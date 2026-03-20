@@ -1143,7 +1143,6 @@ void US_SolutionMgrNew::newSolution( void )
 void US_SolutionMgrNew::reset( void )
 {
    QList< US_Solution::AnalyteInfo >&   ai         = solution->analyteInfo;
-   QString                              bufferDesc = solution->buffer.description;
 
    le_bufferInfo   -> setText( solution->buffer.description );
    le_descrip      -> setText( solution->solutionDesc );
@@ -1177,7 +1176,7 @@ void US_SolutionMgrNew::reset( void )
 
       lw_analytes->addItem( item );
    }
-   if ( can_accept( ) ) //we can have a solution with buffer only
+   if ( can_accept( ) )
    {
       pb_accept    -> setEnabled( true );
       pb_spectrum  -> setEnabled( true );

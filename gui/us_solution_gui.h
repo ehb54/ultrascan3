@@ -216,6 +216,8 @@ class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
       //QMap< QString, US_SolutionComponent > component_list;
 
       US_Help       showHelp;
+      bool can_accept         ( void ) const;
+
 
    private slots:
 
@@ -223,7 +225,6 @@ class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
      void assignAnalyte      ( US_Analyte );
      void calcCommonVbar20   ( void );
      void reset              ( void );
-     bool can_accept         ( void );
      void new_description    ();
      void saveAmount         ( double );
      void selectAnalyte      ( QListWidgetItem* );
