@@ -32,7 +32,9 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt5-hpc"
+        "VCPKG_MANIFEST_FEATURES": "qt5-hpc",
+        "US3_NO_DB": "ON",
+        "US3_PROFILE": "HPC"
       }
     },
     {
@@ -48,7 +50,9 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt5-qwt630-hpc"
+        "VCPKG_MANIFEST_FEATURES": "qt5-qwt630-hpc",
+        "US3_NO_DB": "ON",
+        "US3_PROFILE": "HPC"
       }
     },
     {
@@ -66,7 +70,9 @@
       "inherits": "base",
       "cacheVariables": {
         "VCPKG_MANIFEST_FEATURES": "qt6-hpc",
-        "USE_QT6": "ON"
+        "USE_QT6": "ON",
+        "US3_NO_DB": "ON",
+        "US3_PROFILE": "HPC"
       }
     },
     {
@@ -315,9 +321,6 @@
         "macos-base",
         "base-qt5-qwt616-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -332,9 +335,6 @@
         "macos-base",
         "base-qt5-qwt630-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -349,9 +349,6 @@
         "macos-base",
         "base-qt6-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -366,9 +363,6 @@
         "macos-x64-base",
         "base-qt5-qwt616-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -383,9 +377,6 @@
         "macos-x64-base",
         "base-qt5-qwt630-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -400,9 +391,6 @@
         "macos-x64-base",
         "base-qt6-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -501,11 +489,6 @@
         "linux-base",
         "base-qt5-qwt616-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC",
-        "VCPKG_MANIFEST_FEATURES": "qt5-hpc",
-        "US3_NO_DB": "ON"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -520,11 +503,6 @@
         "linux-base",
         "base-qt5-qwt630-hpc"
       ],
-      "cacheVariables": {
-        "US3_PROFILE": "HPC",
-        "VCPKG_MANIFEST_FEATURES": "qt5-qwt630-hpc",
-        "US3_NO_DB": "ON"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -539,11 +517,6 @@
         "linux-base",
         "base-qt6-hpc"
       ],
-      "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt6-hpc",
-        "USE_QT6": "ON",
-        "US3_NO_DB": "ON"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

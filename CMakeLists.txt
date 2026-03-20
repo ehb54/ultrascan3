@@ -860,6 +860,54 @@ endif()
 # add_subdirectory(us_somo)
 
 # =============================================================================
+# qhelpgenerator — needed for Qt help file generation (all platforms)
+# =============================================================================
+set(_QHELPGEN_HINTS "")
+foreach (_vcpkg_dir IN ITEMS "${VCPKG_INSTALLED_DIR}" "${_VCPKG_INSTALLED_DIR}")
+    if (_vcpkg_dir AND VCPKG_TARGET_TRIPLET)
+        string(REGEX REPLACE "-dynamic$" "" _vcpkg_host_triplet "${VCPKG_TARGET_TRIPLET}")
+        foreach (_triplet IN ITEMS "${VCPKG_TARGET_TRIPLET}" "${_vcpkg_host_triplet}")
+            list(APPEND _QHELPGEN_HINTS
+                    "${_vcpkg_dir}/${_triplet}/tools/qttools/bin"
+                    "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin"
+                    "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin"
+            )
+        endforeach ()
+    endif ()
+endforeach ()
+foreach (_qt_dir IN ITEMS "${Qt6_DIR}" "${Qt5_DIR}")
+    if (_qt_dir)
+        list(APPEND _QHELPGEN_HINTS "${_qt_dir}/../../../bin")
+    endif ()
+endforeach ()
+if (APPLE)
+    list(APPEND _QHELPGEN_HINTS
+            /opt/homebrew/opt/qt/bin
+            /opt/homebrew/opt/qt@5/bin
+            /usr/local/opt/qt/bin
+            /usr/local/opt/qt@5/bin
+    )
+elseif (UNIX)
+    list(APPEND _QHELPGEN_HINTS
+            /usr/lib/qt6/bin
+            /usr/lib/qt5/bin
+            /usr/lib/x86_64-linux-gnu/qt5/bin
+            /usr/lib/aarch64-linux-gnu/qt5/bin
+    )
+elseif (WIN32)
+    list(APPEND _QHELPGEN_HINTS "$ENV{QTDIR}/bin")
+endif ()
+find_program(QHELPGENERATOR_EXECUTABLE NAMES qhelpgenerator
+        HINTS ${_QHELPGEN_HINTS}
+        DOC "Qt Help Generator executable"
+)
+if (QHELPGENERATOR_EXECUTABLE)
+    message(STATUS "Found qhelpgenerator: ${QHELPGENERATOR_EXECUTABLE}")
+else ()
+    message(STATUS "qhelpgenerator not found - Qt help files will not be built")
+endif ()
+
+# =============================================================================
 # macOS DEPLOYMENT (folder-based layout)
 # =============================================================================
 if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")

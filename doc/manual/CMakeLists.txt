@@ -11,66 +11,6 @@ find_program(SPHINX_EXECUTABLE NAMES sphinx-build
     "${PROJECT_SOURCE_DIR}/.venv/bin"
     DOC "Sphinx documentation builder")
 
-# qhelpgenerator ships with Qt tools (qttools for Qt6, qt5-tools for Qt5).
-# Build a list of candidate hint paths that work regardless of where vcpkg
-# is installed on any given machine or platform.
-set(_QHELPGEN_HINTS "")
-
-# 1. vcpkg-provided paths - derived from toolchain variables so they
-#    resolve correctly for every developer and every CI machine.
-foreach(_vcpkg_dir IN ITEMS
-        "${VCPKG_INSTALLED_DIR}"
-        "${_VCPKG_INSTALLED_DIR}")
-    if(_vcpkg_dir AND VCPKG_TARGET_TRIPLET)
-        # Strip -dynamic suffix to also check the static/default triplet where
-        # host tools like qhelpgenerator are installed by vcpkg
-        string(REGEX REPLACE "-dynamic$" "" _vcpkg_host_triplet "${VCPKG_TARGET_TRIPLET}")
-        foreach(_triplet IN ITEMS "${VCPKG_TARGET_TRIPLET}" "${_vcpkg_host_triplet}")
-            list(APPEND _QHELPGEN_HINTS
-                    "${_vcpkg_dir}/${_triplet}/tools/qttools/bin"    # Qt6 (Assistant.app)
-                    "${_vcpkg_dir}/${_triplet}/tools/Qt6/bin"        # Qt6 (qhelpgenerator)
-                    "${_vcpkg_dir}/${_triplet}/tools/qt5-tools/bin" # Qt5
-            )
-        endforeach()
-    endif()
-endforeach()
-
-# 2. Qt CMake dir relative paths (covers Homebrew, official Qt installer, etc.)
-foreach(_qt_dir IN ITEMS "${Qt6_DIR}" "${Qt5_DIR}")
-    if(_qt_dir)
-        list(APPEND _QHELPGEN_HINTS "${_qt_dir}/../../../bin")
-    endif()
-endforeach()
-
-# 3. Common system locations per platform
-if(APPLE)
-    list(APPEND _QHELPGEN_HINTS
-            /opt/homebrew/opt/qt/bin        # Homebrew Qt6 (Apple Silicon)
-            /opt/homebrew/opt/qt@5/bin      # Homebrew Qt5 (Apple Silicon)
-            /usr/local/opt/qt/bin           # Homebrew Qt6 (Intel)
-            /usr/local/opt/qt@5/bin         # Homebrew Qt5 (Intel)
-    )
-elseif(UNIX)
-    list(APPEND _QHELPGEN_HINTS
-            /usr/lib/qt6/bin
-            /usr/lib/qt5/bin
-            /usr/lib/x86_64-linux-gnu/qt5/bin
-            /usr/lib/aarch64-linux-gnu/qt5/bin
-    )
-elseif(WIN32)
-    list(APPEND _QHELPGEN_HINTS
-            "$ENV{QTDIR}/bin"
-    )
-endif()
-
-find_program(QHELPGENERATOR_EXECUTABLE NAMES qhelpgenerator
-        HINTS ${_QHELPGEN_HINTS}
-        DOC "Qt Help Generator executable")
-
-find_program(QCOLLECTIONGENERATOR_EXECUTABLE NAMES qcollectiongenerator
-        HINTS ${_QHELPGEN_HINTS}
-        DOC "Qt Collection Generator executable")
-
 if(NOT SPHINX_EXECUTABLE)
     message(STATUS "Documentation build disabled - sphinx-build not found")
     message(STATUS "  Install with: pip install -r doc/manual/source/requirements.txt")
@@ -132,9 +72,8 @@ add_custom_command(
 #   manual.qhp   -> manual.qch   (compiled help file + full-text search index)
 #   manual.qhcp  -> manual.qhc   (Qt help collection database)
 #
-# Qt6 merged qcollectiongenerator into qhelpgenerator, but older Qt5 builds
-# may still provide qcollectiongenerator separately. We therefore detect
-# which tool is available.
+# Qt6 merged qcollectiongenerator into qhelpgenerator. qhelpgenerator
+# handles both .qhp and .qhcp compilation on all supported platforms.
 #
 # The .qch and .qhc files are generated in the qthelp build directory where
 # the HTML files live. They are then copied into the application's runtime
@@ -222,24 +161,16 @@ if(QHELPGENERATOR_EXECUTABLE)
     # -----------------------------------------------------------------------
     # Step 2b: Compile manual.qhcp → manual.qhc
     #
-    # Qt5 used a separate qcollectiongenerator tool, while Qt6 merged this
-    # functionality into qhelpgenerator. We detect which generator exists.
+    # qhelpgenerator handles both .qhp and .qhcp compilation (Qt6 merged
+    # qcollectiongenerator into qhelpgenerator).
     # -----------------------------------------------------------------------
-    if(QCOLLECTIONGENERATOR_EXECUTABLE)
-        set(_QHC_GENERATOR ${QCOLLECTIONGENERATOR_EXECUTABLE})
-        message(STATUS "  qcollectiongenerator: ${QCOLLECTIONGENERATOR_EXECUTABLE}")
-    else()
-        set(_QHC_GENERATOR ${QHELPGENERATOR_EXECUTABLE})
-        message(STATUS "  qcollectiongenerator not found — using qhelpgenerator (Qt6 merged tool)")
-    endif()
-
     if(WIN32)
         add_custom_command(
                 OUTPUT  ${DOC_QHC_STAGE}
                 COMMAND ${CMAKE_COMMAND} -E env
                 "PATH=${_QT_RUNTIME_BIN_DIR};${_QT_TOOL_BIN_DIR};$ENV{PATH}"
                 "QT_PLUGIN_PATH=${_QT_PLUGIN_DIR}"
-                ${_QHC_GENERATOR} manual.qhcp -o manual.qhc
+                ${QHELPGENERATOR_EXECUTABLE} manual.qhcp -o manual.qhc
                 DEPENDS ${SPHINX_QHCP} ${DOC_QCH_STAGE}
                 WORKING_DIRECTORY ${DOC_QTHELP_DIR}
                 COMMENT "Compiling Qt help collection (manual.qhc)"
@@ -248,7 +179,7 @@ if(QHELPGENERATOR_EXECUTABLE)
     else()
         add_custom_command(
                 OUTPUT  ${DOC_QHC_STAGE}
-                COMMAND ${_QHC_GENERATOR} manual.qhcp -o manual.qhc
+                COMMAND ${QHELPGENERATOR_EXECUTABLE} manual.qhcp -o manual.qhc
                 DEPENDS ${SPHINX_QHCP} ${DOC_QCH_STAGE}
                 WORKING_DIRECTORY ${DOC_QTHELP_DIR}
                 COMMENT "Compiling Qt help collection (manual.qhc)"
@@ -256,12 +187,6 @@ if(QHELPGENERATOR_EXECUTABLE)
         )
     endif()
 
-    # -----------------------------------------------------------------------
-    # Step 2c: Copy runtime help files into bin/
-    #
-    # UltraScan launches Qt Assistant pointing at bin/manual.qhc, which then
-    # loads the associated manual.qch from the same directory.
-    # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
     # Step 2c: Copy runtime help files into bin/
     #
@@ -460,7 +385,6 @@ if(WIN32 AND QHELPGENERATOR_EXECUTABLE)
     set(DOC_QCH_STAGE "${DOC_QCH_STAGE}" PARENT_SCOPE)
     set(DOC_QHC_STAGE "${DOC_QHC_STAGE}" PARENT_SCOPE)
     set(DOC_OUTPUT_DIR "${DOC_OUTPUT_DIR}" PARENT_SCOPE)
-    set(QHELPGENERATOR_EXECUTABLE "${QHELPGENERATOR_EXECUTABLE}" PARENT_SCOPE)
 endif()
 
 # ---------------------------------------------------------------------------
