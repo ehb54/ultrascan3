@@ -1713,6 +1713,25 @@ pb_plateau->setVisible(false);
    le_bll_intercept            = us_lineedit( "", 0, true );
    connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
 
+   //Information field for baseline correction
+   QTextEdit*     le_info;
+   QFont le_info_font( US_Widgets::fixedFont().family(),
+		       US_GuiSettings::fontSize() );
+   le_info = us_textedit();
+   QFontMetrics m (le_info -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   //le_info -> setFixedHeight  (11 * RowHeight) ;
+   
+   QPalette p = le_info->palette(); 
+   p.setColor(QPalette::Base, Qt::lightGray);
+   p.setColor(QPalette::Text, Qt::darkRed);
+   le_info->setPalette(p);
+   le_info->setText(tr( "Baseline Correction Instructions:"
+			"<ul><li>[Firt Point]: to select, Hold Ctrl & Left Mouse click </ul></li>"
+			"<ul><li>Continue holding Ctrl, move Mouse to the Second Point to be selected (you will see red line following the mouse)</ul></li>"
+			"<ul><li>[Second Point]: to select, click Left Mouse (while still holding Ctrl)</ul></li>"
+			));
+   le_info->setFont(le_info_font);
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -1847,6 +1866,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
    specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
    specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+   specs->addWidget( le_info ,             s_row++, 0, 1, 6 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
