@@ -223,7 +223,7 @@ class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
      void assignAnalyte      ( US_Analyte );
      void calcCommonVbar20   ( void );
      void reset              ( void );
-     
+     bool can_accept         ( void );
      void new_description    ();
      void saveAmount         ( double );
      void selectAnalyte      ( QListWidgetItem* );
@@ -231,8 +231,8 @@ class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
      void newCanceled        ( void );
      void selectBuffer       ( void );
      void assignBuffer       ( US_Buffer );
-     void newAccepted        ( void);
-     void saveTemperature    ( const QString& );
+     void newAccepted        ( void );
+     void saveTemperature    ( void );
      void saveNotes          ( void );
      void spectrum_class     ( void );
      
