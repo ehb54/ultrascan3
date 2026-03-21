@@ -2168,7 +2168,7 @@ void US_Astfem_Sim::plot( int step )
    // Set plot scale for band-forming
    if ( simparams.band_forming )
    {
-      min_y_axis = total_conc;
+      max_y_axis = total_conc;
    }
    // adjust the plotting for the baseline offset if defined
    if ( simparams.baseline != 0.0)
