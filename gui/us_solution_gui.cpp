@@ -598,6 +598,40 @@ void US_SolutionMgrSelect::reject( void )
 // Accept the currently selected solutiom
 void US_SolutionMgrSelect::accept_solution( void )
 {
+   // show a warning for solutions without an analyte
+   if ( solution->analyteInfo.count() == 0 )
+   {
+      QMessageBox msgbox;
+      msgbox.setWindowTitle( tr( "Solution without analytes") );
+      msgbox.setIcon( QMessageBox::Warning );
+      msgbox.setText( tr( "The selected solution does not have any analytes associated with it.\n"
+                          "This may cause problems if it is used in analysis programs.\n"
+                          "Are you sure you want to continue with this solution?") );
+      msgbox.setStandardButtons( QMessageBox::Yes | QMessageBox::No );
+      msgbox.setDefaultButton( QMessageBox::No );
+      const int ret = msgbox.exec();
+      if ( ret == QMessageBox::No )
+      {
+         return;
+      }
+   }
+   // show a warning for solutions with a common vbar of 0.0
+   if ( qFuzzyCompare( solution->commonVbar20, 0.0 ) )
+   {
+      QMessageBox msgbox;
+      msgbox.setWindowTitle( tr( "Solution has a common vbar of 0.0 mL/g") );
+      msgbox.setIcon( QMessageBox::Warning );
+      msgbox.setText( tr( "The selected solution has a common vbar of 0.0 mL/g.\n"
+                          "This may cause problems if it is used in analysis programs.\n"
+                          "Are you sure you want to continue with this solution?") );
+      msgbox.setStandardButtons( QMessageBox::Yes | QMessageBox::No );
+      msgbox.setDefaultButton( QMessageBox::No );
+      const int ret = msgbox.exec();
+      if ( ret == QMessageBox::No )
+      {
+         return;
+      }
+   }
    emit solutionAccepted();
 }
 
@@ -1009,32 +1043,17 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    main->addWidget( le_storageTemp,  row,   8, 1, 4 );
 
    //main->setRowStretch( 5, 5 );
-   connect( le_descrip, SIGNAL( editingFinished   () ), SLOT  ( new_description() ) );
-   connect( pb_analyte, SIGNAL( clicked() ), SLOT( addAnalyte() ) );
-   connect( pb_reset,   SIGNAL( clicked() ), this, SLOT  ( newSolution() ) );
-
-   connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
-                         SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
-
-   connect( pb_removeAnalyte, SIGNAL( clicked() ), SLOT( removeAnalyte() ) );
-
-   connect( pb_cancel,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newCanceled() ) );
-   connect( pb_buffer,   SIGNAL( clicked() ), SLOT( selectBuffer() ) );
-
-   connect( pb_accept,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newAccepted() ) );
-
-   connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
-                            SLOT  ( saveTemperature ( const QString&   ) ) );
-
-   connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
-
-   // connect( pb_spectrum,     SIGNAL( clicked() ),
-   //          this,            SLOT  ( spectrum()    ) );
-   connect( pb_spectrum,     SIGNAL( clicked() ),
-            this,            SLOT  ( spectrum_class()    ) );
-
+   connect( le_descrip, &QLineEdit::editingFinished, this, &US_SolutionMgrNew::new_description );
+   connect( pb_analyte, &QPushButton::clicked, this, &US_SolutionMgrNew::addAnalyte );
+   connect( pb_reset,   &QPushButton::clicked, this, &US_SolutionMgrNew::newSolution );
+   connect( lw_analytes, &QListWidget::itemClicked, this, &US_SolutionMgrNew::selectAnalyte );
+   connect( pb_removeAnalyte, &QPushButton::clicked, this, &US_SolutionMgrNew::removeAnalyte );
+   connect( pb_cancel,   &QPushButton::clicked, this, &US_SolutionMgrNew::newCanceled );
+   connect( pb_buffer,   &QPushButton::clicked, this, &US_SolutionMgrNew::selectBuffer );
+   connect( pb_accept,   &QPushButton::clicked, this, &US_SolutionMgrNew::newAccepted );
+   connect( le_storageTemp, &QLineEdit::editingFinished, this, &US_SolutionMgrNew::saveTemperature );
+   connect( te_notes, &QTextEdit::textChanged, this, &US_SolutionMgrNew::saveNotes );
+   connect( pb_spectrum, &QPushButton::clicked, this, &US_SolutionMgrNew::spectrum_class );
 
    newSolution();
 }
@@ -1051,9 +1070,18 @@ void US_SolutionMgrNew::spectrum_class( void )
 // Function to save solution information to disk or db
 void US_SolutionMgrNew::newAccepted()
 {
+   if ( !can_accept() )
+   {
+      QMessageBox::critical( this,
+         tr( "Solution Error" ),
+         tr( "The solution cannot be accepted. It is missing either an analyte, a buffer or a name." ) );
+      return;
+   }
 
    if ( le_storageTemp->text().isEmpty() )
+   {
       solution->storageTemp = 0;
+   }
 
    if ( from_db )
    {
@@ -1068,7 +1096,7 @@ void US_SolutionMgrNew::newAccepted()
          //db_error( db.lastError() );
          return;
       }
-DbgLv(1) << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
+      DbgLv(1) << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
       int status = solution->saveToDB( experimentID, channelID, &db );
 
       // if ( status != US_DB2::OK && ! display_status )  // then we return but no status msg
@@ -1093,9 +1121,9 @@ DbgLv(1) << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " <
 
       else if ( status != US_DB2::OK )
       {
-QString emsg = "solSv2DB: status=" + QString::number(status) + " " + QString::number(db.lastErrno())
- + " LErr=\"" + db.lastError() + "\"\n"
- + "expID,chnID " + QString::number(experimentID) + " " + QString::number(channelID);
+         QString emsg = "solSv2DB: status=" + QString::number(status) + " " + QString::number(db.lastErrno())
+          + " LErr=\"" + db.lastError() + "\"\n"
+          + "expID,chnID " + QString::number(experimentID) + " " + QString::number(channelID);
          QMessageBox::warning( this,
                tr( "Solution DB Save Error" ),
 //               db.lastError() );
@@ -1105,22 +1133,44 @@ QString emsg = "solSv2DB: status=" + QString::number(status) + " " + QString::nu
    }
 
    else
+   {
       solution->saveToDisk();
+   }
 
    emit newSolAccepted();
 }
 
+bool US_SolutionMgrNew::can_accept( void ) const
+{
+   bool ret = true;
+   // solution needs a description
+   if ( solution->solutionDesc.isEmpty() )
+   {
+      ret = false;
+   }
+   // solution needs a buffer
+   if ( solution->buffer.description.isEmpty() )
+   {
+      ret = false;
+   }
+   // solution needs at least one analyte
+   if ( solution->analyteInfo.isEmpty() )
+   {
+      ret = false;
+   }
+   // Manage accept and spectrum button state
+   pb_accept->setEnabled( ret );
+   pb_spectrum->setEnabled( ret );
+   return ret;
+}
 
 
 // Slot to capture new solution description
 void US_SolutionMgrNew::new_description()
 {
-  solution->solutionDesc = le_descrip->text();
+   solution->solutionDesc = le_descrip->text();
 
-  bool can_accept = ( !le_descrip->text().isEmpty()  &&
-                      !le_bufferInfo ->text().isEmpty() );
-  pb_accept    ->setEnabled( can_accept );
-  pb_spectrum  ->setEnabled( can_accept );
+   const bool is_ok = can_accept();
 }
 
 void US_SolutionMgrNew::newSolution( void )
@@ -1136,7 +1186,6 @@ void US_SolutionMgrNew::newSolution( void )
 void US_SolutionMgrNew::reset( void )
 {
    QList< US_Solution::AnalyteInfo >&   ai         = solution->analyteInfo;
-   QString                              bufferDesc = solution->buffer.description;
 
    le_bufferInfo   -> setText( solution->buffer.description );
    le_descrip      -> setText( solution->solutionDesc );
@@ -1146,7 +1195,7 @@ void US_SolutionMgrNew::reset( void )
    le_storageTemp  -> setText( QString::number( solution->storageTemp  ) );
    te_notes        -> setText( solution->notes        );
    //le_guid         -> setText( solution->solutionGUID );
-   ct_amount       -> disconnect();
+   const QSignalBlocker blocker_ct_amount( ct_amount );
    ct_amount       -> setEnabled( false );
    ct_amount       -> setValue( 1 );
 
@@ -1154,15 +1203,7 @@ void US_SolutionMgrNew::reset( void )
 
    pb_analyte      -> setEnabled( true );
    pb_removeAnalyte-> setEnabled( false );
-   pb_spectrum     -> setEnabled( false );
 
-   // Let's calculate if we're eligible to save this solution
-   pb_accept       -> setEnabled( false );
-   if ( !le_descrip->text().isEmpty()  && ! bufferDesc.isEmpty() ) //we can have a solution with buffer only
-   {
-      pb_accept    -> setEnabled( true );
-      pb_spectrum  -> setEnabled( true );
-   }
 
    // Display analytes that have been selected
    lw_analytes->clear();
@@ -1175,11 +1216,11 @@ void US_SolutionMgrNew::reset( void )
 
       lw_analytes->addItem( item );
    }
-
    // Turn the red label back
    QPalette p = lb_amount->palette();
    p.setColor( QPalette::WindowText, Qt::white );
    lb_amount->setPalette( p );
+   const bool is_ok = can_accept();
 }
 
 
@@ -1190,12 +1231,8 @@ void US_SolutionMgrNew::addAnalyte( void )
                             : US_Disk_DB_Controls::Disk;
 
    US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true, QString(), dbdisk );
-
-   connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
-            this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
-
-   // connect( analyte_dialog, SIGNAL( use_db        ( bool ) ),
-   //                          SLOT  ( update_disk_db( bool ) ) );
+   connect( analyte_dialog, qOverload<US_Analyte>(&US_AnalyteGui::valueChanged),
+      this, &US_SolutionMgrNew::assignAnalyte );
 
    analyte_dialog->exec();
    qApp->processEvents();
@@ -1275,7 +1312,9 @@ void US_SolutionMgrNew::calcCommonVbar20( void )
    solution->commonVbar20 = 0.0;
 
    if ( solution->analyteInfo.size() == 1 )
-      solution->commonVbar20 = solution->analyteInfo[ 0 ].analyte.vbar20;
+   {
+      solution->commonVbar20 = solution->analyteInfo[0].analyte.vbar20;
+   }
 
    else     // multiple analytes
    {
@@ -1296,11 +1335,11 @@ void US_SolutionMgrNew::calcCommonVbar20( void )
 // Function to handle when solution listwidget item is selected
 void US_SolutionMgrNew::selectAnalyte( QListWidgetItem* item )
 {
-qDebug() << "Sol:NselAna: IN";
+   qDebug() << "Sol:NselAna: IN";
    // Get the right index in the sorted list, and load the amount
-qDebug() << "Sol:NselAna:  aMap count" << analyteMap.size();
+   qDebug() << "Sol:NselAna:  aMap count" << analyteMap.size();
    int ndx = analyteMap[ item ];
-qDebug() << "Sol:NselAna:  ndx" << ndx;
+   qDebug() << "Sol:NselAna:  ndx" << ndx;
    ct_amount ->setValue( solution->analyteInfo[ ndx ].amount );
 
    // Now turn the label red to catch attention
@@ -1310,8 +1349,7 @@ qDebug() << "Sol:NselAna:  ndx" << ndx;
 
    pb_removeAnalyte ->setEnabled( true );
    ct_amount        ->setEnabled( true );
-   connect( ct_amount, SIGNAL( valueChanged ( double ) ),      // if the user has changed it
-                       SLOT  ( saveAmount   ( double ) ) );
+   connect( ct_amount, &QwtCounter::valueChanged, this, &US_SolutionMgrNew::saveAmount );
    //changed = true;
 }
 
@@ -1334,7 +1372,7 @@ void US_SolutionMgrNew::saveAmount( double amount )
 }
 
 // Function to update the storage temperature associated with the current solution
-void US_SolutionMgrNew::saveTemperature( const QString& )
+void US_SolutionMgrNew::saveTemperature( void )
 {
    solution->storageTemp = le_storageTemp ->text().toDouble();
    //changed = true;
@@ -1375,12 +1413,8 @@ void US_SolutionMgrNew::selectBuffer( void )
 
    US_BufferGui* buffer_dialog = new US_BufferGui( true,
                                                    solution->buffer, dbdisk );
-
-   connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
-            this,          SLOT  ( assignBuffer ( US_Buffer ) ) );
-
-   // connect( buffer_dialog, SIGNAL( use_db        ( bool ) ),
-   //                         SLOT  ( update_disk_db( bool ) ) );
+   connect( buffer_dialog, qOverload<US_Buffer>(&US_BufferGui::valueChanged),
+      this, &US_SolutionMgrNew::assignBuffer );
 
    buffer_dialog->exec();
    qApp->processEvents();
@@ -1404,20 +1438,21 @@ void US_SolutionMgrNew::assignBuffer( US_Buffer newBuffer )
          db.query( q );
 
          if ( db.next() )
+         {
             newBuffer.bufferID = db.value( 0 ).toString();
+         }
 
          else
+         {
             newBuffer.bufferID = QString( "-1" );
-
+         }
       }
    }
 
    solution->buffer = newBuffer;
 
    reset();
-   if (!le_descrip->text().isEmpty() )
-     pb_spectrum -> setEnabled( true );
-   //changed = true;
+   // changed = true;
 }
 
 
