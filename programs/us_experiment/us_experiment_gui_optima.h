@@ -540,6 +540,7 @@ class US_ExperGuiCells : public US_WidgetsDialog
 
    private:
       US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoRotor* rpRotor;  
       US_RunProtocol::RunProtoCells* rpCells;
       US_Help  showHelp;
       QList< QLabel* >     cc_labls;   // Cell label object pointers

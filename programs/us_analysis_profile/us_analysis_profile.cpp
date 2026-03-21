@@ -3480,9 +3480,6 @@ DbgLv(1) << "2D:SL: NEXT_CHAN";
   channel_selected( chnx );
 }
 
-
-
-
 // smin value changed
 void US_AnaprofPan2DSA::smin_changed( )
 {

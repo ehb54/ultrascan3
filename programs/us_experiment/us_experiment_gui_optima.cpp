@@ -4610,6 +4610,7 @@ US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
 {
 DbgLv(1) << "EGCe: IN";
    mainw               = (US_ExperimentMain*)topw;
+   rpRotor             = &(mainw->currProto.rpRotor);
    rpCells             = &(mainw->currProto.rpCells);
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
