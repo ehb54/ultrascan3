@@ -1836,7 +1836,7 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
       {  // Look for virtually-zero concentration from last radius back
          if ( C_init.radius[ jr ] < rad_last )
          {
-            if ( C_init.concentration[ jr ] < z_tolerance )
+            if ( C_init.concentration[ jr ] < z_tolerance && !simparams.band_forming )
             {  // Concentration very low, so flag simulation zero here on out
                is_zero         = true;
             }
