@@ -598,6 +598,40 @@ void US_SolutionMgrSelect::reject( void )
 // Accept the currently selected solutiom
 void US_SolutionMgrSelect::accept_solution( void )
 {
+   // show a warning for solutions without an analyte
+   if ( solution->analyteInfo.count() == 0 )
+   {
+      QMessageBox msgbox;
+      msgbox.setWindowTitle( tr( "Solution without analytes") );
+      msgbox.setIcon( QMessageBox::Warning );
+      msgbox.setText( tr( "The selected solution does not have any analytes associated with it.\n"
+                          "This may cause problems if it is used in analysis programs.\n"
+                          "Are you sure you want to continue with this solution?") );
+      msgbox.setStandardButtons( QMessageBox::Yes | QMessageBox::No );
+      msgbox.setDefaultButton( QMessageBox::No );
+      const int ret = msgbox.exec();
+      if ( ret == QMessageBox::No )
+      {
+         return;
+      }
+   }
+   // show a warning for solutions with a common vbar of 0.0
+   if ( qFuzzyCompare( solution->commonVbar20, 0.0 ) )
+   {
+      QMessageBox msgbox;
+      msgbox.setWindowTitle( tr( "Solution has a common vbar of 0.0 mL/g") );
+      msgbox.setIcon( QMessageBox::Warning );
+      msgbox.setText( tr( "The selected solution has a common vbar of 0.0 mL/g.\n"
+                          "This may cause problems if it is used in analysis programs.\n"
+                          "Are you sure you want to continue with this solution?") );
+      msgbox.setStandardButtons( QMessageBox::Yes | QMessageBox::No );
+      msgbox.setDefaultButton( QMessageBox::No );
+      const int ret = msgbox.exec();
+      if ( ret == QMessageBox::No )
+      {
+         return;
+      }
+   }
    emit solutionAccepted();
 }
 
@@ -1036,6 +1070,13 @@ void US_SolutionMgrNew::spectrum_class( void )
 // Function to save solution information to disk or db
 void US_SolutionMgrNew::newAccepted()
 {
+   if ( !can_accept() )
+   {
+      QMessageBox::critical( this,
+         tr( "Solution Error" ),
+         tr( "The solution cannot be accepted. It is missing either an analyte, a buffer or a name." ) );
+      return;
+   }
 
    if ( le_storageTemp->text().isEmpty() )
    {
@@ -1101,22 +1142,26 @@ void US_SolutionMgrNew::newAccepted()
 
 bool US_SolutionMgrNew::can_accept( void ) const
 {
+   bool ret = true;
    // solution needs a description
-   if ( le_descrip->text().isEmpty() )
+   if ( solution->solutionDesc.isEmpty() )
    {
-      return false;
+      ret = false;
    }
    // solution needs a buffer
-   if ( le_bufferInfo->text().isEmpty() )
+   if ( solution->buffer.description.isEmpty() )
    {
-      return false;
+      ret = false;
    }
    // solution needs at least one analyte
-   if ( lw_analytes->count() == 0 )
+   if ( solution->analyteInfo.isEmpty() )
    {
-      return false;
+      ret = false;
    }
-   return true;
+   // Manage accept and spectrum button state
+   pb_accept->setEnabled( ret );
+   pb_spectrum->setEnabled( ret );
+   return ret;
 }
 
 
@@ -1126,8 +1171,6 @@ void US_SolutionMgrNew::new_description()
    solution->solutionDesc = le_descrip->text();
 
    const bool is_ok = can_accept();
-   pb_accept    ->setEnabled( is_ok );
-   pb_spectrum  ->setEnabled( is_ok );
 }
 
 void US_SolutionMgrNew::newSolution( void )
@@ -1152,7 +1195,7 @@ void US_SolutionMgrNew::reset( void )
    le_storageTemp  -> setText( QString::number( solution->storageTemp  ) );
    te_notes        -> setText( solution->notes        );
    //le_guid         -> setText( solution->solutionGUID );
-   ct_amount       -> disconnect();
+   const QSignalBlocker blocker_ct_amount( ct_amount );
    ct_amount       -> setEnabled( false );
    ct_amount       -> setValue( 1 );
 
@@ -1160,10 +1203,7 @@ void US_SolutionMgrNew::reset( void )
 
    pb_analyte      -> setEnabled( true );
    pb_removeAnalyte-> setEnabled( false );
-   pb_spectrum     -> setEnabled( false );
 
-   // Let's calculate if we're eligible to save this solution
-   pb_accept       -> setEnabled( false );
 
    // Display analytes that have been selected
    lw_analytes->clear();
@@ -1176,15 +1216,11 @@ void US_SolutionMgrNew::reset( void )
 
       lw_analytes->addItem( item );
    }
-   if ( can_accept( ) )
-   {
-      pb_accept    -> setEnabled( true );
-      pb_spectrum  -> setEnabled( true );
-   }
    // Turn the red label back
    QPalette p = lb_amount->palette();
    p.setColor( QPalette::WindowText, Qt::white );
    lb_amount->setPalette( p );
+   const bool is_ok = can_accept();
 }
 
 
@@ -1416,10 +1452,6 @@ void US_SolutionMgrNew::assignBuffer( US_Buffer newBuffer )
    solution->buffer = newBuffer;
 
    reset();
-   if (!le_descrip->text().isEmpty() )
-   {
-      pb_spectrum->setEnabled( true );
-   }
    // changed = true;
 }
 
