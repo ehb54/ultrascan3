@@ -5,6 +5,23 @@
 file(GLOB UTILS_SOURCES "*.cpp")
 file(GLOB UTILS_HEADERS "*.h")
 
+# Exclude instrument-specific DB importers when building without database support.
+# US_CfaData (SQLite) and US_XpnData (PostgreSQL) are data-acquisition components
+# that are not needed for the HPC compute-only profile.
+# US_LinkSsl manages SSL connections to the Optima instrument — also GUI/DB only.
+if(US3_NO_DB)
+    list(REMOVE_ITEM UTILS_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_cfa_data.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_xpn_data.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_link_ssl.cpp"
+    )
+    list(REMOVE_ITEM UTILS_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_cfa_data.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_xpn_data.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/us_link_ssl.h"
+    )
+endif()
+
 # Create the utils library
 add_library(us_utils ${UTILS_SOURCES} ${UTILS_HEADERS})
 
@@ -82,7 +99,7 @@ target_include_directories(us_utils
         ${CMAKE_CURRENT_BINARY_DIR}  # For generated headers
         )
 
-# Core Qt libraries (always needed)
+# Core Qt libraries + OpenSSL (always needed — us_crypto.cpp uses EVP directly)
 target_link_libraries(us_utils
         PUBLIC
         Qt::Core
@@ -93,7 +110,7 @@ target_link_libraries(us_utils
         LibArchive::LibArchive
         )
 
-# Optional database support
+# Database support (APP/TEST profiles only)
 if(NOT US3_NO_DB)
     target_link_libraries(us_utils
             PUBLIC
@@ -155,7 +172,7 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
             ${CMAKE_CURRENT_BINARY_DIR}
             )
 
-    # Apply same link libraries
+    # Core Qt libraries + OpenSSL (always needed)
     target_link_libraries(us_utils_static
             PUBLIC
             Qt::Core
@@ -166,7 +183,7 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
             LibArchive::LibArchive
             )
 
-    # Optional database support
+    # Database support (APP/TEST profiles only)
     if(NOT US3_NO_DB)
         target_link_libraries(us_utils_static
                 PUBLIC

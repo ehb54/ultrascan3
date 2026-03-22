@@ -87,12 +87,21 @@ if(USE_QT6)
     target_link_libraries(qwtplot3d PUBLIC Qt::OpenGLWidgets)
 endif()
 
-# Platform-specific OpenGL libraries
+# Platform-specific OpenGL libraries — GLU is required on all platforms
 if(WIN32)
     target_link_libraries(qwtplot3d PUBLIC glu32)
-elseif(UNIX AND NOT APPLE)
-    if(GLU_LIBRARY)
+elseif(APPLE)
+    # macOS: GLU is part of the system OpenGL.framework (deprecated but present).
+    # Use the framework directly — no XQuartz/X11 dependency needed.
+    target_link_libraries(qwtplot3d PUBLIC "-framework OpenGL")
+else()
+    # Linux
+    if(TARGET OpenGL::GLU)
+        target_link_libraries(qwtplot3d PUBLIC OpenGL::GLU)
+    elseif(GLU_LIBRARY)
         target_link_libraries(qwtplot3d PUBLIC ${GLU_LIBRARY})
+    else()
+        message(WARNING "GLU not found — qwtplot3d will have unresolved symbols")
     endif()
 endif()
 

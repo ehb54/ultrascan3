@@ -24,7 +24,8 @@ gui/qrc_images.cpp
 /vcpkg/
 /.idea/
 /.vscode/
-vcpkg_installed/ 
-configure-arm64.log 
-programs/us/us.rc 
-CMakeUserPresets.json 
+/_CPack_Packages/
+vcpkg_installed/
+configure-arm64.log
+programs/us/us.rc
+CMakeUserPresets.json

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    distribution.xml.in - productbuild distribution definition for UltraScan3
+    Processed by CMake configure_file(); @US3_VERSION_STRING@ is substituted.
+
+    Non-relocatable design:
+      - customize="never"          hides the "Change Install Location" button
+      - rootVolumeOnly="true"      prevents installation to non-root volumes
+      - enable_currentUserHome=    blocks ~/Applications installs
+          "false"
+      - enable_anywhere="false"    restricts to system domain only
+      - auth="Root" on pkg-ref     ensures pre/postinstall run as root
+      - install-location /        (pkgbuild flag) locks the payload root
+-->
+<installer-gui-script minSpecVersion="1">
+
+    <title>UltraScan3</title>
+
+    <product id="com.aucsolutions.ultrascan3"
+             version="@US3_VERSION_STRING@"
+             title="UltraScan3">
+    </product>
+
+    <background file="background.png"
+            alignment="bottomleft"
+            scaling="none"/>
+
+    <!-- Installation domain - system-wide only.
+         All three attributes must be present to fully lock the target. -->
+
+    <!-- Installer options.
+         customize="never"        - no Customize button, single install set
+         require-scripts="true"   - abort if pre/postinstall cannot run
+         rootVolumeOnly="true"    - single-volume lock
+         allow-external-scripts="no" - defence-in-depth: disallow injected scripts -->
+    <options customize="never"
+             require-scripts="true"
+             rootVolumeOnly="true"
+             allow-external-scripts="no"/>
+
+    <!-- UI screens (files must be present in the resources directory) -->
+    <welcome file="Welcome.txt" mime-type="text/plain"/>
+    <license file="License.txt" mime-type="text/plain"/>
+
+    <!-- Single-component package, no user-visible choice tree.
+         The choice is hidden so there is no checkable component list. -->
+    <choices-outline>
+        <line choice="default"/>
+    </choices-outline>
+
+    <choice id="default" visible="false">
+        <pkg-ref id="com.aucsolutions.ultrascan3"/>
+    </choice>
+
+    <!-- pkg-ref ties back to the component .pkg built by pkgbuild.
+         The filename must match what was passed to productbuild via package-path.
+         auth="Root" ensures pre/postinstall scripts run with root privileges. -->
+    <pkg-ref id="com.aucsolutions.ultrascan3"
+             version="@US3_VERSION_STRING@"
+             auth="Root">ultrascan3-component.pkg</pkg-ref>
+
+</installer-gui-script>

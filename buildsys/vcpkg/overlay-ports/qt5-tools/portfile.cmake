@@ -1,5 +1,8 @@
 include(${CURRENT_INSTALLED_DIR}/share/qt5/qt_port_functions.cmake)
-
+if(VCPKG_TARGET_IS_MINGW)
+    set(VCPKG_C_FLAGS "${VCPKG_C_FLAGS} -fpermissive -Wno-incompatible-pointer-types")
+    set(VCPKG_CXX_FLAGS "${VCPKG_CXX_FLAGS} -fpermissive -Wno-incompatible-pointer-types")
+endif()
 vcpkg_list(SET OPTIONS)
 if("qdoc" IN_LIST FEATURES)
     set(ENV{LLVM_INSTALL_DIR} "${CURRENT_INSTALLED_DIR}")

@@ -35,13 +35,21 @@ debug("location="+location);
        << url;
 
   debug( args.join( " " ) );
-#ifndef Q_OS_MAC
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
+#ifdef Q_OS_MAC
+  QString assisloc  = US_Settings::appBaseDir()
+                      + "/bin/Assistant.app/Contents/MacOS/Assistant";
+  if ( !QFile::exists( assisloc ) )
+    assisloc = US_Settings::appBaseDir() + "/bin/assistant";
+#elif defined(Q_OS_WIN)
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant.exe";
+  if ( !QFile::exists( assisloc ) )
+    assisloc = US_Settings::appBaseDir() + "/bin/Assistant.exe";
 #else
-  QString assisloc  = US_Settings::appBaseDir() + "/bin/Assistant.app";
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
 #endif
+
+  debug( "assisloc=" + assisloc );
   daemon.start( assisloc, args );
-//debug("assisloc="+assisloc);
   daemon.waitForStarted();
 
   connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),

@@ -30,10 +30,10 @@ fi
 REV2=`cut -f2 -d\" us_revision.h`
 if [ "$REV1" != "$REV2" ]; then
   # If svn shows revision later than header, report and store that one
-  echo "REVISION WAS -- \"$REV2\""
-  echo "REVISION NOW -- \"$REV1\""
-  echo "#define REVISION \"$REV1\"" >us_revision.h
+  echo "GIT_REVISION WAS -- \"$REV2\""
+  echo "GIT_REVISION NOW -- \"$REV1\""
+  echo "#define GIT_REVISION \"$REV1\"" >us_revision.h
 else
-  echo "REVISION IS -- \"$REV2\""
+  echo "GIT_REVISION IS -- \"$REV2\""
 fi
 

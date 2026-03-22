@@ -112,9 +112,9 @@ DbgLv(1) << "w:" << my_rank << ":PM:Recv: 2:zsol" << job_length*zsolut_doubles;
 }
 //*DEBUG*
                // Tell master we are sending back results
-               int sizes[ 4 ] = { simulation_values.zsolutes.size(),
-                                  simulation_values.ti_noise.size(),
-                                  simulation_values.ri_noise.size(),
+               int sizes[ 4 ] = { (int)simulation_values.zsolutes.size(),
+                                  (int)simulation_values.ti_noise.size(),
+                                  (int)simulation_values.ri_noise.size(),
                                   (int)max_rss() };
 
 DbgLv(1) << "w:" << my_rank << ":   result sols size" << sizes[0]
@@ -285,7 +285,7 @@ if(ss<4 && rr<4)
 }
 //*DEBUG*
                // Tell master we are sending back results
-               int sizes[ 4 ] = { simulation_values.zsolutes.size(),
+               int sizes[ 4 ] = { (int)simulation_values.zsolutes.size(),
                                   mc_iter,
                                   0,
                                   (int)max_rss() };
@@ -367,8 +367,13 @@ DbgLv(1) << "w:" << my_rank << ":Recv:NEWDATA  joblen" << job_length;
                   long memavail   = pgavail * pgsize;
                   double gb_avail = (double)memavail / gb_bytes;
                   gb_avail        = qRound( gb_avail * 1000.0 ) * 0.001;
+#ifdef _SC_AVPHYS_PAGES
                   long pgcurav    = sysconf( _SC_AVPHYS_PAGES );
                   long memcurav   = pgcurav * pgsize;
+#else
+                  // _SC_AVPHYS_PAGES is Linux-only; on macOS report 0
+                  long memcurav   = 0L;
+#endif
                   double gb_curav = (double)memcurav / gb_bytes;
                   gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
 
