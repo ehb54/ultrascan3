@@ -20,6 +20,19 @@
 #include "../us_abde/us_norm_profile.h"
 
 /**
+ * @struct Heading
+ * @brief Represents a single HTML heading extracted during PDF rendering.
+ *        Used to inject PDF bookmarks via PoDoFo after the file is written.
+ */
+struct Heading
+{
+    int     level;   //!< Heading level: 1 = h1, 2 = h2, 3 = h3
+    QString title;   //!< Sanitized heading text (bookmark label)
+    int     page;    //!< 0-based page index where the heading appears
+};
+
+
+/**
  * @class US_ReporterGMP
  * @brief The US_ReporterGMP class provides functionality for generating GMP reports.
  */
@@ -259,6 +272,8 @@ class US_ReporterGMP : public US_Widgets
 
         QTextEdit* te_fpath_info;            //!< File path info text edit
         QTextEdit* te_fpath_info_db;         //!< File path info DB text edit
+
+        QList<Heading> m_headings;           //!< Headings extracted during printDocument(); 
 
         QString AProfileGUID;                //!< Analysis profile GUID
         QString ProtocolName_auto;           //!< Auto protocol name
@@ -646,6 +661,14 @@ class US_ReporterGMP : public US_Widgets
          * @param doc The QTextDocument object
          */
         void printDocument(QPrinter& printer, QTextDocument* doc);
+
+        /**
+         * @brief Inject PDF bookmarks into an already-written PDF file.
+         *        Uses PoDoFo to write a PdfOutlines tree built from m_headings.
+         * @param pdfPath Path to the PDF file to modify in-place
+         */
+        void injectBookmarks(const QString& pdfPath);
+  
 
         /**
          * @brief Convert millimeters to pixels.

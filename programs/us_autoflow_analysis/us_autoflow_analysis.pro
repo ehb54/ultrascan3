@@ -6,6 +6,8 @@ QT           += sql
 QT           += svg opengl printsupport
 QT           += datavisualization
 
+LIBS          += -lpodofo
+
 HEADERS       = us_autoflow_analysis.h \
                 ../us_analysis_profile/us_analysis_profile.h  \
                 ../us_fit_meniscus/us_fit_meniscus.h \

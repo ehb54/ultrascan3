@@ -7,6 +7,16 @@ QT           += svg opengl
 QT           += printsupport
 QT           += datavisualization
 
+# ── PoDoFo 0.9.x — PDF bookmark injection ───────────────────────────────────
+# Requires libpodofo-dev (Debian/Ubuntu) or podofo (Homebrew/vcpkg).
+# Adjust paths if your installation is non-standard.
+LIBS          += -lpodofo
+# If pkg-config is available you can replace the line above with:
+#   CONFIG += link_pkgconfig
+#   PKGCONFIG += libpodofo
+# ────────────────────────────────────────────────────────────────────────────
+
+
 HEADERS       = us_reporter_gmp.h \
                 ../us_analysis_profile/us_analysis_profile.h  \
                 ../us_autoflow_analysis/us_autoflow_analysis.h \

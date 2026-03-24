@@ -9,6 +9,8 @@ QT           += svg
 QT           += printsupport
 QT           += datavisualization
 
+LIBS          += -lpodofo
+
 HEADERS       = us_protocol_dev_gui.h \
                 ../us_experiment/us_experiment_gui_optima.h  \
                 ../us_analysis_profile/us_analysis_profile.h \

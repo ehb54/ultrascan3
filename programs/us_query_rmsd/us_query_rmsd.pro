@@ -5,6 +5,8 @@ QT           += datavisualization
 
 TARGET        = us_query_rmsd
 
+LIBS          += -lpodofo
+
 HEADERS       =  us_query_rmsd.h \
                  ../us_analysis_profile/us_analysis_profile.h \
                  ../us_autoflow_analysis/us_autoflow_analysis.h \

@@ -5,6 +5,8 @@ QT           += datavisualization
 
 TARGET        = us_fematch
 
+LIBS          += -lpodofo
+
 HEADERS       = us_fematch.h          \
                 us_plot_control_fem.h \
                 us_resplot_fem.h      \
