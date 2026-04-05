@@ -46,7 +46,7 @@ US_ConstraintsEdit::US_ConstraintsEdit( US_Model& current_model )
    lw_comps               = new US_ListWidget;
 
    // Components column headers
-   QLabel*      lb_attr   = us_label( tr( "Attribute" ) );
+   QLabel*      lb_attr   = us_label( tr( "Parameter" ) );
    QLabel*      lb_avalue = us_label( tr( "Value" ) );
    QLabel*      lb_alow   = us_label( tr( "Low" ) );
    QLabel*      lb_ahigh  = us_label( tr( "High" ) );
@@ -54,7 +54,7 @@ US_ConstraintsEdit::US_ConstraintsEdit( US_Model& current_model )
    QLabel*      lb_locsc  = us_label( tr( "LogSc?" ) );
 //   QLabel*      lb_desc   = us_label( tr( "Analyte Description:" ) );
 
-   // Attribute Fix? checkboxes and labels
+   // Parameter Fix? checkboxes and labels
    QGridLayout* lo_vbar   = us_checkbox( 
       tr( "Vbar at 20 " ) + DEGC + " (ml/g):", ck_sel_vbar, true );
    QGridLayout* lo_mw     = us_checkbox( 
@@ -78,7 +78,7 @@ US_ConstraintsEdit::US_ConstraintsEdit( US_Model& current_model )
    ck_sel_conc->setEnabled( false );
 DbgLv(1) << "cnG:main: hds,lbs defined";
 
-   // Attribute value/low/high text boxes
+   // Parameter value/low/high text boxes
    le_val_vbar             = us_lineedit( "0.7200" );
    le_min_vbar             = us_lineedit( notapl, true );
    le_max_vbar             = us_lineedit( notapl, true );
@@ -102,7 +102,7 @@ DbgLv(1) << "cnG:main: hds,lbs defined";
    le_max_conc             = us_lineedit( notapl, true );
 DbgLv(1) << "cnG:main: le_vals defined";
 
-   // Attribute Float? checkboxes
+   // Parameter Float? checkboxes
    ck_flt_vbar            = new QCheckBox( "", this );
    ck_flt_mw              = new QCheckBox( "", this );
    ck_log_mw              = new QCheckBox( "", this );
@@ -159,14 +159,14 @@ DbgLv(1) << "cnG:main: flt/log defined";
       tr( "Co-sedimenting Solute" ), ck_co_sed );
 pb_load_c0->setEnabled(false);
    QPushButton* pb_recompute = us_pushbutton(
-         tr( "Re-compute unselected component attribute values" ) );
+         tr( "Re-compute unselected component parameter values" ) );
 
    // Associations
    QLabel*      lb_assocs = us_banner( tr( "Associations (reactions)" ) );
    lw_assocs              = new US_ListWidget;
 
    // Associations column headers
-   QLabel*      lb_attra  = us_label( tr( "Attribute" ) );
+   QLabel*      lb_attra  = us_label( tr( "Parameter" ) );
    QLabel*      lb_avala  = us_label( tr( "Value" ) );
    QLabel*      lb_alowa  = us_label( tr( "Low" ) );
    QLabel*      lb_ahigha = us_label( tr( "High" ) );
@@ -1607,7 +1607,7 @@ DbgLv(1) << "cnG:check_selects !CKD_S  flt_any" << flt_any;
    }
 
    else
-   {  // Attribute newly unselected, enable ability to check a different one
+   {  // Parameter newly unselected, enable ability to check a different one
       ck_sel_mw ->setEnabled( true );
       ck_sel_ff0->setEnabled( true );
       ck_sel_s  ->setEnabled( true );
