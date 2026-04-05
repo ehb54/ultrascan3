@@ -4,4 +4,9 @@ sphinx>=7.0.0
 # Grid/figure layout (replaces defunct sphinx-subfigure)
 sphinx-design
 
+# qthelp builder
+sphinxcontrib-qthelp
+
+# markdown support
+myst-parser
 

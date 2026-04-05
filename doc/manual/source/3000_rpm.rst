@@ -1,0 +1,38 @@
+====================================
+Tips for initial 3,000 rpm checks:
+====================================
+
+.. toctree:: 
+  :maxdepth: 3
+
+.. contents:: Index
+  :local: 
+
+
+It is common practice in some laboratories to measure initial 3,000 rpm scans from each cell before reaching full experimental speed, to make sure that the absorbance in each cell is appropriate and to make sure there are no leaks. Making sure there are no leaks is a very good idea, since centerpieces (especially epon-charcoal filled centerpieces) can easily bend or break the septum if one channel leaks and the other does not because the hydrostatic pressure difference between the channels can be very large, especially at high speeds, if different volumes are present on either sector. However, it is quite possible that leaks are missed if the sample doesn't start leaking until high speed has been reached, when the pressure is maximal. Hence, checking for leaks at 3,000 rpm may miss this crucial information, and leak checking really should be performed at high speed by comparing the menisci from the reference and sample channels from the first 2-3 scans and making sure they have not moved. In the XLA data acquisition program, when measuring in intensity mode, the sample and reference channels are recorded in blue and black traces and can easily be distinguished.
+
+|
+
+Optimal experimental designs strongly favor intensity measurements over absorbance experiments because of the reduced noise and doubled sample capacity, hence, when measuring with the UV/vis optics it is recommended to only use intensity measurements. In such cases, the reported signal consists of the counts of the intensity from each channel, not the absorbance, since there may also be a sample in the reference channel and no reference subtraction is performed. Intensity counts may or may not be easily interpretable to some to figure out if the desired concentration has been loaded, hence, it is much better to simply measure the absorbance of each sample with a benchtop spectrophotometer before cell loading. Please also read the "Tips for successful Absorbance/Intensity Experiments" about this topic.
+
+|
+
+A third complication comes from a recent addition in the UltraScan software that more precisely models the acceleration profile of the instrument with a timestate object. During acceleration, all samples will sediment and diffuse, even at slow speed, if just slightly. This change in sedimentation and diffusion can be modeled precisely, if the speed is known at each instant through the experiment. This profile is certainly affected by initial 3,000 rpm runs, and changes the expected omega2t profile if the 3,000 rpm scans are not considered in the acceleration period. In the new Optima AUC instrument, this is not a concern since the instrument can be programmed to collect speed/time/omega2t profiles during the entire run in 1 second increments, which is exactly what UltraScan will use to predict the acceleration profile. In the XLA this information needs to be deduced from the available run information, which is stored in the file header from each recorded scan. The problem is that the XLA data acquisition software does NOT record the 3,000 rpm data in the same folder as the final experimental speed scans. Therefore, UltraScan is deprived of the needed information to predict accurate acceleration profiles, and this compromises the calculation of good fits.
+
+|
+
+So, how can you address this problem? There are multiple options that work:
+
+    1. eliminate 3,000 rpm runs altogether (the easiest solution)
+
+    2. Collect 3,000 rpm runs as before, but move the 3,000 rpm files into the full speed directory, overwriting the earlier scans in your full speed directory, if you only take a couple of scans this is acceptable, and you only lose info you would probably delete anyway. Import all files, exclude the 3krpm traces during editing *before* you pick the meniscus, since the meniscus position will change and move to the right as the rotor stretches
+
+    3. move them into the directory after renaming all your files in the full speed directory so the sequence # is simply higher by as many scans as you add 3,000 rpm traces.
+
+    4. program the run as an equilibrium method scan with multiple speed steps, this has the disadvantage that you have to program multiple steps for each speed with more than 99 scans, since 99 is the max per step, but if you want 495 scans you can program 5 speed steps with the same speed, this works too.
+
+    5. Stop after the 3,000 rpm run, shake up the cell, and restart.
+
+|
+
+Our preferred option is (1), and waiting a few minutes until you have scanned all cells 2-3 times so you can see if there are leaks. If there are, stop the run immediately to avoid damaging the cells. 
