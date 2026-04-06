@@ -3,6 +3,12 @@
 #include <QPainter>
 //#include <QThread>    
 
+#include <QTextBlock>
+#include <QAbstractTextDocumentLayout>
+
+// PoDoFo 0.9.x — used to inject bookmark outlines into the finished PDF
+#include <podofo/podofo.h>
+using namespace PoDoFo;
 
 #include "us_esigner_gmp.h"
 #include "us_settings.h"
@@ -4259,6 +4265,19 @@ void US_eSignaturesGMP::esign_report( void )
   printer.setFullPage(true);
   
   printDocument(printer, &textDocument, eSigners_info); //, 0);
+
+  // ── INJECT PDF BOOKMARKS ─────────────────────────────────────────────────
+  // m_headings was populated by the pre-pass inside printDocument().
+  // The PDF file is now fully written to filePath, so PoDoFo can open,
+  // patch, and re-save it in-place.
+  if ( !m_headings.isEmpty() )
+    injectBookmarks( filePath_db );
+  else
+    qDebug() << "[write_pdf_report] No headings found — PDF written without bookmarks.";
+  // ── END BOOKMARK INJECTION ────────────────────────────────────────────────
+  
+
+  
   qApp->processEvents();
   
   //Finally, re-upload GMP Report with eSigs to DB
@@ -4454,6 +4473,139 @@ double US_eSignaturesGMP::mmToPixels(QPrinter& printer, int mm)
   return mm * 0.039370147 * printer.resolution();
 }
 
+
+// ---------------------------------------------------------------------------
+// Inject PDF bookmarks (outlines) into the already-written PDF at pdfPath.
+// Uses the heading list built by the pre-pass in printDocument().
+// PoDoFo 0.9.x API.
+//
+// How PoDoFo 0.9.x outlines actually work (confirmed from official test source):
+//
+//   PdfOutlines::CreateRoot( title )
+//     — Creates ONE label-only root node.  Takes a title string only.
+//       There is NO destination overload and NO way to attach one afterwards
+//       (PdfOutlineItem has no GetDictionary(), SetDestination() crashes on
+//       the root because its /Dest slot is never initialized).
+//       The root is purely a container; PDF viewers show it as a collapsible
+//       group header, not as a clickable link.
+//
+//   rootItem->CreateChild( title, dest )
+//     — Adds the first real navigable bookmark as a child of the root.
+//
+//   sibling->CreateNext( title, dest )
+//     — Adds a sibling to an existing item at the same level.
+//
+// Consequence for our heading tree:
+//   • We create ONE root node titled with the document/protocol name.
+//   • Every h1 heading becomes a child of that root (first via CreateChild,
+//     subsequent ones via CreateNext on the previous h1).
+//   • h2 headings are children of the most recent h1.
+//   • h3 headings are children of the most recent h2 (or h1 if no h2 seen).
+//
+// Rule — safe write:
+//   Never write back to the same path PoDoFo loaded from.  Write to a sibling
+//   temp file then rename over the original.
+// ---------------------------------------------------------------------------
+void US_eSignaturesGMP::injectBookmarks( const QString& pdfPath )
+{
+  PdfMemDocument doc;
+  doc.Load( pdfPath.toUtf8().constData() );
+
+  const int pageCount = doc.GetPageCount();
+  if ( pageCount == 0 )
+    {
+      qWarning() << "[injectBookmarks] PDF has no pages:" << pdfPath;
+      return;
+    }
+  qDebug() << "[injectBookmarks] PDF pages:" << pageCount
+           << " | headings:" << m_headings.size();
+
+  // Remove any existing outlines so re-runs don't accumulate duplicates.
+  PdfOutlines* existing = doc.GetOutlines( false );
+  if ( existing )
+    doc.GetCatalog()->GetDictionary().RemoveKey( PdfName( "Outlines" ) );
+
+  PdfOutlines* outlines = doc.GetOutlines( true );
+  if ( !outlines )
+    {
+      qWarning() << "[injectBookmarks] Could not create PdfOutlines.";
+      return;
+    }
+
+  // One label-only root — no destination, title is the protocol/run name.
+  // CreateRoot() is called exactly once; it takes a title string only.
+  // const std::string rootTitle =
+  //     ( ProtocolName_auto.isEmpty() ? runName : ProtocolName_auto )
+  //     .toStdString();
+
+  const std::string rootTitle = folderRunName.toStdString();
+  PdfOutlineItem* rootItem = outlines->CreateRoot( rootTitle );
+
+  // stack[0] = last h1 item, stack[1] = last h2, stack[2] = last h3.
+  // All are children/grandchildren of rootItem.
+  PdfOutlineItem* stack[ 3 ] = { nullptr, nullptr, nullptr };
+
+  for ( const Heading_es& h : m_headings )
+    {
+      if ( h.level < 1 || h.level > 3 ) continue;
+      const int idx = h.level - 1;   // 0=h1, 1=h2, 2=h3
+
+      const int pageIdx = qBound( 0, h.page, pageCount - 1 );
+      PdfPage* page = doc.GetPage( pageIdx );
+      if ( !page ) continue;
+
+      PdfDestination dest( page, ePdfDestinationFit_Fit );
+      const std::string title = h.title.toStdString();
+
+      PdfOutlineItem* item = nullptr;
+
+      if ( idx == 0 )
+        {
+          // h1: child of root (first one) or sibling of previous h1.
+          item = ( stack[ 0 ] == nullptr )
+                   ? rootItem->CreateChild( title, dest )
+                   : stack[ 0 ]->CreateNext( title, dest );
+          stack[ 0 ] = item;
+          stack[ 1 ] = stack[ 2 ] = nullptr;  // reset deeper levels
+        }
+      else
+        {
+          // h2 / h3: child of nearest ancestor already in the stack.
+          PdfOutlineItem* parent = nullptr;
+          for ( int p = idx - 1; p >= 0; --p )
+            {
+              if ( stack[ p ] ) { parent = stack[ p ]; break; }
+            }
+          // If no ancestor exists yet (doc starts with h2/h3), attach under root.
+          if ( !parent ) parent = rootItem;
+
+          item = ( stack[ idx ] == nullptr || parent != stack[ idx - 1 ] )
+                   ? parent->CreateChild( title, dest )
+                   : stack[ idx ]->CreateNext( title, dest );
+
+          stack[ idx ] = item;
+          for ( int d = idx + 1; d < 3; ++d )
+            stack[ d ] = nullptr;
+        }
+    }
+
+  // Safe write: temp file beside the original, then atomic rename.
+  const QString tmpPath = pdfPath + ".tmp_bkm";
+  doc.Write( tmpPath.toUtf8().constData() );
+
+  QFile::remove( pdfPath );
+  if ( !QFile::rename( tmpPath, pdfPath ) )
+    {
+      qWarning() << "[injectBookmarks] rename failed:"
+                 << tmpPath << "->" << pdfPath;
+      return;
+    }
+
+  qDebug() << "[injectBookmarks] Bookmarks written to:" << pdfPath;
+}
+
+
+
 void US_eSignaturesGMP::printDocument(QPrinter& printer, QTextDocument* doc, QMap< QString,
 				      QMap< QString, QString>> eSigners_info ) //, QWidget* parentWidget)
 {
@@ -4469,6 +4621,45 @@ void US_eSignaturesGMP::printDocument(QPrinter& printer, QTextDocument* doc, QMa
   qDebug() << "footerHeigh: " << footerHeight;
   doc->setPageSize(textRect.size());
   
+  // ── HEADING PRE-PASS ──────────────────────────────────────────────────────
+  // The call to doc->setPageSize() above finalises Qt's layout engine:
+  // every QTextBlock now has a stable bounding rect in document coordinates.
+  // We walk all blocks once here — before the paint loop — to map each h1/h2/h3
+  // to its 0-based page index.  No Poppler required; we use the same pageH
+  // divisor that paintPage() uses for its textPageRect calculation.
+  m_headings.clear();
+  const qreal pageH = doc->pageSize().height();   // height of one page in doc pixels
+
+  for ( QTextBlock block = doc->begin(); block != doc->end(); block = block.next() )
+    {
+      int level = block.blockFormat().headingLevel(); // 0 when not a heading
+      if ( level < 1 || level > 3 ) continue;
+
+      // Sanitize: replace Unicode paragraph/line separators and NBSP with
+      // plain spaces, drop control characters, then collapse whitespace.
+      QString raw = block.text();
+      QString title;
+      title.reserve( raw.size() );
+      for ( const QChar& ch : raw )
+        {
+          ushort u = ch.unicode();
+          if ( u == 0x2028 || u == 0x2029 || u == 0x00A0 )
+            title += ' ';
+          else if ( u >= 0x0020 && u != 0x007F )
+            title += ch;
+        }
+      title = title.simplified();
+      if ( title.isEmpty() ) continue;
+
+      QRectF rect  = doc->documentLayout()->blockBoundingRect( block );
+      int pageIdx  = ( pageH > 0 ) ? static_cast<int>( rect.top() / pageH ) : 0;
+
+      m_headings.append({ level, title, pageIdx });
+      qDebug() << "[Heading pre-pass] h" << level
+               << "| page" << (pageIdx + 1) << "|" << title;
+    }
+  // ── END PRE-PASS ─────────────────────────────────────────────────────────
+
   const int pageCount = doc->pageCount();
 
   QProgressDialog * progress_msg = new QProgressDialog ("Preparing .PDF...", QString(), 0, pageCount, this);

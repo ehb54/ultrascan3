@@ -16,6 +16,20 @@
 #include "us_extern.h"
 #include "us_select_item.h"
 
+
+/**
+ * @struct Heading
+ * @brief Represents a single HTML heading extracted during PDF rendering.
+ *        Used to inject PDF bookmarks via PoDoFo after the file is written.
+ */
+struct Heading_es
+{
+    int     level;   //!< Heading level: 1 = h1, 2 = h2, 3 = h3
+    QString title;   //!< Sanitized heading text (bookmark label)
+    int     page;    //!< 0-based page index where the heading appears
+};
+
+
 //! \class US_eSignaturesGMP
 //! \brief A class for managing electronic signatures for GMP compliance in UltraScan.
 class US_eSignaturesGMP : public US_Widgets
@@ -102,6 +116,8 @@ class US_eSignaturesGMP : public US_Widgets
         QPushButton* pb_set_operRev; //!< Button to set operators/reviewers.
 
         US_Help showHelp;                    //!< Help display object
+
+        QList<Heading_es> m_headings;           //!< Headings extracted during printDocument(); 
 
         QPushButton* pb_add_oper; //!< Button to add operator.
         QPushButton* pb_remove_oper; //!< Button to remove operator.
@@ -463,6 +479,14 @@ class US_eSignaturesGMP : public US_Widgets
         //! \param doc The text document.
         //! \param details The map of details.
         void printDocument(QPrinter& printer, QTextDocument* doc, QMap<QString, QMap<QString, QString>> details);
+
+        /**
+         * @brief Inject PDF bookmarks into an already-written PDF file.
+         *        Uses PoDoFo to write a PdfOutlines tree built from m_headings.
+         * @param pdfPath Path to the PDF file to modify in-place
+         */
+        void injectBookmarks(const QString& pdfPath);
+  
 
         //! \brief Convert millimeters to pixels.
         //! \param printer The printer object.

@@ -6,6 +6,8 @@ QT           += sql
 QT           += network
 QT           += printsupport
 
+LIBS          += -lpodofo
+
 HEADERS       = us_experiment_gui_optima.h \
                 ../us_analysis_profile/us_analysis_profile.h \
                 ../us_esigner_gmp/us_esigner_gmp.h

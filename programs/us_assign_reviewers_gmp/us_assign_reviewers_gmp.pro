@@ -6,6 +6,8 @@ QT           += sql
 QT           += svg opengl
 QT           += printsupport
 
+LIBS          += -lpodofo
+
 HEADERS       = ../us_esigner_gmp/us_esigner_gmp.h                  
 
 SOURCES       = us_assign_reviewers_gmp_main.cpp       \
