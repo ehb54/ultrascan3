@@ -49,7 +49,7 @@ fi
 DOMAN=1
 DODOX=1
 
-if [ -z "`which tpage`" ]; then
+if [ -z "`which sphinx-build`" ]; then
   DOMAN=0
 fi
 if [ -z "`which doxygen`" ]; then

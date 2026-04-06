@@ -486,6 +486,7 @@ void US_ExperimentMain::set_tabs_buttons_readonly_dataDisk( bool readonly )
       {
 	allCBoxes[i]->setEnabled(!readonly);
       }
+      
       for ( int i = 0; i < allSBoxes.count(); i++ )
          allSBoxes[i]->setEnabled(!readonly);
       for ( int i = 0; i < allCounters.count(); i++ )
@@ -2208,6 +2209,35 @@ DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
    // //TEST
    // if ( rpRotor->importData )
    //   init_cells_data_import();
+
+   //Set enabled used cells centerpieces if dataDisk, disallow empty
+   if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       QStringList ucells;
+       for (int i=0; i<rpCells->nused; ++i )
+	 {
+	   qDebug() << "Used Cells: oname, cell_n -- "  << rpCells->used[i].cell;
+	   ucells << QString::number(rpCells->used[i].cell);
+	 }
+       for (int i=0; i<cc_cenps.size(); ++i )
+	 {
+	   QString cent_oname      = cc_cenps[ i ]->objectName();
+	   QString cent_oname_cell = cent_oname.split(":")[0].trimmed();
+	   int cent_cell_n = cent_oname_cell.toInt() + 1;
+	   if ( ucells.contains( QString::number(cent_cell_n) ) )
+	     {
+	       qDebug() << "Removing \"empty\" from list of ucell -- " << cent_oname;
+	       QString substring = "empty";
+	       int index;
+	       while ((index = cc_cenps[ i ]->findText(substring, Qt::MatchContains)) != -1)
+		 cc_cenps[ i ]->removeItem(index);
+	       
+	       qDebug() << "Enabling ucell -- " << cent_oname;
+	       cc_cenps[ i ]->setEnabled(true); 
+	     }
+	 }
+       
+     }
 }
 
 // void US_ExperGuiCells::init_cells_data_import()

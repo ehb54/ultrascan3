@@ -170,7 +170,7 @@ DbgLv(0) << "CmdArg: jxmlfili" << jxmlfili;
    {
 DbgLv(0) << "wkdir=" << wkdir;
 DbgLv(0) << "work_dir=" << work_dir;
-      DbgLv(0) << "Us_Mpi_Analysis  " << REVISION;
+      DbgLv(0) << "Us_Mpi_Analysis  " << GIT_REVISION;
 
       // Unpack the input tarfile
       US_Archive archive;
@@ -272,12 +272,12 @@ DbgLv(0) << "submitTime " << submitTime
  << " mgroupcount" << task_params["mgroupcount"].toInt()
  << " walltime" << task_params["walltime"].toInt();
 
-      printf( "Us_Mpi_Analysis %s has started.\n", REVISION );
+      printf( "Us_Mpi_Analysis %s has started.\n", GIT_REVISION );
    }
 
    group_rank = my_rank;    // Temporary setting for send_udp
 
-   QString msg_start = QString( "Starting --  " ) + QString( REVISION );
+   QString msg_start = QString( "Starting --  " ) + QString( GIT_REVISION );
    send_udp( msg_start );   // Can't send udp message until xmlfile is parsed
 
    // Read data 

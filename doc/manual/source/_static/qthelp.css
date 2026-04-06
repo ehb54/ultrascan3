@@ -1,0 +1,60 @@
+img.align-left, figure.align-left, .figure.align-left, object.align-left {
+    clear: left;
+    float: left;
+    margin-right: 1em;
+}
+
+img.align-right, figure.align-right, .figure.align-right, object.align-right {
+    clear: right;
+    float: right;
+    margin-left: 1em;
+}
+
+img.align-center, figure.align-center, .figure.align-center, object.align-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+img.align-default, figure.align-default, .figure.align-default {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.admonition {
+    -webkit-border-radius: 10px;
+    -khtml-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    border-style: dotted;
+    border-width: thin;
+    border-color: #dcdcdc;
+    padding: 10px 15px 10px 15px;
+    margin-bottom: 15px;
+    margin-top: 15px;
+}
+div.note {
+    padding: 10px 15px 10px 15px;
+    background: #e4ffde 15px 15px no-repeat;
+    min-height: 42px;
+}
+div.warning {
+    padding: 10px 15px 10px 15px;
+    background: #fffbc6 15px 15px no-repeat;
+    min-height: 42px;
+}
+div.caution {
+    padding: 10px 15px 10px 15px;
+    background: #fffbc6 15px 15px no-repeat;
+    min-height: 42px;
+}
+div.seealso {
+    background: #e4ffde;
+}
+
+div.body p.caption {
+    text-align: inherit;
+    font-weight: 700;
+
+}
