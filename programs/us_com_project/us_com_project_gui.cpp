@@ -562,8 +562,12 @@ void US_ComProjectMain::checkDataLocation( void )
 	{
 	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
 				tr( "Could not connect to database \n" ) + db->lastError() );
+
+	  delete db;   // free before exit
 	  exit(1);
 	}
+
+      delete db;       //free on normal path
     }
 }
 
@@ -1317,11 +1321,13 @@ void US_InitDialogueGui::checkCertificates( void )
   
   US_Passwd  pw;
   US_DB2* dbP  = new US_DB2( pw.getPasswd() );
-
   
   //read_optima_machines
   read_optima_machines( dbP );
 
+  delete dbP;
+  dbP = NULL;
+  
   QMap < QString, QString > Optimas_disconnect_msg;
   Optimas_disconnect_msg.clear();
 
@@ -1528,15 +1534,22 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
     return;
   
   
-  // Dialog of existing autoflow records
-  US_Passwd  pw;
-  US_DB2* dbP  = new US_DB2( pw.getPasswd() );
+  // // Dialog of existing autoflow records
+  // US_Passwd  pw;
+  // US_DB2* dbP  = new US_DB2( pw.getPasswd() );
   
-  //read_optima_machines
-  read_optima_machines( dbP );
+  // //read_optima_machines
+  // read_optima_machines( dbP );
   
-  //read autoflow records
-  list_all_autoflow_records( autoflowdata, dbP );
+  // //read autoflow records
+  // list_all_autoflow_records( autoflowdata, dbP );
+
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+
+  read_optima_machines( &db );
+  list_all_autoflow_records( autoflowdata, &db );
+  
   
   //count instruments in use
   occupied_instruments.clear();
@@ -2765,22 +2778,20 @@ int US_InitDialogueGui::get_autoflow_records( void )
   
    // Check DB connection
    US_Passwd pw;
-   QString masterpw = pw.getPasswd();
-   US_DB2* db = new US_DB2( masterpw );
-
+   US_DB2 db( pw.getPasswd() );
    int record_number = 0;
    
-   if ( db->lastErrno() != US_DB2::OK )
+   if ( db.lastErrno() != US_DB2::OK )
      {
        QMessageBox::warning( this, tr( "Connection Problem" ),
-			     tr( "Read protocol: Could not connect to database \n" ) + db->lastError() );
+			     tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
        return record_number;
      }
 
    QStringList qry;
    qry << "count_autoflow_records";
    
-   record_number = db->functionQuery( qry );
+   record_number = db.functionQuery( qry );
 
    return record_number;
 }

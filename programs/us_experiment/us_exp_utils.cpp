@@ -1501,19 +1501,32 @@ qDebug() << "Optima in use: name, host, port, dbname, dbuser, dbpasw: " << name 
 
    if ( o_connected )
      {
-       le_optima_connected->setText( "connected" );
-       QPalette *new_palette = new QPalette();
-       new_palette->setColor(QPalette::Text, Qt::darkGreen);
-       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
-       le_optima_connected->setPalette(*new_palette);
+       // le_optima_connected->setText( "connected" );
+       // QPalette *new_palette = new QPalette();
+       // new_palette->setColor(QPalette::Text, Qt::darkGreen);
+       // new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       // le_optima_connected->setPalette(*new_palette);
+
+       le_optima_connected->setText("connected");
+       QPalette new_palette = le_optima_connected->palette();
+       new_palette.setColor(QPalette::Text, Qt::darkGreen);
+       new_palette.setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(new_palette);
      }
    else
      {
-       le_optima_connected->setText( "disconnected" );
-       QPalette *new_palette = new QPalette();
-       new_palette->setColor(QPalette::Text,Qt::red);
-       new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
-       le_optima_connected->setPalette(*new_palette);
+       // le_optima_connected->setText( "disconnected" );
+       // QPalette *new_palette = new QPalette();
+       // new_palette->setColor(QPalette::Text,Qt::red);
+       // new_palette->setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       // le_optima_connected->setPalette(*new_palette);
+
+       le_optima_connected->setText("disconnected");
+       QPalette new_palette = le_optima_connected->palette();
+       new_palette.setColor(QPalette::Text, Qt::red);
+       new_palette.setColor(QPalette::Base, orig_pal.color(QPalette::Base));
+       le_optima_connected->setPalette(new_palette);
+       
      }
 
    mainw->connection_status = o_connected;

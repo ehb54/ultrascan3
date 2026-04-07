@@ -308,8 +308,8 @@ void US_SelectItem::list_data()
   
    QFont tw_font( US_Widgets::fixedFont().family(),
                   US_GuiSettings::fontSize() );
-   QFontMetrics* fm = new QFontMetrics( tw_font );
-   int rowhgt       = fm->height() + 2;     // Row height based on font
+   QFontMetrics fm( tw_font );
+   int rowhgt = fm.height() + 2;            // Row height based on font
    bool have_search = ! dsearch.isEmpty();  // Flag if searching by filter
 
    //ALEXEY: moved here from build_layout()

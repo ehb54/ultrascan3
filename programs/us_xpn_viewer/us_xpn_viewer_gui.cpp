@@ -285,8 +285,9 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    //ALEXEY: new way
    US_Passwd pw;
    US_DB2*   dbP = new US_DB2( pw.getPasswd() );
-   if ( dbP != NULL )
-     read_optima_machines( dbP );
+   read_optima_machines( dbP );
+   delete dbP;
+   
 
    // for ( int ii = 0; ii < instruments.count(); ii++ )
    //   sl_optimas << QString::number( instruments[ ii ].ID )
@@ -925,9 +926,9 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    //ALEXEY: new way <--------------------------------------------- //New
    US_Passwd pw;
    US_DB2*   dbP = new US_DB2( pw.getPasswd() );
-   if ( dbP != NULL )
-     read_optima_machines( dbP );
-
+   read_optima_machines( dbP );
+   delete dbP;
+   
    qDebug() << "After opt. machines 2";
    
    for ( int ii = 0; ii < instruments.count(); ii++ )

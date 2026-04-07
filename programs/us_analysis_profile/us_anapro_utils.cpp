@@ -424,6 +424,7 @@ use_db=false;
  
 
 //TESTING
+  /***
    QMap < QString, US_ReportGMP* > ch_report_map;
    US_ReportGMP* reportGMP_1 = new US_ReportGMP();
    US_ReportGMP* reportGMP_2 = new US_ReportGMP();
@@ -433,6 +434,7 @@ use_db=false;
    ch_report_map.insert ( QString( "290" ), reportGMP_2 );
    ch_report_map.insert ( QString( "300" ), reportGMP_3 ); 
    ch_report_map.insert ( QString( "310" ), reportGMP_4 );
+  ***/
 
 //END of TESTING
  

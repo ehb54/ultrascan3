@@ -767,6 +767,9 @@ for (int jj=0;jj<gxentrs.count();jj++)
 
    US_ProtocolUtil::list_all( protdata, dbP );
 
+   delete dbP;
+   dbP = NULL;
+
    for ( int ii = 0; ii < protdata.count(); ii++ )
       pr_names << protdata[ ii ][ 0 ];
 DbgLv(1) << "EGGe:main: prnames,prdata counts" << pr_names.count() << protdata.count();
@@ -1307,6 +1310,12 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
      if ( !(acp_list[ ii ].name).contains("1-channel") )  //ALEXEY: remove 1-channel Simulaiton centerpiece from the list
        cp_names << acp_list[ ii ].name;
    }
+
+   if ( dbP != NULL )
+     {
+       delete dbP;
+       dbP = NULL;
+     }
 }
 
 
@@ -1544,7 +1553,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    US_DB2* dbP     = ( sibSValue( "general", "dbdisk" ) == "DB" )
                       ? new US_DB2( pw.getPasswd() ) : NULL;
    if ( dbP != NULL )
-      US_Rotor::readLabsDB( labs, dbP );
+     {
+       US_Rotor::readLabsDB( labs, dbP );
+       delete dbP;
+       dbP = NULL;
+     }
    else
       US_Rotor::readLabsDisk( labs );
 
@@ -2657,6 +2670,7 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
    {
       US_Rotor::readAbstractRotorsDB( arotors, dbP );
       US_Rotor::readRotorsFromDB( rotors, labID, dbP );
+    
    }
    else
    {
@@ -2761,6 +2775,8 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
 
    cb_exptype->addItems( experimentTypes );
    changeExpType( 0 );
+
+   delete dbP;
 }
 
 
@@ -2889,6 +2905,9 @@ DbgLv(1) << "EGR: chgRotor rotID desc" << rotID << descr;
    if ( dbP != NULL )
    {
       US_Rotor::readCalibrationProfilesDB( calibs, rotID, dbP );
+
+      delete dbP;
+      dbP = NULL;
 //*DEBUG*
 DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
 for (int ii=0; ii<calibs.count(); ii++) {
@@ -5387,6 +5406,9 @@ int US_ExperGuiSolutions::allSolutions()
          sonames << descr;
          soids   << solID;
       }
+
+      delete dbP;
+      dbP = NULL;
    }  // END: solutions in DB
 
    else

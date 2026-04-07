@@ -1683,6 +1683,11 @@ void US_Norm_Profile::plotData(void){
     double dx = (maxX - minX) * 0.05;
     plot->setAxisScale( QwtPlot::xBottom, minX - dx, maxX + dx);
     plot->replot();
+
+    // //clean linesymbols vector
+    // for (QwtSymbol* s : line_symbols)
+    //   delete s;
+    // line_symbols.clear();
 }
 
 void US_Norm_Profile::find_percent_from_range( QString channame, QString point1_s, QString point2_s,
