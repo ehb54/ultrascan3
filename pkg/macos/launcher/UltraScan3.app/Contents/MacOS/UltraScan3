@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOT="/Applications/UltraScan3"
+APP="$ROOT/bin/us.app"
+
+if [ ! -d "$APP" ]; then
+  /usr/bin/osascript -e 'display dialog "UltraScan3 is not installed correctly.\n\nMissing: /Applications/UltraScan3/bin/us.app" buttons {"OK"} default button 1 with icon stop'
+  exit 1
+fi
+
+# Launch the real app bundle so it shows in Dock normally
+exec /usr/bin/open -a "$APP"

@@ -43,6 +43,8 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+
+   expType_manual = "";
    
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
@@ -603,6 +605,8 @@ pb_plateau->setVisible(false);
        rb_radius      ->hide();
        rb_waveln      ->hide();
 
+       pb_exclusion_click->hide();
+
      }
 
 
@@ -812,6 +816,18 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("VELOCITY");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
 
+   
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("AAV_11OCT24-run2172-dataDiskRun-1872");
+   // details[ "protocolName" ] = QString("AAV-GMPtest2");
+   // details[ "statusID" ]     = QString("899");
+   // //details[ "autoflowID" ]   = QString("1872");
+   // details[ "runID" ]        = QString("");
+   // details[ "OptimaName" ]   = QString("");
+   // details[ "expType" ]      = QString("ABDE");
+   // details[ "dataSource" ]   = QString("dataDiskAUC");
+
+
    // load_auto( details );
 
 }
@@ -821,6 +837,8 @@ pb_plateau->setVisible(false);
 US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype ) : US_Widgets()
 {
+   expType_manual = exptype;
+  
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
    pb_bll_modify -> setVisible( false );
    
@@ -1106,6 +1124,26 @@ pb_plateau->setVisible(false);
    le_bll_intercept            = us_lineedit( "", 0, true );
    connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
 
+   //Information field for baseline correction
+   QTextEdit*     le_info;
+   QFont le_info_font( US_Widgets::fixedFont().family(),
+		       US_GuiSettings::fontSize() );
+   le_info = us_textedit();
+   QFontMetrics m (le_info -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   //le_info -> setFixedHeight  (11 * RowHeight) ;
+   
+   QPalette p = le_info->palette(); 
+   p.setColor(QPalette::Base, Qt::lightGray);
+   p.setColor(QPalette::Text, Qt::darkRed);
+   le_info->setPalette(p);
+   le_info->setText(tr( "Baseline Correction Instructions:"
+			"<ul><li>[First Point]: to select, Hold Ctrl & Left Mouse click </ul></li>"
+			"<ul><li>Continue holding Ctrl, move Mouse to the Second Point to be selected (you will see red line following the mouse)</ul></li>"
+			"<ul><li>[Second Point]: to select, click Left Mouse (while still holding Ctrl)</ul></li>"
+			));
+   le_info->setFont(le_info_font);
+
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -1240,6 +1278,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
    specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
    specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+   specs->addWidget( le_info ,             s_row++, 0, 1, 6 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -1283,6 +1322,8 @@ pb_plateau->setVisible(false);
    lb_baseline ->hide();
    le_baseline ->hide();
 
+   pb_exclusion_click->hide();
+   
    if ( exptype != "ABDE" )
      {
        lb_scan        ->hide();
@@ -1393,6 +1434,8 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 {
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
    pb_bll_modify -> setVisible( false );
+
+   expType_manual = exptype;
        
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
@@ -1676,6 +1719,25 @@ pb_plateau->setVisible(false);
    le_bll_intercept            = us_lineedit( "", 0, true );
    connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
 
+   //Information field for baseline correction
+   QTextEdit*     le_info;
+   QFont le_info_font( US_Widgets::fixedFont().family(),
+		       US_GuiSettings::fontSize() );
+   le_info = us_textedit();
+   QFontMetrics m (le_info -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   //le_info -> setFixedHeight  (11 * RowHeight) ;
+   
+   QPalette p = le_info->palette(); 
+   p.setColor(QPalette::Base, Qt::lightGray);
+   p.setColor(QPalette::Text, Qt::darkRed);
+   le_info->setPalette(p);
+   le_info->setText(tr( "Baseline Correction Instructions:"
+			"<ul><li>[First Point]: to select, Hold Ctrl & Left Mouse click </ul></li>"
+			"<ul><li>Continue holding Ctrl, move Mouse to the Second Point to be selected (you will see red line following the mouse)</ul></li>"
+			"<ul><li>[Second Point]: to select, click Left Mouse (while still holding Ctrl)</ul></li>"
+			));
+   le_info->setFont(le_info_font);
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -1810,6 +1872,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
    specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
    specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+   specs->addWidget( le_info ,             s_row++, 0, 1, 6 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -1878,6 +1941,8 @@ pb_plateau->setVisible(false);
    le_baseline    ->hide();
    le_edtrsp      ->hide();
    le_ltrng       ->hide();
+
+   pb_exclusion_click->hide();
 
 //*NEW STUFF
 
@@ -2004,6 +2069,9 @@ US_Edit::US_Edit() : US_Widgets()
    lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
    le_bll_intercept    = us_lineedit( "", 1, true );
    pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+
+   expType_manual = "";
+   
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
@@ -2902,6 +2970,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   isSet_ref_wvl.clear();
 
   channels_to_analyse.clear();
+  channels_abde_refs.clear();
   triple_to_edit.clear();
   triples_skip_analysis.clear();
 
@@ -3056,7 +3125,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    }
 
    qDebug() << "IN PROCESS OPTICS: triples_size() " << triples.size();
-
+  
    cb_triple->addItems( triples );
 
    // Debug
@@ -3621,8 +3690,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    //all_loaded = true;
    le_status->setText( tr( "Data loaded..." ) );
 
-   emit data_loaded();
-
+   emit data_loaded(); 
+   
    // editProfile.clear();
    // centerpieceParameters.clear();
    // aprofileParameters.clear();
@@ -3647,6 +3716,25 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	    <<  job4run << ", "
 	    <<  job5run << ", "
 	    <<  job6run_pcsa;
+
+   
+   //if ABDE, check if channel is a reference
+   if( autoflow_expType == "ABDE" )
+     {
+       int chann_size = cb_triple->count();
+       QStandardItemModel* model_t = qobject_cast<QStandardItemModel*>(cb_triple->model());
+       for (int i=0; i<chann_size; i++)
+	 {
+	   QString chann_item = cb_triple->itemText( i );
+	   if ( isSet_abde_ref( chann_item ) )
+	     {
+	       //exclude for list
+	       if ( model_t )
+		 model_t->item(i)->setEnabled(false);
+	     }
+	 }
+     }
+      
 
    //Debug
    for (int i=0; i<cb_triple->count(); i++)
@@ -4272,6 +4360,16 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		    channels_to_analyse[ channel_desc ] = bool_flag( attr.value( "run" ).toString() );
 		  }
 
+		//Read for ABDE: if chanel Reference one, or not
+		if ( attr.hasAttribute("abde_reference") )
+		  {
+		    QString abde_ref_set = attr.value( "abde_reference" ).toString();
+		    bool abde_ref_set_bool = abde_ref_set.toInt() != 0;
+		    qDebug() << "channel_name, abde_ref_set, abde_ref_set_bool -- "
+			     << channel_name << abde_ref_set << abde_ref_set_bool;
+		    channels_abde_refs[ channel_name ] = abde_ref_set_bool;
+		  }
+		
 		//Read what triple selected for editing:
 		if ( attr.hasAttribute("wvl_edit") )
 		  {
@@ -6254,7 +6352,7 @@ void US_Edit::set_data_over_lamda() {
             edata         = &allData[ trx ];               // Triple data
             int iwavl     = rawi_wvlns[ jj ];             // Wavelength value
             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-            DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+            //DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
             int rpidx = -1;
             for ( int kk = xvals_pos.at(jj); kk < edata->pointCount(); kk++)
@@ -8256,14 +8354,13 @@ void US_Edit::reset_excludes( void )
 //Exclude all but last scan
 void US_Edit::exclude_all_but_last( void )
 {
-  int scanStart = 0;
-  int scanEnd   = data.scanData.size() - 1;
-
   qDebug() << "includes before: " << includes;
-
-  for ( int i = scanEnd; i >= scanStart; i-- )
-    includes.removeAt( i - 1 );
-
+  if (!includes.isEmpty())
+    {
+      int lastItem = includes.last();
+      includes.clear();
+      includes.append(lastItem);
+    }
   qDebug() << "includes after " << includes;
 
   replot();
@@ -9027,8 +9124,10 @@ void US_Edit::new_triple_auto( int index )
   //qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
   //qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ triple_index ].size();
 
-  qDebug() << "Triple_name, cb_triple->currentText() -- "
+  qDebug() << "Triple_name, triple_index, index, cb_triple->currentText() -- "
 	   << triple_name
+	   << triple_index
+	   << index
 	   << cb_triple->currentText();
 
   // Remove Spike: Icon/Enable
@@ -10282,13 +10381,19 @@ void US_Edit::update_triple_edit_params (  QMap < QString, QStringList > &  edit
   new_triple_auto( 0 );
 }
 
-//for ABDE, check if all triples were processed & enable/diable Save
+//for ABDE, check if all triples were processed & enable/disable Save
 void US_Edit::setUnsetSaveBttn_abde( void )
 {
   bool all_processed = true;
   QMap<QString, bool>::iterator os;
   for ( os = edited_triples_abde.begin(); os != edited_triples_abde.end(); ++os )
     {
+      qDebug() << "[in setUnsetSaveBttn_abde()] triple_edited_manually -- "
+	       << os.key() << os.value();
+
+      if ( isSet_abde_ref(os.key()) )
+	continue;
+      
       if ( !os.value() )
 	{
 	  all_processed = false;
@@ -10316,8 +10421,7 @@ void US_Edit::write_auto( void )
  
   // ////
 
-  
-  
+
 
   /****  TEMP1 **/
   //--- Check if saving already initiated
@@ -10584,6 +10688,13 @@ void US_Edit::write_auto( void )
 
 	for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	  {
+	    if( autoflow_expType == "ABDE" )
+	      {
+		QString chann_item = cb_triple->itemText( trx );
+		if ( isSet_abde_ref( chann_item ) )
+		  continue;
+	      }
+	    
 	    qDebug() << "Writing MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 	    write_mwl_auto( trx );
 	  }
@@ -10598,6 +10709,13 @@ void US_Edit::write_auto( void )
 	//   {
 	    for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	      {
+		if( autoflow_expType == "ABDE" )
+		  {
+		    QString chann_item = cb_triple->itemText( trx );
+		    if ( isSet_abde_ref( chann_item ) )
+		      continue;
+		  }
+		
 		qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 		write_triple_auto( trx );
 	      }
@@ -11023,6 +11141,39 @@ void US_Edit::delete_autoflow_record( void )
        << QString::number( autoflowID_passed );
 
    db->statusQuery( qry );
+}
+
+bool US_Edit::isSet_abde_ref( QString triple_name )
+{
+  bool abde_ref_set = false;
+  if ( channels_abde_refs.isEmpty() )
+    {
+      qDebug() << "It looks like older protocol is in use: QMap channels_abde_refs is EMPTY!";
+      return abde_ref_set;
+    }
+
+  QStringList triple_name_list = triple_name.split("/");
+  QString channel = triple_name_list[0].trimmed() + triple_name_list[1].trimmed();
+
+  QMap<QString, bool>::iterator jj;
+  for ( jj = channels_abde_refs.begin(); jj != channels_abde_refs.end(); ++jj )
+    {
+      qDebug() << "[in isSet_abde_ref()] chann_passed, chann_aprofile, abde_ref_setting_aprofile -- "
+	       << channel << jj.key() << jj.value();
+      if ( jj.key() == channel  )
+	{
+	  // qDebug() << "[in isSet_abde_ref()] chann_passed, chann_aprofile, abde_ref_setting_aprofile -- "
+	  // 	   << channel << jj.key() << jj.value();
+	  if ( jj.value()  )
+	    {
+	      qDebug() << "Channel " << triple_name << " of channel (" << jj.key() << ") is set as ABDE REF channel.";
+	      abde_ref_set = true;
+	      break;
+	    }
+	}
+    }
+  
+  return abde_ref_set;
 }
 
 
@@ -12344,7 +12495,33 @@ void US_Edit::next_triple_auto( void )
    pb_priorChan ->setEnabled( true );
 
    int row = cb_triple->currentIndex() + 1;
-   //row     = ( row < cb_triple->count() ) ? row : 0;
+   qDebug() << "[NEXT triple_auto] Initial set, row = " << row;
+
+   //if ABDE, or in general, any items in cb_triple disabled, look for the first enabled item:
+   bool abde_hit_the_end = false;
+   if ( autoflow_expType == "ABDE" )
+     {
+       int found = -1;
+       for (int i = row; i < cb_triple->count(); ++i) 
+	 {
+	   Qt::ItemFlags flags = cb_triple->model()->index(i, 0).flags();
+	   if (flags & Qt::ItemIsEnabled)
+	     {
+	       found = i;
+	       break; 
+	     }
+	 }
+       if (found != -1)
+	 row = found;
+       else
+	 {
+	   abde_hit_the_end = true;
+	   row -= 1;
+	   pb_nextChan->setEnabled( false );
+	 }
+       
+       qDebug() << "in ABDE[NEXT], row = " << row;
+     }
 
    if ( (row + 1 ) <= cb_triple->count() )
      {
@@ -12367,7 +12544,7 @@ void US_Edit::next_triple_auto( void )
 
        new_triple_auto( dax );
 
-       if ( (row + 1 ) == cb_triple->count() )
+       if ( (row + 1 ) == cb_triple->count() || abde_hit_the_end )
          pb_nextChan ->setEnabled( false );
 
        qDebug() << "NEXT Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
@@ -12382,8 +12559,33 @@ void US_Edit::prior_triple_auto( void )
   pb_nextChan ->setEnabled( true );
 
   int row = cb_triple->currentIndex() - 1;
-  //row     = ( row < cb_triple->count() ) ? row : 0;
+  qDebug() << "[PRIOR triple_auto] Initial set, row = " << row;
 
+  //if ABDE, or in general, any items in cb_triple disabled, look for the first enabled item:
+   bool abde_hit_the_end = false;
+   if ( autoflow_expType == "ABDE" )
+     {
+       int found = -1;
+       for (int i = row; i >= 0; --i)
+	 {
+	   if (cb_triple->model()->index(i, 0).flags() & Qt::ItemIsEnabled)
+	     {
+	       found = i;
+	       break; 
+	     }
+	 }
+       if (found != -1)
+	 row = found;
+       else
+	 {
+	   abde_hit_the_end = true;
+	   row += 1;
+	   pb_priorChan->setEnabled( false );
+	 }
+       qDebug() << "in ABDE[PRIOR], row = " << row;
+     }
+  
+  
   if ( row  >= 0 )
     {
       cb_triple->disconnect();
@@ -12391,20 +12593,12 @@ void US_Edit::prior_triple_auto( void )
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
 	       SLOT  ( new_triple_auto    ( int ) ) );
 
-      // if ( le_edtrsp->isVisible() )
-      // 	 {
-      // 	   QString trsp = cb_triple->currentText() + " : " + trip_rpms[ 0 ];
-      // 	   le_edtrsp->setText( trsp );
-      // 	   cb_rpms  ->setCurrentIndex( 0 );
-      // 	 }
-
-
       int dax = index_data();
       data    = *outData[ dax ];
 
       new_triple_auto( dax );
 
-      if ( row == 0 )
+      if ( row == 0 || abde_hit_the_end )
 	pb_priorChan ->setEnabled( false );
 
 
@@ -14908,6 +15102,28 @@ void US_Edit::pass_values_bll( void )
 // Close edit after review of saved edits
 void US_Edit::pass_values( void )
 {
+  //For ABDE. check if Remove ALl but Last was ckicked
+  qDebug() << "autoflow_expType -- " << expType_manual;
+  if ( expType_manual == "ABDE" ) 
+    {
+      QMessageBox msgBox(this);
+      msgBox.setIcon(QMessageBox::Warning);
+      msgBox.setWindowTitle(tr("ABDE Edit Profile"));
+      msgBox.setText(tr("Before applying cjanges for edit profile, please verify that\n"
+			"all scans but last were excluded for this channel.\n\n"
+			"If not, you can do this by clicking \"Remove All but Last\"\n"
+			"button for every selected channel..."));
+      
+      QPushButton *verifyButton = msgBox.addButton(tr("Let me verify"), QMessageBox::RejectRole);
+      QPushButton *yesButton = msgBox.addButton(tr("Proceed with saving"), QMessageBox::AcceptRole);
+      
+      msgBox.setDefaultButton(verifyButton);
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() != yesButton)
+	return; 
+    }
+  
   //collect menicsus | airGap | baseline | range | etc data && pass to main edit stage
 
   QString triple_name = cb_triple->itemText( cb_triple->currentIndex() );

@@ -41,31 +41,50 @@ US_Zoomer::US_Zoomer( const int xAxis, const int yAxis, QwtPlotCanvas* canvas )
    toggle_zoom_events( this, false );
 }
 
-void US_Zoomer::begin(  ) {
-   if (!zoom_base_set) {
-      QwtPlot* plot = QwtPlotZoomer::plot();
-      if ( plot && plot->itemList(QwtPlotItem::Rtti_PlotCurve).count() > 0 ) {
-         // first zoom event, check if the zoomStack is properly set
-         // Get the actual axis values
-         auto xa = plot->axisScaleDiv( xAxis() );
-         auto ya = plot->axisScaleDiv( yAxis() );
-         auto x_min = xa.lowerBound();
-         auto x_max = xa.upperBound();
-         auto y_min = ya.lowerBound();
-         auto y_max = ya.upperBound();
-         auto zoom_base = zoomBase();
-         if ( !qFuzzyCompare(zoom_base.left(), x_min ) ||
-            !qFuzzyCompare(zoom_base.right(), x_max ) ||
-            !qFuzzyCompare(zoom_base.top(), y_min ) ||
-            !qFuzzyCompare(zoom_base.bottom(), y_max ) ) {
-            auto zoom_stack = QStack<QRectF>();
-            zoom_stack << QRectF( x_min, y_min, x_max - x_min, y_max - y_min );
-            const QSignalBlocker blocker(this);
-            setZoomStack(zoom_stack, -1);
-            zoom_base_set = true;
-            }
-      }
+void US_Zoomer::initializeZoomStack( QwtPlotZoomer* zoomer ) {
+   if ( zoomer == nullptr ) {
+      return;
    }
+   if ( zoomer->zoomStack().size() > 1) {
+      return;
+   }
+   const QwtPlot* plot = zoomer->plot();
+   if ( plot == nullptr || plot->itemList(QwtPlotItem::Rtti_PlotCurve).count() == 0 ) {
+      return;
+   }
+   // first zoom event, check if the zoomStack is properly set
+   // Get the actual axis values
+   const auto xa = plot->axisScaleDiv( zoomer->xAxis() );
+   const auto ya = plot->axisScaleDiv( zoomer->yAxis() );
+   const auto x_min = xa.lowerBound();
+   const auto x_max = xa.upperBound();
+   const auto y_min = ya.lowerBound();
+   const auto y_max = ya.upperBound();
+   const auto zoom_base = zoomer->zoomBase();
+
+   // if zoom base is within 10% of the actual axis values, do not reset zoom stack
+   if ( qAbs(x_min * 0.9) <= qAbs(zoom_base.left()) && qAbs(zoom_base.left()) <= qAbs(x_min * 1.1) &&
+      qAbs(y_min * 0.9) <= qAbs(zoom_base.top()) && qAbs(zoom_base.top()) <= qAbs(y_min * 1.1) &&
+      qAbs(x_max * 0.9) <= qAbs(zoom_base.right()) && qAbs(zoom_base.right()) <= qAbs(x_max * 1.1) &&
+      qAbs(y_max * 0.9) <= qAbs(zoom_base.bottom()) && qAbs(zoom_base.bottom()) <= qAbs(y_max * 1.1) ) {
+      return;
+   }
+   if ( !qFuzzyCompare(zoom_base.left(), x_min ) ||
+        !qFuzzyCompare(zoom_base.right(), x_max ) ||
+        !qFuzzyCompare(zoom_base.top(), y_min ) ||
+        !qFuzzyCompare(zoom_base.bottom(), y_max ) ) {
+      auto zoom_stack = QStack<QRectF>();
+      zoom_stack << QRectF( x_min, y_min, x_max - x_min, y_max - y_min );
+      const QSignalBlocker blocker(zoomer);
+      zoomer->setZoomStack(zoom_stack, -1);
+   }
+}
+
+void US_Zoomer::begin(  ) {
+   if ( !zoom_base_set ) {
+	   initializeZoomStack( this );
+   }
+   zoom_base_set = true;
    QwtPlotZoomer::begin();
 }
 
@@ -539,6 +558,7 @@ void US_Plot::setZoomEnabled( bool enable )
       if ( panner ) panner->setEnabled( true );
       if ( zoomer )
       {
+         US_Zoomer::initializeZoomStack( zoomer );
          zoomer->setEnabled( true );
          zoomer->zoom( 0 );
          US_Zoomer::toggle_zoom_events(zoomer, true);

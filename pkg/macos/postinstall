@@ -1,0 +1,180 @@
+#!/bin/bash
+# =============================================================================
+# postinstall — UltraScan3 PKG post-installation script
+# Runs as root after the installer has copied the payload to disk.
+#
+# Responsibilities:
+#   1. Validate the LaunchDaemon plist was installed.
+#   2. Set correct ownership (root:wheel) and permissions (0644) on the plist.
+#   3. Apply sysctl shared-memory values immediately (no reboot required).
+#   4. Bootstrap the LaunchDaemon into the system domain.
+#
+# Exit behaviour:
+#   - Exits non-zero (failing the install) only if the plist is missing or
+#     if launchctl bootstrap fails with an unexpected error code.
+#   - sysctl failures are warnings, not fatal (values take effect on reboot
+#     via the LaunchDaemon even if the live apply fails).
+# =============================================================================
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+readonly LOG=/var/log/ultrascan3-install.log
+readonly DAEMON_PLIST=/Library/LaunchDaemons/ultrascan_sysctl.plist
+readonly DAEMON_LABEL=ultrascan_sysctl
+
+# launchctl exit code 36 = "Service already bootstrapped" — not an error.
+readonly LAUNCHCTL_ALREADY_LOADED=36
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [postinstall] $*" | tee -a "$LOG"
+}
+
+log "============================================================"
+log "UltraScan3 post-install starting"
+log "  macOS  : $(sw_vers -productVersion 2>/dev/null || echo unknown)"
+log "  arch   : $(uname -m 2>/dev/null || echo unknown)"
+log "============================================================"
+
+# ---------------------------------------------------------------------------
+# Guard: must run as root.
+# ---------------------------------------------------------------------------
+if [ "$(id -u)" -ne 0 ]; then
+    log "ERROR: postinstall must run as root (effective uid=$(id -u))"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# 1. Validate plist was installed by the payload.
+#    If it is missing the pkg payload failed — abort so the installer
+#    reports an error rather than leaving the system silently unconfigured.
+# ---------------------------------------------------------------------------
+if [ ! -f "$DAEMON_PLIST" ]; then
+    log "ERROR: $DAEMON_PLIST was not installed by the payload."
+    log "       The PKG may be corrupt. Aborting."
+    exit 1
+fi
+log "LaunchDaemon plist present: $DAEMON_PLIST"
+
+# ---------------------------------------------------------------------------
+# 2. Ownership and permissions.
+#    launchd silently ignores plists that are not owned by root:wheel 0644.
+#    Enforce this explicitly even though pkgbuild should set it correctly,
+#    because some environments (e.g. CI, manual copy) may not preserve them.
+# ---------------------------------------------------------------------------
+log "Setting ownership and permissions on $DAEMON_PLIST ..."
+if /usr/sbin/chown root:wheel "$DAEMON_PLIST"; then
+    log "  chown root:wheel — OK"
+else
+    log "ERROR: chown root:wheel failed on $DAEMON_PLIST"
+    exit 1
+fi
+
+if /bin/chmod 0644 "$DAEMON_PLIST"; then
+    log "  chmod 0644       — OK"
+else
+    log "ERROR: chmod 0644 failed on $DAEMON_PLIST"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# 3. Apply sysctl shared-memory values immediately.
+#
+#    macOS default kern.sysv.shmmax is only 4 MB; UltraScan3 AUC analysis
+#    requires 1 GB.  We apply values now so the user can launch UltraScan3
+#    immediately after install without rebooting.
+#
+#    Failures here are non-fatal: the LaunchDaemon will apply values on the
+#    next boot.  We log a warning rather than aborting the install.
+# ---------------------------------------------------------------------------
+log "------------------------------------------------------------"
+log "Applying sysctl shared-memory values ..."
+
+apply_sysctl() {
+    local key="$1"
+    local val="$2"
+    if /usr/sbin/sysctl -w "${key}=${val}" >>"$LOG" 2>&1; then
+        log "  ${key} = ${val}  [OK]"
+    else
+        log "  WARNING: sysctl -w ${key}=${val} failed — will apply on next boot"
+    fi
+}
+
+apply_sysctl kern.sysv.shmmax 1073741824
+apply_sysctl kern.sysv.shmmin 1
+apply_sysctl kern.sysv.shmmni 256
+apply_sysctl kern.sysv.shmseg 64
+apply_sysctl kern.sysv.shmall 262144
+
+log "Verifying applied values:"
+/usr/sbin/sysctl \
+    kern.sysv.shmmax \
+    kern.sysv.shmmin \
+    kern.sysv.shmmni \
+    kern.sysv.shmseg \
+    kern.sysv.shmall >>"$LOG" 2>&1 || true
+
+# ---------------------------------------------------------------------------
+# 4. Bootstrap the LaunchDaemon into the system domain.
+#
+#    `launchctl bootstrap system <plist>` is the correct API on macOS 10.11+
+#    (El Capitan and later).  We fall back to `launchctl load -w` only for
+#    macOS 10.10 and older (kept for correctness; UltraScan3 targets 10.15+).
+#
+#    Exit code 36 means the daemon is already bootstrapped (e.g. the preinstall
+#    bootout failed silently on a previous run); we treat that as success.
+#
+#    Any other non-zero exit is a genuine failure and we abort the install.
+# ---------------------------------------------------------------------------
+log "------------------------------------------------------------"
+log "Bootstrapping LaunchDaemon ${DAEMON_LABEL} ..."
+
+# Determine macOS major.minor for API selection.
+_macos_ver=$(sw_vers -productVersion 2>/dev/null || echo "0.0")
+_macos_major=$(echo "$_macos_ver" | cut -d. -f1)
+_macos_minor=$(echo "$_macos_ver" | cut -d. -f2)
+
+_use_bootstrap=0
+if [ "${_macos_major}" -ge 11 ]; then
+    _use_bootstrap=1
+elif [ "${_macos_major}" -eq 10 ] && [ "${_macos_minor:-0}" -ge 11 ]; then
+    _use_bootstrap=1
+fi
+
+if [ "${_use_bootstrap}" -eq 1 ]; then
+    log "  Using modern launchctl bootstrap (macOS ${_macos_ver})"
+    if /bin/launchctl bootstrap system "$DAEMON_PLIST" >>"$LOG" 2>&1; then
+        log "  launchctl bootstrap system — succeeded"
+    else
+        _rc=$?
+        if [ "${_rc}" -eq "${LAUNCHCTL_ALREADY_LOADED}" ]; then
+            log "  launchctl bootstrap returned ${_rc} (already loaded — OK)"
+        else
+            log "ERROR: launchctl bootstrap system failed with exit code ${_rc}"
+            log "       Check $LOG and 'sudo launchctl print system' for details."
+            exit "${_rc}"
+        fi
+    fi
+else
+    log "  Using legacy launchctl load (macOS ${_macos_ver} < 10.11)"
+    if /bin/launchctl load -w "$DAEMON_PLIST" >>"$LOG" 2>&1; then
+        log "  launchctl load -w — succeeded"
+    else
+        _rc=$?
+        log "ERROR: launchctl load -w failed with exit code ${_rc}"
+        exit "${_rc}"
+    fi
+fi
+
+log "------------------------------------------------------------"
+log "UltraScan3 post-install complete."
+log ""
+log "  Verify daemon : sudo launchctl list | grep ${DAEMON_LABEL}"
+log "  Verify sysctl : sysctl kern.sysv.shmmax kern.sysv.shmall"
+log "  Full log      : ${LOG}"
+log "============================================================"
+exit 0

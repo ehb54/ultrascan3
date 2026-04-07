@@ -540,6 +540,7 @@ class US_ExperGuiCells : public US_WidgetsDialog
 
    private:
       US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoRotor* rpRotor;  
       US_RunProtocol::RunProtoCells* rpCells;
       US_Help  showHelp;
       QList< QLabel* >     cc_labls;   // Cell label object pointers
@@ -738,6 +739,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< double >          hicrads;  // High radius value, ea. channel
       QVector< bool >            abde_buff;
       QVector< bool >            abde_mwl_deconv;
+      QVector< QString >         abde_ch_msg; 
 
       QComboBox * cb_scancount;
       QComboBox * cb_scancount_int;

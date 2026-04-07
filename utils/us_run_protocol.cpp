@@ -1072,6 +1072,7 @@ US_RunProtocol::RunProtoRanges::Ranges::Ranges()
    hi_rad               = 7.25;
    abde_buffer_spectrum = false;
    abde_mwl_deconvolution = false;
+   abde_chann_msg       = "";
 }
 
 // RunProtoRanges::Ranges subclass Equality operator

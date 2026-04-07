@@ -1,25 +1,63 @@
 @echo off
-:: =============================================================================
-:: UltraScan3 Windows Build Launcher
-:: =============================================================================
-:: This file is a thin passthrough to build.ps1 which contains all the build
-:: logic. You can run it from any terminal (CMD, PowerShell, or Windows
-:: Terminal) without needing to set up an execution policy manually.
-::
-:: All arguments are forwarded directly to build.ps1. Run with --help to see
-:: all available options:
-::
-::     scripts\build.bat --help
-::
-:: EXAMPLES:
-::     scripts\build.bat                            Qt6, auto-detect arch, APP
-::     scripts\build.bat --arch arm64               Qt6, ARM64, APP
-::     scripts\build.bat --qt5-qwt616               Qt5 + Qwt6.1.6, APP
-::     scripts\build.bat --clean                    Clean then build
-::     scripts\build.bat --clean --arch arm64 TEST  Clean ARM64 Qt6 TEST build
-::     scripts\build.bat --vcpkg-root C:\dev\vcpkg  Use specific vcpkg
-::
-:: To edit build behavior, see: scripts\build.ps1
-:: =============================================================================
-powershell.exe -ExecutionPolicy Bypass -File "%~dp0build.ps1" %*
+rem =============================================================================
+rem UltraScan3 Windows Build Wrapper
+rem =============================================================================
+rem Purpose:
+rem   Thin Windows wrapper for build.ps1.
+rem
+rem What it does:
+rem   - Locates build.ps1 in the same scripts/ directory
+rem   - Accepts either Unix-style "--flag" arguments or PowerShell-style "-flag"
+rem   - Normalizes any "--flag" argument to "-flag" before invoking PowerShell
+rem   - Forwards all other arguments unchanged
+rem
+rem Why this exists:
+rem   - Lets Windows users and CI use a command style closer to Linux/macOS
+rem   - Keeps argument normalization in the wrapper, not in build.ps1
+rem   - Preserves build.ps1 as the authoritative Windows build implementation
+rem
+rem Examples:
+rem   scripts\build.bat APP --qt6 --clean --pkg
+rem   scripts\build.bat APP -qt6 -clean -pkg
+rem   scripts\build.bat --qt6 --clean --pkg
+rem
+rem Notes:
+rem   - If a build profile is provided positionally, it should be APP, TEST, or HPC
+rem   - build.ps1 remains responsible for validation and actual build behavior
+rem =============================================================================
+setlocal EnableExtensions EnableDelayedExpansion
 
+set "SCRIPT_DIR=%~dp0"
+set "PS_SCRIPT=%SCRIPT_DIR%build.ps1"
+
+if not exist "%PS_SCRIPT%" (
+  echo ERROR: build.ps1 not found at "%PS_SCRIPT%"
+  exit /b 1
+)
+
+where powershell.exe >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: powershell.exe not found in PATH.
+  exit /b 1
+)
+
+set "ARGS="
+
+:parse_args
+if "%~1"=="" goto run_build
+
+set "ARG=%~1"
+
+rem If argument starts with --, convert it to single-dash PowerShell style
+if "!ARG:~0,2!"=="--" (
+  set "ARG=-!ARG:~2!"
+)
+
+set "ARGS=!ARGS! "!ARG!""
+shift
+goto parse_args
+
+:run_build
+echo Invoking: %PS_SCRIPT% %ARGS%
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" %ARGS%
+exit /b %ERRORLEVEL%

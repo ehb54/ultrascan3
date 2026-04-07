@@ -21,7 +21,7 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   NEW_BUILDNUM=$(git rev-list --count HEAD | tr -d '[:space:]')
 
   # Get short commit hash
-  NEW_GIT_REVISION=$(git rev-parse --short=7 HEAD 2>/dev/null || echo "unknown")
+  NEW_GIT_REVISION=$(git rev-parse --short=10 HEAD 2>/dev/null || echo "unknown")
 
   # Get commit date (last commit date)
   NEW_REVISION_DATE=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo "unknown")
@@ -47,10 +47,22 @@ OLD_REVISION_DATE=""
 OLD_LOCAL_CHANGES=""
 
 if [ -f "$HEADER" ]; then
-  OLD_BUILDNUM=$(sed -n 's/^#define[[:space:]]\+BUILDNUM[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
-  OLD_GIT_REVISION=$(sed -n 's/^#define[[:space:]]\+GIT_REVISION[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
-  OLD_REVISION_DATE=$(sed -n 's/^#define[[:space:]]\+REVISION_DATE[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
-  OLD_LOCAL_CHANGES=$(sed -n 's/^#define[[:space:]]\+LOCAL_CHANGES[[:space:]]\+"\(.*\)".*$/\1/p' "$HEADER" | head -n1 || true)
+  OLD_BUILDNUM=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+BUILDNUM[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1 
+  ) || true
+  OLD_GIT_REVISION=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+GIT_REVISION[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1
+  ) || true
+  OLD_REVISION_DATE=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+REVISION_DATE[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1
+  ) || true
+  OLD_LOCAL_CHANGES=$(
+    sed -nE 's/^[[:space:]]*#define[[:space:]]+LOCAL_CHANGES[[:space:]]+"([^"]*)".*$/\1/p' "$HEADER" \
+    | sed -E 's/\r$//' | head -n 1
+  ) || true
 fi
 
 # --- comparison: only rewrite when something changes ---

@@ -529,10 +529,7 @@ void US_Win::launch( int index )
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
-#ifndef Q_OS_MAC
-  QStringList args;
-  process->start( pname, args );
-#else
+#ifdef Q_OS_MAC
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
 
@@ -540,6 +537,14 @@ void US_Win::launch( int index )
       procapp         = procbin;
 
    process->start( "open", QStringList(procapp) );
+#else
+   // Use full path so the binary is found regardless of PATH.
+   // appBaseDir() is derived from the running executable location
+   // (applicationDirPath() minus "/bin"), so this works for both
+   // installed and dev-build trees.
+   QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
+   QStringList args;
+   process->start( procbin, args );
 #endif
 
   if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout

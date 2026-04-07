@@ -966,6 +966,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	      replicates_to_channdesc[ replicate_group_number ] << chdesc_alt;
 
 	      currProf->replicates_to_channdesc_main [ replicate_group_number ] << chdesc_alt;
+	      qDebug() << "replicate_group_number, chdesc_alt -- "
+		       << replicate_group_number << chdesc_alt;
 	    }
 	}
       QMap< int, QStringList >::iterator rgi;
@@ -974,8 +976,17 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  int group_number           = rgi.key();
 	  QStringList group_channels = rgi.value();
 
-	  if( group_number == 0 || group_channels.size() == 1 )
-	    continue;
+	  qDebug() << "[1]group_number, group_channels -- "
+		   << group_number << group_channels;
+	  
+	  // if( group_number == 0 || group_channels.size() == 1 )
+	  //   continue;
+
+	  if( group_number == 0 )
+	     continue;
+
+	  qDebug() << "[2]group_number, group_channels -- "
+		   << group_number << group_channels;
 
 	  //do copying US_ReportGMPs here:
 	  // internal_reports IS map-of-maps: QMap < chann_desc, QMap< wvl_number,  US_ReportGMP >>:
@@ -989,9 +1000,21 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 	  //Go over all reference reports (triple reports in the 1st channel of the replicate group): 
 	  QList < QString > reference_ch_wvls = internal_reports[ group_channels[0] ].keys();
 
+	  qDebug() << "reference_ch_wvls -- " << reference_ch_wvls;
+
 	  for( int rgj = 0; rgj < reference_ch_wvls.size(); ++rgj )
 	    {
 	      US_ReportGMP reference_group_report = internal_reports[ group_channels[0] ] [ reference_ch_wvls[ rgj ] ];
+
+	      //When replica group contains only 1 channel
+	      if ( group_channels.size() == 1 )
+		{
+		  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
+		  qDebug() << "group_chans==1; ref_triple -- " << ref_triple;
+		  channdesc_to_overlapping_wvls[ group_channels [0] ]                << ref_triple;
+		  currProf->channdesc_to_overlapping_wvls_main [ group_channels[0] ] << ref_triple;
+		}
+	      
 	      //Now, go over the reports for other channels in a group (per-triple basis)
 	      for( int i = 1; i < group_channels.size(); ++i )
 		{
@@ -1005,6 +1028,8 @@ DbgLv(1) << "APGe: svP:  kle cr,ct,dv,vt,de"
 			  //QMap of the overlapping replicate group wavelengths (all overlapping triples):
 			  QString ref_triple   = group_channels[ 0 ].split(":")[0] + "." + reference_ch_wvls[ rgj ];
 			  QString other_triple = group_channels[ i ].split(":")[0] + "." + other_group_ch_wvls[ j ];
+
+			  qDebug() << "group_chans>1; ref_triple, other_triple  -- " << ref_triple << other_triple;
 			  
 			  channdesc_to_overlapping_wvls[ group_channels [0] ]                << ref_triple << other_triple;
 			  currProf->channdesc_to_overlapping_wvls_main [ group_channels[0] ] << ref_triple << other_triple;
