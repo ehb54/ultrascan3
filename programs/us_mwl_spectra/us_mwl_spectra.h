@@ -168,7 +168,7 @@ class US_MwlSpectra : public US_Widgets
      void   changedPlotX   ( bool );
      double comp_value     ( const US_Model::SimulationComponent*, int );
      void   help           ( void )
-     { showHelp.show_help( "mwl_spectra.html" ); };
+     { showHelp.show_help( "manual/multi-wavelength/mwl_spectra.html" ); };
 };
 #endif
 

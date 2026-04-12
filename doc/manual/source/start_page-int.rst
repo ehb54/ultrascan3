@@ -13,7 +13,7 @@ Analysis of Interacting Solutes
 
 Step 1: 2DSA refinement 
 --------------------------
-#. Follow steps 3-6 in the `2DSA Flowchart <start_page.html>`_ to perform 2DSA analysis and fit the associated Time- and Radially- invariant noises, the meniscus and bottom boundary positions and rotor stretching and final iterative refinements. 
+#. Follow steps 3-6 in the :doc:`2DSA Flowchart <start_page>` to perform 2DSA analysis and fit the associated Time- and Radially- invariant noises, the meniscus and bottom boundary positions and rotor stretching and final iterative refinements. 
 
 Step 2: DMGA
 --------------------------

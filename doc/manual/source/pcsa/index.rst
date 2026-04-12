@@ -15,6 +15,7 @@ This module enables users to perform parametrically constrained spectrum analysi
    pcsa_rpscan
    pcsa_mlines
    pcsa_results
+   load_modelrecs
    
 
 

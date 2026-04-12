@@ -17,6 +17,10 @@ All experimental data acquired with the analytical ultracentrifuge must be proce
 .. image:: _static/images/us_edit.png
   :align: center
 
+.. rst-class::
+  :align: center
+
+  **Edit Data Main Window**
 
 Edit Functions:
 ====================
@@ -146,17 +150,16 @@ Edit Multi-Wavelength (MWL) Data
 
 .. image:: _static/images/us_edit_mwl.png
 
-Where the data loaded in an editing session is comprised of multiple wavelengths (more than two), the main editor window is changed to the above form. Instead of selecting Triplicates to edit, this MWL edit procedure consists of selecting Cell / Channel pairs and the wavelengths within those doubles. Once editing in the normal way has been completed, the user may save the edit for either the specific Triplicate ("Save Current Edit Profile") or for all of the wavelengths of the current double ("Save to all Wavelengths").
+Where the data loaded in an editing session is comprised of multiple wavelengths (more than two), the main editor window is changed to the above form. Instead of selecting Triples to edit, this MWL edit procedure consists of selecting Cell / Channel pairs and the wavelengths within those doubles. Once editing in the normal way has been completed, the user may save the edit for either the specific Triplicate ("Save Current Edit Profile") or for all of the wavelengths of the current double ("Save to all Wavelengths").
 
 Most of the edit controls for MWL are the same as for the standard :ref:`Data Editor Window <US-edit-Functions>`; and are not repeated here. The steps and control objects described herein are those specific to MWL processing.
 
 
-**Functions specific to MWL:**
-
-
+Functions specific to MWL:
+---------------------------
 
 .. list-table::
-  :widths: 29 71  
+  :widths: 20 50
 
 
   * - **Cell / Channel** 
@@ -198,8 +201,8 @@ Most of the edit controls for MWL are the same as for the standard :ref:`Data Ed
 
 
 
-**Editing steps specific to MWL**
-
+Editing steps specific to MWL
+--------------------------------
 
 *   **Step 1:** Load data from the database or a local data directory. Select an entire runID so that MWL data is recognized as such. 
 *   **Step 2:** Select the Cell / Channel to be edited; specify the Lambda (wavelength) range to be edited; and select a single wavelength for display and edit.
@@ -207,3 +210,33 @@ Most of the edit controls for MWL are the same as for the standard :ref:`Data Ed
 *   **Step 4:** Save editing for either the specific Triplicate selected or to be applied to all wavelengths of a cell / channel double.
 
 
+Edit Specific Scans
+=====================
+
+.. image:: _static/images/edit_scan.png
+  :align: center 
+
+.. rst-class::
+  :align: center
+
+  **Edit Individual Scans**
+
+1. Use the zoom function as needed to focus on a point.
+2. Use Control-Left Press to select the point desired.
+3. Drag the point to the value desired.
+
+
+
+Exclusion Profile 
+===================
+
+
+Exclude scan ranges and intervals with this dialog. 
+
+.. image:: _static/images/edit_exclude_scan.png
+  :align: center 
+
+.. rst-class::
+  :align: center
+
+  **Exclude Scans**

@@ -36,9 +36,9 @@ Combine vHW Functions:
   * - **Save Data** 
     - Save combined integral distribution and envelope data to a local data file and, if input source so indicates, to the database.
   * - **Reset Data** 
-    - Clear all data, lists and plots. To choose runs and Triplicates, a new set of Load Data selections must be made.
+    - Clear all data, lists and plots. To choose runs and Triples, a new set of Load Data selections must be made.
   * - **Reset Plot** 
-    - Clear all plots. Data is still saved, so a new set of plots can be created by simply selecting runs and Triplicates.
+    - Clear all plots. Data is still saved, so a new set of plots can be created by simply selecting runs and Triples.
   * - **Help** 
     - Display detailed vHW_Combine help.
   * - **Close** 
@@ -52,9 +52,9 @@ Combine vHW Functions:
   * - **Save Plot under Project:** 
     - The name shown to the right of this label specifies the project subdirectory under which the combination is to be saved. By default, the name shown is the first run selected for plotting, but this can be changed by the user to any listed name. If "All" is selected, plot copies will be saved to all of the component run IDs.
   * - **Run IDs:** 
-    - The list below shows all runs selected in Load Data dialogs. Click on a list line to reveal the Cell / Channel / Wavelength Triplicates for the run.
+    - The list below shows all runs selected in Load Data dialogs. Click on a list line to reveal the Cell / Channel / Wavelength Triples for the run.
   * - **Cell/Channel/ Wavelength:** 
-    - The list below shows the Triplicates for the currently selected run. Click on a Triplicate line to have its distribution/envelope added to the combined plot.
+    - The list below shows the Triples for the currently selected run. Click on a Triplicate line to have its distribution/envelope added to the combined plot.
 
 .. _selrun:
 

@@ -9,9 +9,12 @@ Discrete Model Genetic Algorithm
 .. contents:: Index
   :local: 
 
-The Discrete Model Genetic Algorithm (DMGA) initialization window lets users define the components of a model, along with the dissociation constant (K_D) and the (k_off) rate constant that govern binding. After these inputs are set, the initialized DMGA model is simulated by genetic-algorithm analysis.
+The Discrete Model Genetic Algorithm (DMGA) module employs user-defined models to fit sedimentation velocity data to parameters of those
+models. While there is no restriction on the type of model that can be built to fit a particular system, the method is most often used
+for fitting reversibly associating systems, such as oligomerization or self-association, or hetero-associating systems. The method uses genetic
+algorithms to optimize non-linear fitting problems using stochastic approaches. The user has to define a model and the :doc:`constraints <dmga_init_constr>` for the parameters of the model to initialize the DMGA routine. The fit is performed on the **LIMS** using the **Discrete Model GA Control**.
 
-.. image:: _static/images/beck_converter.png
+.. image:: _static/images/dmga.png
     :align: center
 
 .. rst-class:: 
@@ -19,17 +22,22 @@ The Discrete Model Genetic Algorithm (DMGA) initialization window lets users def
 
     **Discrete Genetic Algorithm Initialization**
 
-Process: 
-============
 
-1. If an existing model is available, Load Model and teh text box will update. if model doesn't exist, define base model and open the `Model Editor window <model_editor.html>`_. components.html (need at least 2 components), associations.html and Save. 
+DMGA Process: 
+==============
 
-2. If an existing Constraints is available, Load Constraints and the text box will update. if Constraints  doesn't exist, define base Constraints and open the `load distribution model <load model distribution.html>`_. 
-Load of Define and Save. 
+1. If an existing model is available, **Load Base Model** and use the
+:doc:`Load Distribution Model <common_dialogs>`
+dialog to select the desired model. If a model needs to be created first, use **Define Base Model** to open the :doc:`Model Editor window <model_editor>` and select **Save Base Model**.
 
-3. Send Model + Constraints to GA Analysis on LIMS
+2. If constraints for all parameters have been defined
+previously, **Load Constraints** will allow the user to select a predefined constrained from the :doc:`Load Distribution Model <common_dialogs>` dialog. If a set of
+constraints needs to be created first, use **Define Constraints** to open
+the `Discrete Model GA Constraints Editor <dmga_init_constr>`, enter
+the parameter constraints for the **Components** and any **Associations
+(reactions)**, and **Accept** the changes. At this point, **Save Constraints** in the main window will
+allow you to save the DMGA initialization to the LIMS database. By default, the constraints model will
+be named with the current timestamp, but selecting **Edit** allows you to use a custom name in the database.
 
-
-
-
-dmga_init_constr.html (define which attribute is floated)
+3. To start the analysis, select the same constraints model in the
+**Setup Discrete Model GA Control** on the **LIMS** page.

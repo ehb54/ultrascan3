@@ -126,7 +126,7 @@ class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
       void calc_visc_dent_temp ( void );
 
 
-      void help( void ) { showHelp.show_help( "buffer_select.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_select.html" ); };
 
    public slots:
      void init_buffer		( void );
@@ -217,7 +217,7 @@ class US_GUI_EXTERN US_BufferGuiNew : public US_Widgets
       void update_db_disk  ( bool );
       void calc_visc_dent_temp ( void );
       void set_temp20 ( void );
-      void help( void ) { showHelp.show_help( "buffer_new.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_new.html" ); };
       
    public slots:
       void init_buffer		( void );
@@ -274,7 +274,7 @@ class US_GUI_EXTERN US_BufferGuiEdit : public US_Widgets
       void editCanceled( void );
       void write_db    ( void );
       void write_disk  ( void );
-      void help( void ) { showHelp.show_help( "buffer_edit.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_edit.html" ); };
       
       void change_spectrum( void );
       void accept_enable  ( void );
@@ -331,7 +331,7 @@ class US_GUI_EXTERN US_BufferGuiSettings: public US_Widgets
       void assign_investigator( int  );
       void synch_components   ( void );
 
-      void help( void ) { showHelp.show_help( "buffer_settings.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_settings.html" ); };
 };
 
 class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog

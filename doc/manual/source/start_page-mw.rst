@@ -17,7 +17,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         Required for data from XLA or XLI, this step is performed automatically in the Optima AUC.
         Sedimentation velocity data should not be measured in absorbance mode, use intensity mode instead.
 
-#.  Import the experimental data: Utilities: `Import Experimental Data <convert.html>`_
+#.  Import the experimental data: Utilities: :doc:`Import Experimental Data <convert>`
 #.  Confirm Investigator setting and local/database selection
 #.  Import Experimental Data from local disk 
 #.  Edit Run Information, Select Lab/Rotor/Calibration
@@ -33,7 +33,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         * If you have more than one Triplicate, you can click on Apply to All but verify centerpiece and solution for each Triplicate first. Also, check the Description field again to make sure the appropriate information is saved.
 #.  If data were collected in intensity mode, you will need to Define Reference Scans by selecting a short region from the air-to-air interface portion of the data.
 #.  For equilibrium data from 6-channel centerpieces you should separate each channel with the Define Subsets/Process Subsets functions.
-#.  Failed Triplicates or empty Triplicates can be excluded from the run by clicking on Drop Selected Triplicates.
+#.  Failed Triples or empty Triples can be excluded from the run by clicking on Drop Selected Triples.
 #.  When everything has been set you can Save the scans to database or disk.
 
 .. image:: _static/images/mwlr_viewer_wvl.png
@@ -48,7 +48,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
 Step 2: Edit experimental data
 --------------------------------
 
-#. Edit the data in the `Edit Data <us_edit.html>`_ module. 
+#. Edit the data in the :doc:`Edit Data <us_edit>` module. 
 #. Load data from the database or a local data directory containing the UltraScan-III openAUC data files.data. 
 #. Select the Cell / Channel / Wavelength Triplicate to be edited. 
 #. Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard. 
@@ -72,7 +72,7 @@ Step 2: Edit experimental data
 Step 3: Inspect and plot the raw data 
 ----------------------------------------
 
-#. Inspect the raw MWL data using the `Multi-Wavelength Raw Data Viewer <multi-wavelength/index.html>`_ in the Multi-wavelength modules.  
+#. Inspect the raw MWL data using the :doc:`Multi-Wavelength Raw Data Viewer <multi-wavelength/index>` in the Multi-wavelength modules.  
 #. Load the data from the local disk or the database. 
 #. Select the Cell / Channel / Wavelength Triplicate to be inspected.
 #. Generate and save the 3-D plot and movie. 
@@ -86,28 +86,28 @@ Step 3: Inspect and plot the raw data
     **Raw MWL Data Inspection and Plotting**
 
 
-Step 4: Perform a 2DSA refinement following the `2DSA Flowchart <start_page.html>`_
+Step 4: Perform a 2DSA refinement following the :doc:`2DSA Flowchart <start_page>`
 ----------------------------------------------------------------------------------------
 
-#. Follow Steps 3-6 in the `2DSA Flowchart <start_page.html>`_ to perform 2DSA analysis and fit the associated Time- and Radially- invariant noises, the meniscus and bottom boundary positions and rotor stretching and final iterative refinements. 
+#. Follow Steps 3-6 in the :doc:`2DSA Flowchart <start_page>` to perform 2DSA analysis and fit the associated Time- and Radially- invariant noises, the meniscus and bottom boundary positions and rotor stretching and final iterative refinements. 
 
 
 Step 5: Simulated a time-grid synchronized model based on 2DSA-IT MWL models
 -------------------------------------------------------------------------------
 
-#. Simulate a time synchronized **ISSF_** model based on the MWL 2DSA-IT models using the `MWL Pre-Fit Species Simulation <multi-wavelength/mwl_species_sim.html>`_. 
+#. Simulate a time synchronized **ISSF_** model based on the MWL 2DSA-IT models using the :doc:`MWL Pre-Fit Species Simulation <multi-wavelength/mwl_species_sim>`. 
 #. Click **PreFilter Models** to define the MWL pre-filter for the simulation and
 #. Click **Select Models** and load all related 2DSA-IT models from one MWL dataset channel.
-#. **Define Buffer** and open the `Buffer Management <buffer/index>`_ dialog to define the experimental parameters of the dataset
+#. **Define Buffer** and open the :doc:`Buffer Management <buffer/index>`_ dialog to define the experimental parameters of the dataset
 #. Define the simulation parameters
-#. Click **Define Rotor** and open the `Rotor Management <buffer/index>`_ dialog to select the Default 1003 (Simulation) rotor. 
+#. Click **Define Rotor** and open the :doc:`Rotor Management <buffer/index>`_ dialog to select the Default 1003 (Simulation) rotor. 
 #. Start the simulation and save the open-auc file into $HOME/ultrascan/imports folder. 
  
 
 Step 6: Create basis spectra for each species
 ---------------------------------------------------
 
-#. Generate the extinction coefficient basis spectrum of an analyte in the `Spectrum Fitter <us_spectrum.html>`_ dialog. 
+#. Generate the extinction coefficient basis spectrum of an analyte in the :doc:`Spectrum Fitter <us_spectrum>` dialog. 
 #. Using a UV-visible spectrophotometer, scan the serial dilutions of analyte - spectra. 
 #. load csv files, define the column separator character and click **Apply**.  
 #. Add the extinction coefficient of the analyte at 260 or 280 nm, and click Perform a global fit if known.
@@ -124,8 +124,8 @@ Step 7: Import and Edit the **ISSF-** data file
 Step 8: Deconvolute MW data using species basis spectra
 ----------------------------------------------------------
 
-#. Deconvolute the analytes in `MWL Species Fit Analysis <multi-wavelength/mwl_species_fit.html>`_. 
-#. Load the time-synchronized **ISSF-** simulation generated using `Optima MWL Fit Simulations <multi-wavelength/mwl_species_sim>` using `Load Run Data Dialog <common_dialogs.html#data-loader>`_. 
+#. Deconvolute the analytes in :doc:`MWL Species Fit Analysis <multi-wavelength/mwl_species_fit>`. 
+#. Load the time-synchronized **ISSF-** simulation generated using :doc:`Optima MWL Fit Simulations <multi-wavelength/mwl_species_sim>` using :doc:`Load Run Data Dialog <common_dialogs.html#data-loader>`_. 
 #. Click **Load Species Fits** and load the species extinction coefficient basis spectra from local disk. 
 #. Perform the deconvolution by clicking **Species Fit Data**. 
 #. Deconvoluted sedimentation velocity data of each species will by generated with a **SSF-ISSF-** pre-fix. 
@@ -144,27 +144,27 @@ Step 10: Perform a 2DSA with refinement only
 Step 11: Perform van Holde-Weischet analysis - (recommended)
 ----------------------------------------------------------------
 
-#. Open Velocity: `Enhanced van Holde-Weischet <vhw_enhanced.html>`_.
+#. Open Velocity: :doc:`Enhanced van Holde-Weischet <vhw_enhanced>`.
 #. Load the desired experiment, applying the noise files from Step 6 (the latest model).
 #. Check Plateaus from 2DSA and Use Enhanced vHW.
 #. Adjust Beck Diffusion Tolerance, Divisions, Data Smoothing, % of Boundary, and Boundary Position to desired values.
 #. If appropriate, delete early scans to improve resolution and reduce noise. Only keep scans and boundary portions that contribute to well correlated line fits in the linear extrapolations.
 #. Select groups, if appropriate, to generate weight averaged s-values for discrete species.
-#. Display `Distribution Plot and histogram <vhw_distrib_plot.html>`_.
+#. Display :doc:`Distribution Plot and histogram <vhw_distrib_plot>`.
 #. Save Data and distributions.
 
 .. note::
-    Refer to the `van Holde-Weischet manual <vhw_enhanced.html>`_ page for additional details.
+    Refer to the :doc:`van Holde-Weischet manual <vhw_enhanced>` page for additional details.
 
 
 Step 12: Overlay combined distributions - (recommended)
 ----------------------------------------------------------------
 
 #. All van Holde-Weischet distributions and finite element models can be combined into a single plot for easy comparison.
-#. Use Velocity: `Combine Distribution Plots <vhw_combine.html>`_ (vHW) for van Holde-Weischet plots.
-#. Use Velocity: `Combine Discrete Distributions <ddist_combine.html>`_ for all finite element models (2DSA, GA, Monte Carlo).
-#. Use Velocity: `Combine Integral Distributions <idist_combine.html>`_ for all finite element models (2DSA, GA, Monte Carlo).
-#. Use Velocity: `Combine pseudo-3D Distributions <pseudo3d.html>`_ for all finite element models (2DSA, GA, Monte Carlo).
+#. Use Velocity: :doc:`Combine Distribution Plots <vhw_combine>` (vHW) for van Holde-Weischet plots.
+#. Use Velocity: :doc:`Combine Discrete Distributions <ddist_combine>` for all finite element models (2DSA, GA, Monte Carlo).
+#. Use Velocity: :doc:`Combine Integral Distributions <idist_combine>` for all finite element models (2DSA, GA, Monte Carlo).
+#. Use Velocity: :doc:`Combine pseudo-3D Distributions <pseudo3d>` for all finite element models (2DSA, GA, Monte Carlo).
 
 Reference
 ==========

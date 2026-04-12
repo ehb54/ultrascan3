@@ -12,12 +12,12 @@ Parametrically Constrained Spectrum Analysis Results
 
 Upon completion of an analysis fit, windows and plots generated include: 
 
-* `PCSA Fitting Controls <pcsa_analys.html>`_ - Once the PCSA module has simulated the model with, the Status Information on the window updates to include the best model after the iterative simulations are done. the par1 and par2  for the curves updates.  
-* `PCSA model lines viewer <pcsa_rpscan.html>`_ - simulated model lines; 
+* :doc:`PCSA Fitting Controls <pcsa_analys>` - Once the PCSA module has simulated the model with, the Status Information on the window updates to include the best model after the iterative simulations are done. the par1 and par2  for the curves updates.  
+* :doc:`PCSA model lines viewer <pcsa_rpscan>` - simulated model lines; 
 * :ref:`PCSA data/residuals viewer <pcsa_data_residuals_viewer>` - Visual comparison of simulated and experimental data. Graphical display of time and radially invariant noises subtracted; 
 * :ref:`PCSA Report <pcsa_report>` - Generate a Simulated model Report file and view it in a dialog;
 * :ref:`Bit Map residuals <residual_bit_map>` Bit map of every scan as a pixel line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(positive) pixels. an Excellent residual map will have a random distribution of red and green pixels; 
-* `3-Dimensional Plot Controls <../3d_plot.html>`_ - 3D plots of the simulated data
+* :doc:`3-Dimensional Plot Controls <../3d_plot>` - 3D plots of the simulated data
 
 .. image:: ../_static/images/pcsa_all.png
     :align: center

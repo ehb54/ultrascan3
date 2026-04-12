@@ -131,9 +131,9 @@ Peak Fitting
   :widths: 20 50
   :header-rows: 0 
   
-  * - **Fit All Triplicates**
+  * - **Fit All Triples**
     - 
-  * - **Fit Current Triplicates**
+  * - **Fit Current Triples**
     - 
   * - **Fitting Progress:**
     - 

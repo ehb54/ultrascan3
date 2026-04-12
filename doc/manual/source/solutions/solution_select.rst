@@ -12,9 +12,9 @@ Select Solution Tab
 **Panel Tab Options:**
 
 * :ref:`Select Solution <select_solution>` - A panel whose primary purpose is to select a Solution to return to the caller.
-* `Enter New Solution <solution_new.html>`_ - A panel whose primary purpose is to enter a brand new Solution, defined mostly by specifying components and each one's concentration.
-* `Edit Existing Solution <solution_edit.html>`_ - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing Solution.
-* `Settings <solution_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input and to select the investigator. 
+* :doc:`Enter New Solution <solution_new>` - A panel whose primary purpose is to enter a brand new Solution, defined mostly by specifying components and each one's concentration.
+* :doc:`Edit Existing Solution <solution_edit>` - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing Solution.
+* :doc:`Settings <solution_settings>` - A panel whose primary purpose is to set Database-or-Disk input and to select the investigator. 
 
 Select Solution Panel: 
 =========================

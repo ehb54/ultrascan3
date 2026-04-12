@@ -37,9 +37,9 @@ This utility combines selected models into a single global model that can be use
   * - **Local Disk**
     - Select to specify model input from local disk.
   * - **Select PreFilter:**
-    - Open a `Models Pre-Filter dialog <common_dialogs.html#data-loader>`_ to select Run IDs on which to pre-filter lists of models for loading. 
+    - Open a :doc:`Models Pre-Filter dialog <common_dialogs>` to select Run IDs on which to pre-filter lists of models for loading. 
   * - **Add Models**
-    - Open a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_ to select model(s) to load into the list of component models to the global model.
+    - Open a :doc:`Model Loader dialog <common_dialogs>` to select model(s) to load into the list of component models to the global model.
   * - **Reset List**
     - Clear the list of input models in order to start over in the model selection process.
   * - **Save Global Model**

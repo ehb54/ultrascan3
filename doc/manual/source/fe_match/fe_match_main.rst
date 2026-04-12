@@ -94,7 +94,7 @@ FE Viewer Functions
       :width: 100%
       :align: right
 
-    **D :sub:`20,w` distribution**
+    D :sub:`20,w` distribution
 
 
 **Information for this Run:**
@@ -110,7 +110,7 @@ FE Viewer Functions
   * - **(experiment description)**
     - A text string is displayed giving a fairly detailed description of the experiment.
   	
-**Cell / Channel / Wavelength:** One or more rows of data edit Triplicates. If more than one, click on a row to select it as the data of interest.
+**Cell / Channel / Wavelength:** One or more rows of data edit Triples. If more than one, click on a row to select it as the data of interest.
 
 **Experimental Parameters (at 20°C):**
 
@@ -184,5 +184,4 @@ When the **Noise Dialog Level** in the `Configuration and Preferences setting <.
     **Noise Vector Database Load**
 
 .. note::
-  The Model siblings are in the order of latest noise fitted. The n
-
+  The model siblings are ordered with the most recently fitted noise first and the earlier noise profiles last. Select the appropriate noise for the model and click **Load**.

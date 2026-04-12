@@ -11,6 +11,20 @@ Common Dialogs of Ultrascan-III
 
 UltraScan-III provides several dialogs for inputting data for analysis or viewing, including options to load run data or load/remove distribution/fitted model data.
 
+Select Pre-Filter
+==================
+
+A number of UltraScan-III applications load model distribution data for processing. For large-volume data bases, it helps the speed of model list preparation to do a pre-filter of the model data by run ID. These applications use the US_SelectRuns dialog class to allow the user to choose runs with which to filter model listings. 
+The dialog presented when a US_SelectRuns is executed allows a list of run ID data choices from database or local disk. A Search text field allows the list to be pared down further to those of interest. After one or more data sets are selected in the list, a button labelled **Select PreFilter(s)** passes experiment data to the caller which passes selections to the :ref:`Load Model Dialog <fe_data_loader>`. 
+
+.. image:: /_static/images/select_prefilt.png
+  :align: center
+
+.. rst-class::
+  :align: center
+
+  **Load Run Data from DB**
+
 Data Loader 
 =============
 
@@ -29,9 +43,9 @@ Ultrascan-III modules can load models by first loading the Run as **Experiment**
 Data Set Selection
 --------------------
 
-Most often, you need not expand the list tree and need only select the top level run ID description. This effectively selects all Triplicates for the run and selects the first listed edit for each Triplicate. In the default case where Latest Data Edit was checked in the calling dialog, there will be only one edit (the latest) for each Triplicate. If Latest Data Edit was not checked, there may be multiple edits for Triplicates. In this case, selecting a Run description or a Triplicate description effectively selects the earliest edit(s).
+Most often, you need not expand the list tree and need only select the top level run ID description. This effectively selects all Triples for the run and selects the first listed edit for each Triplicate. In the default case where Latest Data Edit was checked in the calling dialog, there will be only one edit (the latest) for each Triplicate. If Latest Data Edit was not checked, there may be multiple edits for Triples. In this case, selecting a Run description or a Triplicate description effectively selects the earliest edit(s).
 
-You may, of course, select specific Triplicates of a run.
+You may, of course, select specific Triples of a run.
 Similarly, in the case where Lastest Data Edit was not checked, you may select any edit of a Triplicate.
 
 .. image:: /_static/images/data_loader-edits.png
@@ -60,13 +74,13 @@ Load Run Functions:
   * - **Search**
     - As characters are entered in the text box to the right of the Search label, the list of data sets is modified to consist of matching entries. A blank field restores the full list. Note that the search is case-insensitive. 
   * - **Run**
-    - The Run ID given in the `Import stage <import.html>`_. 
+    - The Run ID given in the :doc:`Import stage <import>`. 
   * - **date**
     - The date the data was imported to Ultrascan or generated using connected instruments.
   * - **Database identification (DbID)**
     - The Database ID number.
   * - **Run**
-    - The Run Label given in the `Import stage <import.html>`_. 
+    - The Run Label given in the remove_mod_dis: :doc:`Import stage <import>`. 
   * - **Show Edits**
     - Click to transform the data list from showing only runs to showing a data tree with Triplicate and edit children. If no Run List entry is selected, the entire data tree will be transformed. If a Run is selected, only that run with its Triplicate and edit descendants will be shown. 
   * - **Load**
@@ -159,6 +173,19 @@ Remove Functions:
   * - **(status)**
     - The ongoing status of the list and current selections is documented here.
 
+Select to Delete
+=======================
+
+.. _convert_seltrip:
+
+Using this dialog window, you can select triples and wavelengths to be deleted from the selection pool. For Triplies, the final state of included and excluded triples determines what data will be output. 
+The dialog consists of two list windows. The one on the left initially contains the included dataset triples at invocation. 
+The right-side list is initially empty. 
+Delete selection consists of clicking on one or more left-side-list triples and moving them to the **Excluded** list on the right, via the **Add ===>** button. You may remove triples from the excluded list by clicking on their entries in the "Excluded" list and moving them back to the "Included" list via the button. 
+Once the lists of included and excluded triples is as desired, the Accept button closes the dialog and communicates the selected triple deletions to the caller. 
+
+.. images:: _static/images/delseltrip.png
+  :align: center
 
 Common Plot Controls 
 =======================

@@ -205,7 +205,7 @@ Adv. Config. Functions
   * - **Number of Threads**
     - On multi-core computers, a thread count greater than one is advantageous in certain applications that are thread-aware. The number depends on the application and the available resources.
   * - **Noise Dialog Level**
-    - This function enables user to select from multiple noise profiles that are associated with a model. When the level flag is 1 (enabled), in `Finite Element Viewer <fe_match/fe_match_main.html#noise-vector-selection>`_, user is prompted to select from a list of noise profiles, where the earlier profiles will have higher Model Sibling 000#. See `Finite Element Viewer <fe_match/fe_match_main.html#noise-vector-selection>`_ help documentation for further instructions.
+    - This function enables user to select from multiple noise profiles that are associated with a model. When the level flag is 1 (enabled), in :doc:`Finite Element Viewer <fe_match/fe_match_main>`, user is prompted to select from a list of noise profiles, where the earlier profiles will have higher Model Sibling 000#. See :doc:`Finite Element Viewer <fe_match/fe_match_main>` help documentation for further instructions.
   * - **Reset to Last Saved** 
     -  All of the above settings can be made to revert to last-saved settings by clicking this button.
 

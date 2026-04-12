@@ -62,6 +62,7 @@ add_custom_command(
         ${RST_FILES}
         ${STATIC_FILES}
         "${DOC_SOURCE_DIR}/conf.py"
+        "${DOC_SOURCE_DIR}/auto_index.py"
         COMMENT "Building Sphinx qthelp output"
         VERBATIM
 )

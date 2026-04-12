@@ -121,7 +121,7 @@ all: html qch
 help:
 	@$(SPHINXBUILD) -M help $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
 
-html:
+html: latexpdf
 	@$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html $(SPHINXOPTS)
 	@echo "HTML documentation written to $(BUILDDIR)/html"
 
@@ -170,11 +170,13 @@ latexpdf:
 	fi
 	@$(SPHINXBUILD) -b latex $(SOURCEDIR) $(BUILDDIR)/latex $(SPHINXOPTS)
 	@$(MAKE) -C $(BUILDDIR)/latex
+	@cp $(BUILDDIR)/latex/UltraScanIII.pdf $(SOURCEDIR)/_static/UltraScanIII.pdf
 	@echo "PDF manual written to $(BUILDDIR)/latex"
 
 clean:
 	@rm -rf $(BUILDDIR)
 	@rm -f $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
+	@rm -f $(SOURCEDIR)/_static/UltraScanIII.pdf
 	@echo "Cleaned build directory and installed files"
 
 # Catch-all: forward anything else to sphinx-build

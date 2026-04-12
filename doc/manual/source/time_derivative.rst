@@ -10,7 +10,7 @@ Time Derivative (dC/dt) Data Analysis
 
     
 
-The DCDT or Time Derivative method will calculate g(S) differential sedimentation profiles by subtracting consecutive scan pairs from each other and mapping the resulting difference curves to the S domain to obtain dcdt curves. The advantage of this method is its ability to nicely subtract out time invariant noise, such as window scratches and dirt, as well as refractive index hetereogeneities in the windows. The latter is particularly important for low-concentration interference data. Unlike the `van Holde-Weischet method <vhw_enhanced.html>`_, the Time Derivative method does not correct for diffusion. In order to obtain accurate results with this method, it is important that you use only a small scan range over which diffusion has not changed significantly.
+The DCDT or Time Derivative method will calculate g(S) differential sedimentation profiles by subtracting consecutive scan pairs from each other and mapping the resulting difference curves to the S domain to obtain dcdt curves. The advantage of this method is its ability to nicely subtract out time invariant noise, such as window scratches and dirt, as well as refractive index hetereogeneities in the windows. The latter is particularly important for low-concentration interference data. Unlike the `van Holde-Weischet method <vhw_enhanced>`, the Time Derivative method does not correct for diffusion. In order to obtain accurate results with this method, it is important that you use only a small scan range over which diffusion has not changed significantly.
 
 .. image:: _static/images/time_derivative.png
 
@@ -23,9 +23,9 @@ The DCDT or Time Derivative method will calculate g(S) differential sedimentatio
 
 
   * - **Load Experiment** 
-    - Click on this button and, in the resulting `Load Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click on this button and, in the resulting :doc:`Load Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details** 
-    - Bring up a `Details for Raw Data <run_details.html>`_ dialog with a summary of data and run details.
+    - Bring up a :doc:`Details for Raw Data <run_details>` dialog with a summary of data and run details.
   * - **Latest Data Edit** 
     - Uncheck to allow choosing an edit other than the latest one for the experimental data.
   * - **Database** 
@@ -59,9 +59,9 @@ The DCDT or Time Derivative method will calculate g(S) differential sedimentatio
   :header-rows: 0 
 
   * - **Cell / Channel / Wavelength** 
-    - The text box below this label gives cell, channel and wavelength Triplicates available in this data set. Highlight the desired value.
+    - The text box below this label gives cell, channel and wavelength Triples available in this data set. Highlight the desired value.
   * - **Solution** 
-    - Click this button to open a `Solution Management dialog <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a :doc:`Solution Management dialog <us_solution>` that allows changes to buffer and analyte characteristics of the data set.
   * - **Density (20°C)** 
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity (20°C)**

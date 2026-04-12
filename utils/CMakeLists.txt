@@ -163,6 +163,7 @@ if(BUILD_TESTING OR US3_PREFER_STATIC)
     target_compile_definitions(us_utils_static
             PUBLIC
             QT_SHARED
+            US_UTIL_STATIC
             )
 
     # Apply same include directories

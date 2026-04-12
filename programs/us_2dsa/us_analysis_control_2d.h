@@ -177,7 +177,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       void load_model(       void );
       int  memory_check(     void );
       void help     ( void )
-      { showHelp.show_help( "2dsa_analys.html" ); };
+      { showHelp.show_help( "manual/2dsa/2dsa_analys.html" ); };
 };
 #endif
 

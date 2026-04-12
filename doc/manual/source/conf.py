@@ -252,7 +252,7 @@ qthelp_namespace = f'org.sphinx.{qthelp_basename}.{release}'
 # -- Options for LaTeX output ------------------------------------------------
 # Use XeLaTeX for proper Unicode support
 latex_engine = "xelatex"
-
+latex_use_xindy = False
 latex_elements = {
     # Paper size for the generated PDF
     'papersize': 'letterpaper',
@@ -268,6 +268,28 @@ latex_elements = {
 \usepackage{graphicx}
 \setlength{\headheight}{13.6pt}
 """,
+    # Overwrite fontpkg to prevent FreeSerif fonts from not being found by xelatex
+    # https://github.com/sphinx-doc/sphinx/issues/10347#issuecomment-1647984313
+    'fontpkg': r'''
+\setmainfont{FreeSerif}[
+  UprightFont    = *,
+  ItalicFont     = *Italic,
+  BoldFont       = *Bold,
+  BoldItalicFont = *BoldItalic
+]
+\setsansfont{FreeSans}[
+  UprightFont    = *,
+  ItalicFont     = *Oblique,
+  BoldFont       = *Bold,
+  BoldItalicFont = *BoldOblique,
+]
+\setmonofont{FreeMono}[
+  UprightFont    = *,
+  ItalicFont     = *Oblique,
+  BoldFont       = *Bold,
+  BoldItalicFont = *BoldOblique,
+]
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

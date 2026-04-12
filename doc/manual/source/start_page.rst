@@ -16,7 +16,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         Required for data from XLA or XLI, this step is performed automatically in the Optima AUC.
         Sedimentation velocity data should not be measured in absorbance mode, use intensity mode instead.
 
-#. Import the experimental data: Utilities: `Import Experimental Data <convert.html>`_
+#. Import the experimental data: Utilities: :doc:`Import Experimental Data <convert>`
 
 #. Confirm Investigator setting and local/database selection
 #.  Import Experimental Data from local disk 
@@ -33,7 +33,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         * If you have more than one Triplicate, you can click on Apply to All but verify centerpiece and solution for each Triplicate first. Also, check the Description field again to make sure the appropriate information is saved.
 #.  If data were collected in intensity mode, you will need to Define Reference Scans by selecting a short region from the air-to-air interface portion of the data.
 #.  For equilibrium data from 6-channel centerpieces you should separate each channel with the Define Subsets/Process Subsets functions.
-#.  Failed Triplicates or empty Triplicates can be excluded from the run by clicking on Drop Selected Triplicates.
+#.  Failed Triples or empty Triples can be excluded from the run by clicking on Drop Selected Triples.
 #.  When everything has been set you can Save the scans to database or disk.
 
 
@@ -42,7 +42,7 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
 Step 2: Edit experimental data.
 --------------------------------
 
-#. Edit the data into Edit Data: `Edit Data <us_edit.html>`_. 
+#. Edit the data into Edit Data: :doc:`Edit Data <us_edit>`. 
 #. Load data from the database or a local data directory that contains the UltraScan 3 data files previously converted from the Beckman raw data. 
 #. Select the Cell / Channel / Wavelength Triplicate to be edited. 
 #. Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard. 
@@ -59,7 +59,7 @@ Step 2: Edit experimental data.
 Step 3: Perform a Time Derivative analysis and find the limits of the s-value range.
 ------------------------------------------------------------------------------------
 
-#. Select Velocity: `Time Derivative <time_derivative.html>`_ and Load Experiment
+#. Select Velocity: :doc:`Time Derivative <time_derivative>` and Load Experiment
 #. Set Data Smoothing to ~ 10
 #. Set the Boundary Pos (%) to zero
 #. Exclude scans that do not exhibit a stable upper plateau.
@@ -72,7 +72,7 @@ Step 3: Perform a Time Derivative analysis and find the limits of the s-value ra
 Step 4:  Submit a 2DSA analysis request in USLIMS.
 --------------------------------------------------
 
-#. Log in and select the run and triplicates in `USLIMS <https://uslims.aucsolutions.com/index.php>`_. 
+#. Log in and select the run and triples in `USLIMS <https://uslims.aucsolutions.com/index.php>`_.
 #. Locate the dataset and set the s-value limits to values obtained in step 3, and set f/f0 limits to 1-4 or adjust the upper limit based on prior knowledge of the sample (in case of DNA for example).
 
 #. Set the resolution for S and f/f0 to the desired value. 64 is the default for both S and f/f0, the resolution is the number of points into which this variable will be discretized. For example, if the range is selected from 1-5, and the resolution is set to 40, there will be 10 grid points/S-value, resulting in an increment of 0.1 S.
@@ -84,7 +84,7 @@ Step 4:  Submit a 2DSA analysis request in USLIMS.
 
 #. Check queue viewer for job completion
 
-#. Confirm results with Velocity: `FE Model Viewer <fe_match/fe_match_simulate.html>`_ and `FE Model Module <fe_match/index.html>`_, load newly generated time invariant noise file. If random residuals are obtained, proceed with step 5, but if residuals do not look random, and a strong diagonal line in the residual bitmap is apparent, investigate range settings for S and f/f0 settings and repeat 2DSA with improved ranges.
+#. Confirm results with Velocity: :doc:`FE Model Viewer <fe_match/fe_match_simulate>` and :doc:`FE Model Module <fe_match/index>`, load newly generated time invariant noise file. If random residuals are obtained, proceed with step 5, but if residuals do not look random, and a strong diagonal line in the residual bitmap is apparent, investigate range settings for S and f/f0 settings and repeat 2DSA with improved ranges.
 
 .. note::
      Do not set the lower s-value limit too low, as this could create artificially low-s species signal if a baseline or slowly changing baseline exists. These artifacts are better handled in the time invariant noise. 
@@ -96,7 +96,7 @@ Step 5: Perform Meniscus fit.
 ------------------------------
 
 #. Repeat submission by also fitting the meniscus over 0.03 cm with 10 points, turning on both time invariant and radially invariant noise. Make sure to load the previously generated time invariant noise when loading the dataset. Use the same range settings as in Step 4.
-#. Check queue or e-mail and once results are available, load Utilities: `Fit Meniscus <fit_meniscus.html>`_. Click on Scan Database if using the database, and check the Status line for new results. Load the desired meniscus fit (check the UltraScan manual for details).
+#. Check queue or e-mail and once results are available, load Utilities: :doc:`Fit Meniscus <fit_meniscus>`. Click on Scan Database if using the database, and check the Status line for new results. Load the desired meniscus fit (check the UltraScan manual for details).
 #. After updating the meniscus, confirm the deletion of the scans that resulted in non-optimal RMSD values.
 
 
@@ -106,7 +106,7 @@ Step 6: Perform a final 2DSA refinement
 
 #. Refine the analysis by re-fitting the data with the improved meniscus value by repeating the analysis with identical range settings as before fitted in Step 5, except this time selecting the **time- and radially invariant noise** that was generated in Step 5, and also do not select meniscus fitting. 
     * Instead, select Iterative Refinement and set the refinement level to 10 iterations. Also refit time and radially invariant noise.
-#. Visualize the final results in Velocity: `FE Model Viewer <fe_match/fe_match_simulate.html>`_ and save results to database.
+#. Visualize the final results in Velocity: :doc:`FE Model Viewer <fe_match/fe_match_simulate>` and save results to database.
 #. All subsequent analyses methods should now be based on the model generated in this final 2DSA refinement step.
 
 
@@ -118,11 +118,11 @@ At this point, multiple analysis options exist depending on the properties of th
 Step 7: Genetic Algorithm analysis - (optional)
 ----------------------------------------------------------------
 
-#. If the refined 2DSA data are appropriate for genetic algorithm analysis, select Velocity: `Initialize Genetic Algorithm <ga_initialize.html>`_ and load the model from Step 6 into the initialization program. See the corresponding UltraScan Manual section for details.
+#. If the refined 2DSA data are appropriate for genetic algorithm analysis, select Velocity: :doc:`Initialize Genetic Algorithm <ga_initialize>` and load the model from Step 6 into the initialization program. See the corresponding UltraScan Manual section for details.
 #. Assign initialization and save to disk. 
 #. Log into USLIMS and submit data to Genetic Algorithm analysis, but do not refit time or radially invariant noise. Make sure to select time and radially invariant noise generated in Step 6, which is set to occur by default unless overridden by the user.
 #. Select the gadistro file from the UltraScan/results/run-id directory for the correct Triplicate.
-#. Visualize results by using the Velocity: `FE Model Viewer <fe_match/fe_match_simulate.html>`_. 
+#. Visualize results by using the Velocity: :doc:`FE Model Viewer <fe_match/fe_match_simulate>`. 
 
 
 |
@@ -134,7 +134,7 @@ Step 8: Perform 2DSA Monte Carlo analysis - (recommended)
 #. Use the same limits as before, but do not refit time or radially invariant noise, instead, load the noise corrections from Step 6 (which will be done by default in the LIMS and GUI). 
 #. Select 50 Monte Carlo iterations.
 #. If the 2DSA distribution appears to be a sparse solute situation, and not a smooth continuous distribution of many species, you can further refine the data with a parsimonious regularization using the GA analysis.
-#. When using 2DSA Monte Carlo distributions for the GA initialization, make sure to use the manual GA initialization method in Velocity: `Initialize Genetic Algorithm <ga_initialize.html>`_.
+#. When using 2DSA Monte Carlo distributions for the GA initialization, make sure to use the manual GA initialization method in Velocity: `Initialize Genetic Algorithm <ga_initialize>`.
 #. Proceed as described in Step 7.
 
 
@@ -147,7 +147,7 @@ Step 9: Perform Monte Carlo GA analysis -  (optional)
 #. Select a multiple of 8 Monte Carlo iterations (48, 56 or 64 are good choices)
 #. Select parallel processing with 8 program groups.
 #. Repeat Step 7 by loading the gadistro file generated from the GA distribution model.
-#. Submit to desired cluster and visualize results by using the Velocity: `FE Model Viewer <fe_match/fe_match_simulate.html>`_.
+#. Submit to desired cluster and visualize results by using the Velocity: :doc:`FE Model Viewer <fe_match/fe_match_simulate>`.
 
 
 
@@ -155,17 +155,17 @@ Step 9: Perform Monte Carlo GA analysis -  (optional)
 Step 10: Perform van Holde-Weischet analysis - (recommended)
 ----------------------------------------------------------------
 
-#. Open Velocity: `Enhanced van Holde-Weischet <vhw_enhanced.html>`_.
+#. Open Velocity: :doc:`Enhanced van Holde-Weischet <vhw_enhanced>`.
 #. Load the desired experiment, applying the noise files from Step 6 (the latest model).
 #. Check Plateaus from 2DSA and Use Enhanced vHW.
 #. Adjust Beck Diffusion Tolerance, Divisions, Data Smoothing, % of Boundary, and Boundary Position to desired values.
 #. If appropriate, delete early scans to improve resolution and reduce noise. Only keep scans and boundary portions that contribute to well correlated line fits in the linear extrapolations.
 #. Select groups, if appropriate, to generate weight averaged s-values for discrete species.
-#. Display `Distribution Plot and histogram <vhw_distrib_plot.html>`_.
+#. Display :doc:`Distribution Plot and histogram <vhw_distrib_plot>`.
 #. Save Data and distributions.
 
 .. note::
-    Refer to the `van Holde-Weischet manual <vhw_enhanced.html>`_ page for additional details.
+    Refer to the :doc:`van Holde-Weischet manual <vhw_enhanced>` page for additional details.
 
 
 
@@ -174,8 +174,8 @@ Step 11: Overlay combined distributions - (recommended)
 ----------------------------------------------------------------
 
 #. All van Holde-Weischet distributions and finite element models can be combined into a single plot for easy comparison.
-#. Use Velocity: `Combine Distribution Plots <vhw_combine.html>`_ (vHW) for van Holde-Weischet plots.
-#. Use Velocity: `Combine Discrete Distributions <ddist_combine.html>`_ for all finite element models (2DSA, GA, Monte Carlo).
+#. Use Velocity: :doc:`Combine Distribution Plots <vhw_combine>` (vHW) for van Holde-Weischet plots.
+#. Use Velocity: :doc:`Combine Discrete Distributions <ddist_combine>` for all finite element models (2DSA, GA, Monte Carlo).
 
 
 
@@ -184,7 +184,7 @@ Step 11: Overlay combined distributions - (recommended)
 Step 12: Perform Parametrically Constrained Spectrum Analysis (PCSA) - (optional)
 ------------------------------------------------------------------------------------------------
 #. Inspect the results from the 2DSA-Monte Carlo analysis to determine an appropriate parameterization constraint for the PCSA analysis. 
-#. Open Velocity: `Parametrically Constrained Spectrum Analysis <pcsa/index.html>`_. 
+#. Open Velocity: :doc:`Parametrically Constrained Spectrum Analysis <pcsa/index>`. 
     * Select a parametrization (straight line, increasing sigmoid, decreasing sigmoid, power law or horizontal line (equivalent to C(s), not recommended) that is consistent with the pattern displayed in the pseudo-3D plot of the 2DSA-Monte Carlo analysis, i.e., a line shape that best describes the distribution of most solute points. You can select the PCSA either from the desktop GUI (Velocity:PCSA) or from the corresponding LIMS option after loading the data.
 #. Decide on a parameter combination to be fitted and set appropriate limits. If fitting s and f/f0, use the same limits as were used in the 2DSA.
 #. Optionally, regularize PCSA result either by Monte Carlo or Tikhonov regularization. 

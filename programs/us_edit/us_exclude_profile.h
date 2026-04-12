@@ -82,7 +82,7 @@ class US_ExcludeProfile : public US_WidgetsDialog
         //! \brief Slot to show the help documentation.
         void help(void)
         {
-            showHelp.show_help("manual/edit_exclude_profile.html");
+            showHelp.show_help("manual/us_edit.html#exclusion-profile");
         }
 };
 

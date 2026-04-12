@@ -74,7 +74,7 @@ Once an analysis is complete, the main window will appear similar to this:
   * - **(experiment description)**
     - A text string is displayed giving a fairly detailed description of the experiment.
   * - **Cell / Channel / Wavelength**
-    - One or more rows of data edit Triplicates. If more than one, click on a row to select it as the data of interest.
+    - One or more rows of data edit Triples. If more than one, click on a row to select it as the data of interest.
   * - **Solution**
     - Click this button to open a `Solution Management dialog <../solutions/index.html>`_ that allows changes to buffer and analyte characteristics of the data set. 
   * - **Density (20°C)**

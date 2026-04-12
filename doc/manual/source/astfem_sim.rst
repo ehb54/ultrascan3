@@ -37,13 +37,13 @@ Simulation Functions:
   :header-rows: 0
 
   * - **Model Control** 
-    - Load a model from database or local disk using a `Model Editor <model_editor.html>`_ dialog. 
+    - Load a model from database or local disk using a :doc:`Model Editor <model_editor>` dialog. 
   * - **Define Buffer** 
-    - Normally not used, this button allows you to specify buffer conditions through a `Buffer Management <buffer/index.html>`_ dialog. 
+    - Normally not used, this button allows you to specify buffer conditions through a :doc:`Buffer Management <buffer/index>` dialog. 
   * - **Simulation Parameters** 
-    - The majority of the parameters that govern the output simulation grid, duration, method, and so on are given in the result of clicking this button: a `Simulation Parameters <simparams.html>`_ dialog. 
+    - The majority of the parameters that govern the output simulation grid, duration, method, and so on are given in the result of clicking this button: a :doc:`Simulation Parameters <simparams>` dialog. 
   * - **Select Rotor**
-    - Load a rotor and its calibration data by opening the `Rotor Management <rotor.html>`_ dialog.
+    - Load a rotor and its calibration data by opening the :doc:`Rotor Management <rotor> dialog.
   * - **Show Movie**
     - Have intermediate scan curves displayed in the upper right plot window during simulation calculations by checking this box. This function allows the user to select a run time which allows the analyte sediments fully. 
   * - **Use Time Correction** 
@@ -53,7 +53,7 @@ Simulation Functions:
   * - **Stop Simulation** 
     - If the simulation seems to be taking an inordinate amount of time and you suspect incorrect setting of parameters as the cause, you may click here to stop calculations so that you can review and modify parameters. 
   * - **Save Simulation**
-    - Clicking this button leads to a standard output directory dialog in which you may specify a ./results folder on local disk into which to save a simulated raw experiment data set. This data set may be desirable for testing purposes, in which case it will need further editing through `Edit <us_edit.html>`_. 
+    - Clicking this button leads to a standard output directory dialog in which you may specify a ./results folder on local disk into which to save a simulated raw experiment data set. This data set may be desirable for testing purposes, in which case it will need further editing through `Edit <us_edit>`. 
   * - **Help** 
     - Display this documentation. 
   * - **Close**
@@ -66,3 +66,8 @@ Simulation Functions:
     - This plot window displays the final result of simulation calculations. 
   * - **(progress counters and bars)** 
     - Several counters and bars illustrate ongoing progress during simulation calculation. 
+
+
+
+Clip
+======

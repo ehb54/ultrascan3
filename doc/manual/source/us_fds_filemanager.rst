@@ -22,7 +22,7 @@ This procedure allows the user to distinguish between scans for different gain s
 This module allows the user to select files with gainsets, speeds, and subsets of scans that are supposed to be combined into a logical run, or experiment. 
 
 .. note:: 
-    Depending on the experiment performed, it may be necessary to combine different gains from different speeds into a single run (for example, for equilibrium experiments, where different gains may need to be used to measure different gradients evolving at different speeds, where low speeds produce shallow gradients (requiring a higher gain setting) and higher speeds form steeper gradients that may require a lower gainset for optimal dynamic range). The program allows the user to export all selected Triplicates, speeds, gain settings and scans to a new directory, where the selected scans are saved with the standard file naming convention used for single gain settings. 
+    Depending on the experiment performed, it may be necessary to combine different gains from different speeds into a single run (for example, for equilibrium experiments, where different gains may need to be used to measure different gradients evolving at different speeds, where low speeds produce shallow gradients (requiring a higher gain setting) and higher speeds form steeper gradients that may require a lower gainset for optimal dynamic range). The program allows the user to export all selected Triples, speeds, gain settings and scans to a new directory, where the selected scans are saved with the standard file naming convention used for single gain settings.
 
 The program can also be used to merge scan files from arbitrary many directories into a single directory to create a combined run directory suitable for a single data import action in UltraScan-III. 
 
@@ -48,7 +48,7 @@ A file manager dialog that allows user to navigate to the directory containing t
 .. note:: 
     Only one directory can be chosen at this stage. 
 
-Once loaded, the **Dataset Info** field will indicate a summary of the number scans in this directory, the number of Triplicates, speeds and gain settings for this directory. All scans for the first Triplicate, speed and gain setting will be plotted in the graph window: 
+Once loaded, the **Dataset Info** field will indicate a summary of the number scans in this directory, the number of Triples, speeds and gain settings for this directory. All scans for the first Triplicate, speed and gain setting will be plotted in the graph window:
 
 
 .. image:: _static/images/us_fds_filemanager-1.png
@@ -59,7 +59,7 @@ Once loaded, the **Dataset Info** field will indicate a summary of the number sc
 
     **Loaded Fluorescence File Manager**
 
-Once loaded, the listboxes will be populated with all Triplicates, speeds and gain settings. The gain settings will be listed if they differ by voltage, gain set or range: 
+Once loaded, the listboxes will be populated with all Triples, speeds and gain settings. The gain settings will be listed if they differ by voltage, gain set or range:
 
 .. image:: _static/images/us_fds_filemanager-2.png
     :align: center
@@ -70,7 +70,7 @@ Once loaded, the listboxes will be populated with all Triplicates, speeds and ga
     **Parameter Details Listed**
 
 .. Tip::
-    If every Triplicates, speeds or gain settings are listed, a quick review is possible by simply clicking with the mouse on any listbox item and scrolling through the list by holding down an arrow key button. 
+    If every Triples, speeds or gain settings are listed, a quick review is possible by simply clicking with the mouse on any listbox item and scrolling through the list by holding down an arrow key button.
 
 2. **File Exclusion:** There are multiple ways to exclude files before sorting all files into a single directory. For example, if the channel leaked, or the data are unusable for some other reason, **Delete Triplicate** will remove the entire Triplicate from the list. Alternatively, a scan file selection allows the user to save a subset of scans. Scans marked for exclusion will be marked in red, all others in yellow. To perform the exclusion, click on **Delete marked Scan(s)**: 
 

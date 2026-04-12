@@ -70,7 +70,7 @@ Data Management Functions:
   :header-rows: 0
 
   * - **Investigator:**
-    - Often the investigator text field will already be correctly filled out if your home directory name is the same as the first or last of your investigator name. If not, you may enter all or a portion of the first or last name and hit the **Enter** key to have the investigator found. If that, too, fails, you may click the button to enter a full `Investigator dialog <us_investigator.html>`_.
+    - Often the investigator text field will already be correctly filled out if your home directory name is the same as the first or last of your investigator name. If not, you may enter all or a portion of the first or last name and hit the **Enter** key to have the investigator found. If that, too, fails, you may click the button to enter a full :doc:`Investigator dialog <us_investigator>`.
   * - **Reset**
     - Reset the tree to the default sample data.
   * - **Scan Data**
@@ -82,9 +82,9 @@ Data Management Functions:
   * - **Expand All**  
     - Expand the tree view to insure all rows at the level of Noise data and their ancestors are revealed. The button will then be relabelled **Hide All Noises** so you can hide noise record rows.
   * - **Data Tree Help**
-    - This button lets you pop up a `Tree Help Text <manage_data_thelp.html>`_ Window with some helpful notes on use of the tree view and on the color legend for its rows.
+    - This button lets you pop up a :doc:`Tree Help Text <manage_data_thelp>` Window with some helpful notes on use of the tree view and on the color legend for its rows.
   * - **Tree Navigation and Context Menus**
-    - Individual rows in the tree view may be expanded ("+") to show children and other descendants or may be collapsed ("-"). A right-mouse-button click on any row brings up a `Manage Data Context Menu <manage_data_cmenu.html>`_ that allows you to perform processes on the data record or show details about it.
+    - Individual rows in the tree view may be expanded ("+") to show children and other descendants or may be collapsed ("-"). A right-mouse-button click on any row brings up a :doc:`Manage Data Context Menu <manage_data_cmenu>` that allows you to perform processes on the data record or show details about it.
   * - **Help**
     - Display this and other documentation.
   * - **Close**

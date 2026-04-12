@@ -38,11 +38,11 @@ DM Functions:
   * - **(prefilter text):**
     - Brief information about PreFilter selection(s) made. 
   * - **Select PreFilter:**
-    - Open a `Models Pre-Filter dialog <common_dialogs.html#data-loader>`_ to select Run IDs on which to pre-filter lists of models for loading. 
+    - Open a :doc:`Models Pre-Filter dialog <common_dialogs>` to select Run IDs on which to pre-filter lists of models for loading. 
   * - **Load Distribution(s):**
-    - Load model distribution data to use in density matching, as specified through a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_.
+    - Load model distribution data to use in density matching, as specified through a :doc:`Model Loader dialog <common_dialogs>`.
   * - **Remove Distribution(s):**
-    - Open a `Remove Models dialog <common_dialogs.html#remove-model-distributions>`_ to pare down the list of selected models. 
+    - Open a :doc:`Remove Models dialog <common_dialogs>` to pare down the list of selected models. 
   * - **Refresh Plot:**
     - Force a re-plot of the currently selected plot type. 
   * - **Set Model Parameters:**
@@ -91,3 +91,42 @@ DM Functions:
     - Close all windows and exit.
 
 
+Density Matching Model Parameters:
+======================================
+
+An option in UltraScan-III US_Density_Match, this dialog allows specifying parameters associated with each model distribution. 
+The dialog presents a row for each model selected in the calling Density Matching main window. In each model row, the user may add or change the value for (1) D2O (heavy water) percent; (2) density; or (3) model label. After setting all percent values, the Compute Densities button causes computation of the densities for non-zero-percent models, based on the zero-percent model density value. Once all model values are set, the Accept button closes the dialog and returns the values associated with each model. 
+
+Upon entry, the dialog appears as follows. 
+
+.. image:: /_static/images/densmatch_mpars_empty.png
+    :align: center
+
+After completion of parameter setting, the dialog will appear similar to this: 
+
+.. image:: /_static/images/densmatch_mpars_completed.png
+    :align: center
+
+DM. Model Para. Functions
+-------------------------------
+
+.. list-table::
+  :widths: 20 50
+  :header-rows: 0 
+
+  * - **(D2O Percent column):**  
+    - Text boxes allow setting D2O percent values for each model.
+  * - **(Density (g/l) column)**  
+    - Text boxes allow setting density values in grams per liter for each model. Initial values are computed and often need not be manually changed by the user.
+  * - **(Label column):**  
+    - Text boxes allow setting labels for each model that are used in the Legend of each plot.
+  * - **(Description column):**  
+    - Read-only text boxes display the description text associated with  each model.
+  * - **Help:**  
+    - Display this documentation.
+  * - **Cancel:**  
+    - Exit this dialog without returning parameter values to the caller.
+  * - **Accept:**  
+    - Exit this dialog and return parameter values to the caller.
+  * - **Compute Densities:**  
+    - Compute densities values for all models with non-zero D2O percent values .

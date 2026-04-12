@@ -45,7 +45,7 @@ Second Moment Functions:
   * - **(description)** 
     - The text box below the one for temperature shows a full data description string.
   * - **Cell / Channel / Wavelength**
-    - The text box below this label gives cell, channel and wavelength Triplicates available in this data set. Highlight the desired value.
+    - The text box below this label gives cell, channel and wavelength Triples available in this data set. Highlight the desired value.
   * - **Solution** 
     - Click this button to open a `Solution Management dialog <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
   * - **Density (20°C)** 

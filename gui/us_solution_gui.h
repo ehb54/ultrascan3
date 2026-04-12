@@ -141,7 +141,7 @@ class US_GUI_EXTERN US_SolutionMgrSelect: public US_Widgets
       /* QString solution_smry ( US_Solution* ); */
       /* void sequence        (void); */
 
-      void help( void ) { showHelp.show_help( "solution_select.html" ); };
+      void help( void ) { showHelp.show_help( "solutions/solution_select.html" ); };
 
    public slots:
      void load               ( void );
@@ -237,7 +237,7 @@ class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
      void saveNotes          ( void );
      void spectrum_class     ( void );
      
-     void help( void ) { showHelp.show_help( "solution_new.html" ); };
+     void help( void ) { showHelp.show_help( "solutions/solution_new.html" ); };
  
    public slots:
      void newSolution        ( void );
@@ -300,7 +300,7 @@ class US_GUI_EXTERN US_SolutionMgrEdit : public US_Widgets
       void accept_enable     ( void ); 
       void saveTemperature   ( const QString& );
       void saveNotes         ( void );
-      void help( void ) { showHelp.show_help( "solution_edit.html" ); };
+      void help( void ) { showHelp.show_help( "solutions/solution_edit.html" ); };
       void description       ( void );
 
    public slots:
@@ -354,7 +354,7 @@ class US_GUI_EXTERN US_SolutionMgrSettings: public US_Widgets
       void assign_investigator( int  );
       //void synch_components   ( void );
 
-      void help( void ) { showHelp.show_help( "solution_settings.html" ); };
+      void help( void ) { showHelp.show_help( "solutions/solution_settings.html" ); };
 };
 
 

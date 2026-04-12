@@ -28,11 +28,11 @@ Model Comp. Functions:
   :header-rows: 0
 
   * - **New Analyte**
-    - Click to create a new analyte and add it to the list of model components, using an `Analyte Management dialog <analyte/analyte_new.html>`_.
+    - Click to create a new analyte and add it to the list of model components, using an :doc:`Analyte Management dialog <analyte/analyte_new>`.
   * - **Remove Current Analyte**
     - Click to remove from the list of model components the analyte currently selected.
   * - **Edit Current Analyte**
-    - Click to replace a model components with a new or ready-made analyte and add it to the list of model components, using an `Analyte Management dialog <analyte/analyte_new.html>`_. 
+    - Click to replace a model components with a new or ready-made analyte and add it to the list of model components, using an :doc:`Analyte Management dialog <analyte/analyte_new>`. 
   * - **Analyte Description:**
     - Enter in the text box the name to be given a newly created analyte or the new name to be given to a currently selected analyte.
   * - **(Analyte List)**
@@ -48,7 +48,7 @@ Model Comp. Functions:
   * - **Analyte Signal Concentration:**
     - Enter the analyte's signal concentration value.
   * - **Simulate s and D**
-    - Bring up a `Shape dialog <predict1.html>`_ that uses axial ratio to model s, D, and f from MW for 4 basic shapes.
+    - Bring up a :doc:`Shape dialog <predict1>` that uses axial ratio to model s, D, and f from MW for 4 basic shapes.
   * - **(Shape)**
     - Select molecule shape: Sphere, Prolate Ellipsoid, Oblate Ellipsoid, or Rod. The selection here should be made before any use of the Shape dialog.
   * - **(Parameters/Coefficients)**

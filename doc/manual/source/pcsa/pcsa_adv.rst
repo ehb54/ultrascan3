@@ -30,9 +30,9 @@ Advance Controls Functions:
   :header-rows: 0
 
   * - **Curve Type:**
-    - The module take the specifies curve type selected in the `PCSA Fit Controls <pcsa_analys.html>`_ Window.
+    - The module take the specifies curve type selected in the :doc:`PCSA Fit Controls <pcsa_analys>` Window.
   * - **X Range**
-    - The module take the X parameter range specified in the `PCSA Fit Controls <pcsa_analys.html>`_ Window.
+    - The module take the X parameter range specified in the :doc:`PCSA Fit Controls <pcsa_analys>` Window.
   * - **Y Range**
     - Adjust the Y parameter range 
   * - **Par1**

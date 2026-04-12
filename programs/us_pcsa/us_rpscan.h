@@ -92,7 +92,7 @@ class US_RpScan : public US_WidgetsDialog
                         const int, const int, const int, double&, double& );
 
       void help       ( void )
-      { showHelp.show_help( "pcsa_rpscan.html" ); };
+      { showHelp.show_help( "manual/pcsa/pcsa_rpscan.html" ); };
 
 };
 #endif

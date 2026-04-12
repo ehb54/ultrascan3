@@ -33,7 +33,7 @@ Next, the program moves to the 'IMPORT' stage, which displays the last scan of e
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_05.png
     :align: center
 
-Clicking **OK** displays the converted absorbance data following the automated reference scan processing. If the user is not satisfied with the automated reference scans processing, the **Undo Reference Scans** button allows for them to be defined manually using the **Define Reference Scans** button. **Drop Selected Triplicates** can be used to drop unwanted Triplicates. 
+Clicking **OK** displays the converted absorbance data following the automated reference scan processing. If the user is not satisfied with the automated reference scans processing, the **Undo Reference Scans** button allows for them to be defined manually using the **Define Reference Scans** button. **Drop Selected Triples** can be used to drop unwanted Triples.
 
 The 'Save' button prompts the 'GMP Run IMPORT Form', allowing the user to add a comment and prompting them for their master password for authentication. 
 
@@ -60,7 +60,7 @@ Once the edited profiles have been saved, the user is notified that the program 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_10.png
     :align: center
 
-The analysis window displays the current status of the submitted jobs producing the models specified in the **Aprofile**. **Cancel** can be used to stop ongoing jobs. **View Fit** simulates completed model overlays and displays them. The **Expand All Triplicates** and **Collapse All Triplicates** buttons control all Triplicates, while the {down arrow} button can be used to collapse or expand each individual Triplicate. 
+The analysis window displays the current status of the submitted jobs producing the models specified in the **Aprofile**. **Cancel** can be used to stop ongoing jobs. **View Fit** simulates completed model overlays and displays them. The **Expand All Triples** and **Collapse All Triples** buttons control all Triples, while the {down arrow} button can be used to collapse or expand each individual Triplicate.
 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_11.png
     :align: center

@@ -9,7 +9,7 @@ Finite Element Model Simulation
   :local: 
 
 Simulation Product Output Summary
-=================================
+===================================
 
 When the **Simulate Model** button is clicked in the **Finite Element Model Viewer** window, a simulation is performed using the Edit data, a Loaded Model, and simulation parameters primarily created using the edit data set. A simulation data set is created that has the same ranges as the edit set, but with readings values that are calculated and compared to the actual experimental data. The comparison spawns a number of new dialogs and options that allow the user to evaluate the quality of the model.
 

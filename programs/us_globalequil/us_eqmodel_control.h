@@ -207,7 +207,7 @@ class US_EqModelControl : public US_WidgetsDialog
         void selected(void);
 
         //! \brief Slot to show help.
-        void help(void) { showHelp.show_help("global_equil-modctrl.html"); };
+        void help(void) { showHelp.show_help("global_equil.html#model-controls"); };
 };
 
 #endif // US_EQMODCTRL_H

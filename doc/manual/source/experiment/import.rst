@@ -9,7 +9,7 @@
   :local: 
 
 
-After a run is completed, the data is imported by first defining the reference scans, allowing users to drop any invalid Triplicates; or scans and the resulting edit profile is then imported into the database by clicking **Save**.
+After a run is completed, the data is imported by first defining the reference scans, allowing users to drop any invalid Triples; or scans and the resulting edit profile is then imported into the database by clicking **Save**.
 
 .. image:: ../_static/images/experiment_import.png
     :align: center
@@ -19,7 +19,7 @@ After a run is completed, the data is imported by first defining the reference s
 
     **Main Import Window in the Data Acquisition Package**
 
-Once Run is completed, define reference scans, drop Triplicates, and the edit profile is imported to the database. 
+Once Run is completed, define reference scans, drop Triples, and the edit profile is imported to the database.
 
 .. image:: ../_static/images/experiment_edit.png
     :align: center
@@ -50,8 +50,8 @@ LIMS Import Functions:
     - Click bottom to accept the reference selection automatically generated. 
   * - **Undo Reference Scans**
     - Undo reference selection automatically made and make manual selection. 
-  * - **Drop Selected Triplicates**
-    - Delete selected Triplicate when :ref:`Triplicates Selector for Deletes <select_delete>` window appears. 
+  * - **Drop Selected Triples**
+    - Delete selected Triplicate when :ref:`Triples Selector for Deletes <select_delete>` window appears.
   * - **Comments:**
     - Add comments to sample solution label.  
   * - **Triplicate (c/c/w) Info:**

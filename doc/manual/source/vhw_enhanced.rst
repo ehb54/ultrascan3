@@ -24,9 +24,9 @@ vHW Enhanced Functions:
   :header-rows: 0
 
   * - **Load Experiment**
-    - Click on this button and, in the resulting `Load Run Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click on this button and, in the resulting :doc:`Load Run Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
   * - **Run Details**
-    - Bring up a `Run Details Dialog <run_details.html>`_ with a summary of data and run details.		 
+    - Bring up a :doc:`Run Details Dialog <run_details>` with a summary of data and run details.		 
   * - **Latest Data Edit**
     - Uncheck to allow choosing an edit other than the latest one for the experimental data.		
   * - **Database**
@@ -45,20 +45,20 @@ vHW Enhanced Functions:
     - The text box below the one for temperature shows a full data description string.		
 
 
-**Cell / Channel / Wavelength** The text box below this label gives cell, channel and wavelength Triplicates available in this data set. Highlight the desired value.
+**Cell / Channel / Wavelength** The text box below this label gives cell, channel and wavelength Triples available in this data set. Highlight the desired value.
 
 .. list-table::
   :widths: 20 50
   :header-rows: 0
 
   * - **Solution** 
-    - Click this button to open a `Solution Management <solution/solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a :doc:`Solution Management <solution/solution>` that allows changes to buffer and analyte characteristics of the data set.
   * - **Density (20°C)**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.		
   * - **Viscosity (20°C)**
     - Shows the viscosity value for the loaded experiment. Click the Solution button to open a dialog in which viscosity and other values may be changed.		
   * - **Distribution Plot**
-    - Click for a plot dialog that shows a `vHW Distribution Plot <vhw_distrib_plot.html>`_ illustrating sedimentation coefficient power related to separate species.
+    - Click for a plot dialog that shows a :doc:`vHW Distribution Plot <vhw_distrib_plot>` illustrating sedimentation coefficient power related to separate species.
   * - **Select Groups**
     - Click on this button to begin a session of choosing vHW Extrapolation Plot division groups. As an initial pop-up dialog explains, you must click first above any group of division lines and then below it. Multiple groups may be chosen, with division line overlap between groups. 
 	.. note:: The button label becomes **Clear Groups** after selection, allowing the set of selected groups to be discarded in favor of a new set of selections. 

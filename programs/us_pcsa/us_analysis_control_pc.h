@@ -177,7 +177,7 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       void    set_solute_type( void );
 
       void help       ( void )
-      { showHelp.show_help( "pcsa_analys.html" ); };
+      { showHelp.show_help( "manual/pcsa/pcsa_analys.html" ); };
 };
 #endif
 

@@ -44,7 +44,7 @@ Add Rotor Calibration
 .. note::
     Administrators only. 
 
-In this sequence you have come to this window from `Rotor Calibration <rotor_calibration.html>`_ module and you would like to associate the calibration with an existing rotor. Click on the rotor you would like to associate and then click on **Save Calibration Data.** 
+In this sequence you have come to this window from :doc:`Rotor Calibration <rotor_calibration>` module and you would like to associate the calibration with an existing rotor. Click on the rotor you would like to associate and then click on **Save Calibration Data.** 
 
 
 .. image:: _static/images/rotor-save-calibration.png
@@ -87,4 +87,4 @@ Calibration reports can be loaded to each Rotor in this window.
 
     **Rotor Calibration Report**
 
-The Rotor Calibration reports can be generated in `Edit Rotor Calibration <rotor_calibration.html>`_
+The Rotor Calibration reports can be generated in :doc:`Edit Rotor Calibration <rotor_calibration>`

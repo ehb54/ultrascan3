@@ -70,13 +70,13 @@ Pseudo-3D Functions
   * - **Local Disk**
     - Select to specify data input from local disk.
   * - **Select PreFilter(s)**
-    - `Select Run(s) as Models Pre-Filter <common_dialogs.html#data-loader>`_ dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
+    - :doc:`Select Run(s) as Models Pre-Filter <common_dialogs>` dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
   * - **Load Color File**
-    - Load a color map for Z dimension display as specified through the `Color Map Load dialog <config.html#color-configuration-panel>`_.
+    - Load a color map for Z dimension display as specified through the :doc:`Color Map Load dialog <config.html>`.
   * - **Load Distribution(s)**
-    - Load model distribution data as specified through a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_. Multiple distribution files may be selected.
+    - Load model distribution data as specified through a :doc:`Model Loader dialog <common_dialogs>`. Multiple distribution files may be selected.
   * - **Remove Distribution(s)**
-    - Open a `Remove Model Distributions <common_dialogs.html#remove-model-distributions>`_ dialog to remove selected model distributions from the loaded set.
+    - Open a :doc:`Remove Model Distributions <common_dialogs>` dialog to remove selected model distributions from the loaded set.
 
 
 **Window Controls**

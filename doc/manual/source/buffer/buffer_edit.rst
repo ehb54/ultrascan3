@@ -15,7 +15,7 @@ Edit Existing Buffer Tab
 * `Select Buffer <buffer_select.html>`_ - A panel whose primary purpose is to select a buffer to return to the caller.
 * `Enter New Buffer <buffer_new.html>`_ - A panel whose primary purpose is to enter a brand new buffer, defined mostly by specifying components and each one's concentration.
 * :ref:`Edit Existing Buffer <edit_buffer>` - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing buffer.
-* `Settings <buffer_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local buffer components file from the database.
+* :ref:`Settings <buffer_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local buffer components file from the database.
 
 Edit Buffer Panel
 =======================

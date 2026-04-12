@@ -11,6 +11,7 @@ This module is used to display, and export FE solutions fitted to velocity exper
    fe_match_main
    fe_match_simulate
    fe_match_adv
+   fe_dmga_adv
 
 Steps to compare Experiment to FE models: 
 =============================================
