@@ -90,7 +90,7 @@ class US_GUI_EXTERN US_SelectItem : public US_WidgetsDialog
       void do_refresh_state_autoflow( void );
       void show_autoflow_run_as_failed( void );
       void help           ( void )
-      { showHelp.show_help( "select_item.html" ); };
+      { showHelp.show_help( "common_dialogs.html#select-pre-filter" ); };
 
    signals:
       void accept_deletion( void );

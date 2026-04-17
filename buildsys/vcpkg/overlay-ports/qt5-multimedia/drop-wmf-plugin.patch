@@ -1,0 +1,13 @@
+diff --git a/src/plugins/plugins.pro b/src/plugins/plugins.pro
+index ec2c204..2877666 100644
+--- a/src/plugins/plugins.pro
++++ b/src/plugins/plugins.pro
+@@ -35,7 +35,7 @@ win32:!winrt {
+                windowsaudio
+ 
+     qtConfig(directshow): SUBDIRS += directshow
+-    qtConfig(wmf): SUBDIRS += wmf
++#    qtConfig(wmf): SUBDIRS += wmf
+ }
+ 
+ 

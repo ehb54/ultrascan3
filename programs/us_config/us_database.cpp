@@ -571,7 +571,7 @@ void US_Database::reset( )
 void US_Database::help( )
 {
   US_Help* showhelp = new US_Help(this);
-  showhelp->show_help( "database_config.html" );
+  showhelp->show_help( "config.html#database-configuration-panel" );
 }
 
 void US_Database::save_default( )

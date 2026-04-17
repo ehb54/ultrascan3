@@ -91,6 +91,7 @@ class US_GUI_EXTERN US_Images
       //! \param  bname Base name of embedded image (e.g., "check")
       //! \return       Full embedded image name (e.g., ":/images/check.png")
       static const QString expanded_name( const QString& );
+      static void ensure_us3_gui_images_resources();
 };
 
 #endif

@@ -54,7 +54,7 @@ US_ABDE_MW::US_ABDE_MW() : US_Widgets()
     turn_on(pb_fitter, true);
     turn_on(pb_normalizer, false);
     setWindowTitle(fitter->windowTitle());
-    main_lyt->setMargin(1);
+    main_lyt->setContentsMargins( 1, 1, 1, 1);
     main_lyt->setSpacing(2);
 //    main_lyt->setSizeConstraint(QLayout::SetMinimumSize);
     this->setLayout(main_lyt);

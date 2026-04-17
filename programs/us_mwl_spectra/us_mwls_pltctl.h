@@ -28,7 +28,7 @@ class US_MwlSPlotControl : public US_WidgetsDialog
       void          do_3dplot   ( void );
 
       //! \brief Return 3-d plot data widget pointer
-      QGLWidget*    data_3dplot ( void );
+      QOpenGLWidget*    data_3dplot ( void );
 
       //! \brief Return 3-d plot main widget pointer
       US_Plot3D* widget_3dplot  ( void );
@@ -64,7 +64,7 @@ class US_MwlSPlotControl : public US_WidgetsDialog
       void close_all( void );
 
       void help     ( void )
-      { showHelp.show_help( "mwl_spectra_pltctl.html" ); };
+      { showHelp.show_help( "manual/multi-wavelength/mwl_spectra.html#process" ); };
 };
 #endif
 

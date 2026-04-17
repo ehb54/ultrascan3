@@ -48,11 +48,11 @@ DbgLv(1) << "MwDa: evers" << evers << "is_absorb" << is_absorb;
    cellchans.clear();
    QString old_runID  = runID;
 
-   runID.replace( QRegExp( "![A-Za-z0-9_-]" ), "_" );
+   runID.replace( QRegularExpression( "![A-Za-z0-9_-]" ), "_" );
 
    if ( runID != old_runID )
    {
-      QMessageBox::warning( 0,
+      QMessageBox::warning( nullptr,
             tr( "RunID Name Changed" ),
             tr( "The runID name has been changed. It may consist only\n"
                 "of alphanumeric characters, underscore, or hyphen.\n"

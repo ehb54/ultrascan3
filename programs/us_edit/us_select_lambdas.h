@@ -68,7 +68,7 @@ class US_SelectLambdas : public US_WidgetsDialog
         //! \brief Slot to show the help documentation.
         void help(void)
         {
-            showHelp.show_help("manual/edit_select_lambdas.html");
+            showHelp.show_help("manual/us_edit.html#edit-multi-wavelength-mwl-data");
         }
 };
 

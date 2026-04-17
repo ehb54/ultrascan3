@@ -17,9 +17,6 @@ win32 {
       DEFINES += US_MAKE_UTIL_DLL
 }
 
-TRANSLATIONS = $${TARGET}_DE_de.ts
-
-
 # Consolidate us_femglobal and us_femglobal_new when development is
 # progressed to a point where us_femglobal can be removed
 
@@ -77,7 +74,8 @@ HEADERS      = us_ana_profile.h   \
                us_util.h          \
                us_vector.h        \
                us_xpn_data.h      \
-               us_zsolute.h
+               us_zsolute.h       \
+               us_utils_qt.h
 
 SOURCES      = us_ana_profile.cpp   \
                us_analyte.cpp       \

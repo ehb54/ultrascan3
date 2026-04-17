@@ -314,7 +314,7 @@ public:
     US_LineEdit_RE(const QString& = 0, int = -1, bool = false);
     void setMaxChars(int);
     void setDefault(void);
-    QRegExp re;
+    QRegularExpression re;
 
 signals:
     void textUpdated(void);

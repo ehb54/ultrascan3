@@ -342,9 +342,13 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
    int stype     = data_sets[ offset ]->solute_type;
 
    if ( use_zsol )
-       std::sort(sim_vals.zsolutes.begin(), sim_vals.zsolutes.end());
+   {
+      std::sort( sim_vals.zsolutes.begin(), sim_vals.zsolutes.end() );
+   }
    else
-       std::sort(sim_vals.solutes.begin(), sim_vals.solutes.end());
+   {
+      std::sort( sim_vals.solutes.begin(), sim_vals.solutes.end() );
+   }
 
    int count_cut  = 0;         // Count of A columns cut by norm tolerance
    int ksolutes   = nsolutes;  // Saved original number of solutes (columns)
@@ -1214,7 +1218,7 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
 
 
    int kstodo   = nsolutes / 50;          // Set steps count for NNLS
-   kstodo       = max( kstodo, 2 );
+   kstodo       = qMax( kstodo, 2 );
 DbgLv(1) << "   CR:200  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 //DebugTime("BEG:clcr-cn");
 //------------------------------------------
@@ -1501,9 +1505,8 @@ DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
          }
       }
    }
-
-   double rmsds[ dataset_count ];
-   int    kntva[ dataset_count ];
+   QVector<double> rmsds( dataset_count );
+   QVector<int> kntva( dataset_count );
    double variance   = 0.0;
    int    tinoffs    = 0;
    int    rinoffs    = 0;
@@ -1872,8 +1875,8 @@ DebugTime("BEG:ri_smab");
    int nscans  = edata->scanCount();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
-   incprg      = max( incprg,  1 );
-   incprg      = min( incprg, 10 );
+   incprg      = qMax( incprg,  1 );
+   incprg      = qMin( incprg, 10 );
    int jsols   = qMax( 1, nsolutes );
    int jstprg  = ( kstodo * incprg ) / jsols;     // steps for each report
    int kstep   = 0;                               // progress counter
@@ -1972,8 +1975,8 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
    int nscans  = edata->scanCount();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
-   incprg      = max( incprg,  1 );
-   incprg      = min( incprg, 10 );
+   incprg      = qMax( incprg,  1 );
+   incprg      = qMin( incprg, 10 );
 
 DbgLv(1)<< "ti_small_a_and_b: nsolutes=" << nsolutes;
 

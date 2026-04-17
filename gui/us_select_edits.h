@@ -78,7 +78,7 @@ class US_GUI_EXTERN US_SelectEdits : public US_WidgetsDialog
       void update_person  ( int  );
       void update_disk_db ( bool );
       void help           ( void )
-      { showHelp.show_help( "select_edits.html" ); };
+      { showHelp.show_help( "common_dialogs.html#select-pre-filter" ); };
 
 };
 #endif

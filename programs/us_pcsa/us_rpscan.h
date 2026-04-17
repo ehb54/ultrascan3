@@ -85,14 +85,14 @@ class US_RpScan : public US_WidgetsDialog
       void accept_it  ( void   );
       void scan       ( void   );
       void plot_data  ( void   );
-      void mouse      ( const QwtDoublePoint& );
+      void mouse      ( const QPointF& );
       void process_job( WorkerThreadPc* );
       void apply_alpha( const double,
                         QVector< double >*, QVector< double >*,
                         const int, const int, const int, double&, double& );
 
       void help       ( void )
-      { showHelp.show_help( "pcsa_rpscan.html" ); };
+      { showHelp.show_help( "manual/pcsa/pcsa_rpscan.html" ); };
 
 };
 #endif

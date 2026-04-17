@@ -7,7 +7,6 @@
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_model_loader.h"
-#include "us_solute.h"
 #include "us_spectrodata.h"
 #include "us_plot.h"
 
@@ -41,6 +40,8 @@ bool distro_lessthan_s(const S_Solute&, const S_Solute&);
 bool distro_lessthan_k(const S_Solute&, const S_Solute&);
 bool distro_lessthan_w(const S_Solute&, const S_Solute&);
 bool distro_lessthan_d(const S_Solute&, const S_Solute&);
+bool distro_lessthan_v(const S_Solute&, const S_Solute&);
+bool distro_lessthan_r(const S_Solute&, const S_Solute&);
 
 //! \brief Class for displaying models in pseudo-3D
 class US_Integral : public US_Widgets
@@ -58,7 +59,7 @@ class US_Integral : public US_Widgets
     private:
 
         //! \brief Enumeration for attribute types
-        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F };
+        enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_D, ATTR_F, ATTR_V, ATTR_R };
 
         QLabel*       lb_division;       //!< Division label
         QTextEdit*    te_distr_info;     //!< Distribution information text edit
@@ -91,6 +92,7 @@ class US_Integral : public US_Widgets
         QRadioButton* rb_x_vbar;         //!< x-axis vbar radio button
         QRadioButton* rb_x_s;            //!< x-axis sedimentation coefficient radio button
         QRadioButton* rb_x_d;            //!< x-axis diffusion coefficient radio button
+        QRadioButton* rb_x_rh;           //!< x-axis hydrodynamic radius radio button
         QRadioButton* rb_da_n;           //!< Distribution average n radio button
         QRadioButton* rb_da_s;           //!< Distribution average s radio button
         QRadioButton* rb_da_w;           //!< Distribution average w radio button
@@ -106,6 +108,7 @@ class US_Integral : public US_Widgets
         QVector< QVector< double > >  v_frats;   //!< Vector of friction ratios per fraction
         QVector< QVector< double > >  v_sedcs;   //!< Vector of sedimentation coefficient vectors per distribution
         QVector< QVector< double > >  v_difcs;   //!< Vector of diffusion coefficient vectors per distribution
+        QVector< QVector< double > >  v_rhs;     //!< Vector of hydrodynamic radius vectors per distribution
 
         int           dbg_level;        //!< Debug level
         int           plot_x;           //!< x-axis plot selection
@@ -205,6 +208,6 @@ class US_Integral : public US_Widgets
 
         //! \brief Slot to display help information
         void help()
-        { showHelp.show_help("integral.html"); }
+        { showHelp.show_help("idist_combine.html"); }
 };
 #endif

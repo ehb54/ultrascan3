@@ -2,8 +2,6 @@
 #ifndef US_MEMORY_H
 #define US_MEMORY_H
 
-#include <QtCore>
-
 #include "us_extern.h"
 
 //! \brief Platform-dependent resident memory (RSS) utilities

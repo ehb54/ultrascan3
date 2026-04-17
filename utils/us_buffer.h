@@ -2,7 +2,6 @@
 #ifndef US_BUFFER_H
 #define US_BUFFER_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "ius_db2.h"
 
@@ -17,7 +16,7 @@ class US_UTIL_EXTERN US_BufferComponent
       double  dens_coeff[ 6 ];   //!< The density coefficients. 
       double  visc_coeff[ 6 ];   //!< The viscosity coefficients. 
       QString range;             //!< The buffer component's range. 
-      bool    grad_form;         //!< Flag if gradient forming.
+      bool    grad_form{false};         //!< Flag if gradient forming.
 
       //! Get all component data from the DB
       //! \param masterPW The user's master password.

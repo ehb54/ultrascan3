@@ -17,7 +17,7 @@
 #include "us_new_spectrum.h"
 
 //! This class provides a tabbed entry for solution selection
-class US_SolutionMgrSelect: public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrSelect: public US_Widgets
 {
    Q_OBJECT
 
@@ -141,7 +141,7 @@ class US_SolutionMgrSelect: public US_Widgets
       /* QString solution_smry ( US_Solution* ); */
       /* void sequence        (void); */
 
-      void help( void ) { showHelp.show_help( "solution_select.html" ); };
+      void help( void ) { showHelp.show_help( "solutions/solution_select.html" ); };
 
    public slots:
      void load               ( void );
@@ -149,7 +149,7 @@ class US_SolutionMgrSelect: public US_Widgets
 };
 
 //!      This class provides a tabbed entry for new solution creation
-class US_SolutionMgrNew : public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrNew : public US_Widgets
 {
    Q_OBJECT
 
@@ -216,6 +216,8 @@ class US_SolutionMgrNew : public US_Widgets
       //QMap< QString, US_SolutionComponent > component_list;
 
       US_Help       showHelp;
+      bool can_accept         ( void ) const;
+
 
    private slots:
 
@@ -223,7 +225,6 @@ class US_SolutionMgrNew : public US_Widgets
      void assignAnalyte      ( US_Analyte );
      void calcCommonVbar20   ( void );
      void reset              ( void );
-     
      void new_description    ();
      void saveAmount         ( double );
      void selectAnalyte      ( QListWidgetItem* );
@@ -231,12 +232,12 @@ class US_SolutionMgrNew : public US_Widgets
      void newCanceled        ( void );
      void selectBuffer       ( void );
      void assignBuffer       ( US_Buffer );
-     void newAccepted        ( void);
-     void saveTemperature    ( const QString& );
+     void newAccepted        ( void );
+     void saveTemperature    ( void );
      void saveNotes          ( void );
      void spectrum_class     ( void );
      
-     void help( void ) { showHelp.show_help( "solution_new.html" ); };
+     void help( void ) { showHelp.show_help( "solutions/solution_new.html" ); };
  
    public slots:
      void newSolution        ( void );
@@ -244,7 +245,7 @@ class US_SolutionMgrNew : public US_Widgets
 };
 
 //! This class provides a tabbed entry for non-hydrodynamic solution mods
-class US_SolutionMgrEdit : public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrEdit : public US_Widgets
 {
    Q_OBJECT
 
@@ -299,7 +300,7 @@ class US_SolutionMgrEdit : public US_Widgets
       void accept_enable     ( void ); 
       void saveTemperature   ( const QString& );
       void saveNotes         ( void );
-      void help( void ) { showHelp.show_help( "solution_edit.html" ); };
+      void help( void ) { showHelp.show_help( "solutions/solution_edit.html" ); };
       void description       ( void );
 
    public slots:
@@ -308,7 +309,7 @@ class US_SolutionMgrEdit : public US_Widgets
 
 
 //! This class provides a tabbed entry for general solution settings
-class US_SolutionMgrSettings: public US_Widgets
+class US_GUI_EXTERN US_SolutionMgrSettings: public US_Widgets
 {
    Q_OBJECT
 
@@ -353,7 +354,7 @@ class US_SolutionMgrSettings: public US_Widgets
       void assign_investigator( int  );
       //void synch_components   ( void );
 
-      void help( void ) { showHelp.show_help( "solution_settings.html" ); };
+      void help( void ) { showHelp.show_help( "solutions/solution_settings.html" ); };
 };
 
 

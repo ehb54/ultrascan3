@@ -68,7 +68,7 @@ jobs:
       - name: Build Documentation
         run: |
           cd doc/manual
-          make -j1
+          make -j1 qch
   check-status:
     if: always()
     needs: [ build-docs ]

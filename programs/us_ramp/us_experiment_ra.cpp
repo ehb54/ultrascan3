@@ -238,10 +238,8 @@ int US_ExperimentRa::saveToDisk(
     QString runID,
     QString dirname )
 { 
-   QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
-
-   if ( this->expGUID.isEmpty() || ! rx.exactMatch( this->expGUID ) )
+   if ( this->expGUID.isEmpty() || !US_Util::is_valid_uuid( this->expGUID ) )
       this->expGUID = US_Util::new_guid();
 
    if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /

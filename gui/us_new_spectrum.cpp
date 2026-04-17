@@ -387,7 +387,7 @@ void US_ViewSpectrum::save_csv(){
                                                   tr("CSV (*.csv)"));
   if (fileName.isEmpty()) return;
 
-  if (! (fileName.endsWith(".csv") or fileName.endsWith(".CSV"))) {
+  if (! (fileName.endsWith(".csv") || fileName.endsWith(".CSV"))) {
     fileName.append(".csv");
   }  
 

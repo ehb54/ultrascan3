@@ -552,7 +552,7 @@ DbgLv(1) << "Color at position" << pos << positionColor( pos ); }
 QColor US_MLinesPlot::positionColor( double pos )
 {
 //DbgLv(1) << "pC: position" << pos;
-   QwtDoubleInterval colorinterv( 0.0, 1.0 );
+   QwtInterval colorinterv( 0.0, 1.0 );
    return QColor( colormap->rgb( colorinterv, pos ) );
 }
 

@@ -2,8 +2,6 @@
 #ifndef US_PCSA_MODEL_RECORD_H
 #define US_PCSA_MODEL_RECORD_H
 
-#include <QtCore>
-
 #include "us_extern.h"
 #include "us_zsolute.h"
 #include "us_dataIO.h"

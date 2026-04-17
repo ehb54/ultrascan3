@@ -54,7 +54,7 @@ class US_RemoveDistros : public US_WidgetsDialog
       void restore          ( void );
       void accepted         ( void );
       void help             ( void )
-      { showHelp.show_help( "pseudo3d_comb_rmv.html" ); };
+      { showHelp.show_help( "manual/common_dialogs.html#remove-model-distributions" ); };
 };
 #endif
 

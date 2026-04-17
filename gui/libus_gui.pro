@@ -17,8 +17,9 @@ win32 {
 }
 
 QT          += network svg
-
-TRANSLATIONS = $${TARGET}_DE_de.ts
+greaterThan( QT_VERSION, 5.99 ) {
+QT          += openglwidgets
+}
 
 HEADERS      = \
                us_abstractrotor_gui.h   \
@@ -142,4 +143,24 @@ SOURCES      = \
                us_widgets.cpp             \
                us_widgets_dialog.cpp
 
-RESOURCES     = images.qrc
+
+GUI_IMAGE_FILES = $$files($$PWD/images/*.png, true) \
+                  $$files($$PWD/images/*.svg, true) \
+                  $$files($$PWD/images/*.xpm, true) \
+                  $$files($$PWD/images/*.ico, true)
+
+QRC_CONTENT = "<RCC>" \
+              "  <qresource prefix=\"/images\">"
+
+for(img_path, GUI_IMAGE_FILES) {
+    rel_path = $$relative_path($$img_path, $$PWD/images)
+    QRC_CONTENT += "    <file alias=\"$$rel_path\">$$img_path</file>"
+}
+
+QRC_CONTENT += "  </qresource>" \
+               "</RCC>"
+
+US3_GUI_QRC = $$PWD/us3_gui_images.qrc
+write_file($$US3_GUI_QRC, QRC_CONTENT)
+
+RESOURCES += us3_gui_images.qrc

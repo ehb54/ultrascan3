@@ -65,14 +65,13 @@ int US_Ramp::saveToDisk(
    //qDebug()<<"tripledesc_filename_cellchan_cell_chan"<<all_chaninfo[i].tripleDesc<<i<<filename;
 
       // Same with solutionGUID
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
       qDebug()<<"_______________________________________________________________________";
       qDebug()<<"all_chaninfo[ i ].solution.saveStatus"<<all_chaninfo[ i ].solution.saveStatus;
       qDebug()<<"US_Solution::NOT_SAVED "<<US_Solution::NOT_SAVED ;
-      qDebug()<<"!rx.exactMatch( all_chaninfo[ i ].solution.solutionGUID "<<!rx.exactMatch( all_chaninfo[ i ].solution.solutionGUID) ;
+      qDebug()<<"!US_Util::is_valid_uuid( all_chaninfo[ i ].solution.solutionGUID "<< !US_Util::is_valid_uuid( all_chaninfo[ i ].solution.solutionGUID ) ;
       
       if ( ( all_chaninfo[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) || 
-           ( ! rx.exactMatch( all_chaninfo[ i ].solution.solutionGUID )       ) )
+           ( ! US_Util::is_valid_uuid( all_chaninfo[ i ].solution.solutionGUID )       ) )
       {
          all_chaninfo[ i ].solution.solutionGUID = US_Util::new_guid();
          all_chaninfo[ i ].solution.solutionDesc = "New Solution";
@@ -355,7 +354,7 @@ int US_Ramp::readRawData( const QString file, US_mwlRamp::RampRawData& data )
       cell.i = 0;
 
       read( ds, cell.c, 1, crc );
-      data.cell = (qFromLittleEndian( cell.i ))+'0';
+      data.cell = QChar(qFromLittleEndian( cell.i ) +  '0' );
 //       QChar cell3= cell2 + '0';
       //qDebug()<<"readcell"<<data.cell;
       
@@ -370,7 +369,7 @@ int US_Ramp::readRawData( const QString file, US_mwlRamp::RampRawData& data )
       chan.i = 0;
 //       char chan[1];
       read( ds, chan.c, 1, crc );
-      data.chan = qFromLittleEndian( chan.i );
+      data.chan = QChar( qFromLittleEndian( chan.i ) );
       //qDebug()<<"readchan"<<data.chan;
 // 
 //       // Get the guid

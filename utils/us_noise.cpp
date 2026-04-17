@@ -1,5 +1,4 @@
 //! \file us_noise.cpp
-
 #include "us_noise.h"
 #include "us_constants.h"
 #include "us_settings.h"

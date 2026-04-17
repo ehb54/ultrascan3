@@ -15,6 +15,7 @@
 #include "us_csv_loader.h"
 
 #include "qwt_picker_machine.h"
+#include <qwt_scale_div.h>
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
@@ -1204,7 +1205,7 @@ void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > a
   int nspecies_tmp = analytes_profs_keys.size();
   
   QStringList analytes_profs_keys_mod;
-  QRegExp rx( "[^A-Za-z0-9_-]" );
+  QRegularExpression rx( "[^A-Za-z0-9_-]" );
   for ( int i=0; i< analytes_profs_keys.size(); ++i )
     {
       QString ana_desc = analytes_profs_keys[i];
@@ -1353,7 +1354,7 @@ void US_MwlSpeciesFit::loadSpecs()
 DbgLv(1) << "SpFiles:";
    for ( int ii = 0; ii < nspecies_tmp; ii++ )
    {
-      QFileInfo finfo = data_list[ii].filePath();
+      QFileInfo finfo( data_list[ii].filePath() );
       spfiles_tmp << finfo.filePath();
       QVector<double> xvals = data_list[ii].columnAt(0);
       QVector<double> yvals = data_list[ii].columnAt(1);
@@ -2011,4 +2012,62 @@ void US_MwlSpeciesFit::rmsd_3dplot(){
     const SFData* sfdata = synFitError.data();
     US_MWL_SF_PLOT3D* plot3d = new US_MWL_SF_PLOT3D(this, sfdata[ccx]);
     plot3d->exec();
+}
+
+void US_MwlSpeciesFit::reset( void )
+{
+   US_AnalysisBase2::reset();
+   reset_data();
+   reset_gui();
+}
+
+void US_MwlSpeciesFit::reset_data( void )
+{
+   nspecies    = 0;
+   jspec       = 0;
+   synData.clear();
+   have_p1.clear();
+   celchns.clear();
+   ftndxs.clear();
+   ltndxs.clear();
+   spfiles.clear();
+   celchn_wvl.clear();
+   synFitError.clear();
+   rmsd_for_gmp.clear();
+   radii.clear();
+   spconcs.clear();
+   lambdas.clear();
+   spwavls.clear();
+   nwavls.clear();
+   editProfile_blc.clear();
+   extinction_profiles_per_channel.clear();
+   report_runs.clear();
+   analysis_runs.clear();
+   ch_wvls.clear();
+   chndescs.clear();
+   chndescs_alt.clear();
+   ch_reports.clear();
+   protocol_details.clear();
+   us_gmp_auto_mode = false;
+}
+
+void US_MwlSpeciesFit::reset_gui( void )
+{
+   if ( te_results != nullptr )
+   {
+      te_results->disconnect();
+      te_results->close();
+      te_results = nullptr;
+   }
+
+   le_fit_error->clear();
+
+   pb_loadsfit->setEnabled( false );
+   pb_sfitdata->setEnabled( false );
+   pb_prev    ->setEnabled( false );
+   pb_next    ->setEnabled( false );
+   pb_plot3d  ->setEnabled( false );
+
+   data_plot1->setTitle( tr( "Output Data Set" ) );
+   data_plot2->setTitle( tr( "Input Data Set" ) );
 }

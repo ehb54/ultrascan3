@@ -61,6 +61,9 @@ class US_SecondMoment : public US_AnalysisBase2
         {
             showHelp.show_help("manual/second_moment.html");
         }
+        void reset();
+        void reset_data();
+        void reset_gui();
 };
 
 #endif

@@ -479,7 +479,7 @@ class US_FeMatch : public US_Widgets
         bool has_intensity_profile(const QString& filename, const bool is_mc);
 
         //! \brief Show help.
-        void help() { showHelp.show_help("fe_match.html"); };
+        void help() { showHelp.show_help("manual/fe_match/fe_match_main.html"); };
 
     protected:
         QList<int> excludedScans; //!< List of excluded scans.

@@ -106,8 +106,8 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
       void update         ( void );
                         
    private slots:       
-      void new_value      ( const QwtDoublePoint&   );
-      void mouseU         ( const QwtDoublePoint&   );
+      void new_value      ( const QPointF&   );
+      void mouseU         ( const QPointF&   );
       void update_ratio   ( void                    );
       void update_mw      ( const QString&          );
       void degC           ( const QString&          ); 

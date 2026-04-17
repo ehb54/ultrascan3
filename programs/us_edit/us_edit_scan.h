@@ -73,16 +73,16 @@ class US_EditScan : public US_WidgetsDialog
 
         //! \brief Slot to end dragging a point.
         //! \param point The point where the drag ended.
-        void end_drag(const QwtDoublePoint& point);
+        void end_drag(const QPointF& point);
 
         //! \brief Slot to handle dragging a point.
         //! \param point The point being dragged.
-        void drag(const QwtDoublePoint& point);
+        void drag(const QPointF& point);
 
         //! \brief Slot to show the help documentation.
         void help(void)
         {
-            showHelp.show_help("manual/edit_scan.html");
+            showHelp.show_help("manual/us_edit.html#edit-specific-scans");
         }
 };
 

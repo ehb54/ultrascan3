@@ -251,9 +251,9 @@ void US_PlotControlFem::do_3dplot_auto()
 }
 
 // Public slot to return a pointer to the 3D plot data widget
-QGLWidget* US_PlotControlFem::data_3dplot( void )
+QOpenGLWidget* US_PlotControlFem::data_3dplot( void )
 {
-   QGLWidget* widgP = (QGLWidget*)0;
+   QOpenGLWidget* widgP = (QOpenGLWidget*)0;
 
    if ( plot3d_w != 0 )
    {

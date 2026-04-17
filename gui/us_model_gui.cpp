@@ -149,7 +149,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    {  // if re-loading a previous model, list that model
       ModelDesc desc;
       desc.description = model.description;
-      desc.DB_id       = -1;
+      desc.DB_id       = "-1";
       desc.filename .clear();
       desc.modelGUID   = model.modelGUID;
       desc.editGUID    = model.editGUID;
@@ -239,7 +239,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                            md.modelGUID   = a.value( "modelGUID"   ).toString();
                            md.editGUID    = a.value( "editGUID"    ).toString();
                            md.filename    = path + "/" + f_name;
-                           md.DB_id       = -1;
+                           md.DB_id       = "-1";
                            model_descriptions << md;
                            break;
                         }
@@ -377,7 +377,7 @@ void US_ModelGui::show_model_desc( void )
    QString mfilt    = le_mlfilt->text();
    bool    listdesc = !mfilt.isEmpty();
 qDebug() << "ShMDsc: mfilt listdesc" << mfilt << listdesc;
-   QRegExp mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
+   QRegularExpression mpart( ".*" + mfilt + ".*", QRegularExpression::CaseInsensitiveOption );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    for ( int ii = 0; ii < model_descriptions.size(); ii++ )
@@ -1063,7 +1063,7 @@ qDebug() << "LsMdl: path" << path;
                      md.modelGUID   = a.value( "modelGUID"   ).toString();
                      md.editGUID    = a.value( "editGUID"    ).toString();
                      md.filename    = path + "/" + f_names[ ii ];
-                     md.DB_id       = -1;
+                     md.DB_id       = "-1";
                      model_descriptions << md;
                      break;
                   }

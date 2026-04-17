@@ -29,7 +29,7 @@ int main( int argc, char* argv[] )
   // Set up language localization
   QString locale = QLocale::system().name();
   QString program = application.applicationFilePath();
-  program.remove( QRegExp( "/.*/" ) );
+  program.remove( QRegularExpression( "/.*/" ) );
 
   QTranslator translator1;
   translator1.load( program + "_" + locale );

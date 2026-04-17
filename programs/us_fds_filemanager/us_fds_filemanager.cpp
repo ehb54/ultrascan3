@@ -436,7 +436,7 @@ void US_FDS_FileManager::plot_scans( void )
    for (int i=0; i<scanindex.size(); i++)
    {
       npts = scaninfo[scanindex[i]].x.size();
-      double x[npts], y[npts];
+      QVector<double> x(npts), y(npts);
       for (int j=0; j<npts; j++)
       {
          x[j] = scaninfo[scanindex[i]].x.at(j);
@@ -444,7 +444,7 @@ void US_FDS_FileManager::plot_scans( void )
       }
       str1.setNum( i+1 );
       curve = us_curve( data_plot, "Scan " + str1 );
-      curve->setSamples( x, y, npts );
+      curve->setSamples( x.data(), y.data(), npts );
       c.append( curve );
       if ( from == 0 && to == 0 )
       { // all scans are yellow

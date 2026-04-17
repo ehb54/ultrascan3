@@ -94,7 +94,7 @@ class US_AdvAnalysis2D : public US_WidgetsDialog
       void load_model   (    void );
 
       void help     ( void )
-      { showHelp.show_help( "2dsa_advan.html" ); };
+      { showHelp.show_help( "manual/2dsa/2dsa_adv.html" ); };
 };
 #endif
 

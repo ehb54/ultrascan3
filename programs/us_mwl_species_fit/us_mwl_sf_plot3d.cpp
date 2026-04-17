@@ -546,7 +546,7 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
 
     QWidget* tab1 = new QWidget();
     QVBoxLayout* tab1_lyt = new QVBoxLayout(tab1);
-    tab1_lyt->setMargin(0);
+    tab1_lyt->setContentsMargins( 0, 0, 0, 0 );
     tab1_lyt->setSpacing(1);
     tab1_lyt->addLayout(us_dataPlot, 1);
     tab1_lyt->addLayout(us_devPlot, 1);
@@ -596,13 +596,13 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     left_lyt->addSpacing(1);
     left_lyt->addLayout(close_lyt);
     left_lyt->setSpacing(1);
-    left_lyt->setMargin(1);
+    left_lyt->setContentsMargins( 1, 1, 1, 1 );
 
     QHBoxLayout* main_lyt = new QHBoxLayout();
     main_lyt->addLayout(left_lyt, 0);
     main_lyt->addWidget(tabs, 1);
     main_lyt->setSpacing(2);
-    main_lyt->setMargin(1);
+    main_lyt->setContentsMargins( 1, 1, 1, 1 );
 //    main_lyt->setSizeConstraint(QLayout::SetFixedSize);
 
     this->setLayout(main_lyt);
@@ -721,14 +721,14 @@ void US_MWL_SF_PLOT3D::renderImage(){
         int state = bnameDialog->exec();
         QString format = cb_format->currentText();
         QString bname = le_bname->text();
-        QRegExp rx( "[A-Za-z0-9_-]" );
+        QRegularExpression rx( "[A-Za-z0-9_-]" );
         QString baseName;
         int pos = 0;
-        int idx = rx.indexIn(bname, pos);
+        int idx = bname.indexOf( rx, pos);
         while (idx != -1) {
             baseName = baseName.append(bname.at(idx));
             pos = idx + 1;
-            idx = rx.indexIn(bname, pos);
+            idx = bname.indexOf( rx, pos);
         }
         if (bname != baseName)
             QMessageBox::warning(this, tr("Warning!"),
@@ -1592,11 +1592,31 @@ SpectrogramData::SpectrogramData(QVector<double> points, QVector<double> scans,
     }
     yrange << scans.last() + (scans.last() - yrange.last());
 
-    setInterval( Qt::XAxis, QwtInterval( xrange.first(), xrange.last() ) );
-    setInterval( Qt::YAxis, QwtInterval( yrange.first(), yrange.last() ) );
-    setInterval( Qt::ZAxis, QwtInterval( 0, 1 ) );
+    //setInterval( Qt::XAxis, QwtInterval( xrange.first(), xrange.last() ) );
+    //setInterval( Qt::YAxis, QwtInterval( yrange.first(), yrange.last() ) );
+    //setInterval( Qt::ZAxis, QwtInterval( 0, 1 ) );
 
     zvals << states;
+}
+
+QwtInterval SpectrogramData::interval( Qt::Axis axis ) const
+{
+    QwtInterval arange = QwtInterval( 0, 1 );
+
+    switch ( axis )
+    {
+    case Qt::XAxis:
+        arange = QwtInterval( xrange.first(), xrange.last() );
+        break;
+    case Qt::YAxis:
+        arange = QwtInterval( yrange.first(), yrange.last() );
+        break;
+    case Qt::ZAxis:
+    default:
+        break;
+    }
+
+    return arange;
 }
 
 double SpectrogramData::value( double x, double y ) const{

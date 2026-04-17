@@ -41,7 +41,7 @@ QString US_Util::new_guid( void )
 }
 
 // Calculate the md5hash and size of a named file (full path)
-QString US_Util::md5sum_file( QString filename )
+QString US_Util::md5sum_file( const QString& filename )
 {
    QFile f( filename );
 
@@ -63,7 +63,7 @@ QString US_Util::md5sum_file( QString filename )
 }
 
 // Convert DateTime string to unambiguous UTC form ("yyyy-mm-dd HH:MM:SS UTC")
-QString US_Util::toUTCDatetimeText( QString dttext, bool knownUTC )
+QString US_Util::toUTCDatetimeText( const QString& dttext, bool knownUTC )
 {
    QString utctext = dttext;
    int     ixLT    = dttext.length() - 2;          // expected last 'T'
@@ -122,7 +122,7 @@ QString US_Util::toUTCDatetimeText( QString dttext, bool knownUTC )
 }
 
 // Ensure DateTime text is in ISO form (ISO, UTC, or unknown on input )
-QString US_Util::toISODatetimeText( QString dttext )
+QString US_Util::toISODatetimeText( const QString& dttext )
 {
    QString isotext = dttext;   // default assumes already in ISO form
 
@@ -141,14 +141,21 @@ QString US_Util::toISODatetimeText( QString dttext )
 }
 
 // Convert a binary uuid to a QString
-QString US_Util::uuid_unparse( unsigned char* uu )
+QString US_Util::uuid_unparse( const unsigned char* uu )
 {
-   return QString().asprintf(
-         "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-"
-         "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
-         uu[  0 ], uu[  1 ], uu[  2 ], uu[  3 ], uu[  4 ], uu[  5 ],
-         uu[  6 ], uu[  7 ], uu[  8 ], uu[  9 ], uu[ 10 ], uu[ 11 ],
-         uu[ 12 ], uu[ 13 ], uu[ 14 ], uu[ 15 ] );
+   QStringList hexParts;
+   for ( int i = 0; i < 16; ++i )
+   {
+      hexParts << QString::number( uu[i], 16 ).rightJustified( 2, '0' );
+   }
+
+   // Group the UUID parts according to the standard format in groups of 4, 2, 2, 2, 6
+   return  QString( "%1-%2-%3-%4-%5" )
+              .arg( hexParts.mid(  0, 4 ).join( "" ) ,
+                    hexParts.mid(  4, 2 ).join( "" ) ,
+                    hexParts.mid(  6, 2 ).join( "" ) ,
+                    hexParts.mid(  8, 2 ).join( "" ) ,
+                    hexParts.mid( 10, 6 ).join( "" ) );
 }
 
 // Convert a triple string from expanded to compressed form
@@ -179,6 +186,11 @@ QString US_Util::expanded_triple( const QString& ccw, bool spaces )
 
    // Return, for example, "4 / A / 280" or "4/A/280"
    return ( cell + sep + chan + sep + wvln );
+}
+
+bool US_Util::is_valid_uuid(const QString& uuid)
+{
+   return UUID_REGEX.match(uuid).hasMatch();
 }
 
 // A helper function to convert a character hex digit to decimal
@@ -217,7 +229,7 @@ bool US_Util::ithTime( int timeinc )
 }
 
 // Return a flag if an XML attribute string represents true or false.
-bool US_Util::bool_flag( const QString xmlattr )
+bool US_Util::bool_flag( const QString& xmlattr )
 {
    return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
 }
@@ -256,7 +268,7 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
    // Search the strings in the list of string lists for each delimeter
    for ( int ii = 0; ii < delims.count(); ii++ )
    {
-      QString delim   = delims[ ii ];
+      const QString& delim   = delims[ ii ];
 //qDebug() << "llB:   ii delim" << ii << delim;
       int kfound      = 0;
 
@@ -308,7 +320,7 @@ int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
    // Build outer strings for each QStringList
    for ( int ii = 0; ii < nlelem; ii++ )
    {
-      QStringList sl  = lsl[ ii ];
+      const QStringList& sl  = lsl[ ii ];
 //qDebug() << "llB:  ii" << ii << "sl" << sl;
       int nslelem     = sl.count();
       int lastjj      = nslelem - 1;
@@ -367,10 +379,12 @@ int US_Util::listlistParse( QList< QStringList >& lsl, QString& llstring )
    // Build the outer list of stringlists by parsing inner strings
    for ( int ii = 0; ii < nlelem; ii++ )
    {
-      QString inner   = out[ ii ];   // Inner formatted string
+      const QString& inner = out[ ii ];   // Inner formatted string
       lsl << inner.split( delim2 );  // Parse and append stringlist
    }
 
    return nlelem;                    // Return the count of QList elements
 }
 
+//! \brief Regex expression for UUID for use
+QRegularExpression US_Util::UUID_REGEX = QRegularExpression( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );

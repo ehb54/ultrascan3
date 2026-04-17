@@ -173,19 +173,19 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     right_lyt->addLayout(intg_lyt);
     right_lyt->addLayout(usplot);
 
-    left_lyt->setMargin(1);
+    left_lyt->setContentsMargins( 1, 1, 1, 1);
     left_lyt->setSpacing(1);
-    right_lyt->setMargin(1);
+    right_lyt->setContentsMargins( 1, 1, 1, 1);
     right_lyt->setSpacing(1);
 
     body_lyt->addLayout(left_lyt, 1);
     body_lyt->addLayout(right_lyt, 3);
-    body_lyt->setMargin(1);
+    body_lyt->setContentsMargins( 1, 1, 1, 1);
     body_lyt->setSpacing(0);
 
     main_lyt->addLayout(runinfo_lyt);
     main_lyt->addLayout(body_lyt);
-    main_lyt->setMargin(0);
+    main_lyt->setContentsMargins( 0, 0, 0, 0);
     main_lyt->setSpacing(0);
     this->setLayout(main_lyt);
 
@@ -219,8 +219,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
     connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
     connect(ckb_ranges, SIGNAL(stateChanged(int)), this, SLOT(slt_ranges(int)));
-    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
-            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
+    connect(picker, SIGNAL(cMouseUp(const QPointF&)),
+            this,   SLOT(slt_mouse(const QPointF&)));
     ckb_norm_max->setCheckState(Qt::Checked);
 
     //hide 
@@ -411,19 +411,19 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     right_lyt->addLayout(intg_lyt);
     right_lyt->addLayout(usplot);
 
-    left_lyt->setMargin(1);
+    left_lyt->setContentsMargins( 1, 1, 1, 1);
     left_lyt->setSpacing(1);
-    right_lyt->setMargin(1);
+    right_lyt->setContentsMargins( 1, 1, 1, 1);
     right_lyt->setSpacing(1);
 
     body_lyt->addLayout(left_lyt, 1);
     body_lyt->addLayout(right_lyt, 3);
-    body_lyt->setMargin(1);
+    body_lyt->setContentsMargins( 1, 1, 1, 1);
     body_lyt->setSpacing(0);
 
     main_lyt->addLayout(runinfo_lyt);
     main_lyt->addLayout(body_lyt);
-    main_lyt->setMargin(0);
+    main_lyt->setContentsMargins( 0, 0, 0, 0);
     main_lyt->setSpacing(0);
     this->setLayout(main_lyt);
 
@@ -455,8 +455,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
     connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
     connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
-    connect(picker, SIGNAL(cMouseUp(const QwtDoublePoint&)),
-            this,   SLOT(slt_mouse(const QwtDoublePoint&)));
+    connect(picker, SIGNAL(cMouseUp(const QPointF&)),
+            this,   SLOT(slt_mouse(const QPointF&)));
     ckb_norm_max->setCheckState(Qt::Checked);
 }
 
@@ -1779,7 +1779,7 @@ void US_Norm_Profile::slt_pickPoint() {
 // }
 
 
-void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
+void US_Norm_Profile::slt_mouse(const QPointF& point){
     if (selFilenames.size() == 0) return;
     if (picker_state == XNONE) return;
     QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
@@ -1823,8 +1823,10 @@ void US_Norm_Profile::slt_mouse(const QwtDoublePoint& point){
     } else if (picker_state == XNORM) {
         x_norm = point.x();
         enableWidgets(true);
-        pb_pick_norm->setStyleSheet(bkgc);
-        picker_state = XNONE;
+	if (!us_auto_mode )
+	  pb_pick_norm->setStyleSheet(bkgc);
+
+	picker_state = XNONE;
 	if ( us_auto_mode )
 	  {
 	    QString channame = cb_chann->currentText();
@@ -2010,17 +2012,26 @@ void US_Norm_Profile::slt_norm_by_max(int state)
   
   QString qs = "QPushButton { background-color: %1 }";
   QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
-  if (state == Qt::Checked) {
-    pb_pick_norm->setStyleSheet(qs.arg(color.name()));
-    pb_pick_norm->setDisabled(true);
-  } else {
-    pb_pick_norm->setDisabled(false);
-    if (x_norm == -1) {
-      pb_pick_norm->setStyleSheet(qs.arg("yellow"));
-    } else {
+  if (state == Qt::Checked)
+    {
       pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+      pb_pick_norm->setDisabled(true);
     }
-  }
+  else
+    {
+      pb_pick_norm->setDisabled(false);
+      if ( !us_auto_mode )
+	{
+	  if (x_norm == -1)
+	    {
+	      pb_pick_norm->setStyleSheet(qs.arg("yellow"));
+	    }
+	  else
+	    {
+	      pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+	    }
+	}
+    }
   if ( us_auto_mode ) 
     selectData_auto();
   else
@@ -2036,8 +2047,7 @@ void US_Norm_Profile::save_auto( void )
       int status = QMessageBox::warning( this,
 					 tr( "Channel Normalization" ),
 					 msg_u,
-					 tr( "&Proceed" ), tr( "&Cancel" ),
-					 0, 0, 1 );
+					 QMessageBox::Ok, QMessageBox::Cancel );
 
       if ( status != 0 ) return;
     }
