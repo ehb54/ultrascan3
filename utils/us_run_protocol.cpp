@@ -282,9 +282,9 @@ qDebug() << "RP:ROT: EQ calG";
    if ( absGUID != rp.absGUID ) return false;
 qDebug() << "RP:ROT: EQ absG";
 
-//add explicit comparison between old && new opername(s)                                                                                        
-  if ( opername != rp.opername ) return false;
-  if ( operID != rp.operID ) return false;
+// //add explicit comparison between old && new opername(s)                                                                                      
+//   if ( opername != rp.opername ) return false;
+//   if ( operID != rp.operID ) return false;
 
 
    return true;
