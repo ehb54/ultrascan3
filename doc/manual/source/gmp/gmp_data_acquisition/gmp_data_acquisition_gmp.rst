@@ -15,7 +15,7 @@ After a run is initiated from the instrument, the user is presented with the 'Da
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_01.png
     :align: center
 
-Once the machine reaches the desired rotor speed and begins acquiring scans, **Optical System** allows for the user to select the intensity/interference data. Each cell/channel/wavelength Triplicate can be viewed using the **Cell/Channel** and **Wavelength** drop down menus, which can be cycled through using the **Next** and **Previous** buttons. **Skip Stage** allows for the current stage to be skipped. While **STOP** allows for the run to be stopped, and prompts the `GMP e-signature <../gmp_signature.html>`_ window for user authentication. 
+Once the machine reaches the desired rotor speed and begins acquiring scans, **Optical System** allows for the user to select the intensity/interference data. Each cell/channel/wavelength Triple can be viewed using the **Cell/Channel** and **Wavelength** drop down menus, which can be cycled through using the **Next** and **Previous** buttons. **Skip Stage** allows for the current stage to be skipped. While **STOP** allows for the run to be stopped, and prompts the :doc:`GMP e-signature <../gmp_signature>` window for user authentication. 
 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_02.png
     :align: center
@@ -25,7 +25,7 @@ Once all of the scans defined in the experiment have been collected, the **Remai
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_03.png
     :align: center
 
-Next, the program moves to the 'IMPORT' stage, which displays the last scan of each Triplicate from the intensity data. The user is prompted with the **Reference Scans: Automated Processing** message: 
+Next, the program moves to the 'IMPORT' stage, which displays the last scan of each Triple from the intensity data. The user is prompted with the **Reference Scans: Automated Processing** message: 
 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_04.png
     :align: center
@@ -45,7 +45,7 @@ Once the data has been saved, the user is notified that the program is proceedin
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_07.png
     :align: center
 
-The editing window presents the user with the data edited in accordance with 'Data End' value and 'Excluded Scan Ranges' defined in the **Aprofile**. The 'Meniscus' position and 'Data Start' value are defined through automated processing. If the user is not satisfied with the automated processing, the **Edit Currently Selected Profile Manually** button allows for the 'Meniscus' position and 'Data End' values to be defined manually. **Remove Spikes** removes some sharp, irregular intensity spikes from data. Each cell/channel/wavelength Triplicate can be cycled through using the **Previous Triplicate** and **Next Triplicate** buttons. 
+The editing window presents the user with the data edited in accordance with 'Data End' value and 'Excluded Scan Ranges' defined in the **Aprofile**. The 'Meniscus' position and 'Data Start' value are defined through automated processing. If the user is not satisfied with the automated processing, the **Edit Currently Selected Profile Manually** button allows for the 'Meniscus' position and 'Data End' values to be defined manually. **Remove Spikes** removes some sharp, irregular intensity spikes from data. Each cell/channel/wavelength Triple can be cycled through using the **Previous Triple** and **Next Triple** buttons. 
 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_08.png
     :align: center
@@ -60,7 +60,7 @@ Once the edited profiles have been saved, the user is notified that the program 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_10.png
     :align: center
 
-The analysis window displays the current status of the submitted jobs producing the models specified in the **Aprofile**. **Cancel** can be used to stop ongoing jobs. **View Fit** simulates completed model overlays and displays them. The **Expand All Triples** and **Collapse All Triples** buttons control all Triples, while the {down arrow} button can be used to collapse or expand each individual Triplicate.
+The analysis window displays the current status of the submitted jobs producing the models specified in the **Aprofile**. **Cancel** can be used to stop ongoing jobs. **View Fit** simulates completed model overlays and displays them. The **Expand All Triples** and **Collapse All Triples** buttons control all Triples, while the {down arrow} button can be used to collapse or expand each individual Triple.
 
 .. image:: ../../_static/images/gmp/data_acquisition/gmp/gmp_data_acquisition_gmp_11.png
     :align: center

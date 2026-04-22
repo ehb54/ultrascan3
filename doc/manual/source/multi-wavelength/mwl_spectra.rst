@@ -82,7 +82,7 @@ MWL Spectra Viewer Functions:
   * - **Select PreFilter** 
     - Load a run dataset as a Pre-filter using the "Select Run(s) as Models Pre-Filter (DB)".  
   * - **Load Distribution**
-    - Select the distributions to plot on in the "`../Load Distribution Model(s) <common_dialogs.html#load-distribution-model>`_.
+    - Select the distributions to plot on in the :ref:`Load Distribution Model(s) <fe-model-loader>`.
   * - **Reset Data** 
     - Reset loaded data. 
   * - **Data Details**

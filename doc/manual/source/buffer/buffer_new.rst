@@ -10,10 +10,10 @@ Enter New Buffer Tab
 
 **Panel Tab Options:**
 
-* `Select Buffer <buffer_select.html>`_ - A panel whose primary purpose is to select a buffer to return to the caller.
+* `Select Buffer <buffer_select>`- A panel whose primary purpose is to select a buffer to return to the caller.
 * :ref:`Enter New Buffer <enter-new-buffer>` - A panel whose primary purpose is to enter a brand new buffer, defined mostly by specifying components and each one's concentration.
-* `Edit Existing Buffer <buffer_edit.html>`_ - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing buffer.
-* `Settings <buffer_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local buffer components file from the database.
+* `Edit Existing Buffer <buffer_edit>`- A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing buffer.
+* `Settings <buffer_settings>`- A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local buffer components file from the database.
 
 Enter New Buffer Panel
 =======================
@@ -56,11 +56,11 @@ Buffer New Functions:
     * - **Compressibility**
       - The compressibility of the new buffer. It may be modified here.
     * - **Cancel**
-      - Close the panel and return to the `Select Buffer <buffer_select.html>_` panel with no new buffer created.
+      - Close the panel and return to the :doc:`Select Buffer <buffer_select>` panel with no new buffer created.
     * - **Accept**
-      - Close the panel and return to the `Select Buffer <buffer_select.html>_` panel with the new buffer selected.
+      - Close the panel and return to the :doc:`Select Buffer <buffer_select>` panel with the new buffer selected.
     * - **Enter Spectrum**
-      - This button brings up a :ref:`Manage Spectrum dialog <manage_buffer_spectrum>` to set a Wavelength/Extinction profile.
+      - This button brings up a :ref:`Manage Spectrum dialog <manage-buffer-spectrum>` to set a Wavelength/Extinction profile.
 
 
 .. note::
@@ -74,7 +74,7 @@ Add New Buffer Steps
 Once the new buffer has been sufficiently defined, the **Accept** button becomes enabled. Clicking on it causes the buffer to be added to the DB or the local disk and causes a return to the :ref:`Select Buffer <select_buffer>` panel with the new buffer selected. 
 
 
-
+.. _add-buffer-spectrum:
 
 Add Buffer Spectrum 
 =====================
@@ -86,7 +86,7 @@ A Spectrum of the buffer can be added to each buffer using the **Enter Spectrum*
 - Open the Spectrum Fitter 
 
 
-.. _manage_buffer_spectrum:
+.. _manage-buffer-spectrum:
 
 .. image:: ../_static/images/buffer_new_spectrum.png
     :align: center

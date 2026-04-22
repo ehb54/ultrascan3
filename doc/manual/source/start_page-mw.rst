@@ -30,19 +30,13 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         * Edit the Description field if necessary
 #.  Navigate to the first channel and select the centerpiece type.
 #.  Select the proper solution - Make sure that the solution contains at least one analyte and a buffer
-        * If you have more than one Triplicate, you can click on Apply to All but verify centerpiece and solution for each Triplicate first. Also, check the Description field again to make sure the appropriate information is saved.
+        * If you have more than one Triple, you can click on Apply to All but verify centerpiece and solution for each Triple first. Also, check the Description field again to make sure the appropriate information is saved.
 #.  If data were collected in intensity mode, you will need to Define Reference Scans by selecting a short region from the air-to-air interface portion of the data.
 #.  For equilibrium data from 6-channel centerpieces you should separate each channel with the Define Subsets/Process Subsets functions.
 #.  Failed Triples or empty Triples can be excluded from the run by clicking on Drop Selected Triples.
 #.  When everything has been set you can Save the scans to database or disk.
 
-.. image:: _static/images/mwlr_viewer_wvl.png
-    :align: center
 
-.. rst-class::
-    :align: center
-
-    **Alternate Record and X-axis**
 
 
 Step 2: Edit experimental data
@@ -50,7 +44,7 @@ Step 2: Edit experimental data
 
 #. Edit the data in the :doc:`Edit Data <us_edit>` module. 
 #. Load data from the database or a local data directory containing the UltraScan-III openAUC data files.data. 
-#. Select the Cell / Channel / Wavelength Triplicate to be edited. 
+#. Select the Cell / Channel / Wavelength Triple to be edited. 
 #. Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard. 
 #. Specify the left and right edges of the data to be analyzed. 
 
@@ -60,13 +54,7 @@ Step 2: Edit experimental data
 #. Specify the location of the scan plateau. This is the radial position where most scans have a stable plateau, but the selected position should not reach into the back-diffusion region. The most appropriate point tends to be close to the right edge of the data range, but not so far to the right that it extends into the region where the concentration of the later scans curves upward at the bottom of the cell due to back-diffusion. 
 #. Make any other optional adjustments to the data that are necessary and save the edit profile. When saving, a pop-up message is presented asking for an edit ID. The default for this ID is the current date and time in the form of YYMMdd hhmm (Year / Month / Day / Hour / Minute), but this default can be supplemented with a suffix of your own choice. 
 
-.. image:: _static/images/mwlr_viewer_wvl.png
-    :align: center
 
-.. rst-class::
-    :align: center
-
-    **Alternate Record and X-axis**
 
 
 Step 3: Inspect and plot the raw data 
@@ -74,7 +62,7 @@ Step 3: Inspect and plot the raw data
 
 #. Inspect the raw MWL data using the :doc:`Multi-Wavelength Raw Data Viewer <multi-wavelength/index>` in the Multi-wavelength modules.  
 #. Load the data from the local disk or the database. 
-#. Select the Cell / Channel / Wavelength Triplicate to be inspected.
+#. Select the Cell / Channel / Wavelength Triple to be inspected.
 #. Generate and save the 3-D plot and movie. 
 
 .. image:: _static/images/mwlr_viewer.png
@@ -98,9 +86,9 @@ Step 5: Simulated a time-grid synchronized model based on 2DSA-IT MWL models
 #. Simulate a time synchronized **ISSF_** model based on the MWL 2DSA-IT models using the :doc:`MWL Pre-Fit Species Simulation <multi-wavelength/mwl_species_sim>`. 
 #. Click **PreFilter Models** to define the MWL pre-filter for the simulation and
 #. Click **Select Models** and load all related 2DSA-IT models from one MWL dataset channel.
-#. **Define Buffer** and open the :doc:`Buffer Management <buffer/index>`_ dialog to define the experimental parameters of the dataset
+#. **Define Buffer** and open the :doc:`Buffer Management <buffer/index>`  dialog to define the experimental parameters of the dataset
 #. Define the simulation parameters
-#. Click **Define Rotor** and open the :doc:`Rotor Management <buffer/index>`_ dialog to select the Default 1003 (Simulation) rotor. 
+#. Click **Define Rotor** and open the :doc:`Rotor Management <rotors>`  dialog to select the Default 1003 (Simulation) rotor. 
 #. Start the simulation and save the open-auc file into $HOME/ultrascan/imports folder. 
  
 
@@ -125,7 +113,7 @@ Step 8: Deconvolute MW data using species basis spectra
 ----------------------------------------------------------
 
 #. Deconvolute the analytes in :doc:`MWL Species Fit Analysis <multi-wavelength/mwl_species_fit>`. 
-#. Load the time-synchronized **ISSF-** simulation generated using :doc:`Optima MWL Fit Simulations <multi-wavelength/mwl_species_sim>` using :doc:`Load Run Data Dialog <common_dialogs.html#data-loader>`_. 
+#. Load the time-synchronized **ISSF-** simulation generated using :doc:`Optima MWL Fit Simulations <multi-wavelength/mwl_species_sim>` using :ref:`Load Run Data Dialog <fe-data-loader>` . 
 #. Click **Load Species Fits** and load the species extinction coefficient basis spectra from local disk. 
 #. Perform the deconvolution by clicking **Species Fit Data**. 
 #. Deconvoluted sedimentation velocity data of each species will by generated with a **SSF-ISSF-** pre-fix. 
@@ -167,7 +155,7 @@ Step 12: Overlay combined distributions - (recommended)
 #. Use Velocity: :doc:`Combine pseudo-3D Distributions <pseudo3d>` for all finite element models (2DSA, GA, Monte Carlo).
 
 Reference
-==========
+----------
 
 **2DSA**
 

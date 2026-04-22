@@ -46,7 +46,7 @@ Pseudo-3D Functions
   * - **Plot Limit s Maximum:**
     - Choose the upper plot limit for sedimentation (or MW).
   * - **Plot Loop Delay Seconds:**
-    - Choose the number of seconds to delay between plots when all distros are plotted.
+    - Choose the number of seconds to delay between plots when all distributions are plotted.
   * - **Current Distro:**
     - Choose the index (1 to n) of the distribution to make the current one.
   * - **Plot f/f0 vs s**
@@ -57,7 +57,7 @@ Pseudo-3D Functions
     - Select to plot vbar versus sedimentation coefficient corrected for water at 20°Celsius.
   * - **Plot vbar vs MW**
     - Select to plot vbar versus molecular weight (Dalton).
-  * - **Plot All Distros**
+  * - **Plot All Distros (distributions)**
     - Loop to successively plot all loaded model distributions.
   * - **Stop Plotting Loop**
     - Stop the successive plot of all loaded model distributions.
@@ -70,13 +70,13 @@ Pseudo-3D Functions
   * - **Local Disk**
     - Select to specify data input from local disk.
   * - **Select PreFilter(s)**
-    - :doc:`Select Run(s) as Models Pre-Filter <common_dialogs>` dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
+    - :ref:`Select Run(s) as Models Pre-Filter <fe-data-loader>` dialog to select Run IDs. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
   * - **Load Color File**
-    - Load a color map for Z dimension display as specified through the :doc:`Color Map Load dialog <config.html>`.
+    - Load a color map for Z dimension display as specified through the :doc:`Color Map Load dialog <config>`.
   * - **Load Distribution(s)**
-    - Load model distribution data as specified through a :doc:`Model Loader dialog <common_dialogs>`. Multiple distribution files may be selected.
+    - Load model distribution data as specified through a :ref:`Model Loader dialog <fe-model-loader>`. Multiple distribution files may be selected.
   * - **Remove Distribution(s)**
-    - Open a :doc:`Remove Model Distributions <common_dialogs>` dialog to remove selected model distributions from the loaded set.
+    - Open a :ref:`Remove Model Distributions <remove-mod-dis>` dialog to remove selected model distributions from the loaded set.
 
 
 **Window Controls**

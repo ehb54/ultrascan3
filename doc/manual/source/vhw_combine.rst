@@ -32,7 +32,7 @@ Combine vHW Functions:
   * - **Local Disk** 
     - Check this radio button to indicate that distribution data to be selected is on local disk file systems.
   * - **Load Data** 
-    - Click on this button to open `Run ID Select Dialog <common_dialogs.html#load-distribution-model>`_ in which one or more run IDs may be selected from which distribution data files can be taken.
+    - Click on this button to open :ref:`Run ID Select Dialog <fe-data-loader>` in which one or more run IDs may be selected from which distribution data files can be taken.
   * - **Save Data** 
     - Save combined integral distribution and envelope data to a local data file and, if input source so indicates, to the database.
   * - **Reset Data** 
@@ -54,7 +54,7 @@ Combine vHW Functions:
   * - **Run IDs:** 
     - The list below shows all runs selected in Load Data dialogs. Click on a list line to reveal the Cell / Channel / Wavelength Triples for the run.
   * - **Cell/Channel/ Wavelength:** 
-    - The list below shows the Triples for the currently selected run. Click on a Triplicate line to have its distribution/envelope added to the combined plot.
+    - The list below shows the Triples for the currently selected run. Click on a Triple line to have its distribution/envelope added to the combined plot.
 
 .. _selrun:
 

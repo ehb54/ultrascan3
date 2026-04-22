@@ -1,5 +1,5 @@
 ==========================================
-Manage Data in Database and on Local Disk
+Report Chooser/Generator
 ==========================================
 
 .. toctree:: 
@@ -11,7 +11,7 @@ Manage Data in Database and on Local Disk
 This module is launched from the US main window using the Utilities > Report Generator menu item. It enables the user to create and view a composite report generated from selections of individual analysis program reports and plots. 
 Upon launch, selection of a Run (or **all** runs) populates a data tree with reports from which to select the components of the composite report. A click on the **View** or the **Save** button generates the report, which can be viewed in a browser and printed. Both the composite report HTML and all the component reports and plots are copied to a new folder so that the page is fully self-contained, can be archived, and can be viewed in the future. 
 
-.. image:: _static/images/manage_data.png
+.. image:: _static/images/reporter.png
     :align: center
 
 Manage Data Functions:
@@ -28,7 +28,7 @@ Manage Data Functions:
   * - **View**
     - Once selections are as desired, click on this button to generate the composite report and view it in the configured browser. See a :ref:`Sample composite report view <reporter-view>`. A print within the browser can be used to generate hardcopy or a PDF version. Component reports and plots will start on page boundaries.
   * - **Save** 
-    - Click this button to generate the report, but without being immediately taken to a view of it. You will receive a Notice of report save..
+    - Click this button to generate the report, but without being immediately taken to a view of it. You will receive a :ref:`Notice of report save <reporter-comp-report>`.
   * - **Load Profile** 
     - Make component report selections by means of a previously saved selection profile. Click this button to initiate a Profile Load Dialog.
   * - **Save Profile** 
@@ -65,3 +65,14 @@ Dialog items:
     - Item Release on this menu item to view an Item View Window. This is a way to preview individual items that are potential candidates for the composite report.
   * - **Save** 
     - As Save a copy of the currently selected item. The location and name of the file copy may be chosen in the resulting standard file dialog.
+
+
+.. _reporter-comp-report:
+
+.. image:: _static/images/reporter_comrep.png
+  :align: center
+
+.. rst-class::
+    :align: center
+
+    **Saved Report**

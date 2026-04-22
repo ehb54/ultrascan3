@@ -27,6 +27,38 @@ This module is used to display, and export FE solutions fitted to velocity exper
 
     **Simulated Finite Element Solution**
 
+
+The main **Compare Experiment to Finite Element Solution** window may need additional controls  when the model loaded includes Reversible Associations (RA). These controls can be revealed using the :doc:`Advanced Analysis Controls <fe_match_adv>` button to invoke a separate dialog.
+
+Noise Vector Selection 
+============================
+
+.. _manage-noise:
+
+When the **Noise Dialog Level** in the :ref:`Configuration and Preferences setting <adv-change>` is enabled (1), the user can select the noise profiles to simulate the data with. 
+
+
+.. image:: ../_static/images/noise_prompt.png
+  :align: center
+
+.. rst-class:: center
+
+    **Noise Vector prompt**
+
+**No** - no noise will be selected, model will be simulated without noise correction, 
+
+**Yes** - User will be prompted to select the noise vector. 
+
+.. image:: ../_static/images/noise_vec_db.png
+  :align: center
+
+.. rst-class:: center
+
+    **Noise Vector Database Load**
+
+.. note::
+  The model siblings are ordered with the most recently fitted noise first and the earlier noise profiles last. Select the appropriate noise for the model and click **Load**.
+
 FE Viewer Functions
 =======================
 
@@ -35,9 +67,9 @@ FE Viewer Functions
   :header-rows: 0
 
   * - **Load Experiment** 
-    - Click here and, in the resulting `Load Data Dialog <../common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click here and, in the resulting :ref:`Load Data Dialog <fe-data-loader>`, select an edited data set to load.
   * - **Run Details**
-    - Pop up a dialog showing `Run details <../run_details.html>`_.	
+    - Pop up a dialog showing :doc:`Run details <../run_details>`.	
   * - **Latest Data Edit** 
     - Uncheck to allow choosing an edit other than the latest one for the raw experimental data.
   * - **Database**
@@ -45,9 +77,9 @@ FE Viewer Functions
   * - **Local Disk** 
     - Select to specify data input from local disk.			
   * - **Load Model**
-    - Load model data, choosing a model in a `Model Loader dialog <../common_dialogs.html#load-distribution-model>`_. If appropriate noise exists, you may also be presented with a :ref:`Noise Loader dialog <manage_noise>` to select time-invariant and/or radially-invariant noise vector(s) to load.
+    - Load model data, choosing a model in a :ref:`Model Loader dialog <fe-data-loader>` . If appropriate noise exists, you may also be presented with a :ref:`Noise Loader dialog <manage-noise>` to select time-invariant and/or radially-invariant noise vector(s) to load.
   * - **Simulate Model** 
-    -  Run a simulation and display results. For details on the results of clicking this button, see `Simulate Model Results <fe_match_simulate.html>`_.
+    -  Run a simulation and display results. For details on the results of clicking this button, see :doc:`Simulate Model Results <fe_match_simulate>`.
   * - **View Data Report**
     - Generate a report file and view it in a dialog.	
   * - **Save Data**
@@ -119,7 +151,7 @@ FE Viewer Functions
   :header-rows: 0
 
   * - **Solution**
-    - Click this button to open a `Solution Management <solution/solution_select.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a :doc:`Solution Management <../solutions/solution_select>` that allows changes to buffer and analyte characteristics of the data set.
   * - **Density**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity**
@@ -133,11 +165,11 @@ FE Viewer Functions
   * - **RMSD:**
     - Root-Mean-Square-of-Differences for residuals.
   * - **Advanced Analysis Controls**
-    - Click to reveal an `Advanced Analysis Controls <fe_match_adv.html>`_, with options to set parameters related to Reversible Associations (RA) models or to show details on model components.
+    - Click to reveal an :doc:`Advanced Analysis Controls <fe_match_adv>`, with options to set parameters related to Reversible Associations (RA) models or to show details on model components.
   * - **3D Plot**
-    - Show a dialog of plot controls for a 3-dimensional model plot. See `3-Dimensional Plot Controls Details <3d_plot.html>`_.
+    - Show a dialog of plot controls for a 3-dimensional model plot. See :doc:`3-Dimensional Plot Controls Details <../3d_plot>`.
   * - **Residual Plot**
-    - Show a plot dialog with a more advanced set of data/residuals/noise plots. See `Simulate Model Results <fe_match_simulate.html>`_.
+    - Show a plot dialog with a more advanced set of data/residuals/noise plots. See :doc:`Simulate Model Results <fe_match_simulate>`.
 
 
 **Window Controls**
@@ -153,35 +185,3 @@ FE Viewer Functions
     - Display this detailed van Holde-Weischet Analysis help.
   * - **Close** 
     - Close all windows and exit.
-
-
-The main **Compare Experiment to Finite Element Solution** window may need additional controls  when the model loaded includes Reversible Associations (RA). These controls can be revealed using the `Advanced Analysis Controls <fe_match_adv.html>`_ button to invoke a separate dialog.
-
-Noise Vector Selection 
-============================
-
-.. _manage_noise:
-
-When the **Noise Dialog Level** in the `Configuration and Preferences setting <../config.html#advanced-configuration-panel>`_ is enabled (1), the user can select the noise profiles to simulate the data with. 
-
-
-.. image:: ../_static/images/noise_prompt.png
-  :align: center
-
-.. rst-class:: center
-
-    **Noise Vector prompt**
-
-**No** - no noise will be selected, model will be simulated without noise correction, 
-
-**Yes** - User will be prompted to select the noise vector. 
-
-.. image:: ../_static/images/noise_vec_db.png
-  :align: center
-
-.. rst-class:: center
-
-    **Noise Vector Database Load**
-
-.. note::
-  The model siblings are ordered with the most recently fitted noise first and the earlier noise profiles last. Select the appropriate noise for the model and click **Load**.

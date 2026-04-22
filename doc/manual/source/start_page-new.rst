@@ -46,5 +46,5 @@ After downloading the tar.xz package, you need to uncompress and extract it in a
 
     You can run these to start the UltraScan GUI and the US-SOMO GUI respectively. 
 
-`Register the software <register.html>`_. UltraScan development is funded by NIH and your registration helps us document usage of the software to NIH. Only operating system, and the number of active users for any given year are shared with the NIH. Registrations are free, and valid for one year. After that they have to be renewed (also free).
+:doc:`Register the software <register>`. UltraScan development is funded by NIH and your registration helps us document usage of the software to NIH. Only operating system, and the number of active users for any given year are shared with the NIH. Registrations are free, and valid for one year. After that they have to be renewed (also free).
 
