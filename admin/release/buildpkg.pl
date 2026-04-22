@@ -17,7 +17,10 @@ my %supported =
      ,"ubuntu:20.04" => "python"
      ,"ubuntu:22.04" => "python3"
      ,"ubuntu:24.04" => "python3"
-     ,"redhat:8.10"   => "python3"
+     ,"redhat:8.10"  => "python3"
+     ,"redhat:9.6"   => "python3"
+# 2025.09.29 rh10 not tested, it compiles and builds ok, waiting for the Jetstream2 cloud to create a rocky 10 VM image
+#     ,"redhat:10.0"   => "python3"
     );
 
 $snames = join( "\n", keys %supported );
@@ -69,7 +72,10 @@ $cmd =
     . " && $docker cp \$id:lastpkgname ../last.$name"
     . " && $docker cp \$id:`cat ../last.$name` .."
     . " && $docker rm -v \$id"
-    . " && echo package `cat ../last.$name` created"
+    . " && cd .. "
+    . " && echo 'checking archive for files to remove'"
+    . " && perl ./fixarchive.pl `cat last.$name`"
+    . " && echo package `cat last.$name` created"
     ;
 
 $|=1;
@@ -79,6 +85,6 @@ print "building release package for $bimage using $cores cores and branch $branc
 print "-"x80 . "\n";
 print "$cmd\n";
 print "-"x80 . "\n";
-print `$cmd\n`;
+system( "/bin/bash", "-c", $cmd );
 print "-"x80 . "\n";
 
