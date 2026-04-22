@@ -50,15 +50,15 @@ Configuration Functions
   * - **Default Data Location**
     - The default location of the data storage and retrieval.         
   * - **Color Preferences:** 
-    - See the Color Configuration below on the :ref:`Change <col_change>` button if you want to load or define a different color scheme.
+    - See the Color Configuration below on the :ref:`Change <col-change>` button if you want to load or define a different color scheme.
   * - **Font Preferences:** 
-    - See the Font Configuration below on the :ref:`Change <fon_change>` button if you want to set a new default font for all of UltraScan's applications. 
+    - See the Font Configuration below on the :ref:`Change <fon-change>` button if you want to set a new default font for all of UltraScan's applications. 
   * - **Database Preferences:** 
-    - See the Database Configuration below on the :ref:`Change <dat_change>` button if you want to set the database username, password, database name and server host name.
+    - See the Database Configuration below on the :ref:`Change <dat-change>` button if you want to set the database username, password, database name and server host name.
   * - **Master Password:** 
-    - See the Database Configuration below on the :ref:`Change <mp_change>` button to set or reset your personal **UltraScanIII** password. Be sure to remember the password. If it is lost, you will need to reset all saved database information in the *Database Preferences* panel.
+    - See the Database Configuration below on the :ref:`Change <mp-change>` button to set or reset your personal **UltraScan-III** password. Be sure to remember the password. If it is lost, you will need to reset all saved database information in the *Database Preferences* panel.
   * - **Advanced Settings:** 
-    - See the Database Configuration below on the :ref:`Change <adv_change>` button to set advanced settings related to debug, advanced level, and number of threads.
+    - See the Database Configuration below on the :ref:`Change <adv-change>` button to set advanced settings related to debug, advanced level, and number of threads.
 
 Once all settings are correct, click on **Save** to make your settings permanent.
 
@@ -66,7 +66,7 @@ Once all settings are correct, click on **Save** to make your settings permanent
 Color Configuration Panel
 =========================
 
-.. _col_change:
+.. _col-change:
 
 .. image:: _static/images/color-1.png
     :align: center
@@ -104,7 +104,7 @@ If you want to delete a custom scheme, select the scheme and click on the Delete
 Font Configuration Panel
 ========================
 
-.. _fon_change:
+.. _fon-change:
 
 
 .. image:: _static/images/usfont-1.png
@@ -131,7 +131,7 @@ Selecting *Save* will save the currently displayed font as the UltraScan *defaul
 Database Configuration Panel
 ============================
 
-.. _dat_change:
+.. _dat-change:
 
 .. note::
     Whenever UltraScan needs to use a database entry, it needs the user's master password. The first time it is needed, it will prompt for it and save it in memory, but not on disk storage. When needed again, UltraScan uses the stored password. Before this can be done, the master password needs to be set up and a cryptographic hash of the password stored. Use the Master Password panel, accessed form the main configuration panel, to set up or change the master password. 
@@ -157,7 +157,7 @@ To delete an entry, select it and click on Delete Current Entry.
 Master Password Panel
 =====================
 
-.. _mp_change:
+.. _mp-change:
 
 .. image:: _static/images/master-pw.png
     :align: center
@@ -176,7 +176,7 @@ The user's master password needs to be entered in order to access encrypted data
 Advanced Configuration Panel
 ============================
 
-.. _adv_change:
+.. _adv-change:
 
 .. note:: 
     Some **UltraScan-III** applications output debug text to STDOUT or a log file. Some only include certain GUI elements when in an advanced mode. Certain applications can benefit from use of more than one thread. These variations are governed by the configuration values that are set in this panel. Actual values should be set only under the guidance of software developers, since meanings of settings vary considerably from application to application.
@@ -267,10 +267,10 @@ Adv. Config. Functions
 Instrument Preference Panel
 ===================================
 
-.. _opt_change:
+.. _opt-change:
 
 .. note:: 
-    Whenever UltraScan needs to use an Optima host entry, it needs the user's master password. The first time it is needed, it will prompt for it and save it in memory, but not on disk storage. When needed again, UltraScan uses the stored password. Before this can be done, the master password needs to be set up and a cryptographic hash of the password stored. Use the :ref:`Master Password <mp_change>` panel, accessed from the main configuration panel, to set up or change the master password. 
+    Whenever UltraScan needs to use an Optima host entry, it needs the user's master password. The first time it is needed, it will prompt for it and save it in memory, but not on disk storage. When needed again, UltraScan uses the stored password. Before this can be done, the master password needs to be set up and a cryptographic hash of the password stored. Use the :ref:`Master Password <mp-change>` panel, accessed from the main configuration panel, to set up or change the master password. 
 
 .. image:: _static/images/optima_host_config.png
     :align: center

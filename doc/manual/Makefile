@@ -121,7 +121,7 @@ all: html qch
 help:
 	@$(SPHINXBUILD) -M help $(SOURCEDIR) $(BUILDDIR) $(SPHINXOPTS)
 
-html: latexpdf
+html: 
 	@$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html $(SPHINXOPTS)
 	@echo "HTML documentation written to $(BUILDDIR)/html"
 

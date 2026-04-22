@@ -9,7 +9,7 @@ Discrete Model Genetic Algorithm
 .. contents:: Index
   :local: 
 
-The Discrete Model Genetic Algorithm (DMGA) module employs user-defined models to fit sedimentation velocity data to parameters of those
+The Discrete Model Genetic Algorithm (DMGA) module employs user-defined interacting and non interacting models to fit sedimentation velocity data to parameters of those
 models. While there is no restriction on the type of model that can be built to fit a particular system, the method is most often used
 for fitting reversibly associating systems, such as oligomerization or self-association, or hetero-associating systems. The method uses genetic
 algorithms to optimize non-linear fitting problems using stochastic approaches. The user has to define a model and the :doc:`constraints <dmga_init_constr>` for the parameters of the model to initialize the DMGA routine. The fit is performed on the **LIMS** using the **Discrete Model GA Control**.

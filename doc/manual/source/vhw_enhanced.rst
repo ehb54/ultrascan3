@@ -24,7 +24,7 @@ vHW Enhanced Functions:
   :header-rows: 0
 
   * - **Load Experiment**
-    - Click on this button and, in the resulting :doc:`Load Run Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click on this button and, in the resulting :ref:`Load Run Data Dialog <fe-data-loader>`, select an edited data set to load.
   * - **Run Details**
     - Bring up a :doc:`Run Details Dialog <run_details>` with a summary of data and run details.		 
   * - **Latest Data Edit**
@@ -52,7 +52,7 @@ vHW Enhanced Functions:
   :header-rows: 0
 
   * - **Solution** 
-    - Click this button to open a :doc:`Solution Management <solution/solution>` that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a :doc:`Solution Management <solutions/solution_select>` that allows changes to buffer and analyte characteristics of the data set.
   * - **Density (20°C)**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.		
   * - **Viscosity (20°C)**
@@ -130,7 +130,7 @@ van Holde-Weischet Analysis Steps
 
 *  **Step 1:** First, load a velocity dataset. Click on **Load Experiment** to select an edited velocity data set from the database or from local disk.
 
-*  **Step 2:** Secondly, select a model from database or disk. Simply click on a triplicate in the Cell / Channel / Wavelength. Enhanced van Holde-Weischet analysis is automatically applied according to the Analysis Controls
+*  **Step 2:** Secondly, select a model from database or disk. Simply click on a triple in the Cell / Channel / Wavelength. Enhanced van Holde-Weischet analysis is automatically applied according to the Analysis Controls
 
 *  **Step 3:** If necessary, adjust the Back Diffusion Tolerance, Divisions, % of Boundary and Boundary Position (%).
 
