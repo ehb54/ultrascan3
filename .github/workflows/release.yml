@@ -1,0 +1,222 @@
+name: UltraScan3 Release
+
+# ============================================================================
+# Triggered by a v* tag push.
+# Calls ultrascan-reusable-build.yml directly for each platform/profile,
+# then publishes a versioned GitHub Release with all platform assets.
+#
+# Release builds are cache-consumer only: require_exact_cache_hit=true,
+# save_cache=false. Caches must be pre-warmed by the nightly workflows.
+# ============================================================================
+
+run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+
+  # --- Group 1 (parallel) ---------------------------------------------------
+
+  ubuntu-app:
+    name: "Ubuntu 24.04 APP"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  ubuntu-24.04
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  ubuntu-hpc:
+    name: "Ubuntu 24.04 HPC"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  ubuntu-24.04
+      qt_variant:              qt6
+      profile:                 HPC
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}-HPC', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  macos-arm:
+    name: "macOS ARM APP"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  macos-15
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}-arm', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  oraclelinux8-app:
+    name: "Oracle Linux 8 APP"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  ubuntu-24.04
+      cache_os_label:          oraclelinux8
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  oraclelinux8-hpc:
+    name: "Oracle Linux 8 HPC"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  ubuntu-24.04
+      cache_os_label:          oraclelinux8
+      qt_variant:              qt6
+      profile:                 HPC
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}-HPC', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  macos-intel:
+    name: "macOS Intel APP"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  macos-15-intel
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  windows:
+    name: "Windows x64 APP"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ github.ref }}
+      runner:                  windows-2022
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
+      artifact_retention_days: 7
+      require_exact_cache_hit: true
+      save_cache:              false
+
+  # --------------------------------------------------------------------------
+  # PUBLISH RELEASE
+  # Runs only when all platform builds succeeded.
+  # Downloads all artifacts produced by this run, renames to stable filenames,
+  # then creates a permanent versioned GitHub Release.
+  # --------------------------------------------------------------------------
+  publish-release:
+    name: "Publish release ${{ github.ref_name }}"
+    needs: [ubuntu-app, ubuntu-hpc, macos-arm, oraclelinux8-app, oraclelinux8-hpc, macos-intel, windows]
+    if: success()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-${{ github.ref_name }}-*
+          path: artifacts
+          run-id: ${{ github.run_id }}
+
+      - name: Stage assets with stable filenames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+
+          cp_first_find() {
+            local dest="$1"
+            shift
+            local src
+            src=$("$@" | head -1)
+            [ -n "$src" ] || { echo "ERROR: no file found for $dest"; exit 1; }
+            cp "$src" "release-assets/$dest"
+            echo "  $dest ← $src"
+          }
+
+          find artifacts -maxdepth 4 -print | sort
+          echo "Staging release assets..."
+          cp_first_find "UltraScan3-macos-arm.pkg" \
+            find artifacts -type f -path '*release-*-arm-macos-15-*/*' -name '*.pkg'
+
+          cp_first_find "UltraScan3-macos-intel.pkg" \
+            find artifacts -type f -path '*release-*-macos-15-intel-*/*' -name '*.pkg'
+
+          cp_first_find "UltraScan3-windows-x64.exe" \
+            find artifacts -type f -path '*release-*-windows-2022-*/*' -name '*.exe'
+
+          cp_first_find "UltraScan3-linux-x64.tar.gz" \
+            find artifacts -type f -path '*release-*-ubuntu-24.04-*/*' ! -path '*HPC*' -name '*.tar.gz'
+
+          cp_first_find "UltraScan3-HPC-linux-x64.tar.gz" \
+            find artifacts -type f -path '*release-*-HPC-ubuntu-24.04-*/*' -name '*.tar.gz'
+
+          cp_first_find "UltraScan3-oraclelinux8-x64.tar.gz" \
+            find artifacts -type f -path '*release-*-oraclelinux8-*/*' ! -path '*HPC*' -name '*.tar.gz'
+
+          cp_first_find "UltraScan3-HPC-oraclelinux8-x64.tar.gz" \
+            find artifacts -type f -path '*release-*-HPC-oraclelinux8-*/*' -name '*.tar.gz'
+
+          echo "Assets ready:"
+          ls -lh release-assets/
+
+      - name: Publish versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ github.ref_name }}"
+          COMMIT=$(git rev-parse HEAD)
+          DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+
+          NOTES="## UltraScan3 $TAG
+
+          **Released:** $DATE
+          **Commit:** $COMMIT
+
+          | Asset | Platform | Profile |
+          |-------|----------|---------|
+          | \`UltraScan3-macos-arm.pkg\`              | macOS ARM (Apple Silicon) | Desktop |
+          | \`UltraScan3-macos-intel.pkg\`            | macOS Intel (x86-64)      | Desktop |
+          | \`UltraScan3-windows-x64.exe\`            | Windows x64               | Desktop |
+          | \`UltraScan3-linux-x64.tar.gz\`           | Ubuntu 24.04 x64          | Desktop |
+          | \`UltraScan3-HPC-linux-x64.tar.gz\`       | Ubuntu 24.04 x64          | HPC/MPI |
+          | \`UltraScan3-oraclelinux8-x64.tar.gz\`    | Oracle Linux 8 x64        | Desktop |
+          | \`UltraScan3-HPC-oraclelinux8-x64.tar.gz\`| Oracle Linux 8 x64        | HPC/MPI |"
+
+          gh release create "$TAG" release-assets/* \
+            --title "UltraScan3 $TAG" \
+            --notes "$NOTES" \
+            --target main

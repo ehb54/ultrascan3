@@ -1,0 +1,130 @@
+name: UltraScan3 On-Demand Build
+
+# ============================================================================
+# Manual dispatch: run any single platform, any combination, or all.
+# Each selected platform executes independently with its own probe/warm/build.
+# Windows goes direct to build with no warm phase.
+#
+# Selecting a platform here fans out to the corresponding nightly-<platform>.yml
+# via workflow_call so the logic stays in one place.
+# ============================================================================
+
+run-name: "On-Demand [${{ inputs.ref }}] ${{ inputs.platforms }} by @${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+
+      ref:
+        description: "Branch, tag, or SHA to build"
+        required: true
+        default: "main"
+        type: string
+
+      platforms:
+        description: "Platforms to build"
+        required: true
+        default: "ubuntu"
+        type: choice
+        options:
+          - all
+          - ubuntu
+          - macos-arm
+          - macos-intel
+          - windows
+          - oraclelinux8
+          - linux          # ubuntu + oraclelinux8
+          - macos          # macos-arm + macos-intel
+
+      clean_tier:
+        description: "Clean tier"
+        required: true
+        default: incremental
+        type: choice
+        options:
+          - incremental
+          - rebuild
+          - clean
+          - clean-purge-cache
+
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: true
+        default: "7"
+        type: choice
+        options: ["3","7","14","30"]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+
+  ubuntu:
+    name: "Ubuntu 24.04 (APP + HPC)"
+    if: |
+      inputs.platforms == 'all'    ||
+      inputs.platforms == 'ubuntu' ||
+      inputs.platforms == 'linux'
+    uses: ./.github/workflows/nightly-ubuntu.yml
+    with:
+      ref:                     ${{ inputs.ref }}
+      clean_tier:              ${{ inputs.clean_tier }}
+      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
+    secrets: inherit
+
+  macos-arm:
+    name: "macOS ARM (APP)"
+    if: |
+      inputs.platforms == 'all'       ||
+      inputs.platforms == 'macos-arm' ||
+      inputs.platforms == 'macos'
+    uses: ./.github/workflows/nightly-macos-arm.yml
+    with:
+      ref:                     ${{ inputs.ref }}
+      clean_tier:              ${{ inputs.clean_tier }}
+      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
+    secrets: inherit
+
+  macos-intel:
+    name: "macOS Intel (APP)"
+    if: |
+      inputs.platforms == 'all'         ||
+      inputs.platforms == 'macos-intel' ||
+      inputs.platforms == 'macos'
+    uses: ./.github/workflows/nightly-macos-intel.yml
+    with:
+      ref:                     ${{ inputs.ref }}
+      clean_tier:              ${{ inputs.clean_tier }}
+      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
+    secrets: inherit
+
+  windows:
+    name: "Windows x64 (APP)"
+    if: |
+      inputs.platforms == 'all'     ||
+      inputs.platforms == 'windows'
+    uses: ./.github/workflows/nightly-windows.yml
+    with:
+      ref:                     ${{ inputs.ref }}
+      clean_tier:              ${{ inputs.clean_tier }}
+      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
+    secrets: inherit
+
+  oraclelinux8:
+    name: "Oracle Linux 8 x64 (APP + HPC)"
+    if: |
+      inputs.platforms == 'all'         ||
+      inputs.platforms == 'oraclelinux8' ||
+      inputs.platforms == 'linux'
+    uses: ./.github/workflows/nightly-oraclelinux8.yml
+    with:
+      ref:                     ${{ inputs.ref }}
+      clean_tier:              ${{ inputs.clean_tier }}
+      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
+    secrets: inherit

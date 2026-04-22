@@ -1,0 +1,170 @@
+name: Nightly — Ubuntu
+
+# ============================================================================
+# Platform: Ubuntu 24.04 x64
+# Profiles:  APP + HPC
+# Schedule:  nightly (selected platform)
+# Release:   called by release.yml via workflow_call
+# Manual:    workflow_dispatch on this file
+# ============================================================================
+#
+# Cache isolation strategy:
+#   Probe + warm are scoped to this platform's keys only.
+#   A miss on ubuntu does NOT trigger warming for any other platform.
+#   The warm job is skipped when the probe job itself was skipped.
+#
+# Change detection is handled by the caller (nightly-builds.yml) for
+# scheduled runs. workflow_dispatch on this file always proceeds.
+
+run-name: >-
+  ${{ github.event_name == 'schedule'
+    && format('Nightly Ubuntu [{0}]', github.run_started_at)
+    || github.event_name == 'workflow_call'
+    && format('Release Ubuntu [{0}]', inputs.ref)
+    || format('Manual Ubuntu by @{0}', github.actor) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA"
+        required: false
+        default: main
+        type: string
+      clean_tier:
+        description: "Clean tier"
+        required: false
+        default: incremental
+        type: choice
+        options: [incremental, rebuild, clean, clean-purge-cache]
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: false
+        default: "3"
+        type: choice
+        options: ["3","7","14","30"]
+
+  workflow_call:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA"
+        required: false
+        type: string
+        default: main
+      clean_tier:
+        description: "Clean tier"
+        required: false
+        type: string
+        default: incremental
+      artifact_name_prefix:
+        description: "Artifact name prefix (set by caller)"
+        required: false
+        type: string
+        default: ""
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: false
+        type: number
+        default: 3
+
+permissions:
+  contents: write
+  actions: write
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+env:
+  _REF:    ${{ inputs.ref || 'main' }}
+  _CLEAN:  ${{ inputs.clean_tier || 'incremental' }}
+  _DAYS:   ${{ inputs.artifact_retention_days || 3 }}
+  _PREFIX: ${{ inputs.artifact_name_prefix || format('nightly-ubuntu-{0}', github.run_id) }}
+
+jobs:
+
+  # --------------------------------------------------------------------------
+  # PHASE 1 — CACHE PROBES  (ubuntu-only keys)
+  # --------------------------------------------------------------------------
+  probe-app:
+    name: "Probe: ubuntu-24.04 / qt6 / APP"
+    runs-on: ubuntu-24.04
+    outputs:
+      cache-hit: ${{ steps.probe.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env._REF }}
+          fetch-depth: 1
+      - id: probe
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/us3-vcpkg-cache
+          key: vcpkg-ubuntu-24.04-qt6-APP-${{ hashFiles('vcpkg.json', 'admin/cmake/**', 'buildsys/vcpkg/overlay-ports/**', 'scripts/warm-cache.sh') }}
+          lookup-only: true
+
+  probe-hpc:
+    name: "Probe: ubuntu-24.04 / qt6 / HPC"
+    runs-on: ubuntu-24.04
+    outputs:
+      cache-hit: ${{ steps.probe.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env._REF }}
+          fetch-depth: 1
+      - id: probe
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/us3-vcpkg-cache
+          key: vcpkg-ubuntu-24.04-qt6-HPC-${{ hashFiles('vcpkg.json', 'admin/cmake/**', 'buildsys/vcpkg/overlay-ports/**', 'scripts/warm-cache.sh') }}
+          lookup-only: true
+
+  # --------------------------------------------------------------------------
+  # PHASE 2 — CONDITIONAL WARM  (ubuntu platform only)
+  # Skipped when probe jobs were skipped (has_changes == false).
+  # The 'has_changes' guard prevents the empty-output false-positive
+  # where a skipped probe's '' != 'true' evaluates true.
+  # --------------------------------------------------------------------------
+  warm-if-needed:
+    name: "Warm ubuntu caches (if any miss)"
+    needs: [probe-app, probe-hpc]
+    if: |
+      needs.probe-app.outputs.cache-hit != 'true' ||
+      needs.probe-hpc.outputs.cache-hit != 'true'
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:        ${{ inputs.ref || 'main' }}
+      platforms:  "ubuntu-x64 (ubuntu-24.04)"
+      qt_variant: qt6
+    secrets: inherit
+
+  # --------------------------------------------------------------------------
+  # PHASE 3 — BUILDS
+  # --------------------------------------------------------------------------
+  build-app:
+    name: "Ubuntu APP (ubuntu-24.04, qt6)"
+    needs: [probe-app, probe-hpc, warm-if-needed]
+    if: ${{ !cancelled() }}
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ inputs.ref || 'main' }}
+      runner:                  ubuntu-24.04
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
+      artifact_name_prefix:    ${{ inputs.artifact_name_prefix || format('nightly-ubuntu-{0}', github.run_id) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
+
+  build-hpc:
+    name: "Ubuntu HPC (ubuntu-24.04, qt6)"
+    needs: [probe-app, probe-hpc, warm-if-needed]
+    if: ${{ !cancelled() }}
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ inputs.ref || 'main' }}
+      runner:                  ubuntu-24.04
+      qt_variant:              qt6
+      profile:                 HPC
+      clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
+      artifact_name_prefix:    ${{ format('{0}-HPC', inputs.artifact_name_prefix || format('nightly-ubuntu-{0}', github.run_id)) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}

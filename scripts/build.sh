@@ -225,12 +225,7 @@ if [ -n "${US3_BUILD_JOBS:-}" ]; then
   # Explicit override always wins
   BUILD_JOBS="$US3_BUILD_JOBS"
 elif [ "${CI:-false}" = "true" ]; then
-  # Linux Qt6 builds on GitHub runners can run out of disk at higher parallelism
-  if [ "$PLATFORM" = "Linux" ] && [ "$QT_VARIANT" = "qt6" ]; then
-    BUILD_JOBS=2
-  else
-    BUILD_JOBS="$CORES"
-  fi
+  BUILD_JOBS="$CORES"
 else
   # Local builds: leave ~10% headroom to keep the machine usable
   BUILD_JOBS=$((CORES * 9 / 10))
@@ -252,6 +247,31 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # =============================================================================
+# MACOS CI DISK MANAGEMENT
+# macOS runners come with large preinstalled tools (Xcode simulators, etc.)
+# that consume significant disk. Free them before the build in CI.
+# =============================================================================
+if [ "$PLATFORM" = "macOS" ] && [ "${CI:-false}" = "true" ]; then
+  echo "=========================================="
+  echo "macOS disk preflight"
+  echo "=========================================="
+  df -h
+  echo "Freeing large preinstalled tool stacks not needed for UltraScan..."
+  # Xcode iOS/watchOS/tvOS simulators — largest single consumer (~20 GB)
+  sudo rm -rf /Library/Developer/CoreSimulator/Profiles/Runtimes || true
+  # Android SDK
+  sudo rm -rf /usr/local/lib/android || true
+  # .NET
+  sudo rm -rf /usr/local/share/dotnet || true
+  # Homebrew packages not needed for our build
+  brew uninstall --force --ignore-dependencies azure-cli google-cloud-sdk || true
+  echo ""
+  echo "Disk after cleanup:"
+  df -h
+  echo ""
+fi
+
+# =============================================================================
 # LINUX CI SCRATCH / DISK MANAGEMENT
 # On GitHub-hosted Ubuntu runners, root disk space is tight. Put large mutable
 # build state on scratch storage in CI when possible.
@@ -266,10 +286,11 @@ if [ "$PLATFORM" = "Linux" ]; then
 
   if [ "${CI:-false}" = "true" ]; then
     echo "Freeing large preinstalled tool stacks not needed for UltraScan..."
-    sudo rm -rf /usr/share/dotnet || true
-    sudo rm -rf /opt/ghc || true
-    sudo rm -rf /usr/local/lib/android || true
-    sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+    SUDO=""; [ "$(id -u)" != "0" ] && SUDO="sudo"
+    $SUDO rm -rf /usr/share/dotnet || true
+    $SUDO rm -rf /opt/ghc || true
+    $SUDO rm -rf /usr/local/lib/android || true
+    $SUDO rm -rf /opt/hostedtoolcache/CodeQL || true
     echo ""
     echo "Disk after cleanup:"
     df -h
@@ -336,6 +357,58 @@ elif [ "$PLATFORM" = "Linux" ]; then
     bash "$_BOOTSTRAP"
   fi
   echo ""
+
+  # ---------------------------------------------------------------------------
+  # RHEL/Rocky 8: activate GCC 13 for this shell session.
+  # bootstrap-linux.sh writes /etc/profile.d/gcc-toolset-13.sh but profile.d
+  # is not sourced in non-login CI shells — source the enable script directly.
+  if [ -f /opt/rh/gcc-toolset-13/enable ]; then
+    # shellcheck disable=SC1091
+    source /opt/rh/gcc-toolset-13/enable
+    echo "GCC toolset 13 activated: $(g++ --version | head -1)"
+    # Export CC/CXX explicitly so vcpkg's inner CMake invocations and Qt5's
+    # qmake configure script both pick up GCC 13 rather than re-detecting
+    # the compiler from PATH (which can race with system /usr/bin/cc).
+    GCC13_BIN=/opt/rh/gcc-toolset-13/root/usr/bin
+    export CC="${GCC13_BIN}/gcc"
+    export CXX="${GCC13_BIN}/g++"
+    export AR="${GCC13_BIN}/ar"
+    export NM="${GCC13_BIN}/nm"
+    export RANLIB="${GCC13_BIN}/ranlib"
+    export STRIP="${GCC13_BIN}/strip"
+    echo "CC=${CC}  CXX=${CXX}"
+  fi
+
+  # ---------------------------------------------------------------------------
+  # RHEL/Rocky 8: add OpenMPI to PATH for HPC builds.
+  # openmpi-devel installs mpicxx to /usr/lib64/openmpi/bin/ which is not
+  # on PATH by default. profile.d is not sourced in non-login CI shells.
+  # PKG_CONFIG_PATH must include the OpenMPI pkgconfig dir so that CMake's
+  # FindMPI can resolve the 'mpi-cxx' pkg-config module; without it,
+  # find_package(MPI REQUIRED CXX) fails even when mpicxx is on PATH.
+  # MPI_CXX_COMPILER is exported as a hint so FindMPI uses the wrapper
+  # directly rather than relying solely on pkg-config.
+  if [ "$PROFILE" = "HPC" ] && [ -d /usr/lib64/openmpi/bin ]; then
+    export PATH="/usr/lib64/openmpi/bin:${PATH}"
+    export LD_LIBRARY_PATH="/usr/lib64/openmpi/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    export PKG_CONFIG_PATH="/usr/lib64/openmpi/lib/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
+    export MPI_CXX_COMPILER="/usr/lib64/openmpi/bin/mpicxx"
+    echo "OpenMPI PATH added: $(command -v mpicxx 2>/dev/null || echo NOT FOUND)"
+    echo "PKG_CONFIG_PATH: ${PKG_CONFIG_PATH}"
+  fi
+
+  # ---------------------------------------------------------------------------
+  # RHEL/Rocky 8: Python 3.6 is the system default but vcpkg's meson port
+  # requires >= 3.7. bootstrap-linux.sh registers python3.9 via
+  # update-alternatives, but that only affects that shell's hash table.
+  # Create a shim in a temp dir so every subprocess (including cmake/vcpkg)
+  # sees python3 >= 3.9 without needing a new login shell.
+  if [ -x /usr/bin/python3.9 ]; then
+    _PYTHON_SHIM_DIR="$(mktemp -d)"
+    ln -sf /usr/bin/python3.9 "${_PYTHON_SHIM_DIR}/python3"
+    export PATH="${_PYTHON_SHIM_DIR}:${PATH}"
+    echo "python3 shimmed to: $(python3 --version 2>&1)"
+  fi
 fi
 
 # =============================================================================

@@ -1,0 +1,116 @@
+name: Nightly — macOS Intel
+
+# ============================================================================
+# Platform: macOS 15 Intel x86_64
+# Profiles:  APP
+# Schedule:  NOT on nightly schedule (Intel is not a selected nightly platform)
+#             Remove the comment below and add a cron entry to opt in.
+# Release:   called by release.yml via workflow_call
+# Manual:    workflow_dispatch on this file
+# ============================================================================
+#
+# Change detection is handled by the caller (nightly-builds.yml) for
+# scheduled runs. workflow_dispatch on this file always proceeds.
+# (No schedule trigger on this workflow; always builds when called.)
+
+run-name: >-
+  ${{ github.event_name == 'workflow_call'
+    && format('Release macOS Intel [{0}]', inputs.ref)
+    || format('Manual macOS Intel by @{0}', github.actor) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA"
+        required: false
+        default: main
+        type: string
+      clean_tier:
+        description: "Clean tier"
+        required: false
+        default: incremental
+        type: choice
+        options: [incremental, rebuild, clean, clean-purge-cache]
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: false
+        default: "3"
+        type: choice
+        options: ["3","7","14","30"]
+
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+        default: main
+      clean_tier:
+        required: false
+        type: string
+        default: incremental
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: ""
+      artifact_retention_days:
+        required: false
+        type: number
+        default: 3
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+
+  # --------------------------------------------------------------------------
+  # PHASE 1 — CACHE PROBE
+  # --------------------------------------------------------------------------
+  probe-app:
+    name: "Probe: macos-15-intel / qt6 / APP"
+    runs-on: macos-15-intel
+    outputs:
+      cache-hit: ${{ steps.probe.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 1
+      - id: probe
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/us3-vcpkg-cache
+          key: vcpkg-macos-15-intel-qt6-APP-${{ hashFiles('vcpkg.json', 'admin/cmake/**', 'buildsys/vcpkg/overlay-ports/**', 'scripts/warm-cache.sh') }}
+          lookup-only: true
+
+  # --------------------------------------------------------------------------
+  # PHASE 2 — CONDITIONAL WARM
+  # --------------------------------------------------------------------------
+  warm-if-needed:
+    name: "Warm macos-15-intel cache (if miss)"
+    needs: [probe-app]
+    if: needs.probe-app.outputs.cache-hit != 'true'
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:        ${{ inputs.ref || 'main' }}
+      platforms:  "macos-intel (macos-15-intel)"
+      qt_variant: qt6
+    secrets: inherit
+
+  # --------------------------------------------------------------------------
+  # PHASE 3 — BUILD
+  # --------------------------------------------------------------------------
+  build-app:
+    name: "macOS Intel APP (macos-15-intel, qt6)"
+    needs: [probe-app, warm-if-needed]
+    if: ${{ !cancelled() }}
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    with:
+      ref:                     ${{ inputs.ref || 'main' }}
+      runner:                  macos-15-intel
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
+      artifact_name_prefix:    ${{ inputs.artifact_name_prefix || format('nightly-{0}', github.run_id) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
