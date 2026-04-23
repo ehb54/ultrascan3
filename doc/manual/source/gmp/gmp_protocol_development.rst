@@ -43,7 +43,7 @@ The protocol name is the only information that can be changed, since the source 
 2: Lab/Rotor
 ===============
 
-The user cannot change the laboratory, rotor, rotor calibration profile, instrument, and experiment types. The roles of Operator, Reviewer, Approver, and Subject Matter Expert (SME) can be re-assigned from the drop-down menus. See here for more information: `UltraScan GMP Help <../index.html>`_. 
+The user cannot change the laboratory, rotor, rotor calibration profile, instrument, and experiment types. The roles of Operator, Reviewer, Approver, and Subject Matter Expert (SME) can be re-assigned from the drop-down menus. See here for more information: :doc:`UltraScan GMP Help <../index>`. 
 
 3: Speeds
 =============
@@ -208,7 +208,7 @@ The 'OK' button brings up the 'Run Reinitialization' window, which informs the u
 .. image:: ../_static/images/protocol_development/protocol_development_23.png 
     :align: center
     
-The program moves to the 'IMPORT' stage, which displays the last scan of each Triplicate from the intensity data. The user is prompted with the **Reference Scans: Automated Processing** message:
+The program moves to the 'IMPORT' stage, which displays the last scan of each Triple from the intensity data. The user is prompted with the **Reference Scans: Automated Processing** message:
 
 .. image:: ../_static/images/protocol_development/protocol_development_24.png 
     :align: center
@@ -228,7 +228,7 @@ Once the data has been saved, the user is notified that the program is proceedin
 .. image:: ../_static/images/protocol_development/protocol_development_27.png 
     :align: center
     
-The editing window presents the user with the data edited in accordance with 'Data End' value and 'Excluded Scan Ranges' defined in the **Aprofile**. The 'Meniscus' position and 'Data Start' value are defined through automated processing. If the user is not satisfied with the automated processing, the **Edit Currently Selected Profile Manually** button allows for the 'Meniscus' position and 'Data End' values to be defined manually. **Remove Spikes** removes some sharp, irregular intensity spikes from data. Each cell/channel/wavelength Triplicate can be cycled through using the **Previous Triplicate** and **Next Triplicate** buttons.
+The editing window presents the user with the data edited in accordance with 'Data End' value and 'Excluded Scan Ranges' defined in the **Aprofile**. The 'Meniscus' position and 'Data Start' value are defined through automated processing. If the user is not satisfied with the automated processing, the **Edit Currently Selected Profile Manually** button allows for the 'Meniscus' position and 'Data End' values to be defined manually. **Remove Spikes** removes some sharp, irregular intensity spikes from data. Each cell/channel/wavelength Triple can be cycled through using the **Previous Triple** and **Next Triple** buttons.
 
 .. image:: ../_static/images/protocol_development/protocol_development_28.png
     :align: center
@@ -243,7 +243,7 @@ Once the edited profiles have been saved, the user is notified that the program 
 .. image:: ../_static/images/protocol_development/protocol_development_30.png
     :align: center
     
-The analysis window displays the current status of the submitted jobs producing the models specified in the **Aprofile**. **Cancel** can be used to stop ongoing jobs. **View Fit** simulates completed model overlays and displays them. The **Expand All Triples** and **Collapse All Triples** buttons control all Triples, while the {down arrow} button can be used to collapse or expand each individual Triplicate.
+The analysis window displays the current status of the submitted jobs producing the models specified in the **Aprofile**. **Cancel** can be used to stop ongoing jobs. **View Fit** simulates completed model overlays and displays them. The **Expand All Triples** and **Collapse All Triples** buttons control all Triples, while the {down arrow} button can be used to collapse or expand each individual Triple.
 
 .. image:: ../_static/images/protocol_development/protocol_development_31.png
     :align: center

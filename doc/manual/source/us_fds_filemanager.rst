@@ -48,7 +48,7 @@ A file manager dialog that allows user to navigate to the directory containing t
 .. note:: 
     Only one directory can be chosen at this stage. 
 
-Once loaded, the **Dataset Info** field will indicate a summary of the number scans in this directory, the number of Triples, speeds and gain settings for this directory. All scans for the first Triplicate, speed and gain setting will be plotted in the graph window:
+Once loaded, the **Dataset Info** field will indicate a summary of the number scans in this directory, the number of Triples, speeds and gain settings for this directory. All scans for the first Triple, speed and gain setting will be plotted in the graph window:
 
 
 .. image:: _static/images/us_fds_filemanager-1.png
@@ -72,7 +72,7 @@ Once loaded, the listboxes will be populated with all Triples, speeds and gain s
 .. Tip::
     If every Triples, speeds or gain settings are listed, a quick review is possible by simply clicking with the mouse on any listbox item and scrolling through the list by holding down an arrow key button.
 
-2. **File Exclusion:** There are multiple ways to exclude files before sorting all files into a single directory. For example, if the channel leaked, or the data are unusable for some other reason, **Delete Triplicate** will remove the entire Triplicate from the list. Alternatively, a scan file selection allows the user to save a subset of scans. Scans marked for exclusion will be marked in red, all others in yellow. To perform the exclusion, click on **Delete marked Scan(s)**: 
+2. **File Exclusion:** There are multiple ways to exclude files before sorting all files into a single directory. For example, if the channel leaked, or the data are unusable for some other reason, **Delete Triple** will remove the entire Triple from the list. Alternatively, a scan file selection allows the user to save a subset of scans. Scans marked for exclusion will be marked in red, all others in yellow. To perform the exclusion, click on **Delete marked Scan(s)**: 
 
 .. image:: _static/images/us_fds_filemanager-3.png
     :align: center
@@ -82,7 +82,7 @@ Once loaded, the listboxes will be populated with all Triples, speeds and gain s
 
     **Exclude Scans**
 
-Additional convenience functions are available to quickly delete a subset of scans. **Delete all Scans** will remove all scans for the active Triplicate, speed, and gain setting selection, but not other scans from this Triplicate. To save only the first scan of a selection, click on **Save first Scan**. The first scan may be needed for cases where the meniscus has to be determined visually. Similarly, **Save last Scan** will only save the last scan of the selection shown on the screen. This is useful for picking the last scan in an equilibrium experiment, which is presumably closest to equilibrium. **Save first and last Scan** will save both: 
+Additional convenience functions are available to quickly delete a subset of scans. **Delete all Scans** will remove all scans for the active Triple, speed, and gain setting selection, but not other scans from this Triple. To save only the first scan of a selection, click on **Save first Scan**. The first scan may be needed for cases where the meniscus has to be determined visually. Similarly, **Save last Scan** will only save the last scan of the selection shown on the screen. This is useful for picking the last scan in an equilibrium experiment, which is presumably closest to equilibrium. **Save first and last Scan** will save both: 
 
 .. image:: _static/images/us_fds_filemanager-4.png
     :align: center
@@ -93,7 +93,7 @@ Additional convenience functions are available to quickly delete a subset of sca
     **Exclude Scans**
 
 
-3. **Exporting selected Files:** Once all scans that are not desired have been marked for deletion, the remaining scans can be reviewed by selecting the desired Triplicate, speed and gain setting, and then be exported by clicking on **Export File Selection**. A new target directory should be created where the file selection can be written with sorted filenames suitable for import into US3. All exported files will be written with standard filenames of the format A00001.FI1, A00002.FI1, ...
+3. **Exporting selected Files:** Once all scans that are not desired have been marked for deletion, the remaining scans can be reviewed by selecting the desired Triple, speed and gain setting, and then be exported by clicking on **Export File Selection**. A new target directory should be created where the file selection can be written with sorted filenames suitable for import into US3. All exported files will be written with standard filenames of the format A00001.FI1, A00002.FI1, ...
 
 |
 

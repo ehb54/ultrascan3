@@ -172,7 +172,7 @@ The 2DSA settings should closely match the simulation parameters for optimal res
 
 In this screen, specify the 2DSA workflow and analysis parameters, such as s-value and f/f0-value ranges, noise fitting, boundary condition fits, and Monte Carlo details. A manual or automatic meniscus/bottom position fit is available.
 
-The recommended analysis flow chart is explained in this `Flowchart <../start_page.html>`_.
+The recommended analysis flow chart is explained in this :doc:`Flowchart <../start_page>`.
 
 .. image:: ../_static/images/gmp/automation/2dsa.png
     :align: center
@@ -249,7 +249,7 @@ Optionally, the manual editing option can be invoked, and new limits for the bou
 Data Analysis:
 ==================
 
-The data analysis should commence immediately after the editing step has been electronically signed. Individual analysis steps are listed in sequential order for each Triplicate in the analysis, and their status is indicated as “Waiting for prior stage(s) to complete”, “QUEUED”, “RUNNING”, or “COMPLETE”.
+The data analysis should commence immediately after the editing step has been electronically signed. Individual analysis steps are listed in sequential order for each Triple in the analysis, and their status is indicated as “Waiting for prior stage(s) to complete”, “QUEUED”, “RUNNING”, or “COMPLETE”.
 
 When all analysis steps are in “COMPLETE” stage, the GMP workflow will switch to the report generation and produce a GMP report. Review signatures from the operator, reviewers and approvers will be solicited via email, and added to the GMP report after signing. The electronic signature panel in the GMP menu will be used to review reports and provide the final signatures.
 

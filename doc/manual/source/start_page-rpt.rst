@@ -71,10 +71,10 @@ The simulation quality assessment includes the following results:
   :header-rows: 0
 
   *  - **root-mean-square deviation**
-     - The root-mean-square deviation (RMSD) is reported together with the edit profile, analysis method, and Triplicate designation. This allows the user to evaluate fit quality in the exact context in which the model was generated. RMSD is a primary indicator of how closely the simulation matches the experimental scans.
-  *  - :doc:`Bitmap <fe_match/fe_match_simulate.html#residual-bit-map>`_
+     - The root-mean-square deviation (RMSD) is reported together with the edit profile, analysis method, and Triple designation. This allows the user to evaluate fit quality in the exact context in which the model was generated. RMSD is a primary indicator of how closely the simulation matches the experimental scans.
+  *  - :ref:`Bitmap <residual-bit-map>` 
      - A bitmap representation of fit quality or residual structure may be generated to provide a rapid visual diagnostic of agreement between the model and the data. Such displays can help reveal systematic artifacts, scan-specific problems, or localized fitting errors.
-  *  - :doc:`Time- and radially invariant noise profiles <fe_match/fe_match_simulate.html#noise-data-analysis>`_
+  *  - :ref:`Time- and radially invariant noise profiles <noise-data-analysis>` 
      - Noise decomposition is a central element of SV analysis. UltraScan3 can report both time-invariant noise and radially invariant noise, allowing the user to determine whether systematic baseline distortions are contributing to the apparent signal. These noise profiles are important for judging whether the fit quality is limited by model inadequacy or by non-ideal data structure.
   * - **Residuals**
     - Residuals represent the difference between experimental data and simulated values. Inspection of residuals is essential for identifying systematic deviations, concentration-dependent effects, convection artifacts, optical distortions, or incomplete modeling assumptions. Ideally, residuals should be random and centered around zero.

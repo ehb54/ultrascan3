@@ -1,4 +1,4 @@
-=======================
+triple=======================
 Run Detail of Raw Data
 =======================
 
@@ -9,7 +9,7 @@ Run Detail of Raw Data
   :local: 
 
 
-As raw data is collected, the temperature (°C), rotor speed (RPM), and time interval between scans (min) are recorded. The Run Details module enables users to view variations in temperature, rotor speed, and scan intervals-both for individual triplicate scans and across the entire run. 
+As raw data is collected, the temperature (°C), rotor speed (RPM), and time interval between scans (min) are recorded. The Run Details module enables users to view variations in temperature, rotor speed, and scan intervals-both for individual triple scans and across the entire run. 
 
 
 .. _run_dets:
@@ -39,7 +39,7 @@ Run Details
   * - **Data Directory:** 
     - Name of data directory if local. 
   * - **Description:**
-    - Run label or selected triplicate identification.
+    - Run label or selected triple identification.
   * - **Run Identification:**
     - Run label
   * - **Length of Run:**
@@ -54,5 +54,5 @@ Run Details
     - average temperate across the total run time
   * - **Speed text box**
     - average rotor speed
-  * - triplicate and number of scans - used for Scan Number in plot
+  * - triple and number of scans - used for Scan Number in plot
     - 

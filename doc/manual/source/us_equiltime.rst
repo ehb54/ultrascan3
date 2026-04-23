@@ -18,7 +18,7 @@ Estimating Equilibrium Time
 
 Whenever you are planning or designing an equilibrium experiment, the question comes up of how long it takes to reach equilibrium at a certain speed. The time it takes depends on several factors: 
 
-* The model of the solution will govern the experiment simulation. Use the `Model Editor <model_editor.html>`_ to set the following parameters: 
+* The model of the solution will govern the experiment simulation. Use the :ref:`Model Editor <fe-model-loader>` to set the following parameters: 
 
     * The diffusion coefficient. The smaller the diffusion coefficient, the longer it will take to reach equilibrium, since the sample will diffuse slower. Asymmetric and random coil molecules will take longer to equilibrate than globular molecules with the same molecular weight. 
     * The sedimentation coefficient. The larger the sedimentation coefficient, the faster the molecule will equilibrate, provided the diffusion coefficient stays constant, which is rarely the case. As molecular weight and sedimentation coefficient increase, the diffusion coefficient will generally decrease, which has the opposite effect. 
@@ -48,7 +48,7 @@ Est. Equilibrium Time Functions:
   * - Set / Change / Review Model 
     - Use this pushbutton to bring up the Model Editor. 
   * - Radius Settings 
-    - Chose a pre-dfined top and bottom radius settings with the Channel Type radio buttons. Use the Custom button to manually define the radius settings. 
+    - Chose a pre-defined top and bottom radius settings with the Channel Type radio buttons. Use the Custom button to manually define the radius settings. 
   * - Rotor speed Settings 
     - Select the appropriate radio button to enter the speeds in terms of sigma (reduced molecular weight term: **(M * ω² * (1 - vbar * ρ))/( 2 * R * T)** or by RPM. 
 

@@ -41,6 +41,8 @@ Initially you are presented with a small window to enter your database password.
 
     **Populated Data Manager**
 
+.. _manage-data-thelp:
+
 The tree menu will expand and collapse with buttons like these.
 
 .. grid:: 2
@@ -62,8 +64,13 @@ The tree menu will expand and collapse with buttons like these.
 
     **Tree Menu Buttons**
 
+.. _manage-data-cmenu:
+
+.. image:: _static/images/cmenu_help.png
+  :align: center
+
 Data Management Functions:
-==================================
+============================
 
 .. list-table::
   :widths: 20 50
@@ -82,9 +89,9 @@ Data Management Functions:
   * - **Expand All**  
     - Expand the tree view to insure all rows at the level of Noise data and their ancestors are revealed. The button will then be relabelled **Hide All Noises** so you can hide noise record rows.
   * - **Data Tree Help**
-    - This button lets you pop up a :doc:`Tree Help Text <manage_data_thelp>` Window with some helpful notes on use of the tree view and on the color legend for its rows.
+    - This button lets you pop up a :ref:`Tree Help Text <manage-data-thelp>` Window with some helpful notes on use of the tree view and on the color legend for its rows.
   * - **Tree Navigation and Context Menus**
-    - Individual rows in the tree view may be expanded ("+") to show children and other descendants or may be collapsed ("-"). A right-mouse-button click on any row brings up a :doc:`Manage Data Context Menu <manage_data_cmenu>` that allows you to perform processes on the data record or show details about it.
+    - Individual rows in the tree view may be expanded ("+") to show children and other descendants or may be collapsed ("-"). A right-mouse-button click on any row brings up a :ref:`Manage Data Context Menu <manage-data-cmenu>` that allows you to perform processes on the data record or show details about it.
   * - **Help**
     - Display this and other documentation.
   * - **Close**

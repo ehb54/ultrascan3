@@ -1,5 +1,5 @@
 ====================================
-Managing Personal Information
+Manage Personal Information
 ====================================
 
 .. toctree:: 

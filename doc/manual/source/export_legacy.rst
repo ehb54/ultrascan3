@@ -20,7 +20,7 @@ This module enables you to load a run with one or more triples in Ultrascan-III 
 
     **Export Data into Legacy (Beckman) Format**
 
-Once loaded by clicking **Load Data**, sedimentation velocity data that has been converted to pseudo-absorbance from intensity by the :doc:`Import <import>` module can be exported as Intensity(RI) or as Pseudo-absorbance (RA) data. 
+Once loaded by clicking **Load Data**, sedimentation velocity data that has been converted to pseudo-absorbance from intensity by the :doc:`Import <convert>` module can be exported as Intensity(RI) or as Pseudo-absorbance (RA) data. 
 
 A popup dialog will appear to prompt the type the user wants to export 
 
@@ -110,7 +110,7 @@ OpenAUC Converter Functions:
   * - **Run ID:** 
     - The Run identifier string is displayed for the loaded data sets.
   * - **Avg. Temp.:** 
-    - The average temperature over all the scans of the currently selected Triplicate.
+    - The average temperature over all the scans of the currently selected Triple.
   * - **(experiment description)**
     - A text string is displayed giving a fairly detailed description of the experiment.
   * - **Cell / Channel / Wavelength** 
@@ -118,7 +118,7 @@ OpenAUC Converter Functions:
   * - **Export Status** 
     - This text window displays continually updated summaries of computational activity and results.
   * - **(right side plot)** 
-    - This plot shows the Experimental data for the currently selected Triplicate.
+    - This plot shows the Experimental data for the currently selected Triple.
   * - **Reset**
     - Reset all parameters to defaults.
   * - **Help** 

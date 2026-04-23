@@ -4,7 +4,7 @@ Flowchart for the Analysis of Sedimentation Velocity Data
 
 
 .. toctree:: 
-  :maxdepth: 3
+  :maxdepth: 4
 
 .. contents:: Analysis Steps:
   :local: 
@@ -16,21 +16,20 @@ Step 1: Import Experimental data into UltraScan-III OpenAUC format
         Required for data from XLA or XLI, this step is performed automatically in the Optima AUC.
         Sedimentation velocity data should not be measured in absorbance mode, use intensity mode instead.
 
-#. Import the experimental data: Utilities: :doc:`Import Experimental Data <convert>`
-
-#. Confirm Investigator setting and local/database selection
-#.  Import Experimental Data from local disk 
-#.  Edit Run Information, Select Lab/Rotor/Calibration
-#.  Enter a Label (verbose description for the run)
+#.  Import the experimental data: Utilities: :doc:`Import Experimental Data <convert>`.
+#.  Confirm Investigator setting and local/database selection.
+#.  Import Experimental Data from local disk.
+#.  Edit Run Information, Select :ref:`Lab/Rotor/Calibration <edit-run-info>`.
+#.  Enter a Label (verbose description for the run).
 #.  Select the corresponding project by clicking on the Project button. If there is no project, create a new project. 
-#.  Confirm experiment type and optical detection system
-#.  Enter any comments, if applicable
-#.  Select instrument, rotor, rotor calibration and operator
+#.  Confirm experiment type and optical detection system.
+#.  Enter any comments, if applicable.
+#.  Select instrument, rotor, rotor calibration and operator.
 #.  Click on Accept.
         * Edit the Description field if necessary
 #.  Navigate to the first channel and select the centerpiece type.
-#.  Select the proper solution - Make sure that the solution contains at least one analyte and a buffer
-        * If you have more than one Triplicate, you can click on Apply to All but verify centerpiece and solution for each Triplicate first. Also, check the Description field again to make sure the appropriate information is saved.
+#.  Select the proper solution - Make sure that the solution contains at least one analyte and a buffer.
+        * If you have more than one Triple, you can click on Apply to All but verify centerpiece and solution for each Triple first. Also, check the Description field again to make sure the appropriate information is saved.
 #.  If data were collected in intensity mode, you will need to Define Reference Scans by selecting a short region from the air-to-air interface portion of the data.
 #.  For equilibrium data from 6-channel centerpieces you should separate each channel with the Define Subsets/Process Subsets functions.
 #.  Failed Triples or empty Triples can be excluded from the run by clicking on Drop Selected Triples.
@@ -44,7 +43,7 @@ Step 2: Edit experimental data.
 
 #. Edit the data into Edit Data: :doc:`Edit Data <us_edit>`. 
 #. Load data from the database or a local data directory that contains the UltraScan 3 data files previously converted from the Beckman raw data. 
-#. Select the Cell / Channel / Wavelength Triplicate to be edited. 
+#. Select the Cell / Channel / Wavelength Triple to be edited. 
 #. Specify the meniscus of the data by holding down the Control key and using the left mouse button. The meniscus value may be manually adjusted with the keyboard. 
 #. If the data were collected with the interference detector, specify the left and right edges of the air gap area of the data. 
 #. Specify the left and right edges of the data to be analyzed. 
@@ -109,8 +108,8 @@ Step 6: Perform a final 2DSA refinement
 #. Visualize the final results in Velocity: :doc:`FE Model Viewer <fe_match/fe_match_simulate>` and save results to database.
 #. All subsequent analyses methods should now be based on the model generated in this final 2DSA refinement step.
 
-
-At this point, multiple analysis options exist depending on the properties of the analyte distribution. If a polydisperse solution is obtained, parsimonious regularization with the genetic algorithm method is appropriate. Otherwise, the data should be analyzed only by the 2DSA analysis in conjunction with a 50-iteration Monte Carlo analysis. Both options are explained below.
+.. note::
+    At this point, multiple analysis options exist depending on the properties of the analyte distribution. If a polydisperse solution is obtained, parsimonious regularization with the genetic algorithm method is appropriate. Otherwise, the data should be analyzed only by the 2DSA analysis in conjunction with a 50-iteration Monte Carlo analysis. Both options are explained below.
 
 
 
@@ -121,7 +120,7 @@ Step 7: Genetic Algorithm analysis - (optional)
 #. If the refined 2DSA data are appropriate for genetic algorithm analysis, select Velocity: :doc:`Initialize Genetic Algorithm <ga_initialize>` and load the model from Step 6 into the initialization program. See the corresponding UltraScan Manual section for details.
 #. Assign initialization and save to disk. 
 #. Log into USLIMS and submit data to Genetic Algorithm analysis, but do not refit time or radially invariant noise. Make sure to select time and radially invariant noise generated in Step 6, which is set to occur by default unless overridden by the user.
-#. Select the gadistro file from the UltraScan/results/run-id directory for the correct Triplicate.
+#. Select the gadistro file from the UltraScan/results/run-id directory for the correct Triple.
 #. Visualize results by using the Velocity: :doc:`FE Model Viewer <fe_match/fe_match_simulate>`. 
 
 
@@ -191,7 +190,7 @@ Step 12: Perform Parametrically Constrained Spectrum Analysis (PCSA) - (optional
     * Tikhonov regularization can be performed with a specified regularization level, or by asking the program to auto-compute the most appropriate regularization level based on the L-curve criterion, see:
 
 Reference
-==========
+----------
 
 **2DSA**
 

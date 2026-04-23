@@ -22,15 +22,15 @@ The Pseudo-Absorbance Program is the first processing step in the characterizati
     **ABDE**
 
 
-Process:
-=========
+PsAP Process:
+==============
 
-1. Click **Import Run** and load ABDE dataset using a :doc:`Load Run Data Dialog <common_dialogs.html>`.
+1. Click **Import Run** and load ABDE dataset using a :ref:`Load Run Data Dialog <fe-data-loader>`.
 
 .. image:: _static/images/pseudo-abde-2.png
     :align: center
 
-2. Assign the reference channel in the Reference pulldown menu. The reference will automatically be subtracted. Select which Triplicate to save by clicking the **Save** checkbox.  
+2. Assign the reference channel in the Reference pulldown menu. The reference will automatically be subtracted. Select which Triple to save by clicking the **Save** checkbox.  
 
 .. image:: _static/images/pseudo-abde-3.png
     :align: center
@@ -60,7 +60,7 @@ Pseudo-Absorbance Functions:
   * - **Local Disk** 
     - Select to specify data input from local disk or the database.  
   * - **Import Run** 
-    - Click here import the dataset using :doc:`Load Data Dialog <common_dialogs>`, select a run ID for the data set to load.  
+    - Click here import the dataset using :ref:`Load Data Dialog <fe-data-loader>`, select a run ID for the data set to load.  
   * - **Load Reference Scan**
     - Load a reference scan from a different dataset if no Reference Scan was included.    
   * - **Reset**

@@ -15,7 +15,7 @@ When the **Simulate Model** button is clicked in the **Finite Element Model View
 
  * **Finite Element Data/Residuals Viewer** - Visual comparison of simulated and experimental data. Graphical display of time and radially invariant noises subtracted. 
  * **Residuals Pixel Map** - Bit map of every scan as a pixel line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(positive) pixels. an Excellent residual map will have a random distribution of red and green pixels. 
- * `3-Dimensional Plot Controls <../3d_plot.html>`_ - 3D plots of the simulated data.
+ * :doc:`3-Dimensional Plot Controls <../3d_plot>`- 3D plots of the simulated data.
  * **Data report File** - Generate a Simulated model Report file and view it in a dialog.
 
 .. image:: ../_static/images/fe_match_allct.png
@@ -54,9 +54,9 @@ Data/Residuals Viewer Functions
   * - Subtract Radially Invariant Noise:
     - Add Radially Invariant Noise to the Experimental data in the Experimental and Simulated Data Plot. 
   * - Plot Simulated/Modeled Data:
-    -  View the simulated data in the Experimental and Simulated Data Plot. 
+    - View the simulated data in the Experimental and Simulated Data Plot. 
   * - Add Time Invariant Noise:
-    -  Add Time Invariant Noise to the Simulated data in the Experimental and Simulated Data Plot. 
+    - Add Time Invariant Noise to the Simulated data in the Experimental and Simulated Data Plot. 
   * - Add Radially Invariant Noise:
     - Add Radially Invariant Noise to the Simulated data in the Experimental and Simulated Data Plot. 
 
@@ -83,6 +83,7 @@ Data/Residuals Viewer Functions
 
 |
 
+.. _noise-data-analysis:
 
 Noise Data Analysis
 -------------------
@@ -173,11 +174,11 @@ Noise Data Analysis
 
     **Random noise**
 
-
-
+.. _residual-bit-map:
 
 Residual Bit Map
 ================
+
 Experimental-Simulation residuals are plotted in another way in a bit map. This small window represents each residual #Scans x #Readings point as a color: green where simulation is greater than experimental; red where experimental is greater. A random distribution of colors throughout the bit map is indication of a good model fit. 
 
 .. image:: ../_static/images/bitmap.png
@@ -188,9 +189,12 @@ Experimental-Simulation residuals are plotted in another way in a bit map. This 
 
     **Pixel Bit Map**
 
+.. _fe-match-report:
+
 Report: FE Match Model Simulation
 =================================
-The "Save Data" button produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
+
+The **Save Data** button produces a set of report files. One of these is displayable via the **View Report** button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
 
 .. image:: ../_static/images/simulatedReport.png
   :align: center
@@ -204,7 +208,7 @@ The "Save Data" button produces a set of report files. One of these is displayab
    * - **Heading 1:**
      - Analysis type
    * - **Heading 2:**
-     - This heading indicates the "dataset named in the Import module", the cell number, channel, and wavelength triplicate, the edit profile processed in the Edit data module,
+     - This heading indicates the "dataset named in the Import module", the cell number, channel, and wavelength triple, the edit profile processed in the Edit data module,
    * - **Model Analysis:**
      - The name of the model is determined by the analysis number_the type of analysis completed_the database request number_number of models in the analysis cohort
    * - **Number of components:**

@@ -43,7 +43,7 @@ Simulation Functions:
   * - **Simulation Parameters** 
     - The majority of the parameters that govern the output simulation grid, duration, method, and so on are given in the result of clicking this button: a :doc:`Simulation Parameters <simparams>` dialog. 
   * - **Select Rotor**
-    - Load a rotor and its calibration data by opening the :doc:`Rotor Management <rotor> dialog.
+    - Load a rotor and its calibration data by opening the :doc:`Rotor Management <rotors>` dialog.
   * - **Show Movie**
     - Have intermediate scan curves displayed in the upper right plot window during simulation calculations by checking this box. This function allows the user to select a run time which allows the analyte sediments fully. 
   * - **Use Time Correction** 
