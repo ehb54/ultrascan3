@@ -278,11 +278,12 @@ bool US_Saxs_Util::nsa_run()
    unsigned int endloop   = control_parameters[ "nsaspheres" ].toUInt();
 
    {
-      QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
-      if ( rx.indexIn( control_parameters[ "nsaspheres" ] ) != -1 )
+      QRegularExpression rx( "^(\\d+)\\s+(\\d+)$" );
+      QRegularExpressionMatch rx_m = rx.match( control_parameters[ "nsaspheres" ] );
+      if ( rx_m.hasMatch() )
       {
-         startloop = rx.cap( 1 ).toUInt();
-         endloop   = rx.cap( 2 ).toUInt();
+         startloop = rx_m.captured(1).toUInt();
+         endloop   = rx_m.captured(2).toUInt();
       }
    }
    cout << QString( "nsa run: %1 to %2\n" ).arg( startloop ).arg( endloop );

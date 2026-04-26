@@ -5,7 +5,7 @@
 
 #define TSO QTextStream( stdout )
 
-static QRegExp rx_eb = QRegExp( QString( "%1%2" ).arg( "^" ).arg( UPU_EB_PREFIX ) );
+static QRegularExpression rx_eb = QRegularExpression( QString( "%1%2" ).arg( "^" ).arg( UPU_EB_PREFIX ) );
 
 void US_Plot_Util::eb_handling(
                               vector < QString >                   titles,

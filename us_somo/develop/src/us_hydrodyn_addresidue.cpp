@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_addresidue.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_math.h"
@@ -1080,7 +1081,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
    residue_list.clear( );
    lb_residues->clear( );
    i=1;
-   QRegExp rx_spaces = QRegExp( "\\s+" ); 
+   QRegularExpression rx_spaces = QRegularExpression( QStringLiteral( "\\s+" ) ); 
    int line_count = 1;
 
    if (f.open(QIODevice::ReadOnly))

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_best.h"
 // #include "../include/us_vector.h"
 #include "../include/us_lm.h"
@@ -804,7 +805,7 @@ void US_Hydrodyn_Best::load()
             pb_load->setEnabled( true );
             return;
          }
-         one_over_triangles.push_back( QString( qsl[ i ] ).replace( QRegExp( "^=" ), "" ).toDouble() );
+         one_over_triangles.push_back( QString( qsl[ i ] ).replace( QRegularExpression( QStringLiteral( "^=" ) ), "" ).toDouble() );
       }
    }
 
@@ -835,7 +836,7 @@ void US_Hydrodyn_Best::load()
          for ( int i = 1; i <= points; ++i )
          {
             qs += QString( "%1," ).arg( qsl[ i ] );
-            parameter_data[ qsl[ 0 ] ].push_back( QString( qsl[ i ] ).replace( QRegExp( "^=" ), "" ).toDouble() );
+            parameter_data[ qsl[ 0 ] ].push_back( QString( qsl[ i ] ).replace( QRegularExpression( QStringLiteral( "^=" ) ), "" ).toDouble() );
             if ( qsl[ i ] == "?" )
             {
                f.close();
@@ -2211,7 +2212,7 @@ void US_Hydrodyn_Best::join_results()
    }
 
 
-   save_file.replace(  QRegExp( "(-joined|)\\.(csv|CSV)$" ), "" );
+   save_file.replace(  QRegularExpression( QStringLiteral( "(-joined|)\\.(csv|CSV)$" ) ), "" );
    save_file += "-joined.csv";
 
    if ( QFile::exists( save_file ) )

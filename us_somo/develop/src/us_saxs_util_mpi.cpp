@@ -1,4 +1,5 @@
 #include <mpi.h>
+#include <QRegularExpression>
 
 #include "../include/us_saxs_util.h"
 #include "../include/us_file_util.h"
@@ -46,7 +47,7 @@ bool       timed_out;
          ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msg;
          f.close();
       }
-      if ( msg.contains( QRegExp( "^\\d+: (SEND|RECV) " ) ) )
+      if ( msg.contains( QRegularExpression( QStringLiteral( "^\\d+: (SEND|RECV) " ) ) ) )
       {
          QFile f( QString( "debug-%1" ).arg( myrank ) );
          QStringList msgs = (msg ).split( "\n" , Qt::SkipEmptyParts );
@@ -83,7 +84,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    QString original_controlfile = controlfile;
 
    errormsg = "";
-   if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
+   if ( !controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TAR)$" ) ) ) )
    {
       errormsg = QString( "controlfile must be .tgz or .tar, was %1" ).arg( controlfile );
       cout << errormsg << endl << flush;
@@ -167,12 +168,12 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       
       QString dest = controlfile;
       int result;
-      if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+      if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
       {
          // gunzip controlfile, must be renamed for us_gzip
          
          // rename
-         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+         dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
          QDir qd;
          qd.remove( dest );
          if ( !qd.rename( controlfile, dest ) )
@@ -195,7 +196,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          }
          errorno--;
 
-         controlfile.replace( QRegExp( "\\.gz$" ), "" );
+         controlfile.replace( QRegularExpression( QStringLiteral( "\\.gz$" ) ), "" );
       }
 
       // tar open controlfile
@@ -211,7 +212,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       // check to make sure all files .tgz
 
-      if ( qslt.filter( QRegExp( "\\.(tgz|TGZ)$" ) ).size() != qslt.size() )
+      if ( qslt.filter( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ).size() != qslt.size() )
       {
          // not all tgz
          cout << QString("Error: %1 control file does not contain only .tgz files\n").arg( controlfile );
@@ -224,7 +225,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       // check for ^common_
 
-      QStringList common = qslt.filter( QRegExp( "^common_" ) );
+      QStringList common = qslt.filter( QRegularExpression( QStringLiteral( "^common_" ) ) );
       if ( common.size() )
       {
          for ( unsigned int i = 0; i < common.size(); i++ )
@@ -233,14 +234,14 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          
             QString controlfile = common[ i ];
 
-            if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+            if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
             {
                // gunzip controlfile, must be renamed for us_gzip
 
                dest = controlfile;
 
                // rename
-               dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+               dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
                cout << QString("Renaming %1 to %2\n").arg( controlfile ).arg( dest );
                QDir qd;
                qd.remove( dest );
@@ -264,7 +265,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                }
                errorno--;
                
-               controlfile.replace( QRegExp( "\\.gz$" ), "" );
+               controlfile.replace( QRegularExpression( QStringLiteral( "\\.gz$" ) ), "" );
             }
 
             // mkdir, extract
@@ -314,7 +315,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          QStringList newqslt;
          for ( unsigned int i = 0; i < qslt.size(); i++ )
          {
-            if ( !qslt[ i ].contains( QRegExp( "^common_" ) ) )
+            if ( !qslt[ i ].contains( QRegularExpression( QStringLiteral( "^common_" ) ) ) )
             {
                newqslt << qslt[ i ];
             }
@@ -541,7 +542,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       // create results.tar
 
       QString results_file = original_controlfile;
-      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
+      results_file.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TGZ)$" ) ), "" );
       results_file += "_out.tar";
 
       QStringList list;
@@ -652,7 +653,7 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    nsa_mpi = true;
 
    errormsg = "";
-   if ( !controlfile.contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
+   if ( !controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TAR)$" ) ) ) )
    {
       errormsg = QString( "controlfile must be .tgz or .tar, was %1" ).arg( controlfile );
       cerr << errormsg << endl << flush;
@@ -742,12 +743,12 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
          .arg( dest );
       original_controlfile = dest;
 
-      if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+      if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
       {
          // gunzip controlfile, must be renamed for us_gzip
          
          // rename
-         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+         dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
          QDir qd;
          qd.remove( dest );
          if ( !qd.rename( controlfile, dest ) )
@@ -770,7 +771,7 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
          }
          errorno--;
 
-         controlfile.replace( QRegExp( "\\.gz$" ), "" );
+         controlfile.replace( QRegularExpression( QStringLiteral( "\\.gz$" ) ), "" );
       }
 
       // tar open controlfile
@@ -849,7 +850,7 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
          cout << "closeup knows we timed out\n";
       }
       QString results_file = original_controlfile;
-      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
+      results_file.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TGZ)$" ) ), "" );
       results_file += "_out.tgz";
 
       QDir dod( outputData );
