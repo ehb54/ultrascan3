@@ -15,6 +15,7 @@
 #include <QCloseEvent>
 
 #include "us_util.h"
+#include "us_uhshs_data.h"
 #include <map>
 #include <set>
 #include <vector>
@@ -25,23 +26,7 @@ using namespace std;
 # if QT_VERSION < 0x040000
      #pragma warning ( disable: 4251 )
 # endif
-#endif      
-
-struct uhshs_data {
-   QLabel     * lbl_name;
-
-   QLabel     * lbl_i_mult;
-   QLineEdit  * le_i_mult;
-
-   QLabel     * lbl_center;
-   QLineEdit  * le_center;
-
-   QLabel     * lbl_width;
-   QLineEdit  * le_width;
-
-   QCheckBox  * cb_alpha;
-   QLineEdit  * le_alpha;
-};
+#endif
 
 class US_EXTERN US_Hydrodyn_Mals_Saxs_Simulate : public QFrame
 {
