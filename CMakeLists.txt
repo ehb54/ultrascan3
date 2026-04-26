@@ -829,6 +829,7 @@ if(BUILD_TESTING)
     add_compile_definitions(US3_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     add_subdirectory(test)
 endif()
+add_subdirectory(us_somo/develop)
 
 # =============================================================================
 # INSTALLATION
