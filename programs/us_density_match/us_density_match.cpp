@@ -96,8 +96,7 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
    rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_s   ->setChecked( true );
-   connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_x_axis ( int ) ) );
+   connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_Density_Match::select_x_axis );
 
    // Diffusion-averaging radio buttons and button group
    diff_avg    = 1;
@@ -113,8 +112,7 @@ US_Density_Match::US_Density_Match() : US_Widgets()
    rb_da_s  ->setToolTip( tr( "Do a SIMPLE average of Diffusion Coefficients across distributions" ) );
    rb_da_w  ->setToolTip( tr( "Do a WEIGHTED average of Diffusion Coefficients across distributions" ) );
    rb_da_s  ->setChecked( true );
-   connect( bg_di_avg,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_di_avg ( int ) ) );
+   connect( bg_di_avg, &QButtonGroup::idReleased, this, &US_Density_Match::select_di_avg );
 
    // Various other GUI elements 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ) );

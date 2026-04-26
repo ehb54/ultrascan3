@@ -15,7 +15,6 @@
 #   import sys
 #   sys.path.insert(0, os.path.abspath('../src'))
 # ---------------------------------------------------------------------------
-from __future__ import annotations
 import datetime
 import re
 from pathlib import Path
@@ -96,7 +95,7 @@ def generate_version_metadata(source_dir: str | os.PathLike[str]) -> dict[str, s
 
     revision_date = revision_date or "unknown"
 
-    version_full = f"{build_number}{git_dirty_flag}({git_revision})"  # keep/extend as needed, e.g. f"{version_string}+{build_number}"
+    version_full = f"({build_number}|{git_revision}{' ' if local_changes else ''}{local_changes})"
 
     return {
         "BUILD_NUMBER": build_number,
@@ -108,15 +107,15 @@ def generate_version_metadata(source_dir: str | os.PathLike[str]) -> dict[str, s
         "VERSION_FULL": version_full,
     }
 
-# Read root VERSION file at ../../../VERSION
-version_file = Path(__file__).parent.parent.parent / "VERSION"
-version = "unknown"
+# Read root VERSION file at ../../../../VERSION aka /VERSION
+version_file = Path(__file__).parent.parent.parent.parent / "VERSION"
+version = "v4.1.0-dev" # match default in utils/us_defines.h
 if version_file.exists():
     with open(version_file, "r") as f:
         version = 'v' + f.read().strip()
 
 meta = generate_version_metadata(os.path.dirname(__file__))
-release = version + '-' + meta["VERSION_FULL"]
+release = version + ' ' + meta["VERSION_FULL"]
 
 # ---------------------------------------------------------------------------
 # Fix: sphinxcontrib-qthelp hardcodes "doc" as the virtualFolder in .qhp/.qhcp.
@@ -248,7 +247,7 @@ htmlhelp_basename = 'UltraScanIIIdoc'
 
 # Namespace used by
 qthelp_basename = 'manual'
-qthelp_namespace = f'org.sphinx.{qthelp_basename}.{release}'
+qthelp_namespace = f'org.sphinx.{qthelp_basename}.{version}-{meta["BUILD_NUMBER"]}-{meta["GIT_REVISION"]}{meta["GIT_DIRTY_FLAG"]}'
 # -- Options for LaTeX output ------------------------------------------------
 # Use XeLaTeX for proper Unicode support
 latex_engine = "xelatex"

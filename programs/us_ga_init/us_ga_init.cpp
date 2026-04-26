@@ -227,10 +227,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    rb_y_vbar->setToolTip( tr( "Set Y axis to Partial Specific Volume"   ) );
    rb_y_D   ->setToolTip( tr( "Set Y axis to Diffusion Coefficient"     ) );
    rb_y_f   ->setToolTip( tr( "Set Y axis to Frictional Coefficient"    ) );
-   connect( bg_x_axis,   SIGNAL( buttonReleased( int ) ),
-            this,        SLOT(   select_x_axis ( int ) ) );
-   connect( bg_y_axis,   SIGNAL( buttonReleased( int ) ),
-            this,        SLOT(   select_y_axis ( int ) ) );
+   connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_x_axis );
+   connect( bg_y_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_y_axis );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );

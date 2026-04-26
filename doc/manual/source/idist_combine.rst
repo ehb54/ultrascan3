@@ -30,11 +30,11 @@ Integral Dis. Functions:
   * - **Local Disk** 
     - Check this radio button to indicate that distribution data to be selected is on local disk file systems.
   * - **Select PreFilter(s)**
-    - :doc:`Select Run(s) as Models Pre-Filter <common_dialogs>` dialog to select Run IDs.This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
+    - :ref:`Select Run(s) as Models Pre-Filter <fe-data-loader>` dialog to select Run IDs.This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as pre-filters.
   * - **Load Distribution(s)**
-    - Load model distribution data as specified through a :doc:`Model Loader dialog <common_dialogs.html>`. Multiple distribution files may be selected.
+    - Load model distribution data as specified through a :ref:`Model Loader dialog <fe-model-loader>`. Multiple distribution files may be selected.
   * - **Remove Distribution(s)**
-    - Open a :doc:`Remove Model Distributions <common_dialogs>` dialog to remove selected model distributions from the loaded set.
+    - Open a :ref:`Remove Model Distributions <remove-mod-dis>` dialog to remove selected model distributions from the loaded set.
   * - **Refresh Plot**
     - Resets the plot to the default and automatic plot ranges. 
   * - **Save**

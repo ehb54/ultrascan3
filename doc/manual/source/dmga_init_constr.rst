@@ -9,7 +9,7 @@ Discrete Model Genetic Algorithm Constraints
 .. contents:: Index
   :local: 
 
-The Discrete Model GA Constraints Editor is a sub-module of the `DMGA Initialization <dmga_init.html>`_ module that 
+The Discrete Model GA Constraints Editor is a sub-module of the :doc:`DMGA Initialization <dmga_init>` module that 
 allows the user to define constraints for each parameter of the selected model, and to determine which parameters
 are held fixed and which are floated. 
 
@@ -48,8 +48,8 @@ parameters can be set to a logarithmic scale by checking the **LogSc?** checkbox
 DMGA Constraint Functions:
 ===========================
 
-Component Parameters:
-----------------------
+DMGA Component Parameters:
+---------------------------
 
 .. list-table::
   :widths: 20 50

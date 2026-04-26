@@ -9,29 +9,10 @@ Parametrically Constrained Spectrum Analysis Results
 .. contents:: Index
   :local: 
 
-
-Upon completion of an analysis fit, windows and plots generated include: 
-
-* :doc:`PCSA Fitting Controls <pcsa_analys>` - Once the PCSA module has simulated the model with, the Status Information on the window updates to include the best model after the iterative simulations are done. the par1 and par2  for the curves updates.  
-* :doc:`PCSA model lines viewer <pcsa_rpscan>` - simulated model lines; 
-* :ref:`PCSA data/residuals viewer <pcsa_data_residuals_viewer>` - Visual comparison of simulated and experimental data. Graphical display of time and radially invariant noises subtracted; 
-* :ref:`PCSA Report <pcsa_report>` - Generate a Simulated model Report file and view it in a dialog;
-* :ref:`Bit Map residuals <residual_bit_map>` Bit map of every scan as a pixel line and the positive or negative difference of the model to the data are highlighted as red (negative) and green(positive) pixels. an Excellent residual map will have a random distribution of red and green pixels; 
-* :doc:`3-Dimensional Plot Controls <../3d_plot>` - 3D plots of the simulated data
-
-.. image:: ../_static/images/pcsa_all.png
-    :align: center
-
-.. rst-class::
-    :align: center
-
-    **Simulated PCSA Results**
-
+.. _pcsa-data-residuals-viewer:
 
 PCSA Data Residuals Viewer
 ============================
-
-.. _pcsa_data_residuals_viewer:
 
 The simulation creates a data set with the same ranges as the edit experimental data set. The actual values for scan readings vectors are synthetically produced, as illustrated by the plot below.
 
@@ -62,13 +43,12 @@ Experimental-Simulation residuals are plotted in another way in a bit map. This 
 
     **Pixel Bit Map**
 
+.. _pcsa-report:
 
 PCSA Report
 ===============
 
-.. _pcsa_report:
-
-The "Save Data" button in the `PCSA Controls <pcsa_analys.html#pcsa-fitting-process>`_ produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
+The "Save Data" button in the `PCSA Controls <pcsa-fitting-process>` produces a set of report files. One of these is displayable via the "View Report" button, which produces a dialog that shows the contents of a report. A dialog sample follows. 
 
 .. image:: ../_static/images/pcsa_report.png
     :align: center
@@ -82,7 +62,7 @@ The "Save Data" button in the `PCSA Controls <pcsa_analys.html#pcsa-fitting-proc
   **Detailed 2DSA Report**
 
    - **Heading 1:** Analysis type
-   - **Heading 2:** This heading indicates the "dataset named in the Import module", the cell number, channel, and wavelength triplicate, the edit profile processed in the Edit data module,  
+   - **Heading 2:** This heading indicates the "dataset named in the Import module", the cell number, channel, and wavelength triple, the edit profile processed in the Edit data module,  
    - **Model Statistics:** The settings entered to generate the models and the. The model line used by the analysis,  number_the type of analysis completed_the database request number_number of models in the analysis cohort
    - **Data Analysis Settings:** The name of the model is determined by the analysis number_the type of analysis completed_the database request number_number of models in the analysis cohort
    - **Number of components:** Number of components with unique s, and D values. 
@@ -106,3 +86,4 @@ Distribution Information Units:
 - **D 20,W:** cm²/s
 - **f/f0:** unitless
 - **Concentration:** optical density (OD) at measured wavelength, (% contribution)
+

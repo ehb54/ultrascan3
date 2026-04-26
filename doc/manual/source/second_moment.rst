@@ -25,9 +25,9 @@ Second Moment Functions:
   :header-rows: 0 
 
   * - **Load Experiment** 
-    - Click on this button and, in the resulting `Load Data Dialog <data_loader.html#data-loader>`_, select an edited data set to load.
+    - Click on this button and, in the resulting :ref:`Load Data Dialog <fe-data-loader>`, select an edited data set to load.
   * - **Run Details** 
-    - Bring up a `Run Details Dialog <run_details.html>`_ with a summary of data and run details.
+    - Bring up a :doc:`Run Details Dialog <run_details>` with a summary of data and run details.
   * - **Latest Data Edit** 
     - Uncheck to allow choosing an edit other than the latest one for the experimental data. 
   * - **Database** 
@@ -47,7 +47,7 @@ Second Moment Functions:
   * - **Cell / Channel / Wavelength**
     - The text box below this label gives cell, channel and wavelength Triples available in this data set. Highlight the desired value.
   * - **Solution** 
-    - Click this button to open a `Solution Management dialog <us_solution.html>`_ that allows changes to buffer and analyte characteristics of the data set.
+    - Click this button to open a :doc:`Solution Management dialog <solutions/index>` that allows changes to buffer and analyte characteristics of the data set.
   * - **Density (20°C)** 
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity (20°C)** 

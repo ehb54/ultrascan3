@@ -17,7 +17,7 @@ Upon completion of an analysis fit, plots available include: experiment; simulat
 2DSA Overall Process
 =====================
 
-*  **Step 1:** First, load experimental velocity data. Click on :doc:`Load Data <../common_dialogs.html#data-loader>`_ to select an edited velocity data set from the database or from local disk.
+*  **Step 1:** First, load experimental velocity data. Click on :ref:`Load Data <fe-data-loader>` to select an edited velocity data set from the database or from local disk.
 *  **Step 2:** Secondly, open an analysis control window by clicking on :doc:`Fit Control <2dsa_analys>`. Within that dialog, define the grids and iterations that comprise the analysis.
 *  **Step 3:** Next, after having specified analysis parameters, begin the fit analysis by clicking "Start Fit".
 *  **Step 4:** Display and Save Results: After simulation, a variety of options are available for displaying simulation results, residuals, and distributions. Report text files and graphics plot files can also be generated.

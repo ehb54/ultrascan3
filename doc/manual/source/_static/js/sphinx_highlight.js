@@ -78,9 +78,9 @@ const SphinxHighlight = {
     // get and clear terms from localstorage
     const url = new URL(window.location);
     const highlight =
-        localStorage.getItem("sphinx_highlight_terms")
-        || url.searchParams.get("highlight")
-        || "";
+      localStorage.getItem("sphinx_highlight_terms")
+      || url.searchParams.get("highlight")
+      || "";
     localStorage.removeItem("sphinx_highlight_terms")
     url.searchParams.delete("highlight");
     window.history.replaceState({}, "", url);
@@ -103,9 +103,9 @@ const SphinxHighlight = {
         .createRange()
         .createContextualFragment(
           '<p class="highlight-link">' +
-            '<a href="javascript:SphinxHighlight.hideSearchWords()">' +
-            _("Hide Search Matches") +
-            "</a></p>"
+          '<a href="javascript:SphinxHighlight.hideSearchWords()">' +
+          _("Hide Search Matches") +
+          "</a></p>"
         )
     );
   },
@@ -113,31 +113,31 @@ const SphinxHighlight = {
   /**
    * helper function to hide the search marks again
    */
-  hideSearchWords: () => {
+  hideSearchWords: () => ` ` {
     document
       .querySelectorAll("#searchbox .highlight-link")
-      .forEach((el) => el.remove());
-    document
-      .querySelectorAll("span.highlighted")
-      .forEach((el) => el.classList.remove("highlighted"));
-    localStorage.removeItem("sphinx_highlight_terms")
+  .forEach((el) => el.remove());
+document
+  .querySelectorAll("span.highlighted")
+  .forEach((el) => el.classList.remove("highlighted"));
+localStorage.removeItem("sphinx_highlight_terms")
   },
 
-  initEscapeListener: () => {
-    // only install a listener if it is really needed
-    if (!DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS) return;
+initEscapeListener: () => {
+  // only install a listener if it is really needed
+  if (!DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS) return;
 
-    document.addEventListener("keydown", (event) => {
-      // bail for input elements
-      if (BLACKLISTED_KEY_CONTROL_ELEMENTS.has(document.activeElement.tagName)) return;
-      // bail with special keys
-      if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS && (event.key === "Escape")) {
-        SphinxHighlight.hideSearchWords();
-        event.preventDefault();
-      }
-    });
-  },
+  document.addEventListener("keydown", (event) => {
+    // bail for input elements
+    if (BLACKLISTED_KEY_CONTROL_ELEMENTS.has(document.activeElement.tagName)) return;
+    // bail with special keys
+    if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS && (event.key === "Escape")) {
+      SphinxHighlight.hideSearchWords();
+      event.preventDefault();
+    }
+  });
+},
 };
 
 _ready(SphinxHighlight.highlightSearchWords);

@@ -18,7 +18,7 @@ Rotor Stretch Calibration Utility
 
 The purpose of this program is to analyze rotor stretch profile data acquired with the analytical ultracentrifuge, and to create a rotor stretch calibration profile for different rotors in use at a laboratory.
 
-In combination with the centerpiece geometry, the rotor stretch calibration serves to inform all analysis protocols relying on finite element modeling about the position of the cell bottom, which is one of the boundary conditions required for the solution of the Lamm equation. During acceleration, the rotor will stretch and move the bottom of the celll position by the amount of the stretch outward. The stretch is a function of the rotor speed, which depends on the square of the angular velocity. The rotor stretch calibration profile is stored in the LIMS database for each rotor in use and retrieved on the fly to calculate boundary conditions. This value is calculated based on a second-order polynomial that describes the amount of stretch observed for each rotor.
+In combination with the centerpiece geometry, the rotor stretch calibration serves to inform all analysis protocols relying on finite element modeling about the position of the cell bottom, which is one of the boundary conditions required for the solution of the Lamm equation. During acceleration, the rotor will stretch and move the bottom of the cell position by the amount of the stretch outward. The stretch is a function of the rotor speed, which depends on the square of the angular velocity. The rotor stretch calibration profile is stored in the LIMS database for each rotor in use and retrieved on the fly to calculate boundary conditions. This value is calculated based on a second-order polynomial that describes the amount of stretch observed for each rotor.
 
 The amount by which each rotor stretches as a function of rotor speed depends on the rotor's type and age. Hence it is advisable to individually calibrate each rotor in use periodically. The rotor stretch is mostly independent of temperature and can be measured at any temperature.
 
@@ -53,7 +53,7 @@ Absolute stretch values are plotted in blue as a function of speed, with black c
 .. image:: _static/images/rotorstretch-5.png
   :align: center
 
-Clicking OK, the user is prompted with the `Rotor Management <rotor.html>`_ program where a new stretch profile can be stored. 
+Clicking OK, the user is prompted with the :doc:`Rotor Management <rotors>` program where a new stretch profile can be stored. 
 
 It is important to note that the appropriate rotor is pre-selected, based on the rotor information used to store the data originally in the LIMS database when the data was committed to the database. The user can add a name for the calibration as well as a w2t value for the rotor, if known. The date on which the rotor data are committed is automatically added to each rotor's profile in the LIMS system. The final report can be printed out by clicking on **View Calibration Report**:
 

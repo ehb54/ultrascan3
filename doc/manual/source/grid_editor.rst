@@ -74,7 +74,7 @@ View or Edit an Existing Grid
   Users cannot change the grid setup for existing grids. 
 
 1. Select the investigator to load the model from.   
-2. Click *Load Model* to call `Load Distribution Model dialog <common_dialogs.html#load-distribution-model>`_ and Accept. The selected model grid will populate the Grid plot.  
+2. Click *Load Model* to call :ref:`Load Distribution Model dialog <fe-data-loader>` and Accept. The selected model grid will populate the Grid plot.  
 3. From the Partial Grid List, select the grid to edit and click *Update* or *Delete*. This will to enable the grayed out area. 
 4. Adjust the values of the X and Y attributes and click *Add/Update*. 
 5. Once the grid has been edited, click *Save* and a *Save Grid Model* dialog will appear to edit name and save.  
@@ -104,9 +104,9 @@ Experimental Space
   :header-rows: 0 
 
   * - **T [C]** 
-    - The temperature selected by the user in the `Buffer Management <buffer/index.html>`_ module. Manually setting the temperature will readout **arbitrary Value!!!** error. 
+    - The temperature selected by the user in the :doc:`Buffer Management <buffer/index>`  module. Manually setting the temperature will readout **arbitrary Value!!!** error. 
   * - **Load Buffer**
-    - Load the buffer using the `Buffer Management <buffer/index.html>`_ module. 
+    - Load the buffer using the :doc:`Buffer Management <buffer/index>`  module. 
   * - **Description**
     - Read out the buffer selected or error if temperature is not set in the buffer management module. 
   * - **p (20°C) [g/mL]**

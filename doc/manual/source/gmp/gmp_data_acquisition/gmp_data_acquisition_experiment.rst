@@ -53,7 +53,7 @@ Load in the parameters from a pre-existing protocol in the database,
 
 .. _select-project: 
 
-Assign the run to a user-created Project in the `Project Management <../../us_project.html>`_ module. Each section requires information on the goals, molecules being analyzed, and experimental design.
+Assign the run to a user-created Project in the :doc:`Project Management <../../us_project>` module. Each section requires information on the goals, molecules being analyzed, and experimental design.
 
 
 2. Lab/Rotor
@@ -72,7 +72,7 @@ Selection of the hardware and experiment type, along with the assignment of role
 
 .. _advanced-lab:
 
-Management of rotors and associated rotor (stretch) calibration profiles is accessed by calling the `Rotor Management <../../rotor.html>`_. 
+Management of rotors and associated rotor (stretch) calibration profiles is accessed by calling the :doc:`Rotor Management <../../rotors>`. 
 
 .. image:: ../../_static/images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_15.png
     :align: center
@@ -157,7 +157,7 @@ The **Optical System Scan Type** options are **UV/visible** or **Rayleigh Interf
 .. _ranges:
 
 Define the wavelength ranges for each cell to be scanned using UV/visible optics.
-When the wavelength ranges are defined for each cell, the **Scan interval** for the UV/visible and Rayleigh Interference optics appear highlighted in red if updated. This also changes the **Number of scans per Triplicate (UV/vis)** and the **Number of Scans per Cell (Interference)**. These changes are then reflected in the **3: Speeds** window.
+When the wavelength ranges are defined for each cell, the **Scan interval** for the UV/visible and Rayleigh Interference optics appear highlighted in red if updated. This also changes the **Number of scans per Triple (UV/vis)** and the **Number of Scans per Cell (Interference)**. These changes are then reflected in the **3: Speeds** window.
 
 .. image:: ../../_static/images/gmp/data_acquisition/experiment/gmp_data_acquisition_experiment_30.png
     :align: center

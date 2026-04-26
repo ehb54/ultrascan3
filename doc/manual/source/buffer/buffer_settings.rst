@@ -11,9 +11,9 @@ Buffer Settings Tab
 **Panel Tab Options:**
 
 
-* `Select Buffer <select_buffer.html>`_ - A panel whose primary purpose is to select a buffer to return to the caller.
-* `Enter New Buffer <buffer_new.html>`_ - A panel whose primary purpose is to enter a brand new buffer, defined mostly by specifying components and each one's concentration.
-* :ref:`Edit Existing Buffer <buffer_edit>` - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing buffer.
+* :doc:`Select Buffer <buffer_select>`- A panel whose primary purpose is to select a buffer to return to the caller.
+* :doc:`Enter New Buffer <buffer_new>`- A panel whose primary purpose is to enter a brand new buffer, defined mostly by specifying components and each one's concentration.
+* :doc:`Edit Existing Buffer <buffer_edit>` - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing buffer.
 * :ref:`Settings <settings-tab>` - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local buffer components file from the database.
 
 

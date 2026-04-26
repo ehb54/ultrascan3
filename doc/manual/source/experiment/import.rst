@@ -51,13 +51,13 @@ LIMS Import Functions:
   * - **Undo Reference Scans**
     - Undo reference selection automatically made and make manual selection. 
   * - **Drop Selected Triples**
-    - Delete selected Triplicate when :ref:`Triples Selector for Deletes <select_delete>` window appears.
+    - Delete selected Triple when :ref:`Triples Selector for Deletes <select_delete>` window appears.
   * - **Comments:**
     - Add comments to sample solution label.  
-  * - **Triplicate (c/c/w) Info:**
+  * - **Triple (c/c/w) Info:**
     - Cell Centerpiece. 
   * - **Solution:**
-    - Solution added in the `Cells <cells.html>`_ Experiment tab. 
+    - Solution added in the :doc:`Cells <cells>` Experiment tab. 
   * - **Scan Focus from:**
     - Select Scan start range to exclude. 
   * - **Scan Focus to:**

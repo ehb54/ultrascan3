@@ -13,14 +13,14 @@ Panel Tab Options:
 
 In each panel, tabs are visible at the top of the window to enable the user to move to another panel, to perform specific experiment subtasks. 
 
-1. `General <general.html>`_: A panel whose primary purpose is to specify the experiment run ID (a description string), select a parent project name, and possibly change data source (database or local disk) or database investigator name. 
+1. :doc:`General <general>`: A panel whose primary purpose is to specify the experiment run ID (a description string), select a parent project name, and possibly change data source (database or local disk) or database investigator name. 
 2. :ref:`Lab/Rotor <rotor>`: A panel whose primary purpose is to select the Laboratory, Rotor, and Calibration values for the experiment. 
-3. `Speeds <speeds.html>`_: A panel whose primary primary purpose is to specify one or more speed steps. For each step, speeds and durations may be given. 
-4. `Cells <cells.html>`_: A panel whose primary purpose is to select the centerpieces (or counterbalance) for the cells, along with a quartz/sapphire windows selection. 
-5. `Solutions <solutions.html>`_: A panel whose primary purpose is to specify the solution to be used in each cell/channel. 
-6. `Optics <optics.html>`_: A panel whose primary purpose is to select the optical system used to scan.  
-7. `Range <range.html>`_: A panel whose primary purpose is to select the wavelength ranges and cell radius measured.  
-8. `Submit <submit.html>`_: A panel whose primary purpose is save and upload the protocol to the Optima/Instrument and database.  
+3. :doc:`Speeds <speeds>`: A panel whose primary primary purpose is to specify one or more speed steps. For each step, speeds and durations may be given. 
+4. :doc:`Cells <cells>`: A panel whose primary purpose is to select the centerpieces (or counterbalance) for the cells, along with a quartz/sapphire windows selection. 
+5. :doc:`Solutions <solutions>`: A panel whose primary purpose is to specify the solution to be used in each cell/channel. 
+6. :doc:`Optics <optics>`: A panel whose primary purpose is to select the optical system used to scan.  
+7. :doc:`Range <range>`: A panel whose primary purpose is to select the wavelength ranges and cell radius measured.  
+8. :doc:`Submit <submit>`: A panel whose primary purpose is save and upload the protocol to the Optima/Instrument and database.  
 
 
 Lab/Rotor Panel:
@@ -29,7 +29,7 @@ Lab/Rotor Panel:
 .. _rotor:
 
 Using this panel, you can specify the rotor to be used on a proposed experiment. Specifications include the laboratory, the rotor type, and the calibration. 
-The `Rotor Management <../rotor.html>`_ module help page has detailed explanations of these items. 
+The :doc:`Rotor Management <../rotors>` module help page has detailed explanations of these items. 
 
 .. image:: ../_static/images/experiment_rotor.png
     :align: center
@@ -60,4 +60,4 @@ Lab/Rotor Functions:
 Shared Panel Functions:
 ========================
 
-A panel status box and multiple buttons are shared by all panels. The `General <general.html>`_ tab help page has detailed explanations of these items. 
+A panel status box and multiple buttons are shared by all panels. The :doc:`General <general>` tab help page has detailed explanations of these items. 

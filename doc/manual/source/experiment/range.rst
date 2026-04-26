@@ -52,10 +52,10 @@ Range Functions:
     - The interval time of each UV/vis scan.
   * - **Scan Interval: Interference(in red if updated)**
     - The interval time of each interference scan.
-  * - **Stage 1. Number of Scans per Triplicate (UV/vis):####**
-    - Number of totals UV/vis scans per Triplicate (cell/channel/wavelength). 
-  * - **Stage 1. Number of Scans per Triplicate (Interference):####**
-    - Number of totals Interference scans per Triplicate (cell/channel/wavelength). 
+  * - **Stage 1. Number of Scans per Triple (UV/vis):####**
+    - Number of totals UV/vis scans per Triple (cell/channel/wavelength). 
+  * - **Stage 1. Number of Scans per Triple (Interference):####**
+    - Number of totals Interference scans per Triple (cell/channel/wavelength). 
   * - **Cell / Channel**
     - The cell number and channel selected to be measured.  
   * - **Wavelengths**

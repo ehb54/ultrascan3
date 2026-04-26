@@ -79,6 +79,6 @@ class US_GUI_EXTERN US_AbstractRotorGui : public US_WidgetsDialog
       void select             ( void );
       void connect_error      ( const QString & );
       void help (void)
-           { showHelp.show_help( "manual/rotor.html" ); };
+           { showHelp.show_help( "manual/rotors.html" ); };
 };
 #endif

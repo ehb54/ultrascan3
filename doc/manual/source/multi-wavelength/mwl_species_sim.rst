@@ -27,7 +27,7 @@ MWL Pre-Fit Species Process:
 1. **PreFilter Models:** Select the pre-filter to find the distribution models.
 2. **Select Model:** Load the 2DSA-IT models on which the simulation will be based. 
 3. **Define Buffer:** Optionally (and rarely), you may wish to specify buffer conditions. This may be necessary if your intention is to simulate and save an artificial version of a specific experimental data set. Normally, the buffer conditions are those of water at 20 degrees Centigrade. 
-4. **Simulation Parameters:** Secondly, open a dialog to specify parameters governing the :doc:`../simulation <simparams>`.
+4. **Simulation Parameters:** Secondly, open a dialog to specify parameters governing the :doc:`simulations <../simparams>`.
 5. **Select Rotor:** Load the rotor and rotor calibration used in the pre-filter models and select the simulation rotor. 
 6. **Start Simulation:** Initiate calculation of the specified simulation. (If an error has occurred, users can stop the simulation by clicking **Stop Simulation**)
 7. **Save Simulations** After simulation, users can save the resulting **ISSF** auc file to disk for later import. 
@@ -49,13 +49,13 @@ MWL Pre-Fit Species Functions:
   * - **PreFilter Models** 
     - Load a run dataset as a Pre-filter using the "Select Run(s) as Models Pre-Filter (DB)".  
   * - **Select Models**
-    - Select the distributions to base simulation on in the ":doc:`Load Distribution Model(s) <../common_dialogs.html#load-distribution-model>`_. Click and drag to select multiples model distributions. Click on **Select Models** first to select models across runs. 
+    - Select the distributions to base simulation on in the :ref:`Load Distribution Model(s) <fe-model-loader>`. Click and drag to select multiples model distributions. Click on **Select Models** first to select models across runs. 
   * - **Define Buffer**
     - Open the :doc:`Buffer Management <../buffer/index>` dialog to select the buffer the simulations will use for density and viscosity values. 
   * - **Simulation Parameters**
     - Click to set the :doc:`Simulation Parameters <../simparams>` profile. 
   * - **Select Rotor**
-    - Click to open the :doc:`Rotor Management <../rotor>` dialog. Set the Rotor type and the associated calibration profiles for the simulation.  
+    - Click to open the :doc:`Rotor Management <../rotors>` dialog. Set the Rotor type and the associated calibration profiles for the simulation.  
   * - **Start Simulations**
     - Once all parameters have been entered, click to start simulation. 
   * - **Stop Simulations**
@@ -64,8 +64,8 @@ MWL Pre-Fit Species Functions:
     - Save simulation once generated. Simulations are saved in $HOME/ultrascan/imports/
   * - **Run ID:** 
     - The Run name automatically generated for simulations. Simulations will have the "ISS-" prefix.  
-  * - **Triplicate:** 
-    - The Triplicate initially loaded using **Select Models**.  
+  * - **Triple:** 
+    - The Triple initially loaded using **Select Models**.  
   * - **Help**
     - The Help documentation of this "MWL Pre-Fit Species Simulation" Module.
   * - **Close**

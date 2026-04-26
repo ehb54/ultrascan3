@@ -55,9 +55,9 @@ PCSA Functions:
   :header-rows: 0 
   
   * - **Load Experiment**
-    - Click here and, in the resulting :doc:`Load Run Data Dialog <common_dialogs.html#data-loader>`_, select an edited data set to load.
+    - Click here and, in the resulting :ref:`Load Run Data Dialog <fe-data-loader>`, select an edited data set to load.
   * - **Run Details**
-    - Pop up a dialog showing :doc:`Run Details Dialog <run_details>`.
+    - Pop up a dialog showing :doc:`Run Details Dialog <../run_details>`.
   * - **Latest Data Edit**
     - Uncheck to allow choosing an edit other than the latest one for the raw experimental data.
   * - **Database**
@@ -65,7 +65,7 @@ PCSA Functions:
   * - **Local Disk**
     - Select to specify data input from local disk.
   * - **View Data Report**  
-    - Generate a report file and view it in a dialog. See the details of the report in :doc:`PCSA Process Results <pcsa_results.html#pcsa-report>`_.
+    - Generate a report file and view it in a dialog. See the details of the report in :ref:`PCSA Process Results <pcsa-report>`.
   * - **Save Data**
     - Save models and noises, as well as report and plot images files.
   * - **Run ID / Edit ID:**
@@ -77,7 +77,7 @@ PCSA Functions:
   * - **Cell / Channel / Wavelength**
     - One or more rows of data edit Triples. If more than one, click on a row to select it as the data of interest.
   * - **Solution**
-    - Click this button to open a :doc:`Solution Management dialog <us_solution>` that allows changes to buffer and analyte characteristics of the data set. 
+    - Click this button to open a :doc:`Solution Management dialog <../solutions/index>` that allows changes to buffer and analyte characteristics of the data set. 
   * - **Density (20°C)**
     - Shows the density value for the loaded experiment. Click the Solution button to open a dialog in which density and other values may be changed.
   * - **Viscosity (20°C)**
@@ -101,9 +101,9 @@ PCSA Functions:
   * - **Fit Control**
     - Open a dialog to set analysis parameters and start a fit run. For details on the results of clicking this button, see :doc:`PCSA Analysis Control <pcsa_analys>`.
   * - **3-D Plot**
-    - After a PCSA model is fitted, open a control window for a :doc:`3-Dimensional plot <3d_plot>` of the final computed model. 
+    - After a PCSA model is fitted, open a control window for a :doc:`3-Dimensional plot <../3d_plot>` of the final computed model. 
   * - **Residual Plot**
-    - After a PCSA model is fitted, open a plot dialog for a far more detailed set of result plots. See :doc:`PDSA Residual Plot Dialog <pcsa_results.html#pcsa-data-residuals-viewer>`_ for further details.
+    - After a PCSA model is fitted, open a plot dialog for a far more detailed set of result plots. See :ref:`PCSA Residual Plot <pcsa-data-residuals-viewer>`  Dialog for further details.
   * - **Status Info:**
     - This text window displays continually updated summaries of computational activity and results.
   * - **Status Info**
