@@ -420,17 +420,43 @@ endif()
 add_definitions(-DQT_SHARED)
 set(QT_STATICPLUGIN 0 CACHE BOOL "Disable static Qt plugins" FORCE)
 
-# vcpkg's FindWrapOpenGL.cmake on macOS spuriously adds /usr/X11R6/lib as a
-# link directory (a legacy X11 path that doesn't exist on modern macOS).
-# CMake warns about this for every target.  Suppress it by pre-emptively
-# marking that path as already handled.
+# vcpkg/Qt WrapOpenGL on macOS may incorrectly propagate /usr/X11R6/lib
+# as a link item. CMake warns because targets may link only to libraries,
+# not directories. Remove the stale X11 directory from imported target
+# interfaces before UltraScan targets inherit it.
 if(APPLE)
-    set_property(DIRECTORY APPEND PROPERTY LINK_DIRECTORIES "")
-    list(REMOVE_ITEM CMAKE_EXE_LINKER_FLAGS "-L/usr/X11R6/lib")
-    # The warning comes from target_link_libraries being given a directory path.
-    # We cannot silence it globally, but we can prevent it from being added
-    # by overriding the offending variable that FindWrapOpenGL.cmake reads.
-    set(X11_X11_LIB "" CACHE STRING "Suppress X11R6 link dir warning" FORCE)
+    foreach(_target
+            WrapOpenGL::WrapOpenGL
+            OpenGL::GL
+            Qt6::Gui
+            Qt6::Widgets
+            Qt6::OpenGL
+            Qt6::OpenGLWidgets
+    )
+        if(TARGET ${_target})
+            foreach(_prop
+                    INTERFACE_LINK_LIBRARIES
+                    INTERFACE_LINK_OPTIONS
+            )
+                get_target_property(_items ${_target} ${_prop})
+                if(_items)
+                    list(REMOVE_ITEM _items "/usr/X11R6/lib" "-L/usr/X11R6/lib")
+                    set_target_properties(${_target} PROPERTIES ${_prop} "${_items}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+
+    foreach(_flag_var
+            CMAKE_EXE_LINKER_FLAGS
+            CMAKE_SHARED_LINKER_FLAGS
+            CMAKE_MODULE_LINKER_FLAGS
+    )
+        if(DEFINED ${_flag_var})
+            string(REPLACE "-L/usr/X11R6/lib" "" ${_flag_var} "${${_flag_var}}")
+            string(REPLACE "/usr/X11R6/lib" "" ${_flag_var} "${${_flag_var}}")
+        endif()
+    endforeach()
 endif()
 
 # Platform-specific Qt configuration
