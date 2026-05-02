@@ -149,3 +149,113 @@ jobs:
       clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
       artifact_name_prefix:    ${{ format('{0}-HPC', inputs.artifact_name_prefix || format('nightly-oraclelinux8-{0}', github.run_id)) }}
       artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
+
+  # --------------------------------------------------------------------------
+  # PUBLISH NIGHTLY
+  # Downloads the OL8 build artifacts, renames to customer-facing traceable
+  # nightly names, and publishes to a rolling 'nightly' pre-release tag.
+  # Skipped when called from release.yml (inputs.artifact_name_prefix is set).
+  # Skipped when called from nightly-builds.yml (artifact_name_prefix is set);
+  # in that case nightly-builds.yml publish-release owns the nightly tag.
+  #
+  # concurrency group prevents two simultaneous workflow_dispatch runs from
+  # racing to delete/recreate the same rolling nightly release. The scheduled
+  # nightly path is unaffected because this job is skipped when
+  # artifact_name_prefix is set by the caller.
+  # --------------------------------------------------------------------------
+  publish-nightly:
+    name: "Publish nightly OL8 artifacts"
+    needs: [build-app, build-hpc]
+    if: ${{ !cancelled() && !inputs.artifact_name_prefix }}
+    concurrency:
+      group: nightly-publish
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 1
+
+      - name: Derive nightly metadata
+        id: meta
+        shell: bash
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "label=nightly-${DATE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Download APP artifact
+        uses: actions/download-artifact@v7
+        with:
+          pattern: nightly-oraclelinux8-${{ github.run_id }}-oraclelinux8-*
+          path: dl-app
+          run-id: ${{ github.run_id }}
+
+      - name: Download HPC artifact
+        uses: actions/download-artifact@v7
+        with:
+          pattern: nightly-oraclelinux8-${{ github.run_id }}-HPC-oraclelinux8-*
+          path: dl-hpc
+          run-id: ${{ github.run_id }}
+
+      - name: Stage nightly assets with traceable filenames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p nightly-assets
+          LABEL="${{ steps.meta.outputs.label }}"
+
+          # Require exactly one matching file; fail clearly if zero or multiple.
+          find_one() {
+            local label="$1" root="$2" pattern="$3"
+            mapfile -t matches < <(find "$root" -type f -name "$pattern" | sort)
+            if [[ ${#matches[@]} -eq 0 ]]; then
+              echo "::error::Missing ${label}; pattern=${pattern} in ${root}"
+              return 1
+            fi
+            if [[ ${#matches[@]} -gt 1 ]]; then
+              echo "::error::Ambiguous ${label}; found ${#matches[@]} matches:"
+              printf '  %s\n' "${matches[@]}"
+              return 1
+            fi
+            printf '%s' "${matches[0]}"
+          }
+
+          # Desktop artifact — build system produces .tar.xz (APP, not HPC)
+          APP_SRC=$(find_one "OL8 APP" dl-app 'UltraScan3-[!H]*-Linux-*.tar.xz')
+          cp "$APP_SRC" "nightly-assets/us3-redhat-8.10-x86_64-${LABEL}.tar.xz"
+          echo "  us3-redhat-8.10-x86_64-${LABEL}.tar.xz <- $APP_SRC"
+
+          # HPC artifact
+          HPC_SRC=$(find_one "OL8 HPC" dl-hpc 'UltraScan3-HPC-*-Linux-*.tar.xz')
+          cp "$HPC_SRC" "nightly-assets/us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz"
+          echo "  us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz <- $HPC_SRC"
+
+          echo "Nightly assets:"
+          ls -lh nightly-assets/
+
+      - name: Publish to rolling nightly pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          LABEL="${{ steps.meta.outputs.label }}"
+          DATE="${{ steps.meta.outputs.date }}"
+          SHORT_SHA="${{ steps.meta.outputs.short_sha }}"
+
+          # Create or update the rolling nightly tag/release
+          gh release delete nightly --yes 2>/dev/null || true
+          git tag -f nightly
+          git push -f origin nightly
+
+          gh release create nightly nightly-assets/* \
+            --title "Nightly OL8 ${DATE}" \
+            --notes "Nightly Oracle Linux 8 build.\n\n**Date:** ${DATE}\n**Commit:** ${SHORT_SHA}\n\nAssets:\n- \`us3-redhat-8.10-x86_64-${LABEL}.tar.xz\` - OL8/RHEL8 x86_64 desktop\n- \`us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz\` - OL8/RHEL8 x86_64 HPC/MPI" \
+            --prerelease \
+            --target main

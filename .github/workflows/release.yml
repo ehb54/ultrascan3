@@ -154,6 +154,10 @@ jobs:
           set -euo pipefail
           mkdir -p release-assets
 
+          # Extract version from tag (strip leading 'v')
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+
           cp_first_find() {
             local dest="$1"
             shift
@@ -166,26 +170,27 @@ jobs:
 
           find artifacts -maxdepth 4 -print | sort
           echo "Staging release assets..."
-          cp_first_find "UltraScan3-macos-arm.pkg" \
+
+          cp_first_find "UltraScan3-macos-installer-arm64-${VERSION}.pkg" \
             find artifacts -type f -path '*release-*-arm-macos-15-*/*' -name '*.pkg'
 
-          cp_first_find "UltraScan3-macos-intel.pkg" \
+          cp_first_find "UltraScan3-macos-installer-x86_64-${VERSION}.pkg" \
             find artifacts -type f -path '*release-*-macos-15-intel-*/*' -name '*.pkg'
 
-          cp_first_find "UltraScan3-windows-x64.exe" \
+          cp_first_find "us3-Windows-x86_64-${VERSION}-setup.exe" \
             find artifacts -type f -path '*release-*-windows-2022-*/*' -name '*.exe'
 
-          cp_first_find "UltraScan3-linux-x64.tar.gz" \
-            find artifacts -type f -path '*release-*-ubuntu-24.04-*/*' ! -path '*HPC*' -name '*.tar.gz'
+          cp_first_find "us3-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-ubuntu-24.04-*/*' ! -path '*HPC*' -name '*.tar.xz'
 
-          cp_first_find "UltraScan3-HPC-linux-x64.tar.gz" \
-            find artifacts -type f -path '*release-*-HPC-ubuntu-24.04-*/*' -name '*.tar.gz'
+          cp_first_find "us3-HPC-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-HPC-ubuntu-24.04-*/*' -name '*.tar.xz'
 
-          cp_first_find "UltraScan3-oraclelinux8-x64.tar.gz" \
-            find artifacts -type f -path '*release-*-oraclelinux8-*/*' ! -path '*HPC*' -name '*.tar.gz'
+          cp_first_find "us3-redhat-8.10-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-oraclelinux8-*/*' ! -path '*HPC*' -name '*.tar.xz'
 
-          cp_first_find "UltraScan3-HPC-oraclelinux8-x64.tar.gz" \
-            find artifacts -type f -path '*release-*-HPC-oraclelinux8-*/*' -name '*.tar.gz'
+          cp_first_find "us3-HPC-redhat-8.10-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-HPC-oraclelinux8-*/*' -name '*.tar.xz'
 
           echo "Assets ready:"
           ls -lh release-assets/
@@ -198,6 +203,7 @@ jobs:
           set -euo pipefail
 
           TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
           COMMIT=$(git rev-parse HEAD)
           DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
 
@@ -208,13 +214,13 @@ jobs:
 
           | Asset | Platform | Profile |
           |-------|----------|---------|
-          | \`UltraScan3-macos-arm.pkg\`              | macOS ARM (Apple Silicon) | Desktop |
-          | \`UltraScan3-macos-intel.pkg\`            | macOS Intel (x86-64)      | Desktop |
-          | \`UltraScan3-windows-x64.exe\`            | Windows x64               | Desktop |
-          | \`UltraScan3-linux-x64.tar.gz\`           | Ubuntu 24.04 x64          | Desktop |
-          | \`UltraScan3-HPC-linux-x64.tar.gz\`       | Ubuntu 24.04 x64          | HPC/MPI |
-          | \`UltraScan3-oraclelinux8-x64.tar.gz\`    | Oracle Linux 8 x64        | Desktop |
-          | \`UltraScan3-HPC-oraclelinux8-x64.tar.gz\`| Oracle Linux 8 x64        | HPC/MPI |"
+          | \`UltraScan3-macos-installer-arm64-${VERSION}.pkg\`    | macOS ARM (Apple Silicon) | Desktop |
+          | \`UltraScan3-macos-installer-x86_64-${VERSION}.pkg\`   | macOS Intel (x86_64)      | Desktop |
+          | \`us3-Windows-x86_64-${VERSION}-setup.exe\`             | Windows x86_64            | Desktop |
+          | \`us3-ubuntu-24.04-x86_64-${VERSION}.tar.xz\`          | Ubuntu 24.04 x86_64       | Desktop |
+          | \`us3-HPC-ubuntu-24.04-x86_64-${VERSION}.tar.xz\`      | Ubuntu 24.04 x86_64       | HPC/MPI |
+          | \`us3-redhat-8.10-x86_64-${VERSION}.tar.xz\`           | Oracle Linux 8 / RHEL 8   | Desktop |
+          | \`us3-HPC-redhat-8.10-x86_64-${VERSION}.tar.xz\`       | Oracle Linux 8 / RHEL 8   | HPC/MPI |"
 
           gh release create "$TAG" release-assets/* \
             --title "UltraScan3 $TAG" \

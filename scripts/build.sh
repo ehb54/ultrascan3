@@ -70,8 +70,8 @@ while [[ $# -gt 0 ]]; do
       echo "  --pkg                Build platform-native package:"
       echo "                         macOS   -> PKG installer (installs to /Applications/UltraScan3)"
       echo "                                    Output: build/<preset>/UltraScan3-<version>-macOS.pkg"
-      echo "                         Linux   -> portable tar.gz archive"
-      echo "                                    Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz"
+      echo "                         Linux   -> portable tar.xz archive (xz-compressed)"
+      echo "                                    Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.xz"
       echo "  --qt6                Build with Qt6 + Qwt6.3.0 [default on macOS]"
       echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [Linux only]"
       echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0 [Linux only]"
@@ -893,9 +893,9 @@ fi
 #   APP profile -> package_linux_tarball   (desktop, includes GUI, help, etc.)
 #   HPC profile -> package_linux_hpc_tarball (headless, no docs, no GUI)
 #
-# Output:
-#   APP: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.gz
-#   HPC: build/<preset>/UltraScan3-HPC-<version>-Linux-<arch>.tar.gz
+# Output (real xz-compressed .tar.xz archives):
+#   APP: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.xz
+#   HPC: build/<preset>/UltraScan3-HPC-<version>-Linux-<arch>.tar.xz
 # =============================================================================
 if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   BUILD_DIR="build/$CONFIGURE_PRESET"
@@ -908,13 +908,13 @@ if [ "$BUILD_PKG" = true ] && [ "$PLATFORM" = "Linux" ]; then
   if [ "$PROFILE" = "HPC" ]; then
     _PKG_TARGET="package_linux_hpc_tarball"
     _PKG_LABEL="Linux HPC tarball"
-    _PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-Linux-*.tar.gz"
+    _PKG_GLOB="${BUILD_DIR}/UltraScan3-HPC-*-Linux-*.tar.xz"
     _PKG_STAGE="_hpc_stage/UltraScan3-HPC"
     _DEPLOY_TARGET="deploy_linux_hpc"
   else
     _PKG_TARGET="package_linux_tarball"
     _PKG_LABEL="Linux tarball"
-    _PKG_GLOB="${BUILD_DIR}/UltraScan3-*-Linux-*.tar.gz"
+    _PKG_GLOB="${BUILD_DIR}/UltraScan3-*-Linux-*.tar.xz"
     _PKG_STAGE="_stage/UltraScan3"
     _DEPLOY_TARGET="deploy_linux"
   fi

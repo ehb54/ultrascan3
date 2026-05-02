@@ -167,26 +167,48 @@ jobs:
           set -euo pipefail
           mkdir -p release-assets
 
+          DATE=$(date -u +%Y%m%d)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          LABEL="nightly-${DATE}-${SHORT_SHA}"
+
           cp_first() {
             local pattern="$1" dest="$2"
             local src
             src=$(find artifacts -path "$pattern" | head -1)
             [ -n "$src" ] || { echo "ERROR: no file matching $pattern"; exit 1; }
             cp "$src" "release-assets/$dest"
-            echo "  $dest ← $src"
+            echo "  $dest <- $src"
           }
 
-          echo "Staging release assets..."
-          cp_first "artifacts/nightly-*-arm-macos-15-[0-9]*/UltraScan3-*-macOS.pkg" "UltraScan3-nightly-macos-arm.pkg"
-          cp_first "artifacts/nightly-*-macos-15-intel-*/UltraScan3-*-macOS.pkg" "UltraScan3-nightly-macos-intel.pkg"
-          cp_first "artifacts/nightly-*-windows-2022-*/UltraScan3-*-Windows.exe" "UltraScan3-nightly-windows-x64.exe"
-          cp_first "artifacts/nightly-*-ubuntu-24.04-[0-9]*/UltraScan3-*-Linux-*.tar.gz" "UltraScan3-nightly-linux-x64.tar.gz"
-          cp_first "artifacts/nightly-*-HPC-ubuntu-24.04-[0-9]*/UltraScan3-*-Linux-*.tar.gz" "UltraScan3-nightly-linux-hpc-x64.tar.gz"
-          cp_first "artifacts/nightly-*-oraclelinux8-[0-9]*/UltraScan3-*-Linux-*.tar.gz" "UltraScan3-nightly-oraclelinux8-x64.tar.gz"
-          cp_first "artifacts/nightly-*-HPC-oraclelinux8-[0-9]*/UltraScan3-*-Linux-*.tar.gz" "UltraScan3-nightly-oraclelinux8-hpc-x64.tar.gz"
+          echo "Staging release assets (label: ${LABEL})..."
+
+          # macOS artifacts (pkg, not .tar.xz)
+          cp_first "artifacts/nightly-*-arm-macos-15-[0-9]*/UltraScan3-*-macOS.pkg" \
+            "UltraScan3-macos-installer-arm64-${LABEL}.pkg"
+          cp_first "artifacts/nightly-*-macos-15-intel-*/UltraScan3-*-macOS.pkg" \
+            "UltraScan3-macos-installer-x86_64-${LABEL}.pkg"
+
+          # Windows (exe)
+          cp_first "artifacts/nightly-*-windows-2022-*/UltraScan3-*-Windows.exe" \
+            "us3-Windows-x86_64-${LABEL}-setup.exe"
+
+          # Ubuntu 24.04 (.tar.xz from build system)
+          cp_first "artifacts/nightly-*-ubuntu-24.04-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
+            "us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+          cp_first "artifacts/nightly-*-HPC-ubuntu-24.04-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
+            "us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+
+          # Oracle Linux 8 / RHEL 8 (.tar.xz from build system)
+          cp_first "artifacts/nightly-*-oraclelinux8-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
+            "us3-redhat-8.10-x86_64-${LABEL}.tar.xz"
+          cp_first "artifacts/nightly-*-HPC-oraclelinux8-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
+            "us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz"
 
           echo "Assets ready:"
           ls -lh release-assets/
+
+          # Export label for publish step
+          echo "label=${LABEL}" >> "$GITHUB_ENV"
 
       - name: Publish rolling nightly release
         env:
@@ -195,7 +217,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          TAG="nightly"
+          LABEL="${label}"
           COMMIT=$(git rev-parse HEAD)
           DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
 
@@ -208,20 +230,20 @@ jobs:
 
           | Asset | Platform | Profile |
           |-------|----------|---------|
-          | \`UltraScan3-nightly-macos-arm.pkg\` | macOS ARM | Desktop |
-          | \`UltraScan3-nightly-macos-intel.pkg\`         | macOS Intel (x86-64)      | Desktop |
-          | \`UltraScan3-nightly-windows-x64.exe\`         | Windows x64               | Desktop |
-          | \`UltraScan3-nightly-linux-x64.tar.gz\`        | Ubuntu 24.04 x64          | Desktop |
-          | \`UltraScan3-nightly-linux-hpc-x64.tar.gz\`    | Ubuntu 24.04 x64          | HPC/MPI |
-          | \`UltraScan3-nightly-oraclelinux8-x64.tar.gz\` | Oracle Linux 8 x64        | Desktop |
-          | \`UltraScan3-nightly-oraclelinux8-hpc-x64.tar.gz\` | Oracle Linux 8 x64    | HPC/MPI |"
+          | \`UltraScan3-macos-installer-arm64-${LABEL}.pkg\`         | macOS arm64 (Apple Silicon) | Desktop |
+          | \`UltraScan3-macos-installer-x86_64-${LABEL}.pkg\`        | macOS x86_64 (Intel)        | Desktop |
+          | \`us3-Windows-x86_64-${LABEL}-setup.exe\`                 | Windows x86_64              | Desktop |
+          | \`us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz\`               | Ubuntu 24.04 x86_64         | Desktop |
+          | \`us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz\`           | Ubuntu 24.04 x86_64         | HPC/MPI |
+          | \`us3-redhat-8.10-x86_64-${LABEL}.tar.xz\`               | Oracle Linux 8 / RHEL 8 x86_64 | Desktop |
+          | \`us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz\`           | Oracle Linux 8 / RHEL 8 x86_64 | HPC/MPI |"
 
           # Delete existing nightly release and tag if present
-          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release delete nightly --yes --cleanup-tag 2>/dev/null || true
           sleep 2
 
           # Create new release with all assets
-          gh release create "$TAG" release-assets/* \
+          gh release create nightly release-assets/* \
             --title "Nightly Build" \
             --notes "$NOTES" \
             --prerelease \
