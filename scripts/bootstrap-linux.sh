@@ -83,9 +83,9 @@ if [ "$(id -u)" != "0" ]; then
   SUDO="sudo"
 fi
 
-# Detect CI mode the same way build.sh does
+# Detect CI mode or NONINTERACTIVE
 NON_INTERACTIVE=false
-if [ "${CI:-false}" = "true" ]; then
+if [ "${CI:-false}" = "true" ] || [ "${US3_BOOTSTRAP_NONINTERACTIVE:-false}" = "true" ]; then
   NON_INTERACTIVE=true
 fi
 

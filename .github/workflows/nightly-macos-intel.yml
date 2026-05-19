@@ -91,7 +91,7 @@ jobs:
     name: "Warm macos-15-intel cache (if miss)"
     needs: [probe-app]
     if: needs.probe-app.outputs.cache-hit != 'true'
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:        ${{ inputs.ref || 'main' }}
       platforms:  "macos-intel (macos-15-intel)"
@@ -105,7 +105,7 @@ jobs:
     name: "macOS Intel APP (macos-15-intel, qt6)"
     needs: [probe-app, warm-if-needed]
     if: ${{ !cancelled() }}
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ inputs.ref || 'main' }}
       runner:                  macos-15-intel

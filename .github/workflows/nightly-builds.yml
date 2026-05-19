@@ -17,13 +17,22 @@ permissions:
 jobs:
 
   # =========================================================================
-  # PHASE 0 — CHANGE DETECTION
-  # Single authoritative gate for the entire nightly run.
+  # PHASE 0 — GATE: decide whether the nightly build is needed.
   # All platform jobs and publish-release are conditioned on this output.
-  # workflow_dispatch always proceeds (has_changes=true).
+  #
+  # has_changes=true (build proceeds) when ANY of the following are true:
+  #   1. Triggered by workflow_dispatch (always build).
+  #   2. Commits landed on main in the last 24 hours.
+  #   3. The rolling `nightly` GitHub Release does not exist.
+  #   4. The `nightly` tag does not exist.
+  #   5. The `nightly` tag does not resolve to the current origin/main commit.
+  #
+  # has_changes=false (skip) only when ALL of these hold:
+  #   - No commits in the last 24 hours.
+  #   - The `nightly` tag exists and resolves to the current origin/main HEAD.
   # =========================================================================
   check-changes:
-    name: "Check for changes in last 24h"
+    name: "Gate: decide whether nightly build is needed"
     runs-on: ubuntu-24.04
     outputs:
       has_changes: ${{ steps.detect.outputs.has_changes }}
@@ -32,17 +41,72 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-      - name: Detect commits in last 24 hours
+
+      - name: Decide whether nightly build is needed
         id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          # --- 1. workflow_dispatch always proceeds --------------------------
           if [[ "${{ github.event_name }}" != "schedule" ]]; then
+            echo "Triggered by workflow_dispatch — proceeding unconditionally."
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
+          # --- 2. Commits on main in the last 24 hours? ---------------------
           COUNT=$(git log --oneline --since="24 hours ago" origin/main | wc -l | tr -d ' ')
-          echo "Commits in last 24h: $COUNT"
-          echo "has_changes=$( [[ $COUNT -gt 0 ]] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          echo "Commits on origin/main in last 24h: ${COUNT}"
+          if [[ "${COUNT}" -gt 0 ]]; then
+            echo "Recent commits found — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- 3. Does the nightly GitHub Release exist? --------------------
+          if ! gh release view nightly --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "No 'nightly' GitHub Release found — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- 4 & 5. Does the nightly tag resolve to origin/main HEAD? ----
+          #
+          # We do NOT trust gh release view's targetCommitish — GitHub may
+          # report the branch name "main" instead of a resolved SHA.
+          #
+          # For annotated tags, ls-remote returns the tag object SHA at
+          # refs/tags/nightly, not the commit SHA. The peeled ref
+          # refs/tags/nightly^{} always resolves to the underlying commit.
+          # We try the peeled form first and fall back to the raw tag ref.
+
+          MAIN_SHA=$(git rev-parse origin/main)
+          echo "Current origin/main SHA: ${MAIN_SHA}"
+
+          NIGHTLY_SHA=$(git ls-remote origin 'refs/tags/nightly^{}' | awk '{print $1}')
+          if [[ -z "${NIGHTLY_SHA}" ]]; then
+            # Lightweight tag (no peeled form) — use the raw ref directly.
+            NIGHTLY_SHA=$(git ls-remote origin 'refs/tags/nightly' | awk '{print $1}')
+          fi
+
+          if [[ -z "${NIGHTLY_SHA}" ]]; then
+            echo "Tag 'nightly' not found on origin — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Resolved 'nightly' tag SHA: ${NIGHTLY_SHA}"
+
+          if [[ "${NIGHTLY_SHA}" != "${MAIN_SHA}" ]]; then
+            echo "Tag 'nightly' does not point to current origin/main — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- All conditions met: nothing to do ----------------------------
+          echo "No commits in 24h and 'nightly' tag matches origin/main — skipping build."
+          echo "has_changes=false" >> "$GITHUB_OUTPUT"
 
   # =========================================================================
   # PLATFORM BUILDS — two parallel groups to reduce wall time while keeping
@@ -248,3 +312,5 @@ jobs:
             --notes "$NOTES" \
             --prerelease \
             --target main
+          
+          

@@ -26,7 +26,7 @@ jobs:
 
   ubuntu-app:
     name: "Ubuntu 24.04 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  ubuntu-24.04
@@ -40,7 +40,7 @@ jobs:
 
   ubuntu-hpc:
     name: "Ubuntu 24.04 HPC"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  ubuntu-24.04
@@ -54,7 +54,7 @@ jobs:
 
   macos-arm:
     name: "macOS ARM APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  macos-15
@@ -68,7 +68,7 @@ jobs:
 
   oraclelinux8-app:
     name: "Oracle Linux 8 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  ubuntu-24.04
@@ -83,7 +83,7 @@ jobs:
 
   oraclelinux8-hpc:
     name: "Oracle Linux 8 HPC"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  ubuntu-24.04
@@ -98,7 +98,7 @@ jobs:
 
   macos-intel:
     name: "macOS Intel APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  macos-15-intel
@@ -112,7 +112,7 @@ jobs:
 
   windows:
     name: "Windows x64 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ github.ref }}
       runner:                  windows-2022

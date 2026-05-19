@@ -71,7 +71,7 @@ jobs:
   # --------------------------------------------------------------------------
   build-app:
     name: "Windows APP (windows-2022, qt6)"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@bfd00d222bcdfa0d8375562f9ffe8cff81e6cb18
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
     with:
       ref:                     ${{ inputs.ref || 'main' }}
       runner:                  windows-2022
