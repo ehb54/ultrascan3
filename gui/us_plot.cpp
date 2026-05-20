@@ -49,7 +49,7 @@ void US_Zoomer::initializeZoomStack( QwtPlotZoomer* zoomer ) {
       return;
    }
    const QwtPlot* plot = zoomer->plot();
-   if ( plot == nullptr || plot->itemList(QwtPlotItem::Rtti_PlotCurve).count() == 0 ) {
+   if ( plot == nullptr || ( plot->itemList(QwtPlotItem::Rtti_PlotCurve).count() == 0 && plot->itemList(QwtPlotItem::Rtti_PlotSpectrogram).count() == 0 ) ) {
       return;
    }
    // first zoom event, check if the zoomStack is properly set
@@ -803,6 +803,11 @@ void US_Plot::quit( void )
 void US_Plot::scale_yRight( const QRectF &rect ) const
 {
    if (! plot->axisEnabled ( QwtPlot::yRight )){
+      return;
+   }
+   // if a QwtPlotSpectrogram is present, return early too
+   if ( plot->itemList(QwtPlotItem::Rtti_PlotSpectrogram).count() > 0 )
+   {
       return;
    }
    const double dyL = yLeftRange.at(1) - yLeftRange.at(0);

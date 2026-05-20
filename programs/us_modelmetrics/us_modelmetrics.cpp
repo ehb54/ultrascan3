@@ -127,8 +127,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    rb_d->setToolTip( tr( "Select Diffusion Coefficient"     ));
    rb_f->setToolTip( tr( "Select Frictional Coefficient"    ));
    rb_r->setToolTip( tr( "Select Hydrodynamic Radius"       ));
-   connect( bg_hp, SIGNAL( buttonReleased( int )),
-            this,  SLOT  ( select_hp     ( int )));
+   connect( bg_hp, &QButtonGroup::idReleased, this, &US_ModelMetrics::select_hp );
 
    lbl_dval1 = us_label( tr( "D10 value: " ), -1 );
    lbl_dval2 = us_label( tr( "D50 value: " ), -1 );
