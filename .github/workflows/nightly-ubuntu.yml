@@ -1,0 +1,280 @@
+name: Nightly — Ubuntu
+
+# ============================================================================
+# Platform: Ubuntu 24.04 x64
+# Profiles:  APP + HPC
+# Schedule:  nightly (selected platform)
+# Release:   called by release.yml via workflow_call
+# Manual:    workflow_dispatch on this file
+# ============================================================================
+#
+# Cache isolation strategy:
+#   Probe + warm are scoped to this platform's keys only.
+#   A miss on ubuntu does NOT trigger warming for any other platform.
+#   The warm job is skipped when the probe job itself was skipped.
+#
+# Change detection is handled by the caller (nightly-builds.yml) for
+# scheduled runs. workflow_dispatch on this file always proceeds.
+
+run-name: >-
+  ${{ github.event_name == 'schedule'
+    && format('Nightly Ubuntu [{0}]', github.run_started_at)
+    || github.event_name == 'workflow_call'
+    && format('Release Ubuntu [{0}]', inputs.ref)
+    || format('Manual Ubuntu by @{0}', github.actor) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA"
+        required: false
+        default: main
+        type: string
+      clean_tier:
+        description: "Clean tier"
+        required: false
+        default: incremental
+        type: choice
+        options: [incremental, rebuild, clean, clean-purge-cache]
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: false
+        default: "3"
+        type: choice
+        options: ["3","7","14","30"]
+
+  workflow_call:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA"
+        required: false
+        type: string
+        default: main
+      clean_tier:
+        description: "Clean tier"
+        required: false
+        type: string
+        default: incremental
+      artifact_name_prefix:
+        description: "Artifact name prefix (set by caller)"
+        required: false
+        type: string
+        default: ""
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: false
+        type: number
+        default: 3
+
+permissions:
+  contents: write
+  actions: write
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+env:
+  _REF:    ${{ inputs.ref || 'main' }}
+  _CLEAN:  ${{ inputs.clean_tier || 'incremental' }}
+  _DAYS:   ${{ inputs.artifact_retention_days || 3 }}
+  _PREFIX: ${{ inputs.artifact_name_prefix || format('nightly-ubuntu-{0}', github.run_id) }}
+
+jobs:
+
+  # --------------------------------------------------------------------------
+  # PHASE 1 — CACHE PROBES  (ubuntu-only keys)
+  # --------------------------------------------------------------------------
+  probe-app:
+    name: "Probe: ubuntu-24.04 / qt6 / APP"
+    runs-on: ubuntu-24.04
+    outputs:
+      cache-hit: ${{ steps.probe.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env._REF }}
+          fetch-depth: 1
+      - id: probe
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/us3-vcpkg-cache
+          key: vcpkg-ubuntu-24.04-qt6-APP-${{ hashFiles('vcpkg.json', 'admin/cmake/**', 'buildsys/vcpkg/overlay-ports/**', 'scripts/warm-cache.sh') }}
+          lookup-only: true
+
+  probe-hpc:
+    name: "Probe: ubuntu-24.04 / qt6 / HPC"
+    runs-on: ubuntu-24.04
+    outputs:
+      cache-hit: ${{ steps.probe.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env._REF }}
+          fetch-depth: 1
+      - id: probe
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/us3-vcpkg-cache
+          key: vcpkg-ubuntu-24.04-qt6-HPC-${{ hashFiles('vcpkg.json', 'admin/cmake/**', 'buildsys/vcpkg/overlay-ports/**', 'scripts/warm-cache.sh') }}
+          lookup-only: true
+
+  # --------------------------------------------------------------------------
+  # PHASE 2 — CONDITIONAL WARM  (ubuntu platform only)
+  # Skipped when probe jobs were skipped (has_changes == false).
+  # The 'has_changes' guard prevents the empty-output false-positive
+  # where a skipped probe's '' != 'true' evaluates true.
+  # --------------------------------------------------------------------------
+  warm-if-needed:
+    name: "Warm ubuntu caches (if any miss)"
+    needs: [probe-app, probe-hpc]
+    if: |
+      needs.probe-app.outputs.cache-hit != 'true' ||
+      needs.probe-hpc.outputs.cache-hit != 'true'
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    with:
+      ref:        ${{ inputs.ref || 'main' }}
+      platforms:  "ubuntu-x64 (ubuntu-24.04)"
+      qt_variant: qt6
+    secrets: inherit
+
+  # --------------------------------------------------------------------------
+  # PHASE 3 — BUILDS
+  # --------------------------------------------------------------------------
+  build-app:
+    name: "Ubuntu APP (ubuntu-24.04, qt6)"
+    needs: [probe-app, probe-hpc, warm-if-needed]
+    if: ${{ !cancelled() }}
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    with:
+      ref:                     ${{ inputs.ref || 'main' }}
+      runner:                  ubuntu-24.04
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
+      artifact_name_prefix:    ${{ inputs.artifact_name_prefix || format('nightly-ubuntu-{0}', github.run_id) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
+
+  build-hpc:
+    name: "Ubuntu HPC (ubuntu-24.04, qt6)"
+    needs: [probe-app, probe-hpc, warm-if-needed]
+    if: ${{ !cancelled() }}
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    with:
+      ref:                     ${{ inputs.ref || 'main' }}
+      runner:                  ubuntu-24.04
+      qt_variant:              qt6
+      profile:                 HPC
+      clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
+      artifact_name_prefix:    ${{ format('{0}-HPC', inputs.artifact_name_prefix || format('nightly-ubuntu-{0}', github.run_id)) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
+
+  # --------------------------------------------------------------------------
+  # PUBLISH NIGHTLY
+  # Downloads Ubuntu build artifacts, renames to customer-facing traceable
+  # nightly names, and publishes to the rolling 'nightly' pre-release tag.
+  # Skipped when called from release.yml (inputs.artifact_name_prefix is set).
+  # Skipped when called from nightly-builds.yml (artifact_name_prefix is set);
+  # in that case nightly-builds.yml publish-release owns the nightly tag.
+  #
+  # concurrency group prevents two simultaneous workflow_dispatch runs from
+  # racing to delete/recreate the same rolling nightly release. The scheduled
+  # nightly path is unaffected because this job is skipped when
+  # artifact_name_prefix is set by the caller.
+  # --------------------------------------------------------------------------
+  publish-nightly:
+    name: "Publish nightly Ubuntu artifacts"
+    needs: [build-app, build-hpc]
+    if: ${{ !cancelled() && !inputs.artifact_name_prefix }}
+    concurrency:
+      group: nightly-publish
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 1
+
+      - name: Derive nightly metadata
+        id: meta
+        shell: bash
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "label=nightly-${DATE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Download APP artifact
+        uses: actions/download-artifact@v7
+        with:
+          pattern: nightly-ubuntu-${{ github.run_id }}-ubuntu-24.04-*
+          path: dl-app
+          run-id: ${{ github.run_id }}
+
+      - name: Download HPC artifact
+        uses: actions/download-artifact@v7
+        with:
+          pattern: nightly-ubuntu-${{ github.run_id }}-HPC-ubuntu-24.04-*
+          path: dl-hpc
+          run-id: ${{ github.run_id }}
+
+      - name: Stage nightly assets with traceable filenames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p nightly-assets
+          LABEL="${{ steps.meta.outputs.label }}"
+
+          # Require exactly one matching file; fail clearly if zero or multiple.
+          find_one() {
+            local label="$1" root="$2" pattern="$3"
+            mapfile -t matches < <(find "$root" -type f -name "$pattern" | sort)
+            if [[ ${#matches[@]} -eq 0 ]]; then
+              echo "::error::Missing ${label}; pattern=${pattern} in ${root}"
+              return 1
+            fi
+            if [[ ${#matches[@]} -gt 1 ]]; then
+              echo "::error::Ambiguous ${label}; found ${#matches[@]} matches:"
+              printf '  %s\n' "${matches[@]}"
+              return 1
+            fi
+            printf '%s' "${matches[0]}"
+          }
+
+          # Desktop artifact — build system produces .tar.xz (APP, not HPC)
+          APP_SRC=$(find_one "Ubuntu APP" dl-app 'UltraScan3-[!H]*-Linux-*.tar.xz')
+          cp "$APP_SRC" "nightly-assets/us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+          echo "  us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz <- $APP_SRC"
+
+          # HPC artifact
+          HPC_SRC=$(find_one "Ubuntu HPC" dl-hpc 'UltraScan3-HPC-*-Linux-*.tar.xz')
+          cp "$HPC_SRC" "nightly-assets/us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+          echo "  us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz <- $HPC_SRC"
+
+          echo "Nightly assets:"
+          ls -lh nightly-assets/
+
+      - name: Publish to rolling nightly pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          LABEL="${{ steps.meta.outputs.label }}"
+          DATE="${{ steps.meta.outputs.date }}"
+          SHORT_SHA="${{ steps.meta.outputs.short_sha }}"
+
+          # Create or update the rolling nightly tag/release
+          gh release delete nightly --yes 2>/dev/null || true
+          git tag -f nightly
+          git push -f origin nightly
+
+          gh release create nightly nightly-assets/* \
+            --title "Nightly Ubuntu ${DATE}" \
+            --notes "Nightly Ubuntu 24.04 build.\n\n**Date:** ${DATE}\n**Commit:** ${SHORT_SHA}\n\nAssets:\n- \`us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz\` - Ubuntu 24.04 x86_64 desktop\n- \`us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz\` - Ubuntu 24.04 x86_64 HPC/MPI" \
+            --prerelease \
+            --target main

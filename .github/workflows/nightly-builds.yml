@@ -1,0 +1,316 @@
+name: UltraScan3 Nightly Build
+
+run-name: >-
+  ${{ github.event_name == 'schedule'
+    && format('Nightly [main] {0}', github.run_started_at)
+    || format('Nightly [manual] by @{0}', github.actor) }}
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+
+  # =========================================================================
+  # PHASE 0 — GATE: decide whether the nightly build is needed.
+  # All platform jobs and publish-release are conditioned on this output.
+  #
+  # has_changes=true (build proceeds) when ANY of the following are true:
+  #   1. Triggered by workflow_dispatch (always build).
+  #   2. Commits landed on main in the last 24 hours.
+  #   3. The rolling `nightly` GitHub Release does not exist.
+  #   4. The `nightly` tag does not exist.
+  #   5. The `nightly` tag does not resolve to the current origin/main commit.
+  #
+  # has_changes=false (skip) only when ALL of these hold:
+  #   - No commits in the last 24 hours.
+  #   - The `nightly` tag exists and resolves to the current origin/main HEAD.
+  # =========================================================================
+  check-changes:
+    name: "Gate: decide whether nightly build is needed"
+    runs-on: ubuntu-24.04
+    outputs:
+      has_changes: ${{ steps.detect.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Decide whether nightly build is needed
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          # --- 1. workflow_dispatch always proceeds --------------------------
+          if [[ "${{ github.event_name }}" != "schedule" ]]; then
+            echo "Triggered by workflow_dispatch — proceeding unconditionally."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- 2. Commits on main in the last 24 hours? ---------------------
+          COUNT=$(git log --oneline --since="24 hours ago" origin/main | wc -l | tr -d ' ')
+          echo "Commits on origin/main in last 24h: ${COUNT}"
+          if [[ "${COUNT}" -gt 0 ]]; then
+            echo "Recent commits found — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- 3. Does the nightly GitHub Release exist? --------------------
+          if ! gh release view nightly --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "No 'nightly' GitHub Release found — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- 4 & 5. Does the nightly tag resolve to origin/main HEAD? ----
+          #
+          # We do NOT trust gh release view's targetCommitish — GitHub may
+          # report the branch name "main" instead of a resolved SHA.
+          #
+          # For annotated tags, ls-remote returns the tag object SHA at
+          # refs/tags/nightly, not the commit SHA. The peeled ref
+          # refs/tags/nightly^{} always resolves to the underlying commit.
+          # We try the peeled form first and fall back to the raw tag ref.
+
+          MAIN_SHA=$(git rev-parse origin/main)
+          echo "Current origin/main SHA: ${MAIN_SHA}"
+
+          NIGHTLY_SHA=$(git ls-remote origin 'refs/tags/nightly^{}' | awk '{print $1}')
+          if [[ -z "${NIGHTLY_SHA}" ]]; then
+            # Lightweight tag (no peeled form) — use the raw ref directly.
+            NIGHTLY_SHA=$(git ls-remote origin 'refs/tags/nightly' | awk '{print $1}')
+          fi
+
+          if [[ -z "${NIGHTLY_SHA}" ]]; then
+            echo "Tag 'nightly' not found on origin — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Resolved 'nightly' tag SHA: ${NIGHTLY_SHA}"
+
+          if [[ "${NIGHTLY_SHA}" != "${MAIN_SHA}" ]]; then
+            echo "Tag 'nightly' does not point to current origin/main — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # --- All conditions met: nothing to do ----------------------------
+          echo "No commits in 24h and 'nightly' tag matches origin/main — skipping build."
+          echo "has_changes=false" >> "$GITHUB_OUTPUT"
+
+  # =========================================================================
+  # PLATFORM BUILDS — two parallel groups to reduce wall time while keeping
+  # peak cache usage under the 10 GB Actions quota.
+  #
+  # Each platform workflow owns its own probe → warm → build chain using
+  # isolated key namespaces (vcpkg-ubuntu-24.04-*, vcpkg-macos-15-*, etc.),
+  # so parallel runs do not contend on cache keys.
+  #
+  # Group 1 (parallel): ubuntu + macos-arm
+  #   Combined final keys ~3.9 GB; ubuntu intermediates are small.
+  #   Peak well within quota while both warm pipelines overlap.
+  #
+  # Group 2 (parallel, after group 1): oraclelinux8 + macos-intel
+  #   Group 1 intermediates are cleaned up before group 2 starts.
+  #   oraclelinux8 is small; intel final key ~1 GB.
+  #
+  # Group 3 (after group 2): windows
+  # =========================================================================
+
+  # --- Group 1 (parallel) ---------------------------------------------------
+
+  ubuntu:
+    name: "Ubuntu 24.04 (APP + HPC)"
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    uses: ./.github/workflows/nightly-ubuntu.yml
+    with:
+      ref:                     main
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
+      artifact_retention_days: 3
+    secrets: inherit
+
+  macos-arm:
+    name: "macOS ARM (APP)"
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    uses: ./.github/workflows/nightly-macos-arm.yml
+    with:
+      ref:                     main
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
+      artifact_retention_days: 3
+    secrets: inherit
+
+  # --- Group 2 (parallel, after group 1) ------------------------------------
+
+  oraclelinux8:
+    name: "Oracle Linux 8 x64 (APP + HPC)"
+    needs: [check-changes, ubuntu, macos-arm]
+    if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
+    uses: ./.github/workflows/nightly-oraclelinux8.yml
+    with:
+      ref:                     main
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
+      artifact_retention_days: 3
+    secrets: inherit
+
+  macos-intel:
+    name: "macOS Intel (APP)"
+    needs: [check-changes, ubuntu, macos-arm]
+    if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
+    uses: ./.github/workflows/nightly-macos-intel.yml
+    with:
+      ref:                     main
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
+      artifact_retention_days: 3
+    secrets: inherit
+
+  # --- Group 3 (after group 2) -----------------------------------------------
+
+  windows:
+    name: "Windows x64 (APP)"
+    needs: [check-changes, oraclelinux8, macos-intel]
+    if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
+    uses: ./.github/workflows/nightly-windows.yml
+    with:
+      ref:                     main
+      clean_tier:              incremental
+      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
+      artifact_retention_days: 3
+    secrets: inherit
+
+  # =========================================================================
+  # PHASE 4 — PUBLISH RELEASE
+  # Runs only when all builds succeed. Downloads all run artifacts, renames
+  # each to a stable filename, then publishes/overwrites the rolling `nightly`
+  # GitHub Release. The release assets are the canonical distribution —
+  # artifact retention stays at 3 days.
+  # =========================================================================
+
+  publish-release:
+    name: "Publish Nightly Release"
+    needs:
+      - check-changes
+      - ubuntu
+      - oraclelinux8
+      - macos-arm
+      - macos-intel
+      - windows
+    if: needs.check-changes.outputs.has_changes == 'true' && success()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: nightly-*
+          path: artifacts
+          run-id: ${{ github.run_id }}
+
+      - name: Stage assets with stable filenames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+
+          DATE=$(date -u +%Y%m%d)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          LABEL="nightly-${DATE}-${SHORT_SHA}"
+
+          cp_first() {
+            local pattern="$1" dest="$2"
+            local src
+            src=$(find artifacts -path "$pattern" | head -1)
+            [ -n "$src" ] || { echo "ERROR: no file matching $pattern"; exit 1; }
+            cp "$src" "release-assets/$dest"
+            echo "  $dest <- $src"
+          }
+
+          echo "Staging release assets (label: ${LABEL})..."
+
+          # macOS artifacts (pkg, not .tar.xz)
+          cp_first "artifacts/nightly-*-arm-macos-15-[0-9]*/UltraScan3-*-macOS.pkg" \
+            "UltraScan3-macos-installer-arm64-${LABEL}.pkg"
+          cp_first "artifacts/nightly-*-macos-15-intel-*/UltraScan3-*-macOS.pkg" \
+            "UltraScan3-macos-installer-x86_64-${LABEL}.pkg"
+
+          # Windows (exe)
+          cp_first "artifacts/nightly-*-windows-2022-*/UltraScan3-*-Windows.exe" \
+            "us3-Windows-x86_64-${LABEL}-setup.exe"
+
+          # Ubuntu 24.04 (.tar.xz from build system)
+          cp_first "artifacts/nightly-*-ubuntu-24.04-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
+            "us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+          cp_first "artifacts/nightly-*-HPC-ubuntu-24.04-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
+            "us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+
+          # Oracle Linux 8 / RHEL 8 (.tar.xz from build system)
+          cp_first "artifacts/nightly-*-oraclelinux8-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
+            "us3-redhat-8.10-x86_64-${LABEL}.tar.xz"
+          cp_first "artifacts/nightly-*-HPC-oraclelinux8-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
+            "us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz"
+
+          echo "Assets ready:"
+          ls -lh release-assets/
+
+          # Export label for publish step
+          echo "label=${LABEL}" >> "$GITHUB_ENV"
+
+      - name: Publish rolling nightly release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LABEL="${label}"
+          COMMIT=$(git rev-parse HEAD)
+          DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+
+          NOTES="## UltraScan3 Nightly Build
+
+          **Date:** $DATE
+          **Commit:** $COMMIT
+
+          Automated nightly build from \`main\`. All platforms passed.
+
+          | Asset | Platform | Profile |
+          |-------|----------|---------|
+          | \`UltraScan3-macos-installer-arm64-${LABEL}.pkg\`         | macOS arm64 (Apple Silicon) | Desktop |
+          | \`UltraScan3-macos-installer-x86_64-${LABEL}.pkg\`        | macOS x86_64 (Intel)        | Desktop |
+          | \`us3-Windows-x86_64-${LABEL}-setup.exe\`                 | Windows x86_64              | Desktop |
+          | \`us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz\`               | Ubuntu 24.04 x86_64         | Desktop |
+          | \`us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz\`           | Ubuntu 24.04 x86_64         | HPC/MPI |
+          | \`us3-redhat-8.10-x86_64-${LABEL}.tar.xz\`               | Oracle Linux 8 / RHEL 8 x86_64 | Desktop |
+          | \`us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz\`           | Oracle Linux 8 / RHEL 8 x86_64 | HPC/MPI |"
+
+          # Delete existing nightly release and tag if present
+          gh release delete nightly --yes --cleanup-tag 2>/dev/null || true
+          sleep 2
+
+          # Create new release with all assets
+          gh release create nightly release-assets/* \
+            --title "Nightly Build" \
+            --notes "$NOTES" \
+            --prerelease \
+            --target main
+          
+          

@@ -1,0 +1,82 @@
+name: Nightly — Windows
+
+# ============================================================================
+# Platform: Windows x64 (windows-2022)
+# Profiles:  APP
+# Schedule:  nightly (selected platform)
+# Release:   called by release.yml via workflow_call
+# Manual:    workflow_dispatch on this file
+# ============================================================================
+#
+# Change detection is handled by the caller (nightly-builds.yml) for
+# scheduled runs. workflow_dispatch on this file always proceeds.
+# Windows does not participate in staged cache warming.
+
+run-name: >-
+  ${{ github.event_name == 'schedule'
+    && format('Nightly Windows [{0}]', github.run_started_at)
+    || github.event_name == 'workflow_call'
+    && format('Release Windows [{0}]', inputs.ref)
+    || format('Manual Windows by @{0}', github.actor) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA"
+        required: false
+        default: main
+        type: string
+      clean_tier:
+        description: "Clean tier"
+        required: false
+        default: incremental
+        type: choice
+        options: [incremental, rebuild, clean, clean-purge-cache]
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: false
+        default: "3"
+        type: choice
+        options: ["3","7","14","30"]
+
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        type: string
+        default: main
+      clean_tier:
+        required: false
+        type: string
+        default: incremental
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: ""
+      artifact_retention_days:
+        required: false
+        type: number
+        default: 3
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+
+  # --------------------------------------------------------------------------
+  # PHASE 1 — BUILD
+  # No probe/warm phase. The reusable build workflow manages its own cache.
+  # --------------------------------------------------------------------------
+  build-app:
+    name: "Windows APP (windows-2022, qt6)"
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    with:
+      ref:                     ${{ inputs.ref || 'main' }}
+      runner:                  windows-2022
+      qt_variant:              qt6
+      profile:                 APP
+      clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
+      artifact_name_prefix:    ${{ inputs.artifact_name_prefix || format('nightly-windows-{0}', github.run_id) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
