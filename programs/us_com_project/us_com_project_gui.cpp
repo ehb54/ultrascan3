@@ -1183,8 +1183,12 @@ void US_ComProjectMain::call_AutoflowDialogue( void )                           
   //Check Optima's certificates first:
   // if ( !mainw->us_mode_bool ) 
   epanInit->checkCertificates();
-    
-  epanInit->initRecordsDialogue();
+  //epanInit->initRecordsDialogue();
+  
+  QTimer::singleShot(0, epanInit, [this]() {
+        epanInit->initRecordsDialogue();
+    });
+  
 }
 
 
