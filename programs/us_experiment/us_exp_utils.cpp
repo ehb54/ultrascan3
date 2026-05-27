@@ -637,7 +637,7 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 	 }
      }
    //////////////////
-
+   mainw->enable_disable_prev_next_btns();
 }
 
 
@@ -923,6 +923,8 @@ void US_ExperGuiGeneral::savePanel()
    currProto->temeq_delay  = ct_tedelay     ->value();
 
    currProto->exp_label    = le_label       ->text();
+
+   mainw->pb_prev->setEnabled(true);
 
 }
 
@@ -3886,6 +3888,8 @@ QStringList US_ExperGuiAProfile::getLValue( const QString type )
 // Initialize an Upload panel, especially after clicking on its tab
 void US_ExperGuiUpload::initPanel()
 {
+   mainw->enable_disable_prev_next_btns();
+  
    currProto       = &mainw->currProto;
    loadProto       = &mainw->loadProto;
    //rps_differ      = ( mainw->currProto !=  mainw->loadProto );
@@ -4991,6 +4995,7 @@ bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_Ana
 // Save panel controls when about to leave the panel
 void US_ExperGuiUpload::savePanel()
 {
+  mainw->pb_next->setEnabled( true );
 }
 
 // Get a specific panel value

@@ -45,6 +45,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    us_prot_dev_mode = false;
    us_abde_mode = false;
+   expPanelSet = false;
    
    global_reset = false;
    instruments_in_use.clear();
@@ -458,6 +459,9 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   protocol_details_passed.clear();
   protocol_details_passed = protocol_details;
 
+  expPanelSet=true;
+  enable_disable_prev_next_btns();
+  
   emit close_expsetup_msg();
 }
 
@@ -561,6 +565,20 @@ void US_ExperimentMain::auto_mode_passed( void )
   this->pb_close->hide();
 
   
+}
+
+void US_ExperimentMain::enable_disable_prev_next_btns( void )
+{
+  if ( !expPanelSet )
+    return;
+    
+  int totalTabs = tabWidget->count();
+  int lastTabIndex = totalTabs - 1;
+  int currTabIndex = tabWidget->currentIndex();
+  if ( currTabIndex == 0 )
+    pb_prev->setEnabled(false);
+  if ( currTabIndex == lastTabIndex )
+    pb_next->setEnabled(false);
 }
 
 // Reset parameters to their defaults
