@@ -1166,7 +1166,7 @@ void US_Properties::edit_analyte()
      {
        QMessageBox::information( this,
 				 tr( "UltraScan Information" ),
-				 tr( "No Analyte Selected:\n\n"
+				 tr( "No Analyte Selected\n\n"
 				     "Please select an analyte from the list before editing.") );
        return;
      }
