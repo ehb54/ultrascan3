@@ -4761,8 +4761,28 @@ DbgLv(1) << "EGCe:cpChg:  xrow icbal" << xrow << icbal;
          }
       }
 
-DbgLv(1) << "EGCe:cpChg:   CB:jsel" << jsel;
-      cc_cenps[ xrow ]->setCurrentIndex( jsel );
+      DbgLv(1) << "EGCe:cpChg:   CB:jsel" << jsel;
+
+      //treat dataDisk case separately:
+      if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+	{
+	  //only set counterbalance if cell exists in uploaded data:
+	  QStringList ucells;
+	  for (int i=0; i<rpCells->nused; ++i )
+	    {
+	      qDebug() << "[irow != icbal]Used Cells: oname, cell_n -- "  << rpCells->used[i].cell;
+	      ucells << QString::number(rpCells->used[i].cell);
+	    }
+	  QString cent_oname      = cc_cenps[ xrow ]->objectName();
+	  QString cent_oname_cell = cent_oname.split(":")[0].trimmed();
+	  int cent_cell_n = cent_oname_cell.toInt() + 1;
+	  qDebug() << "cent_oname, cent_oname_cell, cent_cell_n -- "
+		   << cent_oname << cent_oname_cell << cent_cell_n;
+	  if ( ucells.contains( QString::number(cent_cell_n) ) )
+	    cc_cenps[ xrow ]->setCurrentIndex( jsel );
+	}
+      else
+	cc_cenps[ xrow ]->setCurrentIndex( jsel );
    }
    else     //ALEXEY: if index of the counterbalance - treat when NOT counterbalance
    {
@@ -4775,7 +4795,27 @@ DbgLv(1) << "EGCe:cpChg:   CB:jsel" << jsel;
          int xrow_c            = irow - halfnh_c;
          int jsel_c            = sel - 3;        // Use same centerpiece for cross (minus 3 since cent. list is longer in counterbalance rows)
 
-         cc_cenps[ xrow_c ]->setCurrentIndex( jsel_c );
+	 //treat dataDisk case separately:
+	 if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+	   {
+	     //only set counterbalance if cell exists in uploaded data:
+	     QStringList ucells;
+	     for (int i=0; i<rpCells->nused; ++i )
+	       {
+		 qDebug() << "[irow == icbal]Used Cells: oname, cell_n -- "  << rpCells->used[i].cell;
+		 ucells << QString::number(rpCells->used[i].cell);
+	       }
+	     QString cent_oname      = cc_cenps[ xrow_c ]->objectName();
+	     QString cent_oname_cell = cent_oname.split(":")[0].trimmed();
+	     int cent_cell_n = cent_oname_cell.toInt() + 1;
+	     qDebug() << "cent_oname, cent_oname_cell, cent_cell_n -- "
+		   << cent_oname << cent_oname_cell << cent_cell_n;
+	     
+	     if ( ucells.contains( QString::number(cent_cell_n) ) )
+	       cc_cenps[ xrow_c ]->setCurrentIndex( jsel_c );
+	   }
+	 else
+	   cc_cenps[ xrow_c ]->setCurrentIndex( jsel_c );
 
          // Set windows
          if ( cc_winds[ xrow_c ]->currentText().contains( tr( "quartz" ) ) )
