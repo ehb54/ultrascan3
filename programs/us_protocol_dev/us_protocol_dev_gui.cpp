@@ -2142,6 +2142,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    // if ( mainw->us_mode_bool )
    //   sdiag->us_mode_passed();
+
+   sdiag->expPanelSet=true;
    
    sdiag->show();
 }
