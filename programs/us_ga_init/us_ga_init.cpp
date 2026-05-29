@@ -2211,12 +2211,12 @@ DbgLv(1) << "VIEW OPEN ERROR" << fname;
 // Select the coordinate for the horizontal axis
 void US_GA_Initialize::select_x_axis( int ival )
 {
-   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D",  "f", "Rh" };
-   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8, 1e-8 };
-   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 1e-7 };
-   const double  xmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5, 1e-5 };
-   const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 1e-9 };
+   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
+   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 0.10, 1e-8,  1.0 };
+   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1.00, 1e-7, 10.0 };
+   const double  xmins[] = {    -1e+5,   1.0,    0.0,  0.01, 1e-3, 1e-9, 0.00 };
+   const double  xmaxs[] = {     1e+5,  50.0,  1e+10,  3.00, 1e+3, 1e-5, 1e+5 };
+   const double  xincs[] = {     0.01,  0.01,   1e+3,  0.01, 1e-2, 1e-9, 0.01 };
 
    attr_x         = ival;
    xa_title       = anno_title( attr_x );
@@ -2252,12 +2252,12 @@ void US_GA_Initialize::select_x_axis( int ival )
 // Select the coordinate for the vertical axis
 void US_GA_Initialize::select_y_axis( int ival )
 {
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D",  "f", "Rh" };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8, 1e-8 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 1e-7 };
-   const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9, 1e-9 };
-   const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5, 1e-5 };
-   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 1e-9 };
+   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
+   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 0.10, 1e-8,  1.0 };
+   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1.00, 1e-7, 10.0 };
+   const double  ymins[] = {    -1e+5,   1.0,    0.0,  0.01, 1e-3, 1e-9, 0.00 };
+   const double  ymaxs[] = {     1e+5,  50.0,  1e+10,  3.00, 1e+3, 1e-5, 1e+5 };
+   const double  yincs[] = {     0.01,  0.01,   1e+3,  0.01, 1e-2, 1e-9, 0.01 };
 
    attr_y         = ival;
    ya_title       = anno_title( attr_y );
