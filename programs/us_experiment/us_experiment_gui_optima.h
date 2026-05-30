@@ -321,6 +321,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void init_grevs( void );
       void init_gapprs( void );
       void init_gsmes( void );
+  
+      void setEnabledDisabledAddToORASME( void );
+    
       void addOpertoList( void );
       void removeOperfromList( void );
       void addRevtoList( void );
@@ -1136,6 +1139,7 @@ class US_ExperimentMain : public US_Widgets
       bool    us_prot_dev_mode;
       bool    global_reset;
       bool    us_abde_mode;
+      bool    expPanelSet;
 
   QMap <QString, QString> protocol_details_passed; 
       
@@ -1144,6 +1148,7 @@ class US_ExperimentMain : public US_Widgets
       void    set_abde_mode_aprofile( void );
       void    unset_abde_mode_aprofile( void );
       void    abde_sv_mode_change_reset_reports( QString  );
+      void    enable_disable_prev_next_btns( void );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;
