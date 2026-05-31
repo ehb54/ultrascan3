@@ -1520,6 +1520,46 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     endif()
 
     # -------------------------------------------------------------------------
+    # Copy MariaDB auth plugins into the dev-build plugins/ dir
+    #
+    # libmariadb resolves its plugin directory at runtime using a compiled-in
+    # relative path ("../plugins/libmariadb") from wherever libmariadb.so.3 is
+    # loaded.  When running directly from the build tree this resolves to
+    # <CMAKE_BINARY_DIR>/plugins/libmariadb/, which is NOT populated by the
+    # normal build.  Mirror what LinuxDeploy.cmake does for the staging tree so
+    # that "cmake --build && ./bin/us" works without running deploy_linux first.
+    # -------------------------------------------------------------------------
+    set(_LNX_MARIADB_PLUGIN_BUILD_DIR "${CMAKE_BINARY_DIR}/plugins/libmariadb")
+    set(_LNX_MARIADB_DIALOG_SRC "${_LNX_VCPKG_PLUGIN_DIR}/libmariadb/dialog.so")
+    if(_LNX_VCPKG_PLUGIN_DIR AND EXISTS "${_LNX_MARIADB_DIALOG_SRC}")
+        set(_LNX_MARIADB_CLRPWD_SRC "${_LNX_VCPKG_PLUGIN_DIR}/libmariadb/mysql_clear_password.so")
+        # Build the command list at configure time so we only copy files that exist.
+        # add_custom_target does not support per-COMMAND conditionals, so we gate
+        # the mysql_clear_password copy here.
+        set(_LNX_MARIADB_CLRPWD_CMD "")
+        if(EXISTS "${_LNX_MARIADB_CLRPWD_SRC}")
+            set(_LNX_MARIADB_CLRPWD_CMD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_LNX_MARIADB_CLRPWD_SRC}"
+                    "${_LNX_MARIADB_PLUGIN_BUILD_DIR}/mysql_clear_password.so"
+            )
+        endif()
+        add_custom_target(copy_mariadb_plugins_to_build ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${_LNX_MARIADB_PLUGIN_BUILD_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_LNX_MARIADB_DIALOG_SRC}"
+                "${_LNX_MARIADB_PLUGIN_BUILD_DIR}/dialog.so"
+            ${_LNX_MARIADB_CLRPWD_CMD}
+            COMMENT "Copying MariaDB auth plugins -> plugins/libmariadb/ (dev build)"
+            VERBATIM
+        )
+        message(STATUS "MariaDB auth plugins will be copied to plugins/ at build time (dev build)")
+    else()
+        message(WARNING "MariaDB auth plugins not found -- DB auth may fail when running from build tree. "
+            "Expected: ${_LNX_MARIADB_DIALOG_SRC}")
+    endif()
+
+    # -------------------------------------------------------------------------
     # Staging directory
     # -------------------------------------------------------------------------
     set(US3_LNX_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
