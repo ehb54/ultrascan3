@@ -277,16 +277,18 @@ void US_Database::select_db( QListWidgetItem* entry )
       uuid = dblist.at( i ).at( 9 );
 //qDebug() << "USCFG: dbl 0,6,9"
 // << dblist.at(i).at(0) << dblist.at(i).at(6) << dblist.at(i).at(9);
+      const QStringList defaultDB = US_Settings::defaultDB();
+      if ( defaultDB != dblist.at( i )) {
+        // Set the default DB and user for that DB
+        US_Settings::set_defaultDB( dblist.at( i ) );
 
-      // Set the default DB and user for that DB
-      US_Settings::set_defaultDB( dblist.at( i ) );
+        update_inv();
+        update_lw( item );
 
-      update_inv();
-      update_lw( item );
-
-      QMessageBox::information( this,
-            tr( "Database Selected" ),
-            tr( "The default database has been updated." ) );
+        QMessageBox::information( this,
+              tr( "Database Selected" ),
+              tr( "The default database has been updated." ) );
+	  }
       pb_save  ->setEnabled( true );
       pb_delete->setEnabled( true );
 
