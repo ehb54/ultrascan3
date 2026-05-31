@@ -75,6 +75,8 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       QPushButton*   pb_save;
       QPushButton*   pb_delete;
       QPushButton*   pb_accept;
+      QPushButton*   pb_components;
+      QPushButton*   pb_associations;
 
       QComboBox*     cb_optics;
  

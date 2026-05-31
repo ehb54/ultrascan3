@@ -321,6 +321,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void init_grevs( void );
       void init_gapprs( void );
       void init_gsmes( void );
+  
+      void setEnabledDisabledAddToORASME( void );
+    
       void addOpertoList( void );
       void removeOperfromList( void );
       void addRevtoList( void );
