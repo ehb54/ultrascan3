@@ -1590,6 +1590,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
                 -DVCPKG_QT6_PLUGIN_DIR=${_LNX_VCPKG_QT6_PLUGIN_DIR}
+                -DUS3_VERSION_STRING=${US3_VERSION_STRING}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake
             DEPENDS ${_deploy_linux_deps}
             COMMENT "Staging Linux deployment into ${US3_LNX_STAGE_DIR}"
