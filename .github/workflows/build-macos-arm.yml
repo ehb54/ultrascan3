@@ -1,21 +1,23 @@
-name: Nightly — macOS ARM
+name: Build — macOS ARM
 
 # ============================================================================
-# Platform: macOS 15 arm64 (Apple Silicon)
+# Reusable platform build workflow: macOS 15 arm64 (Apple Silicon)
 # Profiles:  APP
-# Schedule:  nightly (selected platform)
-# Release:   called by release.yml via workflow_call
-# Manual:    workflow_dispatch on this file
+# Callers:   nightly-build.yml (scheduled, Group 1) and on-demand-build.yml
+#            (manual dispatch) invoke this via workflow_call.
+# Standalone: workflow_dispatch on this file for one-off builds; runs
+#             probe → warm → build. No schedule trigger on this file.
+# Note:      release.yml calls ultrascan-reusable-build.yml (external) directly
+#            and does NOT invoke this workflow.
 # ============================================================================
 #
-# Change detection is handled by the caller (nightly-builds.yml) for
-# scheduled runs. workflow_dispatch on this file always proceeds.
+# Change detection for scheduled nightly runs is handled by nightly-build.yml.
+# Calls from on-demand-build.yml and direct workflow_dispatch always proceed.
 
+# build-macos-arm.yml
 run-name: >-
-  ${{ github.event_name == 'schedule'
-    && format('Nightly macOS ARM [{0}]', github.run_started_at)
-    || github.event_name == 'workflow_call'
-    && format('Release macOS ARM [{0}]', inputs.ref)
+  ${{ github.event_name == 'workflow_call'
+    && format('macOS ARM [{0}]', inputs.ref)
     || format('Manual macOS ARM by @{0}', github.actor) }}
 
 on:
@@ -92,7 +94,7 @@ jobs:
     name: "Warm macos-15 cache (if miss)"
     needs: [probe-app]
     if: needs.probe-app.outputs.cache-hit != 'true'
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
     with:
       ref:        ${{ inputs.ref || 'main' }}
       platforms:  "macos-arm (macos-15)"
@@ -106,7 +108,7 @@ jobs:
     name: "macOS ARM APP (macos-15, qt6)"
     needs: [probe-app, warm-if-needed]
     if: ${{ !cancelled() }}
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
     with:
       ref:                     ${{ inputs.ref || 'main' }}
       runner:                  macos-15

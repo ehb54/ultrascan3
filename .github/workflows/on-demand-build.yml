@@ -1,12 +1,13 @@
 name: UltraScan3 On-Demand Build
 
 # ============================================================================
-# Manual dispatch: run any single platform, any combination, or all.
-# Each selected platform executes independently with its own probe/warm/build.
-# Windows goes direct to build with no warm phase.
+# Manual dispatch (workflow_dispatch) entry point for on-demand platform builds.
+# Fans out to the corresponding ./.github/workflows/build-<platform>.yml reusable workflows via
+# workflow_call. Each selected platform runs its own probe → warm → build chain
+# independently. Windows goes direct to build with no probe/warm phase.
 #
-# Selecting a platform here fans out to the corresponding nightly-<platform>.yml
-# via workflow_call so the logic stays in one place.
+# Inputs: ref (branch/tag/SHA), platforms (single, group, or all), clean tier,
+#         artifact retention. All artifacts are prefixed with ondemand-<run>.
 # ============================================================================
 
 run-name: "On-Demand [${{ inputs.ref }}] ${{ inputs.platforms }} by @${{ github.actor }}"
@@ -55,7 +56,7 @@ on:
         options: ["3","7","14","30"]
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 jobs:
@@ -66,7 +67,7 @@ jobs:
       inputs.platforms == 'all'    ||
       inputs.platforms == 'ubuntu' ||
       inputs.platforms == 'linux'
-    uses: ./.github/workflows/nightly-ubuntu.yml
+    uses: ./.github/workflows/build-ubuntu.yml
     with:
       ref:                     ${{ inputs.ref }}
       clean_tier:              ${{ inputs.clean_tier }}
@@ -80,7 +81,7 @@ jobs:
       inputs.platforms == 'all'       ||
       inputs.platforms == 'macos-arm' ||
       inputs.platforms == 'macos'
-    uses: ./.github/workflows/nightly-macos-arm.yml
+    uses: ./.github/workflows/build-macos-arm.yml
     with:
       ref:                     ${{ inputs.ref }}
       clean_tier:              ${{ inputs.clean_tier }}
@@ -94,7 +95,7 @@ jobs:
       inputs.platforms == 'all'         ||
       inputs.platforms == 'macos-intel' ||
       inputs.platforms == 'macos'
-    uses: ./.github/workflows/nightly-macos-intel.yml
+    uses: ./.github/workflows/build-macos-intel.yml
     with:
       ref:                     ${{ inputs.ref }}
       clean_tier:              ${{ inputs.clean_tier }}
@@ -107,7 +108,7 @@ jobs:
     if: |
       inputs.platforms == 'all'     ||
       inputs.platforms == 'windows'
-    uses: ./.github/workflows/nightly-windows.yml
+    uses: ./.github/workflows/build-windows.yml
     with:
       ref:                     ${{ inputs.ref }}
       clean_tier:              ${{ inputs.clean_tier }}
@@ -121,7 +122,7 @@ jobs:
       inputs.platforms == 'all'         ||
       inputs.platforms == 'oraclelinux8' ||
       inputs.platforms == 'linux'
-    uses: ./.github/workflows/nightly-oraclelinux8.yml
+    uses: ./.github/workflows/build-oraclelinux.yml
     with:
       ref:                     ${{ inputs.ref }}
       clean_tier:              ${{ inputs.clean_tier }}

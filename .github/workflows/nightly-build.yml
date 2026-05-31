@@ -1,9 +1,30 @@
 name: UltraScan3 Nightly Build
 
+# ============================================================================
+# Scheduled nightly orchestration workflow.
+# Trigger: cron at 06:00 UTC daily; also supports workflow_dispatch for manual
+#          nightly runs.
+#
+# PHASE 0 — Gate (check-changes): decides whether the nightly build is needed.
+#   Skips all builds if no commits landed in the last 24h and the `nightly` tag
+#   already resolves to the current origin/main HEAD.
+#
+# PHASE 1-3 — Platform builds in three sequential groups (to stay within the
+#   10 GB Actions cache quota), each group fanning out to the corresponding
+#   ./.github/workflows/build-<platform>.yml reusable workflow via workflow_call:
+#   Group 1 (parallel): ubuntu + macos-arm
+#   Group 2 (parallel, after Group 1): oraclelinux8 + macos-intel
+#   Group 3 (after Group 2): windows
+#
+# PHASE 4 — Publish (publish-release): runs only when all platform builds
+#   succeed. Downloads all run artifacts, renames to stable filenames, and
+#   overwrites the rolling `nightly` GitHub pre-release.
+# ============================================================================
+
 run-name: >-
-  ${{ github.event_name == 'schedule'
-    && format('Nightly [main] {0}', github.run_started_at)
-    || format('Nightly [manual] by @{0}', github.actor) }}
+    ${{ github.event_name == 'schedule'
+      && format('Nightly [main] run #{0}', github.run_number)
+      || format('Nightly [manual] by @{0}', github.actor) }}
 
 on:
   schedule:
@@ -133,7 +154,7 @@ jobs:
     name: "Ubuntu 24.04 (APP + HPC)"
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    uses: ./.github/workflows/nightly-ubuntu.yml
+    uses: ./.github/workflows/build-ubuntu.yml
     with:
       ref:                     main
       clean_tier:              incremental
@@ -145,7 +166,7 @@ jobs:
     name: "macOS ARM (APP)"
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    uses: ./.github/workflows/nightly-macos-arm.yml
+    uses: ./.github/workflows/build-macos-arm.yml
     with:
       ref:                     main
       clean_tier:              incremental
@@ -159,7 +180,7 @@ jobs:
     name: "Oracle Linux 8 x64 (APP + HPC)"
     needs: [check-changes, ubuntu, macos-arm]
     if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
-    uses: ./.github/workflows/nightly-oraclelinux8.yml
+    uses: ./.github/workflows/build-oraclelinux.yml
     with:
       ref:                     main
       clean_tier:              incremental
@@ -171,7 +192,7 @@ jobs:
     name: "macOS Intel (APP)"
     needs: [check-changes, ubuntu, macos-arm]
     if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
-    uses: ./.github/workflows/nightly-macos-intel.yml
+    uses: ./.github/workflows/build-macos-intel.yml
     with:
       ref:                     main
       clean_tier:              incremental
@@ -185,7 +206,7 @@ jobs:
     name: "Windows x64 (APP)"
     needs: [check-changes, oraclelinux8, macos-intel]
     if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
-    uses: ./.github/workflows/nightly-windows.yml
+    uses: ./.github/workflows/build-windows.yml
     with:
       ref:                     main
       clean_tier:              incremental

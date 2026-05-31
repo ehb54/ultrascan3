@@ -1,21 +1,24 @@
-name: Nightly — macOS Intel
+name: Build — macOS Intel
 
 # ============================================================================
-# Platform: macOS 15 Intel x86_64
+# Reusable platform build workflow: macOS 15 Intel x86_64
 # Profiles:  APP
-# Schedule:  NOT on nightly schedule (Intel is not a selected nightly platform)
-#             Remove the comment below and add a cron entry to opt in.
-# Release:   called by release.yml via workflow_call
-# Manual:    workflow_dispatch on this file
+# Callers:   nightly-build.yml (scheduled, Group 2) and on-demand-build.yml
+#            (manual dispatch) invoke this via workflow_call.
+# Standalone: workflow_dispatch on this file for one-off builds; runs
+#             probe → warm → build. No schedule trigger on this file.
+# Note:      release.yml calls ultrascan-reusable-build.yml (external) directly
+#            and does NOT invoke this workflow.
 # ============================================================================
 #
-# Change detection is handled by the caller (nightly-builds.yml) for
-# scheduled runs. workflow_dispatch on this file always proceeds.
-# (No schedule trigger on this workflow; always builds when called.)
+# Change detection for scheduled nightly runs is handled by nightly-build.yml.
+# Calls from on-demand-build.yml and direct workflow_dispatch always proceed.
+# (No schedule trigger on this file; builds whenever called or dispatched.)
 
+# build-macos-intel.yml
 run-name: >-
   ${{ github.event_name == 'workflow_call'
-    && format('Release macOS Intel [{0}]', inputs.ref)
+    && format('macOS Intel [{0}]', inputs.ref)
     || format('Manual macOS Intel by @{0}', github.actor) }}
 
 on:
@@ -91,7 +94,7 @@ jobs:
     name: "Warm macos-15-intel cache (if miss)"
     needs: [probe-app]
     if: needs.probe-app.outputs.cache-hit != 'true'
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-warm-cache.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
     with:
       ref:        ${{ inputs.ref || 'main' }}
       platforms:  "macos-intel (macos-15-intel)"
@@ -105,7 +108,7 @@ jobs:
     name: "macOS Intel APP (macos-15-intel, qt6)"
     needs: [probe-app, warm-if-needed]
     if: ${{ !cancelled() }}
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@d40ab4b6fde60ae0f8af2994ba938191a2c3356d
+    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
     with:
       ref:                     ${{ inputs.ref || 'main' }}
       runner:                  macos-15-intel
