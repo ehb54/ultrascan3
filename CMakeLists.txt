@@ -1290,8 +1290,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                     "  This tool would stage ${_wdqt_host} Qt DLLs into a "
                     "${VCPKG_TARGET_TRIPLET} package — wrong architecture.\n"
                     "  Run:  scripts/build.bat ${_wdqt_arch_hint}  "
-                    "(installs qttools for ${VCPKG_TARGET_TRIPLET} automatically)\n"
-                    "  Or:   vcpkg install qttools[assistant]:${VCPKG_TARGET_TRIPLET}")
+                    "(cmake configure triggers the vcpkg manifest install)")
                 unset(WINDEPLOYQT_EXECUTABLE CACHE)
             endif()
         endif()
@@ -1302,9 +1301,10 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     else()
         message(WARNING
             "[WinDeploy] windeployqt not found for target triplet '${VCPKG_TARGET_TRIPLET}'.\n"
-            "  Run:  scripts/build.bat ${_wdqt_arch_hint}  "
-            "(installs qttools for ${VCPKG_TARGET_TRIPLET} automatically)\n"
-            "  Or: vcpkg install qttools[assistant]:${VCPKG_TARGET_TRIPLET}")
+            "  vcpkg.json must include the Qt tools for the active feature "
+            "(qttools[assistant] for Qt6, qt5-tools for Qt5).\n"
+            "  cmake configure triggers the vcpkg manifest install automatically.\n"
+            "  Run:  scripts/build.bat ${_wdqt_arch_hint}")
     endif()
 
     # -------------------------------------------------------------------------
@@ -1395,8 +1395,9 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
         if(NOT WINDEPLOYQT_EXECUTABLE)
             set(_deploy_windows_reason
                 "windeployqt not found for triplet '${VCPKG_TARGET_TRIPLET}' -- "
-                "run scripts/build.bat ${_wdqt_arch_hint} or: "
-                "vcpkg install qttools[assistant]:${VCPKG_TARGET_TRIPLET}")
+                "check vcpkg.json includes qttools[assistant] (Qt6) or qt5-tools (Qt5) "
+                "for the active feature, then rerun: "
+                "scripts/build.bat ${_wdqt_arch_hint}")
         elseif(NOT TARGET us)
             set(_deploy_windows_reason "'us' target not defined (check US3_BUILD_PROGRAMS / US3_NO_DB)")
         else()
