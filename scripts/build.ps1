@@ -990,6 +990,45 @@ Test-PathLengthRisk `
     -Platform "Windows"
 
 # =============================================================================
+# WINDEPLOYQT PRE-FLIGHT
+#
+# On ARM64 Windows building for x64, vcpkg's manifest install may place Qt
+# tools under the HOST triplet (arm64-windows/tools/) rather than the TARGET
+# triplet (x64-windows/tools/).  windeployqt from the host triplet deploys
+# host-arch Qt DLLs -- the wrong architecture for the target package.
+#
+# If windeployqt is missing for the target triplet, install it explicitly via
+# vcpkg before cmake configure runs.  The vcpkg repo is already synced to the
+# project baseline at this point, so the installed version is consistent.
+# =============================================================================
+$TargetTriplet = Get-VcpkgTriplet
+if ($QtSuffix -eq "-qt6") {
+    $ExpectedTool = Join-Path $VcpkgRoot "installed\$TargetTriplet\tools\Qt6\bin\windeployqt.exe"
+    $VcpkgToolPkg = "qttools[assistant]:$TargetTriplet"
+} else {
+    $ExpectedTool = Join-Path $VcpkgRoot "installed\$TargetTriplet\tools\qt5-tools\bin\windeployqt.exe"
+    $VcpkgToolPkg = "qt5-tools:$TargetTriplet"
+}
+
+if (-not (Test-Path $ExpectedTool)) {
+    Write-Host "windeployqt.exe not found for target triplet $TargetTriplet." -ForegroundColor Yellow
+    Write-Host "  Expected: $ExpectedTool"
+    Write-Host "  Pre-installing $VcpkgToolPkg..." -ForegroundColor Yellow
+    $OverlayPorts = Join-Path $SourceRoot "buildsys\vcpkg\overlay-ports"
+    & "$VcpkgRoot\vcpkg.exe" install $VcpkgToolPkg `
+        "--overlay-ports=$OverlayPorts" `
+        "--downloads-root=$VcpkgDownloadsDir" `
+        "--binarysource=clear;files,$VcpkgCacheDir,readwrite" `
+        "--x-wait-for-lock"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Pre-install of $VcpkgToolPkg failed (rc=$LASTEXITCODE). windeployqt may still be missing."
+    } else {
+        Write-Host "$VcpkgToolPkg installed for $TargetTriplet." -ForegroundColor Green
+    }
+    Write-Host ""
+}
+
+# =============================================================================
 # CONFIGURE AND BUILD
 #
 # NOTE: Do NOT pass -DCMAKE_TOOLCHAIN_FILE here.

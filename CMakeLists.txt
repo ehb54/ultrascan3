@@ -1215,6 +1215,21 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     # Locate windeployqt from the Qt installation
     # -------------------------------------------------------------------------
+    message(STATUS "[WinDeploy] VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    if(DEFINED VCPKG_HOST_TRIPLET)
+        message(STATUS "[WinDeploy] VCPKG_HOST_TRIPLET:  ${VCPKG_HOST_TRIPLET}")
+    endif()
+
+    # Derive a build.bat --arch hint from the target triplet for use in
+    # diagnostic messages below.  Avoids hardcoding a specific arch.
+    if(VCPKG_TARGET_TRIPLET STREQUAL "x64-windows")
+        set(_wdqt_arch_hint "--arch x64")
+    elseif(VCPKG_TARGET_TRIPLET STREQUAL "arm64-windows")
+        set(_wdqt_arch_hint "--arch arm64")
+    else()
+        set(_wdqt_arch_hint "--arch <value matching ${VCPKG_TARGET_TRIPLET}>")
+    endif()
+
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
         set(_WIN_VCPKG_TOOLS_DYN  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
         set(_WIN_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qt5-tools/bin")
@@ -1225,6 +1240,19 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
         set(_WIN_VCPKG_TOOLS_STA "")
         set(_WIN_VCPKG_TOOLS_STA5 "")
     endif()
+
+    message(STATUS "[WinDeploy] Searching windeployqt in:")
+    foreach(_p IN ITEMS
+            "${_WIN_VCPKG_TOOLS_DYN}"
+            "${_WIN_VCPKG_TOOLS_STA}"
+            "${_WIN_VCPKG_TOOLS_STA5}"
+            "${Qt6_DIR}/../../../bin"
+            "${Qt5_DIR}/../../../bin"
+            "$ENV{QTDIR}/bin")
+        if(_p)
+            message(STATUS "    ${_p}")
+        endif()
+    endforeach()
 
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt
         HINTS
@@ -1237,10 +1265,46 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
         NAMES windeployqt.exe windeployqt
         DOC "Path to windeployqt"
     )
+
+    # Reject the tool if it comes from the host triplet while building for a
+    # different target triplet.  The host-triplet windeployqt deploys host-arch
+    # Qt DLLs (e.g. ARM64), not target-arch ones (e.g. x64).
+    # Derive the host triplet from VCPKG_HOST_TRIPLET (set by vcpkg.cmake) or
+    # from CMAKE_HOST_SYSTEM_PROCESSOR as a fallback.
+    if(WINDEPLOYQT_EXECUTABLE AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_wdqt_host "")
+        if(DEFINED VCPKG_HOST_TRIPLET AND NOT VCPKG_HOST_TRIPLET STREQUAL "")
+            set(_wdqt_host "${VCPKG_HOST_TRIPLET}")
+        elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(ARM64|aarch64)$"
+               AND NOT VCPKG_TARGET_TRIPLET STREQUAL "arm64-windows")
+            set(_wdqt_host "arm64-windows")
+        endif()
+
+        if(_wdqt_host AND NOT _wdqt_host STREQUAL VCPKG_TARGET_TRIPLET)
+            string(FIND "${WINDEPLOYQT_EXECUTABLE}" "${_wdqt_host}" _host_pos)
+            if(NOT _host_pos EQUAL -1)
+                message(WARNING
+                    "[WinDeploy] Rejecting windeployqt found under host triplet "
+                    "'${_wdqt_host}', not target '${VCPKG_TARGET_TRIPLET}'.\n"
+                    "  Rejected: ${WINDEPLOYQT_EXECUTABLE}\n"
+                    "  This tool would stage ${_wdqt_host} Qt DLLs into a "
+                    "${VCPKG_TARGET_TRIPLET} package — wrong architecture.\n"
+                    "  Run:  scripts/build.bat ${_wdqt_arch_hint}  "
+                    "(installs qttools for ${VCPKG_TARGET_TRIPLET} automatically)\n"
+                    "  Or:   vcpkg install qttools[assistant]:${VCPKG_TARGET_TRIPLET}")
+                unset(WINDEPLOYQT_EXECUTABLE CACHE)
+            endif()
+        endif()
+    endif()
+
     if(WINDEPLOYQT_EXECUTABLE)
-        message(STATUS "Found windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
+        message(STATUS "[WinDeploy] Found windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
     else()
-        message(WARNING "windeployqt not found - Windows deployment will not work")
+        message(WARNING
+            "[WinDeploy] windeployqt not found for target triplet '${VCPKG_TARGET_TRIPLET}'.\n"
+            "  Run:  scripts/build.bat ${_wdqt_arch_hint}  "
+            "(installs qttools for ${VCPKG_TARGET_TRIPLET} automatically)\n"
+            "  Or: vcpkg install qttools[assistant]:${VCPKG_TARGET_TRIPLET}")
     endif()
 
     # -------------------------------------------------------------------------
@@ -1320,6 +1384,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
                 -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
+                -DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
             DEPENDS ${_deploy_windows_deps}
             COMMENT "Staging Windows deployment into ${US3_WIN_STAGE_DIR}"
@@ -1328,7 +1393,10 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     else()
         # Stub target so --target deploy_windows gives a clear error
         if(NOT WINDEPLOYQT_EXECUTABLE)
-            set(_deploy_windows_reason "windeployqt not found — install Qt Tools component")
+            set(_deploy_windows_reason
+                "windeployqt not found for triplet '${VCPKG_TARGET_TRIPLET}' -- "
+                "run scripts/build.bat ${_wdqt_arch_hint} or: "
+                "vcpkg install qttools[assistant]:${VCPKG_TARGET_TRIPLET}")
         elseif(NOT TARGET us)
             set(_deploy_windows_reason "'us' target not defined (check US3_BUILD_PROGRAMS / US3_NO_DB)")
         else()
