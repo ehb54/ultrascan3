@@ -434,9 +434,10 @@ Then re-run the build from the shortened path.
 }
 
 # =============================================================================
-# BUILD DIRECTORY
+# BUILD DIRECTORY AND BUILD TYPE
 # =============================================================================
-$BuildDir = Join-Path $SourceRoot "build\$Preset"
+$BuildDir  = Join-Path $SourceRoot "build\$Preset"
+$BuildType = if ($Preset -match "release") { "Release" } else { "Debug" }
 
 # =============================================================================
 # HEADER
@@ -1037,13 +1038,19 @@ if ($profile -ne "HPC") {
 
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
+# Always run a full build first. This mirrors build.sh, which performs a full
+# cmake --build before the package target so all us_*.exe companion programs
+# are compiled and present in bin/ when the staging script's glob runs.
+# package_windows_nsis depends only on deploy_windows -> us, so without this
+# step the other 68 program executables would never be built before staging.
+cmake --build $BuildDir --config $BuildType --parallel $BuildJobs
+if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
+
 if (${pkg}) {
     Write-Host "Building Windows installer..." -ForegroundColor Cyan
-    cmake --build $BuildDir --target package_windows_nsis --parallel $BuildJobs
-} else {
-    cmake --build $BuildDir --parallel $BuildJobs
+    cmake --build $BuildDir --config $BuildType --target package_windows_nsis --parallel $BuildJobs
+    if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Installer build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 }
-if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Green
