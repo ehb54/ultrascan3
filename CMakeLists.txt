@@ -1420,7 +1420,6 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
                 -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
-                -DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
             DEPENDS ${_deploy_windows_deps}
             COMMENT "Staging Windows deployment into ${US3_WIN_STAGE_DIR}"
