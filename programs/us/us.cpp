@@ -53,11 +53,11 @@ int main( int argc, char* argv[] )
   // authentication; it only makes auth plugins discoverable if the server
   // requests one.
   {
-      const QString pluginDir =
-          QDir( QCoreApplication::applicationDirPath() )
-              .absoluteFilePath( "../plugins/libmariadb" );
-      qputenv( "MARIADB_PLUGIN_DIR",
-               QDir::toNativeSeparators( pluginDir ).toUtf8() );
+    const QString pluginDir =
+      QDir( QCoreApplication::applicationDirPath() )
+        .absoluteFilePath( "../plugins/libmariadb" );
+    qputenv( "MARIADB_PLUGIN_DIR",
+             QDir::toNativeSeparators( pluginDir ).toUtf8() );
   }
 #endif
 
