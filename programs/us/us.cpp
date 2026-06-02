@@ -43,6 +43,24 @@ int main( int argc, char* argv[] )
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
 
+#ifdef Q_OS_WIN
+  // MariaDB Connector/C on Windows does not fall back to the compiled-in
+  // MARIADB_PLUGINDIR when MYSQL_PLUGIN_DIR is unset: it constructs a bare
+  // filename ("dialog.dll") which Windows cannot find via the standard DLL
+  // search path.  Setting MARIADB_PLUGIN_DIR before any DB connection is
+  // opened makes the connector look in plugins/libmariadb/ relative to the
+  // executable, mirroring the POSIX behaviour.  This does not force PAM
+  // authentication; it only makes auth plugins discoverable if the server
+  // requests one.
+  {
+      const QString pluginDir =
+          QDir( QCoreApplication::applicationDirPath() )
+              .absoluteFilePath( "../plugins/libmariadb" );
+      qputenv( "MARIADB_PLUGIN_DIR",
+               QDir::toNativeSeparators( pluginDir ).toUtf8() );
+  }
+#endif
+
   // Set up language localization
   QString locale = QLocale::system().name();
 

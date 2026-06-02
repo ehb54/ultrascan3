@@ -1347,6 +1347,42 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     message(STATUS "vcpkg plugin dir (Windows): ${_WIN_VCPKG_PLUGIN_DIR}")
 
     # -------------------------------------------------------------------------
+    # Copy MariaDB auth plugins into the dev-build plugins/ dir (Windows)
+    #
+    # us.cpp sets MARIADB_PLUGIN_DIR to <appDir>/../plugins/libmariadb at
+    # startup so the connector looks there for dialog.dll.  Populate that
+    # directory at build time so running from the build tree works without
+    # running deploy_windows first.  Mirrors the Linux copy_mariadb_plugins_to_build
+    # target; WinDeploy.cmake section 6b handles the staged/package copy.
+    # -------------------------------------------------------------------------
+    set(_WIN_MARIADB_DIALOG_SRC "${_WIN_VCPKG_PLUGIN_DIR}/libmariadb/dialog.dll")
+    if(_WIN_VCPKG_PLUGIN_DIR AND EXISTS "${_WIN_MARIADB_DIALOG_SRC}")
+        set(_WIN_MARIADB_PLUGIN_BUILD_DIR "${CMAKE_BINARY_DIR}/plugins/libmariadb")
+        set(_WIN_MARIADB_CLRPWD_SRC "${_WIN_VCPKG_PLUGIN_DIR}/libmariadb/mysql_clear_password.dll")
+        set(_WIN_MARIADB_CLRPWD_CMD "")
+        if(EXISTS "${_WIN_MARIADB_CLRPWD_SRC}")
+            set(_WIN_MARIADB_CLRPWD_CMD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_WIN_MARIADB_CLRPWD_SRC}"
+                    "${_WIN_MARIADB_PLUGIN_BUILD_DIR}/mysql_clear_password.dll"
+            )
+        endif()
+        add_custom_target(copy_mariadb_plugins_to_build ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${_WIN_MARIADB_PLUGIN_BUILD_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_WIN_MARIADB_DIALOG_SRC}"
+                "${_WIN_MARIADB_PLUGIN_BUILD_DIR}/dialog.dll"
+            ${_WIN_MARIADB_CLRPWD_CMD}
+            COMMENT "Copying MariaDB auth plugins -> plugins/libmariadb/ (dev build)"
+            VERBATIM
+        )
+        message(STATUS "MariaDB auth plugins will be copied to plugins/ at build time (dev build)")
+    else()
+        message(WARNING "MariaDB auth plugins not found -- DB auth may fail when running from build tree. "
+            "Expected: ${_WIN_MARIADB_DIALOG_SRC}")
+    endif()
+
+    # -------------------------------------------------------------------------
     # Staging directory (mirrors macOS US3_STAGE_DIR)
     # -------------------------------------------------------------------------
     set(US3_WIN_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
