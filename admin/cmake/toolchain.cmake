@@ -55,6 +55,18 @@ elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "vcpkg triplet")
     endif()
 
+    # On Windows ARM64 building for x64-windows, vcpkg auto-detects the host as
+    # arm64-windows and installs Qt tools (moc, rcc, windeployqt) there instead
+    # of under x64-windows.  Explicitly setting VCPKG_HOST_TRIPLET=x64-windows
+    # causes vcpkg.cmake to pass --host-triplet=x64-windows to vcpkg install,
+    # which makes vcpkg treat the build as native x64 and place all tools under
+    # installed/x64-windows/tools/.  x64 binaries run under ARM64 emulation on
+    # Windows 11 ARM, so this is safe.
+    if(NOT DEFINED VCPKG_HOST_TRIPLET AND VCPKG_TARGET_TRIPLET STREQUAL "x64-windows")
+        set(VCPKG_HOST_TRIPLET "x64-windows" CACHE STRING "vcpkg host triplet")
+        message(STATUS "VCPKG_HOST_TRIPLET set to x64-windows (ensures Qt tools land in x64-windows/tools/)")
+    endif()
+
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_HOST_SYSTEM_NAME}")
 endif()
