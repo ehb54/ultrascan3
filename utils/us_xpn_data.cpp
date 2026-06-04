@@ -12,7 +12,8 @@ US_XpnData::US_XpnData( ) {
    clear();                // Clear internal vectors
 
    dbg_level    = US_Settings::us_debug();
-   dbhost       = QString( "bcf.uthscsa.edu" );
+   //dbhost       = QString( "bcf.uthscsa.edu" );
+   dbhost       = QString("");
    dbport       = 5432;
    dbname       = QString( "AUC_DATA_DB" );
    dbuser       = QString( "aucuser" );
@@ -37,7 +38,18 @@ bool US_XpnData::connect_data( const QString xpnhost, const int xpnport,
    const QString adbname, const QString adbuser, const QString adbpasw )
 {
    bool status   = true;
-   dbhost        = ( xpnhost.isEmpty() ) ? dbhost : xpnhost;
+
+   QString resolvedHost = xpnhost.isEmpty() ? dbhost : xpnhost;
+   if ( resolvedHost.isEmpty() )
+     {
+       qDebug() << "connect_data: ERROR - no database host specified";
+       emit status_text( "ERROR: No Optima host configured. Check instrument settings." );
+       return false;
+     }
+   
+   dbhost = resolvedHost;
+   
+   //dbhost        = ( xpnhost.isEmpty() ) ? dbhost : xpnhost;
    dbport        = ( xpnport <= 0 )      ? 5432   : xpnport;
    dbname        = ( adbname.isEmpty() ) ? dbname : adbname;
    dbuser        = ( adbuser.isEmpty() ) ? dbuser : adbuser;

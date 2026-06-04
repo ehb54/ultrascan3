@@ -508,8 +508,6 @@ private slots:
   void to_autoflow_records( void );
 
   void define_new_experiment( QStringList & );
-
-  void delete_psql_record( int );
   
   void liveupdate_stopped( void );
 
