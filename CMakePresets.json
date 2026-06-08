@@ -123,7 +123,8 @@
       "name": "windows-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/admin/cmake/toolchain.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/admin/cmake/toolchain.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows"
       }
     },
     {

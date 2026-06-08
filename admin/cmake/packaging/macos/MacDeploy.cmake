@@ -658,6 +658,40 @@ if(VCPKG_LIB_DIR)
 endif()
 
 # =========================================================================
+# 9e) Copy MariaDB Connector/C client-side auth plugins
+#     libmariadb locates these at runtime relative to itself:
+#       <install-root>/plugins/libmariadb/dialog.so
+#       <install-root>/plugins/libmariadb/mysql_clear_password.so
+#     macdeployqt has no knowledge of these — they must be staged explicitly.
+#     Source: ${VCPKG_PLUGIN_DIR}/libmariadb/  (passed via VCPKG_PLUGIN_DIR)
+# =========================================================================
+set(_MARIADB_PLUGIN_SRC_DIR "")
+foreach(_pdir IN ITEMS "${VCPKG_PLUGIN_DIR}" "${VCPKG_PLUGIN_DIR_STA}")
+    if(_pdir AND EXISTS "${_pdir}/libmariadb")
+        set(_MARIADB_PLUGIN_SRC_DIR "${_pdir}/libmariadb")
+        break()
+    endif()
+endforeach()
+
+if(_MARIADB_PLUGIN_SRC_DIR)
+    file(MAKE_DIRECTORY "${S_PLUG}/libmariadb")
+    foreach(_mariadb_plugin IN ITEMS "dialog.so" "mysql_clear_password.so")
+        set(_mariadb_src "${_MARIADB_PLUGIN_SRC_DIR}/${_mariadb_plugin}")
+        if(EXISTS "${_mariadb_src}")
+            message(STATUS "Installing MariaDB auth plugin -> plugins/libmariadb/${_mariadb_plugin}")
+            file(COPY "${_mariadb_src}" DESTINATION "${S_PLUG}/libmariadb")
+        else()
+            message(WARNING "MariaDB auth plugin not found: ${_mariadb_src}")
+        endif()
+    endforeach()
+else()
+    message(WARNING
+        "MariaDB Connector/C plugins dir not found -- PAM auth will fail at runtime. "
+        "Expected: \${VCPKG_PLUGIN_DIR}/libmariadb/. "
+        "Check that libmariadb is installed for the active vcpkg triplet.")
+endif()
+
+# =========================================================================
 # 10) Copy manual.qch / manual.qhc into bin/
 # =========================================================================
 if(QCH_DIR)

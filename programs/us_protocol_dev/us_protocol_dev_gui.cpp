@@ -781,11 +781,7 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
   autoflow_records = get_autoflow_records();
   
   qDebug() << "Autoflow record #: " << autoflow_records;
-  
-  // //Temporary: delete ExperimentDefinition record ( ExpId = 306, 301 )
-  // int ExpId = 285;
-  // delete_psql_record( ExpId );
-  
+    
   if ( autoflow_records < 1 )
     return;
   
@@ -2142,6 +2138,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    // if ( mainw->us_mode_bool )
    //   sdiag->us_mode_passed();
+
+   sdiag->expPanelSet=true;
    
    sdiag->show();
 }

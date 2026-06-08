@@ -637,7 +637,7 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 	 }
      }
    //////////////////
-
+   mainw->enable_disable_prev_next_btns();
 }
 
 
@@ -924,6 +924,8 @@ void US_ExperGuiGeneral::savePanel()
 
    currProto->exp_label    = le_label       ->text();
 
+   mainw->pb_prev->setEnabled(true);
+
 }
 
 // Get a specific panel string value
@@ -1099,6 +1101,9 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    init_gapprs();
    init_gsmes();
 
+   //Disable Add To List for [o | r | a | sme ] if respective lists are empty
+   setEnabledDisabledAddToORASME();
+
    //BAsed on mode [usmode - R&D], hide/show oper/rev section:
       //show Assign oper/rev ONLY for GMP:
    qDebug() << "In Rotor: mainw->automode, mainw->usmode -- "
@@ -1161,6 +1166,21 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    qDebug() << "Rotor::initPanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
 	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 
+}
+
+void US_ExperGuiRotor::setEnabledDisabledAddToORASME( void )
+{
+  bool isOperEmpty = cb_choose_operator->count() == 0;
+  pb_add_oper->setEnabled( !isOperEmpty );
+
+  bool isRevEmpty = cb_choose_rev->count() == 0;
+  pb_add_rev->setEnabled( !isRevEmpty );
+
+  bool isApprEmpty = cb_choose_appr->count() == 0;
+  pb_add_appr->setEnabled( !isApprEmpty );
+
+  bool isSmeEmpty = cb_choose_sme->count() == 0;
+  pb_add_sme->setEnabled( !isSmeEmpty );
 }
 
 void US_ExperGuiRotor::init_grevs( void )
@@ -3886,6 +3906,8 @@ QStringList US_ExperGuiAProfile::getLValue( const QString type )
 // Initialize an Upload panel, especially after clicking on its tab
 void US_ExperGuiUpload::initPanel()
 {
+   mainw->enable_disable_prev_next_btns();
+  
    currProto       = &mainw->currProto;
    loadProto       = &mainw->loadProto;
    //rps_differ      = ( mainw->currProto !=  mainw->loadProto );
@@ -4991,6 +5013,7 @@ bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_Ana
 // Save panel controls when about to leave the panel
 void US_ExperGuiUpload::savePanel()
 {
+  mainw->pb_next->setEnabled( true );
 }
 
 // Get a specific panel value
