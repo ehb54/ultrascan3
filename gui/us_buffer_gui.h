@@ -60,6 +60,8 @@ class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
 
       int           dbg_level;
       QString       load_init;
+      QString       buffer_state_style;
+      QLabel*       lb_buffer_state;
       QLabel*       lb_density;
       QLabel*       lb_viscosity;
       QLineEdit*    le_search;
