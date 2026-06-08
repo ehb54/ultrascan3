@@ -1413,6 +1413,9 @@ void US_Pseudo3D_Combine::select_y_axis_auto( int ival )
 // Select coordinate for horizontal axis
 void US_Pseudo3D_Combine::select_x_axis( int ival )
 {
+   ck_autosxy->setChecked( true );
+   select_autosxy();
+
    const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
    const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 0.10, 1e-8,  1.0 };
    const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1.00, 1e-7, 10.0 };
@@ -1453,6 +1456,9 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
 // Select coordinate for vertical axis
 void US_Pseudo3D_Combine::select_y_axis( int ival )
 {
+   ck_autosxy->setChecked( true );
+   select_autosxy();
+
    const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
    const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 0.10, 1e-8,  1.0 };
    const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1.00, 1e-7, 10.0 };
