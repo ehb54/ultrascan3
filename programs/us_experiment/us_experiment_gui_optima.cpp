@@ -3398,7 +3398,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   QLabel* lb_scan_estimator    = us_banner( tr( "Scan Number Estimator:" ) );
   QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths (from all cells) to be scanned:" ));
   sb_wvl_per_cell = us_spinbox();
-  sb_wvl_per_cell->setRange(1, 100);
+  sb_wvl_per_cell->setRange(1, 800);
   connect( sb_wvl_per_cell,  SIGNAL( valueChanged     ( int ) ),
 	   this,             SLOT  ( ssChgWvlPerCell  ( int ) ) );
 
@@ -3943,13 +3943,24 @@ void US_ExperGuiSpeeds::ssChgWvlPerCell( int val )
   std::modf (ssvals[ curssx ][ "scanintv_min" ], &scanint_sec_min);
   
   int scancount = 0;
+
+  qDebug() << "[in ssChgWvlPerCell() ], scanint_sec, scanint_sec_min, tot_wvl -- "
+	   << scanint_sec << scanint_sec_min << tot_wvl;
+  qDebug() << "[in ssChgWvlPerCell() ], duration_sec -- "
+	   << duration_sec;
   
   //ALEXEY: use this algorithm to calculate scanCount && scanInt
   if ( scanint_sec > scanint_sec_min*tot_wvl )
+    {
+      qDebug() << "scanint_sec > scanint_sec_min*tot_wvl";
       scancount     = int( duration_sec / scanint_sec );
+    }
   else
-    scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-    
+    {
+      qDebug() << "scanint_sec < scanint_sec_min*tot_wvl";
+      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+    }
+  
   le_scans_per_cell -> setText( QString::number( scancount ));
 }
 
