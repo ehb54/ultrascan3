@@ -225,7 +225,7 @@ QString US_LM::lm_statmsg( US_LM::LM_Status *status, bool longmsg )
          QVector< double > v_fvec( m );
          QVector< double > v_diag( n );
          QVector< double > v_qtf ( n );
-         QVector< double > v_fjac( m*n );
+         QVector< double > v_fjac( static_cast<qsizetype>( m ) * n );
          QVector< double > v_wa1 ( n );
          QVector< double > v_wa2 ( n );
          QVector< double > v_wa3 ( n );
