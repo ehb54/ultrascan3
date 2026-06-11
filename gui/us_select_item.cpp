@@ -842,7 +842,7 @@ void US_SelectItem::set_unset_failed_autoflow()
    
    QString current_mark = "<font color='green'><b>NOT FAILED</b></font>";
    QString new_mark     = "<font color='red'><b>FAILED</b></font>";
-   QString add_msg      = "This implies the run will be re-started from stage <b>3. IMPORT</b> upon next re-attachment.";
+   QString add_msg      = "<br>If you later select this run again, UltraScan will restart processing from Stage <b>3: LIMS Import</b>.";
    bool isFailed = false;
    if ( failedID. toInt() != 0 )
      {
@@ -854,13 +854,13 @@ void US_SelectItem::set_unset_failed_autoflow()
      }
 
    QMessageBox msgBox;
-   msgBox.setText(tr( "You have selected to change the status for the following run:<br><br>" )
+   msgBox.setText(tr( "You are about to update the status of the following run:<br><br>" )
 		  + tr("<b>ID:&emsp;</b>") + items[ AutoflowRow ][ 0 ]
 		  + tr("<br>")
 		  + tr("<b>Name:&emsp;</b>") + items[ AutoflowRow ][ 1 ]
 		  + tr("<br>")
 		  + tr("<b>Current Status:&emsp;</b> ") + current_mark
-		  + tr("<br><br> If proceeded, it will be marked as %1. %2").arg( new_mark ).arg( add_msg )
+		  + tr("<br><br> It will be marked as %1. %2").arg( new_mark ).arg( add_msg )
 		  + tr( "<br><br>Proceed?" ));
    //msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if deleted, this run cannot be monitored with this program anymore!</font>");
    msgBox.setWindowTitle(tr("Mark/UnMark Autoflow Record as FAILED"));
