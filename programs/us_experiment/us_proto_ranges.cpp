@@ -1049,18 +1049,22 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	}
       if ( has_absorbance )
 	{
-	  //ALEXEY: use this algorithm
-	  if ( scanint_sec > scanint_sec_min*tot_wvl )
-	    {
-	      scancount     = int( duration_sec / scanint_sec );
-	      scaninterval  = scanint_sec;
-	    }
-	  else
-	    {
-	      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-	      scaninterval = int( scanint_sec_min * tot_wvl );
-	      scaninterval_updated = true; //updated: show in RED
-	    }
+	  // //ALEXEY: use this algorithm
+	  // if ( scanint_sec > scanint_sec_min*tot_wvl )
+	  //   {
+	  //     scancount     = int( duration_sec / scanint_sec );
+	  //     scaninterval  = scanint_sec;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  //     scaninterval = int( scanint_sec_min * tot_wvl );
+	  //     scaninterval_updated = true; //updated: show in RED
+	  //   }
+
+	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  scaninterval = int( scanint_sec_min * tot_wvl );
+	  scaninterval_updated = true; //updated: show in RED
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount >= 1500 )
@@ -1073,7 +1077,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  rpSpeed->ssteps[ i ].scancount = scancount;
 	  mainw->ScanCount_global   = scancount;
 	  mainw->currProto.scanCount;
-	  mainw->TotalWvlNum_global = tot_wvl; 
+	  mainw->TotalWvlNum_global = tot_wvl;
+	  rpSpeed->ssteps[ i ].scanintv = scaninterval; 
 	
 	  
 	  //Update le_scanint text: set text color RED if updated
@@ -1089,7 +1094,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	      //palette->setColor(QPalette::Base,Qt::white);
 	      le_scanint->setPalette(*palette);
 	      
-	      rpSpeed->ssteps[ i ].scanintv = scaninterval;
+	      //rpSpeed->ssteps[ i ].scanintv = scaninterval;
 	    }
 	  else
 	    {
@@ -1129,17 +1134,21 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  ncells_used_int /= 2;
 	  
 	  //ALEXEY: use this algorithm for Interference: scanint_min=5; 
-	  if ( scanint_sec_int > 5 * ncells_used_int )
-	    {
-	      scancount_int     = int( duration_sec / scanint_sec_int );
-	      scaninterval_int  = scanint_sec_int;
-	    }
-	  else
-	    {
-	      scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
-	      scaninterval_int         = int( 5 * ncells_used_int );
-	      scaninterval_int_updated = true; //updated: show in RED
-	    }
+	  // if ( scanint_sec_int > 5 * ncells_used_int )
+	  //   {
+	  //     scancount_int     = int( duration_sec / scanint_sec_int );
+	  //     scaninterval_int  = scanint_sec_int;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  //     scaninterval_int         = int( 5 * ncells_used_int );
+	  //     scaninterval_int_updated = true; //updated: show in RED
+	  //   }
+
+	  scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  scaninterval_int         = int( 5 * ncells_used_int );
+	  scaninterval_int_updated = true; //updated: show in RED
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount_int >= 1500 )
@@ -1155,7 +1164,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
 	  mainw->ScanCount_global_int     = scancount_int;
 	  mainw->currProto.scanCount_int  = scancount_int; 
-	  
+	  rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
           
 	  //Update le_scanint text: set text color RED if updated
 	  QList< int > hms_scanint_int;
@@ -1170,7 +1179,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	      //palette->setColor(QPalette::Base,Qt::white);
 	      le_scanint_int->setPalette(*palette_int);
 	      
-	      rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
+	      //rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
 	    }
 	  else
 	    {
@@ -1401,17 +1410,21 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	{
 	  
 	  //ALEXEY: use this algorithm
-	  if ( scanint_sec > scanint_sec_min*tot_wvl )
-	    {
-	      scancount     = int( duration_sec / scanint_sec );
-	      scaninterval  = scanint_sec;
-	    }
-	  else
-	    {
-	      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-	      scaninterval = int( scanint_sec_min * tot_wvl );
-	      scaninterval_updated = true; //updated: show in RED
-	    }
+	  // if ( scanint_sec > scanint_sec_min*tot_wvl )
+	  //   {
+	  //     scancount     = int( duration_sec / scanint_sec );
+	  //     scaninterval  = scanint_sec;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  //     scaninterval = int( scanint_sec_min * tot_wvl );
+	  //     scaninterval_updated = true; //updated: show in RED
+	  //   }
+	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  scaninterval = int( scanint_sec_min * tot_wvl );
+	  scaninterval_updated = true; //updated: show in RED
+	  
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount >= 1500 )
@@ -1482,17 +1495,21 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  ncells_used_int /= 2;
 	  
 	  //ALEXEY: use this algorithm for Interference: scanint_min=5; 
-	  if ( scanint_sec_int > 5 * ncells_used_int )
-	    {
-	      scancount_int     = int( duration_sec / scanint_sec_int );
-	      scaninterval_int  = scanint_sec_int;
-	    }
-	  else
-	    {
-	      scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
-	      scaninterval_int         = int( 5 * ncells_used_int );
-	      scaninterval_int_updated = true; //updated: show in RED
-	    }
+	  // if ( scanint_sec_int > 5 * ncells_used_int )
+	  //   {
+	  //     scancount_int     = int( duration_sec / scanint_sec_int );
+	  //     scaninterval_int  = scanint_sec_int;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  //     scaninterval_int         = int( 5 * ncells_used_int );
+	  //     scaninterval_int_updated = true; //updated: show in RED
+	  //   }
+
+	  scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  scaninterval_int         = int( 5 * ncells_used_int );
+	  scaninterval_int_updated = true; //updated: show in RED
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount_int >= 1500 )

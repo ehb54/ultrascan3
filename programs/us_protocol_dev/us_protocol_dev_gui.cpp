@@ -781,11 +781,7 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
   autoflow_records = get_autoflow_records();
   
   qDebug() << "Autoflow record #: " << autoflow_records;
-  
-  // //Temporary: delete ExperimentDefinition record ( ExpId = 306, 301 )
-  // int ExpId = 285;
-  // delete_psql_record( ExpId );
-  
+    
   if ( autoflow_records < 1 )
     return;
   

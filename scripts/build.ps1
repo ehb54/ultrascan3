@@ -434,9 +434,10 @@ Then re-run the build from the shortened path.
 }
 
 # =============================================================================
-# BUILD DIRECTORY
+# BUILD DIRECTORY AND BUILD TYPE
 # =============================================================================
-$BuildDir = Join-Path $SourceRoot "build\$Preset"
+$BuildDir  = Join-Path $SourceRoot "build\$Preset"
+$BuildType = if ($Preset -match "release") { "Release" } else { "Debug" }
 
 # =============================================================================
 # HEADER
@@ -995,20 +996,61 @@ Test-PathLengthRisk `
 # NOTE: Do NOT pass -DCMAKE_TOOLCHAIN_FILE here.
 #   toolchain.cmake (set in windows-base preset) handles triplet detection
 #   and includes vcpkg via $env:VCPKG_ROOT which is already exported above.
+#
+# vcpkg manifest install runs automatically during cmake configure, installing
+# all dependencies declared in vcpkg.json for the active feature and triplet.
 # =============================================================================
 Write-Host "Configuring..." -ForegroundColor Cyan
 cmake --preset $Preset -DUS3_PROFILE="${profile}"
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: CMake configuration failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
+# =============================================================================
+# POST-CONFIGURE: verify windeployqt is present for the target triplet.
+#
+# The vcpkg manifest install ran during cmake configure above.  If windeployqt
+# is still missing, vcpkg.json does not include the Qt tools dependency for the
+# active feature, or vcpkg placed the tools under the host triplet in a
+# cross-compile scenario.  Fail now rather than letting the build produce a
+# broken package.
+# =============================================================================
+if ($profile -ne "HPC") {
+    $TargetTriplet = Get-VcpkgTriplet
+    if ($QtSuffix -eq "-qt6") {
+        $ExpectedTool   = Join-Path $VcpkgRoot "installed\$TargetTriplet\tools\Qt6\bin\windeployqt.exe"
+        $QtToolsFeature = "qt6-app (qttools[assistant])"
+    } else {
+        $ExpectedTool   = Join-Path $VcpkgRoot "installed\$TargetTriplet\tools\qt5-tools\bin\windeployqt.exe"
+        $QtToolsFeature = "qt5-app / qt5-qwt630-app (qt5-tools)"
+    }
+
+    if (-not (Test-Path $ExpectedTool)) {
+        Write-Host ""
+        Write-Host "ERROR: windeployqt.exe not found for $TargetTriplet after cmake configure." -ForegroundColor Red
+        Write-Host "  Expected : $ExpectedTool" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "The vcpkg manifest install ran but did not produce windeployqt.exe" -ForegroundColor Yellow
+        Write-Host "for the target triplet $TargetTriplet." -ForegroundColor Yellow
+        Write-Host "Verify vcpkg.json includes the Qt tools for feature: $QtToolsFeature" -ForegroundColor Yellow
+        Write-Host "Then rerun: scripts\build.bat --arch $Arch$(if (${pkg}) { ' --pkg' })" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
 Write-Host ""
 Write-Host "Building..." -ForegroundColor Cyan
+# Always run a full build first. This mirrors build.sh, which performs a full
+# cmake --build before the package target so all us_*.exe companion programs
+# are compiled and present in bin/ when the staging script's glob runs.
+# package_windows_nsis depends only on deploy_windows -> us, so without this
+# step the other 68 program executables would never be built before staging.
+cmake --build $BuildDir --config $BuildType --parallel $BuildJobs
+if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
+
 if (${pkg}) {
     Write-Host "Building Windows installer..." -ForegroundColor Cyan
-    cmake --build $BuildDir --target package_windows_nsis --parallel $BuildJobs
-} else {
-    cmake --build $BuildDir --parallel $BuildJobs
+    cmake --build $BuildDir --config $BuildType --target package_windows_nsis --parallel $BuildJobs
+    if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Installer build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 }
-if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Build failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Green

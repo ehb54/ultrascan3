@@ -1215,6 +1215,21 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     # -------------------------------------------------------------------------
     # Locate windeployqt from the Qt installation
     # -------------------------------------------------------------------------
+    message(STATUS "[WinDeploy] VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    if(DEFINED VCPKG_HOST_TRIPLET)
+        message(STATUS "[WinDeploy] VCPKG_HOST_TRIPLET:  ${VCPKG_HOST_TRIPLET}")
+    endif()
+
+    # Derive a build.bat --arch hint from the target triplet for use in
+    # diagnostic messages below.  Avoids hardcoding a specific arch.
+    if(VCPKG_TARGET_TRIPLET STREQUAL "x64-windows")
+        set(_wdqt_arch_hint "--arch x64")
+    elseif(VCPKG_TARGET_TRIPLET STREQUAL "arm64-windows")
+        set(_wdqt_arch_hint "--arch arm64")
+    else()
+        set(_wdqt_arch_hint "--arch <value matching ${VCPKG_TARGET_TRIPLET}>")
+    endif()
+
     if(DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
         set(_WIN_VCPKG_TOOLS_DYN  "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/Qt6/bin")
         set(_WIN_VCPKG_TOOLS_STA5 "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qt5-tools/bin")
@@ -1225,6 +1240,19 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
         set(_WIN_VCPKG_TOOLS_STA "")
         set(_WIN_VCPKG_TOOLS_STA5 "")
     endif()
+
+    message(STATUS "[WinDeploy] Searching windeployqt in:")
+    foreach(_p IN ITEMS
+            "${_WIN_VCPKG_TOOLS_DYN}"
+            "${_WIN_VCPKG_TOOLS_STA}"
+            "${_WIN_VCPKG_TOOLS_STA5}"
+            "${Qt6_DIR}/../../../bin"
+            "${Qt5_DIR}/../../../bin"
+            "$ENV{QTDIR}/bin")
+        if(_p)
+            message(STATUS "    ${_p}")
+        endif()
+    endforeach()
 
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt
         HINTS
@@ -1237,10 +1265,46 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
         NAMES windeployqt.exe windeployqt
         DOC "Path to windeployqt"
     )
+
+    # Reject the tool if it comes from the host triplet while building for a
+    # different target triplet.  The host-triplet windeployqt deploys host-arch
+    # Qt DLLs (e.g. ARM64), not target-arch ones (e.g. x64).
+    # Derive the host triplet from VCPKG_HOST_TRIPLET (set by vcpkg.cmake) or
+    # from CMAKE_HOST_SYSTEM_PROCESSOR as a fallback.
+    if(WINDEPLOYQT_EXECUTABLE AND DEFINED VCPKG_TARGET_TRIPLET)
+        set(_wdqt_host "")
+        if(DEFINED VCPKG_HOST_TRIPLET AND NOT VCPKG_HOST_TRIPLET STREQUAL "")
+            set(_wdqt_host "${VCPKG_HOST_TRIPLET}")
+        elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(ARM64|aarch64)$"
+               AND NOT VCPKG_TARGET_TRIPLET STREQUAL "arm64-windows")
+            set(_wdqt_host "arm64-windows")
+        endif()
+
+        if(_wdqt_host AND NOT _wdqt_host STREQUAL VCPKG_TARGET_TRIPLET)
+            string(FIND "${WINDEPLOYQT_EXECUTABLE}" "${_wdqt_host}" _host_pos)
+            if(NOT _host_pos EQUAL -1)
+                message(WARNING
+                    "[WinDeploy] Rejecting windeployqt found under host triplet "
+                    "'${_wdqt_host}', not target '${VCPKG_TARGET_TRIPLET}'.\n"
+                    "  Rejected: ${WINDEPLOYQT_EXECUTABLE}\n"
+                    "  This tool would stage ${_wdqt_host} Qt DLLs into a "
+                    "${VCPKG_TARGET_TRIPLET} package — wrong architecture.\n"
+                    "  Run:  scripts/build.bat ${_wdqt_arch_hint}  "
+                    "(cmake configure triggers the vcpkg manifest install)")
+                unset(WINDEPLOYQT_EXECUTABLE CACHE)
+            endif()
+        endif()
+    endif()
+
     if(WINDEPLOYQT_EXECUTABLE)
-        message(STATUS "Found windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
+        message(STATUS "[WinDeploy] Found windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
     else()
-        message(WARNING "windeployqt not found - Windows deployment will not work")
+        message(WARNING
+            "[WinDeploy] windeployqt not found for target triplet '${VCPKG_TARGET_TRIPLET}'.\n"
+            "  vcpkg.json must include the Qt tools for the active feature "
+            "(qttools[assistant] for Qt6, qt5-tools for Qt5).\n"
+            "  cmake configure triggers the vcpkg manifest install automatically.\n"
+            "  Run:  scripts/build.bat ${_wdqt_arch_hint}")
     endif()
 
     # -------------------------------------------------------------------------
@@ -1281,6 +1345,42 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
         endif()
     endif()
     message(STATUS "vcpkg plugin dir (Windows): ${_WIN_VCPKG_PLUGIN_DIR}")
+
+    # -------------------------------------------------------------------------
+    # Copy MariaDB auth plugins into the dev-build plugins/ dir (Windows)
+    #
+    # us.cpp sets MARIADB_PLUGIN_DIR to <appDir>/../plugins/libmariadb at
+    # startup so the connector looks there for dialog.dll.  Populate that
+    # directory at build time so running from the build tree works without
+    # running deploy_windows first.  Mirrors the Linux copy_mariadb_plugins_to_build
+    # target; WinDeploy.cmake section 6b handles the staged/package copy.
+    # -------------------------------------------------------------------------
+    set(_WIN_MARIADB_DIALOG_SRC "${_WIN_VCPKG_PLUGIN_DIR}/libmariadb/dialog.dll")
+    if(_WIN_VCPKG_PLUGIN_DIR AND EXISTS "${_WIN_MARIADB_DIALOG_SRC}")
+        set(_WIN_MARIADB_PLUGIN_BUILD_DIR "${CMAKE_BINARY_DIR}/plugins/libmariadb")
+        set(_WIN_MARIADB_CLRPWD_SRC "${_WIN_VCPKG_PLUGIN_DIR}/libmariadb/mysql_clear_password.dll")
+        set(_WIN_MARIADB_CLRPWD_CMD "")
+        if(EXISTS "${_WIN_MARIADB_CLRPWD_SRC}")
+            set(_WIN_MARIADB_CLRPWD_CMD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_WIN_MARIADB_CLRPWD_SRC}"
+                    "${_WIN_MARIADB_PLUGIN_BUILD_DIR}/mysql_clear_password.dll"
+            )
+        endif()
+        add_custom_target(copy_mariadb_plugins_to_build ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${_WIN_MARIADB_PLUGIN_BUILD_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_WIN_MARIADB_DIALOG_SRC}"
+                "${_WIN_MARIADB_PLUGIN_BUILD_DIR}/dialog.dll"
+            ${_WIN_MARIADB_CLRPWD_CMD}
+            COMMENT "Copying MariaDB auth plugins -> plugins/libmariadb/ (dev build)"
+            VERBATIM
+        )
+        message(STATUS "MariaDB auth plugins will be copied to plugins/ at build time (dev build)")
+    else()
+        message(WARNING "MariaDB auth plugins not found -- DB auth may fail when running from build tree. "
+            "Expected: ${_WIN_MARIADB_DIALOG_SRC}")
+    endif()
 
     # -------------------------------------------------------------------------
     # Staging directory (mirrors macOS US3_STAGE_DIR)
@@ -1328,7 +1428,11 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
     else()
         # Stub target so --target deploy_windows gives a clear error
         if(NOT WINDEPLOYQT_EXECUTABLE)
-            set(_deploy_windows_reason "windeployqt not found — install Qt Tools component")
+            set(_deploy_windows_reason
+                "windeployqt not found for triplet '${VCPKG_TARGET_TRIPLET}' -- "
+                "check vcpkg.json includes qttools[assistant] (Qt6) or qt5-tools (Qt5) "
+                "for the active feature, then rerun: "
+                "scripts/build.bat ${_wdqt_arch_hint}")
         elseif(NOT TARGET us)
             set(_deploy_windows_reason "'us' target not defined (check US3_BUILD_PROGRAMS / US3_NO_DB)")
         else()
@@ -1520,6 +1624,46 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
     endif()
 
     # -------------------------------------------------------------------------
+    # Copy MariaDB auth plugins into the dev-build plugins/ dir
+    #
+    # libmariadb resolves its plugin directory at runtime using a compiled-in
+    # relative path ("../plugins/libmariadb") from wherever libmariadb.so.3 is
+    # loaded.  When running directly from the build tree this resolves to
+    # <CMAKE_BINARY_DIR>/plugins/libmariadb/, which is NOT populated by the
+    # normal build.  Mirror what LinuxDeploy.cmake does for the staging tree so
+    # that "cmake --build && ./bin/us" works without running deploy_linux first.
+    # -------------------------------------------------------------------------
+    set(_LNX_MARIADB_PLUGIN_BUILD_DIR "${CMAKE_BINARY_DIR}/plugins/libmariadb")
+    set(_LNX_MARIADB_DIALOG_SRC "${_LNX_VCPKG_PLUGIN_DIR}/libmariadb/dialog.so")
+    if(_LNX_VCPKG_PLUGIN_DIR AND EXISTS "${_LNX_MARIADB_DIALOG_SRC}")
+        set(_LNX_MARIADB_CLRPWD_SRC "${_LNX_VCPKG_PLUGIN_DIR}/libmariadb/mysql_clear_password.so")
+        # Build the command list at configure time so we only copy files that exist.
+        # add_custom_target does not support per-COMMAND conditionals, so we gate
+        # the mysql_clear_password copy here.
+        set(_LNX_MARIADB_CLRPWD_CMD "")
+        if(EXISTS "${_LNX_MARIADB_CLRPWD_SRC}")
+            set(_LNX_MARIADB_CLRPWD_CMD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${_LNX_MARIADB_CLRPWD_SRC}"
+                    "${_LNX_MARIADB_PLUGIN_BUILD_DIR}/mysql_clear_password.so"
+            )
+        endif()
+        add_custom_target(copy_mariadb_plugins_to_build ALL
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${_LNX_MARIADB_PLUGIN_BUILD_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${_LNX_MARIADB_DIALOG_SRC}"
+                "${_LNX_MARIADB_PLUGIN_BUILD_DIR}/dialog.so"
+            ${_LNX_MARIADB_CLRPWD_CMD}
+            COMMENT "Copying MariaDB auth plugins -> plugins/libmariadb/ (dev build)"
+            VERBATIM
+        )
+        message(STATUS "MariaDB auth plugins will be copied to plugins/ at build time (dev build)")
+    else()
+        message(WARNING "MariaDB auth plugins not found -- DB auth may fail when running from build tree. "
+            "Expected: ${_LNX_MARIADB_DIALOG_SRC}")
+    endif()
+
+    # -------------------------------------------------------------------------
     # Staging directory
     # -------------------------------------------------------------------------
     set(US3_LNX_STAGE_DIR "${CMAKE_BINARY_DIR}/_stage/UltraScan3" CACHE PATH
@@ -1550,6 +1694,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_LNX_VCPKG_PLUGIN_DIR}
                 -DVCPKG_QT6_PLUGIN_DIR=${_LNX_VCPKG_QT6_PLUGIN_DIR}
+                -DUS3_VERSION_STRING=${US3_VERSION_STRING}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxDeploy.cmake
             DEPENDS ${_deploy_linux_deps}
             COMMENT "Staging Linux deployment into ${US3_LNX_STAGE_DIR}"
