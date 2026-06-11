@@ -2148,7 +2148,7 @@ void US_XpnDataViewer::stop_optima( void )
   QMessageBox msgBox;
   msgBox.setText(tr("\nYou are about to STOP Optima machine! \n\n")
 		 + tr("Do you want to proceed ?\n") );
-  msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if stopped, ongoing experiment will be abortded! </font>");
+  msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if stopped, ongoing experiment will be aborted! </font>");
   
   msgBox.setWindowTitle(tr("Confirm Optima Experiment Aboriton"));
 
