@@ -285,6 +285,28 @@ void US_ExperimentMain::disable_tabs_buttons( void )
 
 }
 
+//Slot to DISABLE tabs after  2. Lab/Rotor and the Next buttons when dataDisk clicked/unclicked
+void US_ExperimentMain::disableEnable_tabs_for_dataDisk( bool disabled )
+{
+  qDebug() << "dataDisk checked ? " << disabled << ", tabs action...";
+  pb_next   ->setEnabled( !disabled );
+  
+  for (int i=2; i<tabWidget->count(); i++)
+    {
+      tabWidget ->setTabEnabled( i, !disabled );
+      if ( disabled )
+	tabWidget ->tabBar()->setTabTextColor( i, Qt::darkGray);
+      else
+	{
+	  QPalette pal = tabWidget ->tabBar()->palette();
+	  tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
+	}
+    }
+
+  qApp->processEvents();
+
+}
+
 //Slot to ENABLE tabs and Next/Prev buttons
 void US_ExperimentMain::enable_tabs_buttons( void )
 {
@@ -638,6 +660,7 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
      }
    //////////////////
    mainw->enable_disable_prev_next_btns();
+
 }
 
 
@@ -1166,6 +1189,9 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    qDebug() << "Rotor::initPanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
 	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 
+   /////
+   mainw->enable_disable_prev_next_btns();
+   
 }
 
 void US_ExperGuiRotor::setEnabledDisabledAddToORASME( void )

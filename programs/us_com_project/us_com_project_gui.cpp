@@ -1389,9 +1389,9 @@ void US_InitDialogueGui::checkCertificates( void )
       return;
     }
 
-  //TEST
-  //isDataDiskOnly = true;
-  //emit pass_allow_dataDisk_only();
+  // //TEST
+  // isDataDiskOnly = true;
+  // emit pass_allow_dataDisk_only();
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
 }
 
