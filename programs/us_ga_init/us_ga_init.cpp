@@ -688,10 +688,23 @@ DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
 
    pb_ckovrlp->setEnabled( false );
 
+   double xrange = qAbs( plxmax - plxmin );
+   double yrange = qAbs( plymax - plymin );
+   
+   if ( xrange == 0.0 )
+   {
+      xrange = 1.0e-1;
+   }
+   
+   if ( yrange <= 0.0 )
+   {
+      yrange = 1.0e-1;
+   }
+   
    //wxbuck       = ( plxmax - plxmin ) / 10.0;
    //hybuck       = ( plymax - plymin ) / 10.0;
-   wxbuck       = ( plxmax - plxmin ) * 0.08;
-   hybuck       = ( plymax - plymin ) * 0.2;
+   wxbuck       = xrange * 0.08;
+   hybuck       = yrange * 0.2;
    ct_wxbuck->disconnect( );
    ct_hybuck->disconnect( );
    int    rpwr  = qRound( log10( wxbuck ) );
