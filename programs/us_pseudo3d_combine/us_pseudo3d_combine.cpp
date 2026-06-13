@@ -1135,14 +1135,25 @@ void US_Pseudo3D_Combine::stop()
 
 void US_Pseudo3D_Combine::set_limits()
 {
-   double smin = 1.0e30;
-   double smax = -1.0e30;
-   double kmin = 1.0e30;
-   double kmax = -1.0e30;
-   double sinc;
-   double kinc;
+   const QStringList labels = {"s", "f/f0", "MW", "vbar", "D", "f", "Rh" };
+   double smin = +1.0e99;
+   double smax = -1.0e99;
+   double kmin = +1.0e99;
+   double kmax = -1.0e99;
+   double sinc, srng;
+   double kinc, krng;
    xa_title    = anno_title( plot_x );
    ya_title    = anno_title( plot_y );
+
+   lb_plt_smin->setText( tr( "Plot Limit " ) + labels.at( plot_x )
+                       + tr( " Minimum:" ) );
+   lb_plt_smax->setText( tr( "Plot Limit " ) + labels.at( plot_x )
+                       + tr( " Maximum:" ) );
+
+   lb_plt_kmin->setText( tr( "Plot Limit " ) + labels.at( plot_y )
+                       + tr( " Minimum:" ) );
+   lb_plt_kmax->setText( tr( "Plot Limit " ) + labels.at( plot_y )
+                       + tr( " Maximum:" ) );
 
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
@@ -1167,8 +1178,21 @@ void US_Pseudo3D_Combine::set_limits()
    }
 
    // adjust minima, maxima
-   sinc      = ( smax - smin ) / 10.0;
-   kinc      = ( kmax - kmin ) / 10.0;
+   srng      = smax - smin;
+   krng      = kmax - kmin;
+
+   ct_plt_smin->setRange( smin - srng, smax + srng );
+   ct_plt_smax->setRange( smin - srng, smax + srng );
+   ct_plt_smin->setSingleStep( srng * 1e-3 );
+   ct_plt_smax->setSingleStep( srng * 1e-3 );
+   
+   ct_plt_kmin->setRange( kmin - krng, kmax + krng );
+   ct_plt_kmax->setRange( kmin - krng, kmax + krng );
+   ct_plt_kmin->setSingleStep( krng * 1e-3 );
+   ct_plt_kmax->setSingleStep( krng * 1e-3 );
+
+   sinc      = srng / 10.0;
+   kinc      = krng / 10.0;
    sinc      = ( sinc <= 0.0 ) ? ( smin * 0.05 ) : sinc;
    kinc      = ( kinc <= 0.0 ) ? ( kmin * 0.05 ) : kinc;
 DbgLv(1) << "SL: real smin smax kmin kmax" << smin << smax << kmin << kmax;
@@ -1416,27 +1440,7 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
    ck_autosxy->setChecked( true );
    select_autosxy();
 
-   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
-   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 0.10, 1e-8,  1.0 };
-   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1.00, 1e-7, 10.0 };
-   const double  xmins[] = {    -1e+5,   1.0,    0.0,  0.01, 1e-3, 1e-9, 0.00 };
-   const double  xmaxs[] = {     1e+5,  50.0,  1e+10,  3.00, 1e+3, 1e-5, 1e+5 };
-   const double  xincs[] = {     0.01,  0.01,   1e+3,  0.01, 1e-2, 1e-9, 0.01 };
-
    plot_x     = ival;
-
-   qDebug() << "Pseudo3D: x_axis changed: ival,  xlabs[ plot_x ] -- " << ival <<  xlabs[ plot_x ];
-
-   lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
-                       + tr( " Minimum:" ) );
-   lb_plt_smax->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
-                       + tr( " Maximum:" ) );
-   ct_plt_smin->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_plt_smax->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_plt_smin->setSingleStep( xincs[ plot_x ] );
-   ct_plt_smax->setSingleStep( xincs[ plot_x ] );
-   ct_plt_smin->setValue( xvlos[ plot_x ] );
-   ct_plt_smax->setValue( xvhis[ plot_x ] );
 
    rb_y_s   ->setEnabled( plot_x != ATTR_S );
    rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
@@ -1459,31 +1463,7 @@ void US_Pseudo3D_Combine::select_y_axis( int ival )
    ck_autosxy->setChecked( true );
    select_autosxy();
 
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 0.10, 1e-8,  1.0 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1.00, 1e-7, 10.0 };
-   const double  ymins[] = {    -1e+5,   1.0,    0.0,  0.01, 1e-3, 1e-9, 0.00 };
-   const double  ymaxs[] = {     1e+5,  50.0,  1e+10,  3.00, 1e+3, 1e-5, 1e+5 };
-   const double  yincs[] = {     0.01,  0.01,   1e+3,  0.01, 1e-2, 1e-9, 0.01 };
-
    plot_y     = ival;
-qDebug() << "select-y: plot_y" << plot_y;
-
-   qDebug() << "Pseudo3D: y_axis changed: ival,  ylabs[ plot_y ] -- " << ival <<  ylabs[ plot_y ];
-
-   lb_plt_kmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
-                       + tr( " Minimum:" ) );
-   lb_plt_kmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
-                       + tr( " Maximum:" ) );
-qDebug() << "  ylab" << ylabs[plot_y];
-   ct_plt_kmin->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_plt_kmin->setSingleStep( yincs[ plot_y ] );
-   ct_plt_kmax->setSingleStep( yincs[ plot_y ] );
-   ct_plt_kmin->setValue( yvlos[ plot_y ] );
-   ct_plt_kmax->setValue( yvhis[ plot_y ] );
-qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
-
    rb_x_s   ->setEnabled( plot_y != ATTR_S );
    rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
    rb_x_mw  ->setEnabled( plot_y != ATTR_W );
