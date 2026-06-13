@@ -250,6 +250,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,       SLOT(   load_color() ) );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ), false );
+   connect( pb_refresh, SIGNAL( clicked() ),
+            this,       SLOT(   replot_data() ) );
 
    plot_dim   = 3;          // default plot dimension
    us_radiobutton( tr( "1-Dimensional Plot" ), rb_1dplot, false );
@@ -1531,7 +1533,7 @@ void US_GA_Initialize::set_limits()
    
    const QStringList labels = {"s", "f/f0", "MW", "vbar", "D", "f", "Rh" };
    xa_title = anno_title( attr_x );
-   ya_title = anno_title( attr_x );
+   ya_title = anno_title( attr_y );
    QString xlabel = labels.at( attr_x );
    QString ylabel = labels.at( attr_y );
    lb_plxmin->setText( tr( "Plot Limit " ) + xlabel + tr( " Minimum:" ) );
@@ -1590,7 +1592,6 @@ DbgLv(1) << "SL: adj smin,max" << smin << smax
    ct_plymax->setRange( kmin, kmax );
    ct_plymin->setSingleStep( kinc / 10.0 );
    ct_plymax->setSingleStep( kinc / 10.0 );
-
 
    sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
    kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
@@ -2232,6 +2233,11 @@ void US_GA_Initialize::select_x_axis( int ival )
    rb_y_f   ->setEnabled( attr_x != ATTR_F );
    rb_y_rh  ->setEnabled( attr_x != ATTR_R );
 
+   if ( sk_distro.empty() )
+   {
+      return;
+   }
+
    build_xy_distro();
    set_limits();
    replot_data();
@@ -2248,6 +2254,11 @@ void US_GA_Initialize::select_y_axis( int ival )
    rb_x_D   ->setEnabled( attr_y != ATTR_D );
    rb_x_f   ->setEnabled( attr_y != ATTR_F );
    rb_x_rh  ->setEnabled( attr_y != ATTR_R );
+
+   if ( sk_distro.empty() )
+   {
+      return;
+   }
 
    build_xy_distro();
    set_limits();
