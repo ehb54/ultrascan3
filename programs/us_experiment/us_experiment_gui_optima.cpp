@@ -6469,7 +6469,8 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
                          chk_ranges );
-   bool chk_sub_enab = ( chk_vars_set  &&  connected );
+   //bool chk_sub_enab = ( chk_vars_set  &&  connected );
+   bool chk_sub_enab = subm_enab;
    bool chk_sub_done = submitted;
 
    QString s_Yes     = tr( "YES" );
