@@ -75,10 +75,10 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( true );
 
-   QLabel* lb_banner3 = us_banner( tr( "Current solution contents" )  );
+   QLabel* lb_banner3 = us_banner( tr( "Current Solution Contents" )  );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
-   QLabel* lb_banner4 = us_banner( tr( "Solution notes" )  );
+   QLabel* lb_banner4 = us_banner( tr( "Solution Notes" )  );
    lb_banner4->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
    lw_analytes = us_listwidget();
@@ -87,6 +87,21 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
                          SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
    //lw_analytes->setSelectionMode( QAbstractItemView::NoSelection );
 
+   buffer_state_style = tr( "color: %1; background-color: white;" ) +
+   tr( "font-family: '%1';" ).arg( US_GuiSettings::fontFamily() ) +
+   tr( "font-size: %1pt; font-weight: bold;" ).arg( US_GuiSettings::fontSize() );
+
+   QLabel* lb_banner5 = us_banner( tr( "Buffer Notes" )  );
+   lb_banner5->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   lb_buffer_state  = new QLabel( this );
+   lb_buffer_state->setText("");
+   lb_buffer_state->setFixedHeight( 30 );
+   lb_buffer_state->setStyleSheet( buffer_state_style.arg( "green" ) );
+   lb_buffer_state->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+   lb_buffer_state->setAlignment ( Qt::AlignCenter );
+   lb_buffer_state->setAutoFillBackground( true );
+
    int row = 0;
    main->addWidget( bn_select,       row++,  0,  1, 12 );
    main->addWidget( lb_search,       row,    0,  1,  1 );
@@ -94,7 +109,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    main->addWidget( pb_help,         row,    6,  1,  2 );
    main->addWidget( pb_cancel,       row,    8,  1,  2 );
    main->addWidget( pb_accept,       row++, 10,  1,  2 );
-   main->addWidget( lw_solutions,    row,    0, 10,  6 );
+   main->addWidget( lw_solutions,    row,    0, 12,  6 );
    main->addWidget( pb_spectrum,     row,    6,  1,  3 );
    main->addWidget( pb_delete,       row++,  9,  1,  3 );
    main->addWidget( pb_upload,       row++,  6,  1,  6 );
@@ -103,8 +118,10 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    main->addWidget( te_notes,        row++,  6,  1,  6 );
    main->addWidget( lb_banner3,      row++,  6,  1,  6 );
    main->addWidget( lw_analytes,     row++,  6,  4,  6 );
+   row += 4;
 
-   row += 5;
+   main->addWidget( lb_banner5,      row++,  6,  1,  6 );
+   main->addWidget( lb_buffer_state, row++,  6,  1,  6 );
 
    main->addWidget( lb_amount,       row,    0, 1,  2 );
    main->addWidget( le_amount,       row,    2, 1,  4 );
@@ -891,6 +908,17 @@ DbgLv(1) << "We are at RESET_2:  aInf count" << solution->analyteInfo.count() <<
 
    else
       pb_accept->setEnabled( false );
+
+   lb_buffer_state->clear();
+   if ( solution->buffer.manual )
+   {
+      lb_buffer_state->setText( "Manual Buffer" );
+      lb_buffer_state->setStyleSheet( buffer_state_style.arg( "red" ) );
+   } else
+   {
+      lb_buffer_state->setText( "Automatic Temperature Correction" );
+      lb_buffer_state->setStyleSheet( buffer_state_style.arg( "green" ) );
+   }
 
    // // Display investigator
    // investigatorID = US_Settings::us_inv_ID();
