@@ -288,7 +288,6 @@ void US_ExperimentMain::disable_tabs_buttons( void )
 //Slot to DISABLE tabs after  2. Lab/Rotor and the Next buttons when dataDisk clicked/unclicked
 void US_ExperimentMain::disableEnable_tabs_for_dataDisk( bool disabled )
 {
-  qDebug() << "dataDisk checked ? " << disabled << ", tabs action...";
   pb_next   ->setEnabled( !disabled );
   
   for (int i=2; i<tabWidget->count(); i++)
