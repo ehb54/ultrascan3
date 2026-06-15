@@ -250,6 +250,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,       SLOT(   load_color() ) );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ), false );
+   connect( pb_refresh, SIGNAL( clicked() ),
+            this,       SLOT(   replot_data() ) );
 
    plot_dim   = 3;          // default plot dimension
    us_radiobutton( tr( "1-Dimensional Plot" ), rb_1dplot, false );
@@ -686,10 +688,23 @@ DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
 
    pb_ckovrlp->setEnabled( false );
 
+   double xrange = qAbs( plxmax - plxmin );
+   double yrange = qAbs( plymax - plymin );
+   
+   if ( xrange == 0.0 )
+   {
+      xrange = 1.0e-1;
+   }
+   
+   if ( yrange <= 0.0 )
+   {
+      yrange = 1.0e-1;
+   }
+   
    //wxbuck       = ( plxmax - plxmin ) / 10.0;
    //hybuck       = ( plymax - plymin ) / 10.0;
-   wxbuck       = ( plxmax - plxmin ) * 0.08;
-   hybuck       = ( plymax - plymin ) * 0.2;
+   wxbuck       = xrange * 0.08;
+   hybuck       = yrange * 0.2;
    ct_wxbuck->disconnect( );
    ct_hybuck->disconnect( );
    int    rpwr  = qRound( log10( wxbuck ) );
@@ -1528,22 +1543,33 @@ void US_GA_Initialize::load_color()
 // set plot x,y limits
 void US_GA_Initialize::set_limits()
 {
-   double smin = 1.0e30;
-   double smax = -1.0e30;
-   double kmin = 1.0e30;
-   double kmax = -1.0e30;
-   double sinc;
-   double kinc;
-
-   resetSb();
-   sdistro     = &xy_distro;
-
-   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
-
+   
+   const QStringList labels = {"s", "f/f0", "MW", "vbar", "D", "f", "Rh" };
+   xa_title = anno_title( attr_x );
+   ya_title = anno_title( attr_y );
+   QString xlabel = labels.at( attr_x );
+   QString ylabel = labels.at( attr_y );
+   lb_plxmin->setText( tr( "Plot Limit " ) + xlabel + tr( " Minimum:" ) );
+   lb_plxmax->setText( tr( "Plot Limit " ) + xlabel + tr( " Maximum:" ) );
+   lb_wxbuck->setText( tr( "Width of "   ) + xlabel + tr( " Bucket:"  ) );
+   lb_plymin->setText( tr( "Plot Limit " ) + ylabel + tr( " Minimum:" ) );
+   lb_plymax->setText( tr( "Plot Limit " ) + ylabel + tr( " Maximum:" ) );
+   lb_hybuck->setText( tr( "Height of "  ) + ylabel + tr( " Bucket:"  ) );
+   
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
 
+   resetSb();
+   sdistro     = &xy_distro;
+   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
+   
    // find min,max for S distributions
+   double smin = +1.0e99;
+   double smax = -1.0e99;
+   double kmin = +1.0e99;
+   double kmax = -1.0e99;
+   double sinc;
+   double kinc;
    for ( int jj = 0; jj < sdistro->size(); jj++ )
    {
       double sval = sdistro->at( jj ).s;
@@ -1570,52 +1596,52 @@ DbgLv(1) << "SL:  adj sinc kinc" << sinc << kinc;
 DbgLv(1) << "SL: adj smin,max" << smin << smax
  << "kmin,max" << kmin << kmax;
 
-   if ( auto_lim )
-   {  // Set auto limits
-      sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
-      kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
+   ct_plxmin->setRange( smin, smax );
+   ct_plxmax->setRange( smin, smax );
+   ct_plxmin->setSingleStep( sinc / 10.0 );
+   ct_plxmax->setSingleStep( sinc / 10.0 );
+
+   ct_plymin->setRange( kmin, kmax );
+   ct_plymax->setRange( kmin, kmax );
+   ct_plymin->setSingleStep( kinc / 10.0 );
+   ct_plymax->setSingleStep( kinc / 10.0 );
+
+   sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
+   kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
 DbgLv(1) << "SL: aut min,inc" << smax << sinc << kmax << kinc;
 
-      // Make x,y limits multiples of reasonable values
-      if ( equivalent( smin, smax, 0.001 ) )
-      {
-         smin       -= sinc;
-         smax       += sinc;
-      }
-      if ( equivalent( kmin, kmax, 0.001 ) )
-      {
-         kmin       -= kinc;
-         kmax       += kinc;
-      }
-      smin        = qFloor( smin / sinc ) * sinc;
-      smin        = ( smin < 0.0 ) ? ( smin - sinc ) : smin;
-      smax        = qFloor( smax / sinc ) * sinc + sinc;
-      smin        = ( attr_x != ATTR_S ) ?  qMax( smin, 0.0 ) : smin;
-      smin        = ( attr_x == ATTR_K ) ?  qMax( smin, 0.8 ) : smin;
-      kmin        = qFloor( kmin / kinc ) * kinc;
-      kmax        = qFloor( kmax / kinc ) * kinc + kinc;
-      kmin        = ( attr_y != ATTR_S ) ?  qMax( kmin, 0.0 ) : kmin;
-      kmin        = ( attr_y == ATTR_K ) ?  qMax( kmin, 0.8 ) : kmin;
+   // Make x,y limits multiples of reasonable values
+   if ( equivalent( smin, smax, 0.001 ) )
+   {
+      smin       -= sinc;
+      smax       += sinc;
+   }
+   if ( equivalent( kmin, kmax, 0.001 ) )
+   {
+      kmin       -= kinc;
+      kmax       += kinc;
+   }
+   smin        = qFloor( smin / sinc ) * sinc;
+   smin        = ( smin < 0.0 ) ? ( smin - sinc ) : smin;
+   smax        = qFloor( smax / sinc ) * sinc + sinc;
+   smin        = ( attr_x != ATTR_S ) ?  qMax( smin, 0.0 ) : smin;
+   smin        = ( attr_x == ATTR_K ) ?  qMax( smin, 0.8 ) : smin;
+   kmin        = qFloor( kmin / kinc ) * kinc;
+   kmax        = qFloor( kmax / kinc ) * kinc + kinc;
+   kmin        = ( attr_y != ATTR_S ) ?  qMax( kmin, 0.0 ) : kmin;
+   kmin        = ( attr_y == ATTR_K ) ?  qMax( kmin, 0.8 ) : kmin;
 DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
  << "kmin,max,inc" << kmin << kmax << kinc;
 
-      ct_plxmin->setValue( smin );
-      ct_plxmax->setValue( smax );
-      ct_plymin->setValue( kmin );
-      ct_plymax->setValue( kmax );
+   ct_plxmin->setValue( smin );
+   ct_plxmax->setValue( smax );
+   ct_plymin->setValue( kmin );
+   ct_plymax->setValue( kmax );
 
-      plxmin      = smin;
-      plxmax      = smax;
-      plymin      = kmin;
-      plymax      = kmax;
-   }
-   else
-   {
-      plxmin      = ct_plxmin->value();
-      plxmax      = ct_plxmax->value();
-      plymin      = ct_plymin->value();
-      plymax      = ct_plymax->value();
-   }
+   plxmin      = smin;
+   plxmax      = smax;
+   plymin      = kmin;
+   plymax      = kmax;
 
    // Set bucket width,height values
    //wxbuck       = ( plxmax - plxmin ) / 20.0;
@@ -2211,29 +2237,7 @@ DbgLv(1) << "VIEW OPEN ERROR" << fname;
 // Select the coordinate for the horizontal axis
 void US_GA_Initialize::select_x_axis( int ival )
 {
-   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D",  "f", "Rh" };
-   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8, 1e-8 };
-   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 1e-7 };
-   const double  xmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9, 1e-9 };
-   const double  xmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5, 1e-5 };
-   const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 1e-9 };
-
-   attr_x         = ival;
-   xa_title       = anno_title( attr_x );
-   QString xlab   = xlabs[ attr_x ];
-   double  xmin   = xmins[ attr_x ];
-   double  xmax   = xmaxs[ attr_x ];
-   double  xinc   = xincs[ attr_x ];
-   lb_plxmin->setText( tr( "Plot Limit " ) + xlab + tr( " Minimum:" ) );
-   lb_plxmax->setText( tr( "Plot Limit " ) + xlab + tr( " Maximum:" ) );
-   lb_wxbuck->setText( tr( "Width of "   ) + xlab + tr( " Bucket:" ) );
-   ct_plxmin->setRange( xmin, xmax );
-   ct_plxmax->setRange( xmin, xmax );
-   ct_plxmin->setSingleStep( xinc );
-   ct_plxmax->setSingleStep( xinc );
-   ct_plxmin->setValue( xvlos[ attr_x ]  );
-   ct_plxmax->setValue( xvhis[ attr_x ]  );
-
+   attr_x = ival;
    rb_y_s   ->setEnabled( attr_x != ATTR_S );
    rb_y_ff0 ->setEnabled( attr_x != ATTR_K );
    rb_y_mw  ->setEnabled( attr_x != ATTR_W );
@@ -2242,39 +2246,20 @@ void US_GA_Initialize::select_x_axis( int ival )
    rb_y_f   ->setEnabled( attr_x != ATTR_F );
    rb_y_rh  ->setEnabled( attr_x != ATTR_R );
 
+   if ( sk_distro.empty() )
+   {
+      return;
+   }
+
    build_xy_distro();
-
    set_limits();
-
    replot_data();
 }
 
 // Select the coordinate for the vertical axis
 void US_GA_Initialize::select_y_axis( int ival )
 {
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D",  "f", "Rh" };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8, 1e-8 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 1e-7 };
-   const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9, 1e-9 };
-   const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5, 1e-5 };
-   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 1e-9 };
-
-   attr_y         = ival;
-   ya_title       = anno_title( attr_y );
-   QString ylab   = ylabs[ attr_y ];
-   double  ymin   = ymins[ attr_y ];
-   double  ymax   = ymaxs[ attr_y ];
-   double  yinc   = yincs[ attr_y ];
-   lb_plymin->setText( tr( "Plot Limit " ) + ylab + tr( " Minimum:" ) );
-   lb_plymax->setText( tr( "Plot Limit " ) + ylab + tr( " Maximum:" ) );
-   lb_hybuck->setText( tr( "Height of "  ) + ylab + tr( " Bucket:" ) );
-   ct_plymin->setRange( ymin, ymax );
-   ct_plymax->setRange( ymin, ymax );
-   ct_plymin->setSingleStep( yinc );
-   ct_plymax->setSingleStep( yinc );
-   ct_plymin->setValue( yvlos[ attr_y ]  );
-   ct_plymax->setValue( yvhis[ attr_y ]  );
-
+   attr_y = ival;
    rb_x_s   ->setEnabled( attr_y != ATTR_S );
    rb_x_ff0 ->setEnabled( attr_y != ATTR_K );
    rb_x_mw  ->setEnabled( attr_y != ATTR_W );
@@ -2283,18 +2268,21 @@ void US_GA_Initialize::select_y_axis( int ival )
    rb_x_f   ->setEnabled( attr_y != ATTR_F );
    rb_x_rh  ->setEnabled( attr_y != ATTR_R );
 
+   if ( sk_distro.empty() )
+   {
+      return;
+   }
+
    build_xy_distro();
-
    set_limits();
-
    replot_data();
 }
 
 // Re-generate the XY version of the current distribution
 void US_GA_Initialize::build_xy_distro()
 {
-   S_Solute        sol_sk;
-   S_Solute        sol_xy;
+   S_Solute sol_sk;
+   S_Solute sol_xy;
    xy_distro.clear();
 
    for ( int jj = 0; jj < sk_distro.size(); jj++ )
