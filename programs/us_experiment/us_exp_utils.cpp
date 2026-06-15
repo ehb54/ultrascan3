@@ -309,6 +309,11 @@ void US_ExperimentMain::disableEnable_tabs_for_dataDisk( bool disabled )
 //Slot to ENABLE tabs and Next/Prev buttons
 void US_ExperimentMain::enable_tabs_buttons( void )
 {
+  if ( currProto.rpRotor.importData &&
+       currProto.rpRotor.importDataDisk.isEmpty() &&
+       !us_prot_dev_mode)
+    return;
+  
   DbgLv(1) << "ENABLING!!!";
   pb_next   ->setEnabled(true);
   pb_prev   ->setEnabled(true);
