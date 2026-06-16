@@ -3451,8 +3451,7 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   US_DB2* dbP = new US_DB2( pw.getPasswd() );
     
   record_or_update_analysis_meniscus_status( dbP, triple_curr_key, FMB_changed );
-  
-  
+   
   
   // Now update autoflowAnalysis records:
   QStringList requestID_list; 

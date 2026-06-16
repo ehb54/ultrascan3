@@ -166,6 +166,6 @@ void US_Advanced::save()
 void US_Advanced::help( void )
 {
   US_Help* showhelp = new US_Help(this);
-  showhelp->show_help( "advanced_config.html" );
+  showhelp->show_help( "config.html#database-configuration-panel" );
 }
 

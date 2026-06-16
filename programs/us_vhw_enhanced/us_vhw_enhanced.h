@@ -155,9 +155,14 @@ class US_vHW_Enhanced : public US_AnalysisBase2
 
         int kcalls[20];                        //!< Timing counts
         int kmsecs[20];                        //!< Timing milliseconds
-
+    protected slots:
+        void exclude_from(double);             //!< Exclude data from a certain point
+        void exclude_to(double);               //!< Exclude data to a certain point
+        void reset();
+        void reset_data();
+        void reset_gui();
     private slots:
-                void load(void);                       //!< Slot to load data
+        void load(void);                       //!< Slot to load data
         void data_plot(void);                  //!< Slot to plot data
         void distr_plot(void);                 //!< Slot to plot distribution
         void save_data(void);                  //!< Slot to save data
@@ -194,8 +199,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
         void vhw_calcs_standard(double*, double*); //!< Perform standard vHW calculations
         bool have_model(void);                 //!< Check if model is available
         void vert_exclude_lines(void);         //!< Exclude vertical lines
-        void exclude_from(double);             //!< Exclude data from a certain point
-        void exclude_to(double);               //!< Exclude data to a certain point
         void live_scans(void);                 //!< Handle live scans
         void init_partials(void);              //!< Initialize partials
         void update_mid_concs(void);           //!< Update mid concentrations

@@ -12,7 +12,8 @@ US_XpnData::US_XpnData( ) {
    clear();                // Clear internal vectors
 
    dbg_level    = US_Settings::us_debug();
-   dbhost       = QString( "bcf.uthscsa.edu" );
+   //dbhost       = QString( "bcf.uthscsa.edu" );
+   dbhost       = QString("");
    dbport       = 5432;
    dbname       = QString( "AUC_DATA_DB" );
    dbuser       = QString( "aucuser" );
@@ -37,7 +38,18 @@ bool US_XpnData::connect_data( const QString xpnhost, const int xpnport,
    const QString adbname, const QString adbuser, const QString adbpasw )
 {
    bool status   = true;
-   dbhost        = ( xpnhost.isEmpty() ) ? dbhost : xpnhost;
+
+   QString resolvedHost = xpnhost.isEmpty() ? dbhost : xpnhost;
+   if ( resolvedHost.isEmpty() )
+     {
+       qDebug() << "connect_data: ERROR - no database host specified";
+       emit status_text( "ERROR: No Optima host configured. Check instrument settings." );
+       return false;
+     }
+   
+   dbhost = resolvedHost;
+   
+   //dbhost        = ( xpnhost.isEmpty() ) ? dbhost : xpnhost;
    dbport        = ( xpnport <= 0 )      ? 5432   : xpnport;
    dbname        = ( adbname.isEmpty() ) ? dbname : adbname;
    dbuser        = ( adbuser.isEmpty() ) ? dbuser : adbuser;
@@ -2580,7 +2592,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
          << "F4"          << "I2"       << "I2";
 
    US_TimeState tsobj;
-
+   tsobj.setTimeStateType(US_TimeState::TIMESTATE_TYPE::ORIGINAL);
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
@@ -2878,7 +2890,9 @@ DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
-      tsobj.write_defs( 0.0, "Optima" );
+      tsobj.setImportType( US_TimeState::IMPORT_TYPE::OPTIMA );
+      tsobj.setTimeStateType( US_TimeState::TIMESTATE_TYPE::ORIGINAL );
+      tsobj.write_defs( 0.0 );
       nfiles        += 2;
 DbgLv(1) << "expA: TMST files written.";
    }
@@ -3007,7 +3021,7 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
          << "F4"          << "I2"       << "I2";
 
    US_TimeState tsobj;
-
+   tsobj.setTimeStateType(US_TimeState::TIMESTATE_TYPE::ORIGINAL);
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = scans.count();
    int ntssda        = tSydata.count();
@@ -3312,7 +3326,9 @@ DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
-      tsobj.write_defs( 0.0, "Optima" );
+      tsobj.setImportType( US_TimeState::IMPORT_TYPE::OPTIMA );
+      tsobj.setTimeStateType( US_TimeState::TIMESTATE_TYPE::ORIGINAL );
+      tsobj.write_defs( 0.0 );
       nfiles        += 2;
 DbgLv(1) << "expA: TMST files written.";
    }

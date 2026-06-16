@@ -45,7 +45,6 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
    baserss    = 0;
 
    // Build local and pcsa-specific GUI elements
-   te_results = NULL;
 
    QLabel* lb_analysis = us_banner( tr( "Analysis Controls" ) );
    QLabel* lb_scan     = us_banner( tr( "Scan Control"       ) );
@@ -57,7 +56,7 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
 
    pb_exclude   = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
+   connect( pb_exclude, &QPushButton::clicked, this, &US_pcsa::exclude );
 
    // Effectively disable boundaries to turn off cyan portion of plot2
    ct_boundaryPercent->disconnect();
@@ -71,17 +70,15 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
    ct_boundaryPos    ->setValue     ( -50.0 );
    ct_boundaryPos    ->setEnabled   ( false );
 
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_to  ( double ) ) );
-   pb_fitcntl   = us_pushbutton( tr( "Fit Control"   ) );
-   pb_plt3d     = us_pushbutton( tr( "3-D Plot"      ) );
-   pb_pltres    = us_pushbutton( tr( "Residual Plot" ) );
+   connect( ct_from, &QwtCounter::valueChanged, this, &US_pcsa::exclude_from );
+   connect( ct_to,   &QwtCounter::valueChanged, this, &US_pcsa::exclude_to );
+   pb_fitcntl = us_pushbutton( tr( "Fit Control"   ) );
+   pb_plt3d   = us_pushbutton( tr( "3-D Plot"      ) );
+   pb_pltres  = us_pushbutton( tr( "Residual Plot" ) );
 
-   connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
-   connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
-   connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
+   connect( pb_fitcntl, &QPushButton::clicked, this, &US_pcsa::open_fitcntl );
+   connect( pb_plt3d,   &QPushButton::clicked, this, &US_pcsa::open_3dplot );
+   connect( pb_pltres,  &QPushButton::clicked, this, &US_pcsa::open_resplot );
 
    // To modify controls layout, first make Base elements invisible
    
@@ -131,10 +128,10 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
        "Iterations:  0" ) );
    us_setReadOnly( te_status, true );
 
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help()  ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view()  ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save()  ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_help,  &QPushButton::clicked, this, &US_pcsa::help );
+   connect( pb_view,  &QPushButton::clicked, this, &US_pcsa::view );
+   connect( pb_save,  &QPushButton::clicked, this, &US_pcsa::save );
+   connect( pb_close, &QPushButton::clicked, this, &US_pcsa::close );
 
    pb_view   ->setEnabled( false );
    pb_save   ->setEnabled( false );
@@ -145,14 +142,14 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
    ct_from   ->setEnabled( false );
    ct_to     ->setEnabled( false );
 
-   edata        = 0;
-   resplotd     = 0;
-   eplotcd      = 0;
-   analcd       = 0;
+   edata        = nullptr;
+   resplotd.clear();
+   eplotcd .clear();
+   analcd  .clear();
 
-   rbd_pos      = this->pos() + QPoint(  100, 100 );
-   epd_pos      = this->pos() + QPoint(  400, 200 );
-   acd_pos      = this->pos() + QPoint(  500,  50 );
+   rbd_pos = this->pos() + QPoint(  100, 100 );
+   epd_pos = this->pos() + QPoint(  400, 200 );
+   acd_pos = this->pos() + QPoint(  500,  50 );
 
    dsets.clear();
    dsets << &dset;
@@ -455,7 +452,7 @@ void US_pcsa::view( void )
    write_report( ts );
 
    // Create US_Editor and display report
-   if ( te_results == NULL )
+   if ( !te_results )
    {
       te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
       te_results->resize( 820, 700 );
@@ -471,6 +468,7 @@ void US_pcsa::view( void )
 
    te_results->e->setHtml( rtext );
    te_results->show();
+   te_results->raise();
 }
 
 // Save data (model,noise), report, and PNG image files
@@ -800,13 +798,11 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    write_dset_report( dsinfFile );
 
    // Write plots
-   if ( resplotd == 0 )
+   if ( !resplotd )
    {
       resplotd = new US_ResidPlotPc( this );
       resplotd->move( rbd_pos );
       resplotd->setVisible( true );
-      connect( resplotd, SIGNAL( destroyed   ( QObject *) ),
-               this,     SLOT(   child_closed( QObject* ) ) );
    }
 
    write_plot( plot1File, data_plot2 );
@@ -899,8 +895,7 @@ void US_pcsa::open_resplot()
    resplotd = new US_ResidPlotPc( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
-   connect( resplotd, SIGNAL( destroyed   ( QObject *) ),
-            this,     SLOT(   child_closed( QObject* ) ) );
+   resplotd->raise();
 }
 
 // Open 3-D plot control window
@@ -917,8 +912,7 @@ void US_pcsa::open_3dplot()
    eplotcd = new US_PlotControlPc( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
-   connect( eplotcd,  SIGNAL( destroyed   ( QObject *) ),
-            this,     SLOT(   child_closed( QObject* ) ) );
+   eplotcd->raise();
 }
 
 // Open fit analysis control window
@@ -946,7 +940,7 @@ void US_pcsa::open_fitcntl()
       return;
    }
 
-   US_Math2::SolutionData sd;
+   US_Math2::SolutionData sd{};
    sd.density      = density;
    sd.viscosity    = viscosity;
    sd.vbar20       = vbar20;
@@ -985,19 +979,19 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
       dbP    = NULL;
    }
 
-   if ( analcd != 0 )
+   if ( analcd )
    {
       acd_pos  = analcd->pos();
       analcd->close();
    }
-   else
+   else {
       acd_pos  = this->pos() + QPoint(  500,  50 );
+   }
 
    analcd  = new US_AnalysisControlPc( dsets, this );
    analcd->move( acd_pos );
    analcd->show();
-   connect( analcd,   SIGNAL( destroyed   ( QObject *) ),
-            this,     SLOT(   child_closed( QObject* ) ) );
+   analcd->raise();
    qApp->processEvents();
 }
 
@@ -1264,27 +1258,96 @@ DbgLv(1) << "pcsa: removed: " << ptmp4File;
    }
 DbgLv(1) << "pcsa:  close d's res epl ana" << resplotd << eplotcd << analcd;
 
-   if ( resplotd != 0 )
+   if ( resplotd ) {
       resplotd->close();
-   if ( eplotcd != 0 )
+   }
+   if ( eplotcd ) {
       eplotcd->close();
-   if ( analcd != 0 )
+   }
+   if ( analcd ) {
       analcd->close();
+   }
+   if ( te_results ) {
+      te_results->close();
+   }
 }
 
-// Private slot to mark a child widgets as closed, if it has been destroyed
-void US_pcsa::child_closed( QObject* o )
+void US_pcsa::reset( void )
 {
-   QString oname = o->objectName();
-DbgLv(1) << "pcsa:CC: d's res epl ana" << resplotd << eplotcd << analcd;
-
-   if ( oname.contains( "AnalysisControl" ) )
-      analcd    = 0;
-   else if ( oname.contains( "ResidPlot" ) )
-      resplotd  = 0;
-   else if ( oname.contains( "PlotControl" ) )
-      eplotcd   = 0;
-DbgLv(1) << "pcsa:CC: return res epl ana" << resplotd << eplotcd << analcd
-   << "oname" << oname;
+   US_AnalysisBase2::reset();
+   reset_data();
+   reset_gui();
 }
 
+void US_pcsa::reset_data( void )
+{
+   baserss    = 0;
+
+   dsets.clear();
+   dset = SS_DATASET();
+   dsets << &dset;
+
+   speed_steps.clear();
+
+   model = US_Model();
+   model_stats.clear();
+
+   mrecs.clear();
+   mrecs_mc.clear();
+
+   ti_noise = US_Noise();
+   ri_noise = US_Noise();
+   ti_noise_in = US_Noise();
+   ri_noise_in = US_Noise();
+
+   edata = nullptr;
+   sdata.scanData.clear();
+   rdata.scanData.clear();
+}
+
+void US_pcsa::reset_gui( void )
+{
+   if ( te_results ) {
+      te_results->close();
+   }
+   if ( resplotd ) {
+      resplotd->close();
+   }
+   if ( eplotcd ) {
+      eplotcd->close();
+   }
+   if ( analcd ) {
+      analcd->close();
+   }
+
+
+   te_status->setText( tr(
+       "Solution not initiated...\n"
+       "RMSD:  0.000000,\n"
+       "Variance: 0.000000e-05 .\n"
+       "Iterations:  0" ) );
+
+   le_vari->setText( "0.00000" );
+   le_rmsd->setText( "0.00000" );
+
+   pb_view   ->setEnabled( false );
+   pb_save   ->setEnabled( false );
+   pb_fitcntl->setEnabled( false );
+   pb_plt3d  ->setEnabled( false );
+   pb_pltres ->setEnabled( false );
+   pb_exclude->setEnabled( false );
+   ct_from   ->setEnabled( false );
+   ct_to     ->setEnabled( false );
+
+   // Reset boundary counters to PCSA defaults (disabled)
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPercent->setRange     ( 0.0, 300.0 );
+   ct_boundaryPercent->setSingleStep( 1.0 );
+   ct_boundaryPercent->setValue     ( 300.0 );
+   ct_boundaryPercent->setEnabled   ( false );
+   ct_boundaryPos    ->disconnect();
+   ct_boundaryPos    ->setRange     ( -50.0, 300.0 );
+   ct_boundaryPos    ->setSingleStep( 1.0 );
+   ct_boundaryPos    ->setValue     ( -50.0 );
+   ct_boundaryPos    ->setEnabled   ( false );
+}

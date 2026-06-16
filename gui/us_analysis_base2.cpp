@@ -21,6 +21,7 @@
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
+   US_AnalysisBase2::reset_data();
    setPalette( US_GuiSettings::frameColor() );
 
    mainLayout      = new QGridLayout( this );
@@ -69,11 +70,11 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    // Analysis buttons
    pb_load    = us_pushbutton( tr( "Load Experiment" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   connect( pb_load, &QPushButton::clicked, this, &US_AnalysisBase2::load );
    pb_details = us_pushbutton( tr( "Run Details" ) );
+   connect( pb_details, &QPushButton::clicked, this, &US_AnalysisBase2::details );
    QLayout* lo_edlast =
-                us_checkbox(   tr( "Latest Data Edit" ), ck_edlast, true ); 
-   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+                us_checkbox(   tr( "Latest Data Edit" ), ck_edlast, true );
 
    disk_controls = new US_Disk_DB_Controls;
 
@@ -94,14 +95,14 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    // Standard buttons
    pb_reset = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, &QPushButton::clicked, this, &US_AnalysisBase2::reset );
    pb_help  = us_pushbutton( tr( "Help"  ) );
    pb_close = us_pushbutton( tr( "Close" ) );
+   connect( pb_close, &QPushButton::clicked, this, &US_AnalysisBase2::close );
 
    buttonLayout->addWidget( pb_reset );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttonLayout->addWidget( pb_help  );
    buttonLayout->addWidget( pb_close );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
 
    // Run info
    QLabel* lb_info    = us_banner( tr( "Information for this Run" ) );
@@ -114,12 +115,13 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    te_desc    = us_textedit();
    lw_triples = us_listwidget();
+   connect( lw_triples, &QListWidget::currentRowChanged, this, &US_AnalysisBase2::new_triple );
 
-   QFont        font( US_GuiSettings::fontFamily(), 
+   const QFont        font( US_GuiSettings::fontFamily(),
                       US_GuiSettings::fontSize() );
-   QFontMetrics fm  ( font );
+   const QFontMetrics fm  ( font );
 
-   int fontHeight = fm.lineSpacing();
+   const int fontHeight = fm.lineSpacing();
 
    te_desc   ->setMaximumHeight( fontHeight * 2 + 12 );  // Add for border
    lw_triples->setMaximumHeight( fontHeight * 6 + 12 );
@@ -140,17 +142,12 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    // Parameters
 
    pb_solution  = us_pushbutton( tr( "Solution" ) );
-   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
+   connect( pb_solution, &QPushButton::clicked, this, &US_AnalysisBase2::get_solution );
 
    QLabel* lb_density   = us_label( tr( "Density (20" ) + DEGC + ")" );
    QLabel* lb_viscosity = us_label( tr( "Viscosity (20" ) + DEGC + ")" );
    QLabel* lb_vbar      = us_label( tr( "Vbar (20" ) + DEGC + ")" );
    QLabel* lb_skipped   = us_label( tr( "Non-Cleared:" ) );
-
-   density      = DENS_20W;
-   viscosity    = VISC_20W;
-   vbar         = TYPICAL_VBAR;
-   manual       = false;
 
    le_solution  = us_lineedit( tr( "(Experiment's solution)" ), 0, true );
    le_density   = us_lineedit( QString::number( density,   'f', 6 ), 0, true );
@@ -173,43 +170,36 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    parameterLayout->addWidget( le_skipped  , row++, 3 );
 
    // Analysis Controls
-   QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"  ) ); 
+   QLabel* lb_analysis     = us_banner( tr( "Analysis Controls"  ) );
    QLabel* lb_smoothing    = us_label ( tr( "Data Smoothing:"    ) );
-   QLabel* lb_boundPercent = us_label ( tr( "% of Boundary:"     ) ); 
-   QLabel* lb_boundPos     = us_label ( tr( "Boundary Pos. (%):" ) ); 
+   QLabel* lb_boundPercent = us_label ( tr( "% of Boundary:"     ) );
+   QLabel* lb_boundPos     = us_label ( tr( "Boundary Pos. (%):" ) );
 
    QLabel* lb_from         = us_label ( tr( "Scan focus from:" ) );
    QLabel* lb_to           = us_label ( tr( "to:"   ) );
 
    pb_exclude = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
+   connect( pb_exclude, &QPushButton::clicked, this, &US_AnalysisBase2::exclude );
 
    pb_reset_exclude = us_pushbutton( tr( "Reset Scan Range" ) );
    pb_reset_exclude->setEnabled( false );
-   connect( pb_reset_exclude, SIGNAL( clicked() ), SLOT( reset_excludes() ) );
+   connect( pb_reset_exclude, &QPushButton::clicked, this, &US_AnalysisBase2::reset_excludes );
 
    ct_smoothing = us_counter( 2,  1,  50,  1 );
+   connect( ct_smoothing, &QwtCounter::valueChanged, this,  &US_AnalysisBase2::smoothing );
    ct_smoothing->setSingleStep( 1.0 );
-   connect( ct_smoothing, SIGNAL( valueChanged( double ) ),
-                          SLOT  ( smoothing   ( double ) ) );
-
    ct_boundaryPercent = us_counter( 3, 10, 100, 90 );
-   ct_boundaryPos     = us_counter( 3,  0,  10,  5 );
+   connect( ct_boundaryPercent, &QwtCounter::valueChanged, this, &US_AnalysisBase2::boundary_pct );
    ct_boundaryPercent->setSingleStep( 0.1 );
+   ct_boundaryPos     = us_counter( 3,  0,  10,  5 );
+   connect( ct_boundaryPos, &QwtCounter::valueChanged, this, &US_AnalysisBase2::boundary_pos );
    ct_boundaryPos    ->setSingleStep( 0.1 );
-   connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pct( double ) ) );
-   connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pos( double ) ) );
-   
+
    ct_from            = us_counter( 3, 0, 0 );
+   connect( ct_from, &QwtCounter::valueChanged, this, &US_AnalysisBase2::exclude_from );
    ct_to              = us_counter( 3, 0, 0 );
-   
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_to  ( double ) ) );
+   connect( ct_to, &QwtCounter::valueChanged, this, &US_AnalysisBase2::exclude_to );
 
    row = 0;
    controlsLayout->addWidget( lb_from           , row,   0, 1, 1 );
@@ -228,19 +218,13 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    controlsLayout->setColumnStretch( 0, 1 );
    controlsLayout->setColumnStretch( 1, 1 );
 
-   dataLoaded = false;
-   buffLoaded = false;
-
-   dfilter    = "";
-   etype_filt = "velocity";
-
    setMaximumSize( QGuiApplication::primaryScreen()->availableSize() - QSize( 60, 60 ) );
    reset();
 //qDebug() << "AB2: desktop size" << qApp->desktop()->size();
 //qDebug() << "AB2: max main size" << maximumSize();
 }
 
-void US_AnalysisBase2::update_disk_db( bool db )
+void US_AnalysisBase2::update_disk_db( const bool db )
 {
    ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
 }
@@ -255,23 +239,22 @@ void US_AnalysisBase2::load( void )
    triples      .clear();
    savedValues  .clear();
 
-   lw_triples->disconnect();
+   QSignalBlocker b_lw_triples( lw_triples );
    lw_triples->clear();
-   ct_from   ->disconnect();
+   QSignalBlocker b_ct_from( ct_from );
    ct_from   ->setValue( 0 );
+   b_ct_from.unblock();
 
 
-   bool edlast = ck_edlast->isChecked();
-   int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+   const bool edlast = ck_edlast->isChecked();
+   const int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                          : US_Disk_DB_Controls::Disk;
    QString description;
 
    US_DataLoader* dialog = new US_DataLoader(
          edlast, dbdisk, rawList, dataList, triples, description, etype_filt );
-
-   connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
-   connect( dialog, SIGNAL( progress    ( const QString ) ), 
-                    SLOT  ( set_progress( const QString ) ) );
+   connect( dialog, &US_DataLoader::changed, this, &US_AnalysisBase2::update_disk_db );
+   connect( dialog, &US_DataLoader::progress, this, &US_AnalysisBase2::set_progress );
 
    if ( dialog->exec() != QDialog::Accepted ) return;
 
@@ -287,7 +270,7 @@ void US_AnalysisBase2::load( void )
    for ( int ii=0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
-   int nscans  = dataList[ 0 ].scanCount();
+   const int nscans  = dataList[ 0 ].scanCount();
 
    // Save original readings values for each scan
    for ( int ii = 0; ii < nscans; ii++ )
@@ -297,9 +280,7 @@ void US_AnalysisBase2::load( void )
    allExcls.fill( excludedScans, dataList.size() );
    rinoises.fill( US_Noise(),    dataList.size() );
    tinoises.fill( US_Noise(),    dataList.size() );
-
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
-                        SLOT  ( new_triple       ( int ) ) );
+   b_lw_triples.unblock();
    lw_triples->setCurrentRow( 0 );
 
    // Enable other buttons
@@ -308,9 +289,6 @@ void US_AnalysisBase2::load( void )
    pb_view    ->setEnabled( true );
    pb_save    ->setEnabled( true );
    pb_exclude ->setEnabled( true );
-
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_from( double ) ) );
 
    dataLoaded = true;
    emit dataAreLoaded();
@@ -350,7 +328,7 @@ void US_AnalysisBase2::update( int selection )
    QString errmsg = "";
    US_Passwd pw;
    US_DB2*   dbP  = ( disk_controls->db() ) ?
-                    new US_DB2( pw.getPasswd() ) : 0;
+                    new US_DB2( pw.getPasswd() ) : nullptr;
 
    bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar, bdens,
                                              bvisc, bcomp, bmanu, errmsg );
@@ -373,7 +351,7 @@ void US_AnalysisBase2::update( int selection )
             tr( "Empty solution ID value!" ) );
       }
 
-      else if ( solID.length() < 36  &&  dbP != NULL )
+      else if ( solID.length() < 36  &&  dbP != nullptr )
       {  // Have DB solution ID
          solution_rec.readFromDB( solID.toInt(), dbP );
       }
@@ -399,7 +377,7 @@ void US_AnalysisBase2::update( int selection )
    US_SimulationParameters simulationParameters = US_SimulationParameters();
    QVector<US_SimulationParameters::SpeedProfile> speed_profiles;
    speed_profiles.clear();
-   if ( disk_controls->db() )
+   if ( disk_controls->db() && dbP != nullptr )
    {
      QStringList query;
      QString     expID;
@@ -483,16 +461,16 @@ void US_AnalysisBase2::update( int selection )
      {
        QString temp_Id_name = ( "p" + QString::number( getpid() ) + "t" +
             QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
-       QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name + ".time_state.tmst";
-       US_AstfemMath::writetimestate( tmst_fpath, simulationParameters, sdata );
+       QString tmp_tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name + ".time_state.tmst";
+       US_AstfemMath::writetimestate( tmp_tmst_fpath, simulationParameters, sdata );
 
-       simulationParameters.simSpeedsFromTimeState( tmst_fpath );
+       simulationParameters.simSpeedsFromTimeState( tmp_tmst_fpath );
      }
 
    // Compute speed steps from sim speed profile
    simulationParameters.speedstepsFromSSprof();
 
-   if ( dbP != NULL )
+   if ( dbP != nullptr )
    {
       delete dbP;
    }
@@ -539,7 +517,7 @@ void US_AnalysisBase2::details( void )
 
 void US_AnalysisBase2::data_plot( void )
 {
-   int                     row  = lw_triples->currentRow();
+   const int                     row  = lw_triples->currentRow();
    US_DataIO::EditedData* d     = &dataList[ row ];
 
    QString                        dataType = tr( "Absorbance" );
@@ -565,15 +543,15 @@ void US_AnalysisBase2::data_plot( void )
    us_grid( data_plot2 );
 
    int     scan_number = 0;
-   int     from        = (int)ct_from->value();
-   int     to          = (int)ct_to  ->value();
+   const int     from        = static_cast<int>( ct_from->value() );
+   const int     to          = static_cast<int>( ct_to->value() );
 
-   int     scanCount   = d->scanCount();
-   int     points      = d->pointCount();
+   const int     scanCount   = d->scanCount();
+   const int     points      = d->pointCount();
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
    boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
-   double  positionPct = ct_boundaryPos    ->value() / 100.0;
-   double  baseline    = calc_baseline();
+   const double  positionPct = ct_boundaryPos    ->value() / 100.0;
+   const double  baseline    = calc_baseline();
 
    QVector< double > rvec( points );
    QVector< double > vvec( points );
@@ -587,10 +565,10 @@ void US_AnalysisBase2::data_plot( void )
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar20    = le_vbar     ->text().toDouble();
    solution.manual    = manual;
-   double avgTemp     = d->average_temperature();
+   const double avgTemp     = d->average_temperature();
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
    QList< QColor > mcolors;
-   int nmcols         = plotLayout2->map_colors( mcolors );
+   const int nmcols         = plotLayout2->map_colors( mcolors );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -600,13 +578,13 @@ void US_AnalysisBase2::data_plot( void )
       if ( excludedScans.contains( i ) ) continue;
 
       scan_number++;
-      bool highlight = scan_number >= from  &&  scan_number <= to;
+      const bool highlight = scan_number >= from  &&  scan_number <= to;
 
       US_DataIO::Scan*  s = &d->scanData[ i ];
 
-      double range       = s->plateau - baseline;
-      double lower_limit = baseline    + range * positionPct;
-      double upper_limit = lower_limit + range * boundaryPct;
+      const double range       = s->plateau - baseline;
+      const double lower_limit = baseline    + range * positionPct;
+      const double upper_limit = lower_limit + range * boundaryPct;
 
       int j     = 0;
       int count = 0;
@@ -621,7 +599,7 @@ void US_AnalysisBase2::data_plot( void )
          count++;
       }
 
-      QString       title; 
+      QString       title;
       QwtPlotCurve* c;
 
       if ( count > 1 )
@@ -633,7 +611,7 @@ void US_AnalysisBase2::data_plot( void )
             c->setPen( QPen( Qt::red ) );
          else
             c->setPen( QPen( Qt::cyan ) );
-         
+
          c->setSamples( r, v, count );
       }
 
@@ -658,7 +636,7 @@ void US_AnalysisBase2::data_plot( void )
             c->setPen( QPen( mcolors[ i % nmcols ] ) );
          else
             c->setPen( QPen( US_GuiSettings::plotCurve() ) );
-         
+
          c->setSamples( r, v, count );
       }
 
@@ -681,7 +659,7 @@ void US_AnalysisBase2::data_plot( void )
             c->setPen( QPen( Qt::red ) );
          else
             c->setPen( QPen( Qt::cyan ) );
-        
+
          c->setSamples( r, v, count );
       }
    }
@@ -691,55 +669,44 @@ void US_AnalysisBase2::data_plot( void )
    return;
 }
 
-void US_AnalysisBase2::boundary_pct( double percent )
+void US_AnalysisBase2::boundary_pct( const double percent )
 {
-   ct_boundaryPos->disconnect();
+   const QSignalBlocker blocker( ct_boundaryPos );
    ct_boundaryPos->setMaximum( 100.0 - percent );
 
    ct_boundaryPos->setValue( ( 100.0 - percent ) / 2.0 );
-
-   connect( ct_boundaryPos, SIGNAL( valueChanged( double ) ),
-                            SLOT  ( boundary_pos( double ) ) );
    data_plot();
 }
 
-void US_AnalysisBase2::boundary_pos( double percent )
+void US_AnalysisBase2::boundary_pos( const double percent )
 {
-   ct_boundaryPercent->disconnect();
+   const QSignalBlocker blocker( ct_boundaryPercent );
    ct_boundaryPercent->setMaximum( 100.0 - percent );
 
-   connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pct( double ) ) );
    data_plot();
 }
 
-void US_AnalysisBase2::exclude_from( double from )
+void US_AnalysisBase2::exclude_from( const double from )
 {
-   double to = ct_to->value();
+   const double to = ct_to->value();
 
    if ( to < from )
    {
-      ct_to->disconnect();
+      const QSignalBlocker blocker( ct_to );
       ct_to->setValue( from );
-
-      connect( ct_to,   SIGNAL( valueChanged( double ) ),
-                        SLOT  ( exclude_to  ( double ) ) );
    }
 
    data_plot();
 }
 
-void US_AnalysisBase2::exclude_to( double to )
+void US_AnalysisBase2::exclude_to( const double to )
 {
-   double from = ct_from->value();
+   const double from = ct_from->value();
 
    if ( from > to )
    {
-      ct_from->disconnect();
+      const QSignalBlocker blocker( ct_from );
       ct_from->setValue( to );
-
-      connect( ct_from, SIGNAL( valueChanged( double ) ),
-                        SLOT  ( exclude_from( double ) ) );
    }
 
    data_plot();
@@ -747,20 +714,20 @@ void US_AnalysisBase2::exclude_to( double to )
 
 void US_AnalysisBase2::exclude( void )
 {
-   double from = ct_from->value();
-   double to   = ct_to  ->value();
+   const double from = ct_from->value();
+   const double to   = ct_to  ->value();
 
-   int                     displayedScan = 1; 
-   int                     index         = lw_triples->currentRow();
-   US_DataIO::EditedData*  d             = &dataList[ index ];
-   int                     totalScans    = d->scanData.size();
-   
+   int                          displayedScan = 1;
+   const int                    index         = lw_triples->currentRow();
+   const US_DataIO::EditedData* d             = &dataList[ index ];
+   const int                    totalScans    = d->scanData.size();
+
    for( int i = 0; i < totalScans; i++ )
    {
       if ( excludedScans.contains( i ) ) continue;
-      
+
       if ( displayedScan >= from  &&  displayedScan <= to ) excludedScans << i;
-   
+
       displayedScan++;
    }
 
@@ -776,9 +743,9 @@ void US_AnalysisBase2::exclude( void )
 
 void US_AnalysisBase2::reset_excludes( void )
 {
-   int                     index      = lw_triples->currentRow();
-   US_DataIO::EditedData*  d          = &dataList[ index ];
-   int                     totalScans = d->scanData.size();
+   const int                     index      = lw_triples->currentRow();
+   const US_DataIO::EditedData*  d          = &dataList[ index ];
+   const int                     totalScans = d->scanData.size();
 
    excludedScans.clear();
    le_skipped->setText( "0" );
@@ -795,33 +762,31 @@ void US_AnalysisBase2::reset_excludes( void )
    allExcls[ index ] = excludedScans;
 }
 
-void US_AnalysisBase2::smoothing( double smoothCount )
+void US_AnalysisBase2::smoothing( const double smoothCount )
 {
    if ( ! dataLoaded ) return;
 
-   int smoothPoints = (int) smoothCount;
+   const int smoothPoints = static_cast<int>( smoothCount );
 
    // Restore saved data
-   int                     index  = lw_triples->currentRow();
+   const int               index  = lw_triples->currentRow();
    US_DataIO::EditedData*  dat    = &dataList[ index ];
 
    for ( int ii = 0; ii < dat->scanCount(); ii++ )
       dat->scanData[ ii ].rvalues  = savedValues[ ii ];
-   
+
    // Smooth the data
    if ( smoothPoints > 1 )
    {
-      QVector< double > xwvec( smoothPoints );
-      QVector< double > ywvec( smoothPoints );
-      x_weights = xwvec.data();
-      y_weights = ywvec.data();
-                  
+      x_weights.resize( smoothPoints );
+      y_weights.resize( smoothPoints );
+
       // Divide the count into 2 standard deviations
-      double increment  = 2.0 / smoothCount;
-      int    scanPoints = dat->pointCount();
+      const double increment  = 2.0 / smoothCount;
+      const int    scanPoints = dat->pointCount();
 
       // Only calculate half a Gaussian curve, since the other side is symmetric
-      for ( int jj = 0; jj < smoothPoints; jj++ ) 
+      for ( int jj = 0; jj < smoothPoints; jj++ )
       {
          x_weights[ jj ] = increment * jj;
 
@@ -829,7 +794,7 @@ void US_AnalysisBase2::smoothing( double smoothCount )
          // by 0.7 to scale the result as an empirical weighting factor
          
          // Standard deviation = 0.7, mean = 0.0, point = 0.0;
-         y_weights[ jj ] = 
+         y_weights[ jj ] =
             0.7 * US_Math2::normal_distribution( 0.7, 0.0, x_weights[ jj ] );
       }
 
@@ -863,8 +828,8 @@ void US_AnalysisBase2::smoothing( double smoothCount )
    data_plot();
 }
 
-double US_AnalysisBase2::smooth_point( 
-      int scan, int point, int type, int smoothPoints, int scanPoints )
+double US_AnalysisBase2::smooth_point(
+      const int scan, const int point, const int type, const int smoothPoints, const int scanPoints )
 {
    // type ==  0 means no reflection
    // type ==  1 means to reflect on the right
@@ -892,10 +857,10 @@ double US_AnalysisBase2::smooth_point(
 
    // This is a bit complex because the test for leaving the loop
    // is different if we are incrementing or decrementing.
-   
+
    int position = 0;
    int k        = start;
-   
+
    while ( true )
    {
       position++;
@@ -905,13 +870,13 @@ double US_AnalysisBase2::smooth_point(
       {
          if ( point - position < 0 ) // we need a reflected value
          {
-            double dy = savedValues[ scan ][ k ] - savedValues[ scan ][ point ];
+            const double dy = savedValues[ scan ][ k ] - savedValues[ scan ][ point ];
             value     = savedValues[ scan ][ point ] - dy;
          }
          else
             value     = savedValues[ scan ][ point - position ];
       }
-      
+
       sum   += value * y_weights[ position ];
       sum_y +=         y_weights[ position ];
 
@@ -930,7 +895,7 @@ double US_AnalysisBase2::smooth_point(
    // Add the center point
    sum   += savedValues[ scan ][ point ] * y_weights[ 0 ];
    sum_y +=                                y_weights[ 0 ];
-   
+
    // Sum all applicable points right of center
    if ( type == 1 ) // reflect right
    {
@@ -957,7 +922,7 @@ double US_AnalysisBase2::smooth_point(
       {
          if ( point + position >= scanPoints ) // Need reflection
          {
-            double dy = savedValues[ scan ][ k ] 
+            const double dy = savedValues[ scan ][ k ]
                       - savedValues[ scan ][ point ];
             value     = savedValues[ scan ][ point ] - dy;
          }
@@ -980,75 +945,21 @@ double US_AnalysisBase2::smooth_point(
       k += direction;
    }
 
-   // Normalize by the sum of all weights that were used 
+   // Normalize by the sum of all weights that were used
    return sum / sum_y;
 }
 
 void US_AnalysisBase2::reset( void )
 {
-   if ( ! dataLoaded ) return;
-
-   excludedScans.clear();
-
-   int index    = lw_triples->currentRow();
-   density      = DENS_20W;
-   viscosity    = VISC_20W;
-   vbar         = TYPICAL_VBAR;
-   manual       = false;
-
-   le_density  ->setText( QString::number( density,   'f', 6 ) );
-   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
-   le_vbar     ->setText( QString::number( vbar,      'f', 5 ) );
-   le_skipped  ->setText( "0" );
-
-   // Restore saved data
-   if ( dataList.size() > 0 )
-   {
-      US_DataIO::EditedData*  dat    = &dataList[ index ];
-   
-      for ( int ii = 0; ii < dat->scanData.size(); ii++ )
-      {
-         dat->scanData[ ii ].rvalues = savedValues[ ii ];
-      }
-   }
-
-   ct_from           ->disconnect();
-   ct_to             ->disconnect();
-   ct_smoothing      ->disconnect();
-   ct_boundaryPercent->disconnect();
-   ct_boundaryPos    ->disconnect();
-   
-   ct_from           ->setValue( 0 );
-   ct_to             ->setValue( 0 );
-   ct_smoothing      ->setValue( 1 );
-   ct_boundaryPercent->setValue( 90 );
-   ct_boundaryPos    ->setValue( 5 );
-
-   connect( ct_from,            SIGNAL( valueChanged( double ) ),
-                                SLOT  ( exclude_from( double ) ) );
-                                
-   connect( ct_to,              SIGNAL( valueChanged( double ) ),
-                                SLOT  ( exclude_to  ( double ) ) );
-
-   connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pct( double ) ) );
-
-   connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pos( double ) ) );
-   
-   connect( ct_smoothing,       SIGNAL( valueChanged( double ) ),
-                                SLOT  ( smoothing   ( double ) ) );
-
-   allExcls[ index ] = excludedScans;
-
-   update( index );
+   reset_data();
+   reset_gui();
 }
 
-void US_AnalysisBase2::new_triple( int index )
+void US_AnalysisBase2::new_triple( const int index )
 {
    // Save the data for the new triple
    US_DataIO::EditedData*  dat = &dataList[ index ];
- 
+
    // Test for noise data to substract from the experiment; apply if any
    load_noise( index );
 
@@ -1063,21 +974,23 @@ void US_AnalysisBase2::new_triple( int index )
    update( index );
 
    // Make sure we have a reports directory for this runID
-   QString repdir = US_Settings::reportDir() + "/" + dat->runID;
+   const QString repdir = US_Settings::reportDir() + "/" + dat->runID;
    QDir dir;
-   if ( ! dir.exists( repdir ) )  dir.mkpath( repdir );
+   if ( ! dir.exists( repdir ) ) {
+      dir.mkpath( repdir );
+   }
 }
 
 double US_AnalysisBase2::calc_baseline( void ) const
 {
-   int    row   = lw_triples->currentRow();
+   const int    row   = lw_triples->currentRow();
    const US_DataIO::Scan*
           scan  = &dataList[ row ].scanData.last();
-   int    point = US_DataIO::index( dataList[ row ].xvalues, 
+   int    point = US_DataIO::index( dataList[ row ].xvalues,
                                     dataList[ row ].baseline );
           point = ( point < 5 ) ? 5 : point;
    double sum   = 0.0;
-   
+
    for ( int j = point - 5;  j < point + 6; j++ )
       sum += scan->rvalues[ j ];
 
@@ -1097,7 +1010,7 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2 ) cons
 }
 
 // Table row HTML with 3 columns
-QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
                                      const QString& s3 ) const
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
@@ -1105,7 +1018,7 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
 }
 
 // Table row HTML with 4 columns
-QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
                                      const QString& s3, const QString& s4 ) const
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
@@ -1113,8 +1026,8 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
 }
 
 // Table row HTML with 5 columns
-QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
-                                     const QString& s3, const QString& s4, 
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
+                                     const QString& s3, const QString& s4,
                                      const QString& s5 ) const
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
@@ -1122,9 +1035,9 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
 }
 
 // Table row HTML with 7 columns
-QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2, 
-                                     const QString& s3, const QString& s4, 
-                                     const QString& s5, const QString& s6, 
+QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
+                                     const QString& s3, const QString& s4,
+                                     const QString& s5, const QString& s6,
                                      const QString& s7 ) const
 {
    return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
@@ -1157,7 +1070,7 @@ QString US_AnalysisBase2::html_header( const QString& title,
 
 // Compose HTML header string
 QString US_AnalysisBase2::html_header( const QString& title,
-      const QString& head1, US_DataIO::EditedData* edata ) const
+      const QString& head1, const US_DataIO::EditedData* edata ) const
 {
    QString ss = QString( "<?xml version=\"1.0\"?>\n" );
    ss  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
@@ -1181,13 +1094,13 @@ QString US_AnalysisBase2::html_header( const QString& title,
    ss  += tr( ", Wavelength " ) + edata->wavelength;
    ss  += ",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Edited Dataset " );
    ss  += edata->editID + "</h2>\n";
- 
+
    return ss;
 }
 
 QString US_AnalysisBase2::run_details( void ) const
 {
-   int                           index  = lw_triples->currentRow();
+   const int                           index  = lw_triples->currentRow();
    const US_DataIO::EditedData*  d      = &dataList[ index ];
 
    QString s = "\n" + indent( 4 )
@@ -1195,8 +1108,8 @@ QString US_AnalysisBase2::run_details( void ) const
         + indent( 4 ) + "<table>\n"
         + table_row( tr( "Cell Description:" ), d->description )
         + table_row( tr( "Data Directory:"   ), directory )
-        + table_row( tr( "Rotor Speed:"      ),  
-            QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
+        + table_row( tr( "Rotor Speed:"      ),
+            QString::number( static_cast<int>( d->scanData[ 0 ].rpm ) ) + " rpm" );
 
    // Temperature data
    double sum     =  0.0;
@@ -1211,62 +1124,61 @@ QString US_AnalysisBase2::run_details( void ) const
       minTemp = qMin( minTemp, t );
    }
 
-   QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
+   const QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
 
    s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
 
    if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
       s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
-   else 
-      s += table_row( tr( "Temperature Variation:" ), 
+   else
+      s += table_row( tr( "Temperature Variation:" ),
                       tr( "(!) OUTSIDE TOLERANCE (!)" ) );
 
    // Time data
-   int minutes = (int)time_correction / 60;
-   int seconds = (int)time_correction % 60;
+   int minutes = static_cast<int>( time_correction ) / 60;
+   int seconds = static_cast<int>( time_correction ) % 60;
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
 
-   s += table_row( tr( "Time Correction:" ), 
+   s += table_row( tr( "Time Correction:" ),
                    QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
 
-   double duration = rawList.last().scanData.last().seconds;
+   const double duration = rawList.last().scanData.last().seconds;
 
-   int hours = (int) duration / 3600;
-   minutes   = (int) duration / 60 - hours * 60;
-   seconds   = (int) duration % 60;
+   const int hours = static_cast<int>( duration ) / 3600;
+   minutes         = static_cast<int>( duration ) / 60 - hours * 60;
+   seconds         = static_cast<int>( duration ) % 60;
    QString                        dataType = tr( "Absorbance:" );
    if ( d->dataType == "RI" )     dataType = tr( "Intensity:" );
    if ( d->dataType == "WI" )     dataType = tr( "Intensity:" );
    if ( d->dataType == "IP" )     dataType = tr( "Interference:" );
    if ( d->dataType == "FI" )     dataType = tr( "Fluorescence:" );
 
-   QString h;
-   h   = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
+   const QString h = (hours == 1) ? tr(" hour " ) : tr(" hours " );
    m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds" );
 
    s += table_row( tr( "Run Duration:" ),
-                   QString::number( hours   ) + h + 
-                   QString::number( minutes ) + m + 
+                   QString::number( hours   ) + h +
+                   QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
 
    // Wavelength, baseline, meniscus, range
    s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
         table_row( tr( "Baseline " ) + dataType,
-                   QString::number( calc_baseline(), 'f', 6 ) + " OD" ) + 
-        table_row( tr( "Meniscus Position:" ),           
+                   QString::number( calc_baseline(), 'f', 6 ) + " OD" ) +
+        table_row( tr( "Meniscus Position:" ),
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
-   int    rrx   =  d->xvalues.size() - 1;
-   double left  =  d->xvalues[ 0   ];
-   double right =  d->xvalues[ rrx ];
+   const int    rrx   =  d->xvalues.size() - 1;
+   const double left  =  d->xvalues[ 0   ];
+   const double right =  d->xvalues[ rrx ];
 
-   s += table_row( tr( "Edited Data starts at:"  ), 
+   s += table_row( tr( "Edited Data starts at:"  ),
                    QString::number( left,  'f', 3 ) + " cm" ) +
-        table_row( tr( "Edited Data stops at:"   ), 
+        table_row( tr( "Edited Data stops at:"   ),
                    QString::number( right, 'f', 3 ) + " cm" );
    s += indent( 4 ) + "</table>\n";
    return s;
@@ -1275,38 +1187,38 @@ QString US_AnalysisBase2::run_details( void ) const
 QString US_AnalysisBase2::hydrodynamics( void ) const
 {
    // Set up hydrodynamics values
-   US_Math2::SolutionData solution = this->solution;
-   solution.vbar20    = le_vbar     ->text().toDouble();
-   solution.density   = le_density  ->text().toDouble();
-   solution.viscosity = le_viscosity->text().toDouble();
-   solution.manual    = manual;
-   double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
-   solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec, avgTemp );
-   US_Math2::data_correction( avgTemp, solution );
+   US_Math2::SolutionData rep_solution = this->solution;
+   rep_solution.vbar20    = le_vbar     ->text().toDouble();
+   rep_solution.density   = le_density  ->text().toDouble();
+   rep_solution.viscosity = le_viscosity->text().toDouble();
+   rep_solution.manual    = manual;
+   const double avgTemp     = le_temp     ->text().section( " ", 0, 0 ).toDouble();
+   rep_solution.vbar      = US_Math2::calcCommonVbar( const_cast<US_Solution &>( solution_rec ), avgTemp );
+   US_Math2::data_correction( avgTemp, rep_solution );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
                + indent( 4 ) + "<table>\n";
-  
-   s += table_row( tr( "Viscosity corrected:" ), 
-                   QString::number( solution.viscosity, 'f', 5 ) ) +
+
+   s += table_row( tr( "Viscosity corrected:" ),
+                   QString::number( rep_solution.viscosity, 'f', 5 ) ) +
         table_row( tr( "Viscosity (absolute):" ),
-                   QString::number( solution.viscosity_tb, 'f', 5 ) ) +
+                   QString::number( rep_solution.viscosity_tb, 'f', 5 ) ) +
         table_row( tr( "Density corrected:" ),
-                   QString::number( solution.density, 'f', 6 ) + " g/ccm" ) +
+                   QString::number( rep_solution.density, 'f', 6 ) + " g/ccm" ) +
         table_row( tr( "Density (absolute):" ),
-                   QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
-        table_row( tr( "Vbar:" ), 
-                   QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
+                   QString::number( rep_solution.density_tb, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Vbar:" ),
+                   QString::number( rep_solution.vbar, 'f', 4 ) + " ccm/g" ) +
         table_row( tr( "Vbar corrected for 20 " ) + MLDEGC + ":",
-                   QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
+                   QString::number( rep_solution.vbar20, 'f', 4 ) + " ccm/g" ) +
         table_row( tr( "Buoyancy (Water, 20 " ) + MLDEGC + "):",
-                   QString::number( solution.buoyancyw, 'f', 6 ) ) +
+                   QString::number( rep_solution.buoyancyw, 'f', 6 ) ) +
         table_row( tr( "Buoyancy (absolute):" ),
-                   QString::number( solution.buoyancyb, 'f', 6 ) ) +
+                   QString::number( rep_solution.buoyancyb, 'f', 6 ) ) +
         table_row( tr( "Correction Factor (s):" ),
-                   QString::number( solution.s20w_correction, 'f', 6 ) ) + 
+                   QString::number( rep_solution.s20w_correction, 'f', 6 ) ) +
         table_row( tr( "Correction Factor (D):" ),
-                   QString::number( solution.D20w_correction, 'f', 6 ) ) + 
+                   QString::number( rep_solution.D20w_correction, 'f', 6 ) ) +
         indent( 4 ) + "</table>\n";
 
    return s;
@@ -1318,15 +1230,15 @@ QString US_AnalysisBase2::analysis( const QString& extra ) const
                + indent( 4 ) + "<table>\n";
 
    s += table_row( tr( "Smoothing Frame:" ),
-                   QString::number( (int)ct_smoothing->value() ) );
+                   QString::number( static_cast<int>( ct_smoothing->value() ) ) );
    s += table_row( tr( "Analyzed Boundary:" ),
-                   QString::number( (int)ct_boundaryPercent->value() ) + " %" );
+                   QString::number( static_cast<int>( ct_boundaryPercent->value() ) ) + " %" );
    s += table_row( tr( "Boundary Position:" ),
-                   QString::number( (int)ct_boundaryPos->value() ) + " %" );
+                   QString::number( static_cast<int>( ct_boundaryPos->value() ) ) + " %" );
    s += table_row( tr( "Early Non-Cleared Scans:" ),
                    le_skipped->text() + " scans" );
    s += extra;
-   
+
    s += indent( 4 ) + "</table>\n";
 
    return s;
@@ -1334,13 +1246,13 @@ QString US_AnalysisBase2::analysis( const QString& extra ) const
 
 QString US_AnalysisBase2::scan_info( void ) const
 {
-   int                           index  = lw_triples->currentRow();
+   const int                           index  = lw_triples->currentRow();
    const US_DataIO::EditedData*  d      = &dataList[ index ];
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
-               + indent( 4 ) + "<table>\n"; 
-         
-   s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+               + indent( 4 ) + "<table>\n";
+
+   s += table_row( tr( "Scan" ), tr( "Corrected Time" ),
                    tr( "Plateau Concentration" ),
                    tr( "Seconds" ), tr( "Omega^2T" ) );
 
@@ -1354,42 +1266,42 @@ QString US_AnalysisBase2::scan_info( void ) const
       QString s4;
       QString s5;
 
-      double od    = d->scanData[ ii ].plateau;
-      double time  = d->scanData[ ii ].seconds;
-      double omg2t = d->scanData[ ii ].omega2t;
-      int    ctime = (int)( time - time_correction ); 
+      const double od    = d->scanData[ ii ].plateau;
+      const double time  = d->scanData[ ii ].seconds;
+      const double omg2t = d->scanData[ ii ].omega2t;
+      const int    ctime = static_cast<int>( time - time_correction );
 
       s1 = QString::asprintf( "%4d",             ii + 1 );
       s2 = QString::asprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = QString::asprintf( "%.6f OD",         od ); 
-      s4 = QString::asprintf( "%5d",             (int)time ); 
-      s5 = QString::asprintf( "%.5e",            omg2t ); 
+      s3 = QString::asprintf( "%.6f OD",         od );
+      s4 = QString::asprintf( "%5d",             static_cast<int>( time ) );
+      s5 = QString::asprintf( "%.5e",            omg2t );
 
       s += table_row( s1, s2, s3, s4, s5 );
    }
 
    s += indent( 4 ) + "</table>\n";
-   
+
    return s;
 }
 
 bool US_AnalysisBase2::mkdir( const QString& baseDir, const QString& subdir )
 {
-   QDir folder( baseDir );
+   const QDir folder( baseDir );
 
    if ( folder.exists( subdir ) ) return true;
-           
+
    if ( folder.mkdir( subdir ) ) return true;
-   
+
    QMessageBox::warning( this,
       tr( "File error" ),
       tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
-   
+
    return false;
 }
 
 // Slot to give load-data progress feedback
-void US_AnalysisBase2::set_progress( const QString message )
+void US_AnalysisBase2::set_progress( const QString& message )
 {
    te_desc->setHtml( "<b>" + message + " ...</b>" );
    qApp->processEvents();
@@ -1423,7 +1335,7 @@ void US_AnalysisBase2::load_noise( int index )
    bool loadDB = disk_controls->db();
    bool local  = ! loadDB;
    int  noisdf = US_Settings::noise_dialog();
-   int  nenois = lnoise.count_noise( local, edata, NULL, mieGUIDs, nieGUIDs );
+   int  nenois = lnoise.count_noise( local, edata, nullptr, mieGUIDs, nieGUIDs );
    te_desc->setHtml( tr( "<b>%1 noise(s) found for %2</b>" )
       .arg( nenois ).arg( triples[ index ] ) );
    qApp->processEvents();
@@ -1434,7 +1346,7 @@ void US_AnalysisBase2::load_noise( int index )
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
       US_Passwd pw;
-      US_DB2* dbP  = local ? NULL : new US_DB2( pw.getPasswd() );
+      US_DB2* dbP  = local ? nullptr : new US_DB2( pw.getPasswd() );
 
       if ( nenois > 1  &&  noisdf == 0 )
       {  // Noise exists and noise-dialog flag set to "Auto-load"
@@ -1555,7 +1467,7 @@ void US_AnalysisBase2::load_noise( int index )
       rinoises[ index ] = nrinois > 0 ? ri_noise : US_Noise();
       tinoises[ index ] = ntinois > 0 ? ti_noise : US_Noise();
 
-      if ( dbP != NULL )
+      if ( dbP != nullptr )
       {
          delete dbP;
       }
@@ -1571,17 +1483,17 @@ void US_AnalysisBase2::get_solution()
    if ( ! dataLoaded )
       return;
 
-   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+   const int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
    int expID  = 0;
-   QString runID = dataList[ lw_triples->currentRow() ].runID;
+   const QString l_runID = dataList[ lw_triples->currentRow() ].runID;
 
    if ( disk_controls->db() )
    {
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       QStringList query( "get_experiment_info_by_runID" );
-      query << runID << QString::number( US_Settings::us_inv_ID() );
+      query << l_runID << QString::number( US_Settings::us_inv_ID() );
       db.query( query );
       if ( db.lastErrno() != US_DB2::NOROWS )
       {
@@ -1592,9 +1504,7 @@ void US_AnalysisBase2::get_solution()
 
    US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true, dbdisk,
                                                   solution_rec, false );
-
-   connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-            this,     SLOT(   updateSolution(             US_Solution ) ) );
+   connect( soluInfo, &US_SolutionGui::updateSolutionGuiSelection, this, &US_AnalysisBase2::updateSolution );
 
    soluInfo->exec();
 }
@@ -1614,8 +1524,8 @@ void US_AnalysisBase2::updateSolution( US_Solution solution_sel )
    QString bmanu   = solution_rec.buffer.manual ? "1" : "0";
    QString errmsg  = "";
    QString bufGUID = solution_rec.buffer.GUID;
-qDebug() << "updSolu: manual" << bmanu;
-   
+   qDebug() << "updSolu: manual" << bmanu;
+
    if ( disk_controls->db() )
    {
       US_Passwd pw;
@@ -1648,7 +1558,7 @@ qDebug() << "updSolu:  reread manual" << manual << bmanu;
 // Query whether user wants to retain already-applied noise
 bool US_AnalysisBase2::query_noise_retain( )
 {
-   QString msg = tr(
+   const QString msg = tr(
          "Noise has previously been applied to this triple.<br/>"
          "Do you want to retain the previous noise selection?<br/>"
          "<ul><li><b>Yes</b> to retain the applied noise selection;</li>"
@@ -1662,15 +1572,15 @@ bool US_AnalysisBase2::query_noise_retain( )
    msgBox.addButton     ( QMessageBox::Yes );
    msgBox.setDefaultButton( QMessageBox::Yes );
 
-   bool retain = ( msgBox.exec() == QMessageBox::Yes );
+   const bool retain = ( msgBox.exec() == QMessageBox::Yes );
 
    return retain;
 }
 
 // Back out applied noise in preparation for possible reselection of noise
-void US_AnalysisBase2::back_out_noise( int index )
+void US_AnalysisBase2::back_out_noise( const int index )
 {
-   int noif     = noiflags[ index ];
+   const int noif     = noiflags[ index ];
 
    // Add noise back into data
    ri_noise     = ( ( noif & 1 ) != 0 ) ? rinoises[ index ] : US_Noise();
@@ -1686,15 +1596,15 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    US_DB2      db( pw.getPasswd() );
    US_DB2*     dbP  = &db;
    QStringList query;
-   US_DataIO::EditedData* edata = &dataList[ lw_triples->currentRow() ];
-   QString tripdesc = edata->description;
-   QString pfdir    = QString( files[ 0 ] ).section( "/", 0, -2 );
+   const US_DataIO::EditedData* edata = &dataList[ lw_triples->currentRow() ];
+   const QString tripdesc = edata->description;
+   const QString pfdir    = QString( files[ 0 ] ).section( "/", 0, -2 );
 
    // Get the ID of the EditedData DB record associated with the report
    query << "get_editID" << edata->editGUID;
    db.query( query );
    db.next();
-   int     idEdit = db.value( 0 ).toString().toInt();
+   const int     idEdit = db.value( 0 ).toString().toInt();
 
    // Set the runID for the report
    US_Report freport;
@@ -1702,7 +1612,7 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
 qDebug() << "base2:rptFtoDB: idEdit" << idEdit << "runID" << runID;
 
    // Write all report records to the database
-   int st = freport.saveFileDocuments( pfdir, files, dbP,
+   const int st = freport.saveFileDocuments( pfdir, files, dbP,
                                        idEdit, tripdesc );
 
    if ( st != US_DB2::OK )
@@ -1712,22 +1622,22 @@ qDebug() << "base2:rptFtoDB: idEdit" << idEdit << "runID" << runID;
 }
 
 // Write a general dataset information HTML report file
-bool US_AnalysisBase2::write_dset_report( QString& dsfname )
+bool US_AnalysisBase2::write_dset_report( const QString& dsfname )
 {
    QFile f_rep( dsfname );
 
-   bool is_ok = f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate );
+   const bool is_ok = f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate );
 
    if ( ! is_ok )
       return is_ok;
 
    QTextStream ts( &f_rep );
 
-   int                    index  = lw_triples->currentRow();
-   US_DataIO::EditedData* edata  = &dataList[ index ];
+   const int                    index  = lw_triples->currentRow();
+   const US_DataIO::EditedData* edata  = &dataList[ index ];
 
-   QString title = "US_Analysis_Base";
-   QString head1 = tr( "General Data Set Information" );
+   const QString title = "US_Analysis_Base";
+   const QString head1 = tr( "General Data Set Information" );
 
    ts << html_header( title, head1, edata );
    ts << run_details();
@@ -1741,16 +1651,18 @@ bool US_AnalysisBase2::write_dset_report( QString& dsfname )
 
 // Update report files list, including adding PNG for each SVGZ
 void US_AnalysisBase2::update_filelist( QStringList& flist,
-                                        const QString fname )
+                                        const QString &fname )
 {
    flist << fname;
 
-   if ( fname.contains( ".svg" ) )
-      flist << QString( fname ).section( ".", 0, -2 ) + ".png";
+   if ( fname.contains( ".svg" ) ) {
+      const QString pngname = QString( fname ).section( ".", 0, -2 ) + ".png";
+      flist << pngname;
+   }
 }
 
 // Determine if a run has an intensity profile
-bool US_AnalysisBase2::has_intensity_profile( const QString& runID,
+bool US_AnalysisBase2::has_intensity_profile( const QString& run_id,
                                               const bool in_db )
 {
    QString ripxml;
@@ -1760,7 +1672,7 @@ bool US_AnalysisBase2::has_intensity_profile( const QString& runID,
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       QStringList query;
-      query << "get_experiment_info_by_runID" << runID
+      query << "get_experiment_info_by_runID" << run_id
             << QString::number( US_Settings::us_inv_ID() );
       db.query( query );
       if ( db.lastErrno() == US_DB2::NOROWS )
@@ -1771,8 +1683,8 @@ bool US_AnalysisBase2::has_intensity_profile( const QString& runID,
 
    else
    {  // Data local:  read in any RIProfile from an XML file
-      QString filename = US_Settings::resultDir() + "/" + runID + "/"
-                         + runID + ".RIProfile.xml";
+      const QString filename = US_Settings::resultDir() + "/" + run_id + "/"
+                         + run_id + ".RIProfile.xml";
 
       QFile fi( filename );
 
@@ -1786,3 +1698,94 @@ bool US_AnalysisBase2::has_intensity_profile( const QString& runID,
    return ! ripxml.isEmpty();
 }
 
+void US_AnalysisBase2::reset_data( void ) {
+   dataLoaded = false;
+   buffLoaded = false;
+
+   dataList     .clear();
+   rawList      .clear();
+   excludedScans.clear();
+   triples      .clear();
+   savedValues  .clear();
+   noiflags     .clear();
+   allExcls     .clear();
+   rinoises     .clear();
+   tinoises     .clear();
+   ri_noise        = US_Noise();
+   ti_noise        = US_Noise();
+   solution_rec    = US_Solution();
+   buff            = US_Buffer();
+   solution        = US_Math2::SolutionData();
+
+   density         = DENS_20W;
+   viscosity       = VISC_20W;
+   vbar            = TYPICAL_VBAR;
+   manual          = false;
+   time_correction = 0.0;
+
+   directory       = "";
+   runID           = "";
+   editID          = "";
+   dfilter         = "";
+   investig        = "";
+   etype_filt      = "velocity";
+
+   x_weights.clear();
+   y_weights.clear();
+}
+
+void US_AnalysisBase2::reset_gui( void ) {
+   // disable all signals, disconnect all signals
+   const QSignalBlocker blocker              ( this );
+   const QSignalBlocker b_ct_smoothing       ( ct_smoothing );
+   const QSignalBlocker b_ct_boundaryPercent ( ct_boundaryPercent );
+   const QSignalBlocker b_ct_boundaryPos     ( ct_boundaryPos );
+   const QSignalBlocker b_ct_from            ( ct_from );
+   const QSignalBlocker b_ct_to              ( ct_to );
+   const QSignalBlocker b_lw_triples         ( lw_triples );
+
+
+   // reset plots
+   dataPlotClear( data_plot1 );
+   dataPlotClear( data_plot2 );
+   data_plot1->setTitle("Plot 1 Title");
+   data_plot2->setTitle("Plot 2 Title");
+   data_plot1->setAxisTitle( QwtPlot::xBottom, "X-Axis Title" );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   "Y-Axis Title" );
+   data_plot2->setAxisTitle( QwtPlot::xBottom, "X-Axis Title" );
+   data_plot2->setAxisTitle( QwtPlot::yLeft,   "Y-Axis Title" );
+   data_plot1->setMinimumSize( 600, 150 );
+   data_plot2->setMinimumSize( 600, 150 );
+   data_plot1->replot();
+   data_plot2->replot();
+
+   // reset buttons
+   pb_details->setEnabled( false );
+   pb_view   ->setEnabled( false );
+   pb_save   ->setEnabled( false );
+
+   // reset experiment section
+   le_id->clear();
+   le_temp->clear();
+   te_desc->clear();
+   lw_triples->clear();
+
+   // Solution section
+   le_density->setText( QString::number( density, 'f', 6 ) );
+   le_viscosity->setText( QString::number( viscosity, 'f', 5 ) );
+   le_vbar->setText( QString::number( vbar, 'f', 5 ) );
+   le_solution->setText( tr( "(Experiment's solution)" ) );
+   le_skipped->setText( tr( "0" ) );
+   pb_solution ->setEnabled ( false );
+
+   // reset scan exclusion
+   pb_exclude->setEnabled( false );
+   pb_reset_exclude->setEnabled( false );
+   ct_from->setValue( 0 );
+   ct_to->setValue( 0 );
+
+   // reset smoothing and boundary
+   ct_smoothing->setValue( 1 );
+   ct_boundaryPercent->setValue( 90 );
+   ct_boundaryPos->setValue( 5 );
+}

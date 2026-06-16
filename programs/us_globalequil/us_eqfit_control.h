@@ -183,7 +183,7 @@ class US_EqFitControl : public US_WidgetsDialog
 
         //! \brief Slot to show help.
         void help( void )
-        { showHelp.show_help( "global_equil-fitctrl.html" ); };
+        { showHelp.show_help( "global_equil.html#fit-controls" ); };
 };
 
 #endif

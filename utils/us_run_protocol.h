@@ -258,7 +258,8 @@ class US_UTIL_EXTERN US_RunProtocol
 
 		  bool             abde_buffer_spectrum;
 		  bool             abde_mwl_deconvolution;
-
+		  QString          abde_chann_msg;
+		  
                   Ranges();
 
                   bool operator== ( const Ranges& ) const;

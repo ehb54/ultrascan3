@@ -32,7 +32,7 @@ class US_ClipData : public US_WidgetsDialog
 	private slots:
       void ok  ( void );
 		void help( void )
-        { showhelp.show_help( "manual/astfem_sim_clip.html" ); };	
+        { showhelp.show_help( "manual/astfem_sim.html#clip" ); };	
 };
 
 #endif

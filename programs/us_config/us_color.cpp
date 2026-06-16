@@ -1199,7 +1199,7 @@ void US_Color::pick_color6( void )
 
 void US_Color::help( void )
 {
-  showhelp.show_help( "manual/uscol.html" );
+  showhelp.show_help( "manual/config.html#color-configuration-panel" );
 }
 
 void US_Color::reset()

@@ -130,7 +130,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
 
    //Row 6b
    lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
-   ct_radcalwvl          = us_counter( 2,   190,   800,  280 );
+   ct_radcalwvl          = us_counter( 2,   190,   800,  250 );
    ct_radcalwvl ->setSingleStep( 1 );
    details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
    details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
@@ -180,17 +180,18 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    row = 0;
    QGridLayout* buttons = new QGridLayout();
 
-   pb_testconn = us_pushbutton( tr( "Test Connectivity" ) );
-   pb_testconn->setEnabled( true );
-   connect( pb_testconn, SIGNAL( clicked( ) ), this, SLOT( test_connectivity( ) ) );
-   buttons->addWidget( pb_testconn, row++, 0, 1, 2 );
+   // pb_testconn = us_pushbutton( tr( "Test Connectivity" ) );
+   // pb_testconn->setEnabled( true );
+   // connect( pb_testconn, SIGNAL( clicked( ) ), this, SLOT( test_connectivity( ) ) );
+   // buttons->addWidget( pb_testconn, row++, 0, 1, 2 );
    
    pb_save = us_pushbutton( tr( "Save Entry" ) );
    pb_save->setEnabled( true );
    connect( pb_save, SIGNAL( clicked( ) ), this, SLOT( save_new( ) ) );
    buttons->addWidget( pb_save, row, 0, 1, 1 );
-   pb_save->setEnabled(false);
-
+   //pb_save->setEnabled(false);
+   pb_save->setEnabled(true);
+   
    pb_cancel = us_pushbutton( tr( "Cancel" ) );
    pb_cancel->setEnabled( true );
    connect( pb_cancel,      SIGNAL( clicked()  ),
@@ -295,7 +296,7 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
 
    //Row 6b
    lb_radcalwvl  = us_label( tr( "Radial Calibration Wavelength:" ) );
-   ct_radcalwvl          = us_counter( 2,   190,   800,  280 );
+   ct_radcalwvl          = us_counter( 2,   190,   800,  250 );
    ct_radcalwvl ->setSingleStep( 1 );
    details->addWidget( lb_radcalwvl,    row,   0, 1, 2 );
    details->addWidget( ct_radcalwvl,    row++, 2, 1, 2 );
@@ -344,17 +345,18 @@ US_NewXpnHostDB::US_NewXpnHostDB( QMap <QString,QString> currentInstrument ) : U
    row = 0;
    QGridLayout* buttons = new QGridLayout();
 
-   pb_testconn = us_pushbutton( tr( "Test Connectivity" ) );
-   pb_testconn->setEnabled( true );
-   connect( pb_testconn, SIGNAL( clicked( ) ), this, SLOT( test_connectivity( ) ) );
-   buttons->addWidget( pb_testconn, row++, 0, 1, 2 );
+   // pb_testconn = us_pushbutton( tr( "Test Connectivity" ) );
+   // pb_testconn->setEnabled( true );
+   // connect( pb_testconn, SIGNAL( clicked( ) ), this, SLOT( test_connectivity( ) ) );
+   // buttons->addWidget( pb_testconn, row++, 0, 1, 2 );
    
    pb_save = us_pushbutton( tr( "Save Entry" ) );
    pb_save->setEnabled( true );
    connect( pb_save, SIGNAL( clicked( ) ), this, SLOT( save_new( ) ) );
    buttons->addWidget( pb_save, row, 0, 1, 1 );
-   pb_save->setEnabled(false);
-
+   //pb_save->setEnabled(false);
+   pb_save->setEnabled(true);
+   
    pb_cancel = us_pushbutton( tr( "Cancel" ) );
    pb_cancel->setEnabled( true );
    connect( pb_cancel,      SIGNAL( clicked()  ),
@@ -404,15 +406,17 @@ qDebug() << "test_connect: (2)dbpasw" << dbpasw;
      {
        QMessageBox::information( this,
 				 tr( "OptimaHost Connection" ),
-				 tr( "The connection was successful." ) );
+				 tr( "The connection was successful!\n\n"
+				     "Instrument information will be saved to DB." ) );
        
-       pb_save->setEnabled( true );
+       //pb_save->setEnabled( true );
      }
    else
      {
        QMessageBox::warning( this,
 			     tr( "OptimaHost Connection" ),
-			     tr( "The connection failed.\n" ) + xpn_data->lastError() );
+			     tr( "The connection failed!\n\n"
+				 "Instrument information cannot be saved to DB at this time." ) + xpn_data->lastError() );
        
        //pb_save->setEnabled( true );
      }
@@ -450,7 +454,8 @@ void US_NewXpnHostDB::changeType( int ndx )
        lb_radcalwvl->setVisible( false );
        ct_radcalwvl->setVisible( false );
        le_chromofile->setVisible( false );
-       pb_testconn->setVisible( false );
+
+       //pb_testconn->setVisible( false );
 
        pb_save->setEnabled(true);
 
@@ -826,11 +831,16 @@ void US_NewXpnHostDB::save_new( void )
 				 QString( tr( "Specified combination of the host (%1) and port (%2) is currently used by other machine!  Please edit host and/or port and re-test the connection") 
 					  .arg(optimaHost).arg(QString::number(optimaPort)) ) );
 
-	  pb_save->setEnabled(false);
+	  //pb_save->setEnabled(false);
 	  return;
 	}
     }
 
+  //Now, check connectivity: preclude if not connected
+  if ( !test_connectivity() )
+    return;
+
+  
   //Chromo Array shifting/forming
   double radwvl = ct_radcalwvl->value();
   shiftChromoArray( radwvl );

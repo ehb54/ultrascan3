@@ -17,9 +17,6 @@ win32 {
       DEFINES += US_MAKE_UTIL_DLL
 }
 
-TRANSLATIONS = $${TARGET}_DE_de.ts
-
-
 # Consolidate us_femglobal and us_femglobal_new when development is
 # progressed to a point where us_femglobal can be removed
 

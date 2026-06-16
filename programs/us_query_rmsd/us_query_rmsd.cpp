@@ -11,7 +11,6 @@
 #include <QTemporaryDir>
 
 
-
 //! \brief Main program. Loads the Model RMSD values from DB
 int main( int argc, char* argv[] )
 {
@@ -30,37 +29,50 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
 {
    setWindowTitle( tr( "Query Model RMSDs" ) );
    setPalette( US_GuiSettings::frameColor() );
-
+   setMinimumSize(QSize(600,400));
+   
    dbg_level = US_Settings::us_debug();
    dbCon = new US_DB2();
+   
+   QLabel *lb_runid = us_label(tr("Run ID"));
+   QLabel *lb_edit = us_label(tr("Edit"));
+   QLabel *lb_analysis = us_label(tr("Analysis"));
+   QLabel *lb_cell = us_label(tr("Cell"));
+   QLabel *lb_channel = us_label(tr("Channel"));
+   QLabel *lb_lambda = us_label(tr("Lambda"));
+   QLabel *lb_method = us_label(tr("Method"));
+   QLabel *lb_trsh = us_label(tr("RMSD Threshold"));
+   QLabel *lb_file = us_label(tr("Output Filename"));
+   QLabel* lb_progress = us_label(tr("Progress"));
 
-   QPushButton *pb_load_runid = us_pushbutton(tr("Load Run ID"));
+   lb_runid->setAlignment(Qt::AlignCenter);
+   lb_edit->setAlignment(Qt::AlignCenter);
+   lb_analysis->setAlignment(Qt::AlignCenter);
+   lb_cell->setAlignment(Qt::AlignCenter);
+   lb_channel->setAlignment(Qt::AlignCenter);
+   lb_lambda->setAlignment(Qt::AlignCenter);
+   lb_method->setAlignment(Qt::AlignCenter);
+   lb_trsh->setAlignment(Qt::AlignCenter);
+   lb_file->setAlignment(Qt::AlignCenter);
+   lb_progress->setAlignment(Qt::AlignCenter);
 
-   QLabel *lb_runid = us_label(tr("Run ID:"));
-   le_runid = us_lineedit(tr(""), 0, true);
-
-   QLabel *lb_edit = us_label(tr("Edit:"));
    cb_edit = us_comboBox();
-
-   QLabel *lb_analysis = us_label(tr("Analysis:"));
    cb_analysis = us_comboBox();
-
-   QLabel *lb_cell = us_label(tr("Cell:"));
    cb_cell = us_comboBox();
-
-   QLabel *lb_channel = us_label(tr("Channel:"));
    cb_channel = us_comboBox();
-
-   QLabel *lb_lambda = us_label(tr("Lambda:"));
    cb_lambda = us_comboBox();
-
-   QLabel *lb_method = us_label(tr("Method:"));
    cb_method = us_comboBox();
-
-   QLabel *lb_trsh = us_label(tr("RMSD Threshold:"));
+   
+   le_runid = us_lineedit(tr(""), 0, true);
    le_threshold = us_lineedit("", 0);
-
+   le_file = us_lineedit(tr(""), 0, false);
+   
+   QPushButton *pb_load_runid = us_pushbutton(tr("Load Run ID"));
+   QPushButton *pb_save = us_pushbutton(tr("Save Data"));
+   QPushButton *pb_help = us_pushbutton(tr("Help"));
    pb_simulate = us_pushbutton("Simulate");
+   
+   progress = us_progressBar( 0, 100, 0 );
 
    tw_rmsd = new QTableWidget();
    tw_rmsd->setRowCount(0);
@@ -70,89 +82,65 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
    hheader = tw_rmsd->horizontalHeader();
    tw_rmsd->setStyleSheet("background-color: white");
    QHeaderView *header = tw_rmsd->horizontalHeader();
-//   header->setSectionResizeMode(header->logicalIndexAt(0), QHeaderView::Stretch);
-//   header->setSectionResizeMode(header->logicalIndexAt(2), QHeaderView::Stretch);
-//   header->setSectionResizeMode(header->logicalIndexAt(3), QHeaderView::ResizeToContents);
-//   header->setSectionResizeMode(header->logicalIndexAt(4), QHeaderView::Stretch);
-
-//   header->setSectionResizeMode(0, QHeaderView::Stretch);
-//   header->setSectionResizeMode(2, QHeaderView::Stretch);
-//   header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-//   header->setSectionResizeMode(4, QHeaderView::Stretch);
-
    header->setSectionResizeMode(QHeaderView::Stretch);
-//   tw_rmsd->setColumnWidth(0, 100);
-//   tw_rmsd->setColumnWidth(1, 150);
-//   tw_rmsd->setColumnWidth(3, 120);
 
-   QGridLayout *lyt_top = new QGridLayout();
-   lyt_top->addWidget(pb_load_runid, 0, 0, 1, 2);
-   lyt_top->addWidget(lb_runid,      0, 2, 1, 1);
-   lyt_top->addWidget(le_runid,      0, 3, 1, 3);
+   QGridLayout *layout = new QGridLayout();
+   int row = 0;
+   layout->addWidget(pb_load_runid, row,   0, 1, 2);
+   layout->addWidget(lb_runid,      row,   2, 1, 1);
+   layout->addWidget(le_runid,      row++, 3, 1, 3);
 
-   lyt_top->addWidget(lb_edit,       1, 0, 1, 1);
-   lyt_top->addWidget(cb_edit,       1, 1, 1, 1);
-   lyt_top->addWidget(lb_analysis,   1, 2, 1, 1);
-   lyt_top->addWidget(cb_analysis,   1, 3, 1, 1);
-   lyt_top->addWidget(lb_method,     1, 4, 1, 1);
-   lyt_top->addWidget(cb_method,     1, 5, 1, 1);
+   layout->addWidget(lb_edit,       row,   0, 1, 1);
+   layout->addWidget(cb_edit,       row,   1, 1, 1);
+   layout->addWidget(lb_analysis,   row,   2, 1, 1);
+   layout->addWidget(cb_analysis,   row,   3, 1, 1);
+   layout->addWidget(lb_method,     row,   4, 1, 1);
+   layout->addWidget(cb_method,     row++, 5, 1, 1);
 
-   lyt_top->addWidget(lb_cell,       2, 0, 1, 1);
-   lyt_top->addWidget(cb_cell,       2, 1, 1, 1);
-   lyt_top->addWidget(lb_channel,    2, 2, 1, 1);
-   lyt_top->addWidget(cb_channel,    2, 3, 1, 1);
-   lyt_top->addWidget(lb_lambda,     2, 4, 1, 1);
-   lyt_top->addWidget(cb_lambda,     2, 5, 1, 1);
+   layout->addWidget(lb_cell,       row,   0, 1, 1);
+   layout->addWidget(cb_cell,       row,   1, 1, 1);
+   layout->addWidget(lb_channel,    row,   2, 1, 1);
+   layout->addWidget(cb_channel,    row,   3, 1, 1);
+   layout->addWidget(lb_lambda,     row,   4, 1, 1);
+   layout->addWidget(cb_lambda,     row++, 5, 1, 1);
 
-   lyt_top->addWidget(lb_trsh,       3, 0, 1, 2);
-   lyt_top->addWidget(le_threshold,  3, 2, 1, 2);
-   lyt_top->addWidget(pb_simulate,   3, 4, 1, 2);
+   layout->addWidget(tw_rmsd,       row++, 0, 1, 6);
+   
+   layout->addWidget(pb_simulate,   row,   0, 1, 2);
+   layout->addWidget(lb_trsh,       row,   2, 1, 1);
+   layout->addWidget(le_threshold,  row++, 3, 1, 3);
 
-   lyt_top->setColumnStretch(0, 0);
-   lyt_top->setColumnStretch(1, 1);
-   lyt_top->setColumnStretch(2, 0);
-   lyt_top->setColumnStretch(3, 1);
-   lyt_top->setColumnStretch(4, 0);
-   lyt_top->setColumnStretch(5, 1);
-   lyt_top->setContentsMargins( 0, 0, 0, 0 );
-   lyt_top->setSpacing(1);
+   layout->addWidget(pb_save,       row,   0, 1, 2);
+   layout->addWidget(lb_file,       row,   2, 1, 1);
+   layout->addWidget(le_file,       row++, 3, 1, 3);
 
-   QLabel *lb_file = us_label(tr("Output Filename:"));
-   le_file = us_lineedit(tr(""), 0, false);
-   QPushButton *pb_save = us_pushbutton(tr("Save Data"));
+   layout->addWidget(pb_help,       row,   0, 1, 2);
+   layout->addWidget(lb_progress,   row,   2, 1, 1);
+   layout->addWidget(progress,      row++, 3, 1, 3);
 
-   QHBoxLayout *lyt_bottom = new QHBoxLayout();
-   lyt_bottom->addWidget(lb_file,0);
-   lyt_bottom->addWidget(le_file,5);
-   lyt_bottom->addWidget(pb_save,1);
-   lyt_bottom->setContentsMargins( 0, 0, 0, 0 );
-   lyt_bottom->setSpacing(1);
+   layout->setColumnStretch(0, 1);
+   layout->setColumnStretch(1, 2);
+   layout->setColumnStretch(2, 1);
+   layout->setColumnStretch(3, 2);
+   layout->setColumnStretch(4, 1);
+   layout->setColumnStretch(5, 2);
+   layout->setContentsMargins(1, 1, 1, 1);
+   layout->setSpacing(1);
 
-   QLabel* lb_progress = us_label("Progress");
-   lb_progress->setAlignment( Qt::AlignCenter );
-   progress            = us_progressBar( 0, 100, 0 );
-   QHBoxLayout *lyt_progress = new QHBoxLayout();
-   lyt_progress->addWidget(lb_progress);
-   lyt_progress->addWidget(progress);
-
-   QVBoxLayout *lyt_main = new QVBoxLayout();
-   lyt_main->addLayout(lyt_top);
-   lyt_main->addWidget(tw_rmsd);
-   lyt_main->addLayout(lyt_bottom);
-   lyt_main->addLayout(lyt_progress);
-   lyt_main->setContentsMargins( 1, 1, 1, 1 );
-   lyt_main->setSpacing(2);
-
-   this->setLayout(lyt_main);
-   setMinimumSize(QSize(600,400));
+   this->setLayout(layout);
 
    fematch = new US_FeMatch();
 
    connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
    connect(pb_save, SIGNAL(clicked()), this, SLOT(save_data()));
+   connect(pb_help, SIGNAL(clicked()), this, SLOT(help()));
    connect(pb_simulate, SIGNAL(clicked()), this, SLOT(simulate()));
    connect(le_threshold, SIGNAL(editingFinished()), this, SLOT(new_threshold()));
    connect(fematch, SIGNAL(astfem_cmp(int)), SLOT(update_progress(int)));
+}
+
+void US_QueryRmsd::help() {
+   showHelp.show_help("manual/rmsd_query.html");
 }
 
 bool US_QueryRmsd::check_connection(){

@@ -82,7 +82,7 @@ class US_EditScan : public US_WidgetsDialog
         //! \brief Slot to show the help documentation.
         void help(void)
         {
-            showHelp.show_help("manual/edit_scan.html");
+            showHelp.show_help("manual/us_edit.html#edit-specific-scans");
         }
 };
 

@@ -1,7 +1,7 @@
 ﻿//! \file us_integral.cpp
 
 #include <QApplication>
-
+#include <cmath>
 #include "us_integral.h"
 #include "us_delete_models.h"
 #include "us_select_runs.h"
@@ -60,6 +60,18 @@ bool distro_lessthan_d(const S_Solute &solu1, const S_Solute &solu2)
     return (solu1.d < solu2.d );
 }
 
+// LessThan method for S_Solute vbar
+bool distro_lessthan_v(const S_Solute &solu1, const S_Solute &solu2)
+{
+    return (solu1.v < solu2.v );
+}
+
+// LessThan method for S_Solute hydrodynamic radius
+bool distro_lessthan_r(const S_Solute &solu1, const S_Solute &solu2)
+{
+    return (solu1.r < solu2.r );
+}
+
 // US_Integral class constructor
 US_Integral::US_Integral() : US_Widgets()
 {
@@ -97,17 +109,22 @@ US_Integral::US_Integral() : US_Widgets()
    QGridLayout*  gl_x_d    = us_radiobutton( tr( "diff coeff"   ), rb_x_d,    false );
    QGridLayout*  gl_x_mass = us_radiobutton( tr( "m.mass"   ), rb_x_mass, true  );
    QGridLayout*  gl_x_ff0  = us_radiobutton( tr( "fric. ratio" ), rb_x_ff0,  false );
+   QGridLayout*  gl_x_vbar = us_radiobutton( tr( "vbar" ), rb_x_vbar,  false );
+   QGridLayout*  gl_x_rh   = us_radiobutton( tr( "Rh" ), rb_x_rh,  false );
    bg_x_axis->addButton( rb_x_s,    ATTR_S );
    bg_x_axis->addButton( rb_x_d,    ATTR_D );
    bg_x_axis->addButton( rb_x_mass, ATTR_W );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
+   bg_x_axis->addButton( rb_x_vbar, ATTR_V );
+   bg_x_axis->addButton( rb_x_rh,   ATTR_R );
    rb_x_s   ->setToolTip( tr( "Set X axis to Sedimentation Coefficient" ) );
    rb_x_d   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
    rb_x_mass->setToolTip( tr( "Set X axis to Molar Mass"                ) );
    rb_x_ff0 ->setToolTip( tr( "Set X axis to Frictional Ratio"          ) );
+   rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
+   rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_s   ->setChecked( true );
-   connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_x_axis ( int ) ) );
+   connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_Integral::select_x_axis );
 
 
    // Various other GUI elements 
@@ -173,6 +190,8 @@ US_Integral::US_Integral() : US_Widgets()
    spec->addLayout( gl_x_d,        s_row++, 5, 1, 3 );
    spec->addLayout( gl_x_mass,     s_row,   2, 1, 3 );
    spec->addLayout( gl_x_ff0,      s_row++, 5, 1, 3 );
+   spec->addLayout( gl_x_vbar,     s_row,   2, 1, 3 );
+   spec->addLayout( gl_x_rh,       s_row++, 5, 1, 3 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
 
    // Set up analysis controls
@@ -193,9 +212,9 @@ US_Integral::US_Integral() : US_Widgets()
    ct_boundaryPct->setSingleStep( 1 );
    ct_boundaryPos->setSingleStep( 1 );
    ct_smoothing  ->setSingleStep( 1 );
-   ct_division   ->setValue( 50 );
-   ct_boundaryPct->setValue( 90 );
-   ct_boundaryPos->setValue(  5 );
+   ct_division   ->setValue( 100 );
+   ct_boundaryPct->setValue( 100 );
+   ct_boundaryPos->setValue(  0 );
    ct_smoothing  ->setValue(  1 );
 
    connect( ct_division,    SIGNAL( valueChanged( double ) ),
@@ -269,6 +288,8 @@ DbgLv(1) << "MD:   reset: AA";
    v_frats .clear();
    v_sedcs .clear();
    v_difcs .clear();
+   v_vbars .clear();
+   v_rhs   .clear();
 
    pb_refresh->setEnabled( false );
    pb_save   ->setEnabled( false );
@@ -310,7 +331,7 @@ void US_Integral::save( void )
 
       fname           = fpfix + "frat_" + QString::number ( (ii + 1) ) + ".csv";
       fpath           = reppath + fname;
-      write_csv ( fpath, "frats", v_mmass[ ii ],
+      write_csv ( fpath, "frats", v_frats[ ii ],
                   "boundary_fraction", v_bfracs );
       fnames << fname;
 
@@ -320,14 +341,27 @@ void US_Integral::save( void )
                         "boundary_fraction", v_bfracs );
       fnames << fname;
 
+      fname           = fpfix + "vbar_" + QString::number( (ii+1) ) + ".csv";
+      fpath           = reppath + fname;
+      write_csv( fpath, "vbar", v_vbars[ ii ],
+                        "boundary_fraction", v_bfracs );
+      fnames << fname;
+
+      fname           = fpfix + "hr_" + QString::number( (ii+1) ) + ".csv";
+      fpath           = reppath + fname;
+      write_csv( fpath, "hr", v_rhs[ ii ],
+                        "boundary_fraction", v_bfracs );
+      fnames << fname;
 
    }
 
    // Cycle through possible plots and save PNG files
    const int plxs[]   = { ATTR_S, ATTR_D,
-                          ATTR_W, ATTR_K};
+                          ATTR_W, ATTR_K,
+                          ATTR_V, ATTR_R};
    const char* pltp[] = { "sedc", "difc",
-                          "mass", "frat"};
+                          "mass", "frat",
+                          "vbar", "hr"};
    const int nplots  = sizeof( plxs ) / sizeof( plxs[ 0 ] );
 DbgLv(1) << "SV: nplots" << nplots;
    for ( int ii = 0; ii < nplots; ii++ )
@@ -434,6 +468,22 @@ DbgLv(1) << "DaPl: (2)tstr" << tstr;
       curvtitl       =alldis[0].label;
       tstr          += tr( "Frictional Ratio" );
    }
+
+   else if ( plot_x == ATTR_V )
+   {
+      xx             = v_vbars[ 0 ].data();
+      ncurvs         = v_vbars.size();
+      curvtitl       =alldis[0].label;
+      tstr          += tr( "Partial Specific Volume" );
+   }
+
+   else if ( plot_x == ATTR_R )
+   {
+      xx             = v_rhs[ 0 ].data();
+      ncurvs         = v_rhs.size();
+      curvtitl       =alldis[0].label;
+      tstr          += tr( "Hydrodynamic Radius" );
+   }
 DbgLv(1) << "DaPl: (3)tstr" << tstr;
 
    // Initial plot settings
@@ -536,6 +586,12 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
           break;
       case ATTR_K:
           xx = v_frats[ ii ].data();
+          break;
+      case ATTR_V:
+          xx = v_vbars[ ii ].data();
+          break;
+      case ATTR_R:
+          xx = v_rhs  [ ii ].data();
           break;
       }
 
@@ -713,6 +769,7 @@ DbgLv(1) << "LD:  edata: desc run cell chan"
       sol_in.v  = model.components[ jj ].vbar20;
       sol_in.d  = model.components[ jj ].D * 1.0e7;
       sol_in.f  = model.components[ jj ].f;
+      sol_in.r  = model.components[ jj ].f / ( 6e-9 * M_PI * VISC_20W );
 
       tsys.in_distro << sol_in;
       wk_distro << sol_in;
@@ -821,7 +878,9 @@ int US_Integral::plot_x_select()
    plotx       = rb_x_mass->isChecked() ? ATTR_W : plotx;
    plotx       = rb_x_ff0 ->isChecked() ? ATTR_K : plotx;
    plotx       = rb_x_s   ->isChecked() ? ATTR_S : plotx;
-   plotx       = rb_x_d   ->isChecked() ? ATTR_D : plotx; 
+   plotx       = rb_x_d   ->isChecked() ? ATTR_D : plotx;
+   plotx       = rb_x_vbar->isChecked() ? ATTR_V : plotx;
+   plotx       = rb_x_rh  ->isChecked() ? ATTR_R : plotx;
    return plotx;
 }
 
@@ -837,13 +896,17 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
    // sort distro solute list depending on selected plot
    switch (this->plot_x)
    {
-      case ATTR_D: std::sort ( listsols.begin(), listsols.end(), distro_lessthan_d);
+      case ATTR_D: std::sort( listsols.begin(), listsols.end(), distro_lessthan_d);
          break;
       case ATTR_W: std::sort( listsols.begin(), listsols.end(), distro_lessthan_w);
          break;
       case ATTR_K: std::sort( listsols.begin(), listsols.end(), distro_lessthan_k);
          break;
       case ATTR_S: std::sort( listsols.begin(), listsols.end(), distro_lessthan_s);
+         break;
+      case ATTR_V: std::sort( listsols.begin(), listsols.end(), distro_lessthan_v);
+         break;
+      case ATTR_R: std::sort( listsols.begin(), listsols.end(), distro_lessthan_r);
          break;
    }
 
@@ -877,7 +940,9 @@ void US_Integral::sort_distro( QList< S_Solute >& listsols,
              sol2.s  = ( sol1.s + sol2.s ) * 0.5;  // average values
              sol2.d  = ( sol1.d + sol2.d ) * 0.5;
              sol2.w  = ( sol1.w + sol2.w ) * 0.5;
-             sol2.k  = ( sol2.k + sol2.k ) * 0.5;
+             sol2.k  = ( sol1.k + sol2.k ) * 0.5;
+             sol2.v  = ( sol1.v + sol2.v ) * 0.5;
+             sol2.r  = ( sol1.r + sol2.r ) * 0.5;
              reduced.replace( reduced.size() - 1, sol2 );
              kdup    = qMax( kdup, ++jdup );
           }
@@ -1097,6 +1162,10 @@ DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
    v_mmass.resize( ndists );
    v_frats.clear();
    v_frats.resize( ndists );
+   v_vbars.clear();
+   v_vbars.resize( ndists );
+   v_rhs  .clear();
+   v_rhs  .resize( ndists );
 
    for ( int ii = 0; ii < ndists; ii++ )
    {
@@ -1108,6 +1177,11 @@ DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
       v_mmass[ ii ].reserve( npoints );
       v_frats[ ii ].clear();
       v_frats[ ii ].reserve( npoints );
+      v_vbars[ ii ].clear();
+      v_vbars[ ii ].reserve( npoints );
+      v_rhs  [ ii ].clear();
+      v_rhs  [ ii ].reserve( npoints );
+
 
       // Build vectors of s and D for this model
       for ( int jj = 0; jj < npoints; jj++ )
@@ -1116,6 +1190,8 @@ DbgLv(1) << "BldVc: bf 0 1 k n" << v_bfracs[0] << v_bfracs[1]
          v_difcs[ ii ] << alldis[ ii ].bf_distro[ jj ].d;
          v_mmass[ ii ] << alldis[ ii ].bf_distro[ jj ].w;
          v_frats[ ii ] << alldis[ ii ].bf_distro[ jj ].k;
+         v_vbars[ ii ] << alldis[ ii ].bf_distro[ jj ].v;
+         v_rhs  [ ii ] << alldis[ ii ].bf_distro[ jj ].r;
       }
 DbgLv(1) << "BldVc: ii" << ii << "se 0 1 k n" << v_sedcs[ii][0] << v_sedcs[ii][1]
  << v_sedcs[ii][npoints-2] << v_sedcs[ii][npoints-1];
@@ -1128,7 +1204,8 @@ DbgLv(1) << "BldVc:     di 0 1 k n" << v_difcs[ii][0] << v_difcs[ii][1]
          US_Math2::gaussian_smoothing( v_difcs[ ii ], nsmoo );
          US_Math2::gaussian_smoothing (v_mmass[ ii ], nsmoo );
          US_Math2::gaussian_smoothing (v_frats[ ii ], nsmoo );
-
+         US_Math2::gaussian_smoothing (v_vbars[ ii ], nsmoo );
+         US_Math2::gaussian_smoothing (v_rhs  [ ii ], nsmoo );
       }
    }
 
@@ -1149,16 +1226,20 @@ QString US_Integral::anno_title( int pltndx )
    QString a_title;
 
    if      ( pltndx == ATTR_S )
-      a_title  = tr( "Sedimentation Coefficient (1e-13)"
+      a_title  = tr( "Sedimentation Coefficient (1e-13 s)"
                      " for water at 20" ) + DEGC;
    else if ( pltndx == ATTR_K )
       a_title  = tr( "Frictional Ratio f/f0" );
    else if ( pltndx == ATTR_W )
-      a_title  = tr( "Molar Mass (Dalton)" );
+      a_title  = tr( "Molar Mass (Da)" );
    else if ( pltndx == ATTR_D )
-      a_title  = tr( "Diffusion Coefficient (1e-7)" );
+      a_title  = tr( "Diffusion Coefficient (1e-7 cm^2/s)" );
    else if ( pltndx == ATTR_F )
       a_title  = tr( "Boundary Fraction" );
+   else if ( pltndx == ATTR_V )
+      a_title  = tr( "Partial Specific Volume (mL/g)" );
+   else if ( pltndx == ATTR_R )
+      a_title  = tr( "Hydrodynamic Radius (nm)" );
 
    return a_title;
 }
@@ -1178,6 +1259,10 @@ QString US_Integral::ptype_text( int pltndx )
       t_text  = "d";
    else if ( pltndx == ATTR_F )
       t_text  = "bf";
+   else if ( pltndx == ATTR_V )
+      t_text  = "vb";
+   else if ( pltndx == ATTR_R )
+      t_text  = "hr";
 
    return t_text;
 }

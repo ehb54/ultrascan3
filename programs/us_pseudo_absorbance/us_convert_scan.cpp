@@ -3,6 +3,8 @@
 #include "us_csv_loader.h"
 #include <QGuiApplication>
 #include <qwt_scale_div.h>
+#include <us_passwd.h>
+#include <us_time_state.h>
 
 US_ConvertScan::US_ConvertScan() : US_Widgets()
 {
@@ -616,14 +618,16 @@ void US_ConvertScan::import_run() {
         QStringList triples;
         US_LoadAUC* dialog = new US_LoadAUC( false, allData, triples, workingDir );
         if ( dialog->exec() == QDialog::Rejected )  return;
+        is_db_source = true;
     } else {
         workingDir = QFileDialog::getExistingDirectory( this,
                                                 tr( "Open Run ID" ),
                                                 US_Settings::importDir(),
                                                 QFileDialog::DontResolveSymlinks );
         if (workingDir.isEmpty()) return;
+        is_db_source = false;
     }
-
+    data_source_identifier = workingDir;
     int maxscn = read_auc(rawdata, absorbance, refscans, shifts, workingDir);
     if (maxscn == -1) {
         return;
@@ -1034,6 +1038,8 @@ void US_ConvertScan::save_run() {
     QString fileName("%1.RA.%2.%3.%4.auc");
     QDir dir = QDir(US_Settings::importDir());
     dir.setPath(dir.absoluteFilePath(abs_runid));
+    // load timestate if available
+    int loading_timestate = load_timestate(run_list.at(0), dir);
     for (int ii = 0; ii < out_rawdata.size(); ii++) {
         US_DataIO::RawData rawdata = out_rawdata.at(ii);
         int cell = rawdata.cell;
@@ -1808,3 +1814,71 @@ bool US_ConvertScan::linear_interpolation(const QVector<double>& xt_vals,
     return true;
 }
 
+int US_ConvertScan::load_timestate(const QString& run_id, const QDir& pabs_dir) {
+    int result = -1;
+    if ( is_db_source ) {
+        result = load_timestate_from_db(run_id, pabs_dir);
+    }
+    else {
+        result = load_timestate_from_disk(run_id, pabs_dir);
+    }
+    if (result == -1) {
+        QMessageBox::information(
+            this,
+            tr("No timestate found"),
+            tr("The loaded dataset seems to have no timestate attached."),
+            QMessageBox::Ok, QMessageBox::StandardButton::Ok);
+        return 1;
+    }
+    if (result == 0) {
+        QMessageBox::information(
+            this,
+            tr("Error saving timestate"),
+            tr("Unable to save the timestate to the data directory."),
+            QMessageBox::Ok, QMessageBox::StandardButton::Ok);
+        return 1;
+    }
+    return result;
+}
+
+int US_ConvertScan::load_timestate_from_disk(const QString& run_id, const QDir& pabs_dir) {
+    // Check timestate on disk
+    QString tmst_fbase = run_id + ".time_state.tmst";
+    QString defs_fbase = run_id + ".time_state.xml";
+    QString pabs_tmst_fbase = pabs_dir.dirName() + ".time_state.tmst";
+    QString pabs_defs_fbase = pabs_dir.dirName() + ".time_state.xml";
+    QDir data_dir (data_source_identifier);
+    QFileInfo tmst_file(data_dir.absoluteFilePath(tmst_fbase));
+    QFileInfo defs_file(data_dir.absoluteFilePath(defs_fbase));
+    if (!tmst_file.exists() || !defs_file.exists()) {
+        return -1;
+    }
+    QFile::copy(tmst_file.absoluteFilePath(), pabs_dir.absoluteFilePath(pabs_tmst_fbase));
+    QFile::copy(defs_file.absoluteFilePath(), pabs_dir.absoluteFilePath(pabs_defs_fbase));
+    if (QFile::exists(pabs_dir.absoluteFilePath(pabs_tmst_fbase)) && QFile::exists(pabs_dir.absoluteFilePath(pabs_defs_fbase))) {
+        return 1;
+    }
+    return 0;
+}
+
+int US_ConvertScan::load_timestate_from_db(const QString& run_id, const QDir& pabs_dir) {
+    // check database for timestate
+    const QString pabs_tmst_fbase = pabs_dir.dirName() + ".time_state.tmst";
+    US_Passwd pw;
+    US_DB2 db( pw.getPasswd() );
+    QStringList query;
+    query << "get_experiment_info_by_runID" << run_id
+          << QString::number( US_Settings::us_inv_ID() );
+    db.query( query );
+    if ( db.lastErrno() == US_DB2::NOROWS )
+        return -1;                      // No DB records means database experiment
+    db.next();
+    const int  experimentID  = db.value( 1 ).toInt();
+    query.clear();
+    const bool newfile       = US_TimeState::dbSyncToLF(
+        &db, pabs_dir.absoluteFilePath(pabs_tmst_fbase), experimentID );
+    if ( newfile ) {
+        return 1;
+    }
+    return 0;
+}

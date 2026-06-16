@@ -331,7 +331,7 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
    if ( abort ) return;
 
    QList< US_DataIO::RawData > simulations;       // All simulations, this run
-   simulations.reserve( nsolutes * dataset_count );
+   simulations.reserve( static_cast<qsizetype>( nsolutes ) * dataset_count );
 
    // Simulate data using models, each with a single s,f/f0 component
    int increp    = nsolutes / 10;                 // Progress report increment

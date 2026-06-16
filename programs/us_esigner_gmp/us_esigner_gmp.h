@@ -481,7 +481,7 @@ class US_eSignaturesGMP : public US_Widgets
         QString get_role_by_name(QString name);
 
         void help ( void )
-        { showHelp.show_help( "manual/gmp_signature.html" ); };
+        { showHelp.show_help( "manual/gmp/gmp_signature.html" ); };
 
     signals:
         //! \brief Signal emitted to accept reviewers.

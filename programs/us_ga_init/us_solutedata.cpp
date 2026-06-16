@@ -5,6 +5,7 @@
 #include "us_defines.h"
 #include "us_math2.h"
 #include "us_settings.h"
+#include "us_constants.h"
 
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
@@ -903,6 +904,14 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vsum    += ( bcomp.at( jj ).v * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << Qt::endl;
 
+            ts << tr( "Hydrodynamic Radius:        " );
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ ) {
+               double rh = bcomp.at( jj ).f / ( 6e-9 * M_PI * VISC_20W );
+               vsum    += ( rh * bcomp.at( jj ).c );
+            }
+            ts << ( vsum / tconc ) << Qt::endl;
+
             ts << tr( "Partial concentration:      " );
 //            vsum     = tconc;
 //            ts << ( vsum / vsiz ) << endl;
@@ -948,6 +957,12 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                valus.append( bcomp.at( jj ).v );
             outputStats( ts, valus, concs, false,
                   tr( "Partial specific volume:   " ) );
+            
+            valus.clear();
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).f / ( 6e-9 * M_PI * VISC_20W ) );
+            outputStats( ts, valus, concs, false,
+                  tr( "Hydrodynamic Radius:       " ) );
 
             for ( int jj = 0; jj < ksol; jj++ )
                vtotal    += bcomp.at( jj ).c;

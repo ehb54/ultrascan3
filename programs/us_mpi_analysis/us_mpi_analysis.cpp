@@ -170,7 +170,7 @@ DbgLv(0) << "CmdArg: jxmlfili" << jxmlfili;
    {
 DbgLv(0) << "wkdir=" << wkdir;
 DbgLv(0) << "work_dir=" << work_dir;
-      DbgLv(0) << "Us_Mpi_Analysis  " << REVISION;
+      DbgLv(0) << "Us_Mpi_Analysis  " << GIT_REVISION;
 
       // Unpack the input tarfile
       US_Archive archive;
@@ -272,12 +272,12 @@ DbgLv(0) << "submitTime " << submitTime
  << " mgroupcount" << task_params["mgroupcount"].toInt()
  << " walltime" << task_params["walltime"].toInt();
 
-      printf( "Us_Mpi_Analysis %s has started.\n", REVISION );
+      printf( "Us_Mpi_Analysis %s has started.\n", GIT_REVISION );
    }
 
    group_rank = my_rank;    // Temporary setting for send_udp
 
-   QString msg_start = QString( "Starting --  " ) + QString( REVISION );
+   QString msg_start = QString( "Starting --  " ) + QString( GIT_REVISION );
    send_udp( msg_start );   // Can't send udp message until xmlfile is parsed
 
    // Read data 
@@ -1422,7 +1422,7 @@ DbgLv(0) << "DSM: NORM_CUT:  norm_a" << norm_a << "ksol" << ksolutes;
 
    if ( ksolutes < nsolutes )
    {  // Norm tolerance has excluded some columns
-      nnls_a.resize( ksolutes * ndspts ); // Resize A matrix
+      nnls_a.resize( static_cast<qsizetype>( ksolutes ) * ndspts ); // Resize A matrix
       *nsolutesP      = ksolutes;         // Save new solutes count
 DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
@@ -1436,7 +1436,6 @@ DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
 }
 
-
 // Calculate residuals (FE Modeling and NNLS)
 void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,

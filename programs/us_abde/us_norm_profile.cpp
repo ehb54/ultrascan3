@@ -1823,8 +1823,10 @@ void US_Norm_Profile::slt_mouse(const QPointF& point){
     } else if (picker_state == XNORM) {
         x_norm = point.x();
         enableWidgets(true);
-        pb_pick_norm->setStyleSheet(bkgc);
-        picker_state = XNONE;
+	if (!us_auto_mode )
+	  pb_pick_norm->setStyleSheet(bkgc);
+
+	picker_state = XNONE;
 	if ( us_auto_mode )
 	  {
 	    QString channame = cb_chann->currentText();
@@ -2010,17 +2012,26 @@ void US_Norm_Profile::slt_norm_by_max(int state)
   
   QString qs = "QPushButton { background-color: %1 }";
   QColor color = US_GuiSettings::pushbColor().color(QPalette::Active, QPalette::Button);
-  if (state == Qt::Checked) {
-    pb_pick_norm->setStyleSheet(qs.arg(color.name()));
-    pb_pick_norm->setDisabled(true);
-  } else {
-    pb_pick_norm->setDisabled(false);
-    if (x_norm == -1) {
-      pb_pick_norm->setStyleSheet(qs.arg("yellow"));
-    } else {
+  if (state == Qt::Checked)
+    {
       pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+      pb_pick_norm->setDisabled(true);
     }
-  }
+  else
+    {
+      pb_pick_norm->setDisabled(false);
+      if ( !us_auto_mode )
+	{
+	  if (x_norm == -1)
+	    {
+	      pb_pick_norm->setStyleSheet(qs.arg("yellow"));
+	    }
+	  else
+	    {
+	      pb_pick_norm->setStyleSheet(qs.arg(color.name()));
+	    }
+	}
+    }
   if ( us_auto_mode ) 
     selectData_auto();
   else
