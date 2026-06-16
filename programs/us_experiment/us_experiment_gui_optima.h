@@ -332,6 +332,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void removeApprfromList( void );
       void addSmetoList( void );
       void removeSmefromList( void );
+
+   signals:
+      void disableEnable_tabs_dataDisk( bool );
   
 };
 
@@ -1191,6 +1194,7 @@ class US_ExperimentMain : public US_Widgets
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
       void set_tabs_buttons_readonly( void );
       void switch_to_run_manager( void );
+      void disableEnable_tabs_for_dataDisk( bool );				
 
 					
    public slots:
