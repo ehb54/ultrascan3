@@ -137,6 +137,9 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( epanGeneral, SIGNAL( go_back_to_run_manager( void )),
 	    this,      SLOT( switch_to_run_manager( void ) ));
 
+   connect( epanRotor, SIGNAL( disableEnable_tabs_dataDisk( bool )),
+            this,        SLOT(  disableEnable_tabs_for_dataDisk( bool ) ));
+
    //int min_width = tabWidget->tabBar()->width();
 
    //setMinimumSize( QSize( min_width, 450 ) );
@@ -576,7 +579,23 @@ void US_ExperimentMain::enable_disable_prev_next_btns( void )
   int lastTabIndex = totalTabs - 1;
   int currTabIndex = tabWidget->currentIndex();
   if ( currTabIndex == 0 )
-    pb_prev->setEnabled(false);
+    {
+      pb_prev->setEnabled(false);
+
+      //if dataDisk checked but NO data uploaded
+      if ( currProto.rpRotor.importData &&
+	   currProto.rpRotor.importDataDisk.isEmpty() &&
+	   !us_prot_dev_mode )
+	{
+	  pb_next->setEnabled(true);
+	}
+    }
+  if ( currTabIndex == 1 &&
+       currProto.rpRotor.importData &&
+       currProto.rpRotor.importDataDisk.isEmpty() &&
+       !us_prot_dev_mode )
+    pb_next->setEnabled(false);
+    
   if ( currTabIndex == lastTabIndex )
     pb_next->setEnabled(false);
 }
@@ -1700,6 +1719,9 @@ void US_ExperGuiRotor::switch_to_dataDisk_public()
 
   connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
 	   this,           SLOT  ( importDiskChecked( bool ) ) );
+
+  //and disable tabs
+  emit disableEnable_tabs_dataDisk( true );
 }
 
 void US_ExperGuiRotor::get_chann_ranges_public( QString d_type, QMap< QString, QStringList>& f_data )
@@ -1797,7 +1819,8 @@ void US_ExperGuiRotor::importDiskChecked( bool checked )
       
       if (msgBox.clickedButton() == Accept_r)
 	{
-	  
+	  emit disableEnable_tabs_dataDisk( checked );
+	  return;
 	}
       else if (msgBox.clickedButton() == Cancel_r)
 	{
@@ -2173,6 +2196,9 @@ void US_ExperGuiRotor::importDisk( void )
 
   //set tabs readonly
   mainw->set_tabs_buttons_readonly_dataDisk( true );
+
+  //and enable tabs
+  emit disableEnable_tabs_dataDisk( false );
 }
 
 //
