@@ -31,3 +31,4 @@ programs/us/us.rc
 CMakeUserPresets.json
 __pycache__
 /CLAUDE.md
+*.pyc
