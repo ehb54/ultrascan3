@@ -6,6 +6,7 @@ QT            += printsupport
 }
 
 unix:   TARGET = us_gui
+macx:   LIBS  += -L../lib -lus_utils
 
 win32 {
         DEFINES += QWT_DLL US_MAKE_GUI_DLL
