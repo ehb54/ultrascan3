@@ -17,10 +17,6 @@ win32 {
         # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a
 }
 
-macx {
-        LIBS   += -L../lib/ -lus_utils
-}
-
 QT          += network svg
 greaterThan( QT_VERSION, 5.99 ) {
 QT          += openglwidgets
