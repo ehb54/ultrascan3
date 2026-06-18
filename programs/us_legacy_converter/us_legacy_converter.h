@@ -10,6 +10,7 @@
 // #include "us_tar.h"
 // #include "us_gzip.h"
 #include "us_convert.h"
+#include "us_help.h"
 
 //! \brief Class to converte Beckman legacy data to OpenAUC
 class US_LegacyConverter : public US_Widgets
@@ -41,6 +42,8 @@ class US_LegacyConverter : public US_Widgets
         US_LineEdit_RE* le_runid;  //!< Line edit for run ID with regular expression validation
         QLineEdit*      le_dir;    //!< Line edit for directory
         US_Archive*     archive;   //!< Archive object
+        US_Help         showHelp;  //!< US_Help
+
         int counter;               //!< counter to update test edit
         bool exists;               //!< if it's true, runIDs are overwritten on disk
 
@@ -77,6 +80,9 @@ class US_LegacyConverter : public US_Widgets
 
         //! \brief Slot to save AUC data
         void save_auc(void);
+
+        //! \brief Slot to show Help
+        void show_help(void);
 
         //! \brief Slot to update text edit when a file extracted from the archive file
         //! \param relative path

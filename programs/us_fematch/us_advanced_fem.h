@@ -46,7 +46,7 @@ class US_AdvancedFem : public US_WidgetsDialog
 
       void done(           void );
       void help     ( void )
-      { showHelp.show_help( "fe_match_adv.html" ); };
+      { showHelp.show_help( "manual/fe_match/fe_match_adv.html" ); };
 };
 #endif
 

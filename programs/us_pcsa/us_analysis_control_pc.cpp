@@ -1213,26 +1213,16 @@ void US_AnalysisControlPc::fitpars_connect( bool reconn )
 {
    if ( reconn )
    {  // Reconnect controls
-      connect( bg_x_axis,   SIGNAL( buttonReleased( int )    ),
-               this,        SLOT(   select_x_axis ( int )    ) );
-      connect( bg_y_axis,   SIGNAL( buttonReleased( int )    ),
-               this,        SLOT(   select_y_axis ( int )    ) );
-      connect( cb_curvtype, SIGNAL( activated     ( int )    ),
-               this,        SLOT(   type_change()            ) );
-      connect( ct_lolimitx, SIGNAL( valueChanged  ( double ) ),
-               this,        SLOT(   xlim_change()            ) );
-      connect( ct_uplimitx, SIGNAL( valueChanged  ( double ) ),
-               this,        SLOT(   xlim_change()            ) );
-      connect( ct_lolimity, SIGNAL( valueChanged  ( double ) ),
-               this,        SLOT(   ylim_change()            ) );
-      connect( ct_uplimity, SIGNAL( valueChanged  ( double ) ),
-               this,        SLOT(   ylim_change()            ) );
-      connect( cb_z_type,   SIGNAL( activated     ( int )    ),
-               this,        SLOT(   ztype_change  ( int )    ) );
-      connect( ct_varcount, SIGNAL( valueChanged  ( double ) ),
-               this,        SLOT(   compute()                ) );
-      connect( ct_cresolu,  SIGNAL( valueChanged  ( double ) ),
-               this,        SLOT(   reso_change()            ) );
+      connect( bg_x_axis,   &QButtonGroup::idReleased, this, &US_AnalysisControlPc::select_x_axis );
+      connect( bg_y_axis,   &QButtonGroup::idReleased, this, &US_AnalysisControlPc::select_y_axis );
+      connect( cb_curvtype, qOverload<int>(&QComboBox::activated), this, &US_AnalysisControlPc::type_change );
+      connect( ct_lolimitx, &QwtCounter::valueChanged, this, &US_AnalysisControlPc::xlim_change );
+      connect( ct_uplimitx, &QwtCounter::valueChanged, this, &US_AnalysisControlPc::xlim_change );
+      connect( ct_lolimity, &QwtCounter::valueChanged, this, &US_AnalysisControlPc::ylim_change );
+      connect( ct_uplimity, &QwtCounter::valueChanged, this, &US_AnalysisControlPc::ylim_change );
+      connect( cb_z_type,   qOverload<int>(&QComboBox::activated), this, &US_AnalysisControlPc::ztype_change );
+      connect( ct_varcount, &QwtCounter::valueChanged, this, &US_AnalysisControlPc::compute );
+      connect( ct_cresolu,  &QwtCounter::valueChanged, this, &US_AnalysisControlPc::reso_change );
    }
 
    else

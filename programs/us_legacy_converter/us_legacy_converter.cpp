@@ -49,6 +49,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    le_runid = new US_LineEdit_RE("", 0);
 
    pb_save = us_pushbutton("Save", true, 0);
+   QPushButton* pb_help = us_pushbutton("Help", true, 0);
 
    te_info = us_textedit();
    te_info->setReadOnly(true);
@@ -60,7 +61,8 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    layout->addWidget(le_dir,       1, 1, 1, 2);
    layout->addWidget(lb_runid,     2, 0, 1, 1);
    layout->addWidget(le_runid,     2, 1, 1, 2);
-   layout->addWidget(pb_save,      3, 1, 1, 1);
+   layout->addWidget(pb_help,      3, 0, 1, 1);
+   layout->addWidget(pb_save,      3, 1, 1, 2);
    layout->addWidget(te_info,      5, 0, 4, 3);
    layout->setContentsMargins( 2, 2, 2, 2 );
    layout->setSpacing(2);
@@ -73,6 +75,7 @@ US_LegacyConverter::US_LegacyConverter() : US_Widgets()
    connect(le_runid, &US_LineEdit_RE::textUpdated, this, &US_LegacyConverter::runid_updated);
    connect(le_dir, &QLineEdit::textChanged, this, &US_LegacyConverter::runid_updated);
    connect(pb_save, &QPushButton::clicked, this, &US_LegacyConverter::save_auc);
+   connect(pb_help, &QPushButton::clicked, this, &US_LegacyConverter::show_help);
    connect(archive, &US_Archive::itemExtracted, this, &US_LegacyConverter::itemExtracted);
 }
 
@@ -175,6 +178,10 @@ void US_LegacyConverter::save_auc() {
       QMessageBox::information(this, "Data Stored!", "Run(s) Successfully Saved!\n\n" + msg);
    }
    pb_save->setEnabled(true);
+}
+
+void US_LegacyConverter::show_help(void) {
+   showHelp.show_help( "manual/beckman_openauc.html" );
 }
 
 void US_LegacyConverter::reset(void) {

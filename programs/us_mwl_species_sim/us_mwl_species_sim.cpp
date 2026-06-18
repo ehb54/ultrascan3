@@ -1064,6 +1064,8 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
    }
 
    timestate.close_write_data();
+   timestate.setImportType( US_TimeState::IMPORT_TYPE::MWRS );
+   timestate.setTimeStateType( US_TimeState::TIMESTATE_TYPE::CALCULATED );
    timestate.write_defs( 1.0 );
 
    return timestate.time_count();

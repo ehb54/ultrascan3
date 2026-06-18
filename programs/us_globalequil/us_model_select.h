@@ -67,7 +67,7 @@ class US_ModelSelect : public US_WidgetsDialog
 
         //! \brief Slot to show help documentation.
         void help              ( void )
-        { showHelp.show_help("global_equil-modsel.html"); };
+        { showHelp.show_help("global_equil.html"); };
 };
 
 #endif

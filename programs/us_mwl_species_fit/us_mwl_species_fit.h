@@ -147,7 +147,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
         //! \brief Show help information
         void help(void)
-        { showHelp.show_help("manual/mwl_species_fit.html"); };
+        { showHelp.show_help("manual/multi-wavelength/mwl_species_fit.html"); };
 
         void reset();
         void reset_data();

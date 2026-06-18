@@ -107,7 +107,7 @@ void US_Font::save()
 void US_Font::help()
 {
    US_Help* help = new US_Help();
-   help->show_help( "manual/usfont.html" );
+   help->show_help( "manual/config.html#font-configuration-panel" );
 }
 
 void US_Font::selectFont()

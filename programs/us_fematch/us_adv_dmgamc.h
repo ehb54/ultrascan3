@@ -93,7 +93,7 @@ class US_AdvDmgaMc : public US_WidgetsDialog
       void prev_param    ( void );
       void simulate      ( void );
       void help          ( void )
-      { showHelp.show_help( "fem_adv_dmgamc.html" ); };
+      { showHelp.show_help( "fe_match/fe_dmga_adv.html" ); };
 };
 #endif
 

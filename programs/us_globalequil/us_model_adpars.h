@@ -43,7 +43,7 @@ class US_ModelAdPars : public US_WidgetsDialog
 
         //! \brief Slot to show help documentation.
         void help              ( void )
-        { showHelp.show_help( "global_equil-modapar.html" ); };
+        { showHelp.show_help( "global_equil.html#model-parameters" ); };
 };
 
 #endif

@@ -43,6 +43,24 @@ int main( int argc, char* argv[] )
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
 
+#ifdef Q_OS_WIN
+  // MariaDB Connector/C on Windows does not fall back to the compiled-in
+  // MARIADB_PLUGINDIR when MYSQL_PLUGIN_DIR is unset: it constructs a bare
+  // filename ("dialog.dll") which Windows cannot find via the standard DLL
+  // search path.  Setting MARIADB_PLUGIN_DIR before any DB connection is
+  // opened makes the connector look in plugins/libmariadb/ relative to the
+  // executable, mirroring the POSIX behaviour.  This does not force PAM
+  // authentication; it only makes auth plugins discoverable if the server
+  // requests one.
+  {
+    const QString pluginDir =
+      QDir( QCoreApplication::applicationDirPath() )
+        .absoluteFilePath( "../plugins/libmariadb" );
+    qputenv( "MARIADB_PLUGIN_DIR",
+             QDir::toNativeSeparators( pluginDir ).toUtf8() );
+  }
+#endif
+
   // Set up language localization
   QString locale = QLocale::system().name();
 
@@ -529,10 +547,7 @@ void US_Win::launch( int index )
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
-#ifndef Q_OS_MAC
-  QStringList args;
-  process->start( pname, args );
-#else
+#ifdef Q_OS_MAC
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
 
@@ -540,6 +555,14 @@ void US_Win::launch( int index )
       procapp         = procbin;
 
    process->start( "open", QStringList(procapp) );
+#else
+   // Use full path so the binary is found regardless of PATH.
+   // appBaseDir() is derived from the running executable location
+   // (applicationDirPath() minus "/bin"), so this works for both
+   // installed and dev-build trees.
+   QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
+   QStringList args;
+   process->start( procbin, args );
 #endif
 
   if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout

@@ -84,7 +84,7 @@ class US_PlotControlFem : public US_WidgetsDialog
       int  dimensionType( QVector< QCheckBox* >& );
 
       void help      ( void )
-      { showHelp.show_help( "fe_match_controls.html" ); };
+      { showHelp.show_help( "manual/3d_plot.html" ); };
 };
 #endif
 

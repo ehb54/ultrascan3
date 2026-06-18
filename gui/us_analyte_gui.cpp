@@ -2721,8 +2721,8 @@ void US_AnalyteMgrNew::verify_vbar()
       analyte->mw      = mwval;
       double pvbar    = p.vbar20;
       double vbar20   = le_protein_vbar20->text().toDouble();
-
-      if ( qAbs( vbar20 - pvbar ) > 1e-4 )
+      // an empty sequence gives a pvbar of 0, don't trigger it
+      if ( pvbar > 0.0 && qAbs( vbar20 - pvbar ) > 1e-4 )
       {
          QString msg  = tr(
                "There is a difference between<br/>"

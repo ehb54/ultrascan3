@@ -54,8 +54,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    // Models List Box
    lw_models              = us_listwidget();
 
-   QPushButton* pb_components   = us_pushbutton( tr( "Manage Components" ) );
-   QPushButton* pb_associations = us_pushbutton( tr( "Manage Associations" ) );
+   pb_components   = us_pushbutton( tr( "Manage Components" ) );
+   pb_associations = us_pushbutton( tr( "Manage Associations" ) );
 
    QLabel* lb_wavelength  = us_label( tr( "Wavelength:" ) );
    le_wavelength          = us_lineedit( );
@@ -545,9 +545,11 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
 				     "It can NOT be deleted or altered...")
        				 .arg( mdesc ) );
 
-       pb_save  ->setEnabled( false );
-       pb_delete->setEnabled( false );
-       pb_accept->setEnabled( false );
+       pb_save      ->setEnabled( false );
+       pb_delete    ->setEnabled( false );
+       //pb_accept  ->setEnabled( false );
+       pb_components->setEnabled( false );
+       pb_associations ->setEnabled( false );
      }
 }
 

@@ -248,7 +248,7 @@ class US_RampGui : public US_Widgets
 //       void mwl_setup         ( void );
       void init_output_data  ( void );
 //       void build_output_data ( void );
-//       void help              ( void )
-//         { showHelp.show_help( "convert.html" ); };
+      void help              ( void )
+        { showHelp.show_help( "ramp_data.html" ); };
 };
 #endif

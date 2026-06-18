@@ -64,7 +64,7 @@ class US_MwlPlotControl : public US_WidgetsDialog
       void close_all( void );
 
       void help     ( void )
-      { showHelp.show_help( "mwlr_view_pltctrl.html" ); };
+      { showHelp.show_help( "3d_plot.html#model-solute-3-dimensional-viewer" ); };
 };
 #endif
 

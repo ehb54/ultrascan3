@@ -68,7 +68,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_general.html" ); };
+         { showHelp.show_help( "manual/experiment/general.html" ); };
 
       // Detailed information for specific centerpiece
       bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
@@ -172,7 +172,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_rotor.html" ); };
+         { showHelp.show_help( "manual/experiment/rotor.html" ); };
 
       bool message_instr_shown;
       QString runID;
@@ -321,6 +321,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void init_grevs( void );
       void init_gapprs( void );
       void init_gsmes( void );
+  
+      void setEnabledDisabledAddToORASME( void );
+    
       void addOpertoList( void );
       void removeOperfromList( void );
       void addRevtoList( void );
@@ -329,6 +332,9 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void removeApprfromList( void );
       void addSmetoList( void );
       void removeSmefromList( void );
+
+   signals:
+      void disableEnable_tabs_dataDisk( bool );
   
 };
 
@@ -353,7 +359,7 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_speeds.html" ); };
+         { showHelp.show_help( "manual/experiment/speeds.html" ); };
 
    private:
       US_ExperimentMain*   mainw;
@@ -536,10 +542,11 @@ class US_ExperGuiCells : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_cells.html" ); };
+         { showHelp.show_help( "manual/experiment/cells.html" ); };
 
    private:
       US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoRotor* rpRotor;  
       US_RunProtocol::RunProtoCells* rpCells;
       US_Help  showHelp;
       QList< QLabel* >     cc_labls;   // Cell label object pointers
@@ -578,7 +585,7 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_solutions.html" ); };
+         { showHelp.show_help( "manual/experiment/solutions.html" ); };
 
       QMap <int, bool> solution_comment_init;
       int      mxrow;                           // Max rows (24)
@@ -658,7 +665,7 @@ class US_ExperGuiOptical : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_photomult.html" ); };
+         { showHelp.show_help( "manual/experiment/optics.html" ); };
 
    private:
       US_ExperimentMain*   mainw;
@@ -702,7 +709,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_photomult.html" ); };
+         { showHelp.show_help( "manual/experiment/range.html" ); };
 
    private:
       US_ExperimentMain*   mainw;
@@ -738,6 +745,7 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       QVector< double >          hicrads;  // High radius value, ea. channel
       QVector< bool >            abde_buff;
       QVector< bool >            abde_mwl_deconv;
+      QVector< QString >         abde_ch_msg; 
 
       QComboBox * cb_scancount;
       QComboBox * cb_scancount_int;
@@ -830,7 +838,7 @@ class US_SelectWavelengths : public US_WidgetsDialog
       void done           ( void );
       void reset          ( void );
       void help           ( void )
-      { showHelp.show_help( "manual/convert-seltrip.html" ); };
+      { showHelp.show_help( "manual/common_dialogs.html#select-to-delete" ); };
 };
 
 
@@ -883,7 +891,7 @@ class US_SelectWavelengths_manual : public US_WidgetsDialog
       void reset          ( void );
       void cancel         ( void );
       void help           ( void ) 
-      { showHelp.show_help( "manual/convert-seltrip.html" ); }; 
+      { showHelp.show_help( "manual/common_dialogs.html#select-to-delete" ); }; 
 };
 
 
@@ -908,7 +916,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_submit.html" ); };
+         { showHelp.show_help( "manual/experiment/submit.html" ); };
 
       QPushButton* pb_saverp;
       QPushButton* pb_connect;      
@@ -1045,7 +1053,7 @@ class US_ExperGuiAProfile : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_submit.html" ); };
+         { showHelp.show_help( "manual/experiment/submit.html" ); };
 
       QPushButton* pb_saverp;
 
@@ -1134,6 +1142,7 @@ class US_ExperimentMain : public US_Widgets
       bool    us_prot_dev_mode;
       bool    global_reset;
       bool    us_abde_mode;
+      bool    expPanelSet;
 
   QMap <QString, QString> protocol_details_passed; 
       
@@ -1142,6 +1151,7 @@ class US_ExperimentMain : public US_Widgets
       void    set_abde_mode_aprofile( void );
       void    unset_abde_mode_aprofile( void );
       void    abde_sv_mode_change_reset_reports( QString  );
+      void    enable_disable_prev_next_btns( void );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;
@@ -1184,6 +1194,7 @@ class US_ExperimentMain : public US_Widgets
       void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
       void set_tabs_buttons_readonly( void );
       void switch_to_run_manager( void );
+      void disableEnable_tabs_for_dataDisk( bool );				
 
 					
    public slots:

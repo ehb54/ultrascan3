@@ -52,6 +52,6 @@ class US_SelectTriplesRa : public US_WidgetsDialog
       void done          ( void );
       void reset         ( void );
       void help          ( void )
-      { showHelp.show_help( "manual/convert-seltrip.html" ); };
+      { showHelp.show_help( "manual/convert.html#step-5-modify-cell-channel-wavelength-c-c-w-info" ); };
 };
 #endif

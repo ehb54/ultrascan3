@@ -66,6 +66,6 @@ class US_GUI_EXTERN US_GetRun : public US_WidgetsDialog
       void update_disk_db( bool );
       void limit_data    ( const QString& );
       void help( void )
-      { showHelp.show_help( "get_run.help" ); };
+      { showHelp.show_help( "manual/common_dialogs.html#data-loader" ); };
 };
 #endif

@@ -279,7 +279,7 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       int           nlamb_i;                   // Lambda count for raw input
       int           dbg_level;                 // Debug level
       int           impType;                   // Import type flag: 0,1,2 == Beck,MWL,AUC
-
+      US_TimeState time_state;
       QVector<int> slambdas_per_channel;
       QVector<int> elambdas_per_channel;
 
@@ -304,7 +304,7 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       bool readProtocolSolutions_auto ( QXmlStreamReader& );
       bool readProtocolOptics_auto ( QXmlStreamReader& );
       bool isCorrectDataType( QString, QString );
-  int  getProtSolIndex( QString , QString);
+      int  getProtSolIndex( QString , QString);
 
       void read_aprofile_data_from_aprofile( void );
       bool readAProfileBasicParms_auto ( QXmlStreamReader& );
@@ -474,6 +474,7 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       void connectTolerance  ( bool );
       int  countSpeeds       ( QVector< int >&, int* );
       int  writeTimeStateDisk( void );
+      int  prepareTimeState  ( void );
       int  writeTimeStateDB  ( void );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };

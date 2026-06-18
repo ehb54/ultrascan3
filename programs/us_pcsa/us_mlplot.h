@@ -117,7 +117,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       QwtLinearColorMap* reverseColorMap( void );
 
       void help     ( void )
-      { showHelp.show_help( "pcsa_mlines.html" ); };
+      { showHelp.show_help( "pcsa/pcsa_mlines.html" ); };
 
 };
 #endif

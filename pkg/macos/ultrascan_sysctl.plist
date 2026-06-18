@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    ultrascan_sysctl.plist
+    LaunchDaemon — runs at boot as root to apply shared-memory sysctl values
+    required by UltraScan3 AUC analysis.
+
+    macOS default kern.sysv.shmmax is 4 MB; UltraScan3 requires 1 GB.
+
+    Install location : /Library/LaunchDaemons/ultrascan_sysctl.plist
+    Ownership        : root:wheel  0644
+    Load             : launchctl bootstrap system <this-file>
+-->
+<plist version="1.0">
+<dict>
+
+    <!-- Unique reverse-DNS label; must match the filename stem -->
+    <key>Label</key>
+    <string>ultrascan_sysctl</string>
+
+    <!--
+        Use the sysctl binary directly with individual key=value arguments
+        rather than embedding a shell script string.  This avoids shell
+        quoting issues and is compatible with all modern macOS launchd
+        versions (10.10+).  Each sysctl call is a separate argument so
+        that a single failure does not suppress the remaining values.
+    -->
+    <key>Program</key>
+    <string>/usr/sbin/sysctl</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/sbin/sysctl</string>
+        <string>-w</string>
+        <string>kern.sysv.shmmax=1073741824</string>
+        <string>kern.sysv.shmmin=1</string>
+        <string>kern.sysv.shmmni=256</string>
+        <string>kern.sysv.shmseg=64</string>
+        <string>kern.sysv.shmall=262144</string>
+    </array>
+
+    <!-- Apply values at every boot before any user session starts -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!--
+        launchd will not keep this job alive after it exits; it is a
+        one-shot configuration task, not a daemon that should be restarted.
+    -->
+    <key>KeepAlive</key>
+    <false/>
+
+    <!-- Capture stdout/stderr for post-boot diagnostics -->
+    <key>StandardOutPath</key>
+    <string>/var/log/ultrascan_sysctl.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/var/log/ultrascan_sysctl.log</string>
+
+</dict>
+</plist>

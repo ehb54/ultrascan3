@@ -147,12 +147,9 @@ TEST_F(US_RegexTest, ValidateAllRegexPatterns) {
             valid = false;
             error = re.errorString();
             
-            ADD_FAILURE() << "Invalid regex pattern found!"
-                          << "\n  File: " << file.toStdString()
-                          << "\n  Line: " << line
+            ADD_FAILURE_AT(file.toStdString().c_str(), line)
+                           << QString("Invalid regex pattern `%1`found: %2").arg(fixedPattern).arg(error).toStdString()
                           << "\n  Raw Pattern: " << pattern.toStdString()
-                          << "\n  Fixed Pattern: " << fixedPattern.toStdString()
-                          << "\n  Error: " << error.toStdString()
                           << "\n  Context: " << context.toStdString();
         }
     }

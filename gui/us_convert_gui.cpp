@@ -2525,11 +2525,6 @@ DbgLv(1) << "rTS: tmsfs" << tmst_fnamei << defs_fnamei;
 DbgLv(1) << "rTS: tmst,defs fnamei" << tmst_fnamei << defs_fnamei;
    }
 
-   else  // If file does not exist, clear name
-   {
-DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
-      tmst_fnamei.clear();
-   }
 
    if ( !us_convert_auto_mode )
    {
@@ -10161,15 +10156,13 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
       }
    }
 
+   int nspeed = prepareTimeState();
+   pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
    // Save a vector of speed steps read or computed from the data scans
    char chtype[ 3 ] = { 'R', 'A', '\0' };
    strncpy( chtype, allData[ 0 ].type, 2 );
-   QString dataType = QString( chtype ).left( 2 );
-   int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
-                                                               speedsteps );
+
    int     nspeedc  = 0;
-   bool low_accel   = false;
-   double rate      = 400.0;
 DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
 
    if ( nspeed == 0 )
@@ -10178,17 +10171,13 @@ DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
       nspeedc          = speedsteps.size();
       nspeed           = nspeedc;
 DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
-
-      // Check to see if implied 1st acceleration is too low
-#define DSS_LO_ACC 250.0 // default SetSpeedLowAccel
-      if ( impType != 2 )  // Check if not imported AUC
-      {
-         QString dbgval   = US_Settings::debug_value( "SetSpeedLowAcc" );
-         double ss_lo_acc = dbgval.isEmpty() ? DSS_LO_ACC : dbgval.toDouble();
-         low_accel        = US_AstfemMath::low_acceleration( speedsteps, ss_lo_acc, rate );
-      }
    }
-	QStringList check_results = US_AstfemMath::check_acceleration(speedsteps, allData[0].scanData);
+
+	QStringList check_results = US_AstfemMath::check_acceleration(
+	   speedsteps,
+	   allData[0].scanData,
+	   &time_state
+	   );
 	if ( !check_results.isEmpty() ) {
 		// append the notice about the recalculation
 		check_results << tr( "By clicking 'Continue', the experiment will be adjusted to occur as performed with a "
@@ -10528,9 +10517,6 @@ DbgLv(1) << "wTS: EMPTY: tmst_fnamei";
 
    US_DataIO::RawData* rdata    = outData[ 0 ];
 
-   simparams.speed_step        = speedsteps;
-
-   simparams.sim  = ( rdata->channel == 'S' );
    int n_times    = US_AstfemMath::writetimestate( tmst_fname, simparams, *rdata );
 
 DbgLv(1) << "number of times in file" << n_times;
@@ -10538,6 +10524,130 @@ DbgLv(1) << "number of times in file" << n_times;
    QFile::copy( tmst_fnamei, tmst_fname );
    tmst_fnamei  = tmst_fname;
    return n_times;
+}
+
+int US_ConvertGui::prepareTimeState() {
+   QString tmst_fbase   = runID + ".time_state.tmst";
+   QString defs_fbase   = runID + ".time_state.xml";
+   QDir     writeDir( US_Settings::tmpDir() ); // Writes timestate to tmp directory
+
+
+   QString  dirname     = writeDir.absolutePath() + "/";
+
+   //QString tmst_fdir    = currentDir;
+   QString tmst_fdir    = dirname;
+
+   QString tmst_fname   = tmst_fdir + tmst_fbase;
+   QString defs_fname   = tmst_fdir + defs_fbase;
+   QVector< double > rrpms;
+   int     nmscans      = isMwl ? mwl_data.raw_speeds( rrpms ) : 0;
+
+   bool time_state_exists = !tmst_fnamei.isEmpty() && QFile::exists( tmst_fnamei );
+   bool use_existing = false;
+   bool calculate_timestate =false;
+
+
+   // Determine if TimeState of right character already exists
+   if ( time_state_exists )
+   {  // An input TMST exists
+      time_state.open_read_data( tmst_fnamei, true );
+      bool constti;
+      double timeinc;
+      double ftime;
+      QStringList fkeys;
+      QStringList ffmts;
+      int  ntimes     = time_state.time_range( &constti, &timeinc, &ftime );
+      int  nvalues    = time_state.field_keys( &fkeys, &ffmts );
+      DbgLv(1) << "wTS: TMST file exists:" << tmst_fnamei;
+
+
+      // See if all file characteristics match what is now needed
+      bool use_exstsf = ( ntimes >= nmscans );  // Use existing TMST file?
+      use_exstsf      = ( fkeys.contains( "RawSpeed" ) ) ? use_exstsf : false;
+      use_exstsf      = ( nvalues > 2 )      ? use_exstsf : false;
+      if ( constti )
+      {  // Constant time increment
+         use_exstsf   = ( ntimes > nmscans ) ? use_exstsf : false;
+         use_exstsf   = ( timeinc > 0.0 )    ? use_exstsf : false;
+      }
+      else
+      {  // Non-constant time increment
+         use_exstsf   = ( ntimes >= nmscans ) ? use_exstsf : false;
+         use_exstsf   = ( timeinc == 0.0    ) ? use_exstsf : false;
+         use_exstsf   = ( fkeys.contains( "Time" ) ) ? use_exstsf : false;
+      }
+DbgLv(1) << "wTS: use_exstsf" << use_exstsf << "ntimes nmscans nvalues"
+ << ntimes << nmscans << nvalues;
+
+      if ( use_exstsf )
+      {  // Existing files have enough: we can use them;  need to copy?
+
+         use_existing = true;
+      }
+      else {
+         use_existing = false;
+         calculate_timestate = true;
+      }
+
+   }
+   if ( use_existing ) {
+      const int n_ssprof = US_SimulationParameters::ssProfFromTimeState( &time_state, simparams.sim_speed_prof );
+
+      if ( n_ssprof > 0 ) {
+         const int n_speedsteps = simparams.speedstepsFromSSprof();
+         if ( n_speedsteps > 0 ) {
+            speedsteps.clear();
+            speedsteps = simparams.speed_step;
+            return n_speedsteps;
+         }
+         else {
+            calculate_timestate = true;
+         }
+      }
+      else {
+         calculate_timestate = true;
+      }
+   }
+   else {
+      calculate_timestate = true;
+   }
+   if ( calculate_timestate ) {
+      // Compute speed steps from all raw auc data
+      US_SimulationParameters::computeSpeedSteps( allData, speedsteps );
+      int n_speedsteps = speedsteps.size();
+      simparams.speed_step = speedsteps;
+      //
+      US_DataIO::RawData all_data = US_DataIO::RawData();
+      QVector<US_DataIO::Scan> scans;
+      QVector<double> times;
+
+      for ( int ii = 0; ii < allData.count(); ii++ ) {
+         for ( int jj = 0; jj < allData[ii].scanCount(); jj++ ) {
+            if ( !times.contains(allData[ii].scanData[jj].seconds) ) {
+               scans << allData[ii].scanData[jj];
+               times << allData[ii].scanData[jj].seconds;
+            }
+         }
+      }
+      times.clear();
+
+      struct SortBySeconds {
+         bool operator()(const US_DataIO::Scan& a, const US_DataIO::Scan& b) const {
+            return a.seconds < b.seconds;
+         }
+      };
+      // Sort the scans by their respective attribute seconds
+      std::sort(scans.begin(), scans.end(), SortBySeconds());
+      all_data.scanData = scans;
+      const int n_times    = US_AstfemMath::writetimestate( tmst_fname, simparams, all_data );
+      tmst_fnamei = tmst_fname;
+      time_state.close_read_data();
+      time_state.open_read_data( tmst_fnamei, true );
+
+
+      return n_speedsteps;
+   }
+   return 0;
 }
 
 // Function to write TimeState files to the database

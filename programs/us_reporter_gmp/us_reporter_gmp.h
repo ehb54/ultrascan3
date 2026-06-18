@@ -559,7 +559,7 @@ class US_ReporterGMP : public US_Widgets
         QMap<QString, double> get_replicate_group_results(US_ReportGMP::ReportItem, QString, QStringList); //!< Get replicate group results
         void assemble_replicate_av_integration_html(void); //!< Assemble replicate average integration HTML
         bool triple_exist_inMWL( QString );
-
+        
         QString get_filename(QString); //!< Get file name
 
     public slots:
@@ -686,7 +686,7 @@ class US_ReporterGMP : public US_Widgets
          * @brief Display help.
          */
         void help(void)
-        { showHelp.show_help("manual/gmp_report_generator.html"); };
+        { showHelp.show_help("manual/gmp/gmp_report_generator.html"); };
 
         signals:
                 /**

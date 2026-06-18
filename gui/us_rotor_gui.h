@@ -144,7 +144,7 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
 
       void help (void)
       {
-         showHelp.show_help( "manual/rotor.html" );
+         showHelp.show_help( "manual/rotors.html" );
       };
       
       void reset              ( void );

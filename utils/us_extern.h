@@ -22,7 +22,14 @@
  * Defined as __declspec(dllimport) on Windows.
  */
 
-#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)) && (defined(US_MAKE_DLL))
+#if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__))
+#if defined(US_UTIL_STATIC)
+  #define US_EXPORT
+  #define US_IMPORT
+  #define US_UTIL_EXTERN
+  #define US_GUI_EXTERN
+  #define US_EXTERN
+#elif defined(US_MAKE_DLL)
   #define US_EXPORT       __declspec(dllexport)
   #define US_IMPORT       __declspec(dllimport)
 
@@ -73,6 +80,7 @@
     #endif
     #define US_EXTERN           US_IMPORT
   #endif
+#endif
 #endif
 
 /**

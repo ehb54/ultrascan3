@@ -1,0 +1,105 @@
+name: Sphinx Documentation Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'doc/manual/source/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'doc/manual/source/**'
+
+# Cancel in-progress jobs for the same workflow and branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Safeguard against abuse: limit token permissions to read-only for repository contents.
+permissions:
+  contents: read
+
+jobs:
+  build-qthelp:
+    name: Build QtHelp
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6.0.2
+        with:
+          # Fetch all history for git-based versioning in conf.py
+          fetch-depth: 0
+          # Safeguard: do not persist credentials
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f doc/manual/source/requirements.txt ]; then
+            pip install -r doc/manual/source/requirements.txt
+          fi
+
+      - name: Build qthelp
+        run: |
+          sphinx-build -M qthelp doc/manual/source doc/manual/build -q 2>&1 | tee build.log
+        continue-on-error: true
+      - name: Sphinx Problem Matcher
+        uses: sphinx-doc/github-problem-matcher@v1
+      - name: Run Linkcheck
+        run: sphinx-build -M linkcheck $(pwd)/doc/manual/source $(pwd)/doc/manual/build -q --keep-going
+        continue-on-error: true
+  build-html:
+    name: Build Html
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6.0.2
+        with:
+          # Fetch all history for git-based versioning in conf.py
+          fetch-depth: 0
+          # Safeguard: do not persist credentials
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f doc/manual/source/requirements.txt ]; then
+            pip install -r doc/manual/source/requirements.txt
+          fi
+
+      - name: Install System Dependencies (LaTeX, Qt, Graphviz)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-xetex \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            fonts-freefont-ttf \
+            latexmk
+
+      - name: Build pdf
+        run: |
+          sphinx-build -M latexpdf doc/manual/source doc/manual/build -q
+          cp doc/manual/build/latex/UltraScanIII.pdf doc/manual/source/_static/UltraScanIII.pdf
+        continue-on-error: true
+      - name: Build html
+        run: |
+          sphinx-build -M html doc/manual/source doc/manual/build -q
+        continue-on-error: true

@@ -6,6 +6,7 @@ QT            += printsupport
 }
 
 unix:   TARGET = us_gui
+macx:   LIBS  += -L../lib -lus_utils
 
 win32 {
         DEFINES += QWT_DLL US_MAKE_GUI_DLL
@@ -24,8 +25,6 @@ QT          += network svg
 greaterThan( QT_VERSION, 5.99 ) {
 QT          += openglwidgets
 }
-
-TRANSLATIONS = $${TARGET}_DE_de.ts
 
 HEADERS      = \
                us_abstractrotor_gui.h   \

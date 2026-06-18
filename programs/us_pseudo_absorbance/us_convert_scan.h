@@ -83,6 +83,8 @@ private:
     };
 
     US_Disk_DB_Controls* disk_controls;
+    QString data_source_identifier;
+    bool is_db_source;
     QPushButton* pb_prev_id;
     QPushButton* pb_next_id;
     QPushButton* pb_import;
@@ -137,6 +139,9 @@ private:
     void offon_prev_next();
     void plot_intensity();
     void plot_refscan();
+    int  load_timestate(const QString& run_id, const QDir& pabs_dir);
+    int  load_timestate_from_disk(const QString& run_id, const QDir& pabs_dir);
+    int  load_timestate_from_db(const QString& run_id, const QDir& pabs_dir);
 
     void calc_absorbance(int);
     void trim_absorbance(QVector<QVector<double>>&, QVector<double>&, bool);
