@@ -23,13 +23,20 @@ die "$qwt is not a directory\n" if !-d $qwt;
 
 $rfile = "$us/programs/us/us_revision.h";
 die "$rfile does not exist\n" if !-e $rfile;
-$cmd = "grep REVISION $rfile | awk -F\\\" '{ print \$2 }'";
-# print "$cmd\n";
-$rev = `$cmd`;
-chomp $rev;
-print "revision is $rev\n";
+$vfile = "$us/utils/us_defines.h";
+die "$vfile does not exist\n" if !-e $vfile;
 
-$dd = "us3-$sn-64-4.0.$rev";
+$cmd = "grep BUILDNUM $rfile | awk -F\\\" '{ print \$2 }'";
+$buildnum = `$cmd`;
+chomp $buildnum;
+
+$cmd = "grep US_Version $vfile | awk -F\\\" '{ print \$2 }'";
+$version = `$cmd`;
+chomp $version;
+
+print "version is $version build $buildnum\n";
+
+$dd = "us3-$sn-64-$version-build-$buildnum";
 print "$dd\n";
 
 die "$dd exists, please remove it first
