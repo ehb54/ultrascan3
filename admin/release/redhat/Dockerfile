@@ -119,13 +119,19 @@ RUN dnf install -y graphviz
 ## upgrade doxygen as the file is often not current in repo
 RUN cd $ULTRASCAN && doxygen -u
 
+## the manual is built with sphinx, which needs a newer python3 than the platform default
+RUN dnf module enable -y python39 && dnf install -y python39 python39-pip
+RUN mkdir -p /tmp/python_bin && ln -sf /usr/bin/python3.9 /tmp/python_bin/python3
+RUN cd $ULTRASCAN/doc/manual/source && python3.9 -m pip install -r requirements.txt
+
 # make ultrascan
 ## faster qmake, make first
 RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && qmake && make -j$parallel_compile
 RUN cd $ULTRASCAN && export PATH=$QTDIR/bin:$PATH && ./makeall.sh -j$parallel_compile
 
 ## old versions of makeall.sh fail to build manual as it is doing in parallel, make sure we build the manual
-RUN cd $ULTRASCAN/doc/manual && export PATH=$QTDIR/bin:$PATH && make -j1
+## /tmp/python_bin is prepended so the Makefile's "python3 -m sphinx" resolves to python3.9
+RUN cd $ULTRASCAN/doc/manual && export PATH=/tmp/python_bin:$QTDIR/bin:$PATH && make -j1
 
 # make sure manual exists
 RUN cd $ULTRASCAN && ls -l bin/manual*
