@@ -683,7 +683,7 @@ int US_EqMath::calc_jacobian()
    QVector< double > v_vbar ( mcomp );
    QVector< double > v_buoy ( mcomp );
 
-   v_jacobi.fill( 0.0, ntpts * nfpars );
+   v_jacobi.fill( 0.0, static_cast<qsizetype>( ntpts ) * nfpars );
 
    switch( modelx )
    {

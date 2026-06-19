@@ -642,9 +642,9 @@ void US_FitWorker::updateQN( double* gamma, double* delta )
    QVector< double* > mvvtrns( nfpars );
    QVector< double* > mhgtrns( nfpars );
    QVector< double* > mdatrns( nfpars );
-   QVector< double  > dvvtrns( nfpars * nfpars );
-   QVector< double  > dhgtrns( nfpars * nfpars );
-   QVector< double  > ddatrns( nfpars * nfpars );
+   QVector< double  > dvvtrns( static_cast<qsizetype>( nfpars ) * nfpars );
+   QVector< double  > dhgtrns( static_cast<qsizetype>( nfpars ) * nfpars );
+   QVector< double  > ddatrns( static_cast<qsizetype>( nfpars ) * nfpars );
    double*  hgamma = vhgamma.data();
    double*  vv     = vvv    .data();
 

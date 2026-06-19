@@ -1504,7 +1504,7 @@ DbgLv(1) << "sfd: klambda ccx trpxs trpxe" << klambda << ccx << trpxs << trpxe;
    QVector< double > nnls_a;
    QVector< double > nnls_b;
    QVector< double > nnls_x;
-   nnls_a.fill( 0.0, klambda * nspecies );
+   nnls_a.fill( 0.0, static_cast<qsizetype>( klambda ) * nspecies );
    nnls_b.fill( 0.0, klambda );
    nnls_x.fill( 0.0, nspecies );
 
