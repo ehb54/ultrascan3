@@ -26,9 +26,11 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   # Get commit date (last commit date)
   NEW_REVISION_DATE=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M:%S UTC' 2>/dev/null || echo "unknown")
 
-  # Check for local changes (tracked files only; ignore untracked)
-  if ! git diff --quiet --exit-code 2>/dev/null \
-     || ! git diff --quiet --cached --exit-code 2>/dev/null; then
+  # Check for local changes in source files only (.h .cpp .ui .qrc)
+  # Run from repo root so pathspecs match across all subdirectories
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  if ! git -C "$REPO_ROOT" diff --quiet --exit-code -- '*.h' '*.cpp' '*.ui' '*.qrc' 2>/dev/null \
+     || ! git -C "$REPO_ROOT" diff --quiet --cached --exit-code -- '*.h' '*.cpp' '*.ui' '*.qrc' 2>/dev/null; then
     NEW_LOCAL_CHANGES=" Δ"
   else
     NEW_LOCAL_CHANGES=""
