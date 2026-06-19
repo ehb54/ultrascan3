@@ -120,7 +120,7 @@ RUN cd qt-everywhere-src-$qt_version && nohup make install -j1 2>&1 > makeinstal
 RUN rm -r qt-everywhere-src-$qt_version
 
 # install qwt
-RUN wget https://versaweb.dl.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$qwt_version.tar.bz2 && tar jxf qwt-$qwt_version.tar.bz2 && cd qwt-$qwt_version && /qt-$qt_version/bin/qmake && make -j$parallel_compile
+RUN wget https://downloads.sourceforge.net/project/qwt/qwt/$qwt_version/qwt-$qwt_version.tar.bz2 && tar jxf qwt-$qwt_version.tar.bz2 && cd qwt-$qwt_version && /qt-$qt_version/bin/qmake && make -j$parallel_compile
 
 # get source
 ## invalidate docker cache
