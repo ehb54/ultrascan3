@@ -2,7 +2,7 @@
 
 ### exposed ARGs override defaults with --build-arg <varname>=<value>
 
-ARG image=ubuntu:18.04
+ARG image=ubuntu:22.04
 ## ARGs are scoped FROM
 FROM $image
 
@@ -149,6 +149,10 @@ RUN cpan Template
 RUN apt-get install -y graphviz
 ## upgrade doxygen as the file is often not current in repo
 RUN cd $ULTRASCAN && doxygen -u
+
+## the manual is built with sphinx
+RUN apt-get install -y python3-pip
+RUN cd $ULTRASCAN/doc/manual/source && PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install -r requirements.txt
 
 # make ultrascan
 ## faster qmake, make first
