@@ -37,7 +37,21 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    disable_updates = false;
    validate_all_rows();
 
-   setGeometry( 200, 150, 500, 100 + 30 * ( names.size() + 4 ) );
+   // curve names can get quite long (e.g. derived HPLC/KIN frame names), so size
+   // the window width to the longest name rather than using a fixed width
+   int max_name_len = 0;
+   for ( int i = 0; i < names.size(); i++ )
+   {
+      QString display_name = names[ i ];
+      display_name.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+      if ( display_name.length() > max_name_len )
+      {
+         max_name_len = display_name.length();
+      }
+   }
+   int width = qBound( 600, 250 + max_name_len * 8, 1400 );
+
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 4 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -67,6 +81,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    t_conc->setHorizontalHeaderLabels( QStringList() << us_tr( "Curve Name" ) << us_tr( "Concentration" ) );
    t_conc->setSortingEnabled( false );
    t_conc->verticalHeader()->hide();
+   t_conc->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
+   t_conc->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::ResizeToContents );
 
    populate_table();
 
