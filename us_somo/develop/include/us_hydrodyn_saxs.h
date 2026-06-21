@@ -786,6 +786,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void load_iqq_csv( QString filename, bool just_plotted_curves = false );
 
+      void do_extrap_c0( QStringList qsl_sel_names,
+                          QStringList qsl_data,
+                          map < QString, QString > name_to_errors_map,
+                          vector < double > q,
+                          QString filename );
+
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();
       void clear_plot_saxs_and_replot_experimental();
