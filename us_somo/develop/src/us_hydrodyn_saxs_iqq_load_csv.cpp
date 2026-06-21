@@ -700,13 +700,21 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_clear_plot_first()
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_extrapolate_c0()
 {
    *extrapolate_c0 = cb_extrapolate_c0->isChecked();
-   if ( *extrapolate_c0 && expert_mode ) {
-      cb_run_nnls    ->setChecked( false );
-      cb_run_best_fit->setChecked( false );
-      cb_run_ift     ->setChecked( false );
-      *run_nnls       = false;
-      *run_best_fit   = false;
-      *run_ift        = false;
+   if ( *extrapolate_c0 ) {
+      // the caller clears the plot (if checked) before the concentration dialog
+      // even opens, so if the user then cancels out of that dialog the previously
+      // plotted curves are gone with no way back -- avoid that the same way
+      // run_ift already does, by forcing "Clear plot" off while this is active
+      cb_clear_plot_first->setChecked( false );
+      *clear_plot_first = false;
+      if ( expert_mode ) {
+         cb_run_nnls    ->setChecked( false );
+         cb_run_best_fit->setChecked( false );
+         cb_run_ift     ->setChecked( false );
+         *run_nnls       = false;
+         *run_best_fit   = false;
+         *run_ift        = false;
+      }
    }
    update_enables();
 }
@@ -773,7 +781,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
    pb_save_as_dat->setEnabled(qsl_sel_names->size() == 1);
    pb_save_selected->setEnabled(qsl_sel_names->size());
    pb_ok->setEnabled( qsl_sel_names->size() );
-   cb_clear_plot_first->setEnabled( qsl_sel_names->size() && !cb_run_ift->isChecked() );
+   cb_clear_plot_first->setEnabled( qsl_sel_names->size() && !cb_run_ift->isChecked() && !cb_extrapolate_c0->isChecked() );
    cb_run_nnls->setEnabled( !cb_run_ift->isChecked() && !cb_extrapolate_c0->isChecked() );
    cb_run_best_fit->setEnabled( !cb_run_ift->isChecked() && !cb_extrapolate_c0->isChecked() );
    cb_nnls_csv->setEnabled( cb_run_nnls->isChecked() );
