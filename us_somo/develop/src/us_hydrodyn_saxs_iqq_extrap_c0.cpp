@@ -315,6 +315,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    plot_one_iqq( out_q, out_I0, out_I0_err, final_name );
 
+   // this curve is I(q)/c extrapolated to c=0, i.e. already concentration-normalized
+   // -- mark it with SOMO's "Conc:1" convention for already-normalized curves so
+   // anything downstream that respects conc_csv treats it correctly
+   update_conc_csv( final_name, 1e0 );
+
    editor_msg( "black",
               QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
                        "Note: this curve is I(q)/concentration extrapolated to c=0, not raw intensity -- "
