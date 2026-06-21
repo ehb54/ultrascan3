@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO SAXS/SANS (SAS) Simulation Module</title>
+	<title>SOMO SAS MALS+SAXS Module</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -24,10 +24,793 @@
 SOMO - SAXS/SANS (SAS) Module: MALS+SAXS</h2>
 <p>
 <p>
-<h3><center>Last updated: July 2024 </center></h3><p>
+<h3><center>Last updated: September 2024 </center></h3><p>
 </center>
-The <b>Help</b> for the <b><i>MALS+SAXS</b></i> module, available from the <span style="color:#CC0000">July 2024 intermediate <b><i>US-SOMO</i></b> release</span>, is under construction. We apologize for this inconvenience.
+The <b>Help</b> for the <b><i>MALS+SAXS</b></i> module, available from the <span style="color:#CC0000">July 2024 intermediate <b><i>US-SOMO</i></b> release</span>, is currently still under construction. We apologize for this inconvenience.<p>
 
+This <b>US-SOMO</b> module was conceived to allow joining <i>Multi-Angle Light Scattering (<b>MALS</b>)</i> and <i>Small-Angle X-ray Scattering (<b>SAXS</b>)</i> data collected in sequential or parallel fashion on the <i>same</i> sample, and pre-processed to put them on the <i>same <b>absolute</b></i> scale (see <a href=somo_saxs_hplc.html>here</a> and <a href=somo_mals.html>here</a>).<p>
+
+In the image below, the initial screen of the <b><i>US-SOMO MALS+SAXS</i></b> module is shown:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_initial.png" ALT="Somo-MALS+SAXS initial screen" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+As with all other <b><i>US-SOMO</i></b> modules, the buttons with the black labels are the ones currently active, and the ones with the <span style="color:#CC0000">red labels</span> are currently inactive but will become active (turning black) when allowed by the processing/visualization stage.<p>
+The left side of the window is divided in three sections, labeled "<b><i>Data files</i></b>", "<b><i>Produced Data</i></b>", and "<b><i>Messages</i></b>". By clicking on these labels, the corresponding panel below each label will disappear, allowing for an expansion of the remaining other panel(s). If every panel is made to disappear, the main graph will expand to cover the full size of the <b><i>MALS+SAXS</i></b> module window. By clicking again on the labels, the corresponding panels will be restored.<p>
+
+At the top of the left-side panel, you can pre-select a directory where your data are stored. Clicking on this field (shown in the picture above is the <i>/home/ultrascan/ultrascan/somo/saxs</i> path) will open a directory navigator where you can selected another directory. Checking the <i>Lock</i> checkbox will make the selected directory the default one upon re-starting the application.<p>
+
+In the top left panel (<b><i>Data files</i></b>) there are five buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_top_buttons.png" ALT="Somo-MALS+SAXS Top buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+<b><i>View Selected</i></b>, active when up to ten datasets are selected, will show them in text format (see below).<p>
+
+<li>
+The <b><i>Add files</i></b> button is used to load either the <i><b>MALS</b></i> or the <b><i>SAXS</b></i> data. Both type of data should be in either <i>I#</i>(<i>q,t</i>) vs. <i>q</i> or <i>I*</i>(<i>q,t</i>) vs. <i>q</i> (see <a href="somo_mals.html#Make_Idash">here</a> for a description of the <i>I#</i>(<i>q)</i> and <i>I*</i>(<i>q)</i> type of data).<p>
+As an example involving data collected in kinetics mode, in the images below we show the loading of fibrin re-polymerization data in which fibrin monomer at 0.8 mg/mL obtained from a thrombin-generated fibrin clot dissolved in CH<sub>3</sub>COONa 100 mM/CH<sub>3</sub>COOH 110 mM, pH 4.6, and then subjected to preparative SEC, was mixed in a 1:1 ratio with a TRIS-base 65 mM, NaOH 57 mM, NaCl 100 mM, pH 12.6 buffer, obtaining a final buffer composition of TRIS-base 6 mM/TRIS-NH<sub>4</sub><sup>+</sup>Cl<sup>-</sup> 265 mM, CH<sub>3</sub>COONa 105 mM, NaCl 23 mM, pH 7.425 that allows re-polymerization. The rapidly mixed solution was injected sequentially in the <b><i>MALS</i></b> and <b><i>SAXS</i></b> flow cells (data collected with a dedicated facility at the <a href=https://www.synchrotron-soleil.fr/en/beamlines/swing>SWING beamline</a> of the Synchrotron SOLEIL, Gif-sur-Yvette, France).<p>
+The <i><b>MALS</i></b> and <i><b>SAXS</i></b> original data were first processed with the <i><b>US-SOMO <a href="somo_mals.html">MALS</a></i></b> and <i><b><a href=somo_saxs_hplc.html>HPLC/KIN</a></i></b> modules to produce <i>I*</i>(<i>q,t</i>) vs. <i>q</i> datasets on the same, absolute scale (units: [g/mol]).<p>
+We begin by loading the <i>MALS</i> data using the <i><b>Add files</i></b> button and then pressing <i><b>Sel. all</i></b> (see here for its description):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_loadMALS.png" ALT="Somo-MALS+SAXS loading MALS data" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that the correct units in the <i>X</i> and <i>Y</i> axes are now displayed. Note also that at the bottom of the <i><b>Messages</i></b> section, a <span style="color:#CC0000">warning in red color</span> is printed, alerting of conflicts between the <i>time</i> stored in the filename and the actual collection time stored inside the file, which can be checked by selecting only the file(s) listed in the warning message(s) and pressing <i><b>View Selected</i></b>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_viewselected.png" ALT="Somo-MALS+SAXS viewing a select file in text mode"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The source of this error, which was automatically corrected on loading the file(s) as indicated in the warning message, has been found and corrected in the <i><b>US-SOMO MALS</i></b> module. Nevertheless, this kind of check is maintained to correct similar and yet undiscovered potential errors in the file-naming process.<p>
+Before loading the corresponding <i>SAXS</i> data, we change the view to double logarithmic scale by pressing the <i><b>Log X</i></b> and <i><b>Log Y</i></b> buttons at the top of the graphic window (the name of these buttons will then change to <i><b>Lin X</i></b> and <i><b>Lin Y</i></b>; see here for a full description of the <i>Plot buttons</i> utilities):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_MALS_data_loglog.png" ALT="Somo-MALS+SAXS viewing MALS data in log log scale" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+We can now add the corresponding <i>SAXS</i> data, by using again the <i><b>Add files</i></b> button and pressing <i><b>Sel. all</i></b> again:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_SAXS_data_loading.png" ALT="Somo-MALS+SAXS loading SAXS data" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that some of the <i>SAXS</i> data files have a pronounced upturn at low <i>q</i>-values, potentially inicating some capillary fouling. We will deal with this problem later on (see here).
+
+<li>
+<b><i>Add Dir.</i></b> will allow loading all files within a selected directory. <span style="color:#CC0000">Warning</span>: you must be sure that all files in the selected directory are consistent with each other, <i>i.e.</i>, that no other kind of files are present. Also, no sub-directories must be present within the selected directory.<p>
+
+<li>
+<b><i>To SOMO/SAS</i></b> will transfer <i>compatible</i> selected datasets back into the <b>US-SOMO <i>SAS</i></b> module.<p>
+
+<li>
+<b><i>Remove files</i></b> will discard selected files; if the files were produced by the module, and were not previously saved, a warning window will pop-up, allowing to save them, proceed without saving, or to stop removing the selected items (see <a href="#removing">here</a>):
+
+</ul>
+<br>
+
+Below the window with the loaded files listing there is a second section of buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_second_set_buttons.png" ALT="Somo-MALS+SAXS Second Set of buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<ul>
+<li>
+<b><i>Sel. all</i></b> will select all files.<p>
+
+<li>
+<b><i>Sel. Unsel.</i></b> will allow toggling the selection between selected files and everything else not currently selected.<p>
+
+<li>
+<b><i>Adv. Sel.</i></b> will open up a panel in which several selection options can be utilized (see <a href=saxs_hplc_nth.html>here</a>).<p>
+
+<li>
+<a id="Average"></a>
+<b><i>Average</i></b> will produce an average with propagated SDs of selected <i>I</i>(<i>q</i>) data. The <i>I</i>(<i>q</i>) values from each frame will be averaged, and then a scaling factor will be determined for each frame against the average resulting frame. The scaling factor for each original frame multiplies the frames's SD. The average intensity SDs are computed as the square root of the sum of the squares of each curves scaled SDs, and this is divided by the number of curves. The resulting datset filename will contain the number of frames averaged, and the initial and final frame numbers, followed by "_avg".<p>
+
+<li>
+<b><i>Bin</i></b> allows averaging adjacent points in <i>I</i>(<i>q</i>) datasets, starting with the first point in the file and using a binning size defined in a pop-up dialogue:<p>
+
+<center>
+<img SRC="somo-HPLC-SAXS_bin.png" ALT="SOMO HPLC-SAXS binning window panel">
+</center>
+<p>
+
+<li>
+<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2<i>n</i>+1 points.<p>
+<center>
+<img SRC="somo-HPLC-SAXS_smoothing.png" ALT="SOMO HPLC-SAXS smoothing window panel">
+</center>
+<p>
+
+<li>
+<a id="commontime"></a>
+<b><i>I#,I*(q) common times</i></b>. Pressing this button will launch the first step in the <i>MALS+SAXS</i> datasets joining operation. Especially in kinetic mode, <i>SAXS</i> frames could be collected with longer time intervals in respect to <i>MALS</i> data points, because of both radiation damage issues, and limited sample quantities. In fact, in kinetic mode, while the sample is isolated in the <i><b>MALS</i></b> cell and can be continuously illuminated with the relatively low-intensity laser light beam, the sample for the <i><b>SAXS</i></b> capillary must be continuosly changed to avoid radiation damage, by pushing it in small volume increments from a sample accumulation loop containing a finite amount of material. <br>
+In addition, the absolute times in the <i>MALS</i> and <i>SAXS</i> datasets can be slightly different. For these reasons, this "<i>common times</i>" utility will use the <i>SAXS</i> frames times to select corresponding times in the <i>MALS</i> datasets, interpolating them from the two closest time points (above and below) corresponding to each <i>SAXS</i> frame. By <b><i>default</i></b>, a <i>linear interpolation</i> method will be used, but <i>quadratic</i> and <i>cubic spline interpolation</i> methods are also available from the <a href="mals_saxs_options.html"><b><i>Options</i></b></a> panel, accessible from the corresponding button placed on the bottom line (see <a href="#options">here</a>).<p>
+On pressing <b><i>I#,I*(q) common times</i></b>, the two datasets are first analyzed, and a pop-up message will report the findings:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_commons times_popup.png" ALT="Somo-MALS+SAXS common times pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+listing the number of individual files with their starting and ending times, and the <i>q</i>-values covered, followed by the determined common time range. Pressing "<i>Ok</i>" will allow the creation of the <i>MALS</i> new dataset with <i>I*</i>(<i>q,t</i>) vs. <i>q</i> datasets having common times with the corresponding available <i>SAXS</i> datasets.<p>
+Before completion, a second pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_other_MALS_data_popup.png" ALT="Somo-MALS+SAXS other MALS data to be interoplated pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+asking if there are other <i><b>MALS</i></b>-derived sets of time-dependent parameters (such, <i>e.g.</i>, the <i>weight-average molecular weight M<sub>w</sub></i> or the <i>rms z-average radius of gyration [&lt;R<sub>g</sub><sup>2</sup>&gt;<sub>z</sub>]<sup>0.5</sup></i>) that might be put on a common time scale with <i>SAXS</i>-derived parameters. Pressing "<i>Yes</i>" a directory browser will open allowing selecting a <i>csv</i>-type file where in separate columns the times and the parameters' values must be present (not shown). Pressing "<i>No</i>" the programs will just complete the operation:  
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_SAXS_common_times.png" ALT="Somo-MALS+SAXS common times results" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+automatically selecting in the graphics window the newly created <i>MALS</i> <i>I*</i>(<i>q,t</i>) vs. <i>q</i> datasets having the same times of the already selected <i>SAXS</i> datasets. This new set of data has "<i>iLin_common</i>" appended to their filenames, and they will also appear in the <i><b>Produced Data</i></b> section.<p>
+
+<li>
+Pressing <b><i>Scroll</i></b> will allow to examine in the graphics window each single time point consisting of the common <i>MALS</i> and <i>SAXS</i> datasets:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_SAXS_common_times_scroll1.png" ALT="Somo-MALS+SAXS common times results scroll first frame" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+starting from the first time point. Here we have changed the representation from dots connect by a line to symbols with their associated error bars by selecting the <i>Err</i> checkbox in the <i>Options</i> submenu on top of the graphics windows (see here). The names of the joined <i>MALS+SAXS</i> frames are reported below the cyan-scale bar-wheel, and the time being examined is reported to the right of the bar-wheel.<br>
+Scrolling is performed by either using the cyan-scale bar-wheel, or by clicking on the the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides, and can be used to check how the select common time <i>MALS+SAXS</i> frames behave:  
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_SAXS_common_times_scroll2.png" ALT="Somo-MALS+SAXS common times results scroll another frame" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing <i><b>Cancel</i></b> in the line of buttons below the graphics window will exit from the <i><b>Scroll</i></b> function.<p>
+</ul>
+
+Before describing the last two buttons in this panel (<i><b>Scale</i></b> and <i><b>Join I#,I*(q) by time</i></b>), let's first describe other panels and functions.<p>
+
+The file names of data produced in this module are shown in the <b><i>Produced Data</b></i> panel to the centre-left, and can be selected and saved to files using the appropriate buttons below it.<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_Produced_data.png" ALT="Somo-MALS+SAXS Produced Data section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+By clicking on the file path shown below the <b><i>Produced Data</b></i> label, a file system navigator will open, allowing selecting a different directory and/or creating a new one.<p>
+Several buttons are available in this panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_Produced_data_buttons.png" ALT="Somo-MALS+SAXS Produced Data buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<ul>
+<li>
+<b><i>Select all</i></b> will select all files in this panel (single files can be selected by individually clicking on them, shift-click will select a contiguous series, ctrl-click allows multiple irregularly spaced selections).<p>
+<li>
+<b><i>Sel. Unsel.</i></b> will allow toggling the selection between selected files and everything else not currently selected.<p>
+<li>
+<a id="removing"></a>
+<b><i>Remove</i></b> will discard the selected files. If the files were produced by the module, and were not previously saved, a warning window will pop-up, allowing to save them, proceed without saving, or to stop removing the selected items:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_remove_panel.png" ALT="Somo-MALS+SAXS question asked on removing"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Show</i></b> will add the selected file(s) among those produced to the ones already displayed in the graphics window.<p>
+<li>
+<b><i>Show only</i></b> will show only the selected file(s) among those produced in the graphics window.<p>
+</ul>
+Two types of files can be produced:<p>
+<ul>
+<li>
+csv-style (<b><i>Save CSV</i></b>)<p>
+<li>
+or regular 3-columns .dat files (<b><i>Save</i></b>).<p>
+</ul>
+
+<hr>
+
+In the <b><i>Messages</i></b> area, the operations performed are tracked, and computed parameters are shown. The display can be copied or cleared from the <i>File</i> pull-down menu: <p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_Messages.png" ALT="Somo-MALS+SAXS Messages section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The bottom line of this module contains the <i><b>Help</i></b>, <i><b>Options</i></b>, and <i><b>Close</i></b> buttons, with in between a progess bar showing in blue color and with a numeric % value the advancement of the currect action:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_bottom line.png" ALT="Somo-MALS+SAXS bottom line of commands"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<a id="options"></a>
+On pressing <i><b>Options</i></b>, a pop-up panel will be shown:<p>
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_options.png" ALT="Somo-MALS+SAXS Options"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+See <a href=mals_saxs_options.html>here</a> for a description of this module.<p>
+<hr>
+
+On the top of the graphics window there is a row of round "<b><i>Plot buttons:</i></b>" checkboxes each one controlling the showing of a series of buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_plot_buttons.png" ALT="Somo-MALS-SAXS graphics plot buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The <i>Options</i> checkbox will enable these buttons:<p>
+
+<ul>
+<li>
+<b><i>Rescale X-Y</i></b>: adjusts the X-Y axes on the graphics window to maximize the display of shown datasets (no effect on the data themselves).<p>
+<li>
+<b><i>Rescale Y</i></b>: adjusts only the Y axis on the graphics window to maximize the display of shown datasets only along this direction (no effect on the data themselves).<p>
+<li>
+The <b><i>Log X</i></b> (<b><i>Lin X</i></b>) and <b><i>Log Y</i></b> (<b><i>Lin Y</i></b>) buttons allow to toggle between linear and log<sub>10</sub> scaling of the data on the <i>x</i>- and <i>y</i>-axes, respectively (if zero or negative values are present, they will be temporarily removed when the scale is set to log<sub>10</sub> mode, as they cannot be shown on the display in this mode). The buttons will change their respective label once pressed, to underscore what is the action currently available.<p>
+<li>
+Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selected, will switch their representation from the dots connected with a line mode, to symbols (diamonds) with their associated SDs represented as error bars mode.<p>
+<li>
+Selecting the <b><i>Dots</i></b> checkbox will switch the data representation from the dots connected with a line mode to dots only mode.<p>
+<li>
+Each time the <b><i>Width</i></b> button is pressed, it increments the data line (or symbol) size of the plots, until after five iterations it goes back to the initial value.<p>
+<li>
+<b><i>Color</i></b> shifts the colors used in the graphics window; the operation can be repeated until a better contrast with the background is achieved. Note that the background color can be changed by right-clicking on the plot borders, which will open up a pop-up dialogue panel where all plot characteristics can be modified.<p>
+<li>
+<b><i>Legend</i></b> will turn on below the graphics window a display of the correspondence between colours and filenames (automatically disabled if the selected files are 20 or more and/or if the <b><i>Err</i></b> checkbox is selected).<p>
+</ul>
+
+In the image below eight files (four couples of common-time <i>MALS</i> and <i>SAXS</i> datasets) were selected, the <b><i>Dots</i></b> checkbox was checked, <b><i>Width</i></b> was pressed twice, <b><i>Color</i></b> was pressed several times, and <b><i>Legend</i></b> was also pressed:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_Plot_Options_demo.png" ALT="Somo-MALS+SAXS graphics plot buttons demo"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+By selecting the <i>Err</i> checkbox, the <i>Legends</i> disappear, and the <i><b>Width</i></b> button has to be pressed three times to obtain this image:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_Plot_Options_demo2.png" ALT="Somo-MALS+SAXS graphics plot buttons demo 2"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<br>
+
+The <i>Selections</i> checkbox will enable these buttons:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_selections_buttons.png" ALT="Somo-MALS+SAXS graphics selections buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+<b><i>Select Visible</i></b> will select the files shown in the graphics window, which can be zoomed using the mouse (left click and drag). For instance, this is a practical way of selecting only a few files, by zooming on a region where only them are present.<p>
+<li>
+<b><i>Remove Vis(ible)</i></b> will instead remove the files shown in the graphics window.<p>
+<li>
+<b><i>Movie</i></b>: Pressing this button will open a pop-up window with the commands allowing to view in the main graphics window of the <b>US-SOMO <i>MALS+SAXS</i></b> module a series of selected data files in a movie-like manner, and to optionally save each frame as an image for real movie-making operations (see <a href=somo_saxs_hplc_movie.html>here</a>).<p>
+<li>
+<b><i>Save plots</i></b> allows saving the data shown in any of the plots currently visualized in csv-formatted files. Pressing it will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
+</ul>
+<br>
+The <i>Cropping</i> checkbox will enable these buttons:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_cropping_buttons.png" ALT="Somo-MALS+SAXS graphics cropping buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+When a part of the graph is selected using the mouse/left button, the buttons become all available (only <b><i>Crop Zeros</i></b> and <b><i>Crop Common</i></b> are available when files are just displayed after selection).<p>
+<ul>
+<li>
+<b><i>Crop Common</i></b> will crop all selected files so that they have identical x-axis values by dropping points outside of the union of all selected file's x-axis values.<p>
+<li>
+<a id="Cropvis"></a>
+<b><i>Crop Vis(ible)</i></b> will remove what is shown in the graphics window. For instance, this is practical way to remove "bad" points. As an example, we can remove the lowermost <i>q</i>-values that results from capillary fouling after a certain reaction time from the <i>SAXS</i> datasets, as shown in the image below, before scaling them with the common times <i>MALS</i> datasets. Note: crop visible is <b>not</b> allowed in the middle of a dataset, only at the beginning or at the end!
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_commontimes_all_dots.png" ALT="Somo-MALS+SAXS common times datasets shown as dots" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+We beging by zooming on the region where we want to remove the "bad" datapoints: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_cropvis_select.png" ALT="Somo-MALS+SAXS common times selecting for Crop Visible" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+By pressing <b><i>Crop Vis</i></b> the shown datapoints will be removed from each <i>SAXS</i> file, as can be seen by zooming out and showing the data as points connected by lines:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_cropvis_results.png" ALT="Somo-MALS+SAXS common times results of Crop Visible" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Crop to Vis(ible)</i></b> will keep only what is shown in the graphics window. For instance, this is practical way to trim the data on the <i>x</i>-axis.<p>
+<li>
+<b><i>Crop Zeros</i></b> will remove data having zero or negative values in the intensity columns (<span style="color:#CC0000">discouraged: a warning panel will pop-up, asking the user whether she/he really wants to proceed, since experimental zero or negative values have statistical significance</span>).<p>
+<li>
+<b><i>Crop Left</i></b> and <b><i>Crop Right</i></b> will remove one point on the left or right of the selected data, respectively.<p>
+<li>
+<b><i>Undo</i></b> will undo the last operation.<p>
+</ul>
+<br>
+
+The <i>q exclude</i> checkbox will enable these buttons:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_q_exclude_buttons.png" ALT="Somo-MALS+SAXS graphics q-exclude buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This utility was developed to allow excluding "bad" <i>q</i>-values from the scaling procedure utilized to optimize the <i>MALS</i> and <i>SAXS</i> datasets on the <i>y</i>-axis (see here). The "<i>Currently no excluded q values</i>" label appears on selecting this checkbox if no previous action was taken in this respect. The utility works by selecting with the mouse a zone containing a <i>q</i>-values range, and then operating with the provided buttons.<p>
+
+<ul>
+<li>
+<i><b>Excl. Vis</i></b> will select visible <i>q</i>-values from the subsequent scaling operation. For instance, in the current datasets, there are some <i>q</i>-values on the <i>SAXS</i> side that present a large upturn after some time:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_exclude_q_vis_demo1.png" ALT="Somo-MALS+SAXS graphics labeling as 'excluded' some visualized q-values"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+After reverting to the <i>Err</i> visualization mode, by selecting the lowermost three <i>SAXS q</i>-values with the mouse and pressing <i><b>Excl. Vis</i></b> one obtains this result, where in the graphics window the three selected <i>q</i>-values have been listed and marked as "<i>excludeed</i>" by a red cross:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_exclude_q_vis_demo2.png" ALT="Somo-MALS+SAXS graphics labeling as 'excluded' some visualized q-values second step"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<i><b>Excl. Left</i></b> and <i><b>Excl. Right</i></b> will exclude just one <i>q</i>-value to the left or to the right, respectively, of what is shown in the grahics window.<p>
+
+<li>
+<i><b>Excl. Clear</i></b> will clear all pre-selected excluded <i>q</i>-values.<p>
+
+<li>
+The last checkbox above the graphics window, <b><i>None</i></b>, will just hide the buttons row below the round checkboxes row.<p>
+
+</ul>
+<br>
+
+We can now return to the second section of buttons below the window with the loaded files listing:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_second_set_buttons1.png" ALT="Somo-MALS+SAXS Second Set of buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+to describe the use of the two last buttons.<p>
+<ul>
+<li>
+<i><b>Scale</i></b>. On pressing this button, the first time point of the previously selected <i>SAXS</i> datasets <b>and</b> <i>MALS</i> datasets  with <b>common times</b> is displayed in the graphics window, and a new series of fields and buttons are shown:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale1.png" ALT="Somo-MALS+SAXS scaling initial graphic window" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Here, the <i>Err</i> checkbox has been selected to show the associated error bars.<br>
+Two sets of dashed vertical lines are now displayed, with associated fields having their background color matching the vertical dashed lines colors. On the left side, the pink vertical dashed lines mark the beginning ("<i>Start</i>") and the end ("<i>End</i>") of a zone in the <i>MALS</i> data to be used in the scaling procedure againts the corresponding <i>SAXS</i> data. The corresponding fields are indicated by the "<i>Fit range 1 (scales)</i>" label; "<i>scales</i>" signifies that is this dataset that will be scaled against the other dataset (but at the end of the procedure the scaling can be reversed, see below). On the right side, the light green vertical dashed lines mark the beginning (<i>Start</i>") and the end ("<i>End</i>") of a zone in the <i>SAXS</i> data against which the corresponding <i>MALS</i> data will be scaled. The corresponding fields are indicated by the "<i>Fit range 2 (fixed)</i>" label.<p>
+We beging by adjusting these ranges, by either typing new <i>q</i>-values in the provided fields, or, after having clicked in the corresponding field, by using the cyan-scale bar-wheel, or clicking on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. The currently shown and used <i>common time</i> point is indicated in the field to the right of the cyan-scale bar-wheel, and can be changed by clicking on this field and using the bar-wheel or the  "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides.<br>
+Normally, the range should be restricted to the 5-6 highest <i>MALS q</i>-values, and to the &sim;20 lower <i>q</i>-values <i>SAXS</i> points (sometimes excluding the very noisy intial <i>q</i>-values, which in the example shown are been already <i>excluded</i> as indicated on the top of the graph if the <i>q exclude</i> checkbox is checked, and in any case by the red crosses on the plot): 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale2.png" ALT="Somo-MALS+SAXS scaling setting the ranges" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Below the ranges fields there are two additional fields and four new buttons. 
+<li>
+The first field <i>Global scale:</i> indicates the current vertical scaling factor. It is updated at the end of a scaling procedure, but a value can by also typed in it. For instance, this can be useful if an optimal scaling factor has been determined on a restricted set of <i>MALS</i> and <i>SAXS</i> datasets, and then applied to the remaining datasets.<p>
+
+<li>
+<i>MALS SD Mult.:</i> In this field the <i>MALS</i> data standard deviation (or any other form of associated error bars) can be all multiplied by a factor. This option is introduced because usually the <i><b>MALS</i></b>-obtained data have associated SD much lower than the corresponding <i><b>SAXS</i></b>-obtained data, and thus they will dominate the scaling procedure <i>if</i> a weighted fitting is applied. Moreover, if subsequently the <i>joined MALS+SAXS</i> data will be analyzed by any type of weighted fitting functions, the same problem of over-weighting the <i>MALS</i> data will be present: the multiplying factor entered here can be used to make permanent this change in the <i>global MALS+SAXS</i> resulting datasets. For this example, we will enter a value of 30 for this factor.<p>
+
+<li>
+<b><i>Fit</i></b> will perform a trial fit on the currently selected <i>MALS+SAXS common time</i> dataset. Below this line of fields and buttons, the <i>Fit controls</i> are present:<p>
+<ul>
+<li>
+First, a list of provided <i>polynomials</i> can be accessed by clicking on the currently selected polynomial: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_polynomials.png" ALT="Somo-MALS+SAXS available polynomials"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+with a 3<sup>rd</sup> degree polynomial being the <b><i>default</i></b> option.<p>
+
+<li>
+A series of available fitting procedures can by selected by clicking on the currently selected procedure acronym next to the polynomials section:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_fitting_methods.png" ALT="Somo-MALS+SAXS available fitting methods"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+with the <i><b>LR (Linear Regression)</i></b> method being the <i><b>default</i></b> choice. A description of the other methods available can be found here <span style="color:#CC0000">(to be added)</span>.<p>
+
+<li>
+A series of weighting procedures to be applied in the fitting is also provided:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_weighting_methods.png" ALT="Somo-MALS+SAXS available weighting procedures for the fit"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+including <i>no weighting</i>, <i>1/amount</i> (that is, the inverse of each data point), <i>1/amount^2</i> (that is, the inverse of the square of each data point), <i>1/SD</i> (the <b><i>default</i></b> choice), and <i>1/SD^2</i>.<p>
+
+</ul>
+
+<li>
+Pressing <i><b>Fit</i></b> will show the current fit as a <span style="color:#CC0000">red line</span> between the selected <i>q</i>-ranges:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale3.png" ALT="Somo-MALS+SAXS scaling test fit" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This test fit could be also applied to other <i>MALS+SAXS common time</i> datasets, to verify the appropriateness of all the chosen fitting parameters.
+
+<li>
+<b><i>Minimize</i></b> will then find the best <i>vertical scaling factor</i> by appying the chosen fitting procedure and associated parameters over <i>all MALS+SAXS common time</i> datasets, minimizing the &chi;<sup>2</sup> value over all fittings. On pressing it, a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_minimize_popup.png" ALT="Somo-MALS+SAXS minimize pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where values for the minimum ("<i>Global scale start:</i>"; <b><i>default: 0.5</i></b>) and maximum ("<i>Global scale end:</i>"; <b><i>default: 1.5</i></b>) scaling factor limits, and the <i>step size</i> (<b><i>default: 0.01</i></b>) can be chosen. Pressing "<i>Cancel</i>" will abort the operation, pressing "<i>Ok</i>" will launch it. On the graphics window, the steps of the global fitting procedure overlaid to the cureently selected <i>MALS+SAXS common time</i> dataset will be shown, followed by the final <i>global vertical scaling</i> results with its value now printed in the <i>Global scale:</i> field:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale4.png" ALT="Somo-MALS+SAXS global scaling result" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that the <i>Global scale:</i> value, 1.49, is practically equivalent to the <i>Global scale end:</i> utilized value, 1.5, and both the fit <span style="color:#CC0000">red line</span> and the normalized &chi;<sup>2</sup> ("<i>nChi^2</i>") for this fit, 1.19225, and its average value for all fits, 17.209 for 74 curves, reported below the <i>Fit controls</i> line, are not optimal. The high average &chi;<sup>2</sup> value is mainly due to the capillary fouling present after a certain time point, as can be seen by selecting the <i>t</i>=92.75 s time point and pressing <i><b>Fit</i></b> (<i><b>Width</i></b> on the <i>Options Plot buttons</i> was also pressed once):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale5.png" ALT="Somo-MALS+SAXS global scaling result at t=92.75 s" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+where the n&xhi;<sup>2</sup> value is already quite high, 8.55345, notwithstanding the exclusion from the fit of the first 3 <i>SAXS q</i> points. To try and improve the scaling, we can select <i>MALS+SAXS</i> datasets only up to <i>common time</i> 70.25 s, and extend the <i>SAXS q</i>-range to &sim;0.01 &Aring;<sup>-1</sup>, with this <i>Global scaling</i> results:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale6.png" ALT="Somo-MALS+SAXS global scaling results with different settings" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where the <i>Global scale</i> is now 0.95, and <i>n</i>&chi;<sup>2</sup> for the initial time point (<i>t</i>=2.5 s) fit, &sim;0.655, and its average value for all fits, &sim;0.737 for 29 curves, is also excellent. Increasing the <i>MALS</i> SD multiplier to 50, and using a 4<sup>th</sup> degree polynomial yields similar results:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale7.png" ALT="Somo-MALS+SAXS global scaling results with increasing MALS SD multiplier and polynomial degree" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+with a <i>Global scale</i> of 1.02, a <i>n</i>&chi;<sup>2</sup> for the initial time point (<i>t</i>=2.5 s) fit of &sim;0.546, and an average <i>n</i>&chi;<sup>2</sup>  value for all fits of &sim;0.597 for 29 curves. The improvement in <i>n</i>&chi;<sup>2</sup> values is also due to the larger <i>MALS</i> SD values, besides the higher degree of freedom of the 4<sup>th</sup> degree polynomial.<p>
+
+<li>
+We could then <i><b>Keep</i></b> this <i>Global scale</i> value, and use it for all the remaining <i>MALS+SAXS common time</i> datasets.<p>
+This is done by reloading all <i>SAXS</i> and <i>MALS common time</i> datasets, and the module will show the kept parameters as used/derived from the previous <i>scaling minimization</i> with fewer datasets, and apply them to any other dataset that is now loaded. This can be seen the previously examined <i>t</i>=92.75 s time point:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scale8.png" ALT="Somo-MALS+SAXS global scaling results at t=92.75 s with the new parameters" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Obviously, the <i>n</i>&chi;<sup>2</sup> for this time point, and its average value for all fits, are worse than when the entire dataset scaling was <i>minimized</i>, but this is because the presence of not-excluded low-<i>q SAXS</i> points that are clearly affected by the capillary fouling.<p>
+
+<li>
+Pressing <i><b>Reset</i></b> will restore all parameters in this function to the default settings.<p>
+
+<li>
+<i><b>Make scaled</i></b> is used to generate a <i>scaled</i> set of either the <i>common time MALS</i> in respect to the <i>SAXS</i> datasets, or the other way around. For this example, since <i>kept</i> scaling parameters determined on a subset of files were not <i>minimized</i> again upon loading all files, on pressing <i><b>Make scaled</i></b> a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_make_scaled_popup1.png" ALT="Somo-MALS+SAXS Make scaled pop-up if scaling was not re-minimized"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing "<i>Quit</i>" will abort this operation. For instance, we can change the <i>MALS</i> SD <i>multiplier</i> value used in the minimization process to another value, since these modified <i>MALS</i> SDs can replace the original ones in the final joined <i>MALS+SAXS</i> datasets (see below). In this case, we aborted the operation and changed the <i>MALS</i> SD <i>multiplier</i> value to 30, and restarted the process, pressing "<i>Continue anyway</i>" this time. Another pop-up will appear, asking which one of the two datasets should be scaled in respect to the other: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_make_scaled_popup2.png" ALT="Somo-MALS+SAXS Make scaled pop-up asking which datasets should be scaled in respect to the other datasets"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Since the <i>MALS</i> data have the lower <i>q</i>-values, that are important in the determination for instance of &lt;<i>M</i>&gt;<i><sub>w</sub></i> by Guinier fitting or in other fitting procedures, it is suggested to scale the <i>SAXS</i> data, unless there are reasons to believe that their absolute intensity values are more reliable than those of the <i>MALS</i> data. Therefore, in this example we press "<i>Inverse scaled SAXS data</i>", and the scaling utility will process all datasets.<p>
+
+<li>
+Pressing <i><b>Cancel</i></b> will exit from the scaling utility, and on the graphics window the two processed datasets, scaled <i>SAXS</i> and SD-modified <i>MALS common time</i> datasets will be automatically shown:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_make_scaled.png" ALT="Somo-MALS+SAXS make scaled final" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In the newly generated <i>MALS common time</i> files, the string "<i>MSDm30</i>" (<i>MALS SD multiplier 30</i>) has been added to their filenames to indicate that the <i>MALS</i> SD values were all multiplied by 30. In the newly generated, scaled <i>SAXS</i> files, the string "<i>SIm0_980392</i>" (<i>SAXS Intensity multiplier 0.980392</i>, the inverse of the previously determined scaling factor for <i>MALS</i> datasets) was added at the end of their filenames to indicate that they were scaled by that value.<p>
+
+If we select one of the newly generated <i>MALS common time</i> files and press <i><b>View Selected</i></b>, we can see that all the information about its processing, and the <i>x</i> and <i>y</i> units, are recorded in its header:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scaled_MALS_generated_popup.png" ALT="Somo-MALS+SAXS viewing a MALS generated file"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+If we select one of the newly generated <i>SAXS scaled</i> files and press <i><b>View Selected</i></b>, we can see that all the information about its processing, and the <i>x</i> and <i>y</i> units, are recorded in its header:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_scaled_SAXS_generated_popup.png" ALT="Somo-MALS+SAXS viewing a scaled SAXS generated file"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<br>
+<li>
+<i><b>Join I#,I*(q) by time</i></b>). The generation of a complete dataset of joined <i>MALS+SAXS</i> data can be now completed by pressing this button. If some <i>q</i>-values have been <i>excluded</i> during the <i>scaling</i> process, a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_generating_joined_excl_q_popup.png" ALT="Somo-MALS+SAXS generating joined datasets excluded q-values pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing "<i>No</i>" will maintain those <i>q</i>-values in the joined files, pressing "<i>Yes</i>" will remove them for every joined file. In this example, we press "<i>Yes</i>", and at the end of the joining process the newly created <i>MALS+SAXS</i> datasets will be automatically displayed:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_joined.png" ALT="Somo-MALS+SAXS joined datasets" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where the datasets are wisualized as points connected by lines. Tthe resulting filenames have the <i>SAXS</i> datasets root and other information, terninating with "<i>_joined</i>".<br>
+The joined <i>MALS+SAXS</i> datasets can also be individually seen using the <i><b>Scroll</i></b> button, as in this example:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SAXS_joined_scroll.png" ALT="Somo-MALS+SAXS joined MALS+SAXS datasets joined scrolled" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+</ul>
+<br>
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
@@ -43,7 +826,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 11, 2024
+Last modified on September 25, 2024
 </font>
 </body>
 </html>

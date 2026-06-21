@@ -24,9 +24,1476 @@
 SOMO - SAXS/SANS (SAS) Module: MALS</h2>
 <p>
 <p>
-<h3><center>Last updated: July 2024 </center></h3><p>
+<h3><center>Last updated: February 2026 </center></h3><p>
 </center>
-The <b>Help</b> for the <b><i>MALS</b></i> module, available from the <span style="color:#CC0000">July 2024 intermediate <b><i>US-SOMO</i></b> release</span>, is under construction. We apologize for this inconvenience.
+<span style="color:#CC0000">The <b>Help</b> for the <b><i>MALS</b></i> module, available from the <b>July 2024</b> intermediate <b><i>US-SOMO</i></b> release, is currently still under construction. We apologize for any inconvenience this might cause.</span>
+<p>
+
+This <b>US-SOMO</b> module was conceived to process <b><i>Multi-Angle Light Scattering (MALS)</b></i> data collected either autonomously or sequentially/in parallel with <i><b>Small-Angle X-ray Scattering (SAXS)</i></b> data. It is based on the data format produced by a commercial developer of such instruments (<a href=https://www.wyatt.com/>Wyatt Technology, now part of Waters Corporation</a>), collected and processed using their <a href=https://www.wyatt.com/products/software/astra.html><b><i>ASTRA<sup>&copy;</sup></b></i> software</a> versions 6.1.7.17 and 7.3.2.19, respectively. In the end, the data are saved as a comma-separated variables (csv) file containing in columns first the time (usually [min]) and then the Rayleigh ratios [cm<sup>-1</sup>] and their uncertainties for each scattering detector, and in lines their time-evolution, with the first line reporting the content of each column, such as in this example (uploaded in <i>Excel<sup>TM</sup></i>): 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="WyattRayleigh ratios csv.png" ALT="Somo-MALS Rayleigh ratios csv" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+If available, in a separate block within the same <i>csv</i> file, concentration detector data as a function of time, such as the absorbance at a specific wavelength, can also be stored. This is particularly useful when dealing with chromatographic <i><b>MALS</i></b> data (see below).<p>
+The data used to develop this module were collected using a Wyatt's now discontinued <i><b>DAWN HELEOS-II MALS</i></b> photometer, equipped with a glass flow cell. The geometry of this cell (maintained in their new <i><b>DAWN</i></b> model) is based on a solid cylinder on which a narrow channel is bored across the circular face, as exemplified in the schematic drawing below (taken from Bernocco et al. Biophys. J. 79(1) 561-583, 2000). As a consequence, the true scattering angle seen by each detector, placed at fixed positions around the circular face, depend on the refractive index of the solvent:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="DAWN_head.png" ALT="Somo-MALS Dawn head schematics" width="800"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Therefore, the user has to prepare a text file containing all the necessary information about the detectors available and their effective scattering angle, such as in this example:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_scattering_angles.png" ALT="Somo-MALS scattering angles file"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+which was derived from the "<i>Detailed Report</i>" available in <b><i>ASTRA<sup>&copy;</sup></i></b> (7.3.2.19). Here the first four lines report the content of the columns that follow: "Detector" (with its physical angle), "Refractive Index Corrected Scattering Angle", "Gain" of each photodiode, and "Normalization Coefficient" of each detector, which is the result of a crucial procedure performed within <b><i>ASTRA<sup>&copy;</sup></i></b> to compensate for the different physical characteristics of each photodiode and the geometry of their scattering angle. The latter two sets of parameters are not used in our <b><i>MALS</b></i> data treatment, since they were used by <b><i>ASTRA<sup>&copy;</sup></b></i> in producing the Rayleigh ratios at each scattering angle.<br>
+Note also that, since one of the photodiodes in the <i><b>DAWN HELEOS-II MALS</i></b> photometer utilized for this module development was replaced by a fiber optics for <i>Quasi-Elastic Light Scattering (QELS)</i> (also known as "<i>Dynamic Ligth Scattering (DLS)</i>), in the scattering angles file its position (detector 14 in this case) is marked with a "n/a (0.000)" scattering angle. The <b><i>US-SOMO MALS</i></b> module will just avoid processing data from that detector, which, although meaningless, are nevertheless present in the Rayleigh ratios <i>csv</i> exported from <b><i>ASTRA<sup>&copy;</sup></i></b>.
+<br>
+Data produced by other <b><i>MALS</i></b> photometers should be converted to this two-files format and units to be processed by the <b><i>US-SOMO MALS</i></b> module.<p>
+
+In the image below, the initial screen of the <b><i>US-SOMO MALS</i></b> module is shown:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_initial.png" ALT="Somo-MALS initial screen" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+As with all other <b><i>US-SOMO</i></b> modules, the buttons with the black labels are the ones currently active, and the ones with the <span style="color:#CC0000">red labels</span> are currently inactive but will become active (turning black) when allowed by the processing/visualization stage.<p>
+The left side of the window is divided in three sections, labeled "<b><i>Data files</i></b>", "<b><i>Produced Data</i></b>", and "<b><i>Messages</i></b>". By clicking on these labels, the corresponding panel below each label will disappear, allowing for an expansion of the remaining other panel(s). If every panel is made to disappear, the main graph will expand to cover the full size of the <b><i>MALS</i></b> module window. By clicking again on the labels, the corresponding panels will be restored.<p>
+
+At the top of the left-side panel, you can pre-select a directory where your data are stored. Clicking on this field (shown in the picture above is the <i>/home/ultrascan/ultrascan/somo/saxs</i> path) will open a directory navigator where you can selected another directory. Checking the <i>Lock</i> checkbox will make the selected directory the default one upon re-starting the application.<p>
+
+In the top left panel (<b><i>Data files</i></b>) there are eigth buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_top_buttons.png" ALT="Somo-MALS Top buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+<span id="conc_load"></span>
+The first button, <b><i>Conc. file</i></b>, is used to upload any chromatographic data files containing a concentration-related elution profile, such as those produced by UV-VIS absorption or refractive index detectors (the program will then internally keep track of such datasets, distinguishing them from MALS datasets). In theory, a similar concentration-profile file can be generated and used for kinetics data, where, howewer, the concentration is usually constant and thus can be entered as a single parameter (see <a href="#glob_conc">here</a>). By default, the program will look for "*.txt" and "*.csv" files, but the choice could be expanded to other extensions in the file upload dialogue. The currently recognized format for non-CSV concentration data is similar to the SAXS data format (see <a href=somo_saxs_hplc.html>here</a>) with the addition of the string "Frame data" in any place on the first line. The two or three columns of data are the frame number, concentration-related data, and optionally an associated SD value. For loading CSV format concentration data files, see <a href=saxs_hplc_conc_csv_frames.html>here</a>.<br>
+However, since <b><i>ASTRA<sup>&copy;</sup></i></b>-produced Rayleigh ratios <i>csv</i> data files can also contain concentration-detector data, and already band-broadened if recorded in a chromatography setting, this is the preferred method to upload such data.<p>
+
+<li>
+<b><i>SAXS Ref.</i></b> is used to upload an <i>I#</i>(<i>t</i>) vs. <i>t</i> chromatogram (in [g<sup>2</sup>/(cm<sup>3</sup>*mol)]) units, see <a href=somo_saxs_hplc.html#MakeIdash>here</a>) that will be used as a reference frame in band-broadening the <i>MALS</i> chromatograms collected either before of after the <i>SAXS</i> data in <i>MALS+SAXS</i> chromatography settings.<p>
+
+<li>
+<b><i>Concs</i></b> will show every file listed together with their associated concentration [mg/mL], if appropriate and properly set (see <a href="#Concs">here</a>). Concentrations can also be entered and modified manually. They can be used to normalize the <i>I(q)</i> vs. <i>q</i> data (see below).<p>
+
+<li>
+<b><i>View Selected</i></b>, active when up to ten datasets are selected, will show them in text format.<p>
+
+<li>
+<a id="Addfiles"></a>
+The <b><i>Add files</i></b> button is used to load either the MALS data or related data (such as the scattering angles listing or Gaussian deconvolution parameters) into the module. An operating directory can be pre-selected by clicking on the path shown on the top of this section, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for original MALS data recognized by the <b><i>US-SOMO MALS</i></b> module consist of a <i>csv</i> file containing in the first column the progressive collection time, and in subsequent columns the <i>Rayleigh ratios</i> <b><i>R</i></b>(<b><i>&theta;</i></b>) and their uncertainties [cm<sup>-1</sup>] for each scattering angle <b><i>&theta;</i></b>. The first line reports the columns specifications, where instead of scattering angles the detector number is listed. Therefore, prior to uploading the <i>Rayleigh ratios</i> file, a <i>txt</i> file containing the correspondence between the detector number and the real scattering angle must be uploaded using the <b><i>Add files</i></b> button (see above for a general description of these file formats and content). The <b><i>Add files</i></b> button will also obviously recognize and load individual <i>R</i>(<i>t,q</i>), <i>I#</i>(<i>t,q</i>), and <i>I*</i>(<i>q,t</i>) data files produced by the <b><i>US-SOMO MALS</i></b> module.<br>
+Upon loading a correctly recognized scattering angles file, its content is displayed in the "<b><i>Messages</i></b>" section.<p>
+<a id="Add_SEC_MALS"></a>
+The loading and processing of an example <i>Rayleigh ratios csv</i> file will be demonstrated using first a size-exclusion chromatography (SEC) run in which 40 &mu;L of a 7 mg/mL high molecular weight fibrinogen (HMW-FG) sample were injected on a <a href=https://www.agilent.com/store/productDetail.jsp?catalogId=5190-2519&catId=SubCat1ECS_738756>Agilent BioSec 5-500</a> (particle size 5 &mu;m, pore-size 500 &Aring;) 4.6x150 mm HPLC column, eluted with a 0.3 mL/min flow rate at 20 &deg;C with TRIS 50 mM, NaCl 100 nmM, pH 7.4 (data collected at the <a href=https://www.synchrotron-soleil.fr/en/beamlines/swing>SWING beamline</a> of the Synchrotron SOLEIL, Gif-sur-Yvette, France).<p>
+
+After loading the scattering angles files, on loading the <i>Rayleigh ratios</i> <i>csv</i> file a first pop-up panel will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_angles_pop_up.png" ALT="Somo-MALS scattering angles pop-up listing"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+listing the correspondence between the detector numbers and the real scattering angles, and asking to either proceed or halt the operation in case an incorrect scattering angles files is recognized. On pressing <i>Yes</i>, another pop-up panel will appear, listing additional processing parameters stored in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a> module accessible from the <b><i>Options</b></i> module (see <a href=somo_mals_options.html>here</a>):
+<a id="glob_conc"></a>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_processing_param_pop_up.png" ALT="Somo-MALS processing parameters pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+These data include the light source wavelength <i>in vacuo</i> &lambda; [nm] and the refractive index <i>n<sub>s</sub></i> of the solution, that will be used to automatically convert the <i>scattering angles &theta;</i> into <i>scattering vectors</i> (or <i>momentum transfer</i>) <i>q</i> (<i>q</i> = [4 <i>&pi; n<sub>s</sub> </i> sin(<i>&theta;</i>/2)] / &lambda;) [&Aring;<sup>-1</sup>]). Also listed are the differential refractive index increment of the solute <i>dn/dc</i> [mL/g] and its <i>global concentration</i> [mg/mL], the latter used when processing kinetic data.<br>
+In case of not correct values stored in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a> as reported in the pop-up, answering "<i>No</i>" to the "<i>Proceed with these parameters</i>" question will call another pop-up:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_incorrect processing_param_pop_up.png" ALT="Somo-MALS incorrect processing parameters pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+reporting the problems. Pressing "<i>Ok</i>" will halt the data loading operation.<p>
+If the <i>processing parameters</i> are instead correct, on pressing "<i>Yes</i>" the module will proceed into checking the time intervals for the data present in the <i>Rayleigh ratios csv</i>, and if inconsistencies are found another pop-up will appear, such as:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_inconsistent times_pop_up.png" ALT="Somo-MALS inconsistent times pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+On pressing "<i>Ok</i>", the module will offer the possibility of adjusting the starting time (useful in case the <i>csv</i> data have already been cropped to begin at the sample injection for chromatographic data or at the start of the reaction for kinetic data), and the collection interval, for which a regularized value is presented:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_adjust_times_pop_up.png" ALT="Somo-MALS adjust times pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that the collection times that are in <i>minutes</i> in this example, will be automatically converted to <i>seconds</i>. We can accept the values as presented in this pop-up, noting that the starting time can be later adjusted using the <i><b>Crop</b></i> functions (see <a href="#Cropvis">here</a>). On pressing "<i>Ok</i>", if the <i>Rayleigh ratios csv</i> also contained concentration-related data, such as an UV absorbance chromatogram, a final pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_UV_data_pop_up.png" ALT="Somo-MALS UV data presence pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Answering "<i>No</i>" will not load the UV data, answering "<i>Yes</i>" the UV data will be uploaded and recognized internally as such by the loading module. In either case, the data loading process will complete, and a list of individual <i>Rayleigh ratios</i> as a function of time <i>R</i>(<i>t</i>) vs. <i>t</i> for each scattering vector <i>q</i> will be produced, as listed in both the  "<b><i>Data files</i></b>" and "<b><i>Produced Data</i></b>" sections, with a message in the "<b><i>Messages</i></b>" section:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_R_theta_csv_loaded.png" ALT="Somo-MALS after Rayleigh ratios csv loaded" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that the original detector number is listed in the produced filenames: this will become useful when fitting <i>MALS</i> data, giving the possibility of including/excluding detectors based on their recognizable number, rather than by their associated <i>q</i>-value.<br>
+Loaded files can be displayed on the graphics panel by individually clicking on them (shift-click will select a contiguous series, ctrl-click allows multiple irregularly spaced selections):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_R_theta_shown.png" ALT="Somo-MALS after Rayleigh ratios shown" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that the <i>x</i>- and <i>y</i>-axes are now displaying their respective correct units labels. These produced data files can be saved and later retrieved using the <b><i>Add files</b></i> button (see <a href="#Addfiles">here</a>).<p>
+<a id="fibrin_MALS"></a>
+As an example involving data collected in kinetics mode, in the images below we show the loading of fibrin re-polymerization data in which fibrin monomer at 0.8 mg/mL obtained from a thrombin-generated fibrin clot dissolved in CH<sub>3</sub>COONa 100 mM/CH<sub>3</sub>COOH 110 mM, pH 4.6, and then subjected to preparative SEC, was mixed in a 1:1 ratio with a TRIS-base 65 mM, NaOH 57 mM, NaCl 100 mM, pH 12.6 buffer, obtaining a final buffer composition of TRIS-base 6 mM/TRIS-NH<sub>4</sub><sup>+</sup>Cl<sup>-</sup> 265 mM, CH<sub>3</sub>COONa 105 mM, NaCl 23 mM, pH 7.425 that allows re-polymerization. The rapidly mixed solution was injected sequentially in the <b><i>MALS</i></b> and <b><i>SAXS</i></b> flow cells (data collected with a dedicated facility at the <a href=https://www.synchrotron-soleil.fr/en/beamlines/swing>SWING beamline</a> of the Synchrotron SOLEIL, Gif-sur-Yvette, France).<p>
+After having modified the <b><i>MALS Processing Parameters</i></b> to include a <i>global concentration</i> value, loading a proper <i>Scattering Angles</i> files, and accepting it on adding the kinetics <i>Rayleigh ratios</i> file, the pop-up panel will now show these data:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_processing_param_pop_up2.png" ALT="Somo-MALS processing parameters pop-up for kinetic data"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing "<i>Yes</i>" will allow the loading to proceed:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_adjust_times_pop_up2.png" ALT="Somo-MALS adjust times pop-up kinetics"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This time we can set the time to "0" and press "<i>Ok</i>". The <i><b>R(q,t)</b></i> will be produced, and can be visualized by pressing <b><i>Sel. all</i></b>: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_R_theta_kin_shown.png" ALT="Somo-MALS kinetic Rayleigh ratios shown" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Add Dir.</i></b> will allow loading all files within a selected directory. <span style="color:#CC0000">Warning</span>: you must be sure that all files in the selected directory are consistent with each other, <i>i.e.</i>, that no other kind of files are present. Also, no sub-directories must be present within the selected directory.<p>
+<li>
+<b><i>To SOMO/SAS</i></b> will transfer <i>compatible</i> selected datasets back into the <b>US-SOMO <i>SAS</i></b> module.<p>
+
+<li>
+<b><i>Remove files</i></b> will discard previously selected files (see below); if the files were produced by the module, and were not previously saved, a warning window will pop-up, allowing to save them, proceed without saving, or to stop removing the selected items:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_remove_panel.png" ALT="Somo-MALS question asked on removing"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+</ul>
+<br>
+
+Below the window with the loaded files listing there is a second section of buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_second_set_buttons.png" ALT="Somo-MALS Second Set of buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+<b><i>Sel. all</i></b> will select all files.<p>
+
+<li>
+<b><i>Sel. Unsel.</i></b> will allow toggling the selection between selected files and everything else not currently selected.<p>
+
+<li>
+<b><i>Adv. Sel.</i></b> will open up a panel in which several selection options can be utilized (see <a href=saxs_hplc_nth.html>here</a>).<p>
+
+<li>
+<b><i>Conc. Norm.</i></b> will divide selected <i>I</i>(<i>q</i>) data by the stored/entered concentrations, if available (see <a href="#Conc_norm">here</a>).<p>
+
+<li>
+<a id="Average"></a>
+<b><i>Average</i></b> will produce an average with propagated SDs of selected <i>I</i>(<i>q</i>) data. The <i>I</i>(<i>q</i>) values from each frame will be averaged, and then a scaling factor will be determined for each frame against the average resulting frame. The scaling factor for each original frame multiplies the frames's SD. The average intensity SDs are computed as the square root of the sum of the squares of each curves scaled SDs, and this is divided by the number of curves. The resulting datset filename will contain the number of frames averaged, and the initial and final frame numbers, followed by "_avg" (see <a href="#Average_ex">here</a>).<p>
+
+<li>
+<b><i>Bin</i></b> allows averaging adjacent points in <i>I</i>(<i>q</i>) datasets, starting with the first point in the file and using a binning size defined in a pop-up dialogue:<p>
+
+<center>
+<img SRC="somo-HPLC-SAXS_bin.png" ALT="SOMO HPLC-SAXS binning window panel">
+</center>
+<p>
+
+<li>
+<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2<i>n</i>+1 points.<p>
+<center>
+<img SRC="somo-HPLC-SAXS_smoothing.png" ALT="SOMO HPLC-SAXS smoothing window panel">
+</center>
+<p>
+
+<li>
+<a id="Make_Idash"></a>
+<b><i>Make I#(t)</i></b>. This function was developed because of the new <b><i>US-SOMO SAS</i></b> module features allowing to join <i>Multi-Angle Light Scattering (MALS)</i></b> data with SAXS data, for global analyses on an expanded <i>q</i> range. Joining is possible only if the <i>intensities</i> of the two datasets are in the same, absolute scale. A first absolute scale for the intensity is in [g<sup>2</sup>/(cm<sup>3</sup>*mol)], that we identify with the symbol "<i>I#</i>(<i>t</i>)" or "<i>I#</i>(<i>q</i>)". Later on, by dividing <i>I#</i> data by the concentration of the sample in g/mL, one obtains the data in the absolute scale of [g/mol], which we previously identified with the symbol "<i>I*</i>" (see <a href=saxs_hplc_parameters.html><b><i>here</b></i></a> for a listing of the required parameters and the equations used to process <i>SAXS</i> data). The <i>I*</i>(<i>q</i>) units are also needed by the <a href=somo_saxs_options.html><b><i>Guinier analysis</b></i></a> feature of the <b><i>US-SOMO SAS</i></b> module, allowing to directly determine the weight-average molecular weight &lt;<i>M</i>&gt;<sub>w</sub> from the Guinier fit intercept.<p>
+
+On pressing this button, the data are imediately converted using the parameters stored in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a> module, first producing the optical constant <i>K</i>=(4*<i>&pi;</i><sup>2</sup>*<i>n<sub>s</sub></i><sup>2</sup>*(<i>dn/dc</i>)<sup>2</sup>*&lambda;<sup>-4</sup>), and then computing <i>I#</i>(<i>t,q</i>) as <i>R</i>(<i>t,q</i>)*<i>N<sub>A</sub></i> / <i>K</i>, with <i>N<sub>A</sub></i> being Avogadro's number.<br>
+The <i>I#</i>(<i>t</i>) vs. <i>t</i> produced data will be shown in the <i><b><i>Data files</i></b></i> and <i><b><i>Produced Data</i></b></i> panels, automatically selected only and thus appearing in the graphics window with the correct units posted on the <i>y</i>-axis label:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_MakeIdash_final.png" ALT="Somo-MALS Make I#(q) results" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that these SEC-derived data can be decomposed using Gaussian decomposition much is it is done for <i>SAXS</i> data in the <a href=somo_saxs_hplc.html><b><i>US-SOMO HPLC/KIN</b></i> module</a> (see <a href="#Gauss_dec">here</a>).<p>
+
+We can also show the same <b><i>Make I#(t)</i></b> procedure applied to the fibrin re-polymerization kinetic data used above in the <b><i>Add files</i></b> button description:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_MakeIdash_final_kin.png" ALT="Somo-MALS Make I#(q) results for kinetics" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that a baseline is present in these data, more evident if the first &sim;40 s are zoomed and the visualization mode is switched to <i>Dots</i> checking the checkbox present on the top part of the graphics window:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_MakeIdash_final_kin_zoom.png" ALT="Somo-MALS Make I#(q) results for kinetics zoomed" width="800"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The data can be then <i>cropped</i> and the initial time reset to "0" s as will be later explained (see <a href="#Cropvis">here</a>):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_MakeIdash_final_kin_cropped.png" ALT="Somo-MALS Make I#(q) results for kinetics cropped" width="800"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Make I*(q)</i></b>. The last step in the basic <i>MALS</i> data treatment is their conversion from <i>I#</i>(<i>t</i>) vs. <i>t</i> to <i>I*</i>(<i>q</i>) vs. <i>q</i>, putting them in the same absolute units [g/mol] as <i>SAXS</i>-derived data, by dividing each time point by its associated concentration (in [mg/mL]), internally converted to [g/mL]). For chromatography-derived data, a chromatogram containing the concentration evolution information must be associated with the MALS data (see below). For kinetic data collected at a fixed total concentration, this can be either entered in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a>, or the program will ask to enter a value during the data processing stage.<p>
+As an example, we show the processing of the fibrin re-polymerization kinetic data used above (see <a href="#fibrin_MALS">here</a>) in the <b><i>Add files</i></b> and <b><i>Make I#(t)</i></b> buttons description. On pressing <b><i>Make I*(q)</i></b>, since no Gaussian decomposition parameters were generated or loaded, a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_no_Gaussians_pop_up.png" ALT="Somo-MALS no Gaussian presents pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing "<i>Ok</i>", if a <i>Global concentration</i> value is <b>not</b> present in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a>, a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_no_conc_pop_up.png" ALT="Somo-MALS no global conc. presents pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+alerting of the problem and asking if instead one wants to make <i>I#</i>(<i>q</i>), leaving the generation of the <i>I*</i>(<i>q</i>) at another stage. Pressing "<i>No</i>" will halt operation and another pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_no_conc_pop_up2.png" ALT="Somo-MALS no global conc. presents pop-up 2"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+explaining the reasons and suggesting the corrective action. After entering the required <i>Global concentration</i> in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a>, <b><i>Make I*(q)</i></b> can be pressed again, and after the pop-up alerting that <b>no</b> Gaussian decomposition parameters are present, another pop-up will appear reporting the <i>Global concentration</i> value that will be used to generate the <i>I*</i>(<i>q</i>) vs. <i>q</i> data:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_used_pop_up.png" ALT="Somo-MALS global conc. used pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+On pressing "<i>Ok</i>", the <i>I*</i>(<i>q</i>) vs. <i>q</i> data will be generated:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_MakeIstar_final_kin.png" ALT="Somo-MALS Make I*(q) results for kinetics" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+with the new files appearing in both the <i><b><i>Data files</i></b></i> and <i><b><i>Produced Data</i></b></i> panels, automatically selected only and thus appearing in the graphics window with the correct units posted on the <i>y</i>-axis label. Note that the <i>time</i> for each <i>I*</i>(<i>q</i>) vs. <i>q</i> file is now present in the filename.<p>
+
+By selecting with the <b><i>Adv. Sel.</i></b> button from the first <i>I*</i>(<i>q</i>) vs. <i>q</i> time (<i>t</i>=0) every 50 files to 
+<i>t</i>=148.40 (7 files), and selecting the <i>Dots</i> and <i>Err</i> checkboxes present above the graphics window, the evolution of the data can be seen, along with their <b><i>ASTRA<sup>&copy;</sup></i></b>-derived and propagated error bars: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_MakeIstar_sel_kin_dots_err.png" ALT="Somo-MALS Make I*(q) selected results for kinetics shown with dots and SD" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Fitting</i></b>. This button will call another module dedicated to analyze <i>MALS</i> data with dedicated fitting routines.<br>
+<span style="color:#CC0000">At  the time of the <b>July 2024</b> intermediate <b><i>US-SOMO</i></b> release, this module is still in the planning stage.</span><p>
+
+</ul>
+<br>
+<hr>
+
+The file names of produced data are shown in the <b><i>Produced Data</b></i> panel to the centre-left, and can be selected and saved to files using the appropriate buttons below it.<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Produced_data.png" ALT="Somo-MALS Produced Data section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+By clicking on the file path shown below the <b><i>Produced Data</b></i> label, a file system navigator will open, allowing selecting a different directory and/or creating a new one.<p>
+
+<ul>
+<li>
+<b><i>Select all</i></b> will select all files in this panel.<p>
+<li>
+<b><i>Sel. Unsel.</i></b> will allow toggling the selection between selected files and everything else not currently selected.<p>
+<li>
+<b><i>Remove</i></b> will discard the selected files.<p>
+<li>
+<b><i>Show</i></b> will add the selected file(s) among those produced to the ones already displayed in the graphics window.<p>
+<li>
+<b><i>Show only</i></b> will show only the selected file(s) among those produced in the graphics window.<p>
+</ul>
+Two types of files can be produced:<p>
+<ul>
+<li>
+csv-style (<b><i>Save CSV</i></b>)<p>
+<li>
+or regular 3-columns .dat files (<b><i>Save</i></b>).<p>
+</ul>
+
+<p>
+
+<hr>
+
+In the <b><i>Messages</i></b> area, the operations performed are tracked, and computed parameters are shown. The display can be copied or cleared from the <i>File</i> pull-down menu: <p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Messages.png" ALT="Somo-MALS Messages section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The bottom line of this module contains the <i><b>Help</i></b>, <i><b>Options</i></b>, and <i><b>Close</i></b> buttons, with in between a progess bar showing in blue color and with a numeric % value the advancement of the currect action:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-KIN_bottom line.png" ALT="Somo-MALS bottom line of commands"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+
+On pressing <i><b>Options</i></b>, a pop-up panel will be shown:<p>
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_options.png" ALT="Somo-MALS Options"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+See <a href=somo_mals_options.html>here</a> for a description of this module.<p>
+
+<hr>
+
+On the top of the graphics window there is a row of round "<b><i>Plot buttons:</i></b>" checkboxes each one controlling the showing of a series of buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_plot_buttons.png" ALT="Somo-MALS graphics plot buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The <i>Options</i> checkbox will enable these buttons:<p>
+
+<ul>
+<li>
+<b><i>Rescale X-Y</i></b>: adjusts the X-Y axes on the graphics window to maximize the display of shown datasets (no effect on the data themselves).<p>
+<li>
+<b><i>Rescale Y</i></b>: adjusts only the Y axis on the graphics window to maximize the display of shown datasets only along this direction (no effect on the data themselves).<p>
+<li>
+The <b><i>Log X</i></b> (<b><i>Lin X</i></b>) and <b><i>Log Y</i></b> (<b><i>Lin Y</i></b>) buttons allow to toggle between linear and log<sub>10</sub> scaling of the data on the <i>x</i>- and <i>y</i>-axes, respectively (if zero or negative values are present, they will be temporarily removed when the scale is set to log<sub>10</sub> mode, as they cannot be shown on the display in this mode). The buttons will change their respective label once pressed, to underscore what is the action currently available.<p>
+<li>
+Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selected, will switch their representation from the dots connected with a line mode, to symbols (diamonds) with their associated SDs represented as error bars mode.<p>
+<li>
+Selecting the <b><i>Dots</i></b> checkbox will switch the data representation from the dots connected with a line mode to dots only mode.<p>
+<li>
+Each time the <b><i>Width</i></b> button is pressed, it increments the data line (or symbol) size of the plots, until after five iterations it goes back to the initial value.<p>
+<li>
+<b><i>Color</i></b> shifts the colors used in the graphics window; the operation can be repeated until a better contrast with the background is achieved. Note that the background color can be changed by right-clicking on the plot borders, which will open up a pop-up dialogue panel where all plot characteristics can be modified.<p>
+<li>
+<b><i>Legend</i></b> will turn on below the graphics window a display of the correspondence between colours and filenames (automatically disabled if the selected files are 20 or more and/or if the <b><i>Err</i></b> checkbox is selected).<p>
+</ul>
+
+In the image below eight files were selected, the <b><i>Dots</i></b> checkbox was checked, <b><i>Width</i></b> was pressed once, <b><i>Color</i></b> was pressed several times, and <b><i>Legend</i></b> was also pressed:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Plot_Options_demo.png" ALT="Somo-MALS graphics plot buttons demo"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<br>
+The <i>Selections</i> checkbox will enable these buttons:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_selections_buttons.png" ALT="Somo-MALS graphics selections buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+<b><i>Select Visible</i></b> will select the files shown in the graphics window, which can be zoomed using the mouse (left click and drag). For instance, this is a practical way of selecting only a few files, by zooming on a region where only them are present.<p>
+<li>
+<b><i>Remove Vis(ible)</i></b> will instead remove the files shown in the graphics window.<p>
+<li>
+<b><i>Movie</i></b>: Pressing this button will open a pop-up window with the commands allowing to view in the main graphics window of the <b>US-SOMO <i>MALS</i></b> module a series of selected data files in a movie-like manner, and to optionally save each frame as an image for real movie-making operations (see <a href=somo_saxs_hplc_movie.html>here</a>).<p>
+<li>
+<b><i>Save plots</i></b> allows saving the data shown in any of the plots currently visualized in csv-formatted files. Pressing it will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
+</ul>
+<br>
+
+The <i>Cropping</i> checkbox will enable these buttons:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_cropping_buttons.png" ALT="Somo-MALS graphics cropping buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+When a part of the graph is selected using the mouse/left button, the buttons become all available (only <b><i>Crop Zeros</i></b> and <b><i>Crop Common</i></b> are available when files are just displayed after selection).<p>
+<ul>
+<li>
+<b><i>Crop Common</i></b> will crop all selected files so that they have identical x-axis values by dropping points outside of the union of all selected file's x-axis values.<p>
+<li>
+<a id="Cropvis"></a>
+<b><i>Crop Vis(ible)</i></b> will remove what is shown in the graphics window. For instance, this is practical way to trim the data on the <i>x</i>-axis. When this operation is performed on a time-series data, a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_timeshift_pop_up.png" ALT="Somo-MALS timeshift on cropping visible pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+asking if after cropping the remaining <i>x</i>-axis values should start at <i>t</i>=0, maintaining the original time interval between the remaining points. Answering "<i>Yes</i>" will perform the time-shift operation, and a second pop-up panel will appear, reporting the time-shifting value such as in this example:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_timeshift_pop_up2.png" ALT="Somo-MALS timeshift on cropping visible pop-up with timeshift value"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing "<i>Ok</i>" the operation will complete.<p>
+
+<li>
+<b><i>Crop to Vis(ible)</i></b> will keep only what is shown in the graphics window. Again, this is practical way to trim the data on the <i>x</i>-axis.<p>
+<li>
+<b><i>Crop Zeros</i></b> will remove data having zero or negative values in the intensity columns (<span style="color:#CC0000">discouraged: a warning panel will pop-up, asking the user whether she/he really wants to proceed, since experimental zero or negative values have statistical significance</span>).<p>
+<li>
+<b><i>Crop Left</i></b> and <b><i>Crop Right</i></b> will remove one point on the left or right of the selected data, respectively.<p>
+<li>
+<b><i>Undo</i></b> will undo the last operation.<p>
+
+</ul>
+<br>
+The <i>Conc. Util.</i> (Concentration Utility) checkbox will enable these buttons:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_buttons.png" ALT="Somo-MALS graphics concentration utility buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+They are used to deal with chromatography data coming from a concentration detector, such as absorbance (UV-Vis) or refractive index (RI). These data are usually on a different intensity scale, and time-shifted because of the placement of these detectors either before or after the <i><b>MALS</i></b> cell. To deal with these problems, we need first to scale the concentration-associated chromatogram to a <i>MALS</i> <i>I#</i>(<i>t</i>) vs. <i>t</i>  chromatogram at a <i>q</i> value, and then to time-shift it to align it in the time domain.<br>
+To demonstrate these procedures we use the <b><i>SEC-MALS</i></b> data acquired on the HMW-FG sample described above in the <b><i>Add files</i></b> procedure description, with the data already processed using the <i><b>Make I#(t)</i></b> function. The concentration-associated data were an absorption profile at 280 nm collected with a DAD (Diode Array Detector), time-shifted and-broadened to match the light scattering profile shape when the data were processed using <b><i>ASTRA<sup>&copy;</sup></i></b>, and already present in the <i>Rayleigh ratios csv</i> file that was uploaded in the <b><i>Add files</i></b> procedure (see <a href="#Add_SEC_MALS">here</a>).<br>
+The concentration data are first selected:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_loaded_data.png" ALT="Somo-MALS graphics concentration utility loaded concentration-associated file" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Then, usually the <i>light scattering</i> chromatogram acquired at the right angle (90&deg;, corresponding to detector #11 in the <i><b>DAWN HELEOS-II MALS</i></b> photometer used in this example) is also selected (<b><i>Legend</i></b> was also pressed in the <i>Plot buttons Options</i>) :
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_add_MALS_data.png" ALT="Somo-MALS graphics concentration utility loaded concentration-associated and MALS 90° chromatogram file" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+The <b><i>Repeak</i></b> button becomes available, and it is used to effectively scale the concentration-associated data on the <i>y</i>-axis to the target <i>MALS</i> data, using the maximum intensity found in the target <i>light scattering</i> data. On pressing it, a pop-up panel will appear:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_pop_up.png" ALT="Somo-MALS graphics concentration utility pop-up SD question"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+asking if you want to "*Set*" (see below) the repeaked concentration file. In this case the answer will be <i>Yes</i>, since the two chromatograms were already aligned on the <i>x</i>-axis.<p>
+The repeak operation affects the data, a new file is generated with "rp" extension and the scaling factor, which will be used to re-generate the proper intensity scale when needed, added at the end of the filename:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_repeak.png" ALT="Somo-MALS graphics concentration utility repeaked" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Timeshift</i></b> can be used to align the two chromatograms if this operation was not (properly) done. We demostrate it by manually translating the concentration chromatogram to disalign the two files. On pressing <b><i>Timeshift</i></b>, the program will automatically traslate the concentration chromatogram so that the top of the maximum intensity peaks will coincide:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_timeshift.png" ALT="Somo-MALS graphics concentration utility timeshifted"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+If this traslation doesn't occur automatically, it can be initialized by acting on the "&lt;" and "&gt;" buttons at the extremities of the cyan-shades bar-wheel below the graphics window. The resulting traslation of the concentration-associated dataset can be either refused by pressing <b><i>Cancel</i></b>, or accepted by pressing <b><i>Keep</i></b> using the buttons placed below the graphics window. On pressing <b><i>Keep</i></b>, another pop-up panel will show up: <p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_pop_up2.png" ALT="Somo-MALS graphics concentration utility pop-up timeshifted set question"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing <i>No</i> will defer this important decision, pressing <i>Yes</i> will already define this repeaked, time-shifted concentration-associated chromatogram as the source of frame-by-frame concentration values for the <i>MALS</i> data: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_timeshift_set.png" ALT="Somo-MALS graphics concentration utility repeaked, time-shifted, set" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Set</i></b> will set an already uploaded and currently selected file containing the UV or refractive index profile vs. time or frame number as the source of the concentration-dependent signal.<p>
+
+<li>
+<b><i>Time scale</i></b> will let you change the time scale of a concentration-associated chromatogram, if needed, to bring it on the same units as the SAXS chromatograms. On pressing it, another pop-up panel will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_util_pop_up3.png" ALT="Somo-MALS graphics concentration utility pop-up time scaling multiplier value"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+were a multiplying factor can be entered. For instance, if the time units of the concentration data were minutes, and those of the <i>MALS</i> data were seconds, entering "60" and pressing <i>Ok</i> will bring the concentration data on the same time units as the <i>MALS</i> data. This operation, if needed, should be done <b>before</b> any other in this panel. Pressing <i>Cancel</i> will abort this operation.<p>
+</ul>
+
+<br>
+The <i>S.D. Util</i> checkbox has two buttons:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SD_eval_buttons.png" ALT="Somo-MALS graphics S.D. Evaluation buttons"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+This utility, derived from the way the <i>SD</i> are evaluated in the <i><b>ASTRA<sup>&copy;</sup></i></b> software, estimates the errors associated with the <i>MALS</i> data. This might become useful if no errors have been already associated with the experimental data, or if their reliability is questionable.<br>
+The method is based on the assumption that the fluctuations of the signal at the baseline level are a good representation of the error associated with the data at any other point along each <i>I#(t)</i> vs. <i>t</i> chromatogram. Therefore, by estimating the average fluctuations in flat regions of the chromatogram, a <b>constant</b> SD value can be associated with <b>every</b> datapoint in that particular chromatogram. Obviously, chromatograms corresponding to different scattering angles will have different values for their respective constant SD.<br>
+Pressing <b><i>SD Eval</i></b> will change the graphics window and on the left side of the graph two vertical dashed red lines will appear, which can be repositioned by clicking on the red-background boxes at bottom and entering a different value or using with the mouse the cyan-shades bar-wheel positioned below the graph:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SD_eval_define_1region.png" ALT="Somo-MALS graphics S.D. Evaluation Define 1 region"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+By selecting the <i>2 regions</i> checkbox, a second set of magenta-colored vertical dashed bars will appear, which can be likewise positioned:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SD_eval_define_2regions.png" ALT="Somo-MALS graphics S.D. Evaluation Define 2 regions"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The <b><i>Messages</i></b> box will list any movements of the vertical bar and provide an evaluation of the average SD over the chosen region(s).<br>
+Pressing <i><b>Cancel</i></b> will abort the operation, pressing <i><b>Keep</i></b> will save the currently selected region(s).<br>
+All chromatograms can be now selected, and pressing <i><b>SD apply</i></b> the new SD evaluation can be performed. New files with the extension <i>sde</i> will be generated, and can be visualized:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SD_eval_applied.png" ALT="Somo-MALS graphics S.D. Evaluation applied"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+A comparison between the original (yellow) and the newly evaluated (tan) SDs for a peak region of the detector 2 data can be seen in this image:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_SD_eval_comparisonD2.png" ALT="Somo-MALS graphics S.D. Evaluation comparison on D2"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The newly created files can be saved from the <i><b>Produced Data</i></b> section.
+
+<br>
+
+<p>
+<p>
+<i>MALS info</i>: selecting this checkbox will present a single button and show a listing of the correspondence between detector numbers, their associated original and RI-corrected scattering angles, and their derived <i>q</i>-values, together with other information loaded from the <i>scattering angles</i> file. If files are selected in the graphics window, they will appear on a small scale at the bottom of the <i>MALS</i> info panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_info_panel.png" ALT="Somo-MALS graphics MALS info panel"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+The <b><i>Save Angles as CSV</i></b> button will allow saving the information listed in a <i>csv</i>-style file.<p>
+</ul>
+
+<br>
+<i>Band Broad.</i>: <span style="color:#CC0000">This option is currently (<b>October 2024</b>) under construction.</span> It will allow to band broaden the <i>MALS</i> and its associated concentration chromatograms to a reference <i>SAXS</i> chromatogram, allowing to correctly join the final <i>I*</i>(<i>q,t</i>) data coming from sequential acquisitions, either without or after Gaussian decomposition.<p> 
+<br>
+<hr><p>
+
+We will now demonstrate the generation of <i>I*</i>(<i>q</i>) vs. <i>q</i> data from <i>I#</i>(<i>t</i>) vs. <i>t</i> chromatograms using the <i>Set</i> associated <i>A<sup>280</sup></i> UV chromatogram.<br>
+First, we crop the <i>I#</i>(<i>t</i>) vs. <i>t</i> chromatograms to maintain only the peaks region without the baseline regions, using the <b><i>Crop to Vis</i></b> button:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_crop_I_dash_chromatograms.png" ALT="Somo-MALS graphics cropping a series of I#(t) chromatograms" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Then, we press <b><i>Make I*(q)</i></b>, and a pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_make_Istar_q_noGauss_popup.png" ALT="Somo-MALS graphics Make I*(q) pop-up No Gaussians"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+alerting that no Gaussians were defined for this dataset and thus the resulting <i>I*</i>(<i>q</i>) vs. <i>q</i> data will be generated without any decomposition to resolve not-baseline separated peaks. On pressing "<i>Ok</i>", anothe pop-up will appear:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_make_Istar_q_enterparam_popup.png" ALT="Somo-MALS graphics Make I*(q) enter exctinction coeff and dn/dc pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where two parameters used to calculate the <i>molecular weight</i> from extrapolation to <i>q</i>=0 (using any standard method, like <i>Guinier</i> or <i>Debye</i> plots), the <i>extinction coefficient</i> [ml mg<sup>-1</sup> cm<sup>-1</sup>] used to convert the chromatographic data of the UV absorbance at a specific wavelength to time-dependent concentrations [mg/mL], and the differential refractive increment of the solute at the <i><b>MALS</i></b> wavelength <i>dn/dc</i> [mL/g], must be entered. Note that a <i>dn/dc</i> value is already present, taken from the <i>Global dn/dc</i> value stored in the <a href=mals_parameters.html><b><i>MALS Processing Parameters</i></b></a> module (accessible from the <b><i>Options</b></i> module, see <a href=somo_mals_options.html>here</a>), while a <i>Global extinction coefficient</i> was not stored there. After entering an appropriate <i>extinction coefficient</i>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_make_Istar_q_enterparam_popup1.png" ALT="Somo-MALS graphics Make I*(q) enter exctinction coeff and dn/dc pop-up"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+pressing the <i><b>Continue</i></b> button will start the generation of the time-dependent <i>I*</i>(<i>q</i>) vs. <i>q</i> data, monitored by the progess bar at the bottom (<i><b>Quit</i></b> will instead halt the <i>I*</i>(<i>q</i>) vs. <i>q</i> conversion operation):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_resulting_I_starq_NoGauss.png" ALT="Somo-MALS graphics resulting I*(q) data without Gaussians" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Importantly, all the parameters used to generate the <i>I*</i>(<i>q</i>) vs. <i>q</i> individual files are stored in the header of each file, as can be seen in this example, accessed by pressing the <b><i>View Selected</i></b> button:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Istarq_file_view_selected.png" ALT="Somo-MALS I*(q) file with header"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+The resulting <i>I*</i>(<i>q</i>) vs. <i>q</i> data can be also visualized using the <i><b>Movie</i></b> button (see <a href=somo_saxs_hplc_movie.html>here</a>) present activating the <i>Selections</i> round checkbox above the graphics panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Movie_selected.png" ALT="Somo-MALS graphics Movie button with selections"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Here we have first selected <b><i>Show reference</i></b> that will upload the concentration-related chromatogram, and we have also already run the movie feature to reach a frame (#99) at the top of one of the peaks: 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_I_starq_NoGauss_movieframe99.png" ALT="Somo-MALS graphics movie showing I*(q) data without Gaussians, frame #99" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where we have also pressed the <b><i>Log X</i></b> and <b><i>Log Y</i></b> buttons under the <i>Options</i> round checkbox. A visual extrapolation to <i>q</i>=0 of the flat region of this curve indicates a &sim;1x10<sup>6</sup> g/mol value for the <i>weight-average molecular weight &lt;M&gt;<sub>w</sub></i> at the top of this peak, rougly corresponding to a fibrinogen trimer (FG molecular weight is &sim;340,000 g/mol). We can check two other frames, #155:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_I_starq_NoGauss_movieframe155.png" ALT="Somo-MALS graphics movie showing I*(q) data without Gaussians, frame #155" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where the <i>&lt;M&gt;<sub>w</sub></i> is roughly that of a FG dimer, and #316:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_I_starq_NoGauss_movieframe316.png" ALT="Somo-MALS graphics movie showing I*(q) data without Gaussians, frame #316" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where the <i>&lt;M&gt;<sub>w</sub></i> indicates the likely contamination of the FG main peak with some degraded material, calling for a full decomposition to better characterize this sample.<p>
+
+We can use this <i>I*</i>(<i>q</i>) vs. <i>q</i> and an <i>I#</i>(<i>q</i>) vs. <i>q</i> datasets to demonstrate the use of the <b><i>Concs</i></b> and <b><i>Conc. Norm.</i></b> buttons.<p>
+<a id="Concs"></a>
+With the current <i>I*</i>(<i>q</i>) vs. <i>q</i> dataset, pressing <b><i>Concs</i></b> will open up a pop-up window where all the files currently loaded are listed, and, if available, any associated concentration value is shown:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Concs.png" ALT="SOMO MALS showing the concentration value associated with every uploaded file"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Note that only the <i>I*</i>(<i>q</i>) vs. <i>q</i> files have an associated concentration value.<br>
+In this case, since <i>I*</i>(<i>q</i>) vs. <i>q</i> are by definition already "normalized" by each time-point-associated concentration, no meaningful operations can be carried out within this module. We load instead a series of <i>I#</i>(<i>q</i>) vs. <i>q</i> time points, obtained from the fibrin repolymerization data (see <a href="#fibrin_MALS">here</a>) and converted from <i>I#</i>(<i>t</i>) vs. <i>t</i> using the <b><i>Make I*(q)</i></b> button <b>without</b> having entered a <i>Global concentration</i> value (see <a href="#glob_conc">here</a>): 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_I_hash_q_example.png" ALT="Somo-MALS I#(q) data example" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing again <b><i>Concs</i></b> will re-open the pop-up window:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Concs2.png" ALT="SOMO MALS showing no concentration values associated with every file" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+We can now illustrate the several buttons present in this module:<p>
+<ul>
+<li>
+<b><i>Copy values</i></b>, active when just one file is selected, will allow to copy to the clipboard its associated concentration value. <p>
+<li>
+<b><i>Paste values</i></b>, active when a value has been copied to the clipboard, will allow to paste that value to a single selected file.<p>
+<li>
+<b><i>Past values to all</i></b>, active when a value has been copied to the clipboard, will allow to propagate that value to all files. <span style="color:#CC0000">Warning</span>: this feature is useful when dealing with batch data that have the same, not-evolving concentration. Be careful to not apply it to chromatographic data!<p>
+<li>
+<b><i>Save to file</i></b> will open up the directories navigator allowing to save all data shown in a <i>csv</i>-formatted file with the extension <i>*.sbc</i>.<p>
+<li>
+<b><i>Load</i></b> will open up the directories navigator allowing to retrieve a previously saved <i>*.sbc</i> file.<p>
+<li>
+<b><i>Save values</i></b> will exit updating in the <b><i>MALS</i></b> module any change made regarding the concentrations associated with each file.<p>
+<li>
+<b><i>Cancel</i></b> will exit without updating in the <b><i>MALS</i></b> module any change made regarding the concentrations associated with each file.<p>
+<li>
+<b><i>Help</i></b> as of <span style="color:#CC0000">March 2026</span>, there is NO specific <i>Help</i> page associated with this module.<p>
+</ul>
+In this case, we can manually enter a concentration value for one of the files:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Concs3.png" ALT="SOMO MALS entering a concentration value associated with a file" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+and then use the <b><i>Copy values</i></b> and <b><i>Past values to all</i></b> to propagate the entered concentration value to all files:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Concs4.png" ALT="SOMO MALS propagating a concentration value to all files" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Pressing <b><i>Save values</i></b> will exit updating in the <b><i>MALS</i></b> module the changes made.<p>
+
+<br>
+<a id="Conc_norm"></a>
+When selected <i>I#</i>(<i>q</i>) vs. <i>q</i> files have an associated concentration value, the <b><i>Conc. Norm.</i></b> button becomes available. Pressing it will divide the intensities by their associated concentration. The resulting files will have "<i>_n</i>" appended to their filenames. The differences between the original and <i>concentration normalized</i> files can be seen in this example:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Selected_orig_and_norm_files.png" ALT="Somo-MALS showing not normalized and concentration normalized files" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<a id="Average_ex"></a>
+The <i>concentration normalized</i> files can also be <i>averaged</i> using the procedures described <a href="#Average">here</a>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Selected_normalized_ave.png" ALT="Somo-MALS selected files normalized by concentration and averaged." width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+
+<br>
+<hr><p>
+Below the <b><i>US-SOMO MALS</i></b> module graphics panel there are a series of buttons for performing several operations on the files displayed, some of which will become available only when multiple files are selected, or a region of the graph is zoomed, while others will become available only when single files are selected:<p>
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_commands1.png" ALT="SOMO MALS below graphics commands"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Note: some buttons are not always visualized, but will appear in place of others when some functions are called, such as in the SD evaluation procedure described above.<p>
+
+
+<ul>
+<li>
+The use of the <b><i>Concentration reference</i></b> button will be described later on (see <a href="#ConcRef">here</a>).<p>
+<li>
+The <b><i>Residuals</i></b> main use is to visualize the residuals of a fit, as will be described in detail later on (see <a href="#ResFit">here</a>). However, it could be used also in directly comparing two curves. In this example two <i>I*(q)</i> vs. <i>q</i>  frames at the top of the peak for the FG <i>SEC-MALS</i> data were selected. Pressing <b><i>Residuals</i></b> a second graph below the main one is generated, with the differences between the two curves plotted on an absolute scale:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-mals_Residuals_twocurves.png" ALT="SOMO mals residuals between two curves"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+Selecting the <i>Reverse</i> checkbox will invert the order of comparison and thus the sign of the differences. Selecting the <i>Use standard deviations</i> checkbox will weight the residuals by the associated SD of each point:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Residuals_twocurvesSD.png" ALT="SOMO MALS residuals between two curves weighted by SD"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Selecting instead the <i>By percent</i> checkbox the residuals will be plotted as % values:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Residuals_twocurves_percent.png" ALT="SOMO MALS residuals between two curves as % values"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The residuals plot can be toggled off by pressing again <b><i>Residuals</i></b>.<p>
+
+<li>
+<b><i>PVP</i></b> (Previously named <b><i>CorMap Analysis</i></b>) will launch a pairwise similarity comparison between all currently selected datasets, according to our implementation of <i>P</i>-value pair computations and comparisons derived from the Correlation Map method developed by Franke </span><span lang="en-US"><i>et al.</i></span><span lang="en-US"> (Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015). A in depth <i><b>PVP</i></b> module description with examples can be found <a href=cormap.html>here</a>.<p>
+<li>
+<b><i>Cancel</i></b> and <b><i>Keep</i></b> buttons become available when some functions have been performed, and allow to either exit (<b><i>Cancel</i></b>) from the procedure, or to <b><i>Keep</i></b> the results obtained.<p>
+</ul>
+
+<br>
+<a id="Gauss_dec"></a>
+<i>Gaussian decomposition</i> of not baseline-resolved peaks is another utility present in the <b><i>US-SOMO MALS</i></b> module, whose theory can be seen <a href=saxs_hplc_Gaussian_theory.html>here</a>. Three buttons control the <i>Gaussian decomposition</i> procedure: <b><i>Gaussian options</i></b>, <b><i>Gaussians</i></b>, and <b><i>Global Gaussians</i></b>.<p>
+<ul>
+<li>
+<b><i>Gaussian options</i></b>. On pressing this button, a pop-up panel will appear asking to revise the type of Gaussians that are currently set in the  <a href=somo_mals_options.html><i><b>MALS Options</i></b></a>  module:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gaussian_options.png" ALT="SOMO MALS Gaussians Options selection"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+It also offers the possibility of re-initializing the Gaussian analysis by pressing the <b><i>Clear cached Gaussian values</i></b> button. For this demonstration, we will change the selection from the <b><i>default Standard Gaussian</i></b> checkbox to <b><i>EMG+GMG</i></b> (<i>Exponentially Modified Gaussian</i> plus <i>Gaussian Modified Gaussian</i>), which can properly take into account the skewness often present in chromatographic data. Note that on selecting any of the options listed, the <b><i>Gaussians</i></b> button label will change accordingly, <i>e.g.</i> it will be labeled <b><i>GMG</i></b>, or <b><i>EMG</i></b>, or <b><i>EMG+GMG</i></b>.<br> <i><b>Quit</i></b> will exit from this pop-up without retaining any changes, <i><b>Ok</i></b> will exit maintaining any changes made.<p>
+
+<li>
+The <b><i>Gaussians</i></b> button, now labeled <b><i>EMG+GMG</i></b> in this example, will become active if just one <i>I(t)</i> vs. <i>t</i> chromatogram is selected:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_selected_Ihash_EMG_GMG.png" ALT="Somo-MALS selected I#(t) file with EMG+GMG Gaussian button." width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+On pressing <b><i>EMG+GMG</i></b>, two new rows of buttons/fields and two checkboxes will appear at the bottom of the graphics window, together with two vertical red dashed lines indicating the <i>Fit start</i> and <i>Fit end</i> points of the Gaussian fitting region, whose directly editable values (<b><i>default: at the beinning and end of the available data</b></i>) appear in the two red-background fields in the bottom row:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gaussian_start.png" ALT="SOMO MALS Gaussians start"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+<li>
+<b><i>Clear</i></b> will remove currently-generated Gausssian, and allow to start a new analysis. If Gaussians had been loaded from file, the <i><b>Clear cached Gaussian values</i></b> button accessible from the <b><i>Gaussian options</i></b> button (see above) should be used.<p>
+<li>
+Each time the <b><i>New</i></b> button is pressed, a new Gaussian will be added (green colour), with pre-set center, width and amplitude shown in the first three white fields, with the other two govering the skewness (that will be set on fitting).  By clicking on each field, and then using the cyan-shades bar-wheel, each Gaussian can be adjusted to initialize the process (usually, only the centers need to be positioned under the peaks). If the <i>Match</i> checkbox is selected, the height of each Gaussian will be automatically adjusted so to match the height of the experimental <i>I</i>(<i>t</i>) vs. <i>t</i> curve at the Gaussian current position. For this example, five <i>EMG+GMG</i> Gaussians were positioned, and the fit limits were set at <i>t</i>=300 and <i>t</i>=800 s:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gaussian_init.png" ALT="SOMO MALS Gaussians initialization"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+If a previously-generated set of Gaussians was present or loaded from file, the Gaussians will automatically show up under the peak(s) together with vertical lines indicating their centers, such as in the example above.
+<p>
+
+<li>
+<b><i>Del</i></b> will remove only the current Gaussian.<p>
+
+<li>
+Clicking on the "<b>&lt;</b>" and "<b>&gt;</b>" buttons will toggle among the Gaussian present, whose identifying number is shown in the field between them. The active Gaussian is identified by a magenta vertical line positioned at its center, while blue lines are used for the others.<p>
+<li>
+The <i>SD</i> checkbox controls whether the data-associated std. dev. values will be used in the fitting procedure (<b><i>default: not selected</i></b>). It is recommended to select this checkbox only after a first round of fitting with the various algorithms provided has been performed, as the SD can only be used with the LM algorithm at the time of updating this Help section (March 2026).<p>
+<li>
+<a id="ResFit"></a>
+Once the initialization is completed, the residuals of the fit can be visualized by pressing the <b><i>Residuals</i></b> button, which will split the graphics window in two, and show a plot of the fit residuals below the main plot. The residuals plot can be removed by pressing <b><i>Residuals</i></b> again.<p>
+<li>
+Pressing the <b><i>Fit</i></b> button will bring up a window controlling it, shown below:<p>
+
+<p><center>
+<img SRC="somo-MALS_GaussFit.png" ALT="SOMO MALS Gaussian Fit panel">
+</center>
+<p>
+
+See <a href=somo_saxs_hplc_fit.html>here</a> for a description of the <b><i>Fit</b></i> module.<p>
+
+In the first cycle of iterations, it is best to keep the original centers fixed, and also fix all Gaussian except that under the major peak. The <i><b>Levenberg-Marquardt (LM)</i></b> algorithm is used throughout this example:<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gauss1anew.png" ALT="SOMO MALS Gaussian first round only major peak center fixed" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Then the first three Gaussians are initially fitted, fixing the other two and keeping fixed all centers' positions:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gauss1bnew.png" ALT="SOMO HPLC-SAXS Gaussian second round first 3 peaks centers fixed" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The cycle is completed by fixing the first four Gaussians and fitting only the fifth, still keeping all centers fixed:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gauss1cnew.png" ALT="SOMO HPLC-SAXS Gaussian third round last peak centers fixed" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+We can now release all Gaussians, and allow the centers to move by a fixed percentage (5% in this case) from their original positions. After a couple of <b><i>LM</i></b> cycles, we obtain this fit:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gauss1dnew.png" ALT="SOMO HPLC-SAXS Gaussian third round last peak centers fixed" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Releasing all constraints will produce this final fit:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gaussian_final.png" ALT="SOMO MALS Gaussians final fit single I(t)"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+which shows a couple of regions, the top of the third Gaussian and the through between the third and the fourth Gaussian, not well fitted. Note that the <i>Use standard deviation</i> checkbox for the <b><i>Residuals</i></b> was not selected in this case, as the <i>SD</i> associated with these data are extremely low. Indeed, if we select the <i>SD</i> checkbox at the left of the <b><i>Fit</i></b> button, and perform another round of fitting, no appreciable changes are obtained.<br>
+Note: when using the <i>SD</i> checkbox, if some datasets have missing or NaN values for one or more SD values, a pop-up menu will appear listing all the files presenting this problem, and with how many occurrences. The user can then select between three options: drop the datasets containing these non-defined SDs; drop just the frame (or time) point missing the SD(s); or not use SD weighting.<br>
+
+The global improvement of the fit can be also judged by the rmsd (<i>SD</i> checkbox not selected) or &chi;<sup>2</sup> (<i>SD</i> checkbox selected) value which is updated next to the <b><i>Fit</b></i> button.<p>
+
+For this sample, we can try and improve the fitting by adding a sixt Gaussian and restarting, having cleared the actual Gaussian values and restricted the fit range. A lower <i>q</i>-value detector, #6, was also chosen to enhance the scattering contribution of the larger material eluting early:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_six_Gaussians1.png" ALT="SOMO MALS six Gaussians single I(t) initialization"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+After a couple of rounds of <b><i>LM</i></b> fits, an improved fit is obtained, this time with the remaining noticeable discrepancy at the tail end of the sixt Gaussian:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_six_Gaussians2.png" ALT="SOMO MALS six Gaussians single I(t) final"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Adding a seventh Gaussian to compensate for the main peak tailing will lead to a further improved fitting:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians2.png" ALT="SOMO MALS seven Gaussians single I(t) final"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Here we have set the <i><b>Residuals</i></b> plot to <i>By percent</i> to better appreciate the discrepancies in the most interesting regions.<p>
+
+<li>
+Once a satisfactory fit is reached, pressing <b><i>Keep</i></b> will accept the current Gaussians for further work. But to save the parameters of the current Gaussians in a file, the <b><i>Save</i></b> button has to be pressed before <b><i>Keep</i></b>.<p>
+<li>
+<b><i>Cancel</i></b> will cancel the operations and remove all the Gaussians.<p>
+</ul>
+
+Once an initial set of fitted Gaussians has been produced, it should be globally fitted to all chromatograms. While in the case of <i>SAXS</i> data performing this operation directly on all chromatograms can be very computationally intensive, this is not the case for <i>MALS</i> data, usually containing no more than 20 <i>q</i>-points. Therefore, we will select all the <i>I#</i>(<i>t</i>) vs. <i>t</i> data for the 16 <i>q</i>-values in this FG <i>SEC-MALS</i> example. <span style="color:#CC0000"><b>Importantly</b></span>, in the global fitting procedure the centers and widths of each particular Gaussian are optimized so to be the same across all chromatograms, and only the amplitudes are then fitted.<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Gauss_all_Idash_t_selected.png" ALT="SOMO MALS selecting all I#(t) for Global Gaussian" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<ul>
+<li>
+The <b><i>Global Gaussians</i></b> button is now available. This utility has two main usages. During the search for the best Gaussians parameters, it will find the amplitudes best fitting all the selected chromatograms based on the centres and widths found on the initial chromatogram. This operation has to be performed before the global fit. In theory, SD should be used in the Gaussian fits from this point on, selecting the <i>SD</i> checkbox. If this selection was not done, on pressing the <b><i>Global Gaussians</i></b> button a pop-up panel will appear:
+
+<p><center>
+<img SRC="somo-MALS_GlobalGaussianSDreminder.png" ALT="SOMO MALS Global Gaussians mode: turn on SD question">
+</center>
+<p>
+
+Since MALS data usually have very low associated SD values, the fit could be performed without turning on the SD weighting. In this example, we are nevertheless using it, and  <i>Turn on</i> is then selected. <b><i>Global Gaussians</i></b>  will also restore parameters saved in a file after a satisfactory fitting is attained. For this reason, another pop-up panel could appear:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_GlobalGaussianOptions.png" ALT="SOMO HPLC-SAXS Global Gaussians mode: fit amplitudes or restore saved ones">
+</center>
+<p>
+In this example, since we are working with just produced Gaussians and not with parameters loaded from a saved file, another pop-up will appear:
+<p><center>
+<img SRC="somo-MALS_GlobalGaussian_init.png" ALT="SOMO MALS Global Gaussians mode: initialization pop-up">
+</center>
+<p>
+Pressing "<i>Ok</i>" will allow <b><i>Global Gaussians</i></b> to proceed:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians_GlobGauss.png" ALT="SOMO MALS seven Gaussians Global Gaussians" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In the image above, the <b><i>Global Gaussians</i></b> results on all the <i>MALS</i> datasets are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit</span>, are displayed in the graph as vertical and horizontal bars, respectively. Note that the <i>Residuals</i> <i>x</i>-axis scale was manually optimized (right-click on the scale to access the plot options menu). <br>
+Note that since these <i>MALS</i> data have non-integer times, the SD-weighting was automatically turned off, as it is not supported in this case.<br>
+Note also that due to the very low fluctuations associated with these <i>MALS</i> datasets, the <i>P</i>-value analysis yields extremely poor values, as contiguos streches of not perfectly fitting Gaussian values are unavoidable. Therefore, the <i>P</i>-value analysis is of little meaning in this case.<p>
+
+<li>
+<b><i>Save</i></b> will save the resulting Gaussians to the current selected directory, with extension -gauss.dat for symmetrical Gaussians of single files and -mgauss.dat for Gaussians of multiple files. For distorted Gaussians, the extensions will be -mgmg.dat, -memg.dat, and -memggmg.dat for the GMG, EMG and EMG+GMG Gaussians, respectively.<p>
+
+<li>
+Pressing <b><i>Keep</i></b> will accept the current Gaussians for further work.<p>
+
+<li>
+<b><i>Global fit</i></b>, which becomes available instead of the <b><i>Fit</i></b> button once a series of chromatogram is selected and after at least an initial set of Gaussians is generated/loaded, can now be used to optimize all the centres and widths of each Gaussian along all the chromatograms to common values for each family of Gaussians. The operation is controlled by the same pop-up <b>Fit</b> panel as for the single chromatogram case (see <a href=somo_saxs_hplc_fit.html>here</a>), but only the LM method is still currently (March 2026) available:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians_GlobFit_Init.png" ALT="SOMO MALS seven Gaussians Global Fit start" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+We can do the global fit with all the Gaussians free to adjust, obtaining a slight improvement of the global normalized &chi;<sup>2</sup>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians_GlobFit_Final.png" ALT="SOMO MALS seven Gaussians Global Fit done" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In the image above, the results of the <b><i>Global fit</i></b> are shown together with the grouped fit residuals. Furthermore, a new set of tools is available to judge the goodness of the fit:<p>
+
+<li>
+A pairwise <b>PVP</b> analysis in automatically performed between each original <i>I</i>(<i>t</i>) vs. <i>t</i> chromatogram and its reconstruction based on the sum of the fitting Gaussians, for each <i>q</i>-value. However, as already stated above, when the original data have very minor oscillations, as in the case of these <i>MALS</i> data, relatively long stretches of resulting sum of Gaussians points slightly above or below the original data are entirely possible, leading to very bad <i>P</i>-values (see the <i><b>Messages</b></i> area).<p>
+
+<li>
+A new kind of plot becomes available, visualized by pressing <b><i>Global fit by q</i></b>. The individual normalized &chi;<sup>2</sup> or RMSD values (both represented as diamonds connected by a line) and the pairwise <i>P</i>-values (squares connected by a line) are plotted as a function of the <i>q</i>-value. In the image below, the RMSD and not the <i>n</i>&chi;<sup>2</sup> are shown (with the <i><b>Residuals</i></b> plot turned off):<p>
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians_GlobFit_by_q.png" ALT="SOMO MALS Gaussian Global fit with Global fit by q" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+In the <i><b>Global fit by q</i></b> graph it is possible to visualize either one of or both the two plots, by selecting/deselecting their respective checkboxes positioned just below it (<i>Plot Chi^2/RMSD</i> and <i>Plot P values</i>).<p>
+
+<li>
+The goodness-of-fit and the distribution of the residuals can be examined for each original/fit <i>I</i>(<i>t</i> vs. <i>t</i> pair by selecting the <i>Scroll</i> checkbox:<p>
+
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians_scroll1.png" ALT="SOMO MALS Gaussian Global fit scroll 1" width="800"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+In the image above, corresponding to the <i>I#</i>(<i>t</i>) vs. <i>t</i> chromatogram at the lowest <i>q</i>-value available (detector #2), the  <i><b>Global fit by q</i></b> graph is not shown (if it were, the current chromatograms pair would be highlighted in the <i>P</i>-values and normalized &chi;<sup>2</sup> plots by an enlarged symbol).<br>
+In the top graph, the color of the original <i>I#</i>(<i>t</i>) vs. <i>t</i> chromatogram is cyan (it can be changed by pressing <b><i>Color</i></b>), the individual Gaussians are green, and their sum is yellow (both fixed colors).<br>
+As can be seen, the fit is not good at the top of the first Gaussian and also at the main peak, but reasonable in all other places.<br>
+Scrolling is performed by either using the cyan-scale bar-wheel, or by clicking on the the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides.  We can now examine the fit at another <i>q</i>-value, corresponding to detector #5, where we can see that the fit is now very good in most places except still the first Gaussian, which is nevertheless improved:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_seven_Gaussians_scroll2.png" ALT="SOMO MALS Gaussian Global fit scroll 1" width="800"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The fit improves with detector number, and we can now accept it by first deselecting the <i>Scroll</i> checkbox and then pressing first <i><b>Save</i></b> and then <b><i>Keep</i></b>.<p>
+<li>
+For a description of the <b><i>Make results curves</i></b> and <b><i>To produced data</i></b> buttons see <a href=somo_saxs_hplc.html#Gaussians>here</a>.<p>
+</ul>
+
+A re-peaked (and if necessary time-shifted) concentration chromatogram can be now fitted with Gaussians, using for initialization the set derived from the <i>I#(t)</i> vs. <i>t</i> chromatograms (note: it is mandatory that the same number of Gaussians be used for both the concentration and <i>I#(t)</i> vs. <i>t</i> chromatograms).<p>
+
+This is done by first selecting only the concentration chromatogram and then pressing <b><i>Gaussian</i></b> (<b><i>EMG+GMG</i></b> in this example), which will bring up the current Gaussian parameters automatically rescaled to the highest intensity in the concentration chromatogram:<p> 
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_chrom_init_Gauss.png" ALT="Somo-MALS Conc. Chromatogram initial Gaussians" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+note how the intensities of the early eluting peaks are much smaller in the <i>UV</i> chromatogram, as their concentration is relatively small while they scatter strongly due to their sizes.<p>
+
+Pressing <b><i>Fit</i></b> will then bring up the <b>Fit</b> window (see <a href=somo_saxs_hplc_fit.html>here</a>), with the centers fixed as the <b><i>default</i></b> option, since for <i>MALS</i>-associated concentration detector data usually a band broadenig operation is performed before exporting them:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_chrom_fit_module.png" ALT="Somo-MALS Conc. Chromatogram fit module settings" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+<b><i>Fit</i></b> is then pressed, obtaining these results:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_conc_chrom_Gauss_fit.png" ALT="Somo-MALS Conc. Chromatogram  Gaussians fit" width="700"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+that can be considered satisfactory, given the smoothness of the original data.<p>
+
+The <b><i>Save</i></b> and <b><i>Keep</i></b> buttons must be then pressed to store and associate the resulting Gaussians to the concentration chromatogram. On re-generating the <i>I*(q)</i> vs. <i>q</i> frames (see below), each concentration Gaussian peak will be mapped onto the corresponding <i>I#(t)</i> vs. <i>t</i> peaks.<p>
+
+The <b><i>Make I*(q)</i></b> button becomes available every time that more than one <i>I#</i>(<i>t</i>) chromatogram is selected. If Gaussian fitting was performed, pressing it will produce a series of <i>I*(q)</i> vs. <i>q</i> curves for each Gaussian peak for each frame of the chromatogram on which the global operations have been carried out. An option panel in a pop-up window will allow several choices:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_Make_Iq.png" ALT="Somo-MALS Make I(q)" width="1000"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+A description of this module can be found <a href=saxs_hplc_ciq.html>here</a>.<p>
+
+<br>
 
 <hr>
 <font face="helvetica" size="-1">
@@ -43,7 +1510,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 11, 2024
+Last modified on February 13, 2026
 </font>
 </body>
 </html>
