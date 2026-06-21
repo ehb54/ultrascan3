@@ -158,14 +158,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                      vector < double > q,
                      vector < double > I,
                      bool              is_time = false,
-                     bool              replot  = true );
+                     bool              replot  = true,
+                     double            conc    = -1e0 );
 
       void add_plot( QString           name,
                      vector < double > q,
                      vector < double > I,
                      vector < double > errors,
                      bool              is_time = false,
-                     bool              replot  = true );
+                     bool              replot  = true,
+                     double            conc    = -1e0 );
 
       void add_plot_gaussian(
                              const QString     & file,
