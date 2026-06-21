@@ -1148,6 +1148,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       nnls_target = "\"" + grid_target + "\"";
    }
    bool clear_plot_first    = true;
+   bool extrapolate_c0      = false;
 
    US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
       new US_Hydrodyn_Saxs_Iqq_Load_Csv(
@@ -1171,6 +1172,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &use_SDs_for_fitting_iqq,
                                         &nnls_target,
                                         &clear_plot_first,
+                                        &extrapolate_c0,
                                         1 || U_EXPT,
                                         us_hydrodyn
                                         );
@@ -1230,6 +1232,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       ift_to_process.replaceInStrings( QRegularExpression( "^\""), "" ).replaceInStrings( QRegularExpression( "\"$"), "" );
       QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << Qt::endl;
       call_ift( true );
+      return;
+   }
+
+   // setup for extrapolation to zero concentration
+   if ( extrapolate_c0 ) {
+      do_extrap_c0( qsl_sel_names, qsl_data, name_to_errors_map, q, filename );
       return;
    }
 
