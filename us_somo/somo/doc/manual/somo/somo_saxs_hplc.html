@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC/KIN Module:</h2></center>
-<h3><center>Last updated: July 2024 </center></h3><p>
+<h3><center>Last updated: February 2026 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. P&eacute;rez, P. Vachette, and M. Rocco.<br>
 Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst. 49:1827-1841, 2016. Some subsequent improvements are discussed in Brookes and Rocco, "Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite", Eur. Biophys. J. 47:855-864 (2018). The most recent (July 2024) developments will be subsequently published (Brookes and Rocco, in preparation).</span>
@@ -39,7 +39,9 @@ In the image above, the main panel of the <b><i>HPLC/KIN</i></b> module is shown
 
 The left side of the window is divided in three sections, labeled "<b><i>Data files</i></b>", "<b><i>Produced Data</i></b>", and "<b><i>Messages</i></b>". By clicking on these labels, the corresponding panel below each label will disappear, allowing for an expansion of the remaining other panel(s). If every panel is made to disappear, the main graph will expand to cover the full size of the <b><i>HPLC/KIN</i></b> module window. By clicking again on the labels, the corresponding panels will be restored.<p>
 
-On the top left panel (<b><i>Data files</i></b>) there are seven buttons:
+At the top of the left-side panel, you can pre-select a directory where your data are stored. Clicking on this field (shown in the picture above is the <i>/home/ultrascan/HPLC_SAXS/Lyso_15_14_SOMO</i> path) will open a directory navigator where you can selected another directory. Checking the <i>Lock</i> checkbox will make the selected directory the default one upon re-starting the application.<p>
+
+In the top left panel (<b><i>Data files</i></b>) there are seven buttons:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -113,7 +115,7 @@ Below the window with the loaded files listing there is a second section of butt
 </center>
 <p>
 <li>
-<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2<i>n</i>+1 points.<p>
+<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose radius <i>n</i> is defined in a pop-up menu (shown below; <b><i>default: 1</i></b>), using a Gaussian smoothing kernel of 2<i>n</i>+1 points.<p>
 <center>
 <img SRC="somo-HPLC-SAXS_smoothing.png" ALT="SOMO HPLC-SAXS smoothing window panel">
 </center>
@@ -121,7 +123,8 @@ Below the window with the loaded files listing there is a second section of butt
 <li>
 <b><i>SVD/EFA</i></b> opens a pop-up window were a Single-Value Decomposition (SVD) analysis (e.g., see Williamson et al.,  Biophys J. 94, 4906-4923, 2008) and an Evolving Factor Analysis (EFA) (e.g., see Meisburger et al., J. Am. Chem. Soc. 138:6506-6516, 2016) can be performed on the selected data (see <a href=somo_saxs_hplc_svd.html>here</a>). <span style="color:#CC0000">Important:</span> the data must be all on the same grid; if not, a warning message will appear in the bottom left <b><i>Messages</i></b> window: "<span style="color:#CC0000">SVD: curves must be on the same grid, try 'Crop Common' first</span>" (see below for the use of the <b><i>Crop Common</i></b> button).<p>
 <li>
-<b><i>Make I#,I*(q)</i></b>. This is a new function, available from the <span style="color:#CC0000">July 2024</span> <b><i>US-SOMO</i></b> release. It was developed because of the new <b><i>US-SOMO SAS</i></b> module features allowing to join <i>Multi-Angle Light Scattering (MALS)</i></b> data with SAXS data, for global analyses on an expanded <i>q</i> range. Joining is possible only if the <i>intensities</i> of the two datasets are in the same, absolute scale. A first absolute scale for the intensity is in [g<sup>2</sup>/(cm<sup>3</sup>*mol)], that we identify with the symbol "<i>I#</i>(<i>q</i>)". By dividing <i>I#</i>(<i>q</i>) data by the concentration of the sample in mg/mL, one obtains the data in the absolute scale of [g/mol], which we previously identified with the symbol "<i>I*</i>(<i>q</i>)" (see <a href=saxs_hplc_parameters.html><b><i>here</b></i></a> for a listing of the required parameters and the equations used). The <i>I*</i>(<i>q</i>) units are also needed by the <a href=somo_saxs_options.html><b><i>Guinier analysis</b></i></a> feature of the <b><i>US-SOMO SAS</i></b> module, allowing to directly determine the weight-average molecular weight &lt;<i>M</i>&gt;<sub>w</sub> from the Guinier fit intercept.<br>
+<a id="MakeIdash"></a>
+<b><i>Make I#,I*(q)</i></b>. This is a new function, available from the <span style="color:#CC0000">July 2024</span> <b><i>US-SOMO</i></b> release. It was developed because of the new <b><i>US-SOMO SAS</i></b> module features allowing to join <i>Multi-Angle Light Scattering (MALS)</i></b> data with SAXS data, for global analyses on an expanded <i>q</i> range. Joining is possible only if the <i>intensities</i> of the two datasets are in the same, absolute scale. A first absolute scale for the intensity is in [g<sup>2</sup>/(cm<sup>3</sup>*mol)], that we identify with the symbol "<i>I#</i>(<i>q</i>)". By dividing <i>I#</i>(<i>q</i>) data by the concentration of the sample in g/mL, one obtains the data in the absolute scale of [g/mol], which we previously identified with the symbol "<i>I*</i>(<i>q</i>)" (see <a href=saxs_hplc_parameters.html><b><i>here</b></i></a> for a listing of the required parameters and the equations used). The <i>I*</i>(<i>q</i>) units are also needed by the <a href=somo_saxs_options.html><b><i>Guinier analysis</b></i></a> feature of the <b><i>US-SOMO SAS</i></b> module, allowing to directly determine the weight-average molecular weight &lt;<i>M</i>&gt;<sub>w</sub> from the Guinier fit intercept.<br>
 On pressing this button, a first pop-up panel will appear:
 <p>
 <center>
@@ -192,7 +195,7 @@ Pressing <i>OK</i> the procedure completes, and the <i>I#</i>(<i>q</i>) or <i>I*
 <td align=justify>
 <p>
 <br>
-As a kinetics data processing example, we load SAXS data on a fibrin re-polymerization experiment, where fibrin monomer obtained from solubilization of a fibrin clot with sodium acetate 100 mM, pH 4.6,  and purified by SEC on a preparative column, was mixed it in a 1:1 ratio with Tris 65 mM, NaCl 100 mM, pH 12.3, restoring near-physiological conditions of pH &sim;7.4. The reaction mixture was sequentially injected into a <i><b>Multi-Angle Light Scattering (MALS)</i></b> detector and in the SAXS capillary. SAXS frames were recorded every 2.5 s with a sample-to-detector distance of 2.56 m (Rocco, Thureau, P&eacute;rez, et al., manuscript in preparation): 
+As a kinetics data processing example, we load SAXS data on a fibrin re-polymerization experiment, where fibrin monomer at 0.8 mg/mL obtained from a thrombin-generated fibrin clot dissolved in CH<sub>3</sub>COONa 100 mM/CH<sub>3</sub>COOH 110 mM, pH 4.6, and then subjected to preparative SEC, was mixed in a 1:1 ratio with a TRIS-base 65 mM, NaOH 57 mM, NaCl 100 mM, pH 12.6 buffer, obtaining a final buffer composition of TRIS-base 6 mM/TRIS-NH<sub>4</sub><sup>+</sup>Cl<sup>-</sup> 265 mM, CH<sub>3</sub>COONa 105 mM, NaCl 23 mM, pH 7.425 that allows re-polymerization. The rapidly mixed solution was injected sequentially in the <b><i>MALS</i></b> and <b><i>SAXS</i></b> flow cells (data collected with a dedicated facility at the <a href=https://www.synchrotron-soleil.fr/en/beamlines/swing>SWING beamline</a> of the Synchrotron SOLEIL, Gif-sur-Yvette, France). SAXS frames were recorded every 2.5 s with a sample-to-detector distance of 2.56 m (Rocco, Thureau, P&eacute;rez, et al., manuscript in preparation): 
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -225,7 +228,7 @@ listing the new SAXS processing parameters. Pressing <i>Yes</i> the <i>I</i>(<i>
 </center>
 <td align=justify>
 <p>
-We leave the <i>Starting time [s]</i> "0" as these kinetic data were collected immediately after injection. We set the <i>Exposure time [s]</i>  to 0.5 s and the <i>Frame interval [s]</i> t0 2 s. Pressing <i>OK</i> will perform this operation, and the third pop-up panel will appear:
+We leave the <i>Starting time [s]</i> "0" as these kinetic data were collected immediately after injection. We set the <i>Exposure time [s]</i>  to 0.5 s and the <i>Frame interval [s]</i> to 2 s. Pressing <i>OK</i> will perform this operation, and the third pop-up panel will appear:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -396,6 +399,8 @@ On pressing <i><b>Options</i></b>, a pop-up panel will be shown:<p>
 <p>
 
 See <a href=saxs_hplc_options.html>here</a> for a description of this module.<p>
+<br>
+<hr>
 
 On the top of the graphics window there is a row of round "<b><i>Plot buttons:</i></b>" checkboxes each one controlling the showing of a series of buttons:
 <p>
@@ -504,7 +509,7 @@ The <i>Conc. Util.</i> (Concentration Utility) checkbox will enable these button
 </center>
 <td align=justify>
 <p>
-They are used to deal with chromatography data coming from a concentration detector, such as absorbance (UV-Vis) or refractive index (RI). These data are usually on a diffent intensity scale, and time-shifted because of the placement of these detectors either before or after the SAXS cell. To deal with these problems, we need first to scale the concentration-associated chromatogram to a SAXS <i>I</i>(<i>t</i>) vs. <i>t</i>  chromatogram at a <i>q</i> value, and then to time-shift it to align it in the time domain.<br>
+They are used to deal with chromatography data coming from a concentration detector, such as absorbance (UV-Vis) or refractive index (RI). These data are usually on a different intensity scale, and time-shifted because of the placement of these detectors either before or after the SAXS cell. To deal with these problems, we need first to scale the concentration-associated chromatogram to a SAXS <i>I</i>(<i>t</i>) vs. <i>t</i>  chromatogram at a <i>q</i> value, and then to time-shift it to align it in the time domain.<br>
 To demonstrate these procedures we employ a bovine serum albumin (BSA) SEC-SAXS run using two 7.8 &times; 300 mm ID columns packed with hydroxylated polymethacrylate particles (TSK G4000PWXL, 10 &micro;m size, 500 &Aring; pore size, and G3000PWXL, 6 &micro;m size, 200 &Aring; pore size, Tosoh Bioscience, Tokyo, Japan) connected in series, protected by a 6 &times; 40 mm guard column filled with G3000PW resin (Tosoh). The data presented capillary fouling evidence, and were thus subjected to Integral Baseline correction (not shown). The concentration-associated data were an absorption profile at 280 nm collected with a DAD (Diode Array Detector).<br>
 The concentration data are first loaded with the <b><i>Conc. File Load</i></b> button (see <a href="#conc_load">here</a>) and then selected:
 <p>
@@ -615,14 +620,14 @@ Pressing <i>No</i> will defer this important decision, pressing <i>Yes</i> will 
 </center>
 <td align=justify>
 <p>
-were a multiplying factor can be entered. For instance, if the time units of the concentration data were minutes, and of the SAXS data were seconds, entering "60" and pressing <i>Ok</i> will bring the concentration data on the same time units as the SAXS data. This operation, if needed, should be done <b>before</b> any other in this panel. Pressing <i>Cancel</i> will abort this operation.<p>
+were a multiplying factor can be entered. For instance, if the time units of the concentration data were minutes, and those of the <i>SAXS</i> data were seconds, entering "60" and pressing <i>Ok</i> will bring the concentration data on the same time units as the <i>SAXS</i> data. This operation, if needed, should be done <b>before</b> any other in this panel. Pressing <i>Cancel</i> will abort this operation.<p>
 
 </ul>
 
 <br>
 
 The <i>S.D. Util</i> checkbox relates to another feature present in the <b><i>US-SOMO HPLC/KIN</i></b> module, an alternative way of estimating the errors associated with the SAXS data. This might become useful if no errors have been already associated with the experimental data, or if their reliability is questionable.<br>
-The method is based on the assumption that the fluctuations of the signal at the baseline level are a good representation of the error associated with the data an any other point along each <i>I(t)</i> vs. <i>t</i> chromatogram. Therefore, by estimating the average fluctuations in flat regions of the chromatogram, a <b>constant</b> SD value can be associated with <b>every</b> datapoint in that particular chromatogram. Obviously, different chromatograms will have different values for their respective constant SD.<br>
+The method is based on the assumption that the fluctuations of the signal at the baseline level are a good representation of the error associated with the data at any other point along each <i>I(t)</i> vs. <i>t</i> chromatogram. Therefore, by estimating the average fluctuations in flat regions of the chromatogram, a <b>constant</b> SD value can be associated with <b>every</b> datapoint in that particular chromatogram. Obviously, different chromatograms will have different values for their respective constant SD.<br>
 Two buttons will become availble on selecting the <i>S.D. Util</i> checkbox: 
 <p>
 <center>
@@ -739,7 +744,7 @@ The <b><i>Residuals</i></b> main use is to visualize the residuals of a fit, as 
 <td align=justify>
 <p>
 
-Selecting the <i>Reverse</i> checkbox will inverted the order of comparison and thus the sign of the differences. Selecting the <i>Use standard deviations</i> checkbox will weight the residuals by the associated SD of each point:
+Selecting the <i>Reverse</i> checkbox will invert the order of comparison and thus the sign of the differences. Selecting the <i>Use standard deviations</i> checkbox will weight the residuals by the associated SD of each point:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -841,7 +846,7 @@ If a previously-generated set of Gaussians was present or loaded from file, the 
 <li>
 Clicking on the "<b>&lt;</b>" and "<b>&gt;</b>" buttons will toggle among the Gaussian present, whose identifying number is shown in the field between them. The active Gaussian is identified by a magenta vertical line positioned at its center, while blue lines are used for the others.<p>
 <li>
-The <i>SD</i> checkbox controls whether the data associated std. dev. values will be used in the fitting procedure (<b><i>default: not selected</i></b>). It is recommended to select this checkbox only after a first round of fitting with the various algorithms provided has been performed, as the SD can only be used with the LM algorithm at the time of updating this Help section (July 2024).<p>
+The <i>SD</i> checkbox controls whether the data associated std. dev. values will be used in the fitting procedure (<b><i>default: not selected</i></b>). It is recommended to select this checkbox only after a first round of fitting with the various algorithms provided has been performed, as the SD can only be used with the LM algorithm at the time of updating this Help section (March 2026).<p>
 <li>
 Once the initialization is completed, pressing the <b><i>Fit</i></b> button will bring up a window controlling the fit procedure, shown below:<p>
 
@@ -926,7 +931,7 @@ The <b><i>Global Gaussians</i></b> button is now available. This utility has two
 </center>
 <p>
 
-<i>Turn on</i> is then selected. <b><i>Global Gaussians</i></b>  will allso restore the saved parameters saved in a file after a satisfactory fitting is attained. For this reason, another pop-up panel will appear:
+<i>Turn on</i> is then selected. <b><i>Global Gaussians</i></b>  will also restore the parameters saved in a file after a satisfactory fitting is attained. For this reason, another pop-up panel will appear:
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_GlobalGaussianOptions.png" ALT="SOMO HPLC-SAXS Global Gaussians mode: fit amplitudes or restore saved ones">
@@ -959,7 +964,7 @@ In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth<
 <li>
 Pressing <b><i>Keep</i></b> will accept the current Gaussians for further work.<p>
 <li>
-<b><i>Global fit</i></b>, which becomes available instead of the <b><i>Fit</i></b> button once a series of chromatogram is selected and after at least an initial set of Gaussians is generated/loaded, can now be used to optimize all the centres and widths of each Gaussian along all the chromatograms to common values for each family of Gaussians. The operation is controlled by the same pop-up <b>Fit</b> panel as for the single chromatogram case (see <a href=somo_saxs_hplc_fit.html>here</a>), but only the LM method is still currently (July 2024) available. In this example, it is best to first perform a global fit round keeping the Gaussians 1, 2 and 4 fixed, and then perform a second round leaving all parameters free:
+<b><i>Global fit</i></b>, which becomes available instead of the <b><i>Fit</i></b> button once a series of chromatogram is selected and after at least an initial set of Gaussians is generated/loaded, can now be used to optimize all the centres and widths of each Gaussian along all the chromatograms to common values for each family of Gaussians. The operation is controlled by the same pop-up <b>Fit</b> panel as for the single chromatogram case (see <a href=somo_saxs_hplc_fit.html>here</a>), but only the LM method is still currently (March 2026) available. In this example, it is best to first perform a global fit round keeping the Gaussians 1, 2 and 4 fixed, and then perform a second round leaving all parameters free:
 
 <p>
 <center>
@@ -1066,9 +1071,9 @@ Pressing <i>Ok</i> will allow the operation to complete anyway, and if the resul
 <p>
 
 The image above shows the global Gaussians results after applying the global fit parameters found on a subset of data to all chromatograms. <b><i>Save</i></b> and <i><b>Keep</i></b> can then be sequentially pressed to store and accept the global Gaussian results.<br>
-Note, however, how the <i>P</i>-values plot shows a large increase of "bad" <i>P</i>-values at increasing <i>q</i>-values. This is due to the global Gaussians propagation failing to reach true mininima by some peaks values getting "trapped" by spikes in the data. To alleviate this problem, starting from the  <span style="color:#CC0000">July 2024 intermediate release</span> we offer two alternative ways leading to a better global Gaussians propagation. In the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module there are two checkboxes labeled "<i>Experimental: Global Gaussian Initialization smoothing. Maximum smoothing points:</i>" followed by a field that becomes available if this checkbox is selected, and <i>Experimental: Global Gaussian cyclic fit</i>. <p>
+Note, however, how the <i>P</i>-values plot shows a large increase of "bad" <i>P</i>-values at increasing <i>q</i>-values. This is due to the global Gaussians propagation failing to reach true mininima by some peaks values getting "trapped" by spikes in the data. To alleviate this problem, starting from the  <span style="color:#CC0000">July 2024 intermediate release</span> we offer two alternative ways leading to a better global Gaussians propagation. In the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module there are two checkboxes labeled "<i>Global Gaussian Initialization smoothing. Maximum smoothing radius:</i>" followed by a field that becomes available if this checkbox is selected, and <i>Global Gaussian cyclic fit</i>. <p>
 The first feature deals with the problem of how to avoid local minimima when propagating a set of Gaussians optimized on a few chromatograms to all other chromatograms, by resorting to smoothing the data. Especially for high scattering angles, very noisy data, local spikes can lead the optimization of the individual fits to stop before reaching a true global minimum. Smoothing at the fit level alleviates this problem. (<span style="color:#CC0000">Note: importantly, the final decomposition when regenerating the <i>I(q)</i> vs. <i>q</i> data for each peak is done on the <i>original</i>, <b>not</b> on the <i>smoothed</i> <i>I(t)</i> vs. <i>t</i> chromatograms!</span>).<br>
-After selecting this checkbox with 7 as the maximum smoothing points, we can return to the <b><i>HPLC/KIN</i></b> module and restart <b><i>Global Gaussians</i></b>. The pop-up asking for re-fitting the Gaussians amplitudes or keeping the actual values will again appear, and we choose <i>Yes</i>, leading to an iterative procedure where for each chromatogram a smoothing pass increasing from 1 to the maximum chosen points (7 in this case) is launched, followed with the amplitudes fitting. The procedure stops at each chromatogram level when a further increase in smoothing doesn't improve the fit, leading to these results:
+After selecting this checkbox with 7 as the maximum smoothing radius <i>n</i>, which will produce a Gaussian smoothing kernel of 2<i>n</i>+1 points (15 points in this case), we can return to the <b><i>HPLC/KIN</i></b> module and restart <b><i>Global Gaussians</i></b>. The pop-up asking for re-fitting the Gaussians amplitudes or keeping the actual values will again appear, and we choose <i>Yes</i>, leading to an iterative procedure where for each chromatogram a smoothing cycle with the smoothing kernel increasing from 3 (for <i>n</i>=1) to the maximum allowed (15 in this case for <i>n</i>=7) is launched, followed with the amplitudes fitting. The procedure stops at each chromatogram level when a further increase in smoothing doesn't improve the fit, leading to these results:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -1093,8 +1098,8 @@ The final smoothed data for each chromatogram appear in the <b><i>Data files</i>
 <p>
 Obviously, while this procedure can resolve some of the local minima problems, it cannot cure poor fitting issues.<p>
 
-The second procedure we developed can be run by choosing the <i>Experimental: Global Gaussian cyclic fit</i> in the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously.<p>
-After selecting this checkbox, to allow a direct comparison of this cyclic procedure versus the "standard" procedure, the <i>Experimental: Global Gaussian - Enable legacy Gaussian fit display</i> is also checked. We can now return to the <b><i>HPLC/KIN</i></b> module and restart <b><i>Global Gaussians</i></b>. The pop-up asking for re-fitting the Gaussians amplitudes or keeping the actual values will again appear, and we choose <i>Yes</i>, leading to the cyclic fit being launched (as reported in the <b><i>Messages</i></b> section) with these results:
+The second procedure we developed can be run by choosing the <i>Global Gaussian cyclic fit</i> in the <a href=saxs_hplc_options.html><i><b>HPLC/KIN Options</i></b></a> module. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously, and the entire cycle is done twice.<p>
+After selecting this checkbox, to allow a direct comparison of this cyclic procedure versus the "standard" procedure, the <i>Global Gaussian - Enable legacy Gaussian fit display</i> is also checked. We can now return to the <b><i>HPLC/KIN</i></b> module and restart <b><i>Global Gaussians</i></b>. The pop-up asking for re-fitting the Gaussians amplitudes or keeping the actual values will again appear, and we choose <i>Yes</i>, leading to the cyclic fit being launched (as reported in the <b><i>Messages</i></b> section) with these results:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -1105,7 +1110,7 @@ After selecting this checkbox, to allow a direct comparison of this cyclic proce
 </center>
 <td align=justify>
 <p>
-The improvement in the fitting can be seen in the <b><i>Messages</i></b> section, where the global "good" <i>P</i>-values have now increased from &sim;50 % to &sim;76 %. The <i>Global fit by q</i> plot also shows an improved distribution of the <i>P</i>-values. As for the <i>smoothing</i> procedure while the <i>cyclic fit</i>  procedure can significantly resolve some of the local minima problems, it cannot cure poor fitting issues. Selecting then the <i>Scroll</i> and the "<i>Raw</i>" checkboxes, we can directly see the effect of the cyclic procedure on any chromatogram, as in this example: 
+The improvement in the fitting can be seen in the <b><i>Messages</i></b> section, where the global "good" <i>P</i>-values have now increased from &sim;50 % to &sim;76 %. The <i>Global fit by q</i> plot also shows an improved distribution of the <i>P</i>-values. As for the <i>smoothing</i> procedure, while the <i>cyclic fit</i>  procedure can significantly resolve some of the local minima problems, it cannot cure poor fitting issues. Selecting then the <i>Scroll</i> and the "<i>Raw</i>" checkboxes, we can directly see the effect of the cyclic procedure on any chromatogram, as in this example: 
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -1334,6 +1339,7 @@ since we do not need to re-fit the data:
 <td align=justify>
 <p>
 
+<a id="Gaussians"></a>
 Each individual Gaussian is defined by three to five numbers: the amplitude, width and center, and optionally the distorsions parameters. As such, they are not "curves" in the sense of the loaded files, which are collections of data points. Therefore, the Gaussians can not be visualized with the facilities of the program outside of Gaussian or Global Gaussian modes.<p>
 <ul>
 <li>
@@ -1644,7 +1650,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 11, 2024.
+Last modified on February 24, 2026.
 </font>
 </body>
 </html>
