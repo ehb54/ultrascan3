@@ -195,7 +195,33 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                   "Proceeding anyway." ) );
    }
 
-   // 6. per-q linear regression: I(q) vs concentration -> intercept (I0) + its standard error
+   // loaded I(q) curves are raw (not pre-normalized by concentration): raw SAXS
+   // intensity is dominated by a term directly proportional to c, so a linear fit
+   // of raw I(q) vs c trivially extrapolates to ~0 at c=0 (no protein, no excess
+   // scattering) -- not physically useful. The standard "extrapolation to zero
+   // concentration" technique (the SAXS analogue of a Zimm plot) instead fits the
+   // concentration-NORMALIZED intensity I(q,c)/c against c; its c=0 intercept is
+   // the ideal, structure-factor-free dilute-limit curve. So divide by concentration
+   // here, on the intensity axis only -- the concentration (x) axis stays the real,
+   // distinct entered values; collapsing it (e.g. to 1 for "already normalized"
+   // data) would remove the spread the regression needs and isn't equivalent.
+   unsigned int zero_conc_excluded = 0;
+   for ( int ci = 0; ci < (int) concs.size(); ci++ )
+   {
+      if ( concs[ ci ] <= 0e0 )
+      {
+         zero_conc_excluded++;
+      }
+   }
+   if ( zero_conc_excluded )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString( us_tr( "%1 curve(s) have a concentration of 0 and will be excluded "
+                                            "from the extrapolation (intensity can't be normalized by a zero concentration)." ) )
+                            .arg( zero_conc_excluded ) );
+   }
+
+   // 6. per-q linear regression: I(q)/c vs concentration -> intercept (I0) + its standard error
 
    US_Saxs_Util usu;
 
@@ -211,13 +237,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       for ( int ci = 0; ci < ordered_names.size(); ci++ )
       {
+         if ( concs[ ci ] <= 0e0 )
+         {
+            continue;
+         }
          double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
          if ( us_isnan( Iv ) )
          {
             continue;
          }
          x.push_back( concs[ ci ] );
-         y.push_back( Iv );
+         y.push_back( Iv / concs[ ci ] );
       }
 
       if ( x.size() < 2 )
@@ -286,6 +316,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    plot_one_iqq( out_q, out_I0, out_I0_err, final_name );
 
    editor_msg( "black",
-              QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n" )
+              QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
+                       "Note: this curve is I(q)/concentration extrapolated to c=0, not raw intensity -- "
+                       "its scale differs from the input curves by a factor of concentration.\n" )
               .arg( final_name ).arg( out_q.size() ).arg( skipped_points ) );
 }
