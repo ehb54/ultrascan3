@@ -3654,7 +3654,8 @@ void US_Hydrodyn_Saxs_Hplc::update_csv_conc()
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
-            tmp_data.push_back( "" );
+            tmp_data.push_back( f_conc.count( tmp_data[ 0 ] ) && f_conc[ tmp_data[ 0 ] ] != 0e0 ?
+                                 QString( "%1" ).arg( f_conc[ tmp_data[ 0 ] ] ) : "" );
             
             csv_conc.prepended_names.push_back(tmp_data[0]);
             csv_conc.data.push_back(tmp_data);
@@ -3691,7 +3692,8 @@ void US_Hydrodyn_Saxs_Hplc::update_csv_conc()
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
-            tmp_data.push_back( "" );
+            tmp_data.push_back( f_conc.count( tmp_data[ 0 ] ) && f_conc[ tmp_data[ 0 ] ] != 0e0 ?
+                                 QString( "%1" ).arg( f_conc[ tmp_data[ 0 ] ] ) : "" );
             
             new_csv.prepended_names.push_back(tmp_data[0]);
             new_csv.data.push_back(tmp_data);
@@ -6287,14 +6289,15 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       vector < double > q,
                                       vector < double > I,
                                       bool              is_time,
-                                      bool              replot )
+                                      bool              replot,
+                                      double            conc )
 {
    vector < double > errors( I.size() );
    for ( unsigned int i = 0; i < ( unsigned int ) errors.size(); i++ )
    {
       errors[ i ] = 0e0;
    }
-   add_plot( name, q, I, errors, is_time, replot );
+   add_plot( name, q, I, errors, is_time, replot, conc );
 }
 
 void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
@@ -6302,7 +6305,8 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
                                       vector < double > I,
                                       vector < double > errors,
                                       bool              is_time,
-                                      bool              replot )
+                                      bool              replot,
+                                      double            conc )
 {
    name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    if ( q.size() != I.size() )
@@ -6348,7 +6352,7 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
    f_Is        [ bsub_name ] = I;
    f_errors    [ bsub_name ] = errors;
    f_is_time   [ bsub_name ] = is_time;
-   f_conc      [ bsub_name ] = f_conc.count( bsub_name ) ? f_conc[ bsub_name ] : 0e0;
+   f_conc      [ bsub_name ] = conc >= 0e0 ? conc : ( f_conc.count( bsub_name ) ? f_conc[ bsub_name ] : 0e0 );
    {
       vector < double > tmp;
       f_gaussians  [ bsub_name ] = tmp;
