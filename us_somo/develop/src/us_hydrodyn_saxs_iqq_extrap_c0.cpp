@@ -128,15 +128,25 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 3. launch the concentration-assignment dialog
 
+   // conc_csv is keyed inconsistently depending on how a curve arrived:
+   // curves loaded straight from this CSV file and previously plotted get keyed
+   // by "<csv filename> <quoted row name>" (e.g. plot_one_iqq() callers elsewhere
+   // in load_iqq_csv() use QFileInfo(filename).fileName() + " " + qsl_tmp[0]);
+   // curves pushed in from elsewhere (e.g. SAXS Hplc's to_saxs()) are keyed by
+   // the bare, unquoted plotted curve name. Try all three forms.
    map < QString, double > prepop_conc;
    for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
    {
       QString name = *it;
+      QString dequoted_name = name;
+      dequoted_name.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+
       double  conc, psv, I0_std;
 
       QString composed_name = QFileInfo( filename ).fileName() + " " + name;
       if ( get_conc_csv_values( composed_name, conc, psv, I0_std ) ||
-           get_conc_csv_values( name, conc, psv, I0_std ) )
+           get_conc_csv_values( name, conc, psv, I0_std ) ||
+           get_conc_csv_values( dequoted_name, conc, psv, I0_std ) )
       {
          prepop_conc[ name ] = conc;
       }
@@ -152,14 +162,20 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    if ( !dlg_ok )
    {
+      this->isVisible() ? this->raise() : this->show();
+      editor_msg( "black", us_tr( "Extrapolation to zero concentration cancelled\n" ) );
       return;
    }
 
-   // 4. persist entered concentrations back into the existing conc_csv facility
+   // 4. persist entered concentrations back into the existing conc_csv facility,
+   //    keyed by the dequoted (canonical, unquoted) curve name -- matches the
+   //    convention used by other writers such as US_Hydrodyn_Saxs_Hplc::to_saxs()
 
    for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
    {
-      update_conc_csv( *it, name_to_conc[ *it ] );
+      QString dequoted_name = *it;
+      dequoted_name.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+      update_conc_csv( dequoted_name, name_to_conc[ *it ] );
    }
 
    // 5. distinct-concentration sanity check (warn, don't block)
