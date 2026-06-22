@@ -122,7 +122,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
 
    cb_makeiq_avg_peaks = new QCheckBox(this);
-   cb_makeiq_avg_peaks->setText( us_tr( "Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
+   cb_makeiq_avg_peaks->setText( us_tr( "Average resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
    cb_makeiq_avg_peaks->setEnabled( true );
    cb_makeiq_avg_peaks->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks" ] == "true" );
    cb_makeiq_avg_peaks->setChecked( false );
@@ -150,16 +150,16 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       le_makeiq_avg_peaks->hide();
    }
 
-   cb_makeiq_avg_peaks_normalize = new QCheckBox(this);
-   cb_makeiq_avg_peaks_normalize->setText( us_tr( "Normalize before averaging (uncheck for true-concentration rescale)" ) );
-   cb_makeiq_avg_peaks_normalize->setEnabled( true );
-   cb_makeiq_avg_peaks_normalize->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] != "false" );
-   cb_makeiq_avg_peaks_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   cb_makeiq_avg_peaks_normalize->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_makeiq_avg_peaks_normalize );
-   connect( cb_makeiq_avg_peaks_normalize, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   cb_makeiq_avg_peaks_rescale_conc = new QCheckBox(this);
+   cb_makeiq_avg_peaks_rescale_conc->setText( us_tr( "Rescale averaged curve to average concentration" ) );
+   cb_makeiq_avg_peaks_rescale_conc->setEnabled( true );
+   cb_makeiq_avg_peaks_rescale_conc->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] == "true" );
+   cb_makeiq_avg_peaks_rescale_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_makeiq_avg_peaks_rescale_conc->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_makeiq_avg_peaks_rescale_conc );
+   connect( cb_makeiq_avg_peaks_rescale_conc, SIGNAL( clicked() ), SLOT( update_enables() ) );
    if ( parameters->count( "ngmode" ) ) {
-      cb_makeiq_avg_peaks_normalize->hide();
+      cb_makeiq_avg_peaks_rescale_conc->hide();
    }
 
    // cb's co dependent
@@ -535,7 +535,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       hbl_avg_peaks->addWidget( le_makeiq_avg_peaks );
       vbl->addLayout( hbl_avg_peaks );
    }
-   vbl->addWidget( cb_makeiq_avg_peaks_normalize );
+   vbl->addWidget( cb_makeiq_avg_peaks_rescale_conc );
 
    vbl->addWidget( cb_normalize );
    vbl->addWidget( cb_istarq );
@@ -662,7 +662,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
 
    (*parameters)[ "hplc_cb_makeiq_avg_peaks"     ] = cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_makeiq_avg_peaks"        ] = le_makeiq_avg_peaks    ->text();
-   (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] = cb_makeiq_avg_peaks_normalize->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] = cb_makeiq_avg_peaks_rescale_conc->isChecked() ? "true" : "false";
 
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
@@ -844,7 +844,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
    }
 
    le_makeiq_avg_peaks               ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
-   cb_makeiq_avg_peaks_normalize     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   cb_makeiq_avg_peaks_rescale_conc     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
 
    le_I0se->setEnabled( !cb_I0se->isChecked() );
    pb_go->setEnabled( !no_go );

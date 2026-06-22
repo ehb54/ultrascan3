@@ -3338,7 +3338,7 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "hplc_makeiq_cutmax_pct"     ]                  = "1";
    gparams[ "hplc_cb_makeiq_avg_peaks"   ]                  = "false";
    gparams[ "hplc_makeiq_avg_peaks"      ]                  = "5";
-   gparams[ "hplc_cb_makeiq_avg_peaks_normalize" ]          = "true";
+   gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ]          = "false";
    gparams[ "hplc_cb_gg_cyclic"          ]                  = "true";
    
    gparams[ "zeno_repeats"               ]                  = "1";
