@@ -33,6 +33,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
                                                      bool *use_SDs_for_fitting,
                                                      QString *nnls_target,
                                                      bool *clear_plot_first,
+                                                     bool *extrapolate_c0,
                                                      bool expert_mode,
                                                      void *us_hydrodyn,
                                                      QWidget *p,
@@ -58,6 +59,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
    this->use_SDs_for_fitting  = use_SDs_for_fitting;
    this->nnls_target          = nnls_target;
    this->clear_plot_first     = clear_plot_first;
+   this->extrapolate_c0       = extrapolate_c0;
    this->expert_mode          = expert_mode;
    this->us_hydrodyn          = us_hydrodyn;
 
@@ -254,6 +256,16 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    AUTFBACK( cb_clear_plot_first );
    connect(cb_clear_plot_first, SIGNAL(clicked()), this, SLOT(set_clear_plot_first()));
 
+   cb_extrapolate_c0 = new QCheckBox(this);
+   cb_extrapolate_c0->setText(us_tr("Extrap. to\nzero conc"));
+   cb_extrapolate_c0->setEnabled(true);
+   cb_extrapolate_c0->setChecked(*extrapolate_c0);
+   cb_extrapolate_c0->setMinimumHeight(minHeight1dl);
+   cb_extrapolate_c0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_extrapolate_c0->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_extrapolate_c0 );
+   connect(cb_extrapolate_c0, SIGNAL(clicked()), this, SLOT(set_extrapolate_c0()));
+
    pb_select_all = new QPushButton(us_tr("Select All"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
@@ -315,6 +327,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    hbl_avg_std->addWidget(cb_save_to_csv);
    hbl_avg_std->addWidget(le_csv_filename);
    hbl_avg_std->addWidget(cb_save_original_data);
+   hbl_avg_std->addWidget(cb_extrapolate_c0);
 
    QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget(lbl_info);
@@ -596,6 +609,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_nnls()
    if ( *run_nnls ) {
       cb_run_ift        ->setChecked( false );
       *run_ift          = false;
+      cb_extrapolate_c0 ->setChecked( false );
+      *extrapolate_c0   = false;
    }
    if ( nnls_target->isEmpty() && *run_nnls )
    {
@@ -629,9 +644,11 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_ift()
       cb_clear_plot_first->setChecked( false );
       cb_run_nnls        ->setChecked( false );
       cb_run_best_fit    ->setChecked( false );
+      cb_extrapolate_c0  ->setChecked( false );
       *clear_plot_first = false;
       *run_nnls         = false;
       *run_best_fit     = false;
+      *extrapolate_c0   = false;
    }
    if ( nnls_target->isEmpty() && *run_ift )
    {
@@ -652,6 +669,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_run_best_fit()
    if ( *run_best_fit ) {
       cb_run_ift        ->setChecked( false );
       *run_ift          = false;
+      cb_extrapolate_c0 ->setChecked( false );
+      *extrapolate_c0   = false;
    }
    if ( nnls_target->isEmpty() && *run_best_fit )
    {
@@ -678,6 +697,28 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_clear_plot_first()
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Iqq_Load_Csv::set_extrapolate_c0()
+{
+   *extrapolate_c0 = cb_extrapolate_c0->isChecked();
+   if ( *extrapolate_c0 ) {
+      // the caller clears the plot (if checked) before the concentration dialog
+      // even opens, so if the user then cancels out of that dialog the previously
+      // plotted curves are gone with no way back -- avoid that the same way
+      // run_ift already does, by forcing "Clear plot" off while this is active
+      cb_clear_plot_first->setChecked( false );
+      *clear_plot_first = false;
+      if ( expert_mode ) {
+         cb_run_nnls    ->setChecked( false );
+         cb_run_best_fit->setChecked( false );
+         cb_run_ift     ->setChecked( false );
+         *run_nnls       = false;
+         *run_best_fit   = false;
+         *run_ift        = false;
+      }
+   }
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::select_target()
 {
    if ( *run_nnls || *run_best_fit )
@@ -694,8 +735,17 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::select_target()
 
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
 {
-   pb_ok->setText( us_tr( cb_run_ift->isChecked() ? "Run" : "Plot" ) );
-   
+   if ( qsl_sel_names->size() < 3 && cb_extrapolate_c0->isChecked() )
+   {
+      cb_extrapolate_c0->setChecked( false );
+      *extrapolate_c0 = false;
+   }
+   cb_extrapolate_c0->setEnabled( qsl_sel_names->size() >= 3 );
+
+   pb_ok->setText( us_tr( cb_run_ift->isChecked()        ? "Run" :
+                          cb_extrapolate_c0->isChecked() ? "Extrapolate" :
+                          "Plot" ) );
+
    cb_create_avg->setEnabled(qsl_sel_names->size() > 1);
    cb_create_std_dev->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 2);
    cb_only_plot_stats->setEnabled(cb_create_avg->isChecked() && qsl_sel_names->size() > 1);
@@ -731,9 +781,9 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
    pb_save_as_dat->setEnabled(qsl_sel_names->size() == 1);
    pb_save_selected->setEnabled(qsl_sel_names->size());
    pb_ok->setEnabled( qsl_sel_names->size() );
-   cb_clear_plot_first->setEnabled( qsl_sel_names->size() && !cb_run_ift->isChecked() );
-   cb_run_nnls->setEnabled( !cb_run_ift->isChecked() );
-   cb_run_best_fit->setEnabled( !cb_run_ift->isChecked() );
+   cb_clear_plot_first->setEnabled( qsl_sel_names->size() && !cb_run_ift->isChecked() && !cb_extrapolate_c0->isChecked() );
+   cb_run_nnls->setEnabled( !cb_run_ift->isChecked() && !cb_extrapolate_c0->isChecked() );
+   cb_run_best_fit->setEnabled( !cb_run_ift->isChecked() && !cb_extrapolate_c0->isChecked() );
    cb_nnls_csv->setEnabled( cb_run_nnls->isChecked() );
    if ( !cb_run_nnls->isChecked() ) {
       cb_nnls_csv->setChecked( false );

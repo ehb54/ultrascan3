@@ -173,7 +173,7 @@ void US_Hydrodyn_Mals_Conc::setupGUI()
    // t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
-   connect( t_csv->verticalHeader(), SIGNAL( released( int ) ), SLOT( row_header_released( int ) ) );
+   connect( t_csv->verticalHeader(), SIGNAL( sectionClicked( int ) ), SLOT( row_header_released( int ) ) );
    
    pb_load = new QPushButton(us_tr("Load"), this);
    pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
