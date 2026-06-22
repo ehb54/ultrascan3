@@ -2435,8 +2435,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       for ( unsigned int i = 0; i < (unsigned int) avg_peaks_names.size(); ++i ) {
          if ( avg_peaks_names[ i ].size() ) {
             set_selected( avg_peaks_names[ i ] );
-            // then average
-            avg( all_selected_files(), QString( peak_tag ) );
+            // avg() refuses to average fewer than 2 curves (by design, for the
+            // interactive "average selected" button); a Gaussian peak's "top %"
+            // window can easily select just 1 curve, so that case is handled
+            // below by using the single curve directly instead of calling avg().
+            bool singleton = avg_peaks_names[ i ].size() == 1;
             if ( conc_ok && istarq_mode == ISTARQ_NONE ) {
                // snapshot the ORIGINAL (pre-normalize) average concentration
                // for this peak's raw curve set, before normalize() resets conc to 1.0
@@ -2456,18 +2459,24 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                   }
                }
 
-               // normalize selected, then average again
+               // normalize the selected raw curves, then average the normalized set
                set < QString > norm_names;
                normalize( norm_names );
-               set_selected( norm_names );
-               avg( all_selected_files(), QString( peak_tag ) );
-               remove_files( norm_names );
-               // set < QString > last_selected;
-               // last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
-               // set_selected( last_selected );
-               // normalize();
 
-               QString final_name = lb_files->item( lb_files->count() - 1 )->text();
+               QString final_name;
+               if ( singleton ) {
+                  // nothing to average -- the lone normalized curve is the result
+                  final_name = norm_names.size() ? *norm_names.begin() : QString();
+               } else {
+                  set_selected( norm_names );
+                  avg( all_selected_files(), QString( peak_tag ) );
+                  remove_files( norm_names );
+                  final_name = lb_files->item( lb_files->count() - 1 )->text();
+               }
+
+               if ( final_name.isEmpty() ) {
+                  continue;
+               }
 
                if ( avg_peaks_rescale_conc && avg_conc_orig > 0e0 ) {
                   // rescale the normalized-and-averaged curve back to the average
@@ -2543,7 +2552,15 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
                final_files_set.insert( final_name );
             } else {
-               final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
+               QString final_name;
+               if ( singleton ) {
+                  // nothing to average -- the lone raw curve is the result
+                  final_name = *avg_peaks_names[ i ].begin();
+               } else {
+                  avg( all_selected_files(), QString( peak_tag ) );
+                  final_name = lb_files->item( lb_files->count() - 1 )->text();
+               }
+               final_files_set.insert( final_name );
             }
          }
       }
