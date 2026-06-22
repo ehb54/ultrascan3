@@ -205,10 +205,6 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ] = "5";
    }
-   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_makeiq_avg_peaks_rescale_conc" ) )
-   {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] = "false";
-   }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_gg_smooth" ) ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_gg_smooth" ] = "false";
    }

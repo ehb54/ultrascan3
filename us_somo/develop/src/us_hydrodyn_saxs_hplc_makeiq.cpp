@@ -1030,7 +1030,6 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
       parameters[ "hplc_cb_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ];
       parameters[ "hplc_makeiq_avg_peaks" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ];
-      parameters[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ];
       
       // Istarq bits
       
@@ -1088,7 +1087,6 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks" ] = parameters[ "hplc_cb_makeiq_avg_peaks" ];
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ] = parameters[ "hplc_makeiq_avg_peaks" ];
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] = parameters[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ];
 
       if ( bl_count && ( !parameters.count( "add_baseline" ) || parameters[ "add_baseline" ] == "false" ) )
       {
@@ -2429,7 +2427,6 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
    if ( avg_peaks ) {
       QString peak_tag = QString( "co%1_" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks" ] );
-      bool avg_peaks_rescale_conc = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] == "true";
       set < QString > selected_files_set = all_selected_files_set();
       set < QString > final_files_set;
       for ( unsigned int i = 0; i < (unsigned int) avg_peaks_names.size(); ++i ) {
@@ -2478,7 +2475,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                   continue;
                }
 
-               if ( avg_peaks_rescale_conc && avg_conc_orig > 0e0 ) {
+               if ( avg_conc_orig > 0e0 ) {
                   // rescale the normalized-and-averaged curve back to the average
                   // of the ORIGINAL concentrations, giving a true-concentration curve
                   // instead of the artificial conc=1.0 produced by normalize()
@@ -2492,9 +2489,10 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                   }
                   f_conc[ final_name ] = avg_conc_orig;
 
-                  // rename trailing "_n"/"_n<N>" (inherited from normalize()) to "_c"
-                  // so the true-concentration result is visually distinct from the
-                  // conc=1.0 "as before" result, which keeps its "_n" name
+                  // rename trailing "_n"/"_n<N>" (inherited from normalize(), and only
+                  // ever an intermediate/transient name at this point) to "_c", marking
+                  // this as a true-concentration result rather than the conc=1.0 the
+                  // normalize()+avg() step alone would have produced
                   QString new_name = final_name;
                   new_name.replace( QRegularExpression( QStringLiteral( "_n\\d*$" ) ), "_c" );
                   if ( new_name != final_name ) {

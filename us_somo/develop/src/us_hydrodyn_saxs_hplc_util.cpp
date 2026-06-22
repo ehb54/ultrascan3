@@ -2446,7 +2446,6 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_cb_makeiq_cutmax_pct"  ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_cutmax_pct"     ];
    parameters[ "hplc_cb_makeiq_avg_peaks"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks"      ];
    parameters[ "hplc_makeiq_avg_peaks"      ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks"         ];
-   parameters[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ];
 
    
    parameters[ "hplc_csv_transposed" ] = 
@@ -2512,7 +2511,6 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_cutmax_pct"  ] = parameters[ "hplc_cb_makeiq_cutmax_pct"     ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks"   ] = parameters[ "hplc_cb_makeiq_avg_peaks"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_makeiq_avg_peaks"      ] = parameters[ "hplc_makeiq_avg_peaks"         ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ] = parameters[ "hplc_cb_makeiq_avg_peaks_rescale_conc" ];
 
    // maybe ask (warn) here if gaussian data structures have data
 

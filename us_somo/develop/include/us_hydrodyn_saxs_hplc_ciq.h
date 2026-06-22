@@ -37,7 +37,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
 
       QCheckBox *                             cb_makeiq_avg_peaks;
       QLineEdit *                             le_makeiq_avg_peaks;
-      QCheckBox *                             cb_makeiq_avg_peaks_rescale_conc;
 
       QCheckBox *                             cb_sd_source;
 
