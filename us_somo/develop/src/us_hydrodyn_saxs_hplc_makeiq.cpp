@@ -2432,22 +2432,133 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       for ( unsigned int i = 0; i < (unsigned int) avg_peaks_names.size(); ++i ) {
          if ( avg_peaks_names[ i ].size() ) {
             set_selected( avg_peaks_names[ i ] );
-            // then average
-            avg( all_selected_files(), QString( peak_tag ) );
+            // avg() refuses to average fewer than 2 curves (by design, for the
+            // interactive "average selected" button); a Gaussian peak's "top %"
+            // window can easily select just 1 curve, so that case is handled
+            // below by using the single curve directly instead of calling avg().
+            bool singleton = avg_peaks_names[ i ].size() == 1;
             if ( conc_ok && istarq_mode == ISTARQ_NONE ) {
-               // normalize selected, then average again 
+               // snapshot the ORIGINAL (pre-normalize) average concentration
+               // for this peak's raw curve set, before normalize() resets conc to 1.0
+               double avg_conc_orig = 0e0;
+               {
+                  map < QString, double > concs_orig = current_concs();
+                  unsigned int n = 0;
+                  for ( set < QString >::iterator it = avg_peaks_names[ i ].begin();
+                        it != avg_peaks_names[ i ].end(); ++it ) {
+                     if ( concs_orig.count( *it ) ) {
+                        avg_conc_orig += concs_orig[ *it ];
+                        ++n;
+                     }
+                  }
+                  if ( n ) {
+                     avg_conc_orig /= (double) n;
+                  }
+               }
+
+               // normalize the selected raw curves, then average the normalized set
                set < QString > norm_names;
                normalize( norm_names );
-               set_selected( norm_names );
-               avg( all_selected_files(), QString( peak_tag ) );
-               remove_files( norm_names );
-               // set < QString > last_selected;
-               // last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
-               // set_selected( last_selected );
-               // normalize();
-               final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
+
+               QString final_name;
+               if ( singleton ) {
+                  // nothing to average -- the lone normalized curve is the result
+                  final_name = norm_names.size() ? *norm_names.begin() : QString();
+               } else {
+                  set_selected( norm_names );
+                  avg( all_selected_files(), QString( peak_tag ) );
+                  remove_files( norm_names );
+                  final_name = lb_files->item( lb_files->count() - 1 )->text();
+               }
+
+               if ( final_name.isEmpty() ) {
+                  continue;
+               }
+
+               if ( avg_conc_orig > 0e0 ) {
+                  // rescale the normalized-and-averaged curve back to the average
+                  // of the ORIGINAL concentrations, giving a true-concentration curve
+                  // instead of the artificial conc=1.0 produced by normalize()
+                  for ( unsigned int j = 0; j < f_Is[ final_name ].size(); j++ ) {
+                     f_Is[ final_name ][ j ] *= avg_conc_orig;
+                  }
+                  if ( f_errors.count( final_name ) ) {
+                     for ( unsigned int j = 0; j < f_errors[ final_name ].size(); j++ ) {
+                        f_errors[ final_name ][ j ] *= avg_conc_orig;
+                     }
+                  }
+                  f_conc[ final_name ] = avg_conc_orig;
+
+                  // rename trailing "_n"/"_n<N>" (inherited from normalize(), and only
+                  // ever an intermediate/transient name at this point) to "_c", marking
+                  // this as a true-concentration result rather than the conc=1.0 the
+                  // normalize()+avg() step alone would have produced
+                  QString new_name = final_name;
+                  new_name.replace( QRegularExpression( QStringLiteral( "_n\\d*$" ) ), "_c" );
+                  if ( new_name != final_name ) {
+                     map < QString, bool > existing_items;
+                     for ( int j = 0; j < lb_files->count(); j++ ) {
+                        existing_items[ lb_files->item( j )->text() ] = true;
+                     }
+                     existing_items.erase( final_name );
+                     QString base_new_name = new_name;
+                     unsigned int ext = 0;
+                     while ( existing_items.count( new_name ) ) {
+                        new_name = base_new_name + QString( "_%1" ).arg( ++ext );
+                     }
+
+                     f_pos      [ new_name ] = f_pos      [ final_name ]; f_pos.erase( final_name );
+                     f_qs_string[ new_name ] = f_qs_string[ final_name ]; f_qs_string.erase( final_name );
+                     f_qs       [ new_name ] = f_qs       [ final_name ]; f_qs.erase( final_name );
+                     f_Is       [ new_name ] = f_Is       [ final_name ]; f_Is.erase( final_name );
+                     if ( f_errors.count( final_name ) ) {
+                        f_errors[ new_name ] = f_errors[ final_name ]; f_errors.erase( final_name );
+                     }
+                     f_is_time  [ new_name ] = f_is_time  [ final_name ]; f_is_time.erase( final_name );
+                     f_conc     [ new_name ] = f_conc     [ final_name ]; f_conc.erase( final_name );
+                     if ( f_psv.count( final_name ) ) {
+                        f_psv[ new_name ] = f_psv[ final_name ]; f_psv.erase( final_name );
+                     }
+                     if ( f_I0se.count( final_name ) ) {
+                        f_I0se[ new_name ] = f_I0se[ final_name ]; f_I0se.erase( final_name );
+                     }
+                     if ( f_header.count( final_name ) ) {
+                        f_header[ new_name ] = f_header[ final_name ]; f_header.erase( final_name );
+                     }
+                     if ( f_gaussians.count( final_name ) ) {
+                        f_gaussians[ new_name ] = f_gaussians[ final_name ]; f_gaussians.erase( final_name );
+                     }
+                     created_files_not_saved.erase( final_name );
+                     created_files_not_saved[ new_name ] = true;
+
+                     lb_files->item( lb_files->count() - 1 )->setText( new_name );
+                     lb_created_files->item( lb_created_files->count() - 1 )->setText( new_name );
+
+                     final_name = new_name;
+                  }
+
+                  update_csv_conc();
+                  for ( unsigned int j = 0; j < csv_conc.data.size(); j++ ) {
+                     if ( csv_conc.data[ j ].size() > 1 && csv_conc.data[ j ][ 0 ] == final_name ) {
+                        csv_conc.data[ j ][ 1 ] = QString( "%1" ).arg( avg_conc_orig );
+                     }
+                  }
+                  if ( conc_widget ) {
+                     conc_window->refresh( csv_conc );
+                  }
+               }
+
+               final_files_set.insert( final_name );
             } else {
-               final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
+               QString final_name;
+               if ( singleton ) {
+                  // nothing to average -- the lone raw curve is the result
+                  final_name = *avg_peaks_names[ i ].begin();
+               } else {
+                  avg( all_selected_files(), QString( peak_tag ) );
+                  final_name = lb_files->item( lb_files->count() - 1 )->text();
+               }
+               final_files_set.insert( final_name );
             }
          }
       }

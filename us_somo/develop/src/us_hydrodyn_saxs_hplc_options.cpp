@@ -649,7 +649,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    le_makeiq_cutmax_pct->setMinimumWidth( 60 );
 
    cb_makeiq_avg_peaks = new QCheckBox(this);
-   cb_makeiq_avg_peaks->setText( us_tr( "Make I(q): average and normalize top % of max intensity" ) );
+   cb_makeiq_avg_peaks->setText( us_tr( "Make I(q): average top % of max intensity" ) );
    cb_makeiq_avg_peaks->setEnabled( true );
    cb_makeiq_avg_peaks->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks" ] == "true" );
    cb_makeiq_avg_peaks->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -1079,7 +1079,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    le_guinier_qrgmax       ->setEnabled( cb_guinier_qrgmax->isChecked() );
    le_gg_smooth            ->setEnabled( cb_gg_smooth->isChecked() );
    le_makeiq_cutmax_pct    ->setEnabled( cb_makeiq_cutmax_pct->isChecked() );
-   le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   le_makeiq_avg_peaks               ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
    if ( cb_makeiq_cutmax_pct->isEnabled() &&
         cb_makeiq_cutmax_pct->isChecked() &&
         le_makeiq_avg_peaks->text().toDouble() > 100.0 - le_makeiq_cutmax_pct->text().toDouble() ) {

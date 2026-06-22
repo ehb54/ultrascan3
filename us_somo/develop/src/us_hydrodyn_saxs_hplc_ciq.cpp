@@ -122,7 +122,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
 
    cb_makeiq_avg_peaks = new QCheckBox(this);
-   cb_makeiq_avg_peaks->setText( us_tr( "Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
+   cb_makeiq_avg_peaks->setText( us_tr( "Average resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
    cb_makeiq_avg_peaks->setEnabled( true );
    cb_makeiq_avg_peaks->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks" ] == "true" );
    cb_makeiq_avg_peaks->setChecked( false );
@@ -587,7 +587,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       cb_I0se->hide();
       le_I0se->hide();
 
-      cb_makeiq_avg_peaks->setText( us_tr( "Average resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
+      cb_makeiq_avg_peaks->setText( us_tr( "Simple average resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
 
       // cb_normalize->hide();
    } else {
@@ -829,7 +829,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
       }
    }
 
-   le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   le_makeiq_avg_peaks               ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
 
    le_I0se->setEnabled( !cb_I0se->isChecked() );
    pb_go->setEnabled( !no_go );
