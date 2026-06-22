@@ -672,6 +672,16 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    le_makeiq_avg_peaks->setMinimumWidth( 60 );
    le_makeiq_avg_peaks->hide();
 
+   cb_makeiq_avg_peaks_normalize = new QCheckBox(this);
+   cb_makeiq_avg_peaks_normalize->setText( us_tr( "Normalize before averaging (uncheck for true-concentration rescale)" ) );
+   cb_makeiq_avg_peaks_normalize->setEnabled( true );
+   cb_makeiq_avg_peaks_normalize->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] != "false" );
+   cb_makeiq_avg_peaks_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_makeiq_avg_peaks_normalize->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_makeiq_avg_peaks_normalize );
+   connect( cb_makeiq_avg_peaks_normalize, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   cb_makeiq_avg_peaks_normalize->hide();
+
    pb_quit =  new QPushButton ( us_tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -840,6 +850,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       gl_other->addWidget         ( cb_makeiq_avg_peaks , ++row, 0 );
       gl_other->addWidget         ( le_makeiq_avg_peaks , row, 1 );
 
+      gl_other->addWidget         ( cb_makeiq_avg_peaks_normalize , ++row, 0 );
+
       background->addLayout( gl_other );
    }
 
@@ -959,6 +971,7 @@ bool US_Hydrodyn_Saxs_Hplc_Options::any_changes()
       || (*parameters)[ "hplc_makeiq_cutmax_pct"       ] != ( le_makeiq_cutmax_pct   ->text() )
       || (*parameters)[ "hplc_cb_makeiq_avg_peaks"     ] != ( cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false" )
       || (*parameters)[ "hplc_makeiq_avg_peaks"        ] != ( le_makeiq_avg_peaks    ->text() )
+      || (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] != ( cb_makeiq_avg_peaks_normalize ->isChecked() ? "true" : "false" )
       || (*parameters)[ "hplc_csv_transposed"          ] != ( cb_csv_transposed->isChecked() ? "true" : "false" )
       || (*parameters)[ "hplc_ampl_width_min"          ] != ( le_ampl_width_min      ->text() )
       || (*parameters)[ "hplc_ampl_min"                ] != ( le_ampl_min            ->text() )
@@ -1001,6 +1014,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_makeiq_cutmax_pct"       ] = le_makeiq_cutmax_pct   ->text();
    (*parameters)[ "hplc_cb_makeiq_avg_peaks"     ] = cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_makeiq_avg_peaks"        ] = le_makeiq_avg_peaks    ->text();
+   (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] = cb_makeiq_avg_peaks_normalize->isChecked() ? "true" : "false";
 
    if ( rb_gauss->isChecked() )
    {
@@ -1079,7 +1093,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    le_guinier_qrgmax       ->setEnabled( cb_guinier_qrgmax->isChecked() );
    le_gg_smooth            ->setEnabled( cb_gg_smooth->isChecked() );
    le_makeiq_cutmax_pct    ->setEnabled( cb_makeiq_cutmax_pct->isChecked() );
-   le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   le_makeiq_avg_peaks               ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   cb_makeiq_avg_peaks_normalize     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
    if ( cb_makeiq_cutmax_pct->isEnabled() &&
         cb_makeiq_cutmax_pct->isChecked() &&
         le_makeiq_avg_peaks->text().toDouble() > 100.0 - le_makeiq_cutmax_pct->text().toDouble() ) {

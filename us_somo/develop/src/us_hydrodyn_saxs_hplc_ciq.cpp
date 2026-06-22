@@ -150,6 +150,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       le_makeiq_avg_peaks->hide();
    }
 
+   cb_makeiq_avg_peaks_normalize = new QCheckBox(this);
+   cb_makeiq_avg_peaks_normalize->setText( us_tr( "Normalize before averaging (uncheck for true-concentration rescale)" ) );
+   cb_makeiq_avg_peaks_normalize->setEnabled( true );
+   cb_makeiq_avg_peaks_normalize->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] != "false" );
+   cb_makeiq_avg_peaks_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_makeiq_avg_peaks_normalize->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_makeiq_avg_peaks_normalize );
+   connect( cb_makeiq_avg_peaks_normalize, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   if ( parameters->count( "ngmode" ) ) {
+      cb_makeiq_avg_peaks_normalize->hide();
+   }
+
    // cb's co dependent
    connect( cb_save_as_pct_iq, SIGNAL( clicked() ), SLOT( set_save_as_pct_iq() ) );
    connect( cb_sd_source, SIGNAL( clicked() ), SLOT( set_sd_source() ) );
@@ -523,6 +535,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
       hbl_avg_peaks->addWidget( le_makeiq_avg_peaks );
       vbl->addLayout( hbl_avg_peaks );
    }
+   vbl->addWidget( cb_makeiq_avg_peaks_normalize );
 
    vbl->addWidget( cb_normalize );
    vbl->addWidget( cb_istarq );
@@ -649,6 +662,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
 
    (*parameters)[ "hplc_cb_makeiq_avg_peaks"     ] = cb_makeiq_avg_peaks    ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_makeiq_avg_peaks"        ] = le_makeiq_avg_peaks    ->text();
+   (*parameters)[ "hplc_cb_makeiq_avg_peaks_normalize" ] = cb_makeiq_avg_peaks_normalize->isChecked() ? "true" : "false";
 
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
@@ -829,7 +843,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
       }
    }
 
-   le_makeiq_avg_peaks     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   le_makeiq_avg_peaks               ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
+   cb_makeiq_avg_peaks_normalize     ->setEnabled( cb_makeiq_avg_peaks->isChecked() );
 
    le_I0se->setEnabled( !cb_I0se->isChecked() );
    pb_go->setEnabled( !no_go );
