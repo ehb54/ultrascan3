@@ -48,8 +48,47 @@ fi
 
 DOMAN=1
 DODOX=1
+DOC_PYTHON=""
+DOC_PYTHON_BINDIR=""
 
-if [ -z "`which sphinx-build`" ]; then
+# Find a Python interpreter that can run Sphinx, installing it for that
+# interpreter if needed. Avoids hardcoding a single python3.X version since
+# RHEL8 variants ship different combinations of python3.11/python3.12 (and a
+# too-old default python3).
+find_doc_python() {
+  if command -v sphinx-build >/dev/null 2>&1 && sphinx-build --version >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local pyver py
+  for pyver in python3.12 python3.11 python3.10 python3.9 python3; do
+    py=`command -v ${pyver} 2>/dev/null`
+    if [ -z "$py" ]; then
+      continue
+    fi
+
+    if ${py} -c 'import sphinx' >/dev/null 2>&1; then
+      DOC_PYTHON=${py}
+      return 0
+    fi
+
+    ${py} -m ensurepip --upgrade >/dev/null 2>&1
+    if ${py} -m pip install --user -q -r doc/manual/source/requirements.txt >/dev/null 2>&1 \
+      || ${py} -m pip install --user --break-system-packages -q -r doc/manual/source/requirements.txt >/dev/null 2>&1
+    then
+      if ${py} -c 'import sphinx' >/dev/null 2>&1; then
+        DOC_PYTHON=${py}
+        return 0
+      fi
+    fi
+  done
+
+  return 1
+}
+
+if ! find_doc_python; then
+  echo "WARNING: no usable Python/Sphinx found - documentation will not be built."
+  echo "  Install manually: python3 -m pip install -r doc/manual/source/requirements.txt"
   DOMAN=0
 fi
 if [ -z "`which doxygen`" ]; then
@@ -99,8 +138,20 @@ if [ $DOMAN -ne 0 ]; then
   sdir=`pwd`
   echo "Making in $d"   >> $DIR/build.log
   ## n.b. the make failes with parallel builds, require -j1
-  make -j1 2>&1  >> $DIR/build.log
+  if [ -n "$DOC_PYTHON" ]; then
+    # doc/manual/Makefile invokes the interpreter as plain "python3"; if the
+    # interpreter we found is named e.g. python3.11, shim a "python3" on
+    # PATH for this build only, so we don't affect anything else.
+    DOC_PYTHON_BINDIR=`mktemp -d`
+    ln -s "$DOC_PYTHON" "$DOC_PYTHON_BINDIR/python3"
+    PATH="$DOC_PYTHON_BINDIR:$PATH" make -j1 2>&1  >> $DIR/build.log
+  else
+    make -j1 2>&1  >> $DIR/build.log
+  fi
   stat=$?
+  if [ -n "$DOC_PYTHON_BINDIR" ]; then
+    rm -rf "$DOC_PYTHON_BINDIR"
+  fi
   if [ $stat -gt 0 ]; then
      echo "  ***ERROR*** building $d"
      NBERR=`expr ${NBERR} + 1`
