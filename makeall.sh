@@ -83,7 +83,12 @@ find_doc_python() {
       return 0
     fi
 
-    ${py} -m ensurepip --upgrade >/dev/null 2>&1
+    # Plain ensurepip (no --upgrade) just installs the wheel bundled in
+    # the Python install itself -- fully offline. --upgrade would make
+    # pip then try to upgrade itself from PyPI, which fails outright on
+    # network-restricted hosts and isn't needed just to get a working
+    # pip module for the requirements.txt install below.
+    ${py} -m ensurepip >/dev/null 2>&1
     if ${py} -m pip install --user -q -r doc/manual/source/requirements.txt >/dev/null 2>&1 \
       || ${py} -m pip install --user --break-system-packages -q -r doc/manual/source/requirements.txt >/dev/null 2>&1
     then
