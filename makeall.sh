@@ -67,7 +67,12 @@ _doc_python_version_ok() {
 # RHEL8 variants ship different combinations of python3.11/python3.12 (and a
 # too-old default python3).
 find_doc_python() {
-  if command -v sphinx-build >/dev/null 2>&1 && sphinx-build --version >/dev/null 2>&1; then
+  # doc/manual/Makefile invokes the interpreter as plain "python3", not
+  # "sphinx-build" (SPHINXBUILD ?= python3 -m sphinx). Checking
+  # sphinx-build here would be checking the wrong command: an unrelated
+  # sphinx-build script tied to some other (possibly too-old) interpreter
+  # can be on PATH and "work" while "python3 -m sphinx" still fails.
+  if _doc_python_version_ok python3 && python3 -c 'import sphinx' >/dev/null 2>&1; then
     return 0
   fi
 
