@@ -51,6 +51,17 @@ DODOX=1
 DOC_PYTHON=""
 DOC_PYTHON_BINDIR=""
 
+# doc/manual/source/conf.py uses Python >=3.9 syntax (PEP 585 builtin
+# generics, e.g. "list[str]"), so any candidate interpreter older than
+# that must be rejected outright -- even if some (possibly stale) Sphinx
+# package happens to already be importable for it. A too-old default
+# python3 (e.g. RHEL's 3.6) with a leftover manual "pip install --user"
+# from before this version check existed is exactly this trap: "import
+# sphinx" succeeds, but the build then fails on conf.py.
+_doc_python_version_ok() {
+  "$1" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1
+}
+
 # Find a Python interpreter that can run Sphinx, installing it for that
 # interpreter if needed. Avoids hardcoding a single python3.X version since
 # RHEL8 variants ship different combinations of python3.11/python3.12 (and a
@@ -63,7 +74,7 @@ find_doc_python() {
   local pyver py
   for pyver in python3.12 python3.11 python3.10 python3.9 python3; do
     py=`command -v ${pyver} 2>/dev/null`
-    if [ -z "$py" ]; then
+    if [ -z "$py" ] || ! _doc_python_version_ok "$py"; then
       continue
     fi
 
