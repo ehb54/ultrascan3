@@ -2641,6 +2641,18 @@ DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
 	      this,         SLOT  ( changeSolu         ( int ) ) );
       
    }
+
+ //If dataDisk, disallow (unspecified)
+   if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       for ( int ii = 0; ii < cc_solus.size(); ii++ )
+	 {
+	   QString substring = "(unspecified)";
+	   int index;
+	   while ((index = cc_solus[ ii ]->findText(substring, Qt::MatchContains)) != -1)
+	     cc_solus[ ii ]->removeItem(index);
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
