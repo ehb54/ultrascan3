@@ -356,7 +356,7 @@ void US_Database::check_add()
     {
       QMessageBox::warning( this,
 			    tr( "Attention" ),
-			    tr( "DB entry cannot be saved until valid credentials are provided.\n" ) );
+			    tr( "Database entry cannot be saved until valid credentials are provided.\n" ) );
       pb_save->setEnabled(false);
       return;
     }
