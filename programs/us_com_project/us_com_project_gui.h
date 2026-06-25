@@ -521,6 +521,8 @@ private slots:
   
 protected:
   void closeEvent      ( QCloseEvent* event ) override;
+  void showEvent(QShowEvent* event) override;
+  //void resizeEvent(QResizeEvent* event) override; // potentially for MacOS
   
 signals:
   void pass_to_live_update( QMap < QString, QString > & protocol_details );
