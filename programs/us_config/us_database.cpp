@@ -352,6 +352,15 @@ QString US_Database::validate_value( QLineEdit* line_edit, const QString& proper
 
 void US_Database::check_add()
 {
+  if ( !test_connect() )
+    {
+      QMessageBox::warning( this,
+			    tr( "Attention" ),
+			    tr( "DB entry cannot be saved until valid credentials are provided.\n" ) );
+      pb_save->setEnabled(false);
+      return;
+    }
+  
   QStringList problems;
   // Check that all fields have at least something
   QString status = validate_value( le_description, "description" );
