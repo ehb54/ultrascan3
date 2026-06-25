@@ -24,8 +24,9 @@ Options
 --pullrequest id      : checkout from pull request
 --build               : build 
 --run                 : run
+--qt6                 : enable qt6
+--assume-yes          : non-interactive; assume YES when asked to discard uncommitted changes
 ```
 
 ### notes 
  * if it for some reason fails, make sure to double check the `branchname` is correct
- * remove or rename the ultrascan3 subdirectory in your home directory
