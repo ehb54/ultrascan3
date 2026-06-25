@@ -289,10 +289,10 @@ DbgLv(1) << "te_status size" << te_status->size();
          tr( "DB Connection Problem" ),
          tr( "There was an error connecting to the database:\n" )
          + db->lastError() + "\n"
-         //+ tr( "Cannot continue.  Closing" ) );
-         + tr( "Continuing without database." ) );
+         + tr( "Cannot continue.  Closing" ) );
+         //+ tr( "Continuing without database." ) );
       db = NULL;
-      //return;
+      return;
    }
 DbgLv(1) << "db passwd complete";
 
