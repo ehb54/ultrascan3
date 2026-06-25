@@ -289,7 +289,7 @@ void US_Database::select_db( QListWidgetItem* entry )
               tr( "Database Selected" ),
               tr( "The default database has been updated." ) );
       }
-      pb_save  ->setEnabled( true );
+      //pb_save  ->setEnabled( true );
       pb_delete->setEnabled( true );
 
       break;
@@ -469,8 +469,9 @@ void US_Database::check_add()
     save_default();
   }
 
-  pb_save  ->setEnabled( true );
+  //pb_save  ->setEnabled( true );
   pb_delete->setEnabled( true );
+  pb_save  ->setEnabled( false );
 }
 
 void US_Database::update_lw( const QString& current )
