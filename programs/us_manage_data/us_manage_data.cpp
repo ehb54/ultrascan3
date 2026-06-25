@@ -288,8 +288,8 @@ DbgLv(1) << "te_status size" << te_status->size();
       QMessageBox::information( this,
          tr( "DB Connection Problem" ),
          tr( "There was an error connecting to the database:\n" )
-         + db->lastError() + "\n"
-         + tr( "Cannot continue.  Closing" ) );
+         + db->lastError() + "\n\n"
+         + tr( "Program cannot continue without database connection and will be closed." ) );
          //+ tr( "Continuing without database." ) );
       db = NULL;
       return;
