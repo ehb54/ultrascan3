@@ -325,7 +325,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( multiwave   );
   menuBar()->addMenu( simulation  );
+#ifndef Q_OS_MAC
   menuBar()->addMenu( gmp         );
+#endif
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 
