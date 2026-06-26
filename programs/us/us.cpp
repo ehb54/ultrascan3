@@ -240,7 +240,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   QMenu* multiwave   = new QMenu( tr( "&Multiwavelength" ),   this );
   QMenu* spectrum    = new QMenu( tr( "&Spectral Analysis" ),   this );
+#ifndef Q_OS_MAC
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
+#endif
   addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
   addMenu(  P_LEGDATA  , tr( "&Convert Optima Data (Beckman tar.gz) " ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
