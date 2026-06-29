@@ -718,7 +718,7 @@ void US_Spectrum::fit()
     int nwvl = target.xvec.size();
     int order = basis_list.size();
     double nnls_rnorm;
-    QVector<double> nnls_a(nwvl * order);
+    QVector<double> nnls_a(static_cast<qsizetype>(nwvl) * order);
     QVector<double> nnls_b(target.yvec);
     QVector<double> nnls_x(order, 0);
 

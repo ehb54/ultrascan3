@@ -6,11 +6,12 @@ QT            += printsupport
 }
 
 unix:   TARGET = us_gui
+macx:   LIBS  += -L../lib -lus_utils
 
 win32 {
         DEFINES += QWT_DLL US_MAKE_GUI_DLL
         TARGET   = us_gui
-        LIBS    += -L../lib -lus_utils$${VER} -lqwtplot3d
+        LIBS    += -L../lib -lus_utils$${VER} -lqwtplot3d$${VER}
         LIBS    += -L$${QWTPATH}/lib -lqwt
         QMAKE_LFLAGS += -shared 
         # We assume QMAKE_LFLAGS += Wl,--out-implib,../lib/lib$${TARGET}$${VER}.a

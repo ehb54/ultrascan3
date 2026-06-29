@@ -1507,7 +1507,7 @@ void CustomFormatter::recalculate() {
     QString labelFormat =  axis()->labelFormat();
 
     gridPositions().resize(segmentCount + 1);
-    subGridPositions().resize(segmentCount * subGridCount);
+    subGridPositions().resize(static_cast<qsizetype>(segmentCount) * subGridCount);
 
     labelPositions().resize(segmentCount + 1);
     labelStrings().clear();
