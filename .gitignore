@@ -26,6 +26,7 @@ doc/manual/build
 /.vscode/
 /_CPack_Packages/
 vcpkg_installed/
+admin/vcpkg/installed/
 configure-arm64.log
 programs/us/us.rc
 CMakeUserPresets.json
