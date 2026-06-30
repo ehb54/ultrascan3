@@ -509,7 +509,7 @@ bool US_Settings::get_DA_status( const QString& da_type )
 {
   QSettings settings( US3, "UltraScan" );
 
-  int status; 
+  int status = 0;
   if ( da_type == "COM" )
     status = settings.value( "daComOpened", QString() ).toInt();
 
