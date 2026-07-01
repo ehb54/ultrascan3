@@ -798,7 +798,7 @@ void US_XpnHostDB::editDB( void )
 	   currentInstrument[ "dbname" ]  = instruments[ii].optimaDBname;
 	   currentInstrument[ "dbusername" ] = instruments[ii].optimaDBusername; 
 	   currentInstrument[ "dbpassw" ]  = instruments[ii].optimaDBpassw;   
-	   currentInstrument[ "selected" ] = instruments[ii].selected;
+	   currentInstrument[ "selected" ] = QString::number(instruments[ii].selected);
 	   currentInstrument[ "os1" ]      = instruments[ii].os1; 
 	   currentInstrument[ "os2" ]      = instruments[ii].os2;   
 	   currentInstrument[ "os3" ]      = instruments[ii].os3;
@@ -843,7 +843,7 @@ void US_XpnHostDB::editHost( QMap < QString, QString > & newInstrument  )
       QMessageBox::warning( this,
                             tr( "Database Connection Problem!" ),
                             tr( "You are not currently connected to the DB!\n"
-                                "Error: " ) + db->lastErrno() + "\n" );
+                                "Error: " ) + QString::number( db->lastErrno() ) + "\n" );
       return;
     }
 
@@ -943,7 +943,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
       QMessageBox::warning( this,
                             tr( "Database Connection Problem!" ),
                             tr( "You are not currently connected to the DB!\n"
-                                "Error: " ) + db->lastErrno() + "\n" );
+                                "Error: " ) + QString::number( db->lastErrno() ) + "\n" );
       return;
     }
 
@@ -1002,7 +1002,7 @@ void US_XpnHostDB::newHost( QMap < QString, QString > & newInstrument  )
 void US_XpnHostDB::help( void )
 {
    US_Help* showhelp = new US_Help(this);
-   showhelp->show_help( "optima_host_config.html" );
+   showhelp->show_help( "config.html#instrument-preference-panel" );
 }
 
 //Test Connection
@@ -1545,7 +1545,7 @@ void US_XpnHost::reset( void )
 void US_XpnHost::help( void )
 {
    US_Help* showhelp = new US_Help(this);
-   showhelp->show_help( "database_config.html" );
+   showhelp->show_help( "config.html#instrument-preference-panel" );
 }
 
 void US_XpnHost::save_default( void )

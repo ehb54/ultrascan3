@@ -164,7 +164,8 @@ class US_FitMeniscus : public US_Widgets
         double miny_global; //!< Global minimum Y value.
 
         double Meniscus_fitted_2d_val; //!< Fitted meniscus 2D value.
-
+        double Bottom_fitted_2d_val; //!< Fitted meniscus 2D value. 
+  
         QMap<QString, QString> triple_information; //!< Map of triple information.
 
     private slots:
@@ -264,7 +265,7 @@ class US_FitMeniscus : public US_Widgets
 
         //! \brief Handle mouse event.
         //! \param point The point of the mouse event.
-        void mouse(const QwtDoublePoint& point);
+        void mouse(const QPointF& point);
 
         //! \brief Show help.
         void help() { showHelp.show_help("manual/fit_meniscus.html"); };

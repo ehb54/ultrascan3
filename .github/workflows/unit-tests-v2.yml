@@ -63,7 +63,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -84,6 +84,9 @@ jobs:
               git \
               libqt5datavisualization5-dev \
               libqt5svg5-dev
+
+      - name: Add GoogleTest Problem Matcher
+        run: echo "::add-matcher::.github/gtest-us.json"
 
       - name: Prepare build
         run: |

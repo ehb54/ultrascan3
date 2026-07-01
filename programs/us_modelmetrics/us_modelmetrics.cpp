@@ -1,6 +1,7 @@
 //! \file us_modelmetrics.cpp
 
 #include "us_modelmetrics.h"
+#include "us_constants.h"
 #include "us_gui_util.h"
 
 #ifndef DbgLv
@@ -126,8 +127,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    rb_d->setToolTip( tr( "Select Diffusion Coefficient"     ));
    rb_f->setToolTip( tr( "Select Frictional Coefficient"    ));
    rb_r->setToolTip( tr( "Select Hydrodynamic Radius"       ));
-   connect( bg_hp, SIGNAL( buttonReleased( int )),
-            this,  SLOT  ( select_hp     ( int )));
+   connect( bg_hp, &QButtonGroup::idReleased, this, &US_ModelMetrics::select_hp );
 
    lbl_dval1 = us_label( tr( "D10 value: " ), -1 );
    lbl_dval2 = us_label( tr( "D50 value: " ), -1 );
@@ -462,7 +462,7 @@ void US_ModelMetrics::load_model( void )
          sol_sk.v  = model.components[ jj ].vbar20;
          sol_sk.d  = model.components[ jj ].D;
          sol_sk.f  = model.components[ jj ].f;
-         tmpval1   = model.components[ jj ].f/(6.0*M_PI*1.00194);
+         tmpval1   = model.components[ jj ].f/( 6e-9 * M_PI * VISC_20W );
          total_conc += sol_sk.c;
 
          cmin      = qMin( cmin, sol_sk.c );
@@ -682,7 +682,7 @@ void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
           else
           {   // duplicate:  sum c value
  DbgLv(2) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
-             kdup    = max( kdup, ++jdup );
+             kdup    = qMax( kdup, ++jdup );
              qreal f = (qreal)( jdup + 1 );
              sol2.c += sol1.c;   // sum c value
              sol2.s  = ( sol1.s * jdup + sol2.s ) / f;  // average s,k
@@ -810,11 +810,11 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPr)
    {
-      report_entry.parameter = "Hydrodynamic Radius Distribution (m)";
+      report_entry.parameter = "Hydrodynamic Radius Distribution (nm)";
 		xtitle = "Hydrodynamic Radius";
       for (i=0; i<sk_distro.size(); i++)
       {
-         val1.parm = sk_distro[i].f/(6.0*M_PI*1.00194);
+         val1.parm = sk_distro[i].f/( 6e-9 * M_PI * VISC_20W );
          val1.conc = sk_distro[i].c;
          temp_list.append(val1);
       }

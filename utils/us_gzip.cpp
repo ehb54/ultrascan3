@@ -10,44 +10,69 @@
  *  Univerity of Texas Health Science Center
 */
 
-#include <QFileInfo> 
-#include <QDataStream>
-#include <QDateTime>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <fcntl.h>
 
-#ifndef Q_OS_WIN
-#include <unistd.h>
-#endif
-
-#ifdef Q_OS_WIN
+#if (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #   include <io.h>
 #   include <sys/utime.h>
 #   include <sys/stat.h>
 #   include <qdatetime.h>
+#  include <share.h>   // <-- provides SH_DENYNO / _SH_DENYNO depending on CRT
+   // MinGW sometimes defines SH_DENYNO (no leading underscore), while code uses _SH_DENYNO.
+#  if !defined(_SH_DENYNO) && defined(SH_DENYNO)
+#    define _SH_DENYNO SH_DENYNO
+#  endif
+   // Last-resort fallback: "deny none" share mode (matches intent)
+#  if !defined(_SH_DENYNO)
+#    define _SH_DENYNO 0
+#  endif
 #   define utime   _utime
-#   define open    _open
 #   define read    _read
 #   define write   _write
 #   define close   _close
 #   define fstat   _fstat
 #   define stat    _stat
 #   define utimbuf _utimbuf
+#   define unlink  _unlink
+#   define chmod   _chmod
+static inline int us_open( const char* path, int oflag )
+{
+   int fd = -1;
+   if ( _sopen_s( &fd, path, oflag, _SH_DENYNO, 0 ) != 0 ) return -1;
+   return fd;
+}
+
+static inline int us_open( const char* path, int oflag, int pmode )
+{
+   int fd = -1;
+   if ( _sopen_s( &fd, path, oflag, _SH_DENYNO, pmode ) != 0 ) return -1;
+   return fd;
+}
 #else
+#  include <unistd.h>
 #  include <utime.h>
 #  include <sys/stat.h>  // For OSX
 #  define O_BINARY 0
+static inline int us_open( const char* path, int oflag )
+{
+   return ::open( path, oflag );
+}
+
+static inline int us_open( const char* path, int oflag, int pmode )
+{
+   return ::open( path, oflag, pmode );
+}
 #endif
 
-#include <iostream>
+// #include <iostream>
 using namespace std;
 
 #include "us_gzip.h"
 
-#ifdef WIN32
+#if (defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #  define ssize_t long
 #  define bzero(p, size) (void)memset((p), 0, (size))
 #endif
@@ -226,9 +251,9 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   QDateTime    lastRead   = filename.lastRead();
   QDateTime    lastMod    = filename.lastModified();
   
-  filetime = lastMod.toTime_t();
+  filetime = lastMod.toSecsSinceEpoch();
 
-  ifd = open( iname.toLatin1().constData(), O_RDONLY | O_BINARY );
+  ifd = us_open( iname.toLatin1().constData(), O_RDONLY | O_BINARY );
   if ( ifd < 0 ) return GZIP_READERROR;
 
   // Generate output file name. 
@@ -290,8 +315,8 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     char timestring[40];
 #ifdef WIN32
-    //ctime_s( timestring, sizeof( timestring ),  &filetime );
-    int stringCount = sprintf( timestring, "%s", ctime( &filetime ) );
+    ctime_s( timestring, sizeof( timestring ),  &filetime );
+    // int stringCount = sprintf( timestring, "%s", ctime( &filetime ) );
 #else
     ctime_r( &filetime, timestring );
 #endif
@@ -352,7 +377,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     if ( output_file.exists() ) return GZIP_OUTFILEEXISTS;
 
-    ofd    = open( oname.toLatin1().constData(), 
+    ofd    = us_open( oname.toLatin1().constData(),
                    O_CREAT | O_WRONLY | O_BINARY , 0664 );
     outcnt = 0;
 
@@ -412,7 +437,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     QFileInfo filename( oname );
 ////    if ( filename.exists() ) return GZIP_OUTFILEEXISTS;
 
-    ofd = open( oname.toLatin1().constData(), 
+    ofd = us_open( oname.toLatin1().constData(),
                 O_CREAT | O_WRONLY | O_BINARY, 0664 );
     if ( ofd < 0 ) return GZIP_WRITEERROR;
 
@@ -464,7 +489,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
       put_byte( flags );         /* general flags */
 
       /* original time stamp (modification time) */
-      time_t time_stamp = lastMod.toTime_t();  
+      time_t time_stamp = lastMod.toSecsSinceEpoch();
       put_long( (ulg) time_stamp == ( time_stamp & 0xffffffff ) ? 
           (ulg) time_stamp : (ulg) 0);
 
@@ -485,7 +510,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
          return GZIP_FILENAMEERROR;
 
       char f[256];
-      strcpy( f, iname.toLatin1().constData() );
+      qstrcpy( f, iname.toLatin1().constData() );
       char* p = base_name( f ); /* Don't save the directory part. */
       do { put_byte( *p ); } while ( *p++ );
                         

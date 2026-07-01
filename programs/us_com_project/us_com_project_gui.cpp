@@ -147,8 +147,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
-   
+   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
+
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
    hbox->setSpacing(1);
@@ -393,7 +393,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   //connect( m_help, SIGNAL( clicked() ), this, SLOT( help_m()  ) );
+   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
@@ -524,6 +524,15 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
 
  }
 
+
+//help bttns
+void US_ComProjectMain::help( void )
+{
+  if ( !us_mode_bool )
+    showHelp.show_help("gmp/index.html");
+  else
+    showHelp.show_help("experiment/index.html");
+}
 
 // Check if data location set to DB
 void US_ComProjectMain::checkDataLocation( void )
@@ -723,24 +732,46 @@ void US_ComProjectMain::analysis_update_stopped( void  )
 
 void US_ComProjectMain::closeEvent( QCloseEvent* event )
 {
-    window_closed = true;
+  qDebug() << "Closing Event..";
+  //confirm
+  QMessageBox msgBox(this);
+  msgBox.setIcon(QMessageBox::Critical);
+  msgBox.setWindowTitle(tr("Closing Program:"));
+      
+  QString msg_text      = QString("Confirm Exit");
+  QString msg_text_info = QString("Are you sure you want to exit? \nAll unsaved data will be lost. \n\nProceed? ");
+  
+  msgBox.setText( msg_text );
+  msgBox.setInformativeText( msg_text_info );
+  
+  QPushButton *Accept_r   = msgBox.addButton(tr("Yes"), QMessageBox::YesRole);
+  QPushButton *Cancel_r   = msgBox.addButton(tr("No"),  QMessageBox::RejectRole);
+  
+  msgBox.exec();
+  
+  if ( msgBox.clickedButton() != Accept_r )
+    {
+      qDebug () << "CANCEL Closing...";
+      event->ignore();
 
-    qDebug() << "Closing 1: ";
-    qDebug() << "data_location_disk: " <<  data_location_disk;
+      return;
+    }
 
-    if ( !data_location_disk )
-      {
-	qDebug() << "initDialogue: true/false 1 : " << epanInit->initDialogueOpen ;
-	emit us_comproject_closed();
-	close_initDialogue();
-	qDebug() << "initDialogue: true/false 3 : " << epanInit->initDialogueOpen ;
-
-	qApp->processEvents();
-      }
-
-    qApp->processEvents();
-    
-    event->accept();
+  //Else, continue with closure
+  qDebug() << "data_location_disk: " <<  data_location_disk;
+  
+  window_closed = true;
+  
+  if ( !data_location_disk )
+    {
+      emit us_comproject_closed();
+      close_initDialogue();
+            
+      qApp->processEvents();
+    }
+  
+  qApp->processEvents();
+  event->accept();
 }
 
 void US_ComProjectMain::to_autoflow_records( void )
@@ -758,112 +789,6 @@ void US_ComProjectMain::close_initDialogue( void )
   if ( epanInit-> initMsgNorecOpen)
     epanInit->msg_norec->reject();
   //msg_norec->close();
-}
-
-
-//Slot to delete Postgres Optima ExperimentDefinition record
-void US_ComProjectMain::delete_psql_record( int ExpId )
-{
-  QString schname( "AUC_schema" );
-  
-  QString tabname_expdef( "ExperimentDefinition" );
-  QString tabname_fuge  ( "CentrifugeRunProfile" );
-  QString tabname_abs   ( "AbsorbanceScanParameters" );
-  
-  QString qrytab_expdef  = "\"" + schname + "\".\"" + tabname_expdef + "\"";
-  QString qrytab_fuge    = "\"" + schname + "\".\"" + tabname_fuge + "\"";
-  QString qrytab_abs     = "\"" + schname + "\".\"" + tabname_abs + "\"";
-  
-  
-  QString dbhost      = "demeler5.uleth.ca";
-  int     dbport      = 5552;
-  QString dbname      = "AUC_DATA_DB";
-  QString dbuser      = "";
-  QString dbpasw      = "";
-
-  QSqlDatabase dbxpn;
-  
-  dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "" );
-  dbxpn.setDatabaseName( "XpnData" );
-  dbxpn.setHostName    ( dbhost );
-  dbxpn.setPort        ( dbport );
-  dbxpn.setDatabaseName( dbname  );
-  dbxpn.setUserName    ( dbuser  );
-  dbxpn.setPassword    ( dbpasw );
-
-  qDebug() << "Opening Postgres Connection!!!";
-  
-  if (  dbxpn.open() )
-    {
-      qDebug() << "Connected !!!";
-      
-      QSqlQuery query_expdef(dbxpn);
-      QSqlQuery query_fuge(dbxpn);
-      QSqlQuery query_abs_scan(dbxpn);
-     
-      /*
-      // AbsorbanceScanParameters
-      QString ScanId = "5996";
-      if(! query_abs_scan.prepare(QString("DELETE FROM %1 WHERE \"ScanId\" = %2").arg(qrytab_abs).arg(ScanId) ) )
-	qDebug() << query_abs_scan.lastError().text();
-
-      if (query_abs_scan.exec())
-	{
-	  qDebug() << "AbsorbanceScanParameters record # :" << ScanId  << "deleted !";
-	}
-      else
-	{
-	  QString errmsg   = "Delete record error: " + query_abs_scan.lastError().text();
-	  QMessageBox::critical( this,
-				 tr( "*ERROR* in Deleting Absorbance Record" ),
-				 tr( "An error occurred in the attempt to delete"
-				     " AbsorbanceScanParameters from AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_abs ).arg( errmsg ) );
-	  return;
-	}
-      
-      // Cell Parameters
-      
-      
-      // FugeProfile
-      int FugeId = 308;
-      if(! query_fuge.prepare(QString("DELETE FROM %1 WHERE \"FugeRunProfileId\" = %2").arg(qrytab_fuge).arg(FugeId) ) )
-	qDebug() << query_fuge.lastError().text();
-
-      if (query_fuge.exec())
-	{
-	  qDebug() << "FugeProfile record # :" << FugeId  << "deleted !";
-	}
-      else
-	{
-	  QString errmsg   = "Delete record error: " + query_fuge.lastError().text();;
-	  QMessageBox::critical( this,
-				 tr( "*ERROR* in Deleting Fuge Profile" ),
-				 tr( "An error occurred in the attempt to delete"
-				     " FugeProfile from AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_fuge ).arg( errmsg ) );
-	  return;
-	}
-
-      */
-
-      // ExperimentalDefinition
-      if(! query_expdef.prepare(QString("DELETE FROM %1 WHERE \"ExperimentId\" = %2").arg(qrytab_expdef).arg(ExpId) ) )
-	qDebug() << query_expdef.lastError().text();
-      
-      if (query_expdef.exec())
-	{
-	  qDebug() << "ExperimentDefinition record # :" << ExpId  << "deleted !";
-	}
-      else
-	{
-	  QString errmsg   = "Delete record error: " + query_expdef.lastError().text();;
-	  QMessageBox::critical( this,
-				 tr( "*ERROR* in Deleting Experimental Method" ),
-				 tr( "An error occurred in the attempt to delete"
-				     " exp. method from AUC DB\n  %1 table\n  %2 ." ).arg( qrytab_expdef ).arg( errmsg ) );
-	  return;
-	}
-				
-    }
 }
 
 
@@ -1368,7 +1293,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	    {
 	      if ( daysToExpiration > 0 )
 		{
-		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:\n")).arg( QChar(0x2022), alias );
+		  msg_sys_text_info += QString(tr("\nPlease check the following for %2:\n")).arg( QChar(0x2022), alias );
 		  msg_sys_text_info += QString( tr("1. %1 is turned on\n"
 						   "2. the data acquisition server on %1 is running\n"
 						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is valid and not expired.\n")).arg( alias );
@@ -1431,7 +1356,7 @@ void US_InitDialogueGui::checkCertificates( void )
       else
 	inst_names = Optima_names.join("");
       
-      QMessageBox msgBox_sys_data;
+      QMessageBox msgBox_sys_data(this);
       msgBox_sys_data.setIcon(QMessageBox::Critical);
       msgBox_sys_data.setWindowTitle(tr("Optima System Data Server Connection Problem!"));
 
@@ -1465,8 +1390,8 @@ void US_InitDialogueGui::checkCertificates( void )
     }
 
   //TEST
-  //isDataDiskOnly = true;
-  //emit pass_allow_dataDisk_only();
+  // isDataDiskOnly = true;
+  // emit pass_allow_dataDisk_only();
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
 }
 
@@ -1488,11 +1413,7 @@ void US_InitDialogueGui::initRecords( void )               // <-- 1st entry poin
   autoflow_records = get_autoflow_records();
   
   qDebug() << "Autoflow record #: " << autoflow_records;
-  
-  // //Temporary: delete ExperimentDefinition record ( ExpId = 306, 301 )
-  // int ExpId = 285;
-  // delete_psql_record( ExpId );
-  
+
   if ( autoflow_records < 1 )
     return;
   
@@ -2995,6 +2916,8 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    if ( mainw->us_mode_bool )
      sdiag->us_mode_passed();
+
+   sdiag->expPanelSet=true;
    
    sdiag->show();
 

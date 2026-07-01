@@ -1,8 +1,13 @@
 //! \file us_edit.cpp
 
-//#include <QApplication>
+#include <QApplication>
 //#include <QDomDocument>
-
+#include <QToolTip>
+#include <QMessageBox>
+#include <QLineF>
+#include <qwt_scale_div.h>
+#include <qwt_scale_map.h>
+#include <qwt_picker_machine.h>
 #include "us_edit.h"
 #include "us_exclude_profile.h"
 #include "us_select_lambdas.h"
@@ -38,15 +43,21 @@ US_Edit::US_Edit( QString auto_mode ) : US_Widgets()
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_baseline_correct = us_pushbutton( tr( "Correct Baseline" ), false );
    pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+
+   expType_manual = "";
    
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -239,6 +250,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
    // Edit controls
@@ -350,6 +363,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple_auto         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
    connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
    connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
@@ -429,6 +443,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
    specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -590,6 +605,8 @@ pb_plateau->setVisible(false);
        rb_radius      ->hide();
        rb_waveln      ->hide();
 
+       pb_exclusion_click->hide();
+
      }
 
 
@@ -598,7 +615,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled(false);
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -799,6 +816,18 @@ pb_plateau->setVisible(false);
    // details[ "expType" ]      = QString("VELOCITY");
    // details[ "dataSource" ]   = QString("dataDiskAUC");
 
+   
+   // details[ "invID_passed" ] = QString("165");
+   // details[ "filename" ]     = QString("AAV_11OCT24-run2172-dataDiskRun-1872");
+   // details[ "protocolName" ] = QString("AAV-GMPtest2");
+   // details[ "statusID" ]     = QString("899");
+   // //details[ "autoflowID" ]   = QString("1872");
+   // details[ "runID" ]        = QString("");
+   // details[ "OptimaName" ]   = QString("");
+   // details[ "expType" ]      = QString("ABDE");
+   // details[ "dataSource" ]   = QString("dataDiskAUC");
+
+
    // load_auto( details );
 
 }
@@ -808,6 +837,8 @@ pb_plateau->setVisible(false);
 US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 		  QString  workingDir, int currenChtInd, int plotind, QString exptype ) : US_Widgets()
 {
+   expType_manual = exptype;
+  
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
    pb_bll_modify -> setVisible( false );
    
@@ -815,10 +846,14 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -988,6 +1023,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
@@ -1087,6 +1124,26 @@ pb_plateau->setVisible(false);
    le_bll_intercept            = us_lineedit( "", 0, true );
    connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
 
+   //Information field for baseline correction
+   QTextEdit*     le_info;
+   QFont le_info_font( US_Widgets::fixedFont().family(),
+		       US_GuiSettings::fontSize() );
+   le_info = us_textedit();
+   QFontMetrics m (le_info -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   //le_info -> setFixedHeight  (11 * RowHeight) ;
+   
+   QPalette p = le_info->palette(); 
+   p.setColor(QPalette::Base, Qt::lightGray);
+   p.setColor(QPalette::Text, Qt::darkRed);
+   le_info->setPalette(p);
+   le_info->setText(tr( "Baseline Correction Instructions:"
+			"<ul><li>[First Point]: to select, Hold Ctrl & Left Mouse click </ul></li>"
+			"<ul><li>Continue holding Ctrl, move Mouse to the Second Point to be selected (you will see red line following the mouse)</ul></li>"
+			"<ul><li>[Second Point]: to select, click Left Mouse (while still holding Ctrl)</ul></li>"
+			));
+   le_info->setFont(le_info_font);
+
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -1098,6 +1155,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
 
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
@@ -1169,6 +1227,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_removeAllbutLast, s_row,   0, 1, 3 );
 
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -1219,6 +1278,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
    specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
    specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+   specs->addWidget( le_info ,             s_row++, 0, 1, 6 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -1262,6 +1322,8 @@ pb_plateau->setVisible(false);
    lb_baseline ->hide();
    le_baseline ->hide();
 
+   pb_exclusion_click->hide();
+   
    if ( exptype != "ABDE" )
      {
        lb_scan        ->hide();
@@ -1310,7 +1372,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled( false );
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -1372,15 +1434,21 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
 {
    pb_bll_modify       = us_pushbutton( tr( "Modify Baseline Correction for Selected Triple" ), false );
    pb_bll_modify -> setVisible( false );
+
+   expType_manual = exptype;
        
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -1550,6 +1618,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_removeAllbutLast = us_pushbutton( tr( "Remove All but Last" ), true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
@@ -1649,6 +1719,25 @@ pb_plateau->setVisible(false);
    le_bll_intercept            = us_lineedit( "", 0, true );
    connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
 
+   //Information field for baseline correction
+   QTextEdit*     le_info;
+   QFont le_info_font( US_Widgets::fixedFont().family(),
+		       US_GuiSettings::fontSize() );
+   le_info = us_textedit();
+   QFontMetrics m (le_info -> font()) ;
+   int RowHeight = m.lineSpacing() ;
+   //le_info -> setFixedHeight  (11 * RowHeight) ;
+   
+   QPalette p = le_info->palette(); 
+   p.setColor(QPalette::Base, Qt::lightGray);
+   p.setColor(QPalette::Text, Qt::darkRed);
+   le_info->setPalette(p);
+   le_info->setText(tr( "Baseline Correction Instructions:"
+			"<ul><li>[First Point]: to select, Hold Ctrl & Left Mouse click </ul></li>"
+			"<ul><li>Continue holding Ctrl, move Mouse to the Second Point to be selected (you will see red line following the mouse)</ul></li>"
+			"<ul><li>[Second Point]: to select, click Left Mouse (while still holding Ctrl)</ul></li>"
+			));
+   le_info->setFont(le_info_font);
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -1660,6 +1749,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
 
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
@@ -1731,6 +1821,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_removeAllbutLast, s_row,   0, 1, 3 );
 
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -1781,6 +1872,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( le_bll_slope ,        s_row++, 4, 1, 2 );
    specs->addWidget( lb_bll_intercept ,    s_row,   3, 1, 1 );
    specs->addWidget( le_bll_intercept ,    s_row++, 4, 1, 2 );
+   specs->addWidget( le_info ,             s_row++, 0, 1, 6 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -1850,6 +1942,8 @@ pb_plateau->setVisible(false);
    le_edtrsp      ->hide();
    le_ltrng       ->hide();
 
+   pb_exclusion_click->hide();
+
 //*NEW STUFF
 
    if ( exptype != "ABDE" )
@@ -1888,7 +1982,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled(false);
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -1975,14 +2069,21 @@ US_Edit::US_Edit() : US_Widgets()
    lb_bll_intercept    = us_label( tr( "Y-intercept:" ), -1 );
    le_bll_intercept    = us_lineedit( "", 1, true );
    pb_pass             = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
+
+   expType_manual = "";
+   
    check        = US_Images::getIcon( US_Images::CHECK );
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
+   exclusion_click_mode = false;
    total_speeds = 0;
    total_edits  = 0;
    v_line       = NULL;
    line_to_mouse = NULL;
+   hover_timer  = new QTimer( this );
+   hover_timer->setSingleShot( true );
+   hover_timer->setInterval( 500 );
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
    chlamb       = QChar( 955 );
@@ -2152,6 +2253,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
    pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_exclusion_click = us_pushbutton( tr( "Click Exclusion Mode" ), false );
+   pb_exclusion_click->setCheckable( true );
    pb_include     = us_pushbutton( tr( "Include All" ), false );
 
    // Edit controls
@@ -2241,6 +2344,7 @@ pb_plateau->setVisible(false);
                              SLOT  ( new_triple         ( int ) ) );
    connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
    connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
    connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
    connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
@@ -2308,6 +2412,7 @@ pb_plateau->setVisible(false);
    specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
    specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
    specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( pb_exclusion_click, s_row++, 0, 1, 6 );
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
@@ -2370,7 +2475,7 @@ pb_plateau->setVisible(false);
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ),
          true, "", "rainbow" );
-
+   plot->getPicker()->setEnabled(false);
    data_plot->setMinimumSize( 600, 400 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
@@ -2517,6 +2622,7 @@ void US_Edit::reset( void )
 
    pb_excludeRange->setEnabled( false );
    pb_exclusion   ->setEnabled( false );
+   pb_exclusion_click->setEnabled( false );
    pb_include     ->setEnabled( false );
    pb_edit1       ->setEnabled( false );
 
@@ -2864,6 +2970,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   isSet_ref_wvl.clear();
 
   channels_to_analyse.clear();
+  channels_abde_refs.clear();
   triple_to_edit.clear();
   triples_skip_analysis.clear();
 
@@ -3018,7 +3125,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    }
 
    qDebug() << "IN PROCESS OPTICS: triples_size() " << triples.size();
-
+  
    cb_triple->addItems( triples );
 
    // Debug
@@ -3257,8 +3364,25 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -3300,6 +3424,7 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_details   ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
 //   pb_dataRange ->setEnabled( false );
@@ -3565,8 +3690,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    //all_loaded = true;
    le_status->setText( tr( "Data loaded..." ) );
 
-   emit data_loaded();
-
+   emit data_loaded(); 
+   
    // editProfile.clear();
    // centerpieceParameters.clear();
    // aprofileParameters.clear();
@@ -3591,6 +3716,25 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	    <<  job4run << ", "
 	    <<  job5run << ", "
 	    <<  job6run_pcsa;
+
+   
+   //if ABDE, check if channel is a reference
+   if( autoflow_expType == "ABDE" )
+     {
+       int chann_size = cb_triple->count();
+       QStandardItemModel* model_t = qobject_cast<QStandardItemModel*>(cb_triple->model());
+       for (int i=0; i<chann_size; i++)
+	 {
+	   QString chann_item = cb_triple->itemText( i );
+	   if ( isSet_abde_ref( chann_item ) )
+	     {
+	       //exclude for list
+	       if ( model_t )
+		 model_t->item(i)->setEnabled(false);
+	     }
+	 }
+     }
+      
 
    //Debug
    for (int i=0; i<cb_triple->count(); i++)
@@ -3800,7 +3944,13 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	       if ( channelname_.contains(ci.key()) )
 		 {
 		   qDebug() << "Channel, AProfile SCANSS: " << channelname_ << ", " << ci.key() << ": " << ci.value();
-		   editProfile_scans_excl[ triple_name ] = ci.value();
+		   QStringList scans_set = ci.value();
+
+		   //check
+		   if (scans_set[2] == QString("0") )
+		     scans_set[2] = QString::number(1);
+		   
+		   editProfile_scans_excl[ triple_name ] = scans_set;
 		   break;
 		 }
 	       ++ci;
@@ -4210,6 +4360,16 @@ bool US_Edit::readAProfileBasicParms_auto( QXmlStreamReader& xmli )
 		    channels_to_analyse[ channel_desc ] = bool_flag( attr.value( "run" ).toString() );
 		  }
 
+		//Read for ABDE: if chanel Reference one, or not
+		if ( attr.hasAttribute("abde_reference") )
+		  {
+		    QString abde_ref_set = attr.value( "abde_reference" ).toString();
+		    bool abde_ref_set_bool = abde_ref_set.toInt() != 0;
+		    qDebug() << "channel_name, abde_ref_set, abde_ref_set_bool -- "
+			     << channel_name << abde_ref_set << abde_ref_set_bool;
+		    channels_abde_refs[ channel_name ] = abde_ref_set_bool;
+		  }
+		
 		//Read what triple selected for editing:
 		if ( attr.hasAttribute("wvl_edit") )
 		  {
@@ -5196,8 +5356,25 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -5234,6 +5411,7 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_details   ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
 //   pb_dataRange ->setEnabled( false );
@@ -5811,8 +5989,24 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, &US_PlotPicker::cMouseUp, this, &US_Edit::mouse );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
@@ -5849,6 +6043,7 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_details   ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
 //   pb_dataRange ->setEnabled( false );
@@ -6157,7 +6352,7 @@ void US_Edit::set_data_over_lamda() {
             edata         = &allData[ trx ];               // Triple data
             int iwavl     = rawi_wvlns[ jj ];             // Wavelength value
             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-            DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+            //DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
             int rpidx = -1;
             for ( int kk = xvals_pos.at(jj); kk < edata->pointCount(); kk++)
@@ -6300,8 +6495,25 @@ void US_Edit::plot_current( int index )
    ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                  SLOT  ( mouse   ( const QPointF& ) ) );
+   // Enable hover tooltips
+   pick->setStateMachine( new QwtPickerTrackerMachine() );
+   connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseUpRaw,
+   this, [=](const QPointF& pos, QMouseEvent* e) {
+      if ( e != nullptr )
+      {
+         const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                 ( e->buttons() & Qt::LeftButton );
+         const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                               ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+         if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+            exclude_scan_by_click( pos );
+      }
+   });
 }
 
 // Re-plot
@@ -6327,7 +6539,7 @@ void US_Edit::replot( void )
 }
 
 // Handle a mouse click according to the current pick step
-void US_Edit::mouse( const QwtDoublePoint& p )
+void US_Edit::mouse( const QPointF& p )
 {
    double maximum = -1.0e99;
 
@@ -7288,6 +7500,9 @@ DbgLv(2) << " PlAll:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot curves with linear baseline corrections
@@ -7427,7 +7642,9 @@ DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
-
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 
 }
 
@@ -7568,6 +7785,9 @@ DbgLv(2) << " PlRng:      i" << i << "pen_plot" << pen_plot;
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot the last picked curve
@@ -7628,6 +7848,9 @@ void US_Edit::plot_last( void )
    // Reset colors
    focus( (int)ct_from->value(), (int)ct_to->value() );
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot a single scan curve
@@ -7692,6 +7915,9 @@ void US_Edit::plot_scan( void )
    }
 
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 }
 
 // Plot MWL curves
@@ -7883,8 +8109,25 @@ DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
          cc->setSamples( rr, vv, npoint );
       }
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                     SLOT  ( mouse   ( const QPointF& ) ) );
+      // Enable hover tooltips
+      pick->setStateMachine( new QwtPickerTrackerMachine() );
+      connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+      connect( pick, &US_PlotPicker::mouseUpRaw,
+      this, [=](const QPointF& pos, QMouseEvent* e) {
+         if ( e != nullptr )
+         {
+            const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                    ( e->buttons() & Qt::LeftButton );
+            const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                                  ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+            if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+               exclude_scan_by_click( pos );
+         }
+      });
 DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    }
 
@@ -7934,6 +8177,9 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
 
 DbgLv(1) << "PlMwl: call replot()";
    data_plot->replot();
+   if ( auto* z = plot->getZoomer() ) {
+      z->setZoomBase();
+   }
 DbgLv(1) << "PlMwl:  retn fr replot()";
 
    // Set the Scan spin boxes
@@ -7944,8 +8190,25 @@ DbgLv(1) << "PlMwl:  retn fr replot()";
    ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
-   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
+                  SLOT  ( mouse   ( const QPointF& ) ) );
+   // Enable hover tooltips
+   pick->setStateMachine( new QwtPickerTrackerMachine() );
+   connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseMoving, this, &US_Edit::hide_scan_tooltip );
+   connect( pick, &US_PlotPicker::mouseUpRaw,
+   this, [=](const QPointF& pos, QMouseEvent* e) {
+      if ( e != nullptr )
+      {
+         const bool left_click = ( e->button() == Qt::LeftButton ) ||
+                                 ( e->buttons() & Qt::LeftButton );
+         const bool alt_down = ( e->modifiers() & Qt::AltModifier ) ||
+                               ( QApplication::keyboardModifiers() & Qt::AltModifier );
+
+         if ( left_click  &&  (alt_down || exclusion_click_mode ) )
+            exclude_scan_by_click( pos );
+      }
+   });
 }
 
 // Set focus FROM scan value
@@ -8091,14 +8354,13 @@ void US_Edit::reset_excludes( void )
 //Exclude all but last scan
 void US_Edit::exclude_all_but_last( void )
 {
-  int scanStart = 0;
-  int scanEnd   = data.scanData.size() - 1;
-
   qDebug() << "includes before: " << includes;
-
-  for ( int i = scanEnd; i >= scanStart; i-- )
-    includes.removeAt( i - 1 );
-
+  if (!includes.isEmpty())
+    {
+      int lastItem = includes.last();
+      includes.clear();
+      includes.append(lastItem);
+    }
   qDebug() << "includes after " << includes;
 
   replot();
@@ -8264,6 +8526,190 @@ void US_Edit::include( void )
 {
    init_includes();
    reset_excludes();
+}
+
+// Toggle exclusion click mode
+void US_Edit::toggle_exclusion_click_mode( void )
+{
+   exclusion_click_mode = pb_exclusion_click->isChecked();
+
+   if ( exclusion_click_mode )
+   {
+      pb_exclusion_click->setIcon( check );
+   }
+   else
+   {
+      pb_exclusion_click->setIcon( QIcon() );
+   }
+}
+
+// Exclude scan by clicking on it
+void US_Edit::exclude_scan_by_click( const QPointF& p )
+{
+   QList<int> near_scans;
+   double click_radius = p.x();
+   double click_value = p.y();
+
+   int nearest = find_nearest_scan( click_radius, click_value, near_scans );
+
+   if ( nearest < 0 )
+      return;
+
+   // If multiple scans are close, ask for confirmation
+   if ( near_scans.size() > 1 )
+   {
+      QString msg = tr( "Found %1 scans near click position:\n\n" )
+                    .arg( near_scans.size() );
+      for ( int i = 0; i < near_scans.size(); i++ )
+      {
+         int scan_num = near_scans[i];
+         double time = data.scanData[ scan_num ].seconds;
+         msg += tr( "Scan %1 at %2 seconds\n" )
+                .arg( scan_num + 1 )
+                .arg( time, 0, 'f', 1 );
+      }
+      msg += tr( "\nExclude all %1 scans?" ).arg( near_scans.size() );
+
+      int ret = QMessageBox::question( this,
+                                        tr( "Exclude Multiple Scans" ),
+                                        msg,
+                                        QMessageBox::Yes | QMessageBox::No,
+                                        QMessageBox::No );
+      if ( ret != QMessageBox::Yes )
+         return;
+
+      // Exclude all near scans
+      for ( int i = 0; i < near_scans.size(); i++ )
+      {
+         includes.removeAll( near_scans[i] );
+      }
+   }
+   else
+   {
+      // Exclude single scan
+      includes.removeAll( nearest );
+   }
+   // get zoom if currentl
+   // Update display
+   replot();
+   reset_excludes();
+}
+
+// Find nearest scan to click position
+int US_Edit::find_nearest_scan( double radius, double value, QList<int>& near_scans )
+{
+   near_scans.clear();
+
+   if ( includes.isEmpty() || data_plot == nullptr )
+      return -1;
+
+   QwtScaleMap xmap = data_plot->canvasMap( QwtPlot::xBottom );
+   QwtScaleMap ymap = data_plot->canvasMap( QwtPlot::yLeft   );
+
+   QPoint click_pos( qRound( xmap.transform( radius ) ),
+                     qRound( ymap.transform( value  ) ) );
+
+   QwtPlotItemList items = data_plot->itemList();
+   double min_distance = 1.0e99;
+   int nearest_scan = -1;
+   const double threshold_pixels = 20.0;
+
+   // Find closest scan(s) by curve distance in canvas pixels
+   for ( int i = 0; i < data.scanData.size(); i++ )
+   {
+      if ( !includes.contains( i ) ) continue;
+
+      QString       scan_tag = " #" + QString::number( i );
+      QwtPlotCurve* curve    = nullptr;
+
+      for ( int j = 0; j < items.size(); j++ )
+      {
+         if ( items[ j ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
+         {
+            QwtPlotCurve* item_curve = dynamic_cast< QwtPlotCurve* >( items[ j ] );
+            if ( item_curve != nullptr &&
+                 item_curve->title().text().contains( scan_tag ) )
+            {
+               curve = item_curve;
+               break;
+            }
+         }
+      }
+
+      if ( curve == nullptr || !curve->isVisible() )
+         continue;
+
+      double qwt_distance = 0.0;
+      int nearest_point = curve->closestPoint( click_pos, &qwt_distance );
+
+      if ( nearest_point < 0 )
+         continue;
+
+      QPointF curve_point = curve->sample( nearest_point );
+      QPointF curve_canvas( xmap.transform( curve_point.x() ),
+                            ymap.transform( curve_point.y() ) );
+
+      double scan_min_dist = QLineF( QPointF( click_pos ), curve_canvas ).length();
+
+      if ( qwt_distance < 0.0 )
+         scan_min_dist = qAbs( qwt_distance );
+
+      if ( scan_min_dist <= threshold_pixels )
+      {
+         near_scans.append( i );
+
+         if ( scan_min_dist < min_distance )
+         {
+            min_distance = scan_min_dist;
+            nearest_scan = i;
+         }
+      }
+   }
+
+   return nearest_scan;
+}
+
+// Show tooltip with scan info on hover
+void US_Edit::show_scan_tooltip( const QPointF& p )
+{
+   QList<int> near_scans;
+   int nearest = find_nearest_scan( p.x(), p.y(), near_scans );
+
+   if ( nearest >= 0 && !near_scans.isEmpty() )
+   {
+      int scan_num = nearest;
+      double time = data.scanData[ scan_num ].seconds;
+      int minutes = (int)time / 60;
+      int seconds = (int)time % 60;
+      int current_scan_index = includes.indexOf( scan_num );
+
+      QString tooltip = tr( "Scan %1\nTime: %2:%3\nCurrent Index %4" )
+                        .arg( scan_num + 1 )
+                        .arg( minutes )
+                        .arg( seconds, 2, 10, QChar('0') )
+                        .arg( current_scan_index + 1 );
+
+      // If multiple scans are nearby, indicate this
+      if ( near_scans.size() > 1 )
+      {
+         tooltip += tr( "\n\n%1 scans nearby (ALT+Click to exclude)" )
+                    .arg( near_scans.size() );
+      }
+      else
+      {
+         tooltip += tr( "\n\nALT+Click to exclude this scan" );
+      }
+
+      QToolTip::showText( QCursor::pos(), tooltip, this );
+   }
+   else
+   {
+      QToolTip::hideText();
+   }
+}
+void US_Edit::hide_scan_tooltip(  )
+{
+   QToolTip::hideText();
 }
 
 // Reset pushbutton and plot with invert flag change
@@ -8678,8 +9124,10 @@ void US_Edit::new_triple_auto( int index )
   //qDebug() << "#triples, #wavelns_i -- " << cb_triple->count() << wavelns_i.size();
   //qDebug() << "#wavelns in triple   -- " << triple_name << wavelns_i[ triple_index ].size();
 
-  qDebug() << "Triple_name, cb_triple->currentText() -- "
+  qDebug() << "Triple_name, triple_index, index, cb_triple->currentText() -- "
 	   << triple_name
+	   << triple_index
+	   << index
 	   << cb_triple->currentText();
 
   // Remove Spike: Icon/Enable
@@ -8848,6 +9296,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_report   ->setEnabled( all_edits );
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( true );
    pb_noise    ->setEnabled( true );
@@ -9300,6 +9749,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
    pb_report   ->setEnabled( all_edits );
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
+   pb_exclusion_click->setEnabled( true );
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( false );
    pb_noise    ->setEnabled( false );
@@ -9931,13 +10381,19 @@ void US_Edit::update_triple_edit_params (  QMap < QString, QStringList > &  edit
   new_triple_auto( 0 );
 }
 
-//for ABDE, check if all triples were processed & enable/diable Save
+//for ABDE, check if all triples were processed & enable/disable Save
 void US_Edit::setUnsetSaveBttn_abde( void )
 {
   bool all_processed = true;
   QMap<QString, bool>::iterator os;
   for ( os = edited_triples_abde.begin(); os != edited_triples_abde.end(); ++os )
     {
+      qDebug() << "[in setUnsetSaveBttn_abde()] triple_edited_manually -- "
+	       << os.key() << os.value();
+
+      if ( isSet_abde_ref(os.key()) )
+	continue;
+      
       if ( !os.value() )
 	{
 	  all_processed = false;
@@ -9965,8 +10421,7 @@ void US_Edit::write_auto( void )
  
   // ////
 
-  
-  
+
 
   /****  TEMP1 **/
   //--- Check if saving already initiated
@@ -10233,6 +10688,13 @@ void US_Edit::write_auto( void )
 
 	for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	  {
+	    if( autoflow_expType == "ABDE" )
+	      {
+		QString chann_item = cb_triple->itemText( trx );
+		if ( isSet_abde_ref( chann_item ) )
+		  continue;
+	      }
+	    
 	    qDebug() << "Writing MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 	    write_mwl_auto( trx );
 	  }
@@ -10247,6 +10709,13 @@ void US_Edit::write_auto( void )
 	//   {
 	    for ( int trx = 0; trx < cb_triple->count(); trx++ )
 	      {
+		if( autoflow_expType == "ABDE" )
+		  {
+		    QString chann_item = cb_triple->itemText( trx );
+		    if ( isSet_abde_ref( chann_item ) )
+		      continue;
+		  }
+		
 		qDebug() << "Writing non-MWL, channel: " << trx << ": " << cb_triple->itemText( trx );
 		write_triple_auto( trx );
 	      }
@@ -10672,6 +11141,39 @@ void US_Edit::delete_autoflow_record( void )
        << QString::number( autoflowID_passed );
 
    db->statusQuery( qry );
+}
+
+bool US_Edit::isSet_abde_ref( QString triple_name )
+{
+  bool abde_ref_set = false;
+  if ( channels_abde_refs.isEmpty() )
+    {
+      qDebug() << "It looks like older protocol is in use: QMap channels_abde_refs is EMPTY!";
+      return abde_ref_set;
+    }
+
+  QStringList triple_name_list = triple_name.split("/");
+  QString channel = triple_name_list[0].trimmed() + triple_name_list[1].trimmed();
+
+  QMap<QString, bool>::iterator jj;
+  for ( jj = channels_abde_refs.begin(); jj != channels_abde_refs.end(); ++jj )
+    {
+      qDebug() << "[in isSet_abde_ref()] chann_passed, chann_aprofile, abde_ref_setting_aprofile -- "
+	       << channel << jj.key() << jj.value();
+      if ( jj.key() == channel  )
+	{
+	  // qDebug() << "[in isSet_abde_ref()] chann_passed, chann_aprofile, abde_ref_setting_aprofile -- "
+	  // 	   << channel << jj.key() << jj.value();
+	  if ( jj.value()  )
+	    {
+	      qDebug() << "Channel " << triple_name << " of channel (" << jj.key() << ") is set as ABDE REF channel.";
+	      abde_ref_set = true;
+	      break;
+	    }
+	}
+    }
+  
+  return abde_ref_set;
 }
 
 
@@ -11334,7 +11836,7 @@ DbgLv(1) << "BL: CC : baseline bl" << baseline << bl;
 
 DbgLv(1) << "EDT:WrTripl: orig sufx" << sufx;
       QString isufx = sufx;
-      sufx.replace( QRegExp( "[^\\w\\d\\-]" ), "-" );
+      sufx.replace( QRegularExpression( "[^\\w\\d\\-]" ), "-" );
       sufx.replace( '_', '-' );
 DbgLv(1) << "EDT:WrTripl:  rmvd sufx" << sufx;
       if ( sufx != isufx )
@@ -11517,7 +12019,7 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
       index1 = filter.indexOf( '.' ) + 1;
 
       filter = "*" + filter.mid( index1 );
-      filter.replace( QRegExp( "auc$" ), "xml" );
+      filter.replace( QRegularExpression( "auc$" ), "xml" );
       filter = tr( "Edits(" ) + filter + tr( ");;All XML (*.xml)" );
 
       // Ask for edit file
@@ -11774,7 +12276,7 @@ void US_Edit::prior_equil( void )
       index1 = filter.indexOf( '.' ) + 1;
 
       filter.insert( index1, "*." );
-      filter.replace( QRegExp( "auc$" ), "xml" );
+      filter.replace( QRegularExpression( "auc$" ), "xml" );
 
       // Ask for edit file
       filename = QFileDialog::getOpenFileName( this,
@@ -11993,7 +12495,33 @@ void US_Edit::next_triple_auto( void )
    pb_priorChan ->setEnabled( true );
 
    int row = cb_triple->currentIndex() + 1;
-   //row     = ( row < cb_triple->count() ) ? row : 0;
+   qDebug() << "[NEXT triple_auto] Initial set, row = " << row;
+
+   //if ABDE, or in general, any items in cb_triple disabled, look for the first enabled item:
+   bool abde_hit_the_end = false;
+   if ( autoflow_expType == "ABDE" )
+     {
+       int found = -1;
+       for (int i = row; i < cb_triple->count(); ++i) 
+	 {
+	   Qt::ItemFlags flags = cb_triple->model()->index(i, 0).flags();
+	   if (flags & Qt::ItemIsEnabled)
+	     {
+	       found = i;
+	       break; 
+	     }
+	 }
+       if (found != -1)
+	 row = found;
+       else
+	 {
+	   abde_hit_the_end = true;
+	   row -= 1;
+	   pb_nextChan->setEnabled( false );
+	 }
+       
+       qDebug() << "in ABDE[NEXT], row = " << row;
+     }
 
    if ( (row + 1 ) <= cb_triple->count() )
      {
@@ -12016,7 +12544,7 @@ void US_Edit::next_triple_auto( void )
 
        new_triple_auto( dax );
 
-       if ( (row + 1 ) == cb_triple->count() )
+       if ( (row + 1 ) == cb_triple->count() || abde_hit_the_end )
          pb_nextChan ->setEnabled( false );
 
        qDebug() << "NEXT Triple: row " << row << ", cb_triple->count() " << cb_triple->count() ;
@@ -12031,8 +12559,33 @@ void US_Edit::prior_triple_auto( void )
   pb_nextChan ->setEnabled( true );
 
   int row = cb_triple->currentIndex() - 1;
-  //row     = ( row < cb_triple->count() ) ? row : 0;
+  qDebug() << "[PRIOR triple_auto] Initial set, row = " << row;
 
+  //if ABDE, or in general, any items in cb_triple disabled, look for the first enabled item:
+   bool abde_hit_the_end = false;
+   if ( autoflow_expType == "ABDE" )
+     {
+       int found = -1;
+       for (int i = row; i >= 0; --i)
+	 {
+	   if (cb_triple->model()->index(i, 0).flags() & Qt::ItemIsEnabled)
+	     {
+	       found = i;
+	       break; 
+	     }
+	 }
+       if (found != -1)
+	 row = found;
+       else
+	 {
+	   abde_hit_the_end = true;
+	   row += 1;
+	   pb_priorChan->setEnabled( false );
+	 }
+       qDebug() << "in ABDE[PRIOR], row = " << row;
+     }
+  
+  
   if ( row  >= 0 )
     {
       cb_triple->disconnect();
@@ -12040,20 +12593,12 @@ void US_Edit::prior_triple_auto( void )
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
 	       SLOT  ( new_triple_auto    ( int ) ) );
 
-      // if ( le_edtrsp->isVisible() )
-      // 	 {
-      // 	   QString trsp = cb_triple->currentText() + " : " + trip_rpms[ 0 ];
-      // 	   le_edtrsp->setText( trsp );
-      // 	   cb_rpms  ->setCurrentIndex( 0 );
-      // 	 }
-
-
       int dax = index_data();
       data    = *outData[ dax ];
 
       new_triple_auto( dax );
 
-      if ( row == 0 )
+      if ( row == 0 || abde_hit_the_end )
 	pb_priorChan ->setEnabled( false );
 
 
@@ -13075,7 +13620,7 @@ void US_Edit::write_mwl()
 
       if ( ! ok ) return;
 
-      sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
+      sufx.remove( QRegularExpression( "[^\\w\\d_-]" ) );
       editLabel    = now + sufx;
 
       if ( editLabel.length() > 20 )
@@ -14545,10 +15090,9 @@ void US_Edit::pass_values_bll( void )
 					 tr( "New Baseline Correction Parameters" ),
 					 tr( "This will overwrite current Baseline Correction parameters. "
 					     "Do you want to proceed? " ),
-					 tr( "&OK" ), tr( "&Cancel" ),
-					 0, 0, 1 );
+					 QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-  if ( status != 0 ) return;
+  if ( status != QMessageBox::Ok ) return;
 
    emit pass_edit_params_blc( editProfile_triple_blc );
    //emit pass_edit_params_blc_plot( cb_triple->currentIndex() );
@@ -14558,6 +15102,28 @@ void US_Edit::pass_values_bll( void )
 // Close edit after review of saved edits
 void US_Edit::pass_values( void )
 {
+  //For ABDE. check if Remove ALl but Last was ckicked
+  qDebug() << "autoflow_expType -- " << expType_manual;
+  if ( expType_manual == "ABDE" ) 
+    {
+      QMessageBox msgBox(this);
+      msgBox.setIcon(QMessageBox::Warning);
+      msgBox.setWindowTitle(tr("ABDE Edit Profile"));
+      msgBox.setText(tr("Before applying cjanges for edit profile, please verify that\n"
+			"all scans but last were excluded for this channel.\n\n"
+			"If not, you can do this by clicking \"Remove All but Last\"\n"
+			"button for every selected channel..."));
+      
+      QPushButton *verifyButton = msgBox.addButton(tr("Let me verify"), QMessageBox::RejectRole);
+      QPushButton *yesButton = msgBox.addButton(tr("Proceed with saving"), QMessageBox::AcceptRole);
+      
+      msgBox.setDefaultButton(verifyButton);
+      msgBox.exec();
+      
+      if (msgBox.clickedButton() != yesButton)
+	return; 
+    }
+  
   //collect menicsus | airGap | baseline | range | etc data && pass to main edit stage
 
   QString triple_name = cb_triple->itemText( cb_triple->currentIndex() );
@@ -14602,10 +15168,9 @@ void US_Edit::pass_values( void )
 					 tr( "New Edit Parameters" ),
 					 tr( "This will overwrite current edit parameters. "
 					     "Do you want to proceed? " ),
-					 tr( "&OK" ), tr( "&Cancel" ),
-					 0, 0, 1 );
+					 QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel );
 
-  if ( status != 0 ) return;
+  if ( status != QMessageBox::Ok ) return;
 
   emit pass_edit_params_includes( editProfile_triple_includes );
   emit pass_edit_params_blc( editProfile_triple_blc );

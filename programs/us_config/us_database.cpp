@@ -277,17 +277,19 @@ void US_Database::select_db( QListWidgetItem* entry )
       uuid = dblist.at( i ).at( 9 );
 //qDebug() << "USCFG: dbl 0,6,9"
 // << dblist.at(i).at(0) << dblist.at(i).at(6) << dblist.at(i).at(9);
+      const QStringList defaultDB = US_Settings::defaultDB();
+      if ( defaultDB.at( 9 ) != uuid ) {
+        // Set the default DB and user for that DB
+        US_Settings::set_defaultDB( dblist.at( i ) );
 
-      // Set the default DB and user for that DB
-      US_Settings::set_defaultDB( dblist.at( i ) );
+        update_inv();
+        update_lw( item );
 
-      update_inv();
-      update_lw( item );
-
-      QMessageBox::information( this,
-            tr( "Database Selected" ),
-            tr( "The default database has been updated." ) );
-      pb_save  ->setEnabled( true );
+        QMessageBox::information( this,
+              tr( "Database Selected" ),
+              tr( "The default database has been updated." ) );
+      }
+      //pb_save  ->setEnabled( true );
       pb_delete->setEnabled( true );
 
       break;
@@ -350,6 +352,15 @@ QString US_Database::validate_value( QLineEdit* line_edit, const QString& proper
 
 void US_Database::check_add()
 {
+  if ( !test_connect() )
+    {
+      QMessageBox::warning( this,
+			    tr( "Attention" ),
+			    tr( "Database entry cannot be saved until valid credentials are provided.\n" ) );
+      pb_save->setEnabled(false);
+      return;
+    }
+  
   QStringList problems;
   // Check that all fields have at least something
   QString status = validate_value( le_description, "description" );
@@ -467,8 +478,9 @@ void US_Database::check_add()
     save_default();
   }
 
-  pb_save  ->setEnabled( true );
+  //pb_save  ->setEnabled( true );
   pb_delete->setEnabled( true );
+  pb_save  ->setEnabled( false );
 }
 
 void US_Database::update_lw( const QString& current )
@@ -571,7 +583,7 @@ void US_Database::reset( )
 void US_Database::help( )
 {
   US_Help* showhelp = new US_Help(this);
-  showhelp->show_help( "database_config.html" );
+  showhelp->show_help( "config.html#database-configuration-panel" );
 }
 
 void US_Database::save_default( )

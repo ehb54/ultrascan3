@@ -130,7 +130,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void accepted       ( void );
       void experiment_info( QString&, QString&, QString& );
       void help           ( void )
-      { showHelp.show_help( "data_loader.html" ); };
+      { showHelp.show_help( "common_dialogs.html#data-loader" ); };
 
    protected:
       //! \brief Event filter to flag whether a mouse click is

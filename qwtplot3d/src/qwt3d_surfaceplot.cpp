@@ -10,8 +10,8 @@ Initializes with dataNormals()==false, NOFLOOR, resolution() == 1
 SurfacePlot::SurfacePlot( QWidget* parent, const char* name )
     : Plot3D( parent, name )
 #else
-SurfacePlot::SurfacePlot( QWidget * parent, const QGLWidget * shareWidget)
-    : Plot3D( parent, shareWidget) 
+SurfacePlot::SurfacePlot( QWidget * parent)
+    : Plot3D( parent )
 #endif
 {
 	datanormals_p = false;
@@ -85,7 +85,7 @@ void SurfacePlot::setResolution( int res )
 	updateNormals();
 	updateData();
 	if (initializedGL())
-    updateGL();
+    update();
 
 	emit resolutionChanged(res);
 }

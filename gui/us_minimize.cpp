@@ -5,9 +5,12 @@
 #include <cerrno> //for floating point errors
 //#include <cfloat>
 
-
+#ifndef FLT_MIN
 #define FLT_MIN  1.17549e-38
+#endif
+#ifndef FLT_MAX
 #define FLT_MAX  3.40282e+38
+#endif
 
 //using namespace std;
 

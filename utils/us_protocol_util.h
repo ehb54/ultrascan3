@@ -2,8 +2,6 @@
 #ifndef US_PROTO_UTIL_H
 #define US_PROTO_UTIL_H
 
-#include <QtCore>
-
 #include "us_extern.h"
 #include "us_db2.h"
 #include "us_settings.h"

@@ -1105,7 +1105,7 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
    modstats << tr( "Index of best model:" )
             << QString::asprintf( "%5d", mrecs[ 0 ].taskx );
    modstats << tr( "Best curve calculated solutes:" )
-            << QString::asprintf( "%5d", mrecs[ 0 ].csolutes.size() );
+            << QString::asprintf( "%5d", static_cast<int>( mrecs[ 0 ].csolutes.size() ) );
    modstats << tr( "Minimum, Maximum calculated solutes:" )
             << QString::asprintf( "%5d  %5d", nsolmin, nsolmax );
    modstats << tr( "Average calculated solutes:" )

@@ -54,7 +54,7 @@ class US_ModelParams : public US_WidgetsDialog
       bool all_percents     ( void );
       void lnedChanged      ( const QString& );
       void help             ( void )
-      { showHelp.show_help( "dens_match_mparam.html" ); };
+      { showHelp.show_help( "dens_match.html#density-matching-model-parameters" ); };
 };
 #endif
 

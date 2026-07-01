@@ -6,13 +6,9 @@
 #ifndef US_TIMER_H
 #define US_TIMER_H
 
-#include <qstring.h>
-#include <qdatetime.h>
-#include <map>
 #include "us_extern.h"
 #include <QElapsedTimer>
-
-using namespace std;
+#include <map>
 
 /**
  * @class US_Timer
@@ -73,10 +69,10 @@ public:
     QString list_times();
 
 private:
-    map<QString, QElapsedTimer> timers;    ///< Map of timer names to QElapsedTimer objects.
-    map<QString, unsigned int> counts;     ///< Map of timer names to counts.
-    map<QString, unsigned long> times;     ///< Map of timer names to recorded times.
-    map<QString, unsigned long> times2;    ///< Map of timer names to secondary recorded times.
+    std::map<QString, QElapsedTimer> timers;    ///< Map of timer names to QElapsedTimer objects.
+    std::map<QString, unsigned int> counts;     ///< Map of timer names to counts.
+    std::map<QString, unsigned long> times;     ///< Map of timer names to recorded times.
+    std::map<QString, unsigned long> times2;    ///< Map of timer names to secondary recorded times.
 };
 
 #endif // US_TIMER_H

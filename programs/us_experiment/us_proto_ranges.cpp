@@ -19,6 +19,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    mainw               = (US_ExperimentMain*)topw;
    rpRange             = &(mainw->currProto.rpRange);
    rpSolut             = &(mainw->currProto.rpSolut);
+   rpRotor             = &(mainw->currProto.rpRotor);
    
    mxrow               = 24;     // Maximum possible rows
    nrnchan             = 0;
@@ -269,6 +270,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
       hicrads.resize( nrnchan );
       abde_buff.resize( nrnchan );
       abde_mwl_deconv.resize( nrnchan );
+      abde_ch_msg.resize( nrnchan );
 
       for ( int ii = 0; ii < oprof.count(); ii++ )
       {
@@ -297,6 +299,7 @@ DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
 
 	    abde_buff[ kuv ]           = rpRange->chrngs[ kuv ].abde_buffer_spectrum;
 	    abde_mwl_deconv[ kuv ]     = rpRange->chrngs[ kuv ].abde_mwl_deconvolution;
+	    abde_ch_msg[ kuv ]         = rpRange->chrngs[ kuv ].abde_chann_msg;
 
             if ( ++kuv >= nuvvis )  break;
          }
@@ -326,6 +329,7 @@ DbgLv(1) << "EGRn: rbR:  pprotoname" << protoname << "cur_pname" << cur_pname;
       hicrads.resize( nrnchan );
       abde_buff.resize( nrnchan );
       abde_mwl_deconv.resize( nrnchan );
+      abde_ch_msg.resize( nrnchan );
 DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < nrnchan; ii++ )
@@ -345,6 +349,7 @@ DbgLv(1) << "EGRn: rbR:   ii jj " << ii << jj << "wavelen" << wavelen;
          hicrads[ ii ]        = rpRange->chrngs[ ii ].hi_rad;
 	 abde_buff[ ii ]      = rpRange->chrngs[ ii ].abde_buffer_spectrum;
 	 abde_mwl_deconv[ ii] = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+	 abde_ch_msg[ ii ]    = rpRange->chrngs[ ii ].abde_chann_msg;
 	 
 DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
@@ -375,6 +380,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
       hicrads.resize( ntchan );
       abde_buff.resize( ntchan );
       abde_mwl_deconv.resize( ntchan );
+      abde_ch_msg.resize( ntchan );
       int kk              = nochan;
 
       for ( int ii = 0; ii < nrnchan_sv; ii++ )
@@ -385,6 +391,7 @@ DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
          hicrads[ kk ]         = hicrads[ ii ];
 	 abde_buff[ kk ]       = abde_buff[ ii ];
 	 abde_mwl_deconv[ kk ] = abde_mwl_deconv[ ii ];
+	 abde_ch_msg[ kk ]     = abde_ch_msg[ ii ];
          rchans [ ii ]    = "";
       }
    }
@@ -450,6 +457,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             hicrads[ ii ]       = hicrads[ ppx ];
 	    abde_buff[ ii ]     = abde_buff[ ppx ];
 	    abde_mwl_deconv[ ii ] = abde_mwl_deconv[ ppx ];
+	    abde_ch_msg [ ii ]  = abde_ch_msg [ ppx ];
          }
          else
          {
@@ -459,6 +467,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
             hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
 	    abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
 	    abde_mwl_deconv[ ii ] =  rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+	    abde_ch_msg [ ii ]  = rpRange->chrngs[ ii ].abde_chann_msg;
          }
       }
    }
@@ -471,6 +480,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
      hicrads.resize( nrnchan );
      abde_buff.resize( nrnchan );
      abde_mwl_deconv.resize( nrnchan );
+     abde_ch_msg.resize( nrnchan );
 
      for ( int ii = 0; ii < nrnchan; ii++ )
       {
@@ -484,6 +494,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
 	 abde_buff[ ii ]     = rpRange->chrngs[ ii ].abde_buffer_spectrum;
 	 abde_mwl_deconv[ ii ] =  rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+	 abde_ch_msg[ ii ]   = rpRange->chrngs[ ii ].abde_chann_msg;
          qDebug() << "Test 1";
       }
    }
@@ -494,6 +505,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    hicrads.resize( nrnchan );
    abde_buff.resize( nrnchan );
    abde_mwl_deconv.resize( nrnchan );
+   abde_ch_msg.resize( nrnchan );
 }
 
 #if 0
@@ -643,6 +655,7 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
   int    nwavl;
   bool   buff_req;
   QString sol_id;
+  int chrow_global;
   
   if ( mode == "INIT" )
     {
@@ -655,7 +668,8 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
 	      nwavl    = all_wvls.count();
 	      buff_req = rpRange->chrngs[ ii ].abde_buffer_spectrum;
 	      sol_id   = rpSolut->chsols[ii].sol_id;
-
+	      chrow_global = ii;
+		
 	      break;
 	    }
 	}
@@ -667,7 +681,10 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
       nwavl    = all_wvls.count();
       buff_req = abde_buff[ chrow ];
       sol_id   = rpSolut->chsols[ chrow ].sol_id;
+      chrow_global = chrow;
     }
+
+  abde_ch_msg[ chrow_global ]. clear();
 
   qDebug() << "In CHECK SPECTRA" << "[" << mode << "]: channel, channelName, nwavl, buff_req, solID -- "
 	   << channel << channelName <<  nwavl <<  buff_req << sol_id;
@@ -733,7 +750,11 @@ bool US_ExperGuiRanges::iStwoOrMoreAnalytesSpectra_forChannel( QString channelNa
 	  //Check if ext. profile: (1) exists; (2) in range of specs channel-wvls.
 	  QString a_desc = "ANALYTE: " + a_name;
 	  if ( !validExtinctionProfile( a_desc, all_wvls, analyte.extinction.keys(), msg_to_user ) )
-	    profiles_exist = false;
+	    {
+	      //capture msg on why exactly ext. profile invalid:
+	      abde_ch_msg[ chrow_global ] = msg_to_user.join("\n");
+	      profiles_exist = false;
+	    }
 	}
     }
   else
@@ -899,6 +920,7 @@ void US_ExperGuiRanges::selectWavelengths_manual()
 	   //also, reset abde_buff[ ii ], abde_mwl_deconv[ chrow ]
 	   abde_buff[ chrow ]       = false;
 	   abde_mwl_deconv[ chrow ] = false;
+	   abde_ch_msg[ chrow ] = "";
 	 }
      }
    else
@@ -1027,18 +1049,22 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	}
       if ( has_absorbance )
 	{
-	  //ALEXEY: use this algorithm
-	  if ( scanint_sec > scanint_sec_min*tot_wvl )
-	    {
-	      scancount     = int( duration_sec / scanint_sec );
-	      scaninterval  = scanint_sec;
-	    }
-	  else
-	    {
-	      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-	      scaninterval = int( scanint_sec_min * tot_wvl );
-	      scaninterval_updated = true; //updated: show in RED
-	    }
+	  // //ALEXEY: use this algorithm
+	  // if ( scanint_sec > scanint_sec_min*tot_wvl )
+	  //   {
+	  //     scancount     = int( duration_sec / scanint_sec );
+	  //     scaninterval  = scanint_sec;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  //     scaninterval = int( scanint_sec_min * tot_wvl );
+	  //     scaninterval_updated = true; //updated: show in RED
+	  //   }
+
+	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  scaninterval = int( scanint_sec_min * tot_wvl );
+	  scaninterval_updated = true; //updated: show in RED
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount >= 1500 )
@@ -1051,7 +1077,8 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  rpSpeed->ssteps[ i ].scancount = scancount;
 	  mainw->ScanCount_global   = scancount;
 	  mainw->currProto.scanCount;
-	  mainw->TotalWvlNum_global = tot_wvl; 
+	  mainw->TotalWvlNum_global = tot_wvl;
+	  rpSpeed->ssteps[ i ].scanintv = scaninterval; 
 	
 	  
 	  //Update le_scanint text: set text color RED if updated
@@ -1067,7 +1094,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	      //palette->setColor(QPalette::Base,Qt::white);
 	      le_scanint->setPalette(*palette);
 	      
-	      rpSpeed->ssteps[ i ].scanintv = scaninterval;
+	      //rpSpeed->ssteps[ i ].scanintv = scaninterval;
 	    }
 	  else
 	    {
@@ -1107,17 +1134,21 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  ncells_used_int /= 2;
 	  
 	  //ALEXEY: use this algorithm for Interference: scanint_min=5; 
-	  if ( scanint_sec_int > 5 * ncells_used_int )
-	    {
-	      scancount_int     = int( duration_sec / scanint_sec_int );
-	      scaninterval_int  = scanint_sec_int;
-	    }
-	  else
-	    {
-	      scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
-	      scaninterval_int         = int( 5 * ncells_used_int );
-	      scaninterval_int_updated = true; //updated: show in RED
-	    }
+	  // if ( scanint_sec_int > 5 * ncells_used_int )
+	  //   {
+	  //     scancount_int     = int( duration_sec / scanint_sec_int );
+	  //     scaninterval_int  = scanint_sec_int;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  //     scaninterval_int         = int( 5 * ncells_used_int );
+	  //     scaninterval_int_updated = true; //updated: show in RED
+	  //   }
+
+	  scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  scaninterval_int         = int( 5 * ncells_used_int );
+	  scaninterval_int_updated = true; //updated: show in RED
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount_int >= 1500 )
@@ -1133,7 +1164,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  rpSpeed->ssteps[ i ].scancount_int = scancount_int;
 	  mainw->ScanCount_global_int     = scancount_int;
 	  mainw->currProto.scanCount_int  = scancount_int; 
-	  
+	  rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
           
 	  //Update le_scanint text: set text color RED if updated
 	  QList< int > hms_scanint_int;
@@ -1148,7 +1179,7 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	      //palette->setColor(QPalette::Base,Qt::white);
 	      le_scanint_int->setPalette(*palette_int);
 	      
-	      rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
+	      //rpSpeed->ssteps[ i ].scanintv_int = scaninterval_int;
 	    }
 	  else
 	    {
@@ -1246,6 +1277,7 @@ DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
 	   //also, reset abde_buff[ ii ], abde_mwl_deconv[ chrow ]
 	   abde_buff[ chrow ]       = false;
 	   abde_mwl_deconv[ chrow ] = false;
+	   abde_ch_msg[ chrow ]     = ""; 
 	 }
      }
    else
@@ -1378,17 +1410,21 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	{
 	  
 	  //ALEXEY: use this algorithm
-	  if ( scanint_sec > scanint_sec_min*tot_wvl )
-	    {
-	      scancount     = int( duration_sec / scanint_sec );
-	      scaninterval  = scanint_sec;
-	    }
-	  else
-	    {
-	      scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
-	      scaninterval = int( scanint_sec_min * tot_wvl );
-	      scaninterval_updated = true; //updated: show in RED
-	    }
+	  // if ( scanint_sec > scanint_sec_min*tot_wvl )
+	  //   {
+	  //     scancount     = int( duration_sec / scanint_sec );
+	  //     scaninterval  = scanint_sec;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  //     scaninterval = int( scanint_sec_min * tot_wvl );
+	  //     scaninterval_updated = true; //updated: show in RED
+	  //   }
+	  scancount    = int( duration_sec / (scanint_sec_min * tot_wvl) );
+	  scaninterval = int( scanint_sec_min * tot_wvl );
+	  scaninterval_updated = true; //updated: show in RED
+	  
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount >= 1500 )
@@ -1459,17 +1495,21 @@ DbgLv(1) << "EGRan: ranrows: ccrows" << ccrows;
 	  ncells_used_int /= 2;
 	  
 	  //ALEXEY: use this algorithm for Interference: scanint_min=5; 
-	  if ( scanint_sec_int > 5 * ncells_used_int )
-	    {
-	      scancount_int     = int( duration_sec / scanint_sec_int );
-	      scaninterval_int  = scanint_sec_int;
-	    }
-	  else
-	    {
-	      scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
-	      scaninterval_int         = int( 5 * ncells_used_int );
-	      scaninterval_int_updated = true; //updated: show in RED
-	    }
+	  // if ( scanint_sec_int > 5 * ncells_used_int )
+	  //   {
+	  //     scancount_int     = int( duration_sec / scanint_sec_int );
+	  //     scaninterval_int  = scanint_sec_int;
+	  //   }
+	  // else
+	  //   {
+	  //     scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  //     scaninterval_int         = int( 5 * ncells_used_int );
+	  //     scaninterval_int_updated = true; //updated: show in RED
+	  //   }
+
+	  scancount_int            = int( duration_sec / (5 * ncells_used_int ) );
+	  scaninterval_int         = int( 5 * ncells_used_int );
+	  scaninterval_int_updated = true; //updated: show in RED
 	  
 	  //Increase scan interval if scancount >= 1500:
 	  if( scancount_int >= 1500 )
@@ -1961,9 +2001,13 @@ bool US_SelectWavelengths_manual::wln_entered( void )
   //QRegExp rx9("[(\\d{3}-\\d{3}:\\d+),]+");
   //QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3}]*[(:\\d+)]*[,(\\d{3})]*"); //working partially
 
-  QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3},]*[\\d{3}-\\d{3}:\\d+,]*");
+  static const QRegularExpression rx_new("^(\\d{3}(-\\d{3}(:\\d+)?)?)(,\\s*\\d{3}(-\\d{3}(:\\d+)?)?)*$");
+  //OR -- static const QRegularExpression rx_new("^(\\d{3}|\\d{3}-\\d{3}|\\d{3}-\\d{3}:\\d+)(,(\\d{3}|\\d{3}-\\d{3}|\\d{3}-\\d{3}:\\d+))*$");
 
-   if ( rx_new.exactMatch(text)
+  if (!rx_new.isValid()) 
+    qDebug() << "Regex Error:" << rx_new.errorString();
+  
+   if ( rx_new.match( text ).hasMatch()
        //|| rx1.exactMatch(text)
        //||  rx2.exactMatch(text) || rx3.exactMatch(text)
        //|| rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text)
@@ -1977,11 +2021,11 @@ bool US_SelectWavelengths_manual::wln_entered( void )
          return true;
       else
       {
-         QPalette *palette = new QPalette();
-         palette->setColor(QPalette::Text,Qt::red);
-         palette->setColor(QPalette::Base,Qt::white);
-         le_wrange->setPalette(*palette);
-         return false;
+	QPalette palette = le_wrange->palette();
+	palette.setColor(QPalette::Text, Qt::red);
+	palette.setColor(QPalette::Base, Qt::white);
+	le_wrange->setPalette(palette);
+	return false;
       }
    }
    else
@@ -1990,11 +2034,11 @@ bool US_SelectWavelengths_manual::wln_entered( void )
       QString message_error   = tr( "Syntax error!" );
       QMessageBox::critical( this, mtitle_error, message_error );
 
-      QPalette *palette = new QPalette();
-      palette->setColor(QPalette::Text,Qt::red);
-      palette->setColor(QPalette::Base,Qt::white);
-      le_wrange->setPalette(*palette);
-
+      QPalette palette = le_wrange->palette();
+      palette.setColor(QPalette::Text, Qt::red);
+      palette.setColor(QPalette::Base, Qt::white);
+      le_wrange->setPalette(palette);
+      
       return false;
    }
 }
@@ -2392,7 +2436,9 @@ DbgLv(1) << "SelWl: neww_inc: " << val;
 void US_SelectWavelengths::new_wl_range( const int wls, const int wle,
                                          const int wli )
 {
+  /****
    // Save a copy of the current potential wavelength list
+  qDebug() << "Potential 1: " << potential;
 DbgLv(1) << "SelWl: newwr: s,e,i" << wls << wle << wli;
    QStringList sv_poten = potential;
    nbr_poten            = potential.count();
@@ -2421,10 +2467,20 @@ DbgLv(1) << "SelWl: newwr:  p_strwl p_endwl" << p_strwl << p_endwl;
             potential << wavel;
       }
    }
-
+  ***/
+  potential. clear();
+  nbr_range            = ( wle - wls ) / wli + 1;
+  for ( int iwvl = wls; iwvl <= wle; iwvl += wli )
+   {
+      QString wavel        = QString::number( iwvl );
+      potential << wavel;
+   }
+  
    // Now rebuild widget lists
    lw_original->clear();
    lw_original->addItems( potential );
+
+   qDebug() << "Potential 2: " << potential;
 
    nbr_poten            = potential.count();   // Update count
 

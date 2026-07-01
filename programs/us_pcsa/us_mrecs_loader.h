@@ -113,7 +113,7 @@ class US_MrecsLoader : public US_WidgetsDialog
       void delete_mrecs   ( void );
 
       void help  (        void )
-      { showHelp.show_help( "load_modelrecs.html" ); };
+      { showHelp.show_help( "pcsa/load_modelrecs.html" ); };
 
       int  mrecsIndex( QString mdesc, QList< MrecsDesc > );
       void show_mrecs_info( void );

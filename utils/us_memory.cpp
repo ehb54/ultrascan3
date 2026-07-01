@@ -1,6 +1,5 @@
 //! \file us_memory.cpp
 #include "us_memory.h"
-
 #ifdef Q_OS_LINUX
 #include <sys/sysinfo.h>
 #include <unistd.h>
@@ -35,7 +34,7 @@ long int US_Memory::rss_now( void )
    QByteArray ba = f.read( 512 );
    f.close();
 
-   const static int kk = PAGE_SIZE / 1024;
+   const static long kk = sysconf( _SC_PAGESIZE ) / 1024;
 
    rssnow = QString( ba ).section( " ", 23, 23 ).toLong() * (long int)kk;
 #endif
@@ -96,7 +95,7 @@ int US_Memory::memory_profile( int* pMemA, int* pMemT, int* pMemU )
    qproc.waitForFinished( -1 );
    QString totmem   = QString( qproc.readAllStandardOutput() ).trimmed();
    totmem           = totmem.section( "\n", 1, 1 );
-   totmem.replace( QRegExp( "\\s+" ), " " );
+   totmem.replace( QRegularExpression( "\\s+" ), " " );
 qDebug() << "  UsMEM:LINUX: totmem" << totmem;
    int fmtotal      = totmem.section( " ", 1, 1 ).toInt();
    int fmused       = totmem.section( " ", 2, 2 ).toInt();

@@ -2,9 +2,6 @@
 #ifndef US_GLOBAL_H
 #define US_GLOBAL_H
 
-#include <QSharedMemory>
-#include <QPoint>
-
 #include "us_extern.h"
 
 //!  \brief Manage shared memory

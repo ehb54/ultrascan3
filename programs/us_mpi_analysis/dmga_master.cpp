@@ -773,7 +773,7 @@ void US_MPI_Analysis::dmga_global_fit( void )
    int radius_points = data->pointCount();
    int index         = 0;
 
-   QVector< double > scaled_data( scan_count * radius_points );
+   QVector< double > scaled_data( static_cast<qsizetype>( scan_count ) * radius_points );
 
    // Scale the data
    for ( int s = 0; s < scan_count; s++ )

@@ -54,8 +54,8 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    // Models List Box
    lw_models              = us_listwidget();
 
-   QPushButton* pb_components   = us_pushbutton( tr( "Manage Components" ) );
-   QPushButton* pb_associations = us_pushbutton( tr( "Manage Associations" ) );
+   pb_components   = us_pushbutton( tr( "Manage Components" ) );
+   pb_associations = us_pushbutton( tr( "Manage Associations" ) );
 
    QLabel* lb_wavelength  = us_label( tr( "Wavelength:" ) );
    le_wavelength          = us_lineedit( );
@@ -149,7 +149,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    {  // if re-loading a previous model, list that model
       ModelDesc desc;
       desc.description = model.description;
-      desc.DB_id       = -1;
+      desc.DB_id       = "-1";
       desc.filename .clear();
       desc.modelGUID   = model.modelGUID;
       desc.editGUID    = model.editGUID;
@@ -239,7 +239,7 @@ bool US_ModelGui::load_model( const QString& load_init, US_Model& modelIn )
                            md.modelGUID   = a.value( "modelGUID"   ).toString();
                            md.editGUID    = a.value( "editGUID"    ).toString();
                            md.filename    = path + "/" + f_name;
-                           md.DB_id       = -1;
+                           md.DB_id       = "-1";
                            model_descriptions << md;
                            break;
                         }
@@ -377,7 +377,7 @@ void US_ModelGui::show_model_desc( void )
    QString mfilt    = le_mlfilt->text();
    bool    listdesc = !mfilt.isEmpty();
 qDebug() << "ShMDsc: mfilt listdesc" << mfilt << listdesc;
-   QRegExp mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
+   QRegularExpression mpart( ".*" + mfilt + ".*", QRegularExpression::CaseInsensitiveOption );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    for ( int ii = 0; ii < model_descriptions.size(); ii++ )
@@ -545,9 +545,11 @@ qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
 				     "It can NOT be deleted or altered...")
        				 .arg( mdesc ) );
 
-       pb_save  ->setEnabled( false );
-       pb_delete->setEnabled( false );
-       pb_accept->setEnabled( false );
+       pb_save      ->setEnabled( false );
+       pb_delete    ->setEnabled( false );
+       //pb_accept  ->setEnabled( false );
+       pb_components->setEnabled( false );
+       pb_associations ->setEnabled( false );
      }
 }
 
@@ -1063,7 +1065,7 @@ qDebug() << "LsMdl: path" << path;
                      md.modelGUID   = a.value( "modelGUID"   ).toString();
                      md.editGUID    = a.value( "editGUID"    ).toString();
                      md.filename    = path + "/" + f_names[ ii ];
-                     md.DB_id       = -1;
+                     md.DB_id       = "-1";
                      model_descriptions << md;
                      break;
                   }

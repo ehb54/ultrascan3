@@ -1,5 +1,4 @@
 //! \file us_solute.cpp
-
 #include "us_solute.h"
 #include "us_math2.h"
 

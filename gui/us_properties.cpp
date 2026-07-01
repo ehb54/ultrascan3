@@ -489,6 +489,7 @@ void US_Properties::set_oligomer( double oligomer )
 void US_Properties::edit_component( void )
 {
    int row = lw_components->currentRow();
+   
    if ( row < 0 ) return;
 
    QString desc = le_description->text().trimmed();
@@ -1157,7 +1158,19 @@ void US_Properties::source_changed( bool db )
 // Slot to edit the currently selected analyte
 void US_Properties::edit_analyte()
 {
+   qDebug() << "[Prop:edit_analyte()] 1";
    int row       = lw_components->currentRow();
+   qDebug() << "[Prop:edit_analyte()], row -- " << row;
+
+   if (row < 0 )
+     {
+       QMessageBox::information( this,
+				 tr( "UltraScan Information" ),
+				 tr( "No Analyte Selected\n\n"
+				     "Please select an analyte from the list before editing.") );
+       return;
+     }
+   
    QString aguid = le_guid->text();
    if ( aguid.isEmpty() )
       aguid         = model.components[ row ].analyteGUID;

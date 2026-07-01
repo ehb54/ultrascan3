@@ -13,7 +13,7 @@
 //!        current user displayed. When the user clicks the select 
 //!        button, the highlighted runID is passed back to
 //!        the calling program.
-class US_GetRun : public US_WidgetsDialog
+class US_GUI_EXTERN US_GetRun : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -66,6 +66,6 @@ class US_GetRun : public US_WidgetsDialog
       void update_disk_db( bool );
       void limit_data    ( const QString& );
       void help( void )
-      { showHelp.show_help( "get_run.help" ); };
+      { showHelp.show_help( "manual/common_dialogs.html#data-loader" ); };
 };
 #endif

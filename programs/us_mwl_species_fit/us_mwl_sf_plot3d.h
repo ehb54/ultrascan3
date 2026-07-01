@@ -10,6 +10,7 @@
 #endif
 
 #include <cmath>
+#include <QtDataVisualization>
 #include <QtDataVisualization/Q3DSurface>
 #include <QtDataVisualization/QSurfaceDataProxy>
 #include <QtDataVisualization/QHeightMapSurfaceDataProxy>
@@ -49,8 +50,9 @@
 #include <qwt_plot_layout.h>
 #include <qwt_plot_renderer.h>
 
-
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 using namespace QtDataVisualization;
+#endif
 
 //////
 /// \brief The SFData class
@@ -246,8 +248,9 @@ class SpectrogramData: public QwtRasterData
 public:
     SpectrogramData(QVector<double> rp, QVector<double> sc,
                     QVector<QVector<double>> st);
+    QwtInterval interval(Qt::Axis axis) const;
 
-    virtual double value( double x, double y ) const;
+    double value( double x, double y ) const;
 
 private:
     QVector<QVector<double>> zvals;

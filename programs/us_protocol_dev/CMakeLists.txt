@@ -1,8 +1,5 @@
 # us_protocol_dev
 
-# Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
 # Main program sources from us_protocol_dev directory
 set(PROTOCOL_DEV_SOURCES
         us_protocol_dev_main.cpp
@@ -154,7 +151,7 @@ target_include_directories(us_protocoldev PRIVATE
 # Link libraries
 target_link_libraries(us_protocoldev PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install

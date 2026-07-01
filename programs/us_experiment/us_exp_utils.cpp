@@ -285,9 +285,35 @@ void US_ExperimentMain::disable_tabs_buttons( void )
 
 }
 
+//Slot to DISABLE tabs after  2. Lab/Rotor and the Next buttons when dataDisk clicked/unclicked
+void US_ExperimentMain::disableEnable_tabs_for_dataDisk( bool disabled )
+{
+  pb_next   ->setEnabled( !disabled );
+  
+  for (int i=2; i<tabWidget->count(); i++)
+    {
+      tabWidget ->setTabEnabled( i, !disabled );
+      if ( disabled )
+	tabWidget ->tabBar()->setTabTextColor( i, Qt::darkGray);
+      else
+	{
+	  QPalette pal = tabWidget ->tabBar()->palette();
+	  tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
+	}
+    }
+
+  qApp->processEvents();
+
+}
+
 //Slot to ENABLE tabs and Next/Prev buttons
 void US_ExperimentMain::enable_tabs_buttons( void )
 {
+  if ( currProto.rpRotor.importData &&
+       currProto.rpRotor.importDataDisk.isEmpty() &&
+       !us_prot_dev_mode)
+    return;
+  
   DbgLv(1) << "ENABLING!!!";
   pb_next   ->setEnabled(true);
   pb_prev   ->setEnabled(true);
@@ -440,6 +466,62 @@ void US_ExperimentMain::set_tabs_buttons_readonly( void )
 
 }
 
+//Set all tabs their all Widgets (but 5. Sols, 8. AProfile sections) READ-ONLY for dataDisk in GMP
+void US_ExperimentMain::set_tabs_buttons_readonly_dataDisk( bool readonly )
+{
+  pb_next   ->setEnabled(true);
+  pb_prev   ->setEnabled(true);
+
+  for (int ii=0; ii<tabWidget->count(); ii++)
+    {
+      tabWidget ->setTabEnabled( ii, true );
+      QPalette pal = tabWidget ->tabBar()->palette();
+      //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
+      tabWidget ->tabBar()->setTabTextColor( ii, pal.color(QPalette::WindowText) ); // Qt::black
+      
+      
+      if ( ( ii==0 || ii==1 || ii==4 || ii==7 ) && readonly ) //1.Gen.. 2. Labs, 5.Sols. or 8. AProfile
+	continue;
+      
+      QWidget* pWidget= tabWidget->widget(ii);
+
+      //Find all children of each Tab in QTabWidget [children of all types...]
+      QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
+      QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
+      QList<QSpinBox *>    allSBoxes   = pWidget->findChildren<QSpinBox *>();
+      QList<QwtCounter *>  allCounters = pWidget->findChildren<QwtCounter *>();
+      QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
+
+      // and so on ..
+      
+      for (int i=0; i < allPButtons.count(); i++)
+      {
+         if ( (allPButtons[i]->text()).contains("View Solution Details" ) ||
+              (allPButtons[i]->text()).contains("View Ranges" ) ||
+              (allPButtons[i]->text()).contains("View Experiment Details" ) ||
+              (allPButtons[i]->text()).contains("Test Connection" ) ||
+	      (allPButtons[i]->text()).contains("Add to List" ) ||
+	      (allPButtons[i]->text()).contains("Remove Last" )
+	      )
+            allPButtons[i]->setEnabled(true);
+         else
+            allPButtons[i]->setEnabled(!readonly);
+      }
+
+      for ( int i = 0; i < allCBoxes.count(); i++ )
+      {
+	allCBoxes[i]->setEnabled(!readonly);
+      }
+      
+      for ( int i = 0; i < allSBoxes.count(); i++ )
+         allSBoxes[i]->setEnabled(!readonly);
+      for ( int i = 0; i < allCounters.count(); i++ )
+         allCounters[i]->setEnabled(!readonly);
+      for ( int i = 0; i < allChBoxes.count(); i++ )
+         allChBoxes[i]->setEnabled(!readonly);
+      // and so on ..
+    }
+}
 
 // Use main interface to call general utility functions
 bool US_ExperimentMain::centpInfo( const QString par1,
@@ -581,6 +663,7 @@ DbgLv(1) << "mainw->automode" << mainw->automode;
 	 }
      }
    //////////////////
+   mainw->enable_disable_prev_next_btns();
 
 }
 
@@ -868,6 +951,8 @@ void US_ExperGuiGeneral::savePanel()
 
    currProto->exp_label    = le_label       ->text();
 
+   mainw->pb_prev->setEnabled(true);
+
 }
 
 // Get a specific panel string value
@@ -1043,6 +1128,9 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    init_gapprs();
    init_gsmes();
 
+   //Disable Add To List for [o | r | a | sme ] if respective lists are empty
+   setEnabledDisabledAddToORASME();
+
    //BAsed on mode [usmode - R&D], hide/show oper/rev section:
       //show Assign oper/rev ONLY for GMP:
    qDebug() << "In Rotor: mainw->automode, mainw->usmode -- "
@@ -1105,6 +1193,24 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    qDebug() << "Rotor::initPanel(), rpRotor->importData_absorbance_t, rpRotor->importData_absorbance_pa -- "
 	    << rpRotor->importData_absorbance_t <<  rpRotor->importData_absorbance_pa;
 
+   /////
+   mainw->enable_disable_prev_next_btns();
+   
+}
+
+void US_ExperGuiRotor::setEnabledDisabledAddToORASME( void )
+{
+  bool isOperEmpty = cb_choose_operator->count() == 0;
+  pb_add_oper->setEnabled( !isOperEmpty );
+
+  bool isRevEmpty = cb_choose_rev->count() == 0;
+  pb_add_rev->setEnabled( !isRevEmpty );
+
+  bool isApprEmpty = cb_choose_appr->count() == 0;
+  pb_add_appr->setEnabled( !isApprEmpty );
+
+  bool isSmeEmpty = cb_choose_sme->count() == 0;
+  pb_add_sme->setEnabled( !isSmeEmpty );
 }
 
 void US_ExperGuiRotor::init_grevs( void )
@@ -2153,6 +2259,35 @@ DbgLv(1) << "EGCe:inP: kused" << kused << "nused" << nused;
    // //TEST
    // if ( rpRotor->importData )
    //   init_cells_data_import();
+
+   //Set enabled used cells centerpieces if dataDisk, disallow empty
+   if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       QStringList ucells;
+       for (int i=0; i<rpCells->nused; ++i )
+	 {
+	   qDebug() << "Used Cells: oname, cell_n -- "  << rpCells->used[i].cell;
+	   ucells << QString::number(rpCells->used[i].cell);
+	 }
+       for (int i=0; i<cc_cenps.size(); ++i )
+	 {
+	   QString cent_oname      = cc_cenps[ i ]->objectName();
+	   QString cent_oname_cell = cent_oname.split(":")[0].trimmed();
+	   int cent_cell_n = cent_oname_cell.toInt() + 1;
+	   if ( ucells.contains( QString::number(cent_cell_n) ) )
+	     {
+	       qDebug() << "Removing \"empty\" from list of ucell -- " << cent_oname;
+	       QString substring = "empty";
+	       int index;
+	       while ((index = cc_cenps[ i ]->findText(substring, Qt::MatchContains)) != -1)
+		 cc_cenps[ i ]->removeItem(index);
+	       
+	       qDebug() << "Enabling ucell -- " << cent_oname;
+	       cc_cenps[ i ]->setEnabled(true); 
+	     }
+	 }
+       
+     }
 }
 
 // void US_ExperGuiCells::init_cells_data_import()
@@ -2475,7 +2610,7 @@ DbgLv(1) << "EGSo:inP: call rbS";
        qDebug() << "22";
 
        protocol_comment.replace(sdescr, "");
-       protocol_comment.remove( QRegExp("^[,\\s*]+") );
+       protocol_comment.remove( QRegularExpression("^[,\\s*]+") );
       
       cc_mancomms[ ii ] -> setText( protocol_comment.trimmed() );
       //end sols. comments
@@ -2506,6 +2641,18 @@ DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
 	      this,         SLOT  ( changeSolu         ( int ) ) );
       
    }
+
+ //If dataDisk, disallow (unspecified)
+   if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       for ( int ii = 0; ii < cc_solus.size(); ii++ )
+	 {
+	   QString substring = "(unspecified)";
+	   int index;
+	   while ((index = cc_solus[ ii ]->findText(substring, Qt::MatchContains)) != -1)
+	     cc_solus[ ii ]->removeItem(index);
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
@@ -2597,7 +2744,7 @@ void US_ExperGuiSolutions::savePanel()
 	   //ch_comment             = rpSolut->chsols[ ii ].ch_comment;
 	   QString ch_comment_tmp = ch_comment;
 	   ch_comment_tmp.replace(solution, "");
-	   ch_comment_tmp.remove( QRegExp("^[,\\s*]+") );
+	   ch_comment_tmp.remove( QRegularExpression("^[,\\s*]+") );
 	   
 	   qDebug() << "SolInit, row: " << ii;
 	   manual_comment[ iistr ]  = ch_comment_tmp.trimmed();
@@ -2820,7 +2967,7 @@ DbgLv(1) << "EGOp:inP: nochan" << nochan;
      {
        QString channel     = rpOptic->chopts[ ii ].channel;
 
-       int cell_number = ((channel.split(QRegExp("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
+       int cell_number = ((channel.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts))[0]).toInt();
 DbgLv(1) << "EGOp:inP: CELL #" << cell_number;
        if ( nholes == cell_number )
          ctrbal_is_centerpiece = true;
@@ -3500,8 +3647,9 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
    }
    // End of ScanCount listbox
 
-   //If for US_ProtocolDev mode, set all widgets in read-only mode:
-   if ( mainw->us_prot_dev_mode )
+   //If for US_ProtocolDev mode OR dataDisk in GMP, set all widgets in read-only mode:
+   if ( mainw->us_prot_dev_mode ||
+	(rpRotor->importData && !rpRotor->importDataDisk.isEmpty()) )
      {
        for ( int ii = 0; ii < nrnchan; ii++ )
 	 {
@@ -3511,7 +3659,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
 	 }
      }
 
-   //For abde only, chow buff_spectra cks
+   //For abde only, show buff_spectra cks
    if ( mainw->us_abde_mode )
      {
        qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
@@ -3586,6 +3734,7 @@ DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
       //abde
       rpRange->chrngs[ ii ].abde_buffer_spectrum   = abde_buff[ ii ];
       rpRange->chrngs[ ii ].abde_mwl_deconvolution = abde_mwl_deconv[ ii ];
+      rpRange->chrngs[ ii ].abde_chann_msg         = abde_ch_msg[ ii ];
 
       rpRange->chrngs[ ii ].wvlens.clear();
 
@@ -3799,6 +3948,8 @@ QStringList US_ExperGuiAProfile::getLValue( const QString type )
 // Initialize an Upload panel, especially after clicking on its tab
 void US_ExperGuiUpload::initPanel()
 {
+   mainw->enable_disable_prev_next_btns();
+  
    currProto       = &mainw->currProto;
    loadProto       = &mainw->loadProto;
    //rps_differ      = ( mainw->currProto !=  mainw->loadProto );
@@ -4043,6 +4194,17 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 					 "Please modify the solution, or select a different one to satisfy these "
 					 "requirements."
 					 "\n\nSaving protocol or run submission to the Optima are not possible "
+					 "until this problem is resolved."));
+	     }
+	   else if (msg_to_user.join(",").contains(" Invalid Extinction Profile(s);"))
+	     {
+	       QMessageBox::critical( this,
+				      tr( "ATTENTION: Invalid Extinction Profile(s) (MWL-ABDE)" ),
+				      msg_to_user.join("\n") +
+				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
+					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
+					 "\n\"Database:Manage Buffer Data\"\n\n"
+					 "Saving protocol or run submission to the Optima are not possible "
 					 "until this problem is resolved."));
 	     }
 	   else
@@ -4570,6 +4732,7 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
       int    nwavl      = all_wvls.count();
       bool   buff_req   = rpRange->chrngs[ ii ].abde_buffer_spectrum;
       bool   mwl_deconv = rpRange->chrngs[ ii ].abde_mwl_deconvolution;
+      QString chann_msg = rpRange->chrngs[ ii ].abde_chann_msg;
 
       if ( nwavl > 1 )
 	{
@@ -4581,7 +4744,14 @@ bool US_ExperGuiUpload::extinctionProfilesExist( QStringList& msg_to_user )
 	      ch_name_m = ch_name_m.simplified();
 	      ch_name_m.replace( " ", "" );
 	      qDebug() << "Ref_channs -- " << ref_channs
-		       << "ch_name_m -- " << ch_name_m;
+		       << "ch_name_m -- " << ch_name_m
+		       << "Chann_msg -- " << chann_msg;
+	      if ( !chann_msg.isEmpty() )
+		{
+		  msg_to_user << channel + ": Invalid Extinction Profile(s); " << chann_msg;
+		  return false;
+		}
+	      
 	      if ( !ref_channs.contains(ch_name_m) )
 		{
 		  msg_to_user << channel + ": Single Analyte Defined;";
@@ -4885,6 +5055,7 @@ bool US_ExperGuiUpload::areReportMapsDifferent( US_AnaProfile aprof_curr, US_Ana
 // Save panel controls when about to leave the panel
 void US_ExperGuiUpload::savePanel()
 {
+  mainw->pb_next->setEnabled( true );
 }
 
 // Get a specific panel value

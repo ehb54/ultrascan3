@@ -24,7 +24,7 @@ struct listInfo
            a logical ID rather than the list item number as in 
            ordinary combo boxes and list widgets.
 */
-class US_SelectBase
+class US_GUI_EXTERN US_SelectBase
 {
    public:
       /*! \brief Generic constructor for the US_SelectBase class. The
@@ -49,7 +49,7 @@ class US_SelectBase
            instance, an ID from a database table), and to retrieve the 
            current logical ID are provided.
 */
-class US_SelectBox : public QComboBox, public US_SelectBase
+class US_GUI_EXTERN US_SelectBox : public QComboBox, public US_SelectBase
 {
    public:
       /*! \brief Generic constructor for the US_SelectBox class.
@@ -101,7 +101,7 @@ class US_SelectBox : public QComboBox, public US_SelectBase
            instance, an ID from a database table), and to retrieve the 
            current logical ID are provided.
 */
-class US_ListwidgetBox : public QListWidget, public US_SelectBase
+class US_GUI_EXTERN US_ListwidgetBox : public QListWidget, public US_SelectBase
 {
    public:
       /*! \brief Generic constructor for the US_ListwidgetBox class.

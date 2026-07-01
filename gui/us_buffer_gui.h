@@ -22,7 +22,7 @@
 //! An application to manage buffer data.
 //! \class US_BufferGuiSelect
 //!      This class provides a tabbed entry for buffer selection
-class US_BufferGuiSelect: public US_Widgets
+class US_GUI_EXTERN US_BufferGuiSelect: public US_Widgets
 {
    Q_OBJECT
 
@@ -60,6 +60,8 @@ class US_BufferGuiSelect: public US_Widgets
 
       int           dbg_level;
       QString       load_init;
+      QString       buffer_state_style;
+      QLabel*       lb_buffer_state;
       QLabel*       lb_density;
       QLabel*       lb_viscosity;
       QLineEdit*    le_search;
@@ -126,7 +128,7 @@ class US_BufferGuiSelect: public US_Widgets
       void calc_visc_dent_temp ( void );
 
 
-      void help( void ) { showHelp.show_help( "buffer_select.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_select.html" ); };
 
    public slots:
      void init_buffer		( void );
@@ -134,7 +136,7 @@ class US_BufferGuiSelect: public US_Widgets
 
 //! \class US_BufferGuiNew
 //!      This class provides a tabbed entry for new buffer creation
-class US_BufferGuiNew : public US_Widgets
+class US_GUI_EXTERN US_BufferGuiNew : public US_Widgets
 {
    Q_OBJECT
 
@@ -217,7 +219,7 @@ class US_BufferGuiNew : public US_Widgets
       void update_db_disk  ( bool );
       void calc_visc_dent_temp ( void );
       void set_temp20 ( void );
-      void help( void ) { showHelp.show_help( "buffer_new.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_new.html" ); };
       
    public slots:
       void init_buffer		( void );
@@ -226,7 +228,7 @@ class US_BufferGuiNew : public US_Widgets
 
 //! \class US_BufferGuiEdit
 //!      This class provides a tabbed entry for non-hydrodynamic buffer mods
-class US_BufferGuiEdit : public US_Widgets
+class US_GUI_EXTERN US_BufferGuiEdit : public US_Widgets
 {
    Q_OBJECT
 
@@ -274,7 +276,7 @@ class US_BufferGuiEdit : public US_Widgets
       void editCanceled( void );
       void write_db    ( void );
       void write_disk  ( void );
-      void help( void ) { showHelp.show_help( "buffer_edit.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_edit.html" ); };
       
       void change_spectrum( void );
       void accept_enable  ( void );
@@ -286,7 +288,7 @@ class US_BufferGuiEdit : public US_Widgets
 
 //! \class US_BufferGuiSettings
 //!      This class provides a tabbed entry for general buffer settings
-class US_BufferGuiSettings: public US_Widgets
+class US_GUI_EXTERN US_BufferGuiSettings: public US_Widgets
 {
    Q_OBJECT
 
@@ -331,7 +333,7 @@ class US_BufferGuiSettings: public US_Widgets
       void assign_investigator( int  );
       void synch_components   ( void );
 
-      void help( void ) { showHelp.show_help( "buffer_settings.html" ); };
+      void help( void ) { showHelp.show_help( "buffer/buffer_settings.html" ); };
 };
 
 class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog

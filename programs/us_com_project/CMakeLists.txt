@@ -1,8 +1,5 @@
 # us_com_project
 
-# Find required Qt components based on .pro file
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
 # Main program sources from us_com_project directory
 set(COM_PROJECT_SOURCES
         us_com_project_main.cpp
@@ -154,7 +151,7 @@ target_include_directories(us_com_project PRIVATE
 # Link libraries
 target_link_libraries(us_com_project PRIVATE
         us_program_common
-        Qt5::DataVisualization  # Required by .pro file
+        Qt::DataVisualization  # Required by .pro file
         )
 
 # Set the binary output name

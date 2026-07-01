@@ -1,0 +1,10 @@
+{
+  "name": "qwtplot3d-qwt-6-3-0-qt5",
+  "version": "0.3.0-ultrascan-local",
+  "description": "QwtPlot3D library (built from the vendored source inside the UltraScan3 repo).",
+  "homepage": "https://github.com/ehb54/ultrascan3",
+  "license": "LGPL-2.1-or-later",
+  "dependencies": [
+    "qwt-6-3-0-qt5"
+  ]
+}

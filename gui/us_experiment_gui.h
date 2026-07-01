@@ -18,7 +18,7 @@
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_ExperimentGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_ExperimentGui : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -120,6 +120,6 @@ class US_ExperimentGui : public US_WidgetsDialog
       void cancel            ( void );
       void connect_error     ( const QString& );
       void help              ( void )
-        { showHelp.show_help( "manual/convert-experiment.html" ); };
+        { showHelp.show_help( "manual/convert.html#step-3-edit-run-information" ); };
 };
 #endif

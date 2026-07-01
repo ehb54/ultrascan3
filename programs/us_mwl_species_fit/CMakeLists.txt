@@ -1,13 +1,5 @@
 # us_mwl_species_fit
 
-# Find required Qt components
-find_package(Qt5 REQUIRED COMPONENTS DataVisualization)
-
-# Check if DataVisualization was found
-if(NOT Qt5DataVisualization_FOUND)
-    message(FATAL_ERROR "Qt5DataVisualization is required for us_mwl_species_fit")
-endif()
-
 # Main program sources from us_mwl_species_fit directory
 file(GLOB MWL_SOURCES "*.cpp")
 file(GLOB MWL_HEADERS "*.h")
@@ -53,7 +45,7 @@ target_include_directories(us_mwl_species_fit PRIVATE
 # Link libraries - Qt DataVisualization is critical for this program
 target_link_libraries(us_mwl_species_fit PRIVATE
         us_program_common
-        Qt5::DataVisualization
+        Qt::DataVisualization
         )
 
 # Install

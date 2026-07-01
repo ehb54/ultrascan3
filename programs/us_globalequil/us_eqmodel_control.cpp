@@ -537,7 +537,7 @@ qDebug() << "EMC: scan_changed" << value;
    ampb          = ( ampb == 0.0 ) ? ( ampv * 0.2 ) : ampb;
    le_amguess->setText( QString::number( ampv ) );
    le_ambound->setText( QString::number( ampb ) );
-   jj            = min( scanfits[ scanx ].extincts.size() - 1, compx );
+   jj            = qMin( scanfits[ scanx ].extincts.size() - 1, compx );
    le_extinct->setText( QString::number( scanfits[ scanx ].extincts[ jj ] ) );
    le_density->setText( QString::number( scanfits[ scanx ].density ) );
    chng_floats   = false;
@@ -655,7 +655,7 @@ qDebug() << "EMC: local_comp_changed" << value;
    le_amguess->setText( QString::number( ampv ) );
    le_ambound->setText( QString::number( ampb ) );
    le_density->setText( QString::number( scanfits[ scanx ].density ) );
-   int jj = min( scanfits[ scanx ].extincts.size() - 1, compx );
+   int jj = qMin( scanfits[ scanx ].extincts.size() - 1, compx );
    le_extinct->setText( QString::number( scanfits[ scanx ].extincts[ jj ] ) );
    chng_floats   = false;
    rb_amfloat->setChecked( scanfits[ scanx ].amp_fits[ compx ] );
@@ -754,7 +754,7 @@ void US_EqModelControl::update_lvals( void )
 {
    int    scanx    = selscan - 1;
    int    compx    = (int)ct_lrunpar->value() - 1;
-   int    extix    = min( compx, scanfits[ scanx ].extincts.size() - 1 );
+   int    extix    = qMin( compx, scanfits[ scanx ].extincts.size() - 1 );
    scanfits[ scanx ].amp_vals[ compx ] = le_amguess->text().toDouble();
    scanfits[ scanx ].amp_bnds[ compx ] = le_ambound->text().toDouble();
    scanfits[ scanx ].baseline          = le_blguess->text().toDouble();

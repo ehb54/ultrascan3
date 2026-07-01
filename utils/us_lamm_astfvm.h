@@ -2,7 +2,6 @@
 #ifndef US_LAMMASTFVM_H
 #define US_LAMMASTFVM_H
 
-#include <QtCore>
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"

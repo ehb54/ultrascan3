@@ -409,54 +409,73 @@ US_Extinction::US_Extinction() : US_Widgets()
    main->setColumnStretch(1, 5);
 }
 
-// void US_Extinction::add_wavelength(void)
-// {
-//   QStringList files;
-//   QFile f;
-
-//   QFileDialog dialog (this);
-//   //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
-
-//   dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-
-//   dialog.setFileMode(QFileDialog::ExistingFiles);
-//   dialog.setViewMode(QFileDialog::Detail);
-//   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
-
-//   QString work_dir_data  = US_Settings::dataDir();
-//   //qDebug() << work_dir_data;
-//   //dialog.setDirectory(work_dir_data);
-
-//   qDebug() << current_path;
-//   current_path = current_path.isEmpty() ? work_dir_data : current_path;
-
-//   dialog.setDirectory(current_path);
-//   qDebug() << current_path;
-
-//   if(dialog.exec())
-//     {
-//       QDir d = dialog.directory();
-//       current_path = d.absolutePath();
-//       files = dialog.selectedFiles();
-//       reading(files);
-//     }
-// }
-
 void US_Extinction::add_wavelength(void)
 {
-   QString filter = "Text Files (*.csv *.dat *.txt *.dsp *.wa);; All Files (*)";
-   QString fpath = QFileDialog::getOpenFileName(this, "Load The Target Spectrum",
-                                                US_Settings::dataDir(), filter);
-   if (fpath.isEmpty()) {
+
+   QString path = US_Settings::dataDir();
+   current_path = current_path.isEmpty() ? path : current_path;
+
+   QString filter = tr("Text Files (*.txt *.csv *.dat *.wa *.dsp);;All Files (*)");
+   QStringList files;
+   files = QFileDialog::getOpenFileNames(this, "Add Basis Spectra", current_path, filter);
+
+   if (files.isEmpty())
+   {
       return;
    }
-   QString note = "1st Column -> WAVELENGTH ; Others -> OD";
-   US_CSV_Loader *csv_loader = new US_CSV_Loader(fpath, note, true, this);
-   int state = csv_loader->exec();
-   if (state != QDialog::Accepted) return;
-   US_CSV_Data csv_data = csv_loader->data();
-   if (csv_data.columnCount() < 2) return;
-   loadScan(csv_data);
+
+   QVector<US_CSV_Data> data_list;
+   for (int ii = 0; ii < files.size(); ii++)
+   {
+      QString filepath = files.at(ii);
+      QString note = "1st Column -> WAVELENGTH ; Others -> OD";
+      bool editing = true;
+      US_CSV_Loader *csv_loader = new US_CSV_Loader(filepath, note, editing, this);
+      int state = csv_loader->exec();
+      if (state == QDialog::Rejected)
+      {
+         int check = QMessageBox::question(this, "Warning!",
+                                           "You canceled parsing a file.\n" + filepath +
+                                               "\nDo you want to continue loading the rest of the file(s)?");
+         if (check == QMessageBox::No)
+         {
+            return;
+         }
+      }
+      else if (state == QDialog::Accepted)
+      {
+         US_CSV_Data csv_data = csv_loader->data();
+         if (csv_data.columnCount() < 2)
+         {
+            int check = QMessageBox::question(this, "Warning!",
+                                              "This file does not have two data columns:\n" + filepath +
+                                                  "\nDo you want to continue loading the rest of the file(s)?");
+            if (check == QMessageBox::No)
+            {
+               return;
+            }
+         }
+         else
+         {
+            data_list << csv_data;
+         }
+      }
+      else
+      {
+         int check = QMessageBox::question(this, "Warning!",
+                                           "Unable to load the file!\n" + filepath +
+                                               "\nDo you want to continue loading the rest of the file(s)?");
+         if (check == QMessageBox::No)
+         {
+            return;
+         }
+      }
+   }
+
+   for (int ii = 0; ii < data_list.size(); ii++)
+   {
+      loadScan(data_list[ii]);
+   }
    update_data();
 }
 
@@ -519,8 +538,8 @@ bool US_Extinction::loadScan(US_CSV_Data& csv_data)
          if(xt >= lambdaLimitLeft && yt <= odCutoff && xt <= lambdaLimitRight) {
             Reading r = {xt, yt};
             Wvs_to_descr_map [ key ].v_readings.push_back(r);
-            lambda_max = max(xt, lambda_max);
-            lambda_min = min (xt, lambda_min);
+            lambda_max = qMax(xt, lambda_max);
+            lambda_min = qMin(xt, lambda_min);
          }
       }
    }
@@ -599,8 +618,8 @@ void US_Extinction::plot()
    
    for(int i = 0; i < v_wavelength.size(); i++)
    {
-      xmax = max(xmax, (double) v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size() - 1).lambda);
-      xmin = min(xmin, (double) v_wavelength.at(i).v_readings.at(0).lambda);
+      xmax = qMax(xmax, (double) v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size() - 1).lambda);
+      xmin = qMin(xmin, (double) v_wavelength.at(i).v_readings.at(0).lambda);
    }
    qDebug() << "In PLOT, xmin:  " << xmin;
 
@@ -1094,8 +1113,8 @@ void US_Extinction::calc_extinction()
 
    for (int i=0; i< v_wavelength.size(); i++)
    {
-      xmax = max(xmax, v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size()-1).lambda);
-      xmin = min(xmin, v_wavelength.at(i).v_readings.at(0).lambda);
+      xmax = qMax(xmax, v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size()-1).lambda);
+      xmin = qMin(xmin, v_wavelength.at(i).v_readings.at(0).lambda);
    }
    maxrange = (unsigned int) (xmax - xmin + 0.5);
    maxrange += 1;
@@ -1127,7 +1146,7 @@ qDebug() << "J:" << j << fitparameters[v_wavelength.size() + (3 * j)] << fitpara
        }
    }
    // Do not scale if buffer...
-   if (buffer_temp == "" or buffer_temp == "ANALYTE")
+   if (buffer_temp == "" || buffer_temp == "ANALYTE")
    {
        if(od_wavelength != 0 )
        {
@@ -1328,7 +1347,7 @@ void US_Extinction::view_result(void)
 }
 void US_Extinction::help(void)
 {
-
+   showHelp.show_help("manual/us_extinction.html");
 }
 
 bool CustomListWidgetItem::operator<(const QListWidgetItem& other) const {
