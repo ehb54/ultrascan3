@@ -936,6 +936,7 @@ bool US_DB2::configure_ssl( QString& err )
    }
    // Due to legacy certs and ciphers, security policies must be relaxed
    if ( US_Settings::debug_match( "DB_ENFORCE_DEFAULT_SSL_SECURITY" ) ) {
+#if !defined(__MINGW64__)
          // set default SSL ciphers
          success = mysql_options( db, MYSQL_OPT_SSL_CIPHER, CIPHER );
          if ( success != 0 ) {
@@ -943,9 +944,11 @@ bool US_DB2::configure_ssl( QString& err )
             err = error;
             return false;
          }
+#endif
       // the user enforces default security
       return true;
    }
+#if !defined(__MINGW64__)
    // apply :@SECLEVEL=0 to the cipher
    const QString cipher = QString::asprintf( "%s:@SECLEVEL=0", CIPHER );
    success = mysql_options( db, MYSQL_OPT_SSL_CIPHER, cipher.toLatin1().constData() );
@@ -954,6 +957,14 @@ bool US_DB2::configure_ssl( QString& err )
       err = error;
       return false;
    }
+#else
+   // MSYS2/64 (MINGW64) Windows builds link a Schannel-backed libmariadb,
+   // which fails to match any suite from the OpenSSL-style CIPHER list
+   // above (TLS SEC_E_ALGORITHM_MISMATCH, "no cipher match"). Skip setting
+   // MYSQL_OPT_SSL_CIPHER here and let the backend negotiate its own
+   // default suite set instead. Does not affect MSVC/vcpkg builds
+   // (__MINGW64__ is not defined under MSVC). See ultrascan-tickets#940.
+#endif
    // force a minimum of TLS 1.2
    const QString tls_versions ("TLSv1.2,TLSv1.3");
 #if defined(LIBMARIADB)
