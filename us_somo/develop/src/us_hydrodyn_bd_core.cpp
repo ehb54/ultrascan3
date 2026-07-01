@@ -1,5 +1,4 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
-#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // (this) us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations

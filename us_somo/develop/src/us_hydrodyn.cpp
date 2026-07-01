@@ -4959,7 +4959,7 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
    if ( mode == 1 )
    {
       // split filename into pieces, do increment until !exists
-      QRegularExpression rx("-(\\d+)$");
+      static const QRegularExpression rx("-(\\d+)$");
       do
       {
          QRegularExpressionMatch m = rx.match(*base);
