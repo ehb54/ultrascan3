@@ -2369,7 +2369,8 @@ void US_Hydrodyn_Mals::options()
    parameters[ "mals_csv_transposed"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_csv_transposed" ];
 
    parameters[ "mals_ampl_width_min"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_width_min"           ];
-   parameters[ "mals_lock_min_retry"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"           ];
+   parameters[ "mals_ampl_min"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_min"                 ];
+   parameters[ "mals_lock_min_retry"        ] =( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"           ];
    parameters[ "mals_lock_min_retry_mult"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry_mult"      ];
    parameters[ "mals_maxfpk_restart"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart"           ];
    parameters[ "mals_maxfpk_restart_tries"  ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart_tries"     ];
@@ -2433,7 +2434,8 @@ void US_Hydrodyn_Mals::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_csv_transposed"        ] = parameters[ "mals_csv_transposed"           ];
 
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_width_min"        ] = parameters[ "mals_ampl_width_min"           ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"        ] = parameters[ "mals_lock_min_retry"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_min"              ] = parameters[ "mals_ampl_min"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"        ] =parameters[ "mals_lock_min_retry"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry_mult"   ] = parameters[ "mals_lock_min_retry_mult"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart"        ] = parameters[ "mals_maxfpk_restart"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart_tries"  ] = parameters[ "mals_maxfpk_restart_tries"     ];

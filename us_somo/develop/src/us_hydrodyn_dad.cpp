@@ -618,6 +618,9 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_width_min"        ] = "1e-12";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_ampl_min"        ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_min"              ] = "1e-12";
+   }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_lock_min_retry"        ) ||
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"        ] = "false";
