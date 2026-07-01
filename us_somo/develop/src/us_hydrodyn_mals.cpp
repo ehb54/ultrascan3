@@ -481,6 +481,9 @@ US_Hydrodyn_Mals::US_Hydrodyn_Mals(
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_width_min"        ] = "1e-12";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_ampl_min"        ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_min"              ] = "1e-12";
+   }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_lock_min_retry"        ) ||
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"        ] = "false";

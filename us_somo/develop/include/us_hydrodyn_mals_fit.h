@@ -199,6 +199,7 @@ class US_EXTERN US_Hydrodyn_Mals_Fit : public QDialog
       bool          max_free_peak_delta( vector < double > & par );
 
       double        mals_ampl_width_min;
+      double        mals_ampl_min;
       bool          mals_lock_min_retry;
       double        mals_lock_min_retry_mult;
       bool          mals_maxfpk_restart;

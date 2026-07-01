@@ -2389,7 +2389,8 @@ void US_Hydrodyn_Dad::options()
    parameters[ "dad_csv_transposed"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_csv_transposed" ];
 
    parameters[ "dad_ampl_width_min"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_width_min"           ];
-   parameters[ "dad_lock_min_retry"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"           ];
+   parameters[ "dad_ampl_min"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_min"                 ];
+   parameters[ "dad_lock_min_retry"        ] =( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"           ];
    parameters[ "dad_lock_min_retry_mult"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry_mult"      ];
    parameters[ "dad_maxfpk_restart"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart"           ];
    parameters[ "dad_maxfpk_restart_tries"  ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart_tries"     ];
@@ -2453,7 +2454,8 @@ void US_Hydrodyn_Dad::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_csv_transposed"        ] = parameters[ "dad_csv_transposed"           ];
 
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_width_min"        ] = parameters[ "dad_ampl_width_min"           ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"        ] = parameters[ "dad_lock_min_retry"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_min"              ] = parameters[ "dad_ampl_min"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"        ] =parameters[ "dad_lock_min_retry"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry_mult"   ] = parameters[ "dad_lock_min_retry_mult"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart"        ] = parameters[ "dad_maxfpk_restart"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart_tries"  ] = parameters[ "dad_maxfpk_restart_tries"     ];
