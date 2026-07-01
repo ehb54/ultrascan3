@@ -82,7 +82,7 @@ int US3i_GuiUtil::save_svg( const QString& filename, QwtPlot* plot )
 }
 
 // Const-friendly wrapper to preserve existing call sites
-int US3i_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
+inline int US3i_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
 {
    return US3i_GuiUtil::save_svg( filename,
                                   const_cast<QwtPlot*>( plot ) );

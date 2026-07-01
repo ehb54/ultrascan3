@@ -796,6 +796,7 @@ void US_Hydrodyn_Best::load()
          return;
       }
 
+      static const QRegularExpression rx_leading_equals( QStringLiteral( "^=" ) );
       for ( int i = 1; i <= points; ++i )
       {
          if ( qsl[ i ] == "=-1" )
@@ -805,7 +806,7 @@ void US_Hydrodyn_Best::load()
             pb_load->setEnabled( true );
             return;
          }
-         one_over_triangles.push_back( QString( qsl[ i ] ).replace( QRegularExpression( QStringLiteral( "^=" ) ), "" ).toDouble() );
+         one_over_triangles.push_back( QString( qsl[ i ] ).replace( rx_leading_equals, "" ).toDouble() );
       }
    }
 

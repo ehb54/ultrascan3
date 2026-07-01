@@ -829,7 +829,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
 
          // find last atom number
-         QRegularExpression rx;
+         QRegularExpression rx("^ATOM\\s*(\\d+)\\s*CA");
 
          QStringList qsl_atom = qsl.filter(QRegularExpression( QStringLiteral( "^ATOM " ) ));
          QString last_atom = "";
@@ -842,7 +842,6 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             return 1;
          }
 
-         rx.setPattern("^ATOM\\s*(\\d+)\\s*CA");
          QRegularExpressionMatch rx_m = rx.match( last_atom );
          if ( !rx_m.hasMatch() )
          {

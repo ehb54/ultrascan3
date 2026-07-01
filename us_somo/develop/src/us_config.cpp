@@ -2,10 +2,6 @@
 #include <QRegularExpression>
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
-#if QT_VERSION >= 0x040000
-#include <QtCore>
-#endif
-//Added by qt3to4:
 #include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
