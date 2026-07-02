@@ -229,20 +229,21 @@ void US_Hydrodyn_Saxs_Mw::set_known_mw()
 
    // pass 1 get "left" mw's
 
-   QRegExp rx( "^(\\S+)\\s*( Model \\d+|)\\s*$" );
+   QRegularExpression rx( "^(\\S+)\\s*( Model \\d+|)\\s*$" );
 
    for ( map < QString, float >::iterator it = remember_mw->begin();
          it != remember_mw->end();
          ++it ) {
-      if ( rx.indexIn( it->first ) != -1 &&
-           !rx.cap(1).isEmpty() ) {
-         if ( !good_mw.count( rx.cap( 1 ) ) ) {
-            good_mw[ rx.cap( 1 ) ] = it->second;
+      QRegularExpressionMatch rx_m = rx.match( it->first );
+      if ( rx_m.hasMatch() &&
+           !rx_m.captured(1).isEmpty() ) {
+         if ( !good_mw.count( rx_m.captured(1) ) ) {
+            good_mw[ rx_m.captured(1) ] = it->second;
             if ( remember_mw_source->count( it->first ) ) {
-               good_mw_source[ rx.cap( 1 ) ] = (*remember_mw_source)[ it->first ];
+               good_mw_source[ rx_m.captured(1) ] = (*remember_mw_source)[ it->first ];
             }
          } else {
-            if ( good_mw[ rx.cap( 1 ) ] != it->second ) {
+            if ( good_mw[ rx_m.captured( 1 ) ] != it->second ) {
                good_mw[ it->first ] = it->second;
                if ( remember_mw_source->count( it->first ) ) {
                   good_mw_source[ it->first ] = (*remember_mw_source)[ it->first ];

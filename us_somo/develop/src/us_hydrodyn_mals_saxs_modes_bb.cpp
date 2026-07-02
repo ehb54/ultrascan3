@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_mals_saxs.h"
 #include "../include/us_hydrodyn_mals_saxs_baseline_best.h"
 //Added by qt3to4:
@@ -170,8 +171,8 @@ void US_Hydrodyn_Mals_Saxs::blanks_start()
       map < double, bool > used_q;
       list < double >      ql;
 
-      QRegExp rx_cap( "(\\d+)_(\\d+)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
+      QRegularExpression rx_cap( "(\\d+)_(\\d+)" );
+      QRegularExpression rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
 
       {
          QString     * qs;
@@ -195,14 +196,16 @@ void US_Hydrodyn_Mals_Saxs::blanks_start()
             } else {
                QString tmp = qs->mid( head.length() );
                tmp = tmp.mid( 0, tmp.length() - tail.length() );
-               if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
+               QRegularExpressionMatch rx_clear_nonnumeric_m = rx_clear_nonnumeric.match( tmp );
+               if ( rx_clear_nonnumeric_m.hasMatch() )
                {
-                  tmp = rx_clear_nonnumeric.cap( 1 );
+                  tmp = rx_clear_nonnumeric_m.captured(1);
                }
 
-               if ( rx_cap.indexIn( tmp ) != -1 )
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+               if ( rx_cap_m.hasMatch() )
                {
-                  tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+                  tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
                }
                double timestamp = tmp.toDouble();
 #ifdef DEBUG_LOAD_REORDER
@@ -3094,7 +3097,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
             {
                QString head = qstring_common_head( baseline_selected, true );
                QString tail = qstring_common_tail( baseline_selected, true );
-               head = head.replace( QRegExp( "_q0_" ), "" );
+               head = head.replace( QRegularExpression( QStringLiteral( "_q0_" ) ), "" );
                best_parameters[ "name" ] = QString( "%1%2" )
                   .arg( head )
                   .arg( tail )
@@ -3132,7 +3135,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
                }
             }
             
-            QRegExp rx_cap( 
+            QRegularExpression rx_cap( 
                            hb_mode 
                            ? "^(\\d+):% red pairs$"
                            : "^(\\d+):Red cluster size average$"
@@ -3146,8 +3149,9 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
             for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
                   it != baseline_brookesmap_sliding_results.end();
                   ++it ) {
-               if ( rx_cap.indexIn( it->first ) != -1 ) {
-                  int pos = rx_cap.cap( 1 ).toInt();
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( it->first );
+               if ( rx_cap_m.hasMatch() ) {
+                  int pos = rx_cap_m.captured(1).toInt();
                   if ( pos > 0 && pos < q_size ) {
                      plotdata[ f_qs[ wheel_file ][ pos ] ] = it->second;
                   }
@@ -3155,13 +3159,14 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
             }
 
             if ( !hb_mode ) {
-               QRegExp rx_cap( "^(\\d+):% red pairs$" );
+               QRegularExpression rx_cap( "^(\\d+):% red pairs$" );
             
                for ( map < QString, double >::iterator it = baseline_hb_brookesmap_sliding_results.begin();
                      it != baseline_hb_brookesmap_sliding_results.end();
                      ++it ) {
-                  if ( rx_cap.indexIn( it->first ) != -1 ) {
-                     int pos = rx_cap.cap( 1 ).toInt();
+                  QRegularExpressionMatch rx_cap_m = rx_cap.match( it->first );
+                  if ( rx_cap_m.hasMatch() ) {
+                     int pos = rx_cap_m.captured(1).toInt();
                      if ( pos > 0 && pos < q_size ) {
                         hb_plotdata[ f_qs[ wheel_file ][ pos ] ] = it->second;
                      }
@@ -3321,7 +3326,7 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
                double cormap_maxq = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_saxs_cormap_maxq" ) ?
                   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_cormap_maxq" ].toDouble() : 0.05;
 
-               QRegExp rx_capqv( "_It_q(\\d+_\\d+)" );
+               QRegularExpression rx_capqv( "_It_q(\\d+_\\d+)" );
 
                bool use_errors = true;
                for ( int i = 0; i < (int) baseline_selected.size(); ++i ) {
@@ -3337,14 +3342,15 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
 
                if ( use_errors ) {
                   for ( int i = 0; i < (int) baseline_selected.size(); ++i ) {
-                     if ( rx_capqv.indexIn( baseline_selected[ i ] ) == -1 ) {
+                     QRegularExpressionMatch rx_capqv_m = rx_capqv.match( baseline_selected[ i ] );
+                     if ( !rx_capqv_m.hasMatch() ) {
                         editor_msg( "red", 
                                     QString( us_tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
                                     .arg( baseline_selected[ i ] ) );
                         baseline_enables();
                         return;
                      }
-                     double qv = rx_capqv.cap( 1 ).replace( "_", "." ).toDouble();
+                     double qv = rx_capqv_m.captured( 1 ).replace( "_", "." ).toDouble();
 
                      for ( int j = 0; j < (int) f_qs[ baseline_selected[ i ] ].size(); ++j ) {
                         sdinv2 = 1e0 / f_errors[ baseline_selected[ i ] ][ j ];
@@ -3373,14 +3379,15 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
                   // now msumq[ j ] and msumqmaxq[ j ] contains sd weighted xbar for each frame
                } else {
                   for ( int i = 0; i < (int) baseline_selected.size(); ++i ) {
-                     if ( rx_capqv.indexIn( baseline_selected[ i ] ) == -1 ) {
+                     QRegularExpressionMatch rx_capqv_m = rx_capqv.match( baseline_selected[ i ] );
+                     if ( !rx_capqv_m.hasMatch() ) {
                         editor_msg( "red", 
                                     QString( us_tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
                                     .arg( baseline_selected[ i ] ) );
                         baseline_enables();
                         return;
                      }
-                     double qv = rx_capqv.cap( 1 ).replace( "_", "." ).toDouble();
+                     double qv = rx_capqv_m.captured( 1 ).replace( "_", "." ).toDouble();
 
                      for ( int j = 0; j < (int) f_qs[ baseline_selected[ i ] ].size(); ++j ) {
                         msumq [ j ] += f_Is[ baseline_selected[ i ] ][ j ];
@@ -3423,8 +3430,9 @@ void US_Hydrodyn_Mals_Saxs::baseline_best() {
                for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
                      it != baseline_brookesmap_sliding_results.end();
                      ++it ) {
-                  if ( rx_cap.indexIn( it->first ) != -1 ) {
-                     int pos = rx_cap.cap( 1 ).toInt();
+                  QRegularExpressionMatch rx_cap_m = rx_cap.match( it->first );
+                  if ( rx_cap_m.hasMatch() ) {
+                     int pos = rx_cap_m.captured(1).toInt();
                      msumqx     [ pos ] = f_qs[ wheel_file ][ pos ];
                      msumqy     [ pos ] = 0e0;
                      msum2qy    [ pos ] = 0e0;

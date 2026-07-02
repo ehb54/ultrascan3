@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QLabel>
 #include <QFocusEvent>
+#include <QTextStream>
 
 static QTextStream& qStdOut()
 {

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
@@ -879,7 +880,7 @@ void US_Hydrodyn_Saxs_2d::start()
    update_enables();
    
    // setup atoms
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -939,7 +940,7 @@ void US_Hydrodyn_Saxs_2d::start()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2").arg(use_resname).arg(this_atom->name);
 
@@ -1081,10 +1082,11 @@ void US_Hydrodyn_Saxs_2d::start()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )

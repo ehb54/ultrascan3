@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_file_util.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -100,7 +101,7 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
 
    QString created_dat = pdb + ".dat";
    QString created_plt = pdb;
-   created_plt.replace( QRegExp( "\\.(pdb|PDB)$" ), ".plt" );
+   created_plt.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), ".plt" );
    
    if ( !QFile::exists( created_dat ) )
    {
@@ -196,8 +197,8 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
    }
 
    QString crysol_last_pdb = pdb;
-   crysol_last_pdb.replace( QRegExp( "\\.(pdb|PDB)$" ), ".pdb" );
-   QString crysol_last_pdb_base = QFileInfo( crysol_last_pdb ).fileName().replace( QRegExp( "\\.(pdb|PDB)$" ), "").left( 6 ) + ".pdb";
+   crysol_last_pdb.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), ".pdb" );
+   QString crysol_last_pdb_base = QFileInfo( crysol_last_pdb ).fileName().replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), "").left( 6 ) + ".pdb";
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
@@ -241,7 +242,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
    // clean up so we have new files
 
    {
-      QString base = crysol_last_pdb_base.replace( QRegExp("\\.(pdb|PDB)$" ), "" );
+      QString base = crysol_last_pdb_base.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), "" );
       cout << "base: <" << base << ">\n";
 
       QString to_remove = base + "00.alm";
@@ -322,7 +323,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
 
    // we just want the .int, the rest will be removed if needed
 
-   QString created_dat = crysol_last_pdb_base.replace( QRegExp( "\\.(pdb|PDB)$" ), "" ) +  "00.int";
+   QString created_dat = crysol_last_pdb_base.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), "" ) +  "00.int";
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -332,7 +333,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
 
    // now move the file to the saxs directory
    QString new_created_dat = 
-      QFileInfo( crysol_last_pdb.replace( QRegExp( "\\.(pdb|PDB)$" ), "" ) ).fileName() + iqq_suffix() + ".int";
+      QFileInfo( crysol_last_pdb.replace( QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ), "" ) ).fileName() + iqq_suffix() + ".int";
 
    if ( QFile::exists(new_created_dat) )
    {
@@ -429,9 +430,9 @@ bool US_Saxs_Util::load_saxs( QString filename  )
       if ( qv.size() > 3 )
       {
          QString test_line = qv[2];
-         test_line.replace(QRegExp("^\\s+"),"");
-         test_line.replace(QRegExp("\\s+$"),"");
-         QStringList test_list = (test_line).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         test_line.replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         test_line.replace(QRegularExpression( QStringLiteral( "\\s+$" ) ),"");
+         QStringList test_list = (test_line).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          // number_of_fields = test_list.size();
          // cout << "number of fields: " << number_of_fields << endl;
       }
@@ -466,22 +467,23 @@ bool US_Saxs_Util::load_saxs( QString filename  )
       }
       double units = 1.0;
 
-      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-      rx_ok_line.setMinimal( true );
+      QRegularExpression rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
-         if ( qv[i].contains(QRegExp("^#")) ||
-              rx_ok_line.indexIn( qv[i] ) == -1 )
+         QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
+         if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
+              !rx_ok_line_m.hasMatch() )
          {
             // cout << "not ok: " << qv[i] << endl; 
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
-            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+            QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+            tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          }
          if ( (unsigned int) tokens.size() > Icolumn )
          {
