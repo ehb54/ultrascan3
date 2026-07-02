@@ -4,11 +4,31 @@
   "builtin-baseline": "a44707152fabbedcf1c17fe80d7bfb7d9370d8d5",
   "dependencies": [
     "zlib",
-    "openssl",
-    "qt5-base",
-    "qt5-svg",
-    "qt5-multimedia",
-    "qwt-6-3-0-qt5",
-    "qwtplot3d-qwt-6-3-0-qt5"
-  ]
+    "openssl"
+  ],
+  "default-features": [
+    "qt5"
+  ],
+  "features": {
+    "qt5": {
+      "description": "Build against Qt5 + Qwt 6.3.0",
+      "dependencies": [
+        "qt5-base",
+        "qt5-svg",
+        "qt5-multimedia",
+        "qwt-6-3-0-qt5",
+        "qwtplot3d-qwt-6-3-0-qt5"
+      ]
+    },
+    "qt6": {
+      "description": "Build against Qt6 + Qwt 6.3.0",
+      "dependencies": [
+        "qtbase",
+        "qtsvg",
+        "qtmultimedia",
+        "qwt-6-3-0-qt6",
+        "qwtplot3d-qwt-6-3-0-qt6"
+      ]
+    }
+  }
 }

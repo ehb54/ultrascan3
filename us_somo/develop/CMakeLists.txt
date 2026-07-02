@@ -29,9 +29,11 @@
 # In standalone mode the third-party deps come from this directory's own
 # vcpkg.json (+ vcpkg-configuration.json), a minimal manifest that reuses the
 # repo-root overlay-ports (qwt / qwtplot3d / qt5-multimedia) and the same
-# builtin-baseline as the root. When built from the root instead, the root
-# vcpkg.json / qt5-app feature already provides every dep SOMO needs, and this
-# manifest is simply ignored (vcpkg reads the manifest at the top-level source).
+# builtin-baseline as the root. It has qt5 (default) and qt6 features — select
+# Qt6 with: --x-feature=qt6 (or -DVCPKG_MANIFEST_FEATURES=qt6 -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON).
+# When built from the root instead, the root vcpkg.json (qt5-* / qt6-app
+# features) already provides every dep SOMO needs, and this manifest is simply
+# ignored (vcpkg reads the manifest at the top-level source).
 # =============================================================================
 
 # --- standalone bootstrap (skipped when included via add_subdirectory) --------
@@ -61,11 +63,19 @@ option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
 # --- dependencies (all third-party) ------------------------------------------
-# NOTE: Multimedia is required (sounds/) and is NOT in the root's HPC Qt set —
-# the root vcpkg manifest's qt5-app / qt6-app features already include
-# qt5-multimedia / qtmultimedia, so an integrated build is covered.
-find_package(Qt5 REQUIRED COMPONENTS
-    Core Gui Widgets Network Xml Svg PrintSupport OpenGL Concurrent Multimedia)
+# Qt5 AND Qt6: PR #335 made the SOMO code compatible with both; CI/CodeQL test
+# both, and the qmake build is Qt5 today with a planned move to Qt6. Use the
+# version-agnostic idiom so this follows whichever Qt the (GUI) build selects,
+# and link Qt${QT_VERSION_MAJOR}::... throughout.
+# NOTE: Multimedia is required (sounds/). The root manifest's qt5-app/qt6-app
+# features include qt5-multimedia / qtmultimedia, and the standalone vcpkg.json
+# provides both via its qt5 / qt6 features.
+# TODO(Qt6): QtOpenGL split in Qt6 — if the code uses QOpenGLWidget, add the
+# OpenGLWidgets component for QT_VERSION_MAJOR==6.
+set(SOMO_QT_COMPONENTS Core Gui Widgets Network Xml Svg PrintSupport OpenGL Concurrent Multimedia)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${SOMO_QT_COMPONENTS})
+message(STATUS "SOMO: building against Qt${QT_VERSION_MAJOR} (${Qt${QT_VERSION_MAJOR}_VERSION})")
 find_package(OpenGL REQUIRED)
 find_package(ZLIB    REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -126,8 +136,8 @@ elseif(WIN32)
 endif()
 
 target_link_libraries(us_somo PUBLIC
-    Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::Xml Qt5::Svg
-    Qt5::PrintSupport Qt5::OpenGL Qt5::Concurrent Qt5::Multimedia
+    Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
+    Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
     Qwt::Qwt OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
 if(TARGET qwtplot3d::qwtplot3d)
     target_link_libraries(us_somo PUBLIC qwtplot3d::qwtplot3d)
@@ -187,8 +197,8 @@ function(somo_add_tool tgt)
         ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt})
     target_compile_definitions(${tgt} PRIVATE CMDLINE NO_DB NO_EDITOR_PRINT)
     target_link_libraries(${tgt} PRIVATE
-        Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::Xml Qt5::Svg
-        Qt5::PrintSupport Qt5::OpenGL Qt5::Concurrent Qt5::Multimedia
+        Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
+        Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
         OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
     if(UNIX AND NOT APPLE)
         target_compile_definitions(${tgt} PRIVATE UNIX LINUX BIN64)
