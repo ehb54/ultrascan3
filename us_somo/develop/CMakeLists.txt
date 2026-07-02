@@ -25,6 +25,13 @@
 # DUAL-MODE: this file configures standalone
 #     cmake -S us_somo/develop -B build --toolchain <vcpkg>/scripts/buildsystems/vcpkg.cmake
 # OR when pulled in from the root UltraScan3 build via add_subdirectory(us_somo).
+#
+# In standalone mode the third-party deps come from this directory's own
+# vcpkg.json (+ vcpkg-configuration.json), a minimal manifest that reuses the
+# repo-root overlay-ports (qwt / qwtplot3d / qt5-multimedia) and the same
+# builtin-baseline as the root. When built from the root instead, the root
+# vcpkg.json / qt5-app feature already provides every dep SOMO needs, and this
+# manifest is simply ignored (vcpkg reads the manifest at the top-level source).
 # =============================================================================
 
 # --- standalone bootstrap (skipped when included via add_subdirectory) --------
