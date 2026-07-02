@@ -100,15 +100,21 @@ if(NOT TARGET qwtplot3d::qwtplot3d)
     message(WARNING "SOMO: no qwtplot3d::qwtplot3d target yet (3dplot TODO)")
 endif()
 
-# --- revision header (mirrors qmake `revision.sh` -> include/us_revision.h) ---
-# TODO: revision.sh currently writes into the SOURCE tree. Prefer generating
-# into ${CMAKE_CURRENT_BINARY_DIR} and adding that to the include path, to keep
-# the checkout clean (see admin/cmake/GenerateVersion.cmake for the pattern).
-add_custom_target(us_somo_revision ALL
-    COMMAND sh ${SOMO_ROOT}/revision.sh
-    WORKING_DIRECTORY ${SOMO_ROOT}
-    BYPRODUCTS ${SOMO_ROOT}/include/us_revision.h
-    COMMENT "Generating SOMO us_revision.h")
+# --- generated version headers -----------------------------------------------
+# SOMO generates two headers via shell scripts (as in the qmake build):
+#   version.sh  -> include/us_version.h   (needs $us3      = repo root; reads utils/us_defines.h)
+#   revision.sh -> include/us_revision.h  (needs $ULTRASCAN = repo root; git log)
+# us_config.cpp includes us_version.h, and many src/ files include us_revision.h,
+# so both must exist before compilation. Both need git.
+# TODO: these write into the SOURCE tree and shell out to git — prefer a
+# CMake-native generator writing into ${CMAKE_CURRENT_BINARY_DIR} (see
+# admin/cmake/GenerateVersion.cmake). Generated headers are gitignored.
+get_filename_component(SOMO_REPO_ROOT "${SOMO_ROOT}/../.." ABSOLUTE)
+add_custom_target(us_somo_genheaders ALL
+    COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}"
+            sh -c "cd '${SOMO_ROOT}' && sh version.sh && sh revision.sh"
+    BYPRODUCTS ${SOMO_ROOT}/include/us_version.h ${SOMO_ROOT}/include/us_revision.h
+    COMMENT "Generating SOMO us_version.h / us_revision.h")
 
 # --- the library: libus_somo -------------------------------------------------
 # AUTHORITATIVE source/header lists, extracted from libus_somo.pro (SOURCES /
@@ -121,7 +127,7 @@ list(TRANSFORM SOMO_LIB_SOURCES PREPEND "${SOMO_ROOT}/")
 list(TRANSFORM SOMO_LIB_HEADERS PREPEND "${SOMO_ROOT}/")
 
 add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
-add_dependencies(us_somo us_somo_revision)
+add_dependencies(us_somo us_somo_genheaders)
 set_target_properties(us_somo PROPERTIES VERSION 10.0.0 SOVERSION 10)  # libus_somo.so.10
 
 target_include_directories(us_somo PUBLIC ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
@@ -183,7 +189,7 @@ function(somo_add_gui_app tgt subdir)
     add_executable(${tgt} ${SOMO_ROOT}/${subdir}/main.cpp)
     target_link_libraries(${tgt} PRIVATE us_somo)
     target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
-    add_dependencies(${tgt} us_somo_revision)
+    add_dependencies(${tgt} us_somo_genheaders)
 endfunction()
 
 # Standalone tool: explicit ../src subset, no libus_somo, no qwt (cmdline.pri).
@@ -204,7 +210,7 @@ function(somo_add_tool tgt)
         target_compile_definitions(${tgt} PRIVATE UNIX LINUX BIN64)
         target_link_libraries(${tgt} PRIVATE GLU)
     endif()
-    add_dependencies(${tgt} us_somo_revision)
+    add_dependencies(${tgt} us_somo_genheaders)
 endfunction()
 
 # --- GUI applications --------------------------------------------------------
