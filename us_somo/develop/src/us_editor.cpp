@@ -253,7 +253,7 @@ void US_Editor::print()
 #ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
 
-   printer.setPageSize( QPageSize( QPageSize::Letter ) );
+   printer.setPageSize( QPrinter::Letter );
 
    if ( printer.setup( this ) )
    {                            // opens printer dialog

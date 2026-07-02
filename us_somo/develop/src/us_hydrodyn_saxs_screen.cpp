@@ -1455,7 +1455,7 @@ bool US_Hydrodyn_Saxs_Screen::validate_saxs_window()
    }
 
    if ( !lbl_current_target->text().isEmpty() &&
-        !saxs_window->qsl_plotted_iq_names.filter(QRegExp(QString("^%1$").arg(lbl_current_target->text()))).size() )
+        !saxs_window->qsl_plotted_iq_names.filter(QRegularExpression(QString("^%1$").arg(lbl_current_target->text()))).size() )
    {
       // need to replot
       editor_msg("dark red", "Current target missing from SAXS window plot, replotting");
@@ -1857,7 +1857,7 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
       return;
    }
 
-   if ( !filename.contains(QRegExp(".ssc$", Qt::CaseInsensitive )) )
+   if ( !filename.contains(QRegularExpression(".ssc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       filename += ".ssc";
    }
