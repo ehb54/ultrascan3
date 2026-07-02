@@ -49,12 +49,13 @@ docker run --rm -i \
       FEATURE_ARGS+=( -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON -DVCPKG_MANIFEST_FEATURES=qt6 )
     fi
 
-    echo "=== configuring ($TRIPLET) ==="
+    echo "=== configuring ($TRIPLET, release-only) ==="
     cmake -S "$SRC" -B "$BUILD" -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
       -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET="$TRIPLET" \
+      -DVCPKG_OVERLAY_TRIPLETS=/src/us_somo/develop/docker/triplets \
       -DVCPKG_INSTALLED_DIR="/src/us_somo/develop/build-docker/vcpkg_installed" \
       "${FEATURE_ARGS[@]}"
 
