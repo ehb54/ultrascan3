@@ -1,0 +1,282 @@
+# =============================================================================
+# somo_app_sources.cmake  —  authoritative per-app source/header lists
+# =============================================================================
+# EXTRACTED from each app's own .pro. Two classes of app:
+#   * GUI apps (us3_somo/us_admin/us3_config) include generic.pri => a single
+#     main.cpp that LINKS libus_somo + qwt; they are handled by somo_add_app()
+#     in CMakeLists.txt and are NOT listed here.
+#   * Standalone command-line/MPI tools include cmdline.pri => main.cpp plus a
+#     CURATED subset of ../src/*.cpp compiled directly into the executable.
+#     They do NOT link libus_somo and do NOT link qwt (verified via ldd).
+#     Their exact source subsets are below (main.cpp is implicit in cmdline.pri
+#     and prepended here). Paths are relative to develop/; prefixed with
+#     ${SOMO_ROOT}/ by the caller.
+# =============================================================================
+
+
+set(SOMO_TOOL_us_saxs_cmds_t_SOURCES
+    us_saxs_cmds_t/main.cpp
+    src/us_saxs_gp.cpp
+    src/us_saxs_util.cpp
+    src/us_saxs_util_a2sb.cpp
+    src/us_saxs_util_asab1.cpp
+    src/us_saxs_util_best.cpp
+    src/us_saxs_util_c2check.cpp
+    src/us_saxs_util_cuda.cpp
+    src/us_saxs_util_dmd.cpp
+    src/us_saxs_util_extern.cpp
+    src/us_saxs_util_guinier.cpp
+    src/us_saxs_util_hydrate.cpp
+    src/us_saxs_util_hydrate_align.cpp
+    src/us_saxs_util_hydro.cpp
+    src/us_saxs_util_hydro_grid_atob_hydro.cpp
+    src/us_saxs_util_hydro_asab1_hydro.cpp
+    src/us_saxs_util_hydro_supc_hydro.cpp
+    src/us_saxs_util_hydro_pat_hydro.cpp
+    src/us_saxs_util_hydro_zeno_hydro.cpp
+    src/us_zeno_cxx.cpp
+    src/us_zeno_cxx_nf.cpp
+    src/us_saxs_util_ift.cpp
+    src/us_saxs_util_loads.cpp
+    src/us_saxs_util_nsa.cpp
+    src/us_saxs_util_nsa_ga.cpp
+    src/us_saxs_util_nsa_gsm.cpp
+    src/us_saxs_util_nsa_sga.cpp
+    src/us_saxs_util_iqq.cpp
+    src/us_saxs_util_iqq_pdb.cpp
+    src/us_saxs_util_iqq_bead_model.cpp
+    src/us_saxs_util_pat.cpp
+    src/us_saxs_util_pm.cpp
+    src/us_saxs_util_sgp.cpp
+    src/us_saxs_util_sgp_phys.cpp
+    src/us_saxs_util_ssbond.cpp
+    src/us_saxs_util_static.cpp
+    src/us_pm.cpp
+    src/us_pm_best.cpp
+    src/us_pm_best_sphere.cpp
+    src/us_pm_best_cylinder.cpp
+    src/us_pm_best_spheroid.cpp
+    src/us_pm_best_ellipsoid.cpp
+    src/us_pm_best_torus.cpp
+    src/us_pm_best_torus_segment.cpp
+    src/us_pm_fitness.cpp
+    src/us_pm_ga.cpp
+    src/us_pm_objects.cpp
+    src/us_pm_test.cpp
+    src/us_sh.cpp
+    src/us_tar.cpp
+    src/us_gzip.cpp
+    src/us_timer.cpp
+    src/us_math.cpp
+    src/us_file_util.cpp
+    src/us_hydrodyn_pat.cpp
+    src/us_cmdline_app.cpp
+    src/us_saxs_util_dammin.cpp
+    src/us_saxs_util_crysol.cpp
+    src/us_saxs_util_iqq_1d.cpp
+    src/us_json.cpp
+    src/us_lm.cpp
+    src/us_vector.cpp
+    shd_mpi/shs_use.cpp
+)
+set(SOMO_TOOL_us_saxs_cmds_t_HEADERS
+    include/us.h
+    include/us_pm.h
+    include/us_sh.h
+    include/us_math.h
+    include/us_tar.h
+    include/us_gzip.h
+    include/us_hydrodyn_pdbdefs.h
+    include/us_saxs_gp.h
+    include/us_saxs_util.h
+    include/us_saxs_util_asab1.h
+    include/us_tnt_jama.h
+    include/us_file_util.h
+    include/us_timer.h
+    include/us_cmdline_app.h
+    include/us_json.h
+    include/us_lm.h
+    include/us_vector.h
+    shd_mpi/shs_use.h
+    shd_mpi/shs_data.h
+)
+
+set(SOMO_TOOL_us_saxs_cmds_mpi_SOURCES
+    us_saxs_cmds_mpi/main.cpp
+    src/us_saxs_gp.cpp
+    src/us_saxs_util.cpp
+    src/us_saxs_util_a2sb.cpp
+    src/us_saxs_util_asab1.cpp
+    src/us_saxs_util_best.cpp
+    src/us_saxs_util_c2check.cpp
+    src/us_saxs_util_cuda.cpp
+    src/us_saxs_util_dmd.cpp
+    src/us_saxs_util_extern.cpp
+    src/us_saxs_util_guinier.cpp
+    src/us_saxs_util_hydrate.cpp
+    src/us_saxs_util_hydrate_align.cpp
+    src/us_saxs_util_ift.cpp
+    src/us_saxs_util_iqq.cpp
+    src/us_saxs_util_iqq_pdb.cpp
+    src/us_saxs_util_iqq_bead_model.cpp
+    src/us_saxs_util_loads.cpp
+    src/us_saxs_util_nsa.cpp
+    src/us_saxs_util_nsa_ga.cpp
+    src/us_saxs_util_nsa_ga_mpi.cpp
+    src/us_saxs_util_nsa_gsm.cpp
+    src/us_saxs_util_nsa_sga.cpp
+    src/us_saxs_util_pat.cpp
+    src/us_saxs_util_pm.cpp
+    src/us_saxs_util_pm_mpi.cpp
+    src/us_saxs_util_sgp.cpp
+    src/us_saxs_util_sgp_phys.cpp
+    src/us_saxs_util_static.cpp
+    src/us_saxs_util_mpi.cpp
+    src/us_pm.cpp
+    src/us_pm_best.cpp
+    src/us_pm_best_sphere.cpp
+    src/us_pm_best_cylinder.cpp
+    src/us_pm_best_spheroid.cpp
+    src/us_pm_best_ellipsoid.cpp
+    src/us_pm_best_torus.cpp
+    src/us_pm_best_torus_segment.cpp
+    src/us_pm_fitness.cpp
+    src/us_pm_ga.cpp
+    src/us_pm_objects.cpp
+    src/us_pm_test.cpp
+    src/us_sh.cpp
+    src/us_tar.cpp
+    src/us_gzip.cpp
+    src/us_timer.cpp
+    src/us_math.cpp
+    src/us_file_util.cpp
+    src/us_hydrodyn_pat.cpp
+    src/us_cmdline_app.cpp
+    src/us_saxs_util_dammin.cpp
+    src/us_saxs_util_crysol.cpp
+    src/us_saxs_util_iqq_1d.cpp
+    src/us_saxs_util_iqq_1d_mpi.cpp
+    src/us_json.cpp
+    src/us_lm.cpp
+    src/us_vector.cpp
+    shd_mpi/shs_use.cpp
+    src/us_saxs_util_hydro.cpp
+    src/us_saxs_util_hydro_grid_atob_hydro.cpp
+    src/us_saxs_util_hydro_asab1_hydro.cpp
+    src/us_saxs_util_hydro_supc_hydro.cpp
+    src/us_saxs_util_hydro_pat_hydro.cpp
+    src/us_saxs_util_hydro_zeno_hydro.cpp
+    src/us_zeno_cxx.cpp
+    src/us_zeno_cxx_nf.cpp
+)
+set(SOMO_TOOL_us_saxs_cmds_mpi_HEADERS
+    include/us.h
+    include/us_pm.h
+    include/us_sh.h
+    include/us_math.h
+    include/us_tar.h
+    include/us_gzip.h
+    include/us_hydrodyn_pdbdefs.h
+    include/us_saxs_gp.h
+    include/us_saxs_util.h
+    include/us_saxs_util_asab1.h
+    include/us_tnt_jama.h
+    include/us_file_util.h
+    include/us_timer.h
+    include/us_cmdline_app.h
+    include/us_json.h
+    include/us_lm.h
+    include/us_vector.h
+    shd_mpi/shs_use.h
+    shd_mpi/shs_data.h
+)
+
+set(SOMO_TOOL_us_saxs_cmds_mpi_cuda_SOURCES
+    us_saxs_cmds_mpi_cuda/main.cpp
+    src/us_saxs_gp.cpp
+    src/us_saxs_util.cpp
+    src/us_saxs_util_a2sb.cpp
+    src/us_saxs_util_asab1.cpp
+    src/us_saxs_util_best.cpp
+    src/us_saxs_util_c2check.cpp
+    src/us_saxs_util_cuda.cpp
+    src/us_saxs_util_dmd.cpp
+    src/us_saxs_util_extern.cpp
+    src/us_saxs_util_guinier.cpp
+    src/us_saxs_util_hydrate.cpp
+    src/us_saxs_util_hydrate_align.cpp
+    src/us_saxs_util_ift.cpp
+    src/us_saxs_util_iqq.cpp
+    src/us_saxs_util_iqq_pdb.cpp
+    src/us_saxs_util_iqq_bead_model.cpp
+    src/us_saxs_util_loads.cpp
+    src/us_saxs_util_nsa.cpp
+    src/us_saxs_util_nsa_ga.cpp
+    src/us_saxs_util_nsa_ga_mpi.cpp
+    src/us_saxs_util_nsa_gsm.cpp
+    src/us_saxs_util_nsa_sga.cpp
+    src/us_saxs_util_sgp.cpp
+    src/us_saxs_util_sgp_phys.cpp
+    src/us_saxs_util_static.cpp
+    src/us_saxs_util_mpi.cpp
+    src/us_pm.cpp
+    src/us_pm_best.cpp
+    src/us_pm_best_sphere.cpp
+    src/us_pm_best_cylinder.cpp
+    src/us_pm_best_spheroid.cpp
+    src/us_pm_best_ellipsoid.cpp
+    src/us_pm_best_torus.cpp
+    src/us_pm_best_torus_segment.cpp
+    src/us_pm_fitness.cpp
+    src/us_pm_ga.cpp
+    src/us_pm_objects.cpp
+    src/us_pm_test.cpp
+    src/us_sh.cpp
+    src/us_tar.cpp
+    src/us_gzip.cpp
+    src/us_timer.cpp
+    src/us_math.cpp
+    src/us_file_util.cpp
+    src/us_hydrodyn_pat.cpp
+    us_saxs_cmds_mpi_cuda/us_semaphore.cpp
+    src/us_cmdline_app.cpp
+    src/us_saxs_util_dammin.cpp
+    src/us_saxs_util_crysol.cpp
+    src/us_saxs_util_iqq_1d.cpp
+    src/us_saxs_util_iqq_1d_mpi.cpp
+    src/us_json.cpp
+    src/us_lm.cpp
+    src/us_vector.cpp
+    shd_mpi/shs_use.cpp
+)
+set(SOMO_TOOL_us_saxs_cmds_mpi_cuda_HEADERS
+    include/us.h
+    include/us_pm.h
+    include/us_sh.h
+    include/us_math.h
+    include/us_tar.h
+    include/us_gzip.h
+    include/us_hydrodyn_pdbdefs.h
+    include/us_saxs_gp.h
+    include/us_saxs_util.h
+    include/us_saxs_util_asab1.h
+    include/us_tnt_jama.h
+    include/us_file_util.h
+    include/us_timer.h
+    us_saxs_cmds_mpi_cuda/us_semaphore.h
+    include/us_cmdline_app.h
+    include/us_json.h
+    include/us_lm.h
+    include/us_vector.h
+    shd_mpi/shs_use.h
+    shd_mpi/shs_data.h
+)
+
+set(SOMO_TOOL_us_cluster_server_t_SOURCES
+    us_cluster_server_t/main.cpp
+)
+set(SOMO_TOOL_us_cluster_server_t_HEADERS
+    us_cluster_server_t/us_cluster_server_config.h
+    us_cluster_server_t/us_cluster_server_global.h
+    us_cluster_server_t/us_cluster_server_sockets.h
+)

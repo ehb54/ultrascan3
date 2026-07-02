@@ -1,16 +1,20 @@
 # =============================================================================
 # us_somo / US-SOMO  —  CMake build  (SKELETON — not yet buildable end-to-end)
 # =============================================================================
-# Builds the SOMO hydrodynamics / SAXS suite:
-#     libus_somo        shared library (SONAME .10) — the bulk of the code
-#     us3_somo          main GUI application     (us3_hydrodyn/main.cpp)
-#     us_admin          admin GUI                (us_admin/)
-#     us3_config        config GUI               (us3_config/)
-#     us_saxs_cmds_t    headless SAXS tool       (us_saxs_cmds_t/)
+# Builds the SOMO hydrodynamics / SAXS suite. Two classes of application:
+#   GUI apps — a single main.cpp that LINKS libus_somo (+ qwt):
+#     libus_somo          shared library (SONAME .10) — the bulk of the code
+#     us3_somo            main GUI application     (us3_hydrodyn/main.cpp)
+#     us_admin            admin GUI                (us_admin/)
+#     us3_config          config GUI               (us3_config/)
+#   Standalone tools — compile a curated ../src subset directly, NO lib, NO qwt:
+#     us_saxs_cmds_t      SAXS command-line tool   (us_saxs_cmds_t/)
+#     us_cluster_server_t legacy cluster-server test tool (2011; may be obsolete)
 # Optional (default OFF):
-#     us_saxs_cmds_mpi  MPI SAXS tool            SOMO_ENABLE_MPI
-#     CUDA SAXS kernels                          SOMO_ENABLE_CUDA
-#     ADOLC autodiff                             SOMO_ENABLE_ADOLC
+#     us_saxs_cmds_mpi        MPI SAXS tool            SOMO_ENABLE_MPI
+#     us_saxs_cmds_mpi_cuda   MPI+CUDA SAXS tool       SOMO_ENABLE_MPI + SOMO_ENABLE_CUDA
+#     CUDA code paths in the lib                       SOMO_ENABLE_CUDA
+#     ADOLC autodiff                                   SOMO_ENABLE_ADOLC
 #
 # KEY FACT (verified): SOMO is SELF-CONTAINED. It VENDORS its own fork of the
 # us_utils sources (src/us_math.cpp, us_matrix.cpp, us_saxs_util*.cpp, ...) and
@@ -143,38 +147,84 @@ if(SOMO_ENABLE_CUDA)
     # TODO: wire the actual .cu kernels + CUDA::cudart.
 endif()
 
-# --- helper: declare a thin SOMO app that links libus_somo -------------------
-function(somo_add_app tgt subdir)
-    cmake_parse_arguments(A "" "" "EXTRA_SOURCES" ${ARGN})
-    file(GLOB _srcs CONFIGURE_DEPENDS
-        ${SOMO_ROOT}/${subdir}/*.cpp
-        ${SOMO_ROOT}/${subdir}/*.ui
-        ${SOMO_ROOT}/${subdir}/*.qrc)
-    add_executable(${tgt} ${_srcs} ${A_EXTRA_SOURCES})
+# =============================================================================
+# APPLICATIONS — two distinct classes (verified against the .pro files + ldd):
+#
+#   1) GUI apps  (include generic.pri): a single main.cpp that LINKS libus_somo
+#      (which pulls qwt transitively).  -> us3_somo, us_admin, us3_config
+#
+#   2) Standalone command-line / MPI tools (include cmdline.pri): main.cpp plus
+#      a CURATED subset of ../src/*.cpp compiled DIRECTLY into the executable.
+#      They do NOT link libus_somo and do NOT link qwt (confirmed by ldd of the
+#      deployed us_saxs_cmds_t). Their exact source subsets live in
+#      somo_app_sources.cmake, extracted from each tool's own .pro.
+# =============================================================================
+include(${SOMO_ROOT}/somo_app_sources.cmake)   # -> SOMO_TOOL_<name>_SOURCES / _HEADERS
+
+# GUI app: main.cpp + link libus_somo (generic.pri: SOURCES=main.cpp, -lus_somo -lqwt)
+function(somo_add_gui_app tgt subdir)
+    add_executable(${tgt} ${SOMO_ROOT}/${subdir}/main.cpp)
     target_link_libraries(${tgt} PRIVATE us_somo)
     target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
     add_dependencies(${tgt} us_somo_revision)
 endfunction()
 
-# --- applications ------------------------------------------------------------
-# TODO: each app dir is currently a single main.cpp (verified), so a glob is
-# adequate for now — but for parity with the lib, extract each app's SOURCES
-# from its own .pro (us3_hydrodyn.pro, us_admin.pro, ...) before this is final.
-somo_add_app(us3_somo       us3_hydrodyn)     # main GUI -> us3_somo binary
-somo_add_app(us_admin       us_admin)
-somo_add_app(us3_config     us3_config)
-somo_add_app(us_saxs_cmds_t us_saxs_cmds_t)   # cuda TU comes from the lib; do not re-add here
+# Standalone tool: explicit ../src subset, no libus_somo, no qwt (cmdline.pri).
+function(somo_add_tool tgt)
+    set(_srcs ${SOMO_TOOL_${tgt}_SOURCES})
+    set(_hdrs ${SOMO_TOOL_${tgt}_HEADERS})
+    list(TRANSFORM _srcs PREPEND "${SOMO_ROOT}/")
+    list(TRANSFORM _hdrs PREPEND "${SOMO_ROOT}/")
+    add_executable(${tgt} ${_srcs} ${_hdrs})
+    target_include_directories(${tgt} PRIVATE
+        ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt})
+    target_compile_definitions(${tgt} PRIVATE CMDLINE NO_DB NO_EDITOR_PRINT)
+    target_link_libraries(${tgt} PRIVATE
+        Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::Xml Qt5::Svg
+        Qt5::PrintSupport Qt5::OpenGL Qt5::Concurrent Qt5::Multimedia
+        OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
+    if(UNIX AND NOT APPLE)
+        target_compile_definitions(${tgt} PRIVATE UNIX LINUX BIN64)
+        target_link_libraries(${tgt} PRIVATE GLU)
+    endif()
+    add_dependencies(${tgt} us_somo_revision)
+endfunction()
 
+# --- GUI applications --------------------------------------------------------
+somo_add_gui_app(us3_somo   us3_hydrodyn)     # main GUI -> us3_somo binary
+somo_add_gui_app(us_admin   us_admin)
+somo_add_gui_app(us3_config us3_config)
+
+# --- standalone tools --------------------------------------------------------
+somo_add_tool(us_saxs_cmds_t)                 # non-MPI SAXS command-line tool
+somo_add_tool(us_cluster_server_t)            # legacy (2011) cluster-server test tool; may be obsolete
+
+set(SOMO_INSTALL_TARGETS
+    us_somo us3_somo us_admin us3_config us_saxs_cmds_t us_cluster_server_t)
+
+# --- optional MPI tools ------------------------------------------------------
 if(SOMO_ENABLE_MPI)
     find_package(MPI REQUIRED CXX)
-    somo_add_app(us_saxs_cmds_mpi us_saxs_cmds_mpi)
+
+    somo_add_tool(us_saxs_cmds_mpi)
     target_link_libraries(us_saxs_cmds_mpi PRIVATE MPI::MPI_CXX)
+    # TODO: MPI flags come from a custom qmake mkspec in the qmake build, not the
+    # .pro — confirm whether a project-specific MPI guard define is also needed.
     target_compile_definitions(us_saxs_cmds_mpi PRIVATE OMPI_SKIP_MPICXX)
     target_include_directories(us_saxs_cmds_mpi PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+    list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_mpi)
+
+    if(SOMO_ENABLE_CUDA)
+        somo_add_tool(us_saxs_cmds_mpi_cuda)
+        target_link_libraries(us_saxs_cmds_mpi_cuda PRIVATE MPI::MPI_CXX)
+        target_compile_definitions(us_saxs_cmds_mpi_cuda PRIVATE OMPI_SKIP_MPICXX CUDA)
+        target_include_directories(us_saxs_cmds_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+        list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_mpi_cuda)
+    endif()
 endif()
 
 # --- install -----------------------------------------------------------------
-install(TARGETS us_somo us3_somo us_admin us3_config us_saxs_cmds_t
+install(TARGETS ${SOMO_INSTALL_TARGETS}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
 
