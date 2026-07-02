@@ -90,19 +90,14 @@ add_custom_target(us_somo_revision ALL
     COMMENT "Generating SOMO us_revision.h")
 
 # --- the library: libus_somo -------------------------------------------------
-# The ~345 src/*.cpp are the vendored-utils + hydrodyn/SAXS engine and compile
-# into the shared lib. Apps are thin main() wrappers that link it.
-file(GLOB SOMO_LIB_SOURCES CONFIGURE_DEPENDS ${SOMO_ROOT}/src/*.cpp)
-file(GLOB SOMO_LIB_HEADERS CONFIGURE_DEPENDS ${SOMO_ROOT}/include/*.h)
-
-# CUDA TU is compiled per-app in the qmake build (SOURCES += ../src/us_saxs_util_cuda.cpp),
-# not into the lib — keep it out of the default library sources.
-list(FILTER SOMO_LIB_SOURCES EXCLUDE REGEX "/us_saxs_util_cuda\\.cpp$")
-# TODO (this is the "build has errors" hotspot): audit src/ for any TU that
-#   - defines its own main(), or
-#   - is app-specific / mutually exclusive with another TU, or
-#   - is gated by a DEFINE only some apps set,
-# and move it out of the lib glob. This partition is the main porting risk.
+# AUTHORITATIVE source/header lists, extracted from libus_somo.pro (SOURCES /
+# HEADERS) into somo_lib_sources.cmake — NOT a glob of src/*.cpp. Globbing is
+# wrong here: several src/ TUs are app-specific and must not be in the lib, and
+# the lib also pulls in shd_mpi/shs_use.cpp. Regenerate the .cmake from the .pro
+# if the source set changes. Apps are thin main() wrappers that link this lib.
+include(${SOMO_ROOT}/somo_lib_sources.cmake)   # -> SOMO_LIB_SOURCES / SOMO_LIB_HEADERS (paths relative to develop/)
+list(TRANSFORM SOMO_LIB_SOURCES PREPEND "${SOMO_ROOT}/")
+list(TRANSFORM SOMO_LIB_HEADERS PREPEND "${SOMO_ROOT}/")
 
 add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
 add_dependencies(us_somo us_somo_revision)
@@ -143,7 +138,9 @@ endif()
 if(SOMO_ENABLE_CUDA)
     enable_language(CUDA)
     target_compile_definitions(us_somo PUBLIC CUDA)
-    # TODO: wire src/us_saxs_util_cuda.cpp + .cu kernels + CUDA::cudart here or per-app.
+    # us_saxs_util_cuda.cpp is already a lib member (it's in libus_somo.pro's
+    # SOURCES); this option only turns on the CUDA code paths inside it.
+    # TODO: wire the actual .cu kernels + CUDA::cudart.
 endif()
 
 # --- helper: declare a thin SOMO app that links libus_somo -------------------
@@ -160,11 +157,13 @@ function(somo_add_app tgt subdir)
 endfunction()
 
 # --- applications ------------------------------------------------------------
+# TODO: each app dir is currently a single main.cpp (verified), so a glob is
+# adequate for now — but for parity with the lib, extract each app's SOURCES
+# from its own .pro (us3_hydrodyn.pro, us_admin.pro, ...) before this is final.
 somo_add_app(us3_somo       us3_hydrodyn)     # main GUI -> us3_somo binary
 somo_add_app(us_admin       us_admin)
 somo_add_app(us3_config     us3_config)
-somo_add_app(us_saxs_cmds_t us_saxs_cmds_t
-    EXTRA_SOURCES $<$<BOOL:${SOMO_ENABLE_CUDA}>:${SOMO_ROOT}/src/us_saxs_util_cuda.cpp>)
+somo_add_app(us_saxs_cmds_t us_saxs_cmds_t)   # cuda TU comes from the lib; do not re-add here
 
 if(SOMO_ENABLE_MPI)
     find_package(MPI REQUIRED CXX)
