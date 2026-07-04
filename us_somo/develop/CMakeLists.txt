@@ -62,12 +62,12 @@ option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
 
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-# PLATFORM / TITLE — us_register.cpp uses these; the root us3 build defines them
-# directly via -D (leaving that file's arch-macro #if blocks dormant). Mirror it.
-if(APPLE)
-    add_compile_definitions(PLATFORM="mac" TITLE="Macintosh")
-else()
-    add_compile_definitions(PLATFORM="intel" TITLE="Intel")
+# us_register.cpp derives PLATFORM/TITLE from an arch macro (its own #if chain
+# sets the strings right before use). APPLE is covered by the MAC define on the
+# targets, Windows by WIN32; define INTEL on Linux so its #if block fires. This
+# avoids -DPLATFORM="..." string-literal quote-escaping headaches.
+if(UNIX AND NOT APPLE)
+    add_compile_definitions(INTEL)
 endif()
 
 # --- dependencies (all third-party) ------------------------------------------
