@@ -56,7 +56,7 @@ docker run --rm -i \
       -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake \
       -DVCPKG_TARGET_TRIPLET="$TRIPLET" \
       -DVCPKG_OVERLAY_TRIPLETS=/src/us_somo/develop/docker/triplets \
-      -DVCPKG_INSTALLED_DIR="/src/us_somo/develop/build-docker/vcpkg_installed" \
+      -DVCPKG_INSTALLED_DIR="/src/us_somo/develop/build-docker/vcpkg_installed-$FEATURE" \
       "${FEATURE_ARGS[@]}"
 
     echo "=== building ==="
