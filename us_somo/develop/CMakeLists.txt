@@ -111,8 +111,9 @@ endif()
 # admin/cmake/GenerateVersion.cmake). Generated headers are gitignored.
 get_filename_component(SOMO_REPO_ROOT "${SOMO_ROOT}/../.." ABSOLUTE)
 add_custom_target(us_somo_genheaders ALL
-    COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}"
-            sh -c "cd '${SOMO_ROOT}' && sh version.sh && sh revision.sh"
+    COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh version.sh
+    COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh revision.sh
+    WORKING_DIRECTORY ${SOMO_ROOT}
     BYPRODUCTS ${SOMO_ROOT}/include/us_version.h ${SOMO_ROOT}/include/us_revision.h
     COMMENT "Generating SOMO us_version.h / us_revision.h")
 
