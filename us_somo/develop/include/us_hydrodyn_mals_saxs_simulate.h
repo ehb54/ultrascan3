@@ -27,6 +27,8 @@ using namespace std;
 # endif
 #endif      
 
+#ifndef UHSHS_DATA_STRUCT_DEFINED
+#define UHSHS_DATA_STRUCT_DEFINED
 struct uhshs_data {
    QLabel     * lbl_name;
 
@@ -42,6 +44,7 @@ struct uhshs_data {
    QCheckBox  * cb_alpha;
    QLineEdit  * le_alpha;
 };
+#endif
 
 class US_EXTERN US_Hydrodyn_Mals_Saxs_Simulate : public QFrame
 {

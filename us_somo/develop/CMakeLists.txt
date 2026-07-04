@@ -141,6 +141,17 @@ add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
 add_dependencies(us_somo us_somo_genheaders)
 set_target_properties(us_somo PROPERTIES VERSION 10.0.0 SOVERSION 10)  # libus_somo.so.10
 
+# The qwt widgets scrollbar/scrollzoomer are vendored in BOTH src/qwt/ and
+# include/qwt/ (identical). AUTOMOC mocs the class twice — once from the listed
+# include/qwt/*.h header, and again from src/qwt/*.h via adjacency to
+# src/qwt/*.cpp — causing duplicate moc symbols. The .cpp includes the
+# include/qwt/ copy, so skip AUTOMOC on the src/qwt/*.cpp to drop the adjacency
+# moc and keep exactly one (from the listed include/qwt/ header).
+set_source_files_properties(
+    ${SOMO_ROOT}/src/qwt/scrollbar.cpp
+    ${SOMO_ROOT}/src/qwt/scrollzoomer.cpp
+    PROPERTIES SKIP_AUTOMOC ON)
+
 target_include_directories(us_somo PUBLIC ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_QWT_INCLUDE_DIR})
 
 target_compile_definitions(us_somo PUBLIC NO_DB THREAD NO_EDITOR_PRINT)
