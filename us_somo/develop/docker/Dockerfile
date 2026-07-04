@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev \
       libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev \
       libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev libxcb-cursor-dev \
+      libxcb-xinput-dev libsm-dev libice-dev \
       libfontconfig1-dev libfreetype6-dev libdbus-1-dev libglib2.0-dev \
       libasound2-dev libpulse-dev \
     && rm -rf /var/lib/apt/lists/*
