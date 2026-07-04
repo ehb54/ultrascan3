@@ -9,7 +9,7 @@
 #     us3_config          config GUI               (us3_config/)
 #   Standalone tools — compile a curated ../src subset directly, NO lib, NO qwt:
 #     us_saxs_cmds_t      SAXS command-line tool   (us_saxs_cmds_t/)
-#     us_cluster_server_t legacy cluster-server test tool (2011; may be obsolete)
+#   (us_cluster_server_t dropped: needs Qt3Support / q3socket.h, gone since Qt5)
 # Optional (default OFF):
 #     us_saxs_cmds_mpi        MPI SAXS tool            SOMO_ENABLE_MPI
 #     us_saxs_cmds_mpi_cuda   MPI+CUDA SAXS tool       SOMO_ENABLE_MPI + SOMO_ENABLE_CUDA
@@ -92,6 +92,16 @@ if(NOT TARGET Qwt::Qwt)
     message(FATAL_ERROR "SOMO: Qwt not found (need a Qwt::Qwt target)")
 endif()
 
+# SOMO does `#include <qwt_counter.h>` (flat, like the qmake QWTPATH/include
+# layout), but vcpkg nests the headers under include/qwt/. The Qwt::Qwt target's
+# interface include (the vcpkg include root) is therefore not enough — add the
+# directory that actually contains the qwt headers.
+find_path(SOMO_QWT_INCLUDE_DIR NAMES qwt_counter.h PATH_SUFFIXES qwt qwt6 qt5/qwt)
+if(NOT SOMO_QWT_INCLUDE_DIR)
+    message(FATAL_ERROR "SOMO: qwt headers (qwt_counter.h) not found on the include path")
+endif()
+message(STATUS "SOMO: qwt headers at ${SOMO_QWT_INCLUDE_DIR}")
+
 # QwtPlot3D — SOMO carries its own 3dplot/ tree.
 # TODO: decide between (a) reusing root qwtplot3d::qwtplot3d, or
 #       (b) add_subdirectory(3dplot) for the SOMO-local copy.
@@ -131,7 +141,7 @@ add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
 add_dependencies(us_somo us_somo_genheaders)
 set_target_properties(us_somo PROPERTIES VERSION 10.0.0 SOVERSION 10)  # libus_somo.so.10
 
-target_include_directories(us_somo PUBLIC ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
+target_include_directories(us_somo PUBLIC ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_QWT_INCLUDE_DIR})
 
 target_compile_definitions(us_somo PUBLIC NO_DB THREAD NO_EDITOR_PRINT)
 if(UNIX AND NOT APPLE)
@@ -205,7 +215,7 @@ function(somo_add_tool tgt)
     # build/ldd — but the headers must be on the include path).
     target_include_directories(${tgt} PRIVATE
         ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt}
-        $<TARGET_PROPERTY:Qwt::Qwt,INTERFACE_INCLUDE_DIRECTORIES>)
+        ${SOMO_QWT_INCLUDE_DIR})
     target_compile_definitions(${tgt} PRIVATE CMDLINE NO_DB NO_EDITOR_PRINT)
     target_link_libraries(${tgt} PRIVATE
         Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
@@ -225,10 +235,11 @@ somo_add_gui_app(us3_config us3_config)
 
 # --- standalone tools --------------------------------------------------------
 somo_add_tool(us_saxs_cmds_t)                 # non-MPI SAXS command-line tool
-somo_add_tool(us_cluster_server_t)            # legacy (2011) cluster-server test tool; may be obsolete
+# us_cluster_server_t (2011) dropped: its us_cluster_server_global.h includes
+# <q3socket.h> (Qt3Support), removed since Qt5 — it cannot build on Qt5/Qt6.
 
 set(SOMO_INSTALL_TARGETS
-    us_somo us3_somo us_admin us3_config us_saxs_cmds_t us_cluster_server_t)
+    us_somo us3_somo us_admin us3_config us_saxs_cmds_t)
 
 # --- optional MPI tools ------------------------------------------------------
 if(SOMO_ENABLE_MPI)
