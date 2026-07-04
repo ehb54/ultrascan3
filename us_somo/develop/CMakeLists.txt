@@ -200,8 +200,12 @@ function(somo_add_tool tgt)
     list(TRANSFORM _srcs PREPEND "${SOMO_ROOT}/")
     list(TRANSFORM _hdrs PREPEND "${SOMO_ROOT}/")
     add_executable(${tgt} ${_srcs} ${_hdrs})
+    # Tools compile SOMO headers that #include <qwt_*.h> (the qwt code paths are
+    # compiled out under -DCMDLINE, so no qwt LINK is needed — matching the qmake
+    # build/ldd — but the headers must be on the include path).
     target_include_directories(${tgt} PRIVATE
-        ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt})
+        ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt}
+        $<TARGET_PROPERTY:Qwt::Qwt,INTERFACE_INCLUDE_DIRECTORIES>)
     target_compile_definitions(${tgt} PRIVATE CMDLINE NO_DB NO_EDITOR_PRINT)
     target_link_libraries(${tgt} PRIVATE
         Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
