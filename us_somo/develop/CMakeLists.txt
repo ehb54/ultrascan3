@@ -62,6 +62,14 @@ option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
 
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
+# PLATFORM / TITLE — us_register.cpp uses these; the root us3 build defines them
+# directly via -D (leaving that file's arch-macro #if blocks dormant). Mirror it.
+if(APPLE)
+    add_compile_definitions(PLATFORM="mac" TITLE="Macintosh")
+else()
+    add_compile_definitions(PLATFORM="intel" TITLE="Intel")
+endif()
+
 # --- dependencies (all third-party) ------------------------------------------
 # Qt5 AND Qt6: PR #335 made the SOMO code compatible with both; CI/CodeQL test
 # both, and the qmake build is Qt5 today with a planned move to Qt6. Use the
