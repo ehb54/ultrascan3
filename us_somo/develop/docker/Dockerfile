@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential g++ cmake ninja-build git \
       curl zip unzip tar ca-certificates pkg-config \
       autoconf automake autoconf-archive libtool libtool-bin libltdl-dev \
-      gettext autopoint perl bison flex python3 \
+      gettext autopoint perl bison flex gperf \
+      python3 python3-venv python3-pip \
       libgl1-mesa-dev libglu1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
       libx11-dev libx11-xcb-dev libxext-dev libxrender-dev libxi-dev \
       libxrandr-dev libxfixes-dev libxdamage-dev libxcomposite-dev \
