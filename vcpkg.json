@@ -8,6 +8,18 @@
     "zlib",
     "eigen3"
   ],
+  "overrides": [
+    {
+      "name": "gperf",
+      "version": "3.1#7",
+      "$comment": "Pin to 3.1: Rocky 8 ships autoconf 2.69 which is too old to run autoreconf on gperf 3.3's configure.ac"
+    },
+    {
+      "name": "qtbase",
+      "version": "6.10.1",
+      "$comment": "Pin to 6.10.1: overlay port carries fix-x86intrin-rdseed.patch for GCC 8 on Rocky/RHEL 8"
+    }
+  ],
   "features": {
     "test": {
       "description": "Unit testing dependencies (TEST profile only)",
@@ -109,9 +121,109 @@
             "sql",
             "concurrent",
             "dnslookup",
-            "openssl"
+            "openssl",
+            "zstd"
           ]
         }
+      ]
+    },
+
+    "warm-qt6-hpc": {
+      "description": "Cache warming only: qtbase with HPC feature set (stage for rocky8 HPC builds)",
+      "dependencies": [
+        {
+          "name": "qtbase",
+          "default-features": false,
+          "features": [
+            "network",
+            "sql",
+            "concurrent",
+            "dnslookup",
+            "openssl",
+            "zstd"
+          ]
+        }
+      ]
+    },
+
+    "warm-qt6-stage2": {
+      "description": "Cache warming only: qtbase alone (stage 2 of 5)",
+      "dependencies": [
+        "qtbase"
+      ]
+    },
+
+    "warm-qt6-stage3": {
+      "description": "Cache warming only: qtmultimedia + qtdeclarative (stage 3 of 5)",
+      "dependencies": [
+        "qtmultimedia"
+      ]
+    },
+
+    "warm-qt6-stage4": {
+      "description": "Cache warming only: remaining Qt modules + DB libs (stage 4 of 5)",
+      "dependencies": [
+        {
+          "name": "libmariadb",
+          "default-features": false,
+          "features": ["openssl"]
+        },
+        {
+          "name": "sqlite3",
+          "features": ["fts5"]
+        },
+        "qtdatavis3d",
+        "qtsvg",
+        {
+          "name": "qttools",
+          "features": ["assistant"]
+        }
+      ]
+    },
+
+    "warm-qt6-stage5": {
+      "description": "Cache warming only: Qwt + QwtPlot3D (stage 5 of 5)",
+      "dependencies": [
+        "qwt-6-3-0-qt6",
+        "qwtplot3d-qwt-6-3-0-qt6"
+      ]
+    },
+
+    "warm-qt5-stage2": {
+      "description": "Cache warming only: qt5-base + Qt modules + DB libs (stage 2 of 3)",
+      "dependencies": [
+        {
+          "name": "libmariadb",
+          "default-features": false,
+          "features": ["openssl"]
+        },
+        {
+          "name": "sqlite3",
+          "features": ["fts5"]
+        },
+        {
+          "name": "qt5-base",
+          "features": ["sqlite3plugin"]
+        },
+        "qt5-datavis3d",
+        "qt5-svg",
+        "qt5-tools",
+        "qt5-multimedia"
+      ]
+    },
+
+    "warm-qt5-stage3": {
+      "description": "Cache warming only: Qwt 6.1.6 + QwtPlot3D for Qt5 (stage 3 of 3, qt5-qwt616 variant)",
+      "dependencies": [
+        "qwt-6-1-6",
+        "qwtplot3d-qwt-6-1-6-qt5"
+      ]
+    },
+    "warm-qt5-qwt630-stage3": {
+      "description": "Cache warming only: Qwt 6.3.0 + QwtPlot3D for Qt5 (stage 3 of 3, qt5-qwt630 variant)",
+      "dependencies": [
+        "qwt-6-3-0-qt5",
+        "qwtplot3d-qwt-6-3-0-qt5"
       ]
     }
   }
