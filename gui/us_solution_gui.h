@@ -52,6 +52,8 @@ class US_GUI_EXTERN US_SolutionMgrSelect: public US_Widgets
 
       int           dbg_level;
       US_Help       showHelp;
+      QString       buffer_state_style;
+      QLabel*       lb_buffer_state;
       QLineEdit*    le_bufferInfo;
       QLineEdit*    le_commonVbar20;
       QLineEdit*    le_density;

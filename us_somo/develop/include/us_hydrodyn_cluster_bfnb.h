@@ -20,7 +20,6 @@
 #include "qpushbutton.h"
 #include "qfiledialog.h"
 #include "qmessagebox.h"
-#include "qregexp.h"
 #include "us_json.h"
 #include "us_hydrodyn.h"
 

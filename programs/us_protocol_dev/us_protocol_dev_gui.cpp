@@ -35,7 +35,7 @@ US_ProtocolDevMain::US_ProtocolDevMain() : US_Widgets()
   main->setSpacing         ( 2 );
   main->setContentsMargins ( 2, 2, 2, 2 );
   
-  gen_banner = us_banner( tr( "UltraScan Protocol Development Module, v. 0.1" ) );
+  gen_banner = us_banner( tr( "UltraScan Protocol Development Module" ) );
   
   //set font
   QFont font_gen = gen_banner->font();

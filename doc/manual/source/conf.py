@@ -48,11 +48,15 @@ def generate_version_metadata(source_dir: str | os.PathLike[str]) -> dict[str, s
     git_revision = _run_git(["rev-parse", "--short=7", "HEAD"], source_dir) or "unknown"
     git_branch = _run_git(["rev-parse", "--abbrev-ref", "HEAD"], source_dir) or "unknown"
 
-    # Tracked changes only: ignore untracked files
+    # Tracked changes to source files only: ignore untracked files and
+    # non-source changes (docs, scripts, etc.) so that building docs from a
+    # tree with only doc/script modifications does not mark the software dirty.
+    # Matches the filter used by programs/us/revision.sh.
+    _SOURCE_PATHSPECS = ["--", "*.h", "*.cpp", "*.ui", "*.qrc"]
     dirty = False
     try:
         worktree_rc = subprocess.run(
-            ["git", "diff", "--quiet", "--exit-code"],
+            ["git", "diff", "--quiet", "--exit-code"] + _SOURCE_PATHSPECS,
             cwd=str(source_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -60,7 +64,7 @@ def generate_version_metadata(source_dir: str | os.PathLike[str]) -> dict[str, s
         ).returncode
 
         index_rc = subprocess.run(
-            ["git", "diff", "--quiet", "--cached", "--exit-code"],
+            ["git", "diff", "--quiet", "--cached", "--exit-code"] + _SOURCE_PATHSPECS,
             cwd=str(source_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -247,7 +251,7 @@ htmlhelp_basename = 'UltraScanIIIdoc'
 
 # Namespace used by
 qthelp_basename = 'manual'
-qthelp_namespace = f'org.sphinx.{qthelp_basename}.{version}-{meta["BUILD_NUMBER"]}-{meta["GIT_REVISION"]}{meta["GIT_DIRTY_FLAG"]}'
+qthelp_namespace = f'com.aucsolutions.{qthelp_basename}.{version}-{meta["BUILD_NUMBER"]}-{meta["GIT_REVISION"]}{meta["GIT_DIRTY_FLAG"]}'
 # -- Options for LaTeX output ------------------------------------------------
 # Use XeLaTeX for proper Unicode support
 latex_engine = "xelatex"

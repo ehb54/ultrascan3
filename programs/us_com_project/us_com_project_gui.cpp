@@ -1293,7 +1293,7 @@ void US_InitDialogueGui::checkCertificates( void )
 	    {
 	      if ( daysToExpiration > 0 )
 		{
-		  msg_sys_text_info += QString(tr("\n%1 Please check the following for %2:\n")).arg( QChar(0x2022), alias );
+		  msg_sys_text_info += QString(tr("\nPlease check the following for %2:\n")).arg( QChar(0x2022), alias );
 		  msg_sys_text_info += QString( tr("1. %1 is turned on\n"
 						   "2. the data acquisition server on %1 is running\n"
 						   "3. your license key is stored in $HOME/ultrascan/etc/optima and is valid and not expired.\n")).arg( alias );
@@ -1390,8 +1390,8 @@ void US_InitDialogueGui::checkCertificates( void )
     }
 
   //TEST
-  //isDataDiskOnly = true;
-  //emit pass_allow_dataDisk_only();
+  // isDataDiskOnly = true;
+  // emit pass_allow_dataDisk_only();
   //  End of checkig for conneciton to Optima sys_data server ///////////////////////////////////////////////
 }
 
