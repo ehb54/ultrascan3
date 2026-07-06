@@ -10,7 +10,7 @@ Initialize Genetic Algorithm
   :local: 
 
 
-When the **Initialize Genetic Algorithm module** is opened from *Velocity*, a **Etc Dorectory Cleaned** dialog will open. Press **OK** to continue to the Genetic Algorithm Initiation Window. 
+When the **Initialize Genetic Algorithm module** is opened from *Velocity*, a **Etc Directory Cleaned** dialog will open. Press **OK** to continue to the Genetic Algorithm Initiation Window. 
 
 .. image:: /_static/images/ga_initialize-o.png
     :align: center
@@ -98,11 +98,11 @@ GA Functions:
   :widths: 20 50 
 
   * - **Select PreFilter(s)**
-    - Open  `Select Pre-Filter <common_dialogs.html#data-loader>`_ to select Run IDs on which to pre-filter lists of models for loading. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as Pre-filters.     
+    - Open  :ref:`Select Pre-Filter <fe-data-loader>` to select Run IDs on which to pre-filter lists of models for loading. This can significantly reduce model loading time, particularly with large model counts in the database. The text box to the right of this button will display a summary of runs selected as Pre-filters.     
   * - **Load Distribution**
-    - Load model distribution data as specified through a `Model Loader dialog <common_dialogs.html#load-distribution-model>`_.
+    - Load model distribution data as specified through a :ref:`Model Loader dialog <fe-model-loader>`.
   * - **Load Color File**
-    - Load a color map (.xml) for Z dimension display as specified through `Load Color File dialog <colorgradient.html>`_.
+    - Load a color map (.xml) for Z dimension display as specified through :doc:`Load Color File dialog <colorgradient>`.
   * - **1-Dimensional Plot**
     - Select to plot in one dimension, displaying the selected X-axis variable on the horizontal axis and the partial concentration on the Y-axis as a bar plot.
   * - **2-Dimensional Plot**
@@ -115,7 +115,7 @@ GA Functions:
     - Specify that you are about to manually draw bins in a 2-D or 3-D plot. Each bin is drawn by clicking and holding on one bin vertex, moving the mouse and showing a rubber band rectangle, then releasing when the diagonal vertex point is reached.
   * - **Check for Bin Overlaps / Sort**
     - Click this button to check that no drawn bins overlap and to sort bins so they are ordered by the X,Y upper-left vertex.
-  * - **Autoassign Solute Bins**
+  * - **Auto-assign Solute Bins**
     - Automatically draw bins around solute points, using bucket width and height values specified. If a number of initial solutes value is first specified, only that number of the bins with the highest concentration values will be initially drawn. Where bins overlap, additional rectangles will be drawn using the portion of the second rectangle that is not overlapping.
   * - **Reset Solute Bins**
     - Erase bins from the plot and internal data base, so that a new set may be generated.
@@ -140,6 +140,7 @@ GA Functions:
   * - **Close** 
     - Close all windows and exit.
 
+.. _ga-stats-report:
 
 Statistics File Output
 ============================

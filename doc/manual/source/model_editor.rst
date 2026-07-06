@@ -26,7 +26,7 @@ Model Editor Functions:
   :header-rows: 0
 
   * - **Select Investigator** 
-    - This button brings up an `Investigator Dialog <us_investigator.html>`_ that allows selecting the current investigator for whom to list models.
+    - This button brings up an :doc:`Investigator Dialog <us_investigator>` that allows selecting the current investigator for whom to list models.
   * - **Use Database** 
     - Check to select loading or editing the model from the database.
   * - **Use Local Disk** 
@@ -38,9 +38,9 @@ Model Editor Functions:
   * - **Model Description:** 
     - The text box here echoes the name of the model currently selected in the list. The text box entry can be edited to change the model name; of use, particularly, when a new model is being created.
   * - **Manage Components** 
-    - This button brings up a `Model Components Dialog <components.html>`_ in which the model components and their properties can be specified.
+    - This button brings up a :doc:`Model Components Dialog <components>` in which the model components and their properties can be specified.
   * - **Manage Associations** 
-    - This button brings up a `Model Associations Dialog <associations.html>`_ in which reversible association chemical equations can be defined.
+    - This button brings up a :doc:`Model Associations Dialog <associations>` in which reversible association chemical equations can be defined.
   * - **Wavelength:** 
     - Specify the model wavelength value in this text box.
   * - **Optical System:** 

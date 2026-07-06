@@ -11,17 +11,17 @@ Enter New Solution Tab
 
 **Panel Tab Options:**
 
-* `Select Solution <solution_select.html>`_ - A panel whose primary purpose is to select a Solution to return to the caller.
+* `Select Solution <solution_select>` - A panel whose primary purpose is to select a Solution to return to the caller.
 * :ref:`Enter New Solution <enter-new-solution>` - A panel whose primary purpose is to enter a brand new Solution, defined mostly by specifying components and each one's concentration.
-* `Edit Existing Solution <solution_edit.html>`_ - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing Solution.
-* `Settings <solution_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input and to select the investigator. 
+* `Edit Existing Solution <solution_edit>` - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing Solution.
+* `Settings <solution_settings>` - A panel whose primary purpose is to set Database-or-Disk input and to select the investigator. 
 
 Enter New Solution Panel
 =========================
 
 .. _enter-new-solution: 
 
-Using this panel, you can create a new solution in the current database or on the local disk. Most commonly, you select or create analytes in the solution using the `Analyte Management <../analyte/index.html>`_. As each is selected, you enter the molar ratio of each analyte, then select or create a buffer condition from the set of buffers in the `Buffer Management <../buffer/index.html>`_. After providing a descriptive title, you add a spectrum of the solution by clicking `Manage Spectrum <../analyte/analyte_new.html#add-analyte-spectrum>`_ or you can click on the Accept button to upload the solution to the DB or to local disk and to return to the Select Solution panel.
+Using this panel, you can create a new solution in the current database or on the local disk. Most commonly, you select or create analytes in the solution using the :doc:`Analyte Management <../analyte/index>`. As each is selected, you enter the molar ratio of each analyte, then select or create a buffer condition from the set of buffers in the :doc:`Buffer Management <../buffer/index>`. After providing a descriptive title, you add a spectrum of the solution by clicking :ref:`Manage Spectrum <add-analyte-spectrum>` or you can click on the Accept button to upload the solution to the DB or to local disk and to return to the Select Solution panel.
 
 As with all panels, a set of tabs allows you to navigate to other panels in order to perform specialized subtasks relating to solution management. 
 
@@ -69,9 +69,9 @@ New Solution Functions:
 Add New Solution Steps:
 ========================
 
-* **Step 1:** - Enter the `Analyte Management <../analyte/index.html>`_ module to select or create an analyte by clicking **Add Analyte** button. 
+* **Step 1:** - Enter the :doc:`Analyte Management <../analyte/index>` module to select or create an analyte by clicking **Add Analyte** button. 
 * **Step 2:** - For solutions with multiple analytes, enter the Analyte Molar Ratio integer of each Analyte. 
-* **Step 3:** - Enter the `Buffer Managenemt <../buffer/index.html>`_ module to call or create a buffer by clicking **Select Buffer**. 
+* **Step 3:** - Enter the :doc:`Buffer Managenemt <../buffer/index>` module to call or create a buffer by clicking **Select Buffer**. 
 * **Step 4:** - Add a descriptive title in the **Solution Name:**  
 * **Optional/Additional:** - Enter Solution note, enter a solution spectrum profile. 
 

@@ -45,6 +45,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    gaussian_type_size = hplc_win->gaussian_type_size;
 
    hplc_ampl_width_min       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_ampl_width_min"        ].toDouble();
+   hplc_ampl_min             = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_ampl_min"              ].toDouble();
    hplc_lock_min_retry       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry"        ] == "true" ? true : false;
    hplc_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry_mult"   ].toDouble();
    hplc_maxfpk_restart       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart"        ] == "true" ? true : false;
@@ -431,22 +432,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    lbl_fix_curves->setPalette( PALET_LABEL );
    AUTFBACK( lbl_fix_curves );
    lbl_fix_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   /* old way
-   QString qs_rx = QString( "^(|(\\d+)|(\\d+(,\\d+){0,%1}))$" ).arg( hplc_win->gaussians.size() / 3 - 1 );
-   cout << "qs_rx:" << qs_rx << endl;
-   QRegExp rx_fix_curves( qs_rx );
-   QRegExpValidator *rx_val_fix_curves = new QRegExpValidator( rx_fix_curves, this );
-   le_fix_curves = new mQLineEdit( this );    le_fix_curves->setObjectName( "le_fix_curves Line Edit" );
-   le_fix_curves->setText( "" );
-   le_fix_curves->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_fix_curves->setPalette( PALET_NORMAL );
-   AUTFBACK( le_fix_curves );
-   le_fix_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
-   le_fix_curves->setEnabled( false );
-   le_fix_curves->setValidator( rx_val_fix_curves );
-   connect( le_fix_curves, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
-   */
 
    for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size() / gaussian_type_size; i++ )
    {
@@ -1620,7 +1605,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = hplc_ampl_width_min;
+         double min = hplc_ampl_min;
          double max = hplc_win->gauss_max_height;
          // qDebug() << "hplc_fit:: gauss_max_height " << max;
          if ( cb_pct_amplitude->isChecked() )
@@ -1629,9 +1614,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < hplc_ampl_width_min )
+         if ( min < hplc_ampl_min )
          {
-            min = hplc_ampl_width_min;
+            min = hplc_ampl_min;
          }
          if ( max > hplc_win->gauss_max_height )
          {
@@ -1969,7 +1954,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::lock_zeros( vector < double > & par )
       if ( !cb_fix_curves[ pos ]->isChecked() ) {
 
          if ( !cb_fix_amplitude->isChecked() ) {
-            if ( tmp_gaussians[ 0 + i ] <= hplc_ampl_width_min * hplc_lock_min_retry_mult ) {
+            if ( tmp_gaussians[ 0 + i ] <= hplc_ampl_min * hplc_lock_min_retry_mult ) {
                to_lock.insert( pos + 1 );
                continue;
             }

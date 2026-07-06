@@ -87,8 +87,25 @@ void US_Help::show_html_file( const QString& location )
 // Open a web page or file in the user's configured browser
 void US_Help::openBrowser( const QString& location )
 {
+   QString program = US_Settings::browser();
+
+   if ( program.isEmpty() )
+   {
+      // No browser explicitly configured -- use the OS default.
+      if ( !QDesktopServices::openUrl( QUrl( location ) ) )
+      {
+         QMessageBox::warning( 0,
+            tr( "Ultrascan III Error" ),
+            tr( "Cannot open the system default browser ...\n"
+                "Please insure you have a default browser configured "
+                "for your operating system or set one explicitly in "
+                "UltraScan Configuration.\n\n"
+                "  URL: %1" ).arg( location ) );
+      }
+      return;
+   }
+
    QProcess*   proc    = new QProcess( this );
-   QString     program = US_Settings::browser();
    QStringList args;
 
 #ifndef Q_OS_MAC

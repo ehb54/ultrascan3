@@ -20,7 +20,7 @@ In each panel, tabs are visible at the top of the window to enable the user to m
 .. image:: ../_static/images/solution_select.png
     :align: center
 
-* `Select Solution <solution_select.html>`_ - A panel whose primary purpose is to select a solution to return to the caller.
-* `Enter New Solution <solution_new.html>`_ - A panel whose primary purpose is to enter a brand new solution, defined mostly by specifying components and each one's concentration.
-* `Edit Existing Solution <solution_edit.html>`_ - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing solution.
-* `Settings <solution_settings.html>`_ - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local solution components file from the database.
+* `Select Solution <solution_select>` - A panel whose primary purpose is to select a solution to return to the caller.
+* `Enter New Solution <solution_new>` - A panel whose primary purpose is to enter a brand new solution, defined mostly by specifying components and each one's concentration.
+* `Edit Existing Solution <solution_edit>` - A panel whose primary purpose is to change non-hydrodynamic characteristics of an already existing solution.
+* `Settings <solution_settings>` - A panel whose primary purpose is to set Database-or-Disk input, the investigator; or to synchronize the local solution components file from the database.

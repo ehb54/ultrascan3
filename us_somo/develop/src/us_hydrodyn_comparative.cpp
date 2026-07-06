@@ -1,8 +1,7 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
-#include "qregexp.h"
-//Added by qt3to4:
 #include <QBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>
@@ -2686,7 +2685,7 @@ void US_Hydrodyn_Comparative::save_param()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".smp$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".smp$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".smp";
    }
@@ -3176,8 +3175,8 @@ void US_Hydrodyn_Comparative::process_csv()
       return;
    }
 
-   csv_processed.name.replace(QRegExp("^selected_rows_from_"),"");
-   csv_processed.name.replace(QRegExp("^Processed_"),"");
+   csv_processed.name.replace(QRegularExpression( QStringLiteral( "^selected_rows_from_" ) ),"");
+   csv_processed.name.replace(QRegularExpression( QStringLiteral( "^Processed_" ) ),"");
    csv_processed.name = "Processed_" + csv_processed.name;
    if ( !csv_process(csv_processed) )
    {
@@ -3270,7 +3269,7 @@ void US_Hydrodyn_Comparative::save_csv()
    }
 
    QString use_name = sel_name.isEmpty() ? "*.csv" : sel_name;
-   if ( !use_name.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !use_name.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       use_name += ".csv";
    }
@@ -3288,7 +3287,7 @@ void US_Hydrodyn_Comparative::save_csv()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".csv";
    }
@@ -3322,7 +3321,7 @@ void US_Hydrodyn_Comparative::print()
 {
 #ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
-   printer.setPageSize( QPageSize( QPageSize::Letter ) );
+   printer.setPageSize(QPrinter::Letter);
 
    if ( printer.setup(this) ) {      // opens printer dialog
       QPainter p;
@@ -4045,7 +4044,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    // csv csv_merged;
 
    csv *ref_csv = &csvs[ csv_used_vector[0] ];
-   csv_merged.name.replace(QRegExp("^selected_rows_from_"),"");
+   csv_merged.name.replace(QRegularExpression( QStringLiteral( "^selected_rows_from_" ) ),"");
    csv_merged.name = "selected_rows_from_" + QFileInfo(ref_csv->name).completeBaseName();
    csv_merged.header_map = ref_csv->header_map;
    csv_merged.header = ref_csv->header;

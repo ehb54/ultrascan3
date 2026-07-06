@@ -299,6 +299,46 @@ else()
 endif()
 
 # =========================================================================
+# 6b) Copy MariaDB Connector/C client-side auth plugins
+#
+#     libmariadb resolves its plugin directory at runtime relative to the
+#     directory containing the loaded DLL (via GetModuleFileName).  The
+#     vcpkg port bakes in the relative path "../plugins/libmariadb", so:
+#
+#       bin/libmariadb.dll  ->  bin/../plugins/libmariadb/
+#
+#     windeployqt has no knowledge of these modules — they must be staged
+#     explicitly.  Source: ${VCPKG_PLUGIN_DIR}/libmariadb/
+#     Mirrors: MacDeploy.cmake section 9e
+# =========================================================================
+set(_MARIADB_PLUGIN_SRC_DIR "")
+if(VCPKG_PLUGIN_DIR AND EXISTS "${VCPKG_PLUGIN_DIR}/libmariadb")
+    set(_MARIADB_PLUGIN_SRC_DIR "${VCPKG_PLUGIN_DIR}/libmariadb")
+endif()
+
+if(_MARIADB_PLUGIN_SRC_DIR)
+    file(MAKE_DIRECTORY "${S_PLUG}/libmariadb")
+    foreach(_mariadb_plugin IN ITEMS "dialog.dll" "mysql_clear_password.dll")
+        set(_mariadb_src "${_MARIADB_PLUGIN_SRC_DIR}/${_mariadb_plugin}")
+        if(EXISTS "${_mariadb_src}")
+            if(NOT EXISTS "${S_PLUG}/libmariadb/${_mariadb_plugin}")
+                message(STATUS "[WinDeploy] Installing MariaDB auth plugin -> plugins/libmariadb/${_mariadb_plugin}")
+                file(COPY "${_mariadb_src}" DESTINATION "${S_PLUG}/libmariadb")
+            else()
+                message(STATUS "[WinDeploy] MariaDB auth plugin already present: plugins/libmariadb/${_mariadb_plugin}")
+            endif()
+        else()
+            message(WARNING "[WinDeploy] MariaDB auth plugin not found: ${_mariadb_src}")
+        endif()
+    endforeach()
+else()
+    message(WARNING
+        "[WinDeploy] MariaDB Connector/C plugins dir not found -- PAM auth may fail at runtime. "
+        "Expected: \${VCPKG_PLUGIN_DIR}/libmariadb/. "
+        "Ensure libmariadb is installed for the active vcpkg triplet.")
+endif()
+
+# =========================================================================
 # 7) Deploy Qt Assistant (help viewer)
 #    Mirrors MacDeploy.cmake section 9.
 # =========================================================================

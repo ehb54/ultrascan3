@@ -208,7 +208,7 @@ double** US_Matrix::construct( QVector< double* >& QVm,
       QVector< double >& QVd, int rows, int columns )
 {
    QVm.fill(  0, rows );            // Initialize the pointers vector
-   QVd.fill( 0., rows * columns );  // Initialize the data elements vector
+   QVd.fill( 0., static_cast<qsizetype>( rows ) * columns );  // Initialize the data elements vector
    double*  vd = QVd.data();        // Point to the beginning of data
 
    for ( int ii = 0; ii < rows; ii++ )

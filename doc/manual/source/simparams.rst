@@ -8,7 +8,7 @@ Simulation Parameters
 .. contents:: Index
   :local: 
 
-An option in UltraScan-III `Simulation Module <astfem_sim.html>`_, this dialog allows specifying parameters governing a simulation. 
+An option in UltraScan-III :doc:`Simulation Module <astfem_sim>`, this dialog allows specifying parameters governing a simulation. 
 The dialog allows multiple speed profiles in the course of the simulation. Items along the left side of the dialog refer to the currently selected speed step. Those on the right are for the general properties of the simulation, including radial ranges and simulation method. 
 
 .. image:: _static/images/simparams.png

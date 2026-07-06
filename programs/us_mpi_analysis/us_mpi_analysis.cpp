@@ -1422,7 +1422,7 @@ DbgLv(0) << "DSM: NORM_CUT:  norm_a" << norm_a << "ksol" << ksolutes;
 
    if ( ksolutes < nsolutes )
    {  // Norm tolerance has excluded some columns
-      nnls_a.resize( ksolutes * ndspts ); // Resize A matrix
+      nnls_a.resize( static_cast<qsizetype>( ksolutes ) * ndspts ); // Resize A matrix
       *nsolutesP      = ksolutes;         // Save new solutes count
 DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
@@ -1436,7 +1436,6 @@ DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
 }
 
-
 // Calculate residuals (FE Modeling and NNLS)
 void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,

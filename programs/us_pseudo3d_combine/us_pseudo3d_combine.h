@@ -214,7 +214,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
 
       void help       ( void )
-      { showHelp.show_help( "pseudo3d_combine.html" ); };
+      { showHelp.show_help( "manual/pseudo3d.html" ); };
 
    protected:
       virtual void timerEvent( QTimerEvent *e );

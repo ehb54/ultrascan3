@@ -43,6 +43,24 @@ int main( int argc, char* argv[] )
   QApplication application( argc, argv );
   application.setApplicationDisplayName( "UltraScan III" );
 
+#ifdef Q_OS_WIN
+  // MariaDB Connector/C on Windows does not fall back to the compiled-in
+  // MARIADB_PLUGINDIR when MYSQL_PLUGIN_DIR is unset: it constructs a bare
+  // filename ("dialog.dll") which Windows cannot find via the standard DLL
+  // search path.  Setting MARIADB_PLUGIN_DIR before any DB connection is
+  // opened makes the connector look in plugins/libmariadb/ relative to the
+  // executable, mirroring the POSIX behaviour.  This does not force PAM
+  // authentication; it only makes auth plugins discoverable if the server
+  // requests one.
+  {
+    const QString pluginDir =
+      QDir( QCoreApplication::applicationDirPath() )
+        .absoluteFilePath( "../plugins/libmariadb" );
+    qputenv( "MARIADB_PLUGIN_DIR",
+             QDir::toNativeSeparators( pluginDir ).toUtf8() );
+  }
+#endif
+
   // Set up language localization
   QString locale = QLocale::system().name();
 
@@ -222,7 +240,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   QMenu* multiwave   = new QMenu( tr( "&Multiwavelength" ),   this );
   QMenu* spectrum    = new QMenu( tr( "&Spectral Analysis" ),   this );
+#ifndef Q_OS_MAC
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
+#endif
   addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
   addMenu(  P_LEGDATA  , tr( "&Convert Optima Data (Beckman tar.gz) " ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
@@ -307,7 +327,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( multiwave   );
   menuBar()->addMenu( simulation  );
+#ifndef Q_OS_MAC
   menuBar()->addMenu( gmp         );
+#endif
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 

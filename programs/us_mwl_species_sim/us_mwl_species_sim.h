@@ -163,7 +163,7 @@ class US_MwlSpeciesSim : public US_Widgets
 
         //! \brief Show help information
         void help(void)
-        { showHelp.show_help("manual/mwl_species_sim.html"); };
+        { showHelp.show_help("manual/multi-wavelength/mwl_species_sim.html"); };
 };
 
 #endif // US_MWL_SPECIES_SIM_H

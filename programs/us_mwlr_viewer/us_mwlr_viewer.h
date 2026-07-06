@@ -171,7 +171,7 @@ class US_MwlRawViewer : public US_Widgets
      void   p3dctrl_closed ( void );
      int    live_scan      ( int* = 0, int* = 0, int* = 0 );
      void   help           ( void )
-     { showHelp.show_help( "mwlr_viewer.html" ); };
+     { showHelp.show_help( "manual/multi-wavelength/mwlr_viewer.html" ); };
 };
 #endif
 

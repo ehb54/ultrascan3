@@ -161,11 +161,12 @@ void US_SelectItem::build_layout( const QString titl )
 	 }
        else
 	 {
-	   le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
-				"<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
-				"<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
-				"<ul><li>Records can be removed form the list (\"Remove from the List\"). NOTE that such runs cannot be monitored with this program</ul></li>"
-				"<ul><li>Finally, selected record can be marked as \"Failed\". The program will re-initialize the run from the 3. IMPORT stage</ul></li>"));
+	   le_info->setText(tr( "One or more experimental methods have already been submitted to the Beckman Optima AUC instrument(s)."
+				"<ul><li>To continue monitoring an existing run, select it from the list below and click \"Select Optima Run to Follow.\"</ul></li>"
+				"<ul><li>To create or submit a new method, click \"Define Another Experiment.\"</ul></li>"
+				"<ul><li>To hide a record from this list, select it and click \"Remove from the List.\" Removed runs can no longer be monitored from this program.</ul></li>"
+				"<ul><li>To mark a selected record as failed, click \"Mark/Unmark Run as Failed.\" The program will reset the workflow to stage 3, \"LIMS Import,\" so the run can be reinitialized.</ul></li>"));
+	   
 	 }
        
        le_info->setFont(le_info_font);
@@ -842,7 +843,7 @@ void US_SelectItem::set_unset_failed_autoflow()
    
    QString current_mark = "<font color='green'><b>NOT FAILED</b></font>";
    QString new_mark     = "<font color='red'><b>FAILED</b></font>";
-   QString add_msg      = "This implies the run will be re-started from stage <b>3. IMPORT</b> upon next re-attachment.";
+   QString add_msg      = "<br>If you later select this run again, UltraScan will restart processing from Stage <b>3: LIMS Import</b>.";
    bool isFailed = false;
    if ( failedID. toInt() != 0 )
      {
@@ -854,13 +855,13 @@ void US_SelectItem::set_unset_failed_autoflow()
      }
 
    QMessageBox msgBox;
-   msgBox.setText(tr( "You have selected to change the status for the following run:<br><br>" )
+   msgBox.setText(tr( "You are about to update the status of the following run:<br><br>" )
 		  + tr("<b>ID:&emsp;</b>") + items[ AutoflowRow ][ 0 ]
 		  + tr("<br>")
 		  + tr("<b>Name:&emsp;</b>") + items[ AutoflowRow ][ 1 ]
 		  + tr("<br>")
 		  + tr("<b>Current Status:&emsp;</b> ") + current_mark
-		  + tr("<br><br> If proceeded, it will be marked as %1. %2").arg( new_mark ).arg( add_msg )
+		  + tr("<br><br> It will be marked as %1. %2").arg( new_mark ).arg( add_msg )
 		  + tr( "<br><br>Proceed?" ));
    //msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if deleted, this run cannot be monitored with this program anymore!</font>");
    msgBox.setWindowTitle(tr("Mark/UnMark Autoflow Record as FAILED"));

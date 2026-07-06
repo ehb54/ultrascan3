@@ -1,6 +1,5 @@
 #include "../include/us_file_util.h"
-#include <qregexp.h>
-//Added by qt3to4:
+#include <QRegularExpression>
 #include <QTextStream>
 
 bool US_File_Util::copy( QString from, QString to, bool overwrite, QString qsheader )
@@ -279,7 +278,7 @@ void US_Log::log( const QString & qs )
    if ( error_msg.isEmpty() )
    {
       (*ts) << qs;
-      if ( !qs.contains( QRegExp( "\\n$" ) ) )
+      if ( !qs.contains( QRegularExpression( QStringLiteral( "\\n$" ) ) ) )
       {
          (*ts) << Qt::endl;
       }

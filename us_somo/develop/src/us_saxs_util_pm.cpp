@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_file_util.h"
 #include "../include/us_pm.h"
 #include "../include/us_timer.h"
@@ -559,7 +560,7 @@ bool US_Saxs_Util::run_pm(
       return false;
    }
 
-   parameters[ "pmfiles" ].replace( "\\/", "/" ).replace( QRegExp( "^\"" ), "" ).replace( QRegExp( "\"$" ), "" );
+   parameters[ "pmfiles" ].replace( "\\/", "/" ).replace( QRegularExpression( "^\"" ), "" ).replace( QRegularExpression( "\"$" ), "" );
    QStringList files;
 
    {
@@ -848,12 +849,12 @@ bool US_Saxs_Util::run_pm( QString controlfile )
 
    bool use_tar = false;
 
-   if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
    {
       // gunzip controlfile, must be renamed for us_gzip
       
       // rename
-      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+      dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
       QDir qd;
       qd.remove( dest );
       if ( !qd.rename( controlfile, dest ) )
@@ -874,12 +875,12 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       }
       errorno--;
 
-      controlfile.replace( QRegExp( "\\.gz$" ), "" );
+      controlfile.replace( QRegularExpression( QStringLiteral( "\\.gz$" ) ), "" );
    }
 
    QStringList qsl;
 
-   if ( controlfile.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+   if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
    {
       use_tar = true;
       // tar open controlfile
@@ -985,7 +986,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    {
       // package output
       QString results_file = controlfile;
-      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
+      results_file.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TGZ)$" ) ), "" );
       results_file += "_out.tgz";
 
       if ( !create_tgz_output( results_file ) )
@@ -1058,10 +1059,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
    vector < double >            csv_q;
    vector < vector < double > > csv_I;
 
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
 
-   QRegExp rx_valid  ( 
+   QRegularExpression rx_valid  ( 
                       "^("
                       "pmgridsize|"
                       "pmharmonics|"
@@ -1115,7 +1116,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       ")$" 
                       );
 
-   QRegExp rx_arg    ( 
+   QRegularExpression rx_arg    ( 
                       "^("
                       "pmgridsize|"
                       "pmharmonics|"
@@ -1162,7 +1163,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       ")$" 
                       );
 
-   QRegExp rx_vector ( 
+   QRegularExpression rx_vector ( 
                       "^("
                       "pmf|"
                       "pmq|"
@@ -1188,7 +1189,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
@@ -1198,7 +1199,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
       QString option = qsl[ 0 ].toLower();
       qsl.pop_front();
 
-      if ( rx_valid.indexIn( option ) == -1 )
+      QRegularExpressionMatch rx_valid_m = rx_valid.match( option );
+      if ( !rx_valid_m.hasMatch() )
       {
          errormsg = QString( "Error controlfile line %1 : Unrecognized token %2" )
             .arg( i + 1 )
@@ -1206,7 +1208,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          return false;
       }
 
-      if ( rx_arg.indexIn( option ) != -1 && 
+      QRegularExpressionMatch rx_arg_m = rx_arg.match( option );
+      if ( rx_arg_m.hasMatch() && 
            qsl.size() < 1 )
       {
          errormsg = QString( "Error reading controlfile line %1 : Missing argument " )
@@ -1214,12 +1217,13 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          return false;
       }
 
-      if ( rx_arg.indexIn( option ) != -1 )
+      if ( rx_arg_m.hasMatch() )
       {
          control_parameters[ option ] = qsl.join( " " );
       }
 
-      if ( rx_vector.indexIn( option ) != -1 )
+      QRegularExpressionMatch rx_vector_m = rx_vector.match( option );
+      if ( rx_vector_m.hasMatch() )
       {
          control_vectors[ option ].clear( );
          if ( us_log )
@@ -1230,7 +1234,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          {
             QStringList qsl2;
             {
-               QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
+               QRegularExpression rx = QRegularExpression( QStringLiteral( "(\\s+|(\\s*(,|:)\\s*))" ) );
                qsl2 = (qsl[ j ] ).split( rx , Qt::SkipEmptyParts );
             }
             if ( us_log )
@@ -2731,7 +2735,7 @@ bool US_Saxs_Util::run_align(
 
    int from_size = (int) from.size();
    int to_size   = (int) to  .size();
-   QRegExp rx_atomhetatm = QRegExp( "^(ATOM|HETATM)$" );
+   QRegularExpression rx_atomhetatm = QRegularExpression( QStringLiteral( "^(ATOM|HETATM)$" ) );
 
    // build frommap if requested
    if ( frommap ) {
@@ -3194,7 +3198,7 @@ bool US_Saxs_Util::run_align(
 
    {
       bool cut_replaced = false;
-      QRegExp rx_linkconect = QRegExp( "^(LINK|CONECT)$" );
+      QRegularExpression rx_linkconect = QRegularExpression( QStringLiteral( "^(LINK|CONECT)$" ) );
 
       for ( int i = 0; i < to_size; ++i ) {
          QString line = to[ i ];

@@ -103,7 +103,7 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       void    limit_data         ( const QString& );
       void    update_disk_db     ( bool );
       void    help               ( void )
-      { showHelp.show_help( "load_auc.html" ); };
+      { showHelp.show_help( "manual/common_dialogs.html#data-loader" ); };
 
    protected:
       //! \brief Event filter to flag whether a mouse click is

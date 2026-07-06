@@ -208,6 +208,6 @@ class US_Integral : public US_Widgets
 
         //! \brief Slot to display help information
         void help()
-        { showHelp.show_help("integral.html"); }
+        { showHelp.show_help("idist_combine.html"); }
 };
 #endif

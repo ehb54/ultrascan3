@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_surfracer.h"
 
 #include "../include/us_hydrodyn_grid_atob_hydro.h"
@@ -15,9 +16,7 @@
 #include "../include/us_pm.h"
 #include "../include/us_timer.h"
 
-#include <qregexp.h>
 #include <qfont.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -560,23 +559,23 @@ void US_Saxs_Util::read_residue_file()
                
                unsigned int pos = ( unsigned int ) msroll_radii.size() + 1;
                double covalent_radius = new_atom.hybrid.radius / 2e0;
-               if ( new_atom.name.contains( QRegExp( "^C" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^C" ) ) ) )
                {
                   covalent_radius = 0.77e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^N" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^N" ) ) ) )
                {
                   covalent_radius = 0.70e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^P" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^P" ) ) ) )
                {
                   covalent_radius = 0.95e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^S" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^S" ) ) ) )
                {
                   covalent_radius = 1.04e0;
                }
-               if ( new_atom.name.contains( QRegExp( "^O" ) ) )
+               if ( new_atom.name.contains( QRegularExpression( QStringLiteral( "^O" ) ) ) )
                {
                   covalent_radius = new_atom.hybrid.radius / 2.68e0;
                }
@@ -643,7 +642,7 @@ void US_Saxs_Util::read_residue_file()
                residue_atom_abb_hybrid_map[ new_atom.name ] = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
-               if ( new_residue.name.contains(QRegExp("^PBR-")) )
+               if ( new_residue.name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
                {
                   pbr_override_map[ QString("%1|%2|%3|%4")
                                     .arg(new_residue.name == "PBR-P" ? "P" : "NP" )
@@ -749,7 +748,7 @@ void US_Saxs_Util::read_residue_file()
    {
       // only AA's
       if ( residue_list[i].type == 0 &&
-           !residue_list[i].name.contains(QRegExp("^PBR-")) )
+           !residue_list[i].name.contains(QRegularExpression( QStringLiteral( "^PBR-" ) )) )
       {
          for ( unsigned int j = 0; j < residue_list[i].r_atom.size(); j++ )
          {
@@ -11482,7 +11481,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
          {
                
             QString tmp_str = str1.mid(10,62);
-            tmp_str.replace(QRegExp("\\s+")," ");
+            tmp_str.replace(QRegularExpression( QStringLiteral( "\\s+" ) )," ");
             if ( str1.left(5) == "TITLE" )
             {
                last_pdb_title << tmp_str;
@@ -11508,10 +11507,11 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
             model_flag = true; // we are using model descriptions (possibly multiple models)
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
-            QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.indexIn( str1 ) != -1 )
+            QRegularExpression rx_get_model( "^MODEL\\s+(\\S+)" );
+            QRegularExpressionMatch rx_get_model_m = rx_get_model.match( str1 );
+            if ( rx_get_model_m.hasMatch() )
             {
-               temp_model.model_id = rx_get_model.cap( 1 );
+               temp_model.model_id = rx_get_model_m.captured(1);
             } else {
                temp_model.model_id = str1.mid( 6, 15 );
             }
@@ -11897,7 +11897,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
 
    // consolidate & symmetrize connections
 
-   QRegExp rx("^(\\d+)~(\\d+)$");
+   QRegularExpression rx("^(\\d+)~(\\d+)$");
 
    sortable_uint tmp_suint_i;
    sortable_uint tmp_suint_j;
@@ -11912,7 +11912,8 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
    {
       if ( connection_active[it->first] ) 
       {
-         if ( rx.indexIn(it->first) == -1 ) 
+         QRegularExpressionMatch rx_m = rx.match(it->first);
+         if ( !rx_m.hasMatch() ) 
          {
 	   us_log->log("unexpected regexp extract failure (write_pdb)!\n");
 	   if ( us_udp_msg )
@@ -11926,8 +11927,8 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
 	   accumulated_msgs += "unexpected regexp extract failure (write_pdb)!\\n"; 
 	   return -1;
          }
-         tmp_suint_i.x = rx.cap(1).toInt();
-         tmp_suint_j.x = rx.cap(2).toInt();
+         tmp_suint_i.x = rx_m.captured(1).toInt();
+         tmp_suint_j.x = rx_m.captured(2).toInt();
 
          connect_list[tmp_suint_i.x].push_back(tmp_suint_j);
          connect_list[tmp_suint_j.x].push_back(tmp_suint_i);
@@ -12097,7 +12098,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 #endif
    get_atom_map(&model_vector[current_model]);
 
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
    {
@@ -12395,7 +12396,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
               //                 this_atom->hydrogens = 0;
               //                 if ( count_hydrogens.indexIn(hybrid_name) != -1 )
               //                 {
-              //                    this_atom->hydrogens = count_hydrogens.cap(1).toInt();
+              //                    this_atom->hydrogens = count_hydrogens_m.captured(1).toInt();
               //                 }
               //                 this_atom->saxs_excl_vol = saxs_util->atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
               //                 if ( !saxs_util->saxs_map.count(saxs_util->hybrid_map[hybrid_name].saxs_name) )

@@ -68,7 +68,7 @@ class US_PlotControlPc : public US_WidgetsDialog
       int  dimensionType( QVector< QCheckBox* >& );
 
       void help     ( void )
-      { showHelp.show_help( "us_pcsa_controls.html" ); };
+      { showHelp.show_help( "manual/3d_plot.html" ); };
 };
 #endif
 

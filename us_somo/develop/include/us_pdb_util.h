@@ -3,7 +3,6 @@
 
 #include <qstring.h>
 #include <qstringlist.h>
-#include <qregexp.h>
 #include <list>
 #include <set>
 #include <algorithm>

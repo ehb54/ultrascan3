@@ -240,6 +240,6 @@ void US_Admin::save( void )
 void US_Admin::help()
 {
   US_Help* online_help = new US_Help( this );
-  online_help->show_help( "manual/administrator.html" );
+  online_help->show_help( "manual/us_administrator.html" );
 }
 

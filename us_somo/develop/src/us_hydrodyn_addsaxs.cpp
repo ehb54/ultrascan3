@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_addsaxs.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -555,7 +556,7 @@ void US_AddSaxs::select_file()
          QTextStream ts(&f);
          while (!ts.atEnd())
          {
-            QStringList qsl = ( ts.readLine() ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+            QStringList qsl = ( ts.readLine() ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 ) {
                saxs_map[ qsl[0] ].saxs_name = qsl[pos++];

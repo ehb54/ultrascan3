@@ -60,44 +60,44 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_resolu->setSingleStep( 1 );
-   connect( ct_resolu, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_resolu( double ) ) );
+   connect( ct_resolu, &QwtCounter::valueChanged,
+            this,      &US_Pseudo3D_Combine::update_resolu );
 
    QLabel* lb_xreso      = us_label( tr( "X Resolution:" ) );
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_xreso->setSingleStep( 1 );
-   connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_xreso( double ) ) );
+   connect( ct_xreso,  &QwtCounter::valueChanged,
+            this,      &US_Pseudo3D_Combine::update_xreso );
 
    QLabel* lb_yreso      = us_label( tr( "Y Resolution:" ) );
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_yreso->setSingleStep( 1 );
-   connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_yreso( double ) ) );
+   connect( ct_yreso,  &QwtCounter::valueChanged,
+            this,      &US_Pseudo3D_Combine::update_yreso );
 
    QLabel* lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zfloor     = us_counter( 3, 50.0, 150.0, 1.0 );
    ct_zfloor->setSingleStep( 1 );
-   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_zfloor( double ) ) );
+   connect( ct_zfloor, &QwtCounter::valueChanged,
+            this,      &US_Pseudo3D_Combine::update_zfloor );
 
    us_checkbox( tr( "Autoscale X and Y" ), ck_autosxy, true );
-   connect( ck_autosxy, SIGNAL( clicked() ),
-            this,       SLOT( select_autosxy() ) );
+   connect( ck_autosxy, &QCheckBox::clicked,
+            this,       &US_Pseudo3D_Combine::select_autosxy );
 
    us_checkbox( tr( "Autoscale Z" ), ck_autoscz, true );
-   connect( ck_autoscz, SIGNAL( clicked() ),
-            this,       SLOT( select_autoscz() ) );
+   connect( ck_autoscz, &QCheckBox::clicked,
+            this,       &US_Pseudo3D_Combine::select_autoscz );
 
    us_checkbox( tr( "Continuous Loop" ), ck_conloop, true );
-   connect( ck_conloop, SIGNAL( clicked() ),
-            this,       SLOT( select_conloop() ) );
+   connect( ck_conloop, &QCheckBox::clicked,
+            this,       &US_Pseudo3D_Combine::select_conloop );
 
    us_checkbox( tr( "Z as Percentage" ), ck_zpcent,  false );
 
@@ -109,32 +109,32 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    ct_plt_kmin   = us_counter( 3, 0.5, 50.0, 1.0 );
    ct_plt_kmin->setSingleStep( 1 );
-   connect( ct_plt_kmin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_kmin( double ) ) );
+   connect( ct_plt_kmin, &QwtCounter::valueChanged,
+            this,        &US_Pseudo3D_Combine::update_plot_kmin );
 
    lb_plt_kmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
    lb_plt_kmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_kmax   = us_counter( 3, 1.0, 50.0, 4.0 );
    ct_plt_kmax->setSingleStep( 1 );
-   connect( ct_plt_kmax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_kmax( double ) ) );
+   connect( ct_plt_kmax, &QwtCounter::valueChanged,
+            this,        &US_Pseudo3D_Combine::update_plot_kmax );
 
    lb_plt_smin   = us_label( tr( "Plot Limit s Minimum:" ) );
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_smin   = us_counter( 3, -100000.0, 100000.0, 1.0 );
    ct_plt_smin->setSingleStep( 1 );
-   connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_smin( double ) ) );
+   connect( ct_plt_smin, &QwtCounter::valueChanged,
+            this,        &US_Pseudo3D_Combine::update_plot_smin );
 
    lb_plt_smax   = us_label( tr( "Plot Limit s Maximum:" ) );
    lb_plt_smax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_smax   = us_counter( 3, -100.0, 100000.0, 10.0 );
    ct_plt_smax->setSingleStep( 1 );
-   connect( ct_plt_smax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_smax( double ) ) );
+   connect( ct_plt_smax, &QwtCounter::valueChanged,
+            this,        &US_Pseudo3D_Combine::update_plot_smax );
 
    QLabel* lb_plt_dlay   = us_label( tr( "Plot Loop Delay Seconds:" ) );
    lb_plt_dlay->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -151,8 +151,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    ct_curr_distr = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_curr_distr->setSingleStep( 1 );
-   connect( ct_curr_distr, SIGNAL( valueChanged     ( double ) ),
-            this,          SLOT(   update_curr_distr( double ) ) );
+   connect( ct_curr_distr, &QwtCounter::valueChanged,
+            this,          &US_Pseudo3D_Combine::update_curr_distr );
 
    te_distr_info = us_textedit();
    te_distr_info->setText    ( tr( "Run:  runID.triple (method)\n" )
@@ -216,66 +216,66 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    rb_y_D   ->setToolTip( tr( "Set Y axis to Diffusion Coefficient"     ) );
    rb_y_f   ->setToolTip( tr( "Set Y axis to Frictional Coefficient"    ) );
    rb_y_rh  ->setToolTip( tr( "Set Y axis to Hydrodynamic Radius"       ) );
-   connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_x_axis ( int ) ) );
-   connect( bg_y_axis,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_y_axis ( int ) ) );
+   connect( bg_x_axis,  &QButtonGroup::idReleased,
+            this,       &US_Pseudo3D_Combine::select_x_axis );
+   connect( bg_y_axis,  &QButtonGroup::idReleased,
+            this,       &US_Pseudo3D_Combine::select_y_axis );
 
    pb_pltall     = us_pushbutton( tr( "Plot All Distros" ) );
    pb_pltall->setEnabled( false );
-   connect( pb_pltall,  SIGNAL( clicked() ),
-            this,       SLOT( plotall() ) );
+   connect( pb_pltall,  &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::plotall );
 
    pb_stopplt    = us_pushbutton( tr( "Stop Plotting Loop" ) );
    pb_stopplt->setEnabled( false );
-   connect( pb_stopplt, SIGNAL( clicked() ),
-            this,       SLOT( stop() ) );
+   connect( pb_stopplt, &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::stop );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Pseudo-3D Plot" ) );
    pb_refresh->setEnabled(  false );
-   connect( pb_refresh, SIGNAL( clicked() ),
-            this,       SLOT( plot_data() ) );
+   connect( pb_refresh, &QPushButton::clicked,
+            this,       [this]{this->plot_data();} );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT( reset() ) );
+   connect( pb_reset,   &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::reset );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_Pseudo3D_Combine::update_disk_db );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
 
    pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
    pb_ldcolor->setEnabled( true );
-   connect( pb_ldcolor, SIGNAL( clicked() ),
-            this,       SLOT( load_color() ) );
+   connect( pb_ldcolor, &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::load_color );
 
    le_prefilt    = us_lineedit( tr( "" ), -1, true );
-   connect( pb_prefilt, SIGNAL( clicked() ),
-            this,       SLOT( select_prefilt() ) );
+   connect( pb_prefilt, &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::select_prefilt );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution(s)" ) );
    pb_lddistr->setEnabled( true );
-   connect( pb_lddistr, SIGNAL( clicked() ),
-            this,       SLOT( load_distro() ) );
+   connect( pb_lddistr, &QPushButton::clicked,
+            this,       [this]{this->load_distro();} );
 
    pb_rmvdist    = us_pushbutton( tr( "Remove Distribution(s)" ) );
    pb_rmvdist->setEnabled( true );
-   connect( pb_rmvdist, SIGNAL( clicked() ),
-            this,       SLOT( remove_distro() ) );
+   connect( pb_rmvdist, &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::remove_distro );
 
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT( help() ) );
+   connect( pb_help,    &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::help );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT( close() ) );
+   connect( pb_close,   &QPushButton::clicked,
+            this,       &US_Pseudo3D_Combine::close );
 
    QFontMetrics fm( ct_plt_smax->font() );
    ct_plt_smax->adjustSize();
@@ -799,8 +799,8 @@ void US_Pseudo3D_Combine::load_distro()
    US_ModelLoader dialog( loadDB, mfilter, models, mdescs, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
-   connect( &dialog, SIGNAL(   changed( bool ) ),
-            this, SLOT( update_disk_db( bool ) ) );
+   connect( &dialog, &US_ModelLoader::changed,
+            this,    &US_Pseudo3D_Combine::update_disk_db );
    QApplication::restoreOverrideCursor();
 
    if ( dialog.exec() != QDialog::Accepted )
@@ -1135,14 +1135,25 @@ void US_Pseudo3D_Combine::stop()
 
 void US_Pseudo3D_Combine::set_limits()
 {
-   double smin = 1.0e30;
-   double smax = -1.0e30;
-   double kmin = 1.0e30;
-   double kmax = -1.0e30;
-   double sinc;
-   double kinc;
+   const QStringList labels = {"s", "f/f0", "MW", "vbar", "D", "f", "Rh" };
+   double smin = +1.0e99;
+   double smax = -1.0e99;
+   double kmin = +1.0e99;
+   double kmax = -1.0e99;
+   double sinc, srng;
+   double kinc, krng;
    xa_title    = anno_title( plot_x );
    ya_title    = anno_title( plot_y );
+
+   lb_plt_smin->setText( tr( "Plot Limit " ) + labels.at( plot_x )
+                       + tr( " Minimum:" ) );
+   lb_plt_smax->setText( tr( "Plot Limit " ) + labels.at( plot_x )
+                       + tr( " Maximum:" ) );
+
+   lb_plt_kmin->setText( tr( "Plot Limit " ) + labels.at( plot_y )
+                       + tr( " Minimum:" ) );
+   lb_plt_kmax->setText( tr( "Plot Limit " ) + labels.at( plot_y )
+                       + tr( " Maximum:" ) );
 
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
@@ -1167,8 +1178,21 @@ void US_Pseudo3D_Combine::set_limits()
    }
 
    // adjust minima, maxima
-   sinc      = ( smax - smin ) / 10.0;
-   kinc      = ( kmax - kmin ) / 10.0;
+   srng      = smax - smin;
+   krng      = kmax - kmin;
+
+   ct_plt_smin->setRange( smin - srng, smax + srng );
+   ct_plt_smax->setRange( smin - srng, smax + srng );
+   ct_plt_smin->setSingleStep( srng * 1e-3 );
+   ct_plt_smax->setSingleStep( srng * 1e-3 );
+   
+   ct_plt_kmin->setRange( kmin - krng, kmax + krng );
+   ct_plt_kmax->setRange( kmin - krng, kmax + krng );
+   ct_plt_kmin->setSingleStep( krng * 1e-3 );
+   ct_plt_kmax->setSingleStep( krng * 1e-3 );
+
+   sinc      = srng / 10.0;
+   kinc      = krng / 10.0;
    sinc      = ( sinc <= 0.0 ) ? ( smin * 0.05 ) : sinc;
    kinc      = ( kinc <= 0.0 ) ? ( kmin * 0.05 ) : kinc;
 DbgLv(1) << "SL: real smin smax kmin kmax" << smin << smax << kmin << kmax;
@@ -1349,8 +1373,8 @@ void US_Pseudo3D_Combine::select_prefilt( void )
 
    US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
    srdiag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT  ( update_disk_db( bool ) ) );
+   connect( &srdiag, &US_SelectRuns::dkdb_changed,
+            this,    &US_Pseudo3D_Combine::update_disk_db );
 
    if ( srdiag.exec() == QDialog::Accepted )
       nruns         = pfilts.size();
@@ -1413,27 +1437,10 @@ void US_Pseudo3D_Combine::select_y_axis_auto( int ival )
 // Select coordinate for horizontal axis
 void US_Pseudo3D_Combine::select_x_axis( int ival )
 {
-   const QString xlabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
-   const double  xvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8,  1.0 };
-   const double  xvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 10.0 };
-   const double  xmins[] = { -100000.0,  1.0,    0.0,  0.01, 1e-9, 1e-9, -1e5 };
-   const double  xmaxs[] = {  100000.0, 50.0,  1e+10,  3.00, 1e-5, 1e-5,  1e5 };
-   const double  xincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 0.01 };
+   ck_autosxy->setChecked( true );
+   select_autosxy();
 
    plot_x     = ival;
-
-   qDebug() << "Pseudo3D: x_axis changed: ival,  xlabs[ plot_x ] -- " << ival <<  xlabs[ plot_x ];
-
-   lb_plt_smin->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
-                       + tr( " Minimum:" ) );
-   lb_plt_smax->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
-                       + tr( " Maximum:" ) );
-   ct_plt_smin->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_plt_smax->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
-   ct_plt_smin->setSingleStep( xincs[ plot_x ] );
-   ct_plt_smax->setSingleStep( xincs[ plot_x ] );
-   ct_plt_smin->setValue( xvlos[ plot_x ] );
-   ct_plt_smax->setValue( xvhis[ plot_x ] );
 
    rb_y_s   ->setEnabled( plot_x != ATTR_S );
    rb_y_ff0 ->setEnabled( plot_x != ATTR_K );
@@ -1453,31 +1460,10 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
 // Select coordinate for vertical axis
 void US_Pseudo3D_Combine::select_y_axis( int ival )
 {
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f",  "Rh" };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8,  1.0 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7, 10.0 };
-   const double  ymins[] = { -100000.0,  1.0,    0.0,  0.01, 1e-9, 1e-9, -1e5 };
-   const double  ymaxs[] = {  100000.0, 50.0,  1e+10,  3.00, 1e-5, 1e-5,  1e5 };
-   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9, 0.01 };
+   ck_autosxy->setChecked( true );
+   select_autosxy();
 
    plot_y     = ival;
-qDebug() << "select-y: plot_y" << plot_y;
-
-   qDebug() << "Pseudo3D: y_axis changed: ival,  ylabs[ plot_y ] -- " << ival <<  ylabs[ plot_y ];
-
-   lb_plt_kmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
-                       + tr( " Minimum:" ) );
-   lb_plt_kmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
-                       + tr( " Maximum:" ) );
-qDebug() << "  ylab" << ylabs[plot_y];
-   ct_plt_kmin->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
-   ct_plt_kmin->setSingleStep( yincs[ plot_y ] );
-   ct_plt_kmax->setSingleStep( yincs[ plot_y ] );
-   ct_plt_kmin->setValue( yvlos[ plot_y ] );
-   ct_plt_kmax->setValue( yvhis[ plot_y ] );
-qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
-
    rb_x_s   ->setEnabled( plot_y != ATTR_S );
    rb_x_ff0 ->setEnabled( plot_y != ATTR_K );
    rb_x_mw  ->setEnabled( plot_y != ATTR_W );

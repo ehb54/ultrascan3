@@ -16,7 +16,6 @@ Welcome to UltraScan-III's Documentation and Resource!
 
 .. image:: /_static/images/UltraScan-logo.png
     :align: center
-
 .. toctree::
    :maxdepth: 1
    :caption: Ultrascan-III Protocols:
@@ -25,15 +24,7 @@ Welcome to UltraScan-III's Documentation and Resource!
    start_page
    start_page-mw
    start_page-rpt
-  
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: SV-AUC Experimental Tips:
-
-
-   3000_rpm
+   start_page-int
 
 
 .. toctree::
@@ -65,6 +56,26 @@ Welcome to UltraScan-III's Documentation and Resource!
    gmp/index
    experiment/index
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Model-Free Analysis: 
+
+   time_derivative
+   second_moment
+   vhw_enhanced
+   vhw_distrib_plot
+
+.. toctree::
+   :maxdepth: 1
+   :caption: ASTFEM/ASTFVM Analysis: 
+
+   2dsa/index
+   pcsa/index
+   ga_initialize
+   dmga_init
+   dmga_init_constr
+
 .. toctree::
    :maxdepth: 1
    :caption: Multi-Wavelength: 
@@ -80,24 +91,6 @@ Welcome to UltraScan-III's Documentation and Resource!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Diagnostics: 
-
-   time_derivative
-   second_moment
-   vhw_enhanced
-   vhw_distrib_plot
-
-.. toctree::
-   :maxdepth: 1
-   :caption: ASTFEM Analysis: 
-
-   2dsa/index
-   pcsa/index
-   ga_initialize
-
-
-.. toctree::
-   :maxdepth: 1
    :caption: Advanced Analysis for Biologics:     
 
    dens_match
@@ -110,7 +103,6 @@ Welcome to UltraScan-III's Documentation and Resource!
    :caption: Analysis Utilities:
 
    grid_editor
-
    combine_models
    model_editor
    components
@@ -126,8 +118,7 @@ Welcome to UltraScan-III's Documentation and Resource!
    predict1
    predict2
    sassoc
-   dmga_init
-   dmga_init_constr
+
 
 
 .. toctree::
@@ -135,16 +126,20 @@ Welcome to UltraScan-III's Documentation and Resource!
    :caption: Reports and Data Viewers:
 
    fe_match/index
+   tmst_viewer
    reporter
    us_modelmetrics
    rmsd_query
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Plotting:
+
    pseudo3d
    ddist_combine
    idist_combine 
    vhw_combine
-   tmst_viewer
-
-
+   
 
 .. toctree::
    :maxdepth: 1
@@ -156,7 +151,7 @@ Welcome to UltraScan-III's Documentation and Resource!
    solutions/index
    us_project
    manage_data
-   rotor
+   rotors
    rotor_calibration
 
 .. toctree::
@@ -167,8 +162,20 @@ Welcome to UltraScan-III's Documentation and Resource!
    run_details
    3d_plot
 
+.. toctree::
+   :maxdepth: 1
+   :caption: SV-AUC Experimental Tips:
 
-:download:`UltraScan-III Manual PDF <../../../build/doc/manual/latex/UltraScanIII.pdf>`
 
+   3000_rpm
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Under Construction
 
+   analysprof_general 
+   global_equil 
+   ramp_data 
+   start_page-abde 
+   start_page-dm 
+   us_administrator 

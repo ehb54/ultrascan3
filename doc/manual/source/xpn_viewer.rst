@@ -96,8 +96,8 @@ Plot Controls:
     - Name of cell and channel. 
   * - **Lambda Range:**
     - Wavelength range of the data collected.  
-  * - **Plot Triplicate:**
-    - Select the Triplicate to plot. 
+  * - **Plot Triple:**
+    - Select the Triple to plot. 
   * - **Color Map**
     - Load a color map generated to change the default color schema. 
 

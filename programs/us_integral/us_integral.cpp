@@ -124,8 +124,7 @@ US_Integral::US_Integral() : US_Widgets()
    rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
    rb_x_rh  ->setToolTip( tr( "Set X axis to Hydrodynamic Radius"       ) );
    rb_x_s   ->setChecked( true );
-   connect( bg_x_axis,  SIGNAL( buttonReleased( int ) ),
-            this,       SLOT  ( select_x_axis ( int ) ) );
+   connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_Integral::select_x_axis );
 
 
    // Various other GUI elements 
