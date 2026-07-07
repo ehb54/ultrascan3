@@ -61,6 +61,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
 
+# The root sets -fvisibility=hidden globally (admin/cmake/platform-config.cmake),
+# but SOMO's classes are not annotated for export, so that hides ALL of
+# libus_somo's symbols and the GUI apps fail to link (undefined US_Register/
+# US_Admin/US_Config/...). SOMO builds with default visibility (as standalone and
+# under qmake); restore it for this subtree — a later -fvisibility flag wins.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-fvisibility=default)
+endif()
+
 # Qt codegen — scoped to this subtree only (root already sets these globally,
 # but standalone mode needs them too).
 set(CMAKE_AUTOMOC ON)
