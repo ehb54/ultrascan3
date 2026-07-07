@@ -40,14 +40,18 @@
 if(NOT DEFINED PROJECT_NAME)
     cmake_minimum_required(VERSION 3.21)
     project(us_somo VERSION 10.0.0 LANGUAGES CXX C)
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
     set(SOMO_STANDALONE ON)
 else()
-    set(SOMO_STANDALONE OFF)   # inherit CXX standard / output dirs from root
+    set(SOMO_STANDALONE OFF)   # inherit output dirs from root
 endif()
+
+# SOMO requires C++17 in BOTH modes. The root build sets a lower global standard
+# (CMAKE_CXX_STANDARD 14), so pin it for this subtree (directory scope → applies
+# to all SOMO targets defined here).
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Qt codegen — scoped to this subtree only (root already sets these globally,
 # but standalone mode needs them too).
@@ -66,7 +70,10 @@ set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 # sets the strings right before use). APPLE is covered by the MAC define on the
 # targets, Windows by WIN32; define INTEL on Linux so its #if block fires. This
 # avoids -DPLATFORM="..." string-literal quote-escaping headaches.
-if(UNIX AND NOT APPLE)
+# Standalone ONLY: in a root build the parent already defines PLATFORM/TITLE
+# globally (-DPLATFORM="intel" -DTITLE="Intel"); defining INTEL too would make
+# us_register.cpp redefine TITLE to a different value.
+if(UNIX AND NOT APPLE AND SOMO_STANDALONE)
     add_compile_definitions(INTEL)
 endif()
 
