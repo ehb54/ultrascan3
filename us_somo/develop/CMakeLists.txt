@@ -53,6 +53,14 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# The root build enables LTO globally (CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE).
+# LTO on the shared libus_somo drops symbols the GUI apps link against (undefined
+# references to US_Register/US_Config/us_tr/...). SOMO builds cleanly without LTO
+# (as standalone, and as its qmake build always did), so disable it for this
+# subtree (directory scope; root's other components keep LTO).
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
+
 # Qt codegen — scoped to this subtree only (root already sets these globally,
 # but standalone mode needs them too).
 set(CMAKE_AUTOMOC ON)
