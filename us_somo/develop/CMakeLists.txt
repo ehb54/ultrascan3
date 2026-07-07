@@ -67,13 +67,15 @@ option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
 # us_register.cpp derives PLATFORM/TITLE from an arch macro (its own #if chain
-# sets the strings right before use). APPLE is covered by the MAC define on the
-# targets, Windows by WIN32; define INTEL on Linux so its #if block fires. This
-# avoids -DPLATFORM="..." string-literal quote-escaping headaches.
-# Standalone ONLY: in a root build the parent already defines PLATFORM/TITLE
-# globally (-DPLATFORM="intel" -DTITLE="Intel"); defining INTEL too would make
-# us_register.cpp redefine TITLE to a different value.
-if(UNIX AND NOT APPLE AND SOMO_STANDALONE)
+# sets the strings right before use). Define INTEL on Linux so that #if block
+# fires. This is needed in BOTH standalone and root builds: the string-valued
+# -DPLATFORM="intel"/-DTITLE="Intel" that add_compile_definitions() emits does
+# NOT survive CMake's quote-escaping into a usable macro (this bites the root's
+# own line 209 definition too — it just never mattered because only
+# us_register.cpp uses PLATFORM as a bare macro). The bareword INTEL is immune,
+# and since the parent's PLATFORM/TITLE don't actually take effect there is no
+# redefinition clash. APPLE is covered by MAC, Windows by WIN32.
+if(UNIX AND NOT APPLE)
     add_compile_definitions(INTEL)
 endif()
 
