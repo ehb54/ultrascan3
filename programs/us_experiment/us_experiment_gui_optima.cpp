@@ -21,6 +21,10 @@
 #include "../../utils/us_convert.h"
 #include "../us_esigner_gmp/us_esigner_gmp.h"
 
+#include <QCollator>
+#include <algorithm>
+
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
@@ -1952,16 +1956,21 @@ void US_ExperGuiRotor::importDisk( void )
   //check if all A/B channels of the same cell have equal wvl ranges
   QMap< QString, QMap <QString, QStringList > > cell_chann_wvls;
   bool wvl_inconsistent = false;
-  QString cell_f, channel_f, wvl_f;
+  QString cell_f, channel_f, wvl_f, d_type;
   for ( int trx = 0; trx < files.size(); trx++ )
     {
       QString fname  = files[ trx ];
       QStringList parts = fname.split(".");
       if (parts.size() >= 5)
 	{
+	  d_type    = parts[parts.size() - 5];
 	  cell_f    = parts[parts.size() - 4];
 	  channel_f = parts[parts.size() - 3];
 	  wvl_f     = parts[parts.size() - 2];
+
+	  if ( d_type == "IP" )
+	    continue;
+	  
 	  cell_chann_wvls[ cell_f ][ channel_f ] << wvl_f;
 
 	  if ( channel_f == "S" )
@@ -2524,7 +2533,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
   QMap < QString, QStringList > chann_to_wvls;
   for( int i=0; i< all_tripinfo.size(); ++i)
     {
-      qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc;
+      qDebug() << "triple #" << i << ": " << all_tripinfo[i].tripleDesc << all_tripinfo[i].tripleFilename;
       QString channumber = all_tripinfo[i].tripleDesc.split(" / ")[0].simplified();
       QString channame   = channumber  + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
       QString channame_1 = channumber  + QString(" / ") + all_tripinfo[i].tripleDesc.split(" / ")[1].simplified();
@@ -2537,10 +2546,17 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       channels_for_dataDisk << channame_1;
 
       QString runType_t    = QString( all_tripinfo[i].tripleFilename ).section( ".", -5, -5 );
+      qDebug() << "runType_t -- " << runType_t;
       if ( runType_t == "RI" || runType_t == "RA" )
 	chann_to_wvls[ channame ] << wvl;
     }
   chann_list. removeDuplicates();
+
+  QCollator collator;
+  collator.setNumericMode(true);
+  std::sort(chann_list.begin(), chann_list.end(), collator);
+  std::sort(channels_for_dataDisk.begin(), channels_for_dataDisk.end(), collator);
+
   qDebug() << "List of unique channel numbers -- " << chann_list;
   qDebug() << "List of unique channel names   -- " << chann_to_wvls.keys();
   qDebug() << "List of channels_for_dataDisk -- " <<  channels_for_dataDisk;
@@ -2603,6 +2619,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       //decide on optics types
       QString scan1_str, scan2_str, scan3_str;
       QStringList ops_types = runTypes[ chann_list[i] ];
+      qDebug() << "in optics, chann_list[i], ops_types -- " << chann_list[i] << ops_types;
       for (int j=0; j<ops_types.size(); ++j )
 	{
 	  if ( ops_types[j] == "RI" )
@@ -2623,9 +2640,11 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       os_b.scan3     = scan3_str;
 
       rpOptic->chopts << os_a;
-      rpOptic->chopts << os_b;
+      if ( ops_types.contains("RI") )
+	rpOptic->chopts << os_b;
     }
-  rpOptic->nochan = chann_list.size()*2;
+  //rpOptic->nochan = chann_list.size()*2;
+  rpOptic->nochan = rpOptic->chopts.size();
   
   //[RANGES:] Clear && Fill in
   rpRange-> nranges       = 0;
@@ -5780,6 +5799,7 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
    : US_WidgetsDialog( topw, Qt::WindowFlags() )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpRotor             = &(mainw->currProto.rpRotor);
    rpOptic             = &(mainw->currProto.rpOptic);
    mxrow               = 24;     // Maximum possible rows
    nochan              = 0;
@@ -5927,8 +5947,16 @@ DbgLv(1) << "EGOp:main: call initPanel";
 // Function to rebuild the Optical protocol after Solutions change
 void US_ExperGuiOptical::rebuild_Optic( void )
 {
-
-
+  qDebug() << "InitOp: rpOptic->chopts -- ";
+  for ( int i=0; i<rpOptic->chopts.size(); ++i)
+    {
+      qDebug() << "channel, scans -- "
+	       << rpOptic->chopts[i].channel
+	       << rpOptic->chopts[i].scan1
+	       << rpOptic->chopts[i].scan2
+	       << rpOptic->chopts[i].scan3;
+    }
+ 
    int nchanf          = sibIValue( "solutions", "nchanf" );
    QStringList ochans  = sibLValue( "solutions", "sochannels" );
    int kochan          = ochans.count();
@@ -6002,9 +6030,27 @@ DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";
       return;
    }
 
+   qDebug() << "rpRotor->importData, rpRotor->importDataDisk -- "
+	    << rpRotor->importData
+	    << rpRotor->importDataDisk;
+    
+   if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     return;
+
    // Save information from any existing protocol
    int nochan_sv       = rpOptic->nochan;
    QVector< US_RunProtocol::RunProtoOptics::OpticSys > chopts_sv = rpOptic->chopts;
+
+   qDebug() << "in chopts_sv: ";
+   for ( int i=0; i<chopts_sv.size(); ++i)
+     {
+       qDebug() << "channel, scans -- "
+		<< chopts_sv[i].channel
+		<< chopts_sv[i].scan1
+		<< chopts_sv[i].scan2
+		<< chopts_sv[i].scan3;
+     }
+  
 
    nochan              = nchanf;
    rpOptic->nochan     = nchanf;
