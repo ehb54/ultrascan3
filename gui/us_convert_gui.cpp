@@ -3497,6 +3497,22 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    ///////////////////////////////////////////////////////////////////////
 
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
+
+   //Fix for GMP:dataDisk
+   /***
+       When mixed RI+IP data, it's possible that #total_chsols (channels) is less than 2*#cells_used
+       E.g., 1/A,1/B,2/A,2/B,5/A,5/B = RI (6 channels) + only 6/A IP (1 IP channel)
+       So, #total_chsols = 6+1 = 7, while #cells_used = 4 (1,2,5,6)
+       So, num_cent_holes = 7 / 4 = 1 (should be 2 !)
+       Possible fix: if #total_chsols > #cells_used: just make num_cent_holes = 2! 
+    ***/
+   if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
+     {
+       if ( ProtInfo.ProtSolutions.chsols.size() > ProtInfo.ProtCells.cells_used.size() )
+	 num_cent_holes = 2;
+     }
+   
+   
    qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
    
    int cellnumber;
