@@ -3705,7 +3705,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       qDebug() << " Test HEXAL 1" ;
 	       
 	       cellnumber = i / num_cent_holes;
-
+	       qDebug() << "cellnumber, i, num_cent_holes, ProtInfo.ProtCells.cells_used.keys(), cent_options.keys()  -- "
+			<< cellnumber <<  i <<  num_cent_holes << ProtInfo.ProtCells.cells_used.size() << cent_options.size();
+	       
 	       qDebug() << " Test HEXAL 2" ;
 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
 		 {
