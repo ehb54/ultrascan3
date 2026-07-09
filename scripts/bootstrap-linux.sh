@@ -751,11 +751,18 @@ fi
 # with priority 100 (higher than any typical system alternative) and then
 # explicitly set it as the current default so the change takes effect
 # immediately in this shell session without relying on priority ordering.
+# Only touch update-alternatives (which requires sudo) when the currently
+# active python3 is actually too old; otherwise this would re-run on every
+# invocation and prompt for sudo even when nothing needs to change.
 if [ "$DISTRO_FAMILY" = "rhel" ] && [ -x /usr/bin/python3.9 ]; then
-  log "Registering python3.9 as the default python3 via update-alternatives..."
-  ${SUDO:+$SUDO} update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 100
-  ${SUDO:+$SUDO} update-alternatives --set python3 /usr/bin/python3.9
-  log "python3 now resolves to: $(python3 --version 2>&1) at $(command -v python3)"
+  if ! python3 -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 7) else 1)' 2>/dev/null; then
+    log "Registering python3.9 as the default python3 via update-alternatives..."
+    ${SUDO:+$SUDO} update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 100
+    ${SUDO:+$SUDO} update-alternatives --set python3 /usr/bin/python3.9
+    log "python3 now resolves to: $(python3 --version 2>&1) at $(command -v python3)"
+  else
+    log "python3 ($(python3 --version 2>&1)) already satisfies >= 3.7; skipping update-alternatives."
+  fi
 fi
 
 # =============================================================================
