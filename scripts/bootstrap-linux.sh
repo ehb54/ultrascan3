@@ -440,12 +440,19 @@ elif [ "$DISTRO_FAMILY" = "rhel" ]; then
   #   which is too old for vcpkg's meson port (requires >= 3.7).  python39 installs
   #   as a parallel alternative; the post-install section below registers it via
   #   update-alternatives so that `python3` resolves to 3.9 for vcpkg and Sphinx.
+  #   Newer RHEL-family releases (e.g. Rocky/RHEL/OL 9) already ship a
+  #   sufficiently new python3 by default and may not even offer a "python39"
+  #   package, so only request it when the currently active python3 is too old
+  #   -- otherwise it shows up as "to install" on every run and can fail outright
+  #   on distros where that package doesn't exist.
   PKGS_PYTHON=(
     python3
     python3-pip
-    python39
-    python39-pip
   )
+  if ! command -v python3 >/dev/null 2>&1 || \
+     ! python3 -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 7) else 1)' 2>/dev/null; then
+    PKGS_PYTHON+=(python39 python39-pip)
+  fi
 
   # --- OpenGL / graphics headers --------------------------------------------
   # mesa-libGL-devel: provides GL/gl.h — RHEL equivalent of libgl-dev
@@ -629,7 +636,12 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   done
 elif [ "$DISTRO_FAMILY" = "rhel" ]; then
   for pkg in "${ALL_PKGS[@]}"; do
-    if ! rpm -q "$pkg" &>/dev/null; then
+    # Some package names (e.g. "python3" on RHEL/Rocky/OL 8, which is only
+    # provided virtually by the "python36" module package) never match a
+    # plain `rpm -q` by exact name, so this would re-attempt "installing"
+    # them on every run even though they are already satisfied. Fall back
+    # to --whatprovides, which resolves virtual provides as well.
+    if ! rpm -q "$pkg" &>/dev/null && ! rpm -q --whatprovides "$pkg" &>/dev/null; then
       PKGS_TO_INSTALL+=("$pkg")
     fi
   done
