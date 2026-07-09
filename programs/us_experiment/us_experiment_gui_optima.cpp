@@ -2133,14 +2133,24 @@ void US_ExperGuiRotor::importDisk( void )
   channs_ranges = build_protocol_for_data_import( runTypes_map );
 
   //Maybe insert informing dialog (on channels, ranges)??
-  QString msg_wvls;
-  for( int i=0; i<channs_ranges.keys().size(); ++i ) 
+  //get all uploaded channels irrespective of osys type:
+  QStringList channames_from_dataDisk;
+  for (int cd=0; cd<channels_for_dataDisk.size(); ++cd)
     {
-      QString ch_c    = channs_ranges.keys()[ i ];
-
-      //check if the key (channel) is in channels_for_dataDisk:
-      if ( !check_for_channel_dataDisk( ch_c ) )
-	continue;
+      QString cd_c = channels_for_dataDisk[cd];
+      channames_from_dataDisk << cd_c.replace(" / ","").simplified();
+    }
+  
+  QString msg_wvls;
+  //for( int i=0; i<channs_ranges.keys().size(); ++i ) 
+  for( int i=0; i<channames_from_dataDisk.size(); ++i ) 
+    {
+      //QString ch_c    = channs_ranges.keys()[ i ];
+      QString ch_c    = channames_from_dataDisk[ i ];
+      
+      // //check if the key (channel) is in channels_for_dataDisk:
+      // if ( !check_for_channel_dataDisk( ch_c ) )
+      // 	continue;
 
       if ( ra_data_type && ch_c. contains("B") )
 	continue;
@@ -2151,7 +2161,11 @@ void US_ExperGuiRotor::importDisk( void )
 	. replace("IP","Interf.");
       msg_wvls += ch_c;
 	
-      QStringList wvls = channs_ranges[ ch_c ];
+      //QStringList wvls = channs_ranges[ ch_c ];
+      QStringList wvls;
+      if ( channs_ranges.keys().contains( ch_c ) )
+	wvls = channs_ranges[ ch_c ];
+
       QString wvl_min, wvl_max;
       int wvl_count;
       if ( !wvls.isEmpty() )
@@ -2551,6 +2565,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	chann_to_wvls[ channame ] << wvl;
     }
   chann_list. removeDuplicates();
+  channels_for_dataDisk. removeDuplicates();
 
   QCollator collator;
   collator.setNumericMode(true);
@@ -2652,7 +2667,11 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
   for ( int i=0; i<chann_list.size(); ++i)
     {
       US_RunProtocol::RunProtoRanges::Ranges rng_a, rng_b;
+      QStringList ops_types = runTypes[ chann_list[i] ];
 
+      if ( !ops_types.contains("RI") )
+	continue;
+	
       //A channel
       rng_a.channel = chann_list[i] + " / A, sample [right]";
       rng_a.lo_rad  = 5.75;
@@ -2677,8 +2696,9 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	}
       rpRange->chrngs << rng_b;
     }
-  rpRange-> nranges = chann_list.size()*2;
-
+  //rpRange-> nranges = chann_list.size()*2;
+  rpRange-> nranges = rpRange->chrngs.size();
+  
   //run Details: Initiate data arrays for getting runInfo:
   if ( ! init_output_data() )  
     qDebug() << "[in build_protocol_for_data_import()]: could not init_output_data()!!!";
