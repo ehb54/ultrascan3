@@ -5,8 +5,9 @@ cmake_minimum_required(VERSION 3.21)
 # =============================================================================
 # Extract version before project() call
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake")
-list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/admin/cmake/triplets")
-list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/buildsys/vcpkg/overlay-ports")
+list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/admin/vcpkg/overlay-triplets")
+list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/admin/vcpkg/overlay-ports")
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/admin/vcpkg/installed")
 include(UsDefinesParser)
 parse_header("${CMAKE_CURRENT_SOURCE_DIR}/utils/us_defines.h")
 
