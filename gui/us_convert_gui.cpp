@@ -3832,7 +3832,8 @@ int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
   QStringList channelList = channel_name.split("/");
   QString channel_name_mod = channelList[0] + " / " + channelList[1];
   
-  qDebug() << "In getProtSolIndex():  channel_name_mod -- " <<  channel_name_mod; 
+  qDebug() << "In getProtSolIndex():  ProtInfo.ProtSolutions.chsols.size(), channel_name_mod -- "
+	   <<  ProtInfo.ProtSolutions.chsols.size() << ", " << channel_name_mod; 
   
   for ( int i=0; i < ProtInfo.ProtSolutions.chsols.size(); ++i ) 
     {
