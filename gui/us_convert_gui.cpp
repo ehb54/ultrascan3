@@ -2583,11 +2583,13 @@ QString US_ConvertGui::correct_description( QString & description, QString cell,
 void US_ConvertGui::check_scans()
 {
    int nsmin = 99999;
+   int nsmax = -99999;
    for (int ii = 0; ii < allData.size(); ii++ ) {
       nsmin = qMin(allData[ii].scanCount(), nsmin);
+      nsmax = qMax(allData[ii].scanCount(), nsmax);
    }
 
-   QStringList ccws_list;
+   QStringList ccws_list, ccws_list_for_report;
    bool same = true;
    for (int ii = 0; ii < allData.size(); ii++ ) {
       int ns = allData[ii].scanCount();
@@ -2601,6 +2603,16 @@ void US_ConvertGui::check_scans()
       if ( df > 0 ) {
          same = false;
          allData[ii].scanData.remove( ns - df, df );
+
+	 //for GMP report
+	 if ( us_convert_auto_mode ) 
+	   //ccws_list_for_report << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
+	   ccws_list << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
+	     .arg(cell)
+	     .arg(channel)
+	     .arg(lambda)
+	     .arg(nsmax)
+	     .arg(ns);
       }
    }
    if ( ! same ) {
