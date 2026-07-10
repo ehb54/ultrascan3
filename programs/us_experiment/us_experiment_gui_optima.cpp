@@ -2655,7 +2655,7 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
       os_b.scan3     = scan3_str;
 
       rpOptic->chopts << os_a;
-      if ( ops_types.contains("RI") )
+      if ( ops_types.contains("RI") && !ra_data_sim )
 	rpOptic->chopts << os_b;
     }
   //rpOptic->nochan = chann_list.size()*2;
@@ -2684,6 +2684,8 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	}
       rpRange->chrngs << rng_a;
 
+      if ( ra_data_sim )
+	continue;
       //B channel
       rng_b.channel = chann_list[i] + " / B, reference [left]";
       rng_b.lo_rad  = 5.75;
