@@ -2588,7 +2588,7 @@ void US_ConvertGui::check_scans()
       nsmin = qMin(allData[ii].scanCount(), nsmin);
       nsmax = qMax(allData[ii].scanCount(), nsmax);
    }
-
+   
    QStringList ccws_list, ccws_list_for_report;
    bool same = true;
    for (int ii = 0; ii < allData.size(); ii++ ) {
@@ -2601,18 +2601,18 @@ void US_ConvertGui::check_scans()
       double lambda = allData[ii].scanData.first().wavelength;
       ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
       if ( df > 0 ) {
-         same = false;
-         allData[ii].scanData.remove( ns - df, df );
-
-	 //for GMP report
-	 if ( us_convert_auto_mode ) 
-	   //ccws_list_for_report << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
-	   ccws_list << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
-	     .arg(cell)
-	     .arg(channel)
-	     .arg(lambda)
-	     .arg(nsmax)
-	     .arg(ns);
+	//for GMP report
+	if ( us_convert_auto_mode ) 
+	  //ccws_list_for_report << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
+	  ccws_list << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
+	    .arg(cell)
+	    .arg(channel)
+	    .arg(lambda)
+	    .arg(nsmax)
+	    .arg(ns);
+	
+	same = false;
+	allData[ii].scanData.remove( ns - df, df );
       }
    }
    if ( ! same ) {
