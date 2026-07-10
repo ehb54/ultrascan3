@@ -2600,20 +2600,25 @@ void US_ConvertGui::check_scans()
       char channel = allData[ii].channel;
       double lambda = allData[ii].scanData.first().wavelength;
       ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
-      if ( df > 0 ) {
-	//for GMP report
-	if ( us_convert_auto_mode ) 
-	  //ccws_list_for_report << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
-	  ccws_list << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
-	    .arg(cell)
-	    .arg(channel)
-	    .arg(lambda)
-	    .arg(nsmax)
-	    .arg(ns);
-	
-	same = false;
-	allData[ii].scanData.remove( ns - df, df );
-      }
+      if ( df > 0 )
+	{
+	  same = false;
+	  allData[ii].scanData.remove( ns - df, df );
+	}
+      else
+	{
+	  //for GMP report
+	  qDebug() << "triple: " << cell << "/" << channel << "/" << lambda << ": ns (collected) " << ns
+		   << "; nsmax (expected) " << nsmax;
+	  if ( us_convert_auto_mode ) 
+	    //ccws_list_for_report << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
+	    ccws_list << tr("Number of scans for triple %1 / %2 / %3 : expected %4; collected %5")
+	      .arg(cell)
+	      .arg(channel)
+	      .arg(lambda)
+	      .arg(nsmax)
+	      .arg(ns);
+	} 
    }
    if ( ! same ) {
       US_WidgetsDialog *error_wgt = new US_WidgetsDialog(this);
