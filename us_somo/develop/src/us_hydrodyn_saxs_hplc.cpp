@@ -3897,7 +3897,7 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos, b
       start_pos = f_qs[ file ][ 0 ];
    }
    if ( le_gauss_fit_end->text().isEmpty() ||
-        le_gauss_fit_end->text().toDouble() > f_qs[ wheel_file ].back() )
+        le_gauss_fit_end->text().toDouble() > f_qs[ file ].back() )
    {
       end_pos = f_qs[ file ].back();
    }
