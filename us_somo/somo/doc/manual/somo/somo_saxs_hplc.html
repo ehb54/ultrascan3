@@ -1573,7 +1573,7 @@ The <b><i>Make I(q)</i></b> button becomes available every time that more than o
 
 A description of this module can be found <a href=saxs_hplc_ciq.html>here</a>.<p>
 </ul>
-At the end of the <i>Make I(q)</i> operations, if the <i>Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity"</i> checkbox had been selected, the graphics window will report the averaged curves for each Gaussian-decomposed peak:
+At the end of the <i>Make I(q)</i> operations, if the <i>Average resulting I(q) curves by Gaussian, using top % of max. intensity</i> checkbox had been selected, the graphics window will report the averaged curves for each Gaussian-decomposed peak:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -1597,7 +1597,7 @@ shown here in log<sub>10</sub>-log<sub>10</sub> mode and after zooming. Note tha
 <p>
 Here we can see that the Guinier-extrapolated <i>I*</i>(0) gives a value that although a bit high is consistent with monomeric BSA (&sim;66,500 g/mol). The <i>R<sub>g</sub></i> value is in excellent agreement with that computed from the structure (28.3 &Aring;).<p> 
 
-If the <i>Make I*(q) using the concentration curve "filename"?</i> checkbox is <b>not</b> selected, two averaged <i>I</i>(<i>q</i>) vs. <i>q</i> curves for each Gaussian-decomposed peak will be produced, simple average and average normalized by the concentration:
+If the <i>Make I*(q) using the concentration curve "filename"?</i> checkbox is <b>not</b> selected, two averaged <i>I</i>(<i>q</i>) vs. <i>q</i> curves for each Gaussian-decomposed peak will be produced: the simple average (suffix <tt>_avg</tt>), which retains the mean concentration of the averaged frames and is therefore the concentration-scaled curve to use for concentration-dependent analyses (e.g. molecular weight by Guinier), and the average normalized by the concentration (suffix <tt>_avg_n</tt>), rescaled to concentration 1.0. Since the averaged frames lie near the peak apex, where the concentration is nearly constant, the two differ essentially only by the concentration scale factor:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
