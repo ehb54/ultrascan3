@@ -1182,6 +1182,8 @@ void US_ConvertGui::reset_auto( void )
    ExpData     .clear();
 
    drop_operations. clear();
+   scan_difference_map. clear();
+   
    if ( isMwl )
       mwl_data.clear();
    show_plot_progress = true;
