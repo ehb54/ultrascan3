@@ -282,14 +282,15 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Conc:1 (SOMO's "already normalized" convention).
    //
    // Primus mode: reproduces ATSAS almerge. Each curve is least-squares scaled onto
-   // the highest-concentration curve (the reference), then the SCALED ABSOLUTE
-   // intensity is linearly extrapolated vs c to c=0. This keeps the output on the
-   // reference curve's absolute intensity scale (~c_ref times larger than the Zimm
-   // result) and, unlike the pure I/c fit, lets the data -- not the entered
-   // concentrations alone -- set the relative scale between curves, which matters
-   // when the curves are different samples/peaks rather than one dilution series.
-   // The output carries the reference curve's error bars and is tagged with the
-   // reference concentration rather than Conc:1.
+   // the highest-concentration curve (the reference), then the scaled curves are
+   // combined per q with an inverse-variance weighted MERGE (not a per-q linear
+   // extrapolation to c=0). Once scaled, the curves' residual concentration
+   // dependence is negligible for typical data, so a per-point extrapolation mostly
+   // fits noise and drives the high-q intensity negative -- which makes the copied
+   // error bars look enormous on a log plot. The weighted merge is stable, stays
+   // positive, and matches the ATSAS output. The result is on the reference curve's
+   // absolute intensity scale, carries the reference curve's error bars, and is
+   // tagged with the reference concentration rather than Conc:1.
    unsigned int zero_conc_excluded = 0;
    for ( int ci = 0; ci < (int) concs.size(); ci++ )
    {
@@ -456,9 +457,41 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          continue;
       }
 
-      double a, b, siga, sigb, chi2;
+      double a = 0e0, b = 0e0, siga = 0e0;
 
-      if ( x.size() == 2 )
+      if ( primus_mode )
+      {
+         // Primus mode: inverse-variance weighted MERGE of the concentration-scaled
+         // intensities, matching ATSAS almerge. Once the curves are scaled onto the
+         // reference their residual concentration dependence is negligible for these
+         // data, so a per-q linear extrapolation to c=0 (as Zimm does) mostly fits
+         // noise -- it swings the high-q intensity negative, which then makes the
+         // (reference) error bars look enormous on a log plot. The weighted merge is
+         // stable, stays positive, and reproduces the ATSAS result. It is a level
+         // (horizontal) estimate, so the reported slope is 0.
+         double wsum  = 0e0;
+         double wysum = 0e0;
+         double ysum  = 0e0;
+         bool   all_have_err = true;
+         for ( int j = 0; j < (int) y.size(); j++ )
+         {
+            ysum += y[ j ];
+            if ( ye[ j ] > 0e0 )
+            {
+               double w = 1e0 / ( ye[ j ] * ye[ j ] );
+               wsum  += w;
+               wysum += w * y[ j ];
+            }
+            else
+            {
+               all_have_err = false;
+            }
+         }
+         a = ( all_have_err && wsum > 0e0 ) ? ( wysum / wsum ) : ( ysum / (double) y.size() );
+         b = 0e0;
+         siga = 0e0;
+      }
+      else if ( x.size() == 2 )
       {
          if ( x[ 1 ] == x[ 0 ] )
          {
@@ -475,6 +508,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       }
       else
       {
+         double sigb, chi2;
          usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
       }
 
@@ -495,8 +529,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       reg_y   .push_back( y );
       reg_e   .push_back( ye );
       reg_a   .push_back( a );
-      reg_b   .push_back( b );
-      reg_siga.push_back( siga );
+      reg_b   .push_back( b );                 // 0 in Primus mode (level merge)
+      reg_siga.push_back( err_val );           // error actually assigned to the output
    }
 
    if ( skipped_points )
@@ -539,11 +573,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       update_conc_csv( final_name, out_conc_tag );
 
       editor_msg( "black",
-                 QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Primus mode: %4 extrapolated to c=0 on the scale of the "
-                          "highest-concentration curve (conc %5), carrying that curve's error bars.%6\n" )
+                 QString( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped)\n"
+                          "Primus mode (ATSAS almerge-style): inverse-variance weighted merge of the "
+                          "curves scaled onto the highest-concentration curve (conc %4), carrying that "
+                          "curve's error bars.%5\n" )
                  .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
-                 .arg( all_istar ? "already-I*(q) intensity" : "absolute intensity" )
                  .arg( ref_conc )
                  .arg( all_istar ? QString( " Inputs were I*(q) (I(0)=MW), so the result is tagged Conc:1." ) : QString( "" ) ) );
    }

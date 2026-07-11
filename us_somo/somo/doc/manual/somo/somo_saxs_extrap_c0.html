@@ -90,14 +90,16 @@ carries the standard error of the fitted intercept as its uncertainty.</p>
 <p><b>Primus mode</b> (checkbox checked). This reproduces the behavior of the
 ATSAS <i>almerge</i> program. The highest-concentration curve is taken as a
 reference; every other curve is scaled onto it by a least-squares factor, and the
-scaled <i>absolute</i> intensity is then extrapolated linearly against <i>c</i> to
-<i>c</i>&nbsp;=&nbsp;0. The output is therefore on the reference curve's
-<i>absolute</i> intensity scale (a factor of roughly the reference concentration
-larger than the Zimm result), it inherits the reference curve's error bars, and it
-is tagged with the reference concentration. Letting the data &mdash; rather than the
-entered concentrations alone &mdash; set the relative scale between curves is useful
-when the curves are different samples or peaks rather than a single dilution
-series.</p>
+scaled curves are then combined, at each <i>q</i>, with an inverse-variance
+weighted merge. Once the curves are scaled together their residual concentration
+dependence is small, so a per-point linear extrapolation to <i>c</i>&nbsp;=&nbsp;0
+(as Zimm does) mostly fits noise and can drive the high-<i>q</i> intensity negative;
+the weighted merge is stable, stays positive, and matches the ATSAS output. The
+result is on the reference curve's <i>absolute</i> intensity scale, inherits the
+reference curve's error bars, and is tagged with the reference concentration.
+Letting the data &mdash; rather than the entered concentrations alone &mdash; set the
+relative scale between curves is useful when the curves are different samples or
+peaks rather than a single dilution series.</p>
 
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the Zimm
      result, and the Primus result on a log I(q) vs q axis -->
