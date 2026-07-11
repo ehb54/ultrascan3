@@ -34,6 +34,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           QStringList *out_selected_names,
                                           bool *out_ok,
                                           bool *out_primus_mode,
+                                          bool *out_show_regplots,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -45,6 +46,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QLabel       *lbl_info;
       QTableWidget *t_conc;
       QCheckBox    *cb_primus;
+      QCheckBox    *cb_regplots;
       QLabel       *lbl_status;
       QPushButton  *pb_help;
       QPushButton  *pb_ok;
@@ -58,6 +60,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QStringList  *out_selected_names;
       bool         *out_ok;
       bool         *out_primus_mode;
+      bool         *out_show_regplots;
       void         *us_hydrodyn;
 
       bool          disable_updates;

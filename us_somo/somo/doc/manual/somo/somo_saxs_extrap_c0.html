@@ -103,6 +103,23 @@ series.</p>
      result, and the Primus result on a log I(q) vs q axis -->
 <center><img SRC="somo_saxs_extrap_c0_result.png" BORDER="1" ALT="Extrapolated curve"></center>
 
+<h3><center>Per-q regression plots</center></h3>
+
+<p>Checking <b>Show per-q regression plots</b> in the concentration dialog opens a
+scrollable pop-up after the extrapolation. It shows, one <i>q</i> value at a time,
+the linear regression behind the result: each input curve plotted as a point at its
+concentration (with its error bar), the fitted line, and the extrapolated
+<i>c</i>&nbsp;=&nbsp;0 intercept (highlighted, with its own error bar) at the dashed
+vertical axis. Use the wheel &mdash; or the <b>Prev</b>/<b>Next</b> buttons &mdash; to
+step through the <i>q</i> grid; the current <i>q</i>, intercept &plusmn; error, and
+slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
+Zimm, scaled absolute <i>I</i>(q) for Primus, or <i>I</i>*(q) for already-normalized
+inputs. This is a diagnostic view; it does not add or change any plotted curve.</p>
+
+<!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
+     bars, the fit line, the c=0 intercept, and the scroll wheel -->
+<center><img SRC="somo_saxs_extrap_c0_regplot.png" BORDER="1" ALT="Per-q regression pop-up"></center>
+
 <h3><center>Output</center></h3>
 
 <p>A new curve is added to the plot. Its name is the longest common prefix of the

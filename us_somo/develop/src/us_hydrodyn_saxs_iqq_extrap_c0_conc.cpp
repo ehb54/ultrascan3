@@ -14,6 +14,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           QStringList *out_selected_names,
                                                                           bool *out_ok,
                                                                           bool *out_primus_mode,
+                                                                          bool *out_show_regplots,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -25,6 +26,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_selected_names = out_selected_names;
    this->out_ok             = out_ok;
    this->out_primus_mode    = out_primus_mode;
+   this->out_show_regplots  = out_show_regplots;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -59,7 +61,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 5 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 6 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -115,6 +117,17 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "then extrapolate the absolute intensity to c=0 -- matches ATSAS almerge;\n"
                                 "the output carries the reference curve's error bars and absolute scale." ) );
 
+   cb_regplots = new QCheckBox( us_tr( "Show per-q regression plots (scrollable pop-up)" ), this );
+   cb_regplots->setChecked( false );
+   cb_regplots->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_regplots->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_regplots );
+   cb_regplots->setMinimumHeight( minHeight1 );
+   cb_regplots->setToolTip(
+                           us_tr( "After extrapolating, open a pop-up showing the per-q linear regression\n"
+                                  "(the concentration data points with error bars, the fit, and the c=0\n"
+                                  "intercept), scrollable q-by-q with a wheel." ) );
+
    lbl_status = new QLabel( "", this );
    lbl_status->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_status->setMinimumHeight(minHeight1);
@@ -149,6 +162,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( lbl_info );
    background->addWidget( t_conc );
    background->addWidget( cb_primus );
+   background->addWidget( cb_regplots );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
 }
@@ -262,7 +276,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
       ( *out_name_to_conc )[ names[ i ] ] = t_conc->item( i, 1 )->text().toDouble();
       *out_selected_names << names[ i ];
    }
-   *out_primus_mode = cb_primus->isChecked();
+   *out_primus_mode   = cb_primus->isChecked();
+   *out_show_regplots = cb_regplots->isChecked();
    *out_ok = true;
    close();
 }

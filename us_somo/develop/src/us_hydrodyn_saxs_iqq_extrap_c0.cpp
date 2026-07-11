@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_iqq_extrap_c0_conc.h"
+#include "../include/us_hydrodyn_saxs_iqq_extrap_c0_regplot.h"
 #include <QRegularExpression>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -130,6 +131,31 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       name_to_I[ *it ].resize( npts );
    }
 
+   // 2b. parse each curve's I(q) sd row (same format/keying as name_to_errors_map),
+   //     used for the per-point error bars in the optional regression-plot pop-up.
+   //     Absent errors are left as an empty vector (no error bar drawn for that curve).
+   map < QString, vector < double > > name_to_err;
+   for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
+   {
+      if ( !name_to_errors_map.count( *it ) )
+      {
+         continue;
+      }
+      QStringList qsl_err = name_to_errors_map[ *it ].split( "," );
+      if ( qsl_err.size() < 3 )
+      {
+         continue;
+      }
+      vector < double > err;
+      for ( int k = 2; k < qsl_err.size(); k++ )
+      {
+         err.push_back( qsl_err[ k ].toDouble() );
+      }
+      err.pop_back();
+      err.resize( npts );
+      name_to_err[ *it ] = err;
+   }
+
    // 3. launch the concentration-assignment dialog
 
    // conc_csv is keyed inconsistently depending on how a curve arrived:
@@ -158,10 +184,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    map < QString, double > name_to_conc;
    QStringList selected_names;
-   bool dlg_ok      = false;
-   bool primus_mode = false;
+   bool dlg_ok        = false;
+   bool primus_mode   = false;
+   bool show_regplots = false;
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, &show_regplots, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -363,10 +390,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double > out_I0_err;
    unsigned int       skipped_points = 0;
 
+   // per-q regression data captured for the optional scrollable regression-plot pop-up:
+   // the (concentration, y, y-error) points, plus the fit intercept, slope and its SE
+   vector < double >               reg_q;
+   vector < vector < double > >    reg_x;
+   vector < vector < double > >    reg_y;
+   vector < vector < double > >    reg_e;
+   vector < double >               reg_a;
+   vector < double >               reg_b;
+   vector < double >               reg_siga;
+
    for ( unsigned int qi = 0; qi < npts; qi++ )
    {
       vector < double > x;
       vector < double > y;
+      vector < double > ye;
 
       for ( int ci = 0; ci < ordered_names.size(); ci++ )
       {
@@ -379,21 +417,35 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             continue;
          }
+         double sd = 0e0;
+         if ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
+         {
+            sd = name_to_err[ ordered_names[ ci ] ][ qi ];
+            if ( us_isnan( sd ) )
+            {
+               sd = 0e0;
+            }
+         }
          double yv;
+         double yev;
          if ( primus_mode )
          {
-            yv = scale[ ci ] * Iv;
+            yv  = scale[ ci ] * Iv;
+            yev = scale[ ci ] * sd;
          }
          else if ( is_istar[ ci ] )
          {
-            yv = Iv;                 // already I*(q)/concentration-normalized; do not re-divide
+            yv  = Iv;                // already I*(q)/concentration-normalized; do not re-divide
+            yev = sd;
          }
          else
          {
-            yv = Iv / concs[ ci ];
+            yv  = Iv / concs[ ci ];
+            yev = sd / concs[ ci ];
          }
          x.push_back( concs[ ci ] );
          y.push_back( yv );
+         ye.push_back( yev );
       }
 
       if ( x.size() < 2 )
@@ -437,6 +489,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       out_q     .push_back( q[ qi ] );
       out_I0    .push_back( a );
       out_I0_err.push_back( err_val );
+
+      reg_q   .push_back( q[ qi ] );
+      reg_x   .push_back( x );
+      reg_y   .push_back( y );
+      reg_e   .push_back( ye );
+      reg_a   .push_back( a );
+      reg_b   .push_back( b );
+      reg_siga.push_back( siga );
    }
 
    if ( skipped_points )
@@ -501,5 +561,26 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                  .arg( all_istar
                        ? QString( " Inputs were already I*(q) (I(0)=MW); used as-is (not re-divided by concentration)." )
                        : QString( " Its scale differs from raw input curves by a factor of concentration." ) ) );
+   }
+
+   // 9. optional per-q regression viewer (scrollable pop-up requested from the dialog)
+
+   if ( show_regplots && reg_q.size() )
+   {
+      QString y_axis_title =
+         primus_mode ? us_tr( "scaled I(q)  (absolute)" )
+                     : ( all_istar ? us_tr( "I*(q)  (normalized)" )
+                                   : us_tr( "I(q)/concentration" ) );
+
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot *regplot =
+         new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
+                                                    us_hydrodyn,
+                                                    y_axis_title,
+                                                    reg_q, reg_x, reg_y, reg_e,
+                                                    reg_a, reg_b, reg_siga,
+                                                    this
+                                                    );
+      regplot->setAttribute( Qt::WA_DeleteOnClose );
+      regplot->show();
    }
 }
