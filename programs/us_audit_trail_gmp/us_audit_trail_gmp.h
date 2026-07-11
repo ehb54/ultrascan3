@@ -76,6 +76,9 @@ class US_auditTrailGMP : public US_Widgets
         //! \brief Load the GMP report.
         void loadGMPReport(void);
 
+        //! \brief Re-fetch the GMP report list and redraw it in the still-open selection dialog.
+        void refreshGMPReportsList(void);
+
         //! \brief Print a PDF.
         void printAPDF(void);
 

@@ -79,6 +79,49 @@ bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
   return US_Widgets::eventFilter( obj, event );
 }
 
+// Re-fetches the GMP report list from the database while the "Select GMP
+// Report for Audit Trail" dialog is still open (triggered by its own
+// "Refresh List" button, see loadGMPReport()), then redraws that dialog's
+// table in place with the refreshed data.
+void US_auditTrailGMP::refreshGMPReportsList( void )
+{
+  US_Passwd pw( this );
+  US_DB2 db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+			     QString(), 0, 0, pdiag_autoflow_db );
+  progress.setWindowModality( Qt::ApplicationModal );
+  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+  progress.setMinimumDuration( 0 );
+  progress.setAutoClose( false );
+  progress.setAutoReset( false );
+  progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
+  progress.setValue( 0 );
+  progress.show();
+  progress.move( pdiag_autoflow_db->frameGeometry().center() - progress.rect().center() );
+  qApp->processEvents();
+
+  gmpReportsDBdata.clear();
+  list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+
+  // Make sure the bar visibly reaches 100% before it disappears
+  progress.setValue( progress.maximum() );
+  qApp->processEvents();
+
+  progress.close();
+
+  // gmpReportsDBdata is held by reference inside pdiag_autoflow_db, so it
+  // already sees the refreshed contents -- just ask it to redraw the table.
+  QMetaObject::invokeMethod( pdiag_autoflow_db, "list_data" );
+}
+
 void US_auditTrailGMP::printAPDF( void )
 {
   QString subDirName = gmpRunName_passed + "_AuditTrail";
@@ -130,7 +173,7 @@ void US_auditTrailGMP::loadGMPReport( void )
   // it instead of hitting the database and re-running the full scan again.
   if ( gmpReportsDBdata.isEmpty() )
     {
-      US_Passwd pw;
+      US_Passwd pw( this );
       US_DB2 db( pw.getPasswd() );
   
       if ( db.lastErrno() != US_DB2::OK )
@@ -146,7 +189,7 @@ void US_auditTrailGMP::loadGMPReport( void )
       // and drag -- the dialog stays put, centered over this window.
       QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
 				 QString(), 0, 0, this );
-      progress.setWindowModality( Qt::WindowModal );
+      progress.setWindowModality( Qt::ApplicationModal );
       progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
       progress.setMinimumDuration( 0 );
       progress.setAutoClose( false );
@@ -180,6 +223,8 @@ void US_auditTrailGMP::loadGMPReport( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+
+  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -359,7 +404,7 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 {
   QMap< QString, QString> eSign_record;
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -2000,7 +2045,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
+   US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
 
@@ -2072,7 +2117,7 @@ void US_auditTrailGMP::read_reportLists_from_aprofile( QStringList & dropped_tri
   QString aprofile_xml;
   
   // Check DB connection
-  US_Passwd pw;
+  US_Passwd pw( this );
   QString masterPW = pw.getPasswd();
   US_DB2 db( masterPW );
   
@@ -2260,7 +2305,7 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QStrin
   analysisABDEJson  .clear();
   analysisABDEts    .clear();
 
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2    db( pw.getPasswd() );
 
   if ( db.lastErrno() != US_DB2::OK )
