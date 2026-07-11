@@ -1,6 +1,9 @@
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QPainter>
+#include <QProgressDialog>
+#include <QApplication>
+#include <QKeyEvent>
 //#include <QThread>    
 
 
@@ -605,17 +608,47 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
 //Load GMP Report form Db with assigned operator(s) && reviewer(s)
 void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
 {
-  US_Passwd pw;
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+  // If the report list was already fetched earlier in this session, reuse
+  // it instead of hitting the database and re-running the full scan again.
+  if ( gmpReportsDBdata.isEmpty() )
     {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
+      US_Passwd pw( this );
+      US_DB2 db( pw.getPasswd() );
+
+      if ( db.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+				tr( "Could not connect to database \n" ) + db.lastError() );
+	  return;
+	}
+
+      // Show a busy progress dialog while the (potentially long) DB query runs.
+      // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+      // are no close/minimize/maximize buttons and nothing for the user to grab
+      // and drag -- the dialog stays put, centered over this window. No Cancel
+      // button on this very first scan.
+      QProgressDialog progress( tr( "<b>Please Wait</b><br>Scanning for GMP runs where you are "
+				     "an assigned operator, reviewer, or approver..." ),
+				 QString(), 0, 0, this );
+      progress.setWindowModality( Qt::ApplicationModal );
+      progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+      progress.setMinimumDuration( 0 );
+      progress.setAutoClose( false );
+      progress.setAutoReset( false );
+      progress.installEventFilter( this );   // swallow Escape, see eventFilter()
+      progress.setValue( 0 );
+      progress.show();
+      progress.move( this->frameGeometry().center() - progress.rect().center() );
+      qApp->processEvents();
+
+      list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+
+      progress.close();
     }
-  
-  list_all_gmp_reports_db( gmpReportsDBdata, &db );
 
   QString pdtitle( tr( "Select GMP Report to e-Sign" ) );
   QStringList hdrs;
@@ -631,6 +664,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+
+  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -1037,6 +1072,25 @@ US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & it_details ) : 
   adjustSize();
   resize( 700, 800 );
   
+}
+
+// Blocks the modal "please wait" progress dialog (shown in
+// loadGMPReportDB_assigned()/loadGMPReportDB_assigned_separate()) from
+// being dismissed by the user via the Escape key -- it has no title-bar
+// buttons since it is frameless, so that's the only way left in.
+bool US_eSignaturesGMP::eventFilter( QObject* obj, QEvent* event )
+{
+  if ( qobject_cast< QProgressDialog* >( obj ) )
+    {
+      if ( event->type() == QEvent::KeyPress )
+	{
+	  QKeyEvent* keyEvent = static_cast< QKeyEvent* >( event );
+	  if ( keyEvent->key() == Qt::Key_Escape )
+	    return true;
+	}
+    }
+
+  return US_Widgets::eventFilter( obj, event );
 }
 
 
@@ -2004,7 +2058,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 
   QStringList qry;
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -2135,7 +2189,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 QMap< QString, QString>  US_eSignaturesGMP::read_autoflow_record( int autoflowID, QString type  )
 {
    // Check DB connection
-   US_Passwd pw;
+   US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
 
@@ -2219,7 +2273,7 @@ QStringList US_eSignaturesGMP::read_operators( QString optima_id )
 {
   QStringList instr_opers;
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -2259,7 +2313,7 @@ QMap< QString, QString> US_eSignaturesGMP::read_autoflowGMPReportEsign_record( Q
 {
   QMap< QString, QString> eSign_record;
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -2556,7 +2610,7 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   
   //JSON for logJsonUpdateTime - compose updated;
   //DB 
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -2839,7 +2893,7 @@ void US_eSignaturesGMP::assignOperRevs( void )
   qDebug() << "operRevToSignJsonObject -- "  << eSignStatusJson;
 
   //DB 
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -3194,7 +3248,7 @@ QString US_eSignaturesGMP::compare_ora_lists( QString old_ora, QString new_ora )
 //For auto: Load GMP Report form Db with assigned operator(s) && reviewer(s)
 void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
 {
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2 db( pw.getPasswd() );
   
   if ( db.lastErrno() != US_DB2::OK )
@@ -3337,17 +3391,35 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_auto( QString aID_passed )
 //Load GMP Report form Db with assigned operator(s) && reviewer(s)
 void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 {
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2 db( pw.getPasswd() );
-  
+
   if ( db.lastErrno() != US_DB2::OK )
     {
       QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
 			    tr( "Could not connect to database \n" ) + db.lastError() );
       return;
     }
-  
-  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+
+  // If the report list was already fetched earlier in this session, reuse
+  // it instead of re-running the full scan again.
+  if ( gmpReportsDBdata.isEmpty() )
+    {
+      // Show a busy progress dialog while the (potentially long) DB query runs.
+      // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+      // are no close/minimize/maximize buttons and nothing for the user to grab
+      // and drag -- the dialog stays put, centered over this window. No Cancel
+      // button on this very first scan.
+      QProgressDialog progress( tr( "<b>Please Wait</b><br>Scanning for GMP runs "
+				     "with assigned operators, reviewers, and approvers..." ),
+				 QString(), 0, 0, this );
+
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+
+      progress.close();
+    }
 
   QString pdtitle( tr( "Select GMP Report" ) );
   QStringList hdrs;
@@ -3363,6 +3435,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
+
+  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -3511,7 +3585,8 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 
 
 // Get .pdf GMP reports with assigned reviewers:
-int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db,
+						 QProgressDialog* progress )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -3531,23 +3606,62 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
   qry << "get_autoflowGMPReport_desc";
   db->query( qry );
 
+  // First pass: buffer the base rows so the *total* record count is known
+  // up front. This is what lets the progress dialog show real, proportional
+  // ("N of M") progress below, instead of just sitting at an indeterminate
+  // busy state that never visibly moves.
+  struct GmpBaseRow
+  {
+    QString id;
+    QString autoflowHistoryID;
+    QString autoflowHistoryName;
+    QString ptime_created;
+    QString filenamePdf;
+  };
+
+  QList< GmpBaseRow > baseRows;
+
   while ( db->next() )
     {
-      QStringList gmpreportentry;
-      QString id                     = db->value( 0 ).toString();
-      QString autoflowHistoryID      = db->value( 1 ).toString();
-      QString autoflowHistoryName    = db->value( 2 ).toString();
-      QString protocolName           = db->value( 3 ).toString();
+      GmpBaseRow row;
+      row.id                  = db->value( 0 ).toString();
+      row.autoflowHistoryID   = db->value( 1 ).toString();
+      row.autoflowHistoryName = db->value( 2 ).toString();
+      // db->value( 3 )  -- protocolName, currently unused
 
-      QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
-      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+      QDateTime time_created  = db->value( 4 ).toDateTime().toUTC();
+      row.ptime_created        = US_Util::toUTCDatetimeText( time_created
 								   .toString( Qt::ISODate ), true )
 	                                                           .section( ":", 0, 1 ) + " UTC";
-      
-      QString filenamePdf            = db->value( 5 ).toString();
+
+      row.filenamePdf          = db->value( 5 ).toString();
+
+      baseRows << row;
+    }
+
+  if ( progress )
+    {
+      progress->setRange( 0, baseRows.size() );
+      progress->setValue( 0 );
+    }
+
+  // Second pass: for each candidate report, look up its eSign details --
+  // this is the part that does an extra DB round-trip per record and is
+  // where most of the time is spent -- and update the progress dialog with
+  // real, proportional progress as each one completes.
+  for ( int irow = 0; irow < baseRows.size(); irow++ )
+    {
+      // Only has any effect for a progress dialog that was given a real
+      // Cancel button (see refreshGMPReportsList()) -- the very first scan's
+      // dialog has no Cancel button, so wasCanceled() can never be true there.
+      if ( progress && progress->wasCanceled() )
+	break;
+
+      const GmpBaseRow& row = baseRows.at( irow );
+      QStringList gmpreportentry;
 
       //check if report has assigned operator(s) & reviewer(s)
-      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( autoflowHistoryID );
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID );
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
@@ -3567,10 +3681,10 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
       	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
-	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << ptime_created //<< time_created.toString()
-			 << filenamePdf
-			 << autoflowHistoryID;
+	  gmpreportentry << row.id << row.autoflowHistoryName
+			 << row.ptime_created
+			 << row.filenamePdf
+			 << row.autoflowHistoryID;
 
 	  //additionally filter by userID for {operator, reviewer, appr.} in case of SEPARATE const.
 	  if ( auto_separate_status )
@@ -3585,9 +3699,87 @@ int US_eSignaturesGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReports
 
 	  nrecs++;
 	}
+
+      if ( progress )
+	{
+	  progress->setValue( irow + 1 );
+	  QString scanText = auto_separate_status ?
+	    tr( "Scanning for GMP runs where you are an assigned operator, reviewer, or approver..." ) :
+	    tr( "Scanning for GMP runs with assigned operators, reviewers, and approvers..." );
+	  progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
+				       "%2 of %3 checked, %4 record(s) found" )
+				     .arg( scanText ).arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
+	  qApp->processEvents();
+	}
     }
 
   return nrecs;
+}
+
+// Re-fetches the GMP report list from the database while the "Select GMP
+// Report" (or "Select GMP Report to e-Sign") dialog is still open (triggered
+// by its own "Refresh List" button, see loadGMPReportDB_assigned() /
+// loadGMPReportDB_assigned_separate()), then redraws that dialog's table in
+// place with the refreshed data. Unlike the very first scan, this one can be
+// cancelled -- if the user does, the previously loaded list is left untouched.
+void US_eSignaturesGMP::refreshGMPReportsList( void )
+{
+  US_Passwd pw( this );
+  US_DB2 db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QString scanText = auto_separate_status ?
+    tr( "Scanning for GMP runs where you are an assigned operator, reviewer, or approver..." ) :
+    tr( "Scanning for GMP runs with assigned operators, reviewers, and approvers..." );
+
+  QProgressDialog progress( tr( "<b>Please Wait</b><br>%1" ).arg( scanText ),
+			     tr( "Cancel" ), 0, 0, pdiag_autoflow_db );
+  progress.setWindowModality( Qt::ApplicationModal );
+  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+  progress.setMinimumDuration( 0 );
+  progress.setAutoClose( false );
+  progress.setAutoReset( false );
+  progress.installEventFilter( this );   // swallow Escape (Cancel button click still works normally)
+  progress.setValue( 0 );
+  progress.show();
+  progress.move( pdiag_autoflow_db->frameGeometry().center() - progress.rect().center() );
+  qApp->processEvents();
+
+  // Scan into a temporary list rather than gmpReportsDBdata directly, so
+  // that cancelling mid-scan can't leave the already-open dialog's data
+  // (and the cached list) in a truncated, half-refreshed state.
+  QList< QStringList > freshReportsData;
+  list_all_gmp_reports_db( freshReportsData, &db, &progress );
+
+  bool cancelled = progress.wasCanceled();
+
+  if ( !cancelled )
+    {
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+    }
+
+  progress.close();
+
+  if ( cancelled )
+    {
+      QMessageBox::information( pdiag_autoflow_db, tr( "Refresh Cancelled" ),
+				tr( "The refresh was cancelled. The previously loaded list is unchanged." ) );
+      return;
+    }
+
+  gmpReportsDBdata = freshReportsData;
+
+  // gmpReportsDBdata is held by reference inside pdiag_autoflow_db, so it
+  // already sees the refreshed contents -- just ask it to redraw the table.
+  QMetaObject::invokeMethod( pdiag_autoflow_db, "list_data" );
 }
 
 
@@ -3937,7 +4129,7 @@ void US_eSignaturesGMP::esign_report( void )
   qDebug() << "temp debug -- ";
   
   //first, check if you (as logged in user) are among listed operators && reviewers
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2 db( pw.getPasswd() );
   
   if ( db.lastErrno() != US_DB2::OK )
@@ -4857,7 +5049,7 @@ void US_eSignaturesGMP::write_download_eSignatures_DB( QString filePath, QString
   qDebug() << "write_eSignatures_DB():: Writing Blob of final_fpath, eSignID -- "
 	   << final_fpath << eSignID_global.toInt();
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2    db( pw.getPasswd() );
   
   if ( db.lastErrno() != US_DB2::OK )
