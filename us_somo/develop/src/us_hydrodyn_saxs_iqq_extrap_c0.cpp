@@ -35,16 +35,20 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
    return prefix;
 }
 
-static QString us_extrap_c0_curve_name( const QStringList &names )
+static QString us_extrap_c0_curve_name( const QStringList &names, bool primus_mode )
 {
+   // method token so Zimm vs Primus outputs are distinguishable on a plot and on
+   // disk (the "zimm"/"primus" wording may change later)
+   QString method = primus_mode ? "_primus" : "_zimm";
+
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
 
    if ( prefix.isEmpty() )
    {
-      return "extrap_c0";
+      return "extrap_c0" + method;
    }
-   return prefix + "_extrap_c0";
+   return prefix + "_extrap_c0" + method;
 }
 
 void US_Hydrodyn_Saxs::do_extrap_c0(
@@ -409,7 +413,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, primus_mode );
    QString final_name = base_name;
    {
       int suffix = 1;

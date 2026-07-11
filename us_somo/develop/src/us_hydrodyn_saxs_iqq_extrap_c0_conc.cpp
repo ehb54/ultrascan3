@@ -122,6 +122,12 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    AUTFBACK( lbl_status );
    lbl_status->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
+   pb_help = new QPushButton(us_tr("Help"), this);
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setMinimumHeight(minHeight1);
+   pb_help->setPalette( PALET_PUSHB );
+   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+
    pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -135,6 +141,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
 
    QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
+   hbl_bottom->addWidget( pb_help );
    hbl_bottom->addWidget( pb_cancel );
    hbl_bottom->addWidget( pb_ok );
 
@@ -264,4 +271,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::cancel()
 {
    *out_ok = false;
    close();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::help()
+{
+   US_Help *online_help;
+   online_help = new US_Help( this );
+   online_help->show_help( "manual/somo/somo_saxs_extrap_c0.html" );
 }

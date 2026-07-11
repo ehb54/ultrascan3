@@ -46,6 +46,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QTableWidget *t_conc;
       QCheckBox    *cb_primus;
       QLabel       *lbl_status;
+      QPushButton  *pb_help;
       QPushButton  *pb_ok;
       QPushButton  *pb_cancel;
 
@@ -71,6 +72,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       void selection_changed();
       void ok();
       void cancel();
+      void help();
 };
 
 #endif
