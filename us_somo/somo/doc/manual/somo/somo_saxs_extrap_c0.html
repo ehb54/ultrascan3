@@ -114,6 +114,19 @@ the fit, and any <i>q</i> point with fewer than two usable values is skipped; th
 editor window reports how many curves and points were used, and, in Primus mode,
 the reference curve and the per-curve scale factors.</p>
 
+<h3><center>I*(q) (already-normalized) curves</center></h3>
+
+<p>Curves whose name contains <code>_Istarq_</code> are treated as already being in
+<i>I</i>*(<i>q</i>) form (header units g/mol, <i>I</i>(0)&nbsp;=&nbsp;MW), i.e. their
+intensity has already been normalized by concentration &mdash; even though their
+<code>Conc:</code> header carries the real, non-unity measurement concentration. For
+these curves the intensity is used <i>as is</i> (it is <span style="color:#CC0000">not</span>
+divided by concentration again), while the real concentration is still used as the
+extrapolation variable. A selection made entirely of <i>I</i>*(<i>q</i>) curves therefore
+produces an already-normalized result (tagged <code>Conc:1</code> in both modes). Mixing
+<i>I</i>*(<i>q</i>) curves with raw-intensity curves in one extrapolation is flagged with a
+warning, as the two are on different scales.</p>
+
 <h3><center>References</center></h3>
 
 <p><span lang="en-US">The concentration extrapolation and the <i>almerge</i>

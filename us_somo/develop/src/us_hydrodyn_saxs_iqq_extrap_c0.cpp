@@ -212,6 +212,35 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                   "Proceeding anyway." ) );
    }
 
+   // Curves whose name contains "_Istarq_" are already in I*(q) form (header units
+   // g/mol, I(0)=MW): their intensity has ALREADY been normalized by concentration
+   // even though their Conc: header is non-unity. Such a curve must NOT be divided by
+   // its concentration again in the Zimm fit -- its intensity is used as-is, while its
+   // real concentration still serves as the regression x-axis. A wholly-I*(q) input
+   // therefore also yields an already-normalized (I(0)=MW) output. Primus mode never
+   // divides by c, so its intensity handling is unaffected (only its output conc tag
+   // differs, below).
+   vector < bool > is_istar( ordered_names.size(), false );
+   unsigned int    istar_count = 0;
+   for ( int ci = 0; ci < ordered_names.size(); ci++ )
+   {
+      if ( ordered_names[ ci ].contains( "_Istarq_" ) )
+      {
+         is_istar[ ci ] = true;
+         istar_count++;
+      }
+   }
+   bool all_istar = ( istar_count == (unsigned int) ordered_names.size() );
+   if ( istar_count && !all_istar )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString( us_tr( "The selection mixes %1 I*(q) (already concentration-normalized, "
+                                            "I(0)=MW) curve(s) with %2 raw-intensity curve(s). These are on "
+                                            "different scales; the extrapolation may not be meaningful. "
+                                            "Proceeding anyway." ) )
+                            .arg( istar_count ).arg( ordered_names.size() - (int) istar_count ) );
+   }
+
    // Two extrapolation modes are offered (selected via the concentration dialog):
    //
    // Zimm mode (default): loaded I(q) curves are raw (not pre-normalized by
@@ -350,8 +379,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             continue;
          }
+         double yv;
+         if ( primus_mode )
+         {
+            yv = scale[ ci ] * Iv;
+         }
+         else if ( is_istar[ ci ] )
+         {
+            yv = Iv;                 // already I*(q)/concentration-normalized; do not re-divide
+         }
+         else
+         {
+            yv = Iv / concs[ ci ];
+         }
          x.push_back( concs[ ci ] );
-         y.push_back( primus_mode ? ( scale[ ci ] * Iv ) : ( Iv / concs[ ci ] ) );
+         y.push_back( yv );
       }
 
       if ( x.size() < 2 )
@@ -429,15 +471,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    if ( primus_mode )
    {
-      // absolute intensity on the reference curve's scale -- tag it with the
-      // reference concentration so dividing by it recovers the normalized form
-      update_conc_csv( final_name, ref_conc );
+      // absolute intensity on the reference curve's scale -- tag it with the reference
+      // concentration so dividing by it recovers the normalized form. Exception: if
+      // every input was already I*(q) (I(0)=MW), the output is likewise already
+      // normalized, so tag it Conc:1 rather than the reference concentration.
+      double out_conc_tag = all_istar ? 1e0 : ref_conc;
+      update_conc_csv( final_name, out_conc_tag );
 
       editor_msg( "black",
                  QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Primus mode: absolute intensity extrapolated to c=0 on the scale of the "
-                          "highest-concentration curve (conc %4), carrying that curve's error bars.\n" )
-                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points ).arg( ref_conc ) );
+                          "Primus mode: %4 extrapolated to c=0 on the scale of the "
+                          "highest-concentration curve (conc %5), carrying that curve's error bars.%6\n" )
+                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
+                 .arg( all_istar ? "already-I*(q) intensity" : "absolute intensity" )
+                 .arg( ref_conc )
+                 .arg( all_istar ? QString( " Inputs were I*(q) (I(0)=MW), so the result is tagged Conc:1." ) : QString( "" ) ) );
    }
    else
    {
@@ -448,8 +496,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       editor_msg( "black",
                  QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Zimm mode: this curve is I(q)/concentration extrapolated to c=0, not raw intensity -- "
-                          "its scale differs from the input curves by a factor of concentration.\n" )
-                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points ) );
+                          "Zimm mode: concentration-normalized intensity extrapolated to c=0, tagged Conc:1.%4\n" )
+                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
+                 .arg( all_istar
+                       ? QString( " Inputs were already I*(q) (I(0)=MW); used as-is (not re-divided by concentration)." )
+                       : QString( " Its scale differs from raw input curves by a factor of concentration." ) ) );
    }
 }
