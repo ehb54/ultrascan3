@@ -4,6 +4,7 @@
 #define US_AUDITTRAIL_GMP_H
 
 #include <QPrinter>
+#include <QProgressDialog>
 
 #include "us_widgets.h"
 #include "us_db2.h"
@@ -24,6 +25,11 @@ class US_auditTrailGMP : public US_Widgets
     public:
         //! \brief Constructor for the US_auditTrailGMP class.
         US_auditTrailGMP();
+
+    protected:
+        //! \brief Blocks the modal "please wait" progress dialog from being
+        //!        dismissed by the user (Escape key / close attempts).
+        bool eventFilter(QObject* obj, QEvent* event) override;
 
     private:
         QVBoxLayout* topLayout_auto; //!< Top layout for the auto section.
@@ -85,8 +91,9 @@ class US_auditTrailGMP : public US_Widgets
         //! \brief List all GMP reports from the database.
         //! \param data The list to store the GMP report data.
         //! \param db The database connection.
+        //! \param progress Optional progress dialog to update while the (potentially long) query runs.
         //! \return The number of reports listed.
-        int list_all_gmp_reports_db(QList<QStringList>& data, US_DB2* db);
+        int list_all_gmp_reports_db(QList<QStringList>& data, US_DB2* db, QProgressDialog* progress = NULL);
 
         //! \brief Read the autoflow GMP report eSign record.
         //! \param id The ID of the eSign record.

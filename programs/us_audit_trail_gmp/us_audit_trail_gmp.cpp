@@ -1,6 +1,9 @@
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QPainter>
+#include <QProgressDialog>
+#include <QApplication>
+#include <QKeyEvent>
 //#include <QThread>    
 
 
@@ -56,6 +59,30 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
     
   //resize( 1200, 300 );
   resize( 600, 500 );
+}
+
+// Blocks the modal "please wait" progress dialog (shown in loadGMPReport())
+// from being dismissed by the user -- it has no title-bar buttons since it
+// is frameless, but Escape would otherwise still close it.
+bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
+{
+  if ( qobject_cast< QProgressDialog* >( obj ) )
+    {
+      if ( event->type() == QEvent::Close )
+	{
+	  event->ignore();
+	  return true;
+	}
+
+      if ( event->type() == QEvent::KeyPress )
+	{
+	  QKeyEvent* keyEvent = static_cast< QKeyEvent* >( event );
+	  if ( keyEvent->key() == Qt::Key_Escape )
+	    return true;
+	}
+    }
+
+  return US_Widgets::eventFilter( obj, event );
 }
 
 void US_auditTrailGMP::printAPDF( void )
@@ -115,7 +142,26 @@ void US_auditTrailGMP::loadGMPReport( void )
       return;
     }
   
-  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+  // Show a busy progress dialog while the (potentially long) DB query runs.
+  // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+  // are no close/minimize/maximize buttons and nothing for the user to grab
+  // and drag -- the dialog stays put, centered over this window.
+  QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+			     QString(), 0, 0, this );
+  progress.setWindowModality( Qt::WindowModal );
+  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+  progress.setMinimumDuration( 0 );
+  progress.setAutoClose( false );
+  progress.setAutoReset( false );
+  progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
+  progress.setValue( 0 );
+  progress.show();
+  progress.move( this->frameGeometry().center() - progress.rect().center() );
+  qApp->processEvents();
+
+  list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+
+  progress.close();
 
   QString pdtitle( tr( "Select GMP Report for Audit Trail" ) );
   QStringList hdrs;
@@ -181,7 +227,8 @@ void US_auditTrailGMP::loadGMPReport( void )
 }
 
 // Get .pdf GMP reports with assigned reviewers:
-int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db,
+						QProgressDialog* progress )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -201,23 +248,56 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
   qry << "get_autoflowGMPReport_desc";
   db->query( qry );
 
+  // First pass: buffer the base rows so the *total* record count is known
+  // up front. This is what lets the progress dialog show real, proportional
+  // ("N of M") progress below, instead of just sitting at an indeterminate
+  // busy state that never visibly moves.
+  struct GmpBaseRow
+  {
+    QString id;
+    QString autoflowHistoryID;
+    QString autoflowHistoryName;
+    QString ptime_created;
+    QString filenamePdf;
+  };
+
+  QList< GmpBaseRow > baseRows;
+
   while ( db->next() )
     {
-      QStringList gmpreportentry;
-      QString id                     = db->value( 0 ).toString();
-      QString autoflowHistoryID      = db->value( 1 ).toString();
-      QString autoflowHistoryName    = db->value( 2 ).toString();
-      QString protocolName           = db->value( 3 ).toString();
+      GmpBaseRow row;
+      row.id                  = db->value( 0 ).toString();
+      row.autoflowHistoryID   = db->value( 1 ).toString();
+      row.autoflowHistoryName = db->value( 2 ).toString();
+      // db->value( 3 )  -- protocolName, currently unused
 
-      QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
-      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+      QDateTime time_created  = db->value( 4 ).toDateTime().toUTC();
+      row.ptime_created        = US_Util::toUTCDatetimeText( time_created
 								   .toString( Qt::ISODate ), true )
 	                                                           .section( ":", 0, 1 ) + " UTC";
-      
-      QString filenamePdf            = db->value( 5 ).toString();
+
+      row.filenamePdf          = db->value( 5 ).toString();
+
+      baseRows << row;
+    }
+
+  if ( progress )
+    {
+      progress->setRange( 0, baseRows.size() );
+      progress->setValue( 0 );
+    }
+
+  // Second pass: for each candidate report, look up its eSign details --
+  // this is the part that does an extra DB round-trip per record and is
+  // where most of the time is spent -- and update the progress dialog with
+  // real, proportional progress as each one completes.
+  for ( int irow = 0; irow < baseRows.size(); irow++ )
+    {
+      const GmpBaseRow& row = baseRows.at( irow );
+      QStringList gmpreportentry;
 
       //check if report has assigned operator(s) & reviewer(s)
-      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( autoflowHistoryID );
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID );
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
@@ -237,10 +317,10 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
       	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
-	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << ptime_created //<< time_created.toString()
-			 << filenamePdf
-			 << autoflowHistoryID;
+	  gmpreportentry << row.id << row.autoflowHistoryName
+			 << row.ptime_created
+			 << row.filenamePdf
+			 << row.autoflowHistoryID;
 
 	  // //additionally filter by userID for {operator, reviewer, appr.} in case of SEPARATE const.
 	  // if ( operatorListJson.contains( logged_user ) ||
@@ -254,6 +334,16 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
 	  
 	  gmpReportsDBdata << gmpreportentry;
 	  nrecs++;
+	}
+
+      if ( progress )
+	{
+	  progress->setValue( irow + 1 );
+	  progress->setLabelText( tr( "<b>Please Wait</b><br>"
+				       "Loading GMP runs from database...<br>"
+				       "%1 of %2 checked, %3 record(s) found" )
+				     .arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
+	  qApp->processEvents();
 	}
     }
 
