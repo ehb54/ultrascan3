@@ -995,7 +995,7 @@ class US_EXTERN US_Saxs_Util
       double              prob_of_streak( int n, int c );
       float               prob_of_streak_f( int n, int c );
 
-      bool                cormap( 
+      bool                cormap(
                                  const vector < double >            & q,
                                  const vector < vector < double > > & I,
                                  vector < vector < double > >       & rkl,
@@ -1004,6 +1004,15 @@ class US_EXTERN US_Saxs_Util
                                  int                                & C,
                                  double                             & P
                                   );
+
+      // pairwise CORMAP longest-run test between two equal-length y-vectors: the
+      // p-value that the longest run of (y1>y2)/(y1<y2) arises by chance under a
+      // fair-coin null. Matches the two-curve case of cormap() (and the tested
+      // saxsafold SAS::compute_p_value). Numerically stable for large n.
+      // longest_run (out) is the observed longest run length.
+      static double       compute_p_value( const vector < double > & y1,
+                                           const vector < double > & y2,
+                                           int                     & longest_run );
 
       static double       holm_bonferroni( vector < double > P, double alpha );
 

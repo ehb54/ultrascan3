@@ -36,7 +36,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                               void *                          us_hydrodyn,
                                               QString                         y_axis_title,
-                                              bool                            merge_mode,
+                                              double                          merge_q,
                                               vector < double >               reg_q,
                                               vector < vector < double > >    reg_x,
                                               vector < vector < double > >    reg_y,
@@ -55,7 +55,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       void *                          us_hydrodyn;
 
       QString                         y_axis_title;
-      bool                            merge_mode;
+      double                          merge_q;      // Primus merging q (0 => pure extrapolation / Zimm)
       vector < double >               reg_q;
       vector < vector < double > >    reg_x;
       vector < vector < double > >    reg_y;

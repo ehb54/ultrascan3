@@ -14,7 +14,7 @@
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                                                 void *                          us_hydrodyn,
                                                                                 QString                         y_axis_title,
-                                                                                bool                            merge_mode,
+                                                                                double                          merge_q,
                                                                                 vector < double >               reg_q,
                                                                                 vector < vector < double > >    reg_x,
                                                                                 vector < vector < double > >    reg_y,
@@ -28,7 +28,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
 {
    this->us_hydrodyn  = us_hydrodyn;
    this->y_axis_title = y_axis_title;
-   this->merge_mode   = merge_mode;
+   this->merge_q      = merge_q;
    this->reg_q        = reg_q;
    this->reg_x        = reg_x;
    this->reg_y        = reg_y;
@@ -64,9 +64,10 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
    int minHeight1 = 30;
 
    lbl_info = new QLabel(
-                         merge_mode
-                         ? us_tr( "Each point is one input curve at its concentration; the line is the "
-                                  "inverse-variance weighted merge (the Primus result) at this q.\n"
+                         ( merge_q > 0e0 )
+                         ? us_tr( "Each point is one input curve at its concentration; the line is the linear "
+                                  "fit whose c=0 intercept is the extrapolated value. Below the merging point "
+                                  "the output is this intercept; at/above it the reference curve is used.\n"
                                   "Drag the wheel to scroll q; use Prev/Next to step one q at a time." )
                          : us_tr( "Each point is one input curve at its concentration; the line is the linear "
                                   "fit whose intercept at c=0 is the extrapolated value.\n"
@@ -344,16 +345,13 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
       marker->attach( plot );
       plot_markers.push_back( marker );
 
-      // vertical reference line at c=0 -- only meaningful for the Zimm extrapolation
-      if ( !merge_mode )
-      {
-         QwtPlotMarker * vline = new QwtPlotMarker;
-         vline->setLineStyle( QwtPlotMarker::VLine );
-         vline->setLinePen( QPen( Qt::red, 0, Qt::DashDotLine ) );
-         vline->setXValue( 0e0 );
-         vline->attach( plot );
-         plot_markers.push_back( vline );
-      }
+      // vertical reference line at c=0 (marks where the fit extrapolates to)
+      QwtPlotMarker * vline = new QwtPlotMarker;
+      vline->setLineStyle( QwtPlotMarker::VLine );
+      vline->setLinePen( QPen( Qt::red, 0, Qt::DashDotLine ) );
+      vline->setXValue( 0e0 );
+      vline->attach( plot );
+      plot_markers.push_back( vline );
    }
 
    double y_pad = 0.06 * ( y_max - y_min );
@@ -364,25 +362,28 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
    plot->setAxisScale( QwtPlot::xBottom, x_lo, x_hi );
    plot->setAxisScale( QwtPlot::yLeft, y_min - y_pad, y_max + y_pad );
 
+   bool at_ref = ( merge_q > 0e0 && reg_q[ i ] >= merge_q );
+   QString mode_note;
+   if ( merge_q > 0e0 )
+   {
+      mode_note = at_ref
+         ? us_tr( "  -- output: reference curve (q >= merge point)" )
+         : us_tr( "  -- output: extrapolated intercept" );
+   }
+
    plot->setTitle( QString( us_tr( "q = %1  (point %2 of %3)%4" ) )
                    .arg( reg_q[ i ], 0, 'g', 6 )
                    .arg( i + 1 )
                    .arg( (int) reg_q.size() )
-                   .arg( merge_mode ? us_tr( "  -- weighted merge" ) : QString( "" ) ) );
+                   .arg( mode_note ) );
 
-   lbl_results->setText(
-                        merge_mode
-                        ? QString( us_tr( "q = %1    merged value = %2 ± %3    n = %4 curves" ) )
-                          .arg( reg_q[ i ], 0, 'g', 6 )
-                          .arg( a, 0, 'g', 6 )
-                          .arg( siga, 0, 'g', 4 )
-                          .arg( (int) x.size() )
-                        : QString( us_tr( "q = %1    intercept (c=0) = %2 ± %3    slope = %4    n = %5 curves" ) )
-                          .arg( reg_q[ i ], 0, 'g', 6 )
-                          .arg( a, 0, 'g', 6 )
-                          .arg( siga, 0, 'g', 4 )
-                          .arg( b, 0, 'g', 6 )
-                          .arg( (int) x.size() ) );
+   lbl_results->setText( QString( us_tr( "q = %1    intercept (c=0) = %2 ± %3    slope = %4    n = %5 curves%6" ) )
+                         .arg( reg_q[ i ], 0, 'g', 6 )
+                         .arg( a, 0, 'g', 6 )
+                         .arg( siga, 0, 'g', 4 )
+                         .arg( b, 0, 'g', 6 )
+                         .arg( (int) x.size() )
+                         .arg( at_ref ? us_tr( "   [taken from reference]" ) : QString( "" ) ) );
 
    plot_zoomer = new ScrollZoomer( plot->canvas() );
    plot_zoomer->setRubberBandPen( QPen( Qt::yellow, 0, Qt::DotLine ) );

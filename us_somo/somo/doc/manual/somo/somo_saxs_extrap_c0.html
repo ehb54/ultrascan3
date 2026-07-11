@@ -87,19 +87,22 @@ This is the small-angle-scattering analogue of a Zimm plot. The output is a
 tagged <code>Conc:1</code>, SOMO's convention for an already-normalized curve, and
 carries the standard error of the fitted intercept as its uncertainty.</p>
 
-<p><b>Primus mode</b> (checkbox checked). This reproduces the behavior of the
-ATSAS <i>almerge</i> program. The highest-concentration curve is taken as a
-reference; every other curve is scaled onto it by a least-squares factor, and the
-scaled curves are then combined, at each <i>q</i>, with an inverse-variance
-weighted merge. Once the curves are scaled together their residual concentration
-dependence is small, so a per-point linear extrapolation to <i>c</i>&nbsp;=&nbsp;0
-(as Zimm does) mostly fits noise and can drive the high-<i>q</i> intensity negative;
-the weighted merge is stable, stays positive, and matches the ATSAS output. The
-result is on the reference curve's <i>absolute</i> intensity scale, inherits the
-reference curve's error bars, and is tagged with the reference concentration.
-Letting the data &mdash; rather than the entered concentrations alone &mdash; set the
-relative scale between curves is useful when the curves are different samples or
-peaks rather than a single dilution series.</p>
+<p><b>Primus mode</b> (checkbox checked). This follows the ATSAS <i>almerge</i>
+approach (Petoukhov <i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). The
+highest-concentration curve is taken as the reference and every curve is scaled to
+it by <i>c</i><sub>ref</sub>/<i>c</i><sub>i</sub>. At each <i>q</i> the scaled
+intensity is fitted linearly against concentration and the <i>c</i>&nbsp;=&nbsp;0
+intercept &mdash; the infinite-dilution intensity &mdash; is taken. Crucially, this
+extrapolation is applied only in the low-<i>q</i> region where the curves show a real
+concentration dependence; above the <b>merging point</b> the reference curve is used
+verbatim. The merging point is found automatically where the extrapolation and the
+reference differ only by noise, using a CORMAP longest-run <i>p</i>-value test (the
+significance level defaults to 0.01 and may be set via the <code>saxs_extrap_c0_pvalue_alpha</code>
+parameter). This removes the interparticle/structure-factor effect at low <i>q</i>
+while keeping stable, positive intensities at high <i>q</i> (a per-point fit there
+would only track noise and can go negative). The result is on the reference curve's
+<i>absolute</i> intensity scale, inherits the reference curve's error bars, and is
+tagged with the reference concentration.</p>
 
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the Zimm
      result, and the Primus result on a log I(q) vs q axis -->
@@ -110,16 +113,17 @@ peaks rather than a single dilution series.</p>
 <p>Checking <b>Show per-q regression plots</b> in the concentration dialog opens a
 pop-up window after the extrapolation. It shows, one <i>q</i> value at a time, each
 input curve as a point at its concentration (with its error bar) together with the
-per-q result. In <b>Zimm</b> mode the result is the fitted line and its extrapolated
-<i>c</i>&nbsp;=&nbsp;0 intercept (highlighted, with its own error bar) at the dashed
-vertical axis. In <b>Primus</b> mode the result is the inverse-variance weighted
-merge, drawn as a horizontal level. <b>Drag the wheel</b> to scroll smoothly through
-the <i>q</i> grid (it has inertia, so a flick keeps scrolling); the <b>Prev</b> and
-<b>Next</b> buttons step one <i>q</i> at a time. The current <i>q</i>, the result
-&plusmn; its error, and (Zimm) the slope are shown below the plot. The <i>y</i> axis
-matches the mode: <i>I</i>(q)/c for Zimm, scaled absolute <i>I</i>(q) for Primus, or
-<i>I</i>*(q) for already-normalized inputs. This is a diagnostic view; it does not add
-or change any plotted curve.</p>
+per-q result: the fitted line and its extrapolated <i>c</i>&nbsp;=&nbsp;0 intercept
+(highlighted, with its own error bar) at the dashed vertical axis. In <b>Primus</b>
+mode the title also notes, for the current <i>q</i>, whether the output there is the
+extrapolated intercept (below the merging point) or taken from the reference curve
+(at/above it). <b>Drag the wheel</b> to scroll smoothly through the <i>q</i> grid (it
+has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> buttons step
+one <i>q</i> at a time. The current <i>q</i>, the intercept &plusmn; its error, and the
+slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
+Zimm, <i>I</i>(q) scaled to the reference concentration for Primus, or <i>I</i>*(q) for
+already-normalized inputs. This is a diagnostic view; it does not add or change any
+plotted curve.</p>
 
 <!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
      bars, the fit line, the c=0 intercept, and the scroll wheel -->

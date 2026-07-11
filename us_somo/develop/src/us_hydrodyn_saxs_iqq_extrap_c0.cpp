@@ -281,16 +281,19 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // axis stays the real, distinct entered values. The output is I(q)/c, tagged
    // Conc:1 (SOMO's "already normalized" convention).
    //
-   // Primus mode: reproduces ATSAS almerge. Each curve is least-squares scaled onto
-   // the highest-concentration curve (the reference), then the scaled curves are
-   // combined per q with an inverse-variance weighted MERGE (not a per-q linear
-   // extrapolation to c=0). Once scaled, the curves' residual concentration
-   // dependence is negligible for typical data, so a per-point extrapolation mostly
-   // fits noise and drives the high-q intensity negative -- which makes the copied
-   // error bars look enormous on a log plot. The weighted merge is stable, stays
-   // positive, and matches the ATSAS output. The result is on the reference curve's
-   // absolute intensity scale, carries the reference curve's error bars, and is
-   // tagged with the reference concentration rather than Conc:1.
+   // Primus mode: reproduces ATSAS almerge (Petoukhov et al. 2012 Eq 1; Franke et al.
+   // 2017). Each curve is least-squares scaled onto the highest-concentration curve
+   // (the reference), then at each q the scaled intensity is fitted linearly against
+   // concentration; the intercept is the infinite-dilution intensity I_ex. This
+   // extrapolation is applied only in the low-q "overlap" region where the curves
+   // show a real concentration dependence; above the merging point -- located where
+   // the extrapolation and the reference differ only by noise (a CORMAP longest-run
+   // p-value test, US_Saxs_Util::compute_p_value) -- the reference curve is taken
+   // verbatim. This removes the interparticle/structure-factor effect at low q while
+   // keeping stable, positive intensities at high q (a per-point fit there would just
+   // track noise and go negative). The result is on the reference curve's absolute
+   // intensity scale, carries the reference curve's error bars, and is tagged with
+   // the reference concentration rather than Conc:1.
    unsigned int zero_conc_excluded = 0;
    for ( int ci = 0; ci < (int) concs.size(); ci++ )
    {
@@ -315,9 +318,23 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    double ref_conc = 0e0;
    vector < double > scale( ordered_names.size(), 1e0 );
    vector < double > ref_sd;
+   vector < double > Iref_full;                 // reference (highest-conc) raw I(q), full grid
+   vector < double > Iex( npts, 0e0 );          // per-q extrapolated intercept (reference scale)
+   vector < double > Islope( npts, 0e0 );       // per-q fit slope (for the regression viewer)
+   int    merge_idx = 0;                        // grid index: output = reference from here up
+   double merge_q   = 0e0;                      // q at the merge point (0 => no merge / all reference)
+   double pvalue_alpha = 1e-2;                  // CORMAP merge-point significance (cf. cormap_alpha)
 
    if ( primus_mode )
    {
+      {
+         US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
+         if ( uh->gparams.count( "saxs_extrap_c0_pvalue_alpha" ) )
+         {
+            pvalue_alpha = uh->gparams[ "saxs_extrap_c0_pvalue_alpha" ].toDouble();
+         }
+      }
+
       for ( int ci = 0; ci < ordered_names.size(); ci++ )
       {
          if ( concs[ ci ] > ref_conc )
@@ -337,6 +354,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       const vector < double > &Iref = name_to_I[ ordered_names[ ref_ci ] ];
 
+      // Scale each curve to the reference concentration by c_ref/c_i (equivalent to
+      // normalizing by concentration, I/c, then re-expressing on the reference's
+      // absolute scale). A data-driven least-squares scale was tried but is corrupted
+      // at low q by the structure factor for strongly-interacting samples -- it made
+      // the extrapolation recover only ~85% of the true dilute limit on a simulated
+      // strong-dependence series, vs ~99% with the concentration scale used here.
       QString scale_report;
       for ( int ci = 0; ci < ordered_names.size(); ci++ )
       {
@@ -344,24 +367,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             continue;
          }
-         const vector < double > &Ii = name_to_I[ ordered_names[ ci ] ];
-         double num = 0e0;
-         double den = 0e0;
-         for ( unsigned int qi = 0; qi < npts; qi++ )
-         {
-            if ( us_isnan( Ii[ qi ] ) || us_isnan( Iref[ qi ] ) )
-            {
-               continue;
-            }
-            num += Ii[ qi ] * Iref[ qi ];
-            den += Ii[ qi ] * Ii[ qi ];
-         }
-         scale[ ci ] = ( den > 0e0 ) ? num / den : 1e0;
+         scale[ ci ] = ref_conc / concs[ ci ];
          scale_report += QString( "    %1  conc %2  scale %3\n" )
             .arg( ordered_names[ ci ] ).arg( concs[ ci ] ).arg( scale[ ci ] );
       }
       editor_msg( "black",
-                 QString( us_tr( "Primus-mode extrapolation: scaling reference is \"%1\" (conc %2)\n%3" ) )
+                 QString( us_tr( "Primus-mode extrapolation: reference (highest conc) is \"%1\" (conc %2); "
+                                 "curves scaled to it by c_ref/c_i\n%3" ) )
                  .arg( ordered_names[ ref_ci ] ).arg( ref_conc ).arg( scale_report ) );
 
       // the extrapolated curve inherits the reference curve's error bars (matches almerge)
@@ -377,6 +389,83 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             ref_sd.pop_back();
          }
          ref_sd.resize( npts );
+      }
+
+      // reference raw I(q) on the full grid (sanitized), used as the high-q output
+      // and as the comparison curve for the merging-point p-value test
+      Iref_full.resize( npts );
+      for ( unsigned int qi = 0; qi < npts; qi++ )
+      {
+         Iref_full[ qi ] = us_isnan( Iref[ qi ] ) ? 0e0 : Iref[ qi ];
+      }
+
+      // pointwise weighted linear fit of the scaled intensity vs concentration
+      // (Petoukhov et al. 2012, Eq 1): intercept = infinite-dilution intensity I_ex.
+      for ( unsigned int qi = 0; qi < npts; qi++ )
+      {
+         double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+         int    cnt = 0;
+         for ( int ci = 0; ci < ordered_names.size(); ci++ )
+         {
+            if ( concs[ ci ] <= 0e0 )
+            {
+               continue;
+            }
+            double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
+            if ( us_isnan( Iv ) )
+            {
+               continue;
+            }
+            double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
+               ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
+            double sig = scale[ ci ] * sd;
+            double w   = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
+            double xv  = concs[ ci ];
+            double yv  = scale[ ci ] * Iv;
+            S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv; cnt++;
+         }
+         double d = S * Sxx - Sx * Sx;
+         if ( cnt >= 2 && d != 0e0 )
+         {
+            Iex[ qi ]    = ( Sxx * Sy - Sx * Sxy ) / d;
+            Islope[ qi ] = ( S * Sxy - Sx * Sy ) / d;
+         }
+         else
+         {
+            Iex[ qi ]    = Iref_full[ qi ];
+            Islope[ qi ] = 0e0;
+         }
+      }
+
+      // merging point (ATSAS almerge): extrapolate the low-q region where the
+      // concentration effect is real, and take the reference curve verbatim at high
+      // q where the profiles differ only by noise. Detect the crossover with a local
+      // CORMAP longest-run p-value between the extrapolated curve and the reference:
+      // scan from low q, and the merge point is the first q where a trailing window
+      // agrees (p >= alpha). Below it: extrapolation; at/above it: reference.
+      {
+         const int win = 50;
+         merge_idx = 0;
+         if ( (int) npts > win )
+         {
+            merge_idx = (int) npts - win;      // fallback: extrapolate all but the last window
+            for ( int j = 0; j + win <= (int) npts; j++ )
+            {
+               vector < double > wex( Iex.begin() + j, Iex.begin() + j + win );
+               vector < double > wrf( Iref_full.begin() + j, Iref_full.begin() + j + win );
+               int lr;
+               if ( US_Saxs_Util::compute_p_value( wex, wrf, lr ) >= pvalue_alpha )
+               {
+                  merge_idx = j;
+                  break;
+               }
+            }
+         }
+         merge_q = ( merge_idx < (int) npts ) ? q[ merge_idx ] : q[ npts - 1 ];
+         editor_msg( "black",
+                    QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
+                                    "taking the highest-concentration curve above (CORMAP alpha = %4)\n" ) )
+                    .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
       }
    }
 
@@ -449,47 +538,24 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          ye.push_back( yev );
       }
 
-      if ( x.size() < 2 )
+      double a = 0e0, b = 0e0, siga = 0e0;
+
+      if ( primus_mode )
+      {
+         // per-q extrapolation (Eq 1 intercept) + slope were precomputed above for
+         // every q (falling back to the reference where a fit was impossible), and
+         // above the merge point the output is simply the reference curve, so Primus
+         // does not skip a q for having < 2 valid points. reg_a/reg_b show the fit.
+         a    = Iex[ qi ];
+         b    = Islope[ qi ];
+         siga = 0e0;
+      }
+      else if ( x.size() < 2 )
       {
          TSO << QString( "WARNING: do_extrap_c0: insufficient valid points (%1) to regress at q[%2]=%3, skipping\n" )
             .arg( x.size() ).arg( qi ).arg( q[ qi ] );
          skipped_points++;
          continue;
-      }
-
-      double a = 0e0, b = 0e0, siga = 0e0;
-
-      if ( primus_mode )
-      {
-         // Primus mode: inverse-variance weighted MERGE of the concentration-scaled
-         // intensities, matching ATSAS almerge. Once the curves are scaled onto the
-         // reference their residual concentration dependence is negligible for these
-         // data, so a per-q linear extrapolation to c=0 (as Zimm does) mostly fits
-         // noise -- it swings the high-q intensity negative, which then makes the
-         // (reference) error bars look enormous on a log plot. The weighted merge is
-         // stable, stays positive, and reproduces the ATSAS result. It is a level
-         // (horizontal) estimate, so the reported slope is 0.
-         double wsum  = 0e0;
-         double wysum = 0e0;
-         double ysum  = 0e0;
-         bool   all_have_err = true;
-         for ( int j = 0; j < (int) y.size(); j++ )
-         {
-            ysum += y[ j ];
-            if ( ye[ j ] > 0e0 )
-            {
-               double w = 1e0 / ( ye[ j ] * ye[ j ] );
-               wsum  += w;
-               wysum += w * y[ j ];
-            }
-            else
-            {
-               all_have_err = false;
-            }
-         }
-         a = ( all_have_err && wsum > 0e0 ) ? ( wysum / wsum ) : ( ysum / (double) y.size() );
-         b = 0e0;
-         siga = 0e0;
       }
       else if ( x.size() == 2 )
       {
@@ -520,17 +586,25 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          err_val = ref_sd[ qi ];
       }
 
+      // Primus hybrid output: extrapolation below the merge point, the reference
+      // (highest-concentration) curve verbatim at/above it. Zimm: the intercept.
+      double out_val = a;
+      if ( primus_mode && (int) qi >= merge_idx && qi < Iref_full.size() )
+      {
+         out_val = Iref_full[ qi ];
+      }
+
       out_q     .push_back( q[ qi ] );
-      out_I0    .push_back( a );
+      out_I0    .push_back( out_val );
       out_I0_err.push_back( err_val );
 
       reg_q   .push_back( q[ qi ] );
       reg_x   .push_back( x );
       reg_y   .push_back( y );
       reg_e   .push_back( ye );
-      reg_a   .push_back( a );
-      reg_b   .push_back( b );                 // 0 in Primus mode (level merge)
-      reg_siga.push_back( err_val );           // error actually assigned to the output
+      reg_a   .push_back( a );                 // the per-q fit intercept (diagnostic)
+      reg_b   .push_back( b );
+      reg_siga.push_back( err_val );
    }
 
    if ( skipped_points )
@@ -574,11 +648,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       editor_msg( "black",
                  QString( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Primus mode (ATSAS almerge-style): inverse-variance weighted merge of the "
-                          "curves scaled onto the highest-concentration curve (conc %4), carrying that "
-                          "curve's error bars.%5\n" )
+                          "Primus mode (ATSAS almerge-style): low-q extrapolated to c=0 on the scale of "
+                          "the highest-concentration curve (conc %4); at/above the merging point q=%5 the "
+                          "reference curve is taken verbatim, carrying its error bars.%6\n" )
                  .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
-                 .arg( ref_conc )
+                 .arg( ref_conc ).arg( merge_q )
                  .arg( all_istar ? QString( " Inputs were I*(q) (I(0)=MW), so the result is tagged Conc:1." ) : QString( "" ) ) );
    }
    else
@@ -602,7 +676,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    if ( show_regplots && reg_q.size() )
    {
       QString y_axis_title =
-         primus_mode ? us_tr( "scaled I(q)  (absolute)" )
+         primus_mode ? us_tr( "I(q) scaled to reference concentration" )
                      : ( all_istar ? us_tr( "I*(q)  (normalized)" )
                                    : us_tr( "I(q)/concentration" ) );
 
@@ -610,7 +684,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                     us_hydrodyn,
                                                     y_axis_title,
-                                                    primus_mode,          // merge_mode
+                                                    primus_mode ? merge_q : 0e0,   // merge point q (0 => none)
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_siga,
                                                     this
