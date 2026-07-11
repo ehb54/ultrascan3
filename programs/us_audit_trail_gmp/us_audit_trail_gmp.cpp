@@ -126,38 +126,45 @@ void US_auditTrailGMP::viewAPDF ( void )
 //Load GMP Run
 void US_auditTrailGMP::loadGMPReport( void )
 {
-  US_Passwd pw;
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+  // If the report list was already fetched earlier in this session, reuse
+  // it instead of hitting the database and re-running the full scan again.
+  if ( gmpReportsDBdata.isEmpty() )
     {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
   
-  // Show a busy progress dialog while the (potentially long) DB query runs.
-  // Frameless + CustomizeWindowHint removes the title bar entirely, so there
-  // are no close/minimize/maximize buttons and nothing for the user to grab
-  // and drag -- the dialog stays put, centered over this window.
-  QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
-			     QString(), 0, 0, this );
-  progress.setWindowModality( Qt::WindowModal );
-  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
-  progress.setMinimumDuration( 0 );
-  progress.setAutoClose( false );
-  progress.setAutoReset( false );
-  progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
-  progress.setValue( 0 );
-  progress.show();
-  progress.move( this->frameGeometry().center() - progress.rect().center() );
-  qApp->processEvents();
+      if ( db.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+				tr( "Could not connect to database \n" ) + db.lastError() );
+	  return;
+	}
+  
+      // Show a busy progress dialog while the (potentially long) DB query runs.
+      // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+      // are no close/minimize/maximize buttons and nothing for the user to grab
+      // and drag -- the dialog stays put, centered over this window.
+      QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+				 QString(), 0, 0, this );
+      progress.setWindowModality( Qt::WindowModal );
+      progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+      progress.setMinimumDuration( 0 );
+      progress.setAutoClose( false );
+      progress.setAutoReset( false );
+      progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
+      progress.setValue( 0 );
+      progress.show();
+      progress.move( this->frameGeometry().center() - progress.rect().center() );
+      qApp->processEvents();
 
-  list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+      list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
 
-  // Make sure the bar visibly reaches 100% before it disappears
-  progress.setValue( progress.maximum() );
-  qApp->processEvents();
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+
+      progress.close();
+    }
 
   QString pdtitle( tr( "Select GMP Report for Audit Trail" ) );
   QStringList hdrs;
@@ -171,8 +178,6 @@ void US_auditTrailGMP::loadGMPReport( void )
        << "GMP Run ID";
          
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
-
-  progress.close();
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
