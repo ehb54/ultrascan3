@@ -610,6 +610,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                     us_hydrodyn,
                                                     y_axis_title,
+                                                    primus_mode,          // merge_mode
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_siga,
                                                     this

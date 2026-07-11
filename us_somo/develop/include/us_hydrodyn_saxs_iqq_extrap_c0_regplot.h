@@ -36,6 +36,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                               void *                          us_hydrodyn,
                                               QString                         y_axis_title,
+                                              bool                            merge_mode,
                                               vector < double >               reg_q,
                                               vector < vector < double > >    reg_x,
                                               vector < vector < double > >    reg_y,
@@ -54,6 +55,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       void *                          us_hydrodyn;
 
       QString                         y_axis_title;
+      bool                            merge_mode;
       vector < double >               reg_q;
       vector < vector < double > >    reg_x;
       vector < vector < double > >    reg_y;
@@ -82,6 +84,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       vector < QwtPlotMarker * >      plot_markers;
 
       void                            setupGUI();
+      int                             clamp_index( int i );
       void                            set_index( int i );
       void                            update_plot();
       void                            clear_plot_items();

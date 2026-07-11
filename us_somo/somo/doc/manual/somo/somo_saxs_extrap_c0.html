@@ -108,15 +108,18 @@ peaks rather than a single dilution series.</p>
 <h3><center>Per-q regression plots</center></h3>
 
 <p>Checking <b>Show per-q regression plots</b> in the concentration dialog opens a
-scrollable pop-up after the extrapolation. It shows, one <i>q</i> value at a time,
-the linear regression behind the result: each input curve plotted as a point at its
-concentration (with its error bar), the fitted line, and the extrapolated
+pop-up window after the extrapolation. It shows, one <i>q</i> value at a time, each
+input curve as a point at its concentration (with its error bar) together with the
+per-q result. In <b>Zimm</b> mode the result is the fitted line and its extrapolated
 <i>c</i>&nbsp;=&nbsp;0 intercept (highlighted, with its own error bar) at the dashed
-vertical axis. Use the wheel &mdash; or the <b>Prev</b>/<b>Next</b> buttons &mdash; to
-step through the <i>q</i> grid; the current <i>q</i>, intercept &plusmn; error, and
-slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
-Zimm, scaled absolute <i>I</i>(q) for Primus, or <i>I</i>*(q) for already-normalized
-inputs. This is a diagnostic view; it does not add or change any plotted curve.</p>
+vertical axis. In <b>Primus</b> mode the result is the inverse-variance weighted
+merge, drawn as a horizontal level. <b>Drag the wheel</b> to scroll smoothly through
+the <i>q</i> grid (it has inertia, so a flick keeps scrolling); the <b>Prev</b> and
+<b>Next</b> buttons step one <i>q</i> at a time. The current <i>q</i>, the result
+&plusmn; its error, and (Zimm) the slope are shown below the plot. The <i>y</i> axis
+matches the mode: <i>I</i>(q)/c for Zimm, scaled absolute <i>I</i>(q) for Primus, or
+<i>I</i>*(q) for already-normalized inputs. This is a diagnostic view; it does not add
+or change any plotted curve.</p>
 
 <!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
      bars, the fit line, the c=0 intercept, and the scroll wheel -->
