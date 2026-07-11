@@ -153,10 +153,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    }
 
    map < QString, double > name_to_conc;
+   QStringList selected_names;
    bool dlg_ok      = false;
    bool primus_mode = false;
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &dlg_ok, &primus_mode, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -165,6 +166,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    {
       this->isVisible() ? this->raise() : this->show();
       editor_msg( "black", us_tr( "Extrapolation to zero concentration cancelled\n" ) );
+      return;
+   }
+
+   // the dialog's selected (highlighted) rows are the curves to extrapolate; narrow
+   // the working set to those (the dialog already enforces >= 3 selected, but guard)
+   ordered_names = selected_names;
+   if ( ordered_names.size() < 3 )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            us_tr( "Fewer than 3 curves were selected; "
+                                  "cannot extrapolate to zero concentration." ) );
       return;
    }
 

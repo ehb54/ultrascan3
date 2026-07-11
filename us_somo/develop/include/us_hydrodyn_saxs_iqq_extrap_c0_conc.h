@@ -31,6 +31,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           QStringList names,
                                           map < QString, double > prepop_conc,
                                           map < QString, double > *out_name_to_conc,
+                                          QStringList *out_selected_names,
                                           bool *out_ok,
                                           bool *out_primus_mode,
                                           void *us_hydrodyn,
@@ -53,6 +54,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QStringList   names;
       map < QString, double > prepop_conc;
       map < QString, double > *out_name_to_conc;
+      QStringList  *out_selected_names;
       bool         *out_ok;
       bool         *out_primus_mode;
       void         *us_hydrodyn;
@@ -66,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
    private slots:
 
       void cell_changed( QTableWidgetItem * );
+      void selection_changed();
       void ok();
       void cancel();
 };

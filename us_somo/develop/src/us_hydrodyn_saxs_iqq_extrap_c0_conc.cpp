@@ -11,6 +11,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           QStringList names,
                                                                           map < QString, double > prepop_conc,
                                                                           map < QString, double > *out_name_to_conc,
+                                                                          QStringList *out_selected_names,
                                                                           bool *out_ok,
                                                                           bool *out_primus_mode,
                                                                           void *us_hydrodyn,
@@ -18,12 +19,13 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           const char *
                                                                           ) : QDialog( p )
 {
-   this->names            = names;
-   this->prepop_conc      = prepop_conc;
-   this->out_name_to_conc = out_name_to_conc;
-   this->out_ok           = out_ok;
-   this->out_primus_mode  = out_primus_mode;
-   this->us_hydrodyn      = us_hydrodyn;
+   this->names              = names;
+   this->prepop_conc        = prepop_conc;
+   this->out_name_to_conc   = out_name_to_conc;
+   this->out_selected_names = out_selected_names;
+   this->out_ok             = out_ok;
+   this->out_primus_mode    = out_primus_mode;
+   this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
 
@@ -37,6 +39,10 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    setupGUI();
 
    disable_updates = false;
+
+   // default to all curves selected (preserves the prior "extrapolate all" behavior);
+   // selectAll() emits itemSelectionChanged which drives validate_all_rows()
+   t_conc->selectAll();
    validate_all_rows();
 
    // curve names can get quite long (e.g. derived HPLC/KIN frame names), so size
@@ -65,8 +71,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    int minHeight1 = 30;
 
    lbl_info = new QLabel(
-                         us_tr( "Enter a non-negative concentration for each curve to be used in the\n"
-                                "linear extrapolation to zero concentration" ),
+                         us_tr( "Enter a non-negative concentration for each curve, then select (highlight)\n"
+                                "the rows to use. Extrapolation needs at least 3 selected curves." ),
                          this
                          );
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -86,9 +92,15 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    t_conc->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
    t_conc->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::ResizeToContents );
 
+   // the selected (highlighted) rows are the curves that get extrapolated; whole-row
+   // selection, multiple rows, concentrations still editable by double-clicking a cell
+   t_conc->setSelectionBehavior( QAbstractItemView::SelectRows );
+   t_conc->setSelectionMode( QAbstractItemView::ExtendedSelection );
+
    populate_table();
 
    connect( t_conc, SIGNAL( itemChanged( QTableWidgetItem * ) ), SLOT( cell_changed( QTableWidgetItem * ) ) );
+   connect( t_conc, SIGNAL( itemSelectionChanged() ), SLOT( selection_changed() ) );
 
    cb_primus = new QCheckBox( us_tr( "Primus mode (extrapolate absolute intensity, ATSAS almerge-style)" ), this );
    cb_primus->setChecked( false );
@@ -159,7 +171,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::populate_table()
 
 bool US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::validate_all_rows()
 {
-   unsigned int valid_count = 0;
+   // only the selected (highlighted) rows drive extrapolation; a row's concentration
+   // matters only when that row is selected. Invalid concentrations are flagged red
+   // regardless, but they only block the action when the row is selected.
+   int selected_count   = 0;
+   int selected_invalid = 0;
 
    for ( int i = 0; i < t_conc->rowCount(); i++ )
    {
@@ -170,26 +186,49 @@ bool US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::validate_all_rows()
 
       item->setBackground( row_valid ? QColor( 255, 255, 255 ) : QColor( 255, 200, 200 ) );
 
-      if ( row_valid )
+      if ( t_conc->item( i, 0 )->isSelected() )
       {
-         valid_count++;
+         selected_count++;
+         if ( !row_valid )
+         {
+            selected_invalid++;
+         }
       }
    }
 
-   bool all_valid = (int) valid_count == t_conc->rowCount();
+   bool can_extrap = selected_count >= 3 && selected_invalid == 0;
 
-   lbl_status->setText(
-                       all_valid ?
-                       us_tr( "All rows valid" ) :
-                       QString( us_tr( "%1 of %2 rows valid" ) ).arg( valid_count ).arg( t_conc->rowCount() )
-                       );
+   QString status;
+   if ( selected_count < 3 )
+   {
+      status = QString( us_tr( "Select at least 3 curves (%1 selected)" ) ).arg( selected_count );
+   }
+   else if ( selected_invalid )
+   {
+      status = QString( us_tr( "%1 selected, but %2 have an invalid concentration" ) )
+         .arg( selected_count ).arg( selected_invalid );
+   }
+   else
+   {
+      status = QString( us_tr( "%1 curves selected for extrapolation" ) ).arg( selected_count );
+   }
+   lbl_status->setText( status );
 
-   pb_ok->setEnabled( all_valid );
+   pb_ok->setEnabled( can_extrap );
 
-   return all_valid;
+   return can_extrap;
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::cell_changed( QTableWidgetItem * )
+{
+   if ( disable_updates )
+   {
+      return;
+   }
+   validate_all_rows();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::selection_changed()
 {
    if ( disable_updates )
    {
@@ -206,9 +245,15 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    }
 
    out_name_to_conc->clear();
+   out_selected_names->clear();
    for ( int i = 0; i < names.size(); i++ )
    {
+      if ( !t_conc->item( i, 0 )->isSelected() )
+      {
+         continue;
+      }
       ( *out_name_to_conc )[ names[ i ] ] = t_conc->item( i, 1 )->text().toDouble();
+      *out_selected_names << names[ i ];
    }
    *out_primus_mode = cb_primus->isChecked();
    *out_ok = true;
