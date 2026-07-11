@@ -12,6 +12,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           map < QString, double > prepop_conc,
                                                                           map < QString, double > *out_name_to_conc,
                                                                           bool *out_ok,
+                                                                          bool *out_primus_mode,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -21,6 +22,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->prepop_conc      = prepop_conc;
    this->out_name_to_conc = out_name_to_conc;
    this->out_ok           = out_ok;
+   this->out_primus_mode  = out_primus_mode;
    this->us_hydrodyn      = us_hydrodyn;
 
    *out_ok = false;
@@ -51,7 +53,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 4 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 5 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -88,6 +90,19 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
 
    connect( t_conc, SIGNAL( itemChanged( QTableWidgetItem * ) ), SLOT( cell_changed( QTableWidgetItem * ) ) );
 
+   cb_primus = new QCheckBox( us_tr( "Primus mode (extrapolate absolute intensity, ATSAS almerge-style)" ), this );
+   cb_primus->setChecked( false );
+   cb_primus->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_primus->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_primus );
+   cb_primus->setMinimumHeight( minHeight1 );
+   cb_primus->setToolTip(
+                         us_tr( "Unchecked (Zimm mode): output the concentration-normalized intensity I(q)/c\n"
+                                "extrapolated to c=0 (SAXS analogue of a Zimm plot); tagged Conc:1.\n\n"
+                                "Checked (Primus mode): scale each curve onto the highest-concentration curve,\n"
+                                "then extrapolate the absolute intensity to c=0 -- matches ATSAS almerge;\n"
+                                "the output carries the reference curve's error bars and absolute scale." ) );
+
    lbl_status = new QLabel( "", this );
    lbl_status->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_status->setMinimumHeight(minHeight1);
@@ -114,6 +129,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget( lbl_info );
    background->addWidget( t_conc );
+   background->addWidget( cb_primus );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
 }
@@ -194,6 +210,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    {
       ( *out_name_to_conc )[ names[ i ] ] = t_conc->item( i, 1 )->text().toDouble();
    }
+   *out_primus_mode = cb_primus->isChecked();
    *out_ok = true;
    close();
 }

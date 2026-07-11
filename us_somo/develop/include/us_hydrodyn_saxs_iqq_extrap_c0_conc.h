@@ -5,6 +5,7 @@
 
 #include <qlabel.h>
 #include <qpushbutton.h>
+#include <qcheckbox.h>
 #include <qdialog.h>
 #include <qstringlist.h>
 #include <qtablewidget.h>
@@ -31,6 +32,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           map < QString, double > prepop_conc,
                                           map < QString, double > *out_name_to_conc,
                                           bool *out_ok,
+                                          bool *out_primus_mode,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -41,6 +43,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
 
       QLabel       *lbl_info;
       QTableWidget *t_conc;
+      QCheckBox    *cb_primus;
       QLabel       *lbl_status;
       QPushButton  *pb_ok;
       QPushButton  *pb_cancel;
@@ -51,6 +54,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       map < QString, double > prepop_conc;
       map < QString, double > *out_name_to_conc;
       bool         *out_ok;
+      bool         *out_primus_mode;
       void         *us_hydrodyn;
 
       bool          disable_updates;

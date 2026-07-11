@@ -153,9 +153,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    }
 
    map < QString, double > name_to_conc;
-   bool dlg_ok = false;
+   bool dlg_ok      = false;
+   bool primus_mode = false;
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &dlg_ok, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &dlg_ok, &primus_mode, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -195,16 +196,28 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                   "Proceeding anyway." ) );
    }
 
-   // loaded I(q) curves are raw (not pre-normalized by concentration): raw SAXS
-   // intensity is dominated by a term directly proportional to c, so a linear fit
-   // of raw I(q) vs c trivially extrapolates to ~0 at c=0 (no protein, no excess
-   // scattering) -- not physically useful. The standard "extrapolation to zero
-   // concentration" technique (the SAXS analogue of a Zimm plot) instead fits the
-   // concentration-NORMALIZED intensity I(q,c)/c against c; its c=0 intercept is
-   // the ideal, structure-factor-free dilute-limit curve. So divide by concentration
-   // here, on the intensity axis only -- the concentration (x) axis stays the real,
-   // distinct entered values; collapsing it (e.g. to 1 for "already normalized"
-   // data) would remove the spread the regression needs and isn't equivalent.
+   // Two extrapolation modes are offered (selected via the concentration dialog):
+   //
+   // Zimm mode (default): loaded I(q) curves are raw (not pre-normalized by
+   // concentration); raw SAXS intensity is dominated by a term directly proportional
+   // to c, so a linear fit of raw I(q) vs c trivially extrapolates to ~0 at c=0
+   // (no protein, no excess scattering) -- not physically useful. The standard
+   // "extrapolation to zero concentration" technique (the SAXS analogue of a Zimm
+   // plot) instead fits the concentration-NORMALIZED intensity I(q,c)/c against c;
+   // its c=0 intercept is the ideal, structure-factor-free dilute-limit curve. So
+   // we divide by concentration on the intensity axis only -- the concentration (x)
+   // axis stays the real, distinct entered values. The output is I(q)/c, tagged
+   // Conc:1 (SOMO's "already normalized" convention).
+   //
+   // Primus mode: reproduces ATSAS almerge. Each curve is least-squares scaled onto
+   // the highest-concentration curve (the reference), then the SCALED ABSOLUTE
+   // intensity is linearly extrapolated vs c to c=0. This keeps the output on the
+   // reference curve's absolute intensity scale (~c_ref times larger than the Zimm
+   // result) and, unlike the pure I/c fit, lets the data -- not the entered
+   // concentrations alone -- set the relative scale between curves, which matters
+   // when the curves are different samples/peaks rather than one dilution series.
+   // The output carries the reference curve's error bars and is tagged with the
+   // reference concentration rather than Conc:1.
    unsigned int zero_conc_excluded = 0;
    for ( int ci = 0; ci < (int) concs.size(); ci++ )
    {
@@ -221,7 +234,82 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             .arg( zero_conc_excluded ) );
    }
 
-   // 6. per-q linear regression: I(q)/c vs concentration -> intercept (I0) + its standard error
+   // Primus-mode setup: pick the reference (highest-concentration) curve, compute a
+   // least-squares scale factor for every curve onto that reference over the common
+   // q-grid, and grab the reference curve's error column to carry into the output.
+
+   int    ref_ci   = -1;
+   double ref_conc = 0e0;
+   vector < double > scale( ordered_names.size(), 1e0 );
+   vector < double > ref_sd;
+
+   if ( primus_mode )
+   {
+      for ( int ci = 0; ci < ordered_names.size(); ci++ )
+      {
+         if ( concs[ ci ] > ref_conc )
+         {
+            ref_conc = concs[ ci ];
+            ref_ci   = ci;
+         }
+      }
+
+      if ( ref_ci < 0 )
+      {
+         QMessageBox::critical( this, "UltraScan",
+                                us_tr( "Primus mode: no curve has a positive concentration to use as the "
+                                       "scaling reference; aborting." ) );
+         return;
+      }
+
+      const vector < double > &Iref = name_to_I[ ordered_names[ ref_ci ] ];
+
+      QString scale_report;
+      for ( int ci = 0; ci < ordered_names.size(); ci++ )
+      {
+         if ( concs[ ci ] <= 0e0 )
+         {
+            continue;
+         }
+         const vector < double > &Ii = name_to_I[ ordered_names[ ci ] ];
+         double num = 0e0;
+         double den = 0e0;
+         for ( unsigned int qi = 0; qi < npts; qi++ )
+         {
+            if ( us_isnan( Ii[ qi ] ) || us_isnan( Iref[ qi ] ) )
+            {
+               continue;
+            }
+            num += Ii[ qi ] * Iref[ qi ];
+            den += Ii[ qi ] * Ii[ qi ];
+         }
+         scale[ ci ] = ( den > 0e0 ) ? num / den : 1e0;
+         scale_report += QString( "    %1  conc %2  scale %3\n" )
+            .arg( ordered_names[ ci ] ).arg( concs[ ci ] ).arg( scale[ ci ] );
+      }
+      editor_msg( "black",
+                 QString( us_tr( "Primus-mode extrapolation: scaling reference is \"%1\" (conc %2)\n%3" ) )
+                 .arg( ordered_names[ ref_ci ] ).arg( ref_conc ).arg( scale_report ) );
+
+      // the extrapolated curve inherits the reference curve's error bars (matches almerge)
+      if ( name_to_errors_map.count( ordered_names[ ref_ci ] ) )
+      {
+         QStringList qsl_err = name_to_errors_map[ ordered_names[ ref_ci ] ].split( "," );
+         for ( int k = 2; k < qsl_err.size(); k++ )
+         {
+            ref_sd.push_back( qsl_err[ k ].toDouble() );
+         }
+         if ( !ref_sd.empty() )
+         {
+            ref_sd.pop_back();
+         }
+         ref_sd.resize( npts );
+      }
+   }
+
+   // 6. per-q linear regression -> intercept (I0) + error
+   //    Zimm mode:   fit I(q)/c            vs concentration; error = regression SE
+   //    Primus mode: fit scale*I(q) (abs)  vs concentration; error = reference curve sd
 
    US_Saxs_Util usu;
 
@@ -247,7 +335,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             continue;
          }
          x.push_back( concs[ ci ] );
-         y.push_back( Iv / concs[ ci ] );
+         y.push_back( primus_mode ? ( scale[ ci ] * Iv ) : ( Iv / concs[ ci ] ) );
       }
 
       if ( x.size() < 2 )
@@ -280,9 +368,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
       }
 
+      // Primus mode carries the reference curve's error at this q; Zimm mode reports
+      // the regression standard error of the intercept
+      double err_val = siga;
+      if ( primus_mode && qi < ref_sd.size() )
+      {
+         err_val = ref_sd[ qi ];
+      }
+
       out_q     .push_back( q[ qi ] );
       out_I0    .push_back( a );
-      out_I0_err.push_back( siga );
+      out_I0_err.push_back( err_val );
    }
 
    if ( skipped_points )
@@ -315,14 +411,29 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    plot_one_iqq( out_q, out_I0, out_I0_err, final_name );
 
-   // this curve is I(q)/c extrapolated to c=0, i.e. already concentration-normalized
-   // -- mark it with SOMO's "Conc:1" convention for already-normalized curves so
-   // anything downstream that respects conc_csv treats it correctly
-   update_conc_csv( final_name, 1e0 );
+   if ( primus_mode )
+   {
+      // absolute intensity on the reference curve's scale -- tag it with the
+      // reference concentration so dividing by it recovers the normalized form
+      update_conc_csv( final_name, ref_conc );
 
-   editor_msg( "black",
-              QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
-                       "Note: this curve is I(q)/concentration extrapolated to c=0, not raw intensity -- "
-                       "its scale differs from the input curves by a factor of concentration.\n" )
-              .arg( final_name ).arg( out_q.size() ).arg( skipped_points ) );
+      editor_msg( "black",
+                 QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
+                          "Primus mode: absolute intensity extrapolated to c=0 on the scale of the "
+                          "highest-concentration curve (conc %4), carrying that curve's error bars.\n" )
+                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points ).arg( ref_conc ) );
+   }
+   else
+   {
+      // this curve is I(q)/c extrapolated to c=0, i.e. already concentration-normalized
+      // -- mark it with SOMO's "Conc:1" convention for already-normalized curves so
+      // anything downstream that respects conc_csv treats it correctly
+      update_conc_csv( final_name, 1e0 );
+
+      editor_msg( "black",
+                 QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
+                          "Zimm mode: this curve is I(q)/concentration extrapolated to c=0, not raw intensity -- "
+                          "its scale differs from the input curves by a factor of concentration.\n" )
+                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points ) );
+   }
 }
