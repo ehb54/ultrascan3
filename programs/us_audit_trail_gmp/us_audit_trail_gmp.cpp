@@ -161,7 +161,9 @@ void US_auditTrailGMP::loadGMPReport( void )
 
   list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
 
-  progress.close();
+  // Make sure the bar visibly reaches 100% before it disappears
+  progress.setValue( progress.maximum() );
+  qApp->processEvents();
 
   QString pdtitle( tr( "Select GMP Report for Audit Trail" ) );
   QStringList hdrs;
@@ -175,6 +177,8 @@ void US_auditTrailGMP::loadGMPReport( void )
        << "GMP Run ID";
          
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
+
+  progress.close();
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
