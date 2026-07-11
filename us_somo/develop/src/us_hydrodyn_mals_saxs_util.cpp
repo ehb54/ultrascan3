@@ -1306,10 +1306,23 @@ void US_Hydrodyn_Mals_Saxs::crop_common()
       }
    }
 
+   // Merge q values that differ only by last-digit rounding (e.g. 0.00547318 vs
+   // 0.00547317) so they match as one grid point; retained points keep their
+   // original q/I/sd (see ehb54/ultrascan-tickets#962).
+   const double crop_common_reltol = 1e-4;
+   map < double, double > q_canonical = US_Vector::canonical_map( grids, crop_common_reltol );
+   for ( unsigned int g = 0; g < ( unsigned int ) grids.size(); g++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) grids[ g ].size(); i++ )
+      {
+         grids[ g ][ i ] = q_canonical[ grids[ g ][ i ] ];
+      }
+   }
+
    vector < double > v_union = US_Vector::vunion( grids );
    vector < double > v_int   = US_Vector::intersection( grids );
 
-   editor_msg( "black", 
+   editor_msg( "black",
                QString( us_tr( "Crop common:\n"
                             "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
                             "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
@@ -1367,7 +1380,7 @@ void US_Hydrodyn_Mals_Saxs::crop_common()
 
       for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
       {
-         if ( map_int.count( f_qs[ it->first ][ i ] ) )
+         if ( map_int.count( q_canonical[ f_qs[ it->first ][ i ] ] ) )
          {
             new_q_string.push_back( f_qs_string[ it->first ][ i ] );
             new_q       .push_back( f_qs       [ it->first ][ i ] );

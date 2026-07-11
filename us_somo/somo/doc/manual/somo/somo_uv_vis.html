@@ -184,7 +184,7 @@ Checking the <i>Cropping</i> checkbox will change the buttons bar to seven new b
 
 As for the <i>Selections</i>, the <i>Cropping</i> buttons become all available when a part of the graph is selected using the mouse/left button, (only <b><i>Crop Zeros</i></b> and <b><i>Crop Common</i></b> are available when files are just displayed after selection).<p>
 
-<b><i>Crop Common</i></b> will crop all selected files so that they have identical <i>x</i>-axis values by dropping points outside of the union of all selected file's <i>x</i>-axis values.<br>
+<b><i>Crop Common</i></b> will crop all selected files so that they have identical <i>x</i>-axis values by dropping points outside of the union of all selected file's <i>x</i>-axis values. Grid points whose <i>x</i>-axis values differ only by last-digit rounding (e.g., 0.00547318 vs. 0.00547317) are treated as the same point, so curves saved at slightly different rounding do not develop spurious gaps ("holes") in the common grid.<br>
 <b><i>Crop Vis(ible)</i></b> will remove what is shown in the graphics window. For instance, this is practical way to trim the data on the <i>x</i>-axis.<br>
 <b><i>Crop to Vis(ible)</i></b> will select <b>only</b> what is shown in the graphics window after zooming with the mouse.<br>
 <b><i>Crop Zeros</i></b> will remove data having zero or negative values in the intensity columns (<span style="color:#CC0000">discouraged: a warning panel will pop-up, asking the user whether she/he really wants to proceed, since experimental zero or negative values can have statistical significance</span>).<br>
