@@ -82,7 +82,9 @@ bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
 // Re-fetches the GMP report list from the database while the "Select GMP
 // Report for Audit Trail" dialog is still open (triggered by its own
 // "Refresh List" button, see loadGMPReport()), then redraws that dialog's
-// table in place with the refreshed data.
+// table in place with the refreshed data. Unlike the very first scan, this
+// one can be cancelled -- if the user does, the previously loaded list is
+// left untouched.
 void US_auditTrailGMP::refreshGMPReportsList( void )
 {
   US_Passwd pw( this );
@@ -96,26 +98,43 @@ void US_auditTrailGMP::refreshGMPReportsList( void )
     }
 
   QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
-			     QString(), 0, 0, pdiag_autoflow_db );
+			     tr( "Cancel" ), 0, 0, pdiag_autoflow_db );
   progress.setWindowModality( Qt::ApplicationModal );
   progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
   progress.setMinimumDuration( 0 );
   progress.setAutoClose( false );
   progress.setAutoReset( false );
-  progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
+  progress.installEventFilter( this );   // swallow Escape (Cancel button click still works normally)
   progress.setValue( 0 );
   progress.show();
   progress.move( pdiag_autoflow_db->frameGeometry().center() - progress.rect().center() );
   qApp->processEvents();
 
-  gmpReportsDBdata.clear();
-  list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+  // Scan into a temporary list rather than gmpReportsDBdata directly, so
+  // that cancelling mid-scan can't leave the already-open dialog's data
+  // (and the cached list) in a truncated, half-refreshed state.
+  QList< QStringList > freshReportsData;
+  list_all_gmp_reports_db( freshReportsData, &db, &progress );
 
-  // Make sure the bar visibly reaches 100% before it disappears
-  progress.setValue( progress.maximum() );
-  qApp->processEvents();
+  bool cancelled = progress.wasCanceled();
+
+  if ( !cancelled )
+    {
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+    }
 
   progress.close();
+
+  if ( cancelled )
+    {
+      QMessageBox::information( pdiag_autoflow_db, tr( "Refresh Cancelled" ),
+				tr( "The refresh was cancelled. The previously loaded list is unchanged." ) );
+      return;
+    }
+
+  gmpReportsDBdata = freshReportsData;
 
   // gmpReportsDBdata is held by reference inside pdiag_autoflow_db, so it
   // already sees the refreshed contents -- just ask it to redraw the table.
@@ -341,6 +360,12 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
   // real, proportional progress as each one completes.
   for ( int irow = 0; irow < baseRows.size(); irow++ )
     {
+      // Only has any effect for a progress dialog that was given a real
+      // Cancel button (see refreshGMPReportsList()) -- the very first scan's
+      // dialog has no Cancel button, so wasCanceled() can never be true there.
+      if ( progress && progress->wasCanceled() )
+	break;
+
       const GmpBaseRow& row = baseRows.at( irow );
       QStringList gmpreportentry;
 
