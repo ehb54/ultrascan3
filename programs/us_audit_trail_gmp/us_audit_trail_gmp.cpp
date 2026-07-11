@@ -1120,6 +1120,59 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      genL51 -> addLayout( genL5);
 	      genL51 -> addStretch();
 	    }
+
+	  //Scan Count Mismatch (ScanDifference) [if any]
+	  QGridLayout* genL6  = NULL;
+	  QVBoxLayout* genL61 = NULL;
+	  if ( status_map. contains("ScanDifference") )
+	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption style=\"color:red;\" align=left> <b><i>Scan Count Mismatch (Expected vs. Collected): </i></b> </caption>"
+				   "</table>"
+
+				   "<table style=\"margin-left:25px\">"
+				   );
+
+	      genL6  = new QGridLayout();
+	      genL61 = new QVBoxLayout();
+
+	      QLabel* lb_scandiff         = us_label( tr("Scan Count Mismatch:") );
+	      lb_scandiff->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      row=0;
+	      genL6 -> addWidget( lb_scandiff,      row++,   0,  1,  6  );
+
+	      QLabel* lb_scandiff1        = us_label( tr("Expected vs. Collected:") );
+	      genL6 -> addWidget( lb_scandiff1,     row,     1,  1,  2  );
+
+	      QStringList scandiff_list;
+	      QMap < QString, QString >::iterator sd;
+	      for ( sd = status_map[ "ScanDifference" ].begin(); sd != status_map[ "ScanDifference" ].end(); ++sd )
+		{
+		  scandiff_list << sd.value();
+
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td style=\"color:red;\"> %1 </td> "
+				       "</tr>"
+				       )
+		    .arg( sd.value() )
+		    ;
+		}
+	      html_assembled += tr( "</table>" );
+
+	      QTextEdit* te_scandiff1    = us_textedit();
+	      te_scandiff1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_scandiff1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+						US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_scandiff1, true );
+
+	      te_scandiff1 -> setText( scandiff_list.join(",\n") );
+	      genL6 -> addWidget( te_scandiff1,     row++,   3,  1,  3  );
+
+	      genL61 -> addLayout( genL6);
+	      genL61 -> addStretch();
+	    }
 	  
 	  //assemble
 	  genL->addLayout( genL11);
@@ -1130,6 +1183,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	    genL_sec_row->addLayout( genL41);
 	  if ( genL51 != NULL )
 	    genL_sec_row->addLayout( genL51);
+	  if ( genL61 != NULL )
+	    genL_sec_row->addLayout( genL61);
 
 	  genL_v_rows->addLayout( genL);
 	  genL_v_rows->addLayout( genL_sec_row);
@@ -2231,6 +2286,22 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
 	  status_map[ key ] = dropped_map;
 	}
       
+
+      if ( key == "ScanDifference" )   // import: scan-count mismatches (expected vs. collected) per triple
+	{
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > scandiff_map;
+
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      scandiff_map[ QString::number( i ) ] = json_array[i].toString();
+	      qDebug() << "ScanDifference Map: -- index, value: "
+		       << i
+		       << json_array[i].toString();
+	    }
+
+	  status_map[ key ] = scandiff_map;
+	}
 
       if ( key == "Meniscus" )   //edit  
 	{	  
