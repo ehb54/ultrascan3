@@ -42,7 +42,11 @@ void US_GuiSettings::set_fontSize(int fontSize) {
 
 QString US_GuiSettings::guiStyle(void) {
 #ifdef Q_OS_MAC
+  #if QT_VERSION_MAJOR >= 6
+    const QString defaultStyle("macOS");
+  #else
     const QString defaultStyle("Macintosh");
+  #endif
 #elif defined(Q_OS_WIN)
     const QString defaultStyle("Windows");
 #else
@@ -55,7 +59,11 @@ QString US_GuiSettings::guiStyle(void) {
 
 void US_GuiSettings::set_guiStyle(const QString &style) {
 #ifdef Q_OS_MAC
+  #if QT_VERSION_MAJOR >= 6
+    const QString defaultStyle("macOS");
+  #else
     const QString defaultStyle("Macintosh");
+  #endif
 #elif defined(Q_OS_WIN)
     const QString defaultStyle("Windows");
 #else
