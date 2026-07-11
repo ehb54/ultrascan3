@@ -62,18 +62,12 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
 }
 
 // Blocks the modal "please wait" progress dialog (shown in loadGMPReport())
-// from being dismissed by the user -- it has no title-bar buttons since it
-// is frameless, but Escape would otherwise still close it.
+// from being dismissed by the user via the Escape key -- it has no
+// title-bar buttons since it is frameless, so that's the only way left in.
 bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
 {
   if ( qobject_cast< QProgressDialog* >( obj ) )
     {
-      if ( event->type() == QEvent::Close )
-	{
-	  event->ignore();
-	  return true;
-	}
-
       if ( event->type() == QEvent::KeyPress )
 	{
 	  QKeyEvent* keyEvent = static_cast< QKeyEvent* >( event );
