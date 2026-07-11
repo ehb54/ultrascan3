@@ -254,8 +254,12 @@ class US_eSignaturesGMP : public US_Widgets
         //! \brief List all autoflow records.
         //! \param records The list of autoflow records.
         //! \param query The query string.
+        //! \param progress Optional progress dialog to update while the (potentially long) query runs.
         //! \return The number of records found.
-        int list_all_autoflow_records(QList<QStringList>& records, QString query);
+        int list_all_autoflow_records(QList<QStringList>& records, QString query, QProgressDialog* progress = NULL);
+
+        //! \brief Re-fetch the autoflow records list and redraw it in the still-open selection dialog.
+        void refreshAutoflowRecordsList(void);
 
         //! \brief Read an autoflow record.
         //! \param index The index of the record.

@@ -1768,8 +1768,38 @@ void US_eSignaturesGMP::selectGMPRun_sa( void )
 {
   /* Here, we need to list all completed GMP runs (i.e. from autoflowHistory) */
   /* For HISTORY, check if GMP reports for these runs are NOT completely eSigned */
-  
-  list_all_autoflow_records( autoflowdata, "HISTORY" );  
+
+  // If the report list was already fetched earlier in this session, reuse
+  // it instead of hitting the database and re-running the full scan again.
+  if ( autoflowdata.isEmpty() )
+    {
+      // Show a busy progress dialog while the (potentially long) DB query runs.
+      // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+      // are no close/minimize/maximize buttons and nothing for the user to grab
+      // and drag -- the dialog stays put, centered over this window. No Cancel
+      // button on this very first scan.
+      QProgressDialog progress( tr( "<b>Please Wait</b><br>Scanning completed GMP runs "
+				     "for outstanding e-Signatures..." ),
+				 QString(), 0, 0, this );
+      progress.setWindowModality( Qt::ApplicationModal );
+      progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+      progress.setMinimumDuration( 0 );
+      progress.setAutoClose( false );
+      progress.setAutoReset( false );
+      progress.installEventFilter( this );   // swallow Escape, see eventFilter()
+      progress.setValue( 0 );
+      progress.show();
+      progress.move( this->frameGeometry().center() - progress.rect().center() );
+      qApp->processEvents();
+
+      list_all_autoflow_records( autoflowdata, "HISTORY", &progress );
+
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+
+      progress.close();
+    }
 
   qDebug() << "in selectGMPRun_sa( void ), autoflowdata -- " << autoflowdata;
   qApp->processEvents();
@@ -1788,6 +1818,8 @@ void US_eSignaturesGMP::selectGMPRun_sa( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -4 );
+
+  connect( pdiag_autoflow, SIGNAL( accept_refresh_states() ), SLOT( refreshAutoflowRecordsList() ) );
 
   QString autoflow_id_selected("");
   if ( pdiag_autoflow->exec() == QDialog::Accepted )
@@ -2051,7 +2083,8 @@ QString US_eSignaturesGMP::get_assigned_oper_revs_sa( QString role, QJsonDocumen
 }
 
 // Query autoflow (history) table for records
-int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflowdata, QString type)
+int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflowdata, QString type,
+						   QProgressDialog* progress )
 {
   int nrecs        = 0;   
   autoflowdata.clear();
@@ -2093,95 +2126,197 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
     qry << "get_autoflow_desc";
   db->query( qry );
 
+  // First pass: buffer the raw rows so the total count is known up front --
+  // this lets the progress dialog show real, proportional progress below,
+  // instead of an indeterminate busy state that never visibly moves.
+  struct AutoflowBaseRow
+  {
+    QString   id;
+    QString   runname;
+    QString   status;
+    QString   optimaname;
+    QDateTime time_started;
+    QString   invID;
+    QString   ptime_created;
+    QString   gmpRun;
+    QString   full_runname;
+    QString   operatorID;
+    QString   devRecord;
+  };
+
+  QList< AutoflowBaseRow > baseRows;
+
   while ( db->next() )
     {
-      QStringList autoflowentry;
-      QString id                 = db->value( 0 ).toString();
-      QString runname            = db->value( 5 ).toString();
-      QString status             = db->value( 8 ).toString();
-      QString optimaname         = db->value( 10 ).toString();
-      
-      QDateTime time_started     = db->value( 11 ).toDateTime().toUTC();
-      QString invID              = db->value( 12 ).toString();
+      AutoflowBaseRow row;
+      row.id                 = db->value( 0 ).toString();
+      row.runname            = db->value( 5 ).toString();
+      row.status             = db->value( 8 ).toString();
+      row.optimaname         = db->value( 10 ).toString();
+      row.time_started       = db->value( 11 ).toDateTime().toUTC();
+      row.invID              = db->value( 12 ).toString();
 
-      QDateTime time_created     = db->value( 13 ).toDateTime().toUTC();
-      QString ptime_created      = US_Util::toUTCDatetimeText( time_created
-							       .toString( Qt::ISODate ), true )
-	                                                       .section( ":", 0, 1 ) + " UTC";
-      
-      QString gmpRun             = db->value( 14 ).toString();
-      QString full_runname       = db->value( 15 ).toString();
+      QDateTime time_created = db->value( 13 ).toDateTime().toUTC();
+      row.ptime_created       = US_Util::toUTCDatetimeText( time_created
+								  .toString( Qt::ISODate ), true )
+	                                                          .section( ":", 0, 1 ) + " UTC";
 
-      QString operatorID         = db->value( 16 ).toString();
-      QString devRecord          = db->value( 18 ).toString();
+      row.gmpRun              = db->value( 14 ).toString();
+      row.full_runname        = db->value( 15 ).toString();
+      row.operatorID          = db->value( 16 ).toString();
+      row.devRecord           = db->value( 18 ).toString();
 
-      QDateTime local(QDateTime::currentDateTime());
+      baseRows << row;
+    }
 
-      if ( devRecord == "Processed" )                      
-      	continue;
+  if ( progress )
+    {
+      progress->setRange( 0, baseRows.size() );
+      progress->setValue( 0 );
+    }
+
+  // Second pass: apply the (potentially slow -- for HISTORY, one extra DB
+  // round-trip per record) eSign-completeness check and the user-level
+  // filter, updating the progress dialog with real progress as we go.
+  for ( int irow = 0; irow < baseRows.size(); irow++ )
+    {
+      // Only has any effect for a progress dialog that was given a real
+      // Cancel button (see refreshAutoflowRecordsList()) -- the very first
+      // scan's dialog has no Cancel button, so wasCanceled() is never true.
+      if ( progress && progress->wasCanceled() )
+	break;
+
+      AutoflowBaseRow row = baseRows.at( irow );
+      bool skip = ( row.devRecord == "Processed" );
 
       /* Check for HISTORY -- if autoflowGMPReportEsign where ID=devRecord EXISTS!!! */
       /* If not - GMP report completely eSigned, so do not include in the list (cont.) */
-      if ( type == "HISTORY" )
+      if ( !skip && type == "HISTORY" )
 	{
-	  QMap<QString,QString> eSign_rec = read_autoflowGMPReportEsign_record( id );
+	  QMap<QString,QString> eSign_rec = read_autoflowGMPReportEsign_record( row.id );
 
 	  if ( eSign_rec.isEmpty() )
-	    continue;
-	}
-      
-      //process runname: if combined, correct for nicer appearance
-      if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
-	{
-	  QString full_runname_edited  = full_runname.split(",")[0];
-	  full_runname_edited.chop(3);
-
-	  full_runname = full_runname_edited + " (combined RI+IP) ";
-	  runname += " (combined RI+IP) ";
-	}
-      
-      //autoflowentry << id << runname << optimaname  << time_created.toString(); // << time_started.toString(); // << local.toString( Qt::ISODate );
-      autoflowentry << id << runname << optimaname  << ptime_created;
-      
-      if ( time_started.toString().isEmpty() )
-	autoflowentry << QString( tr( "NOT STARTED" ) );
-      else
-	{
-	  if ( status == "LIVE_UPDATE" )
-	    autoflowentry << QString( tr( "RUNNING" ) );
-	  if ( status == "EDITING" || status == "EDIT_DATA" || status == "ANALYSIS" || status == "REPORT" || status == "E-SIGNATURES" )
-	    autoflowentry << QString( tr( "COMPLETED" ) );
-	    //autoflowentry << time_started.toString();
+	    skip = true;
 	}
 
-      if ( status == "EDITING" )
-	status = "LIMS_IMPORT";
-      
-      autoflowentry << status << gmpRun;
-
-      //Check user level && GUID; if <3, check if the user is operator || investigator
-      if ( US_Settings::us_inv_level() < 3 )
+      if ( !skip )
 	{
-	  qDebug() << "User level low: " << US_Settings::us_inv_level();
-	  qDebug() << "user_id, operatorID.toInt(), invID.toInt() -- " << user_id << operatorID.toInt() << invID.toInt();
+	  QString runname      = row.runname;
+	  QString full_runname = row.full_runname;
 
-	  //if ( user_id && ( user_id == operatorID.toInt() || user_id == invID.toInt() ) )
-	  if ( user_id && user_id == invID.toInt() )
-	    {//Do we allow operator as defined in autoflow record to also see reports?? 
-	    
+	  //process runname: if combined, correct for nicer appearance
+	  if ( full_runname.contains(",") && full_runname.contains("IP") && full_runname.contains("RI") )
+	    {
+	      QString full_runname_edited  = full_runname.split(",")[0];
+	      full_runname_edited.chop(3);
+
+	      full_runname = full_runname_edited + " (combined RI+IP) ";
+	      runname += " (combined RI+IP) ";
+	    }
+
+	  QStringList autoflowentry;
+	  autoflowentry << row.id << runname << row.optimaname  << row.ptime_created;
+
+	  if ( row.time_started.toString().isEmpty() )
+	    autoflowentry << QString( tr( "NOT STARTED" ) );
+	  else
+	    {
+	      if ( row.status == "LIVE_UPDATE" )
+		autoflowentry << QString( tr( "RUNNING" ) );
+	      if ( row.status == "EDITING" || row.status == "EDIT_DATA" || row.status == "ANALYSIS"
+		   || row.status == "REPORT" || row.status == "E-SIGNATURES" )
+		autoflowentry << QString( tr( "COMPLETED" ) );
+	    }
+
+	  QString status = row.status;
+	  if ( status == "EDITING" )
+	    status = "LIMS_IMPORT";
+
+	  autoflowentry << status << row.gmpRun;
+
+	  //Check user level && GUID; if <3, check if the user is operator || investigator
+	  if ( US_Settings::us_inv_level() < 3 )
+	    {
+	      if ( user_id && user_id == row.invID.toInt() )
+		{
+		  autoflowdata  << autoflowentry;
+		  nrecs++;
+		}
+	    }
+	  else
+	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
 	    }
 	}
-      else
+
+      if ( progress )
 	{
-	  autoflowdata  << autoflowentry;
-	  nrecs++;
+	  progress->setValue( irow + 1 );
+	  QString scanText = ( type == "HISTORY" ) ?
+	    tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) :
+	    tr( "Scanning current GMP runs..." );
+	  progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
+				       "%2 of %3 checked, %4 record(s) found" )
+				     .arg( scanText ).arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
+	  qApp->processEvents();
 	}
-      
     }
+
   qDebug() << "in listallautolfow, autoflowdata -- " << autoflowdata;
   return nrecs;
+}
+
+// Re-fetches the autoflow records list from the database while the "Select
+// GMP Run" dialog is still open (triggered by its own "Refresh List" button,
+// see selectGMPRun_sa()), then redraws that dialog's table in place with the
+// refreshed data. Unlike the very first scan, this one can be cancelled --
+// if the user does, the previously loaded list is left untouched.
+void US_eSignaturesGMP::refreshAutoflowRecordsList( void )
+{
+  QProgressDialog progress( tr( "<b>Please Wait</b><br>Scanning completed GMP runs "
+				 "for outstanding e-Signatures..." ),
+			     tr( "Cancel" ), 0, 0, pdiag_autoflow );
+  progress.setWindowModality( Qt::ApplicationModal );
+  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+  progress.setMinimumDuration( 0 );
+  progress.setAutoClose( false );
+  progress.setAutoReset( false );
+  progress.installEventFilter( this );   // swallow Escape (Cancel button click still works normally)
+  progress.setValue( 0 );
+  progress.show();
+  progress.move( pdiag_autoflow->frameGeometry().center() - progress.rect().center() );
+  qApp->processEvents();
+
+  // Scan into a temporary list rather than autoflowdata directly, so that
+  // cancelling mid-scan can't leave the already-open dialog's data (and the
+  // cached list) in a truncated, half-refreshed state.
+  QList< QStringList > freshAutoflowData;
+  list_all_autoflow_records( freshAutoflowData, "HISTORY", &progress );
+
+  bool cancelled = progress.wasCanceled();
+
+  if ( !cancelled )
+    {
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+    }
+
+  progress.close();
+
+  if ( cancelled )
+    {
+      QMessageBox::information( pdiag_autoflow, tr( "Refresh Cancelled" ),
+				tr( "The refresh was cancelled. The previously loaded list is unchanged." ) );
+      return;
+    }
+
+  autoflowdata = freshAutoflowData;
+
+  // autoflowdata is held by reference inside pdiag_autoflow, so it already
+  // sees the refreshed contents -- just ask it to redraw the table.
+  QMetaObject::invokeMethod( pdiag_autoflow, "list_data" );
 }
 
 
