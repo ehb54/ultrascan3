@@ -125,8 +125,11 @@ significance level defaults to 0.01 and may be set via the <code>saxs_extrap_c0_
 parameter). This removes the interparticle/structure-factor effect at low <i>q</i>
 while keeping stable, positive intensities at high <i>q</i> (a per-point fit there
 would only track noise and can go negative). The result is on the reference curve's
-<i>absolute</i> intensity scale, inherits the reference curve's error bars, and is
-tagged with the reference concentration.</p>
+<i>absolute</i> intensity scale and is tagged with the reference concentration. Its
+error bars are the reference curve's uncertainty at and above the merging point (where
+the output <i>is</i> the reference) and the propagated standard error of the fitted
+intercept below it (the extrapolated region), so the low-<i>q</i> extrapolation carries
+its own uncertainty rather than borrowing the reference's.</p>
 
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the Zimm
      result, and the Primus result on a log I(q) vs q axis -->
@@ -146,10 +149,11 @@ has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> button
 one <i>q</i> at a time. The current <i>q</i>, the intercept &plusmn; its error, and the
 slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
 Zimm, <i>I</i>(q) scaled to the reference concentration for Primus, or <i>I</i>*(q) for
-already-normalized inputs. When Zimm fit broadening is active, the fit line uses the
-smoothed slope (and the note above the plot says so), so the pop-up shows exactly the
-fit that produced the plotted curve. This is a diagnostic view; it does not add or
-change any plotted curve.</p>
+already-normalized inputs. When automatic GCV regularization (or the manual fit-broadening
+window) is active, the fit line uses the globally-smoothed slope &mdash; a note above the
+plot says so, and reports the effective slope degrees of freedom for GCV &mdash; so the line
+reflects the regularized fit and may not pass exactly through the raw per-<i>q</i> intercept.
+This is a diagnostic view; it does not add or change any plotted curve.</p>
 
 <!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
      bars, the fit line, the c=0 intercept, and the scroll wheel -->
@@ -165,6 +169,15 @@ numeric suffix is appended. Curves with a concentration of zero are excluded fro
 the fit, and any <i>q</i> point with fewer than two usable values is skipped; the
 editor window reports how many curves and points were used, and, in Primus mode,
 the reference curve and the per-curve scale factors.</p>
+
+<p><b>Guinier quality check.</b> After the curve is produced, the editor window reports a
+Guinier fit of it (a straight-line fit of ln&nbsp;<i>I</i> versus <i>q</i><sup>2</sup> over
+the low-<i>q</i> region, the window chosen so <i>q</i><sub>max</sub>&middot;<i>R</i><sub>g</sub>&nbsp;&le;&nbsp;1.3):
+the radius of gyration <i>R</i><sub>g</sub>, <i>I</i>(0), and the fit's <i>R</i><sup>2</sup>.
+This is a ground-truth-free quality signal &mdash; a high <i>R</i><sup>2</sup> with a
+physically sensible <i>R</i><sub>g</sub> indicates a clean low-<i>q</i> extrapolation; a low
+<i>R</i><sup>2</sup> is flagged and suggests checking the low-<i>q</i> data or the assigned
+concentrations.</p>
 
 <h3><center>I*(q) (already-normalized) curves</center></h3>
 
@@ -213,7 +226,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 11, 2026.
+Last modified on July 12, 2026.
 </font>
 </body>
 </html>
