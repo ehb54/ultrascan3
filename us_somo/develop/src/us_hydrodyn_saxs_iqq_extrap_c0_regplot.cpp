@@ -15,6 +15,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                                                 void *                          us_hydrodyn,
                                                                                 QString                         y_axis_title,
                                                                                 double                          merge_q,
+                                                                                int                             fit_broaden,
                                                                                 vector < double >               reg_q,
                                                                                 vector < vector < double > >    reg_x,
                                                                                 vector < vector < double > >    reg_y,
@@ -29,6 +30,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
    this->us_hydrodyn  = us_hydrodyn;
    this->y_axis_title = y_axis_title;
    this->merge_q      = merge_q;
+   this->fit_broaden  = fit_broaden;
    this->reg_q        = reg_q;
    this->reg_x        = reg_x;
    this->reg_y        = reg_y;
@@ -63,16 +65,21 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_info = new QLabel(
-                         ( merge_q > 0e0 )
-                         ? us_tr( "Each point is one input curve at its concentration; the line is the linear "
-                                  "fit whose c=0 intercept is the extrapolated value. Below the merging point "
-                                  "the output is this intercept; at/above it the reference curve is used.\n"
-                                  "Drag the wheel to scroll q; use Prev/Next to step one q at a time." )
-                         : us_tr( "Each point is one input curve at its concentration; the line is the linear "
-                                  "fit whose intercept at c=0 is the extrapolated value.\n"
-                                  "Drag the wheel to scroll q; use Prev/Next to step one q at a time." ),
-                         this );
+   QString info_txt =
+      ( merge_q > 0e0 )
+      ? us_tr( "Each point is one input curve at its concentration; the line is the linear "
+               "fit whose c=0 intercept is the extrapolated value. Below the merging point "
+               "the output is this intercept; at/above it the reference curve is used.\n"
+               "Drag the wheel to scroll q; use Prev/Next to step one q at a time." )
+      : us_tr( "Each point is one input curve at its concentration; the line is the linear "
+               "fit whose intercept at c=0 is the extrapolated value.\n"
+               "Drag the wheel to scroll q; use Prev/Next to step one q at a time." );
+   if ( fit_broaden > 1 )
+   {
+      info_txt += QString( us_tr( "\nFit broadening on: the fit line's slope is smoothed over a %1-point q-window." ) )
+         .arg( fit_broaden );
+   }
+   lbl_info = new QLabel( info_txt, this );
    lbl_info->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_info->setMinimumHeight( minHeight1 );
    lbl_info->setPalette( PALET_LABEL );

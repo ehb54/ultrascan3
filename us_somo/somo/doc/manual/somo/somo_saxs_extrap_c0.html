@@ -87,6 +87,22 @@ This is the small-angle-scattering analogue of a Zimm plot. The output is a
 tagged <code>Conc:1</code>, SOMO's convention for an already-normalized curve, and
 carries the standard error of the fitted intercept as its uncertainty.</p>
 
+<p><b>Fit broadening (Zimm mode).</b> By default each <i>q</i> is fitted
+independently, which lets measurement noise propagate into the extrapolated
+intercept. The interparticle/interaction term (the fit's slope), however, varies
+smoothly with <i>q</i> and dies off at high <i>q</i>, so it can be regularized
+across neighbouring <i>q</i> without harming the form-factor detail carried by the
+intercept. Setting <b>Zimm fit broadening (q-window)</b> to a value <i>N</i>&nbsp;&gt;&nbsp;1
+averages the concentration slope over an <i>N</i>-point window and then recomputes
+each intercept (<i>a</i>&nbsp;=&nbsp;&#10216;<i>I</i>/c&#10217;&nbsp;&minus;&nbsp;<i>b</i><sub>smoothed</sub>&#10216;c&#10217;).
+On tests against a known dilute-limit ground truth this reduced the point-to-point
+noise appreciably with no loss of accuracy at modest windows; larger windows trade
+a little accuracy for more smoothing (most useful for weak or noisy dilution
+series). 0 (the default) leaves the per-<i>q</i> fits independent. The setting
+applies to Zimm mode only and is disabled while Primus mode is selected. Note that
+this smooths the concentration <i>dependence</i>, not the output curve itself
+(smoothing the output directly would smear real features and is not done).</p>
+
 <p><b>Primus mode</b> (checkbox checked). This follows the ATSAS <i>almerge</i>
 approach (Petoukhov <i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). The
 highest-concentration curve is taken as the reference and every curve is scaled to
@@ -122,8 +138,10 @@ has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> button
 one <i>q</i> at a time. The current <i>q</i>, the intercept &plusmn; its error, and the
 slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
 Zimm, <i>I</i>(q) scaled to the reference concentration for Primus, or <i>I</i>*(q) for
-already-normalized inputs. This is a diagnostic view; it does not add or change any
-plotted curve.</p>
+already-normalized inputs. When Zimm fit broadening is active, the fit line uses the
+smoothed slope (and the note above the plot says so), so the pop-up shows exactly the
+fit that produced the plotted curve. This is a diagnostic view; it does not add or
+change any plotted curve.</p>
 
 <!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
      bars, the fit line, the c=0 intercept, and the scroll wheel -->

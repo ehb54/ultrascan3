@@ -6,6 +6,7 @@
 #include <QFrame>
 #include <QColor>
 #include <QHeaderView>
+#include <QIntValidator>
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           QStringList names,
@@ -15,6 +16,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_ok,
                                                                           bool *out_primus_mode,
                                                                           bool *out_show_regplots,
+                                                                          int *out_fit_broaden,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -27,6 +29,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_ok             = out_ok;
    this->out_primus_mode    = out_primus_mode;
    this->out_show_regplots  = out_show_regplots;
+   this->out_fit_broaden    = out_fit_broaden;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -61,7 +64,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 6 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 7 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -128,6 +131,37 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                   "(the concentration data points with error bars, the fit, and the c=0\n"
                                   "intercept), scrollable q-by-q with a wheel." ) );
 
+   // Zimm fit-broadening: couple neighbouring q by smoothing the concentration slope
+   QHBoxLayout * hbl_broaden = new QHBoxLayout; hbl_broaden->setContentsMargins( 4, 0, 4, 0 ); hbl_broaden->setSpacing( 6 );
+   lbl_broaden = new QLabel( us_tr( "Zimm fit broadening (q-window, 0 = off):" ), this );
+   lbl_broaden->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_broaden->setMinimumHeight( minHeight1 );
+   lbl_broaden->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_broaden );
+   lbl_broaden->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   lbl_broaden->setToolTip(
+                           us_tr( "Zimm mode only. 0 = independent per-q fits. A value N > 1 averages the\n"
+                                  "concentration slope over an N-point q-window before taking the c=0\n"
+                                  "intercept -- the interaction term varies smoothly with q, so this reduces\n"
+                                  "extrapolation noise without smearing the form-factor detail in the intercept." ) );
+
+   le_broaden = new QLineEdit( this );
+   le_broaden->setText( "0" );
+   le_broaden->setValidator( new QIntValidator( 0, 999, le_broaden ) );
+   le_broaden->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
+   le_broaden->setMinimumHeight( minHeight1 );
+   le_broaden->setMaximumWidth( 70 );
+   le_broaden->setPalette( PALET_NORMAL );
+   AUTFBACK( le_broaden );
+   le_broaden->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   // broadening applies to Zimm mode only; disable it while Primus mode is checked
+   connect( cb_primus, SIGNAL( toggled( bool ) ), le_broaden, SLOT( setDisabled( bool ) ) );
+   connect( cb_primus, SIGNAL( toggled( bool ) ), lbl_broaden, SLOT( setDisabled( bool ) ) );
+
+   hbl_broaden->addWidget( lbl_broaden );
+   hbl_broaden->addWidget( le_broaden );
+   hbl_broaden->addStretch( 1 );
+
    lbl_status = new QLabel( "", this );
    lbl_status->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_status->setMinimumHeight(minHeight1);
@@ -163,6 +197,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( t_conc );
    background->addWidget( cb_primus );
    background->addWidget( cb_regplots );
+   background->addLayout( hbl_broaden );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
 }
@@ -278,6 +313,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    }
    *out_primus_mode   = cb_primus->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
+   *out_fit_broaden   = cb_primus->isChecked() ? 0 : le_broaden->text().toInt();
    *out_ok = true;
    close();
 }

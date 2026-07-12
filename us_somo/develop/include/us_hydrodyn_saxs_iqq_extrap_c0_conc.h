@@ -6,6 +6,7 @@
 #include <qlabel.h>
 #include <qpushbutton.h>
 #include <qcheckbox.h>
+#include <qlineedit.h>
 #include <qdialog.h>
 #include <qstringlist.h>
 #include <qtablewidget.h>
@@ -35,6 +36,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_ok,
                                           bool *out_primus_mode,
                                           bool *out_show_regplots,
+                                          int *out_fit_broaden,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -47,6 +49,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QTableWidget *t_conc;
       QCheckBox    *cb_primus;
       QCheckBox    *cb_regplots;
+      QLabel       *lbl_broaden;
+      QLineEdit    *le_broaden;
       QLabel       *lbl_status;
       QPushButton  *pb_help;
       QPushButton  *pb_ok;
@@ -61,6 +65,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_ok;
       bool         *out_primus_mode;
       bool         *out_show_regplots;
+      int          *out_fit_broaden;
       void         *us_hydrodyn;
 
       bool          disable_updates;

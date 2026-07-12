@@ -187,8 +187,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool dlg_ok        = false;
    bool primus_mode   = false;
    bool show_regplots = false;
+   int  fit_broaden   = 0;
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, &show_regplots, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, &show_regplots, &fit_broaden, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -490,6 +491,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double >               reg_b;
    vector < double >               reg_siga;
 
+   // per-output-point concentration centroids, used only for Zimm fit-broadening:
+   // for an OLS line a = ybar - b*xbar, so after smoothing the slope the intercept
+   // is recomputed as ybar - b_smoothed*xbar (parallel to out_q)
+   vector < double >               out_xbar;
+   vector < double >               out_ybar;
+
    for ( unsigned int qi = 0; qi < npts; qi++ )
    {
       vector < double > x;
@@ -594,9 +601,23 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          out_val = Iref_full[ qi ];
       }
 
+      double xbar = 0e0, ybar = 0e0;
+      for ( int j = 0; j < (int) x.size(); j++ )
+      {
+         xbar += x[ j ];
+         ybar += y[ j ];
+      }
+      if ( x.size() )
+      {
+         xbar /= (double) x.size();
+         ybar /= (double) y.size();
+      }
+
       out_q     .push_back( q[ qi ] );
       out_I0    .push_back( out_val );
       out_I0_err.push_back( err_val );
+      out_xbar  .push_back( xbar );
+      out_ybar  .push_back( ybar );
 
       reg_q   .push_back( q[ qi ] );
       reg_x   .push_back( x );
@@ -619,6 +640,40 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    {
       QMessageBox::critical( this, "UltraScan", us_tr( "No q-points could be extrapolated; aborting." ) );
       return;
+   }
+
+   // 6b. Zimm fit broadening: the interparticle/interaction slope varies smoothly with
+   //     q (and dies off at high q), so smoothing the per-q concentration slope across
+   //     a q-window and recomputing the intercept (a = ybar - b_smooth*xbar) removes
+   //     extrapolation noise without smearing the form-factor detail carried by the
+   //     intercept. Off by default (window <= 1); Primus mode is unaffected.
+   if ( !primus_mode && fit_broaden > 1 )
+   {
+      int n = (int) out_q.size();
+      int half = fit_broaden / 2;
+      vector < double > b_smooth( n );
+      for ( int k = 0; k < n; k++ )
+      {
+         int lo = k - half; if ( lo < 0 ) lo = 0;
+         int hi = k + half; if ( hi > n - 1 ) hi = n - 1;
+         double sum = 0e0;
+         for ( int j = lo; j <= hi; j++ )
+         {
+            sum += reg_b[ j ];
+         }
+         b_smooth[ k ] = sum / (double) ( hi - lo + 1 );
+      }
+      for ( int k = 0; k < n; k++ )
+      {
+         double a_new = out_ybar[ k ] - b_smooth[ k ] * out_xbar[ k ];
+         out_I0[ k ] = a_new;
+         reg_a[ k ]  = a_new;
+         reg_b[ k ]  = b_smooth[ k ];
+      }
+      editor_msg( "black",
+                 QString( us_tr( "Zimm fit broadening applied: concentration slope smoothed over a "
+                                 "%1-point q-window before taking the c=0 intercept.\n" ) )
+                 .arg( fit_broaden ) );
    }
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
@@ -685,6 +740,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                     us_hydrodyn,
                                                     y_axis_title,
                                                     primus_mode ? merge_q : 0e0,   // merge point q (0 => none)
+                                                    primus_mode ? 0 : fit_broaden, // Zimm fit-broadening q-window
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_siga,
                                                     this
