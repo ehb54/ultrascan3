@@ -328,6 +328,7 @@ class US_XpnDataViewer : public US_Widgets
 
      QMap < QString, QString > details_at_live_update; 
 
+     QString        p_mode;
      bool           experimentAborted;
      bool           experimentAborted_remotely;
      bool           opticsFailed;
