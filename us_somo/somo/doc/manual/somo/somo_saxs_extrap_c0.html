@@ -119,10 +119,15 @@ intensity is fitted linearly against concentration and the <i>c</i>&nbsp;=&nbsp;
 intercept &mdash; the infinite-dilution intensity &mdash; is taken. Crucially, this
 extrapolation is applied only in the low-<i>q</i> region where the curves show a real
 concentration dependence; above the <b>merging point</b> the reference curve is used
-verbatim. The merging point is found automatically where the extrapolation and the
-reference differ only by noise, using a CORMAP longest-run <i>p</i>-value test (the
-significance level defaults to 0.01 and may be set via the <code>saxs_extrap_c0_pvalue_alpha</code>
-parameter). This removes the interparticle/structure-factor effect at low <i>q</i>
+verbatim. The merging point is found automatically as the first <i>q</i> from which the
+extrapolated curve agrees with the reference to within the reference's own errors &mdash;
+a reduced <i>&chi;</i><sup>2</sup> of (<i>I</i><sub>ex</sub>&nbsp;&minus;&nbsp;<i>I</i><sub>ref</sub>)/<i>&sigma;</i><sub>ref</sub>
+below a threshold (default 4, i.e. ~2&sigma; agreement; set via
+<code>saxs_extrap_c0_merge_chi2</code>). This error-band test is used in preference to a
+sign-run (CORMAP) test because the latter, comparing the smoothed extrapolation against the
+noisy reference, is biased toward placing the merge too high; CORMAP
+(<code>saxs_extrap_c0_pvalue_alpha</code>, default 0.01) is used as a fallback when the
+reference curve carries no error column. This removes the interparticle/structure-factor effect at low <i>q</i>
 while keeping stable, positive intensities at high <i>q</i> (a per-point fit there
 would only track noise and can go negative). The result is on the reference curve's
 <i>absolute</i> intensity scale and is tagged with the reference concentration. Its

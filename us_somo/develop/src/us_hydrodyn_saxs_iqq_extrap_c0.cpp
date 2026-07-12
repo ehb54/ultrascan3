@@ -753,26 +753,86 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
 
-      // merging point (ATSAS almerge): extrapolate the low-q region where the
-      // concentration effect is real, and take the reference curve verbatim at high
-      // q where the profiles differ only by noise. Detect the crossover with a local
-      // CORMAP longest-run p-value between the extrapolated curve and the reference:
-      // scan from low q, and the merge point is the first q where a trailing window
-      // agrees (p >= alpha). Below it: extrapolation; at/above it: reference.
+      // Merging point (ATSAS almerge idea): below it the extrapolated (structure-factor-
+      // removed) intercept is used; at/above it the reference curve is copied verbatim.
+      // It is located by scanning from low q for the first trailing window where the
+      // extrapolated curve agrees with the reference to within the reference's OWN errors
+      // -- a reduced chi-square of (Iex - Iref)/sd_ref <= threshold (default 4, i.e. ~2
+      // sigma agreement; gparam saxs_extrap_c0_merge_chi2). This error-band test is robust
+      // to GCV smoothing: a sign-run (CORMAP) test compares the smoothed Iex against the
+      // noisy reference and is biased toward large merge points, because a small consistent
+      // offset (e.g. the residual bias of a nearly-linear regularized slope at high q)
+      // produces long same-sign runs even when the curves agree to within noise. CORMAP is
+      // kept as a fallback when the reference curve has no error column.
       {
-         // trailing-window size for the CORMAP crossover test; shrink it for short
-         // grids so Primus still extrapolates. A fixed 50-pt window that only ran
-         // when npts > 50 left merge_idx = 0 for shorter curves, which made every
-         // output point copy the reference -- i.e. Primus silently returned the
-         // input curve with no extrapolation and no warning.
+         double merge_chi2 = 4e0;
+         {
+            US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
+            if ( uh->gparams.count( "saxs_extrap_c0_merge_chi2" ) )
+            {
+               merge_chi2 = uh->gparams[ "saxs_extrap_c0_merge_chi2" ].toDouble();
+            }
+         }
+         bool have_ref_err = false;
+         for ( unsigned int qi = 0; qi < npts && qi < ref_sd.size(); qi++ )
+         {
+            if ( ref_sd[ qi ] > 0e0 ) { have_ref_err = true; break; }
+         }
+
+         // trailing-window size; shrink it for short grids so Primus still extrapolates
+         // (a fixed 50-pt window that only ran when npts>50 left merge_idx=0 for shorter
+         // curves, silently returning the input with no extrapolation and no warning)
          int win = 50;
          if ( (int) npts <= win )
          {
             win = (int) npts / 2;
          }
-         if ( win >= 5 )
+
+         if ( win < 5 )
+         {
+            // too few q-points to locate a merging point: extrapolate the whole curve
+            // (merge_idx == npts => no high-q reference copy), merge_q = 0 signals "no
+            // merge point" to the summary and the regression viewer
+            merge_idx = (int) npts;
+            merge_q   = 0e0;
+            editor_msg( "dark red",
+                       QString( us_tr( "Primus-mode: only %1 q-point(s) -- too few to locate a merging point; "
+                                       "extrapolating the whole curve (no high-q reference copy).\n" ) )
+                       .arg( (int) npts ) );
+         }
+         else if ( have_ref_err )
          {
             merge_idx = (int) npts - win;      // fallback: extrapolate all but the last window
+            for ( int j = 0; j + win <= (int) npts; j++ )
+            {
+               double num = 0e0;
+               int    m   = 0;
+               for ( int i = j; i < j + win; i++ )
+               {
+                  if ( i < (int) ref_sd.size() && ref_sd[ i ] > 0e0 )
+                  {
+                     double r = ( Iex[ i ] - Iref_full[ i ] ) / ref_sd[ i ];
+                     num += r * r;
+                     m++;
+                  }
+               }
+               if ( m > 0 && num / (double) m <= merge_chi2 )
+               {
+                  merge_idx = j;
+                  break;
+               }
+            }
+            merge_q = q[ merge_idx ];
+            editor_msg( "black",
+                       QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
+                                       "taking the highest-concentration curve above (error band: reduced chi^2 of "
+                                       "(Iex-Iref)/sd_ref <= %4)\n" ) )
+                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
+         }
+         else
+         {
+            // no reference error column: fall back to the CORMAP longest-run sign test
+            merge_idx = (int) npts - win;
             for ( int j = 0; j + win <= (int) npts; j++ )
             {
                vector < double > wex( Iex.begin() + j, Iex.begin() + j + win );
@@ -787,20 +847,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             merge_q = q[ merge_idx ];
             editor_msg( "black",
                        QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
-                                       "taking the highest-concentration curve above (CORMAP alpha = %4)\n" ) )
+                                       "taking the highest-concentration curve above (no reference errors; CORMAP "
+                                       "alpha = %4)\n" ) )
                        .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
-         }
-         else
-         {
-            // too few q-points to locate a merging point: extrapolate the whole
-            // curve (merge_idx == npts => no high-q reference copy), merge_q = 0
-            // signals "no merge point" to the summary and the regression viewer
-            merge_idx = (int) npts;
-            merge_q   = 0e0;
-            editor_msg( "dark red",
-                       QString( us_tr( "Primus-mode: only %1 q-point(s) -- too few to locate a merging point; "
-                                       "extrapolating the whole curve (no high-q reference copy).\n" ) )
-                       .arg( (int) npts ) );
          }
       }
    }
