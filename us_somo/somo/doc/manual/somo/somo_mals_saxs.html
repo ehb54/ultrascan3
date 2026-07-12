@@ -427,7 +427,7 @@ The <i>Cropping</i> checkbox will enable these buttons:<p>
 When a part of the graph is selected using the mouse/left button, the buttons become all available (only <b><i>Crop Zeros</i></b> and <b><i>Crop Common</i></b> are available when files are just displayed after selection).<p>
 <ul>
 <li>
-<b><i>Crop Common</i></b> will crop all selected files so that they have identical x-axis values by dropping points outside of the union of all selected file's x-axis values.<p>
+<b><i>Crop Common</i></b> will crop all selected files so that they have identical x-axis values by dropping points outside of the union of all selected file's x-axis values. Grid points whose x-axis values differ only by last-digit rounding (e.g., 0.00547318 vs. 0.00547317) are treated as the same point, so curves saved at slightly different rounding do not develop spurious gaps ("holes") in the common grid.<p>
 <li>
 <a id="Cropvis"></a>
 <b><i>Crop Vis(ible)</i></b> will remove what is shown in the graphics window. For instance, this is practical way to remove "bad" points. As an example, we can remove the lowermost <i>q</i>-values that results from capillary fouling after a certain reaction time from the <i>SAXS</i> datasets, as shown in the image below, before scaling them with the common times <i>MALS</i> datasets. Note: crop visible is <b>not</b> allowed in the middle of a dataset, only at the beginning or at the end!
