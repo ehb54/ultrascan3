@@ -210,6 +210,101 @@ static bool us_extrap_c0_gcv_penalized(
    return true;
 }
 
+// Guinier quality check of a produced curve: fit ln(I) vs q^2 over the low-q region
+// (refined once so q_max*Rg <= ~1.3, the valid Guinier range), returning Rg, I(0), the
+// fit R^2 and the number of points used. A high R^2 with a physically sensible Rg is a
+// ground-truth-free indicator that the low-q extrapolation is clean (it was the decisive
+// real-data test that showed the GCV fit outperforms per-q OLS and ATSAS almerge at low
+// q). Returns false if no Guinier region can be formed.
+static bool us_extrap_c0_guinier(
+                                 const vector < double > & q,
+                                 const vector < double > & I,
+                                 double & Rg, double & I0, double & r2, int & npts_used )
+{
+   int n = (int) q.size();
+   if ( n < 5 )
+   {
+      return false;
+   }
+
+   int    k         = ( n < 25 ) ? n : 25;      // initial low-q window
+   double slope     = 0e0;
+   double intercept = 0e0;
+
+   for ( int pass = 0; pass < 2; pass++ )
+   {
+      double sx = 0e0, sy = 0e0, sxx = 0e0, sxy = 0e0;
+      int    m  = 0;
+      for ( int i = 0; i < k && i < n; i++ )
+      {
+         if ( I[ i ] <= 0e0 || us_isnan( I[ i ] ) )
+         {
+            continue;
+         }
+         double xx = q[ i ] * q[ i ];
+         double yy = std::log( I[ i ] );
+         sx += xx; sy += yy; sxx += xx * xx; sxy += xx * yy; m++;
+      }
+      if ( m < 3 )
+      {
+         return false;
+      }
+      double den = (double) m * sxx - sx * sx;
+      if ( den == 0e0 )
+      {
+         return false;
+      }
+      slope     = ( (double) m * sxy - sx * sy ) / den;
+      intercept = ( sy - slope * sx ) / (double) m;
+
+      double mean = sy / (double) m;
+      double ssr = 0e0, sst = 0e0;
+      for ( int i = 0; i < k && i < n; i++ )
+      {
+         if ( I[ i ] <= 0e0 || us_isnan( I[ i ] ) )
+         {
+            continue;
+         }
+         double xx   = q[ i ] * q[ i ];
+         double yy   = std::log( I[ i ] );
+         double pred = intercept + slope * xx;
+         ssr += ( yy - pred ) * ( yy - pred );
+         sst += ( yy - mean ) * ( yy - mean );
+      }
+      r2        = ( sst > 0e0 ) ? ( 1e0 - ssr / sst ) : 0e0;
+      npts_used = m;
+      Rg        = ( slope < 0e0 ) ? std::sqrt( -3e0 * slope ) : 0e0;
+      I0        = std::exp( intercept );
+
+      // refine the window once so q_max*Rg <= ~1.3 (the valid Guinier range)
+      if ( pass == 0 && Rg > 0e0 )
+      {
+         int knew = 0;
+         for ( int i = 0; i < n; i++ )
+         {
+            if ( q[ i ] * Rg <= 1.3e0 )
+            {
+               knew = i + 1;
+            }
+            else
+            {
+               break;
+            }
+         }
+         if ( knew < 5 )
+         {
+            knew = ( n < 10 ) ? n : 10;
+         }
+         k = knew;
+      }
+      else
+      {
+         break;
+      }
+   }
+   return ( Rg > 0e0 );
+}
+
 void US_Hydrodyn_Saxs::do_extrap_c0(
                                     QStringList qsl_sel_names,
                                     QStringList qsl_data,
@@ -481,9 +576,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double > Iref_full;                 // reference (highest-conc) raw I(q), full grid
    vector < double > Iex( npts, 0e0 );          // per-q extrapolated intercept (reference scale)
    vector < double > Islope( npts, 0e0 );       // per-q fit slope (for the regression viewer)
+   vector < double > Iex_se( npts, 0e0 );       // per-q intercept standard error (extrapolated region)
    int    merge_idx = 0;                        // grid index: output = reference from here up
    double merge_q   = 0e0;                      // q at the merge point (0 => no merge / all reference)
    double pvalue_alpha = 1e-2;                  // CORMAP merge-point significance (cf. cormap_alpha)
+
+   // GCV effective slope dof actually used (0 => GCV not applied); surfaced to the
+   // regression viewer so it can annotate that automatic regularization was in effect
+   double gcv_edof_used = 0e0;
 
    if ( primus_mode )
    {
@@ -589,11 +689,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             Iex[ qi ]    = ( Sxx * Sy - Sx * Sxy ) / d;
             Islope[ qi ] = ( S * Sxy - Sx * Sy ) / d;
+            // weighted-fit intercept standard error, Var(a) = Sxx/d (used below the merge
+            // point where the output is the extrapolated intercept). With GCV the slope is
+            // regularized so the true intercept uncertainty is smaller -- this is a
+            // conservative (upper-bound) error bar for the extrapolated low-q region.
+            Iex_se[ qi ] = ( Sxx / d > 0e0 ) ? std::sqrt( Sxx / d ) : 0e0;
          }
          else
          {
             Iex[ qi ]    = Iref_full[ qi ];
             Islope[ qi ] = 0e0;
+            Iex_se[ qi ] = 0e0;
          }
       }
 
@@ -640,6 +746,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                Iex[ qi ]    = Iex_pen[ qi ];
                Islope[ qi ] = alpha_pen[ qi ];
             }
+            gcv_edof_used = gcv_edof;
             editor_msg( "black",
                        QString( us_tr( "Primus GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
                        .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
@@ -766,6 +873,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       zimm_gcv_ok = us_extrap_c0_gcv_penalized( vM, vR, vB, vC, vQ, zimm_Iex, zimm_alpha, gcv_lambda, gcv_edof );
       if ( zimm_gcv_ok )
       {
+         gcv_edof_used = gcv_edof;
          editor_msg( "black",
                     QString( us_tr( "Zimm GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
                     .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
@@ -878,12 +986,22 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
       }
 
-      // Primus mode carries the reference curve's error at this q; Zimm mode reports
-      // the regression standard error of the intercept
+      // Error bars: Zimm reports the regression SE of the intercept. Primus reports the
+      // reference curve's error at/above the merge point (where the output IS the
+      // reference), but the propagated intercept SE below the merge point (the
+      // extrapolated region), so the low-q extrapolation carries its own uncertainty
+      // rather than borrowing the reference's.
       double err_val = siga;
-      if ( primus_mode && qi < ref_sd.size() )
+      if ( primus_mode )
       {
-         err_val = ref_sd[ qi ];
+         if ( (int) qi >= merge_idx && qi < ref_sd.size() )
+         {
+            err_val = ref_sd[ qi ];
+         }
+         else if ( qi < Iex_se.size() )
+         {
+            err_val = Iex_se[ qi ];
+         }
       }
 
       // Primus hybrid output: extrapolation below the merge point, the reference
@@ -970,6 +1088,24 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                  .arg( fit_broaden ) );
    }
 
+   // 6c. Guinier quality check of the extrapolated curve (ground-truth-free): a clean
+   //     ln I vs q^2 line with a physically sensible Rg indicates a well-behaved low-q
+   //     extrapolation. Reported as a QC signal (flagged if R^2 is low).
+   {
+      double g_Rg = 0e0, g_I0 = 0e0, g_r2 = 0e0;
+      int    g_n  = 0;
+      if ( us_extrap_c0_guinier( out_q, out_I0, g_Rg, g_I0, g_r2, g_n ) )
+      {
+         editor_msg( ( g_r2 >= 0.9 ) ? "black" : "dark red",
+                    QString( us_tr( "Guinier QC of the extrapolated curve: Rg = %1 A, I(0) = %2, "
+                                    "R^2 = %3 over the first %4 points (q*Rg <= 1.3)%5\n" ) )
+                    .arg( g_Rg, 0, 'f', 1 ).arg( g_I0, 0, 'g', 4 ).arg( g_r2, 0, 'f', 4 ).arg( g_n )
+                    .arg( ( g_r2 >= 0.9 )
+                          ? QString( us_tr( " -- a clean, linear Guinier region." ) )
+                          : QString( us_tr( " -- low R^2: check the low-q data/concentrations." ) ) ) );
+      }
+   }
+
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
    QString base_name  = us_extrap_c0_curve_name( ordered_names, primus_mode );
@@ -1035,6 +1171,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                     y_axis_title,
                                                     primus_mode ? merge_q : 0e0,   // merge point q (0 => none)
                                                     primus_mode ? 0 : fit_broaden, // Zimm fit-broadening q-window
+                                                    gcv_edof_used,                 // GCV effective slope dof (0 => off)
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_siga,
                                                     this
