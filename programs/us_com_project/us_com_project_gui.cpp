@@ -903,10 +903,6 @@ void US_ComProjectMain::switch_to_live_update( QMap < QString, QString > & proto
 	tabWidget->tabBar()->setTabEnabled(i, false);
     }
 
-  //HERE: distinguish btw R&D and GMP!!!
-  QString p_mode = (us_mode_bool) ? QString("RD") : QString("GMP");
-  protocol_details["p_mode"] = p_mode;
-  
   emit pass_to_live_update( protocol_details );
 }
 
