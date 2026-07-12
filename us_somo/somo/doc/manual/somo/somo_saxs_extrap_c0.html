@@ -61,7 +61,7 @@ number. A concentration shown on a <span style="color:#CC0000">red</span>
 background is not yet a valid number.</p>
 
 <!-- IMAGE NEEDED: the concentration-assignment dialog itself, showing the table,
-     the Primus-mode checkbox, the status line, and the Help/Cancel/Extrapolate row -->
+     the Absolute-scale mode checkbox, the status line, and the Help/Cancel/Extrapolate row -->
 <center><img SRC="somo_saxs_extrap_c0_dialog.png" BORDER="1" ALT="Concentration and selection dialog"></center>
 
 <p><b>Selecting the curves.</b> The rows highlighted (selected) in the table are
@@ -77,7 +77,7 @@ concentrations first, then choose the selection.</p>
 
 <h3><center>Extrapolation modes</center></h3>
 
-<p>Two modes are offered, selected with the <b>Primus mode</b> checkbox:</p>
+<p>Two modes are offered, selected with the <b>Absolute-scale mode</b> checkbox:</p>
 
 <p><b>Zimm mode</b> (checkbox unchecked, the default). At each <i>q</i> the
 concentration-normalized intensity <i>I</i>(<i>q</i>,<i>c</i>)/<i>c</i> is fitted
@@ -103,15 +103,15 @@ Uncheck the box for the classic independent per-<i>q</i> fits (optionally with t
 window below).</p>
 
 <p><b>Fit broadening (manual, Zimm mode).</b> An alternative to the automatic GCV option,
-used only when GCV is off (and Primus is off). Setting <b>Zimm fit broadening (q-window)</b>
+used only when GCV is off (and Absolute-scale is off). Setting <b>Zimm fit broadening (q-window)</b>
 to a value <i>N</i>&nbsp;&gt;&nbsp;1 averages the concentration slope over an <i>N</i>-point
 window and then recomputes each intercept (<i>a</i>&nbsp;=&nbsp;&#10216;<i>I</i>/c&#10217;&nbsp;&minus;&nbsp;<i>b</i><sub>smoothed</sub>&#10216;c&#10217;).
 0 (the default of this field) leaves the per-<i>q</i> fits independent. As with GCV, this
 smooths the concentration <i>dependence</i>, not the output curve itself (smoothing the
 output directly would smear real features and is not done). The field is disabled while
-either automatic GCV or Primus mode is selected.</p>
+either automatic GCV or Absolute-scale mode is selected.</p>
 
-<p><b>Primus mode</b> (checkbox checked). This follows the ATSAS <i>almerge</i>
+<p><b>Absolute-scale mode</b> (checkbox checked). This follows the ATSAS <i>almerge</i>
 approach (Petoukhov <i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). The
 highest-concentration curve is taken as the reference and every curve is scaled to
 it by <i>c</i><sub>ref</sub>/<i>c</i><sub>i</sub>. At each <i>q</i> the scaled
@@ -137,7 +137,7 @@ intercept below it (the extrapolated region), so the low-<i>q</i> extrapolation 
 its own uncertainty rather than borrowing the reference's.</p>
 
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the Zimm
-     result, and the Primus result on a log I(q) vs q axis -->
+     result, and the Absolute-scale result on a log I(q) vs q axis -->
 <center><img SRC="somo_saxs_extrap_c0_result.png" BORDER="1" ALT="Extrapolated curve"></center>
 
 <h3><center>Per-q regression plots</center></h3>
@@ -146,14 +146,14 @@ its own uncertainty rather than borrowing the reference's.</p>
 pop-up window after the extrapolation. It shows, one <i>q</i> value at a time, each
 input curve as a point at its concentration (with its error bar) together with the
 per-q result: the fitted line and its extrapolated <i>c</i>&nbsp;=&nbsp;0 intercept
-(highlighted, with its own error bar) at the dashed vertical axis. In <b>Primus</b>
+(highlighted, with its own error bar) at the dashed vertical axis. In <b>Absolute-scale</b>
 mode the title also notes, for the current <i>q</i>, whether the output there is the
 extrapolated intercept (below the merging point) or taken from the reference curve
 (at/above it). <b>Drag the wheel</b> to scroll smoothly through the <i>q</i> grid (it
 has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> buttons step
 one <i>q</i> at a time. The current <i>q</i>, the intercept &plusmn; its error, and the
 slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
-Zimm, <i>I</i>(q) scaled to the reference concentration for Primus, or <i>I</i>*(q) for
+Zimm, <i>I</i>(q) scaled to the reference concentration for Absolute-scale, or <i>I</i>*(q) for
 already-normalized inputs. When automatic GCV regularization (or the manual fit-broadening
 window) is active, the fit line uses the globally-smoothed slope &mdash; a note above the
 plot says so, and reports the effective slope degrees of freedom for GCV &mdash; so the line
@@ -168,11 +168,11 @@ This is a diagnostic view; it does not add or change any plotted curve.</p>
 
 <p>A new curve is added to the plot. Its name is the longest common prefix of the
 selected curve names followed by <code>_extrap_c0</code> and a method token:
-<code>_zimm</code> or <code>_primus</code> (for example
-<code>Sub_..._extrap_c0_primus</code>). If a curve of that name already exists a
+<code>_zimm</code> or <code>_absolute</code> (for example
+<code>Sub_..._extrap_c0_absolute</code>). If a curve of that name already exists a
 numeric suffix is appended. Curves with a concentration of zero are excluded from
 the fit, and any <i>q</i> point with fewer than two usable values is skipped; the
-editor window reports how many curves and points were used, and, in Primus mode,
+editor window reports how many curves and points were used, and, in Absolute-scale mode,
 the reference curve and the per-curve scale factors.</p>
 
 <p><b>Guinier quality check.</b> After the curve is produced, the editor window reports a
@@ -205,7 +205,7 @@ Zimm, B. H. (1948) <i>The scattering of light and the radial distribution functi
 of high polymer solutions.</i> J. Chem. Phys. <b>16</b>, 1093-1099.</span></p>
 
 <p><span lang="en-US">The concentration extrapolation and the <i>almerge</i>
-algorithm reproduced by Primus mode are described in: Petoukhov, M. V., Franke,
+algorithm reproduced by Absolute-scale mode are described in: Petoukhov, M. V., Franke,
 D., Shkumatov, A. V., Tria, G., Kikhney, A. G., Gajda, M., Gorba, C., Mertens, H.
 D. T., Konarev, P. V. &amp; Svergun, D. I. (2012) <i>New developments in the
 ATSAS program package for small-angle scattering data analysis.</i> J. Appl.

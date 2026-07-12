@@ -340,7 +340,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
       plot_curves.push_back( curve );
    }
 
-   // result marker: for Zimm this is the c=0 intercept; for Primus it is the merged
+   // result marker: for Zimm this is the c=0 intercept; for absolute-scale it is the merged
    // (level) value. Draw its error bar + a highlighted diamond at x=0.
    {
       double ix[ 2 ] = { 0e0, 0e0 };

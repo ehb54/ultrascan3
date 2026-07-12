@@ -34,7 +34,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           map < QString, double > *out_name_to_conc,
                                           QStringList *out_selected_names,
                                           bool *out_ok,
-                                          bool *out_primus_mode,
+                                          bool *out_absolute_mode,
                                           bool *out_show_regplots,
                                           int *out_fit_broaden,
                                           bool *out_gcv,
@@ -48,7 +48,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
 
       QLabel       *lbl_info;
       QTableWidget *t_conc;
-      QCheckBox    *cb_primus;
+      QCheckBox    *cb_absolute;
       QCheckBox    *cb_gcv;
       QCheckBox    *cb_regplots;
       QLabel       *lbl_broaden;
@@ -65,7 +65,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       map < QString, double > *out_name_to_conc;
       QStringList  *out_selected_names;
       bool         *out_ok;
-      bool         *out_primus_mode;
+      bool         *out_absolute_mode;
       bool         *out_show_regplots;
       int          *out_fit_broaden;
       bool         *out_gcv;

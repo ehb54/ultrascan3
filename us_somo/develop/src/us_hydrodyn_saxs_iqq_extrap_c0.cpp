@@ -40,11 +40,11 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
    return prefix;
 }
 
-static QString us_extrap_c0_curve_name( const QStringList &names, bool primus_mode )
+static QString us_extrap_c0_curve_name( const QStringList &names, bool absolute_mode )
 {
-   // method token so Zimm vs Primus outputs are distinguishable on a plot and on
-   // disk (the "zimm"/"primus" wording may change later)
-   QString method = primus_mode ? "_primus" : "_zimm";
+   // method token so Zimm vs absolute-scale outputs are distinguishable on a plot and on
+   // disk
+   QString method = absolute_mode ? "_absolute" : "_zimm";
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
@@ -57,7 +57,7 @@ static QString us_extrap_c0_curve_name( const QStringList &names, bool primus_mo
 }
 
 // Penalized-slope extrapolation core with automatic GCV smoothing (shared by Zimm and
-// Primus). At each q the model is  y_i = c_i*alpha(q) + Iex(q)  (inverse-variance
+// absolute-scale). At each q the model is  y_i = c_i*alpha(q) + Iex(q)  (inverse-variance
 // weighted); a global smoothness penalty is applied to ONLY the concentration slope
 // alpha(q) -- the interparticle/second-virial term, which is smooth in q and dies off at
 // high q -- while the intercept Iex(q) (which carries the form-factor detail) is left
@@ -438,12 +438,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    map < QString, double > name_to_conc;
    QStringList selected_names;
    bool dlg_ok        = false;
-   bool primus_mode   = false;
+   bool absolute_mode   = false;
    bool show_regplots = false;
    int  fit_broaden   = 0;
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, &show_regplots, &fit_broaden, &use_gcv, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &absolute_mode, &show_regplots, &fit_broaden, &use_gcv, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -499,7 +499,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // even though their Conc: header is non-unity. Such a curve must NOT be divided by
    // its concentration again in the Zimm fit -- its intensity is used as-is, while its
    // real concentration still serves as the regression x-axis. A wholly-I*(q) input
-   // therefore also yields an already-normalized (I(0)=MW) output. Primus mode never
+   // therefore also yields an already-normalized (I(0)=MW) output. absolute-scale mode never
    // divides by c, so its intensity handling is unaffected (only its output conc tag
    // differs, below).
    vector < bool > is_istar( ordered_names.size(), false );
@@ -536,7 +536,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // axis stays the real, distinct entered values. The output is I(q)/c, tagged
    // Conc:1 (SOMO's "already normalized" convention).
    //
-   // Primus mode: reproduces ATSAS almerge (Petoukhov et al. 2012 Eq 1; Franke et al.
+   // absolute-scale mode: reproduces ATSAS almerge (Petoukhov et al. 2012 Eq 1; Franke et al.
    // 2017). Each curve is least-squares scaled onto the highest-concentration curve
    // (the reference), then at each q the scaled intensity is fitted linearly against
    // concentration; the intercept is the infinite-dilution intensity I_ex. This
@@ -565,7 +565,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             .arg( zero_conc_excluded ) );
    }
 
-   // Primus-mode setup: pick the reference (highest-concentration) curve, compute a
+   // Absolute-scale setup: pick the reference (highest-concentration) curve, compute a
    // least-squares scale factor for every curve onto that reference over the common
    // q-grid, and grab the reference curve's error column to carry into the output.
 
@@ -585,7 +585,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // regression viewer so it can annotate that automatic regularization was in effect
    double gcv_edof_used = 0e0;
 
-   if ( primus_mode )
+   if ( absolute_mode )
    {
       {
          US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
@@ -607,7 +607,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       if ( ref_ci < 0 )
       {
          QMessageBox::critical( this, "UltraScan",
-                                us_tr( "Primus mode: no curve has a positive concentration to use as the "
+                                us_tr( "Absolute-scale mode: no curve has a positive concentration to use as the "
                                        "scaling reference; aborting." ) );
          return;
       }
@@ -632,7 +632,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             .arg( ordered_names[ ci ] ).arg( concs[ ci ] ).arg( scale[ ci ] );
       }
       editor_msg( "black",
-                 QString( us_tr( "Primus-mode extrapolation: reference (highest conc) is \"%1\" (conc %2); "
+                 QString( us_tr( "Absolute-scale extrapolation: reference (highest conc) is \"%1\" (conc %2); "
                                  "curves scaled to it by c_ref/c_i\n%3" ) )
                  .arg( ordered_names[ ref_ci ] ).arg( ref_conc ).arg( scale_report ) );
 
@@ -748,7 +748,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             }
             gcv_edof_used = gcv_edof;
             editor_msg( "black",
-                       QString( us_tr( "Primus GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
+                       QString( us_tr( "Absolute-scale GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
                        .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
          }
       }
@@ -779,7 +779,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             if ( ref_sd[ qi ] > 0e0 ) { have_ref_err = true; break; }
          }
 
-         // trailing-window size; shrink it for short grids so Primus still extrapolates
+         // trailing-window size; shrink it for short grids so absolute-scale still extrapolates
          // (a fixed 50-pt window that only ran when npts>50 left merge_idx=0 for shorter
          // curves, silently returning the input with no extrapolation and no warning)
          int win = 50;
@@ -796,7 +796,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             merge_idx = (int) npts;
             merge_q   = 0e0;
             editor_msg( "dark red",
-                       QString( us_tr( "Primus-mode: only %1 q-point(s) -- too few to locate a merging point; "
+                       QString( us_tr( "Absolute-scale mode: only %1 q-point(s) -- too few to locate a merging point; "
                                        "extrapolating the whole curve (no high-q reference copy).\n" ) )
                        .arg( (int) npts ) );
          }
@@ -824,7 +824,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             }
             merge_q = q[ merge_idx ];
             editor_msg( "black",
-                       QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
+                       QString( us_tr( "Absolute-scale merging point: q = %1 (index %2 of %3); extrapolating below, "
                                        "taking the highest-concentration curve above (error band: reduced chi^2 of "
                                        "(Iex-Iref)/sd_ref <= %4)\n" ) )
                        .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
@@ -846,7 +846,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             }
             merge_q = q[ merge_idx ];
             editor_msg( "black",
-                       QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
+                       QString( us_tr( "Absolute-scale merging point: q = %1 (index %2 of %3); extrapolating below, "
                                        "taking the highest-concentration curve above (no reference errors; CORMAP "
                                        "alpha = %4)\n" ) )
                        .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
@@ -856,7 +856,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 6. per-q linear regression -> intercept (I0) + error
    //    Zimm mode:   fit I(q)/c            vs concentration; error = regression SE
-   //    Primus mode: fit scale*I(q) (abs)  vs concentration; error = reference curve sd
+   //    absolute-scale mode: fit scale*I(q) (abs)  vs concentration; error = reference curve sd
 
    US_Saxs_Util usu;
 
@@ -883,10 +883,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // Zimm GCV-penalized fit: per-q weighted stats over the whole grid -> a globally
    // slope-regularized intercept Iex(q) (and slope) at every q, lambda auto-tuned by GCV.
-   // Used in the main loop below when GCV is enabled (Primus does its own GCV above).
+   // Used in the main loop below when GCV is enabled (absolute-scale does its own GCV above).
    vector < double > zimm_Iex, zimm_alpha;
    bool   zimm_gcv_ok = false;
-   if ( use_gcv && !primus_mode )
+   if ( use_gcv && !absolute_mode )
    {
       vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
       for ( unsigned int qi = 0; qi < npts; qi++ )
@@ -957,7 +957,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
          double yv;
          double yev;
-         if ( primus_mode )
+         if ( absolute_mode )
          {
             yv  = scale[ ci ] * Iv;
             yev = scale[ ci ] * sd;
@@ -979,11 +979,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       double a = 0e0, b = 0e0, siga = 0e0;
 
-      if ( primus_mode )
+      if ( absolute_mode )
       {
          // per-q extrapolation (Eq 1 intercept) + slope were precomputed above for
          // every q (falling back to the reference where a fit was impossible), and
-         // above the merge point the output is simply the reference curve, so Primus
+         // above the merge point the output is simply the reference curve, so absolute-scale
          // does not skip a q for having < 2 valid points. reg_a/reg_b show the fit.
          a    = Iex[ qi ];
          b    = Islope[ qi ];
@@ -1035,13 +1035,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
       }
 
-      // Error bars: Zimm reports the regression SE of the intercept. Primus reports the
+      // Error bars: Zimm reports the regression SE of the intercept. absolute-scale reports the
       // reference curve's error at/above the merge point (where the output IS the
       // reference), but the propagated intercept SE below the merge point (the
       // extrapolated region), so the low-q extrapolation carries its own uncertainty
       // rather than borrowing the reference's.
       double err_val = siga;
-      if ( primus_mode )
+      if ( absolute_mode )
       {
          if ( (int) qi >= merge_idx && qi < ref_sd.size() )
          {
@@ -1053,10 +1053,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
 
-      // Primus hybrid output: extrapolation below the merge point, the reference
+      // absolute-scale hybrid output: extrapolation below the merge point, the reference
       // (highest-concentration) curve verbatim at/above it. Zimm: the intercept.
       double out_val = a;
-      if ( primus_mode && (int) qi >= merge_idx && qi < Iref_full.size() )
+      if ( absolute_mode && (int) qi >= merge_idx && qi < Iref_full.size() )
       {
          out_val = Iref_full[ qi ];
       }
@@ -1106,9 +1106,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    //     q (and dies off at high q), so smoothing the per-q concentration slope across
    //     a q-window and recomputing the intercept (a = ybar - b_smooth*xbar) removes
    //     extrapolation noise without smearing the form-factor detail carried by the
-   //     intercept. Off by default (window <= 1); Primus mode is unaffected. Superseded
+   //     intercept. Off by default (window <= 1); absolute-scale mode is unaffected. Superseded
    //     by GCV regularization when that is enabled (the two are mutually exclusive).
-   if ( !primus_mode && !zimm_gcv_ok && fit_broaden > 1 )
+   if ( !absolute_mode && !zimm_gcv_ok && fit_broaden > 1 )
    {
       int n = (int) out_q.size();
       int half = fit_broaden / 2;
@@ -1157,7 +1157,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, primus_mode );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, absolute_mode );
    QString final_name = base_name;
    {
       int suffix = 1;
@@ -1171,7 +1171,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    plot_one_iqq( out_q, out_I0, out_I0_err, final_name );
 
-   if ( primus_mode )
+   if ( absolute_mode )
    {
       // absolute intensity on the reference curve's scale -- tag it with the reference
       // concentration so dividing by it recovers the normalized form. Exception: if
@@ -1182,7 +1182,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       editor_msg( "black",
                  QString( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Primus mode (ATSAS almerge-style): low-q extrapolated to c=0 on the scale of "
+                          "Absolute-scale mode: low-q extrapolated to c=0 on the scale of "
                           "the highest-concentration curve (conc %4); at/above the merging point q=%5 the "
                           "reference curve is taken verbatim, carrying its error bars.%6\n" )
                  .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
@@ -1210,7 +1210,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    if ( show_regplots && reg_q.size() )
    {
       QString y_axis_title =
-         primus_mode ? us_tr( "I(q) scaled to reference concentration" )
+         absolute_mode ? us_tr( "I(q) scaled to reference concentration" )
                      : ( all_istar ? us_tr( "I*(q)  (normalized)" )
                                    : us_tr( "I(q)/concentration" ) );
 
@@ -1218,8 +1218,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                     us_hydrodyn,
                                                     y_axis_title,
-                                                    primus_mode ? merge_q : 0e0,   // merge point q (0 => none)
-                                                    primus_mode ? 0 : fit_broaden, // Zimm fit-broadening q-window
+                                                    absolute_mode ? merge_q : 0e0,   // merge point q (0 => none)
+                                                    absolute_mode ? 0 : fit_broaden, // Zimm fit-broadening q-window
                                                     gcv_edof_used,                 // GCV effective slope dof (0 => off)
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_siga,
