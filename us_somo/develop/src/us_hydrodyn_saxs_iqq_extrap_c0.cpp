@@ -445,9 +445,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       // scan from low q, and the merge point is the first q where a trailing window
       // agrees (p >= alpha). Below it: extrapolation; at/above it: reference.
       {
-         const int win = 50;
-         merge_idx = 0;
-         if ( (int) npts > win )
+         // trailing-window size for the CORMAP crossover test; shrink it for short
+         // grids so Primus still extrapolates. A fixed 50-pt window that only ran
+         // when npts > 50 left merge_idx = 0 for shorter curves, which made every
+         // output point copy the reference -- i.e. Primus silently returned the
+         // input curve with no extrapolation and no warning.
+         int win = 50;
+         if ( (int) npts <= win )
+         {
+            win = (int) npts / 2;
+         }
+         if ( win >= 5 )
          {
             merge_idx = (int) npts - win;      // fallback: extrapolate all but the last window
             for ( int j = 0; j + win <= (int) npts; j++ )
@@ -461,12 +469,24 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                   break;
                }
             }
+            merge_q = q[ merge_idx ];
+            editor_msg( "black",
+                       QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
+                                       "taking the highest-concentration curve above (CORMAP alpha = %4)\n" ) )
+                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
          }
-         merge_q = ( merge_idx < (int) npts ) ? q[ merge_idx ] : q[ npts - 1 ];
-         editor_msg( "black",
-                    QString( us_tr( "Primus-mode merging point: q = %1 (index %2 of %3); extrapolating below, "
-                                    "taking the highest-concentration curve above (CORMAP alpha = %4)\n" ) )
-                    .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
+         else
+         {
+            // too few q-points to locate a merging point: extrapolate the whole
+            // curve (merge_idx == npts => no high-q reference copy), merge_q = 0
+            // signals "no merge point" to the summary and the regression viewer
+            merge_idx = (int) npts;
+            merge_q   = 0e0;
+            editor_msg( "dark red",
+                       QString( us_tr( "Primus-mode: only %1 q-point(s) -- too few to locate a merging point; "
+                                       "extrapolating the whole curve (no high-q reference copy).\n" ) )
+                       .arg( (int) npts ) );
+         }
       }
    }
 

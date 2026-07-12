@@ -117,8 +117,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                          us_tr( "Unchecked (Zimm mode): output the concentration-normalized intensity I(q)/c\n"
                                 "extrapolated to c=0 (SAXS analogue of a Zimm plot); tagged Conc:1.\n\n"
                                 "Checked (Primus mode): scale each curve onto the highest-concentration curve,\n"
-                                "then combine them with an inverse-variance weighted merge -- matches ATSAS\n"
-                                "almerge; the output carries the reference curve's error bars and absolute scale." ) );
+                                "extrapolate to c=0 at low q, and take the reference curve verbatim above the\n"
+                                "merging point -- matches ATSAS almerge; the output carries the reference\n"
+                                "curve's error bars and absolute scale." ) );
 
    cb_regplots = new QCheckBox( us_tr( "Show per-q regression plots (scrollable pop-up)" ), this );
    cb_regplots->setChecked( false );
