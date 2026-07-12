@@ -7,6 +7,10 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <set>
+#include <algorithm>
+#include <limits>
+#include <cmath>
+#include "../include/Eigen/Dense"
 
 #define TSO QTextStream(stdout)
 
@@ -50,6 +54,160 @@ static QString us_extrap_c0_curve_name( const QStringList &names, bool primus_mo
       return "extrap_c0" + method;
    }
    return prefix + "_extrap_c0" + method;
+}
+
+// Penalized-slope extrapolation core with automatic GCV smoothing (shared by Zimm and
+// Primus). At each q the model is  y_i = c_i*alpha(q) + Iex(q)  (inverse-variance
+// weighted); a global smoothness penalty is applied to ONLY the concentration slope
+// alpha(q) -- the interparticle/second-virial term, which is smooth in q and dies off at
+// high q -- while the intercept Iex(q) (which carries the form-factor detail) is left
+// unpenalized. Given the per-q weighted sufficient statistics
+//    M = sum w c^2 - (sum w c)^2/(sum w)   (slope Fisher info; per-q OLS slope = R/M)
+//    R = sum w c y - (sum w c)(sum w y)/(sum w)
+//    B = sum w c,  C = sum w,  Q = sum w y
+// the fit reduces to  (diag(M) + lambda * D2'D2) alpha = R ,  Iex = (Q - B*alpha)/C ,
+// where D2 is the second-difference operator. lambda is chosen automatically by
+// Generalized Cross-Validation: one symmetric eigendecomposition of the whitened penalty
+// K = M^-1/2 (D2'D2) M^-1/2 makes the whole GCV scan closed-form
+// (GCV(lambda) = (RSS/n)/(1-edof/n)^2, edof = sum 1/(1+lambda*g)). lambda=0 recovers the
+// independent per-q weighted fit. Validated to track the ground-truth-optimal lambda
+// across simulated dilution series (weak/strong, repulsive/attractive interactions) and
+// to give a cleaner low-q Guinier than either per-q OLS or ATSAS almerge on real data.
+// Returns false on a degenerate problem, in which case the caller keeps its per-q result.
+static bool us_extrap_c0_gcv_penalized(
+                                       const vector < double > & M,
+                                       const vector < double > & R,
+                                       const vector < double > & B,
+                                       const vector < double > & C,
+                                       const vector < double > & Q,
+                                       vector < double > & Iex_out,
+                                       vector < double > & alpha_out,
+                                       double & lambda_out,
+                                       double & edof_out )
+{
+   int n = (int) M.size();
+   if ( n < 5 )
+   {
+      return false;
+   }
+   // the dense symmetric eigendecomposition below is O(n^3); guard against pathologically
+   // large grids so we fall back to the per-q fit rather than hang (a banded eigensolver
+   // would lift this limit; typical SAXS grids are well under it)
+   if ( n > 5000 )
+   {
+      return false;
+   }
+
+   // floor for degenerate q (M<=0, e.g. all-NaN column) so the whitening stays bounded
+   vector < double > pos;
+   for ( int i = 0; i < n; i++ )
+   {
+      if ( M[ i ] > 0e0 )
+      {
+         pos.push_back( M[ i ] );
+      }
+   }
+   if ( (int) pos.size() < n / 2 )
+   {
+      return false;                            // too many degenerate q to regularize
+   }
+   std::sort( pos.begin(), pos.end() );
+   double medM   = pos[ pos.size() / 2 ];
+   double floorM = 1e-6 * medM;
+
+   Eigen::VectorXd Mh( n ), Mih( n ), a0( n );
+   for ( int i = 0; i < n; i++ )
+   {
+      double m = ( M[ i ] > floorM ) ? M[ i ] : floorM;
+      Mh[ i ]  = std::sqrt( m );
+      Mih[ i ] = 1e0 / Mh[ i ];
+      a0[ i ]  = ( M[ i ] > 0e0 ) ? R[ i ] / M[ i ] : 0e0;   // per-q OLS slope
+   }
+
+   // second-difference operator D2 ((n-2) x n) and its Gram L = D2'D2 (pentadiagonal),
+   // then the whitened, symmetric penalty K = M^-1/2 L M^-1/2
+   Eigen::MatrixXd D2 = Eigen::MatrixXd::Zero( n - 2, n );
+   for ( int i = 0; i < n - 2; i++ )
+   {
+      D2( i, i ) = 1e0; D2( i, i + 1 ) = -2e0; D2( i, i + 2 ) = 1e0;
+   }
+   Eigen::MatrixXd L = D2.transpose() * D2;
+   Eigen::MatrixXd K = Mih.asDiagonal() * L * Mih.asDiagonal();
+
+   Eigen::SelfAdjointEigenSolver < Eigen::MatrixXd > es( K );
+   if ( es.info() != Eigen::Success )
+   {
+      return false;
+   }
+   Eigen::VectorXd g = es.eigenvalues().cwiseMax( 0e0 );     // penalty eigenvalues
+   Eigen::MatrixXd U = es.eigenvectors();
+   Eigen::VectorXd z = U.transpose() * ( Mh.asDiagonal() * a0 );   // whitened OLS slope
+
+   double gmax = g.maxCoeff();
+   double gmin = 0e0;
+   for ( int i = 0; i < n; i++ )
+   {
+      if ( g[ i ] > 0e0 && ( gmin == 0e0 || g[ i ] < gmin ) )
+      {
+         gmin = g[ i ];
+      }
+   }
+   if ( gmax <= 0e0 || gmin <= 0e0 )
+   {
+      return false;
+   }
+
+   // GCV over a log-lambda grid spanning from ~no smoothing (lambda*gmax<<1) to alpha
+   // forced linear (lambda*gmin>>1); closed-form via the eigenbasis
+   double lam_lo    = 1e-3 / gmax;
+   double lam_hi    = 1e3  / gmin;
+   const int NL     = 120;
+   double best_gcv  = std::numeric_limits < double >::infinity();
+   double best_lam  = lam_lo;
+   double best_edof = (double) n;
+   for ( int k = 0; k < NL; k++ )
+   {
+      double lam  = lam_lo * std::pow( lam_hi / lam_lo, (double) k / (double) ( NL - 1 ) );
+      double edof = 0e0, rss = 0e0;
+      for ( int i = 0; i < n; i++ )
+      {
+         double lg = lam * g[ i ];
+         double s  = lg / ( 1e0 + lg );        // shrinkage of whitened coordinate i
+         edof     += 1e0 - s;                  // 1/(1+lambda g)
+         double r  = z[ i ] * s;
+         rss      += r * r;
+      }
+      double denom = 1e0 - edof / (double) n;
+      if ( denom <= 0e0 )
+      {
+         continue;
+      }
+      double gcv = ( rss / (double) n ) / ( denom * denom );
+      if ( gcv < best_gcv )
+      {
+         best_gcv  = gcv;
+         best_lam  = lam;
+         best_edof = edof;
+      }
+   }
+
+   Eigen::VectorXd shrunk( n );
+   for ( int i = 0; i < n; i++ )
+   {
+      shrunk[ i ] = z[ i ] / ( 1e0 + best_lam * g[ i ] );
+   }
+   Eigen::VectorXd alpha = Mih.asDiagonal() * ( U * shrunk );
+
+   Iex_out.resize( n );
+   alpha_out.resize( n );
+   for ( int i = 0; i < n; i++ )
+   {
+      alpha_out[ i ] = alpha[ i ];
+      Iex_out[ i ]   = ( C[ i ] != 0e0 ) ? ( Q[ i ] - B[ i ] * alpha[ i ] ) / C[ i ] : 0e0;
+   }
+   lambda_out = best_lam;
+   edof_out   = best_edof;
+   return true;
 }
 
 void US_Hydrodyn_Saxs::do_extrap_c0(
@@ -188,8 +346,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool primus_mode   = false;
    bool show_regplots = false;
    int  fit_broaden   = 0;
+   bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, &show_regplots, &fit_broaden, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &primus_mode, &show_regplots, &fit_broaden, &use_gcv, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -438,6 +597,55 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
 
+      // GCV-penalized slope regularization: replace the noisy per-q intercepts with a
+      // globally slope-smoothed fit (auto-tuned by GCV) so the merge test below and the
+      // low-q output use the cleaner curve. Overwrites Iex/Islope; on any degeneracy the
+      // helper returns false and the per-q OLS values above are kept.
+      if ( use_gcv )
+      {
+         vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
+         for ( unsigned int qi = 0; qi < npts; qi++ )
+         {
+            double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+            for ( int ci = 0; ci < ordered_names.size(); ci++ )
+            {
+               if ( concs[ ci ] <= 0e0 )
+               {
+                  continue;
+               }
+               double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
+               if ( us_isnan( Iv ) )
+               {
+                  continue;
+               }
+               double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
+                  ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
+               if ( us_isnan( sd ) ) { sd = 0e0; }
+               double sig = scale[ ci ] * sd;
+               double w   = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
+               double xv  = concs[ ci ];
+               double yv  = scale[ ci ] * Iv;
+               S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
+            }
+            vC[ qi ] = S; vB[ qi ] = Sx; vQ[ qi ] = Sy;
+            vM[ qi ] = ( S > 0e0 ) ? ( Sxx - Sx * Sx / S ) : 0e0;
+            vR[ qi ] = ( S > 0e0 ) ? ( Sxy - Sx * Sy / S ) : 0e0;
+         }
+         vector < double > Iex_pen, alpha_pen;
+         double gcv_lambda = 0e0, gcv_edof = 0e0;
+         if ( us_extrap_c0_gcv_penalized( vM, vR, vB, vC, vQ, Iex_pen, alpha_pen, gcv_lambda, gcv_edof ) )
+         {
+            for ( unsigned int qi = 0; qi < npts; qi++ )
+            {
+               Iex[ qi ]    = Iex_pen[ qi ];
+               Islope[ qi ] = alpha_pen[ qi ];
+            }
+            editor_msg( "black",
+                       QString( us_tr( "Primus GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
+                       .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
+         }
+      }
+
       // merging point (ATSAS almerge): extrapolate the low-q region where the
       // concentration effect is real, and take the reference curve verbatim at high
       // q where the profiles differ only by noise. Detect the crossover with a local
@@ -517,6 +725,53 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double >               out_xbar;
    vector < double >               out_ybar;
 
+   // Zimm GCV-penalized fit: per-q weighted stats over the whole grid -> a globally
+   // slope-regularized intercept Iex(q) (and slope) at every q, lambda auto-tuned by GCV.
+   // Used in the main loop below when GCV is enabled (Primus does its own GCV above).
+   vector < double > zimm_Iex, zimm_alpha;
+   bool   zimm_gcv_ok = false;
+   if ( use_gcv && !primus_mode )
+   {
+      vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
+      for ( unsigned int qi = 0; qi < npts; qi++ )
+      {
+         double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+         for ( int ci = 0; ci < ordered_names.size(); ci++ )
+         {
+            if ( concs[ ci ] <= 0e0 )
+            {
+               continue;
+            }
+            double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
+            if ( us_isnan( Iv ) )
+            {
+               continue;
+            }
+            double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
+               ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
+            if ( us_isnan( sd ) ) { sd = 0e0; }
+            // Zimm axis: y = I/c (raw) or I as-is (already-normalized I*(q)); weight 1/sig^2
+            double yv, sig;
+            if ( is_istar[ ci ] ) { yv = Iv;              sig = sd; }
+            else                  { yv = Iv / concs[ ci ]; sig = sd / concs[ ci ]; }
+            double w  = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
+            double xv = concs[ ci ];
+            S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
+         }
+         vC[ qi ] = S; vB[ qi ] = Sx; vQ[ qi ] = Sy;
+         vM[ qi ] = ( S > 0e0 ) ? ( Sxx - Sx * Sx / S ) : 0e0;
+         vR[ qi ] = ( S > 0e0 ) ? ( Sxy - Sx * Sy / S ) : 0e0;
+      }
+      double gcv_lambda = 0e0, gcv_edof = 0e0;
+      zimm_gcv_ok = us_extrap_c0_gcv_penalized( vM, vR, vB, vC, vQ, zimm_Iex, zimm_alpha, gcv_lambda, gcv_edof );
+      if ( zimm_gcv_ok )
+      {
+         editor_msg( "black",
+                    QString( us_tr( "Zimm GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
+                    .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
+      }
+   }
+
    for ( unsigned int qi = 0; qi < npts; qi++ )
    {
       vector < double > x;
@@ -576,6 +831,24 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          a    = Iex[ qi ];
          b    = Islope[ qi ];
          siga = 0e0;
+      }
+      else if ( zimm_gcv_ok )
+      {
+         // GCV-penalized Zimm: intercept/slope come from the globally slope-smoothed fit
+         // (defined at every q, so no q is skipped). The reported error is the per-q OLS
+         // intercept SE where computable -- a conservative bound, since the regularized
+         // estimate borrows information across q and is actually less uncertain.
+         a = zimm_Iex[ qi ];
+         b = zimm_alpha[ qi ];
+         if ( x.size() >= 3 )
+         {
+            double aa, bb, sigb, chi2;
+            usu.linear_fit( x, y, aa, bb, siga, sigb, chi2 );
+         }
+         else
+         {
+            siga = 0e0;
+         }
       }
       else if ( x.size() < 2 )
       {
@@ -666,8 +939,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    //     q (and dies off at high q), so smoothing the per-q concentration slope across
    //     a q-window and recomputing the intercept (a = ybar - b_smooth*xbar) removes
    //     extrapolation noise without smearing the form-factor detail carried by the
-   //     intercept. Off by default (window <= 1); Primus mode is unaffected.
-   if ( !primus_mode && fit_broaden > 1 )
+   //     intercept. Off by default (window <= 1); Primus mode is unaffected. Superseded
+   //     by GCV regularization when that is enabled (the two are mutually exclusive).
+   if ( !primus_mode && !zimm_gcv_ok && fit_broaden > 1 )
    {
       int n = (int) out_q.size();
       int half = fit_broaden / 2;

@@ -17,6 +17,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_primus_mode,
                                                                           bool *out_show_regplots,
                                                                           int *out_fit_broaden,
+                                                                          bool *out_gcv,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -30,6 +31,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_primus_mode    = out_primus_mode;
    this->out_show_regplots  = out_show_regplots;
    this->out_fit_broaden    = out_fit_broaden;
+   this->out_gcv            = out_gcv;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -121,6 +123,20 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "merging point -- matches ATSAS almerge; the output carries the reference\n"
                                 "curve's error bars and absolute scale." ) );
 
+   cb_gcv = new QCheckBox( us_tr( "Automatic slope regularization (GCV) -- recommended" ), this );
+   cb_gcv->setChecked( true );
+   cb_gcv->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_gcv->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gcv );
+   cb_gcv->setMinimumHeight( minHeight1 );
+   cb_gcv->setToolTip(
+                      us_tr( "Applies to both modes. Fits all q jointly with a smoothness penalty on only the\n"
+                             "concentration slope (the interparticle term, smooth in q) while leaving the\n"
+                             "extrapolated intensity's form-factor detail intact; the smoothing strength is\n"
+                             "chosen automatically by Generalized Cross-Validation (no tuning). This denoises\n"
+                             "the low-q extrapolation and supersedes the manual q-window below.\n"
+                             "Uncheck for the classic independent per-q fits (plus any manual window)." ) );
+
    cb_regplots = new QCheckBox( us_tr( "Show per-q regression plots (scrollable pop-up)" ), this );
    cb_regplots->setChecked( false );
    cb_regplots->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
@@ -155,9 +171,10 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    le_broaden->setPalette( PALET_NORMAL );
    AUTFBACK( le_broaden );
    le_broaden->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   // broadening applies to Zimm mode only; disable it while Primus mode is checked
-   connect( cb_primus, SIGNAL( toggled( bool ) ), le_broaden, SLOT( setDisabled( bool ) ) );
-   connect( cb_primus, SIGNAL( toggled( bool ) ), lbl_broaden, SLOT( setDisabled( bool ) ) );
+   // the manual broadening window applies to Zimm mode only and is superseded by GCV;
+   // disable it whenever Primus or automatic GCV regularization is selected
+   connect( cb_primus, SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
+   connect( cb_gcv,    SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
 
    hbl_broaden->addWidget( lbl_broaden );
    hbl_broaden->addWidget( le_broaden );
@@ -197,10 +214,23 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( lbl_info );
    background->addWidget( t_conc );
    background->addWidget( cb_primus );
+   background->addWidget( cb_gcv );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_broaden );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
+
+   // reflect the default state (GCV on => manual window disabled)
+   refresh_broaden_enabled();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
+{
+   // the manual fit-broadening window is meaningful only for Zimm mode with automatic
+   // GCV off; Primus and GCV each supersede it
+   bool enable = !cb_primus->isChecked() && !cb_gcv->isChecked();
+   le_broaden->setEnabled( enable );
+   lbl_broaden->setEnabled( enable );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::populate_table()
@@ -314,7 +344,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    }
    *out_primus_mode   = cb_primus->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
-   *out_fit_broaden   = cb_primus->isChecked() ? 0 : le_broaden->text().toInt();
+   *out_gcv           = cb_gcv->isChecked();
+   // the manual q-window is used only for classic Zimm (no Primus, no GCV)
+   *out_fit_broaden   = ( cb_primus->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
    *out_ok = true;
    close();
 }

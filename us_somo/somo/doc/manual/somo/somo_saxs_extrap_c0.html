@@ -87,21 +87,29 @@ This is the small-angle-scattering analogue of a Zimm plot. The output is a
 tagged <code>Conc:1</code>, SOMO's convention for an already-normalized curve, and
 carries the standard error of the fitted intercept as its uncertainty.</p>
 
-<p><b>Fit broadening (Zimm mode).</b> By default each <i>q</i> is fitted
-independently, which lets measurement noise propagate into the extrapolated
-intercept. The interparticle/interaction term (the fit's slope), however, varies
-smoothly with <i>q</i> and dies off at high <i>q</i>, so it can be regularized
-across neighbouring <i>q</i> without harming the form-factor detail carried by the
-intercept. Setting <b>Zimm fit broadening (q-window)</b> to a value <i>N</i>&nbsp;&gt;&nbsp;1
-averages the concentration slope over an <i>N</i>-point window and then recomputes
-each intercept (<i>a</i>&nbsp;=&nbsp;&#10216;<i>I</i>/c&#10217;&nbsp;&minus;&nbsp;<i>b</i><sub>smoothed</sub>&#10216;c&#10217;).
-On tests against a known dilute-limit ground truth this reduced the point-to-point
-noise appreciably with no loss of accuracy at modest windows; larger windows trade
-a little accuracy for more smoothing (most useful for weak or noisy dilution
-series). 0 (the default) leaves the per-<i>q</i> fits independent. The setting
-applies to Zimm mode only and is disabled while Primus mode is selected. Note that
-this smooths the concentration <i>dependence</i>, not the output curve itself
-(smoothing the output directly would smear real features and is not done).</p>
+<p><b>Automatic slope regularization (GCV)</b> (checkbox, on by default; applies to
+<i>both</i> modes). The interparticle/interaction term &mdash; the fit's concentration
+<i>slope</i> &mdash; varies smoothly with <i>q</i> and dies off at high <i>q</i>, so it
+can be regularized across <i>q</i> without harming the form-factor detail carried by the
+intercept. With this option on, all <i>q</i> are fitted jointly with a smoothness penalty
+applied to <i>only</i> the slope &alpha;(<i>q</i>) (the intercept
+<i>I</i><sub>ex</sub>(<i>q</i>) is left untouched), and the smoothing strength is chosen
+automatically by <i>Generalized Cross-Validation</i> (GCV) &mdash; there is nothing to
+tune. On simulated dilution series with a known dilute-limit ground truth this tracks the
+best-possible smoothing across weak/strong and repulsive/attractive interactions, and on
+real data it yields a markedly cleaner low-<i>q</i> Guinier region than independent per-<i>q</i>
+fits. The editor window reports the selected penalty and the effective degrees of freedom.
+Uncheck the box for the classic independent per-<i>q</i> fits (optionally with the manual
+window below).</p>
+
+<p><b>Fit broadening (manual, Zimm mode).</b> An alternative to the automatic GCV option,
+used only when GCV is off (and Primus is off). Setting <b>Zimm fit broadening (q-window)</b>
+to a value <i>N</i>&nbsp;&gt;&nbsp;1 averages the concentration slope over an <i>N</i>-point
+window and then recomputes each intercept (<i>a</i>&nbsp;=&nbsp;&#10216;<i>I</i>/c&#10217;&nbsp;&minus;&nbsp;<i>b</i><sub>smoothed</sub>&#10216;c&#10217;).
+0 (the default of this field) leaves the per-<i>q</i> fits independent. As with GCV, this
+smooths the concentration <i>dependence</i>, not the output curve itself (smoothing the
+output directly would smear real features and is not done). The field is disabled while
+either automatic GCV or Primus mode is selected.</p>
 
 <p><b>Primus mode</b> (checkbox checked). This follows the ATSAS <i>almerge</i>
 approach (Petoukhov <i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). The

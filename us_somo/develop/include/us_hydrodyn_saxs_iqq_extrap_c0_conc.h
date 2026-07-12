@@ -37,6 +37,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_primus_mode,
                                           bool *out_show_regplots,
                                           int *out_fit_broaden,
+                                          bool *out_gcv,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -48,6 +49,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QLabel       *lbl_info;
       QTableWidget *t_conc;
       QCheckBox    *cb_primus;
+      QCheckBox    *cb_gcv;
       QCheckBox    *cb_regplots;
       QLabel       *lbl_broaden;
       QLineEdit    *le_broaden;
@@ -66,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_primus_mode;
       bool         *out_show_regplots;
       int          *out_fit_broaden;
+      bool         *out_gcv;
       void         *us_hydrodyn;
 
       bool          disable_updates;
@@ -78,6 +81,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
 
       void cell_changed( QTableWidgetItem * );
       void selection_changed();
+      void refresh_broaden_enabled();
       void ok();
       void cancel();
       void help();
