@@ -210,10 +210,10 @@ reported in the log, and the chosen mode is encoded in the curve name
 pop-up window after the extrapolation. It shows, one <i>q</i> value at a time, each
 input curve as a point at its concentration (with its error bar) together with the
 per-q result: the fitted line and its extrapolated <i>c</i>&nbsp;=&nbsp;0 intercept
-(highlighted, with its own error bar) at the dashed vertical axis. In <b>Absolute-scale</b>
-mode the title also notes, for the current <i>q</i>, whether the output there is the
-extrapolated intercept (below the merging point) or taken from the reference curve
-(at/above it). <b>Drag the wheel</b> to scroll smoothly through the <i>q</i> grid (it
+(highlighted, with its own error bar) at the dashed vertical axis. When the reference curve is
+<b>spliced</b> (the merge checkbox), the title also notes, for the current <i>q</i>, whether the
+output there is the extrapolated intercept (below the merging point) or taken from the reference
+curve (at/above it). <b>Drag the wheel</b> to scroll smoothly through the <i>q</i> grid (it
 has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> buttons step
 one <i>q</i> at a time. The line below the plot reports, for the current <i>q</i>, the
 extrapolated <i>c</i>&nbsp;=&nbsp;0 result &plusmn; its error, the number of curves used, and
@@ -234,6 +234,22 @@ uses the globally-smoothed slope &mdash; a note above the plot says so, and repo
 slope degrees of freedom for GCV &mdash; so the line reflects the regularized fit and may not
 pass exactly through the raw per-<i>q</i> intercept. This is a diagnostic view; it does not add
 or change any plotted curve.</p>
+
+<p><b>A negative <i>R</i>&sup2; is expected at some <i>q</i> and is not an error.</b>
+<i>R</i>&sup2; here is the fraction of the points' variance explained <i>by the plotted line</i>
+(1&nbsp;&minus;&nbsp;SS<sub>residual</sub>/SS<sub>total</sub>), so it goes negative whenever the
+plotted line fits the points more poorly than a flat line through their mean. That happens
+legitimately in two situations. First, with GCV or fit broadening the slope at each <i>q</i> is
+deliberately borrowed from neighbouring <i>q</i> rather than fitted locally; at the
+noise-dominated low-<i>q</i> points &mdash; where the individual curves show no real concentration
+trend &mdash; that shared slope can fit worse than a flat mean, giving <i>R</i>&sup2;&nbsp;&lt;&nbsp;0.
+This is the regularization <i>working as intended</i>: it stabilizes the <i>c</i>&nbsp;=&nbsp;0
+intercept by not chasing local noise, and a negative <i>R</i>&sup2; there is a useful signal that
+the per-<i>q</i> trend is noise rather than a defect. Second, the fit is inverse-variance weighted
+while <i>R</i>&sup2; is computed unweighted, so a single high-error point can also push it slightly
+below zero. With only a few concentrations the statistic is noisy in any case; judge the
+extrapolation on the reduced &chi;&sup2; and the overall Guinier quality check as well, not on a
+single <i>q</i>'s <i>R</i>&sup2;.</p>
 
 <!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
      bars, the fit line, the c=0 intercept, and the scroll wheel -->
