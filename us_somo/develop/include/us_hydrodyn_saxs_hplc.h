@@ -1374,7 +1374,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         conc_widget;
       void                         update_csv_conc();
       bool                         all_selected_have_nonzero_conc();
-      bool                         all_selected_have_errors();       // count + matching size + all non-zero
+      bool                         all_selected_have_errors();       // count + matching size + at least one usable (>0) SD
 
       void                         delete_zoomer_if_ranges_changed();
       QString                      vector_double_to_csv( vector < double > vd );

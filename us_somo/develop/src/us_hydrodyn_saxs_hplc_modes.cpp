@@ -4677,6 +4677,21 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_apply( const QStringList & files )
    update_enables();
 }
 
+// true if v holds at least one usable (positive) error; recompute_errors
+// tolerates individual zero/negative points, so we only reject all-zero
+// (placeholder) vectors, not vectors with a few masked points.
+static bool sd_has_usable_errors( const vector < double > & v )
+{
+   for ( unsigned int i = 0; i < v.size(); i++ )
+   {
+      if ( v[ i ] > 0e0 )
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
 bool US_Hydrodyn_Saxs_Hplc::all_selected_have_errors()
 {
    unsigned int selected_count = 0;
@@ -4689,7 +4704,7 @@ bool US_Hydrodyn_Saxs_Hplc::all_selected_have_errors()
          if ( !f_errors.count( f ) ||
               !f_qs.count( f ) ||
               f_errors[ f ].size() != f_qs[ f ].size() ||
-              !US_Saxs_Util::is_nonzero_vector( f_errors[ f ] ) )
+              !sd_has_usable_errors( f_errors[ f ] ) )
          {
             return false;
          }
@@ -4757,7 +4772,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_rescale( const QStringList & files, char mode 
 
       if ( !f_errors.count( f ) ||
            f_errors[ f ].size() != f_qs[ f ].size() ||
-           !US_Saxs_Util::is_nonzero_vector( f_errors[ f ] ) )
+           !sd_has_usable_errors( f_errors[ f ] ) )
       {
          editor_msg( "dark red", QString( us_tr( "SD rescale: skipping %1 (no usable SD errors)" ) ).arg( f ) );
          ++skipped;
