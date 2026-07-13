@@ -186,14 +186,24 @@ mode the title also notes, for the current <i>q</i>, whether the output there is
 extrapolated intercept (below the merging point) or taken from the reference curve
 (at/above it). <b>Drag the wheel</b> to scroll smoothly through the <i>q</i> grid (it
 has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> buttons step
-one <i>q</i> at a time. The current <i>q</i>, the intercept &plusmn; its error, and the
-slope are shown below the plot. The <i>y</i> axis matches the mode: <i>I</i>(q)/c for
-Zimm, <i>I</i>(q) scaled to the reference concentration for Absolute-scale, or <i>I</i>*(q) for
-already-normalized inputs. When automatic GCV regularization (or the manual fit-broadening
-window) is active, the fit line uses the globally-smoothed slope &mdash; a note above the
-plot says so, and reports the effective slope degrees of freedom for GCV &mdash; so the line
-reflects the regularized fit and may not pass exactly through the raw per-<i>q</i> intercept.
-This is a diagnostic view; it does not add or change any plotted curve.</p>
+one <i>q</i> at a time. The line below the plot reports, for the current <i>q</i>, the
+extrapolated <i>c</i>&nbsp;=&nbsp;0 result &plusmn; its error, the number of curves used, and
+a <b>goodness-of-fit summary</b> &mdash; the coefficient of determination <i>R</i>&sup2;, and
+(when the data carry error bars) the reduced &chi;&sup2; of the points about the fit &mdash; so
+the quality of each per-<i>q</i> extrapolation can be judged at a glance.</p>
+
+<p>The <i>y</i> axis and the fitted curve follow the selected model and mode. For the
+<b>additive</b> model the axis is <i>I</i>(q)/c (or <i>I</i>*(q) for already-normalized
+inputs, or <i>I</i>(q) scaled to the reference concentration in Absolute-scale mode) and the
+intercept is the dilute <i>I</i>(0) directly. For the <b>reciprocal</b> and <b>2nd-order
+virial</b> models the axis is <i>c</i>/<i>I</i>(q): the plotted intercept is <i>u</i> and the
+readout also gives the recovered forward scatter <i>I</i>(0)&nbsp;=&nbsp;1/<i>u</i> with its
+propagated error; the 2nd-order virial draws its fitted parabola rather than a straight line.
+When automatic GCV regularization (or the manual fit-broadening window) is active, the fit line
+uses the globally-smoothed slope &mdash; a note above the plot says so, and reports the effective
+slope degrees of freedom for GCV &mdash; so the line reflects the regularized fit and may not
+pass exactly through the raw per-<i>q</i> intercept. This is a diagnostic view; it does not add
+or change any plotted curve.</p>
 
 <!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
      bars, the fit line, the c=0 intercept, and the scroll wheel -->
