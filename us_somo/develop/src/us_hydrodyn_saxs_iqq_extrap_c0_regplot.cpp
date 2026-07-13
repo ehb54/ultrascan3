@@ -17,12 +17,14 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                                                 double                          merge_q,
                                                                                 int                             fit_broaden,
                                                                                 double                          gcv_edof,
+                                                                                int                             model,
                                                                                 vector < double >               reg_q,
                                                                                 vector < vector < double > >    reg_x,
                                                                                 vector < vector < double > >    reg_y,
                                                                                 vector < vector < double > >    reg_e,
                                                                                 vector < double >               reg_a,
                                                                                 vector < double >               reg_b,
+                                                                                vector < double >               reg_c,
                                                                                 vector < double >               reg_siga,
                                                                                 QWidget *                       p,
                                                                                 const char *
@@ -33,12 +35,14 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
    this->merge_q      = merge_q;
    this->fit_broaden  = fit_broaden;
    this->gcv_edof     = gcv_edof;
+   this->model        = model;
    this->reg_q        = reg_q;
    this->reg_x        = reg_x;
    this->reg_y        = reg_y;
    this->reg_e        = reg_e;
    this->reg_a        = reg_a;
    this->reg_b        = reg_b;
+   this->reg_c        = reg_c;
    this->reg_siga     = reg_siga;
 
    cur_index   = 0;
@@ -300,14 +304,24 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
    if ( a < y_min ) y_min = a;
    if ( a > y_max ) y_max = a;
 
-   // fitted line across the full x-range (so the c=0 intercept is visible)
+   // fitted curve across the full x-range (so the c=0 intercept is visible). A straight
+   // line for the additive/reciprocal fits; a sampled parabola for the 2nd-order virial.
+   double c_coef = ( i < (int) reg_c.size() ) ? reg_c[ i ] : 0e0;
    {
-      double lx[ 2 ] = { x_lo, x_hi };
-      double ly[ 2 ] = { a + b * x_lo, a + b * x_hi };
+      const int NS = 60;
+      vector < double > lx( NS ), ly( NS );
+      for ( int k = 0; k < NS; k++ )
+      {
+         double xx = x_lo + ( x_hi - x_lo ) * (double) k / ( NS - 1 );
+         lx[ k ] = xx;
+         ly[ k ] = a + b * xx + c_coef * xx * xx;
+         if ( ly[ k ] < y_min ) y_min = ly[ k ];
+         if ( ly[ k ] > y_max ) y_max = ly[ k ];
+      }
       QwtPlotCurve * curve = new QwtPlotCurve( "fit" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setPen( QPen( Qt::green, 1, Qt::SolidLine ) );
-      curve->setSamples( lx, ly, 2 );
+      curve->setSamples( &lx[ 0 ], &ly[ 0 ], NS );
       curve->attach( plot );
       plot_curves.push_back( curve );
    }
@@ -349,7 +363,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
       {
          QwtPlotCurve * curve = new QwtPlotCurve( "result errorbar" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setPen( QPen( Qt::red, 1, Qt::SolidLine ) );
+         curve->setPen( QPen( Qt::red, 2, Qt::SolidLine ) );
          curve->setSamples( ix, iy, 2 );
          curve->attach( plot );
          plot_curves.push_back( curve );
@@ -361,10 +375,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
       marker->attach( plot );
       plot_markers.push_back( marker );
 
-      // vertical reference line at c=0 (marks where the fit extrapolates to)
+      // vertical reference line at c=0 (marks where the fit extrapolates to); white so the
+      // red intercept error bar drawn on top of it stays clearly visible
       QwtPlotMarker * vline = new QwtPlotMarker;
       vline->setLineStyle( QwtPlotMarker::VLine );
-      vline->setLinePen( QPen( Qt::red, 0, Qt::DashDotLine ) );
+      vline->setLinePen( QPen( Qt::white, 1, Qt::DashDotLine ) );
       vline->setXValue( 0e0 );
       vline->attach( plot );
       plot_markers.push_back( vline );
@@ -393,11 +408,47 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
                    .arg( (int) reg_q.size() )
                    .arg( mode_note ) );
 
-   lbl_results->setText( QString( us_tr( "q = %1    intercept (c=0) = %2 ± %3    slope = %4    n = %5 curves%6" ) )
+   // goodness of fit at this q: R^2 (fraction of variance explained) and, when the data
+   // carry error bars, the reduced chi^2 of the points about the plotted fit
+   double ss_res = 0e0, ss_tot = 0e0, chi2 = 0e0, ybar_s = 0e0;
+   int    nfit = (int) x.size(), have_err = 0;
+   for ( int j = 0; j < nfit; j++ ) { ybar_s += y[ j ]; }
+   if ( nfit ) { ybar_s /= (double) nfit; }
+   for ( int j = 0; j < nfit; j++ )
+   {
+      double yp = a + b * x[ j ] + c_coef * x[ j ] * x[ j ];
+      double r  = y[ j ] - yp;
+      ss_res += r * r;
+      ss_tot += ( y[ j ] - ybar_s ) * ( y[ j ] - ybar_s );
+      double ej = ( j < (int) e.size() ) ? e[ j ] : 0e0;
+      if ( ej > 0e0 ) { chi2 += ( r / ej ) * ( r / ej ); have_err++; }
+   }
+   int    nparam   = ( c_coef != 0e0 ) ? 3 : 2;
+   double r2       = ( ss_tot > 0e0 ) ? 1e0 - ss_res / ss_tot : 1e0;
+   double red_chi2 = ( have_err > nparam ) ? chi2 / ( have_err - nparam ) : 0e0;
+
+   // for the reciprocal/virial models the plotted intercept is u = 1/I0; report both
+   QString fit_desc;
+   if ( model >= 1 )
+   {
+      double I0  = ( a != 0e0 ) ? 1e0 / a : 0e0;
+      double I0e = ( a != 0e0 ) ? siga / ( a * a ) : 0e0;
+      fit_desc = QString( us_tr( "u(c=0) = %1 ± %2   \342\206\222  I(0) = 1/u = %3 ± %4" ) )
+                 .arg( a, 0, 'g', 6 ).arg( siga, 0, 'g', 4 )
+                 .arg( I0, 0, 'g', 6 ).arg( I0e, 0, 'g', 4 );
+   }
+   else
+   {
+      fit_desc = QString( us_tr( "I(0) = %1 ± %2" ) ).arg( a, 0, 'g', 6 ).arg( siga, 0, 'g', 4 );
+   }
+   QString qof = ( have_err > nparam )
+      ? QString( us_tr( "R\302\262 = %1   reduced \317\207\302\262 = %2" ) ).arg( r2, 0, 'f', 4 ).arg( red_chi2, 0, 'g', 4 )
+      : QString( us_tr( "R\302\262 = %1" ) ).arg( r2, 0, 'f', 4 );
+
+   lbl_results->setText( QString( us_tr( "q = %1    %2    %3    n = %4 curves%5" ) )
                          .arg( reg_q[ i ], 0, 'g', 6 )
-                         .arg( a, 0, 'g', 6 )
-                         .arg( siga, 0, 'g', 4 )
-                         .arg( b, 0, 'g', 6 )
+                         .arg( fit_desc )
+                         .arg( qof )
                          .arg( (int) x.size() )
                          .arg( at_ref ? us_tr( "   [taken from reference]" ) : QString( "" ) ) );
 

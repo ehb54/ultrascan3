@@ -874,6 +874,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < vector < double > >    reg_e;
    vector < double >               reg_a;
    vector < double >               reg_b;
+   vector < double >               reg_c;      // quadratic coeff (2nd-virial); 0 for linear fits
    vector < double >               reg_siga;
 
    // per-output-point concentration centroids, used only for Zimm fit-broadening:
@@ -961,6 +962,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // (0,0) element of the inverse normal matrix (weights are inverse variances). Needs >= 4
    // concentrations for a stable 3-parameter fit; degenerate q fall back to being skipped.
    vector < double > virial2_u( npts, 0e0 ), virial2_use( npts, 0e0 );
+   vector < double > virial2_v( npts, 0e0 ), virial2_w( npts, 0e0 );   // slope/curvature (diagnostic plot)
    vector < bool >   virial2_ok( npts, false );
    if ( reciprocal && extrap_model == 2 )
    {
@@ -987,8 +989,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          if ( det == 0e0 || us_isnan( det ) ) { continue; }
          double u = ( Z0*(S2*S4-S3*S3) - S1*(Z1*S4-Z2*S3) + S2*(Z1*S3-Z2*S2) ) / det;
          if ( u <= 0e0 || us_isnan( u ) ) { continue; }
+         double v = ( S0*(Z1*S4-S3*Z2) - Z0*(S1*S4-S3*S2) + S2*(S1*Z2-Z1*S2) ) / det;
+         double w = ( S0*(S2*Z2-Z1*S3) - S1*(S1*Z2-Z1*S2) + Z0*(S1*S3-S2*S2) ) / det;
          double cof00 = S2*S4 - S3*S3;                // cofactor -> inverse[0,0] = cof00/det
          virial2_u[ qi ]   = u;
+         virial2_v[ qi ]   = v;
+         virial2_w[ qi ]   = w;
          virial2_use[ qi ] = ( cof00 > 0e0 && det > 0e0 ) ? std::sqrt( cof00 / det ) : 0e0;
          virial2_ok[ qi ]  = true;
       }
@@ -1122,6 +1128,16 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
       }
 
+      // Capture the fit in the plotted axis (additive: I/c; reciprocal/virial: c/I) for the
+      // regression-plot viewer, BEFORE any reciprocal inversion of the output value. For the
+      // 2nd-order virial the slope/curvature come from the quadratic solve.
+      double fit_a = a, fit_b = b, fit_c = 0e0, fit_siga = siga;
+      if ( reciprocal && extrap_model == 2 && virial2_ok[ qi ] )
+      {
+         fit_b = virial2_v[ qi ];
+         fit_c = virial2_w[ qi ];
+      }
+
       // Reciprocal / virial models fit c/I, so the fitted intercept is 1/I0(q); invert to
       // recover the intensity I0(q) = 1/u and propagate SE(1/u) = SE(u)/u^2.
       if ( reciprocal )
@@ -1186,9 +1202,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       reg_x   .push_back( x );
       reg_y   .push_back( y );
       reg_e   .push_back( ye );
-      reg_a   .push_back( a );                 // the per-q fit intercept (diagnostic)
-      reg_b   .push_back( b );
-      reg_siga.push_back( err_val );
+      reg_a   .push_back( fit_a );             // fit intercept in the plotted axis (diagnostic)
+      reg_b   .push_back( fit_b );             // slope
+      reg_c   .push_back( fit_c );             // quadratic coeff (2nd-virial), 0 otherwise
+      reg_siga.push_back( reciprocal ? fit_siga : err_val );   // SE in the plotted axis
    }
 
    if ( skipped_points )
@@ -1314,8 +1331,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    {
       QString y_axis_title =
          absolute_mode ? us_tr( "I(q) scaled to reference concentration" )
-                     : ( all_istar ? us_tr( "I*(q)  (normalized)" )
-                                   : us_tr( "I(q)/concentration" ) );
+                     : ( reciprocal ? us_tr( "concentration / I(q)   (c/I)" )
+                                    : ( all_istar ? us_tr( "I*(q)  (normalized)" )
+                                                  : us_tr( "I(q)/concentration" ) ) );
 
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot *regplot =
          new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
@@ -1324,8 +1342,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                     absolute_mode ? merge_q : 0e0,   // merge point q (0 => none)
                                                     absolute_mode ? 0 : fit_broaden, // Zimm fit-broadening q-window
                                                     gcv_edof_used,                 // GCV effective slope dof (0 => off)
+                                                    extrap_model,                  // 0 additive, 1 reciprocal, 2 virial
                                                     reg_q, reg_x, reg_y, reg_e,
-                                                    reg_a, reg_b, reg_siga,
+                                                    reg_a, reg_b, reg_c, reg_siga,
                                                     this
                                                     );
       regplot->setAttribute( Qt::WA_DeleteOnClose );
