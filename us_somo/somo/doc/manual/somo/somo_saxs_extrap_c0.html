@@ -102,6 +102,41 @@ fits. The editor window reports the selected penalty and the effective degrees o
 Uncheck the box for the classic independent per-<i>q</i> fits (optionally with the manual
 window below).</p>
 
+<p><b>Concentration model</b> (drop-down, Zimm mode only). This selects how the intensity
+is fitted against concentration at each <i>q</i>, and chiefly affects the accuracy of the
+molecular weight read from the extrapolated forward scatter <i>I</i>(0):</p>
+
+<ul>
+<li><b>Additive I(q)/c</b> (the default). Fits <i>I</i>(<i>q</i>,c)/c linearly against
+c and reports the c&nbsp;=&nbsp;0 intercept &mdash; the classic Zimm-plot form. This gives the
+cleanest low-<i>q</i> profile, but because the second-virial structure factor makes
+<i>I</i>/c a saturating (convex) function of c, a straight-line fit reads <i>I</i>(0) &mdash;
+and hence the molecular weight &mdash; systematically <i>low</i> when interparticle
+interactions are strong.</li>
+
+<li><b>Reciprocal c/I(q)</b>. Fits c/<i>I</i>(<i>q</i>,c) linearly against c and reports
+<i>I</i>(0)&nbsp;=&nbsp;1/(intercept). Because the second-virial relation
+c/<i>I</i>&nbsp;=&nbsp;(1&nbsp;+&nbsp;2<i>A</i><sub>2</sub><i>Mc</i>)/<i>I</i><sub>0</sub> is
+<i>linear</i> in c, this removes the additive fit's low bias and gives an unbiased forward
+scatter, i.e. a more accurate molecular weight. The uncertainty is propagated as
+SE(1/<i>u</i>)&nbsp;=&nbsp;SE(<i>u</i>)/<i>u</i><sup>2</sup>.</li>
+
+<li><b>2nd-order virial c/I(q)</b>. Adds a c<sup>2</sup> term
+(c/<i>I</i>&nbsp;=&nbsp;<i>u</i>&nbsp;+&nbsp;<i>v</i>c&nbsp;+&nbsp;<i>w</i>c<sup>2</sup>) to
+absorb the residual curvature that appears at strong interaction, where the first-order
+reciprocal begins to over-correct. It is the most robust choice across weak-to-strong
+interaction but needs at least four to five well-spread concentrations to determine the
+extra parameter; with fewer, prefer the first-order reciprocal.</li>
+</ul>
+
+<p>All three were validated against a physical Percus&ndash;Yevick hard-sphere ground truth:
+the additive fit is biased low, the first-order reciprocal is accurate at realistic
+interaction but over-corrects when very strong, and the second-order virial is within a few
+percent across the whole range. The additive model is unchanged from earlier versions and
+remains the default, so existing workflows are unaffected. Absolute-scale mode always uses the
+additive fit. A preferred default may be preselected via the <i>gparam</i>
+<code>saxs_extrap_c0_model</code> (0&nbsp;additive, 1&nbsp;reciprocal, 2&nbsp;virial).</p>
+
 <p><b>Fit broadening (manual, Zimm mode).</b> An alternative to the automatic GCV option,
 used only when GCV is off (and Absolute-scale is off). Setting <b>Zimm fit broadening (q-window)</b>
 to a value <i>N</i>&nbsp;&gt;&nbsp;1 averages the concentration slope over an <i>N</i>-point

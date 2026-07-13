@@ -442,8 +442,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool show_regplots = false;
    int  fit_broaden   = 0;
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
+   int  extrap_model  = 0;      // concentration model: 0 additive, 1 reciprocal, 2 2nd-virial
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &absolute_mode, &show_regplots, &fit_broaden, &use_gcv, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &absolute_mode, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -881,6 +882,25 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double >               out_xbar;
    vector < double >               out_ybar;
 
+   // Intensity-vs-concentration model for the Zimm-family fit (absolute-scale mode is
+   // unaffected). Selected via gparam saxs_extrap_c0_model:
+   //   0 = additive    I(q)/c = Iex + alpha*c            (default; cleanest low-q profile)
+   //   1 = reciprocal  c/I(q) = u + v*c,       I0 = 1/u  (2nd-virial form; unbiased MW/I(0))
+   //   2 = virial2     c/I(q) = u + v*c + w*c^2, I0 = 1/u (robust MW at strong interaction)
+   // The additive fit is biased low for a saturating (second-virial) structure factor because
+   // I(q,c)/c is convex in c; the reciprocal c/I is linear in c and unbiased, and the 2nd-order
+   // form absorbs the residual curvature at strong interaction. Validated against a physical
+   // Percus-Yevick hard-sphere ground truth. Model 2 needs >= 4-5 well-spread concentrations.
+   // extrap_model is set by the concentration dialog (default 0); a power-user default can be
+   // preselected via gparam saxs_extrap_c0_model.
+   bool reciprocal = ( !absolute_mode && extrap_model >= 1 );
+   if ( reciprocal )
+   {
+      editor_msg( "black",
+                  QString( us_tr( "Extrapolation model: %1 (fits c/I vs concentration; I0 = 1/intercept)\n" ) )
+                  .arg( extrap_model == 2 ? us_tr( "2nd-order virial" ) : us_tr( "reciprocal (2nd-virial)" ) ) );
+   }
+
    // Zimm GCV-penalized fit: per-q weighted stats over the whole grid -> a globally
    // slope-regularized intercept Iex(q) (and slope) at every q, lambda auto-tuned by GCV.
    // Used in the main loop below when GCV is enabled (absolute-scale does its own GCV above).
@@ -906,10 +926,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
                ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
             if ( us_isnan( sd ) ) { sd = 0e0; }
-            // Zimm axis: y = I/c (raw) or I as-is (already-normalized I*(q)); weight 1/sig^2
+            // Zimm axis: additive y = I/c (raw) or I as-is (I*(q)); reciprocal z = c/I
+            // (for I*(q), I = Iv*c so z = 1/Iv). weight 1/sig^2; c/I needs I>0.
             double yv, sig;
-            if ( is_istar[ ci ] ) { yv = Iv;              sig = sd; }
-            else                  { yv = Iv / concs[ ci ]; sig = sd / concs[ ci ]; }
+            if ( reciprocal )
+            {
+               if ( Iv <= 0e0 ) { continue; }
+               if ( is_istar[ ci ] ) { yv = 1e0 / Iv;            sig = sd / ( Iv * Iv ); }
+               else                  { yv = concs[ ci ] / Iv;    sig = sd * concs[ ci ] / ( Iv * Iv ); }
+            }
+            else if ( is_istar[ ci ] ) { yv = Iv;              sig = sd; }
+            else                       { yv = Iv / concs[ ci ]; sig = sd / concs[ ci ]; }
             double w  = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
             double xv = concs[ ci ];
             S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
@@ -926,6 +953,44 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          editor_msg( "black",
                     QString( us_tr( "Zimm GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
                     .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
+      }
+   }
+
+   // 2nd-order virial precompute (model 2): per-q weighted quadratic  c/I = u + v*c + w*c^2,
+   // I0 = 1/u. Solves the 3x3 weighted normal equations by Cramer's rule; SE(u) from the
+   // (0,0) element of the inverse normal matrix (weights are inverse variances). Needs >= 4
+   // concentrations for a stable 3-parameter fit; degenerate q fall back to being skipped.
+   vector < double > virial2_u( npts, 0e0 ), virial2_use( npts, 0e0 );
+   vector < bool >   virial2_ok( npts, false );
+   if ( reciprocal && extrap_model == 2 )
+   {
+      for ( unsigned int qi = 0; qi < npts; qi++ )
+      {
+         double S0=0e0,S1=0e0,S2=0e0,S3=0e0,S4=0e0,Z0=0e0,Z1=0e0,Z2=0e0; int nvalid=0;
+         for ( int ci = 0; ci < ordered_names.size(); ci++ )
+         {
+            if ( concs[ ci ] <= 0e0 ) { continue; }
+            double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
+            if ( us_isnan( Iv ) || Iv <= 0e0 ) { continue; }
+            double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
+               ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
+            if ( us_isnan( sd ) ) { sd = 0e0; }
+            double cc = concs[ ci ];
+            double zz = is_istar[ ci ] ? 1e0 / Iv         : cc / Iv;
+            double sz = is_istar[ ci ] ? sd / ( Iv * Iv ) : sd * cc / ( Iv * Iv );
+            double w  = ( sz > 0e0 && !us_isnan( sz ) ) ? 1e0 / ( sz * sz ) : 1e0;
+            S0+=w; S1+=w*cc; S2+=w*cc*cc; S3+=w*cc*cc*cc; S4+=w*cc*cc*cc*cc;
+            Z0+=w*zz; Z1+=w*cc*zz; Z2+=w*cc*cc*zz; nvalid++;
+         }
+         if ( nvalid < 4 ) { continue; }
+         double det = S0*(S2*S4-S3*S3) - S1*(S1*S4-S3*S2) + S2*(S1*S3-S2*S2);
+         if ( det == 0e0 || us_isnan( det ) ) { continue; }
+         double u = ( Z0*(S2*S4-S3*S3) - S1*(Z1*S4-Z2*S3) + S2*(Z1*S3-Z2*S2) ) / det;
+         if ( u <= 0e0 || us_isnan( u ) ) { continue; }
+         double cof00 = S2*S4 - S3*S3;                // cofactor -> inverse[0,0] = cof00/det
+         virial2_u[ qi ]   = u;
+         virial2_use[ qi ] = ( cof00 > 0e0 && det > 0e0 ) ? std::sqrt( cof00 / det ) : 0e0;
+         virial2_ok[ qi ]  = true;
       }
    }
 
@@ -962,6 +1027,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             yv  = scale[ ci ] * Iv;
             yev = scale[ ci ] * sd;
          }
+         else if ( reciprocal )
+         {
+            // reciprocal axis z = c/I (for I*(q), I = Iv*c so z = 1/Iv); needs I>0
+            if ( Iv <= 0e0 ) { continue; }
+            if ( is_istar[ ci ] ) { yv = 1e0 / Iv;          yev = sd / ( Iv * Iv ); }
+            else                  { yv = concs[ ci ] / Iv;  yev = sd * concs[ ci ] / ( Iv * Iv ); }
+         }
          else if ( is_istar[ ci ] )
          {
             yv  = Iv;                // already I*(q)/concentration-normalized; do not re-divide
@@ -988,6 +1060,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          a    = Iex[ qi ];
          b    = Islope[ qi ];
          siga = 0e0;
+      }
+      else if ( reciprocal && extrap_model == 2 )
+      {
+         // 2nd-order virial: intercept u of the per-q weighted quadratic c/I = u + v*c + w*c^2
+         // (precomputed above); inverted to I0 = 1/u after the cascade.
+         if ( !virial2_ok[ qi ] )
+         {
+            TSO << QString( "WARNING: do_extrap_c0: 2nd-order virial fit unavailable at q[%1]=%2 (need >=4 valid points), skipping\n" )
+               .arg( qi ).arg( q[ qi ] );
+            skipped_points++;
+            continue;
+         }
+         a    = virial2_u[ qi ];
+         b    = 0e0;
+         siga = virial2_use[ qi ];
       }
       else if ( zimm_gcv_ok )
       {
@@ -1033,6 +1120,22 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       {
          double sigb, chi2;
          usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
+      }
+
+      // Reciprocal / virial models fit c/I, so the fitted intercept is 1/I0(q); invert to
+      // recover the intensity I0(q) = 1/u and propagate SE(1/u) = SE(u)/u^2.
+      if ( reciprocal )
+      {
+         if ( a <= 0e0 || us_isnan( a ) )
+         {
+            TSO << QString( "WARNING: do_extrap_c0: non-positive reciprocal intercept at q[%1]=%2, skipping\n" )
+               .arg( qi ).arg( q[ qi ] );
+            skipped_points++;
+            continue;
+         }
+         siga = siga / ( a * a );
+         a    = 1e0 / a;
+         b    = 0e0;                // reciprocal slope is in 1/I space; not meaningful post-inversion
       }
 
       // Error bars: Zimm reports the regression SE of the intercept. absolute-scale reports the
@@ -1108,7 +1211,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    //     extrapolation noise without smearing the form-factor detail carried by the
    //     intercept. Off by default (window <= 1); absolute-scale mode is unaffected. Superseded
    //     by GCV regularization when that is enabled (the two are mutually exclusive).
-   if ( !absolute_mode && !zimm_gcv_ok && fit_broaden > 1 )
+   if ( !absolute_mode && !reciprocal && !zimm_gcv_ok && fit_broaden > 1 )
    {
       int n = (int) out_q.size();
       int half = fit_broaden / 2;

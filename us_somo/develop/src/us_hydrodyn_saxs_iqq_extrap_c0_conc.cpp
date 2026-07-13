@@ -18,6 +18,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_show_regplots,
                                                                           int *out_fit_broaden,
                                                                           bool *out_gcv,
+                                                                          int *out_model,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -32,6 +33,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_show_regplots  = out_show_regplots;
    this->out_fit_broaden    = out_fit_broaden;
    this->out_gcv            = out_gcv;
+   this->out_model          = out_model;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -149,6 +151,48 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                   "(the concentration data points with error bars, the fit, and the c=0\n"
                                   "intercept), scrollable q-by-q with a wheel." ) );
 
+   // Concentration-dependence model (Zimm mode only): how I(q,c) is fit vs c at each q.
+   // Additive I/c is unbiased for the profile but reads MW low for a saturating structure
+   // factor; the reciprocal c/I (second-virial form) is linear in c and gives an unbiased
+   // MW/I(0); the 2nd-order virial absorbs the residual curvature at strong interaction.
+   QHBoxLayout * hbl_model = new QHBoxLayout; hbl_model->setContentsMargins( 4, 0, 4, 0 ); hbl_model->setSpacing( 6 );
+   lbl_model = new QLabel( us_tr( "Concentration model:" ), this );
+   lbl_model->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_model->setMinimumHeight( minHeight1 );
+   lbl_model->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_model );
+   lbl_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+
+   cb_model = new QComboBox( this );
+   cb_model->addItem( us_tr( "Additive  I(q)/c  \342\200\224 cleanest low-q profile (default)" ) );
+   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)" ) );
+   cb_model->addItem( us_tr( "2nd-order virial  c/I(q)  \342\200\224 MW at strong interaction (needs \342\211\2654-5 conc)" ) );
+   cb_model->setCurrentIndex( 0 );
+   cb_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_model->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_model );
+   cb_model->setMinimumHeight( minHeight1 );
+   cb_model->setToolTip(
+                        us_tr( "Zimm mode only (absolute-scale mode always uses the additive fit).\n"
+                               "Additive: fit I(q)/c vs c, intercept = dilute I(q)/c. Best profile; MW biased\n"
+                               "low when interparticle repulsion/attraction is strong.\n"
+                               "Reciprocal: fit c/I(q) vs c (the second-virial form, linear in c); I0 = 1/intercept.\n"
+                               "Unbiased forward scatter, so a more accurate molecular weight.\n"
+                               "2nd-order virial: adds a c^2 term for strongly interacting series; needs 4-5\n"
+                               "well-spread concentrations. Validated against a Percus-Yevick hard-sphere model." ) );
+   // a power-user default may preselect the model via gparam saxs_extrap_c0_model
+   {
+      US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
+      if ( uh && uh->gparams.count( "saxs_extrap_c0_model" ) )
+      {
+         int m = uh->gparams[ "saxs_extrap_c0_model" ].toInt();
+         if ( m >= 0 && m <= 2 ) { cb_model->setCurrentIndex( m ); }
+      }
+   }
+
+   hbl_model->addWidget( lbl_model );
+   hbl_model->addWidget( cb_model, 1 );
+
    // Zimm fit-broadening: couple neighbouring q by smoothing the concentration slope
    QHBoxLayout * hbl_broaden = new QHBoxLayout; hbl_broaden->setContentsMargins( 4, 0, 4, 0 ); hbl_broaden->setSpacing( 6 );
    lbl_broaden = new QLabel( us_tr( "Zimm fit broadening (q-window, 0 = off):" ), this );
@@ -217,6 +261,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( cb_absolute );
    background->addWidget( cb_gcv );
    background->addWidget( cb_regplots );
+   background->addLayout( hbl_model );
    background->addLayout( hbl_broaden );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
@@ -346,6 +391,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_absolute_mode   = cb_absolute->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
    *out_gcv           = cb_gcv->isChecked();
+   *out_model         = cb_model->currentIndex();
    // the manual q-window is used only for classic Zimm (no absolute-scale, no GCV)
    *out_fit_broaden   = ( cb_absolute->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
    *out_ok = true;
