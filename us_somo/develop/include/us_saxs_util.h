@@ -534,7 +534,8 @@ class US_EXTERN US_Saxs_Util
       // where the input point was invalid, i.e. sd<=0 or non-finite).
       //   mode : 'C' constant factor beta=sqrt(chi2r) (default)
       //          'N' non-constant, per-bin factor, triangular-smoothed
-      //          'I' intensity-dependent, sd -> sd + a*I
+      //          'I' intensity-dependent, sd -> sd + a*|I| (|I| keeps sd>0 on
+      //              zero-crossing/background-subtracted curves; inflates only)
       //   nbin : min points per bin (non-constant mode) [default 10]
       //   smooth_win : points in the local smoothing window [default 11]
       //   force : rescale even if not statistically significant
