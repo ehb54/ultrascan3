@@ -628,7 +628,7 @@ were a multiplying factor can be entered. For instance, if the time units of the
 
 The <i>S.D. Util</i> checkbox relates to another feature present in the <b><i>US-SOMO HPLC/KIN</i></b> module, an alternative way of estimating the errors associated with the SAXS data. This might become useful if no errors have been already associated with the experimental data, or if their reliability is questionable.<br>
 The method is based on the assumption that the fluctuations of the signal at the baseline level are a good representation of the error associated with the data at any other point along each <i>I(t)</i> vs. <i>t</i> chromatogram. Therefore, by estimating the average fluctuations in flat regions of the chromatogram, a <b>constant</b> SD value can be associated with <b>every</b> datapoint in that particular chromatogram. Obviously, different chromatograms will have different values for their respective constant SD.<br>
-Two buttons will become availble on selecting the <i>S.D. Util</i> checkbox: 
+Three buttons will become available on selecting the <i>S.D. Util</i> checkbox:
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -707,6 +707,15 @@ A zoom-in of the main peak region highlights how the two SDs are very close to e
 <p>
 
 demonstrating that the assumptions taken for this alternative SD evaluation produce SDs which are very similar to the ones that have been associated to the original SAXS data using a Poisson distribution. The main difference is that the original SDs vary slightly with the intensity for each <i>I(t)</i> vs. <i>t</i> chromatogram, while the baseline fluctuations method produces constant SD values for each <i>I(t)</i> vs. <i>t</i> chromatogram.<p>
+<li>
+The third button, <b><i>SD rescale</i></b>, serves a different purpose from the two described above: instead of <i>estimating</i> SDs from baseline fluctuations, it <i>assesses</i> and, where warranted, rescales the errors <b>already associated</b> with selected <i>I(q)</i> vs. <i>q</i> SAXS datasets (it becomes available when such datasets, carrying non-zero SDs, are selected). The method follows the approach implemented in <a href="https://doi.org/10.1107/S1600576721006877" target=_blank>BayesApp [Larsen &amp; Pedersen, <i>J. Appl. Cryst.</i> (2021) <b>54</b>, 1281-1289]</a> (see also the <a href="saxs_ift.html">SAS Indirect Fourier Transform</a> module): a smooth curve is fitted to each dataset, and the point-to-point scatter about it is compared to the quoted SDs through a reduced &chi;<sup>2</sup> and its associated probability. If the SDs are found to be statistically inconsistent with the observed scatter (probability below 0.003) and to differ by more than 10%, they are rescaled; otherwise they are left unchanged. The errors of each dataset are accordingly judged as <i>Correct</i>, <i>Overestimated</i>, or <i>Underestimated</i>, and the outcome (verdict, applied scale factor, reduced &chi;<sup>2</sup> and probability) is reported for each dataset in the <b><i>Messages</i></b> section.<br>
+On pressing <b><i>SD rescale</i></b>, a pop-up asks for the rescaling mode:
+<ul>
+<li><b>Constant</b>: all the SDs of a dataset are multiplied by a single factor (&radic;&chi;<sup>2</sup><sub>r</sub>);</li>
+<li><b>Non-constant</b>: an independent factor is determined for successive <i>q</i>-bins and applied point by point, useful when the reliability of the errors varies along <i>q</i>;</li>
+<li><b>Intensity-dependent</b>: an intensity-proportional term is added to the errors, SD &rarr; SD + <i>a</i>|<i>I(q)</i>|.</li>
+</ul>
+The rescaled SDs replace those of each selected dataset in place; the operation can be reverted with the <b><i>Undo</i></b> button. This provides a quick, in-module quality check of the experimental errors; note that it is a self-contained approximation to the full Bayesian indirect Fourier transform assessment, which can be performed directly with the <a href="saxs_ift.html">BayesApp</a> interface.<p>
 <li>
 The last checkbox above the graphics window, <i>None</i>, will just hide the buttons row below the round checkboxes row.<p>
 </ul>
