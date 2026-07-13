@@ -1121,14 +1121,43 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       double S_out  = ref_scale ? c_ref : 1e0;                               // extrapolation scale
       double refdiv = ref_scale ? 1e0 : ( c_ref > 0e0 ? 1e0 / c_ref : 1e0 ); // reference onto output scale
+
+      // Continuity: the extrapolation (which carries the dilute-limit scale) and the reference
+      // generally differ by a few percent at the merge point, so copying the reference verbatim
+      // leaves a visible step. Scale the spliced reference by the median ratio of the normalized
+      // extrapolation to the normalized reference over a window just below the merge, so the
+      // reference contributes clean high-q *shape* stitched smoothly onto the extrapolation.
+      double ref_cont = 1e0;
+      if ( merge_ref && merge_idx > 0 && merge_idx < (int) npts )
+      {
+         vector < double > ratios;
+         int w0 = merge_idx - 25; if ( w0 < 0 ) { w0 = 0; }
+         for ( int i = w0; i < merge_idx; i++ )
+         {
+            if ( grid_to_out[ i ] >= 0 && i < (int) Iref_full.size() && Iref_full[ i ] != 0e0 )
+            {
+               double rn = Iref_full[ i ] / ( c_ref > 0e0 ? c_ref : 1e0 );   // reference normalized
+               if ( rn != 0e0 ) { ratios.push_back( out_I0[ grid_to_out[ i ] ] / rn ); }
+            }
+         }
+         if ( !ratios.empty() )
+         {
+            std::sort( ratios.begin(), ratios.end() );
+            ref_cont = ratios[ ratios.size() / 2 ];                          // median
+            editor_msg( "black",
+                       QString( us_tr( "Reference splice continuity factor: %1 (reference scaled to join the "
+                                       "extrapolation smoothly at the merge point).\n" ) ).arg( ref_cont, 0, 'f', 4 ) );
+         }
+      }
+
       vector < double > nq, nI, nE;
       for ( unsigned int qi = 0; qi < npts; qi++ )
       {
          if ( merge_ref && (int) qi >= merge_idx )
          {
             nq.push_back( q[ qi ] );
-            nI.push_back( ( qi < Iref_full.size() ? Iref_full[ qi ] : 0e0 ) * refdiv );
-            nE.push_back( ( qi < ref_sd.size() ? ref_sd[ qi ] : 0e0 ) * refdiv );
+            nI.push_back( ( qi < Iref_full.size() ? Iref_full[ qi ] : 0e0 ) * refdiv * ref_cont );
+            nE.push_back( ( qi < ref_sd.size() ? ref_sd[ qi ] : 0e0 ) * refdiv * ref_cont );
          }
          else if ( grid_to_out[ qi ] >= 0 )
          {
