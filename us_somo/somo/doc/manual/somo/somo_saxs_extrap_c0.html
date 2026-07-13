@@ -77,15 +77,14 @@ concentrations first, then choose the selection.</p>
 
 <h3><center>Extrapolation modes</center></h3>
 
-<p>Two modes are offered, selected with the <b>Absolute-scale mode</b> checkbox:</p>
-
-<p><b>Zimm mode</b> (checkbox unchecked, the default). At each <i>q</i> the
-concentration-normalized intensity <i>I</i>(<i>q</i>,<i>c</i>)/<i>c</i> is fitted
-linearly against <i>c</i> and the <i>c</i>&nbsp;=&nbsp;0 intercept is reported.
-This is the small-angle-scattering analogue of a Zimm plot. The output is a
-<i>concentration-normalized</i> curve (intensity per unit concentration); it is
-tagged <code>Conc:1</code>, SOMO's convention for an already-normalized curve, and
-carries the standard error of the fitted intercept as its uncertainty.</p>
+<p>An extrapolation is described by two independent choices: <i>how</i> the intensity is
+fitted against concentration (the <b>concentration model</b>, below) and <i>what convention</i>
+the resulting curve is expressed in (two checkboxes, described here). The fit itself always
+produces the same thing &mdash; the <i>c</i>&nbsp;=&nbsp;0 dilute-limit curve, normalized per
+unit concentration (the small-angle-scattering analogue of a Zimm plot). With both output
+checkboxes unchecked (the default), that normalized curve is the output: it is tagged
+<code>Conc:1</code> (SOMO's convention for an already-normalized curve) and carries the standard
+error of the fitted intercept as its uncertainty.</p>
 
 <p><b>Automatic slope regularization (GCV)</b> (checkbox, on by default; applies to
 <i>both</i> modes). The interparticle/interaction term &mdash; the fit's concentration
@@ -102,7 +101,7 @@ fits. The editor window reports the selected penalty and the effective degrees o
 Uncheck the box for the classic independent per-<i>q</i> fits (optionally with the manual
 window below).</p>
 
-<p><b>Concentration model</b> (drop-down, Zimm mode only). This selects how the intensity
+<p><b>Concentration model</b> (drop-down). This selects how the intensity
 is fitted against concentration at each <i>q</i>, and chiefly affects the accuracy of the
 molecular weight read from the extrapolated forward scatter <i>I</i>(0):</p>
 
@@ -134,46 +133,58 @@ the additive fit is biased low, the first-order reciprocal is accurate at realis
 interaction but over-corrects when very strong, and the second-order virial is within a few
 percent across the whole range. The <b>reciprocal</b> model is the default, since an unbiased
 molecular weight is the more common need; the additive model remains available for work that
-values the smoothest low-<i>q</i> profile over MW accuracy. Absolute-scale mode always uses the
-additive fit. A preferred default may be preselected via the <i>gparam</i>
+values the smoothest low-<i>q</i> profile over MW accuracy. The model applies regardless of the
+output convention, so the reference-scale and spliced outputs use the selected model too. A
+preferred default may be preselected via the <i>gparam</i>
 <code>saxs_extrap_c0_model</code> (0&nbsp;additive, 1&nbsp;reciprocal, 2&nbsp;virial).</p>
 
 <p><b>Fit broadening (manual, Zimm mode).</b> An alternative to the automatic GCV option,
-used only when GCV is off (and Absolute-scale is off). Setting <b>Zimm fit broadening (q-window)</b>
+used only when GCV is off (and both output-convention boxes are off). Setting <b>Zimm fit broadening (q-window)</b>
 to a value <i>N</i>&nbsp;&gt;&nbsp;1 averages the concentration slope over an <i>N</i>-point
 window and then recomputes each intercept (<i>a</i>&nbsp;=&nbsp;&#10216;<i>I</i>/c&#10217;&nbsp;&minus;&nbsp;<i>b</i><sub>smoothed</sub>&#10216;c&#10217;).
 0 (the default of this field) leaves the per-<i>q</i> fits independent. As with GCV, this
 smooths the concentration <i>dependence</i>, not the output curve itself (smoothing the
 output directly would smear real features and is not done). The field is disabled while
-either automatic GCV or Absolute-scale mode is selected.</p>
+automatic GCV or either output-convention box is selected.</p>
 
-<p><b>Absolute-scale mode</b> (checkbox checked). This follows the ATSAS <i>almerge</i>
-approach (Petoukhov <i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). The
-highest-concentration curve is taken as the reference and every curve is scaled to
-it by <i>c</i><sub>ref</sub>/<i>c</i><sub>i</sub>. At each <i>q</i> the scaled
-intensity is fitted linearly against concentration and the <i>c</i>&nbsp;=&nbsp;0
-intercept &mdash; the infinite-dilution intensity &mdash; is taken. Crucially, this
-extrapolation is applied only in the low-<i>q</i> region where the curves show a real
-concentration dependence; above the <b>merging point</b> the reference curve is used
-verbatim. The merging point is found automatically as the first <i>q</i> from which the
-extrapolated curve agrees with the reference to within the reference's own errors &mdash;
-a reduced <i>&chi;</i><sup>2</sup> of (<i>I</i><sub>ex</sub>&nbsp;&minus;&nbsp;<i>I</i><sub>ref</sub>)/<i>&sigma;</i><sub>ref</sub>
-below a threshold (default 4, i.e. ~2&sigma; agreement; set via
-<code>saxs_extrap_c0_merge_chi2</code>). This error-band test is used in preference to a
-sign-run (CORMAP) test because the latter, comparing the smoothed extrapolation against the
-noisy reference, is biased toward placing the merge too high; CORMAP
-(<code>saxs_extrap_c0_pvalue_alpha</code>, default 0.01) is used as a fallback when the
-reference curve carries no error column. This removes the interparticle/structure-factor effect at low <i>q</i>
-while keeping stable, positive intensities at high <i>q</i> (a per-point fit there
-would only track noise and can go negative). The result is on the reference curve's
-<i>absolute</i> intensity scale and is tagged with the reference concentration. Its
-error bars are the reference curve's uncertainty at and above the merging point (where
-the output <i>is</i> the reference) and the propagated standard error of the fitted
-intercept below it (the extrapolated region), so the low-<i>q</i> extrapolation carries
-its own uncertainty rather than borrowing the reference's.</p>
+<p><b>Output conventions (two independent checkboxes).</b> The normalized <i>c</i>&nbsp;=&nbsp;0
+fit above can be re-expressed in either or both of the following ways. They are output
+conventions layered on top of the fit &mdash; they do not change the fit, so they combine
+freely with any concentration model.</p>
 
-<!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the Zimm
-     result, and the Absolute-scale result on a log I(q) vs q axis -->
+<ul>
+<li><b>Output on reference (absolute) scale.</b> Multiply the extrapolated curve by the
+highest concentration <i>c</i><sub>ref</sub> so it is expressed on that reference curve's
+<i>absolute</i> intensity scale, tagged with the reference concentration (dividing by it
+recovers the normalized form). Because the normalized fit times <i>c</i><sub>ref</sub> is
+exactly the infinite-dilution intensity on the reference scale, this is a pure re-scaling.</li>
+
+<li><b>Splice reference curve at high q</b> (the ATSAS <i>almerge</i> idea; Petoukhov
+<i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). Apply the extrapolation only in the
+low-<i>q</i> region where the curves show a real concentration dependence, and above a
+<b>merging point</b> take the highest-concentration reference curve verbatim &mdash; replacing
+the noisy high-<i>q</i> extrapolated tail (a per-point fit there only tracks noise and can go
+negative) with the reference's stable, positive data, and carrying its error bars there. The
+merging point is found automatically as the first <i>q</i> from which the extrapolation agrees
+with the reference to within the reference's own errors &mdash; a reduced
+<i>&chi;</i><sup>2</sup> of (<i>I</i><sub>ex</sub>&nbsp;&minus;&nbsp;<i>I</i><sub>ref</sub>)/<i>&sigma;</i><sub>ref</sub>
+below a threshold (default 4, ~2&sigma; agreement; <code>saxs_extrap_c0_merge_chi2</code>).
+This error-band test is preferred to a sign-run (CORMAP) test, which &mdash; comparing the
+smoothed extrapolation against the noisy reference &mdash; is biased toward placing the merge
+too high; CORMAP (<code>saxs_extrap_c0_pvalue_alpha</code>, default 0.01) is the fallback when
+the reference has no error column. Below the merge the error bars are the propagated intercept
+standard error; at and above it (where the output <i>is</i> the reference) they are the
+reference's own.</li>
+</ul>
+
+<p>The two combine to give four behaviors: neither box = the classic normalized <code>Conc:1</code>
+curve; scale only = the same curve on the absolute reference scale; splice only = a normalized
+curve with the clean reference tail; both = the former "absolute-scale mode" (reference scale
+with the high-<i>q</i> splice). Unlike before, all four now honor the chosen concentration model,
+so the reciprocal/virial models' unbiased molecular weight is available on the absolute scale too.</p>
+
+<!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the normalized
+     result, and the absolute-scale + spliced result on a log I(q) vs q axis -->
 <center><img SRC="somo_saxs_extrap_c0_result.png" BORDER="1" ALT="Extrapolated curve"></center>
 
 <h3><center>Per-q regression plots</center></h3>
@@ -193,10 +204,11 @@ a <b>goodness-of-fit summary</b> &mdash; the coefficient of determination <i>R</
 (when the data carry error bars) the reduced &chi;&sup2; of the points about the fit &mdash; so
 the quality of each per-<i>q</i> extrapolation can be judged at a glance.</p>
 
-<p>The <i>y</i> axis and the fitted curve follow the selected model and mode. For the
-<b>additive</b> model the axis is <i>I</i>(q)/c (or <i>I</i>*(q) for already-normalized
-inputs, or <i>I</i>(q) scaled to the reference concentration in Absolute-scale mode) and the
-intercept is the dilute <i>I</i>(0) directly. For the <b>reciprocal</b> and <b>2nd-order
+<p>The <i>y</i> axis and the fitted curve follow the selected concentration model; the plot
+always shows the normalized fit (the reference scale and splice are output conventions applied
+afterwards, not part of the fit). For the <b>additive</b> model the axis is <i>I</i>(q)/c (or
+<i>I</i>*(q) for already-normalized inputs) and the intercept is the dilute <i>I</i>(0) directly.
+For the <b>reciprocal</b> and <b>2nd-order
 virial</b> models the axis is <i>c</i>/<i>I</i>(q): the plotted intercept is <i>u</i> and the
 readout also gives the recovered forward scatter <i>I</i>(0)&nbsp;=&nbsp;1/<i>u</i> with its
 propagated error; the 2nd-order virial draws its fitted parabola rather than a straight line.
@@ -213,13 +225,16 @@ or change any plotted curve.</p>
 <h3><center>Output</center></h3>
 
 <p>A new curve is added to the plot. Its name is the longest common prefix of the
-selected curve names followed by <code>_extrap_c0</code> and a method token:
-<code>_zimm</code> or <code>_absolute</code> (for example
-<code>Sub_..._extrap_c0_absolute</code>). If a curve of that name already exists a
-numeric suffix is appended. Curves with a concentration of zero are excluded from
-the fit, and any <i>q</i> point with fewer than two usable values is skipped; the
-editor window reports how many curves and points were used, and, in Absolute-scale mode,
-the reference curve and the per-curve scale factors.</p>
+selected curve names followed by <code>_extrap_c0</code> and tokens encoding the choices
+that produced it &mdash; the concentration model
+(<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then
+<code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
+spliced (for example <code>Sub_..._extrap_c0_recip_abs_merge</code>). Distinct selections
+therefore produce distinct, self-describing names; a genuine repeat of the same configuration
+gets a numeric suffix. Curves with a concentration of zero are excluded from the fit, and any
+<i>q</i> point with fewer than two usable values is skipped; the editor window reports how many
+curves and points were used, the fit model and output conventions, and, when a reference is
+used, its identity and the merge point.</p>
 
 <p><b>Guinier quality check.</b> After the curve is produced, the editor window reports a
 Guinier fit of it (a straight-line fit of ln&nbsp;<i>I</i> versus <i>q</i><sup>2</sup> over
