@@ -438,16 +438,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    map < QString, double > name_to_conc;
    QStringList selected_names;
    bool dlg_ok        = false;
-   bool absolute_mode   = false;
+   bool ref_scale     = false;  // output on the reference (max-conc) absolute scale (else Conc:1)
+   bool merge_ref     = false;  // splice the reference curve above the almerge switchover
    bool show_regplots = false;
    int  fit_broaden   = 0;
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    int  extrap_model  = 1;      // concentration model: 0 additive, 1 reciprocal (default), 2 2nd-virial
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &absolute_mode, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
+   // The reference (max-concentration) curve is needed for either the absolute output scale
+   // or the high-q reference splice; the fit itself (below) is always the normalized
+   // concentration-model fit, applied identically to both output conventions.
+   bool use_ref_path = ref_scale || merge_ref;
 
    if ( !dlg_ok )
    {
@@ -572,12 +577,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    int    ref_ci   = -1;
    double ref_conc = 0e0;
-   vector < double > scale( ordered_names.size(), 1e0 );
    vector < double > ref_sd;
    vector < double > Iref_full;                 // reference (highest-conc) raw I(q), full grid
-   vector < double > Iex( npts, 0e0 );          // per-q extrapolated intercept (reference scale)
-   vector < double > Islope( npts, 0e0 );       // per-q fit slope (for the regression viewer)
-   vector < double > Iex_se( npts, 0e0 );       // per-q intercept standard error (extrapolated region)
    int    merge_idx = 0;                        // grid index: output = reference from here up
    double merge_q   = 0e0;                      // q at the merge point (0 => no merge / all reference)
    double pvalue_alpha = 1e-2;                  // CORMAP merge-point significance (cf. cormap_alpha)
@@ -586,7 +587,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // regression viewer so it can annotate that automatic regularization was in effect
    double gcv_edof_used = 0e0;
 
-   if ( absolute_mode )
+   if ( use_ref_path )
    {
       {
          US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
@@ -608,34 +609,22 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       if ( ref_ci < 0 )
       {
          QMessageBox::critical( this, "UltraScan",
-                                us_tr( "Absolute-scale mode: no curve has a positive concentration to use as the "
-                                       "scaling reference; aborting." ) );
+                                us_tr( "Absolute-scale / reference-splice: no curve has a positive concentration "
+                                       "to use as the reference; aborting." ) );
          return;
       }
 
       const vector < double > &Iref = name_to_I[ ordered_names[ ref_ci ] ];
 
-      // Scale each curve to the reference concentration by c_ref/c_i (equivalent to
-      // normalizing by concentration, I/c, then re-expressing on the reference's
-      // absolute scale). A data-driven least-squares scale was tried but is corrupted
-      // at low q by the structure factor for strongly-interacting samples -- it made
-      // the extrapolation recover only ~85% of the true dilute limit on a simulated
-      // strong-dependence series, vs ~99% with the concentration scale used here.
-      QString scale_report;
-      for ( int ci = 0; ci < ordered_names.size(); ci++ )
-      {
-         if ( concs[ ci ] <= 0e0 )
-         {
-            continue;
-         }
-         scale[ ci ] = ref_conc / concs[ ci ];
-         scale_report += QString( "    %1  conc %2  scale %3\n" )
-            .arg( ordered_names[ ci ] ).arg( concs[ ci ] ).arg( scale[ ci ] );
-      }
+      // The fit itself is the normalized concentration-model fit (below), identical to the
+      // Conc:1 output; the reference curve is used only to place the output on its absolute
+      // scale (ref_scale, multiply the normalized fit by c_ref) and/or to splice its clean
+      // high-q data above the merge point (merge_ref).
       editor_msg( "black",
-                 QString( us_tr( "Absolute-scale extrapolation: reference (highest conc) is \"%1\" (conc %2); "
-                                 "curves scaled to it by c_ref/c_i\n%3" ) )
-                 .arg( ordered_names[ ref_ci ] ).arg( ref_conc ).arg( scale_report ) );
+                 QString( us_tr( "Reference (highest-concentration) curve: \"%1\" (conc %2)%3%4\n" ) )
+                 .arg( ordered_names[ ref_ci ] ).arg( ref_conc )
+                 .arg( ref_scale ? us_tr( "; output on its absolute scale" ) : QString( "" ) )
+                 .arg( merge_ref ? us_tr( "; high-q reference splice enabled" ) : QString( "" ) ) );
 
       // the extrapolated curve inherits the reference curve's error bars (matches almerge)
       if ( name_to_errors_map.count( ordered_names[ ref_ci ] ) )
@@ -660,199 +649,6 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          Iref_full[ qi ] = us_isnan( Iref[ qi ] ) ? 0e0 : Iref[ qi ];
       }
 
-      // pointwise weighted linear fit of the scaled intensity vs concentration
-      // (Petoukhov et al. 2012, Eq 1): intercept = infinite-dilution intensity I_ex.
-      for ( unsigned int qi = 0; qi < npts; qi++ )
-      {
-         double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
-         int    cnt = 0;
-         for ( int ci = 0; ci < ordered_names.size(); ci++ )
-         {
-            if ( concs[ ci ] <= 0e0 )
-            {
-               continue;
-            }
-            double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
-            if ( us_isnan( Iv ) )
-            {
-               continue;
-            }
-            double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
-               ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
-            double sig = scale[ ci ] * sd;
-            double w   = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
-            double xv  = concs[ ci ];
-            double yv  = scale[ ci ] * Iv;
-            S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv; cnt++;
-         }
-         double d = S * Sxx - Sx * Sx;
-         if ( cnt >= 2 && d != 0e0 )
-         {
-            Iex[ qi ]    = ( Sxx * Sy - Sx * Sxy ) / d;
-            Islope[ qi ] = ( S * Sxy - Sx * Sy ) / d;
-            // weighted-fit intercept standard error, Var(a) = Sxx/d (used below the merge
-            // point where the output is the extrapolated intercept). With GCV the slope is
-            // regularized so the true intercept uncertainty is smaller -- this is a
-            // conservative (upper-bound) error bar for the extrapolated low-q region.
-            Iex_se[ qi ] = ( Sxx / d > 0e0 ) ? std::sqrt( Sxx / d ) : 0e0;
-         }
-         else
-         {
-            Iex[ qi ]    = Iref_full[ qi ];
-            Islope[ qi ] = 0e0;
-            Iex_se[ qi ] = 0e0;
-         }
-      }
-
-      // GCV-penalized slope regularization: replace the noisy per-q intercepts with a
-      // globally slope-smoothed fit (auto-tuned by GCV) so the merge test below and the
-      // low-q output use the cleaner curve. Overwrites Iex/Islope; on any degeneracy the
-      // helper returns false and the per-q OLS values above are kept.
-      if ( use_gcv )
-      {
-         vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
-         for ( unsigned int qi = 0; qi < npts; qi++ )
-         {
-            double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
-            for ( int ci = 0; ci < ordered_names.size(); ci++ )
-            {
-               if ( concs[ ci ] <= 0e0 )
-               {
-                  continue;
-               }
-               double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
-               if ( us_isnan( Iv ) )
-               {
-                  continue;
-               }
-               double sd = ( name_to_err.count( ordered_names[ ci ] ) && qi < name_to_err[ ordered_names[ ci ] ].size() )
-                  ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
-               if ( us_isnan( sd ) ) { sd = 0e0; }
-               double sig = scale[ ci ] * sd;
-               double w   = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
-               double xv  = concs[ ci ];
-               double yv  = scale[ ci ] * Iv;
-               S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
-            }
-            vC[ qi ] = S; vB[ qi ] = Sx; vQ[ qi ] = Sy;
-            vM[ qi ] = ( S > 0e0 ) ? ( Sxx - Sx * Sx / S ) : 0e0;
-            vR[ qi ] = ( S > 0e0 ) ? ( Sxy - Sx * Sy / S ) : 0e0;
-         }
-         vector < double > Iex_pen, alpha_pen;
-         double gcv_lambda = 0e0, gcv_edof = 0e0;
-         if ( us_extrap_c0_gcv_penalized( vM, vR, vB, vC, vQ, Iex_pen, alpha_pen, gcv_lambda, gcv_edof ) )
-         {
-            for ( unsigned int qi = 0; qi < npts; qi++ )
-            {
-               Iex[ qi ]    = Iex_pen[ qi ];
-               Islope[ qi ] = alpha_pen[ qi ];
-            }
-            gcv_edof_used = gcv_edof;
-            editor_msg( "black",
-                       QString( us_tr( "Absolute-scale GCV slope regularization applied: lambda = %1, effective slope dof = %2 of %3\n" ) )
-                       .arg( gcv_lambda ).arg( gcv_edof, 0, 'f', 1 ).arg( (int) npts ) );
-         }
-      }
-
-      // Merging point (ATSAS almerge idea): below it the extrapolated (structure-factor-
-      // removed) intercept is used; at/above it the reference curve is copied verbatim.
-      // It is located by scanning from low q for the first trailing window where the
-      // extrapolated curve agrees with the reference to within the reference's OWN errors
-      // -- a reduced chi-square of (Iex - Iref)/sd_ref <= threshold (default 4, i.e. ~2
-      // sigma agreement; gparam saxs_extrap_c0_merge_chi2). This error-band test is robust
-      // to GCV smoothing: a sign-run (CORMAP) test compares the smoothed Iex against the
-      // noisy reference and is biased toward large merge points, because a small consistent
-      // offset (e.g. the residual bias of a nearly-linear regularized slope at high q)
-      // produces long same-sign runs even when the curves agree to within noise. CORMAP is
-      // kept as a fallback when the reference curve has no error column.
-      {
-         double merge_chi2 = 4e0;
-         {
-            US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
-            if ( uh->gparams.count( "saxs_extrap_c0_merge_chi2" ) )
-            {
-               merge_chi2 = uh->gparams[ "saxs_extrap_c0_merge_chi2" ].toDouble();
-            }
-         }
-         bool have_ref_err = false;
-         for ( unsigned int qi = 0; qi < npts && qi < ref_sd.size(); qi++ )
-         {
-            if ( ref_sd[ qi ] > 0e0 ) { have_ref_err = true; break; }
-         }
-
-         // trailing-window size; shrink it for short grids so absolute-scale still extrapolates
-         // (a fixed 50-pt window that only ran when npts>50 left merge_idx=0 for shorter
-         // curves, silently returning the input with no extrapolation and no warning)
-         int win = 50;
-         if ( (int) npts <= win )
-         {
-            win = (int) npts / 2;
-         }
-
-         if ( win < 5 )
-         {
-            // too few q-points to locate a merging point: extrapolate the whole curve
-            // (merge_idx == npts => no high-q reference copy), merge_q = 0 signals "no
-            // merge point" to the summary and the regression viewer
-            merge_idx = (int) npts;
-            merge_q   = 0e0;
-            editor_msg( "dark red",
-                       QString( us_tr( "Absolute-scale mode: only %1 q-point(s) -- too few to locate a merging point; "
-                                       "extrapolating the whole curve (no high-q reference copy).\n" ) )
-                       .arg( (int) npts ) );
-         }
-         else if ( have_ref_err )
-         {
-            merge_idx = (int) npts - win;      // fallback: extrapolate all but the last window
-            for ( int j = 0; j + win <= (int) npts; j++ )
-            {
-               double num = 0e0;
-               int    m   = 0;
-               for ( int i = j; i < j + win; i++ )
-               {
-                  if ( i < (int) ref_sd.size() && ref_sd[ i ] > 0e0 )
-                  {
-                     double r = ( Iex[ i ] - Iref_full[ i ] ) / ref_sd[ i ];
-                     num += r * r;
-                     m++;
-                  }
-               }
-               if ( m > 0 && num / (double) m <= merge_chi2 )
-               {
-                  merge_idx = j;
-                  break;
-               }
-            }
-            merge_q = q[ merge_idx ];
-            editor_msg( "black",
-                       QString( us_tr( "Absolute-scale merging point: q = %1 (index %2 of %3); extrapolating below, "
-                                       "taking the highest-concentration curve above (error band: reduced chi^2 of "
-                                       "(Iex-Iref)/sd_ref <= %4)\n" ) )
-                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
-         }
-         else
-         {
-            // no reference error column: fall back to the CORMAP longest-run sign test
-            merge_idx = (int) npts - win;
-            for ( int j = 0; j + win <= (int) npts; j++ )
-            {
-               vector < double > wex( Iex.begin() + j, Iex.begin() + j + win );
-               vector < double > wrf( Iref_full.begin() + j, Iref_full.begin() + j + win );
-               int lr;
-               if ( US_Saxs_Util::compute_p_value( wex, wrf, lr ) >= pvalue_alpha )
-               {
-                  merge_idx = j;
-                  break;
-               }
-            }
-            merge_q = q[ merge_idx ];
-            editor_msg( "black",
-                       QString( us_tr( "Absolute-scale merging point: q = %1 (index %2 of %3); extrapolating below, "
-                                       "taking the highest-concentration curve above (no reference errors; CORMAP "
-                                       "alpha = %4)\n" ) )
-                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
-         }
-      }
    }
 
    // 6. per-q linear regression -> intercept (I0) + error
@@ -864,6 +660,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double > out_q;
    vector < double > out_I0;
    vector < double > out_I0_err;
+   vector < int >    out_qidx;                  // full-grid q index of each output point
    unsigned int       skipped_points = 0;
 
    // per-q regression data captured for the optional scrollable regression-plot pop-up:
@@ -894,7 +691,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Percus-Yevick hard-sphere ground truth. Model 2 needs >= 4-5 well-spread concentrations.
    // extrap_model is set by the concentration dialog (default 0); a power-user default can be
    // preselected via gparam saxs_extrap_c0_model.
-   bool reciprocal = ( !absolute_mode && extrap_model >= 1 );
+   bool reciprocal = ( extrap_model >= 1 );
    if ( reciprocal )
    {
       editor_msg( "black",
@@ -907,7 +704,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Used in the main loop below when GCV is enabled (absolute-scale does its own GCV above).
    vector < double > zimm_Iex, zimm_alpha;
    bool   zimm_gcv_ok = false;
-   if ( use_gcv && !absolute_mode )
+   if ( use_gcv )
    {
       vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
       for ( unsigned int qi = 0; qi < npts; qi++ )
@@ -1028,12 +825,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
          double yv;
          double yev;
-         if ( absolute_mode )
-         {
-            yv  = scale[ ci ] * Iv;
-            yev = scale[ ci ] * sd;
-         }
-         else if ( reciprocal )
+         if ( reciprocal )
          {
             // reciprocal axis z = c/I (for I*(q), I = Iv*c so z = 1/Iv); needs I>0
             if ( Iv <= 0e0 ) { continue; }
@@ -1057,17 +849,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       double a = 0e0, b = 0e0, siga = 0e0;
 
-      if ( absolute_mode )
-      {
-         // per-q extrapolation (Eq 1 intercept) + slope were precomputed above for
-         // every q (falling back to the reference where a fit was impossible), and
-         // above the merge point the output is simply the reference curve, so absolute-scale
-         // does not skip a q for having < 2 valid points. reg_a/reg_b show the fit.
-         a    = Iex[ qi ];
-         b    = Islope[ qi ];
-         siga = 0e0;
-      }
-      else if ( reciprocal && extrap_model == 2 )
+      if ( reciprocal && extrap_model == 2 )
       {
          // 2nd-order virial: intercept u of the per-q weighted quadratic c/I = u + v*c + w*c^2
          // (precomputed above); inverted to I0 = 1/u after the cascade.
@@ -1159,26 +941,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       // reference), but the propagated intercept SE below the merge point (the
       // extrapolated region), so the low-q extrapolation carries its own uncertainty
       // rather than borrowing the reference's.
+      // Normalized fit: the reported value is the intercept (I0/c per unit concentration)
+      // and its regression SE. The reference-scale (x c_ref) and high-q reference splice, if
+      // requested, are applied as a post-pass over the full grid after this loop.
       double err_val = siga;
-      if ( absolute_mode )
-      {
-         if ( (int) qi >= merge_idx && qi < ref_sd.size() )
-         {
-            err_val = ref_sd[ qi ];
-         }
-         else if ( qi < Iex_se.size() )
-         {
-            err_val = Iex_se[ qi ];
-         }
-      }
-
-      // absolute-scale hybrid output: extrapolation below the merge point, the reference
-      // (highest-concentration) curve verbatim at/above it. Zimm: the intercept.
       double out_val = a;
-      if ( absolute_mode && (int) qi >= merge_idx && qi < Iref_full.size() )
-      {
-         out_val = Iref_full[ qi ];
-      }
 
       double xbar = 0e0, ybar = 0e0;
       for ( int j = 0; j < (int) x.size(); j++ )
@@ -1197,6 +964,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       out_I0_err.push_back( err_val );
       out_xbar  .push_back( xbar );
       out_ybar  .push_back( ybar );
+      out_qidx  .push_back( (int) qi );        // full-grid index (for the reference post-pass)
 
       reg_q   .push_back( q[ qi ] );
       reg_x   .push_back( x );
@@ -1228,7 +996,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    //     extrapolation noise without smearing the form-factor detail carried by the
    //     intercept. Off by default (window <= 1); absolute-scale mode is unaffected. Superseded
    //     by GCV regularization when that is enabled (the two are mutually exclusive).
-   if ( !absolute_mode && !reciprocal && !zimm_gcv_ok && fit_broaden > 1 )
+   if ( !reciprocal && !zimm_gcv_ok && fit_broaden > 1 )
    {
       int n = (int) out_q.size();
       int half = fit_broaden / 2;
@@ -1257,6 +1025,118 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                  .arg( fit_broaden ) );
    }
 
+   // 6b2. Output conventions (post-pass over the full grid). The fit above is always the
+   //      normalized (Conc:1) concentration-model curve; here we optionally (a) place it on the
+   //      reference (max-concentration) absolute scale by multiplying by c_ref [ref_scale], and
+   //      (b) splice the reference curve's clean high-q data above an almerge-style merge point
+   //      [merge_ref], taking the reference's error bars there. The two are independent.
+   if ( use_ref_path )
+   {
+      double c_ref = ref_conc;
+      vector < int > grid_to_out( npts, -1 );
+      for ( int k = 0; k < (int) out_qidx.size(); k++ )
+      {
+         if ( out_qidx[ k ] >= 0 && out_qidx[ k ] < (int) npts ) { grid_to_out[ out_qidx[ k ] ] = k; }
+      }
+
+      merge_idx = (int) npts;                    // default: no splice (whole curve extrapolated)
+      merge_q   = 0e0;
+      if ( merge_ref )
+      {
+         double merge_chi2 = 4e0;
+         {
+            US_Hydrodyn *uh = (US_Hydrodyn *) us_hydrodyn;
+            if ( uh->gparams.count( "saxs_extrap_c0_merge_chi2" ) )
+            {
+               merge_chi2 = uh->gparams[ "saxs_extrap_c0_merge_chi2" ].toDouble();
+            }
+         }
+         bool have_ref_err = false;
+         for ( unsigned int qi = 0; qi < npts && qi < ref_sd.size(); qi++ )
+         {
+            if ( ref_sd[ qi ] > 0e0 ) { have_ref_err = true; break; }
+         }
+         int win = 50;
+         if ( (int) npts <= win ) { win = (int) npts / 2; }
+         if ( win < 5 )
+         {
+            merge_idx = (int) npts;
+            editor_msg( "dark red",
+                       QString( us_tr( "Reference splice: only %1 q-point(s) -- too few to locate a merge point; "
+                                       "extrapolating the whole curve.\n" ) ).arg( (int) npts ) );
+         }
+         else if ( have_ref_err )
+         {
+            merge_idx = (int) npts - win;
+            for ( int j = 0; j + win <= (int) npts; j++ )
+            {
+               double num = 0e0; int m = 0;
+               for ( int i = j; i < j + win; i++ )
+               {
+                  if ( grid_to_out[ i ] >= 0 && i < (int) ref_sd.size() && ref_sd[ i ] > 0e0 )
+                  {
+                     double r = ( out_I0[ grid_to_out[ i ] ] * c_ref - Iref_full[ i ] ) / ref_sd[ i ];
+                     num += r * r; m++;
+                  }
+               }
+               if ( m > 0 && num / (double) m <= merge_chi2 ) { merge_idx = j; break; }
+            }
+            merge_q = q[ merge_idx ];
+            editor_msg( "black",
+                       QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); extrapolating below, "
+                                       "taking the highest-concentration curve above (reduced chi^2 <= %4)\n" ) )
+                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
+         }
+         else
+         {
+            merge_idx = (int) npts - win;
+            for ( int j = 0; j + win <= (int) npts; j++ )
+            {
+               vector < double > wex, wrf;
+               for ( int i = j; i < j + win; i++ )
+               {
+                  if ( grid_to_out[ i ] >= 0 )
+                  {
+                     wex.push_back( out_I0[ grid_to_out[ i ] ] * c_ref );
+                     wrf.push_back( Iref_full[ i ] );
+                  }
+               }
+               int lr;
+               if ( (int) wex.size() >= 5 && US_Saxs_Util::compute_p_value( wex, wrf, lr ) >= pvalue_alpha )
+               {
+                  merge_idx = j; break;
+               }
+            }
+            merge_q = q[ merge_idx ];
+            editor_msg( "black",
+                       QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); no reference errors, "
+                                       "CORMAP alpha = %4\n" ) )
+                       .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( pvalue_alpha ) );
+         }
+      }
+
+      double S_out  = ref_scale ? c_ref : 1e0;                               // extrapolation scale
+      double refdiv = ref_scale ? 1e0 : ( c_ref > 0e0 ? 1e0 / c_ref : 1e0 ); // reference onto output scale
+      vector < double > nq, nI, nE;
+      for ( unsigned int qi = 0; qi < npts; qi++ )
+      {
+         if ( merge_ref && (int) qi >= merge_idx )
+         {
+            nq.push_back( q[ qi ] );
+            nI.push_back( ( qi < Iref_full.size() ? Iref_full[ qi ] : 0e0 ) * refdiv );
+            nE.push_back( ( qi < ref_sd.size() ? ref_sd[ qi ] : 0e0 ) * refdiv );
+         }
+         else if ( grid_to_out[ qi ] >= 0 )
+         {
+            int k = grid_to_out[ qi ];
+            nq.push_back( out_q[ k ] );
+            nI.push_back( out_I0[ k ] * S_out );
+            nE.push_back( out_I0_err[ k ] * S_out );
+         }
+      }
+      out_q = nq; out_I0 = nI; out_I0_err = nE;
+   }
+
    // 6c. Guinier quality check of the extrapolated curve (ground-truth-free): a clean
    //     ln I vs q^2 line with a physically sensible Rg indicates a well-behaved low-q
    //     extrapolation. Reported as a QC signal (flagged if R^2 is low).
@@ -1277,7 +1157,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, absolute_mode );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, ref_scale );
    QString final_name = base_name;
    {
       int suffix = 1;
@@ -1291,56 +1171,45 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    plot_one_iqq( out_q, out_I0, out_I0_err, final_name );
 
-   if ( absolute_mode )
-   {
-      // absolute intensity on the reference curve's scale -- tag it with the reference
-      // concentration so dividing by it recovers the normalized form. Exception: if
-      // every input was already I*(q) (I(0)=MW), the output is likewise already
-      // normalized, so tag it Conc:1 rather than the reference concentration.
-      double out_conc_tag = all_istar ? 1e0 : ref_conc;
-      update_conc_csv( final_name, out_conc_tag );
+   // Tag the output: reference (absolute) scale -> tag with the reference concentration so
+   // dividing by it recovers the normalized form; otherwise Conc:1. Already-I*(q) inputs are
+   // always Conc:1.
+   double out_conc_tag = ( ref_scale && !all_istar ) ? ref_conc : 1e0;
+   update_conc_csv( final_name, out_conc_tag );
 
-      editor_msg( "black",
-                 QString( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Absolute-scale mode: low-q extrapolated to c=0 on the scale of "
-                          "the highest-concentration curve (conc %4); at/above the merging point q=%5 the "
-                          "reference curve is taken verbatim, carrying its error bars.%6\n" )
-                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
-                 .arg( ref_conc ).arg( merge_q )
-                 .arg( all_istar ? QString( " Inputs were I*(q) (I(0)=MW), so the result is tagged Conc:1." ) : QString( "" ) ) );
-   }
-   else
-   {
-      // this curve is I(q)/c extrapolated to c=0, i.e. already concentration-normalized
-      // -- mark it with SOMO's "Conc:1" convention for already-normalized curves so
-      // anything downstream that respects conc_csv treats it correctly
-      update_conc_csv( final_name, 1e0 );
-
-      editor_msg( "black",
-                 QString( "Added zero-concentration extrapolation curve \"%1\" (%2 q-points, %3 skipped)\n"
-                          "Zimm mode: concentration-normalized intensity extrapolated to c=0, tagged Conc:1.%4\n" )
-                 .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
-                 .arg( all_istar
-                       ? QString( " Inputs were already I*(q) (I(0)=MW); used as-is (not re-divided by concentration)." )
-                       : QString( " Its scale differs from raw input curves by a factor of concentration." ) ) );
-   }
+   QString fit_name   = ( extrap_model == 2 ) ? us_tr( "2nd-order virial (c/I)" )
+                      : ( extrap_model == 1 ) ? us_tr( "reciprocal (c/I)" )
+                                              : us_tr( "additive (I/c)" );
+   QString scale_note = ref_scale
+      ? QString( us_tr( "output on the reference absolute scale (conc %1)" ) ).arg( ref_conc )
+      : QString( us_tr( "normalized (tagged Conc:1)" ) );
+   QString merge_note = merge_ref
+      ? QString( us_tr( "; reference curve spliced above q = %1" ) ).arg( merge_q )
+      : QString( us_tr( "; no high-q reference splice" ) );
+   editor_msg( "black",
+              QString( us_tr( "Added zero-concentration curve \"%1\" (%2 q-points, %3 skipped). "
+                              "Fit: %4; %5%6.%7\n" ) )
+              .arg( final_name ).arg( out_q.size() ).arg( skipped_points )
+              .arg( fit_name ).arg( scale_note ).arg( merge_note )
+              .arg( all_istar ? QString( us_tr( " Inputs were I*(q) (I(0)=MW)." ) ) : QString( "" ) ) );
 
    // 9. optional per-q regression viewer (scrollable pop-up requested from the dialog)
 
    if ( show_regplots && reg_q.size() )
    {
+      // the fit shown is always the normalized concentration-model fit (reciprocal -> c/I);
+      // the reference scale/splice are output conventions applied after the fit
       QString y_axis_title =
-         absolute_mode ? us_tr( "I(q) scaled to reference concentration" )
-                     : ( reciprocal ? us_tr( "concentration / I(q)   (c/I)" )
-                                    : ( all_istar ? us_tr( "I*(q)  (normalized)" )
-                                                  : us_tr( "I(q)/concentration" ) ) );
+         reciprocal ? us_tr( "concentration / I(q)   (c/I)" )
+                    : ( all_istar ? us_tr( "I*(q)  (normalized)" )
+                                  : us_tr( "I(q)/concentration" ) );
 
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot *regplot =
          new US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                     us_hydrodyn,
                                                     y_axis_title,
-                                                    absolute_mode ? merge_q : 0e0,   // merge point q (0 => none)
-                                                    absolute_mode ? 0 : fit_broaden, // Zimm fit-broadening q-window
+                                                    merge_ref ? merge_q : 0e0,       // merge point q (0 => none)
+                                                    use_ref_path ? 0 : fit_broaden,  // Zimm fit-broadening q-window
                                                     gcv_edof_used,                 // GCV effective slope dof (0 => off)
                                                     extrap_model,                  // 0 additive, 1 reciprocal, 2 virial
                                                     reg_q, reg_x, reg_y, reg_e,

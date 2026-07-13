@@ -14,7 +14,8 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           map < QString, double > *out_name_to_conc,
                                                                           QStringList *out_selected_names,
                                                                           bool *out_ok,
-                                                                          bool *out_absolute_mode,
+                                                                          bool *out_ref_scale,
+                                                                          bool *out_merge_ref,
                                                                           bool *out_show_regplots,
                                                                           int *out_fit_broaden,
                                                                           bool *out_gcv,
@@ -29,7 +30,8 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_name_to_conc   = out_name_to_conc;
    this->out_selected_names = out_selected_names;
    this->out_ok             = out_ok;
-   this->out_absolute_mode    = out_absolute_mode;
+   this->out_ref_scale        = out_ref_scale;
+   this->out_merge_ref        = out_merge_ref;
    this->out_show_regplots  = out_show_regplots;
    this->out_fit_broaden    = out_fit_broaden;
    this->out_gcv            = out_gcv;
@@ -111,20 +113,33 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    connect( t_conc, SIGNAL( itemChanged( QTableWidgetItem * ) ), SLOT( cell_changed( QTableWidgetItem * ) ) );
    connect( t_conc, SIGNAL( itemSelectionChanged() ), SLOT( selection_changed() ) );
 
-   cb_absolute = new QCheckBox( us_tr( "Absolute-scale mode (extrapolate absolute intensity, reference-scaled)" ), this );
-   cb_absolute->setChecked( false );
-   cb_absolute->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
-   cb_absolute->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_absolute );
-   cb_absolute->setMinimumHeight( minHeight1 );
-   cb_absolute->setToolTip(
-                         us_tr( "Unchecked (Zimm mode): output the concentration-normalized intensity I(q)/c\n"
-                                "extrapolated to c=0 (SAXS analogue of a Zimm plot); tagged Conc:1.\n\n"
-                                "Checked (Absolute-scale mode): scale each curve onto the highest-concentration\n"
-                                "(reference) curve, extrapolate to c=0 at low q, and take the reference curve\n"
-                                "verbatim above the merging point; the output is on the reference's absolute\n"
-                                "intensity scale and carries the reference curve's error bars above the merge\n"
-                                "(and the propagated fit error below it)." ) );
+   cb_ref_scale = new QCheckBox( us_tr( "Output on reference (absolute) scale" ), this );
+   cb_ref_scale->setChecked( false );
+   cb_ref_scale->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_ref_scale->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_ref_scale );
+   cb_ref_scale->setMinimumHeight( minHeight1 );
+   cb_ref_scale->setToolTip(
+                         us_tr( "Unchecked: output the concentration-normalized intensity I(q)/c (or its\n"
+                                "reciprocal-model equivalent) extrapolated to c=0; tagged Conc:1.\n\n"
+                                "Checked: multiply the extrapolated curve by the highest concentration so the\n"
+                                "output is on that reference curve's absolute intensity scale, tagged with the\n"
+                                "reference concentration. This is a pure output-scale choice; it does not change\n"
+                                "the fit and works with any concentration model." ) );
+
+   cb_merge = new QCheckBox( us_tr( "Splice reference curve at high q (almerge-style switchover)" ), this );
+   cb_merge->setChecked( false );
+   cb_merge->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_merge->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_merge );
+   cb_merge->setMinimumHeight( minHeight1 );
+   cb_merge->setToolTip(
+                         us_tr( "Unchecked: the extrapolated curve is used at every q.\n\n"
+                                "Checked: above an automatically-located merge point (the first q where the\n"
+                                "extrapolation agrees with the highest-concentration reference within its errors),\n"
+                                "the reference curve is copied verbatim, carrying its error bars -- replacing the\n"
+                                "noisy high-q extrapolated tail with the cleaner reference data (the ATSAS almerge\n"
+                                "idea). Independent of the scale option above." ) );
 
    cb_gcv = new QCheckBox( us_tr( "Automatic slope regularization (GCV) -- recommended" ), this );
    cb_gcv->setChecked( true );
@@ -173,7 +188,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    AUTFBACK( cb_model );
    cb_model->setMinimumHeight( minHeight1 );
    cb_model->setToolTip(
-                        us_tr( "Zimm mode only (absolute-scale mode always uses the additive fit).\n"
+                        us_tr( "Applies to all output conventions (normalized, reference-scale, and/or spliced).\n"
                                "Additive: fit I(q)/c vs c, intercept = dilute I(q)/c. Best profile; MW biased\n"
                                "low when interparticle repulsion/attraction is strong.\n"
                                "Reciprocal: fit c/I(q) vs c (the second-virial form, linear in c); I0 = 1/intercept.\n"
@@ -218,7 +233,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    le_broaden->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    // the manual broadening window applies to Zimm mode only and is superseded by GCV;
    // disable it whenever absolute-scale or automatic GCV regularization is selected
-   connect( cb_absolute, SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
+   connect( cb_ref_scale, SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
+   connect( cb_merge,     SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
    connect( cb_gcv,    SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
 
    hbl_broaden->addWidget( lbl_broaden );
@@ -258,7 +274,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget( lbl_info );
    background->addWidget( t_conc );
-   background->addWidget( cb_absolute );
+   background->addWidget( cb_ref_scale );
+   background->addWidget( cb_merge );
    background->addWidget( cb_gcv );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
@@ -274,7 +291,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
 {
    // the manual fit-broadening window is meaningful only for Zimm mode with automatic
    // GCV off; absolute-scale and GCV each supersede it
-   bool enable = !cb_absolute->isChecked() && !cb_gcv->isChecked();
+   bool enable = !cb_ref_scale->isChecked() && !cb_merge->isChecked() && !cb_gcv->isChecked();
    le_broaden->setEnabled( enable );
    lbl_broaden->setEnabled( enable );
 }
@@ -388,12 +405,13 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
       ( *out_name_to_conc )[ names[ i ] ] = t_conc->item( i, 1 )->text().toDouble();
       *out_selected_names << names[ i ];
    }
-   *out_absolute_mode   = cb_absolute->isChecked();
+   *out_ref_scale       = cb_ref_scale->isChecked();
+   *out_merge_ref       = cb_merge->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
    *out_gcv           = cb_gcv->isChecked();
    *out_model         = cb_model->currentIndex();
    // the manual q-window is used only for classic Zimm (no absolute-scale, no GCV)
-   *out_fit_broaden   = ( cb_absolute->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
+   *out_fit_broaden   = ( cb_ref_scale->isChecked() || cb_merge->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
    *out_ok = true;
    close();
 }
