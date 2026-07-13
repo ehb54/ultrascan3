@@ -1216,16 +1216,36 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       QString sd_label = ( sd_mode == 2 ) ? us_tr( "non-constant (per q-bin)" )
                        : ( sd_mode == 3 ) ? us_tr( "intensity-dependent" )
                                           : us_tr( "constant" );
-      QString sd_errors;
-      QString sd_verdict;
-      double  sd_pval  = 0e0;
-      double  sd_chi2r = 0e0;
+      QString           sd_errors;
+      QString           sd_verdict;
+      double            sd_pval  = 0e0;
+      double            sd_chi2r = 0e0;
+      vector < double > sd_factors;
       if ( US_Saxs_Util::recompute_errors( out_I0, out_q, out_I0_err, sd_errors, sd_char,
-                                           10, 11, false, 0, 0, &sd_verdict, &sd_pval, &sd_chi2r ) )
+                                           10, 11, false, &sd_factors, 0, &sd_verdict, &sd_pval, &sd_chi2r ) )
       {
+         // summarize the applied scale factor(s): a single value for constant mode, median +
+         // range for the per-point (non-constant / intensity) modes -- matching the s.d.util
+         // "SD rescale" log. (Constant's factor is sqrt(reduced chi^2), so it is not implied by
+         // the chi^2 alone and is worth reporting explicitly.)
+         double fmin = 1e0, fmed = 1e0, fmax = 1e0;
+         {
+            vector < double > fs = sd_factors;
+            std::sort( fs.begin(), fs.end() );
+            if ( fs.size() )
+            {
+               fmin = fs.front();
+               fmax = fs.back();
+               fmed = fs[ fs.size() / 2 ];
+            }
+         }
+         QString factor_str =
+            ( fmax - fmin < 1e-9 )
+            ? QString( us_tr( "factor %1" ) ).arg( fmed, 0, 'g', 4 )
+            : QString( us_tr( "factor median %1 (%2..%3)" ) ).arg( fmed, 0, 'g', 4 ).arg( fmin, 0, 'g', 4 ).arg( fmax, 0, 'g', 4 );
          editor_msg( "black",
-                    QString( us_tr( "Output SD reassessment (%1): %2 (reduced chi^2 = %3, p = %4).\n" ) )
-                    .arg( sd_label ).arg( sd_verdict )
+                    QString( us_tr( "Output SD reassessment (%1): %2, %3 (reduced chi^2 = %4, p = %5).\n" ) )
+                    .arg( sd_label ).arg( sd_verdict ).arg( factor_str )
                     .arg( sd_chi2r, 0, 'f', 3 ).arg( sd_pval, 0, 'f', 3 ) );
       }
       else
