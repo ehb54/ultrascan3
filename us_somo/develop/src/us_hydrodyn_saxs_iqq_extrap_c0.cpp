@@ -40,20 +40,24 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
    return prefix;
 }
 
-static QString us_extrap_c0_curve_name( const QStringList &names, bool absolute_mode )
+static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale, bool merge_ref )
 {
-   // method token so Zimm vs absolute-scale outputs are distinguishable on a plot and on
-   // disk
-   QString method = absolute_mode ? "_absolute" : "_zimm";
+   // method token encoding the choices that produced the curve, so distinct selections give
+   // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
+   //   fit model (add / recip / virial2) + output scale (abs) + high-q reference splice (merge)
+   QString method = "_extrap_c0";
+   method += ( model == 2 ) ? "_virial2" : ( model == 1 ) ? "_recip" : "_add";
+   if ( ref_scale ) { method += "_abs"; }
+   if ( merge_ref ) { method += "_merge"; }
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
 
    if ( prefix.isEmpty() )
    {
-      return "extrap_c0" + method;
+      return method.mid( 1 );                    // drop the leading underscore when no prefix
    }
-   return prefix + "_extrap_c0" + method;
+   return prefix + method;
 }
 
 // Penalized-slope extrapolation core with automatic GCV smoothing (shared by Zimm and
@@ -1157,7 +1161,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, ref_scale );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref );
    QString final_name = base_name;
    {
       int suffix = 1;
