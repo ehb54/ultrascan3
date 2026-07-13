@@ -11135,6 +11135,11 @@ bool US_Saxs_Util::recompute_errors(
    }
    else if ( mode == 'I' )
    {
+      // Intensity-dependent term uses |I| (not signed I as in bift.f): on
+      // background-subtracted / extrapolated curves I crosses zero, and signed
+      // sigma+a*I would go negative and blow up the search. With |I| the term is
+      // sigma+a*|I| >= sigma > 0 everywhere. Note this model can only inflate
+      // errors (factor >= 1), so it corrects under- but not over-estimation.
       double a_opt = 0e0;
       if ( do_rescale )
       {
@@ -11145,7 +11150,7 @@ bool US_Saxs_Util::recompute_errors(
             double s = 0e0;
             for ( unsigned int k = 0; k < m; k++ )
             {
-               double sda = sg[ k ] + a * Ig[ k ];
+               double sda = sg[ k ] + a * fabs( Ig[ k ] );
                double r   = ( Ifit[ k ] - Ig[ k ] ) / sda;
                s += r * r;
             }
@@ -11159,7 +11164,7 @@ bool US_Saxs_Util::recompute_errors(
       }
       for ( unsigned int k = 0; k < m; k++ )
       {
-         factor[ k ] = ( sg[ k ] + a_opt * Ig[ k ] ) / sg[ k ];
+         factor[ k ] = ( sg[ k ] + a_opt * fabs( Ig[ k ] ) ) / sg[ k ];
       }
    }
    else // 'N' non-constant, binned by point count (no Dmax available standalone)
@@ -11236,8 +11241,12 @@ bool US_Saxs_Util::recompute_errors(
    for ( unsigned int k = 0; k < m; k++ )
    {
       unsigned int i = gidx[ k ];
-      sd[ i ] = sg[ k ] * factor[ k ];
-      if ( scale_factors ) ( *scale_factors )[ i ] = factor[ k ];
+      // safety: never emit a non-positive or non-finite sigma; leave the point
+      // unchanged (factor 1) if the computed factor is degenerate.
+      double fk = factor[ k ];
+      if ( !rce_finite( fk ) || fk <= 0e0 ) fk = 1e0;
+      sd[ i ] = sg[ k ] * fk;
+      if ( scale_factors ) ( *scale_factors )[ i ] = fk;
       if ( I_smooth )      ( *I_smooth )[ i ]      = Ifit[ k ];
    }
 
