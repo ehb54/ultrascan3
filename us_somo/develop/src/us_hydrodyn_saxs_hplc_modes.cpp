@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_hydrodyn_saxs_hplc_scale_trend.h"
 #include "../include/us_pm.h"
+#include "../include/us_saxs_util.h"
 //Added by qt3to4:
 #include <QPixmap>
 
@@ -4673,6 +4674,139 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_apply( const QStringList & files )
          }
       }
    }
+   update_enables();
+}
+
+bool US_Hydrodyn_Saxs_Hplc::all_selected_have_errors()
+{
+   unsigned int selected_count = 0;
+   for ( int i = 0; i < lb_files->count(); i++ )
+   {
+      if ( lb_files->item( i )->isSelected() )
+      {
+         selected_count++;
+         QString f = lb_files->item( i )->text();
+         if ( !f_errors.count( f ) ||
+              !f_qs.count( f ) ||
+              f_errors[ f ].size() != f_qs[ f ].size() ||
+              !US_Saxs_Util::is_nonzero_vector( f_errors[ f ] ) )
+         {
+            return false;
+         }
+      }
+   }
+   return selected_count > 0;
+}
+
+void US_Hydrodyn_Saxs_Hplc::wyatt_rescale()
+{
+   QStringList files = all_selected_files();
+   if ( files.isEmpty() )
+   {
+      editor_msg( "red", us_tr( "SD rescale: no curves selected" ) );
+      return;
+   }
+
+   // ask the rescaling mode (US_Static::getItem avoids the OSX QInputDialog-in-slot bug)
+   QStringList mode_list;
+   mode_list
+      << us_tr( "Constant (one factor for all points)" )
+      << us_tr( "Non-constant (per q-bin factor)" )
+      << us_tr( "Intensity-dependent (sd -> sd + a*|I|)" );
+
+   bool ok = false;
+   QString choice = US_Static::getItem(
+                                       us_tr( "US-SOMO: SD rescale" ),
+                                       us_tr( "BayesApp-style error rescaling mode:\n" ),
+                                       mode_list,
+                                       0,
+                                       false,
+                                       &ok,
+                                       this );
+   if ( !ok || choice.isEmpty() )
+   {
+      return;
+   }
+
+   char mode = 'C';
+   if ( choice == mode_list[ 1 ] )
+   {
+      mode = 'N';
+   } else if ( choice == mode_list[ 2 ] )
+   {
+      mode = 'I';
+   }
+
+   wyatt_rescale( files, mode );
+}
+
+void US_Hydrodyn_Saxs_Hplc::wyatt_rescale( const QStringList & files, char mode )
+{
+   // one undo record (full restore) covering every rescaled curve, so a single
+   // "Crop undo" restores the original SD values
+   crop_undo_data cud;
+   cud.is_left   = false;
+   cud.is_common = true;
+
+   int done    = 0;
+   int skipped = 0;
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      const QString & f = files[ i ];
+
+      if ( !f_errors.count( f ) ||
+           f_errors[ f ].size() != f_qs[ f ].size() ||
+           !US_Saxs_Util::is_nonzero_vector( f_errors[ f ] ) )
+      {
+         editor_msg( "dark red", QString( us_tr( "SD rescale: skipping %1 (no usable SD errors)" ) ).arg( f ) );
+         ++skipped;
+         continue;
+      }
+
+      vector < double > q  = f_qs    [ f ];
+      vector < double > I  = f_Is    [ f ];
+      vector < double > sd = f_errors[ f ];
+
+      QString errors;
+      QString verdict;
+      double  pval  = 0e0;
+      double  chi2r = 0e0;
+
+      if ( !US_Saxs_Util::recompute_errors( I, q, sd, errors, mode,
+                                            10, 11, false,
+                                            0, 0, &verdict, &pval, &chi2r ) )
+      {
+         editor_msg( "red", QString( us_tr( "SD rescale failed for %1: %2" ) ).arg( f ).arg( errors ) );
+         ++skipped;
+         continue;
+      }
+
+      // save undo (full) BEFORE modifying
+      cud.f_qs_string[ f ] = f_qs_string[ f ];
+      cud.f_qs       [ f ] = f_qs       [ f ];
+      cud.f_Is       [ f ] = f_Is       [ f ];
+      cud.f_errors   [ f ] = f_errors   [ f ];
+
+      f_errors[ f ] = sd;
+      to_created( f );
+      ++done;
+
+      editor_msg( "blue", QString( us_tr( "SD rescale %1: errors %2 (reduced chi-square %3, p %4), mode %5" ) )
+                  .arg( f )
+                  .arg( verdict )
+                  .arg( chi2r, 0, 'g', 4 )
+                  .arg( pval,  0, 'g', 3 )
+                  .arg( QChar( mode ) ) );
+   }
+
+   if ( done )
+   {
+      crop_undos.push_back( cud );
+      update_files();
+   }
+
+   editor_msg( "black", QString( us_tr( "SD rescale: %1 curve(s) rescaled, %2 skipped" ) ).arg( done ).arg( skipped ) );
    update_enables();
 }
 
