@@ -20,6 +20,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           int *out_fit_broaden,
                                                                           bool *out_gcv,
                                                                           int *out_model,
+                                                                          int *out_sd_mode,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -36,6 +37,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_fit_broaden    = out_fit_broaden;
    this->out_gcv            = out_gcv;
    this->out_model          = out_model;
+   this->out_sd_mode        = out_sd_mode;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -70,7 +72,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 7 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 8 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -208,6 +210,44 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    hbl_model->addWidget( lbl_model );
    hbl_model->addWidget( cb_model, 1 );
 
+   // Optional post-fit reassessment of the extrapolated curve's error bars, reusing the
+   // s.d.util "SD rescale" engine (US_Saxs_Util::recompute_errors, BayesApp-style). Off by
+   // default: the propagated errors are kept. The other modes reassess I(q)'s own
+   // point-to-point scatter and rescale sigma (Constant = one factor; Non-constant = per
+   // q-bin factor; Intensity-dependent = sigma -> sigma + a*|I|).
+   QHBoxLayout * hbl_sd_mode = new QHBoxLayout; hbl_sd_mode->setContentsMargins( 4, 0, 4, 0 ); hbl_sd_mode->setSpacing( 6 );
+   lbl_sd_mode = new QLabel( us_tr( "Recompute output SDs:" ), this );
+   lbl_sd_mode->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_sd_mode->setMinimumHeight( minHeight1 );
+   lbl_sd_mode->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_sd_mode );
+   lbl_sd_mode->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+
+   cb_sd_mode = new QComboBox( this );
+   cb_sd_mode->addItem( us_tr( "Off  \342\200\224 keep propagated errors  (default)" ) );
+   cb_sd_mode->addItem( us_tr( "Constant  \342\200\224 one rescale factor for all q" ) );
+   cb_sd_mode->addItem( us_tr( "Non-constant  \342\200\224 per q-bin rescale factor" ) );
+   cb_sd_mode->addItem( us_tr( "Intensity-dependent  \342\200\224 sd \342\206\222 sd + a\302\267|I|" ) );
+   cb_sd_mode->setCurrentIndex( 0 );
+   cb_sd_mode->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_sd_mode->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_sd_mode );
+   cb_sd_mode->setMinimumHeight( minHeight1 );
+   cb_sd_mode->setToolTip(
+                        us_tr( "After extrapolating, optionally reassess the output curve's error bars from the\n"
+                               "curve's own point-to-point scatter (the s.d.util \"SD rescale\" / BayesApp method),\n"
+                               "instead of keeping the analytically propagated errors.\n\n"
+                               "Off: keep the propagated errors (default).\n"
+                               "Constant: rescale every sigma by a single factor sqrt(reduced chi^2).\n"
+                               "Non-constant: rescale per q-bin (captures a q-dependent misestimate).\n"
+                               "Intensity-dependent: add an intensity-proportional term, sigma -> sigma + a*|I|.\n\n"
+                               "Sigma is only rescaled when the data warrant it (poor fit and >10% off); the\n"
+                               "verdict and factor are reported in the log. If the reference is spliced in at\n"
+                               "high q, the reassessment covers the whole spliced curve." ) );
+
+   hbl_sd_mode->addWidget( lbl_sd_mode );
+   hbl_sd_mode->addWidget( cb_sd_mode, 1 );
+
    // Zimm fit-broadening: couple neighbouring q by smoothing the concentration slope
    QHBoxLayout * hbl_broaden = new QHBoxLayout; hbl_broaden->setContentsMargins( 4, 0, 4, 0 ); hbl_broaden->setSpacing( 6 );
    lbl_broaden = new QLabel( us_tr( "Zimm fit broadening (q-window, 0 = off):" ), this );
@@ -279,6 +319,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( cb_gcv );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
+   background->addLayout( hbl_sd_mode );
    background->addLayout( hbl_broaden );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
@@ -410,6 +451,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_show_regplots = cb_regplots->isChecked();
    *out_gcv           = cb_gcv->isChecked();
    *out_model         = cb_model->currentIndex();
+   *out_sd_mode       = cb_sd_mode->currentIndex();
    // the manual q-window is used only for classic Zimm (no absolute-scale, no GCV)
    *out_fit_broaden   = ( cb_ref_scale->isChecked() || cb_merge->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
    *out_ok = true;

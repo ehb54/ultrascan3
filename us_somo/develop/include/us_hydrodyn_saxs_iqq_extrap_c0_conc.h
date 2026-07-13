@@ -41,6 +41,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           int *out_fit_broaden,
                                           bool *out_gcv,
                                           int *out_model,
+                                          int *out_sd_mode,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -57,6 +58,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QCheckBox    *cb_regplots;
       QLabel       *lbl_model;
       QComboBox    *cb_model;
+      QLabel       *lbl_sd_mode;
+      QComboBox    *cb_sd_mode;
       QLabel       *lbl_broaden;
       QLineEdit    *le_broaden;
       QLabel       *lbl_status;
@@ -77,6 +80,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       int          *out_fit_broaden;
       bool         *out_gcv;
       int          *out_model;
+      int          *out_sd_mode;
       void         *us_hydrodyn;
 
       bool          disable_updates;

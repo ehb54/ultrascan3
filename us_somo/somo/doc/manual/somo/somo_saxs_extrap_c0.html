@@ -183,6 +183,23 @@ curve with the clean reference tail; both = the former "absolute-scale mode" (re
 with the high-<i>q</i> splice). Unlike before, all four now honor the chosen concentration model,
 so the reciprocal/virial models' unbiased molecular weight is available on the absolute scale too.</p>
 
+<p><b>Recompute output SDs</b> (drop-down). By default the extrapolated curve carries its
+<i>propagated</i> error bars (the per-<i>q</i> intercept standard error, and the reference's
+own errors in any spliced high-<i>q</i> region). This optional selection instead reassesses
+the output curve's error bars from the curve's own point-to-point scatter, using the same
+BayesApp-style engine as the HPLC/KIN <i>s.d.util</i> &ldquo;SD rescale&rdquo; button (Larsen
+&amp; Pedersen, 2021): a local inverse-variance quadratic smoother gives the residuals and an
+effective number of degrees of freedom, hence a reduced <i>&chi;</i><sup>2</sup> and a
+two-sided <i>p</i>-value, and <i>&sigma;</i> is rescaled only when the fit is poor and the
+implied factor is more than 10&nbsp;% from unity. The modes are <b>Constant</b> (a single
+factor for all <i>q</i>), <b>Non-constant</b> (a per-<i>q</i>-bin factor, for a
+<i>q</i>-dependent misestimate), and <b>Intensity-dependent</b>
+(<i>&sigma;</i>&nbsp;&rarr;&nbsp;<i>&sigma;</i>&nbsp;+&nbsp;<i>a</i>&middot;|<i>I</i>|); <b>Off</b>
+keeps the propagated errors. When a reference tail is spliced in, the reassessment spans the
+whole spliced curve. The verdict, reduced <i>&chi;</i><sup>2</sup>, and <i>p</i>-value are
+reported in the log, and the chosen mode is encoded in the curve name
+(<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>).</p>
+
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the normalized
      result, and the absolute-scale + spliced result on a log I(q) vs q axis -->
 <center><img SRC="somo_saxs_extrap_c0_result.png" BORDER="1" ALT="Extrapolated curve"></center>
@@ -230,7 +247,9 @@ that produced it &mdash; the concentration model
 (<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
-underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), so a
+underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), and
+finally the SD-reassessment mode if one was applied
+(<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), so a
 run's cutover is visible in its name (for example
 <code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
 therefore produce distinct, self-describing names; a genuine repeat of the same configuration

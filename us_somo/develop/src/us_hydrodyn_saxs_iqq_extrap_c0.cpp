@@ -41,13 +41,13 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
 }
 
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
-                                        bool merge_ref, double merge_q )
+                                        bool merge_ref, double merge_q, int sd_mode )
 {
    // method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
    //   fit model (add / recip / virial2) + output scale (abs) + high-q reference splice, with
    //   the merge point q appended (e.g. _merge_q0_0898) so runs that cut over at different q
-   //   are distinguishable at a glance.
+   //   are distinguishable at a glance, plus any post-fit SD reassessment (_sdC/_sdN/_sdI).
    QString method = "_extrap_c0";
    method += ( model == 2 ) ? "_virial2" : ( model == 1 ) ? "_recip" : "_add";
    if ( ref_scale ) { method += "_abs"; }
@@ -60,6 +60,9 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
       }
       // merge_q == 0 => splice requested but no cutover located (whole curve extrapolated)
    }
+   if ( sd_mode == 1 ) { method += "_sdC"; }
+   else if ( sd_mode == 2 ) { method += "_sdN"; }
+   else if ( sd_mode == 3 ) { method += "_sdI"; }
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
@@ -459,8 +462,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    int  fit_broaden   = 0;
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    int  extrap_model  = 1;      // concentration model: 0 additive, 1 reciprocal (default), 2 2nd-virial
+   int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, &sd_mode, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -1199,9 +1203,42 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       }
    }
 
+   // 6d. optional post-fit reassessment of the output error bars (the s.d.util "SD rescale"
+   //     engine, US_Saxs_Util::recompute_errors). Off by default: keep the propagated errors.
+   //     When requested, reassess sigma from the extrapolated curve's own point-to-point
+   //     scatter and rescale in place (Constant / Non-constant / Intensity-dependent). If the
+   //     reference was spliced in above the merge q, the reassessment spans the whole spliced
+   //     curve. sigma is only actually rescaled when the fit warrants it (see recompute_errors);
+   //     the verdict and factor are reported here.
+   if ( sd_mode >= 1 && sd_mode <= 3 )
+   {
+      char sd_char = ( sd_mode == 2 ) ? 'N' : ( sd_mode == 3 ) ? 'I' : 'C';
+      QString sd_label = ( sd_mode == 2 ) ? us_tr( "non-constant (per q-bin)" )
+                       : ( sd_mode == 3 ) ? us_tr( "intensity-dependent" )
+                                          : us_tr( "constant" );
+      QString sd_errors;
+      QString sd_verdict;
+      double  sd_pval  = 0e0;
+      double  sd_chi2r = 0e0;
+      if ( US_Saxs_Util::recompute_errors( out_I0, out_q, out_I0_err, sd_errors, sd_char,
+                                           10, 11, false, 0, 0, &sd_verdict, &sd_pval, &sd_chi2r ) )
+      {
+         editor_msg( "black",
+                    QString( us_tr( "Output SD reassessment (%1): %2 (reduced chi^2 = %3, p = %4).\n" ) )
+                    .arg( sd_label ).arg( sd_verdict )
+                    .arg( sd_chi2r, 0, 'f', 3 ).arg( sd_pval, 0, 'f', 3 ) );
+      }
+      else
+      {
+         editor_msg( "dark red",
+                    QString( us_tr( "Output SD reassessment (%1) skipped: %2\n" ) )
+                    .arg( sd_label ).arg( sd_errors ) );
+      }
+   }
+
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode );
    QString final_name = base_name;
    {
       int suffix = 1;
