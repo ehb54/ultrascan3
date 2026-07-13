@@ -6,6 +6,7 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
 #include <QPixmap>
+#include <algorithm>
 
 // --- PM ----
 
@@ -4783,19 +4784,38 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_rescale( const QStringList & files, char mode 
       vector < double > I  = f_Is    [ f ];
       vector < double > sd = f_errors[ f ];
 
-      QString errors;
-      QString verdict;
-      double  pval  = 0e0;
-      double  chi2r = 0e0;
+      QString           errors;
+      QString           verdict;
+      double            pval  = 0e0;
+      double            chi2r = 0e0;
+      vector < double > factors;
 
       if ( !US_Saxs_Util::recompute_errors( I, q, sd, errors, mode,
                                             10, 11, false,
-                                            0, 0, &verdict, &pval, &chi2r ) )
+                                            &factors, 0, &verdict, &pval, &chi2r ) )
       {
          editor_msg( "red", QString( us_tr( "SD rescale failed for %1: %2" ) ).arg( f ).arg( errors ) );
          ++skipped;
          continue;
       }
+
+      // summarize the applied scale factor(s): a single value for constant mode,
+      // median + range for the per-point (non-constant / intensity) modes
+      double fmin = 1e0, fmed = 1e0, fmax = 1e0;
+      {
+         vector < double > fs = factors;
+         sort( fs.begin(), fs.end() );
+         if ( fs.size() )
+         {
+            fmin = fs.front();
+            fmax = fs.back();
+            fmed = fs[ fs.size() / 2 ];
+         }
+      }
+      QString factor_str =
+         ( fmax - fmin < 1e-9 )
+         ? QString( us_tr( "factor %1" ) ).arg( fmed, 0, 'g', 4 )
+         : QString( us_tr( "factor median %1 (%2..%3)" ) ).arg( fmed, 0, 'g', 4 ).arg( fmin, 0, 'g', 4 ).arg( fmax, 0, 'g', 4 );
 
       // save undo (full) BEFORE modifying
       cud.f_qs_string[ f ] = f_qs_string[ f ];
@@ -4807,9 +4827,10 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_rescale( const QStringList & files, char mode 
       to_created( f );
       ++done;
 
-      editor_msg( "blue", QString( us_tr( "SD rescale %1: errors %2 (reduced chi-square %3, p %4), mode %5" ) )
+      editor_msg( "blue", QString( us_tr( "SD rescale %1: errors %2, %3 (reduced chi-square %4, p %5), mode %6" ) )
                   .arg( f )
                   .arg( verdict )
+                  .arg( factor_str )
                   .arg( chi2r, 0, 'g', 4 )
                   .arg( pval,  0, 'g', 3 )
                   .arg( QChar( mode ) ) );
