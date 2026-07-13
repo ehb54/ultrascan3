@@ -4832,7 +4832,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_rescale( const QStringList & files, char mode 
                   .arg( verdict )
                   .arg( factor_str )
                   .arg( chi2r, 0, 'g', 4 )
-                  .arg( pval,  0, 'g', 3 )
+                  .arg( pval,  0, 'f', 3 )
                   .arg( QChar( mode ) ) );
    }
 
