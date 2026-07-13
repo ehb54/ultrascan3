@@ -10846,7 +10846,408 @@ bool US_Saxs_Util::calc_chisqshannon(
 }
 
 
-bool US_Saxs_Util::sscaling_fit( 
+// ---------------------------------------------------------------------------
+// recompute_errors: standalone (BIFT-free) reassessment / rescaling of the
+// experimental errors of a provided I(q) curve.  See header for rationale.
+// The file-scope helpers below (rce_*) support only this routine.
+// ---------------------------------------------------------------------------
+
+// regularized lower incomplete gamma P(a,x) via the power series (x < a+1)
+static double rce_gser( double a, double x )
+{
+   const int    ITMAX = 400;
+   const double EPS   = 3e-13;
+   if ( x <= 0e0 )
+   {
+      return 0e0;
+   }
+   double ap  = a;
+   double sum = 1e0 / a;
+   double del = sum;
+   for ( int nn = 1; nn <= ITMAX; nn++ )
+   {
+      ap  += 1e0;
+      del *= x / ap;
+      sum += del;
+      if ( fabs( del ) < fabs( sum ) * EPS )
+      {
+         break;
+      }
+   }
+   return sum * exp( -x + a * log( x ) - lgamma( a ) );
+}
+
+// regularized upper incomplete gamma Q(a,x) via the Lentz continued fraction (x >= a+1)
+static double rce_gcf( double a, double x )
+{
+   const int    ITMAX = 400;
+   const double EPS   = 3e-13;
+   const double FPMIN = 1e-300;
+   double b = x + 1e0 - a;
+   double c = 1e0 / FPMIN;
+   double d = 1e0 / b;
+   double h = d;
+   for ( int i = 1; i <= ITMAX; i++ )
+   {
+      double an = -i * ( i - a );
+      b += 2e0;
+      d  = an * d + b;
+      if ( fabs( d ) < FPMIN ) d = FPMIN;
+      c  = b + an / c;
+      if ( fabs( c ) < FPMIN ) c = FPMIN;
+      d  = 1e0 / d;
+      double del = d * c;
+      h *= del;
+      if ( fabs( del - 1e0 ) < EPS )
+      {
+         break;
+      }
+   }
+   return exp( -x + a * log( x ) - lgamma( a ) ) * h;
+}
+
+static double rce_gammp( double a, double x )
+{
+   if ( x < 0e0 || a <= 0e0 )
+   {
+      return 0e0;
+   }
+   if ( x < a + 1e0 )
+   {
+      return rce_gser( a, x );
+   }
+   return 1e0 - rce_gcf( a, x );
+}
+
+// two-sided chi-square p-value, as in bift.f (2*min(P,Q))
+static double rce_chi2_pvalue( double dof, double chi2 )
+{
+   if ( dof <= 0e0 )
+   {
+      return 0e0;
+   }
+   double p1 = rce_gammp( 0.5 * dof, 0.5 * chi2 );
+   double p2 = 1e0 - p1;
+   double p  = ( p1 <= p2 ? 2e0 * p1 : 2e0 * p2 );
+   if ( p > 1e0 ) p = 1e0;
+   if ( p < 0e0 ) p = 0e0;
+   return p;
+}
+
+// solve the small system M a = rhs (n <= 3) by Gauss-Jordan with partial pivoting.
+// M and rhs are taken by value (destroyed internally).
+static bool rce_solve( vector < vector < double > > M,
+                       vector < double >             rhs,
+                       vector < double >           & out )
+{
+   int n = (int) rhs.size();
+   out.assign( n, 0e0 );
+   for ( int col = 0; col < n; col++ )
+   {
+      int    piv  = col;
+      double best = fabs( M[ col ][ col ] );
+      for ( int r = col + 1; r < n; r++ )
+      {
+         if ( fabs( M[ r ][ col ] ) > best )
+         {
+            best = fabs( M[ r ][ col ] );
+            piv  = r;
+         }
+      }
+      if ( best < 1e-300 )
+      {
+         return false;
+      }
+      if ( piv != col )
+      {
+         swap( M[ piv ], M[ col ] );
+         swap( rhs[ piv ], rhs[ col ] );
+      }
+      double inv = 1e0 / M[ col ][ col ];
+      for ( int r = 0; r < n; r++ )
+      {
+         if ( r == col ) continue;
+         double f = M[ r ][ col ] * inv;
+         if ( f == 0e0 ) continue;
+         for ( int cc = col; cc < n; cc++ )
+         {
+            M[ r ][ cc ] -= f * M[ col ][ cc ];
+         }
+         rhs[ r ] -= f * rhs[ col ];
+      }
+   }
+   for ( int r = 0; r < n; r++ )
+   {
+      out[ r ] = rhs[ r ] / M[ r ][ r ];
+   }
+   return true;
+}
+
+static bool rce_finite( double v )
+{
+   return v == v && fabs( v ) < 1e300;
+}
+
+bool US_Saxs_Util::recompute_errors(
+                                    const vector < double > & I,
+                                    const vector < double > & q,
+                                    vector < double >       & sd,
+                                    QString                 & errors,
+                                    char                      mode,
+                                    unsigned int              nbin,
+                                    unsigned int              smooth_win,
+                                    bool                      force,
+                                    vector < double >       * scale_factors,
+                                    vector < double >       * I_smooth,
+                                    QString                 * verdict,
+                                    double                  * pval_out,
+                                    double                  * chi2r_out
+                                    )
+{
+   errors = "";
+
+   unsigned int n = I.size();
+   if ( q.size() != n || sd.size() != n )
+   {
+      errors = QString( "recompute_errors: incompatible vector sizes I %1 q %2 sd %3" )
+         .arg( I.size() ).arg( q.size() ).arg( sd.size() );
+      return false;
+   }
+   if ( mode != 'C' && mode != 'N' && mode != 'I' )
+   {
+      errors = QString( "recompute_errors: unknown mode '%1' (expected C, N or I)" ).arg( QChar( mode ) );
+      return false;
+   }
+   if ( nbin < 2 ) nbin = 2;
+
+   const int deg = 2; // local quadratic smoother
+
+   // compact the valid points (finite, sd > 0)
+   vector < unsigned int > gidx;
+   for ( unsigned int i = 0; i < n; i++ )
+   {
+      if ( sd[ i ] > 0e0 && rce_finite( sd[ i ] ) && rce_finite( I[ i ] ) && rce_finite( q[ i ] ) )
+      {
+         gidx.push_back( i );
+      }
+   }
+   unsigned int m = gidx.size();
+   if ( (int) m < 2 * deg + 3 )
+   {
+      errors = QString( "recompute_errors: too few valid points (%1)" ).arg( m );
+      return false;
+   }
+
+   vector < double > qg( m ), Ig( m ), sg( m );
+   for ( unsigned int k = 0; k < m; k++ )
+   {
+      qg[ k ] = q [ gidx[ k ] ];
+      Ig[ k ] = I [ gidx[ k ] ];
+      sg[ k ] = sd[ gidx[ k ] ];
+   }
+
+   // smoothing window (points)
+   int win = (int) smooth_win;
+   if ( win < deg + 1 ) win = deg + 1;
+   if ( win > (int) m )  win = (int) m;
+
+   // local weighted (1/sd^2) quadratic fit -> smooth curve, residuals, hat-trace
+   vector < double > Ifit( m ), nres( m );
+   double trH = 0e0;
+   for ( unsigned int k = 0; k < m; k++ )
+   {
+      int lo = (int) k - win / 2;
+      if ( lo < 0 ) lo = 0;
+      if ( lo + win > (int) m ) lo = (int) m - win;
+
+      vector < vector < double > > MM( deg + 1, vector < double >( deg + 1, 0e0 ) );
+      vector < double >            rhs( deg + 1, 0e0 );
+      for ( int w = 0; w < win; w++ )
+      {
+         int    idx = lo + w;
+         double t   = qg[ idx ] - qg[ k ];            // center abscissa on point k
+         double wt  = 1e0 / ( sg[ idx ] * sg[ idx ] ); // heteroscedastic weight
+         double yv  = Ig[ idx ];
+         double tp[ 2 * deg + 1 ];
+         tp[ 0 ] = 1e0;
+         for ( int p = 1; p <= 2 * deg; p++ ) tp[ p ] = tp[ p - 1 ] * t;
+         for ( int a = 0; a <= deg; a++ )
+         {
+            rhs[ a ] += wt * tp[ a ] * yv;
+            for ( int b = 0; b <= deg; b++ )
+            {
+               MM[ a ][ b ] += wt * tp[ a + b ];
+            }
+         }
+      }
+
+      // fitted value at t=0 is coef[0]; hat diagonal h_kk = w_k * (MM^-1)_00
+      vector < double > coef;
+      double fit = Ig[ k ];
+      double h   = 1e0 / win;
+      if ( rce_solve( MM, rhs, coef ) )
+      {
+         fit = coef[ 0 ];
+         vector < double > e0( deg + 1, 0e0 ), col0;
+         e0[ 0 ] = 1e0;
+         if ( rce_solve( MM, e0, col0 ) )
+         {
+            h = ( 1e0 / ( sg[ k ] * sg[ k ] ) ) * col0[ 0 ];
+         }
+      }
+      Ifit[ k ] = fit;
+      nres[ k ] = ( Ig[ k ] - fit ) / sg[ k ];
+      trH += h;
+   }
+
+   double chi2  = 0e0;
+   for ( unsigned int k = 0; k < m; k++ ) chi2 += nres[ k ] * nres[ k ];
+   double dof   = (double) m - trH;
+   if ( dof < 1e0 ) dof = 1e0;
+   double chi2r = chi2 / dof;
+   double pval  = rce_chi2_pvalue( dof, chi2 );
+   double beta_all = sqrt( chi2r );
+
+   // verdict (mirrors bift.f)
+   QString vd;
+   if ( pval > 0.003 )
+   {
+      vd = "Correct";
+   }
+   else if ( beta_all <= 1.1 && beta_all >= 0.9 )
+   {
+      vd = "Correct";
+   }
+   else
+   {
+      vd = ( chi2r <= 1e0 ? "Overestimated" : "Underestimated" );
+   }
+
+   // significance + >10% gate
+   bool do_rescale = force || ( pval <= 0.003 && ( beta_all > 1.1 || beta_all < 0.9 ) );
+
+   vector < double > factor( m, 1e0 );
+
+   if ( mode == 'C' )
+   {
+      double beta = do_rescale ? beta_all : 1e0;
+      for ( unsigned int k = 0; k < m; k++ ) factor[ k ] = beta;
+   }
+   else if ( mode == 'I' )
+   {
+      double a_opt = 0e0;
+      if ( do_rescale )
+      {
+         double best = fabs( chi2 - dof ); // a = 0 baseline
+         for ( int jj = 1; jj <= 1000; jj++ )
+         {
+            double a = pow( 10e0, -6e0 + jj * 0.007 );
+            double s = 0e0;
+            for ( unsigned int k = 0; k < m; k++ )
+            {
+               double sda = sg[ k ] + a * Ig[ k ];
+               double r   = ( Ifit[ k ] - Ig[ k ] ) / sda;
+               s += r * r;
+            }
+            double diff = fabs( s - dof );
+            if ( diff < best )
+            {
+               best  = diff;
+               a_opt = a;
+            }
+         }
+      }
+      for ( unsigned int k = 0; k < m; k++ )
+      {
+         factor[ k ] = ( sg[ k ] + a_opt * Ig[ k ] ) / sg[ k ];
+      }
+   }
+   else // 'N' non-constant, binned by point count (no Dmax available standalone)
+   {
+      vector < int > binof( m, 0 );
+      int nb  = 0;
+      int cnt = 0;
+      for ( unsigned int k = 0; k < m; k++ )
+      {
+         binof[ k ] = nb;
+         cnt++;
+         int rest = (int) m - (int) k - 1;
+         if ( cnt >= (int) nbin && rest >= (int) nbin )
+         {
+            nb++;
+            cnt = 0;
+         }
+      }
+      int nbins = nb + 1;
+
+      vector < double > bchi2 ( nbins, 0e0 );
+      vector < double > bcount( nbins, 0e0 );
+      for ( unsigned int k = 0; k < m; k++ )
+      {
+         bchi2 [ binof[ k ] ] += nres[ k ] * nres[ k ];
+         bcount[ binof[ k ] ] += 1e0;
+      }
+
+      vector < double > betan( nbins, 1e0 );
+      for ( int bb = 0; bb < nbins; bb++ )
+      {
+         double ngpart = trH * bcount[ bb ] / (double) m; // proportional share of eff. params
+         double dofn   = bcount[ bb ] - ngpart;
+         if ( dofn < 1e0 ) dofn = 1e0;
+         double chi2rn = bchi2[ bb ] / dofn;
+         double pvaln  = rce_chi2_pvalue( dofn, bchi2[ bb ] ) * (double) nbins; // Bonferroni
+         double bn     = sqrt( chi2rn );
+         bool   grn    = force || ( pvaln <= 0.003 && ( bn > 1.1 || bn < 0.9 ) );
+         betan[ bb ]   = grn ? bn : 1e0;
+      }
+
+      vector < double > betani( m );
+      for ( unsigned int k = 0; k < m; k++ ) betani[ k ] = betan[ binof[ k ] ];
+
+      // triangular smoothing of the per-point factor (port of bift.f betansm)
+      int wing = ( (int) nbin % 2 == 0 ) ? (int) nbin / 2 : ( (int) nbin - 1 ) / 2;
+      if ( wing < 1 ) wing = 1;
+      for ( unsigned int k = 0; k < m; k++ )
+      {
+         if ( k == 0 || k == m - 1 )
+         {
+            factor[ k ] = betani[ k ];
+            continue;
+         }
+         int rest = (int) m - 1 - (int) k;
+         int jmax;
+         if ( (int) k <= wing )      jmax = (int) k;
+         else if ( rest < wing )     jmax = rest;
+         else                        jmax = wing;
+         double sumsm = betani[ k ] * jmax;
+         double norm  = jmax;
+         for ( int j = 1; j <= jmax; j++ )
+         {
+            sumsm += ( jmax - j ) * ( betani[ k - j ] + betani[ k + j ] );
+            norm  += 2 * ( jmax - j );
+         }
+         factor[ k ] = ( norm > 0e0 ) ? sumsm / norm : betani[ k ];
+      }
+   }
+
+   // apply and map results back to full-length arrays
+   if ( scale_factors ) scale_factors->assign( n, 1e0 );
+   if ( I_smooth )      *I_smooth = I;
+   for ( unsigned int k = 0; k < m; k++ )
+   {
+      unsigned int i = gidx[ k ];
+      sd[ i ] = sg[ k ] * factor[ k ];
+      if ( scale_factors ) ( *scale_factors )[ i ] = factor[ k ];
+      if ( I_smooth )      ( *I_smooth )[ i ]      = Ifit[ k ];
+   }
+
+   if ( verdict )   *verdict   = vd;
+   if ( pval_out )  *pval_out  = pval;
+   if ( chi2r_out ) *chi2r_out = chi2r;
+   return true;
+}
+
+bool US_Saxs_Util::sscaling_fit(
                                 vector < double > x, 
                                 vector < double > y, 
                                 vector < double > sd, 

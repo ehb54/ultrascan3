@@ -518,7 +518,42 @@ class US_EXTERN US_Saxs_Util
                                     double            &ns,
                                     double            &chi2shannon
                                     );
-                                 
+
+      // Standalone (BIFT-free) reassessment / rescaling of experimental errors.
+      //
+      // Reproduces the spirit of BayesApp's error-assessment stage
+      // (Larsen & Pedersen, J. Appl. Cryst. 2021) without an indirect Fourier
+      // transform: a local (weighted) polynomial smoother of I(q) supplies the
+      // residuals and an effective degrees-of-freedom (hat-trace), from which a
+      // reduced chi-square and two-sided p-value are formed. If the errors are
+      // both significantly and by more than 10% inconsistent with the observed
+      // scatter, sd is rescaled. This is an approximation to the BIFT-based
+      // method (no p(r) model, no Ng, no Dmax) and is intended for quick data QC.
+      //
+      // On return sd holds the rescaled errors (unchanged where not rescaled or
+      // where the input point was invalid, i.e. sd<=0 or non-finite).
+      //   mode : 'C' constant factor beta=sqrt(chi2r) (default)
+      //          'N' non-constant, per-bin factor, triangular-smoothed
+      //          'I' intensity-dependent, sd -> sd + a*I
+      //   nbin : min points per bin (non-constant mode) [default 10]
+      //   smooth_win : points in the local smoothing window [default 11]
+      //   force : rescale even if not statistically significant
+      static bool recompute_errors(
+                                   const vector < double > & I,
+                                   const vector < double > & q,
+                                   vector < double >       & sd,
+                                   QString                 & errors,
+                                   char                      mode           = 'C',
+                                   unsigned int              nbin           = 10,
+                                   unsigned int              smooth_win     = 11,
+                                   bool                      force          = false,
+                                   vector < double >       * scale_factors  = 0,
+                                   vector < double >       * I_smooth       = 0,
+                                   QString                 * verdict        = 0,
+                                   double                  * pval_out       = 0,
+                                   double                  * chi2r_out      = 0
+                                   );
+
 
       bool setup_saxs_maps( QString atom_file, QString hybrid_file, QString saxs_file );
 
