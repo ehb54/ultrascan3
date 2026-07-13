@@ -164,10 +164,10 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    lbl_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
 
    cb_model = new QComboBox( this );
-   cb_model->addItem( us_tr( "Additive  I(q)/c  \342\200\224 cleanest low-q profile (default)" ) );
-   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)" ) );
+   cb_model->addItem( us_tr( "Additive  I(q)/c  \342\200\224 cleanest low-q profile" ) );
+   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)  (default)" ) );
    cb_model->addItem( us_tr( "2nd-order virial  c/I(q)  \342\200\224 MW at strong interaction (needs \342\211\2654-5 conc)" ) );
-   cb_model->setCurrentIndex( 0 );
+   cb_model->setCurrentIndex( 1 );
    cb_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
    cb_model->setPalette( PALET_NORMAL );
    AUTFBACK( cb_model );

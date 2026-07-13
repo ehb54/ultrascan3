@@ -442,7 +442,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool show_regplots = false;
    int  fit_broaden   = 0;
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
-   int  extrap_model  = 0;      // concentration model: 0 additive, 1 reciprocal, 2 2nd-virial
+   int  extrap_model  = 1;      // concentration model: 0 additive, 1 reciprocal (default), 2 2nd-virial
    {
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &absolute_mode, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
@@ -885,8 +885,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // Intensity-vs-concentration model for the Zimm-family fit (absolute-scale mode is
    // unaffected). Selected via gparam saxs_extrap_c0_model:
-   //   0 = additive    I(q)/c = Iex + alpha*c            (default; cleanest low-q profile)
-   //   1 = reciprocal  c/I(q) = u + v*c,       I0 = 1/u  (2nd-virial form; unbiased MW/I(0))
+   //   0 = additive    I(q)/c = Iex + alpha*c            (cleanest low-q profile)
+   //   1 = reciprocal  c/I(q) = u + v*c,       I0 = 1/u  (default; 2nd-virial form, unbiased MW)
    //   2 = virial2     c/I(q) = u + v*c + w*c^2, I0 = 1/u (robust MW at strong interaction)
    // The additive fit is biased low for a saturating (second-virial) structure factor because
    // I(q,c)/c is convex in c; the reciprocal c/I is linear in c and unbiased, and the 2nd-order
