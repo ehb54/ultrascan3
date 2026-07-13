@@ -565,6 +565,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_wyatt_start2;
       mQLineEdit    *le_wyatt_end2;
       QPushButton   *pb_wyatt_apply;
+      QPushButton   *pb_wyatt_rescale;
 
       void           wyatt_enables();
       void           wyatt_init_markers();
@@ -1373,6 +1374,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         conc_widget;
       void                         update_csv_conc();
       bool                         all_selected_have_nonzero_conc();
+      bool                         all_selected_have_errors();       // count + matching size + at least one usable (>0) SD
 
       void                         delete_zoomer_if_ranges_changed();
       QString                      vector_double_to_csv( vector < double > vd );
@@ -1710,6 +1712,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                           vector < double > & new_I
                                           );
       void                         wyatt_apply( const QStringList & files );
+      void                         wyatt_rescale( const QStringList & files, char mode );
 
       void                         timescale  ( const QStringList & files );
 
@@ -1884,6 +1887,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void wyatt_start                 ();
       void wyatt_apply                 ();
+      void wyatt_rescale               ();
       void wyatt_2                     ();
       void wyatt_start_text            ( const QString & );
       void wyatt_start_focus           ( bool );
