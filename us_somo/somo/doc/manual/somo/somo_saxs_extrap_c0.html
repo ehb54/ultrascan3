@@ -229,7 +229,10 @@ selected curve names followed by <code>_extrap_c0</code> and tokens encoding the
 that produced it &mdash; the concentration model
 (<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
-spliced (for example <code>Sub_..._extrap_c0_recip_abs_merge</code>). Distinct selections
+spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
+underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), so a
+run's cutover is visible in its name (for example
+<code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
 therefore produce distinct, self-describing names; a genuine repeat of the same configuration
 gets a numeric suffix. Curves with a concentration of zero are excluded from the fit, and any
 <i>q</i> point with fewer than two usable values is skipped; the editor window reports how many

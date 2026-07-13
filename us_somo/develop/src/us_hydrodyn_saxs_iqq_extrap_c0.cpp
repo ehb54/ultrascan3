@@ -40,15 +40,26 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
    return prefix;
 }
 
-static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale, bool merge_ref )
+static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
+                                        bool merge_ref, double merge_q )
 {
    // method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
-   //   fit model (add / recip / virial2) + output scale (abs) + high-q reference splice (merge)
+   //   fit model (add / recip / virial2) + output scale (abs) + high-q reference splice, with
+   //   the merge point q appended (e.g. _merge_q0_0898) so runs that cut over at different q
+   //   are distinguishable at a glance.
    QString method = "_extrap_c0";
    method += ( model == 2 ) ? "_virial2" : ( model == 1 ) ? "_recip" : "_add";
    if ( ref_scale ) { method += "_abs"; }
-   if ( merge_ref ) { method += "_merge"; }
+   if ( merge_ref )
+   {
+      method += "_merge";
+      if ( merge_q > 0e0 )
+      {
+         method += "_q" + QString::number( merge_q, 'f', 4 ).replace( '.', '_' );
+      }
+      // merge_q == 0 => splice requested but no cutover located (whole curve extrapolated)
+   }
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
@@ -1190,7 +1201,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q );
    QString final_name = base_name;
    {
       int suffix = 1;
