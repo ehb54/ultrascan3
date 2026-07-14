@@ -42,7 +42,7 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
 
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
                                         bool merge_ref, double merge_q, int sd_mode,
-                                        int n_outlier_dropped, bool unweighted )
+                                        int n_outlier_dropped, bool unweighted, int ri_mode )
 {
    // method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
@@ -61,6 +61,10 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
       }
       // merge_q == 0 => splice requested but no cutover located (whole curve extrapolated)
    }
+   // input-SD recompute (before the fit) precedes the output SD reassessment token
+   if ( ri_mode == 1 ) { method += "_riC"; }
+   else if ( ri_mode == 2 ) { method += "_riN"; }
+   else if ( ri_mode == 3 ) { method += "_riI"; }
    if ( sd_mode == 1 ) { method += "_sdC"; }
    else if ( sd_mode == 2 ) { method += "_sdN"; }
    else if ( sd_mode == 3 ) { method += "_sdI"; }
@@ -630,12 +634,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    bool use_sd_weights = true;  // weight the concentration regressions by 1/sigma^2 (recommended default)
    int  extrap_model  = 1;      // concentration model: 0 additive, 1 reciprocal (default), 2 2nd-virial
+   bool recompute_inputs      = false; // transiently reassess each input curve's SDs before fitting
+   int  recompute_inputs_mode = 0;     // 0 constant, 1 non-constant, 2 intensity-dependent
    int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
    bool   discard_outlier     = false; // auto-discard one outlier concentration curve (robust QC)
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -766,6 +772,64 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             QString( us_tr( "%1 curve(s) have a concentration of 0 and will be excluded "
                                             "from the extrapolation (intensity can't be normalized by a zero concentration)." ) )
                             .arg( zero_conc_excluded ) );
+   }
+
+   // 5a. optional transient input-SD recompute: reassess each selected curve's error bars from
+   //     its own point-to-point scatter (the BayesApp engine, same as the output SD reassessment)
+   //     and use those errors for THIS extrapolation only -- name_to_err is a local copy, the
+   //     loaded curves are untouched. Runs before the outlier QC and the fit, so the reassessed
+   //     errors feed the outlier detector, the 1/sigma^2 weights and the reference merge test.
+   if ( recompute_inputs )
+   {
+      char ri_mode = ( recompute_inputs_mode == 2 ) ? 'I' : ( recompute_inputs_mode == 1 ) ? 'N' : 'C';
+      QString ri_label = ( recompute_inputs_mode == 2 ) ? us_tr( "intensity-dependent" )
+                       : ( recompute_inputs_mode == 1 ) ? us_tr( "non-constant" )
+                                                        : us_tr( "constant" );
+      vector < double > qv( q.begin(), q.begin() + ( ( npts <= (unsigned int) q.size() ) ? npts : q.size() ) );
+      editor_msg( "black",
+                 QString( us_tr( "Recomputing input curve SDs (%1) for this extrapolation only:\n" ) ).arg( ri_label ) );
+      int ri_done = 0, ri_skipped = 0;
+      for ( int ci = 0; ci < ordered_names.size(); ci++ )
+      {
+         const QString & nm = ordered_names[ ci ];
+         if ( !name_to_err.count( nm ) || name_to_err[ nm ].size() != name_to_I[ nm ].size()
+              || !US_Saxs_Util::is_nonzero_vector( name_to_err[ nm ] ) )
+         {
+            editor_msg( "dark red", QString( us_tr( "  %1: skipped (no usable SDs)\n" ) ).arg( nm ) );
+            ri_skipped++;
+            continue;
+         }
+         vector < double > sd = name_to_err[ nm ];
+         vector < double > factors;
+         QString ri_errors, ri_verdict;
+         double  ri_pval = 0e0, ri_chi2r = 0e0;
+         if ( !US_Saxs_Util::recompute_errors( name_to_I[ nm ], qv, sd, ri_errors, ri_mode,
+                                               10, 11, false, &factors, 0, &ri_verdict, &ri_pval, &ri_chi2r ) )
+         {
+            editor_msg( "dark red", QString( us_tr( "  %1: skipped (%2)\n" ) ).arg( nm ).arg( ri_errors ) );
+            ri_skipped++;
+            continue;
+         }
+         // factor summary matching the s.d.util "SD rescale" log
+         double fmin = 1e0, fmed = 1e0, fmax = 1e0;
+         {
+            vector < double > fs = factors;
+            std::sort( fs.begin(), fs.end() );
+            if ( fs.size() ) { fmin = fs.front(); fmax = fs.back(); fmed = fs[ fs.size() / 2 ]; }
+         }
+         QString factor_str = ( fmax - fmin < 1e-9 )
+            ? QString( us_tr( "factor %1" ) ).arg( fmed, 0, 'g', 4 )
+            : QString( us_tr( "factor median %1 (%2..%3)" ) ).arg( fmed, 0, 'g', 4 ).arg( fmin, 0, 'g', 4 ).arg( fmax, 0, 'g', 4 );
+         name_to_err[ nm ] = sd;
+         ri_done++;
+         editor_msg( "black",
+                    QString( us_tr( "  %1: %2, %3 (reduced chi^2 %4, p %5)\n" ) )
+                    .arg( nm ).arg( ri_verdict ).arg( factor_str )
+                    .arg( ri_chi2r, 0, 'f', 3 ).arg( ri_pval, 0, 'f', 3 ) );
+      }
+      editor_msg( "black",
+                 QString( us_tr( "Input SD recompute: %1 curve(s) reassessed, %2 skipped (loaded curves unchanged).\n" ) )
+                 .arg( ri_done ).arg( ri_skipped ) );
    }
 
    // 5b. robust one-outlier-curve QC. Detect (always) a single concentration curve that is off
@@ -948,8 +1012,16 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                  .arg( ref_scale ? us_tr( "; output on its absolute scale" ) : QString( "" ) )
                  .arg( merge_ref ? us_tr( "; high-q reference splice enabled" ) : QString( "" ) ) );
 
-      // the extrapolated curve inherits the reference curve's error bars (matches almerge)
-      if ( name_to_errors_map.count( ordered_names[ ref_ci ] ) )
+      // the extrapolated curve inherits the reference curve's error bars (matches almerge).
+      // Source from name_to_err (already per-q aligned to npts), so a transient input-SD
+      // recompute, if enabled, is reflected in the merge test too; fall back to the raw error
+      // map only if the reference somehow has no parsed errors.
+      if ( name_to_err.count( ordered_names[ ref_ci ] ) && !name_to_err[ ordered_names[ ref_ci ] ].empty() )
+      {
+         ref_sd = name_to_err[ ordered_names[ ref_ci ] ];
+         ref_sd.resize( npts );
+      }
+      else if ( name_to_errors_map.count( ordered_names[ ref_ci ] ) )
       {
          QStringList qsl_err = name_to_errors_map[ ordered_names[ ref_ci ] ].split( "," );
          for ( int k = 2; k < qsl_err.size(); k++ )
@@ -1589,7 +1661,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights,
+                                                  recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0 );
    QString final_name = base_name;
    {
       int suffix = 1;

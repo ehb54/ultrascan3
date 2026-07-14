@@ -22,6 +22,8 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_gcv,
                                                                           bool *out_use_sd_weights,
                                                                           int *out_model,
+                                                                          bool *out_recompute_inputs,
+                                                                          int *out_recompute_inputs_mode,
                                                                           int *out_sd_mode,
                                                                           bool *out_discard_outlier,
                                                                           double *out_outlier_sigma,
@@ -43,6 +45,8 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_gcv            = out_gcv;
    this->out_use_sd_weights = out_use_sd_weights;
    this->out_model          = out_model;
+   this->out_recompute_inputs      = out_recompute_inputs;
+   this->out_recompute_inputs_mode = out_recompute_inputs_mode;
    this->out_sd_mode        = out_sd_mode;
    this->out_discard_outlier    = out_discard_outlier;
    this->out_outlier_sigma      = out_outlier_sigma;
@@ -81,7 +85,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 11 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 13 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -236,6 +240,51 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
 
    hbl_model->addWidget( lbl_model );
    hbl_model->addWidget( cb_model, 1 );
+
+   // Optional preprocessing: reassess each INPUT curve's error bars (same BayesApp engine as
+   // "Recompute output SDs" / the s.d.util "SD rescale" button) before the fit, so better errors
+   // feed the outlier check, the 1/sigma^2 weights and the reference merge test. Transient: the
+   // loaded curves are not modified (use the s.d.util "SD rescale" button to apply permanently).
+   cb_recompute_inputs = new QCheckBox( us_tr( "Recompute input curve SDs before fitting (transient)" ), this );
+   cb_recompute_inputs->setChecked( false );
+   cb_recompute_inputs->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_recompute_inputs->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_recompute_inputs );
+   cb_recompute_inputs->setMinimumHeight( minHeight1 );
+   cb_recompute_inputs->setToolTip(
+                        us_tr( "Off (default): use each input curve's error bars as loaded.\n\n"
+                               "On: before extrapolating, reassess every selected curve's errors from its own\n"
+                               "point-to-point scatter (the BayesApp method), and use those errors for this\n"
+                               "extrapolation only -- the loaded curves are NOT changed (to change them\n"
+                               "permanently, use the s.d.util \"SD rescale\" button instead). Most useful together\n"
+                               "with error weighting on; with weighting off it only affects the plotted error bars\n"
+                               "and the high-q reference merge test." ) );
+
+   QHBoxLayout * hbl_ri = new QHBoxLayout; hbl_ri->setContentsMargins( 4, 0, 4, 0 ); hbl_ri->setSpacing( 6 );
+   lbl_recompute_inputs_mode = new QLabel( us_tr( "Input SD recompute mode:" ), this );
+   lbl_recompute_inputs_mode->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_recompute_inputs_mode->setMinimumHeight( minHeight1 );
+   lbl_recompute_inputs_mode->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_recompute_inputs_mode );
+   lbl_recompute_inputs_mode->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+
+   cb_recompute_inputs_mode = new QComboBox( this );
+   cb_recompute_inputs_mode->addItem( us_tr( "Constant  \342\200\224 one factor for all q  (default)" ) );
+   cb_recompute_inputs_mode->addItem( us_tr( "Non-constant  \342\200\224 per q-bin factor" ) );
+   cb_recompute_inputs_mode->addItem( us_tr( "Intensity-dependent  \342\200\224 sd \342\206\222 sd + a\302\267|I|" ) );
+   cb_recompute_inputs_mode->setCurrentIndex( 0 );
+   cb_recompute_inputs_mode->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_recompute_inputs_mode->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_recompute_inputs_mode );
+   cb_recompute_inputs_mode->setMinimumHeight( minHeight1 );
+   cb_recompute_inputs_mode->setToolTip(
+                        us_tr( "How each input curve's errors are reassessed (same modes as the output SD\n"
+                               "reassessment). Constant rescales every sigma by one factor and is the safest\n"
+                               "default; Non-constant allows a per-q-bin correction; Intensity-dependent adds an\n"
+                               "intensity-proportional term." ) );
+
+   hbl_ri->addWidget( lbl_recompute_inputs_mode );
+   hbl_ri->addWidget( cb_recompute_inputs_mode, 1 );
 
    // Optional post-fit reassessment of the extrapolated curve's error bars, reusing the
    // s.d.util "SD rescale" engine (US_Saxs_Util::recompute_errors, BayesApp-style). Off by
@@ -413,6 +462,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( cb_weight );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
+   background->addWidget( cb_recompute_inputs );
+   background->addLayout( hbl_ri );
    background->addLayout( hbl_sd_mode );
    background->addWidget( cb_outlier );
    background->addLayout( hbl_outlier );
@@ -548,6 +599,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_gcv           = cb_gcv->isChecked();
    *out_use_sd_weights = cb_weight->isChecked();
    *out_model         = cb_model->currentIndex();
+   *out_recompute_inputs      = cb_recompute_inputs->isChecked();
+   *out_recompute_inputs_mode = cb_recompute_inputs_mode->currentIndex();
    *out_sd_mode       = cb_sd_mode->currentIndex();
    *out_discard_outlier = cb_outlier->isChecked();
    {

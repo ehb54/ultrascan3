@@ -201,6 +201,21 @@ curve with the clean reference tail; both = the former "absolute-scale mode" (re
 with the high-<i>q</i> splice). Unlike before, all four now honor the chosen concentration model,
 so the reciprocal/virial models' unbiased molecular weight is available on the absolute scale too.</p>
 
+<p><b>Recompute input curve SDs before fitting</b> (checkbox, off by default, with a mode
+sub-option). When checked, each selected input curve's error bars are first reassessed from the
+curve's own point-to-point scatter &mdash; the same BayesApp engine (Larsen &amp; Pedersen, 2021)
+used by &ldquo;Recompute output SDs&rdquo; below and the s.d.util &ldquo;SD rescale&rdquo; button
+&mdash; and the reassessed errors are used for <i>this extrapolation only</i>. The reassessment
+runs before everything else, so the improved errors feed the outlier check, the 1/&sigma;&sup2;
+weights, and the high-<i>q</i> reference merge test. This is <b>transient</b>: the loaded curves
+are <i>not</i> modified &mdash; to change a curve's errors permanently, use the s.d.util
+&ldquo;SD rescale&rdquo; button instead. The mode sub-option (<b>Constant</b> default,
+<b>Non-constant</b>, <b>Intensity-dependent</b>) is the same set of rescaling modes as the output
+reassessment; Constant (one factor per curve) is the safest default. It pairs naturally with error
+weighting on (fix the errors, then weight by them); with weighting off it affects only the plotted
+error bars and the merge test. Each curve's verdict and factor are reported in the log, and the
+output name gains <code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>.</p>
+
 <p><b>Recompute output SDs</b> (drop-down). By default the extrapolated curve carries its
 <i>propagated</i> error bars (the per-<i>q</i> intercept standard error, and the reference's
 own errors in any spliced high-<i>q</i> region). This optional selection instead reassesses
@@ -307,7 +322,9 @@ that produced it &mdash; the concentration model
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
 underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), and
-the SD-reassessment mode if one was applied
+an input-SD recompute if one was applied
+(<code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>), the
+output SD-reassessment mode if one was applied
 (<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
 <code>_qc1</code> if an outlier concentration was discarded, and <code>_uw</code> if the
 regression was unweighted (curve errors not used), so a
