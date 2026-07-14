@@ -101,6 +101,24 @@ fits. The editor window reports the selected penalty and the effective degrees o
 Uncheck the box for the classic independent per-<i>q</i> fits (optionally with the manual
 window below).</p>
 
+<p><b>Weight regression by curve errors (1/&sigma;&sup2;)</b> (checkbox, on by default). With
+this on, every concentration regression is fitted with inverse-variance weights &mdash; each
+point weighted by 1/&sigma;&sup2;, with the curve's error propagated onto the fit axis
+(&sigma;/<i>c</i> for the additive <i>I</i>/c axis, &sigma;&middot;<i>c</i>/<i>I</i>&sup2; for the
+reciprocal <i>c</i>/<i>I</i> axis) &mdash; and that error is propagated into the extrapolated
+intercept's reported error bar. This is the statistically optimal choice when the error bars are
+reliable, and for the reciprocal axis it automatically de-emphasizes the noisy high-<i>q</i>.
+Unchecked, an ordinary (unweighted) least-squares fit is used: the curve errors are still drawn in
+the regression plots but are not used in the fit, and the intercept error bar is the fit's residual
+scatter. Unweighted is more robust when the error bars are missing or mis-scaled (common in SAXS);
+a large difference between the weighted and unweighted results is itself a sign that the error bars
+are driving the extrapolation. The switch affects only the concentration regression (including the
+outlier check, which then standardizes residuals by their per-<i>q</i> scatter instead of by
+&sigma;) &mdash; not the high-<i>q</i> reference merge test or the post-fit SD reassessment, which
+are inherently error-based. If weighting is on but some points carry no usable error, those <i>q</i>
+are fitted unweighted and the count is reported. An unweighted run adds <code>_uw</code> to the
+output curve name.</p>
+
 <p><b>Concentration model</b> (drop-down). This selects how the intensity
 is fitted against concentration at each <i>q</i>, and chiefly affects the accuracy of the
 molecular weight read from the extrapolated forward scatter <i>I</i>(0):</p>
@@ -291,7 +309,8 @@ spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal wr
 underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), and
 the SD-reassessment mode if one was applied
 (<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
-<code>_qc1</code> if an outlier concentration was discarded, so a
+<code>_qc1</code> if an outlier concentration was discarded, and <code>_uw</code> if the
+regression was unweighted (curve errors not used), so a
 run's cutover is visible in its name (for example
 <code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
 therefore produce distinct, self-describing names; a genuine repeat of the same configuration

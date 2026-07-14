@@ -40,6 +40,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_show_regplots,
                                           int *out_fit_broaden,
                                           bool *out_gcv,
+                                          bool *out_use_sd_weights,
                                           int *out_model,
                                           int *out_sd_mode,
                                           bool *out_discard_outlier,
@@ -58,6 +59,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QCheckBox    *cb_ref_scale;
       QCheckBox    *cb_merge;
       QCheckBox    *cb_gcv;
+      QCheckBox    *cb_weight;
       QCheckBox    *cb_regplots;
       QLabel       *lbl_model;
       QComboBox    *cb_model;
@@ -87,6 +89,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_show_regplots;
       int          *out_fit_broaden;
       bool         *out_gcv;
+      bool         *out_use_sd_weights;
       int          *out_model;
       int          *out_sd_mode;
       bool         *out_discard_outlier;

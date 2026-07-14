@@ -42,7 +42,7 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
 
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
                                         bool merge_ref, double merge_q, int sd_mode,
-                                        int n_outlier_dropped )
+                                        int n_outlier_dropped, bool unweighted )
 {
    // method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
@@ -65,6 +65,7 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    else if ( sd_mode == 2 ) { method += "_sdN"; }
    else if ( sd_mode == 3 ) { method += "_sdI"; }
    if ( n_outlier_dropped > 0 ) { method += "_qc" + QString::number( n_outlier_dropped ); }
+   if ( unweighted ) { method += "_uw"; }
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
@@ -344,6 +345,7 @@ static int us_extrap_c0_detect_outlier(
                                        map < QString, vector < double > >       & name_to_err,
                                        unsigned int                               npts,
                                        bool                                       reciprocal,
+                                       bool                                       use_weights,  // 1/sigma^2 fit + standardize by sigma; else OLS + per-q RMS
                                        double                                   & T_out,       // mean |t| of the nominee
                                        double                                   & sgn_out,     // one-sided fraction of the nominee
                                        double                                   & sep_out,     // T_nominee / median T of the rest (reported, not gated)
@@ -388,7 +390,7 @@ static int us_extrap_c0_detect_outlier(
          }
          else if ( is_istar[ ci ] ) { y = Iv;               sig = sd; }
          else                       { y = Iv / concs[ ci ];  sig = sd / concs[ ci ]; }
-         double w = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
+         double w = ( use_weights && sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
          yv[ ci ] = y; wv[ ci ] = w; xv[ ci ] = concs[ ci ]; ok[ ci ] = true;
          S += w; Sx += w * xv[ ci ]; Sy += w * y; Sxx += w * xv[ ci ] * xv[ ci ]; Sxy += w * xv[ ci ] * y;
          n_here++;
@@ -397,12 +399,34 @@ static int us_extrap_c0_detect_outlier(
       if ( n_here < 3 || M <= 0e0 ) { continue; } // no usable trend at this q
       double slope = ( Sxy - Sx * Sy / S ) / M;
       double icept = ( Sy - Sx * slope ) / S;
+      // standardize residuals by sigma (weighted mode) or by the per-q residual RMS (unweighted
+      // mode) -- raw residuals span orders of magnitude across q, so a per-q scale is required
+      double s_q = 0e0;
+      if ( !use_weights )
+      {
+         double ss = 0e0;
+         for ( int ci = 0; ci < nc; ci++ )
+         {
+            if ( !ok[ ci ] ) { continue; }
+            double r = yv[ ci ] - ( icept + slope * xv[ ci ] );
+            ss += r * r;
+         }
+         s_q = ( n_here > 2 ) ? sqrt( ss / ( n_here - 2 ) ) : 0e0;
+      }
       for ( int ci = 0; ci < nc; ci++ )
       {
          if ( !ok[ ci ] ) { continue; }
          double r  = yv[ ci ] - ( icept + slope * xv[ ci ] );
-         double sg = ( wv[ ci ] > 0e0 ) ? 1e0 / sqrt( wv[ ci ] ) : 0e0;
-         double t  = ( sg > 0e0 ) ? r / sg : 0e0;
+         double t;
+         if ( use_weights )
+         {
+            double sg = ( wv[ ci ] > 0e0 ) ? 1e0 / sqrt( wv[ ci ] ) : 0e0;
+            t = ( sg > 0e0 ) ? r / sg : 0e0;
+         }
+         else
+         {
+            t = ( s_q > 0e0 ) ? r / s_q : 0e0;
+         }
          absres[ ci ].push_back( fabs( t ) );
          nval[ ci ]++;
          if ( r >= 0e0 ) { npos[ ci ]++; }
@@ -604,13 +628,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool show_regplots = false;
    int  fit_broaden   = 0;
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
+   bool use_sd_weights = true;  // weight the concentration regressions by 1/sigma^2 (recommended default)
    int  extrap_model  = 1;      // concentration model: 0 additive, 1 reciprocal (default), 2 2nd-virial
    int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
    bool   discard_outlier     = false; // auto-discard one outlier concentration curve (robust QC)
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -694,6 +719,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             .arg( istar_count ).arg( ordered_names.size() - (int) istar_count ) );
    }
 
+   if ( !use_sd_weights )
+   {
+      editor_msg( "black",
+                 QString( us_tr( "Unweighted (OLS) regression: the curve errors are not used in the fit; the "
+                                 "intercept error bar is the fit's residual scatter.\n" ) ) );
+   }
+
    // Two extrapolation modes are offered (selected via the concentration dialog):
    //
    // Zimm mode (default): loaded I(q) curves are raw (not pre-normalized by
@@ -755,7 +787,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       double oT = 0e0, osgn = 0e0, osep = 0e0, oc2f = 0e0, oc2r = 0e0;
       int    j_star = us_extrap_c0_detect_outlier( ordered_names, concs, is_istar,
                                                    name_to_I, name_to_err, npts,
-                                                   ( extrap_model >= 1 ),
+                                                   ( extrap_model >= 1 ), use_sd_weights,
                                                    oT, osgn, osep, oc2f, oc2r );
 
       // gates: magnitude (mean |t| >= sigma), systematic (>=70% one-sided), and the curve
@@ -952,6 +984,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < double > out_I0_err;
    vector < int >    out_qidx;                  // full-grid q index of each output point
    unsigned int       skipped_points = 0;
+   unsigned int       n_missing_sd_pts = 0;     // points lacking a usable SD while weighting is on (logged)
 
    // per-q regression data captured for the optional scrollable regression-plot pop-up:
    // the (concentration, y, y-error) points, plus the fit intercept, slope and its SE
@@ -1025,7 +1058,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             }
             else if ( is_istar[ ci ] ) { yv = Iv;              sig = sd; }
             else                       { yv = Iv / concs[ ci ]; sig = sd / concs[ ci ]; }
-            double w  = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
+            double w  = ( use_sd_weights && sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
             double xv = concs[ ci ];
             S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
          }
@@ -1067,7 +1100,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             double cc = concs[ ci ];
             double zz = is_istar[ ci ] ? 1e0 / Iv         : cc / Iv;
             double sz = is_istar[ ci ] ? sd / ( Iv * Iv ) : sd * cc / ( Iv * Iv );
-            double w  = ( sz > 0e0 && !us_isnan( sz ) ) ? 1e0 / ( sz * sz ) : 1e0;
+            double w  = ( use_sd_weights && sz > 0e0 && !us_isnan( sz ) ) ? 1e0 / ( sz * sz ) : 1e0;
             S0+=w; S1+=w*cc; S2+=w*cc*cc; S3+=w*cc*cc*cc; S4+=w*cc*cc*cc*cc;
             Z0+=w*zz; Z1+=w*cc*zz; Z2+=w*cc*cc*zz; nvalid++;
          }
@@ -1137,6 +1170,21 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          ye.push_back( yev );
       }
 
+      // inverse-variance weighting is used only when EVERY point at this q carries a usable
+      // error (the weighted linear_fit divides by e^2, and its built-in fallback only triggers
+      // when ALL errors are zero); otherwise this q falls back to unweighted. Points lacking a
+      // usable SD are counted so the run can report that weighting was partial.
+      bool all_err = ( x.size() > 0 );
+      for ( int j = 0; j < (int) ye.size(); j++ )
+      {
+         if ( !( ye[ j ] > 0e0 ) || us_isnan( ye[ j ] ) )
+         {
+            all_err = false;
+            if ( use_sd_weights ) { n_missing_sd_pts++; }
+         }
+      }
+      bool weight_here = use_sd_weights && all_err;
+
       double a = 0e0, b = 0e0, siga = 0e0;
 
       if ( reciprocal && extrap_model == 2 )
@@ -1165,7 +1213,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          if ( x.size() >= 3 )
          {
             double aa, bb, sigb, chi2;
-            usu.linear_fit( x, y, aa, bb, siga, sigb, chi2 );
+            if ( weight_here ) { usu.linear_fit( x, y, ye, aa, bb, siga, sigb, chi2 ); }
+            else               { usu.linear_fit( x, y,     aa, bb, siga, sigb, chi2 ); }
          }
          else
          {
@@ -1197,7 +1246,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       else
       {
          double sigb, chi2;
-         usu.linear_fit( x, y, a, b, siga, sigb, chi2 );
+         if ( weight_here ) { usu.linear_fit( x, y, ye, a, b, siga, sigb, chi2 ); }
+         else               { usu.linear_fit( x, y,     a, b, siga, sigb, chi2 ); }
       }
 
       // Capture the fit in the plotted axis (additive: I/c; reciprocal/virial: c/I) for the
@@ -1272,6 +1322,16 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             QString( us_tr( "%1 of %2 q-points could not be extrapolated "
                                             "(fewer than 2 valid data points) and were skipped." ) )
                             .arg( skipped_points ).arg( npts ) );
+   }
+
+   // weighting requested but some points had no usable error: those q fell back to unweighted;
+   // surface it rather than silently mixing weighted and unweighted fits
+   if ( use_sd_weights && n_missing_sd_pts )
+   {
+      editor_msg( "dark red",
+                 QString( us_tr( "Note: inverse-variance weighting was requested, but %1 data point(s) had no "
+                                 "usable error; those q were fitted unweighted.\n" ) )
+                 .arg( n_missing_sd_pts ) );
    }
 
    if ( out_q.empty() )
@@ -1529,7 +1589,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights );
    QString final_name = base_name;
    {
       int suffix = 1;

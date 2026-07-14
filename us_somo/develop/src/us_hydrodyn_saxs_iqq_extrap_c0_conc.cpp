@@ -20,6 +20,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_show_regplots,
                                                                           int *out_fit_broaden,
                                                                           bool *out_gcv,
+                                                                          bool *out_use_sd_weights,
                                                                           int *out_model,
                                                                           int *out_sd_mode,
                                                                           bool *out_discard_outlier,
@@ -40,6 +41,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_show_regplots  = out_show_regplots;
    this->out_fit_broaden    = out_fit_broaden;
    this->out_gcv            = out_gcv;
+   this->out_use_sd_weights = out_use_sd_weights;
    this->out_model          = out_model;
    this->out_sd_mode        = out_sd_mode;
    this->out_discard_outlier    = out_discard_outlier;
@@ -79,7 +81,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 10 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 11 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -163,6 +165,24 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                              "chosen automatically by Generalized Cross-Validation (no tuning). This denoises\n"
                              "the low-q extrapolation and supersedes the manual q-window below.\n"
                              "Uncheck for the classic independent per-q fits (plus any manual window)." ) );
+
+   cb_weight = new QCheckBox( us_tr( "Weight regression by curve errors (1/sigma\302\262)" ), this );
+   cb_weight->setChecked( true );
+   cb_weight->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_weight->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_weight );
+   cb_weight->setMinimumHeight( minHeight1 );
+   cb_weight->setToolTip(
+                      us_tr( "Checked (default): fit each concentration regression with inverse-variance weights\n"
+                             "(1/sigma^2), sigma propagated onto the fit axis from each curve's error column, and\n"
+                             "propagate sigma into the extrapolated intercept's error bar. Statistically optimal\n"
+                             "when the error bars are reliable.\n\n"
+                             "Unchecked: ordinary (unweighted) least squares -- the curve errors are still shown\n"
+                             "in the regression plots but are not used in the fit, and the intercept error bar is\n"
+                             "the fit's residual scatter. More robust when the error bars are missing or mis-scaled\n"
+                             "(common in SAXS). A large weighted-vs-unweighted difference is itself a sign the\n"
+                             "errors are driving the result. This affects only the concentration regression, not\n"
+                             "the high-q reference merge test or the post-fit SD reassessment." ) );
 
    cb_regplots = new QCheckBox( us_tr( "Show per-q regression plots (scrollable pop-up)" ), this );
    cb_regplots->setChecked( false );
@@ -390,6 +410,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( cb_ref_scale );
    background->addWidget( cb_merge );
    background->addWidget( cb_gcv );
+   background->addWidget( cb_weight );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
    background->addLayout( hbl_sd_mode );
@@ -525,6 +546,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_merge_ref       = cb_merge->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
    *out_gcv           = cb_gcv->isChecked();
+   *out_use_sd_weights = cb_weight->isChecked();
    *out_model         = cb_model->currentIndex();
    *out_sd_mode       = cb_sd_mode->currentIndex();
    *out_discard_outlier = cb_outlier->isChecked();
