@@ -330,10 +330,10 @@ static bool us_extrap_c0_guinier(
 // the CURVE level (never per-q). Cheap per-q weighted OLS on the model axis (I/c for additive,
 // c/I for reciprocal/virial -- 1st order even when the output model is 2nd-virial, for stability
 // with a curve removed) gives standardized residuals t = (y - yhat)/sigma; per curve we take the
-// median |t| across q (robust to a few noisy q) and the fraction of q where the residual keeps
-// one sign (a real scale/concentration error is systematically one-signed; noise flips). The
-// worst curve is nominated; the caller applies the significance/separation/pooled-chi2 gates and
-// the count guard, and decides flag-vs-discard. Returns the nominated curve index (argmax median|t|)
+// mean |t| across q and the fraction of q where the residual keeps one sign (a real
+// scale/concentration error is systematically one-signed and biases low q most; noise flips). The
+// worst curve is nominated; the caller applies the significance + one-sided + pooled-chi2 gates and
+// the count guard, and decides flag-vs-discard. Returns the nominated curve index (argmax mean|t|)
 // or -1 if the set is too small; fills the diagnostics the gates and the log need. This targets
 // concentration/scale outliers only -- aggregation (extra low-q intensity) stays the Guinier QC's job.
 static int us_extrap_c0_detect_outlier(
@@ -344,9 +344,9 @@ static int us_extrap_c0_detect_outlier(
                                        map < QString, vector < double > >       & name_to_err,
                                        unsigned int                               npts,
                                        bool                                       reciprocal,
-                                       double                                   & T_out,       // median |t| of the nominee
+                                       double                                   & T_out,       // mean |t| of the nominee
                                        double                                   & sgn_out,     // one-sided fraction of the nominee
-                                       double                                   & sep_out,     // T_nominee / median T of the rest
+                                       double                                   & sep_out,     // T_nominee / median T of the rest (reported, not gated)
                                        double                                   & chi2_full_out,
                                        double                                   & chi2_red_out )
 {
@@ -411,14 +411,17 @@ static int us_extrap_c0_detect_outlier(
       pooled_den_full += ( n_here - 2 );         // per-q dof of a 2-parameter line
    }
 
-   // per-curve robust aggregate: median |t| and one-sided fraction
+   // per-curve aggregate: mean |t| across q. (Mean, not median: a bad concentration/scale error
+   // bites hardest at low q -- exactly where it corrupts I(0)/MW -- so its |t| is concentrated in
+   // a minority of points; the median washes that out, the mean keeps it while the one-sided and
+   // pooled-chi2 gates below still guard against a merely noisy curve.)
    vector < double > Tj( nc, 0e0 );
    for ( int ci = 0; ci < nc; ci++ )
    {
       if ( nval[ ci ] < 1 ) { Tj[ ci ] = 0e0; continue; }
-      vector < double > v = absres[ ci ];
-      std::sort( v.begin(), v.end() );
-      Tj[ ci ] = v[ v.size() / 2 ];
+      double s = 0e0;
+      for ( int k = 0; k < (int) absres[ ci ].size(); k++ ) { s += absres[ ci ][ k ]; }
+      Tj[ ci ] = s / (double) absres[ ci ].size();
    }
    int j_star = -1; double T_best = -1e0;
    for ( int ci = 0; ci < nc; ci++ )
@@ -755,17 +758,20 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                    ( extrap_model >= 1 ),
                                                    oT, osgn, osep, oc2f, oc2r );
 
-      bool qualifies = ( j_star >= 0 )
-         && ( oT   >= outlier_sigma )
-         && ( osgn >= 0.7e0 )
-         && ( osep >= 2e0 )
-         && ( oc2r >  0e0 && ( oc2f / oc2r ) >= outlier_chi2_ratio );
+      // gates: magnitude (mean |t| >= sigma), systematic (>=70% one-sided), and the curve
+      // must matter globally (pooled reduced chi^2 improves by >= the chi^2-gain factor when it
+      // is removed). Separation is reported but no longer a hard gate -- it needlessly blocked
+      // genuine low-q outliers whose per-q spread overlaps the others (see the alpha-syn 1.818 set).
+      double gain      = ( oc2r > 0e0 ) ? oc2f / oc2r : 0e0;
+      bool   g_sigma   = ( j_star >= 0 ) && ( oT   >= outlier_sigma );
+      bool   g_sign    = ( j_star >= 0 ) && ( osgn >= 0.7e0 );
+      bool   g_gain    = ( j_star >= 0 ) && ( oc2r > 0e0 ) && ( gain >= outlier_chi2_ratio );
+      bool   qualifies = g_sigma && g_sign && g_gain;
 
       int  min_remaining = ( extrap_model == 2 ) ? 4 : 3;
       bool count_ok      = false;
-      if ( qualifies )
+      if ( j_star >= 0 )
       {
-         // distinct remaining concentrations if j_star were dropped
          set < double > rem;
          for ( int ci = 0; ci < (int) concs.size(); ci++ )
          {
@@ -774,12 +780,18 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          count_ok = ( n_participating - 1 >= min_remaining ) && ( (int) rem.size() >= 3 );
       }
 
-      QString why = ( j_star >= 0 )
-         ? QString( us_tr( "median standardized residual %1 across q, %2% one-sided, "
-                           "pooled reduced chi^2 %3 -> %4 (x%5 better) if removed" ) )
-             .arg( oT, 0, 'f', 2 ).arg( 100e0 * osgn, 0, 'f', 0 )
-             .arg( oc2f, 0, 'g', 3 ).arg( oc2r, 0, 'g', 3 )
-             .arg( ( oc2r > 0e0 ) ? oc2f / oc2r : 0e0, 0, 'f', 2 )
+      QString nominee = ( j_star >= 0 ) ? ordered_names[ j_star ] : QString();
+      nominee.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+
+      // full evaluation line, so a no-discard run is not silent and the thresholds can be tuned
+      QString detail = ( j_star >= 0 )
+         ? QString( us_tr( "most-outlying \"%1\" (conc %2): mean standardized residual %3 (threshold %4), "
+                           "%5% one-sided (>=70%), pooled reduced chi^2 %6 -> %7 (x%8, threshold %9), separation %10x" ) )
+             .arg( nominee ).arg( ( j_star >= 0 ) ? concs[ j_star ] : 0e0 )
+             .arg( oT, 0, 'f', 2 ).arg( outlier_sigma, 0, 'f', 2 )
+             .arg( 100e0 * osgn, 0, 'f', 0 )
+             .arg( oc2f, 0, 'g', 3 ).arg( oc2r, 0, 'g', 3 ).arg( gain, 0, 'f', 2 ).arg( outlier_chi2_ratio, 0, 'f', 2 )
+             .arg( osep, 0, 'f', 2 )
          : QString();
 
       if ( qualifies && count_ok && discard_outlier )
@@ -805,11 +817,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             }
          }
 
-         QString dropped_display = excl_name;
-         dropped_display.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
          editor_msg( "red",
-                    QString( us_tr( "Outlier QC: excluded curve \"%1\" (conc %2) -- %3. Refit on %4 curves.\n" ) )
-                    .arg( dropped_display ).arg( excl_conc ).arg( why ).arg( n_participating - 1 ) );
+                    QString( us_tr( "Outlier QC: DISCARDED -- %1. Refit on %2 curves.\n" ) )
+                    .arg( detail ).arg( n_participating - 1 ) );
 
          ordered_names.removeAt( j_star );
          concs.erase( concs.begin() + j_star );
@@ -821,24 +831,33 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          all_istar = ( istar_count == (unsigned int) ordered_names.size() );
          n_outlier_dropped = 1;
       }
-      else if ( qualifies && !count_ok )
+      else if ( discard_outlier )
       {
-         QString nm = ordered_names[ j_star ];
-         nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
-         editor_msg( "dark red",
-                    QString( us_tr( "Outlier QC: curve \"%1\" (conc %2) looks off the trend (%3), but too few "
-                                    "curves would remain to drop it safely -- keeping it. Check this concentration.\n" ) )
-                    .arg( nm ).arg( concs[ j_star ] ).arg( why ) );
+         // auto-discard on but nothing dropped: always say why, so the thresholds can be tuned
+         if ( j_star < 0 )
+         {
+            editor_msg( "black",
+                       QString( us_tr( "Outlier QC: too few curves to evaluate (need >= 4 with a concentration).\n" ) ) );
+         }
+         else
+         {
+            QStringList fails;
+            if ( !g_sigma )  { fails << us_tr( "residual below sigma threshold" ); }
+            if ( !g_sign )   { fails << us_tr( "not systematic enough (<70% one-sided)" ); }
+            if ( !g_gain )   { fails << us_tr( "chi^2 gain below threshold" ); }
+            if ( qualifies && !count_ok ) { fails << us_tr( "too few curves would remain to drop safely" ); }
+            editor_msg( "dark red",
+                       QString( us_tr( "Outlier QC: kept (%1) -- %2.\n" ) )
+                       .arg( fails.join( "; " ) ).arg( detail ) );
+         }
       }
-      else if ( qualifies )                       // detected but auto-discard not enabled
+      else if ( qualifies && count_ok )
       {
-         QString nm = ordered_names[ j_star ];
-         nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         // auto-discard off: flag a would-be discard so the user can act
          editor_msg( "dark red",
-                    QString( us_tr( "Outlier QC: curve \"%1\" (conc %2) looks off the trend (%3). Not discarded "
-                                    "(enable \"Automatically discard one outlier concentration\" or verify this "
-                                    "concentration).\n" ) )
-                    .arg( nm ).arg( concs[ j_star ] ).arg( why ) );
+                    QString( us_tr( "Outlier QC: %1 looks like an outlier. Not discarded (enable "
+                                    "\"Automatically discard one outlier concentration\" to act, or verify this concentration).\n" ) )
+                    .arg( detail ) );
       }
    }
 

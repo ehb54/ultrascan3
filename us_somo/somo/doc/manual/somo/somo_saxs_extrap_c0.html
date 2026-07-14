@@ -211,13 +211,17 @@ curves. <b>At most one</b> curve is ever discarded, and only when enough remain 
 &ge;&nbsp;4 for the 2nd-order virial). Detection is at the curve level, never per-<i>q</i>:
 per-<i>q</i> outlier trimming would overfit at these small point counts and stitch discontinuities
 into the output, whereas a bad concentration is a whole-curve property. The two fields tune it:
-<b>Outlier threshold (sigma)</b> (default 3.0) is the median standardized residual across <i>q</i>
+<b>Outlier threshold (sigma)</b> (default 3.0) is the mean standardized residual across <i>q</i>
 above which a curve is flagged, and <b>Min &chi;&sup2; gain to discard</b> (default 1.5) is the
 factor by which removing the curve must improve the pooled reduced <i>&chi;</i><sup>2</sup> before
-it is actually dropped (the curve must also be consistently one-signed and well separated from the
-others). Whether or not the box is checked, a strong outlier is always <b>flagged</b> in the log;
-checking the box additionally acts on it. A discarded curve is drawn as a <b>red x</b> in the
-per-<i>q</i> regression plots and noted in the log, and the output name gains <code>_qc1</code>.
+it is actually dropped; the curve must also be consistently one-signed (a systematic offset, not
+noise). Because a concentration error bites hardest at low <i>q</i>, mild outliers often sit near
+a mean residual of 1&ndash;2 rather than 3, so lowering the sigma field (e.g. to 1.5) with the
+&chi;&sup2; gain near 1.2 is the way to act on a borderline curve; the default is deliberately
+conservative. Every run reports the most-outlying curve and all of these numbers in the log (so
+the thresholds can be tuned), whether or not anything is discarded. A discarded curve is drawn as
+a <b>red x</b> in the per-<i>q</i> regression plots and noted in the log, and the output name gains
+<code>_qc1</code>.
 This targets concentration/scale outliers; curve-shape problems such as aggregation are the job of
 the Guinier quality check below.</p>
 

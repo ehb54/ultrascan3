@@ -288,7 +288,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
 
    le_outlier_sigma = new QLineEdit( this );
    le_outlier_sigma->setText( "3.0" );
-   le_outlier_sigma->setValidator( new QDoubleValidator( 1.0, 100.0, 2, le_outlier_sigma ) );
+   le_outlier_sigma->setValidator( new QDoubleValidator( 0.1, 100.0, 2, le_outlier_sigma ) );
    le_outlier_sigma->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
    le_outlier_sigma->setMinimumHeight( minHeight1 );
    le_outlier_sigma->setMaximumWidth( 70 );
@@ -532,8 +532,10 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
       bool   ok_s = false, ok_c = false;
       double s = le_outlier_sigma->text().toDouble( &ok_s );
       double c = le_outlier_chi2 ->text().toDouble( &ok_c );
-      *out_outlier_sigma      = ( ok_s && s >= 1e0 ) ? s : 3.0e0;
-      *out_outlier_chi2_ratio = ( ok_c && c >= 1e0 ) ? c : 1.5e0;
+      // sigma is a standardized-residual threshold (can be well below 1 for mild outliers);
+      // the chi^2 gain is a ratio, so values < 1 (removal makes the fit worse) are meaningless
+      *out_outlier_sigma      = ( ok_s && s >  0e0 ) ? s : 3.0e0;
+      *out_outlier_chi2_ratio = ( ok_c && c >= 1e0 ) ? c : 1.0e0;
    }
    // the manual q-window is used only for classic Zimm (no absolute-scale, no GCV)
    *out_fit_broaden   = ( cb_ref_scale->isChecked() || cb_merge->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
