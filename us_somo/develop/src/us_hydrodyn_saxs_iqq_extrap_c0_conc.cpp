@@ -7,6 +7,7 @@
 #include <QColor>
 #include <QHeaderView>
 #include <QIntValidator>
+#include <QDoubleValidator>
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           QStringList names,
@@ -21,6 +22,9 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_gcv,
                                                                           int *out_model,
                                                                           int *out_sd_mode,
+                                                                          bool *out_discard_outlier,
+                                                                          double *out_outlier_sigma,
+                                                                          double *out_outlier_chi2_ratio,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -38,6 +42,9 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_gcv            = out_gcv;
    this->out_model          = out_model;
    this->out_sd_mode        = out_sd_mode;
+   this->out_discard_outlier    = out_discard_outlier;
+   this->out_outlier_sigma      = out_outlier_sigma;
+   this->out_outlier_chi2_ratio = out_outlier_chi2_ratio;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -72,7 +79,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    }
    int width = qBound( 600, 250 + max_name_len * 8, 1400 );
 
-   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 8 ) );
+   setGeometry( 200, 150, width, 100 + 30 * ( names.size() + 10 ) );
 }
 
 US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::~US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc()
@@ -248,6 +255,72 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    hbl_sd_mode->addWidget( lbl_sd_mode );
    hbl_sd_mode->addWidget( cb_sd_mode, 1 );
 
+   // Robust one-outlier-curve QC. A bad concentration / scale / aggregating curve is off the
+   // concentration trend at essentially every q; detected at the curve level and, if this box is
+   // checked, discarded from the whole fit (at most one). The two thresholds tune detection: a
+   // curve is flagged when its median standardized residual across q exceeds "sigma" (and it is
+   // consistently one-signed and well separated from the others), and discarded only if removing
+   // it also improves the pooled reduced chi^2 by at least the "min chi^2 gain" factor.
+   cb_outlier = new QCheckBox( us_tr( "Automatically discard one outlier concentration (robust QC)" ), this );
+   cb_outlier->setChecked( false );
+   cb_outlier->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_outlier->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_outlier );
+   cb_outlier->setMinimumHeight( minHeight1 );
+   cb_outlier->setToolTip(
+                        us_tr( "Off (default): use every selected curve.\n\n"
+                               "On: if one concentration curve is consistently off the concentration trend across q\n"
+                               "(a mis-entered concentration, a scaling error, or an aggregating curve), discard that\n"
+                               "single curve before fitting -- so it cannot bias the extrapolation or be picked as the\n"
+                               "reference. At most one curve is removed, only when enough curves remain (>=3, or >=4 for\n"
+                               "the 2nd-order virial). The excluded curve is drawn as a red x in the regression plots and\n"
+                               "reported in the log. Whether or not this is checked, a strong outlier is always flagged in\n"
+                               "the log. Targets concentration/scale outliers; aggregation is caught by the Guinier check." ) );
+
+   QHBoxLayout * hbl_outlier = new QHBoxLayout; hbl_outlier->setContentsMargins( 4, 0, 4, 0 ); hbl_outlier->setSpacing( 6 );
+   lbl_outlier_sigma = new QLabel( us_tr( "Outlier threshold (sigma):" ), this );
+   lbl_outlier_sigma->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_outlier_sigma->setMinimumHeight( minHeight1 );
+   lbl_outlier_sigma->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_outlier_sigma );
+   lbl_outlier_sigma->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   lbl_outlier_sigma->setToolTip( us_tr( "Median standardized residual (across q) above which a curve is flagged as an outlier." ) );
+
+   le_outlier_sigma = new QLineEdit( this );
+   le_outlier_sigma->setText( "3.0" );
+   le_outlier_sigma->setValidator( new QDoubleValidator( 1.0, 100.0, 2, le_outlier_sigma ) );
+   le_outlier_sigma->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
+   le_outlier_sigma->setMinimumHeight( minHeight1 );
+   le_outlier_sigma->setMaximumWidth( 70 );
+   le_outlier_sigma->setPalette( PALET_NORMAL );
+   AUTFBACK( le_outlier_sigma );
+   le_outlier_sigma->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+
+   lbl_outlier_chi2 = new QLabel( us_tr( "Min chi\302\262 gain to discard:" ), this );
+   lbl_outlier_chi2->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_outlier_chi2->setMinimumHeight( minHeight1 );
+   lbl_outlier_chi2->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_outlier_chi2 );
+   lbl_outlier_chi2->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   lbl_outlier_chi2->setToolTip( us_tr( "Required factor by which removing the curve must improve the pooled reduced chi^2 before it is actually discarded." ) );
+
+   le_outlier_chi2 = new QLineEdit( this );
+   le_outlier_chi2->setText( "1.5" );
+   le_outlier_chi2->setValidator( new QDoubleValidator( 1.0, 100.0, 2, le_outlier_chi2 ) );
+   le_outlier_chi2->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
+   le_outlier_chi2->setMinimumHeight( minHeight1 );
+   le_outlier_chi2->setMaximumWidth( 70 );
+   le_outlier_chi2->setPalette( PALET_NORMAL );
+   AUTFBACK( le_outlier_chi2 );
+   le_outlier_chi2->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+
+   hbl_outlier->addWidget( lbl_outlier_sigma );
+   hbl_outlier->addWidget( le_outlier_sigma );
+   hbl_outlier->addSpacing( 16 );
+   hbl_outlier->addWidget( lbl_outlier_chi2 );
+   hbl_outlier->addWidget( le_outlier_chi2 );
+   hbl_outlier->addStretch( 1 );
+
    // Zimm fit-broadening: couple neighbouring q by smoothing the concentration slope
    QHBoxLayout * hbl_broaden = new QHBoxLayout; hbl_broaden->setContentsMargins( 4, 0, 4, 0 ); hbl_broaden->setSpacing( 6 );
    lbl_broaden = new QLabel( us_tr( "Zimm fit broadening (q-window, 0 = off):" ), this );
@@ -320,6 +393,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
    background->addLayout( hbl_sd_mode );
+   background->addWidget( cb_outlier );
+   background->addLayout( hbl_outlier );
    background->addLayout( hbl_broaden );
    background->addWidget( lbl_status );
    background->addLayout( hbl_bottom );
@@ -452,6 +527,14 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_gcv           = cb_gcv->isChecked();
    *out_model         = cb_model->currentIndex();
    *out_sd_mode       = cb_sd_mode->currentIndex();
+   *out_discard_outlier = cb_outlier->isChecked();
+   {
+      bool   ok_s = false, ok_c = false;
+      double s = le_outlier_sigma->text().toDouble( &ok_s );
+      double c = le_outlier_chi2 ->text().toDouble( &ok_c );
+      *out_outlier_sigma      = ( ok_s && s >= 1e0 ) ? s : 3.0e0;
+      *out_outlier_chi2_ratio = ( ok_c && c >= 1e0 ) ? c : 1.5e0;
+   }
    // the manual q-window is used only for classic Zimm (no absolute-scale, no GCV)
    *out_fit_broaden   = ( cb_ref_scale->isChecked() || cb_merge->isChecked() || cb_gcv->isChecked() ) ? 0 : le_broaden->text().toInt();
    *out_ok = true;

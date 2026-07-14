@@ -48,6 +48,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
                                               vector < double >               reg_b,
                                               vector < double >               reg_c,
                                               vector < double >               reg_siga,
+                                              double                          excl_conc,
+                                              vector < double >               reg_excl_y,
+                                              QString                         excl_name,
                                               QWidget *                       p = 0,
                                               const char *                    name = 0
                                               );
@@ -71,6 +74,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot : public QFrame
       vector < double >               reg_b;
       vector < double >               reg_c;        // quadratic coeff (2nd-virial), 0 for linear fits
       vector < double >               reg_siga;
+      double                          excl_conc;    // QC-excluded curve's concentration (< 0 => none)
+      vector < double >               reg_excl_y;   // its per-q y on the plot axis (NaN where none)
+      QString                         excl_name;    // its (dequoted) name, for the info note
 
       int                             cur_index;
 

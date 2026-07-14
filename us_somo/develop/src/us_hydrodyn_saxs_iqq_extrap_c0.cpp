@@ -41,7 +41,8 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
 }
 
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
-                                        bool merge_ref, double merge_q, int sd_mode )
+                                        bool merge_ref, double merge_q, int sd_mode,
+                                        int n_outlier_dropped )
 {
    // method token encoding the choices that produced the curve, so distinct selections give
    // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
@@ -63,6 +64,7 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    if ( sd_mode == 1 ) { method += "_sdC"; }
    else if ( sd_mode == 2 ) { method += "_sdN"; }
    else if ( sd_mode == 3 ) { method += "_sdI"; }
+   if ( n_outlier_dropped > 0 ) { method += "_qc" + QString::number( n_outlier_dropped ); }
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
    prefix.remove( QRegularExpression( "[\\s_-]+$" ) );
@@ -323,6 +325,144 @@ static bool us_extrap_c0_guinier(
    return ( Rg > 0e0 );
 }
 
+// Robust one-outlier-curve detection for the dilution series. A bad concentration / scale /
+// aggregating curve is off the concentration trend at (nearly) every q, so it is detected at
+// the CURVE level (never per-q). Cheap per-q weighted OLS on the model axis (I/c for additive,
+// c/I for reciprocal/virial -- 1st order even when the output model is 2nd-virial, for stability
+// with a curve removed) gives standardized residuals t = (y - yhat)/sigma; per curve we take the
+// median |t| across q (robust to a few noisy q) and the fraction of q where the residual keeps
+// one sign (a real scale/concentration error is systematically one-signed; noise flips). The
+// worst curve is nominated; the caller applies the significance/separation/pooled-chi2 gates and
+// the count guard, and decides flag-vs-discard. Returns the nominated curve index (argmax median|t|)
+// or -1 if the set is too small; fills the diagnostics the gates and the log need. This targets
+// concentration/scale outliers only -- aggregation (extra low-q intensity) stays the Guinier QC's job.
+static int us_extrap_c0_detect_outlier(
+                                       const QStringList                        & names,
+                                       const vector < double >                  & concs,
+                                       const vector < bool >                    & is_istar,
+                                       map < QString, vector < double > >       & name_to_I,
+                                       map < QString, vector < double > >       & name_to_err,
+                                       unsigned int                               npts,
+                                       bool                                       reciprocal,
+                                       double                                   & T_out,       // median |t| of the nominee
+                                       double                                   & sgn_out,     // one-sided fraction of the nominee
+                                       double                                   & sep_out,     // T_nominee / median T of the rest
+                                       double                                   & chi2_full_out,
+                                       double                                   & chi2_red_out )
+{
+   T_out = 0e0; sgn_out = 0e0; sep_out = 0e0; chi2_full_out = 0e0; chi2_red_out = 0e0;
+   int nc = names.size();
+   if ( nc < 4 )
+   {
+      return -1;                                 // need >= 4 so dropping one still leaves >= 3
+   }
+
+   // per-curve accumulators over q
+   vector < vector < double > > absres( nc );    // |standardized residual| per q (valid only)
+   vector < int >    npos( nc, 0 ), nval( nc, 0 );
+   double pooled_num_full = 0e0; double pooled_den_full = 0e0;
+
+   for ( unsigned int qi = 0; qi < npts; qi++ )
+   {
+      // weighted OLS of y vs c at this q (model axis), collecting sufficient stats
+      double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+      int    n_here = 0;
+      vector < double > yv( nc ), wv( nc ), xv( nc );
+      vector < bool >   ok( nc, false );
+      for ( int ci = 0; ci < nc; ci++ )
+      {
+         if ( concs[ ci ] <= 0e0 ) { continue; }
+         const vector < double > & Iarr = name_to_I[ names[ ci ] ];
+         if ( qi >= Iarr.size() ) { continue; }
+         double Iv = Iarr[ qi ];
+         if ( us_isnan( Iv ) ) { continue; }
+         double sd = ( name_to_err.count( names[ ci ] ) && qi < name_to_err[ names[ ci ] ].size() )
+            ? name_to_err[ names[ ci ] ][ qi ] : 0e0;
+         if ( us_isnan( sd ) ) { sd = 0e0; }
+         double y, sig;
+         if ( reciprocal )
+         {
+            if ( Iv <= 0e0 ) { continue; }
+            if ( is_istar[ ci ] ) { y = 1e0 / Iv;           sig = sd / ( Iv * Iv ); }
+            else                  { y = concs[ ci ] / Iv;   sig = sd * concs[ ci ] / ( Iv * Iv ); }
+         }
+         else if ( is_istar[ ci ] ) { y = Iv;               sig = sd; }
+         else                       { y = Iv / concs[ ci ];  sig = sd / concs[ ci ]; }
+         double w = ( sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
+         yv[ ci ] = y; wv[ ci ] = w; xv[ ci ] = concs[ ci ]; ok[ ci ] = true;
+         S += w; Sx += w * xv[ ci ]; Sy += w * y; Sxx += w * xv[ ci ] * xv[ ci ]; Sxy += w * xv[ ci ] * y;
+         n_here++;
+      }
+      double M = ( S > 0e0 ) ? ( Sxx - Sx * Sx / S ) : 0e0;
+      if ( n_here < 3 || M <= 0e0 ) { continue; } // no usable trend at this q
+      double slope = ( Sxy - Sx * Sy / S ) / M;
+      double icept = ( Sy - Sx * slope ) / S;
+      for ( int ci = 0; ci < nc; ci++ )
+      {
+         if ( !ok[ ci ] ) { continue; }
+         double r  = yv[ ci ] - ( icept + slope * xv[ ci ] );
+         double sg = ( wv[ ci ] > 0e0 ) ? 1e0 / sqrt( wv[ ci ] ) : 0e0;
+         double t  = ( sg > 0e0 ) ? r / sg : 0e0;
+         absres[ ci ].push_back( fabs( t ) );
+         nval[ ci ]++;
+         if ( r >= 0e0 ) { npos[ ci ]++; }
+         pooled_num_full += wv[ ci ] * r * r;
+      }
+      pooled_den_full += ( n_here - 2 );         // per-q dof of a 2-parameter line
+   }
+
+   // per-curve robust aggregate: median |t| and one-sided fraction
+   vector < double > Tj( nc, 0e0 );
+   for ( int ci = 0; ci < nc; ci++ )
+   {
+      if ( nval[ ci ] < 1 ) { Tj[ ci ] = 0e0; continue; }
+      vector < double > v = absres[ ci ];
+      std::sort( v.begin(), v.end() );
+      Tj[ ci ] = v[ v.size() / 2 ];
+   }
+   int j_star = -1; double T_best = -1e0;
+   for ( int ci = 0; ci < nc; ci++ )
+   {
+      if ( Tj[ ci ] > T_best ) { T_best = Tj[ ci ]; j_star = ci; }
+   }
+   if ( j_star < 0 ) { return -1; }
+
+   // separation: nominee vs the median of the OTHER curves' Tj
+   vector < double > rest;
+   for ( int ci = 0; ci < nc; ci++ ) { if ( ci != j_star ) { rest.push_back( Tj[ ci ] ); } }
+   std::sort( rest.begin(), rest.end() );
+   double T_rest_med = rest.size() ? rest[ rest.size() / 2 ] : 0e0;
+
+   // pooled reduced chi^2 with the nominee removed (cheap: subtract its residual contribution)
+   double pooled_num_red = 0e0, pooled_den_red = 0e0;
+   {
+      // recompute quickly without j_star (its removal also changes each q's fit, but for the
+      // gate a refit-free approximation that drops its residuals is adequate and conservative)
+      pooled_num_red = pooled_num_full;
+      // subtract j_star's weighted squared residuals
+      double sub = 0e0; int nsub = 0;
+      // (absres holds |t| = |r|/sg, and t^2 = w r^2, so w r^2 = t^2)
+      for ( int k = 0; k < (int) absres[ j_star ].size(); k++ )
+      {
+         sub += absres[ j_star ][ k ] * absres[ j_star ][ k ]; nsub++;
+      }
+      pooled_num_red -= sub;
+      pooled_den_red  = pooled_den_full - nsub;  // each dropped point removes ~1 dof
+   }
+
+   double chi2_full = ( pooled_den_full > 0e0 ) ? pooled_num_full / pooled_den_full : 0e0;
+   double chi2_red  = ( pooled_den_red  > 0e0 ) ? pooled_num_red  / pooled_den_red  : 0e0;
+
+   T_out         = Tj[ j_star ];
+   sgn_out       = ( nval[ j_star ] > 0 )
+      ? qMax( (double) npos[ j_star ], (double) ( nval[ j_star ] - npos[ j_star ] ) ) / (double) nval[ j_star ]
+      : 0e0;
+   sep_out       = ( T_rest_med > 0e0 ) ? T_out / T_rest_med : ( T_out > 0e0 ? 1e30 : 0e0 );
+   chi2_full_out = chi2_full;
+   chi2_red_out  = chi2_red;
+   return j_star;
+}
+
 void US_Hydrodyn_Saxs::do_extrap_c0(
                                     QStringList qsl_sel_names,
                                     QStringList qsl_data,
@@ -463,8 +603,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool use_gcv       = true;   // automatic GCV slope regularization (recommended default)
    int  extrap_model  = 1;      // concentration model: 0 additive, 1 reciprocal (default), 2 2nd-virial
    int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
+   bool   discard_outlier     = false; // auto-discard one outlier concentration curve (robust QC)
+   double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
+   double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, &sd_mode, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &extrap_model, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -588,6 +731,115 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             QString( us_tr( "%1 curve(s) have a concentration of 0 and will be excluded "
                                             "from the extrapolation (intensity can't be normalized by a zero concentration)." ) )
                             .arg( zero_conc_excluded ) );
+   }
+
+   // 5b. robust one-outlier-curve QC. Detect (always) a single concentration curve that is off
+   //     the concentration trend at essentially every q -- a bad concentration/scale or an
+   //     aggregating curve (the alpha-syn 1.818 case) -- and, if the user enabled auto-discard,
+   //     remove it from the whole fit before the reference is picked (so a bad curve can't become
+   //     the reference either). If detected but auto-discard is off (or too few curves remain to
+   //     drop safely), just flag it. At most one curve is ever removed. Captured for the regplot
+   //     as a red "x" on the excluded point. Targets concentration/scale outliers; aggregation is
+   //     the Guinier QC's job.
+   QString           excl_name;                 // name of the QC-excluded curve ("" => none)
+   double            excl_conc = -1e0;           // its concentration (regplot x); < 0 => none
+   vector < double > reg_excl_y;                 // its per-q y on the plot axis (NaN where none)
+   int               n_outlier_dropped = 0;
+   {
+      int n_participating = 0;
+      for ( int ci = 0; ci < (int) concs.size(); ci++ ) { if ( concs[ ci ] > 0e0 ) { n_participating++; } }
+
+      double oT = 0e0, osgn = 0e0, osep = 0e0, oc2f = 0e0, oc2r = 0e0;
+      int    j_star = us_extrap_c0_detect_outlier( ordered_names, concs, is_istar,
+                                                   name_to_I, name_to_err, npts,
+                                                   ( extrap_model >= 1 ),
+                                                   oT, osgn, osep, oc2f, oc2r );
+
+      bool qualifies = ( j_star >= 0 )
+         && ( oT   >= outlier_sigma )
+         && ( osgn >= 0.7e0 )
+         && ( osep >= 2e0 )
+         && ( oc2r >  0e0 && ( oc2f / oc2r ) >= outlier_chi2_ratio );
+
+      int  min_remaining = ( extrap_model == 2 ) ? 4 : 3;
+      bool count_ok      = false;
+      if ( qualifies )
+      {
+         // distinct remaining concentrations if j_star were dropped
+         set < double > rem;
+         for ( int ci = 0; ci < (int) concs.size(); ci++ )
+         {
+            if ( ci != j_star && concs[ ci ] > 0e0 ) { rem.insert( concs[ ci ] ); }
+         }
+         count_ok = ( n_participating - 1 >= min_remaining ) && ( (int) rem.size() >= 3 );
+      }
+
+      QString why = ( j_star >= 0 )
+         ? QString( us_tr( "median standardized residual %1 across q, %2% one-sided, "
+                           "pooled reduced chi^2 %3 -> %4 (x%5 better) if removed" ) )
+             .arg( oT, 0, 'f', 2 ).arg( 100e0 * osgn, 0, 'f', 0 )
+             .arg( oc2f, 0, 'g', 3 ).arg( oc2r, 0, 'g', 3 )
+             .arg( ( oc2r > 0e0 ) ? oc2f / oc2r : 0e0, 0, 'f', 2 )
+         : QString();
+
+      if ( qualifies && count_ok && discard_outlier )
+      {
+         excl_name = ordered_names[ j_star ];
+         excl_conc = concs[ j_star ];
+         // the excluded curve's y on the current plot axis, per q, for the regplot red "x"
+         bool istar_j = is_istar[ j_star ];
+         reg_excl_y.assign( npts, numeric_limits < double >::quiet_NaN() );
+         const vector < double > & Iarr = name_to_I[ excl_name ];
+         for ( unsigned int qi = 0; qi < npts && qi < Iarr.size(); qi++ )
+         {
+            double Iv = Iarr[ qi ];
+            if ( us_isnan( Iv ) ) { continue; }
+            if ( extrap_model >= 1 )              // reciprocal / virial axis c/I
+            {
+               if ( Iv <= 0e0 ) { continue; }
+               reg_excl_y[ qi ] = istar_j ? 1e0 / Iv : excl_conc / Iv;
+            }
+            else                                  // additive axis I/c
+            {
+               reg_excl_y[ qi ] = istar_j ? Iv : Iv / excl_conc;
+            }
+         }
+
+         QString dropped_display = excl_name;
+         dropped_display.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         editor_msg( "red",
+                    QString( us_tr( "Outlier QC: excluded curve \"%1\" (conc %2) -- %3. Refit on %4 curves.\n" ) )
+                    .arg( dropped_display ).arg( excl_conc ).arg( why ).arg( n_participating - 1 ) );
+
+         ordered_names.removeAt( j_star );
+         concs.erase( concs.begin() + j_star );
+         is_istar.erase( is_istar.begin() + j_star );
+
+         // refresh the I*(q) bookkeeping after removal
+         istar_count = 0;
+         for ( int ci = 0; ci < ordered_names.size(); ci++ ) { if ( is_istar[ ci ] ) { istar_count++; } }
+         all_istar = ( istar_count == (unsigned int) ordered_names.size() );
+         n_outlier_dropped = 1;
+      }
+      else if ( qualifies && !count_ok )
+      {
+         QString nm = ordered_names[ j_star ];
+         nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         editor_msg( "dark red",
+                    QString( us_tr( "Outlier QC: curve \"%1\" (conc %2) looks off the trend (%3), but too few "
+                                    "curves would remain to drop it safely -- keeping it. Check this concentration.\n" ) )
+                    .arg( nm ).arg( concs[ j_star ] ).arg( why ) );
+      }
+      else if ( qualifies )                       // detected but auto-discard not enabled
+      {
+         QString nm = ordered_names[ j_star ];
+         nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         editor_msg( "dark red",
+                    QString( us_tr( "Outlier QC: curve \"%1\" (conc %2) looks off the trend (%3). Not discarded "
+                                    "(enable \"Automatically discard one outlier concentration\" or verify this "
+                                    "concentration).\n" ) )
+                    .arg( nm ).arg( concs[ j_star ] ).arg( why ) );
+      }
    }
 
    // Absolute-scale setup: pick the reference (highest-concentration) curve, compute a
@@ -1258,7 +1510,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
-   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode );
+   QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped );
    QString final_name = base_name;
    {
       int suffix = 1;
@@ -1315,6 +1567,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                                     extrap_model,                  // 0 additive, 1 reciprocal, 2 virial
                                                     reg_q, reg_x, reg_y, reg_e,
                                                     reg_a, reg_b, reg_c, reg_siga,
+                                                    excl_conc,                     // QC-excluded curve conc (<0 => none)
+                                                    reg_excl_y,                    // its per-q y on the plot axis
+                                                    QString( excl_name ).remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) ),
                                                     this
                                                     );
       regplot->setAttribute( Qt::WA_DeleteOnClose );

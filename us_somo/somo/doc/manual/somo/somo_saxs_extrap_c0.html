@@ -200,6 +200,27 @@ whole spliced curve. The verdict, reduced <i>&chi;</i><sup>2</sup>, and <i>p</i>
 reported in the log, and the chosen mode is encoded in the curve name
 (<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>).</p>
 
+<p><b>Automatically discard one outlier concentration</b> (checkbox, off by default; with two
+threshold fields). A single curve with a mis-entered concentration, a scaling error, or
+aggregation sits off the concentration trend at essentially <i>every</i> <i>q</i>, and because
+it is on the wrong concentration axis rather than merely noisy, the inverse-variance weighting
+does not suppress it &mdash; it biases every per-<i>q</i> fit and can even be picked as the
+high-<i>q</i> reference. When this box is checked, such a curve is detected and removed from the
+whole fit (before the reference is chosen), so the extrapolation is computed on the remaining
+curves. <b>At most one</b> curve is ever discarded, and only when enough remain (&ge;&nbsp;3, or
+&ge;&nbsp;4 for the 2nd-order virial). Detection is at the curve level, never per-<i>q</i>:
+per-<i>q</i> outlier trimming would overfit at these small point counts and stitch discontinuities
+into the output, whereas a bad concentration is a whole-curve property. The two fields tune it:
+<b>Outlier threshold (sigma)</b> (default 3.0) is the median standardized residual across <i>q</i>
+above which a curve is flagged, and <b>Min &chi;&sup2; gain to discard</b> (default 1.5) is the
+factor by which removing the curve must improve the pooled reduced <i>&chi;</i><sup>2</sup> before
+it is actually dropped (the curve must also be consistently one-signed and well separated from the
+others). Whether or not the box is checked, a strong outlier is always <b>flagged</b> in the log;
+checking the box additionally acts on it. A discarded curve is drawn as a <b>red x</b> in the
+per-<i>q</i> regression plots and noted in the log, and the output name gains <code>_qc1</code>.
+This targets concentration/scale outliers; curve-shape problems such as aggregation are the job of
+the Guinier quality check below.</p>
+
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the normalized
      result, and the absolute-scale + spliced result on a log I(q) vs q axis -->
 <center><img SRC="somo_saxs_extrap_c0_result.png" BORDER="1" ALT="Extrapolated curve"></center>
@@ -264,8 +285,9 @@ that produced it &mdash; the concentration model
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
 underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), and
-finally the SD-reassessment mode if one was applied
-(<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), so a
+the SD-reassessment mode if one was applied
+(<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
+<code>_qc1</code> if an outlier concentration was discarded, so a
 run's cutover is visible in its name (for example
 <code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
 therefore produce distinct, self-describing names; a genuine repeat of the same configuration

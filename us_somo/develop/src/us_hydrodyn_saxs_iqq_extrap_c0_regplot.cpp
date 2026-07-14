@@ -26,6 +26,9 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
                                                                                 vector < double >               reg_b,
                                                                                 vector < double >               reg_c,
                                                                                 vector < double >               reg_siga,
+                                                                                double                          excl_conc,
+                                                                                vector < double >               reg_excl_y,
+                                                                                QString                         excl_name,
                                                                                 QWidget *                       p,
                                                                                 const char *
                                                                                 ) : QFrame( p )
@@ -44,6 +47,9 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot(
    this->reg_b        = reg_b;
    this->reg_c        = reg_c;
    this->reg_siga     = reg_siga;
+   this->excl_conc    = excl_conc;
+   this->reg_excl_y   = reg_excl_y;
+   this->excl_name    = excl_name;
 
    cur_index   = 0;
    plot_zoomer = (ScrollZoomer *) 0;
@@ -91,6 +97,11 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::setupGUI()
                                   "reflects the globally-smoothed fit, while the points/error bars are the raw "
                                   "per-q data -- so the line may not pass exactly through the per-q intercept." ) )
          .arg( gcv_edof, 0, 'f', 1 );
+   }
+   if ( excl_conc > 0e0 && !excl_name.isEmpty() )
+   {
+      info_txt += QString( us_tr( "\nOutlier QC: curve \"%1\" (conc %2) was excluded from the fit and is shown as a red x." ) )
+         .arg( excl_name ).arg( excl_conc );
    }
    lbl_info = new QLabel( info_txt, this );
    lbl_info->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
@@ -304,6 +315,15 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
    if ( a < y_min ) y_min = a;
    if ( a > y_max ) y_max = a;
 
+   // include the QC-excluded curve's point (drawn below as a red x) in the autoscale so it
+   // stays visible -- seeing where the rejected point sits is the purpose of showing it
+   bool have_excl = ( excl_conc > 0e0 && i < (int) reg_excl_y.size() && !us_isnan( reg_excl_y[ i ] ) );
+   if ( have_excl )
+   {
+      if ( reg_excl_y[ i ] < y_min ) y_min = reg_excl_y[ i ];
+      if ( reg_excl_y[ i ] > y_max ) y_max = reg_excl_y[ i ];
+   }
+
    // fitted curve across the full x-range (so the c=0 intercept is visible). A straight
    // line for the additive/reciprocal fits; a sampled parabola for the 2nd-order virial.
    double c_coef = ( i < (int) reg_c.size() ) ? reg_c[ i ] : 0e0;
@@ -352,6 +372,17 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Regplot::update_plot()
       curve->setSamples( (double *) &( x[ 0 ] ), (double *) &( y[ 0 ] ), x.size() );
       curve->attach( plot );
       plot_curves.push_back( curve );
+   }
+
+   // QC-excluded curve's point at this q: a red x (the same convention as removed Guinier
+   // points), not part of the fit -- so the user can see what was rejected and where it sat
+   if ( have_excl )
+   {
+      QwtPlotMarker * marker = new QwtPlotMarker;
+      marker->setSymbol( new QwtSymbol( QwtSymbol::XCross, QBrush( Qt::red ), QPen( Qt::red, 2 ), QSize( 12, 12 ) ) );
+      marker->setValue( excl_conc, reg_excl_y[ i ] );
+      marker->attach( plot );
+      plot_markers.push_back( marker );
    }
 
    // result marker: for Zimm this is the c=0 intercept; for absolute-scale it is the merged

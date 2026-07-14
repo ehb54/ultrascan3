@@ -42,6 +42,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_gcv,
                                           int *out_model,
                                           int *out_sd_mode,
+                                          bool *out_discard_outlier,
+                                          double *out_outlier_sigma,
+                                          double *out_outlier_chi2_ratio,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -60,6 +63,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QComboBox    *cb_model;
       QLabel       *lbl_sd_mode;
       QComboBox    *cb_sd_mode;
+      QCheckBox    *cb_outlier;
+      QLabel       *lbl_outlier_sigma;
+      QLineEdit    *le_outlier_sigma;
+      QLabel       *lbl_outlier_chi2;
+      QLineEdit    *le_outlier_chi2;
       QLabel       *lbl_broaden;
       QLineEdit    *le_broaden;
       QLabel       *lbl_status;
@@ -81,6 +89,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_gcv;
       int          *out_model;
       int          *out_sd_mode;
+      bool         *out_discard_outlier;
+      double       *out_outlier_sigma;
+      double       *out_outlier_chi2_ratio;
       void         *us_hydrodyn;
 
       bool          disable_updates;
