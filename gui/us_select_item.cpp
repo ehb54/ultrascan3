@@ -85,7 +85,8 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	 }
        if( add_label == "AUTOFLOW_GMP_REPORT")
 	 {
-	   autoflow_gmp_report = true;	   
+	   autoflow_gmp_report = true;
+	   refresh_state_autoflow = true;   // reuse the existing "refresh" button/signal plumbing
 	 }
      }
    
@@ -251,7 +252,9 @@ void US_SelectItem::build_layout( const QString titl )
 
    QPushButton* pb_mark_unmark_failed_autoflow = us_pushbutton( tr( "Mark/Unmark Run as Failed" ) );
 
-   QPushButton* pb_refresh_state_autoflow      = us_pushbutton( tr( "Refresh Optima Run States" ) );
+   QPushButton* pb_refresh_state_autoflow      = us_pushbutton( autoflow_gmp_report ?
+                                                                 tr( "Refresh List" ) :
+                                                                 tr( "Refresh Optima Run States" ) );
    
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_delete );

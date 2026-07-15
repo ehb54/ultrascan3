@@ -1,6 +1,9 @@
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QPainter>
+#include <QProgressDialog>
+#include <QApplication>
+#include <QKeyEvent>
 //#include <QThread>    
 
 
@@ -58,6 +61,86 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
   resize( 600, 500 );
 }
 
+// Blocks the modal "please wait" progress dialog (shown in loadGMPReport())
+// from being dismissed by the user via the Escape key -- it has no
+// title-bar buttons since it is frameless, so that's the only way left in.
+bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
+{
+  if ( qobject_cast< QProgressDialog* >( obj ) )
+    {
+      if ( event->type() == QEvent::KeyPress )
+	{
+	  QKeyEvent* keyEvent = static_cast< QKeyEvent* >( event );
+	  if ( keyEvent->key() == Qt::Key_Escape )
+	    return true;
+	}
+    }
+
+  return US_Widgets::eventFilter( obj, event );
+}
+
+// Re-fetches the GMP report list from the database while the "Select GMP
+// Report for Audit Trail" dialog is still open (triggered by its own
+// "Refresh List" button, see loadGMPReport()), then redraws that dialog's
+// table in place with the refreshed data. Unlike the very first scan, this
+// one can be cancelled -- if the user does, the previously loaded list is
+// left untouched.
+void US_auditTrailGMP::refreshGMPReportsList( void )
+{
+  US_Passwd pw( this );
+  US_DB2 db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+			     tr( "Cancel" ), 0, 0, pdiag_autoflow_db );
+  progress.setWindowModality( Qt::ApplicationModal );
+  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+  progress.setMinimumDuration( 0 );
+  progress.setAutoClose( false );
+  progress.setAutoReset( false );
+  progress.installEventFilter( this );   // swallow Escape (Cancel button click still works normally)
+  progress.setValue( 0 );
+  progress.show();
+  progress.move( pdiag_autoflow_db->frameGeometry().center() - progress.rect().center() );
+  qApp->processEvents();
+
+  // Scan into a temporary list rather than gmpReportsDBdata directly, so
+  // that cancelling mid-scan can't leave the already-open dialog's data
+  // (and the cached list) in a truncated, half-refreshed state.
+  QList< QStringList > freshReportsData;
+  list_all_gmp_reports_db( freshReportsData, &db, &progress );
+
+  bool cancelled = progress.wasCanceled();
+
+  if ( !cancelled )
+    {
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+    }
+
+  progress.close();
+
+  if ( cancelled )
+    {
+      QMessageBox::information( pdiag_autoflow_db, tr( "Refresh Cancelled" ),
+				tr( "The refresh was cancelled. The previously loaded list is unchanged." ) );
+      return;
+    }
+
+  gmpReportsDBdata = freshReportsData;
+
+  // gmpReportsDBdata is held by reference inside pdiag_autoflow_db, so it
+  // already sees the refreshed contents -- just ask it to redraw the table.
+  QMetaObject::invokeMethod( pdiag_autoflow_db, "list_data" );
+}
+
 void US_auditTrailGMP::printAPDF( void )
 {
   QString subDirName = gmpRunName_passed + "_AuditTrail";
@@ -105,17 +188,45 @@ void US_auditTrailGMP::viewAPDF ( void )
 //Load GMP Run
 void US_auditTrailGMP::loadGMPReport( void )
 {
-  US_Passwd pw;
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+  // If the report list was already fetched earlier in this session, reuse
+  // it instead of hitting the database and re-running the full scan again.
+  if ( gmpReportsDBdata.isEmpty() )
     {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+      US_Passwd pw( this );
+      US_DB2 db( pw.getPasswd() );
   
-  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+      if ( db.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+				tr( "Could not connect to database \n" ) + db.lastError() );
+	  return;
+	}
+  
+      // Show a busy progress dialog while the (potentially long) DB query runs.
+      // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+      // are no close/minimize/maximize buttons and nothing for the user to grab
+      // and drag -- the dialog stays put, centered over this window.
+      QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+				 QString(), 0, 0, this );
+      progress.setWindowModality( Qt::ApplicationModal );
+      progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+      progress.setMinimumDuration( 0 );
+      progress.setAutoClose( false );
+      progress.setAutoReset( false );
+      progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
+      progress.setValue( 0 );
+      progress.show();
+      progress.move( this->frameGeometry().center() - progress.rect().center() );
+      qApp->processEvents();
+
+      list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+
+      progress.close();
+    }
 
   QString pdtitle( tr( "Select GMP Report for Audit Trail" ) );
   QStringList hdrs;
@@ -131,6 +242,8 @@ void US_auditTrailGMP::loadGMPReport( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+
+  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -181,7 +294,8 @@ void US_auditTrailGMP::loadGMPReport( void )
 }
 
 // Get .pdf GMP reports with assigned reviewers:
-int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db,
+						QProgressDialog* progress )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -201,23 +315,62 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
   qry << "get_autoflowGMPReport_desc";
   db->query( qry );
 
+  // First pass: buffer the base rows so the *total* record count is known
+  // up front. This is what lets the progress dialog show real, proportional
+  // ("N of M") progress below, instead of just sitting at an indeterminate
+  // busy state that never visibly moves.
+  struct GmpBaseRow
+  {
+    QString id;
+    QString autoflowHistoryID;
+    QString autoflowHistoryName;
+    QString ptime_created;
+    QString filenamePdf;
+  };
+
+  QList< GmpBaseRow > baseRows;
+
   while ( db->next() )
     {
-      QStringList gmpreportentry;
-      QString id                     = db->value( 0 ).toString();
-      QString autoflowHistoryID      = db->value( 1 ).toString();
-      QString autoflowHistoryName    = db->value( 2 ).toString();
-      QString protocolName           = db->value( 3 ).toString();
+      GmpBaseRow row;
+      row.id                  = db->value( 0 ).toString();
+      row.autoflowHistoryID   = db->value( 1 ).toString();
+      row.autoflowHistoryName = db->value( 2 ).toString();
+      // db->value( 3 )  -- protocolName, currently unused
 
-      QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
-      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+      QDateTime time_created  = db->value( 4 ).toDateTime().toUTC();
+      row.ptime_created        = US_Util::toUTCDatetimeText( time_created
 								   .toString( Qt::ISODate ), true )
 	                                                           .section( ":", 0, 1 ) + " UTC";
-      
-      QString filenamePdf            = db->value( 5 ).toString();
+
+      row.filenamePdf          = db->value( 5 ).toString();
+
+      baseRows << row;
+    }
+
+  if ( progress )
+    {
+      progress->setRange( 0, baseRows.size() );
+      progress->setValue( 0 );
+    }
+
+  // Second pass: for each candidate report, look up its eSign details --
+  // this is the part that does an extra DB round-trip per record and is
+  // where most of the time is spent -- and update the progress dialog with
+  // real, proportional progress as each one completes.
+  for ( int irow = 0; irow < baseRows.size(); irow++ )
+    {
+      // Only has any effect for a progress dialog that was given a real
+      // Cancel button (see refreshGMPReportsList()) -- the very first scan's
+      // dialog has no Cancel button, so wasCanceled() can never be true there.
+      if ( progress && progress->wasCanceled() )
+	break;
+
+      const GmpBaseRow& row = baseRows.at( irow );
+      QStringList gmpreportentry;
 
       //check if report has assigned operator(s) & reviewer(s)
-      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( autoflowHistoryID );
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID );
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
@@ -237,10 +390,10 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
       	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
-	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << ptime_created //<< time_created.toString()
-			 << filenamePdf
-			 << autoflowHistoryID;
+	  gmpreportentry << row.id << row.autoflowHistoryName
+			 << row.ptime_created
+			 << row.filenamePdf
+			 << row.autoflowHistoryID;
 
 	  // //additionally filter by userID for {operator, reviewer, appr.} in case of SEPARATE const.
 	  // if ( operatorListJson.contains( logged_user ) ||
@@ -255,6 +408,16 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
 	  gmpReportsDBdata << gmpreportentry;
 	  nrecs++;
 	}
+
+      if ( progress )
+	{
+	  progress->setValue( irow + 1 );
+	  progress->setLabelText( tr( "<b>Please Wait</b><br>"
+				       "Loading GMP runs from database...<br>"
+				       "%1 of %2 checked, %3 record(s) found" )
+				     .arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
+	  qApp->processEvents();
+	}
     }
 
   return nrecs;
@@ -266,7 +429,7 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 {
   QMap< QString, QString> eSign_record;
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -1120,6 +1283,59 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	      genL51 -> addLayout( genL5);
 	      genL51 -> addStretch();
 	    }
+
+	  //Scan Count Mismatch (ScanDifference) [if any]
+	  QGridLayout* genL6  = NULL;
+	  QVBoxLayout* genL61 = NULL;
+	  if ( status_map. contains("ScanDifference") )
+	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption style=\"color:red;\" align=left> <b><i>Scan Count Mismatch (Expected vs. Collected): </i></b> </caption>"
+				   "</table>"
+
+				   "<table style=\"margin-left:25px\">"
+				   );
+
+	      genL6  = new QGridLayout();
+	      genL61 = new QVBoxLayout();
+
+	      QLabel* lb_scandiff         = us_label( tr("Scan Count Mismatch:") );
+	      lb_scandiff->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      row=0;
+	      genL6 -> addWidget( lb_scandiff,      row++,   0,  1,  6  );
+
+	      QLabel* lb_scandiff1        = us_label( tr("Expected vs. Collected:") );
+	      genL6 -> addWidget( lb_scandiff1,     row,     1,  1,  2  );
+
+	      QStringList scandiff_list;
+	      QMap < QString, QString >::iterator sd;
+	      for ( sd = status_map[ "ScanDifference" ].begin(); sd != status_map[ "ScanDifference" ].end(); ++sd )
+		{
+		  scandiff_list << sd.value();
+
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td style=\"color:red;\"> %1 </td> "
+				       "</tr>"
+				       )
+		    .arg( sd.value() )
+		    ;
+		}
+	      html_assembled += tr( "</table>" );
+
+	      QTextEdit* te_scandiff1    = us_textedit();
+	      te_scandiff1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_scandiff1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+						US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_scandiff1, true );
+
+	      te_scandiff1 -> setText( scandiff_list.join(",\n") );
+	      genL6 -> addWidget( te_scandiff1,     row++,   3,  1,  3  );
+
+	      genL61 -> addLayout( genL6);
+	      genL61 -> addStretch();
+	    }
 	  
 	  //assemble
 	  genL->addLayout( genL11);
@@ -1130,6 +1346,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	    genL_sec_row->addLayout( genL41);
 	  if ( genL51 != NULL )
 	    genL_sec_row->addLayout( genL51);
+	  if ( genL61 != NULL )
+	    genL_sec_row->addLayout( genL61);
 
 	  genL_v_rows->addLayout( genL);
 	  genL_v_rows->addLayout( genL_sec_row);
@@ -1852,7 +2070,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
+   US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
 
@@ -1924,7 +2142,7 @@ void US_auditTrailGMP::read_reportLists_from_aprofile( QStringList & dropped_tri
   QString aprofile_xml;
   
   // Check DB connection
-  US_Passwd pw;
+  US_Passwd pw( this );
   QString masterPW = pw.getPasswd();
   US_DB2 db( masterPW );
   
@@ -2112,7 +2330,7 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QStrin
   analysisABDEJson  .clear();
   analysisABDEts    .clear();
 
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2    db( pw.getPasswd() );
 
   if ( db.lastErrno() != US_DB2::OK )
@@ -2231,6 +2449,22 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
 	  status_map[ key ] = dropped_map;
 	}
       
+
+      if ( key == "ScanDifference" )   // import: scan-count mismatches (expected vs. collected) per triple
+	{
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > scandiff_map;
+
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      scandiff_map[ QString::number( i ) ] = json_array[i].toString();
+	      qDebug() << "ScanDifference Map: -- index, value: "
+		       << i
+		       << json_array[i].toString();
+	    }
+
+	  status_map[ key ] = scandiff_map;
+	}
 
       if ( key == "Meniscus" )   //edit  
 	{	  
