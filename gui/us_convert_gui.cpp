@@ -1182,6 +1182,8 @@ void US_ConvertGui::reset_auto( void )
    ExpData     .clear();
 
    drop_operations. clear();
+   scan_difference_map. clear();
+   
    if ( isMwl )
       mwl_data.clear();
    show_plot_progress = true;
@@ -2583,12 +2585,19 @@ QString US_ConvertGui::correct_description( QString & description, QString cell,
 void US_ConvertGui::check_scans()
 {
    int nsmin = 99999;
+   int nsmax = -99999;
    for (int ii = 0; ii < allData.size(); ii++ ) {
       nsmin = qMin(allData[ii].scanCount(), nsmin);
+      nsmax = qMax(allData[ii].scanCount(), nsmax);
    }
-
+   
    QStringList ccws_list;
    bool same = true;
+
+   // Reset any previously recorded scan-count differences for this runType,
+   // so record_import_status() only sees the current check_scans() results.
+   scan_difference_map[ runType ].clear();
+
    for (int ii = 0; ii < allData.size(); ii++ ) {
       int ns = allData[ii].scanCount();
       // In most cases, df is zero. However, occasionally it becomes 1,
@@ -2598,10 +2607,27 @@ void US_ConvertGui::check_scans()
       char channel = allData[ii].channel;
       double lambda = allData[ii].scanData.first().wavelength;
       ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
-      if ( df > 0 ) {
-         same = false;
-         allData[ii].scanData.remove( ns - df, df );
-      }
+      if ( df > 0 )
+	{
+	  same = false;
+	  allData[ii].scanData.remove( ns - df, df );
+	}
+      else
+	{
+	  //for GMP report
+	  qDebug() << "triple: " << cell << "/" << channel << "/" << lambda << ": ns (collected) " << ns
+		   << "; nsmax (expected) " << nsmax;
+
+	  // Only triples whose collected scan count differs from the
+	  // expected (max) count are recorded for the import status report.
+	  if ( us_convert_auto_mode && ns != nsmax )
+	    scan_difference_map[ runType ] << tr("%1 / %2 / %3 : expected %4; collected %5")
+	      .arg(cell)
+	      .arg(channel)
+	      .arg(lambda)
+	      .arg(nsmax)
+	      .arg(ns);
+	} 
    }
    if ( ! same ) {
       US_WidgetsDialog *error_wgt = new US_WidgetsDialog(this);
@@ -3497,6 +3523,22 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    ///////////////////////////////////////////////////////////////////////
 
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
+
+   //Fix for GMP:dataDisk
+   /***
+       When mixed RI+IP data, it's possible that #total_chsols (channels) is less than 2*#cells_used
+       E.g., 1/A,1/B,2/A,2/B,5/A,5/B = RI (6 channels) + only 6/A IP (1 IP channel)
+       So, #total_chsols = 6+1 = 7, while #cells_used = 4 (1,2,5,6)
+       So, num_cent_holes = 7 / 4 = 1 (should be 2 !)
+       Possible fix: if #total_chsols > #cells_used: just make num_cent_holes = 2! 
+    ***/
+   if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
+     {
+       if ( ProtInfo.ProtSolutions.chsols.size() > ProtInfo.ProtCells.cells_used.size() )
+	 num_cent_holes = 2;
+     }
+   
+   
    qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
    
    int cellnumber;
@@ -3705,7 +3747,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       qDebug() << " Test HEXAL 1" ;
 	       
 	       cellnumber = i / num_cent_holes;
-
+	       qDebug() << "cellnumber, i, num_cent_holes, ProtInfo.ProtCells.cells_used.keys(), cent_options.keys()  -- "
+			<< cellnumber <<  i <<  num_cent_holes << ProtInfo.ProtCells.cells_used.size() << cent_options.size();
+	       
 	       qDebug() << " Test HEXAL 2" ;
 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
 		 {
@@ -3832,7 +3876,8 @@ int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
   QStringList channelList = channel_name.split("/");
   QString channel_name_mod = channelList[0] + " / " + channelList[1];
   
-  qDebug() << "In getProtSolIndex():  channel_name_mod -- " <<  channel_name_mod; 
+  qDebug() << "In getProtSolIndex():  ProtInfo.ProtSolutions.chsols.size(), channel_name_mod -- "
+	   <<  ProtInfo.ProtSolutions.chsols.size() << ", " << channel_name_mod; 
   
   for ( int i=0; i < ProtInfo.ProtSolutions.chsols.size(); ++i ) 
     {
@@ -8016,6 +8061,20 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importRI_Json.chop(1);
 	  importRI_Json += "}]";
 	}
+
+      //Now check if check_scans() found a mismatch between expected and
+      //collected scan counts for any triple in this run:
+      if ( !scan_difference_map[ runType ].isEmpty() )
+	{
+	  importRI_Json += ", \"ScanDifference\": ";
+	  importRI_Json += "[";
+	  foreach ( QString sd_line, scan_difference_map[ runType ] )
+	    {
+	      importRI_Json += "\"" + sd_line + "\",";
+	    }
+	  importRI_Json.chop(1);
+	  importRI_Json += "]";
+	}
       //////////////////////////////////////////////////////////////////////////////////
       
       importRI_Json += "}";
@@ -8077,6 +8136,20 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importIP_Json.chop(1);
 	  importIP_Json += "}]";
 	}
+
+      //Now check if check_scans() found a mismatch between expected and
+      //collected scan counts for any triple in this run:
+      if ( !scan_difference_map[ runType ].isEmpty() )
+	{
+	  importIP_Json += ", \"ScanDifference\": ";
+	  importIP_Json += "[";
+	  foreach ( QString sd_line, scan_difference_map[ runType ] )
+	    {
+	      importIP_Json += "\"" + sd_line + "\",";
+	    }
+	  importIP_Json.chop(1);
+	  importIP_Json += "]";
+	}
       //////////////////////////////////////////////////////////////////////////////////
 
       importIP_Json += "}";
@@ -8111,6 +8184,7 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
     }
 
   qDebug() << "in record_import_status: importRI_Json,importIP_Json -- " << importRI_Json << "\n" << importIP_Json;
+  
 } 
 
 
