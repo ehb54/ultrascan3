@@ -400,6 +400,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_iqq.cpp \
         src/us_hydrodyn_saxs_iqq_bead_model.cpp \
         src/us_hydrodyn_saxs_iqq_extrap_c0.cpp \
+        src/us_hydrodyn_saxs_iqq_extrap_c0_script.cpp \
         src/us_hydrodyn_saxs_iqq_extrap_c0_conc.cpp \
         src/us_hydrodyn_saxs_iqq_extrap_c0_regplot.cpp \
         src/us_hydrodyn_saxs_iqq_load_csv.cpp \

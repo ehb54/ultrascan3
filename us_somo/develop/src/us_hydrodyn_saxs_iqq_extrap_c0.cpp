@@ -5,6 +5,8 @@
 #include "../include/us_hydrodyn_saxs_iqq_extrap_c0_regplot.h"
 #include <QRegularExpression>
 #include <QFileInfo>
+#include <QFile>
+#include <QTextStream>
 #include <QMessageBox>
 #include <set>
 #include <algorithm>
@@ -502,6 +504,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                     QString filename
                                     )
 {
+   // In a scripted (headless) run the modal warning/critical popups below would block with no
+   // one to dismiss them; route them to the editor log instead. Interactively, behaviour is
+   // unchanged (a modal warning box). The abort messages are still followed by their return.
+   auto extrap_msg = [this]( const QString & msg ) {
+      if ( extrap_c0_script ) { editor_msg( "red", msg + "\n" ); }
+      else { QMessageBox::warning( this, "UltraScan", msg ); }
+   };
+
    // 1. parse the selected curves' I(q) rows (mirrors the parsing in load_iqq_csv())
 
    map < QString, vector < double > > name_to_I;
@@ -552,7 +562,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    if ( ordered_names.size() < 3 )
    {
-      QMessageBox::warning( this, "UltraScan",
+      extrap_msg(
                             us_tr( "Fewer than 3 curves with usable data are available; "
                                   "cannot extrapolate to zero concentration." ) );
       return;
@@ -640,6 +650,49 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool   discard_outlier     = false; // auto-discard one outlier concentration curve (robust QC)
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
+   if ( extrap_c0_script )
+   {
+      // scripted run: skip the modal concentration/options dialog and take every choice from
+      // the members set by saxs_extrap_c0_script(). Concentrations come from each curve's
+      // Conc: header (prepop_conc), optionally overridden by "conc" directives (dequoted key).
+      selected_names = ordered_names;
+      for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
+      {
+         QString name = *it;
+         QString dequoted_name = name;
+         dequoted_name.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         if ( extrap_c0_script_conc.count( dequoted_name ) )
+         {
+            name_to_conc[ name ] = extrap_c0_script_conc[ dequoted_name ];
+         }
+         else if ( prepop_conc.count( name ) )
+         {
+            name_to_conc[ name ] = prepop_conc[ name ];
+         }
+         else
+         {
+            editor_msg( "red",
+                       QString( us_tr( "saxs_extrap_c0: no concentration for curve %1 "
+                                       "(no Conc: header and no conc override); using 0\n" ) ).arg( name ) );
+            name_to_conc[ name ] = 0e0;
+         }
+      }
+      dlg_ok             = true;
+      ref_scale          = extrap_c0_script_ref_scale;
+      merge_ref          = extrap_c0_script_merge_ref;
+      show_regplots      = false;
+      fit_broaden        = extrap_c0_script_fit_broaden;
+      use_gcv            = extrap_c0_script_gcv;
+      use_sd_weights     = extrap_c0_script_sd_weights;
+      extrap_model       = extrap_c0_script_model;
+      recompute_inputs      = extrap_c0_script_recompute_in;
+      recompute_inputs_mode = extrap_c0_script_recompute_mode;
+      sd_mode            = extrap_c0_script_sd_mode;
+      discard_outlier    = extrap_c0_script_discard;
+      outlier_sigma      = extrap_c0_script_outlier_sigma;
+      outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
+   }
+   else
    {
       US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
@@ -662,7 +715,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    ordered_names = selected_names;
    if ( ordered_names.size() < 3 )
    {
-      QMessageBox::warning( this, "UltraScan",
+      extrap_msg(
                             us_tr( "Fewer than 3 curves were selected; "
                                   "cannot extrapolate to zero concentration." ) );
       return;
@@ -690,7 +743,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    set < double > distinct_concs( concs.begin(), concs.end() );
    if ( distinct_concs.size() < 3 )
    {
-      QMessageBox::warning( this, "UltraScan",
+      extrap_msg(
                             us_tr( "Fewer than 3 distinct concentration values were entered.\n"
                                   "The zero-concentration extrapolation may not be meaningful.\n"
                                   "Proceeding anyway." ) );
@@ -717,7 +770,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool all_istar = ( istar_count == (unsigned int) ordered_names.size() );
    if ( istar_count && !all_istar )
    {
-      QMessageBox::warning( this, "UltraScan",
+      extrap_msg(
                             QString( us_tr( "The selection mixes %1 I*(q) (already concentration-normalized, "
                                             "I(0)=MW) curve(s) with %2 raw-intensity curve(s). These are on "
                                             "different scales; the extrapolation may not be meaningful. "
@@ -768,7 +821,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    }
    if ( zero_conc_excluded )
    {
-      QMessageBox::warning( this, "UltraScan",
+      extrap_msg(
                             QString( us_tr( "%1 curve(s) have a concentration of 0 and will be excluded "
                                             "from the extrapolation (intensity can't be normalized by a zero concentration)." ) )
                             .arg( zero_conc_excluded ) );
@@ -994,7 +1047,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       if ( ref_ci < 0 )
       {
-         QMessageBox::critical( this, "UltraScan",
+         extrap_msg(
                                 us_tr( "Absolute-scale / reference-splice: no curve has a positive concentration "
                                        "to use as the reference; aborting." ) );
          return;
@@ -1390,7 +1443,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    if ( skipped_points )
    {
-      QMessageBox::warning( this, "UltraScan",
+      extrap_msg(
                             QString( us_tr( "%1 of %2 q-points could not be extrapolated "
                                             "(fewer than 2 valid data points) and were skipped." ) )
                             .arg( skipped_points ).arg( npts ) );
@@ -1408,7 +1461,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    if ( out_q.empty() )
    {
-      QMessageBox::critical( this, "UltraScan", us_tr( "No q-points could be extrapolated; aborting." ) );
+      extrap_msg( us_tr( "No q-points could be extrapolated; aborting." ) );
       return;
    }
 
@@ -1681,6 +1734,36 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // always Conc:1.
    double out_conc_tag = ( ref_scale && !all_istar ) ? ref_conc : 1e0;
    update_conc_csv( final_name, out_conc_tag );
+
+   // scripted run: also write the extrapolated curve to the requested output path, in the same
+   // 3-column q/I(q)/sd .dat format as the inputs (with a Conc: header) so it round-trips and
+   // can be diffed against a regression baseline.
+   if ( extrap_c0_script && !extrap_c0_script_out.isEmpty() )
+   {
+      QFile of( extrap_c0_script_out );
+      if ( !of.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         editor_msg( "red", QString( us_tr( "saxs_extrap_c0: cannot write output file '%1'\n" ) ).arg( extrap_c0_script_out ) );
+      }
+      else
+      {
+         QTextStream os( &of );
+         os << QString( "US-SOMO: extrapolate-to-zero-concentration: %1 q units:1/A Conc:%2 [mg/mL]\n" )
+            .arg( final_name ).arg( out_conc_tag, 0, 'g', 8 );
+         os << "q\tI(q)\tsd\n";
+         for ( unsigned int oi = 0; oi < (unsigned int) out_q.size(); oi++ )
+         {
+            double oe = ( oi < out_I0_err.size() ) ? out_I0_err[ oi ] : 0e0;
+            os << QString( "%1\t%2\t%3\n" )
+               .arg( out_q[ oi ], 0, 'e', 6 )
+               .arg( out_I0[ oi ], 0, 'e', 6 )
+               .arg( oe, 0, 'e', 6 );
+         }
+         of.close();
+         editor_msg( "black", QString( us_tr( "saxs_extrap_c0: wrote %1 points to %2\n" ) )
+                     .arg( out_q.size() ).arg( extrap_c0_script_out ) );
+      }
+   }
 
    QString fit_name   = ( extrap_model == 2 ) ? us_tr( "2nd-order virial (c/I)" )
                       : ( extrap_model == 1 ) ? us_tr( "reciprocal (c/I)" )

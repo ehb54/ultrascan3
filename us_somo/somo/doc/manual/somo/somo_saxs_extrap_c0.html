@@ -358,6 +358,66 @@ produces an already-normalized result (tagged <code>Conc:1</code> in both modes)
 <i>I</i>*(<i>q</i>) curves with raw-intensity curves in one extrapolation is flagged with a
 warning, as the two are on different scales.</p>
 
+<h3><center>Scripting (command-line / headless)</center></h3>
+
+<p>The same extrapolation can be run without the interactive dialogs, driven from a
+<code>gui_script</code> so that a run is reproducible and its result can be saved for
+regression testing or batch validation. The computation is identical to the interactive
+one &mdash; the same fit, the same options, the same output curve &mdash; only the two
+dialogs are replaced by a control file. Invoke it as:</p>
+
+<blockquote><code>us3_somo -I -g&nbsp;<i>script</i></code></blockquote>
+
+<p>where <i>script</i> contains one or more lines of the form
+<code>saxs_extrap_c0&nbsp;<i>controlfile</i></code> (followed by <code>exit</code>). The
+<code>-I</code> flag runs with the stored configuration and no start-up prompts. Each control
+file is a small key/value text file (one directive per line; lines beginning with <code>#</code>
+are comments). The <code>input</code> and <code>output</code> values may contain spaces:</p>
+
+<p>
+<code>input&nbsp;&nbsp;&nbsp;<i>path</i></code> &mdash; an input curve (a three-column
+<i>q</i>&nbsp;/&nbsp;<i>I</i>(<i>q</i>)&nbsp;/&nbsp;sd <code>.dat</code> file with a
+<code>Conc:</code> header); repeat for each curve (at least three). The concentration is read
+from each file's header.<br>
+<code>output&nbsp;&nbsp;<i>path</i></code> &mdash; where the extrapolated curve is written
+(same three-column format, with a <code>Conc:</code> header, so it round-trips).<br>
+<code>model&nbsp;&nbsp;&nbsp;additive&nbsp;|&nbsp;reciprocal&nbsp;|&nbsp;virial2</code>
+(default <code>reciprocal</code>).<br>
+<code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
+absolute scale, and splice the reference above the merge point.<br>
+<code>gcv&nbsp;0|1</code> (default&nbsp;1), <code>sd_weights&nbsp;0|1</code> (default&nbsp;1),
+<code>fit_broaden&nbsp;<i>N</i></code> &mdash; the slope-regularization, inverse-variance
+weighting, and Zimm fit-broadening controls.<br>
+<code>recompute_inputs&nbsp;off|constant|nonconstant|intensity</code> &mdash; transiently
+reassess the input SDs before fitting.<br>
+<code>sd_reassess&nbsp;off|constant|nonconstant|intensity</code> &mdash; reassess the output
+SDs after fitting.<br>
+<code>discard_outlier&nbsp;0|1</code>, <code>outlier_sigma&nbsp;<i>x</i></code>,
+<code>outlier_chi2&nbsp;<i>x</i></code> &mdash; the automatic one-outlier-concentration QC and
+its thresholds.<br>
+<code>conc&nbsp;&nbsp;&nbsp;"<i>name</i>"&nbsp;<i>value</i></code> &mdash; optional; override a
+curve's concentration instead of using its header.
+</p>
+
+<p>For example, a control file selecting the reciprocal model on the reference absolute scale
+with the reference spliced in above the merge point:</p>
+
+<blockquote><code>
+# reciprocal, absolute scale, reference splice<br>
+input&nbsp;&nbsp;&nbsp;curve_c1.dat<br>
+input&nbsp;&nbsp;&nbsp;curve_c2.dat<br>
+input&nbsp;&nbsp;&nbsp;curve_c3.dat<br>
+output&nbsp;&nbsp;extrap_c0.dat<br>
+model&nbsp;&nbsp;&nbsp;reciprocal<br>
+ref_scale&nbsp;1<br>
+merge_ref&nbsp;1
+</code></blockquote>
+
+<p>The diagnostics that would appear in the editor window (curves and points used, fit model
+and conventions, merge point, Guinier quality check, outlier-QC verdict, SD-reassessment
+verdict) are written to standard output, and the produced curve carries the same
+self-describing name as in the interactive run.</p>
+
 <h3><center>References</center></h3>
 
 <p><span lang="en-US">The linear extrapolation of concentration-normalized
