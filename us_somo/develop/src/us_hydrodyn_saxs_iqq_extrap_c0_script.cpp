@@ -3,6 +3,7 @@
 #include <QRegularExpression>
 #include <QFileInfo>
 #include <QFile>
+#include <QDir>
 #include <QTextStream>
 
 #define TSO QTextStream(stdout)
@@ -17,6 +18,16 @@
 //
 //   input   <path to input .dat>      (repeatable; >= 3 required; conc read from Conc: header)
 //   output  <path to result .dat>     (required)
+//   common_crop     0 | 1             (crop inputs to their shared q-overlap first; default 1.
+//                                      prevents the loader from spline-resampling mismatched grids)
+//   fill_sd         0 | 1             (repair non-positive input SDs before loading; default 1.
+//                                      A single zero SD (often a grid edge) otherwise disables that
+//                                      curve's errors entirely -- SOMO error handling is all-or-
+//                                      nothing -- forcing an unweighted fit. Each non-positive SD is
+//                                      replaced by its nearest positive neighbour, but only when the
+//                                      positive SDs are the majority (a mostly-zero curve has no real
+//                                      errors to draw from). Warnings are logged either way. Set 0 to
+//                                      disable repair, e.g. to reproduce the raw unweighted result.)
 //   model   additive | reciprocal | virial2         (default reciprocal)
 //   ref_scale       0 | 1             (output on reference absolute scale; default 0)
 //   merge_ref       0 | 1             (splice reference curve above merge q; default 0)
@@ -46,6 +57,120 @@ static int us_extrap_c0_script_sd_word( const QString & w )
    return -2; // unrecognized
 }
 
+// A data row is a line whose first whitespace token parses as a number and has >= 2 tokens;
+// anything else (US-SOMO header, "q I sd" column line, comments) is treated as a header line.
+static bool us_extrap_c0_script_is_data_row( const QString & line, double & q )
+{
+   QStringList t = line.simplified().split( ' ' );
+   if ( t.size() < 2 ) { return false; }
+   bool ok = false;
+   q = t[ 0 ].toDouble( &ok );
+   return ok;
+}
+
+// Scan an input curve's q-range (first and last data-row q) and count non-positive SD points.
+static bool us_extrap_c0_script_parse_qrange( const QString & path, double & q_front, double & q_back,
+                                              int & n_zero_sd, QString & errmsg )
+{
+   n_zero_sd = 0;
+   QFile f( path );
+   if ( !f.open( QIODevice::ReadOnly | QIODevice::Text ) ) { errmsg = QString( "cannot open '%1'" ).arg( path ); return false; }
+   QTextStream ts( &f );
+   bool have = false;
+   double q = 0e0, last = 0e0;
+   while ( !ts.atEnd() )
+   {
+      QString line = ts.readLine();
+      if ( !us_extrap_c0_script_is_data_row( line, q ) ) { continue; }
+      if ( !have ) { q_front = q; have = true; }
+      last = q;
+      QStringList t = line.simplified().split( ' ' );
+      if ( t.size() < 3 || t[ 2 ].toDouble() <= 0e0 ) { n_zero_sd++; }
+   }
+   f.close();
+   q_back = last;
+   if ( !have ) { errmsg = QString( "no data rows in '%1'" ).arg( path ); return false; }
+   return true;
+}
+
+// Copy an input curve to out_path keeping only data rows with q in [lo,hi] (header lines verbatim,
+// data lines verbatim so precision/columns/Conc: header are preserved untouched).
+// Copy an input curve to out_path keeping only data rows with q in [lo,hi]. Header lines are copied
+// verbatim. n_zero counts kept rows whose SD (3rd column) is <= 0; if fill_sd, each such SD is
+// replaced by the nearest positive-SD neighbour (n_filled counts replacements) so the loaded curve
+// keeps all-nonzero errors. This matters because SOMO uses all-or-nothing error handling: a single
+// zero SD (typically a grid edge) disables the whole curve's errors and forces an unweighted fit.
+static bool us_extrap_c0_script_write_crop( const QString & in_path, const QString & out_path,
+                                            double lo, double hi, bool fill_sd,
+                                            int & n_zero, int & n_filled, QString & errmsg )
+{
+   n_zero = 0; n_filled = 0;
+   QFile fi( in_path );
+   if ( !fi.open( QIODevice::ReadOnly | QIODevice::Text ) ) { errmsg = QString( "cannot open '%1'" ).arg( in_path ); return false; }
+
+   const double tol = 1e-7;
+   QStringList        headers;                 // leading non-data lines, verbatim
+   QStringList        rows;                     // in-range data rows, verbatim
+   vector < QString > qtok, itok;               // parsed q,I token strings (to re-emit filled rows)
+   vector < double >  sds;                      // parsed SD of each kept row
+   {
+      QTextStream is( &fi );
+      double q = 0e0;
+      while ( !is.atEnd() )
+      {
+         QString line = is.readLine();
+         if ( !us_extrap_c0_script_is_data_row( line, q ) ) { headers << line; continue; }
+         if ( q < lo - tol || q > hi + tol ) { continue; }
+         QStringList t = line.simplified().split( ' ' );
+         rows  << line;
+         qtok.push_back( t.size() > 0 ? t[ 0 ] : QString( "0" ) );
+         itok.push_back( t.size() > 1 ? t[ 1 ] : QString( "0" ) );
+         double sd = ( t.size() > 2 ) ? t[ 2 ].toDouble() : 0e0;
+         sds.push_back( sd );
+         if ( sd <= 0e0 ) { n_zero++; }
+      }
+   }
+   fi.close();
+
+   // fill each non-positive SD from the nearest positive-SD neighbour (index distance), but only
+   // when the positive SDs are the majority -- a mostly/all-zero curve has no real error information
+   // to interpolate from, so it is left as-is (its errors stay disabled) and only warned about.
+   vector < double > filled = sds;
+   if ( fill_sd && n_zero && n_zero * 2 < (int) sds.size() )
+   {
+      int n = (int) sds.size();
+      for ( int i = 0; i < n; i++ )
+      {
+         if ( sds[ i ] > 0e0 ) { continue; }
+         double v = 0e0;
+         for ( int d = 1; d < n; d++ )
+         {
+            if ( i - d >= 0 && sds[ i - d ] > 0e0 ) { v = sds[ i - d ]; break; }
+            if ( i + d <  n && sds[ i + d ] > 0e0 ) { v = sds[ i + d ]; break; }
+         }
+         if ( v > 0e0 ) { filled[ i ] = v; n_filled++; }
+      }
+   }
+
+   QFile fo( out_path );
+   if ( !fo.open( QIODevice::WriteOnly | QIODevice::Text ) ) { errmsg = QString( "cannot write '%1'" ).arg( out_path ); return false; }
+   QTextStream os( &fo );
+   for ( int i = 0; i < headers.size(); i++ ) { os << headers[ i ] << "\n"; }
+   for ( int i = 0; i < rows.size(); i++ )
+   {
+      if ( fill_sd && sds[ i ] <= 0e0 && filled[ i ] > 0e0 )
+      {
+         os << qtok[ i ] << "\t" << itok[ i ] << "\t" << QString::number( filled[ i ], 'e', 6 ) << "\n";
+      }
+      else
+      {
+         os << rows[ i ] << "\n";
+      }
+   }
+   fo.close();
+   return true;
+}
+
 void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
 {
    QFile f( controlfile );
@@ -57,6 +182,8 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
 
    QStringList  inputs;
    QString      output;
+   bool         common_crop = true;   // crop inputs to their shared q-overlap before loading
+   bool         fill_sd     = true;   // repair non-positive input SDs (when most are present) so errors stay enabled
    // start every run from the documented defaults, then apply directives
    extrap_c0_script_model          = 1;
    extrap_c0_script_ref_scale      = false;
@@ -113,6 +240,8 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
          else if ( l == "virial2"    || l == "virial" || l == "2" ) extrap_c0_script_model = 2;
          else { TSO << QString( "saxs_extrap_c0: line %1: unknown model '%2'\n" ).arg( lineno ).arg( val ); parse_ok = false; }
       }
+      else if ( key == "common_crop") { common_crop = ( val.toInt() != 0 ); }
+      else if ( key == "fill_sd"    ) { fill_sd     = ( val.toInt() != 0 ); }
       else if ( key == "ref_scale"  ) { extrap_c0_script_ref_scale  = ( val.toInt() != 0 ); }
       else if ( key == "merge_ref"  ) { extrap_c0_script_merge_ref  = ( val.toInt() != 0 ); }
       else if ( key == "gcv"        ) { extrap_c0_script_gcv        = ( val.toInt() != 0 ); }
@@ -179,6 +308,94 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    // start from an empty plot so repeated saxs_extrap_c0 runs in one session are independent
    // (curves would otherwise accumulate across runs).
    clear_plot_saxs_data();
+
+   // Pre-load conditioning of the inputs (this scripted flow only):
+   //  * common_crop (default on): crop to the shared q-overlap [max(first q), min(last q)] so
+   //    grid-aligned curves -- the common HPLC case, one detector grid cropped at different low-q --
+   //    load as identical grids with no interpolation; otherwise the shared loader resamples
+   //    mismatched grids, spline-extrapolating higher-starting curves below their data.
+   //  * zero-SD handling: SOMO disables a curve's errors entirely if ANY point has a non-positive SD
+   //    (all-or-nothing), forcing an unweighted fit. Such curves are always warned about; with
+   //    fill_sd on, each non-positive SD is replaced by its nearest positive neighbour so errors
+   //    stay enabled. Headers (incl. Conc:) are preserved, so concentrations/names are unchanged.
+   {
+      double lo = -1e99, hi = 1e99, min_front = 1e99, max_back = -1e99;
+      int    total_zero = 0;
+      bool   ok = true;
+      vector < int > zero_per( inputs.size(), 0 );
+      for ( int i = 0; i < inputs.size() && ok; ++i )
+      {
+         double fq = 0e0, bq = 0e0; int nz = 0; QString e;
+         if ( !us_extrap_c0_script_parse_qrange( inputs[ i ], fq, bq, nz, e ) )
+         {
+            TSO << QString( "saxs_extrap_c0: input scan: %1\n" ).arg( e );
+            ok = false; break;
+         }
+         if ( fq > lo ) { lo = fq; }
+         if ( bq < hi ) { hi = bq; }
+         if ( fq < min_front ) { min_front = fq; }
+         if ( bq > max_back  ) { max_back  = bq; }
+         zero_per[ i ] = nz; total_zero += nz;
+      }
+      if ( ok && lo >= hi )
+      {
+         TSO << QString( "saxs_extrap_c0: inputs have no common q-overlap (max start %1 >= min end %2)\n" ).arg( lo ).arg( hi );
+         ok = false;
+      }
+      if ( !ok ) { TSO << "saxs_extrap_c0: aborting (input scan failed)\n"; return; }
+
+      // warn about non-positive SDs (each disables its whole curve's errors -> unweighted fit)
+      for ( int i = 0; i < inputs.size(); ++i )
+      {
+         if ( zero_per[ i ] )
+         {
+            TSO << QString( "saxs_extrap_c0: WARNING: %1 has %2 non-positive SD point(s); SOMO disables that "
+                            "curve's errors entirely (unweighted fit)%3\n" )
+               .arg( QFileInfo( inputs[ i ] ).fileName() ).arg( zero_per[ i ] )
+               .arg( fill_sd ? " -- attempting repair (fill_sd on)" : " -- fill_sd off, not repaired" );
+         }
+      }
+
+      const double tol = 1e-7;
+      bool need_crop = common_crop && ( lo > min_front + tol || hi < max_back - tol );
+      bool need_fill = fill_sd && total_zero;
+      if ( need_crop || need_fill )
+      {
+         double clo = common_crop ? lo : min_front;   // keep each curve's full range when not cropping
+         double chi = common_crop ? hi : max_back;
+         QString tmpdir = QDir::tempPath() + "/us_extrap_c0_prep_" + QFileInfo( output ).completeBaseName();
+         QDir().mkpath( tmpdir );
+         TSO << QString( "saxs_extrap_c0: preparing %1 inputs%2%3 in %4\n" )
+            .arg( inputs.size() )
+            .arg( need_crop ? QString( " (crop to q %1:%2)" ).arg( clo ).arg( chi ) : QString() )
+            .arg( need_fill ? QString( " (fill non-positive SDs)" ) : QString() )
+            .arg( tmpdir );
+         QStringList prepared;
+         int total_filled = 0;
+         for ( int i = 0; i < inputs.size() && ok; ++i )
+         {
+            QString outp = QString( "%1/%2_%3" ).arg( tmpdir ).arg( i ).arg( QFileInfo( inputs[ i ] ).fileName() );
+            int nz = 0, nf = 0; QString e;
+            if ( !us_extrap_c0_script_write_crop( inputs[ i ], outp, clo, chi, fill_sd, nz, nf, e ) )
+            {
+               TSO << QString( "saxs_extrap_c0: prepare: %1\n" ).arg( e );
+               ok = false; break;
+            }
+            total_filled += nf;
+            prepared << outp;
+         }
+         if ( ok )
+         {
+            inputs = prepared;
+            if ( total_filled ) { TSO << QString( "saxs_extrap_c0: filled %1 non-positive SD point(s) across inputs\n" ).arg( total_filled ); }
+         }
+      }
+      else if ( common_crop )
+      {
+         TSO << "saxs_extrap_c0: inputs already share a common q-range; no cropping needed\n";
+      }
+      if ( !ok ) { TSO << "saxs_extrap_c0: aborting (prepare failed)\n"; return; }
+   }
 
    // load every input curve into the SAXS plot exactly as the user would (Conc: headers are
    // parsed into the conc facility here, feeding do_extrap_c0's prepopulated concentrations).

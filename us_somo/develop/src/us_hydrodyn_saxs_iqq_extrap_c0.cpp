@@ -1449,13 +1449,19 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                             .arg( skipped_points ).arg( npts ) );
    }
 
-   // weighting requested but some points had no usable error: those q fell back to unweighted;
-   // surface it rather than silently mixing weighted and unweighted fits
+   // weighting requested but some points had no usable error: those q fell back to unweighted.
+   // Surface it (non-blocking editor message -- never a pop-up, so it doesn't hang headless runs)
+   // rather than silently mixing weighted and unweighted fits. The usual cause is a curve carrying
+   // one or more non-positive SD points: SOMO's error handling is all-or-nothing, so that disables
+   // the whole curve's errors. Repair the SDs (the scripted path can auto-fill edge zeros) or, if
+   // you intend an unweighted extrapolation, turn off "Weight regression by curve errors".
    if ( use_sd_weights && n_missing_sd_pts )
    {
       editor_msg( "dark red",
                  QString( us_tr( "Note: inverse-variance weighting was requested, but %1 data point(s) had no "
-                                 "usable error; those q were fitted unweighted.\n" ) )
+                                 "usable error (a curve likely carries non-positive SD points, which disables its "
+                                 "errors entirely); those q were fitted unweighted. Repair the input SDs, or turn "
+                                 "off error weighting for an intentionally unweighted fit.\n" ) )
                  .arg( n_missing_sd_pts ) );
    }
 
