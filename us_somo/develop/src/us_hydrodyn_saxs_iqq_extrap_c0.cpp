@@ -254,11 +254,17 @@ static bool us_extrap_c0_guinier(
       return false;
    }
 
-   int    k         = ( n < 25 ) ? n : 25;      // initial low-q window
+   // initial low-q Guinier window chosen by q-VALUE (q <= ~0.08 A^-1), not point count: deposited
+   // data can be on a very fine grid where a fixed point count spans only a tiny, noisy sliver of
+   // low q, wrecking the fit (e.g. 25 points is q < 0.008 on a 2452-point grid). Fall back to a
+   // point count for coarse/short grids.
+   int    k = 0;
+   for ( int i = 0; i < n; i++ ) { if ( q[ i ] <= 8e-2 ) { k = i + 1; } else { break; } }
+   if ( k < 5 ) { k = ( n < 25 ) ? n : 25; }
    double slope     = 0e0;
    double intercept = 0e0;
 
-   for ( int pass = 0; pass < 2; pass++ )
+   for ( int pass = 0; pass < 6; pass++ )
    {
       double sx = 0e0, sy = 0e0, sxx = 0e0, sxy = 0e0;
       int    m  = 0;
@@ -303,8 +309,8 @@ static bool us_extrap_c0_guinier(
       Rg        = ( slope < 0e0 ) ? std::sqrt( -3e0 * slope ) : 0e0;
       I0        = std::exp( intercept );
 
-      // refine the window once so q_max*Rg <= ~1.3 (the valid Guinier range)
-      if ( pass == 0 && Rg > 0e0 )
+      // refine the window so q_max*Rg <= ~1.3 (the valid Guinier range), iterating to convergence
+      if ( Rg > 0e0 )
       {
          int knew = 0;
          for ( int i = 0; i < n; i++ )
@@ -321,6 +327,10 @@ static bool us_extrap_c0_guinier(
          if ( knew < 5 )
          {
             knew = ( n < 10 ) ? n : 10;
+         }
+         if ( knew == k )
+         {
+            break;                              // window stable -> converged
          }
          k = knew;
       }
@@ -1656,7 +1666,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       if ( us_extrap_c0_guinier( out_q, out_I0, g_Rg, g_I0, g_r2, g_n ) )
       {
          editor_msg( ( g_r2 >= 0.9 ) ? "black" : "dark red",
-                    QString( us_tr( "Guinier QC of the extrapolated curve: Rg = %1 A, I(0) = %2, "
+                    QString( us_tr( "Guinier QC of the extrapolated curve (rough automatic check -- use the "
+                                    "Guinier panel for a definitive fit): Rg = %1 A, I(0) = %2, "
                                     "R^2 = %3 over the first %4 points (q*Rg <= 1.3)%5\n" ) )
                     .arg( g_Rg, 0, 'f', 1 ).arg( g_I0, 0, 'g', 4 ).arg( g_r2, 0, 'f', 4 ).arg( g_n )
                     .arg( ( g_r2 >= 0.9 )
