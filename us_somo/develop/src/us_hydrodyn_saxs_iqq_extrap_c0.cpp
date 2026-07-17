@@ -627,6 +627,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // curves pushed in from elsewhere (e.g. SAXS Hplc's to_saxs()) are keyed by
    // the bare, unquoted plotted curve name. Try all three forms.
    map < QString, double > prepop_conc;
+   // Also remember each curve's partial specific volume (psv) and standard I(0) (i0se). These are
+   // read from the PSV:/I0se: header tokens into conc_csv on load; the extrapolated curve must
+   // carry them (and the inputs must keep them) so a later Guinier sees the real values rather than
+   // the global defaults. get_conc_csv_values() leaves the global default in psv/I0_std when a
+   // curve has no entry, so these maps always hold a usable value for every name.
+   map < QString, double > name_to_psv;
+   map < QString, double > name_to_i0se;
    for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
    {
       QString name = *it;
@@ -642,6 +649,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       {
          prepop_conc[ name ] = conc;
       }
+      name_to_psv [ name ] = psv;
+      name_to_i0se[ name ] = I0_std;
    }
 
    map < QString, double > name_to_conc;
@@ -731,15 +740,72 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       return;
    }
 
-   // 4. persist entered concentrations back into the existing conc_csv facility,
-   //    keyed by the dequoted (canonical, unquoted) curve name -- matches the
-   //    convention used by other writers such as US_Hydrodyn_Saxs_Hplc::to_saxs()
+   // 3b. psv / i0se consistency: partial specific volume (psv) and standard I(0) (i0se) are
+   //     molecular properties, so every curve in a concentration series must carry the same values.
+   //     A curve with no explicit PSV:/I0se: header uses the global default -- treat that as "unset"
+   //     (it constrains nothing, so it is always compatible). Two curves with *different explicit*
+   //     values are a fatal input error (extrapolating a mix of psv/i0se is meaningless): stop.
+   //     The agreed value, if any, is carried onto the inputs (step 4) and the extrapolated curve
+   //     (conc_csv + output header) so a later Guinier reproduces it rather than the defaults.
+   double common_psv  = our_saxs_options->psv;
+   double common_i0se = our_saxs_options->I0_exp;
+   bool   have_psv    = false;   // an explicit (non-default) psv was found and agreed on
+   bool   have_i0se   = false;
+   {
+      const double def_psv  = our_saxs_options->psv;
+      const double def_i0se = our_saxs_options->I0_exp;
+      auto differs = []( double a, double b )
+      {
+         return qAbs( a - b ) > 1e-6 + 1e-4 * qMax( qAbs( a ), qAbs( b ) );
+      };
+      QString conflicts;
+      for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
+      {
+         double  p  = name_to_psv .count( *it ) ? name_to_psv [ *it ] : def_psv;
+         double  e  = name_to_i0se.count( *it ) ? name_to_i0se[ *it ] : def_i0se;
+         QString dq = *it;
+         dq.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         if ( differs( p, def_psv ) )       // explicitly set (differs from the global default)
+         {
+            if ( !have_psv ) { common_psv = p; have_psv = true; }
+            else if ( differs( p, common_psv ) )
+            {
+               conflicts += QString( us_tr( "\n  %1: psv %2 (expected %3)" ) ).arg( dq ).arg( p, 0, 'g', 6 ).arg( common_psv, 0, 'g', 6 );
+            }
+         }
+         if ( differs( e, def_i0se ) )
+         {
+            if ( !have_i0se ) { common_i0se = e; have_i0se = true; }
+            else if ( differs( e, common_i0se ) )
+            {
+               conflicts += QString( us_tr( "\n  %1: i0se %2 (expected %3)" ) ).arg( dq ).arg( e, 0, 'g', 6 ).arg( common_i0se, 0, 'g', 6 );
+            }
+         }
+      }
+      if ( !conflicts.isEmpty() )
+      {
+         extrap_msg(
+            us_tr( "The selected curves carry conflicting partial specific volume (PSV) or "
+                   "standard I(0) (i0se) values. These are molecular properties and must be "
+                   "identical across a concentration series, so extrapolation is aborted. "
+                   "Correct the PSV:/I0se: headers so they agree (a curve without the header "
+                   "uses the global default and is treated as compatible):" ) + conflicts );
+         return;
+      }
+   }
+
+   // 4. persist entered concentrations back into the existing conc_csv facility, keyed by the
+   //    dequoted (canonical, unquoted) curve name -- matches the convention used by other writers
+   //    such as US_Hydrodyn_Saxs_Hplc::to_saxs(). Carry each curve's psv/i0se too, so re-plotting
+   //    does not reset them to the global defaults.
 
    for ( QStringList::iterator it = ordered_names.begin(); it != ordered_names.end(); it++ )
    {
       QString dequoted_name = *it;
       dequoted_name.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
-      update_conc_csv( dequoted_name, name_to_conc[ *it ] );
+      update_conc_csv( dequoted_name, name_to_conc[ *it ],
+                       name_to_psv .count( *it ) ? name_to_psv [ *it ] : our_saxs_options->psv,
+                       name_to_i0se.count( *it ) ? name_to_i0se[ *it ] : our_saxs_options->I0_exp );
    }
 
    // 5. distinct-concentration sanity check (warn, don't block)
@@ -1750,7 +1816,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // dividing by it recovers the normalized form; otherwise Conc:1. Already-I*(q) inputs are
    // always Conc:1.
    double out_conc_tag = ( ref_scale && !all_istar ) ? ref_conc : 1e0;
-   update_conc_csv( final_name, out_conc_tag );
+   update_conc_csv( final_name, out_conc_tag, common_psv, common_i0se );
 
    // scripted run: also write the extrapolated curve to the requested output path, in the same
    // 3-column q/I(q)/sd .dat format as the inputs (with a Conc: header) so it round-trips and
@@ -1765,8 +1831,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       else
       {
          QTextStream os( &of );
-         os << QString( "US-SOMO: extrapolate-to-zero-concentration: %1 q units:1/A Conc:%2 [mg/mL]\n" )
-            .arg( final_name ).arg( out_conc_tag, 0, 'g', 8 );
+         // carry psv/i0se forward in the header (same tokens/format as HPLC/MALS/DAD) so the
+         // extrapolated curve round-trips; only when an explicit value was actually present.
+         QString hdr_extra;
+         if ( have_psv )  { hdr_extra += QString( " PSV:%1 [mL/g]" ).arg( common_psv,  0, 'g', 8 ); }
+         if ( have_i0se ) { hdr_extra += QString( " I0se:%1 [a.u.]" ).arg( common_i0se, 0, 'g', 8 ); }
+         os << QString( "US-SOMO: extrapolate-to-zero-concentration: %1 q units:1/A Conc:%2 [mg/mL]%3\n" )
+            .arg( final_name ).arg( out_conc_tag, 0, 'g', 8 ).arg( hdr_extra );
          os << "q\tI(q)\tsd\n";
          for ( unsigned int oi = 0; oi < (unsigned int) out_q.size(); oi++ )
          {

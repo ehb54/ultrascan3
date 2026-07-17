@@ -41,6 +41,9 @@
 //   outlier_chi2    <double>          (required pooled chi^2 gain to confirm a drop; default 1.5)
 //   conc    <curve-name> <double>     (optional; override a curve's concentration. name may be
 //                                      quoted; matched against the plotted/dequoted curve name)
+//   dump_conc_csv   <path>            (optional; after the run, write the conc_csv table as
+//                                      name<TAB>conc<TAB>psv<TAB>i0se for every plotted curve --
+//                                      used to validate that psv/i0se are carried to the output)
 //
 // Input/output paths take the entire remainder of the line (they may contain spaces).
 
@@ -182,6 +185,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
 
    QStringList  inputs;
    QString      output;
+   QString      dump_conc_csv_path;   // optional: dump the conc_csv table after the run (validation)
    bool         common_crop = true;   // crop inputs to their shared q-overlap before loading
    bool         fill_sd     = true;   // repair non-positive input SDs (when most are present) so errors stay enabled
    // start every run from the documented defaults, then apply directives
@@ -242,6 +246,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       }
       else if ( key == "common_crop") { common_crop = ( val.toInt() != 0 ); }
       else if ( key == "fill_sd"    ) { fill_sd     = ( val.toInt() != 0 ); }
+      else if ( key == "dump_conc_csv" ) { dump_conc_csv_path = val; }
       else if ( key == "ref_scale"  ) { extrap_c0_script_ref_scale  = ( val.toInt() != 0 ); }
       else if ( key == "merge_ref"  ) { extrap_c0_script_merge_ref  = ( val.toInt() != 0 ); }
       else if ( key == "gcv"        ) { extrap_c0_script_gcv        = ( val.toInt() != 0 ); }
@@ -420,5 +425,33 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    TSO << QString( "saxs_extrap_c0: extrapolating %1 curves -> %2\n" ).arg( inputs.size() ).arg( output );
    load_saxs( "", true );
    extrap_c0_script     = false;
+
+   // optional: dump the conc_csv table (name, conc, psv, i0se) for regression validation -- lets a
+   // test assert that the extrapolated curve (and the inputs) carry the inputs' psv/i0se rather
+   // than the global defaults.
+   if ( !dump_conc_csv_path.isEmpty() )
+   {
+      QFile df( dump_conc_csv_path );
+      if ( !df.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         TSO << QString( "saxs_extrap_c0: cannot write conc_csv dump '%1'\n" ).arg( dump_conc_csv_path );
+      }
+      else
+      {
+         QTextStream ds( &df );
+         ds << "name\tconc\tpsv\ti0se\n";
+         for ( unsigned int i = 0; i < conc_csv.data.size(); ++i )
+         {
+            const vector < QString > & r = conc_csv.data[ i ];
+            ds << ( r.size() > 0 ? r[ 0 ] : QString() ) << "\t"
+               << ( r.size() > 1 ? r[ 1 ] : QString() ) << "\t"
+               << ( r.size() > 2 ? r[ 2 ] : QString() ) << "\t"
+               << ( r.size() > 3 ? r[ 3 ] : QString() ) << "\n";
+         }
+         df.close();
+         TSO << QString( "saxs_extrap_c0: wrote conc_csv (%1 rows) to %2\n" ).arg( (int) conc_csv.data.size() ).arg( dump_conc_csv_path );
+      }
+   }
+
    TSO << "saxs_extrap_c0: done\n";
 }
