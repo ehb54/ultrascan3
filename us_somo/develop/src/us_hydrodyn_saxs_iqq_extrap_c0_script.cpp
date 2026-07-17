@@ -377,9 +377,28 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
             .arg( tmpdir );
          QStringList prepared;
          int total_filled = 0;
+         // Name each cropped/filled copy by its ORIGINAL basename when the inputs' basenames are
+         // all distinct (the normal case: a labelled concentration series). Then the loaded curve
+         // names keep the shared series prefix (e.g. X4_Lys...), so the extrapolated curve's derived
+         // name and any per-curve warnings stay meaningful instead of being defeated by an index
+         // prefix. Only fall back to an index-prefixed basename if two inputs share a basename (same
+         // filename from different dirs), which would otherwise collide as identical plotted names.
+         bool basenames_unique = true;
+         {
+            QStringList seen;
+            for ( int i = 0; i < inputs.size(); ++i )
+            {
+               QString b = QFileInfo( inputs[ i ] ).fileName();
+               if ( seen.contains( b ) ) { basenames_unique = false; break; }
+               seen << b;
+            }
+         }
          for ( int i = 0; i < inputs.size() && ok; ++i )
          {
-            QString outp = QString( "%1/%2_%3" ).arg( tmpdir ).arg( i ).arg( QFileInfo( inputs[ i ] ).fileName() );
+            QString base = QFileInfo( inputs[ i ] ).fileName();
+            QString outp = basenames_unique
+               ? QString( "%1/%2" ).arg( tmpdir ).arg( base )
+               : QString( "%1/%2_%3" ).arg( tmpdir ).arg( i ).arg( base );
             int nz = 0, nf = 0; QString e;
             if ( !us_extrap_c0_script_write_crop( inputs[ i ], outp, clo, chi, fill_sd, nz, nf, e ) )
             {
