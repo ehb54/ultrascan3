@@ -60,6 +60,16 @@ value already known to SOMO, and may be edited; each must be a non-negative
 number. A concentration shown on a <span style="color:#CC0000">red</span>
 background is not yet a valid number.</p>
 
+<p><b>Partial specific volume and standard <i>I</i>(0).</b> Alongside the concentration, each
+curve can carry two molecular properties read from its header &mdash; the partial specific volume
+(the <code>PSV:</code> tag) and the standard experimental forward scatter <i>I</i>(0) (the
+<code>I0se:</code> tag) &mdash; which the downstream Guinier / molecular-weight analysis relies on.
+Because these are properties of the molecule, they must be the same for every curve in a
+concentration series. If two selected curves carry <i>different explicit</i> values the
+extrapolation is aborted with a message naming the disagreeing curve, so the headers can be
+corrected; a curve that has no such header simply uses the program default and is treated as
+compatible.</p>
+
 <!-- IMAGE NEEDED: the concentration-assignment dialog itself, showing the table,
      the Absolute-scale mode checkbox, the status line, and the Help/Cancel/Extrapolate row -->
 <center><img SRC="somo_saxs_extrap_c0_dialog.png" BORDER="1" ALT="Concentration and selection dialog"></center>
@@ -336,6 +346,13 @@ gets a numeric suffix. Curves with a concentration of zero are excluded from the
 curves and points were used, the fit model and output conventions, and, when a reference is
 used, its identity and the merge point.</p>
 
+<p>The extrapolated curve inherits the series' partial specific volume and standard <i>I</i>(0)
+(the agreed <code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> values described above) &mdash; both in
+the plot, so that a subsequent Guinier / molecular-weight analysis of it uses the correct values
+rather than the program defaults, and in the saved file's header, so they round-trip. These
+values are also preserved on the input curves themselves (re-plotting no longer resets them to the
+defaults).</p>
+
 <p><b>Guinier quality check.</b> After the curve is produced, the editor window reports a
 Guinier fit of it (a straight-line fit of ln&nbsp;<i>I</i> versus <i>q</i><sup>2</sup> over
 the low-<i>q</i> region, the window chosen so <i>q</i><sub>max</sub>&middot;<i>R</i><sub>g</sub>&nbsp;&le;&nbsp;1.3):
@@ -378,9 +395,10 @@ are comments). The <code>input</code> and <code>output</code> values may contain
 <code>input&nbsp;&nbsp;&nbsp;<i>path</i></code> &mdash; an input curve (a three-column
 <i>q</i>&nbsp;/&nbsp;<i>I</i>(<i>q</i>)&nbsp;/&nbsp;sd <code>.dat</code> file with a
 <code>Conc:</code> header); repeat for each curve (at least three). The concentration is read
-from each file's header.<br>
+from each file's header, as are the optional <code>PSV:</code> and <code>I0se:</code> tags.<br>
 <code>output&nbsp;&nbsp;<i>path</i></code> &mdash; where the extrapolated curve is written
-(same three-column format, with a <code>Conc:</code> header, so it round-trips).<br>
+(same three-column format; the header carries <code>Conc:</code>, and the series'
+<code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> when present, so it round-trips).<br>
 <code>model&nbsp;&nbsp;&nbsp;additive&nbsp;|&nbsp;reciprocal&nbsp;|&nbsp;virial2</code>
 (default <code>reciprocal</code>).<br>
 <code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
@@ -396,7 +414,10 @@ SDs after fitting.<br>
 <code>outlier_chi2&nbsp;<i>x</i></code> &mdash; the automatic one-outlier-concentration QC and
 its thresholds.<br>
 <code>conc&nbsp;&nbsp;&nbsp;"<i>name</i>"&nbsp;<i>value</i></code> &mdash; optional; override a
-curve's concentration instead of using its header.
+curve's concentration instead of using its header.<br>
+<code>dump_conc_csv&nbsp;<i>path</i></code> &mdash; optional; after the run, write the per-curve
+table (name, concentration, PSV, I0se) for every plotted curve, e.g. to confirm that the
+extrapolated curve carries the inputs' values.
 </p>
 
 <p>For example, a control file selecting the reciprocal model on the reference absolute scale
@@ -452,7 +473,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 12, 2026.
+Last modified on July 17, 2026.
 </font>
 </body>
 </html>
