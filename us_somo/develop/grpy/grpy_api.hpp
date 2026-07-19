@@ -12,6 +12,7 @@
 // The SOMO adapter creates a QtParallel-backed Solver over SOMO's thread pool, calls
 // run(), maps Results into SOMO's structures, and writes Results::report to disk.
 #pragma once
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -63,6 +64,34 @@ struct Results {
 };
 
 using ProgressFn = la::Progress;          // void(int pct, const char* stage)
+
+// Parse a GRPY-native input file (the `.grpy` file SOMO writes and used to feed the
+// binary with `-e`): title, T[C], eta, Mw, vbar, rho, unit, N, then N lines "x y z r".
+// Returns the beads + PhysParams so the caller can hand them straight to Solver::run.
+struct NativeInput { std::vector<Bead> beads; PhysParams params; };
+inline NativeInput read_native_file(const std::string& path) {
+    std::ifstream f(path);
+    NativeInput in;
+    std::string line;
+    auto firstd = [&]() -> double {
+        std::getline(f, line); std::istringstream s(line); double v = 0; s >> v; return v;
+    };
+    std::getline(f, line);                     // title line -- discarded; GRPY -e mode
+    in.params.input_label = "GRPY";            // hardcodes the report label to "GRPY"
+    in.params.temperature_C = firstd();
+    in.params.eta   = firstd();
+    in.params.mw    = firstd();
+    in.params.vbar  = firstd();
+    in.params.rho   = firstd();
+    in.params.units = firstd();
+    int N = (int)firstd();
+    for (int i = 0; i < N; ++i) {
+        std::getline(f, line); std::istringstream s(line);
+        Bead b{}; s >> b.x >> b.y >> b.z >> b.radius; b.mw = 0;
+        in.beads.push_back(b);
+    }
+    return in;
+}
 
 // Fill the structured scalars from a completed ReportData, using the SAME display
 // formulas as write_report (guarded against drift by test_api).

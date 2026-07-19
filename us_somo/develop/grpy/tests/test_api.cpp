@@ -106,6 +106,13 @@ int main() {
         p.units=1e-8; p.mw=0; p.input_label="us-somo";   // mw summed from beads
         fails += check_case("1znf", b, p, "data/1znf_golden.txt");
     }
+    // native .grpy file reader (the exact path SOMO uses: read the file SOMO writes,
+    // hand beads+params to the Solver) -> must reproduce the dumbbell golden.
+    {
+        grpy::NativeInput in = grpy::read_native_file("data/dumbbell.grpy");
+        fails += check_case("dumbbell.grpy", in.beads, in.params,
+                            "data/dumbbell_golden.txt");
+    }
     std::printf("%s\n", fails ? "FAILURES" : "ALL PASS");
     return fails ? 1 : 0;
 }
