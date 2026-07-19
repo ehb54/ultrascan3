@@ -418,8 +418,35 @@ void US_Hydrodyn::grpy_process_next() {
       }
       grpy::NativeInput in =
          grpy::read_native_file( grpy_path.toStdString() );
+
+      // large-N options (issue 972): single-precision storage/factor halves memory,
+      // out-of-core spills the tiled matrix to disk so RAM stays bounded. These matter
+      // only for very large bead models (run via batch/cluster), so they are exposed
+      // through the lightweight gui_script `global` params (global grpy_single 1 /
+      // global grpy_ooc_dir <dir>) with GRPY_SINGLE / GRPY_OOC_DIR env-var fallback --
+      // no god-class UI. Default off = in-core double, identical to prior behavior.
+      grpy::Options opt;
+      auto truthy = []( QString v ) {
+         v = v.trimmed().toLower();
+         return v == "1" || v == "true" || v == "yes" || v == "on";
+      };
+      opt.single = gparams.count( "grpy_single" )
+         ? truthy( gparams[ "grpy_single" ] )
+         : !qEnvironmentVariableIsEmpty( "GRPY_SINGLE" );
+      QString ooc_dir = gparams.count( "grpy_ooc_dir" )
+         ? gparams[ "grpy_ooc_dir" ]
+         : QString::fromLocal8Bit( qgetenv( "GRPY_OOC_DIR" ) );
+      opt.ooc_dir = ooc_dir.trimmed().toStdString();
+      if ( opt.single || !opt.ooc_dir.empty() ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "GRPY options: %1%2\n" ) )
+                     .arg( opt.single ? us_tr( "single-precision " ) : QString() )
+                     .arg( opt.ooc_dir.empty() ? QString()
+                           : QString( us_tr( "out-of-core (%1) " ) ).arg( ooc_dir.trimmed() ) ) );
+      }
+
       la::QtParallel par( USglobal->config_list.numThreads );
-      grpy::Solver solver( par );
+      grpy::Solver solver( par, opt );
       const int model = grpy_last_model_number;
       grpy::Results r = solver.run(
          in.beads, in.params,
