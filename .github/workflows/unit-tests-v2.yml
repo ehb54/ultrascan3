@@ -41,7 +41,7 @@ jobs:
         with:
           files_yaml: |
             relevant:
-              - .github/workflows/unit-tests.yml
+              - .github/workflows/unit-tests-v2.yml
               - utils/**.c
               - utils/**.cpp
               - utils/**.h
