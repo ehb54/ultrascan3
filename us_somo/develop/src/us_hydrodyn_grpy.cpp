@@ -397,7 +397,6 @@ void US_Hydrodyn::grpy_process_next() {
       // unchanged. The heavy compute is internally multi-threaded (QtParallel over
       // SOMO's thread pool); processEvents() in the progress callback keeps the GUI
       // painting between block-columns.
-      grpy = nullptr;
       editor_msg( "black", QString( "\nStarting GRPY (in-process) on %1 with %2 beads\n" )
                   .arg( QFileInfo( grpy_last_processed ).completeBaseName() )
                   .arg( grpy_last_used_beads ) );
@@ -426,47 +425,6 @@ void US_Hydrodyn::grpy_process_next() {
                                  Q_ARG( QProcess::ExitStatus, QProcess::NormalExit ) );
       return;
    }
-}
-
-void US_Hydrodyn::grpy_readFromStdout()
-{
-   // us_qdebug( QString( "grpy_readFromStdout %1" ).arg( grpy_last_processed ) );
-   static QRegularExpression re = QRegularExpression( "^\\s*(\\d+)%\\s*TASK:\\s*(.*)$" );
-   QString qs = QString( grpy->readAllStandardOutput() );
-   // only needed for windows
-   qs = qs.replace( "\r\n", "\n" );
-   QStringList qsl = qs.split( "\r" );
-   int size = (int) qsl.size();
-   for ( int i = 0; i < size; ++i ) {
-      qs = qsl[ i ];
-      if ( qs.contains( "% TASK:" ) ) {
-         qs = qs.split( "\r" ).takeLast();
-         QRegularExpressionMatch match = re.match( qs );
-         if ( match.hasMatch() ) {
-            // qDebug() << "capture 1:" << match.captured( 1 );
-            // qDebug() << "capture 2:" << match.captured( 2 );
-            progress->setValue( 101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() );
-            // qDebug() << "progress value " <<  101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() + 1;
-            mprogress->setValue( match.captured( 1 ).toDouble() );
-            lbl_core_progress->setText( QString( "Model %1 : %2" )
-                                        .arg( grpy_last_model_number + 1 )
-                                        .arg( match.captured( 2 ) )
-                                        );
-         }
-      } else {
-         grpy_stdout += qs;
-         // editor_msg( "brown", qs );
-      }
-   }
-   //   qApp->processEvents();
-}
-
-void US_Hydrodyn::grpy_readFromStderr()
-{
-   // us_qdebug( QString( "grpy_readFromStderr %1" ).arg( grpy_last_processed ) );
-
-   editor_msg( "red", QString( grpy->readAllStandardError() ) );
-   //  qApp->processEvents();
 }
 
 void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
@@ -1120,13 +1078,6 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    
    grpy_process_next();
-}
-   
-void US_Hydrodyn::grpy_started()
-{
-   // us_qdebug( QString( "grpy_started %1" ).arg( grpy_last_processed ) );
-   // editor_msg("brown", "GRPY launch exited\n");
-   disconnect( grpy, SIGNAL(started()), 0, 0);
 }
 
 void US_Hydrodyn::grpy_finalize() {
