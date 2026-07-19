@@ -1259,11 +1259,11 @@ int main (int argc, char **argv)
 
       QString projectdir = projectname;
 
-      projectname.replace(QRegularExpression("^.*((\\|/)"),"");
+      projectname.replace(QRegularExpression("^.*[\\\\/]"),"");
 
       // make directory
       if ( 
-          !projectdir.contains(QRegularExpression("^(\\|/)")) // doesn't start at root
+          !projectdir.contains(QRegularExpression("^[\\\\/]")) // doesn't start at root
           )
       {
          projectdir = QString("%1%2%3")
