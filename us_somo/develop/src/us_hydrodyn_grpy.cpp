@@ -401,8 +401,23 @@ void US_Hydrodyn::grpy_process_next() {
                   .arg( QFileInfo( grpy_last_processed ).completeBaseName() )
                   .arg( grpy_last_used_beads ) );
 
+      // resolve against get_somo_dir() -- the old QProcess set its working
+      // directory there and passed grpy_last_processed (a bare filename) as -e arg,
+      // so the .grpy file lives in the somo dir regardless of the process CWD.
+      QString grpy_path = QDir( get_somo_dir() ).filePath( grpy_last_processed );
+      if ( !QFileInfo( grpy_path ).exists() ) {
+         editor_msg( "red", QString( us_tr( "GRPY input file '%1' does not exist\n" ) ).arg( grpy_path ) );
+         grpy_success = false;
+         // defer to the event loop (avoids deep recursion through the model batch);
+         // a lambda is used rather than invokeMethod-by-name so we don't need to
+         // register QProcess::ExitStatus as a queued-connection metatype.
+         QTimer::singleShot( 0, this, [ this ]() {
+            grpy_finished( 0, QProcess::NormalExit );
+         } );
+         return;
+      }
       grpy::NativeInput in =
-         grpy::read_native_file( grpy_last_processed.toStdString() );
+         grpy::read_native_file( grpy_path.toStdString() );
       la::QtParallel par( USglobal->config_list.numThreads );
       grpy::Solver solver( par );
       const int model = grpy_last_model_number;
@@ -418,11 +433,13 @@ void US_Hydrodyn::grpy_process_next() {
          } );
       grpy_stdout = QString::fromStdString( r.report );
 
-      // hand off to the existing finish/parse path (queued -> no deep recursion
-      // through the model batch, mirrors the old async QProcess finished signal)
-      QMetaObject::invokeMethod( this, "grpy_finished", Qt::QueuedConnection,
-                                 Q_ARG( int, 0 ),
-                                 Q_ARG( QProcess::ExitStatus, QProcess::NormalExit ) );
+      // hand off to the existing finish/parse path, deferred to the event loop so we
+      // don't recurse through the model batch (mirrors the old async QProcess finished
+      // signal). A lambda avoids invokeMethod-by-name, which would need
+      // QProcess::ExitStatus registered as a queued-connection metatype.
+      QTimer::singleShot( 0, this, [ this ]() {
+         grpy_finished( 0, QProcess::NormalExit );
+      } );
       return;
    }
 }
