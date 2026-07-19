@@ -127,7 +127,6 @@ SOURCES *= \
 #  us_calendar.cpp \ 
 #  us_clipdata.cpp \ 
         src/us_container.cpp \
-        src/us_container_grpy.cpp \
         src/us_cmdline_app.cpp \
 #  us_cofdistro.cpp \
 #  us_cofs.cpp \ 
@@ -639,7 +638,6 @@ HEADERS *= \
 #  us_calendar.h \
 #  us_clipdata.h \
         include/us_container.h \
-        include/us_container_grpy.h \
         include/us_cmdline_app.h \
 #  us_cofdistro.h \
 #  us_cofs.h \

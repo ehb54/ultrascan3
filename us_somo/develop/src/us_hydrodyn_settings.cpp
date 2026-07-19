@@ -1718,7 +1718,6 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "asa.vvv_probe_radius" ] = QString( "%1" ).arg( asa.vvv_probe_radius );
       parameters[ "asa.vvv_grid_dR" ] = QString( "%1" ).arg( asa.vvv_grid_dR );
       parameters[ "misc.export_msroll" ] = QString( "%1" ).arg( misc.export_msroll );
-      parameters[ "misc.parallel_grpy" ] = QString( "%1" ).arg( misc.parallel_grpy );
       parameters[ "misc.auto_calc_hydro_method" ] = QString( "%1" ).arg( (int) misc.auto_calc_hydro_method );
 
       parameters[ "saxs_options.qstart" ] = QString( "%1" ).arg( saxs_options.qstart );
@@ -2231,7 +2230,6 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "asa.vvv_probe_radius" ) ) asa.vvv_probe_radius = parameters[ "asa.vvv_probe_radius" ].toFloat();
    if ( parameters.count( "asa.vvv_grid_dR" ) ) asa.vvv_grid_dR = parameters[ "asa.vvv_grid_dR" ].toFloat();
    if ( parameters.count( "misc.export_msroll" ) ) misc.export_msroll = parameters[ "misc.export_msroll" ] == "1";
-   if ( parameters.count( "misc.parallel_grpy" ) ) misc.parallel_grpy = parameters[ "misc.parallel_grpy" ] == "1";
    if ( parameters.count( "misc.auto_calc_hydro_method" ) ) misc.auto_calc_hydro_method = (CALC_HYDRO_METHOD) parameters[ "misc.auto_calc_hydro_method" ].toInt();
 
    if ( parameters.count( "saxs_options.qstart" ) ) saxs_options.qstart = parameters[ "saxs_options.qstart" ].toDouble();
@@ -3282,7 +3280,6 @@ void US_Hydrodyn::hard_coded_defaults()
    asa.vvv_grid_dR                                          = 0.5f;
 
    misc.export_msroll                                       = false;
-   misc.parallel_grpy                                       = false;
    misc.auto_calc_hydro_method                              = AUTO_CALC_HYDRO_ZENO;
 
    saxs_options.cs_qRgmax                                   = 1e0;

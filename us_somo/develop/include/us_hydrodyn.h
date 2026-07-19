@@ -83,7 +83,6 @@
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
 // #include "us_hydrodyn_fractal_dimension_options.h"
-#include "us_container_grpy.h"
 
 // #include "us_hydrodyn_pat.h"
 
@@ -295,9 +294,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
-      bool                grpy_parallel_pulled;
-      US_Container_Grpy * us_container_grpy;
-      
       set < QString > residues_with_atomic_vs_bead_hydration_differences;
       void            compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl = {} );
       bool            residue_atomic_vs_bead_hydration_differences( const struct residue & r );
@@ -1023,10 +1019,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QStringList                                          data_csv_headers;
 
       // grpy data & methods
-      QProcess                            * grpy;
       void                                  grpy_process_next();
       void                                  grpy_finalize();
-      QString                               grpy_prog;
       QStringList                           grpy_to_process;
       QStringList                           grpy_processed;
       QString                               grpy_last_processed;
@@ -1105,9 +1099,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void hullrad_readFromStderr();
       void hullrad_started();
       void hullrad_finished( int, QProcess::ExitStatus );
-      void grpy_readFromStdout();
-      void grpy_readFromStderr();
-      void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
       void gui_script_run();
       void fractal_dimension( bool from_parameters = false, save_info * fd_save_info = (save_info *)0 );
