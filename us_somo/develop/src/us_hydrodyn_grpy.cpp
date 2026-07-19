@@ -420,19 +420,24 @@ void US_Hydrodyn::grpy_process_next() {
          grpy::read_native_file( grpy_path.toStdString() );
 
       // large-N options (issue 972): single-precision storage/factor halves memory,
-      // out-of-core spills the tiled matrix to disk so RAM stays bounded. These matter
-      // only for very large bead models (run via batch/cluster), so they are exposed
-      // through the lightweight gui_script `global` params (global grpy_single 1 /
-      // global grpy_ooc_dir <dir>) with GRPY_SINGLE / GRPY_OOC_DIR env-var fallback --
-      // no god-class UI. Default off = in-core double, identical to prior behavior.
+      // out-of-core spills the tiled matrix to disk so RAM stays bounded. Both matter
+      // only for very large bead models. Single-precision is the GRPY Numerical
+      // Precision control in the SOMO Hydrodynamic Calculation Options window
+      // (hydro.grpy_single; default Double). The gui_script `global grpy_single`/
+      // `global grpy_ooc_dir` params and GRPY_SINGLE/GRPY_OOC_DIR env vars still
+      // override, for headless/batch automation. Out-of-core has no GUI control
+      // (script/env only) as it is a cluster-scale knob. Default = in-core double.
       grpy::Options opt;
       auto truthy = []( QString v ) {
          v = v.trimmed().toLower();
          return v == "1" || v == "true" || v == "yes" || v == "on";
       };
-      opt.single = gparams.count( "grpy_single" )
-         ? truthy( gparams[ "grpy_single" ] )
-         : !qEnvironmentVariableIsEmpty( "GRPY_SINGLE" );
+      opt.single = hydro.grpy_single;                       // GUI checkbox (default off)
+      if ( gparams.count( "grpy_single" ) ) {               // scripting override
+         opt.single = truthy( gparams[ "grpy_single" ] );
+      } else if ( !qEnvironmentVariableIsEmpty( "GRPY_SINGLE" ) ) {
+         opt.single = true;
+      }
       QString ooc_dir = gparams.count( "grpy_ooc_dir" )
          ? gparams[ "grpy_ooc_dir" ]
          : QString::fromLocal8Bit( qgetenv( "GRPY_OOC_DIR" ) );
