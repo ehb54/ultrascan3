@@ -1186,6 +1186,14 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    vector < int >    out_qidx;                  // full-grid q index of each output point
    unsigned int       skipped_points = 0;
    unsigned int       n_missing_sd_pts = 0;     // points lacking a usable SD while weighting is on (logged)
+   // Per-cause skip tallies. All four causes previously reported as "fewer than 2 valid data
+   // points", which is wrong for three of them and actively misleading when the real cause is a
+   // non-positive reciprocal intercept -- report each cause with its own count instead.
+   unsigned int       n_skip_fewpts   = 0;      // < 2 usable points at this q
+   unsigned int       n_skip_dupconc  = 0;      // exactly 2 points at the same concentration
+   unsigned int       n_skip_virial2  = 0;      // 2nd-order virial needs >= 4 points
+   unsigned int       n_skip_nonposu  = 0;      // reciprocal intercept <= 0 (cannot invert to I(0))
+   unsigned int       n_gcv_fallback  = 0;      // GCV intercept was non-positive; per-q fit used instead
 
    // per-q regression data captured for the optional scrollable regression-plot pop-up:
    // the (concentration, y, y-error) points, plus the fit intercept, slope and its SE
@@ -1233,7 +1241,8 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       vector < double > vM( npts ), vR( npts ), vB( npts ), vC( npts ), vQ( npts );
       for ( unsigned int qi = 0; qi < npts; qi++ )
       {
-         double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+         // Collect this q's points first, so an unweighted run can derive a per-q scale below.
+         vector < double > qx, qy, qsig;
          for ( int ci = 0; ci < ordered_names.size(); ci++ )
          {
             if ( concs[ ci ] <= 0e0 )
@@ -1259,8 +1268,37 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             }
             else if ( is_istar[ ci ] ) { yv = Iv;              sig = sd; }
             else                       { yv = Iv / concs[ ci ]; sig = sd / concs[ ci ]; }
-            double w  = ( use_sd_weights && sig > 0e0 && !us_isnan( sig ) ) ? 1e0 / ( sig * sig ) : 1e0;
-            double xv = concs[ ci ];
+            qx.push_back( concs[ ci ] ); qy.push_back( yv ); qsig.push_back( sig );
+         }
+
+         // Per-q scale for the UNWEIGHTED case (weighted runs are untouched).
+         // With unit weights every q contributes to the joint GCV fit in proportion to its own
+         // magnitude. On the reciprocal (c/I) axis |y| spans orders of magnitude across q, so the
+         // huge, noisy high-q points dominate lambda selection: GCV then over-smooths alpha(q)
+         // into a near-constant, and Iex = (Q - B*alpha)/C goes NEGATIVE from the lowest q upward
+         // -- every such q is dropped and the Guinier region is destroyed. Re-weighting each q by
+         // 1/scale^2 restores the balanced conditioning the 1/sigma^2 path gets for free. The
+         // factor is CONSTANT WITHIN a q, so it leaves every per-q fit (slope R/M and intercept
+         // Iex) algebraically unchanged -- it only rebalances q against each other in the joint
+         // penalized solve. It amounts to assuming constant RELATIVE error, the standard default
+         // when error bars are absent or deliberately not trusted.
+         double inv_scale2 = 1e0;
+         if ( !use_sd_weights && qy.size() )
+         {
+            double acc = 0e0;
+            for ( unsigned int k = 0; k < qy.size(); k++ ) { acc += qAbs( qy[ k ] ); }
+            double scale = acc / (double) qy.size();
+            if ( scale > 0e0 && !us_isnan( scale ) ) { inv_scale2 = 1e0 / ( scale * scale ); }
+         }
+
+         double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+         for ( unsigned int k = 0; k < qy.size(); k++ )
+         {
+            double sig = qsig[ k ];
+            double w   = ( use_sd_weights && sig > 0e0 && !us_isnan( sig ) )
+               ? 1e0 / ( sig * sig )
+               : inv_scale2;                       // 1.0 for weighted-but-missing-sd (unchanged)
+            double xv = qx[ k ], yv = qy[ k ];
             S += w; Sx += w * xv; Sy += w * yv; Sxx += w * xv * xv; Sxy += w * xv * yv;
          }
          vC[ qi ] = S; vB[ qi ] = Sx; vQ[ qi ] = Sy;
@@ -1387,6 +1425,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       bool weight_here = use_sd_weights && all_err;
 
       double a = 0e0, b = 0e0, siga = 0e0;
+      // Unregularized per-q intercept, kept as a safety net: if the GCV-smoothed intercept comes
+      // out non-positive on the reciprocal axis (so it cannot be inverted to I(0)), fall back to
+      // this rather than dropping the q point entirely.
+      double perq_a      = 0e0;
+      bool   have_perq_a = false;
 
       if ( reciprocal && extrap_model == 2 )
       {
@@ -1396,7 +1439,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             TSO << QString( "WARNING: do_extrap_c0: 2nd-order virial fit unavailable at q[%1]=%2 (need >=4 valid points), skipping\n" )
                .arg( qi ).arg( q[ qi ] );
-            skipped_points++;
+            skipped_points++; n_skip_virial2++;
             continue;
          }
          a    = virial2_u[ qi ];
@@ -1416,6 +1459,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             double aa, bb, sigb, chi2;
             if ( weight_here ) { usu.linear_fit( x, y, ye, aa, bb, siga, sigb, chi2 ); }
             else               { usu.linear_fit( x, y,     aa, bb, siga, sigb, chi2 ); }
+            perq_a = aa; have_perq_a = true;   // safety-net intercept (see reciprocal inversion)
          }
          else
          {
@@ -1426,7 +1470,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       {
          TSO << QString( "WARNING: do_extrap_c0: insufficient valid points (%1) to regress at q[%2]=%3, skipping\n" )
             .arg( x.size() ).arg( qi ).arg( q[ qi ] );
-         skipped_points++;
+         skipped_points++; n_skip_fewpts++;
          continue;
       }
       else if ( x.size() == 2 )
@@ -1435,7 +1479,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          {
             TSO << QString( "WARNING: do_extrap_c0: duplicate concentrations with only 2 points at q[%1]=%2, skipping\n" )
                .arg( qi ).arg( q[ qi ] );
-            skipped_points++;
+            skipped_points++; n_skip_dupconc++;
             continue;
          }
          b    = ( y[ 1 ] - y[ 0 ] ) / ( x[ 1 ] - x[ 0 ] );
@@ -1465,11 +1509,20 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       // recover the intensity I0(q) = 1/u and propagate SE(1/u) = SE(u)/u^2.
       if ( reciprocal )
       {
+         // Safety net: a non-positive intercept cannot be inverted to I(0). If the value came from
+         // the GCV-smoothed fit, prefer the unregularized per-q intercept for this q instead of
+         // dropping the point -- dropping is what previously wiped out the low-q (Guinier) region
+         // whenever the regularization over-smoothed. Only skip if both are unusable.
+         if ( ( a <= 0e0 || us_isnan( a ) ) && have_perq_a && perq_a > 0e0 && !us_isnan( perq_a ) )
+         {
+            a = perq_a;
+            n_gcv_fallback++;
+         }
          if ( a <= 0e0 || us_isnan( a ) )
          {
             TSO << QString( "WARNING: do_extrap_c0: non-positive reciprocal intercept at q[%1]=%2, skipping\n" )
                .arg( qi ).arg( q[ qi ] );
-            skipped_points++;
+            skipped_points++; n_skip_nonposu++;
             continue;
          }
          siga = siga / ( a * a );
@@ -1517,12 +1570,33 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       reg_siga.push_back( reciprocal ? fit_siga : err_val );   // SE in the plotted axis
    }
 
-   if ( skipped_points )
+   // The GCV-smoothed intercept was unusable at some q and the unregularized per-q fit was used
+   // there instead. Report it: the points are in the output, but they are NOT regularized, and a
+   // large count means the slope regularization is fighting the data (see the reciprocal/unweighted
+   // note below) rather than helping.
+   if ( n_gcv_fallback )
    {
       extrap_msg(
-                            QString( us_tr( "%1 of %2 q-points could not be extrapolated "
-                                            "(fewer than 2 valid data points) and were skipped." ) )
-                            .arg( skipped_points ).arg( npts ) );
+                            QString( us_tr( "Slope regularization (GCV) produced a non-positive intercept at %1 of %2 "
+                                            "q-points; the unregularized per-q fit was used at those q instead of "
+                                            "dropping them. Those points are therefore not regularized. If this count "
+                                            "is large, prefer turning GCV off for this dataset." ) )
+                            .arg( n_gcv_fallback ).arg( npts ) );
+   }
+
+   if ( skipped_points )
+   {
+      // Report the ACTUAL cause(s). Previously every cause was reported as "fewer than 2 valid
+      // data points", which is wrong for three of the four and hid the common real case (a
+      // non-positive reciprocal intercept, which cannot be inverted to I(0)).
+      QStringList why;
+      if ( n_skip_fewpts )  { why << QString( us_tr( "%1 with fewer than 2 valid data points" ) ).arg( n_skip_fewpts ); }
+      if ( n_skip_dupconc ) { why << QString( us_tr( "%1 with only 2 points at the same concentration" ) ).arg( n_skip_dupconc ); }
+      if ( n_skip_virial2 ) { why << QString( us_tr( "%1 where the 2nd-order virial fit needs >= 4 concentrations" ) ).arg( n_skip_virial2 ); }
+      if ( n_skip_nonposu ) { why << QString( us_tr( "%1 with a non-positive fitted 1/I(0) intercept (cannot invert to I(0))" ) ).arg( n_skip_nonposu ); }
+      extrap_msg(
+                            QString( us_tr( "%1 of %2 q-points could not be extrapolated and were skipped: %3." ) )
+                            .arg( skipped_points ).arg( npts ).arg( why.join( "; " ) ) );
    }
 
    // weighting requested but some points had no usable error: those q fell back to unweighted.

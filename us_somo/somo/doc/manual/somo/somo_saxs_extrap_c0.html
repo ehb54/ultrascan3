@@ -129,6 +129,16 @@ are inherently error-based. If weighting is on but some points carry no usable e
 are fitted unweighted and the count is reported. An unweighted run adds <code>_uw</code> to the
 output curve name.</p>
 
+<p>When weighting is off, the automatic slope regularization below conditions itself on a per-<i>q</i>
+<i>relative</i> scale rather than on the raw magnitudes. Without this, an unweighted fit on the
+reciprocal <i>c</i>/<i>I</i> axis &mdash; where the fitted values span orders of magnitude across
+<i>q</i> &mdash; would let the large, noisy high-<i>q</i> points dictate the amount of smoothing,
+over-smoothing the concentration slope until the extrapolated intercept turned negative at low
+<i>q</i> and those points had to be dropped. The scale factor is constant within each <i>q</i>, so it
+leaves every individual per-<i>q</i> fit unchanged; it only balances the <i>q</i> against one another
+in the joint regularized solve, and amounts to assuming a constant relative error &mdash; the usual
+default when error bars are absent or deliberately not trusted.</p>
+
 <p><b>Concentration model</b> (drop-down). This selects how the intensity
 is fitted against concentration at each <i>q</i>, and chiefly affects the accuracy of the
 molecular weight read from the extrapolated forward scatter <i>I</i>(0):</p>
