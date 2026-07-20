@@ -29,8 +29,13 @@ Test-side (this directory, not part of the SOMO build):
 - `residue_oracle.h` — parses `somo.residue.new` into the regression ground truth.
 - `tinytest.h` — zero-dependency test harness.
 - `tests/` — `tests_unit.cpp` (synthetic geometries), `regression.cpp` (demo PDB vs oracle),
-  `emit_residue.cpp` (generate a somo.residue entry).
-- `data/` — copies of `somo.hybrid.new`/`somo.residue.new` and demo PDBs.
+  `emit_residue.cpp` (generate a somo.residue entry), `coverage.cpp` (table-gap audit).
+- `examples/perceive.somo` — ready-to-run gui_script for the in-SOMO commands.
+- `tools/gen_saxs_entries.py` — converts published scattering-factor tables into SOMO's row order.
+- `data/` — demo PDBs (gitignored; copy them from `us_somo/somo/demo`) and, under `data/ref/`,
+  the published scattering-factor sources plus generated `somo.saxs_atoms` rows. The `somo.*`
+  parameter tables are **not** copied here — the tests read `us_somo/etc` directly so they cannot
+  drift from the real tables.
 
 ## Build & run
 ```
