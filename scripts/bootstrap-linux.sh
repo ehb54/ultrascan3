@@ -345,9 +345,15 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   # --- MPI (optional, --hpc flag) -------------------------------------------
   # Required only for the HPC build profile (mpicxx must be on PATH).
   # Using openmpi as the default; mpich is an acceptable substitute.
+  # libgomp1: OpenMPI's runtime (libmpi.so) links against libgomp for its
+  #   atomics/threading fallback. Not pulled in by build-essential on minimal
+  #   images (Docker/WSL bare Ubuntu), so it must be listed explicitly or
+  #   us_mpi_analysis fails to link/run with "libgomp.so.1: cannot open
+  #   shared object file".
   PKGS_HPC=(
     libopenmpi-dev
     openmpi-bin
+    libgomp1
   )
 
 elif [ "$DISTRO_FAMILY" = "rhel" ]; then
@@ -560,8 +566,11 @@ elif [ "$DISTRO_FAMILY" = "rhel" ]; then
   #   On Rocky 8 the wrapper lands in /usr/lib64/openmpi/bin/mpicxx and
   #   /usr/lib64/openmpi/bin is NOT on PATH by default.  We add it explicitly
   #   in the post-install section when --hpc is requested.
+  # libgomp: OpenMPI's runtime (libmpi.so) links against libgomp for its
+  #   atomics/threading fallback (see matching Debian-family comment above).
   PKGS_HPC=(
     openmpi-devel
+    libgomp
   )
 
 fi  # end distro-family package list definitions

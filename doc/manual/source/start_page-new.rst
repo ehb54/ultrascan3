@@ -30,7 +30,7 @@ The UltraScan is multi-platform and can be installed on Windows, Macintosh, and 
 
     * Microsoft Windows: Download the installation file and execute it on your computer. When prompted for an installation directory, please choose C:\Program Files\UltraScan, this is the expected path. If your international version of Windows has a different path, please create this subdirectory first before installation. On Windows 7, also install in C:\Program Files\UltraScan, not in C:\Program Files (x86)\UltraScan. You may have to run the program as Administrator.
 
-    * Mac OS-X: Download and Double-click the installation package. If you have not previously installed XQuartz, you will be requested to do so. XQuartz can be downloaded from https://www.xquartz.org.
+    * Mac OS-X: Download and Double-click the installation package.
 
     * Linux, Unix/X11: To install the tar.xz package for any distribution, please follow these steps:
 

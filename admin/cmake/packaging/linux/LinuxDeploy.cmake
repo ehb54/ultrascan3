@@ -482,6 +482,11 @@ if(LICENSE_FILE AND EXISTS "${LICENSE_FILE}")
     endif()
 endif()
 
+if(VERSION_FILE AND EXISTS "${VERSION_FILE}")
+    message(STATUS "[LinuxDeploy] Copying VERSION")
+    file(COPY "${VERSION_FILE}" DESTINATION "${STAGE_DIR}")
+endif()
+
 # =========================================================================
 # 10) Write qt.conf so Qt finds plugins/ relative to the tarball root
 #
