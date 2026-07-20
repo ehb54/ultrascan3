@@ -26,9 +26,12 @@ doc/manual/build
 /.vscode/
 /_CPack_Packages/
 vcpkg_installed/
+admin/vcpkg/installed/
 configure-arm64.log
 programs/us/us.rc
 CMakeUserPresets.json
 __pycache__
 /CLAUDE.md
 *.pyc
+
+compile_commands.json
