@@ -195,4 +195,55 @@ QList<Tentative> perceive_unknown( const PDB_model         & model,
     return result;
 }
 
+CompareResult compare_against_table(
+    const PDB_model & model,
+    const HybridTable & tbl,
+    const std::map< QString, std::map< QString, QString > > & curated,
+    const QString & pdb_filename ) {
+
+    CompareResult r;
+    std::vector<InAtom> atoms = from_pdb_model( model );
+    if ( atoms.empty() ) {
+        return r;
+    }
+    std::vector< std::pair< int, int > > ebonds;
+    if ( !pdb_filename.isEmpty() ) {
+        ebonds = conect_bonds( pdb_filename, atoms );
+    }
+    Perceiver perc( tbl );
+    std::vector<OutAtom> out = perc.perceive( atoms, ebonds );
+
+    QString last_key;
+    for ( size_t i = 0; i < atoms.size(); ++i ) {
+        QString rn = QString::fromStdString( atoms[ i ].resName );
+        QString an = QString::fromStdString( atoms[ i ].name );
+        auto ri = curated.find( rn );
+        if ( ri == curated.end() ) {
+            continue;                      // not a coded residue: nothing to compare against
+        }
+        auto ai = ri->second.find( an );
+        if ( ai == ri->second.end() ) {
+            continue;                      // atom not in the template (e.g. OXT, alt naming)
+        }
+        QString key = rn + "|" + QString::fromStdString( atoms[ i ].chain )
+                      + "|" + QString::number( atoms[ i ].resSeq );
+        if ( key != last_key ) { ++r.residues; last_key = key; }
+
+        const QString & expected = ai->second;
+        QString got = QString::fromStdString( out[ i ].hybrid );
+        ++r.scored;
+        bool e = ( got == expected );
+        bool p = tbl.phys_equal( got.toStdString(), expected.toStdString() );
+        if ( e ) ++r.exact;
+        if ( p ) ++r.phys;
+        if ( !p ) {
+            CompareRow row;
+            row.res = rn; row.atom = an; row.expected = expected; row.got = got;
+            r.mismatches << row;
+            r.by_pair[ expected + " -> " + got ]++;
+        }
+    }
+    return r;
+}
+
 } // namespace somo_perceive
