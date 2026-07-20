@@ -56,6 +56,31 @@ QList<Tentative> perceive_unknown( const PDB_model         & model,
                                    const std::set<QString> & to_perceive,
                                    const QString           & pdb_filename = QString() );
 
+// ---------------------------------------------------------------------------------------------
+// Hand-testing aid: run perception over residues somo.residue DOES code and diff the result
+// against the curated types. This is the same check the standalone regression harness performs,
+// exposed inside SOMO so a structure can be spot-checked with the user's own installed tables.
+
+struct CompareRow {
+    QString res, atom, expected, got;
+};
+
+struct CompareResult {
+    long scored = 0;                       // atoms compared
+    long exact  = 0;                       // perceived label identical to the curated one
+    long phys   = 0;                       // mw / radius / electrons identical (label may differ)
+    long residues = 0;                     // coded residue instances seen
+    QList<CompareRow>      mismatches;     // physics mismatches only
+    std::map<QString,long> by_pair;        // "expected -> got" counts
+};
+
+// 'curated' is resName -> (atomName -> hybrid type), built by the caller from SOMO's residue_list.
+CompareResult compare_against_table(
+    const PDB_model & model,
+    const HybridTable & tbl,
+    const std::map< QString, std::map< QString, QString > > & curated,
+    const QString & pdb_filename = QString() );
+
 } // namespace somo_perceive
 
 #endif
