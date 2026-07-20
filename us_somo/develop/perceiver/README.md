@@ -40,14 +40,27 @@ make coverage   # audit the "no hybridization and/or no SAXS coefficient" bottle
 make emit PDB=data/1HEL.pdb RES=TRP        # emit a somo.residue entry for one residue
 ```
 
-Inside SOMO the same perception is reachable headlessly through a gui_script command:
+Inside SOMO the same perception is reachable headlessly through a gui_script command — see
+`examples/perceive.somo`:
 
 ```
-us3_somo _pad -I -g <script>        # script contains:  perceive <pdbfile>
+us3_somo _pad -I -g examples/perceive.somo
 ```
 
-which loads the structure with SOMO's own parser and prints a tentative `somo.residue` entry (plus
-any new `somo.hybrid` rows) for every residue `somo.residue` does not already code.
+Two sub-commands:
+
+| command | what it does |
+|---|---|
+| `perceive <pdb>` | loads the structure with SOMO's own parser and prints a tentative `somo.residue` entry (plus any new `somo.hybrid` rows) for every residue `somo.residue` does **not** code — the residues SOMO would otherwise model as a generic ABB average bead |
+| `perceive compare <pdb>` | **hand-testing aid**: runs perception over the residues `somo.residue` **does** code and diffs the result against the curated types, reporting exact-match and physics-match rates plus every difference |
+
+`perceive compare` is the interactive equivalent of `make regress`: same check, but inside SOMO
+against *your installed* `~/ultrascan/etc` tables, so it also tells you whether an installed table
+is out of date.
+
+Invocation notes: on macOS the throwaway `_pad` first argument is required and on Linux it must be
+omitted; `-I` avoids blocking config dialogs; and the first run after rebuilding `libus_somo` only
+re-installs configs and exits, so run it twice.
 
 ## How it works
 1. **Bond perception** — spatial-grid neighbor search; bonded if `dist < rcov_i + rcov_j + 0.45 A`.
