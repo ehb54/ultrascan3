@@ -10,6 +10,7 @@
 // (this) us_hydrodyn_load.cpp contains code to load files 
 
 #include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_perceive_somo.h"
 #include "../include/us_write_config.h"
 
 #define TSE QTextStream( stderr )
@@ -155,6 +156,68 @@ void US_Hydrodyn::gui_script_run() {
             TSO << "model_summary_csv returned ok\n";
          } else {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
+         }
+      } else if ( cmd == "perceive" ) {
+         // Perceive hybridization / vdW radius / electron count for residues somo.residue does not
+         // code, and print a tentative entry for each. See ehb54/ultrascan-tickets#978.
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument: <pdbfile>" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+         if ( !QFile::exists( opt1 ) ) {
+            gui_script_error( i, cmd, "file does not exist: " + opt1 );
+         }
+         if ( !screen_pdb( opt1, false, true ) ) {
+            gui_script_error( i, cmd, "could not load pdb: " + opt1 );
+         }
+         if ( model_vector.empty() ) {
+            gui_script_error( i, cmd, "no models loaded from: " + opt1 );
+         }
+         somo_perceive::HybridTable ptbl;
+         if ( !ptbl.load( saxs_options.default_hybrid_filename.toStdString() ) ) {
+            gui_script_error( i, cmd, "could not load hybrid table: "
+                              + saxs_options.default_hybrid_filename );
+         }
+         // somo.residue is the master: only residues it could NOT code are perceived. SOMO records
+         // exactly those in unknown_residues (and would otherwise model each as a generic ABB
+         // average bead), so that set -- not multi_residue_map, which by now also holds the
+         // auto-created "_NC" placeholders -- is the correct trigger.
+         std::set< QString > to_perceive;
+         for ( map < QString, bool >::iterator it = unknown_residues.begin();
+               it != unknown_residues.end();
+               ++it ) {
+            if ( it->second ) {
+               to_perceive.insert( it->first );
+            }
+         }
+         QList< somo_perceive::Tentative > tents =
+            somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive, opt1 );
+         unsigned int perceive_atom_count = 0;
+         for ( unsigned int pc = 0; pc < model_vector[ 0 ].molecule.size(); ++pc ) {
+            perceive_atom_count += (unsigned int) model_vector[ 0 ].molecule[ pc ].atom.size();
+         }
+         TSO << QString( "perceive: %1 model atom(s) in %4 chain(s), %2 non-coded residue instance(s), "
+                         "%3 non-coded residue type(s) perceived\n" )
+            .arg( perceive_atom_count )
+            .arg( (unsigned int) to_perceive.size() )
+            .arg( tents.size() )
+            .arg( (unsigned int) model_vector[ 0 ].molecule.size() );
+         for ( int t = 0; t < tents.size(); ++t ) {
+            const somo_perceive::Tentative & tv = tents[ t ];
+            TSO << QString( "\n===== tentative somo.residue entry: %1 "
+                            "(%2 atoms, %3 instance(s) in model, %4 atom(s) flagged for review) =====\n" )
+               .arg( tv.resName ).arg( tv.atoms ).arg( tv.instances ).arg( tv.flagged );
+            TSO << tv.block;
+            if ( !tv.new_hybrids.isEmpty() ) {
+               TSO << QString( "----- new somo.hybrid rows (types not already in the table) -----\n" );
+               for ( int h = 0; h < tv.new_hybrids.size(); ++h ) {
+                  TSO << tv.new_hybrids[ h ] << "\n";
+               }
+            }
+         }
+         if ( tents.isEmpty() ) {
+            TSO << "perceive: every residue in this structure is already coded in somo.residue\n";
          }
       } else if ( cmd == "saxs_options" ) {
          if ( ls.isEmpty() ) {

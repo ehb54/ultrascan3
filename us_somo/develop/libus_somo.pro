@@ -372,6 +372,8 @@ SOURCES *= \
         src/us_hydrodyn_overlap_reduction.cpp \
         src/us_hydrodyn_pat.cpp \
         src/us_hydrodyn_pdb_parsing.cpp \
+        src/us_hydrodyn_perceive.cpp \
+        src/us_hydrodyn_perceive_somo.cpp \
         src/us_hydrodyn_pdb_tool.cpp \
         src/us_hydrodyn_pdb_tool_merge.cpp \
         src/us_hydrodyn_pdb_tool_renum.cpp \
@@ -823,6 +825,11 @@ HEADERS *= \
         include/us_hydrodyn_pdbdefs.h \
         include/us_hydrodyn_pat.h \
         include/us_hydrodyn_pdb_parsing.h \
+        include/us_hydrodyn_perceive.h \
+        include/us_hydrodyn_perceive_elements.h \
+        include/us_hydrodyn_perceive_hybrid.h \
+        include/us_hydrodyn_perceive_saxs.h \
+        include/us_hydrodyn_perceive_somo.h \
         include/us_hydrodyn_pdb_tool.h \
         include/us_hydrodyn_pdb_tool_merge.h \
         include/us_hydrodyn_pdb_tool_renum.h \
