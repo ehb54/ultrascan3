@@ -260,11 +260,15 @@ it is on the wrong concentration axis rather than merely noisy, the inverse-vari
 does not suppress it &mdash; it biases every per-<i>q</i> fit and can even be picked as the
 high-<i>q</i> reference. When this box is checked, such a curve is detected and removed from the
 whole fit (before the reference is chosen), so the extrapolation is computed on the remaining
-curves. <b>At most one</b> curve is ever discarded, and only when enough remain (&ge;&nbsp;3, or
-&ge;&nbsp;4 for the 2nd-order virial). Detection is at the curve level, never per-<i>q</i>:
+curves. <b>At most one</b> curve is discarded from the interactive dialog, and only when enough
+remain (&ge;&nbsp;3, or &ge;&nbsp;4 for the 2nd-order virial); the scripted interface can raise that
+limit (see <code>outlier_max</code> below), in which case detection is simply repeated on the
+cleaned set until no curve qualifies. Raising it matters when more than one curve is contaminated,
+because a single pass judges every curve against a trend that still contains the other offender, so
+the nominee itself can be the wrong curve. Detection is at the curve level, never per-<i>q</i>:
 per-<i>q</i> outlier trimming would overfit at these small point counts and stitch discontinuities
 into the output, whereas a bad concentration is a whole-curve property. The two fields tune it:
-<b>Outlier threshold (sigma)</b> (default 3.0) is the mean standardized residual across <i>q</i>
+<b>Outlier threshold (sigma)</b> (default 3.0) is the mean <i>studentized</i> residual across <i>q</i>
 above which a curve is flagged, and <b>Min &chi;&sup2; gain to discard</b> (default 1.5) is the
 factor by which removing the curve must improve the pooled reduced <i>&chi;</i><sup>2</sup> before
 it is actually dropped; the curve must also be consistently one-signed (a systematic offset, not
@@ -274,9 +278,29 @@ a mean residual of 1&ndash;2 rather than 3, so lowering the sigma field (e.g. to
 conservative. Every run reports the most-outlying curve and all of these numbers in the log (so
 the thresholds can be tuned), whether or not anything is discarded. A discarded curve is drawn as
 a <b>red x</b> in the per-<i>q</i> regression plots and noted in the log, and the output name gains
-<code>_qc1</code>.
+<code>_qc</code><i>N</i> for <i>N</i> discarded curves (<code>_qc1</code> in the usual single-discard
+case). When more than one curve is discarded the red <b>x</b> marks the first (strongest) one, while
+the log records every discard.
 This targets concentration/scale outliers; curve-shape problems such as aggregation are the job of
 the Guinier quality check below.</p>
+
+<p><b>Why the residual is leverage-corrected.</b> The residual used to rank the curves is
+<i>studentized</i>: divided by &radic;(1&minus;<i>h</i>), where <i>h</i> is the curve's leverage in
+the per-<i>q</i> fit of intensity against concentration. This matters because the highest-
+concentration curve sits at the extreme of the concentration axis and therefore carries the most
+leverage: it pulls the fitted line towards itself and so shrinks its own residual. Without the
+correction a genuinely bad highest-concentration curve is masked &mdash; on a seven-curve test series
+the top curve carried a leverage of 0.80 against an average of 0.29, which placed it fifth of seven
+on the raw statistic and second once corrected. Since the residual variance is
+<i>&sigma;</i><sup>2</sup>(1&minus;<i>h</i>), this is the standard studentized residual rather than a
+heuristic adjustment.</p>
+
+<p><i>A limitation worth knowing:</i> when one concentration sits far above all the others, its
+leverage can approach 1, meaning the fitted line passes almost exactly through it and the regression
+has essentially <i>no</i> information with which to judge it &mdash; its residual is near zero
+however it is scaled. No residual-based test, corrected or not, can assess such a curve. Judging it
+requires information from outside the concentration regression, for example comparing the molecular
+weight deduced from each curve's <i>I</i>(0) against the known value.</p>
 
 <!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the normalized
      result, and the absolute-scale + spliced result on a log I(q) vs q axis -->
@@ -421,8 +445,15 @@ reassess the input SDs before fitting.<br>
 <code>sd_reassess&nbsp;off|constant|nonconstant|intensity</code> &mdash; reassess the output
 SDs after fitting.<br>
 <code>discard_outlier&nbsp;0|1</code>, <code>outlier_sigma&nbsp;<i>x</i></code>,
-<code>outlier_chi2&nbsp;<i>x</i></code> &mdash; the automatic one-outlier-concentration QC and
+<code>outlier_chi2&nbsp;<i>x</i></code> &mdash; the automatic outlier-concentration QC and
 its thresholds.<br>
+<code>outlier_max&nbsp;<i>N</i></code> &mdash; maximum number of curves the QC may discard
+(default&nbsp;1, which reproduces the interactive behaviour). With <i>N</i>&nbsp;&gt;&nbsp;1 the
+detection is repeated on the cleaned set until no curve qualifies; hitting the limit while another
+curve still qualifies is reported rather than passed over silently.<br>
+<code>outlier_leverage&nbsp;0|1</code> &mdash; studentize the ranking residual by
+&radic;(1&minus;<i>h</i>) (default&nbsp;1). Set 0 to rank on the raw standardized residual, which
+masks the highest-concentration curve as described above.<br>
 <code>conc&nbsp;&nbsp;&nbsp;"<i>name</i>"&nbsp;<i>value</i></code> &mdash; optional; override a
 curve's concentration instead of using its header.<br>
 <code>dump_conc_csv&nbsp;<i>path</i></code> &mdash; optional; after the run, write the per-curve
@@ -483,7 +514,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 17, 2026.
+Last modified on July 20, 2026.
 </font>
 </body>
 </html>
