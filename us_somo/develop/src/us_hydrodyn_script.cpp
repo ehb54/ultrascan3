@@ -164,6 +164,15 @@ void US_Hydrodyn::gui_script_run() {
             gui_script_error( i, cmd, "missing argument: <pdbfile>" );
          }
          QString opt1 = ls.front(); ls.pop_front();
+         // "perceive compare <pdb>" diffs perception against somo.residue for residues it DOES
+         // code -- a hand-testing aid. Plain "perceive <pdb>" proposes entries for the ones it does not.
+         bool perceive_compare = ( opt1 == "compare" );
+         if ( perceive_compare ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument: perceive compare <pdbfile>" );
+            }
+            opt1 = ls.front(); ls.pop_front();
+         }
          gui_script_msg( i, cmd, opt1 );
          if ( !QFile::exists( opt1 ) ) {
             gui_script_error( i, cmd, "file does not exist: " + opt1 );
@@ -179,6 +188,56 @@ void US_Hydrodyn::gui_script_run() {
             gui_script_error( i, cmd, "could not load hybrid table: "
                               + saxs_options.default_hybrid_filename );
          }
+         if ( perceive_compare ) {
+            // Build resName -> (atomName -> curated hybrid) from SOMO's loaded residue table.
+            std::map< QString, std::map< QString, QString > > curated;
+            for ( map < QString, vector < int > >::iterator it = multi_residue_map.begin();
+                  it != multi_residue_map.end();
+                  ++it ) {
+               for ( unsigned int ri = 0; ri < it->second.size(); ++ri ) {
+                  int idx = it->second[ ri ];
+                  if ( idx < 0 || idx >= (int) residue_list.size() ) continue;
+                  const struct residue & rr = residue_list[ idx ];
+                  for ( unsigned int ai = 0; ai < rr.r_atom.size(); ++ai ) {
+                     // first definition wins; multi-pKa variants share the base atom naming
+                     if ( !curated[ it->first ].count( rr.r_atom[ ai ].name ) ) {
+                        curated[ it->first ][ rr.r_atom[ ai ].name ] = rr.r_atom[ ai ].hybrid.name;
+                     }
+                  }
+               }
+            }
+            somo_perceive::CompareResult cr =
+               somo_perceive::compare_against_table( model_vector[ 0 ], ptbl, curated, opt1 );
+            TSO << QString( "\nperceive compare: %1\n" ).arg( opt1 );
+            TSO << QString( "  coded residues compared : %1\n" ).arg( cr.residues );
+            TSO << QString( "  atoms scored            : %1\n" ).arg( cr.scored );
+            TSO << QString( "  exact hybrid match      : %1 (%2%)\n" )
+               .arg( cr.exact )
+               .arg( cr.scored ? 100.0 * cr.exact / cr.scored : 0, 0, 'f', 2 );
+            TSO << QString( "  physics match           : %1 (%2%)   [mw/radius/electrons identical]\n" )
+               .arg( cr.phys )
+               .arg( cr.scored ? 100.0 * cr.phys / cr.scored : 0, 0, 'f', 2 );
+            if ( !cr.by_pair.empty() ) {
+               TSO << "\n  differences (curated -> perceived):\n";
+               for ( std::map<QString,long>::const_iterator pit = cr.by_pair.begin();
+                     pit != cr.by_pair.end();
+                     ++pit ) {
+                  TSO << QString( "   %1  %2\n" ).arg( pit->second, 6 ).arg( pit->first );
+               }
+               TSO << "\n  first differing atoms:\n";
+               for ( int m = 0; m < cr.mismatches.size() && m < 25; ++m ) {
+                  TSO << QString( "     %1 %2 : curated %3, perceived %4\n" )
+                     .arg( cr.mismatches[ m ].res, -6 )
+                     .arg( cr.mismatches[ m ].atom, -5 )
+                     .arg( cr.mismatches[ m ].expected, -7 )
+                     .arg( cr.mismatches[ m ].got );
+               }
+            } else {
+               TSO << "\n  perception agrees with somo.residue on every compared atom.\n";
+            }
+            continue;
+         }
+
          // somo.residue is the master: only residues it could NOT code are perceived. SOMO records
          // exactly those in unknown_residues (and would otherwise model each as a generic ABB
          // average bead), so that set -- not multi_residue_map, which by now also holds the
