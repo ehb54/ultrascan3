@@ -232,8 +232,11 @@ itself unsound (aggregation, a mis-set concentration, radiation damage, poor buf
 the concentration axis, so it carries almost all the leverage in the per-<i>q</i> fit: the fitted line
 passes essentially through it and its residual is near zero however it is scaled. Judging it needs
 information from outside the concentration regression &mdash; for instance comparing the molecular
-weight implied by each curve's <i>I</i>(0) against the known value. Where you have such knowledge, the
-scripted <code>reference</code> directive lets you name the curve to use.</p>
+weight implied by each curve's <i>I</i>(0) against the known value. Where you have such knowledge you
+can say so: the concentration dialog offers a <b>Reference curve</b> selector (default
+<i>Automatic (highest concentration)</i>, and enabled only when one of the two options above is
+ticked, since nothing else uses a reference), and the scripted interface has the equivalent
+<code>reference</code> directive.</p>
 
 <p><i>Caveat when overriding with the splice enabled:</i> the merge point is found as the <i>q</i> from
 which the extrapolation stops differing from the reference, i.e. where the interparticle contribution

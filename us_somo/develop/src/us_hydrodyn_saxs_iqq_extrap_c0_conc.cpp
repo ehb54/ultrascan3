@@ -28,6 +28,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_discard_outlier,
                                                                           double *out_outlier_sigma,
                                                                           double *out_outlier_chi2_ratio,
+                                                                          QString *out_reference,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -51,6 +52,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_discard_outlier    = out_discard_outlier;
    this->out_outlier_sigma      = out_outlier_sigma;
    this->out_outlier_chi2_ratio = out_outlier_chi2_ratio;
+   this->out_reference          = out_reference;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -155,6 +157,43 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "the reference curve is copied verbatim, carrying its error bars -- replacing the\n"
                                 "noisy high-q extrapolated tail with the cleaner reference data (the ATSAS almerge\n"
                                 "idea). Independent of the scale option above." ) );
+
+   // Reference-curve selection. Default = automatic (highest concentration), which is the right
+   // default because intensity scales with concentration, so the top curve normally has the best
+   // high-q signal-to-noise -- exactly what the splice copies. It is only wrong when that curve is
+   // itself unsound, which cannot be judged from the concentration fit (the top curve is the
+   // extreme x, so its leverage approaches 1 and the fit passes essentially through it). Where the
+   // user knows better -- e.g. from MW vs concentration against the known value -- let them say so.
+   lbl_reference = new QLabel( us_tr( "Reference curve:" ), this );
+   lbl_reference->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lbl_reference->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_reference );
+   lbl_reference->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold ) );
+
+   cb_reference = new QComboBox( this );
+   cb_reference->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_reference );
+   cb_reference->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_reference->setMinimumHeight( minHeight1 );
+   cb_reference->addItem( us_tr( "Automatic (highest concentration)" ) );
+   for ( int i = 0; i < names.size(); i++ )
+   {
+      QString dn = names[ i ];
+      dn.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+      cb_reference->addItem( dn );
+   }
+   cb_reference->setCurrentIndex( 0 );
+   cb_reference->setToolTip(
+                         us_tr( "Which curve provides the absolute scale and/or the high-q splice.\n\n"
+                                "Automatic uses the highest concentration, which normally has the best high-q\n"
+                                "signal-to-noise. Override it only if you know that curve is unsound (aggregation,\n"
+                                "a mis-set concentration, radiation damage, poor buffer subtraction) -- the program\n"
+                                "cannot detect that itself, because the highest-concentration curve carries almost\n"
+                                "all the leverage in the fit and so has a near-zero residual whatever its quality.\n\n"
+                                "Note: with the high-q splice enabled, choosing a LOWER concentration tends to move\n"
+                                "the merge point down, because a less concentrated curve is already nearer the\n"
+                                "dilute limit and noisier -- the result can become that raw curve rather than the\n"
+                                "extrapolation. The merge point is reported in the log." ) );
 
    cb_gcv = new QCheckBox( us_tr( "Automatic slope regularization (GCV) -- recommended" ), this );
    cb_gcv->setChecked( true );
@@ -417,6 +456,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    // disable it whenever absolute-scale or automatic GCV regularization is selected
    connect( cb_ref_scale, SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
    connect( cb_merge,     SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
+   connect( cb_ref_scale, SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
+   connect( cb_merge,     SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
    connect( cb_gcv,    SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
 
    hbl_broaden->addWidget( lbl_broaden );
@@ -458,6 +499,12 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( t_conc );
    background->addWidget( cb_ref_scale );
    background->addWidget( cb_merge );
+   {
+      QHBoxLayout *hbl_reference = new QHBoxLayout(); hbl_reference->setContentsMargins( 0, 0, 0, 0 ); hbl_reference->setSpacing( 2 );
+      hbl_reference->addWidget( lbl_reference );
+      hbl_reference->addWidget( cb_reference );
+      background->addLayout( hbl_reference );
+   }
    background->addWidget( cb_gcv );
    background->addWidget( cb_weight );
    background->addWidget( cb_regplots );
@@ -473,6 +520,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
 
    // reflect the default state (GCV on => manual window disabled)
    refresh_broaden_enabled();
+   refresh_reference_enabled();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
@@ -482,6 +530,14 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
    bool enable = !cb_ref_scale->isChecked() && !cb_merge->isChecked() && !cb_gcv->isChecked();
    le_broaden->setEnabled( enable );
    lbl_broaden->setEnabled( enable );
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_reference_enabled()
+{
+   // a reference curve is only used by the absolute scale and/or the high-q splice
+   bool enable = cb_ref_scale->isChecked() || cb_merge->isChecked();
+   cb_reference->setEnabled( enable );
+   lbl_reference->setEnabled( enable );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::populate_table()
@@ -593,6 +649,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
       ( *out_name_to_conc )[ names[ i ] ] = t_conc->item( i, 1 )->text().toDouble();
       *out_selected_names << names[ i ];
    }
+   // index 0 is "Automatic"; anything else names the curve explicitly
+   *out_reference       = ( cb_reference->currentIndex() > 0 ) ? cb_reference->currentText() : QString();
    *out_ref_scale       = cb_ref_scale->isChecked();
    *out_merge_ref       = cb_merge->isChecked();
    *out_show_regplots = cb_regplots->isChecked();

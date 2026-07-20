@@ -48,6 +48,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_discard_outlier,
                                           double *out_outlier_sigma,
                                           double *out_outlier_chi2_ratio,
+                                          QString *out_reference,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -60,6 +61,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QTableWidget *t_conc;
       QCheckBox    *cb_ref_scale;
       QCheckBox    *cb_merge;
+      QLabel       *lbl_reference;
+      QComboBox    *cb_reference;
       QCheckBox    *cb_gcv;
       QCheckBox    *cb_weight;
       QCheckBox    *cb_regplots;
@@ -102,6 +105,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_discard_outlier;
       double       *out_outlier_sigma;
       double       *out_outlier_chi2_ratio;
+      QString      *out_reference;
       void         *us_hydrodyn;
 
       bool          disable_updates;
@@ -115,6 +119,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       void cell_changed( QTableWidgetItem * );
       void selection_changed();
       void refresh_broaden_enabled();
+      void refresh_reference_enabled();
       void ok();
       void cancel();
       void help();
