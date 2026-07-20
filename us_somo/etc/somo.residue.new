@@ -1881,7 +1881,7 @@ C6N	C3H1	13.02	1.76	4	0	43	0
 2	12	0	1	102.11
 1	12	0	1	116.28
 NADPH [dihydro nicotinamide adenine dinucleotide phosphate] (not protonated, single and double protonated)
-NDP	5	 560.75	534	48	6	0.589    0.599   1.85    0.599   6.38
+NDP	5	 560.75	534	48	6	0.589	0.589	1.85	0.589	6.38
 PA	P4H0	30.98	1.82	0	1	0	0
 O1A	O1H0	16	1.42	0	0	1	0
 O2A	O2H1	17.01	1.46	0	0	2	0	1	O1H0-	16	1.42	0	0	2	5
