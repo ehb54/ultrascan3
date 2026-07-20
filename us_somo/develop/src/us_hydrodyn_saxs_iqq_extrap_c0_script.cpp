@@ -48,6 +48,15 @@
 //                                      itself and hides its own residual.)
 //   outlier_sigma   <double>          (outlier magnitude threshold; default 3.0)
 //   outlier_chi2    <double>          (required pooled chi^2 gain to confirm a drop; default 1.5)
+//   reference <curve-name | conc>     (optional; choose the reference curve used for the absolute
+//                                      scale and/or the high-q splice, instead of the default
+//                                      highest-concentration pick. Accepts a curve name (or a
+//                                      distinctive part of one) or a concentration value. Useful
+//                                      when the top-concentration curve is known to be defective:
+//                                      that cannot be detected from the concentration regression,
+//                                      because the extreme-concentration curve has leverage ~1 and
+//                                      the fit passes essentially through it. A non-matching value
+//                                      is reported, never silently ignored.)
 //   conc    <curve-name> <double>     (optional; override a curve's concentration. name may be
 //                                      quoted; matched against the plotted/dequoted curve name)
 //   dump_conc_csv   <path>            (optional; after the run, write the conc_csv table as
@@ -212,6 +221,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_outlier_chi2   = 1.5e0;
    extrap_c0_script_outlier_max    = 1;
    extrap_c0_script_outlier_leverage = true;
+   extrap_c0_script_reference.clear();
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -268,6 +278,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "outlier_chi2" )    { extrap_c0_script_outlier_chi2  = val.toDouble(); }
       else if ( key == "outlier_max" )     { extrap_c0_script_outlier_max   = val.toInt() > 0 ? val.toInt() : 1; }
       else if ( key == "outlier_leverage" ){ extrap_c0_script_outlier_leverage = ( val.toInt() != 0 ); }
+      else if ( key == "reference" )       { extrap_c0_script_reference      = val; }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );

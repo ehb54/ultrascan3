@@ -694,6 +694,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Studentize the nomination residual by sqrt(1-h). ON by default: the raw statistic
    // systematically masks the highest-concentration curve, which is the highest-leverage point.
    bool   outlier_leverage    = true;
+   // Optional explicit reference-curve choice (name substring, or a concentration value).
+   // Empty = the default highest-concentration pick.
+   QString ref_override;
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    if ( extrap_c0_script )
@@ -737,6 +740,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       discard_outlier    = extrap_c0_script_discard;
       outlier_max        = extrap_c0_script_outlier_max;
       outlier_leverage   = extrap_c0_script_outlier_leverage;
+      ref_override       = extrap_c0_script_reference;
       outlier_sigma      = extrap_c0_script_outlier_sigma;
       outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
    }
@@ -1161,12 +1165,80 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          }
       }
 
-      for ( int ci = 0; ci < ordered_names.size(); ci++ )
+      // Reference selection. Default = highest concentration, which is the right DEFAULT because
+      // intensity scales with concentration, so the top curve normally has the best high-q
+      // signal-to-noise -- exactly what the splice needs. It is only wrong when that particular
+      // curve is defective (aggregation, a mis-set concentration, radiation damage, bad buffer
+      // subtraction), and that cannot be detected from the concentration regression itself: the
+      // top curve is the extreme x, so its leverage approaches 1, the fit passes essentially
+      // through it and its residual carries almost no information about it. Judging it needs
+      // knowledge from outside the regression (e.g. MW from I(0) against the known value), which
+      // the user may well have and the program does not -- hence this explicit override.
+      QString ref_override_note;
+      if ( !ref_override.isEmpty() )
       {
-         if ( concs[ ci ] > ref_conc )
+         QString want = ref_override.trimmed();
+         want.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         bool   numeric = false;
+         double want_c  = want.toDouble( &numeric );
+         int    hit     = -1;
+         for ( int ci = 0; ci < ordered_names.size(); ci++ )
          {
-            ref_conc = concs[ ci ];
-            ref_ci   = ci;
+            QString nm = ordered_names[ ci ];
+            nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+            bool match = numeric
+               ? ( concs[ ci ] > 0e0 && qAbs( concs[ ci ] - want_c ) <= 1e-6 + 1e-6 * qAbs( want_c ) )
+               : ( nm == want || nm.contains( want ) );
+            if ( match && concs[ ci ] > 0e0 ) { hit = ci; break; }
+         }
+         if ( hit >= 0 )
+         {
+            ref_ci   = hit;
+            ref_conc = concs[ hit ];
+            ref_override_note = us_tr( " [user-selected reference]" );
+
+            // The high-q splice is built around the reference being the HIGHEST concentration:
+            // the merge point is where the extrapolation stops differing from it, i.e. where the
+            // interparticle contribution has died away. A lower-concentration reference is itself
+            // closer to dilute AND has larger error bars, so the agreement test passes almost
+            // immediately -- the merge collapses towards q_min and the output becomes that single
+            // raw curve instead of the de-noised extrapolation. Warn; do not silently comply.
+            double max_conc = 0e0;
+            for ( int ci = 0; ci < ordered_names.size(); ci++ )
+            {
+               if ( concs[ ci ] > max_conc ) { max_conc = concs[ ci ]; }
+            }
+            if ( merge_ref && ref_conc < max_conc )
+            {
+               extrap_msg(
+                          QString( us_tr( "Reference override selects conc %1, which is NOT the highest concentration "
+                                          "(%2), while the high-q splice is enabled. The splice takes the reference "
+                                          "verbatim above the merge point, and a lower-concentration reference is both "
+                                          "nearer the dilute limit and noisier, so the merge point will move down and "
+                                          "may replace most of the extrapolation with this single raw curve. Check the "
+                                          "reported merge point, or turn the splice off." ) )
+                          .arg( ref_conc ).arg( max_conc ) );
+            }
+         }
+         else
+         {
+            // never silently ignore an override -- the user asked for a specific curve
+            extrap_msg(
+                       QString( us_tr( "Reference override \"%1\" does not match any selected curve with a "
+                                       "positive concentration; falling back to the highest concentration." ) )
+                       .arg( want ) );
+         }
+      }
+
+      if ( ref_ci < 0 )
+      {
+         for ( int ci = 0; ci < ordered_names.size(); ci++ )
+         {
+            if ( concs[ ci ] > ref_conc )
+            {
+               ref_conc = concs[ ci ];
+               ref_ci   = ci;
+            }
          }
       }
 
@@ -1185,8 +1257,10 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       // scale (ref_scale, multiply the normalized fit by c_ref) and/or to splice its clean
       // high-q data above the merge point (merge_ref).
       editor_msg( "black",
-                 QString( us_tr( "Reference (highest-concentration) curve: \"%1\" (conc %2)%3%4\n" ) )
+                 QString( us_tr( "Reference (%1) curve: \"%2\" (conc %3)%4%5%6\n" ) )
+                 .arg( ref_override_note.isEmpty() ? us_tr( "highest-concentration" ) : us_tr( "user-selected" ) )
                  .arg( ordered_names[ ref_ci ] ).arg( ref_conc )
+                 .arg( ref_override_note )
                  .arg( ref_scale ? us_tr( "; output on its absolute scale" ) : QString( "" ) )
                  .arg( merge_ref ? us_tr( "; high-q reference splice enabled" ) : QString( "" ) ) );
 
@@ -1764,8 +1838,22 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             merge_q = q[ merge_idx ];
             editor_msg( "black",
                        QString( us_tr( "Reference merge point: q = %1 (index %2 of %3); extrapolating below, "
-                                       "taking the highest-concentration curve above (reduced chi^2 <= %4)\n" ) )
+                                       "taking the reference curve above (reduced chi^2 <= %4)\n" ) )
                        .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_chi2 ) );
+            // A merge point at (or near) the start means the output is essentially the raw reference
+            // curve rather than the extrapolation -- the de-noising and the c=0 correction are both
+            // thrown away. That is almost never intended, so say so rather than returning it quietly.
+            if ( merge_idx * 10 < (int) npts )
+            {
+               extrap_msg(
+                          QString( us_tr( "Reference splice: the merge point is at index %1 of %2, so almost the whole "
+                                          "output is the reference curve taken verbatim, not the extrapolation. This "
+                                          "usually means the reference agrees with the extrapolation everywhere -- "
+                                          "typically because it is not the highest concentration, or its error bars are "
+                                          "large. Consider turning the splice off, or using the highest-concentration "
+                                          "curve as the reference." ) )
+                          .arg( merge_idx ).arg( (int) npts ) );
+            }
          }
          else
          {

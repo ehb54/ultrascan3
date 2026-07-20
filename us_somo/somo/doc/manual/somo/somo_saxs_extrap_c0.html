@@ -221,6 +221,28 @@ curve with the clean reference tail; both = the former "absolute-scale mode" (re
 with the high-<i>q</i> splice). Unlike before, all four now honor the chosen concentration model,
 so the reciprocal/virial models' unbiased molecular weight is available on the absolute scale too.</p>
 
+<p><b>Which curve is the reference.</b> Both of the above use a <i>reference</i> curve, and by
+default that is the one at the <b>highest concentration</b>. That is the right default rather than an
+arbitrary one: scattered intensity scales with concentration, so the most concentrated curve normally
+has the best high-<i>q</i> signal-to-noise &mdash; precisely what the splice needs, since above the
+merge point the output <i>is</i> that curve. It is the wrong choice only when that particular curve is
+itself unsound (aggregation, a mis-set concentration, radiation damage, poor buffer subtraction).</p>
+
+<p>The program cannot detect that for itself. The highest-concentration curve sits at the extreme of
+the concentration axis, so it carries almost all the leverage in the per-<i>q</i> fit: the fitted line
+passes essentially through it and its residual is near zero however it is scaled. Judging it needs
+information from outside the concentration regression &mdash; for instance comparing the molecular
+weight implied by each curve's <i>I</i>(0) against the known value. Where you have such knowledge, the
+scripted <code>reference</code> directive lets you name the curve to use.</p>
+
+<p><i>Caveat when overriding with the splice enabled:</i> the merge point is found as the <i>q</i> from
+which the extrapolation stops differing from the reference, i.e. where the interparticle contribution
+has died away. A lower-concentration reference is both nearer the dilute limit already and noisier, so
+that test passes almost at once: the merge point moves down towards <i>q</i><sub>min</sub> and the
+output becomes that one raw curve rather than the de-noised extrapolation. Both situations are
+reported in the log &mdash; a merge point close to the start of the grid is flagged explicitly. If you
+need a different reference for the absolute scale, consider turning the splice off.</p>
+
 <p><b>Recompute input curve SDs before fitting</b> (checkbox, off by default, with a mode
 sub-option). When checked, each selected input curve's error bars are first reassessed from the
 curve's own point-to-point scatter &mdash; the same BayesApp engine (Larsen &amp; Pedersen, 2021)
@@ -454,6 +476,12 @@ curve still qualifies is reported rather than passed over silently.<br>
 <code>outlier_leverage&nbsp;0|1</code> &mdash; studentize the ranking residual by
 &radic;(1&minus;<i>h</i>) (default&nbsp;1). Set 0 to rank on the raw standardized residual, which
 masks the highest-concentration curve as described above.<br>
+<code>reference&nbsp;<i>curve-name</i>&nbsp;|&nbsp;<i>conc</i></code> &mdash; choose the reference
+curve explicitly instead of the default highest-concentration pick; accepts a curve name (or a
+distinctive part of one) or a concentration value. Intended for the case where the
+highest-concentration curve is known to be unsound &mdash; a judgement the program cannot make for
+itself (see the caveat under the reference splice). A value matching no selected curve is reported
+and the default is used; it is never silently ignored.<br>
 <code>conc&nbsp;&nbsp;&nbsp;"<i>name</i>"&nbsp;<i>value</i></code> &mdash; optional; override a
 curve's concentration instead of using its header.<br>
 <code>dump_conc_csv&nbsp;<i>path</i></code> &mdash; optional; after the run, write the per-curve
