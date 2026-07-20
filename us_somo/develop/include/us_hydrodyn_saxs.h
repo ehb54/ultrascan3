@@ -813,6 +813,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool   extrap_c0_script_discard        = false;      // auto-discard one outlier concentration
       double extrap_c0_script_outlier_sigma  = 3e0;        // outlier magnitude threshold
       double extrap_c0_script_outlier_chi2   = 1.5e0;      // required pooled chi^2 gain to confirm drop
+      int    extrap_c0_script_outlier_max    = 1;          // max curves the QC may discard (1 = original)
 
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();

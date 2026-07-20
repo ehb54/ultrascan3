@@ -666,7 +666,12 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool recompute_inputs      = false; // transiently reassess each input curve's SDs before fitting
    int  recompute_inputs_mode = 0;     // 0 constant, 1 non-constant, 2 intensity-dependent
    int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
-   bool   discard_outlier     = false; // auto-discard one outlier concentration curve (robust QC)
+   bool   discard_outlier     = false; // auto-discard outlier concentration curve(s) (robust QC)
+   // Maximum number of curves the QC may discard. 1 = the original single-discard behavior (and the
+   // GUI default). Raising it re-runs the detector on the cleaned set: with TWO contaminated curves
+   // present, a single pass judges every curve against a trend that still contains the other bad
+   // one, so the nomination itself can be unreliable.
+   int    outlier_max         = 1;
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    if ( extrap_c0_script )
@@ -708,6 +713,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       recompute_inputs_mode = extrap_c0_script_recompute_mode;
       sd_mode            = extrap_c0_script_sd_mode;
       discard_outlier    = extrap_c0_script_discard;
+      outlier_max        = extrap_c0_script_outlier_max;
       outlier_sigma      = extrap_c0_script_outlier_sigma;
       outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
    }
@@ -973,6 +979,11 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    double            excl_conc = -1e0;           // its concentration (regplot x); < 0 => none
    vector < double > reg_excl_y;                 // its per-q y on the plot axis (NaN where none)
    int               n_outlier_dropped = 0;
+   // Detection is repeated on the CLEANED set while curves keep qualifying, up to outlier_max
+   // (default 1 = the original behavior). Iterating matters when more than one curve is bad: a
+   // single pass compares every curve against a trend that still contains the other offender, so
+   // the nominee can be the wrong curve. Each pass re-runs the full detector and all gates.
+   while ( true )
    {
       int n_participating = 0;
       for ( int ci = 0; ci < (int) concs.size(); ci++ ) { if ( concs[ ci ] > 0e0 ) { n_participating++; } }
@@ -1019,32 +1030,36 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
              .arg( osep, 0, 'f', 2 )
          : QString();
 
-      if ( qualifies && count_ok && discard_outlier )
+      if ( qualifies && count_ok && discard_outlier && n_outlier_dropped < outlier_max )
       {
-         excl_name = ordered_names[ j_star ];
-         excl_conc = concs[ j_star ];
-         // the excluded curve's y on the current plot axis, per q, for the regplot red "x"
-         bool istar_j = is_istar[ j_star ];
-         reg_excl_y.assign( npts, numeric_limits < double >::quiet_NaN() );
-         const vector < double > & Iarr = name_to_I[ excl_name ];
-         for ( unsigned int qi = 0; qi < npts && qi < Iarr.size(); qi++ )
+         // regplot red "x" shows the FIRST (strongest) discard; with several drops the plot marks
+         // only that one, while the log below records every discard.
+         if ( excl_name.isEmpty() )
          {
-            double Iv = Iarr[ qi ];
-            if ( us_isnan( Iv ) ) { continue; }
-            if ( extrap_model >= 1 )              // reciprocal / virial axis c/I
+            excl_name = ordered_names[ j_star ];
+            excl_conc = concs[ j_star ];
+            bool istar_j = is_istar[ j_star ];
+            reg_excl_y.assign( npts, numeric_limits < double >::quiet_NaN() );
+            const vector < double > & Iarr = name_to_I[ excl_name ];
+            for ( unsigned int qi = 0; qi < npts && qi < Iarr.size(); qi++ )
             {
-               if ( Iv <= 0e0 ) { continue; }
-               reg_excl_y[ qi ] = istar_j ? 1e0 / Iv : excl_conc / Iv;
-            }
-            else                                  // additive axis I/c
-            {
-               reg_excl_y[ qi ] = istar_j ? Iv : Iv / excl_conc;
+               double Iv = Iarr[ qi ];
+               if ( us_isnan( Iv ) ) { continue; }
+               if ( extrap_model >= 1 )              // reciprocal / virial axis c/I
+               {
+                  if ( Iv <= 0e0 ) { continue; }
+                  reg_excl_y[ qi ] = istar_j ? 1e0 / Iv : excl_conc / Iv;
+               }
+               else                                  // additive axis I/c
+               {
+                  reg_excl_y[ qi ] = istar_j ? Iv : Iv / excl_conc;
+               }
             }
          }
 
          editor_msg( "red",
-                    QString( us_tr( "Outlier QC: DISCARDED -- %1. Refit on %2 curves.\n" ) )
-                    .arg( detail ).arg( n_participating - 1 ) );
+                    QString( us_tr( "Outlier QC: DISCARDED (%1 of at most %2) -- %3. Refit on %4 curves.\n" ) )
+                    .arg( n_outlier_dropped + 1 ).arg( outlier_max ).arg( detail ).arg( n_participating - 1 ) );
 
          ordered_names.removeAt( j_star );
          concs.erase( concs.begin() + j_star );
@@ -1054,7 +1069,17 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
          istar_count = 0;
          for ( int ci = 0; ci < ordered_names.size(); ci++ ) { if ( is_istar[ ci ] ) { istar_count++; } }
          all_istar = ( istar_count == (unsigned int) ordered_names.size() );
-         n_outlier_dropped = 1;
+         n_outlier_dropped++;
+         continue;                                // re-detect on the cleaned set
+      }
+
+      if ( discard_outlier && n_outlier_dropped >= outlier_max && qualifies && count_ok )
+      {
+         // hit the cap with another curve still qualifying -- say so, don't silently stop
+         editor_msg( "dark red",
+                    QString( us_tr( "Outlier QC: discard limit (%1) reached; %2 still qualifies but was kept. "
+                                    "Raise the limit if more than %1 curve(s) are suspect.\n" ) )
+                    .arg( outlier_max ).arg( detail ) );
       }
       else if ( discard_outlier )
       {
@@ -1084,6 +1109,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                                     "\"Automatically discard one outlier concentration\" to act, or verify this concentration).\n" ) )
                     .arg( detail ) );
       }
+      break;                                      // nothing (further) discarded -> stop iterating
    }
 
    // Absolute-scale setup: pick the reference (highest-concentration) curve, compute a

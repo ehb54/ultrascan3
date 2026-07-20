@@ -36,7 +36,12 @@
 //   fit_broaden     <int>             (Zimm fit-broadening q-window; default 0 = off)
 //   recompute_inputs off | constant | nonconstant | intensity   (default off)
 //   sd_reassess      off | constant | nonconstant | intensity   (post-fit output SDs; default off)
-//   discard_outlier 0 | 1             (auto-discard one outlier concentration; default 0)
+//   discard_outlier 0 | 1             (auto-discard outlier concentration curve(s); default 0)
+//   outlier_max     <int>             (max curves the QC may discard; default 1 = original single
+//                                      discard. >1 re-runs the detector on the cleaned set, which
+//                                      matters when more than one curve is contaminated: a single
+//                                      pass judges each curve against a trend still containing the
+//                                      other offender, so the nominee itself can be wrong.)
 //   outlier_sigma   <double>          (outlier magnitude threshold; default 3.0)
 //   outlier_chi2    <double>          (required pooled chi^2 gain to confirm a drop; default 1.5)
 //   conc    <curve-name> <double>     (optional; override a curve's concentration. name may be
@@ -201,6 +206,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_discard        = false;
    extrap_c0_script_outlier_sigma  = 3e0;
    extrap_c0_script_outlier_chi2   = 1.5e0;
+   extrap_c0_script_outlier_max    = 1;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -255,6 +261,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "discard_outlier" ) { extrap_c0_script_discard = ( val.toInt() != 0 ); }
       else if ( key == "outlier_sigma" )   { extrap_c0_script_outlier_sigma = val.toDouble(); }
       else if ( key == "outlier_chi2" )    { extrap_c0_script_outlier_chi2  = val.toDouble(); }
+      else if ( key == "outlier_max" )     { extrap_c0_script_outlier_max   = val.toInt() > 0 ? val.toInt() : 1; }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );
