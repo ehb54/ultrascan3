@@ -42,6 +42,10 @@
 //                                      matters when more than one curve is contaminated: a single
 //                                      pass judges each curve against a trend still containing the
 //                                      other offender, so the nominee itself can be wrong.)
+//   outlier_leverage 0 | 1            (studentize the nomination residual by sqrt(1-h); default 1.
+//                                      Without it the highest-concentration curve is masked -- it is
+//                                      the extreme x, so it has the most leverage, pulls the fit onto
+//                                      itself and hides its own residual.)
 //   outlier_sigma   <double>          (outlier magnitude threshold; default 3.0)
 //   outlier_chi2    <double>          (required pooled chi^2 gain to confirm a drop; default 1.5)
 //   conc    <curve-name> <double>     (optional; override a curve's concentration. name may be
@@ -207,6 +211,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_outlier_sigma  = 3e0;
    extrap_c0_script_outlier_chi2   = 1.5e0;
    extrap_c0_script_outlier_max    = 1;
+   extrap_c0_script_outlier_leverage = true;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -262,6 +267,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "outlier_sigma" )   { extrap_c0_script_outlier_sigma = val.toDouble(); }
       else if ( key == "outlier_chi2" )    { extrap_c0_script_outlier_chi2  = val.toDouble(); }
       else if ( key == "outlier_max" )     { extrap_c0_script_outlier_max   = val.toInt() > 0 ? val.toInt() : 1; }
+      else if ( key == "outlier_leverage" ){ extrap_c0_script_outlier_leverage = ( val.toInt() != 0 ); }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );

@@ -362,6 +362,7 @@ static int us_extrap_c0_detect_outlier(
                                        unsigned int                               npts,
                                        bool                                       reciprocal,
                                        bool                                       use_weights,  // 1/sigma^2 fit + standardize by sigma; else OLS + per-q RMS
+                                       bool                                       use_leverage, // studentize by sqrt(1-h) (unmasks high-leverage top-conc curve)
                                        double                                   & T_out,       // mean |t| of the nominee
                                        double                                   & sgn_out,     // one-sided fraction of the nominee
                                        double                                   & sep_out,     // T_nominee / median T of the rest (reported, not gated)
@@ -429,6 +430,7 @@ static int us_extrap_c0_detect_outlier(
          }
          s_q = ( n_here > 2 ) ? sqrt( ss / ( n_here - 2 ) ) : 0e0;
       }
+      double xbar_w = ( S > 0e0 ) ? Sx / S : 0e0;
       for ( int ci = 0; ci < nc; ci++ )
       {
          if ( !ok[ ci ] ) { continue; }
@@ -442,6 +444,23 @@ static int us_extrap_c0_detect_outlier(
          else
          {
             t = ( s_q > 0e0 ) ? r / s_q : 0e0;
+         }
+         if ( use_leverage )
+         {
+            // Studentize: divide by sqrt(1-h). h is the point's leverage in the weighted line fit,
+            //   h_i = w_i * ( 1/S + (x_i - xbar_w)^2 / M ) ,  sum_i h_i = 2 (a 2-parameter fit).
+            // Without this the highest-CONCENTRATION curve is systematically masked: it is the
+            // extreme x, so it has the largest leverage, drags the fitted line onto itself and
+            // shrinks its own residual. Measured on the 7-curve alpha-syn set the top curve carries
+            // mean leverage 0.80 (vs ~0.29 average), which pushed a genuinely suspect curve from
+            // rank 2 down to rank 5 on the raw statistic. Var(r_i) = sigma_i^2 (1-h_i), so this is
+            // the standard internally-studentized residual, not a heuristic.
+            double h = ( S > 0e0 && M > 0e0 )
+               ? wv[ ci ] * ( 1e0 / S + ( xv[ ci ] - xbar_w ) * ( xv[ ci ] - xbar_w ) / M )
+               : 0e0;
+            double denom = sqrt( ( h < 1e0 ) ? ( 1e0 - h ) : 1e-9 );   // h->1 = point barely constrained
+            if ( denom < 1e-4 ) { denom = 1e-4; }                      // cap the inflation
+            t /= denom;
          }
          absres[ ci ].push_back( fabs( t ) );
          nval[ ci ]++;
@@ -672,6 +691,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // present, a single pass judges every curve against a trend that still contains the other bad
    // one, so the nomination itself can be unreliable.
    int    outlier_max         = 1;
+   // Studentize the nomination residual by sqrt(1-h). ON by default: the raw statistic
+   // systematically masks the highest-concentration curve, which is the highest-leverage point.
+   bool   outlier_leverage    = true;
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    if ( extrap_c0_script )
@@ -714,6 +736,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       sd_mode            = extrap_c0_script_sd_mode;
       discard_outlier    = extrap_c0_script_discard;
       outlier_max        = extrap_c0_script_outlier_max;
+      outlier_leverage   = extrap_c0_script_outlier_leverage;
       outlier_sigma      = extrap_c0_script_outlier_sigma;
       outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
    }
@@ -991,7 +1014,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       double oT = 0e0, osgn = 0e0, osep = 0e0, oc2f = 0e0, oc2r = 0e0;
       int    j_star = us_extrap_c0_detect_outlier( ordered_names, concs, is_istar,
                                                    name_to_I, name_to_err, npts,
-                                                   ( extrap_model >= 1 ), use_sd_weights,
+                                                   ( extrap_model >= 1 ), use_sd_weights, outlier_leverage,
                                                    oT, osgn, osep, oc2f, oc2r );
 
       // gates: magnitude (mean |t| >= sigma), systematic (>=70% one-sided), and the curve
