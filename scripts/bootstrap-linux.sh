@@ -230,16 +230,20 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   # gperf: required by the Qt5/Qt6 qtbase vcpkg port for keyword hash tables
   # bison: required by libmariadb connector port (SQL parser grammar)
   # flex: required by libmariadb connector port (SQL lexer)
-  # libtime-piece-perl: provides Time::Piece, required by the OpenSSL Configure
-  #   script invoked during vcpkg's openssl port build.  It is a core Perl module
-  #   but is split into a separate package on Ubuntu/Debian and is not installed
-  #   by default on GitHub-hosted Ubuntu 24.04 runners.
+  # perl: provides Time::Piece (used by the OpenSSL Configure script invoked
+  #   during vcpkg's openssl port build). Time::Piece lives in perl-modules-X.YY,
+  #   pulled in by the "perl" metapackage -- NOT by "perl-base", which is all
+  #   that's guaranteed present on minimal/CI images. There is no standalone
+  #   "libtime-piece-perl" package on Ubuntu/Debian (verified: no such package
+  #   exists in any Ubuntu or Debian suite) -- depend on "perl" instead, since
+  #   its name and Time::Piece bundling are stable across releases, unlike the
+  #   versioned perl-modules-X.YY package.
   PKGS_CODEGEN=(
     nasm
     gperf
     bison
     flex
-    libtime-piece-perl
+    perl
   )
 
   # --- Python (Sphinx documentation) ----------------------------------------
@@ -694,12 +698,21 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   fi
 
   log "Installing packages..."
+  # set -e already aborts on a failed apt-get, but a bad package name buries
+  # apt's "Unable to locate package" line mid-output -- this wrapper adds a
+  # final, unambiguous failure message naming exactly what didn't install
+  # (rather than the run silently reporting the same packages missing again
+  # on the next invocation, as happened with the now-fixed libtime-piece-perl
+  # name above, which never existed as an apt package on any Ubuntu/Debian
+  # suite).
   if [ "$NON_INTERACTIVE" = true ]; then
     DEBIAN_FRONTEND=noninteractive ${SUDO:+$SUDO} apt-get install -y \
       --no-install-recommends \
-      "${PKGS_TO_INSTALL[@]}"
+      "${PKGS_TO_INSTALL[@]}" \
+      || die "apt-get install failed for: ${PKGS_TO_INSTALL[*]} (check package names for this distro/release)"
   else
-    ${SUDO:+$SUDO} apt-get install -y "${PKGS_TO_INSTALL[@]}"
+    ${SUDO:+$SUDO} apt-get install -y "${PKGS_TO_INSTALL[@]}" \
+      || die "apt-get install failed for: ${PKGS_TO_INSTALL[*]} (check package names for this distro/release)"
   fi
 
 elif [ "$DISTRO_FAMILY" = "rhel" ]; then
