@@ -433,13 +433,12 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         const std::vector<InAtom>& atoms, const std::vector<OutAtom>& perceived,
         const std::string& chemical_name) const {
     Emitted em;
-    double total_mw=0, total_vol=0;
+    double total_mw=0;
     std::ostringstream body;
     std::map<std::string,int> seen_new;
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
-        total_mw  += o.mw;
-        total_vol += (4.0/3.0)*M_PI*o.vdw_radius*o.vdw_radius*o.vdw_radius;
+        total_mw += o.mw;
         // atom line: name hybrid mw radius bead 0 index hydration
         body << atoms[k].name << '\t' << o.hybrid << '\t' << o.mw << '\t' << o.vdw_radius
              << "\t0\t0\t" << k << "\t0\n";
@@ -453,28 +452,40 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
             em.new_hybrids.push_back(hl.str());
         }
     }
-    // Flag uncertain atoms so a user confirming this tentative entry knows what to check.
+    // Flag genuinely uncertain atoms so a user confirming this entry knows what to check.
+    // Only ambiguous or novel types qualify: a confident classification that merely carries an
+    // informational note (e.g. "terminal oxo") must not be listed as uncertain, and this must
+    // agree with the flagged count reported by callers.
     std::ostringstream review;
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
-        if (o.ambiguity || !o.in_table || !o.note.empty())
-            review << "#   " << atoms[k].name << " (" << o.hybrid << "): "
-                   << (o.note.empty() ? (o.in_table?"flagged":"NEW type - synthesized coefficients")
-                                      : o.note) << '\n';
+        if (!o.ambiguity && o.in_table) continue;
+        review << "#   " << atoms[k].name << " (" << o.hybrid << "): "
+               << (o.note.empty() ? (o.in_table ? "uncertain"
+                                                : "NEW type - synthesized coefficients")
+                                  : o.note) << '\n';
     }
-    double vbar = total_mw>0 ? 0.60221*total_vol/total_mw : 0.0; // cm^3/g estimate
     std::ostringstream hdr;
     // Comment line = the residue's real chemical name when the PDB header supplied one (HETNAM).
     hdr << "# " << (chemical_name.empty() ? resname : chemical_name)
         << " [" << resname << "]  (generated on-the-fly by perceiver)\n";
-    hdr << "# WARNING: molvol/vbar below are crude sum-of-vdW-sphere estimates that IGNORE bond\n"
-           "#   overlap and so run high (~40% on small groups: ACE 57.3 vs curated 40.4).\n"
-           "#   vbar feeds hydrodynamics directly - replace with proper values before use.\n"
-           "#   Bead assignment and ASA are stubbed (0); hydration is not perceived.\n";
+    hdr << "# Perceived: atom names, hybrid types, masses and vdW radii.\n";
+    hdr << "# NOT perceived - must be supplied before this entry is used:\n"
+           "#   psv (vbar) and molvol : left at 0. Deliberately NOT estimated. Fitting the\n"
+           "#     hybrid composition against the residues somo.residue already codes shows a\n"
+           "#     sum-of-vdW-sphere volume (which ignores bond overlap) is a WORSE predictor of\n"
+           "#     vbar than simply assuming the mean vbar of all residues, so emitting one would\n"
+           "#     be actively misleading. vbar enters hydrodynamics through the buoyancy term\n"
+           "#     (1 - vbar*rho). See ehb54/ultrascan-tickets#980.\n"
+           "#   bead assignment and ASA : stubbed (0).\n"
+           "#   hydration : not perceived.\n";
+    hdr << "# Residue mass from perceived atoms: " << total_mw << " Da (its mass fraction of the\n"
+           "#   model tells you how much an imprecise psv here actually matters).\n";
     if (!review.str().empty())
         hdr << "# REVIEW - perception was uncertain for these atoms:\n" << review.str();
-    hdr << resname << "\t0\t" << total_vol << '\t' << 0.0 << '\t' << atoms.size()
-        << "\t1\t" << vbar << '\n';
+    // molvol and vbar deliberately 0 = unset (see the header comment above).
+    hdr << resname << "\t0\t" << 0.0 << '\t' << 0.0 << '\t' << atoms.size()
+        << "\t1\t" << 0.0 << '\n';
     // one default bead line (all atoms bead 0)
     std::ostringstream bead; bead << "0\t" << atoms.size() << "\t0\t0\t0\n";
     em.residue_block = hdr.str() + body.str() + bead.str();
