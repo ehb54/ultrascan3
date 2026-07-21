@@ -474,6 +474,17 @@ from each file's header, as are the optional <code>PSV:</code> and <code>I0se:</
 <code>output&nbsp;&nbsp;<i>path</i></code> &mdash; where the extrapolated curve is written
 (same three-column format; the header carries <code>Conc:</code>, and the series'
 <code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> when present, so it round-trips).<br>
+<code>common_crop&nbsp;0|1</code> &mdash; crop the inputs to their shared <i>q</i>-overlap before
+loading (default&nbsp;1). Curves that sit on one detector grid but were cut at different low <i>q</i>
+then load as identical grids with no interpolation; without it the loader resamples the mismatched
+grids and spline-extrapolates the higher-starting curves below their own data.<br>
+<code>fill_sd&nbsp;0|1</code> &mdash; repair non-positive input standard deviations before loading
+(default&nbsp;1). This matters more than it sounds: SOMO's error handling is all-or-nothing, so a
+<i>single</i> non-positive SD &mdash; commonly one zero at a grid edge in deposited data &mdash;
+disables that whole curve's errors and silently forces an unweighted fit. With this on, each
+non-positive SD is replaced by its nearest positive neighbour, but only when the positive SDs are in
+the majority (a mostly-zero curve carries no error information to borrow from). Either way the
+affected curves are named in the log. Set 0 to reproduce the raw, unrepaired behaviour.<br>
 <code>model&nbsp;&nbsp;&nbsp;additive&nbsp;|&nbsp;reciprocal&nbsp;|&nbsp;virial2</code>
 (default <code>reciprocal</code>).<br>
 <code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
