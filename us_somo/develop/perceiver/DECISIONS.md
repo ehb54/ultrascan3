@@ -164,9 +164,23 @@ C4H3) **match the hand-curated somo.residue ACE entry exactly**, and the comment
 
 ## CAVEAT surfaced by that comparison — molvol/vbar estimates run high
 Perceived ACE molvol 57.3 vs curated 40.40 (~42% high): summing vdW spheres ignores bond overlap,
-and vbar (0.80 vs 0.565) inherits the error. **vbar feeds hydrodynamics directly**, so the emitted
-entry now carries an explicit WARNING block telling the user to replace these before use. A proper
-fix needs an overlap-corrected molecular volume, or just prompting the user (like hydration, #3).
+and vbar (0.80 vs 0.565) inherits the error.
+
+**RESOLVED 2026-07-20 — the estimate is now removed, not merely warned about.** Fitting a
+group-contribution model over the ~100 polyatomic residues somo.residue codes and scoring it
+leave-one-out (`tools/psv_model.py`) shows the sum-of-vdW-sphere estimate is the WORST option
+available - MAE 0.193 in vbar, worse than simply assuming the global mean (0.110). A hybrid
+group-contribution model reaches 0.054 overall and 0.036 for organic residues, but degrades to
+0.222 on metal-containing ones (worse than the residue-type group average, 0.122), which are
+exactly the residues most likely to be non-coded.
+
+So `emit_residue()` now leaves molvol and vbar at 0 = unset and says why. Emitting a number that
+is worse than guessing would be actively misleading, and vbar enters hydrodynamics through the
+buoyancy term (1 - vbar*rho). The tiered replacement (group-contribution for organic, group
+average for out-of-domain, always user-overridable) is tracked on ticket #980. The entry now also
+reports the residue mass, since what actually matters is the residue's mass fraction of the model:
+molecular vbar is mass-weighted, so a 616 Da heme in a 50 kDa protein moves it by ~0.5% even with
+a 0.34 vbar error.
 
 ## Earlier open questions (superseded above, kept for context)
 - (Q1) For unknown-residue emission, is per-atom hybrid type + radius/electrons enough, or must the
