@@ -1,12 +1,10 @@
 # List of files that belong in $ULTRASCAN/etc/
 abstractCenterpieces.xml
-beckman_logo.png
 bufferComponents.xml
 check.png
 cluster.config
 etc_belongs_list.txt
 labs.xml
-logo_hsc.png
 nobandform.config
 reports.lengths.txt
 reports.xml
