@@ -44,13 +44,16 @@ static QString us_extrap_c0_common_prefix( const QStringList &names )
 
 static QString us_extrap_c0_curve_name( const QStringList &names, int model, bool ref_scale,
                                         bool merge_ref, double merge_q, int sd_mode,
-                                        int n_outlier_dropped, bool unweighted, int ri_mode )
+                                        int n_outlier_dropped, bool unweighted, int ri_mode,
+                                        bool no_gcv, int fit_broaden, double ref_override_conc,
+                                        bool raw_residual )
 {
-   // method token encoding the choices that produced the curve, so distinct selections give
-   // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix:
-   //   fit model (add / recip / virial2) + output scale (abs) + high-q reference splice, with
-   //   the merge point q appended (e.g. _merge_q0_0898) so runs that cut over at different q
-   //   are distinguishable at a glance, plus any post-fit SD reassessment (_sdC/_sdN/_sdI).
+   // Method token encoding the choices that produced the curve, so distinct selections give
+   // distinct (self-describing) names rather than colliding on a bare -1/-2 suffix.
+   //
+   // EVERY option that can change the result must appear here, otherwise two runs land on the same
+   // name and are told apart only by an arbitrary -1 suffix. A token is emitted only for a
+   // NON-DEFAULT choice, so an ordinary run keeps a short name.
    QString method = "_extrap_c0";
    method += ( model == 2 ) ? "_virial2" : ( model == 1 ) ? "_recip" : "_add";
    if ( ref_scale ) { method += "_abs"; }
@@ -63,6 +66,15 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
       }
       // merge_q == 0 => splice requested but no cutover located (whole curve extrapolated)
    }
+   // regularization: GCV is the default, so only its absence is marked. The manual fit-broadening
+   // window only does anything when GCV is off, and then it changes the result, so record it too.
+   if ( no_gcv ) { method += "_nogcv"; }
+   if ( fit_broaden > 1 ) { method += "_fb" + QString::number( fit_broaden ); }
+   // a user-chosen reference curve changes the absolute scale and/or where the splice cuts over
+   if ( ref_override_conc > 0e0 )
+   {
+      method += "_refc" + QString::number( ref_override_conc, 'f', 4 ).replace( '.', '_' );
+   }
    // input-SD recompute (before the fit) precedes the output SD reassessment token
    if ( ri_mode == 1 ) { method += "_riC"; }
    else if ( ri_mode == 2 ) { method += "_riN"; }
@@ -70,7 +82,13 @@ static QString us_extrap_c0_curve_name( const QStringList &names, int model, boo
    if ( sd_mode == 1 ) { method += "_sdC"; }
    else if ( sd_mode == 2 ) { method += "_sdN"; }
    else if ( sd_mode == 3 ) { method += "_sdI"; }
-   if ( n_outlier_dropped > 0 ) { method += "_qc" + QString::number( n_outlier_dropped ); }
+   if ( n_outlier_dropped > 0 )
+   {
+      method += "_qc" + QString::number( n_outlier_dropped );
+      // the leverage correction can change WHICH curve is dropped, so two runs could otherwise
+      // both read _qc1 while resting on different curves
+      if ( raw_residual ) { method += "_rawres"; }
+   }
    if ( unweighted ) { method += "_uw"; }
 
    QString prefix = us_extrap_c0_common_prefix( names ).trimmed();
@@ -1229,6 +1247,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // q-grid, and grab the reference curve's error column to carry into the output.
 
    int    ref_ci   = -1;
+   double ref_override_conc_used = 0e0;         // >0 => the reference was user-selected (name token)
    double ref_conc = 0e0;
    vector < double > ref_sd;
    vector < double > Iref_full;                 // reference (highest-conc) raw I(q), full grid
@@ -1281,6 +1300,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
             ref_ci   = hit;
             ref_conc = concs[ hit ];
             ref_override_note = us_tr( " [user-selected reference]" );
+            ref_override_conc_used = ref_conc;
 
             // The high-q splice is built around the reference being the HIGHEST concentration:
             // the merge point is where the extrapolation stops differing from it, i.e. where the
@@ -2094,7 +2114,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // 7. name the new curve, avoiding collisions with already-plotted curves
 
    QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights,
-                                                  recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0 );
+                                                  recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0,
+                                                  !use_gcv, fit_broaden, ref_override_conc_used,
+                                                  !outlier_leverage );
    QString final_name = base_name;
    {
       int suffix = 1;

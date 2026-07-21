@@ -407,11 +407,16 @@ that produced it &mdash; the concentration model
 <code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
 spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
 underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), and
+<code>_nogcv</code> if the automatic slope regularization was switched off and
+<code>_fb</code><i>N</i> for a manual fit-broadening window, <code>_refc</code><i>c</i> if a
+reference curve was chosen explicitly (with its concentration, decimal written as an underscore),
 an input-SD recompute if one was applied
 (<code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>), the
 output SD-reassessment mode if one was applied
 (<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
-<code>_qc1</code> if an outlier concentration was discarded, and <code>_uw</code> if the
+<code>_qc</code><i>N</i> if outlier concentrations were discarded (with <code>_rawres</code> appended
+when the leverage correction was disabled, since that can change <i>which</i> curve was dropped),
+and <code>_uw</code> if the
 regression was unweighted (curve errors not used), so a
 run's cutover is visible in its name (for example
 <code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
