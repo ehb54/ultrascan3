@@ -98,9 +98,6 @@ class US_Reporter : public US_Widgets
         QString       pagedir;          //!< Page directory
         QString       pagepath;         //!< Page path
         QString       ppdfpath;         //!< PDF path
-        QString       hsclogo;          //!< HS logo
-        QString       becklogo;         //!< Beckman logo
-        QString       us3logo;          //!< US3 logo
         QString       archdir;          //!< Archive directory
 
     private slots:
@@ -231,12 +228,6 @@ class US_Reporter : public US_Widgets
          * @brief Synchronize with the database.
          */
         void sync_db(void);
-
-        /**
-         * @brief Copy logos to the specified directory.
-         * @param directory The directory to copy logos to
-         */
-        void copy_logos(QString directory);
 
         /**
          * @brief Write the report to a PDF file.

@@ -40,20 +40,6 @@ US_Reporter::US_Reporter() : US_Widgets()
    archdir     = US_Settings::archiveDir() + "/";
    clean_etc_dir();
 
-   hsclogo .clear();
-   becklogo.clear();
-   us3logo .clear();
-   QString logopath = US_Settings::appBaseDir() + "/etc/";
-
-   if ( US_Settings::debug_match( "hsclogo" ) )
-      hsclogo  = logopath + "logo_hsc.png";
-
-   if ( US_Settings::debug_match( "becklogo" ) )
-      becklogo = logopath + "beckman_logo.png";
-
-   if ( US_Settings::debug_match( "us3logo" ) )
-      us3logo  = logopath + "ultrascan3.png";
-
    // primary layouts
    QHBoxLayout* mainLayout  = new QHBoxLayout( this );
    QVBoxLayout* leftLayout  = new QVBoxLayout();
@@ -181,7 +167,6 @@ DbgLv(1) << "clickedItem rbtn_click" << rbtn_click;
 // Propagate checked states when one item has its state changed
 void US_Reporter::changedItem( QTreeWidgetItem* item, int col )
 {
-//DbgLv(1) << "changedItem";
    if ( col == 0  &&  change_tree )
    {  // If column 0 changed (state), set new state in tree
       int state = (int)item->checkState( 0 );
@@ -465,7 +450,6 @@ DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0]
                QString rpfname = appname + basname;
                QString rpfnmLo = appnmLo + basname;
                QString rpfnmUp = appnmUp + basname;
-//DbgLv(1) << " BD:     nrptf" << rafiles.size() << "rpfname" << rpfname;
 
                if ( rafiles.indexOf( rpfname ) < 0 )
                {  // Skip if name (even lower/upper case version) not in list
@@ -720,11 +704,9 @@ void US_Reporter::mark_checked()
          Qt::MatchFixedString | Qt::MatchWrap | Qt::MatchRecursive, 0 );
    QTreeWidgetItem* item;
    change_tree = false;           // Disable slot for item change
-//DbgLv(1) << "  MkCk: items size" << items.size();
 
    for ( int jj = 0; jj < adescs.size(); jj++ )
    {  // Set the tree item state according to the data description setting
-//DbgLv(1) << "  MkCk:   jj" << jj;
       item = items.at( jj );
       item->setCheckState( 0, (Qt::CheckState)adescs.at( jj ).checkState );
    }
@@ -868,41 +850,6 @@ bool US_Reporter::write_report()
    rptpage  += "  </style>\n";
    rptpage  += "  </head>\n  <body>\n";
 
-   // Possibly prefix the page with logos
-   copy_logos( cmppath );    // Possibly add ./etc with logos
-DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
-
-   int logof = ( hsclogo .isEmpty() ? 0 : 4 )
-             + ( becklogo.isEmpty() ? 0 : 2 )
-             + ( us3logo .isEmpty() ? 0 : 1 );
-
-   if ( logof != 0 )
-   {
-      rptpage  += "    <p>\n";
-
-      if ( ( logof & 4 ) != 0 )
-         rptpage  += "      <img src=\"" + hsclogo
-                   + "\" alt=\"HSC logo\"/>\n";
-
-      if ( ( logof & 2 ) != 0 )
-         rptpage  += "      <img src=\"" + becklogo
-                   + "\" alt=\"Beckman logo\"/>";
-
-      if ( ( logof & 1 ) != 0 )
-      {
-         if ( logof > 1 )
-            rptpage  += "<br/>";
-
-         rptpage  += "\n      <img src=\"" + us3logo
-                   + "\" alt=\"Ultrascan III logo\"/>\n";
-      }
-
-      else
-         rptpage  += "\n";
-
-      rptpage  += "    </p>\n";
-   }
-
    // Compose the body of the composite report
    QString ppageclass = "    <p class=\"pagebreak parahead\">\n";
    QString pheadclass = "    <p class=\"parahead\">\n";
@@ -953,7 +900,6 @@ DbgLv(1) << "  plot.height" << chght << idesc->filename << "ph" << phght;
 
          if ( jplot != 1  &&  ii > 0 )
          {  // Previous was 2nd plot on the page or was a non-plot
-//DbgLv(1) << "++jplot" << jplot << "ii" << ii << "NEW PAGE";
             rptpage   += ppageclass;
             jplot      = 1;       // mark as 1st plot on page
          }
@@ -962,7 +908,6 @@ DbgLv(1) << "  plot.height" << chght << idesc->filename << "ph" << phght;
          {  // Previous was the 1st plot on the page
             if ( ( chght + phght ) < mxpageht )
             {  // If 2 plots will fit on a page, mark this plot as second
-//DbgLv(1) << "++comb.height (NOPAGE)" << (chght+phght) << "mxpageht" << mxpageht;
                rptpage   += pheadclass;
                jplot      = 2;       // mark as 2nd plot on page
             }
@@ -1092,7 +1037,6 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
             }
 
             rptpage += "\n";
-//            rptpage += "\n    <p class=\"page parahead\"></p>\n";
             fi.close();
          }
       }
@@ -1133,7 +1077,6 @@ void US_Reporter::write_pdf()
    QPrinter printer( QPrinter::HighResolution );
    printer.setOutputFormat  ( QPrinter::PdfFormat );
    printer.setOutputFileName( ppdfpath );
-//   printer.setFullPage      ( true );
    printer.setCreator       ( "UltraScan" );
    printer.setDocName       ( QString( "report_composite.html" ) );
    printer.setPageOrientation   ( QPageLayout::Portrait );
@@ -1499,67 +1442,6 @@ void US_Reporter::sync_db()
    US_SyncWithDB* syncdb = new US_SyncWithDB();
 
    syncdb->exec();
-}
-
-// Create ./etc if need be and put copies of any logos there
-void US_Reporter::copy_logos( QString cmppath )
-{
-   if ( hsclogo.isEmpty()  &&  becklogo.isEmpty()  &&  us3logo.isEmpty() )
-      return;                           // Don't bother if no logos exist
-
-   if ( hsclogo .startsWith( ".." )  &&
-        becklogo.startsWith( ".." )  &&
-        us3logo .startsWith( ".." ) )
-      return;                           // Don't bother if already converted
-
-   // Rename logo paths using a relative path
-   QString hscorig  = hsclogo;
-   QString beckorig = becklogo;
-   QString us3orig  = us3logo;
-   QString etcpath  = US_Settings::appBaseDir() + "/etc/";
-   QString etcnewp  = cmppath + "/etc/";
-   QString relpath  = "../etc/";
-           hsclogo  = hsclogo .isEmpty() ? hsclogo  :
-                      hsclogo .replace( etcpath, relpath );
-           becklogo = becklogo.isEmpty() ? becklogo :
-                      becklogo.replace( etcpath, relpath );
-           us3logo  = us3logo .isEmpty() ? us3logo  :
-                      us3logo .replace( etcpath, relpath );
-   QString hscnewp  = QString( hscorig  ).replace( etcpath, etcnewp );
-   QString becknewp = QString( beckorig ).replace( etcpath, etcnewp );
-   QString us3newp  = QString( us3orig  ).replace( etcpath, etcnewp );
-DbgLv(1) << "hscOrig" << hscorig;
-DbgLv(1) << "hscLogo" << hsclogo;
-DbgLv(1) << "hscNewp" << hscnewp;
-DbgLv(1) << "etcPath" << etcpath;
-DbgLv(1) << "etcNewp" << etcnewp;
-
-   if ( ( hsclogo .isEmpty() || QFile( hscnewp  ).exists() )  &&
-        ( becklogo.isEmpty() || QFile( becknewp ).exists() )  &&
-        ( us3logo .isEmpty() || QFile( us3newp  ).exists() ) )
-      return;                           // Don't bother if logos already exist
-
-   // Need to copy logos, so start by insuring ./composite/etc exists
-   QDir dircmp( cmppath );
-
-   if ( ! dircmp.mkpath( etcnewp ) )
-   {
-      QMessageBox::warning( this, tr( "Composite Report *ERROR*" ),
-            tr( "Unable to create a composite report directory:\n" )
-            + etcnewp );
-      return;
-   }
-
-   // Copy each existing logo file
-   if ( ! hsclogo .isEmpty()  &&  QFile( hscorig  ).exists() )
-      QFile::copy( hscorig , hscnewp  );
-
-   if ( ! becklogo.isEmpty()  &&  QFile( beckorig ).exists() )
-      QFile::copy( beckorig, becknewp );
-
-   if ( ! us3logo .isEmpty()  &&  QFile( us3orig  ).exists() )
-      QFile::copy( us3orig , us3newp  );
-
 }
 
 // Pad text line with non-blank spaces to simulate spaces and tabs
