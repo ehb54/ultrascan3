@@ -238,6 +238,22 @@ can say so: the concentration dialog offers a <b>Reference curve</b> selector (d
 ticked, since nothing else uses a reference), and the scripted interface has the equivalent
 <code>reference</code> directive.</p>
 
+<p><b>Per-curve forward scatter (a diagnostic, not a decision).</b> Every run reports a short table:
+for each curve, its Guinier <i>R</i><sub>g</sub> and <i>I</i>(0), the ratio
+<i>I</i>(0)/<i>c</i>, and how far that ratio sits from (i) the median of the series and (ii) the trend
+predicted by the <i>other</i> curves. <i>I</i>(0)/<i>c</i> is constant in the dilute limit and falls
+smoothly as the interparticle term grows, so a curve well off the others points to a mis-set
+concentration or to aggregation. The trend column is computed leaving that curve out of the fit, so
+it cannot pull the line onto itself &mdash; which matters for the highest concentration, where an
+ordinary residual is structurally uninformative. Deviations beyond 15&nbsp;% are highlighted.</p>
+
+<p>This table is <i>reported only</i>: nothing is discarded or re-selected on the strength of it.
+That is deliberate. Testing showed that the statistics available inside a concentration series do not
+reliably identify a defective highest-concentration curve &mdash; they track signal-to-noise, which
+rises with concentration, so the curve most in need of scrutiny tends to look the best of the set.
+The table is here to put the evidence in front of the person who has the outside knowledge (a known
+molecular weight, say); the <b>Reference curve</b> selector above is how you act on it.</p>
+
 <p><i>Caveat when overriding with the splice enabled:</i> the merge point is found as the <i>q</i> from
 which the extrapolation stops differing from the reference, i.e. where the interparticle contribution
 has died away. A lower-concentration reference is both nearer the dilute limit already and noisier, so

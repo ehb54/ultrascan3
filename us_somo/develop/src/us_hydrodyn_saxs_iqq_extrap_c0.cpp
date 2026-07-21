@@ -1005,6 +1005,91 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    QString           excl_name;                 // name of the QC-excluded curve ("" => none)
    double            excl_conc = -1e0;           // its concentration (regplot x); < 0 => none
    vector < double > reg_excl_y;                 // its per-q y on the plot axis (NaN where none)
+   // ---- Per-curve forward-scatter diagnostic (REPORTED, never acted on) ----------------------
+   // I(0)/c is constant in the dilute limit, so its trend against concentration is the most direct
+   // view of whether one curve is out of family: a mis-set concentration or aggregation shows up
+   // here even when nothing in the concentration fit does. It is deliberately not turned into an
+   // automatic decision. The highest-concentration curve cannot be judged from the fit itself --
+   // it is the extreme x, carries nearly all the leverage, and so has a near-zero residual whatever
+   // its quality -- and internal shape/noise statistics do not separate a defective top curve
+   // either: they track signal-to-noise, which rises with concentration, so the curve most in need
+   // of scrutiny looks best of all. Judging it needs knowledge from outside the regression (e.g.
+   // the known molecular weight). This table puts the evidence in front of whoever holds that
+   // knowledge; the reference-curve selector is how they act on it.
+   {
+      vector < QString > d_name;
+      vector < double >  d_conc, d_rg, d_i0, d_i0c;
+      for ( int ci = 0; ci < ordered_names.size(); ci++ )
+      {
+         if ( concs[ ci ] <= 0e0 ) { continue; }
+         const vector < double > & Iarr = name_to_I[ ordered_names[ ci ] ];
+         double g_rg = 0e0, g_i0 = 0e0, g_r2 = 0e0; int g_n = 0;
+         if ( !us_extrap_c0_guinier( q, Iarr, g_rg, g_i0, g_r2, g_n ) ) { continue; }
+         if ( !( g_i0 > 0e0 ) ) { continue; }
+         QString nm = ordered_names[ ci ];
+         nm.remove( QRegularExpression( "^\"" ) ).remove( QRegularExpression( "\"$" ) );
+         d_name.push_back( nm );
+         d_conc.push_back( concs[ ci ] );
+         d_rg  .push_back( g_rg );
+         d_i0  .push_back( g_i0 );
+         d_i0c .push_back( g_i0 / concs[ ci ] );
+      }
+      if ( d_i0c.size() >= 3 )
+      {
+         // compare against the MEDIAN of the series, not a fit: a median has no leverage, so the
+         // extreme-concentration curve is judged on the same footing as every other one.
+         vector < double > srt = d_i0c;
+         std::sort( srt.begin(), srt.end() );
+         double med = srt[ srt.size() / 2 ];
+         editor_msg( "black",
+                    us_tr( "Per-curve forward scatter (I(0)/c is constant in the dilute limit; a curve well "
+                           "off the others is suspect). Reported for inspection only -- nothing is discarded "
+                           "on this basis:\n" ) );
+         for ( unsigned int k = 0; k < d_name.size(); k++ )
+         {
+            double  rel    = ( med > 0e0 ) ? 100e0 * ( d_i0c[ k ] / med - 1e0 ) : 0e0;
+            QString relstr = ( rel >= 0e0 ? QString( "+" ) : QString() ) + QString::number( rel, 'f', 1 ) + "%";
+
+            // Leave-one-out trend check. I(0)/c is not flat across a real series -- it falls as the
+            // interparticle term grows -- so a curve can sit near the median and still be off the
+            // trend. Fit I(0)/c against c on the OTHER curves only and predict this one. Because the
+            // curve is excluded from the fit it cannot pull the line onto itself, so this is
+            // leverage-free even for the extreme concentration, where an ordinary residual is
+            // structurally uninformative. This is the automated form of plotting MW against
+            // concentration and eyeing which point is out of line.
+            QString devstr = us_tr( "n/a" );
+            QString colour = ( qAbs( rel ) >= 15e0 ) ? "dark red" : "black";
+            if ( d_i0c.size() >= 4 )
+            {
+               double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
+               for ( unsigned int j = 0; j < d_i0c.size(); j++ )
+               {
+                  if ( j == k ) { continue; }
+                  S += 1e0; Sx += d_conc[ j ]; Sy += d_i0c[ j ];
+                  Sxx += d_conc[ j ] * d_conc[ j ]; Sxy += d_conc[ j ] * d_i0c[ j ];
+               }
+               double M = Sxx - Sx * Sx / S;
+               if ( qAbs( M ) > 0e0 )
+               {
+                  double b    = ( Sxy - Sx * Sy / S ) / M;
+                  double a    = ( Sy - Sx * b ) / S;
+                  double pred = a + b * d_conc[ k ];
+                  if ( pred > 0e0 )
+                  {
+                     double dev = 100e0 * ( d_i0c[ k ] / pred - 1e0 );
+                     devstr = ( dev >= 0e0 ? QString( "+" ) : QString() ) + QString::number( dev, 'f', 1 ) + "%";
+                     if ( qAbs( dev ) >= 15e0 ) { colour = "dark red"; }
+                  }
+               }
+            }
+            editor_msg( colour,
+                       QString( us_tr( "   conc %1: Rg %2 A, I(0) %3, I(0)/c %4 (%5 vs median, %6 vs trend of the others)\n" ) )
+                       .arg( d_conc[ k ], 0, 'g', 6 ).arg( d_rg[ k ], 0, 'f', 1 )
+                       .arg( d_i0[ k ], 0, 'g', 4 ).arg( d_i0c[ k ], 0, 'g', 4 ).arg( relstr ).arg( devstr ) );
+         }
+      }
+   }
+
    int               n_outlier_dropped = 0;
    // Detection is repeated on the CLEANED set while curves keep qualifying, up to outlier_max
    // (default 1 = the original behavior). Iterating matters when more than one curve is bad: a
