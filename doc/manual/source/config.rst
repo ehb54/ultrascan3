@@ -239,12 +239,6 @@ Adv. Config. Functions
       - Flag to require user to specify right and left border of the meniscus in us_edit instead of specifying one position.
     * - pcsaTiming
       - Flag to print debug timings in us_pcsa.
-    * - hsclogo
-      - Flag to include the University of Texas Health Science Center logo in the generated reports.
-    * - becklogo
-      - Flag to include the Beckman Coulter logo in the generated reports.
-    * - us3logo
-      - Flag to include the UltraScan-III logo in the generated reports.
     * - DB_ENFORCE_DEFAULT_SSL_SECURITY
       - Flag to enforce the use of the OS configured default SSL security level for database connections, instead of lowering it to for UltraScan database connections to zero.
     * - auto_positioning
