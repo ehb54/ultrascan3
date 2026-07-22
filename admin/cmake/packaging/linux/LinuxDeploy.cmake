@@ -620,6 +620,44 @@ else()
 endif()
 
 # =========================================================================
+# 8d) Explicitly bundle libxcb-cursor -- linuxdeploy's "missing" heuristic
+#     cannot catch this one
+#
+#     linuxdeploy (section 8c) and macdeployqt-style tools in general only
+#     bundle a library if ldd reports it unresolved *on the build machine*.
+#     bootstrap-linux.sh installs libxcb-cursor-dev, which pulls in the
+#     runtime libxcb-cursor0/libxcb-cursor.so.0 as an apt dependency -- so on
+#     every machine that can build this project, ldd on `us` always resolves
+#     it successfully, and linuxdeploy therefore never considers it "missing"
+#     and never bundles it. But Qt6's xcb platform plugin still needs it at
+#     runtime on the *target* machine (required since Qt 6.5), and plenty of
+#     target machines won't have it pre-installed. So: bundle it explicitly
+#     by name, the same way libssl/libcrypto/libsqlite3 are explicitly
+#     globbed above, rather than relying on a "missing on build machine"
+#     heuristic that can never fire for this library.
+# =========================================================================
+if(NOT EXISTS "${S_LIB}/libxcb-cursor.so.0")
+    execute_process(
+        COMMAND bash -c "ldconfig -p 2>/dev/null | grep -m1 'libxcb-cursor\\.so' | awk '{print \$NF}'"
+        OUTPUT_VARIABLE _xcb_cursor_path
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(_xcb_cursor_path AND EXISTS "${_xcb_cursor_path}")
+        message(STATUS "[LinuxDeploy] Explicitly bundling libxcb-cursor from ${_xcb_cursor_path}")
+        # -L dereferences the symlink so a real regular file lands in lib/,
+        # not a dangling link back to a system-only path.
+        execute_process(COMMAND cp -L "${_xcb_cursor_path}" "${S_LIB}/libxcb-cursor.so.0")
+    else()
+        message(WARNING
+            "[LinuxDeploy] libxcb-cursor.so not found on this build machine via ldconfig -- "
+            "not bundled. Install libxcb-cursor-dev (Debian/Ubuntu) or "
+            "xcb-util-cursor-devel (RHEL/Rocky/Oracle) on the build machine so it can be staged.")
+    endif()
+else()
+    message(STATUS "[LinuxDeploy] libxcb-cursor.so.0 already staged -- skipping explicit bundle")
+endif()
+
+# =========================================================================
 # 9) Copy license.txt
 #    Mirrors WinDeploy.cmake section 10
 # =========================================================================
