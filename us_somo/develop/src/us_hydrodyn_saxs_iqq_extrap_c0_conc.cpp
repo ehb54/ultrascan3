@@ -29,6 +29,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           double *out_outlier_sigma,
                                                                           double *out_outlier_chi2_ratio,
                                                                           QString *out_reference,
+                                                                          double *out_merge_q,
                                                                           void *us_hydrodyn,
                                                                           QWidget *p,
                                                                           const char *
@@ -53,6 +54,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_outlier_sigma      = out_outlier_sigma;
    this->out_outlier_chi2_ratio = out_outlier_chi2_ratio;
    this->out_reference          = out_reference;
+   this->out_merge_q            = out_merge_q;
    this->us_hydrodyn        = us_hydrodyn;
 
    *out_ok = false;
@@ -157,6 +159,26 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                 "the reference curve is copied verbatim, carrying its error bars -- replacing the\n"
                                 "noisy high-q extrapolated tail with the cleaner reference data (the ATSAS almerge\n"
                                 "idea). Independent of the scale option above." ) );
+
+   // Manual splice switchover: pin the merge q instead of auto-locating it. Blank = automatic.
+   lbl_merge_q = new QLabel( us_tr( "   switchover q (blank = auto):" ), this );
+   lbl_merge_q->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lbl_merge_q->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_merge_q );
+   lbl_merge_q->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+
+   le_merge_q = new QLineEdit( this );
+   le_merge_q->setText( "" );
+   le_merge_q->setPalette( PALET_NORMAL );
+   AUTFBACK( le_merge_q );
+   le_merge_q->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   le_merge_q->setMinimumHeight( minHeight1 );
+   le_merge_q->setToolTip(
+                         us_tr( "Leave blank to locate the switchover automatically (the first q where\n"
+                                "the extrapolation agrees with the reference within its errors).\n\n"
+                                "Enter a q value to pin it there instead -- useful for testing a specific\n"
+                                "cut, or when the automatic point sits where the regularization has\n"
+                                "distorted the curve. Only used when the high-q splice is enabled." ) );
 
    // Reference-curve selection. Default = automatic (highest concentration), which is the right
    // default because intensity scales with concentration, so the top curve normally has the best
@@ -500,6 +522,12 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    background->addWidget( cb_ref_scale );
    background->addWidget( cb_merge );
    {
+      QHBoxLayout *hbl_merge_q = new QHBoxLayout(); hbl_merge_q->setContentsMargins( 0, 0, 0, 0 ); hbl_merge_q->setSpacing( 2 );
+      hbl_merge_q->addWidget( lbl_merge_q );
+      hbl_merge_q->addWidget( le_merge_q );
+      background->addLayout( hbl_merge_q );
+   }
+   {
       QHBoxLayout *hbl_reference = new QHBoxLayout(); hbl_reference->setContentsMargins( 0, 0, 0, 0 ); hbl_reference->setSpacing( 2 );
       hbl_reference->addWidget( lbl_reference );
       hbl_reference->addWidget( cb_reference );
@@ -538,6 +566,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_reference_enabled()
    bool enable = cb_ref_scale->isChecked() || cb_merge->isChecked();
    cb_reference->setEnabled( enable );
    lbl_reference->setEnabled( enable );
+   le_merge_q->setEnabled( cb_merge->isChecked() );
+   lbl_merge_q->setEnabled( cb_merge->isChecked() );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::populate_table()
@@ -651,6 +681,10 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    }
    // index 0 is "Automatic"; anything else names the curve explicitly
    *out_reference       = ( cb_reference->currentIndex() > 0 ) ? cb_reference->currentText() : QString();
+   {
+      bool ok_q = false; double mq = le_merge_q->text().trimmed().toDouble( &ok_q );
+      *out_merge_q = ( ok_q && mq > 0e0 ) ? mq : 0e0;   // blank / invalid / <=0 => automatic
+   }
    *out_ref_scale       = cb_ref_scale->isChecked();
    *out_merge_ref       = cb_merge->isChecked();
    *out_show_regplots = cb_regplots->isChecked();

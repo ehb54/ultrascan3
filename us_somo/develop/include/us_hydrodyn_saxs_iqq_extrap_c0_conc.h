@@ -49,6 +49,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           double *out_outlier_sigma,
                                           double *out_outlier_chi2_ratio,
                                           QString *out_reference,
+                                          double *out_merge_q,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -63,6 +64,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QCheckBox    *cb_merge;
       QLabel       *lbl_reference;
       QComboBox    *cb_reference;
+      QLabel       *lbl_merge_q;
+      QLineEdit    *le_merge_q;
       QCheckBox    *cb_gcv;
       QCheckBox    *cb_weight;
       QCheckBox    *cb_regplots;
@@ -106,6 +109,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       double       *out_outlier_sigma;
       double       *out_outlier_chi2_ratio;
       QString      *out_reference;
+      double       *out_merge_q;
       void         *us_hydrodyn;
 
       bool          disable_updates;

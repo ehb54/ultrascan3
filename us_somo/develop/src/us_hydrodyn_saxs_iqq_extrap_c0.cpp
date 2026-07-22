@@ -715,6 +715,9 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    // Optional explicit reference-curve choice (name substring, or a concentration value).
    // Empty = the default highest-concentration pick.
    QString ref_override;
+   // Manual splice switchover: if > 0 and merge_ref is on, force the merge point to the nearest
+   // grid q instead of auto-locating it. 0 = automatic (default).
+   double  merge_q_override = 0e0;
    double outlier_sigma       = 3e0;   // detection threshold: median standardized residual across q
    double outlier_chi2_ratio  = 1.5e0; // required pooled reduced-chi^2 improvement to confirm a drop
    if ( extrap_c0_script )
@@ -759,12 +762,13 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       outlier_max        = extrap_c0_script_outlier_max;
       outlier_leverage   = extrap_c0_script_outlier_leverage;
       ref_override       = extrap_c0_script_reference;
+      merge_q_override   = extrap_c0_script_merge_q;
       outlier_sigma      = extrap_c0_script_outlier_sigma;
       outlier_chi2_ratio = extrap_c0_script_outlier_chi2;
    }
    else
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -1900,7 +1904,27 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
       merge_idx = (int) npts;                    // default: no splice (whole curve extrapolated)
       merge_q   = 0e0;
-      if ( merge_ref )
+      // Manual switchover: if the user pinned a q, splice there instead of auto-locating the point.
+      // The automatic search finds where the extrapolation agrees with the reference within its
+      // errors; pinning it lets the user test a specific cut, or override a placement they disagree
+      // with (e.g. when the regularization has distorted the curve near the automatic point).
+      if ( merge_ref && merge_q_override > 0e0 )
+      {
+         int    j_best = (int) npts; double d_best = 1e30;
+         for ( int j = 0; j < (int) npts; j++ )
+         {
+            if ( grid_to_out[ j ] < 0 ) { continue; }        // only where the output is defined
+            double d = qAbs( q[ j ] - merge_q_override );
+            if ( d < d_best ) { d_best = d; j_best = j; }
+         }
+         merge_idx = j_best;
+         merge_q   = ( merge_idx < (int) npts ) ? q[ merge_idx ] : 0e0;
+         editor_msg( "black",
+                    QString( us_tr( "Reference merge point: q = %1 (index %2 of %3), pinned to the requested "
+                                    "q = %4 [manual switchover]\n" ) )
+                    .arg( merge_q ).arg( merge_idx ).arg( (int) npts ).arg( merge_q_override ) );
+      }
+      else if ( merge_ref )
       {
          double merge_chi2 = 4e0;
          {

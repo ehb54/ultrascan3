@@ -31,6 +31,10 @@
 //   model   additive | reciprocal | virial2         (default reciprocal)
 //   ref_scale       0 | 1             (output on reference absolute scale; default 0)
 //   merge_ref       0 | 1             (splice reference curve above merge q; default 0)
+//   merge_q         <double>          (optional; pin the splice switchover to this q instead of
+//                                      auto-locating it. Requires merge_ref 1. 0 = automatic.
+//                                      Lets you test a specific cut, or override an automatic
+//                                      placement distorted by the regularization near that point.)
 //   gcv             0 | 1             (automatic GCV slope regularization; default 1)
 //   sd_weights      0 | 1             (1/sigma^2 weighting of the regressions; default 1)
 //   fit_broaden     <int>             (Zimm fit-broadening q-window; default 0 = off)
@@ -222,6 +226,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_outlier_max    = 1;
    extrap_c0_script_outlier_leverage = true;
    extrap_c0_script_reference.clear();
+   extrap_c0_script_merge_q        = 0e0;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -279,6 +284,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "outlier_max" )     { extrap_c0_script_outlier_max   = val.toInt() > 0 ? val.toInt() : 1; }
       else if ( key == "outlier_leverage" ){ extrap_c0_script_outlier_leverage = ( val.toInt() != 0 ); }
       else if ( key == "reference" )       { extrap_c0_script_reference      = val; }
+      else if ( key == "merge_q" )         { extrap_c0_script_merge_q       = val.toDouble(); }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );
