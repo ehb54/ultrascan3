@@ -212,7 +212,9 @@ smoothed extrapolation against the noisy reference &mdash; is biased toward plac
 too high; CORMAP (<code>saxs_extrap_c0_pvalue_alpha</code>, default 0.01) is the fallback when
 the reference has no error column. Below the merge the error bars are the propagated intercept
 standard error; at and above it (where the output <i>is</i> the reference) they are the
-reference's own.</li>
+reference's own. The <b>switchover q</b> field (blank = automatic) pins the merge to a chosen
+<i>q</i> instead of locating it automatically &mdash; useful for testing a specific cut, or for
+overriding an automatic placement that sits where the regularization has distorted the curve.</li>
 </ul>
 
 <p>The two combine to give four behaviors: neither box = the classic normalized <code>Conc:1</code>
@@ -492,6 +494,8 @@ the majority (a mostly-zero curve carries no error information to borrow from). 
 affected curves are named in the log. Set 0 to reproduce the raw, unrepaired behaviour.<br>
 <code>model&nbsp;&nbsp;&nbsp;additive&nbsp;|&nbsp;reciprocal&nbsp;|&nbsp;virial2</code>
 (default <code>reciprocal</code>).<br>
+<code>merge_q&nbsp;<i>q</i></code> &mdash; pin the splice switchover to this <i>q</i> instead of
+locating it automatically (requires <code>merge_ref&nbsp;1</code>; blank or 0 = automatic).<br>
 <code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
 absolute scale, and splice the reference above the merge point.<br>
 <code>gcv&nbsp;0|1</code> (default&nbsp;1), <code>sd_weights&nbsp;0|1</code> (default&nbsp;1),
