@@ -322,6 +322,24 @@ void US_Hydrodyn::gui_script_run() {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
          }
          qApp->processEvents();
+      } else if ( cmd == "saxs_extrap_c0" ) {
+         // saxs_extrap_c0 <controlfile> : non-interactive "extrapolate to zero concentration".
+         // Loads the input curves, runs the extrapolation with the control file's options, and
+         // writes the result curve to the control file's output path (for regression/validation).
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing control file argument" );
+         }
+         QString opt1 = ls.join( " " );  // control-file path may contain spaces
+         gui_script_msg( i, cmd, opt1 );
+         if ( !saxs_plot_widget ) {
+            pdb_saxs( true, false );  // open the SAXS window (no PDB needed for I(q) curve work)
+         }
+         if ( !saxs_plot_widget || !saxs_plot_window ) {
+            gui_script_error( i, cmd, "could not open the SAXS window" );
+         } else {
+            saxs_plot_window->saxs_extrap_c0_script( opt1 );
+         }
+         qApp->processEvents();
       } else {
          gui_script_error( i, cmd, "unknown command" );
       }

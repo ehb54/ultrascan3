@@ -5,6 +5,9 @@
 
 #include <qlabel.h>
 #include <qpushbutton.h>
+#include <qcheckbox.h>
+#include <qcombobox.h>
+#include <qlineedit.h>
 #include <qdialog.h>
 #include <qstringlist.h>
 #include <qtablewidget.h>
@@ -30,7 +33,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           QStringList names,
                                           map < QString, double > prepop_conc,
                                           map < QString, double > *out_name_to_conc,
+                                          QStringList *out_selected_names,
                                           bool *out_ok,
+                                          bool *out_ref_scale,
+                                          bool *out_merge_ref,
+                                          bool *out_show_regplots,
+                                          int *out_fit_broaden,
+                                          bool *out_gcv,
+                                          bool *out_use_sd_weights,
+                                          int *out_model,
+                                          bool *out_recompute_inputs,
+                                          int *out_recompute_inputs_mode,
+                                          int *out_sd_mode,
+                                          bool *out_discard_outlier,
+                                          double *out_outlier_sigma,
+                                          double *out_outlier_chi2_ratio,
+                                          QString *out_reference,
+                                          double *out_merge_q,
                                           void *us_hydrodyn,
                                           QWidget *p = 0,
                                           const char *name = 0
@@ -41,7 +60,31 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
 
       QLabel       *lbl_info;
       QTableWidget *t_conc;
+      QCheckBox    *cb_ref_scale;
+      QCheckBox    *cb_merge;
+      QLabel       *lbl_reference;
+      QComboBox    *cb_reference;
+      QLabel       *lbl_merge_q;
+      QLineEdit    *le_merge_q;
+      QCheckBox    *cb_gcv;
+      QCheckBox    *cb_weight;
+      QCheckBox    *cb_regplots;
+      QLabel       *lbl_model;
+      QComboBox    *cb_model;
+      QCheckBox    *cb_recompute_inputs;
+      QLabel       *lbl_recompute_inputs_mode;
+      QComboBox    *cb_recompute_inputs_mode;
+      QLabel       *lbl_sd_mode;
+      QComboBox    *cb_sd_mode;
+      QCheckBox    *cb_outlier;
+      QLabel       *lbl_outlier_sigma;
+      QLineEdit    *le_outlier_sigma;
+      QLabel       *lbl_outlier_chi2;
+      QLineEdit    *le_outlier_chi2;
+      QLabel       *lbl_broaden;
+      QLineEdit    *le_broaden;
       QLabel       *lbl_status;
+      QPushButton  *pb_help;
       QPushButton  *pb_ok;
       QPushButton  *pb_cancel;
 
@@ -50,7 +93,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QStringList   names;
       map < QString, double > prepop_conc;
       map < QString, double > *out_name_to_conc;
+      QStringList  *out_selected_names;
       bool         *out_ok;
+      bool         *out_ref_scale;
+      bool         *out_merge_ref;
+      bool         *out_show_regplots;
+      int          *out_fit_broaden;
+      bool         *out_gcv;
+      bool         *out_use_sd_weights;
+      int          *out_model;
+      bool         *out_recompute_inputs;
+      int          *out_recompute_inputs_mode;
+      int          *out_sd_mode;
+      bool         *out_discard_outlier;
+      double       *out_outlier_sigma;
+      double       *out_outlier_chi2_ratio;
+      QString      *out_reference;
+      double       *out_merge_q;
       void         *us_hydrodyn;
 
       bool          disable_updates;
@@ -62,8 +121,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
    private slots:
 
       void cell_changed( QTableWidgetItem * );
+      void selection_changed();
+      void refresh_broaden_enabled();
+      void refresh_reference_enabled();
+      void refresh_model_enabled();
+      void refresh_recompute_enabled();
       void ok();
       void cancel();
+      void help();
 };
 
 #endif

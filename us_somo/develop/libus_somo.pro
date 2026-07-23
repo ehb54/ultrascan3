@@ -400,7 +400,9 @@ SOURCES *= \
         src/us_hydrodyn_saxs_iqq.cpp \
         src/us_hydrodyn_saxs_iqq_bead_model.cpp \
         src/us_hydrodyn_saxs_iqq_extrap_c0.cpp \
+        src/us_hydrodyn_saxs_iqq_extrap_c0_script.cpp \
         src/us_hydrodyn_saxs_iqq_extrap_c0_conc.cpp \
+        src/us_hydrodyn_saxs_iqq_extrap_c0_regplot.cpp \
         src/us_hydrodyn_saxs_iqq_load_csv.cpp \
         src/us_hydrodyn_saxs_iqq_residuals.cpp \
         src/us_hydrodyn_saxs_iqq_sh.cpp \
@@ -847,6 +849,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_options.h \
         include/us_hydrodyn_saxs_ift.h \
         include/us_hydrodyn_saxs_iqq_extrap_c0_conc.h \
+        include/us_hydrodyn_saxs_iqq_extrap_c0_regplot.h \
         include/us_hydrodyn_saxs_iqq_load_csv.h \
         include/us_hydrodyn_saxs_iqq_residuals.h \
         include/us_hydrodyn_saxs_residuals.h \

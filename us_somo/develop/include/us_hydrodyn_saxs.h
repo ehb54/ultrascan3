@@ -792,6 +792,33 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                           vector < double > q,
                           QString filename );
 
+      // ---- extrapolate-to-zero-concentration scripting (us3_somo -g "saxs_extrap_c0 <ctrl>") ----
+      // Non-interactive driver + state: when extrap_c0_script is set, load_iqq_csv() and
+      // do_extrap_c0() skip their two modal dialogs and read every choice from these members,
+      // reproducing the exact GUI computation and writing the extrapolated curve to a file for
+      // regression testing / validation of all option combinations.
+      void saxs_extrap_c0_script( QString controlfile );  // parse ctrl, drive the whole run
+      bool extrap_c0_script = false;                       // master gate for the dialog bypass
+      QString extrap_c0_script_out;                        // output .dat path for the result curve
+      map < QString, double > extrap_c0_script_conc;       // optional per-curve concentration overrides
+      int    extrap_c0_script_model          = 0;          // 0 additive (default), 1 reciprocal, 2 2nd-virial
+      bool   extrap_c0_script_ref_scale      = false;      // output on reference (max-conc) absolute scale
+      bool   extrap_c0_script_merge_ref      = false;      // splice reference curve above merge q
+      bool   extrap_c0_script_gcv            = true;       // automatic GCV slope regularization
+      bool   extrap_c0_script_sd_weights     = true;       // 1/sigma^2 weighting of the regressions
+      int    extrap_c0_script_fit_broaden    = 0;          // Zimm fit-broadening q-window (0 = off)
+      bool   extrap_c0_script_recompute_in   = false;      // transiently reassess input SDs before fit
+      int    extrap_c0_script_recompute_mode = 0;          // 0 constant, 1 non-constant, 2 intensity
+      int    extrap_c0_script_sd_mode        = 0;          // post-fit SD reassess: 0 off,1 C,2 N,3 I
+      bool   extrap_c0_script_discard        = false;      // auto-discard one outlier concentration
+      double extrap_c0_script_outlier_sigma  = 3e0;        // outlier magnitude threshold
+      double extrap_c0_script_outlier_chi2   = 1.5e0;      // required pooled chi^2 gain to confirm drop
+      int    extrap_c0_script_outlier_max    = 1;          // max curves the QC may discard (1 = original)
+      bool   extrap_c0_script_outlier_leverage = true;     // studentize nomination residual by sqrt(1-h)
+      QString extrap_c0_script_reference;                  // explicit reference curve (name or conc); "" = max conc
+      double  extrap_c0_script_merge_q       = 0e0;        // manual splice switchover q; 0 = automatic
+      double  extrap_c0_script_gcv_lambda    = 0e0;        // diagnostic: pin GCV lambda; 0 = automatic
+
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();
       void clear_plot_saxs_and_replot_experimental();

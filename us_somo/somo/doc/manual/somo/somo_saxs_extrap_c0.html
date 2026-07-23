@@ -1,0 +1,595 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO SAS Extrapolation to Zero Concentration Module</title>
+	<link href="mainstyle1.css" rel="styleSheet" type="text/css">
+	<style type="text/css">
+		@page { margin: 0.79in }
+		p { margin-bottom: 0.1in; line-height: 120% }
+		p.sdfootnote { margin-left: 0.24in; text-indent: -0.24in; margin-bottom: 0in; font-size: 10pt; line-height: 100% }
+		a.sdfootnoteanc { font-size: 57% }
+		code { font-size: 150% }
+	</style>
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+Extrapolation to Zero Concentration:</h2></center>
+<h3><center>Last updated: July 2026</center></h3><p>
+
+<h3><center>Synopsis</center></h3>
+
+<p class="iucr-body-text-western"><span lang="en-US">
+Small-angle scattering intensities measured at finite concentration contain a
+concentration-dependent contribution from interparticle interactions (the
+structure factor). The <b><i>Extrapolate to zero concentration</b></i> function
+removes this contribution by combining a set of <i>I</i>(<i>q</i>) curves
+measured at different concentrations and extrapolating, at each <i>q</i>, to the
+ideal dilute limit <i>c</i>&nbsp;=&nbsp;0.</span></p>
+
+<p>The function is reached from the
+<a href=somo_saxs_load_csv.html>SOMO SAXS/SANS Load, manage, and process SAS data</a>
+module: load or plot the curves of interest, press <b>Load Plotted</b>, select at
+least three curves, and choose <b>Extrap. to zero conc</b> &rarr; <b>Extrapolate</b>.
+A dialog then opens in which concentrations are assigned and the extrapolation is
+performed.</p>
+
+<!-- IMAGE NEEDED: full view of the SAS Functions / Load Plotted module with the
+     "Extrap. to zero conc" option highlighted -->
+<center><img SRC="somo_saxs_extrap_c0_launch.png" BORDER="1" ALT="Launching the extrapolation"></center>
+
+<h3><center>The concentration and curve-selection dialog</center></h3>
+
+<p>The dialog lists each selected curve with its concentration. Concentrations
+are pre-filled from the curve headers (the <code>Conc:</code> tag) or from any
+value already known to SOMO, and may be edited; each must be a non-negative
+number. A concentration shown on a <span style="color:#CC0000">red</span>
+background is not yet a valid number.</p>
+
+<p><b>Partial specific volume and standard <i>I</i>(0).</b> Alongside the concentration, each
+curve can carry two molecular properties read from its header &mdash; the partial specific volume
+(the <code>PSV:</code> tag) and the standard experimental forward scatter <i>I</i>(0) (the
+<code>I0se:</code> tag) &mdash; which the downstream Guinier / molecular-weight analysis relies on.
+Because these are properties of the molecule, they must be the same for every curve in a
+concentration series. If two selected curves carry <i>different explicit</i> values the
+extrapolation is aborted with a message naming the disagreeing curve, so the headers can be
+corrected; a curve that has no such header simply uses the program default and is treated as
+compatible.</p>
+
+<!-- IMAGE NEEDED: the concentration-assignment dialog itself, showing the table,
+     the Absolute-scale mode checkbox, the status line, and the Help/Cancel/Extrapolate row -->
+<center><img SRC="somo_saxs_extrap_c0_dialog.png" BORDER="1" ALT="Concentration and selection dialog"></center>
+
+<p><b>Selecting the curves.</b> The rows highlighted (selected) in the table are
+the curves that will be used. All rows are selected by default. Use the mouse
+(click, <b>Shift</b>-click for a range, <b>Ctrl</b>-click to toggle individual
+rows) to change the selection. The <b>Extrapolate</b> button becomes active only
+when at least three rows are selected and every selected row has a valid
+concentration; the status line below the table reports the current state.</p>
+
+<p><i>Note:</i> because the concentration cells remain editable, double-clicking a
+cell to edit it may collapse the selection to that single row. Set the
+concentrations first, then choose the selection.</p>
+
+<h3><center>Extrapolation modes</center></h3>
+
+<p>An extrapolation is described by two independent choices: <i>how</i> the intensity is
+fitted against concentration (the <b>concentration model</b>, below) and <i>what convention</i>
+the resulting curve is expressed in (two checkboxes, described here). The fit itself always
+produces the same thing &mdash; the <i>c</i>&nbsp;=&nbsp;0 dilute-limit curve, normalized per
+unit concentration (the small-angle-scattering analogue of a Zimm plot). With both output
+checkboxes unchecked (the default), that normalized curve is the output: it is tagged
+<code>Conc:1</code> (SOMO's convention for an already-normalized curve) and carries the standard
+error of the fitted intercept as its uncertainty.</p>
+
+<p><b>Automatic slope regularization (GCV)</b> (checkbox, on by default; applies to
+<i>both</i> modes). The interparticle/interaction term &mdash; the fit's concentration
+<i>slope</i> &mdash; varies smoothly with <i>q</i> and dies off at high <i>q</i>, so it
+can be regularized across <i>q</i> without harming the form-factor detail carried by the
+intercept. With this option on, all <i>q</i> are fitted jointly with a smoothness penalty
+applied to <i>only</i> the slope &alpha;(<i>q</i>) (the intercept
+<i>I</i><sub>ex</sub>(<i>q</i>) is left untouched), and the smoothing strength is chosen
+automatically by <i>Generalized Cross-Validation</i> (GCV) &mdash; there is nothing to
+tune. On simulated dilution series with a known dilute-limit ground truth this tracks the
+best-possible smoothing across weak/strong and repulsive/attractive interactions, and on
+real data it yields a markedly cleaner low-<i>q</i> Guinier region than independent per-<i>q</i>
+fits. The editor window reports the selected penalty and the effective degrees of freedom.
+Uncheck the box for the classic independent per-<i>q</i> fits (optionally with the manual
+window below).</p>
+
+<p><b>Weight regression by curve errors (1/&sigma;&sup2;)</b> (checkbox, on by default). With
+this on, every concentration regression is fitted with inverse-variance weights &mdash; each
+point weighted by 1/&sigma;&sup2;, with the curve's error propagated onto the fit axis
+(&sigma;/<i>c</i> for the additive <i>I</i>/c axis, &sigma;&middot;<i>c</i>/<i>I</i>&sup2; for the
+reciprocal <i>c</i>/<i>I</i> axis) &mdash; and that error is propagated into the extrapolated
+intercept's reported error bar. This is the statistically optimal choice when the error bars are
+reliable, and for the reciprocal axis it automatically de-emphasizes the noisy high-<i>q</i>.
+Unchecked, an ordinary (unweighted) least-squares fit is used: the curve errors are still drawn in
+the regression plots but are not used in the fit, and the intercept error bar is the fit's residual
+scatter. Unweighted is more robust when the error bars are missing or mis-scaled (common in SAXS);
+a large difference between the weighted and unweighted results is itself a sign that the error bars
+are driving the extrapolation. The switch affects only the concentration regression (including the
+outlier check, which then standardizes residuals by their per-<i>q</i> scatter instead of by
+&sigma;) &mdash; not the high-<i>q</i> reference merge test or the post-fit SD reassessment, which
+are inherently error-based. If weighting is on but some points carry no usable error, those <i>q</i>
+are fitted unweighted and the count is reported. An unweighted run adds <code>_uw</code> to the
+output curve name.</p>
+
+<p>When weighting is off, the automatic slope regularization below conditions itself on a per-<i>q</i>
+<i>relative</i> scale rather than on the raw magnitudes. Without this, an unweighted fit on the
+reciprocal <i>c</i>/<i>I</i> axis &mdash; where the fitted values span orders of magnitude across
+<i>q</i> &mdash; would let the large, noisy high-<i>q</i> points dictate the amount of smoothing,
+over-smoothing the concentration slope until the extrapolated intercept turned negative at low
+<i>q</i> and those points had to be dropped. The scale factor is constant within each <i>q</i>, so it
+leaves every individual per-<i>q</i> fit unchanged; it only balances the <i>q</i> against one another
+in the joint regularized solve, and amounts to assuming a constant relative error &mdash; the usual
+default when error bars are absent or deliberately not trusted.</p>
+
+<p><b>Concentration model</b> (drop-down). This selects how the intensity
+is fitted against concentration at each <i>q</i>, and chiefly affects the accuracy of the
+molecular weight read from the extrapolated forward scatter <i>I</i>(0):</p>
+
+<ul>
+<li><b>Additive I(q)/c</b> (the default). Fits <i>I</i>(<i>q</i>,c)/c linearly against
+c and reports the c&nbsp;=&nbsp;0 intercept &mdash; the classic Zimm-plot form. This gives the
+cleanest low-<i>q</i> profile, but because the second-virial structure factor makes
+<i>I</i>/c a saturating (convex) function of c, a straight-line fit reads <i>I</i>(0) &mdash;
+and hence the molecular weight &mdash; systematically <i>low</i> when interparticle
+interactions are strong.</li>
+
+<li><b>Reciprocal c/I(q)</b>. Fits c/<i>I</i>(<i>q</i>,c) linearly against c and reports
+<i>I</i>(0)&nbsp;=&nbsp;1/(intercept). Because the second-virial relation
+c/<i>I</i>&nbsp;=&nbsp;(1&nbsp;+&nbsp;2<i>A</i><sub>2</sub><i>Mc</i>)/<i>I</i><sub>0</sub> is
+<i>linear</i> in c, this removes the additive fit's low bias and gives an unbiased forward
+scatter, i.e. a more accurate molecular weight. The uncertainty is propagated as
+SE(1/<i>u</i>)&nbsp;=&nbsp;SE(<i>u</i>)/<i>u</i><sup>2</sup>. <b>Caveat (few concentrations):</b>
+the 1/<i>I</i> inversion couples the automatic GCV slope-smoothing to <i>I</i>(0) in a way the
+additive fit avoids, and on a small number of concentrations this can introduce a coherent
+low-<i>q</i> <i>wave</i> into the extrapolated profile (a shape distortion the Guinier
+<i>R</i><sup>2</sup> does not detect). When this is detected a runs-test warning is written to the
+log; prefer <b>Additive</b> for the profile there, or add concentrations.</li>
+
+<li><b>2nd-order virial c/I(q)</b>. Adds a c<sup>2</sup> term
+(c/<i>I</i>&nbsp;=&nbsp;<i>u</i>&nbsp;+&nbsp;<i>v</i>c&nbsp;+&nbsp;<i>w</i>c<sup>2</sup>) to
+absorb the residual curvature that appears at strong interaction, where the first-order
+reciprocal begins to over-correct. It is the most robust choice across weak-to-strong
+interaction but needs at least four to five well-spread concentrations to determine the
+extra parameter; with fewer, prefer the first-order reciprocal.</li>
+</ul>
+
+<p>All three were validated against a physical Percus&ndash;Yevick hard-sphere ground truth:
+the additive fit is biased low, the first-order reciprocal is accurate at realistic
+interaction but over-corrects when very strong, and the second-order virial is within a few
+percent across the whole range. The <b>additive</b> model is the default: it gives a clean low-<i>q</i>
+profile on every dataset tested, whereas the reciprocal fit &mdash; although it yields the more
+accurate molecular weight &mdash; can develop the coherent low-<i>q</i> wave described above on
+few-concentration series, a shape artifact with no single robust cure (the GCV smoothing level that
+removes it on one dataset re-introduces it on another). Choose <b>reciprocal</b> (or the second-order
+virial) when an unbiased molecular weight is the priority and the log shows no wave warning; the
+model applies regardless of the output convention, so the reference-scale and spliced outputs use
+the selected model too. A preferred default may be preselected via the <i>gparam</i>
+<code>saxs_extrap_c0_model</code> (0&nbsp;additive, 1&nbsp;reciprocal, 2&nbsp;virial).</p>
+
+<p><b>Fit broadening (manual, Zimm mode).</b> An alternative to the automatic GCV option,
+used only when GCV is off (and both output-convention boxes are off). Setting <b>Zimm fit broadening (q-window)</b>
+to a value <i>N</i>&nbsp;&gt;&nbsp;1 averages the concentration slope over an <i>N</i>-point
+window and then recomputes each intercept (<i>a</i>&nbsp;=&nbsp;&#10216;<i>I</i>/c&#10217;&nbsp;&minus;&nbsp;<i>b</i><sub>smoothed</sub>&#10216;c&#10217;).
+0 (the default of this field) leaves the per-<i>q</i> fits independent. As with GCV, this
+smooths the concentration <i>dependence</i>, not the output curve itself (smoothing the
+output directly would smear real features and is not done). The field is disabled while
+automatic GCV or either output-convention box is selected.</p>
+
+<p><b>Output conventions (two independent checkboxes).</b> The normalized <i>c</i>&nbsp;=&nbsp;0
+fit above can be re-expressed in either or both of the following ways. They are output
+conventions layered on top of the fit &mdash; they do not change the fit, so they combine
+freely with any concentration model.</p>
+
+<ul>
+<li><b>Output on reference (absolute) scale.</b> Multiply the extrapolated curve by the
+highest concentration <i>c</i><sub>ref</sub> so it is expressed on that reference curve's
+<i>absolute</i> intensity scale, tagged with the reference concentration (dividing by it
+recovers the normalized form). Because the normalized fit times <i>c</i><sub>ref</sub> is
+exactly the infinite-dilution intensity on the reference scale, this is a pure re-scaling.</li>
+
+<li><b>Splice reference curve at high q</b> (the ATSAS <i>almerge</i> idea; Petoukhov
+<i>et al.</i>, 2012; Franke <i>et al.</i>, 2017). Apply the extrapolation only in the
+low-<i>q</i> region where the curves show a real concentration dependence, and above a
+<b>merging point</b> take the highest-concentration reference curve verbatim &mdash; replacing
+the noisy high-<i>q</i> extrapolated tail (a per-point fit there only tracks noise and can go
+negative) with the reference's stable, positive data, and carrying its error bars there. The
+merging point is found automatically as the first <i>q</i> from which the extrapolation agrees
+with the reference to within the reference's own errors &mdash; a reduced
+<i>&chi;</i><sup>2</sup> of (<i>I</i><sub>ex</sub>&nbsp;&minus;&nbsp;<i>I</i><sub>ref</sub>)/<i>&sigma;</i><sub>ref</sub>
+below a threshold (default 4, ~2&sigma; agreement; <code>saxs_extrap_c0_merge_chi2</code>).
+This error-band test is preferred to a sign-run (CORMAP) test, which &mdash; comparing the
+smoothed extrapolation against the noisy reference &mdash; is biased toward placing the merge
+too high; CORMAP (<code>saxs_extrap_c0_pvalue_alpha</code>, default 0.01) is the fallback when
+the reference has no error column. Below the merge the error bars are the propagated intercept
+standard error; at and above it (where the output <i>is</i> the reference) they are the
+reference's own. The <b>switchover q</b> field (blank = automatic) pins the merge to a chosen
+<i>q</i> instead of locating it automatically &mdash; useful for testing a specific cut, or for
+overriding an automatic placement that sits where the regularization has distorted the curve.</li>
+</ul>
+
+<p>The two combine to give four behaviors: neither box = the classic normalized <code>Conc:1</code>
+curve; scale only = the same curve on the absolute reference scale; splice only = a normalized
+curve with the clean reference tail; both = the former "absolute-scale mode" (reference scale
+with the high-<i>q</i> splice). Unlike before, all four now honor the chosen concentration model,
+so the reciprocal/virial models' unbiased molecular weight is available on the absolute scale too.</p>
+
+<p><b>Which curve is the reference.</b> Both of the above use a <i>reference</i> curve, and by
+default that is the one at the <b>highest concentration</b>. That is the right default rather than an
+arbitrary one: scattered intensity scales with concentration, so the most concentrated curve normally
+has the best high-<i>q</i> signal-to-noise &mdash; precisely what the splice needs, since above the
+merge point the output <i>is</i> that curve. It is the wrong choice only when that particular curve is
+itself unsound (aggregation, a mis-set concentration, radiation damage, poor buffer subtraction).</p>
+
+<p>The program cannot detect that for itself. The highest-concentration curve sits at the extreme of
+the concentration axis, so it carries almost all the leverage in the per-<i>q</i> fit: the fitted line
+passes essentially through it and its residual is near zero however it is scaled. Judging it needs
+information from outside the concentration regression &mdash; for instance comparing the molecular
+weight implied by each curve's <i>I</i>(0) against the known value. Where you have such knowledge you
+can say so: the concentration dialog offers a <b>Reference curve</b> selector (default
+<i>Automatic (highest concentration)</i>, and enabled only when one of the two options above is
+ticked, since nothing else uses a reference), and the scripted interface has the equivalent
+<code>reference</code> directive.</p>
+
+<p><b>Per-curve forward scatter (a diagnostic, not a decision).</b> Every run reports a short table:
+for each curve, its Guinier <i>R</i><sub>g</sub> and <i>I</i>(0), the ratio
+<i>I</i>(0)/<i>c</i>, and how far that ratio sits from (i) the median of the series and (ii) the trend
+predicted by the <i>other</i> curves. <i>I</i>(0)/<i>c</i> is constant in the dilute limit and falls
+smoothly as the interparticle term grows, so a curve well off the others points to a mis-set
+concentration or to aggregation. The trend column is computed leaving that curve out of the fit, so
+it cannot pull the line onto itself &mdash; which matters for the highest concentration, where an
+ordinary residual is structurally uninformative. Deviations beyond 15&nbsp;% are highlighted.</p>
+
+<p>This table is <i>reported only</i>: nothing is discarded or re-selected on the strength of it.
+That is deliberate. Testing showed that the statistics available inside a concentration series do not
+reliably identify a defective highest-concentration curve &mdash; they track signal-to-noise, which
+rises with concentration, so the curve most in need of scrutiny tends to look the best of the set.
+The table is here to put the evidence in front of the person who has the outside knowledge (a known
+molecular weight, say); the <b>Reference curve</b> selector above is how you act on it.</p>
+
+<p><i>Caveat when overriding with the splice enabled:</i> the merge point is found as the <i>q</i> from
+which the extrapolation stops differing from the reference, i.e. where the interparticle contribution
+has died away. A lower-concentration reference is both nearer the dilute limit already and noisier, so
+that test passes almost at once: the merge point moves down towards <i>q</i><sub>min</sub> and the
+output becomes that one raw curve rather than the de-noised extrapolation. Both situations are
+reported in the log &mdash; a merge point close to the start of the grid is flagged explicitly. If you
+need a different reference for the absolute scale, consider turning the splice off.</p>
+
+<p><b>Recompute input curve SDs before fitting</b> (checkbox, off by default, with a mode
+sub-option). When checked, each selected input curve's error bars are first reassessed from the
+curve's own point-to-point scatter &mdash; the same BayesApp engine (Larsen &amp; Pedersen, 2021)
+used by &ldquo;Recompute output SDs&rdquo; below and the s.d.util &ldquo;SD rescale&rdquo; button
+&mdash; and the reassessed errors are used for <i>this extrapolation only</i>. The reassessment
+runs before everything else, so the improved errors feed the outlier check, the 1/&sigma;&sup2;
+weights, and the high-<i>q</i> reference merge test. This is <b>transient</b>: the loaded curves
+are <i>not</i> modified &mdash; to change a curve's errors permanently, use the s.d.util
+&ldquo;SD rescale&rdquo; button instead. The mode sub-option (<b>Constant</b> default,
+<b>Non-constant</b>, <b>Intensity-dependent</b>) is the same set of rescaling modes as the output
+reassessment; Constant (one factor per curve) is the safest default. It pairs naturally with error
+weighting on (fix the errors, then weight by them); with weighting off it affects only the plotted
+error bars and the merge test. Each curve's verdict and factor are reported in the log, and the
+output name gains <code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>.</p>
+
+<p><b>Recompute output SDs</b> (drop-down). By default the extrapolated curve carries its
+<i>propagated</i> error bars (the per-<i>q</i> intercept standard error, and the reference's
+own errors in any spliced high-<i>q</i> region). This optional selection instead reassesses
+the output curve's error bars from the curve's own point-to-point scatter, using the same
+BayesApp-style engine as the HPLC/KIN <i>s.d.util</i> &ldquo;SD rescale&rdquo; button (Larsen
+&amp; Pedersen, 2021): a local inverse-variance quadratic smoother gives the residuals and an
+effective number of degrees of freedom, hence a reduced <i>&chi;</i><sup>2</sup> and a
+two-sided <i>p</i>-value, and <i>&sigma;</i> is rescaled only when the fit is poor and the
+implied factor is more than 10&nbsp;% from unity. The modes are <b>Constant</b> (a single
+factor for all <i>q</i>), <b>Non-constant</b> (a per-<i>q</i>-bin factor, for a
+<i>q</i>-dependent misestimate), and <b>Intensity-dependent</b>
+(<i>&sigma;</i>&nbsp;&rarr;&nbsp;<i>&sigma;</i>&nbsp;+&nbsp;<i>a</i>&middot;|<i>I</i>|); <b>Off</b>
+keeps the propagated errors. When a reference tail is spliced in, the reassessment spans the
+whole spliced curve. The verdict, reduced <i>&chi;</i><sup>2</sup>, and <i>p</i>-value are
+reported in the log, and the chosen mode is encoded in the curve name
+(<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>).</p>
+
+<p><b>Automatically discard one outlier concentration</b> (checkbox, off by default; with two
+threshold fields). A single curve with a mis-entered concentration, a scaling error, or
+aggregation sits off the concentration trend at essentially <i>every</i> <i>q</i>, and because
+it is on the wrong concentration axis rather than merely noisy, the inverse-variance weighting
+does not suppress it &mdash; it biases every per-<i>q</i> fit and can even be picked as the
+high-<i>q</i> reference. When this box is checked, such a curve is detected and removed from the
+whole fit (before the reference is chosen), so the extrapolation is computed on the remaining
+curves. <b>At most one</b> curve is discarded from the interactive dialog, and only when enough
+remain (&ge;&nbsp;3, or &ge;&nbsp;4 for the 2nd-order virial); the scripted interface can raise that
+limit (see <code>outlier_max</code> below), in which case detection is simply repeated on the
+cleaned set until no curve qualifies. Raising it matters when more than one curve is contaminated,
+because a single pass judges every curve against a trend that still contains the other offender, so
+the nominee itself can be the wrong curve. Detection is at the curve level, never per-<i>q</i>:
+per-<i>q</i> outlier trimming would overfit at these small point counts and stitch discontinuities
+into the output, whereas a bad concentration is a whole-curve property. The two fields tune it:
+<b>Outlier threshold (sigma)</b> (default 3.0) is the mean <i>studentized</i> residual across <i>q</i>
+above which a curve is flagged, and <b>Min &chi;&sup2; gain to discard</b> (default 1.5) is the
+factor by which removing the curve must improve the pooled reduced <i>&chi;</i><sup>2</sup> before
+it is actually dropped; the curve must also be consistently one-signed (a systematic offset, not
+noise). Because a concentration error bites hardest at low <i>q</i>, mild outliers often sit near
+a mean residual of 1&ndash;2 rather than 3, so lowering the sigma field (e.g. to 1.5) with the
+&chi;&sup2; gain near 1.2 is the way to act on a borderline curve; the default is deliberately
+conservative. Every run reports the most-outlying curve and all of these numbers in the log (so
+the thresholds can be tuned), whether or not anything is discarded. A discarded curve is drawn as
+a <b>red x</b> in the per-<i>q</i> regression plots and noted in the log, and the output name gains
+<code>_qc</code><i>N</i> for <i>N</i> discarded curves (<code>_qc1</code> in the usual single-discard
+case). When more than one curve is discarded the red <b>x</b> marks the first (strongest) one, while
+the log records every discard.
+This targets concentration/scale outliers; curve-shape problems such as aggregation are the job of
+the Guinier quality check below.</p>
+
+<p><b>Why the residual is leverage-corrected.</b> The residual used to rank the curves is
+<i>studentized</i>: divided by &radic;(1&minus;<i>h</i>), where <i>h</i> is the curve's leverage in
+the per-<i>q</i> fit of intensity against concentration. This matters because the highest-
+concentration curve sits at the extreme of the concentration axis and therefore carries the most
+leverage: it pulls the fitted line towards itself and so shrinks its own residual. Without the
+correction a genuinely bad highest-concentration curve is masked &mdash; on a seven-curve test series
+the top curve carried a leverage of 0.80 against an average of 0.29, which placed it fifth of seven
+on the raw statistic and second once corrected. Since the residual variance is
+<i>&sigma;</i><sup>2</sup>(1&minus;<i>h</i>), this is the standard studentized residual rather than a
+heuristic adjustment.</p>
+
+<p><i>A limitation worth knowing:</i> when one concentration sits far above all the others, its
+leverage can approach 1, meaning the fitted line passes almost exactly through it and the regression
+has essentially <i>no</i> information with which to judge it &mdash; its residual is near zero
+however it is scaled. No residual-based test, corrected or not, can assess such a curve. Judging it
+requires information from outside the concentration regression, for example comparing the molecular
+weight deduced from each curve's <i>I</i>(0) against the known value.</p>
+
+<!-- IMAGE NEEDED (optional): overlay plot comparing an input curve, the normalized
+     result, and the absolute-scale + spliced result on a log I(q) vs q axis -->
+<center><img SRC="somo_saxs_extrap_c0_result.png" BORDER="1" ALT="Extrapolated curve"></center>
+
+<h3><center>Per-q regression plots</center></h3>
+
+<p>Checking <b>Show per-q regression plots</b> in the concentration dialog opens a
+pop-up window after the extrapolation. It shows, one <i>q</i> value at a time, each
+input curve as a point at its concentration (with its error bar) together with the
+per-q result: the fitted line and its extrapolated <i>c</i>&nbsp;=&nbsp;0 intercept
+(highlighted, with its own error bar) at the dashed vertical axis. When the reference curve is
+<b>spliced</b> (the merge checkbox), the title also notes, for the current <i>q</i>, whether the
+output there is the extrapolated intercept (below the merging point) or taken from the reference
+curve (at/above it). <b>Drag the wheel</b> to scroll smoothly through the <i>q</i> grid (it
+has inertia, so a flick keeps scrolling); the <b>Prev</b> and <b>Next</b> buttons step
+one <i>q</i> at a time. The line below the plot reports, for the current <i>q</i>, the
+extrapolated <i>c</i>&nbsp;=&nbsp;0 result &plusmn; its error, the number of curves used, and
+a <b>goodness-of-fit summary</b> &mdash; the coefficient of determination <i>R</i>&sup2;, and
+(when the data carry error bars) the reduced &chi;&sup2; of the points about the fit &mdash; so
+the quality of each per-<i>q</i> extrapolation can be judged at a glance.</p>
+
+<p>The <i>y</i> axis and the fitted curve follow the selected concentration model; the plot
+always shows the normalized fit (the reference scale and splice are output conventions applied
+afterwards, not part of the fit). For the <b>additive</b> model the axis is <i>I</i>(q)/c (or
+<i>I</i>*(q) for already-normalized inputs) and the intercept is the dilute <i>I</i>(0) directly.
+For the <b>reciprocal</b> and <b>2nd-order
+virial</b> models the axis is <i>c</i>/<i>I</i>(q): the plotted intercept is <i>u</i> and the
+readout also gives the recovered forward scatter <i>I</i>(0)&nbsp;=&nbsp;1/<i>u</i> with its
+propagated error; the 2nd-order virial draws its fitted parabola rather than a straight line.
+When automatic GCV regularization (or the manual fit-broadening window) is active, the fit line
+uses the globally-smoothed slope &mdash; a note above the plot says so, and reports the effective
+slope degrees of freedom for GCV &mdash; so the line reflects the regularized fit and may not
+pass exactly through the raw per-<i>q</i> intercept. This is a diagnostic view; it does not add
+or change any plotted curve.</p>
+
+<p><b>A negative <i>R</i>&sup2; is expected at some <i>q</i> and is not an error.</b>
+<i>R</i>&sup2; here is the fraction of the points' variance explained <i>by the plotted line</i>
+(1&nbsp;&minus;&nbsp;SS<sub>residual</sub>/SS<sub>total</sub>), so it goes negative whenever the
+plotted line fits the points more poorly than a flat line through their mean. That happens
+legitimately in two situations. First, with GCV or fit broadening the slope at each <i>q</i> is
+deliberately borrowed from neighbouring <i>q</i> rather than fitted locally; at the
+noise-dominated low-<i>q</i> points &mdash; where the individual curves show no real concentration
+trend &mdash; that shared slope can fit worse than a flat mean, giving <i>R</i>&sup2;&nbsp;&lt;&nbsp;0.
+This is the regularization <i>working as intended</i>: it stabilizes the <i>c</i>&nbsp;=&nbsp;0
+intercept by not chasing local noise, and a negative <i>R</i>&sup2; there is a useful signal that
+the per-<i>q</i> trend is noise rather than a defect. Second, the fit is inverse-variance weighted
+while <i>R</i>&sup2; is computed unweighted, so a single high-error point can also push it slightly
+below zero. With only a few concentrations the statistic is noisy in any case; judge the
+extrapolation on the reduced &chi;&sup2; and the overall Guinier quality check as well, not on a
+single <i>q</i>'s <i>R</i>&sup2;.</p>
+
+<!-- IMAGE NEEDED (optional): the per-q regression pop-up showing points with error
+     bars, the fit line, the c=0 intercept, and the scroll wheel -->
+<center><img SRC="somo_saxs_extrap_c0_regplot.png" BORDER="1" ALT="Per-q regression pop-up"></center>
+
+<h3><center>Output</center></h3>
+
+<p>A new curve is added to the plot. Its name is the longest common prefix of the
+selected curve names followed by <code>_extrap_c0</code> and tokens encoding the choices
+that produced it &mdash; the concentration model
+(<code>_add</code>&nbsp;/&nbsp;<code>_recip</code>&nbsp;/&nbsp;<code>_virial2</code>), then
+<code>_abs</code> if on the reference scale and <code>_merge</code> if the reference was
+spliced &mdash; and, when spliced, the merge point <i>q</i> (with the decimal written as an
+underscore, e.g. <code>_merge_q0_0898</code> for a cutover at <i>q</i>&nbsp;=&nbsp;0.0898), and
+<code>_nogcv</code> if the automatic slope regularization was switched off and
+<code>_fb</code><i>N</i> for a manual fit-broadening window, <code>_refc</code><i>c</i> if a
+reference curve was chosen explicitly (with its concentration, decimal written as an underscore),
+an input-SD recompute if one was applied
+(<code>_riC</code>&nbsp;/&nbsp;<code>_riN</code>&nbsp;/&nbsp;<code>_riI</code>), the
+output SD-reassessment mode if one was applied
+(<code>_sdC</code>&nbsp;/&nbsp;<code>_sdN</code>&nbsp;/&nbsp;<code>_sdI</code>), and
+<code>_qc</code><i>N</i> if outlier concentrations were discarded (with <code>_rawres</code> appended
+when the leverage correction was disabled, since that can change <i>which</i> curve was dropped),
+and <code>_uw</code> if the
+regression was unweighted (curve errors not used), so a
+run's cutover is visible in its name (for example
+<code>Sub_..._extrap_c0_recip_abs_merge_q0_0898</code>). Distinct selections
+therefore produce distinct, self-describing names; a genuine repeat of the same configuration
+gets a numeric suffix. Curves with a concentration of zero are excluded from the fit, and any
+<i>q</i> point with fewer than two usable values is skipped; the editor window reports how many
+curves and points were used, the fit model and output conventions, and, when a reference is
+used, its identity and the merge point.</p>
+
+<p>The extrapolated curve inherits the series' partial specific volume and standard <i>I</i>(0)
+(the agreed <code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> values described above) &mdash; both in
+the plot, so that a subsequent Guinier / molecular-weight analysis of it uses the correct values
+rather than the program defaults, and in the saved file's header, so they round-trip. These
+values are also preserved on the input curves themselves (re-plotting no longer resets them to the
+defaults).</p>
+
+<p><b>Guinier quality check.</b> After the curve is produced, the editor window reports a
+Guinier fit of it (a straight-line fit of ln&nbsp;<i>I</i> versus <i>q</i><sup>2</sup> over
+the low-<i>q</i> region, the window chosen so <i>q</i><sub>max</sub>&middot;<i>R</i><sub>g</sub>&nbsp;&le;&nbsp;1.3):
+the radius of gyration <i>R</i><sub>g</sub>, <i>I</i>(0), and the fit's <i>R</i><sup>2</sup>.
+This is a ground-truth-free quality signal &mdash; a high <i>R</i><sup>2</sup> with a
+physically sensible <i>R</i><sub>g</sub> indicates a clean low-<i>q</i> extrapolation; a low
+<i>R</i><sup>2</sup> is flagged and suggests checking the low-<i>q</i> data or the assigned
+concentrations.</p>
+
+<h3><center>I*(q) (already-normalized) curves</center></h3>
+
+<p>Curves whose name contains <code>_Istarq_</code> are treated as already being in
+<i>I</i>*(<i>q</i>) form (header units g/mol, <i>I</i>(0)&nbsp;=&nbsp;MW), i.e. their
+intensity has already been normalized by concentration &mdash; even though their
+<code>Conc:</code> header carries the real, non-unity measurement concentration. For
+these curves the intensity is used <i>as is</i> (it is <span style="color:#CC0000">not</span>
+divided by concentration again), while the real concentration is still used as the
+extrapolation variable. A selection made entirely of <i>I</i>*(<i>q</i>) curves therefore
+produces an already-normalized result (tagged <code>Conc:1</code> in both modes). Mixing
+<i>I</i>*(<i>q</i>) curves with raw-intensity curves in one extrapolation is flagged with a
+warning, as the two are on different scales.</p>
+
+<h3><center>Scripting (command-line / headless)</center></h3>
+
+<p>The same extrapolation can be run without the interactive dialogs, driven from a
+<code>gui_script</code> so that a run is reproducible and its result can be saved for
+regression testing or batch validation. The computation is identical to the interactive
+one &mdash; the same fit, the same options, the same output curve &mdash; only the two
+dialogs are replaced by a control file. Invoke it as:</p>
+
+<blockquote><code>us3_somo -I -g&nbsp;<i>script</i></code></blockquote>
+
+<p>where <i>script</i> contains one or more lines of the form
+<code>saxs_extrap_c0&nbsp;<i>controlfile</i></code> (followed by <code>exit</code>). The
+<code>-I</code> flag runs with the stored configuration and no start-up prompts. Each control
+file is a small key/value text file (one directive per line; lines beginning with <code>#</code>
+are comments). The <code>input</code> and <code>output</code> values may contain spaces:</p>
+
+<p>
+<code>input&nbsp;&nbsp;&nbsp;<i>path</i></code> &mdash; an input curve (a three-column
+<i>q</i>&nbsp;/&nbsp;<i>I</i>(<i>q</i>)&nbsp;/&nbsp;sd <code>.dat</code> file with a
+<code>Conc:</code> header); repeat for each curve (at least three). The concentration is read
+from each file's header, as are the optional <code>PSV:</code> and <code>I0se:</code> tags.<br>
+<code>output&nbsp;&nbsp;<i>path</i></code> &mdash; where the extrapolated curve is written
+(same three-column format; the header carries <code>Conc:</code>, and the series'
+<code>PSV:</code>&nbsp;/&nbsp;<code>I0se:</code> when present, so it round-trips).<br>
+<code>common_crop&nbsp;0|1</code> &mdash; crop the inputs to their shared <i>q</i>-overlap before
+loading (default&nbsp;1). Curves that sit on one detector grid but were cut at different low <i>q</i>
+then load as identical grids with no interpolation; without it the loader resamples the mismatched
+grids and spline-extrapolates the higher-starting curves below their own data.<br>
+<code>fill_sd&nbsp;0|1</code> &mdash; repair non-positive input standard deviations before loading
+(default&nbsp;1). This matters more than it sounds: SOMO's error handling is all-or-nothing, so a
+<i>single</i> non-positive SD &mdash; commonly one zero at a grid edge in deposited data &mdash;
+disables that whole curve's errors and silently forces an unweighted fit. With this on, each
+non-positive SD is replaced by its nearest positive neighbour, but only when the positive SDs are in
+the majority (a mostly-zero curve carries no error information to borrow from). Either way the
+affected curves are named in the log. Set 0 to reproduce the raw, unrepaired behaviour.<br>
+<code>model&nbsp;&nbsp;&nbsp;additive&nbsp;|&nbsp;reciprocal&nbsp;|&nbsp;virial2</code>
+(default <code>reciprocal</code>).<br>
+<code>merge_q&nbsp;<i>q</i></code> &mdash; pin the splice switchover to this <i>q</i> instead of
+locating it automatically (requires <code>merge_ref&nbsp;1</code>; blank or 0 = automatic).<br>
+<code>ref_scale&nbsp;0|1</code>, <code>merge_ref&nbsp;0|1</code> &mdash; output on the reference
+absolute scale, and splice the reference above the merge point.<br>
+<code>gcv&nbsp;0|1</code> (default&nbsp;1), <code>sd_weights&nbsp;0|1</code> (default&nbsp;1),
+<code>fit_broaden&nbsp;<i>N</i></code> &mdash; the slope-regularization, inverse-variance
+weighting, and Zimm fit-broadening controls.<br>
+<code>recompute_inputs&nbsp;off|constant|nonconstant|intensity</code> &mdash; transiently
+reassess the input SDs before fitting.<br>
+<code>sd_reassess&nbsp;off|constant|nonconstant|intensity</code> &mdash; reassess the output
+SDs after fitting.<br>
+<code>discard_outlier&nbsp;0|1</code>, <code>outlier_sigma&nbsp;<i>x</i></code>,
+<code>outlier_chi2&nbsp;<i>x</i></code> &mdash; the automatic outlier-concentration QC and
+its thresholds.<br>
+<code>outlier_max&nbsp;<i>N</i></code> &mdash; maximum number of curves the QC may discard
+(default&nbsp;1, which reproduces the interactive behaviour). With <i>N</i>&nbsp;&gt;&nbsp;1 the
+detection is repeated on the cleaned set until no curve qualifies; hitting the limit while another
+curve still qualifies is reported rather than passed over silently.<br>
+<code>outlier_leverage&nbsp;0|1</code> &mdash; studentize the ranking residual by
+&radic;(1&minus;<i>h</i>) (default&nbsp;1). Set 0 to rank on the raw standardized residual, which
+masks the highest-concentration curve as described above.<br>
+<code>reference&nbsp;<i>curve-name</i>&nbsp;|&nbsp;<i>conc</i></code> &mdash; choose the reference
+curve explicitly instead of the default highest-concentration pick; accepts a curve name (or a
+distinctive part of one) or a concentration value. Intended for the case where the
+highest-concentration curve is known to be unsound &mdash; a judgement the program cannot make for
+itself (see the caveat under the reference splice). A value matching no selected curve is reported
+and the default is used; it is never silently ignored.<br>
+<code>conc&nbsp;&nbsp;&nbsp;"<i>name</i>"&nbsp;<i>value</i></code> &mdash; optional; override a
+curve's concentration instead of using its header.<br>
+<code>dump_conc_csv&nbsp;<i>path</i></code> &mdash; optional; after the run, write the per-curve
+table (name, concentration, PSV, I0se) for every plotted curve, e.g. to confirm that the
+extrapolated curve carries the inputs' values.
+</p>
+
+<p>For example, a control file selecting the reciprocal model on the reference absolute scale
+with the reference spliced in above the merge point:</p>
+
+<blockquote><code>
+# reciprocal, absolute scale, reference splice<br>
+input&nbsp;&nbsp;&nbsp;curve_c1.dat<br>
+input&nbsp;&nbsp;&nbsp;curve_c2.dat<br>
+input&nbsp;&nbsp;&nbsp;curve_c3.dat<br>
+output&nbsp;&nbsp;extrap_c0.dat<br>
+model&nbsp;&nbsp;&nbsp;reciprocal<br>
+ref_scale&nbsp;1<br>
+merge_ref&nbsp;1
+</code></blockquote>
+
+<p>The diagnostics that would appear in the editor window (curves and points used, fit model
+and conventions, merge point, Guinier quality check, outlier-QC verdict, SD-reassessment
+verdict) are written to standard output, and the produced curve carries the same
+self-describing name as in the interactive run.</p>
+
+<h3><center>References</center></h3>
+
+<p><span lang="en-US">The linear extrapolation of concentration-normalized
+intensity to infinite dilution (Zimm mode) follows the approach introduced in:
+Zimm, B. H. (1948) <i>The scattering of light and the radial distribution function
+of high polymer solutions.</i> J. Chem. Phys. <b>16</b>, 1093-1099.</span></p>
+
+<p><span lang="en-US">The concentration extrapolation and the <i>almerge</i>
+algorithm reproduced by Absolute-scale mode are described in: Petoukhov, M. V., Franke,
+D., Shkumatov, A. V., Tria, G., Kikhney, A. G., Gajda, M., Gorba, C., Mertens, H.
+D. T., Konarev, P. V. &amp; Svergun, D. I. (2012) <i>New developments in the
+ATSAS program package for small-angle scattering data analysis.</i> J. Appl.
+Cryst. <b>45</b>, 342-350; and Franke, D., Petoukhov, M.
+V., Konarev, P. V., Panjkovich, A., Tuukkanen, A., Mertens, H. D. T., Kikhney, A.
+G., Hajizadeh, N. R., Franklin, J. M., Jeffries, C. M. &amp; Svergun, D. I. (2017)
+<i>ATSAS 2.8: a comprehensive data analysis suite for small-angle scattering from
+macromolecular solutions.</i> J. Appl. Cryst. <b>50</b>, 1212-1225.</span></p>
+
+<hr>
+<p>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on July 20, 2026.
+</font>
+</body>
+</html>
