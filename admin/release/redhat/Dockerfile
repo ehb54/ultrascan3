@@ -145,9 +145,9 @@ RUN cp -rp $ULTRASCAN/us_somo/somo/demo/* $ULTRASCAN/somo/demo/
 # copy manual data (should really be in makesomo.sh)
 RUN cp -rp $ULTRASCAN/us_somo/somo/doc $ULTRASCAN/somo/
 
-# get centos rasmol
-ADD https://api.github.com/repos/ehb54/rasmol-centos/git/refs/heads/main ras_version.json
-RUN git clone https://github.com/ehb54/rasmol-centos.git && cp rasmol-centos/bin/rasmol /ultrascan3/bin/ && cp rasmol-centos/lib/* /ultrascan3/lib/
+# get rasmol
+ADD https://api.github.com/repos/ehb54/rasmol/git/refs/heads/somo-modernize ras_version.json
+RUN git clone -b somo-modernize https://github.com/ehb54/rasmol.git && cp rasmol/binaries/linux-x86_64/rasmol /ultrascan3/bin/ && cp rasmol/binaries/linux-x86_64/rasmol.hlp /ultrascan3/bin/
 
 # copy assistant
 
