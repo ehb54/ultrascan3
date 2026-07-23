@@ -1548,6 +1548,23 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       }
    }
 
+   // The manual fit-broadening window applies ONLY to the additive model, with automatic GCV off
+   // and no reference-scale/splice (see the gated application below). If it was requested where it
+   // will not be used, say so rather than accepting it silently -- otherwise the run looks broadened
+   // but is not. fit_broaden_effective is what actually took effect; it (not the requested value)
+   // is what the output name should reflect, so a run cannot claim _fbN while having done nothing.
+   int fit_broaden_effective = ( !reciprocal && !zimm_gcv_ok && !use_ref_path ) ? fit_broaden : 0;
+   if ( fit_broaden > 1 && fit_broaden_effective == 0 )
+   {
+      QStringList why;
+      if ( reciprocal )   { why << us_tr( "the reciprocal/virial model does not use it (additive only)" ); }
+      if ( zimm_gcv_ok )  { why << us_tr( "automatic GCV regularization is on (turn it off to use the manual window)" ); }
+      if ( use_ref_path ) { why << us_tr( "a reference-scale or high-q-splice option is on" ); }
+      editor_msg( "dark red",
+                  QString( us_tr( "Note: the fit-broadening window (%1) was IGNORED -- %2.\n" ) )
+                  .arg( fit_broaden ).arg( why.join( "; " ) ) );
+   }
+
    // 2nd-order virial precompute (model 2): per-q weighted quadratic  c/I = u + v*c + w*c^2,
    // I0 = 1/u. Solves the 3x3 weighted normal equations by Cramer's rule; SE(u) from the
    // (0,0) element of the inverse normal matrix (weights are inverse variances). Needs >= 4
@@ -2139,7 +2156,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
 
    QString base_name  = us_extrap_c0_curve_name( ordered_names, extrap_model, ref_scale, merge_ref, merge_q, sd_mode, n_outlier_dropped, !use_sd_weights,
                                                   recompute_inputs ? ( recompute_inputs_mode + 1 ) : 0,
-                                                  !use_gcv, fit_broaden, ref_override_conc_used,
+                                                  !use_gcv, fit_broaden_effective, ref_override_conc_used,
                                                   !outlier_leverage );
    QString final_name = base_name;
    {
