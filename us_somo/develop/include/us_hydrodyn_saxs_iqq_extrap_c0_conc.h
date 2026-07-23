@@ -124,6 +124,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       void selection_changed();
       void refresh_broaden_enabled();
       void refresh_reference_enabled();
+      void refresh_model_enabled();
+      void refresh_recompute_enabled();
       void ok();
       void cancel();
       void help();

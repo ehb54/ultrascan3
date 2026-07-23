@@ -801,7 +801,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool extrap_c0_script = false;                       // master gate for the dialog bypass
       QString extrap_c0_script_out;                        // output .dat path for the result curve
       map < QString, double > extrap_c0_script_conc;       // optional per-curve concentration overrides
-      int    extrap_c0_script_model          = 1;          // 0 additive, 1 reciprocal, 2 2nd-virial
+      int    extrap_c0_script_model          = 0;          // 0 additive (default), 1 reciprocal, 2 2nd-virial
       bool   extrap_c0_script_ref_scale      = false;      // output on reference (max-conc) absolute scale
       bool   extrap_c0_script_merge_ref      = false;      // splice reference curve above merge q
       bool   extrap_c0_script_gcv            = true;       // automatic GCV slope regularization
@@ -817,6 +817,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool   extrap_c0_script_outlier_leverage = true;     // studentize nomination residual by sqrt(1-h)
       QString extrap_c0_script_reference;                  // explicit reference curve (name or conc); "" = max conc
       double  extrap_c0_script_merge_q       = 0e0;        // manual splice switchover q; 0 = automatic
+      double  extrap_c0_script_gcv_lambda    = 0e0;        // diagnostic: pin GCV lambda; 0 = automatic
 
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();

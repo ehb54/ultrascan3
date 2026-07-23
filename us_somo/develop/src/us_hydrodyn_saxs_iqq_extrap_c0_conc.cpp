@@ -273,10 +273,10 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    lbl_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
 
    cb_model = new QComboBox( this );
-   cb_model->addItem( us_tr( "Additive  I(q)/c  \342\200\224 cleanest low-q profile" ) );
-   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)  (default)" ) );
+   cb_model->addItem( us_tr( "Additive  I(q)/c  \342\200\224 cleanest low-q profile  (default)" ) );
+   cb_model->addItem( us_tr( "Reciprocal  c/I(q)  \342\200\224 unbiased MW / I(0)  (can wave at low q)" ) );
    cb_model->addItem( us_tr( "2nd-order virial  c/I(q)  \342\200\224 MW at strong interaction (needs \342\211\2654-5 conc)" ) );
-   cb_model->setCurrentIndex( 1 );
+   cb_model->setCurrentIndex( 0 );
    cb_model->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
    cb_model->setPalette( PALET_NORMAL );
    AUTFBACK( cb_model );
@@ -286,7 +286,9 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                                "Additive: fit I(q)/c vs c, intercept = dilute I(q)/c. Best profile; MW biased\n"
                                "low when interparticle repulsion/attraction is strong.\n"
                                "Reciprocal: fit c/I(q) vs c (the second-virial form, linear in c); I0 = 1/intercept.\n"
-                               "Unbiased forward scatter, so a more accurate molecular weight.\n"
+                               "Unbiased forward scatter, so a more accurate molecular weight. On few-concentration\n"
+                               "series the GCV smoothing of the 1/I inversion can put a coherent wave into the low-q\n"
+                               "profile (a runs-test warning is issued if so) -- prefer Additive there.\n"
                                "2nd-order virial: adds a c^2 term for strongly interacting series; needs 4-5\n"
                                "well-spread concentrations. Validated against a Percus-Yevick hard-sphere model." ) );
    // a power-user default may preselect the model via gparam saxs_extrap_c0_model
@@ -481,6 +483,8 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    connect( cb_ref_scale, SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
    connect( cb_merge,     SIGNAL( toggled( bool ) ), SLOT( refresh_reference_enabled() ) );
    connect( cb_gcv,    SIGNAL( toggled( bool ) ), SLOT( refresh_broaden_enabled() ) );
+   connect( cb_model,  SIGNAL( currentIndexChanged( int ) ), SLOT( refresh_model_enabled() ) );
+   connect( cb_recompute_inputs, SIGNAL( toggled( bool ) ), SLOT( refresh_recompute_enabled() ) );
 
    hbl_broaden->addWidget( lbl_broaden );
    hbl_broaden->addWidget( le_broaden );
@@ -549,15 +553,37 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
    // reflect the default state (GCV on => manual window disabled)
    refresh_broaden_enabled();
    refresh_reference_enabled();
+   refresh_model_enabled();
+   refresh_recompute_enabled();
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_broaden_enabled()
 {
-   // the manual fit-broadening window is meaningful only for Zimm mode with automatic
-   // GCV off; absolute-scale and GCV each supersede it
-   bool enable = !cb_ref_scale->isChecked() && !cb_merge->isChecked() && !cb_gcv->isChecked();
+   // the manual fit-broadening window is meaningful only for the ADDITIVE model with automatic
+   // GCV off; the reciprocal/virial models do not use it (do_extrap_c0 gates it on !reciprocal),
+   // and absolute-scale / GCV each supersede it too
+   bool enable = ( cb_model->currentIndex() == 0 )
+                 && !cb_ref_scale->isChecked() && !cb_merge->isChecked() && !cb_gcv->isChecked();
    le_broaden->setEnabled( enable );
    lbl_broaden->setEnabled( enable );
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_model_enabled()
+{
+   // the 2nd-order virial (index 2) fits a per-q quadratic and ignores automatic GCV entirely,
+   // so the GCV checkbox is not applicable there; gray it out to say so. (Broadening depends on
+   // the model too, so refresh it here.)
+   bool virial2 = ( cb_model->currentIndex() == 2 );
+   cb_gcv->setEnabled( !virial2 );
+   refresh_broaden_enabled();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_recompute_enabled()
+{
+   // the input-SD reassessment MODE only applies when "Recompute input curve SDs" is checked
+   bool on = cb_recompute_inputs->isChecked();
+   cb_recompute_inputs_mode->setEnabled( on );
+   lbl_recompute_inputs_mode->setEnabled( on );
 }
 
 void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::refresh_reference_enabled()

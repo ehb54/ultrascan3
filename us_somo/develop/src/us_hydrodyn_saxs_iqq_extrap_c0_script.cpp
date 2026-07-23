@@ -28,7 +28,7 @@
 //                                      positive SDs are the majority (a mostly-zero curve has no real
 //                                      errors to draw from). Warnings are logged either way. Set 0 to
 //                                      disable repair, e.g. to reproduce the raw unweighted result.)
-//   model   additive | reciprocal | virial2         (default reciprocal)
+//   model   additive | reciprocal | virial2         (default additive)
 //   ref_scale       0 | 1             (output on reference absolute scale; default 0)
 //   merge_ref       0 | 1             (splice reference curve above merge q; default 0)
 //   merge_q         <double>          (optional; pin the splice switchover to this q instead of
@@ -211,7 +211,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    bool         common_crop = true;   // crop inputs to their shared q-overlap before loading
    bool         fill_sd     = true;   // repair non-positive input SDs (when most are present) so errors stay enabled
    // start every run from the documented defaults, then apply directives
-   extrap_c0_script_model          = 1;
+   extrap_c0_script_model          = 0;
    extrap_c0_script_ref_scale      = false;
    extrap_c0_script_merge_ref      = false;
    extrap_c0_script_gcv            = true;
@@ -227,6 +227,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_outlier_leverage = true;
    extrap_c0_script_reference.clear();
    extrap_c0_script_merge_q        = 0e0;
+   extrap_c0_script_gcv_lambda     = 0e0;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -285,6 +286,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "outlier_leverage" ){ extrap_c0_script_outlier_leverage = ( val.toInt() != 0 ); }
       else if ( key == "reference" )       { extrap_c0_script_reference      = val; }
       else if ( key == "merge_q" )         { extrap_c0_script_merge_q       = val.toDouble(); }
+      else if ( key == "gcv_lambda" )      { extrap_c0_script_gcv_lambda    = val.toDouble(); }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );
