@@ -174,9 +174,11 @@ RUN cp -rp $ULTRASCAN/us_somo/somo/doc $ULTRASCAN/somo/
 ADD https://api.github.com/repos/ehb54/openssl.cnf.d/git/refs/heads/main openssl_version.json
 RUN cd /ultrascan3/etc && git clone https://github.com/ehb54/openssl.cnf.d
 
-# get rasmol
+# get rasmol (statically-linked, X11-less SDL3 build; no lib/* needed)
 ADD https://api.github.com/repos/ehb54/rasmol/git/refs/heads/somo-modernize ras_version.json
-RUN git clone -b somo-modernize https://github.com/ehb54/rasmol.git && cp rasmol/binaries/linux-x86_64/rasmol /ultrascan3/bin/ && cp rasmol/binaries/linux-x86_64/rasmol.hlp /ultrascan3/bin/
+RUN curl -fsSL -o /ultrascan3/bin/rasmol https://raw.githubusercontent.com/ehb54/rasmol/somo-modernize/binaries/linux-x86_64/rasmol \
+ && curl -fsSL -o /ultrascan3/bin/rasmol.hlp https://raw.githubusercontent.com/ehb54/rasmol/somo-modernize/binaries/linux-x86_64/rasmol.hlp \
+ && chmod +x /ultrascan3/bin/rasmol
 
 # copy assistant
 
