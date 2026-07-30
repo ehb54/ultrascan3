@@ -818,6 +818,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString extrap_c0_script_reference;                  // explicit reference curve (name or conc); "" = max conc
       double  extrap_c0_script_merge_q       = 0e0;        // manual splice switchover q; 0 = automatic
       double  extrap_c0_script_gcv_lambda    = 0e0;        // diagnostic: pin GCV lambda; 0 = automatic
+      bool    extrap_c0_script_se_repair     = true;       // low-q SE-correction QC on output errors
 
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();

@@ -20,6 +20,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
                                                                           bool *out_show_regplots,
                                                                           int *out_fit_broaden,
                                                                           bool *out_gcv,
+                                                                          bool *out_se_repair,
                                                                           bool *out_use_sd_weights,
                                                                           int *out_model,
                                                                           bool *out_recompute_inputs,
@@ -45,6 +46,7 @@ US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc(
    this->out_show_regplots  = out_show_regplots;
    this->out_fit_broaden    = out_fit_broaden;
    this->out_gcv            = out_gcv;
+   this->out_se_repair      = out_se_repair;
    this->out_use_sd_weights = out_use_sd_weights;
    this->out_model          = out_model;
    this->out_recompute_inputs      = out_recompute_inputs;
@@ -230,6 +232,20 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
                              "chosen automatically by Generalized Cross-Validation (no tuning). This denoises\n"
                              "the low-q extrapolation and supersedes the manual q-window below.\n"
                              "Uncheck for the classic independent per-q fits (plus any manual window)." ) );
+
+   cb_se_repair = new QCheckBox( us_tr( "Low-q SD correction (widen error bars at low-q artifacts) -- recommended" ), this );
+   cb_se_repair->setChecked( true );
+   cb_se_repair->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1 ) );
+   cb_se_repair->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_se_repair );
+   cb_se_repair->setMinimumHeight( minHeight1 );
+   cb_se_repair->setToolTip(
+                      us_tr( "A low-q point placed far off the smooth low-q trend is usually a correlated\n"
+                             "buffer-subtraction / detector artifact whose extrapolated error came out\n"
+                             "falsely small (the input curves agreed on it), giving it large false weight in\n"
+                             "a downstream Guinier / GNOM / NNLS fit. This widens each such error bar to how\n"
+                             "far the point sits off the trend, without changing any intensity. It also flags\n"
+                             "when GCV has spread such artifacts into a coherent low-q wave (then turn GCV off)." ) );
 
    cb_weight = new QCheckBox( us_tr( "Weight regression by curve errors (1/sigma\302\262)" ), this );
    cb_weight->setChecked( true );
@@ -538,6 +554,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::setupGUI()
       background->addLayout( hbl_reference );
    }
    background->addWidget( cb_gcv );
+   background->addWidget( cb_se_repair );
    background->addWidget( cb_weight );
    background->addWidget( cb_regplots );
    background->addLayout( hbl_model );
@@ -715,6 +732,7 @@ void US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc::ok()
    *out_merge_ref       = cb_merge->isChecked();
    *out_show_regplots = cb_regplots->isChecked();
    *out_gcv           = cb_gcv->isChecked();
+   *out_se_repair     = cb_se_repair->isChecked();
    *out_use_sd_weights = cb_weight->isChecked();
    *out_model         = cb_model->currentIndex();
    *out_recompute_inputs      = cb_recompute_inputs->isChecked();

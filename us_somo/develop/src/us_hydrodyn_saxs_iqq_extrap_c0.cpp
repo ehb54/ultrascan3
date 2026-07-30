@@ -378,88 +378,114 @@ static bool us_extrap_c0_guinier(
    return ( Rg > 0e0 );
 }
 
-// Low-q coherence (Wald-Wolfowitz runs-z) of a produced curve, used by the reciprocal/virial
-// "wave" warning. Fits ln I(q) with a low-order polynomial in q^2 over the low-q window
-// q <= kcut/Rg (kept INSIDE the first form-factor lobe so genuine particle structure is not
-// mistaken for the artifact) and runs a Wald-Wolfowitz runs test on the residual signs: a smooth
-// profile leaves random signs (z ~ 0), a coherent low-q wave leaves long same-sign runs (z very
-// negative). Returned RAW; the caller compares reciprocal vs an additive baseline (the additive
-// I(q)/c fit has no 1/I inversion, so it carries any REAL low-q structure but not the artifact --
-// only the reciprocal-minus-additive EXCESS coherence is the wave). See
-// results/reciprocal_lambda_fix_final.txt for the derivation and validation. 0 = no usable window.
-static double us_extrap_c0_wave_runsz( const vector < double > & q,
-                                       const vector < double > & I,
-                                       double rg, double kcut, int deg )
+// Low-q SE-correction + wave flag -- a MODEL-INDEPENDENT QC on the extrapolated curve. Fits a
+// ROBUST trend to ln I(q) vs q^2 over the Guinier-ish low-q window q <= kcut/Rg (iteratively
+// reweighted least squares, Tukey biweight, so a couple of outliers do NOT drag the trend), and
+// WITHOUT changing any output value it does two things:
+//  (a) SE-CORRECTION: widen each low-q error bar in place to max(sd, |I - trend|). A point the
+//      extrapolation placed far off the smooth low-q trend is a correlated buffer-subtraction /
+//      detector artifact whose per-q intercept SE came out falsely tiny (the input curves agreed
+//      on the artifact). Widening its error to how far it sits off the trend removes the ~10-100x
+//      false leverage it otherwise exerts on any 1/sigma^2 downstream fit (GNOM / NNLS / Guinier).
+//      Validated on Mattia Rocco's alpha-syn curves (2026-07-30): this fixes the low-q of the
+//      no-GCV extrapolation, non-cherry-picked (every low-q point, max rule, no threshold).
+//  (b) WAVE FLAG: returns the Wald-Wolfowitz runs-z of the trend residual signs. Automatic GCV
+//      slope-smoothing SPREADS such artifacts into a coherent low-q WAVE in the profile VALUES,
+//      which (a) cannot undo (it is in the values, not the errors); a strongly negative z tells the
+//      caller to warn and recommend turning GCV OFF (the unsmoothed fit keeps the artifact local,
+//      where (a) handles it). See project_somo_extrap_c0_cli memory + results/ for the derivation.
+// n_inflated / worst_factor / worst_q report the error correction. sd is modified in place. Returns
+// 0 (no signal) when there is no usable low-q window.
+static double us_extrap_c0_lowq_serepair( const vector < double > & q, const vector < double > & I,
+                                          vector < double > & sd, double rg, double kcut,
+                                          int & n_inflated, double & worst_factor, double & worst_q )
 {
-   if ( rg <= 0e0 || q.size() != I.size() )
-   {
-      return 0e0;
-   }
+   n_inflated = 0; worst_factor = 1e0; worst_q = 0e0;
+   if ( rg <= 0e0 || q.size() != I.size() || q.size() != sd.size() ) { return 0e0; }
    double qcut = kcut / rg;
-   vector < double > x, y;                       // x = q^2, y = ln I over the low-q window
+   vector < int >    gi;                          // original indices of the low-q window
+   vector < double > x, y;                        // x = q^2, y = ln I
    for ( unsigned int i = 0; i < q.size(); i++ )
    {
       if ( q[ i ] <= qcut && I[ i ] > 0e0 && !us_isnan( I[ i ] ) )
       {
-         x.push_back( q[ i ] * q[ i ] );
-         y.push_back( std::log( I[ i ] ) );
+         gi.push_back( (int) i ); x.push_back( q[ i ] * q[ i ] ); y.push_back( std::log( I[ i ] ) );
       }
    }
-   int m  = (int) x.size();
-   int d1 = deg + 1;
-   if ( m < 12 || m < 3 * d1 )
+   int m = (int) x.size();
+   const int d1 = 3;                              // quadratic in q^2
+   if ( m < 12 ) { return 0e0; }
+   vector < double > coef( d1, 0e0 ), w( m, 1e0 );
+   for ( int iter = 0; iter < 6; iter++ )
    {
-      return 0e0;
-   }
-   // least-squares poly fit via normal equations A c = b, A_{ab} = sum x^{a+b}, b_a = sum x^a y
-   vector < vector < double > > A( d1, vector < double >( d1, 0e0 ) );
-   vector < double > b( d1, 0e0 );
-   for ( int i = 0; i < m; i++ )
-   {
-      vector < double > xp( 2 * deg + 1 );
-      xp[ 0 ] = 1e0;
-      for ( int p = 1; p <= 2 * deg; p++ ) { xp[ p ] = xp[ p - 1 ] * x[ i ]; }
-      for ( int a = 0; a < d1; a++ )
+      vector < vector < double > > A( d1, vector < double >( d1, 0e0 ) );
+      vector < double > b( d1, 0e0 );
+      for ( int i = 0; i < m; i++ )
       {
-         b[ a ] += xp[ a ] * y[ i ];
-         for ( int c = 0; c < d1; c++ ) { A[ a ][ c ] += xp[ a + c ]; }
+         double xp[ 5 ]; xp[ 0 ] = 1e0;
+         for ( int p = 1; p <= 2 * ( d1 - 1 ); p++ ) { xp[ p ] = xp[ p - 1 ] * x[ i ]; }
+         for ( int a = 0; a < d1; a++ )
+         {
+            b[ a ] += w[ i ] * xp[ a ] * y[ i ];
+            for ( int c = 0; c < d1; c++ ) { A[ a ][ c ] += w[ i ] * xp[ a + c ]; }
+         }
       }
-   }
-   // Gaussian elimination with partial pivoting
-   vector < double > coef( d1, 0e0 );
-   for ( int col = 0; col < d1; col++ )
-   {
-      int piv = col; double best = std::fabs( A[ col ][ col ] );
-      for ( int r = col + 1; r < d1; r++ )
+      bool ok = true;
+      for ( int col = 0; col < d1 && ok; col++ )
       {
-         if ( std::fabs( A[ r ][ col ] ) > best ) { best = std::fabs( A[ r ][ col ] ); piv = r; }
+         int piv = col; double best = std::fabs( A[ col ][ col ] );
+         for ( int r = col + 1; r < d1; r++ )
+            if ( std::fabs( A[ r ][ col ] ) > best ) { best = std::fabs( A[ r ][ col ] ); piv = r; }
+         if ( best < 1e-300 ) { ok = false; break; }
+         std::swap( A[ col ], A[ piv ] ); std::swap( b[ col ], b[ piv ] );
+         for ( int r = col + 1; r < d1; r++ )
+         {
+            double f = A[ r ][ col ] / A[ col ][ col ];
+            for ( int c = col; c < d1; c++ ) { A[ r ][ c ] -= f * A[ col ][ c ]; }
+            b[ r ] -= f * b[ col ];
+         }
       }
-      if ( best < 1e-300 ) { return 0e0; }        // singular
-      std::swap( A[ col ], A[ piv ] ); std::swap( b[ col ], b[ piv ] );
-      for ( int r = col + 1; r < d1; r++ )
+      if ( !ok ) { if ( iter == 0 ) { return 0e0; } break; }
+      for ( int r = d1 - 1; r >= 0; r-- )
       {
-         double f = A[ r ][ col ] / A[ col ][ col ];
-         for ( int c = col; c < d1; c++ ) { A[ r ][ c ] -= f * A[ col ][ c ]; }
-         b[ r ] -= f * b[ col ];
+         double s = b[ r ];
+         for ( int c = r + 1; c < d1; c++ ) { s -= A[ r ][ c ] * coef[ c ]; }
+         coef[ r ] = s / A[ r ][ r ];
+      }
+      // residuals -> robust scale (MAD) -> Tukey biweight weights for the next pass
+      vector < double > res( m ), ar( m );
+      for ( int i = 0; i < m; i++ )
+      {
+         double fit = 0e0, xp = 1e0;
+         for ( int p = 0; p < d1; p++ ) { fit += coef[ p ] * xp; xp *= x[ i ]; }
+         res[ i ] = y[ i ] - fit; ar[ i ] = res[ i ];
+      }
+      std::sort( ar.begin(), ar.end() ); double med = ar[ m / 2 ];
+      for ( int i = 0; i < m; i++ ) { ar[ i ] = std::fabs( res[ i ] - med ); }
+      std::sort( ar.begin(), ar.end() ); double s = 1.4826e0 * ar[ m / 2 ] + 1e-300;
+      for ( int i = 0; i < m; i++ )
+      {
+         double u = res[ i ] / ( 4.685e0 * s );
+         w[ i ] = ( std::fabs( u ) < 1e0 ) ? ( 1e0 - u * u ) * ( 1e0 - u * u ) : 0e0;
       }
    }
-   for ( int r = d1 - 1; r >= 0; r-- )
-   {
-      double s = b[ r ];
-      for ( int c = r + 1; c < d1; c++ ) { s -= A[ r ][ c ] * coef[ c ]; }
-      coef[ r ] = s / A[ r ][ r ];
-   }
-   // residual signs -> runs test
+   // (a) widen low-q error bars to |I - trend|, and (b) runs-z on the trend residual signs
    int runs = 0, n1 = 0, n2 = 0, prev = 0;
    for ( int i = 0; i < m; i++ )
    {
       double fit = 0e0, xp = 1e0;
       for ( int p = 0; p < d1; p++ ) { fit += coef[ p ] * xp; xp *= x[ i ]; }
-      double r = y[ i ] - fit;
-      int s = ( r > 0e0 ) ? 1 : ( r < 0e0 ? -1 : 0 );
-      if ( s == 0 ) { continue; }
-      if ( s > 0 ) { n1++; } else { n2++; }
-      if ( s != prev ) { runs++; prev = s; }
+      double I_trend = std::exp( fit );
+      double dev = std::fabs( I[ gi[ i ] ] - I_trend );
+      if ( sd[ gi[ i ] ] > 0e0 && dev > sd[ gi[ i ] ] )
+      {
+         if ( dev / sd[ gi[ i ] ] > worst_factor ) { worst_factor = dev / sd[ gi[ i ] ]; worst_q = q[ gi[ i ] ]; }
+         sd[ gi[ i ] ] = dev; n_inflated++;
+      }
+      int sgn = ( y[ i ] - fit > 0e0 ) ? 1 : ( y[ i ] - fit < 0e0 ? -1 : 0 );
+      if ( sgn == 0 ) { continue; }
+      if ( sgn > 0 ) { n1++; } else { n2++; }
+      if ( sgn != prev ) { runs++; prev = sgn; }
    }
    int nn = n1 + n2;
    if ( n1 == 0 || n2 == 0 || nn < 4 ) { return 0e0; }
@@ -812,6 +838,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    bool recompute_inputs      = false; // transiently reassess each input curve's SDs before fitting
    int  recompute_inputs_mode = 0;     // 0 constant, 1 non-constant, 2 intensity-dependent
    double gcv_lambda_override = 0e0;   // diagnostic: pin GCV lambda (control-file gcv_lambda); 0 = auto
+   bool   se_repair   = true;   // low-q SE-correction QC on the output errors (recommended default)
    int  sd_mode       = 0;      // post-fit SD reassessment: 0 off, 1 constant, 2 non-constant, 3 intensity
    bool   discard_outlier     = false; // auto-discard outlier concentration curve(s) (robust QC)
    // Maximum number of curves the QC may discard. 1 = the original single-discard behavior (and the
@@ -868,6 +895,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
       recompute_inputs      = extrap_c0_script_recompute_in;
       recompute_inputs_mode = extrap_c0_script_recompute_mode;
       gcv_lambda_override   = extrap_c0_script_gcv_lambda;
+      se_repair             = extrap_c0_script_se_repair;
       sd_mode            = extrap_c0_script_sd_mode;
       discard_outlier    = extrap_c0_script_discard;
       outlier_max        = extrap_c0_script_outlier_max;
@@ -879,7 +907,7 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
    }
    else
    {
-      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, us_hydrodyn, this );
+      US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc dlg( ordered_names, prepop_conc, &name_to_conc, &selected_names, &dlg_ok, &ref_scale, &merge_ref, &show_regplots, &fit_broaden, &use_gcv, &se_repair, &use_sd_weights, &extrap_model, &recompute_inputs, &recompute_inputs_mode, &sd_mode, &discard_outlier, &outlier_sigma, &outlier_chi2_ratio, &ref_override, &merge_q_override, us_hydrodyn, this );
       US_Hydrodyn::fixWinButtons( &dlg );
       dlg.exec();
    }
@@ -2212,98 +2240,34 @@ void US_Hydrodyn_Saxs::do_extrap_c0(
                           ? QString( us_tr( " -- a clean, linear Guinier region." ) )
                           : QString( us_tr( " -- low R^2: check the low-q data/concentrations." ) ) ) );
 
-         // Reciprocal low-q WAVE warning. The wave is the interaction of GCV slope-smoothing with the
-         // 1/I inversion: GCV picks lambda to fit the c/I axis, but I(0)=1/u, and the nonlinear
-         // inversion decouples "good lambda for the fit" from "good lambda for I(0)", so on
-         // few-concentration series the fit-optimal lambda puts a coherent low-q wave into the profile
-         // that the Guinier R^2 above does NOT catch (R^2 can stay ~0.998). It has no robust lambda cure
-         // (results/reciprocal_lambda_fix_final.txt), which is why additive is the default. RECIPROCAL
-         // ONLY (extrap_model 1): additive has no inversion (clean), and the 2nd-order virial uses a
-         // per-q quadratic with no GCV smoothing (also clean -- verified: 0 warnings, GNOM z ~ -1.8 on
-         // the same data where reciprocal waves at -11). Detect as EXCESS low-q coherence over an
-         // additive I(q)/c GCV baseline: additive carries any REAL low-q particle structure but not the
-         // artifact, so only the reciprocal-minus-additive excess is the wave (a single-curve threshold
-         // cannot separate them, since globular form factors are themselves coherent at low q).
-         // Log-only; no effect on the output data.
-         if ( extrap_model == 1 && use_gcv && g_Rg > 0e0 )
+         // Model-independent low-q QC: SE-correction of the error bars + a wave flag. Replaces the
+         // earlier reciprocal-only differential warning -- the low-q artifacts and the GCV "wave" are
+         // model-independent (additive waves too; Mattia Rocco's alpha-syn curves, 2026-07-30), and
+         // the fix is the error correction (+ turning GCV off), not a reciprocal-vs-additive test.
+         // us_extrap_c0_lowq_serepair widens out_I0_err in place where the extrapolation sits off its
+         // own robust low-q trend, and returns the trend-residual runs-z (the wave signature).
+         if ( se_repair && g_Rg > 0e0 )
          {
-            const double WAVE_KCUT   = 2e0;    // low-q window (units of 1/Rg; inside the 1st FF lobe)
-            const int    WAVE_DEG    = 2;      // polynomial degree in q^2
-            const double WAVE_MARGIN = -4.5e0; // warn when reciprocal is this many sigma more coherent
-
-            // additive I(q)/c GCV baseline over the internal grid (same weighting as the model fit)
-            vector < double > aM( npts, 0e0 ), aR( npts, 0e0 ), aB( npts, 0e0 ),
-                              aC( npts, 0e0 ), aQ( npts, 0e0 );
-            for ( unsigned int qi = 0; qi < npts; qi++ )
-            {
-               vector < double > qx, qy, qsig;
-               for ( int ci = 0; ci < (int) ordered_names.size(); ci++ )
-               {
-                  if ( concs[ ci ] <= 0e0 ) { continue; }
-                  double Iv = name_to_I[ ordered_names[ ci ] ][ qi ];
-                  if ( us_isnan( Iv ) ) { continue; }
-                  double sd = ( name_to_err.count( ordered_names[ ci ] )
-                                && qi < name_to_err[ ordered_names[ ci ] ].size() )
-                     ? name_to_err[ ordered_names[ ci ] ][ qi ] : 0e0;
-                  if ( us_isnan( sd ) ) { sd = 0e0; }
-                  double yv, sig;
-                  if ( is_istar[ ci ] ) { yv = Iv;               sig = sd; }
-                  else                  { yv = Iv / concs[ ci ];  sig = sd / concs[ ci ]; }
-                  qx.push_back( concs[ ci ] ); qy.push_back( yv ); qsig.push_back( sig );
-               }
-               double inv_scale2 = 1e0;
-               if ( !use_sd_weights && qy.size() )
-               {
-                  double acc = 0e0;
-                  for ( unsigned int k = 0; k < qy.size(); k++ ) { acc += qAbs( qy[ k ] ); }
-                  double scale = acc / (double) qy.size();
-                  if ( scale > 0e0 && !us_isnan( scale ) ) { inv_scale2 = 1e0 / ( scale * scale ); }
-               }
-               double S = 0e0, Sx = 0e0, Sy = 0e0, Sxx = 0e0, Sxy = 0e0;
-               for ( unsigned int k = 0; k < qy.size(); k++ )
-               {
-                  double sig = qsig[ k ];
-                  double w   = ( use_sd_weights && sig > 0e0 && !us_isnan( sig ) )
-                     ? 1e0 / ( sig * sig ) : inv_scale2;
-                  S += w; Sx += w * qx[ k ]; Sy += w * qy[ k ];
-                  Sxx += w * qx[ k ] * qx[ k ]; Sxy += w * qx[ k ] * qy[ k ];
-               }
-               aC[ qi ] = S; aB[ qi ] = Sx; aQ[ qi ] = Sy;
-               aM[ qi ] = ( S > 0e0 ) ? ( Sxx - Sx * Sx / S ) : 0e0;
-               aR[ qi ] = ( S > 0e0 ) ? ( Sxy - Sx * Sy / S ) : 0e0;
-            }
-
-            double wz_rec = us_extrap_c0_wave_runsz( out_q, out_I0, g_Rg, WAVE_KCUT, WAVE_DEG );
-            double wz_add = 0e0;
-            bool   add_ok = false;
-            {
-               vector < double > add_Iex, add_alpha;
-               double add_lam = 0e0, add_edof = 0e0;
-               if ( us_extrap_c0_gcv_penalized( aM, aR, aB, aC, aQ, add_Iex, add_alpha,
-                                                add_lam, add_edof ) )
-               {
-                  unsigned int nn = ( npts <= (unsigned int) q.size() ) ? npts : (unsigned int) q.size();
-                  vector < double > qg( q.begin(), q.begin() + nn );
-                  add_Iex.resize( nn );
-                  double a_rg = 0e0, a_i0 = 0e0, a_r2 = 0e0; int a_n = 0;
-                  if ( us_extrap_c0_guinier( qg, add_Iex, a_rg, a_i0, a_r2, a_n ) && a_rg > 0e0 )
-                  {
-                     wz_add = us_extrap_c0_wave_runsz( qg, add_Iex, a_rg, WAVE_KCUT, WAVE_DEG );
-                     add_ok = true;
-                  }
-               }
-            }
-            if ( add_ok && ( wz_rec - wz_add ) <= WAVE_MARGIN )
+            int    n_infl  = 0;
+            double worst   = 1e0, worst_q = 0e0;
+            double wz      = us_extrap_c0_lowq_serepair( out_q, out_I0, out_I0_err, g_Rg, 2e0,
+                                                         n_infl, worst, worst_q );
+            if ( n_infl > 0 )
             {
                editor_msg( "dark red", QString( us_tr(
-                  "Warning: the %1 model's low-q profile shows a coherent wave (runs-test z = %2 "
-                  "vs an additive baseline of %3; %4 sigma excess). This is the GCV / 1-over-I(q) "
-                  "smoothing artifact on few-concentration series -- the MW / I(0) may still be "
-                  "usable, but the low-q PROFILE shape is distorted and the Guinier R^2 above does "
-                  "not detect it. Prefer the Additive model for the profile here, or add "
-                  "concentrations.\n" ) )
-                  .arg( extrap_model == 2 ? us_tr( "2nd-virial" ) : us_tr( "reciprocal" ) )
-                  .arg( wz_rec, 0, 'f', 1 ).arg( wz_add, 0, 'f', 1 ).arg( wz_rec - wz_add, 0, 'f', 1 ) );
+                  "Low-q SE-correction: widened %1 low-q error bar(s) to |I - low-q trend| (largest "
+                  "x%2 at q = %3 A^-1) -- correlated low-q artifacts whose extrapolated error was too "
+                  "small; this removes their false leverage on a Guinier / GNOM / NNLS fit.\n" ) )
+                  .arg( n_infl ).arg( worst, 0, 'f', 1 ).arg( worst_q, 0, 'f', 4 ) );
+            }
+            if ( wz <= -4e0 )
+            {
+               editor_msg( "dark red", QString( us_tr(
+                  "Low-q WAVE flag (runs-test z = %1): the automatic GCV slope-smoothing has spread "
+                  "the low-q artifact(s) into a coherent wave in the profile VALUES, which widening "
+                  "the errors cannot undo. Turn OFF \"Automatic slope regularization (GCV)\" -- the "
+                  "unsmoothed extrapolation keeps the artifact local, where the SE-correction "
+                  "handles it.\n" ) ).arg( wz, 0, 'f', 1 ) );
             }
          }
       }

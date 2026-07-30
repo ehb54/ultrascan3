@@ -228,6 +228,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
    extrap_c0_script_reference.clear();
    extrap_c0_script_merge_q        = 0e0;
    extrap_c0_script_gcv_lambda     = 0e0;
+   extrap_c0_script_se_repair      = true;
    extrap_c0_script_conc.clear();
 
    QRegularExpression rx_key( "^\\s*(\\S+)\\s+(.*\\S)\\s*$" );
@@ -287,6 +288,7 @@ void US_Hydrodyn_Saxs::saxs_extrap_c0_script( QString controlfile )
       else if ( key == "reference" )       { extrap_c0_script_reference      = val; }
       else if ( key == "merge_q" )         { extrap_c0_script_merge_q       = val.toDouble(); }
       else if ( key == "gcv_lambda" )      { extrap_c0_script_gcv_lambda    = val.toDouble(); }
+      else if ( key == "se_repair" )       { extrap_c0_script_se_repair     = ( val.toInt() != 0 ); }
       else if ( key == "recompute_inputs" )
       {
          int code = us_extrap_c0_script_sd_word( val );

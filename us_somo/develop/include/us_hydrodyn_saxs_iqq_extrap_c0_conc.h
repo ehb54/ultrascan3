@@ -40,6 +40,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
                                           bool *out_show_regplots,
                                           int *out_fit_broaden,
                                           bool *out_gcv,
+                                          bool *out_se_repair,
                                           bool *out_use_sd_weights,
                                           int *out_model,
                                           bool *out_recompute_inputs,
@@ -67,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       QLabel       *lbl_merge_q;
       QLineEdit    *le_merge_q;
       QCheckBox    *cb_gcv;
+      QCheckBox    *cb_se_repair;
       QCheckBox    *cb_weight;
       QCheckBox    *cb_regplots;
       QLabel       *lbl_model;
@@ -100,6 +102,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Extrap_C0_Conc : public QDialog
       bool         *out_show_regplots;
       int          *out_fit_broaden;
       bool         *out_gcv;
+      bool         *out_se_repair;
       bool         *out_use_sd_weights;
       int          *out_model;
       bool         *out_recompute_inputs;
