@@ -512,6 +512,11 @@ if(_STRIP)
 
     message(STATUS "[LinuxDeploy] Stripping libraries in lib/")
     file(GLOB _strip_libs "${S_LIB}/*.so" "${S_LIB}/*.so.*")
+    # libicudata is a huge data-only blob with almost no symbols to strip;
+    # some strip/binutils versions corrupt its ELF program headers
+    # ("ELF load command address/offset not properly aligned" at load time),
+    # so skip it rather than risk shipping a broken shared library.
+    list(FILTER _strip_libs EXCLUDE REGEX "libicudata")
     foreach(_l ${_strip_libs})
         if(NOT IS_SYMLINK "${_l}")
             execute_process(COMMAND "${_STRIP}" "--strip-unneeded" "${_l}" ERROR_QUIET)

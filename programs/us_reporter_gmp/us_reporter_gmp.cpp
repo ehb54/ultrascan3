@@ -7220,6 +7220,32 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	    }
 	  html_assembled += tr( "</table>" );
 	}
+
+      //Add list of scan-count mismatches (ScanDifference) found by check_scans() (if any):
+      if ( status_map. contains("ScanDifference") )
+	{
+	  html_assembled += tr(
+			       "<table style=\"margin-left:10px\">"
+			       "<caption style=\"color:red;\" align=left> <b><i>Scan Count Mismatch (Expected vs. Collected): </i></b> </caption>"
+			       "</table>"
+
+			       "<table style=\"margin-left:25px\">"
+			       );
+
+	  QMap < QString, QString >::iterator sd;
+	  for ( sd = status_map[ "ScanDifference" ].begin(); sd != status_map[ "ScanDifference" ].end(); ++sd )
+	    {
+	      html_assembled += tr(
+				   "<tr>"
+				   "<td style=\"color:red;\"> %1 </td> "
+				   "</tr>"
+				   )
+		.arg( sd.value() )
+		;
+	    }
+
+	  html_assembled += tr( "</table>" );
+	}
     }
    
   html_assembled += tr("<hr>");
@@ -7882,6 +7908,22 @@ QMap< QString, QMap < QString, QString > > US_ReporterGMP::parse_autoflowStatus_
 	  status_map[ key ] = dropped_map;
 	}
       
+
+      if ( key == "ScanDifference" )   // import: scan-count mismatches (expected vs. collected) per triple
+	{
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > scandiff_map;
+
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      scandiff_map[ QString::number( i ) ] = json_array[i].toString();
+	      qDebug() << "ScanDifference Map: -- index, value: "
+		       << i
+		       << json_array[i].toString();
+	    }
+
+	  status_map[ key ] = scandiff_map;
+	}
 
       if ( key == "Meniscus" )   //edit  
 	{	  

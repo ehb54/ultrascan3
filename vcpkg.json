@@ -28,31 +28,6 @@
       ]
     },
 
-    "qt5-app": {
-      "description": "APP build with Qt5 + Qwt 6.1.6",
-      "dependencies": [
-        {
-          "name": "libmariadb",
-          "default-features": false,
-          "features": ["openssl"]
-        },
-        {
-          "name": "sqlite3",
-          "features": ["fts5"]
-        },
-        {
-          "name": "qt5-base",
-          "features": ["sqlite3plugin"]
-        },
-        "qt5-datavis3d",
-        "qt5-svg",
-        "qt5-tools",
-        "qt5-multimedia",
-        "qwt-6-1-6",
-        "qwtplot3d-qwt-6-1-6-qt5"
-      ]
-    },
-
     "qt5-hpc": {
       "description": "HPC build with minimal Qt5 (no GUI, no DB)",
       "dependencies": [
@@ -60,7 +35,7 @@
       ]
     },
 
-    "qt5-qwt630-app": {
+    "qt5-app": {
       "description": "APP build with Qt5 + Qwt 6.3.0",
       "dependencies": [
         {
@@ -213,13 +188,6 @@
     },
 
     "warm-qt5-stage3": {
-      "description": "Cache warming only: Qwt 6.1.6 + QwtPlot3D for Qt5 (stage 3 of 3, qt5-qwt616 variant)",
-      "dependencies": [
-        "qwt-6-1-6",
-        "qwtplot3d-qwt-6-1-6-qt5"
-      ]
-    },
-    "warm-qt5-qwt630-stage3": {
       "description": "Cache warming only: Qwt 6.3.0 + QwtPlot3D for Qt5 (stage 3 of 3, qt5-qwt630 variant)",
       "dependencies": [
         "qwt-6-3-0-qt5",

@@ -13,7 +13,7 @@ unix {
   QMAKE_CFLAGS_RELEASE   = -O3
   QMAKE_CXXFLAGS += -Wno-unused-local-typedefs
 
-  QWTPATH     = /opt/qwt-6.1.4
+  QWTPATH     = /opt/qwt-6.3.0
   QWTLIB      = -L../../lib -L../lib -L$$QWTPATH/lib -lqwtplot3d -lqwt -lGLU
   MYSQLDIR    = /usr/lib64/mysql
   MYSQLPATH   = /usr/include/mysql
@@ -41,8 +41,8 @@ win32 {
 
   ULOC        = c:/msys64/usr/local
   QWT3D       = ../qwtplot3d
-  QTPATH      = $$ULOC/qt/5.7.1
-  QWTPATH     = $$ULOC/qwt/6.1.4
+  QTPATH      = $$ULOC/qt/5.15.10
+  QWTPATH     = $$ULOC/qwt/6.3.0
   MINGWDIR    = c:/msys64/mingw64/x86_64-w64-mingw32
   DEPDIR      = $$QTPATH/../qt5_deps
   OPENSSL     = $$ULOC/openssl_1.0.2d
@@ -68,7 +68,7 @@ win32 {
 
 macx {
   BUILDBASE   = $us3
-  QWTPATH     = /usr/local/qwt-6.1.4
+  QWTPATH     = /usr/local/qwt-6.3.0
   QWTLIB      = -L$$QWTPATH/lib -lqwt
   CONFIG      += x86_64
   DEFINES     += MAC OSX

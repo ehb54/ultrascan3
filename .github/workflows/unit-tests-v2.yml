@@ -41,7 +41,7 @@ jobs:
         with:
           files_yaml: |
             relevant:
-              - .github/workflows/unit-tests.yml
+              - .github/workflows/unit-tests-v2.yml
               - utils/**.c
               - utils/**.cpp
               - utils/**.h
@@ -83,7 +83,8 @@ jobs:
               libgmock-dev \
               git \
               libqt5datavisualization5-dev \
-              libqt5svg5-dev
+              libqt5svg5-dev \
+              qtmultimedia5-dev
 
       - name: Add GoogleTest Problem Matcher
         run: echo "::add-matcher::.github/gtest-us.json"

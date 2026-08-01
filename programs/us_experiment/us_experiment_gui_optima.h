@@ -669,6 +669,7 @@ class US_ExperGuiOptical : public US_WidgetsDialog
 
    private:
       US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoRotor*   rpRotor;  //!< Rotor controls
       US_RunProtocol::RunProtoOptics*  rpOptic;
       QList< QLabel* >        cc_labls;  // Cell label GUI objects
       QList< QButtonGroup* >  cc_osyss;  // Ck-boxes OptSys GUI objects
