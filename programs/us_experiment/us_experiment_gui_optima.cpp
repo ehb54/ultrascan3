@@ -1366,6 +1366,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    // rpSubmt             = &(mainw->currProto.rpSubmt);
    ra_data_type = false;
    ra_data_sim  = false;
+   vel_mwl      = false;
 
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1401,6 +1402,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
 
+		//add MWL experiment checkbox for Velocity
+		ck_velmwl = new QCheckBox( tr("Treat as MWL"), this );
+		ck_velmwl ->setAutoFillBackground( true );
+		ck_velmwl ->setChecked( false );
+		
 		//select data source from disk
 		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
 		ck_disksource ->setAutoFillBackground( true );
@@ -1444,7 +1450,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( cb_operator,        row++,   1, 1, 1 );
 
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
-   genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
+   genL->addWidget( cb_exptype,         row,     1, 1, 1 );
+   genL->addWidget( ck_velmwl,          row++,   2, 1, 1 );
 
    genL->addWidget( ck_disksource,     row++,   0, 1, 4 );
    genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
@@ -1454,12 +1461,12 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
 
    //connect checkbox & import
+   connect( ck_velmwl,      SIGNAL( toggled     ( bool ) ),
+	    this,           SLOT  ( velMwlChecked( bool ) ) );
    connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
 	    this,           SLOT  ( importDiskChecked( bool ) ) );
    connect( pb_importDisk,      SIGNAL( clicked()       ),
 	    this,           SLOT(   importDisk()        ) );
-   // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
-   // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
    connect( ck_absorbance_pa, SIGNAL( toggled     ( bool ) ),
     	    this,           SLOT  ( dataDiskPseudoAbsChecked( bool ) ) );
 
@@ -1641,9 +1648,11 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   ck_absorbance_t  ->setChecked( false );
   ck_absorbance_pa ->setChecked( false );
   ck_absorbance_pa ->setEnabled( false );
+  ck_velmwl        ->setChecked( false );
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
+  vel_mwl      = false;
 }
 
 void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_details )
@@ -1660,6 +1669,7 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
   rpRotor->importData_absorbance_pa = false;
   ra_data_type = false;
   ra_data_sim  = false;
+  vel_mwl      = false;
   
   QString dataSource_pd = pd_details["dataSource"];
   if ( dataSource_pd.contains("dataDiskAUC") ) 
@@ -1772,6 +1782,11 @@ void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
 }
 
 
+//Velocity MWL checked
+void US_ExperGuiRotor::velMwlChecked( bool checked )
+{
+  vel_mwl = checked;
+}
 
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
@@ -2003,13 +2018,12 @@ void US_ExperGuiRotor::importDisk( void )
 	}
     }
 
-  if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
+    if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 && !vel_mwl )
     {
       QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
       return;
     }
-  
-  
+   
   //proceed
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -2110,8 +2124,10 @@ void US_ExperGuiRotor::importDisk( void )
       ck_absorbance_t  -> setChecked( false );
       ck_absorbance_pa -> setChecked( false );
       ck_absorbance_pa -> setEnabled( false );
+      ck_velmwl        -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
+      vel_mwl      = false;
 
       isMwl        = false;
       allData     .clear();
@@ -2644,18 +2660,21 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	}
       
       US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
+      QString a_ch_n = chann_list[i] + " / A";
       os_a.channel   = chann_list[i] + " / A, sample [right]";
       os_a.scan1     = scan1_str;
       os_a.scan2     = scan2_str;
       os_a.scan3     = scan3_str;
 
+      QString b_ch_n = chann_list[i] + " / B";
       os_b.channel   = chann_list[i] + " / B, reference [left]";
       os_b.scan1     = scan1_str;
       os_b.scan2     = scan2_str;
       os_b.scan3     = scan3_str;
 
-      rpOptic->chopts << os_a;
-      if ( ops_types.contains("RI") && !ra_data_sim )
+      if ( channels_for_dataDisk.contains( a_ch_n ) )
+	rpOptic->chopts << os_a;
+      if ( channels_for_dataDisk.contains( b_ch_n ) && ops_types.contains("RI") && !ra_data_sim )
 	rpOptic->chopts << os_b;
     }
   //rpOptic->nochan = chann_list.size()*2;
@@ -2673,30 +2692,38 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	continue;
 	
       //A channel
-      rng_a.channel = chann_list[i] + " / A, sample [right]";
-      rng_a.lo_rad  = 5.75;
-      rng_a.hi_rad  = 7.25;
-      for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
+      QString a_ch_n = chann_list[i] + " / A";
+      if ( channels_for_dataDisk.contains( a_ch_n ) )
 	{
-	  double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
-	  rng_a.wvlens << wvl_c;
-	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
+	  rng_a.channel = chann_list[i] + " / A, sample [right]";
+	  rng_a.lo_rad  = 5.75;
+	  rng_a.hi_rad  = 7.25;
+	  for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
+	    {
+	      double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
+	      rng_a.wvlens << wvl_c;
+	      qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
+	    }
+	  rpRange->chrngs << rng_a;
 	}
-      rpRange->chrngs << rng_a;
-
+      
       if ( ra_data_sim )
 	continue;
       //B channel
-      rng_b.channel = chann_list[i] + " / B, reference [left]";
-      rng_b.lo_rad  = 5.75;
-      rng_b.hi_rad  = 7.25;
-      for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
+      QString b_ch_n = chann_list[i] + " / B";
+      if ( channels_for_dataDisk.contains( b_ch_n ) )
 	{
-	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
-	  rng_b.wvlens << wvl_c;
-	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+	  rng_b.channel = chann_list[i] + " / B, reference [left]";
+	  rng_b.lo_rad  = 5.75;
+	  rng_b.hi_rad  = 7.25;
+	  for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
+	    {
+	      double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
+	      rng_b.wvlens << wvl_c;
+	      qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+	    }
+	  rpRange->chrngs << rng_b;
 	}
-      rpRange->chrngs << rng_b;
     }
   //rpRange-> nranges = chann_list.size()*2;
   rpRange-> nranges = rpRange->chrngs.size();
@@ -2845,6 +2872,9 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
                    << "Other";
 
    cb_exptype->addItems( experimentTypes );
+
+   connect( cb_exptype,   SIGNAL( activated       ( int ) ),
+            this,         SLOT  ( changeExpType   ( int ) ) );
    changeExpType( 0 );
 }
 
@@ -2941,6 +2971,13 @@ void US_ExperGuiRotor::changeExpType( int ndx )
 {
   //changed             = true;
   cb_exptype->setCurrentIndex( ndx );
+  QString exptype_sel = cb_exptype->currentText();
+
+  if ( exptype_sel == "Velocity" )
+    ck_velmwl->setVisible(true);
+  else
+    ck_velmwl->setVisible(false);
+  
 }
 
 // Slot for change in Operator selection
@@ -3037,8 +3074,10 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
 	  ck_absorbance_t  -> setChecked( false );
 	  ck_absorbance_pa -> setChecked( false );
 	  ck_absorbance_pa -> setEnabled( false);
+	  ck_velmwl        -> setChecked( false ); 
 	  ra_data_type = false;
 	  ra_data_sim  = false;
+	  vel_mwl      = false;
 
 	  importDisk_cleanProto();
 	}

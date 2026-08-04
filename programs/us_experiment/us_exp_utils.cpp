@@ -1115,6 +1115,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        le_dataDiskPath ->setText( rpRotor->importDataDisk );
        rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
        rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
+       rpRotor->vel_mwl_prot = ck_velmwl->isChecked();
      }
 
    //Show current oper(s) & rev(s)
@@ -1180,10 +1181,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        ck_disksource    -> hide();
        ck_absorbance_t  -> hide();
        ck_absorbance_pa -> hide();
+       ck_velmwl        -> hide();   
        rpRotor->importData = false;
        rpRotor->importData_absorbance_t  = false;
        rpRotor->importData_absorbance_pa = false;
        rpRotor->importDataDisk = "";
+       rpRotor->vel_mwl_prot = false;
      }
 
 
@@ -1642,6 +1645,7 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
        rpRotor->importData                = ck_disksource    ->isChecked();
        rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
        rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
+       rpRotor->vel_mwl_prot              = ck_velmwl        ->isChecked();
      }
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
