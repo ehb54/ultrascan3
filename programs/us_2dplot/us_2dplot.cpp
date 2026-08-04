@@ -132,11 +132,11 @@ US_2dPlot::US_2dPlot() : US_Widgets()
 
    pb_calculate = us_pushbutton( tr( "Calculate" ) );
    pb_calculate->setEnabled( true );
-   connect( pb_calculate, SIGNAL( clicked() ), SLOT( calculate() ) );
+   connect( pb_calculate, &QAbstractButton::clicked, this, &US_2dPlot::calculate );
    top->addWidget( pb_calculate, row++, 0 );
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    top->addWidget( pb_close, row++, 0 );
 
    top->setColumnStretch( 0, 0 );

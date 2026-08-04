@@ -63,11 +63,11 @@ US_SelectTriples::US_SelectTriples( QStringList& triples )
    pb_remove->setEnabled( excludes.count() > 0 );
 
   // Connections
-   connect( pb_add,    SIGNAL( clicked() ), SLOT( add_selections() ) );
-   connect( pb_remove, SIGNAL( clicked() ), SLOT( rmv_selections() ) );
-   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset()  ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()   ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+   connect( pb_add,    &QAbstractButton::clicked, this, &US_SelectTriples::add_selections );
+   connect( pb_remove, &QAbstractButton::clicked, this, &US_SelectTriples::rmv_selections );
+   connect( pb_reset,  &QAbstractButton::clicked, this, &US_SelectTriples::reset );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_SelectTriples::help );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectTriples::cancel );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( done()   ) );
 
    // Complete layouts

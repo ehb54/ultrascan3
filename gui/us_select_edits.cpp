@@ -44,8 +44,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    QString invnum      = QString::number( US_Settings::us_inv_ID() ) + ": ";
    QString invusr      = US_Settings::us_inv_name();
    le_invest           = us_lineedit( invnum + invusr, 0, true );
-   connect( pb_invest, SIGNAL( clicked()    ),
-                       SLOT  ( get_person() ) );
+   connect( pb_invest, &QAbstractButton::clicked,
+                       this, &US_SelectEdits::get_person );
 
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
@@ -87,11 +87,11 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_SelectEdits::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectEdits::cancelled );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select PreFilter(s)" ) );
@@ -525,8 +525,8 @@ void US_SelectEdits::get_person()
    int invID     = US_Settings::us_inv_ID();
    US_Investigator* dialog = new US_Investigator( true, invID );
 
-   connect( dialog, SIGNAL( investigator_accepted( int ) ),
-                    SLOT(   update_person(         int ) ) );
+   connect( dialog, &US_Investigator::investigator_accepted,
+                    this, &US_SelectEdits::update_person );
 
    dialog->exec();
 }

@@ -112,17 +112,17 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    QBoxLayout* buttonbox = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help") );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help()) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_AssociationsGui::help );
    buttonbox->addWidget( pb_help );
 
    QPushButton* pb_close = us_pushbutton( tr( "Cancel") );
    buttonbox->addWidget( pb_close );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
 
    //QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
    pb_accept = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_accept );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( complete()) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_AssociationsGui::complete );
 
    main->addLayout( buttonbox, row++, 0, 1, 2 );
 

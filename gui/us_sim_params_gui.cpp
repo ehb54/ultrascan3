@@ -171,8 +171,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_scans->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_scans, row++, 3, 1, 1 );
-   connect( cnt_scans, SIGNAL( valueChanged( double ) ), 
-                       SLOT  ( update_scans( double ) ) );
+   connect( cnt_scans, &QwtCounter::valueChanged,
+                       this, &US_SimParamsGui::update_scans );
 
    // Speed profile
    QLabel* lb_speedProfile = us_label( tr( "Select a Speed Profile:" ) );
@@ -375,8 +375,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_temperature->setIncSteps( QwtCounter::Button3, 100 );
    cnt_temperature->setValue   ( simparams.temperature );
    main->addWidget( cnt_temperature, row++, 7, 1, 1 );
-   connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
-                             SLOT  ( update_temp(  double ) ) );
+   connect( cnt_temperature, &QwtCounter::valueChanged,
+                             this, &US_SimParamsGui::update_temp );
 
    // Moving Grid Combo Box
    cmb_moving = us_comboBox();
@@ -406,14 +406,14 @@ US_SimParamsGui::US_SimParamsGui(
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_load,   SIGNAL( clicked()  ),
-            this,      SLOT  ( load()     ) );
-   connect( pb_save,   SIGNAL( clicked()  ),
-            this,      SLOT  ( save()     ) );
-   connect( pb_help,   SIGNAL( clicked()  ),
-            this,      SLOT  ( help()     ) );
-   connect( pb_cancel, SIGNAL( clicked()  ),
-            this,      SLOT  ( revert()   ) );
+   connect( pb_load,   &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::load );
+   connect( pb_save,   &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::save );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::help );
+   connect( pb_cancel, &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::revert );
    connect( pb_accept, SIGNAL( clicked()  ),
             this,      SLOT  ( accepted() ) );
    buttons ->addWidget( pb_load );
@@ -1184,8 +1184,8 @@ void US_SimParamsGui::reconnect_all( )
                                   SLOT  ( acceleration_flag() ) );
    connect( cnt_acceleration,     SIGNAL( valueChanged       (   double ) ), 
                                   SLOT  ( update_acceleration(   double ) ) );
-   connect( cnt_scans,            SIGNAL( valueChanged(          double ) ), 
-                                  SLOT  ( update_scans(          double ) ) );
+   connect( cnt_scans,            &QwtCounter::valueChanged,
+                                  this, &US_SimParamsGui::update_scans );
    connect( cnt_selected_speed,   SIGNAL( valueChanged        (  double ) ), 
                                   SLOT  ( update_speed_profile(  double ) ) );
    connect( cnt_lamella,          SIGNAL( valueChanged  (        double ) ), 

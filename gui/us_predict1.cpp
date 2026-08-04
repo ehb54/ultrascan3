@@ -53,7 +53,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    int c_row = 0;
 
    QPushButton* pb_solution = us_pushbutton( tr( "Select Solution" ) );
-   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
+   connect( pb_solution, &QAbstractButton::clicked, this, &US_Predict1::get_solution );
    controls->addWidget( pb_solution, c_row++, 0, 1, 2 );
 
    // Basic values
@@ -80,7 +80,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    else
    {
       QPushButton* pb_density = us_pushbutton( tr( "Density" ) );
-      connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+      connect( pb_density, &QAbstractButton::clicked, this, &US_Predict1::get_buffer );
       controls->addWidget( pb_density, c_row, 0 );
 
       le_density = us_lineedit();
@@ -90,7 +90,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       controls->addWidget( le_density, c_row++, 1 );
 
       QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
-      connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+      connect( pb_viscosity, &QAbstractButton::clicked, this, &US_Predict1::get_buffer );
       controls->addWidget( pb_viscosity, c_row, 0 );
 
       le_viscosity = us_lineedit();
@@ -101,7 +101,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    }
    US_Math2::data_correction( temperature, solution );
    QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20" ) + DEGC + ")" );
-   connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
+   connect( pb_vbar, &QAbstractButton::clicked, this, &US_Predict1::get_peptide );
    controls->addWidget( pb_vbar, c_row, 0 );
 
    le_vbar = us_lineedit();
@@ -173,15 +173,15 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    QBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_Predict1::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_close );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( complete() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_Predict1::complete );
    buttons->addWidget( pb_accept );
 
    controls->addLayout( buttons, c_row++, 0, 1, 2 );
@@ -684,8 +684,8 @@ void US_Predict1::update_solution( US_Solution soln )
    else
    {
      US_Choice* dialog = new US_Choice( soln );
-     connect( dialog, SIGNAL( choice( int ) ),
-                      SLOT  ( choose( int ) ) );
+     connect( dialog, &US_Choice::choice,
+                      this, &US_Predict1::choose );
      dialog->exec();
      qApp->processEvents();
 

@@ -277,8 +277,8 @@ void US_ScanExclGui::build_layout ( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_update() ) );
-  connect( pb_accept, SIGNAL( clicked() ), SLOT( update_scans_excl() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &US_ScanExclGui::cancel_update );
+  connect( pb_accept, &QAbstractButton::clicked, this, &US_ScanExclGui::update_scans_excl );
 
   lower_buttons->addWidget( pb_cancel );
   lower_buttons->addWidget( pb_accept );

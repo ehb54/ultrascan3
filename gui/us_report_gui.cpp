@@ -735,10 +735,10 @@ void US_ReportGui::build_report_layout( void )
   addRem_buttons     = new QGridLayout();
   
   pb_addRow     = us_pushbutton( tr( "Add New Row" ) );
-  connect( pb_addRow, SIGNAL( clicked() ), this, SLOT( add_row()  ) );
+  connect( pb_addRow, &QAbstractButton::clicked, this, &US_ReportGui::add_row );
 
   pb_removeRow  = us_pushbutton( tr( "Remove Last Row" ) );
-  connect( pb_removeRow, SIGNAL( clicked() ), this, SLOT( remove_row()  ) );
+  connect( pb_removeRow, &QAbstractButton::clicked, this, &US_ReportGui::remove_row );
   if ( !report->channel_name.contains("Interf.") )
     {
       if (  report->reportItems.size() < 2   )
@@ -963,8 +963,8 @@ void US_ReportGui::build_report_layout( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_update() ) );
-  connect( pb_accept, SIGNAL( clicked() ), SLOT( update_report() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &US_ReportGui::cancel_update );
+  connect( pb_accept, &QAbstractButton::clicked, this, &US_ReportGui::update_report );
 
   lower_buttons->addWidget( pb_cancel );
   lower_buttons->addWidget( pb_accept );
