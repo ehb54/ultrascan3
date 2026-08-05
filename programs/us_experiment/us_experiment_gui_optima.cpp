@@ -49,6 +49,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    us_prot_dev_mode = false;
    us_abde_mode = false;
+   us_velmwl_mode = false;
    expPanelSet = false;
    
    global_reset = false;
@@ -493,6 +494,13 @@ void US_ExperimentMain::unset_abde_mode_aprofile( void )
   
 }
 
+//set | unset Vel-MWL mode
+void US_ExperimentMain::setUnset_velmwl_mode_aprofile( bool set_value )
+{
+  us_velmwl_mode = set_value;
+  epanAProfile->sdiag-> velmwl_mode_aprofile = set_value;
+}
+
 //re-initialize respectively AProfile's report/reportItem portions
 void US_ExperimentMain::abde_sv_mode_change_reset_reports( QString exptype )
 {
@@ -553,8 +561,7 @@ void US_ExperimentMain::us_mode_passed( void )
   
 }
 
-
-	  
+ 
 
 void US_ExperimentMain::auto_mode_passed( void )
 {
@@ -1786,6 +1793,7 @@ void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
 void US_ExperGuiRotor::velMwlChecked( bool checked )
 {
   vel_mwl = checked;
+  mainw->setUnset_velmwl_mode_aprofile( checked ); 
 }
 
 // Check import disk

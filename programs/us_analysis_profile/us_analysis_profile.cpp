@@ -27,9 +27,10 @@ US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
    QGridLayout* statL     = new QGridLayout();
    QHBoxLayout* buttL     = new QHBoxLayout();
 
-   connection_status   = false;
-   automode            = false;
-   abde_mode_aprofile  = false;
+   connection_status    = false;
+   automode             = false;
+   abde_mode_aprofile   = false;
+   velmwl_mode_aprofile = false;
 
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();

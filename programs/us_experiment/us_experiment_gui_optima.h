@@ -1146,6 +1146,7 @@ class US_ExperimentMain : public US_Widgets
       bool    us_prot_dev_mode;
       bool    global_reset;
       bool    us_abde_mode;
+      bool    us_velmwl_mode;
       bool    expPanelSet;
 
   QMap <QString, QString> protocol_details_passed; 
@@ -1156,6 +1157,7 @@ class US_ExperimentMain : public US_Widgets
       void    unset_abde_mode_aprofile( void );
       void    abde_sv_mode_change_reset_reports( QString  );
       void    enable_disable_prev_next_btns( void );
+      void    setUnset_velmwl_mode_aprofile ( bool );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;

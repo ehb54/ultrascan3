@@ -455,6 +455,7 @@ class US_AnalysisProfileGui : public US_Widgets
       
       bool    automode;
   bool abde_mode_aprofile;
+  bool velmwl_mode_aprofile;
   
       void    auto_mode_passed( void ); 
       void    auto_name_passed( QString&, QString& ); 
