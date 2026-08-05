@@ -1831,7 +1831,7 @@ DbgLv(1) << "APpc:inP:   parms_to_gui complete";
    //for VELOCITY-MWL
    bool vel_mwl_mode_2dsa =  ( mainw->velmwl_mode_aprofile ) ? true : false;
    ck_nopcsa->setChecked( vel_mwl_mode_2dsa );
-   ck_nopcsa->setEnabled( vel_mwl_mode_2dsa );
+   ck_nopcsa->setEnabled( !vel_mwl_mode_2dsa );
     
 }
 
