@@ -2008,8 +2008,14 @@ void US_ExperGuiRotor::importDisk( void )
       QStringList chann_list = chan_wvls.keys();
       if ( chann_list.size() != 2 )
 	{
-	  wvl_inconsistent = true;
-	  break;
+	  qDebug() << "no matching channel for " << cell_f << "\\" << chann_list
+		   << ", but that's fine ... if this is channel A...";
+
+	  if ( chann_list[0] == "B" )
+	    {
+	      wvl_inconsistent = true;  
+	      break;
+	    }
 	}
       else
 	{
@@ -2026,7 +2032,7 @@ void US_ExperGuiRotor::importDisk( void )
 	}
     }
 
-    if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 && !vel_mwl )
+    if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
     {
       QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
       return;
