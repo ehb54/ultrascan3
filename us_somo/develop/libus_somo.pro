@@ -127,7 +127,6 @@ SOURCES *= \
 #  us_calendar.cpp \ 
 #  us_clipdata.cpp \ 
         src/us_container.cpp \
-        src/us_container_grpy.cpp \
         src/us_cmdline_app.cpp \
 #  us_cofdistro.cpp \
 #  us_cofs.cpp \ 
@@ -606,6 +605,12 @@ SOURCES *= \
 #  us_laser.cpp \
 
 HEADERS *= \
+  grpy/linalg.hpp \
+  grpy/grpy_core.hpp \
+  grpy/grpy_report.hpp \
+  grpy/grpy_api.hpp \
+  grpy/parallel_qt.hpp \
+  grpy/parallel_std.hpp \
 #  3dplot/mesh2mainwindowbase.h \
 #  3dplot/mesh2mainwindow.h \
 #  3dplot/functions.h \
@@ -633,7 +638,6 @@ HEADERS *= \
 #  us_calendar.h \
 #  us_clipdata.h \
         include/us_container.h \
-        include/us_container_grpy.h \
         include/us_cmdline_app.h \
 #  us_cofdistro.h \
 #  us_cofs.h \
@@ -1006,3 +1010,10 @@ HEADERS *= \
 #   include/textunder.xpm
 
 QT += opengl network
+
+# --- in-process GRPY module (grpy/) ---------------------------------------
+# Self-contained C++ hydrodynamics module called in-process (replaces the GRPY
+# subprocess + stdout scraping). Header-only; needs QtConcurrent for its thread
+# pool and the vendored Eigen + the module dir on the include path.
+QT += concurrent
+INCLUDEPATH += $$PWD/include $$PWD/grpy

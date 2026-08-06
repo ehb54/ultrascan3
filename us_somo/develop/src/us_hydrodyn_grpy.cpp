@@ -14,6 +14,10 @@
  
 #include "../include/us_hydrodyn.h"
 
+// in-process GRPY module (issue 972): replaces the external binary + stdout scraping
+#include "grpy_api.hpp"
+#include "parallel_qt.hpp"
+
 #define SLASH QDir::separator()
 
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
@@ -100,56 +104,9 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       editor_msg( "dark blue", courier, visc_dens_msg() );
    }
 
-   if ( !us_container_grpy ) {
-      if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
-         editor_msg( "dark red", us_tr(
-                                       "Attempting to get the docker image for parallel GRPY\n"
-                                       "The first time you run this, it may take awhile\n"
-                                       "Please be patient\n"
-                                       ) );
-         qApp->processEvents();
-      }                                        
-      us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
-   } else if ( ( misc.parallel_grpy && !us_container_grpy->arguments().size() )
-               || ( !misc.parallel_grpy && us_container_grpy->arguments().size() ) ) {
-      // in case they switched from non-parallel to parallel or vice-versa
-      qDebug() << "grpy recreate!!";
-      delete us_container_grpy;
-      if ( !grpy_parallel_pulled & misc.parallel_grpy ) {
-         editor_msg( "dark red", us_tr(
-                                       "Attempting to get the docker image for parallel GRPY\n"
-                                       "The first time you run this, it may take awhile\n"
-                                       "Please be patient\n"
-                                       ) );
-         qApp->processEvents();
-      }                                        
-      us_container_grpy = new US_Container_Grpy( !grpy_parallel_pulled, !misc.parallel_grpy );
-   } else {
-      qDebug() << "grpy NOT recreated";
-   }      
-   
-
-   if ( misc.parallel_grpy && !us_container_grpy->arguments().size() ) {
-      editor_msg( "red", us_tr( "parallel GRPY requested but unable to start\n"
-                                "Check to make sure you have 'docker' installed and a working network connection to the internet\n"
-                                "Resorting to non-parallel GRPY\n" ) );
-   }
-
-   if ( misc.parallel_grpy && !us_container_grpy->arguments().size() ) {
-      grpy_parallel_pulled = true;
-   }
-
-   grpy_prog = us_container_grpy->executable();
-   
-   if ( us_container_grpy->arguments().size() ) {
-      editor_msg( "darkblue", QString( us_tr( "\nParallel GRPY enabled with %1 threads\n" ) ).arg( USglobal->config_list.numThreads ) );
-   } else {
-      QFileInfo qfi( grpy_prog );
-      if ( !qfi.exists() ) {
-         editor_msg( (QString) "red", QString("GRPY program '%1' does not exist\n").arg(grpy_prog));
-         return false;
-      }
-   }
+   // in-process GRPY module (issue 972): no external binary or Docker container.
+   editor_msg( "darkblue", QString( us_tr( "\nGRPY (in-process) enabled with %1 threads\n" ) )
+               .arg( USglobal->config_list.numThreads ) );
 
    // if ( !overwrite_hydro )
    // {
@@ -433,72 +390,90 @@ void US_Hydrodyn::grpy_process_next() {
    timers.init_timer( "compute grpy this model" );
    timers.start_timer( "compute grpy this model" );
 
-   grpy = new QProcess( this );
-   grpy->setWorkingDirectory( get_somo_dir() );
-   // us_qdebug( "prog is " + grpy_prog );
-   // us_qdebug( "grpy_last_processed " + grpy_last_processed );
    {
-      QStringList args;
-      args << us_container_grpy->arguments( get_somo_dir() );
-      args
-         << "-e"
-         << grpy_last_processed
-         ;
-      
-      connect( grpy, SIGNAL(readyReadStandardOutput()), this, SLOT(grpy_readFromStdout()) );
-      connect( grpy, SIGNAL(readyReadStandardError()), this, SLOT(grpy_readFromStderr()) );
-      connect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(grpy_finished( int, QProcess::ExitStatus )) );
-      connect( grpy, SIGNAL(started()), this, SLOT(grpy_started()) );
-
-      editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
+      // in-process GRPY (issue 972): read the same .grpy file we used to feed the
+      // binary with -e, run the module directly, and populate grpy_stdout with the
+      // report so grpy_finished()'s existing parsing + .grpy_res preservation work
+      // unchanged. The heavy compute is internally multi-threaded (QtParallel over
+      // SOMO's thread pool); processEvents() in the progress callback keeps the GUI
+      // painting between block-columns.
+      editor_msg( "black", QString( "\nStarting GRPY (in-process) on %1 with %2 beads\n" )
                   .arg( QFileInfo( grpy_last_processed ).completeBaseName() )
-                  .arg( grpy_last_used_beads )
-                  );
-      grpy->start( grpy_prog, args, QIODevice::ReadOnly );
-   }
-   
-   return;
-}
+                  .arg( grpy_last_used_beads ) );
 
-void US_Hydrodyn::grpy_readFromStdout()
-{
-   // us_qdebug( QString( "grpy_readFromStdout %1" ).arg( grpy_last_processed ) );
-   static QRegularExpression re = QRegularExpression( "^\\s*(\\d+)%\\s*TASK:\\s*(.*)$" );
-   QString qs = QString( grpy->readAllStandardOutput() );
-   // only needed for windows
-   qs = qs.replace( "\r\n", "\n" );
-   QStringList qsl = qs.split( "\r" );
-   int size = (int) qsl.size();
-   for ( int i = 0; i < size; ++i ) {
-      qs = qsl[ i ];
-      if ( qs.contains( "% TASK:" ) ) {
-         qs = qs.split( "\r" ).takeLast();
-         QRegularExpressionMatch match = re.match( qs );
-         if ( match.hasMatch() ) {
-            // qDebug() << "capture 1:" << match.captured( 1 );
-            // qDebug() << "capture 2:" << match.captured( 2 );
-            progress->setValue( 101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() );
-            // qDebug() << "progress value " <<  101 * ( grpy_processed.size() - 1 ) + match.captured( 1 ).toDouble() + 1;
-            mprogress->setValue( match.captured( 1 ).toDouble() );
-            lbl_core_progress->setText( QString( "Model %1 : %2" )
-                                        .arg( grpy_last_model_number + 1 )
-                                        .arg( match.captured( 2 ) )
-                                        );
-         }
-      } else {
-         grpy_stdout += qs;
-         // editor_msg( "brown", qs );
+      // resolve against get_somo_dir() -- the old QProcess set its working
+      // directory there and passed grpy_last_processed (a bare filename) as -e arg,
+      // so the .grpy file lives in the somo dir regardless of the process CWD.
+      QString grpy_path = QDir( get_somo_dir() ).filePath( grpy_last_processed );
+      if ( !QFileInfo( grpy_path ).exists() ) {
+         editor_msg( "red", QString( us_tr( "GRPY input file '%1' does not exist\n" ) ).arg( grpy_path ) );
+         grpy_success = false;
+         // defer to the event loop (avoids deep recursion through the model batch);
+         // a lambda is used rather than invokeMethod-by-name so we don't need to
+         // register QProcess::ExitStatus as a queued-connection metatype.
+         QTimer::singleShot( 0, this, [ this ]() {
+            grpy_finished( 0, QProcess::NormalExit );
+         } );
+         return;
       }
+      grpy::NativeInput in =
+         grpy::read_native_file( grpy_path.toStdString() );
+
+      // large-N options (issue 972): single-precision storage/factor halves memory,
+      // out-of-core spills the tiled matrix to disk so RAM stays bounded. Both matter
+      // only for very large bead models. Single-precision is the GRPY Numerical
+      // Precision control in the SOMO Hydrodynamic Calculation Options window
+      // (hydro.grpy_single; default Double). The gui_script `global grpy_single`/
+      // `global grpy_ooc_dir` params and GRPY_SINGLE/GRPY_OOC_DIR env vars still
+      // override, for headless/batch automation. Out-of-core has no GUI control
+      // (script/env only) as it is a cluster-scale knob. Default = in-core double.
+      grpy::Options opt;
+      auto truthy = []( QString v ) {
+         v = v.trimmed().toLower();
+         return v == "1" || v == "true" || v == "yes" || v == "on";
+      };
+      opt.single = hydro.grpy_single;                       // GUI checkbox (default off)
+      if ( gparams.count( "grpy_single" ) ) {               // scripting override
+         opt.single = truthy( gparams[ "grpy_single" ] );
+      } else if ( !qEnvironmentVariableIsEmpty( "GRPY_SINGLE" ) ) {
+         opt.single = true;
+      }
+      QString ooc_dir = gparams.count( "grpy_ooc_dir" )
+         ? gparams[ "grpy_ooc_dir" ]
+         : QString::fromLocal8Bit( qgetenv( "GRPY_OOC_DIR" ) );
+      opt.ooc_dir = ooc_dir.trimmed().toStdString();
+      if ( opt.single || !opt.ooc_dir.empty() ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "GRPY options: %1%2\n" ) )
+                     .arg( opt.single ? us_tr( "single-precision " ) : QString() )
+                     .arg( opt.ooc_dir.empty() ? QString()
+                           : QString( us_tr( "out-of-core (%1) " ) ).arg( ooc_dir.trimmed() ) ) );
+      }
+
+      la::QtParallel par( USglobal->config_list.numThreads );
+      grpy::Solver solver( par, opt );
+      const int model = grpy_last_model_number;
+      grpy::Results r = solver.run(
+         in.beads, in.params,
+         [ this, model ]( int pct, const char * stage ) {
+            if ( stopFlag ) return;
+            progress->setValue( 101 * ( grpy_processed.size() - 1 ) + pct );
+            mprogress->setValue( pct );
+            lbl_core_progress->setText( QString( "Model %1 : %2" )
+                                        .arg( model + 1 ).arg( stage ) );
+            qApp->processEvents();
+         } );
+      grpy_stdout = QString::fromStdString( r.report );
+
+      // hand off to the existing finish/parse path, deferred to the event loop so we
+      // don't recurse through the model batch (mirrors the old async QProcess finished
+      // signal). A lambda avoids invokeMethod-by-name, which would need
+      // QProcess::ExitStatus registered as a queued-connection metatype.
+      QTimer::singleShot( 0, this, [ this ]() {
+         grpy_finished( 0, QProcess::NormalExit );
+      } );
+      return;
    }
-   //   qApp->processEvents();
-}
-
-void US_Hydrodyn::grpy_readFromStderr()
-{
-   // us_qdebug( QString( "grpy_readFromStderr %1" ).arg( grpy_last_processed ) );
-
-   editor_msg( "red", QString( grpy->readAllStandardError() ) );
-   //  qApp->processEvents();
 }
 
 void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
@@ -507,12 +482,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    // us_qdebug( QString( "grpy_processExited %1" ).arg( grpy_last_processed) );
    //   for ( int i = 0; i < 10000; i++ )
    //   {
-   grpy_readFromStderr();
-   grpy_readFromStdout();
-      //   }
-   disconnect( grpy, SIGNAL(readyReadStandardOutput()), 0, 0);
-   disconnect( grpy, SIGNAL(readyReadStandardError()), 0, 0);
-   disconnect( grpy, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
+   // in-process (issue 972): grpy_stdout already holds the report; nothing to flush.
    if (stopFlag) {
       editor_msg( "red", us_tr( "Stopped by user\n" ) );
       set_enabled();
@@ -1157,13 +1127,6 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    
    grpy_process_next();
-}
-   
-void US_Hydrodyn::grpy_started()
-{
-   // us_qdebug( QString( "grpy_started %1" ).arg( grpy_last_processed ) );
-   // editor_msg("brown", "GRPY launch exited\n");
-   disconnect( grpy, SIGNAL(started()), 0, 0);
 }
 
 void US_Hydrodyn::grpy_finalize() {

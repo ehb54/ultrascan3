@@ -465,7 +465,38 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_grpy_inclusion->setChecked(true);
    }
-   
+
+   bg_grpy_precision = new QGroupBox( us_tr( "GRPY Numerical Precision:" ) );
+
+   rb_grpy_double = new QRadioButton();
+   rb_grpy_double->setText(us_tr(" Double (default) "));
+   rb_grpy_double->setEnabled(true);
+   rb_grpy_double->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_double->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_double );
+   connect(rb_grpy_double, SIGNAL(clicked()), this, SLOT(select_grpy_precision()));
+
+   rb_grpy_float = new QRadioButton();
+   rb_grpy_float->setText(us_tr(" Float (for large systems) "));
+   rb_grpy_float->setEnabled(true);
+   rb_grpy_float->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_float->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_float );
+   connect(rb_grpy_float, SIGNAL(clicked()), this, SLOT(select_grpy_precision()));
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_grpy_double );
+      bl->addWidget( rb_grpy_float );
+      bg_grpy_precision->setLayout( bl );
+   }
+
+   if ( !(*hydro).grpy_single ) {
+      rb_grpy_double->setChecked(true);
+   } else {
+      rb_grpy_float->setChecked(true);
+   }
+
 
    bg_buried = new QGroupBox( "Include Buried Beads in Volume Correction for Calculation of (for SMI):" );
 
@@ -592,6 +623,8 @@ void US_Hydrodyn_Hydro::setupGUI()
    background->addWidget( bg_bead_inclusion , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
    background->addWidget( bg_grpy_bead_inclusion , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j+=3;
+   background->addWidget( bg_grpy_precision , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
    background->addWidget( bg_buried , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
@@ -747,6 +780,21 @@ void US_Hydrodyn_Hydro::select_grpy_bead_inclusion() {
 void US_Hydrodyn_Hydro::select_grpy_bead_inclusion(int val)
 {
    (*hydro).grpy_bead_inclusion = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::select_grpy_precision() {
+   if ( rb_grpy_double->isChecked() ) {
+      return select_grpy_precision( 0 );
+   }
+   if ( rb_grpy_float->isChecked() ) {
+      return select_grpy_precision( 1 );
+   }
+}
+
+void US_Hydrodyn_Hydro::select_grpy_precision(int val)
+{
+   (*hydro).grpy_single = val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

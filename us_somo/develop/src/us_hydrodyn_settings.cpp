@@ -1413,6 +1413,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.mass" ] = QString( "%1" ).arg( hydro.mass );
       parameters[ "hydro.bead_inclusion" ] = QString( "%1" ).arg( hydro.bead_inclusion );
       parameters[ "hydro.grpy_bead_inclusion" ] = QString( "%1" ).arg( hydro.grpy_bead_inclusion );
+      parameters[ "hydro.grpy_single" ] = QString( "%1" ).arg( hydro.grpy_single );
       parameters[ "hydro.rotational" ] = QString( "%1" ).arg( hydro.rotational );
       parameters[ "hydro.viscosity" ] = QString( "%1" ).arg( hydro.viscosity );
       parameters[ "hydro.overlap_cutoff" ] = QString( "%1" ).arg( hydro.overlap_cutoff );
@@ -1718,7 +1719,6 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "asa.vvv_probe_radius" ] = QString( "%1" ).arg( asa.vvv_probe_radius );
       parameters[ "asa.vvv_grid_dR" ] = QString( "%1" ).arg( asa.vvv_grid_dR );
       parameters[ "misc.export_msroll" ] = QString( "%1" ).arg( misc.export_msroll );
-      parameters[ "misc.parallel_grpy" ] = QString( "%1" ).arg( misc.parallel_grpy );
       parameters[ "misc.auto_calc_hydro_method" ] = QString( "%1" ).arg( (int) misc.auto_calc_hydro_method );
 
       parameters[ "saxs_options.qstart" ] = QString( "%1" ).arg( saxs_options.qstart );
@@ -1929,6 +1929,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.mass" ) ) hydro.mass = parameters[ "hydro.mass" ].toDouble();
    if ( parameters.count( "hydro.bead_inclusion" ) ) hydro.bead_inclusion = parameters[ "hydro.bead_inclusion" ] == "1";
    if ( parameters.count( "hydro.grpy_bead_inclusion" ) ) hydro.grpy_bead_inclusion = parameters[ "hydro.grpy_bead_inclusion" ] == "1";
+   if ( parameters.count( "hydro.grpy_single" ) ) hydro.grpy_single = parameters[ "hydro.grpy_single" ] == "1";
    if ( parameters.count( "hydro.rotational" ) ) hydro.rotational = parameters[ "hydro.rotational" ] == "1";
    if ( parameters.count( "hydro.viscosity" ) ) hydro.viscosity = parameters[ "hydro.viscosity" ] == "1";
    if ( parameters.count( "hydro.overlap_cutoff" ) ) hydro.overlap_cutoff = parameters[ "hydro.overlap_cutoff" ] == "1";
@@ -2231,7 +2232,6 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "asa.vvv_probe_radius" ) ) asa.vvv_probe_radius = parameters[ "asa.vvv_probe_radius" ].toFloat();
    if ( parameters.count( "asa.vvv_grid_dR" ) ) asa.vvv_grid_dR = parameters[ "asa.vvv_grid_dR" ].toFloat();
    if ( parameters.count( "misc.export_msroll" ) ) misc.export_msroll = parameters[ "misc.export_msroll" ] == "1";
-   if ( parameters.count( "misc.parallel_grpy" ) ) misc.parallel_grpy = parameters[ "misc.parallel_grpy" ] == "1";
    if ( parameters.count( "misc.auto_calc_hydro_method" ) ) misc.auto_calc_hydro_method = (CALC_HYDRO_METHOD) parameters[ "misc.auto_calc_hydro_method" ].toInt();
 
    if ( parameters.count( "saxs_options.qstart" ) ) saxs_options.qstart = parameters[ "saxs_options.qstart" ].toDouble();
@@ -2922,6 +2922,7 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.mass                                               = 0.0;                  // mass correction
    hydro.bead_inclusion                                     = false;      // false: exclude hidden beads; true: use all beads
    hydro.grpy_bead_inclusion                                = false;      // false: exclude hidden beads; true: use all beads
+   hydro.grpy_single                                        = false;      // false: double precision (default); true: single/float (large systems)
    hydro.rotational                                         = false;         // false: include beads in volume correction for rotational diffusion, true: exclude
    hydro.viscosity                                          = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    hydro.overlap_cutoff                                     = false;      // false: same as in model building, true: enter manually
@@ -3282,7 +3283,6 @@ void US_Hydrodyn::hard_coded_defaults()
    asa.vvv_grid_dR                                          = 0.5f;
 
    misc.export_msroll                                       = false;
-   misc.parallel_grpy                                       = false;
    misc.auto_calc_hydro_method                              = AUTO_CALC_HYDRO_ZENO;
 
    saxs_options.cs_qRgmax                                   = 1e0;
@@ -3957,6 +3957,11 @@ QString US_Hydrodyn::default_differences_hydro()
    {
       str += QString(base + "Inclusion of Buried Beads in Hydrodynamic Calculations: %1\n")
          .arg(hydro.bead_inclusion ? "Include" : "Exclude");
+   }
+   if ( hydro.grpy_single != default_hydro.grpy_single )
+   {
+      str += QString(base + "GRPY numerical precision: %1\n")
+         .arg(hydro.grpy_single ? "Float (for large systems)" : "Double (default)");
    }
    if ( hydro.grpy_bead_inclusion != default_hydro.grpy_bead_inclusion )
    {

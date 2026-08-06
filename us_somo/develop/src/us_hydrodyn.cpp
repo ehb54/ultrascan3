@@ -106,9 +106,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
-   us_container_grpy = (US_Container_Grpy *)0;
-   grpy_parallel_pulled = false;
-   
    stopFlag = false;
 
 #if defined( BROADEN_TEST ) && defined( BROADEN_TESTING )
@@ -696,7 +693,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
-   grpy = NULL;
 
    last_read_bead_model = "";
    last_hydro_res = "";
@@ -4335,11 +4331,9 @@ void US_Hydrodyn::stop_calc()
       anaflex->terminate();
       QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
    }
-   if ( grpy_running && grpy && grpy->state() == QProcess::Running )
-   {
-      grpy->terminate();
-      QTimer::singleShot( 10000, grpy, SLOT( kill() ) );
-   }
+   // in-process GRPY (issue 972): no external process to terminate; stopFlag (set
+   // above) is honored by the Solver progress callback and grpy_finished(), which
+   // halts the model batch once the in-flight model returns.
    pb_stop_calc->setEnabled(false);
 }
 
