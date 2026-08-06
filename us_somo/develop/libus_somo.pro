@@ -611,6 +611,8 @@ HEADERS *= \
   grpy/grpy_api.hpp \
   grpy/parallel_qt.hpp \
   grpy/parallel_std.hpp \
+  grpy/grpy_exposure.hpp \
+  grpy/grpy_shell.hpp \
 #  3dplot/mesh2mainwindowbase.h \
 #  3dplot/mesh2mainwindow.h \
 #  3dplot/functions.h \

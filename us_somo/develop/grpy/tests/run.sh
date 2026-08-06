@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 EIGEN="${EIGEN_INC:-../../include}"
 CXX="c++ -std=c++17 -O2 -pthread -I.. -I$EIGEN"
 
-for t in test_linalg test_assemble test_threaded test_ooc test_api; do
+for t in test_linalg test_assemble test_threaded test_ooc test_api test_shell; do
     echo "[$t]"; $CXX "$t.cpp" -o "/tmp/grpy_$t" && "/tmp/grpy_$t"
 done
 
