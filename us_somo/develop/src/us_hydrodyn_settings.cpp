@@ -1414,6 +1414,9 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "hydro.bead_inclusion" ] = QString( "%1" ).arg( hydro.bead_inclusion );
       parameters[ "hydro.grpy_bead_inclusion" ] = QString( "%1" ).arg( hydro.grpy_bead_inclusion );
       parameters[ "hydro.grpy_single" ] = QString( "%1" ).arg( hydro.grpy_single );
+      parameters[ "hydro.grpy_shell" ] = QString( "%1" ).arg( hydro.grpy_shell );
+      parameters[ "hydro.grpy_shell_tol" ] = QString( "%1" ).arg( hydro.grpy_shell_tol );
+      parameters[ "hydro.grpy_shell_require_eta" ] = QString( "%1" ).arg( hydro.grpy_shell_require_eta );
       parameters[ "hydro.rotational" ] = QString( "%1" ).arg( hydro.rotational );
       parameters[ "hydro.viscosity" ] = QString( "%1" ).arg( hydro.viscosity );
       parameters[ "hydro.overlap_cutoff" ] = QString( "%1" ).arg( hydro.overlap_cutoff );
@@ -1931,6 +1934,9 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.bead_inclusion" ) ) hydro.bead_inclusion = parameters[ "hydro.bead_inclusion" ] == "1";
    if ( parameters.count( "hydro.grpy_bead_inclusion" ) ) hydro.grpy_bead_inclusion = parameters[ "hydro.grpy_bead_inclusion" ] == "1";
    if ( parameters.count( "hydro.grpy_single" ) ) hydro.grpy_single = parameters[ "hydro.grpy_single" ] == "1";
+   if ( parameters.count( "hydro.grpy_shell" ) ) hydro.grpy_shell = parameters[ "hydro.grpy_shell" ] == "1";
+   if ( parameters.count( "hydro.grpy_shell_tol" ) ) hydro.grpy_shell_tol = parameters[ "hydro.grpy_shell_tol" ].toDouble();
+   if ( parameters.count( "hydro.grpy_shell_require_eta" ) ) hydro.grpy_shell_require_eta = parameters[ "hydro.grpy_shell_require_eta" ] == "1";
    if ( parameters.count( "hydro.rotational" ) ) hydro.rotational = parameters[ "hydro.rotational" ] == "1";
    if ( parameters.count( "hydro.viscosity" ) ) hydro.viscosity = parameters[ "hydro.viscosity" ] == "1";
    if ( parameters.count( "hydro.overlap_cutoff" ) ) hydro.overlap_cutoff = parameters[ "hydro.overlap_cutoff" ] == "1";
@@ -2925,6 +2931,9 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.bead_inclusion                                     = false;      // false: exclude hidden beads; true: use all beads
    hydro.grpy_bead_inclusion                                = false;      // false: exclude hidden beads; true: use all beads
    hydro.grpy_single                                        = false;      // false: double precision (default); true: single/float (large systems)
+   hydro.grpy_shell                                         = false;      // false: off (default); true: shell reduction with a convergence check
+   hydro.grpy_shell_tol                                     = 0.005;      // 0.5% required of every requested observable
+   hydro.grpy_shell_require_eta                             = true;       // true: intrinsic viscosity must converge too (safe default)
    hydro.rotational                                         = false;         // false: include beads in volume correction for rotational diffusion, true: exclude
    hydro.viscosity                                          = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    hydro.overlap_cutoff                                     = false;      // false: same as in model building, true: enter manually
@@ -3970,6 +3979,22 @@ QString US_Hydrodyn::default_differences_hydro()
    {
       str += QString(base + "GRPY numerical precision: %1\n")
          .arg(hydro.grpy_single ? "Float (for large systems)" : "Double (default)");
+   }
+   if ( hydro.grpy_shell != default_hydro.grpy_shell )
+   {
+      str += QString(base + "GRPY shell reduction: %1\n")
+         .arg(hydro.grpy_shell ? "On" : "Off (default)");
+   }
+   if ( hydro.grpy_shell && hydro.grpy_shell_tol != default_hydro.grpy_shell_tol )
+   {
+      str += QString(base + "GRPY shell reduction target accuracy: %1%\n")
+         .arg(100.0 * hydro.grpy_shell_tol);
+   }
+   if ( hydro.grpy_shell && hydro.grpy_shell_require_eta != default_hydro.grpy_shell_require_eta )
+   {
+      str += QString(base + "GRPY shell reduction intrinsic viscosity: %1\n")
+         .arg(hydro.grpy_shell_require_eta ? "required to converge (default)"
+                                           : "not required (withheld from results)");
    }
    if ( hydro.grpy_bead_inclusion != default_hydro.grpy_bead_inclusion )
    {

@@ -16,6 +16,7 @@
 
 // in-process GRPY module (issue 972): replaces the external binary + stdout scraping
 #include "grpy_api.hpp"
+#include "grpy_shell.hpp"
 #include "parallel_qt.hpp"
 
 #define SLASH QDir::separator()
@@ -345,6 +346,9 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    grpy_running    = true;
    grpy_success    = true;
+   // Cleared at run start so the non-shell path (and any earlier run) can never
+   // leave viscosity suppressed. Set per model by the shell-reduction path.
+   grpy_viscosity_unreliable = false;
    progress->setMaximum( 101 * ( grpy_to_process.size() ) + 1 );
    // qDebug() << "progress max " <<  101 * ( grpy_to_process.size() ) + 1;
    progress->setValue( 0 );
@@ -450,11 +454,49 @@ void US_Hydrodyn::grpy_process_next() {
                            : QString( us_tr( "out-of-core (%1) " ) ).arg( ooc_dir.trimmed() ) ) );
       }
 
+      // Shell reduction (issue 984): run exact GRPY on a solvent-exposed subset, with a
+      // convergence ladder that reports its own error. Off by default -- with it off the
+      // result is byte-identical to the plain Solver, so existing results never move.
+      // The observable set matters: intrinsic viscosity needs roughly 3.3x the accuracy
+      // budget of D_t at equal reduction and drove the stopping decision in every test
+      // case, so requiring it costs a large part of the speedup. When it is NOT required,
+      // viscosity is withheld from the reported results as unreliable (see
+      // grpy_viscosity_unreliable and its use in grpy_finished).
+      grpy::ShellOptions sopt;
+      sopt.enabled = hydro.grpy_shell;
+      sopt.tol     = hydro.grpy_shell_tol > 0 ? hydro.grpy_shell_tol : 5e-3;
+      bool require_eta = hydro.grpy_shell_require_eta;
+      if ( gparams.count( "grpy_shell" ) ) {                // scripting override
+         sopt.enabled = truthy( gparams[ "grpy_shell" ] );
+      } else if ( !qEnvironmentVariableIsEmpty( "GRPY_SHELL" ) ) {
+         sopt.enabled = true;
+      }
+      if ( gparams.count( "grpy_shell_tol" ) ) {
+         double v = gparams[ "grpy_shell_tol" ].toDouble();
+         if ( v > 0 ) sopt.tol = v;
+      }
+      if ( gparams.count( "grpy_shell_require_eta" ) ) {
+         require_eta = truthy( gparams[ "grpy_shell_require_eta" ] );
+      }
+      sopt.require = { grpy::Obs::Dt, grpy::Obs::Dr, grpy::Obs::Sedimentation };
+      if ( require_eta ) {
+         sopt.require.push_back( grpy::Obs::EtaInf );
+         sopt.require.push_back( grpy::Obs::EtaZero );
+      }
+      if ( sopt.enabled ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "GRPY shell reduction: tolerance %1%%%2\n" ) )
+                     .arg( 100.0 * sopt.tol )
+                     .arg( require_eta ? us_tr( ", intrinsic viscosity required" )
+                                       : us_tr( ", intrinsic viscosity NOT required (will be withheld)" ) ) );
+      }
+
       la::QtParallel par( USglobal->config_list.numThreads );
-      grpy::Solver solver( par, opt );
+      grpy::ShellSolver solver( par, opt, sopt );
+      grpy::ShellReport srep;
       const int model = grpy_last_model_number;
       grpy::Results r = solver.run(
-         in.beads, in.params,
+         in.beads, in.params, srep,
          [ this, model ]( int pct, const char * stage ) {
             if ( stopFlag ) return;
             progress->setValue( 101 * ( grpy_processed.size() - 1 ) + pct );
@@ -464,6 +506,22 @@ void US_Hydrodyn::grpy_process_next() {
             qApp->processEvents();
          } );
       grpy_stdout = QString::fromStdString( r.report );
+      grpy_viscosity_unreliable = srep.viscosity_unreliable;
+      if ( sopt.enabled ) {
+         editor_msg( srep.converged ? "dark blue" : "red",
+                     QString( us_tr( "GRPY shell reduction: %1 of %2 beads used, %3\n" ) )
+                     .arg( srep.n_used ).arg( srep.n_full )
+                     .arg( srep.converged
+                           ? QString( us_tr( "converged (estimated error %1%%)" ) )
+                             .arg( 100.0 * srep.err_max, 0, 'g', 3 )
+                           : QString( us_tr( "DID NOT CONVERGE (estimated error %1%%)" ) )
+                             .arg( 100.0 * srep.err_max, 0, 'g', 3 ) ) );
+         if ( srep.viscosity_unreliable ) {
+            editor_msg( "red", us_tr( "GRPY shell reduction: intrinsic viscosity and Einstein"
+                                      " radius are unconverged and are being withheld from the"
+                                      " results (retained in the results file, annotated).\n" ) );
+         }
+      }
 
       // hand off to the existing finish/parse path, deferred to the event loop so we
       // don't recurse through the model batch (mirrors the old async QProcess finished
@@ -688,7 +746,12 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             grpy_results2.s20w += it->second[ i ] * it->second[ i ];
          }
 
-         if ( it->first == "\\[eta\\]" ) {
+         // Skipped when unconverged (issue 984). NOTE the cross-model mean below divides
+         // by the TOTAL model count, not a per-observable count, so a run mixing
+         // contributing and non-contributing models would silently corrupt it. That is
+         // safe here only because shell reduction is a RUN-LEVEL setting: every model in
+         // a run either requires viscosity convergence or none does.
+         if ( it->first == "\\[eta\\]" && !grpy_viscosity_unreliable ) {
             grpy_results.viscosity += it->second[ i ];
             grpy_results2.viscosity += it->second[ i ] * it->second[ i ];
          }
@@ -771,7 +834,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( it->second.count( "Dt" ) ) {
          this_data.results.D20w = it->second[ "Dt" ];
       }
-      if ( it->second.count( "\\[eta\\]" ) ) {
+      // Shell reduction (issue 984): when intrinsic viscosity was not converged it is
+      // withheld from the reported results entirely rather than propagated with a caveat
+      // -- a value carrying a warning is still a value that gets used downstream. It
+      // remains in the on-disk report, annotated, for the record.
+      if ( it->second.count( "\\[eta\\]" ) && !grpy_viscosity_unreliable ) {
          this_data.results.viscosity = it->second[ "\\[eta\\]" ];
       }
       if ( it->second.count( "tau1" ) ) {
@@ -799,7 +866,12 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( it->second.count( "rs" ) ) {
          this_data.results.rs = it->second[ "rs" ] * 1e7;
       }
-      if ( it->second.count( "grpy_einst_rad" ) ) {
+      // The Einstein radius is parsed from the SAME report line as the viscosity
+      // ("Zero frequency intrinsic viscosity eta 0", fields 1 and 2) and is
+      // viscosity-derived, so it inherits the same unreliability and must be withheld
+      // together with it -- otherwise a trustworthy-looking radius would carry the
+      // identical error.
+      if ( it->second.count( "grpy_einst_rad" ) && !grpy_viscosity_unreliable ) {
          this_data.grpy_einst_rad = it->second[ "grpy_einst_rad" ] * 1e7;
       }
       
