@@ -1031,6 +1031,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int                                   grpy_last_model_number;
       QVector < int >                       grpy_used_beads;
       QVector < QMap < QString, double > >  grpy_addl_params;
+      // Set per model by the shell-reduction path (issue 984). When true, intrinsic
+      // viscosity did not converge, so grpy_finished() must withhold BOTH the viscosity
+      // and the viscosity-derived Einstein radius -- they are parsed from the same report
+      // line, so the radius inherits the unreliability. The values remain in the on-disk
+      // report, annotated, for the record.
+      bool                                  grpy_viscosity_unreliable;
       QMap < QString, double >              grpy_addl_param;
       int                                   grpy_last_used_beads;
       bool                                  grpy_success;  // only valid if !grpy_running

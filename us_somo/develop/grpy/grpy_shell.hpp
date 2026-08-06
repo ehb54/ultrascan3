@@ -79,6 +79,7 @@ struct ShellOptions {
 struct ShellReport {
     bool   attempted = false;
     bool   converged = false;
+    bool   unreduced = false;   // ladder ran out onto the full model: result is exact
     int    n_full = 0, n_used = 0, levels = 0;
     double err_max = 1.0;                 // max bar over the required observables
     Obs    worst = Obs::Dt;
@@ -238,7 +239,20 @@ public:
                 if (rep.err_est[m] > rep.err_max) { rep.err_max = rep.err_est[m]; rep.worst = sopt_.require[m]; }
             }
             if (hist.size() > 1 && rep.err_max < sopt_.tol) { rep.converged = true; break; }
-            if (f >= 1.0) { rep.converged = true; break; }  // unreduced: exact by definition
+            if (f >= 1.0) {
+                // Ladder exhausted onto the UNREDUCED model. The result is then exact, so
+                // every bar is zero -- the inter-rung gap that produced them describes the
+                // coarser rung we just discarded, not this answer. Reporting that stale gap
+                // would be honest (it bounds a true error of zero) but plainly misleading,
+                // and it would wrongly mark viscosity unreliable on an exact result.
+                rep.converged = true;
+                rep.unreduced = true;
+                for (auto& e : rep.err_est) e = 0.0;
+                for (size_t m = 0; m < rep.extrapolated.size() && m < cur.size(); ++m)
+                    rep.extrapolated[m] = cur[m];
+                rep.err_max = 0.0;
+                break;
+            }
         }
 
         rep.viscosity_unreliable = !viscosity_ok(rep);
@@ -273,8 +287,10 @@ private:
                 if (o.x == k.x && o.y == k.y && o.z == k.z && o.radius == k.r) { out.push_back(o); break; }
         return out;
     }
-    // Viscosity is trustworthy only if it was actually required to converge, and did.
+    // Viscosity is trustworthy if the solve was unreduced (exact, so nothing to converge),
+    // or if it was actually required to converge and did.
     bool viscosity_ok(const ShellReport& rep) const {
+        if (rep.unreduced) return true;
         if (!rep.converged) return false;
         bool required = false;
         for (Obs o : sopt_.require) if (o == Obs::EtaInf || o == Obs::EtaZero) required = true;
@@ -286,7 +302,10 @@ private:
         s += " SHELL REDUCTION was applied to this calculation.\n";
         s += "   beads used: " + std::to_string(rep.n_used) + " of " + std::to_string(rep.n_full)
            + "   ladder rungs: " + std::to_string(rep.levels) + "\n";
-        s += rep.converged
+        s += rep.unreduced
+           ? "   converged: yes -- ladder reached the FULL model, so this result is\n"
+             "              exact and no reduction error was introduced.\n"
+           : rep.converged
            ? "   converged: yes\n"
            : "   converged: NO -- the requested tolerance was not reached; the estimated\n"
              "              errors below are the reliable statement about this result.\n";

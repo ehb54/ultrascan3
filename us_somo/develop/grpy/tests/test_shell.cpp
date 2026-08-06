@@ -137,6 +137,32 @@ int main() {
         fails += chk("viscosity value is still present in the report for the record", r.intrinsic_viscosity_high != 0.0);
     }
 
+    // ---- ladder exhausting onto the full model reports an EXACT result ----------
+    // Caught end-to-end: a 246-bead model at tol=2% could not converge, ran out onto the
+    // unreduced rung, and then reported the stale inter-rung gap (1.68%) as the error of
+    // an answer that was in fact exact -- and wrongly flagged viscosity unreliable.
+    {
+        auto b = blob(4, 3.0, 2.0);
+        Solver plain(par);
+        Results full = plain.run(b, phys);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-12;              // unsatisfiable: force exhaustion
+        so.require = {Obs::Dt, Obs::Dr};                // viscosity deliberately absent
+        so.ladder = {0.25, 0.5, 1.0};                   // last rung IS the full model
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+        fails += chk("exhausted ladder flags unreduced", rep.unreduced);
+        fails += chk("unreduced uses every bead", rep.n_used == rep.n_full);
+        fails += chk("unreduced reports zero error", rep.err_max == 0.0);
+        fails += chk("unreduced matches the plain Solver",
+                     r.translational_diffusion_centre == full.translational_diffusion_centre);
+        fails += chk("unreduced => viscosity usable even when not required",
+                     !rep.viscosity_unreliable);
+        fails += chk("unreduced report says the result is exact",
+                     r.report.find("exact") != std::string::npos);
+    }
+
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);
     return fails ? 1 : 0;
 }
