@@ -74,12 +74,25 @@ struct ShellOptions {
     std::vector<double> ladder = {0.0625, 0.125, 0.25, 0.5, 1.0};
     std::vector<Obs> require = {Obs::Dt, Obs::Dr, Obs::Sedimentation};
     double k_min = 1.0, k_max = 3.0, safety = 1.5;
+
+    // Largest rung the ladder may attempt, in beads (0 = unlimited). Set by the caller from
+    // the available memory: the solver holds the tiled upper triangle of an 11N x 11N
+    // matrix, so a rung that exceeds RAM would thrash the machine. Capping the ladder turns
+    // the caller's "model too large, refused" into "answer from the largest rung that fits,
+    // with its error bar" -- which is the whole point of having a bar. A capped ladder that
+    // has not converged is reported as not converged; it is never silently passed off as if
+    // it had.
+    int max_beads = 0;
 };
 
 struct ShellReport {
     bool   attempted = false;
     bool   converged = false;
     bool   unreduced = false;   // ladder ran out onto the full model: result is exact
+    // Ladder was stopped short by ShellOptions::max_beads rather than by convergence. The
+    // result still stands on its reported bar; it simply could not be refined further on
+    // this machine. When levels == 0 not even the smallest rung fit, and there is no result.
+    bool   mem_capped = false;
     int    n_full = 0, n_used = 0, levels = 0;
     double err_max = 1.0;                 // max bar over the required observables
     Obs    worst = Obs::Dt;
@@ -210,6 +223,14 @@ public:
         for (double f : sopt_.ladder) {
             std::vector<Bead> rb = (f >= 1.0) ? beads : subset(beads, ex, f);
             if (!rep.ns.empty() && (int)rb.size() <= rep.ns.back()) continue;
+            // Memory cap. Checked after building the subset (cheap, O(N) selection) but
+            // before the solve (the expensive part), so the rung costs nothing to reject.
+            // The ladder ascends, so once one rung is too large every later one is too:
+            // stop rather than continue. Whatever rungs already ran keep their bars.
+            if (sopt_.max_beads > 0 && (int)rb.size() > sopt_.max_beads) {
+                rep.mem_capped = true;
+                break;
+            }
             last = solver.run(rb, pin, progress);
             last.rg2 = rg2_full;                           // see note above
             rep.ns.push_back((int)rb.size());
@@ -300,6 +321,14 @@ private:
         std::string s = "\n";
         s += "-------------------------------------------------------------------------------\n";
         s += " SHELL REDUCTION was applied to this calculation.\n";
+        if (rep.levels == 0) {
+            // No rung fit the memory budget, so there is no result to describe. The caller
+            // is responsible for refusing; say plainly why rather than print empty stats.
+            s += "   NO RESULT: even the smallest ladder rung exceeded the available\n";
+            s += "   memory, so no calculation was performed.\n";
+            s += "-------------------------------------------------------------------------------\n";
+            return s;
+        }
         s += "   beads used: " + std::to_string(rep.n_used) + " of " + std::to_string(rep.n_full)
            + "   ladder rungs: " + std::to_string(rep.levels) + "\n";
         s += rep.unreduced
@@ -307,9 +336,14 @@ private:
              "              exact and no reduction error was introduced.\n"
            : rep.converged
            ? "   converged: yes\n"
+           : rep.mem_capped
+           ? "   converged: NO -- the ladder was stopped by the available memory before\n"
+             "              the requested tolerance was reached. The estimated errors\n"
+             "              below are the reliable statement about this result; a machine\n"
+             "              with more memory would refine it further.\n"
            : "   converged: NO -- the requested tolerance was not reached; the estimated\n"
              "              errors below are the reliable statement about this result.\n";
-        for (size_t m = 0; m < rep.require.size(); ++m) {
+        for (size_t m = 0; m < rep.require.size() && m < rep.err_est.size(); ++m) {
             char buf[160];
             std::snprintf(buf, sizeof(buf), "   estimated error %-42s %8.4f %%\n",
                           obs_name(rep.require[m]), 100.0 * rep.err_est[m]);

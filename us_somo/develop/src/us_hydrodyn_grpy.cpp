@@ -48,6 +48,31 @@ static qint64 grpy_physical_ram_bytes() {
 #endif
 }
 
+// Scripting-override parser. File-static rather than a lambda so the pre-flight guard in
+// calc_grpy_hydro() and the solver setup in grpy_process_next() read gparams identically.
+static bool truthy( QString v ) {
+   v = v.trimmed().toLower();
+   return v == "1" || v == "true" || v == "yes" || v == "on";
+}
+
+// Peak bytes for the tiled upper triangle of the 11N x 11N mobility matrix, plus ~10%.
+// Single definition so the pre-flight guard and the shell-reduction budget below can never
+// drift apart and disagree about what fits.
+static double grpy_matrix_bytes( int beads, bool single ) {
+   const double dim = 11.0 * (double) beads;
+   return dim * dim * 0.5 * ( single ? 4.0 : 8.0 ) * 1.10;
+}
+
+// Inverse of the above: the largest bead count that still fits the guard's budget
+// (70% of physical RAM). 0 = no limit known, so no cap is applied.
+static int grpy_max_beads_for_ram( bool single ) {
+   const qint64 ram = grpy_physical_ram_bytes();
+   if ( ram <= 0 ) return 0;
+   const double per_bead2 = grpy_matrix_bytes( 1, single );      // bytes at N = 1
+   const double n = sqrt( ( 0.70 * (double) ram ) / per_bead2 );
+   return n > 1.0 ? (int) n : 1;
+}
+
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
    double mw = 0e0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -372,11 +397,35 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    {
       int max_beads = 0;
       for ( int nb : grpy_used_beads ) if ( nb > max_beads ) max_beads = nb;
-      const qint64 ram    = grpy_physical_ram_bytes();          // 0 = unknown -> skip
-      const double scalar = hydro.grpy_single ? 4.0 : 8.0;
-      const double dim    = 11.0 * (double) max_beads;
-      const double est    = dim * dim * 0.5 * scalar * 1.10;    // triangle + ~10% overhead
-      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram ) {
+      const qint64 ram = grpy_physical_ram_bytes();             // 0 = unknown -> skip
+      // Resolve the same scripting overrides the solver applies further down, so the guard
+      // judges the run that will actually happen rather than the dialog's settings.
+      const bool single_eff = gparams.count( "grpy_single" )
+         ? truthy( gparams[ "grpy_single" ] ) : hydro.grpy_single;
+      const bool shell_eff  = gparams.count( "grpy_shell" )
+         ? truthy( gparams[ "grpy_shell" ] )  : hydro.grpy_shell;
+      const double est = grpy_matrix_bytes( max_beads, single_eff );
+
+      // Shell reduction (issue 984) makes this survivable: its ladder is capped to what
+      // fits (see ShellOptions::max_beads at the call site), so an oversized model yields
+      // the largest rung that fits WITH its error bar instead of being refused outright.
+      // Defer to it whenever the budget admits even the smallest rung -- below that there
+      // is nothing to compute and the refusal still stands.
+      const int    cap      = grpy_max_beads_for_ram( single_eff );
+      const double smallest = grpy::ShellOptions{}.ladder.empty()
+         ? 1.0 : grpy::ShellOptions{}.ladder.front();
+      const bool   shell_can_help =
+         shell_eff && cap > 0 && (double) cap >= smallest * (double) max_beads;
+
+      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram && shell_can_help ) {
+         editor_msg( "dark red",
+                     QString( us_tr( "GRPY: the largest model (%1 beads) exceeds the memory "
+                                     "budget for a full calculation; shell reduction will cap "
+                                     "its ladder at %2 beads and report the resulting error.\n" ) )
+                     .arg( max_beads ).arg( cap ) );
+      }
+
+      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram && !shell_can_help ) {
          const double GB = 1024.0 * 1024.0 * 1024.0;
          QString msg =
             QString( us_tr( "GRPY memory estimate exceeds available RAM:\n"
@@ -388,8 +437,14 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                             "rotational diffusion). Then retry.\n" ) )
             .arg( max_beads )
             .arg( est / GB, 0, 'f', 1 )
-            .arg( hydro.grpy_single ? us_tr( "single" ) : us_tr( "double" ) )
+            .arg( single_eff ? us_tr( "single" ) : us_tr( "double" ) )
             .arg( (double) ram / GB, 0, 'f', 1 );
+         if ( !shell_eff ) {
+            msg += us_tr( "\nGRPY shell reduction is another option: it computes on the "
+                          "most solvent-exposed beads only, stopping when the result stops "
+                          "changing, and reports the remaining error. Unlike ZENO it still "
+                          "computes rotational diffusion.\n" );
+         }
          if ( gui_script ) {
             // headless script mode: proper failure, no blocking dialog.
             editor_msg( "red", msg );
@@ -516,10 +571,6 @@ void US_Hydrodyn::grpy_process_next() {
       // override, for headless/batch automation. Out-of-core has no GUI control
       // (script/env only) as it is a cluster-scale knob. Default = in-core double.
       grpy::Options opt;
-      auto truthy = []( QString v ) {
-         v = v.trimmed().toLower();
-         return v == "1" || v == "true" || v == "yes" || v == "on";
-      };
       opt.single = hydro.grpy_single;                       // GUI checkbox (default off)
       if ( gparams.count( "grpy_single" ) ) {               // scripting override
          opt.single = truthy( gparams[ "grpy_single" ] );
@@ -567,6 +618,12 @@ void US_Hydrodyn::grpy_process_next() {
          sopt.require.push_back( grpy::Obs::EtaInf );
          sopt.require.push_back( grpy::Obs::EtaZero );
       }
+      // Cap the ladder at what physical RAM allows, using the same budget the pre-flight
+      // guard enforces. On a model that fits this never binds (every rung is under the cap
+      // and the ladder ends at the full model as before); on one that does not, the ladder
+      // stops at the largest rung that fits and reports its error rather than thrashing.
+      sopt.max_beads = grpy_max_beads_for_ram( opt.single );
+
       if ( sopt.enabled ) {
          editor_msg( "dark blue",
                      QString( us_tr( "GRPY shell reduction: tolerance %1%%%2\n" ) )
@@ -598,6 +655,10 @@ void US_Hydrodyn::grpy_process_next() {
                      .arg( srep.converged
                            ? QString( us_tr( "converged (estimated error %1%%)" ) )
                              .arg( 100.0 * srep.err_max, 0, 'g', 3 )
+                           : srep.mem_capped
+                           ? QString( us_tr( "STOPPED BY AVAILABLE MEMORY at %1 beads "
+                                             "(estimated error %2%%)" ) )
+                             .arg( sopt.max_beads ).arg( 100.0 * srep.err_max, 0, 'g', 3 )
                            : QString( us_tr( "DID NOT CONVERGE (estimated error %1%%)" ) )
                              .arg( 100.0 * srep.err_max, 0, 'g', 3 ) ) );
          if ( srep.viscosity_unreliable ) {
