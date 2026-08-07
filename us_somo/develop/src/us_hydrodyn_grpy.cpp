@@ -146,6 +146,30 @@ void US_Hydrodyn::grpy_write_shell_model( const vector < int > & idx,
    }
 }
 
+// Encode the GRPY settings that change the answer into a file-name suffix, in the style
+// SOMO already uses for bead models (short mnemonic + value, '.' -> '_', appended only when
+// the option is set -- cf. PR1_4, TH10, pH7, A20, hy, G4 in getExtendedSuffix()).
+//
+// Only non-default settings appear, so a default run produces exactly the names it always
+// did. The point is that shells produced under different settings must not collide: at one
+// target accuracy, or with intrinsic viscosity required rather than not, the retained beads
+// differ, and without this the files would silently overwrite each other.
+//
+//   sp        single precision
+//   SR0_5     shell reduction, 0.5% target accuracy
+//   eta/noeta whether intrinsic viscosity had to converge
+static QString grpy_settings_suffix( bool single, bool shell, double tol, bool require_eta ) {
+   QString s;
+   if ( single ) {
+      s += "-sp";
+   }
+   if ( shell ) {
+      s += QString( "-SR%1" ).arg( 100.0 * tol );
+      s += require_eta ? "eta" : "noeta";
+   }
+   return s.replace( ".", "_" );
+}
+
 // Format a fraction as a percentage string, e.g. 0.00489 -> "0.489%".
 //
 // The percent sign has to be attached HERE rather than written as a literal in a format
@@ -806,7 +830,12 @@ void US_Hydrodyn::grpy_process_next() {
          // duration and the only visible sign of several solves is the progress bar.
          const double rung_tol   = sopt.tol;
          const bool   save_models = hydro.grpy_shell_save_models;
-         const QString shell_base = QFileInfo( grpy_last_processed ).completeBaseName();
+         // Name the shell models for the settings that produced them: at a different
+         // target accuracy, or with viscosity required rather than not, the retained beads
+         // differ, and identically-named files would overwrite each other between runs.
+         const QString shell_base =
+            QFileInfo( grpy_last_processed ).completeBaseName()
+            + grpy_settings_suffix( opt.single, true, sopt.tol, require_eta );
          // srep outlives the solve below, and the module fills in each rung's selection
          // BEFORE calling on_rung, so the current rung is srep.kept.back() here.
          sopt.on_rung = [ this, rung_tol, save_models, shell_base, &srep ]
