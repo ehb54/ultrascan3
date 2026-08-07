@@ -792,6 +792,10 @@ void US_Hydrodyn::grpy_process_next() {
       // Diagnostic: keep each rung's selection so the reduced shells can be written out.
       sopt.record_subsets = hydro.grpy_shell_save_models;
 
+      // Declared before the on_rung lambda below, which captures it by reference to write
+      // each rung's shell model as that rung lands.
+      grpy::ShellReport srep;
+
       if ( sopt.enabled ) {
          editor_msg( "dark blue",
                      QString( us_tr( "GRPY shell reduction: tolerance %1%2\n" ) )
@@ -831,7 +835,6 @@ void US_Hydrodyn::grpy_process_next() {
 
       la::QtParallel par( USglobal->config_list.numThreads );
       grpy::ShellSolver solver( par, opt, sopt );
-      grpy::ShellReport srep;
       const int model = grpy_last_model_number;
       grpy::Results r = solver.run(
          in.beads, in.params, srep,
