@@ -2622,8 +2622,15 @@ void US_Hydrodyn::calc_mw()
    // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
    // info_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_residue_protons_electrons_at_pH( le_pH->text().toDouble(),  model_vector[ 0 ] );
-   QTextStream(stdout) << "end of calc_mw()\n";
-   info_residue_protons_electrons_at_pH( 7, model_vector[0] );
+   // Commented out (not deleted) because it is diagnostic, not dead: it dumps a CSV row of
+   // protons/electrons/charge per atom, which is the thing to re-enable when ionization or
+   // net-charge numbers look wrong. It fires on every PDB load and prints one line per atom
+   // -- thousands for a large structure -- which noticeably slows a debug cycle when stdout
+   // is a terminal or an editor shell. Note the pH here is hardwired to 7 rather than read
+   // from the form, so it does not follow the pH actually in use; the commented call above
+   // is the variant that does. Re-enable whichever suits the question at hand.
+   // QTextStream(stdout) << "end of calc_mw()\n";
+   // info_residue_protons_electrons_at_pH( 7, model_vector[0] );
 }
 
 void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {
