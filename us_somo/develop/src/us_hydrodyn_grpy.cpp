@@ -468,7 +468,12 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                      .arg( gparams.count( "grpy_shell_max_beads" )
                            ? "grpy_shell_max_beads" : "GRPY_SHELL_MAX_BEADS" )
                      .arg( ram_cap > 0 ? QString::number( ram_cap ) : us_tr( "unknown" ) )
-                     .arg( over_ram
+                     .arg( !shell_eff
+                           // The cap only bounds the shell-reduction ladder. Announcing it
+                           // as though it were in force while shell reduction is off reads
+                           // as if it were limiting this run, which it is not.
+                           ? us_tr( " -- no effect: shell reduction is off" )
+                           : over_ram
                            ? us_tr( " -- ABOVE what this machine's memory supports; it may"
                                     " swap heavily" )
                            : QString() ) );
@@ -732,18 +737,32 @@ void US_Hydrodyn::grpy_process_next() {
       grpy_stdout = QString::fromStdString( r.report );
       grpy_viscosity_unreliable = srep.viscosity_unreliable;
       if ( sopt.enabled ) {
+         // err_max is the MAX over the required observables, and intrinsic viscosity runs
+         // ~3.3x the error of D_t at equal reduction -- so on an unconverged run this one
+         // number is usually the viscosity's, and quoting it alone makes D_t look far worse
+         // than it is. Name the observable it belongs to; the per-observable bars are in
+         // the results file. Meaningless on an exact (unreduced) result, where all bars are 0.
+         const QString worst = srep.err_max > 0.0
+            ? QString( us_tr( ", worst: %1" ) ).arg( grpy::obs_name( srep.worst ) )
+            : QString();
          editor_msg( srep.converged ? "dark blue" : "red",
                      QString( us_tr( "GRPY shell reduction: %1 of %2 beads used, %3\n" ) )
                      .arg( srep.n_used ).arg( srep.n_full )
                      .arg( srep.converged
-                           ? QString( us_tr( "converged (estimated error %1)" ) )
-                             .arg( grpy_pct( srep.err_max ) )
+                           ? QString( us_tr( "converged (estimated error %1%2)" ) )
+                             .arg( grpy_pct( srep.err_max ) ).arg( worst )
                            : srep.mem_capped
                            ? QString( us_tr( "STOPPED BY AVAILABLE MEMORY at %1 beads "
-                                             "(estimated error %2)" ) )
-                             .arg( sopt.max_beads ).arg( grpy_pct( srep.err_max ) )
-                           : QString( us_tr( "DID NOT CONVERGE (estimated error %1)" ) )
-                             .arg( grpy_pct( srep.err_max ) ) ) );
+                                             "(estimated error %2%3)" ) )
+                             .arg( sopt.max_beads ).arg( grpy_pct( srep.err_max ) ).arg( worst )
+                           : QString( us_tr( "DID NOT CONVERGE (estimated error %1%2)" ) )
+                             .arg( grpy_pct( srep.err_max ) ).arg( worst ) ) );
+         if ( srep.err_max > 0.0 ) {
+            editor_msg( "dark blue",
+                        us_tr( "GRPY shell reduction: that is the LARGEST of the requested"
+                               " quantities; the individual estimates, which are typically"
+                               " smaller, are listed in the results file.\n" ) );
+         }
          if ( srep.viscosity_unreliable ) {
             editor_msg( "red", us_tr( "GRPY shell reduction: intrinsic viscosity and Einstein"
                                       " radius are unconverged and are being withheld from the"
