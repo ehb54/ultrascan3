@@ -34,7 +34,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       vector < QString > expert_mode_data =
          {
             "__SECTION__",
-            "Main hydro results:",
+            "Main hydro",
 
             "results.name", 
             "Model name", 
@@ -169,7 +169,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
             "__SECTION__",
-            "Additional SMI results:",
+            "SMI",
 
             "cen_of_res_x",
             "Centre of resistance [ X, Y, Z ] [nm]",
@@ -204,7 +204,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             // "Corrected Einstein's radius [nm]",
 
             "__SECTION__",
-            "Additional ZENO results:",
+            "ZENO",
 
             "results.s20w_sd", 
             "Sedimentation coefficient s.d.",
@@ -251,7 +251,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Skin Thickness",
 
             "__SECTION__",
-            "Additional GRPY results:",
+            "GRPY",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
@@ -306,7 +306,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
-            "GRPY options:",
+            "GRPY options",
 
             "hydro.grpy_single",
             "GRPY single precision",
@@ -333,7 +333,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY shell worst quantity",
 
             "__SECTION__",
-            "Additional vdW results:",
+            "vdW",
 
             "vdw_theo_waters",
             "vdW Theoretical waters",
@@ -348,7 +348,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "vdW Exposed waters",
 
             "__SECTION__",
-            "Solvent conditions:",
+            "Solvent",
 
             "hydro.solvent_name", 
             "Solvent name", 
@@ -377,7 +377,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results and options:",
+            "ASA",
 
             "__BREAK__",
 
@@ -406,7 +406,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "ASA vdW+GRPY Threshold [%]",
 
             "__SECTION__",
-            "Fractal Dimension:",
+            "Fractal dim.",
 
             "fractal_dimension_parameters",
             "Fractal dimension parameters",
@@ -466,7 +466,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       vector < QString > non_expert_mode_data =
          {
             "__SECTION__",
-            "Main hydro results:",
+            "Main hydro",
 
             "results.name", 
             "Model name", 
@@ -601,7 +601,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
             "__SECTION__",
-            "Additional SMI results:",
+            "SMI",
 
             "cen_of_res_x",
             "Centre of resistance [ X, Y, Z ] [nm]",
@@ -616,7 +616,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Centre of diffusion [ X, Y, Z ] [nm]",
 
             "__SECTION__",
-            "Additional ZENO results:",
+            "ZENO",
 
             "results.s20w_sd", 
             "Sedimentation coefficient s.d.",
@@ -663,7 +663,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Skin Thickness",
 
             "__SECTION__",
-            "Additional GRPY results:",
+            "GRPY",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
@@ -718,7 +718,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
-            "GRPY options:",
+            "GRPY options",
 
             "hydro.grpy_single",
             "GRPY single precision",
@@ -745,7 +745,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY shell worst quantity",
 
             "__SECTION__",
-            "Additional vdW results:",
+            "vdW",
 
             "vdw_theo_waters",
             "vdW Theoretical waters",
@@ -760,7 +760,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "vdW Exposed waters",
 
             "__SECTION__",
-            "Solvent conditions:",
+            "Solvent",
 
             "hydro.solvent_name", 
             "Solvent name", 
@@ -789,7 +789,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results and options:",
+            "ASA",
 
             "__BREAK__",
 
@@ -818,7 +818,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "ASA vdW+GRPY Threshold [%]",
 
             "__SECTION__",
-            "Fractal Dimension:",
+            "Fractal dim.",
 
             "fractal_dimension_parameters",
             "Fractal dimension parameters",
@@ -1784,7 +1784,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry(global_Xpos, global_Ypos, 640, 480);
+   // 880 rather than 640: nine tabs of titles did not fit, and the titles above were
+   // shortened for the same reason. Qt does not grow a tab to fit multiple lines -- the
+   // height is fixed regardless of newlines -- so wrapping them is not an option without
+   // a custom QTabBar.
+   setGeometry(global_Xpos, global_Ypos, 880, 480);
 }
 
 US_Hydrodyn_Save::~US_Hydrodyn_Save()
