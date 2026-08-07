@@ -165,6 +165,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_model_numbers.clear();
    grpy_processed    .clear();
    grpy_addl_params  .clear();
+   grpy_used_beads   .clear();   // was drained only via pop_front, so an early abort
+                                 // (e.g. the memory guard) left a stale count behind
 
    grpy_results.method                = "GRPY";
    grpy_results.mass                  = 0e0;
