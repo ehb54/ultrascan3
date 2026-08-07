@@ -7,7 +7,7 @@ Link::Link( QString alias )
 {
   connect(&server, &QSslSocket::readyRead, this, &Link::rx);
   connect(&server, &QSslSocket::disconnected, this, &Link::serverDisconnect);
-  connect(&server, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(sslErrors(QList<QSslError>)));
+  connect(&server, &QSslSocket::sslErrors, this, &Link::sslErrors);
  
   certPath = US_Settings::etcDir() + QString("/optima/");
 

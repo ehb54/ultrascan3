@@ -133,7 +133,6 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
 
-
    connect( ck_plteda, &QAbstractButton::toggled,
             this,      &US_ResidPlotFem::pedaCheck );
    connect( ck_subtin, &QAbstractButton::toggled,
@@ -156,6 +155,8 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
             this,      &US_ResidPlotFem::pranCheck );
    connect( ck_shorbm, &QAbstractButton::toggled,
             this,      &US_ResidPlotFem::srbmCheck );
+   connect( ck_pltbm, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::bmbmCheck );
    connect( pb_close,  &QAbstractButton::clicked,
             this,      &US_ResidPlotFem::close_all );
 
