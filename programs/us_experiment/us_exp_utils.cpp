@@ -4153,6 +4153,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    if ( mainw->us_abde_mode || mainw->us_velmwl_mode )
      {
        QString e_mode = ( mainw->us_abde_mode ) ? "ABDE" : "VEL-MWL";
+       QString e_mode_mwl = ( mainw->us_abde_mode ) ? "ABDE-MWL" : "VEL-MWL";
        qDebug() << "Submit::init: " << e_mode << "_MODE ";
        QStringList msg_to_user;
        
@@ -4191,11 +4192,12 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   if (msg_to_user.join(",").contains("Single Analyte Defined;"))
 	     {
 	       QMessageBox::critical( this,
-				      tr( "ATTENTION: Solution with a Single Analyte (MWL-") + e_mode + tr(")"),
+				      tr( "ATTENTION: Solution with a Single Analyte (") + e_mode + tr(")"),
 				      msg_to_user.join("\n") +
 				      tr("\n\nThe solution for the above specified channel has only "
 					 "one analyte. At least two analytes with valid extinction profiles "
-					 "are required for the currently defined MWL-ABDE experiment.\n"
+					 "are required for the currently defined ") + e_mode_mwl +
+				      tr(" experiment.\n"
 					 "Please modify the solution, or select a different one to satisfy these "
 					 "requirements."
 					 "\n\nSaving protocol or run submission to the Optima are not possible "
@@ -4204,7 +4206,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   else if (msg_to_user.join(",").contains(" Invalid Extinction Profile(s);"))
 	     {
 	       QMessageBox::critical( this,
-				      tr( "ATTENTION: Invalid Extinction Profile(s) (MWL-") + e_mode + tr(")"),
+				      tr( "ATTENTION: Invalid Extinction Profile(s) (") + e_mode_mwl + tr(")"),
 				      msg_to_user.join("\n") +
 				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
 					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
@@ -4215,7 +4217,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   else
 	     {
 	       QMessageBox::critical( this,
-				      tr( "ATTENTION: Invalid Extinction Profiles (") + e_mode + tr(")"),
+				      tr( "ATTENTION: Invalid Extinction Profiles (") + e_mode_mwl + tr(")"),
 				      msg_to_user.join("\n") +
 				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
 					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
