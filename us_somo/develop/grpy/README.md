@@ -125,6 +125,44 @@ incremental gain is **~2–3×**, rising with model size and largest where it is
 durable contribution is the error bar: the existing exclusion is a binary heuristic that
 reports no uncertainty at all.
 
+## Memory cap (`ShellOptions::max_beads`)
+
+A caller that refuses oversized models up front (SOMO has such a pre-flight guard) must
+size the matrix from the **full** bead count, since it cannot know where the ladder will
+stop — and so would turn away exactly the large models this exists to make feasible. The
+ladder normally stops well short of the full model, and memory goes as N², so a run that
+stops at ~25% of the beads needs ~6% of the refused matrix.
+
+Set `max_beads` to the largest rung that fits and the ladder stops there instead:
+
+- The cap is checked **after** building the subset (cheap) but **before** the solve
+  (expensive), so a rejected rung costs nothing. The ladder ascends, so the first rung over
+  budget ends it.
+- A capped run sets `ShellReport::mem_capped` and **does not** set `converged`. Its bar is
+  reported as usual and will generally exceed `tol`. It is never passed off as converged.
+- If not even the smallest rung fits, `levels == 0` and **there is no result** — the caller
+  must detect this and refuse. `Results` is default-constructed; do not read it.
+
+So an oversized model yields the best result that fits, with a quantified error, instead of
+nothing.
+
+## Progress reporting
+
+Each rung is a separate solve sweeping 0..100%. Forwarded raw, that restarts the caller's
+progress bar once per rung and gives no clue which rung is running — several solves look
+like one stalled solve repeating. `ShellSolver` therefore **wraps** the `ProgressFn` it is
+given: each rung is mapped onto its share of the whole run, weighted by predicted cost
+(~N³), and the stage string is prefixed `rung i/n, N beads: `. The bar advances
+monotonically. The denominator assumes the ladder runs to its last planned rung, so
+converging early makes it jump to done.
+
+The caller's callback signature is unchanged, and with `enabled = false` progress passes
+through **verbatim** — both asserted in `tests/test_shell.cpp`.
+
+`ShellOptions::on_rung(i, planned, beads, err_max)` fires as each rung lands, for callers
+that want to log the ladder converging rather than leave the user watching a bar. `err_max`
+is 1.0 on the first rung, since there is nothing yet to difference against.
+
 ## Correctness details worth knowing
 
 - **MW and Rg are pinned to the full model.** Left to re-derive from a reduced bead list,
