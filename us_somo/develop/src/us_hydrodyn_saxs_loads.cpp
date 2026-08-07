@@ -1150,9 +1150,19 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    bool clear_plot_first    = true;
    bool extrapolate_c0      = false;
 
-   US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
-      new US_Hydrodyn_Saxs_Iqq_Load_Csv(
-                                        "Select models to load\n" + header_tag + 
+   if ( extrap_c0_script )
+   {
+      // scripted extrapolation-to-c0 run: skip the modal selection dialog and select every
+      // available curve for the extrapolation (see saxs_extrap_c0_script()).
+      qsl_sel_names   = qsl_names;
+      extrapolate_c0  = true;
+      clear_plot_first = false;
+   }
+   else
+   {
+      US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
+         new US_Hydrodyn_Saxs_Iqq_Load_Csv(
+                                        "Select models to load\n" + header_tag +
                                         (bin_msg.isEmpty() ? "" : "\n" + bin_msg),
                                         &qsl_names,
                                         &qsl_sel_names,
@@ -1176,11 +1186,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         1 || U_EXPT,
                                         us_hydrodyn
                                         );
-   US_Hydrodyn::fixWinButtons( hslc );
-   hslc->exec();
-   
-   delete hslc;
-   
+      US_Hydrodyn::fixWinButtons( hslc );
+      hslc->exec();
+
+      delete hslc;
+   }
+
    this->isVisible() ? this->raise() : this->show();
    
    if ( qsl_sel_names.size() && clear_plot_first ) {
@@ -1211,10 +1222,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    // check for scaling target
 
    QString scaling_target = "";
-   if ( qsl_sel_names.size() && !run_ift )
+   if ( qsl_sel_names.size() && !run_ift && !extrap_c0_script )
    {
       set_scaling_target( scaling_target );
-   }         
+   }
    
    // setup for average & stdev
    vector < double > sum_iq(q.size());
