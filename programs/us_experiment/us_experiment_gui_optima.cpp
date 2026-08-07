@@ -2990,8 +2990,10 @@ void US_ExperGuiRotor::changeExpType( int ndx )
   if ( exptype_sel == "Velocity" )
     ck_velmwl->setVisible(true);
   else
-    ck_velmwl->setVisible(false);
-  
+    {
+      ck_velmwl->setVisible(false);
+      ck_velmwl->setChecked(false);
+    }
 }
 
 // Slot for change in Operator selection

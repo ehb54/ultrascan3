@@ -319,7 +319,17 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             operID      = attr.value( "operid"       ).toString().toInt();
             instID      = attr.value( "instid"       ).toString().toInt();
             instrname   = attr.value( "instname" ).toString();
-         }
+
+	    //Velocity-MWL: backward comp.
+	    if ( attr.hasAttribute ("vel_mwl_prot") )
+	      {
+		( attr.value( "vel_mwl_prot" ) .toString().toInt() ) ?
+		  vel_mwl_prot = true : vel_mwl_prot = false;
+	      }
+	    else
+	      vel_mwl_prot = false;
+
+	 }
 
          else
             break;
@@ -352,6 +362,9 @@ bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute( "operid",      QString::number( operID ) );
    xmlo.writeAttribute( "opername",    opername );
    xmlo.writeAttribute( "exptype",     exptype );
+
+   //Velocity-MWL
+   xmlo.writeAttribute( "vel_mwl_prot", QString::number( vel_mwl_prot ));
    
    xmlo.writeAttribute( "labguid",     labGUID );
    xmlo.writeAttribute( "rotguid",     rotGUID );

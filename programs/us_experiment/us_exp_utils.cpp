@@ -3664,7 +3664,7 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
      }
 
    //For abde only, show buff_spectra cks
-   if ( mainw->us_abde_mode )
+   if ( mainw->us_abde_mode || mainw->us_velmwl_mode )
      {
        qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
        for ( int ii = 0; ii < nrnchan; ii++ )
@@ -4150,9 +4150,10 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    
    //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
    //If not, inform user, disable "Submit"/"Save Protocol" buttons
-   if ( mainw->us_abde_mode )
+   if ( mainw->us_abde_mode || mainw->us_velmwl_mode )
      {
-       qDebug() << "Submit::init: ABDE_MODE ";
+       QString e_mode = ( mainw->us_abde_mode ) ? "ABDE" : "VEL-MWL";
+       qDebug() << "Submit::init: " << e_mode << "_MODE ";
        QStringList msg_to_user;
        
        //first, check if this is abde-mixed (MWL & SWL) experiement
@@ -4166,9 +4167,9 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        	   pb_saverp->setEnabled( false );
 
        	   msg_to_user.removeDuplicates();
-        
+
        	   QMessageBox::critical( this,
-       				  tr( "ATTENTION: Invalid Ranges Settings (ABDE)" ),
+       				  tr( "ATTENTION: Invalid Ranges Settings (") + e_mode + tr(")"),
        				  msg_to_user.join("\n") +
        				  tr("\n\nCurrent Ranges settings do not correspond to either multi-wavelength (MWL) or "
        				     "single-wavelength (SWL) experiment."
@@ -4190,7 +4191,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   if (msg_to_user.join(",").contains("Single Analyte Defined;"))
 	     {
 	       QMessageBox::critical( this,
-				      tr( "ATTENTION: Solution with a Single Analyte (MWL-ABDE)" ),
+				      tr( "ATTENTION: Solution with a Single Analyte (MWL-") + e_mode + tr(")"),
 				      msg_to_user.join("\n") +
 				      tr("\n\nThe solution for the above specified channel has only "
 					 "one analyte. At least two analytes with valid extinction profiles "
@@ -4203,7 +4204,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   else if (msg_to_user.join(",").contains(" Invalid Extinction Profile(s);"))
 	     {
 	       QMessageBox::critical( this,
-				      tr( "ATTENTION: Invalid Extinction Profile(s) (MWL-ABDE)" ),
+				      tr( "ATTENTION: Invalid Extinction Profile(s) (MWL-") + e_mode + tr(")"),
 				      msg_to_user.join("\n") +
 				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
 					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
@@ -4214,7 +4215,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   else
 	     {
 	       QMessageBox::critical( this,
-				      tr( "ATTENTION: Invalid Extinction Profiles (ABDE)" ),
+				      tr( "ATTENTION: Invalid Extinction Profiles (") + e_mode + tr(")"),
 				      msg_to_user.join("\n") +
 				      tr("\n\nPlease upload valid extinction profiles for above specified analytes "
 					 "and/or buffers using following UltraScan's programs: \n\"Database:Manage Analytes\""
@@ -4225,8 +4226,8 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	   return;
        	 }
 
-       //Check for the correct settings in AProfile for 'Use Reference#'
-       if ( !useReferenceNumbersSet( msg_to_user ) )
+       //Check for the correct settings in AProfile for 'Use Reference#': ABDE only:
+       if ( !useReferenceNumbersSet( msg_to_user ) && !mainw->us_velmwl_mode )
 	 {
 	   pb_submit->setEnabled( false );
 	   pb_saverp->setEnabled( false );
@@ -4244,7 +4245,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 	 }
 
        //Check for Matching Wvls in Refs. && Samples:
-       if ( !samplesReferencesWvlsMatch( msg_to_user ) )
+       if ( !samplesReferencesWvlsMatch( msg_to_user ) && !mainw->us_velmwl_mode )
 	 {
 	   pb_submit->setEnabled( false );
 	   pb_saverp->setEnabled( false );
