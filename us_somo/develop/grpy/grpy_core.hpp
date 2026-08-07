@@ -11,7 +11,9 @@
 // the Fortran storage. Indices are 0-based; Fortran 6*(I-1)+j maps to 6*i+(j-1).
 #pragma once
 #include <Eigen/Dense>
+#include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <vector>
 #include "linalg.hpp"
@@ -309,7 +311,7 @@ inline void assemble(const std::vector<Bead>& b, int N,
 // store. Validated element-for-element against assemble() (which matches Fortran).
 template <typename S>
 inline void assemble_tiled(const std::vector<Bead>& b, int N, la::TiledUpperSPD<S>& M,
-                           la::Parallel& par) {
+                           la::Parallel& par, const la::Progress& prog = {}) {
     auto put = [&](int r0, int c0, const auto& blk) {           // off-diagonal block, fully upper
         for (int i = 0; i < blk.rows(); ++i)
             for (int j = 0; j < blk.cols(); ++j) M.at(r0 + i, c0 + j) = (S)blk(i, j);
@@ -325,7 +327,13 @@ inline void assemble_tiled(const std::vector<Bead>& b, int N, la::TiledUpperSPD<
     }
     // Pair blocks (O(N^2)) parallelized over the outer bead i. Each i writes bead i's
     // rows only, at distinct elements -> data-parallel-safe (disjoint writes, no resize).
-    par.for_range(N, [&](int i) {
+    //
+    // Chunked over i for the same reason factor() is: with a blocking parallel backend the
+    // calling thread is a worker, so one for_range over all N left the GUI dead for the
+    // whole assembly with no progress at all. Bead i does (N-1-i) pairs, so the bar is
+    // weighted by pairs completed rather than by i. Without a callback this is one chunk,
+    // identical to before.
+    auto pair_block = [&](int i) {
     for (int j = i+1; j < N; ++j) {
         Vector3d R(b[i].x-b[j].x, b[i].y-b[j].y, b[i].z-b[j].z);
         double dist = R.norm(), aI = b[i].r, aJ = b[j].r;
@@ -349,7 +357,28 @@ inline void assemble_tiled(const std::vector<Bead>& b, int N, la::TiledUpperSPD<
             put(qi, qj, ddY2(yama_DD(R,aI,aJ)));
         }
     }
-    });
+    };
+
+    const long long pairs_total = (long long) N * (N - 1) / 2;
+    long long pairs_done = 0;
+    int chunk = prog ? 32 : N;                          // self-tuning; see factor()
+    // NB: advance by what was actually done, never by `chunk` -- `chunk` is retuned at the
+    // bottom of this loop, so using it as the stride would skip beads whenever it grew.
+    for (int base = 0; base < N; ) {
+        const int n = std::min(chunk, N - base);
+        const auto t0 = std::chrono::steady_clock::now();
+        par.for_range(n, [&](int t) { pair_block(base + t); });
+        for (int t = 0; t < n; ++t) pairs_done += (long long)(N - 1 - (base + t));
+        base += n;
+        if (prog) {
+            prog((int)(pairs_total > 0 ? 30 * pairs_done / pairs_total : 30),
+                 "BUILDING MOBILITY MATRIX");
+            const double ms = std::chrono::duration<double, std::milli>(
+                                  std::chrono::steady_clock::now() - t0).count();
+            if      (ms <  40.0 && chunk < N) chunk = std::min(N, chunk * 2);
+            else if (ms > 160.0 && chunk > 1) chunk /= 2;
+        }
+    }
 }
 
 // symmetric positive-definite inverse (MATREV 'M': DPOTRF/DPOTRI upper + symmetrize)
@@ -406,11 +435,11 @@ inline Eigen::Matrix<double,11,11> hydro_tiled(const std::vector<Bead>& b, int N
         const Vector3d& RC, la::Parallel& par, const la::Progress& prog = {},
         int tile = 256, const std::string& oocfile = "") {
     la::TiledUpperSPD<S> M(11*N, tile, oocfile);   // oocfile != "" -> disk-backed
-    assemble_tiled<S>(b, N, M, par);
+    assemble_tiled<S>(b, N, M, par, prog);
     MatrixXd Td = t_rigid_11(b, N, RC);
     M.factor(par, prog);
     Eigen::Matrix<S,Eigen::Dynamic,Eigen::Dynamic> Ts = Td.cast<S>();
-    Eigen::Matrix<S,Eigen::Dynamic,Eigen::Dynamic> Xs = M.solve(Ts);
+    Eigen::Matrix<S,Eigen::Dynamic,Eigen::Dynamic> Xs = M.solve(Ts, prog);
     return (Td.transpose() * Xs.template cast<double>());
 }
 

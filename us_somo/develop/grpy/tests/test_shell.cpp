@@ -277,6 +277,49 @@ int main() {
         fails += chk("disabled => stage text is unmodified", !any_rung_text);
     }
 
+    // ---- chunked progress is numerically inert, and covers all three phases ------
+    // assemble/factor/solve are chunked so the callback can fire inside them (the calling
+    // thread is a compute worker, so nothing else can keep a GUI alive). Chunking changes
+    // parallel granularity, so the first thing to prove is that it changes no result.
+    {
+        auto b = blob(5, 3.0, 2.0);
+        Solver plain(par);
+        Results without = plain.run(b, phys);                  // no callback -> single chunk
+
+        std::vector<int> pcts;
+        std::vector<std::string> stages;
+        Results with = plain.run(b, phys, [&](int pct, const char* stage) {
+            pcts.push_back(pct);
+            stages.push_back(stage ? stage : "");
+        });
+
+        fails += chk("chunking does not change Dt",
+                     with.translational_diffusion_centre == without.translational_diffusion_centre);
+        fails += chk("chunking does not change eta",
+                     with.intrinsic_viscosity_high == without.intrinsic_viscosity_high);
+        fails += chk("chunking does not change the report", with.report == without.report);
+
+        bool monotone = true, in_range = true;
+        for (size_t i = 0; i < pcts.size(); ++i) {
+            if (i && pcts[i] < pcts[i - 1]) monotone = false;
+            if (pcts[i] < 0 || pcts[i] > 100) in_range = false;
+        }
+        auto saw = [&](const char* s) {
+            for (auto& t : stages) if (t.find(s) != std::string::npos) return true;
+            return false;
+        };
+        fails += chk("progress is monotone", monotone);
+        fails += chk("progress within 0..100", in_range);
+        fails += chk("assembly phase reports", saw("BUILDING MOBILITY MATRIX"));
+        fails += chk("factor phase reports", saw("INVERTING MATRICES"));
+        fails += chk("solve phase reports", saw("SOLVING"));
+        // Tick COUNT is deliberately not asserted tightly. The chunker targets a wall-clock
+        // slice, so on a small model that finishes in milliseconds it correctly uses few
+        // large chunks; fine granularity only appears where it is needed. What must hold is
+        // that no phase is silent -- assembly and solve previously reported nothing at all.
+        fails += chk("every phase produced at least one tick", pcts.size() >= 3);
+    }
+
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);
     return fails ? 1 : 0;
 }
