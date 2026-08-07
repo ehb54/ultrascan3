@@ -55,6 +55,17 @@ static bool truthy( QString v ) {
    return v == "1" || v == "true" || v == "yes" || v == "on";
 }
 
+// Format a fraction as a percentage string, e.g. 0.00489 -> "0.489%".
+//
+// The percent sign has to be attached HERE rather than written as a literal in a format
+// string, because QString::arg() -- unlike printf -- has no "%%" escape: it substitutes
+// %1..%99 and passes every other "%" through untouched, so "%1%%" renders a stray double
+// percent. Producing the whole token here also keeps a literal "%" from ever sitting next
+// to a placeholder, where "%1%%2" would be genuinely ambiguous to read.
+static QString grpy_pct( double frac, int prec = 3 ) {
+   return QString::number( 100.0 * frac, 'g', prec ) + "%";
+}
+
 // Peak bytes for the tiled upper triangle of the 11N x 11N mobility matrix, plus ~10%.
 // Single definition so the pre-flight guard and the shell-reduction budget below can never
 // drift apart and disagree about what fits.
@@ -626,10 +637,24 @@ void US_Hydrodyn::grpy_process_next() {
 
       if ( sopt.enabled ) {
          editor_msg( "dark blue",
-                     QString( us_tr( "GRPY shell reduction: tolerance %1%%%2\n" ) )
-                     .arg( 100.0 * sopt.tol )
+                     QString( us_tr( "GRPY shell reduction: tolerance %1%2\n" ) )
+                     .arg( grpy_pct( sopt.tol ) )
                      .arg( require_eta ? us_tr( ", intrinsic viscosity required" )
                                        : us_tr( ", intrinsic viscosity NOT required (will be withheld)" ) ) );
+         // Log each rung as it lands. Without this the ladder is silent for its whole
+         // duration and the only visible sign of several solves is the progress bar.
+         const double rung_tol = sopt.tol;
+         sopt.on_rung = [ this, rung_tol ]( int i, int planned, int nb, double err ) {
+            editor_msg( "dark blue",
+                        QString( us_tr( "GRPY shell reduction: rung %1 of %2, %3 beads%4\n" ) )
+                        .arg( i + 1 ).arg( planned ).arg( nb )
+                        .arg( i == 0
+                              ? us_tr( " (first rung: no error estimate yet)" )
+                              : QString( us_tr( ", estimated error %1 (target %2)" ) )
+                                .arg( grpy_pct( err ) )
+                                .arg( grpy_pct( rung_tol ) ) ) );
+            qApp->processEvents();
+         };
       }
 
       la::QtParallel par( USglobal->config_list.numThreads );
@@ -653,14 +678,14 @@ void US_Hydrodyn::grpy_process_next() {
                      QString( us_tr( "GRPY shell reduction: %1 of %2 beads used, %3\n" ) )
                      .arg( srep.n_used ).arg( srep.n_full )
                      .arg( srep.converged
-                           ? QString( us_tr( "converged (estimated error %1%%)" ) )
-                             .arg( 100.0 * srep.err_max, 0, 'g', 3 )
+                           ? QString( us_tr( "converged (estimated error %1)" ) )
+                             .arg( grpy_pct( srep.err_max ) )
                            : srep.mem_capped
                            ? QString( us_tr( "STOPPED BY AVAILABLE MEMORY at %1 beads "
-                                             "(estimated error %2%%)" ) )
-                             .arg( sopt.max_beads ).arg( 100.0 * srep.err_max, 0, 'g', 3 )
-                           : QString( us_tr( "DID NOT CONVERGE (estimated error %1%%)" ) )
-                             .arg( 100.0 * srep.err_max, 0, 'g', 3 ) ) );
+                                             "(estimated error %2)" ) )
+                             .arg( sopt.max_beads ).arg( grpy_pct( srep.err_max ) )
+                           : QString( us_tr( "DID NOT CONVERGE (estimated error %1)" ) )
+                             .arg( grpy_pct( srep.err_max ) ) ) );
          if ( srep.viscosity_unreliable ) {
             editor_msg( "red", us_tr( "GRPY shell reduction: intrinsic viscosity and Einstein"
                                       " radius are unconverged and are being withheld from the"
