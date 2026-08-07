@@ -5485,21 +5485,23 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
       return false;
    }
 
-   switch ( QMessageBox::question(this, 
-                                  windowTitle() + us_tr( " : Load UV-Vis Data" )
-                                  ,dad_lambdas.summary_rich()
-                                  + QString(
-                                            "<hr>"
-                                            "Proceed with these UV_Vis " + UNICODE_LAMBDA_QS + "s?"
-                                            )
-                                  ) )
-   {
-   case QMessageBox::Yes : 
-      break;
-   default:
-      errormsg = "UV-Vis " + UNICODE_LAMBDA_QS + "s need to be loaded";
-      return false;
-      break;
+   if ( !script_mode ) {
+      switch ( QMessageBox::question(this,
+                                     windowTitle() + us_tr( " : Load UV-Vis Data" )
+                                     ,dad_lambdas.summary_rich()
+                                     + QString(
+                                               "<hr>"
+                                               "Proceed with these UV_Vis " + UNICODE_LAMBDA_QS + "s?"
+                                               )
+                                     ) )
+      {
+      case QMessageBox::Yes :
+         break;
+      default:
+         errormsg = "UV-Vis " + UNICODE_LAMBDA_QS + "s need to be loaded";
+         return false;
+         break;
+      }
    }
 
 
@@ -5515,7 +5517,32 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
    
    bool lambda_crop;
 
-   {
+   if ( script_mode ) {
+
+      start_time_seconds          = script_start_time_seconds;
+      collection_interval_seconds = script_collection_interval_seconds;
+
+      lambda_crop = script_lambda_end > script_lambda_start;
+      if ( lambda_crop ) {
+         lambda_start = script_lambda_start;
+         lambda_end   = script_lambda_end;
+      }
+
+      TSO <<
+         QString(
+                 "script mode UV-Vis load\n"
+                 "start time seconds          %1\n"
+                 "collection_interval_seconds %2\n"
+                 "%3\n"
+                 )
+         .arg( start_time_seconds )
+         .arg( collection_interval_seconds )
+         .arg( lambda_crop
+               ? QString( "lambda range                %1 to %2" ).arg( lambda_start ).arg( lambda_end )
+               : QString( "lambda range                full spectrum" ) )
+         ;
+
+   } else {
       bool try_again = false;
 
       do {
@@ -5608,7 +5635,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
    // get times
 
-   {
+   if ( !script_mode ) {
       bool try_again = false;
 
       do {

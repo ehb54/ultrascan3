@@ -273,6 +273,7 @@ SOURCES *= \
         src/us_hydrodyn_dad_p3d.cpp \
         src/us_hydrodyn_dad_parameters.cpp \
         src/us_hydrodyn_dad_util.cpp \
+        src/us_hydrodyn_dad_script.cpp \
         src/us_hydrodyn_dad_movie.cpp \
         src/us_hydrodyn_dad_conc.cpp \
         src/us_hydrodyn_dad_conc_load.cpp \

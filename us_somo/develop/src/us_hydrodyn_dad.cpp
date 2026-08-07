@@ -518,6 +518,13 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    this->us_hydrodyn = us_hydrodyn;
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
    dad_options_widget = 0;
+
+   script_mode                        = false;
+   script_start_time_seconds          = 0e0;
+   script_collection_interval_seconds = 1e0;
+   script_lambda_start                = 0e0;
+   script_lambda_end                  = 0e0;
+
    suppress_plot            = false;
    powerfit_fit_curve       = (QwtPlotCurve *) 0;
    powerfit_corrected_curve = (QwtPlotCurve *) 0;
