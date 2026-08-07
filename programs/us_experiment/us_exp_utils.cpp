@@ -1116,6 +1116,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
        rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
        rpRotor->vel_mwl_prot = ck_velmwl->isChecked();
+
+       ck_velmwl ->setChecked( rpRotor->vel_mwl_prot );
      }
 
    //Show current oper(s) & rev(s)
