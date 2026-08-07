@@ -84,6 +84,32 @@ static int grpy_max_beads_for_ram( bool single ) {
    return n > 1.0 ? (int) n : 1;
 }
 
+// Explicit override of the shell-reduction bead cap: GRPY_SHELL_MAX_BEADS in the
+// environment, or the grpy_shell_max_beads script parameter (script wins). Returns 0 when
+// unset or unparseable, meaning "use the memory-derived cap".
+//
+// Env/script only, with no GUI control, matching grpy_ooc_dir: this is a diagnostic and
+// shared-machine knob, not a user setting. Two uses:
+//   - bounding GRPY's footprint below 70% of RAM on a machine shared with other work;
+//   - exercising the memory-capped path at all. Without it the ladder can only reach the
+//     cap by FAILING on the rung below it, which on a model large enough to have a cap
+//     means paying for that rung first -- measured at 5h44m on a 11328-bead model.
+// It is honoured in both directions; a value above what memory supports is warned about
+// rather than silently clamped, since overriding is a deliberate act.
+static int grpy_shell_cap_override( const map < QString, QString > & gparams ) {
+   int v = 0;
+   bool ok = false;
+   if ( !qEnvironmentVariableIsEmpty( "GRPY_SHELL_MAX_BEADS" ) ) {
+      const int e = QString( qgetenv( "GRPY_SHELL_MAX_BEADS" ) ).trimmed().toInt( &ok );
+      if ( ok && e > 0 ) v = e;
+   }
+   if ( gparams.count( "grpy_shell_max_beads" ) ) {
+      const int s = gparams.at( "grpy_shell_max_beads" ).trimmed().toInt( &ok );
+      if ( ok && s > 0 ) v = s;
+   }
+   return v;
+}
+
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
    double mw = 0e0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -422,11 +448,37 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       // the largest rung that fits WITH its error bar instead of being refused outright.
       // Defer to it whenever the budget admits even the smallest rung -- below that there
       // is nothing to compute and the refusal still stands.
-      const int    cap      = grpy_max_beads_for_ram( single_eff );
+      const int    ram_cap  = grpy_max_beads_for_ram( single_eff );
+      const int    cap_ovr  = grpy_shell_cap_override( gparams );
+      const int    cap      = cap_ovr > 0 ? cap_ovr : ram_cap;
       const double smallest = grpy::ShellOptions{}.ladder.empty()
          ? 1.0 : grpy::ShellOptions{}.ladder.front();
       const bool   shell_can_help =
          shell_eff && cap > 0 && (double) cap >= smallest * (double) max_beads;
+
+      // Say what the cap is, every run. An override especially must never be silent: it
+      // changes which results are obtainable, and a stale environment variable would
+      // otherwise be invisible while quietly bounding every calculation.
+      if ( cap_ovr > 0 ) {
+         const bool over_ram = ram_cap > 0 && cap_ovr > ram_cap;
+         editor_msg( over_ram ? "red" : "dark red",
+                     QString( us_tr( "GRPY: shell reduction bead cap OVERRIDDEN to %1 by %2"
+                                     " (memory-derived cap %3)%4\n" ) )
+                     .arg( cap_ovr )
+                     .arg( gparams.count( "grpy_shell_max_beads" )
+                           ? "grpy_shell_max_beads" : "GRPY_SHELL_MAX_BEADS" )
+                     .arg( ram_cap > 0 ? QString::number( ram_cap ) : us_tr( "unknown" ) )
+                     .arg( over_ram
+                           ? us_tr( " -- ABOVE what this machine's memory supports; it may"
+                                    " swap heavily" )
+                           : QString() ) );
+      } else if ( shell_eff && ram_cap > 0 ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "GRPY shell reduction: bead cap %1, from %2 GB of"
+                                     " memory (set GRPY_SHELL_MAX_BEADS to override)\n" ) )
+                     .arg( ram_cap )
+                     .arg( (double) ram / ( 1024.0 * 1024.0 * 1024.0 ), 0, 'f', 1 ) );
+      }
 
       if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram && shell_can_help ) {
          editor_msg( "dark red",
@@ -633,7 +685,13 @@ void US_Hydrodyn::grpy_process_next() {
       // guard enforces. On a model that fits this never binds (every rung is under the cap
       // and the ladder ends at the full model as before); on one that does not, the ladder
       // stops at the largest rung that fits and reports its error rather than thrashing.
-      sopt.max_beads = grpy_max_beads_for_ram( opt.single );
+      // Resolved exactly as the guard resolves it -- if these two disagreed, the guard
+      // could admit a run the ladder then refuses to compute, or vice versa. Reported
+      // there, once per run, rather than here, which runs per model.
+      {
+         const int cap_ovr = grpy_shell_cap_override( gparams );
+         sopt.max_beads = cap_ovr > 0 ? cap_ovr : grpy_max_beads_for_ram( opt.single );
+      }
 
       if ( sopt.enabled ) {
          editor_msg( "dark blue",
