@@ -1115,8 +1115,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        le_dataDiskPath ->setText( rpRotor->importDataDisk );
        rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
        rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
-       rpRotor->vel_mwl_prot = ck_velmwl->isChecked();
-
+       
+       qDebug() << "rpRotor->vel_mwl_prot " << rpRotor->vel_mwl_prot; 
        ck_velmwl ->setChecked( rpRotor->vel_mwl_prot );
      }
 

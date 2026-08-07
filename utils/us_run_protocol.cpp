@@ -323,12 +323,17 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
 	    //Velocity-MWL: backward comp.
 	    if ( attr.hasAttribute ("vel_mwl_prot") )
 	      {
+		qDebug() << "reading ROTOR: vel_mwl_prot is present!";
 		( attr.value( "vel_mwl_prot" ) .toString().toInt() ) ?
 		  vel_mwl_prot = true : vel_mwl_prot = false;
+		qDebug() << "reading ROTOR: vel_mwl_prot is present! "
+			 << ", value: " << vel_mwl_prot; 
 	      }
 	    else
-	      vel_mwl_prot = false;
-
+	      {
+		qDebug() << "reading ROTOR: vel_mwl_prot is NOT present!";
+		vel_mwl_prot = false;
+	      }
 	 }
 
          else
