@@ -125,6 +125,31 @@ incremental gain is **~2–3×**, rising with model size and largest where it is
 durable contribution is the error bar: the existing exclusion is a binary heuristic that
 reports no uncertainty at all.
 
+## Reading the report
+
+`run()` returns the **final rung's `Results` verbatim**, so its scalars and the report text
+embedded in them always agree. The extrapolated values and the per-observable bars are
+delivered separately in `ShellReport` — overwriting the scalars with extrapolated values
+would produce a `Results` contradicting its own on-disk report.
+
+| field | meaning |
+|---|---|
+| `attempted` | reduction was tried (false if disabled, or N < 32) |
+| `converged` / `unreduced` / `mem_capped` | how the ladder ended — see below |
+| `n_full`, `n_used`, `levels` | beads in the model, beads in the final rung, rungs run |
+| `err_max`, `worst` | largest bar over the required observables, and which one |
+| `require` | echo of the requested observables; `err_est`, `extrapolated` and `k_obs` are **parallel to it** |
+| `err_est[m]` | relative bar for `require[m]` |
+| `extrapolated[m]` | Richardson value for `require[m]` — the ladder's best estimate, not what `Results` carries. Falls back to the final rung's raw value when extrapolation declines |
+| `k_obs[m]` | observed convergence order; **0 means extrapolation declined** (non-monotone or non-converging gaps), and then `err_est[m]` is the raw inter-rung gap and `extrapolated[m]` is not extrapolated at all |
+| `ns` | bead count per rung, in order |
+| `viscosity_unreliable` | withhold both viscosities and the Einstein radius — see above |
+
+The three end states are mutually exclusive in practice: `unreduced` means the ladder
+reached the full model, so the result is exact and every bar is zero; `mem_capped` means it
+was stopped by `max_beads`; plain `converged` means the tolerance was met on a reduced
+subset. Only `unreduced` licenses treating the result as exact.
+
 ## Memory cap (`ShellOptions::max_beads`)
 
 A caller that refuses oversized models up front (SOMO has such a pre-flight guard) must
