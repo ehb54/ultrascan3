@@ -306,6 +306,33 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
+            "GRPY options:",
+
+            "hydro.grpy_single",
+            "GRPY single precision",
+            "GRPY single precision",
+
+            "hydro.grpy_shell",
+            "GRPY shell reduction",
+            "GRPY shell reduction",
+
+            "hydro.grpy_shell_tol",
+            "GRPY shell reduction target accuracy [%]",
+            "GRPY shell target accuracy [%]",
+
+            "hydro.grpy_shell_require_eta",
+            "GRPY shell reduction intrinsic viscosity required",
+            "GRPY shell viscosity required",
+
+            "grpy_shell_err",
+            "GRPY shell reduction estimated error [%]",
+            "GRPY shell estimated error [%]",
+
+            "grpy_shell_worst",
+            "GRPY shell reduction worst quantity",
+            "GRPY shell worst quantity",
+
+            "__SECTION__",
             "Additional vdW results:",
 
             "vdw_theo_waters",
@@ -690,6 +717,33 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             "GRPY Einstein's radius [nm]",
             
+            "__SECTION__",
+            "GRPY options:",
+
+            "hydro.grpy_single",
+            "GRPY single precision",
+            "GRPY single precision",
+
+            "hydro.grpy_shell",
+            "GRPY shell reduction",
+            "GRPY shell reduction",
+
+            "hydro.grpy_shell_tol",
+            "GRPY shell reduction target accuracy [%]",
+            "GRPY shell target accuracy [%]",
+
+            "hydro.grpy_shell_require_eta",
+            "GRPY shell reduction intrinsic viscosity required",
+            "GRPY shell viscosity required",
+
+            "grpy_shell_err",
+            "GRPY shell reduction estimated error [%]",
+            "GRPY shell estimated error [%]",
+
+            "grpy_shell_worst",
+            "GRPY shell reduction worst quantity",
+            "GRPY shell worst quantity",
+
             "__SECTION__",
             "Additional vdW results:",
 
@@ -1350,6 +1404,53 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          field_to_save_data_type[field[i]] = DT_DOUBLE;
          field_to_precision[field[i]] = 6;
          field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_single" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.grpy_single);
+         field_to_save_data_type[field[i]] = DT_BOOL;
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_shell" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.grpy_shell);
+         field_to_save_data_type[field[i]] = DT_BOOL;
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_shell_tol" )
+      {
+         // stored as a fraction, reported as the percentage the user entered
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_shell_tol_pct);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_shell_require_eta" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.grpy_shell_require_eta);
+         field_to_save_data_type[field[i]] = DT_BOOL;
+         continue;
+      }
+
+      if ( field[i] == "grpy_shell_err" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_shell_err);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "grpy_shell_worst" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_shell_worst);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
          continue;
       }
 
@@ -2999,6 +3100,9 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.cor_int_visc          = 0e0;
    data.cor_einst_rad         = 0e0;
    data.grpy_einst_rad        = 0e0;
+   data.grpy_shell_tol_pct    = 0e0;
+   data.grpy_shell_err        = 0e0;
+   data.grpy_shell_worst      = "";
    data.rel_times_tau_1       = 0e0;
    data.rel_times_tau_2       = 0e0;
    data.rel_times_tau_3       = 0e0;

@@ -1043,6 +1043,17 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool                                  grpy_viscosity_unreliable;
       QMap < QString, double >              grpy_addl_param;
       int                                   grpy_last_used_beads;
+      // File-name suffix for the GRPY settings that change the answer (empty for
+      // defaults). Set when a run starts, consumed when its results are written, so the
+      // two cannot disagree about which settings produced a file.
+      QString                               grpy_settings_sfx;
+      // The hydro settings a run ACTUALLY used, i.e. with scripting or environment
+      // overrides applied. Saved with the results, so the CSV records what produced them
+      // rather than what the dialog happened to be showing.
+      struct hydro_options                  grpy_eff_hydro;
+      // Shell reduction outcome, carried from the solve to where results are written.
+      double                                grpy_shell_err_pct;
+      QString                               grpy_shell_worst_name;
       bool                                  grpy_success;  // only valid if !grpy_running
       map < QString, vector < double > >    grpy_captures;
 
