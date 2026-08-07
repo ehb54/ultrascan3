@@ -79,6 +79,72 @@ private:
 };
 #define GRPY_PAUSE_TIMER GrpyTimerPause grpy_timer_pause__( timers, "compute grpy all models" )
 
+// Write, and display, a bead model of each rung's reduced shell.
+//
+// The shell report records its selection as indices into the bead list GRPY was given,
+// which is the .grpy file -- written from `use_model` in bead_model_output_order(), keeping
+// only beads that are active and (unless buried beads are included) not buried. That same
+// filter and order is rebuilt here, so index k from the report is the k-th bead here. Note
+// bead_output.sequence == 1 reorders the model, so taking bead_model order instead would
+// quietly select the wrong beads.
+//
+// Diagnostic only, off by default: this exists so the reduction can be seen and checked.
+// Files land in <somo>/tmp with fixed per-rung names and overwrite freely -- they are
+// regenerated every run, and prompting per rung would add a modal dialog to each.
+void US_Hydrodyn::grpy_write_shell_models( const grpy::ShellReport & srep,
+                                           const QString & base_name ) {
+   if ( srep.kept.empty() ) {
+      return;
+   }
+
+   // Rebuild the .grpy bead order/filter exactly.
+   vector < PDB_atom * > use_model;
+   bead_model_output_order( & bead_model, use_model );
+   vector < PDB_atom * > used;
+   used.reserve( use_model.size() );
+   for ( unsigned int i = 0; i < use_model.size(); i++ ) {
+      if ( use_model[ i ]->active ) {
+         int color = get_color( use_model[ i ] );
+         if ( hydro.grpy_bead_inclusion || color != 6 ) {
+            used.push_back( use_model[ i ] );
+         }
+      }
+   }
+
+   const QString dir = get_somo_dir() + SLASH + "tmp";
+   QDir().mkpath( dir );
+
+   for ( int r = 0; r < (int) srep.kept.size(); ++r ) {
+      const vector < int > & idx = srep.kept[ r ];
+      vector < PDB_atom > shell;
+      shell.reserve( idx.size() );
+      bool bad = false;
+      for ( int k : idx ) {
+         if ( k < 0 || k >= (int) used.size() ) { bad = true; break; }
+         shell.push_back( * used[ (unsigned int) k ] );
+      }
+      if ( bad ) {
+         // Only reachable if the .grpy bead list and this one disagree, which would mean
+         // the models are of the wrong beads -- say so rather than write something wrong.
+         editor_msg( "red",
+                     QString( us_tr( "GRPY shell reduction: internal bead-index mismatch"
+                                     " (%1 selected of %2 available); shell models not"
+                                     " written.\n" ) )
+                     .arg( idx.size() ).arg( used.size() ) );
+         return;
+      }
+
+      const QString name = QString( "%1-shell-rung-%2" ).arg( base_name ).arg( r + 1 );
+      write_bead_model( dir + SLASH + name, & shell );
+      write_bead_spt  ( dir + SLASH + name, & shell );
+      editor_msg( "dark blue",
+                  QString( us_tr( "GRPY shell reduction: wrote shell model rung %1,"
+                                  " %2 beads: %3\n" ) )
+                  .arg( r + 1 ).arg( shell.size() ).arg( dir + SLASH + name ) );
+      model_viewer( dir + SLASH + name + ".spt", "-script" );
+   }
+}
+
 // Format a fraction as a percentage string, e.g. 0.00489 -> "0.489%".
 //
 // The percent sign has to be attached HERE rather than written as a literal in a format
@@ -722,6 +788,9 @@ void US_Hydrodyn::grpy_process_next() {
          sopt.max_beads = cap_ovr > 0 ? cap_ovr : grpy_max_beads_for_ram( opt.single );
       }
 
+      // Diagnostic: keep each rung's selection so the reduced shells can be written out.
+      sopt.record_subsets = hydro.grpy_shell_save_models;
+
       if ( sopt.enabled ) {
          editor_msg( "dark blue",
                      QString( us_tr( "GRPY shell reduction: tolerance %1%2\n" ) )
@@ -786,6 +855,10 @@ void US_Hydrodyn::grpy_process_next() {
                         us_tr( "GRPY shell reduction: that is the LARGEST of the requested"
                                " quantities; the individual estimates, which are typically"
                                " smaller, are listed in the results file.\n" ) );
+         }
+         if ( hydro.grpy_shell_save_models ) {
+            grpy_write_shell_models( srep,
+                                     QFileInfo( grpy_last_processed ).completeBaseName() );
          }
          if ( srep.viscosity_unreliable ) {
             editor_msg( "red", us_tr( "GRPY shell reduction: intrinsic viscosity and Einstein"

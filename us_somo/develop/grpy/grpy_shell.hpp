@@ -91,6 +91,10 @@ struct ShellOptions {
     // The estimate is 1.0 until a second rung exists to difference against. Lets the
     // caller log the ladder converging instead of leaving the user watching a bar.
     std::function<void(int, int, int, double)> on_rung;
+
+    // Record which beads each rung kept, in ShellReport::kept. Off by default: it is only
+    // wanted when the reduced models are to be written out or inspected.
+    bool record_subsets = false;
 };
 
 struct ShellReport {
@@ -109,6 +113,11 @@ struct ShellReport {
     std::vector<double> extrapolated;     // parallel to `require`; Richardson value
     std::vector<double> k_obs;            // parallel to `require`; 0 => not extrapolated
     std::vector<int>    ns;               // bead count per rung
+    // Indices, into the bead list passed to run(), of the beads kept at each rung -- only
+    // when ShellOptions::record_subsets is set, since it is wanted for writing the reduced
+    // models out and is dead weight otherwise. Parallel to `ns`. The full rung (if reached)
+    // records every index, so a consumer never has to special-case it.
+    std::vector<std::vector<int>> kept;
 
     // True when intrinsic viscosity was NOT among the required observables, or was but did
     // not converge. Callers MUST NOT propagate viscosity (or any viscosity-derived
@@ -257,7 +266,17 @@ public:
         std::vector<std::vector<double>> hist;             // hist[rung][observable]
         Results last;
         for (double f : sopt_.ladder) {
-            std::vector<Bead> rb = (f >= 1.0) ? beads : subset(beads, ex, f);
+            std::vector<int>  rung_idx;
+            std::vector<Bead> rb;
+            if (f >= 1.0) {
+                rb = beads;
+                if (sopt_.record_subsets) {
+                    rung_idx.reserve(beads.size());
+                    for (int i = 0; i < (int)beads.size(); ++i) rung_idx.push_back(i);
+                }
+            } else {
+                rb = subset(beads, ex, f, sopt_.record_subsets ? &rung_idx : nullptr);
+            }
             if (!rep.ns.empty() && (int)rb.size() <= rep.ns.back()) continue;
             // Memory cap. Checked after building the subset (cheap, O(N) selection) but
             // before the solve (the expensive part), so the rung costs nothing to reject.
@@ -284,6 +303,7 @@ public:
             last = solver.run(rb, pin, wrapped);
             last.rg2 = rg2_full;                           // see note above
             rep.ns.push_back((int)rb.size());
+            if (sopt_.record_subsets) rep.kept.push_back(std::move(rung_idx));
             rep.n_used = (int)rb.size();
             ++rep.levels;
 
@@ -350,15 +370,20 @@ private:
         core::calcrg2(c, (int)c.size(), rc, rg2);
         return rg2;
     }
+    // Selection by INDEX. The earlier version rebuilt the API beads by searching the full
+    // list for matching coordinates -- O(keep*N), 32M comparisons on an 11328-bead model --
+    // and could not tell the caller which beads it had chosen. Indices are what the ranking
+    // produces anyway, so taking them directly is both cheaper and more informative.
     static std::vector<Bead> subset(const std::vector<Bead>& b,
-                                    const std::vector<double>& ex, double f) {
-        auto kept = shell::reduce_top_frac(to_core(b), ex, f);
-        // reduce_top_frac ranks by (exposure, radius, index); rebuild the API-level beads
-        // by matching on coordinates, which are unique per bead in a bead model.
-        std::vector<Bead> out; out.reserve(kept.size());
-        for (const auto& k : kept)
-            for (const auto& o : b)
-                if (o.x == k.x && o.y == k.y && o.z == k.z && o.radius == k.r) { out.push_back(o); break; }
+                                    const std::vector<double>& ex, double f,
+                                    std::vector<int>* kept_idx) {
+        std::vector<size_t> idx = shell::reduce_top_frac_idx(to_core(b), ex, f);
+        std::vector<Bead> out; out.reserve(idx.size());
+        for (size_t k : idx) out.push_back(b[k]);
+        if (kept_idx) {
+            kept_idx->clear(); kept_idx->reserve(idx.size());
+            for (size_t k : idx) kept_idx->push_back((int)k);
+        }
         return out;
     }
     // Viscosity is trustworthy if the solve was unreduced (exact, so nothing to converge),

@@ -3,6 +3,7 @@
 // The central property under test is HONESTY: the reported error bar must bound the true
 // error, measured against an independently computed unreduced solve. A bar that
 // understates is worse than no bar at all, so that check is the one that matters.
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -318,6 +319,70 @@ int main() {
         // large chunks; fine granularity only appears where it is needed. What must hold is
         // that no phase is silent -- assembly and solve previously reported nothing at all.
         fails += chk("every phase produced at least one tick", pcts.size() >= 3);
+    }
+
+    // ---- recorded subsets identify the beads actually solved on ------------------
+    // The caller writes these out as bead models, so an index that does not name the bead
+    // the solver used would produce a picture of the wrong thing -- silently.
+    {
+        auto b = blob(5, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-12;             // unsatisfiable: run the whole ladder
+        so.require = {Obs::Dt, Obs::Dr};
+        so.ladder = {0.125, 0.25, 0.5, 1.0};
+        so.record_subsets = true;
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        sh.run(b, phys, rep);
+
+        fails += chk("one recorded subset per rung", rep.kept.size() == rep.ns.size());
+        bool sized = true, in_range = true, unique = true, exposed_first = true;
+        for (size_t r = 0; r < rep.kept.size(); ++r) {
+            if ((int)rep.kept[r].size() != rep.ns[r]) sized = false;
+            std::vector<bool> seen(b.size(), false);
+            for (int k : rep.kept[r]) {
+                if (k < 0 || k >= (int)b.size()) { in_range = false; continue; }
+                if (seen[k]) unique = false;
+                seen[k] = true;
+            }
+            // Each rung is a superset of the one before: the ladder grows the shell.
+            if (r) for (int k : rep.kept[r - 1])
+                if (std::find(rep.kept[r].begin(), rep.kept[r].end(), k) == rep.kept[r].end())
+                    exposed_first = false;
+        }
+        fails += chk("recorded size matches the rung bead count", sized);
+        fails += chk("indices are in range", in_range);
+        fails += chk("indices are unique within a rung", unique);
+        fails += chk("each rung contains the previous rung's beads", exposed_first);
+        // The final rung is the full model, so it must name every bead.
+        fails += chk("full rung records every index",
+                     rep.unreduced && rep.kept.back().size() == b.size());
+
+        // And the selection must be the same beads the solver actually used.
+        std::vector<double> ex = shell::exposure(
+            [&]{ std::vector<core::Bead> c(b.size());
+                 for (size_t i = 0; i < b.size(); ++i)
+                     c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
+                 return c; }(), (int)b.size(), so.K, so.probe);
+        bool matches = true;
+        for (size_t r = 0; r + 1 < rep.kept.size(); ++r) {
+            auto want = shell::reduce_top_frac_idx(
+                [&]{ std::vector<core::Bead> c(b.size());
+                     for (size_t i = 0; i < b.size(); ++i)
+                         c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
+                     return c; }(), ex, so.ladder[r]);
+            if (want.size() != rep.kept[r].size()) { matches = false; continue; }
+            for (size_t i = 0; i < want.size(); ++i)
+                if ((int)want[i] != rep.kept[r][i]) matches = false;
+        }
+        fails += chk("recorded indices are the ranking's own selection", matches);
+
+        // Off by default: nothing recorded, so nothing paid for.
+        ShellOptions off = so; off.record_subsets = false;
+        ShellSolver sh2(par, {}, off);
+        ShellReport rep2;
+        sh2.run(b, phys, rep2);
+        fails += chk("not recorded unless asked", rep2.kept.empty() && rep2.ns.size() > 1);
     }
 
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);

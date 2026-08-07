@@ -546,6 +546,15 @@ void US_Hydrodyn_Hydro::setupGUI()
    AUTFBACK( cb_grpy_shell_eta );
    connect(cb_grpy_shell_eta, SIGNAL(clicked()), this, SLOT(set_grpy_shell_eta()));
 
+   cb_grpy_shell_models = new QCheckBox();
+   cb_grpy_shell_models->setText(us_tr(" Save shell bead models "));
+   cb_grpy_shell_models->setChecked((*hydro).grpy_shell_save_models);
+   cb_grpy_shell_models->setEnabled((*hydro).grpy_shell);
+   cb_grpy_shell_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy_shell_models->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_grpy_shell_models );
+   connect(cb_grpy_shell_models, SIGNAL(clicked()), this, SLOT(set_grpy_shell_models()));
+
    {
       QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( rb_grpy_shell_off );
@@ -553,6 +562,7 @@ void US_Hydrodyn_Hydro::setupGUI()
       bl->addWidget( lbl_grpy_shell_tol );
       bl->addWidget( le_grpy_shell_tol );
       bl->addWidget( cb_grpy_shell_eta );
+      bl->addWidget( cb_grpy_shell_models );
       bg_grpy_shell->setLayout( bl );
    }
 
@@ -879,6 +889,7 @@ void US_Hydrodyn_Hydro::select_grpy_shell(int val)
    (*hydro).grpy_shell = val;
    le_grpy_shell_tol->setEnabled( val );
    cb_grpy_shell_eta->setEnabled( val );
+   cb_grpy_shell_models->setEnabled( val );
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -890,6 +901,12 @@ void US_Hydrodyn_Hydro::update_grpy_shell_tol(const QString &str)
       (*hydro).grpy_shell_tol = pct * 0.01;
       ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    }
+}
+
+void US_Hydrodyn_Hydro::set_grpy_shell_models()
+{
+   (*hydro).grpy_shell_save_models = cb_grpy_shell_models->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::set_grpy_shell_eta()
