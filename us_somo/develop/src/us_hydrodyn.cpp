@@ -641,6 +641,16 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    dmd_options_widget                   = false;
    anaflex_options_widget               = false;
    batch_widget                         = false;
+   // these three were missed when the UV-Vis and MALS windows were added.
+   // US_Hydrodyn_Saxs::dad(), mals() and mals_saxs() test the flag and then
+   // dereference the matching window, so an indeterminate read is a crash.
+   // interactive runs usually survive on zeroed heap, a script run need not
+   dad_widget                           = false;
+   dad_window                           = 0;
+   mals_widget                          = false;
+   mals_window                          = 0;
+   mals_saxs_widget                     = false;
+   mals_saxs_window                     = 0;
    save_widget                          = false;
    comparative_widget                   = false;
    if ( !install_new_version() )

@@ -165,6 +165,10 @@ void US_Hydrodyn::gui_script_run() {
          if ( opt1 == "overwrite" ) {
             cb_overwrite->setChecked( true );
             set_overwrite();
+         } else if ( opt1 == "iqscaleangstrom" || opt1 == "iqscalenm" ) {
+            // controls whether loaded I(q) q values are converted from 1/nm
+            saxs_options.iq_scale_angstrom = ( opt1 == "iqscaleangstrom" );
+            saxs_options.iq_scale_nm       = !saxs_options.iq_scale_angstrom;
          } else if ( opt1 == "fulldebye" ) {
             saxs_options.saxs_iq_native_debye   = true;
             saxs_options.saxs_iq_native_sh      = false;
@@ -320,6 +324,98 @@ void US_Hydrodyn::gui_script_run() {
             }
          } else {
             gui_script_error( i, cmd, "unknown option : " + opt1 );
+         }
+         qApp->processEvents();
+      } else if ( cmd == "dad" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+
+         if ( opt1 == "open" ) {
+            if ( !saxs_plot_widget ) {
+               pdb_saxs( false, false );
+            }
+            if ( !saxs_plot_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "could not open the SAS window" );
+            }
+            // dad() is a private slot, reach it through the meta-object rather
+            // than widening the US_Hydrodyn_Saxs interface for scripting alone
+            QMetaObject::invokeMethod( saxs_plot_window, "dad", Qt::DirectConnection );
+            if ( !dad_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "could not open the UV-Vis window" );
+            }
+            // every dad command below runs without dialogs
+            dad_window->script_mode = true;
+         } else {
+            if ( !dad_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "UV-Vis window not open, use \"dad open\" first" );
+            }
+
+            QString errormsg;
+
+            if ( opt1 == "settimes" ) {
+               if ( ls.size() < 2 ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs <start seconds> <interval seconds>" );
+               }
+               dad_window->script_start_time_seconds          = ls.front().toDouble(); ls.pop_front();
+               dad_window->script_collection_interval_seconds = ls.front().toDouble(); ls.pop_front();
+               if ( dad_window->script_collection_interval_seconds <= 0e0 ) {
+                  gui_script_error( i, cmd + " " + opt1, "interval seconds must be greater than zero" );
+               }
+            } else if ( opt1 == "lambdarange" ) {
+               if ( ls.size() < 2 ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs <start> <end> in nm, or 0 0 for the full spectrum" );
+               }
+               dad_window->script_lambda_start = ls.front().toDouble(); ls.pop_front();
+               dad_window->script_lambda_end   = ls.front().toDouble(); ls.pop_front();
+            } else if ( opt1 == "lambdas" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               if ( !dad_window->script_load_lambdas( ls.front(), errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+               }
+               ls.pop_front();
+            } else if ( opt1 == "load" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               while ( !ls.isEmpty() ) {
+                  if ( !dad_window->script_load( ls.front(), errormsg ) ) {
+                     gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+                  }
+                  ls.pop_front();
+               }
+            } else if ( opt1 == "list" ) {
+               QStringList files = dad_window->script_files();
+               TSO << QString( "dad: %1 curves loaded\n" ).arg( files.size() );
+               for ( int j = 0; j < (int) files.size(); ++j ) {
+                  TSO << QString( "dad: curve %1\n" ).arg( files[ j ] );
+               }
+            } else if ( opt1 == "select" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs \"all\" or a substring to match" );
+               }
+               if ( !dad_window->script_select( ls.front(), errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+               }
+               ls.pop_front();
+            } else if ( opt1 == "makealambda" ) {
+               if ( !dad_window->script_make_a_of_lambda( errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
+            } else if ( opt1 == "save" ) {
+               if ( !dad_window->script_save( ls.isEmpty() ? QString( "" ) : ls.front(), errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
+               if ( !ls.isEmpty() ) {
+                  ls.pop_front();
+               }
+            } else {
+               gui_script_error( i, cmd, "unknown option : " + opt1 );
+            }
          }
          qApp->processEvents();
       } else {
