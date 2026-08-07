@@ -8771,6 +8771,7 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
   //define exp.Type
   QString exp_t = ( mainw->us_abde_mode ) ? "ABDE" : "VELOCITY";
+  exp_t = ( mainw->us_velmwl_mode ) ? "VELOCITY-MWL" : exp_t;
   protocol_details[ "expType" ] = exp_t;
   
   //protocol_details[ "experimentId" ]   = QString::number(ExpDefId);    // NULL  
@@ -9973,6 +9974,8 @@ void US_ExperGuiUpload::submitExperiment()
 	 //define exp.Type!!
 	 if ( mainw->us_abde_mode ) 
 	   protocol_details[ "expType" ] = "ABDE";
+	 else if ( mainw->us_velmwl_mode )
+	   protocol_details[ "expType" ] = "VELOCITY-MWL";
 	 else
 	   protocol_details[ "expType" ] = "VELOCITY";
       }
