@@ -380,8 +380,10 @@ bool US_Hydrodyn::calc_grpy_hydro() {
             QString( us_tr( "GRPY memory estimate exceeds available RAM:\n"
                             "the largest selected model has %1 beads and would need about "
                             "%2 GB in %3 precision, but this machine has %4 GB.\n"
-                            "Enable single precision (about half the memory), or reduce the "
-                            "model, then retry.\n" ) )
+                            "Enable single precision (about half the memory) or reduce the "
+                            "model; for much larger structures use the ZENO method instead, "
+                            "which is nearly size-independent (but does not compute "
+                            "rotational diffusion). Then retry.\n" ) )
             .arg( max_beads )
             .arg( est / GB, 0, 'f', 1 )
             .arg( hydro.grpy_single ? us_tr( "single" ) : us_tr( "double" ) )
