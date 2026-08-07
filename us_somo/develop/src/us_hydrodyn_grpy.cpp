@@ -21,6 +21,33 @@
 
 #define SLASH QDir::separator()
 
+// Total physical RAM in bytes (0 = unknown). Used by the GRPY pre-flight memory
+// guard so an oversized model is refused rather than swapping the machine to death.
+#if defined( Q_OS_WIN ) || defined( _WIN32 )
+#  include <windows.h>
+#elif defined( Q_OS_MACOS ) || defined( __APPLE__ )
+#  include <sys/sysctl.h>
+#elif defined( Q_OS_LINUX ) || defined( __linux__ )
+#  include <unistd.h>
+#endif
+static qint64 grpy_physical_ram_bytes() {
+#if defined( Q_OS_WIN ) || defined( _WIN32 )
+   MEMORYSTATUSEX st; st.dwLength = sizeof( st );
+   if ( GlobalMemoryStatusEx( &st ) ) return (qint64) st.ullTotalPhys;
+   return 0;
+#elif defined( Q_OS_MACOS ) || defined( __APPLE__ )
+   int64_t mem = 0; size_t len = sizeof( mem );
+   if ( sysctlbyname( "hw.memsize", &mem, &len, nullptr, 0 ) == 0 ) return (qint64) mem;
+   return 0;
+#elif defined( Q_OS_LINUX ) || defined( __linux__ )
+   long pages = sysconf( _SC_PHYS_PAGES ), ps = sysconf( _SC_PAGE_SIZE );
+   if ( pages > 0 && ps > 0 ) return (qint64) pages * (qint64) ps;
+   return 0;
+#else
+   return 0;   // unknown platform: no guard (fail open)
+#endif
+}
+
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
    double mw = 0e0;
    for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -139,6 +166,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_model_numbers.clear();
    grpy_processed    .clear();
    grpy_addl_params  .clear();
+   grpy_used_beads   .clear();   // was drained only via pop_front, so an early abort
+                                 // (e.g. the memory guard) left a stale count behind
 
    grpy_results.method                = "GRPY";
    grpy_results.mass                  = 0e0;
@@ -333,6 +362,61 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    }
 
    editor_msg( "dark blue", grpy_to_process.join( "\n" ) );
+
+   // Pre-flight memory guard (issue 987): GRPY holds the tiled upper triangle of the
+   // 11N x 11N mobility matrix in RAM, with peak ~ (11N)^2/2 * scalar bytes. A model
+   // larger than physical RAM will thrash the machine to a standstill (e.g. 20k beads
+   // is ~180 GB in double, ~90 GB in single). Estimate the largest model in the batch
+   // and refuse rather than beachball. In script mode never block on a dialog -- fail
+   // with a clear non-zero exit.
+   {
+      int max_beads = 0;
+      for ( int nb : grpy_used_beads ) if ( nb > max_beads ) max_beads = nb;
+      const qint64 ram    = grpy_physical_ram_bytes();          // 0 = unknown -> skip
+      const double scalar = hydro.grpy_single ? 4.0 : 8.0;
+      const double dim    = 11.0 * (double) max_beads;
+      const double est    = dim * dim * 0.5 * scalar * 1.10;    // triangle + ~10% overhead
+      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram ) {
+         const double GB = 1024.0 * 1024.0 * 1024.0;
+         QString msg =
+            QString( us_tr( "GRPY memory estimate exceeds available RAM:\n"
+                            "the largest selected model has %1 beads and would need about "
+                            "%2 GB in %3 precision, but this machine has %4 GB.\n"
+                            "Enable single precision (about half the memory) or reduce the "
+                            "model; for much larger structures use the ZENO method instead, "
+                            "which is nearly size-independent (but does not compute "
+                            "rotational diffusion). Then retry.\n" ) )
+            .arg( max_beads )
+            .arg( est / GB, 0, 'f', 1 )
+            .arg( hydro.grpy_single ? us_tr( "single" ) : us_tr( "double" ) )
+            .arg( (double) ram / GB, 0, 'f', 1 );
+         if ( gui_script ) {
+            // headless script mode: proper failure, no blocking dialog.
+            editor_msg( "red", msg );
+            fprintf( stderr, "%s", (const char *) ( msg + "\n" ).toUtf8() );
+            exit( -1 );
+         }
+         // interactive: let the user override, but default to Cancel.
+         if ( QMessageBox::warning(
+                 this, windowTitle() + us_tr( ": GRPY memory" ),
+                 msg + us_tr( "\nRun anyway (the interface may become unresponsive and the "
+                              "machine may swap heavily)?" ),
+                 us_tr( "&Cancel" ), us_tr( "Run &anyway" ), QString(), 0, 0 ) == 0 ) {
+            editor_msg( "red", us_tr( "GRPY cancelled: model too large for available memory.\n" ) );
+            set_enabled();
+            pb_calc_hydro->setEnabled( grpy_was_hydro_enabled );
+            pb_calc_zeno->setEnabled( true );
+            pb_bead_saxs->setEnabled( true );
+            pb_calc_grpy->setEnabled( true );
+            pb_calc_hullrad->setEnabled( true );
+            pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+            pb_show_hydro_results->setEnabled( false );
+            progress->reset();
+            grpy_success = false;
+            return false;
+         }
+      }
+   }
 
    grpy_mm_save_params.data_vector.clear();
    grpy_mm         = grpy_to_process.size() > 1;
