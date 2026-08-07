@@ -427,8 +427,8 @@ void US_ReportGenGui::changedItem( QTreeWidgetItem* item, int col )
     }
 
   //reconnect
-  connect( item -> treeWidget(), SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-	   this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( item -> treeWidget(), &QTreeWidget::itemChanged,
+	   this,       &US_ReportGenGui::changedItem );
 }
 
 /*

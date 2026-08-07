@@ -68,7 +68,7 @@ US_SelectTriples::US_SelectTriples( QStringList& triples )
    connect( pb_reset,  &QAbstractButton::clicked, this, &US_SelectTriples::reset );
    connect( pb_help,   &QAbstractButton::clicked, this, &US_SelectTriples::help );
    connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectTriples::cancel );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( done()   ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectTriples::done );
 
    // Complete layouts
    buttons->addWidget( pb_reset  );

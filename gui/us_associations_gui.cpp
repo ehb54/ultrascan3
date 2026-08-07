@@ -84,8 +84,8 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    tw->setDragDropMode( QAbstractItemView::DropOnly );
    tw->horizontalHeader()->setStretchLastSection( true );
 
-   connect( tw, SIGNAL( cellChanged( int, int ) ), 
-                SLOT  ( changed    ( int, int ) ) );
+   connect( tw, &QTableWidget::cellChanged, 
+                this, &US_AssociationsGui::changed );
 
    main->addWidget( tw, row, 0, 5, 2 );
    row += 5;
@@ -227,8 +227,8 @@ void US_AssociationsGui::changed( int row, int col )
       tw->setCellWidget( row, col, w );
    }
    
-   connect( tw, SIGNAL( cellChanged( int, int ) ), 
-                SLOT  ( changed    ( int, int ) ) );
+   connect( tw, &QTableWidget::cellChanged, 
+                this, &US_AssociationsGui::changed );
 
    if ( row == tw->rowCount() - 1 ) new_row();
 }
@@ -240,9 +240,9 @@ void US_AssociationsGui::new_row( void )
    tw->setRowCount ( count + 1 );
    tw->setRowHeight( count, fm->height() + 4 );
 
-   QPushButton* pb = new US_PushButton( "D", count );
+   US_PushButton* pb = new US_PushButton( "D", count );
    pb->setMaximumWidth( fm->horizontalAdvance( "D" ) + 6 );
-   connect( pb, SIGNAL( pushed( int ) ), SLOT( del( int ) ) );
+   connect( pb, &US_PushButton::pushed, this, &US_AssociationsGui::del );
 
    tw->setCellWidget( count, 0, pb );
 }

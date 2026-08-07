@@ -35,8 +35,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
                               : US_Disk_DB_Controls::Disk;
 
    dkdb_cntrls         = new US_Disk_DB_Controls( ddstate );
-   connect( dkdb_cntrls, SIGNAL( changed       ( bool ) ),
-            this,        SLOT  ( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_SelectEdits::update_disk_db );
 
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    if ( US_Settings::us_inv_level() < 3 )
@@ -58,8 +58,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    top->addWidget( lb_filtdata, row,   0, 1, 1 );
    top->addWidget( le_dfilter,  row++, 1, 1, 3 );
 
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_SelectEdits::search );
 
    main->addLayout( top );
 
@@ -95,7 +95,7 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select PreFilter(s)" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectEdits::accepted );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );

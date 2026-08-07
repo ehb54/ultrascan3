@@ -107,12 +107,12 @@ US_ModelParams::US_ModelParams( QVector< DisSys >& adistros,
       mainLayout->addWidget( le_mlab, row,   3, 1, 2 );
       mainLayout->addWidget( le_mdsc, row++, 5, 1, 3 );
 
-      connect( le_d2op,    SIGNAL( textChanged( const QString& ) ),
-               this,       SLOT(   lnedChanged( const QString& ) ) );
-      connect( le_dens,    SIGNAL( textChanged( const QString& ) ),
-               this,       SLOT(   lnedChanged( const QString& ) ) );
-      connect( le_mlab,    SIGNAL( textChanged( const QString& ) ),
-               this,       SLOT(   lnedChanged( const QString& ) ) );
+      connect( le_d2op,    &QLineEdit::textChanged,
+               this,       &US_ModelParams::lnedChanged );
+      connect( le_dens,    &QLineEdit::textChanged,
+               this,       &US_ModelParams::lnedChanged );
+      connect( le_mlab,    &QLineEdit::textChanged,
+               this,       &US_ModelParams::lnedChanged );
    }
 DbgLv(1) << "MP:main: model rows populated";
 
@@ -153,14 +153,14 @@ DbgLv(1) << "MP:main: sTO: ll i1" << ll << ii+1;
    mainLayout->setColumnStretch( 6, 4 );
    mainLayout->setColumnStretch( 7, 4 );
 
-   connect( pb_help,    SIGNAL( clicked()  ),
-            this,       SLOT(   help()     ) );
-   connect( pb_cancel,  SIGNAL( clicked()  ),
-            this,       SLOT(   canceled() ) );
-   connect( pb_accept,  SIGNAL( clicked()  ),
-            this,       SLOT(   accepted() ) );
-   connect( pb_compute, SIGNAL( clicked()  ),
-            this,       SLOT(   compute_densities() ) );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_ModelParams::help );
+   connect( pb_cancel,  &QAbstractButton::clicked,
+            this,       &US_ModelParams::canceled );
+   connect( pb_accept,  &QAbstractButton::clicked,
+            this,       &US_ModelParams::accepted );
+   connect( pb_compute, &QAbstractButton::clicked,
+            this,       &US_ModelParams::compute_densities );
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
 //   int fhigh = fm.lineSpacing();

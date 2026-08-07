@@ -16,7 +16,7 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags )
    // Body
    pb_font = us_pushbutton( tr( "Select Base Font" ) );
    topbox->addWidget( pb_font );
-   connect( pb_font, SIGNAL( clicked() ), SLOT( selectFont() ) );
+   connect( pb_font, &QAbstractButton::clicked, this, &US_Font::selectFont );
 
    lbl_family = us_label( tr( "Current Family:" ), -1 );
    lbl_family->setFixedHeight( BUTTON_H );
@@ -63,17 +63,17 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags )
    topbox->addLayout( lineGrid );
 
    pb_default = us_pushbutton( tr( "Select Default" ) );
-   connect( pb_default, SIGNAL( clicked() ), SLOT( setDefault() ) );
+   connect( pb_default, &QAbstractButton::clicked, this, &US_Font::setDefault );
    topbox->addWidget( pb_default );
 
    pb_save = us_pushbutton( tr( "Save" ) );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_Font::save );
 
    pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_Font::help );
 
    pb_cancel = us_pushbutton( tr( "Close" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
 
    QBoxLayout* buttons = new QHBoxLayout();
 

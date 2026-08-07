@@ -76,8 +76,8 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   DbgLv( 1 ) << "USCFG: defDBd" << defaultDB;
   update_lw( defaultDB );
 
-  connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-                       SLOT  ( select_db        ( QListWidgetItem* ) ) );
+  connect( lw_entries, &QListWidget::itemDoubleClicked,
+                       this, &US_Database::select_db );
   // Detail info
   QLabel* info = us_banner( tr( "Database Detailed  Information" ) );
   topbox->addWidget( info );
@@ -91,16 +91,16 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   le_description = us_lineedit( "", 0 );
   details->addWidget( le_description, row++, 1 );
-  connect(le_description, SIGNAL( editingFinished()   ),this,
-    SLOT(values_updated()));
+  connect(le_description, &QLineEdit::editingFinished,this,
+    &US_Database::values_updated);
   // Row 2
   QLabel* user = us_label( "User Name:" );
   details->addWidget( user, row, 0 );
 
   le_username = us_lineedit( "", 0 );
   details->addWidget( le_username, row++, 1 );
-  connect(le_username, SIGNAL( editingFinished()   ),this,
-      SLOT(values_updated()));
+  connect(le_username, &QLineEdit::editingFinished,this,
+      &US_Database::values_updated);
   // Row 3
   QLabel* password = us_label( "DB Password:" );
   details->addWidget( password, row, 0 );
@@ -108,24 +108,24 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   le_password = us_lineedit( "", 0 );
   le_password->setEchoMode( QLineEdit::Password );
   details->addWidget( le_password, row++, 1 );
-  connect(le_password, SIGNAL( editingFinished()   ),this,
-      SLOT(values_updated()));
+  connect(le_password, &QLineEdit::editingFinished,this,
+      &US_Database::values_updated);
   // Row 4
   QLabel* DBname = us_label( "Database Name:" );
   details->addWidget( DBname, row, 0 );
 
   le_dbname = us_lineedit( "", 0 );
   details->addWidget( le_dbname, row++, 1 );
-  connect(le_dbname, SIGNAL( editingFinished()   ),this,
-      SLOT(values_updated()));
+  connect(le_dbname, &QLineEdit::editingFinished,this,
+      &US_Database::values_updated);
   // Row 5
   QLabel* host = us_label( "Host Address:" );
   details->addWidget( host, row, 0 );
 
   le_host = us_lineedit( "", 0 );
   details->addWidget( le_host, row++, 1 );
-  connect(le_host, SIGNAL( editingFinished()   ),this,
-      SLOT(values_updated()));
+  connect(le_host, &QLineEdit::editingFinished,this,
+      &US_Database::values_updated);
   // Row 6
   QLabel* investigator = us_label( "Investigator Email:" );
   details->addWidget( investigator, row, 0 );
@@ -137,8 +137,8 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   le_investigator_email->setMinimumWidth( fm.maxWidth() * 10 );
 
   details->addWidget( le_investigator_email, row++, 1 );
-  connect(le_investigator_email, SIGNAL( editingFinished()   ),this,
-      SLOT(values_updated()));
+  connect(le_investigator_email, &QLineEdit::editingFinished,this,
+      &US_Database::values_updated);
   // Row 7
   QLabel* investigator_pw = us_label( "Investigator Password:" );
   details->addWidget( investigator_pw, row, 0 );
@@ -146,8 +146,8 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   le_investigator_pw = us_lineedit( "", 0 );
   le_investigator_pw->setEchoMode( QLineEdit::Password );
   details->addWidget( le_investigator_pw, row, 1 );
-  connect(le_investigator_pw, SIGNAL( editingFinished()   ),this,
-      SLOT(values_updated()));
+  connect(le_investigator_pw, &QLineEdit::editingFinished,this,
+      &US_Database::values_updated);
   topbox->addLayout( details );
 
   //Pushbuttons
@@ -155,34 +155,34 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   int col = 0;
   QGridLayout* buttons = new QGridLayout();
   pb_paste = us_pushbutton( tr( "Paste" ) );
-  connect( pb_paste, SIGNAL( clicked() ), this, SLOT( paste_db() ) );
+  connect( pb_paste, &QAbstractButton::clicked, this, &US_Database::paste_db );
   buttons->addWidget( pb_paste, row, col++ );
   pb_save = us_pushbutton( tr( "Save Entry" ) );
   pb_save->setEnabled( false );
-  connect( pb_save, SIGNAL( clicked() ), this, SLOT( check_add() ) );
+  connect( pb_save, &QAbstractButton::clicked, this, &US_Database::check_add );
   buttons->addWidget( pb_save, row, col++ );
 
   pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
   pb_delete->setEnabled( false );
-  connect( pb_delete, SIGNAL( clicked() ), this, SLOT( deleteDB() ) );
+  connect( pb_delete, &QAbstractButton::clicked, this, &US_Database::deleteDB );
   buttons->addWidget( pb_delete, row++, col++ );
 
   pb_testConnect = us_pushbutton( tr( "Test Database Connectivity" ) );
-  connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
+  connect( pb_testConnect, &QAbstractButton::clicked, this, &US_Database::test_connect );
   buttons->addWidget( pb_testConnect, row, 0, 1, col );
 
   QHBoxLayout* std_buttons = new QHBoxLayout;
 
   pb_reset = us_pushbutton( tr( "Reset" ) );
-  connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
+  connect( pb_reset, &QAbstractButton::clicked, this, &US_Database::reset );
   std_buttons->addWidget( pb_reset );
 
   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-  connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
+  connect( pb_help, &QAbstractButton::clicked, this, &US_Database::help );
   std_buttons->addWidget( pb_help );
 
   QPushButton* pb_cancel = us_pushbutton( tr( "Close" ) );
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( close() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
   std_buttons->addWidget( pb_cancel );
 
   topbox->addLayout( buttons );

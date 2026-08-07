@@ -282,28 +282,28 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    buttonbox->addWidget( te_status );
    buttonbox->addStretch();
 
-   connect( pb_changeModel,SIGNAL( clicked()        ),
-            this,          SLOT(   new_model()      ) );
-   connect( pb_buffer,     SIGNAL( clicked()        ),
-            this,          SLOT(   new_buffer()     ) );
-   connect( pb_simParms,   SIGNAL( clicked()        ),
-            this,          SLOT(   sim_parameters() ) );
-   connect( pb_rotor,      SIGNAL( clicked()        ),
-            this,          SLOT(   select_rotor() ) );
-   connect( ck_savemovie,  SIGNAL( toggled          ( bool ) ),
-            this,          SLOT(   update_save_movie( bool ) ) );
-   connect( ck_timeCorr,   SIGNAL( clicked()          ),
-            this,          SLOT(   update_time_corr() ) );
-   connect( pb_start,      SIGNAL( clicked()          ),
-            this,          SLOT(   start_simulation() ) );
-   connect( pb_stop,       SIGNAL( clicked()          ),
-            this,          SLOT(   stop_simulation()  ) );
-   connect( pb_saveSim,    SIGNAL( clicked()    ),
-            this,          SLOT(   save_scans() ) );
-   connect( pb_help,       SIGNAL( clicked()    ),
-            this,          SLOT(   help()       ) );
-   connect( pb_close,      SIGNAL( clicked()    ),
-            this,          SLOT(   close()      ) );
+   connect( pb_changeModel,&QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::new_model );
+   connect( pb_buffer,     &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::new_buffer );
+   connect( pb_simParms,   &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::sim_parameters );
+   connect( pb_rotor,      &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::select_rotor );
+   connect( ck_savemovie,  &QAbstractButton::toggled,
+            this,          &US_Astfem_Sim::update_save_movie );
+   connect( ck_timeCorr,   &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::update_time_corr );
+   connect( pb_start,      &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::start_simulation );
+   connect( pb_stop,       &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::stop_simulation );
+   connect( pb_saveSim,    &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::save_scans );
+   connect( pb_help,       &QAbstractButton::clicked,
+            this,          &US_Astfem_Sim::help );
+   connect( pb_close,      &QAbstractButton::clicked,
+            this,          &QWidget::close );
 
    main->addLayout( buttonbox, 0, 0 );
 
@@ -639,8 +639,8 @@ void US_Astfem_Sim::new_model( void )
 {
    system = US_Model();
    US_ModelGui* dialog = new US_ModelGui( system );
-   connect( dialog, SIGNAL( valueChanged( US_Model ) ),
-                    SLOT  ( change_model( US_Model ) ) );
+   connect( dialog, &US_ModelGui::valueChanged,
+                    this, &US_Astfem_Sim::change_model );
    dialog->exec();
 }
 
@@ -670,8 +670,8 @@ void US_Astfem_Sim::new_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
-                    SLOT  ( change_buffer( US_Buffer ) ) );
+   connect( dialog, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
+                    this, &US_Astfem_Sim::change_buffer );
 
    dialog->exec();
    qApp->processEvents();
@@ -751,8 +751,8 @@ DbgLv(1) << "dbdisk_from_us_astfem_sim" << dbdisk;
                                              dbdisk,
                                              rotor, calibration );
 
-   connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-                       SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
+                       this, &US_Astfem_Sim::assignRotor );
    rotorInfo->exec();
 DbgLv(1) << "simparams_rotorcoeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
@@ -776,7 +776,7 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
 
    US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
 
-   connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
+   connect( dialog, &US_SimParamsGui::complete, this, &US_Astfem_Sim::set_parameters );
 
    dialog->exec();
 }
@@ -1170,18 +1170,18 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
 
       astfem = new US_Astfem_RSA( system_corrected, simparams );
 
-      connect( astfem, SIGNAL( new_scan( QVector< double >*, double* ) ),
-                       SLOT( update_movie_plot( QVector< double >*, double* ) ) );
-      connect( astfem, SIGNAL( current_component( int ) ),
-                       SLOT  ( update_progress  ( int ) ) );
-      connect( astfem, SIGNAL( new_time   ( double ) ),
-                       SLOT  ( update_time( double ) ) );
-      connect( astfem, SIGNAL( current_speed( int ) ),
-                       SLOT  ( update_speed ( int ) ) );
-      connect( astfem, SIGNAL( calc_progress( int ) ),
-                       SLOT  ( show_progress( int ) ) );
-      connect( astfem, SIGNAL( calc_done( void ) ),
-                       SLOT  ( calc_over( void ) ) );
+      connect( astfem, &US_Astfem_RSA::new_scan,
+                       this, &US_Astfem_Sim::update_movie_plot );
+      connect( astfem, &US_Astfem_RSA::current_component,
+                       this, &US_Astfem_Sim::update_progress );
+      connect( astfem, &US_Astfem_RSA::new_time,
+                       this, &US_Astfem_Sim::update_time );
+      connect( astfem, &US_Astfem_RSA::current_speed,
+                       this, &US_Astfem_Sim::update_speed );
+      connect( astfem, &US_Astfem_RSA::calc_progress,
+                       this, &US_Astfem_Sim::show_progress );
+      connect( astfem, &US_Astfem_RSA::calc_done,
+                       this, &US_Astfem_Sim::calc_over );
 
       astfem->set_movie_flag( ck_movie->isChecked() );
 //      astfem->setStopFlag( stopFlag );
@@ -1251,18 +1251,18 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
    {
       astfvm = new US_LammAstfvm( system, simparams );
 
-      connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
-                       SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+      connect( astfvm, &US_LammAstfvm::new_scan,
+                       this, &US_Astfem_Sim::update_movie_plot );
       connect( astfvm, SIGNAL( current_component( int ) ),
                        SLOT  ( update_progress  ( int ) ) );
-      connect( astfvm, SIGNAL( new_time   ( double ) ),
-                       SLOT  ( update_time( double ) ) );
+      connect( astfvm, &US_LammAstfvm::new_time,
+                       this, &US_Astfem_Sim::update_time );
       connect( astfvm, SIGNAL( current_speed( int ) ),
                        SLOT  ( update_speed ( int ) ) );
-      connect( astfvm, SIGNAL( calc_progress( int ) ),
-                       SLOT  ( show_progress( int ) ) );
-      connect( astfvm, SIGNAL( calc_done( void ) ),
-                       SLOT  ( calc_over( void ) ) );
+      connect( astfvm, &US_LammAstfvm::calc_progress,
+                       this, &US_Astfem_Sim::show_progress );
+      connect( astfvm, &US_LammAstfvm::calc_done,
+                       this, &US_Astfem_Sim::calc_over );
       astfvm->calculate( sim_datas[ 0 ] );
    }
 

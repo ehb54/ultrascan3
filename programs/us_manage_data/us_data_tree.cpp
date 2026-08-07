@@ -349,18 +349,18 @@ DbgLv(2) << "    context_menu RTN current_datadesc";
    cmenu->addAction( ashdeta );
 DbgLv(2) << "    context_menu RTN addAction";
 
-   connect( aupload, SIGNAL( triggered() ),
-            this,    SLOT(   item_upload()     ) );
-   connect( adnload, SIGNAL( triggered() ),
-            this,    SLOT(   item_download()   ) );
-   connect( adbasrm, SIGNAL( triggered() ),
-            this,    SLOT(   item_remove_db()  ) );
-   connect( aloclrm, SIGNAL( triggered() ),
-            this,    SLOT(   item_remove_loc() ) );
-   connect( abothrm, SIGNAL( triggered() ),
-            this,    SLOT(   item_remove_all() ) );
-   connect( ashdeta, SIGNAL( triggered() ),
-            this,    SLOT(   item_details()    ) );
+   connect( aupload, &QAction::triggered,
+            this,    &US_DataTree::item_upload );
+   connect( adnload, &QAction::triggered,
+            this,    &US_DataTree::item_download );
+   connect( adbasrm, &QAction::triggered,
+            this,    &US_DataTree::item_remove_db );
+   connect( aloclrm, &QAction::triggered,
+            this,    &US_DataTree::item_remove_loc );
+   connect( abothrm, &QAction::triggered,
+            this,    &US_DataTree::item_remove_all );
+   connect( ashdeta, &QAction::triggered,
+            this,    &US_DataTree::item_details );
 
    // disable menu items that are not appropriate to the record
 

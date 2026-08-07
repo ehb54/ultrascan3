@@ -8,6 +8,8 @@
 #include "us_plot.h"
 #include "us_help.h"
 
+#include <qwt_plot_spectrogram.h>
+
 //! \brief A class to provide a window with a residuals bitmap
 
 class US_GUI_EXTERN US_ResidsBitmap : public US_WidgetsDialog
@@ -25,6 +27,8 @@ class US_GUI_EXTERN US_ResidsBitmap : public US_WidgetsDialog
       void replot( QVector< QVector< double > >& );
 
    private:
+      QwtPlot*            plot;
+      QwtPlotSpectrogram* spectrogram;
       QLabel*       lb_bitmap;
 };
 #endif

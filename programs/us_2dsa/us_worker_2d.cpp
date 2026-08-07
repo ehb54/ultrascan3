@@ -130,8 +130,8 @@ void WorkerThread2D::calc_residuals()
 
    solvesim            = new US_SolveSim( dsets, thrn, true );
 
-   connect( solvesim, SIGNAL(  work_progress( int ) ),
-            this,     SLOT( forward_progress( int ) ) );
+   connect( solvesim, &US_SolveSim::work_progress,
+            this,     &WorkerThread2D::forward_progress );
 
    sim_vals.solutes    = solutes_i;
 

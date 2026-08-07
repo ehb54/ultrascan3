@@ -180,14 +180,14 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data,
    main->addLayout( buttons, row++, 2, 1, 4 );
 
    timer = new QTimer();
-   connect( timer, SIGNAL( timeout() ), SLOT( update_timer() ) );
+   connect( timer, &QTimer::timeout, this, &US_RunDetails2::update_timer );
 
    setup();
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-                        SLOT  ( update           ( int ) ) );
+   connect( lw_triples, &QListWidget::currentRowChanged,
+                        this, &US_RunDetails2::update );
 
-   connect( lw_rpm,     SIGNAL( itemClicked     ( QListWidgetItem* ) ),
-            this,       SLOT  ( show_rpm_details( QListWidgetItem* ) ) );
+   connect( lw_rpm,     &QListWidget::itemClicked,
+            this,       &US_RunDetails2::show_rpm_details );
 }
 
 US_RunDetails2::~US_RunDetails2()

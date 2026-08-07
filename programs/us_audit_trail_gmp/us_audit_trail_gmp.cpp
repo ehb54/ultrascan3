@@ -55,7 +55,7 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
   // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   // topLayout_auto->addItem( spacer2 );
   
-  connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReport() ) );
+  connect( pb_loadreport_db,  &QAbstractButton::clicked, this, &US_auditTrailGMP::loadGMPReport );
     
   //resize( 1200, 300 );
   resize( 600, 500 );
@@ -243,7 +243,7 @@ void US_auditTrailGMP::loadGMPReport( void )
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
-  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
+  connect( pdiag_autoflow_db, &US_SelectItem::accept_refresh_states, this, &US_auditTrailGMP::refreshGMPReportsList );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -551,7 +551,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   loadedRunGrid  -> addWidget( le_runName,      row++,   3,  1,  7  );
   loadedRunGrid  -> addWidget( pb_viewAPDF,     row++,   0,  1,  10  );
 
-  connect( pb_viewAPDF,  SIGNAL( clicked() ), SLOT ( viewAPDF() ) );
+  connect( pb_viewAPDF,  &QAbstractButton::clicked, this, &US_auditTrailGMP::viewAPDF );
 
   //1. e_signers layout
   eSignersGrid     = new QGridLayout();

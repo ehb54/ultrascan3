@@ -212,12 +212,12 @@ void US_ScanExclGui::build_layout ( void )
       genL->addWidget( le_remaining_scans,   row,    9, 1, 2 );
       // }
 
-      connect( sb_begin,   SIGNAL( valueChanged ( int ) ),
-	       this,       SLOT  ( scan_excl_changed ( int ) ) );
-      connect( sb_end,     SIGNAL( valueChanged ( int ) ),
-	       this,       SLOT  ( scan_excl_changed ( int ) ) );
-      connect( sb_nth,     SIGNAL( valueChanged ( int ) ),
-	       this,       SLOT  ( scan_excl_changed ( int ) ) );
+      connect( sb_begin,   &QSpinBox::valueChanged,
+	       this,       &US_ScanExclGui::scan_excl_changed );
+      connect( sb_end,     &QSpinBox::valueChanged,
+	       this,       &US_ScanExclGui::scan_excl_changed );
+      connect( sb_nth,     &QSpinBox::valueChanged,
+	       this,       &US_ScanExclGui::scan_excl_changed );
       
       QFont font   = le_chan_desc->property("font").value<QFont>();
       QFontMetrics fm(font);
@@ -228,8 +228,8 @@ void US_ScanExclGui::build_layout ( void )
       if ( ii == 0 )
 	{
 	  genL->addWidget( pb_applyall, row++, 11, 1, 2 );
-	  connect( pb_applyall, SIGNAL( clicked       ( ) ),
-		   this,        SLOT(   applied_to_all( ) ) );
+	  connect( pb_applyall, &QAbstractButton::clicked,
+		   this,        &US_ScanExclGui::applied_to_all );
 	}
       else
 	row++;

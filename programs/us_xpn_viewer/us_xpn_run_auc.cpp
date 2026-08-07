@@ -24,8 +24,8 @@ US_XpnRunAuc::US_XpnRunAuc( QString& runID )
                 le_search    = us_lineedit( "" );
    search      ->addWidget( lb_search );
    search      ->addWidget( le_search );
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-            this,      SLOT  ( limit_data ( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged,
+            this,      &US_XpnRunAuc::limit_data );
 
    // Load the runInfo structure with current data
    load_runs();
@@ -38,11 +38,11 @@ US_XpnRunAuc::US_XpnRunAuc( QString& runID )
    QHBoxLayout* buttons   = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_XpnRunAuc::select );
    buttons->addWidget( pb_accept );
 
    main->addLayout( search );

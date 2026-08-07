@@ -110,8 +110,8 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
    mainLayout->setStretchFactor( leftLayout,  1 );
    mainLayout->setStretchFactor( rightLayout, 4 );
 
-   connect( cb_pltkey, SIGNAL( currentIndexChanged( int ) ),
-            this,      SLOT  ( plot_kdata()               ) );
+   connect( cb_pltkey, &QComboBox::currentIndexChanged,
+            this,      &US_TmstPlot::plot_kdata );
    connect( pb_prev,   &QAbstractButton::clicked,
             this,      &US_TmstPlot::prev_plot );
    connect( pb_next,   &QAbstractButton::clicked,

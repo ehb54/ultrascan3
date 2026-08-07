@@ -774,7 +774,7 @@ void US_ConvertScan::set_wavl_ctrl(){
     // connect(cb_plot_id, QOverload<int>::of(&QComboBox::currentIndexChanged),
     //         [=](int index){ select_id(index); });
 
-    connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(select_id(int)));
+    connect(cb_plot_id, &QComboBox::currentIndexChanged, this, &US_ConvertScan::select_id);
     select_id(wavl_id);
 }
 
@@ -1161,7 +1161,7 @@ void US_ConvertScan::set_table(){
         combo->setCurrentIndex(cid);
 
         tb_triple->setCellWidget(ii, 2, combo);
-        connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(select_refscan(int)));
+        connect(combo, &QComboBox::currentIndexChanged, this, &US_ConvertScan::select_refscan);
 
         // connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
         //         [=](int index){ select_refscan(index); });

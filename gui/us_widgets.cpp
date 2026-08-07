@@ -933,7 +933,7 @@ US_Disk_DB_Controls::US_Disk_DB_Controls( int state )
    addLayout( db_layout );
    addLayout( disk_layout );
 
-   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+   connect( rb_db, &QAbstractButton::toggled, this, &US_Disk_DB_Controls::rb_changed );
 }
 
 bool US_Disk_DB_Controls::db( void )
@@ -945,14 +945,14 @@ void US_Disk_DB_Controls::set_db( void )
 {
    rb_db->disconnect();
    rb_db->setChecked( true );
-   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+   connect( rb_db, &QAbstractButton::toggled, this, &US_Disk_DB_Controls::rb_changed );
 }
 
 void US_Disk_DB_Controls::set_disk( void )
 {
    rb_db  ->disconnect();
    rb_disk->setChecked( true );
-   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+   connect( rb_db, &QAbstractButton::toggled, this, &US_Disk_DB_Controls::rb_changed );
 }
 
 void US_Disk_DB_Controls::rb_changed( bool /* state */ )
@@ -1009,7 +1009,7 @@ US_LineEdit_RE::US_LineEdit_RE(const QString& txt, int fontAdjust, bool readonly
         this->setReadOnly( false );
     }
     setDefault();
-    connect(this, SIGNAL(textEdited(const QString &)), this, SLOT(newEdit(const QString &)));
+    connect(this, &QLineEdit::textEdited, this, &US_LineEdit_RE::newEdit);
 }
 
 void US_LineEdit_RE::setDefault(){

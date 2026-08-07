@@ -848,11 +848,11 @@ void US_Properties::simulate( void )
    US_Predict1* dialog = new US_Predict1( 
          working_data, analyte, db_access, true );
 
-   connect( dialog, SIGNAL( changed       ( US_Analyte ) ), 
-                    SLOT  ( new_hydro     ( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_Predict1::changed ), 
+                    this, &US_Properties::new_hydro );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ), 
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_Predict1::use_db, 
+                    this, &US_Properties::source_changed );
    dialog->exec();
 }
 
@@ -872,13 +872,13 @@ void US_Properties::new_hydro( US_Analyte ad )
    // Set the name of the component
    if ( ! ad.description.isEmpty() )
    {
-      lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
+      QObject::disconnect( lw_components, &QListWidget::currentRowChanged, nullptr, nullptr );
       delete lw_components->currentItem();
       lw_components->insertItem( row, new QListWidgetItem( ad.description ) );
       lw_components->setCurrentRow( row );
 
-      connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
-                              SLOT  ( update           ( int  ) ) );
+      connect( lw_components, &QListWidget::currentRowChanged,
+                              this, &US_Properties::update );
 
       sc->name = ad.description;
       le_description->setText( ad.description );
@@ -1007,8 +1007,8 @@ void US_Properties::co_sed( int new_state )
          {
              ck_co_sed->disconnect();
              ck_co_sed->setChecked( false );
-             connect( ck_co_sed, SIGNAL( stateChanged( int ) ), 
-                                 SLOT  ( co_sed      ( int ) ) );
+             connect( ck_co_sed, &QCheckBox::checkStateChanged, 
+                                 this, &US_Properties::co_sed );
              return;
          }
       }
@@ -1147,11 +1147,11 @@ void US_Properties::edit_analyte()
 
    US_AnalyteGui* dialog = new US_AnalyteGui( true, aguid, db_access );
 
-   connect( dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
-                    SLOT  ( update_analyte( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_AnalyteGui::valueChanged ),
+                    this, &US_Properties::update_analyte );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ), 
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_AnalyteGui::use_db, 
+                    this, &US_Properties::source_changed );
 
    // If accepted, work is done by update_analyte
    dialog->exec();
@@ -1167,8 +1167,8 @@ void US_Properties::check_molar( bool chkd )
    // Flip check state of signal to opposite of molar
    ck_sigConc->disconnect();
    ck_sigConc->setChecked( !chkd );
-   connect( ck_sigConc, SIGNAL( toggled(      bool ) ), 
-                        SLOT(   check_signal( bool ) ) );
+   connect( ck_sigConc, &QAbstractButton::toggled, 
+                        this, &US_Properties::check_signal );
 }
 
 // Slot to make adjustments with signal check changed
@@ -1181,7 +1181,7 @@ void US_Properties::check_signal( bool chkd )
    // Flip check state of molar to opposite of signal
    ck_molConc->disconnect();
    ck_molConc->setChecked( !chkd );
-   connect( ck_molConc, SIGNAL( toggled(      bool ) ), 
-                        SLOT(   check_molar(  bool ) ) );
+   connect( ck_molConc, &QAbstractButton::toggled, 
+                        this, &US_Properties::check_molar );
 }
 

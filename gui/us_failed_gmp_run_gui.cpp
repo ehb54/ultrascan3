@@ -71,13 +71,13 @@ US_FailedRunGui::US_FailedRunGui( QMap <QString, QString> run_details ) : US_Wid
 
    pb_cancel = us_pushbutton( tr( "Cancel" ) );
    //pb_cancel->setEnabled( true );
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( cancel() ) );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+	    this,           &US_FailedRunGui::cancel );
    buttons->addWidget( pb_cancel, row, 0, 1, 1 );
 
    pb_save = us_pushbutton( tr( "Submit Failed Run Info" ) );
    pb_save->setEnabled( true );
-   connect( pb_save, SIGNAL( clicked( ) ), this, SLOT( save_new( ) ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_FailedRunGui::save_new );
    buttons->addWidget( pb_save, row++, 1, 1, 1 );
    //pb_save->setEnabled(false);
 

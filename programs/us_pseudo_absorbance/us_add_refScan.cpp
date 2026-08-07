@@ -338,20 +338,20 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
 
     slt_reset();
     //
-    connect(pb_import,  SIGNAL(clicked()), this, SLOT(slt_import()));
-    connect(pb_reset,   SIGNAL(clicked()), this, SLOT(slt_reset()));
-    connect(pb_prev_id, SIGNAL(clicked()), this, SLOT(slt_prev_id()));
-    connect(pb_next_id, SIGNAL(clicked()), this, SLOT(slt_next_id()));
-    connect(pb_clscltr, SIGNAL(clicked()), this, SLOT(slt_cls_ctrl()));
-    connect(pb_save,    SIGNAL(clicked()), this, SLOT(slt_save()));
-    connect(pb_loadCA,    SIGNAL(clicked()), this, SLOT(slt_load_CA()));
-    connect(ckb_CA_state, SIGNAL(stateChanged(int)), this, SLOT(slt_CA_state(int)));
+    connect(pb_import,  &QAbstractButton::clicked, this, &US_AddRefScan::slt_import);
+    connect(pb_reset,   &QAbstractButton::clicked, this, &US_AddRefScan::slt_reset);
+    connect(pb_prev_id, &QAbstractButton::clicked, this, &US_AddRefScan::slt_prev_id);
+    connect(pb_next_id, &QAbstractButton::clicked, this, &US_AddRefScan::slt_next_id);
+    connect(pb_clscltr, &QAbstractButton::clicked, this, &US_AddRefScan::slt_cls_ctrl);
+    connect(pb_save,    &QAbstractButton::clicked, this, &US_AddRefScan::slt_save);
+    connect(pb_loadCA,    &QAbstractButton::clicked, this, &US_AddRefScan::slt_load_CA);
+    connect(ckb_CA_state, &QCheckBox::checkStateChanged, this, &US_AddRefScan::slt_CA_state);
     // connect(dkdb_ctrl,  SIGNAL(changed(bool)),  this, SLOT(slt_db_local(bool)));
-    connect(this,  SIGNAL(sig_plot_l(bool)),    this, SLOT(slt_plot_l(bool)));
-    connect(this,  SIGNAL(sig_plot_r(bool)),    this, SLOT(slt_plot_r(bool)));
-    connect(this,  SIGNAL(sig_plot_dist(bool)), this, SLOT(slt_plot_dist(bool)));
-    connect(this,  SIGNAL(sig_plot_inty(bool)), this, SLOT(slt_plot_inty(bool)));
-    connect(this,  SIGNAL(sig_plot_ovlp(bool)), this, SLOT(slt_plot_ovlp(bool)));
+    connect(this,  &US_AddRefScan::sig_plot_l,    this, &US_AddRefScan::slt_plot_l);
+    connect(this,  &US_AddRefScan::sig_plot_r,    this, &US_AddRefScan::slt_plot_r);
+    connect(this,  &US_AddRefScan::sig_plot_dist, this, &US_AddRefScan::slt_plot_dist);
+    connect(this,  &US_AddRefScan::sig_plot_inty, this, &US_AddRefScan::slt_plot_inty);
+    connect(this,  &US_AddRefScan::sig_plot_ovlp, this, &US_AddRefScan::slt_plot_ovlp);
 }
 
 //***SLOTS***//
@@ -468,13 +468,13 @@ void US_AddRefScan::slt_import(){
     le_status->setText(status.arg(n_wavls).arg(n_scans));
     lb_runIDs->setText(runIDs.join(", "));
 
-    connect(ckb_cluster,   SIGNAL(stateChanged(int)), this, SLOT(slt_cls_state(int)));
-    connect(ckb_align,     SIGNAL(stateChanged(int)), this, SLOT(slt_aln_state(int)));
-    connect(this,          SIGNAL(sig_cluster(int)),  this, SLOT(slt_cluster(int)));
-    connect(ct_bws,        SIGNAL(valueChanged(double)), this, SLOT(slt_new_bws(double)));
-    connect(pb_find_merge, SIGNAL(clicked()),            this, SLOT(slt_find_merge()));
-    connect(ct_winlen,     SIGNAL(valueChanged(double)), this, SLOT(slt_new_wlen(double)));
-    connect(pb_reset_bws,  SIGNAL(clicked()),            this, SLOT(slt_reset_bws()));
+    connect(ckb_cluster,   &QCheckBox::checkStateChanged, this, &US_AddRefScan::slt_cls_state);
+    connect(ckb_align,     &QCheckBox::checkStateChanged, this, &US_AddRefScan::slt_aln_state);
+    connect(this,          &US_AddRefScan::sig_cluster,  this, &US_AddRefScan::slt_cluster);
+    connect(ct_bws,        &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_bws);
+    connect(pb_find_merge, &QAbstractButton::clicked,            this, &US_AddRefScan::slt_find_merge);
+    connect(ct_winlen,     &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_wlen);
+    connect(pb_reset_bws,  &QAbstractButton::clicked,            this, &US_AddRefScan::slt_reset_bws);
 
     set_wavl_ctrl();
     hasData = true;
@@ -1368,7 +1368,7 @@ void US_AddRefScan::set_wavl_ctrl(void){
     ckb_cluster->setEnabled(true);
     ct_winlen->setValue(winlen_dflt);
     pb_save->setEnabled(true);
-    connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_set_id(int)));
+    connect(cb_plot_id, &QComboBox::currentIndexChanged, this, &US_AddRefScan::slt_set_id);
     slt_set_id(wavl_id);
     return;
 }
@@ -2668,9 +2668,9 @@ FileNameWidget::FileNameWidget(QString &inputName):US_WidgetsDialog(nullptr, Qt:
 
     le_final->setText(check_fname().fileName());
 
-    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(slt_cancel()));
-    connect(pb_ok,     SIGNAL(clicked()), this, SLOT(slt_ok()));
-    connect(le_base,   SIGNAL(textEdited(QString)), this, SLOT(slt_edit(QString)));
+    connect(pb_cancel, &QAbstractButton::clicked, this, &FileNameWidget::slt_cancel);
+    connect(pb_ok,     &QAbstractButton::clicked, this, &FileNameWidget::slt_ok);
+    connect(le_base,   &QLineEdit::textEdited, this, &FileNameWidget::slt_edit);
 }
 
 void FileNameWidget::slt_ok(void){
@@ -2803,9 +2803,9 @@ setRefTime::setRefTime(QWidget* w, QDate& date):
 
     this->setLayout(main_lyt);
 
-    connect(cb_month, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_set_days(int)));
-    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(close()));
-    connect(pb_apply, SIGNAL(clicked()), this, SLOT(slt_apply()));
+    connect(cb_month, &QComboBox::currentIndexChanged, this, &setRefTime::slt_set_days);
+    connect(pb_cancel, &QAbstractButton::clicked, this, &QWidget::close);
+    connect(pb_apply, &QAbstractButton::clicked, this, &setRefTime::slt_apply);
 }
 
 void setRefTime::slt_set_days(int month){

@@ -74,8 +74,8 @@ US_GetDBRunRa::US_GetDBRunRa( QString& r )
 
    // Enable sorting by a particular column
    QHeaderView* qHeader = tw ->horizontalHeader();
-   connect( qHeader, SIGNAL( sectionClicked( int ) ),
-                     SLOT  ( columnClicked ( int ) ) );
+   connect( qHeader, &QHeaderView::sectionClicked,
+                     this, &US_GetDBRunRa::columnClicked );
 
    main->addWidget( tw );
 
@@ -83,15 +83,15 @@ US_GetDBRunRa::US_GetDBRunRa( QString& r )
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_delete = us_pushbutton( tr( "Delete" ) );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( deleteRun() ) );
+   connect( pb_delete, &QAbstractButton::clicked, this, &US_GetDBRunRa::deleteRun );
    buttons->addWidget( pb_delete );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_GetDBRunRa::select );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );

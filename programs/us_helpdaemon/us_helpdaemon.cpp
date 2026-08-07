@@ -52,8 +52,8 @@ debug("location="+location);
   daemon.start( assisloc, args );
   daemon.waitForStarted();
 
-  connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),
-                    SLOT  ( close    ( int, QProcess::ExitStatus ) ) );
+  connect( &daemon, &QProcess::finished,
+                    this, &US_HelpDaemon::close );
 //show(page);
 }
 
