@@ -28,7 +28,9 @@
 // refinement -- a finer rung swaps in a different subset rather than refining the previous
 // one. Well-separated rungs are what make the bar trustworthy.
 #pragma once
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <string>
 #include <vector>
 #include "grpy_api.hpp"
@@ -83,6 +85,12 @@ struct ShellOptions {
     // has not converged is reported as not converged; it is never silently passed off as if
     // it had.
     int max_beads = 0;
+
+    // Optional per-rung notification, called once after each rung completes with
+    // (rung index 0-based, rungs planned, beads used, worst error estimate so far).
+    // The estimate is 1.0 until a second rung exists to difference against. Lets the
+    // caller log the ladder converging instead of leaving the user watching a bar.
+    std::function<void(int, int, int, double)> on_rung;
 };
 
 struct ShellReport {
@@ -218,6 +226,34 @@ public:
 
         std::vector<double> ex = shell::exposure(to_core(beads), (int)beads.size(),
                                                  sopt_.K, sopt_.probe);
+
+        // PROGRESS. Every rung is a separate solve sweeping 0..100%, so reporting each one
+        // raw makes the bar restart several times per model and the stage text never says
+        // which rung is running. Instead map each rung onto its share of the WHOLE ladder,
+        // weighted by predicted cost (~N^3), and prefix the stage with the rung. The bar
+        // then advances monotonically across the ladder.
+        //
+        // The denominator assumes the worst case -- the ladder runs to its last planned
+        // rung -- so converging early makes the bar jump to done, which is correct: it
+        // finished. Sizes here are the nominal ceil(f*N); reduce_top_frac quantizes
+        // slightly differently, but this only weights a progress bar.
+        std::vector<int> planned;
+        for (double f : sopt_.ladder) {
+            int n = (f >= 1.0) ? (int)beads.size()
+                               : (int)std::ceil(f * (double)beads.size());
+            if (n > (int)beads.size()) n = (int)beads.size();
+            if (!planned.empty() && n <= planned.back()) continue;
+            if (sopt_.max_beads > 0 && n > sopt_.max_beads) break;
+            planned.push_back(n);
+        }
+        if (planned.empty()) planned.push_back((int)beads.size());
+        std::vector<double> cum(planned.size() + 1, 0.0);
+        for (size_t i = 0; i < planned.size(); ++i) {
+            double n = (double)planned[i];
+            cum[i + 1] = cum[i] + n * n * n;
+        }
+        const double work_total = cum.back() > 0.0 ? cum.back() : 1.0;
+        std::string stage_buf;   // outlives each synchronous progress() call
         std::vector<std::vector<double>> hist;             // hist[rung][observable]
         Results last;
         for (double f : sopt_.ladder) {
@@ -231,7 +267,21 @@ public:
                 rep.mem_capped = true;
                 break;
             }
-            last = solver.run(rb, pin, progress);
+            const size_t ri = rep.ns.size();               // 0-based index of this rung
+            const double f0 = cum[std::min(ri, planned.size())] / work_total;
+            const double f1 = cum[std::min(ri + 1, planned.size())] / work_total;
+            ProgressFn wrapped;
+            if (progress) {
+                const int nb = (int)rb.size();
+                wrapped = [&, ri, nb, f0, f1](int pct, const char* stage) {
+                    stage_buf = "rung " + std::to_string(ri + 1) + "/"
+                              + std::to_string(planned.size()) + ", " + std::to_string(nb)
+                              + " beads: " + (stage ? stage : "");
+                    progress((int)std::lround(100.0 * (f0 + (f1 - f0) * (pct / 100.0))),
+                             stage_buf.c_str());
+                };
+            }
+            last = solver.run(rb, pin, wrapped);
             last.rg2 = rg2_full;                           // see note above
             rep.ns.push_back((int)rb.size());
             rep.n_used = (int)rb.size();
@@ -259,6 +309,9 @@ public:
                 }
                 if (rep.err_est[m] > rep.err_max) { rep.err_max = rep.err_est[m]; rep.worst = sopt_.require[m]; }
             }
+            if (sopt_.on_rung)
+                sopt_.on_rung((int)ri, (int)planned.size(), (int)rb.size(), rep.err_max);
+
             if (hist.size() > 1 && rep.err_max < sopt_.tol) { rep.converged = true; break; }
             if (f >= 1.0) {
                 // Ladder exhausted onto the UNREDUCED model. The result is then exact, so

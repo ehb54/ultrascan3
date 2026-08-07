@@ -225,6 +225,58 @@ int main() {
         }
     }
 
+    // ---- progress is ladder-wide, not per-rung ---------------------------------
+    // Each rung is its own solve sweeping 0..100%, so forwarding progress raw made the
+    // bar restart once per rung and the stage text never said which rung was running.
+    {
+        auto b = blob(5, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-12;              // unsatisfiable: run the whole ladder
+        so.require = {Obs::Dt, Obs::Dr};
+        so.ladder = {0.125, 0.25, 0.5, 1.0};
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+
+        std::vector<int> pcts;
+        std::vector<std::string> stages;
+        sh.run(b, phys, rep, [&](int pct, const char* stage) {
+            pcts.push_back(pct);
+            stages.push_back(stage ? stage : "");
+        });
+
+        bool monotone = true, in_range = true, labelled = !stages.empty();
+        for (size_t i = 0; i < pcts.size(); ++i) {
+            if (i && pcts[i] < pcts[i - 1]) monotone = false;
+            if (pcts[i] < 0 || pcts[i] > 100) in_range = false;
+            if (stages[i].find("rung ") == std::string::npos) labelled = false;
+        }
+        fails += chk("progress was reported at all", !pcts.empty());
+        fails += chk("progress never goes backwards across rungs", monotone);
+        fails += chk("progress stays within 0..100", in_range);
+        fails += chk("every stage names its rung", labelled);
+        fails += chk("stage names the bead count",
+                     !stages.empty() && stages.back().find(" beads: ") != std::string::npos);
+        // Several rungs ran, but the bar restarted zero times: proof of the remap.
+        int restarts = 0;
+        for (size_t i = 1; i < pcts.size(); ++i) if (pcts[i] < pcts[i - 1]) ++restarts;
+        fails += chk("multiple rungs ran", rep.levels > 1);
+        fails += chk("bar restarted zero times despite multiple rungs", restarts == 0);
+    }
+
+    // ---- disabled shell reduction leaves progress untouched ---------------------
+    {
+        auto b = blob(4, 3.0, 2.0);
+        ShellSolver sh(par, {}, {});                    // enabled = false
+        ShellReport rep;
+        bool any_rung_text = false, saw = false;
+        sh.run(b, phys, rep, [&](int, const char* stage) {
+            saw = true;
+            if (stage && std::string(stage).find("rung ") != std::string::npos) any_rung_text = true;
+        });
+        fails += chk("disabled => progress still reported", saw);
+        fails += chk("disabled => stage text is unmodified", !any_rung_text);
+    }
+
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);
     return fails ? 1 : 0;
 }
