@@ -55,6 +55,30 @@ static bool truthy( QString v ) {
    return v == "1" || v == "true" || v == "yes" || v == "on";
 }
 
+// Pause a US_Timer across a blocking modal dialog, resuming on scope exit.
+//
+// The GRPY run is timed end to end, but the results-writing path prompts for a filename
+// whenever an output file already exists and overwrite_hydro is false -- and that prompt is
+// modal, so the operator's response time landed in "Time to process". Measured at 71 s on
+// one run, and it varies per run, which makes interactive GRPY timings incomparable.
+//
+// US_Timer::stop_timer banks the interval so far WITHOUT counting a completion, and
+// start_timer restarts from zero; so stop/start is exactly pause/resume, and the paused
+// span is simply never accumulated. No change to US_Timer is needed.
+//
+// The prompt itself is unchanged -- this only stops it being counted as compute.
+class GrpyTimerPause {
+public:
+   GrpyTimerPause( US_Timer & t, const QString & name ) : t_( t ), name_( name ) {
+      t_.stop_timer( name_ );
+   }
+   ~GrpyTimerPause() { t_.start_timer( name_ ); }
+private:
+   US_Timer & t_;
+   QString    name_;
+};
+#define GRPY_PAUSE_TIMER GrpyTimerPause grpy_timer_pause__( timers, "compute grpy all models" )
+
 // Format a fraction as a percentage string, e.g. 0.00489 -> "0.489%".
 //
 // The percent sign has to be attached HERE rather than written as a literal in a format
@@ -945,6 +969,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    if ( !batch_avg_hydro_active() && !grpy_mm ) {
       QString grpy_out_name = grpy_last_processed.replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), ".grpy_res" );
       if ( !overwrite_hydro ) {
+         GRPY_PAUSE_TIMER;   // operator response time is not compute
          grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
       }
       QFile f( grpy_out_name );
@@ -1426,6 +1451,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       {
          QString fname = get_somo_dir() + "/" + this_data.results.name + ".grpy.csv";
          if ( !overwrite_hydro ) {
+            GRPY_PAUSE_TIMER;   // operator response time is not compute
             fname = fileNameCheck( fname, 0, this );
          }
 
@@ -1501,6 +1527,7 @@ void US_Hydrodyn::grpy_finalize() {
       {
          QString grpy_out_name = grpy_mm_name + ".grpy_res";
          if ( !overwrite_hydro ) {
+            GRPY_PAUSE_TIMER;   // operator response time is not compute
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
          }
       
@@ -1524,6 +1551,7 @@ void US_Hydrodyn::grpy_finalize() {
       if ( saveParams && create_hydro_res ) {
          QString grpy_out_name = grpy_mm_name + ".grpy.csv";
          if ( !overwrite_hydro ) {
+            GRPY_PAUSE_TIMER;   // operator response time is not compute
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
          }
          QFile f( grpy_out_name );
