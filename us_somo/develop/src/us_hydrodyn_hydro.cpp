@@ -18,7 +18,11 @@ US_Hydrodyn_Hydro::US_Hydrodyn_Hydro(struct hydro_options *hydro,
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO Hydrodynamic Calculation Options"));
-   this->setMinimumWidth(680);
+   // Headroom for the longer group-box titles and control rows this window has accumulated;
+   // it is a minimum, so the window still grows to whatever its contents need. The GRPY
+   // shell-reduction box, which prompted this, is fixed by being laid out in two rows rather
+   // than by width alone -- see setupGUI() -- since a width threshold only moves with font.
+   this->setMinimumWidth(740);
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -561,9 +565,22 @@ void US_Hydrodyn_Hydro::setupGUI()
       bl->addWidget( rb_grpy_shell_on );
       bl->addWidget( lbl_grpy_shell_tol );
       bl->addWidget( le_grpy_shell_tol );
-      bl->addWidget( cb_grpy_shell_eta );
-      bl->addWidget( cb_grpy_shell_models );
-      bg_grpy_shell->setLayout( bl );
+      bl->addStretch( 1 );
+
+      // Two rows rather than one. This box carries six controls -- about a hundred
+      // characters of label text -- which is half again the widest of the other boxes and
+      // was clipped on the right at the window's minimum width. Splitting it drops the
+      // width this box demands to roughly that of a single row, so it survives larger
+      // fonts and interface scalings rather than merely clearing today's threshold.
+      QHBoxLayout * bl2 = new QHBoxLayout; bl2->setContentsMargins( 0, 0, 0, 0 ); bl2->setSpacing( 0 );
+      bl2->addWidget( cb_grpy_shell_eta );
+      bl2->addWidget( cb_grpy_shell_models );
+      bl2->addStretch( 1 );
+
+      QVBoxLayout * bv = new QVBoxLayout; bv->setContentsMargins( 0, 0, 0, 0 ); bv->setSpacing( 0 );
+      bv->addLayout( bl );
+      bv->addLayout( bl2 );
+      bg_grpy_shell->setLayout( bv );
    }
 
    if ( !(*hydro).grpy_shell ) {

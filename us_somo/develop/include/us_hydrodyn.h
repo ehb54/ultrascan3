@@ -1282,7 +1282,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_ebf( QString, vector <PDB_atom> * );
       void write_bead_spt( QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false );
       // GRPY shell-reduction diagnostic: write+display a bead model per ladder rung.
-      void grpy_write_shell_models( const grpy::ShellReport &, const QString & base_name );
+      void grpy_write_shell_model( const vector <int> & kept, int rung, const QString & base_name );
       // Bead emission order shared by every bead-model output and the .grpy input; see the
       // definition in us_hydrodyn_write.cpp. Public so the GRPY shell-reduction models can
       // map .grpy positions back to beads using the same order by construction.

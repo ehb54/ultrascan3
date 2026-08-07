@@ -385,6 +385,51 @@ int main() {
         fails += chk("not recorded unless asked", rep2.kept.empty() && rep2.ns.size() > 1);
     }
 
+    // ---- cancellation between rungs ---------------------------------------------
+    // A user watching the shells appear must be able to stop on seeing something wrong.
+    // Stopping keeps whatever was computed, on its bar, and never claims convergence.
+    {
+        auto b = blob(5, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-12;            // unsatisfiable: only a stop can end it
+        so.require = {Obs::Dt, Obs::Dr};
+        so.ladder = {0.125, 0.25, 0.5, 1.0};
+        int seen = 0;
+        so.should_stop = [&]{ return seen >= 2; };    // let two rungs run, then stop
+        so.on_rung = [&](int, int, int, double){ ++seen; };
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+
+        fails += chk("stop is reported", rep.stopped);
+        fails += chk("stop does not claim convergence", !rep.converged);
+        fails += chk("stop keeps the rungs already run", rep.levels == 2);
+        fails += chk("stop did not reach the full model", !rep.unreduced);
+        fails += chk("stopped result still carries a bar",
+                     rep.err_max > 0.0 && std::isfinite(rep.err_max));
+        fails += chk("stopped result is usable", r.translational_diffusion_centre > 0.0);
+        fails += chk("report explains the stop",
+                     r.report.find("stopped before the ladder") != std::string::npos);
+
+        // Stopping before anything runs leaves no result, like an impossible memory cap.
+        ShellOptions so2 = so;
+        so2.should_stop = []{ return true; };
+        so2.on_rung = nullptr;
+        ShellSolver sh2(par, {}, so2);
+        ShellReport rep2;
+        sh2.run(b, phys, rep2);
+        fails += chk("stop before any rung leaves no result",
+                     rep2.stopped && rep2.levels == 0);
+
+        // And with no hook the ladder is unaffected.
+        ShellOptions so3 = so; so3.should_stop = nullptr; so3.on_rung = nullptr;
+        ShellSolver sh3(par, {}, so3);
+        ShellReport rep3;
+        sh3.run(b, phys, rep3);
+        fails += chk("no hook => ladder runs to the full model",
+                     !rep3.stopped && rep3.unreduced);
+    }
+
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);
     return fails ? 1 : 0;
 }

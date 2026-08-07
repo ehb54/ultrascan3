@@ -91,9 +91,10 @@ private:
 // Diagnostic only, off by default: this exists so the reduction can be seen and checked.
 // Files land in <somo>/tmp with fixed per-rung names and overwrite freely -- they are
 // regenerated every run, and prompting per rung would add a modal dialog to each.
-void US_Hydrodyn::grpy_write_shell_models( const grpy::ShellReport & srep,
-                                           const QString & base_name ) {
-   if ( srep.kept.empty() ) {
+void US_Hydrodyn::grpy_write_shell_model( const vector < int > & idx,
+                                          int rung,
+                                          const QString & base_name ) {
+   if ( idx.empty() ) {
       return;
    }
 
@@ -114,8 +115,8 @@ void US_Hydrodyn::grpy_write_shell_models( const grpy::ShellReport & srep,
    const QString dir = get_somo_dir() + SLASH + "tmp";
    QDir().mkpath( dir );
 
-   for ( int r = 0; r < (int) srep.kept.size(); ++r ) {
-      const vector < int > & idx = srep.kept[ r ];
+   {
+      const int r = rung;
       vector < PDB_atom > shell;
       shell.reserve( idx.size() );
       bool bad = false;
@@ -799,8 +800,13 @@ void US_Hydrodyn::grpy_process_next() {
                                        : us_tr( ", intrinsic viscosity NOT required (will be withheld)" ) ) );
          // Log each rung as it lands. Without this the ladder is silent for its whole
          // duration and the only visible sign of several solves is the progress bar.
-         const double rung_tol = sopt.tol;
-         sopt.on_rung = [ this, rung_tol ]( int i, int planned, int nb, double err ) {
+         const double rung_tol   = sopt.tol;
+         const bool   save_models = hydro.grpy_shell_save_models;
+         const QString shell_base = QFileInfo( grpy_last_processed ).completeBaseName();
+         // srep outlives the solve below, and the module fills in each rung's selection
+         // BEFORE calling on_rung, so the current rung is srep.kept.back() here.
+         sopt.on_rung = [ this, rung_tol, save_models, shell_base, &srep ]
+            ( int i, int planned, int nb, double err ) {
             editor_msg( "dark blue",
                         QString( us_tr( "GRPY shell reduction: rung %1 of %2, %3 beads%4\n" ) )
                         .arg( i + 1 ).arg( planned ).arg( nb )
@@ -809,8 +815,18 @@ void US_Hydrodyn::grpy_process_next() {
                               : QString( us_tr( ", estimated error %1 (target %2)" ) )
                                 .arg( grpy_pct( err ) )
                                 .arg( grpy_pct( rung_tol ) ) ) );
+            // Written and shown as each rung lands rather than in a batch at the end, so an
+            // obviously wrong shell can be seen while there is still something to stop.
+            if ( save_models && (int) srep.kept.size() == i + 1 ) {
+               grpy_write_shell_model( srep.kept.back(), i, shell_base );
+            }
             qApp->processEvents();
          };
+
+         // Let the Stop button end the ladder between rungs. Each rung costs roughly eight
+         // times the one before, so stopping before the next begins saves nearly all that
+         // remained; a rung already running finishes, as the solve has no interior abort.
+         sopt.should_stop = [ this ]() { return stopFlag; };
       }
 
       la::QtParallel par( USglobal->config_list.numThreads );
@@ -844,6 +860,9 @@ void US_Hydrodyn::grpy_process_next() {
                      .arg( srep.converged
                            ? QString( us_tr( "converged (estimated error %1%2)" ) )
                              .arg( grpy_pct( srep.err_max ) ).arg( worst )
+                           : srep.stopped
+                           ? QString( us_tr( "STOPPED BEFORE CONVERGING (estimated error %1%2)" ) )
+                             .arg( grpy_pct( srep.err_max ) ).arg( worst )
                            : srep.mem_capped
                            ? QString( us_tr( "STOPPED BY AVAILABLE MEMORY at %1 beads "
                                              "(estimated error %2%3)" ) )
@@ -855,10 +874,6 @@ void US_Hydrodyn::grpy_process_next() {
                         us_tr( "GRPY shell reduction: that is the LARGEST of the requested"
                                " quantities; the individual estimates, which are typically"
                                " smaller, are listed in the results file.\n" ) );
-         }
-         if ( hydro.grpy_shell_save_models ) {
-            grpy_write_shell_models( srep,
-                                     QFileInfo( grpy_last_processed ).completeBaseName() );
          }
          if ( srep.viscosity_unreliable ) {
             editor_msg( "red", us_tr( "GRPY shell reduction: intrinsic viscosity and Einstein"
