@@ -548,7 +548,7 @@ void US_RotorCalibration::loadDB(void)
    top_of_cell = false;
    pb_reset->setEnabled (true);
    pb_accept->setEnabled(true);
-   connect( cb_wavelengths,    &QComboBox::currentIndexChanged,
+   connect( cb_wavelengths,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this, &US_RotorCalibration::changeLambda);
    next();
 }

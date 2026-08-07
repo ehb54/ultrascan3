@@ -259,7 +259,7 @@ void US_RotorGui::setupGui( int select_db_disk )
    QLabel* lbl_lab = us_label( tr( " Please select a Laboratory:" ) );
    top->addWidget( lbl_lab, row, 0, 1, 2 );
    cb_lab = new QComboBox( this );
-   connect( cb_lab, &QComboBox::activated,                                         
+   connect( cb_lab, qOverload< int >( &QComboBox::activated ),                                         
                     this, &US_RotorGui::changeLab );
    top->addWidget( cb_lab, row++, 2, 1, 2 );
 

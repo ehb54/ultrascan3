@@ -345,7 +345,7 @@ US_AddRefScan::US_AddRefScan() : US_Widgets()
     connect(pb_clscltr, &QAbstractButton::clicked, this, &US_AddRefScan::slt_cls_ctrl);
     connect(pb_save,    &QAbstractButton::clicked, this, &US_AddRefScan::slt_save);
     connect(pb_loadCA,    &QAbstractButton::clicked, this, &US_AddRefScan::slt_load_CA);
-    connect(ckb_CA_state, &QCheckBox::checkStateChanged, this, &US_AddRefScan::slt_CA_state);
+    connect(ckb_CA_state, US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_CA_state);
     // connect(dkdb_ctrl,  SIGNAL(changed(bool)),  this, SLOT(slt_db_local(bool)));
     connect(this,  &US_AddRefScan::sig_plot_l,    this, &US_AddRefScan::slt_plot_l);
     connect(this,  &US_AddRefScan::sig_plot_r,    this, &US_AddRefScan::slt_plot_r);
@@ -468,8 +468,8 @@ void US_AddRefScan::slt_import(){
     le_status->setText(status.arg(n_wavls).arg(n_scans));
     lb_runIDs->setText(runIDs.join(", "));
 
-    connect(ckb_cluster,   &QCheckBox::checkStateChanged, this, &US_AddRefScan::slt_cls_state);
-    connect(ckb_align,     &QCheckBox::checkStateChanged, this, &US_AddRefScan::slt_aln_state);
+    connect(ckb_cluster,   US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_cls_state);
+    connect(ckb_align,     US_CB_STATE_CHANGED, this, &US_AddRefScan::slt_aln_state);
     connect(this,          &US_AddRefScan::sig_cluster,  this, &US_AddRefScan::slt_cluster);
     connect(ct_bws,        &QwtCounter::valueChanged, this, &US_AddRefScan::slt_new_bws);
     connect(pb_find_merge, &QAbstractButton::clicked,            this, &US_AddRefScan::slt_find_merge);
@@ -1368,7 +1368,7 @@ void US_AddRefScan::set_wavl_ctrl(void){
     ckb_cluster->setEnabled(true);
     ct_winlen->setValue(winlen_dflt);
     pb_save->setEnabled(true);
-    connect(cb_plot_id, &QComboBox::currentIndexChanged, this, &US_AddRefScan::slt_set_id);
+    connect(cb_plot_id, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_AddRefScan::slt_set_id);
     slt_set_id(wavl_id);
     return;
 }
@@ -2803,7 +2803,7 @@ setRefTime::setRefTime(QWidget* w, QDate& date):
 
     this->setLayout(main_lyt);
 
-    connect(cb_month, &QComboBox::currentIndexChanged, this, &setRefTime::slt_set_days);
+    connect(cb_month, qOverload< int >( &QComboBox::currentIndexChanged ), this, &setRefTime::slt_set_days);
     connect(pb_cancel, &QAbstractButton::clicked, this, &QWidget::close);
     connect(pb_apply, &QAbstractButton::clicked, this, &setRefTime::slt_apply);
 }

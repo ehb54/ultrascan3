@@ -612,10 +612,10 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
         this->close();
     }
 
-    connect(cb_scan, &QComboBox::currentIndexChanged, this, &US_MWL_SF_PLOT3D::newScan);
+    connect(cb_scan, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_MWL_SF_PLOT3D::newScan);
     connect(pb_next, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::nextScan);
     connect(pb_prev, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::prevScan);
-    connect(cb_camera, &QComboBox::currentIndexChanged, this, &US_MWL_SF_PLOT3D::resetCamera);
+    connect(cb_camera, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_MWL_SF_PLOT3D::resetCamera);
     connect(cb_theme, &QComboBox::currentTextChanged, this, &US_MWL_SF_PLOT3D::setTheme);
     connect(pb_close, &QAbstractButton::clicked, this, &QWidget::close);
     connect(pb_render, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::renderImage);
@@ -636,8 +636,8 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
     connect(pb_xAngle, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::reset_xAngle);
     connect(pb_yAngle, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::reset_yAngle);
     connect(pb_zAngle, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::reset_zAngle);
-    connect(ckb_plotAbs, &QCheckBox::checkStateChanged, this, &US_MWL_SF_PLOT3D::plot3d);
-    connect(ckb_rendall, &QCheckBox::checkStateChanged, this, &US_MWL_SF_PLOT3D::render_option);
+    connect(ckb_plotAbs, US_CB_STATE_CHANGED, this, &US_MWL_SF_PLOT3D::plot3d);
+    connect(ckb_rendall, US_CB_STATE_CHANGED, this, &US_MWL_SF_PLOT3D::render_option);
     connect(camera,   &Q3DCamera::xRotationChanged, this, &US_MWL_SF_PLOT3D::cameraChanged);
     connect(camera,   &Q3DCamera::yRotationChanged, this, &US_MWL_SF_PLOT3D::cameraChanged);
     connect(pb_plotPixMap,   &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::plotPixMap);
@@ -1688,7 +1688,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     cb_color_r->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
     cb_color_r->setCurrentText("green");
     toolBar->addWidget( cb_color_r );
-    connect( cb_color_r, &QComboBox::currentIndexChanged,
+    connect( cb_color_r, qOverload< int >( &QComboBox::currentIndexChanged ),
              this, &RunsTestWidget::setColorMap );
 
     toolBar->addWidget( new QLabel("Non-random Points:" ) );
@@ -1697,7 +1697,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     cb_color_nr->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
     cb_color_nr->setCurrentText("darkBlue");
     toolBar->addWidget( cb_color_nr );
-    connect( cb_color_nr, &QComboBox::currentIndexChanged,
+    connect( cb_color_nr, qOverload< int >( &QComboBox::currentIndexChanged ),
              this, &RunsTestWidget::setColorMap );
 
     toolBar->addSeparator();

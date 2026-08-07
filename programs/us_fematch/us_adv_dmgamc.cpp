@@ -142,7 +142,7 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
             this,         &US_AdvDmgaMc::prev_param );
    connect( pb_nextparm,  &QAbstractButton::clicked,
             this,         &US_AdvDmgaMc::next_param );
-   connect( cb_params,    &QComboBox::activated,
+   connect( cb_params,    qOverload< int >( &QComboBox::activated ),
             this,         &US_AdvDmgaMc::plot_distrib );
 
    connect( pb_help,      &QAbstractButton::clicked,

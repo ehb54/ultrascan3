@@ -56,7 +56,7 @@ US_SimParamsGui::US_SimParamsGui(
    }
 
    main->addWidget( cmb_speeds, row++, 0, 1, 4 );
-   connect( cmb_speeds, &QComboBox::activated, 
+   connect( cmb_speeds, qOverload< int >( &QComboBox::activated ), 
                         this, &US_SimParamsGui::select_speed_profile );
 
    // Experiment hours
@@ -202,7 +202,7 @@ US_SimParamsGui::US_SimParamsGui(
    
    main->addWidget( cmb_mesh, row++, 0, 1, 4 );
 
-   connect( cmb_mesh, &QComboBox::activated, 
+   connect( cmb_mesh, qOverload< int >( &QComboBox::activated ), 
                       this, &US_SimParamsGui::update_mesh );
 
    // Right Column
@@ -384,7 +384,7 @@ US_SimParamsGui::US_SimParamsGui(
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
    cmb_moving->setCurrentIndex( (int)simparams.gridType );
-   connect( cmb_moving, &QComboBox::activated, 
+   connect( cmb_moving, qOverload< int >( &QComboBox::activated ), 
                         this, &US_SimParamsGui::update_moving );
    
    main->addWidget( cmb_moving, row++, 4, 1, 4 );
@@ -599,7 +599,7 @@ void US_SimParamsGui::update_combobox( void )
             QString::number( spi->rotorspeed       ) + " rpm" );
    }
 
-   connect( cmb_speeds, &QComboBox::activated,
+   connect( cmb_speeds, qOverload< int >( &QComboBox::activated ),
                         this, &US_SimParamsGui::select_speed_profile );
    
    cmb_speeds->setCurrentIndex( current_speed_step );
@@ -904,7 +904,7 @@ void US_SimParamsGui::load( void )
             QString::number( spi->rotorspeed       ) + " rpm" );
       }
 
-      connect( cmb_speeds, &QComboBox::activated,
+      connect( cmb_speeds, qOverload< int >( &QComboBox::activated ),
                            this, &US_SimParamsGui::select_speed_profile );
 
       // Initialize all counters with the first speed profile:
@@ -1168,7 +1168,7 @@ void US_SimParamsGui::reconnect_all( )
 {
    connect( cnt_speeds,           &QwtCounter::valueChanged, 
                                   this, &US_SimParamsGui::update_speeds );
-   connect( cmb_speeds,           &QComboBox::activated, 
+   connect( cmb_speeds,           qOverload< int >( &QComboBox::activated ), 
                                   this, &US_SimParamsGui::select_speed_profile );
    connect( cnt_duration_hours,   &QwtCounter::valueChanged, 
                                   this, &US_SimParamsGui::update_duration_hours );
@@ -1208,9 +1208,9 @@ void US_SimParamsGui::reconnect_all( )
                                   this, &US_SimParamsGui::update_rinoise );
    connect( cnt_baseline,         &QwtCounter::valueChanged, 
                                   this, &US_SimParamsGui::update_baseline );
-   connect( cmb_mesh,             &QComboBox::activated, 
+   connect( cmb_mesh,             qOverload< int >( &QComboBox::activated ), 
                                   this, &US_SimParamsGui::update_mesh );
-   connect( cmb_moving,           &QComboBox::activated, 
+   connect( cmb_moving,           qOverload< int >( &QComboBox::activated ), 
                                   this, &US_SimParamsGui::update_moving );
 }
 

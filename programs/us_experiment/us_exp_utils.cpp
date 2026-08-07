@@ -2637,7 +2637,7 @@ DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
  for ( int ii = 0; ii < mxrow; ii++ )
    {
      QComboBox*   cb_solution = cc_solus[ ii ];
-     connect( cb_solution,  &QComboBox::currentIndexChanged,
+     connect( cb_solution,  qOverload< int >( &QComboBox::currentIndexChanged ),
 	      this,         &US_ExperGuiSolutions::changeSolu );
       
    }

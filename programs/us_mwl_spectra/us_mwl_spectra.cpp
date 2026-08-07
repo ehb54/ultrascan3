@@ -161,17 +161,17 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
             this,         &US_MwlSpectra::resetAll );
    connect( pb_details,   &QAbstractButton::clicked,
             this,         &US_MwlSpectra::runDetails );
-   connect( cb_sstart,    &QComboBox::currentIndexChanged,
+   connect( cb_sstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlSpectra::changeSedcoeff );
-   connect( cb_send,      &QComboBox::currentIndexChanged,
+   connect( cb_send,      qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlSpectra::changeSedcoeff );
-   connect( cb_lstart,    &QComboBox::currentIndexChanged,
+   connect( cb_lstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlSpectra::changeLambda );
-   connect( cb_lend,      &QComboBox::currentIndexChanged,
+   connect( cb_lend,      qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlSpectra::changeLambda );
    connect( ct_smooth,    &QwtCounter::valueChanged,
             this,         &US_MwlSpectra::changeSmooth );
-   connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlSpectra::changeRecord );
    connect( pb_prev,      &QAbstractButton::clicked,
             this,         &US_MwlSpectra::prevPlot );
@@ -1264,15 +1264,15 @@ void US_MwlSpectra::connect_ranges( bool conn )
 {
    if ( conn )
    {  // Connect the range-related controls
-      connect( cb_sstart,  &QComboBox::currentIndexChanged,
+      connect( cb_sstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlSpectra::changeSedcoeff );
-      connect( cb_send,    &QComboBox::currentIndexChanged,
+      connect( cb_send,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlSpectra::changeSedcoeff );
-      connect( cb_lstart,  &QComboBox::currentIndexChanged,
+      connect( cb_lstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlSpectra::changeLambda );
-      connect( cb_lend,    &QComboBox::currentIndexChanged,
+      connect( cb_lend,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlSpectra::changeLambda );
-      connect( cb_pltrec,  &QComboBox::currentIndexChanged,
+      connect( cb_pltrec,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlSpectra::changeRecord );
    }
 
@@ -1597,7 +1597,7 @@ void US_MwlSpectra::sum_check()
       sedxp      = ( sedxp < 0 ) ? ( ( sedxs + sedxe ) / 2 ) : sedxp;
       cb_pltrec->disconnect();
       cb_pltrec->setCurrentIndex( sedxp );
-      connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+      connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_MwlSpectra::changeRecord );
       le_status->setText( lb_pltrec->text() + "  "
             + tr( "sum for S from %1 to %2" )

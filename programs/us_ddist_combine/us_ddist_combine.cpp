@@ -301,73 +301,73 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    connect( pb_close,  &QAbstractButton::clicked,
             this,      &QWidget::close );
 
-   connect( ck_2dsa,     &QCheckBox::checkStateChanged,
+   connect( ck_2dsa,     US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsait,   &QCheckBox::checkStateChanged,
+   connect( ck_2dsait,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsamc,   &QCheckBox::checkStateChanged,
+   connect( ck_2dsamc,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsamw,   &QCheckBox::checkStateChanged,
+   connect( ck_2dsamw,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsamcmw, &QCheckBox::checkStateChanged,
+   connect( ck_2dsamcmw, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsagl,   &QCheckBox::checkStateChanged,
+   connect( ck_2dsagl,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsaglmc, &QCheckBox::checkStateChanged,
+   connect( ck_2dsaglmc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsacg,   &QCheckBox::checkStateChanged,
+   connect( ck_2dsacg,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsacgit, &QCheckBox::checkStateChanged,
+   connect( ck_2dsacgit, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsacgfm, &QCheckBox::checkStateChanged,
+   connect( ck_2dsacgfm, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsacgmc, &QCheckBox::checkStateChanged,
+   connect( ck_2dsacgmc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_2dsafm,   &QCheckBox::checkStateChanged,
+   connect( ck_2dsafm,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_ga,       &QCheckBox::checkStateChanged,
+   connect( ck_ga,       US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_gamc,     &QCheckBox::checkStateChanged,
+   connect( ck_gamc,     US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_gamw,     &QCheckBox::checkStateChanged,
+   connect( ck_gamw,     US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_gamcmw,   &QCheckBox::checkStateChanged,
+   connect( ck_gamcmw,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_gagl,     &QCheckBox::checkStateChanged,
+   connect( ck_gagl,     US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_gaglmc,   &QCheckBox::checkStateChanged,
+   connect( ck_gaglmc,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsais,   &QCheckBox::checkStateChanged,
+   connect( ck_pcsais,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsasl,   &QCheckBox::checkStateChanged,
+   connect( ck_pcsasl,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsads,   &QCheckBox::checkStateChanged,
+   connect( ck_pcsads,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsahl,   &QCheckBox::checkStateChanged,
+   connect( ck_pcsahl,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsaismc, &QCheckBox::checkStateChanged,
+   connect( ck_pcsaismc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsaslmc, &QCheckBox::checkStateChanged,
+   connect( ck_pcsaslmc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsadsmc, &QCheckBox::checkStateChanged,
+   connect( ck_pcsadsmc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsahlmc, &QCheckBox::checkStateChanged,
+   connect( ck_pcsahlmc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsaistr, &QCheckBox::checkStateChanged,
+   connect( ck_pcsaistr, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsasltr, &QCheckBox::checkStateChanged,
+   connect( ck_pcsasltr, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsadstr, &QCheckBox::checkStateChanged,
+   connect( ck_pcsadstr, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsahltr, &QCheckBox::checkStateChanged,
+   connect( ck_pcsahltr, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsa2o,   &QCheckBox::checkStateChanged,
+   connect( ck_pcsa2o,   US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsa2omc, &QCheckBox::checkStateChanged,
+   connect( ck_pcsa2omc, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_pcsa2otr, &QCheckBox::checkStateChanged,
+   connect( ck_pcsa2otr, US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::methodChanged );
-   connect( ck_dtall,    &QCheckBox::checkStateChanged,
+   connect( ck_dtall,    US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::allMethodChanged );
 
    connect( rb_pltsw,    &QAbstractButton::toggled,
@@ -392,7 +392,7 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    connect( le_plxmax,   &QLineEdit::editingFinished,
             this,        &US_DDistr_Combine::envvalChange );
 
-   connect( ck_mdltype,  &QCheckBox::checkStateChanged,
+   connect( ck_mdltype,  US_CB_STATE_CHANGED,
             this,        &US_DDistr_Combine::ltypeChanged );
 
    connect( lw_runids,   &QListWidget::currentRowChanged,

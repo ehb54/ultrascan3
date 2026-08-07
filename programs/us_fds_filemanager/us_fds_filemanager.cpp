@@ -322,7 +322,7 @@ void US_FDS_FileManager::parse_files( void )
    triplelist.removeDuplicates();
    triplelist.sort();
    cb_triple->addItems( triplelist );
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_FDS_FileManager::select_triple );
    select_triple(cb_triple->currentIndex());
 }
@@ -346,7 +346,7 @@ void US_FDS_FileManager::select_triple( int index )
    rpmlist.removeDuplicates();
    rpmlist.sort();
    cb_rpms->addItems(rpmlist);
-   connect( cb_rpms, &QComboBox::currentIndexChanged,
+   connect( cb_rpms, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_FDS_FileManager::select_rpm );
    select_rpm(cb_rpms->currentIndex());
 }
@@ -373,7 +373,7 @@ void US_FDS_FileManager::select_rpm( int index )
    gainlist.removeDuplicates();
    gainlist.sort();
    cb_gains->addItems(gainlist);
-   connect( cb_gains, &QComboBox::currentIndexChanged,
+   connect( cb_gains, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_FDS_FileManager::select_gain );
    select_gain(cb_gains->currentIndex());
 }

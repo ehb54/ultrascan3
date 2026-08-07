@@ -60,7 +60,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
     cmbb_margin->insertItem( i - 1, s );
   }
 
-  connect( cmbb_margin, &QComboBox::activated, this, &US_Color::selMargin );
+  connect( cmbb_margin, qOverload< int >( &QComboBox::activated ), this, &US_Color::selMargin );
   leftColumn->addWidget( cmbb_margin, row++, 1 );
 
   // Labels

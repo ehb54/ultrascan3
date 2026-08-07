@@ -250,7 +250,7 @@ void US_QueryRmsd::load_runid(){
    foreach (QString item, editList)
       cb_edit->addItem(item);
    cb_edit->setCurrentIndex(0);
-   connect(cb_edit,     &QComboBox::currentIndexChanged, this, &US_QueryRmsd::set_analysis);
+   connect(cb_edit,     qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::set_analysis);
    set_analysis(cb_edit->count() - 1);
 }
 
@@ -380,7 +380,7 @@ void US_QueryRmsd::set_analysis(int){
    foreach (QString item, analysisList)
       cb_analysis->addItem(item);
    cb_analysis->setCurrentIndex(0);
-   connect(cb_analysis, &QComboBox::currentIndexChanged, this, &US_QueryRmsd::set_method);
+   connect(cb_analysis, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::set_method);
    set_method(0);
 }
 
@@ -406,7 +406,7 @@ void US_QueryRmsd:: set_method(int){
    foreach (QString item, methodList)
       cb_method->addItem(item);
    cb_method->setCurrentIndex(0);
-   connect(cb_method, &QComboBox::currentIndexChanged, this, &US_QueryRmsd::set_triple);
+   connect(cb_method, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::set_triple);
    set_triple(0);
 }
 
@@ -463,9 +463,9 @@ void US_QueryRmsd::set_triple(int){
       cb_lambda->addItem(item);
    cb_lambda->setCurrentIndex(0);
 
-   connect(cb_cell,     &QComboBox::currentIndexChanged, this, &US_QueryRmsd::fill_table);
-   connect(cb_channel,  &QComboBox::currentIndexChanged, this, &US_QueryRmsd::fill_table);
-   connect(cb_lambda,   &QComboBox::currentIndexChanged, this, &US_QueryRmsd::fill_table);
+   connect(cb_cell,     qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::fill_table);
+   connect(cb_channel,  qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::fill_table);
+   connect(cb_lambda,   qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::fill_table);
    fill_table(0);
 
 }

@@ -111,13 +111,13 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
 
   //Connect Exp. Duration counters to changes:
-  connect( sb_durat_dd,  &QSpinBox::valueChanged,
+  connect( sb_durat_dd,  qOverload< int >( &QSpinBox::valueChanged ),
 	   this,         &US_ReportGui::ssChgDuratTime_dd );
-  connect( sb_durat_hh,  &QSpinBox::valueChanged,
+  connect( sb_durat_hh,  qOverload< int >( &QSpinBox::valueChanged ),
 	   this,         &US_ReportGui::ssChgDuratTime_hh );
-  connect( sb_durat_mm,  &QSpinBox::valueChanged,
+  connect( sb_durat_mm,  qOverload< int >( &QSpinBox::valueChanged ),
 	   this,         &US_ReportGui::ssChgDuratTime_mm );
-  connect( sb_durat_ss,  &QSpinBox::valueChanged,
+  connect( sb_durat_ss,  qOverload< int >( &QSpinBox::valueChanged ),
 	   this,         &US_ReportGui::ssChgDuratTime_ss );
 
   //set Exp. Duration counters to read-only
@@ -130,7 +130,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
-  connect( cb_wvl,  &QComboBox::currentIndexChanged,
+  connect( cb_wvl,  qOverload< int >( &QComboBox::currentIndexChanged ),
             this,   &US_ReportGui::changeWvl );
   /////////////////////////////////////////////////////////////////////////////
 
@@ -696,9 +696,9 @@ void US_ReportGui::build_report_layout( void )
 	}
       
       //Slots for cb_type | cb_method
-      connect( cb_type,    &QComboBox::activated,
+      connect( cb_type,    qOverload< int >( &QComboBox::activated ),
                this,       &US_ReportGui::type_changed );
-      connect( cb_method,  &QComboBox::activated,
+      connect( cb_method,  qOverload< int >( &QComboBox::activated ),
                this,       &US_ReportGui::method_changed );
     }
   

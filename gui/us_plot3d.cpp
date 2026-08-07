@@ -184,20 +184,20 @@ US_Plot3D::US_Plot3D( QWidget* p, US_Model* m, QVector< QVector3D >* d )
    connect( pb_light,    &QPushButton::clicked,
             this,        &US_Plot3D::light_button );
 
-   connect( cb_ifmt,     &QComboBox::activated,
+   connect( cb_ifmt,     qOverload< int >( &QComboBox::activated ),
             this,        &US_Plot3D::ifmt_chosen );
 
-   connect( ck_light,    &QCheckBox::checkStateChanged,
+   connect( ck_light,    US_CB_STATE_CHANGED,
             this,        &US_Plot3D::light_check );
-   connect( ck_ortho,    &QCheckBox::checkStateChanged,
+   connect( ck_ortho,    US_CB_STATE_CHANGED,
             this,        &US_Plot3D::ortho_check );
-   connect( ck_legend,   &QCheckBox::checkStateChanged,
+   connect( ck_legend,   US_CB_STATE_CHANGED,
             this,        &US_Plot3D::legnd_check );
-   connect( ck_autosc,   &QCheckBox::checkStateChanged,
+   connect( ck_autosc,   US_CB_STATE_CHANGED,
             this,        &US_Plot3D::autsc_check );
-   connect( ck_mouse,    &QCheckBox::checkStateChanged,
+   connect( ck_mouse,    US_CB_STATE_CHANGED,
             this,        &US_Plot3D::mouse_check );
-   connect( ck_shade,    &QCheckBox::checkStateChanged,
+   connect( ck_shade,    US_CB_STATE_CHANGED,
             this,        &US_Plot3D::shade_check );
 
    connect( poffsSlider, &QSlider::valueChanged,

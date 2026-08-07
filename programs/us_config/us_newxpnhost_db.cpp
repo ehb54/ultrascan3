@@ -62,7 +62,7 @@ US_NewXpnHostDB::US_NewXpnHostDB() : US_Widgets()
    details->addWidget( cb_type,        row++, 1, 1, 3 );
    cb_type->setCurrentIndex( 0 );
 
-   connect( cb_type,      &QComboBox::activated,
+   connect( cb_type,      qOverload< int >( &QComboBox::activated ),
             this,         &US_NewXpnHostDB::changeType );
    
    // Row 0b

@@ -354,7 +354,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             this, &US_RampGui::changeDescription );
    connect( lw_triple,      &QListWidget::itemSelectionChanged,
                             this, &US_RampGui::changeCellchan );
-   connect( cb_centerpiece, &QComboBox::activated, 
+   connect( cb_centerpiece, qOverload< int >( &QComboBox::activated ), 
                             this, &US_RampGui::getCenterpieceIndex );
    connect( pb_solution,    &QAbstractButton::clicked,
                             this, &US_RampGui::getSolutionInfo );
@@ -1359,8 +1359,8 @@ DbgLv(1) << "CGui: gExpInf: IN";
    connect( expInfo, &US_ExperimentGuiRa::cancelExpInfoSelection,
             this   , &US_RampGui::cancelExpInfo );
 
-   connect( expInfo, SIGNAL( use_db        ( bool ) ),
-                     SLOT  ( update_disk_db( bool ) ) );
+   //connect( expInfo, SIGNAL( use_db        ( bool ) ),
+   //                  SLOT  ( update_disk_db( bool ) ) );
 
    expInfo->exec();
 DbgLv(1) << "CGui: gExpInf: RTN";
@@ -1410,8 +1410,8 @@ void US_RampGui::getSolutionInfo( void )
    connect( solutionInfo, &US_SolutionGui::cancelSolutionGuiSelection,
             this,         &US_RampGui::cancelSolutionInfo );
 
-   connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
-                          SLOT  ( update_disk_db( bool ) ) );
+   //connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
+   //                       SLOT  ( update_disk_db( bool ) ) );
 
    solutionInfo->exec();
 }
@@ -2778,7 +2778,7 @@ void US_RampGui::mwl_connect( bool connect_on )
 //                this,         SLOT  ( lambdaStartChanged ( int    ) ) );
 //       connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
 //                this,         SLOT  ( lambdaEndChanged   ( int    ) ) );
-      connect( cb_lambplot,  &QComboBox::currentIndexChanged,
+      connect( cb_lambplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_RampGui::lambdaPlotChanged );
       connect( pb_lambprev,  &QAbstractButton::clicked,
                this,         &US_RampGui::lambdaPrevClicked );

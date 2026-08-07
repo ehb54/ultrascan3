@@ -359,7 +359,7 @@ pb_plateau->setVisible(false);
    connect( pb_investigator, &QAbstractButton::clicked,
                              this, &US_Edit::sel_investigator );
    connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
-   connect( cb_triple,       &QComboBox::currentIndexChanged,
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
                              this, &US_Edit::new_triple_auto );
    connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
    connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
@@ -1151,7 +1151,7 @@ pb_plateau->setVisible(false);
    connect( pb_investigator, &QAbstractButton::clicked,
                              this, &US_Edit::sel_investigator );
    connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
-   connect( cb_triple,       &QComboBox::currentIndexChanged,
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
                              this, &US_Edit::new_triple );
    connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
    connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
@@ -1745,7 +1745,7 @@ pb_plateau->setVisible(false);
    connect( pb_investigator, &QAbstractButton::clicked,
                              this, &US_Edit::sel_investigator );
    connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
-   connect( cb_triple,       &QComboBox::currentIndexChanged,
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
                              this, &US_Edit::new_triple );
    connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
    connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
@@ -2340,7 +2340,7 @@ pb_plateau->setVisible(false);
    connect( pb_investigator, &QAbstractButton::clicked,
                              this, &US_Edit::sel_investigator );
    connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
-   connect( cb_triple,       &QComboBox::currentIndexChanged,
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
                              this, &US_Edit::new_triple );
    connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
    connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
@@ -3132,7 +3132,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    for (int index = 0; index < cb_triple->count(); index++)
      qDebug() << cb_triple->itemText(index);
 
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Edit::new_triple_auto );
    triple_index = 0;
    data_index   = 0;
@@ -3388,7 +3388,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::prior_equil );
       plot_scan();
 
-      connect( cb_rpms,   &QComboBox::currentIndexChanged,
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
                           this, &US_Edit::new_rpmval );
    }
 
@@ -3628,7 +3628,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->disconnect();
       cb_triple->clear();
       cb_triple->addItems( celchns );
-      connect( cb_triple, &QComboBox::currentIndexChanged,
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                           this, &US_Edit::new_triple_auto );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
@@ -5141,7 +5141,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    }
 
    cb_triple->addItems( triples );
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Edit::new_triple );
    triple_index = 0;
    data_index   = 0;
@@ -5393,7 +5393,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::prior_equil );
       plot_scan();
 
-      connect( cb_rpms,   &QComboBox::currentIndexChanged,
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
                           this, &US_Edit::new_rpmval );
    }
 
@@ -5690,7 +5690,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->disconnect();
       cb_triple->clear();
       cb_triple->addItems( celchns );
-      connect( cb_triple, &QComboBox::currentIndexChanged,
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                           this, &US_Edit::new_triple );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
@@ -5774,7 +5774,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    }
 
    cb_triple->addItems( triples );
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Edit::new_triple );
    triple_index = 0;
    data_index   = 0;
@@ -6025,7 +6025,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::prior_equil );
       plot_scan();
 
-      connect( cb_rpms,   &QComboBox::currentIndexChanged,
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
                           this, &US_Edit::new_rpmval );
    }
 
@@ -6259,7 +6259,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->disconnect();
       cb_triple->clear();
       cb_triple->addItems( celchns );
-      connect( cb_triple, &QComboBox::currentIndexChanged,
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                           this, &US_Edit::new_triple );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
@@ -9253,7 +9253,7 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    reset_triple();
 
    // Need to reconnect after reset
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Edit::new_triple_auto );
 
    QString otdt   = dataType;
@@ -9674,7 +9674,7 @@ DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << 
       {
          cb_triple->disconnect();
          cb_triple->setCurrentIndex( triple_index );
-         connect( cb_triple, &QComboBox::currentIndexChanged,
+         connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                              this, &US_Edit::new_triple );
          return;
       }
@@ -9724,7 +9724,7 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    reset_triple();
 
    // Need to reconnect after reset
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Edit::new_triple );
 
    QString otdt   = dataType;
@@ -12540,7 +12540,7 @@ void US_Edit::next_triple_auto( void )
      {
        cb_triple->disconnect();
        cb_triple->setCurrentIndex( row );
-       connect( cb_triple, &QComboBox::currentIndexChanged,
+       connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
 		this, &US_Edit::new_triple_auto );
 
        if ( le_edtrsp->isVisible() )
@@ -12603,7 +12603,7 @@ void US_Edit::prior_triple_auto( void )
     {
       cb_triple->disconnect();
       cb_triple->setCurrentIndex( row );
-      connect( cb_triple, &QComboBox::currentIndexChanged,
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
 	       this, &US_Edit::new_triple_auto );
 
       int dax = index_data();
@@ -12632,7 +12632,7 @@ void US_Edit::next_triple( void )
 
    cb_triple->disconnect();
    cb_triple->setCurrentIndex( row );
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Edit::new_triple );
 
    if ( le_edtrsp->isVisible() )
@@ -12772,9 +12772,9 @@ void US_Edit::connect_mwl_ctrls( bool conn )
                this,      &US_Edit::lselect_custom_on );
       connect( ct_ldelta, &QwtCounter::valueChanged,
                this,      &US_Edit::ldelta_value );
-      connect( cb_lstart, &QComboBox::currentIndexChanged,
+      connect( cb_lstart, qOverload< int >( &QComboBox::currentIndexChanged ),
                this,      &US_Edit::lambda_start_value );
-      connect( cb_lend,   &QComboBox::currentIndexChanged,
+      connect( cb_lend,   qOverload< int >( &QComboBox::currentIndexChanged ),
                this,      &US_Edit::lambda_end_value );
       connect( rb_radius, &QAbstractButton::toggled,
                this,      &US_Edit::xaxis_radius_on );
@@ -12784,7 +12784,7 @@ void US_Edit::connect_mwl_ctrls( bool conn )
                this,      &US_Edit::lambda_custom_list );
       connect( pb_incall, &QAbstractButton::clicked,
                this,      &US_Edit::lambda_include_all );
-      connect( cb_lplot,  &QComboBox::currentIndexChanged,
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,      &US_Edit::lambda_plot_value );
       connect( pb_larrow, &QAbstractButton::clicked,
                this,      &US_Edit::lambda_plot_prev );
@@ -12951,7 +12951,7 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
       cb_lplot->disconnect();
       cb_lplot->clear();
       cb_lplot->addItems( expc_wvlns );
-      connect( cb_lplot,  &QComboBox::currentIndexChanged,
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,      &US_Edit::lambda_plot_value );
       cb_lplot->setCurrentIndex( plotx );
    }
@@ -13026,7 +13026,7 @@ DbgLv(1) << "xaxis_radius_on  checked" << checked;
       cb_lplot->disconnect();
       cb_lplot->clear();
       cb_lplot->addItems( expc_wvlns );
-      connect( cb_lplot,  &QComboBox::currentIndexChanged,
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,      &US_Edit::lambda_plot_value );
       cb_lplot->setCurrentIndex( expc_wvlns.size() / 2 );
 
@@ -13053,7 +13053,7 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
           expd_radii << xval;
       }
       cb_lplot->addItems( expc_radii );
-      connect( cb_lplot,  &QComboBox::currentIndexChanged,
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,      &US_Edit::lambda_plot_value );
       cb_lplot->setCurrentIndex( expc_radii.size() / 2 );
 
@@ -13187,7 +13187,7 @@ DbgLv(1) << "  lambda_custom_list  ACCEPTED";
          cb_lplot->disconnect();
          cb_lplot->clear();
          cb_lplot->addItems( expc_wvlns );
-         connect( cb_lplot,  &QComboBox::currentIndexChanged,
+         connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                   this,      &US_Edit::lambda_plot_value );
          cb_lplot->setCurrentIndex( plotx );
       }

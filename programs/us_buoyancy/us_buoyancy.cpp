@@ -121,7 +121,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Buoyancy::new_triple );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
@@ -469,7 +469,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Buoyancy::new_triple );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
@@ -1080,7 +1080,7 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
       cb_peaks->clear();
       
       cb_peaks->addItems( peak_names );
-      connect( cb_peaks, &QComboBox::currentIndexChanged,
+      connect( cb_peaks, qOverload< int >( &QComboBox::currentIndexChanged ),
 	       this, &US_Buoyancy::new_peak );
       
       //cb_peaks->setCurrentIndex(0);
@@ -1254,7 +1254,7 @@ void US_Buoyancy::load( void )
    
    
    cb_triple->addItems( triples );
-   connect( cb_triple, &QComboBox::currentIndexChanged,
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
                        this, &US_Buoyancy::new_triple );
    current_triple = 0;
 
@@ -1416,7 +1416,7 @@ void US_Buoyancy::load( void )
 
       plot_scan( current_scan );
             
-      connect( cb_rpms,   &QComboBox::currentIndexChanged,
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
               this, &US_Buoyancy::new_rpmval );
    }
    else

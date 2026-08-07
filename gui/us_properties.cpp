@@ -213,7 +213,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    connect( ck_sigConc,     &QCheckBox::toggled,             this, &US_Properties::check_signal );
    connect( le_sigConc,     &QLineEdit::editingFinished,     this, &US_Properties::set_molar );
    connect( pb_sim,         &QPushButton::clicked,           this, &US_Properties::simulate );
-   connect( cb_shape,       &QComboBox::currentIndexChanged, this, &US_Properties::select_shape );
+   connect( cb_shape,       qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_Properties::select_shape );
    connect( ck_mw,          &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
    connect( le_mw,          &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
    connect( ct_oligomer,    &QwtCounter::valueChanged,       this, &US_Properties::set_oligomer );
@@ -226,7 +226,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    connect( ck_f,           &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
    connect( le_f,           &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
    connect( pb_load_c0,     &QPushButton::clicked,           this, &US_Properties::load_c0 );
-   connect( ck_co_sed,      &QCheckBox::checkStateChanged,        this, &US_Properties::co_sed );
+   connect( ck_co_sed,      US_CB_STATE_CHANGED,        this, &US_Properties::co_sed );
    connect( pb_help,        &QPushButton::clicked,           this, &US_Properties::help );
    connect( pb_close,       &QPushButton::clicked,           this, &US_Properties::close );
    connect( pb_accept,      &QPushButton::clicked,           this, &US_Properties::acceptProp );
@@ -1007,7 +1007,7 @@ void US_Properties::co_sed( int new_state )
          {
              ck_co_sed->disconnect();
              ck_co_sed->setChecked( false );
-             connect( ck_co_sed, &QCheckBox::checkStateChanged, 
+             connect( ck_co_sed, US_CB_STATE_CHANGED, 
                                  this, &US_Properties::co_sed );
              return;
          }

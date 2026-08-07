@@ -568,8 +568,11 @@ class US_ReporterGMP : public US_Widgets
         void resplot_done(void); //!< Slot for residuals plot done
         void update_progress(int); //!< Slot for updating progress
 
-    private slots:
+    public slots:
         void loadRun_auto(QMap<QString, QString>&); //!< Load run automatically
+        void reset_report_panel(void); //!< Reset report panel
+
+    private slots:
         void check_failed_triples(void); //!< Check failed triples
         QMap<QString, QString> read_autoflowAnalysis_record(US_DB2*, const QString&); //!< Read autoflow analysis record
         QMap<QString, QString> read_autoflowAnalysisHistory_record(US_DB2*, const QString&); //!< Read autoflow analysis history record
@@ -578,7 +581,6 @@ class US_ReporterGMP : public US_Widgets
         void check_for_dropped_triples(void); //!< Check for dropped triples
         QString compose_html_failed_stage_missing_models(void); //!< Compose HTML for failed stage with missing models
         QString missing_models_msg(void); //!< Generate missing models message
-        void reset_report_panel(void); //!< Reset report panel
         void view_report(void); //!< View report
         void view_report_db(void); //!< View report from DB
         void load_gmp_report_db(void); //!< Load GMP report from DB

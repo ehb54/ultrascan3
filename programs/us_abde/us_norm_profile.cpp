@@ -56,7 +56,7 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     cb_chann      = us_comboBox();
     pb_next_chann = us_pushbutton("Next Channel");
     pb_prev_chann = us_pushbutton("Previous Channel");
-    connect( cb_chann,  &QComboBox::currentIndexChanged, 
+    connect( cb_chann,  qOverload< int >( &QComboBox::currentIndexChanged ), 
 	     this, &US_Norm_Profile::new_chann_auto );
     connect( pb_next_chann,   &QAbstractButton::clicked,
 	     this, &US_Norm_Profile::next_chann_auto );
@@ -212,13 +212,13 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     connect(pb_pick_rp, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickRange);
     connect(pb_pick_norm, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickPoint);
     //connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint_auto()));
-    connect(ckb_xrange, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_xrange);
-    connect(ckb_legend, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_legend);
-    connect(ckb_integral, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_integral);
-    connect(ckb_norm, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_norm);
-    connect(ckb_rawData, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_rawData);
-    connect(ckb_norm_max, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_norm_by_max);
-    connect(ckb_ranges, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_ranges);
+    connect(ckb_xrange, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_xrange);
+    connect(ckb_legend, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_legend);
+    connect(ckb_integral, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_integral);
+    connect(ckb_norm, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm);
+    connect(ckb_rawData, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_rawData);
+    connect(ckb_norm_max, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm_by_max);
+    connect(ckb_ranges, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_ranges);
     connect(picker, &US_PlotPicker::cMouseUp,
             this,   &US_Norm_Profile::slt_mouse);
     ckb_norm_max->setCheckState(Qt::Checked);
@@ -449,12 +449,12 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
 
     connect(pb_pick_rp, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickRange);
     connect(pb_pick_norm, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickPoint);
-    connect(ckb_xrange, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_xrange);
-    connect(ckb_legend, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_legend);
-    connect(ckb_integral, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_integral);
-    connect(ckb_norm, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_norm);
-    connect(ckb_rawData, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_rawData);
-    connect(ckb_norm_max, &QCheckBox::checkStateChanged, this, &US_Norm_Profile::slt_norm_by_max);
+    connect(ckb_xrange, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_xrange);
+    connect(ckb_legend, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_legend);
+    connect(ckb_integral, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_integral);
+    connect(ckb_norm, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm);
+    connect(ckb_rawData, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_rawData);
+    connect(ckb_norm_max, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm_by_max);
     connect(picker, &US_PlotPicker::cMouseUp,
             this,   &US_Norm_Profile::slt_mouse);
     ckb_norm_max->setCheckState(Qt::Checked);

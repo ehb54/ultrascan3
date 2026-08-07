@@ -490,13 +490,13 @@ if(mcknt>0)
             this,         &US_XpnDataViewer::reloadData );
    connect( ck_autorld,   &QAbstractButton::clicked,
             this,         &US_XpnDataViewer::changeReload );
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeCellCh );
-   connect( cb_rstart,    &QComboBox::currentIndexChanged,
+   connect( cb_rstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRadius );
-   connect( cb_rend,      &QComboBox::currentIndexChanged,
+   connect( cb_rend,      qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRadius );
-   connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRecord );
    connect( pb_prev,      &QAbstractButton::clicked,
             this,         &US_XpnDataViewer::prevPlot );
@@ -937,7 +937,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    cb_optima->clear();
    cb_optima->addItems( sl_optimas );
    
-   connect( cb_optima,    &QComboBox::activated,
+   connect( cb_optima,    qOverload< int >( &QComboBox::activated ),
             this,         &US_XpnDataViewer::changeOptima );
    
    changeOptima(0); 
@@ -1040,13 +1040,13 @@ if(mcknt>0)
             this,         &US_XpnDataViewer::reloadData );
    connect( ck_autorld,   &QAbstractButton::clicked,
             this,         &US_XpnDataViewer::changeReload );
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeCellCh );
-   connect( cb_rstart,    &QComboBox::currentIndexChanged,
+   connect( cb_rstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRadius );
-   connect( cb_rend,      &QComboBox::currentIndexChanged,
+   connect( cb_rend,      qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRadius );
-   connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRecord );
    connect( pb_prev,      &QAbstractButton::clicked,
             this,         &US_XpnDataViewer::prevPlot );
@@ -1234,7 +1234,7 @@ void US_XpnDataViewer::reset( void )
    data_plot->replot();
 
  
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeCellCh );
 //   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
 //            this, SLOT  ( currentRectf ( QRectF ) ) );
@@ -1347,10 +1347,10 @@ void US_XpnDataViewer::reset_auto( void )
    le_remaining->setText("00:00:00");
    le_running  ->setText("00:00:00");
 
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
     	    this,         &US_XpnDataViewer::changeCellCh );
 
-   connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeRecord );
 
 
@@ -3649,7 +3649,7 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
    //          this,         SLOT  ( changeOptics( )            ) );
 
-   connect( cb_optsys,    &QComboBox::currentIndexChanged,
+   connect( cb_optsys,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeOptics_auto);
    /*** END of an older code **********************************************/
    
@@ -3710,7 +3710,7 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();                                      
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeCellCh );
    /*** END of an older code ***********************************************************/
 
@@ -4170,7 +4170,7 @@ DbgLv(1) << "RDr:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    cb_optsys->clear();
    cb_optsys->addItems( opsys );                               
    cb_optsys->setCurrentIndex( optndx );
-   connect( cb_optsys,    &QComboBox::currentIndexChanged,
+   connect( cb_optsys,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeOptics );
 
    runID         = new_runID;
@@ -4203,7 +4203,7 @@ DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();                                      
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );                           
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeCellCh );
 
    nlambda      = xpn_data->lambdas_raw( lambdas );             
@@ -4868,7 +4868,7 @@ DbgLv(1) << "chgOpt:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_XpnDataViewer::changeCellCh );
 
    nlambda      = xpn_data->lambdas_raw( lambdas );
@@ -4982,13 +4982,13 @@ void US_XpnDataViewer::connect_ranges( bool conn )
 {
    if ( conn )
    {  // Connect the range-related controls
-      connect( cb_cellchn, &QComboBox::currentIndexChanged,
+      connect( cb_cellchn, qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_XpnDataViewer::changeCellCh );
-      connect( cb_rstart,  &QComboBox::currentIndexChanged,
+      connect( cb_rstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_XpnDataViewer::changeRadius );
-      connect( cb_rend,    &QComboBox::currentIndexChanged,
+      connect( cb_rend,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_XpnDataViewer::changeRadius );
-      connect( cb_pltrec,  &QComboBox::currentIndexChanged,
+      connect( cb_pltrec,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_XpnDataViewer::changeRecord );
    }
 

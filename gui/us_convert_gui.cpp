@@ -400,7 +400,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             this, &US_ConvertGui::changeDescription );
    connect( lw_triple,      &QListWidget::itemSelectionChanged,
                             this, &US_ConvertGui::changeTriple );
-   connect( cb_centerpiece, &QComboBox::activated,
+   connect( cb_centerpiece, qOverload< int >( &QComboBox::activated ),
                             this, &US_ConvertGui::getCenterpieceIndex );
    connect( pb_solution,    &QAbstractButton::clicked,
                             this, &US_ConvertGui::getSolutionInfo );
@@ -967,7 +967,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             this, &US_ConvertGui::changeDescription );
    connect( lw_triple,      &QListWidget::itemSelectionChanged,
                             this, &US_ConvertGui::changeTriple );
-   connect( cb_centerpiece, &QComboBox::activated,
+   connect( cb_centerpiece, qOverload< int >( &QComboBox::activated ),
                             this, &US_ConvertGui::getCenterpieceIndex );
    connect( pb_solution,    &QAbstractButton::clicked,
                             this, &US_ConvertGui::getSolutionInfo );
@@ -9668,7 +9668,7 @@ DbgLv(1) << "lStChg: LAMBDA_STR_CHANGE: index_lambstrt " << index_lambstrt;
 
        cb_lambstrt->disconnect();
        cb_lambstrt->setCurrentIndex( index_lambstrt );
-       connect( cb_lambstrt,  &QComboBox::currentIndexChanged,
+       connect( cb_lambstrt,  qOverload< int >( &QComboBox::currentIndexChanged ),
        		this,         &US_ConvertGui::lambdaStartChanged );
     
    }
@@ -9722,7 +9722,7 @@ DbgLv(1) << "lEnChg: LAMBDA_STOP_CHANGE:  index_lambstop " << index_lambstop;
 
        cb_lambstop->disconnect();
        cb_lambstop->setCurrentIndex( index_lambstop );
-       connect( cb_lambstop,  &QComboBox::currentIndexChanged,
+       connect( cb_lambstop,  qOverload< int >( &QComboBox::currentIndexChanged ),
        		this,         &US_ConvertGui::lambdaEndChanged );
    }
 
@@ -9857,11 +9857,11 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 {
    if ( connect_on )
    {
-      connect( cb_lambstrt,  &QComboBox::currentIndexChanged,
+      connect( cb_lambstrt,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_ConvertGui::lambdaStartChanged );
-      connect( cb_lambstop,  &QComboBox::currentIndexChanged,
+      connect( cb_lambstop,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_ConvertGui::lambdaEndChanged );
-      connect( cb_lambplot,  &QComboBox::currentIndexChanged,
+      connect( cb_lambplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_ConvertGui::lambdaPlotChanged );
       connect( pb_lambprev,  &QAbstractButton::clicked,
                this,         &US_ConvertGui::lambdaPrevClicked );

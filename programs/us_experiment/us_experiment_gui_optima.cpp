@@ -1596,11 +1596,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    cb_lab->clear();
    cb_lab->addItems( sl_labs );
 
-   connect( cb_lab,       &QComboBox::activated,
+   connect( cb_lab,       qOverload< int >( &QComboBox::activated ),
             this,         &US_ExperGuiRotor::changeLab );
-   connect( cb_rotor,     &QComboBox::activated,
+   connect( cb_rotor,     qOverload< int >( &QComboBox::activated ),
             this,         &US_ExperGuiRotor::changeRotor );
-   connect( cb_calibr,    &QComboBox::activated,
+   connect( cb_calibr,    qOverload< int >( &QComboBox::activated ),
             this,         &US_ExperGuiRotor::changeCalib );
    connect( pb_advrotor,  &QAbstractButton::clicked,
             this,         &US_ExperGuiRotor::advRotor );
@@ -2829,7 +2829,7 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
    cb_optima->clear();
    cb_optima->addItems( sl_optimas );
 
-   connect( cb_optima,    &QComboBox::activated,
+   connect( cb_optima,    qOverload< int >( &QComboBox::activated ),
             this,         &US_ExperGuiRotor::changeOptima );
 
    changeOptima(0);
@@ -3464,7 +3464,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths (from all cells) to be scanned:" ));
   sb_wvl_per_cell = us_spinbox();
   sb_wvl_per_cell->setRange(1, 800);
-  connect( sb_wvl_per_cell,  &QSpinBox::valueChanged,
+  connect( sb_wvl_per_cell,  qOverload< int >( &QSpinBox::valueChanged ),
 	   this,             &US_ExperGuiSpeeds::ssChgWvlPerCell );
 
   QLabel* lb_scans_per_cell = us_label(tr( "Total number of scans per wavelength, per cell:" ));
@@ -3527,13 +3527,13 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    genL->setColumnStretch(  7, 1 );
 
    // Connect signals and slots
-   connect( sb_count,  &QSpinBox::valueChanged,
+   connect( sb_count,  qOverload< int >( &QSpinBox::valueChanged ),
             this,      &US_ExperGuiSpeeds::ssChangeCount );
-   connect( cb_prof,   &QComboBox::activated,
+   connect( cb_prof,   qOverload< int >( &QComboBox::activated ),
             this,      &US_ExperGuiSpeeds::ssChangeProfx );
-   connect( ct_speed,  &QSpinBox::valueChanged,
+   connect( ct_speed,  qOverload< int >( &QSpinBox::valueChanged ),
             this,      &US_ExperGuiSpeeds::ssChangeSpeed );
-   connect( ct_accel,  &QSpinBox::valueChanged,
+   connect( ct_accel,  qOverload< int >( &QSpinBox::valueChanged ),
             this,      &US_ExperGuiSpeeds::ssChangeAccel );
 
    // connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),               \\ALEXEY
@@ -3545,55 +3545,55 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    // connect( tm_delay,  SIGNAL( timeChanged    ( const QTime& ) ),
    //          this,      SLOT  ( ssChgDelayTime ( const QTime& ) ) );
 
-   connect( sb_durat_dd,  &QSpinBox::valueChanged,
+   connect( sb_durat_dd,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDuratDay );
-   connect( sb_durat_hh,  &QSpinBox::valueChanged,
+   connect( sb_durat_hh,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDuratTime_hh );
-   connect( sb_durat_mm,  &QSpinBox::valueChanged,
+   connect( sb_durat_mm,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDuratTime_mm );
-   connect( sb_durat_ss,  &QSpinBox::valueChanged,
+   connect( sb_durat_ss,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDuratTime_ss );
 
    //Uv-vis
-   connect( sb_delay_dd,  &QSpinBox::valueChanged,
+   connect( sb_delay_dd,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayDay );
-   connect( sb_delay_hh,  &QSpinBox::valueChanged,
+   connect( sb_delay_hh,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayTime_hh );
-   connect( sb_delay_mm,  &QSpinBox::valueChanged,
+   connect( sb_delay_mm,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayTime_mm );
-   connect( sb_delay_ss,  &QSpinBox::valueChanged,
+   connect( sb_delay_ss,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayTime_ss );
 
    //interference
-   connect( sb_delay_int_dd,  &QSpinBox::valueChanged,
+   connect( sb_delay_int_dd,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayDay_int );
-   connect( sb_delay_int_hh,  &QSpinBox::valueChanged,
+   connect( sb_delay_int_hh,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayTime_int_hh );
-   connect( sb_delay_int_mm,  &QSpinBox::valueChanged,
+   connect( sb_delay_int_mm,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayTime_int_mm );
-   connect( sb_delay_int_ss,  &QSpinBox::valueChanged,
+   connect( sb_delay_int_ss,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayTime_int_ss );
 
    //Stage delay
-   connect( sb_delay_st_hh,  &QSpinBox::valueChanged,
+   connect( sb_delay_st_hh,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayStageTime_hh );
-   connect( sb_delay_st_mm,  &QSpinBox::valueChanged,
+   connect( sb_delay_st_mm,  qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgDelayStageTime_mm );
 
    //Uv-vis
-   connect( sb_scnint_hh, &QSpinBox::valueChanged,
+   connect( sb_scnint_hh, qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgScIntTime_hh );
-   connect( sb_scnint_mm, &QSpinBox::valueChanged,
+   connect( sb_scnint_mm, qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgScIntTime_mm );
-   connect( sb_scnint_ss, &QSpinBox::valueChanged,
+   connect( sb_scnint_ss, qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgScIntTime_ss );
 
    //interference
-   connect( sb_scnint_int_hh, &QSpinBox::valueChanged,
+   connect( sb_scnint_int_hh, qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgScIntTime_int_hh );
-   connect( sb_scnint_int_mm, &QSpinBox::valueChanged,
+   connect( sb_scnint_int_mm, qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgScIntTime_int_mm );
-   connect( sb_scnint_int_ss, &QSpinBox::valueChanged,
+   connect( sb_scnint_int_ss, qOverload< int >( &QSpinBox::valueChanged ),
             this,         &US_ExperGuiSpeeds::ssChgScIntTime_int_ss );
 
 
@@ -4749,9 +4749,9 @@ DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
       cb_wind->addItem( tr( "quartz" ) );
       cb_wind->addItem( tr( "sapphire" ) );
 
-      connect( cb_cenp, &QComboBox::activated,
+      connect( cb_cenp, qOverload< int >( &QComboBox::activated ),
                this,    &US_ExperGuiCells::centerpieceChanged );
-      connect( cb_wind, &QComboBox::activated,
+      connect( cb_wind, qOverload< int >( &QComboBox::activated ),
                this,    &US_ExperGuiCells::windowsChanged );
 
       // Save pointers to row objects for later update

@@ -185,9 +185,9 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
 
       connect( pbwavln, &QAbstractButton::clicked,           //ALEXEY
                this,    &US_ExperGuiRanges::Wavelengths_class );
-      connect( ctradfr, &QDoubleSpinBox::valueChanged,
+      connect( ctradfr, qOverload< double >( &QDoubleSpinBox::valueChanged ),
                this,    &US_ExperGuiRanges::changedLowRadius );
-      connect( ctradto, &QDoubleSpinBox::valueChanged,
+      connect( ctradto, qOverload< double >( &QDoubleSpinBox::valueChanged ),
                this,    &US_ExperGuiRanges::changedHighRadius );
 #if 0
       connect( ckoptim, SIGNAL( toggled    ( bool )   ),

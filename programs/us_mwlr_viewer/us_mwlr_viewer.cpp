@@ -155,19 +155,19 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
             this,         &US_MwlRawViewer::resetAll );
    connect( pb_details,   &QAbstractButton::clicked,
             this,         &US_MwlRawViewer::runDetails );
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeCellCh );
-   connect( cb_rstart,    &QComboBox::currentIndexChanged,
+   connect( cb_rstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeRadius );
-   connect( cb_rend,      &QComboBox::currentIndexChanged,
+   connect( cb_rend,      qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeRadius );
-   connect( cb_lstart,    &QComboBox::currentIndexChanged,
+   connect( cb_lstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeLambda );
-   connect( cb_lend,      &QComboBox::currentIndexChanged,
+   connect( cb_lend,      qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeLambda );
    connect( ct_recavg,    &QwtCounter::valueChanged,
             this,         &US_MwlRawViewer::changeAverage );
-   connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeRecord );
    connect( ck_xwavlen,   &QAbstractButton::toggled,
             this,         &US_MwlRawViewer::changeRectype );
@@ -346,7 +346,7 @@ void US_MwlRawViewer::reset( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid          = us_grid( data_plot );
    data_plot->replot();
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeCellCh );
 
    last_xmin       = -1.0;
@@ -540,7 +540,7 @@ DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
    cb_cellchn->disconnect();
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );
-   connect( cb_cellchn,   &QComboBox::currentIndexChanged,
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
             this,         &US_MwlRawViewer::changeCellCh );
 
    nlambda      = mwl_data.lambdas_raw( lambdas );
@@ -1208,7 +1208,7 @@ DbgLv(1) << "chgRadius";
          cb_pltrec->addItem( citem );
       }
 
-      connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+      connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_MwlRawViewer::changeRecord );
 
       recx           = ( radxe - radxs ) / 2;
@@ -1237,7 +1237,7 @@ DbgLv(1) << "chgLambda";
          cb_pltrec->addItem( citem );
       }
 
-      connect( cb_pltrec,    &QComboBox::currentIndexChanged,
+      connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,         &US_MwlRawViewer::changeRecord );
 
       recx           = ( lmbxe - lmbxs ) / 2;
@@ -1538,17 +1538,17 @@ void US_MwlRawViewer::connect_ranges( bool conn )
 {
    if ( conn )
    {  // Connect the range-related controls
-      connect( cb_cellchn, &QComboBox::currentIndexChanged,
+      connect( cb_cellchn, qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlRawViewer::changeCellCh );
-      connect( cb_rstart,  &QComboBox::currentIndexChanged,
+      connect( cb_rstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlRawViewer::changeRadius );
-      connect( cb_rend,    &QComboBox::currentIndexChanged,
+      connect( cb_rend,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlRawViewer::changeRadius );
-      connect( cb_lstart,  &QComboBox::currentIndexChanged,
+      connect( cb_lstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlRawViewer::changeLambda );
-      connect( cb_lend,    &QComboBox::currentIndexChanged,
+      connect( cb_lend,    qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlRawViewer::changeLambda );
-      connect( cb_pltrec,  &QComboBox::currentIndexChanged,
+      connect( cb_pltrec,  qOverload< int >( &QComboBox::currentIndexChanged ),
                this,       &US_MwlRawViewer::changeRecord );
    }
 

@@ -787,9 +787,9 @@ void US_MwlSpeciesFit::load( void )
      dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, "none" );
    
 
-   connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
-   connect( dialog, SIGNAL( progress    ( const QString ) ), 
-                    SLOT  ( set_progress( const QString ) ) );
+   connect( dialog, &US_DataLoader::changed, this, &US_MwlSpeciesFit::update_disk_db );
+   connect( dialog, &US_DataLoader::progress, 
+                    this, &US_MwlSpeciesFit::set_progress );
 
    if ( !us_gmp_auto_mode )
      {
@@ -830,8 +830,8 @@ DbgLv(1) << "ldnois:  nscans" << nscans << "ntrips" << ntrips;
    pb_save    ->setEnabled( true );
    pb_exclude ->setEnabled( true );
 
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_from( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_MwlSpeciesFit::exclude_from );
 
    dataLoaded = true;
    emit dataAreLoaded();

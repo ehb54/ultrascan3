@@ -774,7 +774,7 @@ qDebug() << "MngCmp: index" << index;
    connect( dialog, &US_Properties::done, this, &US_ModelGui::update_sim );
    connect( dialog, &US_Properties::use_db, this, &US_ModelGui::source_changed );
 
-   connect( this, SIGNAL( disable_components_gui( ) ), dialog, SLOT( disable_gui( ) ) );
+   connect( this, &US_ModelGui::disable_components_gui, dialog, &US_Properties::disable_gui );
    
    //Check if the model was generated via autoflow framework
    
@@ -821,7 +821,7 @@ void US_ModelGui::associations( void )
    connect( dialog, &US_AssociationsGui::done, this, &US_ModelGui::update_assoc );
    
    //Check if the model was generated via autoflow framework
-   connect( this, SIGNAL( disable_components_gui( ) ), dialog, SLOT( disable_gui( ) ) );
+   connect( this, &US_ModelGui::disable_components_gui, dialog, &US_AssociationsGui::disable_gui );
    if ( is_modelIDs_from_autoflow( modelID_global ) )
      {
        qDebug() << "Manage Associationss: GMP model!";

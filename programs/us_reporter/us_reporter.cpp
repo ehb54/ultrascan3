@@ -81,7 +81,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    dctlLayout->addWidget( pb_help,    row,   0, 1, 2 );
    dctlLayout->addWidget( pb_close,   row++, 2, 1, 2 );
 
-   connect( cb_runids,  &QComboBox::currentIndexChanged,
+   connect( cb_runids,  qOverload< int >( &QComboBox::currentIndexChanged ),
             this,       &US_Reporter::new_runid );
    connect( pb_view,    &QAbstractButton::clicked,
             this,       &US_Reporter::view );

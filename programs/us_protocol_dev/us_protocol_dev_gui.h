@@ -308,6 +308,9 @@ class US_ExperGui : public US_WidgetsDialog
          */
         void resizeEvent(QResizeEvent *event) override;
 
+    public slots:
+        void pass_used_instruments( QMap < QString, QString > & used_instruments );
+
     private slots:
         /**
          * \brief Manages the experiment.
@@ -336,7 +339,6 @@ class US_ExperGui : public US_WidgetsDialog
          * \brief Passes the used instruments.
          * \param used_instruments The used instruments.
          */
-        void pass_used_instruments( QMap < QString, QString > & used_instruments );
 
         /**
          * \brief Closes the experiment setup message.
@@ -406,12 +408,15 @@ class US_ObservGui : public US_WidgetsDialog
          */
         void resizeEvent(QResizeEvent *event) override;
 
+    public slots:
+        void process_protocol_details( QMap < QString, QString > & protocol_details );
+        void reset_live_update( void );
+
     private slots:
         /**
          * \brief Processes the protocol details.
          * \param protocol_details The protocol details.
          */
-        void process_protocol_details( QMap < QString, QString > & protocol_details );
 
         /**
          * \brief Switches to post-processing.
@@ -427,7 +432,6 @@ class US_ObservGui : public US_WidgetsDialog
         /**
          * \brief Resets live update.
          */
-        void reset_live_update( void );
 
         /**
          * \brief Passes the processes stopped signal.
@@ -503,12 +507,15 @@ class US_PostProdGui : public US_WidgetsDialog
          */
         void resizeEvent(QResizeEvent *event) override;
 
+    public slots:
+        void import_data_us_convert( QMap < QString, QString > & protocol_details );
+        void reset_lims_import( void );
+
     private slots:
         /**
          * \brief Imports data using the convert GUI.
          * \param protocol_details The protocol details.
          */
-        void import_data_us_convert( QMap < QString, QString > & protocol_details );
 
         /**
          * \brief Switches to editing.
@@ -524,7 +531,6 @@ class US_PostProdGui : public US_WidgetsDialog
         /**
          * \brief Resets the LIMS import.
          */
-        void reset_lims_import( void );
 
         /**
          * \brief Resizes the main window.
@@ -585,17 +591,19 @@ class US_EditingGui : public US_WidgetsDialog
          */
         void resizeEvent(QResizeEvent *event) override;
 
+    public slots:
+        void do_editing( QMap < QString, QString > & protocol_details );
+        void reset_data_editing( void );
+
     private slots:
         /**
          * \brief Performs editing.
          * \param protocol_details The protocol details.
          */
-        void do_editing( QMap < QString, QString > & protocol_details );
 
         /**
          * \brief Resets data editing.
          */
-        void reset_data_editing( void );
 
         /**
          * \brief Switches to analysis.
@@ -668,12 +676,14 @@ class US_AnalysisGui : public US_WidgetsDialog
          */
         void resizeEvent(QResizeEvent *event) override;
 
+    public slots:
+        void do_analysis( QMap < QString, QString > & protocol_details );
+
     private slots:
         /**
          * \brief Performs analysis.
          * \param protocol_details The protocol details.
          */
-        void do_analysis( QMap < QString, QString > & protocol_details );
 
         /**
          * \brief Passes the processes stopped signal.
@@ -751,17 +761,19 @@ class US_ReportStageGui : public US_WidgetsDialog
          */
         void resizeEvent(QResizeEvent *event) override;
 
+    public slots:
+                void do_report( QMap < QString, QString > & protocol_details );
+        void reset_reporting( void );
+
     private slots:
                 /**
                  * \brief Performs reporting.
                  * \param protocol_details The protocol details.
                  */
-                void do_report( QMap < QString, QString > & protocol_details );
 
         /**
          * \brief Resets reporting.
          */
-        void reset_reporting( void );
 
         signals:
                 /**

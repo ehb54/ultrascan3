@@ -232,10 +232,12 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
 
 
-   private slots:
-      void details       ( void   );
+   protected slots:
       void update_disk_db( bool );
       void set_progress  ( const QString& );
+
+   private slots:
+      void details       ( void   );
       void load_noise    ( int  );
       void get_solution  ( void );
       void updateSolution( US_Solution );

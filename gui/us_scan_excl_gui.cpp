@@ -212,11 +212,11 @@ void US_ScanExclGui::build_layout ( void )
       genL->addWidget( le_remaining_scans,   row,    9, 1, 2 );
       // }
 
-      connect( sb_begin,   &QSpinBox::valueChanged,
+      connect( sb_begin,   qOverload< int >( &QSpinBox::valueChanged ),
 	       this,       &US_ScanExclGui::scan_excl_changed );
-      connect( sb_end,     &QSpinBox::valueChanged,
+      connect( sb_end,     qOverload< int >( &QSpinBox::valueChanged ),
 	       this,       &US_ScanExclGui::scan_excl_changed );
-      connect( sb_nth,     &QSpinBox::valueChanged,
+      connect( sb_nth,     qOverload< int >( &QSpinBox::valueChanged ),
 	       this,       &US_ScanExclGui::scan_excl_changed );
       
       QFont font   = le_chan_desc->property("font").value<QFont>();

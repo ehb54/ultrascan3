@@ -3200,7 +3200,7 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    mainw->setColumnStretches( genL );
 
    // Connect signals and slots
-   connect( cb_chnsel,    &QComboBox::activated,
+   connect( cb_chnsel,    qOverload< int >( &QComboBox::activated ),
             this,         &US_AnaprofPan2DSA::channel_selected );
    connect( pb_nextch,    &QAbstractButton::clicked,
             this,         &US_AnaprofPan2DSA::next_channel );
@@ -3879,15 +3879,15 @@ DbgLv(1) << "APpc: IN";
 
    connect( ck_nopcsa,    &QAbstractButton::toggled,
             this,         &US_AnaprofPanPCSA::nopcsa_checked );
-   connect( cb_chnsel,    &QComboBox::activated,
+   connect( cb_chnsel,    qOverload< int >( &QComboBox::activated ),
             this,         &US_AnaprofPanPCSA::channel_selected );
    connect( pb_nextch,    &QAbstractButton::clicked,
             this,         &US_AnaprofPanPCSA::next_channel );
-   connect( cb_curvtype,  &QComboBox::activated,
+   connect( cb_curvtype,  qOverload< int >( &QComboBox::activated ),
             this,         &US_AnaprofPanPCSA::curvtype_selected );
    connect( pb_applya,    &QAbstractButton::clicked,
             this,         &US_AnaprofPanPCSA::apply_all_clicked );
-   connect( cb_xaxistyp,  &QComboBox::activated,
+   connect( cb_xaxistyp,  qOverload< int >( &QComboBox::activated ),
             this,         &US_AnaprofPanPCSA::xaxis_selected );
 
    // connect( le_xmin,      SIGNAL( editingFinished  ( )      ),
@@ -3905,7 +3905,7 @@ DbgLv(1) << "APpc: IN";
    	       this,   &US_AnaprofPanPCSA::verify_xyz );
    
 
-   connect( cb_yaxistyp,  &QComboBox::activated,
+   connect( cb_yaxistyp,  qOverload< int >( &QComboBox::activated ),
             this,         &US_AnaprofPanPCSA::yaxis_selected );
    
    // connect( le_ymin,      SIGNAL( editingFinished  ( )      ),
@@ -3921,7 +3921,7 @@ DbgLv(1) << "APpc: IN";
    connect( le_ymax, &QLineEdit::editingFinished,
    	       this,   &US_AnaprofPanPCSA::verify_xyz );
 
-   connect( cb_zaxistyp,  &QComboBox::activated,
+   connect( cb_zaxistyp,  qOverload< int >( &QComboBox::activated ),
             this,         &US_AnaprofPanPCSA::zaxis_selected );
    
    // connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),

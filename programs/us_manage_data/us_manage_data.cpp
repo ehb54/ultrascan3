@@ -136,7 +136,7 @@ DbgLv(1) << "GUI setup begun";
    cb_runid  ->addItem( tr( "Select individual run" ) );
    dctlLayout->addWidget( lb_runid,  row,   0, 1, 2 );
    dctlLayout->addWidget( cb_runid,  row++, 2, 1, 6 );
-   connect( cb_runid,   &QComboBox::activated,
+   connect( cb_runid,   qOverload< int >( &QComboBox::activated ),
             this,       qOverload< int >( &US_ManageData::selected_runID ) );
 
    QLabel* lb_triple = us_label( tr( "Triple:" ) );
@@ -716,7 +716,7 @@ DbgLv(0) << "selected_runID: selrunID" << selrunID;
          cb_runid->addItem( tr( "Select individual run" ) );
          cb_runid->addItem( srunID );
          cb_runid->setCurrentIndex( 2 );
-         connect( cb_runid,   &QComboBox::activated,
+         connect( cb_runid,   qOverload< int >( &QComboBox::activated ),
                   this,       qOverload< int >( &US_ManageData::selected_runID ) );
       }
    }

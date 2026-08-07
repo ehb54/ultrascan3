@@ -114,7 +114,7 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
    hardware->addWidget( lb_instrument, row, 0 );
    cb_instrument = new US_SelectBoxRa( this );
-   connect( cb_instrument, &QComboBox::activated,
+   connect( cb_instrument, qOverload< int >( &QComboBox::activated ),
                            this, &US_ExperimentGuiRa::change_instrument );
    hardware->addWidget( cb_instrument, row++, 1 );
 

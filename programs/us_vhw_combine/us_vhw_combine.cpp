@@ -141,11 +141,11 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    connect( pb_close,  &QAbstractButton::clicked,
             this,      &QWidget::close );
 
-   connect( ck_distrib,  &QCheckBox::checkStateChanged,
+   connect( ck_distrib,  US_CB_STATE_CHANGED,
             this,        &US_vHW_Combine::plot_data );
-   connect( ck_envelope, &QCheckBox::checkStateChanged,
+   connect( ck_envelope, US_CB_STATE_CHANGED,
             this,        &US_vHW_Combine::plot_data );
-   connect( ck_intconc,  &QCheckBox::checkStateChanged,
+   connect( ck_intconc,  US_CB_STATE_CHANGED,
             this,        &US_vHW_Combine::plot_data );
 
    connect( lw_runids,   &QListWidget::currentRowChanged,

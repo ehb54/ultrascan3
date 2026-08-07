@@ -222,7 +222,7 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
     connect(this, &US_RemoveRI::sig_plot, this, &US_RemoveRI::slt_plot);
     connect(pb_pick_rp, &QAbstractButton::clicked,
                 this, &US_RemoveRI::slt_pick_point);
-    connect(cb_autofit, &QCheckBox::checkStateChanged, this, &US_RemoveRI::slt_autofit_state);
+    connect(cb_autofit, US_CB_STATE_CHANGED, this, &US_RemoveRI::slt_autofit_state);
     connect(pb_fit, &QAbstractButton::clicked, this, &US_RemoveRI::slt_polyfit);
     connect(ct_max_order, &QwtCounter::valueChanged, this, &US_RemoveRI::slt_rm_fit);
     connect(ct_order, &QwtCounter::valueChanged, this, &US_RemoveRI::slt_rm_fit);
@@ -467,7 +467,7 @@ void US_RemoveRI::slt_new_ccw(int id){
         items << QString::number(wavelength.at(i));
     cb_plot_id->addItems(items);
     pn_id_avail();
-    connect(cb_plot_id, &QComboBox::currentIndexChanged, this, &US_RemoveRI::slt_set_id);
+    connect(cb_plot_id, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_RemoveRI::slt_set_id);
 
     pn_ccw_avail();
 
@@ -706,7 +706,7 @@ void US_RemoveRI::set_cb_triples(){
     idMax.fill(-1, n_ccw);
     ccwFitState.fill(false, n_ccw);
     ccwIntgState.fill(false, n_ccw);
-    connect( cb_triples, &QComboBox::currentIndexChanged,
+    connect( cb_triples, qOverload< int >( &QComboBox::currentIndexChanged ),
             this, &US_RemoveRI::slt_new_ccw );
     cb_triples->setCurrentIndex(ccw_id);
 }

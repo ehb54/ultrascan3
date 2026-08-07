@@ -231,7 +231,7 @@ DbgLv(1) << "AA: nmrecs" << nmrecs << "ncsols" << ncsols;
 
    // Define connections
 DbgLv(1) << "AA: connect buttons";
-   connect( cb_curvtype, &QComboBox::currentIndexChanged,
+   connect( cb_curvtype, qOverload< int >( &QComboBox::currentIndexChanged ),
             this,        &US_AdvAnalysisPc::curvtypeChanged );
 
 #if 0
@@ -250,8 +250,8 @@ DbgLv(1) << "AA: connect buttons";
    connect( le_crpoints, SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   pointsChanged( double ) ) );
 #endif
-   connect( le_mciters,  SIGNAL( textChanged( const QString& ) ),
-            this,        SLOT(   mciterChanged( double ) ) );
+   connect( le_mciters, &QLineEdit::textChanged,
+         this, [this]( const QString& s ) { mciterChanged( s.toInt() ); } );
 
    connect( pb_loadmrs,  &QAbstractButton::clicked,
             this,        &US_AdvAnalysisPc::load_mrecs );
@@ -411,7 +411,7 @@ DbgLv(1) << "pointsChanged" << value;
 #endif
 
 // Slot to handle a change in monte carlo iterations
-void US_AdvAnalysisPc::mciterChanged( double value )
+void US_AdvAnalysisPc::mciterChanged( int value )
 {
 DbgLv(1) << "mciterChanged" << value;
    mciters           = (int)value;

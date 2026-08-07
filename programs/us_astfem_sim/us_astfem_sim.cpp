@@ -1253,12 +1253,12 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
 
       connect( astfvm, &US_LammAstfvm::new_scan,
                        this, &US_Astfem_Sim::update_movie_plot );
-      connect( astfvm, SIGNAL( current_component( int ) ),
-                       SLOT  ( update_progress  ( int ) ) );
+      connect( astfvm, &US_LammAstfvm::comp_progress, this, &US_Astfem_Sim::update_progress );
       connect( astfvm, &US_LammAstfvm::new_time,
                        this, &US_Astfem_Sim::update_time );
-      connect( astfvm, SIGNAL( current_speed( int ) ),
-                       SLOT  ( update_speed ( int ) ) );
+
+      //connect( astfvm, SIGNAL( current_speed( int ) ),
+      //                 SLOT  ( update_speed ( int ) ) );
       connect( astfvm, &US_LammAstfvm::calc_progress,
                        this, &US_Astfem_Sim::show_progress );
       connect( astfvm, &US_LammAstfvm::calc_done,

@@ -163,7 +163,7 @@ DbgLv(1) << "Main: BB";
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 
-   connect( sb_order, &QSpinBox::valueChanged,
+   connect( sb_order, qOverload< int >( &QSpinBox::valueChanged ),
             this,     qOverload< int >( &US_FitMeniscus::plot_data ) );
 
    dkdb_cntrls            = new US_Disk_DB_Controls(
@@ -458,7 +458,7 @@ DbgLv(1) << "Main: BB";
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 
-   connect( sb_order, &QSpinBox::valueChanged,
+   connect( sb_order, qOverload< int >( &QSpinBox::valueChanged ),
             this,     qOverload< int >( &US_FitMeniscus::plot_data ) );
 
    dkdb_cntrls            = new US_Disk_DB_Controls(

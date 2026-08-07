@@ -287,7 +287,7 @@ DbgLv(1) << "cnG:main: elements defined";
                             this, &US_ConstraintsEdit::set_molar );
    connect( pb_load_c0,     &QAbstractButton::clicked,
                             this, &US_ConstraintsEdit::load_c0 );
-   connect( ck_co_sed,      &QCheckBox::checkStateChanged, 
+   connect( ck_co_sed,      US_CB_STATE_CHANGED, 
                             this, &US_ConstraintsEdit::co_sed );
    connect( pb_recompute,   &QAbstractButton::clicked, 
                             this, &US_ConstraintsEdit::check_selects );
@@ -624,7 +624,7 @@ void US_ConstraintsEdit::co_sed( int new_state )
          {
              ck_co_sed->disconnect();
              ck_co_sed->setChecked( false );
-             connect( ck_co_sed, &QCheckBox::checkStateChanged, 
+             connect( ck_co_sed, US_CB_STATE_CHANGED, 
                                  this, &US_ConstraintsEdit::co_sed );
              return;
          }

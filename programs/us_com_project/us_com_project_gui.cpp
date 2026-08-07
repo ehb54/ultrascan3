@@ -219,27 +219,27 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_post_processing_init ), this, &US_ComProjectMain::switch_to_post_processing );
    connect( epanInit, qOverload<>( &US_InitDialogueGui::to_initAutoflow ), this, &US_ComProjectMain::close_all );
    
-   connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+   connect( this, &US_ComProjectMain::pass_used_instruments, epanExp, qOverload< QStringList & >( &US_ExperGui::pass_used_instruments ) );
 
-   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
+   connect( epanInit, &US_InitDialogueGui::pass_allow_dataDisk_only, epanExp, &US_ExperGui::allow_dataDisk_only );
    
    connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_live_update ), this, &US_ComProjectMain::switch_to_live_update );
    connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_import ), this, &US_ComProjectMain::switch_to_post_processing );
-   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+   connect( this   , &US_ComProjectMain::pass_to_live_update,   epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::process_protocol_details ) );
    connect( epanExp, qOverload<>( &US_ExperGui::to_autoflow_records ), this, &US_ComProjectMain::to_autoflow_records );
    connect( epanExp, &US_ExperGui::switch_to_initAutoflow, this, &US_ComProjectMain::close_all );
    
    connect( epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::switch_to_post_processing ), this, &US_ComProjectMain::switch_to_post_processing );
-   connect( this, SIGNAL( pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   connect( this, &US_ComProjectMain::pass_to_post_processing,  epanPostProd, qOverload< QMap < QString, QString > & >( &US_PostProdGui::import_data_us_convert ) );
    
    //connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
    connect( epanObserv, qOverload<>( &US_ObservGui::close_everything ), this, &US_ComProjectMain::close_all);
-   connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
+   connect( this, &US_ComProjectMain::reset_live_update,  epanObserv, qOverload<>( &US_ObservGui::reset_live_update ) );
    connect( epanObserv, qOverload<>( &US_ObservGui::processes_stopped ), this, &US_ComProjectMain::liveupdate_stopped);
    connect( epanObserv, qOverload<>( &US_ObservGui::stop_nodata ), this, &US_ComProjectMain::close_all);
    
    connect( epanPostProd, qOverload<>( &US_PostProdGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
-   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
+   connect( this, &US_ComProjectMain::reset_lims_import,  epanPostProd, qOverload<>( &US_PostProdGui::reset_lims_import ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -471,46 +471,46 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( epanInit, &US_InitDialogueGui::switch_to_esign_init, this, &US_ComProjectMain::switch_to_esign );
    connect( epanInit, qOverload<>( &US_InitDialogueGui::to_initAutoflow ), this, &US_ComProjectMain::close_all );
          
-   connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+   connect( this, &US_ComProjectMain::pass_used_instruments, epanExp, qOverload< QStringList & >( &US_ExperGui::pass_used_instruments ) );
 
-   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
+   connect( epanInit, &US_InitDialogueGui::pass_allow_dataDisk_only, epanExp, &US_ExperGui::allow_dataDisk_only );
    
    connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_live_update ), this, &US_ComProjectMain::switch_to_live_update );
    connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_import ), this, &US_ComProjectMain::switch_to_post_processing );
-   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
+   connect( this   , &US_ComProjectMain::pass_to_live_update,   epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::process_protocol_details ) );
    connect( epanExp, qOverload<>( &US_ExperGui::to_autoflow_records ), this, &US_ComProjectMain::to_autoflow_records );
    connect( epanExp, &US_ExperGui::switch_to_initAutoflow, this, &US_ComProjectMain::close_all );
    
    connect( epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::switch_to_post_processing ), this, &US_ComProjectMain::switch_to_post_processing );
-   connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   connect( this, &US_ComProjectMain::pass_to_post_processing,  epanPostProd, qOverload< QMap < QString, QString > & >( &US_PostProdGui::import_data_us_convert ) );
    connect( epanObserv, qOverload<>( &US_ObservGui::close_everything ), this, &US_ComProjectMain::close_all);
-   connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
+   connect( this, &US_ComProjectMain::reset_live_update,  epanObserv, qOverload<>( &US_ObservGui::reset_live_update ) );
    connect( epanObserv, qOverload<>( &US_ObservGui::processes_stopped ), this, &US_ComProjectMain::liveupdate_stopped);
    connect( epanObserv, qOverload<>( &US_ObservGui::stop_nodata ), this, &US_ComProjectMain::close_all);
    
    connect( epanPostProd, qOverload< QMap < QString, QString > & >( &US_PostProdGui::switch_to_editing ),  this, &US_ComProjectMain::switch_to_editing );
-   connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
+   connect( this, &US_ComProjectMain::pass_to_editing,   epanEditing, qOverload< QMap < QString, QString > & >( &US_EditingGui::do_editing ) );
+   connect( this, &US_ComProjectMain::reset_lims_import,  epanPostProd, qOverload<>( &US_PostProdGui::reset_lims_import ) );
    connect( epanPostProd, qOverload<>( &US_PostProdGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
-   connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
+   connect( this, &US_ComProjectMain::reset_data_editing,  epanEditing, qOverload<>( &US_EditingGui::reset_data_editing ) );
 
    connect( epanEditing, qOverload< QMap < QString, QString > & >( &US_EditingGui::switch_to_analysis ), this, &US_ComProjectMain::switch_to_analysis );
    connect( epanEditing, &US_EditingGui::switch_to_report, this, &US_ComProjectMain::switch_to_report );
-   connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
+   connect( this, &US_ComProjectMain::pass_to_analysis,   epanAnalysis, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::do_analysis ) );
    connect( epanEditing, qOverload<>( &US_EditingGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
 
    connect( epanAnalysis, qOverload<>( &US_AnalysisGui::processes_stopped ), this, &US_ComProjectMain::analysis_update_stopped);
    connect( epanAnalysis, qOverload<>( &US_AnalysisGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
 
    connect( epanAnalysis, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::switch_to_report ), this, &US_ComProjectMain::switch_to_report );
-   connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
+   connect( this, &US_ComProjectMain::pass_to_report,   epanReport, qOverload< QMap < QString, QString > & >( &US_ReportStageGui::do_report ) );
 
-   connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
+   connect( this, &US_ComProjectMain::reset_reporting,  epanReport, qOverload<>( &US_ReportStageGui::reset_reporting ) );
 
    //E-Signs
    connect( epanReport, &US_ReportStageGui::switch_to_esign, this, &US_ComProjectMain::switch_to_esign );
-   connect( this, SIGNAL( pass_to_esign( QMap < QString, QString > & ) ),  epanSign, SLOT( do_esign( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_esigning() ),  epanSign, SLOT( reset_esigning( )  ) );
+   connect( this, &US_ComProjectMain::pass_to_esign,  epanSign, &US_eSignaturesGui::do_esign );
+   connect( this, &US_ComProjectMain::reset_esigning,  epanSign, &US_eSignaturesGui::reset_esigning );
 
    //Hide/disable eSigs tab:
    this->tabWidget->removeTab(7);
@@ -3110,13 +3110,13 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    sdiag = new US_XpnDataViewer("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_ObservGui::to_xpn_viewer ), sdiag, &US_XpnDataViewer::check_for_data );
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
    connect( sdiag, &US_XpnDataViewer::experiment_complete_auto, this, qOverload< QMap < QString, QString > & >( &US_ObservGui::to_post_processing ) );
 
    //ALEXEY: to reset timers/threads and GUI when returning back to InitDialog
-   connect( this, SIGNAL( reset_live_update_passed( ) ), sdiag, SLOT( reset_liveupdate_panel ( )  ) );
+   connect( this, qOverload<>( &US_ObservGui::reset_live_update_passed ), sdiag, &US_XpnDataViewer::reset_liveupdate_panel );
    
    //ALEXEY: close program, emitted from sdiag
    connect( sdiag, &US_XpnDataViewer::close_program, this, &US_ObservGui::to_close_program );
@@ -3255,8 +3255,8 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag = new US_ConvertGui("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_PostProdGui::to_post_prod ), sdiag, &US_ConvertGui::import_data_auto );
+   connect( this, qOverload<>( &US_PostProdGui::reset_lims_import_passed ), sdiag, &US_ConvertGui::reset_limsimport_panel );
 
    //emit signal after data loaded
    connect( sdiag, &US_ConvertGui::data_loaded, this, qOverload<>( &US_PostProdGui::resize_main ) );
@@ -3388,11 +3388,11 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    
    // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
-   connect( this, SIGNAL( start_editing( QMap < QString, QString > & ) ), sdiag, SLOT( load_auto ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_EditingGui::start_editing ), sdiag, &US_Edit::load_auto );
    //emit signal after data loaded
    connect( sdiag, &US_Edit::data_loaded, this, qOverload<>( &US_EditingGui::resize_main ) );
    
-   connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
+   connect( this, qOverload<>( &US_EditingGui::reset_data_editing_passed ), sdiag, &US_Edit::reset_editdata_panel );
 
    //ALEXEY: switch to Analysis || REPORT (abde)
    connect( sdiag, &US_Edit::edit_complete_auto, this, qOverload< QMap < QString, QString > & >( &US_EditingGui::to_analysis ) );
@@ -3527,7 +3527,7 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
    
    //Later - do actual analysis form sdiag - whatever it will be:
-   connect( this, SIGNAL( start_analysis( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::start_analysis ), sdiag, &US_Analysis_auto::initPanel );
    // In initPanel() - re-generate GUI based on # of rows corresponding to # stages in AProfile...
 
    // When coming back to Manage Optima Runs
@@ -3654,9 +3654,9 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
    
    //connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_ReportStageGui::start_report ), sdiag, &US_ReporterGMP::loadRun_auto );
    
-   connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
+   connect( this, qOverload<>( &US_ReportStageGui::reset_reporting_passed ), sdiag, &US_ReporterGMP::reset_report_panel );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3750,8 +3750,8 @@ US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
    sdiag = new US_eSignaturesGMP( "AUTO" );
    sdiag->setParent(this, Qt::Widget);
    
-   connect( this, SIGNAL( start_esign( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel_auto ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_esigning_passed( ) ), sdiag, SLOT(  reset_esign_panel (  )  ) );
+   connect( this, &US_eSignaturesGui::start_esign, sdiag, &US_eSignaturesGMP::initPanel_auto );
+   connect( this, &US_eSignaturesGui::reset_esigning_passed, sdiag, &US_eSignaturesGMP::reset_esign_panel );
 
    offset = 0;
    sdiag->move(offset, 2*offset);

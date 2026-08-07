@@ -66,8 +66,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   //for (SSF-)ABDE
   sdiag_norm_profile = new US_Norm_Profile("AUTO");
-  connect( this, SIGNAL( process_abde( QMap < QString, QString > & ) ),
-	   sdiag_norm_profile, SLOT( load_data_auto ( QMap < QString, QString > & )  ) );
+  connect( this, &US_Analysis_auto::process_abde,
+	   sdiag_norm_profile, &US_Norm_Profile::load_data_auto );
   connect( sdiag_norm_profile, &US_Norm_Profile::abde_to_report,
 	   this, &US_Analysis_auto::proceed_abde_to_report );
   connect( sdiag_norm_profile, &US_Norm_Profile::back_to_runManager,
