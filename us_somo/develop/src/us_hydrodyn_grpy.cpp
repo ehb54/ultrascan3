@@ -22,13 +22,19 @@
 
 // Total physical RAM in bytes (0 = unknown). Used by the GRPY pre-flight memory
 // guard so an oversized model is refused rather than swapping the machine to death.
-#if defined( Q_OS_MACOS ) || defined( __APPLE__ )
+#if defined( Q_OS_WIN ) || defined( _WIN32 )
+#  include <windows.h>
+#elif defined( Q_OS_MACOS ) || defined( __APPLE__ )
 #  include <sys/sysctl.h>
 #elif defined( Q_OS_LINUX ) || defined( __linux__ )
 #  include <unistd.h>
 #endif
 static qint64 grpy_physical_ram_bytes() {
-#if defined( Q_OS_MACOS ) || defined( __APPLE__ )
+#if defined( Q_OS_WIN ) || defined( _WIN32 )
+   MEMORYSTATUSEX st; st.dwLength = sizeof( st );
+   if ( GlobalMemoryStatusEx( &st ) ) return (qint64) st.ullTotalPhys;
+   return 0;
+#elif defined( Q_OS_MACOS ) || defined( __APPLE__ )
    int64_t mem = 0; size_t len = sizeof( mem );
    if ( sysctlbyname( "hw.memsize", &mem, &len, nullptr, 0 ) == 0 ) return (qint64) mem;
    return 0;
