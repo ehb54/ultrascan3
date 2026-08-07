@@ -91,14 +91,18 @@ inline std::vector<double> exposure(const std::vector<core::Bead>& b, int N,
 // ~50% (overlapping-bead models), so one threshold yields wildly different bead counts and
 // therefore wildly different cost. Ranking and taking a target fraction controls the
 // O(N^3) cost directly and behaves the same for every model type.
-inline std::vector<core::Bead> reduce_top_frac(const std::vector<core::Bead>& b,
+// Indices of the beads to keep, most-exposed first. The selection lives here rather than in
+// reduce_top_frac so a caller can learn WHICH beads were kept, not merely how many -- needed
+// to write out the reduced model, and to build the reduced bead list without searching.
+inline std::vector<size_t> reduce_top_frac_idx(const std::vector<core::Bead>& b,
                                                const std::vector<double>& ex, double frac) {
     const size_t N = b.size();
     size_t keep = (size_t)std::ceil(frac * N);
-    if (keep >= N) return b;
+    if (keep > N) keep = N;
     if (keep < 4) keep = std::min<size_t>(4, N);
     std::vector<size_t> idx(N);
     for (size_t i = 0; i < N; ++i) idx[i] = i;
+    if (keep >= N) return idx;                     // everything, in original order
     // Rank by exposure descending; ties broken by radius then index so the selection is
     // deterministic (exposure is quantized to K sample points, so ties are common).
     std::partial_sort(idx.begin(), idx.begin() + keep, idx.end(),
@@ -107,9 +111,17 @@ inline std::vector<core::Bead> reduce_top_frac(const std::vector<core::Bead>& b,
                           if (b[i].r != b[j].r) return b[i].r > b[j].r;
                           return i < j;
                       });
+    idx.resize(keep);
+    return idx;
+}
+
+inline std::vector<core::Bead> reduce_top_frac(const std::vector<core::Bead>& b,
+                                               const std::vector<double>& ex, double frac) {
+    if ((size_t)std::ceil(frac * b.size()) >= b.size()) return b;
+    std::vector<size_t> idx = reduce_top_frac_idx(b, ex, frac);
     std::vector<core::Bead> out;
-    out.reserve(keep);
-    for (size_t k = 0; k < keep; ++k) out.push_back(b[idx[k]]);
+    out.reserve(idx.size());
+    for (size_t k : idx) out.push_back(b[k]);
     return out;
 }
 

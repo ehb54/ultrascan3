@@ -101,6 +101,10 @@
 #include <list>
 #include <map>
 
+// Forward declaration only: taken by const reference below, so the grpy headers (and the
+// Eigen they pull in) stay out of every translation unit that includes this one.
+namespace grpy { struct ShellReport; }
+
 #define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
 
 #define START_RASMOL
@@ -1330,6 +1334,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_tsv( QString, vector <PDB_atom> * );
       void write_bead_ebf( QString, vector <PDB_atom> * );
       void write_bead_spt( QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false );
+      // GRPY shell-reduction diagnostic: write+display a bead model per ladder rung.
+      void grpy_write_shell_models( const grpy::ShellReport &, const QString & base_name );
+      // Bead emission order shared by every bead-model output and the .grpy input; see the
+      // definition in us_hydrodyn_write.cpp. Public so the GRPY shell-reduction models can
+      // map .grpy positions back to beads using the same order by construction.
+      void bead_model_output_order( vector <PDB_atom> *, vector <PDB_atom *> & );
       void write_bead_model( QString, vector <PDB_atom> *, QString extra_text = "" );
       void write_bead_model( QString, vector <PDB_atom> *, int bead_model_output, QString extra_text = "" );
       bool write_bead_xyzr( const QString &, const vector <PDB_atom> & );

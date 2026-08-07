@@ -53,6 +53,8 @@ struct hydro_options
    double grpy_shell_tol;       // relative tolerance required of every requested observable
    bool grpy_shell_require_eta; // true: intrinsic viscosity must also converge (slower);
                                 // false: viscosity is withheld from results as unreliable
+   bool grpy_shell_save_models; // true: write and display a bead model of every rung's
+                                // reduced shell (diagnostic; into <somo>/tmp)
    bool rotational;            // false: include beads in volume correction for rotational diffusion, true: exclude
    bool viscosity;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    bool overlap_cutoff;         // false: same as in model building, true: enter manually
@@ -174,6 +176,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLabel       *lbl_grpy_shell_tol;
       QLineEdit    *le_grpy_shell_tol;
       QCheckBox    *cb_grpy_shell_eta;
+      QCheckBox    *cb_grpy_shell_models;
       QRadioButton *rb_auto_overlap;
       QRadioButton *rb_manual_overlap;
 
@@ -229,6 +232,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void select_grpy_shell(int);
       void update_grpy_shell_tol(const QString &);
       void set_grpy_shell_eta();
+      void set_grpy_shell_models();
       void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();
