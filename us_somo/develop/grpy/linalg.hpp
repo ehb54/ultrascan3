@@ -39,6 +39,65 @@ struct Serial : Parallel {
 // pct in [0,100], stage label; called from the driving thread between block-columns
 using Progress = std::function<void(int pct, const char* stage)>;
 
+// Progress reporting has two independent problems, and one knob cannot solve both.
+//
+//   FREEZE LENGTH -- with a blocking parallel backend the calling thread is a worker, so
+//   the event loop cannot turn until the current slice of work ends. Fixed by sizing that
+//   slice: `tune_chunk` below.
+//
+//   CALL RATE -- the callback itself costs something (a GUI repaint against a large text
+//   buffer is not cheap), and that cost is paid per call however short the slices are.
+//   Fixed by rate-limiting the calls: `ProgressGate` below.
+//
+// Conflating them is a trap worth naming: an earlier version timed work+callback together
+// and resized the chunk from it, so an expensive callback SHRANK the chunk, which raised
+// the call rate and made the overhead worse. Measured on a 512-bead model, a 20 ms callback
+// cost 2.79x the whole solve.
+
+// Size a work slice so the event loop gets a turn often enough. Times only the work, never
+// the callback -- the callback's cost is the gate's problem, not the chunk's. Halve or
+// double rather than solving for the target, so one anomalous measurement (a scheduler
+// stall, another process, swap) cannot set a wild chunk size.
+template <typename TP>
+inline void tune_chunk(int& chunk, const TP& t0, const TP& t1, int chunk_max = (1 << 20)) {
+    const double work_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
+    if      (work_ms <  40.0 && chunk < chunk_max) chunk *= 2;
+    else if (work_ms > 160.0 && chunk > 1)         chunk /= 2;
+}
+
+// Rate-limit progress calls, adapting to what the callback actually costs: emit only after
+// ~10x the last callback's duration has elapsed, and never more often than every ~80 ms.
+// A cheap callback is therefore essentially unthrottled; an expensive one throttles itself
+// until it is ~10% overhead instead of dominating.
+//
+// This is what governs cadence where the emission points are fixed and not chunked -- the
+// triangular solve ticks once per tile, and nt runs to the hundreds on a large model.
+// Frequent repaints and low overhead are not simultaneously achievable when a repaint is
+// expensive; this trades update rate for throughput, deliberately.
+class ProgressGate {
+public:
+    void tick(const Progress& prog, int pct, const char* stage) {
+        if (!prog) return;
+        const auto now = std::chrono::steady_clock::now();
+        if (primed_ &&
+            std::chrono::duration<double, std::milli>(now - last_).count()
+                < std::max(80.0, 10.0 * cb_ms_)) return;
+        prog(pct, stage);
+        const auto done = std::chrono::steady_clock::now();
+        cb_ms_  = std::chrono::duration<double, std::milli>(done - now).count();
+        last_   = done;
+        primed_ = true;
+    }
+    // Emit unconditionally -- for the final tick, so the bar always lands on its end value.
+    void flush(const Progress& prog, int pct, const char* stage) {
+        if (prog) prog(pct, stage);
+    }
+private:
+    std::chrono::steady_clock::time_point last_{};
+    double cb_ms_  = 0.0;
+    bool   primed_ = false;
+};
+
 // ---- tiled upper SPD matrix -------------------------------------------------
 // Storage is a single flat buffer of the upper tiles (packed by column). It is a
 // plain heap allocation by default, or -- if a backing file is given -- a
@@ -116,6 +175,7 @@ struct TiledUpperSPD {
         if (work_total <= 0) work_total = 1;
         long long work_done = 0;
         int chunk = 64;                       // self-tuning; see below
+        ProgressGate gate;
 
         for (int k = 0; k < nt; ++k) {
             // POTRF: diagonal tile A(k,k) = U^T U, store U (upper). Read UPPER (matrixU).
@@ -148,23 +208,19 @@ struct TiledUpperSPD {
                     auto Tij = tile(i, j);
                     Tij.noalias() -= tile(k, i).transpose() * tile(k, j);
                 });
+                const auto t1 = std::chrono::steady_clock::now();
                 base      += n;
                 work_done += n;
                 if (prog) {
-                    prog((int)(30 + 60 * work_done / work_total), "INVERTING MATRICES");
-                    // Aim each chunk at ~80 ms: long enough that the chunking overhead and
-                    // the callback stay negligible, short enough to feel responsive. Halve
-                    // or double rather than solve for it, so a transient stall (swap, another
-                    // process) cannot make one measurement set a wild chunk size.
-                    const double ms = std::chrono::duration<double, std::milli>(
-                                          std::chrono::steady_clock::now() - t0).count();
-                    if      (ms <  40.0 && chunk < (1 << 20)) chunk *= 2;
-                    else if (ms > 160.0 && chunk > 1)         chunk /= 2;
+                    tune_chunk(chunk, t0, t1);
+                    gate.tick(prog, (int)(30 + 60 * work_done / work_total),
+                              "INVERTING MATRICES");
                 }
             }
             // A column with no trailing update (the last one) still owes a tick.
             if (prog && njobs == 0)
-                prog((int)(30 + 60 * work_done / work_total), "INVERTING MATRICES");
+                gate.tick(prog, (int)(30 + 60 * work_done / work_total),
+                          "INVERTING MATRICES");
         }
     }
 
@@ -175,13 +231,17 @@ struct TiledUpperSPD {
     solve(const Eigen::Matrix<S, Eigen::Dynamic, Eigen::Dynamic>& B,
           const Progress& prog = {}) {
         Mat X = B;
+        // Gated: one tick per tile is up to 2*nt calls -- several hundred on a large model
+        // -- against an operation that is cheap next to the factor. Ungated, the callback
+        // cost alone could exceed the solve it is reporting on.
+        ProgressGate gate;
         for (int i = 0; i < nt; ++i) {                 // forward: U^T Y = B
             for (int k = 0; k < i; ++k)
                 X.middleRows(i * b, rows(i)).noalias() -=
                     tile(k, i).transpose() * X.middleRows(k * b, rows(k));
             auto Xi = X.middleRows(i * b, rows(i));
             tile(i, i).template triangularView<Eigen::Upper>().transpose().solveInPlace(Xi);
-            if (prog) prog(90 + 5 * (i + 1) / nt, "SOLVING");
+            gate.tick(prog, 90 + 5 * (i + 1) / nt, "SOLVING");
         }
         for (int i = nt - 1; i >= 0; --i) {            // back: U X = Y
             for (int k = i + 1; k < nt; ++k)
@@ -189,8 +249,9 @@ struct TiledUpperSPD {
                     tile(i, k) * X.middleRows(k * b, rows(k));
             auto Xi = X.middleRows(i * b, rows(i));
             tile(i, i).template triangularView<Eigen::Upper>().solveInPlace(Xi);
-            if (prog) prog(95 + 5 * (nt - i) / nt, "SOLVING");
+            gate.tick(prog, 95 + 5 * (nt - i) / nt, "SOLVING");
         }
+        gate.flush(prog, 100, "SOLVING");              // always land on the end value
         return X;
     }
 };

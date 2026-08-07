@@ -362,21 +362,20 @@ inline void assemble_tiled(const std::vector<Bead>& b, int N, la::TiledUpperSPD<
     const long long pairs_total = (long long) N * (N - 1) / 2;
     long long pairs_done = 0;
     int chunk = prog ? 32 : N;                          // self-tuning; see factor()
+    la::ProgressGate gate;
     // NB: advance by what was actually done, never by `chunk` -- `chunk` is retuned at the
     // bottom of this loop, so using it as the stride would skip beads whenever it grew.
     for (int base = 0; base < N; ) {
         const int n = std::min(chunk, N - base);
         const auto t0 = std::chrono::steady_clock::now();
         par.for_range(n, [&](int t) { pair_block(base + t); });
+        const auto t1 = std::chrono::steady_clock::now();
         for (int t = 0; t < n; ++t) pairs_done += (long long)(N - 1 - (base + t));
         base += n;
         if (prog) {
-            prog((int)(pairs_total > 0 ? 30 * pairs_done / pairs_total : 30),
-                 "BUILDING MOBILITY MATRIX");
-            const double ms = std::chrono::duration<double, std::milli>(
-                                  std::chrono::steady_clock::now() - t0).count();
-            if      (ms <  40.0 && chunk < N) chunk = std::min(N, chunk * 2);
-            else if (ms > 160.0 && chunk > 1) chunk /= 2;
+            la::tune_chunk(chunk, t0, t1, N);          // slice length; see linalg.hpp
+            gate.tick(prog, (int)(pairs_total > 0 ? 30 * pairs_done / pairs_total : 30),
+                      "BUILDING MOBILITY MATRIX");     // call rate
         }
     }
 }
