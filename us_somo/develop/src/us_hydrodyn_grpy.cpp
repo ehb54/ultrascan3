@@ -345,6 +345,11 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_addl_params  .clear();
    grpy_used_beads   .clear();   // was drained only via pop_front, so an early abort
                                  // (e.g. the memory guard) left a stale count behind
+   grpy_settings_sfx .clear();   // likewise: a run that aborts before the settings are
+                                 // resolved must not leave the previous run's suffix
+   grpy_eff_hydro        = hydro; // refined in grpy_process_next once overrides resolve
+   grpy_shell_err_pct    = 0e0;
+   grpy_shell_worst_name = "";
 
    grpy_results.method                = "GRPY";
    grpy_results.mass                  = 0e0;
@@ -816,6 +821,19 @@ void US_Hydrodyn::grpy_process_next() {
       // Diagnostic: keep each rung's selection so the reduced shells can be written out.
       sopt.record_subsets = hydro.grpy_shell_save_models;
 
+      // Resolved once here, from the settings this run will actually use, and consumed by
+      // every file the run writes -- the shell models below and the results in
+      // grpy_finished() -- so they cannot disagree. Empty for default settings, leaving
+      // those file names exactly as they have always been.
+      grpy_settings_sfx = grpy_settings_suffix( opt.single, sopt.enabled, sopt.tol, require_eta );
+
+      // What this run will actually use, overrides included.
+      grpy_eff_hydro                          = hydro;
+      grpy_eff_hydro.grpy_single              = opt.single;
+      grpy_eff_hydro.grpy_shell               = sopt.enabled;
+      grpy_eff_hydro.grpy_shell_tol           = sopt.tol;
+      grpy_eff_hydro.grpy_shell_require_eta   = require_eta;
+
       // Declared before the on_rung lambda below, which captures it by reference to write
       // each rung's shell model as that rung lands.
       grpy::ShellReport srep;
@@ -834,8 +852,7 @@ void US_Hydrodyn::grpy_process_next() {
          // target accuracy, or with viscosity required rather than not, the retained beads
          // differ, and identically-named files would overwrite each other between runs.
          const QString shell_base =
-            QFileInfo( grpy_last_processed ).completeBaseName()
-            + grpy_settings_suffix( opt.single, true, sopt.tol, require_eta );
+            QFileInfo( grpy_last_processed ).completeBaseName() + grpy_settings_sfx;
          // srep outlives the solve below, and the module fills in each rung's selection
          // BEFORE calling on_rung, so the current rung is srep.kept.back() here.
          sopt.on_rung = [ this, rung_tol, save_models, shell_base, &srep ]
@@ -877,6 +894,21 @@ void US_Hydrodyn::grpy_process_next() {
          } );
       grpy_stdout = QString::fromStdString( r.report );
       grpy_viscosity_unreliable = srep.viscosity_unreliable;
+
+      // Report the beads the calculation ACTUALLY used. grpy_last_used_beads was set at
+      // setup from the ASA-excluded count, before any reduction, so a shell-reduced run
+      // would otherwise report the unreduced figure -- 11328 for a run that used 2832 --
+      // in the results table, the .grpy_res report line and the saved CSV alike. Only
+      // narrowed, never widened: with shell reduction off, srep.n_used is the full count.
+      if ( srep.attempted && srep.n_used > 0 && srep.n_used < grpy_last_used_beads ) {
+         grpy_last_used_beads = srep.n_used;
+      }
+
+      // Carried to grpy_finished() for the saved results: the bar the run achieved, and
+      // which quantity it belongs to. Zero/empty when reduction was not attempted.
+      grpy_shell_err_pct    = srep.attempted ? 100.0 * srep.err_max : 0e0;
+      grpy_shell_worst_name = ( srep.attempted && srep.err_max > 0.0 )
+         ? QString( grpy::obs_name( srep.worst ) ) : QString();
       if ( sopt.enabled ) {
          // err_max is the MAX over the required observables, and intrinsic viscosity runs
          // ~3.3x the error of D_t at equal reduction -- so on an unconverged run this one
@@ -1087,7 +1119,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    // save stdout
    if ( !batch_avg_hydro_active() && !grpy_mm ) {
-      QString grpy_out_name = grpy_last_processed.replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), ".grpy_res" );
+      QString grpy_out_name = QString( grpy_last_processed )
+         .replace( QRegularExpression( QStringLiteral( ".grpy$" ) ),
+                   grpy_settings_sfx + ".grpy_res" );
       if ( !overwrite_hydro ) {
          GRPY_PAUSE_TIMER;   // operator response time is not compute
          grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
@@ -1169,7 +1203,10 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       this_data.results.method                = "GRPY";
       this_data.results.mass                  = hydro.mass_correction ? hydro.mass : model_mw( bead_models[ grpy_last_model_number ] ); // ( model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta );
-      this_data.hydro                         = hydro;
+      this_data.hydro                         = grpy_eff_hydro;
+      this_data.grpy_shell_tol_pct            = 100.0 * grpy_eff_hydro.grpy_shell_tol;
+      this_data.grpy_shell_err                = grpy_shell_err_pct;
+      this_data.grpy_shell_worst              = grpy_shell_worst_name;
       this_data.results.num_models            = 1;
       this_data.results.name                  =
          // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), "" ) ).arg( it->first + 1 )
@@ -1569,7 +1606,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       if ( saveParams && create_hydro_res && !grpy_mm )
       {
-         QString fname = get_somo_dir() + "/" + this_data.results.name + ".grpy.csv";
+         QString fname = get_somo_dir() + "/" + this_data.results.name + grpy_settings_sfx + ".grpy.csv";
          if ( !overwrite_hydro ) {
             GRPY_PAUSE_TIMER;   // operator response time is not compute
             fname = fileNameCheck( fname, 0, this );
@@ -1645,7 +1682,7 @@ void US_Hydrodyn::grpy_finalize() {
       vector < save_data > stats = save_util->stats( & grpy_mm_save_params.data_vector );
 
       {
-         QString grpy_out_name = grpy_mm_name + ".grpy_res";
+         QString grpy_out_name = grpy_mm_name + grpy_settings_sfx + ".grpy_res";
          if ( !overwrite_hydro ) {
             GRPY_PAUSE_TIMER;   // operator response time is not compute
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
@@ -1669,7 +1706,7 @@ void US_Hydrodyn::grpy_finalize() {
                                 batch_window->save_batch_active);
 
       if ( saveParams && create_hydro_res ) {
-         QString grpy_out_name = grpy_mm_name + ".grpy.csv";
+         QString grpy_out_name = grpy_mm_name + grpy_settings_sfx + ".grpy.csv";
          if ( !overwrite_hydro ) {
             GRPY_PAUSE_TIMER;   // operator response time is not compute
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
