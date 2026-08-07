@@ -95,6 +95,16 @@ struct ShellOptions {
     // Record which beads each rung kept, in ShellReport::kept. Off by default: it is only
     // wanted when the reduced models are to be written out or inspected.
     bool record_subsets = false;
+
+    // Optional cancellation, consulted before each rung. Returning true stops the ladder
+    // where it stands: whatever has been computed keeps its error bar and is reported as
+    // NOT converged, exactly like any other early stop.
+    //
+    // Checked between rungs only -- a rung already running goes to completion, since the
+    // solve has no interior abort. That is also where stopping is worth anything: each rung
+    // costs roughly eight times the one before it, so cancelling before the next one begins
+    // saves almost everything that remained.
+    std::function<bool()> should_stop;
 };
 
 struct ShellReport {
@@ -105,6 +115,10 @@ struct ShellReport {
     // result still stands on its reported bar; it simply could not be refined further on
     // this machine. When levels == 0 not even the smallest rung fit, and there is no result.
     bool   mem_capped = false;
+    // Ladder was cancelled between rungs via ShellOptions::should_stop. As with mem_capped,
+    // the result stands on its bar and is never marked converged; levels == 0 means it was
+    // stopped before anything ran, so there is no result at all.
+    bool   stopped = false;
     int    n_full = 0, n_used = 0, levels = 0;
     double err_max = 1.0;                 // max bar over the required observables
     Obs    worst = Obs::Dt;
@@ -266,6 +280,7 @@ public:
         std::vector<std::vector<double>> hist;             // hist[rung][observable]
         Results last;
         for (double f : sopt_.ladder) {
+            if (sopt_.should_stop && sopt_.should_stop()) { rep.stopped = true; break; }
             std::vector<int>  rung_idx;
             std::vector<Bead> rb;
             if (f >= 1.0) {
@@ -414,6 +429,10 @@ private:
              "              exact and no reduction error was introduced.\n"
            : rep.converged
            ? "   converged: yes\n"
+           : rep.stopped
+           ? "   converged: NO -- the calculation was stopped before the ladder had\n"
+             "              converged. The estimated errors below are the reliable\n"
+             "              statement about this result.\n"
            : rep.mem_capped
            ? "   converged: NO -- the ladder was stopped by the available memory before\n"
              "              the requested tolerance was reached. The estimated errors\n"
