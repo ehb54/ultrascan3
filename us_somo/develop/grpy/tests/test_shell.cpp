@@ -163,6 +163,68 @@ int main() {
                      r.report.find("exact") != std::string::npos);
     }
 
+    // ---- memory cap (issue 987 interaction) ------------------------------------
+    // The caller's pre-flight guard sizes the mobility matrix from the FULL bead count and
+    // refuses when it exceeds RAM. That would turn away exactly the large models shell
+    // reduction exists to make feasible, since the ladder usually stops well short of the
+    // full model. ShellOptions::max_beads lets the caller cap the ladder instead, so an
+    // oversized model yields the largest rung that fits WITH its bar rather than nothing.
+    {
+        auto b = blob(6, 3.0, 2.0);                     // 216 beads
+
+        // A cap above the full model must change nothing at all.
+        {
+            ShellOptions so;
+            so.enabled = true; so.tol = 1e-12;          // unsatisfiable: force exhaustion
+            so.require = {Obs::Dt, Obs::Dr};
+            so.ladder = {0.25, 0.5, 1.0};
+            so.max_beads = 100000;
+            ShellSolver sh(par, {}, so);
+            ShellReport rep;
+            Results r = sh.run(b, phys, rep);
+            fails += chk("slack cap does not bind", !rep.mem_capped);
+            fails += chk("slack cap still reaches the full model", rep.unreduced);
+            fails += chk("slack cap still reports an exact result", rep.err_max == 0.0);
+            (void) r;
+        }
+
+        // A cap that binds must stop the ladder, say so, and NOT claim convergence.
+        {
+            const int cap = 60;                         // admits 0.125 (27) and 0.25 (54)
+            ShellOptions so;
+            so.enabled = true; so.tol = 1e-12;          // unsatisfiable: only the cap can stop it
+            so.require = {Obs::Dt, Obs::Dr};
+            so.ladder = {0.125, 0.25, 0.5, 1.0};
+            so.max_beads = cap;
+            ShellSolver sh(par, {}, so);
+            ShellReport rep;
+            Results r = sh.run(b, phys, rep);
+            fails += chk("binding cap is reported", rep.mem_capped);
+            fails += chk("binding cap never exceeds the budget", rep.n_used <= cap);
+            fails += chk("binding cap did not reach the full model", !rep.unreduced);
+            fails += chk("binding cap does not claim convergence", !rep.converged);
+            fails += chk("binding cap still produced a result", rep.levels >= 1 && rep.n_used > 0);
+            fails += chk("binding cap reports a finite error bar",
+                         rep.err_max > 0.0 && std::isfinite(rep.err_max));
+            fails += chk("binding cap explains itself in the report",
+                         r.report.find("stopped by the available memory") != std::string::npos);
+        }
+
+        // A cap below even the smallest rung yields no result at all -- the caller must
+        // detect this (levels == 0) and fall back to refusing, rather than report zeros.
+        {
+            ShellOptions so;
+            so.enabled = true; so.tol = 1e-12;
+            so.require = {Obs::Dt, Obs::Dr};
+            so.ladder = {0.125, 0.25, 0.5, 1.0};
+            so.max_beads = 4;                           // smaller than 0.125 * 216
+            ShellSolver sh(par, {}, so);
+            ShellReport rep;
+            sh.run(b, phys, rep);
+            fails += chk("impossible cap runs no rung", rep.levels == 0 && rep.mem_capped);
+        }
+    }
+
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);
     return fails ? 1 : 0;
 }
