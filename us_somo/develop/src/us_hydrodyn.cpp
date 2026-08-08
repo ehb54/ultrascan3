@@ -15,6 +15,7 @@
 // includes and defines need cleanup
  
 #include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_perceive_dialog.h"
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
@@ -1118,6 +1119,14 @@ void US_Hydrodyn::setupGUI()
          QAction *qa = submenu->addAction( us_tr("Add/Edit &SAXS coefficients") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(do_saxs()));
       }
+      submenu->addSeparator();
+      {
+         // Perceive the residues somo.residue does not code, from the loaded structure's
+         // coordinates, and offer each one for review. Without this they fall to the Automatic
+         // Bead Builder, which gives them averaged generic properties.
+         QAction *qa = submenu->addAction( us_tr("&Perceive Non-Coded Residues...") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT( perceive_non_coded() ) );
+      }
       menu->addMenu( submenu );
    }
    {
@@ -2127,6 +2136,105 @@ void US_Hydrodyn::edit_atom()
       addAtom = new US_AddAtom(&atom_widget, 0);
       fixWinButtons( addAtom );
       addAtom->show();
+   }
+}
+
+// Perceive the residues somo.residue does not code and offer each for review. Without this they
+// fall to the Automatic Bead Builder, which models them as a generic averaged bead. Nothing is
+// written to somo.residue unless the user ticks the box in the dialog.
+void US_Hydrodyn::perceive_non_coded() {
+   if ( model_vector.empty() ) {
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "Load a PDB structure first." ) );
+      return;
+   }
+   // unknown_residues is what SOMO itself recorded as non-codable while building the model; it is
+   // the right trigger, unlike multi_residue_map, which by now also holds the "_NC" placeholders
+   // the bead builder created.
+   std::set< QString > to_perceive;
+   for ( map < QString, bool >::iterator it = unknown_residues.begin();
+         it != unknown_residues.end();
+         ++it ) {
+      if ( it->second ) {
+         to_perceive.insert( it->first );
+      }
+   }
+   if ( to_perceive.empty() ) {
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "Every residue in this structure is already coded in "
+                                    "somo.residue -- there is nothing to perceive." ) );
+      return;
+   }
+
+   somo_perceive::HybridTable ptbl;
+   if ( !ptbl.load( saxs_options.default_hybrid_filename.toStdString() ) ) {
+      US_Static::us_message( us_tr( "Please note:" ),
+                             QString( us_tr( "Could not load the hybridization table:\n%1" ) )
+                             .arg( saxs_options.default_hybrid_filename ) );
+      return;
+   }
+
+   somo_residue_builder::Options pb_opt;
+   pb_opt.bead_color = somo_perceive::DEFAULT_BEAD_COLOR;
+   somo_hydration::Table pb_hyd = somo_perceive::hydration_from_residue_list( residue_list );
+
+   QList< somo_perceive::Tentative > tents =
+      somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive,
+                                       le_pdb_file->text(), &pb_hyd, pb_opt );
+   if ( tents.isEmpty() ) {
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "No entries could be proposed for the non-coded residues." ) );
+      return;
+   }
+
+   int accepted = 0;
+   int saved    = 0;
+   for ( int t = 0; t < tents.size(); ++t ) {
+      US_Hydrodyn_Perceive_Dialog * dlg =
+         new US_Hydrodyn_Perceive_Dialog( tents[ t ], le_pdb_file->text(), (void *) this, this );
+      // Modal, one residue at a time: each decision is independent and the user should not be
+      // asked to hold several half-reviewed entries in their head at once.
+      dlg->setWindowModality( Qt::ApplicationModal );
+      dlg->show();
+      while ( dlg->isVisible() ) {
+         qApp->processEvents();
+         US_Saxs_Util::us_usleep( 10000 );
+      }
+      if ( dlg->accepted() ) {
+         ++accepted;
+         editor_msg( "blue", QString( us_tr( "Perceive: accepted entry for %1\n" ) )
+                     .arg( tents[ t ].resName ) );
+         editor_msg( "black", dlg->entry() );
+         if ( dlg->save_requested() ) {
+            QFile f( residue_filename );
+            if ( f.open( QIODevice::Append | QIODevice::Text ) ) {
+               QTextStream ts( &f );
+               ts << dlg->entry();
+               f.close();
+               ++saved;
+               editor_msg( "dark blue",
+                           QString( us_tr( "Perceive: appended %1 to %2\n" ) )
+                           .arg( tents[ t ].resName )
+                           .arg( residue_filename ) );
+            } else {
+               editor_msg( "red", QString( us_tr( "Perceive: could NOT write to %1\n" ) )
+                           .arg( residue_filename ) );
+            }
+         }
+      } else {
+         editor_msg( "dark red", QString( us_tr( "Perceive: skipped %1 (left to the "
+                                                 "Automatic Bead Builder)\n" ) )
+                     .arg( tents[ t ].resName ) );
+      }
+      delete dlg;
+   }
+   editor_msg( "blue", QString( us_tr( "Perceive: %1 of %2 proposed entr(y/ies) accepted, "
+                                       "%3 appended to somo.residue.\n" ) )
+               .arg( accepted ).arg( tents.size() ).arg( saved ) );
+   if ( saved ) {
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "somo.residue was appended to. Reload the structure for the "
+                                    "new entries to take effect." ) );
    }
 }
 

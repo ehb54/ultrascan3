@@ -1265,6 +1265,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void edit_atom();
       void hybrid();
       void residue();
+      // Perceive + review the residues somo.residue does not code (Lookup Tables menu).
+      void perceive_non_coded();
       void do_saxs();
       void select_model( int val = 0 );
       void model_selection_changed();
