@@ -1037,3 +1037,54 @@ with each other about Arg by 17% -- so it is not attributable to ionisation alon
 | 1MBO | 5.74% | 6.48% | 20/22 |
 | 1LDM | 2.65% | 3.78% | 20/22 |
 Perception unchanged at 99.833%; 8 test suites green.
+
+## CORRECTION from Mattia — the vbar ionisation design is deliberate — 2026-08-08
+
+My note above inferred that the identical vbar for both ionisation states meant somo.residue's
+values "already absorb whatever ionisation the underlying Cohn-Edsall measurements had". That
+inference was wrong. Mattia:
+
+> this is on purpose, and all the vbar for AA were recalculated by me at pH 7. They are better
+> than other published values, especially for Arginine.
+> SOMO computes the percentage of charge/neutral species for -COOH and -NH2/-NH3 based on the
+> Henderson-Hasselbalch equation using the stored pKa of the groups. There is not a "pH 7 stored
+> value". So the reasoning, that apparently holds, is to work at pH 7 for non-coded residues,
+> otherwise we would need to know their pKa or pKb values, and assume the hydrations as we
+> determined for the AA. Basically, at pH 7 all -COOH groups are deprotonated, and all
+> -NH2/-NH3 groups are protonated.
+
+### What this changes
+- **The stored AA vbar values ARE pH 7 values**, recalculated by Mattia, not inherited
+  ionisation-agnostic numbers. Setting the ionised vbar equal to the base is the deliberate
+  statement that at pH 7 the value does not change, not an omission.
+- **There is no stored "pH 7 value" for anything.** SOMO derives the species fractions at run
+  time from the stored pKa via Henderson-Hasselbalch -- `US_Hydrodyn::basic_fractions()` at
+  us_hydrodyn_load.cpp:2744 computes `10^(pH - pKa)` -- and mixes the base and ionised values by
+  those fractions. For Asp (pKa 3.67) at pH 7 that is 99.95% deprotonated, which is why the
+  runtime hydration is effectively the ionised 5 rather than the base 0. My earlier phrase "the
+  pH 7 one is a separate field" was wrong: field 15 is the *fully ionised* value, and pH 7 just
+  happens to sit almost entirely at that end.
+- **The arginine outlier reads differently now.** 0.698 is Mattia's recalculated pH 7 value,
+  which he states is better than the published sets -- so my +15.9% is my D&Z calculation
+  reproducing a published-style number while the reference is deliberately better than those.
+  It is not, as I wrote earlier, a case of the reference being uncertain.
+- The conclusion to leave `assume_ph7_ionization` OFF still stands, and the measurement is
+  unchanged (6.23% vs 9.05%). The reason is simply that D&Z's electrostriction, applied on top
+  of the increment sum, overshoots relative to Mattia's recalculated pH 7 values.
+
+### What it confirms
+The design already implemented is the one he describes: **work at pH 7 for a non-coded residue**,
+because we cannot know its pKa, and **assume the hydrations determined for the amino acids** --
+every -COOH deprotonated, every -NH2/-NH3 protonated. That is exactly what
+`propose_by_rules()` does, and it is what took hydration from 48% to 94%.
+
+### One observation, offered without adjudicating
+The base vbar values still match Cohn & Edsall minus exactly 0.002 cm^3/g (the 25->20 C shift)
+for 17 of 19 residues, to the last digit, with Asp and Glu resolving on the unrounded C-E values.
+That and Mattia's recalculation are both consistent if the recalculation landed on or very near
+Cohn-Edsall; worth one line from him if it matters, since it is the kind of coincidence that
+misleads whoever next audits the table's provenance.
+
+### Next
+Mattia: "Next time we'll work the pH-dependent values for vbar!!!" -- i.e. pKa-aware vbar for
+non-coded residues is a future piece, not a gap in this one.
