@@ -97,6 +97,34 @@ CompareResult compare_against_table(
     const std::map< QString, std::map< QString, QString > > & curated,
     const QString & pdb_filename = QString() );
 
+// ---- validation: predict the CODED residues as if they were unknown ------------------------
+// The same idea as compare_against_table, but for the computed properties rather than the atom
+// typing: rebuild each coded residue from geometry alone and check vbar, molvol and hydration
+// against what somo.residue actually stores. This is the only end-to-end measure of the whole
+// pipeline -- perception included -- so it is what any accuracy claim must rest on.
+struct ValidateRow {
+    QString resName;
+    int     instances = 0;
+    double  vbar_computed = 0,      vbar_stored = 0;
+    double  molvol_computed = 0,    molvol_stored = 0;
+    double  hydration_computed = 0, hydration_stored = 0;
+};
+
+struct ValidateResult {
+    QList<ValidateRow> rows;              // one per residue TYPE, averaged over instances
+    long skipped_incomplete = 0;          // atom count differs from the stored entry
+    long skipped_terminal = 0;            // chain terminus: an extra OXT makes it another molecule
+    long instances = 0;
+};
+
+ValidateResult validate_against_table(
+    const PDB_model & model,
+    const HybridTable & tbl,
+    const std::vector<struct residue> & coded,
+    const somo_hydration::Table * hyd = nullptr,
+    const somo_residue_builder::Options & opt = somo_residue_builder::Options(),
+    const QString & pdb_filename = QString() );
+
 } // namespace somo_perceive
 
 #endif
