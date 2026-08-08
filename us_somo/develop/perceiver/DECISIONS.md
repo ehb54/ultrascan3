@@ -1088,3 +1088,37 @@ misleads whoever next audits the table's provenance.
 ### Next
 Mattia: "Next time we'll work the pH-dependent values for vbar!!!" -- i.e. pKa-aware vbar for
 non-coded residues is a future piece, not a gap in this one.
+
+## Metals DO have published volumes — my "no increment" was wrong — 2026-08-08
+
+Mattia pointed at a psv for the iron ion (Millero, doi:10.1021/cr60270a001, quoted as ~-0.78
+mL/g for Fe3+). He is right that one exists, and in fact **D&Z already tabulate iron** -- I had
+extracted their Tables 2 and 3 into the Python prototype months ago and then never implemented
+them in the C++ engine, which reported "no volume increment for this element" for every metal.
+That was my omission, not a limitation of the method.
+
+Now implemented:
+- **DZ94 Table 2, metal ATOMIC volumes** for a metal bonded into a complex (a haem iron, B12's
+  cobalt): Mg 14.0, Ca 26.0, Mn 7.4, Fe 7.1, Co 6.6, Ni 6.6, Cu 7.1, Zn 9.2, Mo 9.4, Hg 14.8.
+- **DZ94 Table 3, aqueous ION volumes** for a free monatomic ion: Fe2+ -32.3, **Fe3+ -55.1**,
+  Mg2+ -28.8, Ca2+ -25.4, Mn2+ -25.3, Cu2+ -31.8, Zn2+ -29.2, Na+ -5.0, K+ 5.2, Cl- 21.6 ...
+  These already contain the ionisation, so electrostriction is NOT charged again on top -- a
+  test asserts an isolated Mg2+ comes out at exactly -28.8 with zero electrostriction.
+
+D&Z's Fe3+ of -55.1 cm^3/mol is **-0.99 mL/g**, the same sign and order as the -0.78 mL/g Mattia
+quoted from the other compilation. Negative because electrostriction pulls water inward around
+the ion harder than the bare ion displaces.
+
+### Effect on haem: real but small
+HEM vbar -24.3% -> **-23.0%**. The iron is worth ~1.2% of a 616 Da molecule, so it was never
+going to close a 24% gap. **The bulk of haem's error is elsewhere** -- most likely the porphyrin:
+four fused pyrrole rings plus the macrocycle, a heavily conjugated system that Traube-style
+additivity is not built for. Worth saying plainly that adding iron did not fix haem.
+
+### FINDINGS worth eb's attention
+- **HEM's stored hydration reads as 0.0 through `validate`, but the table gives its two
+  propionates pKa 4.4 and 4.5 with ionised hydration 6 each** -- so at pH 7 SOMO ought to carry
+  about 12 waters on haem, and my rules compute 14. `set_ionized_residue_vector(residue_list)`
+  is called at load, so the ionisation should be reaching it. Either my validator is reading an
+  un-ionised copy or the ionisation is not being applied to HEM; worth one look, because if it
+  is the latter then every haem protein is being modelled unhydrated at the propionates.

@@ -135,9 +135,44 @@ TEST("covolume is charged once per molecule and only when asked") {
 }
 
 TEST("an element with no published increment is reported for review, not guessed") {
-    std::vector<InAtom> m{at("C", "C", 0, 0, 0), at("FE", "FE", 2.0, 0, 0)};
+    // Tungsten is in neither DZ94 Table 2 nor Table 3.
+    std::vector<InAtom> m{at("C", "C", 0, 0, 0), at("W", "W", 2.0, 0, 0)};
     const Result f = run(m);
     CHECK(!f.review.empty());
+}
+
+// Metals DO have published volumes -- Table 2 for an atom in a complex, Table 3 for a free
+// aqueous ion -- so "no increment for metals" was wrong. An aqueous Fe3+ occupies NEGATIVE
+// apparent volume, -55.1 cm^3/mol, because electrostriction pulls water in around it harder
+// than the ion itself displaces.
+TEST("metal volumes come from the published tables") {
+    CHECK(std::fabs(inc::metal_atomic_volume("FE") - 7.1) < 1e-9);
+    CHECK(std::fabs(inc::metal_atomic_volume("CO") - 6.6) < 1e-9);
+    CHECK(std::fabs(inc::metal_atomic_volume("ZN") - 9.2) < 1e-9);
+    CHECK(inc::metal_atomic_volume("W") < 0);              // genuinely absent
+
+    bool found = false;
+    CHECK(std::fabs(inc::ion_volume("FE", 3, found) + 55.1) < 1e-9);
+    CHECK(found);
+    CHECK(std::fabs(inc::ion_volume("FE", 2, found) + 32.3) < 1e-9);
+    CHECK(std::fabs(inc::ion_volume("MG", 2, found) + 28.8) < 1e-9);
+    CHECK(std::fabs(inc::ion_volume("CL", -1, found) - 21.6) < 1e-9);
+    inc::ion_volume("W", 6, found);
+    CHECK(!found);
+    // Sanity on the magnitude Mattia quoted: -0.78 mL/g for Fe3+ is -43.6 cm^3/mol, the same
+    // sign and order as D&Z's -55.1 from a different compilation.
+    std::printf("  Fe3+ : D&Z %.1f cm^3/mol = %.2f mL/g   (quoted elsewhere: -0.78 mL/g)\n",
+                inc::ion_volume("FE", 3, found), inc::ion_volume("FE", 3, found) / 55.845);
+}
+
+// A free ion's Table 3 value already contains its ionisation, so electrostriction must not be
+// charged again on top of it.
+TEST("a free ion is not electrostricted twice") {
+    std::vector<InAtom> m{at("MG", "MG", 0, 0, 0)};
+    const Result f = run(m, false);
+    std::printf("  isolated Mg: V %.1f  electrostriction %.1f (must be 0)\n",
+                f.molar_volume, f.electrostriction);
+    CHECK(f.electrostriction == 0.0);
 }
 
 // ---------------------------------------------------------------- layer 3: real residues

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <cstdio>
 
 namespace somo_psv {
 
@@ -22,6 +23,34 @@ double ring_decrement(int n) {
         default: return n >= 9 ? 14.1 : 0.0;
     }
 }
+double metal_atomic_volume(const std::string& e) {
+    // DZ94 Table 2. (The scan also lists "Sc 16.5"; scandium is odd company for this set and
+    // selenium would fit -- SOMO carries selenomethionine -- so it is deliberately omitted here
+    // rather than guessed at.)
+    static const std::map<std::string, double> t = {
+        {"MG", 14.0}, {"CA", 26.0}, {"MN", 7.4}, {"FE", 7.1}, {"CO", 6.6},
+        {"NI", 6.6}, {"CU", 7.1}, {"ZN", 9.2}, {"MO", 9.4}, {"HG", 14.8},
+    };
+    auto it = t.find(e);
+    return it == t.end() ? -1.0 : it->second;
+}
+
+double ion_volume(const std::string& e, int charge, bool& found) {
+    // DZ94 Table 3; these include the ionisation contribution already.
+    static const std::map<std::string, double> t = {
+        {"H+1", -3.8}, {"LI+1", -4.7}, {"NA+1", -5.0}, {"K+1", 5.2}, {"CS+1", 17.5},
+        {"MG+2", -28.8}, {"CA+2", -25.4}, {"MN+2", -25.3}, {"FE+2", -32.3},
+        {"CU+2", -31.8}, {"ZN+2", -29.2}, {"FE+3", -55.1},
+        {"F-1", 2.6}, {"CL-1", 21.6}, {"BR-1", 28.5}, {"I-1", 40.0},
+    };
+    char buf[16];
+    std::snprintf(buf, sizeof(buf), "%s%c%d", e.c_str(), charge < 0 ? '-' : '+',
+                  charge < 0 ? -charge : charge);
+    auto it = t.find(buf);
+    found = it != t.end();
+    return found ? it->second : 0.0;
+}
+
 } // namespace inc
 
 namespace {
@@ -84,6 +113,7 @@ Result compute(const std::vector<InAtom>& atoms,
         return r;
 
     std::set<int> in_res(idx.begin(), idx.end());
+    int ion_charges_counted = 0;      // charges already inside a Table 3 ion volume
 
     // ---- 1. hydroxyl oxygens, and which of them are NEIGHBOURING ---------------------------
     // D&Z charge 2.3 for a "1st OH" but only 0.4 for a "2nd or further NEIGHBOURING OH". That
@@ -161,9 +191,26 @@ Result compute(const std::vector<InAtom>& atoms,
             else if (bonded_to_carbonyl_C(i, perceived, bonds)) v += inc::N_AMIDE;
             else                                                v += inc::N_AMINE;
         } else {
-            // No published increment for this element (metals, Se, ...). Additive schemes do not
-            // work for metal centres; say so rather than invent a number.
-            r.review.push_back(atoms[i].name + " (" + e + "): no volume increment for this element");
+            // Metals. A monatomic ion takes the Table 3 aqueous ion volume, which already
+            // contains its ionisation; a metal bonded into a complex (a haem iron, B12's cobalt)
+            // takes the Table 2 atomic volume instead.
+            bool is_ion = false;
+            const double iv = inc::ion_volume(e, o.formal_charge, is_ion);
+            const bool bonded = !bonds.nb[i].empty();
+            if (is_ion && !bonded) {
+                v += iv;
+                ion_charges_counted += o.formal_charge;   // do not electrostrict it twice
+            } else {
+                const double mv = inc::metal_atomic_volume(e);
+                if (mv >= 0) {
+                    v += mv;
+                    r.review.push_back(atoms[i].name + " (" + e + "): metal centre, using the "
+                                       "tabulated atomic volume -- additivity is weakest here");
+                } else {
+                    r.review.push_back(atoms[i].name + " (" + e +
+                                       "): no volume increment for this element");
+                }
+            }
         }
         r.atomic_sum += v;
     }
@@ -205,7 +252,14 @@ Result compute(const std::vector<InAtom>& atoms,
 
     // ---- 4. covolume and electrostriction ---------------------------------------------------
     r.covolume = opt.free_molecule ? inc::COVOLUME : 0.0;
-    r.electrostriction = r.n_pos * inc::ES_POS + r.n_neg * inc::ES_NEG;
+    // Table 3 ion volumes already carry their ionisation, so those charges must not be
+    // electrostricted a second time.
+    {
+        int pos = r.n_pos, neg = r.n_neg;
+        if (ion_charges_counted > 0) pos = std::max(0, pos - ion_charges_counted);
+        if (ion_charges_counted < 0) neg = std::max(0, neg + ion_charges_counted);
+        r.electrostriction = pos * inc::ES_POS + neg * inc::ES_NEG;
+    }
 
     r.molar_volume = r.atomic_sum + r.covolume - r.ring_decrement - r.electrostriction;
     r.vbar = r.mw > 0 ? r.molar_volume / r.mw : 0.0;

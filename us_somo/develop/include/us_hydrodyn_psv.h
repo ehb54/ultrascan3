@@ -106,6 +106,16 @@ constexpr double ES_POS = 6.8, ES_NEG = 6.7;
 
 // Ring-formation decrement by ring size; sizes >= 9 all take the 9-membered value.
 double ring_decrement(int ring_size);
+
+// Metal ATOMIC volume, DZ94 Table 2 -- for a metal bonded into a complex, e.g. the iron of a
+// haem or the cobalt of B12. Returns <0 if the element is not tabulated.
+double metal_atomic_volume(const std::string& element);
+
+// Monatomic ION volume, DZ94 Table 3, keyed "FE+2", "MG+2", "CL-1" ... These ALREADY contain
+// the ionisation contribution, so no electrostriction term is added on top of them.
+// Returns a sentinel via `found` because legitimate values are negative -- an aqueous Fe3+ is
+// -55.1 cm^3/mol, water pulled in so tightly that the ion occupies negative apparent volume.
+double ion_volume(const std::string& element, int charge, bool& found);
 } // namespace inc
 
 } // namespace somo_psv
