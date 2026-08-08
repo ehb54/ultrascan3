@@ -50,3 +50,17 @@ bin/gridvol: tests/grid_volume.cpp ../src/us_hydrodyn_grid_volume.cpp ../include
 
 gridvol: bin/gridvol
 	./bin/gridvol $(DATA)
+
+bin/sssr: tests/sssr.cpp $(SRC) $(HDR)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/sssr.cpp $(SRC) -o bin/sssr
+
+sssr: bin/sssr
+	./bin/sssr
+
+bin/sssrreal: tests/sssr_real.cpp $(SRC) $(HDR)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/sssr_real.cpp $(SRC) -o bin/sssrreal
+
+sssrreal: bin/sssrreal
+	./bin/sssrreal $(DEMOS)

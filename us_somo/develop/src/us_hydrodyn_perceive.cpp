@@ -8,6 +8,7 @@
 #include <sstream>
 #include <algorithm>
 #include <functional>
+#include <set>
 
 namespace somo_perceive {
 
@@ -116,6 +117,92 @@ static void find_rings(const Bonds& b, std::vector<std::vector<int>>& rings) {
         path.clear(); path.push_back(s); onpath[s] = 1;
         dfs(s, s);
         onpath[s] = 0;
+    }
+}
+
+// ---------- SSSR ----------
+// Smallest set of smallest rings, from adjacency only. Distinct from find_rings() above, which
+// enumerates every simple 5- or 6-cycle and feeds aromaticity: that is the right input for "is
+// this atom in a flat conjugated ring", but the wrong one for anything charged once per ring,
+// because a fused bicyclic contributes 3 simple cycles while its circuit rank is 2.
+//
+// Method: for each ring bond take the smallest cycle through it (BFS for the shortest path
+// between its ends with that bond removed), then greedily accept candidates smallest-first,
+// keeping one only if it covers a bond no accepted ring covers yet, until the circuit rank
+// |E| - |V| + |components| is reached. Standard for molecule-sized graphs.
+void find_sssr(Bonds& b, int max_ring) {
+    const int n = (int) b.nb.size();
+    b.rings.clear();
+    if (n == 0) return;
+
+    // edges, and circuit rank = |E| - |V| + |components|
+    std::vector<std::pair<int,int>> edges;
+    for (int u = 0; u < n; ++u)
+        for (int v : b.nb[u])
+            if (u < v) edges.push_back({u, v});
+
+    std::vector<char> seen(n, 0);
+    int comps = 0;
+    for (int s = 0; s < n; ++s) {
+        if (seen[s]) continue;
+        ++comps;
+        std::vector<int> st{s};
+        seen[s] = 1;
+        while (!st.empty()) {
+            int c = st.back(); st.pop_back();
+            for (int x : b.nb[c]) if (!seen[x]) { seen[x] = 1; st.push_back(x); }
+        }
+    }
+    const int rank = (int) edges.size() - n + comps;
+    if (rank <= 0) return;
+
+    // smallest cycle through each edge
+    struct Cand { std::vector<int> ring; std::vector<std::pair<int,int>> bonds; };
+    std::vector<Cand> cands;
+    for (auto& e : edges) {
+        const int u = e.first, v = e.second;
+        // BFS v -> u without using edge (u,v)
+        std::vector<int> prev(n, -1), depth(n, -1);
+        std::vector<int> q{v};
+        depth[v] = 0;
+        for (size_t qi = 0; qi < q.size(); ++qi) {
+            const int c = q[qi];
+            if (depth[c] >= max_ring - 1) continue;
+            for (int x : b.nb[c]) {
+                if ((c == u && x == v) || (c == v && x == u)) continue;   // the removed bond
+                if (depth[x] != -1) continue;
+                depth[x] = depth[c] + 1;
+                prev[x] = c;
+                q.push_back(x);
+            }
+        }
+        if (depth[u] < 0) continue;                       // bond is not in any ring <= max_ring
+        Cand cd;
+        for (int c = u; c != -1; c = prev[c]) cd.ring.push_back(c);
+        if ((int) cd.ring.size() > max_ring) continue;
+        for (size_t k = 0; k < cd.ring.size(); ++k) {
+            const int p = cd.ring[k], q2 = cd.ring[(k + 1) % cd.ring.size()];
+            cd.bonds.push_back({std::min(p, q2), std::max(p, q2)});
+        }
+        cands.push_back(std::move(cd));
+    }
+
+    std::stable_sort(cands.begin(), cands.end(),
+                     [](const Cand& a, const Cand& c) { return a.ring.size() < c.ring.size(); });
+
+    std::set<std::vector<int>> taken;                     // dedupe by sorted atom set
+    std::set<std::pair<int,int>> covered;
+    for (const Cand& cd : cands) {
+        if ((int) b.rings.size() >= rank) break;
+        std::vector<int> key = cd.ring;
+        std::sort(key.begin(), key.end());
+        if (taken.count(key)) continue;
+        bool adds = false;
+        for (auto& bd : cd.bonds) if (!covered.count(bd)) { adds = true; break; }
+        if (!adds) continue;
+        taken.insert(key);
+        for (auto& bd : cd.bonds) covered.insert(bd);
+        b.rings.push_back(cd.ring);
     }
 }
 
@@ -503,17 +590,25 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
 }
 
 std::vector<OutAtom> Perceiver::perceive(const std::vector<InAtom>& atoms,
+        Bonds& bonds_out,
         const std::vector<std::pair<int,int>>& explicit_bonds) const {
     // Normalize element symbols once (uppercase, alpha-only) so the classifier is robust to callers
     // that pass "Br"/"Fe"/" c" etc. All downstream element comparisons assume uppercase symbols.
     std::vector<InAtom> a=atoms;
     for (auto& x : a) x.element = norm_element(x.element);
-    Bonds b=perceive_bonds(a, explicit_bonds);
-    mark_aromatic(a, b);
-    kekulize(a, b);
+    bonds_out = perceive_bonds(a, explicit_bonds);
+    mark_aromatic(a, bonds_out);
+    kekulize(a, bonds_out);
+    find_sssr(bonds_out);
     std::vector<OutAtom> out; out.reserve(a.size());
-    for (size_t i=0;i<a.size();++i) out.push_back(classify((int)i,a,b));
+    for (size_t i=0;i<a.size();++i) out.push_back(classify((int)i,a,bonds_out));
     return out;
+}
+
+std::vector<OutAtom> Perceiver::perceive(const std::vector<InAtom>& atoms,
+        const std::vector<std::pair<int,int>>& explicit_bonds) const {
+    Bonds discard;
+    return perceive(atoms, discard, explicit_bonds);
 }
 
 } // namespace somo_perceive

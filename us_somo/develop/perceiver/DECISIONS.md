@@ -636,3 +636,54 @@ us_hydrodyn_load.cpp:509). So the colour was the atom count:
 Now emits `DEFAULT_BEAD_COLOR` (= 10, Light Green) from a single point of definition in
 `us_hydrodyn_perceive.h`, alongside `bead_color_is_reserved()` / `bead_color_is_selectable()`
 helpers and the full documented colour list. Unit suite still 54 checks / 0 failures.
+
+## Phase A: SSSR ring perception + bond graph exposure — 2026-08-08
+
+Prerequisite for the Durchschlag & Zipper volume increments, which charge a ring-formation
+decrement **once per ring** (Table 1: 3-ring 2.1 ... >=9-ring 14.1). The perceiver previously
+exposed only an `aromatic` flag and never returned `Bonds` at all, so ring *sizes* and the
+topology needed to classify an N or O environment were unavailable -- the Python prototype had
+to be hand-fed both.
+
+- `Bonds` gains `rings` = **SSSR** (smallest set of smallest rings), and `find_sssr()` is
+  declared in the header so it can be unit-tested on hand-built adjacency without geometry.
+- New `perceive(atoms, bonds_out, explicit_bonds)` overload returns the graph; the old
+  signature delegates to it, so existing callers are untouched.
+- SSSR is deliberately **separate from** the existing `find_rings()`, which enumerates every
+  simple 5-/6-cycle and feeds aromaticity. That is the right input for "is this atom in a flat
+  conjugated ring" but the wrong one for anything charged per ring: a fused bicyclic has 3
+  simple cycles and circuit rank 2. Keeping them separate also avoids perturbing the validated
+  99.833% perception -- confirmed, the regression figure is unchanged to the digit.
+- Method: smallest cycle through each bond (BFS with that bond removed), then greedy
+  smallest-first acceptance while a candidate covers an uncovered bond, until circuit rank
+  |E| - |V| + |components|. Rings beyond `max_ring` (default 12) are not sought, since the
+  consumer charges one "large ring" term for everything from 9 up.
+
+### Tests
+`tests/sssr.cpp` (`make sssr`) -- 35 checks on hand-built graphs: acyclic shapes, every ring
+size 3..9, ring-plus-substituent, **fused bicyclics (naphthalene, indole, purine) giving 2 rings
+not 3 cycles**, spiro, bridged/norbornane, three-fused, disconnected components, macrocycle
+beyond max_ring, idempotency, and that every reported ring is a genuine cycle. Also asserts the
+arithmetic the counts drive: one 6-ring decrement reproduces D-Z's published Phe 121.9, one
+5-ring their Pro 80.1.
+
+`tests/sssr_real.cpp` (`make sssrreal`) -- 18 checks on real coordinates through the whole
+perception path, across all 8 demo structures: PHE {6} x171, TYR {6} x150, **TRP {5,6} x47**,
+HIS {5} x138, PRO {5} x244, DA/DG {5,5,6} x72, DC/DT {5,6} x72, and Ala/Gly/Leu/Ser/Arg
+ring-free. Every instance of a residue type gives an identical signature.
+
+### FINDINGS worth eb's attention
+- **Some demo structures contain physically impossible geometry**, which produces spurious small
+  rings. `1AO6` models LYS536 and LEU583 on top of each other -- LYS536/NZ to LEU583/CG is
+  **0.73 A**, shorter than any covalent bond (C-C is 1.54), B-factors 60-85. `6LYZ` (an early
+  low-resolution lysozyme) has LYS97/O 1.22 A from ASP101/OD1, two oxygens at an impossible
+  separation. `3GUT`'s corrupt LEU367 bond was already known. Across the demo set this yields 13
+  cross-residue rings and 12 three-membered rings -- **none of them intra-residue**, so no
+  residue's own ring count is affected.
+- This is pre-existing bond perception on defective input, not an SSSR defect, and the tests now
+  assert it as such: every cross-residue ring must be closed by an inter-residue bond that is
+  neither a peptide/phosphodiester link nor a disulfide, and no 3-membered ring may lie inside a
+  single residue.
+- **Design consequence for the volume work**: a residue's ring decrements must count only rings
+  whose atoms all lie in that residue. That is both correct chemistry (the increments are
+  per-molecule) and immunity to this whole class of input defect.

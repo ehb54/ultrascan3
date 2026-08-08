@@ -40,11 +40,23 @@ struct OutAtom {
 // aromatic[i]    != 0 if atom i belongs to a planar, conjugated 5- or 6-membered ring.
 // ring_double[i] != 0 if atom i was assigned a ring double bond by Kekule perception
 //                 (used to tell pyridine-type ring N (no H) from pyrrole-type (has H)).
+// rings = SSSR (smallest set of smallest rings), one entry per ring, atom indices in cycle order.
+// Its size is the circuit rank |bonds| - |atoms| + |components|, so a fused bicyclic such as
+// naphthalene or indole yields exactly 2 rings -- NOT the 3 simple cycles a full enumeration
+// finds. That distinction matters wherever a quantity is charged once per ring, e.g. the
+// Durchschlag & Zipper ring-formation volume decrement.
 struct Bonds {
     std::vector<std::vector<int>> nb;
     std::vector<char> aromatic;
     std::vector<char> ring_double;
+    std::vector<std::vector<int>> rings;
 };
+
+// Smallest set of smallest rings, from adjacency alone (no geometry). Fills b.rings.
+// Rings longer than max_ring are not sought: the callers that need this charge a single
+// "large ring" term for anything from 9 up, so exhaustive search of big macrocycles buys
+// nothing and costs exponentially.
+void find_sssr(Bonds& b, int max_ring = 12);
 
 // ---- Bead colour policy for machine-generated (non-coded) residues -------------------------
 // SINGLE POINT OF DEFINITION. Change DEFAULT_BEAD_COLOR here to change the policy everywhere;
@@ -90,6 +102,13 @@ public:
     // PDB CONECT records). Merged with distance-based perception; a metal that appears here is NOT
     // treated as an isolated ion, since its ligand bonds are real covalent/cluster bonds.
     std::vector<OutAtom> perceive(const std::vector<InAtom>& atoms,
+                                  const std::vector<std::pair<int,int>>& explicit_bonds = {}) const;
+
+    // Same, but also hands back the perceived bond/ring graph. Downstream consumers that need
+    // topology rather than just per-atom types -- ring sizes and counts for volume increments,
+    // neighbour walks to classify an N or O environment -- use this form.
+    std::vector<OutAtom> perceive(const std::vector<InAtom>& atoms,
+                                  Bonds& bonds_out,
                                   const std::vector<std::pair<int,int>>& explicit_bonds = {}) const;
 
     // Emit a somo.residue-style entry for one residue plus any somo.hybrid lines for perceived
