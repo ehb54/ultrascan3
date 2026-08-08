@@ -60,6 +60,31 @@ struct Proposal {
     bool ok = false;
 };
 
+// ---- pH 7 chemistry rules -------------------------------------------------------------------
+// Rules from Mattia (2026-08-08), extended with the cases the coded residues cover but he did
+// not enumerate. At pH 7 the ionisable groups are assumed to be in their charged form -- an
+// acidic side chain is -COO- and an aliphatic amine is protonated -- WITHOUT building any
+// general pH machinery, which is deliberately out of scope for now.
+//
+//   aliphatic carboxylate, the hydroxyl-side O   5 waters, or 6 when >= 2 sp3 carbons
+//                                                separate it from the residue's attachment
+//   the carbonyl-side O of the same group        0
+//   terminal ammonium      (N4H3+ / sp3 NH3)     3
+//   guanidinium terminal N (N3H2+)               1, and 0 for the internal one
+//   aliphatic hydroxyl     (O2H1)                1
+//   phenolic hydroxyl      (O2H1 on aromatic C)  0
+//   amide -NH- and -NH2    (N3H1 / N3H2)         1
+//   aromatic ring NH                             1, and 2 when protonated
+//   thioether S                                  1, thiol S 0
+//
+// Anything the rules do not recognise falls back to the observed-majority Table and is flagged,
+// so a novel group is never given a confident-looking number by accident.
+Proposal propose_by_rules(const std::vector<somo_perceive::InAtom>& atoms,
+                          const std::vector<somo_perceive::OutAtom>& perceived,
+                          const somo_perceive::Bonds& bonds,
+                          const std::vector<int>& idx,
+                          const Table* fallback = nullptr);
+
 Proposal propose(const Table& t,
                  const std::vector<somo_perceive::InAtom>& atoms,
                  const std::vector<somo_perceive::OutAtom>& perceived,

@@ -58,8 +58,11 @@ Built build(const std::string& resname,
     }
 
     // ---- hydration --------------------------------------------------------------------------
-    if (opt.compute_hydration && hyd) {
-        out.hydration = somo_hydration::propose(*hyd, atoms, perceived, idx);
+    if (opt.compute_hydration) {
+        // Chemistry rules first (pH 7), with the observed-majority table only as a fallback for
+        // groups the rules do not recognise. The rules encode what the coded residues actually
+        // do; the table is a statistical shadow of the same thing and is much weaker.
+        out.hydration = somo_hydration::propose_by_rules(atoms, perceived, bonds, idx, hyd);
         if (out.hydration.ok) {
             props.hydration = out.hydration.per_atom;
             for (const std::string& r : out.hydration.review) props.review.push_back(r);

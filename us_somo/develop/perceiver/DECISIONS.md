@@ -933,3 +933,56 @@ accepted or saved until the user acts.
 - Appending to somo.residue does not reload it; the user is told to reload the structure for a
   saved entry to take effect. Hot-reloading the residue table mid-session would invalidate
   `residue_list` indices that the loaded model already holds.
+
+## pH 7 hydration rules (Mattia, 2026-08-08) — hydration 48% -> 94%
+
+Mattia supplied the chemistry: at pH 7 an acidic side chain is -COO- (one oxygen double-bonded
+and neutral, the other deprotonated and charged), an aliphatic amine is protonated, and the
+amount of water on a carboxylate depends on the length of the aliphatic chain linking it to the
+backbone -- which is what separates Asp from Glu. No general pH machinery, just assume pH 7.
+
+### The data confirms it exactly
+The ionised hydration is field **[15]** of an atom line, not [13] as the layout first suggests.
+Reading it: **Asp OD2 = 5, Glu OE2 = 6**, Lys NZ = 3, Arg NH2 = 1, C-terminal OXT = 5, heme
+propionate = 6. So Asp's total of 6.0 and Glu's 7.0 at run time are the carboxylate plus the
+backbone amide, and the Asp/Glu difference really is the extra methylene.
+
+### Rules implemented (`somo_hydration::propose_by_rules`)
+| group | waters |
+|---|---|
+| aliphatic carboxylate, hydroxyl-side O | 5, or **6** when >= 2 sp3 carbons separate it |
+| carbonyl-side O of the same group | 0 |
+| terminal ammonium (N4H3+) | 3 |
+| guanidinium terminal N / internal N | 1 / 0 |
+| aliphatic hydroxyl | 1 |
+| **phenolic** hydroxyl | **0** |
+| amide -NH-, -NH2, and tertiary ring amide | 1 |
+| aromatic ring NH, protonated | 1, 2 |
+| thioether S / thiol or disulfide S | 1 / 0 |
+Anything unmatched falls back to the observed-majority table **and is flagged**, so a novel
+group never gets a confident-looking number by accident.
+
+### Result
+**Hydration within 0.5 water, before -> after, per structure:**
+1HEL 10/20 -> **20/20**, 6LYZ 10/20 -> 19/20, 2AAS 9/19 -> **19/19**, 8RAT 9/19 -> **19/19**,
+3CRO 12/23 -> 19/23, 1MBO 10/22 -> 20/22, 1LDM 10/22 -> 20/22.
+Overall **~69/145 -> ~136/145, 48% -> 94%**. All 15 applicable coded residues reproduce exactly
+in the unit test, including the Asp/Glu methylene difference. vbar and molvol are unchanged
+(2.7% / 2.1%), and perception still 99.833%.
+
+### FINDINGS worth eb's attention
+- **Chain TERMINI must be excluded from validation, both ends.** The C-terminus was already
+  skipped for its extra OXT; the N-terminus needs skipping too, because its backbone nitrogen is
+  a free protonated amine rather than an amide. An N-terminal lysine genuinely carries two
+  ammonium groups and 6 waters against the tabulated internal residue's 4 -- the rules were
+  right and the comparison was wrong. Now skipped in both `validate_against_table` and the tests.
+- Two rule edges the coded residues exposed: a **disulfide** sulfur has two heavy neighbours just
+  like a thioether, so counting neighbours alone wrongly hydrated Cys (both partners must be
+  carbon); and **proline's** tertiary ring amide nitrogen carries no hydrogen, so an "n_h >= 1"
+  test missed it -- amide nitrogens are now identified by their carbonyl neighbour instead.
+- **Consistency question for psv, not yet acted on.** If a carboxyl really is -COO- at pH 7 for
+  hydration purposes, the same is true for the volume: D&Z charge an electrostriction term per
+  formal charge, and the perceiver currently emits these groups neutral. That is exactly why Asp,
+  Glu, Arg and His are the psv outliers. Making perception emit the pH 7 ionised forms would fix
+  both at once, but it moves the validated 99.833% perception figure and changes emitted hybrid
+  types, so it needs a deliberate decision rather than being folded in here.
