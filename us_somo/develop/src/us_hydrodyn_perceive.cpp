@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <map>
 #include <sstream>
+#include <iomanip>
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -518,8 +519,10 @@ void Perceiver::finalize_physics(OutAtom& o) const {
 
 Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         const std::vector<InAtom>& atoms, const std::vector<OutAtom>& perceived,
-        const std::string& chemical_name) const {
+        const std::string& chemical_name, const Properties* props) const {
     Emitted em;
+    Properties defaults;
+    const Properties& pr = props ? *props : defaults;
     double total_mw=0;
     std::ostringstream body;
     std::map<std::string,int> seen_new;
@@ -527,8 +530,9 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         const OutAtom& o=perceived[k];
         total_mw += o.mw;
         // atom line: name hybrid mw radius bead 0 index hydration
+        const double hyd = k < pr.hydration.size() ? pr.hydration[k] : 0.0;
         body << atoms[k].name << '\t' << o.hybrid << '\t' << o.mw << '\t' << o.vdw_radius
-             << "\t0\t0\t" << k << "\t0\n";
+             << "\t0\t0\t" << k << '\t' << hyd << '\n';
         if (!o.in_table && !seen_new.count(o.hybrid)) {
             seen_new[o.hybrid]=1;
             std::ostringstream hl;
@@ -556,23 +560,50 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // Comment line = the residue's real chemical name when the PDB header supplied one (HETNAM).
     hdr << "# " << (chemical_name.empty() ? resname : chemical_name)
         << " [" << resname << "]  (generated on-the-fly by perceiver)\n";
-    hdr << "# Perceived: atom names, hybrid types, masses and vdW radii.\n";
-    hdr << "# NOT perceived - must be supplied before this entry is used:\n"
-           "#   psv (vbar) and molvol : left at 0. Deliberately NOT estimated. Fitting the\n"
-           "#     hybrid composition against the residues somo.residue already codes shows a\n"
-           "#     sum-of-vdW-sphere volume (which ignores bond overlap) is a WORSE predictor of\n"
-           "#     vbar than simply assuming the mean vbar of all residues, so emitting one would\n"
-           "#     be actively misleading. vbar enters hydrodynamics through the buoyancy term\n"
-           "#     (1 - vbar*rho). See ehb54/ultrascan-tickets#980.\n"
-           "#   bead assignment and ASA : stubbed (0).\n"
-           "#   hydration : not perceived.\n";
+    {
+        // Say plainly which fields are computed and which are still unset. An entry that is only
+        // partly filled must look partly filled.
+        std::ostringstream prov;
+        prov << "# Perceived from geometry: atom names, hybrid types, masses, vdW radii.\n";
+        prov.setf(std::ios::fixed);
+        if (pr.have_vbar)
+            prov << "# psv (vbar)  : " << std::setprecision(3) << pr.vbar << " cm^3/g, computed from Durchschlag & Zipper\n"
+                    "#   atomic volume increments. Typical accuracy +-2-3% for ordinary neutral\n"
+                    "#   organic chemistry; poorer for lipids, ionic detergents and charged\n"
+                    "#   groups, and not applicable to metal or Fe-S clusters.\n";
+        else
+            prov << "# psv (vbar)  : NOT SET (0). Must be supplied before this entry is used --\n"
+                    "#   vbar enters hydrodynamics through the buoyancy term (1 - vbar*rho).\n";
+        if (pr.have_molvol)
+            prov << "# molvol      : " << std::setprecision(2) << pr.molvol << " A^3, solvent-excluded volume at a 1.4 A\n"
+                    "#   probe, scaled onto the convention the coded residues use.\n";
+        else
+            prov << "# molvol      : NOT SET (0). This is also the bead volume.\n";
+        if (pr.hydration.empty())
+            prov << "# hydration   : NOT SET (0) for every atom.\n";
+        else
+            prov << "# hydration   : proposed from the hybrid types of the coded residues; it is a\n"
+                    "#   STARTING POINT to be edited, not a measurement. The residue total is the\n"
+                    "#   quantity with literature backing (Kuntz), the per-atom split is convention.\n";
+        prov << "# bead assignment and ASA : stubbed (single bead, all atoms).\n";
+        hdr << prov.str();
+    }
     hdr << "# Residue mass from perceived atoms: " << total_mw << " Da (its mass fraction of the\n"
            "#   model tells you how much an imprecise psv here actually matters).\n";
+    for (const std::string& r : pr.review) review << "#   " << r << '\n';
     if (!review.str().empty())
-        hdr << "# REVIEW - perception was uncertain for these atoms:\n" << review.str();
-    // molvol and vbar deliberately 0 = unset (see the header comment above).
-    hdr << resname << "\t0\t" << 0.0 << '\t' << 0.0 << '\t' << atoms.size()
-        << "\t1\t" << 0.0 << '\n';
+        hdr << "# REVIEW - check these before accepting the entry:\n" << review.str();
+    // Header fields, in the order US_Hydrodyn::read_residue_file reads them
+    // (us_hydrodyn_load.cpp:151): name, type, molvol, ASA, natoms, nbeads, vbar.
+    // ASA is stubbed at 0 -- it is a modelling quantity, not something perception provides.
+    {
+        std::ostringstream h;
+        h.setf(std::ios::fixed);
+        h << resname << "\t0\t" << std::setprecision(2) << (pr.have_molvol ? pr.molvol : 0.0)
+          << "\t0\t" << atoms.size() << "\t1\t"
+          << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0) << '\n';
+        hdr << h.str();
+    }
     // One default bead, all atoms assigned to it (Mattia: single bead for now).
     // Bead line fields are, in order (see US_Hydrodyn::read_residue_file,
     // us_hydrodyn_load.cpp:509): hydration, colour, placing_method, chain, volume.
@@ -580,11 +611,14 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // reserved colour for any residue with 6/7/8 atoms -- 0 and 6 mean "exclude this bead from
     // the hydrodynamic computation" -- and an out-of-range value above 15 atoms.
     std::ostringstream bead;
-    bead << "0\t"                       // hydration: not perceived, see header comment
-         << DEFAULT_BEAD_COLOR << '\t'  // colour: single point of definition in the header
+    double bead_hydration = 0;
+    for (double h : pr.hydration) bead_hydration += h;
+    bead.setf(std::ios::fixed);
+    bead << std::setprecision(2) << bead_hydration << '\t'  // bead hydration = sum over its atoms
+         << pr.bead_color << '\t'       // colour: default is DEFAULT_BEAD_COLOR in the header
          << "0\t"                       // placing_method 0 = centre of gravity (the only one used)
          << "0\t"                       // chain 0 = main chain
-         << 0.0 << '\n';                // bead volume: unset until molvol is computed
+         << (pr.have_molvol ? pr.molvol : 0.0) << '\n';   // single bead: volume == molvol
     em.residue_block = hdr.str() + body.str() + bead.str();
     return em;
 }

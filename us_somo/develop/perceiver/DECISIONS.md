@@ -746,3 +746,44 @@ as do 17 of the other entries (CFN, CLF, HCA, OXM, OXY, SF4, K, BOG, BEF, BF4, M
 the PBR-*/OXT-P pseudo-residues). Nucleic acids are strongly hydrated, the phosphate especially,
 so this is a systematic under-hydration of every DNA/RNA model, not a rounding issue. Worth its
 own ticket independent of the non-coded-residue work.
+
+## Phases C and E: hydration lookup, and a complete generated entry — 2026-08-08
+
+### C. Hydration (`us_hydrodyn_hydration.{h,cpp}`, `tests/hydration.cpp`, 37 checks)
+The table is **derived at run time from whatever somo.residue is loaded**, not embedded, so it
+cannot drift from the user's own tables -- the same rule the perceiver already follows for
+somo.hybrid. 1581 observations -> 48 hybrid types, 41 confident, **7 flagged**. Flagged types are
+surfaced for review, never silently defaulted; ties break toward the lower water count, since
+under-hydrating a proposal the user will edit is safer than over-hydrating one they may accept.
+Tests assert the source's own properties: every carbon type unanimously anhydrous, the metals
+keeping their distinctive values (Mg 6, Cu 6, Cl 6, Mn 4, Zn 2, Na 1), the weak types
+(`O2H1` 55% of 121, `O2H0` 75%, `N3H2` 59%, `N3H0` 74%) coming back not-confident, and the
+per-residue totals reproducing Kuntz 14/14 with Asp and Glu deliberately low because SOMO stores
+them protonated. **Mattia's nucleotide gap is asserted as a test** -- it fails the day someone
+fills those entries in, which is exactly when any model built on the old values needs revisiting.
+
+### E. Orchestration (`us_hydrodyn_residue_builder.{h,cpp}`, `tests/builder.cpp`, 35 checks)
+perceive -> psv -> volume -> hydration -> emit. `emit_residue` gained an optional `Properties`
+argument rather than the new headers, so `us_hydrodyn_perceive.h` stays free of them (they
+include it). Anything unset is emitted as 0 **and** stated as "NOT SET" in the header, so a
+partially filled entry always looks partly filled.
+
+A generated tryptophan entry now reads: vbar **0.753** (stored 0.738, +2%), molvol **224.29**
+(stored 228.2, -1.7%), hydration 2.0 (stored 2.0), one bead, colour 10, with the psv
+decomposition printed alongside -- atoms 154.4, rings -14.2 over 2 rings, electrostriction 0.
+Across 12 residues treated as unknown, computed molvol is within **2.32% mean** of the stored
+values, none worse than 4.6%.
+
+### FINDINGS worth eb's attention
+- **The convention factor is radius-set specific, and I had it wrong at first.** The 1.204/1.131
+  measured earlier came from 3V's *default* radii; this pipeline uses SOMO's own, which are
+  smaller, so the correct factors are **1.248 / 1.179**. Using the old numbers under-predicted
+  Phe by 12%. Recalibrate if the radii in somo.hybrid ever change.
+- The factor tracks **polarity** at least as much as size -- hydrophobics cluster at 1.26-1.29,
+  polar and charged residues at 1.16-1.21. That is why the residual is ~3% rather than the ~1%
+  the within-band spread suggests, and why fitting a smooth curve in volume alone would not help.
+  The split is placed at 110 A^3 raw, below the hydrophobic cluster, rather than at the midpoint
+  where it separated Leu (127.4) from Ile (128.4) and cost them 8%.
+- **`emit_residue` was writing the ASA field as if it were mw.** Header fields are name, type,
+  molvol, **ASA**, natoms, nbeads, vbar (us_hydrodyn_load.cpp:151). ASA is correctly stubbed at
+  0, but my comment said otherwise; corrected.
