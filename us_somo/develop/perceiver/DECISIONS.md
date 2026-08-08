@@ -249,3 +249,390 @@ rows. Run with `us3_somo _pad -I -g <script>`.
 - **His / guanine:** protonation state (His) and lactam tautomer (guanine N1/N3) are not resolvable
   from heavy-atom geometry. Total ring H is right; only the per-atom placement differs (negligible
   for hydrodynamics). These are the poster-child cases for the CCD-first design.
+
+## PSV (vbar) from published increments — 2026-07-21
+
+Follow-up to Mattia's non-coded-residue problem. Two tools now sit side by side in `tools/`:
+`psv_model.py` fits increments to `somo.residue` itself (leave-one-out MAE 0.115 cm^3/g —
+barely better than a group average, so the similarity idea is weak on its own);
+`psv_durchschlag.py` uses Durchschlag & Zipper's *published* increments with no fitting.
+
+The published scheme is ~65 numbers and reproduces its own papers exactly (8/8 free amino
+acids, 7/7 group increments). Applied to the coded residues it gives ~1.4% mean absolute
+error, and vs Perkins 1986 (which is calibrated to experimental protein vbar at +/-0.005
+ml/g) ~1.6-1.7% excluding Arg. A scheme that never saw `somo.residue` reproducing it that
+closely is the argument for trusting it on ligands the table does *not* cover.
+
+On the two SOMO ligands with measured values it beats the shipped numbers outright:
+glycerol exp 0.767 / SOMO 0.793 / calc 0.760; NAD+ exp 0.62 / SOMO 0.599 / calc 0.617.
+
+### FINDINGS worth eb's attention
+- **`somo.residue` vbar = Cohn & Edsall (1943) minus exactly 0.002 cm^3/g.** 17 of 19 match
+  to the last digit; Asp and Glu resolve exactly using the unrounded C-E values (0.605,
+  0.665). The offset is a 25→20 C correction: 5 K x 4.25e-4 = 0.002125, which is precisely
+  the constant commented out at `us_hydrodyn_load.cpp:925`.
+  NOTE: an earlier draft of these notes also claimed SOMO's Traube covolume was 0 / unused.
+  That was WRONG (Mattia caught it): gparams["covolume"] defaults to 12.4
+  (us_hydrodyn_settings.cpp:3347), is persisted in all 99 configs here, and is added once per
+  structure in calc_vbar_updated (us_hydrodyn_load.cpp:841) -- the single-covolume-per-structure
+  model. It only falls back to 0 if a pre-covolume config JSON is loaded; none exists here.
+  So `somo.residue` is a **20 C
+  table** — which is correct by design, not a defect: `US_Hydrodyn::tc_vbar()`
+  (`us_hydrodyn_load.cpp:1899`) corrects 20 C -> the working `hydro.temperature` at run time
+  with the same 4.25e-4 coefficient, and for a user-entered vbar it first backs out the
+  measurement temperature. It is applied in the GRPY, ZENO, SupC and reporting paths, and the
+  commented-out line at :925 would have double-applied it. Temperature handling is fine.
+  (An earlier draft of this section claimed otherwise — that was my error, caught by Mattia.)
+  The one thing worth knowing for *new* PSV work: 4.25e-4 is applied uniformly regardless of
+  composition, whereas D-Z quote 2-10e-4 across compounds and recommend 5e-4 generally. Fine
+  for protein residues; a non-coded ligand could sit further from that single value.
+- **Bead volumes and vbar disagree for the non-standard entries.** They are consistent for
+  amino acids and nucleotides (bead/psv = 1.02 +/- 0.04) but not for cofactors, detergents
+  and ions: heme 0.60, SF4 0.57, CLF 0.59, NAD 0.79, B12 0.77, the whole detergent block
+  0.64-0.71, PO4 1.42, K 5.76. Nothing in the code cross-checks the two.
+  **The bead volumes are the wrong half**, not the vbars: SOMO's Triton X-100 (OXN) vbar of
+  0.912 matches the measured micellar value 0.9125 (Durchschlag 1986 Table 2), and glycerol's
+  bead volume is ~34% too small (77.9 A^3 vs the 117 A^3 its own vbar implies). Glycerol is
+  common in PDB entries, so this is live, and it is independent of any new PSV work.
+- **Arg (+9%) and Lys (+6%) are the only real residuals** and both are the ammonium/
+  guanidinium N assignment. His was +8% until charge was read from the hybrid names rather
+  than guessed — worth noting that the `+`/`-` markers in `somo.residue` are load-bearing and
+  the perceiver must keep emitting them.
+- **`SE2H0` exists in `somo.residue.new`** (selenomethionine). Durchschlag & Zipper 1994
+  Table 2 lists a metal as "Sc 16.5"; scandium is odd company for Mg/Mn/Fe/Co/Ni/Cu/Zn/Mo/Hg
+  and selenium would fit. Unverified against a clean original — do not rely on it.
+
+## 3V probe radius for the anhydrous volume field — 2026-08-08
+
+The Residue Definition Module doc says to fill "Residue anhydrous mol. vol." using 3V with a
+**0 A probe radius**. Mattia's reasoning was that a buried ligand (HEME, NAD) is not water-
+accessible, so water accessibility should not set its volume. Tested directly. 3V source is at
+https://github.com/vosslab/vossvolvox (the 3vee.molmovdb.org site is long down); it builds with
+one `make` on macOS, `bin/Volume.exe`.
+
+### The tabulated amino-acid entries are on the SOLVENT-EXCLUDED (1.4 A) basis
+Lysozyme 1HEL, 129 residues, SOMO's own per-atom radii:
+- sum of tabulated somo.residue molvols  17374 A^3
+- 3V whole protein, probe 1.4 A          16364 A^3   (ratio 0.94)
+- 3V whole protein, probe 0 A            11663 A^3   (ratio 0.67)
+The 0.67 is just the protein packing fraction -- the interstitial space water cannot enter,
+which belongs inside the bead and which a 0 A probe discards.
+
+### Measuring a BOUND ligand: the difference method works, but must be calibrated
+`V_ligand = V(complex) - V(complex minus ligand)`. Valid only because **Volume.exe leaves
+interior cavities UNCOUNTED**, so the vacated pocket does not contribute to V(apo). Proven on a
+synthetic sealed shell (500 atoms r=2.0 on a sphere R=10):
+- Volume.exe       5032 A^3  vs analytic shell-only 5094  -> cavity NOT counted  <- use this
+- VolumeNoCav.exe  7166 A^3  vs analytic full ball  7238  -> cavity filled
+(`volume.cpp` marks probe-fitting points accessible by a local test; `volume-fill_cavities.cpp`
+flood-fills from outside first. Using the wrong binary collapses the difference to ~0.)
+
+The difference is **size-dependent** -- deleting a small residue leaves a gap too narrow to admit
+a 1.4 A probe centre, so the gap stays counted and the difference underestimates; deleting a
+large one opens a cavity that swallows neighbouring interstitial space and overestimates.
+`tools/calibrate_3v_context.py` measures this against residues whose answer we already know.
+
+### Production calibration (386 measurements, 6 proteins: 1MBO 1HEL 2LZM 1UBQ 5PTI 1LDM:A)
+`tools/calibrate_3v_context.py`, probe 1.4 A, grid 0.25, burial >= 85 neighbours within 8 A,
+composition required to match the tabulated entry exactly (no partial side chains, no termini).
+
+| tabulated size band | n | mean ratio | median | sd |
+|---|---|---|---|---|
+| < 100 A^3   |  78 | 0.705 | 0.735 | 0.274 |
+| 100-140     | 102 | 0.895 | 0.881 | 0.226 |
+| 140-180     | 147 | 1.043 | 1.029 | 0.136 |
+| 180-220     |  44 | 1.011 | 0.985 | 0.142 |
+| >= 220      |  15 | 1.101 | 1.116 | 0.160 |
+
+**CORRECTION FACTOR for ligand-sized species (tabulated >= 180 A^3): 1.034, sd 0.152, sem 0.020
+(n=59).** So `V_ligand = in-context difference / 1.034`. Burial above the threshold does not
+matter (0.996 / 1.093 / 0.946 across burial bands -- no trend, all within scatter).
+Two precisions, do not confuse them: the *factor* is known to ~2% (sem), but a *single* ligand
+measurement carries the ~15% per-residue sd, because the bias depends on local packing.
+
+Most reliable types (low sd): LYS 0.949+-0.054, TYR 1.016+-0.090, HIS 1.006+-0.103,
+ARG 0.963+-0.119, ILE 1.015+-0.120. Worst: GLY 0.458+-0.326, CYS 0.677+-0.261, ASN 0.873+-0.302.
+
+### Result: the ligand entries are ~33% low, on a vdW (0 A) basis
+| ligand | in-context diff | grid-stable | calibrated (/1.034) | tabulated | tab/measured |
+|---|---|---|---|---|---|
+| HEM in myoglobin 1MBO | 825 A^3 | 823-828 @ g=0.20-0.25 | **798** | 536.13 | **0.67** |
+| NAD in LDH 1LDM:A     | 817 A^3 | 816.5-817.4           | **790** | 517.75 | **0.66** |
+Two ligands, two proteins, same ratio -- and it equals the vdW/solvent-excluded packing ratio
+measured independently on lysozyme (0.67). Robust to the correction factor: anywhere in
+1.0-1.2 puts the ligands at 688-825 A^3, i.e. tabulated = 0.65-0.78 of truth either way.
+
+### Conclusion: 1.4 A is the correct probe
+The decisive argument is consistency, not physics. A buried Trp is exactly as water-inaccessible
+as a buried heme, yet its tabulated 228.2 A^3 is on the solvent-excluded basis. The packing void
+around a buried group is real volume the amino-acid convention already includes, so ligands must
+use the same basis or the two halves of a bead model are not comparable.
+=> the ~31 ligand molvol entries need recomputing (~1.5x), and their SoMo bead volumes cascade.
+
+### FINDINGS worth eb's attention
+- **The difference method FAILS for small ligands** (tabulated < 130 A^3): ratio ~0.70 and
+  erratic, because the vacated gap cannot admit a probe centre. GOL, PEG, ACE, PO3/PO4 and the
+  other small entries need a different route (isolated 3V at 1.4 A plus a packing correction),
+  which is NOT resolved.
+- Heme's propionates are solvent-exposed in myoglobin, so 825 is probably a slight underestimate
+  of the fully-buried case.
+- Use `Volume.exe`, never `VolumeNoCav.exe`, for this measurement.
+- **The correction factor is an extrapolation.** It is calibrated on amino acids, whose largest
+  entry is TRP at 228 A^3; heme and NAD are ~800 A^3, i.e. 3.5x beyond the calibration range.
+  The >= 220 band trends *upward* (1.101), so the true factor for a large ligand may exceed
+  1.034. This does not change the conclusion (see the robustness note above) but it does mean
+  the calibrated ligand volumes carry more than the quoted sem.
+- **Parsing trap in Volume.exe output** (cost me a full silent run): the data line is
+  `probe<TAB>grid<TAB>volume<TAB>surf_area<TAB>natoms<TAB>file`. Parse by POSITION (field 3).
+  A "first number greater than 1" heuristic returns the *probe radius* 1.4 for every call, so
+  every difference comes out exactly 0.000 and the run looks superficially fine.
+
+## Recomputing the prosthetic-group volumes — 2026-08-08 (Mattia's procedure)
+
+Mattia: "run 3V again on each prosthetic group and recalibrate proportionally the bead volumes.
+For safety, run 3V with 0 (should get back the actually stored value) and 1.4."
+
+### The safety check passes exactly -> provenance confirmed
+3V at probe 0 on the isolated group, using **3V's own default radii** (NOT SOMO's radii, which
+give HEM 498):
+    HEM  536.0 vs stored 536.13 (0.02%)      NAD  517.1 vs stored 517.75 (0.13%)
+The amino acids do not reproduce this way (ALA 3V@0 = 76.2 vs stored 90.0), confirming they came
+from the crystallographic literature. The two halves of the table really are on different bases.
+
+### But a bare 0->1.4 rescale UNDER-corrects
+Going 0 -> 1.4 A on an isolated molecule only fills its own surface crevices; it cannot see the
+interstitial packing void a group carries inside a protein, which is what the Voronoi-based
+amino-acid values include. Measured over all 20 amino acids, 6 instances each, 4 proteins
+(stored / V_isolated@1.4):
+    large compact (Ile Leu Met Phe Tyr Trp)  **1.204**  sd 0.009
+    small (< 160 A^3)                        **1.131**  sd 0.032
+    large flexible (Lys 1.077, Arg 1.147)    lower - extended chains carry less void
+So: **new_molvol = 1.204 (or 1.131 if small) x V_isolated@1.4**, i.e. ~1.31x stored, not the
+1.09x a bare rescale gives. `tools/recalc_ligand_volumes.py` implements exactly this.
+
+### Two guards, because a plausible number on the wrong molecule is the real danger
+1. **Elemental formula must match** the somo.residue entry. Many SOMO codes collide with
+   unrelated PDB chemical components. 13 genuine collisions found -- applying CCD blindly would
+   have been destructive:
+   `BF4` (SOMO = a C30FE1N6 iron complex, PDB = tetrafluoroborate), `MCA` (SOMO C10N1O1,
+   PDB C25N7O19P3S1), `LIP`/`LP2`/`LP3` (POPC/DMPC/DMPG), `OX9`, `MEN`, `MO2`, `MO6`, `PEG`
+   (C2O1 repeat unit), `SUC`, `SUL`, `XHY` (a 1-atom pseudo-entry).
+2. **V@0 must reproduce the stored value** -- confirms the conformer matches. Isolated volume is
+   conformation-dependent: CCD ideal reproduces NAD (518.0) but not HEM (585.6 vs 536.13, +9%)
+   because heme's propionates are extended in the idealised conformer and folded when bound.
+   Use `--from-pdb HEM=1MBO.pdb`, which then audits 1.000 and gives HEM 536.13 -> **701.0**.
+
+### Result over all non-standard entries
+**18 ACCEPT** (both guards clean), factors 1.16-1.51, mostly ~1.25-1.32:
+ADP 296.6->392.7, AMP 258.9->339.8, ATF 348.6->456.9, ATP 333.9->441.7, B12 1212.6->1598.6,
+13P 118.3->139.3, CFN 241.1->363.1, CLF 172.5->255.0, DMP 580.1->748.2, GOL 77.9->90.4,
+HCA 147.5->178.5, LNC 591.8->764.3, NAD 517.8->668.8, NDP 560.8->720.4, SF4 96.4->132.2,
+PO4 47.9->59.6, LMT 491.6->616.9, OXN 702.4->929.4.  Plus HEM 536.1->701.0 via --from-pdb.
+
+**13 RESIDUE FORM - DO NOT CORRECT**: CGU ORN PCA SAC BMA FUC GAL MAN GLC NAG NDG NGA SIA.
+CCD differs by exactly one O = free monomer vs polymer residue (bond formation sheds H2O).
+These also had bead/vbar ratios ~1.0 in the original audit, i.e. they are **already on the
+literature/Voronoi basis** like the amino acids. Correcting them would be wrong.
+
+**Still open**: 5 conformer-only cases (PO3 OXM BOG ACE BEF) need a bound conformer; 13 collisions
+need manual coordinates; 19 have none at all (the `PBR-*`/`OXT-P` pseudo-residues, and the metals
+CA CD CL CU K MG MN NA PD ZN plus NH2 CMO OXY, where 3V fails on 1-3 atoms -- for a monatomic ion
+the volume is just (4/3)pi r^3 and needs no 3V).
+
+### FINDINGS worth eb's attention
+- **The correction is NOT uniform** -- it ranges 1.16x (GOL) to 1.51x (CFN). A single global
+  factor would be wrong; each entry needs its own measurement.
+- The independent in-context route (calibrate_3v_context.py) gives ~795 A^3 for HEM and NAD vs
+  ~700/669 here, i.e. **this route may still be ~15% low**. The two bracket the truth. Both are
+  far above the stored values, so the direction and rough size of the correction are safe.
+- Bead volumes must be rescaled in step with molvol -- for the 1-bead entries they are the same
+  number, but multi-bead entries need the per-bead split rescaled proportionally.
+
+## Hydration for a new residue (Mattia's step 3) — 2026-08-08
+
+Mattia: "build a table of atom hybridizations from our somo.residue table linked to their
+hydration numbers ... proposed atomic hydration are shown, to be interactively modified."
+Built: `tools/hydration_table.py` (`--cpp` emits a ready-to-paste map).
+
+### What somo.residue's hydration actually is
+Stored **per atom** (field 8 of each atom line). Summed per residue it reproduces the classical
+**Kuntz** per-residue numbers (Durchschlag 1986 Table 1, pH 6-8): 14 of 20 amino acids agree
+within 0.5 water. The two large misses are Asp (SOMO 1 vs Kuntz 6) and Glu (1 vs 7.5) -- exactly
+the residues SOMO stores PROTONATED, so they carry no charged-carboxylate water.
+=> the per-atom values are a **hand distribution of a per-residue Kuntz total**, not an
+independently derived per-atom rule. Same group, different entry, different answer:
+ADP.O2'=1 but A.O2'=0; BMA.O2/O3/O6=1 but BMA.O4=0; MET.SD=1 but CYS.SG=0.
+
+### The derived table
+48 hybrid types: **36 unanimous, 5 majority, 7 WEAK**.
+- unanimous and safe: every carbon type = 0, `O2H0B` = 0, `O2H02-` = 0, `S2H1` = 0, and the
+  metals (MG+2 = 6, CU+2 = 6, CL-1 = 6, MN+2 = 4, CA+2/CD+2/ZN+2/PD+2 = 2, NA+1 = 1).
+- **WEAK, must be flagged not silently defaulted**: `O2H1` (default 1, only 55% of 121 obs),
+  `O2H0` (0, 75% of 115), `N3H2` (1, 59%), `N3H0` (0, 74%), plus `O1H0-`, `S2H0`, `N4H3+`
+  (2-4 observations each).
+
+### How to use it
+Propose per-atom defaults from the table, flag the WEAK ones for review, and **also show the
+residue TOTAL** -- the total is the quantity with literature backing (Kuntz), the per-atom split
+is convention. This is a starting point for interactive editing, exactly as Mattia specified, and
+must not be presented to the user as a physical prediction.
+
+### FINDINGS worth eb's attention
+- Hydration inherits the **same pH/ionization dependence as vbar**. Asp/Glu are the proof: their
+  hydration is 1 protonated vs 6-7.5 charged. So the deferred pH layer affects hydration at least
+  as strongly as it affects psv, and a charged novel ligand will be badly under-hydrated by any
+  table built from SOMO's neutral-stored entries.
+
+## Bead colours (Mattia's step 7) + gui_script defaults for pipeline use — 2026-08-08
+
+Colour list is in `us_somo/somo/doc/manual/somo/somo_residue.html` (Panel 3). Verified against
+the colour field of every bead line in `somo.residue.new` -- the doc and the table agree, and the
+reserved indices are genuinely unused in the table.
+
+| idx | colour | meaning | in table |
+|----|--------|---------|---------|
+| 0 | Black | **RESERVED** - auto-assigned to very small beads, always excluded from computation | unused |
+| 1 | Blue | protein main-chain | 39 |
+| 2 | Green | protein acidic side-chain (D,E) | 4 |
+| 3 | Cyan | protein hydrophobic side-chain (A,V,L,I,F,W) | 8 |
+| 4 | Red | protein polar side-chain (H,Y,S,T,N,Q) | 9 |
+| 5 | Magenta | protein non-polar side-chain (C,M,P) | 7 |
+| 6 | Orange/brown | **RESERVED** - buried beads, auto-assigned during model generation | unused |
+| 7 | White | **USED** for fused beads | unused |
+| 8 | Grey | **USED** for previously-buried beads found exposed on re-check | unused |
+| 9 | Light Blue | lipid tails, carbon monoxide | 33 |
+| 10 | Light Green | "USED by the Automatic Bead Builder for non-coded residues" | 5 |
+| 11 | Light Cyan | bases in DNA/RNA, oxygen, 13P | 36 |
+| 12 | Light Red | heme, NAD, cofactors, prosthetic groups, ions, PO2, lipid heads | 80 |
+| 13 | Light Magenta | carbohydrates (incl. sugar rings in nucleotides), some ions | 38 |
+| 14 | Yellow | protein basic side-chain (K,R) | 3 |
+| 15 | Bright White | unassigned | 2 |
+
+Offer the user 1,2,3,4,5,9,10,11,12,13,14,15. **Never offer 0, 6, 7, 8** -- SOMO already pops a
+warning for 0 and 6; 7 and 8 are equally unsafe and the doc says so.
+The colour is not cosmetic: it is how the bead is categorised (and 0/6 are how beads get excluded
+from the hydrodynamics), so a wrong colour silently changes the model.
+
+### OPEN QUESTION for Mattia -- which default for a non-coded prosthetic group?
+The doc says **10 (Light Green)** is "used by the Automatic Bead Builder for non-coded residues",
+which is literally our case. But in the actual table 10 is used by A/DA/DG/G/NH2 (nucleotides),
+while **12 (Light Red)** is the one described as "heme, NAD, other co-factors, some prosthetic
+groups and ions" and is the largest class (n=80). These point different ways; 12 looks right for a
+cofactor-like ligand and 10 right for "machine-generated". Needs a ruling before pipeline mode
+picks one silently.
+
+## gui_script: non-interactive defaults for pipeline use (eb, 2026-08-08)
+Requirement: the whole new-residue flow must run with no user intervention.
+Existing commands (`us_hydrodyn_script.cpp:160`): `perceive <pdb>`, `perceive compare <pdb>`.
+Proposed additions, following the same sub-option style:
+
+    perceive auto <pdb> [outfile]      # full flow, all defaults, never blocks on a dialog
+    perceive interactive <pdb>         # the guided 8-step flow (RasMol, prompts)
+
+with per-step defaults as `gparams` so a pipeline can pin them (same pattern as `covolume`):
+
+    perceive_default_color    12       # see OPEN QUESTION above
+    perceive_default_beads     1       # Mattia: single bead for now
+    perceive_hydration_mode    table   # table | zero
+    perceive_volume_probe      1.4     # NOT 0 -- see the 3V section above
+    perceive_volume_factor     auto    # 1.204 large / 1.131 small
+    perceive_psv_mode          durchschlag
+    perceive_write_residue     false   # writing back to somo.residue stays OPT-IN
+
+Two rules that matter for batch safety: `perceive auto` must never open a dialog or a RasMol
+window (it is the headless path), and `perceive_write_residue` must default to **false** so a
+pipeline run cannot silently mutate the master table -- consistent with the earlier decision that
+storing a confirmed residue is a user option.
+
+## Durchschlag 1986 Table 2 mining — 2026-08-08
+
+Mined `978-3-642-71114-5_3.pdf` Table 2 ("Specific volumes of small molecules") for measured
+partial specific volumes, to (a) audit SOMO's stored vbar and (b) validate the D-Z increment
+method on ligand-class chemistry rather than only on amino acids.
+86 compounds parsed: **72 with genuinely measured values, 12 calculated-only.**
+
+### TRAP: most of the interesting ligand entries are CALCULATED, not measured
+The chapter's symbol list defines **v_c = "calculated partial specific volume"**, and the table
+annotates such rows `(v_c)` -- which the OCR renders variously as `(vc) (v c) (ve) (v e) (vJ)`.
+These are additivity OUTPUT, so they cannot validate an additivity method or audit SOMO.
+Dropped on that basis: **ATP, Galactose, Mannose, Fucose, N-Acetylglucose/galactose, Acetyl-CoA,
+CTP, carbamyl phosphate, PALA, succinate, sodium glyoxylate, sodium pyruvate.**
+My first pass missed this and produced two spurious "outliers" -- ATP +17% and PO4 -40% -- both
+of which are comparisons against calculated numbers. Always check the annotation.
+Measured markers, by contrast, are bare values or `(v3)/(V3)` (= v-bar of component 3) and `(phi3)`.
+
+### (a) SOMO's stored vbar is in good shape -- no correction needed
+Measured values only, sugars converted to residue basis (-H2O, -12.5 cm^3/mol, Perkins 1986):
+
+| entry | somo vbar | measured | diff |
+|---|---|---|---|
+| GOL | 0.793 | 0.770 | +3.0% |
+| NAD | 0.599 | 0.620 | -3.4% |
+| OXN / OX9 | 0.912 | 0.912 | -0.1% |
+| SIA | 0.579 | 0.580 (free 0.587) | -0.2% |
+| GLC | 0.605 | 0.615 (free 0.623) | -1.6% |
+
+n=6, mean |d| **1.4%**, worst NAD -3.4%. **This is the clean separation the project needed:
+`vbar` needs no correction, `molvol` did (30-50%).** The validation set is small only because
+Durchschlag's ligand entries are largely calculated -- an inherent limit, not an oversight.
+
+### (b) The D-Z method on measured, non-amino-acid chemistry
+11 compounds, structures hand-encoded, measured values only:
+urea -0.5%, glycerol -1.2%, glucose -1.6%, sucrose -1.9%, acetic acid -2.3%, propionic +0.5%,
+butyric -1.8%, ethanol -2.3%, propylene glycol -1.8%, betaine +2.8%, TMAO +10.3%.
+**mean +0.0%, mean|d| 2.5%, median|d| 1.8%, 10/11 within 3%** -- consistent with D-Z's own
+claim (75% within 2%, 90% within 3%) and with the +-2-3% we quote for a novel residue.
+The single failure, **trimethylamine N-oxide (+10.3%)**, is the semipolar N->O bond: Table 1 has
+a dedicated "O in an amine oxide" increment and a `-N-O (amine oxide) 7.5` group in Table 4, so
+this is my encoding, not the method. It is a good regression case for the C++ port.
+
+### FINDINGS worth eb's attention
+- The structures above are **hand-encoded by me** -- element/group counts, ring sizes, charges.
+  That is precisely the perception step the C++ perceiver automates, so this validates the
+  increments and arithmetic, NOT the end-to-end pipeline. The end-to-end number is still unmeasured.
+- Sucrose is a name collision worth noting: SOMO's `SUC` is C7N2O3, **not** sucrose (C12O11).
+
+## DECISIONS (eb, 2026-08-08)
+- **D.2: implement the grid volume natively** in SOMO rather than shelling out to 3V's
+  `Volume.exe`. Removes the only new external dependency. 3V stays as the *validation oracle*.
+- **Default bead colour = 10 (Light Green)** for machine-generated non-coded residues, per the
+  manual's "USED by the Automatic Bead Builder for non-coded residues". Must be a **named,
+  single-point-of-definition constant** so the choice can be changed later, not a literal
+  scattered through the code.
+
+### D.2 implemented: native grid volume (no 3V dependency)
+`include/us_hydrodyn_grid_volume.h` + `src/us_hydrodyn_grid_volume.cpp` (Qt-free),
+test `tests/grid_volume.cpp` (`make gridvol DATA=<dir of .xyzr>`).
+
+    accessible A = { v : |v - c_i| > r_i + probe for every atom i }   (probe-CENTRE positions)
+    excluded   E = { v : v not in A, and dist(v, A) > probe }
+    volume       = |E| * grid^3
+
+probe 0 -> bare vdW union; probe 1.4 -> solvent-excluded. Interior cavities are deliberately NOT
+counted (a sealed void that can host a probe centre is in A), which is what makes
+V(complex) - V(apo) measure a bound ligand. Only the A/blocked *boundary* is dilated, since the
+nearest A voxel to any blocked voxel is always a boundary one -- a surface not a volume, which is
+what makes a 0.25 A grid affordable (~1 s for a 1300-atom protein).
+
+Validated against 3V `Volume.exe`, the tool it replaces:
+| case | native | 3V | diff |
+|---|---|---|---|
+| ALA residue, probe 0 | 68.0 | 68.2 | -0.22% |
+| ALA residue, probe 1.4 | 71.9 | 71.9 | +0.04% |
+| myoglobin holo, probe 1.4 | 20870.6 | 20889.1 | -0.09% |
+| myoglobin apo, probe 1.4 | 20049.5 | 20061.5 | -0.06% |
+| HEM in-context difference | 821.2 | 827.6 | -0.8% |
+plus analytic checks: single sphere within 1%, coincident spheres give the union not the sum,
+and the sealed hollow shell returns shell-only (5038 vs analytic 5094, full ball would be 7238).
+10 checks, 0 failures. **3V is retained only as the validation oracle, not as a dependency.**
+
+### BUG FOUND AND FIXED: emit_residue wrote the atom count into the bead COLOUR field
+`emit_residue` emitted `"0\t" << atoms.size() << "\t0\t0\t0"`, but the bead line is
+`hydration, colour, placing_method, chain, volume` (US_Hydrodyn::read_residue_file,
+us_hydrodyn_load.cpp:509). So the colour was the atom count:
+- a **6**-atom novel residue got colour 6 = RESERVED brown = *silently excluded from the
+  hydrodynamic computation*; 7 and 8 atoms hit the other two reserved colours;
+- anything above 15 atoms was simply out of range.
+Now emits `DEFAULT_BEAD_COLOR` (= 10, Light Green) from a single point of definition in
+`us_hydrodyn_perceive.h`, alongside `bead_color_is_reserved()` / `bead_color_is_selectable()`
+helpers and the full documented colour list. Unit suite still 54 checks / 0 failures.

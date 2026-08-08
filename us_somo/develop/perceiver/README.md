@@ -32,6 +32,24 @@ Test-side (this directory, not part of the SOMO build):
   `emit_residue.cpp` (generate a somo.residue entry), `coverage.cpp` (table-gap audit).
 - `examples/perceive.somo` — ready-to-run gui_script for the in-SOMO commands.
 - `tools/gen_saxs_entries.py` — converts published scattering-factor tables into SOMO's row order.
+- `tools/psv_model.py` — can a residue's `vbar` be predicted from its perceived hybrid composition?
+  Fits per-type increments to `somo.residue` itself, leave-one-out (Mattia's similarity idea).
+- `tools/psv_durchschlag.py` — the same question from published increments instead: Durchschlag &
+  Zipper's atomic volume increments, **no fitting**, checked against `somo.residue` and Perkins 1986.
+  Self-tests against the papers' own worked values first; run it from this directory.
+- `tools/calibrate_3v_context.py` — calibrates the 3V "in-context difference" method used to
+  measure a **bound ligand's** anhydrous volume: `V = V(complex) - V(complex minus ligand)`,
+  scored against residues whose tabulated volume we already know. Needs `Volume.exe` from
+  [vossvolvox](https://github.com/vosslab/vossvolvox) (the 3vee.molmovdb.org site is down).
+  See DECISIONS.md for the resulting correction factors.
+- `tools/recalc_ligand_volumes.py` — recomputes the anhydrous volume of `somo.residue`'s
+  prosthetic groups (3V at probe 0 as a provenance audit, probe 1.4 scaled onto the amino-acid
+  convention). Guards on elemental formula *and* on reproducing the stored value, because many
+  SOMO codes collide with unrelated PDB components. `--from-pdb RES=file.pdb[:chain]` for
+  flexible groups whose CCD idealised conformer differs from the bound one.
+- `tools/hydration_table.py` — derives a hybrid-type → waters lookup from `somo.residue` for
+  proposing a new residue's per-atom hydration (`--cpp` emits a ready-to-paste map). 36 of 48
+  types are unanimous, 7 are weak and must be flagged for user review rather than defaulted.
 - `data/` — demo PDBs (gitignored; copy them from `us_somo/somo/demo`) and, under `data/ref/`,
   the published scattering-factor sources plus generated `somo.saxs_atoms` rows. The `somo.*`
   parameter tables are **not** copied here — the tests read `us_somo/etc` directly so they cannot
