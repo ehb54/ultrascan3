@@ -8,6 +8,9 @@
 #ifndef US_HYDRODYN_PERCEIVE_SOMO_H
 #define US_HYDRODYN_PERCEIVE_SOMO_H
 
+#include "us_hydrodyn_hydration.h"
+#include "us_hydrodyn_residue_builder.h"
+
 #include <QString>
 #include <QStringList>
 #include <QList>
@@ -27,6 +30,9 @@ struct Tentative {
     QString     chemical_name;  // from the PDB HETNAM header record, when present
     QString     block;          // the somo.residue entry, ready for review
     QStringList new_hybrids;    // somo.hybrid rows for any type not already in the table
+    double      vbar = 0;       // computed psv, 0 = not computed
+    double      molvol = 0;     // computed anhydrous volume in A^3, 0 = not computed
+    double      hydration = 0;  // proposed residue total, waters
     int         atoms   = 0;
     int         flagged = 0;    // atoms whose perception was uncertain (needs user confirmation)
 };
@@ -46,15 +52,25 @@ std::vector< std::pair< int, int > > conect_bonds( const QString & pdb_filename,
 // header, which gives a far better entry name than the bare 3-letter code.
 std::map<QString,QString> hetnam_names( const QString & pdb_filename );
 
+// Hydration lookup built from the residue table SOMO has actually loaded, so the proposal for an
+// unknown residue is always consistent with the user's own somo.residue rather than a snapshot
+// compiled into the binary.
+somo_hydration::Table hydration_from_residue_list( const std::vector<struct residue> & coded );
+
 // Perceive the residues named in 'to_perceive' (SOMO's own unknown_residues set: the residues it
 // could not code and for which it would otherwise synthesise a generic ABB average bead).
 // SOMO gives every instance a unique "<RESNAME>_NC<n>" name; entries are de-duplicated back to the
 // base residue name, since one confirmation should cover all instances of the same chemistry.
 // 'pdb_filename' is optional and only used to pick up CONECT/HETNAM records.
+// `hyd` may be null, in which case hydration is left unset rather than guessed. `opt` carries
+// the psv/volume/hydration switches and the bead colour, so a headless run can pin them.
 QList<Tentative> perceive_unknown( const PDB_model         & model,
                                    const HybridTable       & tbl,
                                    const std::set<QString> & to_perceive,
-                                   const QString           & pdb_filename = QString() );
+                                   const QString           & pdb_filename = QString(),
+                                   const somo_hydration::Table * hyd = nullptr,
+                                   const somo_residue_builder::Options & opt =
+                                       somo_residue_builder::Options() );
 
 // ---------------------------------------------------------------------------------------------
 // Hand-testing aid: run perception over residues somo.residue DOES code and diff the result

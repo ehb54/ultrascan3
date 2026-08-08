@@ -787,3 +787,41 @@ values, none worse than 4.6%.
 - **`emit_residue` was writing the ASA field as if it were mw.** Header fields are name, type,
   molvol, **ASA**, natoms, nbeads, vbar (us_hydrodyn_load.cpp:151). ASA is correctly stubbed at
   0, but my comment said otherwise; corrected.
+
+## Phase F: in-SOMO wiring and the headless path — 2026-08-08
+
+Built and RUN in the real Qt build (I had wrongly said I could not compile-test the Qt side;
+`reference_somo_build` has the recipe and this clone was already set up). Both stages clean,
+rc=0, 0 errors, and `perceive` verified end to end through `us3_somo -g`.
+
+- **`libus_somo.pro` did not list the four new sources**, so nothing added since Phase A would
+  ever have been compiled into the library. Registered; symbols confirmed present in the dylib
+  with `nm`.
+- The Qt adapter `perceive_unknown()` now takes the bond graph from the new `perceive` overload
+  and calls `somo_residue_builder::build`, so an in-SOMO proposal carries vbar, molvol and
+  hydration instead of zeros. `Tentative` gained those three fields for callers that want the
+  numbers rather than the text block.
+- `hydration_from_residue_list()` builds the lookup from **SOMO's own loaded `residue_list`**,
+  so a proposal is always consistent with the user's tables rather than a snapshot in the binary.
+- **`perceive auto <pdb>`** is the headless sub-command: accepts every default, prompts for
+  nothing, writes nothing back to somo.residue, and additionally prints a line naming how many
+  atoms were flagged, since in a pipeline nobody is watching the REVIEW block.
+- Defaults pinnable via gparams, same pattern as `covolume`: `perceive_psv`, `perceive_volume`,
+  `perceive_hydration`, `perceive_volume_probe`, `perceive_volume_grid`, `perceive_bead_color`.
+  A reserved bead colour (0/6/7/8) is a hard error rather than a silent substitution -- 0 and 6
+  exclude a bead from the hydrodynamics entirely, so accepting one would quietly produce a model
+  missing beads.
+
+### Verified output (2CMD, citric acid -- genuinely not coded in somo.residue)
+    computed: vbar 0.542 cm^3/g, molvol 186.56 A^3, proposed hydration 0.0 waters
+    # REVIEW - check these before accepting the entry:  [7 items]
+vbar cross-checks: on the residue basis SOMO stores (covolume excluded, since SOMO adds one per
+structure) 0.542 x 192.14 = 104.2 cm^3/mol; as a free molecule that is (104.2 + 12.4)/192.14 =
+**0.607**, against a literature citric acid value near 0.59-0.62. The proposed hydration of 0 for
+a triacid is obviously too low, and the system says so itself -- all four hydroxyl oxygens come
+back flagged at 49% agreement. That is the intended behaviour: propose, then flag what it cannot
+support.
+
+### FINDINGS worth eb's attention
+- I claimed earlier that I could not compile-test the Qt side. That was wrong, and it nearly
+  shipped the `.pro` omission above. Build the real thing.
