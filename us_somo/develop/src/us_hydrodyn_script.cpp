@@ -199,6 +199,17 @@ void US_Hydrodyn::gui_script_run() {
          QString opt1 = ls.front(); ls.pop_front();
          // "perceive compare <pdb>" diffs perception against somo.residue for residues it DOES
          // code -- a hand-testing aid. Plain "perceive <pdb>" proposes entries for the ones it does not.
+         // "perceive auto <pdb>" is the headless path: every default accepted, nothing prompts,
+         // nothing is written back to somo.residue. Same output as plain "perceive", which is
+         // already non-interactive -- the sub-command exists so a pipeline states the intent,
+         // and so the defaults below can be pinned per run.
+         bool perceive_auto = ( opt1 == "auto" );
+         if ( perceive_auto ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument: perceive auto <pdbfile>" );
+            }
+            opt1 = ls.front(); ls.pop_front();
+         }
          bool perceive_compare = ( opt1 == "compare" );
          if ( perceive_compare ) {
             if ( ls.isEmpty() ) {
@@ -283,8 +294,35 @@ void US_Hydrodyn::gui_script_run() {
                to_perceive.insert( it->first );
             }
          }
+         // Defaults a pipeline can pin, same pattern as gparams["covolume"].
+         somo_residue_builder::Options pb_opt;
+         {
+            auto gp = [ & ]( const QString & k, double d ) {
+               return gparams.count( k ) ? gparams[ k ].toDouble() : d;
+            };
+            auto gb = [ & ]( const QString & k, bool d ) {
+               return gparams.count( k ) ? ( gparams[ k ] == "true" ) : d;
+            };
+            pb_opt.compute_psv       = gb( "perceive_psv",       true );
+            pb_opt.compute_volume    = gb( "perceive_volume",    true );
+            pb_opt.compute_hydration = gb( "perceive_hydration", true );
+            pb_opt.volume_probe      = gp( "perceive_volume_probe", pb_opt.volume_probe );
+            pb_opt.volume_grid       = gp( "perceive_volume_grid",  pb_opt.volume_grid );
+            pb_opt.bead_color        = (int) gp( "perceive_bead_color", pb_opt.bead_color );
+            if ( !somo_perceive::bead_color_is_selectable( pb_opt.bead_color ) ) {
+               // 0/6/7/8 are reserved, and 0 and 6 exclude a bead from the hydrodynamics
+               // entirely -- refuse rather than silently produce a model missing beads.
+               gui_script_error( i, cmd, QString( "perceive_bead_color %1 is reserved or out of "
+                                                  "range; pick a selectable colour" )
+                                 .arg( pb_opt.bead_color ) );
+            }
+         }
+         somo_hydration::Table pb_hyd =
+            somo_perceive::hydration_from_residue_list( residue_list );
+
          QList< somo_perceive::Tentative > tents =
-            somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive, opt1 );
+            somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive, opt1,
+                                             &pb_hyd, pb_opt );
          unsigned int perceive_atom_count = 0;
          for ( unsigned int pc = 0; pc < model_vector[ 0 ].molecule.size(); ++pc ) {
             perceive_atom_count += (unsigned int) model_vector[ 0 ].molecule[ pc ].atom.size();
@@ -300,6 +338,13 @@ void US_Hydrodyn::gui_script_run() {
             TSO << QString( "\n===== tentative somo.residue entry: %1 "
                             "(%2 atoms, %3 instance(s) in model, %4 atom(s) flagged for review) =====\n" )
                .arg( tv.resName ).arg( tv.atoms ).arg( tv.instances ).arg( tv.flagged );
+            if ( perceive_auto && tv.flagged ) {
+               TSO << QString( "note: %1 atom(s) flagged -- accepted anyway because this is "
+                               "'perceive auto'; review the REVIEW block before use\n" )
+                  .arg( tv.flagged );
+            }
+            TSO << QString( "computed: vbar %1 cm^3/g, molvol %2 A^3, proposed hydration %3 waters\n" )
+               .arg( tv.vbar, 0, 'f', 3 ).arg( tv.molvol, 0, 'f', 2 ).arg( tv.hydration, 0, 'f', 1 );
             TSO << tv.block;
             if ( !tv.new_hybrids.isEmpty() ) {
                TSO << QString( "----- new somo.hybrid rows (types not already in the table) -----\n" );

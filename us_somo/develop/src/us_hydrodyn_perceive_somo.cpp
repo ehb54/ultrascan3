@@ -113,7 +113,9 @@ std::vector< std::pair< int, int > > conect_bonds( const QString & pdb_filename,
 QList<Tentative> perceive_unknown( const PDB_model         & model,
                                    const HybridTable       & tbl,
                                    const std::set<QString> & to_perceive,
-                                   const QString           & pdb_filename ) {
+                                   const QString           & pdb_filename,
+                                   const somo_hydration::Table * hyd,
+                                   const somo_residue_builder::Options & opt ) {
     QList<Tentative> result;
 
     std::vector<InAtom> atoms = from_pdb_model( model );
@@ -129,7 +131,8 @@ QList<Tentative> perceive_unknown( const PDB_model         & model,
     }
 
     Perceiver perc( tbl );
-    std::vector<OutAtom> out = perc.perceive( atoms, ebonds );
+    Bonds bonds;
+    std::vector<OutAtom> out = perc.perceive( atoms, bonds, ebonds );
 
     // SOMO names each instance of a non-coded residue "<RESNAME>_NC<n>". Strip that back to the
     // base code so one tentative entry covers every instance of the same chemistry.
@@ -184,15 +187,40 @@ QList<Tentative> perceive_unknown( const PDB_model         & model,
                 ++t.flagged;
             }
         }
-        Perceiver::Emitted em =
-            perc.emit_residue( base.toStdString(), res_in, res_out, t.chemical_name.toStdString() );
-        t.block = QString::fromStdString( em.residue_block );
-        for ( size_t k = 0; k < em.new_hybrids.size(); ++k ) {
-            t.new_hybrids << QString::fromStdString( em.new_hybrids[ k ] );
+        // Indices into the WHOLE structure: psv needs the surrounding bond graph to classify a
+        // backbone amide N or a carboxyl O, and to see which rings lie inside this residue.
+        std::vector<int> idx;
+        for ( size_t j = 0; j < atoms.size(); ++j ) {
+            if ( QString::fromStdString( atoms[ j ].resName ) != rn ) continue;
+            if ( atoms[ j ].chain != chain || atoms[ j ].resSeq != resSeq ) continue;
+            idx.push_back( (int) j );
         }
+        somo_residue_builder::Built built =
+            somo_residue_builder::build( base.toStdString(), atoms, out, bonds, idx, perc,
+                                         hyd, t.chemical_name.toStdString(), opt );
+        t.block = QString::fromStdString( built.residue_block );
+        for ( size_t k = 0; k < built.new_hybrids.size(); ++k ) {
+            t.new_hybrids << QString::fromStdString( built.new_hybrids[ k ] );
+        }
+        t.vbar   = built.psv.ok ? built.psv.vbar : 0.0;
+        t.molvol = built.molvol;
+        t.hydration = built.hydration.ok ? built.hydration.total : 0.0;
         result << t;
     }
     return result;
+}
+
+somo_hydration::Table hydration_from_residue_list( const std::vector<struct residue> & coded ) {
+    std::vector< std::pair< std::string, double > > obs;
+    for ( size_t i = 0; i < coded.size(); ++i ) {
+        for ( size_t a = 0; a < coded[ i ].r_atom.size(); ++a ) {
+            const struct atom & at = coded[ i ].r_atom[ a ];
+            if ( at.hybrid.name.isEmpty() ) continue;
+            obs.push_back( std::make_pair( at.hybrid.name.toStdString(),
+                                           (double) at.hydration ) );
+        }
+    }
+    return somo_hydration::Table::from_observations( obs );
 }
 
 CompareResult compare_against_table(
@@ -211,7 +239,8 @@ CompareResult compare_against_table(
         ebonds = conect_bonds( pdb_filename, atoms );
     }
     Perceiver perc( tbl );
-    std::vector<OutAtom> out = perc.perceive( atoms, ebonds );
+    Bonds bonds;
+    std::vector<OutAtom> out = perc.perceive( atoms, bonds, ebonds );
 
     QString last_key;
     for ( size_t i = 0; i < atoms.size(); ++i ) {
