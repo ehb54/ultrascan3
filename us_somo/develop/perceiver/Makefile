@@ -7,15 +7,18 @@ HDR       = ../include/us_hydrodyn_perceive.h ../include/us_hydrodyn_perceive_hy
             ../include/us_hydrodyn_perceive_elements.h ../include/us_hydrodyn_perceive_saxs.h \
             pdb_lite.h residue_oracle.h tinytest.h
 
+BUILDER_SRC = $(SRC) ../src/us_hydrodyn_psv.cpp ../src/us_hydrodyn_hydration.cpp \
+              ../src/us_hydrodyn_grid_volume.cpp ../src/us_hydrodyn_residue_builder.cpp
+
 DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS.pdb data/8RAT.pdb \
         data/1AO6-compl_monA.pdb data/3CRO.pdb data/3GUT.pdb data/6LDH1.pdb
 
 .PHONY: all unit regress emit clean
 all: unit regress
 
-bin/emit_residue: tests/emit_residue.cpp $(SRC) $(HDR)
+bin/emit_residue: tests/emit_residue.cpp $(BUILDER_SRC) $(HDR)
 	@mkdir -p bin
-	$(CXX) $(CXXFLAGS) $(INC) tests/emit_residue.cpp $(SRC) -o bin/emit_residue
+	$(CXX) $(CXXFLAGS) $(INC) tests/emit_residue.cpp $(BUILDER_SRC) -o bin/emit_residue
 
 emit: bin/emit_residue
 	./bin/emit_residue $(PDB) $(RES) $(SEQ)
@@ -71,3 +74,18 @@ bin/psv: tests/psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp $(HDR) ../include/us_hy
 
 psv: bin/psv
 	./bin/psv
+
+bin/hydration: tests/hydration.cpp ../src/us_hydrodyn_hydration.cpp ../include/us_hydrodyn_hydration.h
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/hydration.cpp ../src/us_hydrodyn_hydration.cpp -o bin/hydration
+
+hydration: bin/hydration
+	./bin/hydration
+
+
+bin/builder: tests/builder.cpp $(BUILDER_SRC) $(HDR)
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/builder.cpp $(BUILDER_SRC) -o bin/builder
+
+builder: bin/builder
+	./bin/builder

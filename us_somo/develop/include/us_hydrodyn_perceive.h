@@ -120,10 +120,23 @@ public:
     };
     // chemical_name: optional full name (e.g. from the PDB HETNAM header record) used as the
     // entry's comment line, which is far more informative than the bare 3-letter code.
+    // Values the perceiver cannot derive from geometry alone, supplied by the caller so this
+    // header stays free of the psv / volume / hydration headers (which include this one).
+    // Anything left unset is emitted as 0 and called out in the entry's REVIEW block, so a
+    // partially-filled entry is always visibly partial rather than quietly wrong.
+    struct Properties {
+        bool   have_vbar = false;    double vbar = 0;      // cm^3/g
+        bool   have_molvol = false;  double molvol = 0;    // A^3, also the single bead's volume
+        std::vector<double> hydration;                     // per atom; empty = unset
+        std::vector<std::string> review;                   // extra lines for the REVIEW block
+        int    bead_color = DEFAULT_BEAD_COLOR;
+    };
+
     Emitted emit_residue(const std::string& resname,
                          const std::vector<InAtom>& atoms,
                          const std::vector<OutAtom>& perceived,
-                         const std::string& chemical_name = "") const;
+                         const std::string& chemical_name = "",
+                         const Properties* props = nullptr) const;
 
     const Params& params() const { return p_; }
 
