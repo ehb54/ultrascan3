@@ -2,6 +2,6 @@ bin/
 *.o
 __pycache__/
 *.pyc
-# demo PDBs are copies of /Users/eb/ultrascan3-somo-dev/us_somo/somo/demo/*.pdb
+# demo PDBs are copies of us_somo/somo/demo/*.pdb
 data/*.pdb
 # reference tables are read directly from us_somo/etc (no copies, so they cannot drift)

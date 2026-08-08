@@ -45,10 +45,11 @@ Usage
     python3 tools/recalc_ligand_volumes.py --from-pdb HEM=1MBO.pdb NAD=1LDM.pdb:A
 Requires Volume.exe from https://github.com/vosslab/vossvolvox.
 """
-import os, re, subprocess, sys, urllib.request
+import os, re, shutil, subprocess, sys, urllib.request
 
 RESFILE = os.environ.get("SOMO_RESIDUE", "../../etc/somo.residue.new")
-VOLEXE = os.environ.get("VOLUME_EXE", os.path.expanduser("~/claude/vossvolvox/bin/Volume.exe"))
+# Volume.exe from https://github.com/vosslab/vossvolvox. Taken from $VOLUME_EXE, else PATH.
+VOLEXE = os.environ.get("VOLUME_EXE") or shutil.which("Volume.exe") or "Volume.exe"
 CACHE = os.environ.get("CCD_CACHE", os.path.join(os.environ.get("TMPDIR", "/tmp"), "ccd_cache"))
 GRID = 0.15
 FACTOR_LARGE, FACTOR_SMALL, SIZE_SPLIT = 1.204, 1.131, 160.0
