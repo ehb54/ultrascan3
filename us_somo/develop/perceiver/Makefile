@@ -64,3 +64,10 @@ bin/sssrreal: tests/sssr_real.cpp $(SRC) $(HDR)
 
 sssrreal: bin/sssrreal
 	./bin/sssrreal $(DEMOS)
+
+bin/psv: tests/psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp $(HDR) ../include/us_hydrodyn_psv.h
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp -o bin/psv
+
+psv: bin/psv
+	./bin/psv

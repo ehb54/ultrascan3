@@ -687,3 +687,62 @@ ring-free. Every instance of a residue type gives an identical signature.
 - **Design consequence for the volume work**: a residue's ring decrements must count only rings
   whose atoms all lie in that residue. That is both correct chemistry (the increments are
   per-molecule) and immunity to this whole class of input defect.
+
+## Phase B: the psv increment engine — 2026-08-08
+
+`include/us_hydrodyn_psv.h` + `src/us_hydrodyn_psv.cpp` (Qt-free), tests `tests/psv.cpp`
+(`make psv`, 47 checks). Consumes the perceived atoms and the bond/ring graph from Phase A and
+returns molar volume, vbar, and the **labelled decomposition** (atomic sum, covolume, ring
+decrement, electrostriction, ring and charge counts) so a value can be audited rather than
+trusted. Atoms it cannot classify go into `review` rather than being guessed.
+
+Covolume defaults OFF (a residue is a monomeric unit; SOMO adds one structure-level covolume of
+12.4 from `gparams["covolume"]`); `Options::free_molecule` turns it on for a standalone molecule.
+Only rings lying **entirely inside the residue** are charged -- correct chemistry, and immunity
+to the spurious cross-residue rings that defective coordinates produce (Phase A).
+
+### Results
+Published worked values reproduced **exactly**: urea 44.2, glycerol 70.0, 1,2-ethanediol 53.5,
+1,8-octanediol 152.0, and all seven DZ94 Table 4 group increments.
+Real residues from 1HEL vs the stored `somo.residue` vbar: **mean |error| 1.64% over the 15
+charge-neutral residues**, none worse than 6%.
+
+### Two rules that a naive implementation gets wrong
+- **The hydroxyl increment is topological, not a running count.** "2nd or further NEIGHBOURING
+  OH = 0.4"; an isolated hydroxyl is a fresh 2.3. Hydroxyls are therefore clustered by whether
+  their carrier atoms are bonded, one 2.3 per cluster. Verified against DZ94 Table 5 both ways:
+  1,2-ethanediol (adjacent) 53.5 and 1,8-octanediol (isolated) 152.0, exactly as published.
+- **Guanidinium counts only the TERMINAL nitrogens.** Table 1's footnote says the 8.0 applies
+  "in Arg only to the two terminal N", so arginine's NE (which also bonds CD) takes the amine
+  4.0. Charging all three costs Arg a further ~6%.
+
+### FINDINGS worth eb's attention
+- **The perceiver assigns no formal charge to Arg's guanidinium or to His** (only Lys NZ gets
+  one), while `somo.residue` stores both protonated. So those residues are computed as neutral
+  and lose an electrostriction term. Arginine at physiological pH is essentially always
+  protonated (pKa ~12.5), so that one is not really ambiguous chemistry -- it is a perception
+  gap for the deferred pH layer, and it stacks with Arg being the known outlier of the scheme
+  (the six published residue-volume sets in Perkins 1986 Table 1 disagree about Arg by 17%).
+- Two bugs were caught only because a test asserted a published number rather than "looks
+  plausible": a carbonyl oxygen self-triggered the carboxyl test via its own carbon (a flat
+  -5.1 cm^3/mol on every residue), and my synthetic polyol geometry put neighbouring hydroxyl
+  oxygens 1.5 A apart, which the perceiver correctly read as an O-O bond and turned into a ring.
+
+## Hydration coverage gap (Mattia's follow-up) — 2026-08-08
+Mattia: "in somo.residue the atomic hydration for AA is also pH dependent, but so is the
+corresponding hybridization for the atoms involved. As an added bonus, we could then have atomic
+hydration at neutral pH for all the other entries... I mean, nucleotides..."
+
+Audited. He is right, and the gap is total:
+
+| group | entries | with hydration > 0 | with pH variants |
+|---|---|---|---|
+| amino acid | 25 | **25** | 7 |
+| nucleotide | 8 | **0** | 0 |
+| other | 73 | 56 | 13 |
+
+**Every nucleotide in `somo.residue` -- A, C, G, U, DA, DC, DG, DT -- carries zero hydration**,
+as do 17 of the other entries (CFN, CLF, HCA, OXM, OXY, SF4, K, BOG, BEF, BF4, MEN, MO2, MO6 and
+the PBR-*/OXT-P pseudo-residues). Nucleic acids are strongly hydrated, the phosphate especially,
+so this is a systematic under-hydration of every DNA/RNA model, not a rounding issue. Worth its
+own ticket independent of the non-coded-residue work.
