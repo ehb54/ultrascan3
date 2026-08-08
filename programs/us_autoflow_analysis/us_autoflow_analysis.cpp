@@ -1243,13 +1243,31 @@ void US_Analysis_auto::gui_update( )
       QString msg_text = "All triples have been processed.";
       
       if ( failed_triples )
-	msg_text += QString("\n\nNOTE: analyses for the following triples FAILED: \n\n%1").arg( Failed_triples_list.join(", ") );
+	msg_text += QString("\n\nNOTE: analyses for the following triples FAILED: \n\n%1")
+	  .arg( Failed_triples_list.join(", ") );
 
       if ( canceled_triples )
-	msg_text += QString("\n\nNOTE: analyses for the following triples have been CANCELED: \n\n%1").arg( Canceled_triples_list.join(", ") );
+	msg_text += QString("\n\nNOTE: analyses for the following triples have been CANCELED: \n\n%1")
+	  .arg( Canceled_triples_list.join(", ") );
+
+      //For VELOCITY-MWL: Stop here, inform user on proceeding with:
+      //1. Pre-Fit Simulating
+      //2. Deconvolution (Species Fit)
+      //3. Simulating (2DSA-IT, desktop)
+
+      if ( autoflow_expType == "VELOCITY-MWL" )
+	{
+	  msg_text += QString( tr("\n\nThe program will proceed with the"
+				  "MWL pre-fit species simulations and MWL species deconvolution.") );
+	  QMessageBox::information( this,
+				    tr( "All Triples Processed !" ),
+				    msg_text  );
+	  in_gui_update  = false;
+
+	  return;
+	}
 
       msg_text +=  QString("\n\nThe program will proceed to the Reporting stage. ");
-
       //Update autoflow record at Analysis completion
       update_autoflow_record_atAnalysis();
 

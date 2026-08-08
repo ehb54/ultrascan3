@@ -18,20 +18,6 @@
 #include "qwt_picker_machine.h"
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
-//! \brief Main program. Loads translators and starts
-//         the class US_Convert.
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_MwlSpeciesSim w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 //! \brief Constructor for US_MwlSpeciesSim class
 US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
