@@ -336,7 +336,12 @@ ValidateResult validate_against_table(
         // different chemistry, so count and skip rather than quietly average them in.
         bool terminal = false;
         for ( size_t k = 0; k < it->second.size(); ++k ) {
+            // C-terminus: the extra OXT. N-terminus: a free, protonated backbone nitrogen
+            // instead of an amide -- different chemistry from the tabulated internal residue,
+            // and worth several waters of hydration.
             if ( atoms[ it->second[ k ] ].name == "OXT" ) terminal = true;
+            if ( atoms[ it->second[ k ] ].name == "N" &&
+                 out[ it->second[ k ] ].formal_charge > 0 ) terminal = true;
         }
         if ( terminal ) { ++vr.skipped_terminal; continue; }
         if ( (int) it->second.size() != stored[ rn ].natoms ) { ++vr.skipped_incomplete; continue; }

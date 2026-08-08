@@ -82,14 +82,20 @@ static bool load() {
     return true;
 }
 
-// pick one complete instance of a residue type (no OXT, so not a chain terminus)
+// Pick one complete INTERNAL instance of a residue type. Both chain ends must be excluded:
+// a C-terminus carries an extra OXT, and an N-terminus has a free ammonium backbone nitrogen
+// rather than an amide, which is different chemistry from the tabulated entry (an N-terminal
+// lysine genuinely has two ammonium groups and so twice the hydration).
 static std::vector<int> pick(const std::string& rn, size_t natoms) {
     for (const auto& kv : g.res) {
         if (kv.first.substr(0, kv.first.find('|')) != rn) continue;
         if (kv.second.size() != natoms) continue;
-        bool oxt = false;
-        for (int i : kv.second) if (g.in[i].name == "OXT") oxt = true;
-        if (!oxt) return kv.second;
+        bool terminal = false;
+        for (int i : kv.second) {
+            if (g.in[i].name == "OXT") terminal = true;
+            if (g.in[i].name == "N" && g.perc[i].formal_charge > 0) terminal = true;
+        }
+        if (!terminal) return kv.second;
     }
     return {};
 }
@@ -214,6 +220,63 @@ TEST("computed molvol reproduces the stored volumes") {
         std::printf("  mean |error| over %d residues: %.2f%%\n", n, sum / n);
         CHECK(sum / n < 4.0);
     }
+}
+
+// The pH 7 hydration rules (Mattia, 2026-08-08) must reproduce what somo.residue stores at
+// pH 7 for the coded residues -- which is the only ground truth available. The values below are
+// the runtime, pH-adjusted totals: aspartate's carboxylate carries 5 waters and glutamate's 6,
+// the difference being the extra methylene, and Lys's ammonium 3.
+TEST("pH 7 hydration rules reproduce the coded residues") {
+    if (!load()) return;
+    struct H { const char* res; size_t natoms; double total; const char* why; };
+    const H want[] = {
+        {"ALA", 5,  1.0, "backbone amide N only"},
+        {"GLY", 4,  1.0, "backbone amide N only"},
+        {"SER", 6,  2.0, "backbone + aliphatic hydroxyl"},
+        {"THR", 7,  2.0, "backbone + aliphatic hydroxyl"},
+        {"TYR",12,  1.0, "phenolic hydroxyl is NOT hydrated"},
+        {"CYS", 6,  1.0, "thiol/disulfide S is not hydrated"},
+        {"MET", 8,  2.0, "thioether S is"},
+        {"PRO", 7,  1.0, "tertiary ring amide N, no H, still hydrated"},
+        {"ASN", 8,  2.0, "backbone + amide NH2"},
+        {"GLN", 9,  2.0, "backbone + amide NH2"},
+        {"TRP",14,  2.0, "backbone + aromatic ring NH"},
+        {"ASP", 8,  6.0, "carboxylate 5 (one methylene) + backbone"},
+        {"GLU", 9,  7.0, "carboxylate 6 (two methylenes) + backbone"},
+        {"ARG",11,  3.0, "backbone + two terminal guanidinium N, internal one not hydrated"},
+        {"LYS", 9,  4.0, "backbone + ammonium 3"},
+    };
+    int ok = 0, n = 0;
+    std::printf("  %-5s %9s %9s   %s\n", "res", "computed", "stored", "rule");
+    for (const H& w : want) {
+        std::vector<int> idx = pick(w.res, w.natoms);
+        if (idx.empty()) continue;
+        Built b = build(w.res, g.in, g.perc, g.bonds, idx, Perceiver(g.tbl), &g.hyd);
+        if (!b.hydration.ok) continue;
+        ++n;
+        const double got = b.hydration.total;
+        const bool hit = std::fabs(got - w.total) < 0.51;
+        if (hit) ++ok;
+        std::printf("  %-5s %9.1f %9.1f   %s%s\n", w.res, got, w.total, w.why,
+                    hit ? "" : "   <-- MISMATCH");
+        CHECK(hit);
+    }
+    std::printf("  %d/%d residues reproduced\n", ok, n);
+    CHECK(n >= 12);
+}
+
+// Asp and Glu differ only by a methylene, and that is exactly what the chain-length term is for.
+TEST("carboxylate hydration tracks the chain length") {
+    if (!load()) return;
+    std::vector<int> asp = pick("ASP", 8), glu = pick("GLU", 9);
+    if (asp.empty() || glu.empty()) return;
+    Built a = build("ASP", g.in, g.perc, g.bonds, asp, Perceiver(g.tbl), &g.hyd);
+    Built e = build("GLU", g.in, g.perc, g.bonds, glu, Perceiver(g.tbl), &g.hyd);
+    std::printf("  Asp %.1f, Glu %.1f -- the extra methylene is worth %.1f water\n",
+                a.hydration.total, e.hydration.total,
+                e.hydration.total - a.hydration.total);
+    CHECK(e.hydration.total > a.hydration.total);
+    CHECK(std::fabs((e.hydration.total - a.hydration.total) - 1.0) < 0.01);
 }
 
 int main() { return tinytest::run(); }
