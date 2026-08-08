@@ -825,3 +825,64 @@ support.
 ### FINDINGS worth eb's attention
 - I claimed earlier that I could not compile-test the Qt side. That was wrong, and it nearly
   shipped the `.pro` omission above. Build the real thing.
+
+## Phase G: `perceive validate` — predicting the coded residues as if unknown — 2026-08-08
+
+`perceive validate <pdb>` rebuilds every residue somo.residue DOES code, pretending it is
+unknown, and reports computed vbar / molvol / hydration against the stored values with a summary.
+Same idea as `perceive compare` (which does it for atom typing) but for the computed properties,
+and it runs the whole pipeline including perception -- so it is the only end-to-end measure, and
+what any accuracy claim has to rest on. Chain termini (extra OXT) and residues with unmodelled
+atoms are counted and skipped, not quietly averaged in.
+
+### Results: 7 structures, 1157 coded residue instances rebuilt
+| structure | vbar mean \|err\| | molvol mean \|err\| | hydration within 0.5 water |
+|---|---|---|---|
+| 1HEL | 2.80% | 2.08% | 10/20 |
+| 6LYZ | 2.61% | 2.21% | 10/20 |
+| 2AAS | 2.82% | 1.92% | 9/19 |
+| 8RAT | 2.82% | 2.19% | 9/19 |
+| 3CRO (DNA) | 4.78% | 3.00% | 12/23 |
+| 1MBO (heme) | 5.77% | 6.46% | 10/22 |
+| 1LDM (NAD) | 2.69% | 3.78% | 10/22 |
+
+So for ordinary amino acids: **vbar ~2.7%, molvol ~2.1%**, matching what was claimed from the
+standalone harness. DNA and the metalloprotein are worse, and the ligand rows say why.
+
+### The ligand rows independently reproduce the earlier 3V finding
+| entry | computed | stored | |
+|---|---|---|---|
+| HEM molvol | 710.7 | 536.1 | **+32.6%** |
+| NAD molvol | 663.1 | 517.8 | **+28.1%** |
+| OXM molvol | 78.2 | 71.3 | +9.8% |
+
+Earlier in this session, by a completely different route (3V, isolated-plus-convention-factor and
+in-context difference), the same two entries came out at ~700 and ~798 for heme and ~676 and ~790
+for NAD. This pipeline, which knows nothing about that analysis, lands at 711 and 663. **Two
+independent methods agree the stored ligand volumes are ~30% low.**
+
+Better still, **NAD's computed vbar is 0.619 against a MEASURED 0.620** (Durchschlag 1986
+Table 2), while the stored value is 0.599. The computed number is closer to experiment than the
+table is.
+
+### The known failure behaves as designed
+HEM vbar comes out -24.3% (0.667 vs 0.881). Heme is a metalloporphyrin and Durchschlag & Zipper
+publish no increment for iron; the engine puts the Fe in `review` rather than inventing a value,
+and the entry carries the flag. An additive scheme cannot do metal centres -- that is a stated
+limit, not a regression.
+
+### FINDINGS worth eb's attention
+- **Hydration is much the weakest of the three: ~10/20 within 0.5 water, and systematically
+  LOW.** The misses are the polar and charged side chains (Asp 2.0 vs 6.0, Glu 2.0 vs 7.0,
+  Lys 1.9 vs 4.0, Asn/Gln/Met 1.0 vs 2.0). A per-hybrid-type majority simply cannot express
+  residue-specific hydration, which is the same conclusion the source-data analysis reached from
+  the other direction. Treat the proposal as a prompt for the user, not a number.
+- **Confirmation of Mattia's pH point, from the runtime side.** At run time SOMO's residue_list
+  carries the pH-ADJUSTED hydration: Asp reads 6.0 and Glu 7.0, which are exactly Kuntz's
+  charged-carboxylate values, where the raw file fields give 1.0. So hydration really is pH
+  dependent in the way he described, and any proposal built at neutral pH from type majorities
+  will under-hydrate ionisable groups by design.
+- `hydration_from_residue_list` counts **one vote per residue name**. residue_list holds several
+  entries for residues with ionization variants, and counting each weights those residues more
+  heavily just for being pH-aware -- enough to flip the majority for a borderline type such as
+  O2H1 (51 zeros against 67 ones), which was costing Ser and Thr a water each.

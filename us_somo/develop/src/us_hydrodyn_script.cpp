@@ -210,6 +210,17 @@ void US_Hydrodyn::gui_script_run() {
             }
             opt1 = ls.front(); ls.pop_front();
          }
+         // "perceive validate <pdb>" rebuilds the residues somo.residue DOES code, pretending
+         // they are unknown, and reports computed vbar/molvol/hydration against the stored
+         // values. End-to-end including perception, so it is the measure any accuracy claim
+         // has to rest on.
+         bool perceive_validate = ( opt1 == "validate" );
+         if ( perceive_validate ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument: perceive validate <pdbfile>" );
+            }
+            opt1 = ls.front(); ls.pop_front();
+         }
          bool perceive_compare = ( opt1 == "compare" );
          if ( perceive_compare ) {
             if ( ls.isEmpty() ) {
@@ -319,6 +330,43 @@ void US_Hydrodyn::gui_script_run() {
          }
          somo_hydration::Table pb_hyd =
             somo_perceive::hydration_from_residue_list( residue_list );
+
+         if ( perceive_validate ) {
+            somo_perceive::ValidateResult vr =
+               somo_perceive::validate_against_table( model_vector[ 0 ], ptbl, residue_list,
+                                                      &pb_hyd, pb_opt, opt1 );
+            TSO << QString( "\nperceive validate: %1 coded residue instance(s) rebuilt, "
+                            "%2 skipped as chain termini, %3 skipped as incomplete\n" )
+               .arg( vr.instances ).arg( vr.skipped_terminal ).arg( vr.skipped_incomplete );
+            TSO << QString( "%1 %2 %3 %4 %5 %6 %7 %8 %9\n" )
+               .arg( "res", -6 ).arg( "n", 4 )
+               .arg( "vbar", 8 ).arg( "stored", 8 ).arg( "d%", 7 )
+               .arg( "molvol", 9 ).arg( "stored", 9 ).arg( "d%", 7 ).arg( "  hydration c/s" );
+            double sv = 0, sm = 0; int nv = 0, nm = 0, nh_ok = 0, nh = 0;
+            for ( int r = 0; r < vr.rows.size(); ++r ) {
+               const somo_perceive::ValidateRow & w = vr.rows[ r ];
+               const double dv = w.vbar_stored   > 0 ? 100.0 * ( w.vbar_computed   - w.vbar_stored   ) / w.vbar_stored   : 0.0;
+               const double dm = w.molvol_stored > 0 ? 100.0 * ( w.molvol_computed - w.molvol_stored ) / w.molvol_stored : 0.0;
+               if ( w.vbar_stored   > 0 ) { sv += qAbs( dv ); ++nv; }
+               if ( w.molvol_stored > 0 ) { sm += qAbs( dm ); ++nm; }
+               ++nh;
+               if ( qAbs( w.hydration_computed - w.hydration_stored ) < 0.51 ) ++nh_ok;
+               TSO << QString( "%1 %2 %3 %4 %5 %6 %7 %8   %9 / %10\n" )
+                  .arg( w.resName, -6 ).arg( w.instances, 4 )
+                  .arg( w.vbar_computed, 8, 'f', 3 ).arg( w.vbar_stored, 8, 'f', 3 )
+                  .arg( dv, 7, 'f', 1 )
+                  .arg( w.molvol_computed, 9, 'f', 1 ).arg( w.molvol_stored, 9, 'f', 1 )
+                  .arg( dm, 7, 'f', 1 )
+                  .arg( w.hydration_computed, 0, 'f', 1 ).arg( w.hydration_stored, 0, 'f', 1 );
+            }
+            TSO << QString( "\nSUMMARY  vbar: mean |error| %1%% over %2 type(s)   "
+                            "molvol: mean |error| %3%% over %4 type(s)   "
+                            "hydration: %5/%6 within 0.5 water\n" )
+               .arg( nv ? sv / nv : 0.0, 0, 'f', 2 ).arg( nv )
+               .arg( nm ? sm / nm : 0.0, 0, 'f', 2 ).arg( nm )
+               .arg( nh_ok ).arg( nh );
+            continue;
+         }
 
          QList< somo_perceive::Tentative > tents =
             somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive, opt1,

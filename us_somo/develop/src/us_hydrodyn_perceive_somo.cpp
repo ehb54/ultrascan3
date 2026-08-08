@@ -212,7 +212,13 @@ QList<Tentative> perceive_unknown( const PDB_model         & model,
 
 somo_hydration::Table hydration_from_residue_list( const std::vector<struct residue> & coded ) {
     std::vector< std::pair< std::string, double > > obs;
+    // One vote per residue NAME. residue_list holds several entries for a residue that has
+    // ionization variants, and counting each would weight those residues more heavily than the
+    // rest purely because they are pH-aware -- which is enough to flip the majority for a
+    // borderline type such as O2H1 (51 zeros against 67 ones).
+    std::set<QString> counted;
     for ( size_t i = 0; i < coded.size(); ++i ) {
+        if ( !counted.insert( coded[ i ].name ).second ) continue;
         for ( size_t a = 0; a < coded[ i ].r_atom.size(); ++a ) {
             const struct atom & at = coded[ i ].r_atom[ a ];
             if ( at.hybrid.name.isEmpty() ) continue;
@@ -273,6 +279,94 @@ CompareResult compare_against_table(
         }
     }
     return r;
+}
+
+ValidateResult validate_against_table(
+    const PDB_model & model,
+    const HybridTable & tbl,
+    const std::vector<struct residue> & coded,
+    const somo_hydration::Table * hyd,
+    const somo_residue_builder::Options & opt,
+    const QString & pdb_filename ) {
+
+    ValidateResult vr;
+    std::vector<InAtom> atoms = from_pdb_model( model );
+    if ( atoms.empty() ) {
+        return vr;
+    }
+
+    // What somo.residue stores, keyed by residue name.
+    struct Stored { double vbar = 0, molvol = 0, hydration = 0; int natoms = 0; bool ok = false; };
+    std::map< QString, Stored > stored;
+    for ( size_t i = 0; i < coded.size(); ++i ) {
+        const struct residue & rr = coded[ i ];
+        if ( stored.count( rr.name ) ) continue;              // first definition wins
+        Stored st;
+        st.vbar   = rr.vbar;
+        st.molvol = rr.molvol;
+        st.natoms = (int) rr.r_atom.size();
+        for ( size_t a = 0; a < rr.r_atom.size(); ++a ) st.hydration += rr.r_atom[ a ].hydration;
+        st.ok = true;
+        stored[ rr.name ] = st;
+    }
+
+    Perceiver perc( tbl );
+    std::vector< std::pair< int, int > > ebonds = conect_bonds( pdb_filename, atoms );
+    Bonds bonds;
+    std::vector<OutAtom> out = perc.perceive( atoms, bonds, ebonds );
+
+    // group atoms by residue instance
+    std::map< QString, std::vector<int> > inst;
+    for ( size_t j = 0; j < atoms.size(); ++j ) {
+        const QString rn = QString::fromStdString( atoms[ j ].resName );
+        inst[ rn + "|" + QString::fromStdString( atoms[ j ].chain ) +
+              QString::number( atoms[ j ].resSeq ) ].push_back( (int) j );
+    }
+
+    struct Acc { double vbar = 0, molvol = 0, hyd = 0; int n = 0; };
+    std::map< QString, Acc > acc;
+
+    for ( std::map< QString, std::vector<int> >::const_iterator it = inst.begin();
+          it != inst.end(); ++it ) {
+        const QString rn = it->first.left( it->first.indexOf( '|' ) );
+        if ( !stored.count( rn ) || !stored[ rn ].ok ) continue;
+
+        // A chain terminus carries an extra OXT, and a residue with unmodelled side-chain atoms
+        // is not the molecule somo.residue describes. Either way the comparison would be against
+        // different chemistry, so count and skip rather than quietly average them in.
+        bool terminal = false;
+        for ( size_t k = 0; k < it->second.size(); ++k ) {
+            if ( atoms[ it->second[ k ] ].name == "OXT" ) terminal = true;
+        }
+        if ( terminal ) { ++vr.skipped_terminal; continue; }
+        if ( (int) it->second.size() != stored[ rn ].natoms ) { ++vr.skipped_incomplete; continue; }
+
+        somo_residue_builder::Built b =
+            somo_residue_builder::build( rn.toStdString(), atoms, out, bonds, it->second,
+                                         perc, hyd, std::string(), opt );
+        if ( !b.ok ) continue;
+        Acc & a = acc[ rn ];
+        a.vbar   += b.psv.ok ? b.psv.vbar : 0.0;
+        a.molvol += b.molvol;
+        a.hyd    += b.hydration.ok ? b.hydration.total : 0.0;
+        ++a.n;
+        ++vr.instances;
+    }
+
+    for ( std::map< QString, Acc >::const_iterator it = acc.begin(); it != acc.end(); ++it ) {
+        if ( !it->second.n ) continue;
+        ValidateRow row;
+        row.resName            = it->first;
+        row.instances          = it->second.n;
+        row.vbar_computed      = it->second.vbar   / it->second.n;
+        row.molvol_computed    = it->second.molvol / it->second.n;
+        row.hydration_computed = it->second.hyd    / it->second.n;
+        row.vbar_stored        = stored[ it->first ].vbar;
+        row.molvol_stored      = stored[ it->first ].molvol;
+        row.hydration_stored   = stored[ it->first ].hydration;
+        vr.rows << row;
+    }
+    return vr;
 }
 
 } // namespace somo_perceive
