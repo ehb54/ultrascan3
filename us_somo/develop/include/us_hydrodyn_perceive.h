@@ -46,6 +46,33 @@ struct Bonds {
     std::vector<char> ring_double;
 };
 
+// ---- Bead colour policy for machine-generated (non-coded) residues -------------------------
+// SINGLE POINT OF DEFINITION. Change DEFAULT_BEAD_COLOR here to change the policy everywhere;
+// do not write bare colour numbers anywhere else.
+//
+// 10 = Light Green, which the SOMO manual (somo/doc/manual/somo/somo_residue.html, Panel 3)
+// documents as "USED by the Automatic Bead Builder for non-coded residues". (eb, 2026-08-08.)
+//
+// Colour is NOT cosmetic -- it categorises the bead, and two values cause it to be dropped from
+// the hydrodynamic computation entirely. Never emit a reserved colour:
+//    0 black  RESERVED - very small beads, always EXCLUDED from computations
+//    6 brown  RESERVED - buried beads, auto-assigned during model generation
+//    7 white  USED for fused beads
+//    8 grey   USED for beads previously buried but found exposed on re-check
+// Selectable: 1 blue main-chain, 2 green acidic, 3 cyan hydrophobic, 4 red polar,
+//    5 magenta non-polar, 9 light blue lipid tails/CO, 10 light green (this default),
+//    11 light cyan DNA/RNA bases, 12 light red cofactors/prosthetic groups,
+//    13 light magenta carbohydrates, 14 yellow basic, 15 bright white unassigned.
+static constexpr int DEFAULT_BEAD_COLOR = 10;
+static constexpr int MAX_BEAD_COLOR     = 15;
+
+inline bool bead_color_is_reserved(int c) {
+    return c == 0 || c == 6 || c == 7 || c == 8;
+}
+inline bool bead_color_is_selectable(int c) {
+    return c >= 0 && c <= MAX_BEAD_COLOR && !bead_color_is_reserved(c);
+}
+
 struct Params {
     double bond_tol      = 0.45;   // dist < r_cov(i)+r_cov(j)+tol  => bonded
     double bond_min      = 0.40;   // reject closer than this (clashes)
