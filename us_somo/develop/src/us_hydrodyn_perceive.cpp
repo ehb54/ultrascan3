@@ -486,8 +486,18 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // molvol and vbar deliberately 0 = unset (see the header comment above).
     hdr << resname << "\t0\t" << 0.0 << '\t' << 0.0 << '\t' << atoms.size()
         << "\t1\t" << 0.0 << '\n';
-    // one default bead line (all atoms bead 0)
-    std::ostringstream bead; bead << "0\t" << atoms.size() << "\t0\t0\t0\n";
+    // One default bead, all atoms assigned to it (Mattia: single bead for now).
+    // Bead line fields are, in order (see US_Hydrodyn::read_residue_file,
+    // us_hydrodyn_load.cpp:509): hydration, colour, placing_method, chain, volume.
+    // NB this previously emitted atoms.size() in the COLOUR slot, which silently produced a
+    // reserved colour for any residue with 6/7/8 atoms -- 0 and 6 mean "exclude this bead from
+    // the hydrodynamic computation" -- and an out-of-range value above 15 atoms.
+    std::ostringstream bead;
+    bead << "0\t"                       // hydration: not perceived, see header comment
+         << DEFAULT_BEAD_COLOR << '\t'  // colour: single point of definition in the header
+         << "0\t"                       // placing_method 0 = centre of gravity (the only one used)
+         << "0\t"                       // chain 0 = main chain
+         << 0.0 << '\n';                // bead volume: unset until molvol is computed
     em.residue_block = hdr.str() + body.str() + bead.str();
     return em;
 }
