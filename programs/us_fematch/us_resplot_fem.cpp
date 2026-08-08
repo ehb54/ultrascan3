@@ -819,7 +819,6 @@ void US_ResidPlotFem::plot_rdata()
    bool   do_pltrin = have_ri  &&  ck_pltrin->isChecked();
    bool   do_pltran = have_ed  &&  ck_pltran->isChecked()  &&  have_sd;
    bool   do_shorbm = have_ed  &&  ck_shorbm->isChecked()  &&  have_sd;
-   bool   do_pltbm  = have_ed && have_sd && ck_pltbm->isChecked();
 
    qDebug() << "do_shorbm -- " << do_shorbm;
    
