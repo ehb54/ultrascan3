@@ -122,6 +122,43 @@ int main() {
         }
     }
 
+    // ---- the report gives BOTH values, and says which one the scalars are -------
+    //
+    // The estimate is the distance between the computed value and the extrapolated one, so
+    // a report showing only one of them cannot tell the reader what the estimate applies
+    // to. It applies to the computed value -- the finest rung -- which is also what
+    // Results carries; rep.reported must therefore agree with Results exactly, or the
+    // report and the returned scalars would describe different answers.
+    {
+        auto b = blob(6, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-2;
+        so.require = {Obs::Dt, Obs::Dr, Obs::EtaInf};
+        so.ladder = {0.125, 0.25, 0.5};                    // never the full model
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+
+        fails += chk("reported[] is parallel to require[]", rep.reported.size() == rep.require.size());
+        for (size_t m = 0; m < rep.require.size() && m < rep.reported.size(); ++m) {
+            char msg[200];
+            std::snprintf(msg, sizeof(msg), "%s: reported[] == the returned scalar",
+                          obs_name(rep.require[m]));
+            fails += chk(msg, rep.reported[m] == obs_value(r, rep.require[m]));
+        }
+        fails += chk("report carries both columns",
+                     r.report.find("computed") != std::string::npos &&
+                     r.report.find("extrapolated") != std::string::npos);
+        fails += chk("report says which column the results are",
+                     r.report.find("are the COMPUTED column") != std::string::npos);
+        // The two columns must actually differ somewhere, or the test would pass on a
+        // report that silently printed the same number twice.
+        bool differ = false;
+        for (size_t m = 0; m < rep.reported.size() && m < rep.extrapolated.size(); ++m)
+            if (rep.reported[m] != rep.extrapolated[m]) differ = true;
+        fails += chk("computed and extrapolated are distinct answers", differ);
+    }
+
     // ---- viscosity is flagged unreliable when not required ----------------------
     {
         auto b = blob(5, 3.0, 2.0);
