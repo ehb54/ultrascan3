@@ -179,6 +179,30 @@ Result compute(const std::vector<InAtom>& atoms,
         ++r.n_rings;
     }
 
+    // ---- 3b. optional pH 7 ionisation --------------------------------------------------------
+    if (opt.assume_ph7_ionization) {
+        for (int i : idx) {
+            const OutAtom& o = perceived[i];
+            if (o.formal_charge != 0) continue;             // already charged by perception
+            if (is_elem(o, "O") && o.n_h >= 1) {
+                // a carboxyl -OH is deprotonated at pH 7
+                for (int n : bonds.nb[i]) {
+                    if (!is_elem(perceived[n], "C")) continue;
+                    if (carbon_has_carbonyl_O(n, perceived, bonds, i)) { ++r.n_neg; break; }
+                }
+            } else if (is_elem(o, "N") && bonds.nb[i].size() == 1 &&
+                       is_guanidinium_N(i, perceived, bonds)) {
+                // one positive charge per guanidinium group, not per nitrogen
+                bool first = true;
+                for (int n : bonds.nb[i])
+                    for (int m : bonds.nb[n])
+                        if (is_elem(perceived[m], "N") && m < i && bonds.nb[m].size() == 1)
+                            first = false;
+                if (first) ++r.n_pos;
+            }
+        }
+    }
+
     // ---- 4. covolume and electrostriction ---------------------------------------------------
     r.covolume = opt.free_molecule ? inc::COVOLUME : 0.0;
     r.electrostriction = r.n_pos * inc::ES_POS + r.n_neg * inc::ES_NEG;

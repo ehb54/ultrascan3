@@ -222,4 +222,63 @@ TEST("computed vbar reproduces somo.residue for the coded amino acids") {
     }
 }
 
+// Does assuming pH 7 ionisation improve psv? Measure, do not assume. The hydration rules made a
+// large difference by charging these same groups, so the symmetry is tempting -- but
+// somo.residue lists an identical vbar for the protonated and deprotonated state of every
+// ionisable residue, which says its tabulated values already absorb whatever ionisation the
+// underlying Cohn-Edsall measurements carried. Adding D&Z electrostriction on top would
+// double-count it.
+TEST("pH 7 electrostriction: measured, not assumed") {
+    HybridTable tbl;
+    if (!tbl.load("../../etc/somo.hybrid.new")) return;
+    std::vector<PdbAtom> atoms = strip_altlocs(read_pdb("data/1HEL.pdb"));
+    if (atoms.empty()) { std::printf("  (data absent -- skipped)\n"); return; }
+    std::vector<InAtom> in;
+    for (const PdbAtom& a : atoms) {
+        if (a.resName == "HOH") continue;
+        InAtom x;
+        x.element = a.element; x.x = a.x; x.y = a.y; x.z = a.z;
+        x.serial = a.serial; x.name = a.name; x.resName = a.resName;
+        x.chain = std::string(1, a.chain); x.resSeq = a.resSeq; x.hetatm = a.hetatm;
+        in.push_back(x);
+    }
+    Bonds b;
+    std::vector<OutAtom> p = Perceiver(tbl).perceive(in, b);
+    std::map<std::string, std::vector<int>> res;
+    for (size_t i = 0; i < in.size(); ++i)
+        res[in[i].resName + "|" + std::to_string(in[i].resSeq)].push_back((int) i);
+
+    struct T { const char* res; double stored; };
+    const T want[] = {{"ASP",0.603},{"GLU",0.663},{"ARG",0.698},{"LYS",0.818}};
+    double off_sum = 0, on_sum = 0; int n = 0;
+    std::printf("  %-5s %9s %9s %9s\n", "res", "stored", "neutral", "pH7 ions");
+    for (const T& w : want) {
+        for (const auto& kv : res) {
+            if (kv.first.substr(0, kv.first.find('|')) != w.res) continue;
+            bool term = false;
+            for (int i : kv.second) {
+                if (in[i].name == "OXT") term = true;
+                if (in[i].name == "N" && p[i].formal_charge > 0) term = true;
+            }
+            if (term) continue;
+            Options o_off, o_on;
+            o_on.assume_ph7_ionization = true;
+            const double v_off = compute(in, p, b, kv.second, o_off).vbar;
+            const double v_on  = compute(in, p, b, kv.second, o_on ).vbar;
+            const double d_off = 100.0 * (v_off - w.stored) / w.stored;
+            const double d_on  = 100.0 * (v_on  - w.stored) / w.stored;
+            std::printf("  %-5s %9.3f %6.3f(%+5.1f%%) %6.3f(%+5.1f%%)\n",
+                        w.res, w.stored, v_off, d_off, v_on, d_on);
+            off_sum += std::fabs(d_off); on_sum += std::fabs(d_on); ++n;
+            break;
+        }
+    }
+    if (!n) return;
+    std::printf("  mean |error|: neutral %.2f%%, with pH 7 ionisation %.2f%%\n",
+                off_sum / n, on_sum / n);
+    // The default must be whichever is actually better. It is the neutral one.
+    CHECK(off_sum <= on_sum);
+    CHECK(!Options().assume_ph7_ionization);
+}
+
 int main() { return tinytest::run(); }

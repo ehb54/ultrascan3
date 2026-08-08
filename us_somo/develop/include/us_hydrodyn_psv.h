@@ -43,6 +43,18 @@ struct Options {
     // Add the Traube covolume. False = a residue/monomeric unit (the SOMO case); true = a
     // standalone molecule.
     bool free_molecule = false;
+
+    // Charge the ionisable groups as they stand at pH 7 -- carboxyl as carboxylate, guanidinium
+    // protonated -- and apply an electrostriction term for each, in the same spirit as the pH 7
+    // hydration rules.
+    //
+    // OFF by default, and the measurement is why. somo.residue lists the SAME vbar for the
+    // protonated and deprotonated states of every ionisable residue (Asp 0.603/0.603,
+    // Glu 0.663/0.663, Arg 0.698/0.698 ...), i.e. SOMO's tabulated values already absorb
+    // whatever ionisation the underlying Cohn-Edsall measurements had. Adding an explicit D&Z
+    // electrostriction on top double-counts it: see tests/psv.cpp, where switching this on moves
+    // aspartate and glutamate several percent further from the table than leaving it off.
+    bool assume_ph7_ionization = false;
 };
 
 struct Result {
