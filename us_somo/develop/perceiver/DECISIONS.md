@@ -986,3 +986,54 @@ in the unit test, including the Asp/Glu methylene difference. vbar and molvol ar
   Glu, Arg and His are the psv outliers. Making perception emit the pH 7 ionised forms would fix
   both at once, but it moves the validated 99.833% perception figure and changes emitted hybrid
   types, so it needs a deliberate decision rather than being folded in here.
+
+## psv at pH 7: implemented, MEASURED, and left OFF — 2026-08-08
+
+eb asked to apply the same pH 7 ionisation reasoning to psv that transformed hydration, and to
+revalidate. Implemented as `somo_psv::Options::assume_ph7_ionization` -- carboxyl charged as
+carboxylate, one positive charge per guanidinium group, an electrostriction term for each.
+
+**The revalidation says do not use it.**
+
+| residue | stored | neutral | with pH 7 ionisation |
+|---|---|---|---|
+| ASP | 0.603 | 0.595 (-1.3%) | 0.537 (**-11.0%**) |
+| GLU | 0.663 | 0.655 (-1.2%) | 0.603 (**-9.0%**) |
+| ARG | 0.698 | 0.809 (+15.9%) | 0.766 (**+9.7%**) |
+| LYS | 0.818 | 0.871 (+6.5%) | 0.871 (unchanged) |
+mean |error| **6.23% neutral vs 9.05% ionised**. It helps arginine and badly hurts the acidic
+residues, for a net loss.
+
+### Why the symmetry with hydration does not hold
+somo.residue lists the **same vbar for the protonated and deprotonated state of every ionisable
+residue** -- Asp 0.603/0.603, Glu 0.663/0.663, Arg 0.698/0.698, Lys 0.818/0.818, His, Tyr, Cyh
+likewise. Ionisation there changes mass, radius, protons and hydration, but never vbar. Those
+values descend from Cohn & Edsall's densitometry on real amino acids at neutral pH, so whatever
+ionisation was present is already inside them. D&Z's electrostriction is an explicit correction
+applied to a *neutral-basis* increment sum, so charging the groups as well counts it twice.
+
+Hydration was different precisely because somo.residue does carry two hydration numbers per
+ionisable atom and the pH 7 one is a separate field -- there the pH 7 assumption had a ground
+truth to match, and matching it took hydration from 48% to 94%.
+
+The option stays in the code, off by default, with the numbers in the header comment and a test
+(`tests/psv.cpp`) that asserts the default is whichever setting actually measures better. If the
+reference values are ever put on a single, stated ionisation basis, flip it and the test will say
+whether that was right.
+
+### What this does NOT explain
+Arginine is still +15.9% neutral, and electrostriction only takes it to +9.7%. It is the known
+outlier of the scheme -- the six published residue-volume sets in Perkins 1986 Table 1 disagree
+with each other about Arg by 17% -- so it is not attributable to ionisation alone.
+
+### Final numbers after all of today's work (7 structures, ~1150 residue instances)
+| structure | vbar | molvol | hydration |
+|---|---|---|---|
+| 1HEL | 2.74% | 2.08% | **20/20** |
+| 6LYZ | 2.55% | 2.21% | 19/20 |
+| 2AAS | 2.78% | 1.93% | **19/19** |
+| 8RAT | 2.78% | 2.19% | **19/19** |
+| 3CRO | 4.72% | 3.01% | 19/23 |
+| 1MBO | 5.74% | 6.48% | 20/22 |
+| 1LDM | 2.65% | 3.78% | 20/22 |
+Perception unchanged at 99.833%; 8 test suites green.
