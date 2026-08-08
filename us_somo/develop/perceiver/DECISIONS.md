@@ -1,7 +1,7 @@
 # SOMO residue/hybrid perceiver — decision & progress log
 
-Running log for **eb**'s review. Autonomous session started 2026-07-19.
-Workspace: `~/claude/ultrascan3-perceiver` (isolated local clone), branch `ehb54-residue-perceiver`.
+Running log for review. Autonomous session started 2026-07-19.
+Worked in an isolated local clone of this repository.
 Prototype dir: `us_somo/develop/perceiver/` (self-contained, Qt-free, builds standalone).
 
 ## Goal

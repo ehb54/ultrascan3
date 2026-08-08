@@ -28,13 +28,13 @@ Reports ratio vs residue size and vs burial, over many residues in several prote
 Usage:  python3 tools/calibrate_3v_context.py [pdb ...]      (run from perceiver/)
 Requires: Volume.exe from https://github.com/vosslab/vossvolvox on PATH or at ../../../vossvolvox/bin.
 """
-import os, re, subprocess, sys, math, statistics
+import os, re, shutil, subprocess, sys, math, statistics
 from collections import defaultdict
 
 RESFILE = os.environ.get("SOMO_RESIDUE",
                          "../../etc/somo.residue.new")
-VOLEXE = os.environ.get("VOLUME_EXE",
-                        os.path.expanduser("~/claude/vossvolvox/bin/Volume.exe"))
+# Volume.exe from https://github.com/vosslab/vossvolvox. Taken from $VOLUME_EXE, else PATH.
+VOLEXE = os.environ.get("VOLUME_EXE") or shutil.which("Volume.exe") or "Volume.exe"
 PROBE = 1.4
 GRID = 0.25
 MIN_BURIAL = 85            # neighbour atoms within 8 A of the residue centroid

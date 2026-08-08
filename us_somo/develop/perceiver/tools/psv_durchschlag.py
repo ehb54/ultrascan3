@@ -13,7 +13,7 @@ The second is the interesting one: if a scheme that never saw somo.residue can r
 that scheme can be trusted on the ligands somo.residue does *not* cover -- which is the whole
 non-coded-residue problem.
 
-Sources (PDFs in ~/claude/psv-papers):
+Sources:
   [DZ94] Durchschlag & Zipper (1994) Prog Colloid Polym Sci 94:20-39.  Tables 1-5.
   [DZ97] Durchschlag & Zipper (1997) J Appl Cryst 30:803-807 + SUP84592.
   [P86]  Perkins (1986) Eur J Biochem 157:169-180.  Table 1, six residue-volume sets.
