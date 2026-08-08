@@ -54,3 +54,147 @@ INTEGRATION.md    exact SOMO placement + qmake + minimal call-site change
 - See `INTEGRATION.md` for the SOMO call site: build beads from the bead model, run the
   Solver on a Qt worker (GUI stays responsive), map `Results` → `this_data.results`, write
   `Results::report` to the `.dat` file. Retire QProcess / stdout-scraping incrementally.
+
+---
+
+# Shell reduction (`grpy::ShellSolver`)
+
+GRPY costs O((11N)^3), so the bead count dominates everything. A dense bead packing is
+hydrodynamically **screened** — interior beads sit in near-stagnant fluid and carry almost
+no force — so the exact calculation can run on a surface-enriched subset at small cost in
+accuracy. `ShellSolver` does that, and reports the error it introduced.
+
+```cpp
+grpy::ShellOptions so;
+so.enabled = true;
+so.tol     = 5e-3;                                    // 0.5% on every required observable
+so.require = { grpy::Obs::Dt, grpy::Obs::Dr, grpy::Obs::Sedimentation };
+
+grpy::ShellSolver solver( par, {}, so );
+grpy::ShellReport rep;
+grpy::Results r = solver.run( beads, phys, rep );
+
+if ( rep.viscosity_unreliable ) { /* do NOT propagate r.intrinsic_viscosity_* */ }
+```
+
+## How it works
+
+1. **Exposure** (`grpy_exposure.hpp`) — Shrake-Rupley per bead with a 1.4 Å probe, then
+   keep the most-exposed `ceil(f*N)`. Selection is by *target bead fraction*, never a fixed
+   exposure threshold: the buried fraction ranges ~1%–50% across model types, so one
+   threshold gives wildly different cost per model while a fraction controls O(N^3)
+   directly. The probe is essential — at probe 0 almost nothing registers as buried.
+2. **Ladder** — solve on a doubling ladder of bead fractions, stop when the reported bar
+   drops below `tol`. Geometric against O(N^3), so the whole ladder costs ~1.14× its final
+   rung: the convergence check is nearly free. The final 1.0 rung is the unreduced model,
+   so an unreducible structure degrades to exactly today's behaviour.
+3. **Richardson** — three rungs give the convergence order from the ratio of successive
+   gaps; the remaining error is `gap2/(r^k − 1)`. Per observable, since each converges at
+   its own order.
+
+## What it guarantees, and what it does not
+
+The reported bar **bounds the true error**: verified 92/92 (translational, 23 models,
+N=204–4068) and 252/252 (7 observables × 12 models × 3 tolerances) against unreduced exact
+GRPY. The observed order (median 1.83) matches a value predicted independently by a raw
+reduction sweep, so the error model is derived rather than fitted.
+
+Known failure mode, guarded: on structures with a **degenerate exposure distribution** (a
+perfect cubic lattice realizes ~9 distinct values over 216 beads) rungs swallow whole
+symmetry shells instead of refining, the estimated order comes out spuriously high, and the
+bar understated by ~1.4×. A floor caps extrapolation tightening at 2× the raw gap, which
+restores honesty there and is slack on every real model tested (identical honesty and
+conservatism, no speedup cost). `tests/test_shell.cpp` keeps that lattice as a regression.
+
+## Observables do not share a frontier
+
+Median error relative to `D_t` at equal reduction: anisotropy 0.15×, `D_r` 1.77×,
+**intrinsic viscosity 3.34×**. Viscosity drove the stopping decision in 36/36 test cases,
+so requiring it costs a large part of the speedup — hence `ShellOptions::require`.
+
+When viscosity is not required (or is required and does not converge), `ShellReport
+::viscosity_unreliable` is set. **Callers must then withhold `intrinsic_viscosity_high`,
+`intrinsic_viscosity_zero`, and the viscosity-derived Einstein radius** from reported
+results. The values remain in `Results::report` for the record, with a warning appended.
+
+## Speedup, honestly
+
+Against an unreduced model the gain reaches ~120×, but SOMO defaults to ASA buried-bead
+exclusion, which already removes most dead beads. Measured on that production baseline the
+incremental gain is **~2–3×**, rising with model size and largest where it is wanted. The
+durable contribution is the error bar: the existing exclusion is a binary heuristic that
+reports no uncertainty at all.
+
+## Reading the report
+
+`run()` returns the **final rung's `Results` verbatim**, so its scalars and the report text
+embedded in them always agree. The extrapolated values and the per-observable bars are
+delivered separately in `ShellReport` — overwriting the scalars with extrapolated values
+would produce a `Results` contradicting its own on-disk report.
+
+| field | meaning |
+|---|---|
+| `attempted` | reduction was tried (false if disabled, or N < 32) |
+| `converged` / `unreduced` / `mem_capped` | how the ladder ended — see below |
+| `n_full`, `n_used`, `levels` | beads in the model, beads in the final rung, rungs run |
+| `err_max`, `worst` | largest bar over the required observables, and which one |
+| `require` | echo of the requested observables; `err_est`, `extrapolated` and `k_obs` are **parallel to it** |
+| `err_est[m]` | relative bar for `require[m]` |
+| `extrapolated[m]` | Richardson value for `require[m]` — the ladder's best estimate, not what `Results` carries. Falls back to the final rung's raw value when extrapolation declines |
+| `k_obs[m]` | observed convergence order; **0 means extrapolation declined** (non-monotone or non-converging gaps), and then `err_est[m]` is the raw inter-rung gap and `extrapolated[m]` is not extrapolated at all |
+| `ns` | bead count per rung, in order |
+| `viscosity_unreliable` | withhold both viscosities and the Einstein radius — see above |
+
+The three end states are mutually exclusive in practice: `unreduced` means the ladder
+reached the full model, so the result is exact and every bar is zero; `mem_capped` means it
+was stopped by `max_beads`; plain `converged` means the tolerance was met on a reduced
+subset. Only `unreduced` licenses treating the result as exact.
+
+## Memory cap (`ShellOptions::max_beads`)
+
+A caller that refuses oversized models up front (SOMO has such a pre-flight guard) must
+size the matrix from the **full** bead count, since it cannot know where the ladder will
+stop — and so would turn away exactly the large models this exists to make feasible. The
+ladder normally stops well short of the full model, and memory goes as N², so a run that
+stops at ~25% of the beads needs ~6% of the refused matrix.
+
+Set `max_beads` to the largest rung that fits and the ladder stops there instead:
+
+- The cap is checked **after** building the subset (cheap) but **before** the solve
+  (expensive), so a rejected rung costs nothing. The ladder ascends, so the first rung over
+  budget ends it.
+- A capped run sets `ShellReport::mem_capped` and **does not** set `converged`. Its bar is
+  reported as usual and will generally exceed `tol`. It is never passed off as converged.
+- If not even the smallest rung fits, `levels == 0` and **there is no result** — the caller
+  must detect this and refuse. `Results` is default-constructed; do not read it.
+
+So an oversized model yields the best result that fits, with a quantified error, instead of
+nothing.
+
+## Progress reporting
+
+Each rung is a separate solve sweeping 0..100%. Forwarded raw, that restarts the caller's
+progress bar once per rung and gives no clue which rung is running — several solves look
+like one stalled solve repeating. `ShellSolver` therefore **wraps** the `ProgressFn` it is
+given: each rung is mapped onto its share of the whole run, weighted by predicted cost
+(~N³), and the stage string is prefixed `rung i/n, N beads: `. The bar advances
+monotonically. The denominator assumes the ladder runs to its last planned rung, so
+converging early makes it jump to done.
+
+The caller's callback signature is unchanged, and with `enabled = false` progress passes
+through **verbatim** — both asserted in `tests/test_shell.cpp`.
+
+`ShellOptions::on_rung(i, planned, beads, err_max)` fires as each rung lands, for callers
+that want to log the ladder converging rather than leave the user watching a bar. `err_max`
+is 1.0 on the first rung, since there is nothing yet to difference against.
+
+## Correctness details worth knowing
+
+- **MW and Rg are pinned to the full model.** Left to re-derive from a reduced bead list,
+  MW would fall with the dropped beads (corrupting sedimentation and both viscosities,
+  which are mass-normalized) and Rg would rise (a hollow shell has a larger radius of
+  gyration than the solid body). Regression-tested.
+- **Disabled by default.** With `enabled = false` the result is byte-identical to
+  `Solver::run` — results never move silently.
+- Do **not** use a finer ladder. A ×1.5 ladder was tested: no median speedup gain, and
+  honesty fell 100% → 84%. Well-separated rungs are what make the bar trustworthy.

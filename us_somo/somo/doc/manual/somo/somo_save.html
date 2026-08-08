@@ -23,16 +23,16 @@
 <h2>
 SOMO - Select Parameters to be Saved Module:</h2>
 <p>
-<h3><center>Last updated: June 2024 </center></h3><p>
+<h3><center>Last updated: August 2026 </center></h3><p>
 <p>
 
 <img SRC="somo-save_parameters.png" ALT="SOMO Parameters to be Saved Screen">
 </center>
 <p>
-In this module you can select a series of parameters that can be saved in a comma-separated file (extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of eight, tab-selectable screens where the parameters are subdivided according to their origin and characteristics. The parameters can be toggled from one window of the panel to the other (left side, list of parameters available; right side, parameters to be saved) by clicking on them (multiple selection available; you can scroll down while keeping pressed the central mouse button to select a contiguos series of parameters) and then using the arrows present between the two windows.<br>
-The eight screens are <b><i>Main hydro results:</i></b>, <b><i>Additional SMI results:</i></b>, <b><i>Additional ZENO results:</i></b>, <b><i>Additional GRPY results:</i></b>, <b><i>Additional vdW results:</i></b>, <b><i>Solvent conditions:</i></b>,  <b><i>ASA results and options:</i></b>, and <b><i>Fractal Dimension:</i></b>. Note that the order by which you select the parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the saved file. The <b>Model name</b> "parameter" is the only one which is fixed, alwas available and not selectable, because it will be used to distinguish the results of individual models when multiple models (such as from NMR-style files) are analyzed in a single run.<p>
+In this module you can select a series of parameters that can be saved in a comma-separated file (extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of nine, tab-selectable screens where the parameters are subdivided according to their origin and characteristics. The parameters can be toggled from one window of the panel to the other (left side, list of parameters available; right side, parameters to be saved) by clicking on them (multiple selection available; you can scroll down while keeping pressed the central mouse button to select a contiguos series of parameters) and then using the arrows present between the two windows.<br>
+The nine screens are <b><i>Main hydro</i></b>, <b><i>SMI</i></b>, <b><i>ZENO</i></b>, <b><i>GRPY</i></b>, <b><i>GRPY options</i></b>, <b><i>vdW</i></b>, <b><i>Solvent</i></b>,  <b><i>ASA</i></b>, and <b><i>Fractal dim.</i></b> screens. Note that the order by which you select the parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the saved file. The <b>Model name</b> "parameter" is the only one which is fixed, alwas available and not selectable, because it will be used to distinguish the results of individual models when multiple models (such as from NMR-style files) are analyzed in a single run.<p>
 
-The <b><i>Main hydro results:</i></b> screen contains all parameters which are listed in the <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a> pop-up window, plus some other general parameters <i>i.e.</i>:<br>
+The <b><i>Main hydro</i></b> screen contains all parameters which are listed in the <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a> pop-up window, plus some other general parameters <i>i.e.</i>:<br>
 <p>
 <b>Total beads in model<br>
 Used beads in model<br>
@@ -51,20 +51,20 @@ Used beads surface area [nm^2]<br>
 Used bead mass [Da]<br>
 Total surface area of beads in the model [nm^2]<br>
 Total volume of beads in the model [nm^3]<br>
-Number of unused beads (</b><i>this differs from what is reported in the *.hydro_res file because the used beads are already listed in the <b>Main hydro results</b> panel</i>)<br>
+Number of unused beads (</b><i>this differs from what is reported in the *.hydro_res file because the used beads are already listed in the <b>Main hydro</b> panel</i>)<br>
 <b>Conversion Factor<br>
 Processing time [s]<br>
 Maximum extensions [X, Y, Z]<br>
 Axial ratios [X:Z, X:Y, Y:Z]</b><br>
 
 <p>
-The <b><i>Additional SMI results:</i></b> screen contains all the other parameters which are reported in the <i>*.hydro_res</i> file:<br>
+The <b><i>SMI</i></b> screen contains all the other parameters which are reported in the <i>*.hydro_res</i> file:<br>
 <br>
 <b>Centre of resistance [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
 <b>Centre of mass [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
 <b>Centre of diffusion [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)</b><br>
 <p>
-The <b><i>Additional ZENO results:</i></b> screen contains parameters that are calculated only by the <b><i>ZENO</i></b> method, like the <i>standard deviations (s.d.)</i>, obtained from the averages of many blocks of independent runs:<br>
+The <b><i>ZENO</i></b> screen contains parameters that are calculated only by the <b><i>ZENO</i></b> method, like the <i>standard deviations (s.d.)</i>, obtained from the averages of many blocks of independent runs:<br>
 <b> <p>
 Sedimentation coefficient s.d.<br>
 Translational diffusion coefficient D s.d.<br>
@@ -78,7 +78,7 @@ Dimensionless intrinsic viscosity [eta]<br>
 Dimensionless intrinsic viscosity s.d.<br>
 Skin Thickness</b>
 <p>
-The <b><i>Additional GRPY results:</i></b> screen contains additional parameters that are calculated by the <b><i>GRPY</b></i> method:<br>
+The <b><i>GRPY</i></b> screen contains additional parameters that are calculated by the <b><i>GRPY</b></i> method:<br>
 <b><p>
 Rotational frictional coefficient [g*cm^2/s]<br>
 Rotational diffusion coefficient [1/s]<br>
@@ -93,14 +93,25 @@ Relaxation times, tau(5) [ns]<br>
 Relaxation times, tau(m) [ns]<br>
 GRPY Einstein's radius [nm]</b>
 <p>
-The <b><i>Additional vdW results:</i></b> screen contains information on the atomic hydration used in the bead models generation:<br>
+The <b><i>GRPY options</i></b> screen contains the <b><i>GRPY</i></b> settings that change the computed values, together with the accuracy actually achieved when <a href=somo_hydro.html>shell reduction</a> was used. These are recorded so that a saved file states the conditions its numbers were obtained under, which matters particularly when comparing runs made at different settings:<br>
+<b><p>
+GRPY single precision<br>
+GRPY shell reduction<br>
+GRPY shell reduction target accuracy [%]<br>
+GRPY shell reduction intrinsic viscosity required<br>
+GRPY shell reduction estimated error [%]<br>
+GRPY shell reduction worst quantity</b>
+<p>
+The <i>estimated error</i> is the value the calculation actually achieved, which may be smaller than the target when it converged comfortably, or larger when it was stopped early or limited by the available memory; the <i>worst quantity</i> names the hydrodynamic parameter that estimate belongs to, since the figure quoted is the largest over all those requested (see <a href=somo_hydro_shell_reduction.html>the description of the method</a>). Both are zero and empty respectively when shell reduction was not used. Note also that when shell reduction is in effect the <b>Number of beads used</b> parameter reports the beads the reduced calculation actually used, not the number remaining after burial exclusion.
+<p>
+The <b><i>vdW</i></b> screen contains information on the atomic hydration used in the bead models generation:<br>
 <b><p>
 vdW Theoretical Waters<br>
 vdW Exposed Residues<br>
 vdW Exposed Waters</b>
 <p>
 
-The <b><i>Solvent conditions:</i></b> screen contains the parameters as set in the <a href=somo_hydro.html><b><i>
+The <b><i>Solvent</i></b> screen contains the parameters as set in the <a href=somo_hydro.html><b><i>
 Hydrodynamic Calculations</i></b></a> options module:<br><p>
 <b>Solvent name<br>
 Solvent acronym<br>
@@ -109,7 +120,7 @@ Solvent viscosity [cP]<br>
 Solvent density [g/ml]<br>
 pH</b>
 <p>
-The <b><i>ASA results and options:</i></b> screen contains first two parameters, derived from the <b>ASAB1</b> execution, and then the settings used for the <b><i>vdW with overlaps</b></i> method to perform the atomic hydration and to identify the buried beads for their exclusion in the <b><i>GRPY</b></i> computations: <p>
+The <b><i>ASA</i></b> screen contains first two parameters, derived from the <b>ASAB1</b> execution, and then the settings used for the <b><i>vdW with overlaps</b></i> method to perform the atomic hydration and to identify the buried beads for their exclusion in the <b><i>GRPY</b></i> computations: <p>
 <b>Radius of gyration (+r) [A] (from PDB atomic structure)</b> (<i>computed by taking into account the actual radius</i> r <i>of each atom</i>)<br>
 <b>Radius of gyration (-r) [A] (from PDB atomic structure)</b> (<i>computed without taking into account the actual radius</i> r <i> of each atom</i>)<br><b>
 ASA Hydrate probe radius [A]<br>
@@ -117,7 +128,7 @@ ASA Hydrate Threshold [A^2]<br>
 ASA vdW+GRPY probe radius [A]<br>
 ASA vdW+GRPY Threshold [&]</b>
 <p>
-The <b><i>Fractal Dimension:</i></b> screen contains sveral parameters and information about the <b><i>D<sub>m</sub></i></b> and <b><i>D<sub>s</sub></i></b> computations:<p>
+The <b><i>Fractal dim.</i></b> screen contains sveral parameters and information about the <b><i>D<sub>m</sub></i></b> and <b><i>D<sub>s</sub></i></b> computations:<p>
 <b>Fractal dimension parameters<br>
 Fractal dimension<br>
 Fractal dimension s.d.<br>
@@ -148,7 +159,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on June 13, 2024.
+Last modified on August 7, 2026.
 </font>
 </body>
 </html>

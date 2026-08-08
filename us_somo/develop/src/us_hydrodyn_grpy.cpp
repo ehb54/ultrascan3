@@ -16,6 +16,7 @@
 
 // in-process GRPY module (issue 972): replaces the external binary + stdout scraping
 #include "grpy_api.hpp"
+#include "grpy_shell.hpp"
 #include "parallel_qt.hpp"
 
 #define SLASH QDir::separator()
@@ -45,6 +46,183 @@ static qint64 grpy_physical_ram_bytes() {
 #else
    return 0;   // unknown platform: no guard (fail open)
 #endif
+}
+
+// Scripting-override parser. File-static rather than a lambda so the pre-flight guard in
+// calc_grpy_hydro() and the solver setup in grpy_process_next() read gparams identically.
+static bool truthy( QString v ) {
+   v = v.trimmed().toLower();
+   return v == "1" || v == "true" || v == "yes" || v == "on";
+}
+
+// Pause a US_Timer across a blocking modal dialog, resuming on scope exit.
+//
+// The GRPY run is timed end to end, but the results-writing path prompts for a filename
+// whenever an output file already exists and overwrite_hydro is false -- and that prompt is
+// modal, so the operator's response time landed in "Time to process". Measured at 71 s on
+// one run, and it varies per run, which makes interactive GRPY timings incomparable.
+//
+// US_Timer::stop_timer banks the interval so far WITHOUT counting a completion, and
+// start_timer restarts from zero; so stop/start is exactly pause/resume, and the paused
+// span is simply never accumulated. No change to US_Timer is needed.
+//
+// The prompt itself is unchanged -- this only stops it being counted as compute.
+class GrpyTimerPause {
+public:
+   GrpyTimerPause( US_Timer & t, const QString & name ) : t_( t ), name_( name ) {
+      t_.stop_timer( name_ );
+   }
+   ~GrpyTimerPause() { t_.start_timer( name_ ); }
+private:
+   US_Timer & t_;
+   QString    name_;
+};
+#define GRPY_PAUSE_TIMER GrpyTimerPause grpy_timer_pause__( timers, "compute grpy all models" )
+
+// Write, and display, a bead model of each rung's reduced shell.
+//
+// The shell report records its selection as indices into the bead list GRPY was given,
+// which is the .grpy file -- written from `use_model` in bead_model_output_order(), keeping
+// only beads that are active and (unless buried beads are included) not buried. That same
+// filter and order is rebuilt here, so index k from the report is the k-th bead here. Note
+// bead_output.sequence == 1 reorders the model, so taking bead_model order instead would
+// quietly select the wrong beads.
+//
+// Diagnostic only, off by default: this exists so the reduction can be seen and checked.
+// Files land in <somo>/tmp with fixed per-rung names and overwrite freely -- they are
+// regenerated every run, and prompting per rung would add a modal dialog to each.
+void US_Hydrodyn::grpy_write_shell_model( const vector < int > & idx,
+                                          int rung,
+                                          const QString & base_name ) {
+   if ( idx.empty() ) {
+      return;
+   }
+
+   // Rebuild the .grpy bead order/filter exactly.
+   vector < PDB_atom * > use_model;
+   bead_model_output_order( & bead_model, use_model );
+   vector < PDB_atom * > used;
+   used.reserve( use_model.size() );
+   for ( unsigned int i = 0; i < use_model.size(); i++ ) {
+      if ( use_model[ i ]->active ) {
+         int color = get_color( use_model[ i ] );
+         if ( hydro.grpy_bead_inclusion || color != 6 ) {
+            used.push_back( use_model[ i ] );
+         }
+      }
+   }
+
+   const QString dir = get_somo_dir() + SLASH + "tmp";
+   QDir().mkpath( dir );
+
+   {
+      const int r = rung;
+      vector < PDB_atom > shell;
+      shell.reserve( idx.size() );
+      bool bad = false;
+      for ( int k : idx ) {
+         if ( k < 0 || k >= (int) used.size() ) { bad = true; break; }
+         shell.push_back( * used[ (unsigned int) k ] );
+      }
+      if ( bad ) {
+         // Only reachable if the .grpy bead list and this one disagree, which would mean
+         // the models are of the wrong beads -- say so rather than write something wrong.
+         editor_msg( "red",
+                     QString( us_tr( "GRPY shell reduction: internal bead-index mismatch"
+                                     " (%1 selected of %2 available); shell models not"
+                                     " written.\n" ) )
+                     .arg( idx.size() ).arg( used.size() ) );
+         return;
+      }
+
+      const QString name = QString( "%1-shell-rung-%2" ).arg( base_name ).arg( r + 1 );
+      write_bead_model( dir + SLASH + name, & shell );
+      write_bead_spt  ( dir + SLASH + name, & shell );
+      editor_msg( "dark blue",
+                  QString( us_tr( "GRPY shell reduction: wrote shell model rung %1,"
+                                  " %2 beads: %3\n" ) )
+                  .arg( r + 1 ).arg( shell.size() ).arg( dir + SLASH + name ) );
+      model_viewer( dir + SLASH + name + ".spt", "-script" );
+   }
+}
+
+// Encode the GRPY settings that change the answer into a file-name suffix, in the style
+// SOMO already uses for bead models (short mnemonic + value, '.' -> '_', appended only when
+// the option is set -- cf. PR1_4, TH10, pH7, A20, hy, G4 in getExtendedSuffix()).
+//
+// Only non-default settings appear, so a default run produces exactly the names it always
+// did. The point is that shells produced under different settings must not collide: at one
+// target accuracy, or with intrinsic viscosity required rather than not, the retained beads
+// differ, and without this the files would silently overwrite each other.
+//
+//   sp        single precision
+//   SR0_5     shell reduction, 0.5% target accuracy
+//   eta/noeta whether intrinsic viscosity had to converge
+static QString grpy_settings_suffix( bool single, bool shell, double tol, bool require_eta ) {
+   QString s;
+   if ( single ) {
+      s += "-sp";
+   }
+   if ( shell ) {
+      s += QString( "-SR%1" ).arg( 100.0 * tol );
+      s += require_eta ? "eta" : "noeta";
+   }
+   return s.replace( ".", "_" );
+}
+
+// Format a fraction as a percentage string, e.g. 0.00489 -> "0.489%".
+//
+// The percent sign has to be attached HERE rather than written as a literal in a format
+// string, because QString::arg() -- unlike printf -- has no "%%" escape: it substitutes
+// %1..%99 and passes every other "%" through untouched, so "%1%%" renders a stray double
+// percent. Producing the whole token here also keeps a literal "%" from ever sitting next
+// to a placeholder, where "%1%%2" would be genuinely ambiguous to read.
+static QString grpy_pct( double frac, int prec = 3 ) {
+   return QString::number( 100.0 * frac, 'g', prec ) + "%";
+}
+
+// Peak bytes for the tiled upper triangle of the 11N x 11N mobility matrix, plus ~10%.
+// Single definition so the pre-flight guard and the shell-reduction budget below can never
+// drift apart and disagree about what fits.
+static double grpy_matrix_bytes( int beads, bool single ) {
+   const double dim = 11.0 * (double) beads;
+   return dim * dim * 0.5 * ( single ? 4.0 : 8.0 ) * 1.10;
+}
+
+// Inverse of the above: the largest bead count that still fits the guard's budget
+// (70% of physical RAM). 0 = no limit known, so no cap is applied.
+static int grpy_max_beads_for_ram( bool single ) {
+   const qint64 ram = grpy_physical_ram_bytes();
+   if ( ram <= 0 ) return 0;
+   const double per_bead2 = grpy_matrix_bytes( 1, single );      // bytes at N = 1
+   const double n = sqrt( ( 0.70 * (double) ram ) / per_bead2 );
+   return n > 1.0 ? (int) n : 1;
+}
+
+// Explicit override of the shell-reduction bead cap: GRPY_SHELL_MAX_BEADS in the
+// environment, or the grpy_shell_max_beads script parameter (script wins). Returns 0 when
+// unset or unparseable, meaning "use the memory-derived cap".
+//
+// Env/script only, with no GUI control, matching grpy_ooc_dir: this is a diagnostic and
+// shared-machine knob, not a user setting. Two uses:
+//   - bounding GRPY's footprint below 70% of RAM on a machine shared with other work;
+//   - exercising the memory-capped path at all. Without it the ladder can only reach the
+//     cap by FAILING on the rung below it, which on a model large enough to have a cap
+//     means paying for that rung first -- measured at 5h44m on a 11328-bead model.
+// It is honoured in both directions; a value above what memory supports is warned about
+// rather than silently clamped, since overriding is a deliberate act.
+static int grpy_shell_cap_override( const map < QString, QString > & gparams ) {
+   int v = 0;
+   bool ok = false;
+   if ( !qEnvironmentVariableIsEmpty( "GRPY_SHELL_MAX_BEADS" ) ) {
+      const int e = QString( qgetenv( "GRPY_SHELL_MAX_BEADS" ) ).trimmed().toInt( &ok );
+      if ( ok && e > 0 ) v = e;
+   }
+   if ( gparams.count( "grpy_shell_max_beads" ) ) {
+      const int s = gparams.at( "grpy_shell_max_beads" ).trimmed().toInt( &ok );
+      if ( ok && s > 0 ) v = s;
+   }
+   return v;
 }
 
 double US_Hydrodyn::model_mw( const vector < PDB_atom *> use_model ) {
@@ -167,6 +345,11 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    grpy_addl_params  .clear();
    grpy_used_beads   .clear();   // was drained only via pop_front, so an early abort
                                  // (e.g. the memory guard) left a stale count behind
+   grpy_settings_sfx .clear();   // likewise: a run that aborts before the settings are
+                                 // resolved must not leave the previous run's suffix
+   grpy_eff_hydro        = hydro; // refined in grpy_process_next once overrides resolve
+   grpy_shell_err_pct    = 0e0;
+   grpy_shell_worst_name = "";
 
    grpy_results.method                = "GRPY";
    grpy_results.mass                  = 0e0;
@@ -371,11 +554,66 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    {
       int max_beads = 0;
       for ( int nb : grpy_used_beads ) if ( nb > max_beads ) max_beads = nb;
-      const qint64 ram    = grpy_physical_ram_bytes();          // 0 = unknown -> skip
-      const double scalar = hydro.grpy_single ? 4.0 : 8.0;
-      const double dim    = 11.0 * (double) max_beads;
-      const double est    = dim * dim * 0.5 * scalar * 1.10;    // triangle + ~10% overhead
-      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram ) {
+      const qint64 ram = grpy_physical_ram_bytes();             // 0 = unknown -> skip
+      // Resolve the same scripting overrides the solver applies further down, so the guard
+      // judges the run that will actually happen rather than the dialog's settings.
+      const bool single_eff = gparams.count( "grpy_single" )
+         ? truthy( gparams[ "grpy_single" ] ) : hydro.grpy_single;
+      const bool shell_eff  = gparams.count( "grpy_shell" )
+         ? truthy( gparams[ "grpy_shell" ] )  : hydro.grpy_shell;
+      const double est = grpy_matrix_bytes( max_beads, single_eff );
+
+      // Shell reduction (issue 984) makes this survivable: its ladder is capped to what
+      // fits (see ShellOptions::max_beads at the call site), so an oversized model yields
+      // the largest rung that fits WITH its error bar instead of being refused outright.
+      // Defer to it whenever the budget admits even the smallest rung -- below that there
+      // is nothing to compute and the refusal still stands.
+      const int    ram_cap  = grpy_max_beads_for_ram( single_eff );
+      const int    cap_ovr  = grpy_shell_cap_override( gparams );
+      const int    cap      = cap_ovr > 0 ? cap_ovr : ram_cap;
+      const double smallest = grpy::ShellOptions{}.ladder.empty()
+         ? 1.0 : grpy::ShellOptions{}.ladder.front();
+      const bool   shell_can_help =
+         shell_eff && cap > 0 && (double) cap >= smallest * (double) max_beads;
+
+      // Say what the cap is, every run. An override especially must never be silent: it
+      // changes which results are obtainable, and a stale environment variable would
+      // otherwise be invisible while quietly bounding every calculation.
+      if ( cap_ovr > 0 ) {
+         const bool over_ram = ram_cap > 0 && cap_ovr > ram_cap;
+         editor_msg( over_ram ? "red" : "dark red",
+                     QString( us_tr( "GRPY: shell reduction bead cap OVERRIDDEN to %1 by %2"
+                                     " (memory-derived cap %3)%4\n" ) )
+                     .arg( cap_ovr )
+                     .arg( gparams.count( "grpy_shell_max_beads" )
+                           ? "grpy_shell_max_beads" : "GRPY_SHELL_MAX_BEADS" )
+                     .arg( ram_cap > 0 ? QString::number( ram_cap ) : us_tr( "unknown" ) )
+                     .arg( !shell_eff
+                           // The cap only bounds the shell-reduction ladder. Announcing it
+                           // as though it were in force while shell reduction is off reads
+                           // as if it were limiting this run, which it is not.
+                           ? us_tr( " -- no effect: shell reduction is off" )
+                           : over_ram
+                           ? us_tr( " -- ABOVE what this machine's memory supports; it may"
+                                    " swap heavily" )
+                           : QString() ) );
+      } else if ( shell_eff && ram_cap > 0 ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "GRPY shell reduction: bead cap %1, from %2 GB of"
+                                     " memory (set GRPY_SHELL_MAX_BEADS to override)\n" ) )
+                     .arg( ram_cap )
+                     .arg( (double) ram / ( 1024.0 * 1024.0 * 1024.0 ), 0, 'f', 1 ) );
+      }
+
+      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram && shell_can_help ) {
+         editor_msg( "dark red",
+                     QString( us_tr( "GRPY: the largest model (%1 beads) exceeds the memory "
+                                     "budget for a full calculation; shell reduction will cap "
+                                     "its ladder at %2 beads and report the resulting error.\n" ) )
+                     .arg( max_beads ).arg( cap ) );
+      }
+
+      if ( ram > 0 && max_beads > 0 && est > 0.70 * (double) ram && !shell_can_help ) {
          const double GB = 1024.0 * 1024.0 * 1024.0;
          QString msg =
             QString( us_tr( "GRPY memory estimate exceeds available RAM:\n"
@@ -387,8 +625,14 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                             "rotational diffusion). Then retry.\n" ) )
             .arg( max_beads )
             .arg( est / GB, 0, 'f', 1 )
-            .arg( hydro.grpy_single ? us_tr( "single" ) : us_tr( "double" ) )
+            .arg( single_eff ? us_tr( "single" ) : us_tr( "double" ) )
             .arg( (double) ram / GB, 0, 'f', 1 );
+         if ( !shell_eff ) {
+            msg += us_tr( "\nGRPY shell reduction is another option: it computes on the "
+                          "most solvent-exposed beads only, stopping when the result stops "
+                          "changing, and reports the remaining error. Unlike ZENO it still "
+                          "computes rotational diffusion.\n" );
+         }
          if ( gui_script ) {
             // headless script mode: proper failure, no blocking dialog.
             editor_msg( "red", msg );
@@ -429,6 +673,9 @@ bool US_Hydrodyn::calc_grpy_hydro() {
 
    grpy_running    = true;
    grpy_success    = true;
+   // Cleared at run start so the non-shell path (and any earlier run) can never
+   // leave viscosity suppressed. Set per model by the shell-reduction path.
+   grpy_viscosity_unreliable = false;
    progress->setMaximum( 101 * ( grpy_to_process.size() ) + 1 );
    // qDebug() << "progress max " <<  101 * ( grpy_to_process.size() ) + 1;
    progress->setValue( 0 );
@@ -512,10 +759,6 @@ void US_Hydrodyn::grpy_process_next() {
       // override, for headless/batch automation. Out-of-core has no GUI control
       // (script/env only) as it is a cluster-scale knob. Default = in-core double.
       grpy::Options opt;
-      auto truthy = []( QString v ) {
-         v = v.trimmed().toLower();
-         return v == "1" || v == "true" || v == "yes" || v == "on";
-      };
       opt.single = hydro.grpy_single;                       // GUI checkbox (default off)
       if ( gparams.count( "grpy_single" ) ) {               // scripting override
          opt.single = truthy( gparams[ "grpy_single" ] );
@@ -534,11 +777,113 @@ void US_Hydrodyn::grpy_process_next() {
                            : QString( us_tr( "out-of-core (%1) " ) ).arg( ooc_dir.trimmed() ) ) );
       }
 
+      // Shell reduction (issue 984): run exact GRPY on a solvent-exposed subset, with a
+      // convergence ladder that reports its own error. Off by default -- with it off the
+      // result is byte-identical to the plain Solver, so existing results never move.
+      // The observable set matters: intrinsic viscosity needs roughly 3.3x the accuracy
+      // budget of D_t at equal reduction and drove the stopping decision in every test
+      // case, so requiring it costs a large part of the speedup. When it is NOT required,
+      // viscosity is withheld from the reported results as unreliable (see
+      // grpy_viscosity_unreliable and its use in grpy_finished).
+      grpy::ShellOptions sopt;
+      sopt.enabled = hydro.grpy_shell;
+      sopt.tol     = hydro.grpy_shell_tol > 0 ? hydro.grpy_shell_tol : 5e-3;
+      bool require_eta = hydro.grpy_shell_require_eta;
+      if ( gparams.count( "grpy_shell" ) ) {                // scripting override
+         sopt.enabled = truthy( gparams[ "grpy_shell" ] );
+      } else if ( !qEnvironmentVariableIsEmpty( "GRPY_SHELL" ) ) {
+         sopt.enabled = true;
+      }
+      if ( gparams.count( "grpy_shell_tol" ) ) {
+         double v = gparams[ "grpy_shell_tol" ].toDouble();
+         if ( v > 0 ) sopt.tol = v;
+      }
+      if ( gparams.count( "grpy_shell_require_eta" ) ) {
+         require_eta = truthy( gparams[ "grpy_shell_require_eta" ] );
+      }
+      sopt.require = { grpy::Obs::Dt, grpy::Obs::Dr, grpy::Obs::Sedimentation };
+      if ( require_eta ) {
+         sopt.require.push_back( grpy::Obs::EtaInf );
+         sopt.require.push_back( grpy::Obs::EtaZero );
+      }
+      // Cap the ladder at what physical RAM allows, using the same budget the pre-flight
+      // guard enforces. On a model that fits this never binds (every rung is under the cap
+      // and the ladder ends at the full model as before); on one that does not, the ladder
+      // stops at the largest rung that fits and reports its error rather than thrashing.
+      // Resolved exactly as the guard resolves it -- if these two disagreed, the guard
+      // could admit a run the ladder then refuses to compute, or vice versa. Reported
+      // there, once per run, rather than here, which runs per model.
+      {
+         const int cap_ovr = grpy_shell_cap_override( gparams );
+         sopt.max_beads = cap_ovr > 0 ? cap_ovr : grpy_max_beads_for_ram( opt.single );
+      }
+
+      // Diagnostic: keep each rung's selection so the reduced shells can be written out.
+      sopt.record_subsets = hydro.grpy_shell_save_models;
+
+      // Resolved once here, from the settings this run will actually use, and consumed by
+      // every file the run writes -- the shell models below and the results in
+      // grpy_finished() -- so they cannot disagree. Empty for default settings, leaving
+      // those file names exactly as they have always been.
+      grpy_settings_sfx = grpy_settings_suffix( opt.single, sopt.enabled, sopt.tol, require_eta );
+
+      // What this run will actually use, overrides included.
+      grpy_eff_hydro                          = hydro;
+      grpy_eff_hydro.grpy_single              = opt.single;
+      grpy_eff_hydro.grpy_shell               = sopt.enabled;
+      grpy_eff_hydro.grpy_shell_tol           = sopt.tol;
+      grpy_eff_hydro.grpy_shell_require_eta   = require_eta;
+
+      // Declared before the on_rung lambda below, which captures it by reference to write
+      // each rung's shell model as that rung lands.
+      grpy::ShellReport srep;
+
+      if ( sopt.enabled ) {
+         editor_msg( "dark blue",
+                     QString( us_tr( "GRPY shell reduction: tolerance %1%2\n" ) )
+                     .arg( grpy_pct( sopt.tol ) )
+                     .arg( require_eta ? us_tr( ", intrinsic viscosity required" )
+                                       : us_tr( ", intrinsic viscosity NOT required (will be withheld)" ) ) );
+         // Log each rung as it lands. Without this the ladder is silent for its whole
+         // duration and the only visible sign of several solves is the progress bar.
+         const double rung_tol   = sopt.tol;
+         const bool   save_models = hydro.grpy_shell_save_models;
+         // Name the shell models for the settings that produced them: at a different
+         // target accuracy, or with viscosity required rather than not, the retained beads
+         // differ, and identically-named files would overwrite each other between runs.
+         const QString shell_base =
+            QFileInfo( grpy_last_processed ).completeBaseName() + grpy_settings_sfx;
+         // srep outlives the solve below, and the module fills in each rung's selection
+         // BEFORE calling on_rung, so the current rung is srep.kept.back() here.
+         sopt.on_rung = [ this, rung_tol, save_models, shell_base, &srep ]
+            ( int i, int planned, int nb, double err ) {
+            editor_msg( "dark blue",
+                        QString( us_tr( "GRPY shell reduction: rung %1 of %2, %3 beads%4\n" ) )
+                        .arg( i + 1 ).arg( planned ).arg( nb )
+                        .arg( i == 0
+                              ? us_tr( " (first rung: no error estimate yet)" )
+                              : QString( us_tr( ", estimated error %1 (target %2)" ) )
+                                .arg( grpy_pct( err ) )
+                                .arg( grpy_pct( rung_tol ) ) ) );
+            // Written and shown as each rung lands rather than in a batch at the end, so an
+            // obviously wrong shell can be seen while there is still something to stop.
+            if ( save_models && (int) srep.kept.size() == i + 1 ) {
+               grpy_write_shell_model( srep.kept.back(), i, shell_base );
+            }
+            qApp->processEvents();
+         };
+
+         // Let the Stop button end the ladder between rungs. Each rung costs roughly eight
+         // times the one before, so stopping before the next begins saves nearly all that
+         // remained; a rung already running finishes, as the solve has no interior abort.
+         sopt.should_stop = [ this ]() { return stopFlag; };
+      }
+
       la::QtParallel par( USglobal->config_list.numThreads );
-      grpy::Solver solver( par, opt );
+      grpy::ShellSolver solver( par, opt, sopt );
       const int model = grpy_last_model_number;
       grpy::Results r = solver.run(
-         in.beads, in.params,
+         in.beads, in.params, srep,
          [ this, model ]( int pct, const char * stage ) {
             if ( stopFlag ) return;
             progress->setValue( 101 * ( grpy_processed.size() - 1 ) + pct );
@@ -548,6 +893,58 @@ void US_Hydrodyn::grpy_process_next() {
             qApp->processEvents();
          } );
       grpy_stdout = QString::fromStdString( r.report );
+      grpy_viscosity_unreliable = srep.viscosity_unreliable;
+
+      // Report the beads the calculation ACTUALLY used. grpy_last_used_beads was set at
+      // setup from the ASA-excluded count, before any reduction, so a shell-reduced run
+      // would otherwise report the unreduced figure -- 11328 for a run that used 2832 --
+      // in the results table, the .grpy_res report line and the saved CSV alike. Only
+      // narrowed, never widened: with shell reduction off, srep.n_used is the full count.
+      if ( srep.attempted && srep.n_used > 0 && srep.n_used < grpy_last_used_beads ) {
+         grpy_last_used_beads = srep.n_used;
+      }
+
+      // Carried to grpy_finished() for the saved results: the bar the run achieved, and
+      // which quantity it belongs to. Zero/empty when reduction was not attempted.
+      grpy_shell_err_pct    = srep.attempted ? 100.0 * srep.err_max : 0e0;
+      grpy_shell_worst_name = ( srep.attempted && srep.err_max > 0.0 )
+         ? QString( grpy::obs_name( srep.worst ) ) : QString();
+      if ( sopt.enabled ) {
+         // err_max is the MAX over the required observables, and intrinsic viscosity runs
+         // ~3.3x the error of D_t at equal reduction -- so on an unconverged run this one
+         // number is usually the viscosity's, and quoting it alone makes D_t look far worse
+         // than it is. Name the observable it belongs to; the per-observable bars are in
+         // the results file. Meaningless on an exact (unreduced) result, where all bars are 0.
+         const QString worst = srep.err_max > 0.0
+            ? QString( us_tr( ", worst: %1" ) ).arg( grpy::obs_name( srep.worst ) )
+            : QString();
+         editor_msg( srep.converged ? "dark blue" : "red",
+                     QString( us_tr( "GRPY shell reduction: %1 of %2 beads used, %3\n" ) )
+                     .arg( srep.n_used ).arg( srep.n_full )
+                     .arg( srep.converged
+                           ? QString( us_tr( "converged (estimated error %1%2)" ) )
+                             .arg( grpy_pct( srep.err_max ) ).arg( worst )
+                           : srep.stopped
+                           ? QString( us_tr( "STOPPED BEFORE CONVERGING (estimated error %1%2)" ) )
+                             .arg( grpy_pct( srep.err_max ) ).arg( worst )
+                           : srep.mem_capped
+                           ? QString( us_tr( "STOPPED BY AVAILABLE MEMORY at %1 beads "
+                                             "(estimated error %2%3)" ) )
+                             .arg( sopt.max_beads ).arg( grpy_pct( srep.err_max ) ).arg( worst )
+                           : QString( us_tr( "DID NOT CONVERGE (estimated error %1%2)" ) )
+                             .arg( grpy_pct( srep.err_max ) ).arg( worst ) ) );
+         if ( srep.err_max > 0.0 ) {
+            editor_msg( "dark blue",
+                        us_tr( "GRPY shell reduction: that is the LARGEST of the requested"
+                               " quantities; the individual estimates, which are typically"
+                               " smaller, are listed in the results file.\n" ) );
+         }
+         if ( srep.viscosity_unreliable ) {
+            editor_msg( "red", us_tr( "GRPY shell reduction: intrinsic viscosity and Einstein"
+                                      " radius are unconverged and are being withheld from the"
+                                      " results (retained in the results file, annotated).\n" ) );
+         }
+      }
 
       // hand off to the existing finish/parse path, deferred to the event loop so we
       // don't recurse through the model batch (mirrors the old async QProcess finished
@@ -722,8 +1119,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
    // save stdout
    if ( !batch_avg_hydro_active() && !grpy_mm ) {
-      QString grpy_out_name = grpy_last_processed.replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), ".grpy_res" );
+      QString grpy_out_name = QString( grpy_last_processed )
+         .replace( QRegularExpression( QStringLiteral( ".grpy$" ) ),
+                   grpy_settings_sfx + ".grpy_res" );
       if ( !overwrite_hydro ) {
+         GRPY_PAUSE_TIMER;   // operator response time is not compute
          grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
       }
       QFile f( grpy_out_name );
@@ -772,7 +1172,12 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
             grpy_results2.s20w += it->second[ i ] * it->second[ i ];
          }
 
-         if ( it->first == "\\[eta\\]" ) {
+         // Skipped when unconverged (issue 984). NOTE the cross-model mean below divides
+         // by the TOTAL model count, not a per-observable count, so a run mixing
+         // contributing and non-contributing models would silently corrupt it. That is
+         // safe here only because shell reduction is a RUN-LEVEL setting: every model in
+         // a run either requires viscosity convergence or none does.
+         if ( it->first == "\\[eta\\]" && !grpy_viscosity_unreliable ) {
             grpy_results.viscosity += it->second[ i ];
             grpy_results2.viscosity += it->second[ i ] * it->second[ i ];
          }
@@ -798,7 +1203,10 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       this_data.results.method                = "GRPY";
       this_data.results.mass                  = hydro.mass_correction ? hydro.mass : model_mw( bead_models[ grpy_last_model_number ] ); // ( model_vector[ grpy_last_model_number ].mw + model_vector[ grpy_last_model_number ].ionized_mw_delta );
-      this_data.hydro                         = hydro;
+      this_data.hydro                         = grpy_eff_hydro;
+      this_data.grpy_shell_tol_pct            = 100.0 * grpy_eff_hydro.grpy_shell_tol;
+      this_data.grpy_shell_err                = grpy_shell_err_pct;
+      this_data.grpy_shell_worst              = grpy_shell_worst_name;
       this_data.results.num_models            = 1;
       this_data.results.name                  =
          // QString( "%1-%2" ).arg( QFileInfo( grpy_last_processed ).completeBaseName().replace( QRegularExpression( QStringLiteral( ".grpy$" ) ), "" ) ).arg( it->first + 1 )
@@ -855,7 +1263,11 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( it->second.count( "Dt" ) ) {
          this_data.results.D20w = it->second[ "Dt" ];
       }
-      if ( it->second.count( "\\[eta\\]" ) ) {
+      // Shell reduction (issue 984): when intrinsic viscosity was not converged it is
+      // withheld from the reported results entirely rather than propagated with a caveat
+      // -- a value carrying a warning is still a value that gets used downstream. It
+      // remains in the on-disk report, annotated, for the record.
+      if ( it->second.count( "\\[eta\\]" ) && !grpy_viscosity_unreliable ) {
          this_data.results.viscosity = it->second[ "\\[eta\\]" ];
       }
       if ( it->second.count( "tau1" ) ) {
@@ -883,7 +1295,12 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
       if ( it->second.count( "rs" ) ) {
          this_data.results.rs = it->second[ "rs" ] * 1e7;
       }
-      if ( it->second.count( "grpy_einst_rad" ) ) {
+      // The Einstein radius is parsed from the SAME report line as the viscosity
+      // ("Zero frequency intrinsic viscosity eta 0", fields 1 and 2) and is
+      // viscosity-derived, so it inherits the same unreliability and must be withheld
+      // together with it -- otherwise a trustworthy-looking radius would carry the
+      // identical error.
+      if ( it->second.count( "grpy_einst_rad" ) && !grpy_viscosity_unreliable ) {
          this_data.grpy_einst_rad = it->second[ "grpy_einst_rad" ] * 1e7;
       }
       
@@ -1189,8 +1606,9 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
 
       if ( saveParams && create_hydro_res && !grpy_mm )
       {
-         QString fname = get_somo_dir() + "/" + this_data.results.name + ".grpy.csv";
+         QString fname = get_somo_dir() + "/" + this_data.results.name + grpy_settings_sfx + ".grpy.csv";
          if ( !overwrite_hydro ) {
+            GRPY_PAUSE_TIMER;   // operator response time is not compute
             fname = fileNameCheck( fname, 0, this );
          }
 
@@ -1264,8 +1682,9 @@ void US_Hydrodyn::grpy_finalize() {
       vector < save_data > stats = save_util->stats( & grpy_mm_save_params.data_vector );
 
       {
-         QString grpy_out_name = grpy_mm_name + ".grpy_res";
+         QString grpy_out_name = grpy_mm_name + grpy_settings_sfx + ".grpy_res";
          if ( !overwrite_hydro ) {
+            GRPY_PAUSE_TIMER;   // operator response time is not compute
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
          }
       
@@ -1287,8 +1706,9 @@ void US_Hydrodyn::grpy_finalize() {
                                 batch_window->save_batch_active);
 
       if ( saveParams && create_hydro_res ) {
-         QString grpy_out_name = grpy_mm_name + ".grpy.csv";
+         QString grpy_out_name = grpy_mm_name + grpy_settings_sfx + ".grpy.csv";
          if ( !overwrite_hydro ) {
+            GRPY_PAUSE_TIMER;   // operator response time is not compute
             grpy_out_name = fileNameCheck( grpy_out_name, 0, this );
          }
          QFile f( grpy_out_name );
