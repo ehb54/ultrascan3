@@ -886,3 +886,50 @@ limit, not a regression.
   entries for residues with ionization variants, and counting each weights those residues more
   heavily just for being pH-aware -- enough to flip the majority for a borderline type such as
   O2H1 (51 zeros against 67 ones), which was costing Ser and Thr a water each.
+
+## GUI integration — 2026-08-08
+
+Until now everything was reachable only from `gui_script`; a user sitting in front of SOMO saw
+none of it, and a non-coded residue still fell silently to the Automatic Bead Builder's averaged
+generic bead. That is now a real dialog.
+
+### `US_Hydrodyn_Perceive_Dialog` (`us_hydrodyn_perceive_dialog.{h,cpp}`)
+One modal review per non-coded residue, laid out in the order Mattia specified:
+1. **View residue in RasMol** -- writes a throwaway .spt showing the structure faintly with this
+   residue spacefilled and centred, so the user sees what they are confirming in context.
+2. **Atom table** -- name, hybrid, mass, radius, all read-only: these are perceived, and editing
+   them would desynchronise the entry from the geometry it came from.
+3. **Hydration, per atom, editable** -- the only editable column, because it is the weakest of
+   the three computed numbers. The residue TOTAL is shown beneath and updates live, with a note
+   that the total is the quantity with literature backing and the per-atom split is convention.
+4. **Anhydrous volume**, editable, tooltipped with what it means (1.4 A probe, coded-residue basis).
+5. **Bead count** -- present but fixed at 1, with a tooltip saying why.
+6. **Bead position** -- stated as centre of gravity, the only method in use.
+7. **Bead colour** -- a combo built from the manual's table, showing index, name and meaning.
+   **The four reserved colours are never offered**, and the code says why next to the table.
+8. **psv**, editable, with the running somo.residue entry rebuilt live below so what the user
+   sees is exactly what Accept hands back.
+Plus the REVIEW flags in their own pane, an **opt-in** "append to somo.residue" checkbox (off by
+default -- accepting is per-session unless asked otherwise), and Accept / Skip.
+
+### Trigger: Lookup Tables -> "Perceive Non-Coded Residues..."
+A menu item, not a hook inside model building. `check_for_missing_atoms` runs per model and
+inside batch paths, so opening a modal dialog from there would be both invasive and wrong for
+scripted runs. The menu item is discoverable, changes no existing behaviour, and Skip leaves the
+residue to the Automatic Bead Builder exactly as before.
+
+### Testing a widget
+`perceiver/run_dialog_test.sh` builds `tests/dialog_qt.cpp` against the real libus_somo and runs
+it under `QT_QPA_PLATFORM=offscreen` -- **18 checks, headless, no display needed**. It asserts
+the proposal round-trips through parse and rebuild, that a hydration edit propagates to both the
+atom line and the bead total (1.00 -> 4.50 when an oxygen goes 0 -> 3.5), that a nonsense edit is
+rejected and the previous value restored, that read-only columns really are read-only, that the
+colour combo offers exactly 12 of the 16 colours and defaults to 10, and that nothing is marked
+accepted or saved until the user acts.
+
+### FINDINGS worth eb's attention
+- The dialog writes its RasMol script to the system temp dir rather than SOMO's, since it is
+  regenerated on every click and nothing downstream reads it.
+- Appending to somo.residue does not reload it; the user is told to reload the structure for a
+  saved entry to take effect. Hot-reloading the residue table mid-session would invalidate
+  `residue_list` indices that the loaded model already holds.

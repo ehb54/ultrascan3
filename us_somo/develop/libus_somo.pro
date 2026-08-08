@@ -375,6 +375,7 @@ SOURCES *= \
         src/us_hydrodyn_grid_volume.cpp \
         src/us_hydrodyn_hydration.cpp \
         src/us_hydrodyn_perceive.cpp \
+        src/us_hydrodyn_perceive_dialog.cpp \
         src/us_hydrodyn_perceive_somo.cpp \
         src/us_hydrodyn_psv.cpp \
         src/us_hydrodyn_residue_builder.cpp \
@@ -832,6 +833,7 @@ HEADERS *= \
         include/us_hydrodyn_grid_volume.h \
         include/us_hydrodyn_hydration.h \
         include/us_hydrodyn_perceive.h \
+        include/us_hydrodyn_perceive_dialog.h \
         include/us_hydrodyn_perceive_elements.h \
         include/us_hydrodyn_perceive_hybrid.h \
         include/us_hydrodyn_perceive_saxs.h \
