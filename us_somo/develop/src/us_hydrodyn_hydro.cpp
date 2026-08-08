@@ -541,8 +541,14 @@ void US_Hydrodyn_Hydro::setupGUI()
    // coefficients at equal reduction, so requiring it costs a large part of the speedup.
    // When it is not required it is WITHHELD from the reported results rather than
    // reported with a caveat -- see grpy_finished().
+   // Named for what it does -- gate the ladder's stopping decision -- because " Require
+   // intrinsic viscosity " was read as an on/off switch for the quantity itself, and the
+   // box keeping its state while greyed out then looked as though it had turned viscosity
+   // off for ordinary GRPY runs too. It never does: with shell reduction off nothing is
+   // withheld regardless of this setting.
    cb_grpy_shell_eta = new QCheckBox();
-   cb_grpy_shell_eta->setText(us_tr(" Require intrinsic viscosity "));
+   cb_grpy_shell_eta->setText(us_tr(" Require intrinsic viscosity to converge "));
+   cb_grpy_shell_eta->setToolTip(us_tr("Shell reduction only: the series may not stop until intrinsic viscosity also reaches the target accuracy. Intrinsic viscosity is always computed; unchecked, a reduced result withholds it as unconverged."));
    cb_grpy_shell_eta->setChecked((*hydro).grpy_shell_require_eta);
    cb_grpy_shell_eta->setEnabled((*hydro).grpy_shell);
    cb_grpy_shell_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
