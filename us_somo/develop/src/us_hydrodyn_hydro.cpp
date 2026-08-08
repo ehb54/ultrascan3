@@ -548,7 +548,13 @@ void US_Hydrodyn_Hydro::setupGUI()
    // withheld regardless of this setting.
    cb_grpy_shell_eta = new QCheckBox();
    cb_grpy_shell_eta->setText(us_tr(" Require intrinsic viscosity to converge "));
-   cb_grpy_shell_eta->setToolTip(us_tr("Shell reduction only: the series may not stop until intrinsic viscosity also reaches the target accuracy. Intrinsic viscosity is always computed; unchecked, a reduced result withholds it as unconverged."));
+   // Broken with <br> rather than left to wrap: the tags make Qt treat the tip as rich
+   // text, so the lines fall where the sense does instead of at whatever width the tip
+   // happens to take.
+   cb_grpy_shell_eta->setToolTip(us_tr("Shell reduction only: sets when the series of calculations may stop.<br>"
+                                       "Checked: it may not stop until intrinsic viscosity also reaches the target accuracy.<br>"
+                                       "Unchecked: a reduced result withholds intrinsic viscosity as unconverged.<br>"
+                                       "Intrinsic viscosity is always computed, and is always reported with shell reduction off."));
    cb_grpy_shell_eta->setChecked((*hydro).grpy_shell_require_eta);
    cb_grpy_shell_eta->setEnabled((*hydro).grpy_shell);
    cb_grpy_shell_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
