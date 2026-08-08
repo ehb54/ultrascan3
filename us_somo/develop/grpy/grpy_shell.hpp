@@ -125,6 +125,12 @@ struct ShellReport {
     std::vector<Obs>    require;          // echo of what was asked for
     std::vector<double> err_est;          // parallel to `require`
     std::vector<double> extrapolated;     // parallel to `require`; Richardson value
+    // Parallel to `require`; the finest rung's own value -- i.e. what Results carries and
+    // what every reported scalar in this run is. Recorded so that the report can state the
+    // computed and the extrapolated value side by side: the two are different answers, the
+    // error estimate is the distance between them, and a reader who is shown only one of
+    // them cannot tell which the estimate is attached to.
+    std::vector<double> reported;
     std::vector<double> k_obs;            // parallel to `require`; 0 => not extrapolated
     std::vector<int>    ns;               // bead count per rung
     // Indices, into the bead list passed to run(), of the beads kept at each rung -- only
@@ -327,6 +333,7 @@ public:
             hist.push_back(cur);
 
             const size_t M = sopt_.require.size();
+            rep.reported = cur;                            // the finest rung solved so far
             rep.err_est.assign(M, 1.0); rep.extrapolated.assign(M, 0.0); rep.k_obs.assign(M, 0.0);
             rep.err_max = 0.0;
             for (size_t m = 0; m < M; ++m) {
@@ -440,12 +447,29 @@ private:
              "              with more memory would refine it further.\n"
            : "   converged: NO -- the requested tolerance was not reached; the estimated\n"
              "              errors below are the reliable statement about this result.\n";
+        // Both values, side by side. The scalars reported everywhere else in this file are
+        // the COMPUTED ones -- the finest rung actually solved -- because a reported value
+        // must be one the calculation produced, not one inferred from a trend. The
+        // extrapolated column is what the ladder projects the full model would give, and
+        // the estimated error is the distance between the two, safety factor included.
+        // Showing only one of them would leave the reader unable to tell which value the
+        // error belongs to, which is the whole content of the estimate.
+        s += "\n";
+        s += "   quantity                                       computed    extrapolated   est. error\n";
         for (size_t m = 0; m < rep.require.size() && m < rep.err_est.size(); ++m) {
-            char buf[160];
-            std::snprintf(buf, sizeof(buf), "   estimated error %-42s %8.4f %%\n",
-                          obs_name(rep.require[m]), 100.0 * rep.err_est[m]);
+            char buf[200];
+            const bool have = m < rep.reported.size();
+            std::snprintf(buf, sizeof(buf), "   %-42s %12.6g %15.6g %9.4f %%\n",
+                          obs_name(rep.require[m]),
+                          have ? rep.reported[m] : 0.0,
+                          rep.extrapolated[m], 100.0 * rep.err_est[m]);
             s += buf;
         }
+        s += "\n";
+        s += "   The results reported elsewhere in this file are the COMPUTED column. The\n";
+        s += "   estimated error is an estimate of how far that value stands from the full\n";
+        s += "   model, obtained as its distance from the EXTRAPOLATED column; the two\n";
+        s += "   columns are different answers and neither is a correction to the other.\n";
         if (rep.viscosity_unreliable) {
             s += "\n";
             s += " *** WARNING: intrinsic viscosity (and the viscosity-derived Einstein\n";
