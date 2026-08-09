@@ -73,6 +73,13 @@ private:
     };
     QVector<AtomRow> rows_;
     QString comment_;                                  // the "# ..." header lines
+    // Fields of the proposed header line that the dialog does not edit, kept so refresh_entry()
+    // can put them back verbatim. They must NOT be re-invented here: this class rebuilds the
+    // whole entry from its widgets, so anything it hardcodes silently overrides the perceiver.
+    // A hardcoded 0 in the ASA slot is exactly how generated entries stayed unloadable after the
+    // emitter itself was fixed -- the headless path was right and the GUI path was not.
+    int    header_type_ = 0;
+    double header_asa_  = 0;
 
     QLabel      * lbl_info;
     QLabel      * lbl_summary;

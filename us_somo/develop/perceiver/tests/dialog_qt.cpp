@@ -27,7 +27,7 @@ int main( int argc, char ** argv ) {
         "# test ligand [TST]  (generated on-the-fly by perceiver)\n"
         "# REVIEW - check these before accepting the entry:\n"
         "#   O1 (O2H1): proposed 0 but the coded residues agree only 49% of 115 -- please check\n"
-        "TST\t0\t123.45\t0\t3\t1\t0.712\n"
+        "TST\t0\t123.45\t54.00\t3\t1\t0.712\n"
         "N\tN3H1\t15.02\t1.64\t0\t0\t0\t1\n"
         "CA\tC4H1\t13.02\t1.88\t0\t0\t1\t0\n"
         "O1\tO2H1\t17.01\t1.46\t0\t0\t2\t0\n"
@@ -40,6 +40,22 @@ int main( int argc, char ** argv ) {
     std::printf("--- rebuilt entry ---\n%s---\n", e.toLatin1().constData());
     CK( e.contains( "TST\t0\t123.45" ) );
     CK( e.contains( "0.712" ) );
+    // The dialog rebuilds the whole entry from its widgets, so every header field it does not
+    // edit must survive the round trip. It used to hardcode the ASA slot to 0, which quietly
+    // overrode the emitter and made accepted entries unloadable -- the loaders skip a zero-ASA
+    // record without a word. Assert on the parsed field, not on a substring.
+    {
+        QString header;
+        foreach ( const QString & ln, e.split( "\n" ) ) {
+            if ( !ln.startsWith( "#" ) && !ln.trimmed().isEmpty() ) { header = ln; break; }
+        }
+        const QStringList hf = header.split( "\t" );
+        std::printf("  rebuilt header: %s\n", header.toLatin1().constData());
+        CK( hf.size() >= 7 );
+        CK( hf.size() >= 7 && hf[ 3 ].toDouble() > 0 );        // ASA survived, and is positive
+        CK( hf.size() >= 7 && hf[ 3 ].toDouble() == 54.0 );    // ...unchanged from the proposal
+        CK( hf.size() >= 7 && hf[ 2 ].toDouble() > 0 );        // molvol, the other loader gate
+    }
     CK( e.contains( "N\tN3H1" ) );
     CK( e.contains( "O1\tO2H1" ) );
     CK( !dlg.accepted() );                       // nothing accepted until the user says so
