@@ -466,7 +466,7 @@ void US_Hydrodyn_Perceive_Dialog::skip_all_entries() {
 
 void US_Hydrodyn_Perceive_Dialog::help() {
     US_Help * online_help = new US_Help( this );
-    online_help->show_help( "manual/somo/somo_residue.html" );
+    online_help->show_help( "manual/somo/somo_perceive.html" );
 }
 
 void US_Hydrodyn_Perceive_Dialog::closeEvent( QCloseEvent * e ) {
