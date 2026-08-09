@@ -40,8 +40,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    setPalette( US_GuiSettings::frameColor() );
 
    // Very light gray
-   QPalette gray =  US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray =  US_GuiSettings::readonlyColor();
 
    QBoxLayout* main = new QVBoxLayout( this );
    main->setSpacing         ( 2 );

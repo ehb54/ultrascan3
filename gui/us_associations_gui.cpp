@@ -30,8 +30,7 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    setWindowModality( Qt::WindowModal );
    
    // Very light gray
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    QGridLayout* main = new QGridLayout( this );
    main->setContentsMargins( 2, 2, 2, 2 );

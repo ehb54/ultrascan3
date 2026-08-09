@@ -58,8 +58,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
    QLabel* lb_invGuid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_invGuid, row, 0 );
 
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    le_invGuid = us_lineedit();
    le_invGuid->setReadOnly( true );
@@ -261,8 +260,7 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    QLabel* lb_invGuid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_invGuid, row, 0 );
 
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    le_invGuid = us_lineedit();
    le_invGuid->setReadOnly( true );

@@ -1,6 +1,8 @@
 //! \file us_widgets_dialog.cpp
 #include "us_widgets_dialog.h"
+#include "us_widgets.h"
 #include "us_gui_settings.h"
+#include "us_theme.h"
 #include "us_images.h"
 
 
@@ -8,7 +10,7 @@ US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_styl
    : QDialog( w, f )
 {
   if (set_style)
-      QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
+      US_Theme::apply();
 
   if ( ! g.isValid() )
   {
@@ -16,8 +18,7 @@ US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_styl
     qDebug( "us_win: invalid global memory" );
   }
 
-  vlgray = US_GuiSettings::editColor();
-  vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+  vlgray = US_GuiSettings::readonlyColor();
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
   setWindowIcon( us3_icon );
@@ -28,7 +29,7 @@ QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust,
 {
   QLabel* newLabel = new QLabel( labelString, this );
 
-//  newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+  newLabel->setFrameStyle( QFrame::NoFrame );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
   newLabel->setMargin    ( 2 );
   newLabel->setAutoFillBackground( true );
@@ -61,11 +62,14 @@ QLabel* US_WidgetsDialog::us_banner( const QString& labelString, int fontAdjust,
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
   newLabel->setAlignment ( Qt::AlignCenter );
-  newLabel->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
-  newLabel->setMidLineWidth( 2 );
+  newLabel->setFrameStyle( QFrame::NoFrame );
+  newLabel->setMargin    ( 5 );
+
+  // Tags the label as a section header (hook for site specific style sheets)
+  newLabel->setProperty( US_Theme::bannerProperty(), "banner" );
 
   // Set label colors
-  newLabel->setPalette( US_GuiSettings::frameColor() );
+  newLabel->setPalette( US_GuiSettings::bannerColor() );
 
   return newLabel;
 }
@@ -96,7 +100,7 @@ QTextEdit* US_WidgetsDialog::us_textedit( void )
                                 US_GuiSettings::fontSize() - 1 ) );
   
   te->setPalette       ( US_GuiSettings::normalColor() );
-  te->setFrameStyle    ( QFrame::WinPanel | QFrame::Sunken );
+  te->setFrameStyle    ( QFrame::StyledPanel | QFrame::Plain );
   te->setAcceptRichText( true );
   te->setReadOnly      ( true );
   te->show();
@@ -341,9 +345,7 @@ QwtPlot* US_WidgetsDialog::us_plot( const QString& title, const QString& x_axis,
   plot->setAxisTitle( QwtPlot::xBottom, x_axis );
   plot->setAxisTitle( QwtPlot::yLeft  , y_axis );
 
-  plot->setAutoFillBackground( true );
-  plot->setPalette ( US_GuiSettings::plotColor() );
-  plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+  US_Widgets::us_style_plot( plot );
 
   return plot;
 }
