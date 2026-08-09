@@ -159,6 +159,62 @@ int main() {
         fails += chk("computed and extrapolated are distinct answers", differ);
     }
 
+    // ---- the report carries the per-rung sequence and the estimator's provenance -
+    //
+    // Both exist so that a validation run can be audited without re-solving: `values`
+    // lets any variant of the estimator be recomputed from the stored ladder, and `prov`
+    // says which mechanism produced each estimate. Reconstructing either from a separate
+    // harness is how an earlier round of benchmarks ended up unattributable.
+    {
+        auto b = blob(6, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-2;
+        so.require = {Obs::Dt, Obs::Dr, Obs::EtaInf};
+        so.ladder = {0.125, 0.25, 0.5};
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+
+        fails += chk("values has one row per rung", rep.values.size() == rep.ns.size());
+        bool widths_ok = !rep.values.empty();
+        for (auto& row : rep.values) if (row.size() != rep.require.size()) widths_ok = false;
+        fails += chk("each row has one value per observable", widths_ok);
+        fails += chk("the last row IS the reported value",
+                     !rep.values.empty() && rep.values.back() == rep.reported);
+        // The sequence must be the ladder actually solved, not a copy of one rung.
+        bool moved = rep.values.size() > 1 && rep.values.front()[0] != rep.values.back()[0];
+        fails += chk("values differ between rungs", moved);
+
+        fails += chk("prov is parallel to require", rep.prov.size() == rep.require.size());
+        bool consistent = true;
+        for (size_t m = 0; m < rep.prov.size(); ++m) {
+            const auto& pv = rep.prov[m];
+            // extrapolated and declined are mutually exclusive, and k_obs is set iff
+            // extrapolation succeeded -- otherwise the report contradicts itself.
+            if (pv.extrapolated == (pv.declined != nullptr)) consistent = false;
+            if (pv.extrapolated != (rep.k_obs[m] != 0.0)) consistent = false;
+            if (!pv.extrapolated && (pv.clamped_low || pv.clamped_high || pv.floored)) consistent = false;
+            if (pv.clamped_low && pv.clamped_high) consistent = false;
+        }
+        fails += chk("provenance is self-consistent", consistent);
+    }
+
+    // ---- a two-rung ladder declines to extrapolate, and says so -----------------
+    {
+        auto b = blob(5, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-9;                  // unsatisfiable: use both rungs
+        so.require = {Obs::Dt};
+        so.ladder = {0.25, 0.5};                           // only two rungs: Richardson needs 3
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+        fails += chk("two rungs => not extrapolated", !rep.prov.empty() && !rep.prov[0].extrapolated);
+        fails += chk("two rungs => a reason is given",
+                     !rep.prov.empty() && rep.prov[0].declined != nullptr);
+        fails += chk("two rungs => k_obs stays zero", rep.k_obs.size() == 1 && rep.k_obs[0] == 0.0);
+    }
+
     // ---- viscosity is flagged unreliable when not required ----------------------
     {
         auto b = blob(5, 3.0, 2.0);
