@@ -2678,6 +2678,17 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                                           );
                            editor->setTextColor(save_color);
                         } else {
+                           // An atom name the table has never seen is derived from its hybrid or
+                           // element rather than dropped -- see US_Hydrodyn::ensure_atom_entry.
+                           {
+                              QString how;
+                              if ( ensure_atom_entry( saxs_util->atom_map, this_atom->name,
+                                                      hybrid_name, &how )
+                                   && !how.isEmpty() )
+                              {
+                                 editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+                              }
+                           }
                            if ( !saxs_util->atom_map.count(this_atom->name + "~" + hybrid_name) )
                            {
                               cout << "error: atom_map missing for hybrid_name "

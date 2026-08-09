@@ -1265,6 +1265,20 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void edit_atom();
       void hybrid();
       void residue();
+      // somo.atom is keyed by ATOM NAME, so an atom whose name that table has never seen -- routine
+      // in a non-coded ligand, e.g. a sulfate's "S" when the table only carries the Fe-S cluster
+      // names S1..S4B -- resolves to nothing and is dropped from both the ASA and the excluded
+      // volume, reported once and then ignored. Derive an entry for it instead: prefer another
+      // atom with the SAME HYBRID (which fixes element, mass and radius exactly, leaving only the
+      // excluded volume a convention), and fall back to the same ELEMENT. The derived entry is
+      // inserted into `am`, so this is also the memo -- the next lookup is an ordinary hit.
+      // Returns false only when the table knows nothing of the element at all.
+      // `how` is set only when an entry was actually derived, so callers can report it once.
+      static bool ensure_atom_entry( map < QString, struct atom > & am,
+                                     const QString & atom_name,
+                                     const QString & hybrid_name,
+                                     QString * how = 0 );
+
       // Perceive + review the residues somo.residue does not code (Lookup Tables menu).
       void perceive_non_coded();
       // Put accepted perceived entries into the tables SOMO builds from, so they take effect in

@@ -3328,6 +3328,101 @@ bool US_Hydrodyn::model_summary_csv( struct PDB_model *model, const QString & fi
 }   
 
 
+// Element of a somo.hybrid type name: the leading run of letters, before the sigma count, the
+// hydrogen count or a charge. "C4H3" -> C, "O1H0" -> O, "S" -> S, "FE+2" -> FE, "CL-1" -> CL.
+static QString us_hydrodyn_element_of_hybrid( const QString & hybrid_name )
+{
+   QString e;
+   for ( int i = 0; i < hybrid_name.length(); ++i )
+   {
+      if ( !hybrid_name[ i ].isLetter() )
+      {
+         break;
+      }
+      e += hybrid_name[ i ];
+   }
+   return e.toUpper();
+}
+
+bool US_Hydrodyn::ensure_atom_entry( map < QString, struct atom > & am,
+                                     const QString & atom_name,
+                                     const QString & hybrid_name,
+                                     QString * how )
+{
+   const QString key = atom_name + "~" + hybrid_name;
+   if ( am.count( key ) )
+   {
+      return true;
+   }
+
+   const QString want_element = us_hydrodyn_element_of_hybrid( hybrid_name );
+   if ( want_element.isEmpty() )
+   {
+      return false;
+   }
+
+   // Collect candidates at the best available specificity. Excluded volume is not a function of
+   // the hybrid -- C4H3 appears in somo.atom with both 31.89 and 16.44 A^3 depending on the atom
+   // name -- so take the value the table uses most often for that key rather than whichever row
+   // happens to come first.
+   const char * level = 0;
+   map < float, int > vol_counts;
+   const struct atom * exemplar = 0;
+   for ( int pass = 0; pass < 2 && !exemplar; ++pass )
+   {
+      for ( map < QString, struct atom >::const_iterator it = am.begin(); it != am.end(); ++it )
+      {
+         const bool match = pass == 0
+            ? it->second.hybrid.name == hybrid_name
+            : us_hydrodyn_element_of_hybrid( it->second.hybrid.name ) == want_element;
+         if ( !match )
+         {
+            continue;
+         }
+         if ( !exemplar )
+         {
+            exemplar = &it->second;
+            level    = pass == 0 ? "hybrid" : "element";
+         }
+         vol_counts[ it->second.saxs_excl_vol ]++;
+      }
+   }
+   if ( !exemplar )
+   {
+      return false;
+   }
+
+   float best_vol   = exemplar->saxs_excl_vol;
+   int   best_count = 0;
+   for ( map < float, int >::const_iterator it = vol_counts.begin(); it != vol_counts.end(); ++it )
+   {
+      if ( it->second > best_count )
+      {
+         best_count = it->second;
+         best_vol   = it->first;
+      }
+   }
+
+   struct atom derived    = *exemplar;
+   derived.name           = atom_name;
+   derived.hybrid.name    = hybrid_name;
+   derived.saxs_excl_vol  = best_vol;
+   am[ key ]              = derived;
+
+   if ( how )
+   {
+      *how = QString( "%1 (%2) is not in the atom table; using the %3 match: "
+                      "mw %4, radius %5, excluded volume %6 A^3" )
+         .arg( atom_name )
+         .arg( hybrid_name )
+         .arg( level )
+         .arg( derived.hybrid.mw )
+         .arg( derived.hybrid.radius )
+         .arg( best_vol );
+   }
+   return true;
+}
+
 void US_Hydrodyn::select_atom_file(const QString &filename)
 {
    QString str1;
