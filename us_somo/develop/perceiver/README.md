@@ -54,6 +54,11 @@ Test-side (this directory, not part of the SOMO build):
   the published scattering-factor sources plus generated `somo.saxs_atoms` rows. The `somo.*`
   parameter tables are **not** copied here — the tests read `us_somo/etc` directly so they cannot
   drift from the real tables.
+- `data/non-coded/` — structures that actually contain residues `somo.residue` does **not** code,
+  which the demo PDBs (all fully coded) do not provide. These *are* tracked, since they are copies
+  of nothing else in the tree. `2CMD` (citrate) is the clean first test; `3PTB` (benzamidine) the
+  only ring-bearing one; `5PTI` (neutron/deuterated) the stress case for the review loop.
+  See `data/non-coded/README.md` for what each exercises and the expected output.
 
 ## Build & run
 ```
