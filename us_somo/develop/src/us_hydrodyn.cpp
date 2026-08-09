@@ -2211,6 +2211,50 @@ static bool write_table_overlay( const QString & active, const QString & overlay
    return true;
 }
 
+// Split what SOMO could not code into the residues worth perceiving and the ones that are merely
+// unmatched -- see the declaration for why the distinction matters.
+//
+// unknown_residues is what SOMO itself recorded as non-codable while building the model; it is the
+// right trigger, unlike multi_residue_map, which by now also holds the "_NC" placeholders the bead
+// builder created. It persists across loads, so it is restricted to residues actually present in
+// the structure currently open -- otherwise a second run offers the previous structure's ligands.
+void US_Hydrodyn::select_perceivable( std::set< QString > & to_perceive, QStringList & unmatched ) {
+   to_perceive.clear();
+   unmatched.clear();
+   if ( model_vector.empty() ) {
+      return;
+   }
+
+   std::set< QString > present;
+   for ( unsigned int pm = 0; pm < model_vector[ 0 ].molecule.size(); ++pm ) {
+      for ( unsigned int pa = 0; pa < model_vector[ 0 ].molecule[ pm ].atom.size(); ++pa ) {
+         present.insert( model_vector[ 0 ].molecule[ pm ].atom[ pa ].resName );
+      }
+   }
+
+   // SOMO names each instance of a residue it could not place "<RESNAME>_NC<n>"; perception
+   // reports the base name, so the coded-or-not test has to be made on the base name too.
+   QRegularExpression rx_nc( "_NC\\d+$" );
+   std::set< QString > unmatched_set;
+   for ( map < QString, bool >::iterator it = unknown_residues.begin();
+         it != unknown_residues.end();
+         ++it ) {
+      if ( !it->second || !present.count( it->first ) ) {
+         continue;
+      }
+      QString base = it->first;
+      base.remove( rx_nc );
+      if ( multi_residue_map.count( base ) ) {
+         unmatched_set.insert( base );      // coded name, unmatched instance
+      } else {
+         to_perceive.insert( it->first );
+      }
+   }
+   for ( std::set< QString >::iterator it = unmatched_set.begin(); it != unmatched_set.end(); ++it ) {
+      unmatched << *it;
+   }
+}
+
 // Perceive the residues somo.residue does not code and offer each for review. Without this they
 // fall to the Automatic Bead Builder, which models them as a generic averaged bead. Nothing is
 // written to somo.residue unless the user ticks the box in the dialog.
@@ -2225,25 +2269,32 @@ void US_Hydrodyn::perceive_non_coded() {
                              us_tr( "Load a PDB structure first." ), QString(), this );
       return;
    }
-   // unknown_residues is what SOMO itself recorded as non-codable while building the model; it is
-   // the right trigger, unlike multi_residue_map, which by now also holds the "_NC" placeholders
-   // the bead builder created.
-   // unknown_residues persists across loads, so restrict it to residues actually present in the
-   // structure currently open -- otherwise a second run offers the previous structure's ligands.
-   std::set< QString > present;
-   for ( unsigned int pm = 0; pm < model_vector[ 0 ].molecule.size(); ++pm ) {
-      for ( unsigned int pa = 0; pa < model_vector[ 0 ].molecule[ pm ].atom.size(); ++pa ) {
-         present.insert( model_vector[ 0 ].molecule[ pm ].atom[ pa ].resName );
-      }
-   }
    std::set< QString > to_perceive;
-   for ( map < QString, bool >::iterator it = unknown_residues.begin();
-         it != unknown_residues.end();
-         ++it ) {
-      if ( it->second && present.count( it->first ) ) {
-         to_perceive.insert( it->first );
-      }
+   QStringList unmatched;
+   select_perceivable( to_perceive, unmatched );
+
+   if ( !unmatched.isEmpty() ) {
+      // Coded residues whose instances did not match. Say so and stop short of perceiving them:
+      // the fix is upstream, in the structure.
+      editor_msg( "dark red",
+                  QString( us_tr( "Perceive: %1 residue type(s) ARE coded in somo.residue but "
+                                  "their instances do not match the table: %2\n"
+                                  "  These are not non-coded residues -- they are coded residues "
+                                  "with missing or unexpected atoms (a neutron structure's "
+                                  "deuteriums, for example).\n"
+                                  "  Complete or repair the structure rather than perceiving an "
+                                  "entry for a residue that already has a curated one.\n" ) )
+                  .arg( unmatched.size() ).arg( unmatched.join( ", " ) ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             QString( us_tr( "These residues are coded in somo.residue, but their "
+                                             "instances in this structure do not match the table:\n\n"
+                                             "%1\n\n"
+                                             "They have missing atoms, or atoms the table has no "
+                                             "hybridization for. Please complete the structure -- "
+                                             "they will not be perceived." ) )
+                             .arg( unmatched.join( ", " ) ), QString(), this );
    }
+
    if ( to_perceive.empty() ) {
       editor_msg( "blue", us_tr( "Perceive: every residue in this structure is already coded "
                                  "in somo.residue, nothing to do\n" ) );

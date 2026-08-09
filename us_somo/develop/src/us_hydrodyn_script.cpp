@@ -336,28 +336,17 @@ void US_Hydrodyn::gui_script_run() {
             continue;
          }
 
-         // somo.residue is the master: only residues it could NOT code are perceived. SOMO records
-         // exactly those in unknown_residues (and would otherwise model each as a generic ABB
-         // average bead), so that set -- not multi_residue_map, which by now also holds the
-         // auto-created "_NC" placeholders -- is the correct trigger.
-         // unknown_residues persists across loads, so a second "perceive" in the same session
-         // still carries the previous structure's names. Intersect it with the residues actually
-         // present in the model just loaded, otherwise the counts reported below describe a
-         // structure that is no longer open.
-         std::set< QString > present;
-         for ( unsigned int pm = 0; pm < model_vector[ 0 ].molecule.size(); ++pm ) {
-            for ( unsigned int pa = 0;
-                  pa < model_vector[ 0 ].molecule[ pm ].atom.size(); ++pa ) {
-               present.insert( model_vector[ 0 ].molecule[ pm ].atom[ pa ].resName );
-            }
-         }
+         // somo.residue is the master: only residues it could NOT code are perceived, and a coded
+         // residue whose instance merely failed to match is reported rather than perceived. See
+         // US_Hydrodyn::select_perceivable().
          std::set< QString > to_perceive;
-         for ( map < QString, bool >::iterator it = unknown_residues.begin();
-               it != unknown_residues.end();
-               ++it ) {
-            if ( it->second && present.count( it->first ) ) {
-               to_perceive.insert( it->first );
-            }
+         QStringList unmatched;
+         select_perceivable( to_perceive, unmatched );
+         if ( !unmatched.isEmpty() ) {
+            TSO << QString( "perceive: %1 residue type(s) ARE coded but their instances do not "
+                            "match the table (missing or unexpected atoms), NOT perceived: %2\n"
+                            "perceive: complete or repair the structure for these\n" )
+               .arg( unmatched.size() ).arg( unmatched.join( ", " ) );
          }
          // Defaults a pipeline can pin, same pattern as gparams["covolume"].
          somo_residue_builder::Options pb_opt;

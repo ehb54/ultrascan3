@@ -53,7 +53,13 @@ US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::T
     pdb_filename_ = pdb_filename;
     USglobal = new US_Config();
     setPalette( PALET_FRAME );
-    setWindowTitle( us_tr( "SOMO: Review Non-Coded Residue" ) );
+    // Name the structure in the title bar: several of these dialogs can follow one another, and a
+    // reviewer needs to know which structure the entry came from without going back to the main
+    // window. (Mattia, review of 2026-08-09: "Add the PDB name on the Review Window".)
+    setWindowTitle( pdb_filename.isEmpty()
+                    ? us_tr( "SOMO: Review Non-Coded Residue" )
+                    : QString( us_tr( "SOMO: Review Non-Coded Residue - %1" ) )
+                    .arg( QFileInfo( pdb_filename ).fileName() ) );
     parse_block();
     setupGUI();
     global_Xpos += 30;
@@ -121,10 +127,14 @@ void US_Hydrodyn_Perceive_Dialog::populate_colors() {
 void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     const int minHeight1 = 26;
 
-    lbl_info = new QLabel( QString( us_tr( "Non-coded residue: %1%2" ) )
+    lbl_info = new QLabel( QString( us_tr( "Non-coded residue: %1%2%3" ) )
                            .arg( tent_.resName )
                            .arg( tent_.chemical_name.isEmpty()
-                                 ? QString() : QString( "  [%1]" ).arg( tent_.chemical_name ) ),
+                                 ? QString() : QString( "  [%1]" ).arg( tent_.chemical_name ) )
+                           .arg( pdb_filename_.isEmpty()
+                                 ? QString()
+                                 : QString( "   from %1" )
+                                 .arg( QFileInfo( pdb_filename_ ).fileName() ) ),
                            this );
     lbl_info->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
     lbl_info->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
@@ -422,9 +432,53 @@ void US_Hydrodyn_Perceive_Dialog::view_rasmol() {
     US_Hydrodyn * uh = (US_Hydrodyn *) us_hydrodyn;
     if ( !uh || pdb_filename_.isEmpty() ) return;
 
-    // A throwaway script in the system temp dir: it is regenerated on every click and nothing
-    // downstream reads it, so it does not belong in the user's SOMO directories.
-    const QString spt = QDir::tempPath() + "/somo_perceive_" + tent_.resName + ".spt";
+    // Show ONLY the residue, as atoms. Drawing the whole structure and spacefilling the selection
+    // works for a ligand in a surface pocket (benzamidine in 3PTB) and fails for anything small or
+    // enclosed -- 1MBO's sulfate is simply hidden inside the surrounding wireframe. Extracting the
+    // residue into its own PDB also lets RasMol fit the view to it, which no amount of guessing at
+    // a zoom factor does reliably. (Mattia, review of 2026-08-09: "visual only the residue as
+    // atoms".)
+    //
+    // Both files are throwaways in the system temp dir, regenerated on every click and read by
+    // nothing downstream, so they do not belong in the user's SOMO directories.
+    const QString base = QDir::tempPath() + "/somo_perceive_" + tent_.resName;
+    const QString res_pdb = base + ".pdb";
+    {
+        QFile in( pdb_filename_ );
+        if ( !in.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+            US_Static::us_message( us_tr( "Please note:" ),
+                                   QString( us_tr( "Could not read %1" ) ).arg( pdb_filename_ ) );
+            return;
+        }
+        QFile out( res_pdb );
+        if ( !out.open( QIODevice::WriteOnly | QIODevice::Text ) ) {
+            US_Static::us_message( us_tr( "Please note:" ),
+                                   QString( us_tr( "Could not write %1" ) ).arg( res_pdb ) );
+            return;
+        }
+        QTextStream is( &in );
+        QTextStream os( &out );
+        int kept = 0;
+        while ( !is.atEnd() ) {
+            const QString ln = is.readLine();
+            if ( ( ln.startsWith( "ATOM  " ) || ln.startsWith( "HETATM" ) ) && ln.length() > 20
+                 && ln.mid( 17, 3 ).trimmed() == tent_.resName.trimmed() ) {
+                os << ln << "\n";
+                ++kept;
+            }
+        }
+        os << "END\n";
+        in.close();
+        out.close();
+        if ( !kept ) {
+            US_Static::us_message( us_tr( "Please note:" ),
+                                   QString( us_tr( "No atoms named %1 were found in\n%2" ) )
+                                   .arg( tent_.resName ).arg( pdb_filename_ ) );
+            return;
+        }
+    }
+
+    const QString spt = base + ".spt";
     QFile f( spt );
     if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) ) {
         US_Static::us_message( us_tr( "Please note:" ),
@@ -432,14 +486,13 @@ void US_Hydrodyn_Perceive_Dialog::view_rasmol() {
         return;
     }
     QTextStream ts( &f );
-    ts << "load " << pdb_filename_ << "\n"
+    ts << "load " << res_pdb << "\n"
        << "background white\n"
-       << "wireframe 20\n"
-       << "colour [200,200,200]\n"
-       << "select " << tent_.resName << "\n"
-       << "spacefill 200\n"
+       << "select all\n"
+       << "spacefill\n"          // van der Waals radii -- "as atoms"
        << "colour cpk\n"
-       << "centre selected\n";
+       << "wireframe 40\n"       // keeps the connectivity legible between the spheres
+       << "centre all\n";
     f.close();
     uh->model_viewer( spt, "-script", false );
 }
