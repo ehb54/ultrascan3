@@ -1267,6 +1267,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                      const QString & hybrid_name,
                                      QString * how = 0 );
 
+      // Split what SOMO could not code into residues worth perceiving and residues that are
+      // merely UNMATCHED. A residue whose NAME somo.residue codes, but whose instance did not
+      // match the table -- missing atoms, or atoms the table has no hybrid for, such as the
+      // deuteriums of a neutron structure -- is not a non-coded residue. It is a coded residue
+      // with an incomplete or unexpected instance, and the answer is to repair the structure, not
+      // to invent an entry for it. Perceiving it would produce a plausible-looking entry for a
+      // residue that already has a curated one. Fills `unmatched` with those names instead.
+      void select_perceivable( std::set< QString > & to_perceive,
+                               QStringList & unmatched );
+
       // Perceive + review the residues somo.residue does not code (Lookup Tables menu).
       void perceive_non_coded();
       // Put accepted perceived entries into the tables SOMO builds from, so they take effect in
