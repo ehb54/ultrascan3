@@ -103,12 +103,40 @@ inline std::vector<size_t> reduce_top_frac_idx(const std::vector<core::Bead>& b,
     std::vector<size_t> idx(N);
     for (size_t i = 0; i < N; ++i) idx[i] = i;
     if (keep >= N) return idx;                     // everything, in original order
-    // Rank by exposure descending; ties broken by radius then index so the selection is
-    // deterministic (exposure is quantized to K sample points, so ties are common).
+    // Rank by exposure descending. Exposure is quantized to the K surface sample points, so
+    // ties are not rare: at ~2500 beads the mean tie class holds ~90 of them, and the cut
+    // between rungs generally falls inside one. What breaks those ties therefore decides a
+    // large part of the selection.
+    //
+    // Ties break by radius, then by GEOMETRY -- distance from the model centroid, then by
+    // coordinate -- and only then by index. Geometry is a property of the model; index is a
+    // property of the file, so ranking on it made the retained subset depend on the order
+    // the beads happened to be written in. Measured before this change: permuting the input
+    // order of a 3712-bead model gave a different retained subset in 20 of 20 permutations.
+    // Nothing downstream moved much -- the stopping rung was invariant and every run met its
+    // tolerance -- but a selection that changes when the file is rewritten cannot be
+    // reproduced from the model alone, and that is worth more than the noise it caused.
+    //
+    // Farthest-from-centroid first: among equally exposed beads the outermost contribute most
+    // to the drag, which is the same argument that motivates ranking by exposure at all. The
+    // index fallback survives only for beads identical in exposure, radius and position,
+    // which are interchangeable anyway.
+    double cx = 0, cy = 0, cz = 0;
+    for (const auto& q : b) { cx += q.x; cy += q.y; cz += q.z; }
+    if (N) { cx /= (double)N; cy /= (double)N; cz /= (double)N; }
+    std::vector<double> d2(N);
+    for (size_t i = 0; i < N; ++i) {
+        const double dx = b[i].x - cx, dy = b[i].y - cy, dz = b[i].z - cz;
+        d2[i] = dx * dx + dy * dy + dz * dz;
+    }
     std::partial_sort(idx.begin(), idx.begin() + keep, idx.end(),
                       [&](size_t i, size_t j) {
                           if (ex[i] != ex[j]) return ex[i] > ex[j];
                           if (b[i].r != b[j].r) return b[i].r > b[j].r;
+                          if (d2[i] != d2[j]) return d2[i] > d2[j];
+                          if (b[i].x != b[j].x) return b[i].x < b[j].x;
+                          if (b[i].y != b[j].y) return b[i].y < b[j].y;
+                          if (b[i].z != b[j].z) return b[i].z < b[j].z;
                           return i < j;
                       });
     idx.resize(keep);

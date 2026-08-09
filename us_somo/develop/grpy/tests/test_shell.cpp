@@ -4,6 +4,7 @@
 // error, measured against an independently computed unreduced solve. A bar that
 // understates is worse than no bar at all, so that check is the one that matters.
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -247,6 +248,45 @@ int main() {
         } else {
             fails += chk("full rung => reached the full model (test precondition)", false);
         }
+    }
+
+    // ---- selection is invariant to input bead ORDER ----------------------------
+    //
+    // Exposure ties are large (quantised to K sample points) and the rung boundary usually
+    // falls inside one, so whatever breaks ties decides much of the selection. Breaking
+    // them by bead index made the retained subset depend on the order the file was written
+    // in: measured at 20 distinct subsets over 20 permutations of one real model. Ties now
+    // break on geometry, which is a property of the model, so permuting the input must not
+    // change which beads are kept.
+    {
+        auto b = blob(5, 3.0, 2.0);
+        std::vector<core::Bead> c(b.size());
+        for (size_t i = 0; i < b.size(); ++i) c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
+        auto ex = shell::exposure(c, (int)c.size(), 64, 1.4);
+        auto ref = shell::reduce_top_frac_idx(c, ex, 0.25);
+        std::vector<std::array<double,3>> ref_xyz;
+        for (size_t i : ref) ref_xyz.push_back({c[i].x, c[i].y, c[i].z});
+        std::sort(ref_xyz.begin(), ref_xyz.end());
+
+        bool invariant = true;
+        unsigned st = 12345;
+        for (int trial = 0; trial < 8 && invariant; ++trial) {
+            std::vector<size_t> perm(c.size());
+            for (size_t i = 0; i < perm.size(); ++i) perm[i] = i;
+            for (size_t i = perm.size(); i > 1; --i) {       // deterministic shuffle
+                st = st * 1103515245u + 12345u;
+                std::swap(perm[i - 1], perm[st % i]);
+            }
+            std::vector<core::Bead> pc(c.size());
+            for (size_t i = 0; i < c.size(); ++i) pc[i] = c[perm[i]];
+            auto pex = shell::exposure(pc, (int)pc.size(), 64, 1.4);
+            auto got = shell::reduce_top_frac_idx(pc, pex, 0.25);
+            std::vector<std::array<double,3>> got_xyz;
+            for (size_t i : got) got_xyz.push_back({pc[i].x, pc[i].y, pc[i].z});
+            std::sort(got_xyz.begin(), got_xyz.end());
+            if (got_xyz != ref_xyz) invariant = false;
+        }
+        fails += chk("selection is invariant to input bead order", invariant);
     }
 
     // ---- viscosity is flagged unreliable when not required ----------------------
