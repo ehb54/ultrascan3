@@ -47,6 +47,11 @@ public:
 
     // Result of the review, valid once exec-style use returns / the dialog is closed.
     bool accepted() const { return accepted_; }
+    // True when the user asked to stop reviewing: the caller must abandon the remaining
+    // residues rather than opening another dialog. A neutron structure with explicit
+    // deuteriums can make every residue look non-coded, and without this the user has to
+    // dismiss one modal per residue with no way out.
+    bool skip_all() const { return skip_all_; }
     bool save_requested() const { return save_requested_; }
     QString entry() const { return entry_; }          // the final somo.residue block
     QStringList new_hybrids() const { return tent_.new_hybrids; }
@@ -59,6 +64,7 @@ private:
     QString     entry_;
     bool        accepted_ = false;
     bool        save_requested_ = false;
+    bool        skip_all_ = false;
 
     // parsed from the proposed block so the dialog can rebuild it after edits
     struct AtomRow {
@@ -93,6 +99,7 @@ private:
     QCheckBox   * cb_save;
     QPushButton * pb_accept;
     QPushButton * pb_skip;
+    QPushButton * pb_skip_all;
     QPushButton * pb_help;
 
     void setupGUI();
@@ -106,6 +113,7 @@ private slots:
     void value_changed();
     void accept_entry();
     void skip_entry();
+    void skip_all_entries();
     void help();
 
 protected:
