@@ -227,8 +227,38 @@ void US_Hydrodyn::gui_script_run() {
          // count before and after, which is the assertion worth making -- the GUI path failed for
          // a long time precisely because nothing checked that accepting changed anything.
          // The user's somo.residue is not modified; the entries go to the session overlay.
-         bool perceive_apply = ( opt1 == "apply" );
-         if ( perceive_apply ) {
+         // "perceive build <pdb>" is "apply" plus the thing the GUI user does next: build the
+         // bead model. It exists because apply alone does NOT reach the code that resolves atoms
+         // against somo.atom -- a clean load takes calc_mw(), not the excluded-volume path -- so
+         // the atom-table fallback, and anything else that only bites at bead-build time, was
+         // exercised solely by hand in the GUI. This is the headless equivalent of load, perceive,
+         // accept, build.
+         // An optional method token selects which bead model to build, matching the GUI buttons:
+         //   somo    (default)  pb_somo       calc_somo()          SOMO, overlaps removed
+         //   somo_o             pb_somo_o     calc_somo_o()        SOMO, overlaps kept
+         //   vdw                pb_vdw_beads  calc_vdw_beads()     vdW beads (needs ATOMIC hydration)
+         //   grid | a2b         pb_grid_pdb   calc_grid_pdb()      AtoB grid
+         // They exercise different amounts of the model-building code, so a perceived residue that
+         // satisfies one can still break another -- vdW in particular reads per-atom hydration,
+         // which the perceiver only proposes.
+         bool perceive_build = ( opt1 == "build" );
+         QString build_method = "somo";
+         if ( perceive_build ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument: perceive build [somo|somo_o|vdw|grid] <pdbfile>" );
+            }
+            opt1 = ls.front(); ls.pop_front();
+            if ( opt1 == "somo" || opt1 == "somo_o" || opt1 == "vdw"
+                 || opt1 == "grid" || opt1 == "a2b" ) {
+               build_method = ( opt1 == "a2b" ) ? "grid" : opt1;
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd, "missing argument: perceive build " + opt1 + " <pdbfile>" );
+               }
+               opt1 = ls.front(); ls.pop_front();
+            }
+         }
+         bool perceive_apply = perceive_build || ( opt1 == "apply" );
+         if ( opt1 == "apply" ) {
             if ( ls.isEmpty() ) {
                gui_script_error( i, cmd, "missing argument: perceive apply <pdbfile>" );
             }
@@ -473,6 +503,48 @@ void US_Hydrodyn::gui_script_run() {
                .arg( still_unknown.isEmpty()
                      ? QString( " -- the bead builder will use the perceived entries" )
                      : QString( ": %1" ).arg( still_unknown.join( ", " ) ) );
+         }
+
+         if ( perceive_build ) {
+            // reload_pdb() repopulated the model list and cleared the selection; calc_somo()
+            // refuses to run without one, exactly as the button does.
+            if ( !lb_model->count() ) {
+               gui_script_error( i, cmd, "no models to build after perceive" );
+            }
+            lb_model->item( 0 )->setSelected( true );
+            select_model( 0 );
+            TSO << QString( "\nperceive build: building the %1 bead model\n" ).arg( build_method );
+            int build_rc = 0;
+            if ( build_method == "somo" ) {
+               build_rc = calc_somo();
+            } else if ( build_method == "somo_o" ) {
+               build_rc = calc_somo_o();
+            } else if ( build_method == "vdw" ) {
+               build_rc = calc_vdw_beads();
+            } else {
+               build_rc = calc_grid_pdb();
+            }
+            // Count bead_model, the model just built. NOT bead_models[current_model]: the build
+            // walks current_model as its loop variable and leaves it ONE PAST the last model, so
+            // right after a build that index is out of range (for a single-model file it reads
+            // bead_models[1] of 1). Reading it there reported 0 beads for a build that had plainly
+            // succeeded -- rc 0, three overlap-reduction stages, a written bead model.
+            const int nbeads = (int) bead_model.size();
+            const unsigned int filed_idx = bead_models.size()
+               ? qMin( current_model, (unsigned int) bead_models.size() - 1 ) : 0;
+            const int nfiled = bead_models.size() ? (int) bead_models[ filed_idx ].size() : 0;
+            TSO << QString( "perceive build: %1 rc %2, %3 bead(s) (filed %4 in slot %5 of %6)%7\n" )
+               .arg( build_method )
+               .arg( build_rc )
+               .arg( nbeads )
+               .arg( nfiled )
+               .arg( filed_idx )
+               .arg( (unsigned int) bead_models.size() )
+               .arg( build_rc || !nbeads ? "  <-- FAILED" : "" );
+            if ( build_rc || !nbeads ) {
+               gui_script_error( i, cmd, QString( "%1 bead model build failed after applying the "
+                                                  "perceived entries" ).arg( build_method ) );
+            }
          }
       } else if ( cmd == "saxs_options" ) {
          if ( ls.isEmpty() ) {

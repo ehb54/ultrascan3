@@ -3402,16 +3402,21 @@ bool US_Hydrodyn::ensure_atom_entry( map < QString, struct atom > & am,
    derived.saxs_excl_vol  = best_vol;
    am[ key ]              = derived;
 
+   const QString report = QString( "%1 (%2) is not in the atom table; using the %3 match: "
+                                   "mw %4, radius %5, excluded volume %6 A^3" )
+      .arg( atom_name )
+      .arg( hybrid_name )
+      .arg( level )
+      .arg( derived.hybrid.mw )
+      .arg( derived.hybrid.radius )
+      .arg( best_vol );
+   // Also to stdout: callers report this with editor_msg(), which only ever writes to the GUI
+   // text widget, so in a gui_script run the substitution would be completely silent -- and a
+   // silent substitution is the same defect class as the silent skip this replaces.
+   QTextStream( stdout ) << "atom table: " << report << "\n";
    if ( how )
    {
-      *how = QString( "%1 (%2) is not in the atom table; using the %3 match: "
-                      "mw %4, radius %5, excluded volume %6 A^3" )
-         .arg( atom_name )
-         .arg( hybrid_name )
-         .arg( level )
-         .arg( derived.hybrid.mw )
-         .arg( derived.hybrid.radius )
-         .arg( best_vol );
+      *how = report;
    }
    return true;
 }
