@@ -1277,8 +1277,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void select_perceivable( std::set< QString > & to_perceive,
                                QStringList & unmatched );
 
+      // Entries accepted this session, resName -> the somo.residue record. Keyed, so accepting a
+      // residue twice REPLACES it: the overlay is rebuilt from the permanent table plus these,
+      // never appended to, or a revisited residue would end up in the table twice.
+      map < QString, QString >  perceived_entries;
+
       // Perceive + review the residues somo.residue does not code (Lookup Tables menu).
       void perceive_non_coded();
+      // Discard every entry accepted this session and go back to the user's own table.
+      void reset_perceived_residues();
       // Put accepted perceived entries into the tables SOMO builds from, so they take effect in
       // the running session without touching the user's own table. Shared by the GUI review
       // dialog and the "perceive apply" gui_script command. False if a table could not be written.

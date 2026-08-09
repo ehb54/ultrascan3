@@ -38,11 +38,16 @@ class US_EXTERN US_Hydrodyn_Perceive_Dialog : public QFrame {
 public:
     // `tent` is the proposal to review; `us_hydrodyn` is the owning US_Hydrodyn (void* to match
     // the convention used by the other option dialogs and avoid a circular include).
+    // `accepted_block` is the entry previously accepted for this residue in this session, if any.
+    // When present the dialog opens showing THOSE values -- the point of revisiting is to see and
+    // adjust what you accepted, not to be handed a fresh proposal that silently discards it. The
+    // perceived proposal is still held, and "Reset this residue" returns to it.
     US_Hydrodyn_Perceive_Dialog( const somo_perceive::Tentative & tent,
                                  const QString & pdb_filename,
                                  void * us_hydrodyn,
                                  QWidget * p = 0,
-                                 const char * name = 0 );
+                                 const char * name = 0,
+                                 const QString & accepted_block = QString() );
     ~US_Hydrodyn_Perceive_Dialog();
 
     // Result of the review, valid once exec-style use returns / the dialog is closed.
@@ -80,6 +85,11 @@ private:
     // emitter itself was fixed -- the headless path was right and the GUI path was not.
     int    header_type_ = 0;
     double header_asa_  = 0;
+    // values the widgets open with: the perceived proposal, or what was previously accepted
+    double init_vbar_   = 0;
+    double init_molvol_ = 0;
+    int    init_color_  = somo_perceive::DEFAULT_BEAD_COLOR;
+    bool   revisiting_  = false;
 
     QLabel      * lbl_info;
     QLabel      * lbl_summary;
@@ -104,13 +114,15 @@ private:
     QTextEdit * te_entry;
 
     QCheckBox   * cb_save;
+    QPushButton * pb_reset;
     QPushButton * pb_accept;
     QPushButton * pb_skip;
     QPushButton * pb_skip_all;
     QPushButton * pb_help;
 
     void setupGUI();
-    void parse_block();
+    void parse_block( const QString & data_source );
+    void populate_table();
     void refresh_entry();
     void populate_colors();
 
@@ -118,6 +130,7 @@ private slots:
     void view_rasmol();
     void hydration_edited( int row, int col );
     void value_changed();
+    void reset_entry();
     void accept_entry();
     void skip_entry();
     void skip_all_entries();
