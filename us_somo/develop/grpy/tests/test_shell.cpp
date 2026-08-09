@@ -215,6 +215,40 @@ int main() {
         fails += chk("two rungs => k_obs stays zero", rep.k_obs.size() == 1 && rep.k_obs[0] == 0.0);
     }
 
+    // ---- full model reached AND tolerance met => still exact ---------------------
+    //
+    // Regression: the tolerance test used to precede the full-model test, so when the last
+    // rung was the whole model and also satisfied the tolerance, the run exited as merely
+    // "converged" and kept the inter-rung gap as its estimate -- 0.159% on an answer whose
+    // true error was zero, with `unreduced` left false. A satisfiable tolerance is required
+    // to catch it: with an unsatisfiable one the tolerance branch can never win the race,
+    // which is why the older exhaustion test above passed throughout.
+    {
+        auto b = blob(6, 3.0, 2.0);                        // 216 beads
+        Solver plain(par);
+        Results full = plain.run(b, phys);
+        ShellOptions so;
+        so.enabled = true; so.tol = 5e-3;                  // loose enough to be met AT the full rung
+        so.require = {Obs::Dt, Obs::Dr, Obs::Sedimentation};
+        so.ladder = {0.0625, 0.125, 0.25, 0.5, 1.0};       // ends at the full model
+        ShellSolver sh(par, {}, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+
+        if (rep.n_used == rep.n_full) {                    // only meaningful if it got there
+            fails += chk("full rung => flagged unreduced", rep.unreduced);
+            fails += chk("full rung => zero error estimate", rep.err_max == 0.0);
+            bool all_zero = true;
+            for (double e : rep.err_est) if (e != 0.0) all_zero = false;
+            fails += chk("full rung => every per-observable estimate is zero", all_zero);
+            fails += chk("full rung => result is the exact one",
+                         r.translational_diffusion_centre == full.translational_diffusion_centre);
+            fails += chk("full rung => viscosity not flagged unreliable", !rep.viscosity_unreliable);
+        } else {
+            fails += chk("full rung => reached the full model (test precondition)", false);
+        }
+    }
+
     // ---- viscosity is flagged unreliable when not required ----------------------
     {
         auto b = blob(5, 3.0, 2.0);
