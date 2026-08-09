@@ -2244,7 +2244,14 @@ void US_Hydrodyn::select_perceivable( std::set< QString > & to_perceive, QString
       }
       QString base = it->first;
       base.remove( rx_nc );
-      if ( multi_residue_map.count( base ) ) {
+      // count() is NOT enough. multi_residue_map is read all over the model walk with
+      // operator[] (us_hydrodyn_core.cpp:304 and friends), which INSERTS a default-constructed
+      // empty vector for any name looked up -- including the non-coded ones. So every residue
+      // the walk touched has a key by the time we get here, and only a NON-EMPTY entry means
+      // somo.residue actually codes it. Testing count() alone classified SO4 and CIT as coded.
+      const bool really_coded = multi_residue_map.count( base )
+         && !multi_residue_map[ base ].empty();
+      if ( really_coded ) {
          unmatched_set.insert( base );      // coded name, unmatched instance
       } else {
          to_perceive.insert( it->first );
