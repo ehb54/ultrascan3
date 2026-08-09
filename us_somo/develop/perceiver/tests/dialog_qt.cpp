@@ -84,6 +84,26 @@ int main( int argc, char ** argv ) {
         CK( dlg.entry().contains( "2\t3.5" ) );
     }
 
+    // Regression: the dialog must be a TOP-LEVEL WINDOW even when constructed with a parent.
+    // A QFrame given a parent and no window flag is an ordinary child widget -- setWindowTitle
+    // and setWindowModality are then silently ignored, and the setGeometry( x, y, 0, 0 ) idiom
+    // SOMO uses for all its dialogs leaves it degenerate instead of being expanded to the layout
+    // minimum. It "opens" invisibly inside the main window and a caller waiting on isVisible()
+    // waits forever: the menu item appears to do nothing at all. Constructing it here the way
+    // US_Hydrodyn::perceive_non_coded() does is the only way this is caught without a display.
+    {
+        QWidget owner;
+        owner.show();
+        US_Hydrodyn_Perceive_Dialog child( t, QString(), 0, &owner );
+        CK( child.isWindow() );
+        child.show();
+        std::printf("  parented dialog: isWindow %d, %d x %d\n",
+                    (int) child.isWindow(), child.width(), child.height() );
+        CK( child.width()  > 100 );
+        CK( child.height() > 100 );
+        child.close();
+    }
+
     std::printf("\n%d checks, %d failures\n", checks, fails);
     return fails ? 1 : 0;
 }
