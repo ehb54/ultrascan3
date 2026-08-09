@@ -1122,3 +1122,35 @@ additivity is not built for. Worth saying plainly that adding iron did not fix h
   is called at load, so the ionisation should be reaching it. Either my validator is reading an
   un-ionised copy or the ionisation is not being applied to HEM; worth one look, because if it
   is the latter then every haem protein is being modelled unhydrated at the propionates.
+
+## Two defects found preparing for GUI testing — 2026-08-08
+
+Both surfaced only by running `perceive` over a wider set of structures than the demo set.
+
+### 1. `unknown_residues` leaked between structures
+Running `perceive` twice in one session reported the PREVIOUS structure's non-coded residues
+against the new one: 1UBQ alone gives 0 non-coded instances, but 1UBQ after 2CMD reported 2 --
+citrate's, carried over. SOMO populates `unknown_residues` during model building and never clears
+it, so the set accumulates across loads.
+
+The emitted entries were still correct, because a stale name that is absent from the new model
+produces nothing -- but the reported counts described a structure that was no longer open, which
+in a pipeline log is worse than useless. Both the gui_script command and the GUI slot now
+intersect `unknown_residues` with the residue names actually present in the loaded model.
+
+### 2. A structure with explicit deuteriums makes EVERY residue look non-coded
+`5PTI` is a neutron structure: it carries DOD (heavy water) and explicit D atoms, so its residues
+have more atoms than the table's entries -- ARG with 15 atoms rather than 11 -- and SOMO matches
+none of them. Result: **55 non-coded instances across 18 types**, i.e. eighteen modal review
+dialogs, one after another, with no way out short of dismissing each.
+
+Added **"Skip all remaining"** to the dialog. It abandons the whole review and leaves every
+remaining residue to the Automatic Bead Builder, and the tooltip names the likely cause so a user
+who sees an implausible number of non-coded residues knows to suspect the file rather than the
+tool. The caller honours it and reports how many residues went unreviewed.
+
+### FINDINGS worth eb's attention
+- **A neutron or explicit-hydrogen structure will currently trigger the review for every residue.**
+  The perceiver itself is H-agnostic by design (hydrogens are excluded from bond perception), so
+  it perceives these correctly -- it is SOMO's residue MATCHING that fails, because the atom count
+  differs. Making the match H-agnostic too would be the real fix and is out of scope here.

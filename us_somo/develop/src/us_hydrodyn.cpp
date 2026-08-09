@@ -2151,11 +2151,19 @@ void US_Hydrodyn::perceive_non_coded() {
    // unknown_residues is what SOMO itself recorded as non-codable while building the model; it is
    // the right trigger, unlike multi_residue_map, which by now also holds the "_NC" placeholders
    // the bead builder created.
+   // unknown_residues persists across loads, so restrict it to residues actually present in the
+   // structure currently open -- otherwise a second run offers the previous structure's ligands.
+   std::set< QString > present;
+   for ( unsigned int pm = 0; pm < model_vector[ 0 ].molecule.size(); ++pm ) {
+      for ( unsigned int pa = 0; pa < model_vector[ 0 ].molecule[ pm ].atom.size(); ++pa ) {
+         present.insert( model_vector[ 0 ].molecule[ pm ].atom[ pa ].resName );
+      }
+   }
    std::set< QString > to_perceive;
    for ( map < QString, bool >::iterator it = unknown_residues.begin();
          it != unknown_residues.end();
          ++it ) {
-      if ( it->second ) {
+      if ( it->second && present.count( it->first ) ) {
          to_perceive.insert( it->first );
       }
    }
@@ -2226,7 +2234,14 @@ void US_Hydrodyn::perceive_non_coded() {
                                                  "Automatic Bead Builder)\n" ) )
                      .arg( tents[ t ].resName ) );
       }
+      const bool stop = dlg->skip_all();
       delete dlg;
+      if ( stop ) {
+         editor_msg( "dark red",
+                     QString( us_tr( "Perceive: review abandoned, %1 residue(s) not looked at.\n" ) )
+                     .arg( tents.size() - t - 1 ) );
+         break;
+      }
    }
    editor_msg( "blue", QString( us_tr( "Perceive: %1 of %2 proposed entr(y/ies) accepted, "
                                        "%3 appended to somo.residue.\n" ) )

@@ -286,6 +286,17 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     pb_skip->setToolTip( us_tr( "Leave this residue to the Automatic Bead Builder, as before." ) );
     connect( pb_skip, SIGNAL( clicked() ), SLOT( skip_entry() ) );
 
+    pb_skip_all = new QPushButton( us_tr( "Skip all remaining" ), this );
+    pb_skip_all->setMinimumHeight( minHeight1 );
+    pb_skip_all->setPalette( PALET_PUSHB );
+    pb_skip_all->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+    pb_skip_all->setToolTip( us_tr( "Abandon the review entirely. Every remaining residue is "
+                                    "left to the Automatic Bead Builder, as before. Useful when "
+                                    "a structure reports far more non-coded residues than "
+                                    "expected -- a file carrying explicit hydrogens or deuteriums "
+                                    "will not match the residue table at all." ) );
+    connect( pb_skip_all, SIGNAL( clicked() ), SLOT( skip_all_entries() ) );
+
     pb_help = new QPushButton( us_tr( "Help" ), this );
     pb_help->setMinimumHeight( minHeight1 );
     pb_help->setPalette( PALET_PUSHB );
@@ -322,6 +333,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     QHBoxLayout * buttons = new QHBoxLayout();
     buttons->addWidget( pb_help );
     buttons->addStretch( 1 );
+    buttons->addWidget( pb_skip_all );
     buttons->addWidget( pb_skip );
     buttons->addWidget( pb_accept );
     top->addLayout( buttons );
@@ -417,6 +429,13 @@ void US_Hydrodyn_Perceive_Dialog::accept_entry() {
 void US_Hydrodyn_Perceive_Dialog::skip_entry() {
     accepted_ = false;
     save_requested_ = false;
+    close();
+}
+
+void US_Hydrodyn_Perceive_Dialog::skip_all_entries() {
+    accepted_ = false;
+    save_requested_ = false;
+    skip_all_ = true;
     close();
 }
 
