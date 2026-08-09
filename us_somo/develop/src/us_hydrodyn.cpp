@@ -1127,6 +1127,11 @@ void US_Hydrodyn::setupGUI()
          QAction *qa = submenu->addAction( us_tr("&Perceive Non-Coded Residues...") );
          connect( qa, SIGNAL( triggered() ), this, SLOT( perceive_non_coded() ) );
       }
+      {
+         // Undo the session: discard every perceived entry and go back to the user's own table.
+         QAction *qa = submenu->addAction( us_tr("&Reset Perceived Residues") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT( reset_perceived_residues() ) );
+      }
       menu->addMenu( submenu );
    }
    {
@@ -2249,6 +2254,12 @@ void US_Hydrodyn::select_perceivable( std::set< QString > & to_perceive, QString
       // empty vector for any name looked up -- including the non-coded ones. So every residue
       // the walk touched has a key by the time we get here, and only a NON-EMPTY entry means
       // somo.residue actually codes it. Testing count() alone classified SO4 and CIT as coded.
+      // A residue accepted earlier in this session IS coded now -- by the overlay we wrote. Offer
+      // it again anyway: that is how an accepted entry gets revisited and adjusted.
+      if ( perceived_entries.count( base ) ) {
+         to_perceive.insert( it->first );
+         continue;
+      }
       const bool really_coded = multi_residue_map.count( base )
          && !multi_residue_map[ base ].empty();
       if ( really_coded ) {
@@ -2360,8 +2371,17 @@ void US_Hydrodyn::perceive_non_coded() {
    QStringList accepted_blocks;
    QStringList accepted_hybrids;
    for ( int t = 0; t < tents.size(); ++t ) {
+      // If this residue was accepted earlier in the session, open the dialog on THOSE values.
+      const QString previously_accepted = perceived_entries.count( tents[ t ].resName )
+         ? perceived_entries[ tents[ t ].resName ] : QString();
       US_Hydrodyn_Perceive_Dialog * dlg =
-         new US_Hydrodyn_Perceive_Dialog( tents[ t ], le_pdb_file->text(), (void *) this, this );
+         new US_Hydrodyn_Perceive_Dialog( tents[ t ], le_pdb_file->text(), (void *) this, this,
+                                          0, previously_accepted );
+      if ( !previously_accepted.isEmpty() ) {
+         editor_msg( "blue", QString( us_tr( "Perceive: %1 was accepted earlier this session; "
+                                             "showing those values
+" ) ).arg( tents[ t ].resName ) );
+      }
       // Modal, one residue at a time: each decision is independent and the user should not be
       // asked to hold several half-reviewed entries in their head at once. The dialog carries
       // Qt::Window (see its constructor), so it is a real top-level window and the modality and
@@ -2426,6 +2446,44 @@ void US_Hydrodyn::perceive_non_coded() {
                              us_tr( "The accepted entries could not be applied -- see the text "
                                     "window for which file could not be written." ), QString(), this );
    }
+}
+
+// Discard every entry accepted this session and go back to the user's own table. The overlay file
+// is removed rather than left behind, so nothing can later be re-selected by hand and mistaken for
+// a curated table. The user's somo.residue is untouched -- entries they chose to save are theirs
+// and stay there; this only undoes the session.
+void US_Hydrodyn::reset_perceived_residues() {
+   QString permanent = residue_filename;
+   if ( permanent.endsWith( PERCEIVED_SUFFIX ) ) {
+      permanent.chop( PERCEIVED_SUFFIX.length() );
+   }
+   const QString overlay = permanent + PERCEIVED_SUFFIX;
+
+   if ( perceived_entries.empty() && residue_filename == permanent && !QFile::exists( overlay ) ) {
+      editor_msg( "blue", us_tr( "Perceive: nothing to reset, no entries accepted this session\n" ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "No perceived entries are in effect." ), QString(), this );
+      return;
+   }
+
+   const int n = (int) perceived_entries.size();
+   perceived_entries.clear();
+   QFile::remove( overlay );
+   residue_filename = permanent;
+   read_residue_file();
+   create_fasta_vbar_mw();
+   if ( lbl_table ) {
+      lbl_table->setText( QDir::toNativeSeparators( residue_filename ) );
+   }
+   editor_msg( "dark blue", QString( us_tr( "Perceive: reset -- %1 perceived entr(y/ies) "
+                                            "discarded, active residue table is now %2\n" ) )
+               .arg( n ).arg( residue_filename ) );
+   reload_pdb();
+   US_Static::us_message( us_tr( "Please note:" ),
+                          QString( us_tr( "%1 perceived entr(y/ies) discarded.\n\nThe active "
+                                          "residue table is back to:\n%2\n\nAnything you chose "
+                                          "to save to somo.residue is unaffected." ) )
+                          .arg( n ).arg( residue_filename ), QString(), this );
 }
 
 // Make accepted perceived entries take effect in the running session.
@@ -2498,16 +2556,32 @@ bool US_Hydrodyn::apply_perceived_entries( const QStringList & blocks,
    }
    const QString residue_overlay = permanent_residue_filename + PERCEIVED_SUFFIX;
 
-   QStringList records;
+   // Key each record by residue name so accepting the same residue twice REPLACES it. The overlay
+   // is then rebuilt from the PERMANENT table plus the session's records -- never appended to --
+   // or a revisited residue would appear in the table twice and read_residue_file() would keep
+   // both as duplicate variants.
    for ( int b = 0; b < blocks.size(); ++b ) {
       const QString record = perceived_table_record( blocks[ b ] );
-      if ( !record.isEmpty() ) {
-         records << record;
+      if ( record.isEmpty() ) continue;
+      const QStringList rl = record.split( "\n" );
+      QString resname;
+      for ( int i = 0; i < rl.size(); ++i ) {          // first non-comment line is the header
+         if ( rl[ i ].trimmed().isEmpty() ) continue;
+         const QStringList f = rl[ i ].split( "\t" );
+         if ( f.size() >= 7 ) { resname = f[ 0 ]; break; }
       }
+      if ( resname.isEmpty() ) continue;
+      perceived_entries[ resname ] = record;
+   }
+
+   QStringList records;
+   for ( map < QString, QString >::iterator it = perceived_entries.begin();
+         it != perceived_entries.end(); ++it ) {
+      records << it->second;
    }
 
    QString failed_path;
-   if ( !write_table_overlay( residue_filename, residue_overlay, records, failed_path ) ) {
+   if ( !write_table_overlay( permanent_residue_filename, residue_overlay, records, failed_path ) ) {
       editor_msg( "red", QString( us_tr( "Perceive: could NOT write %1 -- the accepted "
                                          "entr(y/ies) are NOT in effect\n" ) ).arg( failed_path ) );
       return false;

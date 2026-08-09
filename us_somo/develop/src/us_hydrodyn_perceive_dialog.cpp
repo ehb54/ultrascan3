@@ -39,7 +39,8 @@ US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::T
                                                           const QString & pdb_filename,
                                                           void * us_hydrodyn,
                                                           QWidget * p,
-                                                          const char * )
+                                                          const char *,
+                                                          const QString & accepted_block )
     // Qt::Window is REQUIRED, not decorative. A QFrame constructed with a parent and no window
     // flag is a CHILD WIDGET: setWindowTitle and setWindowModality below silently do nothing, and
     // the setGeometry( x, y, 0, 0 ) idiom SOMO uses throughout -- which the window manager expands
@@ -60,7 +61,8 @@ US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::T
                     ? us_tr( "SOMO: Review Non-Coded Residue" )
                     : QString( us_tr( "SOMO: Review Non-Coded Residue - %1" ) )
                     .arg( QFileInfo( pdb_filename ).fileName() ) );
-    parse_block();
+    revisiting_ = !accepted_block.isEmpty();
+    parse_block( revisiting_ ? accepted_block : tent_.block );
     setupGUI();
     global_Xpos += 30;
     global_Ypos += 30;
@@ -71,16 +73,24 @@ US_Hydrodyn_Perceive_Dialog::~US_Hydrodyn_Perceive_Dialog() {}
 
 // Split the proposed block into its comment header, atom rows and trailing bead line, so edits
 // can be folded back in without the dialog having to re-run the pipeline.
-void US_Hydrodyn_Perceive_Dialog::parse_block() {
+// `data_source` supplies the positional lines -- header, atoms, bead. The commentary and the
+// REVIEW block always come from the fresh proposal in tent_.block, because a stored entry has been
+// collapsed to a single comment line and no longer carries the flags a reviewer needs to see.
+// Revisiting an accepted residue therefore shows the accepted NUMBERS under the original REVIEW
+// notes, and "Reset this residue" re-parses with tent_.block as the source to get back the
+// perceived values.
+void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
     rows_.clear();
     comment_.clear();
-    const QStringList lines = tent_.block.split( "\n" );
+    for ( const QString & cl : tent_.block.split( "\n" ) ) {
+        if ( cl.startsWith( "#" ) ) comment_ += cl + "\n";
+    }
+    const QStringList lines = data_source.split( "\n" );
     bool seen_header = false;
     for ( int i = 0; i < lines.size(); ++i ) {
         const QString & ln = lines[ i ];
         if ( ln.startsWith( "#" ) ) {
-            comment_ += ln + "\n";
-            continue;
+            continue;                       // commentary already taken from tent_.block
         }
         if ( ln.trimmed().isEmpty() ) continue;
         const QStringList f = ln.split( "\t" );
@@ -91,8 +101,14 @@ void US_Hydrodyn_Perceive_Dialog::parse_block() {
             seen_header = true;
             if ( f.size() >= 7 ) {
                 header_type_ = f[ 1 ].toInt();
+                init_molvol_ = f[ 2 ].toDouble();
                 header_asa_  = f[ 3 ].toDouble();
+                init_vbar_   = f[ 6 ].toDouble();
             }
+            continue;
+        }
+        if ( f.size() == 5 ) {
+            init_color_ = f[ 1 ].toInt();   // bead line: hydration, colour, placing, chain, volume
             continue;
         }
         if ( f.size() >= 8 ) {
@@ -117,11 +133,36 @@ void US_Hydrodyn_Perceive_Dialog::populate_colors() {
                             .arg( COLORS[ i ].name )
                             .arg( COLORS[ i ].meaning ),
                             COLORS[ i ].idx );
-        if ( COLORS[ i ].idx == somo_perceive::DEFAULT_BEAD_COLOR ) {
+        if ( COLORS[ i ].idx == init_color_ ) {
             select_at = cmb_color->count() - 1;
         }
     }
     cmb_color->setCurrentIndex( select_at );
+}
+
+// Fill the atom table from rows_. Separate from setupGUI so "Reset this residue" can refill it
+// after re-parsing. Only the hydration column is editable: the rest follow from the geometry, and
+// editing them would desynchronise the entry from the structure it was derived from.
+void US_Hydrodyn_Perceive_Dialog::populate_table() {
+    const bool was_blocked = tbl_atoms->blockSignals( true );   // do not fire hydration_edited
+    tbl_atoms->setRowCount( rows_.size() );
+    for ( int r = 0; r < rows_.size(); ++r ) {
+        QTableWidgetItem * i0 = new QTableWidgetItem( rows_[ r ].name );
+        QTableWidgetItem * i1 = new QTableWidgetItem( rows_[ r ].hybrid );
+        QTableWidgetItem * i2 = new QTableWidgetItem( QString::number( rows_[ r ].mw, 'f', 2 ) );
+        QTableWidgetItem * i3 = new QTableWidgetItem( QString::number( rows_[ r ].radius, 'f', 2 ) );
+        QTableWidgetItem * i4 = new QTableWidgetItem( QString::number( rows_[ r ].hydration, 'f', 2 ) );
+        i0->setFlags( i0->flags() & ~Qt::ItemIsEditable );
+        i1->setFlags( i1->flags() & ~Qt::ItemIsEditable );
+        i2->setFlags( i2->flags() & ~Qt::ItemIsEditable );
+        i3->setFlags( i3->flags() & ~Qt::ItemIsEditable );
+        tbl_atoms->setItem( r, 0, i0 );
+        tbl_atoms->setItem( r, 1, i1 );
+        tbl_atoms->setItem( r, 2, i2 );
+        tbl_atoms->setItem( r, 3, i3 );
+        tbl_atoms->setItem( r, 4, i4 );
+    }
+    tbl_atoms->blockSignals( was_blocked );
 }
 
 void US_Hydrodyn_Perceive_Dialog::setupGUI() {
@@ -170,22 +211,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     tbl_atoms->setHorizontalHeaderLabels( headers );
     tbl_atoms->verticalHeader()->setVisible( false );
     tbl_atoms->setSelectionMode( QAbstractItemView::SingleSelection );
-    for ( int r = 0; r < rows_.size(); ++r ) {
-        QTableWidgetItem * i0 = new QTableWidgetItem( rows_[ r ].name );
-        QTableWidgetItem * i1 = new QTableWidgetItem( rows_[ r ].hybrid );
-        QTableWidgetItem * i2 = new QTableWidgetItem( QString::number( rows_[ r ].mw, 'f', 2 ) );
-        QTableWidgetItem * i3 = new QTableWidgetItem( QString::number( rows_[ r ].radius, 'f', 2 ) );
-        QTableWidgetItem * i4 = new QTableWidgetItem( QString::number( rows_[ r ].hydration, 'f', 2 ) );
-        i0->setFlags( i0->flags() & ~Qt::ItemIsEditable );
-        i1->setFlags( i1->flags() & ~Qt::ItemIsEditable );
-        i2->setFlags( i2->flags() & ~Qt::ItemIsEditable );
-        i3->setFlags( i3->flags() & ~Qt::ItemIsEditable );
-        tbl_atoms->setItem( r, 0, i0 );
-        tbl_atoms->setItem( r, 1, i1 );
-        tbl_atoms->setItem( r, 2, i2 );
-        tbl_atoms->setItem( r, 3, i3 );
-        tbl_atoms->setItem( r, 4, i4 );
-    }
+    populate_table();
     tbl_atoms->resizeColumnsToContents();
     tbl_atoms->setMinimumHeight( 180 );
     connect( tbl_atoms, SIGNAL( cellChanged( int, int ) ), SLOT( hydration_edited( int, int ) ) );
@@ -199,7 +225,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     sb_vbar->setDecimals( 3 );
     sb_vbar->setRange( 0.0, 3.0 );
     sb_vbar->setSingleStep( 0.005 );
-    sb_vbar->setValue( tent_.vbar );
+    sb_vbar->setValue( init_vbar_ );
     sb_vbar->setMinimumHeight( minHeight1 );
     sb_vbar->setToolTip( us_tr( "Durchschlag & Zipper atomic volume increments. Typically within "
                                 "2-3% for ordinary neutral organic chemistry; less reliable for "
@@ -215,7 +241,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     sb_molvol->setDecimals( 2 );
     sb_molvol->setRange( 0.0, 100000.0 );
     sb_molvol->setSingleStep( 1.0 );
-    sb_molvol->setValue( tent_.molvol );
+    sb_molvol->setValue( init_molvol_ );
     sb_molvol->setMinimumHeight( minHeight1 );
     sb_molvol->setToolTip( us_tr( "Solvent-excluded volume at a 1.4 A probe, scaled onto the "
                                   "convention the coded residues use. This is also the bead "
@@ -324,6 +350,16 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
                                     "will not match the residue table at all." ) );
     connect( pb_skip_all, SIGNAL( clicked() ), SLOT( skip_all_entries() ) );
 
+    pb_reset = new QPushButton( us_tr( "Reset this residue" ), this );
+    pb_reset->setMinimumHeight( minHeight1 );
+    pb_reset->setPalette( PALET_PUSHB );
+    pb_reset->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+    pb_reset->setToolTip( us_tr( "Discard the edits shown and go back to what perception "
+                                 "proposed for this residue. Does not touch any other residue, "
+                                 "and does not un-accept anything -- use Lookup Tables -> Reset "
+                                 "Perceived Residues for that." ) );
+    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset_entry() ) );
+
     pb_help = new QPushButton( us_tr( "Help" ), this );
     pb_help->setMinimumHeight( minHeight1 );
     pb_help->setPalette( PALET_PUSHB );
@@ -359,6 +395,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
 
     QHBoxLayout * buttons = new QHBoxLayout();
     buttons->addWidget( pb_help );
+    buttons->addWidget( pb_reset );
     buttons->addStretch( 1 );
     buttons->addWidget( pb_skip_all );
     buttons->addWidget( pb_skip );
@@ -495,6 +532,18 @@ void US_Hydrodyn_Perceive_Dialog::view_rasmol() {
        << "centre all\n";
     f.close();
     uh->model_viewer( spt, "-script", false );
+}
+
+// Back to what perception proposed for this residue, discarding whatever is on screen. This is
+// the per-residue counterpart of Lookup Tables -> Reset Perceived Residues, which discards the
+// whole session; this one changes nothing that has already been accepted.
+void US_Hydrodyn_Perceive_Dialog::reset_entry() {
+    parse_block( tent_.block );
+    populate_table();
+    sb_vbar->setValue( init_vbar_ );
+    sb_molvol->setValue( init_molvol_ );
+    populate_colors();
+    refresh_entry();
 }
 
 void US_Hydrodyn_Perceive_Dialog::accept_entry() {
