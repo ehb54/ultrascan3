@@ -129,22 +129,28 @@ TEST("emitted numbers are the ones the stages computed") {
     if (idx.empty()) { std::printf("  (no complete PHE -- skipped)\n"); return; }
     Built b = build("PHE", g.in, g.perc, g.bonds, idx, Perceiver(g.tbl), &g.hyd);
 
-    // header line: name, type, molvol, mw, natoms, nbeads, vbar
+    // header line: name, type, molvol, ASA, natoms, nbeads, vbar
     std::istringstream ls(b.residue_block);
     std::string ln, header;
     while (std::getline(ls, ln)) if (!ln.empty() && ln[0] != '#') { header = ln; break; }
     std::istringstream hs(header);
     std::string nm;
     int type = 0, natoms = 0, nbeads = 0;
-    double molvol = 0, mw = 0, vbar = 0;
-    hs >> nm >> type >> molvol >> mw >> natoms >> nbeads >> vbar;
-    std::printf("  header: %s molvol %.1f natoms %d nbeads %d vbar %.3f\n",
-                nm.c_str(), molvol, natoms, nbeads, vbar);
+    double molvol = 0, asa = 0, vbar = 0;
+    hs >> nm >> type >> molvol >> asa >> natoms >> nbeads >> vbar;
+    std::printf("  header: %s molvol %.1f asa %.1f natoms %d nbeads %d vbar %.3f\n",
+                nm.c_str(), molvol, asa, natoms, nbeads, vbar);
     CHECK(nm == "PHE");
     CHECK(natoms == 11);
     CHECK(nbeads == 1);
     CHECK(std::fabs(molvol - b.molvol) < 0.5);
     CHECK(std::fabs(vbar - b.psv.vbar) < 0.001);
+    // ASA MUST be positive. Every SOMO residue loader skips a record whose ASA is zero, and skips
+    // it silently -- the entry parses, never enters residue_list or multi_residue_map, and the
+    // residue goes on being reported as non-coded no matter what else is right. This emitted 0
+    // for a long time and nothing noticed, because nothing had ever loaded a generated entry.
+    CHECK(asa > 0);
+    CHECK(molvol > 0);                            // the same guard covers molvol
 }
 
 TEST("the single bead carries the molvol, a selectable colour, and the summed hydration") {

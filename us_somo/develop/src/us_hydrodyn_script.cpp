@@ -221,6 +221,19 @@ void US_Hydrodyn::gui_script_run() {
             }
             opt1 = ls.front(); ls.pop_front();
          }
+         // "perceive apply <pdb>" is the headless equivalent of accepting every entry in the GUI
+         // review dialog: perceive, then put the entries into the tables SOMO builds from and
+         // re-read the structure, so the residues stop being non-coded. It reports the non-coded
+         // count before and after, which is the assertion worth making -- the GUI path failed for
+         // a long time precisely because nothing checked that accepting changed anything.
+         // The user's somo.residue is not modified; the entries go to the session overlay.
+         bool perceive_apply = ( opt1 == "apply" );
+         if ( perceive_apply ) {
+            if ( ls.isEmpty() ) {
+               gui_script_error( i, cmd, "missing argument: perceive apply <pdbfile>" );
+            }
+            opt1 = ls.front(); ls.pop_front();
+         }
          bool perceive_compare = ( opt1 == "compare" );
          if ( perceive_compare ) {
             if ( ls.isEmpty() ) {
@@ -414,6 +427,52 @@ void US_Hydrodyn::gui_script_run() {
          }
          if ( tents.isEmpty() ) {
             TSO << "perceive: every residue in this structure is already coded in somo.residue\n";
+         }
+         if ( perceive_apply && !tents.isEmpty() ) {
+            QStringList blocks;
+            QStringList new_hybrids;
+            for ( int t = 0; t < tents.size(); ++t ) {
+               blocks      << tents[ t ].block;
+               new_hybrids += tents[ t ].new_hybrids;
+            }
+            if ( !apply_perceived_entries( blocks, new_hybrids, false ) ) {
+               gui_script_error( i, cmd, "could not apply the perceived entries" );
+            }
+            // Did the entries actually land in the table SOMO matches against? This is a
+            // separate question from whether the file was written, and the two came apart once
+            // already: the file was fine and the records in it were not parseable.
+            for ( int t = 0; t < tents.size(); ++t ) {
+               TSO << QString( "perceive apply: %1 %2 in the residue table (%3 residue(s) loaded "
+                               "from %4)\n" )
+                  .arg( tents[ t ].resName )
+                  .arg( multi_residue_map.count( tents[ t ].resName ) ? "IS" : "is NOT" )
+                  .arg( (unsigned int) residue_list.size() )
+                  .arg( residue_filename );
+            }
+            // apply_perceived_entries() re-read the structure, so this is the state the bead
+            // builder would now see. Anything still listed here did NOT take effect.
+            std::set< QString > still_present;
+            for ( unsigned int pm = 0; pm < model_vector[ 0 ].molecule.size(); ++pm ) {
+               for ( unsigned int pa = 0;
+                     pa < model_vector[ 0 ].molecule[ pm ].atom.size(); ++pa ) {
+                  still_present.insert( model_vector[ 0 ].molecule[ pm ].atom[ pa ].resName );
+               }
+            }
+            QStringList still_unknown;
+            for ( map < QString, bool >::iterator it = unknown_residues.begin();
+                  it != unknown_residues.end();
+                  ++it ) {
+               if ( it->second && still_present.count( it->first ) ) {
+                  still_unknown << it->first;
+               }
+            }
+            TSO << QString( "\nperceive apply: %1 entr(y/ies) applied to the session residue "
+                            "table, %2 residue type(s) still non-coded%3\n" )
+               .arg( blocks.size() )
+               .arg( still_unknown.size() )
+               .arg( still_unknown.isEmpty()
+                     ? QString( " -- the bead builder will use the perceived entries" )
+                     : QString( ": %1" ).arg( still_unknown.join( ", " ) ) );
          }
       } else if ( cmd == "saxs_options" ) {
          if ( ls.isEmpty() ) {

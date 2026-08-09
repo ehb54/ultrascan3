@@ -1255,6 +1255,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void residue();
       // Perceive + review the residues somo.residue does not code (Lookup Tables menu).
       void perceive_non_coded();
+      // Put accepted perceived entries into the tables SOMO builds from, so they take effect in
+      // the running session without touching the user's own table. Shared by the GUI review
+      // dialog and the "perceive apply" gui_script command. False if a table could not be written.
+      bool apply_perceived_entries( const QStringList & blocks,
+                                    const QStringList & hybrids,
+                                    bool persist_hybrids );
       void do_saxs();
       void select_model( int val = 0 );
       void model_selection_changed();

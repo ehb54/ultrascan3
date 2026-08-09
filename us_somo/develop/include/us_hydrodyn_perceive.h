@@ -78,6 +78,25 @@ void find_sssr(Bonds& b, int max_ring = 12);
 static constexpr int DEFAULT_BEAD_COLOR = 10;
 static constexpr int MAX_BEAD_COLOR     = 15;
 
+// ---- ASA policy for machine-generated entries -----------------------------------------------
+// An entry's ASA column MUST be > 0. All three of SOMO's residue loaders --
+// US_Hydrodyn::read_residue_file (us_hydrodyn_load.cpp:534), US_AddResidue
+// (us_hydrodyn_addresidue.cpp:1288) and US_Saxs_Util (us_saxs_util_hydro.cpp:693) -- skip a
+// record whose ASA is zero, and skip it SILENTLY: the file parses, no error is raised, the
+// residue simply never enters residue_list or multi_residue_map, and everything downstream goes
+// on calling it non-coded. Emitting 0 here (as this code first did, on the reasoning that ASA is
+// a modelling quantity perception cannot supply) made every generated entry unloadable.
+//
+// The number itself is informational: nothing computes with the residue-level ASA -- it is only
+// ever printed in the info dumps (us_hydrodyn_core.cpp:2112, us_hydrodyn_info.cpp:1229) -- while
+// the ASA that matters is computed per atom at run time by compute_asa(). So a documented
+// placeholder is honest here, but zero is not.
+//
+// 18 A^2/atom is the mean of asa/natoms over the 127 coded residues of somo.residue
+// (median 16.8, range 0.3-64.8). Callers that can read the user's own table should measure it
+// there and pass it, rather than relying on this default.
+static constexpr double DEFAULT_ASA_PER_ATOM = 18.0;
+
 inline bool bead_color_is_reserved(int c) {
     return c == 0 || c == 6 || c == 7 || c == 8;
 }
@@ -127,6 +146,7 @@ public:
     struct Properties {
         bool   have_vbar = false;    double vbar = 0;      // cm^3/g
         bool   have_molvol = false;  double molvol = 0;    // A^3, also the single bead's volume
+        double asa = 0;                                    // A^2; 0 => emitter substitutes, never 0
         std::vector<double> hydration;                     // per atom; empty = unset
         std::vector<std::string> review;                   // extra lines for the REVIEW block
         int    bead_color = DEFAULT_BEAD_COLOR;
