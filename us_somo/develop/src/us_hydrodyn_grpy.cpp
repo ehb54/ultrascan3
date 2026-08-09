@@ -318,6 +318,24 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    //    setHydroFile();
    // }
 
+   // Scripting override for buried-bead inclusion (issue 984 follow-up). The solver-level
+   // overrides below are resolved into locals at the call site, but this one cannot be:
+   // bead selection happens in several places across a run, including in grpy_finished()
+   // after this function has returned, so the setting itself must carry the override.
+   // Applied, not restored -- a script's `global` is a settings change and the run must be
+   // self-consistent from selection through to the results it writes. Announced, because a
+   // silent change to which beads are used would invalidate every number the run produces.
+   if ( gparams.count( "grpy_bead_inclusion" ) ) {
+      const bool want = truthy( gparams[ "grpy_bead_inclusion" ] );
+      if ( want != hydro.grpy_bead_inclusion ) {
+         hydro.grpy_bead_inclusion = want;
+         display_default_differences();
+      }
+      editor_msg( "dark red",
+                  QString( us_tr( "GRPY: buried-bead inclusion set to %1 by grpy_bead_inclusion\n" ) )
+                  .arg( want ? us_tr( "INCLUDE all beads" ) : us_tr( "exclude buried beads" ) ) );
+   }
+
    stopFlag = false;
    grpy_was_hydro_enabled = pb_calc_hydro->isEnabled();
    pb_stop_calc->setEnabled(true);

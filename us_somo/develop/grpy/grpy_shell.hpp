@@ -133,6 +133,23 @@ struct ShellReport {
     std::vector<double> reported;
     std::vector<double> k_obs;            // parallel to `require`; 0 => not extrapolated
     std::vector<int>    ns;               // bead count per rung
+    // Every rung's value for every requested observable: values[rung][observable], with
+    // rung indexed as `ns`. Kept so that a validation run can recompute any variant of the
+    // estimator from the stored sequence instead of re-solving the whole ladder, which
+    // costs hours per corpus. Small: rungs x observables doubles.
+    std::vector<std::vector<double>> values;
+
+    // Which mechanism produced each observable's estimate, parallel to `require`. Without
+    // this an audit cannot tell whether the extrapolation or one of the safeguards is
+    // responsible for a reported margin.
+    struct Provenance {
+        bool extrapolated = false;      // Richardson succeeded (else the raw gap was used)
+        bool clamped_low = false;       // observed order pinned at k_min
+        bool clamped_high = false;      // observed order pinned at k_max
+        bool floored = false;           // the 2x-tightening floor set the estimate
+        const char* declined = nullptr; // why extrapolation was refused, if it was
+    };
+    std::vector<Provenance> prov;
     // Indices, into the bead list passed to run(), of the beads kept at each rung -- only
     // when ShellOptions::record_subsets is set, since it is wanted for writing the reduced
     // models out and is dead weight otherwise. Parallel to `ns`. The full rung (if reached)
@@ -160,7 +177,17 @@ struct ShellReport {
 // direction: k = k_min = 1 with a doubling ladder returns exactly the raw gap, i.e. the
 // un-extrapolated estimate. Non-monotone or sign-flipped gaps mean we are outside the
 // asymptotic regime, so we decline to extrapolate and fall back to the raw gap.
-struct Richardson { double mu = 0, err = 0, k = 0; bool ok = false; };
+struct Richardson {
+    double mu = 0, err = 0, k = 0;
+    bool ok = false;
+    // Which mechanism produced this estimate. Recorded rather than inferred because the
+    // safeguards, not the extrapolation, turn out to carry much of the reported margin,
+    // and a validation run that cannot say which one fired cannot apportion the credit.
+    bool clamped_low = false;    // observed order pinned at k_min (returns ~the raw gap)
+    bool clamped_high = false;   // observed order pinned at k_max
+    bool floored = false;        // the 2x-tightening floor set the estimate, not Richardson
+    const char* declined = nullptr;   // why extrapolation was refused (nullptr = it wasn't)
+};
 
 inline double richardson_order(double r1, double r2, double ratio_obs,
                                double k_min, double k_max) {
@@ -182,19 +209,22 @@ inline Richardson richardson(const std::vector<double>& v, const std::vector<int
                              double k_min, double k_max, double safety) {
     Richardson r;
     const size_t n = v.size();
-    if (n < 3 || ns.size() != n) return r;
+    if (n < 3 || ns.size() != n)   { r.declined = "fewer than three rungs"; return r; }
     double gap1 = v[n - 3] - v[n - 2], gap2 = v[n - 2] - v[n - 1];
-    if (gap1 == 0.0 || gap2 == 0.0) return r;
-    if ((gap1 > 0) != (gap2 > 0)) return r;                 // not monotone
+    if (gap1 == 0.0 || gap2 == 0.0) { r.declined = "a gap was exactly zero"; return r; }
+    if ((gap1 > 0) != (gap2 > 0))  { r.declined = "gaps not monotone"; return r; }
     double ratio = std::fabs(gap1) / std::fabs(gap2);
-    if (!(ratio > 1.0)) return r;                           // not converging
+    if (!(ratio > 1.0))            { r.declined = "gaps not shrinking"; return r; }
     double r1 = (double)ns[n - 2] / ns[n - 3], r2 = (double)ns[n - 1] / ns[n - 2];
-    if (!(r1 > 1.0) || !(r2 > 1.0)) return r;
+    if (!(r1 > 1.0) || !(r2 > 1.0)) { r.declined = "rung sizes not increasing"; return r; }
     double k = richardson_order(r1, r2, ratio, k_min, k_max);
+    // richardson_order returns the bound verbatim when it clamps, so equality identifies it.
+    r.clamped_low  = (k == k_min);
+    r.clamped_high = (k == k_max);
     double rem = gap2 / (std::pow(r2, k) - 1.0);
     r.k = k;
     r.mu = v[n - 1] - rem;
-    if (r.mu == 0.0) return r;
+    if (r.mu == 0.0) { r.declined = "extrapolated value was zero"; return r; }
     double err = safety * std::fabs(rem) / std::fabs(r.mu);
 
     // FLOOR: never claim better than half the raw inter-rung gap.
@@ -212,6 +242,7 @@ inline Richardson richardson(const std::vector<double>& v, const std::vector<int
     // aggressive regime that carries the risk -- and is slack at the median observed
     // k~1.83, so the extrapolation keeps its benefit on well-behaved models.
     double raw_gap = std::fabs(gap2) / std::fabs(r.mu);
+    r.floored = (0.5 * raw_gap > err);
     r.err = std::max(err, 0.5 * raw_gap);
     r.ok = true;
     return r;
@@ -335,6 +366,8 @@ public:
             const size_t M = sopt_.require.size();
             rep.reported = cur;                            // the finest rung solved so far
             rep.err_est.assign(M, 1.0); rep.extrapolated.assign(M, 0.0); rep.k_obs.assign(M, 0.0);
+            rep.prov.assign(M, ShellReport::Provenance{});
+            rep.values = hist;                             // every rung, every observable
             rep.err_max = 0.0;
             for (size_t m = 0; m < M; ++m) {
                 // Per-observable Richardson: each quantity converges at its own order, so
@@ -342,6 +375,7 @@ public:
                 std::vector<double> series;
                 for (auto& h : hist) series.push_back(h[m]);
                 Richardson ri = richardson(series, rep.ns, sopt_.k_min, sopt_.k_max, sopt_.safety);
+                rep.prov[m] = { ri.ok, ri.clamped_low, ri.clamped_high, ri.floored, ri.declined };
                 if (ri.ok) { rep.extrapolated[m] = ri.mu; rep.err_est[m] = ri.err; rep.k_obs[m] = ri.k; }
                 else {
                     rep.extrapolated[m] = cur[m];
