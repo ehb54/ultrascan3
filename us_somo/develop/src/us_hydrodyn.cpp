@@ -2147,9 +2147,14 @@ void US_Hydrodyn::edit_atom()
 // fall to the Automatic Bead Builder, which models them as a generic averaged bead. Nothing is
 // written to somo.residue unless the user ticks the box in the dialog.
 void US_Hydrodyn::perceive_non_coded() {
+   // Every exit below reports itself to the text window. A menu item that can appear to do
+   // nothing is worse than one that refuses loudly, and the message boxes alone are not enough:
+   // they leave no record to check afterwards.
+   editor_msg( "blue", us_tr( "Perceive: scanning the loaded structure for non-coded residues\n" ) );
    if ( model_vector.empty() ) {
+      editor_msg( "dark red", us_tr( "Perceive: no structure is loaded\n" ) );
       US_Static::us_message( us_tr( "Please note:" ),
-                             us_tr( "Load a PDB structure first." ) );
+                             us_tr( "Load a PDB structure first." ), QString(), this );
       return;
    }
    // unknown_residues is what SOMO itself recorded as non-codable while building the model; it is
@@ -2172,17 +2177,30 @@ void US_Hydrodyn::perceive_non_coded() {
       }
    }
    if ( to_perceive.empty() ) {
+      editor_msg( "blue", us_tr( "Perceive: every residue in this structure is already coded "
+                                 "in somo.residue, nothing to do\n" ) );
       US_Static::us_message( us_tr( "Please note:" ),
                              us_tr( "Every residue in this structure is already coded in "
-                                    "somo.residue -- there is nothing to perceive." ) );
+                                    "somo.residue -- there is nothing to perceive." ),
+                             QString(), this );
       return;
+   }
+   {
+      QStringList names;
+      for ( std::set< QString >::iterator it = to_perceive.begin(); it != to_perceive.end(); ++it ) {
+         names << *it;
+      }
+      editor_msg( "blue", QString( us_tr( "Perceive: %1 non-coded residue type(s) to review: %2\n" ) )
+                  .arg( names.size() ).arg( names.join( ", " ) ) );
    }
 
    somo_perceive::HybridTable ptbl;
    if ( !ptbl.load( saxs_options.default_hybrid_filename.toStdString() ) ) {
+      editor_msg( "red", QString( us_tr( "Perceive: could not load the hybridization table %1\n" ) )
+                  .arg( saxs_options.default_hybrid_filename ) );
       US_Static::us_message( us_tr( "Please note:" ),
                              QString( us_tr( "Could not load the hybridization table:\n%1" ) )
-                             .arg( saxs_options.default_hybrid_filename ) );
+                             .arg( saxs_options.default_hybrid_filename ), QString(), this );
       return;
    }
 
@@ -2194,8 +2212,11 @@ void US_Hydrodyn::perceive_non_coded() {
       somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive,
                                        le_pdb_file->text(), &pb_hyd, pb_opt );
    if ( tents.isEmpty() ) {
+      editor_msg( "dark red",
+                  us_tr( "Perceive: no entries could be proposed for the non-coded residues\n" ) );
       US_Static::us_message( us_tr( "Please note:" ),
-                             us_tr( "No entries could be proposed for the non-coded residues." ) );
+                             us_tr( "No entries could be proposed for the non-coded residues." ),
+                             QString(), this );
       return;
    }
 
@@ -2205,9 +2226,14 @@ void US_Hydrodyn::perceive_non_coded() {
       US_Hydrodyn_Perceive_Dialog * dlg =
          new US_Hydrodyn_Perceive_Dialog( tents[ t ], le_pdb_file->text(), (void *) this, this );
       // Modal, one residue at a time: each decision is independent and the user should not be
-      // asked to hold several half-reviewed entries in their head at once.
+      // asked to hold several half-reviewed entries in their head at once. The dialog carries
+      // Qt::Window (see its constructor), so it is a real top-level window and the modality and
+      // the isVisible() wait below both mean something.
+      fixWinButtons( dlg );
       dlg->setWindowModality( Qt::ApplicationModal );
       dlg->show();
+      dlg->raise();
+      dlg->activateWindow();
       while ( dlg->isVisible() ) {
          qApp->processEvents();
          US_Saxs_Util::us_usleep( 10000 );
@@ -2253,7 +2279,7 @@ void US_Hydrodyn::perceive_non_coded() {
    if ( saved ) {
       US_Static::us_message( us_tr( "Please note:" ),
                              us_tr( "somo.residue was appended to. Reload the structure for the "
-                                    "new entries to take effect." ) );
+                                    "new entries to take effect." ), QString(), this );
    }
 }
 

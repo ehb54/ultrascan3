@@ -40,7 +40,14 @@ US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::T
                                                           void * us_hydrodyn,
                                                           QWidget * p,
                                                           const char * )
-    : QFrame( p ) {
+    // Qt::Window is REQUIRED, not decorative. A QFrame constructed with a parent and no window
+    // flag is a CHILD WIDGET: setWindowTitle and setWindowModality below silently do nothing, and
+    // the setGeometry( x, y, 0, 0 ) idiom SOMO uses throughout -- which the window manager expands
+    // to the layout minimum for a real window -- leaves a child sized 0 x 0. The dialog then
+    // "opens" invisibly inside the main window, and any caller waiting on isVisible() waits
+    // forever. SOMO's other dialogs avoid this by passing no parent at all; keeping the parent and
+    // adding the flag is better on macOS, where it also keeps the dialog stacked above its owner.
+    : QFrame( p, Qt::Window ) {
     this->us_hydrodyn = us_hydrodyn;
     tent_ = tent;
     pdb_filename_ = pdb_filename;
