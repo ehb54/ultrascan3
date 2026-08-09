@@ -78,7 +78,17 @@ void US_Hydrodyn_Perceive_Dialog::parse_block() {
         }
         if ( ln.trimmed().isEmpty() ) continue;
         const QStringList f = ln.split( "\t" );
-        if ( !seen_header ) { seen_header = true; continue; }   // the residue header line
+        if ( !seen_header ) {
+            // residue header: name, type, molvol, ASA, natoms, nbeads, vbar. molvol and vbar are
+            // editable and come back from the spin boxes; type and ASA are carried through
+            // untouched so this dialog cannot contradict what the perceiver emitted.
+            seen_header = true;
+            if ( f.size() >= 7 ) {
+                header_type_ = f[ 1 ].toInt();
+                header_asa_  = f[ 3 ].toDouble();
+            }
+            continue;
+        }
         if ( f.size() >= 8 ) {
             AtomRow r;
             r.name      = f[ 0 ];
@@ -359,10 +369,18 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
                         "(the total is the quantity with literature backing; the per-atom split "
                         "is convention)" ) ).arg( hyd_total, 0, 'f', 2 ) );
 
+    // ASA must stay positive or every SOMO residue loader drops the record silently, and the
+    // residue goes on being treated as non-coded no matter what else the user accepted here.
+    const double asa = header_asa_ > 0
+        ? header_asa_
+        : somo_perceive::DEFAULT_ASA_PER_ATOM * rows_.size();
+
     QString s = comment_;
-    s += QString( "%1\t0\t%2\t0\t%3\t1\t%4\n" )
+    s += QString( "%1\t%2\t%3\t%4\t%5\t1\t%6\n" )
              .arg( tent_.resName )
+             .arg( header_type_ )
              .arg( sb_molvol->value(), 0, 'f', 2 )
+             .arg( asa, 0, 'f', 2 )
              .arg( rows_.size() )
              .arg( sb_vbar->value(), 0, 'f', 3 );
     for ( int r = 0; r < rows_.size(); ++r ) {
