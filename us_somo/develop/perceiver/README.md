@@ -80,7 +80,14 @@ Two sub-commands:
 | command | what it does |
 |---|---|
 | `perceive <pdb>` | loads the structure with SOMO's own parser and prints a tentative `somo.residue` entry (plus any new `somo.hybrid` rows) for every residue `somo.residue` does **not** code — the residues SOMO would otherwise model as a generic ABB average bead |
+| `perceive apply <pdb>` | the same, then **puts the entries into effect**: they go into a session overlay of the residue table, SOMO re-reads it and re-reads the structure, and the non-coded count is reported before and after. The headless equivalent of accepting every entry in the GUI dialog |
 | `perceive compare <pdb>` | **hand-testing aid**: runs perception over the residues `somo.residue` **does** code and diffs the result against the curated types, reporting exact-match and physics-match rates plus every difference |
+
+`perceive apply` never writes your `somo.residue`: accepted entries go to `<table>.perceived`
+alongside it, which becomes the active table for the rest of the session (the GUI shows this in
+the residue-table label). Its closing line is the assertion that matters —
+`0 residue type(s) still non-coded` means the bead builder will use the perceived entries rather
+than a generic averaged bead.
 
 `perceive compare` is the interactive equivalent of `make regress`: same check, but inside SOMO
 against *your installed* `~/ultrascan/etc` tables, so it also tells you whether an installed table

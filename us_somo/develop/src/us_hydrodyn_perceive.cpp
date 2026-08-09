@@ -590,17 +590,24 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     }
     hdr << "# Residue mass from perceived atoms: " << total_mw << " Da (its mass fraction of the\n"
            "#   model tells you how much an imprecise psv here actually matters).\n";
+    const double asa_out = pr.asa > 0 ? pr.asa : DEFAULT_ASA_PER_ATOM * atoms.size();
     for (const std::string& r : pr.review) review << "#   " << r << '\n';
+    if (pr.asa <= 0)
+        review << "#   ASA: placeholder (" << DEFAULT_ASA_PER_ATOM
+               << " A^2 per atom, the coded-residue mean). Nothing computes with the residue's\n"
+                  "#     tabulated ASA, but it may not be zero -- the loaders drop such a record.\n";
     if (!review.str().empty())
         hdr << "# REVIEW - check these before accepting the entry:\n" << review.str();
     // Header fields, in the order US_Hydrodyn::read_residue_file reads them
     // (us_hydrodyn_load.cpp:151): name, type, molvol, ASA, natoms, nbeads, vbar.
-    // ASA is stubbed at 0 -- it is a modelling quantity, not something perception provides.
+    // ASA must be > 0 or every loader drops the record without a word -- see the policy note at
+    // DEFAULT_ASA_PER_ATOM. It is a placeholder, so it is called one in the REVIEW block.
     {
         std::ostringstream h;
         h.setf(std::ios::fixed);
         h << resname << "\t0\t" << std::setprecision(2) << (pr.have_molvol ? pr.molvol : 0.0)
-          << "\t0\t" << atoms.size() << "\t1\t"
+          << '\t' << std::setprecision(2) << asa_out
+          << '\t' << atoms.size() << "\t1\t"
           << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0) << '\n';
         hdr << h.str();
     }
