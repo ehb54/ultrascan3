@@ -2752,7 +2752,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
          }
          QRegularExpressionMatch rx_atom_m = rx_atom.match( qs );
          if ( rx_atom_m.hasMatch() &&
-              qs.mid( 17, 3 ) == "HOH" )
+              pdb_parse_is_water( qs.mid( 17, 3 ) ) )
          {
             continue;
          }

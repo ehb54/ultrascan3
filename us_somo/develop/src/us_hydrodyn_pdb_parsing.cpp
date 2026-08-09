@@ -54,7 +54,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    connect(cb_skip_hydrogen, SIGNAL(clicked()), this, SLOT(skip_hydrogen()));
 
    cb_skip_water = new QCheckBox();
-   cb_skip_water->setText(us_tr(" Skip solvent water molecules"));
+   cb_skip_water->setText(us_tr(" Skip solvent water molecules (light and heavy)"));
    cb_skip_water->setEnabled(false);
    cb_skip_water->setChecked((*pdb).skip_water);
    cb_skip_water->setMinimumHeight(minHeight1);

@@ -1111,8 +1111,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    {
       flag = true;
    }
-   if (temp_atom.resName == "HOH" || // we dont want to add waters to the sequence
-       temp_atom.resName == "DOD")
+   if ( pdb_parse_is_water( temp_atom.resName ) ) // we dont want to add waters to the sequence
    {
       flag = false;
    }
@@ -1235,11 +1234,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    waters.insert( "SOL" );
    waters.insert( "WAT" );
 
-   set < QString > skip_waters;
-   skip_waters.insert( "HOH" );
-   skip_waters.insert( "DOD" );
-   skip_waters.insert( "SOL" );
-   skip_waters.insert( "CIM" );
+   const set < QString > & skip_waters = pdb_parse_water_names();
 
    QRegularExpression rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", QRegularExpression::CaseInsensitiveOption );
    if ( f.open( QIODevice::ReadOnly ) )

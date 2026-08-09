@@ -18,6 +18,7 @@
 //standard C and C++ defs:
 
 #include <vector>
+#include <set>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,6 +26,30 @@
 
 using namespace std;
 
+// The residue names the "Skip solvent water molecules" parsing option discards.  Heavy water
+// counts as solvent water just as light water does - DOD is the PDB chemical component for
+// D2O, e.g. 5PTI.pdb - so both belong here and every PDB parsing path shares this one list.
+//
+// NOTE: "WAT" is deliberately absent.  That is SOMO's own explicit hydration water, which is
+// meant to be kept, not discarded as solvent.
+
+inline const set < QString > & pdb_parse_water_names()
+{
+   static const set < QString > water_names =
+      {
+         "HOH"    // water
+         ,"DOD"   // heavy water, D2O
+         ,"D2O"   // heavy water, non-standard spelling
+         ,"SOL"
+         ,"CIM"
+      };
+   return water_names;
+}
+
+inline bool pdb_parse_is_water( const QString & resName )
+{
+   return pdb_parse_water_names().count( resName.trimmed().toUpper() ) > 0;
+}
 
 struct pdb_parsing
 {

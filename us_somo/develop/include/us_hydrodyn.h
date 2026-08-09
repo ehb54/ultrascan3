@@ -280,7 +280,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void model_viewer( QString file,
                          QString prefix = "",
-                         bool nodisplay = false );  
+                         bool nodisplay = false );
+
+      // the RasMol viewers model_viewer() has started.  they are detached, so they survive
+      // us and are tracked by pid; closeEvent() asks what to do with any still open on exit
+
+      QList < qint64 > rasmol_pids;
+      QList < qint64 > rasmol_running_pids();       // the subset still alive, prunes the rest
+      void             rasmol_close_all();
+      static bool      pid_running  ( qint64 pid ); // portable pid liveness / termination
+      static void      pid_terminate( qint64 pid );
 
       double use_solvent_visc();                     // temperature solvent viscosity - checks manual flag
       double use_solvent_dens();                     // temperature solvent density   - checks manual flag
