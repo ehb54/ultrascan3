@@ -388,8 +388,15 @@ public:
             if (sopt_.on_rung)
                 sopt_.on_rung((int)ri, (int)planned.size(), (int)rb.size(), rep.err_max);
 
-            if (hist.size() > 1 && rep.err_max < sopt_.tol) { rep.converged = true; break; }
-            if (f >= 1.0) {
+            // The full-model test comes FIRST, before the tolerance test. If the rung just
+            // solved is the whole model the answer is exact, and that is true whether or not
+            // the tolerance happened to be met at the same rung. Testing convergence first
+            // let an exact result exit as merely "converged", keeping the inter-rung gap as
+            // its estimate: a 216-bead model at tol=0.5% reported 0.159% on an answer whose
+            // true error was zero, and did not set `unreduced`. The earlier regression test
+            // missed it because it used an unsatisfiable tolerance, so the tolerance branch
+            // could never win the race.
+            if (f >= 1.0 || rep.n_used >= rep.n_full) {
                 // Ladder exhausted onto the UNREDUCED model. The result is then exact, so
                 // every bar is zero -- the inter-rung gap that produced them describes the
                 // coarser rung we just discarded, not this answer. Reporting that stale gap
@@ -403,6 +410,7 @@ public:
                 rep.err_max = 0.0;
                 break;
             }
+            if (hist.size() > 1 && rep.err_max < sopt_.tol) { rep.converged = true; break; }
         }
 
         rep.viscosity_unreliable = !viscosity_ok(rep);
