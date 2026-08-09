@@ -35,6 +35,8 @@
 #undef DEBUG
 #ifndef WIN32
 #   include <unistd.h>
+#   include <signal.h>  // for kill(), used to close tracked RasMol viewers
+#   include <errno.h>
 #   define SLASH "/"
 #   define __open open
 #else
@@ -43,6 +45,11 @@
 #   define __open _open
 #   include <direct.h>
 #   include <io.h>
+// for OpenProcess()/TerminateProcess(), same purpose.  NOMINMAX/WIN32_LEAN_AND_MEAN keep
+// windows.h from redefining min/max out from under the Qt headers included above
+#   define NOMINMAX
+#   define WIN32_LEAN_AND_MEAN
+#   include <windows.h>
 #   define SLASH "\\"
 #   define STDOUT_FILENO 1
 #   define STDERR_FILENO 2
@@ -122,6 +129,33 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
       if (rasmol->state() == QProcess::Running)
       {
          closeAttnt(rasmol, "RASMOL");
+      }
+   }
+   {
+      // the viewers model_viewer() started are detached and will otherwise be left behind
+      QList < qint64 > open_rasmols = rasmol_running_pids();
+
+      if ( guiFlag && open_rasmols.size() )
+      {
+         QMessageBox mb_rasmol( this );
+         mb_rasmol.setWindowTitle( us_tr( "UltraScan" ) );
+         mb_rasmol.setIcon( QMessageBox::Question );
+         mb_rasmol.setText( open_rasmols.size() == 1
+                            ? us_tr( "A RasMol window is still open.\n\n"
+                                     "Close it on exit, or leave it open?" )
+                            : QString( us_tr( "%1 RasMol windows are still open.\n\n"
+                                              "Close them on exit, or leave them open?" ) )
+                            .arg( open_rasmols.size() ) );
+
+         QPushButton *pb_rasmol_close = mb_rasmol.addButton( us_tr( "Close" ), QMessageBox::AcceptRole );
+         mb_rasmol.addButton( us_tr( "Leave open" ), QMessageBox::RejectRole );
+         mb_rasmol.setDefaultButton( pb_rasmol_close );
+         mb_rasmol.exec();
+
+         if ( mb_rasmol.clickedButton() == pb_rasmol_close )
+         {
+            rasmol_close_all();
+         }
       }
    }
    clear_temp_dirs();
@@ -1725,11 +1759,84 @@ void US_Hydrodyn::model_viewer( QString file,
       args << 
          QFileInfo( file ).fileName();
 
-      if ( !process->startDetached( prog, args, QFileInfo( file ).path() ) ) {
+      qint64 pid = 0;
+
+      if ( !process->startDetached( prog, args, QFileInfo( file ).path(), &pid ) ) {
          US_Static::us_message(us_tr("Please note:"), us_tr("There was a problem starting RASMOL\n"
                                                             "Please check to make sure RASMOL is properly installed..."));
+      } else {
+         // detached, so it outlives us unless we are told to close it on exit
+         rasmol_pids << pid;
       }
    }
+}
+
+bool US_Hydrodyn::pid_running( qint64 pid )
+{
+   if ( pid <= 0 )
+   {
+      return false;
+   }
+#if defined( WIN32 )
+   HANDLE h = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, (DWORD) pid );
+   if ( !h )
+   {
+      return false;
+   }
+   DWORD exit_code = 0;
+   bool  running   = GetExitCodeProcess( h, &exit_code ) && exit_code == STILL_ACTIVE;
+   CloseHandle( h );
+   return running;
+#else
+   // signal 0 tests for existence only.  EPERM means it is there but not ours to signal
+   return !::kill( (pid_t) pid, 0 ) || errno == EPERM;
+#endif
+}
+
+void US_Hydrodyn::pid_terminate( qint64 pid )
+{
+   if ( pid <= 0 )
+   {
+      return;
+   }
+#if defined( WIN32 )
+   HANDLE h = OpenProcess( PROCESS_TERMINATE, FALSE, (DWORD) pid );
+   if ( h )
+   {
+      TerminateProcess( h, 0 );
+      CloseHandle( h );
+   }
+#else
+   ::kill( (pid_t) pid, SIGTERM );
+#endif
+}
+
+QList < qint64 > US_Hydrodyn::rasmol_running_pids()
+{
+   QList < qint64 > running;
+
+   for ( int i = 0; i < (int) rasmol_pids.size(); ++i )
+   {
+      if ( pid_running( rasmol_pids[ i ] ) )
+      {
+         running << rasmol_pids[ i ];
+      }
+   }
+
+   rasmol_pids = running;   // the ones the user already closed are of no further interest
+   return running;
+}
+
+void US_Hydrodyn::rasmol_close_all()
+{
+   QList < qint64 > running = rasmol_running_pids();
+
+   for ( int i = 0; i < (int) running.size(); ++i )
+   {
+      pid_terminate( running[ i ] );
+   }
+
+   rasmol_pids.clear();
 }
 
 void US_Hydrodyn::set_bead_colors( vector < PDB_atom * > use_model ) {
