@@ -128,6 +128,46 @@ Accepting several residues within one session accumulates them all into the one 
 </ul>
 
 <p>
+<b>How accurate is it?</b>
+<p>
+A free ligand has nothing to check against, so the accuracy above is measured by <i>renaming</i>
+a residue the table already codes. The atoms are untouched, only the name in the PDB changes, so
+the coded entry for what the residue really is becomes the answer key. <i>8RATNC.pdb</i>,
+distributed with <b><i>US-SOMO</i></b>, is this trick done by hand: 8RAT with <b>LYS 31</b>
+renamed <b>LYD</b>.
+<p>
+Perceived from the structure, against the coded values:
+<p>
+<table BORDER=1 CELLPADDING=5>
+<tr><th>really</th><th>psv perceived</th><th>psv coded</th><th>difference</th>
+    <th>volume perceived</th><th>volume coded</th><th>difference</th><th>hydration</th></tr>
+<tr><td><b>SER</b></td><td>0.632</td><td>0.628</td><td>+0.6%</td>
+    <td>97.95</td><td>95.40</td><td>+2.7%</td><td>2.0 / 2.0</td></tr>
+<tr><td><b>LEU</b></td><td>0.892</td><td>0.898</td><td>&minus;0.7%</td>
+    <td>158.61</td><td>164.00</td><td>&minus;3.3%</td><td>1.0 / 1.0</td></tr>
+<tr><td><b>LYS</b></td><td>0.871</td><td>0.818</td><td><b>+6.5%</b></td>
+    <td>172.85</td><td>167.30</td><td>+3.3%</td><td>4.0 / 4.0</td></tr>
+<tr><td><b>ARG</b></td><td>0.809</td><td>0.698</td><td><b>+15.9%</b></td>
+    <td>196.19</td><td>194.00</td><td>+1.1%</td><td>3.0 / 3.0</td></tr>
+</table>
+<p>
+<ul>
+<li> <b>Hydration was exact</b> on all four &mdash; the proposed number of waters matched the
+     coded one every time. This is the quantity with the least theoretical backing, so it is
+     also the one most worth spot-checking on a residue whose chemistry you know.
+<li> <b>Anhydrous volume</b> agreed to within &plusmn;3.3%.
+<li> <b>psv depends on charge.</b> The neutral side chains are excellent (&plusmn;0.7%); the
+     charged ones read high. The arginine figure of +15.9% is reproduced independently by the
+     isolated-residue validation, and is consistent with the tabulated arginine psv having been
+     measured on the <i>unprotonated</i> residue while the Durchschlag &amp; Zipper increments
+     assume it protonated. Treat a perceived psv for a charged group as provisional.
+</ul>
+<p>
+Being embedded in a chain caused no difficulty: a single non-coded residue, three in a row, and
+three alternating with coded ones all gave the same values and built cleanly. The residuals track
+<i>charge</i>, not chain context.
+
+<p>
 <b>Current limitations:</b>
 <p>
 <ul>
