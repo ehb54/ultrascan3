@@ -81,6 +81,19 @@ Two sub-commands:
 |---|---|
 | `perceive <pdb>` | loads the structure with SOMO's own parser and prints a tentative `somo.residue` entry (plus any new `somo.hybrid` rows) for every residue `somo.residue` does **not** code — the residues SOMO would otherwise model as a generic ABB average bead |
 | `perceive apply <pdb>` | the same, then **puts the entries into effect**: they go into a session overlay of the residue table, SOMO re-reads it and re-reads the structure, and the non-coded count is reported before and after. The headless equivalent of accepting every entry in the GUI dialog |
+| `perceive build [method] <pdb>` | `apply`, then **builds the bead model** and fails the script if it does not. The headless equivalent of the whole GUI session: load, perceive, accept, build. Needed because a clean load never reaches the code that resolves atoms against `somo.atom` — defects that only bite at bead-build time are invisible to `apply` |
+
+`method` is one of `somo` (default, overlaps removed), `somo_o` (overlaps kept), `vdw`, or
+`grid`/`a2b` — the SOMO, SoMo-overlap, vdW-beads and AtoB buttons respectively. They cover
+different parts of the model builder, so an entry that satisfies one can still break another;
+`vdw` is the sharpest test of a perceived residue because it relies on **atomic** hydration, which
+the perceiver only proposes.
+
+**Put `somo overwrite` at the top of any script that uses `perceive build`.** Without the
+overwrite flag the bead-model write calls `setSomoGridFile()`, which raises a modal dialog and
+hangs a headless run (batch mode suppresses those prompts, a gui_script does not). There is no
+equivalent flag for the hydrodynamic calculations, so a build can still reach a prompt if the
+config has automatic hydrodynamics enabled.
 | `perceive compare <pdb>` | **hand-testing aid**: runs perception over the residues `somo.residue` **does** code and diffs the result against the curated types, reporting exact-match and physics-match rates plus every difference |
 
 `perceive apply` never writes your `somo.residue`: accepted entries go to `<table>.perceived`
