@@ -1073,6 +1073,14 @@ void US_Hydrodyn_Saxs_1d::start()
                continue;
             }
 
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom->name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
             {
 #if defined( UHS2_ATOMS_DEBUG )
@@ -3867,6 +3875,14 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
                continue;
             }
 
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom->name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
             {
 #if defined( UHS2_ATOMS_DEBUG )
