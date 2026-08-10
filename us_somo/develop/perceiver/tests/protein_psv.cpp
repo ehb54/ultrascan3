@@ -117,7 +117,13 @@ int main(int argc, char** argv) {
     std::printf("%s\n", std::string(88, '-').c_str());
 
     std::vector<double> et, ed, ep;             // signed % errors
-    struct RD { double dsum = 0; double mw = 0; int n = 0; };
+    // Per protein: composition (model 1) plus the structure-based answers, so a sequence-only
+    // calculation can be compared against them afterwards. Mattia's point: psv is a composition
+    // property, so if the two agree we need sequences, not structures.
+    struct Comp { std::string label; double meas; double v_tab, v_off; std::map<std::string,int> n; };
+    std::vector<Comp> comps;
+    struct RD { double dsum = 0; double mw = 0; int n = 0; double vsum = 0, vsq = 0;
+                double vmin = 1e9, vmax = -1e9; };
     std::map<std::string, RD> per_res_delta;   // resname -> mean dvbar, total mass, count
 
     for (int ai = 2; ai < argc; ++ai) {
@@ -136,6 +142,7 @@ int main(int argc, char** argv) {
         const int n_models = model_count(all_atoms);
 
         std::vector<double> mv_tab, mv_off, mv_on;   // one entry per model
+        std::map<std::string,int> cur_comp_saved;
         for (int mdl = 1; mdl <= n_models; ++mdl) {
         auto atoms = n_models > 1 ? model_of(all_atoms, mdl) : all_atoms;
         std::vector<InAtom> in;
@@ -167,6 +174,7 @@ int main(int argc, char** argv) {
         }
 
         Acc a_tab, a_off, a_on;
+        std::map<std::string,int> cur_comp_local;
         std::set<std::string> missing_tab, failed_psv;
         size_t n_missing = 0, n_failed = 0;
         for (auto& g : groups) {
@@ -188,9 +196,13 @@ int main(int argc, char** argv) {
             a_off.mv += r_off.molar_volume; a_off.mw += r_off.mw; ++a_off.n;
             a_on .mv += r_on .molar_volume; a_on .mw += r_on .mw; ++a_on .n;
             a_tab.mv += te->second.vbar * te->second.mw; a_tab.mw += te->second.mw; ++a_tab.n;
+            if (mdl == 1) ++cur_comp_local[rn];
             if (mdl == 1) {   // once per structure, not once per NMR model
                 auto& acc = per_res_delta[rn];
                 acc.dsum += r_off.vbar - te->second.vbar; acc.mw += te->second.mw; ++acc.n;
+                acc.vsum += r_off.vbar; acc.vsq += r_off.vbar * r_off.vbar;
+                if (r_off.vbar < acc.vmin) acc.vmin = r_off.vbar;
+                if (r_off.vbar > acc.vmax) acc.vmax = r_off.vbar;
             }
         }
 
@@ -221,8 +233,10 @@ int main(int argc, char** argv) {
             for (auto& s2 : failed_psv) std::printf(" %s", s2.c_str());
             std::printf(")\n");
         }
+        if (mdl == 1) cur_comp_saved = cur_comp_local;
         }   // ---- end model loop ----
 
+        const std::map<std::string,int> comp_saved = cur_comp_saved;
         if (mv_tab.empty()) continue;
         auto mean = [](const std::vector<double>& v) {
             double s2 = 0; for (double x : v) s2 += x; return s2 / v.size(); };
@@ -245,6 +259,12 @@ int main(int argc, char** argv) {
             std::printf("%-22s %8.4f %8.4f %8.4f %8.4f   %+7.2f %+7.2f %+7.2f\n",
                         m->second.label.empty() ? key.c_str() : m->second.label.c_str(),
                         mvv, v_tab, v_off, v_on, dt, dd, dp);
+        }
+        {
+            Comp cp; cp.label = (meas.count(key) ? meas[key].label : key);
+            cp.meas = meas.count(key) ? meas[key].psv : 0;
+            cp.v_tab = v_tab; cp.v_off = v_off; cp.n = comp_saved;
+            comps.push_back(cp);
         }
         if (mv_tab.size() > 1)
             std::printf("    (%zu MODELs averaged; psv spread across the ensemble:"
@@ -284,11 +304,48 @@ int main(int argc, char** argv) {
         double base = te != restab.end() ? te->second.vbar : 0;
         double contrib = tot_mw > 0 ? rd.mw * p.first / tot_mw : 0;   // cm^3/g on the protein
         contrib_sum += contrib;
-        std::printf("  %-5s %+7.4f (%.3f -> %.3f, %+6.2f%%)  n=%-4d  contributes %+7.4f cm3/g\n",
+        double mean = rd.n ? rd.vsum / rd.n : 0;
+        double var  = rd.n > 1 ? (rd.vsq - rd.vsum * mean) / (rd.n - 1) : 0;
+        double sd   = var > 0 ? std::sqrt(var) : 0;
+        std::printf("  %-5s %+7.4f (%.3f -> %.3f, %+6.2f%%)  n=%-4d  contributes %+7.4f    "
+                    "D&Z spread: SD %.5f (%.3f%%) range %.4f\n",
                     p.second.c_str(), p.first, base, base + p.first,
-                    base > 0 ? p.first / base * 100 : 0, rd.n, contrib);
+                    base > 0 ? p.first / base * 100 : 0, rd.n, contrib,
+                    sd, mean > 0 ? sd / mean * 100 : 0,
+                    rd.n > 1 ? rd.vmax - rd.vmin : 0.0);
     }
     std::printf("  %-5s %38s %20s %+7.4f cm3/g  (= %+.2f%% on a 0.73 protein)\n",
                 "TOTAL", "", "", contrib_sum, contrib_sum / 0.73 * 100);
+
+    // ---- sequence-only check ---------------------------------------------------------------
+    // Recompute every protein from COMPOSITION alone, using the corpus-mean D&Z vbar per residue
+    // type, and compare against the structure-based value. If these agree, a correct sequence is
+    // sufficient and no experimental structure is needed -- which is Mattia's proposal.
+    std::map<std::string,double> mean_vbar;
+    for (auto& kv : per_res_delta)
+        if (kv.second.n) mean_vbar[kv.first] = kv.second.vsum / kv.second.n;
+    std::printf("\n=== sequence-only vs structure-based (D&Z column) ===\n");
+    std::printf("%-26s %11s %11s %9s\n", "protein", "structure", "sequence", "diff%");
+    double worst = 0; std::vector<double> dd;
+    for (auto& c : comps) {
+        double mv = 0, mw = 0;
+        for (auto& kv : c.n) {
+            auto te = restab.find(kv.first);
+            auto mb = mean_vbar.find(kv.first);
+            if (te == restab.end() || mb == mean_vbar.end()) continue;
+            mv += mb->second * te->second.mw * kv.second;
+            mw += te->second.mw * kv.second;
+        }
+        if (mw <= 0) continue;
+        double seq = (mv + COVOLUME) / mw;
+        double d = (seq - c.v_off) / c.v_off * 100;
+        dd.push_back(std::fabs(d));
+        if (std::fabs(d) > std::fabs(worst)) worst = d;
+        std::printf("%-26s %11.4f %11.4f %+9.3f\n", c.label.c_str(), c.v_off, seq, d);
+    }
+    if (!dd.empty()) {
+        double s2 = 0; for (double x : dd) s2 += x;
+        std::printf("  mean |diff| %.3f%%   worst %+.3f%%\n", s2 / dd.size(), worst);
+    }
     return 0;
 }
