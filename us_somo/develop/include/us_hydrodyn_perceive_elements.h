@@ -3,6 +3,7 @@
 #pragma once
 #include <string>
 #include <map>
+#include <set>
 #include <cctype>
 #include <algorithm>
 
@@ -57,30 +58,53 @@ inline const std::map<std::string, ElementInfo>& element_table() {
     return t;
 }
 
+// Residue names whose atom naming follows the protein/nucleic convention, where a two-letter
+// atom name is NEVER a two-letter element: CA is the alpha carbon, NE2 a nitrogen, SD a sulfur.
+inline const std::set<std::string>& standard_residue_names() {
+    static const std::set<std::string> t = {
+        "ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HIS","ILE","LEU","LYS","MET","PHE",
+        "PRO","SER","THR","TRP","TYR","VAL","SEC","PYL","ASX","GLX","UNK",
+        "HSD","HSE","HSP","HID","HIE","HIP","CYX","CYM","LYN","ASH","GLH",   // force-field variants
+        "A","C","G","T","U","DA","DC","DG","DT","DU","RA","RC","RG","RU",    // nucleotides
+        "HOH","WAT","DOD","TIP","SOL"
+    };
+    return t;
+}
+
 // Element from a PDB ATOM NAME, for files whose element column (77-78) is empty.
 //
 // norm_element() alone is WRONG for this: it only strips non-alphabetics, so the alpha carbon
 // "CA" becomes calcium, "NE2" becomes neon, and "CB", "CG", "OD1" become nothing at all. Every
 // atomic volume increment then silently evaluates to zero and the psv collapses to roughly the
-// electrostriction terms -- a meaningless number that still looks like one. 1AO6-compl_monA.pdb
-// in the demo set has no element column, which is how this was found.
+// electrostriction terms -- a meaningless number that still looks like one.
+// 1AO6-compl_monA.pdb in the demo set has no element column, which is how this was found.
 //
-// The PDB convention is that a one-letter element is right-justified in column 14, so a name
-// starting in column 13 carries a two-letter element. That column is gone by the time we see a
-// trimmed name, so use the only other reliable discriminator: a two-letter element is real when
-// the atom is a lone ion, which in practice means the atom name equals the residue name --
-// HETATM "CA" in residue "CA" is calcium, "CA" in "ALA" is carbon.
+// The discriminator is the RESIDUE, not the atom name. In a standard residue the convention is
+// fixed and the element is always the leading letter. In a ligand it is not: HEM's iron is "FE",
+// a chloride is "CL", a selenomethionine sulfur analogue is "SE" -- and reading those by leading
+// letter yields fluorine, carbon and sulfur. Taking the leading letter everywhere got 6 of 15
+// test cases wrong, all of them ligand atoms, which is the population this code exists for.
+//
+// Residual ambiguity: a ligand carbon named bare "CA" reads as calcium. Ligand carbons are
+// normally C1/CAA/CB1 rather than a bare "CA", so this is rare -- and the psv now refuses to
+// compute rather than guessing when an element cannot be resolved at all.
 inline std::string element_from_atom_name(const std::string& atom_name,
                                           const std::string& res_name) {
     std::string n, r;
     for (char c : atom_name) if (std::isalpha((unsigned char)c)) n += (char)std::toupper((unsigned char)c);
     for (char c : res_name)  if (std::isalpha((unsigned char)c)) r += (char)std::toupper((unsigned char)c);
     if (n.empty()) return n;
-    if (n.size() >= 2 && n == r && element_table().count(n)) {
-        return n;                                  // lone ion: FE in FE, CA in CA, ZN in ZN
+
+    const std::string one(1, n[0]);
+    const bool one_is_element = element_table().count(one) > 0;
+
+    if (standard_residue_names().count(r)) {
+        return one_is_element ? one : n;          // protein/nucleic: always the leading letter
     }
-    const std::string one(1, n[0]);                // otherwise the leading letter is the element
-    return element_table().count(one) ? one : n;
+    if (n.size() == 2 && element_table().count(n)) {
+        return n;                                 // ligand: FE, CL, ZN, SE, BR, NA, CU, MG ...
+    }
+    return one_is_element ? one : n;
 }
 
 // Monatomic ions we treat as non-bonding during perception; value = default hybrid name
