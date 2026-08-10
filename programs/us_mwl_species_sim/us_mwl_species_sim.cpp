@@ -353,9 +353,6 @@ DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
 
-   if ( dialog.exec() != QDialog::Accepted )
-      return;  // no selection made
-
    nmodels        = models.count();
 
    if ( nmodels < 1 )
