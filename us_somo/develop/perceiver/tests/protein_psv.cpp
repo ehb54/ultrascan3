@@ -82,6 +82,28 @@ int main(int argc, char** argv) {
     if (!rok || restab.empty()) { std::fprintf(stderr, "no somo.residue.new\n"); return 2; }
     Perceiver perc(tbl);
 
+    // Table overrides: any argv token of the form RES=vbar replaces that residue's tabulated
+    // vbar in the [table] column only. The D&Z columns are computed from coordinates and are
+    // untouched, so this asks exactly one question -- which tabulated value for a residue makes
+    // somo.residue best predict measured protein psv.
+    std::vector<std::pair<std::string,double>> overrides;
+    for (int i = 1; i < argc; ++i) {
+        std::string t = argv[i];
+        size_t eq = t.find('=');
+        if (eq == std::string::npos || eq == 0 || eq > 4) continue;
+        std::string rn = t.substr(0, eq);
+        bool upper = true;
+        for (char c : rn) if (!std::isupper((unsigned char)c) && !std::isdigit((unsigned char)c)) upper = false;
+        if (!upper) continue;
+        double v = std::atof(t.c_str() + eq + 1);
+        if (v <= 0) continue;
+        auto it = restab.find(rn);
+        if (it == restab.end()) { std::fprintf(stderr, "override: %s not in somo.residue\n", rn.c_str()); continue; }
+        std::printf("[override] %s vbar %.4f -> %.4f\n", rn.c_str(), it->second.vbar, v);
+        it->second.vbar = v;
+        overrides.push_back({rn, v});
+    }
+
     // measured values
     struct Meas { double psv; int n; std::string label; };
     std::map<std::string, Meas> meas;
@@ -100,6 +122,7 @@ int main(int argc, char** argv) {
 
     for (int ai = 2; ai < argc; ++ai) {
         std::string path = argv[ai];
+        if (path.find('=') != std::string::npos) continue;   // an override token
         std::string base = path.substr(path.find_last_of('/') + 1);
         std::string key  = base.substr(0, base.find_last_of('.'));
 
