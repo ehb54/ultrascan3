@@ -57,6 +57,32 @@ inline const std::map<std::string, ElementInfo>& element_table() {
     return t;
 }
 
+// Element from a PDB ATOM NAME, for files whose element column (77-78) is empty.
+//
+// norm_element() alone is WRONG for this: it only strips non-alphabetics, so the alpha carbon
+// "CA" becomes calcium, "NE2" becomes neon, and "CB", "CG", "OD1" become nothing at all. Every
+// atomic volume increment then silently evaluates to zero and the psv collapses to roughly the
+// electrostriction terms -- a meaningless number that still looks like one. 1AO6-compl_monA.pdb
+// in the demo set has no element column, which is how this was found.
+//
+// The PDB convention is that a one-letter element is right-justified in column 14, so a name
+// starting in column 13 carries a two-letter element. That column is gone by the time we see a
+// trimmed name, so use the only other reliable discriminator: a two-letter element is real when
+// the atom is a lone ion, which in practice means the atom name equals the residue name --
+// HETATM "CA" in residue "CA" is calcium, "CA" in "ALA" is carbon.
+inline std::string element_from_atom_name(const std::string& atom_name,
+                                          const std::string& res_name) {
+    std::string n, r;
+    for (char c : atom_name) if (std::isalpha((unsigned char)c)) n += (char)std::toupper((unsigned char)c);
+    for (char c : res_name)  if (std::isalpha((unsigned char)c)) r += (char)std::toupper((unsigned char)c);
+    if (n.empty()) return n;
+    if (n.size() >= 2 && n == r && element_table().count(n)) {
+        return n;                                  // lone ion: FE in FE, CA in CA, ZN in ZN
+    }
+    const std::string one(1, n[0]);                // otherwise the leading letter is the element
+    return element_table().count(one) ? one : n;
+}
+
 // Monatomic ions we treat as non-bonding during perception; value = default hybrid name
 // (matches the charge convention used in somo.hybrid.new).
 inline const std::map<std::string, std::string>& monatomic_ion_hybrid() {

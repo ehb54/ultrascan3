@@ -20,9 +20,14 @@ std::vector<InAtom> from_pdb_model( const PDB_model & model ) {
                 continue;
             }
             InAtom x;
-            // The element column is authoritative; fall back to the atom name only if absent.
-            x.element = norm_element( ( pa.element.trimmed().isEmpty()
-                                        ? pa.name : pa.element ).trimmed().toStdString() );
+            // The element column is authoritative. When it is empty the element has to be
+            // inferred from the atom name, which norm_element() cannot do -- see
+            // element_from_atom_name(). Getting this wrong is silent: every increment becomes
+            // zero and the psv comes out near zero rather than failing.
+            x.element = pa.element.trimmed().isEmpty()
+                ? somo_perceive::element_from_atom_name( pa.name.trimmed().toStdString(),
+                                                         pa.resName.trimmed().toStdString() )
+                : norm_element( pa.element.trimmed().toStdString() );
             x.x       = pa.coordinate.axis[ 0 ];
             x.y       = pa.coordinate.axis[ 1 ];
             x.z       = pa.coordinate.axis[ 2 ];

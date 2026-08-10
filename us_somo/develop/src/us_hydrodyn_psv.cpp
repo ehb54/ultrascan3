@@ -152,6 +152,7 @@ Result compute(const std::vector<InAtom>& atoms,
     }
 
     // ---- 2. per-atom increments ------------------------------------------------------------
+    int no_increment = 0;          // atoms whose element could not be identified at all
     for (int i : idx) {
         const OutAtom& o = perceived[i];
         const std::string& e = o.element;
@@ -209,6 +210,7 @@ Result compute(const std::vector<InAtom>& atoms,
                 } else {
                     r.review.push_back(atoms[i].name + " (" + e +
                                        "): no volume increment for this element");
+                    ++no_increment;
                 }
             }
         }
@@ -263,7 +265,18 @@ Result compute(const std::vector<InAtom>& atoms,
 
     r.molar_volume = r.atomic_sum + r.covolume - r.ring_decrement - r.electrostriction;
     r.vbar = r.mw > 0 ? r.molar_volume / r.mw : 0.0;
-    r.ok = r.mw > 0;
+    // An atom with no volume increment means its element was never identified -- almost always a
+    // PDB with an empty element column (77-78), where the atom-name fallback reads CA as calcium
+    // and CB, CG, OD1, NE2 as nothing at all. The sum then collapses to little more than the
+    // electrostriction terms, giving a psv near zero or negative: not an inaccurate number but a
+    // meaningless one. Refuse it. A caller seeing ok == false emits no psv and says why, rather
+    // than publishing a plausible-looking figure.
+    if (no_increment) {
+        r.review.push_back("psv NOT computed: " + std::to_string(no_increment) +
+                           " atom(s) with no identifiable element -- check the PDB element "
+                           "column (77-78)");
+    }
+    r.ok = r.mw > 0 && no_increment == 0;
     return r;
 }
 

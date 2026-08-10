@@ -5,6 +5,7 @@
 #include "../tinytest.h"
 #include "../../include/us_hydrodyn_perceive.h"
 #include "../../include/us_hydrodyn_perceive_hybrid.h"
+#include "../../include/us_hydrodyn_perceive_elements.h"
 
 using namespace somo_perceive;
 
@@ -192,6 +193,29 @@ TEST("finalize physics pulls radius/electrons from table"){
     CHECK(o[0].in_table);
     CHECK(o[0].vdw_radius>1.8 && o[0].vdw_radius<1.95); // C4H3 radius 1.88
     CHECK_EQ(o[0].num_elect,9);                          // C(6)+3H
+}
+
+
+TEST("element inference from atom names when the PDB element column is empty") {
+    using somo_perceive::element_from_atom_name;
+    // the protein backbone and side chains: element is the LEADING letter
+    CHECK(element_from_atom_name("CA",  "ALA") == "C");   // alpha carbon, NOT calcium
+    CHECK(element_from_atom_name("CB",  "ALA") == "C");
+    CHECK(element_from_atom_name("CG1", "VAL") == "C");
+    CHECK(element_from_atom_name("OD1", "ASP") == "O");
+    CHECK(element_from_atom_name("NE2", "HIS") == "N");   // NOT neon
+    CHECK(element_from_atom_name("NZ",  "LYS") == "N");
+    CHECK(element_from_atom_name("SD",  "MET") == "S");
+    CHECK(element_from_atom_name("OXT", "ALA") == "O");
+    // a lone ion: atom name equals residue name, so the two-letter element is real
+    CHECK(element_from_atom_name("CA",  "CA")  == "CA");  // calcium
+    CHECK(element_from_atom_name("FE",  "FE")  == "FE");
+    CHECK(element_from_atom_name("ZN",  "ZN")  == "ZN");
+    CHECK(element_from_atom_name("MG",  "MG")  == "MG");
+    // ligand atoms still resolve by leading letter
+    CHECK(element_from_atom_name("S",   "SO4") == "S");
+    CHECK(element_from_atom_name("O1",  "SO4") == "O");
+    CHECK(element_from_atom_name("C1",  "CIT") == "C");
 }
 
 int main(){ return tinytest::run(); }
