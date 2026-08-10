@@ -317,6 +317,12 @@ int main(int argc, char** argv) {
     std::printf("  %-5s %38s %20s %+7.4f cm3/g  (= %+.2f%% on a 0.73 protein)\n",
                 "TOTAL", "", "", contrib_sum, contrib_sum / 0.73 * 100);
 
+    // ---- FASTA input --------------------------------------------------------------------
+    // Sequences, not structures. Validated above: composition alone reproduces the structural
+    // answer to 0.076%. So any protein with a known MATURE sequence can be scored, which is
+    // what makes the validation set expandable -- no PDB needed, and the processed form (signal
+    // peptide, propeptides, zymogen vs activated) is taken from UniProt rather than guessed.
+    // A record is  ">label measured_psv"  followed by one-letter sequence lines.
     // ---- sequence-only check ---------------------------------------------------------------
     // Recompute every protein from COMPOSITION alone, using the corpus-mean D&Z vbar per residue
     // type, and compare against the structure-based value. If these agree, a correct sequence is
@@ -346,6 +352,59 @@ int main(int argc, char** argv) {
     if (!dd.empty()) {
         double s2 = 0; for (double x : dd) s2 += x;
         std::printf("  mean |diff| %.3f%%   worst %+.3f%%\n", s2 / dd.size(), worst);
+    }
+
+    if (const char* fa = std::getenv("PROTEIN_PSV_FASTA")) {
+        static const std::map<char,std::string> one2three = {
+            {'A',"ALA"},{'R',"ARG"},{'N',"ASN"},{'D',"ASP"},{'C',"CYS"},{'Q',"GLN"},{'E',"GLU"},
+            {'G',"GLY"},{'H',"HIS"},{'I',"ILE"},{'L',"LEU"},{'K',"LYS"},{'M',"MET"},{'F',"PHE"},
+            {'P',"PRO"},{'S',"SER"},{'T',"THR"},{'W',"TRP"},{'Y',"TYR"},{'V',"VAL"}};
+        std::ifstream f(fa);
+        std::string line, label; double meas = 0; std::map<std::string,int> comp;
+        std::vector<double> et2, ed2;
+        std::printf("\n=== from SEQUENCE (UniProt mature chains, no structures) ===\n");
+        std::printf("%-28s %9s %9s %9s   %7s %7s\n",
+                    "protein", "measured", "table", "D&Z", "dTab%", "dD&Z%");
+        auto emit = [&]() {
+            if (label.empty() || comp.empty()) return;
+            double mvt = 0, mvd = 0, mw = 0; int unknown = 0;
+            for (auto& kv : comp) {
+                auto te = restab.find(kv.first);
+                auto mb = mean_vbar.find(kv.first);
+                if (te == restab.end()) { unknown += kv.second; continue; }
+                double m = te->second.mw * kv.second;
+                mw  += m;
+                mvt += te->second.vbar * m;
+                mvd += (mb != mean_vbar.end() ? mb->second : te->second.vbar) * m;
+            }
+            if (mw <= 0) return;
+            double vt = (mvt + COVOLUME) / mw, vd = (mvd + COVOLUME) / mw;
+            double dt = (vt - meas) / meas * 100, dd = (vd - meas) / meas * 100;
+            et2.push_back(dt); ed2.push_back(dd);
+            std::printf("%-28s %9.4f %9.4f %9.4f   %+7.2f %+7.2f%s\n",
+                        label.c_str(), meas, vt, vd, dt, dd,
+                        unknown ? "  (unknown residues skipped)" : "");
+        };
+        while (std::getline(f, line)) {
+            if (!line.empty() && line[0] == '>') {
+                emit();
+                comp.clear();
+                std::istringstream hs(line.substr(1));
+                hs >> label; if (!(hs >> meas)) meas = 0;
+            } else {
+                for (char c : line) {
+                    auto it = one2three.find((char)std::toupper((unsigned char)c));
+                    if (it != one2three.end()) ++comp[it->second];
+                }
+            }
+        }
+        emit();
+        auto sm = [](const char* lab, std::vector<double>& e) {
+            if (e.empty()) return;
+            double s2 = 0, sa = 0; for (double x : e) { s2 += x; sa += std::fabs(x); }
+            std::printf("  %-8s bias %+6.2f%%   mean|err| %5.2f%%\n", lab, s2/e.size(), sa/e.size());
+        };
+        std::printf("n = %zu\n", et2.size()); sm("[table]", et2); sm("[D&Z]", ed2);
     }
     return 0;
 }
