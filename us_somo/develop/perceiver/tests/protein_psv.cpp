@@ -103,34 +103,25 @@ int main(int argc, char** argv) {
         std::string base = path.substr(path.find_last_of('/') + 1);
         std::string key  = base.substr(0, base.find_last_of('.'));
 
-        auto atoms = strip_altlocs(read_pdb(path));
-        if (atoms.empty()) { std::fprintf(stderr, "%s: no atoms\n", path.c_str()); continue; }
-        // The D&Z increments are a UNITED-ATOM scheme: a heavy atom's increment already contains
-        // its hydrogens (C 9.9, amide N 2.0 ...), and somo.residue is united-atom for the same
-        // reason -- its ALA masses are N 15.02, CA 13.02, CB 15.04. Feeding explicit H atoms in
-        // would double count, and the psv guard correctly refuses them, so strip H/D here.
-        // Deposited NMR ensembles repeat every atom once per MODEL; first occurrence wins, which
-        // takes model 1 and leaves single-model files untouched.
+        // Hydrogens are stripped and MODELs are indexed by read_pdb itself, matching SOMO -- see
+        // pdb_lite.h. Read EVERY model: SOMO keeps them all in model_vector and treats "which
+        // model" as a later choice, so a psv that silently used model 1 would be answering a
+        // question nobody asked. An NMR ensemble also gives a free precision check, since psv is
+        // a composition property and should barely move across models.
+        auto all_atoms = strip_altlocs(read_pdb(path, /*keep_first_model=*/false));
+        if (all_atoms.empty()) { std::fprintf(stderr, "%s: no atoms\n", path.c_str()); continue; }
+        const int n_models = model_count(all_atoms);
+
+        std::vector<double> mv_tab, mv_off, mv_on;   // one entry per model
+        for (int mdl = 1; mdl <= n_models; ++mdl) {
+        auto atoms = n_models > 1 ? model_of(all_atoms, mdl) : all_atoms;
         std::vector<InAtom> in;
-        std::set<std::string> seen_atom;
-        size_t n_h = 0, n_dup = 0;
         for (auto& a : atoms) {
-            std::string el = a.element;
-            for (auto& c : el) c = (char)std::toupper((unsigned char)c);
-            while (!el.empty() && el.front() == ' ') el.erase(el.begin());
-            while (!el.empty() && el.back()  == ' ') el.pop_back();
-            if (el == "H" || el == "D") { ++n_h; continue; }
-            std::string k = std::string(1, a.chain) + "|" + std::to_string(a.resSeq) + "|"
-                          + a.resName + "|" + a.name;
-            if (!seen_atom.insert(k).second) { ++n_dup; continue; }
             InAtom x; x.element = a.element; x.x = a.x; x.y = a.y; x.z = a.z;
             x.serial = a.serial; x.name = a.name; x.resName = a.resName;
             x.chain = std::string(1, a.chain); x.resSeq = a.resSeq; x.hetatm = a.hetatm;
             in.push_back(x);
         }
-        if (n_h || n_dup)
-            std::printf("    (%s: dropped %zu explicit H/D, %zu duplicate-model atoms)\n",
-                        key.c_str(), n_h, n_dup);
         std::map<int,int> ser2idx;
         for (size_t i = 0; i < in.size(); ++i) ser2idx[in[i].serial] = (int)i;
         std::vector<std::pair<int,int>> ebonds;
@@ -174,51 +165,68 @@ int main(int argc, char** argv) {
             a_off.mv += r_off.molar_volume; a_off.mw += r_off.mw; ++a_off.n;
             a_on .mv += r_on .molar_volume; a_on .mw += r_on .mw; ++a_on .n;
             a_tab.mv += te->second.vbar * te->second.mw; a_tab.mw += te->second.mw; ++a_tab.n;
-            auto& acc = per_res_delta[rn];
-            acc.dsum += r_off.vbar - te->second.vbar; acc.mw += te->second.mw; ++acc.n;
+            if (mdl == 1) {   // once per structure, not once per NMR model
+                auto& acc = per_res_delta[rn];
+                acc.dsum += r_off.vbar - te->second.vbar; acc.mw += te->second.mw; ++acc.n;
+            }
         }
 
         auto vb = [&](const Acc& a) { return a.mw > 0 ? (a.mv + COVOLUME) / a.mw : 0.0; };
         double v_tab = vb(a_tab), v_off = vb(a_off), v_on = vb(a_on);
 
         // A psv averaged over a surviving handful of residues is not a protein psv. Refuse it
-        // rather than print a plausible-looking number: 2AAS did exactly that at +13.7%.
+        // rather than print a plausible-looking number: 2AAS did exactly that at +13.7% before
+        // hydrogens were stripped.
         const size_t n_total = (size_t)a_tab.n + n_missing + n_failed;
         const double cover = n_total ? (double)a_tab.n / (double)n_total : 0.0;
         if (cover < 0.95) {
-            std::printf("%-22s  EXCLUDED: only %zu of %zu residues usable (%.0f%%)"
-                        " -- missing from table %zu, psv refused %zu\n",
-                        key.c_str(), (size_t)a_tab.n, n_total, cover * 100, n_missing, n_failed);
-            if (!failed_psv.empty()) {
-                std::printf("    (psv refused for:");
-                for (auto& s2 : failed_psv) std::printf(" %s", s2.c_str());
-                std::printf(")\n");
-            }
+            if (mdl == 1)
+                std::printf("%-22s  EXCLUDED: only %zu of %zu residues usable (%.0f%%)"
+                            " -- missing from table %zu, psv refused %zu\n",
+                            key.c_str(), (size_t)a_tab.n, n_total, cover * 100, n_missing, n_failed);
             continue;
         }
+        mv_tab.push_back(v_tab); mv_off.push_back(v_off); mv_on.push_back(v_on);
+
+        if (mdl == 1 && !missing_tab.empty()) {
+            std::printf("    (not in somo.residue, excluded from all three:");
+            for (auto& s2 : missing_tab) std::printf(" %s", s2.c_str());
+            std::printf(")\n");
+        }
+        if (mdl == 1 && !failed_psv.empty()) {
+            std::printf("    (psv refused for:");
+            for (auto& s2 : failed_psv) std::printf(" %s", s2.c_str());
+            std::printf(")\n");
+        }
+        }   // ---- end model loop ----
+
+        if (mv_tab.empty()) continue;
+        auto mean = [](const std::vector<double>& v) {
+            double s2 = 0; for (double x : v) s2 += x; return s2 / v.size(); };
+        auto spread = [](const std::vector<double>& v) {
+            if (v.size() < 2) return 0.0;
+            double lo = v[0], hi = v[0];
+            for (double x : v) { lo = std::min(lo, x); hi = std::max(hi, x); }
+            return hi - lo; };
+        double v_tab = mean(mv_tab), v_off = mean(mv_off), v_on = mean(mv_on);
 
         auto m = meas.find(key);
         if (m == meas.end()) {
             std::printf("%-22s %8s %8.4f %8.4f %8.4f   %7s %7s %7s\n",
                         key.c_str(), "-", v_tab, v_off, v_on, "-", "-", "-");
         } else {
-            double mv = m->second.psv;
-            double dt = (v_tab - mv) / mv * 100, dd = (v_off - mv) / mv * 100, dp = (v_on - mv) / mv * 100;
+            double mvv = m->second.psv;
+            double dt = (v_tab - mvv) / mvv * 100, dd = (v_off - mvv) / mvv * 100,
+                   dp = (v_on - mvv) / mvv * 100;
             et.push_back(dt); ed.push_back(dd); ep.push_back(dp);
             std::printf("%-22s %8.4f %8.4f %8.4f %8.4f   %+7.2f %+7.2f %+7.2f\n",
                         m->second.label.empty() ? key.c_str() : m->second.label.c_str(),
-                        mv, v_tab, v_off, v_on, dt, dd, dp);
+                        mvv, v_tab, v_off, v_on, dt, dd, dp);
         }
-        if (!missing_tab.empty()) {
-            std::printf("    (not in somo.residue, excluded from [table]:");
-            for (auto& s : missing_tab) std::printf(" %s", s.c_str());
-            std::printf(")\n");
-        }
-        if (!failed_psv.empty()) {
-            std::printf("    (psv could not be computed, excluded from all:");
-            for (auto& s : failed_psv) std::printf(" %s", s.c_str());
-            std::printf(")\n");
-        }
+        if (mv_tab.size() > 1)
+            std::printf("    (%zu MODELs averaged; psv spread across the ensemble:"
+                        " table %.4f, D&Z %.4f, D&Z+pH %.4f)\n",
+                        mv_tab.size(), spread(mv_tab), spread(mv_off), spread(mv_on));
     }
 
     auto summ = [](const char* lab, std::vector<double>& e) {

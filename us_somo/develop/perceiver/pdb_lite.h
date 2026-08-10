@@ -22,6 +22,7 @@ struct PdbAtom {
     double      occ = 1.0;
     std::string element;    // normalized symbol from col 77-78 (or guessed)
     bool        hetatm = false;
+    int         model = 1;  // 1-based MODEL index; always 1 for single-model files
 };
 
 // Guess element from a 4-char PDB atom name when the element column is absent.
@@ -107,21 +108,60 @@ inline std::vector<std::pair<int,int>> read_conect(const std::string& path){
     return out;
 }
 
-// Read a PDB file. keep_first_model=true stops at ENDMDL of the first MODEL.
-inline std::vector<PdbAtom> read_pdb(const std::string& path, bool keep_first_model = true) {
+// Is this a hydrogen, by US-SOMO's own rule? US_Hydrodyn::read_pdb (us_hydrodyn_load.cpp:1489)
+// keeps an atom only when col 13 is not H, col 14 is not H, the trimmed name does not start with
+// H, and it does not match ^\dH -- which is how "1HB", "HD21" and friends are caught.
+//
+// This lives here rather than in one test because SOMO strips hydrogens on load and the
+// perceiver harness did not, so every test built on pdb_lite saw a structure SOMO would never
+// hand it. 2AAS is the demo file that exposes it: 7840 H, 245 in model 1, and it is in the DEMOS
+// list driving regress/coverage/sssrreal.
+//
+// One deliberate divergence: when the element column is present it WINS. SOMO's name-based rule
+// drops a mercury named "HG" (col 13 is H); the perceiver exists to handle exactly such ligands,
+// so an explicit element of HG keeps the atom. The name rule applies only when col 77-78 is blank.
+inline bool is_hydrogen_atom(const std::string& raw_name, const std::string& element_col) {
+    std::string e = trim(element_col);
+    for (auto& c : e) c = (char)std::toupper((unsigned char)c);
+    if (!e.empty()) return e == "H" || e == "D";
+    std::string n = trim(raw_name);
+    if (n.empty()) return false;
+    if (n[0] == 'H') return true;
+    if (n.size() >= 2 && std::isdigit((unsigned char)n[0]) && n[1] == 'H') return true;
+    return false;
+}
+
+// Read a PDB file.
+//   keep_first_model = true  -> stop at the end of MODEL 1 (the default; single-model files are
+//                              unaffected). false reads every model; use model_of() to split them.
+//   keep_hydrogens   = true  -> retain explicit H/D. Default false, matching SOMO, because the
+//                              volume increments and somo.residue are both UNITED-ATOM.
+inline std::vector<PdbAtom> read_pdb(const std::string& path, bool keep_first_model = true,
+                                     bool keep_hydrogens = false) {
     std::vector<PdbAtom> atoms;
     std::ifstream f(path);
     if (!f) return atoms;
     std::string line;
     bool seen_model = false;
+    int model = 1;
     while (std::getline(f, line)) {
-        if (line.rfind("MODEL", 0) == 0) { if (seen_model && keep_first_model) break; seen_model = true; continue; }
+        if (line.rfind("MODEL", 0) == 0) {
+            if (seen_model && keep_first_model) break;
+            if (seen_model) ++model;
+            seen_model = true; continue;
+        }
         if (line.rfind("ENDMDL", 0) == 0) { if (keep_first_model) break; continue; }
         bool is_atom = line.rfind("ATOM", 0) == 0;
         bool is_het  = line.rfind("HETATM", 0) == 0;
         if (!is_atom && !is_het) continue;
         if (line.size() < 54) continue;
+        if (!keep_hydrogens) {
+            std::string nm = line.size() >= 16 ? line.substr(12, 4) : "";
+            std::string ec = line.size() >= 78 ? line.substr(76, 2) : "";
+            if (is_hydrogen_atom(nm, ec)) continue;
+        }
         PdbAtom a;
+        a.model  = model;
         a.hetatm = is_het;
         auto col = [&](int start, int len) -> std::string {
             if ((int)line.size() < start) return "";
@@ -143,6 +183,22 @@ inline std::vector<PdbAtom> read_pdb(const std::string& path, bool keep_first_mo
         atoms.push_back(a);
     }
     return atoms;
+}
+
+// How many MODELs did read_pdb(path, /*keep_first_model=*/false) return?
+inline int model_count(const std::vector<PdbAtom>& in) {
+    int m = 0;
+    for (auto& a : in) if (a.model > m) m = a.model;
+    return m;
+}
+
+// Atoms belonging to one MODEL. SOMO keeps every model (model_vector) and lets the choice of
+// which to use be a later decision; the harness should be able to do the same rather than
+// silently computing on model 1.
+inline std::vector<PdbAtom> model_of(const std::vector<PdbAtom>& in, int model) {
+    std::vector<PdbAtom> out;
+    for (auto& a : in) if (a.model == model) out.push_back(a);
+    return out;
 }
 
 // Drop alternate locations: keep altLoc ' ' or 'A' (highest occupancy would be better; 'A' is a
