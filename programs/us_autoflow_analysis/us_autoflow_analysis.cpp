@@ -1285,7 +1285,7 @@ void US_Analysis_auto::gui_update( )
 		    }
 		}
 	      
-	      //Can VELOCITY-MWL be multiple optics-experiment? OR UV/vis. only?
+	      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
 	      QString stage_n_c = QString( "2DSA-IT" );
 	      //QString ch_name_c = channels_all[ca];
 	      //QString f_name_c  = get_filename( f_name_c );
@@ -1298,6 +1298,21 @@ void US_Analysis_auto::gui_update( )
 	      //now call sim. contructor
 	      sdiag_mwlsim = new US_MwlSpeciesSim();
 	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
+
+	      /**
+		 -- Next: define buffer
+		 sdiag_mwlsim -> define_buffer_auto: encode Water
+		 -- Next: define sim parameters
+		 sdiag_mwlsim -> sim_params_auto
+		 -- Next: set Rotor to "Simulation" one
+		 sdiag_mwlsim -> select_rotor_auto
+		 -- Next: Start Simulation
+		 sdiag_mwlsim -> start_sims_auto
+	      **/
+	      sdiag_mwlsim -> define_buffer_auto( invID );
+
+	      sdiag_mwlsim -> select_rotor_auto();
+	      
 	      sdiag_mwlsim->show(); //DEBUG
 	    }
 	    

@@ -424,6 +424,48 @@ DbgLv(1) << "  smdls: nmodels" << nmodels << "nruns" << nruns
 }
 
 
+//Select buffer (water) for VEL-MWL:GMP
+void US_MwlSpeciesSim::define_buffer_auto( int invID_p )
+{
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+
+  if ( db.lastErrno() != IUS_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+  
+  QStringList q;
+  q << "get_buffer_desc" << QString::number( invID_p );
+  db.query( q );
+
+  QString buffID_w;
+  while ( db.next() )
+    {
+      QString buffID  = db.value( 0 ).toString();
+      QString desc    = db.value( 1 ).toString();
+
+      if (QString::compare(desc, "water", Qt::CaseInsensitive) == 0)
+	{
+	  buffID_w = buffID;
+	  break;
+	}
+    }
+
+  qDebug() << "[buffID_w] -- " << buffID_w;
+  buffer.readFromDB( &db, buffID_w );
+  qDebug() << "[in us_mwl_sp_sim's define_buffer_auto()] : "
+	   << buffer.person
+	   << buffer.description
+	   << buffer.compressibility
+	   << buffer.density
+	   << buffer.viscosity;
+
+  change_buffer( buffer );
+}
+
 
 // Define the buffer for the run
 void US_MwlSpeciesSim::define_buffer( void )
@@ -518,6 +560,26 @@ void US_MwlSpeciesSim::set_parameters( void )
 DbgLv(1) << "set_params:";
 simparams.debug();
 //*DEBUG*
+}
+
+// Select a rotor for VEL-MWL:GMP
+void US_MwlSpeciesSim::select_rotor_auto( void )
+{
+  US_Rotor::Rotor rotor;
+  US_Rotor::RotorCalibration calibration;
+  
+  int dbdisk = US_Disk_DB_Controls::DB;
+  
+  US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk,
+					    rotor, calibration );
+
+  connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
+						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+	   this,      SLOT  ( assign_rotor            (
+						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+  rotorInfo->selectSimRotor();
+  
+  //rotorInfo->exec();
 }
 
 // Select a rotor

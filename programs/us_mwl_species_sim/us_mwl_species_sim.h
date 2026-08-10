@@ -38,6 +38,8 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Constructor for US_MwlSpeciesSim
         US_MwlSpeciesSim();
         void select_models_auto( QString, QStringList );
+        void define_buffer_auto( int );
+        void select_rotor_auto( void );
 
     private:
         int dbg_level;         //!< Debug level
