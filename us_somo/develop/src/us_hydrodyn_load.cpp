@@ -1485,9 +1485,10 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                str1.mid(13,1) != "H" &&
                !str1.mid(12,5).trimmed().startsWith( "H" ) &&
                !str1.mid(12,5).trimmed().contains( QRegularExpression( "^\\dH" ) ) &&
+               !( pdb_parse.skip_deuterium && pdb_parse_is_deuterium( str1 ) ) &&
                !skip_waters.count( str1.mid(17,3).trimmed() )
                )
-            {                  
+            {
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
                {
                   if (str1.mid(16,1) == "A")
