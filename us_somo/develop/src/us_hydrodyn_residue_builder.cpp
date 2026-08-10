@@ -29,6 +29,10 @@ Built build(const std::string& resname,
         // structure-level covolume of its own in calc_vbar_updated.
         out.psv = somo_psv::compute(atoms, perceived, bonds, idx);
         if (out.psv.ok && out.psv.vbar > 0) {
+            // The increments describe 25 C; somo.residue stores 20 C. Convert, or every entry
+            // lands ~0.3% high -- see Options::psv_table_temperature.
+            const double dT = opt.psv_table_temperature - opt.psv_increment_temperature;
+            out.psv.vbar += opt.psv_dvdt * dT;
             props.have_vbar = true;
             props.vbar = out.psv.vbar;
         }

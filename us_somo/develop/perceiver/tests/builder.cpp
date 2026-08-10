@@ -286,3 +286,20 @@ TEST("carboxylate hydration tracks the chain length") {
 }
 
 int main() { return tinytest::run(); }
+
+TEST("psv is emitted at the table temperature, not the increments' temperature") {
+    if (!load()) return;
+    std::vector<int> idx = pick("ALA", 5);
+    if (idx.empty()) { std::printf("  (no complete ALA -- skipped)\n"); return; }
+    somo_residue_builder::Options o;                       // defaults: 25 C -> 20 C
+    Built b20 = build("ALA", g.in, g.perc, g.bonds, idx, Perceiver(g.tbl), &g.hyd, "", o);
+    somo_residue_builder::Options raw = o;
+    raw.psv_table_temperature = raw.psv_increment_temperature;   // no conversion
+    Built b25 = build("ALA", g.in, g.perc, g.bonds, idx, Perceiver(g.tbl), &g.hyd, "", raw);
+    const double expect = raw.psv_dvdt * (o.psv_table_temperature - o.psv_increment_temperature);
+    std::printf("  psv 25 C %.4f -> 20 C %.4f (delta %.4f, expected %.4f)\n",
+                b25.psv.vbar, b20.psv.vbar, b20.psv.vbar - b25.psv.vbar, expect);
+    // somo.residue is a 20 C table; emitting the raw 25 C value put every entry ~0.3% high
+    CHECK(std::fabs((b20.psv.vbar - b25.psv.vbar) - expect) < 1e-9);
+    CHECK(b20.psv.vbar < b25.psv.vbar);
+}
