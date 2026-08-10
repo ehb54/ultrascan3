@@ -1298,7 +1298,7 @@ void US_Analysis_auto::gui_update( )
 	      //now call sim. contructor
 	      sdiag_mwlsim = new US_MwlSpeciesSim();
 	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
-	      sdiag_mwlsim->show(); //DEBUG
+	      //sdiag_mwlsim->show(); //DEBUG
 	    }
 	    
 	  return;
