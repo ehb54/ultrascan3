@@ -229,6 +229,16 @@ TEST("element inference from atom names when the PDB element column is empty") {
     CHECK(element_from_atom_name("C1",  "CIT") == "C");
     CHECK(element_from_atom_name("CAA", "HEM") == "C");   // 3-letter ligand carbon
     CHECK(element_from_atom_name("FE1", "SF4") == "FE");  // element + index
+    // MODIFIED and RENAMED residues: protein atom names under a non-standard residue name.
+    // Keying only on the residue name read every backbone CA as calcium, which corrupted the
+    // hybrid, radius, grid volume and hydration as well as the psv.
+    CHECK(element_from_atom_name("CA",  "MSE") == "C");   // selenomethionine alpha carbon
+    CHECK(element_from_atom_name("SE",  "MSE") == "SE");  // ...but its selenium is selenium
+    CHECK(element_from_atom_name("CA",  "Z01") == "C");   // renamed residue, as the test fixtures use
+    CHECK(element_from_atom_name("CB",  "Z01") == "C");
+    CHECK(element_from_atom_name("NE2", "Z09") == "N");
+    CHECK(element_from_atom_name("CA",  "PTR") == "C");   // phosphotyrosine
+    CHECK(element_from_atom_name("CD",  "CGU") == "C");   // gamma-carboxyglutamate, NOT cadmium
 }
 
 int main(){ return tinytest::run(); }
