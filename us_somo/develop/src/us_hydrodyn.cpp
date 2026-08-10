@@ -2379,8 +2379,7 @@ void US_Hydrodyn::perceive_non_coded() {
                                           0, previously_accepted );
       if ( !previously_accepted.isEmpty() ) {
          editor_msg( "blue", QString( us_tr( "Perceive: %1 was accepted earlier this session; "
-                                             "showing those values
-" ) ).arg( tents[ t ].resName ) );
+                                             "showing those values\n" ) ).arg( tents[ t ].resName ) );
       }
       // Modal, one residue at a time: each decision is independent and the user should not be
       // asked to hold several half-reviewed entries in their head at once. The dialog carries
