@@ -24,8 +24,27 @@ void US_Hydrodyn::gui_script_msg( int line, QString cmd, QString msg ) {
 void US_Hydrodyn::gui_script_error( int line, QString cmd, QString msg, bool doexit ) {
    gui_script_msg( line, cmd, "ERROR: " + msg );
    if ( doexit ) {
-      exit( -1 );
+      gui_script_exit( -1 );
    }
+}
+
+// every gui_script exit comes through here.  a script leaves by exit(), never through
+// closeEvent(), so the RasMol viewers it opened - auto_view_pdb is on unless the script says
+// "norasmol" - would just be orphaned.  close them, unless the script asked otherwise.
+
+void US_Hydrodyn::gui_script_exit( int rc ) {
+   QList < qint64 > open_rasmols = rasmol_running_pids();
+
+   if ( open_rasmols.size() ) {
+      if ( gui_script_rasmol_leave_open ) {
+         TSO << QString( "US_Hydrodyn::gui_script: leaving %1 RasMol window(s) open\n" ).arg( open_rasmols.size() );
+      } else {
+         TSO << QString( "US_Hydrodyn::gui_script: closing %1 RasMol window(s)\n" ).arg( open_rasmols.size() );
+         rasmol_close_all();
+      }
+   }
+
+   exit( rc );
 }
 
 void US_Hydrodyn::gui_script_run() {
@@ -38,8 +57,8 @@ void US_Hydrodyn::gui_script_run() {
       QString error;
       if ( !US_File_Util::getcontents( gui_script_file, script, error ) ) {
          TSE << "US_Hydrodyn::gui_script_run() : Error " << error << "\n";
-         exit( -1);
-      } 
+         gui_script_exit( -1 );
+      }
    }
 
    QStringList scriptlines = script.split( "\n" );
@@ -67,11 +86,25 @@ void US_Hydrodyn::gui_script_run() {
       
       if ( cmd == "exit" ) {
          gui_script_msg( i, cmd, "exiting normally" );
-         exit( 0 );
+         gui_script_exit( 0 );
       } else if ( cmd == "expert" ) {
          advanced_config.expert_mode = true;
       } else if ( cmd == "norasmol" ) {
          advanced_config.auto_view_pdb = false;
+      } else if ( cmd == "rasmol" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+         if ( opt1 == "leaveopen" ) {
+            // leave any viewers the script opened running after it exits
+            gui_script_rasmol_leave_open = true;
+         } else if ( opt1 == "close" ) {
+            gui_script_rasmol_leave_open = false;   // the default
+         } else {
+            gui_script_error( i, cmd, "unknown option : " + opt1 );
+         }
       } else if ( cmd == "progress" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );

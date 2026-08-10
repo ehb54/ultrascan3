@@ -319,6 +319,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void     gui_script_msg  ( int line, QString arg, QString msg );
       void     gui_script_error( int line, QString arg, QString msg, bool doexit = true );
 
+      // a gui_script leaves via exit(), not through closeEvent(), and has nobody at the
+      // keyboard to answer a prompt - so it closes any RasMol viewers it opened rather than
+      // orphaning them, unless the script said "rasmol leaveopen"
+      bool     gui_script_rasmol_leave_open;
+      void     gui_script_exit ( int rc );
+
       bool     init_configs_silently;
       
       map < QString, struct atom * > residue_atom_map( struct residue & residue_entry );

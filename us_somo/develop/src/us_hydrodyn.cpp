@@ -702,6 +702,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    create_beads_normally = true;
    alt_method = false;
    rasmol = NULL;
+   gui_script_rasmol_leave_open = false;   // a script closes its viewers unless it says otherwise
    browflex = NULL;
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
