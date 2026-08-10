@@ -1679,8 +1679,8 @@ qDebug() << "Timing: accept-load: mcount" << modelsCount
 
    dsearch    = dsearch.simplified();
 
-   // accept();        // signal that selection was accepted
-   // close();
+   accept();        // signal that selection was accepted
+   close();
 }
 
 
