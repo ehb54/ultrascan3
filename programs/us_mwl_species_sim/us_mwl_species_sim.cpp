@@ -338,6 +338,95 @@ DbgLv(1) << "  smdls: nmodels" << nmodels << "nruns" << nruns
    pb_strtsims->setEnabled( true );
 }
 
+// Select a set of models
+void US_MwlSpeciesSim::select_models_auto( QString invID_passed, QStringList m_t_r_id )
+{
+DbgLv(1) << "SLOT: select_models";
+   // Get a set of descriptions for distribution data
+DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
+ << "pfilts" << pfilts;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   //US_ModelLoader dialog( dbload, mfilt, models, mdescs, pfilts );
+   US_ModelLoader dialog( true, mfilt, models, mdescs, pfilts, invID_passed );
+
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
+   if ( dialog.exec() != QDialog::Accepted )
+      return;  // no selection made
+
+   nmodels        = models.count();
+
+   if ( nmodels < 1 )
+      return;
+
+   mtconcs.fill( 0.0, nmodels );
+
+   QStringList runids;
+   QStringList chans;
+   QStringList wavelns;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      // Accumulate runs, channels, wavelengths present in models
+      QString mdesc  = models[ jm ].description;
+      QString runid  = QString( mdesc ).section( ".",  0, -4 );
+      QString triple = QString( mdesc ).section( ".", -3, -3 );
+      QString chan   = QString( triple ).left( 2 );
+      QString waveln = QString( triple ).mid( 2, 3 );
+
+      if ( ! runids.contains( runid ) )
+         runids  << runid;
+
+      if ( ! chans .contains( chan ) )
+         chans   << chan;
+
+      if ( ! wavelns.contains( waveln ) )
+         wavelns << waveln;
+//*DEBUG
+if(jm<5 || (jm+5)>nmodels ) {
+ DbgLv(1) << "  smdls: jm" << jm << "model.desc"
+  << mdesc << "mdescs[jm]" << mdescs[jm];
+}
+//*DEBUG
+
+      // Compute and save the total concentration in each model
+      double tot_conc = 0.0;
+
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+      {
+         tot_conc      += models[ jm ].components[ jc ].signal_concentration;
+      }
+
+      mtconcs[ jm ]  = tot_conc;
+DbgLv(1) << "  smdls:   jm" << jm << "tot_conc" << tot_conc;
+   }
+
+   int nruns      = runids .count();
+   int nchans     = chans  .count();
+   int nwavls     = wavelns.count();
+DbgLv(1) << "  smdls: nmodels" << nmodels << "nruns" << nruns
+ << "nchans" << nchans << "nwavls" << nwavls;
+
+   if ( nruns != 1  ||  nchans != 1  ||  nwavls != nmodels )
+   {
+      qDebug() << "expected: runs chans wavelns" << 1 << 1 << nmodels;
+      qDebug() << "have:     runs chans wavelns" << nruns << nchans << nwavls;
+   }
+
+   mrunid         = runids[ 0 ];
+   orunid         = "ISSF-" + mrunid + "-" + chans[ 0 ];
+   QString triple = chans[ 0 ].left( 1 ) + "."
+                  + chans[ 0 ].mid( 1, 1 ) + "."
+                  + wavelns[ 0 ] + "-" + wavelns[ nwavls - 1 ];
+   le_triples->setText( triple );
+   le_runid  ->setText( orunid );
+
+   pb_strtsims->setEnabled( true );
+}
+
+
+
 // Define the buffer for the run
 void US_MwlSpeciesSim::define_buffer( void )
 {

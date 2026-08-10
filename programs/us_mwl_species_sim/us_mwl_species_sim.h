@@ -37,6 +37,7 @@ class US_MwlSpeciesSim : public US_Widgets
     public:
         //! \brief Constructor for US_MwlSpeciesSim
         US_MwlSpeciesSim();
+        void select_models_auto( QString, QStringList );
 
     private:
         int dbg_level;         //!< Debug level
@@ -101,7 +102,7 @@ class US_MwlSpeciesSim : public US_Widgets
 
         //! \brief Select models
         void select_models(void);
-
+        
         //! \brief Define buffer
         void define_buffer(void);
 

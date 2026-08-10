@@ -12,7 +12,6 @@
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
-#include "../us_mwl_species_fit/us_mwl_species_fit.h"
 
 #define MIN_NTC   25
 
@@ -150,6 +149,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   Manual_update.clear();
   History_read.clear();
   Process_2dsafm.clear();
+
+  TriplesArray. clear();
   
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
@@ -304,7 +305,11 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //Define triple's channels
       QStringList triple_name_parts = triple_name.split(".");
       channels_all << triple_name_parts[0] + "." + triple_name_parts[1];
+
+      //Form QStringList of triples
+      TriplesArray << triple_name;
     }
+  TriplesArray. removeDuplicates();
   
   //Group requestIDs by channel, exclude "Intereference" runs
   channels_all.removeDuplicates();
@@ -1264,6 +1269,23 @@ void US_Analysis_auto::gui_update( )
 				    msg_text  );
 	  in_gui_update  = false;
 
+	  //Run Simulation
+	  for ( int ta=0; ta<TriplesArray.size(); ++ta )
+	    {
+	      QString stage_n_c = QString( "2DSA-IT" );
+	      QString t_name_c  = TriplesArray[ta];
+	      QString f_name_c  = get_filename( t_name_c );
+	      QString mod_id_c  = QString("XXX");
+
+	      QStringList m_t_r_id;
+	      m_t_r_id << stage_n_c << t_name_c << f_name_c << mod_id_c;
+	      qDebug() << "[Post-Analysis], m_t_r_id -- " << m_t_r_id;
+
+	      //now call sim. contructor
+	      sdiag_mwlsim = new US_MwlSpeciesSim();
+	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_t_r_id );
+	    }
+	    
 	  return;
 	}
 
@@ -3827,6 +3849,8 @@ void US_Analysis_auto::reset_auto( )
   History_read.clear();
   Completed_triples.clear();
   Process_2dsafm.clear();
+
+  TriplesArray. clear();
   //TO DO MORE later - DB stop etc..
 }
 

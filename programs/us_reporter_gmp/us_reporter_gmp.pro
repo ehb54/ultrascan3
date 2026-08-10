@@ -25,7 +25,8 @@ HEADERS       = us_reporter_gmp.h \
                 ../us_mwl_species_fit/us_mwl_species_fit.h \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
                 ../us_mwl_species_fit/us_load_run_noise.h \
-                ../us_abde/us_norm_profile.h
+                ../us_abde/us_norm_profile.h \
+                ../us_mwl_species_sim/us_mwl_species_sim.h
                                 
 
 SOURCES       = us_reporter_gmp_main.cpp       \
@@ -48,7 +49,8 @@ SOURCES       = us_reporter_gmp_main.cpp       \
                 ../us_mwl_species_fit/us_mwl_species_fit.cpp \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
                 ../us_mwl_species_fit/us_load_run_noise.cpp \
-                ../us_abde/us_norm_profile.cpp
+                ../us_abde/us_norm_profile.cpp \
+                ../us_mwl_species_sim/us_mwl_species_sim.cpp
                 
                 
                 

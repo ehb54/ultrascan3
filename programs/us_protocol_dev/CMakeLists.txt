@@ -70,6 +70,9 @@ set(CROSS_DIR_SOURCES
 
         # us_abde
         ../us_abde/us_norm_profile.cpp
+
+        # us_mwl_species_sim
+        ../us_mwl_species_sim/us_mwl_species_sim.cpp
         )
 
 # Cross-directory headers from .pro file
@@ -104,6 +107,7 @@ set(CROSS_DIR_HEADERS
         ../us_mwl_species_fit/us_mwl_sf_plot3d.h
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_abde/us_norm_profile.h
+        ../us_mwl_species_sim/us_mwl_species_sim.h
         )
 
 # Find UI and resource files
@@ -146,6 +150,7 @@ target_include_directories(us_protocoldev PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_esigner_gmp
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
+        ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
         )
 
 # Link libraries

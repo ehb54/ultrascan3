@@ -20,6 +20,7 @@
 #include "us_selectbox.h"
 //#include "../us_convert/us_select_triples.h"
 #include "../us_abde/us_norm_profile.h"
+#include "../us_mwl_species_sim/us_mwl_species_sim.h"
 
 
 #include "us_analysis_base2.h"
@@ -49,6 +50,7 @@ class US_Analysis_auto : public US_Widgets
         US_MwlSpeciesFit* sdiag;
         US_ConvertGui*    sdiag_convert;
         US_Norm_Profile*  sdiag_norm_profile;
+        US_MwlSpeciesSim* sdiag_mwlsim; 
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
@@ -131,6 +133,7 @@ class US_Analysis_auto : public US_Widgets
         QMessageBox * msg_sim;                                   /**< Message box for simulation messages. */
         QProgressDialog * progress_msg;                          /**< Progress dialog for showing progress messages. */
 
+        
     private:
         QVector< US_DataIO::RawData > rawData;                   /**< Vector of raw data. */
         QVector< US_DataIO::EditedData > editedData;             /**< Vector of edited data. */
@@ -309,6 +312,8 @@ class US_Analysis_auto : public US_Widgets
             QMap < QString, QStringList > Channel_to_requestIDs;     /**< Mapping of channels to request IDs. */
 
             QStringList channels_all;                                /**< List of all channels. */
+
+            QStringList TriplesArray;
 
             QMap < QString, bool > Manual_update;                    /**< Manual update flag. */
             QMap < QString, bool > History_read;                     /**< History read flag. */
