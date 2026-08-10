@@ -49,6 +49,17 @@ struct Options {
     double convention_factor_small = 1.179;
     double convention_split = 110.0;
 
+    // TEMPERATURE. The Durchschlag & Zipper increments are for 25 C, but somo.residue is a 20 C
+    // table -- SOMO converts with tc_vbar() (us_hydrodyn_load.cpp) using this same coefficient.
+    // Emitting the raw 25 C value put every generated entry ~0.3% high, which is small enough to
+    // look like method noise and is not: it is 5 K x 4.25e-4 exactly. Verified against Mattia
+    // Rocco's independent recalculation, whose 25 C and 20 C columns imply 4.2500e-04 for all
+    // 20 residues with zero spread; matching the reference brings 14 of 20 residues to within
+    // +-0.07% of his values.
+    double psv_increment_temperature = 25.0;   // what D&Z's increments describe
+    double psv_table_temperature     = 20.0;   // what somo.residue stores
+    double psv_dvdt                  = 4.25e-4;  // cm^3 g^-1 K^-1, SOMO's tc_vbar coefficient
+
     bool compute_psv = true;
     bool compute_hydration = true;
     int  bead_color = somo_perceive::DEFAULT_BEAD_COLOR;
