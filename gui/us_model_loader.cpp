@@ -1578,6 +1578,8 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
    QString triple_passed  = m_t_r_id[ 1 ];
    QString runid_passed   = m_t_r_id[ 2 ];
    QString modelid_passed = m_t_r_id[ 3 ];
+
+   triple_passed.remove(".");
    
    qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed << modelid_passed;
    
@@ -1587,13 +1589,18 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
        QListWidgetItem* item = lw_models->item(i);
        QString model_text    = item->text();
 
+       QString triple_from_mtext = item->text().split(".")[1];
+
        //get original description of the model
        QString mdesc   = alt_description( model_text, false );
        int     mdx     = modelIndex( mdesc, allmods );
        QString modelID = allmods.at( mdx ).DB_id;
+
+       qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- "
+		<< mdesc << mdx << modelID << triple_from_mtext;
        
        if ( model_text.contains( model_passed ) &&
-	    model_text.contains( triple_passed ) &&
+	    triple_from_mtext.contains( triple_passed ) &&
 	    model_text.contains( runid_passed ) )
 	 {
 	   selmods << item;
