@@ -89,3 +89,13 @@ bin/builder: tests/builder.cpp $(BUILDER_SRC) $(HDR)
 
 builder: bin/builder
 	./bin/builder
+
+bin/protein_psv: tests/protein_psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp $(HDR) ../include/us_hydrodyn_psv.h
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/protein_psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp -o bin/protein_psv
+
+PSV_PROTEINS = data/1HEL.pdb data/8RAT.pdb data/psv/1BEB.pdb data/psv/2CGA.pdb \
+               data/1AO6-compl_monA.pdb data/6LDH1.pdb data/1ADO_noSO4.pdb
+
+protein_psv: bin/protein_psv
+	./bin/protein_psv data/psv_measured.txt $(if $(PDBS),$(PDBS),$(PSV_PROTEINS))
