@@ -212,10 +212,23 @@ TEST("element inference from atom names when the PDB element column is empty") {
     CHECK(element_from_atom_name("FE",  "FE")  == "FE");
     CHECK(element_from_atom_name("ZN",  "ZN")  == "ZN");
     CHECK(element_from_atom_name("MG",  "MG")  == "MG");
-    // ligand atoms still resolve by leading letter
+    // LIGANDS are the opposite case: a two-letter atom name IS a two-letter element there, and
+    // reading it by leading letter turns HEM's iron into fluorine, a chloride into carbon and a
+    // selenium into sulfur. Six of these were wrong before the residue became the discriminator.
+    CHECK(element_from_atom_name("FE",  "HEM") == "FE");
+    CHECK(element_from_atom_name("CL",  "CIT") == "CL");
+    CHECK(element_from_atom_name("NA",  "XYZ") == "NA");
+    CHECK(element_from_atom_name("SE",  "MSE") == "SE");
+    CHECK(element_from_atom_name("BR",  "LIG") == "BR");
+    CHECK(element_from_atom_name("CU",  "CUA") == "CU");
+    CHECK(element_from_atom_name("MG",  "CLA") == "MG");
+    CHECK(element_from_atom_name("MN",  "LIG") == "MN");
+    // ligand light atoms still resolve by leading letter
     CHECK(element_from_atom_name("S",   "SO4") == "S");
     CHECK(element_from_atom_name("O1",  "SO4") == "O");
     CHECK(element_from_atom_name("C1",  "CIT") == "C");
+    CHECK(element_from_atom_name("CAA", "HEM") == "C");   // 3-letter ligand carbon
+    CHECK(element_from_atom_name("FE1", "SF4") == "FE");  // element + index
 }
 
 int main(){ return tinytest::run(); }
