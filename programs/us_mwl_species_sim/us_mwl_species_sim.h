@@ -38,7 +38,19 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Constructor for US_MwlSpeciesSim
         US_MwlSpeciesSim();
 
+        //! \brief Drive the simulation headlessly from command-line flags
+        //! \param flags Parsed --model(s)/--buffer/--simparams/--rotor/--save/--close/--errors-cl values
+        //! \return 0 = ran headless, 1 = need GUI, 2 = error
+        int init_from_args(const QMap<QString, QString>& flags);
+
     private:
+        //! \brief Load models from explicit file paths and aggregate them the
+        //! way select_models() does, without the selection dialog
+        bool load_models_from_paths(const QStringList& paths);
+
+        //! \brief Save simulations to an explicit directory instead of US_Settings::importDir()
+        void save_sims_to(const QString& save_dir);
+
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
         int tripx;             //!< Triple index

@@ -7,6 +7,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_headless_cli.h"
 #include "us_astfem_sim.h"
 #include "us_sim_params_gui.h"
 #include "us_math2.h"
@@ -83,33 +84,9 @@ int main( int argc, char* argv[] )
    parser.addOption(errors_option);
 
    QMap<QString, QString> args;
-   int cli_parsing_result = -1; //!< -1 not finished, 0 headless, 1 gui needed, 2 error
-   // parser had a problem parsing cli arguments
-   if ( !parser.parse( QApplication::arguments() ) )
-   {
-      // print error message to console via QTextStream
-      QTextStream(stderr) << qUtf8Printable(parser.errorText()) << Qt::endl;
-      // exit QApplication with error code
-      QApplication::exit( 1 );
-      return 1;
-   }
-   // parser detected version option
-   if ( parser.isSet( version_option ) )
-   {
-      QTextStream(stdout) << QString::asprintf( "%s (%s)\nVersion %s\n\n",
-         qUtf8Printable(QApplication::applicationDisplayName() ),
-         qUtf8Printable( QApplication::applicationName() ),
-         qUtf8Printable( QApplication::applicationVersion() )) << Qt::endl;
-      QApplication::exit( 0 );
-      return 0;
-   }
-   // parser detected help option (help or help-all)
-   if ( parser.isSet( help_option ) )
-   {
-      QTextStream(stdout) << qUtf8Printable( parser.helpText() ) << Qt::endl;
-      QApplication::exit( 0 );
-      return 0;
-   }
+   int cli_exit_code = 0;
+   if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
+      return cli_exit_code;
 
    // parse command specific commands
 
@@ -124,36 +101,20 @@ int main( int argc, char* argv[] )
    {
       args["model"] = parser.value( model_option );
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
    // parse buffer
    if ( parser.isSet( buffer_option ) && !parser.value( buffer_option ).isEmpty() )
    {
       args["buffer"] = parser.value( buffer_option );
-   }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
    }
    // parse simulation parameters
    if ( parser.isSet( sim_parameters_option ) && !parser.value( sim_parameters_option ).isEmpty() )
    {
       args["simparams"] = parser.value( sim_parameters_option );
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
    // parse rotor
    if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
    {
       args["rotor"] = parser.value( rotor_option );
-   }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
    }
    // parse movie
    if ( parser.isSet( movie_option ) )
@@ -180,20 +141,11 @@ int main( int argc, char* argv[] )
    {
       args["save"] = parser.value( save_option ).replace("\\", "/");
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
    // parse close
    if ( parser.isSet( close_option ) )
    {
       args["close"] = "true";
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
-   cli_parsing_result = qMax( cli_parsing_result, 0 );
    int init_status = w.init_from_args(args);
    if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
    {
@@ -201,12 +153,7 @@ int main( int argc, char* argv[] )
       US_Settings::set_default_data_location( default_data_location );
    }
    // Only show GUI if needed
-   if ( init_status != 0 && !args.contains( "errors-cl" )) {
-      w.show();
-      return QApplication::exec();
-   }
-
-   return init_status;
+   return showGuiIfNeeded( w, init_status, args );
 }
 
 // US_Astfem_Sim constructor
@@ -386,10 +333,13 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check if model is to be loaded
    bool gui_needed = !flags.contains("close");
    bool error_occured = false;
-   bool loaded_model = false;
-   bool loaded_buffer = false;
-   bool loaded_simparams = false;
-   bool loaded_rotor = false;
+   // Each of model/buffer/simparams/rotor is independently optional, so a
+   // flag that wasn't given trivially counts as loaded; only a flag that
+   // was given and failed should block start_simulation() below.
+   bool loaded_model = true;
+   bool loaded_buffer = true;
+   bool loaded_simparams = true;
+   bool loaded_rotor = true;
    bool errors_to_cl = flags.contains("errors-cl");
    // load model
    if ( flags.contains("model") && flags["model"].length() > 0 ) {
@@ -399,18 +349,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_model( model_id, temp_model );
       dialog->close();
       if ( !success ) {
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading model " << model_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "model", model_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_model = false;
       }
       else {
          change_model(temp_model);
-         loaded_model = true;
       }
       delete dialog;
    }
@@ -421,18 +365,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_buffer( load_id, buffer );
       dialog->close();
       if ( !success ) {
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading buffer " << load_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_buffer = false;
       }
       else {
          change_buffer(buffer);
-         loaded_buffer = true;
       }
       delete dialog;
    }
@@ -443,18 +381,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_params( load_id, simparams );
       dialog->close();
       if ( !success ) {
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading simparams " << load_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_simparams = false;
       }
       else {
          set_parameters( );
-         loaded_simparams = true;
       }
       delete dialog;
    }
@@ -482,19 +414,13 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          simparams.rotorcoeffs[0]   = coeff1;
          simparams.rotorcoeffs[1]   = coeff2;
          simparams.rotorCalID = QString::number( rotorInfo->currentCalibration.ID );
-         loaded_rotor = true;
          rotorInfo->close();
       }
       else {
          rotorInfo->close();
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading rotor " << rotor_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_rotor = false;
       }
       delete rotorInfo;
       delete disk_controls;
@@ -572,12 +498,6 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    {
       gui_needed = true;
    }
-   if ( flags.contains( "close" ) && !gui_needed && !error_occured )
-   {
-      // close GUI
-      gui_needed = false;
-   }
-
    if ( error_occured ) {
       return 2;
    }
@@ -2075,13 +1995,16 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
  << "maxc dthresh" << maxc << dthresh;
 
       // Report that some readings were threshold-limited
-      QMessageBox::information( this,
-            tr( "OD Values Threshold Limited" ),
-            tr( "%1 readings in %2 scans were reset\n"
-                "to a threshold value of %3 .\n"
-                "The pre-threshold-limit maximum OD\n"
-                "value was %4 ." )
-            .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      if ( ! supress_dialog )
+      {
+         QMessageBox::information( this,
+               tr( "OD Values Threshold Limited" ),
+               tr( "%1 readings in %2 scans were reset\n"
+                   "to a threshold value of %3 .\n"
+                   "The pre-threshold-limit maximum OD\n"
+                   "value was %4 ." )
+               .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      }
    }
 
 

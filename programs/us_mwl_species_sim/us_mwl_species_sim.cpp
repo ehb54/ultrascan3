@@ -2,6 +2,7 @@
 
 #include <QApplication>
 
+#include "us_headless_cli.h"
 #include "us_mwl_species_sim.h"
 #include "us_data_loader.h"
 #include "us_select_runs.h"
@@ -27,10 +28,89 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_MwlSpeciesSim w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+
+   QCommandLineParser parser;
+   auto help_option = QCommandLineOption({"help", "h", "?"},
+      "Display help on commandline options");
+   parser.addOption(help_option);
+   auto version_option = parser.addVersionOption();
+   auto models_option = QCommandLineOption("models",
+      "Comma-separated list of model file paths, one per wavelength",
+      "models");
+   parser.addOption(models_option);
+   auto buffer_option = QCommandLineOption("buffer",
+      "Load buffer from file path, GUID or DB ID",
+      "buffer");
+   parser.addOption(buffer_option);
+   auto sim_parameters_option = QCommandLineOption("simparams",
+      "Load simulation parameters from file path",
+      "simparams");
+   parser.addOption(sim_parameters_option);
+   auto rotor_option = QCommandLineOption("rotor",
+      "Load rotor from file path, GUID or DB ID",
+      "rotor");
+   parser.addOption(rotor_option);
+   auto start_option = QCommandLineOption("start",
+      "Start simulations automatically");
+   parser.addOption(start_option);
+   auto save_option = QCommandLineOption("save",
+      "Save simulation data to directory path",
+      "save");
+   parser.addOption(save_option);
+   auto close_option = QCommandLineOption("close",
+      "Close application if no errors occurred");
+   parser.addOption(close_option);
+   auto ignore_db_option = QCommandLineOption("no-db",
+      "Ignore any database preferences and only use locally available data");
+   parser.addOption(ignore_db_option);
+   auto errors_option = QCommandLineOption("errors-cl",
+      "Force errors to console and don't open any sort of gui");
+   parser.addOption(errors_option);
+
+   int cli_exit_code = 0;
+   if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
+      return cli_exit_code;
+
+   int default_data_location = US_Settings::default_data_location();
+   if ( parser.isSet( ignore_db_option ) )
+   {
+      US_Settings::set_default_data_location( 2 );
+   }
+
+   QMap<QString, QString> args;
+   if ( parser.isSet( models_option ) && !parser.value( models_option ).isEmpty() )
+      args["models"] = parser.value( models_option );
+   if ( parser.isSet( buffer_option ) && !parser.value( buffer_option ).isEmpty() )
+      args["buffer"] = parser.value( buffer_option );
+   if ( parser.isSet( sim_parameters_option ) && !parser.value( sim_parameters_option ).isEmpty() )
+      args["simparams"] = parser.value( sim_parameters_option );
+   if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
+      args["rotor"] = parser.value( rotor_option );
+   if ( parser.isSet( start_option ) )
+      args["start"] = "true";
+   if ( parser.isSet( errors_option ) )
+      args["errors-cl"] = "true";
+   if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
+      args["save"] = parser.value( save_option ).replace("\\", "/");
+   if ( parser.isSet( close_option ) )
+      args["close"] = "true";
+
+   int init_status = args.isEmpty() ? 1 : w.init_from_args( args );
+
+   if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
+   {
+      US_Settings::set_default_data_location( default_data_location );
+   }
+
+   if ( init_status == 1 && args.contains( "errors-cl" ) )
+      QTextStream(stderr) << "GUI would be required to complete this run "
+         "(some inputs were not given or not loaded); exiting without it "
+         "because --errors-cl was set." << Qt::endl;
+
+   // Show GUI if no args or is needed
+   return showGuiIfNeeded( w, init_status, args );
 }
 
 //! \brief Constructor for US_MwlSpeciesSim class
@@ -584,6 +664,247 @@ DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
                         .arg( tfname );
    te_status->setText( smsga );
    qApp->processEvents();
+}
+
+// Drive the simulation headlessly from command-line flags
+int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
+{
+   bool gui_needed      = !flags.contains( "close" );
+   bool error_occured   = false;
+   bool errors_to_cl    = flags.contains( "errors-cl" );
+
+   // Each of models/buffer/simparams/rotor is independently optional, so a
+   // flag that wasn't given trivially counts as loaded; only a flag that
+   // was given and failed should block start_sims() below.
+   bool loaded_models    = true;
+   bool loaded_buffer    = true;
+   bool loaded_simparams = true;
+   bool loaded_rotor     = true;
+
+   if ( flags.contains( "models" ) && flags[ "models" ].length() > 0 )
+   {
+      QStringList paths = flags[ "models" ].split( ",", Qt::SkipEmptyParts );
+      loaded_models      = load_models_from_paths( paths );
+      if ( ! loaded_models )
+         reportHeadlessLoadFailure( "models", paths.join( "," ), errors_to_cl,
+                                     gui_needed, error_occured );
+   }
+
+   if ( flags.contains( "buffer" ) && flags[ "buffer" ].length() > 0 )
+   {
+      QString load_id     = flags[ "buffer" ];
+      US_BufferGui* dialog = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
+      bool success         = dialog->load_buffer( load_id, buffer );
+      dialog->close();
+      if ( ! success )
+      {
+         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_buffer      = false;
+      }
+      else
+      {
+         change_buffer( buffer );
+      }
+      delete dialog;
+   }
+
+   if ( flags.contains( "simparams" ) && flags[ "simparams" ].length() > 0 )
+   {
+      QString load_id      = flags[ "simparams" ];
+      US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
+      bool success          = dialog->load_params( load_id, simparams );
+      dialog->close();
+      if ( ! success )
+      {
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_simparams    = false;
+      }
+      else
+      {
+         set_parameters();
+      }
+      delete dialog;
+   }
+
+   if ( flags.contains( "rotor" ) && flags[ "rotor" ].length() > 0 )
+   {
+      US_Rotor::Rotor rotorval;
+      US_Rotor::RotorCalibration calibration;
+      QString rotor_id      = flags[ "rotor" ];
+      US_Disk_DB_Controls* disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+      int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                            : US_Disk_DB_Controls::Disk;
+      US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk, rotorval, calibration );
+      double coeff1 = 0.0;
+      double coeff2 = 0.0;
+      bool status = rotorInfo->load_rotor( rotor_id, coeff1, coeff2 );
+
+      if ( status )
+      {
+         rotor                     = rotorInfo->currentRotor;
+         rotor_calib                = rotorInfo->currentCalibration;
+         simparams.rotorcoeffs[0]   = coeff1;
+         simparams.rotorcoeffs[1]   = coeff2;
+         simparams.rotorCalID       = QString::number( rotorInfo->currentCalibration.ID );
+         rotorInfo->close();
+      }
+      else
+      {
+         rotorInfo->close();
+         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_rotor        = false;
+      }
+      delete rotorInfo;
+      delete disk_controls;
+   }
+
+   QString save_path;
+   if ( flags.contains( "save" ) && flags[ "save" ].length() > 0 )
+   {
+      save_path            = flags[ "save" ];
+      QDir dir( save_path );
+      QFile file( dir.filePath( "tmp.txt" ) );
+      if ( ! dir.exists()  ||  ! file.open( QIODevice::WriteOnly ) )
+      {
+         if ( errors_to_cl )
+         {
+            qDebug() << "Error save path doesn't exist or isn't writeable " << save_path;
+            exit( 2 );
+         }
+         error_occured       = true;
+         gui_needed          = true;
+      }
+      else
+      {
+         file.close();
+         file.remove();
+      }
+   }
+
+   if ( ! error_occured && loaded_models && loaded_buffer && loaded_simparams && loaded_rotor )
+   {
+      if ( flags.contains( "start" ) )
+      {
+         start_sims();
+         if ( ! save_path.isEmpty() )
+            save_sims_to( save_path );
+      }
+   }
+   else
+   {
+      gui_needed             = true;
+   }
+
+   if ( error_occured )
+      return 2;
+   if ( gui_needed )
+      return 1;
+   return 0;
+}
+
+// Load models from explicit file paths, aggregating them the way
+// select_models() does, but without the selection dialog
+bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
+{
+   models.clear();
+   mdescs.clear();
+
+   for ( const QString& path : paths )
+   {
+      US_Model m;
+      if ( m.load( path ) != IUS_DB2::OK  ||  m.description.isEmpty() )
+      {
+         qDebug() << "Error loading model file" << path;
+         return false;
+      }
+      models  << m;
+      mdescs  << m.description;
+   }
+
+   nmodels      = models.count();
+   if ( nmodels < 1 )
+      return false;
+
+   mtconcs.fill( 0.0, nmodels );
+
+   QStringList runids;
+   QStringList chans;
+   QStringList wavelns;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString mdesc  = models[ jm ].description;
+      QString runid  = QString( mdesc ).section( ".",  0, -4 );
+      QString triple = QString( mdesc ).section( ".", -3, -3 );
+      QString chan   = QString( triple ).left( 2 );
+      QString waveln = QString( triple ).mid( 2, 3 );
+
+      if ( ! runids.contains( runid ) )
+         runids  << runid;
+
+      if ( ! chans .contains( chan ) )
+         chans   << chan;
+
+      if ( ! wavelns.contains( waveln ) )
+         wavelns << waveln;
+
+      double tot_conc = 0.0;
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+         tot_conc      += models[ jm ].components[ jc ].signal_concentration;
+
+      mtconcs[ jm ]  = tot_conc;
+   }
+
+   int nruns      = runids .count();
+   int nchans     = chans  .count();
+   int nwavls     = wavelns.count();
+
+   if ( nruns != 1  ||  nchans != 1  ||  nwavls != nmodels )
+   {
+      qDebug() << "Model descriptions don't form a single run/channel with"
+                  " one wavelength per model -- expected runs chans wavelns"
+               << 1 << 1 << nmodels << "have" << nruns << nchans << nwavls;
+   }
+
+   mrunid         = runids[ 0 ];
+   orunid         = "ISSF-" + mrunid + "-" + chans[ 0 ];
+   QString triple = chans[ 0 ].left( 1 ) + "."
+                  + chans[ 0 ].mid( 1, 1 ) + "."
+                  + wavelns[ 0 ] + "-" + wavelns[ nwavls - 1 ];
+   le_triples->setText( triple );
+   le_runid  ->setText( orunid );
+
+   pb_strtsims->setEnabled( true );
+
+   return true;
+}
+
+// Save simulations to an explicit directory instead of US_Settings::importDir()
+void US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
+{
+   QString impdir     = save_dir + "/";
+   QString cell       = QString( orunid ).section( "-", -1, -1 ).left( 1 );
+   QString basefn     = orunid + ".RA." + cell + ".S.xxx.auc";
+
+   QDir().mkpath( impdir );
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString mdesc      = models[ jm ].description;
+      QString swavl      = mdesc.section( ".", -3, -3 ).mid( 2, 3 ) + ".auc";
+      QString fname      = QString( basefn ).replace( "xxx.auc", swavl );
+      QString fpath      = impdir + fname;
+
+      US_DataIO::writeRawData( fpath, synData[ jm ] );
+   }
+
+   QString tfname     = orunid + ".time_state.tmst";
+   QString tfpath     = impdir + tfname;
+
+   writeTimeState( tfpath, simparams, synData[ 0 ] );
 }
 
 // Bump the current plot to the previous channel
