@@ -88,6 +88,21 @@ inline const std::set<std::string>& standard_residue_names() {
 // Residual ambiguity: a ligand carbon named bare "CA" reads as calcium. Ligand carbons are
 // normally C1/CAA/CB1 rather than a bare "CA", so this is rare -- and the psv now refuses to
 // compute rather than guessing when an element cannot be resolved at all.
+// Atom names used by the protein/nucleic naming convention, where the element is ALWAYS the
+// leading letter. This is the set that collides with real two-letter elements: CA (calcium),
+// CD (cadmium), CE (cerium), NE (neon), NA (sodium), SE (selenium), CU, CL, CS, CO, NI...
+// A modified residue -- MSE, PTR, CGU, or any renamed one -- carries protein atom names under a
+// NON-standard residue name, so keying only on the residue name is not enough: it read every
+// backbone CA as calcium, which changed the hybrid, the radius, the grid volume and the
+// hydration as well as the psv.
+inline const std::set<std::string>& protein_atom_names() {
+    static const std::set<std::string> t = {
+        "CA","CB","CG","CD","CE","CZ","CH","OG","OH","OD","OE","OX","SG","SD",
+        "NE","ND","NZ","NH","OP","C","N","O","P","S"
+    };
+    return t;
+}
+
 inline std::string element_from_atom_name(const std::string& atom_name,
                                           const std::string& res_name) {
     std::string n, r;
@@ -98,12 +113,15 @@ inline std::string element_from_atom_name(const std::string& atom_name,
     const std::string one(1, n[0]);
     const bool one_is_element = element_table().count(one) > 0;
 
-    if (standard_residue_names().count(r)) {
-        return one_is_element ? one : n;          // protein/nucleic: always the leading letter
-    }
-    if (n.size() == 2 && element_table().count(n)) {
-        return n;                                 // ligand: FE, CL, ZN, SE, BR, NA, CU, MG ...
-    }
+    // 1. a lone ion: the atom name IS the residue name (HETATM "CA" in residue "CA")
+    if (n.size() >= 2 && n == r && element_table().count(n)) return n;
+    // 2. a standard residue always follows the protein/nucleic convention
+    if (standard_residue_names().count(r)) return one_is_element ? one : n;
+    // 3. a protein-style atom name follows it too, whatever the residue is called --
+    //    this is what makes modified and renamed residues work
+    if (protein_atom_names().count(n)) return one_is_element ? one : n;
+    // 4. otherwise a two-letter element is what it looks like: FE, CL, SE, BR, CU, ZN, MG
+    if (n.size() == 2 && element_table().count(n)) return n;
     return one_is_element ? one : n;
 }
 
