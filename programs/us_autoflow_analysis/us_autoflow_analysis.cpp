@@ -1268,22 +1268,37 @@ void US_Analysis_auto::gui_update( )
 				    tr( "All Triples Processed !" ),
 				    msg_text  );
 	  in_gui_update  = false;
-
+	  
 	  //Run Simulation
-	  for ( int ta=0; ta<TriplesArray.size(); ++ta )
+	  for ( int ca=0; ca<channels_all.size(); ++ca )
 	    {
+	      QString ch_name_c, f_name_c;
+	      //Get filename, OR filenameS first???
+	      for ( int ta=0; ta<TriplesArray.size(); ++ta )
+		{
+		  QString t_name_c = TriplesArray[ta];
+		  if( t_name_c.contains( channels_all[ca]) )
+		    {
+		      f_name_c  = get_filename( t_name_c );
+		      ch_name_c = channels_all[ca];
+		      break;
+		    }
+		}
+	      
+	      //Can VELOCITY-MWL be multiple optics-experiment? OR UV/vis. only?
 	      QString stage_n_c = QString( "2DSA-IT" );
-	      QString t_name_c  = TriplesArray[ta];
-	      QString f_name_c  = get_filename( t_name_c );
+	      //QString ch_name_c = channels_all[ca];
+	      //QString f_name_c  = get_filename( f_name_c );
 	      QString mod_id_c  = QString("XXX");
 
-	      QStringList m_t_r_id;
-	      m_t_r_id << stage_n_c << t_name_c << f_name_c << mod_id_c;
-	      qDebug() << "[Post-Analysis], m_t_r_id -- " << m_t_r_id;
+	      QStringList m_c_r_id;
+	      m_c_r_id << stage_n_c << ch_name_c << f_name_c << mod_id_c;
+	      qDebug() << "[Post-Analysis], m_t_r_id -- " << m_c_r_id;
 
 	      //now call sim. contructor
 	      sdiag_mwlsim = new US_MwlSpeciesSim();
-	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_t_r_id );
+	      sdiag_mwlsim->show(); //DEBUG
+	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
 	    }
 	    
 	  return;

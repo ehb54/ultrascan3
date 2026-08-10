@@ -348,6 +348,7 @@ DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    //US_ModelLoader dialog( dbload, mfilt, models, mdescs, pfilts );
    US_ModelLoader dialog( true, mfilt, models, mdescs, pfilts, invID_passed );
+   dialog. accepted_multiple_auto ( m_t_r_id );
 
    QApplication::restoreOverrideCursor();
    qApp->processEvents();

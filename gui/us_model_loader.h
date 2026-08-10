@@ -63,6 +63,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       US_ModelLoader( bool, QString&, QList< US_Model >&, QStringList& );
 
       void accepted_auto(  QStringList );
+      void accepted_multiple_auto(  QStringList );
 
    signals:
       //! \brief A signal to the parent that disk/db selection has changed
