@@ -108,26 +108,32 @@ inline std::vector<std::pair<int,int>> read_conect(const std::string& path){
     return out;
 }
 
-// Is this a hydrogen, by US-SOMO's own rule? US_Hydrodyn::read_pdb (us_hydrodyn_load.cpp:1489)
-// keeps an atom only when col 13 is not H, col 14 is not H, the trimmed name does not start with
-// H, and it does not match ^\dH -- which is how "1HB", "HD21" and friends are caught.
+// Is this a hydrogen or deuterium, by US-SOMO's own rules? Two tests are combined here:
+//   - hydrogen: US_Hydrodyn::read_pdb keeps an atom only when col 13 is not H, col 14 is not H,
+//     the trimmed name does not start with H, and it does not match ^\dH -- which is how "1HB"
+//     and "HD21" are caught (us_hydrodyn_load.cpp, the skip_hydrogens test).
+//   - deuterium: pdb_parse_is_deuterium() (us_hydrodyn_pdb_parsing.h), gated on the
+//     "Skip deuterium atoms" option, default on. Neutron structures carry D where an X-ray
+//     structure carries H; 5PTI has 229 of them and is in data/non-coded.
 //
-// This lives here rather than in one test because SOMO strips hydrogens on load and the
-// perceiver harness did not, so every test built on pdb_lite saw a structure SOMO would never
-// hand it. 2AAS is the demo file that exposes it: 7840 H, 245 in model 1, and it is in the DEMOS
-// list driving regress/coverage/sssrreal.
+// This lives here rather than in one test because SOMO strips both on load and the perceiver
+// harness did not, so every test built on pdb_lite saw a structure SOMO would never hand it.
+// 2AAS is the demo file that exposes it: 7840 H, 245 in model 1, and it is in the DEMOS list
+// driving regress/coverage/sssrreal.
 //
-// One deliberate divergence: when the element column is present it WINS. SOMO's name-based rule
-// drops a mercury named "HG" (col 13 is H); the perceiver exists to handle exactly such ligands,
-// so an explicit element of HG keeps the atom. The name rule applies only when col 77-78 is blank.
+// The element column WINS over the name, for both isotopes and for the same reason SOMO gives:
+// a name test alone cannot tell a deuterium from the second letter of a two-letter element
+// ("CD  " is cadmium, "HG  " is mercury). The name rules apply only when col 77-78 is blank.
 inline bool is_hydrogen_atom(const std::string& raw_name, const std::string& element_col) {
     std::string e = trim(element_col);
     for (auto& c : e) c = (char)std::toupper((unsigned char)c);
     if (!e.empty()) return e == "H" || e == "D";
     std::string n = trim(raw_name);
+    for (auto& c : n) c = (char)std::toupper((unsigned char)c);
     if (n.empty()) return false;
-    if (n[0] == 'H') return true;
-    if (n.size() >= 2 && std::isdigit((unsigned char)n[0]) && n[1] == 'H') return true;
+    if (n[0] == 'H' || n[0] == 'D') return true;                                   // H, HG21, D, DZ1
+    if (n.size() >= 2 && std::isdigit((unsigned char)n[0]) &&
+        (n[1] == 'H' || n[1] == 'D')) return true;                                 // 1HB, 1DG1
     return false;
 }
 
