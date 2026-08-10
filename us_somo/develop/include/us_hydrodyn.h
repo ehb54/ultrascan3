@@ -1127,6 +1127,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       
       // for vdw beads saxs excl vol
       vector < atom >                atom_list;
+      // Entries accepted this session, resName -> the somo.residue record. Keyed, so accepting a
+      // residue twice REPLACES it: the overlay is rebuilt from the permanent table plus these,
+      // never appended to, or a revisited residue would end up in the table twice.
+      map < QString, QString >  perceived_entries;
       map < QString, atom >          atom_map;
       void                           select_atom_file(const QString &filename);
 
@@ -1288,11 +1292,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // residue that already has a curated one. Fills `unmatched` with those names instead.
       void select_perceivable( std::set< QString > & to_perceive,
                                QStringList & unmatched );
-
-      // Entries accepted this session, resName -> the somo.residue record. Keyed, so accepting a
-      // residue twice REPLACES it: the overlay is rebuilt from the permanent table plus these,
-      // never appended to, or a revisited residue would end up in the table twice.
-      map < QString, QString >  perceived_entries;
 
       // Perceive + review the residues somo.residue does not code (Lookup Tables menu).
       void perceive_non_coded();
