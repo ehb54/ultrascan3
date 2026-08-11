@@ -678,8 +678,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    investigatorID = invID;
 
    // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    QGridLayout* general      = new QGridLayout( this );
    general->setSpacing         ( 2 );

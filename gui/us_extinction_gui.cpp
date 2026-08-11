@@ -149,6 +149,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
 
 
    data_plot = new QwtPlot();
+   US_Widgets::us_style_plot( data_plot );
    changedCurve = NULL;
    plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Optical Density"));
    data_plot->setCanvasBackground(Qt::black);
@@ -337,6 +338,7 @@ US_Extinction::US_Extinction() : US_Widgets()
    ct_coefficient->setEnabled(true);
 
    data_plot = new QwtPlot();
+   US_Widgets::us_style_plot( data_plot );
    changedCurve = NULL;
    plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Optical Density"));
    data_plot->setCanvasBackground(Qt::black);

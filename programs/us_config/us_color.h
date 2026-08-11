@@ -41,6 +41,7 @@ class US_Color : public US_Widgets
     QLabel* lbl_counter;
     QLabel* lbl_assign;
     QLabel* lbl_style;
+    QLabel* lbl_scheme;
 
     // Labels
 
@@ -95,6 +96,7 @@ class US_Color : public US_Widgets
     // Other Widgets
     QComboBox*     cmbb_margin;
     QComboBox*     cmbb_style;
+    QComboBox*     cmbb_scheme;
     QProgressBar*  progress;
     QwtCounter*    cnt;
 
@@ -121,7 +123,10 @@ class US_Color : public US_Widgets
 
       QString  guiStyle;
 
+      QString  colorScheme;
+
       QPalette  frameColor;
+      QPalette bannerColor;
       QPalette  pushbColor;
       QPalette  labelColor;
       QPalette   editColor;
@@ -130,14 +135,15 @@ class US_Color : public US_Widgets
       QPalette   plotColor;
     } current;
 
-    enum { FRAME, NORMAL_PB, DISABLED_PB, PLOT_FRAME, PLOT_CANVAS, LABELS, 
-           OTHER_WIDGETS, LCD, EDIT_BOXES };
+    enum { FRAME, BANNER, NORMAL_PB, DISABLED_PB, PLOT_FRAME, PLOT_CANVAS,
+           LABELS, OTHER_WIDGETS, LCD, EDIT_BOXES };
 
     void getCurrentSettings( void );
     void updateScreen      ( void );
     void updateSchemeList  ( const QString& = QString() );
 
     void resetFrames       ( void );
+    void resetBanners      ( void );
     void resetButtons      ( void );
     void resetLabels       ( void );
     void resetWidgets      ( void );
@@ -149,7 +155,8 @@ class US_Color : public US_Widgets
     void save_as        ( void   );
     void selMargin      ( int    );
     void selectedElement( int    );
-    void selectStyle    ( const QString& );
+    void selectStyle    ( int    );
+    void selectScheme   ( int    );
 
     void apply          ( void   );  // set as current
     void reset          ( void   );
