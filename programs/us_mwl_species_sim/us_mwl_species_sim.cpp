@@ -578,6 +578,7 @@ void US_MwlSpeciesSim::select_rotor_auto( void )
 	   this,      SLOT  ( assign_rotor            (
 						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
   rotorInfo->selectSimRotor();
+  assign_rotor ( rotor, calibration );
   
   //rotorInfo->exec();
 }
