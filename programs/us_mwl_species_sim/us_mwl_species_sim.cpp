@@ -578,7 +578,6 @@ void US_MwlSpeciesSim::select_rotor_auto( void )
 	   this,      SLOT  ( assign_rotor            (
 						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
   rotorInfo->selectSimRotor();
-  assign_rotor ( rotor, calibration );
   
   //rotorInfo->exec();
 }
@@ -612,8 +611,8 @@ void US_MwlSpeciesSim::assign_rotor( US_Rotor::Rotor& arotor,
    rotor_calib                = calibration;
    simparams.rotorcoeffs[0]   = rotor_calib.coeff1;
    simparams.rotorcoeffs[1]   = rotor_calib.coeff2;
-DbgLv(1) << "assign_rotor: rotor" << rotor.name
- << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
+   qDebug() << "assign_rotor: rotor" << rotor.name
+	    << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
 
 // Start the simulations for all chosen models

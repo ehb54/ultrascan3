@@ -1190,6 +1190,6 @@ void US_RotorGui::selectSimRotor( void )
 	   << currentRotor.name << currentRotor.ID
 	   << ", " << currentCalibration.rotorID;
   
-  //emit RotorCalibrationSelected ( currentRotor, currentCalibration );
+  emit RotorCalibrationSelected ( currentRotor, currentCalibration );
   //close();
 }
