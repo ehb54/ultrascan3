@@ -1185,6 +1185,11 @@ void US_RotorGui::selectSimRotor( void )
 	  break;
 	}
     }
+
+  qDebug() << "[in US_RotorGui::selectSimRotor()], rotorname "
+	   << currentRotor.name << currentRotor.ID
+	   << ", " << currentCalibration.rotorID;
+  
   emit RotorCalibrationSelected ( currentRotor, currentCalibration );
   close();
 }
