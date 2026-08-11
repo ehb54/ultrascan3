@@ -1,17 +1,35 @@
 //! \file us_sim_inputs.cpp
 #include "us_sim_inputs.h"
 #include "us_astfem_math.h"
+#include "us_hardware.h"
 #include "us_util.h"
 #include <QDir>
 
-US_SimulationParameters US_SimInputs::simParams()
+US_SimulationParameters US_SimInputs::simParams(
+   double    rpm,
+   int       duration_hours,
+   double    duration_minutes,
+   int       scans,
+   double    acceleration,
+   int       simpoints,
+   double    radial_resolution,
+   US_SimulationParameters::MeshType meshType,
+   US_SimulationParameters::GridType gridType,
+   double    rnoise,
+   double    lrnoise,
+   double    tinoise,
+   double    rinoise,
+   double    baseline,
+   bool      band_forming,
+   double    band_volume,
+   QString   rotor_calibr,
+   int       centerpiece,
+   int       centerpiece_channel )
 {
    US_SimulationParameters sp_out;
    US_SimulationParameters::SpeedProfile sp;
-   QString rotor_calibr = "0";
-   double  rpm           = 45000.0;
 
-   sp_out.setHardware( NULL, rotor_calibr, 0, 0 );
+   sp_out.setHardware( NULL, rotor_calibr, centerpiece, centerpiece_channel );
    double bottom        = US_AstfemMath::calc_bottom( rpm, sp_out.bottom_position,
                                                         sp_out.rotorcoeffs );
    double menisc_curr   = 5.8 + bottom - sp_out.bottom_position;
@@ -19,35 +37,54 @@ US_SimulationParameters US_SimInputs::simParams()
    sp_out.mesh_radius.clear();
    sp_out.speed_step .clear();
 
-   sp.duration_hours    = 2;
-   sp.duration_minutes  = 30.0;
+   sp.duration_hours    = duration_hours;
+   sp.duration_minutes  = duration_minutes;
    sp.delay_hours       = 0;
    sp.delay_minutes     = 20.0;
    sp.rotorspeed        = (int)rpm;
    sp.avg_speed         = rpm;
    sp.set_speed         = (int)rpm;
-   sp.scans             = 30;
-   sp.acceleration      = 400;
+   sp.scans             = scans;
+   sp.acceleration      = acceleration;
    sp.acceleration_flag = true;
    sp.delay_minutes     = (double)( sp.rotorspeed / ( 60.0 * sp.acceleration ) );
    sp_out.speed_step << sp;
 
-   sp_out.simpoints         = 200;
-   sp_out.radial_resolution = 0.001;
-   sp_out.meshType          = US_SimulationParameters::ASTFEM;
-   sp_out.gridType          = US_SimulationParameters::MOVING;
+   sp_out.simpoints         = simpoints;
+   sp_out.radial_resolution = radial_resolution;
+   sp_out.meshType          = meshType;
+   sp_out.gridType          = gridType;
    sp_out.meniscus          = menisc_curr;
    sp_out.bottom            = bottom;
-   sp_out.rnoise            = 0.0;
-   sp_out.lrnoise           = 0.0;
-   sp_out.tinoise           = 0.0;
-   sp_out.rinoise           = 0.0;
-   sp_out.baseline          = 0.0;
-   sp_out.band_volume       = 0.015;
+   sp_out.rnoise            = rnoise;
+   sp_out.lrnoise           = lrnoise;
+   sp_out.tinoise           = tinoise;
+   sp_out.rinoise           = rinoise;
+   sp_out.baseline          = baseline;
+   sp_out.band_volume       = band_volume;
    sp_out.rotorCalID        = rotor_calibr;
-   sp_out.band_forming      = false;
+   sp_out.band_forming      = band_forming;
 
    return sp_out;
+}
+
+QString US_SimInputs::validateCenterpiece( int centerpiece, int centerpiece_channel )
+{
+   QList< US_AbstractCenterpiece > cp_list;
+   if ( ! US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
+      return "no centerpiece definitions could be loaded";
+
+   if ( centerpiece < 0 || centerpiece >= cp_list.size() )
+      return QString( "centerpiece index %1 is out of range (0-%2)" )
+         .arg( centerpiece ).arg( cp_list.size() - 1 );
+
+   int channel_count = cp_list[ centerpiece ].channels;
+   if ( centerpiece_channel < 0 || centerpiece_channel >= channel_count )
+      return QString( "centerpiece-channel index %1 is out of range for "
+         "centerpiece %2 (0-%3)" )
+         .arg( centerpiece_channel ).arg( centerpiece ).arg( channel_count - 1 );
+
+   return QString();
 }
 
 US_Model US_SimInputs::model()

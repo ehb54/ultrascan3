@@ -60,6 +60,17 @@ int main( int argc, char* argv[] )
       "Load rotor from file path, GUID or DB ID",
       "rotor");
    parser.addOption(rotor_option);
+   auto centerpiece_option = QCommandLineOption("centerpiece",
+      "Centerpiece list index for channel geometry (default 0) -- not part "
+      "of --simparams' own file, since bottom_position doesn't round-trip "
+      "through it",
+      "index");
+   parser.addOption(centerpiece_option);
+   auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
+      "Channel index within that centerpiece (default 0) -- not an "
+      "instrument channel label",
+      "index");
+   parser.addOption(centerpiece_channel_option);
    auto movie_option = QCommandLineOption("movie",
       "Show movie of simulation");
    parser.addOption(movie_option);
@@ -115,6 +126,15 @@ int main( int argc, char* argv[] )
    if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
    {
       args["rotor"] = parser.value( rotor_option );
+   }
+   // parse centerpiece/centerpiece-channel
+   if ( parser.isSet( centerpiece_option ) )
+   {
+      args["centerpiece"] = parser.value( centerpiece_option );
+   }
+   if ( parser.isSet( centerpiece_channel_option ) )
+   {
+      args["centerpiece-channel"] = parser.value( centerpiece_channel_option );
    }
    // parse movie
    if ( parser.isSet( movie_option ) )
@@ -424,6 +444,22 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       }
       delete rotorInfo;
       delete disk_controls;
+   }
+
+   // load centerpiece/channel geometry if needed -- independent of --rotor
+   // (which only sets rotorcoeffs/rotorCalID) and --simparams (everything
+   // else): simparams.bottom_position is never written to or read back
+   // from a simparams.xml file (US_SimulationParameters::load_simparms()
+   // doesn't touch it), so without this, meniscus/bottom recomputed later
+   // always use the class default (7.2) no matter what centerpiece/channel
+   // was used to build the loaded simparams.xml. Uses whatever rotorCalID
+   // is already in effect (from --simparams or --rotor above), so
+   // rotorcoeffs stay correct too.
+   if ( flags.contains("centerpiece") || flags.contains("centerpiece-channel") )
+   {
+      int cp = flags.value( "centerpiece", "0" ).toInt();
+      int ch = flags.value( "centerpiece-channel", "0" ).toInt();
+      simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
    }
 
    // set movie flag if needed

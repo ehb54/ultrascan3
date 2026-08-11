@@ -88,6 +88,58 @@ int main( int argc, char* argv[] )
    QCommandLineOption ph_option( "ph", "Buffer pH", "value" );
    parser.addOption( ph_option );
 
+   // Generic simparams emitter: every argument optional, defaulting to
+   // US_SimInputs::simParams()'s own defaults (see us_sim_inputs.h) so
+   // omitting all of them reproduces exactly what plain mode already wrote
+   // as sp_default.xml.
+   QCommandLineOption emit_simparams_option( "emit-simparams",
+      "Write a simparams XML from explicit run-condition parameters (all "
+      "optional, default to the original fixed recipe) to --out as a file "
+      "path, not a directory" );
+   parser.addOption( emit_simparams_option );
+   QCommandLineOption speed_option( "speed", "Rotor speed (rpm)", "value" );
+   parser.addOption( speed_option );
+   QCommandLineOption duration_hrs_option( "duration-hrs", "Run duration, hours part", "value" );
+   parser.addOption( duration_hrs_option );
+   QCommandLineOption duration_mins_option( "duration-mins", "Run duration, minutes part", "value" );
+   parser.addOption( duration_mins_option );
+   QCommandLineOption scans_option( "scans", "Number of scans", "value" );
+   parser.addOption( scans_option );
+   QCommandLineOption points_option( "points", "Number of simulation radial grid points", "value" );
+   parser.addOption( points_option );
+   QCommandLineOption acceleration_option( "acceleration", "Rotor acceleration (rpm/sec)", "value" );
+   parser.addOption( acceleration_option );
+   QCommandLineOption rnoise_option( "rnoise", "Random noise, proportional to total concentration", "value" );
+   parser.addOption( rnoise_option );
+   QCommandLineOption lrnoise_option( "lrnoise", "Random noise, proportional to local concentration", "value" );
+   parser.addOption( lrnoise_option );
+   QCommandLineOption tinoise_option( "tinoise", "Time invariant noise", "value" );
+   parser.addOption( tinoise_option );
+   QCommandLineOption rinoise_option( "rinoise", "Radially invariant noise", "value" );
+   parser.addOption( rinoise_option );
+   QCommandLineOption sp_baseline_option( "baseline", "Constant baseline offset", "value" );
+   parser.addOption( sp_baseline_option );
+   QCommandLineOption radial_resolution_option( "radial-resolution", "Radial datapoint increment/resolution", "value" );
+   parser.addOption( radial_resolution_option );
+   QCommandLineOption mesh_type_option( "mesh-type", "ASTFEM|Claverie|MovingHat|User|ASTFVM", "type" );
+   parser.addOption( mesh_type_option );
+   QCommandLineOption grid_type_option( "grid-type", "Fixed|Moving", "type" );
+   parser.addOption( grid_type_option );
+   QCommandLineOption band_forming_option( "band-forming", "Use a band-forming centerpiece" );
+   parser.addOption( band_forming_option );
+   QCommandLineOption band_volume_option( "band-volume", "Loading volume for a band-forming centerpiece", "value" );
+   parser.addOption( band_volume_option );
+   QCommandLineOption rotor_calibration_option( "rotor-calibration",
+      "Rotor calibration ID (default \"0\", a built-in zero-stretch-correction "
+      "entry, not a real rotor file)", "id" );
+   parser.addOption( rotor_calibration_option );
+   QCommandLineOption centerpiece_option( "centerpiece", "Centerpiece list index", "index" );
+   parser.addOption( centerpiece_option );
+   QCommandLineOption centerpiece_channel_option( "centerpiece-channel",
+      "Channel index within the centerpiece (not an instrument channel "
+      "label like \"1A\")", "index" );
+   parser.addOption( centerpiece_channel_option );
+
    parser.process( app );
 
    if ( parser.isSet( emit_model_option ) )
@@ -160,6 +212,118 @@ int main( int argc, char* argv[] )
       buffer_out.manual          = true; // explicit unadjusted density/viscosity, not component-derived
 
       if ( ! buffer_out.writeToDisk( parser.value( out_option ) ) )
+      {
+         QTextStream( stderr ) << "Error writing " << parser.value( out_option ) << Qt::endl;
+         return 2;
+      }
+      QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
+      return 0;
+   }
+
+   if ( parser.isSet( emit_simparams_option ) )
+   {
+      if ( ! parser.isSet( out_option ) )
+      {
+         QTextStream( stderr ) << "Error: --out <file path> is required" << Qt::endl;
+         return 1;
+      }
+
+      bool ok = true;
+      auto opt_double = [&]( const QCommandLineOption& opt, double def )
+      {
+         if ( ! parser.isSet( opt ) ) return def;
+         bool this_ok = false;
+         double v = parser.value( opt ).toDouble( &this_ok );
+         ok = ok && this_ok;
+         return this_ok ? v : def;
+      };
+      auto opt_int = [&]( const QCommandLineOption& opt, int def )
+      {
+         if ( ! parser.isSet( opt ) ) return def;
+         bool this_ok = false;
+         int v = parser.value( opt ).toInt( &this_ok );
+         ok = ok && this_ok;
+         return this_ok ? v : def;
+      };
+
+      double rpm               = opt_double( speed_option, 45000.0 );
+      int    duration_hours    = opt_int( duration_hrs_option, 2 );
+      double duration_minutes  = opt_double( duration_mins_option, 30.0 );
+      int    scans             = opt_int( scans_option, 30 );
+      double acceleration      = opt_double( acceleration_option, 400.0 );
+      int    simpoints         = opt_int( points_option, 200 );
+      double radial_resolution = opt_double( radial_resolution_option, 0.001 );
+      double rnoise            = opt_double( rnoise_option, 0.0 );
+      double lrnoise           = opt_double( lrnoise_option, 0.0 );
+      double tinoise           = opt_double( tinoise_option, 0.0 );
+      double rinoise           = opt_double( rinoise_option, 0.0 );
+      double baseline          = opt_double( sp_baseline_option, 0.0 );
+      double band_volume       = opt_double( band_volume_option, 0.015 );
+      int    centerpiece       = opt_int( centerpiece_option, 0 );
+      int    centerpiece_chan  = opt_int( centerpiece_channel_option, 0 );
+
+      if ( ! ok )
+      {
+         QTextStream( stderr ) << "Error: one or more --emit-simparams "
+            "values is not numeric" << Qt::endl;
+         return 1;
+      }
+
+      if ( acceleration <= 0.0 )
+      {
+         QTextStream( stderr ) << "Error: --acceleration must be greater "
+            "than 0" << Qt::endl;
+         return 1;
+      }
+
+      QString cp_error = US_SimInputs::validateCenterpiece( centerpiece, centerpiece_chan );
+      if ( ! cp_error.isEmpty() )
+      {
+         QTextStream( stderr ) << "Error: " << cp_error << Qt::endl;
+         return 1;
+      }
+
+      QStringList mesh_names, grid_names;
+      mesh_names << "ASTFEM" << "Claverie" << "MovingHat" << "User" << "ASTFVM";
+      grid_names << "Fixed" << "Moving";
+
+      US_SimulationParameters::MeshType meshType = US_SimulationParameters::ASTFEM;
+      if ( parser.isSet( mesh_type_option ) )
+      {
+         int idx = mesh_names.indexOf( parser.value( mesh_type_option ) );
+         if ( idx < 0 )
+         {
+            QTextStream( stderr ) << "Error: --mesh-type must be one of "
+               << mesh_names.join( "|" ) << Qt::endl;
+            return 1;
+         }
+         meshType = (US_SimulationParameters::MeshType)idx;
+      }
+
+      US_SimulationParameters::GridType gridType = US_SimulationParameters::MOVING;
+      if ( parser.isSet( grid_type_option ) )
+      {
+         int idx = grid_names.indexOf( parser.value( grid_type_option ) );
+         if ( idx < 0 )
+         {
+            QTextStream( stderr ) << "Error: --grid-type must be one of "
+               << grid_names.join( "|" ) << Qt::endl;
+            return 1;
+         }
+         gridType = (US_SimulationParameters::GridType)idx;
+      }
+
+      QString rotor_calibr = parser.isSet( rotor_calibration_option )
+         ? parser.value( rotor_calibration_option ) : QString( "0" );
+      bool band_forming = parser.isSet( band_forming_option );
+
+      US_SimulationParameters sp_out = US_SimInputs::simParams(
+         rpm, duration_hours, duration_minutes, scans, acceleration,
+         simpoints, radial_resolution, meshType, gridType,
+         rnoise, lrnoise, tinoise, rinoise, baseline,
+         band_forming, band_volume, rotor_calibr, centerpiece, centerpiece_chan );
+
+      if ( sp_out.save_simparms( parser.value( out_option ) ) != 0 )
       {
          QTextStream( stderr ) << "Error writing " << parser.value( out_option ) << Qt::endl;
          return 2;
