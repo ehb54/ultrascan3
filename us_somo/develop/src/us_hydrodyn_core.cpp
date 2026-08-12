@@ -2097,6 +2097,24 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          }
       }
    }
+
+   // Point at the perceiver. Without this the module is only discoverable by knowing it is there:
+   // the load reports non-coded residues, the bead builder then represents each by one crude bead,
+   // and nothing says a better entry can be derived from the coordinates first (Mattia,
+   // 2026-08-10: "the warning in the progress window alerting to go to the perceiver is no longer
+   // present"). Named residues are listed so it is obvious which ones are meant.
+   if ( !unknown_residues.empty() ) {
+      QStringList nc;
+      for ( map < QString, bool >::iterator it = unknown_residues.begin();
+            it != unknown_residues.end(); ++it )
+         nc << it->first;
+      editor_msg( "dark red",
+                  QString( us_tr( "Non-coded residue(s) found: %1\n"
+                                  "Lookup Tables -> Perceive Non-Coded Residues... can derive a "
+                                  "somo.residue entry for these from the coordinates. Without it "
+                                  "the Automatic Bead Builder represents each by a single bead.\n" ) )
+                  .arg( nc.join( ", " ) ) );
+   }
 #if defined(AUTO_BB_DEBUG) || 1
    QString str1;
    QFile f(somo_tmp_dir + SLASH + "tmp.somo.residue");

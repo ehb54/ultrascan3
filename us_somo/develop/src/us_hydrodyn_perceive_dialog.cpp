@@ -499,13 +499,31 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
 // Rebuild the somo.residue block from the current widget state so what the user sees is exactly
 // what Accept will hand back.
 void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
-    double hyd_total = 0;
-    for ( int r = 0; r < rows_.size(); ++r ) hyd_total += rows_[ r ].hydration;
+    // Two totals, because an entry with ionizable atoms has two states and quoting only the
+    // protonated one is misleading: citrate reads 1 water neutral but 16 once its three carboxyls
+    // are deprotonated, and at pH 7 the deprotonated state is the one that will be used (Mattia,
+    // 2026-08-10: "the residue total waters field is wrong for 2CMD, says 1 instead of 15").
+    double hyd_total = 0, hyd_total_ion = 0;
+    bool any_ionizable = false;
+    for ( int r = 0; r < rows_.size(); ++r ) {
+        hyd_total += rows_[ r ].hydration;
+        if ( rows_[ r ].ion_hybrid.isEmpty() ) {
+            hyd_total_ion += rows_[ r ].hydration;
+        } else {
+            hyd_total_ion += rows_[ r ].ion_hydration;
+            any_ionizable = true;
+        }
+    }
 
     lbl_hydration_total->setText(
-        QString( us_tr( " Residue hydration total: %1 waters   "
-                        "(the total is the quantity with literature backing; the per-atom split "
-                        "is convention)" ) ).arg( hyd_total, 0, 'f', 2 ) );
+        any_ionizable
+        ? QString( us_tr( " Residue hydration total: %1 waters neutral, %2 ionized   "
+                          "(the total is the quantity with literature backing; the per-atom split "
+                          "is convention)" ) )
+              .arg( hyd_total, 0, 'f', 2 ).arg( hyd_total_ion, 0, 'f', 2 )
+        : QString( us_tr( " Residue hydration total: %1 waters   "
+                          "(the total is the quantity with literature backing; the per-atom split "
+                          "is convention)" ) ).arg( hyd_total, 0, 'f', 2 ) );
 
     // ASA must stay positive or every SOMO residue loader drops the record silently, and the
     // residue goes on being treated as non-coded no matter what else the user accepted here.
