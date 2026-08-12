@@ -581,12 +581,15 @@ void US_Hydrodyn_Perceive_Dialog::view_rasmol() {
     US_Hydrodyn * uh = (US_Hydrodyn *) us_hydrodyn;
     if ( !uh || pdb_filename_.isEmpty() ) return;
 
-    // Show ONLY the residue, as atoms. Drawing the whole structure and spacefilling the selection
-    // works for a ligand in a surface pocket (benzamidine in 3PTB) and fails for anything small or
-    // enclosed -- 1MBO's sulfate is simply hidden inside the surrounding wireframe. Extracting the
-    // residue into its own PDB also lets RasMol fit the view to it, which no amount of guessing at
-    // a zoom factor does reliably. (Mattia, review of 2026-08-09: "visual only the residue as
-    // atoms".)
+    // The whole structure, minus solvent, with this residue spacefilled and the rest a thin grey
+    // wireframe -- context matters for judging a perceived entry (Mattia, 2026-08-10: "it was
+    // better before, where it was showed together with the structure").
+    //
+    // Solvent is dropped because it buries the residue in a haze of water oxygens; Mattia's own
+    // workaround was that "unchecking the H atoms remove waters from visualization", so hydrogens
+    // go too. That, plus centring the view ON the residue rather than on the model, is what makes
+    // this work where the first attempt at showing the structure did not: 1MBO's sulfate used to
+    // be lost inside the surrounding wireframe, which is why it was reduced to residue-only.
     //
     // Both files are throwaways in the system temp dir, regenerated on every click and read by
     // nothing downstream, so they do not belong in the user's SOMO directories.
@@ -607,14 +610,25 @@ void US_Hydrodyn_Perceive_Dialog::view_rasmol() {
         }
         QTextStream is( &in );
         QTextStream os( &out );
+        static const QStringList solvent = { "HOH", "WAT", "DOD", "TIP", "SOL", "H2O" };
         int kept = 0;
         while ( !is.atEnd() ) {
             const QString ln = is.readLine();
-            if ( ( ln.startsWith( "ATOM  " ) || ln.startsWith( "HETATM" ) ) && ln.length() > 20
-                 && ln.mid( 17, 3 ).trimmed() == tent_.resName.trimmed() ) {
-                os << ln << "\n";
-                ++kept;
-            }
+            if ( !( ln.startsWith( "ATOM  " ) || ln.startsWith( "HETATM" ) ) || ln.length() <= 20 )
+                continue;
+            const QString rn = ln.mid( 17, 3 ).trimmed();
+            if ( solvent.contains( rn ) ) continue;
+            // Hydrogen by the same rule the readers use: element column when the file supplies
+            // one, atom name otherwise (name starting with H, or a digit then H, as in 1HB).
+            const QString el = ln.length() >= 78 ? ln.mid( 76, 2 ).trimmed().toUpper() : QString();
+            const QString an = ln.mid( 12, 4 ).trimmed().toUpper();
+            const bool is_h = !el.isEmpty() ? ( el == "H" || el == "D" )
+                              : ( an.startsWith( "H" ) || an.startsWith( "D" )
+                                  || ( an.size() > 1 && an[ 0 ].isDigit()
+                                       && ( an[ 1 ] == 'H' || an[ 1 ] == 'D' ) ) );
+            if ( is_h ) continue;
+            os << ln << "\n";
+            if ( rn == tent_.resName.trimmed() ) ++kept;
         }
         os << "END\n";
         in.close();
@@ -637,11 +651,19 @@ void US_Hydrodyn_Perceive_Dialog::view_rasmol() {
     QTextStream ts( &f );
     ts << "load " << res_pdb << "\n"
        << "background white\n"
+       // context first, so the residue's own styling overrides it
        << "select all\n"
-       << "spacefill\n"          // van der Waals radii -- "as atoms"
+       << "wireframe 15\n"                  // thin: present, but never competes with the residue
+       << "colour [200,200,200]\n"
+       // then the residue itself, in full colour at van der Waals radii
+       << "select " << tent_.resName.trimmed() << "\n"
+       << "spacefill\n"
        << "colour cpk\n"
-       << "wireframe 40\n"       // keeps the connectivity legible between the spheres
-       << "centre all\n";
+       << "wireframe 40\n"
+       // centre ON the residue, not on the model: a buried ligand is otherwise off-screen or
+       // hidden behind the protein, which is exactly how 1MBO's sulfate got lost before.
+       << "centre selected\n"
+       << "zoom 150\n";
     f.close();
     uh->model_viewer( spt, "-script", false );
 }
