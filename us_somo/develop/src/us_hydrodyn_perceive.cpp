@@ -547,15 +547,37 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // Only ambiguous or novel types qualify: a confident classification that merely carries an
     // informational note (e.g. "terminal oxo") must not be listed as uncertain, and this must
     // agree with the flagged count reported by callers.
-    std::ostringstream review;
+    // Two independent streams land in this list -- perception ambiguity notes here, and the
+    // psv/volume/hydration reviews collected by the caller -- and both are keyed "NAME (HYB)".
+    // Emitted raw, an atom carrying one of each appears twice, which reads as more flagged atoms
+    // than there are (Mattia, 2026-08-10, on citrate: the review list "incorrectly tentatively
+    // assigns far more waters"). Group by atom instead, first-appearance order, notes joined.
+    std::vector<std::pair<std::string,std::string>> items;   // (key, text); key empty = not per-atom
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
         if (!o.ambiguity && o.in_table) continue;
-        review << "#   " << atoms[k].name << " (" << o.hybrid << "): "
-               << (o.note.empty() ? (o.in_table ? "uncertain"
-                                                : "NEW type - synthesized coefficients")
-                                  : o.note) << '\n';
+        items.push_back({ atoms[k].name + " (" + o.hybrid + ")",
+                          o.note.empty() ? (o.in_table ? std::string("uncertain")
+                                                       : std::string("NEW type - synthesized coefficients"))
+                                         : o.note });
     }
+    for (const std::string& r : pr.review) {
+        const size_t sep = r.find("): ");
+        if (sep == std::string::npos || r.find('(') == std::string::npos)
+            items.push_back({ std::string(), r });
+        else
+            items.push_back({ r.substr(0, sep + 1), r.substr(sep + 3) });
+    }
+    std::ostringstream review;
+    std::vector<std::string> order;                      // keys, first-appearance order
+    std::map<std::string,std::string> merged;
+    for (auto& it : items) {
+        if (it.first.empty()) { review << "#   " << it.second << '\n'; continue; }
+        auto f = merged.find(it.first);
+        if (f == merged.end()) { order.push_back(it.first); merged[it.first] = it.second; }
+        else if (f->second.find(it.second) == std::string::npos) f->second += "; " + it.second;
+    }
+    for (const std::string& k : order) review << "#   " << k << ": " << merged[k] << '\n';
     std::ostringstream hdr;
     // Comment line = the residue's real chemical name when the PDB header supplied one (HETNAM).
     hdr << "# " << (chemical_name.empty() ? resname : chemical_name)
@@ -591,7 +613,6 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     hdr << "# Residue mass from perceived atoms: " << total_mw << " Da (its mass fraction of the\n"
            "#   model tells you how much an imprecise psv here actually matters).\n";
     const double asa_out = pr.asa > 0 ? pr.asa : DEFAULT_ASA_PER_ATOM * atoms.size();
-    for (const std::string& r : pr.review) review << "#   " << r << '\n';
     if (pr.asa <= 0)
         review << "#   ASA: placeholder (" << DEFAULT_ASA_PER_ATOM
                << " A^2 per atom, the coded-residue mean). Nothing computes with the residue's\n"

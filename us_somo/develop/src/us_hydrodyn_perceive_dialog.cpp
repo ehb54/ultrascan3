@@ -53,7 +53,19 @@ US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::T
     tent_ = tent;
     pdb_filename_ = pdb_filename;
     USglobal = new US_Config();
-    setPalette( PALET_FRAME );
+    // White rather than SOMO's global frame grey. This dialog is mostly text the reviewer has to
+    // read closely -- a generated table entry and a list of flags -- and grey behind it is hard
+    // going, markedly so on Linux where the frame colour comes out darker (Mattia, 2026-08-10:
+    // "grey is quite bad, white would be better"). Only the frame's own background changes; every
+    // label here calls AUTFBACK and so paints its own, and the global palette is untouched.
+    {
+        QPalette pal = PALET_FRAME;
+        pal.setColor( QPalette::Window, Qt::white );
+        pal.setColor( QPalette::Base,   Qt::white );
+        pal.setColor( QPalette::WindowText, Qt::black );
+        setPalette( pal );
+        setAutoFillBackground( true );
+    }
     // Name the structure in the title bar: several of these dialogs can follow one another, and a
     // reviewer needs to know which structure the entry came from without going back to the main
     // window. (Mattia, review of 2026-08-09: "Add the PDB name on the Review Window".)
