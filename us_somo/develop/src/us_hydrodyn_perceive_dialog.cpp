@@ -537,16 +537,19 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
     }
     const double hyd_total = hyd_non_ion + hyd_ion;
 
+    // Two lines, not one: as a single line the caveat made this the widest widget in the dialog and
+    // the window grew to fit it (Mattia, 2026-08-12). The break goes before the parenthetical so the
+    // number and its split stay together on the first line.
     lbl_hydration_total->setText(
         any_ionizable
         ? QString( us_tr( " Residue hydration total: <b><font color=\"#b00000\">%1 waters</font></b> "
-                          "proposed, %2 for non-ionized and %3 for ionized atoms &nbsp; "
-                          "(the total is the quantity with literature backing; the per-atom split "
-                          "is convention)" ) )
+                          "proposed, %2 for non-ionized and %3 for ionized atoms<br>"
+                          " &nbsp; (the total is the quantity with literature backing; "
+                          "the per-atom split is convention)" ) )
               .arg( hyd_total, 0, 'f', 2 ).arg( hyd_non_ion, 0, 'f', 2 ).arg( hyd_ion, 0, 'f', 2 )
-        : QString( us_tr( " Residue hydration total: <b><font color=\"#b00000\">%1 waters</font></b> &nbsp; "
-                          "(the total is the quantity with literature backing; the per-atom split "
-                          "is convention)" ) ).arg( hyd_total, 0, 'f', 2 ) );
+        : QString( us_tr( " Residue hydration total: <b><font color=\"#b00000\">%1 waters</font></b><br>"
+                          " &nbsp; (the total is the quantity with literature backing; "
+                          "the per-atom split is convention)" ) ).arg( hyd_total, 0, 'f', 2 ) );
 
     // ASA must stay positive or every SOMO residue loader drops the record silently, and the
     // residue goes on being treated as non-coded no matter what else the user accepted here.
