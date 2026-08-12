@@ -33,7 +33,7 @@ int main( int argc, char* argv[] )
 
    QCommandLineParser parser;
    auto help_option = QCommandLineOption({"help", "h", "?"},
-      "Display help on commandline options");
+      "Display command-line help");
    parser.addOption(help_option);
    auto version_option = parser.addVersionOption();
    auto models_option = QCommandLineOption("models",
@@ -41,25 +41,24 @@ int main( int argc, char* argv[] )
       "models");
    parser.addOption(models_option);
    auto buffer_option = QCommandLineOption("buffer",
-      "Load buffer from file path, GUID or DB ID",
+      "Load a buffer from a file path, GUID, or database ID",
       "buffer");
    parser.addOption(buffer_option);
    auto sim_parameters_option = QCommandLineOption("simparams",
-      "Load simulation parameters from file path",
+      "Load simulation parameters from a file path",
       "simparams");
    parser.addOption(sim_parameters_option);
    auto rotor_option = QCommandLineOption("rotor",
-      "Load rotor from file path, GUID or DB ID",
+      "Load a rotor from a file path, GUID, or database ID",
       "rotor");
    parser.addOption(rotor_option);
    auto centerpiece_option = QCommandLineOption("centerpiece",
-      "Centerpiece list index for channel geometry (default 0) -- not part "
-      "of --simparams' own file, since bottom_position doesn't round-trip "
-      "through it",
+      "Centerpiece-list index used for channel geometry (default: 0). "
+      "Simulation-parameter files do not store this value",
       "index");
    parser.addOption(centerpiece_option);
    auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
-      "Channel index within that centerpiece (default 0) -- not an "
+      "Channel index within the centerpiece (default: 0); this is not an "
       "instrument channel label",
       "index");
    parser.addOption(centerpiece_channel_option);
@@ -67,17 +66,17 @@ int main( int argc, char* argv[] )
       "Start simulations automatically");
    parser.addOption(start_option);
    auto save_option = QCommandLineOption("save",
-      "Save simulation data to directory path",
+      "Save simulation data to a directory",
       "save");
    parser.addOption(save_option);
    auto close_option = QCommandLineOption("close",
       "Close application if no errors occurred");
    parser.addOption(close_option);
    auto ignore_db_option = QCommandLineOption("no-db",
-      "Ignore any database preferences and only use locally available data");
+      "Ignore database preferences and use only locally available data");
    parser.addOption(ignore_db_option);
    auto errors_option = QCommandLineOption("errors-cl",
-      "Force errors to console and don't open any sort of gui");
+      "Write errors to the console without opening the GUI");
    parser.addOption(errors_option);
 
    int cli_exit_code = 0;
@@ -121,10 +120,10 @@ int main( int argc, char* argv[] )
 
    if ( init_status == 1 && args.contains( "errors-cl" ) )
       QTextStream(stderr) << "GUI would be required to complete this run "
-         "(some inputs were not given or not loaded); exiting without it "
+         "(some inputs were omitted or could not be loaded); exiting without it "
          "because --errors-cl was set." << Qt::endl;
 
-   // Show GUI if no args or is needed
+   // Show the GUI if no options were supplied or user interaction is needed.
    return showGuiIfNeeded( w, init_status, args );
 }
 
@@ -681,16 +680,15 @@ DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
    qApp->processEvents();
 }
 
-// Drive the simulation headlessly from command-line flags
+// Run the simulation headlessly using command-line options.
 int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
 {
    bool gui_needed      = !flags.contains( "close" );
    bool error_occured   = false;
    bool errors_to_cl    = flags.contains( "errors-cl" );
 
-   // Each of models/buffer/simparams/rotor is independently optional, so a
-   // flag that wasn't given trivially counts as loaded; only a flag that
-   // was given and failed should block start_sims() below.
+   // Each input is optional. Only an explicitly requested input that fails
+   // to load should prevent start_sims() below.
    bool loaded_models    = true;
    bool loaded_buffer    = true;
    bool loaded_simparams = true;
@@ -776,15 +774,10 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       delete disk_controls;
    }
 
-   // load centerpiece/channel geometry if needed -- independent of --rotor
-   // (which only sets rotorcoeffs/rotorCalID) and --simparams (everything
-   // else): simparams.bottom_position is never written to or read back
-   // from a simparams.xml file (US_SimulationParameters::load_simparms()
-   // doesn't touch it), so without this, init_simparams()'s hardcoded
-   // setHardware(NULL, rotor_calibr, 0, 0) is always what's in effect, no
-   // matter what centerpiece/channel was used to build the loaded
-   // simparams.xml. Uses whatever rotorCalID is already in effect (from
-   // --simparams or --rotor above), so rotorcoeffs stay correct too.
+   // Load centerpiece and channel geometry independently of --rotor and
+   // --simparams. Simulation-parameter files do not preserve bottom_position,
+   // so init_simparams()'s default geometry would otherwise remain in effect.
+   // Retain the rotorCalID loaded above so its coefficients remain in effect.
    if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
    {
       int cp = flags.value( "centerpiece", "0" ).toInt();
@@ -802,7 +795,8 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       {
          if ( errors_to_cl )
          {
-            qDebug() << "Error save path doesn't exist or isn't writeable " << save_path;
+            qDebug() << "Error: save directory does not exist or is not writable:"
+                     << save_path;
             exit( 2 );
          }
          error_occured       = true;
@@ -836,8 +830,8 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    return 0;
 }
 
-// Load models from explicit file paths, aggregating them the way
-// select_models() does, but without the selection dialog
+// Load models from explicit file paths and aggregate them as select_models()
+// does, without displaying the selection dialog.
 bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 {
    models.clear();
@@ -895,9 +889,11 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 
    if ( nruns != 1  ||  nchans != 1  ||  nwavls != nmodels )
    {
-      qDebug() << "Model descriptions don't form a single run/channel with"
-                  " one wavelength per model -- expected runs chans wavelns"
-               << 1 << 1 << nmodels << "have" << nruns << nchans << nwavls;
+      qDebug() << "Model descriptions must identify one run and one channel,"
+                  " with one wavelength per model. Expected counts:"
+               << "runs=" << 1 << "channels=" << 1 << "wavelengths=" << nmodels
+               << "Actual counts: runs=" << nruns << "channels=" << nchans
+               << "wavelengths=" << nwavls;
    }
 
    mrunid         = runids[ 0 ];
@@ -913,7 +909,8 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
    return true;
 }
 
-// Save simulations to an explicit directory instead of US_Settings::importDir()
+// Save simulations to the requested directory instead of
+// US_Settings::importDir().
 void US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
 {
    QString impdir     = save_dir + "/";
@@ -1423,4 +1420,3 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
    return timestate.time_count();
 #endif
 }
-

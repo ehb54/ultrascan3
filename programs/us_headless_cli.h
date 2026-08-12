@@ -1,8 +1,7 @@
 //! \file us_headless_cli.h
-//! \brief Shared boilerplate for QApplication-based headless/CLI drivers
-//! (us_astfem_sim, us_mwl_species_sim): standard --help/--version/parse-error
-//! handling, the log-or-defer-to-gui pattern used for each --model/--buffer/
-//! --simparams/--rotor load, and the final show-GUI-or-return decision.
+//! \brief Shared command-line support for QApplication-based simulation tools.
+//! Handles --help, --version, parsing errors, input-loading failures, and the
+//! decision to show the GUI or return a status code.
 #ifndef US_HEADLESS_CLI_H
 #define US_HEADLESS_CLI_H
 
@@ -13,9 +12,9 @@
 #include <QMap>
 #include <QString>
 
-//! \brief Handle --help, --version and parser errors the same way both
-//! programs do. Returns true (with *exit_code set) if the caller should
-//! return immediately; false to continue processing the remaining options.
+//! \brief Handle --help, --version, and parsing errors consistently.
+//! \return true if the caller should return immediately using exit_code;
+//! false if it should continue processing options.
 inline bool handleStandardCliOptions( QCommandLineParser& parser,
                                        const QCommandLineOption& help_option,
                                        const QCommandLineOption& version_option,
@@ -48,9 +47,9 @@ inline bool handleStandardCliOptions( QCommandLineParser& parser,
    return false;
 }
 
-//! \brief Record a failed headless load: under --errors-cl, log and exit(2)
-//! immediately; otherwise mark the run as needing the GUI. Shared by the
-//! per-flag load blocks in each program's init_from_args().
+//! \brief Handle an input-loading failure during a headless run.
+//! With --errors-cl, log the failure and exit with status 2. Otherwise, mark
+//! the run as requiring the GUI.
 inline void reportHeadlessLoadFailure( const QString& what, const QString& id,
                                         bool errors_to_cl,
                                         bool& gui_needed, bool& error_occured )
@@ -64,9 +63,9 @@ inline void reportHeadlessLoadFailure( const QString& what, const QString& id,
    error_occured = true;
 }
 
-//! \brief Show the GUI (and run the event loop) if the headless run didn't
-//! finish and --errors-cl wasn't set to suppress it; otherwise return the
-//! init status code as-is.
+//! \brief Show the GUI if the headless run could not finish.
+//! If --errors-cl is set, return the initialization status without opening
+//! the GUI.
 template <typename Widget>
 inline int showGuiIfNeeded( Widget& w, int init_status,
                              const QMap<QString, QString>& args )

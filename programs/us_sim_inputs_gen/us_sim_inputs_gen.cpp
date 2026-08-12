@@ -1,7 +1,7 @@
 //! \file us_sim_inputs_gen.cpp
-//! \brief Headless CLI: writes reproducible default model/buffer/simparams
-//! inputs (via US_SimInputs) for driving us_astfem_sim/us_mwl_species_sim
-//! non-interactively. No GUI, no DB, no network access.
+//! \brief Generate reproducible inputs for headless UltraScan simulations.
+//! Uses US_SimInputs without GUI interaction, database access, or network
+//! access.
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -12,10 +12,9 @@
 #include "us_util.h"
 #include "us_defines.h"
 
-// Build a single-component model from explicit physical parameters, shared
-// by --emit-model and the per-wavelength MWL mode's optional override.
-// Starts from US_SimInputs::model() so the model-construction sequence
-// (optics/analysis/GUID/component/update_coefficients) lives in one place.
+// Build a single-component model from explicit physical parameters. Both
+// --emit-model and per-wavelength MWL mode use this helper. Starting with
+// US_SimInputs::model() keeps the model-construction logic in one place.
 static US_Model model_from_params( double mw, double vbar20, double f_f0,
                                     const QString& description )
 {
@@ -38,48 +37,46 @@ int main( int argc, char* argv[] )
 
    QCommandLineParser parser;
    parser.setApplicationDescription(
-      "Write reproducible default model/buffer/simparams inputs for "
+      "Generate reproducible model, buffer, and simulation-parameter inputs for "
       "headless UltraScan simulation runs." );
    parser.addHelpOption();
    parser.addVersionOption();
 
    QCommandLineOption out_option( "out",
-      "Output directory (must already exist)", "dir" );
+      "Output path: an existing directory in default or MWL mode, or a file "
+      "for --emit-model, --emit-buffer, or --emit-simparams", "path" );
    parser.addOption( out_option );
    QCommandLineOption runid_option( "run-id",
-      "Run ID for a per-wavelength MWL model (requires --channel and --wavelength)",
+      "Run ID for a per-wavelength MWL model; requires --channel and --wavelength",
       "id" );
    parser.addOption( runid_option );
    QCommandLineOption channel_option( "channel",
-      "Two-character cell+channel code, e.g. 1A", "channel" );
+      "Two-character cell and channel code (for example, 1A)", "channel" );
    parser.addOption( channel_option );
    QCommandLineOption wavelength_option( "wavelength",
-      "Three-digit wavelength in nm, e.g. 280", "nm" );
+      "Three-digit wavelength in nm (for example, 280)", "nm" );
    parser.addOption( wavelength_option );
 
-   // Generic, no-baked-in-knowledge model/buffer emitters: the caller
-   // supplies real physical parameters (e.g. from a chemistry reference
-   // dataset) on the command line -- this tool has no notion of what a
-   // "category" is, it just writes whatever numbers it's given via
-   // US_Model's/US_Buffer's own native serializers.
+   // Generate model and buffer files from physical parameters supplied by the
+   // caller. US_Model and US_Buffer serialize the resulting values.
    QCommandLineOption emit_model_option( "emit-model",
       "Write a single-component model XML from explicit physical parameters "
-      "(requires --mw, --vbar20, --f-f0; --description optional) to --out "
-      "as a file path, not a directory" );
+      "to the file specified by --out; requires --mw, --vbar20, and --f-f0; "
+      "--description is optional" );
    parser.addOption( emit_model_option );
    QCommandLineOption mw_option( "mw", "Molecular weight (Da)", "value" );
    parser.addOption( mw_option );
-   QCommandLineOption vbar20_option( "vbar20", "Partial specific volume at 20C (mL/g)", "value" );
+   QCommandLineOption vbar20_option( "vbar20", "Partial specific volume at 20 C (mL/g)", "value" );
    parser.addOption( vbar20_option );
    QCommandLineOption f_f0_option( "f-f0", "Frictional ratio (1.0 = perfect sphere)", "value" );
    parser.addOption( f_f0_option );
-   QCommandLineOption model_description_option( "description", "Model or buffer description text", "text" );
+   QCommandLineOption model_description_option( "description", "Model or buffer description", "text" );
    parser.addOption( model_description_option );
 
    QCommandLineOption emit_buffer_option( "emit-buffer",
       "Write a buffer XML from explicit physical parameters (requires "
-      "--density, --viscosity, --ph; --description optional) to --out as a "
-      "file path, not a directory" );
+      "--density, --viscosity, and --ph) to the file specified by --out; "
+      "--description is optional" );
    parser.addOption( emit_buffer_option );
    QCommandLineOption density_option( "density", "Buffer density (g/mL)", "value" );
    parser.addOption( density_option );
@@ -88,38 +85,36 @@ int main( int argc, char* argv[] )
    QCommandLineOption ph_option( "ph", "Buffer pH", "value" );
    parser.addOption( ph_option );
 
-   // Generic simparams emitter: every argument optional, defaulting to
-   // US_SimInputs::simParams()'s own defaults (see us_sim_inputs.h) so
-   // omitting all of them reproduces exactly what plain mode already wrote
-   // as sp_default.xml.
+   // Generate simulation parameters using US_SimInputs::simParams() defaults
+   // for omitted options. Omitting every option produces the same content as
+   // sp_default.xml in default mode.
    QCommandLineOption emit_simparams_option( "emit-simparams",
-      "Write a simparams XML from explicit run-condition parameters (all "
-      "optional, default to the original fixed recipe) to --out as a file "
-      "path, not a directory" );
+      "Write a simulation-parameter XML to the file specified by --out; all "
+      "run-condition options are optional and use documented defaults" );
    parser.addOption( emit_simparams_option );
    QCommandLineOption speed_option( "speed", "Rotor speed (rpm)", "value" );
    parser.addOption( speed_option );
-   QCommandLineOption duration_hrs_option( "duration-hrs", "Run duration, hours part", "value" );
+   QCommandLineOption duration_hrs_option( "duration-hrs", "Hours component of the run duration", "value" );
    parser.addOption( duration_hrs_option );
-   QCommandLineOption duration_mins_option( "duration-mins", "Run duration, minutes part", "value" );
+   QCommandLineOption duration_mins_option( "duration-mins", "Minutes component of the run duration", "value" );
    parser.addOption( duration_mins_option );
    QCommandLineOption scans_option( "scans", "Number of scans", "value" );
    parser.addOption( scans_option );
-   QCommandLineOption points_option( "points", "Number of simulation radial grid points", "value" );
+   QCommandLineOption points_option( "points", "Number of points in the radial simulation grid", "value" );
    parser.addOption( points_option );
-   QCommandLineOption acceleration_option( "acceleration", "Rotor acceleration (rpm/sec)", "value" );
+   QCommandLineOption acceleration_option( "acceleration", "Rotor acceleration (rpm/s)", "value" );
    parser.addOption( acceleration_option );
    QCommandLineOption rnoise_option( "rnoise", "Random noise, proportional to total concentration", "value" );
    parser.addOption( rnoise_option );
    QCommandLineOption lrnoise_option( "lrnoise", "Random noise, proportional to local concentration", "value" );
    parser.addOption( lrnoise_option );
-   QCommandLineOption tinoise_option( "tinoise", "Time invariant noise", "value" );
+   QCommandLineOption tinoise_option( "tinoise", "Time-invariant noise", "value" );
    parser.addOption( tinoise_option );
    QCommandLineOption rinoise_option( "rinoise", "Radially invariant noise", "value" );
    parser.addOption( rinoise_option );
    QCommandLineOption sp_baseline_option( "baseline", "Constant baseline offset", "value" );
    parser.addOption( sp_baseline_option );
-   QCommandLineOption radial_resolution_option( "radial-resolution", "Radial datapoint increment/resolution", "value" );
+   QCommandLineOption radial_resolution_option( "radial-resolution", "Radial grid spacing", "value" );
    parser.addOption( radial_resolution_option );
    QCommandLineOption mesh_type_option( "mesh-type", "ASTFEM|Claverie|MovingHat|User|ASTFVM", "type" );
    parser.addOption( mesh_type_option );
@@ -131,7 +126,7 @@ int main( int argc, char* argv[] )
    parser.addOption( band_volume_option );
    QCommandLineOption rotor_calibration_option( "rotor-calibration",
       "Rotor calibration ID (default \"0\", a built-in zero-stretch-correction "
-      "entry, not a real rotor file)", "id" );
+      "entry rather than a rotor file)", "id" );
    parser.addOption( rotor_calibration_option );
    QCommandLineOption centerpiece_option( "centerpiece", "Centerpiece list index", "index" );
    parser.addOption( centerpiece_option );
@@ -161,7 +156,8 @@ int main( int argc, char* argv[] )
       double f_f0   = parser.value( f_f0_option ).toDouble( &ok_ff0 );
       if ( ! ok_mw || ! ok_vbar || ! ok_ff0 )
       {
-         QTextStream( stderr ) << "Error: --mw/--vbar20/--f-f0 must be numeric" << Qt::endl;
+         QTextStream( stderr ) << "Error: values for --mw, --vbar20, and "
+            "--f-f0 must be numeric" << Qt::endl;
          return 1;
       }
 
@@ -171,7 +167,8 @@ int main( int argc, char* argv[] )
 
       if ( model_out.write( parser.value( out_option ) ) != IUS_DB2::OK )
       {
-         QTextStream( stderr ) << "Error writing " << parser.value( out_option ) << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write "
+            << parser.value( out_option ) << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
@@ -197,7 +194,8 @@ int main( int argc, char* argv[] )
       double ph        = parser.value( ph_option ).toDouble( &ok_p );
       if ( ! ok_d || ! ok_v || ! ok_p )
       {
-         QTextStream( stderr ) << "Error: --density/--viscosity/--ph must be numeric" << Qt::endl;
+         QTextStream( stderr ) << "Error: values for --density, --viscosity, "
+            "and --ph must be numeric" << Qt::endl;
          return 1;
       }
 
@@ -209,11 +207,14 @@ int main( int argc, char* argv[] )
       buffer_out.viscosity       = viscosity;
       buffer_out.pH              = ph;
       buffer_out.compressibility = 0.0;
-      buffer_out.manual          = true; // explicit unadjusted density/viscosity, not component-derived
+      // Preserve the supplied density and viscosity without deriving them
+      // from buffer components.
+      buffer_out.manual          = true;
 
       if ( ! buffer_out.writeToDisk( parser.value( out_option ) ) )
       {
-         QTextStream( stderr ) << "Error writing " << parser.value( out_option ) << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write "
+            << parser.value( out_option ) << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
@@ -264,15 +265,15 @@ int main( int argc, char* argv[] )
 
       if ( ! ok )
       {
-         QTextStream( stderr ) << "Error: one or more --emit-simparams "
-            "values is not numeric" << Qt::endl;
+         QTextStream( stderr ) << "Error: one or more values supplied to "
+            "--emit-simparams are not numeric" << Qt::endl;
          return 1;
       }
 
       if ( acceleration <= 0.0 )
       {
          QTextStream( stderr ) << "Error: --acceleration must be greater "
-            "than 0" << Qt::endl;
+            "than zero" << Qt::endl;
          return 1;
       }
 
@@ -325,7 +326,8 @@ int main( int argc, char* argv[] )
 
       if ( sp_out.save_simparms( parser.value( out_option ) ) != 0 )
       {
-         QTextStream( stderr ) << "Error writing " << parser.value( out_option ) << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write "
+            << parser.value( out_option ) << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
@@ -352,11 +354,10 @@ int main( int argc, char* argv[] )
 
    if ( has_runid || has_channel || has_wavelength )
    {
-      // Per-wavelength MWL mode: emit one model file whose description
-      // matches the <runid>.<channel><wavelength>.<...> convention
-      // us_mwl_species_sim's load_models_from_paths() parses. Buffer and
-      // simparams are shared across a run's wavelengths -- generate those
-      // once, separately, with plain mode below.
+      // Generate one model whose description follows the
+      // <runid>.<channel><wavelength>.<...> convention parsed by
+      // us_mwl_species_sim. A run shares its buffer and simulation parameters
+      // across wavelengths; generate those once in default mode.
       if ( ! ( has_runid && has_channel && has_wavelength ) )
       {
          QTextStream( stderr ) << "Error: --run-id, --channel, and "
@@ -370,7 +371,7 @@ int main( int argc, char* argv[] )
 
       if ( channel.length() != 2 )
       {
-         QTextStream( stderr ) << "Error: --channel must be exactly 2 "
+         QTextStream( stderr ) << "Error: --channel must be exactly two "
             "characters" << Qt::endl;
          return 1;
       }
@@ -383,9 +384,8 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      // Same optional explicit-physical-parameters override as --emit-model,
-      // so a multi-wavelength run can use real chemistry too, not just the
-      // generic default -- falls back to the generic default if omitted.
+      // Accept the same optional physical parameters as --emit-model. If they
+      // are omitted, use the default model.
       US_Model model;
       if ( parser.isSet( mw_option ) && parser.isSet( vbar20_option ) && parser.isSet( f_f0_option ) )
       {
@@ -395,7 +395,8 @@ int main( int argc, char* argv[] )
          double f_f0   = parser.value( f_f0_option ).toDouble( &ok_ff0 );
          if ( ! ok_mw || ! ok_vbar || ! ok_ff0 )
          {
-            QTextStream( stderr ) << "Error: --mw/--vbar20/--f-f0 must be numeric" << Qt::endl;
+            QTextStream( stderr ) << "Error: values for --mw, --vbar20, and "
+               "--f-f0 must be numeric" << Qt::endl;
             return 1;
          }
          model = model_from_params( mw, vbar20, f_f0, QString() );
@@ -411,18 +412,18 @@ int main( int argc, char* argv[] )
       QString fname = QString( "model_%1_%2.xml" ).arg( channel, wavelength );
       if ( model.write( outdir.filePath( fname ) ) != IUS_DB2::OK )
       {
-         QTextStream( stderr ) << "Error writing " << fname << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write " << fname << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << outdir.filePath( fname ) << Qt::endl;
       return 0;
    }
 
-   // Plain mode: emit the full default sp_default.xml/model_default.xml/
-   // buffer_default.xml triple.
+   // Default mode writes the simulation parameters, model, and buffer files.
    if ( ! US_SimInputs::writeAll( outdir.path() ) )
    {
-      QTextStream( stderr ) << "Error writing defaults to " << outdir.path()
+      QTextStream( stderr ) << "Error: could not write default inputs to "
+         << outdir.path()
          << Qt::endl;
       return 2;
    }

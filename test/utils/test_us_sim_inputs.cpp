@@ -34,7 +34,7 @@ TEST_F(US_SimInputsTest, ModelCoefficientsAreComputed) {
     US_Model model = US_SimInputs::model();
     const US_Model::SimulationComponent& sc = model.components[0];
 
-    // update_coefficients() should have derived s/D from mw/vbar20/f_f0
+    // update_coefficients() should calculate s and D from mw, vbar20, and f_f0.
     EXPECT_GT(sc.s, 0.0);
     EXPECT_GT(sc.D, 0.0);
 }
@@ -85,7 +85,7 @@ TEST_F(US_SimInputsTest, WriteAllProducesReadableTriple) {
     EXPECT_TRUE(buffer_file.exists());
     EXPECT_GT(buffer_file.size(), 0);
 
-    // Round-trip: what was written should be loadable back into fresh objects
+    // The generated files should load into new objects.
     US_SimulationParameters sp_loaded;
     EXPECT_EQ(sp_loaded.load_simparms(sp_file.filePath()), 0);
     EXPECT_EQ(sp_loaded.speed_step.count(), 1);

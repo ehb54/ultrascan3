@@ -1,6 +1,6 @@
-# us_sim_inputs_gen: headless, no-GUI CLI tool. Links only Qt::Core/Xml
-# (via UltraScan3::Utils's own PUBLIC deps) -- no us_program_common, no
-# Widgets/Gui stack, since US_SimInputs only touches plain data classes.
+# us_sim_inputs_gen is a headless command-line tool. It uses the Qt Core and
+# XML dependencies exposed by UltraScan3::Utils and does not require the
+# Widgets or GUI libraries.
 
 set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 

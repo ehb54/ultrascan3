@@ -41,38 +41,37 @@ int main( int argc, char* argv[] )
 
    QCommandLineParser parser;
    auto help_option = QCommandLineOption({"help", "h", "?"},
-      "Display help on commandline options");
+      "Display command-line help");
    parser.addOption(help_option);
    auto version_option = parser.addVersionOption();
    auto model_option = QCommandLineOption("model",
-      "Load model from file path, GUID or DB ID",
+      "Load a model from a file path, GUID, or database ID",
       "model");
    parser.addOption(model_option);
    auto buffer_option = QCommandLineOption("buffer",
-      "Load buffer from file path, GUID or DB ID",
+      "Load a buffer from a file path, GUID, or database ID",
       "buffer");
    parser.addOption(buffer_option);
    auto sim_parameters_option = QCommandLineOption("simparams",
-      "Load simulation parameters from file path",
+      "Load simulation parameters from a file path",
       "simparams");
    parser.addOption(sim_parameters_option);
    auto rotor_option = QCommandLineOption("rotor",
-      "Load rotor from file path, GUID or DB ID",
+      "Load a rotor from a file path, GUID, or database ID",
       "rotor");
    parser.addOption(rotor_option);
    auto centerpiece_option = QCommandLineOption("centerpiece",
-      "Centerpiece list index for channel geometry (default 0) -- not part "
-      "of --simparams' own file, since bottom_position doesn't round-trip "
-      "through it",
+      "Centerpiece-list index used for channel geometry (default: 0). "
+      "Simulation-parameter files do not store this value",
       "index");
    parser.addOption(centerpiece_option);
    auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
-      "Channel index within that centerpiece (default 0) -- not an "
+      "Channel index within the centerpiece (default: 0); this is not an "
       "instrument channel label",
       "index");
    parser.addOption(centerpiece_channel_option);
    auto movie_option = QCommandLineOption("movie",
-      "Show movie of simulation");
+      "Show the simulation as a movie");
    parser.addOption(movie_option);
    auto time_correction_option = QCommandLineOption("timecorr",
       "Use time correction");
@@ -81,17 +80,17 @@ int main( int argc, char* argv[] )
       "Start simulation automatically");
    parser.addOption(start_option);
    auto save_option = QCommandLineOption("save",
-      "Save simulation data to file path",
+      "Save simulation data to a file",
       "save");
    parser.addOption(save_option);
    auto close_option = QCommandLineOption("close",
       "Close application if no errors occurred");
    parser.addOption(close_option);
    auto ignore_db_option = QCommandLineOption("no-db",
-      "Ignore any database preferences and only use locally available data");
+      "Ignore database preferences and use only locally available data");
    parser.addOption(ignore_db_option);
    auto errors_option = QCommandLineOption("errors-cl",
-      "Force errors to console and don't open any sort of gui");
+      "Write errors to the console without opening the GUI");
    parser.addOption(errors_option);
 
    QMap<QString, QString> args;
@@ -99,9 +98,9 @@ int main( int argc, char* argv[] )
    if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
       return cli_exit_code;
 
-   // parse command specific commands
+   // Parse command-specific options.
 
-   // parse ignore db
+   // Parse the database setting.
    int default_data_location = US_Settings::default_data_location();
    if ( parser.isSet( ignore_db_option ) )
    {
@@ -127,7 +126,7 @@ int main( int argc, char* argv[] )
    {
       args["rotor"] = parser.value( rotor_option );
    }
-   // parse centerpiece/centerpiece-channel
+   // Parse centerpiece and channel indices.
    if ( parser.isSet( centerpiece_option ) )
    {
       args["centerpiece"] = parser.value( centerpiece_option );
@@ -172,7 +171,7 @@ int main( int argc, char* argv[] )
       // revert the previously changed default data location
       US_Settings::set_default_data_location( default_data_location );
    }
-   // Only show GUI if needed
+   // Show the GUI only if needed.
    return showGuiIfNeeded( w, init_status, args );
 }
 
@@ -348,14 +347,13 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    change_status();
 }
 
-// Initialize simulation from command line arguments
+// Initialize the simulation from command-line arguments.
 int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check if model is to be loaded
    bool gui_needed = !flags.contains("close");
    bool error_occured = false;
-   // Each of model/buffer/simparams/rotor is independently optional, so a
-   // flag that wasn't given trivially counts as loaded; only a flag that
-   // was given and failed should block start_simulation() below.
+   // Each input is optional. Only an explicitly requested input that fails
+   // to load should prevent start_simulation() below.
    bool loaded_model = true;
    bool loaded_buffer = true;
    bool loaded_simparams = true;
@@ -446,15 +444,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       delete disk_controls;
    }
 
-   // load centerpiece/channel geometry if needed -- independent of --rotor
-   // (which only sets rotorcoeffs/rotorCalID) and --simparams (everything
-   // else): simparams.bottom_position is never written to or read back
-   // from a simparams.xml file (US_SimulationParameters::load_simparms()
-   // doesn't touch it), so without this, meniscus/bottom recomputed later
-   // always use the class default (7.2) no matter what centerpiece/channel
-   // was used to build the loaded simparams.xml. Uses whatever rotorCalID
-   // is already in effect (from --simparams or --rotor above), so
-   // rotorcoeffs stay correct too.
+   // Load centerpiece and channel geometry independently of --rotor and
+   // --simparams. Simulation-parameter files do not preserve bottom_position,
+   // so later meniscus and bottom calculations would otherwise use the class
+   // default (7.2). Retain the rotorCalID loaded above so its coefficients
+   // remain in effect.
    if ( flags.contains("centerpiece") || flags.contains("centerpiece-channel") )
    {
       int cp = flags.value( "centerpiece", "0" ).toInt();
@@ -477,31 +471,27 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check save directory
    if ( flags.contains("save") && flags["save"].length() > 0 )
    {
-      // check if path is accessible and writable
+      // Check whether the path exists and is writable.
       QString save_path = flags["save"];
       QDir dir( save_path );
       if ( !dir.exists() ) {
-         // path does not exist
          if ( errors_to_cl )
          {
-            // print error message to command line and exit
-            qDebug() << "Error save path doesn't exist " << save_path;
+            qDebug() << "Error: save directory does not exist:" << save_path;
             exit( 2 );
          }
          error_occured = true;
          gui_needed = true;
       }
-      // check if writeable
+      // Check whether a file can be created in the directory.
       QFile file(dir.filePath( "tmp.txt" ) );
       if ( !file.open(QIODevice::WriteOnly ) )
       {
          if ( errors_to_cl )
          {
-            // print error message to command line and exit
-            qDebug() << "Error save path isn't writeable " << save_path;
+            qDebug() << "Error: save directory is not writable:" << save_path;
             exit( 2 );
          }
-         // path is not writeable
          error_occured = true;
          gui_needed = true;
       }
@@ -2034,11 +2024,9 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
       if ( ! supress_dialog )
       {
          QMessageBox::information( this,
-               tr( "OD Values Threshold Limited" ),
-               tr( "%1 readings in %2 scans were reset\n"
-                   "to a threshold value of %3 .\n"
-                   "The pre-threshold-limit maximum OD\n"
-                   "value was %4 ." )
+               tr( "OD Values Limited to Threshold" ),
+               tr( "%1 readings in %2 scans were reset to the threshold "
+                   "value of %3.\nThe maximum OD before thresholding was %4." )
                .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
       }
    }
@@ -2480,4 +2468,3 @@ void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& /*ms*/ )
    //qDebug() << "conc " << ms.conc;
 #endif
 }
-
