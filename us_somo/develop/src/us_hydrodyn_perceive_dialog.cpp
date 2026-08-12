@@ -35,6 +35,31 @@ static const ColorDef COLORS[] = {
     { 15, "Bright White",  "unassigned",                                             true  },
 };
 
+// One explicit colour scheme for this dialog, background AND foreground.
+//
+// White rather than SOMO's global frame grey: this window is mostly close reading -- a generated
+// table entry and a list of flags -- and grey behind it is hard going, markedly so on Linux where
+// the frame colour renders darker (Mattia, 2026-08-10: "grey is quite bad, white would be better").
+//
+// The foreground has to be pinned too. PALET_LABEL and PALET_FRAME build a whole palette from a
+// single configured colour, and Qt's derivation of the remaining roles is not identical across
+// versions and platforms -- which is why the font colour came out different on Linux and macOS
+// ("make sure not just the background but also the font color"). Naming every role we rely on
+// removes the derivation from the picture, so the dialog looks the same on both.
+//
+// Push buttons keep PALET_PUSHB deliberately: they are controls users recognise by their SOMO
+// styling, and they are not the surface being read.
+static QPalette perceive_palette() {
+    QPalette p;
+    p.setColor( QPalette::Window,     Qt::white );
+    p.setColor( QPalette::Base,       Qt::white );
+    p.setColor( QPalette::AlternateBase, Qt::white );
+    p.setColor( QPalette::WindowText, Qt::black );
+    p.setColor( QPalette::Text,       Qt::black );
+    p.setColor( QPalette::ButtonText, Qt::black );
+    return p;
+}
+
 US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::Tentative & tent,
                                                           const QString & pdb_filename,
                                                           void * us_hydrodyn,
@@ -53,19 +78,8 @@ US_Hydrodyn_Perceive_Dialog::US_Hydrodyn_Perceive_Dialog( const somo_perceive::T
     tent_ = tent;
     pdb_filename_ = pdb_filename;
     USglobal = new US_Config();
-    // White rather than SOMO's global frame grey. This dialog is mostly text the reviewer has to
-    // read closely -- a generated table entry and a list of flags -- and grey behind it is hard
-    // going, markedly so on Linux where the frame colour comes out darker (Mattia, 2026-08-10:
-    // "grey is quite bad, white would be better"). Only the frame's own background changes; every
-    // label here calls AUTFBACK and so paints its own, and the global palette is untouched.
-    {
-        QPalette pal = PALET_FRAME;
-        pal.setColor( QPalette::Window, Qt::white );
-        pal.setColor( QPalette::Base,   Qt::white );
-        pal.setColor( QPalette::WindowText, Qt::black );
-        setPalette( pal );
-        setAutoFillBackground( true );
-    }
+    setPalette( perceive_palette() );
+    setAutoFillBackground( true );
     // Name the structure in the title bar: several of these dialogs can follow one another, and a
     // reviewer needs to know which structure the entry came from without going back to the main
     // window. (Mattia, review of 2026-08-09: "Add the PDB name on the Review Window".)
@@ -192,7 +206,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     lbl_info->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
     lbl_info->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
     lbl_info->setMinimumHeight( minHeight1 + 4 );
-    lbl_info->setPalette( PALET_FRAME );
+    lbl_info->setPalette( perceive_palette() );
     AUTFBACK( lbl_info );
     lbl_info->setFont( QFont( USglobal->config_list.fontFamily,
                               USglobal->config_list.fontSize + 1, QFont::Bold ) );
@@ -204,7 +218,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
             .arg( tent_.atoms ).arg( tent_.instances ).arg( tent_.flagged ), this );
     lbl_summary->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
     lbl_summary->setWordWrap( true );
-    lbl_summary->setPalette( PALET_LABEL );
+    lbl_summary->setPalette( perceive_palette() );
     AUTFBACK( lbl_summary );
     lbl_summary->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
 
@@ -230,7 +244,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
 
     // ---- computed properties ---------------------------------------------------------------
     lbl_vbar = new QLabel( us_tr( " psv (vbar) [cm^3/g]: " ), this );
-    lbl_vbar->setPalette( PALET_LABEL );
+    lbl_vbar->setPalette( perceive_palette() );
     AUTFBACK( lbl_vbar );
     lbl_vbar->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     sb_vbar = new QDoubleSpinBox( this );
@@ -246,7 +260,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     connect( sb_vbar, SIGNAL( valueChanged( double ) ), SLOT( value_changed() ) );
 
     lbl_molvol = new QLabel( us_tr( " Anhydrous volume [A^3]: " ), this );
-    lbl_molvol->setPalette( PALET_LABEL );
+    lbl_molvol->setPalette( perceive_palette() );
     AUTFBACK( lbl_molvol );
     lbl_molvol->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     sb_molvol = new QDoubleSpinBox( this );
@@ -261,14 +275,14 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     connect( sb_molvol, SIGNAL( valueChanged( double ) ), SLOT( value_changed() ) );
 
     lbl_hydration_total = new QLabel( this );
-    lbl_hydration_total->setPalette( PALET_LABEL );
+    lbl_hydration_total->setPalette( perceive_palette() );
     AUTFBACK( lbl_hydration_total );
     lbl_hydration_total->setFont( QFont( USglobal->config_list.fontFamily,
                                          USglobal->config_list.fontSize ) );
 
     // ---- bead properties -------------------------------------------------------------------
     lbl_beads = new QLabel( us_tr( " Number of beads: " ), this );
-    lbl_beads->setPalette( PALET_LABEL );
+    lbl_beads->setPalette( perceive_palette() );
     AUTFBACK( lbl_beads );
     lbl_beads->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     sb_beads = new QSpinBox( this );
@@ -281,7 +295,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
                                  "the Residue Definition Module provides." ) );
 
     lbl_color = new QLabel( us_tr( " Bead colour: " ), this );
-    lbl_color->setPalette( PALET_LABEL );
+    lbl_color->setPalette( perceive_palette() );
     AUTFBACK( lbl_color );
     lbl_color->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     cmb_color = new QComboBox( this );
@@ -294,20 +308,21 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     connect( cmb_color, SIGNAL( currentIndexChanged( int ) ), SLOT( value_changed() ) );
 
     lbl_position = new QLabel( us_tr( " Bead position: centre of gravity of all atoms " ), this );
-    lbl_position->setPalette( PALET_LABEL );
+    lbl_position->setPalette( perceive_palette() );
     AUTFBACK( lbl_position );
     lbl_position->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
 
     // ---- review flags and the running entry ------------------------------------------------
     lbl_review = new QLabel( us_tr( "Flagged for review" ), this );
     lbl_review->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
-    lbl_review->setPalette( PALET_LABEL );
+    lbl_review->setPalette( perceive_palette() );
     AUTFBACK( lbl_review );
     lbl_review->setFont( QFont( USglobal->config_list.fontFamily,
                                 USglobal->config_list.fontSize, QFont::Bold ) );
 
     te_review = new QTextEdit( this );
     te_review->setReadOnly( true );
+    te_review->setPalette( perceive_palette() );
     te_review->setMinimumHeight( 90 );
     te_review->setFont( QFont( "Courier", USglobal->config_list.fontSize - 1 ) );
     {
@@ -327,12 +342,13 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
 
     te_entry = new QTextEdit( this );
     te_entry->setReadOnly( true );
+    te_entry->setPalette( perceive_palette() );
     te_entry->setMinimumHeight( 120 );
     te_entry->setFont( QFont( "Courier", USglobal->config_list.fontSize - 1 ) );
 
     cb_save = new QCheckBox( us_tr( " Also append this entry to somo.residue " ), this );
     cb_save->setChecked( false );
-    cb_save->setPalette( PALET_NORMAL );
+    cb_save->setPalette( perceive_palette() );
     AUTFBACK( cb_save );
     cb_save->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     cb_save->setToolTip( us_tr( "Off by default. When off the entry is used for this session "
