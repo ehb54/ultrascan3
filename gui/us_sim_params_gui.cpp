@@ -1238,4 +1238,8 @@ void US_SimParamsGui::set_run_params( QMap< QString, QString > run_parms )
   cnt_delay_mins    ->setValue( run_parms["delay_m"].toDouble() );
 
   cnt_temperature   ->setValue( run_parms["temperature"].toDouble() );
+
+  cnt_meniscus      ->setValue( run_parms["meniscus"].toDouble() );
+  cnt_bottom        ->setValue( run_parms["data_right"].toDouble() );
+  
 }

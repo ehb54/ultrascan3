@@ -324,7 +324,7 @@ class US_Analysis_auto : public US_Widgets
             QMap < QString, bool > Canceled_triples;                 /**< Canceled triples flag. */
             QMap < QString, bool > Process_2dsafm;                   /**< Process 2DSA-FM flag. */
 
-            QMap< QString, QString > read_run_params( void );
+            QMap< QString, QString > read_run_params( QString );
         
             /**
              * @brief Reads the autoflow analysis record from the database.

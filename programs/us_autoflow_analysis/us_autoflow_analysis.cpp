@@ -1317,7 +1317,7 @@ void US_Analysis_auto::gui_update( )
 	      **/
 	      sdiag_mwlsim -> define_buffer_auto( invID );
 
-	      QMap<QString, QString> run_params = read_run_params();
+	      QMap<QString, QString> run_params = read_run_params( f_name_c );
 	      sdiag_mwlsim -> sim_params_auto( run_params );
 
 	      /**
@@ -1366,7 +1366,7 @@ void US_Analysis_auto::get_editID ( QString& e_ID )
 }
 
 //Read basic run params from protocol && editData
-QMap< QString, QString > US_Analysis_auto::read_run_params( void )
+QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
 {
   QMap< QString, QString > run_parms;
   
@@ -1412,7 +1412,68 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( void )
 
   //Edit parms: meniscus && bottom
   qDebug() << "[VEL-MWL: in read_run_params() ], editGUID -- " << e_ID_for_velmwl;
-    
+  QStringList query;
+  query << "get_editID" << e_ID_for_velmwl;
+  db.query( query );
+  db.next();
+  QString editID  = db.value( 0 ).toString();
+
+  QString edirpath  = US_Settings::resultDir() + "/" + f_name_c;
+  QDir edir( edirpath );
+  if (!edir.exists())
+    edir.mkpath( edirpath );
+
+  query.clear();
+  query << "get_editedData" << editID;
+  db.query( query );
+  db.next();
+  QString efilename  = db.value( 3 ).toString();
+  
+  QString efilepath = edirpath + "/" + efilename;
+  db.readBlobFromDB( efilepath, "download_editData", editID.toInt() );
+
+  //read XML section && extract meniscus value
+  double meniscus_p = 0;
+  double data_left  = 0;
+  double data_right = 0;
+  QFile pfile( efilepath );
+  // Skip if there is a file-open problem
+  if ( pfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+    {
+      // Capture the XML as a string and start XML reader
+      QTextStream tsi( &pfile );
+      QString xmlstr      = tsi.readAll();
+      pfile.close();
+      QXmlStreamReader xmli( xmlstr );
+      
+      while( ! xmli.atEnd() )
+	{  
+	  xmli.readNext();
+	  QString ename       = xmli.name().toString();
+	  
+	  if ( xmli.isStartElement()  &&  ename == "meniscus" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      meniscus_p                = attr.value( "radius" ).toDouble();
+	    }
+	  else if ( xmli.isStartElement()  &&  ename == "data_range" )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      data_left                 = attr.value( "left" ).toDouble();
+	      data_right                = attr.value( "right" ).toDouble();
+	    }
+	  
+	}
+    }
+
+  qDebug() << "EditProfile: filename, path, ID, data_left, data_right -- "
+	   << efilename << efilepath << editID << data_left << data_right;
+
+  //put in map
+  run_parms["meniscus"]   = QString::number( meniscus_p );
+  run_parms["data_left"]  = QString::number( data_left );
+  run_parms["data_right"] = QString::number( data_right );
+  
   return run_parms;
 }
 
