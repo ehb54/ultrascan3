@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <functional>
 #include <set>
+#include <cstdio>
 
 namespace somo_perceive {
 
@@ -524,22 +525,57 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     Properties defaults;
     const Properties& pr = props ? *props : defaults;
     double total_mw=0;
+    // somo.residue can express at most TWO ionizable atoms per residue: the header is a vbar
+    // followed by one (vbar, pKa) pair per ionization, the loader rejects a third outright
+    // ("currently only 2 are supported"), and each atom's ionization index must be unique AND
+    // match a declared pKa, which it then consumes (us_hydrodyn_load.cpp).
+    //
+    // Citrate has three carboxyls, so it cannot be written in two states at all. Rather than emit
+    // a record the loader refuses -- which is what "Duplicate ionization index" was -- collapse to
+    // the single state that is true at pH 7: the deprotonated one, applied to the primary fields
+    // so the TYPES and the WATERS agree. That is a real limitation of the file format and is said
+    // so in the REVIEW block, not hidden.
+    size_t n_ionizable = 0;
+    for (const Properties::Alt& a : pr.alternate) if (!a.hybrid.empty()) ++n_ionizable;
+    const bool collapse_to_ionized = n_ionizable > 2;
+
+    std::vector<std::string> pr_review_extra;
+    if (collapse_to_ionized) {
+        char buf[192];
+        std::snprintf(buf, sizeof(buf),
+                      "%zu ionizable atoms, but somo.residue supports at most 2 per residue. "
+                      "Written in its pH 7 (deprotonated) state only -- types and waters both -- "
+                      "so this entry is NOT pH-switchable", n_ionizable);
+        pr_review_extra.push_back(buf);
+    }
+
     std::ostringstream body;
     std::map<std::string,int> seen_new;
+    int ion_index = 0;   // 1-based, one per ionizable atom, must match a header pKa
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
-        total_mw += o.mw;
+        total_mw += ( collapse_to_ionized && k < pr.alternate.size()
+                      && !pr.alternate[k].hybrid.empty() )
+                    ? pr.alternate[k].mw : o.mw;
         // atom line: name hybrid mw radius bead 0 index hydration
-        const double hyd = k < pr.hydration.size() ? pr.hydration[k] : 0.0;
-        body << atoms[k].name << '\t' << o.hybrid << '\t' << o.mw << '\t' << o.vdw_radius
+        const bool has_alt = k < pr.alternate.size() && !pr.alternate[k].hybrid.empty();
+        const Properties::Alt* a = has_alt ? &pr.alternate[k] : nullptr;
+        double hyd = k < pr.hydration.size() ? pr.hydration[k] : 0.0;
+        // When collapsing, the deprotonated species IS the entry: write its type, mass, radius
+        // and waters in the primary fields rather than the protonated ones.
+        const std::string pr_hyb = (collapse_to_ionized && a) ? a->hybrid : o.hybrid;
+        const double pr_mw  = (collapse_to_ionized && a) ? a->mw     : o.mw;
+        const double pr_rad = (collapse_to_ionized && a) ? a->radius : o.vdw_radius;
+        if (collapse_to_ionized && a) hyd = a->waters;
+        body << atoms[k].name << '\t' << pr_hyb << '\t' << pr_mw << '\t' << pr_rad
              << "\t0\t0\t" << k << '\t' << hyd;
         // 16-field form for an ionizable atom: the protonated species above, the deprotonated one
         // here, exactly as somo.residue writes ASP's OD2 / LYS's NZ / ARG's NH2. The loader accepts
-        // 8 or 16 fields and nothing between (us_hydrodyn_load.cpp), so this is all or nothing.
-        if (k < pr.alternate.size() && !pr.alternate[k].hybrid.empty()) {
-            const Properties::Alt& a = pr.alternate[k];
-            body << "\t1\t" << a.hybrid << '\t' << a.mw << '\t' << a.radius
-                 << "\t0\t0\t" << k << '\t' << a.waters;
+        // 8 or 16 fields and nothing between, so this is all or nothing. The ionization index must
+        // be unique within the residue and match a declared pKa, so it counts up from 1.
+        if (a && !collapse_to_ionized) {
+            body << '\t' << ++ion_index << '\t' << a->hybrid << '\t' << a->mw << '\t' << a->radius
+                 << "\t0\t0\t" << k << '\t' << a->waters;
         }
         body << '\n';
         if (!o.in_table && !seen_new.count(o.hybrid)) {
@@ -562,6 +598,7 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // than there are (Mattia, 2026-08-10, on citrate: the review list "incorrectly tentatively
     // assigns far more waters"). Group by atom instead, first-appearance order, notes joined.
     std::vector<std::pair<std::string,std::string>> items;   // (key, text); key empty = not per-atom
+    for (const std::string& r : pr_review_extra) items.push_back({ std::string(), r });
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
         if (!o.ambiguity && o.in_table) continue;
@@ -643,12 +680,14 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         // residues carry: vbar_ionized then pKa (ASP "0.603 0.603 3.67"). The table gives both
         // states the SAME vbar for every one of them -- Asp 0.603/0.603, Glu 0.663/0.663, Arg
         // 0.698/0.698 -- so the psv stays pH-independent here too, deliberately.
-        double pKa = 0;
-        for (const Properties::Alt& a : pr.alternate)
-            if (!a.hybrid.empty() && a.pKa > 0) { pKa = a.pKa; break; }
-        if (pKa > 0)
-            h << '\t' << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0)
-              << '\t' << std::setprecision(2) << pKa;
+        // One (vbar, pKa) pair per ionizable atom, in the same order the atom lines number their
+        // ionization indices -- the loader builds {1..n_pairs} and each atom's index must match
+        // one, consuming it. Omitted entirely when collapsing, since there are then no alternates.
+        if (!collapse_to_ionized)
+            for (const Properties::Alt& a : pr.alternate)
+                if (!a.hybrid.empty() && a.pKa > 0)
+                    h << '\t' << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0)
+                      << '\t' << std::setprecision(2) << a.pKa;
         h << '\n';
         hdr << h.str();
     }

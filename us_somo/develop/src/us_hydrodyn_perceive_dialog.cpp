@@ -499,29 +499,30 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
 // Rebuild the somo.residue block from the current widget state so what the user sees is exactly
 // what Accept will hand back.
 void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
-    // Two totals, because an entry with ionizable atoms has two states and quoting only the
-    // protonated one is misleading: citrate reads 1 water neutral but 16 once its three carboxyls
-    // are deprotonated, and at pH 7 the deprotonated state is the one that will be used (Mattia,
-    // 2026-08-10: "the residue total waters field is wrong for 2CMD, says 1 instead of 15").
-    double hyd_total = 0, hyd_total_ion = 0;
+    // Split by ATOM CATEGORY, not by state, which is how Mattia reads it (2026-08-10): "16 waters
+    // proposed, 1 for non-ionized and 15 for ionized atoms". Quoting only the protonated total was
+    // misleading -- citrate reads 1 there but 16 once its carboxyls are deprotonated, which at
+    // pH 7 is the state that applies. Coloured, because it is the number most worth checking.
+    double hyd_non_ion = 0, hyd_ion = 0;
     bool any_ionizable = false;
     for ( int r = 0; r < rows_.size(); ++r ) {
-        hyd_total += rows_[ r ].hydration;
         if ( rows_[ r ].ion_hybrid.isEmpty() ) {
-            hyd_total_ion += rows_[ r ].hydration;
+            hyd_non_ion += rows_[ r ].hydration;
         } else {
-            hyd_total_ion += rows_[ r ].ion_hydration;
+            hyd_ion += rows_[ r ].ion_hydration;
             any_ionizable = true;
         }
     }
+    const double hyd_total = hyd_non_ion + hyd_ion;
 
     lbl_hydration_total->setText(
         any_ionizable
-        ? QString( us_tr( " Residue hydration total: %1 waters neutral, %2 ionized   "
+        ? QString( us_tr( " Residue hydration total: <b><font color=\"#b00000\">%1 waters</font></b> "
+                          "proposed, %2 for non-ionized and %3 for ionized atoms &nbsp; "
                           "(the total is the quantity with literature backing; the per-atom split "
                           "is convention)" ) )
-              .arg( hyd_total, 0, 'f', 2 ).arg( hyd_total_ion, 0, 'f', 2 )
-        : QString( us_tr( " Residue hydration total: %1 waters   "
+              .arg( hyd_total, 0, 'f', 2 ).arg( hyd_non_ion, 0, 'f', 2 ).arg( hyd_ion, 0, 'f', 2 )
+        : QString( us_tr( " Residue hydration total: <b><font color=\"#b00000\">%1 waters</font></b> &nbsp; "
                           "(the total is the quantity with literature backing; the per-atom split "
                           "is convention)" ) ).arg( hyd_total, 0, 'f', 2 ) );
 
