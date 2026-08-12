@@ -129,6 +129,7 @@ void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
                 header_type_ = f[ 1 ].toInt();
                 init_molvol_ = f[ 2 ].toDouble();
                 header_asa_  = f[ 3 ].toDouble();
+                if ( f.size() >= 9 ) header_pKa_ = f[ 8 ].toDouble();
                 init_vbar_   = f[ 6 ].toDouble();
             }
             continue;
@@ -144,6 +145,12 @@ void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
             r.mw        = f[ 2 ].toDouble();
             r.radius    = f[ 3 ].toDouble();
             r.hydration = f[ 7 ].toDouble();
+            if ( f.size() >= 16 ) {                 // ionizable: fields 10-16 are the alternate
+                r.ion_hybrid    = f[ 9 ];
+                r.ion_mw        = f[ 10 ].toDouble();
+                r.ion_radius    = f[ 11 ].toDouble();
+                r.ion_hydration = f[ 15 ].toDouble();
+            }
             rows_ << r;
         }
     }
@@ -187,6 +194,21 @@ void US_Hydrodyn_Perceive_Dialog::populate_table() {
         tbl_atoms->setItem( r, 2, i2 );
         tbl_atoms->setItem( r, 3, i3 );
         tbl_atoms->setItem( r, 4, i4 );
+
+        const bool ionizable = !rows_[ r ].ion_hybrid.isEmpty();
+        QTableWidgetItem * i5 = new QTableWidgetItem( rows_[ r ].ion_hybrid );
+        QTableWidgetItem * i6 = new QTableWidgetItem(
+            ionizable ? QString::number( rows_[ r ].ion_hydration, 'f', 2 ) : QString() );
+        QTableWidgetItem * i7 = new QTableWidgetItem(
+            ionizable && header_pKa_ > 0 ? QString::number( header_pKa_, 'f', 2 ) : QString() );
+        i5->setFlags( i5->flags() & ~Qt::ItemIsEditable );      // the type follows the chemistry
+        if ( !ionizable ) {                                     // nothing to edit on a fixed atom
+            i6->setFlags( i6->flags() & ~Qt::ItemIsEditable );
+            i7->setFlags( i7->flags() & ~Qt::ItemIsEditable );
+        }
+        tbl_atoms->setItem( r, 5, i5 );
+        tbl_atoms->setItem( r, 6, i6 );
+        tbl_atoms->setItem( r, 7, i7 );
     }
     tbl_atoms->blockSignals( was_blocked );
 }
@@ -247,10 +269,14 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     connect( pb_rasmol, SIGNAL( clicked() ), SLOT( view_rasmol() ) );
 
     // ---- atom table; only the hydration column is editable -------------------------------
-    tbl_atoms = new QTableWidget( rows_.size(), 5, this );
+    // Ionizable atoms get their deprotonated alternate on the SAME row (ehb54: "use extra
+    // columns on the row"), so a reviewer sees both states of a group together instead of having
+    // to correlate two rows. Non-ionizable atoms leave those cells blank and uneditable.
+    tbl_atoms = new QTableWidget( rows_.size(), 8, this );
     QStringList headers;
     headers << us_tr( "Atom" ) << us_tr( "Hybrid" ) << us_tr( "Mass" )
-            << us_tr( "Radius" ) << us_tr( "Hydration (edit)" );
+            << us_tr( "Radius" ) << us_tr( "Hydration (edit)" )
+            << us_tr( "Ionized" ) << us_tr( "Ionized hydration (edit)" ) << us_tr( "pKa (edit)" );
     tbl_atoms->setHorizontalHeaderLabels( headers );
     tbl_atoms->verticalHeader()->setVisible( false );
     tbl_atoms->setSelectionMode( QAbstractItemView::SingleSelection );
@@ -476,21 +502,34 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
         : somo_perceive::DEFAULT_ASA_PER_ATOM * rows_.size();
 
     QString s = comment_;
-    s += QString( "%1\t%2\t%3\t%4\t%5\t1\t%6\n" )
+    s += QString( "%1\t%2\t%3\t%4\t%5\t1\t%6" )
              .arg( tent_.resName )
              .arg( header_type_ )
              .arg( sb_molvol->value(), 0, 'f', 2 )
              .arg( asa, 0, 'f', 2 )
              .arg( rows_.size() )
              .arg( sb_vbar->value(), 0, 'f', 3 );
+    // The two extra header fields the coded ionizable residues carry: vbar_ionized then pKa.
+    // Both states get the same vbar, as every ionizable residue in somo.residue does.
+    if ( header_pKa_ > 0 )
+        s += QString( "\t%1\t%2" ).arg( sb_vbar->value(), 0, 'f', 3 ).arg( header_pKa_, 0, 'f', 2 );
+    s += "\n";
     for ( int r = 0; r < rows_.size(); ++r ) {
-        s += QString( "%1\t%2\t%3\t%4\t0\t0\t%5\t%6\n" )
+        s += QString( "%1\t%2\t%3\t%4\t0\t0\t%5\t%6" )
                  .arg( rows_[ r ].name )
                  .arg( rows_[ r ].hybrid )
                  .arg( rows_[ r ].mw )
                  .arg( rows_[ r ].radius )
                  .arg( r )
                  .arg( rows_[ r ].hydration );
+        if ( !rows_[ r ].ion_hybrid.isEmpty() )
+            s += QString( "\t1\t%1\t%2\t%3\t0\t0\t%4\t%5" )
+                     .arg( rows_[ r ].ion_hybrid )
+                     .arg( rows_[ r ].ion_mw )
+                     .arg( rows_[ r ].ion_radius )
+                     .arg( r )
+                     .arg( rows_[ r ].ion_hydration );
+        s += "\n";
     }
     s += QString( "%1\t%2\t0\t0\t%3\n" )
              .arg( hyd_total, 0, 'f', 2 )
@@ -500,17 +539,37 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
     te_entry->setText( s );
 }
 
+// Columns 4, 6 and 7 are editable: protonated hydration, deprotonated hydration, and the pKa.
+// A bad value is reverted rather than clamped, so a typo never silently becomes data.
 void US_Hydrodyn_Perceive_Dialog::hydration_edited( int row, int col ) {
-    if ( col != 4 || row < 0 || row >= rows_.size() ) return;
+    if ( row < 0 || row >= rows_.size() ) return;
+    if ( col != 4 && col != 6 && col != 7 ) return;
     QTableWidgetItem * it = tbl_atoms->item( row, col );
     if ( !it ) return;
+    // The alternate columns mean nothing on an atom with no ionizable group.
+    if ( ( col == 6 || col == 7 ) && rows_[ row ].ion_hybrid.isEmpty() ) { it->setText( QString() ); return; }
     bool ok = false;
     const double v = it->text().toDouble( &ok );
-    if ( !ok || v < 0 ) {
-        it->setText( QString::number( rows_[ row ].hydration, 'f', 2 ) );
+    const double old = col == 4 ? rows_[ row ].hydration
+                     : col == 6 ? rows_[ row ].ion_hydration
+                                : header_pKa_;
+    // pKa must be positive; a hydration count may legitimately be zero.
+    if ( !ok || v < 0 || ( col == 7 && v <= 0 ) ) {
+        it->setText( QString::number( old, 'f', 2 ) );
         return;
     }
-    rows_[ row ].hydration = v;
+    if      ( col == 4 ) rows_[ row ].hydration     = v;
+    else if ( col == 6 ) rows_[ row ].ion_hydration = v;
+    else {
+        // One pKa per residue, as somo.residue stores it in the header rather than per atom.
+        // Editing it on any row therefore changes it for the entry, so keep the cells in step.
+        header_pKa_ = v;
+        const bool was_blocked = tbl_atoms->blockSignals( true );
+        for ( int r = 0; r < rows_.size(); ++r )
+            if ( !rows_[ r ].ion_hybrid.isEmpty() && tbl_atoms->item( r, 7 ) )
+                tbl_atoms->item( r, 7 )->setText( QString::number( header_pKa_, 'f', 2 ) );
+        tbl_atoms->blockSignals( was_blocked );
+    }
     refresh_entry();
 }
 

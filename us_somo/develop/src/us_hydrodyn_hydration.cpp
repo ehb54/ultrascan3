@@ -1,4 +1,5 @@
 #include "us_hydrodyn_hydration.h"
+#include <cstdio>
 
 #include <algorithm>
 #include <string>
@@ -133,6 +134,7 @@ Proposal propose_by_rules(const std::vector<InAtom>& atoms,
         const OutAtom& o = perceived[i];
         double w = -1.0;                    // -1 = no rule matched
         const char* why = 0;
+        Alternate alt;                      // stays empty unless a rule finds an ionizable group
 
         if (elem_is(o, "O")) {
             // find a carboxyl carbon this oxygen belongs to
@@ -147,8 +149,17 @@ Proposal propose_by_rules(const std::vector<InAtom>& atoms,
                     for (int n : bonds.nb[cc])
                         if (elem_is(perceived[n], "C"))
                             chain = std::max(chain, chain_len_from(cc, n, perceived, bonds));
-                    w = chain >= 2 ? 6.0 : 5.0;
-                    why = "carboxylate at pH 7";
+                    // The waters belong to the DEPROTONATED alternate, not to this line. ASP
+                    // writes OD2 as "O2H1 ... 0 | O1H0- ... 5": the neutral -COOH carries none
+                    // and the carboxylate carries five. Emitting 5 against an O2H1 primary --
+                    // which is what this did -- produces a row that exists nowhere in the table
+                    // and double-states the ionisation (Mattia, 2026-08-10, on citrate).
+                    w = 0.0;
+                    why = "carboxyl -OH";
+                    alt.hybrid = "O1H0-";
+                    alt.waters = chain >= 2 ? 6.0 : 5.0;
+                    alt.pKa    = chain >= 2 ? 4.25 : 3.67;   // GLU / ASP convention
+                    alt.why    = "carboxylate";
                 } else {
                     w = 0.0;
                     why = "carbonyl oxygen of a carboxylate";
@@ -210,14 +221,23 @@ Proposal propose_by_rules(const std::vector<InAtom>& atoms,
             w = e ? e->waters : 0.0;
             p.review.push_back(atoms[i].name + " (" + o.hybrid + "): no pH 7 rule for this group"
                                + (e ? ", using the coded-residue average" : ", left at 0"));
+        } else if (!alt.hybrid.empty()) {
+            // An ionizable group: say what the alternate is and what pKa is being proposed, since
+            // the pKa is a convention value the user is expected to check.
+            char buf[48];
+            std::snprintf(buf, sizeof(buf), "%.2f", alt.pKa);
+            p.review.push_back(atoms[i].name + " (" + o.hybrid + "): ionizable -> " + alt.hybrid
+                               + ", " + std::to_string((long) std::lround(alt.waters))
+                               + " waters, proposed pKa " + buf + " (convention from the coded residues -- check it)");
         } else if (why && (w >= 5.0)) {
-            // The large carboxylate values dominate a residue's total, so make them visible
-            // even though the rule is confident.
+            // Large values dominate a residue's total, so make them visible even when confident.
             p.review.push_back(atoms[i].name + " (" + o.hybrid + "): " + why + ", "
                                + std::to_string((long) std::lround(w)) + " waters");
         }
         p.per_atom.push_back(w);
+        p.alternate.push_back(alt);
         p.total += w;
+        p.total_ionized += alt.hybrid.empty() ? w : alt.waters;
     }
     p.ok = true;
     return p;

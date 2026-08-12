@@ -148,6 +148,11 @@ public:
         bool   have_molvol = false;  double molvol = 0;    // A^3, also the single bead's volume
         double asa = 0;                                    // A^2; 0 => emitter substitutes, never 0
         std::vector<double> hydration;                     // per atom; empty = unset
+        // Deprotonated alternates, parallel to hydration; an entry with a non-empty hybrid makes
+        // its atom line 16 fields (protonated first, deprotonated second) exactly as the coded
+        // ionizable residues are written, and puts vbar_ionized + pKa in the residue header.
+        struct Alt { std::string hybrid; double mw = 0, radius = 0, waters = 0, pKa = 0; };
+        std::vector<Alt> alternate;
         std::vector<std::string> review;                   // extra lines for the REVIEW block
         int    bead_color = DEFAULT_BEAD_COLOR;
     };
@@ -159,6 +164,9 @@ public:
                          const Properties* props = nullptr) const;
 
     const Params& params() const { return p_; }
+    // Needed to resolve a deprotonated alternate's mass and radius from the table
+    // rather than hard-coding them next to the hydration rules.
+    const HybridTable& table() const { return tbl_; }
 
 private:
     const HybridTable& tbl_;
