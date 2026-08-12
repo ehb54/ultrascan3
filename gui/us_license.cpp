@@ -154,8 +154,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
 
   // Very light gray, for read-only line edits
-  QPalette gray = US_GuiSettings::editColor();
-  gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+  QPalette gray = US_GuiSettings::readonlyColor();
 
   // Row 7 - Platform
   xpos  = spacing;

@@ -1709,6 +1709,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
 //        this, SLOT( showContour( bool ) ) );
 
     d_plot = new QwtPlot();
+    US_Widgets::us_style_plot( d_plot );
 
     d_spectrogram = new QwtPlotSpectrogram();
     d_spectrogram->setRenderThreadCount( 0 ); // use system specific thread count
