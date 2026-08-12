@@ -39,7 +39,8 @@ class US_MwlSpeciesSim : public US_Widgets
         US_MwlSpeciesSim();
         void select_models_auto( QString, QStringList );
         void define_buffer_auto( int );
-        void select_rotor_auto( void );
+        void select_rotor_auto( QStringList );
+        void sim_params_auto( QMap< QString, QString> );
 
     private:
         int dbg_level;         //!< Debug level
@@ -167,6 +168,9 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Show help information
         void help(void)
         { showHelp.show_help("manual/multi-wavelength/mwl_species_sim.html"); };
+
+    signals:
+        void pass_editID_fromLoad( QString& );
 };
 
 #endif // US_MWL_SPECIES_SIM_H

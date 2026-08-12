@@ -69,7 +69,7 @@ class US_GUI_EXTERN US_RotorGui : public US_WidgetsDialog
       US_Rotor::Rotor             currentRotor;           //!< Current rotor structure
       US_Rotor::RotorCalibration  currentCalibration;     //!< Current calibration structure
 
-      void selectSimRotor( void );
+      void selectSimRotor( QStringList );
 
    signals:
       

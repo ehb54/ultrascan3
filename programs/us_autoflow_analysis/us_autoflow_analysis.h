@@ -299,6 +299,8 @@ class US_Analysis_auto : public US_Widgets
             QString autoflow_expType;
             QString dataSource;
 
+            QString e_ID_for_velmwl;
+
             QString FileName;                                        /**< File name. */
             QString FileName_parsed;                                 /**< Parsed file name. */
 
@@ -322,6 +324,8 @@ class US_Analysis_auto : public US_Widgets
             QMap < QString, bool > Canceled_triples;                 /**< Canceled triples flag. */
             QMap < QString, bool > Process_2dsafm;                   /**< Process 2DSA-FM flag. */
 
+            QMap< QString, QString > read_run_params( void );
+        
             /**
              * @brief Reads the autoflow analysis record from the database.
              * @param db Pointer to the database.
@@ -705,6 +709,7 @@ class US_Analysis_auto : public US_Widgets
 
         void proceed_abde_to_report( QMap< QString, QString > & );
         void back_to_initAutoflow( void );
+        void get_editID ( QString&  );
 
     signals:
         /**

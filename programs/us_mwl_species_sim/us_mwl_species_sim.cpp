@@ -381,12 +381,7 @@ DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
 
       if ( ! wavelns.contains( waveln ) )
          wavelns << waveln;
-//*DEBUG
-if(jm<5 || (jm+5)>nmodels ) {
- DbgLv(1) << "  smdls: jm" << jm << "model.desc"
-  << mdesc << "mdescs[jm]" << mdescs[jm];
-}
-//*DEBUG
+
 
       // Compute and save the total concentration in each model
       double tot_conc = 0.0;
@@ -397,7 +392,7 @@ if(jm<5 || (jm+5)>nmodels ) {
       }
 
       mtconcs[ jm ]  = tot_conc;
-DbgLv(1) << "  smdls:   jm" << jm << "tot_conc" << tot_conc;
+     
    }
 
    int nruns      = runids .count();
@@ -421,6 +416,11 @@ DbgLv(1) << "  smdls: nmodels" << nmodels << "nruns" << nruns
    le_runid  ->setText( orunid );
 
    pb_strtsims->setEnabled( true );
+
+   //pass editID from one of the models
+   QString editID = models[0].editGUID;
+
+   emit pass_editID_fromLoad( editID );
 }
 
 
@@ -500,6 +500,21 @@ DbgLv(1) << "SLOT: sim_params";
    dialog->exec();
 }
 
+// For VEL-MWL:GMP
+void US_MwlSpeciesSim::sim_params_auto( QMap< QString, QString > run_params )
+{
+  US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
+  
+  connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
+
+  dialog -> set_run_params( run_params ); 
+
+  //then accept
+  dialog->accepted_auto();
+  
+  //dialog->exec();
+}
+
 // Set simulation parameter as selected in the simparams dialog
 void US_MwlSpeciesSim::set_parameters( void )
 {
@@ -563,7 +578,7 @@ simparams.debug();
 }
 
 // Select a rotor for VEL-MWL:GMP
-void US_MwlSpeciesSim::select_rotor_auto( void )
+void US_MwlSpeciesSim::select_rotor_auto( QStringList r_defs )
 {
   US_Rotor::Rotor rotor;
   US_Rotor::RotorCalibration calibration;
@@ -577,7 +592,7 @@ void US_MwlSpeciesSim::select_rotor_auto( void )
 						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
 	   this,      SLOT  ( assign_rotor            (
 						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
-  rotorInfo->selectSimRotor();
+  rotorInfo->selectSimRotor( r_defs );
   
   //rotorInfo->exec();
 }

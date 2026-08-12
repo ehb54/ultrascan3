@@ -1285,6 +1285,8 @@ void US_Analysis_auto::gui_update( )
 		    }
 		}
 	      
+	      e_ID_for_velmwl.clear();
+	      
 	      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
 	      QString stage_n_c = QString( "2DSA-IT" );
 	      //QString ch_name_c = channels_all[ca];
@@ -1297,6 +1299,10 @@ void US_Analysis_auto::gui_update( )
 
 	      //now call sim. contructor
 	      sdiag_mwlsim = new US_MwlSpeciesSim();
+	      connect( sdiag_mwlsim, SIGNAL( pass_editID_fromLoad( QString& ) ),
+		       this,         SLOT  ( get_editID ( QString& ) ) );
+	      
+	            
 	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
 
 	      /**
@@ -1311,7 +1317,18 @@ void US_Analysis_auto::gui_update( )
 	      **/
 	      sdiag_mwlsim -> define_buffer_auto( invID );
 
-	      sdiag_mwlsim -> select_rotor_auto();
+	      QMap<QString, QString> run_params = read_run_params();
+	      sdiag_mwlsim -> sim_params_auto( run_params );
+
+	      /**
+		 Although we will select 'Default (Simulation)' rotor,
+		 should we select rotor *AFTER* setting simparams,
+		 as only AFTER the new rotorCoeffs will be applied
+		 DEFAULT rotorCoeffs in simparams are 0.0
+	      **/
+	      QStringList rotor_defs;
+	      rotor_defs << "Default" << "(Simulation)";
+	      sdiag_mwlsim -> select_rotor_auto( rotor_defs );
 	      
 	      sdiag_mwlsim->show(); //DEBUG
 	    }
@@ -1342,11 +1359,67 @@ void US_Analysis_auto::gui_update( )
   in_gui_update  = false; 
 }
 
+//Get editID from selected model
+void US_Analysis_auto::get_editID ( QString& e_ID )
+{
+  e_ID_for_velmwl = e_ID;
+}
+
+//Read basic run params from protocol && editData
+QMap< QString, QString > US_Analysis_auto::read_run_params( void )
+{
+  QMap< QString, QString > run_parms;
+  
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return run_parms;
+    }
+  
+  US_RunProtocol currProto;
+  QString xmlstr( "" );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,  &xmlstr, NULL, &db );
+  QXmlStreamReader xmli( xmlstr );
+  currProto. fromXml( xmli );
+
+  //speed
+  run_parms["speed"] = QString::number( currProto. rpSpeed. ssteps[0].speed );
+
+  //acceleration
+  run_parms["accel"] = QString::number( currProto. rpSpeed. ssteps[0].accel );
+  
+  //Duration
+  QList< int > hms_dur;
+  double duration = currProto. rpSpeed. ssteps[0].duration;
+  US_RunProtocol::timeToList( duration, hms_dur );
+  run_parms["duration_h"] = QString::number( hms_dur[ 1 ] );
+  run_parms["duration_m"] = QString::number( hms_dur[ 2 ] );
+
+  //Delay
+  QList< int > hms_delay_stage;
+  double delay_stage = currProto. rpSpeed. ssteps[0].delay_stage;
+  US_RunProtocol::timeToList( delay_stage, hms_delay_stage );
+  run_parms["delay_h"] = QString::number( hms_delay_stage[ 1 ] );
+  run_parms["delay_m"] = QString::number( hms_delay_stage[ 2 ] );
+
+  //Temperature
+  run_parms["temperature"] = QString::number( currProto. temperature );
+
+  //Edit parms: meniscus && bottom
+  qDebug() << "[VEL-MWL: in read_run_params() ], editGUID -- " << e_ID_for_velmwl;
+    
+  return run_parms;
+}
 
 //Update autoflow record upon Analysis completion
 void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
 {
-   // Check DB connection
+  // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
