@@ -630,6 +630,12 @@ void US_MwlSpeciesSim::assign_rotor( US_Rotor::Rotor& arotor,
 	    << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
 
+//For VEL-MWL:GMP
+void US_MwlSpeciesSim::start_sims_auto( void )
+{
+  start_sims();
+}
+  
 // Start the simulations for all chosen models
 void US_MwlSpeciesSim::start_sims( void )
 {

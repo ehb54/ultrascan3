@@ -41,6 +41,7 @@ class US_MwlSpeciesSim : public US_Widgets
         void define_buffer_auto( int );
         void select_rotor_auto( QStringList );
         void sim_params_auto( QMap< QString, QString> );
+        void start_sims_auto( void );
 
     private:
         int dbg_level;         //!< Debug level

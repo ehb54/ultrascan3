@@ -1329,6 +1329,8 @@ void US_Analysis_auto::gui_update( )
 	      QStringList rotor_defs;
 	      rotor_defs << "Default" << "(Simulation)";
 	      sdiag_mwlsim -> select_rotor_auto( rotor_defs );
+
+	      sdiag_mwlsim -> start_sims_auto();
 	      
 	      sdiag_mwlsim->show(); //DEBUG
 	    }
