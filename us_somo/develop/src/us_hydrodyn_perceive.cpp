@@ -530,63 +530,99 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // ("currently only 2 are supported"), and each atom's ionization index must be unique AND
     // match a declared pKa, which it then consumes (us_hydrodyn_load.cpp).
     //
-    // Citrate has three carboxyls, so it cannot be written in two states at all. Rather than emit
-    // a record the loader refuses -- which is what "Duplicate ionization index" was -- collapse to
-    // the single state that is true at pH 7: the deprotonated one, applied to the primary fields
-    // so the TYPES and the WATERS agree. That is a real limitation of the file format and is said
-    // so in the REVIEW block, not hidden.
+    // A species with more ionizable groups than that -- citrate has three carboxyls -- follows
+    // SOMO's existing PHOSPHATE CONVENTION (ehb54/Mattia, 2026-08-12: "our workaround for
+    // phosphate, which is present, was to assume the first oxygen to be always deprotonated").
+    // The lowest-pKa groups are taken as PERMANENTLY deprotonated and written straight into the
+    // primary fields; the two HIGHEST pKas keep the real, pH-switchable slots.
+    //
+    // Lowest-first is what makes this defensible rather than arbitrary: the lowest pKa is the one
+    // that deprotonates first and is therefore already fully ionized everywhere the entry is
+    // usable. Phosphate (2.15 / 7.20 / 12.35) reproduces the hand-written convention exactly --
+    // the first oxygen fixed, 7.20 and 12.35 switchable. Citrate (3.13 / 4.76 / 6.40) keeps its
+    // 2- / 3- transition instead of being frozen at pH 7, which is what collapsing used to do.
+    static const size_t MAX_IONIZATIONS = 2;    // hard limit of the file format, not a policy
     size_t n_ionizable = 0;
     for (const Properties::Alt& a : pr.alternate) if (!a.hybrid.empty()) ++n_ionizable;
-    const bool collapse_to_ionized = n_ionizable > 2;
+    const size_t n_fixed = n_ionizable > MAX_IONIZATIONS ? n_ionizable - MAX_IONIZATIONS : 0;
+
+    // Per atom, not per residue: an entry may now hold both fixed and switchable groups at once.
+    std::vector<char> fixed_deprot(atoms.size(), 0);
+    if (n_fixed) {
+        std::vector<size_t> ion_idx;
+        for (size_t k = 0; k < atoms.size() && k < pr.alternate.size(); ++k)
+            if (!pr.alternate[k].hybrid.empty()) ion_idx.push_back(k);
+        // stable, so chemically equivalent groups (identical pKa) are fixed in atom order and the
+        // same input always yields the same entry.
+        std::stable_sort(ion_idx.begin(), ion_idx.end(),
+                         [&](size_t x, size_t y){ return pr.alternate[x].pKa < pr.alternate[y].pKa; });
+        for (size_t j = 0; j < n_fixed; ++j) fixed_deprot[ion_idx[j]] = 1;
+    }
+
+    // A switchable slot needs BOTH the atom's 16-field form and a matching header pKa -- the
+    // loader builds {1..n_pairs} and rejects the record if an atom's index has no pair to consume.
+    // One predicate drives both emissions so they cannot drift apart, which is also why a pKa of
+    // zero disqualifies: an alternate with no pKa could otherwise take an index nothing declares.
+    auto switchable = [&](size_t k) {
+        return k < pr.alternate.size() && !pr.alternate[k].hybrid.empty()
+               && !fixed_deprot[k] && pr.alternate[k].pKa > 0;
+    };
 
     std::vector<std::string> pr_review_extra;
-    // When the entry has to be collapsed, the ionization still has to reach the review dialog --
-    // the columns must not go blank just because the file cannot hold the alternates (Mattia,
-    // 2026-08-10: "now the ionizable fields are empty ... I would left this in at this stage").
-    // A machine-readable comment carries it: the loader ignores "#" lines, and the dialog keeps
-    // the whole comment block, so this survives without any new plumbing.
+    // A fixed group still has to reach the review dialog -- its columns must not go blank just
+    // because the file cannot hold it as an alternate (Mattia, 2026-08-10: "now the ionizable
+    // fields are empty ... I would left this in at this stage"). A machine-readable comment
+    // carries it: the loader ignores "#" lines and the dialog keeps the whole comment block, so
+    // this survives without new plumbing. The trailing FIXED distinguishes it from a switchable
+    // group, which the dialog needs in order to show it read-only.
     std::ostringstream ion_note;
-    if (collapse_to_ionized)
+    if (n_fixed)
         for (size_t k = 0; k < atoms.size(); ++k) {
-            if (k >= pr.alternate.size() || pr.alternate[k].hybrid.empty()) continue;
+            if (!fixed_deprot[k]) continue;
             const Properties::Alt& a = pr.alternate[k];
             ion_note << "# ION\t" << atoms[k].name << '\t' << a.hybrid << '\t'
-                     << a.waters << '\t' << a.pKa << '\n';
+                     << a.waters << '\t' << a.pKa << "\tFIXED\n";
         }
-    if (collapse_to_ionized) {
-        char buf[192];
+    if (n_fixed) {
+        char buf[256];
         std::snprintf(buf, sizeof(buf),
-                      "%zu ionizable atoms, but somo.residue supports at most 2 per residue. "
-                      "Written in its pH 7 (deprotonated) state only -- types and waters both -- "
-                      "so this entry is NOT pH-switchable", n_ionizable);
+                      "%zu ionizable atoms, but somo.residue supports at most %zu per residue. "
+                      "The %zu lowest-pKa group(s) are written permanently deprotonated "
+                      "(phosphate convention); the %zu highest pKas stay pH-switchable",
+                      n_ionizable, MAX_IONIZATIONS, n_fixed, MAX_IONIZATIONS);
         pr_review_extra.push_back(buf);
     }
 
     std::ostringstream body;
     std::map<std::string,int> seen_new;
+    double bead_hydration = 0;   // accumulated per atom below, so it cannot drift from the atom lines
     int ion_index = 0;   // 1-based, one per ionizable atom, must match a header pKa
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
-        total_mw += ( collapse_to_ionized && k < pr.alternate.size()
-                      && !pr.alternate[k].hybrid.empty() )
-                    ? pr.alternate[k].mw : o.mw;
+        total_mw += fixed_deprot[k] ? pr.alternate[k].mw : o.mw;
         // atom line: name hybrid mw radius bead 0 index hydration
         const bool has_alt = k < pr.alternate.size() && !pr.alternate[k].hybrid.empty();
         const Properties::Alt* a = has_alt ? &pr.alternate[k] : nullptr;
         double hyd = k < pr.hydration.size() ? pr.hydration[k] : 0.0;
-        // When collapsing, the deprotonated species IS the entry: write its type, mass, radius
-        // and waters in the primary fields rather than the protonated ones.
-        const std::string pr_hyb = (collapse_to_ionized && a) ? a->hybrid : o.hybrid;
-        const double pr_mw  = (collapse_to_ionized && a) ? a->mw     : o.mw;
-        const double pr_rad = (collapse_to_ionized && a) ? a->radius : o.vdw_radius;
-        if (collapse_to_ionized && a) hyd = a->waters;
+        // For a group held fixed the deprotonated species IS the atom: write its type, mass,
+        // radius and waters in the primary fields rather than the protonated ones.
+        const std::string pr_hyb = fixed_deprot[k] ? a->hybrid : o.hybrid;
+        const double pr_mw  = fixed_deprot[k] ? a->mw     : o.mw;
+        const double pr_rad = fixed_deprot[k] ? a->radius : o.vdw_radius;
+        if (fixed_deprot[k]) hyd = a->waters;
+        // The bead's hydration counts an ionizable atom in its IONIZED state, which is what the
+        // coded residues do: ASP's OD2 carries 0 waters protonated and 5 ionized, and ASP's second
+        // bead is written 5, not 0. Summing the protonated column instead made 2CMD's citrate bead
+        // read 1 water against the 16 the review dialog computed for the same entry (Mattia,
+        // 2026-08-10) -- the headless and GUI paths disagreed on the same residue.
+        bead_hydration += a ? a->waters : hyd;
         body << atoms[k].name << '\t' << pr_hyb << '\t' << pr_mw << '\t' << pr_rad
              << "\t0\t0\t" << k << '\t' << hyd;
-        // 16-field form for an ionizable atom: the protonated species above, the deprotonated one
+        // 16-field form for a switchable atom: the protonated species above, the deprotonated one
         // here, exactly as somo.residue writes ASP's OD2 / LYS's NZ / ARG's NH2. The loader accepts
         // 8 or 16 fields and nothing between, so this is all or nothing. The ionization index must
         // be unique within the residue and match a declared pKa, so it counts up from 1.
-        if (a && !collapse_to_ionized) {
+        if (switchable(k)) {
             body << '\t' << ++ion_index << '\t' << a->hybrid << '\t' << a->mw << '\t' << a->radius
                  << "\t0\t0\t" << k << '\t' << a->waters;
         }
@@ -694,14 +730,14 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         // residues carry: vbar_ionized then pKa (ASP "0.603 0.603 3.67"). The table gives both
         // states the SAME vbar for every one of them -- Asp 0.603/0.603, Glu 0.663/0.663, Arg
         // 0.698/0.698 -- so the psv stays pH-independent here too, deliberately.
-        // One (vbar, pKa) pair per ionizable atom, in the same order the atom lines number their
-        // ionization indices -- the loader builds {1..n_pairs} and each atom's index must match
-        // one, consuming it. Omitted entirely when collapsing, since there are then no alternates.
-        if (!collapse_to_ionized)
-            for (const Properties::Alt& a : pr.alternate)
-                if (!a.hybrid.empty() && a.pKa > 0)
-                    h << '\t' << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0)
-                      << '\t' << std::setprecision(2) << a.pKa;
+        // One (vbar, pKa) pair per SWITCHABLE atom, walked in atom order -- the same order the atom
+        // lines number their ionization indices, so index n always lands on pair n. Groups held
+        // fixed by the phosphate convention contribute no pair: they are already deprotonated in
+        // the primary fields and have no state to switch to.
+        for (size_t k = 0; k < atoms.size(); ++k)
+            if (switchable(k))
+                h << '\t' << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0)
+                  << '\t' << std::setprecision(2) << pr.alternate[k].pKa;
         h << '\n';
         hdr << h.str();
     }
@@ -712,8 +748,6 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // reserved colour for any residue with 6/7/8 atoms -- 0 and 6 mean "exclude this bead from
     // the hydrodynamic computation" -- and an out-of-range value above 15 atoms.
     std::ostringstream bead;
-    double bead_hydration = 0;
-    for (double h : pr.hydration) bead_hydration += h;
     bead.setf(std::ios::fixed);
     bead << std::setprecision(2) << bead_hydration << '\t'  // bead hydration = sum over its atoms
          << pr.bead_color << '\t'       // colour: default is DEFAULT_BEAD_COLOR in the header

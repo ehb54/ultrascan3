@@ -86,13 +86,22 @@ every reason it declines to do something &mdash; is echoed to the text window.
      <i>O1H0-</i> with five in the deprotonated one &mdash; and an entry with them is written the
      same way, so <b><i>US-SOMO</i></b> can select the state by pH exactly as it does for a coded
      residue. The ionized hydration and the pKa are editable; the ionized type follows from the
-     chemistry. The pKa is <b>one value per residue</b>, so editing it on any row changes it for
-     the whole entry.
+     chemistry. Each ionizable group carries <b>its own pKa</b>, so the two groups of an entry can
+     be given different values.
      <p>
      The proposed pKa is a <b>convention value</b> borrowed from whichever coded residue shares
      the group (a carboxyl takes Asp's 3.67 or Glu's 4.25 according to chain length), <i>not</i> a
      prediction for your molecule. Citrate is the cautionary case: all three of its carboxyls are
      proposed at 3.67, where the real values are roughly 3.13, 4.76 and 6.40. Check it.
+<li> A residue file entry can hold <b>at most two</b> ionizable groups. A molecule with more &mdash;
+     citrate has three carboxyls, phosphate three oxygens &mdash; follows the convention already
+     used for phosphate in the coded table: the <b>lowest-pKa</b> groups are taken as
+     <b>permanently deprotonated</b> and the two highest keep the real, pH-switchable slots. A
+     fixed group shows its deprotonated type and waters in the ordinary columns, with its ionized
+     columns greyed out, because there is no second state for it to switch to. Lowest-first is the
+     safe choice: the lowest pKa is the first to deprotonate, so it is already fully ionized over
+     the pH range where the entry is used. For citrate this keeps the 2&minus;/3&minus; transition
+     live; only the 3.13 carboxyl is frozen.
 <li> <b>Anhydrous volume</b> and <b>psv</b> are editable.
 <li> <b>Bead count</b> is fixed at one for now; the <b>bead position</b> is the centre of
      gravity of all atoms; the <b>bead colour</b> defaults to <i>light green</i>, the colour the

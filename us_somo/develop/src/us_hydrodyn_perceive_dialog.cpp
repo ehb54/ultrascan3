@@ -134,7 +134,11 @@ void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
                 header_type_ = f[ 1 ].toInt();
                 init_molvol_ = f[ 2 ].toDouble();
                 header_asa_  = f[ 3 ].toDouble();
-                if ( f.size() >= 9 ) header_pKa_ = f[ 8 ].toDouble();
+                // Every (vbar_ionized, pKa) pair, not just the first: fields 8/9, 10/11, ...
+                // An entry with two switchable groups declares two, and taking only field 8 was
+                // what made both rows show the same pKa.
+                for ( int k = 7; k + 1 < f.size(); k += 2 )
+                    header_pKas_ << f[ k + 1 ].toDouble();
                 init_vbar_   = f[ 6 ].toDouble();
             }
             continue;
@@ -150,23 +154,28 @@ void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
             r.mw        = f[ 2 ].toDouble();
             r.radius    = f[ 3 ].toDouble();
             r.hydration = f[ 7 ].toDouble();
-            // The entry may have been collapsed because somo.residue holds at most two
-            // ionizations; the perceiver then records what it found as "# ION" comments so the
-            // dialog can still show it. Display only -- these rows stay 8-field on the way out.
+            // A group the phosphate convention holds permanently deprotonated cannot be written
+            // as an alternate, so the perceiver records it as a "# ION ... FIXED" comment and the
+            // dialog shows it read-only. Its primary fields already ARE the deprotonated species.
             for ( const QString & cl : comment_.split( "\n" ) ) {
                 if ( !cl.startsWith( "# ION\t" ) ) continue;
                 const QStringList g = cl.split( "\t" );
                 if ( g.size() < 5 || g[ 1 ] != r.name ) continue;
                 r.ion_hybrid    = g[ 2 ];
                 r.ion_hydration = g[ 3 ].toDouble();
+                r.ion_pKa       = g[ 4 ].toDouble();
                 r.ion_display_only = true;
-                if ( header_pKa_ <= 0 ) header_pKa_ = g[ 4 ].toDouble();
             }
-            if ( f.size() >= 16 ) {                 // ionizable: fields 10-16 are the alternate
+            if ( f.size() >= 16 ) {                 // switchable: fields 10-16 are the alternate
                 r.ion_hybrid    = f[ 9 ];
                 r.ion_mw        = f[ 10 ].toDouble();
                 r.ion_radius    = f[ 11 ].toDouble();
                 r.ion_hydration = f[ 15 ].toDouble();
+                r.ion_display_only = false;
+                // Field 9 is the 1-based ionization index; it selects which header pair is this
+                // atom's, which is the only thing tying an atom to its own pKa.
+                const int ion_index = f[ 8 ].toInt();
+                r.ion_pKa = header_pKas_.value( ion_index - 1, 0.0 );
             }
             rows_ << r;
         }
@@ -220,7 +229,8 @@ void US_Hydrodyn_Perceive_Dialog::populate_table() {
         QTableWidgetItem * i6 = new QTableWidgetItem(
             ionizable ? QString::number( rows_[ r ].ion_hydration, 'f', 2 ) : QString() );
         QTableWidgetItem * i7 = new QTableWidgetItem(
-            ionizable && header_pKa_ > 0 ? QString::number( header_pKa_, 'f', 2 ) : QString() );
+            ionizable && rows_[ r ].ion_pKa > 0
+            ? QString::number( rows_[ r ].ion_pKa, 'f', 2 ) : QString() );
         i6->setForeground( QBrush( QColor( 0xb0, 0, 0 ) ) );
         i5->setFlags( i5->flags() & ~Qt::ItemIsEditable );      // the type follows the chemistry
         // A display-only alternate came from a collapsed entry: it is shown so the reviewer can
@@ -565,13 +575,14 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
              .arg( asa, 0, 'f', 2 )
              .arg( rows_.size() )
              .arg( sb_vbar->value(), 0, 'f', 3 );
-    // The two extra header fields the coded ionizable residues carry: vbar_ionized then pKa.
-    // Both states get the same vbar, as every ionizable residue in somo.residue does.
-    int n_emitted_ion = 0;
+    // The extra header fields the coded ionizable residues carry: vbar_ionized then pKa, one pair
+    // per switchable group. Both states get the same vbar, as every ionizable residue in
+    // somo.residue does. Walked in ROW order, which is the order the atom lines below number their
+    // ionization indices -- index n must land on pair n or the loader rejects the record.
     for ( int r = 0; r < rows_.size(); ++r )
-        if ( !rows_[ r ].ion_hybrid.isEmpty() && !rows_[ r ].ion_display_only ) ++n_emitted_ion;
-    for ( int k = 0; k < n_emitted_ion; ++k )
-        s += QString( "\t%1\t%2" ).arg( sb_vbar->value(), 0, 'f', 3 ).arg( header_pKa_, 0, 'f', 2 );
+        if ( !rows_[ r ].ion_hybrid.isEmpty() && !rows_[ r ].ion_display_only )
+            s += QString( "\t%1\t%2" ).arg( sb_vbar->value(), 0, 'f', 3 )
+                                      .arg( rows_[ r ].ion_pKa, 0, 'f', 2 );
     s += "\n";
     int ion_index = 0;    // unique per residue, and must match a declared header pKa
     for ( int r = 0; r < rows_.size(); ++r ) {
@@ -613,7 +624,7 @@ void US_Hydrodyn_Perceive_Dialog::hydration_edited( int row, int col ) {
     const double v = it->text().toDouble( &ok );
     const double old = col == 4 ? rows_[ row ].hydration
                      : col == 6 ? rows_[ row ].ion_hydration
-                                : header_pKa_;
+                                : rows_[ row ].ion_pKa;
     // pKa must be positive; a hydration count may legitimately be zero.
     if ( !ok || v < 0 || ( col == 7 && v <= 0 ) ) {
         it->setText( QString::number( old, 'f', 2 ) );
@@ -621,16 +632,10 @@ void US_Hydrodyn_Perceive_Dialog::hydration_edited( int row, int col ) {
     }
     if      ( col == 4 ) rows_[ row ].hydration     = v;
     else if ( col == 6 ) rows_[ row ].ion_hydration = v;
-    else {
-        // One pKa per residue, as somo.residue stores it in the header rather than per atom.
-        // Editing it on any row therefore changes it for the entry, so keep the cells in step.
-        header_pKa_ = v;
-        const bool was_blocked = tbl_atoms->blockSignals( true );
-        for ( int r = 0; r < rows_.size(); ++r )
-            if ( !rows_[ r ].ion_hybrid.isEmpty() && tbl_atoms->item( r, 7 ) )
-                tbl_atoms->item( r, 7 )->setText( QString::number( header_pKa_, 'f', 2 ) );
-        tbl_atoms->blockSignals( was_blocked );
-    }
+    // The pKa belongs to THIS group, not to the residue: somo.residue keeps one header pair per
+    // ionization and the atom's index selects its own. Editing one row must not touch the other,
+    // which it used to -- that made citrate's two switchable carboxyls share a single value.
+    else                 rows_[ row ].ion_pKa       = v;
     refresh_entry();
 }
 

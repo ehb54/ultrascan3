@@ -241,4 +241,156 @@ TEST("element inference from atom names when the PDB element column is empty") {
     CHECK(element_from_atom_name("CD",  "CGU") == "C");   // gamma-carboxyglutamate, NOT cadmium
 }
 
+// ---- the phosphate convention -------------------------------------------------------------
+// somo.residue holds at most two ionizations per residue. A species with more (citrate: three
+// carboxyls) fixes its LOWEST-pKa groups permanently deprotonated and keeps the two highest
+// switchable -- SOMO's existing hand-written convention for phosphate.
+namespace {
+
+// Split the emitted block into header line, atom lines, and "# ION" comments.
+struct Parsed {
+    std::vector<std::string> comments, atom_lines;
+    std::string header;
+};
+static std::vector<std::string> split_tabs(const std::string& s){
+    std::vector<std::string> f; std::string cur; std::istringstream is(s);
+    while(std::getline(is,cur,'\t')) f.push_back(cur);
+    return f;
+}
+static Parsed parse_block(const std::string& blk, size_t natoms){
+    Parsed p; std::istringstream is(blk); std::string ln; bool seen_hdr=false; size_t n=0;
+    while(std::getline(is,ln)){
+        if(ln.rfind("#",0)==0){ p.comments.push_back(ln); continue; }
+        if(ln.empty()) continue;
+        if(!seen_hdr){ p.header=ln; seen_hdr=true; continue; }
+        if(n++ < natoms) p.atom_lines.push_back(ln);
+    }
+    return p;
+}
+// atoms named O1..On plus a trailing C; alt[i].pKa taken from pkas (0 = not ionizable)
+static Perceiver::Emitted emit_with_pkas(const std::vector<double>& pkas){
+    std::vector<InAtom>  in;
+    std::vector<OutAtom> out;
+    Perceiver::Properties pr;
+    pr.have_vbar = true; pr.vbar = 0.700;
+    for(size_t i=0;i<pkas.size();++i){
+        InAtom a; a.element="O"; a.name="O"+std::to_string(i+1); in.push_back(a);
+        OutAtom o; o.element="O"; o.hybrid="O2H1"; o.mw=17.01; o.vdw_radius=1.50;
+        o.in_table=true; out.push_back(o);
+        pr.hydration.push_back(1.0);
+        Perceiver::Properties::Alt alt;
+        if(pkas[i]>0){ alt.hybrid="O1H0-"; alt.mw=16.00; alt.radius=1.52;
+                       alt.waters=5.0; alt.pKa=pkas[i]; }
+        pr.alternate.push_back(alt);
+    }
+    InAtom c; c.element="C"; c.name="C1"; in.push_back(c);
+    OutAtom co; co.element="C"; co.hybrid="C4H2"; co.mw=14.03; co.vdw_radius=1.70;
+    co.in_table=true; out.push_back(co);
+    pr.hydration.push_back(0.0);
+    pr.alternate.push_back(Perceiver::Properties::Alt());
+    return Perceiver(table()).emit_residue("CIT", in, out, "citrate", &pr);
+}
+
+} // namespace
+
+TEST("two ionizable groups: both stay switchable, no group is fixed"){
+    auto em = emit_with_pkas({4.76, 6.40});
+    auto p  = parse_block(em.residue_block, 3);
+    auto h  = split_tabs(p.header);
+    // header: name type molvol asa natoms nbeads vbar (vbar,pKa) x2  == 11 fields
+    REQUIRE(h.size() == 11);
+    CHECK_EQ(h[8],  std::string("4.76"));
+    CHECK_EQ(h[10], std::string("6.40"));
+    // both oxygens 16-field, indices 1 and 2
+    REQUIRE(p.atom_lines.size() == 3);
+    CHECK_EQ(split_tabs(p.atom_lines[0]).size(), (size_t)16);
+    CHECK_EQ(split_tabs(p.atom_lines[1]).size(), (size_t)16);
+    CHECK_EQ(split_tabs(p.atom_lines[0])[8], std::string("1"));
+    CHECK_EQ(split_tabs(p.atom_lines[1])[8], std::string("2"));
+    CHECK_EQ(split_tabs(p.atom_lines[2]).size(), (size_t)8);   // the carbon
+    // nothing fixed, so no FIXED note
+    for(auto& c : p.comments) CHECK(c.find("FIXED") == std::string::npos);
+}
+
+TEST("three ionizable groups: lowest pKa is fixed deprotonated, two highest stay switchable"){
+    auto em = emit_with_pkas({3.13, 4.76, 6.40});           // citrate
+    auto p  = parse_block(em.residue_block, 4);
+    auto h  = split_tabs(p.header);
+    REQUIRE(h.size() == 11);                                 // exactly TWO pairs, never three
+    CHECK_EQ(h[8],  std::string("4.76"));
+    CHECK_EQ(h[10], std::string("6.40"));
+    REQUIRE(p.atom_lines.size() == 4);
+    // O1 (pKa 3.13, the lowest) is held fixed: 8 fields, and its PRIMARY type/mass/waters are
+    // the deprotonated species, not the protonated one.
+    auto a0 = split_tabs(p.atom_lines[0]);
+    CHECK_EQ(a0.size(), (size_t)8);
+    CHECK_EQ(a0[1], std::string("O1H0-"));
+    CHECK_EQ(a0[2], std::string("16"));
+    CHECK_EQ(a0[7], std::string("5"));
+    // O2 and O3 keep real switchable slots, numbered 1 and 2 to match the header pairs
+    CHECK_EQ(split_tabs(p.atom_lines[1]).size(), (size_t)16);
+    CHECK_EQ(split_tabs(p.atom_lines[2]).size(), (size_t)16);
+    CHECK_EQ(split_tabs(p.atom_lines[1])[8], std::string("1"));
+    CHECK_EQ(split_tabs(p.atom_lines[2])[8], std::string("2"));
+    // the fixed group still reaches the dialog, marked FIXED
+    bool found = false;
+    for(auto& c : p.comments)
+        if(c.rfind("# ION\tO1\t",0)==0 && c.find("\tFIXED")!=std::string::npos) found = true;
+    CHECK(found);
+}
+
+TEST("fixing is by pKa, not by atom order"){
+    // lowest pKa sits in the MIDDLE; it must still be the one held fixed
+    auto em = emit_with_pkas({6.40, 3.13, 4.76});
+    auto p  = parse_block(em.residue_block, 4);
+    REQUIRE(p.atom_lines.size() == 4);
+    CHECK_EQ(split_tabs(p.atom_lines[0]).size(), (size_t)16);  // 6.40 switchable
+    CHECK_EQ(split_tabs(p.atom_lines[1]).size(), (size_t)8);   // 3.13 FIXED
+    CHECK_EQ(split_tabs(p.atom_lines[2]).size(), (size_t)16);  // 4.76 switchable
+    // header pairs follow ATOM order, so index n lands on pair n
+    auto h = split_tabs(p.header);
+    REQUIRE(h.size() == 11);
+    CHECK_EQ(h[8],  std::string("6.40"));
+    CHECK_EQ(h[10], std::string("4.76"));
+    CHECK_EQ(split_tabs(p.atom_lines[0])[8], std::string("1"));
+    CHECK_EQ(split_tabs(p.atom_lines[2])[8], std::string("2"));
+}
+
+TEST("phosphate: first oxygen always deprotonated, 7.20 and 12.35 switchable"){
+    auto em = emit_with_pkas({2.15, 7.20, 12.35});
+    auto p  = parse_block(em.residue_block, 4);
+    auto h  = split_tabs(p.header);
+    REQUIRE(h.size() == 11);
+    CHECK_EQ(h[8],  std::string("7.20"));
+    CHECK_EQ(h[10], std::string("12.35"));
+    CHECK_EQ(split_tabs(p.atom_lines[0]).size(), (size_t)8);   // the first oxygen
+    CHECK_EQ(split_tabs(p.atom_lines[0])[1], std::string("O1H0-"));
+}
+
+TEST("bead hydration counts ionizable atoms ionized, as the coded residues do"){
+    // ASP's OD2 is 0 waters protonated / 5 ionized and ASP's second bead is written 5, not 0.
+    // Here: 3 ionizable oxygens x 5 ionized + 0 on the carbon = 15. Summing the PROTONATED column
+    // would give 3 x 1 = 3 -- the same defect that made 2CMD's real citrate emit a bead of 1
+    // against the 16 its review dialog computed.
+    auto em = emit_with_pkas({3.13, 4.76, 6.40});
+    std::istringstream is(em.residue_block); std::string ln, last;
+    while(std::getline(is,ln)) if(!ln.empty() && ln[0] != '#') last = ln;
+    auto b = split_tabs(last);
+    REQUIRE(b.size() == 5);                      // hydration colour placing chain volume
+    CHECK_EQ(b[0], std::string("15.00"));
+}
+
+TEST("four ionizable groups: two lowest fixed, still exactly two header pairs"){
+    auto em = emit_with_pkas({2.0, 3.0, 4.0, 5.0});
+    auto p  = parse_block(em.residue_block, 5);
+    auto h  = split_tabs(p.header);
+    REQUIRE(h.size() == 11);
+    CHECK_EQ(h[8],  std::string("4.00"));
+    CHECK_EQ(h[10], std::string("5.00"));
+    CHECK_EQ(split_tabs(p.atom_lines[0]).size(), (size_t)8);
+    CHECK_EQ(split_tabs(p.atom_lines[1]).size(), (size_t)8);
+    CHECK_EQ(split_tabs(p.atom_lines[2]).size(), (size_t)16);
+    CHECK_EQ(split_tabs(p.atom_lines[3]).size(), (size_t)16);
+}
+
 int main(){ return tinytest::run(); }
