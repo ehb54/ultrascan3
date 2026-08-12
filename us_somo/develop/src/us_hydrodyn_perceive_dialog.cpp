@@ -211,11 +211,28 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     lbl_info->setFont( QFont( USglobal->config_list.fontFamily,
                               USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
+    // Pull the REVIEW lines out first: the summary quotes their count, and it has to be the count
+    // the reviewer can actually see. tent_.flagged counts only atoms the PERCEPTION step found
+    // ambiguous, while the box below also carries psv, volume and hydration notes -- so the two
+    // disagreed, and a "0 atom(s) flagged" summary sat above a box with entries in it.
+    QString review_flags;
+    {
+        const QStringList cl = comment_.split( "\n" );
+        bool in_review = false;
+        for ( int i = 0; i < cl.size(); ++i ) {
+            if ( cl[ i ].startsWith( "# REVIEW" ) ) { in_review = true; continue; }
+            if ( in_review && cl[ i ].startsWith( "#   " ) ) review_flags += cl[ i ].mid( 4 ) + "\n";
+            else if ( in_review && !cl[ i ].startsWith( "#" ) ) in_review = false;
+        }
+    }
+    const int review_count = review_flags.trimmed().isEmpty()
+                             ? 0 : review_flags.trimmed().split( "\n" ).size();
+
     lbl_summary = new QLabel(
-        QString( us_tr( "%1 atoms, %2 instance(s) in this model, %3 atom(s) flagged for review.\n"
+        QString( us_tr( "%1 atoms, %2 instance(s) in this model, %3 item(s) flagged for review.\n"
                         "Everything below was derived from the coordinates. Check it, correct "
                         "anything that looks wrong, then Accept or Skip." ) )
-            .arg( tent_.atoms ).arg( tent_.instances ).arg( tent_.flagged ), this );
+            .arg( tent_.atoms ).arg( tent_.instances ).arg( review_count ), this );
     lbl_summary->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
     lbl_summary->setWordWrap( true );
     lbl_summary->setPalette( perceive_palette() );
@@ -313,7 +330,10 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     lbl_position->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
 
     // ---- review flags and the running entry ------------------------------------------------
-    lbl_review = new QLabel( us_tr( "Flagged for review" ), this );
+    lbl_review = new QLabel( review_count
+                             ? QString( us_tr( "Flagged for review - %1 item(s), scroll for all" ) )
+                               .arg( review_count )
+                             : QString( us_tr( "Flagged for review" ) ), this );
     lbl_review->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
     lbl_review->setPalette( perceive_palette() );
     AUTFBACK( lbl_review );
@@ -323,32 +343,37 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     te_review = new QTextEdit( this );
     te_review->setReadOnly( true );
     te_review->setPalette( perceive_palette() );
+    AUTFBACK( te_review );
+    // A sunken frame and a permanent vertical scrollbar. On the old grey background the box
+    // blended into the dialog and there was no sign the list continued below the fold (Mattia,
+    // 2026-08-10: "I didn't get from the actual perceiver that there were more lines to be
+    // scrolled, likely the grey bkg fooled me. It should be evident"). White needs the border
+    // more than grey did, and an always-present scrollbar shows the list is longer than the box
+    // without the reviewer having to discover it.
+    te_review->setFrameStyle( QFrame::StyledPanel | QFrame::Sunken );
+    te_review->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
     te_review->setMinimumHeight( 90 );
     te_review->setFont( QFont( "Courier", USglobal->config_list.fontSize - 1 ) );
     {
-        QString flags;
-        const QStringList cl = comment_.split( "\n" );
-        bool in_review = false;
-        for ( int i = 0; i < cl.size(); ++i ) {
-            if ( cl[ i ].startsWith( "# REVIEW" ) ) { in_review = true; continue; }
-            if ( in_review && cl[ i ].startsWith( "#   " ) ) flags += cl[ i ].mid( 4 ) + "\n";
-            else if ( in_review && !cl[ i ].startsWith( "#" ) ) in_review = false;
-        }
-        te_review->setText( flags.isEmpty()
+        te_review->setText( review_flags.isEmpty()
                             ? us_tr( "Nothing flagged: every atom was classified confidently.\n"
                                      "The computed values are still estimates -- check them." )
-                            : flags );
+                            : review_flags );
     }
 
     te_entry = new QTextEdit( this );
     te_entry->setReadOnly( true );
     te_entry->setPalette( perceive_palette() );
+    AUTFBACK( te_entry );
+    te_entry->setFrameStyle( QFrame::StyledPanel | QFrame::Sunken );
+    te_entry->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
     te_entry->setMinimumHeight( 120 );
     te_entry->setFont( QFont( "Courier", USglobal->config_list.fontSize - 1 ) );
 
     cb_save = new QCheckBox( us_tr( " Also append this entry to somo.residue " ), this );
     cb_save->setChecked( false );
     cb_save->setPalette( perceive_palette() );
+    AUTFBACK( cb_save );
     AUTFBACK( cb_save );
     cb_save->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     cb_save->setToolTip( us_tr( "Off by default. When off the entry is used for this session "
