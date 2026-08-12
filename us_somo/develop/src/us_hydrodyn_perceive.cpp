@@ -532,7 +532,16 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         // atom line: name hybrid mw radius bead 0 index hydration
         const double hyd = k < pr.hydration.size() ? pr.hydration[k] : 0.0;
         body << atoms[k].name << '\t' << o.hybrid << '\t' << o.mw << '\t' << o.vdw_radius
-             << "\t0\t0\t" << k << '\t' << hyd << '\n';
+             << "\t0\t0\t" << k << '\t' << hyd;
+        // 16-field form for an ionizable atom: the protonated species above, the deprotonated one
+        // here, exactly as somo.residue writes ASP's OD2 / LYS's NZ / ARG's NH2. The loader accepts
+        // 8 or 16 fields and nothing between (us_hydrodyn_load.cpp), so this is all or nothing.
+        if (k < pr.alternate.size() && !pr.alternate[k].hybrid.empty()) {
+            const Properties::Alt& a = pr.alternate[k];
+            body << "\t1\t" << a.hybrid << '\t' << a.mw << '\t' << a.radius
+                 << "\t0\t0\t" << k << '\t' << a.waters;
+        }
+        body << '\n';
         if (!o.in_table && !seen_new.count(o.hybrid)) {
             seen_new[o.hybrid]=1;
             std::ostringstream hl;
@@ -629,7 +638,18 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         h << resname << "\t0\t" << std::setprecision(2) << (pr.have_molvol ? pr.molvol : 0.0)
           << '\t' << std::setprecision(2) << asa_out
           << '\t' << atoms.size() << "\t1\t"
-          << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0) << '\n';
+          << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0);
+        // An entry with an ionizable atom needs the two extra header fields the coded ionizable
+        // residues carry: vbar_ionized then pKa (ASP "0.603 0.603 3.67"). The table gives both
+        // states the SAME vbar for every one of them -- Asp 0.603/0.603, Glu 0.663/0.663, Arg
+        // 0.698/0.698 -- so the psv stays pH-independent here too, deliberately.
+        double pKa = 0;
+        for (const Properties::Alt& a : pr.alternate)
+            if (!a.hybrid.empty() && a.pKa > 0) { pKa = a.pKa; break; }
+        if (pKa > 0)
+            h << '\t' << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0)
+              << '\t' << std::setprecision(2) << pKa;
+        h << '\n';
         hdr << h.str();
     }
     // One default bead, all atoms assigned to it (Mattia: single bead for now).

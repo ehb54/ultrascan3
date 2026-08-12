@@ -53,9 +53,31 @@ private:
     std::map<std::string, Entry> by_hybrid_;
 };
 
+// An atom's deprotonated alternate, for entries that need to be pH-aware the way the coded
+// residues are. somo.residue writes these as a 16-field atom line: the first 8 fields are the
+// PROTONATED species and fields 10-16 the DEPROTONATED one, with the pKa in the residue header.
+// Verified against the table --
+//     ASP  OD2  O2H1  ...0  |  O1H0-  ...5      COOH  -> COO-
+//     LYS  NZ   N4H3+ ...3  |  N3H2   ...1      NH3+  -> NH2
+//     ARG  NH2  N3H2+ ...1  |  N3H1   ...0      guanidinium+ -> neutral
+// so "primary = protonated, alternate = deprotonated" holds for acids and bases alike.
+//
+// pKa is a CONVENTION value taken from whichever coded residue carries the same group, not a
+// prediction for this molecule: citrate's three carboxyls all come out short-chain and would be
+// proposed at ASP's 3.67, where the real values are ~3.13/4.76/6.40. It is offered for the user
+// to accept or change (Mattia, 2026-08-10), never presented as measured.
+struct Alternate {
+    std::string hybrid;                    // empty = this atom has no ionizable alternate
+    double waters = 0;
+    double pKa    = 0;
+    std::string why;                       // group that was recognised, for the review line
+};
+
 struct Proposal {
     std::vector<double> per_atom;          // parallel to the idx passed in
+    std::vector<Alternate> alternate;      // parallel to per_atom; hybrid empty when not ionizable
     double total = 0;
+    double total_ionized = 0;              // the same sum with every alternate applied
     std::vector<std::string> review;       // atoms whose type is unknown or not confident
     bool ok = false;
 };

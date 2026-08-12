@@ -69,6 +69,25 @@ Built build(const std::string& resname,
         out.hydration = somo_hydration::propose_by_rules(atoms, perceived, bonds, idx, hyd);
         if (out.hydration.ok) {
             props.hydration = out.hydration.per_atom;
+            // Carry the deprotonated alternates through, resolving each one's mass and radius from
+            // somo.hybrid so the emitted second half of the line is the table's own numbers rather
+            // than anything invented here.
+            props.alternate.assign(out.hydration.alternate.size(), {});
+            for (size_t k = 0; k < out.hydration.alternate.size(); ++k) {
+                const somo_hydration::Alternate& a = out.hydration.alternate[k];
+                if (a.hybrid.empty()) continue;
+                const somo_perceive::HybridInfo* hi = perc.table().get(a.hybrid);
+                if (!hi) {   // the alternate type is not in somo.hybrid: say so, do not invent one
+                    props.review.push_back(a.hybrid + ": ionized alternate type is not in "
+                                           "somo.hybrid, the alternate state was not written");
+                    continue;
+                }
+                props.alternate[k].mw     = hi->mw;
+                props.alternate[k].radius = hi->radius;
+                props.alternate[k].hybrid = a.hybrid;
+                props.alternate[k].waters = a.waters;
+                props.alternate[k].pKa    = a.pKa;
+            }
             for (const std::string& r : out.hydration.review) props.review.push_back(r);
         }
     }

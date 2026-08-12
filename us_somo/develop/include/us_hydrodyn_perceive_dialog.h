@@ -75,6 +75,10 @@ private:
     struct AtomRow {
         QString name, hybrid;
         double  mw = 0, radius = 0, hydration = 0;
+        // Deprotonated alternate, written as fields 10-16 of a 16-field atom line exactly as the
+        // coded ionizable residues are (ASP OD2, LYS NZ, ARG NH2). Empty ion_hybrid = 8 fields.
+        QString ion_hybrid;
+        double  ion_mw = 0, ion_radius = 0, ion_hydration = 0;
     };
     QVector<AtomRow> rows_;
     QString comment_;                                  // the "# ..." header lines
@@ -85,6 +89,7 @@ private:
     // emitter itself was fixed -- the headless path was right and the GUI path was not.
     int    header_type_ = 0;
     double header_asa_  = 0;
+    double header_pKa_  = 0;   // residue-level, from whichever atom is ionizable
     // values the widgets open with: the perceived proposal, or what was previously accepted
     double init_vbar_   = 0;
     double init_molvol_ = 0;
