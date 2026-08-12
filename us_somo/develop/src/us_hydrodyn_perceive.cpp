@@ -540,6 +540,19 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     const bool collapse_to_ionized = n_ionizable > 2;
 
     std::vector<std::string> pr_review_extra;
+    // When the entry has to be collapsed, the ionization still has to reach the review dialog --
+    // the columns must not go blank just because the file cannot hold the alternates (Mattia,
+    // 2026-08-10: "now the ionizable fields are empty ... I would left this in at this stage").
+    // A machine-readable comment carries it: the loader ignores "#" lines, and the dialog keeps
+    // the whole comment block, so this survives without any new plumbing.
+    std::ostringstream ion_note;
+    if (collapse_to_ionized)
+        for (size_t k = 0; k < atoms.size(); ++k) {
+            if (k >= pr.alternate.size() || pr.alternate[k].hybrid.empty()) continue;
+            const Properties::Alt& a = pr.alternate[k];
+            ion_note << "# ION\t" << atoms[k].name << '\t' << a.hybrid << '\t'
+                     << a.waters << '\t' << a.pKa << '\n';
+        }
     if (collapse_to_ionized) {
         char buf[192];
         std::snprintf(buf, sizeof(buf),
@@ -655,6 +668,7 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
                     "#   quantity with literature backing (Kuntz), the per-atom split is convention.\n";
         prov << "# bead assignment and ASA : stubbed (single bead, all atoms).\n";
         hdr << prov.str();
+        hdr << ion_note.str();
     }
     hdr << "# Residue mass from perceived atoms: " << total_mw << " Da (its mass fraction of the\n"
            "#   model tells you how much an imprecise psv here actually matters).\n";

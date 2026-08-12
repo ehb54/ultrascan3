@@ -79,6 +79,9 @@ private:
         // coded ionizable residues are (ASP OD2, LYS NZ, ARG NH2). Empty ion_hybrid = 8 fields.
         QString ion_hybrid;
         double  ion_mw = 0, ion_radius = 0, ion_hydration = 0;
+        // True when the alternate is shown for information only, because the entry had
+        // to be collapsed (somo.residue holds at most two ionizations per residue).
+        bool    ion_display_only = false;
     };
     QVector<AtomRow> rows_;
     QString comment_;                                  // the "# ..." header lines

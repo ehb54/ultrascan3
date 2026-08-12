@@ -150,6 +150,18 @@ void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
             r.mw        = f[ 2 ].toDouble();
             r.radius    = f[ 3 ].toDouble();
             r.hydration = f[ 7 ].toDouble();
+            // The entry may have been collapsed because somo.residue holds at most two
+            // ionizations; the perceiver then records what it found as "# ION" comments so the
+            // dialog can still show it. Display only -- these rows stay 8-field on the way out.
+            for ( const QString & cl : comment_.split( "\n" ) ) {
+                if ( !cl.startsWith( "# ION\t" ) ) continue;
+                const QStringList g = cl.split( "\t" );
+                if ( g.size() < 5 || g[ 1 ] != r.name ) continue;
+                r.ion_hybrid    = g[ 2 ];
+                r.ion_hydration = g[ 3 ].toDouble();
+                r.ion_display_only = true;
+                if ( header_pKa_ <= 0 ) header_pKa_ = g[ 4 ].toDouble();
+            }
             if ( f.size() >= 16 ) {                 // ionizable: fields 10-16 are the alternate
                 r.ion_hybrid    = f[ 9 ];
                 r.ion_mw        = f[ 10 ].toDouble();
@@ -190,6 +202,9 @@ void US_Hydrodyn_Perceive_Dialog::populate_table() {
         QTableWidgetItem * i2 = new QTableWidgetItem( QString::number( rows_[ r ].mw, 'f', 2 ) );
         QTableWidgetItem * i3 = new QTableWidgetItem( QString::number( rows_[ r ].radius, 'f', 2 ) );
         QTableWidgetItem * i4 = new QTableWidgetItem( QString::number( rows_[ r ].hydration, 'f', 2 ) );
+        // Colour the water counts in the editable cells themselves, not only the summary
+        // (Mattia, 2026-08-10: "I meant in the editable fields").
+        i4->setForeground( QBrush( QColor( 0xb0, 0, 0 ) ) );
         i0->setFlags( i0->flags() & ~Qt::ItemIsEditable );
         i1->setFlags( i1->flags() & ~Qt::ItemIsEditable );
         i2->setFlags( i2->flags() & ~Qt::ItemIsEditable );
@@ -206,7 +221,14 @@ void US_Hydrodyn_Perceive_Dialog::populate_table() {
             ionizable ? QString::number( rows_[ r ].ion_hydration, 'f', 2 ) : QString() );
         QTableWidgetItem * i7 = new QTableWidgetItem(
             ionizable && header_pKa_ > 0 ? QString::number( header_pKa_, 'f', 2 ) : QString() );
+        i6->setForeground( QBrush( QColor( 0xb0, 0, 0 ) ) );
         i5->setFlags( i5->flags() & ~Qt::ItemIsEditable );      // the type follows the chemistry
+        // A display-only alternate came from a collapsed entry: it is shown so the reviewer can
+        // see what was perceived, but it is not part of what gets written, so it is not editable.
+        if ( !ionizable || rows_[ r ].ion_display_only ) {
+            i6->setFlags( i6->flags() & ~Qt::ItemIsEditable );
+            i7->setFlags( i7->flags() & ~Qt::ItemIsEditable );
+        }
         if ( !ionizable ) {                                     // nothing to edit on a fixed atom
             i6->setFlags( i6->flags() & ~Qt::ItemIsEditable );
             i7->setFlags( i7->flags() & ~Qt::ItemIsEditable );
@@ -542,9 +564,13 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
              .arg( sb_vbar->value(), 0, 'f', 3 );
     // The two extra header fields the coded ionizable residues carry: vbar_ionized then pKa.
     // Both states get the same vbar, as every ionizable residue in somo.residue does.
-    if ( header_pKa_ > 0 )
+    int n_emitted_ion = 0;
+    for ( int r = 0; r < rows_.size(); ++r )
+        if ( !rows_[ r ].ion_hybrid.isEmpty() && !rows_[ r ].ion_display_only ) ++n_emitted_ion;
+    for ( int k = 0; k < n_emitted_ion; ++k )
         s += QString( "\t%1\t%2" ).arg( sb_vbar->value(), 0, 'f', 3 ).arg( header_pKa_, 0, 'f', 2 );
     s += "\n";
+    int ion_index = 0;    // unique per residue, and must match a declared header pKa
     for ( int r = 0; r < rows_.size(); ++r ) {
         s += QString( "%1\t%2\t%3\t%4\t0\t0\t%5\t%6" )
                  .arg( rows_[ r ].name )
@@ -553,8 +579,9 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
                  .arg( rows_[ r ].radius )
                  .arg( r )
                  .arg( rows_[ r ].hydration );
-        if ( !rows_[ r ].ion_hybrid.isEmpty() )
-            s += QString( "\t1\t%1\t%2\t%3\t0\t0\t%4\t%5" )
+        if ( !rows_[ r ].ion_hybrid.isEmpty() && !rows_[ r ].ion_display_only )
+            s += QString( "\t%1\t%2\t%3\t%4\t0\t0\t%5\t%6" )
+                     .arg( ++ion_index )
                      .arg( rows_[ r ].ion_hybrid )
                      .arg( rows_[ r ].ion_mw )
                      .arg( rows_[ r ].ion_radius )
