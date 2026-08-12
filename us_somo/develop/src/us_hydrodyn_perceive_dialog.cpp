@@ -57,6 +57,11 @@ static QPalette perceive_palette() {
     p.setColor( QPalette::WindowText, Qt::black );
     p.setColor( QPalette::Text,       Qt::black );
     p.setColor( QPalette::ButtonText, Qt::black );
+    // QHeaderView paints its sections with Button/ButtonText, not Window/WindowText. Setting only
+    // the text left the section background inherited, and the table headers came out dark on dark
+    // (Mattia, 2026-08-10: "table headers are unreadable"). A light grey keeps them reading as
+    // headers against the white body while staying legible.
+    p.setColor( QPalette::Button, QColor( 232, 232, 232 ) );
     return p;
 }
 
@@ -278,6 +283,13 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
             << us_tr( "Radius" ) << us_tr( "Hydration (edit)" )
             << us_tr( "Ionized" ) << us_tr( "Ionized hydration (edit)" ) << us_tr( "pKa (edit)" );
     tbl_atoms->setHorizontalHeaderLabels( headers );
+    // The table and its header need the palette explicitly: neither inherits the frame's, and the
+    // header in particular is drawn by its own widget.
+    tbl_atoms->setPalette( perceive_palette() );
+    AUTFBACK( tbl_atoms );
+    tbl_atoms->horizontalHeader()->setPalette( perceive_palette() );
+    tbl_atoms->horizontalHeader()->setFont( QFont( USglobal->config_list.fontFamily,
+                                                   USglobal->config_list.fontSize, QFont::Bold ) );
     tbl_atoms->verticalHeader()->setVisible( false );
     tbl_atoms->setSelectionMode( QAbstractItemView::SingleSelection );
     populate_table();

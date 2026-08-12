@@ -169,6 +169,14 @@ Proposal propose_by_rules(const std::vector<InAtom>& atoms,
                 for (int n : bonds.nb[i]) if (bonds.aromatic[n]) phenolic = true;
                 w = phenolic ? 0.0 : 1.0;
                 why = phenolic ? "phenolic hydroxyl" : "aliphatic hydroxyl";
+            } else if (o.formal_charge == 0) {
+                // No hydrogen, no charge, not part of a carboxyl: a carbonyl, ester, ether or
+                // phosphate oxygen. EVERY O1H0 in somo.residue carries 0 waters -- 36 backbone
+                // O, plus O2/O4/O6/OP1/OP2 and the rest -- so this is a confident zero, not a
+                // fallback. Without it the backbone carbonyl fell through to "no pH 7 rule for
+                // this group" and was flagged for review on essentially every entry.
+                w = 0.0;
+                why = "carbonyl / ether oxygen";
             }
         } else if (elem_is(o, "N")) {
             bool guanid = false;
