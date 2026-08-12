@@ -79,8 +79,13 @@ private:
         // coded ionizable residues are (ASP OD2, LYS NZ, ARG NH2). Empty ion_hybrid = 8 fields.
         QString ion_hybrid;
         double  ion_mw = 0, ion_radius = 0, ion_hydration = 0;
-        // True when the alternate is shown for information only, because the entry had
-        // to be collapsed (somo.residue holds at most two ionizations per residue).
+        // Per ROW, not per residue: under the phosphate convention an entry can carry two
+        // switchable groups with different pKas (citrate 4.76 and 6.40), and the header stores
+        // one pair per ionization, matched to the atom by its ionization index.
+        double  ion_pKa = 0;
+        // True when the alternate is shown for information only: the group is held permanently
+        // deprotonated because somo.residue holds at most two ionizations per residue, so the
+        // primary fields already ARE the deprotonated species and there is nothing to switch.
         bool    ion_display_only = false;
     };
     QVector<AtomRow> rows_;
@@ -92,7 +97,7 @@ private:
     // emitter itself was fixed -- the headless path was right and the GUI path was not.
     int    header_type_ = 0;
     double header_asa_  = 0;
-    double header_pKa_  = 0;   // residue-level, from whichever atom is ionizable
+    QList<double> header_pKas_;  // one per declared ionization, in header order; index n -> pair n
     // values the widgets open with: the perceived proposal, or what was previously accepted
     double init_vbar_   = 0;
     double init_molvol_ = 0;
