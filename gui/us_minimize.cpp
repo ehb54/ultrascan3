@@ -115,6 +115,7 @@ void US_Minimize::setup_GUI()
 	gl1->addWidget(pb_close, 9, 2);
 
 	data_plot = new QwtPlot();
+	US_Widgets::us_style_plot( data_plot );
 	plotLayout = new US_Plot(data_plot, tr(""), tr(""), tr(""));
 	data_plot->setCanvasBackground(Qt::black);	
 	data_plot->setMinimumSize(560, 240);

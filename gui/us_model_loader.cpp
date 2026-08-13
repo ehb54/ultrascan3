@@ -108,8 +108,7 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
    connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
             this,        &US_ModelLoader::select_diskdb );
 
-   QPalette gray   = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray   = US_GuiSettings::readonlyColor();
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, &QAbstractButton::clicked,
@@ -269,8 +268,7 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
    // connect( dkdb_cntrls, SIGNAL( changed(     bool ) ),
    //          this,        SLOT(   select_diskdb()     ) );
 
-   QPalette gray   = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray   = US_GuiSettings::readonlyColor();
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    // connect( pb_investigator, SIGNAL( clicked()       ),

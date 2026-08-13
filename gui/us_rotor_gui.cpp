@@ -239,8 +239,7 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->setContentsMargins ( 2, 2, 2, 2 );
 
    // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    int row = 0;
    QStringList DB = US_Settings::defaultDB();
@@ -910,8 +909,7 @@ void US_RotorGui::saveCalibration()
    savingCalibration = false;
 
    // Disable calibration input fields
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
    le_calibrationLabel->setPalette ( gray );
    le_calibrationLabel->setReadOnly( true );
    le_omega2t->setPalette ( gray );

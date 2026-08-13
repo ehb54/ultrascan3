@@ -82,6 +82,22 @@ The color configuration control can be invoked from the configuration panel by c
 
 The panel has two sections, a *preview* section (on the left) and a *control* section (on the right). With this module you can select custom color combinations for all screen elements (widgets) used by UltraScan and save them as custom color schemes. You can also set the desired margin around graphs.
 
+**Style** selects the Qt widget style. UltraScan uses *Fusion* by default, which is the only style that renders identically on Linux, Windows and macOS and that honors the UltraScan color settings on every platform.
+
+**Color Scheme** selects which set of UltraScan default colors is used:
+
+.. list-table::
+  :widths: 25 75
+
+  * - **Follow the desktop**
+    - UltraScan uses its dark defaults when the desktop is set to a dark appearance and its light defaults otherwise, and switches over while the program is running. This is the default.
+  * - **Light**
+    - Always use the light defaults.
+  * - **Dark**
+    - Always use the dark defaults.
+
+The color scheme only decides which *defaults* are used. Every color you redefine below overrides the default for both schemes, so a screen element you have customized keeps its color when the desktop switches between light and dark. Setting an element back to its UltraScan default (select *UltraScan Default* in the scheme list and click *Set as Current*) makes it follow the light/dark switch again.
+
 To change a widget's color, select the widget you would like to change from the screen element listbox. All applicable colors for that widget will be shown in the Assign new Colors section. Click on the Change button for the desired color definition of the selected widget. A **Color Select** dialog will be displayed that lets you select and define custom colors for the selected color definition. After you click on the "OK" button you will be returned to the color configuration control window and the new color will be applied to the preview section of the screen. Continue to define new colors for each widget until all color changes you want to make have been applied.
 
 .. image:: _static/images/color-2.png
