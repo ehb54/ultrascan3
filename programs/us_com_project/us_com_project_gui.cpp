@@ -148,20 +148,17 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
    connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
-
-   hbox->addWidget(m_help);
-   hbox->addWidget(m_exit);
+   
    hbox->setSpacing(1);
    hbox->setContentsMargins(1, 1, 1, 1);
+   hbox->addStretch();           // <-- this pushes Help/Exit to the bottom
+   hbox->addWidget(m_help);
+   hbox->addWidget(m_exit);
 
-   QFont font_t = tabWidget->property("font").value<QFont>();
-   qDebug() << font_t.family() << font_t.pointSize();
-   QFontMetrics fm_t(font_t);
-   int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
+   QFontMetrics fm_t(tabWidget->property("font").value<QFont>());
+   cornerWidget->setFixedWidth( fm_t.horizontalAdvance("Manage Optima Runs") );
+
    
-   qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
-   cornerWidget->setMinimumWidth( pixelsWide );
-
    //cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
    //hbox->setStretch(0,1);
  
@@ -170,15 +167,16 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
 
-   int pos_x_offset = fm_t.horizontalAdvance("M");
-   int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
-   //int pos_x = (tabWidget->tabBar()->width())/4;
-   int pos_y = (tabWidget->tabBar()->height())*1.22;
-   qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
-   //m_exit->move(pos_x, pos_y);
-   cornerWidget->move(pos_x, pos_y);
-   // End of Help & Exit
-        
+   // int pos_x_offset = fm_t.horizontalAdvance("M");
+   
+   // int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
+   // int pos_y = (tabWidget->tabBar()->height())*1.22;
+   // cornerWidget->move(pos_x, pos_y);
+   
+   // //Fix?
+   // tabWidget->setCornerWidget(cornerWidget, Qt::BottomLeftCorner);
+   // // End of Help & Exit
+   
    main->addWidget( tabWidget );
 
    for (int i=0; i < tabWidget->count(); ++i )
@@ -395,38 +393,45 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
    connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
    
-   hbox->addWidget(m_help);
-   hbox->addWidget(m_exit);
    hbox->setSpacing(1);
    hbox->setContentsMargins(1, 1, 1, 1);
+   hbox->addStretch();           // <-- this pushes Help/Exit to the bottom
+   hbox->addWidget(m_help);
+   hbox->addWidget(m_exit);
 
-   QFont font_t = tabWidget->property("font").value<QFont>();
-   qDebug() << font_t.family() << font_t.pointSize();
-   QFontMetrics fm_t(font_t);
-   int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
+   QFontMetrics fm_t(tabWidget->property("font").value<QFont>());
+   cornerWidget->setFixedWidth( fm_t.horizontalAdvance("Manage Optima Runs") );
+
+   //cornerWidget->setFixedHeight( 400 );
    
-   qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
-   cornerWidget->setMinimumWidth( pixelsWide );
+   // QFont font_t = tabWidget->property("font").value<QFont>();
+   // qDebug() << font_t.family() << font_t.pointSize();
+   // QFontMetrics fm_t(font_t);
+   // int pixelsWide = fm_t.horizontalAdvance("Manage Optima Runs");
+   
+   // qDebug() << "FONT_T: fm_t.width() -- " <<  pixelsWide;
+   // cornerWidget->setMinimumWidth( pixelsWide );
 
-   //cornerWidget->setFixedWidth( tabWidget->tabBar()->width() - 20 );
-   //hbox->setStretch(0,1);
- 
+   
    qDebug() << "TabWidget position: " << tabWidget->x() << tabWidget->y();
    qDebug() << "TabWidget size    : " << tabWidget->width() << tabWidget->height();
    qDebug() << "TabWidget->tabBar position: " << tabWidget->tabBar()->x() << tabWidget->tabBar()->y();
    qDebug() << "TabWidget->tabBar size    : " << tabWidget->tabBar()->width() << tabWidget->tabBar()->height();
 
-   int pos_x_offset = fm_t.horizontalAdvance("M");
-   int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
-   //int pos_x = (tabWidget->tabBar()->width())/4;
-   int pos_y = (tabWidget->tabBar()->height())*1.08;
-   qDebug() << "pos_x, pos_y: " << pos_x << pos_y;
-   //m_exit->move(pos_x, pos_y);
-   cornerWidget->move(pos_x, pos_y);
+   // int pos_x_offset = fm_t.horizontalAdvance("M");
+  
+   // //Old
+   // int pos_x = tabWidget->tabBar()->x() + pos_x_offset*1.2;
+   // int pos_y = (tabWidget->tabBar()->height())*1.22;
+   // cornerWidget->move(pos_x, pos_y);
+   
+   //Fix?
+   //tabWidget->setCornerWidget(cornerWidget, Qt::TopLeftCorner);
+   //tabWidget->setCornerWidget(cornerWidget, Qt::BottomLeftCorner);
    // End of Help & Exit
-     
+   
    main->addWidget( tabWidget );
-
+  
    for (int i=0; i < tabWidget->count(); ++i )
      {
        //ALEXEY: OR enable all tabs ? (e.g. for demonstration, in a read-only mode or the like ?)
@@ -520,9 +525,35 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    setMinimumSize( QSize( 1350, 850 ) );
    adjustSize();
 
-   
+}
 
- }
+// In showEvent — set height now that tab geometry is fully computed:
+void US_ComProjectMain::showEvent(QShowEvent* event)
+{
+    US_Widgets::showEvent(event);
+    
+    // Defer to next event loop iteration — safe on all platforms
+    QTimer::singleShot(0, this, [this]() {
+        QTabBar* tb = tabWidget->tabBar();
+        int lastTabBottom = tb->tabRect( tabWidget->count() - 1 ).bottom();
+        cornerWidget->move( tb->x() + 15, lastTabBottom + 20 );
+        cornerWidget->show();
+        cornerWidget->raise();
+    });
+}
+
+//Potentially needed for MacOS
+/**
+void US_ComProjectMain::resizeEvent(QResizeEvent* event)
+{
+    US_Widgets::resizeEvent(event);  // or QWidget:: if no base implementation
+    
+    QTabBar* tb = tabWidget->tabBar();
+    int lastTabBottom = tb->tabRect( tabWidget->count() - 1 ).bottom();
+    cornerWidget->move( tb->x(), lastTabBottom + 20 );
+    cornerWidget->raise();
+}
+***/
 
 
 //help bttns
@@ -1077,8 +1108,12 @@ void US_ComProjectMain::call_AutoflowDialogue( void )                           
   //Check Optima's certificates first:
   // if ( !mainw->us_mode_bool ) 
   epanInit->checkCertificates();
-    
-  epanInit->initRecordsDialogue();
+  //epanInit->initRecordsDialogue();
+  
+  QTimer::singleShot(0, epanInit, [this]() {
+        epanInit->initRecordsDialogue();
+    });
+  
 }
 
 
