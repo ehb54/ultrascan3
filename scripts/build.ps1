@@ -352,29 +352,6 @@ function Ensure-VcpkgBaselineAvailable {
     exit 1
 }
 
-function Sync-VcpkgRepoToBaseline {
-    param(
-        [string]$RepoRoot,
-        [string]$VcpkgRoot
-    )
-
-    $baseline = Get-BuiltinBaseline -RepoRoot $RepoRoot
-    if (-not $baseline) { return }
-
-    Push-Location $VcpkgRoot
-    try {
-        git checkout --detach $baseline
-        if ($LASTEXITCODE -ne 0) {
-            throw "git checkout --detach $baseline failed"
-        }
-    }
-    finally {
-        Pop-Location
-    }
-
-    Write-Host "vcpkg repo synced to baseline $baseline"
-}
-
 function Test-PathLengthRisk {
     param(
         [string]$RepoRoot,
@@ -720,6 +697,55 @@ function Test-VcpkgRepoClean {
     }
 }
 
+function Get-VcpkgDefaultBranch {
+    param([string]$VcpkgRoot)
+
+    Push-Location $VcpkgRoot
+    try {
+        # Ask the clone's own origin rather than hardcoding a branch name, so this
+        # survives an upstream rename and works for forks pointed at by VCPKG_ROOT.
+        $head = git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null
+        if ($LASTEXITCODE -ne 0 -or -not $head) {
+            git remote set-head origin --auto 1>$null 2>$null
+            $head = git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null
+        }
+
+        if ($head) { return ($head -replace '^origin/', '') }
+        return "master"
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function Restore-VcpkgDefaultBranch {
+    param([string]$VcpkgRoot)
+
+    if (-not (Test-VcpkgGitRepo $VcpkgRoot)) { return }
+
+    Push-Location $VcpkgRoot
+    try {
+        git symbolic-ref --quiet HEAD 1>$null 2>$null
+        if ($LASTEXITCODE -eq 0) { return }   # already on a branch
+
+        # A detached HEAD here is usually left over from an older build script that
+        # checked out the manifest baseline. vcpkg.exe must match the checked-out
+        # scripts, so put the repo back on its default branch before bootstrapping.
+        $branch = Get-VcpkgDefaultBranch -VcpkgRoot $VcpkgRoot
+        Write-Warning "$VcpkgRoot is in a detached HEAD state. Restoring branch '$branch'."
+
+        git checkout $branch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "ERROR: Could not check out '$branch' in $VcpkgRoot." -ForegroundColor Red
+            Write-Host "  Fix the vcpkg clone manually, or delete it and re-run the build."
+            exit 1
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
 function Repair-VcpkgRepo {
     param([string]$VcpkgRoot)
 
@@ -729,6 +755,9 @@ function Repair-VcpkgRepo {
     }
 
     Write-Host "Repairing vcpkg repo at $VcpkgRoot ..." -ForegroundColor Yellow
+
+    # reset --hard HEAD below keeps a detached HEAD detached, so get back on a branch first.
+    Restore-VcpkgDefaultBranch -VcpkgRoot $VcpkgRoot
 
     Push-Location $VcpkgRoot
     try {
@@ -794,6 +823,9 @@ if (-not (Test-Path $VcpkgRoot)) {
     }
 }
 
+# Must run before bootstrap: vcpkg.exe is built from whatever is checked out.
+Restore-VcpkgDefaultBranch -VcpkgRoot $VcpkgRoot
+
 if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
     Write-Host "Bootstrapping vcpkg at $VcpkgRoot..."
     Push-Location $VcpkgRoot
@@ -830,8 +862,10 @@ Write-Host "  cache     : $VcpkgCacheDir"
 Write-Host "  downloads : $VcpkgDownloadsDir"
 Write-Host ""
 
+# Ensure the manifest's dependency baseline exists in the local history.
+# Do not check out that commit: vcpkg.exe must match the currently checked-out
+# scripts and bootstrap files.
 Ensure-VcpkgBaselineAvailable -RepoRoot $SourceRoot -VcpkgRoot $VcpkgRoot
-Sync-VcpkgRepoToBaseline -RepoRoot $SourceRoot -VcpkgRoot $VcpkgRoot
 Write-Host ""
 
 
