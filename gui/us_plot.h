@@ -182,9 +182,6 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
                                               const double& threshold = 20.0 ) const;
       CurveDistance findCurveAtPosition( const QPoint& pos, const double& threshold = 20.0 ) const;
 
-      //! \brief Update color scale for a spectrogram on the right axis
-      void updateSpectrogramColorScale( ) const;
-
    signals:
       //! \brief Signal emitted when zoom rectangle is selected
       //! \param rect - The bounding rectangle of the zoomed area
