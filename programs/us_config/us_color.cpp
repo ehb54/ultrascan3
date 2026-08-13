@@ -181,7 +181,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
                                " and a dark variant.  \"Follow the desktop\""
                                " picks the one the desktop asks for." ) );
 
-  connect( cmbb_scheme, &QComboBox::activated, this, &US_Color::selected_scheme );
+  connect( cmbb_scheme, qOverload<int>(&QComboBox::activated), this, &US_Color::selected_scheme );
 
   rightColumn->addWidget( cmbb_scheme, row++, 1 );
 
