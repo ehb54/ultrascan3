@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -72,7 +73,7 @@ bool US_Saxs_Util::dmd_run_with_log( const QString & tag
       int last_time = 0;
       while  ( fgets(buffer.data(), 256, pipe) != NULL) {
          QString qs = QString( "%1" ).arg( buffer.data() ).trimmed();
-         QStringList qsl = qs.split( QRegExp( "\\s+" ) );
+         QStringList qsl = qs.split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
          double this_time = qsl[ 0 ].toFloat();
          if ( (int) this_time != last_time ) {
             double pct = 100.0 * this_time / max_time;
@@ -410,7 +411,7 @@ bool US_Saxs_Util::input_dimensions( point &range )
 
    if ( control_parameters.count( "dmdboxspacing" ) )
    {
-      if ( control_parameters[ "dmdboxspacing" ].toLower().contains( QRegExp( "^cubic" ) ) )
+      if ( control_parameters[ "dmdboxspacing" ].toLower().contains( QRegularExpression( QStringLiteral( "^cubic" ) ) ) )
       {
          float max_range = range.axis[ 0 ];
          for ( unsigned int m = 1; m < 3; m++ ) 
@@ -420,14 +421,15 @@ bool US_Saxs_Util::input_dimensions( point &range )
                max_range = range.axis[ m ];
             }
          }
-         QRegExp rx_cap( "^cubic\\s+(\\+|)(\\S+)$" );
-         if ( rx_cap.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) != -1 )
+         QRegularExpression rx_cap( "^cubic\\s+(\\+|)(\\S+)$" );
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( control_parameters[ "dmdboxspacing" ].toLower() );
+         if ( rx_cap_m.hasMatch() )
          {
-            if ( rx_cap.cap( 1 ) == "+" )
+            if ( rx_cap_m.captured(1) == "+" )
             {
-               max_range += rx_cap.cap( 2 ).toFloat();
+               max_range += rx_cap_m.captured(2).toFloat();
             } else {
-               max_range = rx_cap.cap( 2 ).toFloat();
+               max_range = rx_cap_m.captured( 2 ).toFloat();
             }
          }
          for ( unsigned int m = 0; m < 3; m++ ) 
@@ -435,24 +437,26 @@ bool US_Saxs_Util::input_dimensions( point &range )
             range.axis[ m ] = max_range;
          }
       } else {
-         QRegExp rx_cap_1( "^\\+(\\S+)$" );
-         QRegExp rx_cap_3( "^(\\S+),(\\S+),(\\S+)$" );
-         if ( rx_cap_1.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) == -1 &&
-              rx_cap_3.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) == -1 )
+         QRegularExpression rx_cap_1( "^\\+(\\S+)$" );
+         QRegularExpression rx_cap_3( "^(\\S+),(\\S+),(\\S+)$" );
+         QRegularExpressionMatch rx_cap_1_m = rx_cap_1.match( control_parameters[ "dmdboxspacing" ].toLower() );
+         QRegularExpressionMatch rx_cap_3_m = rx_cap_3.match( control_parameters[ "dmdboxspacing" ].toLower() );
+         if ( !rx_cap_1_m.hasMatch() &&
+              !rx_cap_3_m.hasMatch() )
          {
             errormsg = "Parameter for DMDBoxSpacing recognized, must in #,#,# or +#: was: " + control_parameters[ "dmdboxspacing" ];
             return false;
          }
-         if ( rx_cap_1.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) != -1 )
+         if ( rx_cap_1_m.hasMatch() )
          {
             for ( unsigned int m = 0; m < 3; m++ ) 
             {
-               range.axis[ m ] += rx_cap_1.cap( 1 ).toFloat();
+               range.axis[ m ] += rx_cap_1_m.captured(1).toFloat();
             }
          } else {
             for ( unsigned int m = 0; m < 3; m++ ) 
             {
-               range.axis[ m ] = rx_cap_3.cap( m + 1 ).toFloat();
+               range.axis[ m ] = rx_cap_3_m.captured( m + 1 ).toFloat();
             }
          }
       }            
@@ -503,7 +507,7 @@ bool US_Saxs_Util::dmd_strip_pdb()
    {
       QString basename = QFileInfo( pdb ).baseName();
       // could get fancier here, perhaps REMARKs could be added or incorporate condensed prior run count
-      basename.replace( QRegExp( "_s_(equi|relax_).*$" ), "" );
+      basename.replace( QRegularExpression( QStringLiteral( "_s_(equi|relax_).*$" ) ), "" );
       dmd_basename     = basename.left( DMD_MAX_BASENAME_LENGTH ) + strip_tag;
    }
 
@@ -630,9 +634,9 @@ bool US_Saxs_Util::dmd_strip_pdb()
 
    int qsl_pdb_size = (int) qsl_pdb.size();
 
-   QRegExp rx_check_line( "^(ATOM|HETATM)" );
+   QRegularExpression rx_check_line( "^(ATOM|HETATM)" );
 
-   QRegExp rx_ter       ( "^(TER)" );
+   QRegularExpression rx_ter       ( "^(TER)" );
 
    unsigned int last_chain_residue_no = 0;
    QString      last_key;
@@ -641,7 +645,8 @@ bool US_Saxs_Util::dmd_strip_pdb()
    for ( int i = 0; i < qsl_pdb_size; ++i ) {
       QString qs = qsl_pdb[ i ];
       bool keep = true;
-      if ( rx_check_line.indexIn( qs ) != -1 )
+      QRegularExpressionMatch rx_check_line_m = rx_check_line.match( qs );
+      if ( rx_check_line_m.hasMatch() )
       {
          QString residue = qs.mid( 17, 3 );
          QString atom    = qs.mid( 12, 4 );
@@ -651,13 +656,15 @@ bool US_Saxs_Util::dmd_strip_pdb()
             keep = false;
          }
       }
-      if ( rx_ter.indexIn( qs ) != -1 )
+      QRegularExpressionMatch rx_ter_m = rx_ter.match( qs );
+      if ( rx_ter_m.hasMatch() )
       {
          keep = false;
       }
       if ( keep )
       {
-         if ( rx_check_line.indexIn( qs ) != -1 )
+         QRegularExpressionMatch rx_check_line_m = rx_check_line.match( qs );
+         if ( rx_check_line_m.hasMatch() )
          {
             QString      chain_id   = qs.mid( 21, 1 );
             unsigned int residue_no = qs.mid( 22, 4 ).trimmed().toUInt();
@@ -1130,7 +1137,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
             if ( dmdmmlastout ) {
                allmodels << qs << "\n";
             }
-            if ( qs.contains( QRegExp( "^ENDMDL" ) ) &&
+            if ( qs.contains( QRegularExpression( QStringLiteral( "^ENDMDL" ) ) ) &&
                  i + 1 < qsl_pdb_size ) {
                models++;
                if ( control_parameters.count( "pdballmodels" ) ) {
@@ -1185,7 +1192,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       output_files << pdb_out_file;
       if ( dmdmmlastout ) {
          // also save allmodels
-         QRegExp rx_check_line( "^(ATOM|HETATM)" );
+         QRegularExpression rx_check_line( "^(ATOM|HETATM)" );
          QString pdb_out_file = dmd_basename + "_" + run_description +  "_m-all.pdb";
          QFile fo( pdb_out_file );
          if ( !fo.open( QIODevice::WriteOnly ) ) {
@@ -1199,7 +1206,8 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          int allmodels_size = (int) allmodels.size();
          for ( int i = 0; i < allmodels_size; ++i ) {
             QString qs = allmodels[ i ];
-            if ( rx_check_line.indexIn( qs ) != -1 &&
+            QRegularExpressionMatch rx_check_line_m = rx_check_line.match( qs );
+            if ( rx_check_line_m.hasMatch() &&
                  qs.mid( 76, 2 ).trimmed() == "H" ) {
                continue;
             }
@@ -1526,7 +1534,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
       map < QString, QString > fields = pdb_fields( line );
 
       // debugging
-      // if ( fields[ "recname" ].contains( QRegExp( "^HETATM" ) ) ) {
+      // if ( fields[ "recname" ].contains( QRegularExpression( QStringLiteral( "^HETATM" ) ) ) ) {
       //    map_dump( "pdb line: ", fields );
       // }
 
@@ -1537,7 +1545,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
 
       // bits that DMD is going to remove anyway
       if ( fields[ "recname" ]
-           .contains( QRegExp(
+           .contains( QRegularExpression(
                               "^("
                               "AUTHOR|"
                               "CISPEP|"
@@ -1583,7 +1591,7 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
          continue;
       }
 
-      if ( fields[ "recname" ].contains( QRegExp( "^(TER|END|ENDMDL)$" ) ) ) {
+      if ( fields[ "recname" ].contains( QRegularExpression( QStringLiteral( "^(TER|END|ENDMDL)$" ) ) ) ) {
          first_residue = true;
          last_resseq   = 0;
          last_chainid  = "";

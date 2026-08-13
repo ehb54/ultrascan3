@@ -2641,6 +2641,18 @@ DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
 	      this,         SLOT  ( changeSolu         ( int ) ) );
       
    }
+
+ //If dataDisk, disallow (unspecified)
+   if( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
+     {
+       for ( int ii = 0; ii < cc_solus.size(); ii++ )
+	 {
+	   QString substring = "(unspecified)";
+	   int index;
+	   while ((index = cc_solus[ ii ]->findText(substring, Qt::MatchContains)) != -1)
+	     cc_solus[ ii ]->removeItem(index);
+	 }
+     }
 }
 
 // Save panel controls when about to leave the panel
@@ -4296,10 +4308,26 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   mainw->get_importDisk_data( "ranges", chann_ranges_from_dataDisk );
   QStringList chann_numbers_from_dataDisk  = runTypes_from_dataDisk.keys();
 
+  qDebug() << "[Upload:check protocolToDataDisk()] : runTypes_from_dataDisk -- "
+	   << runTypes_from_dataDisk << ", " << runTypes_from_dataDisk.keys();
+  qDebug() << "[Upload:check protocolToDataDisk()] : chann_ranges_from_dataDisk -- "
+	   << chann_ranges_from_dataDisk << ", " << chann_ranges_from_dataDisk.keys();
+
+  //get it straight from data uploaded:
+  QStringList channels_dataDisk = mainw->get_all_channels_dataDisk();
   QStringList channames_from_dataDisk;
+  for (int cd=0; cd<channels_dataDisk.size(); ++cd)
+    {
+      QString cd_c = channels_dataDisk[cd];
+      channames_from_dataDisk << cd_c.replace(" / ","").simplified();
+    }
+  channames_from_dataDisk. removeDuplicates();
+      
+  /** 
   for ( int i=0; i<chann_ranges_from_dataDisk.keys().size(); ++i )
     {
       QString channame_c = chann_ranges_from_dataDisk.keys()[i];
+      QString cell_n     = channame_c.left(1);
 
       //check for actual consistency:
       QStringList channels_dataDisk_mod;
@@ -4309,14 +4337,15 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
 	  QString cd_c = channels_dataDisk[cd];
 	  channels_dataDisk_mod << cd_c.replace(" / ","").simplified();
 	}
-      qDebug() << "[Upload:check protocolToDataDisk()] : channame_c, channels_dataDisk_mod -- "
-	       << channame_c << ", " << channels_dataDisk_mod;
+      qDebug() << "[Upload:check protocolToDataDisk()] : channame_c, channels_dataDisk_mod, runTypes_from_dataDisk -- "
+	       << channame_c << ", " << channels_dataDisk_mod << ", " << runTypes_from_dataDisk[ cell_n ];
       if (!channels_dataDisk_mod. contains( channame_c ) )
 	  continue;
       
       if ( !chann_ranges_from_dataDisk[ channame_c ]. isEmpty()  )
 	channames_from_dataDisk << channame_c;
     }
+  ***/
   
   //Cells
   if ( chann_numbers_from_dataDisk.size() != rpCells->used.size() )
@@ -4336,10 +4365,7 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   //Optics
   qDebug() << "chann_numbers_from_dataDisk, rpOptic->chopts.size() -- "
 	   << chann_numbers_from_dataDisk << rpOptic->chopts.size();
-  // int chopts_num = ( !rpRotor-> importData_absorbance_t) ?
-  //   chann_numbers_from_dataDisk.size()*2 : chann_numbers_from_dataDisk.size();
-  //int chopts_num = chann_numbers_from_dataDisk.size();
-
+  
   qDebug() << "channames_from_dataDisk , rpOptic->chopts.size() -- "
 	   << channames_from_dataDisk << rpOptic->chopts.size();
   int chopts_num = channames_from_dataDisk.size();
@@ -4388,7 +4414,8 @@ bool US_ExperGuiUpload::protocolToDataDisk( QStringList& msg_to_user )
   //Ranges
   qDebug() << "channames_from_dataDisk, rpRange->nranges -- "
 	   << channames_from_dataDisk << rpRange->nranges;
-  if ( channames_from_dataDisk.size() != rpRange->nranges )
+  //if ( channames_from_dataDisk.size() != rpRange->nranges )
+  if ( chann_ranges_from_dataDisk.keys().size() != rpRange->nranges )
     {
       msg_to_user << "[Uploaded Data <-> Protocol] Numbers of Range channels are mismatched!";
       return false;

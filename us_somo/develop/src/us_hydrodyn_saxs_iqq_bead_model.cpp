@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_saxs_util.h"
@@ -292,7 +293,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast_bead_model()
          pb_pr_contrib->setEnabled(false);
          if ( cb_pr_contrib->isChecked() &&
               !source &&
-              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+              contrib_file.contains(QRegularExpression( QStringLiteral( "(PDB|pdb)$" ) )) )
          {
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < as1; i++ )

@@ -4,7 +4,6 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
 #include "../include/us_hydrodyn.h"
-#include <qregexp.h>
 
 #define SLASH QDir::separator()
 double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool allow_none )

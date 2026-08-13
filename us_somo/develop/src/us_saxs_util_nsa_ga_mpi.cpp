@@ -1,4 +1,5 @@
 #include <mpi.h>
+#include <QRegularExpression>
 
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
@@ -52,13 +53,14 @@ bool US_Saxs_Util::nsa_run()
    unsigned int startloop = 1;
    unsigned int endloop   = control_parameters[ "nsaspheres" ].toUInt();
    {
-      QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
+      QRegularExpression rx( "^(\\d+)\\s+(\\d+)$" );
       QString qs = control_parameters[ "nsaspheres" ];
-      qs.replace( QRegExp( "(:|,|-)" ), " " );
-      if ( rx.indexIn( qs ) != -1 )
+      qs.replace( QRegularExpression( QStringLiteral( "(:|,|-)" ) ), " " );
+      QRegularExpressionMatch rx_m = rx.match( qs );
+      if ( rx_m.hasMatch() )
       {
-         startloop = rx.cap( 1 ).toUInt();
-         endloop   = rx.cap( 2 ).toUInt();
+         startloop = rx_m.captured(1).toUInt();
+         endloop   = rx_m.captured(2).toUInt();
       }
    }
    if ( !myrank )

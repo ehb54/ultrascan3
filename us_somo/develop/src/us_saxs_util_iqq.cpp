@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 //Added by qt3to4:
 #include <QTextStream>
@@ -62,13 +63,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
       return false;
    }
 
-   if ( controlfile.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
    {
       f.close();
       US_Gzip usg;
       // rename
       QString dest = controlfile;
-      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+      dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
       QDir qd;
       qd.remove( dest );
       
@@ -80,7 +81,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          
       controlfile = dest;
       
-      qd.remove( dest.replace( QRegExp("\\.(gz|GZ)$"), "" ) );
+      qd.remove( dest.replace( QRegularExpression( QStringLiteral( "\\.(gz|GZ)$" ) ), "" ) );
       cout << "controlfile sent to gunzip: " << controlfile << endl;
       int result = usg.gunzip( controlfile );
       cout << "last_written_name from gunzip: " << usg.last_written_name << endl;
@@ -102,7 +103,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
       }
    }
 
-   if ( controlfile.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+   if ( controlfile.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
    {
       f.close();
       cout << "extracting tar archive\n";
@@ -140,9 +141,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
    // read and setup control
 
    QTextStream ts( &f );
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
-   QRegExp rx_valid  ( 
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
+   QRegularExpression rx_valid  ( 
                       "^("
                       "residuefile|"
                       "atomfile|"
@@ -357,7 +358,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "remark)$"
                       );
 
-   QRegExp rx_file   ( 
+   QRegularExpression rx_file   ( 
                       "^("
                       "dammingnomfile|"
                       "residuefile|"
@@ -377,7 +378,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "inputfile)$"
                       );
 
-   QRegExp rx_arg_1  ( 
+   QRegularExpression rx_arg_1  ( 
                       "^("
                       "residuefile|"
                       "atomfile|"
@@ -503,13 +504,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "outputfile)$"
                       );
 
-   QRegExp rx_arg_2  ( 
+   QRegularExpression rx_arg_2  ( 
                       "^("
                       "c2check)$"
                        );
 
 
-   QRegExp rx_valid_saxs_iqmethod (
+   QRegularExpression rx_valid_saxs_iqmethod (
                                    "^("
                                    "db|"
                                    "hy|"
@@ -523,7 +524,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                                    "fd)$"
                                    );
 
-   QRegExp rx_flush  ( 
+   QRegularExpression rx_flush  ( 
                       "^("
                       // "experimentgrid|"
                       // "startq|"
@@ -545,14 +546,15 @@ bool US_Saxs_Util::read_control( QString controlfile )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
          continue;
       }
 
-      if ( rx_valid.indexIn( qsl[ 0 ].toLower() ) == -1 )
+      QRegularExpressionMatch rx_valid_m = rx_valid.match( qsl[ 0 ].toLower() );
+      if ( !rx_valid_m.hasMatch() )
       {
          errormsg = QString( "Error reading %1 line %2 : Unrecognized token %3" )
             .arg( controlfile )
@@ -565,7 +567,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
       qsl.pop_front();
       control_parameters[ option ] = qsl.join(" ");
 
-      if ( rx_arg_1.indexIn( option ) != -1 && 
+      QRegularExpressionMatch rx_arg_1_m = rx_arg_1.match( option );
+      if ( rx_arg_1_m.hasMatch() && 
            qsl.size() < 1 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
@@ -574,7 +577,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
          return false;
       }
 
-      if ( rx_arg_2.indexIn( option ) != -1 && 
+      QRegularExpressionMatch rx_arg_2_m = rx_arg_2.match( option );
+      if ( rx_arg_2_m.hasMatch() && 
            qsl.size() < 2 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
@@ -584,7 +588,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
       }
 
 
-      if ( rx_file.indexIn( option ) != -1 )
+      QRegularExpressionMatch rx_file_m = rx_file.match( option );
+      if ( rx_file_m.hasMatch() )
       {
          QFile qfc( qsl[ 0 ] );
          if ( !qfc.exists() )
@@ -597,7 +602,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }         
 
-      if ( rx_flush.indexIn( option ) != -1 )
+      QRegularExpressionMatch rx_flush_m = rx_flush.match( option );
+      if ( rx_flush_m.hasMatch() )
       {
          if ( !flush_output() )
          {
@@ -855,7 +861,8 @@ bool US_Saxs_Util::read_control( QString controlfile )
       
       if ( option == "iqmethod" )
       {
-         if ( rx_valid_saxs_iqmethod.indexIn( qsl[ 0 ] ) == -1 )
+         QRegularExpressionMatch rx_valid_saxs_iqmethod_m = rx_valid_saxs_iqmethod.match( qsl[ 0 ] );
+         if ( !rx_valid_saxs_iqmethod_m.hasMatch() )
          {
             errormsg = QString( "Error %1 line %2 : invalid %3 %4" )
                .arg( controlfile )
@@ -996,11 +1003,6 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "dmdsupportfile" ) {
          QString filename = control_parameters[ option ];
-         // static QRegExp rx_mol2 = QRegExp( "([^/ .]+)\\.mol2$" );
-         // if ( rx_mol2.indexIn( filename, 0 ) != -1 ) {
-         //    QString mol2 = rx_mol2.cap(1);
-         //    dmd_mol2.insert( mol2 );
-         // }
       }
 
       if ( option == "dmdstrippdb" )
@@ -1389,7 +1391,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
    
    QString ext = QFileInfo( filename ).suffix().toLower();
 
-   QRegExp rx_valid_ext (
+   QRegularExpression rx_valid_ext (
                          "^("
                          "csv|"
                          "dat|"
@@ -1397,7 +1399,8 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.indexIn( ext ) == -1 )
+   QRegularExpressionMatch rx_valid_ext_m = rx_valid_ext.match( ext );
+   if ( !rx_valid_ext_m.hasMatch() )
    {
       errormsg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -1466,21 +1469,22 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       }
 
    } else {
-      QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-      rx_ok_line.setMinimal( true );
+      QRegularExpression rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+      rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
-         if ( qv[i].contains(QRegExp("^#")) ||
-              rx_ok_line.indexIn( qv[i] ) == -1 )
+         QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
+         if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
+              !rx_ok_line_m.hasMatch() )
          {
             continue;
          }
          
-         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+         // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
          QStringList tokens;
          {
-            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-            tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+            QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+            tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
          }
 
          if ( tokens.size() > 1 )
@@ -1744,7 +1748,7 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
       validate_control_parameters_set_one( checks, vals );
    }
 
-   QRegExp rx_fd_params(
+   QRegularExpression rx_fd_params(
                         "^("
                         "hy|"
                         "hya|"
@@ -1754,7 +1758,8 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
                         "h3a|"
                         "fd)$" );
 
-   if ( rx_fd_params.indexIn( control_parameters[ "iqmethod" ] ) != -1 )
+   QRegularExpressionMatch rx_fd_params_m = rx_fd_params.match( control_parameters[ "iqmethod" ] );
+   if ( rx_fd_params_m.hasMatch() )
    {
       checks << "fdbinsize";
       vals   << "0.5";
@@ -1764,7 +1769,7 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
       validate_control_parameters_set_one( checks, vals );
    }
 
-   QRegExp rx_hy_params(
+   QRegularExpression rx_hy_params(
                         "^("
                         "hy|"
                         "hya|"
@@ -1774,7 +1779,8 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
                         "h3a)$"
                         );
                         
-   if ( rx_hy_params.indexIn( control_parameters[ "iqmethod" ] ) != -1 )
+   QRegularExpressionMatch rx_hy_params_m = rx_hy_params.match( control_parameters[ "iqmethod" ] );
+   if ( rx_hy_params_m.hasMatch() )
    {
       checks << "hypoints";
       vals   << "15";
@@ -1782,12 +1788,13 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
       validate_control_parameters_set_one( checks, vals );
    }
 
-   QRegExp rx_crysol_params(
+   QRegularExpression rx_crysol_params(
                             "^("
                             "crysol)$"
                             );
                         
-   if ( rx_crysol_params.indexIn( control_parameters[ "iqmethod" ] ) != -1 )
+   QRegularExpressionMatch rx_crysol_params_m = rx_crysol_params.match( control_parameters[ "iqmethod" ] );
+   if ( rx_crysol_params_m.hasMatch() )
    {
       checks << "crysolharm";
       vals   << "15";
@@ -1827,7 +1834,7 @@ bool US_Saxs_Util::create_tgz_output( QString filename )
    int result;
    QStringList list;
    QString tgz_filename = filename;
-   filename.replace( QRegExp( "\\.(tgz|TGZ))$" ), ".tar" );
+   filename.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ))$" ) ), ".tar" );
    QString tar_dot_gz_filename = filename + ".gz";
 
    cout << QString( "tgz output <%1><%2><%3>\n" ).arg( filename ).arg( tgz_filename ).arg( tar_dot_gz_filename ) << flush;

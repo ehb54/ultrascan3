@@ -17,7 +17,6 @@
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <qregexp.h>
 #include <qwt_wheel.h>
 #include <qtimer.h>
 #include <qmutex.h>
@@ -27,7 +26,6 @@
 
 #include <qwt_plot.h>
 #include "us3i_plot.h"
-//Added by qt3to4:
 #include <QCloseEvent>
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"

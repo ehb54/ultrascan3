@@ -289,7 +289,7 @@ void US_Database::select_db( QListWidgetItem* entry )
               tr( "Database Selected" ),
               tr( "The default database has been updated." ) );
       }
-      pb_save  ->setEnabled( true );
+      //pb_save  ->setEnabled( true );
       pb_delete->setEnabled( true );
 
       break;
@@ -352,6 +352,15 @@ QString US_Database::validate_value( QLineEdit* line_edit, const QString& proper
 
 void US_Database::check_add()
 {
+  if ( !test_connect() )
+    {
+      QMessageBox::warning( this,
+			    tr( "Attention" ),
+			    tr( "Database entry cannot be saved until valid credentials are provided.\n" ) );
+      pb_save->setEnabled(false);
+      return;
+    }
+  
   QStringList problems;
   // Check that all fields have at least something
   QString status = validate_value( le_description, "description" );
@@ -469,8 +478,9 @@ void US_Database::check_add()
     save_default();
   }
 
-  pb_save  ->setEnabled( true );
+  //pb_save  ->setEnabled( true );
   pb_delete->setEnabled( true );
+  pb_save  ->setEnabled( false );
 }
 
 void US_Database::update_lw( const QString& current )

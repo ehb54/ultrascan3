@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include <qtabwidget.h>
@@ -2027,7 +2028,7 @@ QString US_Hydrodyn_Save::header()
    return result + "\n";
 }
 
-// #define ZARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]]).replace(QRegExp("\\.0+$"),"")
+// #define ZARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]]).replace(QRegularExpression( QStringLiteral( "\\.0+$" ) ),"")
 // #define DBFARG(s) printf("i = %u _field <%s> _format <%c> _precision <%d>\n",i,save->field[i].toLatin1().data(), field_to_format[save->field[i]],field_to_precision[save->field[i]]);fflush(stdout)
 #define FARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]])
 

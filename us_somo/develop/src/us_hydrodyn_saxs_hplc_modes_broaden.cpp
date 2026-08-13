@@ -1550,10 +1550,11 @@ void US_Hydrodyn_Saxs_Hplc::broaden_compute_one( bool details ) {
    if ( details ) {
       QString q_val_str = "n/a";
       {
-         QRegExp rx_q     ( "It_q(\\d+_\\d+)" );
-         if ( rx_q.indexIn( broaden_names[ 1 ] ) != -1 ) {
-            TSO << QString( "broaden_names[1] %1 rxcap ok %2\n" ).arg( broaden_names[1] ).arg( rx_q.cap( 1 ) );
-            q_val_str =  rx_q.cap( 1 ).replace( "_", "." );
+         QRegularExpression rx_q     ( "It_q(\\d+_\\d+)" );
+         QRegularExpressionMatch rx_q_m = rx_q.match( broaden_names[ 1 ] );
+         if ( rx_q_m.hasMatch() ) {
+            TSO << QString( "broaden_names[1] %1 rxcap ok %2\n" ).arg( broaden_names[1] ).arg( rx_q_m.captured(1) );
+            q_val_str =  rx_q_m.captured(1).replace( "_", "." );
          } else {
             TSO << QString( "broaden_names[1] %1 rxcap FAILED\n" ).arg( broaden_names[1] );
          }

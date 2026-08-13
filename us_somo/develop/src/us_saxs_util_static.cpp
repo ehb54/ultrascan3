@@ -1,5 +1,5 @@
 #include "../include/us_saxs_util.h"
-//Added by qt3to4:
+#include <QRegularExpression>
 #include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -25,7 +25,7 @@ bool US_Saxs_Util::read_sas_data(
    }
    QString ext = QFileInfo( filename ).suffix().toLower();
 
-   QRegExp rx_valid_ext (
+   QRegularExpression rx_valid_ext (
                          "^("
                          "dat|"
                          "int|"
@@ -33,7 +33,8 @@ bool US_Saxs_Util::read_sas_data(
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.indexIn( ext ) == -1 )
+   QRegularExpressionMatch rx_valid_ext_m = rx_valid_ext.match( ext );
+   if ( !rx_valid_ext_m.hasMatch() )
    {
       error_msg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -75,21 +76,22 @@ bool US_Saxs_Util::read_sas_data(
       offset = 1;
    }      
 
-   QRegExp rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-   rx_ok_line.setMinimal( true );
+   QRegularExpression rx_ok_line("^(\\s+|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+   rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
-      if ( qv[i].contains(QRegExp("^#")) ||
-           rx_ok_line.indexIn( qv[i] ) == -1 )
+      QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
+      if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
+           !rx_ok_line_m.hasMatch() )
       {
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -10941,9 +10943,9 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
    
    QTextStream tso( &of );
 
-   QRegExp rx_atom ("^ATOM");
-   QRegExp rx_model("^MODEL");
-   QRegExp rx_end  ("^END");
+   QRegularExpression rx_atom ("^ATOM");
+   QRegularExpression rx_model("^MODEL");
+   QRegularExpression rx_end  ("^END");
    
    map < QString, QChar > residue2fasta;
    residue2fasta["GLY"] = 'G';
@@ -11011,7 +11013,7 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
             QStringList qsl;
             {
                QString qs2 = qs.left(20);
-               qsl = (qs2 ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+               qsl = (qs2 ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             }
             if ( qsl.size() == 1 )
             {
@@ -11455,8 +11457,8 @@ map < QString, QString > US_Saxs_Util::pdb_fields( const QString & pdb_line ) {
       result[ "remarknum" ] = pdb_line.mid(  7, 3 ).trimmed();
       result[ "contents"  ] = pdb_line.mid( 11    ).trimmed();
       if ( result[ "remarknum" ] == "766" ) {
-         if ( result[ "contents" ].contains( QRegExp( "^DMD LINK RANGE " ) ) ) {
-            QStringList dmdlinkinfo = result[ "contents" ].mid( 15 ).trimmed().split( QRegExp( " +" ) );
+         if ( result[ "contents" ].contains( QRegularExpression( QStringLiteral( "^DMD LINK RANGE " ) ) ) ) {
+            QStringList dmdlinkinfo = result[ "contents" ].mid( 15 ).trimmed().split( QRegularExpression( QStringLiteral( " +" ) ) );
             if ( dmdlinkinfo.size() == 2 ) {
                bool ok;
                if ( dmdlinkinfo[ 0 ] == "PERCENT" ) {

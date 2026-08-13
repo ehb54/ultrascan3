@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
 #include <set>
 //Added by qt3to4:
@@ -1004,8 +1005,8 @@ void US_Hydrodyn_Saxs_Buffer_Nth::i_avg( QStringList files )
 
    for ( int i = 0; i < (int) files.size(); ++i )
    {
-      x.push_back( QString( files[ i ] ).replace( QRegExp( " :.*$" ), "" ).toDouble() );
-      double this_i = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->tot_intensity( QString( files[ i ] ).replace( QRegExp( "^\\d+ : " ), "" ), q_min, q_max );
+      x.push_back( QString( files[ i ] ).replace( QRegularExpression( QStringLiteral( " :.*$" ) ), "" ).toDouble() );
+      double this_i = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->tot_intensity( QString( files[ i ] ).replace( QRegularExpression( QStringLiteral( "^\\d+ : " ) ), "" ), q_min, q_max );
       y.push_back( this_i );
       if ( !i || min_i > this_i )
       {
@@ -1035,7 +1036,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::i_avg( QStringList files )
    qwtw_wheel->setRange( min_i, max_i); qwtw_wheel->setSingleStep( ( max_i - min_i ) / 10000000 );
    update_i_level();
 
-   QString plotname = QString( files[ 0 ] ).replace( QRegExp( "^\\d+ : " ), "" ).replace( QRegExp( ".(dat|DAT)$" ), "" );
+   QString plotname = QString( files[ 0 ] ).replace( QRegularExpression( QStringLiteral( "^\\d+ : " ) ), "" ).replace( QRegularExpression( QStringLiteral( ".(dat|DAT)$" ) ), "" );
    plotname += cb_q_range->isChecked() ?
       QString( "_qs%1_qe%2" ).arg( q_min ).arg( q_max ).replace( ".", "_" ) :
       QString( "_q_all" );
@@ -1122,7 +1123,7 @@ set < int > US_Hydrodyn_Saxs_Buffer_Nth::get_intensity_selected()
 
    for ( int i = 0; i < (int) files.size(); ++i )
    {
-      double this_i = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->tot_intensity( QString( files[ i ] ).replace( QRegExp( "^\\d+ : " ), "" ), q_min, q_max );
+      double this_i = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->tot_intensity( QString( files[ i ] ).replace( QRegularExpression( QStringLiteral( "^\\d+ : " ) ), "" ), q_min, q_max );
       if ( rb_i_above->isChecked() ? ( this_i >= cutoff ) : ( this_i <= cutoff ) )
       {
          result.insert( i );

@@ -2145,6 +2145,7 @@ void US_XpnDataViewer::revert_autoflow_stages_record( int autoflowID )
 //Stop machine
 void US_XpnDataViewer::stop_optima( void )
 {
+  qDebug() << "in stop_optima(), GMP? -- " << gmpRun_bool;
   QMessageBox msgBox;
   msgBox.setText(tr("\nYou are about to STOP Optima machine! \n\n")
 		 + tr("Do you want to proceed ?\n") );
@@ -2160,6 +2161,16 @@ void US_XpnDataViewer::stop_optima( void )
   
   if (msgBox.clickedButton() == Accept)
     {
+
+      if ( !gmpRun_bool )
+	{
+	  qDebug() << "[R&D]STOPPING Optima...";
+	  link->stopOptima();
+
+	  experimentAborted_remotely = true;
+	  return;
+	}
+      
       //Put a reason for a STOP (comment):
       // bool ok;
       // QString msg = QString(tr("Put a comment describing reason for a STOP:"));
@@ -2203,7 +2214,7 @@ void US_XpnDataViewer::stop_optima( void )
 	return;
       ///////////////////////////////////////
       
-      qDebug() << "STOPPING Optima...";
+      qDebug() << "[GMP]STOPPING Optima...";
       link->stopOptima();
 
       // And switch
@@ -2241,6 +2252,7 @@ void US_XpnDataViewer::stop_optima( void )
 //skip stage
 void US_XpnDataViewer::skip_optima_stage( void )
 {
+  qDebug() << "in skip_optima_stage(), GMP? -- " << gmpRun_bool;
   QMessageBox msgBox;
   msgBox.setText(tr("You are about to SKIP the current experiment stage."));
   msgBox.setInformativeText( tr( "Do you want to proceed ?" ));
@@ -2254,6 +2266,14 @@ void US_XpnDataViewer::skip_optima_stage( void )
   
   if (msgBox.clickedButton() == Accept)
     {
+
+       if ( !gmpRun_bool )
+	{
+	  qDebug() << "[R&D]SKIPPING EXP. STAGE...";
+	  link->skipOptimaStage();
+	  return;
+	}
+      
       // //Put a reason for a SKIP (comment):
       // bool ok;
       // QString msg = QString(tr("Put a comment describing reason for a SKIP stage:"));
@@ -2298,7 +2318,7 @@ void US_XpnDataViewer::skip_optima_stage( void )
       ///////////////////////////////////////
       
       
-      qDebug() << "SKIPPING EXP. STAGE...";
+      qDebug() << "[GMP]SKIPPING EXP. STAGE...";
       link->skipOptimaStage();
       
       //Now, create OR update (if exists due to clicking "Stop Optima") autoflowStatus record: 
@@ -2782,6 +2802,12 @@ void US_XpnDataViewer::timeToList( int& sectime, QList< int >& dhms )
 //Query for Optima DB periodically, see if data available
 void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_details)
 {
+  //What mode are we in?
+  gmpRun_bool  = false;
+  if ( protocol_details[ "gmpRun" ] == "YES" )
+    gmpRun_bool = true;
+  qDebug() << "2.LIVE_UPDATE gmpRun? " << gmpRun_bool; 
+  
   //Also reset the panel before reattachement
   //reset_auto();
   in_reload_all_data_set_gui  = false;

@@ -14,7 +14,6 @@
 #include <time.h>
 #include <map>
 #include <set>
-#include <qregexp.h>
 
 #include "us_util.h"
 #include "us_math.h"

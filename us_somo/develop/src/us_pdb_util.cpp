@@ -1,4 +1,5 @@
 #include "../include/us_pdb_util.h"
+#include <QRegularExpression>
 
 class pdb_sortable_qstring {
 public:
@@ -26,16 +27,17 @@ QStringList US_Pdb_Util::sort_pdbs( const QStringList & filenames )
 
    set < QString > used;
 
-   QRegExp rx_cap( "(\\d+)_(\\d+)" );
-   rx_cap.setMinimal( true );
+   QRegularExpression rx_cap( "(\\d+)_(\\d+)" );
+   rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
    for ( int i = 0; i < (int) filenames.size(); ++i )
    {
       QString tmp = filenames[ i ].mid( head.length() );
       tmp = tmp.mid( 0, tmp.length() - tail.length() );
-      if ( rx_cap.indexIn( tmp ) != -1 )
+      QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+      if ( rx_cap_m.hasMatch() )
       {
-         tmp = rx_cap.cap( 2 );
+         tmp = rx_cap_m.captured(2);
       }
       // cout << QString( "sort tmp <%1>\n" ).arg( tmp );
 
@@ -86,7 +88,7 @@ QString US_Pdb_Util::qstring_common_head( const QStringList & qsl, bool strip_di
 
    if ( strip_digits )
    {
-      s.replace( QRegExp( "\\d+$" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" );
    }
    return s;
 }
@@ -108,7 +110,7 @@ QString US_Pdb_Util::qstring_common_tail( const QStringList & qsl, bool strip_di
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
 }
@@ -167,24 +169,25 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
 
    QStringList qsl;
    {
-      QRegExp rx = QRegExp( "\\s*(\\s|,|;)\\s*" );
+      QRegularExpression rx = QRegularExpression( QStringLiteral( "\\s*(\\s|,|;)\\s*" ) );
       qsl = (s ).split( rx , Qt::SkipEmptyParts );
    }
 
    // us_qdebug( qsl.join("\n") + QString( "\n" ) );
 
-   QRegExp rx_1( "(.?):(\\d+)" );
-   QRegExp rx_2( "(.?):(\\d+)-(\\d+)" );
+   QRegularExpression rx_1( "(.?):(\\d+)" );
+   QRegularExpression rx_2( "(.?):(\\d+)-(\\d+)" );
 
    result.clear( );
 
    for ( int i = 0; i < (int) qsl.size(); i++ )
    {
-      if ( rx_2.indexIn( qsl[ i ] ) != -1 )
+      QRegularExpressionMatch rx_2_m = rx_2.match( qsl[ i ] );
+      if ( rx_2_m.hasMatch() )
       {
-         QString chain  = rx_2.cap( 1 );
-         int     startr = rx_2.cap( 2 ).toInt();
-         int     endr   = rx_2.cap( 3 ).toInt();
+         QString chain  = rx_2_m.captured(1);
+         int     startr = rx_2_m.captured(2).toInt();
+         int     endr   = rx_2_m.captured(3).toInt();
          if ( endr < startr )
          {
             return false;
@@ -194,10 +197,11 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
             result.insert( QString( "%1~%2" ).arg( chain ).arg( j ) );
          }
       } else {
-         if ( rx_1.indexIn( qsl[ i ] ) != -1 )
+         QRegularExpressionMatch rx_1_m = rx_1.match( qsl[ i ] );
+         if ( rx_1_m.hasMatch() )
          {
-            QString chain  = rx_1.cap( 1 );
-            int     r      = rx_1.cap( 2 ).toInt();
+            QString chain  = rx_1_m.captured(1);
+            int     r      = rx_1_m.captured(2).toInt();
             result.insert( QString( "%1~%2" ).arg( chain ).arg( r ) );
          } else {
             return false;

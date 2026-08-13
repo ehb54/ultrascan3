@@ -213,6 +213,9 @@ print OUT $ftxt;
 close OUT;
 docmd( "chmod a+rx $f" );
 
+## license file
+docmd( "cp $us/LICENSE.txt ." );
+
 # make tar
 
 chdir $basedir;

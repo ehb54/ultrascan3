@@ -20,7 +20,8 @@ The simplest way is to download and install a precompiled [binary](https://www.u
  
 If you wish to compile from source, here are some notes to get you started.
 
-You will need [qt5](https://doc.qt.io/qt-5/gettingstarted.html) development and [qwt](https://qwt.sourceforge.io/) installed.
+You will need [qt6](https://doc.qt.io/qt-6/gettingstarted.html) development and [qwt6.3.0](https://qwt.sourceforge.io/) installed.
+For now [qt5](https://doc.qt.io/archives/qt-5.15/gettingstarted.html) is still supported but deprecated.
 
 We typically compile from source as in [ansible roles build-qt, build-qwt & build-us3](https://github.com/KJSain/us3lims-roles/tree/master/roles)
 
@@ -33,7 +34,7 @@ Please create an issue or [contact us](https://www.ultrascan3.aucsolutions.com/c
 Assuming you are experienced with containers...
 
 A containerized development image is also available
-```docker pull ehb1/us3comp```
+```docker pull ehb1/usbuildtest```
 
 The source is in `/ultrascan3`
 

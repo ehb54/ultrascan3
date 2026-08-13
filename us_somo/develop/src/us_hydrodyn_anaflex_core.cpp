@@ -1,4 +1,6 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
+static const QRegularExpression rx_txt_ext( QStringLiteral( "(txt|TXT)$" ) );
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // (this) us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -8,7 +10,6 @@
 // includes and defines need cleanup
 
 #include "../include/us_hydrodyn.h"
-#include <qregexp.h>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -745,7 +746,7 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return false;
@@ -759,7 +760,7 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return false;
@@ -773,7 +774,7 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return false;
@@ -916,7 +917,7 @@ void US_Hydrodyn::anaflex_load_results()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return;
@@ -931,7 +932,7 @@ void US_Hydrodyn::anaflex_load_results()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return;
@@ -946,7 +947,7 @@ void US_Hydrodyn::anaflex_load_results()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return;

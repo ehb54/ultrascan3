@@ -407,8 +407,8 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
 
       QString head = US_Pdb_Util::qstring_common_head( qsl_plotted_iq_names, true );
       QString tail = US_Pdb_Util::qstring_common_tail( qsl_plotted_iq_names, true );
-      QRegExp rx_cap( "(\\d+)_(\\d+)" );
-      QRegExp rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
+      QRegularExpression rx_cap( "(\\d+)_(\\d+)" );
+      QRegularExpression rx_clear_nonnumeric( "^(\\d*_?\\d+)([^0-9_]|_[a-zA-Z])" );
 
       for ( unsigned int i = 0; 
             i < plotted_Iq.size();
@@ -420,14 +420,16 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
             skip_curves.insert( i );
          }
          // us_qdebug( QString( "filename %1 tmp is %2" ).arg( qsl_plotted_iq_names[ i ] ).arg( tmp ) );
-         if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_clear_nonnumeric_m = rx_clear_nonnumeric.match( tmp );
+         if ( rx_clear_nonnumeric_m.hasMatch() )
          {
-            tmp = rx_clear_nonnumeric.cap( 1 );
+            tmp = rx_clear_nonnumeric_m.captured(1);
          }
 
-         if ( rx_cap.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+         if ( rx_cap_m.hasMatch() )
          {
-            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
          }
          // us_qdebug( QString( "final tmp is %1" ).arg( tmp ) );
          double timestamp = tmp.toDouble();

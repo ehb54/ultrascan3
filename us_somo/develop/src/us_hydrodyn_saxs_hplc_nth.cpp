@@ -358,14 +358,24 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   if ( !ggaussian_last_pfit_map->size() ||
-        !started_in_expert_mode ) {
-      lbl_pvalue        ->hide();
-      cb_pvalues_green  ->hide();
-      cb_pvalues_yellow ->hide();
-      cb_pvalues_red    ->hide();
-      pb_pvalues_only   ->hide();
-      pb_pvalues_add    ->hide();
+   // check if pvalues ok - e.g. all originally selected files have computed pvalues
+   {
+      bool pvalues_ok = true;
+      for ( int i = 0; i < lb_files->count(); ++i ) {
+         QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text();
+         if ( !ggaussian_last_pfit_map->count( qs ) ) {
+            pvalues_ok = false;
+            break;
+         }
+      }
+      if ( !pvalues_ok ) {
+         lbl_pvalue        ->hide();
+         cb_pvalues_green  ->hide();
+         cb_pvalues_yellow ->hide();
+         cb_pvalues_red    ->hide();
+         pb_pvalues_only   ->hide();
+         pb_pvalues_add    ->hide();
+      }
    }
 }
 

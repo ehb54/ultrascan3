@@ -125,12 +125,14 @@ US_Spectrum::US_Spectrum() : US_Widgets()
     left_lyt->addWidget(pb_close,      row++, 0, 1, 2);
 
     data_plot = new QwtPlot();
+    US_Widgets::us_style_plot( data_plot );
     US_Plot *plot_layout_1 = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
     data_plot->setCanvasBackground(Qt::black);
     data_plot->setTitle("Wavelength Spectrum Fit");
     data_plot->setMinimumSize(600, 200);
 
     error_plot = new QwtPlot();
+    US_Widgets::us_style_plot( error_plot );
     US_Plot *plot_layout_2 = new US_Plot(error_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
     error_plot->setCanvasBackground(Qt::black);
     error_plot->setTitle("Fitting Residuals");

@@ -202,6 +202,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       bool          max_free_peak_delta( vector < double > & par );
 
       double        hplc_ampl_width_min;
+      double        hplc_ampl_min;
       bool          hplc_lock_min_retry;
       double        hplc_lock_min_retry_mult;
       bool          hplc_maxfpk_restart;

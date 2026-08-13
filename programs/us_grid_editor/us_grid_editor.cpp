@@ -3234,6 +3234,7 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    QPushButton *pb_apply  = us_pushbutton( "Apply" );
 
    plot = new QwtPlot();
+   US_Widgets::us_style_plot( plot );
    QBoxLayout* usplot = new US_Plot( plot, "Grid Layout", "", "" );
    plot->setCanvasBackground( QBrush( QColor( 32, 32, 32 ) ) );
 

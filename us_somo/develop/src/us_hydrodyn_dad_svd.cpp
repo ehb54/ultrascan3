@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_dad_svd.h"
 #include "../include/us_svd.h"
 
@@ -2326,7 +2327,7 @@ void US_Hydrodyn_Dad_Svd::add_i_of_q_or_t( QString source, QStringList files, bo
    map < double, bool > used_q;
    list < double >      ql;
 
-   QRegExp rx_cap( "(\\d+)_(\\d+)" );
+   QRegularExpression rx_cap( "(\\d+)_(\\d+)" );
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
@@ -2336,9 +2337,10 @@ void US_Hydrodyn_Dad_Svd::add_i_of_q_or_t( QString source, QStringList files, bo
       } else {
          QString tmp = files[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
-         if ( rx_cap.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+         if ( rx_cap_m.hasMatch() )
          {
-            tmp = rx_cap.cap( 2 );
+            tmp = rx_cap_m.captured(2);
          }
          double timestamp = tmp.toDouble();
          
@@ -3658,7 +3660,7 @@ QStringList US_Hydrodyn_Dad_Svd::get_files_by_name( QString name )
 bool US_Hydrodyn_Dad_Svd::get_name_norm_mode( QString fullname, QString &name, norms &norm_mode ) {
    // QTextStream( stdout ) << "get_name_norm_mode( " << fullname << " );\n";
    for ( int i = NORM_NOT; i <= NORM_AVG; ++i ) {
-      QRegExp rx = QRegExp( " " + norm_name_map[ static_cast<norms>(i) ] + "$" );
+      QRegularExpression rx = QRegularExpression( " " + norm_name_map[ static_cast<norms>(i) ] + "$" );
       // QTextStream( stdout ) << "get_name_norm_mode: checking for '" << norm_name_map[ static_cast<norms>(i) ] << "'\n";
       if ( fullname.contains( rx ) ) {
          norm_mode = static_cast<norms>(i);
@@ -4342,7 +4344,7 @@ void US_Hydrodyn_Dad_Svd::rmsd_save()
       out += QString( "%1,%2,%3" ).arg( rmsd_x[ i ] ).arg( rmsd_y[ i ] ).arg( last_recon_evs[ i ] ) + "\n";
    }
 
-   if ( fname.toLower().contains( QRegExp( "\\.txt$" ) ) )
+   if ( fname.toLower().contains( QRegularExpression( QStringLiteral( "\\.txt$" ) ) ) )
    {
       out.replace( "\"", "" ).replace( ",", "\t" );
    }
@@ -4375,7 +4377,7 @@ void US_Hydrodyn_Dad_Svd::svd_save()
       out += QString( "%1,%2" ).arg( i + 1 ).arg( lb_ev->item( i )->text() ) + "\n";
    }
 
-   if ( fname.toLower().contains( QRegExp( "\\.txt$" ) ) )
+   if ( fname.toLower().contains( QRegularExpression( QStringLiteral( "\\.txt$" ) ) ) )
    {
       out.replace( "\"", "" ).replace( ",", "\t" );
    }
@@ -5831,12 +5833,12 @@ bool US_Hydrodyn_Dad_Svd::convert_it_to_iq( QStringList files, QStringList & cre
 
    QString head = dad_win->qstring_common_head( files, true );
 
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
 
-   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
-   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_q     ( "_q(\\d+_\\d+)" );
+   QRegularExpression rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
    vector < QString > q_string;
    vector < double  > q;
@@ -5868,12 +5870,13 @@ bool US_Hydrodyn_Dad_Svd::convert_it_to_iq( QStringList files, QStringList & cre
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
-      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+      if ( !rx_q_m.hasMatch() )
       {
          error_msg = QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] );
          return false;
       }
-      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      ql.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
       {
          error_msg = QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] );
@@ -5881,11 +5884,13 @@ bool US_Hydrodyn_Dad_Svd::convert_it_to_iq( QStringList files, QStringList & cre
       }
       used_q[ ql.back() ] = true;
          
-      if ( rx_bl.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_bl_m = rx_bl.match( files[ i ] );
+      if ( rx_bl_m.hasMatch() )
       {
          any_bl = true;
       }
-      if ( rx_bi.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_bi_m = rx_bi.match( files[ i ] );
+      if ( rx_bi_m.hasMatch() )
       {
          any_bi = true;
       }

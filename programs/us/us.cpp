@@ -10,6 +10,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_theme.h"
 #include "us_win_data.h"
 #include "us_defines.h"
 #include "us_revision.h"
@@ -240,7 +241,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   QMenu* multiwave   = new QMenu( tr( "&Multiwavelength" ),   this );
   QMenu* spectrum    = new QMenu( tr( "&Spectral Analysis" ),   this );
+#ifndef Q_OS_MAC
   addMenu(  P_GETDATA  , tr( "&Data Acquisition"                 ), utilities );
+#endif
   addMenu(  P_VIEWXPN  , tr( "View Raw &Optima Data"             ), utilities );
   addMenu(  P_LEGDATA  , tr( "&Convert Optima Data (Beckman tar.gz) " ), utilities );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
@@ -325,7 +328,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( multiwave   );
   menuBar()->addMenu( simulation  );
+#ifndef Q_OS_MAC
   menuBar()->addMenu( gmp         );
+#endif
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 
@@ -654,7 +659,7 @@ void US_Win::splash( void )
   const int w = 710;
 
   bigframe = new QLabel( this );
-  bigframe->setFrameStyle        ( QFrame::Box | QFrame::Raised);
+  bigframe->setFrameStyle        ( QFrame::NoFrame );
   bigframe->setPalette           ( US_GuiSettings::frameColor() );
   bigframe->setGeometry          ( 0, y, w, height );
   bigframe->setAutoFillBackground( true );

@@ -312,7 +312,7 @@ bool US_Hydrodyn_Mals_Saxs::gg_fit_vector(
          QString msg = 
             QString::asprintf( "P value analysis summary:\n"
                                " %5.1f%% P >= %.2f (%.1f%% P >= %.2f ) + (%.1f%% %.2f > P >= %.2f) pairs\n"
-                               " %5.1f%% %.2f < P pairs\n"
+                               " %5.1f%% P < %.2f pairs\n"
                                ,tot_c_pct * (double) (cormap_green + cormap_yellow )
                                ,alpha_over_5
                                ,tot_c_pct * (double) cormap_green

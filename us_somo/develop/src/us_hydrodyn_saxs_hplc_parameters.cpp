@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_saxs_hplc_parameters.h"
 //Added by qt3to4:
 #include <QGridLayout>
@@ -341,7 +342,7 @@ void US_Hydrodyn_Saxs_Hplc_Parameters::save()
    //    return;
    // }
 
-   // fn.replace( QRegExp( "(|_saxs_hplc_param)\\.(dat|DAT)$" ), "" );
+   // fn.replace( QRegularExpression( QStringLiteral( "(|_saxs_hplc_param)\\.(dat|DAT)$" ) ), "" );
    // fn += "_saxs_hplc_param.dat";
 
    // QFile f( fn );

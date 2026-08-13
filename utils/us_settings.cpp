@@ -6,7 +6,18 @@
 QString US_Settings::browser( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "browser",  "/usr/bin/firefox" ).toString();
+  QString   value = settings.value( "browser", "" ).toString();
+
+#if defined( Q_OS_MAC ) || defined( Q_OS_WIN )
+  // Self-heal a stale "/usr/bin/firefox" default that earlier versions
+  // could persist on save even when the user never set a browser. That
+  // path is a real, possibly intentional setting on Linux, so leave it
+  // alone there.
+  if ( value == "/usr/bin/firefox" )
+    value = "";
+#endif
+
+  return value;
 }
 
 void US_Settings::set_browser( const QString& browser )
@@ -498,7 +509,7 @@ bool US_Settings::get_DA_status( const QString& da_type )
 {
   QSettings settings( US3, "UltraScan" );
 
-  int status; 
+  int status = 0;
   if ( da_type == "COM" )
     status = settings.value( "daComOpened", QString() ).toInt();
 

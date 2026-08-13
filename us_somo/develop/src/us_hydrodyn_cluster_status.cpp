@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
@@ -53,8 +54,8 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    manage_url_host = manage_url;
    manage_url_port = manage_url;
 
-   manage_url_host.replace( QRegExp( ":.*$" ), "" );
-   manage_url_port.replace( QRegExp( "^.*:" ), "" );
+   manage_url_host.replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+   manage_url_port.replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
    cout << manage_url_host << endl;
    cout << manage_url_port << endl;
 
@@ -62,16 +63,16 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    // submit_url_host = submit_url;
    // submit_url_port = submit_url;
 
-   // submit_url_host.replace( QRegExp( ":.*$" ), "" );
-   // submit_url_port.replace( QRegExp( "^.*:" ), "" );
+   // submit_url_host.replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+   // submit_url_port.replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
 
    // staging is now job specific (ugh)
    // stage_url       = ((US_Hydrodyn_Cluster *) cluster_window )->stage_url;
    // stage_path      = stage_url;
    // stage_url_path  = stage_url;
 
-   // stage_url     .replace( QRegExp( ":.*$" ), "" );
-   // stage_path    .replace( QRegExp( "^.*:" ), "" );
+   // stage_url     .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+   // stage_path    .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
    // stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
 
    if ( cluster_id.isEmpty() ||
@@ -866,14 +867,14 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       // stage_url       = selected_system[ "stage" ];
       // stage_path      = stage_url;
       // stage_url_path  = stage_url;
-      // stage_url       .replace( QRegExp( ":.*$" ), "" );
-      // stage_path      .replace( QRegExp( "^.*:" ), "" );
+      // stage_url       .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+      // stage_path      .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
       // stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
       ftp_url         = selected_system[ "ftp" ];
       ftp_url_host    = ftp_url;
       ftp_url_port    = ftp_url;
-      ftp_url_host    .replace( QRegExp( ":.*$" ), "" );
-      ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
+      ftp_url_host    .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+      ftp_url_port    .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
       } else {
       errormsg = QString( us_tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
       return false;
@@ -892,7 +893,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       QStringList previously_retrieved = qd.entryList( QStringList() << QString( "%1_out.t??" )
                                                        .arg( QString( "%1" )
                                                              .arg( next_to_process->text( 0 ) )
-                                                             .replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
+                                                             .replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" ) ) );
       if ( previously_retrieved.size() )
       {
          switch ( QMessageBox::question(
@@ -918,8 +919,8 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
                   {
                      QString test_base = previously_retrieved[ i ];
                      QString test_ext  = test_base;
-                     test_base.replace( QRegExp( "_out\\.t..$" ), "" );
-                     test_ext .replace( QRegExp( "^.*_out\\." ), "_out." );
+                     test_base.replace( QRegularExpression( QStringLiteral( "_out\\.t..$" ) ), "" );
+                     test_ext .replace( QRegularExpression( QStringLiteral( "^.*_out\\." ) ), "_out." );
                      cout << QString( "test base <%1> text num %2 ext <%3>\n" )
                         .arg( test_base )
                         .arg( ext )
@@ -938,8 +939,8 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
                {
                   QString test_base = previously_retrieved[ i ];
                   QString test_ext  = test_base;
-                  test_base.replace( QRegExp( "_out\\.t..$" ), "" );
-                  test_ext .replace( QRegExp( "^.*_out\\." ), "_out." );
+                  test_base.replace( QRegularExpression( QStringLiteral( "_out\\.t..$" ) ), "" );
+                  test_ext .replace( QRegularExpression( QStringLiteral( "^.*_out\\." ) ), "_out." );
                   QString test_file = test_base + QString( "-%1" ).arg( ext ) + test_ext;
                   QDir qd2;
                   if ( !qd2.rename( previously_retrieved[ i ], test_file ) )
@@ -984,8 +985,8 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    // using http GET
 
    retrieve_file_name = file;
-   retrieve_file_name.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
-   retrieve_file_name += QString( "_out.%1" ).arg( retrieve_file_name.contains( QRegExp( "^(bfnb|bfnbpm|oned)_" ) ) ? "tgz" : "tar" );
+   retrieve_file_name.replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" );
+   retrieve_file_name += QString( "_out.%1" ).arg( retrieve_file_name.contains( QRegularExpression( QStringLiteral( "^(bfnb|bfnbpm|oned)_" ) ) ) ? "tgz" : "tar" );
 
    retrieve_file = new QFile( retrieve_file_name );
    if ( !retrieve_file->open( QIODevice::WriteOnly ) ) {
@@ -1017,8 +1018,8 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    // // using qftp now:
 
    // QString get_file = file;
-   // get_file.replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" );
-   // get_file += QString( "_out.%1" ).arg( get_file.contains( QRegExp( "^(bfnb|bfnbpm|oned)_" ) ) ? "tgz" : "tar" );
+   // get_file.replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" );
+   // get_file += QString( "_out.%1" ).arg( get_file.contains( QRegularExpression( QStringLiteral( "^(bfnb|bfnbpm|oned)_" ) ) ) ? "tgz" : "tar" );
 
    // cout << "get file: " << get_file << endl;
 
@@ -1031,7 +1032,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    //    return false;
    // }
 
-   // QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+   // QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegularExpression( QStringLiteral( "\\.(tar|tgz)$" ) ), "" );
 
    // cout 
    //    << QString( "ftp host   : %1\n"
@@ -1064,9 +1065,9 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    // cmd << "scp";
    // cmd << QString( "%1%2/%3" )
    // .arg( stage_url_path )
-   // .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) )
+   // .arg( QString("%1").arg( file ).replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" ) )
    // .arg( QString( "%1_out.t??" )
-   // .arg( QString( "%1" ).arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
+   // .arg( QString( "%1" ).arg( file ).replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" ) ) );
    //  cmd << QString( "." );
 
    // return( system_cmd( cmd ) );
@@ -1229,7 +1230,7 @@ void US_Hydrodyn_Cluster_Status::system_proc_finished( int, QProcess::ExitStatus
    QStringList retrieved = qd.entryList( QStringList() << QString( "%1_out.t??" )
                                          .arg( QString( "%1" )
                                                .arg( next_to_process->text( 0 ) )
-                                               .replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
+                                               .replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" ) ) );
 
    next_to_process->setText( 2,
                              retrieved.size() ? 

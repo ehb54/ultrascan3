@@ -46,9 +46,9 @@ target_link_libraries(us
         us_program_common
 )
 
-# Ensure us_revision.h is found
+# Ensure us_revision.h is found — written to CMAKE_BINARY_DIR root by GenerateVersion.cmake
 target_include_directories(us PRIVATE
-        ${CMAKE_BINARY_DIR}/us       # where us_revision.h lives
+        ${CMAKE_BINARY_DIR}
 )
 
 # Ensure version headers are always generated first

@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QtSvg>
 #include "us_plot.h"
+#include "us_theme.h"
 #include "us_images.h"
 
 #include <QtPrintSupport>
@@ -269,10 +270,10 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    addWidget( toolBar );
 
-   // Add a 1 pixel black line between the tool bar and the plot
+   // Add a 1 pixel separator between the tool bar and the plot
    QLabel* spacer = new QLabel;
    QPalette p;
-   p.setColor( QPalette::Window, Qt::black );
+   p.setColor( QPalette::Window, US_Theme::tokens().border );
    spacer->setPalette( p );
    spacer->setAutoFillBackground( true );
    spacer->setMaximumWidth( 1 );
@@ -280,6 +281,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    plot        = new QwtPlot;
    parent_plot = plot;
+
+   US_Widgets::us_style_plot( plot );
 
    configWidget = nullptr;
   
@@ -319,10 +322,6 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
       plot->legend()->setFont( font );
    }
   
-   plot->setAutoFillBackground( true );
-   plot->setPalette ( US_GuiSettings::plotColor() );
-   plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
-
    addWidget( plot );
 
    // Setup canvas for double-click events
@@ -1198,7 +1197,7 @@ void US_PlotConfig::selectLegendPos( const int index ) const
    if ( index > 0 )
    {
       legend = new QwtLegend;
-      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      legend->setFrameStyle( QFrame::StyledPanel | QFrame::Plain );
    }
 
    plot->insertLegend( nullptr, QwtPlot::BottomLegend );

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 // this is part of the class US_Hydrodyn
 // listing of other files is in us_hydrodyn.cpp
 // (this) us_hydrodyn_other.cpp contains other routines
@@ -14,18 +15,22 @@
 #include "../include/us_math.h"
 #include "../include/us_dirhist.h"
 #include "../include/us_revision.h"
-#include <qregexp.h>
 #include <qfont.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <qsound.h>
+#include <qsoundeffect.h>
 #include <QAudio>
-#include <QAudioDeviceInfo>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  #include <QMediaDevices>
+  #include <QAudioDevice>
+#else
+  #include <QAudioDeviceInfo>
+#endif
+#include <QAudioOutput>
 
 #undef DEBUG
 #ifndef WIN32
@@ -581,8 +586,14 @@ void US_Hydrodyn::append_options_log_atob_ovlp()
 // and a more through matrix of sound events
 void US_Hydrodyn::play_sounds(int type)
 {
-   if ( advanced_config.use_sounds &&
-        !QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty() )
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+   const bool haveOut = !QMediaDevices::audioOutputs().isEmpty();
+#else
+   const bool haveOut = !QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty();
+#endif
+
+   if ( advanced_config.use_sounds
+        && haveOut )
    {
       QString sound_base = USglobal->config_list.root_dir + "sounds/";
       switch (type)
@@ -908,7 +919,7 @@ void US_Hydrodyn::editor_msg( QString color, QString msg )
 {
    QColor save_color = Qt::black; // editor->textColor();
    editor->setTextColor(color);
-   editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );
+   editor->append( msg.replace( QRegularExpression( QStringLiteral( "\\n$" ) ) , "" ) );
    editor->setTextColor(save_color);
 }
 
@@ -918,7 +929,7 @@ void US_Hydrodyn::editor_msg( QString color, const QFont &font, QString msg )
    QColor save_color = Qt::black; // editor->textColor();
    editor->setCurrentFont(font);
    editor->setTextColor(color);
-   editor->append( msg.replace( QRegExp( "\\n$" ) , "" ) );
+   editor->append( msg.replace( QRegularExpression( QStringLiteral( "\\n$" ) ) , "" ) );
    editor->setCurrentFont(save_font);
    editor->setTextColor(save_color);
 }
@@ -961,7 +972,7 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
       QString tmp;
       do {
          tmp = ts.readLine();
-         if ( tmp.contains(QRegExp("^ATOM ")) &&
+         if ( tmp.contains(QRegularExpression( QStringLiteral( "^ATOM " ) )) &&
               !tmp.contains("CA  ASP ") ) {
             f.close();
             return false;
@@ -991,7 +1002,7 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
       while ( !ts.atEnd() )
       {
          tmp = ts.readLine();
-         if ( tmp.contains(QRegExp("^ATOM ")) &&
+         if ( tmp.contains(QRegularExpression( QStringLiteral( "^ATOM " ) )) &&
               !tmp.contains("CA  ASP ") ) {
             f.close();
             return false;
@@ -1358,7 +1369,7 @@ void US_Hydrodyn::pdb_tool()
 void US_Hydrodyn::make_test_set()
 {
    QTextStream( stdout ) << "make test set\n";
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    QString test_dir = somo_dir + QDir::separator() + "testset";
    QDir dir1( test_dir );
@@ -1398,9 +1409,10 @@ void US_Hydrodyn::make_test_set()
                {
                   QString atom_name_1 = atom_name.left( 1 );
                   QString hybrid_name = residue_list[ i ].r_atom[ j ].hybrid.name;
-                  if ( count_hydrogens.indexIn( hybrid_name ) != -1 )
+                  QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match( hybrid_name );
+                  if ( count_hydrogens_m.hasMatch() )
                   {
-                     hydrogens = count_hydrogens.cap( 1 ).toInt();
+                     hydrogens = count_hydrogens_m.captured(1).toInt();
                   }
 
                   QDir::setCurrent( test_dir );
@@ -1618,7 +1630,7 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 
    // us_qdebug( QString( "add to dir history %1 %2 %3 %4" ).arg( filename ).arg( dir ).arg( fi.suffix() ).arg( accessed ? "true" : "false" ) );
    if ( dir.isEmpty() ||
-        dir.contains( QRegExp( "^\\." ) ) )
+        dir.contains( QRegularExpression( QStringLiteral( "^\\." ) ) ) )
    {
       return;
    }

@@ -372,6 +372,7 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       QMap < QString, QString > channels_report;
       QMap < QString, QStringList >    triples_dropped_from_channel;
   QMap < QString, QMap <QString, QString> > drop_operations;
+  QMap<QString, QStringList> scan_difference_map;
   //ABDE
   QMap < QString, int >  channels_abde_refs;
   QMap < QString, int >  channels_abde_use_refs;					   

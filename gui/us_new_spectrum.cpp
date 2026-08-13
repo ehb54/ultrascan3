@@ -332,6 +332,7 @@ US_ViewSpectrum::US_ViewSpectrum(QMap<double,double>& tmp_extinction) : US_Widge
   extinction = tmp_extinction;
   
   data_plot = new QwtPlot();
+  US_Widgets::us_style_plot( data_plot );
   //changedCurve = NULL;
   plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
   data_plot->setCanvasBackground(Qt::black);

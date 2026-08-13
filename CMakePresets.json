@@ -20,24 +20,6 @@
       }
     },
     {
-      "name": "base-qt5-qwt616-app",
-      "hidden": true,
-      "inherits": "base",
-      "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt5-app"
-      }
-    },
-    {
-      "name": "base-qt5-qwt616-hpc",
-      "hidden": true,
-      "inherits": "base",
-      "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt5-hpc",
-        "US3_NO_DB": "ON",
-        "US3_PROFILE": "HPC"
-      }
-    },
-    {
       "name": "base-qt5-qwt630-app",
       "hidden": true,
       "inherits": "base",
@@ -147,34 +129,6 @@
       }
     },
     {
-      "name": "macos-release-qt5-qwt616",
-      "displayName": "macOS Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "macos-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
-      "name": "macos-debug-qt5-qwt616",
-      "displayName": "macOS Debug Qt5 Qwt6.1.6",
-      "inherits": [
-        "debug-base",
-        "macos-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
       "name": "macos-release-qt5-qwt630",
       "displayName": "macOS Release Qt5 Qwt6.3.0",
       "inherits": [
@@ -223,34 +177,6 @@
         "debug-base",
         "macos-base",
         "base-qt6-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
-      "name": "macos-release-qt5-qwt616-x64",
-      "displayName": "macOS Intel Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "macos-x64-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
-      "name": "macos-debug-qt5-qwt616-x64",
-      "displayName": "macOS Intel Debug Qt5 Qwt6.1.6",
-      "inherits": [
-        "debug-base",
-        "macos-x64-base",
-        "base-qt5-qwt616-app"
       ],
       "condition": {
         "type": "equals",
@@ -315,20 +241,6 @@
       }
     },
     {
-      "name": "macos-hpc-release-qt5-qwt616",
-      "displayName": "macOS HPC Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "macos-base",
-        "base-qt5-qwt616-hpc"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
       "name": "macos-hpc-release-qt5-qwt630",
       "displayName": "macOS HPC Release Qt5 Qwt6.3.0",
       "inherits": [
@@ -349,20 +261,6 @@
         "release-base",
         "macos-base",
         "base-qt6-hpc"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
-      "name": "macos-hpc-release-qt5-qwt616-x64",
-      "displayName": "macOS Intel HPC Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "macos-x64-base",
-        "base-qt5-qwt616-hpc"
       ],
       "condition": {
         "type": "equals",
@@ -396,34 +294,6 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Darwin"
-      }
-    },
-    {
-      "name": "linux-release-qt5-qwt616",
-      "displayName": "Linux Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "linux-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      }
-    },
-    {
-      "name": "linux-debug-qt5-qwt616",
-      "displayName": "Linux Debug Qt5 Qwt6.1.6",
-      "inherits": [
-        "debug-base",
-        "linux-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
       }
     },
     {
@@ -483,20 +353,6 @@
       }
     },
     {
-      "name": "linux-hpc-release-qt5-qwt616",
-      "displayName": "Linux HPC Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "linux-base",
-        "base-qt5-qwt616-hpc"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      }
-    },
-    {
       "name": "linux-hpc-release-qt5-qwt630",
       "displayName": "Linux HPC Release Qt5 Qwt6.3.0",
       "inherits": [
@@ -522,34 +378,6 @@
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
-      }
-    },
-    {
-      "name": "windows-release-qt5-qwt616",
-      "displayName": "Windows x64 Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "windows-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "windows-debug-qt5-qwt616",
-      "displayName": "Windows x64 Debug Qt5 Qwt6.1.6",
-      "inherits": [
-        "debug-base",
-        "windows-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
       }
     },
     {
@@ -609,34 +437,6 @@
       }
     },
     {
-      "name": "windows-release-qt5-qwt616-arm64",
-      "displayName": "Windows ARM64 Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "windows-arm64-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "windows-debug-qt5-qwt616-arm64",
-      "displayName": "Windows ARM64 Debug Qt5 Qwt6.1.6",
-      "inherits": [
-        "debug-base",
-        "windows-arm64-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
       "name": "windows-release-qt5-qwt630-arm64",
       "displayName": "Windows ARM64 Release Qt5 Qwt6.3.0",
       "inherits": [
@@ -685,34 +485,6 @@
         "debug-base",
         "windows-arm64-base",
         "base-qt6-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "mingw-release-qt5-qwt616",
-      "displayName": "MinGW Release Qt5 Qwt6.1.6",
-      "inherits": [
-        "release-base",
-        "mingw-base",
-        "base-qt5-qwt616-app"
-      ],
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "mingw-debug-qt5-qwt616",
-      "displayName": "MinGW Debug Qt5 Qwt6.1.6",
-      "inherits": [
-        "debug-base",
-        "mingw-base",
-        "base-qt5-qwt616-app"
       ],
       "condition": {
         "type": "equals",
@@ -779,14 +551,6 @@
   ],
   "buildPresets": [
     {
-      "name": "build-macos-release-qt5-qwt616",
-      "configurePreset": "macos-release-qt5-qwt616"
-    },
-    {
-      "name": "build-macos-debug-qt5-qwt616",
-      "configurePreset": "macos-debug-qt5-qwt616"
-    },
-    {
       "name": "build-macos-release-qt5-qwt630",
       "configurePreset": "macos-release-qt5-qwt630"
     },
@@ -803,24 +567,12 @@
       "configurePreset": "macos-debug-qt6"
     },
     {
-      "name": "build-macos-hpc-release-qt5-qwt616",
-      "configurePreset": "macos-hpc-release-qt5-qwt616"
-    },
-    {
       "name": "build-macos-hpc-release-qt5-qwt630",
       "configurePreset": "macos-hpc-release-qt5-qwt630"
     },
     {
       "name": "build-macos-hpc-release-qt6",
       "configurePreset": "macos-hpc-release-qt6"
-    },
-    {
-      "name": "build-macos-release-qt5-qwt616-x64",
-      "configurePreset": "macos-release-qt5-qwt616-x64"
-    },
-    {
-      "name": "build-macos-debug-qt5-qwt616-x64",
-      "configurePreset": "macos-debug-qt5-qwt616-x64"
     },
     {
       "name": "build-macos-release-qt5-qwt630-x64",
@@ -839,24 +591,12 @@
       "configurePreset": "macos-debug-qt6-x64"
     },
     {
-      "name": "build-macos-hpc-release-qt5-qwt616-x64",
-      "configurePreset": "macos-hpc-release-qt5-qwt616-x64"
-    },
-    {
       "name": "build-macos-hpc-release-qt5-qwt630-x64",
       "configurePreset": "macos-hpc-release-qt5-qwt630-x64"
     },
     {
       "name": "build-macos-hpc-release-qt6-x64",
       "configurePreset": "macos-hpc-release-qt6-x64"
-    },
-    {
-      "name": "build-linux-release-qt5-qwt616",
-      "configurePreset": "linux-release-qt5-qwt616"
-    },
-    {
-      "name": "build-linux-debug-qt5-qwt616",
-      "configurePreset": "linux-debug-qt5-qwt616"
     },
     {
       "name": "build-linux-release-qt5-qwt630",
@@ -875,24 +615,12 @@
       "configurePreset": "linux-debug-qt6"
     },
     {
-      "name": "build-linux-hpc-release-qt5-qwt616",
-      "configurePreset": "linux-hpc-release-qt5-qwt616"
-    },
-    {
       "name": "build-linux-hpc-release-qt5-qwt630",
       "configurePreset": "linux-hpc-release-qt5-qwt630"
     },
     {
       "name": "build-linux-hpc-release-qt6",
       "configurePreset": "linux-hpc-release-qt6"
-    },
-    {
-      "name": "build-windows-release-qt5-qwt616",
-      "configurePreset": "windows-release-qt5-qwt616"
-    },
-    {
-      "name": "build-windows-debug-qt5-qwt616",
-      "configurePreset": "windows-debug-qt5-qwt616"
     },
     {
       "name": "build-windows-release-qt5-qwt630",
@@ -911,14 +639,6 @@
       "configurePreset": "windows-debug-qt6"
     },
     {
-      "name": "build-windows-release-qt5-qwt616-arm64",
-      "configurePreset": "windows-release-qt5-qwt616-arm64"
-    },
-    {
-      "name": "build-windows-debug-qt5-qwt616-arm64",
-      "configurePreset": "windows-debug-qt5-qwt616-arm64"
-    },
-    {
       "name": "build-windows-release-qt5-qwt630-arm64",
       "configurePreset": "windows-release-qt5-qwt630-arm64"
     },
@@ -933,14 +653,6 @@
     {
       "name": "build-windows-debug-qt6-arm64",
       "configurePreset": "windows-debug-qt6-arm64"
-    },
-    {
-      "name": "build-mingw-release-qt5-qwt616",
-      "configurePreset": "mingw-release-qt5-qwt616"
-    },
-    {
-      "name": "build-mingw-debug-qt5-qwt616",
-      "configurePreset": "mingw-debug-qt5-qwt616"
     },
     {
       "name": "build-mingw-release-qt5-qwt630",

@@ -1,4 +1,5 @@
 //! \file us3i_plot.cpp
+#include <QRegularExpression>
 
 #include <QtSvg>
 #include "us3i_plot.h"
@@ -290,7 +291,7 @@ void US_Plot::print( void )
    
    if ( ! docName.isEmpty() )
    {
-       docName.replace ( QRegExp( QString::fromLatin1( "\n" ) ), tr ( " -- " ) );
+       docName.replace ( QRegularExpression( QStringLiteral( "\n" ) ), tr ( " -- " ) );
        printer.setDocName( docName );
    }
 
@@ -965,7 +966,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    
    // Remove passed '(number) '
    QString firstSelectedText = selected[ 0 ];
-   firstSelectedText.replace( QRegExp( "^\\(\\d+\\) " ), "" );
+   firstSelectedText.replace( QRegularExpression( QStringLiteral( "^\\(\\d+\\) " ) ), "" );
    
    firstSelectedCurve = NULL;
 
@@ -1320,7 +1321,7 @@ void US_PlotCurveConfig::apply( void )
    {
       // Remove Numbering from passed titles
       QString title = selectedItems[ i ];
-      title.replace( QRegExp( "^\\(\\d+\\) " ), "" );
+      title.replace( QRegularExpression( QStringLiteral( "^\\(\\d+\\) " ) ), "" );
 
       // There is no need to reiterate over the full list
       // This assumes the selected list and the full list
