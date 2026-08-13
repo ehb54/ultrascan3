@@ -26,7 +26,6 @@
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
 #include "qwt_plot_spectrogram.h"
-#include "qwt_plot_spectrogram.h"
 
 #include <QMouseEvent>
 #include <QEvent>
@@ -872,70 +871,6 @@ void US_Plot::scale_yRight( const QRectF &rect ) const
    const double y_0 = ys_0 * dyR + yRightRange.at(0);
    const double y_1 = ys_1 * dyR + yRightRange.at(0);
    plot->setAxisScale( QwtPlot::yRight, y_0, y_1 );
-   plot->replot();
-}
-
-void US_Plot::updateSpectrogramColorScale( ) const
-{
-   const QwtInterval xVisible = plot->axisScaleDiv(QwtPlot::xBottom).interval();
-   const QwtInterval yVisible = plot->axisScaleDiv(QwtPlot::yLeft).interval();
-   double zmin = std::numeric_limits< double >::max();
-   double zmax = std::numeric_limits< double >::lowest();
-   if ( plot == nullptr ) {
-      return;
-   }
-
-   QwtPlotItemList list = plot->itemList( QwtPlotItem::Rtti_PlotSpectrogram );
-
-   if ( list.isEmpty() ) {
-      return;
-   }
-   for ( const auto & item : list ) {
-      auto* s = dynamic_cast< QwtPlotSpectrogram* >( item );
-      if ( !s ) {
-         continue;
-      }
-      QwtRasterData* data = s->data();
-      if ( !data ) {
-         continue;
-      }
-      QwtMatrixRasterData* matrixData = dynamic_cast< QwtMatrixRasterData* >( data );
-      if ( !matrixData ) {
-         continue;
-      }
-      const QwtInterval xData = matrixData->interval(Qt::XAxis);
-      const QwtInterval yData = matrixData->interval(Qt::YAxis);
-      const int numCols = matrixData->numColumns();
-      const int numRows = matrixData->numRows();
-      const int colStart = qMax(0, static_cast<int>( (xVisible.minValue() - xData.minValue()) / xData.width() * numCols ));
-      const int colEnd   = qMin(numCols - 1, static_cast<int>( (xVisible.maxValue() - xData.minValue()) / xData.width() * numCols ));
-//
-      //const int rowStart = qMax(0, static_cast<int>( (yVisible.minValue() - yData.minValue()) / yData.width() * numRows ));
-      //const int rowEnd   = qMin(numRows - 1, static_cast<int>( (yVisible.maxValue() - yData.minValue()) / yData.width() * numRows ));
-      //const QVector<double> values = matrixData->valueMatrix();
-//
-      //for (int row = rowStart; row <= rowEnd; ++row) {
-      //   for (int col = colStart; col <= colEnd; ++col) {
-      //      double val = values[row * numCols + col];
-      //      zmin = qMin( zmin, val );
-      //      zmax = qMax( zmax, val );
-      //   }
-      //}
-      double xMin = plot->axisScaleDiv(QwtPlot::xBottom).lowerBound();
-      double xMax = plot->axisScaleDiv(QwtPlot::xBottom).upperBound();
-      double stepX = plot->axisStepSize(QwtPlot::xBottom);
-      double yMin = plot->axisScaleDiv(QwtPlot::yLeft).lowerBound();
-      double yMax = plot->axisScaleDiv(QwtPlot::yLeft).upperBound();
-      double stepY = plot->axisStepSize(QwtPlot::yLeft);
-      for (double x = xMin; x <= xMax; x += stepX) {
-         for (double y = yMin; y <= yMax; y += stepY) {
-            double val = data->value(x, y);
-            zmin = qMin( zmin, val );
-            zmax = qMax( zmax, val );
-         }
-      }
-   }
-   plot->setAxisScale( QwtPlot::yRight, zmin, zmax );
    plot->replot();
 }
 
