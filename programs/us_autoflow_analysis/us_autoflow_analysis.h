@@ -21,6 +21,7 @@
 //#include "../us_convert/us_select_triples.h"
 #include "../us_abde/us_norm_profile.h"
 #include "../us_mwl_species_sim/us_mwl_species_sim.h"
+#include "../us_edit/us_edit.h"
 
 
 #include "us_analysis_base2.h"
@@ -50,7 +51,8 @@ class US_Analysis_auto : public US_Widgets
         US_MwlSpeciesFit* sdiag;
         US_ConvertGui*    sdiag_convert;
         US_Norm_Profile*  sdiag_norm_profile;
-        US_MwlSpeciesSim* sdiag_mwlsim; 
+        US_MwlSpeciesSim* sdiag_mwlsim;
+        US_Edit*          sdiag_edit;
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */

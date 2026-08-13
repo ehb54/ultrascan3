@@ -49,6 +49,14 @@ set(CROSS_DIR_SOURCES
 
         # us_mwl_species_sim
         ../us_mwl_species_sim/us_mwl_species_sim.cpp
+
+        # us_edit
+        ../us_edit/us_edit.cpp
+        ../us_edit/us_ri_noise.cpp
+        ../us_edit/us_get_edit.cpp
+        ../us_edit/us_select_lambdas.cpp
+        ../us_edit/us_exclude_profile.cpp
+        ../us_edit/us_edit_scan.cpp
         )
 
 # Cross-directory headers from .pro file
@@ -72,6 +80,12 @@ set(CROSS_DIR_HEADERS
         ../us_mwl_species_fit/us_load_run_noise.h
         ../us_abde/us_norm_profile.h
         ../us_mwl_species_sim/us_mwl_species_sim.h
+        ../us_edit/us_edit.h
+        ../us_edit/us_ri_noise.h
+        ../us_edit/us_get_edit.h
+        ../us_edit/us_select_lambdas.h
+        ../us_edit/us_exclude_profile.h
+        ../us_edit/us_edit_scan.h
         )
 
 # Find UI and resource files
@@ -113,6 +127,7 @@ target_include_directories(us_reporter_gmp PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_fit
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
+        ${CMAKE_CURRENT_SOURCE_DIR}/../us_edit
         )
 
 # Link libraries

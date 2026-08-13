@@ -26,7 +26,13 @@ HEADERS       = us_reporter_gmp.h \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
                 ../us_mwl_species_fit/us_load_run_noise.h \
                 ../us_abde/us_norm_profile.h \
-                ../us_mwl_species_sim/us_mwl_species_sim.h
+                ../us_mwl_species_sim/us_mwl_species_sim.h \
+                ../us_edit/us_edit.h \
+                ../us_edit/us_ri_noise.h \
+                ../us_edit/us_get_edit.h \
+                ../us_edit/us_select_lambdas.h \
+                ../us_edit/us_exclude_profile.h \
+                ../us_edit/us_edit_scan.h
                                 
 
 SOURCES       = us_reporter_gmp_main.cpp       \
@@ -50,7 +56,13 @@ SOURCES       = us_reporter_gmp_main.cpp       \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
                 ../us_mwl_species_fit/us_load_run_noise.cpp \
                 ../us_abde/us_norm_profile.cpp \
-                ../us_mwl_species_sim/us_mwl_species_sim.cpp
+                ../us_mwl_species_sim/us_mwl_species_sim.cpp \
+                ../us_edit/us_edit.cpp  \
+                ../us_edit/us_ri_noise.cpp \
+                ../us_edit/us_get_edit.cpp \
+                ../us_edit/us_select_lambdas.cpp \
+                ../us_edit/us_exclude_profile.cpp \
+                ../us_edit/us_edit_scan.cpp     
                 
                 
                 

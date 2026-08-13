@@ -1374,6 +1374,11 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   protocol_details_at_analysis["ssf_dir_name"] = ssf_dir;
   sdiag_convert = new US_ConvertGui("AUTO");
   sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+
+  //Next, save edit profiles (based on new menicsus && same edits )
+  sdiag_edit = new US_Edit("AUTO");
+  
+  
 }
 
 //Get editID from selected model
