@@ -164,7 +164,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   cmbb_style->setCurrentIndex(
         cmbb_style->findText( current.guiStyle, Qt::MatchFixedString ) );
 
-  connect( cmbb_style, &QComboBox::activated,
+  connect( cmbb_style, qOverload<int>(&QComboBox::activated),
                        this, &US_Color::selectStyle );
 
   rightColumn->addWidget( cmbb_style, row++, 1 );
