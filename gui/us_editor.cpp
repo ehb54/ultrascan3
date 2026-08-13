@@ -15,16 +15,24 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
    {  // Extension is actually directory-code/extension
 
       if ( extension.startsWith( "results" ) )
+      {
          file_directory = US_Settings::resultDir();
+      }
 
       else if ( extension.startsWith( "reports" ) )
+      {
          file_directory = US_Settings::reportDir();
+      }
 
       else if ( extension.startsWith( "data" ) )
+      {
          file_directory = US_Settings::dataDir();
+      }
 
       else
+      {
          file_directory = extension.section( "/", 0, -2 );
+      }
 
       file_extension = extension.section( "/", -1, -1 );
    }
@@ -66,7 +74,7 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
 
       default:
          QAction* saveAsAction = new QAction( tr( "Save&As" ), this );;
-         saveAsAction->setShortcut( tr( "Ctrl+A" ) );
+         saveAsAction->setShortcut( tr( "Ctrl+S" ) );
          connect( saveAsAction, SIGNAL( triggered() ), this, SLOT( saveAs() ) );
 
          QAction* clearAction = new QAction( tr( "Clear" ), this );;
@@ -104,17 +112,17 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
 
 void US_Editor::load( void )
 {
-   QString fn;
-   QString text;
+   QString fn = QFileDialog::getOpenFileName( this,
+                                              tr( "Open File" ),
+                                              file_directory,
+                                              file_extension );
 
-   fn = QFileDialog::getOpenFileName( this,
-         tr( "Open File" ),
-         file_directory,
-         file_extension );
+  if ( fn == "" )
+  {
+     return;
+  }
 
-  if ( fn == "" ) return;
-
-  filename = fn;
+   filename = fn;
 
   QFile f( filename );
 
@@ -122,7 +130,7 @@ void US_Editor::load( void )
   {
      QTextStream t( &f );
 
-     text = t.readAll();
+     QString text = t.readAll();
      f.close(  );
 
      e->setPlainText( text );
@@ -130,24 +138,28 @@ void US_Editor::load( void )
      file_directory = filename.section( "/", 0, -2 );
   }
   else
+  {
      QMessageBox::information( this,
-           tr( "Error" ),
-           tr( "Could not open\n\n" ) + fn + tr( "\n\n for reading." ) );
+                               tr( "Error" ),
+                               tr( "Could not open\n\n" ) + fn + tr( "\n\n for reading." ) );
+  }
 }
 
 void US_Editor::save(  )
 {
    if ( filename == "" )
+   {
       saveAs();
+   }
    else
+   {
       saveFile();
+   }
 }
 
 void US_Editor::saveAs(  )
 {
-   QString fn;
-
-   fn = QFileDialog::getSaveFileName( this );
+   QString fn = QFileDialog::getSaveFileName( this, tr( "Save File" ), file_directory, file_extension );
 
    if ( ! fn.isEmpty(  ) )
    {
@@ -158,21 +170,34 @@ void US_Editor::saveAs(  )
 
 void US_Editor::saveFile( void )
 {
-      QString text = e->toPlainText();
+   // check for the filetype and don't convert to plain text if it is HTML
+   QString ext = filename.section( ".", -1 );
+   QString text;
+   if ( ext != "html" )
+   {
+      text = e->toPlainText();
+   }
+   else
+   {
+      // saving as HTML
+      text = e->toHtml();
+   }
 
-      QFile f( filename );
+   QFile f( filename );
 
-      if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      {
-         QTextStream t( &f );
+   if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QTextStream t( &f );
 
-         t << text;
-         f.close(  );
-      }
-      else
-         QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "Could not open\n\n" ) + filename + tr( "\n\n for writing." ) );
+      t << text;
+      f.close(  );
+   }
+   else
+   {
+      QMessageBox::information( this,
+                                tr( "Error" ),
+                                tr( "Could not open\n\n" ) + filename + tr( "\n\n for writing." ) );
+   }
 }
 
 void US_Editor::update_font(  )
@@ -195,7 +220,10 @@ void US_Editor::print( void )
 
    dialog->setWindowTitle( tr( "Print Document" ) );
 
-   if ( dialog->exec() != QDialog::Accepted ) return;
+   if ( dialog->exec() != QDialog::Accepted )
+   {
+      return;
+   }
 
    QStringList text = e->toPlainText().split( "\n" );
    QPainter p;
@@ -223,7 +251,7 @@ void US_Editor::print( void )
       yPos = yPos + fm.lineSpacing();
     }
 
-    p.end();                  // send job to printer
+    p.end();                  // send the job to printer
 }
 
 
