@@ -164,7 +164,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   cmbb_style->setCurrentIndex(
         cmbb_style->findText( current.guiStyle, Qt::MatchFixedString ) );
 
-  connect( cmbb_style, &QComboBox::textActivated,
+  connect( cmbb_style, &QComboBox::activated,
                        this, &US_Color::selectStyle );
 
   rightColumn->addWidget( cmbb_style, row++, 1 );
@@ -181,8 +181,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
                                " and a dark variant.  \"Follow the desktop\""
                                " picks the one the desktop asks for." ) );
 
-  connect( cmbb_scheme, SIGNAL( activated   ( int ) ),
-                        SLOT  ( selectScheme( int ) ) );
+  connect( cmbb_scheme, &QComboBox::activated, this, &US_Color::selected_scheme );
 
   rightColumn->addWidget( cmbb_scheme, row++, 1 );
 
