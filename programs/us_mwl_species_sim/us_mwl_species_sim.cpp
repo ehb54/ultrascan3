@@ -699,6 +699,14 @@ DbgLv(1) << "SLOT: stop_sims";
    stopFlag        = true;
 }
 
+//Fro VEL-MWL:GMP
+void US_MwlSpeciesSim::save_sims_auto( void )
+{
+  save_sims();
+  
+}   
+  
+
 // Save simulations to an imports directory, along with time state
 void US_MwlSpeciesSim::save_sims( void )
 {
@@ -740,6 +748,8 @@ DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
                         .arg( tfname );
    te_status->setText( smsga );
    qApp->processEvents();
+
+   emit pass_ssf_dir( impdir );
 }
 
 // Bump the current plot to the previous channel

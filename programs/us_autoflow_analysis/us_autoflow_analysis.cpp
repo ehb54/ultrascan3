@@ -1286,7 +1286,7 @@ void US_Analysis_auto::gui_update( )
 		}
 	      
 	      e_ID_for_velmwl.clear();
-	      
+	      	      
 	      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
 	      QString stage_n_c = QString( "2DSA-IT" );
 	      //QString ch_name_c = channels_all[ca];
@@ -1301,7 +1301,8 @@ void US_Analysis_auto::gui_update( )
 	      sdiag_mwlsim = new US_MwlSpeciesSim();
 	      connect( sdiag_mwlsim, SIGNAL( pass_editID_fromLoad( QString& ) ),
 		       this,         SLOT  ( get_editID ( QString& ) ) );
-	      
+	      connect( sdiag_mwlsim, SIGNAL( pass_ssf_dir( QString& ) ),
+		       this,         SLOT  ( get_ssf_dir_and_saveDB ( QString& ) ) );
 	            
 	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
 
@@ -1330,9 +1331,15 @@ void US_Analysis_auto::gui_update( )
 	      rotor_defs << "Default" << "(Simulation)";
 	      sdiag_mwlsim -> select_rotor_auto( rotor_defs );
 
+	      /** Run Simulations **/
 	      sdiag_mwlsim -> start_sims_auto();
+
+	      /**
+		 After Sims completed, save to Disk & re-use US_Convrt to save into DB
+	       **/
+	      sdiag_mwlsim -> save_sims_auto();
 	      
-	      sdiag_mwlsim->show(); //DEBUG
+	      sdiag_mwlsim->show(); //DEBUG ONLY
 	    }
 	    
 	  return;
@@ -1359,6 +1366,14 @@ void US_Analysis_auto::gui_update( )
     }
 
   in_gui_update  = false; 
+}
+
+//Get SSF dir
+void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
+{
+  protocol_details_at_analysis["ssf_dir_name"] = ssf_dir;
+  sdiag_convert = new US_ConvertGui("AUTO");
+  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
 }
 
 //Get editID from selected model

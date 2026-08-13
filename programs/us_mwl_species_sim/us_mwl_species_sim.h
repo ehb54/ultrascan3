@@ -42,6 +42,7 @@ class US_MwlSpeciesSim : public US_Widgets
         void select_rotor_auto( QStringList );
         void sim_params_auto( QMap< QString, QString> );
         void start_sims_auto( void );
+        void save_sims_auto( void );
 
     private:
         int dbg_level;         //!< Debug level
@@ -172,6 +173,7 @@ class US_MwlSpeciesSim : public US_Widgets
 
     signals:
         void pass_editID_fromLoad( QString& );
+        void pass_ssf_dir( QString& );
 };
 
 #endif // US_MWL_SPECIES_SIM_H

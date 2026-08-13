@@ -300,7 +300,7 @@ class US_Analysis_auto : public US_Widgets
             QString dataSource;
 
             QString e_ID_for_velmwl;
-
+           
             QString FileName;                                        /**< File name. */
             QString FileName_parsed;                                 /**< Parsed file name. */
 
@@ -710,6 +710,7 @@ class US_Analysis_auto : public US_Widgets
         void proceed_abde_to_report( QMap< QString, QString > & );
         void back_to_initAutoflow( void );
         void get_editID ( QString&  );
+        void get_ssf_dir_and_saveDB( QString&  );
 
     signals:
         /**
