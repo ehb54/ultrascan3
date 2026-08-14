@@ -200,7 +200,7 @@ class US_Analysis_auto : public US_Widgets
             };
 
             QMap < QString, QString > protocol_details_at_analysis;  /**< Protocol details at the time of analysis. */
-
+            QMap < QString, QString > protocol_details_at_analysis_velmwl; 
             bool fitmen_bad_vals;                                    /**< Flag for bad FitMeniscus values. */
             bool no_fm_data_auto;                                    /**< Flag indicating no FitMeniscus data automatically. */
 

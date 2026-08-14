@@ -42,7 +42,7 @@ class US_Edit : public US_Widgets
          bool us_edit_auto_mode_manual_bll;
 	 bool all_loaded;
 	 bool is_spike_auto;
-	  
+         void load_auto_velmwl( QMap < QString, QString > &  ); 
 
       private:
 	 US_Edit*       sdiag;

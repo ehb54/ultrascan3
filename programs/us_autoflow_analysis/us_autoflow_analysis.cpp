@@ -187,7 +187,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   
 
   //Copy protocol details
-  protocol_details_at_analysis = protocol_details;
+  protocol_details_at_analysis        = protocol_details;
+  protocol_details_at_analysis_velmwl = protocol_details;
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -1371,14 +1372,16 @@ void US_Analysis_auto::gui_update( )
 //Get SSF dir
 void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 {
-  protocol_details_at_analysis["ssf_dir_name"] = ssf_dir;
+  protocol_details_at_analysis_velmwl["ssf_dir_name"] = ssf_dir;
   sdiag_convert = new US_ConvertGui("AUTO");
-  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis );
+  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
 
   //Next, save edit profiles (based on new menicsus && same edits )
   sdiag_edit = new US_Edit("AUTO");
-  
-  
+  /** re-define some fields **/
+  protocol_details_at_analysis_velmwl[ "filename" ] = ssf_dir.section("/", -2, -2);
+  sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
+  sdiag_edit -> show(); //DEBUG
 }
 
 //Get editID from selected model
@@ -1456,8 +1459,13 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
 
   //read XML section && extract meniscus value
   double meniscus_p = 0;
+  double bottom     = 0;
   double data_left  = 0;
   double data_right = 0;
+  double plateau    = 0;
+  double baseline   = 0;
+  double od_limit   = 0;
+  
   QFile pfile( efilepath );
   // Skip if there is a file-open problem
   if ( pfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -1471,20 +1479,27 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
       while( ! xmli.atEnd() )
 	{  
 	  xmli.readNext();
-	  QString ename       = xmli.name().toString();
-	  
-	  if ( xmli.isStartElement()  &&  ename == "meniscus" )
+
+	  if ( xmli.isStartElement() )
 	    {
 	      QXmlStreamAttributes attr = xmli.attributes();
-	      meniscus_p                = attr.value( "radius" ).toDouble();
+	      QString ename       = xmli.name().toString();
+	      if ( ename == "meniscus" )
+		meniscus_p  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "bottom" )
+		bottom  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "data_range" )
+		{
+		  data_left                 = attr.value( "left" ).toDouble();
+		  data_right                = attr.value( "right" ).toDouble();
+		}
+	      else if ( ename == "plateau" )
+		plateau  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "baseline" )
+		baseline  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "od_limit" )
+		od_limit  = attr.value( "value" ).toDouble();
 	    }
-	  else if ( xmli.isStartElement()  &&  ename == "data_range" )
-	    {
-	      QXmlStreamAttributes attr = xmli.attributes();
-	      data_left                 = attr.value( "left" ).toDouble();
-	      data_right                = attr.value( "right" ).toDouble();
-	    }
-	  
 	}
     }
 
@@ -1495,6 +1510,15 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
   run_parms["meniscus"]   = QString::number( meniscus_p );
   run_parms["data_left"]  = QString::number( data_left );
   run_parms["data_right"] = QString::number( data_right );
+
+  //also, copy to protocol_details_map for further use
+  protocol_details_at_analysis_velmwl["meniscus"]   = QString::number( meniscus_p );
+  protocol_details_at_analysis_velmwl["data_left"]  = QString::number( data_left );
+  protocol_details_at_analysis_velmwl["data_right"] = QString::number( data_right );
+  protocol_details_at_analysis_velmwl["bottom"]     = QString::number( bottom );
+  protocol_details_at_analysis_velmwl["baseline"]   = QString::number( baseline );
+  protocol_details_at_analysis_velmwl["plateau"]    = QString::number( plateau );
+  protocol_details_at_analysis_velmwl["od_limit"]   = QString::number( od_limit );
   
   return run_parms;
 }

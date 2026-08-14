@@ -2960,6 +2960,12 @@ void US_Edit::gap_check( void )
    }
 }
 
+//For VEL-MWL:GMP
+void US_Edit::load_auto_velmwl( QMap < QString, QString > & details_at_editing )
+{
+  load_auto( details_at_editing );
+}
+
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
@@ -3003,6 +3009,7 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto, autoflow_expType : "
 	   << autoflowID_passed << dataSource << ProtocolName_auto << autoflow_expType;
 
+  
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
   runType_combined_IP_RI = false;
@@ -3035,6 +3042,19 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 
       qDebug() << "IN EDIT - filename_base for combined runs: " << filename_runID_auto_base;
 
+    }
+
+  if ( autoflow_expType == "VELOCITY-MWL" )
+    {
+      qDebug() << "[US_Edit: VEL-MWL:GMP], filename : " << filename_runID_passed;
+      qDebug() << "[US_Edit: VEL-MWL:GMP], "
+	       << details_at_editing["meniscus"]
+	       << details_at_editing["data_left"] 
+	       << details_at_editing["data_right"] 
+	       << details_at_editing["bottom"]     
+	       << details_at_editing["baseline"]   
+	       << details_at_editing["plateau"]    
+	       << details_at_editing["od_limit"];
     }
 
   ///////////////////////////////////////////////////////////////////////
@@ -3690,7 +3710,73 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    //all_loaded = true;
    le_status->setText( tr( "Data loaded..." ) );
 
-   emit data_loaded(); 
+   emit data_loaded();
+
+
+   /******* FOR VEL-MWL ext *********************************************/
+   if ( autoflow_expType == "VELOCITY-MWL" )
+     {
+       /** DEBUG **********************************************/
+       iwavl_edit_ref        .resize( cb_triple->count() );
+       iwavl_edit_ref_index  .resize( cb_triple->count() );
+       triple_plot_first_time.resize( cb_triple->count() );
+       for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	 {
+	   iwavl_edit_ref[ trx ] = 0;
+	   iwavl_edit_ref_index[ trx ] = 0;
+	   triple_plot_first_time[ trx ] = 0;
+	 }
+       /** DEBUG ********************************************/
+
+       for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	 {
+	   QString triple_name = cb_triple->itemText( trx );
+
+	   meniscus    = details_at_editing_local["meniscus"].toDouble();
+	   range_left  = details_at_editing_local["data_left"].toDouble();
+	   range_right = details_at_editing_local["data_right"].toDouble();
+	   bottom      = details_at_editing_local["bottom"].toDouble();    
+	   baseline    = details_at_editing_local["baseline"].toDouble();   
+	   plateau     = details_at_editing_local["plateau"].toDouble();   
+	   baseline_od = details_at_editing_local["od_limit"].toDouble();
+	   
+	   triple_info.clear();
+	   triple_info <<  QString::number(meniscus)
+		       <<  QString::number(range_left)
+		       <<  QString::number(range_right)
+		       <<  QString::number(plateau)
+		       <<  QString::number(baseline)
+		       <<  QString::number(baseline_od)
+		       <<  QString("spike_false");
+
+	   editProfile[ triple_name ] = triple_info;
+	   qDebug() << "[FOR VEL-MWL]: triple_info -- " << triple_info;
+
+	   /** DEBUG ********************************************/
+	   plotndx  = cb_lplot->currentIndex();
+	   iwavl_edit_ref[ trx ]       = expi_wvlns[ plotndx ];
+	   iwavl_edit_ref_index[ trx ] = plotndx;
+
+	   QStringList scan_excl = {"0","0","1"};
+	   editProfile_scans_excl[ triple_name ] = scan_excl;
+
+	   le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+	   le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+	   le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+	   step = PLATEAU;
+	   next_step();
+	   /** DEBUG ********************************************/
+	   
+	 }
+       if ( editProfile.count() == cb_triple->count() )
+	 all_loaded = true;
+       /** DEBUG *********************************************/
+       new_triple_auto( 0 ); 
+       //new_triple(0);
+       /** DEBUG *********************************************/
+       
+       return;
+     }
    
    // editProfile.clear();
    // centerpieceParameters.clear();
