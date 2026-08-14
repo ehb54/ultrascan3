@@ -25,6 +25,7 @@
 #include "qwt_scale_map.h"
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
+#include "qwt_plot_spectrogram.h"
 
 #include <QMouseEvent>
 #include <QEvent>

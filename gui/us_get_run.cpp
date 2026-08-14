@@ -32,8 +32,8 @@ US_GetRun::US_GetRun( QString& run, bool inDB )
    main->setContentsMargins( 2, 2, 2, 2 );
 
    dkdb_cntrls       = new US_Disk_DB_Controls( ddstate );
-   connect( dkdb_cntrls, SIGNAL( changed       ( bool ) ),
-            this,        SLOT  ( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_GetRun::update_disk_db );
 
    // Investigator
    personID          = US_Settings::us_inv_ID();
@@ -46,8 +46,8 @@ US_GetRun::US_GetRun( QString& run, bool inDB )
                        US_Settings::us_inv_name();
                 le_invest    = us_lineedit( invval, 1, true );
    investigator->addWidget( le_invest );
-   connect( pb_invest, SIGNAL( clicked         () ),
-            this,      SLOT  ( sel_investigator() ) );
+   connect( pb_invest, &QAbstractButton::clicked,
+            this,      &US_GetRun::sel_investigator );
 
    // Search
    QHBoxLayout* search       = new QHBoxLayout;
@@ -55,8 +55,8 @@ US_GetRun::US_GetRun( QString& run, bool inDB )
                 le_search    = us_lineedit( "" );
    search      ->addWidget( lb_search );
    search      ->addWidget( le_search );
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-            this,      SLOT  ( limit_data ( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged,
+            this,      &US_GetRun::limit_data );
 
    // Load the runInfo structure with current data
    if ( inDB )
@@ -72,15 +72,15 @@ US_GetRun::US_GetRun( QString& run, bool inDB )
    QHBoxLayout* buttons   = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_delete = us_pushbutton( tr( "Delete" ) );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( deleteRun() ) );
+   connect( pb_delete, &QAbstractButton::clicked, this, &US_GetRun::deleteRun );
    buttons->addWidget( pb_delete );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_GetRun::select );
    buttons->addWidget( pb_accept );
 
    main->addLayout( dkdb_cntrls );
@@ -544,8 +544,8 @@ void US_GetRun::sel_investigator( void )
 
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
-   connect( inv_dialog, SIGNAL( investigator_accepted( int ) ),
-            this,       SLOT  ( assign_investigator  ( int ) ) );
+   connect( inv_dialog, &US_Investigator::investigator_accepted,
+            this,       &US_GetRun::assign_investigator );
 
    inv_dialog->exec();
 }

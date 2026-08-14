@@ -111,8 +111,7 @@ int main( int argc, char* argv[] )
 US_Action::US_Action( int i, const QString& text, QObject* parent) 
     : QAction( text, parent ), index( i ) 
 {
-  connect( this, SIGNAL( triggered  ( bool ) ), 
-           this, SLOT  ( onTriggered( bool ) ) );
+   connect( this, &US_Action::triggered, this, &US_Action::onTriggered );
 }
 
 void US_Action::onTriggered( bool ) 
@@ -358,7 +357,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
    // get notices if available
    if ( US_Settings::default_data_location() != 2 ) {
       // notices only if location is database
-      connect( &notices_get_url, SIGNAL( downloaded() ), this, SLOT( notices_ready() ), Qt::UniqueConnection );
+      connect( &notices_get_url, &US_GetUrl::downloaded, this, &US_Win::notices_ready, Qt::UniqueConnection );
       notices_get_url.get("https://ultrascan.aucsolutions.com/notices.json");
    }
 }
@@ -424,9 +423,7 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
                              QFont::Normal );
   action->setFont( font );
 #endif
-
-  connect( action, SIGNAL( indexTriggered  ( int ) ), 
-           this,   SLOT  ( onIndexTriggered( int ) ) );
+  connect( action, &US_Action::indexTriggered, this, &US_Win::onIndexTriggered );
 
   menu->addAction( action );
 }
@@ -549,8 +546,7 @@ void US_Win::launch( int index )
   QProcess* process = new QProcess( 0 );
   process->closeReadChannel( QProcess::StandardOutput );
   process->closeReadChannel( QProcess::StandardError );
-  connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
-            this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
+  connect( process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, &US_Win::terminated );
 
 #ifdef Q_OS_MAC
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;

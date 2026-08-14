@@ -79,14 +79,14 @@ US_TmstViewer::US_TmstViewer() : US_Widgets()
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
    // Signals and Slots
-   connect( pb_loadtmst,  SIGNAL( clicked()       ),
-            this,         SLOT  ( loadTimeState() ) );
-   connect( pb_showtmst,  SIGNAL( clicked()       ),
-            this,         SLOT  ( showTimeState() ) );
-   connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT  ( help()     ) );
-   connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT  ( close()    ) );
+   connect( pb_loadtmst,  &QAbstractButton::clicked,
+            this,         &US_TmstViewer::loadTimeState );
+   connect( pb_showtmst,  &QAbstractButton::clicked,
+            this,         &US_TmstViewer::showTimeState );
+   connect( pb_help,      &QAbstractButton::clicked,
+            this,         &US_TmstViewer::help );
+   connect( pb_close,     &QAbstractButton::clicked,
+            this,         &QWidget::close );
 
    // Do the layout
    int row = 0;

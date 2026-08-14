@@ -37,8 +37,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_speeds->setValue( simparams.speed_step.count() );
    
    main->addWidget( cnt_speeds, row++, 3, 1, 1 );
-   connect( cnt_speeds, SIGNAL( valueChanged ( double ) ), 
-                        SLOT  ( update_speeds( double ) ) );
+   connect( cnt_speeds, &QwtCounter::valueChanged, 
+                        this, &US_SimParamsGui::update_speeds );
    // Speeds combo box
    cmb_speeds = us_comboBox();
 
@@ -56,8 +56,8 @@ US_SimParamsGui::US_SimParamsGui(
    }
 
    main->addWidget( cmb_speeds, row++, 0, 1, 4 );
-   connect( cmb_speeds, SIGNAL( activated           ( int ) ), 
-                        SLOT  ( select_speed_profile( int ) ) );
+   connect( cmb_speeds, qOverload< int >( &QComboBox::activated ), 
+                        this, &US_SimParamsGui::select_speed_profile );
 
    // Experiment hours
    QLabel* lb_hours = us_label( tr( "Length of Experiment (Hours):" ) );
@@ -70,8 +70,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_duration_hours->setIncSteps( QwtCounter::Button3, 100 );
    
    main->addWidget( cnt_duration_hours, row++, 3, 1, 1 );
-   connect( cnt_duration_hours, SIGNAL( valueChanged         ( double ) ), 
-                                SLOT  ( update_duration_hours( double ) ) );
+   connect( cnt_duration_hours, &QwtCounter::valueChanged, 
+                                this, &US_SimParamsGui::update_duration_hours );
 
    // Experiment minutes
    QLabel* lb_mins = us_label( tr( "Length of Experiment (Minutes):" ) );
@@ -84,8 +84,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_duration_mins->setIncSteps( QwtCounter::Button3,  10 );
    
    main->addWidget( cnt_duration_mins, row++, 3, 1, 1 );
-   connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ), 
-                               SLOT  ( update_duration_mins( double ) ) );
+   connect( cnt_duration_mins, &QwtCounter::valueChanged, 
+                               this, &US_SimParamsGui::update_duration_mins );
 
    // Delay hours
    QLabel* lb_delay_hours = us_label( tr( "Time Delay for Scans (Hours):" ) );
@@ -98,8 +98,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_delay_hours->setIncSteps( QwtCounter::Button3, 100 );
    
    main->addWidget( cnt_delay_hours, row++, 3, 1, 1 );
-   connect( cnt_delay_hours, SIGNAL( valueChanged      ( double ) ), 
-                             SLOT  ( update_delay_hours( double ) ) );
+   connect( cnt_delay_hours, &QwtCounter::valueChanged, 
+                             this, &US_SimParamsGui::update_delay_hours );
 
    // Delay minutes
    QLabel* lb_delay_mins = us_label( tr( "Time Delay for Scans (Minutes):" ) );
@@ -112,8 +112,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_delay_mins->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_delay_mins, row++, 3, 1, 1 );
-   connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ), 
-                            SLOT  ( update_delay_mins( double ) ) );
+   connect( cnt_delay_mins, &QwtCounter::valueChanged, 
+                            this, &US_SimParamsGui::update_delay_mins );
 
    // Rotor Speed
    QLabel* lb_rotor = us_label( tr( "Rotor Speed (rpm):" ) );
@@ -129,8 +129,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_rotorspeed->setMinimumWidth( fm.maxWidth() * 12 );
    
    main->addWidget( cnt_rotorspeed, row++, 3, 1, 1 );
-   connect( cnt_rotorspeed, SIGNAL( valueChanged     ( double ) ), 
-                            SLOT  ( update_rotorspeed( double ) ) );
+   connect( cnt_rotorspeed, &QwtCounter::valueChanged, 
+                            this, &US_SimParamsGui::update_rotorspeed );
 
    // Simulate rotor accel checkbox
    QLabel* lb_rotorAccel = us_label( tr( "Simulate Rotor Acceleration:" ) );
@@ -141,8 +141,8 @@ US_SimParamsGui::US_SimParamsGui(
 
    main->addLayout( acceleration_flag, row++, 3, 1, 1 );
    
-   connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
-                                  SLOT  ( acceleration_flag() ) );
+   connect( cb_acceleration_flag, &QAbstractButton::clicked, 
+                                  this, &US_SimParamsGui::acceleration_flag );
 
    // Acceleration Profile
    QLabel* lb_accelProfile = us_label( tr( "Acceleration Profile (rpm/sec):" ));
@@ -157,8 +157,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_acceleration->setValue( sp->acceleration );
    
    main->addWidget( cnt_acceleration, row++, 3, 1, 1 );
-   connect( cnt_acceleration, SIGNAL( valueChanged       ( double ) ), 
-                              SLOT  ( update_acceleration( double ) ) );
+   connect( cnt_acceleration, &QwtCounter::valueChanged, 
+                              this, &US_SimParamsGui::update_acceleration );
 
    // Scans to be saved
    QLabel* lb_scans = us_label( tr( "Scans to be saved:" ) );
@@ -171,8 +171,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_scans->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_scans, row++, 3, 1, 1 );
-   connect( cnt_scans, SIGNAL( valueChanged( double ) ), 
-                       SLOT  ( update_scans( double ) ) );
+   connect( cnt_scans, &QwtCounter::valueChanged,
+                       this, &US_SimParamsGui::update_scans );
 
    // Speed profile
    QLabel* lb_speedProfile = us_label( tr( "Select a Speed Profile:" ) );
@@ -187,8 +187,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_selected_speed->setValue( sp->rotorspeed );
    main->addWidget( cnt_selected_speed, row++, 3, 1, 1 );
 
-   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 
-                                SLOT  ( update_speed_profile( double ) ) );
+   connect( cnt_selected_speed, &QwtCounter::valueChanged, 
+                                this, &US_SimParamsGui::update_speed_profile );
 
    // Mesh combo box
    cmb_mesh = us_comboBox();
@@ -202,8 +202,8 @@ US_SimParamsGui::US_SimParamsGui(
    
    main->addWidget( cmb_mesh, row++, 0, 1, 4 );
 
-   connect( cmb_mesh, SIGNAL( activated  ( int ) ), 
-                      SLOT  ( update_mesh( int ) ) );
+   connect( cmb_mesh, qOverload< int >( &QComboBox::activated ), 
+                      this, &US_SimParamsGui::update_mesh );
 
    // Right Column
    row = 1;
@@ -219,8 +219,8 @@ US_SimParamsGui::US_SimParamsGui(
    
    main->addLayout( rb2, row++, 6, 1, 2 );
    
-   connect( rb_standard, SIGNAL( toggled           ( bool ) ), 
-                         SLOT  ( select_centerpiece( bool ) ) );
+   connect( rb_standard, &QAbstractButton::toggled, 
+                         this, &US_SimParamsGui::select_centerpiece );
 
    // Band loading
    QLabel* lb_lamella = us_label( tr( "Band loading volume (" )
@@ -234,8 +234,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_lamella->setEnabled( false );
 
    main->addWidget( cnt_lamella, row++, 7, 1, 1 );
-   connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ), 
-                         SLOT  ( update_lamella( double ) ) );
+   connect( cnt_lamella, &QwtCounter::valueChanged, 
+                         this, &US_SimParamsGui::update_lamella );
 
    // Meniscus position 
    QLabel* lb_meniscus = us_label( tr( "Meniscus Position (cm):" ) );
@@ -249,8 +249,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_meniscus->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_meniscus, row++, 7, 1, 1 );
-   connect( cnt_meniscus, SIGNAL( valueChanged   ( double ) ), 
-                          SLOT  ( update_meniscus( double ) ) );
+   connect( cnt_meniscus, &QwtCounter::valueChanged, 
+                          this, &US_SimParamsGui::update_meniscus );
    
    // Cell bottom
    QLabel* lb_bottom = us_label( tr( "Bottom of Cell Position (cm):" ) );
@@ -264,8 +264,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_bottom->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_bottom, row++, 7, 1, 1 );
-   connect( cnt_bottom, SIGNAL( valueChanged ( double ) ), 
-                        SLOT  ( update_bottom( double ) ) );
+   connect( cnt_bottom, &QwtCounter::valueChanged, 
+                        this, &US_SimParamsGui::update_bottom );
    
    // Radial Discretization
    QLabel* lb_simpoints = us_label( tr( "Radial Discretization (points):" ) );
@@ -276,8 +276,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_simpoints->setValue( simparams.simpoints );
 
    main->addWidget( cnt_simpoints, row++, 7, 1, 1 );
-   connect( cnt_simpoints, SIGNAL( valueChanged    ( double ) ), 
-                           SLOT  ( update_simpoints( double ) ) );
+   connect( cnt_simpoints, &QwtCounter::valueChanged, 
+                           this, &US_SimParamsGui::update_simpoints );
    
    // Radial Resolution
    QLabel* lb_radial_res = us_label( tr( "Radial Resolution (cm):" ) );
@@ -290,8 +290,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_radial_res->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_radial_res, row++, 7, 1, 1 );
-   connect( cnt_radial_res, SIGNAL( valueChanged     ( double ) ), 
-                            SLOT  ( update_radial_res( double ) ) );
+   connect( cnt_radial_res, &QwtCounter::valueChanged, 
+                            this, &US_SimParamsGui::update_radial_res );
    
    // Random noise, proportional to total concentration
    QLabel* lb_rnoise = us_label( tr( "Random Noise (% total Conc.):" ) );
@@ -304,8 +304,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_rnoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_rnoise, row++, 7, 1, 1 );
-   connect( cnt_rnoise, SIGNAL( valueChanged ( double ) ), 
-                        SLOT  ( update_rnoise( double ) ) );
+   connect( cnt_rnoise, &QwtCounter::valueChanged, 
+                        this, &US_SimParamsGui::update_rnoise );
 
    // Random noise, proportional to local concentration
    QLabel* lb_lrnoise = us_label( tr( "Random Noise (% local Conc.):" ) );
@@ -318,8 +318,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_lrnoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_lrnoise, row++, 7, 1, 1 );
-   connect( cnt_lrnoise, SIGNAL( valueChanged ( double ) ), 
-                        SLOT  ( update_lrnoise( double ) ) );
+   connect( cnt_lrnoise, &QwtCounter::valueChanged, 
+                        this, &US_SimParamsGui::update_lrnoise );
 
    // Time invariant noise
    QLabel* lb_tinoise = us_label( tr( "Time Invariant Noise (% Conc.):" ) );
@@ -332,8 +332,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_tinoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_tinoise, row++, 7, 1, 1 );
-   connect( cnt_tinoise, SIGNAL( valueChanged  ( double ) ), 
-                         SLOT  ( update_tinoise( double ) ) );
+   connect( cnt_tinoise, &QwtCounter::valueChanged, 
+                         this, &US_SimParamsGui::update_tinoise );
    
    // Radially invariant noise
    QLabel* lb_rinoise = us_label( tr( "Radially Invar. Noise (% Conc.):" ) );
@@ -346,8 +346,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_rinoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_rinoise, row++, 7, 1, 1 );
-   connect( cnt_rinoise, SIGNAL( valueChanged  ( double ) ), 
-                         SLOT  ( update_rinoise( double ) ) );
+   connect( cnt_rinoise, &QwtCounter::valueChanged, 
+                         this, &US_SimParamsGui::update_rinoise );
    
    // constant baseline offset
    QLabel* lb_baseline = us_label( tr( "Constant Baseline (Conc.):" ) );
@@ -360,8 +360,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_baseline->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_baseline, row++, 7, 1, 1 );
-   connect( cnt_baseline, SIGNAL( valueChanged  ( double ) ), 
-                         SLOT  ( update_baseline( double ) ) );
+   connect( cnt_baseline, &QwtCounter::valueChanged, 
+                         this, &US_SimParamsGui::update_baseline );
   
    // Temperature
    QLabel* lb_temperature  = us_label( tr( "Temperature (%1):" )
@@ -375,8 +375,8 @@ US_SimParamsGui::US_SimParamsGui(
    cnt_temperature->setIncSteps( QwtCounter::Button3, 100 );
    cnt_temperature->setValue   ( simparams.temperature );
    main->addWidget( cnt_temperature, row++, 7, 1, 1 );
-   connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
-                             SLOT  ( update_temp(  double ) ) );
+   connect( cnt_temperature, &QwtCounter::valueChanged,
+                             this, &US_SimParamsGui::update_temp );
 
    // Moving Grid Combo Box
    cmb_moving = us_comboBox();
@@ -384,8 +384,8 @@ US_SimParamsGui::US_SimParamsGui(
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
    cmb_moving->setCurrentIndex( (int)simparams.gridType );
-   connect( cmb_moving, SIGNAL( activated    ( int ) ), 
-                        SLOT  ( update_moving( int ) ) );
+   connect( cmb_moving, qOverload< int >( &QComboBox::activated ), 
+                        this, &US_SimParamsGui::update_moving );
    
    main->addWidget( cmb_moving, row++, 4, 1, 4 );
 
@@ -406,16 +406,16 @@ US_SimParamsGui::US_SimParamsGui(
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_load,   SIGNAL( clicked()  ),
-            this,      SLOT  ( load()     ) );
-   connect( pb_save,   SIGNAL( clicked()  ),
-            this,      SLOT  ( save()     ) );
-   connect( pb_help,   SIGNAL( clicked()  ),
-            this,      SLOT  ( help()     ) );
-   connect( pb_cancel, SIGNAL( clicked()  ),
-            this,      SLOT  ( revert()   ) );
-   connect( pb_accept, SIGNAL( clicked()  ),
-            this,      SLOT  ( accepted() ) );
+   connect( pb_load,   &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::load );
+   connect( pb_save,   &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::save );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::help );
+   connect( pb_cancel, &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::revert );
+   connect( pb_accept, &QAbstractButton::clicked,
+            this,      &US_SimParamsGui::accepted );
    buttons ->addWidget( pb_load );
    buttons ->addWidget( pb_save );
    buttons ->addWidget( pb_help );
@@ -599,8 +599,8 @@ void US_SimParamsGui::update_combobox( void )
             QString::number( spi->rotorspeed       ) + " rpm" );
    }
 
-   connect( cmb_speeds, SIGNAL( activated           ( int ) ),
-                        SLOT  ( select_speed_profile( int ) ) );
+   connect( cmb_speeds, qOverload< int >( &QComboBox::activated ),
+                        this, &US_SimParamsGui::select_speed_profile );
    
    cmb_speeds->setCurrentIndex( current_speed_step );
    report_mods();
@@ -708,8 +708,8 @@ void US_SimParamsGui::check_delay( void )
    {
       cnt_duration_mins->disconnect();
       cnt_duration_mins->setMinimum( sp->delay_minutes + 1 );
-      connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ), 
-                                  SLOT  ( update_duration_mins( double ) ) );
+      connect( cnt_duration_mins, &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_duration_mins );
    }
 }
 
@@ -904,8 +904,8 @@ void US_SimParamsGui::load( void )
             QString::number( spi->rotorspeed       ) + " rpm" );
       }
 
-      connect( cmb_speeds, SIGNAL( activated           ( int ) ),
-                           SLOT  ( select_speed_profile( int ) ) );
+      connect( cmb_speeds, qOverload< int >( &QComboBox::activated ),
+                           this, &US_SimParamsGui::select_speed_profile );
 
       // Initialize all counters with the first speed profile:
 
@@ -1166,52 +1166,52 @@ void US_SimParamsGui::disconnect_all( )
 
 void US_SimParamsGui::reconnect_all( )
 {
-   connect( cnt_speeds,           SIGNAL( valueChanged (         double ) ), 
-                                  SLOT  ( update_speeds(         double ) ) );
-   connect( cmb_speeds,           SIGNAL( activated           (  int ) ), 
-                                  SLOT  ( select_speed_profile(  int ) ) );
-   connect( cnt_duration_hours,   SIGNAL( valueChanged         ( double ) ), 
-                                  SLOT  ( update_duration_hours( double ) ) );
-   connect( cnt_duration_mins,    SIGNAL( valueChanged        (  double ) ), 
-                                  SLOT  ( update_duration_mins(  double ) ) );
-   connect( cnt_delay_hours,      SIGNAL( valueChanged      (    double ) ), 
-                                  SLOT  ( update_delay_hours(    double ) ) );
-   connect( cnt_delay_mins,       SIGNAL( valueChanged     (     double ) ), 
-                                  SLOT  ( update_delay_mins(     double ) ) );
-   connect( cnt_rotorspeed,       SIGNAL( valueChanged     (     double ) ), 
-                                  SLOT  ( update_rotorspeed(     double ) ) );
-   connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
-                                  SLOT  ( acceleration_flag() ) );
-   connect( cnt_acceleration,     SIGNAL( valueChanged       (   double ) ), 
-                                  SLOT  ( update_acceleration(   double ) ) );
-   connect( cnt_scans,            SIGNAL( valueChanged(          double ) ), 
-                                  SLOT  ( update_scans(          double ) ) );
-   connect( cnt_selected_speed,   SIGNAL( valueChanged        (  double ) ), 
-                                  SLOT  ( update_speed_profile(  double ) ) );
-   connect( cnt_lamella,          SIGNAL( valueChanged  (        double ) ), 
-                                  SLOT  ( update_lamella(        double ) ) );
-   connect( cnt_meniscus,         SIGNAL( valueChanged   (       double ) ), 
-                                  SLOT  ( update_meniscus(       double ) ) );
-   connect( cnt_bottom,           SIGNAL( valueChanged (         double ) ), 
-                                  SLOT  ( update_bottom(         double ) ) );
-   connect( cnt_simpoints,        SIGNAL( valueChanged    (      double ) ), 
-                                  SLOT  ( update_simpoints(      double ) ) );
-   connect( cnt_radial_res,       SIGNAL( valueChanged     (     double ) ), 
-                                  SLOT  ( update_radial_res(     double ) ) );
-   connect( cnt_rnoise,           SIGNAL( valueChanged (         double ) ), 
-                                  SLOT  ( update_rnoise(         double ) ) );
-   connect( cnt_lrnoise,          SIGNAL( valueChanged (         double ) ), 
-                                  SLOT  ( update_lrnoise(        double ) ) );
-   connect( cnt_tinoise,          SIGNAL( valueChanged  (        double ) ), 
-                                  SLOT  ( update_tinoise(        double ) ) );
-   connect( cnt_rinoise,          SIGNAL( valueChanged  (        double ) ), 
-                                  SLOT  ( update_rinoise(        double ) ) );
-   connect( cnt_baseline,         SIGNAL( valueChanged  (        double ) ), 
-                                  SLOT  ( update_baseline(       double ) ) );
-   connect( cmb_mesh,             SIGNAL( activated  (           int ) ), 
-                                  SLOT  ( update_mesh(           int ) ) );
-   connect( cmb_moving,           SIGNAL( activated    (         int ) ), 
-                                  SLOT  ( update_moving(         int ) ) );
+   connect( cnt_speeds,           &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_speeds );
+   connect( cmb_speeds,           qOverload< int >( &QComboBox::activated ), 
+                                  this, &US_SimParamsGui::select_speed_profile );
+   connect( cnt_duration_hours,   &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_duration_hours );
+   connect( cnt_duration_mins,    &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_duration_mins );
+   connect( cnt_delay_hours,      &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_delay_hours );
+   connect( cnt_delay_mins,       &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_delay_mins );
+   connect( cnt_rotorspeed,       &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_rotorspeed );
+   connect( cb_acceleration_flag, &QAbstractButton::clicked, 
+                                  this, &US_SimParamsGui::acceleration_flag );
+   connect( cnt_acceleration,     &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_acceleration );
+   connect( cnt_scans,            &QwtCounter::valueChanged,
+                                  this, &US_SimParamsGui::update_scans );
+   connect( cnt_selected_speed,   &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_speed_profile );
+   connect( cnt_lamella,          &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_lamella );
+   connect( cnt_meniscus,         &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_meniscus );
+   connect( cnt_bottom,           &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_bottom );
+   connect( cnt_simpoints,        &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_simpoints );
+   connect( cnt_radial_res,       &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_radial_res );
+   connect( cnt_rnoise,           &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_rnoise );
+   connect( cnt_lrnoise,          &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_lrnoise );
+   connect( cnt_tinoise,          &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_tinoise );
+   connect( cnt_rinoise,          &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_rinoise );
+   connect( cnt_baseline,         &QwtCounter::valueChanged, 
+                                  this, &US_SimParamsGui::update_baseline );
+   connect( cmb_mesh,             qOverload< int >( &QComboBox::activated ), 
+                                  this, &US_SimParamsGui::update_mesh );
+   connect( cmb_moving,           qOverload< int >( &QComboBox::activated ), 
+                                  this, &US_SimParamsGui::update_moving );
 }
 
 // Report modifications

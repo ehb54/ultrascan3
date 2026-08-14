@@ -486,10 +486,10 @@ DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    wtask.thrn = thrx + 1;
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThread2D* ) ),
-            this, SLOT(   process_final( WorkerThread2D* ) ) );
-   connect( wthr, SIGNAL( work_progress( int             ) ),
-            this, SLOT(   step_progress( int             ) ) );
+   connect( wthr, &WorkerThread2D::work_complete,
+            this, &US_2dsaProcess::process_final );
+   connect( wthr, &WorkerThread2D::work_progress,
+            this, &US_2dsaProcess::step_progress );
 
    emit message_update( pmessage_head() + tr( "Computing final NNLS ..." ),
       false );
@@ -1055,10 +1055,10 @@ void US_2dsaProcess::submit_job( WorkPacket2D& wtask, int thrx )
 
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThread2D* ) ),
-            this, SLOT(   process_job(   WorkerThread2D* ) ) );
-   connect( wthr, SIGNAL( work_progress( int             ) ),
-            this, SLOT(   step_progress( int             ) ) );
+   connect( wthr, &WorkerThread2D::work_complete,
+            this, &US_2dsaProcess::process_job );
+   connect( wthr, &WorkerThread2D::work_progress,
+            this, &US_2dsaProcess::step_progress );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
 DbgLv(1) << "SUBMIT_JOB AvailPercent" << US_Memory::memory_profile();
 

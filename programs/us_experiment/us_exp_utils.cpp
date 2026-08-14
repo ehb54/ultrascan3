@@ -2637,8 +2637,8 @@ DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
  for ( int ii = 0; ii < mxrow; ii++ )
    {
      QComboBox*   cb_solution = cc_solus[ ii ];
-     connect( cb_solution,  SIGNAL( currentIndexChanged( int ) ),
-	      this,         SLOT  ( changeSolu         ( int ) ) );
+     connect( cb_solution,  qOverload< int >( &QComboBox::currentIndexChanged ),
+	      this,         &US_ExperGuiSolutions::changeSolu );
       
    }
 
@@ -4091,16 +4091,16 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
        if ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() )
 	 {
 	   pb_submit -> disconnect();
-	   connect( pb_submit,    SIGNAL( clicked()          ),
-		    this,         SLOT  ( submitExperiment_confirm_dataDisk() ) );
+	   connect( pb_submit,    &QAbstractButton::clicked,
+		    this,         &US_ExperGuiUpload::submitExperiment_confirm_dataDisk );
        
 	 }
      }
    else //PD
      {
        pb_submit -> disconnect();
-       connect( pb_submit,    SIGNAL( clicked()          ),
-		this,         SLOT  ( submitExperiment_confirm_protDev() ) );
+       connect( pb_submit,    &QAbstractButton::clicked,
+		this,         &US_ExperGuiUpload::submitExperiment_confirm_protDev );
        
        pb_submit->show();
        pb_saverp->hide();

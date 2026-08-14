@@ -213,20 +213,20 @@ US_RemoveRI::US_RemoveRI() : US_Widgets()
 
     slt_reset();
 
-    connect(pb_import, SIGNAL(clicked()), this, SLOT(slt_import()));
-    connect(pb_reset, SIGNAL(clicked()), this, SLOT(slt_reset()));
-    connect(pb_prev_id,      SIGNAL(clicked()), this, SLOT(slt_prev_id()));
-    connect(pb_next_id,      SIGNAL(clicked()), this, SLOT(slt_next_id()));
-    connect(pb_prev_ccw,     SIGNAL(clicked()), this, SLOT(slt_prev_ccw()));
-    connect(pb_next_ccw,     SIGNAL(clicked()), this, SLOT(slt_next_ccw()));
-    connect(this, SIGNAL(sig_plot(bool)), this, SLOT(slt_plot(bool)));
-    connect(pb_pick_rp, SIGNAL(clicked()),
-                this, SLOT(slt_pick_point()));
-    connect(cb_autofit, SIGNAL(stateChanged(int)), this, SLOT(slt_autofit_state(int)));
-    connect(pb_fit, SIGNAL(clicked()), this, SLOT(slt_polyfit()));
-    connect(ct_max_order, SIGNAL(valueChanged(double)), this, SLOT(slt_rm_fit(double)));
-    connect(ct_order, SIGNAL(valueChanged(double)), this, SLOT(slt_rm_fit(double)));
-    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
+    connect(pb_import, &QAbstractButton::clicked, this, &US_RemoveRI::slt_import);
+    connect(pb_reset, &QAbstractButton::clicked, this, &US_RemoveRI::slt_reset);
+    connect(pb_prev_id,      &QAbstractButton::clicked, this, &US_RemoveRI::slt_prev_id);
+    connect(pb_next_id,      &QAbstractButton::clicked, this, &US_RemoveRI::slt_next_id);
+    connect(pb_prev_ccw,     &QAbstractButton::clicked, this, &US_RemoveRI::slt_prev_ccw);
+    connect(pb_next_ccw,     &QAbstractButton::clicked, this, &US_RemoveRI::slt_next_ccw);
+    connect(this, &US_RemoveRI::sig_plot, this, &US_RemoveRI::slt_plot);
+    connect(pb_pick_rp, &QAbstractButton::clicked,
+                this, &US_RemoveRI::slt_pick_point);
+    connect(cb_autofit, US_CB_STATE_CHANGED, this, &US_RemoveRI::slt_autofit_state);
+    connect(pb_fit, &QAbstractButton::clicked, this, &US_RemoveRI::slt_polyfit);
+    connect(ct_max_order, &QwtCounter::valueChanged, this, &US_RemoveRI::slt_rm_fit);
+    connect(ct_order, &QwtCounter::valueChanged, this, &US_RemoveRI::slt_rm_fit);
+    connect(pb_save, &QAbstractButton::clicked, this, &US_RemoveRI::slt_save);
 }
 
 
@@ -467,7 +467,7 @@ void US_RemoveRI::slt_new_ccw(int id){
         items << QString::number(wavelength.at(i));
     cb_plot_id->addItems(items);
     pn_id_avail();
-    connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(slt_set_id(int)));
+    connect(cb_plot_id, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_RemoveRI::slt_set_id);
 
     pn_ccw_avail();
 
@@ -518,8 +518,8 @@ void US_RemoveRI::slt_pick_point(){
     pb_fit_avail();
     emit sig_plot(true);
     pb_save_avail();
-    connect(picker, SIGNAL(cMouseUp(const QPointF&)),
-            this, SLOT(slt_mouse(const QPointF&)));
+    connect(picker, &US_PlotPicker::cMouseUp,
+            this, &US_RemoveRI::slt_mouse);
     return;
 }
 
@@ -706,8 +706,8 @@ void US_RemoveRI::set_cb_triples(){
     idMax.fill(-1, n_ccw);
     ccwFitState.fill(false, n_ccw);
     ccwIntgState.fill(false, n_ccw);
-    connect( cb_triples, SIGNAL( currentIndexChanged(int) ),
-            this, SLOT( slt_new_ccw(int) ) );
+    connect( cb_triples, qOverload< int >( &QComboBox::currentIndexChanged ),
+            this, &US_RemoveRI::slt_new_ccw );
     cb_triples->setCurrentIndex(ccw_id);
 }
 

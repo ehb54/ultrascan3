@@ -102,28 +102,28 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    buttLHeight = pb_prev->height();
 
    // Connect signals to slots
-   connect( tabWidget, SIGNAL( currentChanged( int ) ),
-            this,      SLOT  ( newPanel      ( int ) ) );
-   connect( pb_next,   SIGNAL( clicked()    ),
-            this,      SLOT  ( panelUp()    ) );
-   connect( pb_prev,   SIGNAL( clicked()    ),
-            this,      SLOT  ( panelDown()  ) );
-   connect( pb_close,  SIGNAL( clicked()    ),
-            this,      SLOT  ( close_program()      ) );
-   connect( pb_help,   SIGNAL( clicked()    ),
-            this,      SLOT  ( help()       ) );
+   connect( tabWidget, &QTabWidget::currentChanged,
+            this,      &US_ExperimentMain::newPanel );
+   connect( pb_next,   &QAbstractButton::clicked,
+            this,      &US_ExperimentMain::panelUp );
+   connect( pb_prev,   &QAbstractButton::clicked,
+            this,      &US_ExperimentMain::panelDown );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &US_ExperimentMain::close_program );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_ExperimentMain::help );
 
-   connect( epanUpload, SIGNAL( expdef_submitted( QMap < QString, QString > &) ),
-            this,       SLOT  ( optima_submitted( QMap < QString, QString > & ) ) );
+   connect( epanUpload, &US_ExperGuiUpload::expdef_submitted,
+            this,       &US_ExperimentMain::optima_submitted );
 
-   connect( epanUpload, SIGNAL( expdef_submitted_dev( QMap < QString, QString > &) ),
-            this,       SLOT  ( submitted_protDev( QMap < QString, QString > & ) ) );
+   connect( epanUpload, &US_ExperGuiUpload::expdef_submitted_dev,
+            this,       &US_ExperimentMain::submitted_protDev );
 
-   connect( epanUpload, SIGNAL( expdef_submitted_dataDisk( QMap < QString, QString > &) ),
-            this,       SLOT  ( submitted_dataDisk( QMap < QString, QString > & ) ) );
+   connect( epanUpload, &US_ExperGuiUpload::expdef_submitted_dataDisk,
+            this,       &US_ExperimentMain::submitted_dataDisk );
 
-   connect( epanAProfile->sdiag, SIGNAL( back_to_pcsa_signal() ),
-            this,       SLOT  ( back_to_pcsa() ) );
+   connect( epanAProfile->sdiag, &US_AnalysisProfileGui::back_to_pcsa_signal,
+            this,       &US_ExperimentMain::back_to_pcsa );
 
 
 
@@ -131,18 +131,18 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    main->addLayout( statL );
    main->addLayout( buttL );
 
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )),
-            this,        SLOT(   disable_tabs_buttons( void ) ));
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void )),
-	    this,      SLOT(   enable_tabs_buttons_readonly( void ) ));
-   connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),
-	    this,      SLOT(   enable_tabs_buttons( void ) ));
+   connect( epanGeneral, &US_ExperGuiGeneral::set_tabs_buttons_inactive,
+            this,        &US_ExperimentMain::disable_tabs_buttons);
+   connect( epanGeneral, &US_ExperGuiGeneral::set_tabs_buttons_active_readonly,
+	    this,      &US_ExperimentMain::enable_tabs_buttons_readonly);
+   connect( epanGeneral, &US_ExperGuiGeneral::set_tabs_buttons_active,
+	    this,      &US_ExperimentMain::enable_tabs_buttons);
 
-   connect( epanGeneral, SIGNAL( go_back_to_run_manager( void )),
-	    this,      SLOT( switch_to_run_manager( void ) ));
+   connect( epanGeneral, &US_ExperGuiGeneral::go_back_to_run_manager,
+	    this,      &US_ExperimentMain::switch_to_run_manager);
 
-   connect( epanRotor, SIGNAL( disableEnable_tabs_dataDisk( bool )),
-            this,        SLOT(  disableEnable_tabs_for_dataDisk( bool ) ));
+   connect( epanRotor, &US_ExperGuiRotor::disableEnable_tabs_dataDisk,
+            this,        &US_ExperimentMain::disableEnable_tabs_for_dataDisk);
 
    //int min_width = tabWidget->tabBar()->width();
 
@@ -782,20 +782,20 @@ for (int jj=0;jj<gxentrs.count();jj++)
    le_label->hide();
 
    // Set up signal and slot connections
-   connect( le_runid,        SIGNAL( textEdited(const QString &)  ),
-            this,            SLOT(   check_empty_runname(const QString &) ) );
-   connect( le_runid,        SIGNAL( editingFinished()  ),
-            this,            SLOT(   run_name_entered() ) );
-   connect( le_label,        SIGNAL( editingFinished()  ),
-            this,            SLOT(   label_name_entered() ) );
-   connect( pb_project,      SIGNAL( clicked()          ),
-            this,            SLOT(   sel_project()      ) );
-   connect( pb_investigator, SIGNAL( clicked()          ),
-            this,            SLOT(   sel_investigator() ) );
-   connect( pb_protocol,     SIGNAL( clicked()          ),
-            this,            SLOT(   load_protocol()    ) );
-   connect( le_protocol,     SIGNAL( editingFinished()  ),
-            this,            SLOT(   changed_protocol() ) );
+   connect( le_runid,        &QLineEdit::textEdited,
+            this,            &US_ExperGuiGeneral::check_empty_runname );
+   connect( le_runid,        &QLineEdit::editingFinished,
+            this,            &US_ExperGuiGeneral::run_name_entered );
+   connect( le_label,        &QLineEdit::editingFinished,
+            this,            &US_ExperGuiGeneral::label_name_entered );
+   connect( pb_project,      &QAbstractButton::clicked,
+            this,            &US_ExperGuiGeneral::sel_project );
+   connect( pb_investigator, &QAbstractButton::clicked,
+            this,            &US_ExperGuiGeneral::sel_investigator );
+   connect( pb_protocol,     &QAbstractButton::clicked,
+            this,            &US_ExperGuiGeneral::load_protocol );
+   connect( le_protocol,     &QLineEdit::editingFinished,
+            this,            &US_ExperGuiGeneral::changed_protocol );
 
    // Read in centerpiece information and populate names list
    centerpieceInfo();
@@ -994,8 +994,8 @@ void US_ExperGuiGeneral::sel_project( void )
                                   : US_Disk_DB_Controls::Disk;
    US_Project project;
    US_ProjectGui* dialog = new US_ProjectGui( true, dbdisk, project );
-   connect( dialog, SIGNAL( updateProjectGuiSelection( US_Project& ) ),
-            this,   SLOT  ( project_info             ( US_Project& ) ) );
+   connect( dialog, &US_ProjectGui::updateProjectGuiSelection,
+            this,   &US_ExperGuiGeneral::project_info );
 
    dialog->exec();
 }
@@ -1132,7 +1132,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
    //US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
    US_SelectItem* pdiag = new  US_SelectItem( protdata, hdrs, pdtitle, &prx, delete_button, -2 );  //ALEXEY <-- with Delete button and functionality
 
-   connect( pdiag, SIGNAL( accept_deletion() ), this, SLOT( update_protdata() ));
+   connect( pdiag, &US_SelectItem::accept_deletion, this, &US_ExperGuiGeneral::update_protdata);
 
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
@@ -1454,14 +1454,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
 
    //connect checkbox & import
-   connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
-	    this,           SLOT  ( importDiskChecked( bool ) ) );
-   connect( pb_importDisk,      SIGNAL( clicked()       ),
-	    this,           SLOT(   importDisk()        ) );
+   connect( ck_disksource, &QAbstractButton::toggled,
+	    this,           &US_ExperGuiRotor::importDiskChecked );
+   connect( pb_importDisk,      &QAbstractButton::clicked,
+	    this,           &US_ExperGuiRotor::importDisk );
    // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
    // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
-   connect( ck_absorbance_pa, SIGNAL( toggled     ( bool ) ),
-    	    this,           SLOT  ( dataDiskPseudoAbsChecked( bool ) ) );
+   connect( ck_absorbance_pa, &QAbstractButton::toggled,
+    	    this,           &US_ExperGuiRotor::dataDiskPseudoAbsChecked );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1568,14 +1568,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    revOperGMPRunGrid -> addWidget( pb_remove_sme,          row,     13, 1,  2 );
    
    
-   connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
-   connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
-   connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
-   connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
-   connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
-   connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
-   connect( pb_add_sme, SIGNAL( clicked() ), SLOT ( addSmetoList() ) );
-   connect( pb_remove_sme, SIGNAL( clicked() ), SLOT ( removeSmefromList() ) );
+   connect( pb_add_oper, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addOpertoList );
+   connect( pb_remove_oper, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeOperfromList );
+   connect( pb_add_rev, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addRevtoList );
+   connect( pb_remove_rev, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeRevfromList );
+   connect( pb_add_appr, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addApprtoList );
+   connect( pb_remove_appr, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeApprfromList );
+   connect( pb_add_sme, &QAbstractButton::clicked, this, &US_ExperGuiRotor::addSmetoList );
+   connect( pb_remove_sme, &QAbstractButton::clicked, this, &US_ExperGuiRotor::removeSmefromList );
    
    panel->addLayout( genL );
    panel->addLayout( revOperGMPRunGrid ); 
@@ -1596,14 +1596,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    cb_lab->clear();
    cb_lab->addItems( sl_labs );
 
-   connect( cb_lab,       SIGNAL( activated   ( int ) ),
-            this,         SLOT  ( changeLab   ( int ) ) );
-   connect( cb_rotor,     SIGNAL( activated   ( int ) ),
-            this,         SLOT  ( changeRotor ( int ) ) );
-   connect( cb_calibr,    SIGNAL( activated   ( int ) ),
-            this,         SLOT  ( changeCalib ( int ) ) );
-   connect( pb_advrotor,  SIGNAL( clicked()  ),
-            this,         SLOT  ( advRotor() ) );
+   connect( cb_lab,       qOverload< int >( &QComboBox::activated ),
+            this,         &US_ExperGuiRotor::changeLab );
+   connect( cb_rotor,     qOverload< int >( &QComboBox::activated ),
+            this,         &US_ExperGuiRotor::changeRotor );
+   connect( cb_calibr,    qOverload< int >( &QComboBox::activated ),
+            this,         &US_ExperGuiRotor::changeCalib );
+   connect( pb_advrotor,  &QAbstractButton::clicked,
+            this,         &US_ExperGuiRotor::advRotor );
 
    first_time_init = true;
    curr_rotor      = 0;
@@ -1721,8 +1721,8 @@ void US_ExperGuiRotor::switch_to_dataDisk_public()
   ck_disksource   ->setChecked( true );
   ck_disksource   ->setEnabled( false );
 
-  connect( ck_disksource, SIGNAL( toggled     ( bool ) ),
-	   this,           SLOT  ( importDiskChecked( bool ) ) );
+  connect( ck_disksource, &QAbstractButton::toggled,
+	   this,           &US_ExperGuiRotor::importDiskChecked );
 
   //and disable tabs
   emit disableEnable_tabs_dataDisk( true );
@@ -2829,8 +2829,8 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
    cb_optima->clear();
    cb_optima->addItems( sl_optimas );
 
-   connect( cb_optima,    SIGNAL( activated      ( int ) ),
-            this,         SLOT  ( changeOptima   ( int ) ) );
+   connect( cb_optima,    qOverload< int >( &QComboBox::activated ),
+            this,         &US_ExperGuiRotor::changeOptima );
 
    changeOptima(0);
 
@@ -3075,10 +3075,8 @@ DbgLv(1) << "EGR: advR: IN rID cID" << rotor.ID << calibr.ID;
                       : US_Disk_DB_Controls::Disk;
    US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk, rotor, calibr );
 
-   connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
-                          US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-            this,      SLOT  ( advRotorChanged(
-                          US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
+            this,      &US_ExperGuiRotor::advRotorChanged );
 
    rotorInfo->exec();
 }
@@ -3187,8 +3185,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    
    QLayout* lo_delay_stage_sync  = us_checkbox( tr( "Synchronize Stage Delay with the 1st Speed Profile: " ), ck_sync_delay, false );
 
-   connect( ck_sync_delay, SIGNAL( toggled     ( bool ) ),
-               this,       SLOT  ( syncdelayChecked( bool ) ) );
+   connect( ck_sync_delay, &QAbstractButton::toggled,
+               this,       &US_ExperGuiSpeeds::syncdelayChecked );
 
    
    //ALEXEY: do not create these checkboxes for now
@@ -3466,8 +3464,8 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   QLabel* lb_wvl_per_cell = us_label(tr( "Sum of all wavelengths (from all cells) to be scanned:" ));
   sb_wvl_per_cell = us_spinbox();
   sb_wvl_per_cell->setRange(1, 800);
-  connect( sb_wvl_per_cell,  SIGNAL( valueChanged     ( int ) ),
-	   this,             SLOT  ( ssChgWvlPerCell  ( int ) ) );
+  connect( sb_wvl_per_cell,  qOverload< int >( &QSpinBox::valueChanged ),
+	   this,             &US_ExperGuiSpeeds::ssChgWvlPerCell );
 
   QLabel* lb_scans_per_cell = us_label(tr( "Total number of scans per wavelength, per cell:" ));
   le_scans_per_cell = us_lineedit( "", 0, true  ); 
@@ -3529,14 +3527,14 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    genL->setColumnStretch(  7, 1 );
 
    // Connect signals and slots
-   connect( sb_count,  SIGNAL( valueChanged  ( int )  ),
-            this,      SLOT  ( ssChangeCount ( int )  ) );
-   connect( cb_prof,   SIGNAL( activated     ( int    ) ),
-            this,      SLOT  ( ssChangeProfx ( int    ) ) );
-   connect( ct_speed,  SIGNAL( valueChanged  ( int ) ),
-            this,      SLOT  ( ssChangeSpeed ( int ) ) );
-   connect( ct_accel,  SIGNAL( valueChanged  ( int ) ),
-            this,      SLOT  ( ssChangeAccel ( int ) ) );
+   connect( sb_count,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,      &US_ExperGuiSpeeds::ssChangeCount );
+   connect( cb_prof,   qOverload< int >( &QComboBox::activated ),
+            this,      &US_ExperGuiSpeeds::ssChangeProfx );
+   connect( ct_speed,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,      &US_ExperGuiSpeeds::ssChangeSpeed );
+   connect( ct_accel,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,      &US_ExperGuiSpeeds::ssChangeAccel );
 
    // connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),               \\ALEXEY
    //          this,      SLOT  ( ssChgDuratDay  ( int ) ) );
@@ -3547,56 +3545,56 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
    // connect( tm_delay,  SIGNAL( timeChanged    ( const QTime& ) ),
    //          this,      SLOT  ( ssChgDelayTime ( const QTime& ) ) );
 
-   connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDuratDay  ( int ) ) );
-   connect( sb_durat_hh,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDuratTime_hh ( int ) ) );
-   connect( sb_durat_mm,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDuratTime_mm ( int ) ) );
-   connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
+   connect( sb_durat_dd,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDuratDay );
+   connect( sb_durat_hh,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDuratTime_hh );
+   connect( sb_durat_mm,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDuratTime_mm );
+   connect( sb_durat_ss,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDuratTime_ss );
 
    //Uv-vis
-   connect( sb_delay_dd,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayDay  ( int ) ) );
-   connect( sb_delay_hh,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_hh ( int ) ) );
-   connect( sb_delay_mm,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_mm ( int ) ) );
-   connect( sb_delay_ss,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_ss ( int ) ) );
+   connect( sb_delay_dd,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayDay );
+   connect( sb_delay_hh,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayTime_hh );
+   connect( sb_delay_mm,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayTime_mm );
+   connect( sb_delay_ss,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayTime_ss );
 
    //interference
-   connect( sb_delay_int_dd,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayDay_int  ( int ) ) );
-   connect( sb_delay_int_hh,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_int_hh ( int ) ) );
-   connect( sb_delay_int_mm,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_int_mm ( int ) ) );
-   connect( sb_delay_int_ss,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayTime_int_ss ( int ) ) );
+   connect( sb_delay_int_dd,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayDay_int );
+   connect( sb_delay_int_hh,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayTime_int_hh );
+   connect( sb_delay_int_mm,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayTime_int_mm );
+   connect( sb_delay_int_ss,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayTime_int_ss );
 
    //Stage delay
-   connect( sb_delay_st_hh,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayStageTime_hh ( int ) ) );
-   connect( sb_delay_st_mm,  SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgDelayStageTime_mm ( int ) ) );
+   connect( sb_delay_st_hh,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayStageTime_hh );
+   connect( sb_delay_st_mm,  qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgDelayStageTime_mm );
 
    //Uv-vis
-   connect( sb_scnint_hh, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_hh ( int ) ) );
-   connect( sb_scnint_mm, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_mm ( int ) ) );
-   connect( sb_scnint_ss, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_ss ( int ) ) );
+   connect( sb_scnint_hh, qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgScIntTime_hh );
+   connect( sb_scnint_mm, qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgScIntTime_mm );
+   connect( sb_scnint_ss, qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgScIntTime_ss );
 
    //interference
-   connect( sb_scnint_int_hh, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_int_hh ( int ) ) );
-   connect( sb_scnint_int_mm, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_int_mm ( int ) ) );
-   connect( sb_scnint_int_ss, SIGNAL( valueChanged   ( int ) ),
-            this,         SLOT  ( ssChgScIntTime_int_ss ( int ) ) );
+   connect( sb_scnint_int_hh, qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgScIntTime_int_hh );
+   connect( sb_scnint_int_mm, qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgScIntTime_int_mm );
+   connect( sb_scnint_int_ss, qOverload< int >( &QSpinBox::valueChanged ),
+            this,         &US_ExperGuiSpeeds::ssChgScIntTime_int_ss );
 
 
       
@@ -4751,10 +4749,10 @@ DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
       cb_wind->addItem( tr( "quartz" ) );
       cb_wind->addItem( tr( "sapphire" ) );
 
-      connect( cb_cenp, SIGNAL( activated         ( int ) ),
-               this,    SLOT  ( centerpieceChanged( int ) ) );
-      connect( cb_wind, SIGNAL( activated         ( int ) ),
-               this,    SLOT  ( windowsChanged    ( int ) ) );
+      connect( cb_cenp, qOverload< int >( &QComboBox::activated ),
+               this,    &US_ExperGuiCells::centerpieceChanged );
+      connect( cb_wind, qOverload< int >( &QComboBox::activated ),
+               this,    &US_ExperGuiCells::windowsChanged );
 
       // Save pointers to row objects for later update
       cc_labls << clabl;
@@ -5050,8 +5048,8 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       
       cb_solu->addItems( sonames );
       
-      connect( pb_comm, SIGNAL( clicked()           ),
-               this,    SLOT  ( addComments()       ) );
+      connect( pb_comm, &QAbstractButton::clicked,
+               this,    &US_ExperGuiSolutions::addComments );
 
       bool is_vis          = ( ii < 4 );
       cclabl ->setVisible( is_vis );
@@ -5066,10 +5064,10 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       cc_mancomms << le_comm;
    }
 
-   connect( pb_manage,    SIGNAL( clicked()         ),
-            this,         SLOT  ( manageSolutions() ) );
-   connect( pb_details,   SIGNAL( clicked()         ),
-            this,         SLOT  ( detailSolutions() ) );
+   connect( pb_manage,    &QAbstractButton::clicked,
+            this,         &US_ExperGuiSolutions::manageSolutions );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_ExperGuiSolutions::detailSolutions );
 
 
    panel->addLayout(banners);
@@ -5310,8 +5308,8 @@ void US_ExperGuiSolutions::manageSolutions()
 {
    US_SolutionGui* mdiag = new US_SolutionGui;
 
-   connect( mdiag, SIGNAL( newSolAdded()  ),
-            this,  SLOT(   regenSolList() ) ); //ALEXEY when solution added from US_Exp, update sotution list
+   connect( mdiag, &US_SolutionGui::newSolAdded,
+            this,  &US_ExperGuiSolutions::regenSolList ); //ALEXEY when solution added from US_Exp, update sotution list
 
    mdiag->show();
 }
@@ -5930,12 +5928,12 @@ DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
       genL->addWidget( cclabl,   row,    0, 1, 1 );
       genL->addLayout( lo_osyss, row++,  1, 1, 3 );
 
-      connect( ck_osys1, SIGNAL( toggled     ( bool ) ),
-               this,     SLOT  ( opsysChecked( bool ) ) );
-      connect( ck_osys2, SIGNAL( toggled     ( bool ) ),
-               this,     SLOT  ( opsysChecked( bool ) ) );
-      connect( ck_osys3, SIGNAL( toggled     ( bool ) ),
-               this,     SLOT  ( opsysChecked( bool ) ) );
+      connect( ck_osys1, &QAbstractButton::toggled,
+               this,     &US_ExperGuiOptical::opsysChecked );
+      connect( ck_osys2, &QAbstractButton::toggled,
+               this,     &US_ExperGuiOptical::opsysChecked );
+      connect( ck_osys3, &QAbstractButton::toggled,
+               this,     &US_ExperGuiOptical::opsysChecked );
 
       bool is_vis          = ( ii < 4 );
       cclabl  ->setVisible( is_vis );
@@ -6185,8 +6183,8 @@ DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
       QCheckBox* ckbox    = (QCheckBox*)cc_osyss[ ccrow ]->button( ibtn );
       ckbox->setChecked( checked );
 
-      connect( ckbox,  SIGNAL( toggled     ( bool ) ),
-               this,   SLOT  ( opsysChecked( bool ) ) );
+      connect( ckbox,  &QAbstractButton::toggled,
+               this,   &US_ExperGuiOptical::opsysChecked );
    }
 }
 
@@ -6405,15 +6403,15 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    genL->addLayout( lo_sub_done,     row++, 4, 1, 3 );
 
    // Connect to slots
-   connect( pb_details,   SIGNAL( clicked()          ),
-            this,         SLOT  ( detailExperiment() ) );
-   connect( pb_connect,   SIGNAL( clicked()          ),
-            this,         SLOT  ( testConnection()   ) );
-   connect( pb_saverp,    SIGNAL( clicked()          ),
-            this,         SLOT  ( saveRunProtocol()  ) );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_ExperGuiUpload::detailExperiment );
+   connect( pb_connect,   &QAbstractButton::clicked,
+            this,         &US_ExperGuiUpload::testConnection );
+   connect( pb_saverp,    &QAbstractButton::clicked,
+            this,         &US_ExperGuiUpload::saveRunProtocol );
 
-   connect( pb_submit,    SIGNAL( clicked()          ),
-	    this,         SLOT  ( submitExperiment_confirm() ) );
+   connect( pb_submit,    &QAbstractButton::clicked,
+	    this,         &US_ExperGuiUpload::submitExperiment_confirm );
 
    // connect( pb_submit,    SIGNAL( clicked()          ),
    //          this,         SLOT  ( submitExperiment() ) );

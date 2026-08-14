@@ -141,8 +141,8 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
 			       Qt::Horizontal, &dialog);
     form.addRow(&buttonBox);
-    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
-    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+    connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     
     // Show the dialog as modal
     if (dialog.exec() == QDialog::Accepted)

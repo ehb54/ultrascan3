@@ -55,10 +55,10 @@ US_PseudoAbsorbance::US_PseudoAbsorbance() : US_Widgets()
 //    main_lyt->setSizeConstraint(QLayout::SetMinimumSize);
     this->setLayout(main_lyt);
 
-    connect(convertScan->pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(pb_addRef, SIGNAL(clicked()), this, SLOT(select_addRef()));
-    connect(pb_cnvtSc, SIGNAL(clicked()), this, SLOT(select_cnvtSc()));
-    connect(pb_rmri, SIGNAL(clicked()), this, SLOT(select_rmRi()));
+    connect(convertScan->pb_close, &QAbstractButton::clicked, this, &QWidget::close);
+    connect(pb_addRef, &QAbstractButton::clicked, this, &US_PseudoAbsorbance::select_addRef);
+    connect(pb_cnvtSc, &QAbstractButton::clicked, this, &US_PseudoAbsorbance::select_cnvtSc);
+    connect(pb_rmri, &QAbstractButton::clicked, this, &US_PseudoAbsorbance::select_rmRi);
 }
 
 void US_PseudoAbsorbance::select_cnvtSc(){
@@ -138,19 +138,19 @@ void US_PseudoAbsorbance::new_program(int state){
     if (state == ADDREFSCAN){
         addRefScan = new US_AddRefScan();
         main_lyt->addWidget(addRefScan);
-        connect(addRefScan->pb_close, SIGNAL(clicked()), this, SLOT(close()));
+        connect(addRefScan->pb_close, &QAbstractButton::clicked, this, &QWidget::close);
         program_state = ADDREFSCAN;
         turn_on(pb_addRef, true);
     } else if (state == CONVERT){
         convertScan = new US_ConvertScan();
         main_lyt->addWidget(convertScan);
-        connect(convertScan->pb_close, SIGNAL(clicked()), this, SLOT(close()));
+        connect(convertScan->pb_close, &QAbstractButton::clicked, this, &QWidget::close);
         program_state = CONVERT;
         turn_on(pb_cnvtSc, true);
     } else if (state == REMOVERI){
         removeRi = new US_RemoveRI();
         main_lyt->addWidget(removeRi);
-        connect(removeRi->pb_close, SIGNAL(clicked()), this, SLOT(close()));
+        connect(removeRi->pb_close, &QAbstractButton::clicked, this, &QWidget::close);
         program_state = REMOVERI;
         turn_on(pb_rmri, true);
     }

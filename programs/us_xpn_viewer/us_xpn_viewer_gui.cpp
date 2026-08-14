@@ -50,7 +50,7 @@ DialBox::DialBox( QWidget *parent ):
     layout->addWidget( d_dial, 15 );
     layout->addWidget( d_label );
 
-    connect( d_dial, SIGNAL( valueChanged( double ) ), this, SLOT( setNum( double ) ) );
+    connect( d_dial, &QwtAbstractSlider::valueChanged, this, &DialBox::setNum );
    
     setNum( d_dial->value() );
 }
@@ -476,58 +476,58 @@ if(mcknt>0)
  DbgLv(1) << "mcolors c0,cn" << mcolors[0] << mcolors[mcknt-1];
 
    // Signals and Slots
-   connect( pb_loadXpn,   SIGNAL( clicked()      ),
-            this,         SLOT  ( load_xpn_raw() ) );
-   connect( pb_loadAUC,   SIGNAL( clicked()      ),
-            this,         SLOT  ( load_auc_xpn() ) );
-   connect( pb_reset,     SIGNAL( clicked()      ),
-            this,         SLOT  ( resetAll()     ) );
-   connect( pb_details,   SIGNAL( clicked()      ),
-            this,         SLOT  ( runDetails()   ) );
-   connect( pb_saveauc,   SIGNAL( clicked()      ),
-            this,         SLOT  ( export_auc()   ) );
-   connect( pb_reload,    SIGNAL( clicked()      ),
-            this,         SLOT  ( reloadData()   ) );
-   connect( ck_autorld,   SIGNAL( clicked()      ),
-            this,         SLOT  ( changeReload()             ) );
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh( )            ) );
-   connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRadius( )            ) );
-   connect( cb_rend,      SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRadius( )            ) );
-   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRecord( )            ) );
-   connect( pb_prev,      SIGNAL( clicked()  ),
-            this,         SLOT  ( prevPlot() ) );
-   connect( pb_next,      SIGNAL( clicked()  ),
-            this,         SLOT  ( nextPlot() ) );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
-   connect( pb_exclude,   SIGNAL( clicked()       ),
-            this,         SLOT  ( exclude_scans() ) );
-   connect( pb_include,   SIGNAL( clicked()       ),
-            this,         SLOT  ( include_scans() ) );
-   connect( pb_plot2d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( changeCellCh()  ) );
-   connect( pb_showtmst,  SIGNAL( clicked()       ),
-            this,         SLOT  ( showTimeState() ) );
-   connect( pb_colmap,    SIGNAL( clicked()        ),
-            this,         SLOT  ( selectColorMap() ) );
-   connect( ct_rinterv,   SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( changeInterval()       ) );
-   connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT  ( help()     ) );
-   connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT  ( close()    ) );
+   connect( pb_loadXpn,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::load_xpn_raw );
+   connect( pb_loadAUC,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::load_auc_xpn );
+   connect( pb_reset,     &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::resetAll );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::runDetails );
+   connect( pb_saveauc,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::export_auc );
+   connect( pb_reload,    &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::reloadData );
+   connect( ck_autorld,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::changeReload );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeCellCh );
+   connect( cb_rstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRadius );
+   connect( cb_rend,      qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRadius );
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRecord );
+   connect( pb_prev,      &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::prevPlot );
+   connect( pb_next,      &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::nextPlot );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_to );
+   connect( pb_exclude,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::exclude_scans );
+   connect( pb_include,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::include_scans );
+   connect( pb_plot2d,    &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::changeCellCh );
+   connect( pb_showtmst,  &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::showTimeState );
+   connect( pb_colmap,    &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::selectColorMap );
+   connect( ct_rinterv,   &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::changeInterval );
+   connect( pb_help,      &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::help );
+   connect( pb_close,     &QAbstractButton::clicked,
+            this,         &QWidget::close );
 
    // STOP && Skip stage: sys_server commands 
-   connect( pb_stop,      SIGNAL( clicked()  ),
-	    this,         SLOT  ( stop_optima()  ) );
-   connect( pb_skip_stage,SIGNAL( clicked()  ),
-	    this,         SLOT  ( skip_optima_stage()  ) );
+   connect( pb_stop,      &QAbstractButton::clicked,
+	    this,         &US_XpnDataViewer::stop_optima );
+   connect( pb_skip_stage,&QAbstractButton::clicked,
+	    this,         &US_XpnDataViewer::skip_optima_stage );
 
    // Do the left-side layout
    int row = 0;
@@ -615,8 +615,8 @@ if(mcknt>0)
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
 
-   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
-            this, SLOT  ( currentRectf ( QRectF ) ) );
+   connect( plot, &US_Plot::zoomedCorners,
+            this, &US_XpnDataViewer::currentRectf );
 
    //Live params (rpm speed, temp.)
    int row_params = 0;
@@ -737,8 +737,8 @@ if(mcknt>0)
    /*************************************************************************/
 
    
-   connect( plot_rpm, SIGNAL( zoomedCorners( QRectF ) ),
-            this, SLOT  ( currentRectf ( QRectF ) ) );
+   connect( plot_rpm, &US_Plot::zoomedCorners,
+            this, &US_XpnDataViewer::currentRectf );
 
    
 
@@ -937,8 +937,8 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    cb_optima->clear();
    cb_optima->addItems( sl_optimas );
    
-   connect( cb_optima,    SIGNAL( activated      ( int ) ),
-            this,         SLOT  ( changeOptima   ( int ) ) );
+   connect( cb_optima,    qOverload< int >( &QComboBox::activated ),
+            this,         &US_XpnDataViewer::changeOptima );
    
    changeOptima(0); 
    /* End of Optima machines read                                      //New    */ 
@@ -1026,52 +1026,52 @@ if(mcknt>0)
  DbgLv(1) << "mcolors c0,cn" << mcolors[0] << mcolors[mcknt-1];
 
    // Signals and Slots
-   connect( pb_loadXpn,   SIGNAL( clicked()      ),
-            this,         SLOT  ( load_xpn_raw() ) );
-   connect( pb_loadAUC,   SIGNAL( clicked()      ),
-            this,         SLOT  ( load_auc_xpn() ) );
-   connect( pb_reset,     SIGNAL( clicked()      ),
-            this,         SLOT  ( resetAll()     ) );
-   connect( pb_details,   SIGNAL( clicked()      ),
-            this,         SLOT  ( runDetails()   ) );
-   connect( pb_saveauc,   SIGNAL( clicked()      ),
-            this,         SLOT  ( export_auc()   ) );
-   connect( pb_reload,    SIGNAL( clicked()      ),
-            this,         SLOT  ( reloadData()   ) );
-   connect( ck_autorld,   SIGNAL( clicked()      ),
-            this,         SLOT  ( changeReload()             ) );
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh( )            ) );
-   connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRadius( )            ) );
-   connect( cb_rend,      SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRadius( )            ) );
-   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRecord( )            ) );
-   connect( pb_prev,      SIGNAL( clicked()  ),
-            this,         SLOT  ( prevPlot() ) );
-   connect( pb_next,      SIGNAL( clicked()  ),
-            this,         SLOT  ( nextPlot() ) );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
-   connect( pb_exclude,   SIGNAL( clicked()       ),
-            this,         SLOT  ( exclude_scans() ) );
-   connect( pb_include,   SIGNAL( clicked()       ),
-            this,         SLOT  ( include_scans() ) );
-   connect( pb_plot2d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( changeCellCh()  ) );
-   connect( pb_showtmst,  SIGNAL( clicked()       ),
-            this,         SLOT  ( showTimeState() ) );
-   connect( pb_colmap,    SIGNAL( clicked()        ),
-            this,         SLOT  ( selectColorMap() ) );
-   connect( ct_rinterv,   SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( changeInterval()       ) );
-   connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT  ( help()     ) );
-   connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT  ( close()    ) );
+   connect( pb_loadXpn,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::load_xpn_raw );
+   connect( pb_loadAUC,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::load_auc_xpn );
+   connect( pb_reset,     &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::resetAll );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::runDetails );
+   connect( pb_saveauc,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::export_auc );
+   connect( pb_reload,    &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::reloadData );
+   connect( ck_autorld,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::changeReload );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeCellCh );
+   connect( cb_rstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRadius );
+   connect( cb_rend,      qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRadius );
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRecord );
+   connect( pb_prev,      &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::prevPlot );
+   connect( pb_next,      &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::nextPlot );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_to );
+   connect( pb_exclude,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::exclude_scans );
+   connect( pb_include,   &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::include_scans );
+   connect( pb_plot2d,    &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::changeCellCh );
+   connect( pb_showtmst,  &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::showTimeState );
+   connect( pb_colmap,    &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::selectColorMap );
+   connect( ct_rinterv,   &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::changeInterval );
+   connect( pb_help,      &QAbstractButton::clicked,
+            this,         &US_XpnDataViewer::help );
+   connect( pb_close,     &QAbstractButton::clicked,
+            this,         &QWidget::close );
 
    // Do the left-side layout
    int row = 0;
@@ -1149,8 +1149,8 @@ if(mcknt>0)
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
 
-   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
-            this, SLOT  ( currentRectf ( QRectF ) ) );
+   connect( plot, &US_Plot::zoomedCorners,
+            this, &US_XpnDataViewer::currentRectf );
 
    // Now let's assemble the page
    
@@ -1234,8 +1234,8 @@ void US_XpnDataViewer::reset( void )
    data_plot->replot();
 
  
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeCellCh );
 //   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
 //            this, SLOT  ( currentRectf ( QRectF ) ) );
 
@@ -1245,8 +1245,8 @@ void US_XpnDataViewer::reset( void )
    last_ymax     = -1.0;
    xpn_data      = ( xpn_data == NULL ) ? new US_XpnData() : xpn_data;
 
-   connect( xpn_data, SIGNAL( status_text  ( QString ) ),
-            this,     SLOT  ( status_report( QString ) ) );
+   connect( xpn_data, &US_XpnData::status_text,
+            this,     &US_XpnDataViewer::status_report );
 
    xpn_data->clear();
    le_status->setText( tr( "(no data loaded)" ) );
@@ -1347,11 +1347,11 @@ void US_XpnDataViewer::reset_auto( void )
    le_remaining->setText("00:00:00");
    le_running  ->setText("00:00:00");
 
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-    	    this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+    	    this,         &US_XpnDataViewer::changeCellCh );
 
-   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRecord( )            ) );
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeRecord );
 
 
 //   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
@@ -1363,8 +1363,8 @@ void US_XpnDataViewer::reset_auto( void )
    last_ymax     = -1.0;
    xpn_data      = ( xpn_data == NULL ) ? new US_XpnData() : xpn_data;
 
-   connect( xpn_data, SIGNAL( status_text  ( QString ) ),
-            this,     SLOT  ( status_report( QString ) ) );
+   connect( xpn_data, &US_XpnData::status_text,
+            this,     &US_XpnDataViewer::status_report );
 
    xpn_data->clear();
    le_status->setText( tr( "(no data loaded)" ) );
@@ -1757,7 +1757,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
     {
       status_ok = true;
       timer_data_init->stop();
-      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      disconnect(timer_data_init, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
       msg_data_avail->accept();
       //msg_data_avail->close();
       //ok_msg_data->click();
@@ -1773,7 +1773,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 	      if ( finishing_live_update )
 		{
 		  timer_data_init->stop();
-		  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+		  disconnect(timer_data_init, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 		  in_reload_data_init  = false;  
 		  return status_ok;
 		}
@@ -1781,7 +1781,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
 
 	      //reset the program, delete autoflow record
 	      timer_data_init->stop();
-	      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      disconnect(timer_data_init, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	      
 	      //message on aborted run with no data
 	      QMessageBox::warning( this,
@@ -1834,7 +1834,7 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       
     // Check if all triple info is available
       //timer_all_data_avail = new QTimer;
-      connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
+      connect(timer_all_data_avail, &QTimer::timeout, this, &US_XpnDataViewer::retrieve_xpn_raw_auto);
       timer_all_data_avail->start(40000);     // 40 sec
 
       //Somewhere here start sys_server (instead of timer_check_sysdata - BUT move to sys_thread)
@@ -1851,10 +1851,10 @@ bool US_XpnDataViewer::load_xpn_raw_auto( )
       timer_check_sysdata->setInterval(3000);
       timer_check_sysdata->moveToThread(sys_thread);
       //connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ), Qt::QueuedConnection ) ; //Qt::DirectConnection );
-      connect( timer_check_sysdata, SIGNAL(timeout()), this, SLOT( check_for_sysdata( )  ) );//, Qt::QueuedConnection );
+      connect( timer_check_sysdata, &QTimer::timeout, this, &US_XpnDataViewer::check_for_sysdata );//, Qt::QueuedConnection );
       //QThread's started() SIGNAL: before the run()/exec() function is called!!! Is this a potential issue, timer is started from a thread???
-      connect( sys_thread, SIGNAL( started() ), timer_check_sysdata, SLOT( start() ));
-      connect( sys_thread, SIGNAL( finished() ), timer_check_sysdata, SLOT( stop() ));
+      connect( sys_thread, &QThread::started, timer_check_sysdata, qOverload<>( &QTimer::start ));
+      connect( sys_thread, &QThread::finished, timer_check_sysdata, &QTimer::stop);
       sys_thread->start();
 
       // How to stop sys_thread?
@@ -2494,7 +2494,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
       qDebug() << "Connection to Optima DROPPED: in check_for_sysdata()";
       in_reload_check_sysdata = false;
       timer_check_sysdata->stop();
-      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);
+      disconnect(timer_check_sysdata, &QTimer::timeout, nullptr, nullptr);
       qDebug() << "in check_for_sysdata(): timer_check_sysdata stopped";
       //reset_liveupdate_panel();  // <-- redundant ? Cause infinite loop?  
       qApp->processEvents();
@@ -2692,7 +2692,7 @@ void US_XpnDataViewer::check_for_sysdata( void )
       //timer_check_sysdata->stop();
       //ALEXEY: This timer cannot be stopped from another thread, but can be dealt with signal/slot upon Qthread termination..
       //        disconnection maybe enough...
-      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      disconnect(timer_check_sysdata, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
       //Maybe add this?
       sys_thread->quit();     // ALEXEY: I think this emits Qthread's finished() signal... (connected to stopping timer_sysdata)
       qApp->processEvents();  // <-- IMPORTANT to process event loop while stopping thread!!!
@@ -2938,7 +2938,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
 
 
   timer_data_init = new QTimer;
-  connect(timer_data_init, SIGNAL(timeout()), this, SLOT( load_xpn_raw_auto( ) ));
+  connect(timer_data_init, &QTimer::timeout, this, &US_XpnDataViewer::load_xpn_raw_auto);
   timer_data_init->start(5000);     // 5 sec
 
   msg_data_avail = new QMessageBox;
@@ -2968,7 +2968,7 @@ void US_XpnDataViewer::check_for_data( QMap < QString, QString > & protocol_deta
       if (msg_data_avail->clickedButton() == Close)
 	{
 	  timer_data_init->stop();
-	  disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  disconnect(timer_data_init, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	  
 	  reset_auto();
 
@@ -3000,7 +3000,7 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( timer_check_sysdata->isActive() )
     {
       timer_check_sysdata->stop();
-      disconnect(timer_check_sysdata, SIGNAL(timeout()), 0, 0);
+      disconnect(timer_check_sysdata, &QTimer::timeout, nullptr, nullptr);
 
       qDebug() << "Stopping timer_check_sysdata";
     }
@@ -3009,7 +3009,7 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( timer_all_data_avail->isActive() ) 
     {
       timer_all_data_avail->stop();
-      disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);
+      disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);
 
        qDebug() << "Stopping timer_all_data_avail";
     }
@@ -3017,7 +3017,7 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( timer_data_reload->isActive() )
     {
       timer_data_reload->stop();
-      disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);
+      disconnect(timer_data_reload, &QTimer::timeout, nullptr, nullptr);
 
       qDebug() << "Stopping timer_data_reload";
     }
@@ -3025,7 +3025,7 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   if ( timer_data_init->isActive() )
     {
       timer_data_init->stop();
-      disconnect(timer_data_init, SIGNAL(timeout()), 0, 0);
+      disconnect(timer_data_init, &QTimer::timeout, nullptr, nullptr);
 
       qDebug() << "Stopping timer_data_init";
     }
@@ -3055,7 +3055,7 @@ void US_XpnDataViewer::reset_liveupdate_panel ( void )
   // Introduce QTimer which checks for all abpve vartibales to be false (check all related functions to always reset them to false on completion)
   // Put reset_auto() into the timer && and stop/disconnect timer from within connected SLOT.
   //timer_end_processes = new QTimer;
-  connect(timer_end_processes, SIGNAL(timeout()), this, SLOT( end_processes ( ) ));
+  connect(timer_end_processes, &QTimer::timeout, this, &US_XpnDataViewer::end_processes);
   timer_end_processes->start(1000);     // 5 sec
   
   qApp->processEvents();
@@ -3078,7 +3078,7 @@ void US_XpnDataViewer::end_processes( void )
     {
       
       timer_end_processes->stop();
-      disconnect(timer_end_processes, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      disconnect(timer_end_processes, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 
       //ALEXEY: may not be needed
       qDebug() << "LIVE UPDATE panel has been reset!";
@@ -3153,7 +3153,7 @@ void US_XpnDataViewer::end_process_all_data_avail( void )
     {
       
       timer_end_process_all_data_avail->stop();
-      disconnect(timer_end_process_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+      disconnect(timer_end_process_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 
       qDebug() << "All Data Avail: " <<  in_reload_all_data ;
       
@@ -3333,7 +3333,7 @@ DbgLv(1) << "RDa:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
    if ( !o_connected )
      {
        timer_all_data_avail->stop();
-       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
        qDebug() << "in [retrieve_xpn_raw_auto()]: stop timer_all_data_avail";
        qDebug() << "in [retrieve_xpn_raw_auto()]: statusExp == 0 && NO Coneection to Optima!";
        in_reload_all_data  = false;
@@ -3368,7 +3368,7 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	  if ( finishing_live_update )
 	    {
 	      timer_all_data_avail->stop();
-	      disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	      in_reload_all_data   = false;  
 	      return;
 	    }
@@ -3384,7 +3384,7 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	    }
 	  
 	  timer_all_data_avail->stop();
-	  disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	  
 	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	    {
@@ -3409,7 +3409,7 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	  if ( finishing_live_update )
 	    {
 	      timer_all_data_avail->stop();
-	      disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	      in_reload_all_data   = false;  
 	      return;
 	    }
@@ -3417,7 +3417,7 @@ DbgLv(1) << "RDa:      knt(triple)   " << xpn_data->countOf( "triple"    );
 	  qDebug() << "FINISHED IN EARLY STAGE WITH NO DATA...";
 	  	  
 	  timer_all_data_avail->stop();
-	  disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	  
 	  if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 	    {
@@ -3649,8 +3649,8 @@ DbgLv(1) << "RDa:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    // connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
    //          this,         SLOT  ( changeOptics( )            ) );
 
-   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeOptics_auto(  )       ));
+   connect( cb_optsys,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeOptics_auto);
    /*** END of an older code **********************************************/
    
    DbgLv(1) << "RDa: 1b. Crashes HERE!!!!";
@@ -3710,8 +3710,8 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();                                      
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );                             // ALEXEY fill out Cells/Channels listbox
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeCellCh );
    /*** END of an older code ***********************************************************/
 
    
@@ -3790,7 +3790,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
        if ( finishing_live_update )
 	 {
 	   timer_all_data_avail->stop();
-	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	   in_reload_all_data   = false;  
 	   return;
 	 }
@@ -3801,7 +3801,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	 experimentAborted  = true;
        
        timer_all_data_avail->stop();
-       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 
        //For combined Optics type && opticsFailed!
        qDebug() << "[ABORTION IN EARLY STAGE...] : combinedOptics,  opsys_auto.count(), opsys_auto -- "
@@ -3869,7 +3869,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	 {
 	   //stop timer
 	   timer_all_data_avail->stop();
-	   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	   disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	   
 	   in_reload_all_data   = false;  
 	   
@@ -3881,7 +3881,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	       qDebug() << "Switch to update!";
 	       
 	       //update hereafter
-	       connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+	       connect(timer_data_reload, &QTimer::timeout, this, &US_XpnDataViewer::reloadData_auto);
 	       timer_data_reload->start(10000);     // 10 sec
 	     }
 	 }
@@ -3903,7 +3903,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 	       	       
 	       //stop timer
 	       timer_all_data_avail->stop();
-	       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	       disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	       
 	       in_reload_all_data   = false;  
 	       
@@ -3915,7 +3915,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		   qDebug() << "Switch to update!";
 		   
 		   //update hereafter
-		   connect(timer_data_reload, SIGNAL(timeout()), this, SLOT( reloadData_auto( ) ));
+		   connect(timer_data_reload, &QTimer::timeout, this, &US_XpnDataViewer::reloadData_auto);
 		   timer_data_reload->start(10000);     // 10 sec
 		 }
 	     }
@@ -3927,7 +3927,7 @@ DbgLv(1) << "RDa: allData size" << allData.size();
 		 {
 		   //stop timer
 		   timer_all_data_avail->stop();
-		   disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+		   disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 
 		   if ( !timer_check_sysdata->isActive()  ) // Check if sys_data Timer is stopped
 		     {
@@ -4170,8 +4170,8 @@ DbgLv(1) << "RDr:   runType2 scanmask" << runType2 << scanmask << "[ifw]scn_rows
    cb_optsys->clear();
    cb_optsys->addItems( opsys );                               
    cb_optsys->setCurrentIndex( optndx );
-   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeOptics( )            ) );
+   connect( cb_optsys,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeOptics );
 
    runID         = new_runID;
 DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
@@ -4203,8 +4203,8 @@ DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();                                      
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );                           
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeCellCh );
 
    nlambda      = xpn_data->lambdas_raw( lambdas );             
    int wvlo     = lambdas[ 0 ];
@@ -4751,7 +4751,7 @@ void US_XpnDataViewer::changeOptics_auto( void )
    if ( timer_all_data_avail->isActive() ) 
      {
        timer_all_data_avail->stop();
-       disconnect(timer_all_data_avail, SIGNAL(timeout()), 0, 0);
+       disconnect(timer_all_data_avail, &QTimer::timeout, nullptr, nullptr);
 
        qDebug() << "Stopping timer_all_data_avail";
     }
@@ -4759,7 +4759,7 @@ void US_XpnDataViewer::changeOptics_auto( void )
    if ( timer_data_reload->isActive() )
      {
        timer_data_reload->stop();
-       disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);
+       disconnect(timer_data_reload, &QTimer::timeout, nullptr, nullptr);
        
        qDebug() << "Stopping timer_data_reload";
      }
@@ -4767,7 +4767,7 @@ void US_XpnDataViewer::changeOptics_auto( void )
 
    if ( !inExport )
      {
-       connect(timer_end_process_all_data_avail, SIGNAL(timeout()), this, SLOT( end_process_all_data_avail ( ) ));
+       connect(timer_end_process_all_data_avail, &QTimer::timeout, this, &US_XpnDataViewer::end_process_all_data_avail);
        timer_end_process_all_data_avail->start(1000);     // 5 sec
      }
    else
@@ -4868,8 +4868,8 @@ DbgLv(1) << "chgOpt:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_XpnDataViewer::changeCellCh );
 
    nlambda      = xpn_data->lambdas_raw( lambdas );
    int wvlo     = lambdas[ 0 ];
@@ -4892,7 +4892,7 @@ DbgLv(1) << "chgOpt: allData size" << allData.size();
    if ( auto_mode_bool &&  !timer_all_data_avail->isActive() && !inExport )
      {
        qDebug() << "YES, it restarts..." ;
-       connect(timer_all_data_avail, SIGNAL(timeout()), this, SLOT( retrieve_xpn_raw_auto ( ) ));
+       connect(timer_all_data_avail, &QTimer::timeout, this, &US_XpnDataViewer::retrieve_xpn_raw_auto);
        timer_all_data_avail->start(40000);     // 60 sec
      }
 }
@@ -4982,14 +4982,14 @@ void US_XpnDataViewer::connect_ranges( bool conn )
 {
    if ( conn )
    {  // Connect the range-related controls
-      connect( cb_cellchn, SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeCellCh(            ) ) );
-      connect( cb_rstart,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRadius(            ) ) );
-      connect( cb_rend,    SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRadius(            ) ) );
-      connect( cb_pltrec,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRecord(            ) ) );
+      connect( cb_cellchn, qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_XpnDataViewer::changeCellCh );
+      connect( cb_rstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_XpnDataViewer::changeRadius );
+      connect( cb_rend,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_XpnDataViewer::changeRadius );
+      connect( cb_pltrec,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_XpnDataViewer::changeRecord );
    }
 
    else
@@ -5192,8 +5192,8 @@ void US_XpnDataViewer::exclude_from( double sfr )
       ct_to  ->disconnect();
       ct_to  ->setValue( scan_from );
 
-      connect( ct_to,        SIGNAL( valueChanged( double ) ),
-               this,         SLOT  ( exclude_to  ( double ) ) );
+      connect( ct_to,        &QwtCounter::valueChanged,
+               this,         &US_XpnDataViewer::exclude_to );
    }
 
    plot_current();
@@ -5210,8 +5210,8 @@ void US_XpnDataViewer::exclude_to( double sto )
       ct_from->disconnect();
       ct_from->setValue( scan_to );
 
-      connect( ct_from,      SIGNAL( valueChanged( double ) ),
-               this,         SLOT  ( exclude_from( double ) ) );
+      connect( ct_from,      &QwtCounter::valueChanged,
+               this,         &US_XpnDataViewer::exclude_from );
    }
 
    plot_current();
@@ -5241,10 +5241,10 @@ DbgLv(1) << "Excl: kscan" << kscan;
    ct_to     ->disconnect();
    ct_from   ->setMaximum( kscan );
    ct_to     ->setMaximum( kscan );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_to );
    ct_to     ->setValue( 0 );
    pb_include->setEnabled( true );
 }
@@ -5265,10 +5265,10 @@ DbgLv(1) << "Incl: nscan" << nscan << "kscn ecnt" << kscan << excludes.count();
    ct_to     ->disconnect();
    ct_from   ->setMaximum( kscan );
    ct_to     ->setMaximum( kscan );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_XpnDataViewer::exclude_to );
    ct_to     ->setValue( 0 );
    pb_include->setEnabled( false );
 }
@@ -5444,7 +5444,7 @@ QDateTime sttime=QDateTime::currentDateTime();
    if ( !o_connected )
      {
        timer_data_reload->stop();
-       disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+       disconnect(timer_data_reload, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
        qDebug() << "in [reloadData_auto()]: Stop auto-reload timer: " ;
        qDebug() << "in [reloadData_auto()]: statusExp == 0 && NO Coneection to Optima!";
        in_reload_auto   = false;
@@ -5487,7 +5487,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  if ( finishing_live_update )
 	    {
 	      timer_data_reload->stop();
-	      disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	      disconnect(timer_data_reload, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 	      in_reload_auto   = false; 
 	      return;
 	    }
@@ -5557,7 +5557,7 @@ DbgLv(1) << "RLd:       NO CHANGE";
 	  //   }
 
 	  timer_data_reload->stop();
-	  disconnect(timer_data_reload, SIGNAL(timeout()), 0, 0);   //Disconnect timer from anything
+	  disconnect(timer_data_reload, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
 
 	  qDebug() << "STOPPING timer_data_reload...";
 

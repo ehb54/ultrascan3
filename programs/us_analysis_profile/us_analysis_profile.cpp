@@ -71,31 +71,31 @@ DbgLv(1) << "MAIN:  tabs added";
    buttL->addWidget( pb_apply );
 
    // Connect signals to slots
-   connect( tabWidget, SIGNAL( currentChanged( int ) ),
-            this,      SLOT  ( newPanel      ( int ) ) );
-   connect( pb_next,   SIGNAL( clicked()   ),
-            this,      SLOT  ( panelUp()   ) );
-   connect( pb_prev,   SIGNAL( clicked()   ),
-            this,      SLOT  ( panelDown() ) );
-   connect( pb_close,  SIGNAL( clicked()       ),
-            this,      SLOT  ( close_program() ) );
-   connect( pb_apply,  SIGNAL( clicked()       ),
-            this,      SLOT  ( apply_profile() ) );
-   connect( pb_help,   SIGNAL( clicked()   ),
-            this,      SLOT  ( help()      ) );
+   connect( tabWidget, &QTabWidget::currentChanged,
+            this,      &US_AnalysisProfileGui::newPanel );
+   connect( pb_next,   &QAbstractButton::clicked,
+            this,      &US_AnalysisProfileGui::panelUp );
+   connect( pb_prev,   &QAbstractButton::clicked,
+            this,      &US_AnalysisProfileGui::panelDown );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &US_AnalysisProfileGui::close_program );
+   connect( pb_apply,  &QAbstractButton::clicked,
+            this,      &US_AnalysisProfileGui::apply_profile );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_AnalysisProfileGui::help );
 
-   connect( apanPCSA, SIGNAL( back_to_pcsa () ), this, SLOT( back_to_pcsa() )  );
+   connect( apanPCSA, &US_AnaprofPanPCSA::back_to_pcsa, this, &US_AnalysisProfileGui::back_to_pcsa  );
 
    main->addWidget( tabWidget );
    main->addLayout( statL );
    main->addLayout( buttL );
 
-   connect( apanGeneral, SIGNAL( set_tabs_buttons_inactive( void ) ),
-            this,        SLOT  ( disable_tabs_buttons     ( void ) ) );
-   connect( apanGeneral, SIGNAL( set_tabs_buttons_active_readonly( void ) ),
-            this,        SLOT  ( enable_tabs_buttons_readonly    ( void ) ) );
-   connect( apanGeneral, SIGNAL( set_tabs_buttons_active  ( void ) ),
-            this,        SLOT  ( enable_tabs_buttons      ( void ) ) );
+   connect( apanGeneral, &US_AnaprofPanGen::set_tabs_buttons_inactive,
+            this,        &US_AnalysisProfileGui::disable_tabs_buttons );
+   connect( apanGeneral, &US_AnaprofPanGen::set_tabs_buttons_active_readonly,
+            this,        &US_AnalysisProfileGui::enable_tabs_buttons_readonly );
+   connect( apanGeneral, &US_AnaprofPanGen::set_tabs_buttons_active,
+            this,        &US_AnalysisProfileGui::enable_tabs_buttons );
 
    //int min_width = tabWidget->tabBar()->width();
 
@@ -1376,18 +1376,18 @@ DbgLv(1) << "APGe: bgL:    scrollArea children count ZERO";
 	   pb_scan_excl -> setVisible( false ); row++;
    }
 
-   connect( pb_aproname, SIGNAL( clicked            ( ) ),
-            this,        SLOT(   apro_button_clicked( ) ) );
-   connect( pb_protname, SIGNAL( clicked            ( ) ),
-            this,        SLOT(   prot_button_clicked( ) ) );
-   connect( le_aproname, SIGNAL( editingFinished  ( void ) ),
-            this,        SLOT(   apro_text_changed( void ) ) );
-   connect( le_protname, SIGNAL( editingFinished  ( void ) ),
-            this,        SLOT(   prot_text_changed( void ) ) );
-   connect( pb_scan_excl, SIGNAL( clicked            ( ) ),
-	    this,        SLOT(   set_scan_ranges( ) ) );
-   connect( pb_gen_report_sttings, SIGNAL( clicked            ( ) ),
-	    this,        SLOT(   set_gen_report_settings( ) ) );  
+   connect( pb_aproname, &QAbstractButton::clicked,
+            this,        &US_AnaprofPanGen::apro_button_clicked );
+   connect( pb_protname, &QAbstractButton::clicked,
+            this,        &US_AnaprofPanGen::prot_button_clicked );
+   connect( le_aproname, &QLineEdit::editingFinished,
+            this,        &US_AnaprofPanGen::apro_text_changed );
+   connect( le_protname, &QLineEdit::editingFinished,
+            this,        &US_AnaprofPanGen::prot_text_changed );
+   connect( pb_scan_excl, &QAbstractButton::clicked,
+	    this,        &US_AnaprofPanGen::set_scan_ranges );
+   connect( pb_gen_report_sttings, &QAbstractButton::clicked,
+	    this,        &US_AnaprofPanGen::set_gen_report_settings );  
    
    // Build channel lists and rows
 DbgLv(1) << "Ge:SL: nchn" << nchn << "sl_chnsel" << sl_chnsel;
@@ -1642,8 +1642,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       QString strow  = QString::number( ii );
       ck_analysisrun ->setObjectName( strow + ": Run" );
       genL->addWidget( ck_analysisrun,  row,  8, 1, 1, Qt::AlignHCenter );
-      connect( ck_analysisrun, SIGNAL( toggled     ( bool ) ),
-               this,           SLOT  ( runChecked( bool ) ) );
+      connect( ck_analysisrun, &QAbstractButton::toggled,
+               this,           &US_AnaprofPanGen::runChecked );
 
       ck_runs << ck_analysisrun;
       //END of run checkbox seciton
@@ -1654,8 +1654,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_reportrun ->setChecked( true );
       ck_reportrun ->setObjectName( strow + ": RunReport" );
       genL->addWidget( ck_reportrun,  row,  9, 1, 1, Qt::AlignHCenter );
-      connect( ck_reportrun, SIGNAL( toggled     ( bool ) ),
-               this,         SLOT  ( reportRunChecked( bool ) ) );
+      connect( ck_reportrun, &QAbstractButton::toggled,
+               this,         &US_AnaprofPanGen::reportRunChecked );
 
       ck_report_runs << ck_reportrun;
       //END of runReport cks
@@ -1665,8 +1665,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       pb_reportprefs = us_pushbutton( tr( "Report" ) );
       pb_reportprefs ->setObjectName( strow + ": Report --chann_name--" + schan );
       genL->addWidget( pb_reportprefs,  row,  10, 1, 1, Qt::AlignHCenter );
-      connect( pb_reportprefs, SIGNAL( clicked     ( ) ),
-	       this,        SLOT  ( setReport( ) ) );
+      connect( pb_reportprefs, &QAbstractButton::clicked,
+	       this,        &US_AnaprofPanGen::setReport );
 
 
       pb_reports << pb_reportprefs;
@@ -1690,8 +1690,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
 
-      connect( ck_mwvprefs, SIGNAL( toggled     ( bool ) ),
-               this,        SLOT  ( mwvChecked( bool ) ) );
+      connect( ck_mwvprefs, &QAbstractButton::toggled,
+               this,        &US_AnaprofPanGen::mwvChecked );
 
       ck_mwv << ck_mwvprefs;
       
@@ -1719,8 +1719,8 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 	int appall_pos = ( mainw->abde_mode_aprofile ) ? 14 : 13;
 	genL->addWidget( pb_applya, row++, appall_pos, 1, 2 );
 	//genL->addWidget( pb_applya, row++, 13, 1, 2 );
-	connect( pb_applya, SIGNAL( clicked       ( ) ),
-		 this,      SLOT(   applied_to_all( ) ) );
+	connect( pb_applya, &QAbstractButton::clicked,
+		 this,      &US_AnaprofPanGen::applied_to_all );
       }
       else
       {
@@ -1755,16 +1755,16 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       // //END MWV dialog
       
       
-      connect( le_lcrat,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   lcrat_text_changed( void ) ) );
-      connect( le_lctol,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   lctol_text_changed( void ) ) );
-      connect( le_ldvol,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   ldvol_text_changed( void ) ) );
-      connect( le_lvtol,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   lvtol_text_changed( void ) ) );
-      connect( le_daend,    SIGNAL( editingFinished   ( void ) ),
-               this,        SLOT(   daend_text_changed( void ) ) );
+      connect( le_lcrat,    &QLineEdit::editingFinished,
+               this,        &US_AnaprofPanGen::lcrat_text_changed );
+      connect( le_lctol,    &QLineEdit::editingFinished,
+               this,        &US_AnaprofPanGen::lctol_text_changed );
+      connect( le_ldvol,    &QLineEdit::editingFinished,
+               this,        &US_AnaprofPanGen::ldvol_text_changed );
+      connect( le_lvtol,    &QLineEdit::editingFinished,
+               this,        &US_AnaprofPanGen::lvtol_text_changed );
+      connect( le_daend,    &QLineEdit::editingFinished,
+               this,        &US_AnaprofPanGen::daend_text_changed );
    }
 DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
 
@@ -1772,8 +1772,8 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    //Add button to set global combuned plot parameters
    QPushButton* pb_combplot_global    = us_pushbutton( tr( "Global Parameters for \nCombined Plots" ) );
    genL->addWidget( pb_combplot_global,    row++,  9, 2, 3 );
-   connect( pb_combplot_global, SIGNAL( clicked  ( ) ),
-	    this,         SLOT(   set_combplot_parms( ) ) );
+   connect( pb_combplot_global, &QAbstractButton::clicked,
+	    this,         &US_AnaprofPanGen::set_combplot_parms );
 
    int ihgt        = pb_aproname->height();
    QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
@@ -2548,7 +2548,7 @@ void US_AnaprofPanGen::setReport( void )
    reportGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
    reportGui->setWindowModality(Qt::ApplicationModal);
    
-   connect( reportGui, SIGNAL( cancel_changes ( QMap< QString, US_ReportGMP>& ) ), this, SLOT( restore_report  ( QMap< QString, US_ReportGMP>& )  ) );
+   connect( reportGui, &US_ReportGui::cancel_changes, this, &US_AnaprofPanGen::restore_report );
 
    //ALEXEY_NEW_REPORT: this signals may not be needed...
    // connect( reportGui, SIGNAL( apply_to_all_reports( US_ReportGMP* ) ), this, SLOT( apply_to_other_reports( US_ReportGMP* )  ) );
@@ -2712,7 +2712,7 @@ void US_AnaprofPanGen::set_gen_report_settings()
   reportGenGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   reportGenGui->setWindowModality(Qt::ApplicationModal);
   
-  connect( reportGenGui, SIGNAL(  update_details( QString& ) ), this, SLOT( update_gen_report_settings  ( QString& )  ) );
+  connect( reportGenGui, &US_ReportGenGui::update_details, this, &US_AnaprofPanGen::update_gen_report_settings );
 
   //abde
   if ( mainw->abde_mode_aprofile )
@@ -2790,7 +2790,7 @@ void US_AnaprofPanGen::set_combplot_parms( )
   combPlotsGui ->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   combPlotsGui ->setWindowModality(Qt::ApplicationModal);
   
-  connect( combPlotsGui, SIGNAL( update_combplots_parms( QString& ) ), this, SLOT( update_combplots_settings  ( QString& )  ) );
+  connect( combPlotsGui, &US_CombPlotsGui::update_combplots_parms, this, &US_AnaprofPanGen::update_combplots_settings );
      
   combPlotsGui->show();
 }
@@ -2833,7 +2833,7 @@ void US_AnaprofPanGen::set_scan_ranges()
   scanExclGui->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
   scanExclGui->setWindowModality(Qt::ApplicationModal);
   
-  connect( scanExclGui, SIGNAL(  update_aprofile_scans( QStringList& ) ), this, SLOT( update_excl_scans  ( QStringList& )  ) );
+  connect( scanExclGui, &US_ScanExclGui::update_aprofile_scans, this, &US_AnaprofPanGen::update_excl_scans );
      
   scanExclGui->show();
 }
@@ -3200,62 +3200,62 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    mainw->setColumnStretches( genL );
 
    // Connect signals and slots
-   connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( channel_selected ( int )  ) );
-   connect( pb_nextch,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( next_channel     ( )      ) );
-   connect( le_smin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( smin_changed     ( )      ) );
-   connect( le_smax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( smax_changed     ( )      ) );
-   connect( le_sgrpts,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( sgpoints_changed ( )      ) );
-   connect( le_kmin,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( kmin_changed     ( )      ) );
-   connect( le_kmax,      SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( kmax_changed     ( )      ) );
-   connect( le_kgrpts,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( kgpoints_changed ( )      ) );
-   connect( le_grreps,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( grid_reps_changed( )      ) );
-   connect( pb_custmg,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( cust_grid_clicked( )      ) );
-   connect( le_custmg,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( cust_grid_changed( )      ) );
-   connect( ck_varyvb,    SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( vary_vbar_checked( bool ) ) );
-   connect( le_constk,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( constk_changed   ( )      ) );
-   connect( pb_applya,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( apply_all_clicked( )      ) );
-   connect( ck_customgrid, SIGNAL( toggled     ( bool ) ),
-	    this,          SLOT  ( customGridChecked( bool ) ) );
+   connect( cb_chnsel,    qOverload< int >( &QComboBox::activated ),
+            this,         &US_AnaprofPan2DSA::channel_selected );
+   connect( pb_nextch,    &QAbstractButton::clicked,
+            this,         &US_AnaprofPan2DSA::next_channel );
+   connect( le_smin,      &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::smin_changed );
+   connect( le_smax,      &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::smax_changed );
+   connect( le_sgrpts,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::sgpoints_changed );
+   connect( le_kmin,      &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::kmin_changed );
+   connect( le_kmax,      &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::kmax_changed );
+   connect( le_kgrpts,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::kgpoints_changed );
+   connect( le_grreps,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::grid_reps_changed );
+   connect( pb_custmg,    &QAbstractButton::clicked,
+            this,         &US_AnaprofPan2DSA::cust_grid_clicked );
+   connect( le_custmg,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::cust_grid_changed );
+   connect( ck_varyvb,    &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::vary_vbar_checked );
+   connect( le_constk,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::constk_changed );
+   connect( pb_applya,    &QAbstractButton::clicked,
+            this,         &US_AnaprofPan2DSA::apply_all_clicked );
+   connect( ck_customgrid, &QAbstractButton::toggled,
+	    this,          &US_AnaprofPan2DSA::customGridChecked );
 
    
-   connect( ck_j1run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job1_run_checked ( bool ) ) );
-   connect( ck_j2run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job2_run_checked ( bool ) ) );
-   connect( le_j2gpts,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mgpoints_changed ( )      ) );
-   connect( le_j2mrng,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mfrange_changed  ( )      ) );
+   connect( ck_j1run,     &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::job1_run_checked );
+   connect( ck_j2run,     &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::job2_run_checked );
+   connect( le_j2gpts,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::mgpoints_changed );
+   connect( le_j2mrng,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::mfrange_changed );
 
-   connect( le_j2iter,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mfiter_changed  ( )      ) );
+   connect( le_j2iter,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::mfiter_changed );
    
-   connect( ck_j3run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job3_run_checked ( bool ) ) );
-   connect( ck_j3auto,    SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( autopick_checked ( bool ) ) );
-   connect( ck_j4run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job4_run_checked ( bool ) ) );
-   connect( le_j4iter,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( rfiters_changed  ( )      ) );
-   connect( ck_j5run,     SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( job5_run_checked ( bool ) ) );
-   connect( le_j5iter,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mciters_changed  ( )      ) );
+   connect( ck_j3run,     &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::job3_run_checked );
+   connect( ck_j3auto,    &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::autopick_checked );
+   connect( ck_j4run,     &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::job4_run_checked );
+   connect( le_j4iter,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::rfiters_changed );
+   connect( ck_j5run,     &QAbstractButton::toggled,
+            this,         &US_AnaprofPan2DSA::job5_run_checked );
+   connect( le_j5iter,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPan2DSA::mciters_changed );
 
    //hide custom grids
    pb_custmg->setVisible( false );
@@ -3877,18 +3877,18 @@ DbgLv(1) << "APpc: IN";
    panel->addLayout( genL );
    panel->addStretch();
 
-   connect( ck_nopcsa,    SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( nopcsa_checked   ( bool ) ) );
-   connect( cb_chnsel,    SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( channel_selected ( int )  ) );
-   connect( pb_nextch,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( next_channel     ( )      ) );
-   connect( cb_curvtype,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( curvtype_selected( int )  ) );
-   connect( pb_applya,    SIGNAL( clicked          ( )      ),
-            this,         SLOT  ( apply_all_clicked( )      ) );
-   connect( cb_xaxistyp,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( xaxis_selected   ( int )  ) );
+   connect( ck_nopcsa,    &QAbstractButton::toggled,
+            this,         &US_AnaprofPanPCSA::nopcsa_checked );
+   connect( cb_chnsel,    qOverload< int >( &QComboBox::activated ),
+            this,         &US_AnaprofPanPCSA::channel_selected );
+   connect( pb_nextch,    &QAbstractButton::clicked,
+            this,         &US_AnaprofPanPCSA::next_channel );
+   connect( cb_curvtype,  qOverload< int >( &QComboBox::activated ),
+            this,         &US_AnaprofPanPCSA::curvtype_selected );
+   connect( pb_applya,    &QAbstractButton::clicked,
+            this,         &US_AnaprofPanPCSA::apply_all_clicked );
+   connect( cb_xaxistyp,  qOverload< int >( &QComboBox::activated ),
+            this,         &US_AnaprofPanPCSA::xaxis_selected );
 
    // connect( le_xmin,      SIGNAL( editingFinished  ( )      ),
    //          this,         SLOT  ( xmin_changed     ( )      ) );
@@ -3899,14 +3899,14 @@ DbgLv(1) << "APpc: IN";
    // connect( le_xmax, SIGNAL( textChanged ( const QString& ) ),
    // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
 
-   connect( le_xmin, SIGNAL( editingFinished  ( ) ),
-   	       this,   SLOT  ( verify_xyz ( ) ) );
-   connect( le_xmax, SIGNAL( editingFinished (  ) ),
-   	       this,   SLOT  ( verify_xyz ( ) ) );
+   connect( le_xmin, &QLineEdit::editingFinished,
+   	       this,   &US_AnaprofPanPCSA::verify_xyz );
+   connect( le_xmax, &QLineEdit::editingFinished,
+   	       this,   &US_AnaprofPanPCSA::verify_xyz );
    
 
-   connect( cb_yaxistyp,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( yaxis_selected   ( int )  ) );
+   connect( cb_yaxistyp,  qOverload< int >( &QComboBox::activated ),
+            this,         &US_AnaprofPanPCSA::yaxis_selected );
    
    // connect( le_ymin,      SIGNAL( editingFinished  ( )      ),
    //          this,         SLOT  ( ymin_changed     ( )      ) );
@@ -3916,40 +3916,40 @@ DbgLv(1) << "APpc: IN";
    // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
    // connect( le_ymax, SIGNAL( textChanged ( const QString& ) ),
    // 	       this,   SLOT  ( verify_xyz ( const QString& ) ) );
-   connect( le_ymin, SIGNAL( editingFinished  ( ) ),
-   	       this,   SLOT  ( verify_xyz ( ) ) );
-   connect( le_ymax, SIGNAL( editingFinished (  ) ),
-   	       this,   SLOT  ( verify_xyz ( ) ) );
+   connect( le_ymin, &QLineEdit::editingFinished,
+   	       this,   &US_AnaprofPanPCSA::verify_xyz );
+   connect( le_ymax, &QLineEdit::editingFinished,
+   	       this,   &US_AnaprofPanPCSA::verify_xyz );
 
-   connect( cb_zaxistyp,  SIGNAL( activated        ( int )  ),
-            this,         SLOT  ( zaxis_selected   ( int )  ) );
+   connect( cb_zaxistyp,  qOverload< int >( &QComboBox::activated ),
+            this,         &US_AnaprofPanPCSA::zaxis_selected );
    
    // connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),
    //          this,         SLOT  ( zvalue_changed   ( )      ) );
    // connect( le_zvalue, SIGNAL( textChanged ( const QString& ) ),
    // 	    this,   SLOT  ( verify_xyz ( const QString& ) ) );
-   connect( le_zvalue,    SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( verify_xyz ( )    ) );
+   connect( le_zvalue,    &QLineEdit::editingFinished,
+            this,         &US_AnaprofPanPCSA::verify_xyz );
    
 
-   connect( le_varcount,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( varcount_changed ( )      ) );
-   connect( le_grfiters,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( grfiters_changed ( )      ) );
-   connect( le_crpoints,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( crpoints_changed ( )      ) );
-   connect( ck_tinoise,   SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( tinoise_checked  ( bool ) ) );
-   connect( ck_rinoise,   SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( rinoise_checked  ( bool ) ) );
-   connect( ck_tregspec,  SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( tregspec_checked ( bool ) ) );
-   connect( ck_tregauto,  SIGNAL( toggled          ( bool ) ),
-            this,         SLOT  ( tregauto_checked ( bool ) ) );
-   connect( le_regalpha,  SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( alpha_changed    ( )      ) );
-   connect( le_mciters,   SIGNAL( editingFinished  ( )      ),
-            this,         SLOT  ( mciters_changed  ( )      ) );
+   connect( le_varcount,  &QLineEdit::editingFinished,
+            this,         &US_AnaprofPanPCSA::varcount_changed );
+   connect( le_grfiters,  &QLineEdit::editingFinished,
+            this,         &US_AnaprofPanPCSA::grfiters_changed );
+   connect( le_crpoints,  &QLineEdit::editingFinished,
+            this,         &US_AnaprofPanPCSA::crpoints_changed );
+   connect( ck_tinoise,   &QAbstractButton::toggled,
+            this,         &US_AnaprofPanPCSA::tinoise_checked );
+   connect( ck_rinoise,   &QAbstractButton::toggled,
+            this,         &US_AnaprofPanPCSA::rinoise_checked );
+   connect( ck_tregspec,  &QAbstractButton::toggled,
+            this,         &US_AnaprofPanPCSA::tregspec_checked );
+   connect( ck_tregauto,  &QAbstractButton::toggled,
+            this,         &US_AnaprofPanPCSA::tregauto_checked );
+   connect( le_regalpha,  &QLineEdit::editingFinished,
+            this,         &US_AnaprofPanPCSA::alpha_changed );
+   connect( le_mciters,   &QLineEdit::editingFinished,
+            this,         &US_AnaprofPanPCSA::mciters_changed );
 
    // Do first pass at initializing the panel layout
 DbgLv(1) << "APpc: CALL initPanel()";

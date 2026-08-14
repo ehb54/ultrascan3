@@ -90,7 +90,7 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    // Investigator
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_investigator, &QAbstractButton::clicked, this, &US_Buoyancy::sel_investigator );
    specs->addWidget( pb_investigator, s_row, 0 );
 
    if ( US_Settings::us_inv_level() < 1 )
@@ -109,11 +109,11 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
 
    // Row 2
    pb_load = us_pushbutton( tr( "Load Data" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   connect( pb_load, &QAbstractButton::clicked, this, &US_Buoyancy::load );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
    pb_details = us_pushbutton( tr( "Run Details" ), false );
-   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+   connect( pb_details, &QAbstractButton::clicked, this, &US_Buoyancy::details );
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
    // Row 3
@@ -121,8 +121,8 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Buoyancy::new_triple );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
    lbl_rpms   = us_label( tr( "Speed Step (RPM) of triple:" ), -1 );
@@ -139,8 +139,8 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    ct_selectScan->setSingleStep( 1 );
    ct_selectScan->setValue   ( current_scan );
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
-   connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
-            SLOT  ( plot_scan( double ) ) );
+   connect( ct_selectScan, &QwtCounter::valueChanged,
+            this, &US_Buoyancy::plot_scan );
 
    //Exp. Params banner
    QLabel* lb_parms_bn = us_banner( tr( "Experiment Parameters" ) );
@@ -206,30 +206,30 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lbl_dens_0, s_row, 0, 1, 2 );
    le_dens_0 = us_lineedit( QString::number(tmp_dpoint.gradientC0), -1,  true );
    specs->addWidget( le_dens_0, s_row++, 2, 1, 2 );
-   connect (le_dens_0, SIGNAL( editingFinished (void)), this,
-            SLOT (update_for_dens_0(void)));
+   connect (le_dens_0, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_for_dens_0);
 
    QLabel* lbl_vbar = us_label( tr( "Gradient Mat. vbar (ml/g):" ), -1 );
    specs->addWidget( lbl_vbar, s_row, 0, 1, 2 );
    le_vbar = us_lineedit( QString::number( tmp_dpoint.gradientVbar ), -1,  true );
    specs->addWidget( le_vbar, s_row++, 2, 1, 2 );
-   connect (le_vbar, SIGNAL( editingFinished (void)), this,
-            SLOT (update_for_vbar(void)));
+   connect (le_vbar, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_for_vbar);
 
    QLabel* lbl_MW = us_label( tr( "Gradient Mat. MW (g/mol):" ), -1 );
    specs->addWidget( lbl_MW, s_row, 0, 1, 2 );
    le_MW = us_lineedit( QString::number( tmp_dpoint.gradientMW ), -1,  true );
    specs->addWidget( le_MW, s_row++, 2, 1, 2 );
-   connect (le_MW, SIGNAL( editingFinished (void)), this,
-            SLOT (update_for_MW(void)));
+   connect (le_MW, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_for_MW);
 
 
    QLabel* lbl_sigma = us_label( tr( "Peak Sigma Value (cm):" ), -1 );
    specs->addWidget( lbl_sigma, s_row, 0, 1, 2 );
    le_sigma = us_lineedit( QString::number( tmp_dpoint.sigma ), -1,  true );
    specs->addWidget( le_sigma, s_row++, 2, 1, 2 );
-   connect (le_sigma, SIGNAL( editingFinished (void)), this,
-            SLOT (update_for_sigma(void)));
+   connect (le_sigma, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_for_sigma);
 
 
    //Peak. Params banner
@@ -248,8 +248,8 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
 
    le_peakName = us_lineedit( tmp_dpoint.name );
    specs->addWidget( le_peakName, s_row++, 2, 1, 2 );
-   connect (le_peakName, SIGNAL( editingFinished (void)), this,
-            SLOT (update_peakName(void)));
+   connect (le_peakName, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_peakName);
    
 
    QLabel* lbl_peakPosition = us_label( tr( "Peak Position (cm):" ), -1 );
@@ -277,22 +277,22 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lb_peak_editor_bn,  s_row++, 0, 1, 4 );
 
    pb_delete_peak = us_pushbutton( tr( "Delete Current Peak" ), false );
-   connect( pb_delete_peak, SIGNAL( clicked() ), SLOT( delete_peak() ) );
+   connect( pb_delete_peak, &QAbstractButton::clicked, this, &US_Buoyancy::delete_peak );
    specs->addWidget( pb_delete_peak, s_row, 0, 1, 2 );
 
    pb_add_peak = us_pushbutton( tr( "Add Peak Manually" ), false );
-   connect( pb_add_peak, SIGNAL( clicked() ), SLOT( add_peak() ) );
+   connect( pb_add_peak, &QAbstractButton::clicked, this, &US_Buoyancy::add_peak );
    specs->addWidget( pb_add_peak, s_row++, 2, 1, 2 );
    
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
 
    pb_save = us_pushbutton( tr( "Save Datapoint" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_Buoyancy::save );
    //specs->addWidget( pb_save, s_row, 0, 1, 2 );
 
    pb_write = us_pushbutton( tr( "Write Report" ), false );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   connect( pb_write, &QAbstractButton::clicked, this, &US_Buoyancy::write );
    //specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
    
@@ -301,11 +301,11 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
    specs->addWidget( lb_fit_progress_bn,  s_row++, 0, 1, 4 );
 
    us_checkbox( tr( "[AUTO] Fit All Triples" ), ck_auto_fit, false );
-   connect( ck_auto_fit, SIGNAL( toggled     ( bool ) ),
-	    this,        SLOT  ( enblFitBtn  ( bool ) ) );
+   connect( ck_auto_fit, &QAbstractButton::toggled,
+	    this,        &US_Buoyancy::enblFitBtn );
    specs->addWidget( ck_auto_fit,  s_row, 0, 1, 2 );
    pb_fit_current_triple = us_pushbutton( tr( "Fit Current Triple" ), false );
-   connect( pb_fit_current_triple, SIGNAL( clicked() ), SLOT( fit_current_triple() ) );
+   connect( pb_fit_current_triple, &QAbstractButton::clicked, this, &US_Buoyancy::fit_current_triple );
    specs->addWidget( pb_fit_current_triple, s_row++, 2, 1, 2 );
    
    QLabel* lbl_pgb_progress = us_label( tr( "Fitting Progress:" ), -1 );
@@ -317,19 +317,19 @@ US_Buoyancy::US_Buoyancy( QString auto_mode ) : US_Widgets()
       
    //view all auto-generated peak reports
    pb_view_reports = us_pushbutton( tr( "View Reports" ), false );
-   connect( pb_view_reports, SIGNAL( clicked() ), SLOT( write_auto() ) );
+   connect( pb_view_reports, &QAbstractButton::clicked, this, &US_Buoyancy::write_auto );
    specs->addWidget( pb_view_reports, s_row++, 0, 1, 4 );
    
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_Buoyancy::reset );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_Buoyancy::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_accept );
 
 
@@ -438,7 +438,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    // Investigator
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_investigator, &QAbstractButton::clicked, this, &US_Buoyancy::sel_investigator );
    specs->addWidget( pb_investigator, s_row, 0 );
 
    if ( US_Settings::us_inv_level() < 1 )
@@ -457,11 +457,11 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
 
    // Row 2
    pb_load = us_pushbutton( tr( "Load Data" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   connect( pb_load, &QAbstractButton::clicked, this, &US_Buoyancy::load );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
    pb_details = us_pushbutton( tr( "Run Details" ), false );
-   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+   connect( pb_details, &QAbstractButton::clicked, this, &US_Buoyancy::details );
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
    // Row 3
@@ -469,8 +469,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Buoyancy::new_triple );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
    lbl_rpms   = us_label( tr( "Speed Step (RPM) of triple:" ), -1 );
@@ -487,8 +487,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    ct_selectScan->setSingleStep( 1 );
    ct_selectScan->setValue   ( current_scan );
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
-   connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
-            SLOT  ( plot_scan( double ) ) );
+   connect( ct_selectScan, &QwtCounter::valueChanged,
+            this, &US_Buoyancy::plot_scan );
 
    QButtonGroup* bg_points = new QButtonGroup( this );
 
@@ -508,8 +508,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lbl_meniscus, s_row, 0, 1, 2 );
    le_meniscus = us_lineedit(  "0.0"  );
    specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
-   connect (le_meniscus, SIGNAL( editingFinished (void)), this,
-            SLOT (update_meniscus(void)));
+   connect (le_meniscus, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_meniscus);
 
    QLabel* lbl_stretch = us_label( tr( "Rotor Stretch (cm):" ), -1 );
    specs->addWidget( lbl_stretch, s_row, 0, 1, 2 );
@@ -520,44 +520,44 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lbl_bottom, s_row, 0, 1, 2 );
    le_bottom = us_lineedit( QString::number(bottom) );
    specs->addWidget( le_bottom, s_row++, 2, 1, 2 );
-   connect (le_bottom, SIGNAL( editingFinished (void)), this,
-            SLOT (update_bottom(void)));
+   connect (le_bottom, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_bottom);
 
    QLabel* lbl_bottom_calc = us_label( tr( "Speed-corrected Bottom (cm):" ), -1 );
    specs->addWidget( lbl_bottom_calc, s_row, 0, 1, 2 );
    le_bottom_calc = us_lineedit( QString::number( bottom_calc ) );
    specs->addWidget( le_bottom_calc, s_row++, 2, 1, 2 );
-   connect (le_bottom_calc, SIGNAL( editingFinished (void)), this,
-            SLOT (update_bottom_calc(void)));
+   connect (le_bottom_calc, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_bottom_calc);
 
     // Solution info:
    QLabel* lbl_dens_0 = us_label( tr( "Loading Density (g/ml):" ), -1 );
    specs->addWidget( lbl_dens_0, s_row, 0, 1, 2 );
    le_dens_0 = us_lineedit( QString::number(tmp_dpoint.gradientC0) );
    specs->addWidget( le_dens_0, s_row++, 2, 1, 2 );
-   connect (le_dens_0, SIGNAL( editingFinished (void)), this,
-            SLOT (update_dens_0(void)));
+   connect (le_dens_0, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_dens_0);
 
    QLabel* lbl_buffer_density = us_label( tr( "Buffer Density (g/ml):" ), -1 );
    specs->addWidget( lbl_buffer_density, s_row, 0, 1, 2 );
    le_buffer_density = us_lineedit( QString::number(tmp_dpoint.bufferDensity) );
    specs->addWidget( le_buffer_density, s_row++, 2, 1, 2 );
-   connect (le_buffer_density, SIGNAL( editingFinished (void)), this,
-            SLOT ( update_bufferDensity( void ) ));
+   connect (le_buffer_density, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_bufferDensity);
 
    QLabel* lbl_vbar = us_label( tr( "Gradient Mat. vbar (ml/g):" ), -1 );
    specs->addWidget( lbl_vbar, s_row, 0, 1, 2 );
    le_vbar = us_lineedit( QString::number( tmp_dpoint.gradientVbar ) );
    specs->addWidget( le_vbar, s_row++, 2, 1, 2 );
-   connect (le_vbar, SIGNAL( editingFinished (void)), this,
-            SLOT (update_vbar(void)));
+   connect (le_vbar, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_vbar);
 
    QLabel* lbl_MW = us_label( tr( "Gradient Mat. MW (g/mol):" ), -1 );
    specs->addWidget( lbl_MW, s_row, 0, 1, 2 );
    le_MW = us_lineedit( QString::number( tmp_dpoint.gradientMW ) );
    specs->addWidget( le_MW, s_row++, 2, 1, 2 );
-   connect (le_MW, SIGNAL( editingFinished (void)), this,
-            SLOT (update_MW(void)));
+   connect (le_MW, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_MW);
 
    //QString DEGC   = QString( QChar( 176 ) ) + "C"; //!< Degree-symbol + "C"
    QLabel* lbl_temperature = us_label( tr( "Temperature " ) + DEGC +  ":", -1 );
@@ -569,8 +569,8 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lbl_peakName, s_row, 0, 1, 2 );
    le_peakName = us_lineedit( tmp_dpoint.name );
    specs->addWidget( le_peakName, s_row++, 2, 1, 2 );
-   connect (le_peakName, SIGNAL( editingFinished (void)), this,
-            SLOT (update_peakName(void)));
+   connect (le_peakName, &QLineEdit::editingFinished, this,
+            &US_Buoyancy::update_peakName);
 
    QLabel* lbl_peakPosition = us_label( tr( "Peak Position (cm):" ), -1 );
    specs->addWidget( lbl_peakPosition, s_row, 0, 1, 2 );
@@ -591,23 +591,23 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    QBoxLayout* buttons = new QHBoxLayout;
 
    pb_save = us_pushbutton( tr( "Save Datapoint" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_Buoyancy::save );
    specs->addWidget( pb_save, s_row, 0, 1, 2 );
 
    pb_write = us_pushbutton( tr( "Write Report" ), false );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   connect( pb_write, &QAbstractButton::clicked, this, &US_Buoyancy::write );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_Buoyancy::reset );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_Buoyancy::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_accept );
 
    // Plot layout on right side of window
@@ -1080,8 +1080,8 @@ void US_Buoyancy::calc_points_auto( QString triple_n )
       cb_peaks->clear();
       
       cb_peaks->addItems( peak_names );
-      connect( cb_peaks, SIGNAL( currentIndexChanged( int ) ),
-	       SLOT  ( new_peak           ( int ) ) );
+      connect( cb_peaks, qOverload< int >( &QComboBox::currentIndexChanged ),
+	       this, &US_Buoyancy::new_peak );
       
       //cb_peaks->setCurrentIndex(0);
       new_peak( 0 );
@@ -1209,8 +1209,8 @@ void US_Buoyancy::load( void )
    else
      dialog = new US_LoadAUC( isLocal, allData, triples, workingDir );
 
-   connect( dialog, SIGNAL( changed       ( bool ) ),
-            this,     SLOT( update_disk_db( bool ) ) );
+   connect( dialog, &US_LoadAUC::changed,
+            this,     &US_Buoyancy::update_disk_db );
 
    if ( dialog->exec() == QDialog::Rejected )  return;
 
@@ -1254,8 +1254,8 @@ void US_Buoyancy::load( void )
    
    
    cb_triple->addItems( triples );
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Buoyancy::new_triple );
    current_triple = 0;
 
    le_info->setText( runID + ": " + allData[0].description );
@@ -1411,13 +1411,13 @@ void US_Buoyancy::load( void )
       pick     ->disconnect();
 
       if ( !us_buoyancy_auto_mode ) 
-	connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-		 SLOT  ( mouse   ( const QPointF& ) ) );
+	connect( pick, &US_PlotPicker::cMouseUp,
+		 this, &US_Buoyancy::mouse );
 
       plot_scan( current_scan );
             
-      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
-              SLOT  ( new_rpmval         ( int ) ) );
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
+              this, &US_Buoyancy::new_rpmval );
    }
    else
    {  // non-Equilibrium
@@ -1846,8 +1846,8 @@ void US_Buoyancy::reset( void )
    ct_selectScan->setMinimum( 0 );
    ct_selectScan->setMaximum( 0 );
    ct_selectScan->setValue   ( 0 );
-   connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
-            SLOT  ( plot_scan( double ) ) );
+   connect( ct_selectScan, &QwtCounter::valueChanged,
+            this, &US_Buoyancy::plot_scan );
 
    cb_triple->disconnect();
 
@@ -2269,8 +2269,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 	       fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
 					     projectName, &fitting_widget, true );
 	       
-	       connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
-	       connect( fitter, SIGNAL( get_variance( double )), this, SLOT( process_variance( double ) ) );
+	       connect( fitter, &US_ExtinctFitter::get_yfit, this, &US_Buoyancy::process_yfit );
+	       connect( fitter, &US_ExtinctFitter::get_variance, this, &US_Buoyancy::process_variance );
 	       
 	       fitter->Fit();
 	     }
@@ -2551,8 +2551,8 @@ void US_Buoyancy::add_peak( void )
 				"please use CNTR+mouse to mark peak position." ) );
 
   pick -> setEnabled( true ); 
-  connect( pick, SIGNAL( cMouseUp     ( const QPointF& ) ),
-		 SLOT  ( mouse_peak   ( const QPointF& ) ) );
+  connect( pick, &US_PlotPicker::cMouseUp,
+		 this, &US_Buoyancy::mouse_peak );
 
 }
 

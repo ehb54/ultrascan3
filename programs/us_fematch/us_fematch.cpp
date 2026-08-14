@@ -81,22 +81,22 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    pb_save      = us_pushbutton( tr( "Save Data" ) );
    //ck_edit     ->setChecked( true );
 
-   connect( dkdb_cntrls,  SIGNAL( changed(      bool ) ),
-            this,         SLOT( update_disk_db( bool ) ) );
-   connect( pb_load,      SIGNAL( clicked() ),
-            this,         SLOT(   load() ) );
-   connect( pb_details,   SIGNAL( clicked() ),
-            this,         SLOT(   details() ) );
-   connect( pb_distrib,   SIGNAL( clicked() ),
-            this,         SLOT(   distrib_type() ) );
-   connect( pb_loadmodel, SIGNAL( clicked() ),
-            this,         SLOT(   load_model()  ) );
-   connect( pb_simumodel, SIGNAL( clicked() ),
-            this,         SLOT(   simulate_model()  ) );
-   connect( pb_view,      SIGNAL( clicked() ),
-            this,         SLOT(   view_report() ) );
-   connect( pb_save,      SIGNAL( clicked() ),
-            this,         SLOT(   save_data() ) );
+   connect( dkdb_cntrls,  &US_Disk_DB_Controls::changed,
+            this,         &US_FeMatch::update_disk_db );
+   connect( pb_load,      &QAbstractButton::clicked,
+            this,         &US_FeMatch::load );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_FeMatch::details );
+   connect( pb_distrib,   &QAbstractButton::clicked,
+            this,         &US_FeMatch::distrib_type );
+   connect( pb_loadmodel, &QAbstractButton::clicked,
+            this,         &US_FeMatch::load_model );
+   connect( pb_simumodel, &QAbstractButton::clicked,
+            this,         &US_FeMatch::simulate_model );
+   connect( pb_view,      &QAbstractButton::clicked,
+            this,         &US_FeMatch::view_report );
+   connect( pb_save,      &QAbstractButton::clicked,
+            this,         &US_FeMatch::save_data );
 
    pb_load     ->setEnabled( true );
    pb_details  ->setEnabled( false );
@@ -182,8 +182,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
       + DEGC + "):" );
    QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
 
-   connect( pb_solution,  SIGNAL( clicked()      ),
-            this,         SLOT(   get_solution() ) );
+   connect( pb_solution,  &QAbstractButton::clicked,
+            this,         &US_FeMatch::get_solution );
 
    pb_advanced = us_pushbutton( tr( "Advanced Analysis Controls" ) );
    pb_adv_dmga = us_pushbutton( tr( "Advanced DMGA-MC Controls" ) );
@@ -192,14 +192,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    pb_advanced->setEnabled( false );
    pb_adv_dmga->setEnabled( false );
 
-   connect( pb_advanced, SIGNAL( clicked()  ),
-            this,        SLOT(   advanced() ) );
-   connect( pb_adv_dmga, SIGNAL( clicked()  ),
-            this,        SLOT(   adv_dmga() ) );
-   connect( pb_plot3d,   SIGNAL( clicked()  ),
-            this,        SLOT(   plot3d()   ) );
-   connect( pb_plotres,  SIGNAL( clicked()  ),
-            this,        SLOT(   plotres()  ) );
+   connect( pb_advanced, &QAbstractButton::clicked,
+            this,        &US_FeMatch::advanced );
+   connect( pb_adv_dmga, &QAbstractButton::clicked,
+            this,        &US_FeMatch::adv_dmga );
+   connect( pb_plot3d,   &QAbstractButton::clicked,
+            this,        &US_FeMatch::plot3d );
+   connect( pb_plotres,  &QAbstractButton::clicked,
+            this,        &US_FeMatch::plotres );
 
    pb_plot3d ->setEnabled( false );
    pb_plotres->setEnabled( false );
@@ -253,14 +253,14 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    pb_exclude      ->setEnabled( false );
    pb_reset_exclude->setEnabled( false );
 
-   connect( ct_from,    SIGNAL( valueChanged( double ) ),
-            this,       SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,      SIGNAL( valueChanged( double ) ),
-            this,       SLOT  ( exclude_to  ( double ) ) );
-   connect( pb_exclude,       SIGNAL( clicked()        ),
-            this,             SLOT  ( exclude()        ) );
-   connect( pb_reset_exclude, SIGNAL( clicked()        ),
-            this,             SLOT  ( reset_excludes() ) );
+   connect( ct_from,    &QwtCounter::valueChanged,
+            this,       &US_FeMatch::exclude_from );
+   connect( ct_to,      &QwtCounter::valueChanged,
+            this,       &US_FeMatch::exclude_to );
+   connect( pb_exclude,       &QAbstractButton::clicked,
+            this,             &US_FeMatch::exclude );
+   connect( pb_reset_exclude, &QAbstractButton::clicked,
+            this,             &US_FeMatch::reset_excludes );
 
    row      = 0;
    controlsLayout->addWidget( lb_scan           , row++, 0, 1, 4 );
@@ -296,12 +296,12 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    buttonLayout->addWidget( pb_help     );
    buttonLayout->addWidget( pb_close    );
 
-   connect( pb_reset,    SIGNAL( clicked() ),
-            this,        SLOT(   reset()     ) );
-   connect( pb_close,    SIGNAL( clicked() ),
-            this,        SLOT(   close_all() ) );
-   connect( pb_help,     SIGNAL( clicked() ),
-            this,        SLOT(   help()      ) );
+   connect( pb_reset,    &QAbstractButton::clicked,
+            this,        &US_FeMatch::reset );
+   connect( pb_close,    &QAbstractButton::clicked,
+            this,        &US_FeMatch::close_all );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_FeMatch::help );
 
    // Progress label and bar
    QLabel* lb_progress = us_label( tr( "% Complete:" ) );
@@ -348,18 +348,18 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    ct_model->setEnabled( false );
    gb_msim ->setVisible( false );
 
-   connect( rb_curmod,   SIGNAL( toggled        ( bool ) ),
-            this,        SLOT(   curmod_clicked ( bool ) ) );
-   connect( rb_mean,     SIGNAL( toggled        ( bool ) ),
-            this,        SLOT(   modbtn_clicked ( bool ) ) );
-   connect( rb_median,   SIGNAL( toggled        ( bool ) ),
-            this,        SLOT(   modbtn_clicked ( bool ) ) );
-   connect( rb_mode,     SIGNAL( toggled        ( bool ) ),
-            this,        SLOT(   modbtn_clicked ( bool ) ) );
-   connect( pb_nextm,    SIGNAL( clicked        ()       ),
-            this,        SLOT(   next_model     ()       ) );
-   connect( ct_model,    SIGNAL( valueChanged   ( double ) ),
-            this,        SLOT(   update_mc_model()       ) );
+   connect( rb_curmod,   &QAbstractButton::toggled,
+            this,        &US_FeMatch::curmod_clicked );
+   connect( rb_mean,     &QAbstractButton::toggled,
+            this,        &US_FeMatch::modbtn_clicked );
+   connect( rb_median,   &QAbstractButton::toggled,
+            this,        &US_FeMatch::modbtn_clicked );
+   connect( rb_mode,     &QAbstractButton::toggled,
+            this,        &US_FeMatch::modbtn_clicked );
+   connect( pb_nextm,    &QAbstractButton::clicked,
+            this,        &US_FeMatch::next_model );
+   connect( ct_model,    &QwtCounter::valueChanged,
+            this,        &US_FeMatch::update_mc_model );
 
    // Lay out the right side (plots and provisional MC controls
    rightLayout->addLayout( plotLayout1 );
@@ -453,10 +453,10 @@ void US_FeMatch::load( void )
      new US_DataLoader( dataLatest, local, rawList, dataList,
             triples, workingDir, QString( "none" ) );
 
-   connect( dialog, SIGNAL( changed(      bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
-   connect( dialog, SIGNAL( progress(     const QString ) ),
-            this,   SLOT( set_progress(   const QString ) ) );
+   connect( dialog, &US_DataLoader::changed,
+            this,   &US_FeMatch::update_disk_db );
+   connect( dialog, &US_DataLoader::progress,
+            this,   &US_FeMatch::set_progress );
 DbgLv(1) << "LD: exec dialog";
 
    if ( dialog->exec() != QDialog::Accepted )  return;
@@ -633,8 +633,8 @@ DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
    le_temp->setText( QString::number( avgTemp, 'f', 1 ) + " " + DEGC );
 
    lw_triples->setCurrentRow( 0 );
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-                        SLOT(   new_triple(        int ) ) );
+   connect( lw_triples, &QListWidget::currentRowChanged,
+                        this, &US_FeMatch::new_triple );
 
    dataLoaded = true;
    haveSim    = false;
@@ -650,8 +650,8 @@ DbgLv(1) << "LD: after if block, nssp=" << nssp << "   exp_steps" << exp_steps;
    ct_from->disconnect();
    ct_from->setValue( 0 );
 
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-            this,    SLOT(   exclude_from( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+            this,    &US_FeMatch::exclude_from );
 
    bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
@@ -1194,7 +1194,7 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
       resplotd = new US_ResidPlotFem( this );
       resplotd->move( rpd_pos );
       resplotd->show();
-      connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+      connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
    }
 
    write_plot( img14File, resplotd->rp_data_plot1() );
@@ -1275,8 +1275,8 @@ void US_FeMatch::exclude_from( double from )
       ct_to->disconnect();
       ct_to->setValue( from );
 
-      connect( ct_to,   SIGNAL( valueChanged( double ) ),
-               this,    SLOT  ( exclude_to  ( double ) ) );
+      connect( ct_to,   &QwtCounter::valueChanged,
+               this,    &US_FeMatch::exclude_to );
    }
 
    data_plot();
@@ -1292,8 +1292,8 @@ void US_FeMatch::exclude_to( double to )
       ct_from->disconnect();
       ct_from->setValue( to );
 
-      connect( ct_from, SIGNAL( valueChanged( double ) ),
-               this,    SLOT  ( exclude_from( double ) ) );
+      connect( ct_from, &QwtCounter::valueChanged,
+               this,    &US_FeMatch::exclude_from );
    }
 
    data_plot();
@@ -1761,7 +1761,7 @@ void US_FeMatch::plotres( )
    resplotd = new US_ResidPlotFem( this );
    resplotd->move( rpd_pos );
    resplotd->show();
-   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+   connect( resplotd, &QObject::destroyed, this, &US_FeMatch::resplot_done );
 }
 
 // Load the model data and detect if it is RA
@@ -1781,8 +1781,8 @@ DbgLv(1) << "pre-Load eGUID" << dataList[drow].editGUID << "drow" << drow;
    US_ModelLoader dialog( loadDB, mfilter, model,
       mdesc, dataList[ drow ].editGUID );
 
-   connect( &dialog, SIGNAL( changed(      bool ) ),
-            this,    SLOT( update_disk_db( bool ) ) );
+   connect( &dialog, &US_ModelLoader::changed,
+            this,    &US_FeMatch::update_disk_db );
 
    dialog.move( this->pos() + QPoint( 200, 200 ) );
    QApplication::restoreOverrideCursor();
@@ -2265,10 +2265,10 @@ simparams.debug();
 //*DEBUG*
          US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 
-         connect( astfem_rsa, SIGNAL( current_component( int ) ),
-                  this,       SLOT  ( update_progress  ( int ) ) );
-         connect( astfem_rsa, SIGNAL( current_component( int ) ),
-                  this,       SIGNAL( astfem_cmp       ( int ) ) );
+         connect( astfem_rsa, &US_Astfem_RSA::current_component,
+                  this,       &US_FeMatch::update_progress );
+         connect( astfem_rsa, &US_Astfem_RSA::current_component,
+                  this,       &US_FeMatch::astfem_cmp );
          astfem_rsa->set_debug_flag( dbg_level );
          solution_rec.buffer.compressibility = compress;
          solution_rec.buffer.manual          = manual;
@@ -2356,13 +2356,13 @@ DbgLv(1) << "SimMdl: (fematch:)Finite Volume Solver is called";
          tworkers << tworker;
          wthreads << wthread;
 
-         connect( wthread, SIGNAL( started()         ),
-                  tworker, SLOT  ( calc_simulation() ) );
+         connect( wthread, &QThread::started,
+                  tworker, &ThreadWorker::calc_simulation );
 
-         connect( tworker, SIGNAL( work_progress  ( int, int ) ),
-                  this,    SLOT(   thread_progress( int, int ) ) );
-         connect( tworker, SIGNAL( work_complete  ( int )      ),
-                  this,    SLOT(   thread_complete( int )      ) );
+         connect( tworker, &ThreadWorker::work_progress,
+                  this,    &US_FeMatch::thread_progress );
+         connect( tworker, &ThreadWorker::work_complete,
+                  this,    &US_FeMatch::thread_complete );
 
          wthread->start();
       }
@@ -3599,8 +3599,8 @@ void US_FeMatch::get_solution()
    US_SolutionGui* soluInfo = new US_SolutionGui( expID, 1, true, dbdisk,
                                                   solution_rec, false );
 
-   connect( soluInfo, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-            this,     SLOT(   updateSolution(             US_Solution ) ) );
+   connect( soluInfo, &US_SolutionGui::updateSolutionGuiSelection,
+            this,     &US_FeMatch::updateSolution );
 
    soluInfo->exec();
 }
@@ -3696,11 +3696,11 @@ void US_FeMatch::reset( void )
    ct_from     ->setValue( 0 );
    ct_to       ->setValue( 0 );
 
-   connect( ct_from,            SIGNAL( valueChanged( double ) ),
-                                SLOT  ( exclude_from( double ) ) );
+   connect( ct_from,            &QwtCounter::valueChanged,
+                                this, &US_FeMatch::exclude_from );
 
-   connect( ct_to,              SIGNAL( valueChanged( double ) ),
-                                SLOT  ( exclude_to  ( double ) ) );
+   connect( ct_to,              &QwtCounter::valueChanged,
+                                this, &US_FeMatch::exclude_to );
 
    lw_triples->  disconnect();
    lw_triples->  clear();
@@ -4168,8 +4168,8 @@ void US_FeMatch::auto_load_simulate( US_DataIO::RawData i_rdata,
    allExcls.fill( excludedScans, ntriples );
 
    lw_triples->setCurrentRow( 0 );
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-           SLOT(   new_triple(        int ) ) );
+   connect( lw_triples, &QListWidget::currentRowChanged,
+           this, &US_FeMatch::new_triple );
 
    dataLoaded = true;
    haveSim    = false;

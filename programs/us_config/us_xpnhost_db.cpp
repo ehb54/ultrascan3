@@ -170,25 +170,25 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
 
    pb_add = us_pushbutton( tr( "Add New Entry" ) );
    pb_add->setEnabled( true );
-   connect( pb_add, SIGNAL( clicked() ), this, SLOT( add_new() ) );
+   connect( pb_add, &QAbstractButton::clicked, this, &US_XpnHostDB::add_new );
    buttons->addWidget( pb_add, row, 0 );
 
    pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
    pb_delete->setEnabled( false );
-   connect( pb_delete,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( deleteDB() ) );
+   connect( pb_delete,      &QAbstractButton::clicked,
+	    this,           &US_XpnHostDB::deleteDB );
    buttons->addWidget( pb_delete, row++, 1 );
 
    pb_edit = us_pushbutton( tr( "Edit Current Entry" ) );
    pb_edit->setEnabled( false );
-   connect( pb_edit,        SIGNAL( clicked()  ),
-	    this,           SLOT  ( editDB() ) );
+   connect( pb_edit,        &QAbstractButton::clicked,
+	    this,           &US_XpnHostDB::editDB );
    buttons->addWidget( pb_edit, row, 0 );
 
    pb_testConnect = us_pushbutton( tr( "Test Connectivity" ) );
    pb_testConnect->setEnabled( false );
-   connect( pb_testConnect, SIGNAL( clicked()      ),
-            this,           SLOT  ( test_connect() ) );
+   connect( pb_testConnect, &QAbstractButton::clicked,
+            this,           &US_XpnHostDB::test_connect );
    buttons->addWidget( pb_testConnect, row++, 1 );
 
    QHBoxLayout* std_buttons = new QHBoxLayout;
@@ -198,13 +198,13 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    std_buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,        SIGNAL( clicked() ),
-	    this,           SLOT  ( help()    ) );
+   connect( pb_help,        &QAbstractButton::clicked,
+	    this,           &US_XpnHostDB::help );
    std_buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Close" ) );
-   connect( pb_cancel,      SIGNAL( clicked() ),
-	    this,           SLOT  ( close_program()   ) );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+	    this,           &US_XpnHostDB::close_program );
    std_buttons->addWidget( pb_cancel );
 
    topbox->addLayout( buttons );
@@ -233,8 +233,8 @@ US_XpnHostDB::US_XpnHostDB( QWidget* w, Qt::WindowFlags flags )
    // connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
    // 	                SLOT  ( select_db        ( QListWidgetItem* ) ) );
 
-   connect( lw_entries, SIGNAL( itemSelectionChanged() ),
-                        SLOT  ( optima_selected() ) );
+   connect( lw_entries, &QListWidget::itemSelectionChanged,
+                        this, qOverload<>( &US_XpnHostDB::optima_selected ) );
 
 //    // Start out with default entry shown
 // qDebug() << "xpnH:Main: call xpn_db_hosts";
@@ -759,8 +759,8 @@ void US_XpnHostDB::add_new( void )
    new_xpnhost_db->setWindowModality(Qt::WindowModal);
    new_xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
    
-   connect( new_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( newHost( QMap <QString, QString> &) ) );
-   connect( new_xpnhost_db, SIGNAL ( editnew_cancelled( ) ), this, SLOT ( editnew_cancelled() ) ); 
+   connect( new_xpnhost_db, &US_NewXpnHostDB::accepted, this, &US_XpnHostDB::newHost );
+   connect( new_xpnhost_db, &US_NewXpnHostDB::editnew_cancelled, this, &US_XpnHostDB::editnew_cancelled );
    new_xpnhost_db -> show();
 }
 
@@ -827,8 +827,8 @@ void US_XpnHostDB::editDB( void )
    edit_xpnhost_db->setWindowModality(Qt::WindowModal);
    edit_xpnhost_db->setAttribute(Qt::WA_DeleteOnClose);
    
-   connect( edit_xpnhost_db, SIGNAL ( accepted( QMap <QString, QString> &) ), this, SLOT ( editHost( QMap <QString, QString> &) ) );
-   connect( edit_xpnhost_db, SIGNAL ( editnew_cancelled( ) ), this, SLOT ( editnew_cancelled() ) ); 
+   connect( edit_xpnhost_db, &US_NewXpnHostDB::accepted, this, &US_XpnHostDB::editHost );
+   connect( edit_xpnhost_db, &US_NewXpnHostDB::editnew_cancelled, this, &US_XpnHostDB::editnew_cancelled );
    edit_xpnhost_db -> show();
 }
 

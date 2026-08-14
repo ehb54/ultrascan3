@@ -231,8 +231,8 @@ DbgLv(1) << "AA: nmrecs" << nmrecs << "ncsols" << ncsols;
 
    // Define connections
 DbgLv(1) << "AA: connect buttons";
-   connect( cb_curvtype, SIGNAL( currentIndexChanged( int ) ),
-            this,        SLOT(   curvtypeChanged    ( int ) ) );
+   connect( cb_curvtype, qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,        &US_AdvAnalysisPc::curvtypeChanged );
 
 #if 0
    connect( le_x_lower,  SIGNAL( textChanged( const QString& ) ),
@@ -250,32 +250,32 @@ DbgLv(1) << "AA: connect buttons";
    connect( le_crpoints, SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   pointsChanged( double ) ) );
 #endif
-   connect( le_mciters,  SIGNAL( textChanged( const QString& ) ),
-            this,        SLOT(   mciterChanged( double ) ) );
+   connect( le_mciters, &QLineEdit::textChanged,
+         this, [this]( const QString& s ) { mciterChanged( s.toInt() ); } );
 
-   connect( pb_loadmrs,  SIGNAL( clicked()          ),
-            this,        SLOT(   load_mrecs()       ) );
-   connect( pb_storemrs, SIGNAL( clicked()          ),
-            this,        SLOT(   store_mrecs()      ) );
-   connect( pb_loadbfm,  SIGNAL( clicked()          ),
-            this,        SLOT(   load_bfm()         ) );
-   connect( pb_storebfm, SIGNAL( clicked()          ),
-            this,        SLOT(   store_bfm()        ) );
-   connect( pb_resetbfm, SIGNAL( clicked()          ),
-            this,        SLOT(   reset_bfm()        ) );
-   connect( pb_resetmrs, SIGNAL( clicked()          ),
-            this,        SLOT(   reset_mrecs()      ) );
-   connect( pb_buildbfm, SIGNAL( clicked()          ),
-            this,        SLOT(   build_bfm()        ) );
-   connect( pb_mciters,  SIGNAL( clicked()          ),
-            this,        SLOT(   start_montecarlo() ) );
+   connect( pb_loadmrs,  &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::load_mrecs );
+   connect( pb_storemrs, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::store_mrecs );
+   connect( pb_loadbfm,  &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::load_bfm );
+   connect( pb_storebfm, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::store_bfm );
+   connect( pb_resetbfm, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::reset_bfm );
+   connect( pb_resetmrs, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::reset_mrecs );
+   connect( pb_buildbfm, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::build_bfm );
+   connect( pb_mciters,  &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::start_montecarlo );
 
-   connect( pb_help,     SIGNAL( clicked() ),
-            this,        SLOT(   help()    ) );
-   connect( pb_cancel,   SIGNAL( clicked() ),
-            this,        SLOT(   cancel()  ) );
-   connect( pb_accept,   SIGNAL( clicked() ),
-            this,        SLOT(   select()  ) );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::help );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::cancel );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::select );
 
    curvtypeChanged( 1 );
    resize( 780, 400 );
@@ -411,7 +411,7 @@ DbgLv(1) << "pointsChanged" << value;
 #endif
 
 // Slot to handle a change in monte carlo iterations
-void US_AdvAnalysisPc::mciterChanged( double value )
+void US_AdvAnalysisPc::mciterChanged( int value )
 {
 DbgLv(1) << "mciterChanged" << value;
    mciters           = (int)value;
@@ -1169,8 +1169,8 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
          wtask.dsets[ 0 ]->run_data = wdata;
 
          WorkerThreadPc* wthrd  = new WorkerThreadPc( this );
-         connect( wthrd, SIGNAL( work_complete( WorkerThreadPc* ) ),
-                  this,  SLOT  ( process_job  ( WorkerThreadPc* ) ) );
+         connect( wthrd, &WorkerThreadPc::work_complete,
+                  this,  &US_AdvAnalysisPc::process_job );
 
          wthrd->define_work( wtask );
 
@@ -1303,8 +1303,8 @@ DbgLv(1) << "    ksiters" << ksiters << "     wt tskx,thrn"
       delete wthr;
 
       WorkerThreadPc* wthrd  = new WorkerThreadPc( this );
-      connect( wthrd, SIGNAL( work_complete( WorkerThreadPc* ) ),
-               this,  SLOT  ( process_job  ( WorkerThreadPc* ) ) );
+      connect( wthrd, &WorkerThreadPc::work_complete,
+               this,  &US_AdvAnalysisPc::process_job );
 
       wthrd->define_work( wtask );
       wthrd->start();

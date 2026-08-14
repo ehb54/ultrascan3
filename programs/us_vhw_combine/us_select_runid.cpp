@@ -48,12 +48,12 @@ DbgLv(1) << "SE:sel_db" << sel_db;
 
    le_dfilter      = us_lineedit();
 
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
-   connect( pb_invest,   SIGNAL( clicked()    ),
-                         SLOT  ( get_person() ) );
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,   &US_SelectRunid::update_disk_db );
+   connect( pb_invest,   &QAbstractButton::clicked,
+                         this, &US_SelectRunid::get_person );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_SelectRunid::search );
 
    int row           = 0;
    top->addLayout( dkdb_cntrls, row++, 0, 1, 3 );
@@ -73,8 +73,8 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    lw_data->setFont         ( font );
    lw_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
    //lw_data->setSelectionMode( QAbstractItemView::SingleSelection );
-   connect( lw_data,  SIGNAL( itemSelectionChanged() ),
-            this,     SLOT  ( selectionChanged()     ) );
+   connect( lw_data,  &QListWidget::itemSelectionChanged,
+            this,     &US_SelectRunid::selectionChanged );
 
    main->addWidget( lw_data );
 
@@ -84,8 +84,8 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
 
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectRunid::cancelled );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectRunid::accepted );
 
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_accept );
@@ -356,8 +356,8 @@ void US_SelectRunid::get_person()
    int invID     = US_Settings::us_inv_ID();
    US_Investigator* dialog = new US_Investigator( true, invID );
 
-   connect( dialog, SIGNAL( investigator_accepted( int ) ),
-                    SLOT(   update_person(         int ) ) );
+   connect( dialog, &US_Investigator::investigator_accepted,
+                    this, &US_SelectRunid::update_person );
 
    dialog->exec();
 }

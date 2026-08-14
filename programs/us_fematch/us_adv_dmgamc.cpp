@@ -126,31 +126,31 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    pb_nextmodel->setEnabled( false );
    ct_modelnbr ->setEnabled( false );
 
-   connect( pb_nextmodel, SIGNAL( clicked       ()         ),
-            this,         SLOT  ( next_model    ()         ) );
-   connect( ct_modelnbr,  SIGNAL( valueChanged  ( double ) ),
-            this,         SLOT  ( change_model  ( double ) ) );
-   connect( rb_mean,      SIGNAL( toggled       ( bool   ) ),
-            this,         SLOT  ( set_model_type( bool   ) ) );
-   connect( rb_median,    SIGNAL( toggled       ( bool   ) ),
-            this,         SLOT  ( set_model_type( bool   ) ) );
-   connect( rb_mode,      SIGNAL( toggled       ( bool   ) ),
-            this,         SLOT  ( set_model_type( bool   ) ) );
-   connect( rb_curmod,    SIGNAL( toggled       ( bool   ) ),
-            this,         SLOT  ( set_model_type( bool   ) ) );
-   connect( pb_prevparm,  SIGNAL( clicked       ()         ),
-            this,         SLOT  ( prev_param    ()         ) );
-   connect( pb_nextparm,  SIGNAL( clicked       ()         ),
-            this,         SLOT  ( next_param    ()         ) );
-   connect( cb_params,    SIGNAL( activated     ( int )    ),
-            this,         SLOT  ( plot_distrib  ()         ) );
+   connect( pb_nextmodel, &QAbstractButton::clicked,
+            this,         &US_AdvDmgaMc::next_model );
+   connect( ct_modelnbr,  &QwtCounter::valueChanged,
+            this,         &US_AdvDmgaMc::change_model );
+   connect( rb_mean,      &QAbstractButton::toggled,
+            this,         &US_AdvDmgaMc::set_model_type );
+   connect( rb_median,    &QAbstractButton::toggled,
+            this,         &US_AdvDmgaMc::set_model_type );
+   connect( rb_mode,      &QAbstractButton::toggled,
+            this,         &US_AdvDmgaMc::set_model_type );
+   connect( rb_curmod,    &QAbstractButton::toggled,
+            this,         &US_AdvDmgaMc::set_model_type );
+   connect( pb_prevparm,  &QAbstractButton::clicked,
+            this,         &US_AdvDmgaMc::prev_param );
+   connect( pb_nextparm,  &QAbstractButton::clicked,
+            this,         &US_AdvDmgaMc::next_param );
+   connect( cb_params,    qOverload< int >( &QComboBox::activated ),
+            this,         &US_AdvDmgaMc::plot_distrib );
 
-   connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT  ( help()     ) );
-   connect( pb_simulate,  SIGNAL( clicked()  ),
-            this,         SLOT  ( simulate() ) );
-   connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT  ( done()     ) );
+   connect( pb_help,      &QAbstractButton::clicked,
+            this,         &US_AdvDmgaMc::help );
+   connect( pb_simulate,  &QAbstractButton::clicked,
+            this,         &US_AdvDmgaMc::simulate );
+   connect( pb_close,     &QAbstractButton::clicked,
+            this,         &US_AdvDmgaMc::done );
 
    adjustSize();
    QFontMetrics fmet( QFont( US_GuiSettings::fontFamily(),

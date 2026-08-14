@@ -79,12 +79,12 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    ct_rxscale  ->setSingleStep( 0.01 );
    ct_ryscale  ->setSingleStep( 0.01 );
 
-   connect( pb_plot3d, SIGNAL( clicked()   ),
-            this,      SLOT  ( plot3_btn() ) );
-   connect( pb_help,   SIGNAL( clicked()   ),
-            this,      SLOT  ( help()      ) );
-   connect( pb_close,  SIGNAL( clicked()   ),
-            this,      SLOT  ( close_all() ) );
+   connect( pb_plot3d, &QAbstractButton::clicked,
+            this,      &US_MwlPlotControl::plot3_btn );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_MwlPlotControl::help );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &US_MwlPlotControl::close_all );
 
    plot3d_w = 0;
 

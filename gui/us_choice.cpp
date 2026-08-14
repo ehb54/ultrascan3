@@ -46,7 +46,7 @@ US_Choice::US_Choice( const US_Solution& solution )
    }
 
    QPushButton* pb_ok = us_pushbutton( tr( "OK" ) );
-   connect( pb_ok, SIGNAL( clicked() ), SLOT( done() ) );
+   connect( pb_ok, &QPushButton::clicked, this, &US_Choice::done );
    main->addWidget( pb_ok, row, 0, 1, 3 );
 }
 

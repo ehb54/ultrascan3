@@ -32,8 +32,8 @@ US_LongMessageBox::US_LongMessageBox( const QString& title,
    // Create a button box with single OK button
    QDialogButtonBox* btnbox = new QDialogButtonBox( QDialogButtonBox::Ok );
    btnbox->setCenterButtons( true );
-   connect( btnbox, SIGNAL( accepted() ),
-            this,   SLOT(   close_diag() ) );
+   connect( btnbox, &QDialogButtonBox::accepted,
+            this,   &US_LongMessageBox::close_diag );
 
    main->addWidget( textbox );
    main->addWidget( btnbox  );
