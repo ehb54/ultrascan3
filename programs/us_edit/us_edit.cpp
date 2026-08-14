@@ -3009,7 +3009,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto, autoflow_expType : "
 	   << autoflowID_passed << dataSource << ProtocolName_auto << autoflow_expType;
 
-  
+  auto_flag_          = details_at_editing[ "auto_flag_edit" ];
+    
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
   runType_combined_IP_RI = false;
@@ -3044,9 +3045,11 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 
     }
 
-  if ( autoflow_expType == "VELOCITY-MWL" )
+  if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_EDIT_SIM_ANALYSIS" )
     {
-      qDebug() << "[US_Edit: VEL-MWL:GMP], filename : " << filename_runID_passed;
+      qDebug() << "[US_Edit: VEL-MWL:GMP], auto_flag_, filename : "
+	       << auto_flag_
+	       << filename_runID_passed;
       qDebug() << "[US_Edit: VEL-MWL:GMP], "
 	       << details_at_editing["meniscus"]
 	       << details_at_editing["data_left"] 
@@ -3714,7 +3717,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
 
    /******* FOR VEL-MWL ext *********************************************/
-   if ( autoflow_expType == "VELOCITY-MWL" )
+   if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_EDIT_SIM_ANALYSIS" )
      {
        /** DEBUG **********************************************/
        iwavl_edit_ref        .resize( cb_triple->count() );
@@ -3774,7 +3777,11 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        new_triple_auto( 0 ); 
        //new_triple(0);
        /** DEBUG *********************************************/
-       
+
+       //and save edit profiles
+       for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	 write_mwl_auto( trx );
+	        
        return;
      }
    
@@ -13416,14 +13423,21 @@ void US_Edit::write_mwl_auto( int trx )
      }
 
    //old way: just read form centerpiece
-   double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_EDIT_SIM_ANALYSIS" )
+     {
+       bottom = details_at_editing_local[ "bottom" ].toDouble();
+     }
+   else
+     {
+       double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+       US_SimulationParameters simparams;
+       simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+       bottom         = simparams.bottom;
+       qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- "
+		<< bottom_cent << ", " << bottom; 
+     }
+    
    
-   US_SimulationParameters simparams;
-   simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
-   bottom         = simparams.bottom;
-
-   qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- "
-	    << bottom_cent << ", " << bottom; 
    // End of base parameters
 
    //Is this needed ?

@@ -360,6 +360,7 @@ class US_Edit : public US_Widgets
       QString expType_manual;
       QString dataSource;
       bool    simulated_data;
+      QString auto_flag_;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
