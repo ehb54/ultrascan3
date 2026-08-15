@@ -326,4 +326,71 @@ bool US_AbstractCenterpiece::read_centerpieces(
    return read_centerpieces( NULL, centerpieces );
 }
 
+bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
+                                            QString& error )
+{
+   const QString letters = "ABCDEFGH";
+   const QString trimmed = value.trimmed();
 
+   if ( trimmed.isEmpty() )
+   {
+      error = "centerpiece-channel is empty";
+      return false;
+   }
+
+   if ( trimmed.length() == 1 )
+   {
+      int letter_index = letters.indexOf( trimmed.toUpper() );
+      if ( letter_index >= 0 )
+      {  // A channel and its reference share a position, so A/B are 0
+         channel = letter_index / 2;
+         return true;
+      }
+   }
+
+   bool numeric = false;
+   int  parsed  = trimmed.toInt( &numeric );
+   if ( ! numeric )
+   {
+      error = QString( "centerpiece-channel \"%1\" is neither a channel letter "
+                       "(A-H) nor a channel index" ).arg( value );
+      return false;
+   }
+
+   channel = parsed;
+   return true;
+}
+
+bool US_AbstractCenterpiece::parse_index( const QString& value, int& index,
+                                     QString& error )
+{
+   bool numeric = false;
+   int  parsed  = value.trimmed().toInt( &numeric );
+   if ( ! numeric )
+   {
+      error = QString( "centerpiece \"%1\" is not a numeric index" ).arg( value );
+      return false;
+   }
+
+   index = parsed;
+   return true;
+}
+
+QString US_AbstractCenterpiece::validate( int centerpiece, int channel )
+{
+   QList< US_AbstractCenterpiece > cp_list;
+   if ( ! US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
+      return "no centerpiece definitions could be loaded";
+
+   if ( centerpiece < 0 || centerpiece >= cp_list.size() )
+      return QString( "centerpiece index %1 is out of range (0-%2)" )
+         .arg( centerpiece ).arg( cp_list.size() - 1 );
+
+   int channel_count = cp_list[ centerpiece ].channels;
+   if ( channel < 0 || channel >= channel_count )
+      return QString( "centerpiece-channel index %1 is out of range for "
+         "centerpiece %2 (0-%3)" )
+         .arg( channel ).arg( centerpiece ).arg( channel_count - 1 );
+
+   return QString();
+}

@@ -9,24 +9,122 @@
 #include <QDir>
 
 #include "us_sim_inputs.h"
+#include "us_hardware.h"
 #include "us_util.h"
 #include "us_defines.h"
 
-// Build a single-component model from explicit physical parameters. Both
-// --emit-model and per-wavelength MWL mode use this helper. Starting with
-// US_SimInputs::model() keeps the model-construction logic in one place.
-static US_Model model_from_params( double mw, double vbar20, double f_f0,
-                                    const QString& description )
+// Derive option help from the same coefficient table used for validation.
+static QString coefficient_help( const US_SimSpecies::Coefficient& coeff )
 {
-   US_Model model_out = US_SimInputs::model();
-   model_out.description             = description;
-   model_out.components[ 0 ].mw      = mw;
-   model_out.components[ 0 ].vbar20  = vbar20;
-   model_out.components[ 0 ].f_f0    = f_f0;
-   model_out.components[ 0 ].name    = description;
-   model_out.update_coefficients();
+   QString help( coeff.description );
 
-   return model_out;
+   if ( QString( coeff.name ) == "s" )
+      help += "; append S for Svedbergs (for example, 4.5S or 4.5e-13)";
+
+   return help;
+}
+
+// Accept Svedbergs with an S suffix or the stored unit of seconds. Reject a
+// likely suffix omission instead of applying a value 1e13 times too large.
+static bool parse_svedberg( const QString& text, double& value, QString& error )
+{
+   QString trimmed = text.trimmed();
+   bool    svedberg = trimmed.endsWith( "S", Qt::CaseInsensitive )
+                      && ! trimmed.endsWith( "eS", Qt::CaseInsensitive );
+
+   if ( svedberg )
+      trimmed.chop( 1 );
+
+   bool numeric = false;
+   value        = trimmed.toDouble( &numeric );
+
+   if ( ! numeric )
+   {
+      error = QString( "--s \"%1\" is not numeric" ).arg( text );
+      return false;
+   }
+
+   if ( svedberg )
+   {
+      value *= 1.0e-13;
+      return true;
+   }
+
+   // Values in seconds are normally on the order of 1e-13.
+   if ( qAbs( value ) > 1.0e-9 )
+   {
+      error = QString( "--s %1 is too large to be a value in seconds; append "
+                       "S for Svedbergs (--s %1S) or give seconds directly" )
+         .arg( text );
+      return false;
+   }
+
+   return true;
+}
+
+// Leave omitted coefficients unsupplied unless no coefficient was given.
+static bool parse_component( const QCommandLineParser& parser,
+                             const QMap< QString, QCommandLineOption >& options,
+                             US_SimSpecies::Component& component,
+                             bool& any_supplied, QString& error )
+{
+   US_SimSpecies::Component supplied;
+   any_supplied = false;
+
+   for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+   {
+      const QString name = coeff.name;
+      if ( ! parser.isSet( *options.constFind( name ) ) )
+         continue;
+
+      any_supplied = true;
+      const QString text = parser.value( *options.constFind( name ) );
+      double        value = 0.0;
+
+      if ( name == "s" )
+      {
+         if ( ! parse_svedberg( text, value, error ) )
+            return false;
+      }
+      else
+      {
+         bool numeric = false;
+         value        = text.toDouble( &numeric );
+         if ( ! numeric )
+         {
+            error = QString( "--%1 \"%2\" is not numeric" ).arg( name, text );
+            return false;
+         }
+      }
+
+      supplied.*( coeff.field ) = value;
+   }
+
+   if ( parser.isSet( *options.constFind( "vbar20" ) ) )
+   {
+      bool numeric = false;
+      supplied.vbar20 = parser.value( *options.constFind( "vbar20" ) ).toDouble( &numeric );
+      if ( ! numeric )
+      {
+         error = QString( "--vbar20 \"%1\" is not numeric" )
+            .arg( parser.value( *options.constFind( "vbar20" ) ) );
+         return false;
+      }
+   }
+
+   if ( ! any_supplied )
+   {  // Only vbar20, or nothing at all, was given
+      double vbar20 = supplied.vbar20;
+      supplied        = US_SimSpecies::defaultComponent();
+      supplied.vbar20 = vbar20;
+   }
+
+   error = US_SimSpecies::validateComponent( supplied );
+   if ( ! error.isEmpty() )
+      return false;
+
+   component = supplied;
+   return true;
 }
 
 int main( int argc, char* argv[] )
@@ -61,16 +159,26 @@ int main( int argc, char* argv[] )
    // caller. US_Model and US_Buffer serialize the resulting values.
    QCommandLineOption emit_model_option( "emit-model",
       "Write a single-component model XML from explicit physical parameters "
-      "to the file specified by --out; requires --mw, --vbar20, and --f-f0; "
-      "--description is optional" );
+      "to the file specified by --out; requires exactly two of --s, --D, --mw, "
+      "--f, and --f-f0, from which the remaining three are calculated; "
+      "--vbar20 and --description are optional" );
    parser.addOption( emit_model_option );
-   QCommandLineOption mw_option( "mw", "Molecular weight (Da)", "value" );
-   parser.addOption( mw_option );
-   QCommandLineOption vbar20_option( "vbar20", "Partial specific volume at 20 C (mL/g)", "value" );
+
+   QMap< QString, QCommandLineOption > coefficient_opts;
+   for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+   {
+      QCommandLineOption option( coeff.name, coefficient_help( coeff ), "value" );
+      parser.addOption( option );
+      coefficient_opts.insert( coeff.name, option );
+   }
+   QCommandLineOption vbar20_option( "vbar20",
+      "Partial specific volume at 20 C (mL/g); defaults to the typical protein "
+      "value", "value" );
    parser.addOption( vbar20_option );
-   QCommandLineOption f_f0_option( "f-f0", "Frictional ratio (1.0 = perfect sphere)", "value" );
-   parser.addOption( f_f0_option );
-   QCommandLineOption model_description_option( "description", "Model or buffer description", "text" );
+   coefficient_opts.insert( "vbar20", vbar20_option );
+   QCommandLineOption model_description_option( "description",
+      "Model or buffer description; a model description must not contain "
+      "\".\", which us_mwl_species_sim treats as a field separator", "text" );
    parser.addOption( model_description_option );
 
    QCommandLineOption emit_buffer_option( "emit-buffer",
@@ -98,6 +206,14 @@ int main( int argc, char* argv[] )
    parser.addOption( duration_hrs_option );
    QCommandLineOption duration_mins_option( "duration-mins", "Minutes component of the run duration", "value" );
    parser.addOption( duration_mins_option );
+   QCommandLineOption delay_hrs_option( "delay-hrs",
+      "Hours component of the delay before the first scan; defaults to the "
+      "time needed to reach speed. Useful for aligning scan times across runs "
+      "at different speeds", "value" );
+   parser.addOption( delay_hrs_option );
+   QCommandLineOption delay_mins_option( "delay-mins",
+      "Minutes component of the delay before the first scan", "value" );
+   parser.addOption( delay_mins_option );
    QCommandLineOption scans_option( "scans", "Number of scans", "value" );
    parser.addOption( scans_option );
    QCommandLineOption points_option( "points", "Number of points in the radial simulation grid", "value" );
@@ -139,31 +255,41 @@ int main( int argc, char* argv[] )
 
    if ( parser.isSet( emit_model_option ) )
    {
-      if ( ! ( parser.isSet( mw_option ) && parser.isSet( vbar20_option ) && parser.isSet( f_f0_option ) ) )
-      {
-         QTextStream( stderr ) << "Error: --emit-model requires --mw, --vbar20, and --f-f0" << Qt::endl;
-         return 1;
-      }
       if ( ! parser.isSet( out_option ) )
       {
          QTextStream( stderr ) << "Error: --out <file path> is required" << Qt::endl;
          return 1;
       }
 
-      bool ok_mw = false, ok_vbar = false, ok_ff0 = false;
-      double mw     = parser.value( mw_option ).toDouble( &ok_mw );
-      double vbar20 = parser.value( vbar20_option ).toDouble( &ok_vbar );
-      double f_f0   = parser.value( f_f0_option ).toDouble( &ok_ff0 );
-      if ( ! ok_mw || ! ok_vbar || ! ok_ff0 )
+      // --emit-model requires an explicitly defined species.
+      US_SimSpecies::Component component;
+      bool    any_supplied = false;
+      QString component_error;
+      if ( ! parse_component( parser, coefficient_opts, component,
+                              any_supplied, component_error ) )
       {
-         QTextStream( stderr ) << "Error: values for --mw, --vbar20, and "
-            "--f-f0 must be numeric" << Qt::endl;
+         QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+         return 1;
+      }
+      if ( ! any_supplied )
+      {
+         QTextStream( stderr ) << "Error: --emit-model requires exactly two of "
+            "--s, --D, --mw, --f, and --f-f0" << Qt::endl;
          return 1;
       }
 
       QString description = parser.isSet( model_description_option )
          ? parser.value( model_description_option ) : QString( "us_sim_inputs_gen emitted model" );
-      US_Model model_out = model_from_params( mw, vbar20, f_f0, description );
+      if ( description.contains( "." ) )
+      {
+         QTextStream( stderr ) << "Error: a model --description must not "
+            "contain \".\"; us_mwl_species_sim splits descriptions on it"
+            << Qt::endl;
+         return 1;
+      }
+      US_Model model_out = US_SimSpecies::model( component );
+      model_out.description          = description;
+      model_out.components[ 0 ].name = description;
 
       if ( model_out.write( parser.value( out_option ) ) != IUS_DB2::OK )
       {
@@ -196,6 +322,19 @@ int main( int argc, char* argv[] )
       {
          QTextStream( stderr ) << "Error: values for --density, --viscosity, "
             "and --ph must be numeric" << Qt::endl;
+         return 1;
+      }
+
+      if ( density <= 0.0 || viscosity <= 0.0 )
+      {
+         QTextStream( stderr ) << "Error: --density and --viscosity must be "
+            "greater than zero" << Qt::endl;
+         return 1;
+      }
+      if ( ph < 0.0 || ph > 14.0 )
+      {
+         QTextStream( stderr ) << "Error: --ph must be between 0 and 14"
+            << Qt::endl;
          return 1;
       }
 
@@ -247,21 +386,27 @@ int main( int argc, char* argv[] )
          return this_ok ? v : def;
       };
 
-      double rpm               = opt_double( speed_option, 45000.0 );
-      int    duration_hours    = opt_int( duration_hrs_option, 2 );
-      double duration_minutes  = opt_double( duration_mins_option, 30.0 );
-      int    scans             = opt_int( scans_option, 30 );
-      double acceleration      = opt_double( acceleration_option, 400.0 );
-      int    simpoints         = opt_int( points_option, 200 );
-      double radial_resolution = opt_double( radial_resolution_option, 0.001 );
-      double rnoise            = opt_double( rnoise_option, 0.0 );
-      double lrnoise           = opt_double( lrnoise_option, 0.0 );
-      double tinoise           = opt_double( tinoise_option, 0.0 );
-      double rinoise           = opt_double( rinoise_option, 0.0 );
-      double baseline          = opt_double( sp_baseline_option, 0.0 );
-      double band_volume       = opt_double( band_volume_option, 0.015 );
-      int    centerpiece       = opt_int( centerpiece_option, 0 );
-      int    centerpiece_chan  = opt_int( centerpiece_channel_option, 0 );
+      // Use shared defaults for omitted options.
+      US_SimInputs::Params sp_params;
+
+      sp_params.rpm                 = opt_double( speed_option, sp_params.rpm );
+      sp_params.duration_hours      = opt_int( duration_hrs_option, sp_params.duration_hours );
+      sp_params.duration_minutes    = opt_double( duration_mins_option, sp_params.duration_minutes );
+      sp_params.delay_hours         = opt_int( delay_hrs_option, sp_params.delay_hours );
+      sp_params.delay_minutes       = opt_double( delay_mins_option, sp_params.delay_minutes );
+      sp_params.scans               = opt_int( scans_option, sp_params.scans );
+      sp_params.acceleration        = opt_double( acceleration_option, sp_params.acceleration );
+      sp_params.simpoints           = opt_int( points_option, sp_params.simpoints );
+      sp_params.radial_resolution   = opt_double( radial_resolution_option, sp_params.radial_resolution );
+      sp_params.rnoise              = opt_double( rnoise_option, sp_params.rnoise );
+      sp_params.lrnoise             = opt_double( lrnoise_option, sp_params.lrnoise );
+      sp_params.tinoise             = opt_double( tinoise_option, sp_params.tinoise );
+      sp_params.rinoise             = opt_double( rinoise_option, sp_params.rinoise );
+      sp_params.baseline            = opt_double( sp_baseline_option, sp_params.baseline );
+      sp_params.band_volume         = opt_double( band_volume_option, sp_params.band_volume );
+      sp_params.centerpiece         = opt_int( centerpiece_option, sp_params.centerpiece );
+      sp_params.centerpiece_channel = opt_int( centerpiece_channel_option,
+                                                sp_params.centerpiece_channel );
 
       if ( ! ok )
       {
@@ -270,14 +415,38 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      if ( acceleration <= 0.0 )
+      // Numeric parsing alone does not reject invalid negative values.
+      struct { const char* name; double value; bool allow_zero; } positive[] = {
+         { "--speed",             sp_params.rpm,               false },
+         { "--acceleration",      sp_params.acceleration,      false },
+         { "--scans",             (double)sp_params.scans,     false },
+         { "--points",            (double)sp_params.simpoints, false },
+         { "--radial-resolution", sp_params.radial_resolution, false },
+         { "--duration-hrs",      (double)sp_params.duration_hours,  true },
+         { "--duration-mins",     sp_params.duration_minutes,        true },
+         { "--band-volume",       sp_params.band_volume,             true },
+      };
+
+      for ( const auto& check : positive )
       {
-         QTextStream( stderr ) << "Error: --acceleration must be greater "
+         if ( check.allow_zero ? ( check.value < 0.0 ) : ( check.value <= 0.0 ) )
+         {
+            QTextStream( stderr ) << "Error: " << check.name << " must be "
+               << ( check.allow_zero ? "zero or greater" : "greater than zero" )
+               << " (got " << check.value << ")" << Qt::endl;
+            return 1;
+         }
+      }
+
+      if ( sp_params.duration_hours == 0  &&  sp_params.duration_minutes <= 0.0 )
+      {
+         QTextStream( stderr ) << "Error: the run duration must be greater "
             "than zero" << Qt::endl;
          return 1;
       }
 
-      QString cp_error = US_SimInputs::validateCenterpiece( centerpiece, centerpiece_chan );
+      QString cp_error = US_AbstractCenterpiece::validate(
+         sp_params.centerpiece, sp_params.centerpiece_channel );
       if ( ! cp_error.isEmpty() )
       {
          QTextStream( stderr ) << "Error: " << cp_error << Qt::endl;
@@ -288,7 +457,6 @@ int main( int argc, char* argv[] )
       mesh_names << "ASTFEM" << "Claverie" << "MovingHat" << "User" << "ASTFVM";
       grid_names << "Fixed" << "Moving";
 
-      US_SimulationParameters::MeshType meshType = US_SimulationParameters::ASTFEM;
       if ( parser.isSet( mesh_type_option ) )
       {
          int idx = mesh_names.indexOf( parser.value( mesh_type_option ) );
@@ -298,10 +466,9 @@ int main( int argc, char* argv[] )
                << mesh_names.join( "|" ) << Qt::endl;
             return 1;
          }
-         meshType = (US_SimulationParameters::MeshType)idx;
+         sp_params.meshType = (US_SimulationParameters::MeshType)idx;
       }
 
-      US_SimulationParameters::GridType gridType = US_SimulationParameters::MOVING;
       if ( parser.isSet( grid_type_option ) )
       {
          int idx = grid_names.indexOf( parser.value( grid_type_option ) );
@@ -311,18 +478,14 @@ int main( int argc, char* argv[] )
                << grid_names.join( "|" ) << Qt::endl;
             return 1;
          }
-         gridType = (US_SimulationParameters::GridType)idx;
+         sp_params.gridType = (US_SimulationParameters::GridType)idx;
       }
 
-      QString rotor_calibr = parser.isSet( rotor_calibration_option )
-         ? parser.value( rotor_calibration_option ) : QString( "0" );
-      bool band_forming = parser.isSet( band_forming_option );
+      if ( parser.isSet( rotor_calibration_option ) )
+         sp_params.rotor_calibr = parser.value( rotor_calibration_option );
+      sp_params.band_forming = parser.isSet( band_forming_option );
 
-      US_SimulationParameters sp_out = US_SimInputs::simParams(
-         rpm, duration_hours, duration_minutes, scans, acceleration,
-         simpoints, radial_resolution, meshType, gridType,
-         rnoise, lrnoise, tinoise, rinoise, baseline,
-         band_forming, band_volume, rotor_calibr, centerpiece, centerpiece_chan );
+      US_SimulationParameters sp_out = US_SimInputs::simParams( sp_params );
 
       if ( sp_out.save_simparms( parser.value( out_option ) ) != 0 )
       {
@@ -384,27 +547,18 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      // Accept the same optional physical parameters as --emit-model. If they
-      // are omitted, use the default model.
-      US_Model model;
-      if ( parser.isSet( mw_option ) && parser.isSet( vbar20_option ) && parser.isSet( f_f0_option ) )
+      // MWL mode permits the default species when coefficients are omitted.
+      US_SimSpecies::Component component;
+      bool    any_supplied = false;
+      QString component_error;
+      if ( ! parse_component( parser, coefficient_opts, component,
+                              any_supplied, component_error ) )
       {
-         bool ok_mw = false, ok_vbar = false, ok_ff0 = false;
-         double mw     = parser.value( mw_option ).toDouble( &ok_mw );
-         double vbar20 = parser.value( vbar20_option ).toDouble( &ok_vbar );
-         double f_f0   = parser.value( f_f0_option ).toDouble( &ok_ff0 );
-         if ( ! ok_mw || ! ok_vbar || ! ok_ff0 )
-         {
-            QTextStream( stderr ) << "Error: values for --mw, --vbar20, and "
-               "--f-f0 must be numeric" << Qt::endl;
-            return 1;
-         }
-         model = model_from_params( mw, vbar20, f_f0, QString() );
+         QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+         return 1;
       }
-      else
-      {
-         model = US_SimInputs::model();
-      }
+
+      US_Model model    = US_SimSpecies::model( component );
       model.description = QString( "%1.%2%3.model.default" )
                            .arg( run_id, channel, wavelength );
       model.modelGUID    = US_Util::new_guid();

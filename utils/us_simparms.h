@@ -133,6 +133,14 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \returns      The number of speed steps found in the TimeState
    static int ssProfFromTimeState( US_TimeState*, QVector< SimSpeedProf >& );
 
+   //! \brief Set edit radii from simulated cell geometry.
+   //! Bottom-side insets scale for short columns; optical offsets remain fixed.
+   //! \param edits    Reference to the edit values to fill in
+   //! \param meniscus Meniscus radius of the simulated cell
+   //! \param bottom   Bottom radius of the simulated cell
+   static void editRadiiFromCell( US_DataIO::EditValues& edits,
+                                  double meniscus, double bottom );
+
    //! \brief Function to build an internal simulation speed step profile
    //!        vector from an internal TimeState object.
    //! \param tmst_fpath  Path to TimeState binary file to read.
@@ -255,4 +263,3 @@ class US_UTIL_EXTERN US_SimulationParameters
 };
 
 #endif
-

@@ -322,3 +322,39 @@ TEST_F(US_SimulationParametersTest, InitFromData_EditedData_SetsBasicParameters)
     EXPECT_EQ(simparms->meniscus, 5.8);
     EXPECT_EQ(simparms->bottom_position, 7.2);
 }
+TEST_F(US_SimulationParametersTest, EditRadiiKeepStandardColumnInsets) {
+    US_DataIO::EditValues ev;
+    US_SimulationParameters::editRadiiFromCell(ev, 5.8, 7.2);
+
+    EXPECT_DOUBLE_EQ(ev.meniscus,   5.8);
+    EXPECT_DOUBLE_EQ(ev.bottom,     7.2);
+    EXPECT_DOUBLE_EQ(ev.rangeLeft,  5.8 + 0.0005);
+    EXPECT_DOUBLE_EQ(ev.baseline,   5.8 + 0.0055);
+    EXPECT_DOUBLE_EQ(ev.rangeRight, 7.2 - 0.1);
+    EXPECT_DOUBLE_EQ(ev.plateau,    7.2 - 0.3);
+}
+
+TEST_F(US_SimulationParametersTest, EditRadiiHoldMeniscusInsetsFixedOnAShortColumn) {
+    US_DataIO::EditValues ev;
+    US_SimulationParameters::editRadiiFromCell(ev, 5.8, 6.111);
+
+    EXPECT_DOUBLE_EQ(ev.rangeLeft, 5.8 + 0.0005);
+    EXPECT_DOUBLE_EQ(ev.baseline,  5.8 + 0.0055);
+}
+
+TEST_F(US_SimulationParametersTest, EditRadiiScaleColumnInsetsOnAShortColumn) {
+    // A 0.311 cm column cannot use the standard 0.3 cm plateau inset.
+    const double meniscus = 5.8;
+    const double bottom   = 6.111;
+
+    US_DataIO::EditValues ev;
+    US_SimulationParameters::editRadiiFromCell(ev, meniscus, bottom);
+
+    EXPECT_GT(ev.plateau,    ev.baseline);
+    EXPECT_LT(ev.plateau,    ev.rangeRight);
+    EXPECT_LT(ev.rangeRight, bottom);
+
+    double frac = (ev.plateau - meniscus) / (bottom - meniscus);
+    EXPECT_GT(frac, 0.5);
+    EXPECT_LT(frac, 1.0);
+}

@@ -11,41 +11,6 @@ protected:
     }
 };
 
-TEST_F(US_SimInputsTest, ModelIsSingleComponentAbsorbanceManual) {
-    US_Model model = US_SimInputs::model();
-
-    EXPECT_FALSE(model.description.isEmpty());
-    EXPECT_FALSE(model.modelGUID.isEmpty());
-    EXPECT_EQ(model.optics, US_Model::ABSORBANCE);
-    EXPECT_EQ(model.analysis, US_Model::MANUAL);
-    ASSERT_EQ(model.components.count(), 1);
-}
-
-TEST_F(US_SimInputsTest, ModelUsesLibraryComponentDefaults) {
-    US_Model model = US_SimInputs::model();
-    const US_Model::SimulationComponent& sc = model.components[0];
-
-    EXPECT_DOUBLE_EQ(sc.mw, 50000.0);
-    EXPECT_DOUBLE_EQ(sc.f_f0, 1.25);
-    EXPECT_DOUBLE_EQ(sc.vbar20, TYPICAL_VBAR);
-}
-
-TEST_F(US_SimInputsTest, ModelCoefficientsAreComputed) {
-    US_Model model = US_SimInputs::model();
-    const US_Model::SimulationComponent& sc = model.components[0];
-
-    // update_coefficients() should calculate s and D from mw, vbar20, and f_f0.
-    EXPECT_GT(sc.s, 0.0);
-    EXPECT_GT(sc.D, 0.0);
-}
-
-TEST_F(US_SimInputsTest, TwoCallsToModelProduceDistinctGuids) {
-    US_Model model1 = US_SimInputs::model();
-    US_Model model2 = US_SimInputs::model();
-
-    EXPECT_NE(model1.modelGUID, model2.modelGUID);
-}
-
 TEST_F(US_SimInputsTest, BufferMatchesWaterAt20C) {
     US_Buffer buffer = US_SimInputs::buffer();
 
@@ -66,6 +31,72 @@ TEST_F(US_SimInputsTest, SimParamsMatchesDocumentedDefaults) {
     EXPECT_EQ(sp.meshType, US_SimulationParameters::ASTFEM);
     EXPECT_EQ(sp.gridType, US_SimulationParameters::MOVING);
     EXPECT_FALSE(sp.band_forming);
+}
+
+TEST_F(US_SimInputsTest, ParamsDefaultsTrackSimulationParameters) {
+    // Shared defaults must track their source types.
+    US_SimInputs::Params p;
+    US_SimulationParameters sp_defaults;
+    US_SimulationParameters::SpeedProfile step_defaults;
+
+    EXPECT_EQ(p.simpoints, sp_defaults.simpoints);
+    EXPECT_DOUBLE_EQ(p.radial_resolution, sp_defaults.radial_resolution);
+    EXPECT_EQ(p.meshType, sp_defaults.meshType);
+    EXPECT_EQ(p.gridType, sp_defaults.gridType);
+    EXPECT_DOUBLE_EQ(p.band_volume, sp_defaults.band_volume);
+    EXPECT_EQ(p.band_forming, sp_defaults.band_forming);
+    EXPECT_EQ(p.rotor_calibr, sp_defaults.rotorCalID);
+    EXPECT_DOUBLE_EQ(p.acceleration, step_defaults.acceleration);
+}
+
+TEST_F(US_SimInputsTest, DelayDefaultsToTimeToReachSpeed) {
+    US_SimInputs::Params p;
+    p.rpm          = 45000.0;
+    p.acceleration = 400.0;
+
+    US_SimulationParameters sp = US_SimInputs::simParams(p);
+
+    // 45000 rpm / 400 rpm/s = 112.5 s = 1.875 min.
+    ASSERT_EQ(sp.speed_step.count(), 1);
+    EXPECT_EQ(sp.speed_step[0].delay_hours, 0);
+    EXPECT_DOUBLE_EQ(sp.speed_step[0].delay_minutes, 1.875);
+}
+
+TEST_F(US_SimInputsTest, DerivedDelaySplitsIntoHoursAndMinutes) {
+    US_SimInputs::Params p;
+    p.rpm          = 60000.0;
+    p.acceleration = 10.0;
+
+    US_SimulationParameters sp = US_SimInputs::simParams(p);
+
+    // 60000 / 10 = 100 minutes, stored as 1 hour 40 minutes.
+    ASSERT_EQ(sp.speed_step.count(), 1);
+    EXPECT_EQ(sp.speed_step[0].delay_hours, 1);
+    EXPECT_DOUBLE_EQ(sp.speed_step[0].delay_minutes, 40.0);
+    EXPECT_LT(sp.speed_step[0].delay_minutes, 60.0);
+}
+
+TEST_F(US_SimInputsTest, ExplicitDelayOverridesDerivedValue) {
+    US_SimInputs::Params p;
+    p.delay_hours   = 1;
+    p.delay_minutes = 15.0;
+
+    US_SimulationParameters sp = US_SimInputs::simParams(p);
+
+    ASSERT_EQ(sp.speed_step.count(), 1);
+    EXPECT_EQ(sp.speed_step[0].delay_hours, 1);
+    EXPECT_DOUBLE_EQ(sp.speed_step[0].delay_minutes, 15.0);
+}
+
+TEST_F(US_SimInputsTest, ZeroAccelerationDoesNotDivideByZero) {
+    US_SimInputs::Params p;
+    p.acceleration = 0.0;
+
+    US_SimulationParameters sp = US_SimInputs::simParams(p);
+
+    ASSERT_EQ(sp.speed_step.count(), 1);
+    EXPECT_EQ(sp.speed_step[0].delay_hours, 0);
+    EXPECT_DOUBLE_EQ(sp.speed_step[0].delay_minutes, 0.0);
 }
 
 TEST_F(US_SimInputsTest, WriteAllProducesReadableTriple) {

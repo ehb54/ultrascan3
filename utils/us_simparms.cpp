@@ -1292,6 +1292,27 @@ DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
    return sim_speed_prof.count();                // Return number steps
 }
 
+// Set the edit radii implied by a simulated cell geometry.
+void US_SimulationParameters::editRadiiFromCell( US_DataIO::EditValues& edits,
+      double meniscus, double bottom )
+{
+   // Scale bottom-side insets for columns shorter than the reference geometry.
+   const double standard_column = 1.4;
+
+   double column     = bottom - meniscus;
+   double fract      = qMin( 1.0, column / standard_column );
+
+   edits.meniscus    = meniscus;
+   edits.bottom      = bottom;
+
+   // Meniscus-side insets are fixed optical offsets.
+   edits.rangeLeft   = meniscus + 0.0005;
+   edits.baseline    = meniscus + 0.0055;
+
+   edits.rangeRight  = bottom - 0.1 * fract;
+   edits.plateau     = bottom - 0.3 * fract;
+}
+
 // Create a referenced simulation speed step profile from an opened
 // TimeState object pointed to.
 int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
@@ -1736,4 +1757,3 @@ void US_SimulationParameters::debug( void )
       qDebug() << "   Speed StdDev  " << speed_step[ i ].speed_stddev;
    }
 }
-

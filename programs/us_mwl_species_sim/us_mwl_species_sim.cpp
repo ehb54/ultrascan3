@@ -8,6 +8,8 @@
 #include "us_select_runs.h"
 #include "us_astfem_rsa.h"
 #include "us_astfem_math.h"
+#include "us_sim_inputs.h"
+#include "us_hardware.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -54,13 +56,17 @@ int main( int argc, char* argv[] )
    parser.addOption(rotor_option);
    auto centerpiece_option = QCommandLineOption("centerpiece",
       "Centerpiece-list index used for channel geometry (default: 0). "
-      "Simulation-parameter files do not store this value",
+      "Overrides the bottom position recovered from --simparams, which is the "
+      "only way to select a row of a multi-row centerpiece. Indexes the local "
+      "etc/abstractCenterpieces.xml, never the database, so that a given index "
+      "means the same thing on every machine",
       "index");
    parser.addOption(centerpiece_option);
    auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
-      "Channel index within the centerpiece (default: 0); this is not an "
-      "instrument channel label",
-      "index");
+      "Row within the centerpiece (default: 0), given either as a channel "
+      "letter (A-H, where a channel and its reference share a row, so A and B "
+      "are row 0) or as a bare row index",
+      "channel");
    parser.addOption(centerpiece_channel_option);
    auto start_option = QCommandLineOption("start",
       "Start simulations automatically");
@@ -119,9 +125,12 @@ int main( int argc, char* argv[] )
    }
 
    if ( init_status == 1 && args.contains( "errors-cl" ) )
+   {
       QTextStream(stderr) << "GUI would be required to complete this run "
          "(some inputs were omitted or could not be loaded); exiting without it "
          "because --errors-cl was set." << Qt::endl;
+      return init_status;
+   }
 
    // Show the GUI if no options were supplied or user interaction is needed.
    return showGuiIfNeeded( w, init_status, args );
@@ -641,43 +650,7 @@ DbgLv(1) << "SLOT: stop_sims";
 void US_MwlSpeciesSim::save_sims( void )
 {
 DbgLv(1) << "SLOT: save_sims";
-   QString impdir     = US_Settings::importDir() + "/" + orunid + "/";
-   QString cell       = QString( orunid ).section( "-", -1, -1 ).left( 1 );
-   QString basefn     = orunid + ".RA." + cell + ".S.xxx.auc";
-
-   QDir().mkpath( impdir );
-
-   for ( int jm = 0; jm < nmodels; jm++ )
-   {
-      QString mdesc      = models[ jm ].description;
-      QString swavl      = mdesc.section( ".", -3, -3 ).mid( 2, 3 ) + ".auc";
-      QString fname      = QString( basefn ).replace( "xxx.auc", swavl );
-      QString fpath      = impdir + fname;
-DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
-
-      QString smsg       = tr( "Saving data: %1" ).arg( swavl );
-      te_status->setText( smsg );
-      qApp->processEvents();
-
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
-   }
-
-   QString smsga      = tr( "All %1 AUC files created\nand saved "
-                            "to directory\n%2" ).arg( nmodels ).arg( impdir );
-   te_status->setText( smsga );
-   qApp->processEvents();
-
-   // Build and save time state
-   QString tfname     = orunid + ".time_state.tmst";
-   QString tfpath     = impdir + tfname;
-DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
-
-   writeTimeState( tfpath, simparams, synData[ 0 ] );
-
-   smsga             += tr( "\n\nTime State file\n%1\nhas been written" )
-                        .arg( tfname );
-   te_status->setText( smsga );
-   qApp->processEvents();
+   save_sims_to( US_Settings::importDir() + "/" + orunid );
 }
 
 // Run the simulation headlessly using command-line options.
@@ -736,6 +709,9 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       }
       else
       {
+         // The file omits bottom_position; mirror the loaded at-rest bottom.
+         // An explicit --centerpiece overrides it below.
+         simparams.bottom_position = simparams.bottom;
          set_parameters();
       }
       delete dialog;
@@ -774,15 +750,34 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       delete disk_controls;
    }
 
-   // Load centerpiece and channel geometry independently of --rotor and
-   // --simparams. Simulation-parameter files do not preserve bottom_position,
-   // so init_simparams()'s default geometry would otherwise remain in effect.
-   // Retain the rotorCalID loaded above so its coefficients remain in effect.
+   // A centerpiece selects the row geometry and overrides the loaded bottom.
+   // Preserve rotorCalID so its calibration remains in effect.
    if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
    {
-      int cp = flags.value( "centerpiece", "0" ).toInt();
-      int ch = flags.value( "centerpiece-channel", "0" ).toInt();
-      simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
+      int cp = 0;
+      int ch = 0;
+      QString parse_error;
+
+      if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
+           || ! US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ),
+                                          ch, parse_error ) )
+      {
+         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QString range_error = US_AbstractCenterpiece::validate( cp, ch );
+         if ( ! range_error.isEmpty() )
+         {
+            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else
+         {
+            simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
+         }
+      }
    }
 
    QString save_path;
@@ -790,22 +785,28 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    {
       save_path            = flags[ "save" ];
       QDir dir( save_path );
-      QFile file( dir.filePath( "tmp.txt" ) );
-      if ( ! dir.exists()  ||  ! file.open( QIODevice::WriteOnly ) )
+
+      // Accept a new output directory as well as an existing one.
+      if ( ! dir.exists()  &&  ! QDir().mkpath( save_path ) )
       {
-         if ( errors_to_cl )
-         {
-            qDebug() << "Error: save directory does not exist or is not writable:"
-                     << save_path;
-            exit( 2 );
-         }
-         error_occured       = true;
-         gui_needed          = true;
+         reportHeadlessLoadFailure( "save directory (could not create)",
+                                     save_path, errors_to_cl,
+                                     gui_needed, error_occured );
       }
       else
       {
-         file.close();
-         file.remove();
+         QFile file( dir.filePath( "tmp.txt" ) );
+         if ( ! file.open( QIODevice::WriteOnly ) )
+         {
+            reportHeadlessLoadFailure( "save directory (not writable)",
+                                        save_path, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else
+         {
+            file.close();
+            file.remove();
+         }
       }
    }
 
@@ -814,8 +815,13 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       if ( flags.contains( "start" ) )
       {
          start_sims();
-         if ( ! save_path.isEmpty() )
-            save_sims_to( save_path );
+         if ( ! save_path.isEmpty()  &&  ! save_sims_to( save_path ) )
+         {
+            if ( errors_to_cl )
+               return 2;
+            error_occured       = true;
+            gui_needed          = true;
+         }
       }
    }
    else
@@ -894,6 +900,7 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
                << "runs=" << 1 << "channels=" << 1 << "wavelengths=" << nmodels
                << "Actual counts: runs=" << nruns << "channels=" << nchans
                << "wavelengths=" << nwavls;
+      return false;
    }
 
    mrunid         = runids[ 0 ];
@@ -911,13 +918,17 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 
 // Save simulations to the requested directory instead of
 // US_Settings::importDir().
-void US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
+bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
 {
    QString impdir     = save_dir + "/";
    QString cell       = QString( orunid ).section( "-", -1, -1 ).left( 1 );
    QString basefn     = orunid + ".RA." + cell + ".S.xxx.auc";
 
-   QDir().mkpath( impdir );
+   if ( ! QDir().mkpath( impdir ) )
+   {
+      qDebug() << "Error: could not create save directory" << impdir;
+      return false;
+   }
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -925,14 +936,102 @@ void US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
       QString swavl      = mdesc.section( ".", -3, -3 ).mid( 2, 3 ) + ".auc";
       QString fname      = QString( basefn ).replace( "xxx.auc", swavl );
       QString fpath      = impdir + fname;
+DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
 
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
+      te_status->setText( tr( "Saving data: %1" ).arg( swavl ) );
+      qApp->processEvents();
+
+      int stat           = US_DataIO::writeRawData( fpath, synData[ jm ] );
+      if ( stat != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write" << fpath << "status" << stat;
+         te_status->setText( tr( "Error writing %1" ).arg( fname ) );
+         return false;
+      }
    }
+
+   QString smsga      = tr( "All %1 AUC files created\nand saved "
+                            "to directory\n%2" ).arg( nmodels ).arg( impdir );
+   te_status->setText( smsga );
+   qApp->processEvents();
 
    QString tfname     = orunid + ".time_state.tmst";
    QString tfpath     = impdir + tfname;
+DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
-   writeTimeState( tfpath, simparams, synData[ 0 ] );
+   // writeTimeState() reports failure by returning zero time points.
+   if ( writeTimeState( tfpath, simparams, synData[ 0 ] ) == 0 )
+   {
+      qDebug() << "Error: could not write time state" << tfpath;
+      return false;
+   }
+
+   smsga             += tr( "\n\nTime State file\n%1\nhas been written" )
+                        .arg( tfname );
+   te_status->setText( smsga );
+   qApp->processEvents();
+
+   // Analysis programs require one edit file per wavelength.
+   if ( ! write_edit_files( impdir, cell ) )
+      return false;
+
+   return true;
+}
+
+// Write an edit XML with stretched cell geometry beside each .auc file.
+bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
+                                          const QString& cell )
+{
+   QString now        = QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
+   double  stretch    = simparams.rotorcoeffs[ 0 ] * simparams.speed_step[ 0 ].rotorspeed
+                      + simparams.rotorcoeffs[ 1 ]
+                        * sq( (double)simparams.speed_step[ 0 ].rotorspeed );
+   double  meniscus   = simparams.meniscus        + stretch;
+   double  bottom     = simparams.bottom_position + stretch;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString mdesc   = models[ jm ].description;
+      QString swavl   = mdesc.section( ".", -3, -3 ).mid( 2, 3 );
+      QString fname   = orunid + "." + now + ".RA." + cell + ".S." + swavl
+                      + ".xml";
+      US_DataIO::EditValues ev;
+      ev.expType    = "Velocity";
+      ev.runID      = orunid;
+      ev.cell       = cell;
+      ev.channel    = "S";
+      ev.wavelength = swavl;
+      ev.editGUID   = US_Util::new_guid();
+      ev.dataGUID   = US_Util::uuid_unparse(
+         reinterpret_cast<uchar*>( synData[ jm ].rawGUID ) );
+
+      US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom );
+      ev.ODlimit    = max_od( synData[ jm ] );
+
+      if ( US_DataIO::writeEdits( impdir + fname, ev ) != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write edit file" << impdir + fname;
+         return false;
+      }
+   }
+
+   return true;
+}
+
+// Return the OD ceiling used by RMSD calculations.
+double US_MwlSpeciesSim::max_od( US_DataIO::RawData& data )
+{
+   double maxc     = 0.0;
+   int    nscans   = data.scanCount();
+   int    npoints  = data.pointCount();
+
+   for ( int ii = 0; ii < nscans; ii++ )
+   {
+      for ( int kk = 0; kk < npoints; kk++ )
+         maxc = qMax( maxc, data.value( ii, kk ) );
+   }
+
+   return maxc;
 }
 
 // Bump the current plot to the previous channel

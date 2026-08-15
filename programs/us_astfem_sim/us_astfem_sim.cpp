@@ -12,6 +12,8 @@
 #include "us_sim_params_gui.h"
 #include "us_math2.h"
 #include "us_astfem_math.h"
+#include "us_sim_inputs.h"
+#include "us_hardware.h"
 #include "us_defines.h"
 #include "us_clipdata.h"
 #include "us_rotor_gui.h"
@@ -62,13 +64,17 @@ int main( int argc, char* argv[] )
    parser.addOption(rotor_option);
    auto centerpiece_option = QCommandLineOption("centerpiece",
       "Centerpiece-list index used for channel geometry (default: 0). "
-      "Simulation-parameter files do not store this value",
+      "Overrides the bottom position recovered from --simparams, which is the "
+      "only way to select a row of a multi-row centerpiece. Indexes the local "
+      "etc/abstractCenterpieces.xml, never the database, so that a given index "
+      "means the same thing on every machine",
       "index");
    parser.addOption(centerpiece_option);
    auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
-      "Channel index within the centerpiece (default: 0); this is not an "
-      "instrument channel label",
-      "index");
+      "Row within the centerpiece (default: 0), given either as a channel "
+      "letter (A-H, where a channel and its reference share a row, so A and B "
+      "are row 0) or as a bare row index",
+      "channel");
    parser.addOption(centerpiece_channel_option);
    auto movie_option = QCommandLineOption("movie",
       "Show the simulation as a movie");
@@ -80,8 +86,11 @@ int main( int argc, char* argv[] )
       "Start simulation automatically");
    parser.addOption(start_option);
    auto save_option = QCommandLineOption("save",
-      "Save simulation data to a file",
-      "save");
+      "Directory to write the run into; its last path component becomes the "
+      "run ID. Writes several files, not one: the .auc data, the time-state "
+      "pair, the edit file, and any noise CSVs. A multi-speed run instead "
+      "writes one sibling directory per speed, suffixed with -<rpm>",
+      "dir");
    parser.addOption(save_option);
    auto close_option = QCommandLineOption("close",
       "Close application if no errors occurred");
@@ -404,6 +413,9 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          loaded_simparams = false;
       }
       else {
+         // The file omits bottom_position; mirror the loaded at-rest bottom.
+         // An explicit --centerpiece overrides it below.
+         simparams.bottom_position = simparams.bottom;
          set_parameters( );
       }
       delete dialog;
@@ -444,16 +456,34 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       delete disk_controls;
    }
 
-   // Load centerpiece and channel geometry independently of --rotor and
-   // --simparams. Simulation-parameter files do not preserve bottom_position,
-   // so later meniscus and bottom calculations would otherwise use the class
-   // default (7.2). Retain the rotorCalID loaded above so its coefficients
-   // remain in effect.
+   // A centerpiece selects the row geometry and overrides the loaded bottom.
+   // Preserve rotorCalID so its calibration remains in effect.
    if ( flags.contains("centerpiece") || flags.contains("centerpiece-channel") )
    {
-      int cp = flags.value( "centerpiece", "0" ).toInt();
-      int ch = flags.value( "centerpiece-channel", "0" ).toInt();
-      simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
+      int cp = 0;
+      int ch = 0;
+      QString parse_error;
+
+      if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
+           || ! US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ),
+                                          ch, parse_error ) )
+      {
+         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QString range_error = US_AbstractCenterpiece::validate( cp, ch );
+         if ( ! range_error.isEmpty() )
+         {
+            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else
+         {
+            simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
+         }
+      }
    }
 
    // set movie flag if needed
@@ -1763,84 +1793,9 @@ for(int ss=0; ss<kscn; ss++ )
 
    QString now  =  QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
    QString fname = run_id + "." + now + "." + runType + "." + cell + "." + channel + "." + wl + ".xml";
-   QFile efo( odir + fname );
-
-
-   if ( ! efo.open( QFile::WriteOnly | QFile::Text ) )
-   {
-      QMessageBox::information( this,
-            tr( "File write error" ),
-            tr( "Could not open the file\n" ) + odir + fname
-            + tr( "\n for writing.  Check your permissions." ) );
-      return 1;
-   }
-
-   xml.setDevice( &efo );
-   xml.setAutoFormatting( true );
-
-   xml.setAutoFormatting( true );
-   xml.writeStartDocument();
-   xml.writeDTD         ( "<!DOCTYPE UltraScanEdits>" );
-   xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "type", "Velocity" );
-
-   // Write identification
-   xml.writeStartElement( "identification" );
-
-   xml.writeStartElement( "runid" );
-   xml.writeAttribute   ( "value", run_id );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "editGUID" );
-   xml.writeAttribute   ( "value", US_Util::new_guid() );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "rawDataGUID" );
-   xml.writeAttribute   ( "value", rawGUID );
-   xml.writeEndElement  ();
-
-   xml.writeEndElement  ();  // identification
-
-
-
 
 DbgLv(1) << "EDT:WrXml:  waveln" << wl;
 
-   xml.writeStartElement( "run" );
-   xml.writeAttribute   ( "cell",       cell    );
-   xml.writeAttribute   ( "channel",    channel );
-   xml.writeAttribute   ( "wavelength", wl  );
-
-
-   // Write meniscus, range, plateau, baseline, odlimit
-   xml.writeStartElement( "parameters" );
-
-
-   xml.writeStartElement( "meniscus" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_meniscus, 'f', 8 ) );
-   xml.writeEndElement  ();
-   xml.writeStartElement( "bottom" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_bottom, 'f', 8 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "data_range" );
-   xml.writeAttribute   ( "left",
-      QString::number( af_params.current_meniscus + 0.0005,  'f', 8 ) );
-   xml.writeAttribute   ( "right",
-      QString::number( af_params.current_bottom - 0.1, 'f', 8 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "plateau" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_bottom - 0.3,  'f', 8 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "baseline" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_meniscus + 0.0055, 'f', 8 ) );
-   xml.writeEndElement  ();
    double maxc        = 0.0;
    int    total_scans = sim_datas[0].scanCount();
    int    old_points  = sim_datas[0].pointCount();
@@ -1850,19 +1805,28 @@ DbgLv(1) << "EDT:WrXml:  waveln" << wl;
       for ( int kk = 0; kk < old_points; kk++ )
          maxc = qMax( maxc, sim_datas[0].value( ii, kk ) );
    }
-   xml.writeStartElement( "od_limit" );
-   xml.writeAttribute   ( "value",
-      QString::number( maxc,  'f', 8 ) );
-   xml.writeEndElement  ();
 
+   US_DataIO::EditValues ev;
+   ev.expType    = "Velocity";
+   ev.runID      = run_id;
+   ev.cell       = cell;
+   ev.channel    = channel;
+   ev.wavelength = wl;
+   ev.editGUID   = editGUID;
+   ev.dataGUID   = rawGUID;
 
-   xml.writeEndElement  ();  // parameters
+   US_SimulationParameters::editRadiiFromCell( ev, af_params.current_meniscus,
+                                                   af_params.current_bottom );
+   ev.ODlimit    = maxc;
 
-   xml.writeEndElement  ();  // run
-   xml.writeEndElement  ();  // experiment
-   xml.writeEndDocument ();
-
-   efo.close();
+   if ( US_DataIO::writeEdits( odir + fname, ev ) != US_DataIO::OK )
+   {
+      QMessageBox::information( this,
+            tr( "File write error" ),
+            tr( "Could not open the file\n" ) + odir + fname
+            + tr( "\n for writing.  Check your permissions." ) );
+      return 1;
+   }
 
    return true;
 }

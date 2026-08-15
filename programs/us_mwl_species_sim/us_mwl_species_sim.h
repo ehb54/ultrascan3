@@ -48,7 +48,9 @@ class US_MwlSpeciesSim : public US_Widgets
         bool load_models_from_paths(const QStringList& paths);
 
         //! \brief Save simulations to save_dir instead of US_Settings::importDir().
-        void save_sims_to(const QString& save_dir);
+        bool save_sims_to(const QString& save_dir);
+        bool write_edit_files(const QString& impdir, const QString& cell);
+        double max_od(US_DataIO::RawData& data);
 
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
