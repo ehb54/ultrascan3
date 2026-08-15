@@ -127,6 +127,116 @@ static bool parse_component( const QCommandLineParser& parser,
    return true;
 }
 
+// Parse one --component specification: comma-separated key=value pairs, where
+// the keys are the coefficient names plus vbar20, conc, and name. Each
+// component states its own pair, so a mixture may mix parameterizations.
+static bool parse_component_spec( const QString& spec,
+                                  US_SimSpecies::Component& component,
+                                  QString& error )
+{
+   US_SimSpecies::Component supplied;
+   bool                     any_supplied = false;
+
+   const QStringList fields = spec.split( ",", Qt::SkipEmptyParts );
+
+   if ( fields.isEmpty() )
+   {
+      error = "--component needs at least one key=value pair";
+      return false;
+   }
+
+   for ( const QString& field : fields )
+   {
+      const int split_at = field.indexOf( "=" );
+
+      if ( split_at < 1 )
+      {
+         error = QString( "--component field \"%1\" is not key=value" )
+            .arg( field.trimmed() );
+         return false;
+      }
+
+      const QString key  = field.left( split_at ).trimmed();
+      // Only the key is trimmed; a name may legitimately end in a space.
+      const QString text = field.mid( split_at + 1 );
+
+      if ( key == "name" )
+      {
+         supplied.name = text.trimmed();
+         continue;
+      }
+
+      // Resolve the key before reading the value, so an unknown key is
+      // reported as such rather than as a malformed number.
+      const US_SimSpecies::Coefficient* match = nullptr;
+
+      for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+         if ( key == coeff.name )
+            match = &coeff;
+
+      if ( match == nullptr  &&  key != "vbar20"  &&  key != "conc" )
+      {
+         QStringList names;
+
+         for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+            names << coeff.name;
+
+         names << "vbar20" << "conc" << "name";
+         error = QString( "--component key \"%1\" is not one of %2" )
+            .arg( key, names.join( ", " ) );
+         return false;
+      }
+
+      double value   = 0.0;
+      bool   numeric = false;
+
+      if ( key == "s" )
+      {
+         if ( ! parse_svedberg( text.trimmed(), value, error ) )
+            return false;
+      }
+      else
+      {
+         value = text.trimmed().toDouble( &numeric );
+
+         if ( ! numeric )
+         {
+            error = QString( "--component %1 \"%2\" is not numeric" )
+               .arg( key, text.trimmed() );
+            return false;
+         }
+      }
+
+      if ( key == "vbar20" )
+      {
+         supplied.vbar20 = value;
+         continue;
+      }
+
+      if ( key == "conc" )
+      {
+         supplied.concentration = value;
+         continue;
+      }
+
+      any_supplied               = true;
+      supplied.*( match->field ) = value;
+   }
+
+   if ( ! any_supplied )
+   {
+      error = "--component requires exactly two of s, D, mw, f, and f-f0";
+      return false;
+   }
+
+   error = US_SimSpecies::validateComponent( supplied );
+   if ( ! error.isEmpty() )
+      return false;
+
+   component = supplied;
+   return true;
+}
+
 int main( int argc, char* argv[] )
 {
    QCoreApplication app( argc, argv );
@@ -158,11 +268,20 @@ int main( int argc, char* argv[] )
    // Generate model and buffer files from physical parameters supplied by the
    // caller. US_Model and US_Buffer serialize the resulting values.
    QCommandLineOption emit_model_option( "emit-model",
-      "Write a single-component model XML from explicit physical parameters "
-      "to the file specified by --out; requires exactly two of --s, --D, --mw, "
-      "--f, and --f-f0, from which the remaining three are calculated; "
-      "--vbar20 and --description are optional" );
+      "Write a model XML from explicit physical parameters to the file "
+      "specified by --out; requires exactly two of --s, --D, --mw, --f, and "
+      "--f-f0, from which the remaining three are calculated; --vbar20 and "
+      "--description are optional. For a mixture, use --component instead" );
    parser.addOption( emit_model_option );
+   QCommandLineOption component_option( "component",
+      "One component of a multi-component model, given as comma-separated "
+      "key=value pairs: exactly two of s, D, mw, f, f-f0, plus optional "
+      "vbar20, conc (this species' share of the loading concentration, "
+      "default 1), and name. Repeat once per component, for example "
+      "--component \"s=4.58S,mw=66430,vbar20=0.733,conc=0.75,name=BSA Monomer\". "
+      "Each component states its own coefficient pair. Cannot be combined "
+      "with the single-component options above", "spec" );
+   parser.addOption( component_option );
 
    QMap< QString, QCommandLineOption > coefficient_opts;
    for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
@@ -261,20 +380,68 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      // --emit-model requires an explicitly defined species.
-      US_SimSpecies::Component component;
-      bool    any_supplied = false;
-      QString component_error;
-      if ( ! parse_component( parser, coefficient_opts, component,
-                              any_supplied, component_error ) )
+      // The two forms describe the same thing at different arities, so
+      // combining them would leave the component order ambiguous.
+      bool uses_components = parser.isSet( component_option );
+      bool uses_flags      = false;
+
+      for ( const QString& name : coefficient_opts.keys() )
+         if ( parser.isSet( *coefficient_opts.constFind( name ) ) )
+            uses_flags = true;
+
+      if ( uses_components && uses_flags )
       {
-         QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+         QTextStream( stderr ) << "Error: --component cannot be combined with "
+            "--s, --D, --mw, --f, --f-f0, or --vbar20; state every component "
+            "as its own --component" << Qt::endl;
          return 1;
       }
-      if ( ! any_supplied )
+
+      QVector< US_SimSpecies::Component > components;
+      QString component_error;
+
+      if ( uses_components )
       {
-         QTextStream( stderr ) << "Error: --emit-model requires exactly two of "
-            "--s, --D, --mw, --f, and --f-f0" << Qt::endl;
+         for ( const QString& spec : parser.values( component_option ) )
+         {
+            US_SimSpecies::Component component;
+
+            if ( ! parse_component_spec( spec, component, component_error ) )
+            {
+               QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+               return 1;
+            }
+
+            components << component;
+         }
+      }
+      else
+      {
+         // --emit-model requires an explicitly defined species.
+         US_SimSpecies::Component component;
+         bool any_supplied = false;
+
+         if ( ! parse_component( parser, coefficient_opts, component,
+                                 any_supplied, component_error ) )
+         {
+            QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+            return 1;
+         }
+         if ( ! any_supplied )
+         {
+            QTextStream( stderr ) << "Error: --emit-model requires exactly two "
+               "of --s, --D, --mw, --f, and --f-f0, or one --component per "
+               "species" << Qt::endl;
+            return 1;
+         }
+
+         components << component;
+      }
+
+      component_error = US_SimSpecies::validateComponents( components );
+      if ( ! component_error.isEmpty() )
+      {
+         QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
          return 1;
       }
 
@@ -287,9 +454,26 @@ int main( int argc, char* argv[] )
             << Qt::endl;
          return 1;
       }
-      US_Model model_out = US_SimSpecies::model( component );
-      model_out.description          = description;
-      model_out.components[ 0 ].name = description;
+
+      for ( const US_SimSpecies::Component& c : components )
+         if ( c.name.contains( "." ) )
+         {
+            QTextStream( stderr ) << "Error: a component name must not contain "
+               "\".\"; us_mwl_species_sim splits descriptions on it (got \""
+               << c.name << "\")" << Qt::endl;
+            return 1;
+         }
+
+      US_Model model_out = US_SimSpecies::model( components );
+      model_out.description = description;
+
+      // An unnamed component takes the description, which is unambiguous only
+      // when it is the sole component.
+      for ( int ii = 0; ii < model_out.components.count(); ii++ )
+         if ( components[ ii ].name.isEmpty() )
+            model_out.components[ ii ].name = ( components.count() == 1 )
+               ? description
+               : QString( "%1 %2" ).arg( description ).arg( ii + 1 );
 
       if ( model_out.write( parser.value( out_option ) ) != IUS_DB2::OK )
       {
@@ -544,6 +728,16 @@ int main( int argc, char* argv[] )
       {
          QTextStream( stderr ) << "Error: --wavelength must be a 3-digit "
             "number" << Qt::endl;
+         return 1;
+      }
+
+      // One model per wavelength carries one species, and us_mwl_species_sim
+      // reads the species from the description, which holds a single name.
+      if ( parser.isSet( component_option ) )
+      {
+         QTextStream( stderr ) << "Error: --component is not supported for "
+            "per-wavelength MWL models; each wavelength model carries one "
+            "species" << Qt::endl;
          return 1;
       }
 

@@ -18,8 +18,12 @@ US_SimSpecies::Coeff::Coeff( double coeff_value )
 
 US_SimSpecies::Component::Component()
 {
-   // Coefficients start empty; vbar20 always has a typical-protein default.
-   vbar20 = US_Model::SimulationComponent().vbar20;
+   // Coefficients start empty; vbar20 and the loading concentration always
+   // have the library defaults.
+   US_Model::SimulationComponent sc_defaults;
+
+   vbar20        = sc_defaults.vbar20;
+   concentration = sc_defaults.signal_concentration;
 }
 
 const QVector< US_SimSpecies::Coefficient >& US_SimSpecies::coefficients()
@@ -54,12 +58,18 @@ QString US_SimSpecies::validateComponent( const Component& c )
    if ( c.vbar20 <= 0.0 )
       return QString( "vbar20 must be greater than zero (got %1)" ).arg( c.vbar20 );
 
-   // Only s may legitimately be negative.
-   if ( c.mw.supplied  &&  c.mw.value < 0.0 )
+   if ( c.concentration <= 0.0 )
+      return QString( "concentration must be greater than zero (got %1)" )
+         .arg( c.concentration );
+
+   // Only s may legitimately be negative. Zero is rejected along with the
+   // negatives: a massless, non-diffusing, frictionless species is not one
+   // calc_coefficients() can solve for.
+   if ( c.mw.supplied  &&  c.mw.value <= 0.0 )
       return QString( "mw must be greater than zero (got %1)" ).arg( c.mw.value );
-   if ( c.D.supplied   &&  c.D.value < 0.0 )
+   if ( c.D.supplied   &&  c.D.value <= 0.0 )
       return QString( "D must be greater than zero (got %1)" ).arg( c.D.value );
-   if ( c.f.supplied   &&  c.f.value < 0.0 )
+   if ( c.f.supplied   &&  c.f.value <= 0.0 )
       return QString( "f must be greater than zero (got %1)" ).arg( c.f.value );
    if ( c.f_f0.supplied  &&  c.f_f0.value < 1.0 )
       return QString( "f-f0 must be at least 1.0, since a particle cannot be "
@@ -106,7 +116,28 @@ QString US_SimSpecies::validateComponent( const Component& c )
    return QString();
 }
 
+QString US_SimSpecies::validateComponents( const QVector< Component >& components )
+{
+   if ( components.isEmpty() )
+      return "at least one component must be given";
+
+   for ( int ii = 0; ii < components.count(); ii++ )
+   {
+      QString error = validateComponent( components[ ii ] );
+
+      if ( ! error.isEmpty() )
+         return QString( "component %1: %2" ).arg( ii + 1 ).arg( error );
+   }
+
+   return QString();
+}
+
 US_Model US_SimSpecies::model( const Component& c )
+{
+   return model( QVector< Component >() << c );
+}
+
+US_Model US_SimSpecies::model( const QVector< Component >& components )
 {
    US_Model model_out;
    model_out.description  = "us3-sim-inputs generated protein model v1";
@@ -114,16 +145,26 @@ US_Model US_SimSpecies::model( const Component& c )
    model_out.optics       = US_Model::ABSORBANCE;
    model_out.analysis     = US_Model::MANUAL;
 
-   US_Model::SimulationComponent sc;
-   // Zero every unsupplied field so defaults cannot select the wrong pair.
-   sc.vbar20 = c.vbar20;
-   sc.s      = c.s.value;
-   sc.D      = c.D.value;
-   sc.mw     = c.mw.value;
-   sc.f      = c.f.value;
-   sc.f_f0   = c.f_f0.value;
+   for ( const Component& c : components )
+   {
+      US_Model::SimulationComponent sc;
+      // Zero every unsupplied field so defaults cannot select the wrong pair.
+      sc.vbar20 = c.vbar20;
+      sc.s      = c.s.value;
+      sc.D      = c.D.value;
+      sc.mw     = c.mw.value;
+      sc.f      = c.f.value;
+      sc.f_f0   = c.f_f0.value;
 
-   model_out.components << sc;
+      sc.signal_concentration = c.concentration;
+
+      if ( ! c.name.isEmpty() )
+         sc.name = c.name;
+
+      model_out.components << sc;
+   }
+
+   // Solves each component independently; components do not interact.
    model_out.update_coefficients();
 
    return model_out;

@@ -5,7 +5,7 @@
 #include "us_extern.h"
 #include "us_model.h"
 
-//! \brief Describe one solute species and turn it into a model.
+//! \brief Describe one or more solute species and turn them into a model.
 //! Accepts any coefficient pair US_Model::calc_coefficients() can solve.
 class US_UTIL_EXTERN US_SimSpecies
 {
@@ -40,6 +40,13 @@ class US_UTIL_EXTERN US_SimSpecies
             Coeff mw;      //!< Molecular weight (Daltons)
             Coeff f;       //!< Frictional coefficient (g/s)
             Coeff f_f0;    //!< Frictional ratio (1.0 = perfect sphere)
+
+            //! Descriptive name. Empty keeps the US_Model default.
+            QString name;
+
+            //! This species' share of the loading concentration. Only the
+            //! ratio between components of one model is meaningful.
+            double concentration;
       };
 
       //! \brief One coefficient a caller may supply on a Component.
@@ -63,9 +70,22 @@ class US_UTIL_EXTERN US_SimSpecies
       //! \return An empty string if valid; otherwise, an error message.
       static QString validateComponent( const Component& c );
 
+      //! \brief Validate every species of a mixture.
+      //! Each must satisfy validateComponent(); the list must not be empty.
+      //! \return An empty string if valid; otherwise, an error message
+      //!         identifying which component failed.
+      static QString validateComponents( const QVector< Component >& components );
+
       //! \brief Create a single-component absorbance model from a species.
       //! \param c Species to build; must satisfy validateComponent().
       static US_Model model( const Component& c );
+
+      //! \brief Create a multi-component absorbance model from a mixture.
+      //! Components keep the given order and each carries its own
+      //! concentration, so a mixture such as a monomer/dimer pair is one
+      //! model rather than several.
+      //! \param components Species to build; must satisfy validateComponents().
+      static US_Model model( const QVector< Component >& components );
 
       //! \brief Create a default single-component absorbance model.
       //! Equivalent to model( defaultComponent() ).
