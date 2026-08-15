@@ -470,6 +470,194 @@ else()
 endif()
 
 # =========================================================================
+# 8c) Dependency-completeness pass via linuxdeploy
+#
+#     Sections 3-4 above hand-curate which .so files get bundled (UltraScan's
+#     own libs, everything vcpkg built for Qt/Qwt/OpenSSL). That approach
+#     structurally cannot see runtime libraries that come from the *system*
+#     rather than vcpkg -- e.g. libxcb-cursor.so.0, which Qt6's xcb platform
+#     plugin dlopens at runtime (required since Qt 6.5) but which vcpkg does
+#     not vendor (Qt links against the host's X11/xcb stack by design, same
+#     as libX11/libGL). A machine without libxcb-cursor0 installed system-wide
+#     will crash on startup with "This application failed to start because no
+#     Qt platform plugin could be initialized" even though bootstrap-linux.sh
+#     lists libxcb-cursor-dev as a *build*-time header package -- the runtime
+#     .so was simply never staged into the tarball.
+#
+#     linuxdeploy (github.com/linuxdeploy/linuxdeploy) is macdeployqt's Linux
+#     analog: given a set of executables, it walks their real ELF dependency
+#     graph (like ldd) and bundles anything missing. We use it ONLY for that
+#     dependency-discovery capability -- not to restructure this tarball into
+#     an AppImage/AppDir (usr/bin, usr/lib, .desktop, icon) layout, which
+#     would be a much bigger, riskier change rippling into us.sh, qt.conf,
+#     and the mirrored Mac/Win deploy scripts. So: run it against a throwaway
+#     scratch AppDir, then merge only the *new* libraries it finds into the
+#     existing lib/ -- everything else about the tarball layout is untouched.
+#
+#     Best-effort: if the download/tool fails for any reason, this step warns
+#     and the packaging build continues (mirrors the rasmol fetch policy in
+#     MacDeploy.cmake/WinDeploy.cmake -- a missing optional piece degrades a
+#     feature, it doesn't fail the whole build).
+# =========================================================================
+execute_process(COMMAND uname -m OUTPUT_VARIABLE _uname_m OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(_uname_m STREQUAL "x86_64")
+    set(_LD_ARCH "x86_64")
+elseif(_uname_m MATCHES "^(aarch64|arm64)$")
+    set(_LD_ARCH "aarch64")
+else()
+    set(_LD_ARCH "")
+endif()
+
+# Cache the downloaded/extracted tool next to the stage dir (build/<preset>/_tools/)
+# so repeated packaging runs on the same machine don't re-download it every time.
+get_filename_component(_LNX_PRESET_DIR "${STAGE_DIR}" DIRECTORY)  # .../_stage
+get_filename_component(_LNX_PRESET_DIR "${_LNX_PRESET_DIR}" DIRECTORY)  # .../<preset>
+set(_LD_TOOL_DIR "${_LNX_PRESET_DIR}/_tools/linuxdeploy")
+set(_LD_APPIMAGE "${_LD_TOOL_DIR}/linuxdeploy-${_LD_ARCH}.AppImage")
+set(_LD_APPRUN   "${_LD_TOOL_DIR}/squashfs-root/AppRun")
+
+if(NOT _LD_ARCH)
+    message(WARNING "[LinuxDeploy] Unsupported arch '${_uname_m}' for linuxdeploy -- skipping dependency-completeness pass")
+elseif(NOT EXISTS "${_LD_APPRUN}")
+    file(MAKE_DIRECTORY "${_LD_TOOL_DIR}")
+    if(NOT EXISTS "${_LD_APPIMAGE}")
+        message(STATUS "[LinuxDeploy] Fetching linuxdeploy (${_LD_ARCH})...")
+        file(DOWNLOAD
+            "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${_LD_ARCH}.AppImage"
+            "${_LD_APPIMAGE}"
+            STATUS _ld_dl_status)
+        list(GET _ld_dl_status 0 _ld_dl_code)
+        if(NOT _ld_dl_code EQUAL 0)
+            list(GET _ld_dl_status 1 _ld_dl_msg)
+            message(WARNING "[LinuxDeploy] Failed to download linuxdeploy (${_ld_dl_msg}) -- skipping dependency-completeness pass")
+            file(REMOVE "${_LD_APPIMAGE}")
+        endif()
+    endif()
+    if(EXISTS "${_LD_APPIMAGE}")
+        file(CHMOD "${_LD_APPIMAGE}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                                                  GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+        # --appimage-extract avoids needing FUSE, which is frequently unavailable
+        # in Docker/CI containers.
+        execute_process(
+            COMMAND "${_LD_APPIMAGE}" --appimage-extract
+            WORKING_DIRECTORY "${_LD_TOOL_DIR}"
+            RESULT_VARIABLE _ld_extract_rc
+            OUTPUT_QUIET ERROR_QUIET
+        )
+        if(NOT _ld_extract_rc EQUAL 0)
+            message(WARNING "[LinuxDeploy] Failed to extract linuxdeploy AppImage -- skipping dependency-completeness pass")
+        endif()
+    endif()
+endif()
+
+if(EXISTS "${_LD_APPRUN}")
+    # linuxdeploy requires at least one --desktop-file to run at all, even
+    # though we have no use for desktop integration in a portable tarball.
+    # Generate throwaway placeholder inputs purely to satisfy that requirement.
+    set(_LD_SCRATCH "${STAGE_DIR}-linuxdeploy-scratch")
+    file(REMOVE_RECURSE "${_LD_SCRATCH}")
+    file(MAKE_DIRECTORY "${_LD_SCRATCH}")
+    set(_LD_DESKTOP "${_LD_SCRATCH}/us.desktop")
+    set(_LD_ICON    "${_LD_SCRATCH}/us.svg")
+    file(WRITE "${_LD_DESKTOP}"
+"[Desktop Entry]
+Type=Application
+Name=UltraScan3
+Exec=us
+Icon=us
+Categories=Science;
+")
+    file(WRITE "${_LD_ICON}" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1\" height=\"1\"/>")
+
+    # Collect every executable already staged into bin/ so linuxdeploy resolves
+    # dependencies for all of them, not just the main us binary.
+    file(GLOB _LD_EXES "${S_BIN}/us" "${S_BIN}/us_*" "${S_BIN}/assistant" "${S_BIN}/us3_*" "${S_BIN}/us_somo*")
+    set(_LD_EXE_ARGS "")
+    foreach(_exe ${_LD_EXES})
+        if(NOT IS_DIRECTORY "${_exe}" AND NOT IS_SYMLINK "${_exe}")
+            list(APPEND _LD_EXE_ARGS "--executable" "${_exe}")
+        endif()
+    endforeach()
+
+    list(LENGTH _LD_EXES _LD_EXE_COUNT)
+    set(_LD_APPDIR "${_LD_SCRATCH}/AppDir")
+    message(STATUS "[LinuxDeploy] Running linuxdeploy dependency scan over ${_LD_EXE_COUNT} staged executables...")
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" -E env
+            "LD_LIBRARY_PATH=${S_LIB}:${VCPKG_LIB_DIR}:$ENV{LD_LIBRARY_PATH}"
+            "${_LD_APPRUN}"
+            --appdir "${_LD_APPDIR}"
+            --desktop-file "${_LD_DESKTOP}"
+            --icon-file "${_LD_ICON}"
+            ${_LD_EXE_ARGS}
+        RESULT_VARIABLE _ld_run_rc
+        OUTPUT_VARIABLE _ld_run_out
+        ERROR_VARIABLE  _ld_run_err
+    )
+    if(NOT _ld_run_rc EQUAL 0)
+        message(WARNING "[LinuxDeploy] linuxdeploy dependency scan failed (rc=${_ld_run_rc}): ${_ld_run_err}")
+    else()
+        # Merge only libraries linuxdeploy found that we don't already have --
+        # this is the whole point: pick up system libs (libxcb-cursor.so.0 and
+        # anything else) that sections 3-4's vcpkg-only globs cannot see.
+        file(GLOB _ld_found_libs "${_LD_APPDIR}/usr/lib/*.so*")
+        set(_ld_new_count 0)
+        foreach(_lib ${_ld_found_libs})
+            get_filename_component(_n "${_lib}" NAME)
+            if(NOT EXISTS "${S_LIB}/${_n}")
+                message(STATUS "  [linuxdeploy] Bundling missing runtime dependency: ${_n}")
+                file(COPY "${_lib}" DESTINATION "${S_LIB}")
+                math(EXPR _ld_new_count "${_ld_new_count} + 1")
+            endif()
+        endforeach()
+        message(STATUS "[LinuxDeploy] linuxdeploy found ${_ld_new_count} additional runtime dependency/ies not covered by the vcpkg lib copy")
+    endif()
+
+    file(REMOVE_RECURSE "${_LD_SCRATCH}")
+else()
+    message(STATUS "[LinuxDeploy] linuxdeploy not available -- dependency-completeness pass skipped")
+    message(STATUS "  (known gap: libxcb-cursor.so.0 and similar system Qt runtime deps may be missing)")
+endif()
+
+# =========================================================================
+# 8d) Explicitly bundle libxcb-cursor -- linuxdeploy's "missing" heuristic
+#     cannot catch this one
+#
+#     linuxdeploy (section 8c) and macdeployqt-style tools in general only
+#     bundle a library if ldd reports it unresolved *on the build machine*.
+#     bootstrap-linux.sh installs libxcb-cursor-dev, which pulls in the
+#     runtime libxcb-cursor0/libxcb-cursor.so.0 as an apt dependency -- so on
+#     every machine that can build this project, ldd on `us` always resolves
+#     it successfully, and linuxdeploy therefore never considers it "missing"
+#     and never bundles it. But Qt6's xcb platform plugin still needs it at
+#     runtime on the *target* machine (required since Qt 6.5), and plenty of
+#     target machines won't have it pre-installed. So: bundle it explicitly
+#     by name, the same way libssl/libcrypto/libsqlite3 are explicitly
+#     globbed above, rather than relying on a "missing on build machine"
+#     heuristic that can never fire for this library.
+# =========================================================================
+if(NOT EXISTS "${S_LIB}/libxcb-cursor.so.0")
+    execute_process(
+        COMMAND bash -c "ldconfig -p 2>/dev/null | grep -m1 'libxcb-cursor\\.so' | awk '{print \$NF}'"
+        OUTPUT_VARIABLE _xcb_cursor_path
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(_xcb_cursor_path AND EXISTS "${_xcb_cursor_path}")
+        message(STATUS "[LinuxDeploy] Explicitly bundling libxcb-cursor from ${_xcb_cursor_path}")
+        # -L dereferences the symlink so a real regular file lands in lib/,
+        # not a dangling link back to a system-only path.
+        execute_process(COMMAND cp -L "${_xcb_cursor_path}" "${S_LIB}/libxcb-cursor.so.0")
+    else()
+        message(WARNING
+            "[LinuxDeploy] libxcb-cursor.so not found on this build machine via ldconfig -- "
+            "not bundled. Install libxcb-cursor-dev (Debian/Ubuntu) or "
+            "xcb-util-cursor-devel (RHEL/Rocky/Oracle) on the build machine so it can be staged.")
+    endif()
+else()
+    message(STATUS "[LinuxDeploy] libxcb-cursor.so.0 already staged -- skipping explicit bundle")
+endif()
+
+# =========================================================================
 # 9) Copy license.txt
 #    Mirrors WinDeploy.cmake section 10
 # =========================================================================
@@ -480,6 +668,11 @@ if(LICENSE_FILE AND EXISTS "${LICENSE_FILE}")
     if(NOT "${_lic_name}" STREQUAL "license.txt")
         file(RENAME "${STAGE_DIR}/${_lic_name}" "${STAGE_DIR}/license.txt")
     endif()
+endif()
+
+if(VERSION_FILE AND EXISTS "${VERSION_FILE}")
+    message(STATUS "[LinuxDeploy] Copying VERSION")
+    file(COPY "${VERSION_FILE}" DESTINATION "${STAGE_DIR}")
 endif()
 
 # =========================================================================

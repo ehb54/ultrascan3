@@ -24,6 +24,27 @@ message(STATUS "UltraScan3 version: ${US3_VERSION_STRING}")
 message(STATUS "UltraScan3 description: ${US3_DESCRIPTION}")
 
 # =============================================================================
+# VERSION FILE CONSISTENCY CHECK
+# =============================================================================
+# The root VERSION file is a plain-text convenience copy of the version for
+# tooling/humans that don't want to parse us_defines.h. It is not generated
+# automatically -- it must be bumped by hand alongside US_Version -- but the
+# build fails fast if the two are ever allowed to drift apart.
+set(_us3_version_file "${CMAKE_SOURCE_DIR}/VERSION")
+if(EXISTS "${_us3_version_file}")
+    file(READ "${_us3_version_file}" _us3_version_file_content)
+    string(STRIP "${_us3_version_file_content}" _us3_version_file_content)
+    if(NOT _us3_version_file_content STREQUAL US3_VERSION_STRING)
+        message(FATAL_ERROR
+            "VERSION file (\"${_us3_version_file_content}\") does not match "
+            "US_Version in utils/us_defines.h (\"${US3_VERSION_STRING}\"). "
+            "Update VERSION to match before configuring.")
+    endif()
+else()
+    message(FATAL_ERROR "Root VERSION file not found at ${_us3_version_file}")
+endif()
+
+# =============================================================================
 # VERSION HEADER GENERATION
 # =============================================================================
 # Generate us/us_revision.h only when Git state changes (not on every build)
@@ -781,7 +802,10 @@ if(NOT US3_NO_DB)
 endif()
 
 # Platform-specific libraries
-if(UNIX AND NOT APPLE)
+# GLU/X11 are display libraries only needed by the GUI (gui/, programs/us_*).
+# HPC is headless (US3_PROFILE=HPC builds only us_mpi_analysis, no GUI), so
+# don't require them there -- a bare HPC-only host may not have them installed.
+if(UNIX AND NOT APPLE AND NOT US3_PROFILE STREQUAL "HPC")
     find_library(GLU_LIBRARY GLU REQUIRED)
     find_package(X11 REQUIRED)
 elseif(WIN32)
@@ -1195,6 +1219,7 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DVCPKG_LIB_DIR=${_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_VCPKG_PLUGIN_DIR}
                 -DVCPKG_PLUGIN_DIR_STA=${_VCPKG_PLUGIN_DIR_STA}
@@ -1457,6 +1482,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
             DEPENDS ${_deploy_windows_deps}
@@ -1727,6 +1753,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
                 -DASSISTANT_EXE=${_LNX_ASSISTANT_EXE}
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
@@ -1848,6 +1875,7 @@ if(UNIX AND NOT APPLE AND US3_PROFILE STREQUAL "HPC")
             -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
             -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+            -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
             -DVCPKG_LIB_DIR=${_HPC_VCPKG_LIB_DIR}
             -DUS3_VERSION_STRING=${US3_VERSION_STRING}
             -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxHpcDeploy.cmake
@@ -1922,6 +1950,7 @@ if(APPLE AND US3_PROFILE STREQUAL "HPC")
             -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
             -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+            -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
             -DVCPKG_LIB_DIR=${_MAC_HPC_VCPKG_LIB_DIR}
             -DUS3_VERSION_STRING=${US3_VERSION_STRING}
             -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacHpcDeploy.cmake

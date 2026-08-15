@@ -3,12 +3,10 @@ name: Build — macOS Intel
 # ============================================================================
 # Reusable platform build workflow: macOS 15 Intel x86_64
 # Profiles:  APP
-# Callers:   nightly-build.yml (scheduled, Group 2) and on-demand-build.yml
-#            (manual dispatch) invoke this via workflow_call.
+# Callers:   nightly-build.yml, on-demand-build.yml, and release.yml invoke
+#            this via workflow_call.
 # Standalone: workflow_dispatch on this file for one-off builds; runs
 #             probe → warm → build. No schedule trigger on this file.
-# Note:      release.yml calls ultrascan-reusable-build.yml (external) directly
-#            and does NOT invoke this workflow.
 # ============================================================================
 #
 # Change detection for scheduled nightly runs is handled by nightly-build.yml.
@@ -117,3 +115,5 @@ jobs:
       clean_tier:              ${{ inputs.clean_tier || 'incremental' }}
       artifact_name_prefix:    ${{ inputs.artifact_name_prefix || format('nightly-{0}', github.run_id) }}
       artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days || '3') }}
+      require_exact_cache_hit: true
+      save_cache:              false
