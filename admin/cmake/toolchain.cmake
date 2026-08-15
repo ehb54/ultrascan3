@@ -74,14 +74,28 @@ endif()
 message(STATUS "Platform: ${CMAKE_HOST_SYSTEM_NAME}, triplet: ${VCPKG_TARGET_TRIPLET}")
 
 # =============================================================================
-# Set shared vcpkg installed dir BEFORE including vcpkg.cmake so manifest-mode
-# doesn't default to ${CMAKE_BINARY_DIR}/vcpkg_installed.
-# Priority: explicit -DVCPKG_INSTALLED_DIR > VCPKG_ROOT/installed
+# vcpkg installed dir: left at vcpkg's manifest-mode default,
+# ${CMAKE_BINARY_DIR}/vcpkg_installed.
+#
+# A tree under VCPKG_ROOT cannot be shared between build trees: manifest mode
+# makes it match the CURRENT VCPKG_MANIFEST_FEATURES exactly, so an HPC
+# configure uninstalls the APP profile's qwt and vice versa, and each
+# invalidates the other's configure stamp. Keeping packages in the build tree
+# removes the sharing that made that possible. They come from the binary cache
+# (VCPKG_BINARY_SOURCES), so a new tree restores rather than rebuilds.
 # =============================================================================
-if(NOT DEFINED VCPKG_INSTALLED_DIR OR "${VCPKG_INSTALLED_DIR}" STREQUAL "")
-    set(VCPKG_INSTALLED_DIR "${_VCPKG_ROOT}/installed" CACHE PATH
-        "vcpkg installed packages directory" FORCE)
-    message(STATUS "Set VCPKG_INSTALLED_DIR to shared dir: ${VCPKG_INSTALLED_DIR}")
+# string(FIND), not MATCHES: the needle is a path, so a regex metacharacter in
+# it (+, (, a Windows backslash) would silently fail to match. Prefix rather
+# than equality, to catch the feature-keyed variants (installed-qt6-app, ...).
+set(_us3_shared_installed_dir "${_VCPKG_ROOT}/installed")
+if(DEFINED VCPKG_INSTALLED_DIR AND NOT "${VCPKG_INSTALLED_DIR}" STREQUAL "")
+    # Migrate caches written while a shared tree was in use.
+    string(FIND "${VCPKG_INSTALLED_DIR}" "${_us3_shared_installed_dir}" _us3_shared_pos)
+    if(_us3_shared_pos EQUAL 0)
+        unset(VCPKG_INSTALLED_DIR CACHE)
+        unset(_VCPKG_INSTALLED_DIR CACHE)
+        message(STATUS "vcpkg installed dir: migrated to the build-local default")
+    endif()
 endif()
 
 # =============================================================================

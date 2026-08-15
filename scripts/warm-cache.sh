@@ -314,7 +314,13 @@ if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
 fi
 
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
-export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
+
+# Dedicated staging tree: each stage's --x-feature subset prunes the previous
+# stage's packages, so keep it out of the trees real builds configure against.
+# Not exported: the vcpkg CLI ignores VCPKG_INSTALLED_DIR (a CMake toolchain
+# variable) and reads --x-install-root below, so exporting it would only leak
+# the staging path into a child cmake.
+VCPKG_WARM_INSTALL_ROOT="$US3_VCPKG_ROOT/installed-warm"
 
 # Binary cache
 if [ -n "${US3_VCPKG_CACHE:-}" ]; then
@@ -358,6 +364,8 @@ VCPKG_ARGS=(
   "--host-triplet=${STATIC_TRIPLET}"
   "--overlay-triplets=${OVERLAY_TRIPLETS}"
   "--x-no-default-features"
+  # The staging tree is passed with the option the CLI actually reads.
+  "--x-install-root=${VCPKG_WARM_INSTALL_ROOT}"
 )
 if [ -d "$OVERLAY_PORTS" ]; then
   VCPKG_ARGS+=("--overlay-ports=${OVERLAY_PORTS}")
@@ -367,6 +375,7 @@ if [ -n "$FEATURE" ]; then
 fi
 
 echo "  vcpkg root     : $US3_VCPKG_ROOT"
+echo "  install root   : $VCPKG_WARM_INSTALL_ROOT"
 echo "  vcpkg cache    : $US3_VCPKG_CACHE"
 echo "  vcpkg downloads: $US3_VCPKG_DOWNLOADS"
 echo "  triplet        : $TRIPLET"

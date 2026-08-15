@@ -57,6 +57,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       has_changes: ${{ steps.detect.outputs.has_changes }}
+      build_sha: ${{ steps.detect.outputs.build_sha }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -69,6 +70,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          # Resolve main once. Every platform and the publisher use this exact
+          # commit so a long-running nightly cannot mix artifacts from commits
+          # that land while the workflow is running.
+          MAIN_SHA=$(git rev-parse origin/main)
+          echo "Current origin/main SHA: ${MAIN_SHA}"
+          echo "build_sha=${MAIN_SHA}" >> "$GITHUB_OUTPUT"
+
           # --- 1. workflow_dispatch always proceeds --------------------------
           if [[ "${{ github.event_name }}" != "schedule" ]]; then
             echo "Triggered by workflow_dispatch — proceeding unconditionally."
@@ -101,9 +109,6 @@ jobs:
           # refs/tags/nightly, not the commit SHA. The peeled ref
           # refs/tags/nightly^{} always resolves to the underlying commit.
           # We try the peeled form first and fall back to the raw tag ref.
-
-          MAIN_SHA=$(git rev-parse origin/main)
-          echo "Current origin/main SHA: ${MAIN_SHA}"
 
           NIGHTLY_SHA=$(git ls-remote origin 'refs/tags/nightly^{}' | awk '{print $1}')
           if [[ -z "${NIGHTLY_SHA}" ]]; then
@@ -156,7 +161,7 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true'
     uses: ./.github/workflows/build-ubuntu.yml
     with:
-      ref:                     main
+      ref:                     ${{ needs.check-changes.outputs.build_sha }}
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
       artifact_retention_days: 3
@@ -168,7 +173,7 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true'
     uses: ./.github/workflows/build-macos-arm.yml
     with:
-      ref:                     main
+      ref:                     ${{ needs.check-changes.outputs.build_sha }}
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
       artifact_retention_days: 3
@@ -182,7 +187,7 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
     uses: ./.github/workflows/build-oraclelinux.yml
     with:
-      ref:                     main
+      ref:                     ${{ needs.check-changes.outputs.build_sha }}
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
       artifact_retention_days: 3
@@ -194,7 +199,7 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
     uses: ./.github/workflows/build-macos-intel.yml
     with:
-      ref:                     main
+      ref:                     ${{ needs.check-changes.outputs.build_sha }}
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
       artifact_retention_days: 3
@@ -208,7 +213,7 @@ jobs:
     if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
     uses: ./.github/workflows/build-windows.yml
     with:
-      ref:                     main
+      ref:                     ${{ needs.check-changes.outputs.build_sha }}
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
       artifact_retention_days: 3
@@ -217,9 +222,11 @@ jobs:
   # =========================================================================
   # PHASE 4 — PUBLISH RELEASE
   # Runs only when all builds succeed. Downloads all run artifacts, renames
-  # each to a stable filename, then publishes/overwrites the rolling `nightly`
-  # GitHub Release. The release assets are the canonical distribution —
-  # artifact retention stays at 3 days.
+  # each to a unique filename, then updates the rolling `nightly` GitHub
+  # Release in place. New assets are uploaded and verified before the tag,
+  # metadata, or old assets change, so a failed publish leaves the previous
+  # nightly available. Release assets are the canonical distribution — artifact
+  # retention stays at 3 days.
   # =========================================================================
 
   publish-release:
@@ -236,7 +243,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: main
+          ref: ${{ needs.check-changes.outputs.build_sha }}
           fetch-depth: 1
 
       - name: Download all build artifacts
@@ -254,12 +261,18 @@ jobs:
 
           DATE=$(date -u +%Y%m%d)
           SHORT_SHA=$(git rev-parse --short HEAD)
-          LABEL="nightly-${DATE}-${SHORT_SHA}"
+          # Include the run ID so retries and manual rebuilds of the same commit
+          # never collide with assets already present on the rolling release.
+          LABEL="nightly-${DATE}-${SHORT_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
           cp_first() {
-            local pattern="$1" dest="$2"
+            local pattern="$1" dest="$2" exclude="${3:-}"
             local src
-            src=$(find artifacts -path "$pattern" | head -1)
+            if [[ -n "$exclude" ]]; then
+              src=$(find artifacts -path "$pattern" ! -path "*$exclude*" | head -1)
+            else
+              src=$(find artifacts -path "$pattern" | head -1)
+            fi
             [ -n "$src" ] || { echo "ERROR: no file matching $pattern"; exit 1; }
             cp "$src" "release-assets/$dest"
             echo "  $dest <- $src"
@@ -279,13 +292,13 @@ jobs:
 
           # Ubuntu 24.04 (.tar.xz from build system)
           cp_first "artifacts/nightly-*-ubuntu-24.04-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
-            "us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+            "us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz" "-HPC-"
           cp_first "artifacts/nightly-*-HPC-ubuntu-24.04-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
             "us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
 
           # Oracle Linux 8 / RHEL 8 (.tar.xz from build system)
           cp_first "artifacts/nightly-*-oraclelinux8-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
-            "us3-redhat-8.10-x86_64-${LABEL}.tar.xz"
+            "us3-redhat-8.10-x86_64-${LABEL}.tar.xz" "-HPC-"
           cp_first "artifacts/nightly-*-HPC-oraclelinux8-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
             "us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz"
 
@@ -323,15 +336,81 @@ jobs:
           | \`us3-redhat-8.10-x86_64-${LABEL}.tar.xz\`               | Oracle Linux 8 / RHEL 8 x86_64 | Desktop |
           | \`us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz\`           | Oracle Linux 8 / RHEL 8 x86_64 | HPC/MPI |"
 
-          # Delete existing nightly release and tag if present
-          gh release delete nightly --yes --cleanup-tag 2>/dev/null || true
-          sleep 2
+          if gh release view nightly >/dev/null 2>&1; then
+            # Capture the old asset names before uploading anything. The new
+            # names contain the run ID and attempt, so both generations can
+            # coexist during validation.
+            mapfile -t OLD_ASSETS < <(
+              gh release view nightly --json assets --jq '.assets[].name'
+            )
+            mapfile -t NEW_ASSETS < <(
+              for ASSET in release-assets/*; do basename "$ASSET"; done
+            )
+            OLD_TAG_SHA=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/git/ref/tags/nightly" \
+              --jq '.object.sha')
+            TAG_MOVED=false
 
-          # Create new release with all assets
-          gh release create nightly release-assets/* \
-            --title "Nightly Build" \
-            --notes "$NOTES" \
-            --prerelease \
-            --target main
-          
-          
+            rollback_publish() {
+              local STATUS=$?
+              if [[ $# -gt 0 ]]; then STATUS="$1"; fi
+              set +e
+              echo "Rolling back incomplete nightly publication..."
+              if [[ "$TAG_MOVED" == "true" ]]; then
+                gh api --method PATCH \
+                  "repos/${GITHUB_REPOSITORY}/git/refs/tags/nightly" \
+                  -f sha="$OLD_TAG_SHA" -F force=true >/dev/null
+              fi
+              for NEW_ASSET in "${NEW_ASSETS[@]}"; do
+                gh release delete-asset nightly "$NEW_ASSET" --yes >/dev/null 2>&1 || true
+              done
+              exit "$STATUS"
+            }
+            trap rollback_publish ERR
+
+            echo "Uploading replacement assets while the current nightly remains available..."
+            gh release upload nightly release-assets/*
+
+            # Do not alter the release or tag until every replacement asset is
+            # present remotely with the exact local byte count.
+            RELEASE_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/nightly")
+            for ASSET in release-assets/*; do
+              NAME=$(basename "$ASSET")
+              LOCAL_SIZE=$(stat -c '%s' "$ASSET")
+              REMOTE_SIZE=$(jq -r --arg name "$NAME" \
+                '.assets[] | select(.name == $name) | .size' <<< "$RELEASE_JSON")
+              if [[ -z "$REMOTE_SIZE" || "$REMOTE_SIZE" == "null" || "$REMOTE_SIZE" != "$LOCAL_SIZE" ]]; then
+                echo "ERROR: remote verification failed for $NAME (local=$LOCAL_SIZE, remote=${REMOTE_SIZE:-missing})"
+                rollback_publish 1
+              fi
+              echo "Verified $NAME ($LOCAL_SIZE bytes)"
+            done
+
+            # Updating an existing ref is atomic. If this or the metadata edit
+            # fails, the release and both asset generations remain available.
+            gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/git/refs/tags/nightly" \
+              -f sha="${{ needs.check-changes.outputs.build_sha }}" \
+              -F force=true >/dev/null
+            TAG_MOVED=true
+            gh release edit nightly \
+              --title "Nightly Build" \
+              --notes "$NOTES" \
+              --prerelease
+            trap - ERR
+
+            # Cleanup is deliberately last and non-fatal. A cleanup problem is
+            # preferable to making a valid nightly unavailable.
+            for OLD_ASSET in "${OLD_ASSETS[@]}"; do
+              gh release delete-asset nightly "$OLD_ASSET" --yes || \
+                echo "WARNING: could not remove old asset $OLD_ASSET"
+            done
+          else
+            # First publication has no existing nightly to preserve. gh creates
+            # a draft internally, uploads all assets, then publishes it.
+            gh release create nightly release-assets/* \
+              --title "Nightly Build" \
+              --notes "$NOTES" \
+              --prerelease \
+              --target "${{ needs.check-changes.outputs.build_sha }}"
+          fi
