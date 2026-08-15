@@ -10,7 +10,7 @@ when building the macOS PKG installer.
 |------|---------|
 | `distribution.xml.in` | productbuild distribution definition; `@US3_VERSION_STRING@` is substituted by CMake at configure time |
 | `component.plist` | pkgbuild component plist; declares relocatability and upgrade behaviour for `us.app` and `Assistant.app` |
-| `preinstall` | Installer script run as root before payload is laid down; checks for XQuartz and unloads any existing LaunchDaemon |
+| `preinstall` | Installer script run as root before payload is laid down; unloads any existing LaunchDaemon |
 | `postinstall` | Installer script run as root after payload; sets sysctl shared-memory values and bootstraps the LaunchDaemon |
 | `ultrascan_sysctl.plist` | LaunchDaemon plist installed to `/Library/LaunchDaemons/`; applies sysctl values at boot |
 | `uninstall.sh` | Staged into `/Applications/UltraScan3/`; provides a supported removal path for end users |
