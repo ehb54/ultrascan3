@@ -10,11 +10,19 @@
 // ladder costs ~1.14x its final rung: the convergence check is nearly free relative to
 // simply solving at the final size.
 //
-// MEASURED. Against unreduced exact GRPY as ground truth, the reported bar bounded the
-// true error in 92/92 translational runs (23 models, N=204-4068) and 252/252
-// multi-observable runs (12 models x 3 tolerances x 7 observables). The observed
-// convergence order (median 1.83) matches the value independently predicted by a separate
-// raw reduction sweep -- the error model is derived, not fitted.
+// MEASURED, against unreduced exact GRPY as ground truth. The full grid is 23 models
+// (N=204-4068) x 5 observables x 4 tolerances; every reduced evaluation met its requested
+// tolerance and the reported bar bounded the true error, worst case spending 55.3% of the
+// allowed budget. The observed convergence order (median 1.83) matches the value predicted
+// by a separate raw reduction sweep -- the error model is derived, not fitted.
+//
+// An earlier version of this note claimed 92/92 and 252/252. Both were wrong. The second
+// counted 7 observables, three of which are research-only with no shipped equivalent; and
+// the multi-observable grid covered 12 of the 23 models, so 11 models never had intrinsic
+// viscosity or rotational diffusion checked at all. Scored honestly on the value this code
+// actually returns -- the finest rung, not the extrapolation -- the same evidence was
+// 87/92 and 177/180, and widening the grid to all 23 models then exposed two outright
+// tolerance misses. That is what raising floor_frac to 0.75 fixes; see its comment below.
 //
 // SCOPE OF THE SPEEDUP. Relative to an unreduced model the gain is large (up to ~120x),
 // but SOMO defaults to ASA buried-bead exclusion, which already removes most of the dead
@@ -76,6 +84,28 @@ struct ShellOptions {
     std::vector<double> ladder = {0.0625, 0.125, 0.25, 0.5, 1.0};
     std::vector<Obs> require = {Obs::Dt, Obs::Dr, Obs::Sedimentation};
     double k_min = 1.0, k_max = 3.0, safety = 1.5;
+
+    // Floor on the error estimate, as a fraction of the raw inter-rung gap: the estimate never
+    // claims a tightening better than 1/floor_frac. Raised from 0.5 to 0.75 after validation on
+    // the full 23-model grid with all five observables -- the earlier grid ran five observables
+    // over only 12 models, and widening it exposed two evaluations that met the estimator's stop
+    // test yet missed the requested tolerance (2GD1 intrinsic viscosity at 1%: estimate 0.859%,
+    // true error 1.066%), plus eleven more that were compliant but undercovered.
+    //
+    // Raising THIS rather than `safety` is deliberate. The estimate is the max of the two terms,
+    // so while the floor binds the safety factor does nothing: with a doubling ladder and the
+    // order at k_max = 3 the Richardson remainder is gap/7, and safety * gap/7 stays under
+    // 0.5 * gap for any safety <= 3.5. Measured on the same grid, safety = 2.0 fixed neither
+    // failure and still drove the median case to retain every bead, because it inflates the
+    // estimate for the well-behaved majority where the floor is slack. The floor acts only on
+    // the high-observed-order rows that actually fail.
+    //
+    // At 0.75 the full grid is clean: 200/200 reduced evaluations inside their tolerance and
+    // all 200 covered, worst case using 55.3% of the allowed error budget (was 106.6%), for
+    // 4.6 percentage points more beads retained on average. Exposed rather than hardcoded so it
+    // can be validated without patching a copy of this header -- which is how it had to be
+    // measured, and a copy of an estimator is exactly what makes results unattributable later.
+    double floor_frac = 0.75;
 
     // Largest rung the ladder may attempt, in beads (0 = unlimited). Set by the caller from
     // the available memory: the solver holds the tiled upper triangle of an 11N x 11N
@@ -206,7 +236,8 @@ inline double richardson_order(double r1, double r2, double ratio_obs,
 }
 
 inline Richardson richardson(const std::vector<double>& v, const std::vector<int>& ns,
-                             double k_min, double k_max, double safety) {
+                             double k_min, double k_max, double safety,
+                             double floor_frac) {
     Richardson r;
     const size_t n = v.size();
     if (n < 3 || ns.size() != n)   { r.declined = "fewer than three rungs"; return r; }
@@ -242,8 +273,8 @@ inline Richardson richardson(const std::vector<double>& v, const std::vector<int
     // aggressive regime that carries the risk -- and is slack at the median observed
     // k~1.83, so the extrapolation keeps its benefit on well-behaved models.
     double raw_gap = std::fabs(gap2) / std::fabs(r.mu);
-    r.floored = (0.5 * raw_gap > err);
-    r.err = std::max(err, 0.5 * raw_gap);
+    r.floored = (floor_frac * raw_gap > err);
+    r.err = std::max(err, floor_frac * raw_gap);
     r.ok = true;
     return r;
 }
@@ -374,7 +405,8 @@ public:
                 // a single shared k would be wrong for all but one of them.
                 std::vector<double> series;
                 for (auto& h : hist) series.push_back(h[m]);
-                Richardson ri = richardson(series, rep.ns, sopt_.k_min, sopt_.k_max, sopt_.safety);
+                Richardson ri = richardson(series, rep.ns, sopt_.k_min, sopt_.k_max, sopt_.safety,
+                                           sopt_.floor_frac);
                 rep.prov[m] = { ri.ok, ri.clamped_low, ri.clamped_high, ri.floored, ri.declined };
                 if (ri.ok) { rep.extrapolated[m] = ri.mu; rep.err_est[m] = ri.err; rep.k_obs[m] = ri.k; }
                 else {
