@@ -1,15 +1,7 @@
-// Prove that the test executable and the utilities library it links were
-// compiled with the same database-related definitions.
-//
-// us_db2.h declares three private MYSQL members only when NO_DB is undefined, so
-// a test translation unit compiled with NO_DB disagrees with a DB-enabled
-// library about the layout of US_DB2 -- an ODR violation that silently corrupts
-// every US_DB2 the tests touch.
-//
-// This translation unit's variant comes from the preprocessor; the library's is
-// probed through US_Settings::us_debug(), which persists the level through
-// QSettings only in the DB-enabled build.  Test settings are already sandboxed,
-// so the probe writes nothing outside it.
+// Prove the test executable and the utils library were compiled with the
+// same NO_DB setting: us_db2.h declares MYSQL members only when NO_DB is
+// undefined, so a mismatch is an ODR violation on US_DB2.  The library is
+// probed through us_debug(), which uses QSettings only in the DB build.
 
 #include "qt_test_base.h"
 #include "us_defines.h"

@@ -996,9 +996,8 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
                                           const QString& cell )
 {
    QString now        = QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
-   // Reuse the geometry init_rawdata() built the radial grid from.  Deriving
-   // the stretch again here from rotorspeed puts the edit radii outside the
-   // data range whenever set_speed and rotorspeed disagree.
+   // Reuse the geometry init_rawdata() built the radial grid from; deriving
+   // the stretch again here puts the edit radii outside the data range.
    double  meniscus   = curr_meniscus;
    double  bottom     = curr_bottom;
 

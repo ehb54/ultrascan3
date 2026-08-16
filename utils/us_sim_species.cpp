@@ -63,9 +63,7 @@ QString US_SimSpecies::validateComponent( const Component& c )
       return QString( "signal concentration must be finite and greater than "
                       "zero (got %1)" ).arg( c.signal_concentration );
 
-   // Only s may legitimately be negative. Zero is rejected along with the
-   // negatives: a massless, non-diffusing, frictionless species is not one
-   // calc_coefficients() can solve for.
+   // Only s may legitimately be negative; zero is unsolvable for all three.
    if ( c.s.supplied && ( ! qIsFinite( c.s.value ) || c.s.value == 0.0 ) )
       return QString( "s must be finite and nonzero (got %1)" ).arg( c.s.value );
    if ( c.mw.supplied && ( ! qIsFinite( c.mw.value ) || c.mw.value <= 0.0 ) )

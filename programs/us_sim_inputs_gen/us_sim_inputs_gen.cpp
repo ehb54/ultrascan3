@@ -127,9 +127,8 @@ static bool parse_component( const QCommandLineParser& parser,
    return true;
 }
 
-// Parse one --component specification: comma-separated key=value pairs, where
-// the keys are the coefficient names plus vbar20, conc, and name. Each
-// component states its own pair, so a mixture may mix parameterizations.
+// Parse one --component: comma-separated key=value pairs, the keys being
+// the coefficient names plus vbar20, conc, and name.
 static bool parse_component_spec( const QString& spec,
                                   US_SimSpecies::Component& component,
                                   QString& error )
@@ -313,9 +312,8 @@ int main( int argc, char* argv[] )
    QCommandLineOption ph_option( "ph", "Buffer pH", "value" );
    parser.addOption( ph_option );
 
-   // Generate simulation parameters using US_SimInputs::simParams() defaults
-   // for omitted options. Omitting every option produces the same content as
-   // sp_default.xml in default mode.
+   // Use US_SimInputs::simParams() defaults for omitted options; omitting
+   // every option reproduces sp_default.xml.
    QCommandLineOption emit_simparams_option( "emit-simparams",
       "Write a simulation-parameter XML to the file specified by --out; all "
       "run-condition options are optional and use documented defaults" );
@@ -713,10 +711,8 @@ int main( int argc, char* argv[] )
 
    if ( has_runid || has_channel || has_wavelength )
    {
-      // Generate one model whose description follows the
-      // <runid>.<channel><wavelength>.<...> convention parsed by
-      // us_mwl_species_sim. A run shares its buffer and simulation parameters
-      // across wavelengths; generate those once in default mode.
+      // One model per wavelength, described in the convention
+      // us_mwl_species_sim parses; buffer and simparms are shared across them.
       if ( ! ( has_runid && has_channel && has_wavelength ) )
       {
          QTextStream( stderr ) << "Error: --run-id, --channel, and "

@@ -386,10 +386,8 @@ QString US_AbstractCenterpiece::validate( int centerpiece, int channel )
       return QString( "centerpiece index %1 is out of range (0-%2)" )
          .arg( centerpiece ).arg( cp_list.size() - 1 );
 
-   // Bound the channel the way US_SimulationParameters::setHardware() indexes
-   // it: by the per-row lists, not by the "channels" column count.  For a
-   // version-1.0 abstractCenterpieces.xml the two diverge, and validating
-   // against "channels" would accept a row setHardware() then rejects.
+   // Bound the channel by the per-row lists, the way setHardware() indexes
+   // it; the "channels" column disagrees with them in a version-1.0 file.
    const US_AbstractCenterpiece& cp = cp_list[ centerpiece ];
    int channel_count = qMin( cp.bottom_position.size(), cp.path_length.size() );
    if ( channel < 0 || channel >= channel_count )

@@ -293,16 +293,9 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  // The counter's up/down buttons are unusably small with the native macOS
-  // and Windows styles, so give just those buttons a Fusion style.  This is
-  // the same treatment, and the same test, that us_colorgradient applies.
-  // Every other style, the default US_Style( Fusion ) included, draws them
-  // correctly and is left alone: overriding it would drop the UltraScan
-  // shapes US_Style adds and ignore the style chosen in us_config.
-  //
-  // The name comes from US_GuiSettings, the same source US_Theme::apply()
-  // uses, rather than from qApp->style()->objectName(): US_Theme wraps the
-  // chosen style in US_Style, a QProxyStyle that leaves objectName empty.
+  // Give the counter's up/down buttons a Fusion style under the native
+  // macOS and Windows styles, where they are unusably small.  US_Style
+  // leaves objectName empty, so the name comes from US_GuiSettings.
   QString stynam  = US_GuiSettings::guiStyle();
   bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
                      stynam.startsWith( "mac"    , Qt::CaseInsensitive );

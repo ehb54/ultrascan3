@@ -11,9 +11,8 @@
 #include "us_defines.h"
 #include "us_settings.h"
 
-// Native QTest normally creates QApplication through QTEST_MAIN.  UltraScan
-// tests need to configure the platform plugin and isolate writable settings
-// first, so UI tests use this equivalent main instead.
+// Equivalent of QTEST_MAIN that configures the platform plugin and
+// isolates writable settings before creating QApplication.
 #define US3_GUI_TEST_MAIN(TestClass)                                           \
 int main(int argc, char** argv)                                                \
 {                                                                              \

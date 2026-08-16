@@ -205,10 +205,8 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
       return false;
    }
 
-   // Build both inputs before writing anything.  Construction reads hardware
-   // and centerpiece definitions from disk, so it can fail in an installed
-   // layout; writing a default-constructed value would produce a file that
-   // parses but describes an unusable run.
+   // Build both inputs before writing: construction reads hardware
+   // definitions from disk and can fail, leaving an unusable run on disk.
    US_SimulationParameters params;
    if ( ! simParams( params, error ) )
       return false;

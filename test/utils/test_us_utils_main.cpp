@@ -31,9 +31,8 @@ QByteArray fileDigest( const QString& path )
 class QtTestEnvironment : public ::testing::Environment {
 public:
     void SetUp() override {
-        // Capture only the location and digest needed to prove that the real
-        // per-user settings store is not modified.  Tests never consume its
-        // values as input.
+        // Capture only what proves the real settings store is unmodified;
+        // tests never read its values.
         QSettings normalSettings( QSettings::NativeFormat,
                                   QSettings::UserScope, US3, "UltraScan" );
         const QString normalSettingsFile = normalSettings.fileName();
@@ -67,11 +66,8 @@ public:
                  normalSettingsExists ? "1" : "0" );
         qputenv( "US3_TEST_NORMAL_SETTINGS_SHA256", normalSettingsDigest );
 
-        // setPath() only redirects NativeFormat where that format is file
-        // based.  On macOS (CFPreferences) and Windows (registry) it is
-        // ignored, so US_Settings would reach the real per-user store.
-        // Making IniFormat the default keeps every QSettings built without an
-        // explicit format inside the sandbox on all platforms.
+        // setPath() does not redirect NativeFormat on macOS (CFPreferences) or
+        // Windows (registry); IniFormat keeps every QSettings in the sandbox.
         QSettings::setDefaultFormat( QSettings::IniFormat );
         QSettings::setPath( QSettings::NativeFormat, QSettings::UserScope,
                             settingsRoot );

@@ -309,13 +309,9 @@ QwtCounter* US3i_widgets::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  // The counter's up/down buttons are unusably small with the native macOS
-  // and Windows styles, so give just those buttons a Fusion style, matching
-  // the treatment in us_colorgradient.  Any other style already draws them
-  // correctly and is left alone.  QApplication::setStyle() must not be used
-  // here: it restyles the whole application and destroys the style it
-  // replaces, leaving buttons styled by an earlier counter pointing at a
-  // freed QStyle.
+  // Give the counter's up/down buttons a Fusion style under the native
+  // macOS and Windows styles, where they are unusably small.  Not with
+  // QApplication::setStyle(): it destroys the style it replaces.
   QString stynam  = US3i_GuiSettings::guiStyle();
   bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
                      stynam.startsWith( "mac"    , Qt::CaseInsensitive );
