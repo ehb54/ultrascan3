@@ -23,7 +23,7 @@ US_SimSpecies::Component::Component()
    US_Model::SimulationComponent sc_defaults;
 
    vbar20        = sc_defaults.vbar20;
-   concentration = sc_defaults.signal_concentration;
+   signal_concentration = sc_defaults.signal_concentration;
 }
 
 const QVector< US_SimSpecies::Coefficient >& US_SimSpecies::coefficients()
@@ -55,24 +55,31 @@ US_SimSpecies::Component US_SimSpecies::defaultComponent()
 
 QString US_SimSpecies::validateComponent( const Component& c )
 {
-   if ( c.vbar20 <= 0.0 )
-      return QString( "vbar20 must be greater than zero (got %1)" ).arg( c.vbar20 );
+   if ( ! qIsFinite( c.vbar20 ) || c.vbar20 <= 0.0 )
+      return QString( "vbar20 must be finite and greater than zero (got %1)" )
+         .arg( c.vbar20 );
 
-   if ( c.concentration <= 0.0 )
-      return QString( "concentration must be greater than zero (got %1)" )
-         .arg( c.concentration );
+   if ( ! qIsFinite( c.signal_concentration ) || c.signal_concentration <= 0.0 )
+      return QString( "signal concentration must be finite and greater than "
+                      "zero (got %1)" ).arg( c.signal_concentration );
 
    // Only s may legitimately be negative. Zero is rejected along with the
    // negatives: a massless, non-diffusing, frictionless species is not one
    // calc_coefficients() can solve for.
-   if ( c.mw.supplied  &&  c.mw.value <= 0.0 )
-      return QString( "mw must be greater than zero (got %1)" ).arg( c.mw.value );
-   if ( c.D.supplied   &&  c.D.value <= 0.0 )
-      return QString( "D must be greater than zero (got %1)" ).arg( c.D.value );
-   if ( c.f.supplied   &&  c.f.value <= 0.0 )
-      return QString( "f must be greater than zero (got %1)" ).arg( c.f.value );
-   if ( c.f_f0.supplied  &&  c.f_f0.value < 1.0 )
-      return QString( "f-f0 must be at least 1.0, since a particle cannot be "
+   if ( c.s.supplied && ( ! qIsFinite( c.s.value ) || c.s.value == 0.0 ) )
+      return QString( "s must be finite and nonzero (got %1)" ).arg( c.s.value );
+   if ( c.mw.supplied && ( ! qIsFinite( c.mw.value ) || c.mw.value <= 0.0 ) )
+      return QString( "mw must be finite and greater than zero (got %1)" )
+         .arg( c.mw.value );
+   if ( c.D.supplied && ( ! qIsFinite( c.D.value ) || c.D.value <= 0.0 ) )
+      return QString( "D must be finite and greater than zero (got %1)" )
+         .arg( c.D.value );
+   if ( c.f.supplied && ( ! qIsFinite( c.f.value ) || c.f.value <= 0.0 ) )
+      return QString( "f must be finite and greater than zero (got %1)" )
+         .arg( c.f.value );
+   if ( c.f_f0.supplied &&
+        ( ! qIsFinite( c.f_f0.value ) || c.f_f0.value < 1.0 ) )
+      return QString( "f-f0 must be finite and at least 1.0, since a particle cannot be "
                       "more compact than the equivalent sphere (got %1)" )
          .arg( c.f_f0.value );
 
@@ -132,18 +139,24 @@ QString US_SimSpecies::validateComponents( const QVector< Component >& component
    return QString();
 }
 
-US_Model US_SimSpecies::model( const Component& c )
+bool US_SimSpecies::model( const Component& c, US_Model& model_out,
+                           QString& error )
 {
-   return model( QVector< Component >() << c );
+   return model( QVector< Component >() << c, model_out, error );
 }
 
-US_Model US_SimSpecies::model( const QVector< Component >& components )
+bool US_SimSpecies::model( const QVector< Component >& components,
+                           US_Model& model_out, QString& error )
 {
-   US_Model model_out;
-   model_out.description  = "us3-sim-inputs generated protein model v1";
-   model_out.modelGUID    = US_Util::new_guid();
-   model_out.optics       = US_Model::ABSORBANCE;
-   model_out.analysis     = US_Model::MANUAL;
+   error = validateComponents( components );
+   if ( ! error.isEmpty() )
+      return false;
+
+   US_Model candidate;
+   candidate.description  = "us3-sim-inputs generated protein model v1";
+   candidate.modelGUID    = US_Util::new_guid();
+   candidate.optics       = US_Model::ABSORBANCE;
+   candidate.analysis     = US_Model::MANUAL;
 
    for ( const Component& c : components )
    {
@@ -156,21 +169,31 @@ US_Model US_SimSpecies::model( const QVector< Component >& components )
       sc.f      = c.f.value;
       sc.f_f0   = c.f_f0.value;
 
-      sc.signal_concentration = c.concentration;
+      sc.signal_concentration = c.signal_concentration;
 
       if ( ! c.name.isEmpty() )
          sc.name = c.name;
 
-      model_out.components << sc;
+      candidate.components << sc;
    }
 
    // Solves each component independently; components do not interact.
-   model_out.update_coefficients();
+   if ( ! candidate.update_coefficients() )
+   {
+      error = "US_Model could not calculate a complete coefficient set";
+      return false;
+   }
 
-   return model_out;
+   model_out = candidate;
+   error.clear();
+   return true;
 }
 
 US_Model US_SimSpecies::model()
 {
-   return model( defaultComponent() );
+   US_Model model_out;
+   QString  error;
+   bool     ok = model( defaultComponent(), model_out, error );
+   Q_ASSERT_X( ok, "US_SimSpecies::model", qPrintable( error ) );
+   return model_out;
 }

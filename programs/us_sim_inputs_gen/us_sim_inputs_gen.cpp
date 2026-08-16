@@ -215,7 +215,7 @@ static bool parse_component_spec( const QString& spec,
 
       if ( key == "conc" )
       {
-         supplied.concentration = value;
+         supplied.signal_concentration = value;
          continue;
       }
 
@@ -276,8 +276,9 @@ int main( int argc, char* argv[] )
    QCommandLineOption component_option( "component",
       "One component of a multi-component model, given as comma-separated "
       "key=value pairs: exactly two of s, D, mw, f, f-f0, plus optional "
-      "vbar20, conc (this species' share of the loading concentration, "
-      "default 1), and name. Repeat once per component, for example "
+      "vbar20, conc (this species' absolute signal concentration, default 1; "
+      "the model total is the sum across components), and name. Repeat once "
+      "per component, for example "
       "--component \"s=4.58S,mw=66430,vbar20=0.733,conc=0.75,name=BSA Monomer\". "
       "Each component states its own coefficient pair. Cannot be combined "
       "with the single-component options above", "spec" );
@@ -464,7 +465,12 @@ int main( int argc, char* argv[] )
             return 1;
          }
 
-      US_Model model_out = US_SimSpecies::model( components );
+      US_Model model_out;
+      if ( ! US_SimSpecies::model( components, model_out, component_error ) )
+      {
+         QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+         return 1;
+      }
       model_out.description = description;
 
       // An unnamed component takes the description, which is unambiguous only
@@ -669,7 +675,13 @@ int main( int argc, char* argv[] )
          sp_params.rotor_calibr = parser.value( rotor_calibration_option );
       sp_params.band_forming = parser.isSet( band_forming_option );
 
-      US_SimulationParameters sp_out = US_SimInputs::simParams( sp_params );
+      US_SimulationParameters sp_out;
+      QString simparams_error;
+      if ( ! US_SimInputs::simParams( sp_params, sp_out, simparams_error ) )
+      {
+         QTextStream( stderr ) << "Error: " << simparams_error << Qt::endl;
+         return 1;
+      }
 
       if ( sp_out.save_simparms( parser.value( out_option ) ) != 0 )
       {
@@ -752,7 +764,12 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      US_Model model    = US_SimSpecies::model( component );
+      US_Model model;
+      if ( ! US_SimSpecies::model( component, model, component_error ) )
+      {
+         QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
+         return 1;
+      }
       model.description = QString( "%1.%2%3.model.default" )
                            .arg( run_id, channel, wavelength );
       model.modelGUID    = US_Util::new_guid();

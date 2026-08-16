@@ -55,9 +55,21 @@ class US_UTIL_EXTERN US_SimInputs
                                          //!< an instrument channel label
       };
 
+      //! \brief Validate run conditions before constructing parameters.
+      //! \return An empty string if valid; otherwise, an error message.
+      static QString validateParams( const Params& p );
+
       //! \brief Create parameters for a single-speed simulation.
-      //! \param p Run conditions. Geometry is calculated from p.rpm.
-      static US_SimulationParameters simParams( const Params& p = Params() );
+      //! Geometry is stored at rest; simulation consumers apply rotor stretch.
+      //! Validation is enforced here rather than left to the caller.
+      //! \param p      Run conditions.
+      //! \param params Parameters populated only on success.
+      //! \param error  Error message on failure; empty on success.
+      static bool simParams( const Params& p, US_SimulationParameters& params,
+                             QString& error );
+
+      //! \brief Create valid default single-speed simulation parameters.
+      static US_SimulationParameters simParams();
 
       //! \brief Create a default buffer using water properties at 20 C.
       static US_Buffer buffer();

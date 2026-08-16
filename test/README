@@ -29,6 +29,36 @@ The test framework uses Docker to create a consistent environment for running te
 
 ## Writing Tests
 
+### Headless GUI Tests with QTest
+
+Native Qt Test UI tests live in two trees:
+
+```text
+test/gui/                  reusable widgets implemented in gui/
+test/programs/<program>/   UI owned or launched by programs/<program>/
+```
+
+Use `us3_add_gui_test()` in the directory's `CMakeLists.txt`, link the
+production target or compile the same program implementation source, and use
+`US3_GUI_TEST_MAIN()` instead of `QTEST_MAIN`.  The UltraScan test main creates
+one `QApplication`, selects the offscreen platform before Qt starts, enables
+software OpenGL, and redirects settings and writable UltraScan paths to a
+temporary sandbox.
+
+The complete examples are:
+
+- `test/gui/test_us_editor_gui.cpp`, which tests keyboard input and an editor
+  action from `gui/`.
+- `test/programs/us_astfem_sim/test_us_astfem_clipdata_gui.cpp`, which uses
+  QTest to operate the real ASTFEM simulation range dialog and verifies that
+  its selected limits are returned to the caller.
+
+Run only the native headless UI tests with:
+
+```bash
+ctest --test-dir build-docker -L qtest --output-on-failure
+```
+
 ### Test Structure
 Tests use Google Test with Qt5 integration through QtTestBase. Create test files in subdirectories and they'll be automatically discovered by CMake.
 

@@ -503,12 +503,12 @@ void US_MwlSpeciesSim::set_parameters( void )
    double duration     = simparams.speed_step[ 0 ].duration_hours * 3600.0
                        + simparams.speed_step[ 0 ].duration_minutes * 60.0;
    double rspeed       = (double)simparams.speed_step[ 0 ].rotorspeed;
-   double scn_rng      = (double)( simparams.speed_step[ 0 ].scans - 1 );
+   int    scans        = simparams.speed_step[ 0 ].scans;
    delay               = qRound( delay );
    duration            = qRound( duration );
    double pi_fac       = sq( M_PI / 30.0 );
    double tim_rng      = duration - delay;
-   double tim_inc      = tim_rng / scn_rng;
+   double tim_inc      = ( scans > 1 ) ? tim_rng / (double)( scans - 1 ) : 0.0;
    double w2t_fac      = sq( rspeed ) * pi_fac;
    double accel        = simparams.speed_step[ 0 ].acceleration;
    double w2t_inc      = tim_inc * w2t_fac;
@@ -533,14 +533,24 @@ void US_MwlSpeciesSim::set_parameters( void )
    simparams.speed_step[ 0 ].time_first  = tim_val;
    simparams.speed_step[ 0 ].w2t_first   = w2t_val;
 
-   while( tim_val < duration )
-   {  // Walk time and omega2t up to the last scan
-      tim_val            += tim_inc;
-      w2t_val            += w2t_inc;
-   }
+   if ( scans > 1 )
+   {
+      while( tim_val < duration )
+      {  // Walk time and omega2t up to the last scan
+         tim_val            += tim_inc;
+         w2t_val            += w2t_inc;
+      }
 
-   simparams.speed_step[ 0 ].time_last   = duration;
-   simparams.speed_step[ 0 ].w2t_last    = w2t_val;
+      simparams.speed_step[ 0 ].time_last = duration;
+      simparams.speed_step[ 0 ].w2t_last  = w2t_val;
+   }
+   else
+   {  // A one-scan run has only its first-scan time and omega-squared-t.
+      simparams.speed_step[ 0 ].time_last =
+         simparams.speed_step[ 0 ].time_first;
+      simparams.speed_step[ 0 ].w2t_last  =
+         simparams.speed_step[ 0 ].w2t_first;
+   }
    simparams.speed_step[ 0 ].set_speed   = (int)rspeed;
    simparams.speed_step[ 0 ].avg_speed   = rspeed;
 
@@ -1186,9 +1196,10 @@ simparams.debug();
    int terpsize       = ( npoints + 7 ) / 8;
    double mwavelen    = waveln.toDouble();
    double timeval     = simparams.speed_step[ 0 ].time_first;
-   double timeinc     = ( simparams.speed_step[ 0 ].time_last
-                        - simparams.speed_step[ 0 ].time_first )
-                        / (double)( nscans - 1 );
+   double timeinc     = ( nscans > 1 )
+      ? ( simparams.speed_step[ 0 ].time_last
+        - simparams.speed_step[ 0 ].time_first ) / (double)( nscans - 1 )
+      : 0.0;
    double w2tval      = simparams.speed_step[ 0 ].w2t_first;
    double w2tinc      = timeinc * pow( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0, 2.0 );
 DbgLv(1) << "rdata0 tf tl" << simparams.speed_step[0].time_first << simparams.speed_step[0].time_last

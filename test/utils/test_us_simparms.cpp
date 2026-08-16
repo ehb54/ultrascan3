@@ -222,6 +222,11 @@ TEST_F(US_SimulationParametersTest, SetHardware_NegativeCp_HandlesSerialNumber) 
     EXPECT_NO_THROW(simparms->setHardware(testCalID, testSerialNumber, testCh));
 }
 
+TEST_F(US_SimulationParametersTest, SetHardware_RejectsOutOfRangeIndexes) {
+    EXPECT_FALSE(simparms->setHardware("0", 9999, 0));
+    EXPECT_FALSE(simparms->setHardware("0", 0, 9999));
+}
+
 // Load SimParms Tests
 TEST_F(US_SimulationParametersTest, LoadSimparms_ValidFile_LoadsCorrectly) {
     QString xmlContent = createTestSimParmsXml();

@@ -8,6 +8,22 @@ protected:
     void SetUp() override {
         QtTestBase::SetUp();
     }
+
+    US_Model build(const US_SimSpecies::Component& component) {
+        US_Model model;
+        QString error;
+        EXPECT_TRUE(US_SimSpecies::model(component, model, error))
+            << error.toStdString();
+        return model;
+    }
+
+    US_Model build(const QVector<US_SimSpecies::Component>& components) {
+        US_Model model;
+        QString error;
+        EXPECT_TRUE(US_SimSpecies::model(components, model, error))
+            << error.toStdString();
+        return model;
+    }
 };
 
 TEST_F(US_SimSpeciesTest, ModelIsSingleComponentAbsorbanceManual) {
@@ -114,7 +130,7 @@ TEST_F(US_SimSpeciesTest, ComponentAcceptsEverySolvablePair) {
         EXPECT_TRUE(US_SimSpecies::validateComponent(entry.second).isEmpty())
             << US_SimSpecies::validateComponent(entry.second).toStdString();
 
-        US_Model model = US_SimSpecies::model(entry.second);
+        US_Model model = build(entry.second);
         ASSERT_EQ(model.components.count(), 1);
         const US_Model::SimulationComponent& sc = model.components[0];
         EXPECT_GT(sc.mw, 0.0);
@@ -130,7 +146,7 @@ TEST_F(US_SimSpeciesTest, ComponentRoundTripsTheSuppliedPair) {
     c.s = 4.5e-13;
     c.D = 5.0e-7;
 
-    US_Model model = US_SimSpecies::model(c);
+    US_Model model = build(c);
     ASSERT_EQ(model.components.count(), 1);
 
     EXPECT_DOUBLE_EQ(model.components[0].s, 4.5e-13);
@@ -206,28 +222,28 @@ TEST_F(US_SimSpeciesTest, ComponentRejectsZeroValuedCoefficients) {
     zero_f.f_f0 = 1.25;
     EXPECT_FALSE(US_SimSpecies::validateComponent(zero_f).isEmpty());
 
-    // s is the exception: zero and negative both remain meaningful.
+    // Negative s remains meaningful for a floating species, but zero does not.
     US_SimSpecies::Component zero_s;
     zero_s.s    = 0.0;
     zero_s.f_f0 = 1.25;
-    EXPECT_FALSE(US_SimSpecies::validateComponent(zero_s).contains("greater than zero"));
+    EXPECT_FALSE(US_SimSpecies::validateComponent(zero_s).isEmpty());
 }
 
 TEST_F(US_SimSpeciesTest, ComponentDefaultsToTheLibraryConcentration) {
     US_SimSpecies::Component c;
     US_Model::SimulationComponent sc_defaults;
 
-    EXPECT_DOUBLE_EQ(c.concentration, sc_defaults.signal_concentration);
+    EXPECT_DOUBLE_EQ(c.signal_concentration, sc_defaults.signal_concentration);
     EXPECT_TRUE(c.name.isEmpty());
 }
 
 TEST_F(US_SimSpeciesTest, ComponentRejectsNonPositiveConcentration) {
     US_SimSpecies::Component c = US_SimSpecies::defaultComponent();
 
-    c.concentration = 0.0;
+    c.signal_concentration = 0.0;
     EXPECT_FALSE(US_SimSpecies::validateComponent(c).isEmpty());
 
-    c.concentration = -0.5;
+    c.signal_concentration = -0.5;
     EXPECT_FALSE(US_SimSpecies::validateComponent(c).isEmpty());
 }
 
@@ -238,14 +254,14 @@ TEST_F(US_SimSpeciesTest, MixtureKeepsEveryComponentInOrder) {
     monomer.vbar20        = 0.733;
     monomer.s             = 4.58e-13;
     monomer.mw            = 66430.0;
-    monomer.concentration = 0.75;
+    monomer.signal_concentration = 0.75;
     monomer.name          = "BSA Monomer";
 
     US_SimSpecies::Component dimer;
     dimer.vbar20        = 0.733;
     dimer.s             = 6.50e-13;
     dimer.mw            = 132860.0;
-    dimer.concentration = 0.25;
+    dimer.signal_concentration = 0.25;
     dimer.name          = "BSA Dimer";
 
     QVector<US_SimSpecies::Component> mixture;
@@ -254,7 +270,7 @@ TEST_F(US_SimSpeciesTest, MixtureKeepsEveryComponentInOrder) {
     ASSERT_TRUE(US_SimSpecies::validateComponents(mixture).isEmpty())
         << US_SimSpecies::validateComponents(mixture).toStdString();
 
-    US_Model model = US_SimSpecies::model(mixture);
+    US_Model model = build(mixture);
     ASSERT_EQ(model.components.count(), 2);
 
     EXPECT_EQ(model.components[0].name, QString("BSA Monomer"));
@@ -288,7 +304,7 @@ TEST_F(US_SimSpeciesTest, MixtureComponentsMayUseDifferentPairs) {
 
     ASSERT_TRUE(US_SimSpecies::validateComponents(mixture).isEmpty());
 
-    US_Model model = US_SimSpecies::model(mixture);
+    US_Model model = build(mixture);
     ASSERT_EQ(model.components.count(), 2);
 
     for (int ii = 0; ii < model.components.count(); ii++) {
@@ -318,13 +334,39 @@ TEST_F(US_SimSpeciesTest, SingleComponentModelStillBuildsThroughTheMixturePath) 
     // model(Component) delegates to the mixture overload; the single-component
     // callers must see no change.
     US_SimSpecies::Component c = US_SimSpecies::defaultComponent();
-    US_Model model = US_SimSpecies::model(c);
+    US_Model model = build(c);
 
     ASSERT_EQ(model.components.count(), 1);
     EXPECT_DOUBLE_EQ(model.components[0].signal_concentration,
                      US_Model::SimulationComponent().signal_concentration);
     EXPECT_EQ(model.components[0].name,
               US_Model::SimulationComponent().name);
+}
+
+TEST_F(US_SimSpeciesTest, ModelBuilderRejectsInvalidInputWithoutPartialOutput) {
+    US_SimSpecies::Component invalid;
+    US_Model model;
+    model.description = "unchanged";
+    QString error;
+
+    EXPECT_FALSE(US_SimSpecies::model(invalid, model, error));
+    EXPECT_FALSE(error.isEmpty());
+    EXPECT_EQ(model.description, QString("unchanged"));
+    EXPECT_TRUE(model.components.isEmpty());
+}
+
+TEST_F(US_SimSpeciesTest, ConcentrationsAreAbsoluteAndSumToTheModelTotal) {
+    US_SimSpecies::Component first = US_SimSpecies::defaultComponent();
+    US_SimSpecies::Component second = US_SimSpecies::defaultComponent();
+    first.signal_concentration = 2.0;
+    second.signal_concentration = 3.5;
+
+    US_Model model = build(QVector<US_SimSpecies::Component>() << first << second);
+    double total = 0.0;
+    for (const US_Model::SimulationComponent& component : model.components)
+        total += component.signal_concentration;
+
+    EXPECT_DOUBLE_EQ(total, 5.5);
 }
 
 TEST_F(US_SimSpeciesTest, TwoCallsToModelProduceDistinctGuids) {

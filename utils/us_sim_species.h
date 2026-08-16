@@ -11,7 +11,8 @@ class US_UTIL_EXTERN US_SimSpecies
 {
    public:
       //! \brief One coefficient of a species, and whether it was supplied.
-      //! Assignment marks it supplied, allowing zero to remain a valid value.
+      //! Assignment marks it supplied, keeping zero distinguishable from an
+      //! omitted value so validation can report it accurately.
       class US_UTIL_EXTERN Coeff
       {
          public:
@@ -44,9 +45,10 @@ class US_UTIL_EXTERN US_SimSpecies
             //! Descriptive name. Empty keeps the US_Model default.
             QString name;
 
-            //! This species' share of the loading concentration. Only the
-            //! ratio between components of one model is meaningful.
-            double concentration;
+            //! Absolute loading signal concentration for this species.
+            //! A model's total loading concentration is the sum across all
+            //! components; values are not normalized as fractions.
+            double signal_concentration;
       };
 
       //! \brief One coefficient a caller may supply on a Component.
@@ -77,18 +79,26 @@ class US_UTIL_EXTERN US_SimSpecies
       static QString validateComponents( const QVector< Component >& components );
 
       //! \brief Create a single-component absorbance model from a species.
-      //! \param c Species to build; must satisfy validateComponent().
-      static US_Model model( const Component& c );
+      //! Validation is enforced here rather than left to the caller.
+      //! \param c     Species to build.
+      //! \param model Model populated only on success.
+      //! \param error Error message on failure; empty on success.
+      static bool model( const Component& c, US_Model& model, QString& error );
 
       //! \brief Create a multi-component absorbance model from a mixture.
       //! Components keep the given order and each carries its own
       //! concentration, so a mixture such as a monomer/dimer pair is one
       //! model rather than several.
-      //! \param components Species to build; must satisfy validateComponents().
-      static US_Model model( const QVector< Component >& components );
+      //! Validation and coefficient calculation are enforced here rather than
+      //! left to the caller.
+      //! \param components Species to build.
+      //! \param model      Model populated only on success.
+      //! \param error      Error message on failure; empty on success.
+      static bool model( const QVector< Component >& components,
+                         US_Model& model, QString& error );
 
       //! \brief Create a default single-component absorbance model.
-      //! Equivalent to model( defaultComponent() ).
+      //! Built through the same checked path as defaultComponent().
       static US_Model model();
 };
 

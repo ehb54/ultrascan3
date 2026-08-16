@@ -800,13 +800,7 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
 // << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
    // Fill in speed steps with scan times and omega^2t; build raw data
-   double time0   = 0.0;
-   double time1   = 0.0;
-   double time2   = 0.0;
-   double w2tsum  = 0.0;
-   double p_speed = 0.0;
    double s_speed = 0.0;
-   double c_speed = 0.0;
    int nstep      = simparams.speed_step.count();
 
    double previous_speed = 0.0;
@@ -824,7 +818,9 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
       const double delay    = qRound(sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0);
       const double duration = qRound(sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0);
       const double scanning_time = duration - delay;
-      const double time_between_scans = scanning_time / static_cast<double>( sp->scans - 1 );
+      const double time_between_scans = ( sp->scans > 1 )
+         ? scanning_time / static_cast<double>( sp->scans - 1 )
+         : 0.0;
       US_DataIO::Scan scandata;
       scandata.temperature = simparams.temperature;
       scandata.rpm         = target_speed;
@@ -839,6 +835,10 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
          if (s == 0) {
             sp->time_first = scandata.seconds;
             sp->w2t_first  = scandata.omega2t;
+            if ( sp->scans == 1 ) {
+               sp->time_last = sp->time_first;
+               sp->w2t_last  = sp->w2t_first;
+            }
          }
          else if ( s == sp->scans - 1) {
             sp->time_last  = scandata.seconds;
@@ -851,85 +851,6 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
       previous_time  = sp->time_last;
       previous_w2t   = sp->w2t_last;
    }
-
-   for ( int jd = 0; jd < 0; jd++ )
-   {
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jd ];
-      time0          = time2;
-      p_speed        = s_speed;
-      c_speed        = p_speed;
-DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2;
-      s_speed        = sp->set_speed;
-
-      if ( nstep > 0  &&  s_speed < 1.0 )
-      {  // For multi-speed, insure values for set and average speeds
-         s_speed        = qRound( sp->rotorspeed * 0.01 ) * 100.0;
-         sp->set_speed  = s_speed;
-         sp->avg_speed  = sp->rotorspeed;
-      }
-
-      s_speed        = ( s_speed == 0.0 ) ? sp->rotorspeed : s_speed;
-      double accel   = sp->acceleration;
-      double dlay    = sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0;
-      double durat   = sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0;
-      time1          = qRound( time0 + dlay  );
-      time2          = qRound( time0 + durat );
-      double c_time  = time0;
-      sp->time_first = time1;
-      sp->time_last  = time2;
-      double timeinc = ( time2 - time1 ) / (double)( sp->scans - 1 );
-DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2
- << "timeinc" << timeinc << "scans" << sp->scans << " c,s speed" << c_speed << s_speed;
-
-      while ( c_speed < s_speed )
-      {  // Walk through acceleration zone building omega2t sum
-         w2tsum         = sq( accel * M_PI / 30.0 * c_time ) * c_time;
-         c_speed       += accel;
-         c_time        += 1.0;
-DbgLv(1) << "SimPar:MAIN:SetP:   accel speed w2t time" << c_speed << w2tsum << c_time;
-      }
-DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
-
-      c_speed        = s_speed;
-      double w2tinc  = sq( c_speed * M_PI / 30.0 );
-      // reset the w2tsum value at the end of the acceleration for the constant speed iteration
-      w2tsum         = w2tinc * c_speed / accel + w2tinc * ( c_time - c_speed / accel );
-      while ( c_time < time1 )
-      {  // Walk up to the first scan time, accumulating omega2t sum
-         c_time        += 1.0;
-         w2tsum        += w2tinc;
-      }
-      DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum << "w2tinc" << w2tinc;
-
-      sp->time_first = static_cast<int>(time1);
-      sp->w2t_first  = w2tsum;
-      w2tinc         = timeinc * sq( c_speed * M_PI / 30.0 );
-      c_time         = time1 - timeinc;
-      w2tsum         = w2tsum - w2tinc;
-      DbgLv( 1 ) << "SimPar:MAIN:SetP: c_time w2tsum w2tinc timeinc" << c_time << w2tsum << w2tinc << timeinc << "time1" << time1 ;
-      US_DataIO::Scan scandata;
-      scandata.temperature = simparams.temperature;
-      scandata.rpm         = c_speed;
-      scandata.omega2t     = w2tsum;
-      scandata.wavelength  = system.wavelength;
-      scandata.plateau     = 0.0;
-      scandata.delta_r     = simparams.radial_resolution;
-      scandata.rvalues     .fill( 0.0, points   );
-
-      for ( int js = 0; js < sp->scans; js++ )
-      {  // Save scan times and omega2ts
-         c_time           += timeinc;
-         w2tsum           += w2tinc;
-         int itime         = (int)qRound( c_time );
-         scandata.seconds  = (double)itime;
-         scandata.omega2t  = w2tsum;
-         DbgLv( 2 ) << "SimPar:MAIN:SetP: js time omega2t " << js << scandata.seconds << scandata.omega2t;
-         sim_data_all.scanData << scandata;
-      }
-      sp->time_last  = time2;
-      sp->w2t_last   = w2tsum;
-DbgLv(1) << "SimPar:MAIN:SetP: last scan:  time omega2t" << time2  << w2tsum;
-   }  // End: loop to fill sim_data_all with times and omega2t's
 
    // Create a timestate for this speed profile set
    if ( !tmst_tfpath.isEmpty()  ||
