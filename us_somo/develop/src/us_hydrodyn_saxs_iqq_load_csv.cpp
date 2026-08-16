@@ -258,8 +258,14 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
 
    cb_extrapolate_c0 = new QCheckBox(this);
    cb_extrapolate_c0->setText(us_tr("Extrap. to\nzero conc"));
-   cb_extrapolate_c0->setEnabled(true);
-   cb_extrapolate_c0->setChecked(*extrapolate_c0);
+   // Held back from release: the code is merged and maintained, but the control is not
+   // offered yet. Clear the caller's flag too -- the slot that normally maintains it can no
+   // longer run, so a value left over from an earlier session would otherwise stand.
+   // Remove this block, and restore setEnabled(true)/setChecked(*extrapolate_c0), to expose it.
+   cb_extrapolate_c0->setEnabled(false);
+   cb_extrapolate_c0->setVisible(false);
+   cb_extrapolate_c0->setChecked(false);
+   *extrapolate_c0 = false;
    cb_extrapolate_c0->setMinimumHeight(minHeight1dl);
    cb_extrapolate_c0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_extrapolate_c0->setPalette( PALET_NORMAL );
