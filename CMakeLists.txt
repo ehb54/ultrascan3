@@ -212,6 +212,42 @@ if(US3_NO_DB)
     add_compile_definitions(NO_DB)
 endif()
 
+# =============================================================================
+# COVERAGE INSTRUMENTATION (UT-002)
+# =============================================================================
+# Measurement only: this option adds no pass/fail gate.  Coverage is evidence
+# that a line executed, not evidence that anything asserted about it.
+#
+# The instrumentation is applied tree-wide rather than per-target so that the
+# utilities library and the test executable that drives it are compiled and
+# linked consistently -- the same reason a per-target NO_DB was wrong (UT-004).
+# Test sources are instrumented too and are filtered out when the report is
+# generated, which is where the "exclude test and generated code" rule lives.
+option(US3_COVERAGE "Instrument the build for gcov line and branch coverage" OFF)
+
+if(US3_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR
+                "US3_COVERAGE requires GCC or Clang; got ${CMAKE_CXX_COMPILER_ID}")
+    endif()
+
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING
+                "US3_COVERAGE is intended for a Debug build; "
+                "optimized builds attribute lines unreliably")
+    endif()
+
+    # -O0 keeps line attribution honest.  -fprofile-abs-path records absolute
+    # source paths so the report can be generated from any working directory.
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-fprofile-abs-path)
+    endif()
+
+    message(STATUS "Coverage instrumentation enabled (US3_COVERAGE=ON)")
+endif()
+
 # Platform-specific definitions
 if(UNIX AND NOT APPLE)
     add_compile_definitions(LINUX PLATFORM="intel" TITLE="Intel")

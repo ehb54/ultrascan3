@@ -20,6 +20,7 @@ gui/qrc_images.cpp
 /build/
 /build-docker/
 /build-docker-nodb/
+/build-docker-coverage/
 /cmake-build-debug/
 doc/manual/build
 /vcpkg/
