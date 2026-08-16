@@ -1,4 +1,4 @@
-#include "qt_test_base.h"
+#include "us3_file_test_base.h"
 #include "us_project.h"
 #include "mock_us_db2.h"
 #include <QTemporaryDir>
@@ -17,10 +17,10 @@ using ::testing::NiceMock;
 using ::testing::StrictMock;
 using ::testing::InSequence;
 
-class US_ProjectTest : public QtTestBase {
+class US_ProjectTest : public Us3FileTestBase {
 protected:
     void SetUp() override {
-        QtTestBase::SetUp();
+        Us3FileTestBase::SetUp();
         project = std::make_unique<US_Project>();
         mockDb = std::make_unique<NiceMock<US_DB2_Mock>>();
 
@@ -33,7 +33,7 @@ protected:
         project.reset();
         mockDb.reset();
         tempDir.reset();
-        QtTestBase::TearDown();
+        Us3FileTestBase::TearDown();
     }
 
     std::unique_ptr<US_Project> project;
@@ -355,24 +355,20 @@ TEST_F(US_ProjectTest, SaveToDisk_NewProjectGetsASequentialGeneratedFilename) {
 // UT-009: this used to build the string "P0000001.xml" in the test and assert
 // it contained "P" and ".xml".  get_filename() is private, but saveToDisk()
 // drives it, so the naming rule is observable through the file it leaves.
-// The sandbox data directory is shared by every case in this executable, so
-// assert the delta rather than the absolute contents.
-const QString     dir    = projectsDir();
-const QStringList before = QDir(dir).entryList(QStringList("P???????.xml"),
-                                               QDir::Files, QDir::Name);
+//
+// UT-010: the absolute assertions below are only possible because
+// Us3FileTestBase gives this case its own work root.  Against the shared
+// sandbox this had to compare directory listings before and after, since
+// earlier cases had already saved projects there.
+const QString dir = projectsDir();
+ASSERT_TRUE(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files).isEmpty());
 
 populateTestProject();
-project->projectGUID = "31345678-1234-1234-1234-123456789012";
+project->projectGUID = "12345678-1234-1234-1234-123456789012";
 project->saveToDisk();
 
-QStringList added = QDir(dir).entryList(QStringList("P???????.xml"),
-                                        QDir::Files, QDir::Name);
-for (const QString& name : before) added.removeOne(name);
-
-ASSERT_EQ(added.size(), 1);
-// Sequential, zero-padded, seven digits after the P.
-EXPECT_TRUE(QRegularExpression("^P\\d{7}\\.xml$").match(added.first()).hasMatch())
-        << qPrintable(added.first());
+EXPECT_EQ(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files, QDir::Name),
+          QStringList("P0000001.xml"));
 }
 
 TEST_F(US_ProjectTest, SaveToDisk_ExistingProjectReusesItsFileRatherThanAddingOne) {
@@ -380,18 +376,15 @@ TEST_F(US_ProjectTest, SaveToDisk_ExistingProjectReusesItsFileRatherThanAddingOn
 // overwrite rather than allocate P0000002.xml.
 const QString dir = projectsDir();
 populateTestProject();
-project->projectGUID = "22345678-1234-1234-1234-123456789012";
+project->projectGUID = "12345678-1234-1234-1234-123456789012";
 
 project->saveToDisk();
-const QStringList afterFirst = QDir(dir).entryList(QStringList("P???????.xml"),
-                                                   QDir::Files, QDir::Name);
-
 project->goals = "revised goals";
 project->saveToDisk();
 
-// The second save reuses the same file rather than allocating another.
+// The second save reuses the same file rather than allocating P0000002.xml.
 EXPECT_EQ(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files, QDir::Name),
-          afterFirst);
+          QStringList("P0000001.xml"));
 
 US_Project reloaded;
 QString    guid = project->projectGUID;
