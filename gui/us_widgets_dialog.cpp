@@ -5,6 +5,8 @@
 #include "us_theme.h"
 #include "us_images.h"
 
+#include <QStyleFactory>
+
 
 US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_style ) 
    : QDialog( w, f )
@@ -287,16 +289,23 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+  // The counter's up/down buttons are unusably small with the native macOS
+  // style.  Give just those buttons a Fusion style - unlike the former
+  // QApplication::setStyle() call this leaves the style the user selected
+  // for the rest of the application alone.
+  static QStyle* btnstyle = QStyleFactory::create( "Fusion" );
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  if ( btnstyle != nullptr )
   {
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
-
-     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+     for ( int jj = 0; jj < children.size(); jj++ )
      {
-        cwidg->setStyle( btnstyle );
+        QWidget* cwidg = (QWidget*)children.at( jj );
+        QString clname = cwidg->metaObject()->className();
+
+        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+        {
+           cwidg->setStyle( btnstyle );
+        }
      }
   }
 #endif    // END: special button treatment for Mac
