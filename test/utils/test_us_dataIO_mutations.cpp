@@ -1,4 +1,4 @@
-// AUC-T03: safe early-rejection mutations against the public filename API.
+// AUC-T03/T04/T05: mutation recipes against the public filename API.
 //
 // Each case implements a named recipe from AUC_MUTATION_TEST_ANALYSIS.md and
 // carries its AUC-Mxx identifier.  Mutations are generated at runtime from a
@@ -15,12 +15,11 @@
 //     that starts looping on a corrupt count fails as a test rather than
 //     hanging the suite.
 //
-// Deliberately NOT implemented here, per the strategy document's rule against
-// unsafe input before AUC-T04 bounds hardening:
-//   AUC-M06..M09  truncation recipes  -- need exact-read checking; today the
-//                 reader consumes bytes it has not proven are present.
-//   AUC-M12       point count beyond the available bytes -- unbounded loop and
-//                 allocation from an untrusted count.
+// The truncation family (AUC-M06..M09) and the hostile counts (AUC-M12) were
+// deferred from AUC-T03 because running them before the reader checked its read
+// lengths meant exercising undefined behavior.  AUC-T04 added that checking, so
+// they are implemented below.
+//
 // See the AUC-T03 report for the recipes that cannot be built by patching.
 
 #include "qt_test_base.h"
@@ -165,6 +164,15 @@ public:
         {
             EXPECT_LE(keep + 4, bytes_.size());
             bytes_ = bytes_.left(keep) + QByteArray(4, '\0');
+            return *this;
+        }
+
+        // Cut the file short with no checksum slot appended, so the reader runs
+        // out of bytes mid-structure.
+        Edit& truncate(int size)
+        {
+            EXPECT_LE(size, bytes_.size());
+            bytes_ = bytes_.left(size);
             return *this;
         }
 
@@ -348,13 +356,12 @@ TEST(AucMutation, M05_CorruptScanMarkerIsRejectedEvenWithAValidChecksum)
 // ---------------------------------------------------------------------------
 // Structurally degenerate input that is currently ACCEPTED
 //
-// These recipes are safe to run today -- none allocates or loops from an
-// untrusted count -- but the reader has no validation for them, so each records
-// acceptance.  The recipe's target result is named in each comment; these are
-// the assertions AUC-T04/T05 will have to change.
+// These recipes are structurally invalid in ways the checksum cannot catch, so
+// each is resealed and each depends on the validation AUC-T04 added.  Before
+// that issue every one of them loaded successfully.
 // ---------------------------------------------------------------------------
 
-TEST(AucMutation, M10_ZeroScanFileIsCurrentlyAcceptedRatherThanReportedAsNoData)
+TEST(AucMutation, M10_ZeroScanFileIsRejectedAsNoData)
 {
     MutableAuc base;
     US_DataIO::RawData data;
@@ -367,14 +374,11 @@ TEST(AucMutation, M10_ZeroScanFileIsCurrentlyAcceptedRatherThanReportedAsNoData)
                              .resealChecksum()
                              .write("m10.auc");
 
-    // TARGET (AUC-M10): NODATA.  A structurally empty AUC should not be a
-    // successful load.
-    EXPECT_EQ(readBounded(path, data), US_DataIO::OK);
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NODATA);
     EXPECT_EQ(data.scanCount(), 0);
-    EXPECT_EQ(data.pointCount(), 0);
 }
 
-TEST(AucMutation, M11_ZeroPointScanIsCurrentlyAcceptedRatherThanReportedAsNoData)
+TEST(AucMutation, M11_ZeroPointScanIsRejectedAsNoData)
 {
     MutableAuc base;
     US_DataIO::RawData data;
@@ -388,14 +392,11 @@ TEST(AucMutation, M11_ZeroPointScanIsCurrentlyAcceptedRatherThanReportedAsNoData
                              .resealChecksum()
                              .write("m11.auc");
 
-    // TARGET (AUC-M11): NODATA, once explicit zero-count validation exists.
-    EXPECT_EQ(readBounded(path, data), US_DataIO::OK);
-    EXPECT_EQ(data.scanCount(), 1);
-    EXPECT_EQ(data.pointCount(), 0);
-    EXPECT_TRUE(data.scanData[0].rvalues.isEmpty());
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NODATA);
+    EXPECT_EQ(data.scanCount(), 0);
 }
 
-TEST(AucMutation, M13_ScansWithDifferentPointCountsAreCurrentlyAccepted)
+TEST(AucMutation, M13_ScansWithDifferentPointCountsAreRejected)
 {
     // Built rather than patched: the writer emits each scan's own reading count,
     // so a RawData whose scans disagree produces a valid file directly.
@@ -405,22 +406,14 @@ TEST(AucMutation, M13_ScansWithDifferentPointCountsAreCurrentlyAccepted)
     MutableAuc base(source);
     US_DataIO::RawData data;
 
-    // TARGET (AUC-M13): NOT_USDATA.  Downstream code shares one xvalues vector
-    // across every scan, so mismatched dimensions are a latent out-of-bounds
-    // read in every consumer, not merely odd data.
-    ASSERT_EQ(readBounded(base.edit().write("m13.auc"), data), US_DataIO::OK);
-    ASSERT_EQ(data.scanCount(), 2);
-
-    EXPECT_EQ(data.scanData[0].rvalues.size(), 8);
-    EXPECT_EQ(data.scanData[1].rvalues.size(), 16);
-
-    // pointCount() reports the LAST scan's count, so indexing scan 0 by a valid
-    // pointCount() index would run past the end of its readings.
-    EXPECT_EQ(data.pointCount(), 16);
-    EXPECT_LT(data.scanData[0].rvalues.size(), data.pointCount());
+    // Downstream code shares one xvalues vector across every scan, so mismatched
+    // dimensions were a latent out-of-bounds read in every consumer: pointCount()
+    // reported the last scan's 16 while scan 0 held only 8 readings.
+    EXPECT_EQ(readBounded(base.edit().write("m13.auc"), data), US_DataIO::NOT_USDATA);
+    EXPECT_EQ(data.scanCount(), 0);
 }
 
-TEST(AucMutation, M14_NonFiniteRadiusDeltaIsCurrentlyAccepted)
+TEST(AucMutation, M14_NonFiniteRadiusDeltaIsRejected)
 {
     MutableAuc base;
     US_DataIO::RawData data;
@@ -430,16 +423,14 @@ TEST(AucMutation, M14_NonFiniteRadiusDeltaIsCurrentlyAccepted)
                              .resealChecksum()
                              .write("m14.auc");
 
-    // TARGET (AUC-M14): NOT_USDATA.  A non-finite coordinate axis is
-    // structurally unusable regardless of any physical range policy.
-    ASSERT_EQ(readBounded(path, data), US_DataIO::OK);
-    ASSERT_GE(data.xvalues.size(), 2);
-    EXPECT_FALSE(qIsNaN(data.xvalues[0]));      // the origin is still finite
-    EXPECT_TRUE(qIsNaN(data.xvalues[1]));       // everything after it is not
-    EXPECT_TRUE(qIsNaN(data.xvalues.last()));
+    // A non-finite coordinate axis is structurally unusable regardless of any
+    // physical range policy.  It previously produced a finite origin followed by
+    // an entire vector of NaN.
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NOT_USDATA);
+    EXPECT_TRUE(data.xvalues.isEmpty());
 }
 
-TEST(AucMutation, M15_ZeroRadiusDeltaIsCurrentlyAccepted)
+TEST(AucMutation, M15_ZeroRadiusDeltaIsRejected)
 {
     MutableAuc base;
     US_DataIO::RawData data;
@@ -449,15 +440,13 @@ TEST(AucMutation, M15_ZeroRadiusDeltaIsCurrentlyAccepted)
                              .resealChecksum()
                              .write("m15.auc");
 
-    // TARGET (AUC-M15): NOT_USDATA.  Every reading collapses onto one radius,
-    // which is not a usable coordinate axis.
-    ASSERT_EQ(readBounded(path, data), US_DataIO::OK);
-    ASSERT_EQ(data.xvalues.size(), 8);
-    for (int point = 1; point < data.xvalues.size(); point++)
-        EXPECT_DOUBLE_EQ(data.xvalues[point], data.xvalues[0]) << "at point " << point;
+    // Every reading would otherwise collapse onto a single radius, which is not
+    // a usable coordinate axis.
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NOT_USDATA);
+    EXPECT_TRUE(data.xvalues.isEmpty());
 }
 
-TEST(AucMutation, M15b_NegativeRadiusDeltaIsCurrentlyAccepted)
+TEST(AucMutation, M15b_NegativeRadiusDeltaIsRejected)
 {
     MutableAuc base;
     US_DataIO::RawData data;
@@ -467,9 +456,218 @@ TEST(AucMutation, M15b_NegativeRadiusDeltaIsCurrentlyAccepted)
                              .resealChecksum()
                              .write("m15b.auc");
 
-    // TARGET (AUC-M15): NOT_USDATA.  A descending axis breaks the ordering that
-    // xindex() and every consumer of it assume.
+    // A descending axis breaks the ordering that xindex() and every consumer of
+    // it assume.
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NOT_USDATA);
+    EXPECT_TRUE(data.xvalues.isEmpty());
+}
+
+// ---------------------------------------------------------------------------
+// Truncation and hostile counts
+//
+// These were deferred from AUC-T03: before AUC-T04 the reader ignored the
+// return of QDataStream::readRawData(), so a truncated file was parsed out of
+// whatever the stack buffers already held and the checksum was computed over
+// that -- undefined, not merely wrong.  M12 additionally drove a loop and a
+// heap allocation from an untrusted 32-bit count.
+// ---------------------------------------------------------------------------
+
+TEST(AucMutation, M06_TruncationInsideTheFixedHeaderIsRejected)
+{
+    MutableAuc base;
+
+    // Every offset from the magic number through the scan count.  Each must be
+    // a clean rejection rather than a read of uninitialized memory.
+    for (int size = 0; size < kHeaderBytes; size++)
+    {
+        US_DataIO::RawData data;
+        const QString path = base.edit()
+                                 .truncate(size)
+                                 .write(QString("m06_%1.auc").arg(size));
+
+        const int result = readBounded(path, data);
+        EXPECT_NE(result, US_DataIO::OK) << "at truncation size " << size;
+        EXPECT_EQ(data.scanCount(), 0)   << "at truncation size " << size;
+    }
+}
+
+TEST(AucMutation, M07_TruncationInsideAScanHeaderIsRejected)
+{
+    MutableAuc base;
+
+    for (int size = kHeaderBytes; size < kHeaderBytes + kScanHeaderSize; size++)
+    {
+        US_DataIO::RawData data;
+        const QString path = base.edit()
+                                 .truncate(size)
+                                 .write(QString("m07_%1.auc").arg(size));
+
+        EXPECT_NE(readBounded(path, data), US_DataIO::OK) << "at truncation size " << size;
+        EXPECT_EQ(data.scanCount(), 0)                    << "at truncation size " << size;
+    }
+}
+
+TEST(AucMutation, M08_TruncationInsideTheReadingsIsRejected)
+{
+    MutableAuc base;
+    const int firstReading = kHeaderBytes + kScanHeaderSize;
+
+    for (int size = firstReading; size < firstReading + 16; size++)
+    {
+        US_DataIO::RawData data;
+        const QString path = base.edit()
+                                 .truncate(size)
+                                 .write(QString("m08_%1.auc").arg(size));
+
+        EXPECT_NE(readBounded(path, data), US_DataIO::OK) << "at truncation size " << size;
+        EXPECT_EQ(data.scanCount(), 0)                    << "at truncation size " << size;
+    }
+}
+
+TEST(AucMutation, M09_TruncationOfTheTrailingChecksumIsRejected)
+{
+    MutableAuc base;
+    const int full = base.bytes().size();
+
+    // One, two and three checksum bytes present instead of four.  This is the
+    // path that previously compared the crc against uninitialized stack.
+    for (int missing = 1; missing <= 4; missing++)
+    {
+        US_DataIO::RawData data;
+        const QString path = base.edit()
+                                 .truncate(full - missing)
+                                 .write(QString("m09_%1.auc").arg(missing));
+
+        EXPECT_EQ(readBounded(path, data), US_DataIO::NOT_USDATA) << "missing " << missing;
+        EXPECT_EQ(data.scanCount(), 0)                            << "missing " << missing;
+    }
+}
+
+TEST(AucMutation, M12_PointCountBeyondTheAvailableBytesIsRejected)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    // A count far larger than the file, resealed so nothing earlier rejects it.
+    // Before the bounds check this drove both the reading loop and a
+    // new char[] allocation from this value.
+    const QString path = base.edit()
+                             .patchU32(kScanPointCount, 0x3fffffffu)
+                             .resealChecksum()
+                             .write("m12.auc");
+
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NOT_USDATA);
+    EXPECT_EQ(data.scanCount(), 0);
+}
+
+TEST(AucMutation, M12b_NegativePointCountIsRejected)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    // The count is read into a signed 32-bit value, so the high bit makes it
+    // negative rather than merely large.
+    const QString path = base.edit()
+                             .patchU32(kScanPointCount, 0xffffffffu)
+                             .resealChecksum()
+                             .write("m12b.auc");
+
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NODATA);
+    EXPECT_EQ(data.scanCount(), 0);
+}
+
+TEST(AucMutation, NegativeScanCountIsRejected)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    // scan_count is a qint16, so 0x8000 is the most negative value it can hold.
+    const QString path = base.edit()
+                             .patchU16(kScanCount, 0x8000u)
+                             .resealChecksum()
+                             .write("negscans.auc");
+
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NODATA);
+    EXPECT_EQ(data.scanCount(), 0);
+}
+
+TEST(AucMutation, ScanCountBeyondTheAvailableBytesIsRejected)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    const QString path = base.edit()
+                             .patchU16(kScanCount, 0x7fffu)
+                             .resealChecksum()
+                             .write("bigscans.auc");
+
+    EXPECT_EQ(readBounded(path, data), US_DataIO::NOT_USDATA);
+    EXPECT_EQ(data.scanCount(), 0);
+}
+
+// ---------------------------------------------------------------------------
+// AUC-T05: failure output is atomic
+//
+// The documented guarantee is "unchanged": a failed read leaves the caller's
+// RawData exactly as it was.  Previously scans were appended as they parsed and
+// the checksum was verified only at the end, so a rejected file left plausible
+// looking data behind and a reused destination accumulated scans.
+// ---------------------------------------------------------------------------
+
+TEST(AucMutation, ARejectedReadLeavesAnEmptyDestinationUntouched)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    // Corrupt a payload byte so the file parses completely and fails only at
+    // the very end, on the checksum.  This is the case that used to leave two
+    // fully populated scans in the destination.
+    const QString path = base.edit()
+                             .flipBit(kHeaderBytes + kScanHeaderSize, 0x01)
+                             .write("t05_empty.auc");
+
+    ASSERT_EQ(readBounded(path, data), US_DataIO::BADCRC);
+    EXPECT_EQ(data.scanCount(), 0);
+    EXPECT_TRUE(data.xvalues.isEmpty());
+    EXPECT_TRUE(data.description.isEmpty());
+}
+
+TEST(AucMutation, ARejectedReadLeavesAPopulatedDestinationUntouched)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    // Load a good file first, then fail a read into the same object.
+    ASSERT_EQ(readBounded(base.edit().write("t05_good.auc"), data), US_DataIO::OK);
+    ASSERT_EQ(data.scanCount(), 2);
+    const QString    description = data.description;
+    const QVector<double> xvalues = data.xvalues;
+
+    const QString bad = base.edit()
+                            .flipBit(kHeaderBytes + kScanHeaderSize, 0x01)
+                            .write("t05_bad.auc");
+
+    ASSERT_EQ(readBounded(bad, data), US_DataIO::BADCRC);
+
+    // Not 4:  the previous contents survive intact rather than accumulating.
+    EXPECT_EQ(data.scanCount(), 2);
+    EXPECT_EQ(data.pointCount(), 8);
+    EXPECT_EQ(data.description, description);
+    EXPECT_EQ(data.xvalues, xvalues);
+}
+
+TEST(AucMutation, ASuccessfulReadReplacesRatherThanAppends)
+{
+    MutableAuc base;
+    US_DataIO::RawData data;
+
+    const QString path = base.edit().write("t05_reuse.auc");
+
     ASSERT_EQ(readBounded(path, data), US_DataIO::OK);
-    ASSERT_EQ(data.xvalues.size(), 8);
-    EXPECT_LT(data.xvalues.last(), data.xvalues.first());
+    ASSERT_EQ(data.scanCount(), 2);
+
+    // Reading the same file into the same object must not double the scans.
+    ASSERT_EQ(readBounded(path, data), US_DataIO::OK);
+    EXPECT_EQ(data.scanCount(), 2);
+    EXPECT_EQ(data.xvalues.size(), 8);
 }
