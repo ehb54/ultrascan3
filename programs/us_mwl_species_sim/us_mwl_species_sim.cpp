@@ -783,9 +783,12 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
             reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
                                         gui_needed, error_occured );
          }
-         else
-         {
-            simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
+         else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
+                                            cp, ch ) )
+         {  // Ignoring this would silently fall back to the 7.2 default bottom
+            reportHeadlessLoadFailure( "centerpiece",
+               "hardware definitions could not be applied", errors_to_cl,
+               gui_needed, error_occured );
          }
       }
    }
@@ -993,11 +996,19 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
                                           const QString& cell )
 {
    QString now        = QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
-   double  stretch    = simparams.rotorcoeffs[ 0 ] * simparams.speed_step[ 0 ].rotorspeed
-                      + simparams.rotorcoeffs[ 1 ]
-                        * sq( (double)simparams.speed_step[ 0 ].rotorspeed );
-   double  meniscus   = simparams.meniscus        + stretch;
-   double  bottom     = simparams.bottom_position + stretch;
+   // Reuse the geometry init_rawdata() built the radial grid from.  Deriving
+   // the stretch again here from rotorspeed put the edit radii outside the
+   // data range whenever set_speed and rotorspeed disagreed -- which is what
+   // a --simparams file with no set_speed attribute produces.
+   double  meniscus   = curr_meniscus;
+   double  bottom     = curr_bottom;
+
+   if ( bottom <= meniscus )
+   {
+      QTextStream( stderr ) << "Error: cell geometry is unset; simulations "
+         "must run before edit files can be written" << Qt::endl;
+      return false;
+   }
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {

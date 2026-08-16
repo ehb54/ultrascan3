@@ -61,8 +61,10 @@ class US_MwlSpeciesSim : public US_Widgets
         bool dbload;           //!< Database load flag
         bool stopFlag;         //!< Stop flag
 
-        double curr_meniscus;  //!< Current meniscus
-        double curr_bottom;    //!< Current bottom
+        //! Stretched cell geometry, set by init_rawdata() and reused by every
+        //! consumer so the data grid and the edit files cannot disagree.
+        double curr_meniscus = 0.0;  //!< Current meniscus
+        double curr_bottom   = 0.0;  //!< Current bottom
 
         QString mfilt;         //!< Model filter
         QString mrunid;        //!< Model run ID
