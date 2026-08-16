@@ -485,10 +485,16 @@ void US_DB2::query( const QStringList& arguments )
    query( buildQuery( arguments ) );
 }
 
-QString US_DB2::buildQuery( const QStringList& arguments )
+QString US_DB2::composeQuery( const QString&     keyword,
+                              const QStringList& arguments,
+                              const QString&     guid,
+                              const QString&     password )
 {
-   QString newquery = "CALL " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
+   // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
+   if ( arguments.isEmpty() ) return QString();
+
+   QString newquery = keyword + " " + arguments[ 0 ]
+                    + "('" + guid + "', '" + password + "'";
 
    for ( int i = 1; i < arguments.size(); i++ )
    {
@@ -500,27 +506,17 @@ QString US_DB2::buildQuery( const QStringList& arguments )
 
    newquery += ")";
 
-//qDebug() << "NewQuery:" << newquery;
    return newquery;
+}
+
+QString US_DB2::buildQuery( const QStringList& arguments )
+{
+   return composeQuery( "CALL", arguments, guid, userPW );
 }
 
 QString US_DB2::buildQuerySelect( const QStringList& arguments )
 {
-   QString newquery = "SELECT " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
-
-   for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
-
-   newquery += ")";
-
-//qDebug() << "NewQuerySelect:" << newquery;
-   return newquery;
+   return composeQuery( "SELECT", arguments, guid, userPW );
 }
 
 #ifdef NO_DB
