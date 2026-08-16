@@ -479,9 +479,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
             reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
                                         gui_needed, error_occured );
          }
-         else
-         {
-            simparams.setHardware( NULL, simparams.rotorCalID, cp, ch );
+         else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
+                                            cp, ch ) )
+         {  // Ignoring this would silently fall back to the 7.2 default bottom
+            reportHeadlessLoadFailure( "centerpiece",
+               "hardware definitions could not be applied", errors_to_cl,
+               gui_needed, error_occured );
          }
       }
    }
