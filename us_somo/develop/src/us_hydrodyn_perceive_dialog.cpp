@@ -442,12 +442,17 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
 
     cb_save = new QCheckBox( us_tr( " Also append this entry to somo.residue " ), this );
     cb_save->setChecked( false );
+    // Held back from release: perception is offered, but writing the perceived entry into the
+    // user's residue table is not. Left visible rather than hidden so it is clear that the
+    // table is not being modified; the tooltip says why.
+    cb_save->setEnabled( false );
     cb_save->setPalette( perceive_palette() );
     AUTFBACK( cb_save );
     AUTFBACK( cb_save );
     cb_save->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-    cb_save->setToolTip( us_tr( "Off by default. When off the entry is used for this session "
-                                "only and your residue table is left untouched." ) );
+    cb_save->setToolTip( us_tr( "Disabled in this release. The perceived entry is used for this "
+                                "session only and your residue table is never modified. To keep "
+                                "an entry, copy it from the box above." ) );
 
     pb_accept = new QPushButton( us_tr( "Accept" ), this );
     pb_accept->setMinimumHeight( minHeight1 );
@@ -749,7 +754,9 @@ void US_Hydrodyn_Perceive_Dialog::reset_entry() {
 void US_Hydrodyn_Perceive_Dialog::accept_entry() {
     refresh_entry();
     accepted_ = true;
-    save_requested_ = cb_save->isChecked();
+    // Held back from release: never request a permanent somo.residue write, whatever state the
+    // (disabled) checkbox is in. Restore cb_save->isChecked() together with its setEnabled.
+    save_requested_ = false;
     close();
 }
 
