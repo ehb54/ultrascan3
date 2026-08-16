@@ -512,6 +512,10 @@ void US_DataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
    crc = US_Crc::crc32( crc, (unsigned char*) c, len );
 }
 
+// Bytes writeScan() always emits before the readings:  the "DATA" marker plus
+// temperature, rpm, seconds, omega2t, wavelength, delta_r and the reading count.
+static const qint64 scan_header_size = 30;
+
 int US_DataIO::readRawData( const QString& file, RawData& data )
 {
    QFile ff( file );
@@ -520,6 +524,15 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
    int      err = OK;
    quint32  crc = 0xffffffffUL;
+
+   // Parse into a temporary and copy to the caller only once the whole file,
+   // checksum included, has proven valid.  On any error data is left untouched.
+   RawData  rd;
+   rd.cell    = 0;
+   rd.channel = ' ';
+   memset( rd.type,    0, sizeof rd.type    );
+   memset( rd.rawGUID, 0, sizeof rd.rawGUID );
+
 #if 1
    double ss_reso      = 100.0;
    // If debug_text so directs, change set_speed_resolution
@@ -555,7 +568,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
                                         << "WA" << "WI";
     
       if ( ! types.contains( QString( type ) ) ) throw BADTYPE;
-      strncpy( data.type, type, 2 );
+      strncpy( rd.type, type, 2 );
 
       // Get the cell
       union 
@@ -566,18 +579,20 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       cell.i = 0;
 
       read( ds, cell.c, 1, crc );
-      data.cell = qFromLittleEndian( cell.i );
+      rd.cell = qFromLittleEndian( cell.i );
 
       // Get the channel
-      read( ds, &data.channel, 1, crc );
+      read( ds, &rd.channel, 1, crc );
 
       // Get the guid
-      read( ds, data.rawGUID, 16, crc );
-    
-      // Get the description
-      char desc[ 240 ];
+      read( ds, rd.rawGUID, 16, crc );
+
+      // Get the description.  The stored field need not be terminated, so the
+      // buffer carries one extra byte that always is.
+      char desc[ 241 ];
       read( ds, desc, 240, crc );
-      data.description = QString( desc );
+      desc[ 240 ] = '\0';
+      rd.description = QString( desc );
 
       // Get the parameters to expand the values
       union
@@ -631,8 +646,22 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       u2.I = qFromLittleEndian( u1.I );
       double max_data2 = u2.f;
 
+      // A radius axis is generated from these two, so both must be finite and
+      // the spacing must ascend.  A flat or descending axis breaks the ordering
+      // that xindex() and its callers rely on.
+      if ( qIsNaN( min_radius )  ||  qIsInf( min_radius ) ) throw NOT_USDATA;
+      if ( qIsNaN( delta_radius ) || qIsInf( delta_radius ) ) throw NOT_USDATA;
+      if ( delta_radius <= 0.0 ) throw NOT_USDATA;
+
       read( ds, si.c, 2, crc );
       qint16 scan_count = qFromLittleEndian( si.I );
+
+      if ( scan_count <= 0 ) throw NODATA;
+
+      // Every scan costs at least a marker and a scan header, so a count the
+      // file cannot possibly hold is rejected before the loop starts.
+      const qint64 remaining = ff.size() - ff.pos();
+      if ( (qint64)scan_count * scan_header_size > remaining ) throw NOT_USDATA;
 
       // Read each scan
       int valueCount = 0;
@@ -681,12 +710,26 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
          // Reading count
          read( ds, u1.c, 4, crc );
-         valueCount = qFromLittleEndian( u1.I );
+         qint32 this_count = qFromLittleEndian( u1.I );
+
+         if ( this_count <= 0 ) throw NODATA;
+
+         // Every scan describes the same radius axis, so the counts must agree.
+         // Otherwise pointCount() reports the last scan's count while earlier
+         // scans hold fewer readings, and indexing by it runs off the end.
+         if ( ii == 0 ) valueCount = this_count;
+         else if ( this_count != valueCount ) throw NOT_USDATA;
 
          // Get the readings
          double  factor1 = ( max_data1 - min_data1 ) / 65535.0;
          double  factor2 = ( max_data2 - min_data2 ) / 65535.0;
          bool    stdDev  = ( min_data2 != 0.0 || max_data2 != 0.0 );
+
+         // Bound the loop and the bitmap allocation by what the file actually
+         // holds.  Computed in 64 bits so an extreme count cannot overflow.
+         const qint64 need = (qint64)valueCount * ( stdDev ? 4 : 2 )
+                           + ( (qint64)valueCount + 7 ) / 8;
+         if ( need > ff.size() - ff.pos() ) throw NOT_USDATA;
 
          for ( int jj = 0; jj < valueCount; jj++ )
          {
@@ -728,23 +771,26 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          delete [] interpolated;
 
          // Add the scan to the data
-         data.scanData <<  sc;
+         rd.scanData <<  sc;
       }
 
       // Calculate the radius vector
-      data.xvalues.clear();
+      rd.xvalues.clear();
       double  radius  = min_radius;
-      
+
       for ( int jj = 0; jj < valueCount; jj++ )
       {
-         data.xvalues << radius;
+         rd.xvalues << radius;
          radius += delta_radius;
       }
 
       // Read the crc
       quint32 read_crc;
-      ds.readRawData( (char*) &read_crc , 4 );
+      if ( ds.readRawData( (char*) &read_crc, 4 ) != 4 ) throw NOT_USDATA;
       if ( crc != qFromLittleEndian( read_crc ) ) throw BADCRC;
+
+      // Everything checks out:  hand the parsed data to the caller.
+      data = rd;
 
    } catch( ioError error )
    {
@@ -757,7 +803,9 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
 void US_DataIO::read( QDataStream& ds, char* cc, int len, quint32& crc )
 {
-   ds.readRawData( cc, len );
+   // A short read leaves the tail of cc uninitialized, so the caller must not
+   // see it and the crc must not absorb it.
+   if ( ds.readRawData( cc, len ) != len ) throw NOT_USDATA;
    crc = US_Crc::crc32( crc, (uchar*) cc, len );
 }
 
