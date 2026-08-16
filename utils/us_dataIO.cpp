@@ -296,6 +296,26 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    // itself be out of bounds.
    if ( data.xvalues.size() < 2 ) return NODATA;
 
+   // Since only that origin and spacing survive the write, the reader rebuilds
+   // the axis as origin + n * spacing.  Reject what it cannot describe, by the
+   // measure that matters:  no reading may come back attached to a different
+   // grid point than the one it was recorded at.
+   //
+   // The tolerance is a whole step rather than a rounding margin, because a
+   // producer legitimately lands inside it -- us_mwl_species_sim snaps its last
+   // radius onto the cell bottom, displacing that one point by at most half a
+   // step.  A genuinely uneven axis accumulates well past this.
+   const double spacing = data.xvalues[ 1 ] - data.xvalues[ 0 ];
+   if ( ! ( spacing > 0.0 )  ||  qIsInf( spacing ) ) return NOT_USDATA;
+
+   for ( int ii = 2; ii < data.xvalues.size(); ii++ )
+   {
+      const double rebuilt = data.xvalues[ 0 ] + spacing * ii;
+
+      if ( ! ( qAbs( data.xvalues[ ii ] - rebuilt ) <= spacing ) )
+         return NOT_USDATA;
+   }
+
    // An absent interpolation bitmap means no point is interpolated and is
    // filled in by writeScan().  One that is present but shorter than the
    // readings it describes is an inconsistent scan: the producer tracked
