@@ -276,6 +276,12 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
 {
    // Validate before opening, so a rejected write leaves no partial file.
    //
+   // The format stores the radius axis as an origin and a single spacing, and
+   // that spacing is derived from the first two entries.  Fewer than two of
+   // them cannot describe an axis, and reading xvalues[ 1 ] to find out would
+   // itself be out of bounds.
+   if ( data.xvalues.size() < 2 ) return NODATA;
+
    // An absent interpolation bitmap means no point is interpolated and is
    // filled in by writeScan().  One that is present but shorter than the
    // readings it describes is an inconsistent scan: the producer tracked
@@ -324,7 +330,10 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    memset( desc, '\0', sizeof desc );  // bzero is not defined in WIN32
 
    QByteArray dd = data.description.toLatin1();
-   strncpy( desc, dd.data(), sizeof desc );
+   // Copy at most 239 bytes so the field is always terminated.  Filling all 240
+   // leaves no terminator, and every reader of this format builds a QString
+   // from the buffer as if there were one.
+   strncpy( desc, dd.data(), sizeof desc - 1 );
    write( ds, desc, sizeof desc, crc );
 
    // Find min and max radius, data, and std deviation
