@@ -1,4 +1,11 @@
-name: "Unit Tests v2"
+# Qt5 unit tests.  Qt6 runs the same suite from unit-tests-qt6-v2.yml, which
+# builds against vcpkg rather than apt because there is no Qt6 Qwt package.
+#
+# The job names here are deliberately unchanged from when this file was
+# unit-tests-v2.yml:  branch protection identifies a required check by its job
+# name, not by the workflow file, so renaming the file leaves those settings
+# intact.  The Qt6 workflow suffixes its own job names to keep them distinct.
+name: "Unit Tests Qt5 v2"
 
 on:
   push:
@@ -41,7 +48,7 @@ jobs:
         with:
           files_yaml: |
             relevant:
-              - .github/workflows/unit-tests-v2.yml
+              - .github/workflows/unit-tests-qt5-v2.yml
               - utils/**.c
               - utils/**.cpp
               - utils/**.h
