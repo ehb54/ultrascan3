@@ -1835,6 +1835,15 @@ DbgLv(1) << "sfd:  menx menval meniscus" << menx << menval << meniscus;
 
       int stat        = US_DataIO::writeRawData( fname, synData[ kd ] );
 DbgLv(1) << "sfd:  stat fname" << stat << fname;
+
+      if ( stat != US_DataIO::OK )
+      {  // A rejected write leaves no file, so say so instead of logging at a
+         // debug level nobody has switched on
+         QMessageBox::warning( this, tr( "Species File Write Failed" ),
+            tr( "The species data could not be written to\n%1\n\n%2" )
+            .arg( fname ).arg( US_DataIO::errorString( stat ) ) );
+         return;
+      }
    }
 QDateTime time9=QDateTime::currentDateTime();
 DbgLv(1) << "sfd: (C)D0 cmn" << ms << mr << synData[0].value(ms,mr);

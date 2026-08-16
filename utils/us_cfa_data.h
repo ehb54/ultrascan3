@@ -206,7 +206,8 @@ class US_UTIL_EXTERN US_CfaData : public QObject
 
       //! \brief Export to openAUC
       //! \param allData Input vector of rawDatas built from CFA data
-      //! \returns       Number of files written
+      //! \returns       Number of files actually written;  a triple the writer
+      //!                rejects is logged and not counted
       int     export_auc    ( QVector< US_DataIO::RawData >& );
 
       //! \brief A count of specified type
