@@ -15,6 +15,22 @@ const uint US_DataIO::format_version;
 // data type -- so nothing after the type lands where this code looks for it.
 static const quint32 oldest_version = 4;
 
+// Resolution the stored speed is rounded to.  SetSpeedResolution is a
+// documented user setting (Advanced Settings, "Debug Text Options"), not a
+// developer leftover, so it is honored here; an absent, unparsable or
+// non-positive value leaves the default in place rather than rounding every
+// speed against zero.
+static double speed_resolution()
+{
+   const QString dbgval = US_Settings::debug_value( "SetSpeedReso" );
+   if ( dbgval.isEmpty() ) return 100.0;
+
+   bool   ok    = false;
+   double value = dbgval.toDouble( &ok );
+
+   return ( ok  &&  value > 0.0 ) ? value : 100.0;
+}
+
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
 {
@@ -205,16 +221,8 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    QFile ff( file );
    if ( ! ff.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
    QTextStream ts( &ff );
-#if 1
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
-#endif
+
+   double ss_reso      = speed_resolution();
 
    // Read the description
    data.description = ts.readLine();
@@ -570,16 +578,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
    memset( rd.type,    0, sizeof rd.type    );
    memset( rd.rawGUID, 0, sizeof rd.rawGUID );
 
-#if 1
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
-#endif
+   double ss_reso      = speed_resolution();
 
    try
    {
