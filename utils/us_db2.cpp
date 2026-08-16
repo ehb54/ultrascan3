@@ -5,6 +5,8 @@
 #include "us_gzip.h"
 #include "us_util.h"
 
+#include <QRegularExpression>
+
 #define CIPHER \
 /* TLS 1.2 (Prioritize Galois/Counter Mode) */ \
 "ECDHE-ECDSA-AES256-GCM-SHA384:" \
@@ -493,12 +495,21 @@ QString US_DB2::composeQuery( const QString&     keyword,
    // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
    if ( arguments.isEmpty() ) return QString();
 
+   // The name is a SQL identifier, not a quoted literal, so escaping cannot
+   // make it safe -- it is interpolated as written.  Accept only a plain
+   // identifier and refuse anything else rather than emit it.
+   static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
+   if ( ! procName.match( arguments[ 0 ] ).hasMatch() ) return QString();
+
    QString newquery = keyword + " " + arguments[ 0 ]
                     + "('" + guid + "', '" + password + "'";
 
    for ( int i = 1; i < arguments.size(); i++ )
    {
       QString arg = arguments[ i ];
+      // Backslash first:  escaping the quotes first would then double the
+      // backslashes this step inserts.
+      arg.replace( "\\", "\\\\" );
       arg.replace( "'", "\\'" );
 
       newquery += ", '" + arg + "'";

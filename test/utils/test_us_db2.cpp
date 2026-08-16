@@ -90,19 +90,39 @@ TEST( UsDb2Query, EachArgumentIsEscapedIndependently )
     EXPECT_TRUE( query.contains( "'y\\'2'" ) ) << qPrintable( query );
 }
 
-TEST( UsDb2Query, TheProcedureNameIsNotEscaped )
+TEST( UsDb2Query, AProcedureNameThatIsNotAPlainIdentifierIsRefused )
 {
-    // OBSERVED: only arguments 1..n are escaped.  The procedure name is
-    // interpolated verbatim, so it must never come from untrusted input.
-    EXPECT_TRUE( call( QStringList() << "od'd" ).contains( "CALL od'd(" ) );
+    // The name is interpolated as a SQL identifier rather than a quoted
+    // literal, so escaping cannot make it safe and it is rejected instead.
+    EXPECT_TRUE( call( QStringList() << "od'd" ).isEmpty() );
+    EXPECT_TRUE( call( QStringList() << "p; DROP TABLE users" ).isEmpty() );
+    EXPECT_TRUE( call( QStringList() << "" ).isEmpty() );
+    EXPECT_TRUE( call( QStringList() << "9starts_with_a_digit" ).isEmpty() );
 }
 
-TEST( UsDb2Query, BackslashesInAnArgumentAreNotEscaped )
+TEST( UsDb2Query, OrdinaryProcedureNamesAreStillAccepted )
 {
-    // OBSERVED-DEFECT: only the quote character is escaped.  A trailing
-    // backslash escapes the closing delimiter under MySQL's default
-    // NO_BACKSLASH_ESCAPES=off, so this composes a query the server misreads.
-    EXPECT_TRUE( call( QStringList() << "p" << "path\\" ).contains( "'path\\'" ) );
+    // The guard must not reject the names the codebase actually uses.
+    EXPECT_FALSE( call( QStringList() << "get_analyte_info" ).isEmpty() );
+    EXPECT_FALSE( call( QStringList() << "_leading_underscore" ).isEmpty() );
+    EXPECT_FALSE( call( QStringList() << "Mixed_Case9" ).isEmpty() );
+}
+
+TEST( UsDb2Query, BackslashesInAnArgumentAreEscaped )
+{
+    // A trailing backslash would otherwise escape the closing delimiter under
+    // MySQL's default NO_BACKSLASH_ESCAPES=off and run the argument into the
+    // next one.
+    EXPECT_EQ( call( QStringList() << "p" << "path\\" ),
+               QString( "CALL p('%1', '%2', 'path\\\\')" ).arg( kGuid ).arg( kPw ) );
+}
+
+TEST( UsDb2Query, ABackslashBeforeAQuoteIsEscapedExactlyOnce )
+{
+    // Order matters:  escaping the quote first would double the backslash the
+    // quote step inserts, producing a literal backslash and an open quote.
+    EXPECT_EQ( call( QStringList() << "p" << "a\\'b" ),
+               QString( "CALL p('%1', '%2', 'a\\\\\\'b')" ).arg( kGuid ).arg( kPw ) );
 }
 
 TEST( UsDb2Query, AnEmptyArgumentListYieldsAnEmptyQuery )
