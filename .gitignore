@@ -34,3 +34,4 @@ CMakeUserPresets.json
 __pycache__
 /CLAUDE.md
 *.pyc
+/build-mac/
