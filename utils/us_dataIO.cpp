@@ -9,6 +9,12 @@
 // Static member definition
 const uint US_DataIO::format_version;
 
+// The oldest format version this reader can parse.  Versions 2 and 3 placed
+// their fields differently -- version 2 stored the radius limits as 2-byte
+// integers, and neither carried the cell and channel bytes that follow the
+// data type -- so nothing after the type lands where this code looks for it.
+static const quint32 oldest_version = 4;
+
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
 {
@@ -586,8 +592,10 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
-      if ( version > format_version ) throw BAD_VERSION;
+      if ( version > format_version  ||  version < oldest_version )
+         throw BAD_VERSION;
 
+      // Version 4 wrote the wavelength on a different scale than version 5.
       bool wvlf_new  = ( version > (quint32)4 );
 
       // Read and get the file type
