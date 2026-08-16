@@ -375,10 +375,53 @@ TEST(AucReadContract, ParsedRpmDependsOnTheSetSpeedResoDebugSetting)
         configuredRpm = data.scanData[0].rpm;
     }
 
-    // OBSERVED: identical bytes decode to different RPM depending on a global
-    // user setting.  45130 rounds to 45100 at the default 100 rpm resolution and
-    // to 45150 at 50.  Any parser test must pin this setting.
+    // Identical bytes decode to different RPM depending on a global user
+    // setting.  45130 rounds to 45100 at the default 100 rpm resolution and to
+    // 45150 at 50.  Any parser test must pin this setting.
+    //
+    // DECIDED: this is a supported feature, not a debugging leftover.  The
+    // manual documents SetSpeedResolution under Advanced Settings -> Debug Text
+    // Options, with the default of 100 this reader applies, and the same
+    // setting steers the timestate writer and the speed-step profiles that are
+    // matched against these speeds.  It stays.
     EXPECT_NEAR(defaultRpm, 45100.0, 1.0e-6);
     EXPECT_NEAR(configuredRpm, 45150.0, 1.0e-6);
     EXPECT_NE(defaultRpm, configuredRpm);
+}
+
+TEST(AucReadContract, AnUnusableSpeedResolutionSettingFallsBackToTheDefault)
+{
+    AucFixture fixture;
+
+    // The setting used to be read with a bare toDouble(), so a value that is
+    // missing, non-numeric or zero produced a resolution of 0 and every scan
+    // in every file came back with a speed divided by it.
+    const QStringList unusable = QStringList()
+        << "SetSpeedResolution="
+        << "SetSpeedResolution=abc"
+        << "SetSpeedResolution=0"
+        << "SetSpeedResolution=-100";
+
+    for (const QString& setting : unusable)
+    {
+        DebugTextGuard guard(QStringList() << setting);
+
+        US_DataIO::RawData data;
+        ASSERT_EQ(US_DataIO::readRawData(fixture.validPath(), data), US_DataIO::OK)
+            << setting.toStdString();
+        EXPECT_NEAR(data.scanData[0].rpm, 45100.0, 1.0e-6) << setting.toStdString();
+    }
+}
+
+TEST(AucReadContract, TheDocumentedSpellingOfTheSpeedResolutionSettingIsAccepted)
+{
+    AucFixture fixture;
+
+    // The manual spells it SetSpeedResolution; the code matches on the prefix
+    // SetSpeedReso, so both forms have to reach the reader.
+    DebugTextGuard guard(QStringList() << "SetSpeedResolution=50");
+
+    US_DataIO::RawData data;
+    ASSERT_EQ(US_DataIO::readRawData(fixture.validPath(), data), US_DataIO::OK);
+    EXPECT_NEAR(data.scanData[0].rpm, 45150.0, 1.0e-6);
 }
