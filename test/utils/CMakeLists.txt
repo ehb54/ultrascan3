@@ -106,9 +106,23 @@ endif()
 
 # ENABLE Google Test discovery - this will register individual test cases
 include(GoogleTest)
+# The label is one composite word on purpose, and the alternative does not work.
+#
+# gtest_discover_tests flattens PROPERTIES into a single semicolon-separated
+# string before its generated script re-parses it, so the natural
+# LABELS "gtest;unit;utils" arrives there as three arguments: LABELS takes
+# "gtest", and "unit" and "utils" are silently read as property names.  No
+# escaping at this call survives that round trip, and set_property(TEST ...)
+# from a later CTest include file cannot see tests added by another one.  The
+# result was that `ctest -L utils` -- and therefore the test_utils target below
+# and the `./test-docker.sh -f utils` command in test/README -- matched nothing
+# at all while appearing to work.
+#
+# CTest matches -L as a regular expression against each label, so a single
+# "gtest-unit-utils" label is selected by -L gtest, -L unit and -L utils alike.
 gtest_discover_tests(test_us_utils
         PROPERTIES
-        LABELS "gtest;unit;utils"
+        LABELS gtest-unit-utils
         TIMEOUT 60
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
         )
