@@ -38,6 +38,10 @@ QUICK_MODE=false
 SAVE_LOGS=false
 STOP_ON_FIRST_FAILURE=false
 PROFILE="TEST"
+# Database variant of the test build.  false = DB-enabled (the TEST profile),
+# true = the NO_DB variant.  Each variant gets its own build tree so the two
+# never share objects compiled with different NO_DB settings.
+NO_DB_VARIANT=false
 
 
 show_help() {
@@ -71,6 +75,8 @@ Usage: ./test-docker.sh [options]
   --rebuild               Force complete rebuild
   --stats                 Show build and test statistics
   --profile               Profile of APP, HPC, or TEST (default)
+  --no-db                 Build and test the NO_DB variant in build-docker-nodb
+                          (default is the DB-enabled TEST profile in build-docker)
 
 
 === EXAMPLES FOR DEBUGGING WORKFLOW ===
@@ -169,6 +175,7 @@ while [[ $# -gt 0 ]]; do
         -l|--list) LIST_TESTS=true; shift ;;
         --failed-only) FAILED_ONLY=true; shift ;;
         --profile) PROFILE="$2"; shift 2 ;;
+        --no-db) NO_DB_VARIANT=true; shift ;;
         --rebuild) REBUILD=true; shift ;;
         --stats) SHOW_STATS=true; shift ;;
         -q|--quick) QUICK_MODE=true; shift ;;
@@ -229,7 +236,12 @@ fi
 
 # Detect repo root and set build dir consistently
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-BUILD_DIR="${ROOT_DIR}/build-docker"
+if [ "$NO_DB_VARIANT" = true ]; then
+    BUILD_SUBDIR="build-docker-nodb"
+else
+    BUILD_SUBDIR="build-docker"
+fi
+BUILD_DIR="${ROOT_DIR}/${BUILD_SUBDIR}"
 
 print_status "Setting up build environment..."
 if [ "$REBUILD" = true ]; then
@@ -247,7 +259,7 @@ if [ "$INTERACTIVE" = true ]; then
     echo "=== INTERACTIVE DEBUGGING COMMANDS ==="
     echo ""
     echo "BUILD:"
-    echo "  cd /ultrascan3/build-docker && cmake --build . -j $PARALLEL_JOBS"
+    echo "  cd /ultrascan3/${BUILD_SUBDIR} && cmake --build . -j $PARALLEL_JOBS"
     echo ""
     echo "DISCOVER TESTS:"
     echo "  ctest -N                                    # List CTest tests"
@@ -272,7 +284,7 @@ if [ "$INTERACTIVE" = true ]; then
 
     docker run --rm -it \
         -v "$(pwd)":/ultrascan3 \
-        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -v "${BUILD_DIR}":"/ultrascan3/${BUILD_SUBDIR}" \
         -w /ultrascan3 \
         us3comp-test:latest bash
     exit 0
@@ -315,7 +327,7 @@ if [ "$DEBUG_MODE" = "true" ] && [ "$QUICK_MODE" = "false" ]; then
     echo '==========================='
 fi
 
-cd /ultrascan3/build-docker
+cd "/ultrascan3/${BUILD_SUBDIR}"
 
 if [ "$QUICK_MODE" = "false" ]; then
     echo 'Configuring with CMake...'
@@ -341,14 +353,22 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
     fi
 
 #    Enable testing to build static library
-        cmake -S .. -B . \
-            "${GEN_ARGS[@]}" \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DUS3_PROFILE=TEST \
-            -DBUILD_TESTING=ON \
-            -DUS3_BUILD_PROGRAMS=OFF \
-            -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
-            | tee configure.log
+    # The TEST profile force-sets US3_NO_DB=OFF, so the NO_DB variant spells out
+    # the same options instead of selecting a profile.
+    if [ "$NO_DB_VARIANT" = "true" ]; then
+        VARIANT_ARGS=(-DUS3_NO_DB=ON -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
+    else
+        VARIANT_ARGS=(-DUS3_PROFILE=TEST)
+    fi
+
+    cmake -S .. -B . \
+        "${GEN_ARGS[@]}" \
+        -DCMAKE_BUILD_TYPE=Debug \
+        "${VARIANT_ARGS[@]}" \
+        -DBUILD_TESTING=ON \
+        -DUS3_BUILD_PROGRAMS=OFF \
+        -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
+        | tee configure.log
 
     # Point directly to the first configure error if there was one
     if grep -q 'CMake Error' configure.log; then
@@ -539,9 +559,11 @@ if [ "$SAVE_LOGS" = true ]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     docker run --rm \
         -v "$(pwd)":/ultrascan3 \
-        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -v "${BUILD_DIR}":"/ultrascan3/${BUILD_SUBDIR}" \
         -v /tmp/container_script.sh:/tmp/container_script.sh \
         -w /ultrascan3 \
+        -e BUILD_SUBDIR="$BUILD_SUBDIR" \
+        -e NO_DB_VARIANT="$NO_DB_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \
@@ -565,9 +587,11 @@ if [ "$SAVE_LOGS" = true ]; then
 else
     docker run --rm \
         -v "$(pwd)":/ultrascan3 \
-        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -v "${BUILD_DIR}":"/ultrascan3/${BUILD_SUBDIR}" \
         -v /tmp/container_script.sh:/tmp/container_script.sh \
         -w /ultrascan3 \
+        -e BUILD_SUBDIR="$BUILD_SUBDIR" \
+        -e NO_DB_VARIANT="$NO_DB_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \
