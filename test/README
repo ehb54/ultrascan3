@@ -154,6 +154,40 @@ probe of the linked library's `US_Settings::us_debug()`, which persists through
 The `Unit Tests v2` GitHub Actions workflow currently runs the **DB-enabled**
 variant only.  The `NO_DB` variant is covered locally by `--no-db`.
 
+## Coverage
+
+```bash
+./test-docker.sh --coverage
+```
+
+One command from a clean tree: configures an instrumented Debug build in
+`build-docker-coverage`, runs the suite, and writes reports to
+`build-docker-coverage/coverage/`.
+
+| Output | Use |
+|---|---|
+| `html/index.html` | Human-readable, line and branch annotated |
+| `coverage.xml` | Cobertura XML for CI |
+| `summary.txt` | Per-file table |
+| `coverage.info` | lcov tracefile |
+
+Notes on how it works, because both details matter for correctness:
+
+- The suite runs **serially**. CTest registers each GoogleTest case as its own
+  process, and concurrent processes merging into shared `.gcda` files corrupt
+  the counters. This makes a coverage run about four times slower than a normal
+  one.
+- A **baseline capture** runs before the suite and is merged with the result, so
+  sources that no test executes still appear at 0% instead of vanishing from the
+  denominator.
+- Instrumentation is tree-wide (`-DUS3_COVERAGE=ON`); test sources and Qt's
+  generated `moc`/autogen output are filtered out when the report is built, not
+  when the code is compiled.
+
+**Coverage is evidence that a line executed, not evidence that anything asserted
+about it.** There is deliberately no pass/fail threshold. Do not add one before
+the baseline in `UT-002_COVERAGE_BASELINE.md` has been reviewed.
+
 ## Cross-Platform Notes
 
 - Linux/macOS: Run script directly
