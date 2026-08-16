@@ -408,3 +408,56 @@ TEST(AucRoundTrip, AnOversizedInterpolationBitmapIsTruncatedToTheReadings)
 
     EXPECT_EQ(read.scanData[0].interpolated.size(), bitmapBytes(20));
 }
+
+// ---------------------------------------------------------------------------
+// Writer input validation
+//
+// Both cases below were recorded but deliberately not exercised before the
+// writer was hardened: each was an out-of-bounds read reached before any
+// validation ran.
+// ---------------------------------------------------------------------------
+
+TEST(AucRoundTrip, ADatasetWithFewerThanTwoRadiiIsRejected)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    // The radius spacing is derived from xvalues[ 0 ] and xvalues[ 1 ], so a
+    // single-point dataset used to read past the end of the vector.
+    US_DataIO::RawData single = buildRawData(1, 1);
+    const QString singlePath = dir.path() + "/one-radius.auc";
+    EXPECT_EQ(US_DataIO::writeRawData(singlePath, single), US_DataIO::NODATA);
+    EXPECT_FALSE(QFile::exists(singlePath));
+
+    US_DataIO::RawData none = buildRawData(1, 8);
+    none.xvalues.clear();
+    const QString nonePath = dir.path() + "/no-radii.auc";
+    EXPECT_EQ(US_DataIO::writeRawData(nonePath, none), US_DataIO::NODATA);
+    EXPECT_FALSE(QFile::exists(nonePath));
+}
+
+TEST(AucRoundTrip, ADescriptionAtTheFieldWidthIsTruncatedRatherThanLeftUnterminated)
+{
+    // The stored field is 240 bytes.  Filling all 240 left no terminator, and
+    // the reader then built a QString from a buffer with none.  239 characters
+    // is the most that survives.
+    US_DataIO::RawData source = buildRawData(1, 8);
+    source.description = QString(240, QChar('D'));
+
+    RoundTrip trip(source);
+    ASSERT_EQ(trip.result(), US_DataIO::OK);
+
+    EXPECT_EQ(trip.data().description.size(), kMaxSafeDescription);
+    EXPECT_EQ(trip.data().description, QString(kMaxSafeDescription, QChar('D')));
+}
+
+TEST(AucRoundTrip, ADescriptionFarLongerThanTheFieldIsTruncatedToTheSameLength)
+{
+    US_DataIO::RawData source = buildRawData(1, 8);
+    source.description = QString(1000, QChar('E'));
+
+    RoundTrip trip(source);
+    ASSERT_EQ(trip.result(), US_DataIO::OK);
+
+    EXPECT_EQ(trip.data().description, QString(kMaxSafeDescription, QChar('E')));
+}
