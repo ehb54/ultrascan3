@@ -340,3 +340,71 @@ TEST(AucRoundTrip, NonUniformRadiiAreSilentlyResampledOntoAUniformGrid)
     EXPECT_NEAR(trip.data().xvalues[4], 5.84, 1.0e-5);   // written as 5.90
     EXPECT_GT(qAbs(trip.data().xvalues[4] - source.xvalues[4]), 0.05);
 }
+
+// ---------------------------------------------------------------------------
+// Interpolation bitmap consistency
+//
+// writeScan() copies ( pointCount + 7 ) / 8 bytes out of Scan::interpolated.
+// Nothing sized that array for it, so a producer that grew its readings without
+// growing the bitmap -- which us_astfem_sim did on its save path -- read past
+// the end of a QByteArray.
+// ---------------------------------------------------------------------------
+
+TEST(AucRoundTrip, AnAbsentInterpolationBitmapMeansNoPointIsInterpolated)
+{
+    // Simulated data never marks points as interpolated, so an empty bitmap is
+    // a legitimate state rather than a defect, and must round-trip as zeroes.
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    US_DataIO::RawData source = buildRawData(2, 20);
+    for (int scan = 0; scan < source.scanData.size(); scan++)
+        source.scanData[scan].interpolated.clear();
+
+    const QString path = dir.path() + "/no-bitmap.auc";
+    ASSERT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::OK);
+
+    US_DataIO::RawData read;
+    ASSERT_EQ(US_DataIO::readRawData(path, read), US_DataIO::OK);
+
+    ASSERT_EQ(read.scanCount(), 2);
+    for (int scan = 0; scan < read.scanCount(); scan++)
+    {
+        EXPECT_EQ(read.scanData[scan].interpolated,
+                  QByteArray(bitmapBytes(20), '\0')) << "scan " << scan;
+    }
+}
+
+TEST(AucRoundTrip, AnInterpolationBitmapShorterThanItsReadingsIsRejected)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    US_DataIO::RawData source = buildRawData(1, 20);
+    // Present but one byte short: the producer tracked interpolation for some
+    // points and not others, which has no coherent meaning.
+    source.scanData[0].interpolated = QByteArray(bitmapBytes(20) - 1, '\0');
+
+    const QString path = dir.path() + "/short-bitmap.auc";
+    EXPECT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::NOT_USDATA);
+
+    // Rejected before the file was opened, so nothing was left behind.
+    EXPECT_FALSE(QFile::exists(path));
+}
+
+TEST(AucRoundTrip, AnOversizedInterpolationBitmapIsTruncatedToTheReadings)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    US_DataIO::RawData source = buildRawData(1, 20);
+    source.scanData[0].interpolated = QByteArray(bitmapBytes(20) + 4, '\0');
+
+    const QString path = dir.path() + "/long-bitmap.auc";
+    ASSERT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::OK);
+
+    US_DataIO::RawData read;
+    ASSERT_EQ(US_DataIO::readRawData(path, read), US_DataIO::OK);
+
+    EXPECT_EQ(read.scanData[0].interpolated.size(), bitmapBytes(20));
+}

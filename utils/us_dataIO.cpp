@@ -274,6 +274,22 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
 int US_DataIO::writeRawData( const QString& file, RawData& data )
 {
+   // Validate before opening, so a rejected write leaves no partial file.
+   //
+   // An absent interpolation bitmap means no point is interpolated and is
+   // filled in by writeScan().  One that is present but shorter than the
+   // readings it describes is an inconsistent scan: the producer tracked
+   // interpolation for some points and not others, and there is no defensible
+   // value to invent for the rest.
+   for ( int ii = 0; ii < data.scanData.size(); ii++ )
+   {
+      const Scan& sc = data.scanData[ ii ];
+      if ( sc.interpolated.isEmpty() ) continue;
+
+      if ( sc.interpolated.size() < ( sc.rvalues.size() + 7 ) / 8 )
+         return NOT_USDATA;
+   }
+
    // Open the file for writing
    QFile ff( file );
    if ( ! ff.open( QIODevice::WriteOnly ) ) return CANTOPEN;
@@ -501,9 +517,15 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
       }
    }
 
-   // Write interpolated flags
+   // Write interpolated flags.  An empty bitmap means no point is interpolated,
+   // which is the normal state for simulated data, so it is zero-filled here
+   // rather than read past the end of.  A bitmap that is present but too short
+   // for the readings is an inconsistent scan and is rejected by the caller.
    int flagSize = ( valueCount + 7 ) / 8;
-   write( ds, data.interpolated.data(), flagSize, crc );
+   QByteArray flags = data.interpolated;
+   if ( flags.size() < flagSize ) flags = QByteArray( flagSize, '\0' );
+
+   write( ds, flags.data(), flagSize, crc );
 }
 
 void US_DataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
