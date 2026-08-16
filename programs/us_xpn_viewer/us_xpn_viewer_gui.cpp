@@ -5007,6 +5007,10 @@ void US_XpnDataViewer::export_auc_auto( bool& tmstampOK )
    inExport = true;
 
    int nfiles = 0;
+   // Each export_auc_auto() call resets its own error report, so gather them
+   // here;  this path is unattended, so failures go to the status line and the
+   // log rather than a dialog nobody is present to dismiss.
+   QStringList experrs;
    int noptsy     = cb_optsys->count();
    qDebug() << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
 
@@ -5015,6 +5019,8 @@ void US_XpnDataViewer::export_auc_auto( bool& tmstampOK )
      {
        correct_radii();      // Perform chromatic aberration radius corrections
        nfiles     = xpn_data->export_auc_auto( allData, tmstampOK  );
+       if ( ! xpn_data->export_error().isEmpty() )
+          experrs << xpn_data->export_error().split( "\n" );
      }
 
    //--- Combined optics type -----//
@@ -5039,13 +5045,26 @@ void US_XpnDataViewer::export_auc_auto( bool& tmstampOK )
          correct_radii();                  // Chromatic aberration correction if needed
          int kfiles     = xpn_data->export_auc_auto( allData, tmstampOK ) - 2;  // Export data
          nfiles        += kfiles;          // Total files written
+         if ( ! xpn_data->export_error().isEmpty() )
+            experrs << xpn_data->export_error().split( "\n" );
       }
 
       // Restore Optical System selection to what it was before
       // cb_optsys->setCurrentIndex( currsx );   //ALEXEY <-- not needed to repeat data build!!!
     }
 
-   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   if ( experrs.isEmpty() )
+   {
+      le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   }
+
+   else
+   {  // A triple the writer refused is not in that count
+      qDebug() << "*ERROR* AUC export incomplete:" << experrs.join( "; " );
+      le_status  ->setText( tr( "%1 AUC/TMST files written, %2 triple(s) FAILED" )
+                            .arg( nfiles ).arg( experrs.count() ) );
+   }
+
    qApp->processEvents();
 }
    
@@ -5179,6 +5198,17 @@ DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
    }
 
    le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+
+   // A triple the writer refused is not in that count, so say so rather than
+   // let a short export pass for a complete one
+   QString experr = xpn_data->export_error();
+
+   if ( ! experr.isEmpty() )
+   {
+      QMessageBox::warning( this, tr( "AUC Export Incomplete" ),
+         tr( "Some triples could not be written and are missing from the"
+             " exported run:\n\n%1" ).arg( experr ) );
+   }
 }
 
 // Slot to handle a change in scan exclude "from" value

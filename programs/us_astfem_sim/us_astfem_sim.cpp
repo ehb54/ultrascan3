@@ -2153,8 +2153,19 @@ DbgLv(1) << "Sim:SV:  run_id_from_save_xla" << run_id;
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
 
-   US_DataIO::writeRawData( ofname, sim_data );
+   int wstat        = US_DataIO::writeRawData( ofname, sim_data );
 DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
+
+   if ( wstat != US_DataIO::OK )
+   {  // Nothing was saved, so do not report completion
+      progress->setValue( total_scans );
+      lb_progress->setText( tr( "Save failed" ) );
+      QMessageBox::critical( this, tr( "Simulation Save Failed" ),
+         tr( "The simulated data could not be written to\n%1\n\n%2" )
+         .arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
+      return;
+   }
+
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
 }
