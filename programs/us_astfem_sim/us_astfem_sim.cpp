@@ -1955,6 +1955,11 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
 
       scan->rvalues.resize( points );
 
+      // The interpolation bitmap describes the readings, so it has to grow with
+      // them.  None of the simulated points is interpolated, so the added bits
+      // are zero.
+      scan->interpolated.fill( '\0', ( points + 7 ) / 8 );
+
       for ( int jp = 0; jp < points; jp++ )
       {  // Store the values: first 30 then computed values
          scan->rvalues[ jp ] = temp_conc[ jp ];
