@@ -27,7 +27,9 @@ protected:
 };
 
 TEST_F(US_SimSpeciesTest, ModelIsSingleComponentAbsorbanceManual) {
-    US_Model model = US_SimSpecies::model();
+    US_Model model;
+    QString  error;
+    ASSERT_TRUE(US_SimSpecies::model(model, error)) << error.toStdString();
 
     EXPECT_FALSE(model.description.isEmpty());
     EXPECT_FALSE(model.modelGUID.isEmpty());
@@ -37,7 +39,9 @@ TEST_F(US_SimSpeciesTest, ModelIsSingleComponentAbsorbanceManual) {
 }
 
 TEST_F(US_SimSpeciesTest, ModelUsesLibraryComponentDefaults) {
-    US_Model model = US_SimSpecies::model();
+    US_Model model;
+    QString  error;
+    ASSERT_TRUE(US_SimSpecies::model(model, error)) << error.toStdString();
     const US_Model::SimulationComponent& sc = model.components[0];
 
     EXPECT_DOUBLE_EQ(sc.mw, 50000.0);
@@ -46,7 +50,9 @@ TEST_F(US_SimSpeciesTest, ModelUsesLibraryComponentDefaults) {
 }
 
 TEST_F(US_SimSpeciesTest, ModelCoefficientsAreComputed) {
-    US_Model model = US_SimSpecies::model();
+    US_Model model;
+    QString  error;
+    ASSERT_TRUE(US_SimSpecies::model(model, error)) << error.toStdString();
     const US_Model::SimulationComponent& sc = model.components[0];
 
     EXPECT_GT(sc.s, 0.0);
@@ -370,8 +376,11 @@ TEST_F(US_SimSpeciesTest, ConcentrationsAreAbsoluteAndSumToTheModelTotal) {
 }
 
 TEST_F(US_SimSpeciesTest, TwoCallsToModelProduceDistinctGuids) {
-    US_Model model1 = US_SimSpecies::model();
-    US_Model model2 = US_SimSpecies::model();
+    US_Model model1;
+    US_Model model2;
+    QString  error;
+    ASSERT_TRUE(US_SimSpecies::model(model1, error)) << error.toStdString();
+    ASSERT_TRUE(US_SimSpecies::model(model2, error)) << error.toStdString();
 
     EXPECT_NE(model1.modelGUID, model2.modelGUID);
 }

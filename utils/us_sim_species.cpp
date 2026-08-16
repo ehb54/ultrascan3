@@ -189,11 +189,7 @@ bool US_SimSpecies::model( const QVector< Component >& components,
    return true;
 }
 
-US_Model US_SimSpecies::model()
+bool US_SimSpecies::model( US_Model& model_out, QString& error )
 {
-   US_Model model_out;
-   QString  error;
-   bool     ok = model( defaultComponent(), model_out, error );
-   Q_ASSERT_X( ok, "US_SimSpecies::model", qPrintable( error ) );
-   return model_out;
+   return model( defaultComponent(), model_out, error );
 }

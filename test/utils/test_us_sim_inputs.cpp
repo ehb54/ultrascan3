@@ -30,7 +30,9 @@ TEST_F(US_SimInputsTest, BufferMatchesWaterAt20C) {
 }
 
 TEST_F(US_SimInputsTest, SimParamsMatchesDocumentedDefaults) {
-    US_SimulationParameters sp = US_SimInputs::simParams();
+    US_SimulationParameters sp;
+    QString error;
+    ASSERT_TRUE(US_SimInputs::simParams(sp, error)) << error.toStdString();
 
     ASSERT_EQ(sp.speed_step.count(), 1);
     EXPECT_EQ(sp.speed_step[0].rotorspeed, 45000);
@@ -147,7 +149,8 @@ TEST_F(US_SimInputsTest, WriteAllProducesReadableTriple) {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
-    EXPECT_TRUE(US_SimInputs::writeAll(dir.path()));
+    QString error;
+    EXPECT_TRUE(US_SimInputs::writeAll(dir.path(), error)) << error.toStdString();
 
     QFileInfo sp_file(dir.filePath("sp_default.xml"));
     QFileInfo model_file(dir.filePath("model_default.xml"));
@@ -171,7 +174,10 @@ TEST_F(US_SimInputsTest, WriteAllProducesReadableTriple) {
 }
 
 TEST_F(US_SimInputsTest, WriteAllFailsForNonexistentDirectory) {
-    EXPECT_FALSE(US_SimInputs::writeAll("/nonexistent/path/that/should/not/exist"));
+    QString error;
+    EXPECT_FALSE(US_SimInputs::writeAll("/nonexistent/path/that/should/not/exist",
+                                        error));
+    EXPECT_FALSE(error.isEmpty());
 }
 
 TEST_F(US_SimInputsTest, BuilderRejectsInvalidParamsWithoutPartialOutput) {

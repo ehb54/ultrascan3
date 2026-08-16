@@ -68,8 +68,11 @@ class US_UTIL_EXTERN US_SimInputs
       static bool simParams( const Params& p, US_SimulationParameters& params,
                              QString& error );
 
-      //! \brief Create valid default single-speed simulation parameters.
-      static US_SimulationParameters simParams();
+      //! \brief Create default single-speed simulation parameters.
+      //! Construction reads hardware definitions from disk, so it can fail.
+      //! \param params Parameters populated only on success.
+      //! \param error  Error message on failure; empty on success.
+      static bool simParams( US_SimulationParameters& params, QString& error );
 
       //! \brief Create a default buffer using water properties at 20 C.
       static US_Buffer buffer();
@@ -77,9 +80,10 @@ class US_UTIL_EXTERN US_SimInputs
       //! \brief Write the default simulation parameters, model, and buffer.
       //! Creates sp_default.xml, model_default.xml, and buffer_default.xml
       //! using each class's serializer.
-      //! \param dir Existing output directory.
+      //! \param dir   Existing output directory.
+      //! \param error Error message on failure; empty on success.
       //! \return true on success; otherwise, false.
-      static bool writeAll( const QString& dir );
+      static bool writeAll( const QString& dir, QString& error );
 };
 
 #endif // US_SIM_INPUTS_H

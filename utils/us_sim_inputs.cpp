@@ -181,13 +181,10 @@ bool US_SimInputs::simParams( const Params& p,
    return true;
 }
 
-US_SimulationParameters US_SimInputs::simParams()
+bool US_SimInputs::simParams( US_SimulationParameters& params_out,
+                              QString& error )
 {
-   US_SimulationParameters params_out;
-   QString error;
-   bool ok = simParams( Params(), params_out, error );
-   Q_ASSERT_X( ok, "US_SimInputs::simParams", qPrintable( error ) );
-   return params_out;
+   return simParams( Params(), params_out, error );
 }
 
 US_Buffer US_SimInputs::buffer()
@@ -199,21 +196,45 @@ US_Buffer US_SimInputs::buffer()
    return buffer_out;
 }
 
-bool US_SimInputs::writeAll( const QString& dir )
+bool US_SimInputs::writeAll( const QString& dir, QString& error )
 {
    QDir outdir( dir );
    if ( ! outdir.exists() )
+   {
+      error = QString( "output directory %1 does not exist" ).arg( dir );
+      return false;
+   }
+
+   // Build both inputs before writing anything.  Construction reads hardware
+   // and centerpiece definitions from disk, so it can fail in an installed
+   // layout; writing a default-constructed value would produce a file that
+   // parses but describes an unusable run.
+   US_SimulationParameters params;
+   if ( ! simParams( params, error ) )
       return false;
 
-   if ( simParams().save_simparms( outdir.filePath( "sp_default.xml" ) ) != 0 )
+   US_Model model;
+   if ( ! US_SimSpecies::model( model, error ) )
       return false;
 
-   if ( US_SimSpecies::model().write( outdir.filePath( "model_default.xml" ) )
-        != IUS_DB2::OK )
+   if ( params.save_simparms( outdir.filePath( "sp_default.xml" ) ) != 0 )
+   {
+      error = "could not write sp_default.xml";
       return false;
+   }
+
+   if ( model.write( outdir.filePath( "model_default.xml" ) ) != IUS_DB2::OK )
+   {
+      error = "could not write model_default.xml";
+      return false;
+   }
 
    if ( ! buffer().writeToDisk( outdir.filePath( "buffer_default.xml" ) ) )
+   {
+      error = "could not write buffer_default.xml";
       return false;
+   }
 
+   error.clear();
    return true;
 }

@@ -785,10 +785,11 @@ int main( int argc, char* argv[] )
    }
 
    // Default mode writes the simulation parameters, model, and buffer files.
-   if ( ! US_SimInputs::writeAll( outdir.path() ) )
+   QString write_error;
+   if ( ! US_SimInputs::writeAll( outdir.path(), write_error ) )
    {
       QTextStream( stderr ) << "Error: could not write default inputs to "
-         << outdir.path()
+         << outdir.path() << ": " << write_error
          << Qt::endl;
       return 2;
    }

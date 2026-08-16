@@ -99,7 +99,9 @@ class US_UTIL_EXTERN US_SimSpecies
 
       //! \brief Create a default single-component absorbance model.
       //! Built through the same checked path as defaultComponent().
-      static US_Model model();
+      //! \param model Model populated only on success.
+      //! \param error Error message on failure; empty on success.
+      static bool model( US_Model& model, QString& error );
 };
 
 #endif // US_SIM_SPECIES_H
