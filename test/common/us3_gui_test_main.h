@@ -44,9 +44,8 @@ int main(int argc, char** argv)                                                \
     qputenv("US3_TEST_SANDBOX", QFile::encodeName(sandbox.path()));            \
     qputenv("US3_TEST_SETTINGS_ROOT", QFile::encodeName(settingsRoot));        \
     qputenv("US3_TEST_WORK_ROOT", QFile::encodeName(workRoot));                \
-    /* setPath() does not redirect NativeFormat on macOS (CFPreferences) or  */\
-    /* Windows (registry), so make IniFormat the default to keep every       */\
-    /* QSettings built without an explicit format inside the sandbox.        */\
+    /* Isolates Linux only.  setPath() cannot move CFPreferences or the      */\
+    /* registry, and QSettings( org, app ) ignores this default on macOS.    */\
     QSettings::setDefaultFormat(QSettings::IniFormat);                         \
     QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope,           \
                        settingsRoot);                                           \

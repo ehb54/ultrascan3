@@ -66,8 +66,8 @@ public:
                  normalSettingsExists ? "1" : "0" );
         qputenv( "US3_TEST_NORMAL_SETTINGS_SHA256", normalSettingsDigest );
 
-        // setPath() does not redirect NativeFormat on macOS (CFPreferences) or
-        // Windows (registry); IniFormat keeps every QSettings in the sandbox.
+        // Isolates Linux only.  setPath() cannot move CFPreferences or the
+        // registry, and QSettings( org, app ) ignores this default on macOS.
         QSettings::setDefaultFormat( QSettings::IniFormat );
         QSettings::setPath( QSettings::NativeFormat, QSettings::UserScope,
                             settingsRoot );
