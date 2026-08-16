@@ -274,9 +274,13 @@ TEST(AucReadContract, BytesAfterTheChecksumAreIgnored)
     AucFixture fixture;
 
     US_DataIO::RawData data;
-    // OBSERVED: the reader stops at the checksum and never asks whether the file
-    // ended there, so trailing bytes are accepted silently.  Whether that must
-    // remain true for historical files is an open question -- see the report.
+    // DECIDED: the reader stops at the checksum and never asks whether the file
+    // ended there.  This stays accepted.  Everything the caller receives is
+    // covered by the checksum, so trailing bytes cannot influence the parsed
+    // data, and no writer in this tree has ever emitted them -- QFile truncates
+    // on open, so even overwriting a longer file leaves no tail.  That rules out
+    // a benefit, not the existence of third-party or archival files carrying
+    // padding, and those must keep loading.
     EXPECT_EQ(US_DataIO::readRawData(
                   fixture.appended("trailing_junk.auc", QByteArray(8, '\x5a')), data),
               US_DataIO::OK);
@@ -293,9 +297,10 @@ TEST(AucReadContract, AnOlderVersionByteCannotBeExercisedByPatchingAlone)
     // (proved above) but "04" parses all the way through -- decoding wavelength
     // by the pre-v5 rule -- and only then fails the checksum.
     //
-    // Consequence for AUC-T03: historical-version acceptance cannot be tested by
-    // byte-patching a v5 fixture.  It needs a fixture written as that version,
-    // with a checksum computed over those bytes.
+    // Consequence for AUC-T03: historical-version acceptance cannot be tested
+    // by byte-patching a v5 fixture.  It needs a fixture written as that
+    // version, with a checksum computed over those bytes -- which is what
+    // test_us_dataIO_versions.cpp builds.
     EXPECT_EQ(US_DataIO::readRawData(
                   fixture.mutated("version_04.auc", kVersionOffset, "04"), data),
               US_DataIO::BADCRC);
