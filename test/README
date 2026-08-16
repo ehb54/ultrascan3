@@ -123,6 +123,37 @@ For targeted debugging:
 ./test-docker.sh -v -f specific_test_name
 ```
 
+## Database Build Variants
+
+`NO_DB` is a whole-tree switch, not a per-target one.  `utils/us_db2.h` declares
+three private `MYSQL` members only when `NO_DB` is undefined, so a test object
+compiled with `NO_DB` and a utilities library compiled without it disagree about
+the layout of `US_DB2`.  Never add `NO_DB` to a test target on its own; select
+the variant when configuring, and give each variant its own build tree.
+
+| Variant | Configure | Build tree | Contents |
+|---|---|---|---|
+| DB-enabled (default) | `-DUS3_PROFILE=TEST` | `build-docker` | utils, GUI and program tests |
+| `NO_DB` | `-DUS3_NO_DB=ON -DBUILD_TESTING=ON` | `build-docker-nodb` | utils tests only |
+
+The `NO_DB` variant does not build `gui/`, so `test/gui` and `test/programs` are
+skipped there; `test/CMakeLists.txt` guards them on `UltraScan3::Gui_Static`.
+The `TEST` profile force-sets `US3_NO_DB=OFF`, so the `NO_DB` variant must spell
+out its options rather than select a profile.
+
+```bash
+./test-docker.sh            # DB-enabled variant
+./test-docker.sh --no-db    # NO_DB variant
+```
+
+`BuildVariantConsistency.TestExecutableMatchesLinkedUtilsLibrary` fails if the
+two ever diverge: it compares this translation unit's `NO_DB` state against a
+probe of the linked library's `US_Settings::us_debug()`, which persists through
+`QSettings` only in the DB-enabled build.
+
+The `Unit Tests v2` GitHub Actions workflow currently runs the **DB-enabled**
+variant only.  The `NO_DB` variant is covered locally by `--no-db`.
+
 ## Cross-Platform Notes
 
 - Linux/macOS: Run script directly

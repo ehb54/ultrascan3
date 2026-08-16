@@ -32,9 +32,11 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/test/common
 )
 
-# AUTO-DISCOVERY - Find all test files automatically
-file(GLOB_RECURSE AUTO_TEST_SOURCES "test_us_*.cpp" "test_mock_*.cpp")
-file(GLOB_RECURSE AUTO_TEST_HEADERS "test_us_*.h" "test_mock_*.h")
+# AUTO-DISCOVERY - Find all test files automatically.  CONFIGURE_DEPENDS makes
+# the build system re-run the glob, so a newly added test file is picked up by
+# an incremental build instead of only by a fresh configure.
+file(GLOB_RECURSE AUTO_TEST_SOURCES CONFIGURE_DEPENDS "test_us_*.cpp" "test_mock_*.cpp")
+file(GLOB_RECURSE AUTO_TEST_HEADERS CONFIGURE_DEPENDS "test_us_*.h" "test_mock_*.h")
 
 # Remove main file from auto-discovery
 list(REMOVE_ITEM AUTO_TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/test_us_utils_main.cpp")
@@ -54,7 +56,18 @@ add_executable(test_us_utils
         test_us_timer.cpp
         )
 
-target_compile_definitions(test_us_utils PRIVATE NO_DB)
+# Do NOT define NO_DB here.  The whole tree, including the utilities library the
+# tests link, gets NO_DB from the top-level US3_NO_DB option; defining it for the
+# test executable alone made the test translation units see a different private
+# layout of US_DB2 (us_db2.h drops the three MYSQL members under NO_DB) than the
+# library they link against, which is an ODR violation.  The variant is therefore
+# a property of the whole build tree: configure with -DUS3_NO_DB=ON for the NO_DB
+# variant, and leave it OFF (the TEST profile default) for the DB-enabled one.
+if(US3_NO_DB)
+    message(STATUS "test_us_utils: NO_DB variant (utils library is also NO_DB)")
+else()
+    message(STATUS "test_us_utils: DB-enabled variant (utils library is also DB-enabled)")
+endif()
 
 # Determine which library to link against
 # Prefer static for tests, fallback to shared if static not available
@@ -79,8 +92,12 @@ target_link_libraries(test_us_utils
         ${GTEST_LIBRARIES}
         )
 
-# Link MySQL if available
-if(TARGET MySQL::Client AND NOT US3_NO_DB)
+# Link MySQL for the DB-enabled variant.  The utilities library already exports
+# it PUBLIC, so this is belt-and-braces; the NO_DB variant must not have it at
+# all, and its absence there is expected rather than a problem.
+if(US3_NO_DB)
+    # Nothing to link: the whole tree, tests included, is built without the DB.
+elseif(TARGET MySQL::Client)
     target_link_libraries(test_us_utils PRIVATE MySQL::Client)
     message(STATUS "MySQL found and linked")
 else()
