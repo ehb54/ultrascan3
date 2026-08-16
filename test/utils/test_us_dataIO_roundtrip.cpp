@@ -319,26 +319,94 @@ TEST(AucRoundTrip, UniformRadiiAreReconstructedFromTheStoredOriginAndSpacing)
             << "at point " << point;
 }
 
-TEST(AucRoundTrip, NonUniformRadiiAreSilentlyResampledOntoAUniformGrid)
+TEST(AucRoundTrip, AnAxisAccumulatedByRepeatedAdditionIsStillUniformEnough)
 {
-    US_DataIO::RawData source = buildRawData(1, 5);
-
-    // Spacing that widens along the sweep.  Only the first gap is stored.
+    // Producers build the axis by adding the step over and over, so successive
+    // differences drift by rounding.  That must not read as non-uniform.
+    US_DataIO::RawData source = buildRawData(1, 500);
     source.xvalues.clear();
-    source.xvalues << 5.80 << 5.81 << 5.83 << 5.86 << 5.90;
+
+    double radius = 5.8;
+    for (int point = 0; point < 500; point++)
+    {
+        source.xvalues << radius;
+        radius += 0.001;
+    }
 
     RoundTrip trip(source);
     ASSERT_EQ(trip.result(), US_DataIO::OK);
-    ASSERT_EQ(trip.data().xvalues.size(), 5);
+    EXPECT_EQ(trip.data().pointCount(), 500);
+}
 
-    // OBSERVED-DEFECT: the format stores only a first radius and one spacing,
-    // taken as xvalues[1] - xvalues[0], and the reader regenerates the vector
-    // arithmetically.  Non-uniform radii are lost without any error being
-    // reported -- the file reads back OK with different radii than were written.
-    EXPECT_NEAR(trip.data().xvalues[0], 5.80, 1.0e-5);
-    EXPECT_NEAR(trip.data().xvalues[1], 5.81, 1.0e-5);
-    EXPECT_NEAR(trip.data().xvalues[4], 5.84, 1.0e-5);   // written as 5.90
-    EXPECT_GT(qAbs(trip.data().xvalues[4] - source.xvalues[4]), 0.05);
+TEST(AucRoundTrip, AnEndpointSnappedOntoTheCellBottomIsStillAccepted)
+{
+    // us_mwl_species_sim builds its grid by accumulation but then overwrites
+    // the last radius with the cell bottom, which the point count only
+    // approximates.  That displaces one point by up to half a step, so the
+    // uniformity check has to leave room for it -- the file it writes today
+    // must keep being written.  us_astfem_sim has the same line commented out.
+    const double meniscus = 5.8;
+    const double bottom   = 7.2005;
+    const double radinc   = 0.001;
+    const int    points   = qRound((bottom - meniscus) / radinc) + 1;
+
+    US_DataIO::RawData source = buildRawData(1, points);
+    source.xvalues.clear();
+
+    double radius = meniscus;
+    for (int point = 0; point < points - 1; point++)
+    {
+        source.xvalues << radius;
+        radius += radinc;
+    }
+    source.xvalues << bottom;
+
+    // The snapped point sits half a step off the grid it would be rebuilt on.
+    const double displaced = qAbs(source.xvalues.last()
+                                  - (meniscus + radinc * (points - 1)));
+    ASSERT_GT(displaced, radinc * 0.4);
+    ASSERT_LT(displaced, radinc);
+
+    RoundTrip trip(source);
+    ASSERT_EQ(trip.result(), US_DataIO::OK);
+    EXPECT_EQ(trip.data().pointCount(), points);
+}
+
+TEST(AucRoundTrip, NonUniformRadiiAreRejectedRatherThanSilentlyResampled)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    US_DataIO::RawData source = buildRawData(1, 5);
+
+    // Spacing that widens along the sweep.  Only the first gap can be stored.
+    source.xvalues.clear();
+    source.xvalues << 5.80 << 5.81 << 5.83 << 5.86 << 5.90;
+
+    // The format keeps a first radius and one spacing, taken as xvalues[1] -
+    // xvalues[0], and the reader regenerates the vector arithmetically.  Until
+    // this was rejected the write returned OK and the file read back with a
+    // last radius of 5.84 instead of the 5.90 that was handed in -- readings
+    // relabelled with radii they were not measured at, no error reported.
+    //
+    // No acquisition path produces such an axis: the legacy Beckman, Optima,
+    // CFA and MWL importers all accumulate origin + n * step, the one path that
+    // reshapes an existing axis (splitting a triple into radial subsets) copies
+    // a contiguous run of an already uniform one, and the chromatic aberration
+    // correction in us_xpn_viewer -- the one place a user is warned and can
+    // continue -- subtracts the same per-wavelength constant from every point.
+    const QString path = dir.path() + "/non-uniform.auc";
+    EXPECT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::NOT_USDATA);
+    EXPECT_FALSE(QFile::exists(path));
+
+    // A flat or descending axis is rejected for the same reason, and could not
+    // be read back in any case -- the reader requires an ascending spacing.
+    US_DataIO::RawData flat = buildRawData(1, 8);
+    flat.xvalues.fill(5.8);
+
+    const QString flatPath = dir.path() + "/flat-radii.auc";
+    EXPECT_EQ(US_DataIO::writeRawData(flatPath, flat), US_DataIO::NOT_USDATA);
+    EXPECT_FALSE(QFile::exists(flatPath));
 }
 
 // ---------------------------------------------------------------------------
