@@ -300,17 +300,18 @@ TEST(AucReadContract, AnOlderVersionByteCannotBeExercisedByPatchingAlone)
                   fixture.mutated("version_04.auc", kVersionOffset, "04"), data),
               US_DataIO::BADCRC);
 
-    // It parsed the scans on the way to that verdict, using the older
-    // wavelength rule: (stored / 100) + 180 rather than (stored / 10).
-    ASSERT_EQ(data.scanCount(), 2);
-    EXPECT_NEAR(data.scanData[0].wavelength, 208.0, 1.0e-6);
+    // It still parses the scans on the way to that verdict, using the older
+    // wavelength rule -- (stored / 100) + 180 rather than (stored / 10) -- but
+    // since AUC-T05 that work is discarded rather than handed to the caller, so
+    // the decoded wavelength is no longer observable from here.
+    EXPECT_EQ(data.scanCount(), 0);
 }
 
 // ---------------------------------------------------------------------------
 // Destination state on failure
 // ---------------------------------------------------------------------------
 
-TEST(AucReadContract, ChecksumFailureStillLeavesParsedScansInTheDestination)
+TEST(AucReadContract, ChecksumFailureLeavesTheDestinationUntouched)
 {
     AucFixture fixture;
 
@@ -322,14 +323,14 @@ TEST(AucReadContract, ChecksumFailureStillLeavesParsedScansInTheDestination)
     US_DataIO::RawData data;
     EXPECT_EQ(US_DataIO::readRawData(path, data), US_DataIO::BADCRC);
 
-    // OBSERVED-DEFECT: scans are appended to the caller's structure as they are
-    // parsed, before the checksum is verified, so a rejected file still yields
-    // populated output.  Callers that ignore the return code see plausible data.
-    EXPECT_EQ(data.scanCount(), 2);
-    EXPECT_EQ(data.pointCount(), 8);
+    // Before AUC-T05 the scans were appended to the caller's structure as they
+    // were parsed, so a rejected file still yielded populated output and any
+    // caller ignoring the return code consumed plausible-looking data.
+    EXPECT_EQ(data.scanCount(), 0);
+    EXPECT_TRUE(data.xvalues.isEmpty());
 }
 
-TEST(AucReadContract, AnAlreadyPopulatedDestinationAccumulatesRatherThanResetting)
+TEST(AucReadContract, AnAlreadyPopulatedDestinationIsReplacedRatherThanExtended)
 {
     AucFixture fixture;
 
@@ -338,11 +339,10 @@ TEST(AucReadContract, AnAlreadyPopulatedDestinationAccumulatesRatherThanResettin
 
     ASSERT_EQ(US_DataIO::readRawData(fixture.validPath(), data), US_DataIO::OK);
 
-    // OBSERVED-DEFECT: readRawData never clears data.scanData, so a successful
-    // read into a reused RawData appends to whatever was already there.
-    EXPECT_EQ(data.scanCount(), 4);
-
-    // xvalues is cleared and rebuilt, so the two members disagree about shape.
+    // Before AUC-T05 readRawData never cleared data.scanData, so this returned 4
+    // while xvalues held one scan's worth of radii -- the two members disagreed
+    // about the shape of the same dataset.
+    EXPECT_EQ(data.scanCount(), 2);
     EXPECT_EQ(data.xvalues.size(), 8);
 }
 
