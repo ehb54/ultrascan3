@@ -215,8 +215,7 @@ Notes on how it works, because both details matter for correctness:
   when the code is compiled.
 
 **Coverage is evidence that a line executed, not evidence that anything asserted
-about it.** There is deliberately no pass/fail threshold. Do not add one before
-the baseline in `UT-002_COVERAGE_BASELINE.md` has been reviewed.
+about it.** There is deliberately no pass/fail threshold.
 
 ## Cross-Platform Notes
 

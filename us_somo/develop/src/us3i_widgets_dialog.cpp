@@ -290,7 +290,7 @@ QwtCounter* US3i_widgetsDialog::us_counter( int buttons, double low, double high
   // the treatment in us_colorgradient.  Any other style already draws them
   // correctly and is left alone.  QApplication::setStyle() must not be used
   // here: it restyles the whole application and destroys the style it
-  // replaces, so calling it per counter left earlier buttons pointing at a
+  // replaces, leaving buttons styled by an earlier counter pointing at a
   // freed QStyle.
   QString stynam  = US3i_GuiSettings::guiStyle();
   bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||

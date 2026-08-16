@@ -211,8 +211,7 @@ TEST_F(US_SimSpeciesTest, ComponentRejectsSignMismatchBetweenSandVbar) {
 }
 
 TEST_F(US_SimSpeciesTest, ComponentRejectsZeroValuedCoefficients) {
-    // Zero is as unsolvable as a negative for these three, and the message
-    // has always said "greater than zero".
+    // Zero is as unsolvable as a negative for these three.
     US_SimSpecies::Component zero_mw;
     zero_mw.mw   = 0.0;
     zero_mw.f_f0 = 1.25;

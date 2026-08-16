@@ -1,19 +1,15 @@
-// UT-004: prove that the test executable and the utilities library it links were
+// Prove that the test executable and the utilities library it links were
 // compiled with the same database-related definitions.
 //
-// The hazard is not academic.  us_db2.h declares three private MYSQL members
-// only when NO_DB is undefined, so a test translation unit compiled with NO_DB
-// disagrees with a DB-enabled library about the layout and size of US_DB2 -- an
-// ODR violation that silently corrupts every US_DB2 the tests touch.  Several
-// other utils sources (us_settings, us_model, us_simparms, us_astfem_*) change
-// behavior, not just layout, on the same switch.
+// us_db2.h declares three private MYSQL members only when NO_DB is undefined, so
+// a test translation unit compiled with NO_DB disagrees with a DB-enabled
+// library about the layout of US_DB2 -- an ODR violation that silently corrupts
+// every US_DB2 the tests touch.
 //
-// The variant of *this* translation unit is known from the preprocessor.  The
-// variant of the *library* is probed through US_Settings::us_debug(), whose two
-// implementations are observably different: the DB-enabled build persists the
-// level through QSettings, while the NO_DB build keeps it in a process-local
-// static and never touches the settings store.  UT-003 has already redirected
-// QSettings into a per-process sandbox, so the probe writes nothing outside it.
+// This translation unit's variant comes from the preprocessor; the library's is
+// probed through US_Settings::us_debug(), which persists the level through
+// QSettings only in the DB-enabled build.  Test settings are already sandboxed,
+// so the probe writes nothing outside it.
 
 #include "qt_test_base.h"
 #include "us_defines.h"

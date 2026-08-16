@@ -997,9 +997,8 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
 {
    QString now        = QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
    // Reuse the geometry init_rawdata() built the radial grid from.  Deriving
-   // the stretch again here from rotorspeed put the edit radii outside the
-   // data range whenever set_speed and rotorspeed disagreed -- which is what
-   // a --simparams file with no set_speed attribute produces.
+   // the stretch again here from rotorspeed puts the edit radii outside the
+   // data range whenever set_speed and rotorspeed disagree.
    double  meniscus   = curr_meniscus;
    double  bottom     = curr_bottom;
 

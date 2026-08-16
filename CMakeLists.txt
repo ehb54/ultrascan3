@@ -213,16 +213,15 @@ if(US3_NO_DB)
 endif()
 
 # =============================================================================
-# COVERAGE INSTRUMENTATION (UT-002)
+# COVERAGE INSTRUMENTATION
 # =============================================================================
 # Measurement only: this option adds no pass/fail gate.  Coverage is evidence
 # that a line executed, not evidence that anything asserted about it.
 #
-# The instrumentation is applied tree-wide rather than per-target so that the
-# utilities library and the test executable that drives it are compiled and
-# linked consistently -- the same reason a per-target NO_DB was wrong (UT-004).
-# Test sources are instrumented too and are filtered out when the report is
-# generated, which is where the "exclude test and generated code" rule lives.
+# The instrumentation is tree-wide rather than per-target so that the utilities
+# library and the test executable that drives it are compiled and linked
+# consistently, the same reason NO_DB must not be set per target.  Test sources
+# are instrumented too and filtered out when the report is generated.
 option(US3_COVERAGE "Instrument the build for gcov line and branch coverage" OFF)
 
 if(US3_COVERAGE)
