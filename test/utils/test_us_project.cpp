@@ -341,14 +341,18 @@ writeIntoProjectsDir(
         "</project>\n"
         "</ProjectData>\n");
 
+// The malformed element is reached part way through the document, so the id and
+// guid ahead of it parse before the fault is found.  A rejected read must not
+// show them to the caller.
+project->projectID   = 77;
+project->projectGUID = "the guid held before the failed read";
+project->goals       = "the goals held before the failed read";
+
 EXPECT_EQ(project->readFromDisk(guid), IUS_DB2::DBERROR);
 
-// OBSERVED-DEFECT: the error is detected only after the whole document has been
-// walked, and the fields parsed before the fault are left in the caller's
-// object.  A caller that ignores the return code sees a partly loaded project.
-// Same shape as the AUC reader defect AUC-T05 fixed.
-EXPECT_EQ(project->projectID, 1);
-EXPECT_EQ(project->projectGUID, guid);
+EXPECT_EQ(project->projectID, 77);
+EXPECT_EQ(project->projectGUID, "the guid held before the failed read");
+EXPECT_EQ(project->goals, "the goals held before the failed read");
 }
 
 TEST_F(US_ProjectTest, SaveToDisk_NewProjectGetsASequentialGeneratedFilename) {
