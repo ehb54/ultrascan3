@@ -286,39 +286,14 @@ EXPECT_TRUE(model->associations.isEmpty());
 }
 
 // Component Search Tests
-TEST_F(US_ModelTest, FindComponentByName_ExistingComponent_ReturnsCorrectIndex) {
-model->components << createValidComponent();
-model->components << createValidComponent();
-model->components[1].name = "Unique Component";
-
-// Find component by name (assuming there's a method for this)
-bool found = false;
-int index = -1;
-for (int i = 0; i < model->components.size(); ++i) {
-if (model->components[i].name == "Unique Component") {
-found = true;
-index = i;
-break;
-}
-}
-
-EXPECT_TRUE(found);
-EXPECT_EQ(index, 1);
-}
-
-TEST_F(US_ModelTest, FindComponentByName_NonExistentComponent_ReturnsNotFound) {
-model->components << createValidComponent();
-
-bool found = false;
-for (int i = 0; i < model->components.size(); ++i) {
-if (model->components[i].name == "Non-existent Component") {
-found = true;
-break;
-}
-}
-
-EXPECT_FALSE(found);
-}
+//
+// UT-009: FindComponentByName_ExistingComponent_ReturnsCorrectIndex and
+// FindComponentByName_NonExistentComponent_ReturnsNotFound were removed.  Both
+// carried the comment "assuming there's a method for this" and then implemented
+// a linear search over model->components inside the test body, asserting that
+// their own loop found the element the test had just appended.  No production
+// code ran, and US_Model exposes no component lookup for them to have called.
+// Deleted rather than rewritten: the requirement they described does not exist.
 
 // Validation Tests
 TEST_F(US_ModelTest, IsValid_ValidModel_ReturnsTrue) {
@@ -428,47 +403,56 @@ EXPECT_EQ(assoc.stoichs[2], -1);
 }
 
 // Edge Cases
-TEST_F(US_ModelTest, ComponentWithZeroMW_HandlesCorrectly) {
+//
+// UT-009: ComponentWithZeroMW_HandlesCorrectly,
+// ComponentWithNegativeConcentration_HandlesCorrectly and
+// ExtremeWavelengthValues_HandlesCorrectly were rewritten.  Each assigned a
+// public field and asserted the field held the value just assigned, with the
+// claim that the model "handles it gracefully" left in a comment rather than an
+// assertion.  QVector and plain assignment were the only things under test.
+//
+// calc_coefficients() is the production operation those inputs actually reach,
+// so the edge cases now go through it.
+
+TEST_F(US_ModelTest, CalcCoefficients_ZeroMolecularWeight_ReportsFailure) {
 US_Model::SimulationComponent sc = createValidComponent();
 sc.mw = 0.0;
+sc.s  = 0.0;
+sc.D  = 0.0;
+sc.f  = 0.0;
 
-model->components << sc;
-
-EXPECT_EQ(model->components[0].mw, 0.0);
-// Model should handle zero MW gracefully
+// A component with no mass has no derivable hydrodynamic coefficients.
+EXPECT_FALSE(US_Model::calc_coefficients(sc));
 }
 
-TEST_F(US_ModelTest, ComponentWithNegativeConcentration_HandlesCorrectly) {
+TEST_F(US_ModelTest, CalcCoefficients_ValidComponent_DerivesPositiveCoefficients) {
 US_Model::SimulationComponent sc = createValidComponent();
-sc.signal_concentration = -1.0;
+sc.s = 0.0;
+sc.D = 0.0;
+sc.f = 0.0;
 
-model->components << sc;
+ASSERT_TRUE(US_Model::calc_coefficients(sc));
 
-EXPECT_EQ(model->components[0].signal_concentration, -1.0);
-// Model should handle negative concentration (though it might be invalid)
+// The derivation must produce usable values rather than leaving the zeroes.
+EXPECT_GT(sc.D, 0.0);
+EXPECT_GT(sc.f, 0.0);
+EXPECT_GT(sc.f_f0, 0.0);
 }
 
-// Boundary Value Tests
-TEST_F(US_ModelTest, ExtremeWavelengthValues_HandlesCorrectly) {
-model->wavelength = 1000.0; // Very high
-EXPECT_EQ(model->wavelength, 1000.0);
-
-model->wavelength = 0.1; // Very low
-EXPECT_EQ(model->wavelength, 0.1);
-
-model->wavelength = -1.0; // Negative
-EXPECT_EQ(model->wavelength, -1.0);
-}
-
-TEST_F(US_ModelTest, LargeNumberOfComponents_HandlesCorrectly) {
-// Add many components
-for (int i = 0; i < 100; ++i) {
+TEST_F(US_ModelTest, CalcCoefficients_NonPositiveVbarFallsBackToTheTypicalValue) {
 US_Model::SimulationComponent sc = createValidComponent();
-sc.name = QString("Component %1").arg(i);
-model->components << sc;
+sc.vbar20 = 0.0;
+sc.s = 0.0;
+sc.D = 0.0;
+sc.f = 0.0;
+
+ASSERT_TRUE(US_Model::calc_coefficients(sc));
+
+// us_model.cpp substitutes TYPICAL_VBAR when vbar20 <= 0, so the derivation
+// still succeeds rather than propagating a zero.
+EXPECT_GT(sc.D, 0.0);
 }
 
-EXPECT_EQ(model->components.size(), 100);
-EXPECT_EQ(model->components[50].name, "Component 50");
-EXPECT_EQ(model->components[99].name, "Component 99");
-}
+// UT-009: LargeNumberOfComponents_HandlesCorrectly was removed.  It appended
+// 100 components and asserted that components[50] and components[99] held the
+// names it had just written, which tests QVector rather than US_Model.
