@@ -67,16 +67,14 @@ public:
                  normalSettingsExists ? "1" : "0" );
         qputenv( "US3_TEST_NORMAL_SETTINGS_SHA256", normalSettingsDigest );
 
-        // setPath() only redirects NativeFormat where that format is file
-        // based.  On macOS (CFPreferences) and Windows (registry) it is
-        // ignored, so US_Settings would reach the real per-user store.
-        // Making IniFormat the default keeps every QSettings built without an
-        // explicit format inside the sandbox on all platforms.
-        QSettings::setDefaultFormat( QSettings::IniFormat );
-        QSettings::setPath( QSettings::NativeFormat, QSettings::UserScope,
-                            settingsRoot );
-        QSettings::setPath( QSettings::NativeFormat, QSettings::SystemScope,
-                            settingsRoot );
+        // Moves the settings store into the sandbox.  This has to be an
+        // US_SettingsStore override rather than QSettings::setPath, which
+        // isolates Linux only: on macOS and Windows the native store is
+        // CFPreferences or the registry, setPath has no effect on it, and
+        // QSettings( org, app ) always asks for the native store.  Set before
+        // any setting is read, because US_SettingsStore resolves this once.
+        qputenv( "US3_SETTINGS_ROOT", QFile::encodeName( settingsRoot ) );
+
         QSettings::setPath( QSettings::IniFormat, QSettings::UserScope,
                             settingsRoot );
         QSettings::setPath( QSettings::IniFormat, QSettings::SystemScope,

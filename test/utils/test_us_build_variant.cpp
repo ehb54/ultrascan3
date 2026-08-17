@@ -30,14 +30,18 @@ bool linkedUtilsLibraryPersistsDebugLevel()
     const int  restore = US_Settings::us_debug();
     const char key[]   = "us_debug";
 
-    QSettings settings( US3, "UltraScan" );
+    // Has to be the same store the library writes to, which is the sandbox one
+    // here.  Reaching for QSettings( US3, "UltraScan" ) directly would probe the
+    // developer's real settings instead, find nothing there, and report the
+    // library as a NO_DB build when it is nothing of the sort.
+    US_SettingsStore settings;
     settings.remove( key );
     settings.sync();
 
     // A non-zero level; set_us_debug() removes the key instead of storing zero.
     US_Settings::set_us_debug( 7 );
 
-    QSettings probe( US3, "UltraScan" );
+    US_SettingsStore probe;
     probe.sync();
     const bool persisted = probe.value( key, 0 ).toInt() == 7;
 
