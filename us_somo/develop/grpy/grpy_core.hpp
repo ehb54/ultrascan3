@@ -1,5 +1,25 @@
 // GRPY C++ port -- Phase 2 numeric core (Rotne-Prager-Yamakawa hydrodynamics).
 //
+// ---------------------------------------------------------------------------------------
+// PROVENANCE AND COPYRIGHT
+//
+// This file is a translation into C++ of the compute path of GRPY.f:
+//
+//   GRPY -- Copyright (C) 2017 Pawel Jan Zuk
+//   "This library is free software; you can redistribute it and/or modify it under the
+//    terms of the GNU General Public License version 3" (GRPY.f header)
+//
+// Cite: Zuk, P. J., Cichocki, B. and Szymczak, P., "GRPY: an accurate bead method for
+// calculation of hydrodynamic properties of rigid biomacromolecules", Biophys. J.
+// 115:782-800 (2018).
+//
+// NOTE FOR REDISTRIBUTORS: the original is GPLv3 and UltraScan is LGPLv3 (see LICENSE.txt
+// at the repository root).  A translation is a derivative work, so the licensing of this
+// file relative to the rest of the project is NOT settled by this notice -- it records
+// authorship and origin only.  See ehb54/ultrascan-tickets#1009 before shipping a binary
+// that links this module.
+// ---------------------------------------------------------------------------------------
+//
 // Faithful translation of the compute path in GRPY.f:
 //   CALCRG2 -> HYDRO(HYDRO_RP assembly + INVFRI_TO_FRI inverse + T_RIGID_11 + AR)
 //   -> INTRINSIC_HIGH -> BROWN_EW -> invert AR(1:6,1:6) -> CALCRCH -> CALCATRCH
