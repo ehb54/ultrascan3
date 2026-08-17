@@ -1336,7 +1336,7 @@ void US_Analysis_auto::gui_update( )
 	      sdiag_mwlsim -> start_sims_auto();
 
 	      /**
-		 After Sims completed, save to Disk & re-use US_Convrt to save into DB
+		 After Sims completed, save to Disk & re-use US_Convrt && US_Edit to save into DB
 	       **/
 	      sdiag_mwlsim -> save_sims_auto();
 	      
@@ -1384,6 +1384,28 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
   sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
   sdiag_edit -> show(); //DEBUG
+
+  //Call MWL-Fit:
+  protocol_details_at_analysis_velmwl[ "auto_flag_mwlfit"] = QString("VELMWL_MWLFIT_SIM_ANALYSIS");
+  QString f_name = protocol_details_at_analysis_velmwl[ "filename" ];
+  QStringList parts_fname = f_name.split('-');
+  QString chan_to_analyse = parts_fname.last();
+
+  QRegularExpression re("^(\\d+)([A-Za-z]+)$");
+  QRegularExpressionMatch match = re.match(chan_to_analyse);
+
+  QString result_chann;
+  if (match.hasMatch()) {
+    result_chann = match.captured(1) + " / " + match.captured(2);
+  }
+  
+  protocol_details_at_analysis_velmwl[ "chan_to_analyse" ] = result_chann;
+  qDebug() << "For MWL-fit; \"filename\" should be \"ISSF-xxx\" -- "
+	   << protocol_details_at_analysis_velmwl[ "filename" ];
+  qDebug() << "For MWL-fit; \"chann_to_analyse\" -- " 
+	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
+  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  sdiag -> show(); //for debug
 }
 
 //Get editID from selected model

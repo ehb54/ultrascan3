@@ -1586,6 +1586,13 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   writeTimeStateDisk(); // do we need timestate?
   writeTimeStateDB();   // do we need timestate?
 
+  //capture a new "filemane" for VEL-MWL:
+  QString auto_flag_ = details_at_live_update[ "auto_flag_import" ];
+  if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_IMPORT_SIM_ANALYSIS" )
+    {
+      qDebug() << "Saved filename -- " << details_at_live_update[ "filename" ];
+    }
+    
   //message? (will likely be shown in the parent AUTO-analysis widget)
   // QMessageBox::information( this,
   // 			    tr( "[ABDE-SSF]Save is Complete" ),

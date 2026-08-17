@@ -43,7 +43,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
              //chann.    //type[protein, DNA]  //ext. profile
         QString rmsd_for_gmp;
-
+        
     private:
         int dbg_level;         //!< Debug level
         int nspecies;          //!< Number of species

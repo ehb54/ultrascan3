@@ -184,20 +184,35 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 		    << triple_text << ", " << triple_text_1;
 
 	   //
-	   if( !channels_to_analyse.contains( triple_text_1 ) )
+	   QString auto_flag_ = protocol_details[ "auto_flag_mwlfit" ];
+	   if ( auto_flag_.isEmpty() && auto_flag_ != "VELMWL_MWLFIT_SIM_ANALYSIS" )
 	     {
-	       qDebug() << "Channel " << triple_text_1 << " will NOT be analysed!";
-	       continue;
+	       if( !channels_to_analyse.contains( triple_text_1 ) )
+		 {
+		   qDebug() << "Channel " << triple_text_1 << " will NOT be analysed!";
+		   continue;
+		 }
+	       
+	       if ( this->protocol_details["abde_etype"] == "MWL" )
+		 {
+		   //associate ext. profiles
+		   QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
+		   
+		   loadSpecs_auto( analytes_profs );
+		   specFitData();
+		   
+		   //save ssf-dir name for future DB save
+		   protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
+		 }
 	     }
-
-	   if ( this->protocol_details["abde_etype"] == "MWL" )
+	   else //VEL-MWL
 	     {
-	       //associate ext. profiles
-	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
+	       QString chann_to_process_velmwl = protocol_details[ "chan_to_analyse" ];
+	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ chann_to_process_velmwl ];
 	       
 	       loadSpecs_auto( analytes_profs );
 	       specFitData();
-	       
+		   
 	       //save ssf-dir name for future DB save
 	       protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
 	     }
@@ -209,6 +224,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
        rmsd_for_gmp.chop(1);
        protocol_details_p[ "rmsds_for_gmp" ] = rmsd_for_gmp;
        qDebug() << "RMDSs -- " << rmsd_for_gmp;
+       qDebug() << "SSF DIR -- " << protocol_details_p["ssf_dir_name"];
      }
 }
 
@@ -1297,8 +1313,8 @@ void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > a
    int ktspec     = nspecies * celchns.count();
    synData.fill( rawList[ 0 ], ktspec );
    have_p1.fill( false,        ktspec );
-DbgLv(1) << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
- << have_p1.size();
+   qDebug() << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
+	    << have_p1.size();
 
    pb_sfitdata->setEnabled( true );
 }
@@ -1673,18 +1689,18 @@ QDateTime time2=QDateTime::currentDateTime();
 
    int narows     = klambda;
 DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
-
+ 
    synFitError[ccx].clear();
    for (int ii = 0; ii < lambdas.size(); ii++)
        synFitError[ccx].wavelenghts << (double) lambdas.at(ii);
    synFitError[ccx].xValues << synData.at(kdstart).xvalues.mid(krpad);
-
+   
    for ( int ii = 0; ii < kscan; ii++ )
    {  // Loop through non-excluded scans
       int js         = inclscns[ ii ];
       int jr         = radxs;
 DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
-
+  
       synFitError[ccx].includedScans << js;
       QVector< QVector< QVector < double > > > orgSp_rpwl;
       for ( int jj = krpad; jj < kradp; jj++, jr++ )
@@ -1696,7 +1712,7 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
          {  // Store scan,radius reading for each wavelength in channel
 	   // nnls_b[ kk ]   = rawList[ trx ].value( js, jr );
 	   nnls_b[ kk ]   = dataList[ trx ].value( js, jr );
-	   
+
 	   //for GMP auto-processing, make base-line correcitons
 	   if ( us_gmp_auto_mode )
 	     {
@@ -1707,7 +1723,7 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 	       // 		<< dataList[ trx ].bl_corr_slope
 	       // 		<< dataList[ trx ].bl_corr_yintercept;
 	       nnls_b[ kk ]  -= ( dataList[ trx ].xvalues[ jr ]*dataList[ trx ].bl_corr_slope
-				  + dataList[ trx ].bl_corr_yintercept); 
+				  + dataList[ trx ].bl_corr_yintercept);
 	     }
 	 }
 DbgLv(1) << "sfd: NNLS b:" << nnls_b[0] << nnls_b[klambda-1];

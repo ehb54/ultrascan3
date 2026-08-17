@@ -1074,10 +1074,14 @@ void US_SimParamsGui::update_meniscus      ( double meniscus )
 
 void US_SimParamsGui::update_bottom        ( double bottom )
 {
+  qDebug() << "SimparamsGUI: bottom INPUT -- " << bottom;
    double rad_precis   = simparams.radial_resolution * 0.1;
    simparams.bottom    = qRound( bottom / rad_precis )
                                  * rad_precis;
    simparams.bottom_position = bottom;
+
+   qDebug() << "SimparamsGUI: bottom OUTPUT:  simparams.bottom, simparams.bottom_position -- "
+	    << simparams.bottom << simparams.bottom_position;
    report_mods();
 }
 
@@ -1241,5 +1245,7 @@ void US_SimParamsGui::set_run_params( QMap< QString, QString > run_parms )
 
   cnt_meniscus      ->setValue( run_parms["meniscus"].toDouble() );
   cnt_bottom        ->setValue( run_parms["data_right"].toDouble() );
-  
+
+  qDebug() << "[in SimparamsGui], run_parms[\"data_right\"].toDouble() -- "
+	   << run_parms["data_right"].toDouble();
 }
