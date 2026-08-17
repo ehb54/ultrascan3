@@ -68,6 +68,15 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  || github.event.act == 'true' || needs.changed-files.outputs.relevant == 'true' }}
 
+    defaults:
+      run:
+        # For pipefail.  Every cmake and ctest call below is piped into tee, and
+        # without it the pipeline reports tee's success -- so a configure or
+        # compile failure passed this step and only surfaced later as confusing
+        # test errors.  Configure and ctest capture their own status so their
+        # reporting still runs; a failed build now simply ends the step.
+        shell: bash
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -170,13 +179,17 @@ jobs:
             -DUS3_PREFER_STATIC=ON \
             -DUS3_BUILD_PROGRAMS=OFF \
             -DCMAKE_MODULE_PATH=$(pwd)/../admin/cmake \
-            | tee configure.log | tee test-log-$TIMESTAMP.txt
-          
+            | tee configure.log | tee test-log-$TIMESTAMP.txt || CONFIGURE_RESULT=$?
+
             # Point directly to the first configure error if there was one
             if grep -q 'CMake Error' configure.log; then
               echo '---- First CMake Error ----' | tee test-log-$TIMESTAMP.txt
               grep -n 'CMake Error' configure.log | head -1 | tee test-log-$TIMESTAMP.txt
               exit 1
+            fi
+            if [ "${CONFIGURE_RESULT:-0}" -ne 0 ]; then
+              echo 'CMake configuration failed' | tee test-log-$TIMESTAMP.txt
+              exit "$CONFIGURE_RESULT"
             fi
             echo 'CMake configuration complete' | tee test-log-$TIMESTAMP.txt
           else
@@ -222,11 +235,12 @@ jobs:
           START_TIME=$(date +%s)
           
           if [ "$SAVE_LOGS" = "true" ]; then
-            ctest $CTEST_ARGS 2>&1 | tee test_output.log | tee test-log-$TIMESTAMP.txt
-            RESULT=${PIPESTATUS[0]}
+            # Let ctest fail without ending the step, so the analysis below runs.
+            RESULT=0
+            ctest $CTEST_ARGS 2>&1 | tee test_output.log | tee test-log-$TIMESTAMP.txt || RESULT=$?
           else
-            ctest $CTEST_ARGS | tee test-log-$TIMESTAMP.txt
-            RESULT=$?
+            RESULT=0
+            ctest $CTEST_ARGS | tee test-log-$TIMESTAMP.txt || RESULT=$?
           fi
           
           END_TIME=$(date +%s)
