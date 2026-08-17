@@ -76,23 +76,28 @@ struct NativeInput { std::vector<Bead> beads; PhysParams params; };
 // input, naming the line, rather than being computed on.
 inline NativeInput read_native_file(const std::string& path) {
     std::ifstream f(path);
-    if (!f) throw la::Error("GRPY: cannot open the input file '" + path + "'.");
+    if ( !f ) {
+        throw la::Error( "GRPY: cannot open the input file '" + path + "'." );
+    }
     NativeInput in;
     std::string line;
     int lineno = 0;
     auto firstd = [&]( const char* field ) -> double {
-        if (!std::getline(f, line))
-            throw la::Error("GRPY: input file '" + path + "' ends before the " + field
-                            + " field (line " + std::to_string(lineno + 1) + ").");
+        if ( !std::getline( f, line ) ) {
+            throw la::Error( "GRPY: input file '" + path + "' ends before the " + field
+                             + " field (line " + std::to_string( lineno + 1 ) + ")." );
+        }
         ++lineno;
         std::istringstream s(line); double v = 0;
-        if (!(s >> v))
-            throw la::Error("GRPY: input file '" + path + "' line " + std::to_string(lineno)
-                            + ": expected a number for " + field + ", found '" + line + "'.");
+        if ( !( s >> v ) ) {
+            throw la::Error( "GRPY: input file '" + path + "' line " + std::to_string( lineno )
+                             + ": expected a number for " + field + ", found '" + line + "'." );
+        }
         return v;
     };
-    if (!std::getline(f, line))                // title line -- discarded; GRPY -e mode
-        throw la::Error("GRPY: input file '" + path + "' is empty.");
+    if ( !std::getline( f, line ) ) {          // title line -- discarded; GRPY -e mode
+        throw la::Error( "GRPY: input file '" + path + "' is empty." );
+    }
     ++lineno;
     in.params.input_label = "GRPY";            // hardcodes the report label to "GRPY"
     in.params.temperature_C = firstd("temperature");
@@ -102,28 +107,32 @@ inline NativeInput read_native_file(const std::string& path) {
     in.params.rho   = firstd("rho");
     in.params.units = firstd("unit");
     const double Nd = firstd("bead count");
-    if (Nd < 1 || Nd > 1e8 || Nd != std::floor(Nd))
-        throw la::Error("GRPY: input file '" + path + "' declares an implausible bead count ("
-                        + std::to_string(Nd) + ").");
+    if ( Nd < 1 || Nd > 1e8 || Nd != std::floor( Nd ) ) {
+        throw la::Error( "GRPY: input file '" + path + "' declares an implausible bead count ("
+                         + std::to_string( Nd ) + ")." );
+    }
     const int N = (int)Nd;
     in.beads.reserve((size_t)N);
     for (int i = 0; i < N; ++i) {
-        if (!std::getline(f, line))
-            throw la::Error("GRPY: input file '" + path + "' declares " + std::to_string(N)
-                            + " beads but contains only " + std::to_string(i) + ".");
+        if ( !std::getline( f, line ) ) {
+            throw la::Error( "GRPY: input file '" + path + "' declares " + std::to_string( N )
+                             + " beads but contains only " + std::to_string( i ) + "." );
+        }
         ++lineno;
         std::istringstream s(line);
         Bead b{};
-        if (!(s >> b.x >> b.y >> b.z >> b.radius))
-            throw la::Error("GRPY: input file '" + path + "' line " + std::to_string(lineno)
-                            + ": expected 'x y z radius', found '" + line + "'.");
+        if ( !( s >> b.x >> b.y >> b.z >> b.radius ) ) {
+            throw la::Error( "GRPY: input file '" + path + "' line " + std::to_string( lineno )
+                             + ": expected 'x y z radius', found '" + line + "'." );
+        }
         // A zero or negative radius reaches divisions by radius in the mobility assembly.
-        if (!(b.radius > 0) || !std::isfinite(b.radius)
-            || !std::isfinite(b.x) || !std::isfinite(b.y) || !std::isfinite(b.z))
-            throw la::Error("GRPY: input file '" + path + "' line " + std::to_string(lineno)
-                            + ": bead " + std::to_string(i + 1)
-                            + " has a non-finite coordinate or a radius that is not positive ("
-                            + std::to_string(b.radius) + ").");
+        if ( !( b.radius > 0 ) || !std::isfinite( b.radius )
+             || !std::isfinite( b.x ) || !std::isfinite( b.y ) || !std::isfinite( b.z ) ) {
+            throw la::Error( "GRPY: input file '" + path + "' line " + std::to_string( lineno )
+                             + ": bead " + std::to_string( i + 1 )
+                             + " has a non-finite coordinate or a radius that is not positive ("
+                             + std::to_string( b.radius ) + ")." );
+        }
         b.mw = 0;
         in.beads.push_back(b);
     }

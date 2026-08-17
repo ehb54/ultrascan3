@@ -136,31 +136,33 @@ struct TiledUpperSPD {
             // An unchecked calloc here meant every later tile access dereferenced null. The
             // sizes involved are exactly the ones that fail: this is the memory wall the
             // tiling exists for.
-            if (!data)
-                throw Error("GRPY: could not allocate the " + std::to_string(nelem * sizeof(S))
-                            + " byte mobility matrix. Reduce the model size, or enable "
-                              "single precision or out-of-core in the GRPY options.");
+            if ( !data ) {
+                throw Error( "GRPY: could not allocate the " + std::to_string( nelem * sizeof(S) )
+                             + " byte mobility matrix. Reduce the model size, or enable "
+                               "single precision or out-of-core in the GRPY options." );
+            }
         } else {
             path = file; unlink_on_close = true;
             mapbytes = nelem * sizeof(S);
             fd = ::open(file.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
             // Previously std::abort(): an unwritable or full out-of-core directory killed
             // SOMO outright and took any unsaved session with it.
-            if (fd < 0)
-                throw Error("GRPY: cannot create the out-of-core file '" + file
-                            + "': " + std::strerror(errno));
-            if (::ftruncate(fd, mapbytes) != 0) {
-                const std::string e = std::strerror(errno);
-                ::close(fd); fd = -1; ::unlink(file.c_str());
-                throw Error("GRPY: cannot size the out-of-core file '" + file + "' to "
-                            + std::to_string(mapbytes) + " bytes: " + e
-                            + ". Check the free space on that filesystem.");
+            if ( fd < 0 ) {
+                throw Error( "GRPY: cannot create the out-of-core file '" + file
+                             + "': " + std::strerror( errno ) );
+            }
+            if ( ::ftruncate( fd, mapbytes ) != 0 ) {
+                const std::string e = std::strerror( errno );
+                ::close( fd ); fd = -1; ::unlink( file.c_str() );
+                throw Error( "GRPY: cannot size the out-of-core file '" + file + "' to "
+                             + std::to_string( mapbytes ) + " bytes: " + e
+                             + ". Check the free space on that filesystem." );
             }
             void* p = ::mmap(nullptr, mapbytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-            if (p == MAP_FAILED) {
-                const std::string e = std::strerror(errno);
-                ::close(fd); fd = -1; ::unlink(file.c_str());
-                throw Error("GRPY: cannot map the out-of-core file '" + file + "': " + e);
+            if ( p == MAP_FAILED ) {
+                const std::string e = std::strerror( errno );
+                ::close( fd ); fd = -1; ::unlink( file.c_str() );
+                throw Error( "GRPY: cannot map the out-of-core file '" + file + "': " + e );
             }
             data = static_cast<S*>(p);
         }
