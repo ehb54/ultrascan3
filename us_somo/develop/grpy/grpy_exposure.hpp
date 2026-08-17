@@ -23,7 +23,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
-#include "grpy_core.hpp"
+#include "grpy_types.hpp"
 
 namespace grpy {
 namespace shell {
@@ -48,19 +48,19 @@ inline std::vector<std::array<double, 3>> unit_points(int K) {
 // The probe is essential, not cosmetic: at probe 0 almost nothing registers as buried,
 // because bare bead spheres nearly always retain some exposed surface. A water-sized
 // probe (1.4 A) is what makes burial meaningful.
-inline std::vector<double> exposure(const std::vector<core::Bead>& b, int N,
+inline std::vector<double> exposure(const std::vector<Bead>& b, int N,
                                     int K = 64, double probe = 1.4) {   // NB: the SHIPPED
     // value is ShellOptions::K = 512, not this low-level default; every production caller
     // passes K explicitly. Do not read 64 here as the value the reduction uses.
     auto pts = unit_points(K);
     std::vector<double> ex(N, 1.0);
     double rmax = 0;
-    for (int i = 0; i < N; ++i) rmax = std::max(rmax, b[i].r);
+    for (int i = 0; i < N; ++i) rmax = std::max(rmax, b[i].radius);
     rmax += probe;
 
     std::vector<int> nb;
     for (int i = 0; i < N; ++i) {
-        const double ai = b[i].r + probe;
+        const double ai = b[i].radius + probe;
         nb.clear();
         for (int j = 0; j < N; ++j) {                      // neighbours that can reach i's surface
             if (j == i) continue;
@@ -75,7 +75,7 @@ inline std::vector<double> exposure(const std::vector<core::Bead>& b, int N,
             double pz = b[i].z + ai * pts[k][2];
             bool buried = false;
             for (int j : nb) {
-                double aj = b[j].r + probe;
+                double aj = b[j].radius + probe;
                 double dx = px - b[j].x, dy = py - b[j].y, dz = pz - b[j].z;
                 if (dx * dx + dy * dy + dz * dz < aj * aj) { buried = true; break; }
             }
@@ -96,7 +96,7 @@ inline std::vector<double> exposure(const std::vector<core::Bead>& b, int N,
 // Indices of the beads to keep, most-exposed first. The selection lives here rather than in
 // reduce_top_frac so a caller can learn WHICH beads were kept, not merely how many -- needed
 // to write out the reduced model, and to build the reduced bead list without searching.
-inline std::vector<size_t> reduce_top_frac_idx(const std::vector<core::Bead>& b,
+inline std::vector<size_t> reduce_top_frac_idx(const std::vector<Bead>& b,
                                                const std::vector<double>& ex, double frac) {
     const size_t N = b.size();
     size_t keep = (size_t)std::ceil(frac * N);
@@ -136,7 +136,7 @@ inline std::vector<size_t> reduce_top_frac_idx(const std::vector<core::Bead>& b,
     std::partial_sort(idx.begin(), idx.begin() + keep, idx.end(),
                       [&](size_t i, size_t j) {
                           if (ex[i] != ex[j]) return ex[i] > ex[j];
-                          if (b[i].r != b[j].r) return b[i].r > b[j].r;
+                          if (b[i].radius != b[j].radius) return b[i].radius > b[j].radius;
                           if (d2[i] != d2[j]) return d2[i] > d2[j];
                           if (b[i].x != b[j].x) return b[i].x < b[j].x;
                           if (b[i].y != b[j].y) return b[i].y < b[j].y;
@@ -147,11 +147,11 @@ inline std::vector<size_t> reduce_top_frac_idx(const std::vector<core::Bead>& b,
     return idx;
 }
 
-inline std::vector<core::Bead> reduce_top_frac(const std::vector<core::Bead>& b,
+inline std::vector<Bead> reduce_top_frac(const std::vector<Bead>& b,
                                                const std::vector<double>& ex, double frac) {
     if ((size_t)std::ceil(frac * b.size()) >= b.size()) return b;
     std::vector<size_t> idx = reduce_top_frac_idx(b, ex, frac);
-    std::vector<core::Bead> out;
+    std::vector<Bead> out;
     out.reserve(idx.size());
     for (size_t k : idx) out.push_back(b[k]);
     return out;

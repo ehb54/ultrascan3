@@ -20,51 +20,12 @@
 #include <Eigen/Dense>
 #include "grpy_core.hpp"     // core:: pipeline (tensors, tiled solve, pre/post)
 #include "grpy_report.hpp"   // grpy:: report writer + constants + ReportData
+#include "grpy_types.hpp"    // grpy:: Bead, PhysParams, Options, Results, ProgressFn
 
 namespace grpy {
 
-struct Bead { double x, y, z, radius, mw; };
-
-// Physical / solvent parameters. Defaults match GRPY's -u (us-somo) mode: the
-// hydrodynamic quantities come out at 20 C, eta=0.01 P, rho=1.
-struct PhysParams {
-    double temperature_C = 20.0;   // -> TK = temperature_C + 273.15
-    double eta   = 0.01;           // solvent viscosity [P]
-    double rho   = 1.0;            // solution density
-    double vbar  = 0.0;            // partial specific volume (from the model)
-    double units = 1e-8;           // model length scale [cm] (10^-x m)
-    double mw    = 0.0;            // total mass; if <=0, summed from bead mw
-    std::string input_label = "us-somo";  // "from the: <label> input file" in the report
-};
-
-struct Options {
-    bool   single = false;         // float storage/factor for very large systems
-    int    tile   = 256;
-    std::string ooc_dir;           // "" = in-core; else spill tiled matrix here (disk)
-};
-
-// Structured results (SI/GRPY display units). The SOMO adapter maps these to
-// this_data.results.{s20w,D20w,viscosity,rs,rg,...}.
-struct Results {
-    double rotational_diffusion = 0;      // Dr        [s^-1]
-    double sedimentation = 0;             // s         [Svedberg]
-    double translational_diffusion = 0;   // Dt origin [cm^2/s]
-    double translational_diffusion_centre = 0;  // Dt at mobility centre [cm^2/s]
-    double intrinsic_viscosity_high = 0;  // eta_oo    [cm^3/g]
-    double intrinsic_viscosity_zero = 0;  // eta_0     [cm^3/g]
-    double tau_vector[3] = {0,0,0};       // relaxation times, vector        [s]
-    double tau_tensor[5] = {0,0,0,0,0};   // relaxation times, tensor        [s]
-    double tau_harmonic = 0;              // harmonic mean tau               [s]
-    double stokes_radius_Dt = 0;          // radius of sphere w/ equal Dt (rs) [cm]
-    double stokes_radius_Dr = 0;          // radius of sphere w/ equal Dr      [cm]
-    double rg2 = 0;                       // radius of gyration^2 (model units^2)
-    double mass = 0;                      // MW used
-    double diffusion_origin[6][6] = {};   // 6x6 diffusion matrix at origin
-    double diffusion_centre[6][6] = {};   // 6x6 at mobility centre, principal frame
-    std::string report;                   // full GRPY report text (preserve to disk)
-};
-
-using ProgressFn = la::Progress;          // void(int pct, const char* stage)
+// Bead, PhysParams, Options, Results and ProgressFn moved to grpy_types.hpp, which is
+// original work and stays with UltraScan; this header is GRPY-derived (issue 1012).
 
 // Parse a GRPY-native input file (the `.grpy` file SOMO writes and used to feed the
 // binary with `-e`): title, T[C], eta, Mw, vbar, rho, unit, N, then N lines "x y z r".
