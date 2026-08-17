@@ -66,9 +66,10 @@ int main(int argc, char** argv){
         auto raw=read_pdb(path);
         // Name the file that gave us nothing, rather than letting it vanish into a 0 in the
         // per-file line: a missing file and a genuinely unscorable one look identical there.
-        if(raw.empty())
-            std::fprintf(stderr, "regression: %s -- no atoms read (missing or unreadable?)\n",
-                         path.c_str());
+        if ( raw.empty() ) {
+            std::fprintf( stderr, "regression: %s -- no atoms read (missing or unreadable?)\n",
+                          path.c_str() );
+        }
         auto atoms=strip_altlocs(raw);
         std::vector<InAtom> in; in.reserve(atoms.size());
         for(auto& a : atoms){ InAtom x; x.element=a.element;x.x=a.x;x.y=a.y;x.z=a.z;
@@ -145,13 +146,13 @@ int main(int argc, char** argv){
     // in the repository -- every percentage above divides by zero, prints 0.000%, and this
     // returned success. A regression test that reports "0 genuine errors" because it looked
     // at no atoms is worse than no test: it is a green light for work it never checked.
-    if(tot == 0){
-        std::fprintf(stderr,
+    if ( tot == 0 ) {
+        std::fprintf( stderr,
             "\nregression: FAILED -- scored 0 atoms.\n"
             "  %d input file(s) were given but none yielded any scorable atom.\n"
             "  The usual cause is that the demo structures are missing: they are not\n"
             "  committed to the repository. Supply them, or run this with your own PDB\n"
-            "  files as arguments.\n", argc - 1);
+            "  files as arguments.\n", argc - 1 );
         return 2;
     }
     return 0;
