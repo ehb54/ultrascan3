@@ -35,14 +35,6 @@
 
 namespace grpy {
 
-// Thrown when the caller's stop predicate fires. Distinct from a failure so the caller can
-// tell "the user pressed Stop" from "the calculation broke", which read identically when
-// both arrived as a plain runtime_error.
-class Stopped : public std::runtime_error {
-public:
-   Stopped() : std::runtime_error( "GRPY: stopped at the user's request" ) {}
-};
-
 // ---------------------------------------------------------------------------------------
 // Report parsing. Free functions so they can be tested without a process.
 // ---------------------------------------------------------------------------------------

@@ -379,7 +379,20 @@ public:
                              stage_buf.c_str());
                 };
             }
-            last = solve_(rb, pin, wrapped);
+            // A solver that runs out of process can be killed the instant Stop is
+            // pressed, rather than having to finish the rung it is on -- but the rungs
+            // already completed are still perfectly good, and the caller was promised
+            // "the result and error estimate obtained so far". So a stop DURING a rung is
+            // treated exactly like a stop between rungs: the ladder ends where it stands
+            // and reports itself as not converged. Only a stop before the first rung has
+            // finished leaves nothing to report, and that one propagates.
+            try {
+                last = solve_(rb, pin, wrapped);
+            } catch (const Stopped&) {
+                rep.stopped = true;
+                if (rep.levels == 0) throw;
+                break;
+            }
             last.rg2 = rg2_full;                           // see note above
             rep.ns.push_back((int)rb.size());
             if (sopt_.record_subsets) rep.kept.push_back(std::move(rung_idx));

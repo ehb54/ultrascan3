@@ -646,6 +646,49 @@ int main() {
                      !rep3.stopped && rep3.unreduced);
     }
 
+    // ---- a stop DURING a rung keeps the rungs already finished --------------------
+    // The in-process solver could only be stopped between rungs, because its
+    // factorization had no interior abort. A solver running as a separate program can be
+    // killed mid-rung, and when that happens the ladder must still report what it had --
+    // which is what the manual promises the Stop button does.
+    {
+        auto b = blob(6, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true; so.tol = 1e-12;                 // unsatisfiable: run every rung
+        int calls = 0;
+        SolveFn stops_on_third = [&](const std::vector<Bead>& rb, const PhysParams& p,
+                                     const ProgressFn& pr) {
+            if (++calls == 3) throw Stopped();
+            return Analytic{(int)b.size()}(rb, p, pr);
+        };
+        ShellSolver sh(stops_on_third, so);
+        ShellReport rep;
+        Results r = sh.run(b, phys, rep);
+        fails += chk("mid-rung stop is reported as a stop", rep.stopped);
+        fails += chk("mid-rung stop keeps the finished rungs", rep.levels == 2);
+        fails += chk("mid-rung stop keeps a usable result", r.translational_diffusion_centre > 0);
+        fails += chk("mid-rung stop carries an error bar", rep.err_max > 0.0);
+        fails += chk("mid-rung stop does not claim convergence", !rep.converged);
+    }
+
+    // ---- a stop before ANY rung finishes has nothing to report --------------------
+    {
+        auto b = blob(6, 3.0, 2.0);
+        ShellOptions so;
+        so.enabled = true;
+        SolveFn always_stops = [](const std::vector<Bead>&, const PhysParams&,
+                                  const ProgressFn&) -> Results { throw Stopped(); };
+        ShellSolver sh(always_stops, so);
+        ShellReport rep;
+        bool propagated = false;
+        try {
+            sh.run(b, phys, rep);
+        } catch (const Stopped&) {
+            propagated = true;
+        }
+        fails += chk("a stop with no completed rung propagates", propagated);
+    }
+
     std::printf("%s (%d failures)\n", fails ? "FAILURES" : "ALL PASS", fails);
     return fails ? 1 : 0;
 }

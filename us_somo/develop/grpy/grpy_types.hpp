@@ -10,10 +10,20 @@
 // function that runs the external GRPY program on a bead list and returns its results.
 #pragma once
 #include <functional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace grpy {
+
+// Thrown by a SolveFn when the caller's stop predicate fires. Distinct from a failure, so
+// that "the user pressed Stop" and "the calculation broke" can be told apart -- they read
+// identically when both arrive as a plain runtime_error. Declared here rather than beside
+// the process solver so the shell reduction can catch it without depending on Qt.
+class Stopped : public std::runtime_error {
+public:
+   Stopped() : std::runtime_error( "GRPY: stopped at the user's request" ) {}
+};
 
 struct Bead {
    double x;
