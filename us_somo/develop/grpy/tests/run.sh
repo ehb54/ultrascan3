@@ -13,14 +13,23 @@ for t in test_linalg test_assemble test_threaded test_ooc test_api test_shell; d
     echo "[$t]"; $CXX "$t.cpp" -o "/tmp/grpy_$t" && "/tmp/grpy_$t"
 done
 
+# Qt-dependent tests: the process solver (QProcess) and the Qt threading backend.
 if [ -n "${QTDIR:-}" ] && [ -d "$QTDIR/lib/QtCore.framework" ]; then          # macOS
+    echo "[test_process]"
+    $CXX -F"$QTDIR/lib" -I"$QTDIR/lib/QtCore.framework/Headers" -DQT_NO_KEYWORDS \
+         test_process.cpp -o /tmp/grpy_test_process -framework QtCore \
+      && DYLD_FRAMEWORK_PATH="$QTDIR/lib" /tmp/grpy_test_process
     echo "[qt_proof]"
     $CXX -F"$QTDIR/lib" -I"$QTDIR/lib/QtCore.framework/Headers" \
          -I"$QTDIR/lib/QtConcurrent.framework/Headers" -DQT_NO_KEYWORDS \
          qt_proof.cpp -o /tmp/grpy_qt -framework QtConcurrent -framework QtCore \
       && DYLD_FRAMEWORK_PATH="$QTDIR/lib" /tmp/grpy_qt
 elif [ -n "${QTDIR:-}" ] && [ -d "$QTDIR/include/QtConcurrent" ]; then          # Linux
-    echo "[qt_proof]"
+    echo "[test_process]"
+    $CXX -I"$QTDIR/include" -I"$QTDIR/include/QtCore" -DQT_NO_KEYWORDS \
+         test_process.cpp -o /tmp/grpy_test_process -L"$QTDIR/lib" -lQt5Core \
+      && LD_LIBRARY_PATH="$QTDIR/lib" /tmp/grpy_test_process
+    echo "[test_process]"
     $CXX -I"$QTDIR/include" -I"$QTDIR/include/QtCore" -I"$QTDIR/include/QtConcurrent" \
          -DQT_NO_KEYWORDS qt_proof.cpp -o /tmp/grpy_qt \
          -L"$QTDIR/lib" -lQt5Concurrent -lQt5Core \
