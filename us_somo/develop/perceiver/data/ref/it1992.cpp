@@ -1,3 +1,16 @@
+// Verbatim copy of cctbx/eltbx/xray_scattering/it1992.cpp from the cctbx project
+// (https://github.com/cctbx/cctbx_project), retained here as the reference transcription of
+// International Tables Vol. C Table 6.1.1.4.  It is NOT compiled into SOMO: it is parsed by
+// perceiver/tools/gen_saxs_entries.py to generate somo.saxs_atoms entries.
+//
+// cctbx Copyright (c) 2006 - 2026, The Regents of the University of California, through
+// Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from
+// the U.S. Dept. of Energy).  All rights reserved.
+//
+// Redistributed under the cctbx BSD-style license, whose condition (1) requires source
+// redistributions to retain the copyright notice, the conditions and the disclaimer.  The
+// full license text is alongside this file as cctbx_LICENSE.txt.
+
 #include <cctbx/eltbx/xray_scattering.h>
 
 namespace cctbx { namespace eltbx { namespace xray_scattering {
