@@ -46,7 +46,7 @@ TEST( TestEnvironmentIsolation, SettingsAndWritablePathsStayInSandbox )
     ASSERT_TRUE( isWithin( settingsRoot, sandbox ) );
     ASSERT_TRUE( isWithin( workRoot, sandbox ) );
 
-    QSettings settings( US3, "UltraScan" );
+    US_SettingsStore settings;
     ASSERT_TRUE( isWithin( settings.fileName(), settingsRoot ) )
         << settings.fileName().toStdString();
 

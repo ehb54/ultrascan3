@@ -25,10 +25,12 @@ int main(int argc, char** argv)                                                \
         qputenv("LIBGL_ALWAYS_SOFTWARE", "1");                               \
                                                                                \
     QStandardPaths::setTestModeEnabled(true);                                  \
-    QApplication app(argc, argv);                                              \
-    QCoreApplication::setApplicationName("ultrascan3-qtest");                 \
-    QCoreApplication::setOrganizationName(US3);                                \
                                                                                \
+    /* Everything that redirects the settings store has to happen before     */\
+    /* QApplication is constructed.  Building the application reads settings */\
+    /* through the theme, and US_SettingsStore resolves where its store lives*/\
+    /* on the first read and then keeps it, so a redirect set afterwards     */\
+    /* arrives too late and the process writes to the real preferences.      */\
     QTemporaryDir sandbox(QDir::tempPath() +                                   \
                           "/ultrascan3-gui-test-XXXXXX");                      \
     if (!sandbox.isValid())                                                     \
@@ -45,18 +47,19 @@ int main(int argc, char** argv)                                                \
     qputenv("US3_TEST_SANDBOX", QFile::encodeName(sandbox.path()));            \
     qputenv("US3_TEST_SETTINGS_ROOT", QFile::encodeName(settingsRoot));        \
     qputenv("US3_TEST_WORK_ROOT", QFile::encodeName(workRoot));                \
-    /* setPath() does not redirect NativeFormat on macOS (CFPreferences) or  */\
-    /* Windows (registry), so make IniFormat the default to keep every       */\
-    /* QSettings built without an explicit format inside the sandbox.        */\
-    QSettings::setDefaultFormat(QSettings::IniFormat);                         \
-    QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope,           \
-                       settingsRoot);                                           \
-    QSettings::setPath(QSettings::NativeFormat, QSettings::SystemScope,         \
-                       settingsRoot);                                           \
+    /* setPath alone isolates Linux only: the native store is CFPreferences  */\
+    /* or the registry on macOS and Windows, where setPath has no effect, so */\
+    /* US_SettingsStore has to be told to use a file instead.                */\
+    qputenv("US3_SETTINGS_ROOT", QFile::encodeName(settingsRoot));             \
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,              \
                        settingsRoot);                                           \
     QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope,            \
                        settingsRoot);                                           \
+                                                                               \
+    QApplication app(argc, argv);                                              \
+    QCoreApplication::setApplicationName("ultrascan3-qtest");                 \
+    QCoreApplication::setOrganizationName(US3);                                \
+                                                                               \
     US_Settings::set_workBaseDir(workRoot);                                     \
     US_Settings::set_importDir(importRoot);                                     \
     US_Settings::set_tmpDir(temporaryRoot);                                     \
