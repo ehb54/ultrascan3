@@ -49,7 +49,9 @@ inline std::vector<std::array<double, 3>> unit_points(int K) {
 // because bare bead spheres nearly always retain some exposed surface. A water-sized
 // probe (1.4 A) is what makes burial meaningful.
 inline std::vector<double> exposure(const std::vector<core::Bead>& b, int N,
-                                    int K = 64, double probe = 1.4) {
+                                    int K = 64, double probe = 1.4) {   // NB: the SHIPPED
+    // value is ShellOptions::K = 512, not this low-level default; every production caller
+    // passes K explicitly. Do not read 64 here as the value the reduction uses.
     auto pts = unit_points(K);
     std::vector<double> ex(N, 1.0);
     double rmax = 0;
@@ -104,7 +106,9 @@ inline std::vector<size_t> reduce_top_frac_idx(const std::vector<core::Bead>& b,
     for (size_t i = 0; i < N; ++i) idx[i] = i;
     if (keep >= N) return idx;                     // everything, in original order
     // Rank by exposure descending. Exposure is quantized to the K surface sample points, so
-    // ties are not rare: at ~2500 beads the mean tie class holds ~90 of them, and the cut
+    // ties are not rare: at ~2500 beads and K = 64 the mean tie class held ~90 of them; at the
+    // shipped K = 512 the classes are roughly eight times finer but the cut between rungs still
+    // generally lands inside one, and the cut
     // between rungs generally falls inside one. What breaks those ties therefore decides a
     // large part of the selection.
     //
