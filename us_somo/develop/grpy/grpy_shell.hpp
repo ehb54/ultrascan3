@@ -78,7 +78,23 @@ struct ShellOptions {
     bool   enabled = false;          // off by default: results must not move silently
     double tol     = 5e-3;           // relative tolerance on every required observable
     double probe   = 1.4;            // Shrake-Rupley probe radius (model length units)
-    int    K       = 64;             // exposure sample points per bead
+    // Exposure sample points per bead. Raised from 64 to 512 to make the selection far less
+    // sensitive to the ORIENTATION of the input coordinates.
+    //
+    // The point pattern is generated once in the coordinate frame and applied to every bead by
+    // translation and scaling, so it does not rotate with the structure: a rigid rotation changes
+    // 34-77% of bead exposures by a few of the K sample points and therefore changes the ranking.
+    // That reaches the answer almost entirely through the stopping decision -- where the ladder
+    // stops at the same rung in every frame the reported value moves by at most 0.075%, and where
+    // the orientation flips the rung by one it moves by up to 1.043%.
+    //
+    // Measured over twelve rigid motions of six models, matched but for K: at 64 one case of
+    // eighteen changed its stopping rung and the frame-to-frame spread reached 0.23%; at 512 no
+    // case changes rung and the spread falls to 0.016%. Retained beads are unchanged (mean 31.5%
+    // vs 31.3%) and compliance and coverage are perfect either way, so the finer quadrature costs
+    // nothing but exposure time -- about 3% of the ladder, since exposure is milliseconds against
+    // a solve of seconds. It does not make selection frame-independent, only ~14x less sensitive.
+    int    K       = 512;
     // Doubling ladder. The final 1.0 rung is the unreduced model, so an unreducible
     // structure degrades to exactly today's behaviour rather than to a wrong answer.
     std::vector<double> ladder = {0.0625, 0.125, 0.25, 0.5, 1.0};
