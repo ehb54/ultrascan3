@@ -73,6 +73,14 @@ jobs:
     container:
       image: "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
+    defaults:
+      run:
+        # Name the shell rather than take the default:  inside this container the
+        # default resolved to sh, where ${PIPESTATUS[0]} is a syntax error.  This
+        # also turns on pipefail, without which a failing cmake or ctest piped
+        # into tee reports tee's success and the step passes regardless.
+        shell: bash
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -110,7 +118,7 @@ jobs:
             -DUS3_PREFER_STATIC=ON \
             -DUS3_BUILD_PROGRAMS=OFF \
             -DCMAKE_MODULE_PATH="$(pwd)/admin/cmake" \
-            2>&1 | tee configure.log
+            2>&1 | tee configure.log || RESULT=$?
 
           # Point directly at the first configure error if there was one
           if grep -q 'CMake Error' configure.log; then
@@ -118,6 +126,7 @@ jobs:
             grep -n 'CMake Error' configure.log | head -1
             exit 1
           fi
+          exit "${RESULT:-0}"
 
       - name: Build
         run: cmake --build build-qt6 -j "$(nproc)" 2>&1 | tee build.log
@@ -142,8 +151,9 @@ jobs:
             CTEST_ARGS="$CTEST_ARGS -L ${{ github.event.inputs.test_filter }}"
           fi
 
-          ctest $CTEST_ARGS 2>&1 | tee test_output.log
-          RESULT=${PIPESTATUS[0]}
+          # Let ctest fail without ending the step, so the analysis below runs.
+          RESULT=0
+          ctest $CTEST_ARGS 2>&1 | tee test_output.log || RESULT=$?
 
           if [ $RESULT -ne 0 ]; then
             echo '=== FAILURE ANALYSIS ==='
