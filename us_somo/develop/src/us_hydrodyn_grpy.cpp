@@ -14,10 +14,10 @@
  
 #include "../include/us_hydrodyn.h"
 
-// in-process GRPY module (issue 972): replaces the external binary + stdout scraping
+// GRPY module (issue 1012): the shell reduction and the process boundary to the GRPY
+// program, which is run rather than linked
 #include "grpy_process.hpp"
 #include "grpy_shell.hpp"
-#include "parallel_qt.hpp"
 
 #define SLASH QDir::separator()
 
@@ -336,8 +336,8 @@ bool US_Hydrodyn::calc_grpy_hydro() {
       editor_msg( "dark blue", courier, visc_dens_msg() );
    }
 
-   // in-process GRPY module (issue 972): no external binary or Docker container.
-   editor_msg( "darkblue", QString( us_tr( "\nGRPY (in-process) enabled with %1 threads\n" ) )
+   // The GRPY program is run per model (issue 1012); the thread count is passed to it.
+   editor_msg( "darkblue", QString( us_tr( "\nGRPY enabled with %1 threads\n" ) )
                .arg( USglobal->config_list.numThreads ) );
 
    // if ( !overwrite_hydro )
@@ -767,13 +767,11 @@ void US_Hydrodyn::grpy_process_next() {
    timers.start_timer( "compute grpy this model" );
 
    {
-      // in-process GRPY (issue 972): read the same .grpy file we used to feed the
-      // binary with -e, run the module directly, and populate grpy_stdout with the
-      // report so grpy_finished()'s existing parsing + .grpy_res preservation work
-      // unchanged. The heavy compute is internally multi-threaded (QtParallel over
-      // SOMO's thread pool); processEvents() in the progress callback keeps the GUI
-      // painting between block-columns.
-      editor_msg( "black", QString( "\nStarting GRPY (in-process) on %1 with %2 beads\n" )
+      // Run the GRPY program on the .grpy file SOMO wrote (issue 1012), and populate
+      // grpy_stdout with its report so grpy_finished()'s existing parsing and .grpy_res
+      // preservation work unchanged. The program threads internally; processEvents() in
+      // the progress callback keeps the GUI painting while it runs.
+      editor_msg( "black", QString( "\nStarting GRPY on %1 with %2 beads\n" )
                   .arg( QFileInfo( grpy_last_processed ).completeBaseName() )
                   .arg( grpy_last_used_beads ) );
 
@@ -792,13 +790,11 @@ void US_Hydrodyn::grpy_process_next() {
          } );
          return;
       }
-      // Failure boundary for the in-process solve. As a subprocess, a GRPY failure was
-      // isolated: the process died, SOMO read a non-zero exit and carried on. In-process
-      // there is no such isolation -- an allocation failure, an unreadable input file or a
-      // bad out-of-core path propagates out of here and takes SOMO with it, losing the
-      // session. Everything from the parse to the last result extraction runs inside this
-      // try. The body is deliberately left at its existing indentation so the diff shows the
-      // boundary being added and nothing else.
+      // Failure boundary. With GRPY back in its own process a failed solve kills a child
+      // rather than the session -- an allocation failure inside the solver is the child's
+      // problem now -- but this side can still fail: an unreadable input file, a missing
+      // program, a non-zero exit. Everything from the parse to the last result extraction
+      // runs inside this try, and a user stop arrives here too, as grpy::Stopped.
       try {
       grpy::Input in = grpy::read_grpy_input( grpy_path );
 
@@ -1086,7 +1082,7 @@ void US_Hydrodyn::grpy_finished( int, QProcess::ExitStatus )
    // us_qdebug( QString( "grpy_processExited %1" ).arg( grpy_last_processed) );
    //   for ( int i = 0; i < 10000; i++ )
    //   {
-   // in-process (issue 972): grpy_stdout already holds the report; nothing to flush.
+   // grpy_stdout already holds the report the program produced; nothing to flush.
    if (stopFlag) {
       editor_msg( "red", us_tr( "Stopped by user\n" ) );
       set_enabled();

@@ -1,200 +1,70 @@
-# Phase 4 — in-process API (`grpy::Solver`)
+# `grpy/` — shell reduction, and the boundary to the GRPY program
 
-A clean, self-contained module so SOMO calls GRPY **directly as a function** instead of
-spawning the binary and scraping stdout. No SOMO types, no god-class methods — just a
-namespaced class with injected threading and its own tests. Build & validate:
+What SOMO keeps of the GRPY work. The solver itself is **not here**: it is a separate
+GPLv3 program, [ehb54/grpy-cpp](https://github.com/ehb54/grpy-cpp), which SOMO runs rather
+than links. See ehb54/ultrascan-tickets#1012 for why.
 
-```
-./validate.sh            # std::thread backend; add `. qt5env` first for the Qt proof
-```
-
-## The API
-```cpp
-grpy::Bead        { x, y, z, radius, mw };
-grpy::PhysParams  { temperature_C, eta, rho, vbar, units, mw, input_label };  // -u defaults
-grpy::Options     { single, tile, ooc_dir };
-grpy::Results     { rotational_diffusion, sedimentation, translational_diffusion,
-                    intrinsic_viscosity_{high,zero}, tau_vector[3], tau_tensor[5],
-                    tau_harmonic, stokes_radius_{Dt,Dr}, rg2, mass,
-                    diffusion_origin[6][6], diffusion_centre[6][6],
-                    std::string report };          // <- full report text, preserve to disk
-
-class grpy::Solver {
-    Solver(la::Parallel& par, Options = {});        // threading injected (Qt or std)
-    Results run(const std::vector<Bead>&, const PhysParams&, ProgressFn = {}) const;
-};
-```
-
-`Results::report` is the **full GRPY report text** (byte-identical to the Fortran modulo
-the eigenvector gauge / ~1e-16 noise), so the caller can write it to disk and preserve
-the results file exactly as before — while also getting the structured scalars directly.
-
-## Files (all header-only except tests)
-```
-grpy_report.hpp   report writer + display formulas + constants  (shared with the CLI)
-grpy_api.hpp      Bead/PhysParams/Options/Results/Solver + derive_scalars
-grpy_core.hpp     RPY core (from phase3)      linalg.hpp   tiled solve + Parallel
-parallel_qt.hpp   QtParallel (SOMO)           parallel_std.hpp  std::thread (CLI/tests)
-test_api.cpp      unit tests                  qt_proof.cpp      Qt-backend in-process proof
-INTEGRATION.md    exact SOMO placement + qmake + minimal call-site change
-```
-
-## Validation
-- **`test_api`** (std::thread backend): report matches the golden numerically (sign-flip
-  + noise tolerant) for dumbbell and 1znf; structured scalars consistent with the report
-  text (guards `derive_scalars` against drift); progress callback fires.
-- **`qt_proof`** (QtParallel — SOMO's backend): `Solver::run` executes in-process, progress
-  callback delivers `NN% INVERTING MATRICES`, scalars correct. Links QtCore + QtConcurrent.
-
-## Design notes
-- Threading is **dependency-injected** (`la::Parallel&`), so the module is Qt-agnostic and
-  testable with std::threads; SOMO passes a `QtParallel` over its `QThreadPool`.
-- The CLI (`phase3/grpy.cpp`) and this API share `grpy_report.hpp`, so their output can
-  never drift.
-- See `INTEGRATION.md` for the SOMO call site: build beads from the bead model, run the
-  Solver on a Qt worker (GUI stays responsive), map `Results` → `this_data.results`, write
-  `Results::report` to the `.dat` file. Retire QProcess / stdout-scraping incrementally.
-
----
-
-# Shell reduction (`grpy::ShellSolver`)
-
-GRPY costs O((11N)^3), so the bead count dominates everything. A dense bead packing is
-hydrodynamically **screened** — interior beads sit in near-stagnant fluid and carry almost
-no force — so the exact calculation can run on a surface-enriched subset at small cost in
-accuracy. `ShellSolver` does that, and reports the error it introduced.
-
-```cpp
-grpy::ShellOptions so;
-so.enabled = true;
-so.tol     = 5e-3;                                    // 0.5% on every required observable
-so.require = { grpy::Obs::Dt, grpy::Obs::Dr, grpy::Obs::Sedimentation };
-
-grpy::ShellSolver solver( par, {}, so );
-grpy::ShellReport rep;
-grpy::Results r = solver.run( beads, phys, rep );
-
-if ( rep.viscosity_unreliable ) { /* do NOT propagate r.intrinsic_viscosity_* */ }
-```
-
-## How it works
-
-1. **Exposure** (`grpy_exposure.hpp`) — Shrake-Rupley per bead with a 1.4 Å probe, then
-   keep the most-exposed `ceil(f*N)`. Selection is by *target bead fraction*, never a fixed
-   exposure threshold: the buried fraction ranges ~1%–50% across model types, so one
-   threshold gives wildly different cost per model while a fraction controls O(N^3)
-   directly. The probe is essential — at probe 0 almost nothing registers as buried.
-2. **Ladder** — solve on a doubling ladder of bead fractions, stop when the reported bar
-   drops below `tol`. Geometric against O(N^3), so the whole ladder costs ~1.14× its final
-   rung: the convergence check is nearly free. The final 1.0 rung is the unreduced model,
-   so an unreducible structure degrades to exactly today's behaviour.
-3. **Richardson** — three rungs give the convergence order from the ratio of successive
-   gaps; the remaining error is `gap2/(r^k − 1)`. Per observable, since each converges at
-   its own order.
-
-## What it guarantees, and what it does not
-
-The reported bar **bounds the true error**: verified 92/92 (translational, 23 models,
-N=204–4068) and 252/252 (7 observables × 12 models × 3 tolerances) against unreduced exact
-GRPY. The observed order (median 1.83) matches a value predicted independently by a raw
-reduction sweep, so the error model is derived rather than fitted.
-
-Known failure mode, guarded: on structures with a **degenerate exposure distribution** (a
-perfect cubic lattice realizes ~9 distinct values over 216 beads) rungs swallow whole
-symmetry shells instead of refining, the estimated order comes out spuriously high, and the
-bar understated by ~1.4×. A floor caps extrapolation tightening at 2× the raw gap, which
-restores honesty there and is slack on every real model tested (identical honesty and
-conservatism, no speedup cost). `tests/test_shell.cpp` keeps that lattice as a regression.
-
-## Observables do not share a frontier
-
-Median error relative to `D_t` at equal reduction: anisotropy 0.15×, `D_r` 1.77×,
-**intrinsic viscosity 3.34×**. Viscosity drove the stopping decision in 36/36 test cases,
-so requiring it costs a large part of the speedup — hence `ShellOptions::require`.
-
-When viscosity is not required (or is required and does not converge), `ShellReport
-::viscosity_unreliable` is set. **Callers must then withhold `intrinsic_viscosity_high`,
-`intrinsic_viscosity_zero`, and the viscosity-derived Einstein radius** from reported
-results. The values remain in `Results::report` for the record, with a warning appended.
-
-## Speedup, honestly
-
-Against an unreduced model the gain reaches ~120×, but SOMO defaults to ASA buried-bead
-exclusion, which already removes most dead beads. Measured on that production baseline the
-incremental gain is **~2–3×**, rising with model size and largest where it is wanted. The
-durable contribution is the error bar: the existing exclusion is a binary heuristic that
-reports no uncertainty at all.
-
-## Reading the report
-
-`run()` returns the **final rung's `Results` verbatim**, so its scalars and the report text
-embedded in them always agree. The extrapolated values and the per-observable bars are
-delivered separately in `ShellReport` — overwriting the scalars with extrapolated values
-would produce a `Results` contradicting its own on-disk report.
-
-| field | meaning |
+| file | what it is |
 |---|---|
-| `attempted` | reduction was tried (false if disabled, or N < 32) |
-| `converged` / `unreduced` / `mem_capped` | how the ladder ended — see below |
-| `n_full`, `n_used`, `levels` | beads in the model, beads in the final rung, rungs run |
-| `err_max`, `worst` | largest bar over the required observables, and which one |
-| `require` | echo of the requested observables; `err_est`, `extrapolated` and `k_obs` are **parallel to it** |
-| `err_est[m]` | relative bar for `require[m]` |
-| `extrapolated[m]` | Richardson value for `require[m]` — the ladder's best estimate, not what `Results` carries. Falls back to the final rung's raw value when extrapolation declines |
-| `k_obs[m]` | observed convergence order; **0 means extrapolation declined** (non-monotone or non-converging gaps), and then `err_est[m]` is the raw inter-rung gap and `extrapolated[m]` is not extrapolated at all |
-| `ns` | bead count per rung, in order |
-| `viscosity_unreliable` | withhold both viscosities and the Einstein radius — see above |
+| `grpy_types.hpp` | the value types exchanged with the solver, and `SolveFn`, the injection point |
+| `grpy_exposure.hpp` | per-bead solvent exposure (Shrake–Rupley) and the exposure ranking |
+| `grpy_shell.hpp` | the self-validating shell reduction: a ladder of increasing bead counts that reports its own error bar |
+| `grpy_process.hpp` | `ProcessSolver` — runs the GRPY program and parses its report, presented as a `SolveFn` |
 
-The three end states are mutually exclusive in practice: `unreduced` means the ladder
-reached the full model, so the result is exact and every bar is zero; `mem_capped` means it
-was stopped by `max_beads`; plain `converged` means the tolerance was met on a reduced
-subset. Only `unreduced` licenses treating the result as exact.
+All original work, all header-only. No Eigen, no QtConcurrent: the solver that needed them
+is the part that moved out.
 
-## Memory cap (`ShellOptions::max_beads`)
+## How it fits together
 
-A caller that refuses oversized models up front (SOMO has such a pre-flight guard) must
-size the matrix from the **full** bead count, since it cannot know where the ladder will
-stop — and so would turn away exactly the large models this exists to make feasible. The
-ladder normally stops well short of the full model, and memory goes as N², so a run that
-stops at ~25% of the beads needs ~6% of the refused matrix.
+```cpp
+grpy::Input in = grpy::read_grpy_input( grpy_file );      // the .grpy SOMO wrote
 
-Set `max_beads` to the largest rung that fits and the ladder stops there instead:
+grpy::ProcessSolver::Config cfg;
+cfg.program    = ...;                                     // bin/GRPY_<platform>
+cfg.full_input = grpy_file;                               // an unreduced rung reuses it
+cfg.full_beads = (int) in.beads.size();
+grpy::ProcessSolver psolver( cfg, [ & ]{ return stopFlag; } );
 
-- The cap is checked **after** building the subset (cheap) but **before** the solve
-  (expensive), so a rejected rung costs nothing. The ladder ascends, so the first rung over
-  budget ends it.
-- A capped run sets `ShellReport::mem_capped` and **does not** set `converged`. Its bar is
-  reported as usual and will generally exceed `tol`. It is never passed off as converged.
-- If not even the smallest rung fits, `levels == 0` and **there is no result** — the caller
-  must detect this and refuse. `Results` is default-constructed; do not read it.
+grpy::ShellOptions sopt;                                  // enabled = false => one solve
+grpy::ShellReport  srep;
+grpy::ShellSolver  solver( psolver.fn(), sopt );
+grpy::Results r = solver.run( in.beads, in.params, srep, progress );
+```
 
-So an oversized model yields the best result that fits, with a quantified error, instead of
-nothing.
+With shell reduction off — the default — the ladder is a pass-through: one solve, on the
+`.grpy` file the user already has, with the report parsed exactly as it always was.
 
-## Progress reporting
+## The contract with the program
 
-Each rung is a separate solve sweeping 0..100%. Forwarded raw, that restarts the caller's
-progress bar once per rung and gives no clue which rung is running — several solves look
-like one stalled solve repeating. `ShellSolver` therefore **wraps** the `ProgressFn` it is
-given: each rung is mapped onto its share of the whole run, weighted by predicted cost
-(~N³), and the stage string is prefixed `rung i/n, N beads: `. The bar advances
-monotonically. The denominator assumes the ladder runs to its last planned rung, so
-converging early makes it jump to done.
+Unchanged from what SOMO used before the in-process port, which is what makes the program
+a drop-in for the Fortran GRPY it replaces:
 
-The caller's callback signature is unchanged, and with `enabled = false` progress passes
-through **verbatim** — both asserted in `tests/test_shell.cpp`.
+- run it as `GRPY -e <file>`, working directory the SOMO directory;
+- the report arrives on stdout, and is what SOMO parses and writes to `.grpy_res`;
+- progress arrives interleaved as carriage-return-separated `NN% TASK:` records;
+- a non-zero exit is a failure, and its stderr is the message.
 
-`ShellOptions::on_rung(i, planned, beads, err_max)` fires as each rung lands, for callers
-that want to log the ladder converging rather than leave the user watching a bar. `err_max`
-is 1.0 on the first rung, since there is nothing yet to difference against.
+Everything added since the Fortran is an environment variable — `GRPY_SINGLE`, `GRPY_OOC`,
+`GRPY_THREADS`, `GRPY_HP` — so the command line stays the published one.
 
-## Correctness details worth knowing
+## Tests
 
-- **MW and Rg are pinned to the full model.** Left to re-derive from a reduced bead list,
-  MW would fall with the dropped beads (corrupting sedimentation and both viscosities,
-  which are mass-normalized) and Rg would rise (a hollow shell has a larger radius of
-  gyration than the solid body). Regression-tested.
-- **Disabled by default.** With `enabled = false` the result is byte-identical to
-  `Solver::run` — results never move silently.
-- Do **not** use a finer ladder. A ×1.5 ladder was tested: no median speedup gain, and
-  honesty fell 100% → 84%. Well-separated rungs are what make the bar trustworthy.
+```
+./tests/run.sh            # add QTDIR (or source qt5env) to include the process test
+```
+
+`test_shell` drives the ladder with an analytic model whose exact answer is known, so the
+reported error bar can be checked for actually bounding the true error. `test_process`
+drives `ProcessSolver` with a fake GRPY program that replays a real golden report and the
+real progress banner, covering parsing, progress, a non-zero exit, a missing program and a
+mid-solve stop.
+
+The solver's own numerical validation — golden comparison against the original Fortran —
+lives with the solver, in `grpy-cpp`.
+
+## Note on precision
+
+The ladder differences successive rungs, and the report carries four significant figures.
+For tolerances near 0.5% that quantization is small but has not been measured against the
+error estimator; `GRPY_HP=1` makes the program report in extended precision if it turns out
+to matter. This does not affect a run with shell reduction off, which does no differencing.
