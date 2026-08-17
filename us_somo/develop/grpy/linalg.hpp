@@ -12,9 +12,12 @@
 #pragma once
 #include <Eigen/Dense>
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <functional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <fcntl.h>
@@ -22,6 +25,13 @@
 #include <unistd.h>
 
 namespace la {
+
+// Raised instead of aborting or returning silently corrupt state. Running in-process means a
+// failure here takes the whole of SOMO with it unless the caller is given something to catch:
+// the GRPY solve is wrapped at its call site in us_hydrodyn_grpy.cpp.
+struct Error : std::runtime_error {
+    explicit Error( const std::string& what ) : std::runtime_error( what ) {}
+};
 
 // ---- parallel-for abstraction ----------------------------------------------
 // Runs f(k) for k in [0,n). The serial backend is used for standalone tests and
@@ -123,13 +133,35 @@ struct TiledUpperSPD {
             for (int i = 0; i <= j; ++i) { off[idx(i, j)] = nelem; nelem += (size_t)rows(i) * rows(j); }
         if (file.empty()) {
             data = static_cast<S*>(::calloc(nelem, sizeof(S)));
+            // An unchecked calloc here meant every later tile access dereferenced null. The
+            // sizes involved are exactly the ones that fail: this is the memory wall the
+            // tiling exists for.
+            if (!data)
+                throw Error("GRPY: could not allocate the " + std::to_string(nelem * sizeof(S))
+                            + " byte mobility matrix. Reduce the model size, or enable "
+                              "single precision or out-of-core in the GRPY options.");
         } else {
             path = file; unlink_on_close = true;
             mapbytes = nelem * sizeof(S);
             fd = ::open(file.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
-            if (fd < 0 || ::ftruncate(fd, mapbytes) != 0) { std::perror("grpy ooc open"); std::abort(); }
+            // Previously std::abort(): an unwritable or full out-of-core directory killed
+            // SOMO outright and took any unsaved session with it.
+            if (fd < 0)
+                throw Error("GRPY: cannot create the out-of-core file '" + file
+                            + "': " + std::strerror(errno));
+            if (::ftruncate(fd, mapbytes) != 0) {
+                const std::string e = std::strerror(errno);
+                ::close(fd); fd = -1; ::unlink(file.c_str());
+                throw Error("GRPY: cannot size the out-of-core file '" + file + "' to "
+                            + std::to_string(mapbytes) + " bytes: " + e
+                            + ". Check the free space on that filesystem.");
+            }
             void* p = ::mmap(nullptr, mapbytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-            if (p == MAP_FAILED) { std::perror("grpy ooc mmap"); std::abort(); }
+            if (p == MAP_FAILED) {
+                const std::string e = std::strerror(errno);
+                ::close(fd); fd = -1; ::unlink(file.c_str());
+                throw Error("GRPY: cannot map the out-of-core file '" + file + "': " + e);
+            }
             data = static_cast<S*>(p);
         }
     }
@@ -142,6 +174,9 @@ struct TiledUpperSPD {
 
     int idx(int i, int j) const { return j * (j + 1) / 2 + i; }   // i<=j
     int rows(int i) const { return std::min(b, n - i * b); }
+    // Row offset of tile-row i, widened BEFORE the multiply. int*int would overflow int and
+    // only then convert to Eigen::Index, which is what CodeQL flags at the middleRows() calls.
+    Eigen::Index roff(int i) const { return static_cast<Eigen::Index>(i) * b; }
     MapT tile(int i, int j) { return MapT(data + off[idx(i, j)], rows(i), rows(j)); }
 
     // element write for assembly (upper only: caller passes r<=c). Column-major.
@@ -237,17 +272,17 @@ struct TiledUpperSPD {
         ProgressGate gate;
         for (int i = 0; i < nt; ++i) {                 // forward: U^T Y = B
             for (int k = 0; k < i; ++k)
-                X.middleRows(i * b, rows(i)).noalias() -=
-                    tile(k, i).transpose() * X.middleRows(k * b, rows(k));
-            auto Xi = X.middleRows(i * b, rows(i));
+                X.middleRows(roff(i), rows(i)).noalias() -=
+                    tile(k, i).transpose() * X.middleRows(roff(k), rows(k));
+            auto Xi = X.middleRows(roff(i), rows(i));
             tile(i, i).template triangularView<Eigen::Upper>().transpose().solveInPlace(Xi);
             gate.tick(prog, 90 + 5 * (i + 1) / nt, "SOLVING");
         }
         for (int i = nt - 1; i >= 0; --i) {            // back: U X = Y
             for (int k = i + 1; k < nt; ++k)
-                X.middleRows(i * b, rows(i)).noalias() -=
-                    tile(i, k) * X.middleRows(k * b, rows(k));
-            auto Xi = X.middleRows(i * b, rows(i));
+                X.middleRows(roff(i), rows(i)).noalias() -=
+                    tile(i, k) * X.middleRows(roff(k), rows(k));
+            auto Xi = X.middleRows(roff(i), rows(i));
             tile(i, i).template triangularView<Eigen::Upper>().solveInPlace(Xi);
             gate.tick(prog, 95 + 5 * (nt - i) / nt, "SOLVING");
         }
