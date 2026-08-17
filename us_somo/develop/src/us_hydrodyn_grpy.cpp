@@ -765,6 +765,14 @@ void US_Hydrodyn::grpy_process_next() {
          } );
          return;
       }
+      // Failure boundary for the in-process solve. As a subprocess, a GRPY failure was
+      // isolated: the process died, SOMO read a non-zero exit and carried on. In-process
+      // there is no such isolation -- an allocation failure, an unreadable input file or a
+      // bad out-of-core path propagates out of here and takes SOMO with it, losing the
+      // session. Everything from the parse to the last result extraction runs inside this
+      // try. The body is deliberately left at its existing indentation so the diff shows the
+      // boundary being added and nothing else.
+      try {
       grpy::NativeInput in =
          grpy::read_native_file( grpy_path.toStdString() );
 
@@ -891,11 +899,21 @@ void US_Hydrodyn::grpy_process_next() {
             qApp->processEvents();
          };
 
-         // Let the Stop button end the ladder between rungs. Each rung costs roughly eight
-         // times the one before, so stopping before the next begins saves nearly all that
-         // remained; a rung already running finishes, as the solve has no interior abort.
-         sopt.should_stop = [ this ]() { return stopFlag; };
       }
+
+      // Installed for EVERY run, not just a shell-reduced one. It used to sit inside the
+      // `if ( sopt.enabled )` above, so with shell reduction off -- which is the default,
+      // and is now the only configuration -- nothing was ever installed and Stop could not
+      // reach the solve at all. The progress callback's `if ( stopFlag ) return;` only
+      // suppresses repaints; it does not end the computation, so the model ran to
+      // completion with a frozen-looking interface.
+      //
+      // With a ladder this ends it between rungs: each rung costs roughly eight times the
+      // one before, so stopping before the next begins saves nearly all that remained. A
+      // solve already running still finishes -- the factor has no interior abort -- so on a
+      // single large model Stop takes effect at the end of that model rather than
+      // instantly. That is a real limit, not a fix; it is called out in the manual.
+      sopt.should_stop = [ this ]() { return stopFlag; };
 
       la::QtParallel par( USglobal->config_list.numThreads );
       grpy::ShellSolver solver( par, opt, sopt );
@@ -962,6 +980,32 @@ void US_Hydrodyn::grpy_process_next() {
                                       " radius are unconverged and are being withheld from the"
                                       " results (retained in the results file, annotated).\n" ) );
          }
+      }
+
+      } catch ( const std::exception & e ) {
+         // Restores the interface exactly as the pre-flight memory guard does when it
+         // refuses a model -- the batch stops here rather than continuing on a model whose
+         // results do not exist.
+         const QString emsg = QString( us_tr( "GRPY failed: %1\n" ) ).arg( e.what() );
+         editor_msg( "red", emsg );
+         if ( gui_script ) {
+            // headless script mode: a proper failure, as the memory guard does above --
+            // there is no one to read the editor and the batch must not report success.
+            fprintf( stderr, "%s", (const char *) emsg.toUtf8() );
+            exit( -1 );
+         }
+         set_enabled();
+         pb_calc_hydro->setEnabled( grpy_was_hydro_enabled );
+         pb_calc_zeno->setEnabled( true );
+         pb_bead_saxs->setEnabled( true );
+         pb_calc_grpy->setEnabled( true );
+         pb_calc_hullrad->setEnabled( true );
+         pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+         pb_show_hydro_results->setEnabled( false );
+         progress->reset();
+         grpy_success  = false;
+         grpy_running  = false;
+         return;
       }
 
       // hand off to the existing finish/parse path, deferred to the event loop so we
