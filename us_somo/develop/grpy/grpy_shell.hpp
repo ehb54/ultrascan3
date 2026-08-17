@@ -1,4 +1,9 @@
-// Self-validating shell reduction over grpy::Solver.
+// Self-validating shell reduction over an injected solver.
+//
+// The solver is reached through grpy::SolveFn rather than named directly: the GRPY-derived
+// code is GPLv3 and lives in its own program (ehb54/grpy-cpp), while this file and
+// grpy_exposure.hpp are original work and stay with UltraScan. SOMO supplies a SolveFn that
+// runs that program once per rung. See ehb54/ultrascan-tickets#1012.
 //
 // Shell reduction is only defensible if it reports its own error. A fixed "keep X% of
 // beads" rule is just another tuned constant, and the user has no way to know what it cost
@@ -41,38 +46,11 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "grpy_api.hpp"
+#include "grpy_types.hpp"
 #include "grpy_exposure.hpp"
 
 namespace grpy {
 
-// Observables the ladder can be asked to converge. They do NOT share a reduction frontier:
-// measured median error ratio relative to D_t at equal reduction is 1.77x for D_r but
-// 3.34x for intrinsic viscosity, which drove the stopping decision in 36/36 test cases.
-// Requiring viscosity therefore costs a large part of the speedup, so the caller chooses.
-enum class Obs { Dt, Dr, Sedimentation, EtaInf, EtaZero };
-
-inline const char* obs_name(Obs o) {
-    switch (o) {
-        case Obs::Dt:            return "translational diffusion";
-        case Obs::Dr:            return "rotational diffusion";
-        case Obs::Sedimentation: return "sedimentation coefficient";
-        case Obs::EtaInf:        return "intrinsic viscosity (infinite frequency)";
-        case Obs::EtaZero:       return "intrinsic viscosity (zero frequency)";
-    }
-    return "?";
-}
-
-inline double obs_value(const Results& r, Obs o) {
-    switch (o) {
-        case Obs::Dt:            return r.translational_diffusion_centre;
-        case Obs::Dr:            return r.rotational_diffusion;
-        case Obs::Sedimentation: return r.sedimentation;
-        case Obs::EtaInf:        return r.intrinsic_viscosity_high;
-        case Obs::EtaZero:       return r.intrinsic_viscosity_zero;
-    }
-    return 0.0;
-}
 
 struct ShellOptions {
     bool   enabled = false;          // off by default: results must not move silently
@@ -302,18 +280,20 @@ inline Richardson richardson(const std::vector<double>& v, const std::vector<int
 // Results whose fields contradict its own on-disk report.)
 class ShellSolver {
 public:
-    ShellSolver(la::Parallel& par, Options opt = {}, ShellOptions sopt = {})
-        : par_(par), opt_(opt), sopt_(sopt) {}
+    // `solve` runs ONE bead list to completion -- in SOMO, one invocation of the external
+    // GRPY program. The ladder calls it once per rung, at most five times per model, which
+    // is negligible against O((11N)^3): the last rung alone is ~7/8 of the total work.
+    ShellSolver(SolveFn solve, ShellOptions sopt = {})
+        : solve_(std::move(solve)), sopt_(sopt) {}
 
     Results run(const std::vector<Bead>& beads, const PhysParams& p,
                 ShellReport& rep, const ProgressFn& progress = {}) const {
-        Solver solver(par_, opt_);
         rep = ShellReport{};
         rep.n_full = (int)beads.size();
         rep.require = sopt_.require;
 
         if (!sopt_.enabled || beads.size() < 32) {          // too small to be worth reducing
-            Results r = solver.run(beads, p, progress);
+            Results r = solve_(beads, p, progress);
             rep.n_used = (int)beads.size();
             rep.converged = true;
             rep.viscosity_unreliable = false;              // unreduced: everything stands
@@ -331,7 +311,7 @@ public:
         if (pin.mw <= 0) { double s = 0; for (const auto& b : beads) s += b.mw; pin.mw = s; }
         const double rg2_full = full_rg2(beads);
 
-        std::vector<double> ex = shell::exposure(to_core(beads), (int)beads.size(),
+        std::vector<double> ex = shell::exposure(beads, (int)beads.size(),
                                                  sopt_.K, sopt_.probe);
 
         // PROGRESS. Every rung is a separate solve sweeping 0..100%, so reporting each one
@@ -399,7 +379,7 @@ public:
                              stage_buf.c_str());
                 };
             }
-            last = solver.run(rb, pin, wrapped);
+            last = solve_(rb, pin, wrapped);
             last.rg2 = rg2_full;                           // see note above
             rep.ns.push_back((int)rb.size());
             if (sopt_.record_subsets) rep.kept.push_back(std::move(rung_idx));
@@ -467,20 +447,35 @@ public:
     }
 
 private:
-    la::Parallel& par_;
-    Options       opt_;
+    SolveFn       solve_;
     ShellOptions  sopt_;
 
-    static std::vector<core::Bead> to_core(const std::vector<Bead>& b) {
-        std::vector<core::Bead> c(b.size());
-        for (size_t i = 0; i < b.size(); ++i) c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
-        return c;
-    }
-    static double full_rg2(const std::vector<Bead>& b) {
-        auto c = to_core(b);
-        Eigen::Vector3d rc; double rg2 = 0;
-        core::calcrg2(c, (int)c.size(), rc, rg2);
-        return rg2;
+    // Volume-weighted mean square radius of gyration of a union of uniform spheres:
+    // Rg^2 = SUM[ (3/5)a_i^2 + |r_i - R|^2 ] V_i / SUM V_i, about the volume centroid R,
+    // where the (3/5)a^2 term is a solid sphere's own second moment. Standard result,
+    // written here from the definition so that this file needs nothing from the solver.
+    static double full_rg2( const std::vector<Bead>& b ) {
+       double cx = 0, cy = 0, cz = 0, vol = 0;
+       for ( const Bead& q : b ) {
+          const double v = q.radius * q.radius * q.radius;   // 4/3 pi cancels in the ratio
+          cx  += q.x * v;
+          cy  += q.y * v;
+          cz  += q.z * v;
+          vol += v;
+       }
+       if ( vol <= 0 ) {
+          return 0.0;
+       }
+       cx /= vol;
+       cy /= vol;
+       cz /= vol;
+       double rg2 = 0;
+       for ( const Bead& q : b ) {
+          const double v  = q.radius * q.radius * q.radius;
+          const double dx = q.x - cx, dy = q.y - cy, dz = q.z - cz;
+          rg2 += ( 3.0 / 5.0 * q.radius * q.radius + dx * dx + dy * dy + dz * dz ) * v / vol;
+       }
+       return rg2;
     }
     // Selection by INDEX. The earlier version rebuilt the API beads by searching the full
     // list for matching coordinates -- O(keep*N), 32M comparisons on an 11328-bead model --
@@ -489,7 +484,7 @@ private:
     static std::vector<Bead> subset(const std::vector<Bead>& b,
                                     const std::vector<double>& ex, double f,
                                     std::vector<int>* kept_idx) {
-        std::vector<size_t> idx = shell::reduce_top_frac_idx(to_core(b), ex, f);
+        std::vector<size_t> idx = shell::reduce_top_frac_idx(b, ex, f);
         std::vector<Bead> out; out.reserve(idx.size());
         for (size_t k : idx) out.push_back(b[k]);
         if (kept_idx) {

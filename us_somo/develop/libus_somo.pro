@@ -615,6 +615,7 @@ HEADERS *= \
   grpy/linalg.hpp \
   grpy/grpy_core.hpp \
   grpy/grpy_report.hpp \
+  grpy/grpy_types.hpp \
   grpy/grpy_api.hpp \
   grpy/parallel_qt.hpp \
   grpy/parallel_std.hpp \

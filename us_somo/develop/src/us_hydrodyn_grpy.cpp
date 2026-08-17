@@ -915,8 +915,20 @@ void US_Hydrodyn::grpy_process_next() {
       // instantly. That is a real limit, not a fix; it is called out in the manual.
       sopt.should_stop = [ this ]() { return stopFlag; };
 
+      // How one bead list gets solved. The shell reduction no longer names a solver: it
+      // calls this, once per rung (issue 1012), which is what lets the ladder and the
+      // exposure ranking stay in UltraScan while the GRPY-derived solver moves to its own
+      // GPLv3 program. TRANSITIONAL -- this still runs in process; the next step replaces
+      // the body with a run of the external GRPY program, after which grpy_api.hpp and
+      // grpy_core.hpp leave the tree entirely and nothing here links GPLv3 code.
       la::QtParallel par( USglobal->config_list.numThreads );
-      grpy::ShellSolver solver( par, opt, sopt );
+      grpy::SolveFn solve =
+         [ &par, &opt ]( const vector < grpy::Bead > & rung_beads,
+                         const grpy::PhysParams & rung_params,
+                         const grpy::ProgressFn & rung_progress ) {
+            return grpy::Solver( par, opt ).run( rung_beads, rung_params, rung_progress );
+         };
+      grpy::ShellSolver solver( solve, sopt );
       const int model = grpy_last_model_number;
       grpy::Results r = solver.run(
          in.beads, in.params, srep,

@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include "grpy_api.hpp"     // the in-process solver these tests drive the ladder with
 #include "grpy_shell.hpp"
 #include "parallel_std.hpp"
 
@@ -29,6 +30,15 @@ static int chk(const char* what, bool ok) {
     return ok ? 0 : 1;
 }
 
+// The ladder reaches its solver through grpy::SolveFn (issue 1012). These tests still drive
+// it with the in-process Solver, which is what makes "disabled == the plain Solver" a
+// meaningful comparison; SOMO substitutes one that runs the external GRPY program.
+static SolveFn in_process(la::Parallel& par, Options opt = {}) {
+    return [&par, opt](const std::vector<Bead>& b, const PhysParams& p, const ProgressFn& pr) {
+        return Solver(par, opt).run(b, p, pr);
+    };
+}
+
 int main() {
     int fails = 0;
     la::StdThreads par;
@@ -37,8 +47,7 @@ int main() {
     // ---- exposure ------------------------------------------------------------
     {
         auto b = blob(5, 3.0, 2.0);       // 125 beads, 27 of them strictly interior
-        std::vector<core::Bead> c(b.size());
-        for (size_t i = 0; i < b.size(); ++i) c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
+        const std::vector<Bead>& c = b;                    // exposure takes grpy::Bead now
         auto ex = shell::exposure(c, (int)c.size(), 64, 1.4);
         int buried = 0, exposed = 0;
         for (double e : ex) { if (e <= 0.0) ++buried; else ++exposed; }
@@ -51,8 +60,7 @@ int main() {
     // ---- reduce_top_frac -----------------------------------------------------
     {
         auto b = blob(4, 3.0, 2.0);
-        std::vector<core::Bead> c(b.size());
-        for (size_t i = 0; i < b.size(); ++i) c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
+        const std::vector<Bead>& c = b;                    // exposure takes grpy::Bead now
         auto ex = shell::exposure(c, (int)c.size(), 64, 1.4);
         auto half = shell::reduce_top_frac(c, ex, 0.5);
         fails += chk("keeps ceil(frac*N)", (int)half.size() == (int)std::ceil(0.5 * c.size()));
@@ -70,7 +78,7 @@ int main() {
         auto b = blob(4, 3.0, 2.0);
         Solver plain(par);
         Results a = plain.run(b, phys);
-        ShellSolver sh(par, {}, {});                       // ShellOptions.enabled = false
+        ShellSolver sh(in_process(par), {});                       // ShellOptions.enabled = false
         ShellReport rep;
         Results c = sh.run(b, phys, rep);
         fails += chk("disabled => identical Dt", a.translational_diffusion_centre == c.translational_diffusion_centre);
@@ -89,7 +97,7 @@ int main() {
         Results full = plain.run(b, phys);
         ShellOptions so; so.enabled = true; so.tol = 1e-9;   // force deep reduction attempts
         so.ladder = {0.25, 0.5};
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results red = sh.run(b, phys, rep);
         fails += chk("reduction actually happened", rep.n_used < rep.n_full);
@@ -108,7 +116,7 @@ int main() {
             so.enabled = true; so.tol = tol;
             so.require = {Obs::Dt, Obs::Dr, Obs::Sedimentation, Obs::EtaInf, Obs::EtaZero};
             so.ladder = {0.125, 0.25, 0.5};                // never the full model
-            ShellSolver sh(par, {}, so);
+            ShellSolver sh(in_process(par), so);
             ShellReport rep;
             Results r = sh.run(b, phys, rep);
             for (size_t m = 0; m < rep.require.size(); ++m) {
@@ -136,7 +144,7 @@ int main() {
         so.enabled = true; so.tol = 1e-2;
         so.require = {Obs::Dt, Obs::Dr, Obs::EtaInf};
         so.ladder = {0.125, 0.25, 0.5};                    // never the full model
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
 
@@ -172,7 +180,7 @@ int main() {
         so.enabled = true; so.tol = 1e-2;
         so.require = {Obs::Dt, Obs::Dr, Obs::EtaInf};
         so.ladder = {0.125, 0.25, 0.5};
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
 
@@ -207,7 +215,7 @@ int main() {
         so.enabled = true; so.tol = 1e-9;                  // unsatisfiable: use both rungs
         so.require = {Obs::Dt};
         so.ladder = {0.25, 0.5};                           // only two rungs: Richardson needs 3
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
         fails += chk("two rungs => not extrapolated", !rep.prov.empty() && !rep.prov[0].extrapolated);
@@ -232,7 +240,7 @@ int main() {
         so.enabled = true; so.tol = 5e-3;                  // loose enough to be met AT the full rung
         so.require = {Obs::Dt, Obs::Dr, Obs::Sedimentation};
         so.ladder = {0.0625, 0.125, 0.25, 0.5, 1.0};       // ends at the full model
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
 
@@ -260,8 +268,7 @@ int main() {
     // change which beads are kept.
     {
         auto b = blob(5, 3.0, 2.0);
-        std::vector<core::Bead> c(b.size());
-        for (size_t i = 0; i < b.size(); ++i) c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
+        const std::vector<Bead>& c = b;                    // exposure takes grpy::Bead now
         auto ex = shell::exposure(c, (int)c.size(), 64, 1.4);
         auto ref = shell::reduce_top_frac_idx(c, ex, 0.25);
         std::vector<std::array<double,3>> ref_xyz;
@@ -277,7 +284,7 @@ int main() {
                 st = st * 1103515245u + 12345u;
                 std::swap(perm[i - 1], perm[st % i]);
             }
-            std::vector<core::Bead> pc(c.size());
+            std::vector<Bead> pc(c.size());
             for (size_t i = 0; i < c.size(); ++i) pc[i] = c[perm[i]];
             auto pex = shell::exposure(pc, (int)pc.size(), 64, 1.4);
             auto got = shell::reduce_top_frac_idx(pc, pex, 0.25);
@@ -296,7 +303,7 @@ int main() {
         so.enabled = true; so.tol = 5e-2;
         so.require = {Obs::Dt, Obs::Dr};                   // viscosity deliberately absent
         so.ladder = {0.125, 0.25, 0.5};
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
         fails += chk("viscosity flagged unreliable when not required", rep.viscosity_unreliable);
@@ -317,7 +324,7 @@ int main() {
         so.enabled = true; so.tol = 1e-12;              // unsatisfiable: force exhaustion
         so.require = {Obs::Dt, Obs::Dr};                // viscosity deliberately absent
         so.ladder = {0.25, 0.5, 1.0};                   // last rung IS the full model
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
         fails += chk("exhausted ladder flags unreduced", rep.unreduced);
@@ -347,7 +354,7 @@ int main() {
             so.require = {Obs::Dt, Obs::Dr};
             so.ladder = {0.25, 0.5, 1.0};
             so.max_beads = 100000;
-            ShellSolver sh(par, {}, so);
+            ShellSolver sh(in_process(par), so);
             ShellReport rep;
             Results r = sh.run(b, phys, rep);
             fails += chk("slack cap does not bind", !rep.mem_capped);
@@ -364,7 +371,7 @@ int main() {
             so.require = {Obs::Dt, Obs::Dr};
             so.ladder = {0.125, 0.25, 0.5, 1.0};
             so.max_beads = cap;
-            ShellSolver sh(par, {}, so);
+            ShellSolver sh(in_process(par), so);
             ShellReport rep;
             Results r = sh.run(b, phys, rep);
             fails += chk("binding cap is reported", rep.mem_capped);
@@ -386,7 +393,7 @@ int main() {
             so.require = {Obs::Dt, Obs::Dr};
             so.ladder = {0.125, 0.25, 0.5, 1.0};
             so.max_beads = 4;                           // smaller than 0.125 * 216
-            ShellSolver sh(par, {}, so);
+            ShellSolver sh(in_process(par), so);
             ShellReport rep;
             sh.run(b, phys, rep);
             fails += chk("impossible cap runs no rung", rep.levels == 0 && rep.mem_capped);
@@ -402,7 +409,7 @@ int main() {
         so.enabled = true; so.tol = 1e-12;              // unsatisfiable: run the whole ladder
         so.require = {Obs::Dt, Obs::Dr};
         so.ladder = {0.125, 0.25, 0.5, 1.0};
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
 
         std::vector<int> pcts;
@@ -434,7 +441,7 @@ int main() {
     // ---- disabled shell reduction leaves progress untouched ---------------------
     {
         auto b = blob(4, 3.0, 2.0);
-        ShellSolver sh(par, {}, {});                    // enabled = false
+        ShellSolver sh(in_process(par), {});                    // enabled = false
         ShellReport rep;
         bool any_rung_text = false, saw = false;
         sh.run(b, phys, rep, [&](int, const char* stage) {
@@ -498,7 +505,7 @@ int main() {
         so.require = {Obs::Dt, Obs::Dr};
         so.ladder = {0.125, 0.25, 0.5, 1.0};
         so.record_subsets = true;
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         sh.run(b, phys, rep);
 
@@ -526,18 +533,10 @@ int main() {
                      rep.unreduced && rep.kept.back().size() == b.size());
 
         // And the selection must be the same beads the solver actually used.
-        std::vector<double> ex = shell::exposure(
-            [&]{ std::vector<core::Bead> c(b.size());
-                 for (size_t i = 0; i < b.size(); ++i)
-                     c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
-                 return c; }(), (int)b.size(), so.K, so.probe);
+        std::vector<double> ex = shell::exposure(b, (int)b.size(), so.K, so.probe);
         bool matches = true;
         for (size_t r = 0; r + 1 < rep.kept.size(); ++r) {
-            auto want = shell::reduce_top_frac_idx(
-                [&]{ std::vector<core::Bead> c(b.size());
-                     for (size_t i = 0; i < b.size(); ++i)
-                         c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
-                     return c; }(), ex, so.ladder[r]);
+            auto want = shell::reduce_top_frac_idx(b, ex, so.ladder[r]);
             if (want.size() != rep.kept[r].size()) { matches = false; continue; }
             for (size_t i = 0; i < want.size(); ++i)
                 if ((int)want[i] != rep.kept[r][i]) matches = false;
@@ -546,7 +545,7 @@ int main() {
 
         // Off by default: nothing recorded, so nothing paid for.
         ShellOptions off = so; off.record_subsets = false;
-        ShellSolver sh2(par, {}, off);
+        ShellSolver sh2(in_process(par), off);
         ShellReport rep2;
         sh2.run(b, phys, rep2);
         fails += chk("not recorded unless asked", rep2.kept.empty() && rep2.ns.size() > 1);
@@ -564,7 +563,7 @@ int main() {
         int seen = 0;
         so.should_stop = [&]{ return seen >= 2; };    // let two rungs run, then stop
         so.on_rung = [&](int, int, int, double){ ++seen; };
-        ShellSolver sh(par, {}, so);
+        ShellSolver sh(in_process(par), so);
         ShellReport rep;
         Results r = sh.run(b, phys, rep);
 
@@ -582,7 +581,7 @@ int main() {
         ShellOptions so2 = so;
         so2.should_stop = []{ return true; };
         so2.on_rung = nullptr;
-        ShellSolver sh2(par, {}, so2);
+        ShellSolver sh2(in_process(par), so2);
         ShellReport rep2;
         sh2.run(b, phys, rep2);
         fails += chk("stop before any rung leaves no result",
@@ -590,7 +589,7 @@ int main() {
 
         // And with no hook the ladder is unaffected.
         ShellOptions so3 = so; so3.should_stop = nullptr; so3.on_rung = nullptr;
-        ShellSolver sh3(par, {}, so3);
+        ShellSolver sh3(in_process(par), so3);
         ShellReport rep3;
         sh3.run(b, phys, rep3);
         fails += chk("no hook => ladder runs to the full model",
