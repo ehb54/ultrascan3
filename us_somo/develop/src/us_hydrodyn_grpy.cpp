@@ -104,9 +104,18 @@ void US_Hydrodyn::grpy_write_shell_model( const vector < int > & idx,
       return;
    }
 
+   // The model being solved, NOT `bead_model`. `bead_model` is left holding whichever model
+   // the setup loop in calc_grpy_hydro() assigned last, so with several models selected every
+   // one but the last would have its shells rebuilt from the wrong structure -- and the
+   // index-bounds check below only catches that when the bead COUNTS happen to differ.
+   // grpy_process_next() sets grpy_last_model_number per model, so it names the current one.
+   if ( grpy_last_model_number < 0 ||
+        grpy_last_model_number >= (int) bead_models.size() ) {
+      return;
+   }
    // Rebuild the .grpy bead order/filter exactly.
    vector < PDB_atom * > use_model;
-   bead_model_output_order( & bead_model, use_model );
+   bead_model_output_order( & bead_models[ grpy_last_model_number ], use_model );
    vector < PDB_atom * > used;
    used.reserve( use_model.size() );
    for ( unsigned int i = 0; i < use_model.size(); i++ ) {
@@ -949,10 +958,11 @@ void US_Hydrodyn::grpy_process_next() {
       // completion with a frozen-looking interface.
       //
       // With a ladder this ends it between rungs: each rung costs roughly eight times the
-      // one before, so stopping before the next begins saves nearly all that remained. A
-      // solve already running still finishes -- the factor has no interior abort -- so on a
-      // single large model Stop takes effect at the end of that model rather than
-      // instantly. That is a real limit, not a fix; it is called out in the manual.
+      // one before, so stopping before the next begins saves nearly all that remained. And
+      // since the solver became a separate program (issue 1012), a rung already running is
+      // interrupted too -- ProcessSolver polls this flag every 100 ms and kills the child --
+      // so Stop takes effect promptly rather than at the end of the model. The rungs already
+      // finished keep their error bars and the result is reported as not converged.
       sopt.should_stop = [ this ]() { return stopFlag; };
 
       // How one bead list gets solved: by running the GRPY program on it. The shell

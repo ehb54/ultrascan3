@@ -101,9 +101,6 @@
 #include <list>
 #include <map>
 
-// Forward declaration only: taken by const reference below, so the grpy headers (and the
-// Eigen they pull in) stay out of every translation unit that includes this one.
-namespace grpy { struct ShellReport; }
 
 #define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
 

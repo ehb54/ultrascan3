@@ -349,7 +349,9 @@ int main() {
       auto ex = shell::exposure( c, (int) c.size(), 64, 1.4 );
       auto ref = shell::reduce_top_frac_idx( c, ex, 0.25 );
       std::vector<std::array<double,3>> ref_xyz;
-      for ( size_t i : ref ) ref_xyz.push_back( {c[ i ].x, c[ i ].y, c[ i ].z} );
+      for ( size_t i : ref ) {
+         ref_xyz.push_back( {c[ i ].x, c[ i ].y, c[ i ].z} );
+      }
       std::sort( ref_xyz.begin(), ref_xyz.end() );
 
       bool invariant = true;
@@ -370,7 +372,9 @@ int main() {
          auto pex = shell::exposure( pc, (int) pc.size(), 64, 1.4 );
          auto got = shell::reduce_top_frac_idx( pc, pex, 0.25 );
          std::vector<std::array<double,3>> got_xyz;
-         for ( size_t i : got ) got_xyz.push_back( {pc[ i ].x, pc[ i ].y, pc[ i ].z} );
+         for ( size_t i : got ) {
+            got_xyz.push_back( {pc[ i ].x, pc[ i ].y, pc[ i ].z} );
+         }
          std::sort( got_xyz.begin(), got_xyz.end() );
          if ( got_xyz != ref_xyz ) {
             invariant = false;
@@ -625,10 +629,13 @@ int main() {
             seen[ k ] = true;
          }
          // Each rung is a superset of the one before: the ladder grows the shell.
-         if ( r ) for ( int k : rep.kept[ r - 1 ] )
-            if ( std::find( rep.kept[ r ].begin(), rep.kept[ r ].end(), k ) == rep.kept[ r ].end() ) {
-               exposed_first = false;
+         if ( r ) {
+            for ( int k : rep.kept[ r - 1 ] ) {
+               if ( std::find( rep.kept[ r ].begin(), rep.kept[ r ].end(), k ) == rep.kept[ r ].end() ) {
+                  exposed_first = false;
+               }
             }
+         }
       }
       fails += chk( "recorded size matches the rung bead count", sized );
       fails += chk( "indices are in range", in_range );
