@@ -13,7 +13,7 @@ BUILDER_SRC = $(SRC) ../src/us_hydrodyn_psv.cpp ../src/us_hydrodyn_hydration.cpp
 DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS_mod1.pdb data/8RAT.pdb \
         data/1AO6-compl_monA.pdb data/3CRO.pdb data/3GUT.pdb data/6LDH1.pdb
 
-.PHONY: all unit regress emit clean
+.PHONY: all unit regress regress-ci emit clean
 all: unit regress
 
 bin/emit_residue: tests/emit_residue.cpp $(BUILDER_SRC) $(HDR)
@@ -36,6 +36,16 @@ unit: bin/unit
 
 regress: bin/regression
 	./bin/regression $(DEMOS)
+
+# What CI runs. The thresholds are FLOORS pinned to the committed fixture set, not expected
+# values: perception getting better must not fail the build, and the atom count catches a
+# fixture going missing -- which would otherwise shrink what every percentage is measured
+# over while still reporting a healthy-looking number.
+REGRESS_MIN_ATOMS     = 41219
+REGRESS_MIN_GEOMETRIC = 99.8
+
+regress-ci: bin/regression
+	./bin/regression --min-atoms $(REGRESS_MIN_ATOMS) --min-geometric $(REGRESS_MIN_GEOMETRIC) $(DEMOS)
 
 clean:
 	rm -rf bin
