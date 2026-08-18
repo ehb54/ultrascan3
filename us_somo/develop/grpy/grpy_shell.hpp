@@ -440,7 +440,17 @@ public:
             }
             Richardson ri = richardson( series, rep.ns, sopt_.k_min, sopt_.k_max, sopt_.safety,
                                        sopt_.floor_frac );
-            rep.prov[ m ] = { ri.ok, ri.clamped_low, ri.clamped_high, ri.floored, ri.declined };
+            // Assigned field by field, not with a braced list. Provenance carries default
+            // member initializers, which makes it a non-aggregate before C++14, so
+            // `= { ... }` does not compile under the C++11 the Qt5 builds still use. The
+            // initializers are kept: prov is filled by assign() above and they are what make
+            // an untouched entry read false/nullptr rather than indeterminate.
+            ShellReport::Provenance& pv = rep.prov[ m ];
+            pv.extrapolated = ri.ok;
+            pv.clamped_low  = ri.clamped_low;
+            pv.clamped_high = ri.clamped_high;
+            pv.floored      = ri.floored;
+            pv.declined     = ri.declined;
             if ( ri.ok ) { rep.extrapolated[ m ] = ri.mu; rep.err_est[ m ] = ri.err; rep.k_obs[ m ] = ri.k; }
             else {
                rep.extrapolated[ m ] = cur[ m ];
