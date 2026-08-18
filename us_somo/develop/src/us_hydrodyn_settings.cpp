@@ -1934,11 +1934,21 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "hydro.mass" ) ) hydro.mass = parameters[ "hydro.mass" ].toDouble();
    if ( parameters.count( "hydro.bead_inclusion" ) ) hydro.bead_inclusion = parameters[ "hydro.bead_inclusion" ] == "1";
    if ( parameters.count( "hydro.grpy_bead_inclusion" ) ) hydro.grpy_bead_inclusion = parameters[ "hydro.grpy_bead_inclusion" ] == "1";
-   if ( parameters.count( "hydro.grpy_single" ) ) hydro.grpy_single = parameters[ "hydro.grpy_single" ] == "1";
-   if ( parameters.count( "hydro.grpy_shell" ) ) hydro.grpy_shell = parameters[ "hydro.grpy_shell" ] == "1";
-   if ( parameters.count( "hydro.grpy_shell_tol" ) ) hydro.grpy_shell_tol = parameters[ "hydro.grpy_shell_tol" ].toDouble();
-   if ( parameters.count( "hydro.grpy_shell_require_eta" ) ) hydro.grpy_shell_require_eta = parameters[ "hydro.grpy_shell_require_eta" ] == "1";
-   if ( parameters.count( "hydro.grpy_shell_save_models" ) ) hydro.grpy_shell_save_models = parameters[ "hydro.grpy_shell_save_models" ] == "1";
+   if ( parameters.count( "hydro.grpy_single" ) ) {
+      hydro.grpy_single = parameters[ "hydro.grpy_single" ] == "1";
+   }
+   if ( parameters.count( "hydro.grpy_shell" ) ) {
+      hydro.grpy_shell = parameters[ "hydro.grpy_shell" ] == "1";
+   }
+   if ( parameters.count( "hydro.grpy_shell_tol" ) ) {
+      hydro.grpy_shell_tol = parameters[ "hydro.grpy_shell_tol" ].toDouble();
+   }
+   if ( parameters.count( "hydro.grpy_shell_require_eta" ) ) {
+      hydro.grpy_shell_require_eta = parameters[ "hydro.grpy_shell_require_eta" ] == "1";
+   }
+   if ( parameters.count( "hydro.grpy_shell_save_models" ) ) {
+      hydro.grpy_shell_save_models = parameters[ "hydro.grpy_shell_save_models" ] == "1";
+   }
    if ( parameters.count( "hydro.rotational" ) ) hydro.rotational = parameters[ "hydro.rotational" ] == "1";
    if ( parameters.count( "hydro.viscosity" ) ) hydro.viscosity = parameters[ "hydro.viscosity" ] == "1";
    if ( parameters.count( "hydro.overlap_cutoff" ) ) hydro.overlap_cutoff = parameters[ "hydro.overlap_cutoff" ] == "1";

@@ -12,7 +12,13 @@
 # (or set QTDIR) to include it.
 set -euo pipefail
 cd "$(dirname "$0")"
-CXX="c++ -std=c++17 -O2 -pthread -I.."
+# -std=gnu++11 deliberately, matching what SOMO itself compiles this module with. SOMO
+# supports Qt5 as well as Qt6 and so must build under the older compilers Qt5 is used with;
+# nothing in its build raises the standard. Compiling the tests at a HIGHER standard than the
+# product hides breakage rather than finding it -- this was set to -std=c++17 and let a
+# non-aggregate braced initialisation into grpy_shell.hpp that every test passed on and the
+# Qt5 macOS build then refused to compile. Raise this only when SOMO's own standard moves.
+CXX="c++ -std=gnu++11 -O2 -pthread -I.."
 
 echo "[test_shell]"
 $CXX test_shell.cpp -o /tmp/grpy_test_shell && /tmp/grpy_test_shell

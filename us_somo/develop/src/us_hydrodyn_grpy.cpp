@@ -33,15 +33,21 @@
 static qint64 grpy_physical_ram_bytes() {
 #if defined( Q_OS_WIN ) || defined( _WIN32 )
    MEMORYSTATUSEX st; st.dwLength = sizeof( st );
-   if ( GlobalMemoryStatusEx( &st ) ) return (qint64) st.ullTotalPhys;
+   if ( GlobalMemoryStatusEx( &st ) ) {
+      return (qint64) st.ullTotalPhys;
+   }
    return 0;
 #elif defined( Q_OS_MACOS ) || defined( __APPLE__ )
    int64_t mem = 0; size_t len = sizeof( mem );
-   if ( sysctlbyname( "hw.memsize", &mem, &len, nullptr, 0 ) == 0 ) return (qint64) mem;
+   if ( sysctlbyname( "hw.memsize", &mem, &len, nullptr, 0 ) == 0 ) {
+      return (qint64) mem;
+   }
    return 0;
 #elif defined( Q_OS_LINUX ) || defined( __linux__ )
    long pages = sysconf( _SC_PHYS_PAGES ), ps = sysconf( _SC_PAGE_SIZE );
-   if ( pages > 0 && ps > 0 ) return (qint64) pages * (qint64) ps;
+   if ( pages > 0 && ps > 0 ) {
+      return (qint64) pages * (qint64) ps;
+   }
    return 0;
 #else
    return 0;   // unknown platform: no guard (fail open)
@@ -193,7 +199,9 @@ static double grpy_matrix_bytes( int beads, bool single ) {
 // (70% of physical RAM). 0 = no limit known, so no cap is applied.
 static int grpy_max_beads_for_ram( bool single ) {
    const qint64 ram = grpy_physical_ram_bytes();
-   if ( ram <= 0 ) return 0;
+   if ( ram <= 0 ) {
+      return 0;
+   }
    const double per_bead2 = grpy_matrix_bytes( 1, single );      // bytes at N = 1
    const double n = sqrt( ( 0.70 * (double) ram ) / per_bead2 );
    return n > 1.0 ? (int) n : 1;
@@ -216,11 +224,15 @@ static int grpy_shell_cap_override( const map < QString, QString > & gparams ) {
    bool ok = false;
    if ( !qEnvironmentVariableIsEmpty( "GRPY_SHELL_MAX_BEADS" ) ) {
       const int e = QString( qgetenv( "GRPY_SHELL_MAX_BEADS" ) ).trimmed().toInt( &ok );
-      if ( ok && e > 0 ) v = e;
+      if ( ok && e > 0 ) {
+         v = e;
+      }
    }
    if ( gparams.count( "grpy_shell_max_beads" ) ) {
       const int s = gparams.at( "grpy_shell_max_beads" ).trimmed().toInt( &ok );
-      if ( ok && s > 0 ) v = s;
+      if ( ok && s > 0 ) {
+         v = s;
+      }
    }
    return v;
 }
@@ -598,7 +610,11 @@ bool US_Hydrodyn::calc_grpy_hydro() {
    // with a clear non-zero exit.
    {
       int max_beads = 0;
-      for ( int nb : grpy_used_beads ) if ( nb > max_beads ) max_beads = nb;
+      for ( int nb : grpy_used_beads ) {
+         if ( nb > max_beads ) {
+            max_beads = nb;
+         }
+      }
       const qint64 ram = grpy_physical_ram_bytes();             // 0 = unknown -> skip
       // Resolve the same scripting overrides the solver applies further down, so the guard
       // judges the run that will actually happen rather than the dialog's settings.
@@ -844,7 +860,9 @@ void US_Hydrodyn::grpy_process_next() {
       }
       if ( gparams.count( "grpy_shell_tol" ) ) {
          double v = gparams[ "grpy_shell_tol" ].toDouble();
-         if ( v > 0 ) sopt.tol = v;
+         if ( v > 0 ) {
+            sopt.tol = v;
+         }
       }
       if ( gparams.count( "grpy_shell_require_eta" ) ) {
          require_eta = truthy( gparams[ "grpy_shell_require_eta" ] );
@@ -959,7 +977,9 @@ void US_Hydrodyn::grpy_process_next() {
       grpy::Results r = solver.run(
          in.beads, in.params, srep,
          [ this, model ]( int pct, const char * stage ) {
-            if ( stopFlag ) return;
+            if ( stopFlag ) {
+               return;
+            }
             progress->setValue( 101 * ( grpy_processed.size() - 1 ) + pct );
             mprogress->setValue( pct );
             lbl_core_progress->setText( QString( "Model %1 : %2" )
