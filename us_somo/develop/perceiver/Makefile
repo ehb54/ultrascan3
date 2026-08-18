@@ -10,7 +10,7 @@ HDR       = ../include/us_hydrodyn_perceive.h ../include/us_hydrodyn_perceive_hy
 BUILDER_SRC = $(SRC) ../src/us_hydrodyn_psv.cpp ../src/us_hydrodyn_hydration.cpp \
               ../src/us_hydrodyn_grid_volume.cpp ../src/us_hydrodyn_residue_builder.cpp
 
-DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS.pdb data/8RAT.pdb \
+DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS_mod1.pdb data/8RAT.pdb \
         data/1AO6-compl_monA.pdb data/3CRO.pdb data/3GUT.pdb data/6LDH1.pdb
 
 .PHONY: all unit regress emit clean

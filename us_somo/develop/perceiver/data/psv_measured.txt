@@ -1,7 +1,7 @@
 1HEL 0.7042 18 Lysozyme (1HEL)
 6LYZ 0.7042 18 Lysozyme (6LYZ)
 8RAT 0.6947 9 RNase A (8RAT)
-2AAS 0.6947 9 RNase A (2AAS)
+2AAS_mod1 0.6947 9 RNase A (2AAS, model 1)
 1BEB 0.7444 14 b-Lactoglobulin (1BEB)
 2CGA 0.7314 9 Chymotrypsinogen A (2CGA)
 1AO6-compl_monA 0.7323 29 Serum albumin (1AO6)
