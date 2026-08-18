@@ -118,12 +118,25 @@ inline void parse_report( const QString& report, Results& r ) {
 // Split a chunk of the program's stdout into progress records and report text. The banner
 // is carriage-return separated and overwrites itself in a terminal; the report is the part
 // that is not a banner record.
-inline QString consume_progress( const QString& chunk, const ProgressFn& progress ) {
+//
+// `carry` holds a trailing PARTIAL record between calls, and the caller must pass the same
+// one every time. Reads off a pipe break wherever the buffer happened to fill, not on record
+// boundaries, so a banner split across two reads would otherwise match nothing and have both
+// halves appended to the report -- progress text ending up in the .grpy_res file and in what
+// parse_report() reads. Holding the tail back until its terminator arrives also repairs a
+// "\r\n" straddling the boundary. Call once more with flush = true when the pipe is closed,
+// or a final record with no terminator is dropped.
+inline QString consume_progress( const QString& chunk, const ProgressFn& progress,
+                                 QString& carry, bool flush = false ) {
    static const QRegularExpression banner( "^\\s*(\\d+)%\\s*TASK:\\s*(.*)$" );
-   QString text = chunk;
+   QString text = carry + chunk;
+   carry.clear();
    text.replace( "\r\n", "\n" );                  // Windows line endings
    QString report;
-   const QStringList records = text.split( '\r' );
+   QStringList records = text.split( '\r' );
+   if ( !flush && !records.isEmpty() ) {
+      carry = records.takeLast();                 // incomplete: wait for the rest
+   }
    for ( const QString& record : records ) {
       const QRegularExpressionMatch m = banner.match( record );
       if ( m.hasMatch() ) {
@@ -393,6 +406,8 @@ private:
       }
 
       QString report;
+      QString carry;
+      stderr_text.clear();
       while ( proc.state() != QProcess::NotRunning ) {
          if ( should_stop_ && should_stop_() ) {
             proc.kill();
@@ -401,12 +416,20 @@ private:
          }
          if ( proc.waitForReadyRead( 100 ) ) {
             report += consume_progress( QString::fromLocal8Bit( proc.readAllStandardOutput() ),
-                                        progress );
+                                        progress, carry );
          }
+         // Drained every pass, not once at the end. The channels are separate and each has a
+         // finite pipe buffer: a child that writes more to stderr than that buffer holds
+         // blocks in write(), which stops it producing stdout, which stops this loop making
+         // progress -- and waitForFinished( -1 ) below then waits forever. Reading stderr
+         // here keeps the child running whatever it chooses to write.
+         stderr_text += QString::fromLocal8Bit( proc.readAllStandardError() );
       }
       proc.waitForFinished( -1 );
-      report += consume_progress( QString::fromLocal8Bit( proc.readAllStandardOutput() ), progress );
-      stderr_text = QString::fromLocal8Bit( proc.readAllStandardError() ).trimmed();
+      report += consume_progress( QString::fromLocal8Bit( proc.readAllStandardOutput() ),
+                                  progress, carry, true );
+      stderr_text += QString::fromLocal8Bit( proc.readAllStandardError() );
+      stderr_text = stderr_text.trimmed();
 
       if ( proc.exitStatus() != QProcess::NormalExit ) {
          throw std::runtime_error(
