@@ -90,6 +90,10 @@ bin/builder: tests/builder.cpp $(BUILDER_SRC) $(HDR)
 builder: bin/builder
 	./bin/builder
 
+bin/residue_variants: tests/residue_variants.cpp $(SRC) ../src/us_hydrodyn_psv.cpp $(HDR) ../include/us_hydrodyn_psv.h
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/residue_variants.cpp $(SRC) ../src/us_hydrodyn_psv.cpp -o bin/residue_variants
+
 bin/protein_psv: tests/protein_psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp $(HDR) ../include/us_hydrodyn_psv.h
 	@mkdir -p bin
 	$(CXX) $(CXXFLAGS) $(INC) tests/protein_psv.cpp $(SRC) ../src/us_hydrodyn_psv.cpp -o bin/protein_psv
