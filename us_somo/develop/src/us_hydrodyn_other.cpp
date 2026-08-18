@@ -115,7 +115,9 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
                 " because the solve itself cannot be interrupted part-way; close again once"
                 " it has stopped." ) );
       stopFlag = true;
-      if ( pb_stop_calc ) pb_stop_calc->setEnabled( false );
+      if ( pb_stop_calc ) {
+         pb_stop_calc->setEnabled( false );
+      }
       e->ignore();
       return;
    }
