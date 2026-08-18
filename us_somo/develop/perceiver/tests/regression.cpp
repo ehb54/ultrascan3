@@ -48,7 +48,42 @@ static int mismatch_category(const std::string& res, const std::string& atom,
     return 0;
 }
 
+// Optional acceptance checks. Without them this harness only fails when it scores nothing
+// at all, so a real perception regression -- 99.8% collapsing to 90% -- still exits 0.
+//
+// --require-all-inputs is the one CI leans on. It is deliberately ORTHOGONAL to how well
+// perception does: it asks only that every fixture handed in produced something to score,
+// which catches the failure that matters (a fixture missing, unreadable or truncated) and
+// cannot be tripped by anyone tuning the perceiver. A floor on the atom COUNT would be
+// tripped by such work, which is why CI does not set one.
+struct Thresholds {
+   long   min_atoms          = 0;
+   double min_geometric      = 0.0;
+   bool   require_all_inputs = false;
+};
+
 int main(int argc, char** argv){
+    Thresholds thr;
+    std::vector<std::string> inputs;
+    for ( int ai = 1; ai < argc; ++ai ) {
+        std::string a = argv[ ai ];
+        if ( a == "--min-atoms" && ai + 1 < argc ) {
+            thr.min_atoms = std::atol( argv[ ++ai ] );
+        } else if ( a == "--min-geometric" && ai + 1 < argc ) {
+            thr.min_geometric = std::atof( argv[ ++ai ] );
+        } else if ( a == "--require-all-inputs" ) {
+            thr.require_all_inputs = true;
+        } else if ( a.rfind( "--", 0 ) == 0 ) {
+            std::fprintf( stderr, "regression: unknown option %s\n"
+                          "  usage: regression [--min-atoms N] [--min-geometric PCT]\n"
+                          "                    [--require-all-inputs] file.pdb ...\n",
+                          a.c_str() );
+            return 2;
+        } else {
+            inputs.push_back( a );
+        }
+    }
+
     HybridTable tbl;
     if(!tbl.load("../../etc/somo.hybrid.new")){ std::fprintf(stderr,"cannot load somo.hybrid.new\n"); return 2; }
     ResidueOracle orc;
@@ -56,13 +91,13 @@ int main(int argc, char** argv){
     Perceiver perc(tbl);
 
     long tot=0, exact=0, phys=0, skipped_noref=0, perceiver_correct=0, policy=0;
+    std::vector<std::string> scored_nothing;      // inputs that yielded no scorable atom
     std::map<std::string,long> mism_by_pair;      // "expected->got" counts
     std::map<std::string,long> mism_by_element;
     std::map<std::string,long> mism_by_atom;      // "RES/ATOM expected->got" counts
     std::vector<std::string> examples;
 
-    for(int ai=1; ai<argc; ++ai){
-        std::string path=argv[ai];
+    for ( const std::string& path : inputs ) {
         auto raw=read_pdb(path);
         // Name the file that gave us nothing, rather than letting it vanish into a 0 in the
         // per-file line: a missing file and a genuinely unscorable one look identical there.
@@ -112,6 +147,9 @@ int main(int argc, char** argv){
                 // physics-ok but label differs (usually N2H0<->N3H0): note quietly
             }
         }
+        if ( f_tot == 0 ) {
+            scored_nothing.push_back( path );
+        }
         std::printf("%-28s atoms scored %5ld   exact %5ld (%.2f%%)   phys-equiv %5ld (%.2f%%)\n",
             path.c_str(), f_tot, f_exact, f_tot?100.0*f_exact/f_tot:0, f_phys, f_tot?100.0*f_phys/f_tot:0);
     }
@@ -142,18 +180,50 @@ int main(int argc, char** argv){
     }
 
     // Scoring nothing is a failure, not a pass. read_pdb() returns an empty list for a file
-    // that is missing or unreadable, so with the demo structures absent -- and they are not
-    // in the repository -- every percentage above divides by zero, prints 0.000%, and this
-    // returned success. A regression test that reports "0 genuine errors" because it looked
-    // at no atoms is worse than no test: it is a green light for work it never checked.
+    // that is missing or unreadable, so every percentage above divides by zero, prints
+    // 0.000%, and this returned success. A regression test that reports "0 genuine errors"
+    // because it looked at no atoms is worse than no test: it is a green light for work it
+    // never checked.
     if ( tot == 0 ) {
         std::fprintf( stderr,
             "\nregression: FAILED -- scored 0 atoms.\n"
-            "  %d input file(s) were given but none yielded any scorable atom.\n"
-            "  The usual cause is that the demo structures are missing: they are not\n"
-            "  committed to the repository. Supply them, or run this with your own PDB\n"
-            "  files as arguments.\n", argc - 1 );
+            "  %zu input file(s) were given but none yielded any scorable atom.\n"
+            "  The fixtures live in data/ and are committed; check that this was run from\n"
+            "  the perceiver directory, since the hybrid and residue tables are resolved\n"
+            "  relative to it. `make regress` does that for you.\n", inputs.size() );
         return 2;
     }
-    return 0;
+
+    // Acceptance thresholds, when asked for. Reported together rather than short-circuiting,
+    // so one run tells you everything that is out of tolerance.
+    int rc = 0;
+    if ( thr.require_all_inputs && !scored_nothing.empty() ) {
+        std::fprintf( stderr,
+            "\nregression: FAILED -- %zu of %zu input(s) yielded no scorable atom:\n",
+            scored_nothing.size(), inputs.size() );
+        for ( const std::string& p : scored_nothing ) {
+            std::fprintf( stderr, "    %s\n", p.c_str() );
+        }
+        std::fprintf( stderr,
+            "  Missing, unreadable or truncated. Every percentage above is measured over\n"
+            "  what remains, so it would otherwise still look healthy.\n" );
+        rc = 1;
+    }
+    if ( thr.min_atoms > 0 && tot < thr.min_atoms ) {
+        std::fprintf( stderr,
+            "\nregression: FAILED -- scored %ld atoms, expected at least %ld.\n"
+            "  Fewer atoms than the pinned fixture set yields. A fixture is probably missing\n"
+            "  or truncated; that would quietly shrink what every percentage below is measured\n"
+            "  over.\n", tot, thr.min_atoms );
+        rc = 1;
+    }
+    double geometric_pct = tot ? 100.0 * ( phys + perceiver_correct + policy ) / tot : 0.0;
+    if ( thr.min_geometric > 0.0 && geometric_pct < thr.min_geometric ) {
+        std::fprintf( stderr,
+            "\nregression: FAILED -- geometric perception %.3f%%, expected at least %.3f%%.\n"
+            "  Perception got worse on the fixture set. The per-residue/atom mismatch tables\n"
+            "  above name what moved.\n", geometric_pct, thr.min_geometric );
+        rc = 1;
+    }
+    return rc;
 }

@@ -4,6 +4,8 @@ local.pri
 *.o
 tmp/
 moc/
+moc_*.cpp
+moc_predefs.h
 obj/
 Makefile*
 qwtplot3d/

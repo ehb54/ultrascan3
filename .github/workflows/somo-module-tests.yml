@@ -1,19 +1,27 @@
 name: "SOMO module tests"
 
-# The perceiver suite is a numerical regression test that was only ever run by hand, so a
-# change could pass CI while breaking behaviour it covers. It is Qt-free and builds
-# standalone, so it costs a couple of minutes here.
+# The perceiver and grpy suites are numerical tests that were only ever run by hand, so a
+# change could pass CI while breaking behaviour they cover. Both are Qt-free and build
+# standalone, so they cost a couple of minutes here.
 #
-# The perceiver REGRESSION target is deliberately not run: it scores against demo PDB
-# structures that are not committed to the repository, so it has nothing to score. It now
-# fails loudly instead of reporting 0.000% and exiting 0 -- see tests/regression.cpp. Commit
-# the demo structures (or point it at a fixture set) and add it here.
+# grpy's test_process drives QProcess and so needs QtCore; run.sh skips it when QTDIR is
+# unset, which is the case here. test_shell -- the ladder, the exposure ranking and the
+# error estimator, i.e. everything with a number in it -- is Qt-free and does run.
+#
+# The perceiver REGRESSION target scores perception against the committed fixture set, so its
+# numbers appear in the log on every run. Its pass/fail conditions (see regress-ci in the
+# Makefile) are deliberately slack: every fixture must yield something to score, and
+# perception must not collapse. They are NOT pinned to today's figures -- the perceiver is
+# under active development, and a gate pinned that tightly would fail on every legitimate
+# change to it. Tighten them once it settles.
 
 on:
   push:
     branches: [ main, somo-dev ]
     paths:
       - 'us_somo/develop/perceiver/**'
+      - 'us_somo/develop/grpy/**'
+      - 'us_somo/develop/src/us_hydrodyn_grpy.cpp'
       - 'us_somo/develop/src/us_hydrodyn_perceive*'
       - 'us_somo/develop/src/us_hydrodyn_psv.cpp'
       - 'us_somo/develop/src/us_hydrodyn_hydration.cpp'
@@ -27,6 +35,8 @@ on:
     branches: [ main, somo-dev ]
     paths:
       - 'us_somo/develop/perceiver/**'
+      - 'us_somo/develop/grpy/**'
+      - 'us_somo/develop/src/us_hydrodyn_grpy.cpp'
       - 'us_somo/develop/src/us_hydrodyn_perceive*'
       - 'us_somo/develop/src/us_hydrodyn_psv.cpp'
       - 'us_somo/develop/src/us_hydrodyn_hydration.cpp'
@@ -50,13 +60,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # `unit` only -- see the note at the top about `regress`.
       - name: Run perceiver unit tests
         working-directory: us_somo/develop/perceiver
         run: make unit
 
+      # The regression proper: scores every committed fixture. See regress-ci for why its
+      # gates are loose rather than pinned to the current numbers.
+      - name: Run perceiver regression
+        working-directory: us_somo/develop/perceiver
+        run: make regress-ci
+
       # Guards the vacuous-pass mode directly: with no structures given, the regression
-      # binary must FAIL rather than report 0.000% and exit 0.
+      # binary must FAIL rather than report 0.000% and exit 0. Kept alongside the real run
+      # because the run above would stay green if the fixtures vanished AND the guard broke.
       - name: Regression harness refuses to pass on no input
         working-directory: us_somo/develop/perceiver
         run: |
@@ -66,3 +82,16 @@ jobs:
             exit 1
           fi
           echo "ok: regression fails when it has nothing to score"
+
+  grpy:
+    name: grpy module tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Compiles the module at -std=gnu++11 -- the standard SOMO itself builds it with, since
+      # Qt5 is still supported -- and runs the shell-reduction and exposure tests.
+      - name: Run grpy module tests
+        working-directory: us_somo/develop/grpy/tests
+        run: ./run.sh

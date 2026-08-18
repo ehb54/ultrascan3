@@ -101,8 +101,29 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)
 {
+   // A GRPY solve runs synchronously on this thread and calls processEvents() to keep the
+   // interface alive, which leaves Close live while the computation is still going. Taking
+   // it would hide the window, clear the temporary directories and ask the application to
+   // quit underneath a running solve -- SOMO would look closed while it went on computing,
+   // over files that were being removed. Treat Close as a Stop request instead: stopFlag is
+   // what the solver's should_stop honours.
+   if ( grpy_running ) {
+      QMessageBox::information(
+         this, windowTitle() + us_tr( ": GRPY running" ),
+         us_tr( "A GRPY calculation is still running.\n\n"
+                "It is being asked to stop. The calculation is ended as soon as it responds,"
+                " and any results already obtained are kept; close again once it has"
+                " stopped." ) );
+      stopFlag = true;
+      if ( pb_stop_calc ) {
+         pb_stop_calc->setEnabled( false );
+      }
+      e->ignore();
+      return;
+   }
+
    QTextStream( stdout ) << "close messagebox\n";
-   
+
    QMessageBox mb(us_tr("UltraScan"), us_tr("Attention:\nAre you sure you want to exit?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,

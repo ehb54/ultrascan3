@@ -10,10 +10,10 @@ HDR       = ../include/us_hydrodyn_perceive.h ../include/us_hydrodyn_perceive_hy
 BUILDER_SRC = $(SRC) ../src/us_hydrodyn_psv.cpp ../src/us_hydrodyn_hydration.cpp \
               ../src/us_hydrodyn_grid_volume.cpp ../src/us_hydrodyn_residue_builder.cpp
 
-DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS.pdb data/8RAT.pdb \
+DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS_mod1.pdb data/8RAT.pdb \
         data/1AO6-compl_monA.pdb data/3CRO.pdb data/3GUT.pdb data/6LDH1.pdb
 
-.PHONY: all unit regress emit clean
+.PHONY: all unit regress regress-ci emit clean
 all: unit regress
 
 bin/emit_residue: tests/emit_residue.cpp $(BUILDER_SRC) $(HDR)
@@ -36,6 +36,26 @@ unit: bin/unit
 
 regress: bin/regression
 	./bin/regression $(DEMOS)
+
+# What CI runs. The point is that the regression ACTUALLY RUNS and its numbers appear in the
+# log; the pass/fail conditions are deliberately slack, because the perceiver is under active
+# development and a gate pinned to today's figures would fail on every legitimate change to it.
+#
+#   --require-all-inputs  every fixture must yield something to score. This is the check that
+#                         earns its place: it catches a fixture missing, unreadable or
+#                         truncated -- the failure that would otherwise leave the percentages
+#                         looking healthy while measuring less -- and it is orthogonal to
+#                         perception quality, so tuning the perceiver cannot trip it.
+#   --min-geometric 95    a collapse detector, nothing finer. Current value is 99.833%, so
+#                         there is ~5 points of room; only a real breakage reaches it.
+#
+# Deliberately NOT set: --min-atoms. A floor on the atom count IS sensitive to perceiver work
+# (parsing and which atoms are scorable), so pinning it would break CI for anyone changing the
+# module. Tighten these once the perceiver settles.
+REGRESS_MIN_GEOMETRIC = 95
+
+regress-ci: bin/regression
+	./bin/regression --require-all-inputs --min-geometric $(REGRESS_MIN_GEOMETRIC) $(DEMOS)
 
 clean:
 	rm -rf bin

@@ -107,9 +107,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
-   us_container_grpy = (US_Container_Grpy *)0;
-   grpy_parallel_pulled = false;
-   
    stopFlag = false;
 
 #if defined( BROADEN_TEST ) && defined( BROADEN_TESTING )
@@ -708,7 +705,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
-   grpy = NULL;
 
    last_read_bead_model = "";
    last_hydro_res = "";
@@ -4817,11 +4813,10 @@ void US_Hydrodyn::stop_calc()
       anaflex->terminate();
       QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
    }
-   if ( grpy_running && grpy && grpy->state() == QProcess::Running )
-   {
-      grpy->terminate();
-      QTimer::singleShot( 10000, grpy, SLOT( kill() ) );
-   }
+   // GRPY runs out of process again (issue 1012), but its child is owned by
+   // grpy::ProcessSolver, not by a QProcess member here, so there is nothing to terminate
+   // at this level. ProcessSolver polls stopFlag (set above) every 100 ms and kills the
+   // child; grpy_finished() then halts the model batch.
    pb_stop_calc->setEnabled(false);
 }
 

@@ -43,8 +43,17 @@ Built build(const std::string& resname,
     if (opt.compute_volume) {
         std::vector<somo_volume::Sphere> sph;
         sph.reserve(idx.size());
-        for (int i : idx)
-            sph.push_back({atoms[i].x, atoms[i].y, atoms[i].z, perceived[i].vdw_radius});
+        // Field by field, not sph.push_back({ ... }): Sphere carries default member
+        // initializers, which makes it a non-aggregate before C++14, and SOMO still builds
+        // as C++11 for Qt5. The initializers are what make a default Sphere read zero.
+        for ( int i : idx ) {
+            somo_volume::Sphere s;
+            s.x = atoms[ i ].x;
+            s.y = atoms[ i ].y;
+            s.z = atoms[ i ].z;
+            s.r = perceived[ i ].vdw_radius;
+            sph.push_back( s );
+        }
         somo_volume::Options vo;
         vo.probe = opt.volume_probe;
         vo.grid = opt.volume_grid;
