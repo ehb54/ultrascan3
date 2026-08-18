@@ -14,7 +14,11 @@ DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS.pdb data/8RAT.pdb \
         data/1AO6-compl_monA.pdb data/3CRO.pdb data/3GUT.pdb data/6LDH1.pdb
 
 .PHONY: all unit regress emit clean
-all: unit regress
+# Everything deterministic that has a pass/fail verdict. `all` used to be unit+regress only, so a
+# model change could break builder and sit on a pushed branch for days without anything going red
+# (hydration totals, 2026-08-12 -- found 2026-08-17). coverage/sssrreal stay out: they report
+# rather than assert, and sssrreal needs the demo structures.
+all: unit regress psv hydration gridvol sssr builder
 
 bin/emit_residue: tests/emit_residue.cpp $(BUILDER_SRC) $(HDR)
 	@mkdir -p bin

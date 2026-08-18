@@ -232,6 +232,13 @@ TEST("computed molvol reproduces the stored volumes") {
 // pH 7 for the coded residues -- which is the only ground truth available. The values below are
 // the runtime, pH-adjusted totals: aspartate's carboxylate carries 5 waters and glutamate's 6,
 // the difference being the extra methylene, and Lys's ammonium 3.
+//
+// Read total_ionized, not total. Since the builder began emitting both protonation states there
+// are two sums, and `total` is the non-ionized one: a protonated carboxyl oxygen carries 0 waters
+// against the ionized 5, so Asp and Glu would both come back at 1.0 (backbone only). The pH 7
+// figures tabulated here are by definition the ionized ones. The two sums are equal for every
+// other residue -- an ionizable N stays hydrated in both states -- which is why only the two
+// carboxylates ever noticed the difference.
 TEST("pH 7 hydration rules reproduce the coded residues") {
     if (!load()) return;
     struct H { const char* res; size_t natoms; double total; const char* why; };
@@ -260,7 +267,7 @@ TEST("pH 7 hydration rules reproduce the coded residues") {
         Built b = build(w.res, g.in, g.perc, g.bonds, idx, Perceiver(g.tbl), &g.hyd);
         if (!b.hydration.ok) continue;
         ++n;
-        const double got = b.hydration.total;
+        const double got = b.hydration.total_ionized;
         const bool hit = std::fabs(got - w.total) < 0.51;
         if (hit) ++ok;
         std::printf("  %-5s %9.1f %9.1f   %s%s\n", w.res, got, w.total, w.why,
@@ -272,6 +279,8 @@ TEST("pH 7 hydration rules reproduce the coded residues") {
 }
 
 // Asp and Glu differ only by a methylene, and that is exactly what the chain-length term is for.
+// total_ionized for the reason given above: a protonated carboxyl is 0 waters either way, so the
+// non-ionized sums are equal and the methylene term would be invisible.
 TEST("carboxylate hydration tracks the chain length") {
     if (!load()) return;
     std::vector<int> asp = pick("ASP", 8), glu = pick("GLU", 9);
@@ -279,10 +288,10 @@ TEST("carboxylate hydration tracks the chain length") {
     Built a = build("ASP", g.in, g.perc, g.bonds, asp, Perceiver(g.tbl), &g.hyd);
     Built e = build("GLU", g.in, g.perc, g.bonds, glu, Perceiver(g.tbl), &g.hyd);
     std::printf("  Asp %.1f, Glu %.1f -- the extra methylene is worth %.1f water\n",
-                a.hydration.total, e.hydration.total,
-                e.hydration.total - a.hydration.total);
-    CHECK(e.hydration.total > a.hydration.total);
-    CHECK(std::fabs((e.hydration.total - a.hydration.total) - 1.0) < 0.01);
+                a.hydration.total_ionized, e.hydration.total_ionized,
+                e.hydration.total_ionized - a.hydration.total_ionized);
+    CHECK(e.hydration.total_ionized > a.hydration.total_ionized);
+    CHECK(std::fabs((e.hydration.total_ionized - a.hydration.total_ionized) - 1.0) < 0.01);
 }
 
 int main() { return tinytest::run(); }
