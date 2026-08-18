@@ -48,12 +48,18 @@ static int mismatch_category(const std::string& res, const std::string& atom,
     return 0;
 }
 
-// Optional acceptance thresholds. Without them this harness only fails when it scores
-// nothing at all, so a real perception regression -- 99.8% falling to 90% -- still exits 0.
-// CI supplies both, pinned to the committed fixture set; a hand run normally supplies neither.
+// Optional acceptance checks. Without them this harness only fails when it scores nothing
+// at all, so a real perception regression -- 99.8% collapsing to 90% -- still exits 0.
+//
+// --require-all-inputs is the one CI leans on. It is deliberately ORTHOGONAL to how well
+// perception does: it asks only that every fixture handed in produced something to score,
+// which catches the failure that matters (a fixture missing, unreadable or truncated) and
+// cannot be tripped by anyone tuning the perceiver. A floor on the atom COUNT would be
+// tripped by such work, which is why CI does not set one.
 struct Thresholds {
-   long   min_atoms     = 0;
-   double min_geometric = 0.0;
+   long   min_atoms          = 0;
+   double min_geometric      = 0.0;
+   bool   require_all_inputs = false;
 };
 
 int main(int argc, char** argv){
@@ -65,9 +71,12 @@ int main(int argc, char** argv){
             thr.min_atoms = std::atol( argv[ ++ai ] );
         } else if ( a == "--min-geometric" && ai + 1 < argc ) {
             thr.min_geometric = std::atof( argv[ ++ai ] );
+        } else if ( a == "--require-all-inputs" ) {
+            thr.require_all_inputs = true;
         } else if ( a.rfind( "--", 0 ) == 0 ) {
             std::fprintf( stderr, "regression: unknown option %s\n"
-                          "  usage: regression [--min-atoms N] [--min-geometric PCT] file.pdb ...\n",
+                          "  usage: regression [--min-atoms N] [--min-geometric PCT]\n"
+                          "                    [--require-all-inputs] file.pdb ...\n",
                           a.c_str() );
             return 2;
         } else {
@@ -82,6 +91,7 @@ int main(int argc, char** argv){
     Perceiver perc(tbl);
 
     long tot=0, exact=0, phys=0, skipped_noref=0, perceiver_correct=0, policy=0;
+    std::vector<std::string> scored_nothing;      // inputs that yielded no scorable atom
     std::map<std::string,long> mism_by_pair;      // "expected->got" counts
     std::map<std::string,long> mism_by_element;
     std::map<std::string,long> mism_by_atom;      // "RES/ATOM expected->got" counts
@@ -137,6 +147,9 @@ int main(int argc, char** argv){
                 // physics-ok but label differs (usually N2H0<->N3H0): note quietly
             }
         }
+        if ( f_tot == 0 ) {
+            scored_nothing.push_back( path );
+        }
         std::printf("%-28s atoms scored %5ld   exact %5ld (%.2f%%)   phys-equiv %5ld (%.2f%%)\n",
             path.c_str(), f_tot, f_exact, f_tot?100.0*f_exact/f_tot:0, f_phys, f_tot?100.0*f_phys/f_tot:0);
     }
@@ -184,6 +197,18 @@ int main(int argc, char** argv){
     // Acceptance thresholds, when asked for. Reported together rather than short-circuiting,
     // so one run tells you everything that is out of tolerance.
     int rc = 0;
+    if ( thr.require_all_inputs && !scored_nothing.empty() ) {
+        std::fprintf( stderr,
+            "\nregression: FAILED -- %zu of %zu input(s) yielded no scorable atom:\n",
+            scored_nothing.size(), inputs.size() );
+        for ( const std::string& p : scored_nothing ) {
+            std::fprintf( stderr, "    %s\n", p.c_str() );
+        }
+        std::fprintf( stderr,
+            "  Missing, unreadable or truncated. Every percentage above is measured over\n"
+            "  what remains, so it would otherwise still look healthy.\n" );
+        rc = 1;
+    }
     if ( thr.min_atoms > 0 && tot < thr.min_atoms ) {
         std::fprintf( stderr,
             "\nregression: FAILED -- scored %ld atoms, expected at least %ld.\n"

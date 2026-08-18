@@ -4,10 +4,12 @@ name: "SOMO module tests"
 # change could pass CI while breaking behaviour it covers. It is Qt-free and builds
 # standalone, so it costs a couple of minutes here.
 #
-# The perceiver REGRESSION target scores perception against a committed fixture set, under
-# floors pinned in the Makefile (regress-ci). The floors are what make it a test: without
-# them the harness only fails when it scores NOTHING, so perception could fall from 99.8%
-# to 90% and still exit 0.
+# The perceiver REGRESSION target scores perception against the committed fixture set, so its
+# numbers appear in the log on every run. Its pass/fail conditions (see regress-ci in the
+# Makefile) are deliberately slack: every fixture must yield something to score, and
+# perception must not collapse. They are NOT pinned to today's figures -- the perceiver is
+# under active development, and a gate pinned that tightly would fail on every legitimate
+# change to it. Tighten them once it settles.
 
 on:
   push:
@@ -54,7 +56,8 @@ jobs:
         working-directory: us_somo/develop/perceiver
         run: make unit
 
-      # The regression proper: scores every committed fixture and enforces the pinned floors.
+      # The regression proper: scores every committed fixture. See regress-ci for why its
+      # gates are loose rather than pinned to the current numbers.
       - name: Run perceiver regression
         working-directory: us_somo/develop/perceiver
         run: make regress-ci
