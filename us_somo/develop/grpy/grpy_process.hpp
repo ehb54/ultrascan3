@@ -369,6 +369,20 @@ private:
       if ( cfg_.threads > 0 ) {
          env.insert( "GRPY_THREADS", QString::number( cfg_.threads ) );
       }
+      // Ask for the high-precision report. The program's default report is the Fortran's
+      // own ES11.3 -- four significant figures -- which is right for a drop-in replacement
+      // a human reads, and wrong for a caller that DIFFERENCES successive results.
+      //
+      // The shell reduction's error estimate is built from gaps between consecutive rungs
+      // and from the ratio of two such gaps, so a relative quantisation of ~1e-4 in the
+      // values lands directly on the bar. Measured over 266 reduced evaluations by rounding
+      // recorded full-precision rung values through %11.3E: the reported estimate moves by
+      // a median 2.5% and up to 17.6%, the observed order shifts by up to 0.26, the floor
+      // changes which term governs in 14 cases, and 2 stopping decisions flip. Coverage
+      // happened to survive on that corpus -- the minimum margin fell only 1.131x to
+      // 1.119x -- so this is not a correctness fix, but none of that movement should exist:
+      // it is an output format leaking into a numerical result.
+      env.insert( "GRPY_HP", "1" );
       proc.setProcessEnvironment( env );
 
       proc.start( cfg_.program, QStringList() << "-e" << input, QIODevice::ReadOnly );
