@@ -1482,7 +1482,8 @@ bool US_Saxs_Util::dmd_pdb_prepare( QStringList & qsl_pdb
    errormsg  = "";
    noticemsg = "";
 
-   set < QString > remove_hetatms = { "HOH", "WAT" };
+   set < QString > remove_hetatms = pdb_parse_water_names();   // light and heavy water alike
+   remove_hetatms.insert( "WAT" );
 
    dmd_clear();
    qsl_pdb_removed     .clear();

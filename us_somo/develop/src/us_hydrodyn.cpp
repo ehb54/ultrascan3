@@ -15,6 +15,7 @@
 // includes and defines need cleanup
  
 #include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_perceive_dialog.h"
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
@@ -644,6 +645,16 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    dmd_options_widget                   = false;
    anaflex_options_widget               = false;
    batch_widget                         = false;
+   // these three were missed when the UV-Vis and MALS windows were added.
+   // US_Hydrodyn_Saxs::dad(), mals() and mals_saxs() test the flag and then
+   // dereference the matching window, so an indeterminate read is a crash.
+   // interactive runs usually survive on zeroed heap, a script run need not
+   dad_widget                           = false;
+   dad_window                           = 0;
+   mals_widget                          = false;
+   mals_window                          = 0;
+   mals_saxs_widget                     = false;
+   mals_saxs_window                     = 0;
    save_widget                          = false;
    comparative_widget                   = false;
    if ( !install_new_version() )
@@ -692,6 +703,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    create_beads_normally = true;
    alt_method = false;
    rasmol = NULL;
+   gui_script_rasmol_leave_open = false;   // a script closes its viewers unless it says otherwise
    browflex = NULL;
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
@@ -1110,6 +1122,19 @@ void US_Hydrodyn::setupGUI()
       {
          QAction *qa = submenu->addAction( us_tr("Add/Edit &SAXS coefficients") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(do_saxs()));
+      }
+      submenu->addSeparator();
+      {
+         // Perceive the residues somo.residue does not code, from the loaded structure's
+         // coordinates, and offer each one for review. Without this they fall to the Automatic
+         // Bead Builder, which gives them averaged generic properties.
+         QAction *qa = submenu->addAction( us_tr("&Perceive Non-Coded Residues...") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT( perceive_non_coded() ) );
+      }
+      {
+         // Undo the session: discard every perceived entry and go back to the user's own table.
+         QAction *qa = submenu->addAction( us_tr("&Reset Perceived Residues") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT( reset_perceived_residues() ) );
       }
       menu->addMenu( submenu );
    }
@@ -2121,6 +2146,463 @@ void US_Hydrodyn::edit_atom()
       fixWinButtons( addAtom );
       addAtom->show();
    }
+}
+
+// Suffix of the session overlay of a lookup table: <table>.perceived holds the user's table plus
+// whatever they have accepted this session, so accepting takes effect without editing their file.
+static const QString PERCEIVED_SUFFIX = ".perceived";
+
+// Turn a perceived entry into a record somo.residue can actually be read back from.
+//
+// The table is strictly positional: ONE free-text comment line ("Alanine"), then the residue
+// header line, then its atom lines, then its bead lines. There is no comment syntax -- '#' is not
+// special. The perceiver's block carries a ~20-line '#' commentary that belongs in the dialog and
+// the log but is NOT a valid record: read_residue_file() takes the first '#' line as the comment
+// and then parses the SECOND one as a header, and because that line happens to split into a
+// tolerated number of fields it silently creates a zero-atom residue named "#" and consumes the
+// rest of the commentary the same way, two lines at a time. The real entry is never registered.
+// So: keep the first '#' line as the comment, drop the rest, and drop blank lines with them.
+static QString perceived_table_record( const QString & block ) {
+   QStringList out;
+   QString comment;
+   const QStringList lines = block.split( "\n" );
+   for ( int i = 0; i < lines.size(); ++i ) {
+      const QString & ln = lines[ i ];
+      if ( ln.startsWith( "#" ) ) {
+         if ( comment.isEmpty() ) {
+            comment = ln.mid( 1 ).trimmed();          // the first one names the residue
+         }
+         continue;
+      }
+      if ( ln.trimmed().isEmpty() ) {
+         continue;                                    // a blank line desynchronises the reader too
+      }
+      out << ln;
+   }
+   if ( out.isEmpty() ) {
+      return QString();
+   }
+   out.prepend( comment.isEmpty() ? QString( "perceived entry" ) : comment );
+   return out.join( "\n" ) + "\n";
+}
+
+// Write <contents of `active`> + `extra` to `overlay`. Lets perceived entries be added to a
+// working copy of a SOMO lookup table without touching the file the user curates. `active` and
+// `overlay` may be the same path (a second perceive accumulating into an existing overlay), so
+// the whole table is read before anything is written.
+static bool write_table_overlay( const QString & active, const QString & overlay,
+                                 const QStringList & extra, QString & failed_path ) {
+   QString table;
+   {
+      QFile f( active );
+      if ( !f.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+         failed_path = active;
+         return false;
+      }
+      QTextStream ts( &f );
+      table = ts.readAll();
+      f.close();
+   }
+   if ( !table.endsWith( "\n" ) ) {
+      table += "\n";
+   }
+   for ( int i = 0; i < extra.size(); ++i ) {
+      table += extra[ i ].endsWith( "\n" ) ? extra[ i ] : ( extra[ i ] + "\n" );
+   }
+   QFile o( overlay );
+   if ( !o.open( QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text ) ) {
+      failed_path = overlay;
+      return false;
+   }
+   QTextStream os( &o );
+   os << table;
+   o.close();
+   return true;
+}
+
+// Split what SOMO could not code into the residues worth perceiving and the ones that are merely
+// unmatched -- see the declaration for why the distinction matters.
+//
+// unknown_residues is what SOMO itself recorded as non-codable while building the model; it is the
+// right trigger, unlike multi_residue_map, which by now also holds the "_NC" placeholders the bead
+// builder created. It persists across loads, so it is restricted to residues actually present in
+// the structure currently open -- otherwise a second run offers the previous structure's ligands.
+void US_Hydrodyn::select_perceivable( std::set< QString > & to_perceive, QStringList & unmatched ) {
+   to_perceive.clear();
+   unmatched.clear();
+   if ( model_vector.empty() ) {
+      return;
+   }
+
+   std::set< QString > present;
+   for ( unsigned int pm = 0; pm < model_vector[ 0 ].molecule.size(); ++pm ) {
+      for ( unsigned int pa = 0; pa < model_vector[ 0 ].molecule[ pm ].atom.size(); ++pa ) {
+         present.insert( model_vector[ 0 ].molecule[ pm ].atom[ pa ].resName );
+      }
+   }
+
+   // SOMO names each instance of a residue it could not place "<RESNAME>_NC<n>"; perception
+   // reports the base name, so the coded-or-not test has to be made on the base name too.
+   QRegularExpression rx_nc( "_NC\\d+$" );
+   std::set< QString > unmatched_set;
+   for ( map < QString, bool >::iterator it = unknown_residues.begin();
+         it != unknown_residues.end();
+         ++it ) {
+      if ( !it->second || !present.count( it->first ) ) {
+         continue;
+      }
+      QString base = it->first;
+      base.remove( rx_nc );
+      // count() is NOT enough. multi_residue_map is read all over the model walk with
+      // operator[] (us_hydrodyn_core.cpp:304 and friends), which INSERTS a default-constructed
+      // empty vector for any name looked up -- including the non-coded ones. So every residue
+      // the walk touched has a key by the time we get here, and only a NON-EMPTY entry means
+      // somo.residue actually codes it. Testing count() alone classified SO4 and CIT as coded.
+      // A residue accepted earlier in this session IS coded now -- by the overlay we wrote. Offer
+      // it again anyway: that is how an accepted entry gets revisited and adjusted.
+      if ( perceived_entries.count( base ) ) {
+         to_perceive.insert( it->first );
+         continue;
+      }
+      const bool really_coded = multi_residue_map.count( base )
+         && !multi_residue_map[ base ].empty();
+      if ( really_coded ) {
+         unmatched_set.insert( base );      // coded name, unmatched instance
+      } else {
+         to_perceive.insert( it->first );
+      }
+   }
+   for ( std::set< QString >::iterator it = unmatched_set.begin(); it != unmatched_set.end(); ++it ) {
+      unmatched << *it;
+   }
+}
+
+// Perceive the residues somo.residue does not code and offer each for review. Without this they
+// fall to the Automatic Bead Builder, which models them as a generic averaged bead. Nothing is
+// written to somo.residue unless the user ticks the box in the dialog.
+void US_Hydrodyn::perceive_non_coded() {
+   // Every exit below reports itself to the text window. A menu item that can appear to do
+   // nothing is worse than one that refuses loudly, and the message boxes alone are not enough:
+   // they leave no record to check afterwards.
+   editor_msg( "blue", us_tr( "Perceive: scanning the loaded structure for non-coded residues\n" ) );
+   if ( model_vector.empty() ) {
+      editor_msg( "dark red", us_tr( "Perceive: no structure is loaded\n" ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "Load a PDB structure first." ), QString(), this );
+      return;
+   }
+   std::set< QString > to_perceive;
+   QStringList unmatched;
+   select_perceivable( to_perceive, unmatched );
+
+   if ( !unmatched.isEmpty() ) {
+      // Coded residues whose instances did not match. Say so and stop short of perceiving them:
+      // the fix is upstream, in the structure.
+      editor_msg( "dark red",
+                  QString( us_tr( "Perceive: %1 residue type(s) ARE coded in somo.residue but "
+                                  "their instances do not match the table: %2\n"
+                                  "  These are not non-coded residues -- they are coded residues "
+                                  "with missing or unexpected atoms (a neutron structure's "
+                                  "deuteriums, for example).\n"
+                                  "  Complete or repair the structure rather than perceiving an "
+                                  "entry for a residue that already has a curated one.\n" ) )
+                  .arg( unmatched.size() ).arg( unmatched.join( ", " ) ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             QString( us_tr( "These residues are coded in somo.residue, but their "
+                                             "instances in this structure do not match the table:\n\n"
+                                             "%1\n\n"
+                                             "They have missing atoms, or atoms the table has no "
+                                             "hybridization for. Please complete the structure -- "
+                                             "they will not be perceived." ) )
+                             .arg( unmatched.join( ", " ) ), QString(), this );
+   }
+
+   if ( to_perceive.empty() ) {
+      editor_msg( "blue", us_tr( "Perceive: every residue in this structure is already coded "
+                                 "in somo.residue, nothing to do\n" ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "Every residue in this structure is already coded in "
+                                    "somo.residue -- there is nothing to perceive." ),
+                             QString(), this );
+      return;
+   }
+   {
+      QStringList names;
+      for ( std::set< QString >::iterator it = to_perceive.begin(); it != to_perceive.end(); ++it ) {
+         names << *it;
+      }
+      editor_msg( "blue", QString( us_tr( "Perceive: %1 non-coded residue type(s) to review: %2\n" ) )
+                  .arg( names.size() ).arg( names.join( ", " ) ) );
+   }
+
+   somo_perceive::HybridTable ptbl;
+   if ( !ptbl.load( saxs_options.default_hybrid_filename.toStdString() ) ) {
+      editor_msg( "red", QString( us_tr( "Perceive: could not load the hybridization table %1\n" ) )
+                  .arg( saxs_options.default_hybrid_filename ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             QString( us_tr( "Could not load the hybridization table:\n%1" ) )
+                             .arg( saxs_options.default_hybrid_filename ), QString(), this );
+      return;
+   }
+
+   somo_residue_builder::Options pb_opt;
+   pb_opt.bead_color = somo_perceive::DEFAULT_BEAD_COLOR;
+   somo_hydration::Table pb_hyd = somo_perceive::hydration_from_residue_list( residue_list );
+
+   QList< somo_perceive::Tentative > tents =
+      somo_perceive::perceive_unknown( model_vector[ 0 ], ptbl, to_perceive,
+                                       le_pdb_file->text(), &pb_hyd, pb_opt );
+   if ( tents.isEmpty() ) {
+      editor_msg( "dark red",
+                  us_tr( "Perceive: no entries could be proposed for the non-coded residues\n" ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "No entries could be proposed for the non-coded residues." ),
+                             QString(), this );
+      return;
+   }
+
+   // The "save to somo.residue" checkbox must write the user's own table, and a previous perceive
+   // in this session may have left residue_filename pointing at the session overlay, so recover
+   // the permanent path here. apply_perceived_entries() below is what makes an accepted entry
+   // take effect without it.
+   QString permanent_residue_filename = residue_filename;
+   if ( permanent_residue_filename.endsWith( PERCEIVED_SUFFIX ) ) {
+      permanent_residue_filename.chop( PERCEIVED_SUFFIX.length() );
+   }
+
+   int accepted = 0;
+   int saved    = 0;
+   QStringList accepted_blocks;
+   QStringList accepted_hybrids;
+   for ( int t = 0; t < tents.size(); ++t ) {
+      // If this residue was accepted earlier in the session, open the dialog on THOSE values.
+      const QString previously_accepted = perceived_entries.count( tents[ t ].resName )
+         ? perceived_entries[ tents[ t ].resName ] : QString();
+      US_Hydrodyn_Perceive_Dialog * dlg =
+         new US_Hydrodyn_Perceive_Dialog( tents[ t ], le_pdb_file->text(), (void *) this, this,
+                                          0, previously_accepted );
+      if ( !previously_accepted.isEmpty() ) {
+         editor_msg( "blue", QString( us_tr( "Perceive: %1 was accepted earlier this session; "
+                                             "showing those values\n" ) ).arg( tents[ t ].resName ) );
+      }
+      // Modal, one residue at a time: each decision is independent and the user should not be
+      // asked to hold several half-reviewed entries in their head at once. The dialog carries
+      // Qt::Window (see its constructor), so it is a real top-level window and the modality and
+      // the isVisible() wait below both mean something.
+      fixWinButtons( dlg );
+      dlg->setWindowModality( Qt::ApplicationModal );
+      dlg->show();
+      dlg->raise();
+      dlg->activateWindow();
+      while ( dlg->isVisible() ) {
+         qApp->processEvents();
+         US_Saxs_Util::us_usleep( 10000 );
+      }
+      if ( dlg->accepted() ) {
+         ++accepted;
+         QString block = dlg->entry();
+         if ( !block.endsWith( "\n" ) ) block += "\n";
+         accepted_blocks  << block;
+         accepted_hybrids += dlg->new_hybrids();
+         editor_msg( "blue", QString( us_tr( "Perceive: accepted entry for %1\n" ) )
+                     .arg( tents[ t ].resName ) );
+         editor_msg( "black", block );
+         if ( dlg->save_requested() ) {
+            // the user's own table, never the session overlay -- and as a valid record, not the
+            // annotated block, which would leave their table unreadable from that point on
+            QFile f( permanent_residue_filename );
+            if ( f.open( QIODevice::Append | QIODevice::Text ) ) {
+               QTextStream ts( &f );
+               ts << perceived_table_record( block );
+               f.close();
+               ++saved;
+               editor_msg( "dark blue",
+                           QString( us_tr( "Perceive: appended %1 to %2\n" ) )
+                           .arg( tents[ t ].resName )
+                           .arg( permanent_residue_filename ) );
+            } else {
+               editor_msg( "red", QString( us_tr( "Perceive: could NOT write to %1\n" ) )
+                           .arg( permanent_residue_filename ) );
+            }
+         }
+      } else {
+         editor_msg( "dark red", QString( us_tr( "Perceive: skipped %1 (left to the "
+                                                 "Automatic Bead Builder)\n" ) )
+                     .arg( tents[ t ].resName ) );
+      }
+      const bool stop = dlg->skip_all();
+      delete dlg;
+      if ( stop ) {
+         editor_msg( "dark red",
+                     QString( us_tr( "Perceive: review abandoned, %1 residue(s) not looked at.\n" ) )
+                     .arg( tents.size() - t - 1 ) );
+         break;
+      }
+   }
+   editor_msg( "blue", QString( us_tr( "Perceive: %1 of %2 proposed entr(y/ies) accepted, "
+                                       "%3 appended to %4.\n" ) )
+               .arg( accepted ).arg( tents.size() ).arg( saved )
+               .arg( QFileInfo( permanent_residue_filename ).fileName() ) );
+
+   if ( !apply_perceived_entries( accepted_blocks, accepted_hybrids, saved > 0 ) ) {
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "The accepted entries could not be applied -- see the text "
+                                    "window for which file could not be written." ), QString(), this );
+   }
+}
+
+// Discard every entry accepted this session and go back to the user's own table. The overlay file
+// is removed rather than left behind, so nothing can later be re-selected by hand and mistaken for
+// a curated table. The user's somo.residue is untouched -- entries they chose to save are theirs
+// and stay there; this only undoes the session.
+void US_Hydrodyn::reset_perceived_residues() {
+   QString permanent = residue_filename;
+   if ( permanent.endsWith( PERCEIVED_SUFFIX ) ) {
+      permanent.chop( PERCEIVED_SUFFIX.length() );
+   }
+   const QString overlay = permanent + PERCEIVED_SUFFIX;
+
+   if ( perceived_entries.empty() && residue_filename == permanent && !QFile::exists( overlay ) ) {
+      editor_msg( "blue", us_tr( "Perceive: nothing to reset, no entries accepted this session\n" ) );
+      US_Static::us_message( us_tr( "Please note:" ),
+                             us_tr( "No perceived entries are in effect." ), QString(), this );
+      return;
+   }
+
+   const int n = (int) perceived_entries.size();
+   perceived_entries.clear();
+   QFile::remove( overlay );
+   residue_filename = permanent;
+   read_residue_file();
+   create_fasta_vbar_mw();
+   if ( lbl_table ) {
+      lbl_table->setText( QDir::toNativeSeparators( residue_filename ) );
+   }
+   editor_msg( "dark blue", QString( us_tr( "Perceive: reset -- %1 perceived entr(y/ies) "
+                                            "discarded, active residue table is now %2\n" ) )
+               .arg( n ).arg( residue_filename ) );
+   reload_pdb();
+   US_Static::us_message( us_tr( "Please note:" ),
+                          QString( us_tr( "%1 perceived entr(y/ies) discarded.\n\nThe active "
+                                          "residue table is back to:\n%2\n\nAnything you chose "
+                                          "to save to somo.residue is unaffected." ) )
+                          .arg( n ).arg( residue_filename ), QString(), this );
+}
+
+// Make accepted perceived entries take effect in the running session.
+//
+// Accepting used to only print the entry, so the bead builder still saw a non-coded residue and
+// fell back to a generic averaged bead -- the exact outcome this feature exists to avoid.
+//
+// The entries go into a session OVERLAY of the residue table (<table>.perceived) and SOMO's own
+// reader is re-run on it, rather than the residue structures being built by hand here:
+// read_residue_file() fills a dozen derived maps besides residue_list -- residue_atom_hybrid_map,
+// res_vbar, res_mw, vdwf, msroll radii, the save_* copies reload_pdb() restores from -- and
+// re-running it is the only way those cannot end up out of step. The user's own table is never
+// written here; that is the dialog checkbox's job. A second call in the same session finds
+// residue_filename already pointing at the overlay and accumulates into it.
+//
+// persist_hybrids: also append any novel hybrid rows to the permanent somo.hybrid. Only for
+// entries the user saved, since otherwise their saved entry is rejected on the next start.
+bool US_Hydrodyn::apply_perceived_entries( const QStringList & blocks,
+                                           const QStringList & hybrids,
+                                           bool persist_hybrids ) {
+   if ( blocks.isEmpty() ) {
+      return true;
+   }
+
+   // A novel hybrid type has to be resolvable before read_residue_file() will accept the atom
+   // lines that use it -- it rejects any atom whose hybrid is absent from these two maps.
+   // Injecting it rather than repointing saxs_options.default_hybrid_filename at an overlay is
+   // deliberate: that filename is written to the user's config and would follow them into their
+   // next session.
+   if ( !hybrids.isEmpty() ) {
+      QRegularExpression net_charge( "((?:\\+|-)\\d*)$" );
+      QRegularExpression spaces( "\\s+" );
+      int added = 0;
+      for ( int h = 0; h < hybrids.size(); ++h ) {
+         const QStringList f = hybrids[ h ].split( spaces, Qt::SkipEmptyParts );
+         if ( f.size() < 7 ) continue;
+         const QString saxs_name = f[ 0 ];
+         const QString name      = f[ 1 ];
+         const double  num_elect = f[ 6 ].toDouble();
+         double protons = num_elect;
+         QRegularExpressionMatch m = net_charge.match( saxs_name );
+         if ( m.hasMatch() ) {
+            protons += m.captured( 1 ).toDouble();   // the arithmetic read_hybrid_file() uses
+         }
+         hybrid_to_electrons[ name ] = num_elect;
+         hybrid_to_protons  [ name ] = protons;
+         ++added;
+      }
+      editor_msg( "dark blue",
+                  QString( us_tr( "Perceive: %1 new hybrid type(s) made available for this "
+                                  "session\n" ) ).arg( added ) );
+      if ( persist_hybrids ) {
+         QString err;
+         if ( write_table_overlay( saxs_options.default_hybrid_filename,
+                                   saxs_options.default_hybrid_filename, hybrids, err ) ) {
+            editor_msg( "dark blue",
+                        QString( us_tr( "Perceive: appended %1 new hybrid type(s) to %2\n" ) )
+                        .arg( added ).arg( saxs_options.default_hybrid_filename ) );
+         } else {
+            editor_msg( "red", QString( us_tr( "Perceive: could NOT write %1 -- the saved "
+                                               "entr(y/ies) will not load next session\n" ) )
+                        .arg( err ) );
+         }
+      }
+   }
+
+   QString permanent_residue_filename = residue_filename;
+   if ( permanent_residue_filename.endsWith( PERCEIVED_SUFFIX ) ) {
+      permanent_residue_filename.chop( PERCEIVED_SUFFIX.length() );
+   }
+   const QString residue_overlay = permanent_residue_filename + PERCEIVED_SUFFIX;
+
+   // Key each record by residue name so accepting the same residue twice REPLACES it. The overlay
+   // is then rebuilt from the PERMANENT table plus the session's records -- never appended to --
+   // or a revisited residue would appear in the table twice and read_residue_file() would keep
+   // both as duplicate variants.
+   for ( int b = 0; b < blocks.size(); ++b ) {
+      const QString record = perceived_table_record( blocks[ b ] );
+      if ( record.isEmpty() ) continue;
+      const QStringList rl = record.split( "\n" );
+      QString resname;
+      for ( int i = 0; i < rl.size(); ++i ) {          // first non-comment line is the header
+         if ( rl[ i ].trimmed().isEmpty() ) continue;
+         const QStringList f = rl[ i ].split( "\t" );
+         if ( f.size() >= 7 ) { resname = f[ 0 ]; break; }
+      }
+      if ( resname.isEmpty() ) continue;
+      perceived_entries[ resname ] = record;
+   }
+
+   QStringList records;
+   for ( map < QString, QString >::iterator it = perceived_entries.begin();
+         it != perceived_entries.end(); ++it ) {
+      records << it->second;
+   }
+
+   QString failed_path;
+   if ( !write_table_overlay( permanent_residue_filename, residue_overlay, records, failed_path ) ) {
+      editor_msg( "red", QString( us_tr( "Perceive: could NOT write %1 -- the accepted "
+                                         "entr(y/ies) are NOT in effect\n" ) ).arg( failed_path ) );
+      return false;
+   }
+
+   residue_filename = residue_overlay;
+   read_residue_file();
+   create_fasta_vbar_mw();
+   if ( lbl_table ) {
+      lbl_table->setText( QDir::toNativeSeparators( residue_filename ) );
+   }
+   editor_msg( "dark blue", QString( us_tr( "Perceive: active residue table is now %1\n" ) )
+               .arg( residue_filename ) );
+   // The atoms were bound to residues when the structure was read, so updating the tables is not
+   // enough on its own -- re-read the structure against them. This is what actually stops the
+   // bead builder calling these residues non-coded.
+   reload_pdb();
+   return true;
 }
 
 void US_Hydrodyn::residue()

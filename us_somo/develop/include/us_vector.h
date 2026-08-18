@@ -50,6 +50,14 @@ class US_Vector
    static vector < double > vunion( vector < double > &x, vector < double > &y );
    static vector < double > vunion( vector < vector < double > > &x );
 
+   // Build a map from every value in 'grids' to a canonical representative,
+   // merging runs of values whose relative gap is <= reltol.  Used so that q
+   // values differing only by last-digit rounding (e.g. 0.00547318 vs
+   // 0.00547317) collapse to one grid point, while genuinely distinct points
+   // stay separate.  Unlike fixed-grid rounding this has no bin boundaries, so
+   // near-identical values never straddle an edge.
+   static map < double, double > canonical_map( vector < vector < double > > & grids, double reltol );
+
 };
 
 #define US_STAT_ERROR -1e99

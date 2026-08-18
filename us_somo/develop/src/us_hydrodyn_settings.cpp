@@ -1420,6 +1420,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       parameters[ "pdb_vis.visualization" ] = QString( "%1" ).arg( pdb_vis.visualization );
       parameters[ "pdb_vis.filename" ] = QString( "%1" ).arg( pdb_vis.filename );
       parameters[ "pdb_parse.skip_hydrogen" ] = QString( "%1" ).arg( pdb_parse.skip_hydrogen );
+      parameters[ "pdb_parse.skip_deuterium" ] = QString( "%1" ).arg( pdb_parse.skip_deuterium );
       parameters[ "pdb_parse.skip_water" ] = QString( "%1" ).arg( pdb_parse.skip_water );
       parameters[ "pdb_parse.alternate" ] = QString( "%1" ).arg( pdb_parse.alternate );
       parameters[ "pdb_parse.find_sh" ] = QString( "%1" ).arg( pdb_parse.find_sh );
@@ -1936,6 +1937,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "pdb_vis.visualization" ) ) pdb_vis.visualization = parameters[ "pdb_vis.visualization" ].toInt();
    if ( parameters.count( "pdb_vis.filename" ) ) pdb_vis.filename = parameters[ "pdb_vis.filename" ];
    if ( parameters.count( "pdb_parse.skip_hydrogen" ) ) pdb_parse.skip_hydrogen = parameters[ "pdb_parse.skip_hydrogen" ] == "1";
+   if ( parameters.count( "pdb_parse.skip_deuterium" ) ) pdb_parse.skip_deuterium = parameters[ "pdb_parse.skip_deuterium" ] == "1";
    if ( parameters.count( "pdb_parse.skip_water" ) ) pdb_parse.skip_water = parameters[ "pdb_parse.skip_water" ] == "1";
    if ( parameters.count( "pdb_parse.alternate" ) ) pdb_parse.alternate = parameters[ "pdb_parse.alternate" ] == "1";
    if ( parameters.count( "pdb_parse.find_sh" ) ) pdb_parse.find_sh = parameters[ "pdb_parse.find_sh" ] == "1";
@@ -2928,6 +2930,7 @@ void US_Hydrodyn::hard_coded_defaults()
    hydro.overlap                                            = 0.0;               // overlap
 
    pdb_parse.skip_hydrogen                                  = true;
+   pdb_parse.skip_deuterium                                 = true;
    pdb_parse.skip_water                                     = true;
    pdb_parse.alternate                                      = true;
    pdb_parse.find_sh                                        = true;
@@ -3338,6 +3341,8 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "hplc_makeiq_cutmax_pct"     ]                  = "1";
    gparams[ "hplc_cb_makeiq_avg_peaks"   ]                  = "false";
    gparams[ "hplc_makeiq_avg_peaks"      ]                  = "5";
+   gparams[ "hplc_cb_gg_cyclic"          ]                  = "true";
+   
    gparams[ "zeno_repeats"               ]                  = "1";
    gparams[ "zeno_max_cap"               ]                  = "false";
    gparams[ "zeno_max_cap_pct"           ]                  = "0.5";
@@ -3470,6 +3475,11 @@ QString US_Hydrodyn::default_differences_load_pdb()
    {
       str += QString(base + sub + "Skip hydrogen: %1.\n")
          .arg(pdb_parse.skip_hydrogen ? "Selected" : "Not selected");
+   }
+   if ( pdb_parse.skip_deuterium != default_pdb_parse.skip_deuterium )
+   {
+      str += QString(base + sub + "Skip deuterium: %1.\n")
+         .arg(pdb_parse.skip_deuterium ? "Selected" : "Not selected");
    }
    if ( pdb_parse.skip_water != default_pdb_parse.skip_water )
    {
