@@ -69,6 +69,38 @@ int main( int argc, char** argv ) {
    PhysParams        phys;
    phys.mw = 2000.0;
 
+   // ---- the parser must survive the HIGH-PRECISION report ----------------------
+   // SOMO sets GRPY_HP so the program prints %24.15E instead of the Fortran's %11.3E.
+   // That matters because the shell reduction differences successive rungs: at four
+   // significant figures the quantisation lands straight on the error bar. The parser
+   // finds values by their exponent rather than by column, so it should be indifferent
+   // to the field width -- this asserts that, and that a double survives the round trip.
+   {
+      const double dt  = 5.0158680123456789e-07;
+      const double dr  = 2.5544796912345678e+07;
+      const QString hp =
+         QString( " Rotational diffusion coefficient:                                     %1[s^-1]    \n"
+                  " Translational diffusion coefficient:                                  %2[cm^2/s]  \n"
+                  " Translational diffusion coefficient:                                  %3[cm^2/s]  \n" )
+            .arg( dr, 24, 'E', 15 ).arg( dt, 24, 'E', 15 ).arg( dt, 24, 'E', 15 );
+      Results r;
+      parse_report( hp, r );
+      chk( "high-precision report parses D_r", close_to( r.rotational_diffusion, dr, 1e-14 ) );
+      chk( "high-precision report parses D_t", close_to( r.translational_diffusion, dt, 1e-14 ) );
+      chk( "high-precision round trip beats 4 significant figures",
+           std::fabs( r.translational_diffusion - dt ) / dt < 1e-12 );
+
+      // And the legacy width must still parse, since the program's default is unchanged
+      // and an older binary on PATH would still emit it.
+      const QString es3 =
+         QString( " Translational diffusion coefficient:                                  %1[cm^2/s]  \n" )
+            .arg( dt, 11, 'E', 3 );
+      Results r3;
+      parse_report( es3, r3 );
+      chk( "legacy ES11.3 report still parses",
+           std::fabs( r3.translational_diffusion - dt ) / dt < 1e-3 );
+   }
+
    // ---- the input reader, on the file SOMO writes -----------------------------
    {
       const QString in_path = QDir( here ).filePath( "data/dumbbell.grpy" );
