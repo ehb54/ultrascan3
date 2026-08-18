@@ -111,9 +111,9 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
       QMessageBox::information(
          this, windowTitle() + us_tr( ": GRPY running" ),
          us_tr( "A GRPY calculation is still running.\n\n"
-                "It is being asked to stop. The model now being computed will finish first,"
-                " because the solve itself cannot be interrupted part-way; close again once"
-                " it has stopped." ) );
+                "It is being asked to stop. The calculation is ended as soon as it responds,"
+                " and any results already obtained are kept; close again once it has"
+                " stopped." ) );
       stopFlag = true;
       if ( pb_stop_calc ) {
          pb_stop_calc->setEnabled( false );
