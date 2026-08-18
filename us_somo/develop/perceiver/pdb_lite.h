@@ -118,8 +118,9 @@ inline std::vector<std::pair<int,int>> read_conect(const std::string& path){
 //
 // This lives here rather than in one test because SOMO strips both on load and the perceiver
 // harness did not, so every test built on pdb_lite saw a structure SOMO would never hand it.
-// 2AAS is the demo file that exposes it: 7840 H, 245 in model 1, and it is in the DEMOS list
-// driving regress/coverage/sssrreal.
+// 2AAS_mod1 is the fixture that exposes it: 245 explicit H (it is model 1 of the 32-model NMR
+// ensemble 2AAS, trimmed; the full entry carries 7840), and it is in the DEMOS list driving
+// regress/coverage/sssrreal.
 //
 // The element column WINS over the name, for both isotopes and for the same reason SOMO gives:
 // a name test alone cannot tell a deuterium from the second letter of a two-letter element
