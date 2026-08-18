@@ -43,8 +43,18 @@ Built build(const std::string& resname,
     if (opt.compute_volume) {
         std::vector<somo_volume::Sphere> sph;
         sph.reserve(idx.size());
-        for (int i : idx)
-            sph.push_back({atoms[i].x, atoms[i].y, atoms[i].z, perceived[i].vdw_radius});
+        for (int i : idx) {
+            // Field by field rather than brace-init: Sphere carries default member initializers,
+            // which make it a non-aggregate before C++14, so the braced form is not valid C++11.
+            // Same trap as grpy's ShellReport::Provenance (PR #525); the initializers stay, since
+            // they are what make an untouched Sphere read 0 rather than indeterminate.
+            somo_volume::Sphere s;
+            s.x = atoms[i].x;
+            s.y = atoms[i].y;
+            s.z = atoms[i].z;
+            s.r = perceived[i].vdw_radius;
+            sph.push_back(s);
+        }
         somo_volume::Options vo;
         vo.probe = opt.volume_probe;
         vo.grid = opt.volume_grid;
