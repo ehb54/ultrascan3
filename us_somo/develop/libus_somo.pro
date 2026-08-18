@@ -613,12 +613,8 @@ SOURCES *= \
 #  us_laser.cpp \
 
 HEADERS *= \
-  grpy/linalg.hpp \
-  grpy/grpy_core.hpp \
-  grpy/grpy_report.hpp \
-  grpy/grpy_api.hpp \
-  grpy/parallel_qt.hpp \
-  grpy/parallel_std.hpp \
+  grpy/grpy_types.hpp \
+  grpy/grpy_process.hpp \
   grpy/grpy_exposure.hpp \
   grpy/grpy_shell.hpp \
 #  3dplot/mesh2mainwindowbase.h \
@@ -1031,9 +1027,9 @@ HEADERS *= \
 
 QT += opengl network
 
-# --- in-process GRPY module (grpy/) ---------------------------------------
-# Self-contained C++ hydrodynamics module called in-process (replaces the GRPY
-# subprocess + stdout scraping). Header-only; needs QtConcurrent for its thread
-# pool and the vendored Eigen + the module dir on the include path.
-QT += concurrent
+# --- GRPY module (grpy/) ---------------------------------------------------
+# Shell reduction, solvent-exposure ranking, and the process boundary to the GRPY
+# program, which is run rather than linked: GRPY is GPLv3 and UltraScan is LGPLv3
+# (ehb54/ultrascan-tickets#1012). Header-only, and no longer needs QtConcurrent or
+# Eigen -- the solver that used them is now a separate program, ehb54/grpy-cpp.
 INCLUDEPATH += $$PWD/include $$PWD/grpy

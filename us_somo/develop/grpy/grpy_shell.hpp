@@ -1,4 +1,9 @@
-// Self-validating shell reduction over grpy::Solver.
+// Self-validating shell reduction over an injected solver.
+//
+// The solver is reached through grpy::SolveFn rather than named directly: the GRPY-derived
+// code is GPLv3 and lives in its own program (ehb54/grpy-cpp), while this file and
+// grpy_exposure.hpp are original work and stay with UltraScan. SOMO supplies a SolveFn that
+// runs that program once per rung. See ehb54/ultrascan-tickets#1012.
 //
 // Shell reduction is only defensible if it reports its own error. A fixed "keep X% of
 // beads" rule is just another tuned constant, and the user has no way to know what it cost
@@ -10,11 +15,19 @@
 // ladder costs ~1.14x its final rung: the convergence check is nearly free relative to
 // simply solving at the final size.
 //
-// MEASURED. Against unreduced exact GRPY as ground truth, the reported bar bounded the
-// true error in 92/92 translational runs (23 models, N=204-4068) and 252/252
-// multi-observable runs (12 models x 3 tolerances x 7 observables). The observed
-// convergence order (median 1.83) matches the value independently predicted by a separate
-// raw reduction sweep -- the error model is derived, not fitted.
+// MEASURED, against unreduced exact GRPY as ground truth. The full grid is 23 models
+// (N=204-4068) x 5 observables x 4 tolerances; every reduced evaluation met its requested
+// tolerance and the reported bar bounded the true error, worst case spending 55.3% of the
+// allowed budget. The observed convergence order (median 1.83) matches the value predicted
+// by a separate raw reduction sweep -- the error model is derived, not fitted.
+//
+// An earlier version of this note claimed 92/92 and 252/252. Both were wrong. The second
+// counted 7 observables, three of which are research-only with no shipped equivalent; and
+// the multi-observable grid covered 12 of the 23 models, so 11 models never had intrinsic
+// viscosity or rotational diffusion checked at all. Scored honestly on the value this code
+// actually returns -- the finest rung, not the extrapolation -- the same evidence was
+// 87/92 and 177/180, and widening the grid to all 23 models then exposed two outright
+// tolerance misses. That is what raising floor_frac to 0.75 fixes; see its comment below.
 //
 // SCOPE OF THE SPEEDUP. Relative to an unreduced model the gain is large (up to ~120x),
 // but SOMO defaults to ASA buried-bead exclusion, which already removes most of the dead
@@ -33,49 +46,60 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "grpy_api.hpp"
+#include "grpy_types.hpp"
 #include "grpy_exposure.hpp"
 
 namespace grpy {
 
-// Observables the ladder can be asked to converge. They do NOT share a reduction frontier:
-// measured median error ratio relative to D_t at equal reduction is 1.77x for D_r but
-// 3.34x for intrinsic viscosity, which drove the stopping decision in 36/36 test cases.
-// Requiring viscosity therefore costs a large part of the speedup, so the caller chooses.
-enum class Obs { Dt, Dr, Sedimentation, EtaInf, EtaZero };
-
-inline const char* obs_name(Obs o) {
-    switch (o) {
-        case Obs::Dt:            return "translational diffusion";
-        case Obs::Dr:            return "rotational diffusion";
-        case Obs::Sedimentation: return "sedimentation coefficient";
-        case Obs::EtaInf:        return "intrinsic viscosity (infinite frequency)";
-        case Obs::EtaZero:       return "intrinsic viscosity (zero frequency)";
-    }
-    return "?";
-}
-
-inline double obs_value(const Results& r, Obs o) {
-    switch (o) {
-        case Obs::Dt:            return r.translational_diffusion_centre;
-        case Obs::Dr:            return r.rotational_diffusion;
-        case Obs::Sedimentation: return r.sedimentation;
-        case Obs::EtaInf:        return r.intrinsic_viscosity_high;
-        case Obs::EtaZero:       return r.intrinsic_viscosity_zero;
-    }
-    return 0.0;
-}
 
 struct ShellOptions {
     bool   enabled = false;          // off by default: results must not move silently
     double tol     = 5e-3;           // relative tolerance on every required observable
     double probe   = 1.4;            // Shrake-Rupley probe radius (model length units)
-    int    K       = 64;             // exposure sample points per bead
+    // Exposure sample points per bead. Raised from 64 to 512 to make the selection far less
+    // sensitive to the ORIENTATION of the input coordinates.
+    //
+    // The point pattern is generated once in the coordinate frame and applied to every bead by
+    // translation and scaling, so it does not rotate with the structure: a rigid rotation changes
+    // 34-77% of bead exposures by a few of the K sample points and therefore changes the ranking.
+    // That reaches the answer almost entirely through the stopping decision -- where the ladder
+    // stops at the same rung in every frame the reported value moves by at most 0.075%, and where
+    // the orientation flips the rung by one it moves by up to 1.043%.
+    //
+    // Measured over twelve rigid motions of six models, matched but for K: at 64 one case of
+    // eighteen changed its stopping rung and the frame-to-frame spread reached 0.23%; at 512 no
+    // case changes rung and the spread falls to 0.016%. Retained beads are unchanged (mean 31.5%
+    // vs 31.3%) and compliance and coverage are perfect either way, so the finer quadrature costs
+    // nothing but exposure time -- about 3% of the ladder, since exposure is milliseconds against
+    // a solve of seconds. It does not make selection frame-independent, only ~14x less sensitive.
+    int    K       = 512;
     // Doubling ladder. The final 1.0 rung is the unreduced model, so an unreducible
     // structure degrades to exactly today's behaviour rather than to a wrong answer.
     std::vector<double> ladder = {0.0625, 0.125, 0.25, 0.5, 1.0};
     std::vector<Obs> require = {Obs::Dt, Obs::Dr, Obs::Sedimentation};
     double k_min = 1.0, k_max = 3.0, safety = 1.5;
+
+    // Floor on the error estimate, as a fraction of the raw inter-rung gap: the estimate never
+    // claims a tightening better than 1/floor_frac. Raised from 0.5 to 0.75 after validation on
+    // the full 23-model grid with all five observables -- the earlier grid ran five observables
+    // over only 12 models, and widening it exposed two evaluations that met the estimator's stop
+    // test yet missed the requested tolerance (2GD1 intrinsic viscosity at 1%: estimate 0.859%,
+    // true error 1.066%), plus eleven more that were compliant but undercovered.
+    //
+    // Raising THIS rather than `safety` is deliberate. The estimate is the max of the two terms,
+    // so while the floor binds the safety factor does nothing: with a doubling ladder and the
+    // order at k_max = 3 the Richardson remainder is gap/7, and safety * gap/7 stays under
+    // 0.5 * gap for any safety <= 3.5. Measured on the same grid, safety = 2.0 fixed neither
+    // failure and still drove the median case to retain every bead, because it inflates the
+    // estimate for the well-behaved majority where the floor is slack. The floor acts only on
+    // the high-observed-order rows that actually fail.
+    //
+    // At 0.75 the full grid is clean: 200/200 reduced evaluations inside their tolerance and
+    // all 200 covered, worst case using 55.3% of the allowed error budget (was 106.6%), for
+    // 4.6 percentage points more beads retained on average. Exposed rather than hardcoded so it
+    // can be validated without patching a copy of this header -- which is how it had to be
+    // measured, and a copy of an estimator is exactly what makes results unattributable later.
+    double floor_frac = 0.75;
 
     // Largest rung the ladder may attempt, in beads (0 = unlimited). Set by the caller from
     // the available memory: the solver holds the tiled upper triangle of an 11N x 11N
@@ -206,7 +230,8 @@ inline double richardson_order(double r1, double r2, double ratio_obs,
 }
 
 inline Richardson richardson(const std::vector<double>& v, const std::vector<int>& ns,
-                             double k_min, double k_max, double safety) {
+                             double k_min, double k_max, double safety,
+                             double floor_frac) {
     Richardson r;
     const size_t n = v.size();
     if (n < 3 || ns.size() != n)   { r.declined = "fewer than three rungs"; return r; }
@@ -242,8 +267,8 @@ inline Richardson richardson(const std::vector<double>& v, const std::vector<int
     // aggressive regime that carries the risk -- and is slack at the median observed
     // k~1.83, so the extrapolation keeps its benefit on well-behaved models.
     double raw_gap = std::fabs(gap2) / std::fabs(r.mu);
-    r.floored = (0.5 * raw_gap > err);
-    r.err = std::max(err, 0.5 * raw_gap);
+    r.floored = (floor_frac * raw_gap > err);
+    r.err = std::max(err, floor_frac * raw_gap);
     r.ok = true;
     return r;
 }
@@ -255,18 +280,20 @@ inline Richardson richardson(const std::vector<double>& v, const std::vector<int
 // Results whose fields contradict its own on-disk report.)
 class ShellSolver {
 public:
-    ShellSolver(la::Parallel& par, Options opt = {}, ShellOptions sopt = {})
-        : par_(par), opt_(opt), sopt_(sopt) {}
+    // `solve` runs ONE bead list to completion -- in SOMO, one invocation of the external
+    // GRPY program. The ladder calls it once per rung, at most five times per model, which
+    // is negligible against O((11N)^3): the last rung alone is ~7/8 of the total work.
+    ShellSolver(SolveFn solve, ShellOptions sopt = {})
+        : solve_(std::move(solve)), sopt_(sopt) {}
 
     Results run(const std::vector<Bead>& beads, const PhysParams& p,
                 ShellReport& rep, const ProgressFn& progress = {}) const {
-        Solver solver(par_, opt_);
         rep = ShellReport{};
         rep.n_full = (int)beads.size();
         rep.require = sopt_.require;
 
         if (!sopt_.enabled || beads.size() < 32) {          // too small to be worth reducing
-            Results r = solver.run(beads, p, progress);
+            Results r = solve_(beads, p, progress);
             rep.n_used = (int)beads.size();
             rep.converged = true;
             rep.viscosity_unreliable = false;              // unreduced: everything stands
@@ -284,7 +311,7 @@ public:
         if (pin.mw <= 0) { double s = 0; for (const auto& b : beads) s += b.mw; pin.mw = s; }
         const double rg2_full = full_rg2(beads);
 
-        std::vector<double> ex = shell::exposure(to_core(beads), (int)beads.size(),
+        std::vector<double> ex = shell::exposure(beads, (int)beads.size(),
                                                  sopt_.K, sopt_.probe);
 
         // PROGRESS. Every rung is a separate solve sweeping 0..100%, so reporting each one
@@ -352,7 +379,20 @@ public:
                              stage_buf.c_str());
                 };
             }
-            last = solver.run(rb, pin, wrapped);
+            // A solver that runs out of process can be killed the instant Stop is
+            // pressed, rather than having to finish the rung it is on -- but the rungs
+            // already completed are still perfectly good, and the caller was promised
+            // "the result and error estimate obtained so far". So a stop DURING a rung is
+            // treated exactly like a stop between rungs: the ladder ends where it stands
+            // and reports itself as not converged. Only a stop before the first rung has
+            // finished leaves nothing to report, and that one propagates.
+            try {
+                last = solve_(rb, pin, wrapped);
+            } catch (const Stopped&) {
+                rep.stopped = true;
+                if (rep.levels == 0) throw;
+                break;
+            }
             last.rg2 = rg2_full;                           // see note above
             rep.ns.push_back((int)rb.size());
             if (sopt_.record_subsets) rep.kept.push_back(std::move(rung_idx));
@@ -374,7 +414,8 @@ public:
                 // a single shared k would be wrong for all but one of them.
                 std::vector<double> series;
                 for (auto& h : hist) series.push_back(h[m]);
-                Richardson ri = richardson(series, rep.ns, sopt_.k_min, sopt_.k_max, sopt_.safety);
+                Richardson ri = richardson(series, rep.ns, sopt_.k_min, sopt_.k_max, sopt_.safety,
+                                           sopt_.floor_frac);
                 rep.prov[m] = { ri.ok, ri.clamped_low, ri.clamped_high, ri.floored, ri.declined };
                 if (ri.ok) { rep.extrapolated[m] = ri.mu; rep.err_est[m] = ri.err; rep.k_obs[m] = ri.k; }
                 else {
@@ -419,20 +460,35 @@ public:
     }
 
 private:
-    la::Parallel& par_;
-    Options       opt_;
+    SolveFn       solve_;
     ShellOptions  sopt_;
 
-    static std::vector<core::Bead> to_core(const std::vector<Bead>& b) {
-        std::vector<core::Bead> c(b.size());
-        for (size_t i = 0; i < b.size(); ++i) c[i] = {b[i].x, b[i].y, b[i].z, b[i].radius, b[i].mw};
-        return c;
-    }
-    static double full_rg2(const std::vector<Bead>& b) {
-        auto c = to_core(b);
-        Eigen::Vector3d rc; double rg2 = 0;
-        core::calcrg2(c, (int)c.size(), rc, rg2);
-        return rg2;
+    // Volume-weighted mean square radius of gyration of a union of uniform spheres:
+    // Rg^2 = SUM[ (3/5)a_i^2 + |r_i - R|^2 ] V_i / SUM V_i, about the volume centroid R,
+    // where the (3/5)a^2 term is a solid sphere's own second moment. Standard result,
+    // written here from the definition so that this file needs nothing from the solver.
+    static double full_rg2( const std::vector<Bead>& b ) {
+       double cx = 0, cy = 0, cz = 0, vol = 0;
+       for ( const Bead& q : b ) {
+          const double v = q.radius * q.radius * q.radius;   // 4/3 pi cancels in the ratio
+          cx  += q.x * v;
+          cy  += q.y * v;
+          cz  += q.z * v;
+          vol += v;
+       }
+       if ( vol <= 0 ) {
+          return 0.0;
+       }
+       cx /= vol;
+       cy /= vol;
+       cz /= vol;
+       double rg2 = 0;
+       for ( const Bead& q : b ) {
+          const double v  = q.radius * q.radius * q.radius;
+          const double dx = q.x - cx, dy = q.y - cy, dz = q.z - cz;
+          rg2 += ( 3.0 / 5.0 * q.radius * q.radius + dx * dx + dy * dy + dz * dz ) * v / vol;
+       }
+       return rg2;
     }
     // Selection by INDEX. The earlier version rebuilt the API beads by searching the full
     // list for matching coordinates -- O(keep*N), 32M comparisons on an 11328-bead model --
@@ -441,7 +497,7 @@ private:
     static std::vector<Bead> subset(const std::vector<Bead>& b,
                                     const std::vector<double>& ex, double f,
                                     std::vector<int>* kept_idx) {
-        std::vector<size_t> idx = shell::reduce_top_frac_idx(to_core(b), ex, f);
+        std::vector<size_t> idx = shell::reduce_top_frac_idx(b, ex, f);
         std::vector<Bead> out; out.reserve(idx.size());
         for (size_t k : idx) out.push_back(b[k]);
         if (kept_idx) {
