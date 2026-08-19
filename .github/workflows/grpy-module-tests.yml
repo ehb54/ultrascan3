@@ -1,0 +1,45 @@
+name: "grpy module tests"
+
+# The grpy module's tests were only ever run by hand, so a change could land here with
+# nothing checking the ladder, the exposure ranking or the error estimator. They are the
+# parts with numbers in them, and this branch is where the module is developed.
+#
+# Named for grpy rather than reusing main's "somo-module-tests.yml" on purpose. That file
+# carries a perceiver job as well, and main is re-baselined from this branch by wholesale
+# snapshot -- a same-named file here would replace it and silently drop the perceiver's CI.
+# A distinct name can at worst duplicate the grpy job on main, which is cheap and visible.
+#
+# test_process drives QProcess and so needs QtCore; run.sh skips it when QTDIR is unset,
+# which is the case here. test_shell is Qt-free and does run. The module is compiled at
+# -std=gnu++11, the standard SOMO itself builds it with while Qt5 is supported.
+
+on:
+  push:
+    branches: [ somo-dev ]
+    paths:
+      - 'us_somo/develop/grpy/**'
+      - 'us_somo/develop/src/us_hydrodyn_grpy.cpp'
+      - '.github/workflows/grpy-module-tests.yml'
+  pull_request:
+    branches: [ somo-dev ]
+    paths:
+      - 'us_somo/develop/grpy/**'
+      - 'us_somo/develop/src/us_hydrodyn_grpy.cpp'
+      - '.github/workflows/grpy-module-tests.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  grpy:
+    name: grpy module tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run grpy module tests
+        working-directory: us_somo/develop/grpy/tests
+        run: ./run.sh
