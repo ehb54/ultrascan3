@@ -3,6 +3,7 @@
 #include "us_solution_gui.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_theme.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_investigator.h"
@@ -1244,10 +1245,8 @@ void US_SolutionMgrNew::reset( void )
 
       lw_analytes->addItem( item );
    }
-   // Turn the red label back
-   QPalette p = lb_amount->palette();
-   p.setColor( QPalette::WindowText, Qt::white );
-   lb_amount->setPalette( p );
+   // Turn the red label back to the ordinary label color
+   US_Theme::tag( lb_amount, US_Theme::Label );
    const bool is_ok = can_accept();
 }
 
