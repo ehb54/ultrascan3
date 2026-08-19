@@ -215,6 +215,9 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 		   
 	       //save ssf-dir name for future DB save
 	       protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
+
+	       //update GUI
+	       
 	     }
 	   
 	   // //pass ranges from reportItems

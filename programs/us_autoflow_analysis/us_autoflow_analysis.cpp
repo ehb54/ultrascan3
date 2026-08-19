@@ -1340,7 +1340,7 @@ void US_Analysis_auto::gui_update( )
 	       **/
 	      sdiag_mwlsim -> save_sims_auto();
 	      
-	      sdiag_mwlsim->show(); //DEBUG ONLY
+	      //sdiag_mwlsim->show(); //DEBUG ONLY
 	    }
 	    
 	  return;
@@ -1383,7 +1383,7 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir.section("/", -2, -2);
   protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
   sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
-  sdiag_edit -> show(); //DEBUG
+  //sdiag_edit -> show(); //DEBUG
 
   //Call MWL-Fit:
   protocol_details_at_analysis_velmwl[ "auto_flag_mwlfit"] = QString("VELMWL_MWLFIT_SIM_ANALYSIS");
@@ -1404,6 +1404,10 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   qDebug() << "For MWL-fit; \"chann_to_analyse\" -- " 
 	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
   sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+
+  sdiag->setParent(this, Qt::Widget);
+  sdiag->setFrameShape( QFrame::Box);
+  sdiag->setLineWidth(2);
   sdiag -> show(); //for debug
 }
 
