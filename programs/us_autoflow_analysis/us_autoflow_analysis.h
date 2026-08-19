@@ -53,6 +53,7 @@ class US_Analysis_auto : public US_Widgets
         US_Norm_Profile*  sdiag_norm_profile;
         US_MwlSpeciesSim* sdiag_mwlsim;
         US_Edit*          sdiag_edit;
+        bool velmwl_fit_open;
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */

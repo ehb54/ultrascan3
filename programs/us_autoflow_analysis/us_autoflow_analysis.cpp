@@ -170,6 +170,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   autoflow_expType   = protocol_details[ "expType" ];
   dataSource         = protocol_details[ "dataSource" ];
 
+  velmwl_fit_open = false;
+
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
     {
@@ -184,14 +186,6 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   else
     {
       sdiag_norm_profile->hide();
-
-      //close sdiag if left open:
-      bool mwl_fit_open = sdiag->isVisible();
-      if ( mwl_fit_open )
-	{
-	  qDebug() << "Closing/deleting MWL-fit (in VEL-MWL) widget!";
-	  sdiag->close();
-	}
     }
  
   
@@ -1421,8 +1415,17 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
 
   sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  //close sdiag if left open:
+  bool mwl_fit_open = sdiag->isVisible();
+  if ( mwl_fit_open )
+    {
+      qDebug() << "Closing/deleting MWL-fit (in VEL-MWL) widget!";
+      sdiag->close();
+      velmwl_fit_open = false;
+    }
   panel->addWidget( sdiag );
-  sdiag -> show(); //for debug
+  sdiag -> show(); //
+  velmwl_fit_open = true;
 }
 
 //Get editID from selected model
@@ -4039,6 +4042,14 @@ void US_Analysis_auto::reset_analysis_panel( )
       //ALEXEY: now we should wait for completion of the last timer_update shot...
       connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
       timer_end_process->start(1000);     // 5 sec
+
+      //for VEL-MWL stage of VELOCITY:
+      if ( velmwl_fit_open )
+	{
+	  qDebug() << "[in reset Analysis stage: ] Closing MWL-fit in VEL-MWL substage...";
+	  sdiag->close();
+	  velmwl_fit_open = false;
+	}
     }
   else
     {
