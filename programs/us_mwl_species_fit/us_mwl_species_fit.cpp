@@ -217,7 +217,15 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	       protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
 
 	       //update GUI
-	       
+	       pb_loadsfit  ->hide();
+	       pb_sfitdata  ->hide();
+	       pb_load      ->hide();
+	       pb_details   ->hide();
+	       pb_view      ->hide();
+	       pb_save      ->hide();
+	       pb_reset     ->hide();
+	       pb_help      ->hide();
+	       pb_close     ->hide();
 	     }
 	   
 	   // //pass ranges from reportItems

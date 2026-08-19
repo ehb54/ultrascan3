@@ -186,6 +186,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   else
     {
       sdiag_norm_profile->hide();
+      lb_hdr1     ->show();
+      pb_show_all ->show();
+      pb_hide_all ->show();
+      treeWidget  ->show();
     }
  
   
