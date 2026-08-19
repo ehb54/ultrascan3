@@ -4,6 +4,8 @@ local.pri
 *.o
 tmp/
 moc/
+moc_*.cpp
+moc_predefs.h
 obj/
 Makefile*
 qwtplot3d/
@@ -12,6 +14,7 @@ lib/
 build.log
 gui/qrc_images.cpp
 /programs/us/us_revision.h
+/us_somo/develop/include/us_revision.h
 /us_somo/develop/include/us_version.h
 *~
 *.pro.user

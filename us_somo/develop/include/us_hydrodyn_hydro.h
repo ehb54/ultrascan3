@@ -45,6 +45,16 @@ struct hydro_options
    double mass;               // mass correction
    bool bead_inclusion;         // false: exclude hidden beads; true: use all beads
    bool grpy_bead_inclusion;    // false: exclude hidden beads; true: use all beads
+   bool grpy_single;            // false: double precision (default); true: single/float (for large systems)
+   // Shell reduction (issue 984): run exact GRPY on a solvent-exposed subset of beads,
+   // with a convergence ladder that reports the error it introduced. Off by default so
+   // results never move silently.
+   bool grpy_shell;             // false: off (default); true: reduce with a convergence check
+   double grpy_shell_tol;       // relative tolerance required of every requested observable
+   bool grpy_shell_require_eta; // true: intrinsic viscosity must also converge (slower);
+                                // false: viscosity is withheld from results as unreliable
+   bool grpy_shell_save_models; // true: write and display a bead model of every rung's
+                                // reduced shell (diagnostic; into <somo>/tmp)
    bool rotational;            // false: include beads in volume correction for rotational diffusion, true: exclude
    bool viscosity;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
    bool overlap_cutoff;         // false: same as in model building, true: enter manually
@@ -124,7 +134,9 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QGroupBox *bg_overlap;
       QGroupBox *bg_bead_inclusion;
       QGroupBox *bg_grpy_bead_inclusion;
-      
+      QGroupBox *bg_grpy_precision;
+      QGroupBox *bg_grpy_shell;
+
       QGroupBox *bg_buried;
 
       QCheckBox *cb_solvent_defaults;
@@ -157,6 +169,14 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QRadioButton *rb_inclusion;
       QRadioButton *rb_grpy_exclusion;
       QRadioButton *rb_grpy_inclusion;
+      QRadioButton *rb_grpy_double;
+      QRadioButton *rb_grpy_float;
+      QRadioButton *rb_grpy_shell_off;
+      QRadioButton *rb_grpy_shell_on;
+      QLabel       *lbl_grpy_shell_tol;
+      QLineEdit    *le_grpy_shell_tol;
+      QCheckBox    *cb_grpy_shell_eta;
+      QCheckBox    *cb_grpy_shell_models;
       QRadioButton *rb_auto_overlap;
       QRadioButton *rb_manual_overlap;
 
@@ -206,6 +226,13 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void select_bead_inclusion(int);
       void select_grpy_bead_inclusion();
       void select_grpy_bead_inclusion(int);
+      void select_grpy_precision();
+      void select_grpy_precision(int);
+      void select_grpy_shell();
+      void select_grpy_shell(int);
+      void update_grpy_shell_tol(const QString &);
+      void set_grpy_shell_eta();
+      void set_grpy_shell_models();
       void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();

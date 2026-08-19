@@ -137,7 +137,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    
    t_csv->adjustSize();
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
-   connect( t_csv->horizontalHeader(), SIGNAL( released( int ) ), SLOT( col_header_released( int ) ) );
+   connect( t_csv->horizontalHeader(), SIGNAL( sectionClicked( int ) ), SLOT( col_header_released( int ) ) );
    
    pb_del_row = new QPushButton(us_tr("Delete Rows"), this);
    pb_del_row->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));

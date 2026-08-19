@@ -1305,10 +1305,23 @@ void US_Hydrodyn_Dad::crop_common()
       }
    }
 
+   // Merge q values that differ only by last-digit rounding (e.g. 0.00547318 vs
+   // 0.00547317) so they match as one grid point; retained points keep their
+   // original q/I/sd (see ehb54/ultrascan-tickets#962).
+   const double crop_common_reltol = 1e-4;
+   map < double, double > q_canonical = US_Vector::canonical_map( grids, crop_common_reltol );
+   for ( unsigned int g = 0; g < ( unsigned int ) grids.size(); g++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) grids[ g ].size(); i++ )
+      {
+         grids[ g ][ i ] = q_canonical[ grids[ g ][ i ] ];
+      }
+   }
+
    vector < double > v_union = US_Vector::vunion( grids );
    vector < double > v_int   = US_Vector::intersection( grids );
 
-   editor_msg( "black", 
+   editor_msg( "black",
                QString( us_tr( "Crop common:\n"
                             "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
                             "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
@@ -1366,7 +1379,7 @@ void US_Hydrodyn_Dad::crop_common()
 
       for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
       {
-         if ( map_int.count( f_qs[ it->first ][ i ] ) )
+         if ( map_int.count( q_canonical[ f_qs[ it->first ][ i ] ] ) )
          {
             new_q_string.push_back( f_qs_string[ it->first ][ i ] );
             new_q       .push_back( f_qs       [ it->first ][ i ] );
@@ -2389,7 +2402,8 @@ void US_Hydrodyn_Dad::options()
    parameters[ "dad_csv_transposed"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_csv_transposed" ];
 
    parameters[ "dad_ampl_width_min"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_width_min"           ];
-   parameters[ "dad_lock_min_retry"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"           ];
+   parameters[ "dad_ampl_min"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_min"                 ];
+   parameters[ "dad_lock_min_retry"        ] =( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"           ];
    parameters[ "dad_lock_min_retry_mult"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry_mult"      ];
    parameters[ "dad_maxfpk_restart"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart"           ];
    parameters[ "dad_maxfpk_restart_tries"  ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart_tries"     ];
@@ -2453,7 +2467,8 @@ void US_Hydrodyn_Dad::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_csv_transposed"        ] = parameters[ "dad_csv_transposed"           ];
 
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_width_min"        ] = parameters[ "dad_ampl_width_min"           ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"        ] = parameters[ "dad_lock_min_retry"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_min"              ] = parameters[ "dad_ampl_min"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry"        ] =parameters[ "dad_lock_min_retry"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_lock_min_retry_mult"   ] = parameters[ "dad_lock_min_retry_mult"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart"        ] = parameters[ "dad_maxfpk_restart"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_maxfpk_restart_tries"  ] = parameters[ "dad_maxfpk_restart_tries"     ];
@@ -5374,7 +5389,35 @@ void US_Hydrodyn_Dad::gauss_mode()
 
 #define TSO QTextStream(stdout)
 
+static bool isConsecutiveIntegers( const QString& str ) {
+
+    QStringList parts = str.split( QRegularExpression( "\\s+" ), Qt::SkipEmptyParts );
+    if ( parts.isEmpty() ) {
+       return false;
+    }
+
+    bool ok;
+    int first = parts.first().toInt(&ok);
+    if ( !ok ) {
+       return false;
+    }
+
+    int expected = first;
+
+    for ( const QString& part : parts ) {
+        int val = part.toInt(&ok);
+        if ( !ok || val != expected ) {
+            return false;
+        }
+        ++expected;
+    }
+
+    return true;
+}
+
 bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qsl, QString & errormsg ) {
+   TSO << "dad_losd()\n";
+
    errormsg = "";
    
    if ( !qsl.size() ) {
@@ -5384,19 +5427,33 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
    // check if qsl is a dad data file, if not return false
 
+   TSO << "check if dad\n";
+
    vector < vector < double > > absorption_data;
 
    {
       set < size_t > row_sizes;
 
+      bool first = true;
+
       for ( auto const & line : qsl ) {
          vector < double > absorption_data_row;
-         QStringList lineqsl = line.split( QRegularExpression( "[\t ,]" ) );
+         auto tline = line.trimmed();
+         if ( first ) {
+            first = false;
+            if ( isConsecutiveIntegers( tline ) ) {
+               continue; // skip this line
+            }
+         }
+
+         QStringList lineqsl = tline.split( QRegularExpression( "[\t ,]+" ) );
+
          for ( auto const & element : lineqsl ) {
             bool isNumeric = false;
             double absorption = element.toDouble( &isNumeric );
             if ( !isNumeric ) {
                errormsg = "not a valid dad file";
+               TSO << errormsg << " 1 \n";
                return false;
             }
             absorption_data_row.push_back( absorption );
@@ -5407,6 +5464,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
       if ( row_sizes.size() != 1 ) {
          errormsg = "not a valid dad file";
+         TSO << errormsg << " 2 \n";
          return false;
       }
    }   
@@ -5427,21 +5485,23 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
       return false;
    }
 
-   switch ( QMessageBox::question(this, 
-                                  windowTitle() + us_tr( " : Load UV-Vis Data" )
-                                  ,dad_lambdas.summary_rich()
-                                  + QString(
-                                            "<hr>"
-                                            "Proceed with these UV_Vis " + UNICODE_LAMBDA_QS + "s?"
-                                            )
-                                  ) )
-   {
-   case QMessageBox::Yes : 
-      break;
-   default:
-      errormsg = "UV-Vis " + UNICODE_LAMBDA_QS + "s need to be loaded";
-      return false;
-      break;
+   if ( !script_mode ) {
+      switch ( QMessageBox::question(this,
+                                     windowTitle() + us_tr( " : Load UV-Vis Data" )
+                                     ,dad_lambdas.summary_rich()
+                                     + QString(
+                                               "<hr>"
+                                               "Proceed with these UV_Vis " + UNICODE_LAMBDA_QS + "s?"
+                                               )
+                                     ) )
+      {
+      case QMessageBox::Yes :
+         break;
+      default:
+         errormsg = "UV-Vis " + UNICODE_LAMBDA_QS + "s need to be loaded";
+         return false;
+         break;
+      }
    }
 
 
@@ -5457,7 +5517,32 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
    
    bool lambda_crop;
 
-   {
+   if ( script_mode ) {
+
+      start_time_seconds          = script_start_time_seconds;
+      collection_interval_seconds = script_collection_interval_seconds;
+
+      lambda_crop = script_lambda_end > script_lambda_start;
+      if ( lambda_crop ) {
+         lambda_start = script_lambda_start;
+         lambda_end   = script_lambda_end;
+      }
+
+      TSO <<
+         QString(
+                 "script mode UV-Vis load\n"
+                 "start time seconds          %1\n"
+                 "collection_interval_seconds %2\n"
+                 "%3\n"
+                 )
+         .arg( start_time_seconds )
+         .arg( collection_interval_seconds )
+         .arg( lambda_crop
+               ? QString( "lambda range                %1 to %2" ).arg( lambda_start ).arg( lambda_end )
+               : QString( "lambda range                full spectrum" ) )
+         ;
+
+   } else {
       bool try_again = false;
 
       do {
@@ -5550,7 +5635,7 @@ bool US_Hydrodyn_Dad::dad_load( const QString & filename, const QStringList & qs
 
    // get times
 
-   {
+   if ( !script_mode ) {
       bool try_again = false;
 
       do {

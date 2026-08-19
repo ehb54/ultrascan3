@@ -548,8 +548,9 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
       if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
       {
          if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
-            str1.mid(17,3) != "HOH")
-         {                  
+            !( pdb_parse.skip_deuterium && pdb_parse_is_deuterium( str1 ) ) &&
+            !pdb_parse_is_water( str1.mid(17,3) ))
+         {
             if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
             {
                if (str1.mid(16,1) == "A")
@@ -763,8 +764,9 @@ bool US_Saxs_Util::read_pdb( QString filename )
          if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
          {
             if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
-               str1.mid(17,3) != "HOH")
-            {                  
+               !( pdb_parse.skip_deuterium && pdb_parse_is_deuterium( str1 ) ) &&
+               !pdb_parse_is_water( str1.mid(17,3) ))
+            {
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
                {
                   if (str1.mid(16,1) == "A")
@@ -1017,8 +1019,7 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
    {
       flag = true;
    }
-   if (temp_atom.resName == "HOH" || // we dont want to add waters to the sequence
-       temp_atom.resName == "DOD")
+   if ( pdb_parse_is_water( temp_atom.resName ) ) // we dont want to add waters to the sequence
    {
       flag = false;
    }
