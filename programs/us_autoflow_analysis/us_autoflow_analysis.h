@@ -47,7 +47,7 @@ class US_Analysis_auto : public US_Widgets
          * @brief Constructor for the US_Analysis_auto class.
          */
         US_Analysis_auto();
-
+       
         US_MwlSpeciesFit* sdiag;
         US_ConvertGui*    sdiag_convert;
         US_Norm_Profile*  sdiag_norm_profile;
@@ -283,6 +283,8 @@ class US_Analysis_auto : public US_Widgets
             int scanCount;                                           /**< Scan count. */
 
             QPoint rpd_pos;                                          /**< Residual plot position. */
+
+            QVBoxLayout* panel;
   
             QLabel* lb_hdr1;
             QPushButton* pb_show_all;                                /**< Show all button. */

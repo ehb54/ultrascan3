@@ -28,7 +28,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
                        
   //setPalette( US_GuiSettings::frameColor() );
   
-  QVBoxLayout* panel  = new QVBoxLayout( this );
+  //QVBoxLayout* panel  = new QVBoxLayout( this );
+  panel  = new QVBoxLayout( this );
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
@@ -1403,11 +1404,22 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 	   << protocol_details_at_analysis_velmwl[ "filename" ];
   qDebug() << "For MWL-fit; \"chann_to_analyse\" -- " 
 	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
-  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
 
-  sdiag->setParent(this, Qt::Widget);
-  sdiag->setFrameShape( QFrame::Box);
-  sdiag->setLineWidth(2);
+  //hide remnants from mpi-analysis
+  lb_hdr1     ->hide();
+  pb_show_all ->hide();
+  pb_hide_all ->hide();
+  treeWidget  ->hide();
+  
+  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  //close sdiag if left open:
+  bool mwl_fit_open = sdiag->isVisible();
+  if ( mwl_fit_open )
+    {
+      qDebug() << "Closing/deleting MWL-fit (in VEL-MWL) widget!";
+      sdiag->close();
+    }
+  panel->addWidget( sdiag );
   sdiag -> show(); //for debug
 }
 
