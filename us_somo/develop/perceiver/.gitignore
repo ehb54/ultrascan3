@@ -1,0 +1,9 @@
+bin/
+*.o
+__pycache__/
+*.pyc
+# demo PDBs are copies of us_somo/somo/demo/*.pdb
+# NOTE: deliberately non-recursive -- data/non-coded/*.pdb IS tracked, because those
+# structures are copies of nothing else in the tree (see data/non-coded/README.md).
+data/*.pdb
+# reference tables are read directly from us_somo/etc (no copies, so they cannot drift)
