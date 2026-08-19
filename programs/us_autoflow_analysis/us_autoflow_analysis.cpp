@@ -1395,10 +1395,9 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   QRegularExpressionMatch match = re.match(chan_to_analyse);
 
   QString result_chann;
-  if (match.hasMatch()) {
+  if (match.hasMatch())
     result_chann = match.captured(1) + " / " + match.captured(2);
-  }
-  
+    
   protocol_details_at_analysis_velmwl[ "chan_to_analyse" ] = result_chann;
   qDebug() << "For MWL-fit; \"filename\" should be \"ISSF-xxx\" -- "
 	   << protocol_details_at_analysis_velmwl[ "filename" ];
