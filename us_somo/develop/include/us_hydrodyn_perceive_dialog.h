@@ -29,8 +29,11 @@
 #include <QTableWidget>
 #include <QTextEdit>
 
-#include "us_hydrodyn_perceive_somo.h"
+// us_util.h must come first: us_hydrodyn_perceive_somo.h reaches us_hydrodyn_pdbdefs.h, whose
+// `using namespace std;` makes std::byte visible unqualified. On Windows that then collides with
+// the `byte` typedef in rpcndr.h, which us_util.h pulls in via us.h -> QtWidgets -> windows.h.
 #include "us_util.h"
+#include "us_hydrodyn_perceive_somo.h"
 
 class US_EXTERN US_Hydrodyn_Perceive_Dialog : public QFrame {
     Q_OBJECT
