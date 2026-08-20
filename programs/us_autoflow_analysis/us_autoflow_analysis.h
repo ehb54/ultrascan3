@@ -136,6 +136,14 @@ class US_Analysis_auto : public US_Widgets
         QMessageBox * msg_sim;                                   /**< Message box for simulation messages. */
         QProgressDialog * progress_msg;                          /**< Progress dialog for showing progress messages. */
 
+        QProgressDialog * progress_msg_mwlsim;                   /**< Progress dialog shown on a per-channel basis (restarted at 0 for each
+                                                                        channel) for the full VELOCITY-MWL post-analysis pipeline: species
+                                                                        simulation ( US_MwlSpeciesSim::select_models_auto(), define_buffer_auto(),
+                                                                        sim_params_auto(), select_rotor_auto(), start_sims_auto(), save_sims_auto() ),
+                                                                        then import/save to DB (US_ConvertGui), edit-profile update (US_Edit),
+                                                                        and species deconvolution/fit (US_MwlSpeciesFit), driven via
+                                                                        update_mwlsim_progress(). */
+
         
     private:
         QVector< US_DataIO::RawData > rawData;                   /**< Vector of raw data. */
@@ -206,6 +214,11 @@ class US_Analysis_auto : public US_Widgets
             bool no_fm_data_auto;                                    /**< Flag indicating no FitMeniscus data automatically. */
 
             QProgressDialog * progress_msg_fmb;                      /**< Progress dialog for FitMeniscus. */
+
+            int mwlsim_nchannels;                                     /**< Number of channels being processed by the MWL sim/save pipeline (progress_msg_mwlsim). */
+            int mwlsim_chan_idx;                                      /**< Index (0-based) of the channel currently being processed by the MWL sim/save pipeline. */
+            QString mwlsim_chan_name;                                 /**< Name of the channel currently being processed, used to label progress_msg_mwlsim. */
+
             QVector< double > v_meni;                                /**< Vector of meniscus values. */
             QVector< double > v_bott;                                /**< Vector of bottom values. */
             QVector< double > v_rmsd;                                /**< Vector of RMSD values. */
@@ -543,6 +556,18 @@ class US_Analysis_auto : public US_Widgets
             QString get_filename( QString );
 
             /**
+             * @brief (Re)starts progress_msg_mwlsim for a new channel, resetting
+             *        the bar back to 0-100 so progress is shown on a per-channel
+             *        basis. Each channel in VELOCITY-MWL is gated by an approve/
+             *        reject decision (made in US_MwlSpeciesFit) before the next
+             *        channel's simulation begins, so the dialog restarts fresh
+             *        for every channel rather than accumulating across channels.
+             * @param chan_idx  Index (0-based) of the channel about to be processed.
+             * @param chan_name Name of the channel about to be processed.
+             */
+            void start_mwlsim_channel_progress( int chan_idx, const QString& chan_name );
+
+            /**
              * @brief Simulates the model data.
              */
             void simulateModel( void );
@@ -718,6 +743,15 @@ class US_Analysis_auto : public US_Widgets
         void get_ssf_dir_and_saveDB( QString&  );
         void velmwl_deconv_rejected( QString&  );
         void velmwl_deconv_accepted( QString&  );
+
+        /**
+         * @brief Updates progress_msg_mwlsim as US_MwlSpeciesSim reports progress
+         *        through its auto-mode pipeline for the channel being processed.
+         * @param stage Stage identifier: "models","buffer","params","rotor","sims","save".
+         * @param step  Current step within the stage (1-based).
+         * @param total Total number of steps within the stage.
+         */
+        void update_mwlsim_progress( const QString& stage, int step, int total );
 
     signals:
         /**

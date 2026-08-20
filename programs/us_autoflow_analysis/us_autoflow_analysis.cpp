@@ -1283,6 +1283,27 @@ void US_Analysis_auto::gui_update( )
 	  pb_hide_all ->hide();
 	  treeWidget  ->hide();
 	  
+	  //ALEXEY: Centralized progress dialog for the VELOCITY-MWL post-analysis
+	  //        pipeline (species simulate + save), driven by US_MwlSpeciesSim's
+	  //        stage_progress() signal. Each channel is gated by a separate
+	  //        approve/reject decision made in US_MwlSpeciesFit once its own
+	  //        species fit completes, so the dialog is shown on a per-channel
+	  //        basis: it restarts at 0 for every channel rather than
+	  //        accumulating progress across channels. Within a channel, the
+	  //        100 units are split between the four single-shot stages
+	  //        (models/buffer/params/rotor -- 10 units each) and the two
+	  //        multi-model stages (sims/save -- 30 units each, filled in
+	  //        proportionally as models are processed).
+	  mwlsim_nchannels    = channels_all.size();
+	  progress_msg_mwlsim = new QProgressDialog( tr( "Preparing MWL species simulations..." ),
+						      QString(), 0, 100, this );
+	  progress_msg_mwlsim->setWindowFlags( Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint );
+	  progress_msg_mwlsim->setWindowModality( Qt::WindowModal );
+	  progress_msg_mwlsim->setWindowTitle( tr( "VELOCITY-MWL: Species Simulation && Save" ) );
+	  progress_msg_mwlsim->setAutoClose( false );
+	  progress_msg_mwlsim->setMinimumDuration( 0 );
+	  progress_msg_mwlsim->setMinimumWidth( 420 );
+
 	  //Run Simulation
 	  for ( int ca=0; ca<channels_all.size(); ++ca )
 	    {
@@ -1300,6 +1321,9 @@ void US_Analysis_auto::gui_update( )
 		}
 	      
 	      e_ID_for_velmwl.clear();
+
+	      //ALEXEY: (Re)start the progress dialog fresh for this channel
+	      start_mwlsim_channel_progress( ca, ch_name_c );
 	      	      
 	      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
 	      QString stage_n_c = QString( "2DSA-IT" );
@@ -1323,6 +1347,10 @@ void US_Analysis_auto::gui_update( )
 
 	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_ssf_dir,
 		       this,         &US_Analysis_auto::get_ssf_dir_and_saveDB );
+
+	      //ALEXEY: Feed this channel's stage progress into the centralized dialog
+	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::stage_progress,
+		       this,         &US_Analysis_auto::update_mwlsim_progress );
 	            
 	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
 
@@ -1361,6 +1389,10 @@ void US_Analysis_auto::gui_update( )
 	      
 	      //sdiag_mwlsim->show(); //DEBUG ONLY
 	    }
+
+	  //ALEXEY: All channels done -- close the centralized progress dialog
+	  progress_msg_mwlsim->setValue( progress_msg_mwlsim->maximum() );
+	  progress_msg_mwlsim->close();
 	    
 	  return;
 	}
@@ -1388,20 +1420,156 @@ void US_Analysis_auto::gui_update( )
   in_gui_update  = false; 
 }
 
+// (Re)start progress_msg_mwlsim for a new channel. Called once at the top
+// of each channel's processing so the bar always runs 0-100 for the
+// channel currently in flight, rather than accumulating across channels --
+// each channel is independently gated by an approve/reject decision in
+// US_MwlSpeciesFit before the pipeline moves on to the next one.
+void US_Analysis_auto::start_mwlsim_channel_progress( int chan_idx, const QString& chan_name )
+{
+  mwlsim_chan_idx  = chan_idx;
+  mwlsim_chan_name = chan_name;
+
+  if ( ! progress_msg_mwlsim )
+    return;
+
+  progress_msg_mwlsim->setLabelText( tr( "Channel %1 of %2 (%3): Starting..." )
+				      .arg( mwlsim_chan_idx + 1 ).arg( mwlsim_nchannels )
+				      .arg( mwlsim_chan_name ) );
+  progress_msg_mwlsim->setValue( 0 );
+  progress_msg_mwlsim->show();
+  qApp->processEvents();
+}
+
+// Update the centralized progress dialog (progress_msg_mwlsim) as the
+// VELOCITY-MWL pipeline for the current channel reports progress. The
+// pipeline runs, in order: select models -> define buffer -> set sim
+// parameters -> select rotor -> simulate models -> save raw data (all
+// reported by US_MwlSpeciesSim::stage_progress()), then import & save to
+// the database (US_ConvertGui), update the edit profile (US_Edit), and
+// finally run the species deconvolution/fit (US_MwlSpeciesFit) -- the
+// last three reported directly by get_ssf_dir_and_saveDB() below. The bar
+// always spans 0-100 for the current channel alone -- see
+// start_mwlsim_channel_progress().
+void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, int total )
+{
+  if ( ! progress_msg_mwlsim )
+    return;
+
+  // Weight of each macro-stage within the channel's 100 progress units.
+  const int w_models  = 10;
+  const int w_buffer  =  5;
+  const int w_params  =  5;
+  const int w_rotor   =  5;
+  const int w_sims    = 20;
+  const int w_save    = 15;
+  const int w_convert = 15;
+  const int w_edit    = 10;
+  const int w_fit     = 15;
+  // 10 + 5 + 5 + 5 + 20 + 15 + 15 + 10 + 15 == 100
+
+  const int base_buffer  = w_models;
+  const int base_params  = base_buffer  + w_buffer;
+  const int base_rotor   = base_params  + w_params;
+  const int base_sims    = base_rotor   + w_rotor;
+  const int base_save    = base_sims    + w_sims;
+  const int base_convert = base_save    + w_save;
+  const int base_edit    = base_convert + w_convert;
+  const int base_fit     = base_edit    + w_edit;
+
+  int    within = 0;
+  QString label;
+
+  if ( stage == "models" )
+    {
+      within = w_models;
+      label  = tr( "Loading models" );
+    }
+  else if ( stage == "buffer" )
+    {
+      within = base_buffer + w_buffer;
+      label  = tr( "Defining buffer" );
+    }
+  else if ( stage == "params" )
+    {
+      within = base_params + w_params;
+      label  = tr( "Setting simulation parameters" );
+    }
+  else if ( stage == "rotor" )
+    {
+      within = base_rotor + w_rotor;
+      label  = tr( "Selecting rotor" );
+    }
+  else if ( stage == "sims" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_sims + qRound( w_sims * frac );
+      label  = tr( "Simulating model %1 of %2" ).arg( step ).arg( total );
+    }
+  else if ( stage == "save" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_save + qRound( w_save * frac );
+      label  = tr( "Saving simulation %1 of %2" ).arg( step ).arg( total );
+    }
+  else if ( stage == "convert" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_convert + qRound( w_convert * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Importing and saving to database (US_Convert)..." )
+             : tr( "Import and database save complete" );
+    }
+  else if ( stage == "edit" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_edit + qRound( w_edit * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Updating edit profile (US_Edit)..." )
+             : tr( "Edit profile updated" );
+    }
+  else if ( stage == "fit" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_fit + qRound( w_fit * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Running species deconvolution/fit (US_MwlSpeciesFit)..." )
+             : tr( "Species deconvolution/fit ready for review" );
+    }
+  else
+    {
+      within = 0;
+      label  = stage;
+    }
+
+  QString text = tr( "Channel %1 of %2 (%3): %4" )
+                 .arg( mwlsim_chan_idx + 1 ).arg( mwlsim_nchannels )
+                 .arg( mwlsim_chan_name ).arg( label );
+
+  progress_msg_mwlsim->setLabelText( text );
+  progress_msg_mwlsim->setValue( within );
+
+  qApp->processEvents();
+}
+
 //Get SSF dir
 void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 {
   protocol_details_at_analysis_velmwl["ssf_dir_name"] = ssf_dir;
   protocol_details_at_analysis_velmwl[ "auto_flag_import"] = QString("VELMWL_IMPORT_SIM_ANALYSIS");
   sdiag_convert = new US_ConvertGui("AUTO");
+  update_mwlsim_progress( "convert", 0, 1 );
   sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
+  update_mwlsim_progress( "convert", 1, 1 );
 
   //Next, save edit profiles (based on new menicsus && same edits )
   sdiag_edit = new US_Edit("AUTO");
+  update_mwlsim_progress( "edit", 0, 1 );
   /** re-define some fields **/
   protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir.section("/", -2, -2);
   protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
   sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
+  update_mwlsim_progress( "edit", 1, 1 );
   //sdiag_edit -> show(); //DEBUG
 
   //Call MWL-Fit:
@@ -1423,7 +1591,13 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   qDebug() << "For MWL-fit; \"chann_to_analyse\" -- " 
 	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
 
+  //ALEXEY: The US_MwlSpeciesFit constructor runs loadSpecs_auto()+specFitData()
+  //        synchronously for VEL-MWL, so mark "fit" as started before it and
+  //        completed right after -- the dialog it shows is then left up to
+  //        the user for the approve/reject decision.
+  update_mwlsim_progress( "fit", 0, 1 );
   sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  update_mwlsim_progress( "fit", 1, 1 );
   connect( sdiag, &US_MwlSpeciesFit::reject_velmwl_s,
 	   this,  &US_Analysis_auto::velmwl_deconv_rejected );
   connect( sdiag, &US_MwlSpeciesFit::accept_velmwl_s,

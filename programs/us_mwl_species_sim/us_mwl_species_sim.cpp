@@ -355,6 +355,8 @@ DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
 
    nmodels        = models.count();
 
+   emit stage_progress( "models", 1, 1 );
+
    if ( nmodels < 1 )
       return;
 
@@ -464,6 +466,8 @@ void US_MwlSpeciesSim::define_buffer_auto( int invID_p )
 	   << buffer.viscosity;
 
   change_buffer( buffer );
+
+  emit stage_progress( "buffer", 1, 1 );
 }
 
 
@@ -513,6 +517,8 @@ void US_MwlSpeciesSim::sim_params_auto( QMap< QString, QString > run_params )
   dialog->accepted_auto();
   
   //dialog->exec();
+
+  emit stage_progress( "params", 1, 1 );
 }
 
 // Set simulation parameter as selected in the simparams dialog
@@ -595,6 +601,8 @@ void US_MwlSpeciesSim::select_rotor_auto( QStringList r_defs )
   rotorInfo->selectSimRotor( r_defs );
   
   //rotorInfo->exec();
+
+  emit stage_progress( "rotor", 1, 1 );
 }
 
 // Select a rotor
@@ -674,6 +682,8 @@ DbgLv(1) << " sims: build from model" << model.description;
          break;
 
       build_rawdata();
+
+      emit stage_progress( "sims", jm + 1, nmodels );
    }
 
    if ( kmodels == nmodels )
@@ -730,6 +740,8 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
       qApp->processEvents();
 
       US_DataIO::writeRawData( fpath, synData[ jm ] );
+
+      emit stage_progress( "save", jm + 1, nmodels );
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
