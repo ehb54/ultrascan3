@@ -226,6 +226,12 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	       pb_reset     ->hide();
 	       pb_help      ->hide();
 	       pb_close     ->hide();
+
+	       pb_reject_velmwl    = us_pushbutton( tr( "Reject Channel Deconvolution" ) );
+	       pb_accept_velmwl    = us_pushbutton( tr( "Accept Channel Deconvolution" ) );
+	       
+	       buttonLayout->addWidget( pb_reject_velmwl );
+	       buttonLayout->addWidget( pb_accept_velmwl );
 	     }
 	   
 	   // //pass ranges from reportItems

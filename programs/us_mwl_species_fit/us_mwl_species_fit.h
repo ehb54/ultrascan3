@@ -81,6 +81,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QPushButton* pb_next;     //!< Next plot button
         QPushButton* pb_plot3d;   //!< 3D plot button
 
+        QPushButton* pb_reject_velmwl;
+        QPushButton* pb_accept_velmwl;
+
         QLineEdit* le_fit_error; //!< Line edit for fit error
 
         QVector<SFData> synFitError; //!< Synthetic fit error vector
