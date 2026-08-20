@@ -114,6 +114,8 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         bool read_protocol(QStringList &);
         bool validExtinctionProfile( QString, QList< double >,
 				     QList< double >, QStringList& );
+        void reject_velmwl( void );
+        void accept_velmwl( void );
          
         //! \brief Perform species fit data analysis
         void specFitData(void);

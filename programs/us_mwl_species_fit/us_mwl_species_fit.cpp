@@ -226,9 +226,12 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	       pb_reset     ->hide();
 	       pb_help      ->hide();
 	       pb_close     ->hide();
+	       ck_edlast    ->hide();
 
 	       pb_reject_velmwl    = us_pushbutton( tr( "Reject Channel Deconvolution" ) );
 	       pb_accept_velmwl    = us_pushbutton( tr( "Accept Channel Deconvolution" ) );
+	       connect( pb_reject_velmwl, &QPushButton::clicked, this, &US_MwlSpeciesFit::reject_velmwl );
+	       connect( pb_accept_velmwl, &QPushButton::clicked, this, &US_MwlSpeciesFit::accept_velmwl );
 	       
 	       buttonLayout->addWidget( pb_reject_velmwl );
 	       buttonLayout->addWidget( pb_accept_velmwl );
@@ -243,6 +246,16 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
        qDebug() << "RMDSs -- " << rmsd_for_gmp;
        qDebug() << "SSF DIR -- " << protocol_details_p["ssf_dir_name"];
      }
+}
+
+void US_MwlSpeciesFit::reject_velmwl()
+{
+  
+}
+
+void US_MwlSpeciesFit::accept_velmwl()
+{
+  
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
