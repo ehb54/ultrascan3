@@ -193,7 +193,6 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
     }
  
   
-
   //Copy protocol details
   protocol_details_at_analysis        = protocol_details;
   protocol_details_at_analysis_velmwl = protocol_details;
@@ -1314,10 +1313,16 @@ void US_Analysis_auto::gui_update( )
 
 	      //now call sim. contructor
 	      sdiag_mwlsim = new US_MwlSpeciesSim();
-	      connect( sdiag_mwlsim, SIGNAL( pass_editID_fromLoad( QString& ) ),
-		       this,         SLOT  ( get_editID ( QString& ) ) );
-	      connect( sdiag_mwlsim, SIGNAL( pass_ssf_dir( QString& ) ),
-		       this,         SLOT  ( get_ssf_dir_and_saveDB ( QString& ) ) );
+	      // connect( sdiag_mwlsim, SIGNAL( pass_editID_fromLoad( QString& ) ),
+	      // 	       this,         SLOT  ( get_editID ( QString& ) ) );
+	      // connect( sdiag_mwlsim, SIGNAL( pass_ssf_dir( QString& ) ),
+	      // 	       this,         SLOT  ( get_ssf_dir_and_saveDB ( QString& ) ) );
+
+	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_editID_fromLoad,
+		       this,         &US_Analysis_auto::get_editID );
+
+	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_ssf_dir,
+		       this,         &US_Analysis_auto::get_ssf_dir_and_saveDB );
 	            
 	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
 
@@ -1419,6 +1424,10 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
 
   sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  connect( sdiag, &US_MwlSpeciesFit::reject_velmwl_s,
+	   this,  &US_Analysis_auto::velmwl_deconv_rejected );
+  connect( sdiag, &US_MwlSpeciesFit::accept_velmwl_s,
+	   this,  &US_Analysis_auto::velmwl_deconv_accepted );
   //close sdiag if left open:
   bool mwl_fit_open = sdiag->isVisible();
   if ( mwl_fit_open )
@@ -1430,7 +1439,25 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   panel->addWidget( sdiag );
   sdiag -> show(); //
   velmwl_fit_open = true;
+
 }
+
+//slots for reject/accept Vel-MWL deconvoluton for a channel
+void US_Analysis_auto::velmwl_deconv_rejected( QString& chann_dec )
+{
+  qDebug() << "[US_Autoflow_analysis]REJECT VEL-MWL deconvolution, channel -- "
+	   << chann_dec;
+  sdiag->close();
+  velmwl_fit_open = false;
+}
+void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
+{
+  qDebug() << "[US_Autoflow_analysis]ACCEPT VEL-MWL deconvolution, channel -- "
+	   << chann_dec;
+  sdiag->close();
+  velmwl_fit_open = false;
+}
+
 
 //Get editID from selected model
 void US_Analysis_auto::get_editID ( QString& e_ID )

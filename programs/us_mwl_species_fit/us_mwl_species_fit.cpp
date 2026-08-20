@@ -207,7 +207,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	     }
 	   else //VEL-MWL
 	     {
-	       QString chann_to_process_velmwl = protocol_details[ "chan_to_analyse" ];
+	       chann_to_process_velmwl = protocol_details[ "chan_to_analyse" ];
 	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ chann_to_process_velmwl ];
 	       
 	       loadSpecs_auto( analytes_profs );
@@ -226,8 +226,9 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	       pb_reset     ->hide();
 	       pb_help      ->hide();
 	       pb_close     ->hide();
-	       ck_edlast    ->hide();
-
+	       wrapper_lo_edlast ->hide();
+	       wrapper_disk_controls ->hide();
+	       
 	       pb_reject_velmwl    = us_pushbutton( tr( "Reject Channel Deconvolution" ) );
 	       pb_accept_velmwl    = us_pushbutton( tr( "Accept Channel Deconvolution" ) );
 	       connect( pb_reject_velmwl, &QPushButton::clicked, this, &US_MwlSpeciesFit::reject_velmwl );
@@ -250,12 +251,14 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 
 void US_MwlSpeciesFit::reject_velmwl()
 {
-  
+  qDebug() << "[Mwl-FIT]Rejecting VEL-MWL deconvolution results!";
+  emit reject_velmwl_s( chann_to_process_velmwl );
 }
 
 void US_MwlSpeciesFit::accept_velmwl()
 {
-  
+  qDebug() << "[Mwl-FIT]Accepting VEL-MWL deconvolution results!";
+  emit accept_velmwl_s( chann_to_process_velmwl );
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()

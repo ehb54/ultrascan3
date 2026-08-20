@@ -716,6 +716,8 @@ class US_Analysis_auto : public US_Widgets
         void back_to_initAutoflow( void );
         void get_editID ( QString&  );
         void get_ssf_dir_and_saveDB( QString&  );
+        void velmwl_deconv_rejected( QString&  );
+        void velmwl_deconv_accepted( QString&  );
 
     signals:
         /**

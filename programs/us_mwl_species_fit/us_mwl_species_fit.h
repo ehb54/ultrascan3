@@ -43,6 +43,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
              //chann.    //type[protein, DNA]  //ext. profile
         QString rmsd_for_gmp;
+        QString chann_to_process_velmwl;
         
     private:
         int dbg_level;         //!< Debug level
@@ -157,6 +158,10 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         void reset();
         void reset_data();
         void reset_gui();
+ 
+    signals:
+        void reject_velmwl_s( QString& );
+        void accept_velmwl_s( QString& );
 };
 
 #endif // US_MWL_SPECIES_FIT_H
