@@ -2,15 +2,15 @@ name: UltraScan3 Release
 
 # ============================================================================
 # Triggered by a v* tag push (permanent versioned release).
-# Calls ultrascan-reusable-build.yml (from ehb54/uslims_version_workflows)
-# directly for each platform/profile in parallel — does NOT invoke the local
-# build-<platform>.yml reusable workflows. Once all platform builds succeed,
-# publish-release downloads all artifacts, renames to stable filenames, and
-# creates a permanent versioned GitHub Release.
+# Calls the same local build-<platform>.yml reusable workflows used by nightly
+# and on-demand builds, with release-specific ref, artifact prefix, clean tier,
+# and retention parameters. Once all platform builds succeed, publish-release
+# downloads all artifacts, renames them to stable filenames, and creates a
+# permanent versioned GitHub Release.
 #
-# Release builds are cache-consumer only: require_exact_cache_hit=true,
-# save_cache=false. Caches must be pre-warmed by the nightly build before
-# a release tag is pushed.
+# Cache probing, conditional warming, exact-hit enforcement, and cache-saving
+# policy are owned by the local platform workflows so every entry point follows
+# the same path.
 # ============================================================================
 
 run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
@@ -26,107 +26,59 @@ permissions:
 
 jobs:
 
-  # --- Group 1 (parallel) ---------------------------------------------------
+  # The platform workflows own cache probing/warming, runner selection,
+  # profiles, and the pinned external build implementation. Release-specific
+  # policy is expressed only through their public inputs below.
 
-  ubuntu-app:
-    name: "Ubuntu 24.04 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
+  ubuntu:
+    name: "Ubuntu 24.04 (APP + HPC)"
+    uses: ./.github/workflows/build-ubuntu.yml
     with:
       ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      qt_variant:              qt6
-      profile:                 APP
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
       artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
-
-  ubuntu-hpc:
-    name: "Ubuntu 24.04 HPC"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      qt_variant:              qt6
-      profile:                 HPC
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}-HPC', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+    secrets: inherit
 
   macos-arm:
-    name: "macOS ARM APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
+    name: "macOS ARM (APP)"
+    uses: ./.github/workflows/build-macos-arm.yml
     with:
       ref:                     ${{ github.ref }}
-      runner:                  macos-15
-      qt_variant:              qt6
-      profile:                 APP
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}-arm', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
-
-  oraclelinux8-app:
-    name: "Oracle Linux 8 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      cache_os_label:          oraclelinux8
-      qt_variant:              qt6
-      profile:                 APP
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
       artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+    secrets: inherit
 
-  oraclelinux8-hpc:
-    name: "Oracle Linux 8 HPC"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
+  oraclelinux8:
+    name: "Oracle Linux 8 x64 (APP + HPC)"
+    uses: ./.github/workflows/build-oraclelinux.yml
     with:
       ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      cache_os_label:          oraclelinux8
-      qt_variant:              qt6
-      profile:                 HPC
       clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}-HPC', github.ref_name) }}
+      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
       artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+    secrets: inherit
 
   macos-intel:
-    name: "macOS Intel APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
+    name: "macOS Intel (APP)"
+    uses: ./.github/workflows/build-macos-intel.yml
     with:
       ref:                     ${{ github.ref }}
-      runner:                  macos-15-intel
-      qt_variant:              qt6
-      profile:                 APP
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
       artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+    secrets: inherit
 
   windows:
-    name: "Windows x64 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
+    name: "Windows x64 (APP)"
+    uses: ./.github/workflows/build-windows.yml
     with:
       ref:                     ${{ github.ref }}
-      runner:                  windows-2022
-      qt_variant:              qt6
-      profile:                 APP
       clean_tier:              incremental
       artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
       artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+    secrets: inherit
 
   # --------------------------------------------------------------------------
   # PUBLISH RELEASE
@@ -136,7 +88,7 @@ jobs:
   # --------------------------------------------------------------------------
   publish-release:
     name: "Publish release ${{ github.ref_name }}"
-    needs: [ubuntu-app, ubuntu-hpc, macos-arm, oraclelinux8-app, oraclelinux8-hpc, macos-intel, windows]
+    needs: [ubuntu, macos-arm, oraclelinux8, macos-intel, windows]
     if: success()
     runs-on: ubuntu-24.04
     steps:

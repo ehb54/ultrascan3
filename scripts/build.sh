@@ -55,10 +55,12 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
-      echo "  --rebuild            Tier 1: removes the CMake build directory only."
-      echo "                         Fast - vcpkg packages are untouched and restore"
-      echo "                         from binary cache. Use when the build tree is"
-      echo "                         corrupted or you want a clean UltraScan recompile."
+      echo "  --rebuild            Tier 1: removes the CMake build directory only,"
+      echo "                         keeping its vcpkg_installed/ dependencies."
+      echo "                         Fast - vcpkg packages are untouched. Use when you"
+      echo "                         want a clean UltraScan recompile. Does NOT repair"
+      echo "                         damaged packages: vcpkg still records them as"
+      echo "                         installed and will not refetch. Use --clean."
       echo "  --clean              Tier 2: removes build dir + vcpkg buildtrees + the"
       echo "                         installed packages for the active triplet."
       echo "                         Forces vcpkg to reinstall all dependencies."
@@ -455,7 +457,10 @@ if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
 fi
 
 export VCPKG_ROOT="$US3_VCPKG_ROOT"
-export VCPKG_INSTALLED_DIR="$US3_VCPKG_ROOT/installed"
+
+# Not set here: vcpkg's manifest-mode default puts packages in the build tree,
+# so profiles cannot uninstall each other's. Read back from CMakeCache below.
+unset VCPKG_INSTALLED_DIR
 
 # Allow explicit override of the binary cache location via env var.
 # In Linux CI, prefer the scratch root when available to reduce pressure on
@@ -527,54 +532,55 @@ _derive_triplet() {
   fi
 }
 
+# _remove_build_dir [keep-deps]
+#
+# vcpkg installs into build/<preset>/vcpkg_installed, so a plain rm -rf would
+# take the dependencies with it. Tier 1 passes keep-deps to hold to its
+# documented promise that vcpkg packages are untouched; tier 2 does not, which
+# is what --clean means.
 _remove_build_dir() {
   local build_dir="build/$CONFIGURE_PRESET"
-  if [ -d "$build_dir" ]; then
+  local keep_deps="${1:-}"
+
+  if [ ! -d "$build_dir" ]; then
+    echo "Build directory does not exist: $build_dir"
+    return
+  fi
+
+  if [ "$keep_deps" = "keep-deps" ] && [ -d "$build_dir/vcpkg_installed" ]; then
+    echo "Removing build directory (keeping vcpkg_installed): $build_dir"
+    find "$build_dir" -mindepth 1 -maxdepth 1 ! -name vcpkg_installed -exec rm -rf {} +
+  else
     echo "Removing build directory: $build_dir"
     rm -rf "$build_dir"
-  else
-    echo "Build directory does not exist: $build_dir"
   fi
 }
 
+# Installed packages live in build/<preset>/vcpkg_installed and go with the
+# build dir. The shared buildtrees, and any legacy tree left over from when
+# packages did live under VCPKG_ROOT, are what remain to clean here.
 _remove_vcpkg_triplet() {
-  local triplet
-  triplet=$(_derive_triplet)
-  if [ -z "$triplet" ]; then
-    echo "(no triplet derived for $PLATFORM -- skipping vcpkg installed/ removal)"
-    return
-  fi
+  local _triplet
 
   if [ -d "$US3_VCPKG_ROOT/buildtrees" ]; then
     echo "Removing vcpkg buildtrees..."
     rm -rf "$US3_VCPKG_ROOT/buildtrees"
   fi
 
-  # Remove only packages belonging to the selected Qt variant
-  # so Qt5 and Qt6 installs don't clobber each other in the shared triplet.
-  case "$QT_VARIANT" in
-    qt6)
-      local _qt_pattern="qt6|qtbase|qttools|qtsvg|qtmultimedia|qwt-6-3-0-qt6|qwtplot3d-qwt-6-3-0-qt6|litehtml"
-      ;;
-    qt5-qwt616)
-      local _qt_pattern="qt5|qwt-6-1-6|qwtplot3d-qwt-6-1-6"
-      ;;
-    qt5-qwt630)
-      local _qt_pattern="qt5|qwt-6-3-0-qt5|qwtplot3d-qwt-6-3-0-qt5"
-      ;;
-  esac
-
-  echo "Removing vcpkg packages matching Qt variant: $QT_VARIANT"
-  # Get list of installed packages for this triplet matching the Qt variant
-  "$US3_VCPKG_ROOT/vcpkg" list --triplet "$triplet" 2>/dev/null | \
-    grep -E "^(${_qt_pattern}):" | \
-    awk -F: '{print $1}' | \
-    xargs -I{} "$US3_VCPKG_ROOT/vcpkg" remove {}:"$triplet" --recurse 2>/dev/null || true
-
-  # Wipe vcpkg bookkeeping so status is consistent
+  # Legacy shared tree, from before packages moved into the build tree:
+  # toolchain.cmake drops the stale cache entry but cannot delete the tree.
+  # Bookkeeping goes unconditionally -- stale 'half-installed' entries outlive a
+  # triplet dir removed by an earlier clean and make vcpkg fail on pkgconfig
+  # files no longer on disk. Delete this block once no checkout predates the move.
   if [ -d "$US3_VCPKG_ROOT/installed/vcpkg" ]; then
-    echo "Removing vcpkg installed/vcpkg bookkeeping (will be regenerated)..."
+    echo "Removing legacy vcpkg bookkeeping (will be regenerated)..."
     rm -rf "$US3_VCPKG_ROOT/installed/vcpkg"
+  fi
+
+  _triplet=$(_derive_triplet)
+  if [ -d "$US3_VCPKG_ROOT/installed/$_triplet" ]; then
+    echo "Removing legacy vcpkg installed packages for triplet: $_triplet"
+    rm -rf "$US3_VCPKG_ROOT/installed/$_triplet"
   fi
 }
 
@@ -593,7 +599,7 @@ if [ "$REBUILD" = true ] && [ "$CLEAN" = false ]; then
   echo "=========================================="
   echo "Tier 1 rebuild: removing build directory"
   echo "=========================================="
-  _remove_build_dir
+  _remove_build_dir keep-deps
   echo "Rebuild clean complete."
   echo ""
 fi
@@ -758,47 +764,55 @@ echo ""
 # =============================================================================
 # Qt6 macOS .prl/.pri X11R6 fixup
 # vcpkg's Qt6 port bakes /usr/X11R6/lib into .prl and .pri files on macOS.
-# This path does not exist and causes qwt link failures. Scrub it here so
-# the fix applies whether Qt6 was just installed (--clean) or pre-existing.
+# This path does not exist and causes qwt link failures.
+#
+# Called both before and after configure: a fresh build tree has nothing to
+# scrub until vcpkg has restored into it, while an existing one must be scrubbed
+# before it is built against. Idempotent, and globs every tree.
 # =============================================================================
-if [ "$PLATFORM" = "macOS" ] && [ "$QT_VARIANT" = "qt6" ]; then
+_fix_qt6_x11r6_paths() {
+  [ "$PLATFORM" = "macOS" ] || return 0
+  [ "$QT_VARIANT" = "qt6" ] || return 0
+
+  local _triplet _static_triplet _needs_fix=false _tree _t _f _pri
   _triplet=$(_derive_triplet)
   _static_triplet="${_triplet%-dynamic}"
-  _needs_fix=false
 
-  while IFS= read -r -d '' _f; do
-    grep -q 'X11R6' "$_f" 2>/dev/null && _needs_fix=true && break
-  done < <(find \
-    "$US3_VCPKG_ROOT/installed/${_triplet}/lib" \
-    "$US3_VCPKG_ROOT/installed/${_static_triplet}/lib" \
-    -maxdepth 1 -name '*.prl' -print0 2>/dev/null)
+  local _prl_dirs=() _pri_files=()
+  for _tree in build/*/vcpkg_installed "$US3_VCPKG_ROOT"/installed*; do
+    for _t in "${_triplet}" "${_static_triplet}"; do
+      [ -d "$_tree/${_t}/lib" ] && _prl_dirs+=("$_tree/${_t}/lib")
+      _pri_files+=("$_tree/${_t}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri")
+    done
+  done
+
+  if [ ${#_prl_dirs[@]} -gt 0 ]; then
+    while IFS= read -r -d '' _f; do
+      grep -q 'X11R6' "$_f" 2>/dev/null && _needs_fix=true && break
+    done < <(find "${_prl_dirs[@]}" -maxdepth 1 -name '*.prl' -print0 2>/dev/null)
+  fi
 
   if [ "$_needs_fix" = false ]; then
-    for _pri in \
-      "$US3_VCPKG_ROOT/installed/${_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri" \
-      "$US3_VCPKG_ROOT/installed/${_static_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri"
-    do
+    for _pri in "${_pri_files[@]}"; do
       [ -f "$_pri" ] && grep -q 'X11R6' "$_pri" 2>/dev/null && _needs_fix=true && break
     done
   fi
 
-  if [ "$_needs_fix" = true ]; then
-    echo "Fixing Qt6 .prl/.pri files: removing invalid /usr/X11R6/lib path..."
+  [ "$_needs_fix" = true ] || return 0
+
+  echo "Fixing Qt6 .prl/.pri files: removing invalid /usr/X11R6/lib path..."
+  if [ ${#_prl_dirs[@]} -gt 0 ]; then
     while IFS= read -r -d '' _f; do
       sed -i '' 's| /usr/X11R6/lib||g; s|;/usr/X11R6/lib||g' "$_f"
-    done < <(find \
-      "$US3_VCPKG_ROOT/installed/${_triplet}/lib" \
-      "$US3_VCPKG_ROOT/installed/${_static_triplet}/lib" \
-      -maxdepth 1 -name '*.prl' -print0 2>/dev/null)
-    for _pri in \
-      "$US3_VCPKG_ROOT/installed/${_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri" \
-      "$US3_VCPKG_ROOT/installed/${_static_triplet}/share/Qt6/mkspecs/modules/qt_lib_gui_private.pri"
-    do
-      [ -f "$_pri" ] && sed -i '' 's|QMAKE_LIBS_OPENGL = /usr/X11R6/lib|QMAKE_LIBS_OPENGL =|g' "$_pri"
-    done
-    echo "Qt6 X11R6 fixup complete."
+    done < <(find "${_prl_dirs[@]}" -maxdepth 1 -name '*.prl' -print0 2>/dev/null)
   fi
-fi
+  for _pri in "${_pri_files[@]}"; do
+    [ -f "$_pri" ] && sed -i '' 's|QMAKE_LIBS_OPENGL = /usr/X11R6/lib|QMAKE_LIBS_OPENGL =|g' "$_pri"
+  done
+  echo "Qt6 X11R6 fixup complete."
+}
+
+_fix_qt6_x11r6_paths
 
 # =============================================================================
 # CONFIGURE AND BUILD
@@ -806,8 +820,17 @@ fi
 echo "Configuring..."
 cmake --preset "$CONFIGURE_PRESET" \
   -DUS3_PROFILE="${PROFILE}" \
-  -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
-  -DVCPKG_INSTALLED_DIR="$VCPKG_INSTALLED_DIR"
+  -DVCPKG_ROOT="$US3_VCPKG_ROOT"
+
+# Read back what the toolchain resolved rather than recomputing its rule.
+VCPKG_INSTALLED_DIR="$(sed -n 's|^VCPKG_INSTALLED_DIR:PATH=||p' \
+  "build/${CONFIGURE_PRESET}/CMakeCache.txt" 2>/dev/null | head -1)"
+export VCPKG_INSTALLED_DIR
+echo "vcpkg installed dir : ${VCPKG_INSTALLED_DIR:-<unset>}"
+
+# vcpkg has now restored into the build tree; scrub what it just wrote before
+# anything links against it.
+_fix_qt6_x11r6_paths
 
 echo ""
 echo "Building..."
