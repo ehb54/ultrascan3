@@ -109,13 +109,12 @@ EXPECT_TRUE(comp.unit.isEmpty());
 EXPECT_TRUE(comp.range.isEmpty());
 EXPECT_FALSE(comp.grad_form);
 
-// Check coefficients are initialized to zero - using memset to zero first
-memset(comp.dens_coeff, 0, sizeof(comp.dens_coeff));
-memset(comp.visc_coeff, 0, sizeof(comp.visc_coeff));
-
+// This case used to memset both coefficient arrays to zero and then assert they
+// were zero, which tested memset.  The arrays now carry default member
+// initializers, so the zeroes can be observed on a freshly constructed object.
 for (int i = 0; i < 6; i++) {
-EXPECT_THAT(comp.dens_coeff[i], DoubleEq(0.0));
-EXPECT_THAT(comp.visc_coeff[i], DoubleEq(0.0));
+EXPECT_THAT(comp.dens_coeff[i], DoubleEq(0.0)) << "dens_coeff[" << i << "]";
+EXPECT_THAT(comp.visc_coeff[i], DoubleEq(0.0)) << "visc_coeff[" << i << "]";
 }
 }
 

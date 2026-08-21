@@ -22,6 +22,8 @@ gui/qrc_images.cpp
 
 /build/
 /build-docker/
+/build-docker-nodb/
+/build-docker-coverage/
 /cmake-build-debug/
 doc/manual/build
 /vcpkg/
@@ -35,3 +37,4 @@ CMakeUserPresets.json
 __pycache__
 /CLAUDE.md
 *.pyc
+/build-mac/

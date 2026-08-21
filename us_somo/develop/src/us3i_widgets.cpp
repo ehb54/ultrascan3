@@ -309,20 +309,26 @@ QwtCounter* US3i_widgets::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-#if QT_VERSION < 0x050000
-  QStyle *btnstyle = new QPlastiqueStyle();
-#else
-  QStyle *btnstyle = QApplication::setStyle( "fusion" );
-#endif
+  // Give the counter's up/down buttons a Fusion style under the native
+  // macOS and Windows styles, where they are unusably small.  Not with
+  // QApplication::setStyle(): it destroys the style it replaces.
+  QString stynam  = US3i_GuiSettings::guiStyle();
+  bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  if ( needbsty )
   {
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
+     static QStyle* btnsty = QStyleFactory::create( "fusion" );
 
-     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+     for ( int jj = 0; btnsty != nullptr  &&  jj < children.size(); jj++ )
      {
-        cwidg->setStyle( btnstyle );
+        QWidget* cwidg = (QWidget*)children.at( jj );
+        QString clname = cwidg->metaObject()->className();
+
+        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+        {
+           cwidg->setStyle( btnsty );
+        }
      }
   }
 #endif    // END: special button treatment for Mac

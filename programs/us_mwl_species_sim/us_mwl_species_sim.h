@@ -38,7 +38,20 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Constructor for US_MwlSpeciesSim
         US_MwlSpeciesSim();
 
+        //! \brief Run the simulation headlessly using command-line options.
+        //! \param flags Parsed input, output, and execution options.
+        //! \return 0 on success, 1 if the GUI is required, or 2 on error.
+        int init_from_args(const QMap<QString, QString>& flags);
+
     private:
+        //! \brief Load and aggregate models without displaying a selection dialog.
+        bool load_models_from_paths(const QStringList& paths);
+
+        //! \brief Save simulations to save_dir instead of US_Settings::importDir().
+        bool save_sims_to(const QString& save_dir);
+        bool write_edit_files(const QString& impdir, const QString& cell);
+        double max_od(US_DataIO::RawData& data);
+
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
         int tripx;             //!< Triple index
@@ -48,8 +61,10 @@ class US_MwlSpeciesSim : public US_Widgets
         bool dbload;           //!< Database load flag
         bool stopFlag;         //!< Stop flag
 
-        double curr_meniscus;  //!< Current meniscus
-        double curr_bottom;    //!< Current bottom
+        //! Stretched cell geometry, set by init_rawdata() and reused by every
+        //! consumer so the data grid and the edit files cannot disagree.
+        double curr_meniscus = 0.0;  //!< Current meniscus
+        double curr_bottom   = 0.0;  //!< Current bottom
 
         QString mfilt;         //!< Model filter
         QString mrunid;        //!< Model run ID

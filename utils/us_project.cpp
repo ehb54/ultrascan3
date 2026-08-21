@@ -33,7 +33,11 @@ int US_Project::readFromDisk( QString& guid )
 
    QXmlStreamReader xml( &file );
 
-   clear();
+   // Parse into a temporary and copy to the caller only once the whole document
+   // has parsed.  The fault in a malformed file is found part way through, so
+   // parsing in place would leave the fields read before it -- and no others --
+   // in an object the caller was told to discard.
+   US_Project pr;
 
    while ( ! xml.atEnd() )
    {
@@ -44,25 +48,28 @@ int US_Project::readFromDisk( QString& guid )
          if ( xml.name() == "project" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            projectID   = a.value( "id" ).toString().toInt();
-            projectGUID = a.value( "guid" ).toString();
-            lastUpdated = QFileInfo( filename ).lastModified().toUTC();
+            pr.projectID   = a.value( "id" ).toString().toInt();
+            pr.projectGUID = a.value( "guid" ).toString();
+            pr.lastUpdated = QFileInfo( filename ).lastModified().toUTC();
 
-            readProjectInfo( xml );
+            pr.readProjectInfo( xml );
          }
       }
    }
 
    file.close();
 
-   if ( xml.hasError() ) 
+   if ( xml.hasError() )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
       return IUS_DB2::DBERROR;
    }
 
-   saveStatus = HD_ONLY;
+   pr.saveStatus = HD_ONLY;
+
+   // Everything parsed:  hand the project to the caller.
+   *this = pr;
 
    return IUS_DB2::OK;
 }

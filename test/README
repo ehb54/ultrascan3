@@ -29,6 +29,36 @@ The test framework uses Docker to create a consistent environment for running te
 
 ## Writing Tests
 
+### Headless GUI Tests with QTest
+
+Native Qt Test UI tests live in two trees:
+
+```text
+test/gui/                  reusable widgets implemented in gui/
+test/programs/<program>/   UI owned or launched by programs/<program>/
+```
+
+Use `us3_add_gui_test()` in the directory's `CMakeLists.txt`, link the
+production target or compile the same program implementation source, and use
+`US3_GUI_TEST_MAIN()` instead of `QTEST_MAIN`.  The UltraScan test main creates
+one `QApplication`, selects the offscreen platform before Qt starts, enables
+software OpenGL, and redirects settings and writable UltraScan paths to a
+temporary sandbox.
+
+The complete examples are:
+
+- `test/gui/test_us_editor_gui.cpp`, which tests keyboard input and an editor
+  action from `gui/`.
+- `test/programs/us_astfem_sim/test_us_astfem_clipdata_gui.cpp`, which uses
+  QTest to operate the real ASTFEM simulation range dialog and verifies that
+  its selected limits are returned to the caller.
+
+Run only the native headless UI tests with:
+
+```bash
+ctest --test-dir build-docker -L qtest --output-on-failure
+```
+
 ### Test Structure
 Tests use Google Test with Qt5 integration through QtTestBase. Create test files in subdirectories and they'll be automatically discovered by CMake.
 
@@ -122,6 +152,70 @@ For targeted debugging:
 ```bash
 ./test-docker.sh -v -f specific_test_name
 ```
+
+## Database Build Variants
+
+`NO_DB` is a whole-tree switch, not a per-target one.  `utils/us_db2.h` declares
+three private `MYSQL` members only when `NO_DB` is undefined, so a test object
+compiled with `NO_DB` and a utilities library compiled without it disagree about
+the layout of `US_DB2`.  Never add `NO_DB` to a test target on its own; select
+the variant when configuring, and give each variant its own build tree.
+
+| Variant | Configure | Build tree | Contents |
+|---|---|---|---|
+| DB-enabled (default) | `-DUS3_PROFILE=TEST` | `build-docker` | utils, GUI and program tests |
+| `NO_DB` | `-DUS3_NO_DB=ON -DBUILD_TESTING=ON` | `build-docker-nodb` | utils tests only |
+
+The `NO_DB` variant does not build `gui/`, so `test/gui` and `test/programs` are
+skipped there; `test/CMakeLists.txt` guards them on `UltraScan3::Gui_Static`.
+The `TEST` profile force-sets `US3_NO_DB=OFF`, so the `NO_DB` variant must spell
+out its options rather than select a profile.
+
+```bash
+./test-docker.sh            # DB-enabled variant
+./test-docker.sh --no-db    # NO_DB variant
+```
+
+`BuildVariantConsistency.TestExecutableMatchesLinkedUtilsLibrary` fails if the
+two ever diverge: it compares this translation unit's `NO_DB` state against a
+probe of the linked library's `US_Settings::us_debug()`, which persists through
+`QSettings` only in the DB-enabled build.
+
+The `Unit Tests v2` GitHub Actions workflow currently runs the **DB-enabled**
+variant only.  The `NO_DB` variant is covered locally by `--no-db`.
+
+## Coverage
+
+```bash
+./test-docker.sh --coverage
+```
+
+One command from a clean tree: configures an instrumented Debug build in
+`build-docker-coverage`, runs the suite, and writes reports to
+`build-docker-coverage/coverage/`.
+
+| Output | Use |
+|---|---|
+| `html/index.html` | Human-readable, line and branch annotated |
+| `coverage.xml` | Cobertura XML for CI |
+| `summary.txt` | Per-file table |
+| `coverage.info` | lcov tracefile |
+
+Notes on how it works, because both details matter for correctness:
+
+- The suite runs **serially**. CTest registers each GoogleTest case as its own
+  process, and concurrent processes merging into shared `.gcda` files corrupt
+  the counters. This makes a coverage run about four times slower than a normal
+  one.
+- A **baseline capture** runs before the suite and is merged with the result, so
+  sources that no test executes still appear at 0% instead of vanishing from the
+  denominator.
+- Instrumentation is tree-wide (`-DUS3_COVERAGE=ON`); test sources and Qt's
+  generated `moc`/autogen output are filtered out when the report is built, not
+  when the code is compiled.
+
+**Coverage is evidence that a line executed, not evidence that anything asserted
+about it.** There is deliberately no pass/fail threshold.
 
 ## Cross-Platform Notes
 

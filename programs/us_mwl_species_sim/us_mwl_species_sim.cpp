@@ -2,11 +2,14 @@
 
 #include <QApplication>
 
+#include "us_headless_cli.h"
 #include "us_mwl_species_sim.h"
 #include "us_data_loader.h"
 #include "us_select_runs.h"
 #include "us_astfem_rsa.h"
 #include "us_astfem_math.h"
+#include "us_sim_inputs.h"
+#include "us_hardware.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -27,10 +30,110 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_MwlSpeciesSim w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+
+   QCommandLineParser parser;
+   auto help_option = QCommandLineOption({"help", "h", "?"},
+      "Display command-line help");
+   parser.addOption(help_option);
+   auto version_option = parser.addVersionOption();
+   auto models_option = QCommandLineOption("models",
+      "Comma-separated list of model file paths, one per wavelength",
+      "models");
+   parser.addOption(models_option);
+   auto buffer_option = QCommandLineOption("buffer",
+      "Load a buffer from a file path, GUID, or database ID",
+      "buffer");
+   parser.addOption(buffer_option);
+   auto sim_parameters_option = QCommandLineOption("simparams",
+      "Load simulation parameters from a file path",
+      "simparams");
+   parser.addOption(sim_parameters_option);
+   auto rotor_option = QCommandLineOption("rotor",
+      "Load a rotor from a file path, GUID, or database ID",
+      "rotor");
+   parser.addOption(rotor_option);
+   auto centerpiece_option = QCommandLineOption("centerpiece",
+      "Centerpiece-list index used for channel geometry (default: 0). "
+      "Overrides the bottom position recovered from --simparams, which is the "
+      "only way to select a row of a multi-row centerpiece. Indexes the local "
+      "etc/abstractCenterpieces.xml, never the database, so that a given index "
+      "means the same thing on every machine",
+      "index");
+   parser.addOption(centerpiece_option);
+   auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
+      "Row within the centerpiece (default: 0), given either as a channel "
+      "letter (A-H, where a channel and its reference share a row, so A and B "
+      "are row 0) or as a bare row index",
+      "channel");
+   parser.addOption(centerpiece_channel_option);
+   auto start_option = QCommandLineOption("start",
+      "Start simulations automatically");
+   parser.addOption(start_option);
+   auto save_option = QCommandLineOption("save",
+      "Save simulation data to a directory",
+      "save");
+   parser.addOption(save_option);
+   auto close_option = QCommandLineOption("close",
+      "Close application if no errors occurred");
+   parser.addOption(close_option);
+   auto ignore_db_option = QCommandLineOption("no-db",
+      "Ignore database preferences and use only locally available data");
+   parser.addOption(ignore_db_option);
+   auto errors_option = QCommandLineOption("errors-cl",
+      "Write errors to the console without opening the GUI");
+   parser.addOption(errors_option);
+
+   int cli_exit_code = 0;
+   if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
+      return cli_exit_code;
+
+   int default_data_location = US_Settings::default_data_location();
+   if ( parser.isSet( ignore_db_option ) )
+   {
+      US_Settings::set_default_data_location( 2 );
+   }
+
+   QMap<QString, QString> args;
+   if ( parser.isSet( models_option ) && !parser.value( models_option ).isEmpty() )
+      args["models"] = parser.value( models_option );
+   if ( parser.isSet( buffer_option ) && !parser.value( buffer_option ).isEmpty() )
+      args["buffer"] = parser.value( buffer_option );
+   if ( parser.isSet( sim_parameters_option ) && !parser.value( sim_parameters_option ).isEmpty() )
+      args["simparams"] = parser.value( sim_parameters_option );
+   if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
+      args["rotor"] = parser.value( rotor_option );
+   if ( parser.isSet( centerpiece_option ) )
+      args["centerpiece"] = parser.value( centerpiece_option );
+   if ( parser.isSet( centerpiece_channel_option ) )
+      args["centerpiece-channel"] = parser.value( centerpiece_channel_option );
+   if ( parser.isSet( start_option ) )
+      args["start"] = "true";
+   if ( parser.isSet( errors_option ) )
+      args["errors-cl"] = "true";
+   if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
+      args["save"] = parser.value( save_option ).replace("\\", "/");
+   if ( parser.isSet( close_option ) )
+      args["close"] = "true";
+
+   int init_status = args.isEmpty() ? 1 : w.init_from_args( args );
+
+   if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
+   {
+      US_Settings::set_default_data_location( default_data_location );
+   }
+
+   if ( init_status == 1 && args.contains( "errors-cl" ) )
+   {
+      QTextStream(stderr) << "GUI would be required to complete this run "
+         "(some inputs were omitted or could not be loaded); exiting without it "
+         "because --errors-cl was set." << Qt::endl;
+      return init_status;
+   }
+
+   // Show the GUI if no options were supplied or user interaction is needed.
+   return showGuiIfNeeded( w, init_status, args );
 }
 
 //! \brief Constructor for US_MwlSpeciesSim class
@@ -400,12 +503,12 @@ void US_MwlSpeciesSim::set_parameters( void )
    double duration     = simparams.speed_step[ 0 ].duration_hours * 3600.0
                        + simparams.speed_step[ 0 ].duration_minutes * 60.0;
    double rspeed       = (double)simparams.speed_step[ 0 ].rotorspeed;
-   double scn_rng      = (double)( simparams.speed_step[ 0 ].scans - 1 );
+   int    scans        = simparams.speed_step[ 0 ].scans;
    delay               = qRound( delay );
    duration            = qRound( duration );
    double pi_fac       = sq( M_PI / 30.0 );
    double tim_rng      = duration - delay;
-   double tim_inc      = tim_rng / scn_rng;
+   double tim_inc      = ( scans > 1 ) ? tim_rng / (double)( scans - 1 ) : 0.0;
    double w2t_fac      = sq( rspeed ) * pi_fac;
    double accel        = simparams.speed_step[ 0 ].acceleration;
    double w2t_inc      = tim_inc * w2t_fac;
@@ -430,14 +533,24 @@ void US_MwlSpeciesSim::set_parameters( void )
    simparams.speed_step[ 0 ].time_first  = tim_val;
    simparams.speed_step[ 0 ].w2t_first   = w2t_val;
 
-   while( tim_val < duration )
-   {  // Walk time and omega2t up to the last scan
-      tim_val            += tim_inc;
-      w2t_val            += w2t_inc;
-   }
+   if ( scans > 1 )
+   {
+      while( tim_val < duration )
+      {  // Walk time and omega2t up to the last scan
+         tim_val            += tim_inc;
+         w2t_val            += w2t_inc;
+      }
 
-   simparams.speed_step[ 0 ].time_last   = duration;
-   simparams.speed_step[ 0 ].w2t_last    = w2t_val;
+      simparams.speed_step[ 0 ].time_last = duration;
+      simparams.speed_step[ 0 ].w2t_last  = w2t_val;
+   }
+   else
+   {  // A one-scan run has only its first-scan time and omega-squared-t.
+      simparams.speed_step[ 0 ].time_last =
+         simparams.speed_step[ 0 ].time_first;
+      simparams.speed_step[ 0 ].w2t_last  =
+         simparams.speed_step[ 0 ].w2t_first;
+   }
    simparams.speed_step[ 0 ].set_speed   = (int)rspeed;
    simparams.speed_step[ 0 ].avg_speed   = rspeed;
 
@@ -545,11 +658,288 @@ DbgLv(1) << "SLOT: stop_sims";
 void US_MwlSpeciesSim::save_sims( void )
 {
 DbgLv(1) << "SLOT: save_sims";
-   QString impdir     = US_Settings::importDir() + "/" + orunid + "/";
+   save_sims_to( US_Settings::importDir() + "/" + orunid );
+}
+
+// Run the simulation headlessly using command-line options.
+int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
+{
+   bool gui_needed      = !flags.contains( "close" );
+   bool error_occured   = false;
+   bool errors_to_cl    = flags.contains( "errors-cl" );
+
+   // Each input is optional. Only an explicitly requested input that fails
+   // to load should prevent start_sims() below.
+   bool loaded_models    = true;
+   bool loaded_buffer    = true;
+   bool loaded_simparams = true;
+   bool loaded_rotor     = true;
+
+   if ( flags.contains( "models" ) && flags[ "models" ].length() > 0 )
+   {
+      QStringList paths = flags[ "models" ].split( ",", Qt::SkipEmptyParts );
+      loaded_models      = load_models_from_paths( paths );
+      if ( ! loaded_models )
+         reportHeadlessLoadFailure( "models", paths.join( "," ), errors_to_cl,
+                                     gui_needed, error_occured );
+   }
+
+   if ( flags.contains( "buffer" ) && flags[ "buffer" ].length() > 0 )
+   {
+      QString load_id     = flags[ "buffer" ];
+      US_BufferGui* dialog = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
+      bool success         = dialog->load_buffer( load_id, buffer );
+      dialog->close();
+      if ( ! success )
+      {
+         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_buffer      = false;
+      }
+      else
+      {
+         change_buffer( buffer );
+      }
+      delete dialog;
+   }
+
+   if ( flags.contains( "simparams" ) && flags[ "simparams" ].length() > 0 )
+   {
+      QString load_id      = flags[ "simparams" ];
+      US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
+      bool success          = dialog->load_params( load_id, simparams );
+      dialog->close();
+      if ( ! success )
+      {
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_simparams    = false;
+      }
+      else
+      {
+         // The file omits bottom_position; mirror the loaded at-rest bottom.
+         // An explicit --centerpiece overrides it below.
+         simparams.bottom_position = simparams.bottom;
+         set_parameters();
+      }
+      delete dialog;
+   }
+
+   if ( flags.contains( "rotor" ) && flags[ "rotor" ].length() > 0 )
+   {
+      US_Rotor::Rotor rotorval;
+      US_Rotor::RotorCalibration calibration;
+      QString rotor_id      = flags[ "rotor" ];
+      US_Disk_DB_Controls* disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+      int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                            : US_Disk_DB_Controls::Disk;
+      US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk, rotorval, calibration );
+      double coeff1 = 0.0;
+      double coeff2 = 0.0;
+      bool status = rotorInfo->load_rotor( rotor_id, coeff1, coeff2 );
+
+      if ( status )
+      {
+         rotor                     = rotorInfo->currentRotor;
+         rotor_calib                = rotorInfo->currentCalibration;
+         simparams.rotorcoeffs[0]   = coeff1;
+         simparams.rotorcoeffs[1]   = coeff2;
+         simparams.rotorCalID       = QString::number( rotorInfo->currentCalibration.ID );
+         rotorInfo->close();
+      }
+      else
+      {
+         rotorInfo->close();
+         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_rotor        = false;
+      }
+      delete rotorInfo;
+      delete disk_controls;
+   }
+
+   // A centerpiece selects the row geometry and overrides the loaded bottom.
+   // Preserve rotorCalID so its calibration remains in effect.
+   if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
+   {
+      int cp = 0;
+      int ch = 0;
+      QString parse_error;
+
+      if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
+           || ! US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ),
+                                          ch, parse_error ) )
+      {
+         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QString range_error = US_AbstractCenterpiece::validate( cp, ch );
+         if ( ! range_error.isEmpty() )
+         {
+            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
+                                            cp, ch ) )
+         {  // Ignoring this would silently fall back to the 7.2 default bottom
+            reportHeadlessLoadFailure( "centerpiece",
+               "hardware definitions could not be applied", errors_to_cl,
+               gui_needed, error_occured );
+         }
+      }
+   }
+
+   QString save_path;
+   if ( flags.contains( "save" ) && flags[ "save" ].length() > 0 )
+   {
+      save_path            = flags[ "save" ];
+      QDir dir( save_path );
+
+      // Accept a new output directory as well as an existing one.
+      if ( ! dir.exists()  &&  ! QDir().mkpath( save_path ) )
+      {
+         reportHeadlessLoadFailure( "save directory (could not create)",
+                                     save_path, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QFile file( dir.filePath( "tmp.txt" ) );
+         if ( ! file.open( QIODevice::WriteOnly ) )
+         {
+            reportHeadlessLoadFailure( "save directory (not writable)",
+                                        save_path, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else
+         {
+            file.close();
+            file.remove();
+         }
+      }
+   }
+
+   if ( ! error_occured && loaded_models && loaded_buffer && loaded_simparams && loaded_rotor )
+   {
+      if ( flags.contains( "start" ) )
+      {
+         start_sims();
+         if ( ! save_path.isEmpty()  &&  ! save_sims_to( save_path ) )
+         {
+            if ( errors_to_cl )
+               return 2;
+            error_occured       = true;
+            gui_needed          = true;
+         }
+      }
+   }
+   else
+   {
+      gui_needed             = true;
+   }
+
+   if ( error_occured )
+      return 2;
+   if ( gui_needed )
+      return 1;
+   return 0;
+}
+
+// Load models from explicit file paths and aggregate them as select_models()
+// does, without displaying the selection dialog.
+bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
+{
+   models.clear();
+   mdescs.clear();
+
+   for ( const QString& path : paths )
+   {
+      US_Model m;
+      if ( m.load( path ) != IUS_DB2::OK  ||  m.description.isEmpty() )
+      {
+         qDebug() << "Error loading model file" << path;
+         return false;
+      }
+      models  << m;
+      mdescs  << m.description;
+   }
+
+   nmodels      = models.count();
+   if ( nmodels < 1 )
+      return false;
+
+   mtconcs.fill( 0.0, nmodels );
+
+   QStringList runids;
+   QStringList chans;
+   QStringList wavelns;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString mdesc  = models[ jm ].description;
+      QString runid  = QString( mdesc ).section( ".",  0, -4 );
+      QString triple = QString( mdesc ).section( ".", -3, -3 );
+      QString chan   = QString( triple ).left( 2 );
+      QString waveln = QString( triple ).mid( 2, 3 );
+
+      if ( ! runids.contains( runid ) )
+         runids  << runid;
+
+      if ( ! chans .contains( chan ) )
+         chans   << chan;
+
+      if ( ! wavelns.contains( waveln ) )
+         wavelns << waveln;
+
+      double tot_conc = 0.0;
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+         tot_conc      += models[ jm ].components[ jc ].signal_concentration;
+
+      mtconcs[ jm ]  = tot_conc;
+   }
+
+   int nruns      = runids .count();
+   int nchans     = chans  .count();
+   int nwavls     = wavelns.count();
+
+   if ( nruns != 1  ||  nchans != 1  ||  nwavls != nmodels )
+   {
+      qDebug() << "Model descriptions must identify one run and one channel,"
+                  " with one wavelength per model. Expected counts:"
+               << "runs=" << 1 << "channels=" << 1 << "wavelengths=" << nmodels
+               << "Actual counts: runs=" << nruns << "channels=" << nchans
+               << "wavelengths=" << nwavls;
+      return false;
+   }
+
+   mrunid         = runids[ 0 ];
+   orunid         = "ISSF-" + mrunid + "-" + chans[ 0 ];
+   QString triple = chans[ 0 ].left( 1 ) + "."
+                  + chans[ 0 ].mid( 1, 1 ) + "."
+                  + wavelns[ 0 ] + "-" + wavelns[ nwavls - 1 ];
+   le_triples->setText( triple );
+   le_runid  ->setText( orunid );
+
+   pb_strtsims->setEnabled( true );
+
+   return true;
+}
+
+// Save simulations to the requested directory instead of
+// US_Settings::importDir().
+bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
+{
+   QString impdir     = save_dir + "/";
    QString cell       = QString( orunid ).section( "-", -1, -1 ).left( 1 );
    QString basefn     = orunid + ".RA." + cell + ".S.xxx.auc";
 
-   QDir().mkpath( impdir );
+   if ( ! QDir().mkpath( impdir ) )
+   {
+      qDebug() << "Error: could not create save directory" << impdir;
+      return false;
+   }
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -559,11 +949,16 @@ DbgLv(1) << "SLOT: save_sims";
       QString fpath      = impdir + fname;
 DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
 
-      QString smsg       = tr( "Saving data: %1" ).arg( swavl );
-      te_status->setText( smsg );
+      te_status->setText( tr( "Saving data: %1" ).arg( swavl ) );
       qApp->processEvents();
 
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
+      int stat           = US_DataIO::writeRawData( fpath, synData[ jm ] );
+      if ( stat != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write" << fpath << "status" << stat;
+         te_status->setText( tr( "Error writing %1" ).arg( fname ) );
+         return false;
+      }
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
@@ -571,17 +966,89 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
    te_status->setText( smsga );
    qApp->processEvents();
 
-   // Build and save time state
    QString tfname     = orunid + ".time_state.tmst";
    QString tfpath     = impdir + tfname;
 DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
-   writeTimeState( tfpath, simparams, synData[ 0 ] );
+   // writeTimeState() reports failure by returning zero time points.
+   if ( writeTimeState( tfpath, simparams, synData[ 0 ] ) == 0 )
+   {
+      qDebug() << "Error: could not write time state" << tfpath;
+      return false;
+   }
 
    smsga             += tr( "\n\nTime State file\n%1\nhas been written" )
                         .arg( tfname );
    te_status->setText( smsga );
    qApp->processEvents();
+
+   // Analysis programs require one edit file per wavelength.
+   if ( ! write_edit_files( impdir, cell ) )
+      return false;
+
+   return true;
+}
+
+// Write an edit XML with stretched cell geometry beside each .auc file.
+bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
+                                          const QString& cell )
+{
+   QString now        = QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
+   // Reuse the geometry init_rawdata() built the radial grid from; deriving
+   // the stretch again here puts the edit radii outside the data range.
+   double  meniscus   = curr_meniscus;
+   double  bottom     = curr_bottom;
+
+   if ( bottom <= meniscus )
+   {
+      QTextStream( stderr ) << "Error: cell geometry is unset; simulations "
+         "must run before edit files can be written" << Qt::endl;
+      return false;
+   }
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString mdesc   = models[ jm ].description;
+      QString swavl   = mdesc.section( ".", -3, -3 ).mid( 2, 3 );
+      QString fname   = orunid + "." + now + ".RA." + cell + ".S." + swavl
+                      + ".xml";
+      US_DataIO::EditValues ev;
+      ev.expType    = "Velocity";
+      ev.runID      = orunid;
+      ev.cell       = cell;
+      ev.channel    = "S";
+      ev.wavelength = swavl;
+      ev.editGUID   = US_Util::new_guid();
+      ev.dataGUID   = US_Util::uuid_unparse(
+         reinterpret_cast<uchar*>( synData[ jm ].rawGUID ) );
+
+      US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom );
+      ev.ODlimit    = max_od( synData[ jm ] );
+
+      if ( US_DataIO::writeEdits( impdir + fname, ev ) != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write edit file" << impdir + fname;
+         return false;
+      }
+   }
+
+   return true;
+}
+
+// Return the OD ceiling used by RMSD calculations.
+double US_MwlSpeciesSim::max_od( US_DataIO::RawData& data )
+{
+   double maxc     = 0.0;
+   int    nscans   = data.scanCount();
+   int    npoints  = data.pointCount();
+
+   for ( int ii = 0; ii < nscans; ii++ )
+   {
+      for ( int kk = 0; kk < npoints; kk++ )
+         maxc = qMax( maxc, data.value( ii, kk ) );
+   }
+
+   return maxc;
 }
 
 // Bump the current plot to the previous channel
@@ -736,9 +1203,10 @@ simparams.debug();
    int terpsize       = ( npoints + 7 ) / 8;
    double mwavelen    = waveln.toDouble();
    double timeval     = simparams.speed_step[ 0 ].time_first;
-   double timeinc     = ( simparams.speed_step[ 0 ].time_last
-                        - simparams.speed_step[ 0 ].time_first )
-                        / (double)( nscans - 1 );
+   double timeinc     = ( nscans > 1 )
+      ? ( simparams.speed_step[ 0 ].time_last
+        - simparams.speed_step[ 0 ].time_first ) / (double)( nscans - 1 )
+      : 0.0;
    double w2tval      = simparams.speed_step[ 0 ].w2t_first;
    double w2tinc      = timeinc * pow( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0, 2.0 );
 DbgLv(1) << "rdata0 tf tl" << simparams.speed_step[0].time_first << simparams.speed_step[0].time_last
@@ -1069,4 +1537,3 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
    return timestate.time_count();
 #endif
 }
-

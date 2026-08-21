@@ -328,22 +328,25 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  // The counter's up/down buttons are unusably small with the native macOS
-  // style.  Give just those buttons a Fusion style - unlike the former
-  // QApplication::setStyle() call this leaves the style the user selected
-  // for the rest of the application alone.
-  static QStyle* btnstyle = QStyleFactory::create( "Fusion" );
+  // Give the counter's up/down buttons a Fusion style under the native
+  // macOS and Windows styles, where they are unusably small.  US_Style
+  // leaves objectName empty, so the name comes from US_GuiSettings.
+  QString stynam  = US_GuiSettings::guiStyle();
+  bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
 
-  if ( btnstyle != nullptr )
+  if ( needbsty )
   {
-     for ( int jj = 0; jj < children.size(); jj++ )
+     static QStyle* btnsty = QStyleFactory::create( "fusion" );
+
+     for ( int jj = 0; btnsty != nullptr  &&  jj < children.size(); jj++ )
      {
         QWidget* cwidg = (QWidget*)children.at( jj );
         QString clname = cwidg->metaObject()->className();
 
         if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
         {
-           cwidg->setStyle( btnstyle );
+           cwidg->setStyle( btnsty );
         }
      }
   }

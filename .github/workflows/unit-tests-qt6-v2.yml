@@ -1,0 +1,198 @@
+# Qt6 unit tests.
+#
+# Runs the same suite as unit-tests-qt5-v2.yml, against Qt6 instead of Qt5.
+#
+# Qt6 and Qwt come from the prebuilt ehb1/usbuildtest image that codeql-
+# analysis.yml already builds against, rather than from apt:  Ubuntu packages
+# Qwt for Qt5 only, and the TEST profile links it.  Only the 6.10 image is
+# tested -- that is the Qt6 the project is standardizing on, and vcpkg.json
+# pins qtbase to 6.10.1 to match.
+#
+# The job names below are suffixed "(Qt6)" so they do not collide with the Qt5
+# workflow's checks, which kept their original names through the file rename.
+name: "Unit Tests Qt6 v2"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter pattern (optional)'
+        required: false
+        default: ''
+      debug_mode:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  changed-files:
+    runs-on: ubuntu-latest
+    name: Get changed files (Qt6)
+    permissions:
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.changed-files.outputs.relevant_any_modified == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Get changed files
+        if: ${{ !( github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) || !env.ACT }}
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files_yaml: |
+            relevant:
+              - .github/workflows/unit-tests-qt6-v2.yml
+              - utils/**.c
+              - utils/**.cpp
+              - utils/**.h
+              - utils/**.hpp
+              - utils/CMakeLists.txt
+              - test/**
+              - '**/*.json'
+              - admin/cmake/**
+              - admin/test/**
+              - CMakeLists.txt
+
+  unit-testing:
+    needs: changed-files
+    name: Unit Tests (Qt6)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.act == 'true' || needs.changed-files.outputs.relevant == 'true' }}
+
+    container:
+      image: "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+
+    defaults:
+      run:
+        # Name the shell rather than take the default:  inside this container the
+        # default resolved to sh, where ${PIPESTATUS[0]} is a syntax error.  This
+        # also turns on pipefail, without which a failing cmake or ctest piped
+        # into tee reports tee's success and the step passes regardless.
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Install remaining dependencies
+        run: |
+          # The image carries Qt6, Qwt and libarchive.  These four are what the
+          # TEST profile needs on top of it.
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install -y -qq \
+              libmysqlclient-dev \
+              libgtest-dev \
+              libgmock-dev \
+              libgl2ps-dev \
+              pkg-config
+
+      - name: Add GoogleTest Problem Matcher
+        run: echo "::add-matcher::.github/gtest-us.json"
+
+      - name: Configure
+        run: |
+          # FindQwt.cmake reads QWTPATH/QWT_PATH; the image exports QWTDIR only.
+          export QWTPATH="$QWTDIR"
+          export CMAKE_PREFIX_PATH="$QTDIR:$QWTDIR:${CMAKE_PREFIX_PATH:-}"
+
+          mkdir -p build-qt6
+          cmake -S . -B build-qt6 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_STANDARD=17 \
+            -DUSE_QT6=ON \
+            -DUS3_PROFILE=TEST \
+            -DUS3_PREFER_STATIC=ON \
+            -DUS3_BUILD_PROGRAMS=OFF \
+            -DCMAKE_MODULE_PATH="$(pwd)/admin/cmake" \
+            2>&1 | tee configure.log || RESULT=$?
+
+          # Point directly at the first configure error if there was one
+          if grep -q 'CMake Error' configure.log; then
+            echo '---- First CMake Error ----'
+            grep -n 'CMake Error' configure.log | head -1
+            exit 1
+          fi
+          exit "${RESULT:-0}"
+
+      - name: Build
+        run: cmake --build build-qt6 -j "$(nproc)" 2>&1 | tee build.log
+
+      - name: Run tests
+        run: |
+          export QT_QPA_PLATFORM=offscreen
+          cd build-qt6
+
+          echo '=== TEST SUITE STATISTICS ==='
+          echo "Total CTest cases: $(ctest -N 2>/dev/null | grep -c 'Test #' || echo 'Unknown')"
+          if [ -f ./test/utils/test_us_utils ]; then
+            echo "Total GTest cases: $(./test/utils/test_us_utils --gtest_list_tests 2>/dev/null | grep -c '\.' || echo 'Unknown')"
+          fi
+          echo '============================='
+
+          CTEST_ARGS="--output-on-failure --parallel $(nproc)"
+          if [ "${{ github.event.inputs.debug_mode }}" == "true" ]; then
+            CTEST_ARGS="$CTEST_ARGS --verbose"
+          fi
+          if [ -n "${{ github.event.inputs.test_filter }}" ]; then
+            CTEST_ARGS="$CTEST_ARGS -L ${{ github.event.inputs.test_filter }}"
+          fi
+
+          # Let ctest fail without ending the step, so the analysis below runs.
+          RESULT=0
+          ctest $CTEST_ARGS 2>&1 | tee test_output.log || RESULT=$?
+
+          if [ $RESULT -ne 0 ]; then
+            echo '=== FAILURE ANALYSIS ==='
+            echo 'Failed tests summary:'
+            ctest --rerun-failed -N 2>/dev/null | grep 'Test #' || echo 'Unable to get failed test list'
+          fi
+          exit $RESULT
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-qt6-${{ github.run_number }}
+          path: |
+            build-qt6/Testing/
+            build-qt6/test_output.log
+            configure.log
+            build.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  check-status:
+    if: always()
+    needs: [ unit-testing ]
+    name: Check Unit testing job statuses (Qt6)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check statuses
+        run: |
+          RESULTS='${{ toJson(needs) }}'
+          # Check for failures
+          if echo $RESULTS | grep -q '"result": "failure"'; then
+            echo "At least one Qt6 unit testing job failed."
+            exit 1
+          fi
+          # Check for cancelled jobs
+          if echo $RESULTS | grep -q '"result": "cancelled"'; then
+            echo "At least one Qt6 unit testing job was cancelled."
+            exit 1
+          fi
+          echo "All Qt6 unit testing jobs completed successfully or were skipped."
+          exit 0

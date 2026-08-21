@@ -84,19 +84,12 @@ qDebug() << "CG: nefmods" << nefmods;
 
    QGridLayout* colors = new QGridLayout();
 
-   // Check need to change style of buttons so that they can be colored
-   QString stynam  = qApp->style()->objectName();
-#if QT_VERSION > 0x050000
+   // Check need to change style of buttons so that they can be colored.
+   // US_Style leaves objectName empty, so the name comes from US_GuiSettings.
+   QString stynam  = US_GuiSettings::guiStyle();
    QStyle* btnsty  = QStyleFactory::create( "fusion" );
    bool needbsty   = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
                      stynam.startsWith( "mac"    , Qt::CaseInsensitive );
-#else
-   QStyle* btnsty  = new QPlastiqueStyle();   // style sure to be colorable
-   bool needbsty   = stynam.startsWith( "windowsv", Qt::CaseInsensitive ) ||
-                     stynam.startsWith( "windowsx", Qt::CaseInsensitive ) ||
-                     stynam.startsWith( "mac"     , Qt::CaseInsensitive );
-#endif
-qDebug() << "stynam" << stynam << "needbsty" << needbsty;
    int c_row = 0;
 
    for ( int ii = 0; ii < 11; ii++ )
