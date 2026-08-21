@@ -181,7 +181,8 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
                                " and a dark variant.  \"Follow the desktop\""
                                " picks the one the desktop asks for." ) );
 
-  connect( cmbb_scheme, qOverload<int>(&QComboBox::activated), this, &US_Color::selected_scheme );
+  connect( cmbb_scheme, qOverload<int>(&QComboBox::activated),
+           this,        &US_Color::selectScheme );
 
   rightColumn->addWidget( cmbb_scheme, row++, 1 );
 
@@ -908,6 +909,8 @@ void US_Color::resetEditBoxes( void )
   le_save_as->setPalette( p );
   schemes   ->setPalette( p );
   elements  ->setPalette( p );
+  schemes ->viewport()->setPalette( p );
+  elements->viewport()->setPalette( p );
 }
 
 void US_Color::pick_color1( void )
@@ -1350,6 +1353,7 @@ void US_Color::apply( void )
   US_GuiSettings::set_plotColor   ( current.plotColor     );
 
   // Rebuild the application chrome from what was just stored
+  US_Theme::bumpSerial();
   US_Theme::apply( true );
 }
 
@@ -1548,6 +1552,7 @@ void US_Color::selectScheme( const int index )
   current.colorScheme = cmbb_scheme->itemData( index ).toString();
 
   US_Theme::set_schemeSetting( current.colorScheme );
+  US_Theme::apply( true );
 
   getCurrentSettings();
   updateScreen();
