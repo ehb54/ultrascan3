@@ -1617,6 +1617,9 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 }
 
 //slots for reject/accept Vel-MWL deconvoluton for a channel
+//  this info should go to DB on per-channel basis to"
+//   (1) when re-attached (abn if not proceeded to 2dsa-desktop), skip
+//   (2) for the report, reflect the status of accept/reject of the MWL-deconv. 
 void US_Analysis_auto::velmwl_deconv_rejected( QString& chann_dec )
 {
   qDebug() << "[US_Autoflow_analysis]REJECT VEL-MWL deconvolution, channel -- "
