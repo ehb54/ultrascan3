@@ -8149,15 +8149,16 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
        int report_items_number = reportGMP-> reportItems.size();
 
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
-       
-       mstr += QString(tr( "<h4>Protein signal</h4>\n") );
-       mstr += indent( 2 ) + "<table>\n";
+
        QString header_trftp = table_row( tr( "Type:" ),
 			  tr( "Range:"),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       mstr += header_trftp;
+       
+       QString mstr_protein = QString(tr( "<h4>Protein signal</h4>\n") );
+       mstr_protein += indent( 2 ) + "<table>\n";
+       mstr_protein += header_trftp;
        
        QString mstr_dna = QString(tr( "<h4>DNA signal</h4>\n") );
        mstr_dna += indent( 2 ) + "<table>\n";
@@ -8200,21 +8201,21 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 		    << curr_item.range_high
 		    << int_val_m;
 	   
-	   mstr += table_row( type,
-			      range,
-			      QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-			      QString::number( frac_tot_tol_r ),
-			      tot_frac_passed );
+	   mstr_protein += table_row( type,
+				      range,
+				      QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+				      QString::number( frac_tot_tol_r ),
+				      tot_frac_passed );
 	   mstr_dna += table_row( type,
 				  range,
 				  QString::asprintf( "%5.2f%%", frac_tot_m_dna ) + " (" + QString::number( frac_tot_r ) + "%)",
 				  QString::number( frac_tot_tol_r ),
 				  tot_frac_passed_dna );
 	 }
-       //mstr     += mstr_dna;
-       mstr     += indent( 2 ) + "</table>\n";
-       mstr_dna += indent( 2 ) + "</table>\n";
-       mstr     += mstr_dna;
+       mstr_protein  += indent( 2 ) + "</table>\n";
+       mstr_dna      += indent( 2 ) + "</table>\n";
+       mstr          += mstr_protein;
+       mstr          += mstr_dna;
        //End of integration results
      }
  
