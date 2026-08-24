@@ -8150,7 +8150,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
        QString mstr_dna = QString(tr( "<h4>DNA signal</h4>\n") );
-       mstr_dna += "<table>\n";
+       //mstr_dna += "<table>\n";
        mstr += QString(tr( "<h4>Protein signal</h4>\n") );
        mstr += indent( 2 ) + "<table>\n";
        QString header_trftp = table_row( tr( "Type:" ),
@@ -8209,9 +8209,10 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 				  QString::number( frac_tot_tol_r ),
 				  tot_frac_passed_dna );
 	 }
-       mstr     += indent( 2 ) + "</table>\n";
-       mstr_dna += "</table>\n";
        mstr     += mstr_dna;
+       mstr     += indent( 2 ) + "</table>\n";
+       //mstr_dna += "</table>\n";
+       //mstr     += mstr_dna;
        //End of integration results
      }
  
