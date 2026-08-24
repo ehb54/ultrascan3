@@ -1833,6 +1833,9 @@ DbgLv(1) << "sfd:  menx menval meniscus" << menx << menval << meniscus;
          rdata->setValue( jj, menx, menval );
       }
 
+      qDebug() << "Writing syncdata: fname, rdata->description -- "
+	       << fname << rdata->description;
+
       int stat        = US_DataIO::writeRawData( fname, synData[ kd ] );
 DbgLv(1) << "sfd:  stat fname" << stat << fname;
    }
