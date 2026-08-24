@@ -40,7 +40,7 @@ class US_Norm_Profile : public US_Widgets
         void pass_channels_info( QStringList& );
         void pass_rmsd_info( QMap< QString, double >& );
         void pass_menisc_info( QMap< QString, double >& );
-        void pass_percents_info( QMap< QString, QMap < QString, double>>& );
+        void pass_percents_info( QMap< QString, QMap < QString, double>>&, QMap< QString, QMap < QString, double>>& );
         void pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
   
     protected:
@@ -92,6 +92,7 @@ class US_Norm_Profile : public US_Widgets
         QMap< QString, double > data_per_channel_rmsd;
         QMap< QString, int > data_per_channel_norm_cb;
         QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
+        QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents_dna;
         QMap< QString, bool > data_per_channel_processed;
         QMap< QString, QString > prot_details;
  
@@ -119,7 +120,7 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Select data for the plot.
         void selectData(void);
         void selectData_auto(void);
-        void find_percent_from_range( QString, QString, QString, QVector<double>, QVector< double > );
+        void find_percent_from_range( QString, QString, QString, QString, QVector<double>, QVector< double > );
 
         //! \brief Plot the selected data.
         void plotData(void);
@@ -167,6 +168,7 @@ class US_Norm_Profile : public US_Widgets
 					QMap <QString, QString>&,
 					QMap <QString, double>&,
 					QMap< QString, int >&,
+					QMap< QString, QMap < QString, double>>&,
 					QMap< QString, QMap < QString, double>>&,
 					QMap <QString, double>&,
 					QMap <QString, double>& );
