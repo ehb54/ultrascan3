@@ -8109,6 +8109,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
   
    document.print(&printer);
    mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
+   mstr += indent( 2 ) + "</table>\n";
    //END of ABDE distributions .csv format
    
    //Get Report for a channel && item(s)
