@@ -421,6 +421,19 @@ if(QCH_DIR)
     endforeach()
 endif()
 
+foreach(_required_help manual.qch manual.qhc)
+    set(_required_help_path "${S_BIN}/${_required_help}")
+    if(NOT EXISTS "${_required_help_path}")
+        message(FATAL_ERROR
+            "[LinuxDeploy] Required help file was not staged: ${_required_help_path}")
+    endif()
+    file(SIZE "${_required_help_path}" _required_help_size)
+    if(_required_help_size EQUAL 0)
+        message(FATAL_ERROR
+            "[LinuxDeploy] Required help file is empty: ${_required_help_path}")
+    endif()
+endforeach()
+
 # =========================================================================
 # 8) Copy etc/ and somo/
 #    Mirrors WinDeploy.cmake section 9

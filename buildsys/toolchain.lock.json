@@ -1,0 +1,77 @@
+{
+  "$comment": [
+    "Single source of truth for the prebuilt dependency toolchain.",
+    "",
+    "Application builds NEVER compile Qt or any other dependency. They consume",
+    "the artifacts pinned here, which are produced by",
+    ".github/workflows/toolchain-build.yml and published to a GitHub Release",
+    "(archives) or GHCR (container images).",
+    "",
+    "To upgrade dependencies: change vcpkg.json, run the toolchain workflow,",
+    "and merge the pin update it produces. That is the only",
+    "moment Qt gets compiled.",
+    "",
+    "'asset' names carry the run that produced them, so publishing a new",
+    "toolchain never overwrites the one pinned here. The workflow retires the",
+    "superseded archives only after this file has been updated on main.",
+    "",
+    "There is no toolchain version. Everything that affects dependency ABI is",
+    "part of the cache fingerprint, so a rebuild is triggered by content rather",
+    "than by a number someone has to remember to bump.",
+    "",
+    "Container 'image' is the bare package name, NOT a full registry path.",
+    "The owner is supplied at runtime from github.repository_owner so this",
+    "file is identical in ehb54/ultrascan3 and in any fork: each publishes to",
+    "its own GHCR namespace and pins the digest its own toolchain run produced.",
+    "",
+    "The vcpkg commit is NOT recorded here. It is builtin-baseline in",
+    "vcpkg.json -- one SHA in the repository, so the ports baseline and the",
+    "checked-out vcpkg tool can never drift apart. Checking out that commit",
+    "also pins the tool, because bootstrap-vcpkg resolves the tool version",
+    "from scripts/vcpkg-tool-metadata.txt at whatever is checked out.",
+    "",
+    "THE PINS BELOW ARE INTENTIONALLY EMPTY.",
+    "",
+    "A toolchain is published to the repository that builds it -- release",
+    "assets and GHCR images both live under that owner. Carrying another",
+    "repository's pins here would point application builds at artifacts they",
+    "cannot fetch, so the fields are blank until this repository runs the",
+    "toolchain workflow for the first time.",
+    "",
+    "Merging that first run is what populates them: this file, vcpkg.json, the",
+    "triplets and buildsys/docker are all in the workflow's push-paths filter,",
+    "so the merge triggers a toolchain build, which validates its own pin",
+    "against every target and merges the update automatically.",
+    "",
+    "Until then application builds fail with a clear message from",
+    "scripts/fetch-toolchain.sh rather than a download error."
+  ],
+  "release_tag": "toolchain",
+  "targets": {
+    "macos-arm64": {
+      "kind": "archive",
+      "asset": "",
+      "sha256": ""
+    },
+    "macos-x64": {
+      "kind": "archive",
+      "asset": "",
+      "sha256": ""
+    },
+    "windows-x64": {
+      "kind": "archive",
+      "asset": "",
+      "sha256": ""
+    },
+    "ubuntu2404-x64": {
+      "kind": "container",
+      "image": "us3-toolchain-ubuntu2404",
+      "digest": ""
+    },
+    "oraclelinux8-x64": {
+      "kind": "container",
+      "image": "us3-toolchain-oraclelinux8",
+      "digest": ""
+    }
+  }
+}

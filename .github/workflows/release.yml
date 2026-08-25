@@ -1,17 +1,6 @@
 name: UltraScan3 Release
 
-# ============================================================================
-# Triggered by a v* tag push (permanent versioned release).
-# Calls the same local build-<platform>.yml reusable workflows used by nightly
-# and on-demand builds, with release-specific ref, artifact prefix, clean tier,
-# and retention parameters. Once all platform builds succeed, publish-release
-# downloads all artifacts, renames them to stable filenames, and creates a
-# permanent versioned GitHub Release.
-#
-# Cache probing, conditional warming, exact-hit enforcement, and cache-saving
-# policy are owned by the local platform workflows so every entry point follows
-# the same path.
-# ============================================================================
+# Builds and publishes the versioned release for a v* tag.
 
 run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
 
@@ -23,60 +12,58 @@ on:
 permissions:
   contents: write
   actions: write
+  packages: read
 
 jobs:
 
-  # The platform workflows own cache probing/warming, runner selection,
-  # profiles, and the pinned external build implementation. Release-specific
-  # policy is expressed only through their public inputs below.
+  validate-version:
+    name: "Validate release tag and VERSION"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
 
-  ubuntu:
-    name: "Ubuntu 24.04 (APP + HPC)"
-    uses: ./.github/workflows/build-ubuntu.yml
+      - name: Require tag to match VERSION
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '\r\n' < VERSION)
+          expected_tag="v${version}"
+
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "::error::Release tag '$GITHUB_REF_NAME' does not match VERSION '$version' (expected '$expected_tag')."
+            exit 1
+          fi
+
+          echo "Validated release $GITHUB_REF_NAME against VERSION $version."
+
+  # PLATFORM BUILDS
+  # Build all targets against buildsys/toolchain.lock.json.
+
+  build:
+    name: "${{ matrix.label }}"
+    needs: validate-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: ubuntu2404-x64,   profile: APP, label: "Ubuntu 24.04 APP",   platform: Ubuntu-24.04-x86_64 }
+          - { target: ubuntu2404-x64,   profile: HPC, label: "Ubuntu 24.04 HPC",   platform: HPC-Ubuntu-24.04-x86_64 }
+          - { target: oraclelinux8-x64, profile: APP, label: "Oracle Linux 8 APP", platform: RHEL-8-x86_64 }
+          - { target: oraclelinux8-x64, profile: HPC, label: "Oracle Linux 8 HPC", platform: HPC-RHEL-8-x86_64 }
+          - { target: macos-arm64,      profile: APP, label: "macOS arm64 APP",    platform: macOS-arm64 }
+          - { target: macos-x64,        profile: APP, label: "macOS x86_64 APP",   platform: macOS-x86_64 }
+          - { target: windows-x64,      profile: APP, label: "Windows x86_64 APP", platform: Windows-x86_64 }
+    uses: ./.github/workflows/app-build.yml
     with:
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
+      qt_variant:              qt6
       ref:                     ${{ github.ref }}
       clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-    secrets: inherit
-
-  macos-arm:
-    name: "macOS ARM (APP)"
-    uses: ./.github/workflows/build-macos-arm.yml
-    with:
-      ref:                     ${{ github.ref }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-    secrets: inherit
-
-  oraclelinux8:
-    name: "Oracle Linux 8 x64 (APP + HPC)"
-    uses: ./.github/workflows/build-oraclelinux.yml
-    with:
-      ref:                     ${{ github.ref }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-    secrets: inherit
-
-  macos-intel:
-    name: "macOS Intel (APP)"
-    uses: ./.github/workflows/build-macos-intel.yml
-    with:
-      ref:                     ${{ github.ref }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-    secrets: inherit
-
-  windows:
-    name: "Windows x64 (APP)"
-    uses: ./.github/workflows/build-windows.yml
-    with:
-      ref:                     ${{ github.ref }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
+      artifact_name:           ${{ format('release-{0}-{1}', github.ref_name, matrix.platform) }}
       artifact_retention_days: 7
     secrets: inherit
 
@@ -88,7 +75,7 @@ jobs:
   # --------------------------------------------------------------------------
   publish-release:
     name: "Publish release ${{ github.ref_name }}"
-    needs: [ubuntu, macos-arm, oraclelinux8, macos-intel, windows]
+    needs: [validate-version, build]
     if: success()
     runs-on: ubuntu-24.04
     steps:
@@ -128,25 +115,25 @@ jobs:
           echo "Staging release assets..."
 
           cp_first_find "UltraScan3-macos-installer-arm64-${VERSION}.pkg" \
-            find artifacts -type f -path '*release-*-arm-macos-15-*/*' -name '*.pkg'
+            find artifacts -type f -path '*release-*-macOS-arm64/*' -name '*.pkg'
 
           cp_first_find "UltraScan3-macos-installer-x86_64-${VERSION}.pkg" \
-            find artifacts -type f -path '*release-*-macos-15-intel-*/*' -name '*.pkg'
+            find artifacts -type f -path '*release-*-macOS-x86_64/*' -name '*.pkg'
 
           cp_first_find "us3-Windows-x86_64-${VERSION}-setup.exe" \
-            find artifacts -type f -path '*release-*-windows-2022-*/*' -name '*.exe'
+            find artifacts -type f -path '*release-*-Windows-x86_64/*' -name '*.exe'
 
           cp_first_find "us3-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-ubuntu-24.04-*/*' ! -path '*HPC*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-Ubuntu-24.04-x86_64/*' ! -path '*HPC*' -name '*.tar.xz'
 
           cp_first_find "us3-HPC-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-HPC-ubuntu-24.04-*/*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-HPC-Ubuntu-24.04-x86_64/*' -name '*.tar.xz'
 
           cp_first_find "us3-redhat-8.10-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-oraclelinux8-*/*' ! -path '*HPC*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-RHEL-8-x86_64/*' ! -path '*HPC*' -name '*.tar.xz'
 
           cp_first_find "us3-HPC-redhat-8.10-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-HPC-oraclelinux8-*/*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-HPC-RHEL-8-x86_64/*' -name '*.tar.xz'
 
           echo "Assets ready:"
           ls -lh release-assets/
