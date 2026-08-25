@@ -610,7 +610,6 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   simulatedData      = false;
   abde_channList. clear();
   abde_ranges_percents. clear();
-  abde_ranges_percents_dna. clear();
   abde_rmsd. clear();
   abde_menisc. clear();
   abde_plots_filenames. clear();
@@ -1664,7 +1663,6 @@ void US_ReporterGMP::load_gmp_run ( void )
   simulatedData      = false;
   abde_channList. clear();
   abde_ranges_percents. clear();
-  abde_ranges_percents_dna. clear();
   abde_rmsd. clear();
   abde_menisc. clear();
   abde_plots_filenames. clear();
@@ -3942,11 +3940,9 @@ void US_ReporterGMP::get_abde_menisc( QMap< QString, double >& abde_menisc_p)
   qDebug() << "[in get_abde_menisc()] -- " << abde_menisc;
 }
 
-void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& abde_perc_p,
-				       QMap< QString, QMap < QString, double>>& abde_perc_p_dna )
+void US_ReporterGMP::get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& abde_perc_p )
 {
   abde_ranges_percents     = abde_perc_p;
-  abde_ranges_percents_dna = abde_perc_p_dna;
 }
 
 void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
@@ -8156,70 +8152,63 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       
-       QString mstr_protein = QString(tr( "<h4>Protein signal</h4>\n") );
-       mstr_protein += indent( 2 ) + "<table>\n";
-       mstr_protein += header_trftp;
-       
-       QString mstr_dna = QString(tr( "<h4>DNA signal</h4>\n") );
-       mstr_dna += indent( 2 ) + "<table>\n";
-       mstr_dna += header_trftp;
 
-       for ( int kk = 0; kk < report_items_number; ++kk )
+       QStringList chann_samples = abde_ranges_percents[abde_channame].keys();
+       for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	   QString type           = curr_item.type;
-	   QString method         = curr_item.method;
+	   QString c_sample = chann_samples[cs];
 	   
-	   QString int_val_r      = QString::number( curr_item.integration_val );
-	   double  frac_tot_r     = curr_item.total_percent;
-	   double  frac_tot_tol_r = curr_item.tolerance ;
-	   double  low            = curr_item.range_low;
-	   double  high           = curr_item.range_high;
-	   
-	   QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   QString range_alt = QString::number(low) + "-" + QString::number(high);
-	   
-	   //integrate over model_used
-	   double int_val_m = 0;
-	   
-	   double frac_tot_m     = abde_ranges_percents[abde_channame][range_alt];
-	   double frac_tot_m_dna = abde_ranges_percents_dna[abde_channame][range_alt];
-	   
-	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
-	   QString tot_frac_passed_dna = ( qAbs( frac_tot_m_dna - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
-	   
-	   // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	   // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	   // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
-	   
-	   qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-		    << "Inter. val. Sim -- "
-		    << wvl_abde
-		    << curr_item.type
-		    << curr_item.method
-		    << curr_item.range_low
-		    << curr_item.range_high
-		    << int_val_m;
-	   
-	   mstr_protein += table_row( type,
-				      range,
-				      QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-				      QString::number( frac_tot_tol_r ),
-				      tot_frac_passed );
-	   mstr_dna += table_row( type,
-				  range,
-				  QString::asprintf( "%5.2f%%", frac_tot_m_dna ) + " (" + QString::number( frac_tot_r ) + "%)",
-				  QString::number( frac_tot_tol_r ),
-				  tot_frac_passed_dna );
+	   QString mstr_sample = "<h4>" + c_sample + " signal</h4>\n";
+	   mstr_sample += indent( 2 ) + "<table>\n";
+	   mstr_sample += header_trftp;
+       
+	   for ( int kk = 0; kk < report_items_number; ++kk )
+	     {
+	       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
+	       QString type           = curr_item.type;
+	       QString method         = curr_item.method;
+	       
+	       QString int_val_r      = QString::number( curr_item.integration_val );
+	       double  frac_tot_r     = curr_item.total_percent;
+	       double  frac_tot_tol_r = curr_item.tolerance ;
+	       double  low            = curr_item.range_low;
+	       double  high           = curr_item.range_high;
+	       
+	       QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	       QString range_alt = QString::number(low) + "-" + QString::number(high);
+	       
+	       //integrate over model_used
+	       double int_val_m = 0;
+	       
+	       double frac_tot_m     = abde_ranges_percents[abde_channame][ c_sample ][range_alt];
+	       
+	       QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+	       
+	       // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+	       // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+	       // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+	       
+	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+			<< "Inter. val. Sim -- "
+			<< wvl_abde
+			<< curr_item.type
+			<< curr_item.method
+			<< curr_item.range_low
+			<< curr_item.range_high
+			<< int_val_m;
+	       
+	       mstr_sample += table_row( type,
+					 range,
+					 QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+					 QString::number( frac_tot_tol_r ),
+					 tot_frac_passed );
+	     }
+	    mstr_sample   += indent( 2 ) + "</table>\n";
+	    mstr          += mstr_sample;
 	 }
-       mstr_protein  += indent( 2 ) + "</table>\n";
-       mstr_dna      += indent( 2 ) + "</table>\n";
-       mstr          += mstr_protein;
-       mstr          += mstr_dna;
        //End of integration results
      }
- 
+   
    return mstr;
 }
 
