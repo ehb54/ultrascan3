@@ -3176,7 +3176,9 @@ void US_Hydrodyn_Dad::ggauss_scroll_highlight( int pos )
                                 .arg( ggaussian_last_chi2[ ggauss_scroll_set [ pos ] ], 0, 'g', 4 )
                                 .arg( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ], 0, 'f', 4 )
                                 .arg( f_best_smoothed_smoothing.count( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] )
-                                      ? QString( "\nSmoothing points %1" ).arg( f_best_smoothed_smoothing[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ] )
+                                      ? QString( "\nSmoothing radius %1, smoothing points %2" )
+                                      .arg( f_best_smoothed_smoothing[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ] )
+                                      .arg( 1 + 2 * f_best_smoothed_smoothing[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ] )
                                       : QString( "" ) )
                                  );
 

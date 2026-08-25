@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO GRPY Shell Reduction</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+	<style type="text/css">
+		@page { margin: 0.79in }
+		p { margin-bottom: 0.1in; line-height: 120% }
+	</style>
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+GRPY Shell Reduction: what it does, and the mathematics behind it</h2></center>
+<h3><center>Last updated: August 2026</center></h3><p>
+
+<table BORDER=0 CELLPADDING=8>
+<tr><td align=justify>
+
+This page explains the <i>shell reduction</i> option available for the <b><i>GRPY</i></b> hydrodynamic computation method, which is set up in the <a href=somo_hydro.html><b>Hydrodynamic Calculations Options</b></a> window. It is intended for the user who wants to know what the option actually computes, how far the reported error may be trusted, and where the underlying method comes from.<p>
+
+<h3>1. The problem</h3>
+
+The cost of a rigid-body hydrodynamic calculation is dominated by the number of beads. <b><i>GRPY</i></b> assembles and factors a mobility matrix with eleven rows and columns per bead, so the memory required grows as the <i>square</i> of the bead count and the computing time as its <i>cube</i>. Doubling the number of beads multiplies the time by roughly eight. For the atomic-resolution <i>vdW</i> models this is what limits the size of structure that can be treated at all.<p>
+
+At the same time, a dense bead model contains a great deal of hydrodynamic redundancy. A bead buried in the interior of a compact structure sits in essentially stagnant solvent: the flow it would generate is screened by the beads surrounding it, and it therefore contributes very little to the drag on the particle as a whole. This is the same physical fact that underlies the classical <i>shell</i> and <i>bead-shell</i> models of macromolecular hydrodynamics, in which a particle is represented only by beads on its surface (Garc&iacute;a de la Torre and Bloomfield, <i>Q. Rev. Biophys.</i> <b>14</b>:81-139, 1981; Carrasco and Garc&iacute;a de la Torre, <i>Biophys. J.</i> <b>76</b>:3044-3057, 1999).<p>
+
+<span style="color:#CC0000"><b>A caution on terminology.</b></span> The classical <i>shell model</i> just referred to <i>replaces</i> the particle with a shell of small beads on its surface, and extrapolates the computed transport properties to the limit of vanishing bead radius. The option described here does something different: it retains a subset of the <i>existing</i> beads of the model being analysed, chosen by solvent exposure, and extrapolates towards the limit of the <i>complete</i> model. No new beads are created and no bead radius is altered. The two share the physical motivation, and both are extrapolations to a limit, but they are not the same procedure.<p>
+
+<h3>2. What the option does</h3>
+
+<b><i>SOMO</i></b> already reduces the bead count before <b><i>GRPY</i></b> by discarding beads that the ASA calculation labels as buried (see the <i>Inclusion of Buried Beads</i> option). That is a binary decision taken once, with a fixed probe radius and threshold, and it reports no estimate of what it cost in accuracy. The question it leaves open &mdash; <i>how much error does removing beads actually introduce on this structure?</i> &mdash; is the question this option answers.<p>
+
+Rather than apply a fixed rule such as "retain <i>X</i>% of the beads", the procedure performs the <b>exact</b> <b><i>GRPY</i></b> calculation several times, on a nested series of progressively larger subsets of the most solvent-exposed beads, and observes how the answer changes as the subsets grow. Each subset in the series is approximately twice the size of the previous one, and the last is the complete, unreduced model. Writing <i>f</i> for the fraction of beads retained, the default series is<p>
+
+<center><i>f</i> = 0.0625, 0.125, 0.25, 0.5, 1</center><p>
+
+The computation stops as soon as two successive results agree to within the requested accuracy. The result reported is that of the last subset computed; the error attributed to it is obtained by extrapolating the observed differences, as described in section 4.<p>
+
+Because the cost grows as the cube of the bead count while the series grows geometrically, the whole series costs only about 1.14 times its final and largest member:<p>
+
+<center>1 + (1/2)<sup>3</sup> + (1/4)<sup>3</sup> + ... &nbsp;=&nbsp; 8/7 &nbsp;&asymp;&nbsp; 1.14</center><p>
+
+so the convergence check is very nearly free relative to simply computing at the final size and hoping.<p>
+
+<h3>3. Choosing the subsets</h3>
+
+Beads are ranked by <i>solvent exposure</i>, computed by the Shrake-Rupley numerical method (Shrake and Rupley, <i>J. Mol. Biol.</i> <b>79</b>:351-371, 1973): a set of points is distributed over the surface of each bead, expanded by a probe radius, and the fraction of those points not lying inside any other bead is the exposure. The most exposed beads are retained.<p>
+
+The selection is by <i>target fraction of beads</i> rather than by a fixed exposure threshold. This is deliberate: the fraction of beads that a given threshold classifies as buried varies enormously between model types &mdash; from a few percent to about half &mdash; so a fixed threshold would give wildly different computational cost, and wildly different accuracy, from one model to the next. Selecting a fraction controls the cost directly, which is what the cubic scaling makes important.<p>
+
+Ties in exposure are broken by bead radius and then by index, so that the selection is fully deterministic: the same model always yields the same subsets.<p>
+
+<h3>4. The error estimate: Richardson extrapolation</h3>
+
+<i>Richardson extrapolation</i> is a classical device of numerical analysis, introduced by L. F. Richardson (<i>Phil. Trans. R. Soc. A</i> <b>210</b>:307-357, 1911; and with J. A. Gaunt, "The deferred approach to the limit", <i>Phil. Trans. R. Soc. A</i> <b>226</b>:299-361, 1927). Its idea is this: if a computed quantity approaches its true value in a known manner as some discretization parameter is refined, then two or more computations at different refinements can be combined to estimate both the limit and the error remaining.<p>
+
+Here the "refinement" is the fraction <i>f</i> of beads retained. Suppose that the computed value of some hydrodynamic quantity <i>&mu;</i> approaches its converged value <i>&mu;</i><sub>&infin;</sub> as a power of the retained fraction,<p>
+
+<center><i>&mu;</i>(<i>f</i>) = <i>&mu;</i><sub>&infin;</sub> + <i>C f</i><sup>&minus;<i>k</i></sup></center><p>
+
+where <i>k</i> &gt; 0 is the <i>order of convergence</i> and <i>C</i> is an unknown constant. Neither <i>k</i> nor <i>C</i> is assumed in advance; both are obtained from the computation itself. Three successive subsets, of actual bead counts <i>n</i><sub>1</sub> &lt; <i>n</i><sub>2</sub> &lt; <i>n</i><sub>3</sub>, give two differences<p>
+
+<center><i>g</i><sub>1</sub> = <i>&mu;</i><sub>1</sub> &minus; <i>&mu;</i><sub>2</sub>&nbsp;,&nbsp;&nbsp;&nbsp;&nbsp; <i>g</i><sub>2</sub> = <i>&mu;</i><sub>2</sub> &minus; <i>&mu;</i><sub>3</sub></center><p>
+
+and, writing <i>r</i><sub>1</sub> = <i>n</i><sub>2</sub>/<i>n</i><sub>1</sub> and <i>r</i><sub>2</sub> = <i>n</i><sub>3</sub>/<i>n</i><sub>2</sub> for the two size ratios, the order <i>k</i> satisfies<p>
+
+<center><i>g</i><sub>1</sub>/<i>g</i><sub>2</sub> = (1 &minus; <i>r</i><sub>1</sub><sup>&minus;<i>k</i></sup>) / [ <i>r</i><sub>1</sub><sup>&minus;<i>k</i></sup> (1 &minus; <i>r</i><sub>2</sub><sup>&minus;<i>k</i></sup>) ]</center><p>
+
+which is solved numerically for <i>k</i>. The error remaining in the finest result, and the extrapolated value itself, are then<p>
+
+<center>error &asymp; <i>g</i><sub>2</sub> / (<i>r</i><sub>2</sub><sup><i>k</i></sup> &minus; 1)&nbsp;,&nbsp;&nbsp;&nbsp;&nbsp; <i>&mu;</i><sub>&infin;</sub> &asymp; <i>&mu;</i><sub>3</sub> &minus; <i>g</i><sub>2</sub>/(<i>r</i><sub>2</sub><sup><i>k</i></sup> &minus; 1)</center><p>
+
+For a pure doubling series (<i>r</i><sub>1</sub> = <i>r</i><sub>2</sub> = 2) these reduce to the familiar <i>k</i> = log<sub>2</sub>(<i>g</i><sub>1</sub>/<i>g</i><sub>2</sub>) and error = <i>g</i><sub>2</sub>/(2<sup><i>k</i></sup> &minus; 1). The ratios are always taken from the <i>actual</i> bead counts rather than the nominal fractions, because the number of beads retained is rounded to a whole number.<p>
+
+This use of three refinement levels to obtain an <i>observed</i> order of convergence, and from it an error estimate carrying a safety factor, is the same practice long established for verifying grid-based computations, where it is known as the <i>Grid Convergence Index</i> (Roache, <i>J. Fluids Eng.</i> <b>116</b>:405-413, 1994; and <i>Verification and Validation in Computational Science and Engineering</i>, Hermosa, 1998). The quantity reported by this option is the analogous estimate for bead count in place of grid spacing.<p>
+
+<h3>5. Safeguards, and when the estimate is cruder</h3>
+
+An error estimate that understates the error is worse than no estimate at all, so the procedure is deliberately conservative:<p>
+
+<ul>
+<li>The order <i>k</i> is restricted to the range 1 to 3. Restricting it <i>downwards</i> is the safe direction: at <i>k</i> = 1 with a doubling series the formula returns simply the raw difference between the last two results, that is, no extrapolation at all.<p></li>
+<li>A safety factor of 1.5 is applied to the extrapolated error.<p></li>
+<li>The estimate is never allowed to claim better than half the raw difference between the last two results. This bound matters on structures whose exposure values are highly degenerate &mdash; a perfect cubic lattice, for instance, realizes only a handful of distinct exposure values, so successive subsets swallow whole symmetry shells at once instead of refining smoothly. The apparent order then comes out spuriously high and the extrapolation would otherwise tighten the estimate too far.<p></li>
+<li>If the successive differences are not monotone, or change sign, the procedure concludes that it is outside the regime in which the assumed form is valid, declines to extrapolate, and reports the raw difference instead.<p></li>
+</ul>
+
+<span style="color:#CC0000"><b>Note that the extrapolation requires three subsets.</b></span> If the series stops after only two &mdash; because it converged immediately, or because the available memory allowed no more (see the <a href=somo_hydro.html>options page</a>) &mdash; then no order can be determined, and the reported figure is the raw difference between those two results. That is a valid and conservative statement of the uncertainty, but it is a cruder one than a three-subset estimate, and it will generally be larger.<p>
+
+<h3>6. Different quantities converge at different rates</h3>
+
+The hydrodynamic quantities do <i>not</i> share a common convergence behaviour, and the procedure therefore performs the extrapolation separately for each, since a single shared order would be wrong for all but one of them. Measured against the unreduced calculation, over a range of bead models, and expressed relative to the error in the <i>translational diffusion coefficient</i> at the same degree of reduction:<p>
+
+<center>
+<table BORDER CELLSPACING=0 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td><b>Quantity</b></td><td><b>Relative error at equal reduction</b></td></tr>
+<tr><td>anisotropy (a ratio, so systematic error largely cancels)</td><td>0.15 &times;</td></tr>
+<tr><td>translational diffusion coefficient</td><td>1 &times; (reference)</td></tr>
+<tr><td>rotational diffusion coefficient</td><td>1.8 &times;</td></tr>
+<tr><td>intrinsic viscosity</td><td>3.3 &times;</td></tr>
+</table>
+</center><p>
+
+The <i>intrinsic viscosity</i> is thus the most demanding, by a considerable margin, and its error is moreover systematically one-sided: the reduced model under-predicts it, because the response to a straining flow draws more heavily on the interior of the particle than translation does. It is for this reason that the <i>Require intrinsic viscosity to converge</i> checkbox exists, and why the computation runs appreciably longer when it is selected: the series must continue until the viscosity, not merely the diffusion coefficients, has converged.<p>
+
+The single error figure quoted in the progress window is the <i>largest</i> over all the requested quantities, and is therefore usually that of the intrinsic viscosity; the individual estimates are written to the results file.<p>
+
+<h3>7. How far the estimate has been tested</h3>
+
+The essential property claimed for the reported figure is <i>honesty</i>: that it bounds the true error, the latter being determined by comparison against the unreduced exact calculation. This was verified over 23 bead models spanning 204 to 4068 beads, at several requested accuracies, in 92 tests of the translational diffusion coefficient, and separately in 252 tests spanning 7 hydrodynamic quantities, 12 models and 3 accuracies. The reported estimate bounded the true error in every case.<p>
+
+The observed order of convergence had a median value of about 1.8, which agrees with the value predicted independently from a direct study of error against retained fraction. The error model is therefore derived from the behaviour of the calculation rather than fitted to it.<p>
+
+<h3>8. What this option is, and is not, for</h3>
+
+The gain in speed grows with the size of the model and is negligible for small ones, which are computed in a fraction of a second in any case; on such models the procedure will usually and correctly decline to reduce at all. Because <b><i>SOMO</i></b> excludes buried beads by default, much of the available reduction has already been performed before this option is reached, and the further gain is typically a factor of two to three rather than the much larger factors obtainable from a completely unreduced model.<p>
+
+The lasting contribution of the option is therefore not primarily its speed, but that it provides, for the first time in this context, a <i>quantified estimate of the error</i> that bead reduction introduces &mdash; where the existing buried-bead exclusion is a binary heuristic that reports no uncertainty whatsoever.<p>
+
+<h3>References</h3>
+
+<ul>
+<li>Richardson, L. F. "The approximate arithmetical solution by finite differences of physical problems...", <i>Phil. Trans. R. Soc. A</i> <b>210</b>:307-357, 1911.<p></li>
+<li>Richardson, L. F. and Gaunt, J. A. "The deferred approach to the limit", <i>Phil. Trans. R. Soc. A</i> <b>226</b>:299-361, 1927.<p></li>
+<li>Roache, P. J. "Perspective: A Method for Uniform Reporting of Grid Refinement Studies", <i>J. Fluids Eng.</i> <b>116</b>:405-413, 1994.<p></li>
+<li>Roache, P. J. <i>Verification and Validation in Computational Science and Engineering</i>, Hermosa Publishers, 1998.<p></li>
+<li>Shrake, A. and Rupley, J. A. "Environment and exposure to solvent of protein atoms. Lysozyme and insulin", <i>J. Mol. Biol.</i> <b>79</b>:351-371, 1973.<p></li>
+<li>Garc&iacute;a de la Torre, J. and Bloomfield, V. A. "Hydrodynamic properties of complex, rigid, biological macromolecules: theory and applications", <i>Q. Rev. Biophys.</i> <b>14</b>:81-139, 1981.<p></li>
+<li>Carrasco, B. and Garc&iacute;a de la Torre, J. "Hydrodynamic properties of rigid particles: comparison of different modeling and computational procedures", <i>Biophys. J.</i> <b>76</b>:3044-3057, 1999.<p></li>
+<li>Zuk, P. J., Cichocki, B. and Szymczak, P. "GRPY: an accurate bead method for calculation of hydrodynamic properties of rigid biomacromolecules", <i>Biophys. J.</i> <b>115</b>:782-800, 2018.<p></li>
+<li>Brookes, E. and Rocco, M. "Recent advances in the UltraScan SOlution MOdeller (US-SOMO) hydrodynamic and small-angle scattering data analysis and simulation suite", <i>Eur. Biophys. J.</i> <b>47</b>:855-864, 2018.<p></li>
+</ul>
+
+Return to the <a href=somo_hydro.html><b>Hydrodynamic Calculations Options</b></a> page.<p>
+
+</td></tr>
+</table>
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on August 8, 2026.
+</font>
+</body>
+</html>

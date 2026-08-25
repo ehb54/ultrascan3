@@ -127,7 +127,6 @@ SOURCES *= \
 #  us_calendar.cpp \ 
 #  us_clipdata.cpp \ 
         src/us_container.cpp \
-        src/us_container_grpy.cpp \
         src/us_cmdline_app.cpp \
 #  us_cofdistro.cpp \
 #  us_cofs.cpp \ 
@@ -273,6 +272,7 @@ SOURCES *= \
         src/us_hydrodyn_dad_p3d.cpp \
         src/us_hydrodyn_dad_parameters.cpp \
         src/us_hydrodyn_dad_util.cpp \
+        src/us_hydrodyn_dad_script.cpp \
         src/us_hydrodyn_dad_movie.cpp \
         src/us_hydrodyn_dad_conc.cpp \
         src/us_hydrodyn_dad_conc_load.cpp \
@@ -371,6 +371,13 @@ SOURCES *= \
         src/us_hydrodyn_overlap_reduction.cpp \
         src/us_hydrodyn_pat.cpp \
         src/us_hydrodyn_pdb_parsing.cpp \
+        src/us_hydrodyn_grid_volume.cpp \
+        src/us_hydrodyn_hydration.cpp \
+        src/us_hydrodyn_perceive.cpp \
+        src/us_hydrodyn_perceive_dialog.cpp \
+        src/us_hydrodyn_perceive_somo.cpp \
+        src/us_hydrodyn_psv.cpp \
+        src/us_hydrodyn_residue_builder.cpp \
         src/us_hydrodyn_pdb_tool.cpp \
         src/us_hydrodyn_pdb_tool_merge.cpp \
         src/us_hydrodyn_pdb_tool_renum.cpp \
@@ -398,6 +405,8 @@ SOURCES *= \
         src/us_hydrodyn_saxs_ift.cpp \
         src/us_hydrodyn_saxs_iqq.cpp \
         src/us_hydrodyn_saxs_iqq_bead_model.cpp \
+        src/us_hydrodyn_saxs_iqq_extrap_c0.cpp \
+        src/us_hydrodyn_saxs_iqq_extrap_c0_conc.cpp \
         src/us_hydrodyn_saxs_iqq_load_csv.cpp \
         src/us_hydrodyn_saxs_iqq_residuals.cpp \
         src/us_hydrodyn_saxs_iqq_sh.cpp \
@@ -603,6 +612,10 @@ SOURCES *= \
 #  us_laser.cpp \
 
 HEADERS *= \
+  grpy/grpy_types.hpp \
+  grpy/grpy_process.hpp \
+  grpy/grpy_exposure.hpp \
+  grpy/grpy_shell.hpp \
 #  3dplot/mesh2mainwindowbase.h \
 #  3dplot/mesh2mainwindow.h \
 #  3dplot/functions.h \
@@ -630,7 +643,6 @@ HEADERS *= \
 #  us_calendar.h \
 #  us_clipdata.h \
         include/us_container.h \
-        include/us_container_grpy.h \
         include/us_cmdline_app.h \
 #  us_cofdistro.h \
 #  us_cofs.h \
@@ -820,6 +832,16 @@ HEADERS *= \
         include/us_hydrodyn_pdbdefs.h \
         include/us_hydrodyn_pat.h \
         include/us_hydrodyn_pdb_parsing.h \
+        include/us_hydrodyn_grid_volume.h \
+        include/us_hydrodyn_hydration.h \
+        include/us_hydrodyn_perceive.h \
+        include/us_hydrodyn_perceive_dialog.h \
+        include/us_hydrodyn_perceive_elements.h \
+        include/us_hydrodyn_perceive_hybrid.h \
+        include/us_hydrodyn_perceive_saxs.h \
+        include/us_hydrodyn_perceive_somo.h \
+        include/us_hydrodyn_psv.h \
+        include/us_hydrodyn_residue_builder.h \
         include/us_hydrodyn_pdb_tool.h \
         include/us_hydrodyn_pdb_tool_merge.h \
         include/us_hydrodyn_pdb_tool_renum.h \
@@ -843,6 +865,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_mw.h \
         include/us_hydrodyn_saxs_options.h \
         include/us_hydrodyn_saxs_ift.h \
+        include/us_hydrodyn_saxs_iqq_extrap_c0_conc.h \
         include/us_hydrodyn_saxs_iqq_load_csv.h \
         include/us_hydrodyn_saxs_iqq_residuals.h \
         include/us_hydrodyn_saxs_residuals.h \
@@ -1002,3 +1025,10 @@ HEADERS *= \
 #   include/textunder.xpm
 
 QT += opengl network
+
+# --- GRPY module (grpy/) ---------------------------------------------------
+# Shell reduction, solvent-exposure ranking, and the process boundary to the GRPY
+# program, which is run rather than linked: GRPY is GPLv3 and UltraScan is LGPLv3
+# (ehb54/ultrascan-tickets#1012). Header-only, and no longer needs QtConcurrent or
+# Eigen -- the solver that used them is now a separate program, ehb54/grpy-cpp.
+INCLUDEPATH += $$PWD/include $$PWD/grpy
