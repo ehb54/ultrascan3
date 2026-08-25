@@ -1471,6 +1471,9 @@ void US_Norm_Profile::plotData(void){
 		    QString f_name   = selFilenames.at(i);
 		    QString afterDot = f_name.section('.', -1);
 		    QString result_analyte   = afterDot.section('_', 0, 0); // e.g. "AAV-DNA"
+
+		    if ( us_auto_mode_report )
+		      result_analyte = afterDot;
 	    
 		    /**
 		    if ( selFilenames.at(i). contains("_002") ||
@@ -2601,8 +2604,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		      rad_ranges.removeDuplicates();
 		      channels_to_radial_ranges += rad_ranges.join(",");
 		    }
-		  channels_to_radial_ranges.chop(1);
 		}
+	      channels_to_radial_ranges.chop(1);
 	    }
 	  channels_to_radial_ranges += ";";
 	}
