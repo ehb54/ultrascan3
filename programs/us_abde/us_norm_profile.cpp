@@ -626,6 +626,8 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   QString runid = finfo.baseName();
   QString dirname = finfo.dir().absolutePath();
 
+  qDebug() << "workingDir, dirname, runid -- "
+	   << workingDir << dirname << runid;
   qDebug() << "[in slt_loadAUC_auto_report() ], triples -- " << triples; 
 
   char chtype[ 3 ] = { 'R', 'A', '\0' };
@@ -641,10 +643,15 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
       QStringList ccw = triples.at(i).split(u'/');
       US_DataIO::RawData rawData = allData.at(i);
       qDebug() << "RawData desc -- " << rawData.description;
+      QString fn_for_plot_report = rawData.description;
+      QStringList fn_for_plot_report_parts = fn_for_plot_report.split(" - ");
+      QString fn_for_plot_report_parts_lastPart = fn_for_plot_report_parts.last(); // "AAV-DNA"
 
+      // QString fn = tr("%1.%2.%3.%4.%5").arg(runid, dataType, ccw.at(0).trimmed(),
+      // 					 ccw.at(1).trimmed(), ccw.at(2).trimmed());
       QString fn = tr("%1.%2.%3.%4.%5").arg(runid, dataType, ccw.at(0).trimmed(),
-					 ccw.at(1).trimmed(), ccw.at(2).trimmed());
-      QString fp = tr("%1.%2.auc").arg(dirname, fn);
+					 ccw.at(1).trimmed(), fn_for_plot_report_parts_lastPart);
+      QString fp = tr("%1/%2.auc").arg(workingDir, fn);
       
       filenames << fn;
       filePaths << fp;
@@ -673,7 +680,7 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
 	       << data_per_channel_xnorm[channList[i]]
 	       << data_per_channel_norm_cb[channList[i]]
 	       << data_per_channel_rmsd[channList[i]]
-	       << data_per_channel_ranges_percents[channList[i]]
+	       << data_per_channel_ranges_percents_sample[channList[i]]
 	       << data_per_channel_meniscus[channList[i]];
 	;
     }
@@ -1331,7 +1338,9 @@ void US_Norm_Profile::plotData(void){
 		QString afterDot = f_name.section('.', -1);
 		QString result_analyte   = afterDot.section('_', 0, 0); // e.g. "AAV-DNA"
 
-		
+		if ( us_auto_mode_report )
+		  result_analyte = afterDot;
+
 		if (abde_etype == "MWL")
 		  {
 		    /**
@@ -2169,7 +2178,7 @@ void US_Norm_Profile::save_auto( void )
       json_p += "},";
     }
   json_p.chop(1);
-  json_p += "}";
+  json_p += "}}";
 
   qDebug() << "JSON: " << json_p;
 
