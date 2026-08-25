@@ -289,7 +289,7 @@ if(NOT EXISTS "${S_PLUG}/sqldrivers/qsqlite.dll")
     endforeach()
 
     if(NOT _QSQLITE_FOUND)
-        message(WARNING
+        message(FATAL_ERROR
             "[WinDeploy] sqldrivers/qsqlite.dll not found. "
             "Qt Assistant search will not work without it. "
             "Searched: ${_QSQLITE_SEARCH_DIRS}.")
@@ -363,25 +363,37 @@ if(ASSISTANT_EXE AND EXISTS "${ASSISTANT_EXE}")
         ERROR_VARIABLE  _e
     )
     if(NOT _r EQUAL 0)
-        message(WARNING "[WinDeploy] windeployqt on assistant.exe exited with code ${_r}")
-        message(STATUS  "  stderr: ${_e}")
+        message(FATAL_ERROR
+            "[WinDeploy] windeployqt on assistant.exe exited with code ${_r}. "
+            "Qt Assistant is required by the application help system. stderr: ${_e}")
     endif()
 else()
-    message(STATUS "[WinDeploy] ASSISTANT_EXE not provided — help system may not work")
+    message(FATAL_ERROR
+        "[WinDeploy] Qt Assistant was not found. assistant.exe is required by "
+        "the application help system.")
 endif()
 
 # =========================================================================
 # 8) Copy manual.qch / manual.qhc into bin/
 #    Mirrors MacDeploy.cmake section 10.
 # =========================================================================
-if(QCH_DIR)
-    foreach(_qch_file manual.qch manual.qhc)
-        if(EXISTS "${QCH_DIR}/${_qch_file}")
-            message(STATUS "  Copying ${_qch_file} → bin/")
-            file(COPY "${QCH_DIR}/${_qch_file}" DESTINATION "${S_BIN}")
-        endif()
-    endforeach()
+if(NOT QCH_DIR)
+    message(FATAL_ERROR "[WinDeploy] QCH_DIR not set; application help cannot be packaged")
 endif()
+foreach(_qch_file manual.qch manual.qhc)
+    set(_qch_path "${QCH_DIR}/${_qch_file}")
+    if(NOT EXISTS "${_qch_path}")
+        message(FATAL_ERROR
+            "[WinDeploy] Required help file is missing: ${_qch_path}. "
+            "Ensure Sphinx and qhelpgenerator completed successfully before packaging.")
+    endif()
+    file(SIZE "${_qch_path}" _qch_size)
+    if(_qch_size EQUAL 0)
+        message(FATAL_ERROR "[WinDeploy] Required help file is empty: ${_qch_path}")
+    endif()
+    message(STATUS "  Copying ${_qch_file} → bin/")
+    file(COPY "${_qch_path}" DESTINATION "${S_BIN}")
+endforeach()
 
 # =========================================================================
 # 9) Copy etc/ and somo/
@@ -503,6 +515,24 @@ if(EXISTS "${S_BIN}/assistant.exe")
     # assistant.exe lives in bin/ alongside us.exe; it shares qt.conf
     message(STATUS "  qt.conf covers assistant.exe (shared bin/ location)")
 endif()
+
+# 12) Verify the complete runtime help system before CPack consumes the stage
+foreach(_help_runtime_file IN ITEMS
+        "${S_BIN}/assistant.exe"
+        "${S_BIN}/manual.qch"
+        "${S_BIN}/manual.qhc"
+        "${S_PLUG}/sqldrivers/qsqlite.dll")
+    if(NOT EXISTS "${_help_runtime_file}")
+        message(FATAL_ERROR
+            "[WinDeploy] Required staged help component is missing: ${_help_runtime_file}")
+    endif()
+    file(SIZE "${_help_runtime_file}" _help_runtime_size)
+    if(_help_runtime_size EQUAL 0)
+        message(FATAL_ERROR
+            "[WinDeploy] Required staged help component is empty: ${_help_runtime_file}")
+    endif()
+endforeach()
+message(STATUS "[WinDeploy] Verified Qt Assistant, manual.qch, manual.qhc, and qsqlite.dll")
 
 # =========================================================================
 # Summary

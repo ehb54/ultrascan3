@@ -1,25 +1,7 @@
 name: UltraScan3 Nightly Build
 
-# ============================================================================
-# Scheduled nightly orchestration workflow.
-# Trigger: cron at 06:00 UTC daily; also supports workflow_dispatch for manual
-#          nightly runs.
-#
-# PHASE 0 — Gate (check-changes): decides whether the nightly build is needed.
-#   Skips all builds if no commits landed in the last 24h and the `nightly` tag
-#   already resolves to the current origin/main HEAD.
-#
-# PHASE 1-3 — Platform builds in three sequential groups (to stay within the
-#   10 GB Actions cache quota), each group fanning out to the corresponding
-#   ./.github/workflows/build-<platform>.yml reusable workflow via workflow_call:
-#   Group 1 (parallel): ubuntu + macos-arm
-#   Group 2 (parallel, after Group 1): oraclelinux8 + macos-intel
-#   Group 3 (after Group 2): windows
-#
-# PHASE 4 — Publish (publish-release): runs only when all platform builds
-#   succeed. Downloads all run artifacts, renames to stable filenames, and
-#   overwrites the rolling `nightly` GitHub pre-release.
-# ============================================================================
+# Builds changed revisions nightly and updates the rolling `nightly` release.
+# All matrix jobs use the same resolved origin/main SHA.
 
 run-name: >-
     ${{ github.event_name == 'schedule'
@@ -34,6 +16,7 @@ on:
 permissions:
   contents: write
   actions: write
+  packages: read
 
 jobs:
 
@@ -135,92 +118,38 @@ jobs:
           echo "has_changes=false" >> "$GITHUB_OUTPUT"
 
   # =========================================================================
-  # PLATFORM BUILDS — two parallel groups to reduce wall time while keeping
-  # peak cache usage under the 10 GB Actions quota.
-  #
-  # Each platform workflow owns its own probe → warm → build chain using
-  # isolated key namespaces (vcpkg-ubuntu-24.04-*, vcpkg-macos-15-*, etc.),
-  # so parallel runs do not contend on cache keys.
-  #
-  # Group 1 (parallel): ubuntu + macos-arm
-  #   Combined final keys ~3.9 GB; ubuntu intermediates are small.
-  #   Peak well within quota while both warm pipelines overlap.
-  #
-  # Group 2 (parallel, after group 1): oraclelinux8 + macos-intel
-  #   Group 1 intermediates are cleaned up before group 2 starts.
-  #   oraclelinux8 is small; intel final key ~1 GB.
-  #
-  # Group 3 (after group 2): windows
+  # PHASE 1 — PLATFORM BUILDS
+  # Report all platform failures in one run.
   # =========================================================================
 
-  # --- Group 1 (parallel) ---------------------------------------------------
-
-  ubuntu:
-    name: "Ubuntu 24.04 (APP + HPC)"
+  build:
+    name: "${{ matrix.label }}"
     needs: check-changes
     if: needs.check-changes.outputs.has_changes == 'true'
-    uses: ./.github/workflows/build-ubuntu.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: ubuntu2404-x64,   profile: APP, label: "Ubuntu 24.04 APP",     platform: Ubuntu-24.04-x86_64 }
+          - { target: ubuntu2404-x64,   profile: HPC, label: "Ubuntu 24.04 HPC",     platform: HPC-Ubuntu-24.04-x86_64 }
+          - { target: oraclelinux8-x64, profile: APP, label: "Oracle Linux 8 APP",   platform: RHEL-8-x86_64 }
+          - { target: oraclelinux8-x64, profile: HPC, label: "Oracle Linux 8 HPC",   platform: HPC-RHEL-8-x86_64 }
+          - { target: macos-arm64,      profile: APP, label: "macOS arm64 APP",      platform: macOS-arm64 }
+          - { target: macos-x64,        profile: APP, label: "macOS x86_64 APP",     platform: macOS-x86_64 }
+          - { target: windows-x64,      profile: APP, label: "Windows x86_64 APP",   platform: Windows-x86_64 }
+    uses: ./.github/workflows/app-build.yml
     with:
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
+      qt_variant:              qt6
       ref:                     ${{ needs.check-changes.outputs.build_sha }}
       clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
-      artifact_retention_days: 3
-    secrets: inherit
-
-  macos-arm:
-    name: "macOS ARM (APP)"
-    needs: check-changes
-    if: needs.check-changes.outputs.has_changes == 'true'
-    uses: ./.github/workflows/build-macos-arm.yml
-    with:
-      ref:                     ${{ needs.check-changes.outputs.build_sha }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
-      artifact_retention_days: 3
-    secrets: inherit
-
-  # --- Group 2 (parallel, after group 1) ------------------------------------
-
-  oraclelinux8:
-    name: "Oracle Linux 8 x64 (APP + HPC)"
-    needs: [check-changes, ubuntu, macos-arm]
-    if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
-    uses: ./.github/workflows/build-oraclelinux.yml
-    with:
-      ref:                     ${{ needs.check-changes.outputs.build_sha }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
-      artifact_retention_days: 3
-    secrets: inherit
-
-  macos-intel:
-    name: "macOS Intel (APP)"
-    needs: [check-changes, ubuntu, macos-arm]
-    if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
-    uses: ./.github/workflows/build-macos-intel.yml
-    with:
-      ref:                     ${{ needs.check-changes.outputs.build_sha }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
-      artifact_retention_days: 3
-    secrets: inherit
-
-  # --- Group 3 (after group 2) -----------------------------------------------
-
-  windows:
-    name: "Windows x64 (APP)"
-    needs: [check-changes, oraclelinux8, macos-intel]
-    if: needs.check-changes.outputs.has_changes == 'true' && !cancelled()
-    uses: ./.github/workflows/build-windows.yml
-    with:
-      ref:                     ${{ needs.check-changes.outputs.build_sha }}
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('nightly-{0}', github.run_id) }}
+      artifact_name:           ${{ format('nightly-{0}-{1}', github.run_id, matrix.platform) }}
       artifact_retention_days: 3
     secrets: inherit
 
   # =========================================================================
-  # PHASE 4 — PUBLISH RELEASE
+  # PHASE 2 — PUBLISH RELEASE
   # Runs only when all builds succeed. Downloads all run artifacts, renames
   # each to a unique filename, then updates the rolling `nightly` GitHub
   # Release in place. New assets are uploaded and verified before the tag,
@@ -231,13 +160,7 @@ jobs:
 
   publish-release:
     name: "Publish Nightly Release"
-    needs:
-      - check-changes
-      - ubuntu
-      - oraclelinux8
-      - macos-arm
-      - macos-intel
-      - windows
+    needs: [check-changes, build]
     if: needs.check-changes.outputs.has_changes == 'true' && success()
     runs-on: ubuntu-24.04
     steps:
@@ -265,14 +188,11 @@ jobs:
           # never collide with assets already present on the rolling release.
           LABEL="nightly-${DATE}-${SHORT_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
+          # Include the run ID to distinguish APP and HPC artifact directories.
           cp_first() {
-            local pattern="$1" dest="$2" exclude="${3:-}"
+            local pattern="$1" dest="$2"
             local src
-            if [[ -n "$exclude" ]]; then
-              src=$(find artifacts -path "$pattern" ! -path "*$exclude*" | head -1)
-            else
-              src=$(find artifacts -path "$pattern" | head -1)
-            fi
+            src=$(find artifacts -path "$pattern" | head -1)
             [ -n "$src" ] || { echo "ERROR: no file matching $pattern"; exit 1; }
             cp "$src" "release-assets/$dest"
             echo "  $dest <- $src"
@@ -281,25 +201,25 @@ jobs:
           echo "Staging release assets (label: ${LABEL})..."
 
           # macOS artifacts (pkg, not .tar.xz)
-          cp_first "artifacts/nightly-*-arm-macos-15-[0-9]*/UltraScan3-*-macOS.pkg" \
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-macOS-arm64/UltraScan3-*-macOS.pkg" \
             "UltraScan3-macos-installer-arm64-${LABEL}.pkg"
-          cp_first "artifacts/nightly-*-macos-15-intel-*/UltraScan3-*-macOS.pkg" \
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-macOS-x86_64/UltraScan3-*-macOS.pkg" \
             "UltraScan3-macos-installer-x86_64-${LABEL}.pkg"
 
           # Windows (exe)
-          cp_first "artifacts/nightly-*-windows-2022-*/UltraScan3-*-Windows.exe" \
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-Windows-x86_64/UltraScan3-*-Windows.exe" \
             "us3-Windows-x86_64-${LABEL}-setup.exe"
 
           # Ubuntu 24.04 (.tar.xz from build system)
-          cp_first "artifacts/nightly-*-ubuntu-24.04-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
-            "us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz" "-HPC-"
-          cp_first "artifacts/nightly-*-HPC-ubuntu-24.04-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-Ubuntu-24.04-x86_64/UltraScan3-*-Linux-*.tar.xz" \
+            "us3-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-HPC-Ubuntu-24.04-x86_64/UltraScan3-HPC-*-Linux-*.tar.xz" \
             "us3-HPC-ubuntu-24.04-x86_64-${LABEL}.tar.xz"
 
           # Oracle Linux 8 / RHEL 8 (.tar.xz from build system)
-          cp_first "artifacts/nightly-*-oraclelinux8-[0-9]*/UltraScan3-*-Linux-*.tar.xz" \
-            "us3-redhat-8.10-x86_64-${LABEL}.tar.xz" "-HPC-"
-          cp_first "artifacts/nightly-*-HPC-oraclelinux8-[0-9]*/UltraScan3-HPC-*-Linux-*.tar.xz" \
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-RHEL-8-x86_64/UltraScan3-*-Linux-*.tar.xz" \
+            "us3-redhat-8.10-x86_64-${LABEL}.tar.xz"
+          cp_first "artifacts/nightly-${GITHUB_RUN_ID}-HPC-RHEL-8-x86_64/UltraScan3-HPC-*-Linux-*.tar.xz" \
             "us3-HPC-redhat-8.10-x86_64-${LABEL}.tar.xz"
 
           echo "Assets ready:"
@@ -308,6 +228,17 @@ jobs:
           # Export label for publish step
           echo "label=${LABEL}" >> "$GITHUB_ENV"
 
+      # Hand-rolled on purpose. This is a TRANSACTIONAL publish, not a plain
+      # upload: it records the existing asset names and the current `nightly`
+      # tag SHA, uploads the new generation alongside the old, moves the tag,
+      # and installs an ERR trap that deletes the new assets and restores the
+      # tag if any step fails.
+      #
+      # softprops/action-gh-release and `gh release upload` alone have no
+      # rollback. Swapping either in would shorten this step by ~80 lines and
+      # replace a release that is never half-updated with one that can be --
+      # a user downloading mid-failure would get a mixed asset set under a
+      # moved tag. Do not "simplify" this without replacing the guarantee.
       - name: Publish rolling nightly release
         env:
           GH_TOKEN: ${{ github.token }}

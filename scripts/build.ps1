@@ -26,9 +26,6 @@
 .PARAMETER qt6
     Build with Qt6 + Qwt6.3.0 [default]
 
-.PARAMETER qt5-qwt616
-    Build with Qt5 + Qwt6.1.6
-
 .PARAMETER qt5-qwt630
     Build with Qt5 + Qwt6.3.0
 
@@ -56,10 +53,6 @@
     Qt6, ARM64, APP profile
 
 .EXAMPLE
-    .\build.bat --qt5-qwt616 --arch arm64 TEST
-    Qt5 + Qwt6.1.6, ARM64, TEST profile
-
-.EXAMPLE
     .\build.bat --rebuild
     Wipe build dir only, rebuild UltraScan (vcpkg untouched)
 
@@ -84,7 +77,6 @@
         scripts\build.bat
         scripts\build.bat --arch arm64
         scripts\build.bat --rebuild
-        scripts\build.bat --clean --qt5-qwt616 --arch arm64 TEST
         scripts\build.bat --vcpkg-root C:\dev\vcpkg
         scripts\build.bat --pkg
 
@@ -111,7 +103,6 @@ param(
     [switch]${purge-cache},
     [switch]${pkg},
     [switch]${qt6},
-    [switch]${qt5-qwt616},
     [switch]${qt5-qwt630},
     [string]${arch}       = "",
     [string]${vcpkg-root} = "",
@@ -122,6 +113,7 @@ param(
 $DocsBuilt = $true
 $DocsStatusMessage = ""
 $profile = $profile.ToUpperInvariant()
+$RequireHelpFiles = ${pkg} -and $profile -eq "APP"
 
 # =============================================================================
 # HELP
@@ -142,7 +134,6 @@ if (${help}) {
     Write-Host "                             Use when switching compilers or suspecting cache corruption."
     Write-Host "  --pkg                    Build the Windows NSIS installer"
     Write-Host "  --qt6                    Build with Qt6 + Qwt6.3.0 [default]"
-    Write-Host "  --qt5-qwt616             Build with Qt5 + Qwt6.1.6"
     Write-Host "  --qt5-qwt630             Build with Qt5 + Qwt6.3.0"
     Write-Host "  --arch x64               Target x64 architecture [default: auto-detect]"
     Write-Host "  --arch arm64             Target ARM64 architecture"
@@ -164,7 +155,6 @@ if (${help}) {
     Write-Host "EXAMPLES:"
     Write-Host "  build.bat                                  # Qt6, auto-detect arch, APP"
     Write-Host "  build.bat --arch arm64                     # Qt6, ARM64, APP"
-    Write-Host "  build.bat --qt5-qwt616                     # Qt5 + Qwt6.1.6, APP"
     Write-Host "  build.bat --qt6 TEST                       # Qt6, TEST profile"
     Write-Host "  build.bat --rebuild                        # Wipe build dir, rebuild UltraScan only"
     Write-Host "  build.bat --clean                          # Full dep reinstall (after vcpkg.json changes)"
@@ -189,8 +179,7 @@ if (${help}) {
 # RESOLVE QT VERSION
 # =============================================================================
 $QtSuffix = "-qt6"
-if (${qt5-qwt616}.IsPresent) { $QtSuffix = "-qt5-qwt616" }
-elseif (${qt5-qwt630}.IsPresent) { $QtSuffix = "-qt5-qwt630" }
+if (${qt5-qwt630}.IsPresent) { $QtSuffix = "-qt5-qwt630" }
 
 $profile = $profile.ToUpperInvariant()
 
@@ -447,7 +436,6 @@ if ($env:GITHUB_ACTIONS -eq "true") {
 Write-Host "Selected build profile : ${profile}"
 $QtLabel = switch ($QtSuffix) {
     "-qt6"        { "Qt6 (Qwt 6.3.0)" }
-    "-qt5-qwt616" { "Qt5 (Qwt 6.1.6)" }
     "-qt5-qwt630" { "Qt5 (Qwt 6.3.0)" }
     default       { $QtSuffix }
 }
@@ -525,6 +513,19 @@ if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
 # Sphinx via pip if sphinx-build is still absent, matching the behaviour of
 # build.sh on Linux/macOS.
 # =============================================================================
+function Add-PythonScriptsToPath {
+    param([string]$PythonCommand)
+
+    $ScriptsDir = & $PythonCommand -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+    if ($LASTEXITCODE -eq 0 -and $ScriptsDir) {
+        $ScriptsDir = "$ScriptsDir".Trim()
+        if ((Test-Path $ScriptsDir) -and -not (($env:PATH -split ';') -contains $ScriptsDir)) {
+            $env:PATH = "$ScriptsDir;$env:PATH"
+            Write-Host "Added Python scripts directory to PATH: $ScriptsDir"
+        }
+    }
+}
+
 if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
     $DocsBuilt = $false
     $SphinxRequirements = Join-Path $SourceRoot "doc\manual\source\requirements.txt"
@@ -534,13 +535,18 @@ if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
                  elseif (Get-Command python -ErrorAction SilentlyContinue) { "python" }
                  else { $null }
         if ($PyCmd) {
-            & $PyCmd -m pip install -q -r $SphinxRequirements 2>$null
-            if (Get-Command sphinx-build -ErrorAction SilentlyContinue) {
+            & $PyCmd -m pip install -r $SphinxRequirements
+            $PipExitCode = $LASTEXITCODE
+            Add-PythonScriptsToPath -PythonCommand $PyCmd
+            if ($PipExitCode -ne 0) {
+                $DocsStatusMessage = "Documentation not built: pip install failed with exit code $PipExitCode."
+                Write-Host "ERROR: $DocsStatusMessage" -ForegroundColor Red
+            } elseif (Get-Command sphinx-build -ErrorAction SilentlyContinue) {
                 Write-Host "sphinx-build installed successfully." -ForegroundColor Green
                 $DocsBuilt = $true
             } else {
                 $DocsStatusMessage = "Documentation not built: sphinx-build not found after pip install."
-                Write-Host "WARNING: sphinx-build still not found. Help files will not be generated." -ForegroundColor Yellow
+                Write-Host "ERROR: sphinx-build is still unavailable after a successful pip install." -ForegroundColor Red
             }
         } else {
             $DocsStatusMessage = "Documentation not built: Python not found."
@@ -558,10 +564,23 @@ if (-not (Get-Command sphinx-build -ErrorAction SilentlyContinue)) {
         $PyCmd = if (Get-Command py -ErrorAction SilentlyContinue) { "py" }
                  elseif (Get-Command python -ErrorAction SilentlyContinue) { "python" }
                  else { $null }
-        if ($PyCmd) { & $PyCmd -m pip install -q -r $SphinxRequirements 2>$null }
+        if ($PyCmd) {
+            & $PyCmd -m pip install -r $SphinxRequirements
+            if ($LASTEXITCODE -ne 0) {
+                $DocsBuilt = $false
+                $DocsStatusMessage = "Documentation dependencies could not be updated (pip exit code $LASTEXITCODE)."
+                Write-Host "ERROR: $DocsStatusMessage" -ForegroundColor Red
+            }
+        }
     }
     Write-Host "sphinx-build is available: $(Get-Command sphinx-build | Select-Object -ExpandProperty Source)"
     Write-Host ""
+}
+
+if ($RequireHelpFiles -and -not $DocsBuilt) {
+    Write-Host "ERROR: Windows APP installers require manual.qch and manual.qhc." -ForegroundColor Red
+    Write-Host "       Resolve the Sphinx error above; packaging will not continue without application help." -ForegroundColor Red
+    exit 1
 }
 
 # =============================================================================
@@ -712,54 +731,7 @@ function Test-VcpkgRepoClean {
     }
 }
 
-function Get-VcpkgDefaultBranch {
-    param([string]$VcpkgRoot)
 
-    Push-Location $VcpkgRoot
-    try {
-        # Ask the clone's own origin rather than hardcoding a branch name, so this
-        # survives an upstream rename and works for forks pointed at by VCPKG_ROOT.
-        $head = git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null
-        if ($LASTEXITCODE -ne 0 -or -not $head) {
-            git remote set-head origin --auto 1>$null 2>$null
-            $head = git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null
-        }
-
-        if ($head) { return ($head -replace '^origin/', '') }
-        return "master"
-    }
-    finally {
-        Pop-Location
-    }
-}
-
-function Restore-VcpkgDefaultBranch {
-    param([string]$VcpkgRoot)
-
-    if (-not (Test-VcpkgGitRepo $VcpkgRoot)) { return }
-
-    Push-Location $VcpkgRoot
-    try {
-        git symbolic-ref --quiet HEAD 1>$null 2>$null
-        if ($LASTEXITCODE -eq 0) { return }   # already on a branch
-
-        # A detached HEAD here is usually left over from an older build script that
-        # checked out the manifest baseline. vcpkg.exe must match the checked-out
-        # scripts, so put the repo back on its default branch before bootstrapping.
-        $branch = Get-VcpkgDefaultBranch -VcpkgRoot $VcpkgRoot
-        Write-Warning "$VcpkgRoot is in a detached HEAD state. Restoring branch '$branch'."
-
-        git checkout $branch
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "ERROR: Could not check out '$branch' in $VcpkgRoot." -ForegroundColor Red
-            Write-Host "  Fix the vcpkg clone manually, or delete it and re-run the build."
-            exit 1
-        }
-    }
-    finally {
-        Pop-Location
-    }
-}
 
 function Repair-VcpkgRepo {
     param([string]$VcpkgRoot)
@@ -771,8 +743,7 @@ function Repair-VcpkgRepo {
 
     Write-Host "Repairing vcpkg repo at $VcpkgRoot ..." -ForegroundColor Yellow
 
-    # reset --hard HEAD below keeps a detached HEAD detached, so get back on a branch first.
-    Restore-VcpkgDefaultBranch -VcpkgRoot $VcpkgRoot
+    # Preserve a detached manifest-baseline checkout while repairing files.
 
     Push-Location $VcpkgRoot
     try {
@@ -838,8 +809,29 @@ if (-not (Test-Path $VcpkgRoot)) {
     }
 }
 
-# Must run before bootstrap: vcpkg.exe is built from whatever is checked out.
-Restore-VcpkgDefaultBranch -VcpkgRoot $VcpkgRoot
+# Pin the ports and vcpkg executable before bootstrapping.
+$ManifestPath = Join-Path $SourceRoot 'vcpkg.json'
+if (Test-Path $ManifestPath) {
+    $VcpkgPin = (Get-Content -Raw $ManifestPath | ConvertFrom-Json).'builtin-baseline'
+    $CurrentVcpkg = (git -C $VcpkgRoot rev-parse HEAD 2>$null)
+    if ($CurrentVcpkg -ne $VcpkgPin) {
+        Write-Host "Pinning vcpkg to $VcpkgPin (was $CurrentVcpkg)"
+        git -C $VcpkgRoot cat-file -e "$VcpkgPin^{commit}" 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            git -C $VcpkgRoot fetch --quiet origin $VcpkgPin 2>$null
+            if ($LASTEXITCODE -ne 0) { git -C $VcpkgRoot fetch --quiet origin }
+        }
+        git -C $VcpkgRoot checkout --quiet --detach $VcpkgPin
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "ERROR: could not check out pinned vcpkg commit $VcpkgPin" -ForegroundColor Red
+            exit 1
+        }
+        # The tool must match the checkout it was built from.
+        Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $VcpkgRoot 'vcpkg.exe')
+    }
+} else {
+    Write-Warning "vcpkg.json not found; using whatever vcpkg is checked out."
+}
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "vcpkg.exe"))) {
     Write-Host "Bootstrapping vcpkg at $VcpkgRoot..."
@@ -862,11 +854,35 @@ $VcpkgDownloadsDir = if ($env:US3_VCPKG_DOWNLOADS) { $env:US3_VCPKG_DOWNLOADS } 
 if (-not (Test-Path $VcpkgDownloadsDir)) { New-Item -ItemType Directory -Path $VcpkgDownloadsDir -Force | Out-Null }
 
 $env:VCPKG_ROOT           = $VcpkgRoot
-$env:VCPKG_BINARY_SOURCES = "clear;files,$VcpkgCacheDir,readwrite"
+if ($env:VCPKG_BINARY_SOURCES) {
+    Write-Host "Using caller-provided vcpkg binary cache sources"
+} else {
+    $env:VCPKG_BINARY_SOURCES = "clear;files,$VcpkgCacheDir,readwrite"
+    Write-Host "Using local vcpkg binary cache: $VcpkgCacheDir"
+}
 # Cleared, not merely left unset: an inherited value (CI runner, earlier shell)
 # would override vcpkg's build-tree default and re-share the tree.
 $env:VCPKG_INSTALLED_DIR  = $null
 $env:VCPKG_DOWNLOADS      = $VcpkgDownloadsDir
+
+# Options handed to `vcpkg install`, mirroring scripts/build.sh.
+#
+# ';' rather than a space is required: this is passed through
+# -DVCPKG_INSTALL_OPTIONS below and vcpkg.cmake expands it as a CMake *list*,
+# so a space-separated value would arrive at vcpkg as one bogus argument.
+#
+# --clean-after-build keeps peak disk usage down; Windows runners are the
+# tightest on space of any target we build.
+$VcpkgInstallOptions = "--clean-after-build"
+
+# --only-binarycaching turns a binary-cache miss into a hard failure instead of
+# a multi-hour source rebuild. Set by scripts/fetch-toolchain.ps1 for targets
+# whose compiler is pinned; see the matching block in scripts/build.sh for why
+# it is a per-target policy and not a blanket one.
+if ($env:US3_REQUIRE_BINARY_CACHE -eq "true") {
+    $VcpkgInstallOptions = "$VcpkgInstallOptions;--only-binarycaching"
+    Write-Host "Binary cache enforced: dependencies must come from the pinned toolchain."
+}
 
 if (-not (Test-Path (Join-Path $VcpkgRoot "scripts\buildsystems\vcpkg.cmake"))) {
     Write-Host "ERROR: vcpkg toolchain not found." -ForegroundColor Red
@@ -877,6 +893,7 @@ Write-Host "vcpkg ready." -ForegroundColor Green
 Write-Host "  root      : $VcpkgRoot"
 Write-Host "  cache     : $VcpkgCacheDir"
 Write-Host "  downloads : $VcpkgDownloadsDir"
+Write-Host "  install   : $VcpkgInstallOptions"
 Write-Host ""
 
 # Ensure the manifest's dependency baseline exists in the local history.
@@ -1080,7 +1097,7 @@ Test-PathLengthRisk `
 # all dependencies declared in vcpkg.json for the active feature and triplet.
 # =============================================================================
 Write-Host "Configuring..." -ForegroundColor Cyan
-cmake --preset $Preset -DUS3_PROFILE="${profile}"
+cmake --preset $Preset -DUS3_PROFILE="${profile}" -DVCPKG_INSTALL_OPTIONS="$VcpkgInstallOptions"
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: CMake configuration failed." -ForegroundColor Red; exit $LASTEXITCODE }
 
 # Read back what the toolchain resolved rather than recomputing its rule.

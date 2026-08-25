@@ -24,7 +24,7 @@ CLEAN=false            # --clean:   wipe build dir + vcpkg installed/ for triple
 PURGE_CACHE=false      # --purge-cache: additive to --clean, also wipes binary cache (tier 3)
 BUILD_PKG=false        # --pkg: build platform-native package
 PROFILE="APP"          # default profile
-QT_VARIANT="qt6"       # qt6 | qt5-qwt616 | qt5-qwt630
+QT_VARIANT="qt6"       # qt6 | qt5-qwt630
 ARCH=""
 US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-}"
 
@@ -35,7 +35,6 @@ while [[ $# -gt 0 ]]; do
     --clean)        CLEAN=true;                 shift ;;
     --purge-cache)  PURGE_CACHE=true;            shift ;;
     --qt6)          QT_VARIANT="qt6";           shift ;;
-    --qt5-qwt616)   QT_VARIANT="qt5-qwt616";   shift ;;
     --qt5-qwt630)   QT_VARIANT="qt5-qwt630";   shift ;;
     --arch)
       ARCH="$2"; shift 2
@@ -75,7 +74,6 @@ while [[ $# -gt 0 ]]; do
       echo "                         Linux   -> portable tar.xz archive (xz-compressed)"
       echo "                                    Output: build/<preset>/UltraScan3-<version>-Linux-<arch>.tar.xz"
       echo "  --qt6                Build with Qt6 + Qwt6.3.0 [default on macOS]"
-      echo "  --qt5-qwt616         Build with Qt5 + Qwt6.1.6 [Linux only]"
       echo "  --qt5-qwt630         Build with Qt5 + Qwt6.3.0 [Linux only]"
       echo "  --arch x64           Target x64 architecture [default: auto-detect]"
       echo "  --arch arm64         Target ARM64 architecture"
@@ -96,7 +94,6 @@ while [[ $# -gt 0 ]]; do
       echo "EXAMPLES:"
       echo "  $0                        # Build only"
       echo "  $0 TEST                   # Build with TEST profile"
-      echo "  $0 --qt5-qwt616           # Build Qt5+Qwt6.1.6 (Linux only)"
       echo "  $0 --rebuild              # Wipe build dir, rebuild UltraScan only"
       echo "  $0 --clean                # Full dep reinstall (after vcpkg.json changes)"
       echo "  $0 --clean --purge-cache  # Nuke everything, recompile deps from source"
@@ -106,6 +103,7 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "ENVIRONMENT VARIABLES:"
       echo "  US3_BUILD_JOBS      Override number of parallel build jobs"
+      echo "  US3_VCPKG_JOBS      Override dependency-only parallel build jobs"
       echo "  US3_VCPKG_ROOT      Override vcpkg location (default: \$HOME/vcpkg)"
       echo "  US3_VCPKG_CACHE     Override binary cache path (default: \$HOME/.vcpkg-cache)"
       echo "  US3_VCPKG_DOWNLOADS Override downloads cache path"
@@ -145,7 +143,6 @@ fi
 QT_VERSION_LABEL=""
 case "$QT_VARIANT" in
   qt6)         QT_VERSION_LABEL="Qt6 (Qwt 6.3.0)" ;;
-  qt5-qwt616)  QT_VERSION_LABEL="Qt5 (Qwt 6.1.6)" ;;
   qt5-qwt630)  QT_VERSION_LABEL="Qt5 (Qwt 6.3.0)" ;;
 esac
 
@@ -239,7 +236,8 @@ fi
 echo "Detected $CORES cores; using $BUILD_JOBS parallel build jobs."
 echo ""
 
-export VCPKG_MAX_CONCURRENCY="$BUILD_JOBS"
+VCPKG_BUILD_JOBS="${US3_VCPKG_JOBS:-$BUILD_JOBS}"
+export VCPKG_MAX_CONCURRENCY="$VCPKG_BUILD_JOBS"
 
 # =============================================================================
 # SCRIPT_DIR / SOURCE_DIR
@@ -447,6 +445,42 @@ if [ ! -d "$US3_VCPKG_ROOT/.git" ]; then
   git clone https://github.com/microsoft/vcpkg.git "$US3_VCPKG_ROOT"
 fi
 
+# Pin the ports and vcpkg executable to the manifest baseline.
+US3_VCPKG_PIN="$(python3 -c \
+  "import json,sys;print(json.load(open(sys.argv[1]))['builtin-baseline'])" \
+  "${SOURCE_DIR}/vcpkg.json" 2>/dev/null || echo "")"
+
+if [ -n "$US3_VCPKG_PIN" ]; then
+  CURRENT_VCPKG="$(git -C "$US3_VCPKG_ROOT" rev-parse HEAD 2>/dev/null || echo "")"
+  if [ "$CURRENT_VCPKG" != "$US3_VCPKG_PIN" ]; then
+    echo "Pinning vcpkg to ${US3_VCPKG_PIN} (was ${CURRENT_VCPKG:-unknown})"
+    if ! git -C "$US3_VCPKG_ROOT" cat-file -e "${US3_VCPKG_PIN}^{commit}" 2>/dev/null; then
+      git -C "$US3_VCPKG_ROOT" fetch --quiet origin "$US3_VCPKG_PIN" 2>/dev/null \
+        || git -C "$US3_VCPKG_ROOT" fetch --quiet origin
+    fi
+    # Report common checkout failures with actionable context.
+    if ! git -C "$US3_VCPKG_ROOT" checkout --quiet --detach "$US3_VCPKG_PIN"; then
+      echo "" >&2
+      echo "ERROR: could not check out pinned vcpkg commit ${US3_VCPKG_PIN}" >&2
+      echo "       in $US3_VCPKG_ROOT." >&2
+      echo "" >&2
+      echo "       This build pins vcpkg to vcpkg.json's builtin-baseline." >&2
+      echo "       Common causes:" >&2
+      echo "         - local modifications in the vcpkg clone (git -C \"$US3_VCPKG_ROOT\" status)" >&2
+      echo "         - the clone is shared with another project that needs a different commit" >&2
+      echo "" >&2
+      echo "       Fix the clone, or point this build at a private one:" >&2
+      echo "         US3_VCPKG_ROOT=\$HOME/vcpkg-us3 $0 ..." >&2
+      exit 1
+    fi
+    # The tool must match the checkout it was built from.
+    rm -f "$US3_VCPKG_ROOT/vcpkg"
+  fi
+else
+  echo "WARNING: could not read builtin-baseline from vcpkg.json;" >&2
+  echo "         using whatever is checked out at $US3_VCPKG_ROOT." >&2
+fi
+
 if [ ! -x "$US3_VCPKG_ROOT/vcpkg" ]; then
   echo ""
   echo "Bootstrapping vcpkg at $US3_VCPKG_ROOT..."
@@ -474,7 +508,12 @@ else
 fi
 
 mkdir -p "$US3_VCPKG_CACHE"
-export VCPKG_BINARY_SOURCES="clear;files,$US3_VCPKG_CACHE,readwrite"
+if [ -n "${VCPKG_BINARY_SOURCES:-}" ]; then
+  echo "Using caller-provided vcpkg binary cache sources"
+else
+  export VCPKG_BINARY_SOURCES="clear;files,$US3_VCPKG_CACHE,readwrite"
+  echo "Using local vcpkg binary cache: $US3_VCPKG_CACHE"
+fi
 
 if [ -n "${US3_VCPKG_DOWNLOADS:-}" ]; then
   US3_VCPKG_DOWNLOADS="$US3_VCPKG_DOWNLOADS"
@@ -486,9 +525,37 @@ fi
 
 mkdir -p "$US3_VCPKG_DOWNLOADS"
 export US3_VCPKG_DOWNLOADS
+export VCPKG_DOWNLOADS="$US3_VCPKG_DOWNLOADS"
 
 # Reduce peak disk usage during vcpkg dependency builds.
+#
+# Separate options with ';', not spaces: this reaches vcpkg through
+# -DVCPKG_INSTALL_OPTIONS, and vcpkg.cmake expands it as a CMake *list*. A
+# space-separated value is a single list element, so vcpkg would receive
+# "--clean-after-build --only-binarycaching" as one argument and reject it.
 export VCPKG_INSTALL_OPTIONS="--clean-after-build"
+
+# =============================================================================
+# Binary-cache enforcement.
+#
+# Ordinary binary caching falls back to building from source on a miss, which
+# is what a developer wants and what turns a ten-minute CI build into a
+# multi-hour one. --only-binarycaching makes a miss fail instead.
+#
+# The flag is NOT set here by policy. scripts/fetch-toolchain.sh sets
+# US3_REQUIRE_BINARY_CACHE=true only for container targets, where the compiler
+# and CMake -- both inputs to vcpkg's ABI hash -- are pinned inside the image,
+# so a miss can only mean the toolchain is incomplete. On macOS and Windows the
+# compiler comes from the runner image and can change under us, so a miss there
+# is an expected maintenance event and must stay recoverable.
+#
+# Local builds never set it and keep building from source as before.
+# =============================================================================
+if [ "${US3_REQUIRE_BINARY_CACHE:-false}" = "true" ]; then
+  VCPKG_INSTALL_OPTIONS="${VCPKG_INSTALL_OPTIONS};--only-binarycaching"
+  export VCPKG_INSTALL_OPTIONS
+  echo "Binary cache enforced: dependencies must come from the pinned toolchain."
+fi
 
 if [ "$PLATFORM" = "Linux" ] && [ "${CI:-false}" = "true" ]; then
   echo "=========================================="
@@ -656,8 +723,8 @@ fi
 # RHEL/Fedora don't use the PEP 668 externally-managed marker so the flag is
 # not needed there and older pip versions will error on it.
 _pip_break_flag=""
-if command -v pip3 &>/dev/null; then
-  if pip3 install --break-system-packages --dry-run pip &>/dev/null 2>&1; then
+if python3 -m pip --version &>/dev/null; then
+  if python3 -m pip install --break-system-packages --dry-run pip &>/dev/null 2>&1; then
     _pip_break_flag="--break-system-packages"
   fi
 fi
@@ -667,11 +734,11 @@ fi
 # only unnecessary but actively rejected. Outside CI, --user installs to
 # ~/.local which keeps the system Python clean.
 _pip_install() {
-  if command -v pip3 &>/dev/null; then
+  if python3 -m pip --version &>/dev/null; then
     if [ "${CI:-false}" = "true" ]; then
-      pip3 install ${_pip_break_flag:+$_pip_break_flag} -q "$@" 2>/dev/null || true
+      python3 -m pip install ${_pip_break_flag:+$_pip_break_flag} -q "$@" 2>/dev/null || true
     else
-      pip3 install ${_pip_break_flag:+$_pip_break_flag} --user -q "$@" 2>/dev/null || true
+      python3 -m pip install ${_pip_break_flag:+$_pip_break_flag} --user -q "$@" 2>/dev/null || true
     fi
   fi
 }
@@ -704,7 +771,7 @@ _add_user_bin_to_path
 
 if ! command -v sphinx-build &>/dev/null; then
   echo "sphinx-build not found - attempting to install from requirements.txt..."
-  if [ -f "$SPHINX_REQUIREMENTS" ] && command -v pip3 &>/dev/null; then
+  if [ -f "$SPHINX_REQUIREMENTS" ] && python3 -m pip --version &>/dev/null; then
     _pip_install -r "$SPHINX_REQUIREMENTS"
     _add_user_bin_to_path
     if command -v sphinx-build &>/dev/null; then
@@ -723,6 +790,11 @@ else
     _pip_install -r "$SPHINX_REQUIREMENTS"
   fi
   echo "sphinx-build is available: $(command -v sphinx-build)"
+fi
+
+if [ "$BUILD_PKG" = true ] && [ "$PROFILE" = "APP" ] && ! command -v sphinx-build &>/dev/null; then
+  echo "ERROR: APP packages require Sphinx so manual.qch and manual.qhc can be generated."
+  exit 1
 fi
 
 # =============================================================================
@@ -744,6 +816,7 @@ echo "  vcpkg root          : ${VCPKG_ROOT}"
 echo "  vcpkg cache         : ${US3_VCPKG_CACHE}"
 echo "  vcpkg downloads     : ${US3_VCPKG_DOWNLOADS}"
 echo "  vcpkg install opts  : ${VCPKG_INSTALL_OPTIONS:-<none>}"
+echo "  vcpkg build jobs    : ${VCPKG_BUILD_JOBS}"
 echo "  Build jobs          : ${BUILD_JOBS}"
 echo ""
 
@@ -820,7 +893,8 @@ _fix_qt6_x11r6_paths
 echo "Configuring..."
 cmake --preset "$CONFIGURE_PRESET" \
   -DUS3_PROFILE="${PROFILE}" \
-  -DVCPKG_ROOT="$US3_VCPKG_ROOT"
+  -DVCPKG_ROOT="$US3_VCPKG_ROOT" \
+  -DVCPKG_INSTALL_OPTIONS="$VCPKG_INSTALL_OPTIONS"
 
 # Read back what the toolchain resolved rather than recomputing its rule.
 VCPKG_INSTALLED_DIR="$(sed -n 's|^VCPKG_INSTALLED_DIR:PATH=||p' \
