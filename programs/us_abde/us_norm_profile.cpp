@@ -1335,8 +1335,13 @@ void US_Norm_Profile::plotData(void){
 	    if ( us_auto_mode )
 	      {
 		QString f_name   = selFilenames.at(i);
+		qDebug() << "f_name -- " << f_name;
 		QString afterDot = f_name.section('.', -1);
-		QString result_analyte   = afterDot.section('_', 0, 0); // e.g. "AAV-DNA"
+		qDebug() << "afterDot -- " << afterDot;
+		int idx = afterDot.lastIndexOf('_');
+		QString result_analyte = afterDot.left(idx); // e.g. "AAV-DNA"
+		qDebug() << "result_analyte -- " << result_analyte;
+		
 
 		if ( us_auto_mode_report )
 		  result_analyte = afterDot;
