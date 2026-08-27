@@ -149,8 +149,8 @@ int US_Noise::write( IUS_DB2* db )
       db->next();
       QString modelID = db->value( 0 ).toString();
 
-      // Encapsulate the XML contents
-      db->mysqlEscapeString( contents, temp_contents, temp_contents.size() );
+      // composeQuery owns SQL escaping.
+      contents = temp_contents;
 
       // Determine the edit ID
       QString invID   = QString::number( US_Settings::us_inv_ID() );
@@ -529,4 +529,3 @@ bool US_Noise::sum_noises( US_Noise& noise1, US_Noise noise2, bool always_sum )
 
    return noise1.sum_noise( noise2, always_sum );
 }
-
