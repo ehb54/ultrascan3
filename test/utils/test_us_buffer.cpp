@@ -107,8 +107,12 @@ EXPECT_TRUE(comp.componentID.isEmpty());
 EXPECT_TRUE(comp.name.isEmpty());
 EXPECT_TRUE(comp.unit.isEmpty());
 EXPECT_TRUE(comp.range.isEmpty());
-// grad_form is the only non-QString member with a default initializer.
 EXPECT_FALSE(comp.grad_form);
+
+for (int i = 0; i < 6; i++) {
+EXPECT_THAT(comp.dens_coeff[i], DoubleEq(0.0)) << "dens_coeff[" << i << "]";
+EXPECT_THAT(comp.visc_coeff[i], DoubleEq(0.0)) << "visc_coeff[" << i << "]";
+}
 }
 
 TEST_F(US_BufferComponentTest, SaveToDBSuccess) {
