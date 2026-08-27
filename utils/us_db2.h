@@ -93,6 +93,37 @@ public:
                   const QString& user, const QString& password,
                   QString& err ) override;
 
+    /*! \brief Connect and authenticate from explicit values.
+
+        The two-argument connect() reads a stored `QSettings` profile, and
+        writes one back when the account's email has changed.  A command-line
+        program has no profile and should not invent one, so this takes the
+        same values as arguments and touches no settings at all.
+
+        Opening the connection is not enough on its own: every stored procedure
+        takes the caller's identity as its first two arguments and refuses to
+        run until `validate_user` has established it, which is why this exists
+        alongside the four-argument connect() rather than replacing a caller's
+        use of it.
+
+        Deliberately not on IUS_DB2.  Consumers of the interface receive a
+        connection that is already open and authenticated; how it got that way
+        is the application's business.
+
+        \param host           Host name, optionally host:port
+        \param dbname         Database name
+        \param user           Database user
+        \param password       That user's password
+        \param personGUID     The US3 investigator's GUID
+        \param personPassword That investigator's US3 password
+        \param err            Set to the reason on failure
+    */
+    bool connectAuthenticated( const QString& host, const QString& dbname,
+                               const QString& user, const QString& password,
+                               const QString& personGUID,
+                               const QString& personPassword,
+                               QString& err );
+
     /*! \brief Begin a transaction on the active connection. */
     bool beginTransaction( QString& error ) override;
 
