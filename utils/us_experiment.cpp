@@ -21,7 +21,7 @@ US_Experiment::US_Experiment( void )
 }
 
 // Function to see if the current runID already exists in the database
-int US_Experiment::checkRunID( US_DB2* db )
+int US_Experiment::checkRunID( IUS_DB2* db )
 {
    // Let's see if we can find the run ID
    expID = 0;
@@ -39,7 +39,7 @@ int US_Experiment::checkRunID( US_DB2* db )
 }
 
 // Copy of checkRunID when invID propagated in autoflow
-int US_Experiment::checkRunID_auto( int invID_passed, US_DB2* db )
+int US_Experiment::checkRunID_auto( int invID_passed, IUS_DB2* db )
 {
    // Let's see if we can find the run ID
    expID = 0;
@@ -57,7 +57,7 @@ int US_Experiment::checkRunID_auto( int invID_passed, US_DB2* db )
    return US_DB2::OK;
 }
 
-int US_Experiment::saveToDB( bool update, US_DB2* db,
+int US_Experiment::saveToDB( bool update, IUS_DB2* db,
                              QVector< SP_SPEEDPROFILE >& speedsteps )
 {
 qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
@@ -178,7 +178,7 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
 }
 
 //Same as above but for AutoFlow with ExpData.invID set as owner
-int US_Experiment::saveToDB_auto( bool update, US_DB2* db,
+int US_Experiment::saveToDB_auto( bool update, IUS_DB2* db,
 				  QVector< SP_SPEEDPROFILE >& speedsteps, int invID_passed )
 {
 qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
@@ -304,7 +304,7 @@ qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
 
 
 // Function to read an experiment from DB
-int US_Experiment::readFromDB( QString runID, US_DB2* db,
+int US_Experiment::readFromDB( QString runID, IUS_DB2* db,
                                QVector< SP_SPEEDPROFILE >& speedsteps,
 			       const QString invid_p )
 {
@@ -1167,7 +1167,7 @@ qDebug() << "importRIxml() error" << error;
 }
 
 // Delete pcsa_modelrecs for the current experiment run
-bool US_Experiment::deleteRunPcsaMrecs( US_DB2* db, const QString invID,
+bool US_Experiment::deleteRunPcsaMrecs( IUS_DB2* db, const QString invID,
                                                     const QString runID )
 {
    bool is_ok         = true;
