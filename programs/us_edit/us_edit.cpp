@@ -17,6 +17,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_convertio.h"
 #include "us_investigator.h"
 #include "us_run_details2.h"
 #include "us_math2.h"
@@ -14084,20 +14085,24 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
 int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       QString& editID, QString& rawGUID )
 {
-   int idEdit;
+   // The database mechanics live in US_ConvertIO; what stays here is this
+   // program's own policy: which failures deserve which dialog, whether the
+   // record is created or updated, and the editIDs bookkeeping that only the
+   // editor keeps.  The numbered return codes are unchanged, because four call
+   // sites in this file branch on them.
+   int     idEdit;
+   int     rawDataID = -1;
+   QString error;
 
    if ( dbP == NULL )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
-         tr( "Could not connect to database \n" ) + dbP->lastError() );
+         tr( "Could not connect to database \n" ) );
       return 1;
    }
 
-   QStringList query( "get_rawDataID_from_GUID" );
-   query << rawGUID;
-   dbP->query( query );
-
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( US_ConvertIO::findRawDataId( dbP, rawGUID, rawDataID, error )
+        != US_DB2::OK )
    {
       QMessageBox::warning( this,
          tr( "AUC Data is not in DB" ),
@@ -14106,21 +14111,16 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       return 2;
    }
 
-   dbP->next();
-   QString rawDataID = dbP->value( 0 ).toString();
-
-
-   // Save edit file to DB
-   query.clear();
+   US_ConvertIO::EditedDataRecord record;
+   record.rawDataID = rawDataID;
+   record.editGUID  = editGUID;
+   record.label     = runID;
+   record.filename  = fname;
 
    if ( editID.isEmpty() )
    {
-      query << "new_editedData" << rawDataID << editGUID << runID
-            << fname << "";
-
-      dbP->query( query );
-
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::createEditedData( dbP, record, idEdit, error )
+           != US_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ),
             tr( "Could not insert metadata into the database\n" ) +
@@ -14129,7 +14129,6 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
          return 3;
       }
 
-      idEdit   = dbP->lastInsertID();
       editID   = QString::number( idEdit );
       int dax  = editGUIDs.indexOf( editGUID );
       editIDs.replace( dax, editID );
@@ -14137,11 +14136,10 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
 
    else
    {
-      query << "update_editedData" << editID << rawDataID << editGUID
-            << runID << fname << "";
-      dbP->query( query );
+      idEdit   = editID.toInt();
 
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::updateEditedData( dbP, idEdit, record, error )
+           != US_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ),
             tr( "Could not update metadata in the database \n" ) +
@@ -14149,13 +14147,10 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
 
          return 4;
       }
-
-      idEdit   = editID.toInt();
    }
 
-   dbP->writeBlobToDB( workingDir + fname, "upload_editData", idEdit );
-
-   if ( dbP->lastErrno() != US_DB2::OK )
+   if ( US_ConvertIO::uploadEditedDataBlob( dbP, idEdit, workingDir + fname,
+                                            error ) != US_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Database Problem" ),
          tr( "Could not insert edit xml data into database \n" ) +

@@ -14,6 +14,154 @@ US_ConvertIO::US_ConvertIO( void )
 {
 }
 
+// ----------------------------------------------------------------------------
+// Edited-data database mechanics.
+//
+// Three programs used to carry their own copy of this: us_edit, us_manage_data
+// and the corpus loader.  They agreed on the stored procedures and disagreed on
+// everything else -- one raised dialogs, one wrote status codes into a table
+// model, one returned a message -- so the mechanics could not be shared without
+// dragging one program's policy into the others.
+//
+// These take an IUS_DB2*, return the underlying database status, and put
+// context into `error`.  They decide nothing: not whether a record is created
+// or updated, not whether a missing raw record is fatal, not what the user is
+// told, and not where a transaction begins or ends.
+// ----------------------------------------------------------------------------
+
+namespace
+{
+// Guard shared by every operation below.  A null connection is the caller's
+// mistake, and reporting it as NOT_CONNECTED keeps it inside the status space
+// the callers already handle.
+bool haveConnection( IUS_DB2* db, const QString& what, QString& error )
+{
+   if ( db != nullptr )
+      return true;
+
+   error = QString( "%1: no database connection" ).arg( what );
+   return false;
+}
+}
+
+int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID,
+                                 int& rawDataID, QString& error )
+{
+   if ( ! haveConnection( db, "raw data lookup", error ) )
+      return IUS_DB2::NOT_CONNECTED;
+
+   QStringList query;
+   query << "get_rawDataID_from_GUID" << rawGUID;
+   db->query( query );
+
+   const int status = db->lastErrno();
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not look up the raw data record for GUID %1: "
+                       "%2 (status %3)" )
+              .arg( rawGUID, db->lastError() ).arg( status );
+      return status;
+   }
+
+   // A successful query that names no row.  Reported separately from a query
+   // failure because the two mean different things to a caller: one is a
+   // broken connection, the other is data that was never uploaded.
+   if ( ! db->next() )
+   {
+      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      return IUS_DB2::NO_RAWDATA;
+   }
+
+   rawDataID = db->value( 0 ).toInt();
+
+   return IUS_DB2::OK;
+}
+
+int US_ConvertIO::createEditedData( IUS_DB2* db,
+                                    const EditedDataRecord& record,
+                                    int& editedDataID, QString& error )
+{
+   if ( ! haveConnection( db, "edited data creation", error ) )
+      return IUS_DB2::NOT_CONNECTED;
+
+   QStringList query;
+   query << "new_editedData"
+         << QString::number( record.rawDataID )
+         << record.editGUID
+         << record.label
+         << record.filename
+         << record.comment;
+   db->query( query );
+
+   const int status = db->lastErrno();
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not create the editedData record for %1: "
+                       "%2 (status %3)" )
+              .arg( record.filename, db->lastError() ).arg( status );
+      return status;
+   }
+
+   editedDataID = db->lastInsertID();
+
+   return IUS_DB2::OK;
+}
+
+int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID,
+                                    const EditedDataRecord& record,
+                                    QString& error )
+{
+   if ( ! haveConnection( db, "edited data update", error ) )
+      return IUS_DB2::NOT_CONNECTED;
+
+   QStringList query;
+   query << "update_editedData"
+         << QString::number( editedDataID )
+         << QString::number( record.rawDataID )
+         << record.editGUID
+         << record.label
+         << record.filename
+         << record.comment;
+   db->query( query );
+
+   const int status = db->lastErrno();
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not update editedData record %1 for %2: "
+                       "%3 (status %4)" )
+              .arg( editedDataID ).arg( record.filename, db->lastError() )
+              .arg( status );
+      return status;
+   }
+
+   return IUS_DB2::OK;
+}
+
+int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID,
+                                        const QString& filename,
+                                        QString& error )
+{
+   if ( ! haveConnection( db, "edited data upload", error ) )
+      return IUS_DB2::NOT_CONNECTED;
+
+   const int status = db->writeBlobToDB( filename, "upload_editData",
+                                         editedDataID );
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not attach %1 to editedData record %2: "
+                       "%3 (status %4)" )
+              .arg( filename ).arg( editedDataID ).arg( db->lastError() )
+              .arg( status );
+      return status;
+   }
+
+   return IUS_DB2::OK;
+}
+
 QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData, 
                                        QList< US_Convert::TripleInfo >& triples,
                                        const QString& dir,
