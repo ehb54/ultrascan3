@@ -21,6 +21,10 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+#ifdef US_ASTFEM_SIM_NO_MAIN
+class US_AstfemSimNoiseTest;
+#endif
+
 //! \brief Main window to control and display an ultracentrifugation
 //!        simulation
 
@@ -38,18 +42,16 @@ class US_Astfem_Sim : public US_Widgets
       //! \returns int: 0 on success no gui needed, 1 on success but gui needed, -1 on error
       int init_from_args( const QMap<QString, QString>& flags );
 
-      //! Write a timestate file based on auc data
-      //! \attention Not implemented
-      //! \param dir Location to save timestate to
-      //! \param data Data used to construct the timestate from
-      //! \return status code
-      int  writetimestate( const QString& dir,  US_DataIO::RawData& data);
-
     signals:
        void new_time         ( double );
 
    private:
+#ifdef US_ASTFEM_SIM_NO_MAIN
+      friend class US_AstfemSimNoiseTest;
+#endif
+
       bool           stopFlag;            //!< Flag to stop the simulation
+      bool           sim_failed;          //!< Set when start_simulation() could not produce data
       bool           movieFlag;           //!< Flag to show a movie during simulation
       bool           save_movie;          //!< Flag to save the generated frames
       bool           time_correctionFlag; //!< Flag to apply time correction - Currently not implemented/connected
@@ -64,6 +66,13 @@ class US_Astfem_Sim : public US_Widgets
       QString        imagedir;            //!< Path to the image dir
       QString        imageName;           //!< Full path template for movie frames ({imagedir}/frame{image_count}.png)
       QString        tmst_tfpath;         //!< Path to the timestate of the simulation in a temporary location
+      QString        run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
+      int            sim_cell    = 1;    //!< Output cell; historical default 1
+      char           sim_channel = 'S';  //!< Output channel; historical default S
+      uint           noise_seed  = 0;    //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
+      bool           noise_to_composite = true; //!< True on the ASTFEM path, where noise is applied to sim_data_all and the speed views derived from it
+      QString        guid_seed;           //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
+      QString        edit_stamp;          //!< Fixed yyMMddhhmm for the edit filename, from --edit-timestamp; empty uses the clock
 
       QCheckBox*     ck_movie;            //!< Pointer to QCheckbox for movie display
       QCheckBox*     ck_savemovie;        //!< Pointer to QCheckbox for saving movie frames
@@ -115,23 +124,16 @@ class US_Astfem_Sim : public US_Widgets
       void   adjust_limits  ( double );
       double stretch        ( double*, double );
       void   save_xla       ( const QString&, US_DataIO::RawData, int, bool supress_dialog = false );
-      void   save_ultrascan ( const QString& );
       void   finish         ( void );
       void   ri_noise       ( void );
       void   baseline       ( void );
       void   random_noise   ( void );
       void   ti_noise       ( void );
+      void   derive_speed_data( void );
+      US_DataIO::Scan& noise_scan( int, int, int );
       void   plot           ( int  );
-      // debug
-      void dump_system      ( void );
-      void dump_simparms    ( void );
-      void dump_astfem_data ( void );
-      void dump_simComponent( US_Model::SimulationComponent& );
-      void dump_association ( US_Model::Association& );
-      void dump_mfem_initial( US_Model::MfemInitial& );
-      void dump_ss          ( US_SimulationParameters::SpeedProfile& );
-      void dump_mfem_scan   ( US_DataIO::Scan& );
-      bool save_simulation  ( QString odir, bool supress_dialog = false );
+      bool save_simulation  ( QString odir, bool supress_dialog = false,
+                              bool write_records  = false );
       void save_csv_noise   ( US_CSV_Data& );
 
    private slots:
