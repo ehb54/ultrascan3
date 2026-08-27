@@ -221,11 +221,24 @@ void US_Util::uuid_parse( const QString& in, unsigned char* uu )
 }
 
 // Return a flag true if this is the ith time an error occurred;
-// in truth, that a random number over the given range has hit 1.
+// in truth, that a random number over the given range has hit the
+// one residue we test for.
 bool US_Util::ithTime( int timeinc )
 {
+   // Report every time when asked for every time. Guarding this is not
+   // pedantry: "rand() % 1" is always 0, so a test against 1 makes
+   // DbgErr(1) permanently silent rather than maximally verbose, which is
+   // the opposite of what anyone writing it would expect. Commit 6b0a884bc
+   // rewrote every DbgErr() call site to DbgErr(1), reading this argument
+   // as a severity level rather than the rate divisor it is, and silenced
+   // the lot for eight months. A timeinc of 0 would divide by zero.
+   if ( timeinc < 2 )
+      return true;
+
+   // Test against 0 rather than 1. Every residue is equally likely, so
+   // the 1-in-timeinc rate for larger increments is unchanged.
    int rannum  = rand() % timeinc;
-   return ( rannum == 1 );
+   return ( rannum == 0 );
 }
 
 // Return a flag if an XML attribute string represents true or false.
