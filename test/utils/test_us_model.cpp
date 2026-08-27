@@ -285,16 +285,6 @@ EXPECT_TRUE(model->components.isEmpty());
 EXPECT_TRUE(model->associations.isEmpty());
 }
 
-// Component Search Tests
-//
-// UT-009: FindComponentByName_ExistingComponent_ReturnsCorrectIndex and
-// FindComponentByName_NonExistentComponent_ReturnsNotFound were removed.  Both
-// carried the comment "assuming there's a method for this" and then implemented
-// a linear search over model->components inside the test body, asserting that
-// their own loop found the element the test had just appended.  No production
-// code ran, and US_Model exposes no component lookup for them to have called.
-// Deleted rather than rewritten: the requirement they described does not exist.
-
 // Validation Tests
 TEST_F(US_ModelTest, IsValid_ValidModel_ReturnsTrue) {
 model->description = "Valid Model";
@@ -402,17 +392,7 @@ EXPECT_EQ(assoc.rcomps[2], 2);
 EXPECT_EQ(assoc.stoichs[2], -1);
 }
 
-// Edge Cases
-//
-// UT-009: ComponentWithZeroMW_HandlesCorrectly,
-// ComponentWithNegativeConcentration_HandlesCorrectly and
-// ExtremeWavelengthValues_HandlesCorrectly were rewritten.  Each assigned a
-// public field and asserted the field held the value just assigned, with the
-// claim that the model "handles it gracefully" left in a comment rather than an
-// assertion.  QVector and plain assignment were the only things under test.
-//
-// calc_coefficients() is the production operation those inputs actually reach,
-// so the edge cases now go through it.
+// Coefficient calculation edge cases
 
 TEST_F(US_ModelTest, CalcCoefficients_ZeroMolecularWeight_ReportsFailure) {
 US_Model::SimulationComponent sc = createValidComponent();
@@ -452,7 +432,3 @@ ASSERT_TRUE(US_Model::calc_coefficients(sc));
 // still succeeds rather than propagating a zero.
 EXPECT_GT(sc.D, 0.0);
 }
-
-// UT-009: LargeNumberOfComponents_HandlesCorrectly was removed.  It appended
-// 100 components and asserted that components[50] and components[99] held the
-// names it had just written, which tests QVector rather than US_Model.

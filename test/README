@@ -45,13 +45,10 @@ one `QApplication`, selects the offscreen platform before Qt starts, enables
 software OpenGL, and redirects settings and writable UltraScan paths to a
 temporary sandbox.
 
-The complete examples are:
+An example is:
 
 - `test/gui/test_us_editor_gui.cpp`, which tests keyboard input and an editor
   action from `gui/`.
-- `test/programs/us_astfem_sim/test_us_astfem_clipdata_gui.cpp`, which uses
-  QTest to operate the real ASTFEM simulation range dialog and verifies that
-  its selected limits are returned to the caller.
 
 Run only the native headless UI tests with:
 
@@ -181,8 +178,8 @@ two ever diverge: it compares this translation unit's `NO_DB` state against a
 probe of the linked library's `US_Settings::us_debug()`, which persists through
 `QSettings` only in the DB-enabled build.
 
-The `Unit Tests v2` GitHub Actions workflow currently runs the **DB-enabled**
-variant only.  The `NO_DB` variant is covered locally by `--no-db`.
+The Qt5 and Qt6 unit-test workflows currently run the **DB-enabled** variant
+only.  The `NO_DB` variant is covered locally by `--no-db`.
 
 ## Coverage
 
@@ -215,8 +212,8 @@ Notes on how it works, because both details matter for correctness:
   when the code is compiled.
 
 **Coverage is evidence that a line executed, not evidence that anything asserted
-about it.** There is deliberately no pass/fail threshold. Do not add one before
-the baseline in `UT-002_COVERAGE_BASELINE.md` has been reviewed.
+about it.** There is deliberately no pass/fail threshold; establish and review
+a representative baseline before adopting one.
 
 ## Cross-Platform Notes
 
