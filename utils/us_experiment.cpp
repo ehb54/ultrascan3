@@ -75,8 +75,8 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
-   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   // composeQuery owns SQL escaping.
+   RIxmlEscaped = RIxml;
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -200,8 +200,8 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
-   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   // composeQuery owns SQL escaping.
+   RIxmlEscaped = RIxml;
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -635,6 +635,75 @@ int US_Experiment::readFromDisk(
     QString runID,
     QString dirname )
 {
+   // No diagnostics wanted: the state goes nowhere and nothing is reported
+   // from it, so this stays exactly the read it has always been.
+   DiskReadState state;
+
+   return readFromDisk( triples, runType, runID, dirname, state );
+}
+
+int US_Experiment::readFromDisk(
+    QList< US_Convert::TripleInfo >& triples,
+    QString runType,
+    QString runID,
+    QString dirname,
+    QVector< SP_SPEEDPROFILE >& speedsteps,
+    QString& detail )
+{
+   speedsteps.clear();
+   detail.clear();
+
+   DiskReadState state;
+   state.speedsteps = &speedsteps;
+
+   const int status = readFromDisk( triples, runType, runID, dirname, state );
+
+   if ( status != US_Convert::OK )
+      return status;
+
+   // Two datasets naming one triple means the archive cannot say which raw
+   // dataset an identity belongs to.  Reported ahead of the merely-missing
+   // cases because it is the one that would silently overwrite.
+   if ( ! state.duplicated.isEmpty() )
+   {
+      detail = QString( "The experiment record describes %1 more than once" )
+               .arg( state.duplicated.join( ", " ) );
+      return US_Convert::BADGUID;
+   }
+
+   QStringList unfilled;
+
+   for ( int ii = 0; ii < triples.size(); ii++ )
+      if ( ! state.filled.contains( ii ) )
+         unfilled << triples[ ii ].tripleDesc;
+
+   if ( ! state.unmatched.isEmpty()  ||  ! unfilled.isEmpty() )
+   {
+      QStringList parts;
+
+      if ( ! state.unmatched.isEmpty() )
+         parts << QString( "the experiment record describes %1, which has no "
+                           "data file" ).arg( state.unmatched.join( ", " ) );
+
+      if ( ! unfilled.isEmpty() )
+         parts << QString( "the data files include %1, which the experiment "
+                           "record does not describe" )
+                  .arg( unfilled.join( ", " ) );
+
+      detail = parts.join( "; " );
+      return US_Convert::PARTIAL_XML;
+   }
+
+   return US_Convert::OK;
+}
+
+int US_Experiment::readFromDisk(
+    QList< US_Convert::TripleInfo >& triples,
+    QString runType,
+    QString runID,
+    QString dirname,
+    DiskReadState& state )
+{
    // First figure out the xml file name, and try to open it
    QString filename = runID      + "." 
                     + runType    + ".xml";
@@ -658,7 +727,7 @@ int US_Experiment::readFromDisk(
             this->expGUID        = a.value( "guid" ).toString();
             this->expType        = a.value( "type" ).toString();
             this->runID          = a.value( "runID" ).toString();
-            readExperiment ( xml, triples, runType, runID );
+            readExperiment ( xml, triples, runType, runID, state );
          }
       }
    }
@@ -676,7 +745,8 @@ void US_Experiment::readExperiment(
      QXmlStreamReader& xml, 
      QList< US_Convert::TripleInfo >& triples,
      QString runType,
-     QString runID )
+     QString runID,
+     DiskReadState& state )
 {
    while ( ! xml.atEnd() )
    {
@@ -776,8 +846,23 @@ void US_Experiment::readExperiment(
                }
             }
 
+            if ( ! found )
+            {  // No triple carries this description, so no data file does
+               // either.  The read continues -- callers that do not ask for
+               // diagnostics see exactly what they always saw.
+               state.unmatched << triple;
+            }
+
+            else if ( state.filled.contains( ndx ) )
+            {  // A previous dataset already claimed this triple.  Recorded
+               // before the fields are overwritten, which is what used to
+               // happen with nothing said.
+               state.duplicated << triple;
+            }
+
             if ( found )
             {
+               state.filled.insert( ndx );
                triples[ ndx ].tripleID = a.value( "id" ).toString().toInt();
                QString uuidc = a.value( "guid" ).toString();
                US_Util::uuid_parse( uuidc,
@@ -806,6 +891,20 @@ void US_Experiment::readExperiment(
                triples[ ndx ].excluded       = false;
 
                readDataset( xml, triples[ ndx ] );
+            }
+         }
+
+         else if ( xml.name() == "speedstep" )
+         {
+            if ( state.speedsteps != nullptr )
+            {  // Declared inside the loop on purpose.  speedstepFromXml()
+               // assigns a field only when its attribute is present, so a
+               // profile reused across elements lets a step inherit the
+               // previous step's values.  A fresh one per element means what
+               // is returned is what the file actually said.
+               US_SimulationParameters::SpeedProfile sp;
+               US_SimulationParameters::speedstepFromXml( xml, sp );
+               *state.speedsteps << sp;
             }
          }
 
@@ -1257,4 +1356,3 @@ void US_Experiment::show( void )
    for ( int i = 0; i < RIProfile.size(); i++ )
       qDebug() << RIProfile[ i ];
 }
-
