@@ -107,15 +107,15 @@ EXPECT_TRUE(comp.componentID.isEmpty());
 EXPECT_TRUE(comp.name.isEmpty());
 EXPECT_TRUE(comp.unit.isEmpty());
 EXPECT_TRUE(comp.range.isEmpty());
-// grad_form is the only non-QString member with a default initializer.
 EXPECT_FALSE(comp.grad_form);
 
-// UT-009: this case used to memset dens_coeff and visc_coeff to zero and then
-// assert they were zero, which tested memset.  Both arrays are plain doubles
-// with no default member initializer (us_buffer.h:16-17), so after default
-// construction they hold indeterminate values and there is nothing to assert.
-// Removed rather than rewritten: the requirement it appeared to check does not
-// exist.  See the UT-009 report.
+// This case used to memset both coefficient arrays to zero and then assert they
+// were zero, which tested memset.  The arrays now carry default member
+// initializers, so the zeroes can be observed on a freshly constructed object.
+for (int i = 0; i < 6; i++) {
+EXPECT_THAT(comp.dens_coeff[i], DoubleEq(0.0)) << "dens_coeff[" << i << "]";
+EXPECT_THAT(comp.visc_coeff[i], DoubleEq(0.0)) << "visc_coeff[" << i << "]";
+}
 }
 
 TEST_F(US_BufferComponentTest, SaveToDBSuccess) {

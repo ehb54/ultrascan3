@@ -50,6 +50,7 @@ add_subdirectory(utils)
 # utilities tests.
 if(TARGET UltraScan3::Gui_Static)
     add_subdirectory(gui)
+    add_subdirectory(programs)
 else()
     message(STATUS "test: skipping GUI and program tests (no UltraScan3::Gui_Static in this variant)")
 endif()
