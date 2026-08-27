@@ -432,3 +432,38 @@ ASSERT_TRUE(US_Model::calc_coefficients(sc));
 // still succeeds rather than propagating a zero.
 EXPECT_GT(sc.D, 0.0);
 }
+
+// US_Model passes raw XML to the database layer, which owns SQL escaping.
+TEST_F(US_ModelTest, WriteToDb_PassesRawXmlForTheDbLayerToEscape) {
+    model->description = "test-CustomGrid.model";
+    model->modelGUID   = "11111111-2222-3333-4444-555555555555";
+    model->analysis    = US_Model::CUSTOMGRID;
+    model->subGrids    = 3;
+    model->components << createValidComponent();
+
+    // Force the new-model path.
+    ON_CALL(*mockDb, lastErrno()).WillByDefault(Return(IUS_DB2::NOROWS));
+
+    QStringList written;
+    EXPECT_CALL(*mockDb, statusQuery(::testing::An<const QStringList&>()))
+        .WillOnce(DoAll(::testing::SaveArg<0>(&written), Return(IUS_DB2::OK)));
+
+    model->write(mockDb.get());
+
+    ASSERT_FALSE(written.isEmpty());
+    ASSERT_EQ(written.at(0), QString("new_model"));
+
+    // new_model(modelGUID, description, xml, ...)
+    ASSERT_GE(written.size(), 4);
+    const QString xml = written.at(3);
+
+    EXPECT_TRUE(xml.contains("<?xml version=\"1.0\""))
+        << "the xml should reach the DB layer with plain quotes";
+    EXPECT_FALSE(xml.contains("\\\""))
+        << "an escaped quote here means the value was escaped twice: "
+           "composeQuery escapes it again, so the DB stores the escaping";
+    EXPECT_FALSE(xml.contains("\\n"))
+        << "an escaped newline here means the value was escaped twice";
+    EXPECT_TRUE(xml.contains("subGrids=\"3\""))
+        << "the attribute a custom grid model is useless without";
+}
