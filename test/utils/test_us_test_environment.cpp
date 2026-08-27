@@ -50,10 +50,10 @@ TEST( TestEnvironmentIsolation, SettingsAndWritablePathsStayInSandbox )
     ASSERT_TRUE( isWithin( settings.fileName(), settingsRoot ) )
         << settings.fileName().toStdString();
 
-    settings.setValue( "ut003/isolation-sentinel", "sandbox-only" );
+    settings.setValue( "test-environment/isolation-sentinel", "sandbox-only" );
     settings.sync();
     ASSERT_EQ( settings.status(), QSettings::NoError );
-    EXPECT_EQ( settings.value( "ut003/isolation-sentinel" ).toString(),
+    EXPECT_EQ( settings.value( "test-environment/isolation-sentinel" ).toString(),
                QString( "sandbox-only" ) );
 
     const QStringList writablePaths = {
@@ -67,7 +67,7 @@ TEST( TestEnvironmentIsolation, SettingsAndWritablePathsStayInSandbox )
         EXPECT_TRUE( isWithin( path, workRoot ) )
             << path.toStdString();
 
-    const QString probeDir = US_Settings::dataDir() + "/ut003";
+    const QString probeDir = US_Settings::dataDir() + "/test-environment";
     ASSERT_TRUE( QDir().mkpath( probeDir ) );
     QFile probe( probeDir + "/sandbox-probe" );
     ASSERT_TRUE( probe.open( QIODevice::WriteOnly ) );

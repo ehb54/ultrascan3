@@ -39,6 +39,5 @@ configure-arm64.log
 programs/us/us.rc
 CMakeUserPresets.json
 __pycache__
-/CLAUDE.md
 *.pyc
 /build-mac/

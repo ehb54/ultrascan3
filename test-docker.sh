@@ -263,7 +263,7 @@ fi
 mkdir -p "${BUILD_DIR}"  # ensure parent exists for logs and CMakeFiles
 
 
-# Coverage mode (UT-002)
+# Coverage mode
 #
 # Measurement only -- there is deliberately no pass/fail percentage gate.  The
 # instrumented tree is kept separate from build-docker so that ordinary test
@@ -341,7 +341,7 @@ lcov --add-tracefile "$OUT/baseline.info" \
 
 # Keep production utils/ sources only.  Test sources, Qt's generated moc/autogen
 # output, the build tree and system headers are all dropped here rather than at
-# compile time, so the instrumented build stays uniform (see UT-004).
+# compile time, so the instrumented build stays uniform.
 echo '=== Filtering to utils/ ==='
 lcov --extract "$OUT/combined.info" '/ultrascan3/utils/*' \
      --rc lcov_branch_coverage=1 \
