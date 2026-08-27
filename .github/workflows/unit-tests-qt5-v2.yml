@@ -60,7 +60,7 @@ jobs:
               - admin/test/**
               - test-docker.sh
               - CMakeLists.txt
-  
+
 
   unit-testing:
     needs: changed-files
@@ -136,7 +136,7 @@ jobs:
             ARGS="$ARGS --filter '${{ github.event.inputs.test_filter }}'"
             TEST_FILTER='${{ github.event.inputs.test_filter }}'
           fi
-          
+
           if [ "$DEBUG_MODE" = "true" ] && [ "$QUICK_MODE" = "false" ]; then
             echo '=== System Information ===' | tee test-log-$TIMESTAMP.txt
             gcc --version | head -1 | tee test-log-$TIMESTAMP.txt
@@ -153,7 +153,7 @@ jobs:
           else
             echo 'Configuring project...' | tee test-log-$TIMESTAMP.txt
           fi
-          
+
           if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
             echo 'Running CMake configuration...' | tee test-log-$TIMESTAMP.txt
             # Always capture the full configure output so we can see the *first* real error
@@ -169,7 +169,7 @@ jobs:
             else
               echo "No build tool found (ninja, make, or gmake). Install one in the container and retry." >&2
             fi
-          
+
             #    Enable testing to build static library
             cmake -S .. -B . \
             "${GEN_ARGS[@]}" \
@@ -195,7 +195,7 @@ jobs:
           else
             echo 'Using existing CMake configuration (incremental build)' | tee test-log-$TIMESTAMP.txt
           fi
-          
+
           if [ "$QUICK_MODE" = "false" ]; then
             echo "Building project with $PARALLEL_JOBS parallel jobs..." | tee test-log-$TIMESTAMP.txt
             cmake --build . -j $PARALLEL_JOBS | tee build.log | tee test-log-$TIMESTAMP.txt
@@ -204,7 +204,7 @@ jobs:
             cmake --build . -j $PARALLEL_JOBS | tee build.log | tee test-log-$TIMESTAMP.txt
             echo 'Build complete' | tee test-log-$TIMESTAMP.txt
           fi
-          
+
           # Show statistics
           if [ "$SHOW_STATS" = "true" ]; then
             echo '' | tee test-log-$TIMESTAMP.txt
@@ -221,7 +221,7 @@ jobs:
           fi
           # Run tests with CTest
           CTEST_ARGS="--output-on-failure"
-          
+
           [ "$PARALLEL_JOBS" -gt 1 ] && CTEST_ARGS="$CTEST_ARGS --parallel $PARALLEL_JOBS"
           [ "$VERBOSE" = "true" ] && CTEST_ARGS="$CTEST_ARGS --verbose"
           [ "$STOP_ON_FIRST_FAILURE" = "true" ] && CTEST_ARGS="$CTEST_ARGS --stop-on-failure"
@@ -231,9 +231,9 @@ jobs:
           if [ "$DEBUG_MODE" = "true" ]; then
             echo "Executing: ctest $CTEST_ARGS" | tee test-log-$TIMESTAMP.txt
           fi
-          
+
           START_TIME=$(date +%s)
-          
+
           if [ "$SAVE_LOGS" = "true" ]; then
             # Let ctest fail without ending the step, so the analysis below runs.
             RESULT=0
@@ -242,10 +242,10 @@ jobs:
             RESULT=0
             ctest $CTEST_ARGS | tee test-log-$TIMESTAMP.txt || RESULT=$?
           fi
-          
+
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
-          
+
           if [ $RESULT -eq 0 ]; then
             echo '' | tee test-log-$TIMESTAMP.txt
             echo '=== TEST SUMMARY ===' | tee test-log-$TIMESTAMP.txt
@@ -262,12 +262,12 @@ jobs:
             echo '  ./test-docker.sh -t "SpecificTest" -g     # Debug with GDB' | tee test-log-$TIMESTAMP.txt
             echo '  ./test-docker.sh -i                      # Interactive debugging' | tee test-log-$TIMESTAMP.txt
             echo '' | tee test-log-$TIMESTAMP.txt
-          
+
             # Show failed test details
             echo 'Failed tests summary:' | tee test-log-$TIMESTAMP.txt
             ctest --rerun-failed -N 2>/dev/null | grep 'Test #' || echo 'Unable to get failed test list' | tee test-log-$TIMESTAMP.txt
           fi
-          
+
           exit $RESULT
 
 
