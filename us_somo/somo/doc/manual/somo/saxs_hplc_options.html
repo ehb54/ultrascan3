@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC/KIN Module Options Panel</h2></center>
-<h3><center>Last updated: June 2024 </center></h3><p>
+<h3><center>Last updated: February 2026 </center></h3><p>
 
 <center>
 <img SRC="somo-HPLC-SAXS_options_new.png" ALT="SOMO HPLC-SAXS options">
@@ -46,7 +46,7 @@ This is an iterative procedure and the number of steps can be set in the <i>Maxi
 
 As part of this procedure, the <i>epsilon</i> value corresponds to the intensity fouling deposits constant  and an early termination criteria can be defined here which will stop the iterative procedure when the difference in <i>epsilon</i> between iterations is less than or equal to the <i>epsilon early termination limit</i> field (<b><i>default: none</b></i>).<br>
 
-The <i>Smoothing</i> field controls the size of a Gaussian smoothing kernel of 2n+1 points (<b><i>default: n=3</b></i>) that will be applied to each <i>I</i>(<i>t</i>) chromatogram prior to Integral Baseline computation, to avoid large oscillations especially at low <i>q</i> values which might cause problems. The Integral Baseline is nevertheless applied to the <b>original</b> <i>I</i>(<i>t</i>) chromatograms, not to the smoothed data! <br>
+The <i>Smoothing</i> field controls the size of a Gaussian smoothing kernel of 2<i>n</i>+1 points, with <i>n</i> being the smoothing radius (<b><i>default: n=3</b></i>) that will be applied to each <i>I</i>(<i>t</i>) chromatogram prior to Integral Baseline computation, to avoid large oscillations especially at low <i>q</i> values which might cause problems. The Integral Baseline is nevertheless applied to the <b>original</b> <i>I</i>(<i>t</i>) chromatograms, not to the smoothed data! <br>
 
 The <i>Global PVP Analysis maximum q [A^-1]</i> field defines the upper <i>q</i> value limit (<b><i>default: 0.05 &Aring;<sup>-1</sup></b></i>) for the CorMap-based <i>P</i>-value pair analysis of datasets (see <a href=cormap.html>here</a>). <p>
 
@@ -57,7 +57,7 @@ The next set of options deals with the <b><i>Gaussian mode</b></i>:
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
-<td><center><img SRC="somo-HPLC-SAXS_options_new_Gaussians.png" ALT="Somo-HPLC/KIN Options Baseline sectiong"></td>
+<td><center><img SRC="somo-HPLC-SAXS_options_new_Gaussians.png" ALT="Somo-HPLC/KIN Options Baseline section"></td>
 </tr> 
 </table>
 </center>
@@ -98,17 +98,30 @@ where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a
 where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, <i>a<sub>3</sub></i>, and <i>a<sub>4</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, <i>distorsion 1</i>, and <i>distorsion 2</i>, respectively, of the exponentially + half-Gaussian modified Gaussian(s).<p>
 </ul>
 Note: you can switch between these different Gaussian modes also from the <b><i>HPLC/KIN</i></b> main screen (<b><i>Gaussian options</i></b> button).<p>
-Three other checkboxes are then presented, labeled as "<i>Experimental</i>" as of <span style="color:#CC0000">July 2024</span>, pending their full validation in a publication  (Brookes and Rocco, manuscript in preparation):<p>
+Three other checkboxes are then presented, developed for the <span style="color:#CC0000">July 2024</span> <b>US-SOMO</b> release, and that will be fully desctibed in a forthcoming publication  (Brookes et al., manuscript in preparation):<p>
 <ul>
 <li>
-<i>Experimental: Global Gaussian Initialization smoothing. Maximum smoothing points:</i> followed by a field that becomes available if this checkbox is selected (<b><i>default: unchecked</b></i> and <b><i>3</b></i> maximum smoothing points). This feature was developed to avoid local minimima problems when propagating a set of Gaussians optimized on a few chromatograms to all other chromatograms. Especially for high scattering angles, very noisy data, local spikes can lead the optimization of the individual fits to stop before reaching a true global minimum. Smoothing at the fit level alleviates this problem. <span style="color:#CC0000">Importantly</span>, the final decomposition is done on the <i>original</i>, <b>not</b> on the <i>smoothed</i> curves.<p>
+<i>Global Gaussians Initialization smoothing. Maximum smoothing radius:</i> followed by a field that becomes available if this checkbox is selected (<b><i>default: unchecked</b></i> and <b><i>3</b></i> maximum smoothing radius). This feature was developed to avoid local minimima problems when propagating a set of Gaussians optimized on a few chromatograms to all other chromatograms. Especially for high scattering angles, very noisy data, local spikes can lead the optimization of the individual fits to stop before reaching a true global minimum. Smoothing at the fit level alleviates this problem. <span style="color:#CC0000">Importantly</span>, the final decomposition is done on the <i>original</i>, <b>not</b> on the <i>smoothed</i> curves.<p>
 <li>
-<i>Experimental: Global Gaussian cyclic fit</i>. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously. This procedure has provided in our still limited tests (as of <span style="color:#CC0000">July 2024</span>) a significant improvement of the individual fits in the global Gaussian decomposition, with fits with bad <i>p-values</i> going globally from 20-30% to 2-3% of the total (Brookes and Rocco, manuscript in preparation). <b><i>Default: unchecked</b></i>. <span style="color:#CC0000">Note:</span> this option can be run <i>coupled</i> to the previous one, with potential additional gains in the quality of the fits.<p> 
+<i>Global Gaussians cyclic fit</i>. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting all the Gaussian curves simultaneously, first each Gaussian is sequentially fit (starting from the first), keeping the others fixed, followed by fitting all Gaussians simultaneously. The whole cycle is then repeated a second time. This procedure has provided in our tests a significant improvement of the individual fits in the global Gaussian decomposition, with fits with bad <i>p-values</i> going globally from 20-30% to 2-3% of the total (Brookes et al., manuscript in preparation). <b><i>Default: checked</b></i>. <span style="color:#CC0000">Note:</span> this option can be run <i>coupled</i> to the previous one, with potential additional gains in the quality of the fits. Note that in this case the cyclic fit is performed after <i>each</i> smoothing iteration, with a corresponding increase of the processing time.<p> 
 <li>
-<i>Experimental: Global Gaussian - Enable legacy Gaussian fit display</i>. To compare Global Gaussian results obtained without and with the previous two options, selecting this checkbox will enable the display of the individual resulting Gaussians superimposed to the experimental curves. <b><i>Default: unchecked</b></i>.<p> 
+<i>Global Gaussians - Enable legacy Gaussian fit display</i>. To compare Global Gaussian results obtained without and with the previous two options, selecting this checkbox will enable the display of the individual resulting Gaussians superimposed to the experimental curves. <b><i>Default: unchecked</b></i>.<p> 
 </ul>
 
 The <b><i>Maximum absolute value of EMG and GMG distortions:</b></i> field sets limits to the distortions to avoid unreasonably skewed Gaussians (<b><i>default: 50</i></b>).<p>
+
+<b><i>Global minimum value for Gaussian amplitude:</i></b> (<b><i>default: 1e-12</i></b>) Each Gaussian needs to have a minimum non-zero amplitude for stability during fitting. The default minimum amplitude value of 1e-12 is typically sufficient. When Gaussian fitting very low-intensity, noisy datasets one may wish to adjust this to an higher value. A diagnostic sign is the appearance of continuous stretches of apparently zero values at high <i>q</i>-values in the reconstructed <i>I</i>(<i>q</i>) curves after decomposition. In the image below, an example is shown, where a zoomed region of the average <i>I</i>(<i>q</i>) curves obtained after Gaussian decomposition of a peak are shown with the default Gaussian global minimum value (yellow dots) and after raising that value to 1e-8 (purple dots):
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-HPLC-SAXS_options_Min_Gauss.png" ALT="Somo-HPLC/KIN Options Minimun Gaussian values"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
 
 The <i><b>Clear cached Gaussian values</i></b> button allows to clear all Gaussian data produced during the current session.<p>
 
@@ -194,7 +207,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on June 26, 2024
+Last modified on February 23, 2026
 </font>
 </body>
 </html>

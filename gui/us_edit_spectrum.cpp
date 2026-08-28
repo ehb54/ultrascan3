@@ -73,18 +73,18 @@ US_EditSpectrum::US_EditSpectrum( QString tmp_type, QString tmp_exists, const QS
    main->addWidget( pb_cancel,  row,   6, 1, 6 );
    
      
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( cancel() ) ); 
-   connect( pb_manual,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( editmanually() ) );     
-   connect( pb_uploadDisk,  SIGNAL( clicked()  ),
-	    this,           SLOT  ( uploadDisk() ) );
-   connect( pb_uploadFit,   SIGNAL( clicked()  ),
-    	    this,           SLOT  ( uploadFit() ) );
-   connect( pb_delete,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( delete_spectrum() ) );
-   connect( pb_view,        SIGNAL( clicked()  ),
-    	    this,           SLOT  ( view_spectrum() ) );
+   connect( pb_cancel,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::cancel );
+   connect( pb_manual,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::editmanually );
+   connect( pb_uploadDisk,  &QPushButton::clicked,
+	    this,           &US_EditSpectrum::uploadDisk );
+   connect( pb_uploadFit,   &QPushButton::clicked,
+    	    this,           &US_EditSpectrum::uploadFit );
+   connect( pb_delete,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::delete_spectrum );
+   connect( pb_view,        &QPushButton::clicked,
+    	    this,           &US_EditSpectrum::view_spectrum );
  }
 
 
@@ -148,18 +148,18 @@ US_EditSpectrum::US_EditSpectrum( QString tmp_type, QString tmp_exists, const QS
    main->addWidget( pb_cancel,  row,   6, 1, 6 );
    
      
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( cancel() ) ); 
-   connect( pb_manual,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( editmanually() ) );     
-   connect( pb_uploadDisk,  SIGNAL( clicked()  ),
-	    this,           SLOT  ( uploadDisk() ) );
-   connect( pb_uploadFit,   SIGNAL( clicked()  ),
-    	    this,           SLOT  ( uploadFit() ) );
-   connect( pb_delete,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( delete_spectrum() ) );
-   connect( pb_view,        SIGNAL( clicked()  ),
-    	    this,           SLOT  ( view_spectrum() ) );
+   connect( pb_cancel,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::cancel );
+   connect( pb_manual,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::editmanually );
+   connect( pb_uploadDisk,  &QPushButton::clicked,
+	    this,           &US_EditSpectrum::uploadDisk );
+   connect( pb_uploadFit,   &QPushButton::clicked,
+    	    this,           &US_EditSpectrum::uploadFit );
+   connect( pb_delete,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::delete_spectrum );
+   connect( pb_view,        &QPushButton::clicked,
+    	    this,           &US_EditSpectrum::view_spectrum );
  }
 
 US_EditSpectrum::US_EditSpectrum( QString tmp_type, QString tmp_exists, const QString& tmp_text, const QString &tmp_text_e280, US_Solution *tmp_solution ) : US_Widgets()
@@ -222,18 +222,18 @@ US_EditSpectrum::US_EditSpectrum( QString tmp_type, QString tmp_exists, const QS
    main->addWidget( pb_cancel,  row,   6, 1, 6 );
    
      
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( cancel() ) ); 
-   connect( pb_manual,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( editmanually() ) );     
-   connect( pb_uploadDisk,  SIGNAL( clicked()  ),
-	    this,           SLOT  ( uploadDisk() ) );
-   connect( pb_uploadFit,   SIGNAL( clicked()  ),
-    	    this,           SLOT  ( uploadFit() ) );
-   connect( pb_delete,      SIGNAL( clicked()  ),
-	    this,           SLOT  ( delete_spectrum() ) );
-   connect( pb_view,        SIGNAL( clicked()  ),
-    	    this,           SLOT  ( view_spectrum() ) );
+   connect( pb_cancel,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::cancel );
+   connect( pb_manual,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::editmanually );
+   connect( pb_uploadDisk,  &QPushButton::clicked,
+	    this,           &US_EditSpectrum::uploadDisk );
+   connect( pb_uploadFit,   &QPushButton::clicked,
+    	    this,           &US_EditSpectrum::uploadFit );
+   connect( pb_delete,      &QPushButton::clicked,
+	    this,           &US_EditSpectrum::delete_spectrum );
+   connect( pb_view,        &QPushButton::clicked,
+    	    this,           &US_EditSpectrum::view_spectrum );
  }
 
 
@@ -359,7 +359,7 @@ void US_EditSpectrum::uploadFit(void)
 {    
     w_spec = new US_Extinction(type, text, "1.000", (QWidget*)this); 
     
-    connect( w_spec, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+    connect( w_spec, &US_Extinction::get_results, this, &US_EditSpectrum::process_results );
     
     w_spec->setParent(this, Qt::Window);
     w_spec->setAttribute(Qt::WA_DeleteOnClose);

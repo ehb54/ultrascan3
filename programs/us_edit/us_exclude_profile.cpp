@@ -36,8 +36,8 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QFontMetrics fm( ct_start->font() );
    ct_start->setMinimumWidth( fm.maxWidth() * 10 );
 
-   connect( ct_start, SIGNAL( valueChanged ( double ) ),
-                      SLOT  ( update_start ( double ) ) );
+   connect( ct_start, &QwtCounter::valueChanged,
+                      this, &US_ExcludeProfile::update_start );
    main->addWidget( ct_start, row++, 1 );
 
    // Row
@@ -46,8 +46,8 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
 
    ct_stop = us_counter( 3, 1.0, scanCount, scanCount );
    ct_stop->setSingleStep( 1.0 );
-   connect( ct_stop, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( update_stop  ( double ) ) );
+   connect( ct_stop, &QwtCounter::valueChanged,
+                     this, &US_ExcludeProfile::update_stop );
    main->addWidget( ct_stop, row++, 1 );
 
    // Row
@@ -56,8 +56,8 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
 
    ct_nth = us_counter( 2, 1.0, scanCount, 1.0 );
    ct_nth->setSingleStep( 1.0 );
-   connect( ct_nth, SIGNAL( valueChanged ( double ) ),
-                    SLOT  ( update       ( double ) ) );
+   connect( ct_nth, &QwtCounter::valueChanged,
+                    this, &US_ExcludeProfile::update );
    main->addWidget( ct_nth, row++, 1 );
 
    // Row
@@ -78,23 +78,23 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    QHBoxLayout* buttons = new QHBoxLayout;
    
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_ExcludeProfile::reset );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_ExcludeProfile::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( terminate() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_ExcludeProfile::terminate );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_apply = us_pushbutton( tr( "Apply" ) );
-   connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
+   connect( pb_apply, &QAbstractButton::clicked, this, &US_ExcludeProfile::apply );
    buttons->addWidget( pb_apply );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( done() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_ExcludeProfile::done );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons, row++, 0, 1, 2 );
@@ -106,8 +106,8 @@ void US_ExcludeProfile::update_start( double v )
    {
       ct_stop->disconnect();
       ct_stop->setValue( v );
-      connect( ct_stop, SIGNAL( valueChanged ( double ) ),
-                        SLOT  ( update_stop  ( double ) ) );
+      connect( ct_stop, &QwtCounter::valueChanged,
+                        this, &US_ExcludeProfile::update_stop );
    }
 
    if ( (int)ct_nth->value() > 1 )
@@ -120,8 +120,8 @@ void US_ExcludeProfile::update_stop( double v )
    {
       ct_start->disconnect();
       ct_start->setValue( v );
-      connect( ct_start, SIGNAL( valueChanged ( double ) ),
-                         SLOT  ( update_start ( double ) ) );
+      connect( ct_start, &QwtCounter::valueChanged,
+                         this, &US_ExcludeProfile::update_start );
    }
 
    if ( (int)ct_nth->value() > 1 )

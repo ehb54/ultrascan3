@@ -158,36 +158,36 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data,
    QHBoxLayout* buttons = new QHBoxLayout();
 
    QPushButton* pb_temp = us_pushbutton( tr( "Temperature" ) );
-   connect( pb_temp, SIGNAL( clicked() ), SLOT( plot_temp() ) );
+   connect( pb_temp, &QAbstractButton::clicked, this, &US_RunDetails2::plot_temp );
    buttons->addWidget( pb_temp );
 
    QPushButton* pb_rpm = us_pushbutton( tr( "RPM" ) );
-   connect( pb_rpm, SIGNAL( clicked() ), SLOT( plot_rpm() ) );
+   connect( pb_rpm, &QAbstractButton::clicked, this, &US_RunDetails2::plot_rpm );
    buttons->addWidget( pb_rpm );
 
    QPushButton* pb_interval = us_pushbutton( tr( "Interval" ) );
-   connect( pb_interval, SIGNAL( clicked() ), SLOT( plot_interval() ) );
+   connect( pb_interval, &QAbstractButton::clicked, this, &US_RunDetails2::plot_interval );
    buttons->addWidget( pb_interval );
 
    QPushButton* pb_all = us_pushbutton( tr( "Combined" ) );
-   connect( pb_all, SIGNAL( clicked() ), SLOT( plot_combined() ) );
+   connect( pb_all, &QAbstractButton::clicked, this, &US_RunDetails2::plot_combined );
    buttons->addWidget( pb_all );
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_close );
 
    main->addLayout( buttons, row++, 2, 1, 4 );
 
    timer = new QTimer();
-   connect( timer, SIGNAL( timeout() ), SLOT( update_timer() ) );
+   connect( timer, &QTimer::timeout, this, &US_RunDetails2::update_timer );
 
    setup();
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-                        SLOT  ( update           ( int ) ) );
+   connect( lw_triples, &QListWidget::currentRowChanged,
+                        this, &US_RunDetails2::update );
 
-   connect( lw_rpm,     SIGNAL( itemClicked     ( QListWidgetItem* ) ),
-            this,       SLOT  ( show_rpm_details( QListWidgetItem* ) ) );
+   connect( lw_rpm,     &QListWidget::itemClicked,
+            this,       &US_RunDetails2::show_rpm_details );
 }
 
 US_RunDetails2::~US_RunDetails2()

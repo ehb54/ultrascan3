@@ -1,11 +1,11 @@
 #!/bin/sh
 #  version.sh  - update us_version with latest US_Version value
 DESF=./include/us_version.h
-VER1=`grep US_Version $DESF |cut -d\" -f2`
-REV1=`grep SOMO_Revision $DESF |cut -d\" -f2`
+VER1=`grep US_Version $DESF 2>/dev/null |cut -d\" -f2`
+REV1=`grep SOMO_Revision $DESF 2>/dev/null |cut -d\" -f2`
 ##VER2=`grep US_Version $us3/utils/us_defines.h|cut -d\" -f2|sed -n 1p`
-VER2=`sed -n '/0x0500/,/define/p' $us3/utils/us_defines.h|grep US_Vers|cut -d'"' -f2`
-REV2="SOMOgit-`(cd $us3/us_somo;git log --oneline . | wc -l)`"
+VER2=`grep -E '^#define[[:space:]]+US_Version[[:space:]]' $us3/utils/us_defines.h|cut -d'"' -f2`
+REV2="SOMOgit-`(cd $us3/us_somo;git log --oneline . | wc -l | tr -d '[:space:]')`"
 
 if [ "$VER1" != "$VER2"  -o  "$REV1" != "$REV2" ]
 then

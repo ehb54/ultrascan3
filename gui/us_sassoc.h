@@ -76,7 +76,7 @@ class US_GUI_EXTERN US_Sassoc : public US_Widgets
 
       US_Help        showHelp;
 
-      QwtPlotPicker* pick;
+      US_PlotPicker* pick;
 
       void   recalc         ( void           );
       double monomer_root   ( double         );

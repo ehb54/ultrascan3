@@ -65,7 +65,7 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    // Investigator
 
    QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   connect( pb_load, &QAbstractButton::clicked, this, &US_FDS_FileManager::load );
    specs->addWidget( pb_load, s_row, 0, 1, 1 );
 
    le_directory = us_lineedit( "" );
@@ -112,8 +112,8 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setSingleStep( 1 );
    specs->addWidget( ct_from,   s_row++, 2, 1, 2 );
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::focus_from );
 
    // Scan focus to
    lbl_to = us_label( tr( "Scan Focus to:" ), -1 );
@@ -123,52 +123,52 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setSingleStep( 1 );
    specs->addWidget( ct_to,   s_row++, 2, 1, 2 );
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to  , &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::focus_to );
 
    // Exclude and Include pushbuttons
    pb_exclude = us_pushbutton( tr( "Delete marked Scan(s)" ), false );
    specs->addWidget( pb_exclude,   s_row, 0, 1, 2 );
-   connect( pb_exclude,     SIGNAL( clicked()          ),
-                            SLOT(   exclude_scans()    ) );
+   connect( pb_exclude,     &QAbstractButton::clicked,
+                            this, &US_FDS_FileManager::exclude_scans );
 
    pb_delete_all = us_pushbutton( tr( "Delete all Scans" ), false );
    specs->addWidget( pb_delete_all,   s_row++, 2, 1, 2 );
-   connect( pb_delete_all,  SIGNAL( clicked()          ),
-                            SLOT(   delete_all() ) );
+   connect( pb_delete_all,  &QAbstractButton::clicked,
+                            this, &US_FDS_FileManager::delete_all );
 
    pb_save_first = us_pushbutton( tr( "Save first Scan" ), false );
    specs->addWidget( pb_save_first,   s_row, 0, 1, 2 );
    pb_save_first ->setEnabled( false );
-   connect( pb_save_first,  SIGNAL( clicked()  ),
-                            SLOT( save_first() ) );
+   connect( pb_save_first,  &QAbstractButton::clicked,
+                            this, &US_FDS_FileManager::save_first );
 
    pb_save_last = us_pushbutton( tr( "Save last Scan" ), false );
    specs->addWidget( pb_save_last,   s_row++, 2, 1, 2 );
    pb_save_last ->setEnabled( false );
-   connect( pb_save_last,  SIGNAL( clicked()  ),
-                            SLOT( save_last() ) );
+   connect( pb_save_last,  &QAbstractButton::clicked,
+                            this, &US_FDS_FileManager::save_last );
 
    pb_save_first_and_last = us_pushbutton( tr( "Save first and last Scan" ), false );
    specs->addWidget( pb_save_first_and_last, s_row, 0, 1, 2 );
    pb_save_first_and_last ->setEnabled( false );
-   connect( pb_save_first_and_last,  SIGNAL( clicked()  ),
-                            SLOT( save_first_and_last() ) );
+   connect( pb_save_first_and_last,  &QAbstractButton::clicked,
+                            this, &US_FDS_FileManager::save_first_and_last );
 
    pb_delete_triple = us_pushbutton( tr( "Delete Triple" ), false );
    specs->addWidget( pb_delete_triple, s_row++, 2, 1, 2 );
    pb_delete_triple ->setEnabled( false );
-   connect( pb_delete_triple,  SIGNAL( clicked()  ),
-                            SLOT( delete_triple() ) );
+   connect( pb_delete_triple,  &QAbstractButton::clicked,
+                            this, &US_FDS_FileManager::delete_triple );
 
    pb_undo = us_pushbutton( tr( "Undo last Delete" ), false );
    specs->addWidget( pb_undo,   s_row, 0, 1, 2 );
    pb_undo ->setEnabled( false );
-   connect( pb_undo, SIGNAL( clicked() ),
-                     SLOT( undo() ) );
+   connect( pb_undo, &QAbstractButton::clicked,
+                     this, &US_FDS_FileManager::undo );
 
    pb_write = us_pushbutton( tr( "Export File Selection" ), false );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   connect( pb_write, &QAbstractButton::clicked, this, &US_FDS_FileManager::write );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
    // Modify export prefix:
@@ -179,22 +179,22 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    ct_prefix = us_counter ( 3, 0.0, 10000.0 ); 
    ct_prefix->setSingleStep( 1 );
    specs->addWidget( ct_prefix,   s_row++, 2, 1, 2 );
-   connect( ct_prefix, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( update_prefix( double ) ) );
+   connect( ct_prefix, &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::update_prefix );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_FDS_FileManager::reset );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_FDS_FileManager::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_accept );
 
    // Plot layout on right side of window
@@ -322,8 +322,8 @@ void US_FDS_FileManager::parse_files( void )
    triplelist.removeDuplicates();
    triplelist.sort();
    cb_triple->addItems( triplelist );
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( select_triple ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_FDS_FileManager::select_triple );
    select_triple(cb_triple->currentIndex());
 }
 
@@ -346,8 +346,8 @@ void US_FDS_FileManager::select_triple( int index )
    rpmlist.removeDuplicates();
    rpmlist.sort();
    cb_rpms->addItems(rpmlist);
-   connect( cb_rpms, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( select_rpm ( int ) ) );
+   connect( cb_rpms, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_FDS_FileManager::select_rpm );
    select_rpm(cb_rpms->currentIndex());
 }
 
@@ -373,8 +373,8 @@ void US_FDS_FileManager::select_rpm( int index )
    gainlist.removeDuplicates();
    gainlist.sort();
    cb_gains->addItems(gainlist);
-   connect( cb_gains, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( select_gain ( int ) ) );
+   connect( cb_gains, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_FDS_FileManager::select_gain );
    select_gain(cb_gains->currentIndex());
 }
 
@@ -388,10 +388,10 @@ void US_FDS_FileManager::select_gain( int index )
    from = 0;
    ct_from->setValue(0.0);
    ct_to  ->setValue(0.0);
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::focus_from );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::focus_to );
    le_info->setText( "Loaded " + str.setNum(scaninfo.size()) + " scans containing "
    + str1.setNum(cb_triple->count()) 
    + " triples. The current triple (" + cb_triple->currentText() + ") contains " 
@@ -654,10 +654,10 @@ void US_FDS_FileManager::exclude_scans( void )
    ct_to  ->disconnect();
    ct_to  ->setValue( 0.0 );
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::focus_from );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_FDS_FileManager::focus_to );
    pb_exclude->setEnabled( false );
    activate_undo();
 }
@@ -673,8 +673,8 @@ void US_FDS_FileManager::focus_from( double scan )
       ct_to->disconnect();
       ct_to->setValue( scan );
       to = from;
-      connect( ct_to, SIGNAL( valueChanged ( double ) ),
-                      SLOT  ( focus_to     ( double ) ) );
+      connect( ct_to, &QwtCounter::valueChanged,
+                      this, &US_FDS_FileManager::focus_to );
    }
    focus( from, to );
 }
@@ -691,8 +691,8 @@ void US_FDS_FileManager::focus_to( double scan )
       ct_from->setValue( scan );
       from = to;
 
-      connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                        SLOT  ( focus_from   ( double ) ) );
+      connect( ct_from, &QwtCounter::valueChanged,
+                        this, &US_FDS_FileManager::focus_from );
    }
    focus( from, to );
 }

@@ -59,10 +59,10 @@ US_ABDE_MW::US_ABDE_MW() : US_Widgets()
 //    main_lyt->setSizeConstraint(QLayout::SetMinimumSize);
     this->setLayout(main_lyt);
 
-    connect(fitter,     SIGNAL(widgetClosed()), this, SLOT(close()));
-    connect(normalizer, SIGNAL(widgetClosed()), this, SLOT(close()));
-    connect(pb_fitter,     SIGNAL(clicked()), this, SLOT(sel_fitter()));
-    connect(pb_normalizer, SIGNAL(clicked()), this, SLOT(sel_normalizer()));
+    connect(fitter,     &US_Buoyancy::widgetClosed, this, &QWidget::close);
+    connect(normalizer, &US_Norm_Profile::widgetClosed, this, &QWidget::close);
+    connect(pb_fitter,     &QAbstractButton::clicked, this, &US_ABDE_MW::sel_fitter);
+    connect(pb_normalizer, &QAbstractButton::clicked, this, &US_ABDE_MW::sel_normalizer);
 }
 
 void US_ABDE_MW::sel_fitter(){

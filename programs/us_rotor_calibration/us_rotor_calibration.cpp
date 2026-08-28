@@ -56,12 +56,12 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 
    // Radio buttons
    disk_controls = new US_Disk_DB_Controls(US_Disk_DB_Controls::Default);
-   connect(disk_controls, SIGNAL(changed       (bool)),
-                           SLOT  (source_changed(bool)));
+   connect(disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_RotorCalibration::source_changed);
    top->addLayout(disk_controls, row++, 0);
 
    pb_load = us_pushbutton(tr("Load Calibration Data"));
-   connect(pb_load, SIGNAL(clicked()), SLOT(load()));
+   connect(pb_load, &QAbstractButton::clicked, this, &US_RotorCalibration::load);
    top->addWidget(pb_load, row++, 0);
 
    QLabel* lb_cell = us_label(tr("Current Cell:"), -1);
@@ -107,33 +107,33 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 	}
 	minrpm=10000;
 	cb_minrpm->insertItems(0, sl);
-   connect( cb_minrpm,    SIGNAL(highlighted(QString)),
-            this, SLOT(changeminrpm (QString)));
+   connect( cb_minrpm,    &QComboBox::textHighlighted,
+            this, &US_RotorCalibration::changeminrpm);
 
    QGridLayout* lo_6channel = us_checkbox(tr("Use 7-Slot Cal. Mask"), cb_6channel, false);
-   connect (cb_6channel, SIGNAL (clicked()), this, SLOT (use_6channel()));
+   connect (cb_6channel, &QAbstractButton::clicked, this, &US_RotorCalibration::use_6channel);
    top->addLayout(lo_6channel, row++, 0);
 
    QGridLayout* lo_top = us_radiobutton(tr("Top of channel"), rb_top);
-   connect(rb_top, SIGNAL(clicked()), SLOT(update_position()));
+   connect(rb_top, &QAbstractButton::clicked, this, &US_RotorCalibration::update_position);
    top->addLayout(lo_top, row++, 0);
 
    QGridLayout* lo_bottom = us_radiobutton(tr("Bottom of channel"), rb_bottom);
-   connect(rb_bottom, SIGNAL(clicked()), SLOT(update_position()));
+   connect(rb_bottom, &QAbstractButton::clicked, this, &US_RotorCalibration::update_position);
    top->addLayout(lo_bottom, row++, 0);
 
    QGridLayout* lo_assigned = us_checkbox(tr("Limits are assigned"), cb_assigned, false);
-   connect (cb_assigned, SIGNAL (clicked()), this, SLOT (update_used()));
+   connect (cb_assigned, &QAbstractButton::clicked, this, &US_RotorCalibration::update_used);
    top->addLayout(lo_assigned, row++, 0);
 
    pb_accept = us_pushbutton(tr("Next"));
    pb_accept->setEnabled(false);
-   connect(pb_accept, SIGNAL(clicked()), SLOT(next()));
+   connect(pb_accept, &QAbstractButton::clicked, this, &US_RotorCalibration::next);
    top->addWidget(pb_accept, row++, 0);
 
    pb_calculate = us_pushbutton(tr("Calculate"));
    pb_calculate->setEnabled(false);
-   connect(pb_calculate, SIGNAL(clicked()), SLOT(calculate()));
+   connect(pb_calculate, &QAbstractButton::clicked, this, &US_RotorCalibration::calculate);
    top->addWidget(pb_calculate, row++, 0);
 
    //QLabel* lb_spacer = us_banner(tr(""));
@@ -142,26 +142,26 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    top->addItem(new QSpacerItem(0, 0), row++, 0);
 
    pb_save = us_pushbutton(tr("Save Rotor Calibration"));
-   connect(pb_save, SIGNAL(clicked()), SLOT(save()));
+   connect(pb_save, &QAbstractButton::clicked, this, &US_RotorCalibration::save);
    pb_save->setEnabled(false);
    top->addWidget(pb_save, row++, 0);
 
    pb_view = us_pushbutton(tr("View Calibration Report"));
-   connect(pb_view, SIGNAL(clicked()), SLOT(view()));
+   connect(pb_view, &QAbstractButton::clicked, this, &US_RotorCalibration::view);
    pb_view->setEnabled(false);
    top->addWidget(pb_view, row++, 0);
 
    QPushButton* pb_help = us_pushbutton(tr("Help"));
-   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+   connect(pb_help, &QAbstractButton::clicked, this, &US_RotorCalibration::help);
    top->addWidget(pb_help, row++, 0);
 
    pb_reset = us_pushbutton(tr("Reset"));
    pb_reset->setEnabled (false);
-   connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
+   connect(pb_reset, &QAbstractButton::clicked, this, &US_RotorCalibration::reset);
    top->addWidget(pb_reset, row++, 0);
 
    QPushButton* pb_close = us_pushbutton(tr("Close"));
-   connect(pb_close, SIGNAL(clicked()), SLOT(close()));
+   connect(pb_close, &QAbstractButton::clicked, this, &QWidget::close);
    top->addWidget(pb_close, row++, 0);
 
    // Plot layout on right side of window
@@ -176,8 +176,8 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    data_plot->setAxisAutoScale(QwtPlot::yLeft);
    data_plot->setCanvasBackground( QBrush(Qt::white) );
 
-   connect (plot, SIGNAL (zoomedCorners (QRectF)),
-             this, SLOT   (currentRectf  (QRectF)));
+   connect (plot, &US_Plot::zoomedCorners,
+             this, &US_RotorCalibration::currentRectf);
 
 
    top->addLayout(plot, 1, 1, row - 1, 1);
@@ -548,8 +548,8 @@ void US_RotorCalibration::loadDB(void)
    top_of_cell = false;
    pb_reset->setEnabled (true);
    pb_accept->setEnabled(true);
-   connect( cb_wavelengths,    SIGNAL(currentIndexChanged(int)),
-            this, SLOT(changeLambda (int)));
+   connect( cb_wavelengths,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this, &US_RotorCalibration::changeLambda);
    next();
 }
 
@@ -608,7 +608,7 @@ void US_RotorCalibration::plotAll(void)
       if ((QString) allData[current_triple].channel == "F") ct_channel->setValue(6);
       if ((QString) allData[current_triple].channel == "G") ct_channel->setValue(7);
       if ((QString) allData[current_triple].channel == "H") ct_channel->setValue(8);
-      connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
+      connect (ct_channel, &QwtCounter::valueChanged, this, &US_RotorCalibration::update_channel);
       c1->setSamples(x1, y1, size);
       c2->setSamples(x2, y2, size);
       if (top_of_cell)
@@ -720,8 +720,8 @@ void US_RotorCalibration::divide(QRectF rect)
       le_instructions->setText(tr("Please control-left click between each vertical region, then click calculate..."));
    }
    pick->disconnect();
-   connect(pick, SIGNAL(cMouseUp(const QPointF&)),
-   SLOT  (mouse   (const QPointF&)));
+   connect(pick, &US_PlotPicker::cMouseUp,
+   this, &US_RotorCalibration::mouse);
    bounds.clear();
    pb_accept->setEnabled(false);
 }
@@ -788,8 +788,8 @@ void US_RotorCalibration::next()
       if ((QString) allData[current_triple].channel == "F") ct_channel->setValue(6.0);
       if ((QString) allData[current_triple].channel == "G") ct_channel->setValue(7.0);
       if ((QString) allData[current_triple].channel == "H") ct_channel->setValue(8.0);
-      connect (ct_cell, SIGNAL(valueChanged (double)), this, SLOT(update_cell(double)));
-      connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
+      connect (ct_cell, &QwtCounter::valueChanged, this, &US_RotorCalibration::update_cell);
+      connect (ct_channel, &QwtCounter::valueChanged, this, &US_RotorCalibration::update_channel);
    }
    top_of_cell = !top_of_cell;
    pb_accept->setEnabled(true);

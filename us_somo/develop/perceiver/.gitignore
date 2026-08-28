@@ -1,0 +1,10 @@
+bin/
+*.o
+__pycache__/
+*.pyc
+# data/*.pdb WAS ignored here, on the grounds that those structures are copies of
+# us_somo/somo/demo/*.pdb. They are now tracked instead: the two sets serve different purposes
+# and are free to diverge -- the demo structures exist for the demos, while these are the
+# perceiver's regression fixtures, and the calibrated score must not move because someone
+# edited a demo. They happen to be byte-identical today; that is not a guarantee.
+# reference tables are read directly from us_somo/etc (no copies, so they cannot drift)

@@ -60,7 +60,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
     cmbb_margin->insertItem( i - 1, s );
   }
 
-  connect( cmbb_margin, SIGNAL( activated( int ) ), SLOT( selMargin( int ) ) );
+  connect( cmbb_margin, qOverload< int >( &QComboBox::activated ), this, &US_Color::selMargin );
   leftColumn->addWidget( cmbb_margin, row++, 1 );
 
   // Labels
@@ -139,8 +139,8 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   cnt->setIncSteps    ( QwtCounter::Button1,  1 );
   cnt->setIncSteps    ( QwtCounter::Button2, 20 );
   cnt->setMinimumWidth( 2 * width );
-  connect( cnt, SIGNAL( valueChanged( double ) ), SLOT( updateWidgets( double ) ) );
-  counterLine->addWidget( cnt );
+  connect( cnt, &QwtCounter::valueChanged, this, &US_Color::updateWidgets );
+  counterLine->addWidget( cnt );  
 
   leftColumn->addLayout( counterLine, row++, 0, 1, 2 );
 
@@ -164,10 +164,8 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   cmbb_style->setCurrentIndex(
         cmbb_style->findText( current.guiStyle, Qt::MatchFixedString ) );
 
-  // activated( const QString& ) no longer exists in Qt6, so go through the
-  // index overload, which both Qt5 and Qt6 provide.
-  connect( cmbb_style, SIGNAL( activated  ( int ) ),
-                       SLOT  ( selectStyle( int ) ) );
+  connect( cmbb_style, qOverload<int>(&QComboBox::activated),
+                       this, &US_Color::selectStyle );
 
   rightColumn->addWidget( cmbb_style, row++, 1 );
 
@@ -183,8 +181,8 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
                                " and a dark variant.  \"Follow the desktop\""
                                " picks the one the desktop asks for." ) );
 
-  connect( cmbb_scheme, SIGNAL( activated   ( int ) ),
-                        SLOT  ( selectScheme( int ) ) );
+  connect( cmbb_scheme, qOverload<int>(&QComboBox::activated),
+           this,        &US_Color::selectScheme );
 
   rightColumn->addWidget( cmbb_scheme, row++, 1 );
 
@@ -209,7 +207,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   color1->addWidget( color_field1 );
 
   pb_color1 = us_pushbutton( tr( "Change" ) );
-  connect( pb_color1, SIGNAL( clicked() ), SLOT( pick_color1() ) );
+  connect( pb_color1, &QAbstractButton::clicked, this, &US_Color::pick_color1 );
 
   rightColumn->addLayout( color1   , row  , 0 );
   rightColumn->addWidget( pb_color1, row++, 1 );
@@ -223,7 +221,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   color2->addWidget( color_field2 );
 
   pb_color2 = us_pushbutton( tr( "Change" ) );
-  connect( pb_color2, SIGNAL( clicked() ), SLOT( pick_color2() ) );
+  connect( pb_color2, &QAbstractButton::clicked, this, &US_Color::pick_color2 );
 
   rightColumn->addLayout( color2   , row  , 0 );
   rightColumn->addWidget( pb_color2, row++, 1 );
@@ -237,7 +235,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   color3->addWidget( color_field3 );
 
   pb_color3 = us_pushbutton( tr( "Change" ) );
-  connect( pb_color3, SIGNAL( clicked() ), SLOT( pick_color3() ) );
+  connect( pb_color3, &QAbstractButton::clicked, this, &US_Color::pick_color3 );
 
   rightColumn->addLayout( color3   , row  , 0 );
   rightColumn->addWidget( pb_color3, row++, 1 );
@@ -251,7 +249,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   color4->addWidget( color_field4 );
 
   pb_color4 = us_pushbutton( tr( "Change" ) );
-  connect( pb_color4, SIGNAL( clicked() ), SLOT( pick_color4() ) );
+  connect( pb_color4, &QAbstractButton::clicked, this, &US_Color::pick_color4 );
 
   rightColumn->addLayout( color4   , row  , 0 );
   rightColumn->addWidget( pb_color4, row++, 1 );
@@ -265,7 +263,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   color5->addWidget( color_field5 );
 
   pb_color5 = us_pushbutton( tr( "Change" ) );
-  connect( pb_color5, SIGNAL( clicked() ), SLOT( pick_color5() ) );
+  connect( pb_color5, &QAbstractButton::clicked, this, &US_Color::pick_color5 );
 
   rightColumn->addLayout( color5   , row  , 0 );
   rightColumn->addWidget( pb_color5, row++, 1 );
@@ -279,7 +277,7 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   color6->addWidget( color_field6 );
 
   pb_color6 = us_pushbutton( tr( "Change" ) );
-  connect( pb_color6, SIGNAL( clicked() ), SLOT( pick_color6() ) );
+  connect( pb_color6, &QAbstractButton::clicked, this, &US_Color::pick_color6 );
 
   rightColumn->addLayout( color6   , row  , 0 );
   rightColumn->addWidget( pb_color6, row++, 1 );
@@ -324,13 +322,13 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
   elements->insertItem( LCD          , tr( "LCD Panel"            ) );
   elements->insertItem( EDIT_BOXES   , tr( "Edit Boxes"           ) );
 
-  connect( elements, SIGNAL( currentRowChanged( int ) ),
-           this,     SLOT  ( selectedElement  ( int ) ) );
+  connect( elements, &QListWidget::currentRowChanged, 
+           this,     &US_Color::selectedElement );
 
   rightColumn->addWidget( elements, row++, 1 );
 
   pb_save_as = us_pushbutton( tr( "Save Color Scheme as:" ) );
-  connect( pb_save_as, SIGNAL( clicked() ), SLOT( save_as() ) );
+  connect( pb_save_as, &QAbstractButton::clicked, this, &US_Color::save_as );
   rightColumn->addWidget( pb_save_as, row, 0 );
 
   le_save_as = us_lineedit( tr( "MyColors" ), 0 );
@@ -343,27 +341,27 @@ US_Color::US_Color( QWidget* w, const Qt::WindowFlags flags )
 
   pb_apply = us_pushbutton( tr( "Set as Current" ) );
   buttonBar->addWidget( pb_apply );
-  connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
-
+  connect( pb_apply, &QAbstractButton::clicked, this, &US_Color::apply );
+  
   pb_reset = us_pushbutton( tr( "Reset" ) );
   buttonBar->addWidget( pb_reset );
-  connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+  connect( pb_reset, &QAbstractButton::clicked, this, &US_Color::reset );
 
   pb_delete = us_pushbutton( tr( "Delete" ) );
   buttonBar->addWidget( pb_delete );
-  connect( pb_delete, SIGNAL( clicked() ), SLOT( delete_scheme() ) );
-
+  connect( pb_delete, &QAbstractButton::clicked, this, &US_Color::delete_scheme );
+  
   updateSchemeList();
-  connect( schemes, SIGNAL( itemSelectionChanged() ),
-                    SLOT  ( selected_scheme     () ) );
+  connect( schemes, &QListWidget::itemSelectionChanged, 
+                    this, &US_Color::selected_scheme );
 
   pb_help = us_pushbutton( tr( "Help" ) );
   buttonBar->addWidget( pb_help );
-  connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+  connect( pb_help, &QAbstractButton::clicked, this, &US_Color::help );
 
   pb_quit = us_pushbutton( tr( "Close" ) );
   buttonBar->addWidget( pb_quit );
-  connect( pb_quit, SIGNAL( clicked() ), SLOT( close() ) );
+  connect( pb_quit, &QAbstractButton::clicked, this, &QWidget::close );
 
   mainLayout->addLayout( leftColumn , 0, 0 );
   mainLayout->addLayout( rightColumn, 0, 1 );
@@ -911,6 +909,8 @@ void US_Color::resetEditBoxes( void )
   le_save_as->setPalette( p );
   schemes   ->setPalette( p );
   elements  ->setPalette( p );
+  schemes ->viewport()->setPalette( p );
+  elements->viewport()->setPalette( p );
 }
 
 void US_Color::pick_color1( void )
@@ -1353,6 +1353,7 @@ void US_Color::apply( void )
   US_GuiSettings::set_plotColor   ( current.plotColor     );
 
   // Rebuild the application chrome from what was just stored
+  US_Theme::bumpSerial();
   US_Theme::apply( true );
 }
 
@@ -1551,6 +1552,7 @@ void US_Color::selectScheme( const int index )
   current.colorScheme = cmbb_scheme->itemData( index ).toString();
 
   US_Theme::set_schemeSetting( current.colorScheme );
+  US_Theme::apply( true );
 
   getCurrentSettings();
   updateScreen();

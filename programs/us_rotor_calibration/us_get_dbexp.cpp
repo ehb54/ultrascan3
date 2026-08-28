@@ -75,8 +75,8 @@ US_GetDBExp::US_GetDBExp( QString& eID )
 
    // Enable sorting by a particular column
    QHeaderView* qHeader = tw ->horizontalHeader();
-   connect( qHeader, SIGNAL( sectionClicked( int ) ),
-                     SLOT  ( columnClicked ( int ) ) );
+   connect( qHeader, &QHeaderView::sectionClicked,
+                     this, &US_GetDBExp::columnClicked );
 
    main->addWidget( tw );
 
@@ -84,11 +84,11 @@ US_GetDBExp::US_GetDBExp( QString& eID )
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_GetDBExp::select );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );

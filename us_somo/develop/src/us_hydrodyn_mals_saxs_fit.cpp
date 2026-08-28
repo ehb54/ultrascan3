@@ -45,6 +45,7 @@ US_Hydrodyn_Mals_Saxs_Fit::US_Hydrodyn_Mals_Saxs_Fit(
    gaussian_type_size = mals_saxs_win->gaussian_type_size;
 
    mals_saxs_ampl_width_min       = ( ( US_Hydrodyn * ) ( mals_saxs_win->us_hydrodyn ) )->gparams[ "mals_saxs_ampl_width_min"        ].toDouble();
+   mals_saxs_ampl_min             = ( ( US_Hydrodyn * ) ( mals_saxs_win->us_hydrodyn ) )->gparams[ "mals_saxs_ampl_min"              ].toDouble();
    mals_saxs_lock_min_retry       = ( ( US_Hydrodyn * ) ( mals_saxs_win->us_hydrodyn ) )->gparams[ "mals_saxs_lock_min_retry"        ] == "true" ? true : false;
    mals_saxs_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( mals_saxs_win->us_hydrodyn ) )->gparams[ "mals_saxs_lock_min_retry_mult"   ].toDouble();
    mals_saxs_maxfpk_restart       = ( ( US_Hydrodyn * ) ( mals_saxs_win->us_hydrodyn ) )->gparams[ "mals_saxs_maxfpk_restart"        ] == "true" ? true : false;
@@ -1514,7 +1515,7 @@ bool US_Hydrodyn_Mals_Saxs_Fit::setup_run()
          MSFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = mals_saxs_ampl_width_min;
+         double min = mals_saxs_ampl_min;
          double max = mals_saxs_win->gauss_max_height;
          // qDebug() << "mals_saxs_fit:: gauss_max_height " << max;
          if ( cb_pct_amplitude->isChecked() )
@@ -1523,9 +1524,9 @@ bool US_Hydrodyn_Mals_Saxs_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < mals_saxs_ampl_width_min )
+         if ( min < mals_saxs_ampl_min )
          {
-            min = mals_saxs_ampl_width_min;
+            min = mals_saxs_ampl_min;
          }
          if ( max > mals_saxs_win->gauss_max_height )
          {
@@ -1848,7 +1849,7 @@ bool US_Hydrodyn_Mals_Saxs_Fit::lock_zeros( vector < double > & par )
       if ( !cb_fix_curves[ pos ]->isChecked() ) {
 
          if ( !cb_fix_amplitude->isChecked() ) {
-            if ( tmp_gaussians[ 0 + i ] <= mals_saxs_ampl_width_min * mals_saxs_lock_min_retry_mult ) {
+            if ( tmp_gaussians[ 0 + i ] <= mals_saxs_ampl_min * mals_saxs_lock_min_retry_mult ) {
                to_lock.insert( pos + 1 );
                continue;
             }

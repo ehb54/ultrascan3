@@ -54,11 +54,11 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
       case LOAD:
          loadAction = new QAction( tr( "&Load" ), this );;
          loadAction->setShortcut( tr( "Ctrl+L" ) );
-         connect( loadAction, SIGNAL( triggered() ), this, SLOT( load() ) );
+         connect( loadAction, &QAction::triggered, this, &US_Editor::load );
 
          saveAction = new QAction( tr( "&Save" ), this );;
          saveAction->setShortcut( tr( "Ctrl+S" ) );
-         connect( saveAction, SIGNAL( triggered() ), this, SLOT( save() ) );
+         connect( saveAction, &QAction::triggered, this, &US_Editor::save );
 
          fileMenu->addAction( loadAction );
          fileMenu->addAction( saveAction );
@@ -67,18 +67,18 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
       default:
          QAction* saveAsAction = new QAction( tr( "Save&As" ), this );;
          saveAsAction->setShortcut( tr( "Ctrl+A" ) );
-         connect( saveAsAction, SIGNAL( triggered() ), this, SLOT( saveAs() ) );
+         connect( saveAsAction, &QAction::triggered, this, &US_Editor::saveAs );
 
          QAction* clearAction = new QAction( tr( "Clear" ), this );;
-         connect( clearAction, SIGNAL( triggered() ), this, SLOT( clear() ) );
+         connect( clearAction, &QAction::triggered, this, &US_Editor::clear );
 
          QAction* printAction = new QAction( tr( "&Print" ), this );;
          printAction->setShortcut( tr( "Ctrl+P" ) );
-         connect( printAction, SIGNAL( triggered() ), this, SLOT( print() ) );
+         connect( printAction, &QAction::triggered, this, &US_Editor::print );
 
          QAction* fontAction = new QAction( tr( "&Font" ), this );;
          fontAction->setShortcut( tr( "Ctrl+F" ) );
-         connect( fontAction, SIGNAL( triggered() ), this, SLOT( update_font() ) );
+         connect( fontAction, &QAction::triggered, this, &US_Editor::update_font );
 
          fileMenu->addAction( saveAsAction );
          fileMenu->addAction( printAction );

@@ -463,6 +463,9 @@ US_Hydrodyn_Mals_Saxs::US_Hydrodyn_Mals_Saxs(
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_ampl_width_min"        ] = "1e-12";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_saxs_ampl_min"        ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_ampl_min"              ] = "1e-12";
+   }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_saxs_lock_min_retry"        ) ||
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_saxs_lock_min_retry"        ] = "false";
@@ -4323,8 +4326,8 @@ void US_Hydrodyn_Mals_Saxs::smooth( QStringList files )
 {
    bool ok;
    int smoothing = US_Static::getInteger(
-                                            us_tr( "SOMO: HPLC enter smoothing" ),
-                                            us_tr( "Enter the number of points of smoothing:" ),
+                                            us_tr( "SOMO: enter smoothing" ),
+                                            us_tr( "Enter the smoothing radius:" ),
                                             1, 
                                             1,
                                             50,

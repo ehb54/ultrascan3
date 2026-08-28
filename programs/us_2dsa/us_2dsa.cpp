@@ -910,7 +910,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       resplotd = new US_ResidPlot2D( this );
       resplotd->move( rbd_pos );
       resplotd->setVisible( true );
-      connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+      connect( resplotd.data(), &QObject::destroyed, this, &US_2dsa::resplot_done );
    }
 
    // Write plots
@@ -1048,7 +1048,7 @@ void US_2dsa::open_resplot()
    resplotd = new US_ResidPlot2D( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
-   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+   connect( resplotd.data(), &QObject::destroyed, this, &US_2dsa::resplot_done );
 }
 
 // Open 3-D plot control window

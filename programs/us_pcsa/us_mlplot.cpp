@@ -181,18 +181,18 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
    mainLayout->setStretchFactor( leftLayout,  3 );
    mainLayout->setStretchFactor( rightLayout, 5 );
 
-   connect( ct_neline, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( updateElite  ( double ) ) );
-   connect( ct_nsline, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( updateSolutes( double ) ) );
-   connect( ct_nvline, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( updateVisible( double ) ) );
-   connect( pb_colmap, SIGNAL( clicked()        ),
-            this,      SLOT  ( selectColorMap() ) );
-   connect( pb_help,   SIGNAL( clicked()        ),
-            this,      SLOT  ( help()           ) );
-   connect( pb_close,  SIGNAL( clicked()        ),
-            this,      SLOT  ( close_all()      ) );
+   connect( ct_neline, &QwtCounter::valueChanged,
+            this,      &US_MLinesPlot::updateElite );
+   connect( ct_nsline, &QwtCounter::valueChanged,
+            this,      &US_MLinesPlot::updateSolutes );
+   connect( ct_nvline, &QwtCounter::valueChanged,
+            this,      &US_MLinesPlot::updateVisible );
+   connect( pb_colmap, &QAbstractButton::clicked,
+            this,      &US_MLinesPlot::selectColorMap );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_MLinesPlot::help );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &US_MLinesPlot::close_all );
 
 DbgLv(1) << "RP:  p1size" << p1size;
    data_plot1->resize( p1size );

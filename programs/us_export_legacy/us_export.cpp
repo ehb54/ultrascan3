@@ -68,16 +68,16 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    pb_save      = us_pushbutton( tr( "Export Data" ) );
    pb_view      = us_pushbutton( tr( "View Data Report" ) );
 
-   connect( dkdb_cntrls,  SIGNAL( changed(      bool ) ),
-            this,         SLOT( update_disk_db( bool ) ) );
-   connect( pb_load,      SIGNAL( clicked()     ),
-            this,         SLOT(   load()        ) );
-   connect( pb_details,   SIGNAL( clicked()     ),
-            this,         SLOT(   details()     ) );
-   connect( pb_save,      SIGNAL( clicked()     ),
-            this,         SLOT(   export_data() ) );
-   connect( pb_view,      SIGNAL( clicked()     ),
-            this,         SLOT(   view_report() ) );
+   connect( dkdb_cntrls,  &US_Disk_DB_Controls::changed,
+            this,         &US_ExportLegacy::update_disk_db );
+   connect( pb_load,      &QAbstractButton::clicked,
+            this,         &US_ExportLegacy::load );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_ExportLegacy::details );
+   connect( pb_save,      &QAbstractButton::clicked,
+            this,         &US_ExportLegacy::export_data );
+   connect( pb_view,      &QAbstractButton::clicked,
+            this,         &US_ExportLegacy::view_report );
 
    pb_load     ->setEnabled( true );
    pb_details  ->setEnabled( false );
@@ -147,12 +147,12 @@ US_ExportLegacy::US_ExportLegacy() : US_Widgets()
    buttonLayout->addWidget( pb_help     );
    buttonLayout->addWidget( pb_close    );
 
-   connect( pb_reset,    SIGNAL( clicked() ),
-            this,        SLOT(   reset()   ) );
-   connect( pb_close,    SIGNAL( clicked() ),
-            this,        SLOT(   close()   ) );
-   connect( pb_help,     SIGNAL( clicked() ),
-            this,        SLOT(   help()    ) );
+   connect( pb_reset,    &QAbstractButton::clicked,
+            this,        &US_ExportLegacy::reset );
+   connect( pb_close,    &QAbstractButton::clicked,
+            this,        &QWidget::close );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_ExportLegacy::help );
 
    rightLayout->addLayout( plotLayout2 );
    rightLayout->setStretchFactor( plotLayout2, 3 );
@@ -186,8 +186,8 @@ void US_ExportLegacy::load( void )
    US_LoadAUC* dialog = 
       new US_LoadAUC( isLocal, rawList, triples, workingDir ); 
 
-   connect( dialog, SIGNAL( changed       ( bool ) ),
-            this,   SLOT(   update_disk_db( bool ) ) );
+   connect( dialog, &US_LoadAUC::changed,
+            this,   &US_ExportLegacy::update_disk_db );
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
@@ -219,8 +219,8 @@ void US_ExportLegacy::load( void )
       te_stat->setText( tr( "1 input %1 triple" ).arg( rawDtype ) );
 
    lw_triples->setCurrentRow( 0 );
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-                        SLOT(   new_triple(        int ) ) );
+   connect( lw_triples, &QListWidget::currentRowChanged,
+                        this, &US_ExportLegacy::new_triple );
 
    if ( rawDtype == "RI" )
    {  // Possibly convert Pseudo Absorbance to Intensity
