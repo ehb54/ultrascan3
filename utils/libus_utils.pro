@@ -62,6 +62,7 @@ HEADERS      = us_ana_profile.h   \
                us_run_protocol.h  \
                us_settings.h      \
                us_sim_inputs.h    \
+               us_sim_record.h    \
                us_sim_species.h   \
                us_simparms.h      \
                us_solute.h        \
@@ -121,6 +122,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_run_protocol.cpp  \
                us_settings.cpp      \
                us_sim_inputs.cpp    \
+               us_sim_record.cpp    \
                us_sim_species.cpp   \
                us_simparms.cpp      \
                us_solute.cpp        \
