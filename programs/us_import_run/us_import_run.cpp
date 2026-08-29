@@ -25,6 +25,11 @@ namespace
 QTextStream& out() { static QTextStream s( stdout ); return s; }
 QTextStream& err() { static QTextStream s( stderr ); return s; }
 
+//! solution.description is VARCHAR(80) in the LIMS schema.  Reject an
+//! archive before opening a transaction rather than letting new_solution()
+//! fail with LAST_INSERT_ID() == 0 and a misleading missing-solution error.
+constexpr int MAX_SOLUTION_DESCRIPTION_CHARACTERS = 80;
+
 //! Databases accepted without --force.
 const QStringList& allowedDatabases()
 {
@@ -445,6 +450,17 @@ bool prepareRun( const QString& run_dir, const QString& wanted_run,
                + run.disk.triples[ ii ].tripleDesc + " of run " + run_id
                + ")\nThe archive must include the solution XML the simulation "
                  "wrote";
+         return false;
+      }
+
+      const int description_length = solution.solutionDesc.toUcs4().size();
+      if ( description_length > MAX_SOLUTION_DESCRIPTION_CHARACTERS )
+      {
+         error = "Solution " + guid + " in run " + run_id + " (triple "
+               + run.disk.triples[ ii ].tripleDesc + ") has a description of "
+               + QString::number( description_length ) + " characters; the "
+                 "LIMS solution.description limit is "
+               + QString::number( MAX_SOLUTION_DESCRIPTION_CHARACTERS );
          return false;
       }
 
