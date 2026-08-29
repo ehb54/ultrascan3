@@ -7,6 +7,7 @@ QT           += svg opengl printsupport
 QT           += datavisualization
 
 HEADERS       = us_autoflow_analysis.h \
+                ../us_edited_data_loaders.h \
                 ../us_analysis_profile/us_analysis_profile.h  \
                 ../us_fit_meniscus/us_fit_meniscus.h \
                 ../us_reporter_gmp/us_reporter_gmp.h \
@@ -30,6 +31,7 @@ HEADERS       = us_autoflow_analysis.h \
 
 SOURCES       = us_autoflow_analysis_main.cpp       \
                 us_autoflow_analysis.cpp         \
+                ../us_edited_data_loaders.cpp     \
                 ../us_analysis_profile/us_analysis_profile.cpp  \
                 ../us_analysis_profile/us_anapro_utils.cpp \
                 ../us_fit_meniscus/us_fit_meniscus.cpp \
