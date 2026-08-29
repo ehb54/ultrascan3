@@ -1,8 +1,12 @@
 // Program-level tests for the edited-data loading paths shared by
-// US_Analysis_auto::loadData() and US_ReporterGMP::loadData().
+// US_Analysis_auto::loadData() and US_ReporterGMP::loadData().  The ordinary
+// cases are hermetic.  Set US3_TEST_LIVE_DB=1 to additionally exercise the
+// seeded uslims3_test database; its local dev-stack defaults can be overridden
+// with US3_TEST_DB_HOST/USER/PASS and US3_TEST_PERSON_GUID/PASSWORD.
 
 #include "us3_gui_test_main.h"
 
+#include "us_db2.h"
 #include "us_edited_data_loaders.h"
 #include "us_util.h"
 
@@ -159,6 +163,30 @@ FakeDB databaseFor( const FixtureFiles& files )
 class US_EditedDataLoadersTest : public QObject
 {
    Q_OBJECT
+
+   bool liveDatabaseEnabled() const
+   {
+      return qEnvironmentVariableIntValue( "US3_TEST_LIVE_DB" ) == 1;
+   }
+
+   bool connectLiveDatabase( US_DB2& db, const QString& database,
+                             QString& error ) const
+   {
+      const QString host = qEnvironmentVariable(
+         "US3_TEST_DB_HOST", "127.0.0.1:3307" );
+      const QString user = qEnvironmentVariable(
+         "US3_TEST_DB_USER", "us3php" );
+      const QString password = qEnvironmentVariable(
+         "US3_TEST_DB_PASS", "us3phppass" );
+      const QString personGUID = qEnvironmentVariable(
+         "US3_TEST_PERSON_GUID",
+         "00000000-0000-0000-0000-000000000001" );
+      const QString personPassword = qEnvironmentVariable(
+         "US3_TEST_PERSON_PASSWORD", "password" );
+
+      return db.connectAuthenticated( host, database, user, password,
+                                      personGUID, personPassword, error );
+   }
 
 private slots:
    void autoflowSelectsNewestMatchingRowAndLoadsIt()
@@ -355,6 +383,85 @@ private slots:
       QCOMPARE( editID, -1 );
       QVERIFY( updated.isEmpty() );
       QVERIFY( error.contains( "raw checksum mismatch" ) );
+   }
+
+   void liveAutoflowLoadsSeededRaData()
+   {
+      if ( ! liveDatabaseEnabled() )
+         QSKIP( "Set US3_TEST_LIVE_DB=1 to run against the seeded LIMS DB." );
+
+      US_DB2 db;
+      QString error;
+      QVERIFY2( connectLiveDatabase( db, "uslims3_test", error ),
+                qPrintable( error ) );
+      QTemporaryDir destination;
+      QVERIFY( destination.isValid() );
+      QVector< US_DataIO::EditedData > edited;
+      QVector< US_DataIO::RawData > raw;
+      int editID = -1;
+
+      QCOMPARE( US_EditedDataLoaders::loadAutoflow(
+                   &db, "1.A.123", "netrin1-ra", destination.path(),
+                   edited, raw, editID, error ), (int)IUS_DB2::OK );
+      QCOMPARE( editID, 1000 );
+      QCOMPARE( edited.size(), 1 );
+      QCOMPARE( raw.size(), 1 );
+      QCOMPARE( edited[ 0 ].runID, QString( "netrin1-ra" ) );
+      QCOMPARE( edited[ 0 ].wavelength, QString( "123" ) );
+      QCOMPARE( QString::fromLatin1( raw[ 0 ].type, 2 ), QString( "RA" ) );
+   }
+
+   void liveAutoflowLoadsSeededMwlWavelength()
+   {
+      if ( ! liveDatabaseEnabled() )
+         QSKIP( "Set US3_TEST_LIVE_DB=1 to run against the seeded LIMS DB." );
+
+      US_DB2 db;
+      QString error;
+      QVERIFY2( connectLiveDatabase( db, "uslims3_test", error ),
+                qPrintable( error ) );
+      QTemporaryDir destination;
+      QVERIFY( destination.isValid() );
+      QVector< US_DataIO::EditedData > edited;
+      QVector< US_DataIO::RawData > raw;
+      int editID = -1;
+
+      QCOMPARE( US_EditedDataLoaders::loadAutoflow(
+                   &db, "1.A.280", "ISSF-synth-mwl-001-1A",
+                   destination.path(), edited, raw, editID, error ),
+                (int)IUS_DB2::OK );
+      QCOMPARE( editID, 1009 );
+      QCOMPARE( edited.size(), 1 );
+      QCOMPARE( raw.size(), 1 );
+      QCOMPARE( edited[ 0 ].wavelength, QString( "280" ) );
+      QCOMPARE( (int)raw[ 0 ].scanData[ 0 ].wavelength, 280 );
+   }
+
+   void liveReporterLoadsTheSeededModelLinkedEdit()
+   {
+      if ( ! liveDatabaseEnabled() )
+         QSKIP( "Set US3_TEST_LIVE_DB=1 to run against the seeded LIMS DB." );
+
+      US_DB2 db;
+      QString error;
+      QVERIFY2( connectLiveDatabase( db, "uslims3_test", error ),
+                qPrintable( error ) );
+      QTemporaryDir destination;
+      QVERIFY( destination.isValid() );
+      QVector< US_DataIO::EditedData > edited;
+      QVector< US_DataIO::RawData > raw;
+      int editID = -1;
+      QString updated;
+
+      QCOMPARE( US_EditedDataLoaders::loadReporter(
+                   &db, "1.A.123", "netrin1-ra", 1000,
+                   destination.path(), edited, raw, editID, updated, error ),
+                (int)IUS_DB2::OK );
+      QCOMPARE( editID, 1000 );
+      QVERIFY( ! updated.isEmpty() );
+      QCOMPARE( edited.size(), 1 );
+      QCOMPARE( raw.size(), 1 );
+      QCOMPARE( edited[ 0 ].runID, QString( "netrin1-ra" ) );
    }
 };
 
