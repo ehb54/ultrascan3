@@ -3,6 +3,7 @@
 #include <QPainter>
 
 #include "us_reporter_gmp.h"
+#include "us_convertio.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
@@ -4277,7 +4278,11 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   buffLoaded = false;
   haveSim    = false;
   
-  loadData( triple_info_map );
+  if ( ! loadData( triple_info_map ) )
+  {
+    progress_msg->close();
+    return;
+  }
   progress_msg->setValue( 1 );
   
   triple_info_map[ "eID" ]         = QString::number( eID_global );
@@ -4520,126 +4525,88 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
 {
   rawData.clear();
   editedData.clear();
-  
+
+  const auto fail = [ this ]( const QString& detail )
+  {
+    QApplication::restoreOverrideCursor();
+    QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
+    return false;
+  };
+
   US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  US_DB2 db( pw.getPasswd() );
     
-  if ( db->lastErrno() != US_DB2::OK )
+  if ( db.lastErrno() != US_DB2::OK )
     {
-      QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
-      
-      return false;
+      return fail( tr( "There was an error connecting to the database:\n" )
+                   + db.lastError() );
     }
+
+  const QString tripleName = triple_information[ "triple_name" ];
+  const QString runID      = triple_information[ "filename" ];
+  const int requestedEditID = Triple_to_ModelsDesc[ tripleName ][ "eID" ]
+                              .toInt();
 
   qDebug() << "In load Data: triple, eID (from modelsLink) -- "
-	   << triple_information[ "triple_name" ]
-	   << Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ] ;
-  
-  int rID=0;
-  QString rfilename;
-  //int eID=0;
-  int eID = Triple_to_ModelsDesc[ triple_information[ "triple_name" ] ] [ "eID" ].toInt();
+           << tripleName << requestedEditID;
 
-  QString efilename;
-  
-  //get EditedData filename && editedDataID for current triple, then infer rawDataID 
+  if ( requestedEditID < 1 )
+    return fail( tr( "No edited-data record is linked to triple %1." )
+                 .arg( tripleName ) );
+
+  int     rawDataID = -1;
+  QString editFilename;
+  QString editUpdated;
+
+  // The model link chooses the edit.  The report-specific query supplies its
+  // filename, raw-data relationship, and update timestamp.
   QStringList query;
-  query << "get_editedDataFilenamesIDs_forReport" << triple_information["filename"] << QString::number( eID ) ;
-  db->query( query );
+  query << "get_editedDataFilenamesIDs_forReport" << runID
+        << QString::number( requestedEditID );
+  db.query( query );
 
   qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << tripleName;
 
-  int latest_update_time = 1e100;
+  if ( db.lastErrno() != US_DB2::OK )
+    return fail( tr( "Could not look up edited data for triple %1:\n%2" )
+                 .arg( tripleName, db.lastError() ) );
 
-  QString triple_name_actual = triple_information[ "triple_name" ];
-
-  if ( triple_name_actual.contains("Interference") )
-    triple_name_actual.replace( "Interference", "660" );
-  
-  while ( db->next() )
+  while ( db.next() )
     {
-      QString  filename            = db->value( 0 ).toString();
-      int      editedDataID        = db->value( 1 ).toInt();
-      int      rawDataID           = db->value( 2 ).toInt();
-      rID         = rawDataID;
-      efilename   = filename;
-      
-      QDateTime date               = db->value( 3 ).toDateTime();
-      eID_updated                  = db->value( 3 ).toString();
-      
-      // QDateTime now = QDateTime::currentDateTime();
-               
-      // if ( filename.contains( triple_name_actual ) ) 
-      // 	{
-      // 	  int time_to_now = date.secsTo(now);
-      // 	  if ( time_to_now < latest_update_time )
-      // 	    {
-      // 	      latest_update_time = time_to_now;
-      // 	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
+      const int rowEditID = db.value( 1 ).toInt();
 
-      // 	      rID         = rawDataID;
-      // 	      eID         = editedDataID;
-      // 	      efilename   = filename;
-      // 	      eID_updated = db->value( 3 ).toString();
-      // 	    }
-      // 	}
+      // Do not silently load data other than the edit named by the model link.
+      if ( rowEditID != requestedEditID )
+        continue;
+
+      editFilename = db.value( 0 ).toString();
+      rawDataID    = db.value( 2 ).toInt();
+      editUpdated  = db.value( 3 ).toString();
     }
 
-  
-  qDebug() << "In loadData() after Query ";
-  
-  QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
-  QDir edir( edirpath );
-  if (!edir.exists())
-    edir.mkpath( edirpath );
-  
-  QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
+  if ( editFilename.isEmpty()  ||  rawDataID < 1 )
+    return fail( tr( "No usable edited/raw data pair was found for triple %1 "
+                     "and editedData ID %2." )
+                 .arg( tripleName ).arg( requestedEditID ) );
 
-  qDebug() << "In loadData() efilename: " << efilename;
+  US_ConvertIO::EditedDataReadRequest request;
+  request.directory    = US_Settings::resultDir() + "/" + runID;
+  request.editFilename = editFilename;
+  request.editedDataID = requestedEditID;
+  request.rawDataID    = rawDataID;
 
-  
-  // Can check here if such filename exists
-  // QFileInfo check_file( efilepath );
-  // if ( check_file.exists() && check_file.isFile() )
-  //   qDebug() << "EditProfile file: " << efilepath << " exists";
-  // else
-  db->readBlobFromDB( efilepath, "download_editData", eID );
+  QString error;
+  const int status = US_ConvertIO::readEditedDataFromDB(
+     &db, request, editedData, rawData, error );
 
-  qDebug() << "In loadData() after readBlobFromDB ";
+  if ( status != IUS_DB2::OK )
+    return fail( error );
 
-  //Now download rawData corresponding to rID:
-  QString efilename_copy = efilename;
-  QStringList efilename_copy_list = efilename_copy.split(".");
-
-  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
-                                               + efilename_copy_list[3] + "."
-                                               + efilename_copy_list[4] + "."
-                                               + efilename_copy_list[5] + ".auc";
-  
-  QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
-  //do we need to check for existance ?
-  db->readBlobFromDB( rfilepath, "download_aucData", rID );
-
-  qApp->processEvents();
-
-  qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
-
-  //Put downloaded data in memory:
-  QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
-  US_DataIO::loadData( uresdir, efilename, editedData, rawData );
-
-  eID_global = eID;
+  eID_global  = requestedEditID;
+  eID_updated = editUpdated;
 
   qDebug() << "END of loadData(), eID_global: " << eID_global;
-
-  //test:
-  delete db;
-    
   return true;
 }
 
@@ -13754,4 +13721,3 @@ void US_ReporterGMP::add_solution_details( const QString sol_id, const QString s
 	;
     }
 }
-
