@@ -3,6 +3,7 @@
 #include <QPainter>
 
 #include "us_reporter_gmp.h"
+#include "us_edited_data_loaders.h"
 #include "us_convertio.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -4553,57 +4554,18 @@ bool US_ReporterGMP::loadData( QMap < QString, QString > & triple_information )
   if ( requestedEditID < 1 )
     return fail( tr( "No edited-data record is linked to triple %1." )
                  .arg( tripleName ) );
-
-  int     rawDataID = -1;
-  QString editFilename;
+  int     editedDataID = -1;
   QString editUpdated;
-
-  // The model link chooses the edit.  The report-specific query supplies its
-  // filename, raw-data relationship, and update timestamp.
-  QStringList query;
-  query << "get_editedDataFilenamesIDs_forReport" << runID
-        << QString::number( requestedEditID );
-  db.query( query );
-
-  qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << tripleName;
-
-  if ( db.lastErrno() != US_DB2::OK )
-    return fail( tr( "Could not look up edited data for triple %1:\n%2" )
-                 .arg( tripleName, db.lastError() ) );
-
-  while ( db.next() )
-    {
-      const int rowEditID = db.value( 1 ).toInt();
-
-      // Do not silently load data other than the edit named by the model link.
-      if ( rowEditID != requestedEditID )
-        continue;
-
-      editFilename = db.value( 0 ).toString();
-      rawDataID    = db.value( 2 ).toInt();
-      editUpdated  = db.value( 3 ).toString();
-    }
-
-  if ( editFilename.isEmpty()  ||  rawDataID < 1 )
-    return fail( tr( "No usable edited/raw data pair was found for triple %1 "
-                     "and editedData ID %2." )
-                 .arg( tripleName ).arg( requestedEditID ) );
-
-  US_ConvertIO::EditedDataReadRequest request;
-  request.directory    = US_Settings::resultDir() + "/" + runID;
-  request.editFilename = editFilename;
-  request.editedDataID = requestedEditID;
-  request.rawDataID    = rawDataID;
-
   QString error;
-  const int status = US_ConvertIO::readEditedDataFromDB(
-     &db, request, editedData, rawData, error );
+  const int status = US_EditedDataLoaders::loadReporter(
+     &db, tripleName, runID, requestedEditID,
+     US_Settings::resultDir() + "/" + runID,
+     editedData, rawData, editedDataID, editUpdated, error );
 
   if ( status != IUS_DB2::OK )
     return fail( error );
 
-  eID_global  = requestedEditID;
+  eID_global  = editedDataID;
   eID_updated = editUpdated;
 
   qDebug() << "END of loadData(), eID_global: " << eID_global;

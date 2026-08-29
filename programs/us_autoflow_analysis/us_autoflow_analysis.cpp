@@ -5,6 +5,7 @@
 #include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
+#include "us_edited_data_loaders.h"
 #include "us_settings.h"
 #include "us_convertio.h"
 #include "us_gui_settings.h"
@@ -1358,58 +1359,11 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 
   const QString tripleName = triple_information[ "triple_name" ];
   const QString runID      = triple_information[ "filename" ];
-  int     rawDataID        = -1;
-  int     editedDataID     = -1;
-  QString editFilename;
-
-  // Autoflow owns this selection policy: newest edit whose filename matches
-  // the requested triple.  The shared utility starts only after that choice.
-  QStringList query;
-  query << "get_editedDataFilenamesIDs" << runID;
-  db.query( query );
-
-  qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << tripleName;
-
-  if ( db.lastErrno() != US_DB2::OK )
-    return fail( tr( "Could not look up edited data for triple %1:\n%2" )
-                 .arg( tripleName, db.lastError() ) );
-
-  QString tripleNameActual = tripleName;
-
-  if ( tripleNameActual.contains( "Interference" ) )
-    tripleNameActual.replace( "Interference", "660" );
-
-  QDateTime selectedDate;
-
-  while ( db.next() )
-    {
-      const QString filename = db.value( 0 ).toString();
-      const QDateTime date   = db.value( 3 ).toDateTime();
-
-      if ( filename.contains( tripleNameActual )
-           &&  ( ! selectedDate.isValid()  ||  date > selectedDate ) )
-        {
-          selectedDate  = date;
-          editFilename  = filename;
-          editedDataID  = db.value( 1 ).toInt();
-          rawDataID     = db.value( 2 ).toInt();
-        }
-    }
-
-  if ( editFilename.isEmpty()  ||  editedDataID < 1  ||  rawDataID < 1 )
-    return fail( tr( "No usable edited/raw data pair was found for triple %1." )
-                 .arg( tripleName ) );
-
-  US_ConvertIO::EditedDataReadRequest request;
-  request.directory    = US_Settings::resultDir() + "/" + runID;
-  request.editFilename = editFilename;
-  request.editedDataID = editedDataID;
-  request.rawDataID    = rawDataID;
-
+  int editedDataID = -1;
   QString error;
-  const int status = US_ConvertIO::readEditedDataFromDB(
-     &db, request, editedData, rawData, error );
+  const int status = US_EditedDataLoaders::loadAutoflow(
+     &db, tripleName, runID, US_Settings::resultDir() + "/" + runID,
+     editedData, rawData, editedDataID, error );
 
   if ( status != IUS_DB2::OK )
     return fail( error );
