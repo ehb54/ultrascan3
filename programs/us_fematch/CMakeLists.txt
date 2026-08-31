@@ -30,6 +30,9 @@ set(CROSS_DIR_SOURCES
         # us_fit_meniscus
         ../us_fit_meniscus/us_fit_meniscus.cpp
 
+        # shared edited-data loaders
+        ../us_edited_data_loaders.cpp
+
         # us_reporter_gmp
         ../us_reporter_gmp/us_reporter_gmp.cpp
 
@@ -59,6 +62,7 @@ set(CROSS_DIR_HEADERS
         ../us_autoflow_analysis/us_autoflow_analysis.h
         ../us_fit_meniscus/us_fit_meniscus.h
         ../us_reporter_gmp/us_reporter_gmp.h
+        ../us_edited_data_loaders.h
         ../us_analysis_profile/us_analysis_profile.h
         ../us_ddist_combine/us_ddist_combine.h
         ../us_ddist_combine/us_select_rundd.h
