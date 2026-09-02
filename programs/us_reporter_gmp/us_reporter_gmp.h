@@ -279,7 +279,7 @@ class US_ReporterGMP : public US_Widgets
         QString expType;
         QStringList abde_channList;
         QMap<QString, QString >prot_details_at_report;
-        QMap< QString, QMap < QString, double>> abde_ranges_percents;
+        QMap< QString, QMap < QString, QMap < QString, double>>> abde_ranges_percents;
         QMap< QString, double > abde_rmsd;
         QMap< QString, double > abde_menisc;
         QMap<QString, QString > abde_plots_filenames;
@@ -612,7 +612,7 @@ class US_ReporterGMP : public US_Widgets
         void get_abde_channels( QStringList& );
         void get_abde_rmsds(QMap< QString, double >&);
         void get_abde_menisc(QMap< QString, double >&);
-        void get_abde_percents(QMap< QString, QMap < QString, double>>&);
+        void get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record

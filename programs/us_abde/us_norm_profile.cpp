@@ -531,6 +531,8 @@ void US_Norm_Profile::load_data_auto( QMap<QString,QString> & protocol_details )
   data_per_channel_meniscus. clear();
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
+  data_per_channel_ranges_percents_dna. clear();
+  data_per_channel_ranges_percents_sample. clear();
   data_per_channel_processed. clear();
   data_per_channel_rmsd. clear();
   channels_ranges = protocol_details[ "channels_to_radial_ranges" ];
@@ -551,6 +553,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   data_per_channel_meniscus. clear();
   data_per_channel_norm_cb. clear();
   data_per_channel_ranges_percents. clear();
+  data_per_channel_ranges_percents_dna. clear();
+  data_per_channel_ranges_percents_sample. clear();
   data_per_channel_processed. clear();
   data_per_channel_rmsd. clear();
   
@@ -569,7 +573,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     protocol_details,
 			     data_per_channel_xnorm,
 			     data_per_channel_norm_cb,
-			     data_per_channel_ranges_percents,
+			     data_per_channel_ranges_percents_sample,
 			     data_per_channel_rmsd,
 			     data_per_channel_meniscus );
 
@@ -577,7 +581,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     protocol_details,
 			     data_per_channel_xnorm,
 			     data_per_channel_norm_cb,
-			     data_per_channel_ranges_percents,
+			     data_per_channel_ranges_percents_sample,
 			     data_per_channel_rmsd,
 			     data_per_channel_meniscus );
   
@@ -595,7 +599,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   emit pass_channels_info( channList );
   emit pass_rmsd_info( data_per_channel_rmsd );
   emit pass_menisc_info( data_per_channel_meniscus );
-  emit pass_percents_info( data_per_channel_ranges_percents );
+  emit pass_percents_info( data_per_channel_ranges_percents_sample );
+  
 }
 
 //return pointer to data_plot1
@@ -621,6 +626,8 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
   QString runid = finfo.baseName();
   QString dirname = finfo.dir().absolutePath();
 
+  qDebug() << "workingDir, dirname, runid -- "
+	   << workingDir << dirname << runid;
   qDebug() << "[in slt_loadAUC_auto_report() ], triples -- " << triples; 
 
   char chtype[ 3 ] = { 'R', 'A', '\0' };
@@ -636,10 +643,15 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
       QStringList ccw = triples.at(i).split(u'/');
       US_DataIO::RawData rawData = allData.at(i);
       qDebug() << "RawData desc -- " << rawData.description;
+      QString fn_for_plot_report = rawData.description;
+      QStringList fn_for_plot_report_parts = fn_for_plot_report.split(" - ");
+      QString fn_for_plot_report_parts_lastPart = fn_for_plot_report_parts.last(); // "AAV-DNA"
 
+      // QString fn = tr("%1.%2.%3.%4.%5").arg(runid, dataType, ccw.at(0).trimmed(),
+      // 					 ccw.at(1).trimmed(), ccw.at(2).trimmed());
       QString fn = tr("%1.%2.%3.%4.%5").arg(runid, dataType, ccw.at(0).trimmed(),
-					 ccw.at(1).trimmed(), ccw.at(2).trimmed());
-      QString fp = tr("%1.%2.auc").arg(dirname, fn);
+					 ccw.at(1).trimmed(), fn_for_plot_report_parts_lastPart);
+      QString fp = tr("%1/%2.auc").arg(workingDir, fn);
       
       filenames << fn;
       filePaths << fp;
@@ -668,7 +680,7 @@ void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_d
 	       << data_per_channel_xnorm[channList[i]]
 	       << data_per_channel_norm_cb[channList[i]]
 	       << data_per_channel_rmsd[channList[i]]
-	       << data_per_channel_ranges_percents[channList[i]]
+	       << data_per_channel_ranges_percents_sample[channList[i]]
 	       << data_per_channel_meniscus[channList[i]];
 	;
     }
@@ -1282,7 +1294,10 @@ void US_Norm_Profile::plotData(void){
     }
 
     const double *xp, *yp;
+    QMap < QString, QVector<double>> xp_intN_sample, yp_intN_sample; 
+
     QVector<double> xp_intN_protein, yp_intN_protein;
+    // QVector<double> xp_intN_dna, yp_intN_dna;
 
     double minX =  1e99;
     double maxX = -1e99;
@@ -1319,8 +1334,21 @@ void US_Norm_Profile::plotData(void){
 	    QString legend;
 	    if ( us_auto_mode )
 	      {
+		QString f_name   = selFilenames.at(i);
+		qDebug() << "f_name -- " << f_name;
+		QString afterDot = f_name.section('.', -1);
+		qDebug() << "afterDot -- " << afterDot;
+		int idx = afterDot.lastIndexOf('_');
+		QString result_analyte = afterDot.left(idx); // e.g. "AAV-DNA"
+		qDebug() << "result_analyte -- " << result_analyte;
+		
+
+		if ( us_auto_mode_report )
+		  result_analyte = afterDot;
+
 		if (abde_etype == "MWL")
 		  {
+		    /**
 		    if ( selFilenames.at(i). contains("_002") ||
 			 selFilenames.at(i). contains(".002") ||
 			 selFilenames.at(i). endsWith(".2")   ||
@@ -1341,7 +1369,8 @@ void US_Norm_Profile::plotData(void){
 			pen.setColor("cyan");
 		      }
 		    else
-		      legend = channame;
+		    **/
+		    legend = tr("(D)_") + channame + ": " + result_analyte;
 		  }
 		else // SWL
 		  {
@@ -1422,8 +1451,8 @@ void US_Norm_Profile::plotData(void){
 	    }
 	  }
 	
-        for (int i = 0; i < nd; i++){
-	  
+        for (int i = 0; i < nd; i++)
+	  {
 	    int np;
 	    if ( us_auto_mode )
 	      {
@@ -1437,13 +1466,25 @@ void US_Norm_Profile::plotData(void){
 	      }
 	    
 	    pen.setColor(color_list.at(i % sz_clist));
-
+	    
 	    QString legend;
-
+	    
 	    if ( us_auto_mode )
 	      {
 		if (abde_etype == "MWL")
 		  {
+		    QString f_name   = selFilenames.at(i);
+		    qDebug() << "[int]f_name -- " << f_name;
+		    QString afterDot = f_name.section('.', -1);
+		    qDebug() << "[int]afterDot -- " << afterDot;
+		    int idx = afterDot.lastIndexOf('_');
+		    QString result_analyte = afterDot.left(idx); // e.g. "AAV-DNA"
+		    qDebug() << "[int]result_analyte -- " << result_analyte;
+
+		    if ( us_auto_mode_report )
+		      result_analyte = afterDot;
+	    
+		    /**
 		    if ( selFilenames.at(i). contains("_002") ||
 			 selFilenames.at(i). contains(".002") ||
 			 selFilenames.at(i). endsWith(".2")   ||
@@ -1464,9 +1505,16 @@ void US_Norm_Profile::plotData(void){
 		      {
 			legend = tr("(I)_") + channame + "-DNA";
 			pen.setColor("blue");
+
+			xp_intN_dna = data_per_channel[ channame ]["midxval"][i];
+			yp_intN_dna = data_per_channel[ channame ]["integralN"][i];
 		      }
 		    else
-		      legend = channame;
+		    ***/
+		    legend = tr("(I)_") + channame + ": " + result_analyte;
+		    xp_intN_sample[ result_analyte ] = data_per_channel[ channame ]["midxval"][i];
+		    yp_intN_sample[ result_analyte ] = data_per_channel[ channame ]["integralN"][i];
+			
 		  }
 		else //SWL or other
 		  {
@@ -1512,7 +1560,7 @@ void US_Norm_Profile::plotData(void){
                 minY = qMin(minY, yp[j]);
                 maxY = qMax(maxY, yp[j]);
             }
-        }
+	  }
 
         double dy = (maxY - minY) * 0.05;
 
@@ -1570,8 +1618,17 @@ void US_Norm_Profile::plotData(void){
 	    // use xp_intN_protein as index
 	    // yp_intN_protein = data_per_channel[ channame ]["integralN"].at(i).data();
 	    if ( !us_auto_mode_report )
-	      find_percent_from_range( channame, point1_s, point2_s, xp_intN_protein, yp_intN_protein );
-	    
+	      {
+		QStringList samples_list = xp_intN_sample.keys();
+		for ( int sl=0; sl< samples_list.size(); ++ sl )
+		  {
+		    QString c_sample = samples_list[sl];
+		    find_percent_from_range( channame, c_sample, point1_s, point2_s, xp_intN_sample[c_sample], yp_intN_sample[c_sample] );
+		  }
+		//find_percent_from_range( channame, "protein", point1_s, point2_s, xp_intN_protein, yp_intN_protein );
+		//find_percent_from_range( channame, "dna", point1_s, point2_s, xp_intN_dna, yp_intN_dna );
+	      }
+		
 	    QwtPlotCurve* v_line_peak1;
 	    double r1[ 2 ];
 	    r1[ 0 ] = point1;
@@ -1685,8 +1742,8 @@ void US_Norm_Profile::plotData(void){
     plot->replot();
 }
 
-void US_Norm_Profile::find_percent_from_range( QString channame, QString point1_s, QString point2_s,
-					       QVector< double> xp_intN_protein, QVector<double> yp_intN_protein )
+void US_Norm_Profile::find_percent_from_range( QString channame, QString sample, QString point1_s, QString point2_s,
+					       QVector< double> xp_intN_sample, QVector<double> yp_intN_sample )
 {
   QString range = point1_s + "-" + point2_s;
   double p1 = point1_s.toDouble();
@@ -1694,24 +1751,32 @@ void US_Norm_Profile::find_percent_from_range( QString channame, QString point1_
   int p1_ind=0, p2_ind=0;
 
   qDebug() << "p1, p2 -- " << p1 << p2;
-  //qDebug() << "[in find_percent_from_range() ] xp_intN_protein, size() " << xp_intN_protein << ", size: " << xp_intN_protein.size();
-  for (int i=0; i<xp_intN_protein.size(); ++i )
+  //qDebug() << "[in find_percent_from_range() ] xp_intN_sample, size() " << xp_intN_sample << ", size: " << xp_intN_sample.size();
+  for (int i=0; i<xp_intN_sample.size(); ++i )
     {
-      if ( xp_intN_protein[i] <= p1 )
+      if ( xp_intN_sample[i] <= p1 )
 	p1_ind = i;
     }
   
-  for (int i=0; i<xp_intN_protein.size(); ++i )
+  for (int i=0; i<xp_intN_sample.size(); ++i )
     {
-      if ( xp_intN_protein[i] <= p2 )
+      if ( xp_intN_sample[i] <= p2 )
 	p2_ind = i;
     }
-  qDebug() << "p1_ind " << p1_ind << ", y-value: " << yp_intN_protein[p1_ind];
-  qDebug() << "p2_ind " << p2_ind << ", y-value: " << yp_intN_protein[p2_ind];
+  qDebug() << "p1_ind " << p1_ind << ", y-value: " << yp_intN_sample[p1_ind];
+  qDebug() << "p2_ind " << p2_ind << ", y-value: " << yp_intN_sample[p2_ind];
   
-  data_per_channel_ranges_percents[ channame ][ range ] = double(yp_intN_protein[p2_ind] - yp_intN_protein[p1_ind]);
-  qDebug() << "channel " << channame << ", range " << range << ", percent: "
-    	   <<  double(yp_intN_protein[p2_ind] - yp_intN_protein[p1_ind]);
+  // if ( sample == "protein" )
+  //   data_per_channel_ranges_percents[ channame ][ range ] = double(yp_intN_sample[p2_ind] - yp_intN_sample[p1_ind]);
+  // else if ( sample == "dna" )
+  //   data_per_channel_ranges_percents_dna[ channame ][ range ] = double(yp_intN_sample[p2_ind] - yp_intN_sample[p1_ind]);
+  // else
+  //   qDebug() << "Sample type does not exists...";
+
+  data_per_channel_ranges_percents_sample[ channame ][ sample ][ range ] = double(yp_intN_sample[p2_ind] - yp_intN_sample[p1_ind]);
+
+  qDebug() << "sample " << sample <<  ", channel " << channame << ", range " << range << ", percent: "
+	       <<  double(yp_intN_sample[p2_ind] - yp_intN_sample[p1_ind]);
 }
 
 void US_Norm_Profile::slt_legend(int state) {
@@ -2064,8 +2129,14 @@ void US_Norm_Profile::save_auto( void )
 	"4A":{
 	       "x_norm":"6.8476",
 	       "percents":{
-	                      "6.1-6.5":"68.876",
-			      "6.6-6.94":"27.369"
+	                      "AAV-DNA": {
+	                                   "6.1-6.5":"68.876",
+					   "6.6-6.94":"27.369"
+					 },
+			      "AAV-protein": {
+	                                   "6.1-6.5":"68.876",
+					   "6.6-6.94":"27.369"
+					  }		 
 			   }
 	      },
 	 "4B":{
@@ -2098,18 +2169,28 @@ void US_Norm_Profile::save_auto( void )
 	json_p += "\"rmsd\":\"" + QString::number(data_per_channel_rmsd[channame]) + "\",";
       
       //now over ranges:percents
-      QMap < QString, double> ranges_percents = data_per_channel_ranges_percents[ channame ];
       json_p += "\"percents\":{";
-      QMap < QString, double >::iterator rp;
-      for ( rp = ranges_percents.begin(); rp != ranges_percents.end(); ++rp )
+      QStringList chann_samples = data_per_channel_ranges_percents_sample[ channame ].keys();
+      for ( int cs=0; cs<chann_samples.size(); ++cs )
 	{
-	  json_p += "\"" + rp.key() + "\":\"" + QString::number(rp.value()) + "\",";
+	  QString c_sample = chann_samples[ cs ];
+	  
+	  json_p += "\"" + c_sample  + "\":{";
+	  
+	  QMap < QString, double> ranges_percents = data_per_channel_ranges_percents_sample[ channame ][ c_sample ];
+	  QMap < QString, double >::iterator rp;
+	  for ( rp = ranges_percents.begin(); rp != ranges_percents.end(); ++rp )
+	    {
+	      json_p += "\"" + rp.key() + "\":\"" + QString::number(rp.value()) + "\",";
+	    }
+	  json_p.chop(1);
+	  json_p += "},";
 	}
       json_p.chop(1);
-      json_p += "}},";
+      json_p += "},";
     }
   json_p.chop(1);
-  json_p += "}";
+  json_p += "}}";
 
   qDebug() << "JSON: " << json_p;
 
@@ -2456,7 +2537,7 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 						 QMap <QString, QString>& protocol_details,
 						 QMap <QString, double>&  data_chann_x_norm,
 						 QMap< QString, int >& data_chann_x_norm_cb,
-						 QMap< QString, QMap < QString, double>>& data_chann_range_percent,
+						 QMap< QString, QMap< QString, QMap < QString, double>>>& data_chann_range_percent_sample,
 						 QMap <QString, double>&  data_chann_rmsd,
 						 QMap <QString, double>&  data_chann_menisc )
 {
@@ -2509,24 +2590,33 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		    }
 		  else if ( key_1 == "percents" )
 		    {
+		      QStringList rad_ranges;
 		      QJsonObject json_obj_2 = value_1.toObject();
 		      foreach(const QString& key_2, json_obj_2.keys())
 			{
-			  QJsonValue value_2 = json_obj_2.value(key_2);
-			  //for ranges-to-percents
-			  double percent_c = value_2.toString().toDouble();
-			  data_chann_range_percent[key][key_2] = percent_c;
+			  //key_2 == "AAV-DNA" (sample)
+			  QJsonObject json_obj_3 = json_obj_2.value(key_2).toObject();
+			  foreach(const QString& key_3, json_obj_3.keys())
+			    {
+			      QJsonValue value_3 = json_obj_3.value(key_3);
+			      
+			      //for ranges-to-percents
+			      double percent_c = value_3.toString().toDouble();
+			      data_chann_range_percent_sample[key][key_2][key_3] = percent_c;
 			  
-			  //ned to make somethimg like
-			  //protocol_details[ "channels_to_radial_ranges" ]
-			  //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
-			  channels_to_radial_ranges += key_2 + ",";
+			      //ned to make somethimg like
+			      //protocol_details[ "channels_to_radial_ranges" ]
+			      //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
+			      rad_ranges << key_3;
+			    }
 			}
-		      channels_to_radial_ranges.chop(1);
+		      rad_ranges.removeDuplicates();
+		      channels_to_radial_ranges += rad_ranges.join(",");
 		    }
 		}
-	      channels_to_radial_ranges += ";";
+	      channels_to_radial_ranges.chop(1);
 	    }
+	  channels_to_radial_ranges += ";";
 	}
       channels_to_radial_ranges.chop(1);
     }
