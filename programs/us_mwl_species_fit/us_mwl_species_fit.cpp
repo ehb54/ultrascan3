@@ -1658,6 +1658,18 @@ DbgLv(0) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
          synData[ kd ].scanData[ ks ] = edata->scanData[ jj ];
          synData[ kd ].scanData[ ks ].rvalues.fill( 0.0, kradp );
          synData[ kd ].scanData[ ks ].stddevs.fill( 0.0, kradp );
+
+         // The interpolation bitmap describes the readings, so it has to
+         // grow with them, as in us_mwl_species_sim's build_rawdata().  The
+         // bitmap copied from the edited scan cannot be kept as it stands:
+         // its bits are indexed by the edited readings, which are shifted
+         // here by the krpad meniscus pad, so every bit would land on a
+         // different radius -- and each fitted value is drawn from all
+         // klambda wavelengths of the channel, not from the single scan the
+         // bitmap came from, so there is no one scan's flags to carry over.
+         // Flagging nothing matches what the other fit-output writers do.
+         synData[ kd ].scanData[ ks ].interpolated
+            .fill( '\0', ( kradp + 7 ) / 8 );
          synData[ kd ].scanData[ ks ].wavelength  = wavl;
          ks++;
 
