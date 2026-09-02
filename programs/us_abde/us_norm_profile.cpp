@@ -615,6 +615,15 @@ QwtPlot* US_Norm_Profile::rp_data_plot()
 void US_Norm_Profile::set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& chann_analytes_p )
 {
   channs_analytes_pretty = chann_analytes_p;
+
+  //load_data_auto_report() already auto-selected and drew the first channel
+  //before this map could be built (it needs abde_channList, which only
+  //becomes known as a result of that same load). Force a redraw of whatever
+  //channel is currently on screen so its legend picks up the pretty names
+  //too -- switching to any other channel afterward already redraws normally
+  //via new_chann_auto(), so this only needs to cover the initial channel.
+  if ( us_auto_mode && cb_chann->count() > 0 )
+    plotData();
 }
 
 //Reduce a string to its lowercased letters/digits only, so that names which
