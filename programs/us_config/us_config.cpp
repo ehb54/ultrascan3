@@ -61,7 +61,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   pb_browser = us_pushbutton( tr("WWW Browser:" ) );
   pb_browser->setFixedWidth( w );  
   directories->addWidget( pb_browser, row, 0 );
-  connect( pb_browser, SIGNAL( clicked() ), this, SLOT( open_browser() ) );
+  connect( pb_browser, &QAbstractButton::clicked, this, &US_Config::open_browser );
 
   // Calculate the minimum width of all the le boxes
   QString browser = US_Settings::browser();
@@ -74,43 +74,43 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   pb_workDir = us_pushbutton( tr( "Base Work Directory:" ) );
   pb_workDir->setFixedWidth( w );  
   directories->addWidget( pb_workDir, row, 0 );
-  connect( pb_workDir, SIGNAL( clicked() ), this, SLOT( open_workDir() ) );
+  connect( pb_workDir, &QAbstractButton::clicked, this, &US_Config::open_workDir );
 
   QString workDir = US_Settings::workBaseDir();
   le_w = qMax( fm->horizontalAdvance( workDir ) + 20, le_w );
 
   le_workDir = us_lineedit( workDir, 0 );
   directories->addWidget( le_workDir, row++, 1 );
-  connect( le_workDir, SIGNAL( editingFinished()  ),
-           this,       SLOT(   update_workDir()   ) );
+  connect( le_workDir, &QLineEdit::editingFinished,
+           this,       &US_Config::update_workDir );
 
   // Imports Directory
   pb_importDir = us_pushbutton( tr( "Imports Directory:" ) );
   pb_importDir->setFixedWidth( w );  
   directories->addWidget( pb_importDir, row, 0 );
-  connect( pb_importDir, SIGNAL( clicked() ), this, SLOT( open_importDir() ) );
+  connect( pb_importDir, &QAbstractButton::clicked, this, &US_Config::open_importDir );
 
   QString importDir = US_Settings::importDir();
   le_w = qMax( fm->horizontalAdvance( importDir ) + 20, le_w );
 
   le_importDir = us_lineedit( importDir, 0 );
   directories->addWidget( le_importDir, row++, 1 );
-  connect( le_importDir, SIGNAL( editingFinished()  ),
-           this,       SLOT(   update_importDir()   ) );
+  connect( le_importDir, &QLineEdit::editingFinished,
+           this,       &US_Config::update_importDir );
 
   // Temporary Directory
   pb_tmpDir = us_pushbutton( tr( "Temporary Directory:" ) );
   pb_tmpDir->setFixedWidth( w );  
   directories->addWidget( pb_tmpDir, row, 0 );
-  connect( pb_tmpDir, SIGNAL( clicked() ), this, SLOT( open_tmpDir() ) );
+  connect( pb_tmpDir, &QAbstractButton::clicked, this, &US_Config::open_tmpDir );
 
   QString tmpDir = US_Settings::tmpDir();
   le_w = qMax( fm->horizontalAdvance( tmpDir ) + 20, le_w );
 
   le_tmpDir = us_lineedit( tmpDir, 0 );
   directories->addWidget( le_tmpDir, row++, 1 );
-  connect( le_tmpDir, SIGNAL( editingFinished() ),
-           this,      SLOT(   update_tmpDir()   ) );
+  connect( le_tmpDir, &QLineEdit::editingFinished,
+           this,      &US_Config::update_tmpDir );
   
   le_browser   ->setMinimumWidth( le_w );
   le_workDir   ->setMinimumWidth( le_w );
@@ -133,15 +133,15 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   disk_db_control = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
   otherSettings->addLayout( disk_db_control, row++, 1 );
-  connect( disk_db_control, SIGNAL( changed          ( bool ) ), 
-                            SLOT(   set_data_location( bool ) ) );
+  connect( disk_db_control, &US_Disk_DB_Controls::changed, 
+                            this, &US_Config::set_data_location );
   // Color Preferences
   QLabel* color = us_label( "Color Preferences:" );
   otherSettings->addWidget( color, row, 0 );
 
   pb_color = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_color, row++, 1 );
-  connect( pb_color, SIGNAL( clicked() ), this, SLOT( update_colors() ) );
+  connect( pb_color, &QAbstractButton::clicked, this, &US_Config::update_colors );
 
   // Font Preferences
   QLabel* font = us_label( "Font Preferences:" );
@@ -149,7 +149,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   pb_font = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_font, row++, 1 );
-  connect( pb_font, SIGNAL( clicked() ), this, SLOT( update_font() ) );
+  connect( pb_font, &QAbstractButton::clicked, this, &US_Config::update_font );
 
   // Database Preferences
   QLabel* db = us_label( "Database Preferences:" );
@@ -157,7 +157,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   pb_db = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_db, row++, 1 );
-  connect( pb_db, SIGNAL( clicked() ), this, SLOT( update_db() ) );
+  connect( pb_db, &QAbstractButton::clicked, this, &US_Config::update_db );
   /* For DB change - check autoflow records & disable with message if there are any records */
   
   /******************************************************************************************/
@@ -169,7 +169,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   pb_password = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_password, row++, 1 );
-  connect( pb_password, SIGNAL( clicked() ), this, SLOT( update_password() ) );
+  connect( pb_password, &QAbstractButton::clicked, this, &US_Config::update_password );
 
   // Advanced settings
   QLabel* advanced = us_label( "Advanced Settings:" );
@@ -177,7 +177,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   pb_advanced = us_pushbutton( tr( "Change" ) );
   otherSettings->addWidget( pb_advanced, row++, 1 );
-  connect( pb_advanced, SIGNAL( clicked() ), this, SLOT( update_advanced() ) );
+  connect( pb_advanced, &QAbstractButton::clicked, this, &US_Config::update_advanced );
 
   // Optima Host
   QLabel* lb_xpnhost = us_label( "Instrument Preferences:" );
@@ -188,19 +188,19 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
     pb_xpnh->setEnabled(false);
     
   otherSettings->addWidget( pb_xpnh, row++, 1 );
-  connect( pb_xpnh, SIGNAL( clicked() ), this, SLOT( update_xpnhost() ) );
+  connect( pb_xpnh, &QAbstractButton::clicked, this, &US_Config::update_xpnhost );
 
   topbox->addLayout( otherSettings );
 
   // Pushbuttons
   pb_help = us_pushbutton( tr( "Help" ) );
-  connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
+  connect( pb_help, &QAbstractButton::clicked, this, &US_Config::help );
   
   pb_save = us_pushbutton( tr( "Save" ) );
-  connect( pb_save, SIGNAL( clicked() ), this, SLOT( save() ) );
+  connect( pb_save, &QAbstractButton::clicked, this, &US_Config::save );
 
   pb_cancel = us_pushbutton( tr( "Close" ) );
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( close() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
 
   QBoxLayout* buttons = new QHBoxLayout();
   buttons->addWidget( pb_save   );

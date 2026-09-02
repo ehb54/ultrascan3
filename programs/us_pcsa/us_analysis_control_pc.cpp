@@ -272,29 +272,29 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    fitpars_connect( true );
 
-   connect( ct_tralpha,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   set_alpha   ()         ) );
+   connect( ct_tralpha,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControlPc::set_alpha );
 
-   connect( pb_pltlines, SIGNAL( clicked()    ),
-            this,        SLOT(   plot_lines() ) );
-   connect( pb_startfit, SIGNAL( clicked()    ),
-            this,        SLOT(   fit_final()  ) );
-   connect( pb_scanregp, SIGNAL( clicked()    ),
-            this,        SLOT(   scan_alpha() ) );
-   connect( pb_finalmdl, SIGNAL( clicked()    ),
-            this,        SLOT(   final_only() ) );
-   connect( pb_stopfit,  SIGNAL( clicked()    ),
-            this,        SLOT(   stop_fit()   ) );
-   connect( pb_plot,     SIGNAL( clicked()    ),
-            this,        SLOT(   plot()       ) );
-   connect( pb_save,     SIGNAL( clicked()    ),
-            this,        SLOT(   save()       ) );
-   connect( pb_advanaly, SIGNAL( clicked()    ),
-            this,        SLOT(   advanced()   ) );
-   connect( pb_help,     SIGNAL( clicked()    ),
-            this,        SLOT(   help()       ) );
-   connect( pb_close,    SIGNAL( clicked()    ),
-            this,        SLOT(   close_all()  ) );
+   connect( pb_pltlines, &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::plot_lines );
+   connect( pb_startfit, &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::fit_final );
+   connect( pb_scanregp, &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::scan_alpha );
+   connect( pb_finalmdl, &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::final_only );
+   connect( pb_stopfit,  &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::stop_fit );
+   connect( pb_plot,     &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::plot );
+   connect( pb_save,     &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::save );
+   connect( pb_advanaly, &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::advanced );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::help );
+   connect( pb_close,    &QAbstractButton::clicked,
+            this,        &US_AnalysisControlPc::close_all );
 
    pb_pltlines->setEnabled( false );
    compute();
@@ -469,14 +469,14 @@ DbgLv(1) << "AnaC: need_fit need_fnl" << need_fit << need_final
 
    nctotal         = 10000;
 
-   connect( processor, SIGNAL( progress_update(   double ) ),
-            this,      SLOT(   update_progress(   double ) ) );
-   connect( processor, SIGNAL( message_update(    QString, bool ) ),
-            this,      SLOT(   progress_message(  QString, bool ) ) );
-   connect( processor, SIGNAL( stage_complete(    int, int )  ),
-            this,      SLOT(   reset_steps(       int, int )  ) );
-   connect( processor, SIGNAL( process_complete(  int  ) ),
-            this,      SLOT(   completed_process( int  ) ) );
+   connect( processor, &US_pcsaProcess::progress_update,
+            this,      &US_AnalysisControlPc::update_progress );
+   connect( processor, &US_pcsaProcess::message_update,
+            this,      &US_AnalysisControlPc::progress_message );
+   connect( processor, &US_pcsaProcess::stage_complete,
+            this,      &US_AnalysisControlPc::reset_steps );
+   connect( processor, &US_pcsaProcess::process_complete,
+            this,      &US_AnalysisControlPc::completed_process );
 
    // Begin or resume the fit
    pb_startfit->setEnabled( false );
@@ -1077,8 +1077,8 @@ DbgLv(1) << "PL:  mlnplotd closed";
    mlnplotd = new US_MLinesPlot( ymin, ymax, xmin, xmax, ctype,
                                  nypts, nlpts, bmndx );
 
-   connect( mlnplotd, SIGNAL( destroyed( QObject* ) ),
-            this,     SLOT  ( closed   ( QObject* ) ) );
+   connect( mlnplotd, &QObject::destroyed,
+            this,     &US_AnalysisControlPc::closed );
 
 DbgLv(1) << "PL:  new mlnplotd" << mlnplotd << "sol_type" << sol_type;
 

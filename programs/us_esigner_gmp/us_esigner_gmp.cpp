@@ -125,25 +125,25 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   revGlobalGrid -> addWidget( pb_unset_global_appr,    row++,     20, 1,  10  );
   
 
-  connect( le_inv_search, SIGNAL( textChanged( const QString& ) ), 
-	   SLOT  ( limit_inv_names( const QString& ) ) );
-  connect( lw_inv_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
-	   SLOT  ( get_inv_data  ( QListWidgetItem* ) ) );
+  connect( le_inv_search, &QLineEdit::textChanged, 
+	   this, &US_eSignaturesGMP::limit_inv_names );
+  connect( lw_inv_list, &QListWidget::itemClicked, 
+	   this, &US_eSignaturesGMP::get_inv_data );
 
-  connect( le_grev_search, SIGNAL( textChanged( const QString& ) ), 
-	   SLOT  ( limit_grev_names( const QString& ) ) );
-  connect( lw_grev_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
-	   SLOT  ( get_grev_data  ( QListWidgetItem* ) ) );
+  connect( le_grev_search, &QLineEdit::textChanged, 
+	   this, &US_eSignaturesGMP::limit_grev_names );
+  connect( lw_grev_list, &QListWidget::itemClicked, 
+	   this, &US_eSignaturesGMP::get_grev_data );
 
-  connect( le_gappr_search, SIGNAL( textChanged( const QString& ) ), 
-	   SLOT  ( limit_gappr_names( const QString& ) ) );
-  connect( lw_gappr_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
-	   SLOT  ( get_gappr_data  ( QListWidgetItem* ) ) );
+  connect( le_gappr_search, &QLineEdit::textChanged, 
+	   this, &US_eSignaturesGMP::limit_gappr_names );
+  connect( lw_gappr_list, &QListWidget::itemClicked, 
+	   this, &US_eSignaturesGMP::get_gappr_data );
 
-  connect( pb_set_global_rev,    SIGNAL( clicked() ), SLOT ( set_greviewer() ) );
-  connect( pb_unset_global_rev,  SIGNAL( clicked() ), SLOT ( unset_greviewer() ) );
-  connect( pb_set_global_appr,   SIGNAL( clicked() ), SLOT ( set_gappr() ) );
-  connect( pb_unset_global_appr, SIGNAL( clicked() ), SLOT ( unset_gappr() ) );
+  connect( pb_set_global_rev,    &QAbstractButton::clicked, this, &US_eSignaturesGMP::set_greviewer );
+  connect( pb_unset_global_rev,  &QAbstractButton::clicked, this, &US_eSignaturesGMP::unset_greviewer );
+  connect( pb_set_global_appr,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::set_gappr );
+  connect( pb_unset_global_appr, &QAbstractButton::clicked, this, &US_eSignaturesGMP::unset_gappr );
    
   //for setting oper, revs. for selected GMP Run
   QGridLayout*  revOperGMPRunGrid  = new QGridLayout();
@@ -278,14 +278,14 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   revOperGMPRunGrid -> addWidget( pb_set_operRev,         row++,    7,  1,  6 );
 
-  connect( pb_selRun_operRev_set,   SIGNAL( clicked() ), SLOT ( selectGMPRun() ) );
-  connect( pb_set_operRev, SIGNAL( clicked() ), SLOT ( assignOperRevs() ) );
-  connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
-  connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
-  connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
-  connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
-  connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
-  connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
+  connect( pb_selRun_operRev_set,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::selectGMPRun );
+  connect( pb_set_operRev, &QAbstractButton::clicked, this, &US_eSignaturesGMP::assignOperRevs );
+  connect( pb_add_oper, &QAbstractButton::clicked, this, &US_eSignaturesGMP::addOpertoList );
+  connect( pb_remove_oper, &QAbstractButton::clicked, this, &US_eSignaturesGMP::removeOperfromList );
+  connect( pb_add_rev, &QAbstractButton::clicked, this, &US_eSignaturesGMP::addRevtoList );
+  connect( pb_remove_rev, &QAbstractButton::clicked, this, &US_eSignaturesGMP::removeRevfromList );
+  connect( pb_add_appr, &QAbstractButton::clicked, this, &US_eSignaturesGMP::addApprtoList );
+  connect( pb_remove_appr, &QAbstractButton::clicked, this, &US_eSignaturesGMP::removeApprfromList );
 
   
   //for eSigning selected GMP Run's Report with Assigned Operator && Reviewers
@@ -340,10 +340,10 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   eSignGMPRunGrid -> addWidget( pb_esign_report,    row++,    9,  1,  4 );
   
-  connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned() ) );
-  connect( pb_view_report_db, SIGNAL( clicked() ), SLOT ( view_report_db() ) );
-  connect( pb_esign_report,   SIGNAL( clicked() ), SLOT ( esign_report() ) );
-  connect( pb_view_eSigns,    SIGNAL( clicked() ), SLOT ( view_eSignatures() ) );
+  connect( pb_loadreport_db,  &QAbstractButton::clicked, this, &US_eSignaturesGMP::loadGMPReportDB_assigned );
+  connect( pb_view_report_db, &QAbstractButton::clicked, this, &US_eSignaturesGMP::view_report_db );
+  connect( pb_esign_report,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::esign_report );
+  connect( pb_view_eSigns,    &QAbstractButton::clicked, this, &US_eSignaturesGMP::view_eSignatures );
   
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
@@ -520,14 +520,14 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
 
   revOperGMPRunGrid -> addWidget( pb_set_operRev,         row++,    7,  1,  7 );
 
-  connect( pb_selRun_operRev_set,   SIGNAL( clicked() ), SLOT ( selectGMPRun_sa() ) );
-  connect( pb_set_operRev, SIGNAL( clicked() ), SLOT ( assignOperRevs_sa() ) );
-  connect( pb_add_oper, SIGNAL( clicked() ), SLOT ( addOpertoList() ) );
-  connect( pb_remove_oper, SIGNAL( clicked() ), SLOT ( removeOperfromList() ) );
-  connect( pb_add_rev, SIGNAL( clicked() ), SLOT ( addRevtoList() ) );
-  connect( pb_remove_rev, SIGNAL( clicked() ), SLOT ( removeRevfromList() ) );
-  connect( pb_add_appr, SIGNAL( clicked() ), SLOT ( addApprtoList() ) );
-  connect( pb_remove_appr, SIGNAL( clicked() ), SLOT ( removeApprfromList() ) );
+  connect( pb_selRun_operRev_set,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::selectGMPRun_sa );
+  connect( pb_set_operRev, &QAbstractButton::clicked, this, &US_eSignaturesGMP::assignOperRevs_sa );
+  connect( pb_add_oper, &QAbstractButton::clicked, this, &US_eSignaturesGMP::addOpertoList );
+  connect( pb_remove_oper, &QAbstractButton::clicked, this, &US_eSignaturesGMP::removeOperfromList );
+  connect( pb_add_rev, &QAbstractButton::clicked, this, &US_eSignaturesGMP::addRevtoList );
+  connect( pb_remove_rev, &QAbstractButton::clicked, this, &US_eSignaturesGMP::removeRevfromList );
+  connect( pb_add_appr, &QAbstractButton::clicked, this, &US_eSignaturesGMP::addApprtoList );
+  connect( pb_remove_appr, &QAbstractButton::clicked, this, &US_eSignaturesGMP::removeApprfromList );
 
   //Setting top-level Layouts:
   mainLayout -> addLayout( revOperGMPRunGrid );
@@ -594,7 +594,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QString a_mode ) : US_Widgets()
       // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
       // topLayout_auto->addItem( spacer2 );
       
-      connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReportDB_assigned_separate() ) );
+      connect( pb_loadreport_db,  &QAbstractButton::clicked, this, &US_eSignaturesGMP::loadGMPReportDB_assigned_separate );
 
       //resize( 1200, 300 );
       resize( 600, 500 );
@@ -665,7 +665,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned_separate( void )
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
-  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
+  connect( pdiag_autoflow_db, &US_SelectItem::accept_refresh_states, this, &US_eSignaturesGMP::refreshGMPReportsList );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -851,9 +851,9 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   eSignActionsGrid_auto -> addWidget( pb_view_eSigns,     row++,    4,  1,  4 );
   eSignActionsGrid_auto -> addWidget( pb_esign_report,    row++,    2,  1,  4 );
 
-  connect( pb_view_report_db, SIGNAL( clicked() ), SLOT ( view_report_db() ) );
-  connect( pb_esign_report,   SIGNAL( clicked() ), SLOT ( esign_report() ) );
-  connect( pb_view_eSigns,    SIGNAL( clicked() ), SLOT ( view_eSignatures() ) );
+  connect( pb_view_report_db, &QAbstractButton::clicked, this, &US_eSignaturesGMP::view_report_db );
+  connect( pb_esign_report,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::esign_report );
+  connect( pb_view_eSigns,    &QAbstractButton::clicked, this, &US_eSignaturesGMP::view_eSignatures );
   
 
   //load primary GMP Rpeort && internals:
@@ -880,8 +880,8 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
       pb_cancel   = us_pushbutton( tr( "Close" ) );
       pb_help     = us_pushbutton( tr( "Help" ) );
   
-      connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
-      connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
+      connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
+      connect( pb_help,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::help );
       //int ihgt        = pb_cancel ->height();
       //QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
       
@@ -1040,25 +1040,25 @@ US_eSignaturesGMP::US_eSignaturesGMP( QMap< QString, QString > & it_details ) : 
   revGlobalGrid -> addWidget( pb_unset_global_appr,  row++,   0, 1,  20  );
     
 
-  connect( le_inv_search, SIGNAL( textChanged( const QString& ) ), 
-	   SLOT  ( limit_inv_names( const QString& ) ) );
-  connect( lw_inv_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
-	   SLOT  ( get_inv_data  ( QListWidgetItem* ) ) );
+  connect( le_inv_search, &QLineEdit::textChanged, 
+	   this, &US_eSignaturesGMP::limit_inv_names );
+  connect( lw_inv_list, &QListWidget::itemClicked, 
+	   this, &US_eSignaturesGMP::get_inv_data );
 
-  connect( le_grev_search, SIGNAL( textChanged( const QString& ) ), 
-	   SLOT  ( limit_grev_names( const QString& ) ) );
-  connect( lw_grev_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
-	   SLOT  ( get_grev_data  ( QListWidgetItem* ) ) );
+  connect( le_grev_search, &QLineEdit::textChanged, 
+	   this, &US_eSignaturesGMP::limit_grev_names );
+  connect( lw_grev_list, &QListWidget::itemClicked, 
+	   this, &US_eSignaturesGMP::get_grev_data );
 
-  connect( le_gappr_search, SIGNAL( textChanged( const QString& ) ), 
-	   SLOT  ( limit_gappr_names( const QString& ) ) );
-  connect( lw_gappr_list, SIGNAL( itemClicked( QListWidgetItem* ) ), 
-	   SLOT  ( get_gappr_data  ( QListWidgetItem* ) ) );
+  connect( le_gappr_search, &QLineEdit::textChanged, 
+	   this, &US_eSignaturesGMP::limit_gappr_names );
+  connect( lw_gappr_list, &QListWidget::itemClicked, 
+	   this, &US_eSignaturesGMP::get_gappr_data );
 
-  connect( pb_set_global_rev,    SIGNAL( clicked() ), SLOT ( set_greviewer() ) );
-  connect( pb_unset_global_rev,  SIGNAL( clicked() ), SLOT ( unset_greviewer() ) );
-  connect( pb_set_global_appr,   SIGNAL( clicked() ), SLOT ( set_gappr() ) );
-  connect( pb_unset_global_appr, SIGNAL( clicked() ), SLOT ( unset_gappr() ) );
+  connect( pb_set_global_rev,    &QAbstractButton::clicked, this, &US_eSignaturesGMP::set_greviewer );
+  connect( pb_unset_global_rev,  &QAbstractButton::clicked, this, &US_eSignaturesGMP::unset_greviewer );
+  connect( pb_set_global_appr,   &QAbstractButton::clicked, this, &US_eSignaturesGMP::set_gappr );
+  connect( pb_unset_global_appr, &QAbstractButton::clicked, this, &US_eSignaturesGMP::unset_gappr );
 
   //Setting top-level Layouts:
   mainLayout -> addLayout( revGlobalGrid );
@@ -1819,7 +1819,7 @@ void US_eSignaturesGMP::selectGMPRun_sa( void )
 
   pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -4 );
 
-  connect( pdiag_autoflow, SIGNAL( accept_refresh_states() ), SLOT( refreshAutoflowRecordsList() ) );
+  connect( pdiag_autoflow, &US_SelectItem::accept_refresh_states, this, &US_eSignaturesGMP::refreshAutoflowRecordsList );
 
   QString autoflow_id_selected("");
   if ( pdiag_autoflow->exec() == QDialog::Accepted )
@@ -3571,7 +3571,7 @@ void US_eSignaturesGMP::loadGMPReportDB_assigned( void )
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -2 );
 
-  connect( pdiag_autoflow_db, SIGNAL( accept_refresh_states() ), SLOT( refreshGMPReportsList() ) );
+  connect( pdiag_autoflow_db, &US_SelectItem::accept_refresh_states, this, &US_eSignaturesGMP::refreshGMPReportsList );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");

@@ -56,12 +56,12 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     cb_chann      = us_comboBox();
     pb_next_chann = us_pushbutton("Next Channel");
     pb_prev_chann = us_pushbutton("Previous Channel");
-    connect( cb_chann,  SIGNAL( currentIndexChanged( int ) ), 
-	     SLOT  ( new_chann_auto         ( int ) ) );
-    connect( pb_next_chann,   SIGNAL( clicked() ),
-	     SLOT( next_chann_auto()   ) );
-    connect( pb_prev_chann,   SIGNAL( clicked() ),
-	     SLOT( prev_chann_auto()   ) );
+    connect( cb_chann,  qOverload< int >( &QComboBox::currentIndexChanged ), 
+	     this, &US_Norm_Profile::new_chann_auto );
+    connect( pb_next_chann,   &QAbstractButton::clicked,
+	     this, &US_Norm_Profile::next_chann_auto );
+    connect( pb_prev_chann,   &QAbstractButton::clicked,
+	     this, &US_Norm_Profile::prev_chann_auto );
     QGridLayout* chann_lyt = new QGridLayout();
     chann_lyt->addWidget(lb_chann,        0, 0, 1, 1);
     chann_lyt->addWidget(cb_chann,        0, 1, 1, 1);
@@ -108,8 +108,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
 
     QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
     pb_save_auto           = us_pushbutton( tr( "Save Profiles" ) );
-    connect( pb_save_auto,  SIGNAL( clicked() ), 
-	     this, SLOT  ( save_auto() ) );
+    connect( pb_save_auto,  &QAbstractButton::clicked,
+	     this, &US_Norm_Profile::save_auto );
     pb_save_auto->setEnabled(false);
     
     bottom_lyt->addWidget( pb_help,         4,   0, 1, 1 );
@@ -198,29 +198,29 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     plotData();
     picker_state = XNONE;
 
-    connect(pb_load, SIGNAL(clicked()), this, SLOT(slt_loadAUC()));
-    connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(pb_reset, SIGNAL(clicked()), this, SLOT(slt_reset()));
-    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
-    connect(lw_inpData, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
-            this, SLOT(slt_addRmItem(QListWidgetItem *)));
-    connect(lw_inpData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_inItemSel(int )));
-    connect(lw_selData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_outItemSel(int )));
-    connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
-    connect(pb_cleanList, SIGNAL(clicked()), this, SLOT(slt_cleanList()));
+    connect(pb_load, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_loadAUC);
+    connect(pb_close, &QAbstractButton::clicked, this, &QWidget::close);
+    connect(pb_reset, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_reset);
+    connect(pb_save, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_save);
+    connect(lw_inpData, &QListWidget::itemDoubleClicked,
+            this, &US_Norm_Profile::slt_addRmItem);
+    connect(lw_inpData, &QListWidget::currentRowChanged, this, &US_Norm_Profile::slt_inItemSel);
+    connect(lw_selData, &QListWidget::currentRowChanged, this, &US_Norm_Profile::slt_outItemSel);
+    connect(pb_rmItem, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_rmItem);
+    connect(pb_cleanList, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_cleanList);
 
-    connect(pb_pick_rp, SIGNAL(clicked()), this, SLOT(slt_pickRange()));
-    connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint()));
+    connect(pb_pick_rp, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickRange);
+    connect(pb_pick_norm, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickPoint);
     //connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint_auto()));
-    connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
-    connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
-    connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
-    connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
-    connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
-    connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
-    connect(ckb_ranges, SIGNAL(stateChanged(int)), this, SLOT(slt_ranges(int)));
-    connect(picker, SIGNAL(cMouseUp(const QPointF&)),
-            this,   SLOT(slt_mouse(const QPointF&)));
+    connect(ckb_xrange, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_xrange);
+    connect(ckb_legend, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_legend);
+    connect(ckb_integral, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_integral);
+    connect(ckb_norm, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm);
+    connect(ckb_rawData, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_rawData);
+    connect(ckb_norm_max, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm_by_max);
+    connect(ckb_ranges, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_ranges);
+    connect(picker, &US_PlotPicker::cMouseUp,
+            this,   &US_Norm_Profile::slt_mouse);
     ckb_norm_max->setCheckState(Qt::Checked);
 
     //hide 
@@ -436,27 +436,27 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     plotData();
     picker_state = XNONE;
 
-    connect(pb_load, SIGNAL(clicked()), this, SLOT(slt_loadAUC()));
-    connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(pb_reset, SIGNAL(clicked()), this, SLOT(slt_reset()));
-    connect(pb_save, SIGNAL(clicked()), this, SLOT(slt_save()));
-    connect(lw_inpData, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
-            this, SLOT(slt_addRmItem(QListWidgetItem *)));
-    connect(lw_inpData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_inItemSel(int )));
-    connect(lw_selData, SIGNAL(currentRowChanged(int)), this, SLOT(slt_outItemSel(int )));
-    connect(pb_rmItem, SIGNAL(clicked()), this, SLOT(slt_rmItem()));
-    connect(pb_cleanList, SIGNAL(clicked()), this, SLOT(slt_cleanList()));
+    connect(pb_load, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_loadAUC);
+    connect(pb_close, &QAbstractButton::clicked, this, &QWidget::close);
+    connect(pb_reset, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_reset);
+    connect(pb_save, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_save);
+    connect(lw_inpData, &QListWidget::itemDoubleClicked,
+            this, &US_Norm_Profile::slt_addRmItem);
+    connect(lw_inpData, &QListWidget::currentRowChanged, this, &US_Norm_Profile::slt_inItemSel);
+    connect(lw_selData, &QListWidget::currentRowChanged, this, &US_Norm_Profile::slt_outItemSel);
+    connect(pb_rmItem, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_rmItem);
+    connect(pb_cleanList, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_cleanList);
 
-    connect(pb_pick_rp, SIGNAL(clicked()), this, SLOT(slt_pickRange()));
-    connect(pb_pick_norm, SIGNAL(clicked()), this, SLOT(slt_pickPoint()));
-    connect(ckb_xrange, SIGNAL(stateChanged(int)), this, SLOT(slt_xrange(int)));
-    connect(ckb_legend, SIGNAL(stateChanged(int)), this, SLOT(slt_legend(int)));
-    connect(ckb_integral, SIGNAL(stateChanged(int)), this, SLOT(slt_integral(int)));
-    connect(ckb_norm, SIGNAL(stateChanged(int)), this, SLOT(slt_norm(int)));
-    connect(ckb_rawData, SIGNAL(stateChanged(int)), this, SLOT(slt_rawData(int)));
-    connect(ckb_norm_max, SIGNAL(stateChanged(int)), this, SLOT(slt_norm_by_max(int)));
-    connect(picker, SIGNAL(cMouseUp(const QPointF&)),
-            this,   SLOT(slt_mouse(const QPointF&)));
+    connect(pb_pick_rp, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickRange);
+    connect(pb_pick_norm, &QAbstractButton::clicked, this, &US_Norm_Profile::slt_pickPoint);
+    connect(ckb_xrange, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_xrange);
+    connect(ckb_legend, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_legend);
+    connect(ckb_integral, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_integral);
+    connect(ckb_norm, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm);
+    connect(ckb_rawData, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_rawData);
+    connect(ckb_norm_max, US_CB_STATE_CHANGED, this, &US_Norm_Profile::slt_norm_by_max);
+    connect(picker, &US_PlotPicker::cMouseUp,
+            this,   &US_Norm_Profile::slt_mouse);
     ckb_norm_max->setCheckState(Qt::Checked);
 }
 

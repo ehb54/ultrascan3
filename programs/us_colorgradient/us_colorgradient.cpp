@@ -29,7 +29,7 @@ int main( int argc, char* argv[] )
 MyButton::MyButton( int value ) : QPushButton()
 {
    which = value;
-   connect( this, SIGNAL( clicked() ), SLOT( pushed() ) );
+   connect( this, &QAbstractButton::clicked, this, &MyButton::pushed );
 }
 
 void MyButton::pushed( void )
@@ -72,8 +72,8 @@ qDebug() << "CG: nefmods" << nefmods;
    ct_nsteps   = us_counter( 2, 1.0, 10.0, 1.0 );
    ct_nsteps->setSingleStep( 1.0 );
 
-   connect( ct_nsteps, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_steps( double ) ) );
+   connect( ct_nsteps, &QwtCounter::valueChanged,
+            this,      &US_ColorGradient::update_steps );
 
    QHBoxLayout* steps = new QHBoxLayout();
 
@@ -112,11 +112,11 @@ qDebug() << "stynam" << stynam << "needbsty" << needbsty;
       colors->addWidget( pb_c[ ii ], c_row,   0 );
       colors->addWidget( ct_c[ ii ], c_row++, 1 );
 
-      connect( pb_c[ ii ], SIGNAL( click        ( int ) ),
-                           SLOT  ( c_click      ( int ) ) );
+      connect( pb_c[ ii ], &MyButton::click,
+                           this, &US_ColorGradient::c_click );
 
-      connect( ct_c[ ii ], SIGNAL( valueChanged ( double ) ),
-                           SLOT  ( c_cnt_change ( double ) ) );
+      connect( ct_c[ ii ], &QwtCounter::valueChanged,
+                           this, &US_ColorGradient::c_cnt_change );
 
       if ( ii > 1 )
       {
@@ -137,22 +137,22 @@ qDebug() << "stynam" << stynam << "needbsty" << needbsty;
 
    pb_help     = us_pushbutton( tr( "Help" ) );
    pb_reset    = us_pushbutton( tr( "Reset" ) );
-   connect( pb_help,  SIGNAL( clicked() ), this, SLOT( help() ) );
-   connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
+   connect( pb_help,  &QAbstractButton::clicked, this, &US_ColorGradient::help );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_ColorGradient::reset );
    gbuttons->addWidget( pb_help, row, 0 );
    gbuttons->addWidget( pb_reset, row++, 1 );
 
    pb_load     = us_pushbutton( tr( "Load Gradient" ) );
    pb_show     = us_pushbutton( tr( "Show Gradient" ) );
-   connect( pb_load, SIGNAL( clicked() ), this, SLOT( load_gradient() ) );
-   connect( pb_show, SIGNAL( clicked() ), this, SLOT( show_gradient() ) );
+   connect( pb_load, &QAbstractButton::clicked, this, &US_ColorGradient::load_gradient );
+   connect( pb_show, &QAbstractButton::clicked, this, &US_ColorGradient::show_gradient );
    gbuttons->addWidget( pb_load, row, 0 );
    gbuttons->addWidget( pb_show, row++, 1 );
 
    pb_save     = us_pushbutton( tr( "Save Gradient" ) );
    pb_close    = us_pushbutton( tr( "Close" ) );
-   connect( pb_save,  SIGNAL( clicked() ), this, SLOT( save_gradient() ) );
-   connect( pb_close, SIGNAL( clicked() ), this, SLOT( safe_close() ) );
+   connect( pb_save,  &QAbstractButton::clicked, this, &US_ColorGradient::save_gradient );
+   connect( pb_close, &QAbstractButton::clicked, this, &US_ColorGradient::safe_close );
    gbuttons->addWidget( pb_save, row, 0 );
    gbuttons->addWidget( pb_close, row++, 1 );
 

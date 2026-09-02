@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QtSvg>
 #include "us_plot.h"
+#include "us_theme.h"
 #include "us_images.h"
 
 #include <QtPrintSupport>
@@ -24,6 +25,7 @@
 #include "qwt_scale_map.h"
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
+#include "qwt_plot_spectrogram.h"
 
 #include <QMouseEvent>
 #include <QEvent>
@@ -170,6 +172,57 @@ bool US_DoubleClickEventFilter::eventFilter( QObject* object, QEvent* event )
 
 /*********************       US_Plot Class      *************************/
 
+namespace
+{
+   //! The palette of the plot tool bar
+   QPalette toolBarColor( void )
+   {
+      QPalette p = US_GuiSettings::plotColor();
+
+      const QList< QPalette::ColorGroup > groups =
+         QList< QPalette::ColorGroup >()
+            << QPalette::Active << QPalette::Inactive << QPalette::Disabled;
+
+      for ( const auto g : groups )
+      {
+         const QColor bg = p.color( g, QPalette::Window     );
+         const QColor fg = p.color( g, QPalette::WindowText );
+
+         // Contrast has to be added in the direction that is available
+         const bool dark = ( bg.lightness() < 128 );
+
+         p.setColor( g, QPalette::Button    , bg );
+         p.setColor( g, QPalette::ButtonText, fg );
+         p.setColor( g, QPalette::Text      , fg );
+         p.setColor( g, QPalette::Base      , bg );
+
+         p.setColor( g, QPalette::Midlight,                       // hover
+                     dark ? bg.lighter( 135 ) : bg.darker( 108 ) );
+         p.setColor( g, QPalette::Dark,                           // pressed
+                     dark ? bg.lighter( 165 ) : bg.darker( 118 ) );
+         p.setColor( g, QPalette::Mid,                            // outline
+                     dark ? bg.lighter( 150 ) : bg.darker( 125 ) );
+      }
+
+      return p;
+   }
+}
+
+bool US_Plot::eventFilter( QObject* object, QEvent* event )
+{
+   // A widget that carries a palette of its own keeps it when the application
+   // palette is replaced, so the tool bar has to be rebuilt from the new
+   // plot colors by hand.
+   if ( object == toolBar  &&
+        ( event->type() == QEvent::ApplicationPaletteChange ||
+          event->type() == QEvent::StyleChange ) )
+   {
+      toolBar->setPalette( toolBarColor() );
+   }
+
+   return QObject::eventFilter( object, event );
+}
+
 // A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
       const QString& x_axis, const QString& y_axis, const bool cmEnab,
@@ -187,10 +240,13 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
                      US_GuiSettings::fontSize() - 2 );
 
    // Add the tool bar 
-   QToolBar* toolBar = new QToolBar;
+   toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
-   toolBar->setPalette( US_GuiSettings::plotColor() );
+   toolBar->setPalette( toolBarColor() );
    toolBar->setOrientation( Qt::Vertical );
+
+   // Recolor the bar when the color scheme is switched while it is on screen
+   toolBar->installEventFilter( this );
 
    btnZoom = new QToolButton( toolBar );
    btnZoom->setText( "Zoom" );
@@ -269,10 +325,10 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    addWidget( toolBar );
 
-   // Add a 1 pixel black line between the tool bar and the plot
+   // Add a 1 pixel separator between the tool bar and the plot
    QLabel* spacer = new QLabel;
    QPalette p;
-   p.setColor( QPalette::Window, Qt::black );
+   p.setColor( QPalette::Window, US_Theme::tokens().border );
    spacer->setPalette( p );
    spacer->setAutoFillBackground( true );
    spacer->setMaximumWidth( 1 );
@@ -280,6 +336,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    plot        = new QwtPlot;
    parent_plot = plot;
+
+   US_Widgets::us_style_plot( plot );
 
    configWidget = nullptr;
   
@@ -319,10 +377,6 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
       plot->legend()->setFont( font );
    }
   
-   plot->setAutoFillBackground( true );
-   plot->setPalette ( US_GuiSettings::plotColor() );
-   plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
-
    addWidget( plot );
 
    // Setup canvas for double-click events
@@ -1198,7 +1252,7 @@ void US_PlotConfig::selectLegendPos( const int index ) const
    if ( index > 0 )
    {
       legend = new QwtLegend;
-      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      legend->setFrameStyle( QFrame::StyledPanel | QFrame::Plain );
    }
 
    plot->insertLegend( nullptr, QwtPlot::BottomLegend );

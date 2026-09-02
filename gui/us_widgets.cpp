@@ -1,8 +1,11 @@
 //! \file us_widgets.cpp
 #include <QtSvg> 
 
+#include "qwt_plot_canvas.h"
+
 #include "us_widgets.h"
 #include "us_gui_settings.h"
+#include "us_theme.h"
 #include "us_gui_util.h"
 #include "us_settings.h"
 #include "us_images.h"
@@ -10,7 +13,9 @@
 
 US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
-  QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
+  // Install the UltraScan look (style, palette, font and style sheet).  This
+  // is a no-op once it has been done for the current configuration.
+  US_Theme::apply();
 
   if ( ! g.isValid() )
   {
@@ -36,8 +41,9 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
   }
 #endif
 
-  vlgray = US_GuiSettings::editColor();
-  vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+  vlgray = US_GuiSettings::readonlyColor();
+
+  US_Theme::tag( this, US_Theme::Frame );
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
   setWindowIcon( us3_icon );
@@ -62,7 +68,7 @@ QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust,
 {
   QLabel* newLabel = new QLabel( labelString, this );
 
-  newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+  newLabel->setFrameStyle( QFrame::NoFrame );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
   newLabel->setMargin    ( 2 );
   newLabel->setAutoFillBackground( true );
@@ -72,7 +78,7 @@ QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust,
              US_GuiSettings::fontSize  () + fontAdjust, 
              weight ) );
 
-  newLabel->setPalette( US_GuiSettings::labelColor() );
+  US_Theme::tag( newLabel, US_Theme::Label );
 
   return newLabel;
 }
@@ -83,7 +89,7 @@ QLabel* US_Widgets::us_textlabel( const QString& labelString, int fontAdjust,
 {
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
-  newLabel->setPalette( US_GuiSettings::editColor() );
+  US_Theme::tag( newLabel, US_Theme::Edit );
 
   return newLabel;
 }
@@ -95,11 +101,16 @@ QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust,
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
   newLabel->setAlignment ( Qt::AlignCenter );
-  newLabel->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
-  newLabel->setMidLineWidth( 2 );
+  newLabel->setFrameStyle( QFrame::NoFrame );
+  newLabel->setMargin    ( 5 );
+
+  // Tags the label as a section header.  US_Theme leaves the banner colors
+  // to the palette below so that they stay user configurable; the property
+  // is a hook for site specific style sheets.
+  newLabel->setProperty( US_Theme::bannerProperty(), "banner" );
 
   // Set label colors
-  newLabel->setPalette( US_GuiSettings::frameColor() );
+  US_Theme::tag( newLabel, US_Theme::Banner );
 
   return newLabel;
 }
@@ -113,7 +124,7 @@ QPushButton* US_Widgets::us_pushbutton( const QString& labelString, bool enabled
   button->setFont( QFont( US_GuiSettings::fontFamily(), 
                           US_GuiSettings::fontSize  () + fontAdjust ) );
 
-  button->setPalette( US_GuiSettings::pushbColor() );
+  US_Theme::tag( button, US_Theme::Pushbutton );
 
   button->setAutoDefault( false );
   button->setEnabled( enabled );
@@ -129,8 +140,8 @@ QTextEdit* US_Widgets::us_textedit( void )
   te->setFont          ( QFont( US_GuiSettings::fontFamily(), 
                                 US_GuiSettings::fontSize  () - 1 ) );
   
-  te->setPalette       ( US_GuiSettings::normalColor() );
-  te->setFrameStyle    ( WinPanel | Sunken );
+  US_Theme::tag( te, US_Theme::Normal );
+  te->setFrameStyle    ( StyledPanel | Plain );
   te->setAcceptRichText( true );
   te->setReadOnly      ( true );
   te->show();
@@ -161,13 +172,13 @@ void US_Widgets::us_setReadOnly( QLineEdit* le, bool readonly )
 {
   if ( readonly )
   {
-     le->setPalette ( vlgray );
+     US_Theme::tag( le, US_Theme::ReadOnly );
      le->setReadOnly( true );
   }
 
   else
   {
-     le->setPalette ( US_GuiSettings::editColor() );
+     US_Theme::tag( le, US_Theme::Edit );
      le->setReadOnly( false );
   }
 }
@@ -177,13 +188,13 @@ void US_Widgets::us_setReadOnly( QTextEdit* te, bool readonly )
 {
   if ( readonly )
   {
-     te->setPalette ( vlgray );
+     US_Theme::tag( te, US_Theme::ReadOnly );
      te->setReadOnly( true );
   }
 
   else
   {
-     te->setPalette ( US_GuiSettings::normalColor() );
+     US_Theme::tag( te, US_Theme::Normal );
      te->setReadOnly( false );
   }
 }
@@ -194,7 +205,7 @@ QListWidget* US_Widgets::us_listwidget ( int fontAdjust )
   QListWidget* lw = new QListWidget;
 
   lw->setAutoFillBackground( true );
-  lw->setPalette( US_GuiSettings::editColor() );
+  US_Theme::tag( lw, US_Theme::Edit );
   lw->setFont   ( QFont( US_GuiSettings::fontFamily(), 
                          US_GuiSettings::fontSize  () + fontAdjust ) );
 
@@ -205,7 +216,6 @@ QListWidget* US_Widgets::us_listwidget ( int fontAdjust )
 QGridLayout* US_Widgets::us_checkbox( 
       const QString& text, QCheckBox*& cb, bool state )
 {
-  QPalette p    = US_GuiSettings::normalColor();
   QFont    font = QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize  (),
                          QFont::Bold );
@@ -214,14 +224,12 @@ QGridLayout* US_Widgets::us_checkbox(
 
   QLabel* lb_spacer = new QLabel;
   lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
-  lb_spacer->setAutoFillBackground( true );
-  lb_spacer->setPalette           ( p );
+  US_Theme::tag( lb_spacer, US_Theme::Normal );
 
   cb = new QCheckBox( text.toLatin1(), this );
-  cb->setFont              ( font  ); 
-  cb->setPalette           ( p     );
+  cb->setFont              ( font  );
+  US_Theme::tag( cb, US_Theme::Normal );
   cb->setChecked           ( state );
-  cb->setAutoFillBackground( true  );
 
   QGridLayout* layout = new QGridLayout;
   layout->setContentsMargins( 0, 0, 0, 0 );
@@ -237,7 +245,6 @@ QGridLayout* US_Widgets::us_checkbox(
 QGridLayout* US_Widgets::us_radiobutton( 
       const QString& text, QRadioButton*& rb, bool state )
 {
-  QPalette p    = US_GuiSettings::normalColor();
   QFont    font = QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize  (),
                          QFont::Bold );
@@ -246,13 +253,11 @@ QGridLayout* US_Widgets::us_radiobutton(
 
   QLabel* lb_spacer = new QLabel;
   lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
-  lb_spacer->setAutoFillBackground( true );
-  lb_spacer->setPalette           ( p );
+  US_Theme::tag( lb_spacer, US_Theme::Normal );
 
   rb = new QRadioButton( text.toLatin1(), this );
-  rb->setAutoFillBackground( true  );
   rb->setFont              ( font  );
-  rb->setPalette           ( p     );
+  US_Theme::tag( rb, US_Theme::Normal );
   rb->setChecked           ( state );
 
   QGridLayout* layout = new QGridLayout;
@@ -273,8 +278,8 @@ QProgressBar* US_Widgets::us_progressBar( int low, int high, int value )
   pb->setRange( low, high );
   pb->setValue( value );
 
-  pb->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
-  pb->setPalette( US_GuiSettings::normalColor() );
+  pb->setAlignment( Qt::AlignCenter );
+  US_Theme::tag( pb, US_Theme::Normal );
   pb->setAutoFillBackground( true );
 
   pb->setFont( QFont( US_GuiSettings::fontFamily(),
@@ -289,7 +294,7 @@ QComboBox* US_Widgets::us_comboBox( void )
 {
   QComboBox* cb = new QComboBox( this );
 
-  cb->setPalette( US_GuiSettings::normalColor() );
+  US_Theme::tag( cb, US_Theme::Normal );
   cb->setAutoFillBackground( true );
   cb->setFont( QFont( US_GuiSettings::fontFamily(), 
                       US_GuiSettings::fontSize  () ) );
@@ -307,7 +312,7 @@ QLCDNumber* US_Widgets::us_lcd( int digits, int value )
   lcd->display        ( value );
   lcd->setAutoFillBackground( true );
 
-  lcd->setPalette     ( US_GuiSettings::lcdColor() );
+  US_Theme::tag( lcd, US_Theme::Lcd );
 
   return lcd;
 }
@@ -323,16 +328,23 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+  // The counter's up/down buttons are unusably small with the native macOS
+  // style.  Give just those buttons a Fusion style - unlike the former
+  // QApplication::setStyle() call this leaves the style the user selected
+  // for the rest of the application alone.
+  static QStyle* btnstyle = QStyleFactory::create( "Fusion" );
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  if ( btnstyle != nullptr )
   {
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
-
-     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+     for ( int jj = 0; jj < children.size(); jj++ )
      {
-        cwidg->setStyle( btnstyle );
+        QWidget* cwidg = (QWidget*)children.at( jj );
+        QString clname = cwidg->metaObject()->className();
+
+        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+        {
+           cwidg->setStyle( btnstyle );
+        }
      }
   }
 #endif    // END: special button treatment for Mac
@@ -350,7 +362,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
 
   QFont vfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   QFontMetrics fm( vfont );
-  counter->setPalette   ( US_GuiSettings::normalColor() );
+  US_Theme::tag( counter, US_Theme::Normal );
   counter->setFont      ( vfont );
   counter->setAutoFillBackground( true );
 
@@ -366,6 +378,30 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   return counter;
 }
 
+// Apply the theme to a plot.  Called for every plot UltraScan creates, so
+// that plots built outside the factory below look the same.
+void US_Widgets::us_style_plot( QwtPlot* plot )
+{
+  if ( plot == nullptr )
+    return;
+
+  plot->setAutoFillBackground( true );
+  US_Theme::tag( plot, US_Theme::PlotFrame );
+  plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+
+  QwtPlotCanvas* canvas = qobject_cast< QwtPlotCanvas* >( plot->canvas() );
+
+  if ( canvas != NULL )
+  {
+    // Qwt defaults the canvas to a 3D sunken panel.  A flat, rounded canvas
+    // matches the rest of the UltraScan widgets.  Note that the canvas
+    // background lives in the canvas palette's Window role, so the palette
+    // must not be replaced here - it would undo setCanvasBackground().
+    canvas->setFrameStyle  ( QFrame::NoFrame );
+    canvas->setBorderRadius( US_Theme::radius() );
+  }
+}
+
 QwtPlot* US_Widgets::us_plot( const QString& title, const QString& x_axis,
                               const QString& y_axis )
 {
@@ -377,9 +413,7 @@ QwtPlot* US_Widgets::us_plot( const QString& title, const QString& x_axis,
   plot->setAxisTitle( QwtPlot::xBottom, x_axis );
   plot->setAxisTitle( QwtPlot::yLeft  , y_axis );
 
-  plot->setAutoFillBackground( true );
-  plot->setPalette ( US_GuiSettings::plotColor() );
-  plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+  us_style_plot( plot );
 
   return plot;
 }
@@ -504,7 +538,7 @@ QTabWidget* US_Widgets::us_tabwidget(  int fontAdjust,
              US_GuiSettings::fontSize  () + fontAdjust,
              weight ) );
 
-  newtw->setPalette( US_GuiSettings::normalColor() );
+  US_Theme::tag( newtw, US_Theme::Normal );
 
   return newtw;
 }
@@ -517,7 +551,7 @@ QHBoxLayout* US_Widgets::us_timeedit(
    QFont      font   = QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize  () + fontAdjust );
    tedt              = new QTimeEdit( QTime( 0, 0 ), this );
-   tedt->setPalette( pal );
+   US_Theme::tag( tedt, US_Theme::Normal );
    tedt->setAutoFillBackground( true );
    tedt->setFont( font );
 
@@ -528,7 +562,7 @@ QHBoxLayout* US_Widgets::us_timeedit(
    if ( sbox != NULL )
    {
       *sbox             = new QSpinBox( this );
-      (*sbox)->setPalette( pal );
+      US_Theme::tag( *sbox, US_Theme::Normal );
       (*sbox)->setAutoFillBackground( true );
       (*sbox)->setFont( font );
 
@@ -556,7 +590,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmss(
    if ( dd != NULL )
    {
       *dd              = new QSpinBox( this );
-      (*dd)->setPalette( pal );
+      US_Theme::tag( *dd, US_Theme::Normal );
       (*dd)->setAutoFillBackground( true );
       (*dd)->setFont( font );
 
@@ -566,7 +600,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmss(
    if ( hh != NULL )
    {
       *hh              = new QSpinBox( this );
-      (*hh)->setPalette( pal );
+      US_Theme::tag( *hh, US_Theme::Normal );
       (*hh)->setAutoFillBackground( true );
       (*hh)->setFont( font );
 
@@ -576,7 +610,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmss(
    if ( mm != NULL )
    {
       *mm              = new QSpinBox( this );
-      (*mm)->setPalette( pal );
+      US_Theme::tag( *mm, US_Theme::Normal );
       (*mm)->setAutoFillBackground( true );
       (*mm)->setFont( font );
 
@@ -586,7 +620,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmss(
    if ( ss != NULL )
    {
       *ss              = new QSpinBox( this );
-      (*ss)->setPalette( pal );
+      US_Theme::tag( *ss, US_Theme::Normal );
       (*ss)->setAutoFillBackground( true );
       (*ss)->setFont( font );
 
@@ -612,7 +646,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    {
       *dd              = new QSpinBox( this );
       (*dd)->setRange(0, 20);
-      (*dd)->setPalette( pal );
+      US_Theme::tag( *dd, US_Theme::Normal );
       (*dd)->setAutoFillBackground( true );
       (*dd)->setFont( font );
       QLabel*  lb_d   = us_label( tr( "D:" ) );
@@ -632,7 +666,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    {
       *hh              = new QSpinBox( this );
       (*hh)->setRange(0, 23);
-      (*hh)->setPalette( pal );
+      US_Theme::tag( *hh, US_Theme::Normal );
       (*hh)->setAutoFillBackground( true );
       (*hh)->setFont( font );
       QLabel*  lb_h   = us_label( tr( "H:" ) );
@@ -652,7 +686,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    {
       *mm              = new QSpinBox( this );
       (*mm)->setRange(0, 59);
-      (*mm)->setPalette( pal );
+      US_Theme::tag( *mm, US_Theme::Normal );
       (*mm)->setAutoFillBackground( true );
       (*mm)->setFont( font );
       QLabel*  lb_m   = us_label( tr( "M:" ) );
@@ -672,7 +706,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
    {
       *ss              = new QSpinBox( this );
       (*ss)->setRange(0, 59);
-      (*ss)->setPalette( pal );
+      US_Theme::tag( *ss, US_Theme::Normal );
       (*ss)->setAutoFillBackground( true );
       (*ss)->setFont( font );
       QLabel*  lb_s   = us_label( tr( "S:" ) );
@@ -696,7 +730,7 @@ QHBoxLayout* US_Widgets::us_ddhhmmsslay(
 QSpinBox* US_Widgets::us_spinbox( const int fontAdjust )
 {
    QSpinBox* sbox   = new QSpinBox( this );
-   sbox->setPalette( US_GuiSettings::normalColor() );
+   US_Theme::tag( sbox, US_Theme::Normal );
    sbox->setAutoFillBackground( true );
    sbox->setFont( QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize() + fontAdjust ) );
@@ -933,7 +967,7 @@ US_Disk_DB_Controls::US_Disk_DB_Controls( int state )
    addLayout( db_layout );
    addLayout( disk_layout );
 
-   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+   connect( rb_db, &QAbstractButton::toggled, this, &US_Disk_DB_Controls::rb_changed );
 }
 
 bool US_Disk_DB_Controls::db( void )
@@ -945,14 +979,14 @@ void US_Disk_DB_Controls::set_db( void )
 {
    rb_db->disconnect();
    rb_db->setChecked( true );
-   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+   connect( rb_db, &QAbstractButton::toggled, this, &US_Disk_DB_Controls::rb_changed );
 }
 
 void US_Disk_DB_Controls::set_disk( void )
 {
    rb_db  ->disconnect();
    rb_disk->setChecked( true );
-   connect( rb_db, SIGNAL( toggled( bool ) ), SLOT( rb_changed( bool ) ) );
+   connect( rb_db, &QAbstractButton::toggled, this, &US_Disk_DB_Controls::rb_changed );
 }
 
 void US_Disk_DB_Controls::rb_changed( bool /* state */ )
@@ -964,7 +998,6 @@ void US_Disk_DB_Controls::rb_changed( bool /* state */ )
 QGridLayout* US_Disk_DB_Controls::us_radiobutton( 
       const QString& text, QRadioButton*& rb, bool state )
 {
-  QPalette p    = US_GuiSettings::normalColor();
   QFont    font = QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize  (),
                          QFont::Bold );
@@ -973,13 +1006,11 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
 
   QLabel* lb_spacer = new QLabel;
   lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
-  lb_spacer->setAutoFillBackground( true );
-  lb_spacer->setPalette           ( p );
+  US_Theme::tag( lb_spacer, US_Theme::Normal );
 
   rb = new QRadioButton( text.toLatin1() );
-  rb->setAutoFillBackground( true  );
   rb->setFont              ( font  );
-  rb->setPalette           ( p     );
+  US_Theme::tag( rb, US_Theme::Normal );
   rb->setChecked           ( state );
 
   QGridLayout* layout = new QGridLayout;
@@ -999,17 +1030,16 @@ US_LineEdit_RE::US_LineEdit_RE(const QString& txt, int fontAdjust, bool readonly
     this->setFont(QFont(US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() + fontAdjust));
     this->insert(_mytext);
     this->setAutoFillBackground( true );
-    QPalette vlgray = US_GuiSettings::editColor();
-    vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+    QPalette vlgray = US_GuiSettings::readonlyColor();
     if (readonly){
-        this->setPalette ( vlgray );
+        US_Theme::tag( this, US_Theme::ReadOnly );
         this->setReadOnly( true );
     } else {
-        this->setPalette ( US_GuiSettings::normalColor() );
+        US_Theme::tag( this, US_Theme::Normal );
         this->setReadOnly( false );
     }
     setDefault();
-    connect(this, SIGNAL(textEdited(const QString &)), this, SLOT(newEdit(const QString &)));
+    connect(this, &QLineEdit::textEdited, this, &US_LineEdit_RE::newEdit);
 }
 
 void US_LineEdit_RE::setDefault(){

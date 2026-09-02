@@ -283,30 +283,30 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   pb_collapse_all   ->setEnabled( false );
   pb_view_report_db ->setEnabled( false );
   
-  connect( pb_help,    SIGNAL( clicked()      ),
-	   this,       SLOT(   help()         ) );
-  connect( pb_close,   SIGNAL( clicked()      ),
-	   this,       SLOT(   close()        ) );
+  connect( pb_help,    &QAbstractButton::clicked,
+	   this,       &US_ReporterGMP::help );
+  connect( pb_close,   &QAbstractButton::clicked,
+	   this,       &QWidget::close );
 
-  connect( pb_loadrun,      SIGNAL( clicked()      ),
-	   this,            SLOT(   load_gmp_run()   ) );
-  connect( pb_gen_report,   SIGNAL( clicked()      ),
-	   this,            SLOT(   generate_report()   ) );
-  connect( pb_view_report,  SIGNAL( clicked()      ),
-	   this,            SLOT(   view_report()   ) );
-  connect( pb_select_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( select_all()   ) );
-  connect( pb_unselect_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   unselect_all()   ) );
-  connect( pb_expand_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( expand_all()   ) );
-  connect( pb_collapse_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   collapse_all()   ) ); 
+  connect( pb_loadrun,      &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::load_gmp_run );
+  connect( pb_gen_report,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::generate_report );
+  connect( pb_view_report,  &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::view_report );
+  connect( pb_select_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::select_all );
+  connect( pb_unselect_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::unselect_all );
+  connect( pb_expand_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::expand_all );
+  connect( pb_collapse_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::collapse_all ); 
 
-  connect( pb_loadreport_db,  SIGNAL( clicked()      ),
-  	   this,              SLOT(   load_gmp_report_db()   ) );
-  connect( pb_view_report_db, SIGNAL( clicked()      ),
-	   this,              SLOT(   view_report_db()   ) );
+  connect( pb_loadreport_db,  &QAbstractButton::clicked,
+  	   this,              &US_ReporterGMP::load_gmp_report_db );
+  connect( pb_view_report_db, &QAbstractButton::clicked,
+	   this,              &US_ReporterGMP::view_report_db );
   
   //rightLayout: genTree
   QLabel*      lb_gentree  = us_banner(      tr( "General Report Profile Settings:" ), 1 );
@@ -479,25 +479,25 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   pb_expand_all  ->setEnabled( false );
   pb_collapse_all->setEnabled( false );
   
-  connect( pb_help,    SIGNAL( clicked()      ),
-	   this,       SLOT(   help()         ) );
-  connect( pb_close,   SIGNAL( clicked()      ),
-	   this,       SLOT(   close()        ) );
+  connect( pb_help,    &QAbstractButton::clicked,
+	   this,       &US_ReporterGMP::help );
+  connect( pb_close,   &QAbstractButton::clicked,
+	   this,       &QWidget::close );
 
-  connect( pb_loadrun,      SIGNAL( clicked()      ),
-	   this,            SLOT(   load_gmp_run()   ) );
-  connect( pb_gen_report,   SIGNAL( clicked()      ),
-	   this,            SLOT(   generate_report()   ) );
-  connect( pb_view_report,  SIGNAL( clicked()      ),
-	   this,            SLOT(   view_report()   ) );
-  connect( pb_select_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( select_all()   ) );
-  connect( pb_unselect_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   unselect_all()   ) );
-  connect( pb_expand_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( expand_all()   ) );
-  connect( pb_collapse_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   collapse_all()   ) ); 
+  connect( pb_loadrun,      &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::load_gmp_run );
+  connect( pb_gen_report,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::generate_report );
+  connect( pb_view_report,  &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::view_report );
+  connect( pb_select_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::select_all );
+  connect( pb_unselect_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::unselect_all );
+  connect( pb_expand_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::expand_all );
+  connect( pb_collapse_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::collapse_all ); 
     
   //rightLayout: genTree
   QLabel*      lb_gentree  = us_banner(      tr( "General Report Profile Settings:" ), 1 );
@@ -575,8 +575,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   pb_view_report_auto   = us_pushbutton( tr( "View Report" ) );
   genL->addWidget( pb_view_report_auto );
   pb_view_report_auto ->setVisible( false );
-  connect( pb_view_report_auto,  SIGNAL( clicked()      ),
-	   this,                 SLOT(   view_report()   ) );
+  connect( pb_view_report_auto,  &QAbstractButton::clicked,
+	   this,                 &US_ReporterGMP::view_report );
   superLayout -> addLayout( genL );
   
   // Hide layouts
@@ -2376,8 +2376,8 @@ void US_ReporterGMP::build_miscTree ( void )
   //     first_time_misc_tree_build = false;
   //   }
   
-  connect( miscTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
-  	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
+  connect( miscTree, &QTreeWidget::itemChanged,
+  	   this,    &US_ReporterGMP::changedItem );
 
 }
 
@@ -2553,8 +2553,8 @@ void US_ReporterGMP::build_genTree ( void )
       first_time_gen_tree_build = false;
     }
   
-  connect( genTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
-  	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
+  connect( genTree, &QTreeWidget::itemChanged,
+  	   this,    &US_ReporterGMP::changedItem );
 
 }
 
@@ -2617,8 +2617,8 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
     }
 
   //reconnect
-  connect( item -> treeWidget(), SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-	   this,                 SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( item -> treeWidget(), &QTreeWidget::itemChanged,
+	   this,                 &US_ReporterGMP::changedItem );
 }
 
 //build perChanTree:ABDE
@@ -2719,8 +2719,8 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
       first_time_perChan_tree_build = false;
     }
   
-  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( perChanTree, &QTreeWidget::itemChanged,
+  	   this,        &US_ReporterGMP::changedItem );
 }
   
 //build perChanTree
@@ -3134,8 +3134,8 @@ void US_ReporterGMP::build_perChanTree ( void )
       first_time_perChan_tree_build = false;
     }
   
-  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( perChanTree, &QTreeWidget::itemChanged,
+  	   this,        &US_ReporterGMP::changedItem );
 }
 
 
@@ -3194,8 +3194,8 @@ void US_ReporterGMP::build_combPlotsTree ( void )
 
   //combPlotsTree->setMaximumHeight(30);
 
-  connect( combPlotsTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,          SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( combPlotsTree, &QTreeWidget::itemChanged,
+  	   this,          &US_ReporterGMP::changedItem );
   
 }
 
@@ -3884,16 +3884,16 @@ void US_ReporterGMP::process_abde_plots( void )
 {
   //read, parse
   sdiag_norm_profile = new US_Norm_Profile("AUTO");
-  connect( sdiag_norm_profile, SIGNAL( pass_channels_info( QStringList& )),
-	   this, SLOT( get_abde_channels(QStringList&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_rmsd_info( QMap< QString, double >& )),
-	   this, SLOT( get_abde_rmsds(QMap< QString, double >&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_menisc_info( QMap< QString, double >& )),
-	   this, SLOT( get_abde_menisc(QMap< QString, double >&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_percents_info( QMap< QString, QMap < QString, double>>& )),
-	   this, SLOT( get_abde_percents(QMap< QString, QMap < QString, double>>&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >& )),
-	   this, SLOT( get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&) ) );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_channels_info,
+	   this, &US_ReporterGMP::get_abde_channels );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_rmsd_info,
+	   this, &US_ReporterGMP::get_abde_rmsds );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_menisc_info,
+	   this, &US_ReporterGMP::get_abde_menisc );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_percents_info,
+	   this, &US_ReporterGMP::get_abde_percents );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel,
+	   this, &US_ReporterGMP::get_abde_data_per_channel );
 
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
   
@@ -5550,8 +5550,8 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  //*DEBUG*
 	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 	  
-	  connect( astfem_rsa, SIGNAL( current_component( int ) ),
-	   	   this,       SLOT  ( update_progress  ( int ) ) );
+	  connect( astfem_rsa, &US_Astfem_RSA::current_component,
+	   	   this,       &US_ReporterGMP::update_progress );
 	  astfem_rsa->set_debug_flag( dbg_level );
 	  solution_rec.buffer.compressibility = compress;
 	  solution_rec.buffer.manual          = manual;
@@ -5638,13 +5638,13 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  tworkers << tworker;
 	  wthreads << wthread;
 	  
-	  connect( wthread, SIGNAL( started()         ),
-		   tworker, SLOT  ( calc_simulation() ) );
+	  connect( wthread, &QThread::started,
+		   tworker, &ThreadWorker::calc_simulation );
 	  
-	  connect( tworker, SIGNAL( work_progress  ( int, int ) ),
-	   	   this,    SLOT(   thread_progress( int, int ) ) );
-	  connect( tworker, SIGNAL( work_complete  ( int )      ),
-		   this,    SLOT(   thread_complete( int )      ) );
+	  connect( tworker, &ThreadWorker::work_progress,
+	   	   this,    &US_ReporterGMP::thread_progress );
+	  connect( tworker, &ThreadWorker::work_complete,
+		   this,    &US_ReporterGMP::thread_complete );
 	  
 	  wthread->start();
 	}

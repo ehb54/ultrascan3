@@ -110,20 +110,20 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
    mainLayout->setStretchFactor( leftLayout,  1 );
    mainLayout->setStretchFactor( rightLayout, 4 );
 
-   connect( cb_pltkey, SIGNAL( currentIndexChanged( int ) ),
-            this,      SLOT  ( plot_kdata()               ) );
-   connect( pb_prev,   SIGNAL( clicked()   ),
-            this,      SLOT  ( prev_plot() ) );
-   connect( pb_next,   SIGNAL( clicked()   ),
-            this,      SLOT  ( next_plot() ) );
-   connect( pb_detail, SIGNAL( clicked()   ),
-            this,      SLOT  ( details()   ) );
-   connect( pb_close,  SIGNAL( clicked()   ),
-            this,      SLOT  ( close()     ) );
-   connect( ck_xscans, SIGNAL( toggled( bool ) ),
-            this,      SLOT  ( plot_data()     ) );
-   connect( ck_sstart, SIGNAL( toggled( bool ) ),
-            this,      SLOT  ( plot_data()     ) );
+   connect( cb_pltkey, qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,      &US_TmstPlot::plot_kdata );
+   connect( pb_prev,   &QAbstractButton::clicked,
+            this,      &US_TmstPlot::prev_plot );
+   connect( pb_next,   &QAbstractButton::clicked,
+            this,      &US_TmstPlot::next_plot );
+   connect( pb_detail, &QAbstractButton::clicked,
+            this,      &US_TmstPlot::details );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &QWidget::close );
+   connect( ck_xscans, &QAbstractButton::toggled,
+            this,      &US_TmstPlot::plot_data );
+   connect( ck_sstart, &QAbstractButton::toggled,
+            this,      &US_TmstPlot::plot_data );
 
    adjustSize();
    lw_datinfo->setMinimumHeight( lb_pltkey ->height() * 16 );
@@ -247,8 +247,8 @@ void US_TmstPlot::plot_data()
       {
          ck_sstart->disconnect();
          ck_sstart->setChecked( true );
-         connect( ck_sstart, SIGNAL( toggled( bool ) ),
-                  this,      SLOT  ( plot_data()     ) );
+         connect( ck_sstart, &QAbstractButton::toggled,
+                  this,      &US_TmstPlot::plot_data );
       }
    }
    else

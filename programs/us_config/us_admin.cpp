@@ -51,15 +51,15 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags )
   
   pb_help = us_pushbutton( "Help" );
   pb_help->setMinimumHeight( buttonh );
-  connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+  connect( pb_help, &QAbstractButton::clicked, this, &US_Admin::help );
   
   pb_save = us_pushbutton( "Save" );
   pb_save->setMinimumHeight( buttonh ); 
-  connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+  connect( pb_save, &QAbstractButton::clicked, this, &US_Admin::save );
           
   pb_cancel = us_pushbutton( "Close" );
   pb_cancel->setMinimumHeight( buttonh );
-  connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
 
   // Layout
   QGridLayout* passwords = new QGridLayout;

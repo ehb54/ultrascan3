@@ -276,9 +276,9 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     // connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
     connect(ct_maxod, &QwtCounter::valueChanged, this, &US_ConvertScan::plot_absorbance);
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-    connect(chkb_abs_int, &QCheckBox::stateChanged, this, &US_ConvertScan::plot_ref_state);
+    connect(chkb_abs_int, US_CB_STATE_CHANGED, this, &US_ConvertScan::plot_ref_state);
 #else
-    connect(chkb_abs_int, &QCheckBox::checkStateChanged, this, &US_ConvertScan::plot_ref_state);
+    connect(chkb_abs_int, US_CB_STATE_CHANGED, this, &US_ConvertScan::plot_ref_state);
 #endif
 }
 
@@ -774,7 +774,7 @@ void US_ConvertScan::set_wavl_ctrl(){
     // connect(cb_plot_id, QOverload<int>::of(&QComboBox::currentIndexChanged),
     //         [=](int index){ select_id(index); });
 
-    connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(select_id(int)));
+    connect(cb_plot_id, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_ConvertScan::select_id);
     select_id(wavl_id);
 }
 
@@ -1161,7 +1161,7 @@ void US_ConvertScan::set_table(){
         combo->setCurrentIndex(cid);
 
         tb_triple->setCellWidget(ii, 2, combo);
-        connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(select_refscan(int)));
+        connect(combo, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_ConvertScan::select_refscan);
 
         // connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
         //         [=](int index){ select_refscan(index); });

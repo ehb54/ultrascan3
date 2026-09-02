@@ -446,9 +446,12 @@ class US_Edit : public US_Widgets
  //    void resizeEvent(QResizeEvent *event) override;	
 						  
 
+   public slots:
+      void load_auto         ( QMap < QString, QString > & );
+      void reset_editdata_panel ( void );
+
    private slots:         
       void load              ( void );
-      void load_auto         ( QMap < QString, QString > & );
       void load_manual_auto  ( void );
       void onMouseMoved(const QPointF& mousePos);
   
@@ -460,7 +463,6 @@ class US_Edit : public US_Widgets
       
       bool isSaved_auto( void );
       
-      void reset_editdata_panel ( void );
       
       void details           ( void );
 

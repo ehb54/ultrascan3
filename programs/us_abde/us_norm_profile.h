@@ -143,12 +143,14 @@ class US_Norm_Profile : public US_Widgets
         //! \param enable Boolean to enable or disable the widgets.
         void enableWidgets(bool enable);
 
+    public slots:
+        void load_data_auto( QMap<QString,QString>& );
+
     private slots:
         //! \brief Slot to load AUC data.
         void slt_loadAUC(void);
         void slt_loadAUC_auto( QMap<QString,QString>& );
         void slt_loadAUC_auto_report(QMap<QString,QString>& );
-        void load_data_auto( QMap<QString,QString>& );
   //void load_data_auto_report( QMap<QString,QString>& );
         void new_chann_auto   ( int  );
         void next_chann_auto( void );

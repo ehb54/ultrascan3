@@ -59,8 +59,8 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
       defXpnHost = US_Settings::defaultXpnHost().at( 0 );
    update_lw( defXpnHost );
 
-   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-                        SLOT  ( select_db        ( QListWidgetItem* ) ) );
+   connect( lw_entries, &QListWidget::itemDoubleClicked,
+                        this, [this]( QListWidgetItem* item ) { select_db( item ); } );
    // Detail info
    QLabel* info = us_banner( tr( "Optima Host Detailed Information" ) );
    topbox->addWidget( info );
@@ -145,35 +145,35 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
 
    pb_save = us_pushbutton( tr( "Save Entry" ) );
    pb_save->setEnabled( false );
-   connect( pb_save, SIGNAL( clicked() ), this, SLOT( check_add() ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_XpnHost::check_add );
    buttons->addWidget( pb_save, row, 0 );
 
    pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
    pb_delete->setEnabled( true );
-   connect( pb_delete,      SIGNAL( clicked()  ),
-            this,           SLOT  ( deleteDB() ) );
+   connect( pb_delete,      &QAbstractButton::clicked,
+            this,           &US_XpnHost::deleteDB );
    buttons->addWidget( pb_delete, row++, 1 );
 
    pb_testConnect = us_pushbutton( tr( "Test Optima Host Connectivity" ) );
-   connect( pb_testConnect, SIGNAL( clicked()      ),
-            this,           SLOT  ( test_connect() ) );
+   connect( pb_testConnect, &QAbstractButton::clicked,
+            this,           &US_XpnHost::test_connect );
    buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
 
    QHBoxLayout* std_buttons = new QHBoxLayout;
 
    pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset,       SIGNAL( clicked() ),
-            this,           SLOT  ( reset()   ) );
+   connect( pb_reset,       &QAbstractButton::clicked,
+            this,           &US_XpnHost::reset );
    std_buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,        SIGNAL( clicked() ),
-            this,           SLOT  ( help()    ) );
+   connect( pb_help,        &QAbstractButton::clicked,
+            this,           &US_XpnHost::help );
    std_buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Close" ) );
-   connect( pb_cancel,      SIGNAL( clicked() ),
-            this,           SLOT  ( close()   ) );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+            this,           &QWidget::close );
    std_buttons->addWidget( pb_cancel );
 
    topbox->addLayout( buttons );

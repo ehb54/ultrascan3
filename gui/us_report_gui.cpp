@@ -85,16 +85,16 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   le_duration_tol  -> setObjectName( "duration_tol" );
 
   //set connecitons btw textChanged() and slot
-  connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
-	   this,          SLOT  ( verify_text ( const QString& ) ) );
-  connect( le_rmsd_limit, SIGNAL( textChanged ( const QString& ) ),
-	   this,          SLOT  ( verify_text ( const QString& ) ) );
-  connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
-	   this,          SLOT  ( verify_text ( const QString& ) ) );
-  connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
-	   this,          SLOT  ( verify_text ( const QString& ) ) );
-  connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
-	   this,          SLOT  ( verify_text ( const QString& ) ) );  
+  connect( le_tot_conc,   &QLineEdit::textChanged,
+	   this,          &US_ReportGui::verify_text );
+  connect( le_rmsd_limit, &QLineEdit::textChanged,
+	   this,          &US_ReportGui::verify_text );
+  connect( le_av_intensity, &QLineEdit::textChanged,
+	   this,          &US_ReportGui::verify_text );
+  connect( le_tot_conc_tol, &QLineEdit::textChanged,
+	   this,          &US_ReportGui::verify_text );
+  connect( le_duration_tol, &QLineEdit::textChanged,
+	   this,          &US_ReportGui::verify_text );  
    
   qDebug() << "Report params on load: tot_conc, conc_tol, duraiton, duration_tol -- "
 	   <<  report->tot_conc
@@ -111,14 +111,14 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
 
   //Connect Exp. Duration counters to changes:
-  connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),
-	   this,         SLOT  ( ssChgDuratTime_dd  ( int ) ) );
-  connect( sb_durat_hh,  SIGNAL( valueChanged   ( int ) ),
-	   this,         SLOT  ( ssChgDuratTime_hh ( int ) ) );
-  connect( sb_durat_mm,  SIGNAL( valueChanged   ( int ) ),
-	   this,         SLOT  ( ssChgDuratTime_mm ( int ) ) );
-  connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
-	   this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
+  connect( sb_durat_dd,  qOverload< int >( &QSpinBox::valueChanged ),
+	   this,         &US_ReportGui::ssChgDuratTime_dd );
+  connect( sb_durat_hh,  qOverload< int >( &QSpinBox::valueChanged ),
+	   this,         &US_ReportGui::ssChgDuratTime_hh );
+  connect( sb_durat_mm,  qOverload< int >( &QSpinBox::valueChanged ),
+	   this,         &US_ReportGui::ssChgDuratTime_mm );
+  connect( sb_durat_ss,  qOverload< int >( &QSpinBox::valueChanged ),
+	   this,         &US_ReportGui::ssChgDuratTime_ss );
 
   //set Exp. Duration counters to read-only
   sb_durat_dd -> setReadOnly(true);
@@ -130,8 +130,8 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
-  connect( cb_wvl,  SIGNAL( currentIndexChanged( int ) ),
-            this,   SLOT  ( changeWvl          ( int ) ) );
+  connect( cb_wvl,  qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,   &US_ReportGui::changeWvl );
   /////////////////////////////////////////////////////////////////////////////
 
   pb_prev_wvl     = us_pushbutton(  tr( "previous" ), true, 0 );
@@ -139,15 +139,15 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   pb_prev_wvl     ->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
   pb_next_wvl     ->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 
-  connect( pb_prev_wvl, SIGNAL( clicked    () ),
-	   this,        SLOT  ( wvl_prev   () ) );
-  connect( pb_next_wvl, SIGNAL( clicked    () ),
-	   this,        SLOT  ( wvl_next   () ) );
+  connect( pb_prev_wvl, &QAbstractButton::clicked,
+	   this,        &US_ReportGui::wvl_prev );
+  connect( pb_next_wvl, &QAbstractButton::clicked,
+	   this,        &US_ReportGui::wvl_next );
   ////////////////////////////////////////////////////////////////////////////
 
   pb_apply_all   = us_pushbutton(  tr( "Apply to all wvls" ), true, 0 );
-  connect( pb_apply_all, SIGNAL( clicked          () ),
-	   this,         SLOT  ( apply_all_wvls   () ) );
+  connect( pb_apply_all, &QAbstractButton::clicked,
+	   this,         &US_ReportGui::apply_all_wvls );
 
   row = 0;
   
@@ -211,8 +211,8 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   ufiles    ->setContentsMargins ( 2, 2, 2, 2 );
 
   pb_upload_files   = us_pushbutton(  tr( "Upload from File(s)" ), true, 0 );
-  connect( pb_upload_files, SIGNAL( clicked          () ),
-	   this,         SLOT  ( upload_files   () ) );
+  connect( pb_upload_files, &QAbstractButton::clicked,
+	   this,         &US_ReportGui::upload_files );
 
   le_ufiles      = us_lineedit( "",  0, true  );
   row = 0;
@@ -658,16 +658,16 @@ void US_ReportGui::build_report_layout( void )
       ck_ind_plot -> setObjectName( stchan + "ind_combined_plot" );
             
       //set connecitons btw textChanged() and slot
-      connect( le_low, SIGNAL( textChanged ( const QString& ) ),
-	       this,   SLOT  ( verify_text ( const QString& ) ) );
-      connect( le_high, SIGNAL( textChanged ( const QString& ) ),
-	       this,   SLOT  ( verify_text ( const QString& ) ) );
-      connect( le_intval, SIGNAL( textChanged ( const QString& ) ),
-	       this,   SLOT  ( verify_text ( const QString& ) ) );
-      connect( le_tol, SIGNAL( textChanged ( const QString& ) ),
-	       this,   SLOT  ( verify_text ( const QString& ) ) );
-      connect( le_total, SIGNAL( textChanged ( const QString& ) ),
-	       this,   SLOT  ( verify_text ( const QString& ) ) );
+      connect( le_low, &QLineEdit::textChanged,
+	       this,   &US_ReportGui::verify_text );
+      connect( le_high, &QLineEdit::textChanged,
+	       this,   &US_ReportGui::verify_text );
+      connect( le_intval, &QLineEdit::textChanged,
+	       this,   &US_ReportGui::verify_text );
+      connect( le_tol, &QLineEdit::textChanged,
+	       this,   &US_ReportGui::verify_text );
+      connect( le_total, &QLineEdit::textChanged,
+	       this,   &US_ReportGui::verify_text );
       
       genL->addWidget( cb_type,           row,    0, 1, 2 );
       if ( !abde_mode )
@@ -696,10 +696,10 @@ void US_ReportGui::build_report_layout( void )
 	}
       
       //Slots for cb_type | cb_method
-      connect( cb_type,    SIGNAL( activated        ( int )  ),
-               this,       SLOT  ( type_changed     ( int )  ) );
-      connect( cb_method,  SIGNAL( activated        ( int )  ),
-               this,       SLOT  ( method_changed   ( int )  ) );
+      connect( cb_type,    qOverload< int >( &QComboBox::activated ),
+               this,       &US_ReportGui::type_changed );
+      connect( cb_method,  qOverload< int >( &QComboBox::activated ),
+               this,       &US_ReportGui::method_changed );
     }
   
   int ihgt        = lb_low->height();
@@ -735,10 +735,10 @@ void US_ReportGui::build_report_layout( void )
   addRem_buttons     = new QGridLayout();
   
   pb_addRow     = us_pushbutton( tr( "Add New Row" ) );
-  connect( pb_addRow, SIGNAL( clicked() ), this, SLOT( add_row()  ) );
+  connect( pb_addRow, &QAbstractButton::clicked, this, &US_ReportGui::add_row );
 
   pb_removeRow  = us_pushbutton( tr( "Remove Last Row" ) );
-  connect( pb_removeRow, SIGNAL( clicked() ), this, SLOT( remove_row()  ) );
+  connect( pb_removeRow, &QAbstractButton::clicked, this, &US_ReportGui::remove_row );
   if ( !report->channel_name.contains("Interf.") )
     {
       if (  report->reportItems.size() < 2   )
@@ -963,8 +963,8 @@ void US_ReportGui::build_report_layout( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_update() ) );
-  connect( pb_accept, SIGNAL( clicked() ), SLOT( update_report() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &US_ReportGui::cancel_update );
+  connect( pb_accept, &QAbstractButton::clicked, this, &US_ReportGui::update_report );
 
   lower_buttons->addWidget( pb_cancel );
   lower_buttons->addWidget( pb_accept );
@@ -1733,16 +1733,16 @@ void US_ReportGui::changeWvl( int ndx )
    qDebug() << "in ChangeWvl: after build_report_layout( )1";
    
    //Reconnect upper-portion Gui elements to ::verify_text()
-   connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
-	    this,          SLOT  ( verify_text ( const QString& ) ) );
-   connect( le_rmsd_limit, SIGNAL( textChanged ( const QString& ) ),
-	    this,          SLOT  ( verify_text ( const QString& ) ) );
-   connect( le_av_intensity, SIGNAL( textChanged ( const QString& ) ),
-	    this,          SLOT  ( verify_text ( const QString& ) ) );
-   connect( le_tot_conc_tol, SIGNAL( textChanged ( const QString& ) ),
-	    this,          SLOT  ( verify_text ( const QString& ) ) );
-   connect( le_duration_tol, SIGNAL( textChanged ( const QString& ) ),
-	    this,          SLOT  ( verify_text ( const QString& ) ) );  
+   connect( le_tot_conc,   &QLineEdit::textChanged,
+	    this,          &US_ReportGui::verify_text );
+   connect( le_rmsd_limit, &QLineEdit::textChanged,
+	    this,          &US_ReportGui::verify_text );
+   connect( le_av_intensity, &QLineEdit::textChanged,
+	    this,          &US_ReportGui::verify_text );
+   connect( le_tot_conc_tol, &QLineEdit::textChanged,
+	    this,          &US_ReportGui::verify_text );
+   connect( le_duration_tol, &QLineEdit::textChanged,
+	    this,          &US_ReportGui::verify_text );  
 
    qDebug() << "in ChangeWvl: after build_report_layout( )2";
    //Next/Previous wvl btns

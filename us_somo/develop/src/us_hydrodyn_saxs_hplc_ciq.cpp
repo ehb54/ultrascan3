@@ -122,7 +122,13 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
 
    cb_makeiq_avg_peaks = new QCheckBox(this);
-   cb_makeiq_avg_peaks->setText( us_tr( "Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
+   cb_makeiq_avg_peaks->setText( us_tr( "Average resulting I(q) curves by Gaussian, using top % of max. intensity" ) );
+   cb_makeiq_avg_peaks->setToolTip( us_tr(
+      "With an associated concentration curve, two averaged curves are produced per peak:<br>"
+      "&nbsp;&nbsp;<b>..._avg</b> &ndash; scaled to the mean concentration of the averaged frames<br>"
+      "&nbsp;&nbsp;&nbsp;&nbsp;(use this for concentration-dependent analysis, e.g. molecular weight via Guinier)<br>"
+      "&nbsp;&nbsp;<b>..._avg_n</b> &ndash; normalized to concentration 1.0<br>"
+      "Without concentration data, a single plain average is produced." ) );
    cb_makeiq_avg_peaks->setEnabled( true );
    cb_makeiq_avg_peaks->setChecked( (*parameters)[ "hplc_cb_makeiq_avg_peaks" ] == "true" );
    cb_makeiq_avg_peaks->setChecked( false );

@@ -1417,6 +1417,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_wyatt_apply->setPalette( PALET_PUSHB );
    connect(pb_wyatt_apply, SIGNAL(clicked()), SLOT(wyatt_apply()));
 
+   pb_wyatt_rescale = new QPushButton(us_tr("SD rescale"), this);
+   pb_wyatt_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_wyatt_rescale->setMinimumHeight(minHeight1);
+   pb_wyatt_rescale->setPalette( PALET_PUSHB );
+   connect(pb_wyatt_rescale, SIGNAL(clicked()), SLOT(wyatt_rescale()));
+
    le_wyatt_start = new mQLineEdit( this );    le_wyatt_start->setObjectName( "le_wyatt_start Line Edit" );
    le_wyatt_start->setText( "" );
    le_wyatt_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -3787,9 +3793,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
       l_pbmode_sd->addWidget( pb_wyatt_start );
       l_pbmode_sd->addWidget( pb_wyatt_apply );
+      l_pbmode_sd->addWidget( pb_wyatt_rescale );
 
       pbmode_sd_widgets.push_back( pb_wyatt_start );
       pbmode_sd_widgets.push_back( pb_wyatt_apply );
+      pbmode_sd_widgets.push_back( pb_wyatt_rescale );
    }
 
    QBoxLayout * l_pbmode_fasta = new QHBoxLayout();
@@ -5127,9 +5135,11 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                        // ( !baseline_integral || baseline_ready_to_apply ) 
                                        );
    pb_wyatt_start        ->setEnabled( files_selected_count == 1 && files_are_time );
-   pb_wyatt_apply        ->setEnabled( files_selected_count && 
-                                       files_are_time && 
+   pb_wyatt_apply        ->setEnabled( files_selected_count &&
+                                       files_are_time &&
                                        le_wyatt_start->text().toDouble() < le_wyatt_end->text().toDouble() );
+   // SD rescale operates on q-space curves that already carry (usable) errors, not time data
+   pb_wyatt_rescale      ->setEnabled( files_selected_count && !files_are_time && all_selected_have_errors() );
 
    pb_similar_files      ->setEnabled( files_selected_count == 1 );
    pb_conc               ->setEnabled( lb_files->count() > 0 );
@@ -5562,6 +5572,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_wyatt_start        ->setEnabled( false );
    le_wyatt_end          ->setEnabled( false );
    pb_wyatt_apply        ->setEnabled( false );
+   pb_wyatt_rescale      ->setEnabled( false );
 
    pb_blanks_start       ->setEnabled( false );
    // pb_blanks_params      ->setEnabled( false );

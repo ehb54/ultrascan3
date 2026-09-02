@@ -612,35 +612,35 @@ US_MWL_SF_PLOT3D::US_MWL_SF_PLOT3D(QWidget* w, const SFData& spFitData): US_Widg
         this->close();
     }
 
-    connect(cb_scan, SIGNAL(currentIndexChanged(int)), this, SLOT(newScan(int)));
-    connect(pb_next, SIGNAL(clicked()), this, SLOT(nextScan()));
-    connect(pb_prev, SIGNAL(clicked()), this, SLOT(prevScan()));
-    connect(cb_camera, SIGNAL(currentIndexChanged(int)), this, SLOT(resetCamera(int)));
-    connect(cb_theme, SIGNAL(currentTextChanged(QString)), this, SLOT(setTheme(QString)));
-    connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(pb_render, SIGNAL(clicked()), this, SLOT(renderImage()));
-    connect(pb_B2Y, SIGNAL(clicked()), this, SLOT(set_B2Y()));
-    connect(pb_G2R, SIGNAL(clicked()), this, SLOT(set_G2R()));
-    connect(pb_DFLT, SIGNAL(clicked()), this, SLOT(set_DFLT()));
-    connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
-    connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
-    connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
-    connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
-    connect(rb_nosel, SIGNAL(toggled(bool)), this, SLOT(toggleNone(bool)));
-    connect(rb_point, SIGNAL(toggled(bool)), this, SLOT(togglePoint(bool)));
-    connect(rb_radial, SIGNAL(toggled(bool)), this, SLOT(toggleRadial(bool)));
-    connect(rb_lambda, SIGNAL(toggled(bool)), this, SLOT(toggleLambda(bool)));
-    connect(sli_xAngle, SIGNAL(valueChanged(int)), this, SLOT(new_xAngle(int)));
-    connect(sli_yAngle, SIGNAL(valueChanged(int)), this, SLOT(new_yAngle(int)));
-    connect(sli_zAngle, SIGNAL(valueChanged(int)), this, SLOT(new_zAngle(int)));
-    connect(pb_xAngle, SIGNAL(clicked()), this, SLOT(reset_xAngle()));
-    connect(pb_yAngle, SIGNAL(clicked()), this, SLOT(reset_yAngle()));
-    connect(pb_zAngle, SIGNAL(clicked()), this, SLOT(reset_zAngle()));
-    connect(ckb_plotAbs, SIGNAL(stateChanged(int)), this, SLOT(plot3d()));
-    connect(ckb_rendall, SIGNAL(stateChanged(int)), this, SLOT(render_option(int)));
-    connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
-    connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
-    connect(pb_plotPixMap,   SIGNAL(clicked()), this, SLOT(plotPixMap()));
+    connect(cb_scan, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_MWL_SF_PLOT3D::newScan);
+    connect(pb_next, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::nextScan);
+    connect(pb_prev, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::prevScan);
+    connect(cb_camera, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_MWL_SF_PLOT3D::resetCamera);
+    connect(cb_theme, &QComboBox::currentTextChanged, this, &US_MWL_SF_PLOT3D::setTheme);
+    connect(pb_close, &QAbstractButton::clicked, this, &QWidget::close);
+    connect(pb_render, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::renderImage);
+    connect(pb_B2Y, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::set_B2Y);
+    connect(pb_G2R, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::set_G2R);
+    connect(pb_DFLT, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::set_DFLT);
+    connect(ct_min_rp, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustRpMin);
+    connect(ct_max_rp, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustRpMax);
+    connect(ct_min_wl, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustWlMin);
+    connect(ct_max_wl, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustWlMax);
+    connect(rb_nosel, &QAbstractButton::toggled, this, &US_MWL_SF_PLOT3D::toggleNone);
+    connect(rb_point, &QAbstractButton::toggled, this, &US_MWL_SF_PLOT3D::togglePoint);
+    connect(rb_radial, &QAbstractButton::toggled, this, &US_MWL_SF_PLOT3D::toggleRadial);
+    connect(rb_lambda, &QAbstractButton::toggled, this, &US_MWL_SF_PLOT3D::toggleLambda);
+    connect(sli_xAngle, &QAbstractSlider::valueChanged, this, &US_MWL_SF_PLOT3D::new_xAngle);
+    connect(sli_yAngle, &QAbstractSlider::valueChanged, this, &US_MWL_SF_PLOT3D::new_yAngle);
+    connect(sli_zAngle, &QAbstractSlider::valueChanged, this, &US_MWL_SF_PLOT3D::new_zAngle);
+    connect(pb_xAngle, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::reset_xAngle);
+    connect(pb_yAngle, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::reset_yAngle);
+    connect(pb_zAngle, &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::reset_zAngle);
+    connect(ckb_plotAbs, US_CB_STATE_CHANGED, this, &US_MWL_SF_PLOT3D::plot3d);
+    connect(ckb_rendall, US_CB_STATE_CHANGED, this, &US_MWL_SF_PLOT3D::render_option);
+    connect(camera,   &Q3DCamera::xRotationChanged, this, &US_MWL_SF_PLOT3D::cameraChanged);
+    connect(camera,   &Q3DCamera::yRotationChanged, this, &US_MWL_SF_PLOT3D::cameraChanged);
+    connect(pb_plotPixMap,   &QAbstractButton::clicked, this, &US_MWL_SF_PLOT3D::plotPixMap);
 
     fill_table();
     get_minMaxMean();
@@ -716,8 +716,8 @@ void US_MWL_SF_PLOT3D::renderImage(){
         lyt->addWidget(pb_close,  2, 2, 1, 1);
         lyt->addWidget(pb_apply,  2, 3, 1, 1);
         bnameDialog->setLayout(lyt);
-        connect(pb_apply, SIGNAL(clicked()), bnameDialog, SLOT(accept()));
-        connect(pb_close, SIGNAL(clicked()), bnameDialog, SLOT(reject()));
+        connect(pb_apply, &QAbstractButton::clicked, bnameDialog, &QDialog::accept);
+        connect(pb_close, &QAbstractButton::clicked, bnameDialog, &QDialog::reject);
         int state = bnameDialog->exec();
         QString format = cb_format->currentText();
         QString bname = le_bname->text();
@@ -919,8 +919,8 @@ void US_MWL_SF_PLOT3D::resetCamera(int){
         camera->setCameraPreset(Q3DCamera::CameraPresetBehindBelow);
     else if (state == "DirectlyBelow")
         camera->setCameraPreset(Q3DCamera::CameraPresetDirectlyBelow);
-    connect(camera,   SIGNAL(xRotationChanged(float)), this, SLOT(cameraChanged(float)));
-    connect(camera,   SIGNAL(yRotationChanged(float)), this, SLOT(cameraChanged(float)));
+    connect(camera,   &Q3DCamera::xRotationChanged, this, &US_MWL_SF_PLOT3D::cameraChanged);
+    connect(camera,   &Q3DCamera::yRotationChanged, this, &US_MWL_SF_PLOT3D::cameraChanged);
 }
 
 void US_MWL_SF_PLOT3D::set_B2Y(){
@@ -985,8 +985,8 @@ void US_MWL_SF_PLOT3D::set_ct_rp(bool ascent){
     set_radial_slider();
     plot2d();
     plot3d();
-    connect(ct_min_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMin(double)));
-    connect(ct_max_rp, SIGNAL(valueChanged(double)), this, SLOT(adjustRpMax(double)));
+    connect(ct_min_rp, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustRpMin);
+    connect(ct_max_rp, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustRpMax);
 }
 
 void US_MWL_SF_PLOT3D::adjustRpMin(double){
@@ -1032,8 +1032,8 @@ void US_MWL_SF_PLOT3D::set_ct_wl(bool ascent){
     set_radial_slider();
     plot2d();
     plot3d();
-    connect(ct_min_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMin(double)));
-    connect(ct_max_wl, SIGNAL(valueChanged(double)), this, SLOT(adjustWlMax(double)));
+    connect(ct_min_wl, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustWlMin);
+    connect(ct_max_wl, &QwtCounter::valueChanged, this, &US_MWL_SF_PLOT3D::adjustWlMax);
 }
 
 void US_MWL_SF_PLOT3D::adjustWlMin(double){
@@ -1278,8 +1278,8 @@ void US_MWL_SF_PLOT3D::set_radial_slider(void){
     sli_radial->setMinimum(0);
     sli_radial->setMaximum(npts);
     sli_radial->setValue(npts / 2);
-    connect(sli_radial, SIGNAL(valueChanged(int)), this, SLOT(new_rpoint(int)));
-    connect(le_rpid, SIGNAL(returnPressed()), this, SLOT(new_rpid()));
+    connect(sli_radial, &QAbstractSlider::valueChanged, this, &US_MWL_SF_PLOT3D::new_rpoint);
+    connect(le_rpid, &QLineEdit::returnPressed, this, &US_MWL_SF_PLOT3D::new_rpid);
 }
 
 bool US_MWL_SF_PLOT3D::get_runs_test(QVector<double> sample, bool display){
@@ -1665,8 +1665,8 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     pb_print->setText( "Print" );
     pb_print->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
     toolBar->addWidget( pb_print );
-    connect( pb_print, SIGNAL( clicked() ),
-        this, SLOT( printPlot() ) );
+    connect( pb_print, &QAbstractButton::clicked,
+        this, &RunsTestWidget::printPlot );
 
     QToolButton *pb_image = new QToolButton( toolBar );
     pb_image->setText( "Save" );
@@ -1688,8 +1688,8 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     cb_color_r->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
     cb_color_r->setCurrentText("green");
     toolBar->addWidget( cb_color_r );
-    connect( cb_color_r, SIGNAL( currentIndexChanged( int ) ),
-             this, SLOT( setColorMap(  ) ) );
+    connect( cb_color_r, qOverload< int >( &QComboBox::currentIndexChanged ),
+             this, &RunsTestWidget::setColorMap );
 
     toolBar->addWidget( new QLabel("Non-random Points:" ) );
     cb_color_nr = new QComboBox( toolBar );
@@ -1697,8 +1697,8 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
     cb_color_nr->setSizePolicy( QSizePolicy::Fixed, QSizePolicy::Fixed );
     cb_color_nr->setCurrentText("darkBlue");
     toolBar->addWidget( cb_color_nr );
-    connect( cb_color_nr, SIGNAL( currentIndexChanged( int ) ),
-             this, SLOT( setColorMap(  ) ) );
+    connect( cb_color_nr, qOverload< int >( &QComboBox::currentIndexChanged ),
+             this, &RunsTestWidget::setColorMap );
 
     toolBar->addSeparator();
 
@@ -1709,6 +1709,7 @@ RunsTestWidget::RunsTestWidget(QVector<double> points, QVector<double> scans,
 //        this, SLOT( showContour( bool ) ) );
 
     d_plot = new QwtPlot();
+    US_Widgets::us_style_plot( d_plot );
 
     d_spectrogram = new QwtPlotSpectrogram();
     d_spectrogram->setRenderThreadCount( 0 ); // use system specific thread count

@@ -50,7 +50,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    int row=0;
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_investigator, &QAbstractButton::clicked, this, &US_ModelMetrics::sel_investigator );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -64,12 +64,12 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    disk_controls = new US_Disk_DB_Controls;
 
    QPushButton* pb_prefilter= us_pushbutton( tr( "Select Prefilter" ) );
-   connect( pb_prefilter, SIGNAL( clicked() ), SLOT( select_prefilter() ) );
+   connect( pb_prefilter, &QAbstractButton::clicked, this, &US_ModelMetrics::select_prefilter );
 
    le_prefilter= us_lineedit( "", 1, true );
 
    QPushButton* pb_load_model = us_pushbutton( tr( "Load Model" ) );
-   connect( pb_load_model, SIGNAL( clicked() ), SLOT( load_model() ) );
+   connect( pb_load_model, &QAbstractButton::clicked, this, &US_ModelMetrics::load_model );
 
    le_model = us_lineedit( "", 1, true );
 
@@ -81,10 +81,10 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    QLabel* lbl_plotxmax = us_label( tr( "Plot max: " ), -1 );
    le_plotxmin = us_lineedit( "", 1, false );
    le_plotxmax = us_lineedit( "", 1, false );
-   connect (le_plotxmin, SIGNAL( textChanged(const QString &)), this,
-                     SLOT (set_plotxmin(const QString &)));
-   connect (le_plotxmax, SIGNAL( textChanged(const QString &)), this,
-                     SLOT (set_plotxmax(const QString &)));
+   connect (le_plotxmin, &QLineEdit::textChanged, this,
+                     &US_ModelMetrics::set_plotxmin);
+   connect (le_plotxmax, &QLineEdit::textChanged, this,
+                     &US_ModelMetrics::set_plotxmax);
 
    QLabel* lbl_param = us_label( tr( "Select\nParameter: " ), -1 );
    QLabel* lbl_sigma = us_label( tr( "Sigma: " ), -1 );
@@ -96,11 +96,11 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    ct_sigma->setValue( 0.0 );
    ct_sigma->setEnabled( false );
    ct_sigma->setFixedSize(130, 25);
-   connect (ct_sigma, SIGNAL(valueChanged(double)), this, SLOT(set_sigma(double)));
+   connect (ct_sigma, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_sigma);
 
    pb_report = us_pushbutton( tr( "Save to Report" ) );
    pb_report->setEnabled(false);
-   connect( pb_report, SIGNAL( clicked() ), SLOT( addReportItem() ) );
+   connect( pb_report, &QAbstractButton::clicked, this, &US_ModelMetrics::addReportItem );
 
    bg_hp = new QButtonGroup( this );
    QGridLayout* gl_s = us_radiobutton( tr( "s"    ), rb_s, true  );
@@ -143,19 +143,19 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    ct_dval1->setSingleStep( 0.1 );
    ct_dval1->setEnabled( false );
    ct_dval1->setFixedSize(130, 25);
-   connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+   connect (ct_dval1, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_dval1);
 
    ct_dval2 = us_counter( 2, 0.0, 100.0, 50.0 );
    ct_dval2->setSingleStep( 0.1 );
    ct_dval2->setEnabled( false );
    ct_dval2->setFixedSize(130, 25);
-   connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
+   connect (ct_dval2, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_dval2);
 
    ct_dval3 = us_counter( 2, 0.0, 100.0, 90.0 );
    ct_dval3->setSingleStep( 0.1 );
    ct_dval3->setEnabled( false );
    ct_dval3->setFixedSize(130, 25);
-   connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
+   connect (ct_dval3, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_dval3);
 
    lbl_integral = us_label( tr( "D10, D90 Integral: "  ), -1 );
    lbl_minimum  = us_label( tr( "Minimum: "            ), -1 );
@@ -176,21 +176,21 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_skew     = us_lineedit( "", 1, true );
    le_kurtosis = us_lineedit( "", 1, true );
    le_name     = us_lineedit( "", 1, false);
-   connect (le_name, SIGNAL( textChanged(const QString &)), this,
-                     SLOT (update_name(const QString &)));
+   connect (le_name, &QLineEdit::textChanged, this,
+                     &US_ModelMetrics::update_name);
 
    pb_write = us_pushbutton( tr( "Show Report" ) );
    pb_write->setEnabled( false );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write_report() ) );
+   connect( pb_write, &QAbstractButton::clicked, this, &US_ModelMetrics::write_report );
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_ModelMetrics::reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_ModelMetrics::help );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &QWidget::close );
 
    QBoxLayout* plot = new US_Plot( data_plot,
    tr( "" ), "Parameter Value", "Relative Concentration" );
@@ -323,8 +323,8 @@ void US_ModelMetrics::select_prefilter( void )
    pfilts.clear();
 
    US_SelectRuns srdiag( disk_controls->db(), pfilts );
-   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT(   update_disk_db( bool ) ) );
+   connect( &srdiag, &US_SelectRuns::dkdb_changed,
+            this,    &US_ModelMetrics::update_disk_db );
 
    if ( srdiag.exec() == QDialog::Accepted )
       nruns      = pfilts.size();
@@ -352,8 +352,8 @@ void US_ModelMetrics::load_model( void )
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
-   connect( &dialog, SIGNAL(   changed( bool ) ),
-            this, SLOT( update_disk_db( bool ) ) );
+   connect( &dialog, &US_ModelLoader::changed,
+            this, &US_ModelMetrics::update_disk_db );
    QApplication::restoreOverrideCursor();
 
    QString         mfnam;
@@ -881,10 +881,10 @@ void US_ModelMetrics::set_dval_labels( bool update )
       ct_dval2->setValue(dval2);
       ct_dval3->setValue(dval3);
       ct_sigma->setValue(sigma);
-      connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
-      connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
-      connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
-      connect (ct_sigma, SIGNAL(valueChanged(double)), this, SLOT(set_sigma(double)));
+      connect (ct_dval1, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_dval1);
+      connect (ct_dval2, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_dval2);
+      connect (ct_dval3, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_dval3);
+      connect (ct_sigma, &QwtCounter::valueChanged, this, &US_ModelMetrics::set_sigma);
    }
 }
 

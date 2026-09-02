@@ -83,7 +83,7 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
    cb_save_bl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_bl->setPalette( PALET_NORMAL );
 
-   lbl_smooth =  new QLabel      ( us_tr( "Smoothing:" ), this );
+   lbl_smooth =  new QLabel      ( us_tr( "Smoothing radius:" ), this );
    lbl_smooth -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_smooth -> setPalette( PALET_LABEL );
    lbl_smooth -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );

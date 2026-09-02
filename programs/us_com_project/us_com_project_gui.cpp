@@ -146,8 +146,8 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    auto *hbox = new QVBoxLayout(cornerWidget);
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
-   connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
+   connect( m_exit, &QAbstractButton::clicked, this, &QWidget::close );
+   connect( m_help, &QAbstractButton::clicked, this, &US_ComProjectMain::help );
 
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
@@ -190,7 +190,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
 
-   connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
+   connect( tabWidget, &QTabWidget::currentChanged, this, &US_ComProjectMain::initPanels );
 
    // QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
    // pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
@@ -214,32 +214,32 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
    test_footer->setStyleSheet("color: #D3D9DF; background-color: #36454f;");
    main->addWidget( test_footer );
 
-   connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
-   connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( epanInit, qOverload< QStringList & >( &US_InitDialogueGui::define_new_experiment_init ), this, &US_ComProjectMain::define_new_experiment );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_live_update_init ), this, &US_ComProjectMain::switch_to_live_update );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_post_processing_init ), this, &US_ComProjectMain::switch_to_post_processing );
+   connect( epanInit, qOverload<>( &US_InitDialogueGui::to_initAutoflow ), this, &US_ComProjectMain::close_all );
    
-   connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+   connect( this, &US_ComProjectMain::pass_used_instruments, epanExp, qOverload< QStringList & >( &US_ExperGui::pass_used_instruments ) );
 
-   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
+   connect( epanInit, &US_InitDialogueGui::pass_allow_dataDisk_only, epanExp, &US_ExperGui::allow_dataDisk_only );
    
-   connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
-   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
-   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
-   connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
-   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_live_update ), this, &US_ComProjectMain::switch_to_live_update );
+   connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_import ), this, &US_ComProjectMain::switch_to_post_processing );
+   connect( this   , &US_ComProjectMain::pass_to_live_update,   epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::process_protocol_details ) );
+   connect( epanExp, qOverload<>( &US_ExperGui::to_autoflow_records ), this, &US_ComProjectMain::to_autoflow_records );
+   connect( epanExp, &US_ExperGui::switch_to_initAutoflow, this, &US_ComProjectMain::close_all );
    
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
-   connect( this, SIGNAL( pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
+   connect( epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::switch_to_post_processing ), this, &US_ComProjectMain::switch_to_post_processing );
+   connect( this, &US_ComProjectMain::pass_to_post_processing,  epanPostProd, qOverload< QMap < QString, QString > & >( &US_PostProdGui::import_data_us_convert ) );
    
    //connect( this, SIGNAL( clear_experiment( QString & ) ),  epanExp, SLOT( clear_experiment( QString & )  ) );
-   connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
-   connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
-   connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
-   connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
+   connect( epanObserv, qOverload<>( &US_ObservGui::close_everything ), this, &US_ComProjectMain::close_all);
+   connect( this, &US_ComProjectMain::reset_live_update,  epanObserv, qOverload<>( &US_ObservGui::reset_live_update ) );
+   connect( epanObserv, qOverload<>( &US_ObservGui::processes_stopped ), this, &US_ComProjectMain::liveupdate_stopped);
+   connect( epanObserv, qOverload<>( &US_ObservGui::stop_nodata ), this, &US_ComProjectMain::close_all);
    
-   connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
-   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
+   connect( epanPostProd, qOverload<>( &US_PostProdGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
+   connect( this, &US_ComProjectMain::reset_lims_import,  epanPostProd, qOverload<>( &US_PostProdGui::reset_lims_import ) );
    
    setMinimumSize( QSize( 1350, 800 ) );
    adjustSize();
@@ -392,8 +392,8 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    auto *hbox = new QVBoxLayout(cornerWidget);
    auto *m_help = us_pushbutton( tr( "Help" ) );
    auto *m_exit = us_pushbutton( tr( "Exit" ) );
-   connect( m_exit, SIGNAL( clicked() ), this, SLOT( close()  ) );
-   connect( m_help, SIGNAL( clicked() ), this, SLOT( help()  ) );
+   connect( m_exit, &QAbstractButton::clicked, this, &QWidget::close );
+   connect( m_help, &QAbstractButton::clicked, this, &US_ComProjectMain::help );
    
    hbox->addWidget(m_help);
    hbox->addWidget(m_exit);
@@ -436,7 +436,7 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
     	 tabWidget->tabBar()->setTabEnabled(i, false);
      }
    
-   connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( initPanels( int ) ) );
+   connect( tabWidget, &QTabWidget::currentChanged, this, &US_ComProjectMain::initPanels );
 
    // QPushButton* pb_close_program = us_pushbutton( tr( "CLOSE PROGRAM"));
    // pb_close_program->setStyleSheet( "QPushButton { background: red; color: lightgray; min-height: 20 } QPushButton::hover {  background-color: #9E0606; color: white } ");
@@ -462,55 +462,55 @@ US_ComProjectMain::US_ComProjectMain() : US_Widgets()
    main->addWidget( test_footer );
 
 
-   connect( epanInit, SIGNAL( define_new_experiment_init( QStringList & ) ), this, SLOT( define_new_experiment( QStringList &)  ) );
-   connect( epanInit, SIGNAL( switch_to_live_update_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( switch_to_post_processing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( switch_to_editing_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_editing( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( switch_to_analysis_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( switch_to_report_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( switch_to_esign_init( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
-   connect( epanInit, SIGNAL( to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( epanInit, qOverload< QStringList & >( &US_InitDialogueGui::define_new_experiment_init ), this, &US_ComProjectMain::define_new_experiment );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_live_update_init ), this, &US_ComProjectMain::switch_to_live_update );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_post_processing_init ), this, &US_ComProjectMain::switch_to_post_processing );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_editing_init ), this, &US_ComProjectMain::switch_to_editing );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_analysis_init ), this, &US_ComProjectMain::switch_to_analysis );
+   connect( epanInit, qOverload< QMap < QString, QString > & >( &US_InitDialogueGui::switch_to_report_init ), this, &US_ComProjectMain::switch_to_report );
+   connect( epanInit, &US_InitDialogueGui::switch_to_esign_init, this, &US_ComProjectMain::switch_to_esign );
+   connect( epanInit, qOverload<>( &US_InitDialogueGui::to_initAutoflow ), this, &US_ComProjectMain::close_all );
          
-   connect( this, SIGNAL( pass_used_instruments( QStringList & ) ), epanExp, SLOT( pass_used_instruments( QStringList &)  ) );
+   connect( this, &US_ComProjectMain::pass_used_instruments, epanExp, qOverload< QStringList & >( &US_ExperGui::pass_used_instruments ) );
 
-   connect( epanInit, SIGNAL( pass_allow_dataDisk_only( ) ), epanExp, SLOT( allow_dataDisk_only( )  ) );
+   connect( epanInit, &US_InitDialogueGui::pass_allow_dataDisk_only, epanExp, &US_ExperGui::allow_dataDisk_only );
    
-   connect( epanExp, SIGNAL( switch_to_live_update( QMap < QString, QString > &) ), this, SLOT( switch_to_live_update( QMap < QString, QString > & )  ) );
-   connect( epanExp, SIGNAL( switch_to_import( QMap < QString, QString > &) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & )  ) );
-   connect( this   , SIGNAL( pass_to_live_update( QMap < QString, QString > &) ),   epanObserv, SLOT( process_protocol_details( QMap < QString, QString > & )  ) );
-   connect( epanExp, SIGNAL( to_autoflow_records( ) ), this, SLOT( to_autoflow_records( ) ) );
-   connect( epanExp, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_live_update ), this, &US_ComProjectMain::switch_to_live_update );
+   connect( epanExp, qOverload< QMap < QString, QString > & >( &US_ExperGui::switch_to_import ), this, &US_ComProjectMain::switch_to_post_processing );
+   connect( this   , &US_ComProjectMain::pass_to_live_update,   epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::process_protocol_details ) );
+   connect( epanExp, qOverload<>( &US_ExperGui::to_autoflow_records ), this, &US_ComProjectMain::to_autoflow_records );
+   connect( epanExp, &US_ExperGui::switch_to_initAutoflow, this, &US_ComProjectMain::close_all );
    
-   connect( epanObserv, SIGNAL( switch_to_post_processing( QMap < QString, QString > & ) ), this, SLOT( switch_to_post_processing( QMap < QString, QString > & ) ) );
-   connect( this, SIGNAL(  pass_to_post_processing( QMap < QString, QString > & ) ),  epanPostProd, SLOT( import_data_us_convert( QMap < QString, QString > & )  ) );
-   connect( epanObserv, SIGNAL( close_everything() ), this, SLOT( close_all() ));
-   connect( this, SIGNAL( reset_live_update() ),  epanObserv, SLOT( reset_live_update( )  ) );
-   connect( epanObserv, SIGNAL( processes_stopped() ), this, SLOT( liveupdate_stopped() ));
-   connect( epanObserv, SIGNAL( stop_nodata() ), this, SLOT( close_all() ));
+   connect( epanObserv, qOverload< QMap < QString, QString > & >( &US_ObservGui::switch_to_post_processing ), this, &US_ComProjectMain::switch_to_post_processing );
+   connect( this, &US_ComProjectMain::pass_to_post_processing,  epanPostProd, qOverload< QMap < QString, QString > & >( &US_PostProdGui::import_data_us_convert ) );
+   connect( epanObserv, qOverload<>( &US_ObservGui::close_everything ), this, &US_ComProjectMain::close_all);
+   connect( this, &US_ComProjectMain::reset_live_update,  epanObserv, qOverload<>( &US_ObservGui::reset_live_update ) );
+   connect( epanObserv, qOverload<>( &US_ObservGui::processes_stopped ), this, &US_ComProjectMain::liveupdate_stopped);
+   connect( epanObserv, qOverload<>( &US_ObservGui::stop_nodata ), this, &US_ComProjectMain::close_all);
    
-   connect( epanPostProd, SIGNAL( switch_to_editing( QMap < QString, QString > & ) ),  this, SLOT( switch_to_editing ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( pass_to_editing( QMap < QString, QString > & ) ),   epanEditing, SLOT( do_editing( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_lims_import() ),  epanPostProd, SLOT( reset_lims_import( )  ) );
-   connect( epanPostProd, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
-   connect( this, SIGNAL( reset_data_editing() ),  epanEditing, SLOT( reset_data_editing( )  ) );
+   connect( epanPostProd, qOverload< QMap < QString, QString > & >( &US_PostProdGui::switch_to_editing ),  this, &US_ComProjectMain::switch_to_editing );
+   connect( this, &US_ComProjectMain::pass_to_editing,   epanEditing, qOverload< QMap < QString, QString > & >( &US_EditingGui::do_editing ) );
+   connect( this, &US_ComProjectMain::reset_lims_import,  epanPostProd, qOverload<>( &US_PostProdGui::reset_lims_import ) );
+   connect( epanPostProd, qOverload<>( &US_PostProdGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
+   connect( this, &US_ComProjectMain::reset_data_editing,  epanEditing, qOverload<>( &US_EditingGui::reset_data_editing ) );
 
-   connect( epanEditing, SIGNAL( switch_to_analysis( QMap < QString, QString > & ) ), this, SLOT( switch_to_analysis( QMap < QString, QString > & )  ) );
-   connect( epanEditing, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( pass_to_analysis( QMap < QString, QString > & ) ),   epanAnalysis, SLOT( do_analysis( QMap < QString, QString > & )  ) );
-   connect( epanEditing, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( epanEditing, qOverload< QMap < QString, QString > & >( &US_EditingGui::switch_to_analysis ), this, &US_ComProjectMain::switch_to_analysis );
+   connect( epanEditing, &US_EditingGui::switch_to_report, this, &US_ComProjectMain::switch_to_report );
+   connect( this, &US_ComProjectMain::pass_to_analysis,   epanAnalysis, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::do_analysis ) );
+   connect( epanEditing, qOverload<>( &US_EditingGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
 
-   connect( epanAnalysis, SIGNAL( processes_stopped() ), this, SLOT( analysis_update_stopped() ));
-   connect( epanAnalysis, SIGNAL( switch_to_initAutoflow( ) ), this, SLOT( close_all( )  ) );
+   connect( epanAnalysis, qOverload<>( &US_AnalysisGui::processes_stopped ), this, &US_ComProjectMain::analysis_update_stopped);
+   connect( epanAnalysis, qOverload<>( &US_AnalysisGui::switch_to_initAutoflow ), this, &US_ComProjectMain::close_all );
 
-   connect( epanAnalysis, SIGNAL( switch_to_report( QMap < QString, QString > & ) ), this, SLOT( switch_to_report( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( pass_to_report( QMap < QString, QString > & ) ),   epanReport, SLOT( do_report( QMap < QString, QString > & )  ) );
+   connect( epanAnalysis, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::switch_to_report ), this, &US_ComProjectMain::switch_to_report );
+   connect( this, &US_ComProjectMain::pass_to_report,   epanReport, qOverload< QMap < QString, QString > & >( &US_ReportStageGui::do_report ) );
 
-   connect( this, SIGNAL( reset_reporting() ),  epanReport, SLOT( reset_reporting( )  ) );
+   connect( this, &US_ComProjectMain::reset_reporting,  epanReport, qOverload<>( &US_ReportStageGui::reset_reporting ) );
 
    //E-Signs
-   connect( epanReport, SIGNAL( switch_to_esign( QMap < QString, QString > & ) ), this, SLOT( switch_to_esign( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( pass_to_esign( QMap < QString, QString > & ) ),  epanSign, SLOT( do_esign( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_esigning() ),  epanSign, SLOT( reset_esigning( )  ) );
+   connect( epanReport, &US_ReportStageGui::switch_to_esign, this, &US_ComProjectMain::switch_to_esign );
+   connect( this, &US_ComProjectMain::pass_to_esign,  epanSign, &US_eSignaturesGui::do_esign );
+   connect( this, &US_ComProjectMain::reset_esigning,  epanSign, &US_eSignaturesGui::reset_esigning );
 
    //Hide/disable eSigs tab:
    this->tabWidget->removeTab(7);
@@ -1530,8 +1530,8 @@ void US_InitDialogueGui::initRecordsDialogue( void )
 
   pdiag_autoflow = new US_SelectItem( autoflowdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
 
-  connect( pdiag_autoflow, SIGNAL( accept_autoflow_deletion() ), this, SLOT( update_autoflow_data() ));
-  connect( pdiag_autoflow, SIGNAL( accept_refresh_states() ),    this, SLOT( refresh_optima_states() ));
+  connect( pdiag_autoflow, &US_SelectItem::accept_autoflow_deletion, this, &US_InitDialogueGui::update_autoflow_data);
+  connect( pdiag_autoflow, &US_SelectItem::accept_refresh_states,    this, &US_InitDialogueGui::refresh_optima_states);
   pdiag_autoflow->setParent(this, Qt::Widget);
 
   offset = 20;
@@ -2883,27 +2883,27 @@ US_ExperGui::US_ExperGui( QWidget* topw )
 
    sdiag->setParent(this, Qt::Widget);
       
-   connect( sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
+   connect( sdiag, &US_ExperimentMain::us_exp_is_closed, this, &US_ExperGui::us_exp_is_closed_set_button );
    //connect( this,  SIGNAL( set_auto_mode() ),   sdiag, SLOT( auto_mode_passed() ) );
    
-   connect( this, SIGNAL( define_used_instruments( QStringList & ) ), sdiag, SLOT( exclude_used_instruments( QStringList & ) ) );
+   connect( this, &US_ExperGui::define_used_instruments, sdiag, &US_ExperimentMain::exclude_used_instruments );
 
-   connect( this, SIGNAL( data_disk_only( ) ), sdiag, SLOT( enable_data_disk_only(  ) ) );
+   connect( this, &US_ExperGui::data_disk_only, sdiag, &US_ExperimentMain::enable_data_disk_only );
 
-   connect( sdiag, SIGNAL( close_expsetup_msg() ), this, SLOT ( expsetup_msg_closed() ) ); 
+   connect( sdiag, &US_ExperimentMain::close_expsetup_msg, this, &US_ExperGui::expsetup_msg_closed );
    
-   connect( sdiag, SIGNAL( to_live_update( QMap < QString, QString > & ) ),
-	    this,  SLOT( to_live_update( QMap < QString, QString > & ) ) );
+   connect( sdiag, &US_ExperimentMain::to_live_update,
+	    this,  &US_ExperGui::to_live_update );
 
-   connect( sdiag, SIGNAL( to_import( QMap < QString, QString > & ) ),
-	    this,  SLOT( to_import( QMap < QString, QString > & ) ) );
+   connect( sdiag, &US_ExperimentMain::to_import,
+	    this,  &US_ExperGui::to_import );
 
-   connect( this, SIGNAL( reset_experiment( QString & ) ), sdiag, SLOT( us_exp_clear( QString & ) ) );
+   connect( this, &US_ExperGui::reset_experiment, sdiag, &US_ExperimentMain::us_exp_clear );
    
-   connect( sdiag, SIGNAL( exp_cleared( ) ), this, SLOT( exp_cleared( ) ) );
+   connect( sdiag, &US_ExperimentMain::exp_cleared, this, &US_ExperGui::exp_cleared );
 
    //return automatically to Run Manager:
-   connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   connect( sdiag, &US_ExperimentMain::back_to_initAutoflow, this, &US_ExperGui::to_initAutoflow );
    
    
    sdiag->pb_close->setEnabled(false);  // Disable Close button
@@ -3039,7 +3039,7 @@ void US_ExperGui::manageExperiment()
   US_ExperimentMain* sdiag = new US_ExperimentMain;
   sdiag->setParent(this, Qt::Widget);
 
-  connect(sdiag, SIGNAL( us_exp_is_closed() ), this, SLOT( us_exp_is_closed_set_button() ) );
+  connect(sdiag, &US_ExperimentMain::us_exp_is_closed, this, &US_ExperGui::us_exp_is_closed_set_button );
   
   sdiag->move(offset, height_cum);
   sdiag->setFrameShape( QFrame::Box);
@@ -3110,21 +3110,21 @@ US_ObservGui::US_ObservGui( QWidget* topw )
    sdiag = new US_XpnDataViewer("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_xpn_viewer( QMap < QString, QString > &) ), sdiag, SLOT( check_for_data ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_ObservGui::to_xpn_viewer ), sdiag, &US_XpnDataViewer::check_for_data );
 
    //ALEXEY: devise SLOT saying what to do upon completion of experiment and exporting AUC data to hard drive - Import Experimental Data  !!! 
-   connect( sdiag, SIGNAL( experiment_complete_auto( QMap < QString, QString > & ) ), this, SLOT( to_post_processing ( QMap < QString, QString > & ) ) );
+   connect( sdiag, &US_XpnDataViewer::experiment_complete_auto, this, qOverload< QMap < QString, QString > & >( &US_ObservGui::to_post_processing ) );
 
    //ALEXEY: to reset timers/threads and GUI when returning back to InitDialog
-   connect( this, SIGNAL( reset_live_update_passed( ) ), sdiag, SLOT( reset_liveupdate_panel ( )  ) );
+   connect( this, qOverload<>( &US_ObservGui::reset_live_update_passed ), sdiag, &US_XpnDataViewer::reset_liveupdate_panel );
    
    //ALEXEY: close program, emitted from sdiag
-   connect( sdiag, SIGNAL( close_program() ), this, SLOT( to_close_program()  ) );
+   connect( sdiag, &US_XpnDataViewer::close_program, this, &US_ObservGui::to_close_program );
 
-   connect( sdiag, SIGNAL( liveupdate_processes_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+   connect( sdiag, &US_XpnDataViewer::liveupdate_processes_stopped, this, &US_ObservGui::processes_stopped_passed );
 
    //ALEXEY: premature abortion with no data
-   connect( sdiag, SIGNAL( aborted_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow_xpnviewer ( ) ) );
+   connect( sdiag, &US_XpnDataViewer::aborted_back_to_initAutoflow, this, qOverload<>( &US_ObservGui::to_initAutoflow_xpnviewer ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3255,16 +3255,16 @@ US_PostProdGui::US_PostProdGui( QWidget* topw )
    sdiag = new US_ConvertGui("AUTO");
    sdiag->setParent(this, Qt::Widget);
 
-   connect( this, SIGNAL( to_post_prod( QMap < QString, QString > & ) ), sdiag, SLOT( import_data_auto ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_lims_import_passed( ) ), sdiag, SLOT( reset_limsimport_panel ( )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_PostProdGui::to_post_prod ), sdiag, &US_ConvertGui::import_data_auto );
+   connect( this, qOverload<>( &US_PostProdGui::reset_lims_import_passed ), sdiag, &US_ConvertGui::reset_limsimport_panel );
 
    //emit signal after data loaded
-   connect( sdiag, SIGNAL( data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
+   connect( sdiag, &US_ConvertGui::data_loaded, this, qOverload<>( &US_PostProdGui::resize_main ) );
    
    //ALEXEY: switch to Editing
-   connect( sdiag, SIGNAL( saving_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_editing (  QMap < QString, QString > &) ) );
+   connect( sdiag, &US_ConvertGui::saving_complete_auto, this, qOverload< QMap < QString, QString > & >( &US_PostProdGui::to_editing ) );
    //ALEXEY: for academic ver. switch back to experiment
-   connect( sdiag, SIGNAL( saving_complete_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   connect( sdiag, &US_ConvertGui::saving_complete_back_to_initAutoflow, this, qOverload<>( &US_PostProdGui::to_initAutoflow ) );
    
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3388,18 +3388,18 @@ US_EditingGui::US_EditingGui( QWidget* topw )
    
    
    // //Later - do actual editing form sdiag (load_auto() ) - whatever it will be: (us_edit.cpp)
-   connect( this, SIGNAL( start_editing( QMap < QString, QString > & ) ), sdiag, SLOT( load_auto ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_EditingGui::start_editing ), sdiag, &US_Edit::load_auto );
    //emit signal after data loaded
-   connect( sdiag, SIGNAL( data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
+   connect( sdiag, &US_Edit::data_loaded, this, qOverload<>( &US_EditingGui::resize_main ) );
    
-   connect( this, SIGNAL( reset_data_editing_passed( ) ), sdiag, SLOT(  reset_editdata_panel (  )  ) );
+   connect( this, qOverload<>( &US_EditingGui::reset_data_editing_passed ), sdiag, &US_Edit::reset_editdata_panel );
 
    //ALEXEY: switch to Analysis || REPORT (abde)
-   connect( sdiag, SIGNAL( edit_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_analysis (  QMap < QString, QString > &) ) );
-   connect( sdiag, SIGNAL( edit_complete_auto_abde(  QMap < QString, QString > & ) ), this, SLOT( to_report (  QMap < QString, QString > &) ) );
+   connect( sdiag, &US_Edit::edit_complete_auto, this, qOverload< QMap < QString, QString > & >( &US_EditingGui::to_analysis ) );
+   connect( sdiag, &US_Edit::edit_complete_auto_abde, this, &US_EditingGui::to_report );
    
    //ALEXEY: back to initAutoflow 
-   connect( sdiag, SIGNAL( back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   connect( sdiag, &US_Edit::back_to_initAutoflow, this, qOverload<>( &US_EditingGui::to_initAutoflow ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3527,19 +3527,19 @@ US_AnalysisGui::US_AnalysisGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
    
    //Later - do actual analysis form sdiag - whatever it will be:
-   connect( this, SIGNAL( start_analysis( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::start_analysis ), sdiag, &US_Analysis_auto::initPanel );
    // In initPanel() - re-generate GUI based on # of rows corresponding to # stages in AProfile...
 
    // When coming back to Manage Optima Runs
-   connect( sdiag, SIGNAL( analysis_update_process_stopped() ), this, SLOT( processes_stopped_passed()  ) );
+   connect( sdiag, &US_Analysis_auto::analysis_update_process_stopped, this, &US_AnalysisGui::processes_stopped_passed );
 
-   connect( sdiag, SIGNAL( close_analysissetup_msg() ), this, SLOT ( analysissetup_msg_closed() ) );
+   connect( sdiag, &US_Analysis_auto::close_analysissetup_msg, this, &US_AnalysisGui::analysissetup_msg_closed );
 
    //ALEXEY: back to initAutoflow when user stuck at FITMEN (already processed) and program proceeded to REPORT
-   connect( sdiag, SIGNAL( analysis_back_to_initAutoflow( ) ), this, SLOT( to_initAutoflow ( ) ) );
+   connect( sdiag, &US_Analysis_auto::analysis_back_to_initAutoflow, this, qOverload<>( &US_AnalysisGui::to_initAutoflow ) );
 
    //ALEXEY: switch to Report
-   connect( sdiag, SIGNAL( analysis_complete_auto(  QMap < QString, QString > & ) ), this, SLOT( to_report (  QMap < QString, QString > &) ) );
+   connect( sdiag, &US_Analysis_auto::analysis_complete_auto, this, qOverload< QMap < QString, QString > & >( &US_AnalysisGui::to_report ) );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3654,9 +3654,9 @@ US_ReportStageGui::US_ReportStageGui( QWidget* topw )
    sdiag->setParent(this, Qt::Widget);
    
    //connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( start_report( QMap < QString, QString > & ) ), sdiag, SLOT( loadRun_auto ( QMap < QString, QString > & )  ) );
+   connect( this, qOverload< QMap < QString, QString > & >( &US_ReportStageGui::start_report ), sdiag, &US_ReporterGMP::loadRun_auto );
    
-   connect( this, SIGNAL( reset_reporting_passed( ) ), sdiag, SLOT(  reset_report_panel (  )  ) );
+   connect( this, qOverload<>( &US_ReportStageGui::reset_reporting_passed ), sdiag, &US_ReporterGMP::reset_report_panel );
 
    offset = 0;
    sdiag->move(offset, 2*offset);
@@ -3750,8 +3750,8 @@ US_eSignaturesGui::US_eSignaturesGui( QWidget* topw )
    sdiag = new US_eSignaturesGMP( "AUTO" );
    sdiag->setParent(this, Qt::Widget);
    
-   connect( this, SIGNAL( start_esign( QMap < QString, QString > & ) ), sdiag, SLOT( initPanel_auto ( QMap < QString, QString > & )  ) );
-   connect( this, SIGNAL( reset_esigning_passed( ) ), sdiag, SLOT(  reset_esign_panel (  )  ) );
+   connect( this, &US_eSignaturesGui::start_esign, sdiag, &US_eSignaturesGMP::initPanel_auto );
+   connect( this, &US_eSignaturesGui::reset_esigning_passed, sdiag, &US_eSignaturesGMP::reset_esign_panel );
 
    offset = 0;
    sdiag->move(offset, 2*offset);

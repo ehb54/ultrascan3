@@ -99,7 +99,7 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    cb_save_bl->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_bl );
 
-   lbl_smooth =  new QLabel      ( us_tr( "Smoothing:" ), this );
+   lbl_smooth =  new QLabel      ( us_tr( "Smoothing radius:" ), this );
    lbl_smooth -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_smooth -> setPalette      ( PALET_LABEL );
    AUTFBACK( lbl_smooth );
@@ -418,7 +418,7 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
    cb_gg_smooth = new QCheckBox(this);
-   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Maximum smoothing points: "));
+   cb_gg_smooth->setText(us_tr( "Global Gaussians - initialization smoothing. Maximum smoothing radius: "));
    cb_gg_smooth->setEnabled( true );
    cb_gg_smooth->setChecked( (*parameters)[ "mals_cb_gg_smooth" ] == "true" );
    cb_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -440,7 +440,7 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    le_gg_smooth->setMinimumWidth( 60 );
 
    cb_gg_cyclic = new QCheckBox(this);
-   cb_gg_cyclic->setText(us_tr( "Experimental: Global Gaussian Gaussian cyclic fit"));
+   cb_gg_cyclic->setText(us_tr( "Global Gaussians - cyclic fit"));
    cb_gg_cyclic->setEnabled( true );
    cb_gg_cyclic->setChecked( (*parameters)[ "mals_cb_gg_cyclic" ] == "true" );
    cb_gg_cyclic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -449,7 +449,7 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_gg_oldstyle = new QCheckBox(this);
-   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable old style Gaussian fit display"));
+   cb_gg_oldstyle->setText(us_tr( "Global Gaussians - Enable legacy Gaussian fit display"));
    cb_gg_oldstyle->setEnabled( true );
    cb_gg_oldstyle->setChecked( (*parameters)[ "mals_cb_gg_oldstyle" ] == "true" );
    cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -552,6 +552,25 @@ void US_Hydrodyn_Mals_Options::setupGUI()
    }
    connect( le_ampl_width_min, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_ampl_width_min->setMinimumWidth( 60 );
+
+   lbl_ampl_min =  new QLabel      ( us_tr( "Global minimum value for Gaussian amplitude:" ), this );
+   lbl_ampl_min -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_ampl_min -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_ampl_min );
+   lbl_ampl_min -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_ampl_min = new QLineEdit( this );    le_ampl_min->setObjectName( "le_ampl_min Line Edit" );
+   le_ampl_min->setText( (*parameters)[ "mals_ampl_min" ] );
+   le_ampl_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_ampl_min->setPalette( PALET_NORMAL );
+   AUTFBACK( le_ampl_min );
+   le_ampl_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1e-50, 1e-3, 1, le_ampl_min );
+      le_ampl_min->setValidator( qdv );
+   }
+   connect( le_ampl_min, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_ampl_min->setMinimumWidth( 60 );
 
    cb_lock_min_retry = new QCheckBox(this);
    cb_lock_min_retry->setText( us_tr( "Lock curves and retry when minimum amplitude or width is pegged\nby the global minimum times this value:" ) );
@@ -722,15 +741,18 @@ void US_Hydrodyn_Mals_Options::setupGUI()
       gl_other->addWidget         ( lbl_ampl_width_min , 1, 0 );
       gl_other->addWidget         ( le_ampl_width_min  , 1, 1 );
 
-      gl_other->addWidget         ( cb_lock_min_retry       , 2, 0 );
-      gl_other->addWidget         ( le_lock_min_retry_mult  , 2, 1 );
+      gl_other->addWidget         ( lbl_ampl_min , 2, 0 );
+      gl_other->addWidget         ( le_ampl_min  , 2, 1 );
 
-      gl_other->addWidget         ( cb_maxfpk_restart       , 3, 0 );
+      gl_other->addWidget         ( cb_lock_min_retry       , 3, 0 );
+      gl_other->addWidget         ( le_lock_min_retry_mult  , 3, 1 );
+
+      gl_other->addWidget         ( cb_maxfpk_restart       , 4, 0 );
       {
          QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          // hbl->addWidget     ( le_maxfpk_restart_tries );
          hbl->addWidget     ( le_maxfpk_restart_pct );
-         gl_other->addLayout( hbl , 3, 1 );
+         gl_other->addLayout( hbl , 4, 1 );
       }
       background->addLayout( gl_other );
    }
@@ -927,6 +949,7 @@ bool US_Hydrodyn_Mals_Options::any_changes()
       || (*parameters)[ "mals_makeiq_avg_peaks"        ] != ( le_makeiq_avg_peaks    ->text() )
       || (*parameters)[ "mals_csv_transposed"          ] != ( cb_csv_transposed->isChecked() ? "true" : "false" )
       || (*parameters)[ "mals_ampl_width_min"          ] != ( le_ampl_width_min      ->text() )
+      || (*parameters)[ "mals_ampl_min"                ] != ( le_ampl_min            ->text() )
       || (*parameters)[ "mals_lock_min_retry"          ] != ( cb_lock_min_retry->isChecked() ? "true" : "false" )
       || (*parameters)[ "mals_lock_min_retry_mult"     ] != ( le_lock_min_retry_mult ->text() )
       || (*parameters)[ "mals_maxfpk_restart"          ] != ( cb_maxfpk_restart->isChecked() ? "true" : "false" )
@@ -987,6 +1010,7 @@ void US_Hydrodyn_Mals_Options::ok()
    (*parameters)[ "mals_csv_transposed" ] = cb_csv_transposed->isChecked() ? "true" : "false";
    
    (*parameters)[ "mals_ampl_width_min"       ] = le_ampl_width_min      ->text();
+   (*parameters)[ "mals_ampl_min"             ] = le_ampl_min            ->text();
 
    (*parameters)[ "mals_lock_min_retry"       ] = cb_lock_min_retry->isChecked() ? "true" : "false";
    (*parameters)[ "mals_lock_min_retry_mult"  ] = le_lock_min_retry_mult ->text();

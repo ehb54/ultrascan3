@@ -202,62 +202,34 @@ US_Properties::US_Properties( US_Model& mod, int access )
    main->addWidget( pb_accept,      row++, 4, 1, 2 );
 
    // Signal-Slot connections
-   connect( pb_new,         SIGNAL( clicked()       ), 
-                            SLOT(   newAnalyte()    ) );
-   connect( pb_delete,      SIGNAL( clicked()       ), 
-                            SLOT(   del_component() ) );
-   connect( pb_edit,        SIGNAL( clicked()       ), 
-                            SLOT(   edit_analyte()  ) );
-   connect( le_description, SIGNAL( editingFinished() ), 
-                            SLOT  ( edit_component () ) );
-   connect( lw_components,  SIGNAL( currentRowChanged( int  ) ),
-                            SLOT  ( update           ( int  ) ) );
-   connect( le_vbar,        SIGNAL( editingFinished() ), 
-                            SLOT  ( edit_vbar      () ) );
-   connect( le_extinction,  SIGNAL( editingFinished() ), 
-                            SLOT(   set_molar()       ) );
-   connect( ck_molConc,     SIGNAL( toggled(      bool ) ), 
-                            SLOT(   check_molar(  bool ) ) );
-   connect( ck_sigConc,     SIGNAL( toggled(      bool ) ), 
-                            SLOT(   check_signal( bool ) ) );
-   connect( le_sigConc,     SIGNAL( editingFinished() ), 
-                            SLOT(   set_molar()       ) );
-   connect( pb_sim,         SIGNAL( clicked()  ), 
-                            SLOT(   simulate() ) );
-   connect( cb_shape,       SIGNAL( currentIndexChanged( int ) ),
-                            SLOT  ( select_shape       ( int ) ) );
-   connect( ck_mw,          SIGNAL( toggled(   bool ) ), 
-                            SLOT(   calculate( bool ) ) );
-   connect( le_mw,          SIGNAL( editingFinished() ), 
-                            SLOT(   calculate()       ) );
-   connect( ct_oligomer,    SIGNAL( valueChanged ( double ) ), 
-                            SLOT  ( set_oligomer ( double ) ) );
-   connect( ck_f_f0,        SIGNAL( toggled(   bool )  ), 
-                            SLOT(   calculate( bool )  ) );
-   connect( le_f_f0,        SIGNAL( editingFinished () ), 
-                            SLOT(   calculate()        ) );
-   connect( ck_s,           SIGNAL( toggled(   bool )  ), 
-                            SLOT(   calculate( bool)   ) );
-   connect( le_s,           SIGNAL( editingFinished()  ), 
-                            SLOT(   calculate()        ) );
-   connect( ck_D,           SIGNAL( toggled(   bool )  ), 
-                            SLOT(   calculate( bool )  ) );
-   connect( le_D,           SIGNAL( editingFinished()  ), 
-                            SLOT(   calculate()        ) );
-   connect( ck_f,           SIGNAL( toggled(   bool )  ), 
-                            SLOT(   calculate( bool )  ) );
-   connect( le_f,           SIGNAL( editingFinished () ), 
-                            SLOT(   calculate()        ) );
-   connect( pb_load_c0,     SIGNAL( clicked() ), 
-                            SLOT(   load_c0() ) );
-   connect( ck_co_sed,      SIGNAL( stateChanged( int ) ), 
-                            SLOT(   co_sed( int )       ) );
-   connect( pb_help,        SIGNAL( clicked()    ), 
-                            SLOT(   help()       ) );
-   connect( pb_close,       SIGNAL( clicked()    ), 
-                            SLOT(   close()      ) );
-   connect( pb_accept,      SIGNAL( clicked()    ), 
-                            SLOT(   acceptProp() ) );
+   connect( pb_new,         &QPushButton::clicked,           this, &US_Properties::newAnalyte );
+   connect( pb_delete,      &QPushButton::clicked,           this, &US_Properties::del_component );
+   connect( pb_edit,        &QPushButton::clicked,           this, &US_Properties::edit_analyte );
+   connect( le_description, &QLineEdit::editingFinished,     this, &US_Properties::edit_component );
+   connect( lw_components,  &QListWidget::currentRowChanged, this, &US_Properties::update );
+   connect( le_vbar,        &QLineEdit::editingFinished,     this, &US_Properties::edit_vbar );
+   connect( le_extinction,  &QLineEdit::editingFinished,     this, &US_Properties::set_molar );
+   connect( ck_molConc,     &QCheckBox::toggled,             this, &US_Properties::check_molar );
+   connect( ck_sigConc,     &QCheckBox::toggled,             this, &US_Properties::check_signal );
+   connect( le_sigConc,     &QLineEdit::editingFinished,     this, &US_Properties::set_molar );
+   connect( pb_sim,         &QPushButton::clicked,           this, &US_Properties::simulate );
+   connect( cb_shape,       qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_Properties::select_shape );
+   connect( ck_mw,          &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
+   connect( le_mw,          &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
+   connect( ct_oligomer,    &QwtCounter::valueChanged,       this, &US_Properties::set_oligomer );
+   connect( ck_f_f0,        &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
+   connect( le_f_f0,        &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
+   connect( ck_s,           &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
+   connect( le_s,           &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
+   connect( ck_D,           &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
+   connect( le_D,           &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
+   connect( ck_f,           &QCheckBox::toggled,             this, qOverload< bool >( &US_Properties::calculate ) );
+   connect( le_f,           &QLineEdit::editingFinished,     this, qOverload<>( &US_Properties::calculate ) );
+   connect( pb_load_c0,     &QPushButton::clicked,           this, &US_Properties::load_c0 );
+   connect( ck_co_sed,      US_CB_STATE_CHANGED,        this, &US_Properties::co_sed );
+   connect( pb_help,        &QPushButton::clicked,           this, &US_Properties::help );
+   connect( pb_close,       &QPushButton::clicked,           this, &US_Properties::close );
+   connect( pb_accept,      &QPushButton::clicked,           this, &US_Properties::acceptProp );
 
    clear_entries();
    update_lw();
@@ -327,11 +299,10 @@ void US_Properties::newAnalyte( void )
    US_AnalyteGui* dialog =
       new US_AnalyteGui( true, QString(), db_access );
 
-   connect( dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
-                    SLOT  ( update_analyte( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_AnalyteGui::valueChanged ),
+                    this, &US_Properties::update_analyte );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ), 
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_AnalyteGui::use_db, this, &US_Properties::source_changed );
 
    // If accepted, work is done by update_analyte
    if ( dialog->exec() == QDialog::Rejected )
@@ -504,17 +475,16 @@ void US_Properties::edit_component( void )
       return;
    }
       
-   lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   disconnect( lw_components, &QListWidget::currentRowChanged, this, &US_Properties::update );
    delete lw_components->currentItem();
-   
+
    lw_components->insertItem( row, new QListWidgetItem( desc ) );
    lw_components->setCurrentRow( row );
 
    US_Model::SimulationComponent* sc = &model.components[ row ];
    sc->name = desc;
 
-   connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
-                           SLOT  ( update           ( int  ) ) );
+   connect( lw_components, &QListWidget::currentRowChanged, this, &US_Properties::update );
    clear_guid();
 }
 
@@ -878,11 +848,11 @@ void US_Properties::simulate( void )
    US_Predict1* dialog = new US_Predict1( 
          working_data, analyte, db_access, true );
 
-   connect( dialog, SIGNAL( changed       ( US_Analyte ) ), 
-                    SLOT  ( new_hydro     ( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_Predict1::changed ), 
+                    this, &US_Properties::new_hydro );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ), 
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_Predict1::use_db, 
+                    this, &US_Properties::source_changed );
    dialog->exec();
 }
 
@@ -902,13 +872,13 @@ void US_Properties::new_hydro( US_Analyte ad )
    // Set the name of the component
    if ( ! ad.description.isEmpty() )
    {
-      lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
+      QObject::disconnect( lw_components, &QListWidget::currentRowChanged, nullptr, nullptr );
       delete lw_components->currentItem();
       lw_components->insertItem( row, new QListWidgetItem( ad.description ) );
       lw_components->setCurrentRow( row );
 
-      connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
-                              SLOT  ( update           ( int  ) ) );
+      connect( lw_components, &QListWidget::currentRowChanged,
+                              this, &US_Properties::update );
 
       sc->name = ad.description;
       le_description->setText( ad.description );
@@ -1037,8 +1007,8 @@ void US_Properties::co_sed( int new_state )
          {
              ck_co_sed->disconnect();
              ck_co_sed->setChecked( false );
-             connect( ck_co_sed, SIGNAL( stateChanged( int ) ), 
-                                 SLOT  ( co_sed      ( int ) ) );
+             connect( ck_co_sed, US_CB_STATE_CHANGED, 
+                                 this, &US_Properties::co_sed );
              return;
          }
       }
@@ -1177,11 +1147,11 @@ void US_Properties::edit_analyte()
 
    US_AnalyteGui* dialog = new US_AnalyteGui( true, aguid, db_access );
 
-   connect( dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
-                    SLOT  ( update_analyte( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_AnalyteGui::valueChanged ),
+                    this, &US_Properties::update_analyte );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ), 
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_AnalyteGui::use_db, 
+                    this, &US_Properties::source_changed );
 
    // If accepted, work is done by update_analyte
    dialog->exec();
@@ -1197,8 +1167,8 @@ void US_Properties::check_molar( bool chkd )
    // Flip check state of signal to opposite of molar
    ck_sigConc->disconnect();
    ck_sigConc->setChecked( !chkd );
-   connect( ck_sigConc, SIGNAL( toggled(      bool ) ), 
-                        SLOT(   check_signal( bool ) ) );
+   connect( ck_sigConc, &QAbstractButton::toggled, 
+                        this, &US_Properties::check_signal );
 }
 
 // Slot to make adjustments with signal check changed
@@ -1211,7 +1181,7 @@ void US_Properties::check_signal( bool chkd )
    // Flip check state of molar to opposite of signal
    ck_molConc->disconnect();
    ck_molConc->setChecked( !chkd );
-   connect( ck_molConc, SIGNAL( toggled(      bool ) ), 
-                        SLOT(   check_molar(  bool ) ) );
+   connect( ck_molConc, &QAbstractButton::toggled, 
+                        this, &US_Properties::check_molar );
 }
 

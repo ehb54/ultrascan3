@@ -1,6 +1,8 @@
 //! \file us_widgets_dialog.cpp
 #include "us_widgets_dialog.h"
+#include "us_widgets.h"
 #include "us_gui_settings.h"
+#include "us_theme.h"
 #include "us_images.h"
 
 
@@ -8,7 +10,7 @@ US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_styl
    : QDialog( w, f )
 {
   if (set_style)
-      QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
+      US_Theme::apply();
 
   if ( ! g.isValid() )
   {
@@ -16,8 +18,9 @@ US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_styl
     qDebug( "us_win: invalid global memory" );
   }
 
-  vlgray = US_GuiSettings::editColor();
-  vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+  vlgray = US_GuiSettings::readonlyColor();
+
+  US_Theme::tag( this, US_Theme::Frame );
 
   QIcon us3_icon = US_Images::getIcon( US_Images::US3_ICON );
   setWindowIcon( us3_icon );
@@ -28,7 +31,7 @@ QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust,
 {
   QLabel* newLabel = new QLabel( labelString, this );
 
-//  newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+  newLabel->setFrameStyle( QFrame::NoFrame );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
   newLabel->setMargin    ( 2 );
   newLabel->setAutoFillBackground( true );
@@ -38,7 +41,7 @@ QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust,
              US_GuiSettings::fontSize() + fontAdjust, 
              weight ) );
 
-  newLabel->setPalette( US_GuiSettings::labelColor() );
+  US_Theme::tag( newLabel, US_Theme::Label );
 
   return newLabel;
 }
@@ -49,7 +52,7 @@ QLabel* US_WidgetsDialog::us_textlabel( const QString& labelString, int fontAdju
 {
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
-  newLabel->setPalette( US_GuiSettings::editColor() );
+  US_Theme::tag( newLabel, US_Theme::Edit );
 
   return newLabel;
 }
@@ -61,11 +64,14 @@ QLabel* US_WidgetsDialog::us_banner( const QString& labelString, int fontAdjust,
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
   newLabel->setAlignment ( Qt::AlignCenter );
-  newLabel->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
-  newLabel->setMidLineWidth( 2 );
+  newLabel->setFrameStyle( QFrame::NoFrame );
+  newLabel->setMargin    ( 5 );
+
+  // Tags the label as a section header (hook for site specific style sheets)
+  newLabel->setProperty( US_Theme::bannerProperty(), "banner" );
 
   // Set label colors
-  newLabel->setPalette( US_GuiSettings::frameColor() );
+  US_Theme::tag( newLabel, US_Theme::Banner );
 
   return newLabel;
 }
@@ -79,7 +85,7 @@ QPushButton* US_WidgetsDialog::us_pushbutton( const QString& labelString, bool e
   button->setFont( QFont( US_GuiSettings::fontFamily(), 
                           US_GuiSettings::fontSize() + fontAdjust ) );
 
-  button->setPalette( US_GuiSettings::pushbColor() );
+  US_Theme::tag( button, US_Theme::Pushbutton );
 
   button->setAutoDefault( false );
   button->setEnabled( enabled );
@@ -95,8 +101,8 @@ QTextEdit* US_WidgetsDialog::us_textedit( void )
   te->setFont          ( QFont( US_GuiSettings::fontFamily(), 
                                 US_GuiSettings::fontSize() - 1 ) );
   
-  te->setPalette       ( US_GuiSettings::normalColor() );
-  te->setFrameStyle    ( QFrame::WinPanel | QFrame::Sunken );
+  US_Theme::tag( te, US_Theme::Normal );
+  te->setFrameStyle    ( QFrame::StyledPanel | QFrame::Plain );
   te->setAcceptRichText( true );
   te->setReadOnly      ( true );
   te->show();
@@ -127,12 +133,12 @@ void US_WidgetsDialog::us_setReadOnly( QLineEdit* le, bool readonly )
 {
   if ( readonly )
   {
-     le->setPalette ( vlgray );
+     US_Theme::tag( le, US_Theme::ReadOnly );
      le->setReadOnly( true );
   }
   else
   {
-     le->setPalette ( US_GuiSettings::editColor() );
+     US_Theme::tag( le, US_Theme::Edit );
      le->setReadOnly( false );
   }
 }
@@ -142,12 +148,12 @@ void US_WidgetsDialog::us_setReadOnly( QTextEdit* te, bool readonly )
 {
   if ( readonly )
   {
-     te->setPalette ( vlgray );
+     US_Theme::tag( te, US_Theme::ReadOnly );
      te->setReadOnly( true );
   }
   else
   {
-     te->setPalette ( US_GuiSettings::normalColor() );
+     US_Theme::tag( te, US_Theme::Normal );
      te->setReadOnly( false );
   }
 }
@@ -158,7 +164,7 @@ QListWidget* US_WidgetsDialog::us_listwidget ( int fontAdjust )
   QListWidget* lw = new QListWidget;
 
   lw->setAutoFillBackground( true );
-  lw->setPalette( US_GuiSettings::editColor() );
+  US_Theme::tag( lw, US_Theme::Edit );
   lw->setFont   ( QFont( US_GuiSettings::fontFamily(), 
                          US_GuiSettings::fontSize() + fontAdjust ) );
 
@@ -169,22 +175,19 @@ QListWidget* US_WidgetsDialog::us_listwidget ( int fontAdjust )
 QGridLayout* US_WidgetsDialog::us_checkbox( 
       const QString& text, QCheckBox*& cb, bool state )
 {
-  QPalette p    = US_GuiSettings::normalColor();
   QFont    font = QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize  (),
                          QFont::Bold );
 
   QFontMetrics fm( font );
- 
+
   QLabel* lb_spacer = new QLabel;
   lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
-  lb_spacer->setAutoFillBackground( true );
-  lb_spacer->setPalette           ( p );
-  
+  US_Theme::tag( lb_spacer, US_Theme::Normal );
+
   cb = new QCheckBox( text.toLatin1(), this );
   cb->setFont              ( font );
-  cb->setPalette           ( p );
-  cb->setAutoFillBackground( true );
+  US_Theme::tag( cb, US_Theme::Normal );
   cb->setChecked           ( state );
 
   QGridLayout* layout = new QGridLayout;
@@ -201,7 +204,6 @@ QGridLayout* US_WidgetsDialog::us_checkbox(
 QGridLayout* US_WidgetsDialog::us_radiobutton( 
       const QString& text, QRadioButton*& rb, bool state )
 {
-  QPalette p    = US_GuiSettings::normalColor();
   QFont    font = QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize  (),
                          QFont::Bold );
@@ -210,13 +212,11 @@ QGridLayout* US_WidgetsDialog::us_radiobutton(
 
   QLabel* lb_spacer = new QLabel;
   lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); // Space as wide as a 'w'
-  lb_spacer->setAutoFillBackground( true );
-  lb_spacer->setPalette           ( p );
+  US_Theme::tag( lb_spacer, US_Theme::Normal );
 
   rb = new QRadioButton( text.toLatin1(), this );
-  rb->setAutoFillBackground( true );
   rb->setFont              ( font );
-  rb->setPalette           ( p );
+  US_Theme::tag( rb, US_Theme::Normal );
   rb->setChecked           ( state );
 
   QGridLayout* layout = new QGridLayout;
@@ -238,7 +238,7 @@ QProgressBar* US_WidgetsDialog::us_progressBar( int low, int high, int value )
   pb->setValue( value );
 
   pb->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
-  pb->setPalette( US_GuiSettings::normalColor() );
+  US_Theme::tag( pb, US_Theme::Normal );
   pb->setAutoFillBackground( true );
 
   pb->setFont( QFont( US_GuiSettings::fontFamily(),
@@ -253,7 +253,7 @@ QComboBox* US_WidgetsDialog::us_comboBox( void )
 {
   QComboBox* cb = new QComboBox( this );
 
-  cb->setPalette( US_GuiSettings::normalColor() );
+  US_Theme::tag( cb, US_Theme::Normal );
   cb->setAutoFillBackground( true );
   cb->setFont( QFont( US_GuiSettings::fontFamily(), 
                       US_GuiSettings::fontSize() ) );
@@ -271,7 +271,7 @@ QLCDNumber* US_WidgetsDialog::us_lcd( int digits, int value )
   lcd->display        ( value );
   lcd->setAutoFillBackground( true );
 
-  lcd->setPalette     ( US_GuiSettings::lcdColor() );
+  US_Theme::tag( lcd, US_Theme::Lcd );
 
   return lcd;
 }
@@ -314,7 +314,7 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
 
   QFont vfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   QFontMetrics fm( vfont );
-  counter->setPalette   ( US_GuiSettings::normalColor() );
+  US_Theme::tag( counter, US_Theme::Normal );
   counter->setFont      ( vfont );
   counter->setAutoFillBackground( true );
 
@@ -341,9 +341,7 @@ QwtPlot* US_WidgetsDialog::us_plot( const QString& title, const QString& x_axis,
   plot->setAxisTitle( QwtPlot::xBottom, x_axis );
   plot->setAxisTitle( QwtPlot::yLeft  , y_axis );
 
-  plot->setAutoFillBackground( true );
-  plot->setPalette ( US_GuiSettings::plotColor() );
-  plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+  US_Widgets::us_style_plot( plot );
 
   return plot;
 }
@@ -403,7 +401,7 @@ QTabWidget* US_WidgetsDialog::us_tabwidget(  int fontAdjust,
              US_GuiSettings::fontSize  () + fontAdjust,
              weight ) );
 
-  newtw->setPalette( US_GuiSettings::normalColor() );
+  US_Theme::tag( newtw, US_Theme::Normal );
 
   return newtw;
 }
@@ -416,7 +414,7 @@ QHBoxLayout* US_WidgetsDialog::us_timeedit(
    QFont      font   = QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize  () + fontAdjust );
    tedt              = new QTimeEdit( QTime( 0, 0 ), this );
-   tedt->setPalette( pal );
+   US_Theme::tag( tedt, US_Theme::Normal );
    tedt->setAutoFillBackground( true );
    tedt->setFont( font );
 
@@ -427,7 +425,7 @@ QHBoxLayout* US_WidgetsDialog::us_timeedit(
    if ( sbox != NULL )
    {
       *sbox             = new QSpinBox( this );
-      (*sbox)->setPalette( pal );
+      US_Theme::tag( *sbox, US_Theme::Normal );
       (*sbox)->setAutoFillBackground( true );
       (*sbox)->setFont( font );
 
@@ -455,7 +453,7 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
    {
       *dd              = new QSpinBox( this );
       (*dd)->setRange(0, 20);
-      (*dd)->setPalette( pal );
+      US_Theme::tag( *dd, US_Theme::Normal );
       (*dd)->setAutoFillBackground( true );
       (*dd)->setFont( font );
       QLabel*  lb_d   = us_label( tr( "D:" ) );
@@ -475,7 +473,7 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
    {
       *hh              = new QSpinBox( this );
       (*hh)->setRange(0, 23);
-      (*hh)->setPalette( pal );
+      US_Theme::tag( *hh, US_Theme::Normal );
       (*hh)->setAutoFillBackground( true );
       (*hh)->setFont( font );
       QLabel*  lb_h   = us_label( tr( "H:" ) );
@@ -495,7 +493,7 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
    {
       *mm              = new QSpinBox( this );
       (*mm)->setRange(0, 59);
-      (*mm)->setPalette( pal );
+      US_Theme::tag( *mm, US_Theme::Normal );
       (*mm)->setAutoFillBackground( true );
       (*mm)->setFont( font );
       QLabel*  lb_m   = us_label( tr( "M:" ) );
@@ -515,7 +513,7 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
    {
       *ss              = new QSpinBox( this );
       (*ss)->setRange(0, 59);
-      (*ss)->setPalette( pal );
+      US_Theme::tag( *ss, US_Theme::Normal );
       (*ss)->setAutoFillBackground( true );
       (*ss)->setFont( font );
       QLabel*  lb_s   = us_label( tr( "S:" ) );
@@ -537,7 +535,7 @@ QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay(
 QSpinBox* US_WidgetsDialog::us_spinbox( const int fontAdjust )
 {
    QSpinBox* sbox   = new QSpinBox( this );
-   sbox->setPalette( US_GuiSettings::normalColor() );
+   US_Theme::tag( sbox, US_Theme::Normal );
    sbox->setAutoFillBackground( true );
    sbox->setFont( QFont( US_GuiSettings::fontFamily(),
                          US_GuiSettings::fontSize() + fontAdjust ) );
