@@ -2649,7 +2649,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		      channels_to_radial_ranges += rad_ranges.join(",");
 		    }
 		}
-	      channels_to_radial_ranges.chop(1);
+	      if ( channels_to_radial_ranges.endsWith( ":" ) )
+		channels_to_radial_ranges.chop(1);
 	    }
 	  channels_to_radial_ranges += ";";
 	}
