@@ -2592,22 +2592,57 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		    {
 		      QStringList rad_ranges;
 		      QJsonObject json_obj_2 = value_1.toObject();
-		      foreach(const QString& key_2, json_obj_2.keys())
+
+		      //Detect which DB json format we're dealing with:
+		      // new format:  "percents":{ sample:{ range:percent, ... }, ... }
+		      // old format:  "percents":{ range:percent, ... }             (no sample tier)
+		      //Peek at the first child value under "percents" -- if it is
+		      //itself an object, we're in the new (nested-by-sample) format.
+		      bool new_percents_format = false;
+		      if ( !json_obj_2.isEmpty() )
 			{
-			  //key_2 == "AAV-DNA" (sample)
-			  QJsonObject json_obj_3 = json_obj_2.value(key_2).toObject();
-			  foreach(const QString& key_3, json_obj_3.keys())
+			  new_percents_format = json_obj_2.value( json_obj_2.keys().first() ).isObject();
+			}
+
+		      if ( new_percents_format )
+			{
+			  foreach(const QString& key_2, json_obj_2.keys())
 			    {
-			      QJsonValue value_3 = json_obj_3.value(key_3);
+			      //key_2 == "AAV-DNA" (sample)
+			      QJsonObject json_obj_3 = json_obj_2.value(key_2).toObject();
+			      foreach(const QString& key_3, json_obj_3.keys())
+				{
+				  QJsonValue value_3 = json_obj_3.value(key_3);
+				  
+				  //for ranges-to-percents
+				  double percent_c = value_3.toString().toDouble();
+				  data_chann_range_percent_sample[key][key_2][key_3] = percent_c;
 			      
+				  //ned to make somethimg like
+				  //protocol_details[ "channels_to_radial_ranges" ]
+				  //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
+				  rad_ranges << key_3;
+				}
+			    }
+			}
+		      else
+			{
+			  //Old (pre-multi-sample) DB format: "percents" is a flat
+			  //range->percent map with no sample tier, e.g.
+			  //{"5.8-7":"100"}. File it under a single default sample
+			  //name ("Sample") so downstream code, which keys off
+			  //data_chann_range_percent_sample[chan][sample][range],
+			  //works unchanged for old records.
+			  static const QString default_sample_name = "Sample";
+			  foreach(const QString& key_2, json_obj_2.keys())
+			    {
+			      QJsonValue value_2 = json_obj_2.value(key_2);
+
 			      //for ranges-to-percents
-			      double percent_c = value_3.toString().toDouble();
-			      data_chann_range_percent_sample[key][key_2][key_3] = percent_c;
-			  
-			      //ned to make somethimg like
-			      //protocol_details[ "channels_to_radial_ranges" ]
-			      //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
-			      rad_ranges << key_3;
+			      double percent_c = value_2.toString().toDouble();
+			      data_chann_range_percent_sample[key][default_sample_name][key_2] = percent_c;
+
+			      rad_ranges << key_2;
 			    }
 			}
 		      rad_ranges.removeDuplicates();
