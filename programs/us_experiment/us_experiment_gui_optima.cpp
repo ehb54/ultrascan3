@@ -3234,17 +3234,18 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_delay_st_dd->setEnabled(false);
 
    //UV_vis
-   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
+   QHBoxLayout* lo_delaylay        = us_ddhhmmsslay( 0, 0,0,0,0, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss );
    sb_delay_dd->setEnabled(false);
    sb_delay_hh->setEnabled(false);
    sb_delay_mm->setEnabled(false);
+   sb_delay_ss->setEnabled(false);
 
    //Interference
-   QHBoxLayout* lo_delaylay_int    = us_ddhhmmsslay( 0, 0,0,0,1, &sb_delay_int_dd, &sb_delay_int_hh, &sb_delay_int_mm,  &sb_delay_int_ss );
+   QHBoxLayout* lo_delaylay_int    = us_ddhhmmsslay( 0, 0,0,0,0, &sb_delay_int_dd, &sb_delay_int_hh, &sb_delay_int_mm,  &sb_delay_int_ss );
    sb_delay_int_dd->setEnabled(false);
    sb_delay_int_hh->setEnabled(false);
    sb_delay_int_mm->setEnabled(false);
-
+   sb_delay_int_ss->setEnabled(false);
 
    //UV-vis
    QHBoxLayout* lo_scnintlay               = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
@@ -3496,7 +3497,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   genL->addWidget( lb_delay,   row,    0, 1,  5 );
   genL->addLayout( lo_delaylay,   row++,  5, 1,  1 );
   genL->addWidget( lb_scnint,  row,    0, 1,  5 );
-  genL->addLayout( lo_scnintlay,  row++,  5, 1,  3 );
+  genL->addLayout( lo_scnintlay,  row++,  5, 1,  1 );
 
 
   // Interference
@@ -3505,7 +3506,7 @@ DbgLv(1) << "EGSp: addWidg/Layo BB";
   genL->addWidget( lb_delay_int,   row,    0, 1,  5 );
   genL->addLayout( lo_delaylay_int,   row++,  5, 1,  1 );
   genL->addWidget( lb_scnint_int,     row,    0, 1,  5 );
-  genL->addLayout( lo_scnintlay_int,  row++,  5, 1,  3 );
+  genL->addLayout( lo_scnintlay_int,  row++,  5, 1,  1 );
 
 
 DbgLv(1) << "EGSp: addWidg/Layo GG";

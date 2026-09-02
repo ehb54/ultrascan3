@@ -27,7 +27,7 @@ US_ThemeTokens US_Theme::tokens(const Scheme s )
       t.windowAlt     = QColor( 0x2a, 0x30, 0x38 );
       t.windowText    = QColor( 0xe4, 0xe9, 0xee );
       t.mutedText     = QColor( 0x9b, 0xa6, 0xb2 );
-      t.disabledText  = QColor( 0x6b, 0x76, 0x81 );
+      t.disabledText  = QColor( 0x8d, 0x97, 0xa3 );
 
       t.base          = QColor( 0x17, 0x1b, 0x21 );
       t.baseAlt       = QColor( 0x1d, 0x22, 0x2a );
@@ -293,6 +293,80 @@ QString US_Theme::styleSheet( void )
    return qss;
 }
 
+QPalette US_Theme::paletteFor(const Role r )
+{
+   switch ( r )
+   {
+      case Frame:      return US_GuiSettings::frameColor   ();
+      case Banner:     return US_GuiSettings::bannerColor  ();
+      case Label:      return US_GuiSettings::labelColor   ();
+      case Pushbutton: return US_GuiSettings::pushbColor   ();
+      case Edit:       return US_GuiSettings::editColor    ();
+      case ReadOnly:   return US_GuiSettings::readonlyColor();
+      case Lcd:        return US_GuiSettings::lcdColor     ();
+      case PlotFrame:  return US_GuiSettings::plotColor    ();
+      default:         return US_GuiSettings::normalColor  ();
+   }
+}
+
+void US_Theme::tag( QWidget* w, const Role r )
+{
+   if ( w == nullptr )
+      return;
+
+   w->setProperty( roleProperty(), static_cast< int >( r ) );
+   w->setPalette ( paletteFor( r ) );
+}
+
+void US_Theme::restyle( void )
+{
+   if ( qApp == nullptr )
+      return;
+
+   const QWidgetList widgets = QApplication::allWidgets();
+
+   for ( QWidget* w : widgets )
+   {
+      if ( w == nullptr )
+         continue;
+
+      const QVariant v = w->property( roleProperty() );
+
+      if ( ! v.isValid() )
+         continue;
+
+      const auto r = static_cast< Role >( v.toInt() );
+
+      if ( r == NoRole )
+         continue;
+
+      const QPalette p = paletteFor( r );
+
+      w->setPalette( p );
+
+      // A scroll area paints the surface behind its rows through the
+      // viewport, which is a child widget with a palette of its own.
+      if ( const auto* sa = qobject_cast< QAbstractScrollArea* >( w );
+           sa != nullptr  &&  sa->viewport() != nullptr )
+         sa->viewport()->setPalette( p );
+
+      w->update();
+   }
+}
+
+int US_Theme::serial( void )
+{
+   const QSettings settings( US3, "UltraScan" );
+   return settings.value( "themeSerial", 0 ).toInt();
+}
+
+void US_Theme::bumpSerial( void )
+{
+   QSettings settings( US3, "UltraScan" );
+   settings.setValue( "themeSerial", settings.value( "themeSerial", 0 ).toInt() + 1 );
+   settings.sync();
+}
+
 void US_Theme::invalidate( void )
 {
    applied_signature.clear();
@@ -306,11 +380,12 @@ void US_Theme::apply(const bool force )
    // Sample the desktop's scheme before we replace the application palette
    systemScheme();
 
-   const QString signature = QString( "%1|%2|%3|%4" )
+   const QString signature = QString( "%1|%2|%3|%4|%5" )
       .arg( US_GuiSettings::guiStyle () )
       .arg( US_GuiSettings::fontFamily() )
       .arg( US_GuiSettings::fontSize  () )
-      .arg( static_cast< int >( scheme() ) );
+      .arg( static_cast< int >( scheme() ) )
+      .arg( serial() );
 
    if ( ! force  &&  signature == applied_signature )
       return;
@@ -327,6 +402,10 @@ void US_Theme::apply(const bool force )
    QApplication::setPalette  ( applicationPalette() );
    QApplication::setFont     ( baseFont() );
    qApp->setStyleSheet       ( styleSheet() );
+
+   // Windows that are already on screen carry their own widget palettes and
+   // would otherwise keep the colors of the scheme they were built under.
+   // restyle();
 
 #if QT_VERSION >= QT_VERSION_CHECK( 6, 5, 0 )
    if ( ! watcher_installed  &&  QGuiApplication::styleHints() != nullptr )

@@ -200,6 +200,9 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       void zoomModeChanged( bool enabled );
 
    protected:
+      //! \brief Keep the tool bar in step with a live color scheme switch
+      bool eventFilter( QObject* object, QEvent* event ) override;
+
       //! \brief Setup default zoom behavior
       //! Override to customize zoom setup
       virtual void setupZoom();
@@ -219,6 +222,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
 
       US_PlotConfig* configWidget;
       QwtPlot*       plot;
+      QToolBar*      toolBar;
 
       QwtPlotZoomer* zoomer;
       QwtPlotPicker* picker;
