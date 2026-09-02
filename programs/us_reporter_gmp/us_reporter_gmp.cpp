@@ -3896,6 +3896,16 @@ void US_ReporterGMP::process_abde_plots( void )
 	   this, &US_ReporterGMP::get_abde_data_per_channel );
 
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
+
+  //Build channel -> {"Analyte #1:":pretty, ...} map so the norm-profile plot
+  //legends can show human-readable analyte names instead of the sanitized
+  //filename tokens it uses internally as sample keys.
+  QMap< QString, QMap< QString, QString > > abde_channs_analytes_pretty;
+  for ( int i=0; i< abde_channList.size(); ++i )
+    {
+      abde_channs_analytes_pretty[ abde_channList[i] ] = get_channels_analytes_mwl_abde( abde_channList[i] );
+    }
+  sdiag_norm_profile->set_channels_analytes_pretty_names( abde_channs_analytes_pretty );
   
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
@@ -8001,12 +8011,16 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	   break;
 	 }
      }
+   //Hoisted out of the if(mwl_abde) block below so the Integration Results
+   //section further down can reuse it to show human-readable analyte names
+   //instead of the sanitized sample keys, without a second DB round-trip.
+   QMap< QString, QString > channs_analytes_buffers;
    if( mwl_abde )
      {
        mstr +=    "\n" + indent( 2 )
 	          + tr( "<h3>Analytes and Buffer Used in MWL-Deconvolution:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
-       QMap< QString, QString > channs_analytes_buffers = get_channels_analytes_mwl_abde( abde_channame );
+       channs_analytes_buffers = get_channels_analytes_mwl_abde( abde_channame );
 
        QMap < QString, QString >::iterator ab;
        for ( ab = channs_analytes_buffers.begin(); ab != channs_analytes_buffers.end(); ++ab )
@@ -8157,8 +8171,9 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
        for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
 	   QString c_sample = chann_samples[cs];
+	   QString c_sample_display = prettify_abde_sample_name( channs_analytes_buffers, c_sample );
 	   
-	   QString mstr_sample = "<h4>" + c_sample + " signal</h4>\n";
+	   QString mstr_sample = "<h4>" + c_sample_display + " signal</h4>\n";
 	   mstr_sample += indent( 2 ) + "<table>\n";
 	   mstr_sample += header_trftp;
        
@@ -8312,6 +8327,43 @@ QMap< QString, QString > US_ReporterGMP::get_channels_analytes_mwl_abde( QString
     }
 
   return analytes_buffer_map;
+}
+
+//Reduce a string to its lowercased letters/digits only, so that names which
+//differ only by which separator characters (space, ':', '-', '(', ')', '/',
+//'=', '_', ...) were substituted for filename-safety compare equal.
+static QString us_reportergmp_normalize_for_match( const QString& s )
+{
+  QString out;
+  out.reserve( s.size() );
+  foreach ( QChar c, s )
+    {
+      if ( c.isLetterOrNumber() )
+	out += c.toLower();
+    }
+  return out;
+}
+
+//Look up the human-readable analyte description matching a sanitized sample
+//key (as used for report/plot "sample" identifiers) within an already-fetched
+//channel->{"Analyte #1:":pretty, ...} map. Falls back to sample_key unchanged
+//if no match is found.
+QString US_ReporterGMP::prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key )
+{
+  QString target = us_reportergmp_normalize_for_match( sample_key );
+  if ( target.isEmpty() )
+    return sample_key;
+
+  QMap< QString, QString >::const_iterator it;
+  for ( it = channs_analytes_buffers.begin(); it != channs_analytes_buffers.end(); ++it )
+    {
+      if ( !it.key().startsWith( "Analyte #" ) )
+	continue;   //skip the "Buffer:" entry -- not a sample
+
+      if ( us_reportergmp_normalize_for_match( it.value() ) == target )
+	return it.value();
+    }
+  return sample_key;   //no match -- fall back to the raw (sanitized) name
 }
 
 

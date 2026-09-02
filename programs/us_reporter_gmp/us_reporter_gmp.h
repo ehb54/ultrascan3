@@ -553,6 +553,7 @@ class US_ReporterGMP : public US_Widgets
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
         QString distrib_info_abde( QString& ); //!< Generate distribution information
         QMap< QString, QString > get_channels_analytes_mwl_abde( QString );
+        QString prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key );
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number

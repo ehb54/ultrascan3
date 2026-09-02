@@ -609,6 +609,53 @@ QwtPlot* US_Norm_Profile::rp_data_plot()
   return plot;
 }
 
+//Store the channel -> {analyte-label: pretty-description} map computed by the
+//caller (US_ReporterGMP has DB/solution access to fetch analyte descriptions;
+//this class only sees sanitized filename tokens as sample keys).
+void US_Norm_Profile::set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& chann_analytes_p )
+{
+  channs_analytes_pretty = chann_analytes_p;
+}
+
+//Reduce a string to its lowercased letters/digits only, so that names which
+//differ only by which separator characters (space, ':', '-', '(', ')', '/',
+//'=', '_', ...) were substituted for filename-safety compare equal.
+static QString us_norm_profile_normalize_for_match( const QString& s )
+{
+  QString out;
+  out.reserve( s.size() );
+  foreach ( QChar c, s )
+    {
+      if ( c.isLetterOrNumber() )
+	out += c.toLower();
+    }
+  return out;
+}
+
+//Look up the human-readable analyte description matching a sanitized sample
+//key for the given channel. Falls back to the sample key itself if no match.
+QString US_Norm_Profile::prettify_sample_name( QString channame, QString sample_key )
+{
+  if ( !channs_analytes_pretty.contains( channame ) )
+    return sample_key;
+
+  QString target = us_norm_profile_normalize_for_match( sample_key );
+  if ( target.isEmpty() )
+    return sample_key;
+
+  const QMap< QString, QString >& analytes = channs_analytes_pretty[ channame ];
+  QMap< QString, QString >::const_iterator it;
+  for ( it = analytes.begin(); it != analytes.end(); ++it )
+    {
+      if ( !it.key().startsWith( "Analyte #" ) )
+	continue;   //skip the "Buffer:" entry -- not a sample
+
+      if ( us_norm_profile_normalize_for_match( it.value() ) == target )
+	return it.value();
+    }
+  return sample_key;   //no match -- fall back to the raw (sanitized) name
+}
+
 //For use in GMP REPORTing 
 void US_Norm_Profile::slt_loadAUC_auto_report(QMap<QString,QString> & protocol_details)
 {
@@ -1370,7 +1417,7 @@ void US_Norm_Profile::plotData(void){
 		      }
 		    else
 		    **/
-		    legend = tr("(D)_") + channame + ": " + result_analyte;
+		    legend = tr("(D)_") + channame + ": " + prettify_sample_name( channame, result_analyte );
 		  }
 		else // SWL
 		  {
@@ -1511,7 +1558,7 @@ void US_Norm_Profile::plotData(void){
 		      }
 		    else
 		    ***/
-		    legend = tr("(I)_") + channame + ": " + result_analyte;
+		    legend = tr("(I)_") + channame + ": " + prettify_sample_name( channame, result_analyte );
 		    xp_intN_sample[ result_analyte ] = data_per_channel[ channame ]["midxval"][i];
 		    yp_intN_sample[ result_analyte ] = data_per_channel[ channame ]["integralN"][i];
 			
