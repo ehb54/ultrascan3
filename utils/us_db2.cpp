@@ -368,21 +368,133 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
-void US_DB2::rawQuery( const QString& ){}
-#else
-void US_DB2::rawQuery( const QString& sqlQuery )
+bool US_DB2::beginTransaction( QString& transaction_error )
 {
-   // Make sure that we clear out any unused
-   //   result sets
+   transaction_error = "Database support is disabled";
+   return false;
+}
+
+bool US_DB2::commitTransaction( QString& transaction_error )
+{
+   transaction_error = "Database support is disabled";
+   return false;
+}
+
+bool US_DB2::rollbackTransaction( QString& transaction_error )
+{
+   transaction_error = "Database support is disabled";
+   return false;
+}
+#else
+bool US_DB2::beginTransaction( QString& transaction_error )
+{
+   if ( ! connected )
+   {
+      transaction_error = "Database is not connected";
+      return false;
+   }
+
+   // Whatever ran before this call may have left results pending.
+   drainResults();
+
+   if ( mysql_autocommit( db, false ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   transaction_error.clear();
+   return true;
+}
+
+bool US_DB2::commitTransaction( QString& transaction_error )
+{
+   if ( ! connected )
+   {
+      transaction_error = "Database is not connected";
+      return false;
+   }
+
+   // The last query of the transaction left its results on the connection, and
+   // a CALL left a status set behind them.  mysql_commit() talks to the server
+   // directly rather than through rawQuery(), so without this it is answered
+   // with "Commands out of sync" and the whole transaction is lost at the last
+   // step -- with the rollback that follows failing for the same reason.
+   drainResults();
+
+   if ( mysql_commit( db ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   if ( mysql_autocommit( db, true ) != 0 )
+   {
+      transaction_error = "transaction committed, but autocommit could not be "
+                          "restored: " + QString( mysql_error( db ) );
+      return true;
+   }
+
+   transaction_error.clear();
+   return true;
+}
+
+bool US_DB2::rollbackTransaction( QString& transaction_error )
+{
+   if ( ! connected )
+   {
+      transaction_error = "Database is not connected";
+      return false;
+   }
+
+   // Same reason as commitTransaction(), and it matters more here: a rollback
+   // that cannot run is a partial load left in place.
+   drainResults();
+
+   if ( mysql_rollback( db ) != 0 )
+   {
+      transaction_error = mysql_error( db );
+      return false;
+   }
+
+   if ( mysql_autocommit( db, true ) != 0 )
+   {
+      transaction_error = "rollback succeeded, but autocommit could not be "
+                          "restored: " + QString( mysql_error( db ) );
+      return true;
+   }
+
+   transaction_error.clear();
+   return true;
+}
+#endif
+
+#ifdef NO_DB
+void US_DB2::drainResults(){}
+#else
+void US_DB2::drainResults()
+{
    if ( result )
-      mysql_free_result( result ); 
+      mysql_free_result( result );
 
    while ( mysql_next_result( db ) == 0 )
    {
       result = mysql_store_result( db );
       mysql_free_result( result );
    }
+
    result = NULL;
+}
+#endif
+
+#ifdef NO_DB
+void US_DB2::rawQuery( const QString& ){}
+#else
+void US_DB2::rawQuery( const QString& sqlQuery )
+{
+   // Make sure that we clear out any unused
+   //   result sets
+   drainResults();
 
    if ( mysql_query( db, sqlQuery.toLatin1() ) != 0 )
       error = QString( "MySQL error: " ) + mysql_error( db );
@@ -440,6 +552,19 @@ void US_DB2::query( const QString& ) {}
 void US_DB2::query( const QString& sqlQuery )
 {
    this->rawQuery( sqlQuery );
+
+   // A statement the server refused outright leaves no result set, and
+   // rawQuery() reports that only through `error`.  Without this, db_errno
+   // still holds whatever the previous query returned, so lastErrno() answers
+   // OK for a query that never ran -- a lost connection, a deadlock, a
+   // lock-wait timeout.  statusQuery() has always defaulted to DBERROR for the
+   // same reason; this brings query() in line with it.
+   if ( mysql_errno( db ) != 0 )
+   {
+      db_errno = DBERROR;
+      return;
+   }
+
    if ( result )
    {
       // This is a 2-set result: status, then data
@@ -997,4 +1122,3 @@ bool US_DB2::configure_ssl( QString& err )
    return true;
 }
 #endif
-
