@@ -25,6 +25,54 @@ struct cellInfo
 class US_UTIL_EXTERN US_ConvertIO
 {
    public:
+      /*! \brief One run as it exists on disk, loaded but not interpreted.
+
+          The value owns loaded domain data and nothing else: no widgets, no
+          database connection, no edit files, no corpus rules, no settings, no
+          temporary-directory lifecycle.
+      */
+      struct US_UTIL_EXTERN DiskRun
+      {
+         QString                         directory;   //!< With a trailing separator
+         QString                         runID;       //!< From the directory basename
+         QString                         runType;     //!< "RA", "RI", "IP", ...
+         QVector< US_DataIO::RawData >   rawData;     //!< One per AUC, filename order
+         QList< US_Convert::TripleInfo > triples;     //!< Parallel to rawData
+         QVector< SP_SPEEDPROFILE >      speedSteps;  //!< As serialized; may be empty
+         US_Experiment                   experiment;
+      };
+
+      /*! \brief Read one run directory into a DiskRun.
+
+          A thin coordinator over the existing readers.  It reports structural
+          problems and does not reject them: it returns the most specific
+          status it can, fills `error` with the detail, and populates `run` as
+          far as the read got.  Whether a non-OK status ends the load is the
+          caller's decision -- `us_import_run` treats every one as fatal, while
+          US_ConvertGui recovers from exactly what it recovered from before and
+          uses the detail only to say more in its existing messages.
+
+          It does not split archives, require edits, connect to a database,
+          start a transaction, write records, stage files, change settings,
+          present dialogs, or reinterpret scientific data.
+
+          Speed steps are returned as the experiment XML gives them.  They are
+          never computed from the scans and never compared against them; see
+          US_Experiment::readFromDisk()'s diagnostic overload.
+
+          \param directory One run directory, with or without a trailing
+                           separator.  Its basename is the run ID.
+          \param run       Filled as far as the read reached
+          \param error     Set to specific context when the status is not OK
+
+          \returns A US_Convert::ioError value.  US_Convert::INVALID_RUN marks
+                   a structural contradiction with no honest existing code:
+                   an unusable run ID, no raw data, a raw dataset with no
+                   scans, or filenames carrying mixed run IDs or run types.
+      */
+      static int readDiskRun( const QString& directory, DiskRun& run,
+                              QString& error );
+
       /*! \brief The values an editedData row is created or updated with.
 
           Only what the stored procedures take.  Deciding whether a record is
