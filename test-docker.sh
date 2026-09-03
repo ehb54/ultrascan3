@@ -38,6 +38,11 @@ QUICK_MODE=false
 SAVE_LOGS=false
 STOP_ON_FIRST_FAILURE=false
 PROFILE="TEST"
+# Database variant of the test build.  false = DB-enabled (the TEST profile),
+# true = the NO_DB variant.  Each variant gets its own build tree so the two
+# never share objects compiled with different NO_DB settings.
+NO_DB_VARIANT=false
+COVERAGE=false
 
 
 show_help() {
@@ -71,6 +76,10 @@ Usage: ./test-docker.sh [options]
   --rebuild               Force complete rebuild
   --stats                 Show build and test statistics
   --profile               Profile of APP, HPC, or TEST (default)
+  --no-db                 Build and test the NO_DB variant in build-docker-nodb
+                          (default is the DB-enabled TEST profile in build-docker)
+  --coverage              Measure line and branch coverage of utils/ in
+                          build-docker-coverage and write reports there
 
 
 === EXAMPLES FOR DEBUGGING WORKFLOW ===
@@ -169,6 +178,8 @@ while [[ $# -gt 0 ]]; do
         -l|--list) LIST_TESTS=true; shift ;;
         --failed-only) FAILED_ONLY=true; shift ;;
         --profile) PROFILE="$2"; shift 2 ;;
+        --no-db) NO_DB_VARIANT=true; shift ;;
+        --coverage) COVERAGE=true; shift ;;
         --rebuild) REBUILD=true; shift ;;
         --stats) SHOW_STATS=true; shift ;;
         -q|--quick) QUICK_MODE=true; shift ;;
@@ -229,7 +240,19 @@ fi
 
 # Detect repo root and set build dir consistently
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-BUILD_DIR="${ROOT_DIR}/build-docker"
+if [ "$COVERAGE" = true ]; then
+    BUILD_SUBDIR="build-docker-coverage"
+elif [ "$NO_DB_VARIANT" = true ]; then
+    BUILD_SUBDIR="build-docker-nodb"
+else
+    BUILD_SUBDIR="build-docker"
+fi
+
+if [ "$COVERAGE" = true ] && [ "$NO_DB_VARIANT" = true ]; then
+    print_error "--coverage and --no-db cannot be combined; the coverage baseline is measured on the DB-enabled variant"
+    exit 1
+fi
+BUILD_DIR="${ROOT_DIR}/${BUILD_SUBDIR}"
 
 print_status "Setting up build environment..."
 if [ "$REBUILD" = true ]; then
@@ -240,6 +263,143 @@ fi
 mkdir -p "${BUILD_DIR}"  # ensure parent exists for logs and CMakeFiles
 
 
+# Coverage mode
+#
+# Measurement only -- there is deliberately no pass/fail percentage gate.  The
+# instrumented tree is kept separate from build-docker so that ordinary test
+# runs never link against gcov-instrumented objects.
+if [ "$COVERAGE" = true ]; then
+    print_highlight "Measuring coverage of utils/ (no threshold is enforced)"
+
+    cat > /tmp/coverage_script.sh << 'COVERAGE_EOF'
+#!/bin/bash
+set -e
+export QT_QPA_PLATFORM=offscreen
+
+BUILD=/ultrascan3/build-docker-coverage
+OUT=$BUILD/coverage
+cd "$BUILD"
+mkdir -p "$OUT"
+
+if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
+    GEN_ARGS=()
+    if command -v ninja >/dev/null 2>&1; then
+        GEN_ARGS=(-G Ninja)
+    else
+        GEN_ARGS=(-G "Unix Makefiles")
+    fi
+
+    echo '=== Configuring instrumented build ==='
+    cmake -S .. -B . \
+        "${GEN_ARGS[@]}" \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DUS3_PROFILE=TEST \
+        -DUS3_COVERAGE=ON \
+        -DBUILD_TESTING=ON \
+        -DUS3_BUILD_PROGRAMS=OFF \
+        -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
+        > configure.log 2>&1 || { grep -n 'CMake Error' -A6 configure.log | head -40; exit 1; }
+    grep -E 'Coverage instrumentation' configure.log || true
+fi
+
+echo '=== Building instrumented tree ==='
+cmake --build . -j "$PARALLEL_JOBS" > build.log 2>&1 || {
+    grep -nE 'error:' build.log | head -40; exit 1; }
+
+echo '=== Resetting counters ==='
+find . -name '*.gcda' -delete
+lcov --directory . --zerocounters -q
+
+# A baseline capture of every instrumented object gives the report its zero-hit
+# files; without it lcov only lists sources some test happened to execute, and
+# an untested utils/ source would silently vanish from the denominator.
+echo '=== Baseline capture ==='
+lcov --directory . --capture --initial \
+     --base-directory /ultrascan3 \
+     --rc lcov_branch_coverage=1 \
+     --output-file "$OUT/baseline.info" -q 2>/dev/null
+
+# Serial by design: CTest registers each GoogleTest case as its own process, and
+# concurrent processes merging into the same .gcda files corrupt the counters.
+echo '=== Running suite serially ==='
+# A failing suite must still produce a report, so the exit code is carried to
+# the end rather than tripping `set -e` here.
+CTEST_RC=0
+ctest -j1 --output-on-failure > "$OUT/ctest.log" 2>&1 || CTEST_RC=$?
+tail -5 "$OUT/ctest.log"
+
+echo '=== Capturing counters ==='
+lcov --directory . --capture \
+     --base-directory /ultrascan3 \
+     --rc lcov_branch_coverage=1 \
+     --output-file "$OUT/run.info" -q 2>/dev/null
+
+lcov --add-tracefile "$OUT/baseline.info" \
+     --add-tracefile "$OUT/run.info" \
+     --rc lcov_branch_coverage=1 \
+     --output-file "$OUT/combined.info" -q
+
+# Keep production utils/ sources only.  Test sources, Qt's generated moc/autogen
+# output, the build tree and system headers are all dropped here rather than at
+# compile time, so the instrumented build stays uniform.
+echo '=== Filtering to utils/ ==='
+lcov --extract "$OUT/combined.info" '/ultrascan3/utils/*' \
+     --rc lcov_branch_coverage=1 \
+     --output-file "$OUT/utils.info" -q
+lcov --remove "$OUT/utils.info" \
+     '*_autogen/*' '*/moc_*' '*/qrc_*' '*/ui_*' \
+     --rc lcov_branch_coverage=1 \
+     --output-file "$OUT/coverage.info" -q
+
+echo '=== Human-readable report ==='
+genhtml "$OUT/coverage.info" \
+        --branch-coverage \
+        --legend \
+        --title 'UltraScan3 utils/ coverage' \
+        --output-directory "$OUT/html" > "$OUT/genhtml.log" 2>&1
+tail -4 "$OUT/genhtml.log"
+
+echo '=== Machine-readable report ==='
+gcovr --root /ultrascan3 \
+      --filter '/ultrascan3/utils/' \
+      --exclude '.*_autogen.*' \
+      --exclude '/ultrascan3/test/' \
+      --xml-pretty --output "$OUT/coverage.xml" \
+      --print-summary > "$OUT/gcovr.log" 2>&1 || true
+tail -3 "$OUT/gcovr.log"
+
+echo '=== Per-file summary ==='
+lcov --list "$OUT/coverage.info" --rc lcov_branch_coverage=1 \
+     | tee "$OUT/summary.txt" | tail -60
+
+exit $CTEST_RC
+COVERAGE_EOF
+
+    docker run --rm \
+        -v "$(pwd)":/ultrascan3 \
+        -v "${BUILD_DIR}":/ultrascan3/build-docker-coverage \
+        -v /tmp/coverage_script.sh:/tmp/coverage_script.sh \
+        -w /ultrascan3 \
+        -e PARALLEL_JOBS="$PARALLEL_JOBS" \
+        -e REBUILD="$REBUILD" \
+        us3comp-test:latest \
+        bash /tmp/coverage_script.sh
+    RESULT=$?
+
+    echo ""
+    if [ $RESULT -eq 0 ]; then
+        print_success "Coverage reports written to ${BUILD_SUBDIR}/coverage/"
+    else
+        print_warning "Suite reported failures; coverage reports in ${BUILD_SUBDIR}/coverage/ still reflect the run"
+    fi
+    echo "  HTML   : ${BUILD_SUBDIR}/coverage/html/index.html"
+    echo "  XML    : ${BUILD_SUBDIR}/coverage/coverage.xml (Cobertura)"
+    echo "  Text   : ${BUILD_SUBDIR}/coverage/summary.txt"
+    echo "  Tracefile: ${BUILD_SUBDIR}/coverage/coverage.info"
+    exit $RESULT
+fi
+
+
 # Interactive mode
 if [ "$INTERACTIVE" = true ]; then
     print_highlight "Starting interactive debugging session..."
@@ -247,7 +407,7 @@ if [ "$INTERACTIVE" = true ]; then
     echo "=== INTERACTIVE DEBUGGING COMMANDS ==="
     echo ""
     echo "BUILD:"
-    echo "  cd /ultrascan3/build-docker && cmake --build . -j $PARALLEL_JOBS"
+    echo "  cd /ultrascan3/${BUILD_SUBDIR} && cmake --build . -j $PARALLEL_JOBS"
     echo ""
     echo "DISCOVER TESTS:"
     echo "  ctest -N                                    # List CTest tests"
@@ -272,7 +432,7 @@ if [ "$INTERACTIVE" = true ]; then
 
     docker run --rm -it \
         -v "$(pwd)":/ultrascan3 \
-        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -v "${BUILD_DIR}":"/ultrascan3/${BUILD_SUBDIR}" \
         -w /ultrascan3 \
         us3comp-test:latest bash
     exit 0
@@ -315,7 +475,7 @@ if [ "$DEBUG_MODE" = "true" ] && [ "$QUICK_MODE" = "false" ]; then
     echo '==========================='
 fi
 
-cd /ultrascan3/build-docker
+cd "/ultrascan3/${BUILD_SUBDIR}"
 
 if [ "$QUICK_MODE" = "false" ]; then
     echo 'Configuring with CMake...'
@@ -341,14 +501,22 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
     fi
 
 #    Enable testing to build static library
-        cmake -S .. -B . \
-            "${GEN_ARGS[@]}" \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DUS3_PROFILE=TEST \
-            -DBUILD_TESTING=ON \
-            -DUS3_BUILD_PROGRAMS=OFF \
-            -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
-            | tee configure.log
+    # The TEST profile force-sets US3_NO_DB=OFF, so the NO_DB variant spells out
+    # the same options instead of selecting a profile.
+    if [ "$NO_DB_VARIANT" = "true" ]; then
+        VARIANT_ARGS=(-DUS3_NO_DB=ON -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
+    else
+        VARIANT_ARGS=(-DUS3_PROFILE=TEST)
+    fi
+
+    cmake -S .. -B . \
+        "${GEN_ARGS[@]}" \
+        -DCMAKE_BUILD_TYPE=Debug \
+        "${VARIANT_ARGS[@]}" \
+        -DBUILD_TESTING=ON \
+        -DUS3_BUILD_PROGRAMS=OFF \
+        -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
+        | tee configure.log
 
     # Point directly to the first configure error if there was one
     if grep -q 'CMake Error' configure.log; then
@@ -539,9 +707,11 @@ if [ "$SAVE_LOGS" = true ]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     docker run --rm \
         -v "$(pwd)":/ultrascan3 \
-        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -v "${BUILD_DIR}":"/ultrascan3/${BUILD_SUBDIR}" \
         -v /tmp/container_script.sh:/tmp/container_script.sh \
         -w /ultrascan3 \
+        -e BUILD_SUBDIR="$BUILD_SUBDIR" \
+        -e NO_DB_VARIANT="$NO_DB_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \
@@ -565,9 +735,11 @@ if [ "$SAVE_LOGS" = true ]; then
 else
     docker run --rm \
         -v "$(pwd)":/ultrascan3 \
-        -v "$(pwd)/build-docker":/ultrascan3/build-docker \
+        -v "${BUILD_DIR}":"/ultrascan3/${BUILD_SUBDIR}" \
         -v /tmp/container_script.sh:/tmp/container_script.sh \
         -w /ultrascan3 \
+        -e BUILD_SUBDIR="$BUILD_SUBDIR" \
+        -e NO_DB_VARIANT="$NO_DB_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \

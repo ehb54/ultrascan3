@@ -2,10 +2,33 @@
 #include "us_settings.h"
 #include "us_defines.h"
 
+QSettings::Format US_SettingsStore::format( void )
+{
+   static const QSettings::Format resolved = []
+   {
+      const QString root = qEnvironmentVariable( "US3_SETTINGS_ROOT" );
+
+      if ( root.isEmpty() )
+         return QSettings::NativeFormat;
+
+      // IniFormat is a plain file on every platform, so setPath does apply to
+      // it. This is what makes the override work where setPath alone cannot.
+      QSettings::setPath( QSettings::IniFormat, QSettings::UserScope, root );
+      return QSettings::IniFormat;
+   }();
+
+   return resolved;
+}
+
+US_SettingsStore::US_SettingsStore( void )
+   : QSettings( format(), QSettings::UserScope, US3, "UltraScan" )
+{
+}
+
 // Programs
 QString US_Settings::browser( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   QString   value = settings.value( "browser", "" ).toString();
 
 #if defined( Q_OS_MAC ) || defined( Q_OS_WIN )
@@ -22,7 +45,7 @@ QString US_Settings::browser( void )
 
 void US_Settings::set_browser( const QString& browser )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   settings.setValue( "browser", browser );
 }
 
@@ -31,14 +54,14 @@ void US_Settings::set_browser( const QString& browser )
 // Work base directory (where archive,results,reports,etc hang)
 QString US_Settings::workBaseDir( void )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    return settings.value( "workBaseDir",
                           QDir::homePath() + "/ultrascan" ).toString();
 }
 
 void US_Settings::set_workBaseDir( const QString& dir )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( dir ==  QDir::homePath() + "/ultrascan" )
     settings.remove( "workBaseDir" );
   else
@@ -48,13 +71,13 @@ void US_Settings::set_workBaseDir( const QString& dir )
 // importDir
 QString US_Settings::importDir( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "importDir", workBaseDir() + "/imports" ).toString();
 }
 
 void US_Settings::set_importDir( const QString& dir )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( dir == workBaseDir() + "/imports" )
     settings.remove( "importDir" );
   else
@@ -64,13 +87,13 @@ void US_Settings::set_importDir( const QString& dir )
 // tmpDir
 QString US_Settings::tmpDir( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "tmpDir", workBaseDir() + "/tmp" ).toString();
 }
 
 void US_Settings::set_tmpDir( const QString& dir )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( dir == workBaseDir() + "/tmp" )
     settings.remove( "tmpDir" );
   else
@@ -127,39 +150,39 @@ QString US_Settings::appBaseDir( void )
 // License
 QStringList US_Settings::license( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "license", QStringList() ).toStringList();
 }
 
 void US_Settings::set_license( const QStringList& license )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   settings.setValue( "license", license );
 }
 
 // Master Password
 QByteArray US_Settings::UltraScanPW( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "UltraScanPW" ).toByteArray(); // No default
 }
 
 void US_Settings::set_UltraScanPW( const QByteArray& hash )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   settings.setValue( "UltraScanPW", hash );
 }
 
 // Temperature Tolerance
 double US_Settings::tempTolerance( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "tempTolerance", 0.5 ).toDouble(); // No default
 }
 
 void US_Settings::set_tempTolerance( double tempTolerance )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( tempTolerance == 0.5 )
     settings.remove( "tempTolerance" );
   else
@@ -169,13 +192,13 @@ void US_Settings::set_tempTolerance( double tempTolerance )
 // Beckman Bug
 bool US_Settings::beckmanBug( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "beckmanBug", false ).toBool(); // No default
 }
 
 void US_Settings::set_beckmanBug( bool setBug )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( ! setBug )
     settings.remove( "beckmanBug" );
   else
@@ -185,13 +208,13 @@ void US_Settings::set_beckmanBug( bool setBug )
 // Default data location  1 = DB, 2 = Disk
 int US_Settings::default_data_location( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "dataLocation", 2 ).toInt(); 
 }
 
 void US_Settings::set_default_data_location( int location )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( location == 2 )
     settings.remove( "dataLocation" );
   else
@@ -202,13 +225,13 @@ void US_Settings::set_default_data_location( int location )
 #ifndef NO_DB
 int US_Settings::us_debug( void )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    return settings.value( "us_debug", 0 ).toInt();
 }
 
 void US_Settings::set_us_debug( int level )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    if ( level == 0 )
       settings.remove( "us_debug" );
    else
@@ -231,7 +254,7 @@ void US_Settings::set_us_debug( int level )
 #ifndef NO_DB
 void US_Settings::set_debug_text( QStringList debuglist )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    if ( debuglist.count() == 0 )
       settings.remove( "debug_text" );
    else
@@ -240,7 +263,7 @@ void US_Settings::set_debug_text( QStringList debuglist )
 
 QStringList US_Settings::debug_text( void )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    return settings.value( "debug_text", "" ).toStringList();
 }
 
@@ -285,13 +308,13 @@ QString US_Settings::debug_value( QString match )
 // Investigator
 QString US_Settings::us_inv_name( void )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    return settings.value( "us_investigator_name", "Not Available" ).toString();
 }
 
 void US_Settings::set_us_inv_name( const QString& name )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( name == "" )
     settings.remove( "us_investigator_name" );
   else
@@ -300,13 +323,13 @@ void US_Settings::set_us_inv_name( const QString& name )
 
 int US_Settings::us_inv_ID( void )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    return settings.value( "us_investigator_ID", -1 ).toInt();
 }
 
 void US_Settings::set_us_inv_ID( int id )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( id == -1 )
     settings.remove( "us_investigator_ID" );
   else
@@ -315,13 +338,13 @@ void US_Settings::set_us_inv_ID( int id )
 
 int US_Settings::us_inv_level( void )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
    return settings.value( "us_investigator_level", 0 ).toInt();
 }
 
 void US_Settings::set_us_inv_level( int level )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( level == 0 )
     settings.remove( "us_investigator_level" );
   else
@@ -331,13 +354,13 @@ void US_Settings::set_us_inv_level( int level )
 // advanced level
 int US_Settings::advanced_level( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "advanced_level", 0 ).toInt();
 }
 
 void US_Settings::set_advanced_level( int level )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( level == 0 )
     settings.remove( "advanced_level" );
   else
@@ -347,13 +370,13 @@ void US_Settings::set_advanced_level( int level )
 // Threads
 int US_Settings::threads( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "threads", 1 ).toInt(); // No default
 }
 
 void US_Settings::set_threads( int threads )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( threads == 1 )
     settings.remove( "threads" );
   else
@@ -363,13 +386,13 @@ void US_Settings::set_threads( int threads )
 // Noise Dialog:  0 -> Auto, 1 -> Dialog
 int US_Settings::noise_dialog( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "noise_dialog", 0 ).toInt();
 }
 
 void US_Settings::set_noise_dialog( int diagflag )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( diagflag == 0 )
     settings.remove( "noise_dialog" );
   else
@@ -380,7 +403,7 @@ void US_Settings::set_noise_dialog( int diagflag )
 
 QList<QStringList> US_Settings::databases( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   QList<QStringList> dblist; 
   int dbCount = settings.value( "dbCount", 0 ).toInt();
 
@@ -395,7 +418,7 @@ QList<QStringList> US_Settings::databases( void )
 
 void US_Settings::set_databases( const QList<QStringList>& dblist )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
 
   // First remove any existing database entries
   if ( settings.contains( "dbCount" ) )
@@ -421,13 +444,13 @@ void US_Settings::set_databases( const QList<QStringList>& dblist )
 
 QStringList US_Settings::defaultDB( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "defaultDB", QStringList() ).toStringList();
 }
 
 void US_Settings::set_defaultDB( const QStringList& defaultDB )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( defaultDB.isEmpty() )
     settings.remove( "defaultDB" );
   else
@@ -437,7 +460,7 @@ void US_Settings::set_defaultDB( const QStringList& defaultDB )
 // Optima Database Host Entries
 QList<QStringList> US_Settings::xpn_db_hosts( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   QList<QStringList> xhlist; 
   int xhCount = settings.value( "xhCount", 0 ).toInt();
 
@@ -452,7 +475,7 @@ QList<QStringList> US_Settings::xpn_db_hosts( void )
 
 void US_Settings::set_xpn_db_hosts( const QList<QStringList>& xhlist )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
 
   // First remove any existing database entries
   if ( settings.contains( "xhCount" ) )
@@ -478,13 +501,13 @@ void US_Settings::set_xpn_db_hosts( const QList<QStringList>& xhlist )
 
 QStringList US_Settings::defaultXpnHost( void )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   return settings.value( "defXpnHost", QStringList() ).toStringList();
 }
 
 void US_Settings::set_def_xpn_host( const QStringList& defXpnHost )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   if ( defXpnHost.isEmpty() )
     settings.remove( "defXpnHost" );
   else
@@ -495,7 +518,7 @@ void US_Settings::set_def_xpn_host( const QStringList& defXpnHost )
 /***************** DA status related **************************/
 void US_Settings::set_DA_status( const QString& status )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
 
   QStringList status_list = status.split(":");
   
@@ -507,7 +530,7 @@ void US_Settings::set_DA_status( const QString& status )
 
 bool US_Settings::get_DA_status( const QString& da_type )
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
 
   int status = 0;
   if ( da_type == "COM" )
@@ -526,7 +549,7 @@ bool US_Settings::get_DA_status( const QString& da_type )
 
 QString US_Settings::status()
 {
-  QSettings settings( US3, "UltraScan" );
+  US_SettingsStore settings;
   settings.setValue( "status_test", true );
   settings.sync();
   settings.remove( "status_test" );

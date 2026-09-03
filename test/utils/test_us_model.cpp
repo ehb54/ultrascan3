@@ -285,41 +285,6 @@ EXPECT_TRUE(model->components.isEmpty());
 EXPECT_TRUE(model->associations.isEmpty());
 }
 
-// Component Search Tests
-TEST_F(US_ModelTest, FindComponentByName_ExistingComponent_ReturnsCorrectIndex) {
-model->components << createValidComponent();
-model->components << createValidComponent();
-model->components[1].name = "Unique Component";
-
-// Find component by name (assuming there's a method for this)
-bool found = false;
-int index = -1;
-for (int i = 0; i < model->components.size(); ++i) {
-if (model->components[i].name == "Unique Component") {
-found = true;
-index = i;
-break;
-}
-}
-
-EXPECT_TRUE(found);
-EXPECT_EQ(index, 1);
-}
-
-TEST_F(US_ModelTest, FindComponentByName_NonExistentComponent_ReturnsNotFound) {
-model->components << createValidComponent();
-
-bool found = false;
-for (int i = 0; i < model->components.size(); ++i) {
-if (model->components[i].name == "Non-existent Component") {
-found = true;
-break;
-}
-}
-
-EXPECT_FALSE(found);
-}
-
 // Validation Tests
 TEST_F(US_ModelTest, IsValid_ValidModel_ReturnsTrue) {
 model->description = "Valid Model";
@@ -427,48 +392,43 @@ EXPECT_EQ(assoc.rcomps[2], 2);
 EXPECT_EQ(assoc.stoichs[2], -1);
 }
 
-// Edge Cases
-TEST_F(US_ModelTest, ComponentWithZeroMW_HandlesCorrectly) {
+// Coefficient calculation edge cases
+
+TEST_F(US_ModelTest, CalcCoefficients_ZeroMolecularWeight_ReportsFailure) {
 US_Model::SimulationComponent sc = createValidComponent();
 sc.mw = 0.0;
+sc.s  = 0.0;
+sc.D  = 0.0;
+sc.f  = 0.0;
 
-model->components << sc;
-
-EXPECT_EQ(model->components[0].mw, 0.0);
-// Model should handle zero MW gracefully
+// A component with no mass has no derivable hydrodynamic coefficients.
+EXPECT_FALSE(US_Model::calc_coefficients(sc));
 }
 
-TEST_F(US_ModelTest, ComponentWithNegativeConcentration_HandlesCorrectly) {
+TEST_F(US_ModelTest, CalcCoefficients_ValidComponent_DerivesPositiveCoefficients) {
 US_Model::SimulationComponent sc = createValidComponent();
-sc.signal_concentration = -1.0;
+sc.s = 0.0;
+sc.D = 0.0;
+sc.f = 0.0;
 
-model->components << sc;
+ASSERT_TRUE(US_Model::calc_coefficients(sc));
 
-EXPECT_EQ(model->components[0].signal_concentration, -1.0);
-// Model should handle negative concentration (though it might be invalid)
+// The derivation must produce usable values rather than leaving the zeroes.
+EXPECT_GT(sc.D, 0.0);
+EXPECT_GT(sc.f, 0.0);
+EXPECT_GT(sc.f_f0, 0.0);
 }
 
-// Boundary Value Tests
-TEST_F(US_ModelTest, ExtremeWavelengthValues_HandlesCorrectly) {
-model->wavelength = 1000.0; // Very high
-EXPECT_EQ(model->wavelength, 1000.0);
-
-model->wavelength = 0.1; // Very low
-EXPECT_EQ(model->wavelength, 0.1);
-
-model->wavelength = -1.0; // Negative
-EXPECT_EQ(model->wavelength, -1.0);
-}
-
-TEST_F(US_ModelTest, LargeNumberOfComponents_HandlesCorrectly) {
-// Add many components
-for (int i = 0; i < 100; ++i) {
+TEST_F(US_ModelTest, CalcCoefficients_NonPositiveVbarFallsBackToTheTypicalValue) {
 US_Model::SimulationComponent sc = createValidComponent();
-sc.name = QString("Component %1").arg(i);
-model->components << sc;
-}
+sc.vbar20 = 0.0;
+sc.s = 0.0;
+sc.D = 0.0;
+sc.f = 0.0;
 
-EXPECT_EQ(model->components.size(), 100);
-EXPECT_EQ(model->components[50].name, "Component 50");
-EXPECT_EQ(model->components[99].name, "Component 99");
+ASSERT_TRUE(US_Model::calc_coefficients(sc));
+
+// us_model.cpp substitutes TYPICAL_VBAR when vbar20 <= 0, so the derivation
+// still succeeds rather than propagating a zero.
+EXPECT_GT(sc.D, 0.0);
 }
