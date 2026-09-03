@@ -1179,7 +1179,8 @@ int US_Model::write( IUS_DB2* db )
       write_mm_stream( tso );
    }
 
-   db->mysqlEscapeString( contents, temporary, temporary.size() );
+   // composeQuery owns SQL escaping; pre-escaping would store escape bytes.
+   contents = temporary;
 qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
 
    QStringList q;
@@ -1890,4 +1891,3 @@ void US_Model::debug( void )
       }
    }
 }
-
