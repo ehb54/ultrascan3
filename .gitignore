@@ -1,6 +1,10 @@
 local.pri
 .*
 !/.gitignore
+# The blanket dot-rule above also hides .github, which silently made every
+# newly added workflow, composite action and issue template untracked until
+# someone noticed and force-added it. Re-include the directory explicitly.
+!/.github/
 *.o
 tmp/
 moc/
