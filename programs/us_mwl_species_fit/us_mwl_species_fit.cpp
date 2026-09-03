@@ -1658,6 +1658,18 @@ DbgLv(0) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
          synData[ kd ].scanData[ ks ] = edata->scanData[ jj ];
          synData[ kd ].scanData[ ks ].rvalues.fill( 0.0, kradp );
          synData[ kd ].scanData[ ks ].stddevs.fill( 0.0, kradp );
+
+         // The interpolation bitmap describes the readings, so it has to
+         // grow with them, as in us_mwl_species_sim's build_rawdata().  The
+         // bitmap copied from the edited scan cannot be kept as it stands:
+         // its bits are indexed by the edited readings, which are shifted
+         // here by the krpad meniscus pad, so every bit would land on a
+         // different radius -- and each fitted value is drawn from all
+         // klambda wavelengths of the channel, not from the single scan the
+         // bitmap came from, so there is no one scan's flags to carry over.
+         // Flagging nothing matches what the other fit-output writers do.
+         synData[ kd ].scanData[ ks ].interpolated
+            .fill( '\0', ( kradp + 7 ) / 8 );
          synData[ kd ].scanData[ ks ].wavelength  = wavl;
          ks++;
 
@@ -1835,6 +1847,15 @@ DbgLv(1) << "sfd:  menx menval meniscus" << menx << menval << meniscus;
 
       int stat        = US_DataIO::writeRawData( fname, synData[ kd ] );
 DbgLv(1) << "sfd:  stat fname" << stat << fname;
+
+      if ( stat != US_DataIO::OK )
+      {  // A rejected write leaves no file, so say so instead of logging at a
+         // debug level nobody has switched on
+         QMessageBox::warning( this, tr( "Species File Write Failed" ),
+            tr( "The species data could not be written to\n%1\n\n%2" )
+            .arg( fname ).arg( US_DataIO::errorString( stat ) ) );
+         return;
+      }
    }
 QDateTime time9=QDateTime::currentDateTime();
 DbgLv(1) << "sfd: (C)D0 cmn" << ms << mr << synData[0].value(ms,mr);
