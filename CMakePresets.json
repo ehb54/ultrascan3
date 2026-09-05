@@ -32,7 +32,7 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "VCPKG_MANIFEST_FEATURES": "qt5-qwt630-hpc",
+        "VCPKG_MANIFEST_FEATURES": "qt5-hpc",
         "US3_NO_DB": "ON",
         "US3_PROFILE": "HPC"
       }
@@ -61,16 +61,14 @@
       "name": "release-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "VCPKG_BUILD_TYPE": "release"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
       "name": "debug-base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_BUILD_TYPE": "debug"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -106,6 +104,9 @@
       "hidden": true,
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/admin/cmake/toolchain.cmake",
+        "CMAKE_JOB_POOLS": "us3_link=1",
+        "CMAKE_JOB_POOL_LINK": "us3_link",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreadedDLL",
         "VCPKG_TARGET_TRIPLET": "x64-windows"
       }
     },

@@ -230,16 +230,20 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   # gperf: required by the Qt5/Qt6 qtbase vcpkg port for keyword hash tables
   # bison: required by libmariadb connector port (SQL parser grammar)
   # flex: required by libmariadb connector port (SQL lexer)
-  # libtime-piece-perl: provides Time::Piece, required by the OpenSSL Configure
-  #   script invoked during vcpkg's openssl port build.  It is a core Perl module
-  #   but is split into a separate package on Ubuntu/Debian and is not installed
-  #   by default on GitHub-hosted Ubuntu 24.04 runners.
+  # perl: provides Time::Piece (used by the OpenSSL Configure script invoked
+  #   during vcpkg's openssl port build). Time::Piece lives in perl-modules-X.YY,
+  #   pulled in by the "perl" metapackage -- NOT by "perl-base", which is all
+  #   that's guaranteed present on minimal/CI images. There is no standalone
+  #   "libtime-piece-perl" package on Ubuntu/Debian (verified: no such package
+  #   exists in any Ubuntu or Debian suite) -- depend on "perl" instead, since
+  #   its name and Time::Piece bundling are stable across releases, unlike the
+  #   versioned perl-modules-X.YY package.
   PKGS_CODEGEN=(
     nasm
     gperf
     bison
     flex
-    libtime-piece-perl
+    perl
   )
 
   # --- Python (Sphinx documentation) ----------------------------------------
@@ -345,9 +349,15 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   # --- MPI (optional, --hpc flag) -------------------------------------------
   # Required only for the HPC build profile (mpicxx must be on PATH).
   # Using openmpi as the default; mpich is an acceptable substitute.
+  # libgomp1: OpenMPI's runtime (libmpi.so) links against libgomp for its
+  #   atomics/threading fallback. Not pulled in by build-essential on minimal
+  #   images (Docker/WSL bare Ubuntu), so it must be listed explicitly or
+  #   us_mpi_analysis fails to link/run with "libgomp.so.1: cannot open
+  #   shared object file".
   PKGS_HPC=(
     libopenmpi-dev
     openmpi-bin
+    libgomp1
   )
 
 elif [ "$DISTRO_FAMILY" = "rhel" ]; then
@@ -358,7 +368,7 @@ elif [ "$DISTRO_FAMILY" = "rhel" ]; then
   #   Rocky 8's default GCC 8.5 is incompatible with Qt 6.10's C++17 noexcept
   #   correctness checks (static_assert failures in qcomparehelpers.h).
   #   GCC 13 matches the compiler used on Ubuntu 24.04 and builds Qt 6.10 cleanly.
-  #   Activation: warm-cache.sh and build.sh source the toolset environment
+  #   Activation: build-toolchain.sh and build.sh source the toolset environment
   #   before invoking vcpkg.
   # ninja-build: from EPEL — the generator used by every CMake preset
   # cmake: RHEL 8 BaseOS ships cmake 3.26+ which satisfies our >= 3.21 requirement
@@ -560,8 +570,11 @@ elif [ "$DISTRO_FAMILY" = "rhel" ]; then
   #   On Rocky 8 the wrapper lands in /usr/lib64/openmpi/bin/mpicxx and
   #   /usr/lib64/openmpi/bin is NOT on PATH by default.  We add it explicitly
   #   in the post-install section when --hpc is requested.
+  # libgomp: OpenMPI's runtime (libmpi.so) links against libgomp for its
+  #   atomics/threading fallback (see matching Debian-family comment above).
   PKGS_HPC=(
     openmpi-devel
+    libgomp
   )
 
 fi  # end distro-family package list definitions
@@ -685,12 +698,21 @@ if [ "$DISTRO_FAMILY" = "debian" ]; then
   fi
 
   log "Installing packages..."
+  # set -e already aborts on a failed apt-get, but a bad package name buries
+  # apt's "Unable to locate package" line mid-output -- this wrapper adds a
+  # final, unambiguous failure message naming exactly what didn't install
+  # (rather than the run silently reporting the same packages missing again
+  # on the next invocation, as happened with the now-fixed libtime-piece-perl
+  # name above, which never existed as an apt package on any Ubuntu/Debian
+  # suite).
   if [ "$NON_INTERACTIVE" = true ]; then
     DEBIAN_FRONTEND=noninteractive ${SUDO:+$SUDO} apt-get install -y \
       --no-install-recommends \
-      "${PKGS_TO_INSTALL[@]}"
+      "${PKGS_TO_INSTALL[@]}" \
+      || die "apt-get install failed for: ${PKGS_TO_INSTALL[*]} (check package names for this distro/release)"
   else
-    ${SUDO:+$SUDO} apt-get install -y "${PKGS_TO_INSTALL[@]}"
+    ${SUDO:+$SUDO} apt-get install -y "${PKGS_TO_INSTALL[@]}" \
+      || die "apt-get install failed for: ${PKGS_TO_INSTALL[*]} (check package names for this distro/release)"
   fi
 
 elif [ "$DISTRO_FAMILY" = "rhel" ]; then
@@ -736,7 +758,7 @@ fi
 # It is NOT on PATH by default — it must be activated via scl or by sourcing
 # the enable script.  We write a profile.d snippet so that CC/CXX are set
 # for all subsequent shells and subprocesses, and also activate it for the
-# current shell session so warm-cache.sh and build.sh pick it up immediately.
+# current shell session so build-toolchain.sh and build.sh pick it up immediately.
 if [ "$DISTRO_FAMILY" = "rhel" ] && [ -f /opt/rh/gcc-toolset-13/enable ]; then
   GCC13_PROFILE="/etc/profile.d/gcc-toolset-13.sh"
   if [ ! -f "$GCC13_PROFILE" ]; then
@@ -842,5 +864,5 @@ log "Bootstrap complete."
 log ""
 log "Next steps:"
 log "  1. Run 'bash scripts/build.sh --help' to see build options."
-log "  2. First build: 'bash scripts/build.sh --qt5-qwt616'  (or --qt6)"
+log "  2. First build: 'bash scripts/build.sh --qt6'  (or --qt5-qwt630)"
 log "     (vcpkg will build all library dependencies; allow 30-45 minutes)"
