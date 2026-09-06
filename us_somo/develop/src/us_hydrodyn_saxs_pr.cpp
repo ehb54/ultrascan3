@@ -4,6 +4,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
 #include "../include/us_hydrodyn.h"
+#include <QInputDialog>
 
 #define SLASH QDir::separator()
 double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool allow_none )
@@ -210,6 +211,154 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    }
    */
 #endif
+}
+
+// list the r values at the given positions, capped so a wholly bad file does not flood the log
+static QString pr_error_r_list( const vector < double > & r,
+                                const vector < unsigned int > & pos,
+                                unsigned int max_show = 8 ) {
+   QStringList qsl;
+   for ( unsigned int i = 0; i < pos.size() && i < max_show; i++ ) {
+      qsl << QString( "%1" ).arg( r[ pos[ i ] ] );
+   }
+   QString msg = qsl.join( ", " );
+   if ( pos.size() > max_show ) {
+      msg += QString( us_tr( " ... and %1 more" ) ).arg( pos.size() - max_show );
+   }
+   return msg;
+}
+
+void US_Hydrodyn_Saxs::check_pr_error( const QString     & filename,
+                                       vector < double > & r,
+                                       vector < double > & pr_error,
+                                       vector < bool >   & pr_error_present ) {
+   if ( pr_error.size() != r.size() ||
+        pr_error.size() != pr_error_present.size() ) {
+      return;
+   }
+
+   // a P(r) point is only usable with an error if that error is strictly positive:
+   // a zero or negative value divides by zero in weighted fitting and breaks the plot
+
+   vector < unsigned int > no_column;
+   vector < unsigned int > not_positive;
+   double                  min_pr_error     = 0e0;
+   bool                    min_pr_error_set = false;
+
+   for ( unsigned int i = 0; i < pr_error.size(); i++ ) {
+      if ( !pr_error_present[ i ] ) {
+         no_column.push_back( i );
+         continue;
+      }
+      if ( pr_error[ i ] <= 0e0 ) {
+         not_positive.push_back( i );
+         continue;
+      }
+      if ( !min_pr_error_set || pr_error[ i ] < min_pr_error ) {
+         min_pr_error     = pr_error[ i ];
+         min_pr_error_set = true;
+      }
+   }
+
+   unsigned int unusable = no_column.size() + not_positive.size();
+   if ( !unusable ) {
+      return;
+   }
+
+   QString    name = QFileInfo( filename ).fileName();
+   QStringList detail;
+
+   if ( no_column.size() ) {
+      detail << QString( us_tr( "%1 of %2 points have no error value, at r = %3" ) )
+         .arg( no_column.size() )
+         .arg( pr_error.size() )
+         .arg( pr_error_r_list( r, no_column ) );
+   }
+   if ( not_positive.size() ) {
+      detail << QString( us_tr( "%1 of %2 points have a zero or negative error value, at r = %3" ) )
+         .arg( not_positive.size() )
+         .arg( pr_error.size() )
+         .arg( pr_error_r_list( r, not_positive ) );
+   }
+
+   for ( int i = 0; i < (int) detail.size(); i++ ) {
+      editor_msg( "darkRed", QString( us_tr( "File %1 : %2" ) ).arg( name ).arg( detail[ i ] ) );
+   }
+
+   double use_error = 0e0;
+   bool   repair    = false;
+
+   // only offer a repair when there is somebody at the keyboard and a sound value to offer
+   if ( min_pr_error_set &&
+        !( (US_Hydrodyn *) us_hydrodyn )->gui_script &&
+        !( (US_Hydrodyn *) us_hydrodyn )->batch_active() ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "UltraScan Notice" ),
+                                      QString( us_tr( "Please note:\n\n"
+                                                      "File %1\n\n"
+                                                      "%2\n\n"
+                                                      "P(r) needs a positive error value at every point, otherwise\n"
+                                                      "all the error values have to be dropped.\n\n"
+                                                      "What would you like to do?\n" ) )
+                                      .arg( name )
+                                      .arg( detail.join( "\n" ) ),
+                                      us_tr( "&Remove all error values" ),
+                                      QString( us_tr( "Set them to the &minimum error (%1)" ) ).arg( min_pr_error ),
+                                      us_tr( "Set them to a &value..." ),
+                                      1, // default
+                                      0  // escape
+                                      ) ) {
+      case 1 :
+         {
+            use_error = min_pr_error;
+            repair    = true;
+         }
+         break;
+      case 2 :
+         {
+            bool    ok = false;
+            QString qs = QInputDialog::getText( this,
+                                                windowTitle() + us_tr( " : P(r) error value" ),
+                                                us_tr( "Error value to use for the points listed above : " ),
+                                                QLineEdit::Normal,
+                                                QString( "%1" ).arg( min_pr_error ),
+                                                &ok );
+            if ( ok ) {
+               bool   valid = false;
+               double value = qs.toDouble( &valid );
+               if ( valid && value > 0e0 ) {
+                  use_error = value;
+                  repair    = true;
+               } else {
+                  editor_msg( "darkRed",
+                              QString( us_tr( "File %1 : \"%2\" is not a positive number" ) ).arg( name ).arg( qs ) );
+               }
+            }
+         }
+         break;
+      default :
+         break;
+      }
+   }
+
+   if ( repair ) {
+      for ( unsigned int i = 0; i < no_column.size(); i++ ) {
+         pr_error[ no_column[ i ] ] = use_error;
+      }
+      for ( unsigned int i = 0; i < not_positive.size(); i++ ) {
+         pr_error[ not_positive[ i ] ] = use_error;
+      }
+      editor_msg( "darkblue",
+                  QString( us_tr( "File %1 : %2 error value(s) set to %3" ) )
+                  .arg( name )
+                  .arg( unusable )
+                  .arg( use_error ) );
+      return;
+   }
+
+   pr_error.clear();
+   editor_msg( "darkRed",
+               QString( us_tr( "File %1 : all error values removed" ) ).arg( name ) );
 }
 
 void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr )

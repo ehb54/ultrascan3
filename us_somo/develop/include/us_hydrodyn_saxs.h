@@ -833,6 +833,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void check_pr_grid( vector < double > &r, vector < double > &pr );
       void check_pr_grid( vector < double > &r, vector < double > &pr, vector < double > &pr_error );
+      // validate the error column of a loaded P(r): report the points lacking a usable
+      // error value and, when interactive, offer to repair or drop them
+      void check_pr_error( const QString    & filename,
+                           vector < double > & r,
+                           vector < double > & pr_error,
+                           vector < bool >   & pr_error_present );
       vector < double > range_crop( vector < double > &q, vector < double > &I );
 
       bool started_in_expert_mode;
