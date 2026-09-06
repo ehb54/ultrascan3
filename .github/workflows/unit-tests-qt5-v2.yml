@@ -1,5 +1,4 @@
-# Qt5 unit tests; the Qt6 suite runs in unit-tests-qt6-v2.yml.
-# Preserve job names used by branch protection; Qt6 checks use distinct names.
+# Preserve job names used by branch protection.
 name: "Unit Tests Qt5 v2"
 
 on:
