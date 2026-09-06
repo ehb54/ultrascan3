@@ -4,6 +4,24 @@
 
 #include "us_extern.h"
 
+#include <QSettings>
+
+//! \brief UltraScan settings with an optional directory override.
+//!
+//! Use instead of QSettings( US3, "UltraScan" ). US3_SETTINGS_ROOT selects
+//! an INI store in that directory; otherwise, use the native user store.
+//! INI format allows isolation on macOS and Windows, where setPath cannot
+//! relocate native stores. Set the override before first use; it is cached
+//! for the process lifetime.
+class US_UTIL_EXTERN US_SettingsStore : public QSettings
+{
+  public:
+    US_SettingsStore( void );
+
+    //! \brief The format this process resolved to, native unless overridden.
+    static QSettings::Format format( void );
+};
+
 //! \brief Fetch and set values via QSettings.  All functions are static.
 class US_UTIL_EXTERN US_Settings
 {

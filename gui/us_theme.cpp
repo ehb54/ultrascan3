@@ -3,6 +3,7 @@
 #include "us_style.h"
 #include "us_gui_settings.h"
 #include "us_defines.h"
+#include "us_settings.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK( 6, 5, 0 )
 #include <QStyleHints>
@@ -118,13 +119,13 @@ US_ThemeTokens US_Theme::tokens( void )
 
 QString US_Theme::schemeSetting( void )
 {
-   const QSettings settings( US3, "UltraScan" );
+   const US_SettingsStore settings;
    return settings.value( "colorScheme", "auto" ).toString().toLower();
 }
 
 void US_Theme::set_schemeSetting( const QString& pref )
 {
-   QSettings settings( US3, "UltraScan" );
+   US_SettingsStore settings;
 
    if ( pref.compare( "auto", Qt::CaseInsensitive ) == 0 )
       settings.remove  ( "colorScheme" );
