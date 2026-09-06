@@ -6,6 +6,7 @@
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_datafiles.h"
+#include "us_convertio.h"
 
 // class to process operatations on data:  upload/download/remove
 US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
@@ -85,11 +86,14 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       QString rawGUID  = cdesc.parentGUID;
       QString editID   = QString::number( idData );
 
-      query.clear();
-      query << "get_rawDataID_from_GUID" << rawGUID;
-      db->query( query );
+      // The mechanics are US_ConvertIO's; the create-then-always-update
+      // sequence, the record-state codes and the table-model bookkeeping below
+      // are this program's and are unchanged.
+      int     rawDataID = -1;
+      QString opError;
 
-      if ( ( stat = db->lastErrno() ) != US_DB2::OK )
+      if ( ( stat = US_ConvertIO::findRawDataId( db, rawGUID, rawDataID,
+                                                 opError ) ) != US_DB2::OK )
       {
          errMsg = tr( "Raw DB record for Edit could not be accessed: %1" )
                   .arg( stat );
@@ -98,33 +102,33 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
       else
       {
-         db->next();
          DbgLv(1) << "editUpld: rawGUID" << rawGUID;
-
-         QString rawDataID = db->value( 0 ).toString();
-
          DbgLv(1) << "editUpld: rawDataID" << rawDataID;
+
+         US_ConvertIO::EditedDataRecord record;
+         record.rawDataID = rawDataID;
+         record.editGUID  = editGUID;
+         record.label     = runID;
+         record.filename  = filename;
+         record.comment   = comment;
 
          if ( idData < 0 )
          {
-            query.clear();
-            query << "new_editedData" << rawDataID << editGUID << runID
-               << filename << comment;
-            db->query( query );
-            idData   = db->lastInsertID();
+            US_ConvertIO::createEditedData( db, record, idData, opError );
             editID   = QString::number( idData );
             DbgLv(1) << "editUpld: NEW idData" << idData << editID;
          }
 
-         query.clear();
-         query << "update_editedData" << editID << rawDataID << editGUID
-            << label << filename << comment;
-         db->query( query );
+         // The update always follows, including right after a create: it is
+         // what puts the label on the row, since the create procedure takes
+         // the run ID in that position instead.
+         record.label     = label;
+         US_ConvertIO::updateEditedData( db, editID.toInt(), record,
+                                         opError );
          DbgLv(1) << "editUpld: label" << label;
 
-         stat = db->writeBlobToDB( filepath,
-                                   QString( "upload_editData" ),
-                                   idData );
+         stat = US_ConvertIO::uploadEditedDataBlob( db, idData, filepath,
+                                                    opError );
          errMsg = tr( "writeBlob Edited stat %1, idData %2" )
             .arg( stat ).arg( idData );
          stat = ( stat == 0 ) ? 0 : 3042;
