@@ -367,6 +367,19 @@ class US_UTIL_EXTERN US_DataIO
       static int     loadData    ( const QString&, const QString&, 
                                    EditedData& ); 
 
+      /*! Return the raw AUC basename named by an edit-profile basename.
+
+          For a normal edit this removes the edit identifier and changes the
+          suffix to `.auc`.  For a logical MWL name such as
+          `run.edit.RA.1.A.190-800@280.xml`, it selects wavelength 280.  An
+          empty string means the edit filename is not structurally usable.
+
+          This is the same rule loadData() uses, exposed so code which must
+          obtain the raw file before calling loadData() does not carry a
+          second, subtly different copy of the filename convention.
+      */
+      static QString rawFilenameForEdit( const QString& editFilename );
+
       /*! Adjust interference data by aligning air gaps at zero fringes 
           \param data A reference to the RawData structure to be adjusted
           \param ev   The EditValues used for the adjustment.  Only
