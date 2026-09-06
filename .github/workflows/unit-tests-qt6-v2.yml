@@ -1,15 +1,6 @@
-# Qt6 unit tests.
-#
-# Runs the same suite as unit-tests-qt5-v2.yml, against Qt6 instead of Qt5.
-#
-# Qt6 and Qwt come from the prebuilt ehb1/usbuildtest image that codeql-
-# analysis.yml already builds against, rather than from apt:  Ubuntu packages
-# Qwt for Qt5 only, and the TEST profile links it.  Only the 6.10 image is
-# tested -- that is the Qt6 the project is standardizing on, and vcpkg.json
-# pins qtbase to 6.10.1 to match.
-#
-# The job names below are suffixed "(Qt6)" so they do not collide with the Qt5
-# workflow's checks, which kept their original names through the file rename.
+# Run the Qt5 suite against Qt6 using a prebuilt Qt6/Qwt image.
+# Ubuntu packages Qwt for Qt5 only.
+# Suffix job names with "(Qt6)" to distinguish them from required Qt5 checks.
 name: "Unit Tests Qt6 v2"
 
 on:
@@ -75,10 +66,7 @@ jobs:
 
     defaults:
       run:
-        # Name the shell rather than take the default:  inside this container the
-        # default resolved to sh, where ${PIPESTATUS[0]} is a syntax error.  This
-        # also turns on pipefail, without which a failing cmake or ctest piped
-        # into tee reports tee's success and the step passes regardless.
+        # Use bash with pipefail so tee cannot hide command failures.
         shell: bash
 
     steps:
@@ -89,8 +77,7 @@ jobs:
 
       - name: Install remaining dependencies
         run: |
-          # The image carries Qt6, Qwt and libarchive.  These four are what the
-          # TEST profile needs on top of it.
+          # Add TEST dependencies to the image's Qt6, Qwt, and libarchive.
           export DEBIAN_FRONTEND=noninteractive
           apt-get update -qq
           apt-get install -y -qq \
@@ -151,7 +138,7 @@ jobs:
             CTEST_ARGS="$CTEST_ARGS -L ${{ github.event.inputs.test_filter }}"
           fi
 
-          # Let ctest fail without ending the step, so the analysis below runs.
+          # Preserve failures for reporting before exiting.
           RESULT=0
           ctest $CTEST_ARGS 2>&1 | tee test_output.log || RESULT=$?
 

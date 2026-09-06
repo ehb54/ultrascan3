@@ -1,10 +1,5 @@
-# Qt5 unit tests.  Qt6 runs the same suite from unit-tests-qt6-v2.yml, which
-# builds against vcpkg rather than apt because there is no Qt6 Qwt package.
-#
-# The job names here are deliberately unchanged from when this file was
-# unit-tests-v2.yml:  branch protection identifies a required check by its job
-# name, not by the workflow file, so renaming the file leaves those settings
-# intact.  The Qt6 workflow suffixes its own job names to keep them distinct.
+# Qt5 unit tests; the Qt6 suite runs in unit-tests-qt6-v2.yml.
+# Preserve job names used by branch protection; Qt6 checks use distinct names.
 name: "Unit Tests Qt5 v2"
 
 on:
@@ -70,11 +65,7 @@ jobs:
 
     defaults:
       run:
-        # For pipefail.  Every cmake and ctest call below is piped into tee, and
-        # without it the pipeline reports tee's success -- so a configure or
-        # compile failure passed this step and only surfaced later as confusing
-        # test errors.  Configure and ctest capture their own status so their
-        # reporting still runs; a failed build now simply ends the step.
+        # Enable pipefail so tee cannot hide configure, build, or test failures.
         shell: bash
 
     steps:
@@ -235,7 +226,7 @@ jobs:
           START_TIME=$(date +%s)
 
           if [ "$SAVE_LOGS" = "true" ]; then
-            # Let ctest fail without ending the step, so the analysis below runs.
+            # Preserve failures for reporting before exiting.
             RESULT=0
             ctest $CTEST_ARGS 2>&1 | tee test_output.log | tee test-log-$TIMESTAMP.txt || RESULT=$?
           else

@@ -6,21 +6,13 @@
 
 #include <QSettings>
 
-//! \brief The UltraScan settings store.
+//! \brief UltraScan settings with an optional directory override.
 //!
-//! Use this everywhere in place of QSettings( US3, "UltraScan" ). That
-//! constructor is hardwired to QSettings::NativeFormat, and a NativeFormat
-//! store cannot be relocated on macOS or Windows, where it is CFPreferences or
-//! the registry rather than a file; QSettings::setPath documents that it has no
-//! effect there. A process therefore has no way to ask for a settings store of
-//! its own, and a test run writes into the developer's real UltraScan
-//! preferences instead of into its sandbox.
-//!
-//! Setting US3_SETTINGS_ROOT to a directory keeps settings there instead. When
-//! it is unset, which is every production run, this is the native store and
-//! behaves exactly as the constructor it replaces. The environment is read once
-//! per process, before any setting is touched: the store must not move
-//! underneath a process that is already using it.
+//! Use instead of QSettings( US3, "UltraScan" ). US3_SETTINGS_ROOT selects
+//! an INI store in that directory; otherwise, use the native user store.
+//! INI format allows isolation on macOS and Windows, where setPath cannot
+//! relocate native stores. Set the override before first use; it is cached
+//! for the process lifetime.
 class US_UTIL_EXTERN US_SettingsStore : public QSettings
 {
   public:

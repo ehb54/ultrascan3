@@ -1,6 +1,4 @@
-# Shared support for native Qt Test executables.  Each UI test supplies its
-# own QObject test class and uses US3_GUI_TEST_MAIN() to create one sandboxed
-# QApplication before any widgets are constructed.
+# Shared Qt Test support; US3_GUI_TEST_MAIN creates a sandboxed QApplication.
 add_library(us3_gui_test_support INTERFACE)
 target_include_directories(us3_gui_test_support INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/common
@@ -44,10 +42,7 @@ endfunction()
 
 add_subdirectory(utils)
 
-# The GUI library and the programs that link it are only built when the tree has
-# database support (see the top-level CMakeLists.txt), so their tests exist only
-# in the DB-enabled variant.  The NO_DB variant still configures and runs the
-# utilities tests.
+# GUI tests require the DB-enabled GUI library; NO_DB builds run utils tests.
 if(TARGET UltraScan3::Gui_Static)
     add_subdirectory(gui)
 else()

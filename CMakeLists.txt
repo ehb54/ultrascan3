@@ -236,15 +236,8 @@ endif()
 # =============================================================================
 # COVERAGE INSTRUMENTATION
 # =============================================================================
-# Measurement only: this option adds no pass/fail gate.  Coverage is evidence
-# that a line executed, not evidence that anything asserted about it.
-#
-# The instrumentation is applied tree-wide rather than per-target so that the
-# utilities library and the test executable that drives it are compiled and
-# linked consistently. A per-target NO_DB definition would likewise make the
-# test executable and linked utilities library disagree about build settings.
-# Test sources are instrumented too and are filtered out when the report is
-# generated, which is where the "exclude test and generated code" rule lives.
+# Instrument libraries and tests consistently; filter reports to production code.
+# Coverage measures execution only and enforces no threshold.
 option(US3_COVERAGE "Instrument the build for gcov line and branch coverage" OFF)
 
 if(US3_COVERAGE)
@@ -259,8 +252,8 @@ if(US3_COVERAGE)
                 "optimized builds attribute lines unreliably")
     endif()
 
-    # -O0 keeps line attribution honest.  -fprofile-abs-path records absolute
-    # source paths so the report can be generated from any working directory.
+    # Disable optimization for accurate line attribution.
+    # Record absolute source paths on GCC for reports run from any directory.
     add_compile_options(--coverage -O0 -g)
     add_link_options(--coverage)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

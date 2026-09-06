@@ -1,13 +1,5 @@
-// The GUI test harness must keep its settings inside its sandbox.
-//
-// This is the counterpart of TestEnvironmentIsolation in test/utils, which
-// covers the Google Test harness only. The GUI harness had the same defect and
-// kept it after the other was fixed: it redirected the store after constructing
-// QApplication, by which time the theme had already read a setting and pinned
-// the store to the real one. A GUI test run then wrote the sandbox paths into
-// the developer's own UltraScan preferences, pointing workBaseDir at a
-// directory that is deleted when the test exits and breaking every UltraScan
-// program on that machine until the key was removed by hand.
+// Verify GUI tests isolate settings before QApplication caches the store,
+// keeping temporary paths out of the user's UltraScan preferences.
 
 #include "us3_gui_test_main.h"
 
@@ -49,8 +41,7 @@ private slots:
                  QString("sandbox-only"));
     }
 
-    // The paths the harness sets are the ones a leak would write into the real
-    // store, so they are what this has to pin.
+    // Check every writable path stays in the sandbox.
     void writablePathsAreTheSandboxOnes()
     {
         const QString workRoot = qEnvironmentVariable("US3_TEST_WORK_ROOT");
@@ -67,8 +58,7 @@ private slots:
             QVERIFY2(isWithin(path, workRoot), qPrintable(path));
     }
 
-    // The store is resolved once, on the first read.  If any of the above ever
-    // resolves late, this is the assertion that says so directly.
+    // A late redirect leaves the cached format native.
     void storeFormatIsNotTheNativeOne()
     {
         QCOMPARE(US_SettingsStore::format(), QSettings::IniFormat);

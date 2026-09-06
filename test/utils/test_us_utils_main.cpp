@@ -31,9 +31,7 @@ QByteArray fileDigest( const QString& path )
 class QtTestEnvironment : public ::testing::Environment {
 public:
     void SetUp() override {
-        // Capture only the location and digest needed to prove that the real
-        // per-user settings store is not modified.  Tests never consume its
-        // values as input.
+        // Fingerprint user settings to detect writes without using their values.
         QSettings normalSettings( QSettings::NativeFormat,
                                   QSettings::UserScope, US3, "UltraScan" );
         const QString normalSettingsFile = normalSettings.fileName();
@@ -67,12 +65,8 @@ public:
                  normalSettingsExists ? "1" : "0" );
         qputenv( "US3_TEST_NORMAL_SETTINGS_SHA256", normalSettingsDigest );
 
-        // Moves the settings store into the sandbox.  This has to be an
-        // US_SettingsStore override rather than QSettings::setPath, which
-        // isolates Linux only: on macOS and Windows the native store is
-        // CFPreferences or the registry, setPath has no effect on it, and
-        // QSettings( org, app ) always asks for the native store.  Set before
-        // any setting is read, because US_SettingsStore resolves this once.
+        // Set before first use: US_SettingsStore caches this override.
+        // Unlike setPath alone, it also isolates native macOS/Windows settings.
         qputenv( "US3_SETTINGS_ROOT", QFile::encodeName( settingsRoot ) );
 
         QSettings::setPath( QSettings::IniFormat, QSettings::UserScope,
@@ -91,8 +85,7 @@ public:
         // Optional: Suppress Qt debug output during tests
         qputenv("QT_LOGGING_RULES", "*.debug=false");
 
-        // Establish all writable UltraScan paths before any test can read or
-        // write settings.  Each CTest/GTest process receives a unique root.
+        // Initialize writable paths in this process's sandbox before tests run.
         US_Settings::set_workBaseDir( workRoot );
         US_Settings::set_importDir( importRoot );
         US_Settings::set_tmpDir( temporaryRoot );

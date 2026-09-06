@@ -413,7 +413,7 @@ sc.f = 0.0;
 
 ASSERT_TRUE(US_Model::calc_coefficients(sc));
 
-// The derivation must produce usable values rather than leaving the zeroes.
+// Derived coefficients must be positive.
 EXPECT_GT(sc.D, 0.0);
 EXPECT_GT(sc.f, 0.0);
 EXPECT_GT(sc.f_f0, 0.0);
@@ -428,7 +428,6 @@ sc.f = 0.0;
 
 ASSERT_TRUE(US_Model::calc_coefficients(sc));
 
-// us_model.cpp substitutes TYPICAL_VBAR when vbar20 <= 0, so the derivation
-// still succeeds rather than propagating a zero.
+// Nonpositive vbar20 falls back to TYPICAL_VBAR.
 EXPECT_GT(sc.D, 0.0);
 }

@@ -11,8 +11,7 @@ QSettings::Format US_SettingsStore::format( void )
       if ( root.isEmpty() )
          return QSettings::NativeFormat;
 
-      // IniFormat is a plain file on every platform, so setPath does apply to
-      // it. This is what makes the override work where setPath alone cannot.
+      // INI files support setPath on every platform.
       QSettings::setPath( QSettings::IniFormat, QSettings::UserScope, root );
       return QSettings::IniFormat;
    }();

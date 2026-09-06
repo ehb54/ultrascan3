@@ -32,9 +32,7 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/test/common
 )
 
-# AUTO-DISCOVERY - Find all test files automatically.  CONFIGURE_DEPENDS makes
-# the build system re-run the glob, so a newly added test file is picked up by
-# an incremental build instead of only by a fresh configure.
+# Discover new test files during incremental builds.
 file(GLOB_RECURSE AUTO_TEST_SOURCES CONFIGURE_DEPENDS "test_us_*.cpp" "test_mock_*.cpp")
 file(GLOB_RECURSE AUTO_TEST_HEADERS CONFIGURE_DEPENDS "test_us_*.h" "test_mock_*.h")
 
@@ -56,13 +54,8 @@ add_executable(test_us_utils
         test_us_timer.cpp
         )
 
-# Do NOT define NO_DB here.  The whole tree, including the utilities library the
-# tests link, gets NO_DB from the top-level US3_NO_DB option; defining it for the
-# test executable alone made the test translation units see a different private
-# layout of US_DB2 (us_db2.h drops the three MYSQL members under NO_DB) than the
-# library they link against, which is an ODR violation.  The variant is therefore
-# a property of the whole build tree: configure with -DUS3_NO_DB=ON for the NO_DB
-# variant, and leave it OFF (the TEST profile default) for the DB-enabled one.
+# Inherit NO_DB from US3_NO_DB for both tests and libraries.
+# A test-only definition changes the US_DB2 layout and violates the ODR.
 if(US3_NO_DB)
     message(STATUS "test_us_utils: NO_DB variant (utils library is also NO_DB)")
 else()
@@ -92,11 +85,9 @@ target_link_libraries(test_us_utils
         ${GTEST_LIBRARIES}
         )
 
-# Link MySQL for the DB-enabled variant.  The utilities library already exports
-# it PUBLIC, so this is belt-and-braces; the NO_DB variant must not have it at
-# all, and its absence there is expected rather than a problem.
+# Link MySQL only for DB-enabled builds.
 if(US3_NO_DB)
-    # Nothing to link: the whole tree, tests included, is built without the DB.
+    # NO_DB builds need no MySQL library.
 elseif(TARGET MySQL::Client)
     target_link_libraries(test_us_utils PRIVATE MySQL::Client)
     message(STATUS "MySQL found and linked")
@@ -106,20 +97,8 @@ endif()
 
 # ENABLE Google Test discovery - this will register individual test cases
 include(GoogleTest)
-# The label is one composite word on purpose, and the alternative does not work.
-#
-# gtest_discover_tests flattens PROPERTIES into a single semicolon-separated
-# string before its generated script re-parses it, so the natural
-# LABELS "gtest;unit;utils" arrives there as three arguments: LABELS takes
-# "gtest", and "unit" and "utils" are silently read as property names.  No
-# escaping at this call survives that round trip, and set_property(TEST ...)
-# from a later CTest include file cannot see tests added by another one.  The
-# result was that `ctest -L utils` -- and therefore the test_utils target below
-# and the `./test-docker.sh -f utils` command in test/README -- matched nothing
-# at all while appearing to work.
-#
-# CTest matches -L as a regular expression against each label, so a single
-# "gtest-unit-utils" label is selected by -L gtest, -L unit and -L utils alike.
+# Use one label to avoid semicolon splitting in gtest_discover_tests.
+# CTest regex filters still match -L gtest, -L unit, and -L utils.
 gtest_discover_tests(test_us_utils
         PROPERTIES
         LABELS gtest-unit-utils

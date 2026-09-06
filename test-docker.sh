@@ -38,9 +38,7 @@ QUICK_MODE=false
 SAVE_LOGS=false
 STOP_ON_FIRST_FAILURE=false
 PROFILE="TEST"
-# Database variant of the test build.  false = DB-enabled (the TEST profile),
-# true = the NO_DB variant.  Each variant gets its own build tree so the two
-# never share objects compiled with different NO_DB settings.
+# Keep DB and NO_DB builds separate to avoid mixing incompatible objects.
 NO_DB_VARIANT=false
 COVERAGE=false
 
@@ -263,11 +261,7 @@ fi
 mkdir -p "${BUILD_DIR}"  # ensure parent exists for logs and CMakeFiles
 
 
-# Coverage mode
-#
-# Measurement only -- there is deliberately no pass/fail percentage gate.  The
-# instrumented tree is kept separate from build-docker so that ordinary test
-# runs never link against gcov-instrumented objects.
+# Keep coverage objects separate from normal builds; enforce no threshold.
 if [ "$COVERAGE" = true ]; then
     print_highlight "Measuring coverage of utils/ (no threshold is enforced)"
 
@@ -310,20 +304,16 @@ echo '=== Resetting counters ==='
 find . -name '*.gcda' -delete
 lcov --directory . --zerocounters -q
 
-# A baseline capture of every instrumented object gives the report its zero-hit
-# files; without it lcov only lists sources some test happened to execute, and
-# an untested utils/ source would silently vanish from the denominator.
+# Include unexecuted sources in the coverage denominator.
 echo '=== Baseline capture ==='
 lcov --directory . --capture --initial \
      --base-directory /ultrascan3 \
      --rc lcov_branch_coverage=1 \
      --output-file "$OUT/baseline.info" -q 2>/dev/null
 
-# Serial by design: CTest registers each GoogleTest case as its own process, and
-# concurrent processes merging into the same .gcda files corrupt the counters.
+# Run serially to avoid concurrent writes to shared .gcda counters.
 echo '=== Running suite serially ==='
-# A failing suite must still produce a report, so the exit code is carried to
-# the end rather than tripping `set -e` here.
+# Generate the report before returning the test failure status.
 CTEST_RC=0
 ctest -j1 --output-on-failure > "$OUT/ctest.log" 2>&1 || CTEST_RC=$?
 tail -5 "$OUT/ctest.log"
@@ -339,9 +329,7 @@ lcov --add-tracefile "$OUT/baseline.info" \
      --rc lcov_branch_coverage=1 \
      --output-file "$OUT/combined.info" -q
 
-# Keep production utils/ sources only.  Test sources, Qt's generated moc/autogen
-# output, the build tree and system headers are all dropped here rather than at
-# compile time, so the instrumented build stays uniform.
+# Report production utils/ only, excluding test, generated, and system code.
 echo '=== Filtering to utils/ ==='
 lcov --extract "$OUT/combined.info" '/ultrascan3/utils/*' \
      --rc lcov_branch_coverage=1 \
@@ -501,8 +489,7 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
     fi
 
 #    Enable testing to build static library
-    # The TEST profile force-sets US3_NO_DB=OFF, so the NO_DB variant spells out
-    # the same options instead of selecting a profile.
+    # Set options explicitly: the TEST profile forces US3_NO_DB=OFF.
     if [ "$NO_DB_VARIANT" = "true" ]; then
         VARIANT_ARGS=(-DUS3_NO_DB=ON -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
     else

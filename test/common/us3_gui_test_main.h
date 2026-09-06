@@ -11,9 +11,7 @@
 #include "us_defines.h"
 #include "us_settings.h"
 
-// Native QTest normally creates QApplication through QTEST_MAIN.  UltraScan
-// tests need to configure the platform plugin and isolate writable settings
-// first, so UI tests use this equivalent main instead.
+// Configure headless rendering and isolate settings before QApplication starts.
 #define US3_GUI_TEST_MAIN(TestClass)                                           \
 int main(int argc, char** argv)                                                \
 {                                                                              \
@@ -26,11 +24,7 @@ int main(int argc, char** argv)                                                \
                                                                                \
     QStandardPaths::setTestModeEnabled(true);                                  \
                                                                                \
-    /* Everything that redirects the settings store has to happen before     */\
-    /* QApplication is constructed.  Building the application reads settings */\
-    /* through the theme, and US_SettingsStore resolves where its store lives*/\
-    /* on the first read and then keeps it, so a redirect set afterwards     */\
-    /* arrives too late and the process writes to the real preferences.      */\
+    /* Redirect before QApplication: theme setup caches the settings store. */\
     QTemporaryDir sandbox(QDir::tempPath() +                                   \
                           "/ultrascan3-gui-test-XXXXXX");                      \
     if (!sandbox.isValid())                                                     \
@@ -47,9 +41,7 @@ int main(int argc, char** argv)                                                \
     qputenv("US3_TEST_SANDBOX", QFile::encodeName(sandbox.path()));            \
     qputenv("US3_TEST_SETTINGS_ROOT", QFile::encodeName(settingsRoot));        \
     qputenv("US3_TEST_WORK_ROOT", QFile::encodeName(workRoot));                \
-    /* setPath alone isolates Linux only: the native store is CFPreferences  */\
-    /* or the registry on macOS and Windows, where setPath has no effect, so */\
-    /* US_SettingsStore has to be told to use a file instead.                */\
+    /* Use INI files; setPath cannot redirect native macOS/Windows stores. */\
     qputenv("US3_SETTINGS_ROOT", QFile::encodeName(settingsRoot));             \
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope,              \
                        settingsRoot);                                           \
