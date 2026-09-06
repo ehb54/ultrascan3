@@ -71,6 +71,18 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
                         );
       }
    } else {
+      // No stored molecular weight, and get_mw() answers that by opening a modal dialog
+      // in a "while ( mw <= 0.0 )" loop. Under gui_script or batch there is nobody to
+      // close it, so the run hangs forever. Report and carry on without a weight instead:
+      // plot_one_pr() already treats -1 as "none" and turns normalisation off.
+      if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script ||
+           ( (US_Hydrodyn *) us_hydrodyn )->batch_active() ) {
+         QTextStream( stdout )
+            << QString( us_tr( "Notice: %1 : no molecular weight known, continuing without one\n" ) )
+            .arg( filename );
+         return allow_none ? -1e0 : 0e0;
+      }
+
       US_Hydrodyn_Saxs_Mw *smw = new US_Hydrodyn_Saxs_Mw(
                                                          msg,
                                                          &mw,
@@ -265,6 +277,19 @@ void US_Hydrodyn_Saxs::check_pr_error( const QString     & filename,
       return;
    }
 
+   bool interactive =
+      !( (US_Hydrodyn *) us_hydrodyn )->gui_script &&
+      !( (US_Hydrodyn *) us_hydrodyn )->batch_active();
+
+   // editor_msg() only reaches the GUI text window. A scripted or batch run has nobody
+   // watching that, so the same lines go to stdout there or the run reports nothing.
+   auto report = [ & ]( const QString & color, const QString & msg ) {
+      editor_msg( color, msg );
+      if ( !interactive ) {
+         QTextStream( stdout ) << msg << "\n";
+      }
+   };
+
    QString    name = QFileInfo( filename ).fileName();
    QStringList detail;
 
@@ -282,16 +307,25 @@ void US_Hydrodyn_Saxs::check_pr_error( const QString     & filename,
    }
 
    for ( int i = 0; i < (int) detail.size(); i++ ) {
-      editor_msg( "darkRed", QString( us_tr( "File %1 : %2" ) ).arg( name ).arg( detail[ i ] ) );
+      report( "darkRed", QString( us_tr( "File %1 : %2" ) ).arg( name ).arg( detail[ i ] ) );
    }
 
    double use_error = 0e0;
    bool   repair    = false;
 
+   if ( !interactive ) {
+      // nobody to ask, so apply whatever the script asked for in advance
+      if ( script_pr_errors_mode == PR_ERRORS_MINIMUM && min_pr_error_set ) {
+         use_error = min_pr_error;
+         repair    = true;
+      } else if ( script_pr_errors_mode == PR_ERRORS_VALUE && script_pr_errors_value > 0e0 ) {
+         use_error = script_pr_errors_value;
+         repair    = true;
+      }
+   }
+
    // only offer a repair when there is somebody at the keyboard and a sound value to offer
-   if ( min_pr_error_set &&
-        !( (US_Hydrodyn *) us_hydrodyn )->gui_script &&
-        !( (US_Hydrodyn *) us_hydrodyn )->batch_active() ) {
+   if ( interactive && min_pr_error_set ) {
       switch ( QMessageBox::question( this,
                                       us_tr( "UltraScan Notice" ),
                                       QString( us_tr( "Please note:\n\n"
@@ -348,17 +382,64 @@ void US_Hydrodyn_Saxs::check_pr_error( const QString     & filename,
       for ( unsigned int i = 0; i < not_positive.size(); i++ ) {
          pr_error[ not_positive[ i ] ] = use_error;
       }
-      editor_msg( "darkblue",
-                  QString( us_tr( "File %1 : %2 error value(s) set to %3" ) )
-                  .arg( name )
-                  .arg( unusable )
-                  .arg( use_error ) );
+      report( "darkblue",
+              QString( us_tr( "File %1 : %2 error value(s) set to %3" ) )
+              .arg( name )
+              .arg( unusable )
+              .arg( use_error ) );
       return;
    }
 
    pr_error.clear();
-   editor_msg( "darkRed",
-               QString( us_tr( "File %1 : all error values removed" ) ).arg( name ) );
+   report( "darkRed",
+           QString( us_tr( "File %1 : all error values removed" ) ).arg( name ) );
+}
+
+// gui_script: "sas pr_errors remove | minimum | <positive value>"
+bool US_Hydrodyn_Saxs::script_set_pr_errors( const QString & arg, QString & errormsg ) {
+   errormsg = "";
+
+   if ( arg.toLower() == "remove" ) {
+      script_pr_errors_mode  = PR_ERRORS_REMOVE;
+      script_pr_errors_value = 0e0;
+      return true;
+   }
+
+   if ( arg.toLower() == "minimum" ) {
+      script_pr_errors_mode  = PR_ERRORS_MINIMUM;
+      script_pr_errors_value = 0e0;
+      return true;
+   }
+
+   bool   ok    = false;
+   double value = arg.toDouble( &ok );
+   if ( !ok || value <= 0e0 ) {
+      errormsg = us_tr( "expected remove, minimum or a positive value" );
+      return false;
+   }
+
+   script_pr_errors_mode  = PR_ERRORS_VALUE;
+   script_pr_errors_value = value;
+   return true;
+}
+
+// gui_script: "sas load_pr <file>". load_pr() is silent when the file will not open,
+// so the readability checks happen here where the script can be told what went wrong.
+bool US_Hydrodyn_Saxs::script_load_pr( const QString & filename, QString & errormsg ) {
+   errormsg = "";
+
+   QFileInfo fi( filename );
+   if ( !fi.exists() ) {
+      errormsg = us_tr( "file does not exist" );
+      return false;
+   }
+   if ( !fi.isFile() || !fi.isReadable() ) {
+      errormsg = us_tr( "file is not readable" );
+      return false;
+   }
+
+   load_pr( false, filename );
+   return true;
 }
 
 void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr )
