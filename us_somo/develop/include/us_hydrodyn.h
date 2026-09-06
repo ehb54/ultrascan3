@@ -83,7 +83,6 @@
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
 // #include "us_hydrodyn_fractal_dimension_options.h"
-#include "us_container_grpy.h"
 
 // #include "us_hydrodyn_pat.h"
 
@@ -101,6 +100,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+
 
 #define ZENO_GRPY_CORRECTION_BEAD_COUNT_THRESHOLD 1000
 
@@ -277,7 +277,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void model_viewer( QString file,
                          QString prefix = "",
-                         bool nodisplay = false );  
+                         bool nodisplay = false );
+
+      // the RasMol viewers model_viewer() has started.  they are detached, so they survive
+      // us and are tracked by pid; closeEvent() asks what to do with any still open on exit
+
+      QList < qint64 > rasmol_pids;
+      QList < qint64 > rasmol_running_pids();       // the subset still alive, prunes the rest
+      void             rasmol_close_all();
+      static bool      pid_running  ( qint64 pid ); // portable pid liveness / termination
+      static void      pid_terminate( qint64 pid );
 
       double use_solvent_visc();                     // temperature solvent viscosity - checks manual flag
       double use_solvent_dens();                     // temperature solvent density   - checks manual flag
@@ -295,9 +304,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
                                        void * dts );
 
    private:
-      bool                grpy_parallel_pulled;
-      US_Container_Grpy * us_container_grpy;
-      
       set < QString > residues_with_atomic_vs_bead_hydration_differences;
       void            compute_residues_with_atomic_vs_bead_hydration_differences( const vector < struct residue > & rl = {} );
       bool            residue_atomic_vs_bead_hydration_differences( const struct residue & r );
@@ -309,6 +315,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString  gui_script_file;
       void     gui_script_msg  ( int line, QString arg, QString msg );
       void     gui_script_error( int line, QString arg, QString msg, bool doexit = true );
+
+      // a gui_script leaves via exit(), not through closeEvent(), and has nobody at the
+      // keyboard to answer a prompt - so it closes any RasMol viewers it opened rather than
+      // orphaning them, unless the script said "rasmol leaveopen"
+      bool     gui_script_rasmol_leave_open;
+      void     gui_script_exit ( int rc );
 
       bool     init_configs_silently;
       
@@ -1023,10 +1035,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QStringList                                          data_csv_headers;
 
       // grpy data & methods
-      QProcess                            * grpy;
       void                                  grpy_process_next();
       void                                  grpy_finalize();
-      QString                               grpy_prog;
       QStringList                           grpy_to_process;
       QStringList                           grpy_processed;
       QString                               grpy_last_processed;
@@ -1037,8 +1047,25 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int                                   grpy_last_model_number;
       QVector < int >                       grpy_used_beads;
       QVector < QMap < QString, double > >  grpy_addl_params;
+      // Set per model by the shell-reduction path (issue 984). When true, intrinsic
+      // viscosity did not converge, so grpy_finished() must withhold BOTH the viscosity
+      // and the viscosity-derived Einstein radius -- they are parsed from the same report
+      // line, so the radius inherits the unreliability. The values remain in the on-disk
+      // report, annotated, for the record.
+      bool                                  grpy_viscosity_unreliable;
       QMap < QString, double >              grpy_addl_param;
       int                                   grpy_last_used_beads;
+      // File-name suffix for the GRPY settings that change the answer (empty for
+      // defaults). Set when a run starts, consumed when its results are written, so the
+      // two cannot disagree about which settings produced a file.
+      QString                               grpy_settings_sfx;
+      // The hydro settings a run ACTUALLY used, i.e. with scripting or environment
+      // overrides applied. Saved with the results, so the CSV records what produced them
+      // rather than what the dialog happened to be showing.
+      struct hydro_options                  grpy_eff_hydro;
+      // Shell reduction outcome, carried from the solve to where results are written.
+      double                                grpy_shell_err_pct;
+      QString                               grpy_shell_worst_name;
       bool                                  grpy_success;  // only valid if !grpy_running
       map < QString, vector < double > >    grpy_captures;
 
@@ -1105,9 +1132,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void hullrad_readFromStderr();
       void hullrad_started();
       void hullrad_finished( int, QProcess::ExitStatus );
-      void grpy_readFromStdout();
-      void grpy_readFromStderr();
-      void grpy_started();
       void grpy_finished( int, QProcess::ExitStatus );
       void gui_script_run();
       void fractal_dimension( bool from_parameters = false, save_info * fd_save_info = (save_info *)0 );
@@ -1280,6 +1304,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void write_bead_tsv( QString, vector <PDB_atom> * );
       void write_bead_ebf( QString, vector <PDB_atom> * );
       void write_bead_spt( QString, vector <PDB_atom> *, bool movie_frame = false, float scale = 1, bool black_background = false );
+      // GRPY shell-reduction diagnostic: write+display a bead model per ladder rung.
+      void grpy_write_shell_model( const vector <int> & kept, int rung, const QString & base_name );
+      // Bead emission order shared by every bead-model output and the .grpy input; see the
+      // definition in us_hydrodyn_write.cpp. Public so the GRPY shell-reduction models can
+      // map .grpy positions back to beads using the same order by construction.
+      void bead_model_output_order( vector <PDB_atom> *, vector <PDB_atom *> & );
       void write_bead_model( QString, vector <PDB_atom> *, QString extra_text = "" );
       void write_bead_model( QString, vector <PDB_atom> *, int bead_model_output, QString extra_text = "" );
       bool write_bead_xyzr( const QString &, const vector <PDB_atom> & );

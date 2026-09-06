@@ -24,8 +24,27 @@ void US_Hydrodyn::gui_script_msg( int line, QString cmd, QString msg ) {
 void US_Hydrodyn::gui_script_error( int line, QString cmd, QString msg, bool doexit ) {
    gui_script_msg( line, cmd, "ERROR: " + msg );
    if ( doexit ) {
-      exit( -1 );
+      gui_script_exit( -1 );
    }
+}
+
+// every gui_script exit comes through here.  a script leaves by exit(), never through
+// closeEvent(), so the RasMol viewers it opened - auto_view_pdb is on unless the script says
+// "norasmol" - would just be orphaned.  close them, unless the script asked otherwise.
+
+void US_Hydrodyn::gui_script_exit( int rc ) {
+   QList < qint64 > open_rasmols = rasmol_running_pids();
+
+   if ( open_rasmols.size() ) {
+      if ( gui_script_rasmol_leave_open ) {
+         TSO << QString( "US_Hydrodyn::gui_script: leaving %1 RasMol window(s) open\n" ).arg( open_rasmols.size() );
+      } else {
+         TSO << QString( "US_Hydrodyn::gui_script: closing %1 RasMol window(s)\n" ).arg( open_rasmols.size() );
+         rasmol_close_all();
+      }
+   }
+
+   exit( rc );
 }
 
 void US_Hydrodyn::gui_script_run() {
@@ -38,8 +57,8 @@ void US_Hydrodyn::gui_script_run() {
       QString error;
       if ( !US_File_Util::getcontents( gui_script_file, script, error ) ) {
          TSE << "US_Hydrodyn::gui_script_run() : Error " << error << "\n";
-         exit( -1);
-      } 
+         gui_script_exit( -1 );
+      }
    }
 
    QStringList scriptlines = script.split( "\n" );
@@ -67,11 +86,25 @@ void US_Hydrodyn::gui_script_run() {
       
       if ( cmd == "exit" ) {
          gui_script_msg( i, cmd, "exiting normally" );
-         exit( 0 );
+         gui_script_exit( 0 );
       } else if ( cmd == "expert" ) {
          advanced_config.expert_mode = true;
       } else if ( cmd == "norasmol" ) {
          advanced_config.auto_view_pdb = false;
+      } else if ( cmd == "rasmol" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+         if ( opt1 == "leaveopen" ) {
+            // leave any viewers the script opened running after it exits
+            gui_script_rasmol_leave_open = true;
+         } else if ( opt1 == "close" ) {
+            gui_script_rasmol_leave_open = false;   // the default
+         } else {
+            gui_script_error( i, cmd, "unknown option : " + opt1 );
+         }
       } else if ( cmd == "progress" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );
@@ -165,6 +198,10 @@ void US_Hydrodyn::gui_script_run() {
          if ( opt1 == "overwrite" ) {
             cb_overwrite->setChecked( true );
             set_overwrite();
+         } else if ( opt1 == "iqscaleangstrom" || opt1 == "iqscalenm" ) {
+            // controls whether loaded I(q) q values are converted from 1/nm
+            saxs_options.iq_scale_angstrom = ( opt1 == "iqscaleangstrom" );
+            saxs_options.iq_scale_nm       = !saxs_options.iq_scale_angstrom;
          } else if ( opt1 == "fulldebye" ) {
             saxs_options.saxs_iq_native_debye   = true;
             saxs_options.saxs_iq_native_sh      = false;
@@ -338,6 +375,98 @@ void US_Hydrodyn::gui_script_run() {
             gui_script_error( i, cmd, "could not open the SAXS window" );
          } else {
             saxs_plot_window->saxs_extrap_c0_script( opt1 );
+         }
+         qApp->processEvents();
+      } else if ( cmd == "dad" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+
+         if ( opt1 == "open" ) {
+            if ( !saxs_plot_widget ) {
+               pdb_saxs( false, false );
+            }
+            if ( !saxs_plot_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "could not open the SAS window" );
+            }
+            // dad() is a private slot, reach it through the meta-object rather
+            // than widening the US_Hydrodyn_Saxs interface for scripting alone
+            QMetaObject::invokeMethod( saxs_plot_window, "dad", Qt::DirectConnection );
+            if ( !dad_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "could not open the UV-Vis window" );
+            }
+            // every dad command below runs without dialogs
+            dad_window->script_mode = true;
+         } else {
+            if ( !dad_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "UV-Vis window not open, use \"dad open\" first" );
+            }
+
+            QString errormsg;
+
+            if ( opt1 == "settimes" ) {
+               if ( ls.size() < 2 ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs <start seconds> <interval seconds>" );
+               }
+               dad_window->script_start_time_seconds          = ls.front().toDouble(); ls.pop_front();
+               dad_window->script_collection_interval_seconds = ls.front().toDouble(); ls.pop_front();
+               if ( dad_window->script_collection_interval_seconds <= 0e0 ) {
+                  gui_script_error( i, cmd + " " + opt1, "interval seconds must be greater than zero" );
+               }
+            } else if ( opt1 == "lambdarange" ) {
+               if ( ls.size() < 2 ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs <start> <end> in nm, or 0 0 for the full spectrum" );
+               }
+               dad_window->script_lambda_start = ls.front().toDouble(); ls.pop_front();
+               dad_window->script_lambda_end   = ls.front().toDouble(); ls.pop_front();
+            } else if ( opt1 == "lambdas" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               if ( !dad_window->script_load_lambdas( ls.front(), errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+               }
+               ls.pop_front();
+            } else if ( opt1 == "load" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               while ( !ls.isEmpty() ) {
+                  if ( !dad_window->script_load( ls.front(), errormsg ) ) {
+                     gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+                  }
+                  ls.pop_front();
+               }
+            } else if ( opt1 == "list" ) {
+               QStringList files = dad_window->script_files();
+               TSO << QString( "dad: %1 curves loaded\n" ).arg( files.size() );
+               for ( int j = 0; j < (int) files.size(); ++j ) {
+                  TSO << QString( "dad: curve %1\n" ).arg( files[ j ] );
+               }
+            } else if ( opt1 == "select" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs \"all\" or a substring to match" );
+               }
+               if ( !dad_window->script_select( ls.front(), errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+               }
+               ls.pop_front();
+            } else if ( opt1 == "makealambda" ) {
+               if ( !dad_window->script_make_a_of_lambda( errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
+            } else if ( opt1 == "save" ) {
+               if ( !dad_window->script_save( ls.isEmpty() ? QString( "" ) : ls.front(), errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
+               if ( !ls.isEmpty() ) {
+                  ls.pop_front();
+               }
+            } else {
+               gui_script_error( i, cmd, "unknown option : " + opt1 );
+            }
          }
          qApp->processEvents();
       } else {

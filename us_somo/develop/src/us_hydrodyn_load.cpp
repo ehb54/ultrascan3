@@ -1111,8 +1111,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    {
       flag = true;
    }
-   if (temp_atom.resName == "HOH" || // we dont want to add waters to the sequence
-       temp_atom.resName == "DOD")
+   if ( pdb_parse_is_water( temp_atom.resName ) ) // we dont want to add waters to the sequence
    {
       flag = false;
    }
@@ -1235,11 +1234,7 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
    waters.insert( "SOL" );
    waters.insert( "WAT" );
 
-   set < QString > skip_waters;
-   skip_waters.insert( "HOH" );
-   skip_waters.insert( "DOD" );
-   skip_waters.insert( "SOL" );
-   skip_waters.insert( "CIM" );
+   const set < QString > & skip_waters = pdb_parse_water_names();
 
    QRegularExpression rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", QRegularExpression::CaseInsensitiveOption );
    if ( f.open( QIODevice::ReadOnly ) )
@@ -1490,9 +1485,10 @@ int US_Hydrodyn::read_pdb( const QString &filename ) {
                str1.mid(13,1) != "H" &&
                !str1.mid(12,5).trimmed().startsWith( "H" ) &&
                !str1.mid(12,5).trimmed().contains( QRegularExpression( "^\\dH" ) ) &&
+               !( pdb_parse.skip_deuterium && pdb_parse_is_deuterium( str1 ) ) &&
                !skip_waters.count( str1.mid(17,3).trimmed() )
                )
-            {                  
+            {
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
                {
                   if (str1.mid(16,1) == "A")
@@ -2622,8 +2618,15 @@ void US_Hydrodyn::calc_mw()
    // info_model_vector( QString( "after calc_mw() : model_vector" ), model_vector );
    // info_mw( QString( "after calc_mw() : model_vector" ), model_vector, true );
    // info_residue_protons_electrons_at_pH( le_pH->text().toDouble(),  model_vector[ 0 ] );
-   QTextStream(stdout) << "end of calc_mw()\n";
-   info_residue_protons_electrons_at_pH( 7, model_vector[0] );
+   // Commented out (not deleted) because it is diagnostic, not dead: it dumps a CSV row of
+   // protons/electrons/charge per atom, which is the thing to re-enable when ionization or
+   // net-charge numbers look wrong. It fires on every PDB load and prints one line per atom
+   // -- thousands for a large structure -- which noticeably slows a debug cycle when stdout
+   // is a terminal or an editor shell. Note the pH here is hardwired to 7 rather than read
+   // from the form, so it does not follow the pH actually in use; the commented call above
+   // is the variant that does. Re-enable whichever suits the question at hand.
+   // QTextStream(stdout) << "end of calc_mw()\n";
+   // info_residue_protons_electrons_at_pH( 7, model_vector[0] );
 }
 
 void US_Hydrodyn::update_model_chain_ionization( struct PDB_model & model, bool quiet ) {

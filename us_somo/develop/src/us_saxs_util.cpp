@@ -100,8 +100,6 @@ bool US_Saxs_Util::read( QString filename, QString tag )
 
       QRegularExpression rxskip("^#");
       QRegularExpression rx3("^\\s*(\\S*)\\s+(\\S*)\\s+(\\S*)\\s*$");
-      // this next one should work, but doesn't for some reason
-      //  QRegularExpression rxdigits("^\\s*(\\d*(|\\.\\d*)\\s+(\\d*(|\\.\\d*)\\s+(\\d*(|\\.\\d*)\\s*$");
       // just check to see if it starts with a digit
       QRegularExpression rxdigits("^\\s*\\d");
 

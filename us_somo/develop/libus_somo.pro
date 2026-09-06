@@ -127,7 +127,6 @@ SOURCES *= \
 #  us_calendar.cpp \ 
 #  us_clipdata.cpp \ 
         src/us_container.cpp \
-        src/us_container_grpy.cpp \
         src/us_cmdline_app.cpp \
 #  us_cofdistro.cpp \
 #  us_cofs.cpp \ 
@@ -273,6 +272,7 @@ SOURCES *= \
         src/us_hydrodyn_dad_p3d.cpp \
         src/us_hydrodyn_dad_parameters.cpp \
         src/us_hydrodyn_dad_util.cpp \
+        src/us_hydrodyn_dad_script.cpp \
         src/us_hydrodyn_dad_movie.cpp \
         src/us_hydrodyn_dad_conc.cpp \
         src/us_hydrodyn_dad_conc_load.cpp \
@@ -608,6 +608,10 @@ SOURCES *= \
 #  us_laser.cpp \
 
 HEADERS *= \
+  grpy/grpy_types.hpp \
+  grpy/grpy_process.hpp \
+  grpy/grpy_exposure.hpp \
+  grpy/grpy_shell.hpp \
 #  3dplot/mesh2mainwindowbase.h \
 #  3dplot/mesh2mainwindow.h \
 #  3dplot/functions.h \
@@ -635,7 +639,6 @@ HEADERS *= \
 #  us_calendar.h \
 #  us_clipdata.h \
         include/us_container.h \
-        include/us_container_grpy.h \
         include/us_cmdline_app.h \
 #  us_cofdistro.h \
 #  us_cofs.h \
@@ -1009,3 +1012,10 @@ HEADERS *= \
 #   include/textunder.xpm
 
 QT += opengl network
+
+# --- GRPY module (grpy/) ---------------------------------------------------
+# Shell reduction, solvent-exposure ranking, and the process boundary to the GRPY
+# program, which is run rather than linked: GRPY is GPLv3 and UltraScan is LGPLv3
+# (ehb54/ultrascan-tickets#1012). Header-only, and no longer needs QtConcurrent or
+# Eigen -- the solver that used them is now a separate program, ehb54/grpy-cpp.
+INCLUDEPATH += $$PWD/include $$PWD/grpy

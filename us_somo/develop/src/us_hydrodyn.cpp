@@ -106,9 +106,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
                          const char *) : QFrame( p )
 {
-   us_container_grpy = (US_Container_Grpy *)0;
-   grpy_parallel_pulled = false;
-   
    stopFlag = false;
 
 #if defined( BROADEN_TEST ) && defined( BROADEN_TESTING )
@@ -644,6 +641,16 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    dmd_options_widget                   = false;
    anaflex_options_widget               = false;
    batch_widget                         = false;
+   // these three were missed when the UV-Vis and MALS windows were added.
+   // US_Hydrodyn_Saxs::dad(), mals() and mals_saxs() test the flag and then
+   // dereference the matching window, so an indeterminate read is a crash.
+   // interactive runs usually survive on zeroed heap, a script run need not
+   dad_widget                           = false;
+   dad_window                           = 0;
+   mals_widget                          = false;
+   mals_window                          = 0;
+   mals_saxs_widget                     = false;
+   mals_saxs_window                     = 0;
    save_widget                          = false;
    comparative_widget                   = false;
    if ( !install_new_version() )
@@ -692,11 +699,11 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    create_beads_normally = true;
    alt_method = false;
    rasmol = NULL;
+   gui_script_rasmol_leave_open = false;   // a script closes its viewers unless it says otherwise
    browflex = NULL;
    anaflex = NULL;
    anaflex_return_to_bd_load_results = false;
    bd_anaflex_enables(false);
-   grpy = NULL;
 
    last_read_bead_model = "";
    last_hydro_res = "";
@@ -4335,11 +4342,10 @@ void US_Hydrodyn::stop_calc()
       anaflex->terminate();
       QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
    }
-   if ( grpy_running && grpy && grpy->state() == QProcess::Running )
-   {
-      grpy->terminate();
-      QTimer::singleShot( 10000, grpy, SLOT( kill() ) );
-   }
+   // GRPY runs out of process again (issue 1012), but its child is owned by
+   // grpy::ProcessSolver, not by a QProcess member here, so there is nothing to terminate
+   // at this level. ProcessSolver polls stopFlag (set above) every 100 ms and kills the
+   // child; grpy_finished() then halts the model batch.
    pb_stop_calc->setEnabled(false);
 }
 
