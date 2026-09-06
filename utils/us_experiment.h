@@ -136,6 +136,40 @@ class US_UTIL_EXTERN US_Experiment
       int readFromDisk( QList< US_Convert::TripleInfo >&,
                         QString, QString, QString );
 
+      /*! \brief    Reads an xml file, also returning its speed steps and a
+                    description of any dataset/triple disagreement.
+
+          Same parsing as the four-argument overload, which is preserved for
+          callers that do not want diagnostics.  What this adds is what the
+          older one silently discarded: the serialized `<speedstep>` entries,
+          and the fact that an experiment `<dataset>` matched no triple or
+          matched one that a previous dataset had already claimed.  Both were
+          previously invisible -- readExperiment() falls past its `if ( found )`
+          with no else -- so a partial archive read as OK.
+
+          Speed steps are returned exactly as the file gives them.  They are
+          not validated against the scans and no missing profile is computed;
+          a run whose XML carries no `<speedstep>` returns an empty vector.
+
+          \param triples    As the four-argument overload
+          \param runType    As the four-argument overload
+          \param runID      As the four-argument overload
+          \param dirname    As the four-argument overload
+          \param speedsteps Filled with the serialized speed steps, in file
+                            order; cleared first
+          \param detail     Set to a description of what disagreed, when the
+                            return value is not OK
+
+          \returns US_Convert::PARTIAL_XML when a dataset matched no triple or
+                   a triple got no dataset, US_Convert::BADGUID when two
+                   datasets claimed the same triple, otherwise the same status
+                   the four-argument overload would return
+      */
+      int readFromDisk( QList< US_Convert::TripleInfo >&,
+                        QString, QString, QString,
+                        QVector< SP_SPEEDPROFILE >&,
+                        QString& );
+
       /*! \brief    Writes the radial intensity profile data to the HD
 
           \param    runID   The run ID associated with the RI data
@@ -164,8 +198,31 @@ class US_UTIL_EXTERN US_Experiment
       RotorInfo         hwInfo;
 
    private:
+      //! \brief What one experiment-XML read collected beyond the record
+      //!        itself.  Everything here is optional: the four-argument
+      //!        readFromDisk() passes a default-constructed instance and
+      //!        ignores it, which is how its behavior stays unchanged.
+      struct DiskReadState
+      {
+         //! Serialized speed steps, in file order, when wanted.
+         QVector< SP_SPEEDPROFILE >* speedsteps = nullptr;
+
+         //! Triple descriptions of datasets that matched no triple.
+         QStringList unmatched;
+
+         //! Triple descriptions claimed by more than one dataset.
+         QStringList duplicated;
+
+         //! Indexes of the triples a dataset filled in.
+         QSet< int > filled;
+      };
+
+      int  readFromDisk( QList< US_Convert::TripleInfo >&,
+                         QString, QString, QString, DiskReadState& );
+
       void readExperiment( QXmlStreamReader&, 
-                 QList< US_Convert::TripleInfo >&, QString , QString );
+                 QList< US_Convert::TripleInfo >&, QString , QString,
+                 DiskReadState& );
 
       void readDataset( QXmlStreamReader&, US_Convert::TripleInfo& );
 
