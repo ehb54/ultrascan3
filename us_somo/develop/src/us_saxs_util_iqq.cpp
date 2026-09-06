@@ -2530,7 +2530,84 @@ float US_Saxs_Util::prob_of_streak_f( int n, int c ) {
    return res;
 }
 
-bool US_Saxs_Util::cormap( 
+double US_Saxs_Util::compute_p_value( const vector < double > & y1,
+                                      const vector < double > & y2,
+                                      int                     & longest_run )
+{
+   // longest run of sign(y1 - y2)
+   int n = (int) qMin( y1.size(), y2.size() );
+   longest_run   = 0;
+   int current_run = 0;
+   int current_dir = 0;
+   for ( int i = 0; i < n; ++i )
+   {
+      double diff = y1[ i ] - y2[ i ];
+      if ( diff == 0e0 )
+      {
+         current_run = 0;
+         current_dir = 0;
+         continue;
+      }
+      int dir = ( diff > 0e0 ) ? 1 : -1;
+      if ( dir == current_dir )
+      {
+         ++current_run;
+      }
+      else
+      {
+         current_run = 1;
+         current_dir = dir;
+      }
+      if ( current_run > longest_run )
+      {
+         longest_run = current_run;
+      }
+   }
+
+   int k = longest_run;
+   if ( k <= 1 || n < 1 )
+   {
+      return 1e0;
+   }
+
+   // P(longest run < k | n) via the standard state recurrence, kept normalized by
+   // 2^i each step (g[j] = fraction of length-i binary strings whose longest ending
+   // run is exactly j, j = 1..k-1) so it never overflows for large n:
+   //   g(1)[1] = 1                       (= 2 / 2^1)
+   //   g(i)[j] = g(i-1)[j-1] / 2         (extend ending run)
+   //   g(i)[1] = sum_j g(i-1)[j] / 2     (break run with the other symbol)
+   // P(L<k|n) = sum_j g(n)[j];  p_value = 1 - P(L<k|n)
+   vector < double > g( k, 0e0 );          // indices 1..k-1 used
+   g[ 1 ] = 1e0;
+   for ( int i = 2; i <= n; ++i )
+   {
+      vector < double > ng( k, 0e0 );
+      for ( int j = 2; j <= k - 1; ++j )
+      {
+         ng[ j ] = g[ j - 1 ] * 0.5e0;
+      }
+      double total = 0e0;
+      for ( int j = 1; j <= k - 1; ++j )
+      {
+         total += g[ j ];
+      }
+      ng[ 1 ] = total * 0.5e0;
+      g = ng;
+   }
+   double prob_less = 0e0;
+   for ( int j = 1; j <= k - 1; ++j )
+   {
+      prob_less += g[ j ];
+   }
+   double p_value = 1e0 - prob_less;
+   if ( p_value < 0e0 )
+   {
+      p_value = 0e0;
+   }
+   return p_value;
+}
+
+bool US_Saxs_Util::cormap(
                           const vector < double >            & q,
                           const vector < vector < double > > & I,
                           vector < vector < double > >       & rkl,
