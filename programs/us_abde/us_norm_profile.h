@@ -31,6 +31,7 @@ class US_Norm_Profile : public US_Widgets
         void load_data_auto_report( QMap<QString,QString>& );
         QwtPlot* rp_data_plot();
         QString select_channel_public( int index );
+        void set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& );
 
     signals:
         //! \brief Signal emitted when the widget is closed.
@@ -40,7 +41,7 @@ class US_Norm_Profile : public US_Widgets
         void pass_channels_info( QStringList& );
         void pass_rmsd_info( QMap< QString, double >& );
         void pass_menisc_info( QMap< QString, double >& );
-        void pass_percents_info( QMap< QString, QMap < QString, double>>& );
+        void pass_percents_info( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
   
     protected:
@@ -92,8 +93,16 @@ class US_Norm_Profile : public US_Widgets
         QMap< QString, double > data_per_channel_rmsd;
         QMap< QString, int > data_per_channel_norm_cb;
         QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
+        QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents_dna;
+        QMap< QString, QMap < QString, QMap < QString, double>>> data_per_channel_ranges_percents_sample;
         QMap< QString, bool > data_per_channel_processed;
         QMap< QString, QString > prot_details;
+
+        //! \brief channel -> {"Analyte #1:":pretty_name, "Analyte #2:":pretty_name, "Buffer:":..}
+        //! Set by US_ReporterGMP (which has DB/solution access) before ABDE plots are
+        //! rendered, so plot legends can show human-readable analyte names instead of
+        //! the sanitized filename tokens used internally as sample keys.
+        QMap< QString, QMap< QString, QString > > channs_analytes_pretty;
  
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
@@ -119,7 +128,7 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Select data for the plot.
         void selectData(void);
         void selectData_auto(void);
-        void find_percent_from_range( QString, QString, QString, QVector<double>, QVector< double > );
+        void find_percent_from_range( QString, QString, QString, QString, QVector<double>, QVector< double > );
 
         //! \brief Plot the selected data.
         void plotData(void);
@@ -142,6 +151,12 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Enable or disable widgets.
         //! \param enable Boolean to enable or disable the widgets.
         void enableWidgets(bool enable);
+
+        //! \brief Look up the human-readable analyte description for a given
+        //! channel/sample-key (the sample key is the sanitized filename token
+        //! used internally, e.g. "AAV_capsid_-_empty_VP1_VP2_VP3_1_1_10_5_5_50_").
+        //! Falls back to returning sample_key unchanged if no match is found.
+        QString prettify_sample_name( QString channame, QString sample_key );
 
     public slots:
         void load_data_auto( QMap<QString,QString>& );
@@ -167,7 +182,7 @@ class US_Norm_Profile : public US_Widgets
 					QMap <QString, QString>&,
 					QMap <QString, double>&,
 					QMap< QString, int >&,
-					QMap< QString, QMap < QString, double>>&,
+					QMap< QString, QMap< QString, QMap < QString, double>>>&,
 					QMap <QString, double>&,
 					QMap <QString, double>& );
 
