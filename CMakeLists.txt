@@ -233,6 +233,36 @@ if(US3_NO_DB)
     add_compile_definitions(NO_DB)
 endif()
 
+# =============================================================================
+# COVERAGE INSTRUMENTATION
+# =============================================================================
+# Instrument libraries and tests consistently; filter reports to production code.
+# Coverage measures execution only and enforces no threshold.
+option(US3_COVERAGE "Instrument the build for gcov line and branch coverage" OFF)
+
+if(US3_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR
+                "US3_COVERAGE requires GCC or Clang; got ${CMAKE_CXX_COMPILER_ID}")
+    endif()
+
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING
+                "US3_COVERAGE is intended for a Debug build; "
+                "optimized builds attribute lines unreliably")
+    endif()
+
+    # Disable optimization for accurate line attribution.
+    # Record absolute source paths on GCC for reports run from any directory.
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-fprofile-abs-path)
+    endif()
+
+    message(STATUS "Coverage instrumentation enabled (US3_COVERAGE=ON)")
+endif()
+
 # Platform-specific definitions
 if(UNIX AND NOT APPLE)
     add_compile_definitions(LINUX PLATFORM="intel" TITLE="Intel")
