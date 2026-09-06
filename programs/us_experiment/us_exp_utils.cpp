@@ -1303,7 +1303,7 @@ void US_ExperGuiRotor::init_gsmes( void )
     }
   
   QStringList query;
-  query << "get_people" << "%" + QString("") + "%";
+  query << "get_people_gsme" << "%" + QString("") + "%";
   qDebug() << "init_smes(), query --  " << query;
   db.query( query );
 
