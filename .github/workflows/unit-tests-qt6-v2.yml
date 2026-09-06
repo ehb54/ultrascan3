@@ -1,6 +1,3 @@
-# Run the Qt5 suite against Qt6 using a prebuilt Qt6/Qwt image.
-# Ubuntu packages Qwt for Qt5 only.
-# Suffix job names with "(Qt6)" to distinguish them from required Qt5 checks.
 name: "Unit Tests Qt6 v2"
 
 on:
