@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO SAS Data Utility: Solution Concentrations</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - SAS Data Utility: Solution Concentrations</h2>
+<p>
+<h3><center>Last updated: September 2026</center></h3><p>
+</center>
+
+<hr>
+
+The <b><i>Solution Concentrations</i></b> window (window title <i>US-SOMO: SAXS Buffer: File
+Concentrations</i>) is opened with the <b><i>Concentrations</i></b> button of the
+<a href=somo_saxs_buffer.html><b><i>Data Utility</i></b></a> module. It holds the concentration, in mg/ml,
+of every curve loaded in that module.
+<p>
+
+Concentrations matter in three places in the <b><i>Data Utility</i></b>:
+<p>
+<ul>
+<li>in the <b><i>PSV</i></b> route to the buffer subtraction scaling factor,
+&alpha; = 1 &minus; &gamma;&nbsp;<i>c</i>&nbsp;<i>&psi;</i>&nbsp;/&nbsp;1000, where <i>c</i> is taken from
+this table;<p>
+<li>in <b><i>N</i></b> (normalize) and <b><i>Concentration normalized average</i></b>, which are inactive
+until every selected curve has a non-zero concentration here;<p>
+<li>in the <i>Conc:</i> field written into the header of each saved curve, and passed along with the curve
+when it is sent to the <b><i>SAS</i></b> module <i>I(q)</i> panel with the <b><i>S</i></b> button.<p>
+</ul>
+
+<h3>The table</h3>
+
+The table has one row per curve, with the columns <b><i>File</i></b> and
+<b><i>Concentration mg/ml</i></b>. It is kept in step with the <b><i>Data files</i></b> list
+automatically: curves added to the module appear here, curves removed from it disappear, and curves
+<i>produced</i> by the module arrive with an appropriate value already filled in &mdash; the concentration
+of the solution for a buffer subtraction, the mean of the contributors for an average, and 1 for a
+normalized curve.
+<p>
+
+Curves assigned as the buffer or the blank with <b><i>Set buffer</i></b> and <b><i>Set blank</i></b> are
+excluded from the table, since a concentration has no meaning for them.
+<p>
+
+Concentrations found in the first line of a loaded <b>.dat</b> file, as a
+<b><i>Conc:</i></b><i>value</i> keyword, are entered here automatically when the file is loaded, so a set
+of curves saved by <b><i>US-SOMO</i></b> or by any program writing that header carries its concentrations
+with it and needs no further work.
+<p>
+
+Values can be typed directly into the concentration cells. Clicking a column heading sorts the table on that
+column, alternating between ascending and descending order; clicking a row heading selects that whole row.
+<p>
+
+<h3>Buttons</h3>
+
+<ul>
+<li>
+<b><i>Copy values</i></b>, active when exactly one row is selected, takes the values of that row.<p>
+<li>
+<b><i>Paste values to selected</i></b> writes the copied value into every selected row, and
+<b><i>Paste values to all</i></b> writes it into every row of the table. Between them these are the quickest
+way to fill in a series of exposures collected at one concentration.<p>
+<li>
+<b><i>Load</i></b> reads concentrations from a file. Two cases are distinguished by the file extension:
+<ul>
+<li>a <b>.sbc</b> file &mdash; the format this window itself writes &mdash; is applied directly. Each line
+is read as a comma-separated pair of a curve name and a concentration, and rows whose first field matches a
+curve currently in the table are updated. Names that do not match anything are ignored, so a single
+<b>.sbc</b> file covering a whole session can be re-applied to any subset of it;<p>
+<li>any other file is handed to the
+<a href=somo_saxs_buffer_conc_load.html><b><i>File Concentration Loader</i></b></a>, which lets you say
+which of its columns holds the identifier and which holds the concentration before anything is applied. If
+no numeric rows can be found in the file at all, a warning is issued and nothing is loaded.<p>
+</ul>
+<li>
+<b><i>Save to file</i></b> writes the table as a <b>.sbc</b> file, adding that extension if you do not
+supply it, and prompting before overwriting an existing file.<p>
+<li>
+<b><i>Save values</i></b> commits the edited table back to the <b><i>Data Utility</i></b> and closes the
+window.<p>
+<li>
+<b><i>Cancel</i></b> closes the window, discarding any edits made since the last
+<b><i>Save values</i></b>.<p>
+</ul>
+
+<h3>Unsaved edits</h3>
+
+<span style="color:#CC0000">Values typed into this window take effect only once <b><i>Save values</i></b> has
+been pressed.</span> If a buffer subtraction, a normalization or an average is started while edits are still
+pending, a warning points out that the concentrations used by the calculation differ from those displayed
+here, and recommends saving the values and repeating the calculation. The window can be left open alongside
+the <b><i>Data Utility</i></b> while you work.
+<p>
+
+<br>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on September 8, 2026
+</font>
+</body>
+</html>

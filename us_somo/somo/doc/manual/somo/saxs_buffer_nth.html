@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO SAS Data Utility: Select curves</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - SAS Data Utility: Select curves</h2>
+<p>
+<h3><center>Last updated: September 2026</center></h3><p>
+</center>
+
+<hr>
+
+The <b><i>Select curves</i></b> dialog (window title <i>US-SOMO: SAXS Data Utility : Select curves</i>) is
+opened with the <b><i>Select</i></b> button of the
+<a href=somo_saxs_buffer.html><b><i>Data Utility</i></b></a> module, and becomes available once more than
+two curves are loaded. It exists for the case where the <b><i>Data files</i></b> list holds too many curves
+for clicking through them to be practical &mdash; a long series of exposures, or the output of a parameter
+scan &mdash; and provides three ways of picking a subset, together with a preview plot for deciding which
+subset you want.
+<p>
+
+The left of the dialog shows the <b><i>Complete list of data files</i></b> and, beside it, the
+<b><i>Selected data files</i></b> that the current criteria produce, with a running count below them.
+Nothing is applied to the main window until you say so, so the criteria can be tried freely.
+<p>
+
+The three selection methods appear under the headings <b><i>Select every Nth over range</i></b>,
+<b><i>Select by name</i></b> and <b><i>Select by intensity</i></b>. Clicking a heading collapses or expands
+that section, so only the method in use need be on screen; which section is open is remembered for the next
+time the dialog is opened. The list of files can be collapsed the same way.
+<p>
+
+Each method offers the same pair of buttons: <b><i>Select Only</i></b> replaces the current selection with
+the matching curves, while <b><i>Select Additionally</i></b> adds them to what is already selected. Applying
+several methods in succession with <b><i>Select Additionally</i></b> is the way to build up a compound
+selection.
+<p>
+
+<h3>Select every Nth over range</h3>
+
+<ul>
+<li><b><i>Select every Nth</i></b> is the stride, default 1.<p>
+<li><b><i>Starting curve offset</i></b> and <b><i>Ending curve offset</i></b> are positions in the
+<b><i>Data files</i></b> list, counted from 1. The name of the curve at each offset is displayed beside the
+field, so you can see what you are pointing at without counting.<p>
+</ul>
+
+Starting from the start offset, every <i>N</i>th curve up to and including the end offset is selected. With
+a stride of 1 this is simply a contiguous block. This is the tool for thinning a long series down to a
+manageable, evenly spaced sample before plotting, or for picking out one exposure per repeat in an
+interleaved measurement.
+<p>
+
+<h3>Select by name</h3>
+
+<b><i>Name contains</i></b> selects every curve whose name contains the given text as a substring. The
+comparison is a plain substring match, not a regular expression, and it is case sensitive. The text you used
+is remembered between openings of the dialog.
+<p>
+
+To load files by pattern rather than select among those already loaded, use the <b><i>RL</i></b> regular
+expression loader or the <b><i>Similar</i></b> button in the main
+<a href=somo_saxs_buffer.html#Loading><b><i>Data Utility</i></b></a> window instead.
+<p>
+
+<h3>Select by intensity</h3>
+
+This method selects on the <i>total</i> integrated intensity of each curve &mdash; the sum of
+<i>I</i>(<i>q</i>) over its points &mdash; which is a convenient proxy for how much material was in the beam.
+It is the practical way to separate the exposures at the top of a peak from those on the baseline, or to find
+frames damaged by a beam or sample problem.
+<p>
+
+<ul>
+<li>
+Checking <b><i>q range [A]</i></b> restricts the sum to the given interval, defaults 0 to 5 A<sup>-1</sup>;
+unchecked, the whole curve is used. Restricting to the low-<i>q</i> region usually gives the cleanest
+discrimination.<p>
+<li>
+<b><i>Compute average intensity of all</i></b> and <b><i>Compute average intensity of selected</i></b> compute
+the total intensity of every curve in the respective set and report the minimum, maximum and mean in the text
+area. Each computation also adds a curve to the plot on the right, of total intensity against the leading
+number in the curve name &mdash; effectively an elution or kinetic profile of the series. Repeated
+computations, for instance over different <i>q</i> ranges, accumulate as separate curves for comparison.<p>
+<li>
+The threshold is set in the field beside the <b><i>Above</i></b> / <b><i>Below intensity level [A.U.]</i></b>
+radio buttons, and is drawn on the plot as a red horizontal marker. The <b>wheel</b> below the plot is bound
+to it and spans the observed intensity range, so the marker can be dragged through the profile until it sits
+where you want the cut.<p>
+<li>
+<b><i>Select Only</i></b> and <b><i>Select Additionally</i></b> then act on the curves above, or below, that
+level.<p>
+</ul>
+
+The plot has its own controls: <b><i>Clear</i></b> removes the accumulated curves,
+<b><i>Rotate colors</i></b> cycles the colors when two of them are hard to tell apart, and
+<b><i>Save .DAT</i></b> asks for a directory and writes each plotted profile to it as a two-column
+<i>t</i>, <i>I</i>(<i>t</i>) file, named after the first contributing curve with the <i>q</i> range appended.
+<p>
+
+<h3>Applying the selection</h3>
+
+<ul>
+<li><b><i>Select in main window</i></b> applies the current selection to the <b><i>Data files</i></b> list
+and leaves the dialog open, so you can look at the result and refine the criteria.<p>
+<li><b><i>Select in main window and exit</i></b> applies it and closes the dialog.<p>
+<li><b><i>Quit</i></b> closes the dialog without changing the selection in the main window.<p>
+</ul>
+
+<br>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on September 8, 2026
+</font>
+</body>
+</html>
