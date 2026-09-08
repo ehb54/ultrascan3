@@ -377,8 +377,9 @@ The row of fields below the plot then controls the join:
 applied to the curve being adjusted, as <i>a</i>&nbsp;<i>I</i>(<i>q</i>) + <i>b</i>. Standard deviations are
 scaled by <i>a</i> as well.<p>
 <li>
-<b><i>Start</i></b> and <b><i>End</i></b> delimit the region of overlap used for the comparison of the
-two curves.<p>
+<b><i>Start</i></b> and <b><i>End</i></b> delimit the window, within the overlap, over which the two curves
+are compared &mdash; both by the automatic <b><i>Fit</i></b> and by the RMSD readout. Narrow it to exclude a
+part of the overlap you do not trust, such as the last few noisy points of the low-<i>q</i> curve.<p>
 <li>
 <b><i>Cut</i></b> is the <i>q</i> value at which the two curves are spliced: the output takes the low-<i>q</i>
 curve up to and including this <i>q</i>, and the high-<i>q</i> curve beyond it. It need not coincide with a
@@ -389,8 +390,9 @@ multiplier are applied to; the button label always states what pressing it will 
 inverts the current values (the offset changes sign and the multiplier is replaced by its reciprocal), so the
 relative adjustment is preserved.<p>
 <li>
-The number at the right end of the row is the RMSD between the two curves over the overlap, and it updates
-whenever a parameter changes. It is the quantity to minimize.<p>
+The number at the right end of the row is the RMSD between the two curves over the
+<b><i>Start</i></b> to <b><i>End</i></b> window, and it updates whenever a parameter changes. It is the
+quantity to minimize.<p>
 </ul>
 
 Any of the five numeric fields can be adjusted with the <b>wheel</b> above them: click into a field to give
@@ -401,8 +403,8 @@ each other by eye and watch the RMSD as you go.
 <p>
 
 <b><i>Fit</i></b> determines the multiplier automatically by a least-squares scaling fit of one curve onto the
-other over the overlap, weighted by the standard deviations when both curves have them, and sets the offset to
-zero. <b><i>Linear</i></b> would instead fit both a slope and an intercept
+other over the <b><i>Start</i></b> to <b><i>End</i></b> window, weighted by the standard deviations when both
+curves have them, and sets the offset to zero. <b><i>Linear</i></b> would instead fit both a slope and an intercept
 (see <a href="#Limitations">Notes and current limitations</a>).
 <p>
 
@@ -585,12 +587,6 @@ would otherwise collide with an existing one.
 <span style="color:#CC0000">The <b><i>Guinier</i></b> checkbox below the plot is not yet
 implemented.</span> Guinier analysis is available in the <b><i>SAS</i></b> module <i>I(q)</i> panel;
 send the curves there with the <b><i>S</i></b> button.<p>
-<li>
-<span style="color:#CC0000">In the current release the automatic <b><i>Fit</i></b> in the join, and the
-RMSD readout beside it, use the data from <b><i>End</i></b> upwards rather than the
-<b><i>Start</i></b> to <b><i>End</i></b> window.</span> Until this is corrected, place
-<b><i>End</i></b> at the lower edge of the region you want fitted, or set the multiplier by hand with the
-wheel.<p>
 <li>
 <span style="color:#CC0000">The <b><i>Linear</i></b> button in the join, which would fit an offset in
 addition to a multiplier, is currently disabled</span>, in keeping with the caution against introducing a

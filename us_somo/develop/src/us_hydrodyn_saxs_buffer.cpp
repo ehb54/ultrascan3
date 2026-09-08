@@ -6507,7 +6507,7 @@ void US_Hydrodyn_Saxs_Buffer::join_fit_linear()
    for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
    {
       if ( f_qs[ wheel_file ][ i ] >= join_start &&
-           f_qs[ wheel_file ][ i ] >= join_end )
+           f_qs[ wheel_file ][ i ] <= join_end )
       {
          wheel_t.push_back( f_qs[ wheel_file ][ i ] );
          wheel_y.push_back( f_Is[ wheel_file ][ i ] );
@@ -6521,7 +6521,7 @@ void US_Hydrodyn_Saxs_Buffer::join_fit_linear()
    for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
    {
       if ( f_qs[ join_file ][ i ] >= join_start &&
-           f_qs[ join_file ][ i ] >= join_end )
+           f_qs[ join_file ][ i ] <= join_end )
       {
          join_t.push_back( f_qs[ join_file ][ i ] );
          join_y.push_back( f_Is[ join_file ][ i ] );
@@ -6576,7 +6576,7 @@ void US_Hydrodyn_Saxs_Buffer::join_fit_scaling()
    for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
    {
       if ( f_qs[ wheel_file ][ i ] >= join_start &&
-           f_qs[ wheel_file ][ i ] >= join_end )
+           f_qs[ wheel_file ][ i ] <= join_end )
       {
          wheel_t.push_back( f_qs[ wheel_file ][ i ] );
          wheel_y.push_back( f_Is[ wheel_file ][ i ] );
@@ -6590,7 +6590,7 @@ void US_Hydrodyn_Saxs_Buffer::join_fit_scaling()
    for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
    {
       if ( f_qs[ join_file ][ i ] >= join_start &&
-           f_qs[ join_file ][ i ] >= join_end )
+           f_qs[ join_file ][ i ] <= join_end )
       {
          join_t.push_back( f_qs[ join_file ][ i ] );
          join_y.push_back( f_Is[ join_file ][ i ] );
@@ -6802,7 +6802,7 @@ void US_Hydrodyn_Saxs_Buffer::join_set_wheel_range()
         le_join_point->text().toDouble() < join_low_q )
    {
       disconnect( le_join_point, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_join_point->setText( QString( "%1" ).arg( ( join_low_q + join_high_q / 2 ) ) );
+      le_join_point->setText( QString( "%1" ).arg( ( join_low_q + join_high_q ) / 2 ) );
       connect( le_join_point, SIGNAL( textChanged( const QString & ) ), SLOT( join_point_text( const QString & ) ) );
    }
 
@@ -6900,7 +6900,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
 
    join_low_q = 
       f_qs[ wheel_file ][ 0 ] > f_qs[ join_file ][ 0 ] ?
-      f_qs[ wheel_file ][ 0 ] : f_qs[ join_file ][ 1 ];
+      f_qs[ wheel_file ][ 0 ] : f_qs[ join_file ][ 0 ];
 
    join_high_q = 
       f_qs[ wheel_file ].back() < f_qs[ join_file ].back() ?
@@ -7008,7 +7008,7 @@ void US_Hydrodyn_Saxs_Buffer::replot_join()
       for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
       {
          if ( f_qs[ wheel_file ][ i ] >= join_start &&
-              f_qs[ wheel_file ][ i ] >= join_end )
+              f_qs[ wheel_file ][ i ] <= join_end )
          {
             wheel_t.push_back( f_qs[ wheel_file ][ i ] );
             wheel_y.push_back( mult * f_Is[ wheel_file ][ i ] + offset );
@@ -7024,7 +7024,7 @@ void US_Hydrodyn_Saxs_Buffer::replot_join()
       for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
       {
          if ( f_qs[ join_file ][ i ] >= join_start &&
-              f_qs[ join_file ][ i ] >= join_end )
+              f_qs[ join_file ][ i ] <= join_end )
          {
             join_t.push_back( f_qs[ join_file ][ i ] );
             join_y.push_back( f_Is[ join_file ][ i ] );
@@ -7038,7 +7038,7 @@ void US_Hydrodyn_Saxs_Buffer::replot_join()
       for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ wheel_file ].size(); i++ )
       {
          if ( f_qs[ wheel_file ][ i ] >= join_start &&
-              f_qs[ wheel_file ][ i ] >= join_end )
+              f_qs[ wheel_file ][ i ] <= join_end )
          {
             wheel_t.push_back( f_qs[ wheel_file ][ i ] );
             wheel_y.push_back( f_Is[ wheel_file ][ i ] );
@@ -7054,7 +7054,7 @@ void US_Hydrodyn_Saxs_Buffer::replot_join()
       for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ join_file ].size(); i++ )
       {
          if ( f_qs[ join_file ][ i ] >= join_start &&
-              f_qs[ join_file ][ i ] >= join_end )
+              f_qs[ join_file ][ i ] <= join_end )
          {
             join_t.push_back( f_qs[ join_file ][ i ] );
             join_y.push_back( mult * f_Is[ join_file ][ i ] + offset );
