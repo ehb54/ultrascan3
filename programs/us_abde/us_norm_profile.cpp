@@ -2355,12 +2355,19 @@ void US_Norm_Profile::save_auto( void )
   if (!areAllNormalized_auto( msg_u ) && abde_etype == "MWL" )
     {
       qDebug() << "NOT all channels NORMALIZED!!!";
-      int status = QMessageBox::warning( this,
-					 tr( "Channel Normalization" ),
-					 msg_u,
-					 QMessageBox::Ok, QMessageBox::Cancel );
+      QMessageBox::StandardButton status = QMessageBox::warning( this,
+						 tr( "Channel Normalization" ),
+						 msg_u,
+						 QMessageBox::Ok | QMessageBox::Cancel,
+						 QMessageBox::Cancel );
 
-      if ( status != 0 ) return;
+      //NOTE: this used to be the deprecated 3-int-button overload of
+      //QMessageBox::warning(), compared against "status != 0" -- but
+      //QMessageBox::Ok is 0x400, not 0, so that check was true (and the
+      //save silently aborted) no matter which button was clicked. Switched
+      //to the modern StandardButton overload and an explicit Ok check so
+      //clicking Ok actually proceeds.
+      if ( status != QMessageBox::Ok ) return;
     }
 
   //Let the user pick, per channel, which analyte signal(s) should appear
