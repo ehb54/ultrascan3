@@ -559,6 +559,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   data_per_channel_ranges_percents_sample. clear();
   data_per_channel_processed. clear();
   data_per_channel_rmsd. clear();
+  data_per_channel_selected_signals. clear();
   
   //First, read autoflowAnalysisABDE record
   QMap<QString, QString> abde_analysis_parms =
@@ -577,7 +578,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     data_per_channel_norm_cb,
 			     data_per_channel_ranges_percents_sample,
 			     data_per_channel_rmsd,
-			     data_per_channel_meniscus );
+			     data_per_channel_meniscus,
+			     data_per_channel_selected_signals );
 
   parse_abde_analysis_jsons( abde_analysis_parms[ "filename_blc" ],
 			     protocol_details,
@@ -585,7 +587,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     data_per_channel_norm_cb,
 			     data_per_channel_ranges_percents_sample,
 			     data_per_channel_rmsd,
-			     data_per_channel_meniscus );
+			     data_per_channel_meniscus,
+			     data_per_channel_selected_signals );
   
   //set some fields
   protocol_details["abde_etype"]     = abde_analysis_parms["etype"];
@@ -602,6 +605,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   emit pass_rmsd_info( data_per_channel_rmsd );
   emit pass_menisc_info( data_per_channel_meniscus );
   emit pass_percents_info( data_per_channel_ranges_percents_sample );
+  emit pass_selected_signals_info( data_per_channel_selected_signals );
   
 }
 
@@ -665,6 +669,97 @@ QString US_Norm_Profile::prettify_sample_name( QString channame, QString sample_
 	return it.value();
     }
   return sample_key;   //no match -- fall back to the raw (sanitized) name
+}
+
+//At Save-Profiles time, let the user pick, per channel, which analyte
+//signal(s) should appear in the Report's Integration Results section.
+//Every checkbox defaults to checked, so a user who doesn't touch anything
+//gets today's "show every signal" behavior. Uses data already gathered
+//during this Analysis session (data_per_channel_ranges_percents_sample) --
+//no extra DB round-trip needed.
+bool US_Norm_Profile::show_signal_selection_dialog( QMap< QString, QStringList >& selected_signals )
+{
+  selected_signals.clear();
+
+  QDialog dialog( this );
+  dialog.setWindowTitle( tr( "Select Signals for Report" ) );
+
+  QVBoxLayout* main_lyt = new QVBoxLayout( &dialog );
+
+  QLabel* lb_instr = us_label( tr(
+      "Select which analyte signal(s) should appear in the Report's "
+      "\"Integration Results: Fraction of Total Concentration\" section, "
+      "for each channel:" ) );
+  lb_instr->setWordWrap( true );
+  main_lyt->addWidget( lb_instr );
+
+  QScrollArea* scroll = new QScrollArea( &dialog );
+  scroll->setWidgetResizable( true );
+  QWidget*     scroll_contents = new QWidget();
+  QVBoxLayout* scroll_lyt      = new QVBoxLayout( scroll_contents );
+
+  //channel -> {sample_key -> checkbox}, so we can read back what's checked
+  //once the dialog is accepted.
+  QMap< QString, QMap< QString, QCheckBox* > > chann_sample_ckbs;
+
+  for ( int i = 0; i < channList.size(); ++i )
+    {
+      QString channame = channList[ i ];
+      QStringList samples = data_per_channel_ranges_percents_sample[ channame ].keys();
+      if ( samples.isEmpty() )
+	continue;   //nothing computed yet for this channel -- nothing to pick
+
+      QGroupBox*   gb     = new QGroupBox( tr( "Channel " ) + channame );
+      QVBoxLayout* gb_lyt = new QVBoxLayout( gb );
+
+      for ( int s = 0; s < samples.size(); ++s )
+	{
+	  QString sample_key   = samples[ s ];
+	  QString display_name = prettify_sample_name( channame, sample_key );
+
+	  QCheckBox* ckb = new QCheckBox( display_name );
+	  ckb->setChecked( true );   //default: show every signal (today's behavior)
+	  if ( samples.size() == 1 )
+	    ckb->setEnabled( false );   //only one signal -- nothing to choose
+
+	  gb_lyt->addWidget( ckb );
+	  chann_sample_ckbs[ channame ][ sample_key ] = ckb;
+	}
+
+      scroll_lyt->addWidget( gb );
+    }
+
+  if ( chann_sample_ckbs.isEmpty() )
+    return true;   //nothing to pick from -- proceed with an empty (="show all") selection
+
+  scroll_lyt->addStretch();
+  scroll_contents->setLayout( scroll_lyt );
+  scroll->setWidget( scroll_contents );
+  main_lyt->addWidget( scroll );
+
+  QDialogButtonBox* btns = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel );
+  connect( btns, &QDialogButtonBox::accepted, &dialog, &QDialog::accept );
+  connect( btns, &QDialogButtonBox::rejected, &dialog, &QDialog::reject );
+  main_lyt->addWidget( btns );
+
+  dialog.resize( 480, 480 );
+
+  if ( dialog.exec() == QDialog::Rejected )
+    return false;
+
+  QMap< QString, QMap< QString, QCheckBox* > >::const_iterator ci;
+  for ( ci = chann_sample_ckbs.begin(); ci != chann_sample_ckbs.end(); ++ci )
+    {
+      QString channame = ci.key();
+      QMap< QString, QCheckBox* >::const_iterator cj;
+      for ( cj = ci.value().begin(); cj != ci.value().end(); ++cj )
+	{
+	  if ( cj.value()->isChecked() )
+	    selected_signals[ channame ] << cj.key();
+	}
+    }
+
+  return true;
 }
 
 //ABDE: read all analytes (& possibly buffer) used in MWL-deconv. for one
@@ -2267,6 +2362,13 @@ void US_Norm_Profile::save_auto( void )
 
       if ( status != 0 ) return;
     }
+
+  //Let the user pick, per channel, which analyte signal(s) should appear
+  //in the Report's Integration Results section (defaults to all, so a user
+  //who doesn't touch anything keeps today's "show every signal" behavior).
+  QMap< QString, QStringList > selected_signals;
+  if ( !show_signal_selection_dialog( selected_signals ) )
+    return;   //user cancelled -- abort the save, same as the check above
   //construct JSON to be saved && passed
   /***
       {
@@ -2338,10 +2440,28 @@ void US_Norm_Profile::save_auto( void )
 	  json_p += "},";
 	}
       json_p.chop(1);
-      json_p += "},";
+      json_p += "},";   //closes "percents":{...}
+
+      //which analyte-signal(s) the user picked (in show_signal_selection_dialog(),
+      //just above) to show in this channel's Integration Results section
+      json_p += "\"selected_signals\":[";
+      QStringList sel_for_chann = selected_signals.value( channame );
+      for ( int ss=0; ss<sel_for_chann.size(); ++ss )
+	json_p += "\"" + sel_for_chann[ss] + "\",";
+      if ( !sel_for_chann.isEmpty() )
+	json_p.chop(1);
+      json_p += "],";
+
+      json_p.chop(1);
+      json_p += "},";   //closes this channel's own object -- this closing brace
+                        //was previously missing here, which left the JSON
+                        //malformed (and silently unparseable on the Report
+                        //side) for any run with more than one ABDE channel;
+                        //the stray-comma compensation below has been adjusted
+                        //to match now that every channel object is properly closed.
     }
   json_p.chop(1);
-  json_p += "}}";
+  json_p += "}";
 
   qDebug() << "JSON: " << json_p;
 
@@ -2690,7 +2810,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 						 QMap< QString, int >& data_chann_x_norm_cb,
 						 QMap< QString, QMap< QString, QMap < QString, double>>>& data_chann_range_percent_sample,
 						 QMap <QString, double>&  data_chann_rmsd,
-						 QMap <QString, double>&  data_chann_menisc )
+						 QMap <QString, double>&  data_chann_menisc,
+						 QMap< QString, QStringList >& data_chann_selected_signals )
 {
   QString channels_to_radial_ranges;
   
@@ -2738,6 +2859,19 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		    {
 		       double rmsd_val      = value_1.toString().toDouble();
 		       data_chann_rmsd[key] = rmsd_val;
+		    }
+		  else if ( key_1 == "selected_signals" )
+		    {
+		      //Which analyte-signal(s) the user picked, in
+		      //show_signal_selection_dialog(), to show in this
+		      //channel's Integration Results section. Absent from
+		      //older (pre-feature) saved runs -- callers should treat
+		      //a missing channel entry as "show every signal".
+		      QStringList sel_sigs;
+		      QJsonArray json_arr_sel = value_1.toArray();
+		      foreach(const QJsonValue& sel_val, json_arr_sel)
+			sel_sigs << sel_val.toString();
+		      data_chann_selected_signals[key] = sel_sigs;
 		    }
 		  else if ( key_1 == "percents" )
 		    {

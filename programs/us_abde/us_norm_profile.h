@@ -58,6 +58,12 @@ class US_Norm_Profile : public US_Widgets
         void pass_menisc_info( QMap< QString, double >& );
         void pass_percents_info( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
+        //! \brief channel -> list of (raw, sanitized) sample keys the user picked in
+        //! show_signal_selection_dialog() to appear in the Report's Integration
+        //! Results section. A channel missing from the map means "no selection was
+        //! recorded" (older saved run, pre-dating this feature) -- callers should
+        //! treat that as "show every signal", not as "show none".
+        void pass_selected_signals_info( QMap< QString, QStringList >& );
   
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.
@@ -112,6 +118,16 @@ class US_Norm_Profile : public US_Widgets
         QMap< QString, QMap < QString, QMap < QString, double>>> data_per_channel_ranges_percents_sample;
         QMap< QString, bool > data_per_channel_processed;
         QMap< QString, QString > prot_details;
+
+        //! \brief channel -> list of raw sample keys the user picked (in
+        //! show_signal_selection_dialog(), at Save-Profiles time) to appear in
+        //! the Report's Integration Results section. A channel absent from this
+        //! map (e.g. a run saved before this feature existed) means "no
+        //! selection was recorded" -- treat as "show every signal", not "show
+        //! none". Populated locally in save_auto() (Analysis stage) and, on
+        //! the GMP-report side, by parse_abde_analysis_jsons() reading it back
+        //! out of the saved JSON.
+        QMap< QString, QStringList > data_per_channel_selected_signals;
 
         //! \brief channel -> {"Analyte #1:":pretty_name, "Analyte #2:":pretty_name, "Buffer:":..}
         //! Set by US_ReporterGMP (which has DB/solution access) before ABDE plots are
@@ -173,6 +189,19 @@ class US_Norm_Profile : public US_Widgets
         //! Falls back to returning sample_key unchanged if no match is found.
         QString prettify_sample_name( QString channame, QString sample_key );
 
+        //! \brief At Save-Profiles time (after all channels are confirmed
+        //! normalized), let the user pick, per channel, which analyte signal(s)
+        //! should appear in the Report's "Integration Results: Fraction of
+        //! Total Concentration" section. Defaults every checkbox to checked,
+        //! so a user who doesn't touch anything keeps today's "show every
+        //! signal" behavior. Options come from data_per_channel_ranges_percents_sample
+        //! (already populated during this Analysis session -- no extra DB
+        //! round-trip needed), displayed via prettify_sample_name().
+        //! \param selected_signals [out] channel -> list of the raw (sanitized)
+        //!        sample keys the user left checked. Cleared and (re)filled here.
+        //! \return false if the user cancelled -- caller should abort the save.
+        bool show_signal_selection_dialog( QMap< QString, QStringList >& selected_signals );
+
     public slots:
         void load_data_auto( QMap<QString,QString>& );
 
@@ -199,7 +228,8 @@ class US_Norm_Profile : public US_Widgets
 					QMap< QString, int >&,
 					QMap< QString, QMap< QString, QMap < QString, double>>>&,
 					QMap <QString, double>&,
-					QMap <QString, double>& );
+					QMap <QString, double>&,
+					QMap< QString, QStringList >& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.

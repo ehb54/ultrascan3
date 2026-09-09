@@ -3894,6 +3894,8 @@ void US_ReporterGMP::process_abde_plots( void )
 	   this, &US_ReporterGMP::get_abde_percents );
   connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel,
 	   this, &US_ReporterGMP::get_abde_data_per_channel );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_selected_signals_info,
+	   this, &US_ReporterGMP::get_abde_selected_signals );
 
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
 
@@ -3963,6 +3965,12 @@ void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QV
   // qDebug() << "Passed data_for_chan 2A: xvalues -- "   << abde_data_per_channel["2A"]["xvalues"];
   // qDebug() << "Passed data_for_chan 2A: yvaluesN -- "  << abde_data_per_channel["2A"]["yvaluesN"];
   // qDebug() << "Passed data_for_chan 2A: integralN -- " << abde_data_per_channel["2A"]["integralN"];
+}
+
+void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& selected_signals_p )
+{
+  abde_selected_signals = selected_signals_p;
+  qDebug() << "[in get_abde_selected_signals()] -- " << abde_selected_signals;
 }
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
@@ -8170,9 +8178,17 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 			  tr( "PASSED ?" ));
 
        QStringList chann_samples = abde_ranges_percents[abde_channame].keys();
+       //If the user recorded a signal selection for this channel (via
+       //show_signal_selection_dialog() at Save-Profiles time), only include
+       //the samples they left checked. A channel absent from the map means
+       //no selection was recorded (a run saved before this feature existed)
+       //-- keep today's behavior and show every signal in that case.
+       bool have_selection = abde_selected_signals.contains( abde_channame );
        for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
 	   QString c_sample = chann_samples[cs];
+	   if ( have_selection && !abde_selected_signals[abde_channame].contains( c_sample ) )
+	     continue;
 	   QString c_sample_display = prettify_abde_sample_name( channs_analytes_buffers, c_sample );
 	   
 	   QString mstr_sample = "<h4>" + c_sample_display + " signal</h4>\n";

@@ -284,6 +284,12 @@ class US_ReporterGMP : public US_Widgets
         QMap< QString, double > abde_menisc;
         QMap<QString, QString > abde_plots_filenames;
         QMap< QString, QMap < QString, QVector<QVector<double>> > > abde_data_per_channel;
+        //! \brief channel -> list of raw sample keys the user picked (at
+        //! Save-Profiles time, in the Analysis stage) to appear in this
+        //! channel's Integration Results section. A channel missing from this
+        //! map means no selection was recorded (older saved run) -- treated
+        //! as "show every signal" in assemble_distrib_ABDE_html().
+        QMap< QString, QStringList > abde_selected_signals;
   
         QString current_date;                //!< Current date
 
@@ -617,6 +623,7 @@ class US_ReporterGMP : public US_Widgets
         void get_abde_menisc(QMap< QString, double >&);
         void get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
+        void get_abde_selected_signals( QMap< QString, QStringList >& );
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
