@@ -552,7 +552,9 @@ class US_ReporterGMP : public US_Widgets
         QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
         QString distrib_info_abde( QString& ); //!< Generate distribution information
-        QMap< QString, QString > get_channels_analytes_mwl_abde( QString );
+        //NOTE: analyte/buffer lookup for a channel now lives in
+        //US_Norm_Profile::get_channels_analytes_mwl_abde() (shared with the
+        //Analysis-stage ABDE flow) -- call that instead of a local copy here.
         QString prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key );
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages

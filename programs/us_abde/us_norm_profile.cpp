@@ -4,6 +4,8 @@
 #include "us_norm_profile.h"
 #include "us_load_auc.h"
 #include "us_passwd.h"
+#include "us_run_protocol.h"
+#include "us_solution.h"
 #include <QFileInfo>
 
 //Alt. constr.
@@ -663,6 +665,99 @@ QString US_Norm_Profile::prettify_sample_name( QString channame, QString sample_
 	return it.value();
     }
   return sample_key;   //no match -- fall back to the raw (sanitized) name
+}
+
+//ABDE: read all analytes (& possibly buffer) used in MWL-deconv. for one
+//channel, out of an already-loaded run protocol. Shared static helper so
+//every caller that needs a channel -> {"Analyte #1:":pretty, ...} map
+//(this class, US_ReporterGMP, ...) goes through one implementation instead
+//of keeping independent copies that can silently drift out of sync -- which
+//is what previously left the Analysis-stage ABDE legends unprettified while
+//the GMP-report ones were correct.
+QMap< QString, QString > US_Norm_Profile::get_channels_analytes_mwl_abde(
+        US_RunProtocol& proto, QString abde_channame )
+{
+  QMap< QString, QString > analytes_buffer_map;
+
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[get_channels_analytes_mwl_abde] DB connection problem: "
+	       << db.lastError();
+      return analytes_buffer_map;
+    }
+
+  for ( int ii = 0; ii < proto.rpRange.nranges; ii++ )
+    {
+      QString channel   = proto.rpRange.chrngs[ ii ].channel;
+      QString channel_s = channel.split(",")[0].trimmed();
+      channel_s.replace(" / ","");
+
+      if ( channel_s == abde_channame )
+	{
+	  QList< double > all_wvls = proto.rpRange.chrngs[ ii ].wvlens;
+	  int    nwavl      = all_wvls.count();
+	  bool   buff_req   = proto.rpRange.chrngs[ ii ].abde_buffer_spectrum;
+	  bool   mwl_deconv = proto.rpRange.chrngs[ ii ].abde_mwl_deconvolution;
+
+	  if ( nwavl > 1 && mwl_deconv )
+	    {
+	      QString sol_id = proto.rpSolut.chsols[ii].sol_id;
+	      US_Solution*   solution = new US_Solution;
+	      int solutionID = sol_id.toInt();
+
+	      int status = US_DB2::OK;
+	      status = solution->readFromDB  ( solutionID, &db );
+	      // Error reporting
+	      if ( status == US_DB2::NO_BUFFER )
+		{
+		  qDebug() << "[get_channels_analytes_mwl_abde] The buffer this "
+			      "solution refers to was not found.";
+		  return analytes_buffer_map;
+		}
+
+	      else if ( status == US_DB2::NO_ANALYTE )
+		{
+		  qDebug() << "[get_channels_analytes_mwl_abde] One of the analytes "
+			      "this solution refers to was not found.";
+		  return analytes_buffer_map;
+		}
+
+	      else if ( status != US_DB2::OK )
+		{
+		  qDebug() << "[get_channels_analytes_mwl_abde] DB error: "
+			   << db.lastError();
+		  return analytes_buffer_map;
+		}
+	      //End of reading Solution:
+
+	      //Reading Analytes
+	      int num_analytes = solution->analyteInfo.size();
+	      for (int i=0; i < num_analytes; ++i )
+		{
+		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+		  QString a_name     = analyte.description;
+
+		  QString ana_name = "Analyte #" + QString::number(i+1) + ":";
+		  analytes_buffer_map[ ana_name ] = a_name;
+		}
+
+	      //Reading Buffers
+	      if ( buff_req ) //only if buffer spectrum required
+		{
+		  US_Buffer buffer = solution->buffer;
+		  QString b_name   = buffer.description;
+
+		  analytes_buffer_map[ "Buffer:" ] = b_name;
+		}
+	    }
+	}
+    }
+
+  return analytes_buffer_map;
 }
 
 //For use in GMP REPORTing 

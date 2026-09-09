@@ -15,6 +15,8 @@
 #include "qwt_legend.h"
 #include <qwt_scale_div.h>
 
+class US_RunProtocol;   //!< forward decl.; full type only needed in the .cpp
+
 //! \class US_Norm_Profile
 //! \brief A class for handling normalization profiles in the analysis.
 class US_Norm_Profile : public US_Widgets
@@ -32,6 +34,19 @@ class US_Norm_Profile : public US_Widgets
         QwtPlot* rp_data_plot();
         QString select_channel_public( int index );
         void set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& );
+
+        //! \brief ABDE/MWL: read the analytes (& buffer, if used) for one channel's
+        //! solution out of a given run protocol. Shared by US_Norm_Profile itself
+        //! and by any caller (e.g. US_ReporterGMP) that already has a US_RunProtocol
+        //! loaded, so the lookup only has to be implemented once. On any DB/read
+        //! error this logs via qDebug() and returns an empty map -- callers should
+        //! not assume every channel yields entries (non-MWL channels legitimately
+        //! return empty).
+        //! \param proto        The run protocol to read channel/solution info from.
+        //! \param abde_channame The (sanitized) channel name to look up, e.g. "3A".
+        //! \return channel's {"Analyte #1:":pretty_name, ..., "Buffer:":pretty_name} map.
+        static QMap< QString, QString > get_channels_analytes_mwl_abde(
+                US_RunProtocol& proto, QString abde_channame );
 
     signals:
         //! \brief Signal emitted when the widget is closed.
