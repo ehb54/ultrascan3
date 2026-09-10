@@ -1165,9 +1165,8 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
    // Create layout and GUI components
 //   genL            = new QGridLayout();
    genL            = NULL;
-   //middle_h = new QHBoxLayout;
+   middle_h = new QHBoxLayout;
    //middle_h = new QGridLayout;
-   middle_h = new QGridLayout;
    left     = new QVBoxLayout;
    right    = new QVBoxLayout;
    
@@ -1809,14 +1808,14 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    controlsRestrictorWidget_left->setLayout( left );
    controlsRestrictorWidget_left->setMinimumHeight(500);
  
-
-   //middle_h->addLayout( left,  0, 0, -1, 7 );
-   //middle_h->addLayout( right, 0, 7, -1, 2 );
-   //middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
-   middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
-
+   //middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
+   middle_h->addWidget( controlsRestrictorWidget_left, Qt::AlignRight );
+   
    if ( !mainw->abde_mode_aprofile )
-     middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
+     //middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
+     middle_h->addWidget( controlsRestrictorWidget_right );
+   else
+     controlsRestrictorWidget_right->hide();
    //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
    
    //middle_h->setRowStretch( 0, 1);
