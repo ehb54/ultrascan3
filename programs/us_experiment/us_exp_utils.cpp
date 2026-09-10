@@ -3034,6 +3034,12 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       ckbox1->setVisible( ! ckscan1.contains( notinst ) );
       ckbox2->setVisible( ! ckscan2.contains( notinst ) );
       ckbox3->setVisible( ! ckscan3.contains( notinst ) );
+
+      if ( mainw->us_velmwl_mode )
+	{
+	  ckbox2 -> setChecked( false );
+	  ckbox2 -> setEnabled( false );
+	}
    }
 
 
@@ -4171,15 +4177,25 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
 
        	   msg_to_user.removeDuplicates();
 
+	   QString otype_channs = ( e_mode.contains("ABDE") ) ?
+	     tr("\n\nCurrent Ranges settings do not correspond to either multi-wavelength (MWL) or "
+		"single-wavelength (SWL) experiment."
+		"\nPlease modify wavelengths settings in the tab 7:Ranges, to ensure "
+		"all channels are either MWL or SWL."
+		"\n\nSaving protocol or run submission to the Optima are not possible "
+		"until this problem is resolved.") :
+	     tr("\n\nCurrent Ranges settings do not correspond to multi-wavelength (MWL) experiment."
+		"\nPlease modify wavelengths settings in the tab 7:Ranges, to ensure "
+		"all channels are MWL."
+		"\n\nSaving protocol or run submission to the Optima are not possible "
+		"until this problem is resolved.")
+	     ; 
+
+	   
        	   QMessageBox::critical( this,
        				  tr( "ATTENTION: Invalid Ranges Settings (") + e_mode + tr(")"),
        				  msg_to_user.join("\n") +
-       				  tr("\n\nCurrent Ranges settings do not correspond to either multi-wavelength (MWL) or "
-       				     "single-wavelength (SWL) experiment."
-       				     "\nPlease modify wavelengths settings in the tab 7:Ranges, to ensure "
-				     "all channels are either MWL or SWL."
-       				     "\n\nSaving protocol or run submission to the Optima are not possible "
-       				     "until this problem is resolved."));
+       				  otype_channs );
 	   return;
 	 }
 
@@ -4696,6 +4712,10 @@ bool US_ExperGuiUpload::ifMixedABDE( QStringList&  msg_to_user)
   all_wvl_types.removeDuplicates();
 
   if ( all_wvl_types.size() != 1 )
+    all_chann_same_wvl_type = false;
+
+  //here check for VEL-MWL: if all_wvl_types[0] != "MWL" - must be all MWL!!
+  if ( all_wvl_types[0] != "MWL" && mainw->us_velmwl_mode )
     all_chann_same_wvl_type = false;
 
   qDebug() << "[in ifMixedABDE()] " <<  msg_to_user;
