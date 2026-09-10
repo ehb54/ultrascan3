@@ -1811,10 +1811,10 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
    middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
    
-   // //middle_h->setRowStretch( 0, 1);
-   // //Hide all gr_mwvbox instances:
-   // for ( int i=0; i < gr_mwvbox.size(); ++i )
-   //   gr_mwvbox[ i ]->setVisible( false );
+   //middle_h->setRowStretch( 0, 1);
+   //Hide all gr_mwvbox instances:
+   for ( int i=0; i < gr_mwvbox.size(); ++i )
+     gr_mwvbox[ i ]->setVisible( false );
 
    panel->addLayout( middle_h );
 
