@@ -108,17 +108,35 @@ qDebug() << "  UsMEM:LINUX: fmtotal,used,free,buffer,cache" << fmtotal << fmused
    memused          = qMax( fmused, ( fmtotal - fmfree - fmcache ) );
    memavail         = memtotal - memused;
 #endif
-#ifdef Q_OS_MAC         // Mac: use sysctl and rss_now()
+#ifdef Q_OS_MAC         // Mac: use sysctl and host_statistics64()
    const double mb_bytes = ( 1024. * 1024. );
-   const double kb_bytes = 1024.;
-   QProcess qproc;
-   qproc.start( "sysctl", QStringList() << "-n" << "hw.memsize" );
-   qproc.waitForFinished( -1 );
-   QString totmem   = QString( qproc.readAllStandardOutput() ).trimmed();
-   memtotal         = qRound( totmem.toDouble() / mb_bytes );
-   memused          = qRound( (double)rss_now() / kb_bytes );
+   int64_t totbytes = 0;
+   size_t  totlen   = sizeof( totbytes );
+   if ( sysctlbyname( "hw.memsize", &totbytes, &totlen, NULL, 0 ) != 0 )
+      totbytes      = 0;
+   memtotal         = qRound( (double)totbytes / mb_bytes );
+
+   // System-wide usage, not this process's RSS: a page is in use when it is
+   // active, wired down or held compressed.  Free, inactive and speculative
+   // pages are all reclaimable, so they count as available.
+   vm_size_t                pagesize = 0;
+   vm_statistics64_data_t   vmstats;
+   mach_msg_type_number_t   vm_count = HOST_VM_INFO64_COUNT;
+   memused          = 0;
+
+   if ( host_page_size( mach_host_self(), &pagesize ) == KERN_SUCCESS  &&
+        host_statistics64( mach_host_self(), HOST_VM_INFO64,
+                           (host_info64_t)&vmstats, &vm_count ) == KERN_SUCCESS )
+   {
+      const double usedbytes = (double)( vmstats.active_count
+                                       + vmstats.wire_count
+                                       + vmstats.compressor_page_count )
+                             * (double)pagesize;
+      memused       = qRound( usedbytes / mb_bytes );
+   }
+
    memavail         = memtotal - memused;
-qDebug() << "  UsMEM:Mac:  totmem" << totmem << "memtotal" << memtotal;
+qDebug() << "  UsMEM:Mac:  totmem" << totbytes << "memtotal" << memtotal;
 #endif
 #ifdef Q_OS_WIN         // Windows: direct use of GlobalMemoryStatusEx
    const double mb_bytes = ( 1024. * 1024. );

@@ -1,0 +1,599 @@
+name: Toolchain build
+
+# Publishes dependency archives for macOS/Windows and container images for Linux.
+# Application builds adopt them through a reviewed toolchain lock update.
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: "Which targets to build"
+        required: false
+        default: all
+        type: choice
+        options: [all, macos, windows, linux]
+      open_pr:
+        description: "Commit the pin update (PR against main from main; onto the branch otherwise). Uncheck to build and publish only."
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      # Rebuild only for inputs that affect dependency binaries.
+      - "vcpkg.json"
+      - "vcpkg-configuration.json"
+      - "buildsys/vcpkg/overlay-ports/**"
+      - "qwtplot3d/**"
+      - "admin/cmake/triplets/**"
+      - "admin/cmake/toolchain.cmake"
+      - "buildsys/docker/**"
+      - "scripts/build-toolchain.sh"
+      - "scripts/build-toolchain.ps1"
+      - ".github/workflows/toolchain-build.yml"
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+concurrency:
+  group: us3-toolchain
+  cancel-in-progress: false
+
+jobs:
+
+  # Resolve the pin once so every job agrees on tag and image names.
+  plan:
+    name: "Plan"
+    runs-on: ubuntu-24.04
+    outputs:
+      release_tag:    ${{ steps.lock.outputs.release_tag }}
+      vcpkg_commit:   ${{ steps.lock.outputs.vcpkg_commit }}
+      archive_matrix: ${{ steps.lock.outputs.archive_matrix }}
+      image_matrix:   ${{ steps.lock.outputs.image_matrix }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+
+      - name: Read toolchain pin
+        id: lock
+        shell: bash
+        env:
+          SELECTED: ${{ inputs.targets || 'all' }}
+        run: |
+          set -euo pipefail
+          # The matrix is built in Python rather than selected with a job-level `if:`.
+          # This is a GitHub Actions constraint, not a preference: a job's `if:` is
+          # evaluated before its matrix expands, so it cannot read matrix context.
+          # Filtering the matrix itself is the only form that works.
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+
+          lock = json.load(open("buildsys/toolchain.lock.json"))
+          manifest = json.load(open("vcpkg.json"))
+          sel = os.environ["SELECTED"]
+
+          archives = [
+              {"target": "macos-arm64",  "os": "macos-15",       "group": "macos"},
+              {"target": "macos-x64",    "os": "macos-15-intel", "group": "macos"},
+              {"target": "windows-x64",  "os": "windows-2022",   "group": "windows"},
+          ]
+          images = [
+              {"target": "oraclelinux8-x64",
+               "dockerfile": "buildsys/docker/oraclelinux8.Dockerfile",
+               "image": "us3-toolchain-oraclelinux8", "group": "linux"},
+              {"target": "ubuntu2404-x64",
+               "dockerfile": "buildsys/docker/ubuntu2404.Dockerfile",
+               "image": "us3-toolchain-ubuntu2404", "group": "linux"},
+          ]
+
+          keep = lambda rows: [r for r in rows if sel in ("all", r["group"])]
+
+          print(f"release_tag={lock['release_tag']}")
+          print(f"vcpkg_commit={manifest['builtin-baseline']}")
+          print("archive_matrix=" + json.dumps({"include": keep(archives)}))
+          print("image_matrix="   + json.dumps({"include": keep(images)}))
+          PY
+
+          echo "--- plan ---"
+          cat "$GITHUB_OUTPUT"
+
+  # macOS and Windows: build a vcpkg binary cache, archive it.
+  archive:
+    name: "Toolchain ${{ matrix.target }}"
+    needs: plan
+    if: fromJson(needs.plan.outputs.archive_matrix).include[0] != null
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.archive_matrix) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+
+      - name: Resolve paths
+        id: paths
+        shell: bash
+        run: |
+          # Windows keeps the cache on a short path: Qt's source trees are deep
+          # enough to hit the 260-character limit from a workspace-relative one.
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            echo "cache=D:/us3tc" >> "$GITHUB_OUTPUT"
+          else
+            echo "cache=${RUNNER_TEMP}/us3-toolchain-cache" >> "$GITHUB_OUTPUT"
+          fi
+          # Unique names preserve the active archive until validation succeeds.
+          echo "asset=us3-toolchain-${{ matrix.target }}-qt6-${{ github.run_id }}.${{ github.run_attempt }}.tar.zst" >> "$GITHUB_OUTPUT"
+
+      # Resume completed dependency packages across attempts.
+      - name: Restore partial toolchain from previous attempt
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ steps.paths.outputs.cache }}
+          key: us3-toolchain-wip-${{ matrix.target }}-${{ needs.plan.outputs.vcpkg_commit }}-${{ hashFiles('vcpkg.json', 'buildsys/vcpkg/overlay-ports/**', 'qwtplot3d/**', 'admin/cmake/triplets/**', 'admin/cmake/toolchain.cmake') }}
+          restore-keys: |
+            us3-toolchain-wip-${{ matrix.target }}-${{ needs.plan.outputs.vcpkg_commit }}-
+            us3-toolchain-wip-${{ matrix.target }}-
+
+      # Hand-rolled on purpose: jlumbroso/free-disk-space is Linux-only, and the
+      # biggest reclaim here (CoreSimulator runtimes) has no Linux equivalent.
+      - name: Free disk space (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Remove unused preinstalled stacks to make room for Qt buildtrees.
+          sudo rm -rf /Library/Developer/CoreSimulator/Profiles/Runtimes || true
+          sudo rm -rf /usr/local/lib/android /usr/local/share/dotnet || true
+          df -h /
+
+      - name: Build toolchain (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          CI: "true"
+        run: |
+          chmod +x scripts/build-toolchain.sh scripts/bootstrap-macos.sh
+          scripts/build-toolchain.sh \
+            --cache-dir "${{ steps.paths.outputs.cache }}" \
+            --qt6 --profiles "APP"
+
+      - name: Build toolchain (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          CI: "true"
+        run: |
+          ./scripts/build-toolchain.ps1 `
+            -CacheDir "${{ steps.paths.outputs.cache }}" `
+            -QtVariant qt6 -Profiles APP
+
+      # Preserve complete vcpkg entries even when the overall build fails.
+      - name: Save partial toolchain for retry
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ steps.paths.outputs.cache }}
+          key: us3-toolchain-wip-${{ matrix.target }}-${{ needs.plan.outputs.vcpkg_commit }}-${{ hashFiles('vcpkg.json', 'buildsys/vcpkg/overlay-ports/**', 'qwtplot3d/**', 'admin/cmake/triplets/**', 'admin/cmake/toolchain.cmake') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Archive toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --use-compress-program='zstd -19 -T0' \
+              -cf "${{ steps.paths.outputs.asset }}" \
+              -C "${{ steps.paths.outputs.cache }}" .
+          ls -lh "${{ steps.paths.outputs.asset }}"
+
+      - name: Record checksum
+        id: sum
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v sha256sum >/dev/null; then
+            SUM=$(sha256sum "${{ steps.paths.outputs.asset }}" | awk '{print $1}')
+          else
+            SUM=$(shasum -a 256 "${{ steps.paths.outputs.asset }}" | awk '{print $1}')
+          fi
+          echo "sha256=${SUM}" >> "$GITHUB_OUTPUT"
+          printf '%s  %s\n' "$SUM" "${{ steps.paths.outputs.asset }}" > "${{ matrix.target }}.sha256"
+
+      - name: Upload toolchain archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: toolchain-${{ matrix.target }}
+          overwrite: true
+          path: |
+            ${{ steps.paths.outputs.asset }}
+            ${{ matrix.target }}.sha256
+          retention-days: 5
+          compression-level: 0
+
+  # Linux: build and push container images with the toolchain baked in.
+  image:
+    name: "Toolchain ${{ matrix.target }}"
+    needs: plan
+    if: fromJson(needs.plan.outputs.image_matrix).include[0] != null
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.image_matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+
+      # Building the toolchain image needs far more room than the runner ships
+      # with. tool-cache is deliberately left in place: it holds the runner's
+      # Python and other preinstalled tooling that later steps still resolve.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Two tags, deliberately unequal in status.
+      #
+      # The per-run tag is always pushed: it is unique per run and per attempt,
+      # so a publish never overwrites an earlier one, and it keeps every
+      # published image addressable.
+      #
+      # The moving `:qt6` tag is what a human reads as "the current toolchain",
+      # so only a run on main may repoint it. A run from a feature branch still
+      # publishes an image so `validate` can build against it, but that image is
+      # a proposal, not the current toolchain. Consumers are unaffected either
+      # way -- toolchain.lock.json pins by digest, never by tag.
+      #
+      # metadata-action also lowercases the image name, which GHCR requires and
+      # github.repository_owner does not guarantee.
+      - name: Resolve image tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=qt6-${{ github.run_id }}.${{ github.run_attempt }}
+            type=raw,value=qt6,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            IMAGE_SOURCE=${{ github.server_url }}/${{ github.repository }}
+          # Persist BuildKit layers across workflow runs.
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:buildcache,mode=max
+          provenance: false
+
+      # Artifacts preserve one digest per matrix leg.
+      - name: Collect digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Pushed digest: ${{ steps.build.outputs.digest }}"
+          mkdir -p digests
+          printf '%s' "${{ steps.build.outputs.digest }}" > "digests/${{ matrix.target }}.digest"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: digest-${{ matrix.target }}
+          overwrite: true
+          path: digests/${{ matrix.target }}.digest
+          retention-days: 5
+
+  # Publish artifacts and propose the new lock values for validation.
+  publish:
+    name: "Publish and pin"
+    needs: [plan, archive, image]
+    if: always() && needs.plan.result == 'success' && !cancelled()
+    runs-on: ubuntu-24.04
+    outputs:
+      pin_any:    ${{ steps.pin.outputs.any }}
+      pin_branch: ${{ steps.propose.outputs.branch }}
+      pin_pr:     ${{ steps.propose.outputs.number }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+
+      - uses: actions/download-artifact@v7
+        with:
+          path: incoming
+          pattern: "{toolchain-*,digest-*}"
+
+      - name: Show what arrived
+        run: find incoming -type f | sort
+
+      - name: Publish toolchain release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          ARCHIVES=(incoming/toolchain-*/*.tar.zst)
+          if [ ${#ARCHIVES[@]} -eq 0 ]; then
+            echo "No archives to publish (Linux-only run)."
+            exit 0
+          fi
+
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" \
+              --title "UltraScan3 dependency toolchain" \
+              --notes "Prebuilt Qt6 and C dependencies consumed by application builds. Pinned in buildsys/toolchain.lock.json." \
+              --prerelease
+          fi
+
+          # --clobber makes this run's upload retryable; asset names are run-specific.
+          gh release upload "$TAG" "${ARCHIVES[@]}" --clobber
+          gh release view "$TAG" --json assets --jq '.assets[] | "\(.name)  \(.size)"'
+
+      - name: Update toolchain pin
+        id: pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import glob, json, os, pathlib
+
+          lock_path = pathlib.Path("buildsys/toolchain.lock.json")
+          lock = json.loads(lock_path.read_text())
+          changed = []
+
+          # Archive targets: read the checksum recorded beside each archive.
+          for sums in glob.glob("incoming/toolchain-*/*.sha256"):
+              digest, asset = pathlib.Path(sums).read_text().split()
+              target = pathlib.Path(sums).stem
+              entry = lock["targets"].get(target)
+              if entry is None:
+                  continue
+              if entry.get("sha256") != digest or entry.get("asset") != asset:
+                  entry["sha256"] = digest
+                  entry["asset"] = asset
+                  changed.append(target)
+
+          # Container targets: read the pushed manifest digest.
+          for dpath in glob.glob("incoming/digest-*/*.digest"):
+              target = pathlib.Path(dpath).stem
+              digest = pathlib.Path(dpath).read_text().strip()
+              entry = lock["targets"].get(target)
+              if entry is None or not digest:
+                  continue
+              if entry.get("digest") != digest:
+                  entry["digest"] = digest
+                  changed.append(target)
+
+          lock_path.write_text(json.dumps(lock, indent=2) + "\n")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"changed={' '.join(sorted(changed))}\n")
+              fh.write(f"any={'true' if changed else 'false'}\n")
+
+          print("updated targets:", changed or "(none)")
+          PY
+
+          git --no-pager diff -- buildsys/toolchain.lock.json || true
+
+      # =====================================================================
+      # Place the updated pin where it can be reviewed alongside whatever
+      # caused it.
+      #
+      # ON MAIN -- the dependency change has already landed, so the pin is its
+      # own unit of work: branch, PR against main, validated and auto-merged.
+      #
+      # ON ANY OTHER BRANCH -- the change that made this toolchain necessary
+      # (a vcpkg.json edit, a new overlay port) is still on that branch. The
+      # pin is committed straight onto it, so the branch carries the manifest
+      # change and the matching toolchain together and merges as one unit.
+      # No PR against main is opened and `land` never runs, so a dispatch from
+      # a feature branch cannot write to main.
+      #
+      # This ordering is the point: if the pin only ever arrived after a merge,
+      # main would spend the length of a full toolchain build describing
+      # dependencies that no published toolchain contains -- every application
+      # build in that window missing the binary cache.
+      # =====================================================================
+      - name: Commit the pin update
+        id: propose
+        if: steps.pin.outputs.any == 'true' && (inputs.open_pr == null || inputs.open_pr)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Keep subjects readable when a run updates many targets.
+          CHANGED="${{ steps.pin.outputs.changed }}"
+          COUNT=$(printf '%s\n' $CHANGED | wc -w | tr -d ' ')
+          if [ "$COUNT" -le 3 ]; then
+            WHAT=$(printf '%s\n' $CHANGED | paste -sd, - | sed 's/,/, /g')
+          else
+            WHAT="${COUNT} targets"
+          fi
+          SUBJECT="Update dependency toolchain pin for ${WHAT} (run ${GITHUB_RUN_ID})"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ "${GITHUB_REF:-}" = "refs/heads/main" ]; then
+            BRANCH="toolchain/pin-${GITHUB_RUN_ID}"
+            git checkout -b "$BRANCH"
+            git add buildsys/toolchain.lock.json
+            git commit -m "$SUBJECT"
+            git push origin "$BRANCH"
+
+            gh pr create \
+              --title "$SUBJECT" \
+              --body "Built by the Toolchain workflow (run ${GITHUB_RUN_ID}).
+
+          Updated targets: ${CHANGED}
+
+          The \`validate\` job of that run builds every supported platform
+          against this pin. It merges automatically if they all pass, and is
+          left open with a comment if any of them does not." \
+              --base main --head "$BRANCH"
+
+            {
+              echo "branch=$BRANCH"
+              echo "number=$(gh pr view "$BRANCH" --json number --jq .number)"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Off main. Only a branch can receive a commit -- a tag or a raw SHA
+          # has nowhere to put it.
+          if [ "${GITHUB_REF_TYPE:-}" != "branch" ]; then
+            echo "::warning::Dispatched from ${GITHUB_REF:-unknown}, which is not a branch."
+            echo "The toolchain was built and published, but the pin was not committed anywhere."
+            echo "Re-run this workflow from the branch that should carry the pin."
+            { echo "branch="; echo "number="; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BRANCH="${GITHUB_REF_NAME}"
+          git add buildsys/toolchain.lock.json
+          git commit -m "$SUBJECT"
+
+          # HEAD:refs/heads/<branch> works whether checkout left us on the
+          # branch or on a detached HEAD at its tip. A non-fast-forward here
+          # means the branch moved while the toolchain was building.
+          if ! git push origin "HEAD:refs/heads/${BRANCH}"; then
+            echo "::error::Could not push the pin update to '${BRANCH}'."
+            echo "The branch moved while the toolchain was building."
+            echo "Pull the branch and re-run this workflow to regenerate the pin."
+            exit 1
+          fi
+
+          echo "Committed the pin onto '${BRANCH}'. It will be reviewed and merged"
+          echo "together with the change that required a new toolchain."
+
+          # No PR number: `land` is gated on it, so nothing auto-merges off main.
+          { echo "branch=$BRANCH"; echo "number="; } >> "$GITHUB_OUTPUT"
+
+  # Validate the proposed pin against every application target before merging.
+  validate:
+    name: "Validate ${{ matrix.label }}"
+    needs: publish
+    if: needs.publish.outputs.pin_any == 'true' && needs.publish.outputs.pin_branch != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: ubuntu2404-x64,   profile: APP, label: "Ubuntu 24.04 APP",   platform: Ubuntu-24.04-x86_64 }
+          - { target: ubuntu2404-x64,   profile: HPC, label: "Ubuntu 24.04 HPC",   platform: HPC-Ubuntu-24.04-x86_64 }
+          - { target: oraclelinux8-x64, profile: APP, label: "Oracle Linux 8 APP", platform: RHEL-8-x86_64 }
+          - { target: oraclelinux8-x64, profile: HPC, label: "Oracle Linux 8 HPC", platform: HPC-RHEL-8-x86_64 }
+          - { target: macos-arm64,      profile: APP, label: "macOS arm64 APP",    platform: macOS-arm64 }
+          - { target: macos-x64,        profile: APP, label: "macOS x86_64 APP",   platform: macOS-x86_64 }
+          - { target: windows-x64,      profile: APP, label: "Windows x86_64 APP", platform: Windows-x86_64 }
+    uses: ./.github/workflows/app-build.yml
+    with:
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
+      qt_variant:              qt6
+      # Build the proposed lock file from the pin branch.
+      ref:                     ${{ needs.publish.outputs.pin_branch }}
+      # Avoid reusing objects compiled against the previous toolchain.
+      clean_tier:              clean
+      artifact_name:           ${{ format('toolchain-validate-{0}-{1}', github.run_id, matrix.platform) }}
+      artifact_retention_days: 3
+    secrets: inherit
+
+  # Merge validated pins; retain failed proposals for diagnosis.
+  land:
+    name: "Land pin"
+    needs: [publish, validate]
+    if: always() && needs.publish.outputs.pin_pr != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 1 }
+
+      - name: Merge pin update
+        if: needs.validate.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.publish.outputs.pin_pr }}
+        run: |
+          set -euo pipefail
+          gh pr merge "$PR" --squash --delete-branch
+          echo "merged #$PR onto main"
+
+      # Retire archives only after the merged lock file stops referencing them.
+      - name: Retire superseded toolchain archives
+        if: needs.validate.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Read the post-merge lock file from main.
+          gh api \
+            -H "Accept: application/vnd.github.raw" \
+            "repos/${GITHUB_REPOSITORY}/contents/buildsys/toolchain.lock.json?ref=main" \
+            > merged-lock.json
+
+          python3 - <<'PY'
+          import json, subprocess
+
+          lock = json.load(open("merged-lock.json"))
+          tag  = lock["release_tag"]
+          keep = {t["asset"] for t in lock["targets"].values() if t.get("asset")}
+
+          # Refuse cleanup when the lock contains no archive references.
+          if not keep:
+              raise SystemExit(f"{tag}: merged lock file references no archives; refusing to delete")
+
+          print("referenced by main:", *sorted(keep), sep="\n  ")
+
+          assets = subprocess.run(
+              ["gh", "release", "view", tag, "--json", "assets", "--jq", ".assets[].name"],
+              check=True, capture_output=True, text=True,
+          ).stdout.split()
+
+          for name in assets:
+              # Leave unrelated release assets untouched.
+              if not name.startswith("us3-toolchain-") or name in keep:
+                  continue
+              print("retiring:", name)
+              subprocess.run(["gh", "release", "delete-asset", tag, name, "--yes"], check=True)
+          PY
+
+      - name: Hold pin update
+        if: needs.validate.result != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.publish.outputs.pin_pr }}
+          RESULT: ${{ needs.validate.result }}
+        run: |
+          set -euo pipefail
+          # A here-doc avoids nested shell quoting in the Markdown message.
+          gh pr comment "$PR" --body-file - <<EOF
+          Validation **${RESULT}**. Not merging.
+
+          Application builds against this toolchain did not all pass in
+          [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}).
+
+          This pull request and its branch are left in place deliberately: they
+          are what you need to work out which platform the new toolchain broke.
+          Application builds keep using the previous toolchain until this merges.
+          EOF
+
+          echo "::error::validation ${RESULT}; pin PR #${PR} left open"
+          exit 1

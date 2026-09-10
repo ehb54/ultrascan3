@@ -289,7 +289,7 @@ if(NOT EXISTS "${S_PLUG}/sqldrivers/qsqlite.dll")
     endforeach()
 
     if(NOT _QSQLITE_FOUND)
-        message(WARNING
+        message(FATAL_ERROR
             "[WinDeploy] sqldrivers/qsqlite.dll not found. "
             "Qt Assistant search will not work without it. "
             "Searched: ${_QSQLITE_SEARCH_DIRS}.")
@@ -363,25 +363,37 @@ if(ASSISTANT_EXE AND EXISTS "${ASSISTANT_EXE}")
         ERROR_VARIABLE  _e
     )
     if(NOT _r EQUAL 0)
-        message(WARNING "[WinDeploy] windeployqt on assistant.exe exited with code ${_r}")
-        message(STATUS  "  stderr: ${_e}")
+        message(FATAL_ERROR
+            "[WinDeploy] windeployqt on assistant.exe exited with code ${_r}. "
+            "Qt Assistant is required by the application help system. stderr: ${_e}")
     endif()
 else()
-    message(STATUS "[WinDeploy] ASSISTANT_EXE not provided — help system may not work")
+    message(FATAL_ERROR
+        "[WinDeploy] Qt Assistant was not found. assistant.exe is required by "
+        "the application help system.")
 endif()
 
 # =========================================================================
 # 8) Copy manual.qch / manual.qhc into bin/
 #    Mirrors MacDeploy.cmake section 10.
 # =========================================================================
-if(QCH_DIR)
-    foreach(_qch_file manual.qch manual.qhc)
-        if(EXISTS "${QCH_DIR}/${_qch_file}")
-            message(STATUS "  Copying ${_qch_file} → bin/")
-            file(COPY "${QCH_DIR}/${_qch_file}" DESTINATION "${S_BIN}")
-        endif()
-    endforeach()
+if(NOT QCH_DIR)
+    message(FATAL_ERROR "[WinDeploy] QCH_DIR not set; application help cannot be packaged")
 endif()
+foreach(_qch_file manual.qch manual.qhc)
+    set(_qch_path "${QCH_DIR}/${_qch_file}")
+    if(NOT EXISTS "${_qch_path}")
+        message(FATAL_ERROR
+            "[WinDeploy] Required help file is missing: ${_qch_path}. "
+            "Ensure Sphinx and qhelpgenerator completed successfully before packaging.")
+    endif()
+    file(SIZE "${_qch_path}" _qch_size)
+    if(_qch_size EQUAL 0)
+        message(FATAL_ERROR "[WinDeploy] Required help file is empty: ${_qch_path}")
+    endif()
+    message(STATUS "  Copying ${_qch_file} → bin/")
+    file(COPY "${_qch_path}" DESTINATION "${S_BIN}")
+endforeach()
 
 # =========================================================================
 # 9) Copy etc/ and somo/
@@ -411,6 +423,31 @@ if(SOMO_BIN_DIR AND EXISTS "${SOMO_BIN_DIR}")
     endforeach()
 else()
     message(STATUS "[WinDeploy] SoMo bin dir not provided or not yet built — skipping SoMo binary staging")
+endif()
+
+
+# =========================================================================
+# 9c) Fetch and stage rasmol (used by SoMo's PDB/molecule viewer)
+#     Mirrors MacDeploy.cmake section 11c. Statically-linked SDL3 build from
+#     https://github.com/ehb54/rasmol (somo-modernize branch); no separate
+#     runtime dependencies. Best-effort: a network failure here does not
+#     fail the packaging build, it just leaves the SoMo molecule-viewer
+#     feature unavailable.
+# =========================================================================
+set(_rasmol_base_url "https://raw.githubusercontent.com/ehb54/rasmol/somo-modernize/binaries/windows-x86_64")
+message(STATUS "[WinDeploy] Fetching rasmol (windows-x86_64) → bin/")
+file(DOWNLOAD "${_rasmol_base_url}/rasmol.exe" "${S_BIN}/rasmol.exe" STATUS _rasmol_dl_status)
+list(GET _rasmol_dl_status 0 _rasmol_dl_code)
+if(_rasmol_dl_code EQUAL 0)
+    file(DOWNLOAD "${_rasmol_base_url}/rasmol.hlp" "${S_BIN}/rasmol.hlp" STATUS _rasmol_hlp_status)
+    list(GET _rasmol_hlp_status 0 _rasmol_hlp_code)
+    if(NOT _rasmol_hlp_code EQUAL 0)
+        message(WARNING "[WinDeploy] Failed to download rasmol.hlp — rasmol help will be unavailable")
+    endif()
+else()
+    list(GET _rasmol_dl_status 1 _rasmol_dl_msg)
+    message(WARNING "[WinDeploy] Failed to download rasmol.exe (${_rasmol_dl_msg}) — SoMo molecule viewer will be unavailable")
+    file(REMOVE "${S_BIN}/rasmol.exe")
 endif()
 
 if(SOMO_LIB_DIR AND EXISTS "${SOMO_LIB_DIR}")
@@ -449,6 +486,11 @@ if(LICENSE_FILE AND EXISTS "${LICENSE_FILE}")
     endif()
 endif()
 
+if(VERSION_FILE AND EXISTS "${VERSION_FILE}")
+    message(STATUS "[WinDeploy] Copying VERSION")
+    file(COPY "${VERSION_FILE}" DESTINATION "${STAGE_DIR}")
+endif()
+
 # =========================================================================
 # 11) Write a qt.conf alongside us.exe so Qt locates plugins/ and the
 #     DLLs in bin/ without relying on registry entries or a PATH search.
@@ -473,6 +515,24 @@ if(EXISTS "${S_BIN}/assistant.exe")
     # assistant.exe lives in bin/ alongside us.exe; it shares qt.conf
     message(STATUS "  qt.conf covers assistant.exe (shared bin/ location)")
 endif()
+
+# 12) Verify the complete runtime help system before CPack consumes the stage
+foreach(_help_runtime_file IN ITEMS
+        "${S_BIN}/assistant.exe"
+        "${S_BIN}/manual.qch"
+        "${S_BIN}/manual.qhc"
+        "${S_PLUG}/sqldrivers/qsqlite.dll")
+    if(NOT EXISTS "${_help_runtime_file}")
+        message(FATAL_ERROR
+            "[WinDeploy] Required staged help component is missing: ${_help_runtime_file}")
+    endif()
+    file(SIZE "${_help_runtime_file}" _help_runtime_size)
+    if(_help_runtime_size EQUAL 0)
+        message(FATAL_ERROR
+            "[WinDeploy] Required staged help component is empty: ${_help_runtime_file}")
+    endif()
+endforeach()
+message(STATUS "[WinDeploy] Verified Qt Assistant, manual.qch, manual.qhc, and qsqlite.dll")
 
 # =========================================================================
 # Summary

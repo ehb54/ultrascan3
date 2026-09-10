@@ -1,0 +1,189 @@
+name: Application build
+
+# Builds applications against buildsys/toolchain.lock.json.
+# Linux uses pinned containers; macOS and Windows use pinned archives.
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: "macos-arm64 | macos-x64 | windows-x64 | ubuntu2404-x64 | oraclelinux8-x64"
+        required: true
+        type: string
+      profile:
+        required: false
+        type: string
+        default: APP
+      qt_variant:
+        required: false
+        type: string
+        default: qt6
+      ref:
+        required: false
+        type: string
+        default: main
+      clean_tier:
+        required: false
+        type: string
+        default: incremental
+      artifact_name:
+        required: true
+        type: string
+      artifact_retention_days:
+        required: false
+        type: number
+        default: 3
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Build target"
+        required: true
+        type: choice
+        options:
+          - macos-arm64
+          - macos-x64
+          - windows-x64
+          - ubuntu2404-x64
+          - oraclelinux8-x64
+      profile:
+        required: false
+        default: APP
+        type: choice
+        options: [APP, HPC]
+      qt_variant:
+        required: false
+        default: qt6
+        type: choice
+        options: [qt6, qt5-qwt630]
+      ref:
+        description: "Branch, tag or SHA"
+        required: false
+        default: main
+        type: string
+      clean_tier:
+        required: false
+        default: incremental
+        type: choice
+        options: [incremental, rebuild, clean]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+
+  # Resolve which runner and container this target needs.
+  resolve:
+    name: "Resolve ${{ inputs.target }}"
+    runs-on: ubuntu-24.04
+    outputs:
+      runner:      ${{ steps.r.outputs.runner }}
+      container:   ${{ steps.r.outputs.container }}
+      needs_container: ${{ steps.r.outputs.needs_container }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 1
+
+      - name: Resolve target
+        id: r
+        shell: bash
+        env:
+          TARGET: ${{ inputs.target }}
+          # Use the current repository owner so forks resolve their own images.
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, sys
+
+          target = os.environ["TARGET"]
+          lock = json.load(open("buildsys/toolchain.lock.json"))
+          pin = lock["targets"].get(target)
+          if pin is None:
+              sys.exit(f"no toolchain pin for target '{target}'")
+
+          runners = {
+              "macos-arm64":      "macos-15",
+              "macos-x64":        "macos-15-intel",
+              "windows-x64":      "windows-2022",
+              "ubuntu2404-x64":   "ubuntu-24.04",
+              "oraclelinux8-x64": "ubuntu-24.04",
+          }
+          print(f"runner={runners[target]}")
+
+          if pin["kind"] == "container":
+              digest = pin.get("digest") or ""
+              if not digest:
+                  sys.exit(
+                      f"toolchain pin for '{target}' has no image digest.\n"
+                      "Run the Toolchain workflow and merge the pin update."
+                  )
+              # Pinned by digest, not tag: a tag can be moved, a digest cannot.
+              owner = os.environ["OWNER"].lower()
+              print(f"container=ghcr.io/{owner}/{pin['image']}@{digest}")
+              print("needs_container=true")
+          else:
+              print("container=")
+              print("needs_container=false")
+          PY
+
+          echo "--- resolved ---"; cat "$GITHUB_OUTPUT"
+
+  # Linux: build inside the pinned toolchain image.
+  build-container:
+    name: "${{ inputs.target }} / ${{ inputs.profile }} / ${{ inputs.qt_variant }}"
+    needs: resolve
+    if: needs.resolve.outputs.needs_container == 'true'
+    runs-on: ${{ needs.resolve.outputs.runner }}
+    timeout-minutes: 90
+    container:
+      image: ${{ needs.resolve.outputs.container }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Version metadata requires a full Git checkout.
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 0
+
+      - name: Verify build metadata
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$PWD"
+          echo "describe: $(git describe --tags --always --dirty 2>/dev/null || echo none)"
+          echo "sha     : $(git rev-parse HEAD)"
+
+      - uses: ./.github/actions/build-package
+        with:
+          profile: ${{ inputs.profile }}
+          qt_variant: ${{ inputs.qt_variant }}
+          clean_tier: ${{ inputs.clean_tier }}
+          artifact_name: ${{ inputs.artifact_name || format('manual-{0}-{1}-{2}-{3}', inputs.target, inputs.profile, inputs.qt_variant, github.run_id) }}
+          retention_days: ${{ inputs.artifact_retention_days || 3 }}
+
+  # macOS / Windows: build natively against the downloaded toolchain archive.
+  build-native:
+    name: "${{ inputs.target }} / ${{ inputs.profile }} / ${{ inputs.qt_variant }}"
+    needs: resolve
+    if: needs.resolve.outputs.needs_container == 'false'
+    runs-on: ${{ needs.resolve.outputs.runner }}
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || 'main' }}
+          fetch-depth: 0
+
+      - uses: ./.github/actions/build-package
+        with:
+          profile: ${{ inputs.profile }}
+          qt_variant: ${{ inputs.qt_variant }}
+          clean_tier: ${{ inputs.clean_tier }}
+          artifact_name: ${{ inputs.artifact_name || format('manual-{0}-{1}-{2}-{3}', inputs.target, inputs.profile, inputs.qt_variant, github.run_id) }}
+          retention_days: ${{ inputs.artifact_retention_days || 3 }}

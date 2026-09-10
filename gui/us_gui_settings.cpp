@@ -1,6 +1,7 @@
 #include "us_gui_settings.h"
 #include "us_theme.h"
 #include "us_defines.h"
+#include "us_settings.h"
 
 namespace
 {
@@ -39,12 +40,12 @@ QString US_GuiSettings::defaultFontFamily( void ) {
 }
 
 QString US_GuiSettings::fontFamily(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("fontFamily", defaultFontFamily()).toString();
 }
 
 void US_GuiSettings::set_fontFamily(const QString &fontFamily) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (fontFamily == defaultFontFamily())
         settings.remove("fontFamily");
     else
@@ -52,12 +53,12 @@ void US_GuiSettings::set_fontFamily(const QString &fontFamily) {
 }
 
 int US_GuiSettings::fontSize(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("fontSize", 10).toInt();
 }
 
 void US_GuiSettings::set_fontSize(int fontSize) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (fontSize == 10)
         settings.remove("fontSize");
     else
@@ -65,13 +66,13 @@ void US_GuiSettings::set_fontSize(int fontSize) {
 }
 
 QString US_GuiSettings::guiStyle(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
 
     return settings.value("guiStyle", US_Theme::defaultStyle()).toString();
 }
 
 void US_GuiSettings::set_guiStyle(const QString &style) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
 
     if (style == US_Theme::defaultStyle())
         settings.remove("guiStyle");
@@ -81,12 +82,12 @@ void US_GuiSettings::set_guiStyle(const QString &style) {
 
 // Misc
 int US_GuiSettings::plotMargin(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("plotMargin", 10).toInt();
 }
 
 void US_GuiSettings::set_plotMargin(int fontSize) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (fontSize == 10)
         settings.remove("plotMargin");
     else
@@ -104,7 +105,7 @@ void US_GuiSettings::set_plotMargin(int fontSize) {
 
 // Label - the caption of a form field.  Flat text on the window background.
 QPalette US_GuiSettings::labelColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/labelColor"))
         return settings.value("palettes/labelColor").value<QPalette>();
     return labelColorDefault();
@@ -138,7 +139,7 @@ QPalette US_GuiSettings::labelColorDefault(void) {
 }
 
 void US_GuiSettings::set_labelColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == labelColorDefault())
         settings.remove("palettes/labelColor");
     else
@@ -147,7 +148,7 @@ void US_GuiSettings::set_labelColor(const QPalette &palette) {
 
 // Edit - line edits, text edits and list widgets
 QPalette US_GuiSettings::editColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/editColor"))
         return settings.value("palettes/editColor").value<QPalette>();
     return editColorDefault();
@@ -195,7 +196,7 @@ QPalette US_GuiSettings::editColorDefault(void) {
 }
 
 void US_GuiSettings::set_editColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == editColorDefault())
         settings.remove("palettes/editColor");
     else
@@ -216,7 +217,7 @@ QPalette US_GuiSettings::readonlyColor(void) {
 
 // Frame - the background of an UltraScan window or dialog
 QPalette US_GuiSettings::frameColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/frameColor"))
         return settings.value("palettes/frameColor").value<QPalette>();
     return frameColorDefault();
@@ -264,7 +265,7 @@ QPalette US_GuiSettings::frameColorDefault(void) {
 }
 
 void US_GuiSettings::set_frameColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == frameColorDefault())
         settings.remove("palettes/frameColor");
     else
@@ -273,7 +274,7 @@ void US_GuiSettings::set_frameColor(const QPalette &palette) {
 
 // Banner - the accent colored header of a section
 QPalette US_GuiSettings::bannerColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/bannerColor"))
         return settings.value("palettes/bannerColor").value<QPalette>();
     return bannerColorDefault();
@@ -309,7 +310,7 @@ QPalette US_GuiSettings::bannerColorDefault(void) {
 }
 
 void US_GuiSettings::set_bannerColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == bannerColorDefault())
         settings.remove("palettes/bannerColor");
     else
@@ -318,7 +319,7 @@ void US_GuiSettings::set_bannerColor(const QPalette &palette) {
 
 // Pushbutton
 QPalette US_GuiSettings::pushbColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/pushbColor"))
         return settings.value("palettes/pushbColor").value<QPalette>();
     return pushbColorDefault();
@@ -358,7 +359,7 @@ QPalette US_GuiSettings::pushbColorDefault(void) {
 }
 
 void US_GuiSettings::set_pushbColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == pushbColorDefault())
         settings.remove("palettes/pushbColor");
     else
@@ -367,7 +368,7 @@ void US_GuiSettings::set_pushbColor(const QPalette &palette) {
 
 // Normal - every other widget, and the application wide palette
 QPalette US_GuiSettings::normalColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/normalColor"))
         return settings.value("palettes/normalColor").value<QPalette>();
     return normalColorDefault();
@@ -415,7 +416,7 @@ QPalette US_GuiSettings::normalColorDefault(void) {
 }
 
 void US_GuiSettings::set_normalColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == normalColorDefault())
         settings.remove("palettes/normalColor");
     else
@@ -424,7 +425,7 @@ void US_GuiSettings::set_normalColor(const QPalette &palette) {
 
 // LCD
 QPalette US_GuiSettings::lcdColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/lcdColor"))
         return settings.value("palettes/lcdColor").value<QPalette>();
     return lcdColorDefault();
@@ -454,7 +455,7 @@ QPalette US_GuiSettings::lcdColorDefault(void) {
 }
 
 void US_GuiSettings::set_lcdColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == lcdColorDefault())
         settings.remove("palettes/lcdColor");
     else
@@ -463,7 +464,7 @@ void US_GuiSettings::set_lcdColor(const QPalette &palette) {
 
 // Plot frame
 QPalette US_GuiSettings::plotColor(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (settings.contains("palettes/plotColor"))
         return settings.value("palettes/plotColor").value<QPalette>();
     return plotColorDefault();
@@ -491,7 +492,7 @@ QPalette US_GuiSettings::plotColorDefault(void) {
 }
 
 void US_GuiSettings::set_plotColor(const QPalette &palette) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (palette == plotColorDefault())
         settings.remove("palettes/plotColor");
     else
@@ -505,12 +506,12 @@ QColor US_GuiSettings::plotCurveDefault(void) {
 }
 
 QColor US_GuiSettings::plotCurve(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("palettes/plotCurve", plotCurveDefault()).value<QColor>();
 }
 
 void US_GuiSettings::set_plotCurve(const QColor &color) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (color == plotCurveDefault())
         settings.remove("palettes/plotCurve");
     else
@@ -523,12 +524,12 @@ QColor US_GuiSettings::plotCanvasBGDefault(void) {
 }
 
 QColor US_GuiSettings::plotCanvasBG(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("palettes/plotCanvasBG", plotCanvasBGDefault()).value<QColor>();
 }
 
 void US_GuiSettings::set_plotCanvasBG(const QColor &color) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (color == plotCanvasBGDefault())
         settings.remove("palettes/plotCanvasBG");
     else
@@ -541,12 +542,12 @@ QColor US_GuiSettings::plotMajGridDefault(void) {
 }
 
 QColor US_GuiSettings::plotMajGrid(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("palettes/plotMajGrid", plotMajGridDefault()).value<QColor>();
 }
 
 void US_GuiSettings::set_plotMajGrid(const QColor &color) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (color == plotMajGridDefault())
         settings.remove("palettes/plotMajGrid");
     else
@@ -559,12 +560,12 @@ QColor US_GuiSettings::plotMinGridDefault(void) {
 }
 
 QColor US_GuiSettings::plotMinGrid(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("palettes/plotMinGrid", plotMinGridDefault()).value<QColor>();
 }
 
 void US_GuiSettings::set_plotMinGrid(const QColor &color) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (color == plotMinGridDefault())
         settings.remove("palettes/plotMinGrid");
     else
@@ -577,12 +578,12 @@ QColor US_GuiSettings::plotPickerDefault(void) {
 }
 
 QColor US_GuiSettings::plotPicker(void) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     return settings.value("palettes/plotPicker", plotPickerDefault()).value<QColor>();
 }
 
 void US_GuiSettings::set_plotPicker(const QColor &color) {
-    QSettings settings(US3, "UltraScan");
+    US_SettingsStore settings;
     if (color == plotPickerDefault())
         settings.remove("palettes/plotPicker");
     else
