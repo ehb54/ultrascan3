@@ -1814,7 +1814,9 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    //middle_h->addLayout( right, 0, 7, -1, 2 );
    //middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
    middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
-   middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
+
+   if ( !mainw->abde_mode_aprofile )
+     middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
    //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
    
    //middle_h->setRowStretch( 0, 1);
