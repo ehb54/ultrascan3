@@ -1809,22 +1809,18 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    controlsRestrictorWidget_left->setMinimumHeight(500);
  
    middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
-   //middle_h->addWidget( controlsRestrictorWidget_left, Qt::AlignLeft );
-   
-   if ( !mainw->abde_mode_aprofile )
-     middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
-   //middle_h->addWidget( controlsRestrictorWidget_right );
-   else
-     controlsRestrictorWidget_right->hide();
-   //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
+   middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
    
    //middle_h->setRowStretch( 0, 1);
    //Hide all gr_mwvbox instances:
    for ( int i=0; i < gr_mwvbox.size(); ++i )
      gr_mwvbox[ i ]->setVisible( false );
-  
+
    panel->addLayout( middle_h );
 
+   if ( mainw->abde_mode_aprofile )
+     controlsRestrictorWidget_right->hide();
+   
    panel->addStretch();
    
    adjustSize();
