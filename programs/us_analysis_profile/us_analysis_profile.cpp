@@ -1809,7 +1809,7 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    controlsRestrictorWidget_left->setMinimumHeight(500);
  
    //middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
-   middle_h->addWidget( controlsRestrictorWidget_left, Qt::AlignRight );
+   middle_h->addWidget( controlsRestrictorWidget_left, Qt::AlignLeft );
    
    if ( !mainw->abde_mode_aprofile )
      //middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
