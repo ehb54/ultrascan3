@@ -310,6 +310,11 @@ if(LICENSE_FILE AND EXISTS "${LICENSE_FILE}")
     message(STATUS "[MacHpcDeploy] Copied license.txt")
 endif()
 
+if(VERSION_FILE AND EXISTS "${VERSION_FILE}")
+    file(COPY "${VERSION_FILE}" DESTINATION "${HPC_STAGE_DIR}")
+    message(STATUS "[MacHpcDeploy] Copied VERSION")
+endif()
+
 # =========================================================================
 # Summary
 # =========================================================================

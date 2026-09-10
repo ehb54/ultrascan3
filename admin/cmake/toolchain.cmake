@@ -55,33 +55,41 @@ elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "vcpkg triplet")
     endif()
 
-    # On Windows ARM64 building for x64-windows, vcpkg auto-detects the host as
-    # arm64-windows and installs Qt tools (moc, rcc, windeployqt) there instead
-    # of under x64-windows.  Explicitly setting VCPKG_HOST_TRIPLET=x64-windows
-    # causes vcpkg.cmake to pass --host-triplet=x64-windows to vcpkg install,
-    # which makes vcpkg treat the build as native x64 and place all tools under
-    # installed/x64-windows/tools/.  x64 binaries run under ARM64 emulation on
-    # Windows 11 ARM, so this is safe.
-    if(NOT DEFINED VCPKG_HOST_TRIPLET AND VCPKG_TARGET_TRIPLET STREQUAL "x64-windows")
-        set(VCPKG_HOST_TRIPLET "x64-windows" CACHE STRING "vcpkg host triplet")
-        message(STATUS "VCPKG_HOST_TRIPLET set to x64-windows (ensures Qt tools land in x64-windows/tools/)")
-    endif()
-
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_HOST_SYSTEM_NAME}")
 endif()
 
-message(STATUS "Platform: ${CMAKE_HOST_SYSTEM_NAME}, triplet: ${VCPKG_TARGET_TRIPLET}")
+# Native builds use one triplet for target libraries and host tools.
+# This prevents duplicate dependency graphs and keeps Qt tools in the target tree.
+if(NOT DEFINED VCPKG_HOST_TRIPLET)
+    set(VCPKG_HOST_TRIPLET "${VCPKG_TARGET_TRIPLET}" CACHE STRING "vcpkg host triplet")
+endif()
+
+message(STATUS "Platform: ${CMAKE_HOST_SYSTEM_NAME}, triplet: ${VCPKG_TARGET_TRIPLET}, host triplet: ${VCPKG_HOST_TRIPLET}")
 
 # =============================================================================
-# Set shared vcpkg installed dir BEFORE including vcpkg.cmake so manifest-mode
-# doesn't default to ${CMAKE_BINARY_DIR}/vcpkg_installed.
-# Priority: explicit -DVCPKG_INSTALLED_DIR > VCPKG_ROOT/installed
+# vcpkg installed dir: left at vcpkg's manifest-mode default,
+# ${CMAKE_BINARY_DIR}/vcpkg_installed.
+#
+# A tree under VCPKG_ROOT cannot be shared between build trees: manifest mode
+# makes it match the CURRENT VCPKG_MANIFEST_FEATURES exactly, so an HPC
+# configure uninstalls the APP profile's qwt and vice versa, and each
+# invalidates the other's configure stamp. Keeping packages in the build tree
+# removes the sharing that made that possible. They come from the binary cache
+# (VCPKG_BINARY_SOURCES), so a new tree restores rather than rebuilds.
 # =============================================================================
-if(NOT DEFINED VCPKG_INSTALLED_DIR OR "${VCPKG_INSTALLED_DIR}" STREQUAL "")
-    set(VCPKG_INSTALLED_DIR "${_VCPKG_ROOT}/installed" CACHE PATH
-        "vcpkg installed packages directory" FORCE)
-    message(STATUS "Set VCPKG_INSTALLED_DIR to shared dir: ${VCPKG_INSTALLED_DIR}")
+# string(FIND), not MATCHES: the needle is a path, so a regex metacharacter in
+# it (+, (, a Windows backslash) would silently fail to match. Prefix rather
+# than equality, to catch the feature-keyed variants (installed-qt6-app, ...).
+set(_us3_shared_installed_dir "${_VCPKG_ROOT}/installed")
+if(DEFINED VCPKG_INSTALLED_DIR AND NOT "${VCPKG_INSTALLED_DIR}" STREQUAL "")
+    # Migrate caches written while a shared tree was in use.
+    string(FIND "${VCPKG_INSTALLED_DIR}" "${_us3_shared_installed_dir}" _us3_shared_pos)
+    if(_us3_shared_pos EQUAL 0)
+        unset(VCPKG_INSTALLED_DIR CACHE)
+        unset(_VCPKG_INSTALLED_DIR CACHE)
+        message(STATUS "vcpkg installed dir: migrated to the build-local default")
+    endif()
 endif()
 
 # =============================================================================

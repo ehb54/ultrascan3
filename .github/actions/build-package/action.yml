@@ -1,0 +1,137 @@
+name: "Build and package UltraScan3"
+description: >-
+  Configure, build and package UltraScan3 against the pinned dependency
+  toolchain, then stage exactly one package for upload. Shared by the
+  containerised Linux path and the native macOS/Windows path so the two cannot
+  drift apart.
+
+inputs:
+  profile:
+    description: "APP | HPC | TEST"
+    required: true
+  qt_variant:
+    description: "qt6 | qt5-qwt630"
+    required: true
+  clean_tier:
+    description: "incremental | rebuild | clean"
+    required: false
+    default: incremental
+  artifact_name:
+    description: "Name for the uploaded artifact"
+    required: true
+  retention_days:
+    description: "Artifact retention"
+    required: false
+    default: "3"
+
+runs:
+  using: composite
+  steps:
+    # Validate a container cache or download and verify a native archive.
+    - name: Resolve dependency toolchain
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        chmod +x scripts/fetch-toolchain.sh
+        scripts/fetch-toolchain.sh --github-env
+
+    - name: Resolve dependency toolchain (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: ./scripts/fetch-toolchain.ps1 -GitHubEnv
+
+    - name: Report toolchain
+      shell: bash
+      run: |
+        echo "US3_VCPKG_CACHE=${US3_VCPKG_CACHE:-<unset>}"
+        if [ -n "${US3_VCPKG_CACHE:-}" ] && [ -d "$US3_VCPKG_CACHE" ]; then
+          echo "cached packages: $(find "$US3_VCPKG_CACHE" -name '*.zip' | wc -l | tr -d ' ')"
+          du -sh "$US3_VCPKG_CACHE" 2>/dev/null || true
+        fi
+        # Set by fetch-toolchain for container targets only; see build.sh.
+        if [ "${US3_REQUIRE_BINARY_CACHE:-false}" = "true" ]; then
+          echo "binary cache: ENFORCED (a miss fails the build)"
+        else
+          echo "binary cache: advisory (a miss falls back to a source build)"
+        fi
+
+    - name: Build and package (Linux / macOS)
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
+        CI: "true"
+        US3_PROFILE: ${{ inputs.profile }}
+      run: |
+        set -euo pipefail
+        chmod +x scripts/build.sh
+        args=("${{ inputs.profile }}" "--${{ inputs.qt_variant }}" "--pkg")
+        case "${{ inputs.clean_tier }}" in
+          rebuild) args+=("--rebuild") ;;
+          clean)   args+=("--clean") ;;
+        esac
+        echo "scripts/build.sh ${args[*]}"
+        bash scripts/build.sh "${args[@]}"
+
+    - name: Build and package (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      env:
+        CI: "true"
+      run: |
+        call scripts\build.bat ${{ inputs.profile }} --${{ inputs.qt_variant }} --pkg ^
+          ${{ inputs.clean_tier == 'rebuild' && '--rebuild' || '' }} ^
+          ${{ inputs.clean_tier == 'clean' && '--clean' || '' }}
+
+    # Require exactly one package before uploading the artifact.
+    - name: Stage package
+      shell: bash
+      env:
+        PROFILE: ${{ inputs.profile }}
+      run: |
+        set -euo pipefail
+        rm -rf artifact-upload && mkdir -p artifact-upload
+
+        # macOS bash 3.2 lacks `mapfile` and `readarray`.
+        FOUND=$(
+          find build -maxdepth 2 -type f \
+            \( -name 'UltraScan3-*.tar.xz' \
+            -o -name 'UltraScan3-*.pkg' \
+            -o -name 'UltraScan3-*.exe' \
+            -o -name 'UltraScan3-*.tar.gz' \) | sort
+        )
+
+        if [ "$PROFILE" = "HPC" ]; then
+          FOUND=$(printf '%s\n' "$FOUND" | grep -- '-HPC-' || true)
+        else
+          FOUND=$(printf '%s\n' "$FOUND" | grep -v -- '-HPC-' || true)
+        fi
+
+        PKG=$(printf '%s\n' "$FOUND" | head -n 1)
+
+        if [ -z "$PKG" ]; then
+          echo "::error::no package produced for profile ${PROFILE}"
+          find build -maxdepth 2 -type f -name 'UltraScan3-*' || echo "(nothing matching UltraScan3-*)"
+          exit 1
+        fi
+
+        cp "$PKG" artifact-upload/
+        echo "staged: $PKG"
+        ls -lh artifact-upload/
+
+    # overwrite:true because artifact names are immutable and scoped to the run,
+    # not the attempt. Every caller's name is built from run_id or run_number,
+    # so re-running a run would collide with its own previous attempt and fail
+    # the upload rather than replace it.
+    - name: Upload package
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: artifact-upload/*
+        retention-days: ${{ inputs.retention_days }}
+        if-no-files-found: error
+        overwrite: true

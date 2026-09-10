@@ -43,6 +43,7 @@ vdw.json
 yellow-black.map
 # List of directories that belong in $ULTRASCAN/etc
 dmd/
+icons/
 mysql/
 rotors/
 somo/

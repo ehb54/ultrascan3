@@ -216,6 +216,23 @@ else()
     set(EXCLUDED_PROGRAMS CMakeFiles generated)
 endif()
 
+# GMP (21 CFR Part 11) tools, plus the academic "Data Acquisition" variant,
+# have no menu entry on macOS (see the Q_OS_MAC guards around the GMP menu
+# and P_GETDATA in programs/us/us.cpp) and are not shipped in the macOS
+# installer, so skip building them there entirely.
+if(APPLE)
+    list(APPEND EXCLUDED_PROGRAMS
+        us_com_project
+        us_com_project_academic
+        us_protocol_dev
+        us_reporter_gmp
+        us_esigner_gmp
+        us_audit_trail_gmp
+        us_assign_reviewers_gmp
+        us_reassign_reviewers_gmp
+    )
+endif()
+
 file(GLOB program_dirs LIST_DIRECTORIES true RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*")
 
 set(added 0)

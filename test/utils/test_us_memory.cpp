@@ -75,13 +75,21 @@ TEST_F(TestUSMemoryUnit, RssNowAfterMemoryAllocation) {
 // Test that RSS increases after allocating memory
 long int rss_before = US_Memory::rss_now();
 
-// Allocate a significant amount of memory (10MB)
+// Allocate a significant amount of memory (10MB).  The pointer is volatile
+// and the pages are read back into a volatile sink because an optimizing
+// build is otherwise free to delete both the write loop and the allocation
+// itself -- at -O3 it does, and RSS never moves.
 const size_t allocation_size = 10 * 1024 * 1024;
-char* memory_block = new char[allocation_size];
+volatile char* memory_block = new char[allocation_size];
 
 // Touch the memory to ensure it's actually allocated
 for (size_t i = 0; i < allocation_size; i += 4096) {
 memory_block[i] = static_cast<char>(i % 256);
+}
+
+volatile long sink = 0;
+for (size_t i = 0; i < allocation_size; i += 4096) {
+sink += memory_block[i];
 }
 
 long int rss_after = US_Memory::rss_now();

@@ -1,14 +1,7 @@
 name: UltraScan3 On-Demand Build
 
-# ============================================================================
-# Manual dispatch (workflow_dispatch) entry point for on-demand platform builds.
-# Fans out to the corresponding ./.github/workflows/build-<platform>.yml reusable workflows via
-# workflow_call. Each selected platform runs its own probe → warm → build chain
-# independently. Windows goes direct to build with no probe/warm phase.
-#
-# Inputs: ref (branch/tag/SHA), platforms (single, group, or all), clean tier,
-#         artifact retention. All artifacts are prefixed with ondemand-<run>.
-# ============================================================================
+# Runs selected platform builds for a branch, tag, or SHA.
+# Artifact names identify the version, run, commit, and platform.
 
 run-name: "On-Demand [${{ inputs.ref }}] ${{ inputs.platforms }} by @${{ github.actor }}"
 
@@ -58,74 +51,88 @@ on:
 permissions:
   contents: write
   actions: write
+  packages: read
 
 jobs:
 
-  ubuntu:
-    name: "Ubuntu 24.04 (APP + HPC)"
-    if: |
-      inputs.platforms == 'all'    ||
-      inputs.platforms == 'ubuntu' ||
-      inputs.platforms == 'linux'
-    uses: ./.github/workflows/build-ubuntu.yml
-    with:
-      ref:                     ${{ inputs.ref }}
-      clean_tier:              ${{ inputs.clean_tier }}
-      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
-      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
-    secrets: inherit
+  metadata:
+    name: "Resolve build identity"
+    runs-on: ubuntu-24.04
+    outputs:
+      version:   ${{ steps.identity.outputs.version }}
+      short_sha: ${{ steps.identity.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
 
-  macos-arm:
-    name: "macOS ARM (APP)"
-    if: |
-      inputs.platforms == 'all'       ||
-      inputs.platforms == 'macos-arm' ||
-      inputs.platforms == 'macos'
-    uses: ./.github/workflows/build-macos-arm.yml
-    with:
-      ref:                     ${{ inputs.ref }}
-      clean_tier:              ${{ inputs.clean_tier }}
-      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
-      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
-    secrets: inherit
+      - name: Read version and commit
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '\r\n' < VERSION)
+          if [[ ! "$version" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "Invalid VERSION value for an artifact name: $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$(git rev-parse --short=8 HEAD)" >> "$GITHUB_OUTPUT"
 
-  macos-intel:
-    name: "macOS Intel (APP)"
-    if: |
-      inputs.platforms == 'all'         ||
-      inputs.platforms == 'macos-intel' ||
-      inputs.platforms == 'macos'
-    uses: ./.github/workflows/build-macos-intel.yml
-    with:
-      ref:                     ${{ inputs.ref }}
-      clean_tier:              ${{ inputs.clean_tier }}
-      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
-      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
-    secrets: inherit
+  # PLATFORM BUILDS
+  # The matrix is built in Python rather than selected with a job-level `if:`.
+  # This is a GitHub Actions constraint, not a preference: a job's `if:` is
+  # evaluated before its matrix expands, so it cannot read matrix context.
+  # Filtering the matrix itself is the only form that works.
 
-  windows:
-    name: "Windows x64 (APP)"
-    if: |
-      inputs.platforms == 'all'     ||
-      inputs.platforms == 'windows'
-    uses: ./.github/workflows/build-windows.yml
-    with:
-      ref:                     ${{ inputs.ref }}
-      clean_tier:              ${{ inputs.clean_tier }}
-      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
-      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
-    secrets: inherit
+  select:
+    name: "Select platforms"
+    needs: metadata
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.s.outputs.matrix }}
+    steps:
+      - id: s
+        shell: bash
+        env:
+          SELECTED: ${{ inputs.platforms }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
 
-  oraclelinux8:
-    name: "Oracle Linux 8 x64 (APP + HPC)"
-    if: |
-      inputs.platforms == 'all'         ||
-      inputs.platforms == 'oraclelinux8' ||
-      inputs.platforms == 'linux'
-    uses: ./.github/workflows/build-oraclelinux.yml
+          sel = os.environ["SELECTED"]
+          rows = [
+            {"target": "ubuntu2404-x64",   "profile": "APP", "label": "Ubuntu 24.04 APP",   "platform": "Ubuntu-24.04-x86_64",     "groups": ["ubuntu", "linux"]},
+            {"target": "ubuntu2404-x64",   "profile": "HPC", "label": "Ubuntu 24.04 HPC",   "platform": "HPC-Ubuntu-24.04-x86_64", "groups": ["ubuntu", "linux"]},
+            {"target": "oraclelinux8-x64", "profile": "APP", "label": "Oracle Linux 8 APP", "platform": "RHEL-8-x86_64",           "groups": ["oraclelinux8", "linux"]},
+            {"target": "oraclelinux8-x64", "profile": "HPC", "label": "Oracle Linux 8 HPC", "platform": "HPC-RHEL-8-x86_64",       "groups": ["oraclelinux8", "linux"]},
+            {"target": "macos-arm64",      "profile": "APP", "label": "macOS arm64 APP",    "platform": "macOS-arm64",             "groups": ["macos-arm", "macos"]},
+            {"target": "macos-x64",        "profile": "APP", "label": "macOS x86_64 APP",   "platform": "macOS-x86_64",            "groups": ["macos-intel", "macos"]},
+            {"target": "windows-x64",      "profile": "APP", "label": "Windows x86_64 APP", "platform": "Windows-x86_64",          "groups": ["windows"]},
+          ]
+          keep = [r for r in rows if sel == "all" or sel in r["groups"]]
+          for r in keep:
+              r.pop("groups")
+          print("matrix=" + json.dumps({"include": keep}))
+          PY
+          cat "$GITHUB_OUTPUT"
+
+  build:
+    name: "${{ matrix.label }}"
+    needs: [metadata, select]
+    if: fromJson(needs.select.outputs.matrix).include[0] != null
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.select.outputs.matrix) }}
+    uses: ./.github/workflows/app-build.yml
     with:
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
+      qt_variant:              qt6
       ref:                     ${{ inputs.ref }}
       clean_tier:              ${{ inputs.clean_tier }}
-      artifact_name_prefix:    ${{ format('ondemand-{0}-{1}', github.run_number, inputs.ref) }}
+      artifact_name:           ${{ format('UltraScan3-{0}-build-{1}-{2}-{3}', needs.metadata.outputs.version, github.run_number, needs.metadata.outputs.short_sha, matrix.platform) }}
       artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
     secrets: inherit
