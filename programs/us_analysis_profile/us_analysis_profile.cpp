@@ -113,11 +113,7 @@ DbgLv(1) << "MAIN:  CALL check_runname()";
 
 DbgLv(1) << "MAIN:  CALL reset()";
 //reset();
-   // NOTE: previously this called resize( 500, 450 ), which unconditionally
-   // shrank the window right after setMinimumSize( 950, 450 ) + adjustSize()
-   // had already computed a correct size. That forced every user to manually
-   // widen the window by hand on every launch. Let adjustSize() computed
-   // geometry stand instead.
+   resize( 500, 450 );
 
    // //test
    // US_AnaProfile profile1;
@@ -1144,19 +1140,10 @@ void US_AnalysisProfileGui::apply_profile( void )
 DbgLv(1) << "MN:SL: APPLY_PROFILE";
 }
 
-// Set even spacing in the grid layout across however many columns
-// this particular grid actually uses. This is shared by three different
-// panels (General/ABDE, 2DSA, PCSA), whose grids do NOT all have the same
-// column count -- and the General panel's own column count changes
-// between ABDE mode (columns 0-15, 16 total, including the "Reference?",
-// "Use Reference#" and "Apply to All" columns) and non-ABDE mode
-// (columns 0-14, 15 total). A hardcoded "12" silently starved whichever
-// trailing columns existed beyond it of any stretch factor, leaving their
-// share of extra/available width undefined.
+// Set even spacing in the grid layout for all 12 columns
 void US_AnalysisProfileGui::setColumnStretches( QGridLayout* genL )
 {
-   int ncols = genL->columnCount();
-   for ( int ii = 0; ii < ncols; ii++ )
+   for ( int ii = 0; ii < 12; ii++ )
       genL->setColumnStretch( ii, 1 );
 }
 
@@ -1825,23 +1812,9 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
 
    //middle_h->addLayout( left,  0, 0, -1, 7 );
    //middle_h->addLayout( right, 0, 7, -1, 2 );
-   // Restored the column span that was dropped when this switched from
-   // addLayout() to addWidget(): without "-1, 7" here, the left widget only
-   // claims column 0 of this QGridLayout, leaving columns 1-6 empty. With no
-   // stretch factors set on middle_h, Qt spreads any extra window width
-   // evenly across ALL of its columns -- including those empty ones, and the
-   // right-hand columns that are blank whenever the (usually-hidden) MWL
-   // Prefs groupboxes aren't shown. That silent gap is the grey dead space
-   // appearing to the right of "Apply to All".
-   middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
+   //middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
+   middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
    middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
-   // Make sure the left (content) side is the only side that ever claims
-   // extra width; the right side should stay at its natural minimum.
-   middle_h->setColumnStretch( 0, 1 );
-   for ( int ic = 1; ic < 7; ic++ )
-      middle_h->setColumnStretch( ic, 0 );
-   middle_h->setColumnStretch( 7, 0 );
-   middle_h->setColumnStretch( 8, 0 );
    //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
    
    //middle_h->setRowStretch( 0, 1);
@@ -1854,14 +1827,6 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    panel->addStretch();
    
    adjustSize();
-   // This panel is embedded as a tab page inside mainw's tabWidget, so
-   // adjustSize() on "this" does not change the top-level window's size --
-   // it only affects a widget already constrained by its parent layout.
-   // Since abde_mode_aprofile (and therefore this grid's real column count,
-   // 16 vs 15) is only known/settable after mainw was originally constructed
-   // and sized, re-adjust the actual top-level window here too, once the
-   // ABDE-specific columns have actually been added to genL.
-   mainw->adjustSize();
 }
 
 //Togle MWLPrefs checkbox
