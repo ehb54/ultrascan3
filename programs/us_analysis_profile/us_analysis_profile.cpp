@@ -1166,7 +1166,6 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 //   genL            = new QGridLayout();
    genL            = NULL;
    //middle_h = new QHBoxLayout;
-   //middle_h = new QGridLayout;
    middle_h = new QGridLayout;
    left     = new QVBoxLayout;
    right    = new QVBoxLayout;
@@ -1809,21 +1808,29 @@ DbgLv(1) << "Ge:SL: nchn" << nchn << "lcrat size" << le_lcrats.count();
    controlsRestrictorWidget_left->setLayout( left );
    controlsRestrictorWidget_left->setMinimumHeight(500);
  
-
-   //middle_h->addLayout( left,  0, 0, -1, 7 );
-   //middle_h->addLayout( right, 0, 7, -1, 2 );
-   //middle_h->addWidget( controlsRestrictorWidget_left,  0, 0, -1, 7 );
    middle_h->addWidget( controlsRestrictorWidget_left, 0, 0 );
    middle_h->addWidget( controlsRestrictorWidget_right, 0, 7, -1, 2, Qt::AlignRight);
-   //middle_h->setSizeConstraint(QLayout::SetNoConstraint);
    
    //middle_h->setRowStretch( 0, 1);
    //Hide all gr_mwvbox instances:
    for ( int i=0; i < gr_mwvbox.size(); ++i )
      gr_mwvbox[ i ]->setVisible( false );
-  
+
    panel->addLayout( middle_h );
 
+   if ( mainw->abde_mode_aprofile )
+     {
+       controlsRestrictorWidget_right->hide();
+       middle_h->removeWidget(controlsRestrictorWidget_left);
+       middle_h->addWidget(controlsRestrictorWidget_left, 0, 0, 1, 9);
+     }
+   else
+     {
+       middle_h->removeWidget(controlsRestrictorWidget_left);
+       middle_h->addWidget(controlsRestrictorWidget_left, 0, 0); // Reset to default 1x1 cell
+       controlsRestrictorWidget_right->show();
+     }
+   
    panel->addStretch();
    
    adjustSize();
