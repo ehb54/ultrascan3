@@ -93,6 +93,15 @@ public:
                   const QString& user, const QString& password,
                   QString& err ) override;
 
+    /*! \brief Begin a transaction on the active connection. */
+    bool beginTransaction( QString& error ) override;
+
+    /*! \brief Commit the active transaction and restore autocommit. */
+    bool commitTransaction( QString& error ) override;
+
+    /*! \brief Roll back the active transaction and restore autocommit. */
+    bool rollbackTransaction( QString& error ) override;
+
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
 
@@ -316,6 +325,17 @@ private:
     QString    caFile;
     QString    error;
     int        db_errno;
+
+    //! \brief Consume and discard any result sets still pending on the
+    //!        connection.
+    //!
+    //! Every query here leaves its results in place for value()/next() to
+    //! read, and a CALL leaves an extra status set behind that as well.  The
+    //! next query cleans up before it runs, so ordinary use never notices --
+    //! but anything that talks to the connection without going through a
+    //! query, transaction control included, has to clear it first or the
+    //! server answers "Commands out of sync".
+    void       drainResults   ();
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );

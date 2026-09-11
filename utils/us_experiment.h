@@ -83,8 +83,8 @@ class US_UTIL_EXTERN US_Experiment
 
           \param    db For database access, an open database connection
       */
-      int checkRunID( US_DB2* = 0 );
-      int checkRunID_auto( int invID_passed, US_DB2* = 0 );
+      int checkRunID( IUS_DB2* = 0 );
+      int checkRunID_auto( int invID_passed, IUS_DB2* = 0 );
 
       /*! \brief    Function to save the experiment information to db
 
@@ -93,8 +93,8 @@ class US_UTIL_EXTERN US_Experiment
           \param    db For database access, an open database connection
           \param    speedsteps Reference to vector of experiment speed steps
       */
-      int saveToDB( bool, US_DB2*, QVector< SP_SPEEDPROFILE >& );
-      int saveToDB_auto( bool, US_DB2*, QVector< SP_SPEEDPROFILE >&, int );
+      int saveToDB( bool, IUS_DB2*, QVector< SP_SPEEDPROFILE >& );
+      int saveToDB_auto( bool, IUS_DB2*, QVector< SP_SPEEDPROFILE >&, int );
       
       /*! \brief    Reads experiment information from the db
 
@@ -103,7 +103,7 @@ class US_UTIL_EXTERN US_Experiment
           \param    speedsteps Reference to vector of experiment speed steps
           \returns  One of the US_DB2 error codes
       */
-      int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >&, const QString = QString("")  );
+      int readFromDB( QString, IUS_DB2*, QVector< SP_SPEEDPROFILE >&, const QString = QString("")  );
 
       /*! \brief    Writes an xml file
 
@@ -190,7 +190,7 @@ class US_UTIL_EXTERN US_Experiment
           \param    runID   Run ID for which to delete records
           \returns          Flag if delete was OK;
       */
-      static bool deleteRunPcsaMrecs( US_DB2*, const QString, const QString );
+      static bool deleteRunPcsaMrecs( IUS_DB2*, const QString, const QString );
 
       void clear( void ); //!< Function to reset all class variables to defaults
       void show ( void ); //!< Temporary function to display current exp info
