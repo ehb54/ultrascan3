@@ -1,6 +1,10 @@
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QPainter>
+#include <QFontDatabase>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 
 #include "us_reporter_gmp.h"
 #include "us_settings.h"
@@ -6950,15 +6954,15 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     .arg( createdGMPrunts )     //1
     ;
   
+  // NOTE: label ("caption") and value are kept in ONE table (instead of
+  // two separate <table> elements) so that QTextDocument cannot place a page
+  // break between them -- see printDocument()/paintPage() for why a page
+  // break landing between two adjacent, separately-tabled blocks was
+  // possible, and platform-dependent (see reportFontFamily()).
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of GMP Run Initiation: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of GMP Run Initiation: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
     .arg( status_map_c[ "Comment" ][ "comment"] )     //1
@@ -7149,15 +7153,13 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
       
+      // Label + value kept in a single table (see note above) to prevent the
+      // page-break/pagination drift previously seen between "Comment at the
+      // Time of Data Saving:" and its "Comment: ..." value.
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of Data Saving: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
 	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
@@ -7364,27 +7366,24 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       html_assembled += tr( "</table>" );
 
       //Edit Profiles Saved:
+      // Single-cell table (see note above).
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Edit Profiles Saved on: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr><td> %1 (UTC)</td>"
+			   "<tr><td><b><i>Edit Profiles Saved on: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> %1 (UTC)</td></tr>"
 			   "</table>"
 			   )
 	.arg( data_types_edit_ts[ im.key() ] )           //1
 	;
 
+      // This is the specific label/value pair ("Comment at the Time of Data
+      // Saving:" / "Comment: ...") that was previously observed splitting
+      // across the page 7/8 boundary on some OS installs; kept as a single
+      // table so it can no longer be separated by a page break.
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of Data Saving: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
 	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
@@ -7447,15 +7446,12 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
 
   analysis_time_abde = analysisABDEts;
   
+  // Single-cell table (see note above): label and value can no longer be
+  // separated by a page break.
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of ABDE Profile Processing: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of ABDE Profile Processing: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
     .arg( status_map_c[ "Comment" ][ "comment"] )     //1
@@ -10878,7 +10874,12 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   rptpage  += "    }\n";
   rptpage  += "    .datatext\n";
   rptpage  += "    {\n";
-  rptpage  += "      font-family: monospace;\n";
+  // Pin to the exact fixed-width font we ship (see reportFontFamily()),
+  // with the generic "monospace" keyword only as a last-resort fallback,
+  // instead of relying solely on fontconfig's "monospace" alias -- which
+  // is what let this section's layout/metrics (and therefore page breaks)
+  // differ across OS installs.
+  rptpage  += "      font-family: \"" + US_ReporterGMP::reportFontFamily( true ) + "\", monospace;\n";
   rptpage  += "    }\n";
 
   //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
@@ -12249,7 +12250,16 @@ void US_ReporterGMP::write_pdf_report( void )
   textDocument.setHtml( html_assembled );
 
   qDebug() << "Default QtextDoc font1: " << textDocument.defaultFont();
+
+  // Pin the body font to the font we ship with the app (see
+  // reportFontFamily()), instead of leaving the family unset and letting it
+  // resolve to whatever "sans-serif" happens to fontconfig-match on the
+  // machine generating the report (Noto Sans on Ubuntu 24 vs DejaVu Sans on
+  // Oracle Linux, for example). This is what previously caused identical
+  // HTML to paginate differently -- with page 7/8 splitting a label from its
+  // value -- purely because of which OS built the PDF.
   QFont t_f = textDocument.defaultFont();
+  t_f. setFamily( US_ReporterGMP::reportFontFamily( false ) );
   t_f. setPointSize( 7 );
   textDocument. setDefaultFont( t_f );
   qDebug() << "Default QtextDoc font2: " << textDocument.defaultFont();
@@ -12439,6 +12449,78 @@ void US_ReporterGMP::write_pdf_report( void )
 double US_ReporterGMP::mmToPixels(QPrinter& printer, int mm)
 {
   return mm * 0.039370147 * printer.resolution();
+}
+
+
+// Load (once) and return the family name of the font that GMP reports must
+// use, regardless of platform. This is the fix for the pagination drift seen
+// between Ubuntu 24 (fc-match sans-serif -> "Noto Sans") and Oracle Linux
+// (fc-match sans-serif -> "DejaVu Sans"): letting QTextDocument fall back to
+// the *system* default font means two different distros lay out identical
+// HTML with two different sets of glyph metrics, which shifts where the
+// pixel-height-based page breaks in printDocument()/paintPage() land -
+// occasionally splitting a label from its value across a page boundary
+// (e.g. "Comment at the Time of Data Saving:" / "Comment: sa" on pages 7/8).
+//
+// Embedding the exact font file we ship removes that platform dependency:
+// every install renders with byte-identical metrics, so pagination is
+// reproducible everywhere.
+QString US_ReporterGMP::reportFontFamily(bool monospace)
+{
+  static QString regularFamily;
+  static QString monoFamily;
+
+  QString& cached  = monospace ? monoFamily : regularFamily;
+  if ( !cached.isEmpty() )
+    return cached;
+
+  const QString fname   = monospace ? "DejaVuSansMono.ttf" : "DejaVuSans.ttf";
+  const QString fallbackFamily = monospace ? "DejaVu Sans Mono" : "DejaVu Sans";
+
+  // Fonts are shipped alongside the application (e.g. installed under
+  // <app_dir>/fonts/ or /etc/upmc/ultrascan3/fonts/ as part of the package).
+  // Try the most likely locations in order; the first one found wins.
+  QStringList candidatePaths;
+  candidatePaths << QCoreApplication::applicationDirPath() + "/fonts/" + fname
+                 << QCoreApplication::applicationDirPath() + "/../fonts/" + fname
+                 << qEnvironmentVariable( "ULTRASCAN3" ) + "/fonts/" + fname
+                 << qEnvironmentVariable( "ULTRASCAN" )  + "/etc/fonts/" + fname;
+
+  int fontId = -1;
+  for ( const QString& path : candidatePaths )
+    {
+      if ( path.isEmpty() || !QFileInfo::exists( path ) )
+        continue;
+
+      fontId = QFontDatabase::addApplicationFont( path );
+      if ( fontId != -1 )
+        break;
+    }
+
+  if ( fontId != -1 )
+    {
+      const QStringList families = QFontDatabase::applicationFontFamilies( fontId );
+      if ( !families.isEmpty() )
+        {
+          cached = families.at( 0 );
+          qDebug() << "US_ReporterGMP::reportFontFamily: embedded font loaded -- "
+                    << cached << " from " << candidatePaths;
+          return cached;
+        }
+    }
+
+  // Embedded font file wasn't found/loadable - fall back to asking for the
+  // family by name. This is best-effort only: if the target system doesn't
+  // have "DejaVu Sans[ Mono]" installed, Qt/fontconfig will substitute
+  // something else and the platform-dependent pagination drift can recur.
+  // (Ship the .ttf files with the installer to avoid relying on this path.)
+  qWarning() << "US_ReporterGMP::reportFontFamily: embedded font file not found"
+                " (looked in:" << candidatePaths << "); falling back to"
+                " requesting family by name:" << fallbackFamily
+             << "-- report pagination may not be fully OS-independent"
+                " until the font file is shipped with the application.";
+  cached = fallbackFamily;
+  return cached;
 }
 
 void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QWidget* parentWidget)
