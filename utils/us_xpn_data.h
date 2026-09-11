@@ -319,10 +319,15 @@ class US_UTIL_EXTERN US_XpnData : public QObject
 
       //! \brief Export to openAUC
       //! \param allData Input vector of rawDatas built from XPN data
-      //! \returns       Number of files written
+      //! \returns       Number of files actually written.  A triple the writer
+      //!                rejects is not counted;  export_error() describes it.
       int     export_auc      ( QVector< US_DataIO::RawData >& );
       int     export_auc_auto ( QVector< US_DataIO::RawData >&, bool& );
-      
+
+      //! \brief Report on triples the last export failed to write
+      //! \returns       Description of the failures, empty if there were none
+      QString export_error    ( void );
+
       //! \brief A count of specified type
       //! \param key     Key string for which to map a value ("file",...)
       //! \returns       Number of values for the array with given key
@@ -460,6 +465,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       QString   dbfile;              //!< Full path .sqlite DB file
       QString   runID;               //!< Run ID
       QString   runType;             //!< Run Type (usually "RI")
+      QString   exp_error;           //!< Triples the last export could not write
 
    private slots:
 

@@ -2476,6 +2476,7 @@ DbgLv(1) << "rBldRawD   timi1" << timi1 << "timi2" << timi2
 int US_XpnData::export_auc( QVector< US_DataIO::RawData >& allData )
 {
    int nfiles        = 0;
+   exp_error         = QString( "" );
 #if 0
    if ( ! is_raw )
       return nfiles;
@@ -2540,7 +2541,17 @@ DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trno
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 
-      US_DataIO::writeRawData( fpath, *rdata );
+      int wstat         = US_DataIO::writeRawData( fpath, *rdata );
+
+      if ( wstat != US_DataIO::OK )
+      {  // Do not count a file the writer refused, and remember why
+         qDebug() << "*ERROR* Unable to write" << fpath
+                  << ":" << US_DataIO::errorString( wstat );
+         exp_error        += ( exp_error.isEmpty() ? QString( "" )
+                                                   : QString( "\n" ) )
+                           + fname + ": " + US_DataIO::errorString( wstat );
+         continue;
+      }
 
       nfiles++;
 
@@ -2904,6 +2915,7 @@ DbgLv(1) << "expA: TMST files written.";
 int US_XpnData::export_auc_auto( QVector< US_DataIO::RawData >& allData, bool& tmstampOK )
 {
    int nfiles        = 0;
+   exp_error         = QString( "" );
 #if 0
    if ( ! is_raw )
       return nfiles;
@@ -2968,7 +2980,17 @@ DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trno
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 
-      US_DataIO::writeRawData( fpath, *rdata );
+      int wstat         = US_DataIO::writeRawData( fpath, *rdata );
+
+      if ( wstat != US_DataIO::OK )
+      {  // Do not count a file the writer refused, and remember why
+         qDebug() << "*ERROR* Unable to write" << fpath
+                  << ":" << US_DataIO::errorString( wstat );
+         exp_error        += ( exp_error.isEmpty() ? QString( "" )
+                                                   : QString( "\n" ) )
+                           + fname + ": " + US_DataIO::errorString( wstat );
+         continue;
+      }
 
       nfiles++;
 
@@ -3340,6 +3362,12 @@ DbgLv(1) << "expA: TMST files written.";
 
 
 // Return a count of a specified type
+// Report on triples the last export could not write
+QString US_XpnData::export_error( void )
+{
+   return exp_error;
+}
+
 int US_XpnData::countOf( QString key )
 {
    mapCounts();

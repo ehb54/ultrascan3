@@ -606,6 +606,7 @@ void US_RemoveRI::slt_save(void){
     QString status = tr("writting: %1 %2");
     QString percent;
     QString fileName("%1.RA.%2.%3.%4.auc");
+    QStringList write_errors;
     for (int i = 0; i < n_ccw; ++i){
         for (int j = 0; j < ccwItemList.wavelength.at(i).size(); ++j){
             percent = QString::number(100.0 * n / nwl_tot, 'f', 1);
@@ -620,9 +621,23 @@ void US_RemoveRI::slt_save(void){
             char channel = rawData.channel;
             QString fn = fileName.arg(runIdOut).arg(cell).arg(channel).arg(wavelength);
             QFileInfo fileInfo(dir, fn);
-            US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawData);
+            int wstat = US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawData);
+            if (wstat != US_DataIO::OK) {
+                write_errors << tr("%1: %2").arg(fn, US_DataIO::errorString(wstat));
+            }
         }
     }
+
+    // A rejected write leaves no file behind, so announcing success here would
+    // hide triples that never reached the disk.
+    if (! write_errors.isEmpty()) {
+        le_status->setText(tr("%1 triple(s) FAILED to write!").arg(write_errors.size()));
+        QMessageBox::warning(this, "Error!",
+                             tr("%1 triple(s) could not be written:\n\n%2")
+                             .arg(write_errors.size()).arg(write_errors.join("\n")));
+        return;
+    }
+
     le_status->setText("written on the local disk !");
 
     return;

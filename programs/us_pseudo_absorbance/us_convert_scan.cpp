@@ -1040,6 +1040,7 @@ void US_ConvertScan::save_run() {
     dir.setPath(dir.absoluteFilePath(abs_runid));
     // load timestate if available
     int loading_timestate = load_timestate(run_list.at(0), dir);
+    QStringList write_errors;
     for (int ii = 0; ii < out_rawdata.size(); ii++) {
         US_DataIO::RawData rawdata = out_rawdata.at(ii);
         int cell = rawdata.cell;
@@ -1047,7 +1048,19 @@ void US_ConvertScan::save_run() {
         double wvl = rawdata.scanData.at(0).wavelength;
         QString fn = fileName.arg(abs_runid).arg(cell).arg(channel).arg(wvl);
         QFileInfo fileInfo(dir, fn);
-        US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawdata);
+        int wstat = US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawdata);
+        if (wstat != US_DataIO::OK) {
+            write_errors << tr("%1: %2").arg(fn, US_DataIO::errorString(wstat));
+        }
+    }
+
+    // A rejected write leaves no file behind, so a silent loop here would
+    // report a saved run that is missing triples.
+    if (! write_errors.isEmpty()) {
+        QMessageBox::warning(this, "Error!",
+                             tr("%1 of %2 triple(s) could not be saved:\n\n%3")
+                             .arg(write_errors.size()).arg(out_rawdata.size())
+                             .arg(write_errors.join("\n")));
     }
 
 }

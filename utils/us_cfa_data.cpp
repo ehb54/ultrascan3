@@ -558,7 +558,14 @@ int US_CfaData::export_auc( QVector< US_DataIO::RawData >& allData )
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 
-      US_DataIO::writeRawData( fpath, *rdata );
+      int wstat         = US_DataIO::writeRawData( fpath, *rdata );
+
+      if ( wstat != US_DataIO::OK )
+      {  // Do not count a file the writer refused
+         qDebug() << "*ERROR* Unable to write" << fpath
+                  << ":" << US_DataIO::errorString( wstat );
+         continue;
+      }
 
       nfiles++;
 DbgLv(1) << "expA: nf" << nfiles << "fname" << fname;
