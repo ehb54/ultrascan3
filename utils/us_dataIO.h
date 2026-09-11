@@ -165,6 +165,14 @@ class US_UTIL_EXTERN US_DataIO
             ODlimit      = 1.5;
             bottom       = 0.0;
 
+            //! Defaults for optional XML elements.
+            meniscus     = 0.0;
+            gapTolerance = 0.0;
+            rangeLeft    = 0.0;
+            rangeRight   = 0.0;
+            plateau      = 0.0;
+            baseline     = 0.0;
+
 	    bl_corr_slope = 0.0;
 	    bl_corr_yintercept = 0.0; 
 
@@ -294,6 +302,14 @@ class US_UTIL_EXTERN US_DataIO
           \param parameters A reference to the data structure for the read data
       */
       static int     readEdits   ( const QString&, EditValues& );
+
+      /*! Write edit parameters in XML format.
+          Sections with default values and lambdas are omitted.
+          \param filename   The filename to be written
+          \param parameters The edit values to write
+          \returns          OK, or CANTOPEN if the file could not be opened
+      */
+      static int     writeEdits  ( const QString&, const EditValues& );
 
       /*! A string describing the last read or write error
           \param code  The error code to be described

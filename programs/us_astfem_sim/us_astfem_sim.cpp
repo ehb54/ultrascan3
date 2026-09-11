@@ -7,10 +7,13 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
+#include "us_headless_cli.h"
 #include "us_astfem_sim.h"
 #include "us_sim_params_gui.h"
 #include "us_math2.h"
 #include "us_astfem_math.h"
+#include "us_sim_inputs.h"
+#include "us_hardware.h"
 #include "us_defines.h"
 #include "us_clipdata.h"
 #include "us_rotor_gui.h"
@@ -19,12 +22,16 @@
 #include "us_model_gui.h"
 #include "us_buffer_gui.h"
 #include "us_util.h"
+#include "us_experiment.h"
+#include "us_convert.h"
+#include "us_sim_record.h"
 #include "us_astfem_rsa.h"
 #include "us_lamm_astfvm.h"
 #include "us_time_state.h"
 
 //! \brief Main program for US_Astfem_Sim.  Loads translators and starts
 //! the class US_Astfem_Sim.
+#ifndef US_ASTFEM_SIM_NO_MAIN
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
@@ -40,27 +47,41 @@ int main( int argc, char* argv[] )
 
    QCommandLineParser parser;
    auto help_option = QCommandLineOption({"help", "h", "?"},
-      "Display help on commandline options");
+      "Display command-line help");
    parser.addOption(help_option);
    auto version_option = parser.addVersionOption();
    auto model_option = QCommandLineOption("model",
-      "Load model from file path, GUID or DB ID",
+      "Load a model from a file path, GUID, or database ID",
       "model");
    parser.addOption(model_option);
    auto buffer_option = QCommandLineOption("buffer",
-      "Load buffer from file path, GUID or DB ID",
+      "Load a buffer from a file path, GUID, or database ID",
       "buffer");
    parser.addOption(buffer_option);
    auto sim_parameters_option = QCommandLineOption("simparams",
-      "Load simulation parameters from file path",
+      "Load simulation parameters from a file path",
       "simparams");
    parser.addOption(sim_parameters_option);
    auto rotor_option = QCommandLineOption("rotor",
-      "Load rotor from file path, GUID or DB ID",
+      "Load a rotor from a file path, GUID, or database ID",
       "rotor");
    parser.addOption(rotor_option);
+   auto centerpiece_option = QCommandLineOption("centerpiece",
+      "Centerpiece-list index used for channel geometry (default: 0). "
+      "Overrides the bottom position recovered from --simparams, which is the "
+      "only way to select a row of a multi-row centerpiece. Indexes the local "
+      "etc/abstractCenterpieces.xml, never the database, so that a given index "
+      "means the same thing on every machine",
+      "index");
+   parser.addOption(centerpiece_option);
+   auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
+      "Row within the centerpiece (default: 0), given either as a channel "
+      "letter (A-H, where a channel and its reference share a row, so A and B "
+      "are row 0) or as a bare row index",
+      "channel");
+   parser.addOption(centerpiece_channel_option);
    auto movie_option = QCommandLineOption("movie",
-      "Show movie of simulation");
+      "Show the simulation as a movie");
    parser.addOption(movie_option);
    auto time_correction_option = QCommandLineOption("timecorr",
       "Use time correction");
@@ -69,51 +90,52 @@ int main( int argc, char* argv[] )
       "Start simulation automatically");
    parser.addOption(start_option);
    auto save_option = QCommandLineOption("save",
-      "Save simulation data to file path",
-      "save");
+      "Directory to write the run into; its last path component becomes the "
+      "run ID. Writes several files, not one: the .auc data, the time-state "
+      "pair, the edit file, and any noise CSVs. A multi-speed run instead "
+      "writes one sibling directory per speed, suffixed with -<rpm>",
+      "dir");
    parser.addOption(save_option);
+   auto guid_seed_option = QCommandLineOption("guid-seed",
+      "Derive this run's experiment, raw and edit GUIDs from this text "
+      "instead of minting random ones, so simulating the same inputs twice "
+      "produces the same identities. Use a value unique to the run",
+      "text");
+   parser.addOption(guid_seed_option);
+   auto edit_stamp_option = QCommandLineOption("edit-timestamp",
+      "Stamp the edit filename with this yyMMddhhmm instead of the current "
+      "clock, so the run's filenames are reproducible too",
+      "yyMMddhhmm");
+   parser.addOption(edit_stamp_option);
    auto close_option = QCommandLineOption("close",
       "Close application if no errors occurred");
    parser.addOption(close_option);
    auto ignore_db_option = QCommandLineOption("no-db",
-      "Ignore any database preferences and only use locally available data");
+      "Ignore database preferences and use only locally available data");
    parser.addOption(ignore_db_option);
    auto errors_option = QCommandLineOption("errors-cl",
-      "Force errors to console and don't open any sort of gui");
+      "Write errors to the console without opening the GUI");
    parser.addOption(errors_option);
+   auto run_type_option = QCommandLineOption("runtype",
+      runTypeOptionHelp(), "runtype");
+   parser.addOption(run_type_option);
+   auto cell_option = QCommandLineOption("cell", cellOptionHelp(), "cell");
+   parser.addOption(cell_option);
+   auto channel_option = QCommandLineOption("channel", channelOptionHelp(),
+      "channel");
+   parser.addOption(channel_option);
+   auto noise_seed_option = QCommandLineOption("noise-seed",
+      noiseSeedOptionHelp(), "seed");
+   parser.addOption(noise_seed_option);
 
    QMap<QString, QString> args;
-   int cli_parsing_result = -1; //!< -1 not finished, 0 headless, 1 gui needed, 2 error
-   // parser had a problem parsing cli arguments
-   if ( !parser.parse( QApplication::arguments() ) )
-   {
-      // print error message to console via QTextStream
-      QTextStream(stderr) << qUtf8Printable(parser.errorText()) << Qt::endl;
-      // exit QApplication with error code
-      QApplication::exit( 1 );
-      return 1;
-   }
-   // parser detected version option
-   if ( parser.isSet( version_option ) )
-   {
-      QTextStream(stdout) << QString::asprintf( "%s (%s)\nVersion %s\n\n",
-         qUtf8Printable(QApplication::applicationDisplayName() ),
-         qUtf8Printable( QApplication::applicationName() ),
-         qUtf8Printable( QApplication::applicationVersion() )) << Qt::endl;
-      QApplication::exit( 0 );
-      return 0;
-   }
-   // parser detected help option (help or help-all)
-   if ( parser.isSet( help_option ) )
-   {
-      QTextStream(stdout) << qUtf8Printable( parser.helpText() ) << Qt::endl;
-      QApplication::exit( 0 );
-      return 0;
-   }
+   int cli_exit_code = 0;
+   if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
+      return cli_exit_code;
 
-   // parse command specific commands
+   // Parse command-specific options.
 
-   // parse ignore db
+   // Parse the database setting.
    int default_data_location = US_Settings::default_data_location();
    if ( parser.isSet( ignore_db_option ) )
    {
@@ -124,36 +146,29 @@ int main( int argc, char* argv[] )
    {
       args["model"] = parser.value( model_option );
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
    // parse buffer
    if ( parser.isSet( buffer_option ) && !parser.value( buffer_option ).isEmpty() )
    {
       args["buffer"] = parser.value( buffer_option );
-   }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
    }
    // parse simulation parameters
    if ( parser.isSet( sim_parameters_option ) && !parser.value( sim_parameters_option ).isEmpty() )
    {
       args["simparams"] = parser.value( sim_parameters_option );
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
    // parse rotor
    if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
    {
       args["rotor"] = parser.value( rotor_option );
    }
-   else
+   // Parse centerpiece and channel indices.
+   if ( parser.isSet( centerpiece_option ) )
    {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
+      args["centerpiece"] = parser.value( centerpiece_option );
+   }
+   if ( parser.isSet( centerpiece_channel_option ) )
+   {
+      args["centerpiece-channel"] = parser.value( centerpiece_channel_option );
    }
    // parse movie
    if ( parser.isSet( movie_option ) )
@@ -175,39 +190,46 @@ int main( int argc, char* argv[] )
    {
       args["errors-cl"] = "true";
    }
+   // parse run type
+   if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
+      return cli_exit_code;
+   // parse the cell/channel triple
+   if ( parseTripleOptions( parser, cell_option, channel_option, args,
+                            cli_exit_code ) )
+      return cli_exit_code;
+   // parse the noise seed
+   if ( parseNoiseSeedOption( parser, noise_seed_option, args, cli_exit_code ) )
+      return cli_exit_code;
    // parse save
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
    {
       args["save"] = parser.value( save_option ).replace("\\", "/");
    }
-   else
+   // parse guid-seed
+   if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
    {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
+      args["guid-seed"] = parser.value( guid_seed_option );
+   }
+   // parse edit-timestamp
+   if ( parser.isSet( edit_stamp_option ) && !parser.value( edit_stamp_option ).isEmpty() )
+   {
+      args["edit-timestamp"] = parser.value( edit_stamp_option );
    }
    // parse close
    if ( parser.isSet( close_option ) )
    {
       args["close"] = "true";
    }
-   else
-   {
-      cli_parsing_result = qMax( cli_parsing_result, 1 );
-   }
-   cli_parsing_result = qMax( cli_parsing_result, 0 );
    int init_status = w.init_from_args(args);
    if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
    {
       // revert the previously changed default data location
       US_Settings::set_default_data_location( default_data_location );
    }
-   // Only show GUI if needed
-   if ( init_status != 0 && !args.contains( "errors-cl" )) {
-      w.show();
-      return QApplication::exec();
-   }
-
-   return init_status;
+   // Show the GUI only if needed.
+   return showGuiIfNeeded( w, init_status, args );
 }
+#endif
 
 // US_Astfem_Sim constructor
 US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
@@ -215,12 +237,16 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 {
    dbg_level           = US_Settings::us_debug();
    tmst_tfpath         = "";
+   // Only --runtype changes this. The GUI has no control for it, so an
+   // interactive run always produces RA, exactly as before.
+   run_type            = "RA";
 
    setWindowTitle( "UltraScan3 Simulation Module" );
    setPalette( US_GuiSettings::frameColor() );
    init_simparams();
    meniscus_ar                 = 5.8 + simparams.bottom_position - 7.2;
    stopFlag            = false;
+   sim_failed          = false;
    movieFlag           = false;
    save_movie          = false;
    time_correctionFlag = false;
@@ -282,28 +308,28 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    buttonbox->addWidget( te_status );
    buttonbox->addStretch();
 
-   connect( pb_changeModel,&QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::new_model );
-   connect( pb_buffer,     &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::new_buffer );
-   connect( pb_simParms,   &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::sim_parameters );
-   connect( pb_rotor,      &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::select_rotor );
-   connect( ck_savemovie,  &QAbstractButton::toggled,
-            this,          &US_Astfem_Sim::update_save_movie );
-   connect( ck_timeCorr,   &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::update_time_corr );
-   connect( pb_start,      &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::start_simulation );
-   connect( pb_stop,       &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::stop_simulation );
-   connect( pb_saveSim,    &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::save_scans );
-   connect( pb_help,       &QAbstractButton::clicked,
-            this,          &US_Astfem_Sim::help );
-   connect( pb_close,      &QAbstractButton::clicked,
-            this,          &QWidget::close );
+   connect( pb_changeModel,SIGNAL( clicked()        ),
+            this,          SLOT(   new_model()      ) );
+   connect( pb_buffer,     SIGNAL( clicked()        ),
+            this,          SLOT(   new_buffer()     ) );
+   connect( pb_simParms,   SIGNAL( clicked()        ),
+            this,          SLOT(   sim_parameters() ) );
+   connect( pb_rotor,      SIGNAL( clicked()        ),
+            this,          SLOT(   select_rotor() ) );
+   connect( ck_savemovie,  SIGNAL( toggled          ( bool ) ),
+            this,          SLOT(   update_save_movie( bool ) ) );
+   connect( ck_timeCorr,   SIGNAL( clicked()          ),
+            this,          SLOT(   update_time_corr() ) );
+   connect( pb_start,      SIGNAL( clicked()          ),
+            this,          SLOT(   start_simulation() ) );
+   connect( pb_stop,       SIGNAL( clicked()          ),
+            this,          SLOT(   stop_simulation()  ) );
+   connect( pb_saveSim,    SIGNAL( clicked()    ),
+            this,          SLOT(   save_scans() ) );
+   connect( pb_help,       SIGNAL( clicked()    ),
+            this,          SLOT(   help()       ) );
+   connect( pb_close,      SIGNAL( clicked()    ),
+            this,          SLOT(   close()      ) );
 
    main->addLayout( buttonbox, 0, 0 );
 
@@ -381,15 +407,17 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    change_status();
 }
 
-// Initialize simulation from command line arguments
+// Initialize the simulation from command-line arguments.
 int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check if model is to be loaded
    bool gui_needed = !flags.contains("close");
    bool error_occured = false;
-   bool loaded_model = false;
-   bool loaded_buffer = false;
-   bool loaded_simparams = false;
-   bool loaded_rotor = false;
+   // Each input is optional. Only an explicitly requested input that fails
+   // to load should prevent start_simulation() below.
+   bool loaded_model = true;
+   bool loaded_buffer = true;
+   bool loaded_simparams = true;
+   bool loaded_rotor = true;
    bool errors_to_cl = flags.contains("errors-cl");
    // load model
    if ( flags.contains("model") && flags["model"].length() > 0 ) {
@@ -399,18 +427,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_model( model_id, temp_model );
       dialog->close();
       if ( !success ) {
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading model " << model_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "model", model_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_model = false;
       }
       else {
          change_model(temp_model);
-         loaded_model = true;
       }
       delete dialog;
    }
@@ -421,18 +443,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_buffer( load_id, buffer );
       dialog->close();
       if ( !success ) {
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading buffer " << load_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_buffer = false;
       }
       else {
          change_buffer(buffer);
-         loaded_buffer = true;
       }
       delete dialog;
    }
@@ -443,18 +459,15 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_params( load_id, simparams );
       dialog->close();
       if ( !success ) {
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading simparams " << load_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_simparams = false;
       }
       else {
+         // The file omits bottom_position; mirror the loaded at-rest bottom.
+         // An explicit --centerpiece overrides it below.
+         simparams.bottom_position = simparams.bottom;
          set_parameters( );
-         loaded_simparams = true;
       }
       delete dialog;
    }
@@ -482,24 +495,75 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          simparams.rotorcoeffs[0]   = coeff1;
          simparams.rotorcoeffs[1]   = coeff2;
          simparams.rotorCalID = QString::number( rotorInfo->currentCalibration.ID );
-         loaded_rotor = true;
          rotorInfo->close();
       }
       else {
          rotorInfo->close();
-         if ( errors_to_cl )
-         {
-            // print error message to command line and exit
-            qDebug() << "Error loading rotor " << rotor_id;
-            exit( 2 );
-         }
-         gui_needed = true;
-         error_occured = true;
+         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_rotor = false;
       }
       delete rotorInfo;
       delete disk_controls;
    }
 
+   // A centerpiece selects the row geometry and overrides the loaded bottom.
+   // Preserve rotorCalID so its calibration remains in effect.
+   if ( flags.contains("centerpiece") || flags.contains("centerpiece-channel") )
+   {
+      int cp = 0;
+      int ch = 0;
+      QString parse_error;
+
+      if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
+           || ! US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ),
+                                          ch, parse_error ) )
+      {
+         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QString range_error = US_AbstractCenterpiece::validate( cp, ch );
+         if ( ! range_error.isEmpty() )
+         {
+            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
+                                            cp, ch ) )
+         {  // Ignoring this would silently fall back to the 7.2 default bottom
+            reportHeadlessLoadFailure( "centerpiece",
+               "hardware definitions could not be applied", errors_to_cl,
+               gui_needed, error_occured );
+         }
+      }
+   }
+
+   // set the output data type if given. Already validated in main(); absent
+   // it keeps the constructor's "RA", which is what the GUI always uses.
+   // Reproducible identity. Both stay empty unless asked for, so the desktop
+   // and every existing caller keep minting fresh GUIDs and stamping the clock.
+   if ( flags.contains("guid-seed") )
+      guid_seed  = flags["guid-seed"];
+
+   if ( flags.contains("edit-timestamp") )
+      edit_stamp = flags["edit-timestamp"];
+
+   if ( flags.contains("runtype") && flags["runtype"].length() == 2 )
+   {
+      run_type = flags["runtype"];
+   }
+
+   // Preserve the historical 1/S defaults unless the CLI overrides them.
+   if ( flags.contains("cell") )
+      sim_cell    = flags["cell"].toInt();
+
+   if ( flags.contains("channel") )
+      sim_channel = flags["channel"].at( 0 ).toLatin1();
+
+   if ( flags.contains("noise-seed") )
+      noise_seed  = flags["noise-seed"].toUInt();
    // set movie flag if needed
    if ( flags.contains("movie") )
    {
@@ -515,31 +579,27 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check save directory
    if ( flags.contains("save") && flags["save"].length() > 0 )
    {
-      // check if path is accessible and writable
+      // Check whether the path exists and is writable.
       QString save_path = flags["save"];
       QDir dir( save_path );
       if ( !dir.exists() ) {
-         // path does not exist
          if ( errors_to_cl )
          {
-            // print error message to command line and exit
-            qDebug() << "Error save path doesn't exist " << save_path;
+            qDebug() << "Error: save directory does not exist:" << save_path;
             exit( 2 );
          }
          error_occured = true;
          gui_needed = true;
       }
-      // check if writeable
+      // Check whether a file can be created in the directory.
       QFile file(dir.filePath( "tmp.txt" ) );
       if ( !file.open(QIODevice::WriteOnly ) )
       {
          if ( errors_to_cl )
          {
-            // print error message to command line and exit
-            qDebug() << "Error save path isn't writeable " << save_path;
+            qDebug() << "Error: save directory is not writable:" << save_path;
             exit( 2 );
          }
-         // path is not writeable
          error_occured = true;
          gui_needed = true;
       }
@@ -560,11 +620,18 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       if ( flags.contains("start") ) {
          // start simulation
          start_simulation();
-         if ( flags.contains( "save" ) && flags["save"].length() > 0 )
+
+         if ( sim_failed )
+         {  // Saving here would write a dataset that was never simulated,
+            // and report success while doing it.
+            DbgLv(0) << "US_Astfem_Sim: simulation failed; nothing was saved";
+            error_occured = true;
+         }
+         else if ( flags.contains( "save" ) && flags["save"].length() > 0 )
          {
             // check if path is accessible and writable
             QString save_path = flags["save"];
-            save_simulation( save_path, true );
+            save_simulation( save_path, true, true );
          }
       }
    }
@@ -572,12 +639,6 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    {
       gui_needed = true;
    }
-   if ( flags.contains( "close" ) && !gui_needed && !error_occured )
-   {
-      // close GUI
-      gui_needed = false;
-   }
-
    if ( error_occured ) {
       return 2;
    }
@@ -639,8 +700,8 @@ void US_Astfem_Sim::new_model( void )
 {
    system = US_Model();
    US_ModelGui* dialog = new US_ModelGui( system );
-   connect( dialog, &US_ModelGui::valueChanged,
-                    this, &US_Astfem_Sim::change_model );
+   connect( dialog, SIGNAL( valueChanged( US_Model ) ),
+                    SLOT  ( change_model( US_Model ) ) );
    dialog->exec();
 }
 
@@ -670,8 +731,8 @@ void US_Astfem_Sim::new_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
-                    this, &US_Astfem_Sim::change_buffer );
+   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
+                    SLOT  ( change_buffer( US_Buffer ) ) );
 
    dialog->exec();
    qApp->processEvents();
@@ -751,8 +812,8 @@ DbgLv(1) << "dbdisk_from_us_astfem_sim" << dbdisk;
                                              dbdisk,
                                              rotor, calibration );
 
-   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
-                       this, &US_Astfem_Sim::assignRotor );
+   connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+                       SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
    rotorInfo->exec();
 DbgLv(1) << "simparams_rotorcoeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
@@ -776,7 +837,7 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
 
    US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
 
-   connect( dialog, &US_SimParamsGui::complete, this, &US_Astfem_Sim::set_parameters );
+   connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
 
    dialog->exec();
 }
@@ -794,14 +855,14 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    // Initialize all-speed raw data
    sim_data_all.xvalues .clear();
    sim_data_all.scanData.clear();
-   sim_data_all.type[0]    = 'R';
-   sim_data_all.type[1]    = 'A';
+   sim_data_all.type[0]    = run_type.at( 0 ).toLatin1();
+   sim_data_all.type[1]    = run_type.at( 1 ).toLatin1();
 
-   QString guid = US_Util::new_guid();
+   QString guid = US_SimRecord::guid( guid_seed, "raw.all" );
    US_Util::uuid_parse( guid, (uchar*)sim_data_all.rawGUID );
 
-   sim_data_all.cell        = 1;
-   sim_data_all.channel     = 'S';
+   sim_data_all.cell        = sim_cell;
+   sim_data_all.channel     = sim_channel;
    sim_data_all.description = "Simulation";
 
    int points    = qRound( ( simparams.bottom - simparams.meniscus ) /
@@ -824,13 +885,7 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
 // << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
    // Fill in speed steps with scan times and omega^2t; build raw data
-   double time0   = 0.0;
-   double time1   = 0.0;
-   double time2   = 0.0;
-   double w2tsum  = 0.0;
-   double p_speed = 0.0;
    double s_speed = 0.0;
-   double c_speed = 0.0;
    int nstep      = simparams.speed_step.count();
 
    double previous_speed = 0.0;
@@ -848,7 +903,9 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
       const double delay    = qRound(sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0);
       const double duration = qRound(sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0);
       const double scanning_time = duration - delay;
-      const double time_between_scans = scanning_time / static_cast<double>( sp->scans - 1 );
+      const double time_between_scans = ( sp->scans > 1 )
+         ? scanning_time / static_cast<double>( sp->scans - 1 )
+         : 0.0;
       US_DataIO::Scan scandata;
       scandata.temperature = simparams.temperature;
       scandata.rpm         = target_speed;
@@ -863,6 +920,10 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
          if (s == 0) {
             sp->time_first = scandata.seconds;
             sp->w2t_first  = scandata.omega2t;
+            if ( sp->scans == 1 ) {
+               sp->time_last = sp->time_first;
+               sp->w2t_last  = sp->w2t_first;
+            }
          }
          else if ( s == sp->scans - 1) {
             sp->time_last  = scandata.seconds;
@@ -875,85 +936,6 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
       previous_time  = sp->time_last;
       previous_w2t   = sp->w2t_last;
    }
-
-   for ( int jd = 0; jd < 0; jd++ )
-   {
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jd ];
-      time0          = time2;
-      p_speed        = s_speed;
-      c_speed        = p_speed;
-DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2;
-      s_speed        = sp->set_speed;
-
-      if ( nstep > 0  &&  s_speed < 1.0 )
-      {  // For multi-speed, insure values for set and average speeds
-         s_speed        = qRound( sp->rotorspeed * 0.01 ) * 100.0;
-         sp->set_speed  = s_speed;
-         sp->avg_speed  = sp->rotorspeed;
-      }
-
-      s_speed        = ( s_speed == 0.0 ) ? sp->rotorspeed : s_speed;
-      double accel   = sp->acceleration;
-      double dlay    = sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0;
-      double durat   = sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0;
-      time1          = qRound( time0 + dlay  );
-      time2          = qRound( time0 + durat );
-      double c_time  = time0;
-      sp->time_first = time1;
-      sp->time_last  = time2;
-      double timeinc = ( time2 - time1 ) / (double)( sp->scans - 1 );
-DbgLv(1) << "SimPar:MAIN:SetP:   sset" << jd << "time1 time2" << time1 << time2
- << "timeinc" << timeinc << "scans" << sp->scans << " c,s speed" << c_speed << s_speed;
-
-      while ( c_speed < s_speed )
-      {  // Walk through acceleration zone building omega2t sum
-         w2tsum         = sq( accel * M_PI / 30.0 * c_time ) * c_time;
-         c_speed       += accel;
-         c_time        += 1.0;
-DbgLv(1) << "SimPar:MAIN:SetP:   accel speed w2t time" << c_speed << w2tsum << c_time;
-      }
-DbgLv(1) << "SimPar:MAIN:SetP: accel-end:  time omega2t" << c_time << w2tsum;
-
-      c_speed        = s_speed;
-      double w2tinc  = sq( c_speed * M_PI / 30.0 );
-      // reset the w2tsum value at the end of the acceleration for the constant speed iteration
-      w2tsum         = w2tinc * c_speed / accel + w2tinc * ( c_time - c_speed / accel );
-      while ( c_time < time1 )
-      {  // Walk up to the first scan time, accumulating omega2t sum
-         c_time        += 1.0;
-         w2tsum        += w2tinc;
-      }
-      DbgLv(1) << "SimPar:MAIN:SetP: 1st scan:   time omega2t" << c_time << w2tsum << "w2tinc" << w2tinc;
-
-      sp->time_first = static_cast<int>(time1);
-      sp->w2t_first  = w2tsum;
-      w2tinc         = timeinc * sq( c_speed * M_PI / 30.0 );
-      c_time         = time1 - timeinc;
-      w2tsum         = w2tsum - w2tinc;
-      DbgLv( 1 ) << "SimPar:MAIN:SetP: c_time w2tsum w2tinc timeinc" << c_time << w2tsum << w2tinc << timeinc << "time1" << time1 ;
-      US_DataIO::Scan scandata;
-      scandata.temperature = simparams.temperature;
-      scandata.rpm         = c_speed;
-      scandata.omega2t     = w2tsum;
-      scandata.wavelength  = system.wavelength;
-      scandata.plateau     = 0.0;
-      scandata.delta_r     = simparams.radial_resolution;
-      scandata.rvalues     .fill( 0.0, points   );
-
-      for ( int js = 0; js < sp->scans; js++ )
-      {  // Save scan times and omega2ts
-         c_time           += timeinc;
-         w2tsum           += w2tinc;
-         int itime         = (int)qRound( c_time );
-         scandata.seconds  = (double)itime;
-         scandata.omega2t  = w2tsum;
-         DbgLv( 2 ) << "SimPar:MAIN:SetP: js time omega2t " << js << scandata.seconds << scandata.omega2t;
-         sim_data_all.scanData << scandata;
-      }
-      sp->time_last  = time2;
-      sp->w2t_last   = w2tsum;
-DbgLv(1) << "SimPar:MAIN:SetP: last scan:  time omega2t" << time2  << w2tsum;
-   }  // End: loop to fill sim_data_all with times and omega2t's
 
    // Create a timestate for this speed profile set
    if ( !tmst_tfpath.isEmpty()  ||
@@ -1017,6 +999,7 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 void US_Astfem_Sim::start_simulation( void )
 {
 //DbgLv(1) << "start_simulation is called";
+   sim_failed     = false;
    double current_time;  // Used for current time
    double delay;         // Acceleration time of the rotor from one speed to other
    double increment;     // Used to update omega_2_t in experimental grid
@@ -1050,14 +1033,17 @@ DbgLv(1) << "start_simulation is called, steps:" << nstep;
    {
       sim_datas[ jd ].xvalues .clear();
       sim_datas[ jd ].scanData.clear();
-      sim_datas[ jd ].type[0]    = 'R';
-      sim_datas[ jd ].type[1]    = 'A';
+      sim_datas[ jd ].type[0]    = run_type.at( 0 ).toLatin1();
+      sim_datas[ jd ].type[1]    = run_type.at( 1 ).toLatin1();
 
-      QString guid = US_Util::new_guid();
+      // Each speed step is saved as its own run, so it carries its own raw
+      // GUID rather than a view of a shared one.
+      QString guid = US_SimRecord::guid( guid_seed,
+                                         QString( "raw.%1" ).arg( jd ) );
       US_Util::uuid_parse( guid, (uchar*)sim_datas[ jd ].rawGUID );
 
-      sim_datas[ jd ].cell        = 1;
-      sim_datas[ jd ].channel     = 'S';
+      sim_datas[ jd ].cell        = sim_cell;
+      sim_datas[ jd ].channel     = sim_channel;
       sim_datas[ jd ].description = "Simulation";
 
       simparams.meniscus      = meniscus_ar;
@@ -1129,6 +1115,11 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
    simparams.sim    = true;
    simparams.firstScanIsConcentration = false;
 
+   // ASTFEM computes one composite dataset spanning every speed step; ASTFVM
+   // computes sim_datas[ 0 ] and leaves the composite empty.  Noise follows
+   // whichever the solver actually filled in.
+   noise_to_composite = ( simparams.meshType != US_SimulationParameters::ASTFVM );
+
    // Here we simulate on simulation grid and get
    // back the scans on desired grid i.e. either
    // experimental or simulation
@@ -1170,18 +1161,18 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
 
       astfem = new US_Astfem_RSA( system_corrected, simparams );
 
-      connect( astfem, &US_Astfem_RSA::new_scan,
-                       this, &US_Astfem_Sim::update_movie_plot );
-      connect( astfem, &US_Astfem_RSA::current_component,
-                       this, &US_Astfem_Sim::update_progress );
-      connect( astfem, &US_Astfem_RSA::new_time,
-                       this, &US_Astfem_Sim::update_time );
-      connect( astfem, &US_Astfem_RSA::current_speed,
-                       this, &US_Astfem_Sim::update_speed );
-      connect( astfem, &US_Astfem_RSA::calc_progress,
-                       this, &US_Astfem_Sim::show_progress );
-      connect( astfem, &US_Astfem_RSA::calc_done,
-                       this, &US_Astfem_Sim::calc_over );
+      connect( astfem, SIGNAL( new_scan( QVector< double >*, double* ) ),
+                       SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+      connect( astfem, SIGNAL( current_component( int ) ),
+                       SLOT  ( update_progress  ( int ) ) );
+      connect( astfem, SIGNAL( new_time   ( double ) ),
+                       SLOT  ( update_time( double ) ) );
+      connect( astfem, SIGNAL( current_speed( int ) ),
+                       SLOT  ( update_speed ( int ) ) );
+      connect( astfem, SIGNAL( calc_progress( int ) ),
+                       SLOT  ( show_progress( int ) ) );
+      connect( astfem, SIGNAL( calc_done( void ) ),
+                       SLOT  ( calc_over( void ) ) );
 
       astfem->set_movie_flag( ck_movie->isChecked() );
 //      astfem->setStopFlag( stopFlag );
@@ -1232,37 +1223,31 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
       simparams.bottom    = sim_data_all.xvalues[ points - 1 ];
 
       // Compute the simulation dataset
-      astfem->calculate( sim_data_all );
-      calc_over();
-
-      int ks              = 0;
-
-      // Copy generated simulation dataset to any separate speed datasets
-      for ( int jd = 0; jd < nstep; jd++ )
-      {
-         int nscans          = sim_datas[ jd ].scanCount();
-         for ( int js = 0; js < nscans; js++, ks++ )
-         {
-            sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ ks ];
-         }
+      if ( astfem->calculate( sim_data_all ) < 0 )
+      {  // Ignoring this would go on to save a dataset that was never
+         // simulated. The solver has already reported why it failed.
+         DbgLv(0) << "US_Astfem_Sim: simulation failed";
+         sim_failed  = true;
+         return;
       }
+      calc_over();
    }
    else
    {
       astfvm = new US_LammAstfvm( system, simparams );
 
-      connect( astfvm, &US_LammAstfvm::new_scan,
-                       this, &US_Astfem_Sim::update_movie_plot );
-      connect( astfvm, &US_LammAstfvm::comp_progress, this, &US_Astfem_Sim::update_progress );
-      connect( astfvm, &US_LammAstfvm::new_time,
-                       this, &US_Astfem_Sim::update_time );
-
-      //connect( astfvm, SIGNAL( current_speed( int ) ),
-      //                 SLOT  ( update_speed ( int ) ) );
-      connect( astfvm, &US_LammAstfvm::calc_progress,
-                       this, &US_Astfem_Sim::show_progress );
-      connect( astfvm, &US_LammAstfvm::calc_done,
-                       this, &US_Astfem_Sim::calc_over );
+      connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
+                       SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+      connect( astfvm, SIGNAL( current_component( int ) ),
+                       SLOT  ( update_progress  ( int ) ) );
+      connect( astfvm, SIGNAL( new_time   ( double ) ),
+                       SLOT  ( update_time( double ) ) );
+      connect( astfvm, SIGNAL( current_speed( int ) ),
+                       SLOT  ( update_speed ( int ) ) );
+      connect( astfvm, SIGNAL( calc_progress( int ) ),
+                       SLOT  ( show_progress( int ) ) );
+      connect( astfvm, SIGNAL( calc_done( void ) ),
+                       SLOT  ( calc_over( void ) ) );
       astfvm->calculate( sim_datas[ 0 ] );
    }
 
@@ -1281,10 +1266,19 @@ void US_Astfem_Sim::finish( void )
 
 //DbgLv(1) << "FIN: comp size" << system.components.size();
 //DbgLv(1) << "FIN:  total_conc" << total_conc;
+
+   // Seeding here rather than at startup keeps every draw that contributes to
+   // the saved data downstream of the seed, whatever the solver consumed.
+   if ( noise_seed != 0 )
+      US_Math2::randomize( noise_seed );
+
    ri_noise();
    baseline();
    random_noise();
    ti_noise();
+
+   if ( noise_to_composite )
+      derive_speed_data();
 
    // If we didn't interrupt, we need to set to 100 % complete at end of run
    if ( ! stopFlag )
@@ -1326,6 +1320,7 @@ void US_Astfem_Sim::ri_noise( void )
 
    QStringList header;
    header << "Time (s)" << "RI noise (OD)";
+   int scan_offset = 0;
 
    // Add radially invariant noise
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
@@ -1336,12 +1331,13 @@ void US_Astfem_Sim::ri_noise( void )
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
          double rinoise = US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
-         tv << sim_datas[ jd ].scanData[ ks ].seconds;
+         US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
+         tv << scan.seconds;
          rv << rinoise;
 
          for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
          {
-            sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
+            scan.rvalues[ mp ] += rinoise;
          }
       }
       csv_data << tv;
@@ -1349,6 +1345,7 @@ void US_Astfem_Sim::ri_noise( void )
       US_CSV_Data csv;
       csv.setData( header, csv_data );
       csv_data_ri << csv;
+      scan_offset += sim_datas[ jd ].scanData.size();
    }
 }
 
@@ -1357,13 +1354,16 @@ void US_Astfem_Sim::baseline( void )
    if ( simparams.baseline == 0.0 ) return;
 
    // Add a constant baseline offset
+   int scan_offset = 0;
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
        for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
        {
+           US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
            for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += simparams.baseline;
+              scan.rvalues[ mp ] += simparams.baseline;
        }
+       scan_offset += sim_datas[ jd ].scanData.size();
    }
 }
 
@@ -1372,44 +1372,53 @@ void US_Astfem_Sim::random_noise( void )
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
    // Add random noise
    if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
-   {  for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {  int scan_offset = 0;
+      for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
       {
           for ( int j = 0; j < sim_datas[ jd ].scanData.size(); j++ )
           {
+              US_DataIO::Scan& scan = noise_scan( jd, scan_offset, j );
               for ( int k = 0; k < sim_datas[ jd ].pointCount(); k++ )
               {
-                  sim_datas[ jd ].scanData[ j ].rvalues[ k ] +=
+                  scan.rvalues[ k ] +=
                   US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ) + // based on total concentration
-                  US_Math2::box_muller( 0, sim_datas[ jd ].scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
+                  US_Math2::box_muller( 0, scan.rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
               }//'k' loop
           }//'j' loop
+          scan_offset += sim_datas[ jd ].scanData.size();
        }//'i' loop
    }
    if ( simparams.rnoise != 0.0  &&  simparams.lrnoise == 0.0 )
    {
+      int scan_offset = 0;
       for ( int jd = 0; jd < simparams.speed_step.size(); jd++)
       {
           for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
           {
+              US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
               for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
               {
-                  sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] +=
+                  scan.rvalues[ mp ] +=
                   US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
               }
           }
+          scan_offset += sim_datas[ jd ].scanData.size();
        }
    }
    if ( simparams.rnoise == 0.0 && simparams.lrnoise != 0.0)
-   {  for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {  int scan_offset = 0;
+      for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
       {
           for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
           {
+              US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
               for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
               {
-                  sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] +=
-                  US_Math2::box_muller( 0, sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] * simparams.lrnoise / 100 ); // based on local concentration
+                  scan.rvalues[ mp ] +=
+                  US_Math2::box_muller( 0, scan.rvalues[ mp ] * simparams.lrnoise / 100 ); // based on local concentration
               }
           }
+          scan_offset += sim_datas[ jd ].scanData.size();
       }
    }
 }
@@ -1432,16 +1441,18 @@ void US_Astfem_Sim::ti_noise( void )
    }
 
    // Add time invariant noise
+   int scan_offset = 0;
    for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
    {
-      // int points = sim_datas[ jd ].pointCount();
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
+         US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
          for ( int mp = 0; mp < points; mp++ )
          {
-            sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += tinoise[ mp ];
+            scan.rvalues[ mp ] += tinoise[ mp ];
          }
       }
+      scan_offset += sim_datas[ jd ].scanData.size();
    }
 
    // save the TI into a csv file
@@ -1451,6 +1462,41 @@ void US_Astfem_Sim::ti_noise( void )
    csv_data << sim_datas[0].xvalues;
    csv_data << tinoise;
    csv_data_ti.setData( header, csv_data );
+}
+
+// The scan that speed step jd's scan ks contributes to.
+//
+// ASTFEM simulates one composite dataset covering every speed step, so noise
+// is applied there once and the per-speed datasets are derived from the result
+// afterward.  Applying it per speed instead would draw a separate noise series
+// for each step of what is one continuous experiment.  ASTFVM has no composite
+// -- it fills only sim_datas[ 0 ] -- so it keeps the per-speed traversal it has
+// always used.
+US_DataIO::Scan& US_Astfem_Sim::noise_scan( int jd, int scan_offset, int ks )
+{
+   return noise_to_composite ? sim_data_all.scanData[ scan_offset + ks ]
+                             : sim_datas[ jd ].scanData[ ks ];
+}
+
+// Copy the finalized composite scans out to the per-speed datasets that are
+// plotted and saved.  ASTFEM only; see noise_scan().
+void US_Astfem_Sim::derive_speed_data( void )
+{
+   int scan_offset = 0;
+
+   for ( int jd = 0; jd < sim_datas.size(); jd++ )
+   {
+      Q_ASSERT( scan_offset + sim_datas[ jd ].scanData.size()
+                <= sim_data_all.scanData.size() );
+
+      for ( int js = 0; js < sim_datas[ jd ].scanData.size(); js++ )
+         sim_datas[ jd ].scanData[ js ] =
+            sim_data_all.scanData[ scan_offset + js ];
+
+      scan_offset += sim_datas[ jd ].scanData.size();
+   }
+
+   Q_ASSERT( scan_offset == sim_data_all.scanData.size() );
 }
 
 void US_Astfem_Sim::save_scans( void )
@@ -1489,7 +1535,8 @@ DbgLv(1) << "ASIM:svscn: IN";
    save_simulation( odir );
 }
 
-bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog )
+bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog,
+                                     bool write_records )
 {
    QString run_id      = odir.section( "/", -1, -1 );
    int nstep           = simparams.speed_step.size();
@@ -1541,14 +1588,14 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       }  // End:  single-speed case
 
       else
-      {  // Multi-speed_case
+      {  // Multi-speed case: each speed step is saved as its own complete run
+         //  in a sibling directory suffixed with the rpm
 DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
          if ( have_tmst )
          {  // Copy temporary timestate file pairs to each speed's subdirectory
             //  and save AUC data there
             for ( int jd = 0; jd < nstep; jd++ )
             {
-// x  x  x  x  x  x  x
                int ispeed          = simparams.speed_step[ jd ].rotorspeed;
                QString spsufx      = QString::asprintf( "-%05d", ispeed );
                QString run_id1     =  run_id + spsufx;
@@ -1603,320 +1650,173 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
             }
          }
 
-         // Save TI, RI noises
-
+         // Save TI, RI noises beside the data each describes
          for ( int ii = 0; ii < nstep; ii++ )
          {
             int ispeed          = simparams.speed_step[ ii ].rotorspeed;
             QString spsufx      = QString::asprintf( "-%05d", ispeed );
-            QString odir1       =  odir   + spsufx;
-            QDir dir ( odir1 );
-            csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
-            csv_data_ri[ ii ].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
-            save_csv_noise( csv_data_ti );
-            save_csv_noise( csv_data_ri[ ii ] );
-         }
+            QDir dir( odir + spsufx );
 
-//*DEBUG*
-int kscn=sim_data_all.scanCount();
-DbgLv(1) << "ASIM:svscn:  all_data scan count" << kscn << sim_data_all.scanData.count();
-for(int ss=0; ss<kscn; ss++ )
- DbgLv(1) << "ASIM:svscn:  scan" << (ss+1) << "time" << sim_data_all.scanData[ss].seconds;
-//*DEBUG*
+            if ( csv_data_ti.rowCount() > 0 )
+            {
+               csv_data_ti.setFilePath(
+                  dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+               save_csv_noise( csv_data_ti );
+            }
+
+            if ( ii < csv_data_ri.size()  &&  csv_data_ri[ ii ].rowCount() > 0 )
+            {
+               csv_data_ri[ ii ].setFilePath(
+                  dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+               save_csv_noise( csv_data_ri[ ii ] );
+            }
+         }
       }  // End:  multi-speed case
    }  // End:  output directory specified
-   if ( !supress_dialog )
-   {
+   if ( !write_records )
+   {  // The simulated data has been written; the records that describe it have
+      // not. Gated separately from supress_dialog, which the two used to share:
+      // that made whether a run got an experiment record depend on whether it
+      // was allowed to raise a dialog, so the GUI's Save Simulation wrote scan
+      // data with no solution, no experiment record and no edit files, leaving
+      // nothing able to attribute the data to a sample. Kept off by default so
+      // the desktop keeps writing exactly what it always has; the headless
+      // caller, whose output is loaded into a database, asks for the records.
       return true;
    }
-   // write experiment file
+
+   // Ensure trailing /
    if ( odir.right( 1 ) != "/" )
    {
-      odir += "/"; // Ensure trailing /
+      odir += "/";
    }
+
    QString runType = QString( QChar( sim_datas[0].type[ 0 ] ) )
                      + QString( QChar( sim_datas[0].type[ 1 ] ) );
-   QString writeFile = run_id      + "."
-                     + runType    + ".xml";
-   QFile file( odir + writeFile );
-   QString experiment_GUID = US_Util::new_guid();
-   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
+
+   // One solution for the run: the model's components in the run's buffer.
+   // Shared by every dataset, so it is composed and written once. The
+   // composition is shared with us_mwl_species_sim through US_SimRecord.
+   QList< US_Model > models;
+   QList< double >   wavelengths;
+   models      << system;
+   wavelengths << system.wavelength;
+
+   US_Solution sol = US_SimRecord::solution( models, wavelengths, buffer );
+
+   // saveToDisk mints one only when this does not already hold a UUID, so
+   // seeding it here needs no change to US_Solution.
+   if ( ! guid_seed.isEmpty() )
+      sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
+
+   if ( sol.analyteInfo.isEmpty() )
+      return false;
+
+   sol.saveToDisk();
+
+   // One experiment record and one edit file per dataset, each written beside
+   // the data it describes.
+   //
+   // A single-speed run is one dataset in odir and this writes one of each
+   // there.  A multi-speed run has already written one complete run per speed
+   // into a sibling directory suffixed with the rpm, each with its own run ID
+   // and its own rawGUID: separate runs, not triples of one run.  Both
+   // documents name their run in the filename and their data by GUID in the
+   // body, so a single set written for the base run ID describes datasets that
+   // are not there and matches none of the ones that are, leaving every
+   // multi-speed dataset unloadable.
+   int     nspeed = simparams.speed_step.count();
+   QString now    = edit_stamp.isEmpty()
+                    ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" )
+                    : edit_stamp;
+
+   for ( int jd = 0; jd < nspeed; jd++ )
    {
-      return false ;
-   }
+      US_DataIO::RawData& sim_data = sim_datas[ jd ];
+      QString edir       = odir;
+      QString edit_runid = run_id;
 
-   QXmlStreamWriter xml;
-   xml.setDevice( &file );
-   xml.setAutoFormatting( true );
+      // The speed steps this run covers.  A multi-speed dataset is a run of
+      // one speed, so its record carries only that step rather than all of
+      // them.
+      QVector< SP_SPEEDPROFILE > speed_steps = simparams.speed_step;
 
-   xml.writeStartDocument();
-   xml.writeDTD("<!DOCTYPE US_Scandata>");
-   xml.writeStartElement("US_Scandata");
-   xml.writeAttribute("version", "1.0");
+      if ( nspeed > 1 )
+      {  // The same suffix the save loop above used.  odir carries a trailing
+         // separator by this point, so it comes off and goes back on.
+         QString spsufx     = QString::asprintf( "-%05d",
+                                 simparams.speed_step[ jd ].rotorspeed );
+         edir               = odir.left( odir.length() - 1 ) + spsufx + "/";
+         edit_runid         = run_id + spsufx;
 
-   // elements
-   // experiment
-   xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "id",   QString::number( 0 ) );
-   xml.writeAttribute   ( "guid", experiment_GUID );
-   xml.writeAttribute   ( "type",  QString( "velocity" ) );
-   xml.writeAttribute   ( "runID", run_id );
-   // investigator
-   xml.writeStartElement( "investigator" );
-   xml.writeAttribute   ( "id", QString::number( US_Settings::us_inv_ID(  ) ) );
-   xml.writeAttribute   ( "guid", QString( "" ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "name" );
-   xml.writeAttribute   ( "value", US_Settings::us_inv_name(  ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "project" );
-   xml.writeAttribute   ( "id", QString::number( 0 ) );
-   xml.writeAttribute   ( "guid", "" );
-   xml.writeAttribute   ( "desc", "Simulation" );
-   xml.writeEndElement  ();
-   int lab_id = 1;
-   int instrument_id = 1;
-   QString instrument_serial = "";
-
-   xml.writeStartElement( "lab" );
-   xml.writeAttribute   ( "id",   QString::number( 1 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "instrument" );
-   xml.writeAttribute   ( "id",     QString::number( 1 ) );
-   xml.writeAttribute   ( "serial", "" );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "operator" );
-   xml.writeAttribute   ( "id", QString::number( 0 ) );
-   xml.writeAttribute   ( "guid", "" );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "rotor" );
-   xml.writeAttribute   ( "id",     QString::number( rotor.ID   ) );
-   xml.writeAttribute   ( "guid",   rotor.GUID );
-   xml.writeAttribute   ( "serial", rotor.serialNumber );
-   xml.writeAttribute   ( "name", rotor.name );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "calibration" );
-   xml.writeAttribute   ( "id",     simparams.rotorCalID );
-   xml.writeAttribute   ( "coeff1", QString::number( simparams.rotorcoeffs[0] ) );
-   xml.writeAttribute   ( "coeff2", QString::number( simparams.rotorcoeffs[1] ) );
-   xml.writeAttribute( "date", "2019-01-01" );
-   xml.writeEndElement  ();
-
-   int     psolID    = -1;
-   QString psolGUID  = "";
-   QString psolDesc  = "";
-   qDebug() << "  EsTD: triples loop" << sim_datas.size();
-   // find if a solution for this already exists
-   US_Solution sol = US_Solution();
-   sol.buffer = buffer;
-   sol.analyteInfo.clear();
-   for ( int i = 0; i < system.components.size(); i++ )
-   {
-      auto comp = system.components[ i ];
-      auto analyte = US_Analyte();
-      analyte.extinction.clear();
-      analyte.type = static_cast<US_Analyte::analyte_t>(comp.analyte_type);
-      analyte.vbar20 = comp.vbar20;
-      analyte.mw = comp.mw;
-      analyte.description = comp.name;
-      analyte.analyteGUID = comp.analyteGUID;
-      // analyte.sequence has no corresponding SimulationComponent property
-      analyte.grad_form = system.coSedSolute == i;
-      analyte.extinction[system.wavelength] = comp.extinction;
-      auto analyteInfo = US_Solution::AnalyteInfo();
-      analyteInfo.analyte = analyte;
-      analyteInfo.amount = comp.signal_concentration;
-      if ( i > 0 )
-      {
-         psolDesc += " ";
-      }
-      psolDesc += comp.name;
-      sol.analyteInfo.append(analyteInfo);
-   }
-   psolDesc += " | " + buffer.description;
-   sol.solutionDesc = psolDesc;
-   sol.saveToDisk(  );
-
-
-   // loop through the following for c/c/w combinations
-   for ( int trx = 0; trx < sim_datas.size(); trx++ )
-   {
-      auto trp = sim_datas[ trx ];
-
-      QString triple     = trp.description;
-      QStringList parts  = triple.split(" / ");
-
-      QString cell       = QString::number( trp.cell );
-      QString channel    = QString( trp.channel );
-      QString wl         = QString::number( trp.scanData.first().wavelength );
-      wl     = ( trp.scanData.first().wavelength < 99 ) ? "123" : wl;
-
-      xml.writeStartElement( "dataset" );
-      xml.writeAttribute   ( "id",      QString::number( trx + 1 ) );
-      xml.writeAttribute   ( "guid",    US_Util::uuid_unparse(reinterpret_cast<uchar*>(trp.rawGUID)) );
-      xml.writeAttribute   ( "cell",    cell );
-      xml.writeAttribute   ( "channel", channel );
-
-      if ( runType == "WA" )
-      {
-         xml.writeAttribute( "radius", wl );
-      }
-      else
-      {
-         xml.writeAttribute( "wavelength", wl );
+         speed_steps.clear();
+         speed_steps << simparams.speed_step[ jd ];
       }
 
-      xml.writeStartElement( "centerpiece" );
-      xml.writeAttribute   ( "id", QString::number( 1 ) );
-      xml.writeEndElement  ();
+      // The cell limits follow the rotor speed, and save_xla left af_params
+      // holding whichever speed it saved last, so re-derive this one's.
+      adjust_limits( (double)simparams.speed_step[ jd ].rotorspeed );
 
-      xml.writeStartElement( "solution" );
-      xml.writeAttribute   ( "id",   QString::number( sol.solutionID ) );
-      xml.writeAttribute   ( "guid", sol.solutionGUID );
-      xml.writeAttribute   ( "desc", sol.solutionDesc );
-      xml.writeEndElement  ();
+      QString cell       = QString::number( sim_data.cell );
+      QString channel    = QString( sim_data.channel );
+      double  wavelength = sim_data.scanData.first().wavelength;
+      QString wl         = ( wavelength < 99 ) ? QString( "123" )
+                                               : QString::number( wavelength );
 
-      xml.writeEndElement  ();
-   }
+      // The record.  saveToDisk splits cell, channel and wavelength back out
+      // of tripleDesc, so the " / " separator matters.
+      US_Experiment experiment = US_SimRecord::experiment( rotor, simparams,
+                                                           edit_runid, runType,
+                                                           guid_seed );
 
-   for ( int jj = 0; jj < simparams.speed_step.count(); jj++ )
-   {
-      US_SimulationParameters::speedstepToXml( xml, &simparams.speed_step[ jj ] );
-   }
+      US_Convert::TripleInfo triple;
+      triple.clear();
+      triple.tripleID    = 1;
+      triple.tripleDesc  = cell + " / " + channel + " / " + wl;
+      triple.excluded    = false;
+      triple.centerpiece = 1;
+      triple.solution    = sol;
+      memcpy( triple.tripleGUID, sim_data.rawGUID, sizeof( triple.tripleGUID ) );
 
-   xml.writeStartElement( "opticalSystem" );
-   xml.writeAttribute   ( "value", runType  );
-   xml.writeEndElement  ();
+      QList< US_Convert::TripleInfo > triples;
+      triples << triple;
 
-   xml.writeStartElement( "date" );
-   xml.writeAttribute   ( "value", "" );
-   xml.writeEndElement  ();
+      if ( experiment.saveToDisk( triples, runType, edit_runid, edir,
+                                  speed_steps ) != US_Convert::OK )
+      {
+         qDebug() << "Error: could not write the experiment record for"
+                  << edit_runid;
+         return false;
+      }
 
-   xml.writeStartElement( "runTemp" );
-   xml.writeAttribute   ( "value", QString::number(simparams.temperature) );
-   xml.writeEndElement  ();
-
-   xml.writeTextElement ( "label", run_id );
-   xml.writeTextElement ( "comments", "Auto exported" );
-   xml.writeTextElement ( "protocolGUID", "" );
-
-   xml.writeEndElement(); // US_Scandata
-   xml.writeEndDocument();
-   QString editGUID = US_Util::new_guid();
-   QString rawGUID = US_Util::uuid_unparse(reinterpret_cast<uchar*>(sim_datas[0].rawGUID));
-   QString cell       = QString::number( sim_datas[0].cell );
-   QString channel    = QString( sim_datas[0].channel );
-   QString wl         = QString::number( sim_datas[0].scanData.first().wavelength );
-   wl     = ( sim_datas[0].scanData.first().wavelength < 99 ) ? "123" : wl;
-
-   QString now  =  QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" );
-   QString fname = run_id + "." + now + "." + runType + "." + cell + "." + channel + "." + wl + ".xml";
-   QFile efo( odir + fname );
-
-
-   if ( ! efo.open( QFile::WriteOnly | QFile::Text ) )
-   {
-      QMessageBox::information( this,
-            tr( "File write error" ),
-            tr( "Could not open the file\n" ) + odir + fname
-            + tr( "\n for writing.  Check your permissions." ) );
-      return 1;
-   }
-
-   xml.setDevice( &efo );
-   xml.setAutoFormatting( true );
-
-   xml.setAutoFormatting( true );
-   xml.writeStartDocument();
-   xml.writeDTD         ( "<!DOCTYPE UltraScanEdits>" );
-   xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "type", "Velocity" );
-
-   // Write identification
-   xml.writeStartElement( "identification" );
-
-   xml.writeStartElement( "runid" );
-   xml.writeAttribute   ( "value", run_id );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "editGUID" );
-   xml.writeAttribute   ( "value", US_Util::new_guid() );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "rawDataGUID" );
-   xml.writeAttribute   ( "value", rawGUID );
-   xml.writeEndElement  ();
-
-   xml.writeEndElement  ();  // identification
-
-
-
+      // The edit file.
+      QString fname = edit_runid + "." + now + "." + runType + "." + cell + "."
+                      + channel + "." + wl + ".xml";
 
 DbgLv(1) << "EDT:WrXml:  waveln" << wl;
 
-   xml.writeStartElement( "run" );
-   xml.writeAttribute   ( "cell",       cell    );
-   xml.writeAttribute   ( "channel",    channel );
-   xml.writeAttribute   ( "wavelength", wl  );
+      US_DataIO::EditValues ev;
+      ev.expType    = "Velocity";
+      ev.runID      = edit_runid;
+      ev.cell       = cell;
+      ev.channel    = channel;
+      ev.wavelength = wl;
+      ev.editGUID   = US_SimRecord::guid( guid_seed, "edit." + edit_runid );
+      ev.dataGUID   = US_Util::uuid_unparse(
+                         reinterpret_cast<uchar*>( sim_data.rawGUID ) );
 
+      US_SimulationParameters::editRadiiFromCell( ev, af_params.current_meniscus,
+                                                      af_params.current_bottom );
+      ev.ODlimit    = US_SimRecord::maxOD( sim_data );
 
-   // Write meniscus, range, plateau, baseline, odlimit
-   xml.writeStartElement( "parameters" );
-
-
-   xml.writeStartElement( "meniscus" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_meniscus, 'f', 8 ) );
-   xml.writeEndElement  ();
-   xml.writeStartElement( "bottom" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_bottom, 'f', 8 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "data_range" );
-   xml.writeAttribute   ( "left",
-      QString::number( af_params.current_meniscus + 0.0005,  'f', 8 ) );
-   xml.writeAttribute   ( "right",
-      QString::number( af_params.current_bottom - 0.1, 'f', 8 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "plateau" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_bottom - 0.3,  'f', 8 ) );
-   xml.writeEndElement  ();
-
-   xml.writeStartElement( "baseline" );
-   xml.writeAttribute   ( "radius",
-      QString::number( af_params.current_meniscus + 0.0055, 'f', 8 ) );
-   xml.writeEndElement  ();
-   double maxc        = 0.0;
-   int    total_scans = sim_datas[0].scanCount();
-   int    old_points  = sim_datas[0].pointCount();
-
-   for ( int ii = 0; ii < total_scans; ii++ )
-   {  // Accumulate the maximum computed OD value
-      for ( int kk = 0; kk < old_points; kk++ )
-         maxc = qMax( maxc, sim_datas[0].value( ii, kk ) );
+      if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
+      {  // Only the headless caller reaches this block, so report the failure
+         // the way the rest of that path does rather than with a modal dialog
+         // nothing would be there to dismiss.
+         qDebug() << "Error: could not write edit file" << edir + fname;
+         return false;
+      }
    }
-   xml.writeStartElement( "od_limit" );
-   xml.writeAttribute   ( "value",
-      QString::number( maxc,  'f', 8 ) );
-   xml.writeEndElement  ();
-
-
-   xml.writeEndElement  ();  // parameters
-
-   xml.writeEndElement  ();  // run
-   xml.writeEndElement  ();  // experiment
-   xml.writeEndDocument ();
-
-   efo.close();
 
    return true;
 }
@@ -2075,13 +1975,14 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
  << "maxc dthresh" << maxc << dthresh;
 
       // Report that some readings were threshold-limited
-      QMessageBox::information( this,
-            tr( "OD Values Threshold Limited" ),
-            tr( "%1 readings in %2 scans were reset\n"
-                "to a threshold value of %3 .\n"
-                "The pre-threshold-limit maximum OD\n"
-                "value was %4 ." )
-            .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      if ( ! supress_dialog )
+      {
+         QMessageBox::information( this,
+               tr( "OD Values Limited to Threshold" ),
+               tr( "%1 readings in %2 scans were reset to the threshold "
+                   "value of %3.\nThe maximum OD before thresholding was %4." )
+               .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+      }
    }
 
 
@@ -2398,143 +2299,3 @@ DbgLv(1) << "ASIM: upd_tm: tstep" << tstep << "dtime" << dtime << "icomponent" <
    }
    kstep        = tstep;
 }
-
-void US_Astfem_Sim::dump_system( void )
-{
-   qDebug() << "description" <<system.description;
-   qDebug() << "modelGUID" << system.modelGUID;
-   qDebug() << "component vector size" << system.components.size();
-   for ( int i = 0; i < system.components.size(); i++ )
-   {
-      qDebug() << "component " << i + 1;
-      dump_simComponent( system.components[ i ] );
-   }
-   qDebug() << "association vector size" << system.associations.size();
-   for ( int i = 0; i < system.associations.size(); i++ )
-   {
-      qDebug() << "Association vector " << i + 1;
-      dump_association( system.associations[ i ] );
-   }
-}
-
-void US_Astfem_Sim::dump_simComponent( US_Model::SimulationComponent& sc )
-{
-   qDebug() << "molar_concentration" << sc.molar_concentration;
-   qDebug() << "signal_concentration" << sc.signal_concentration;
-   qDebug() << "vbar20" << sc.vbar20;
-   qDebug() << "mw" << sc.mw;
-   qDebug() << "s" << sc.s;
-   qDebug() << "D" << sc.D;
-   qDebug() << "f" << sc.f;
-   qDebug() << "f_f0" << sc.f_f0;
-   qDebug() << "extinction" << sc.extinction;
-   qDebug() << "axial_ratio" << sc.axial_ratio;
-   qDebug() << "sigma" << sc.sigma;
-   qDebug() << "delta" << sc.delta;
-   qDebug() << "oligomer" << sc.oligomer;
-   qDebug() << "shape" << sc.shape;
-   qDebug() << "name" << sc.name;
-   qDebug() << "analyte_type" << sc.analyte_type;
-   qDebug() << "mfem_initial:";
-   dump_mfem_initial( sc.c0 );
-}
-
-void US_Astfem_Sim::dump_mfem_initial( US_Model::MfemInitial& mfem )
-{
-   qDebug() << "radius list size " << mfem.radius.size();
-//   qDebug() << "radius list" << mfem.radius;
-   qDebug() << "concentration list size " << mfem.concentration.size();
-//   qDebug() << "concentration list" << mfem.concentration;
-}
-
-void US_Astfem_Sim::dump_association( US_Model::Association& as )
-{
-   qDebug() << "k_d" << as.k_d;
-   qDebug() << "k_off" << as.k_off;
-   qDebug() << "rcomps list size " << as.rcomps.size();
-   qDebug() << "rcomps list " << as.rcomps;
-   qDebug() << "stoichs list size " << as.stoichs.size();
-   qDebug() << "stoichs list " << as.stoichs;
-}
-
-void US_Astfem_Sim::dump_simparms( void )
-{
-   qDebug() << "simparams";
-   qDebug() << "mesh_radius list size " << simparams.mesh_radius.size();
-//   qDebug() << "mesh_radius list " << simparams.mesh_radius;;
-   qDebug() << "speed profile list size " << simparams.speed_step.size();
-   for ( int i = 0; i < simparams.speed_step.size(); i++ )
-      dump_ss( simparams.speed_step[ i ] );
-   qDebug() << "simpoints " << simparams.simpoints;
-   qDebug() << "meshType " << simparams.meshType;
-   qDebug() << "gridType " << simparams.gridType;
-   qDebug() << "radial_resolution " << simparams.radial_resolution;
-   qDebug() << "meniscus " << simparams.meniscus;
-   qDebug() << "bottom " << simparams.bottom;
-   qDebug() << "rnoise " << simparams.rnoise;
-   qDebug() << "lrnoise " << simparams.lrnoise;
-   qDebug() << "tinoise " << simparams.tinoise;
-   qDebug() << "rinoise " << simparams.rinoise;
-   qDebug() << "rotorCalID " << simparams.rotorCalID;
-   qDebug() << "band_forming " << simparams.band_forming;
-   qDebug() << "band_volume " << simparams.band_volume;
-   qDebug() << "firstScanIsConcentration "
-      << simparams.firstScanIsConcentration;
-}
-
-void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& sp )
-{
-   qDebug() << "speed profile";
-   qDebug() << "duration_hours " << sp.duration_hours;
-   qDebug() << "duration_minutes " << sp.duration_minutes;
-   qDebug() << "delay_hours " << sp.delay_hours;
-   qDebug() << "delay_minutes " << sp.delay_minutes;
-   qDebug() << "scans " << sp.scans;
-   qDebug() << "acceleration " << sp.acceleration;
-   qDebug() << "rotorspeed " << sp.rotorspeed;
-   qDebug() << "acceleration_flag " << sp.acceleration_flag;
-}
-
-void US_Astfem_Sim::dump_astfem_data( void )
-{
-#if 0
-   qDebug() << "astfem_data---- list size " << astfem_data.size();
-   for ( int j = 0; j < astfem_data.size(); j++ )
-   {
-      qDebug() << "id " << astfem_data[ j ].id;
-      qDebug() << "cell " << astfem_data[ j ].cell;
-      qDebug() << "channel " << astfem_data[ j ].channel;
-      qDebug() << "wavelength " << astfem_data[ j ].wavelength;
-      qDebug() << "rpm " << astfem_data[ j ].rpm;
-      qDebug() << "s20w_correction " << astfem_data[ j ].s20w_correction;
-      qDebug() << "D20w_correction " << astfem_data[ j ].D20w_correction;
-      qDebug() << "viscosity " << astfem_data[ j ].viscosity;
-      qDebug() << "density " << astfem_data[ j ].density;
-      qDebug() << "vbar " << astfem_data[ j ].vbar;
-      qDebug() << "avg_temperature " << astfem_data[ j ].avg_temperature;
-      qDebug() << "vbar20 " << astfem_data[ j ].vbar20;
-      qDebug() << "meniscus " << astfem_data[ j ].meniscus;
-      qDebug() << "bottom " << astfem_data[ j ].bottom;
-      qDebug() << "radius list size " << astfem_data[ j ].radius.size();
-      //qDebug() << "radius list " << astfem_data[ j ].radius;;
-      qDebug() << "scan list size " << astfem_data[ j ].scan.size();
-      for ( int i = 0; i < astfem_data[ j ].scan.size(); i++ )
-         dump_mfem_scan( astfem_data[ j ].scan [ i ] );
-   }
-#endif
-}
-
-void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& /*ms*/ )
-{
-#if 0
-   qDebug() << "mfem_scan----";
-   qDebug() << "time " << ms.time;
-   qDebug() << "omega_s_t " << ms.omega_s_t;
-   qDebug() << "rpm " << ms.rpm;
-   qDebug() << "temperature " << ms.temperature;
-   qDebug() << "time " << ms.time;
-   qDebug() << "conc list size " << ms.conc.size();
-   //qDebug() << "conc " << ms.conc;
-#endif
-}
-

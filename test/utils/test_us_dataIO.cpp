@@ -4,6 +4,8 @@
 #include <QString>
 #include <QVector>
 #include <QByteArray>
+#include <QFile>
+#include <QTemporaryDir>
 #include <limits>
 
 using namespace qt_matchers;
@@ -489,4 +491,225 @@ EXPECT_DOUBLE_EQ(spread, 1273.15) << "Should handle extreme temperature range";
 
 double avg = edgeCaseData.average_temperature();
 EXPECT_DOUBLE_EQ(avg, 363.425) << "Should calculate average of extreme values";
+}
+class TestUSDataIOEdits : public QtTestBase {
+protected:
+    void SetUp() override {
+        QtTestBase::SetUp();
+        ASSERT_TRUE(tmp.isValid()) << "Could not create a temporary directory";
+    }
+
+    QString path(const QString& name) { return tmp.filePath(name); }
+
+    QString slurp(const QString& file) {
+        QFile ff(file);
+        if (!ff.open(QIODevice::ReadOnly | QIODevice::Text)) return QString();
+        QString text = QString::fromUtf8(ff.readAll());
+        ff.close();
+        return text;
+    }
+
+    // Populate every optional velocity section.
+    US_DataIO::EditValues fullVelocity() {
+        US_DataIO::EditValues ev;
+        ev.expType    = "Velocity";
+        ev.runID      = "testrun-1";
+        ev.cell       = "2";
+        ev.channel    = "A";
+        ev.wavelength = "280";
+        ev.editGUID   = "11111111-2222-3333-4444-555555555555";
+        ev.dataGUID   = "66666666-7777-8888-9999-000000000000";
+        ev.meniscus   = 5.83000000;
+        ev.bottom     = 7.19000000;
+        ev.rangeLeft  = 5.83050000;
+        ev.rangeRight = 7.09000000;
+        ev.plateau    = 6.89000000;
+        ev.baseline   = 5.83550000;
+        ev.ODlimit    = 0.91250000;
+        ev.airGapLeft  = 6.10000000;
+        ev.airGapRight = 6.40000000;
+        ev.gapTolerance = 0.02000000;
+        ev.bl_corr_slope      = 0.00125000;
+        ev.bl_corr_yintercept = -0.00400000;
+        ev.noiseOrder   = 3;
+        ev.removeSpikes = true;
+        ev.floatingData = true;
+        ev.invert       = -1.0;
+        ev.excludes << 0 << 4 << 9;
+
+        US_DataIO::EditedPoint pt;
+        pt.scan = 2; pt.radius = 17; pt.value = 0.4321;
+        ev.editedPoints << pt;
+
+        return ev;
+    }
+
+    QTemporaryDir tmp;
+};
+
+TEST_F(TestUSDataIOEdits, VelocityEditsSurviveARoundTrip) {
+    US_DataIO::EditValues out = fullVelocity();
+    QString file = path("velocity.xml");
+
+    ASSERT_EQ(US_DataIO::writeEdits(file, out), US_DataIO::OK);
+
+    US_DataIO::EditValues in;
+    ASSERT_EQ(US_DataIO::readEdits(file, in), US_DataIO::OK);
+
+    EXPECT_EQ(in.expType,    out.expType);
+    EXPECT_EQ(in.runID,      out.runID);
+    EXPECT_EQ(in.cell,       out.cell);
+    EXPECT_EQ(in.channel,    out.channel);
+    EXPECT_EQ(in.wavelength, out.wavelength);
+    EXPECT_EQ(in.editGUID,   out.editGUID);
+    EXPECT_EQ(in.dataGUID,   out.dataGUID);
+
+    EXPECT_DOUBLE_EQ(in.meniscus,     out.meniscus);
+    EXPECT_DOUBLE_EQ(in.bottom,       out.bottom);
+    EXPECT_DOUBLE_EQ(in.rangeLeft,    out.rangeLeft);
+    EXPECT_DOUBLE_EQ(in.rangeRight,   out.rangeRight);
+    EXPECT_DOUBLE_EQ(in.plateau,      out.plateau);
+    EXPECT_DOUBLE_EQ(in.baseline,     out.baseline);
+    EXPECT_DOUBLE_EQ(in.ODlimit,      out.ODlimit);
+    EXPECT_DOUBLE_EQ(in.airGapLeft,   out.airGapLeft);
+    EXPECT_DOUBLE_EQ(in.airGapRight,  out.airGapRight);
+    EXPECT_DOUBLE_EQ(in.gapTolerance, out.gapTolerance);
+    EXPECT_DOUBLE_EQ(in.bl_corr_slope,      out.bl_corr_slope);
+    EXPECT_DOUBLE_EQ(in.bl_corr_yintercept, out.bl_corr_yintercept);
+
+    EXPECT_EQ(in.noiseOrder,   out.noiseOrder);
+    EXPECT_EQ(in.removeSpikes, out.removeSpikes);
+    EXPECT_EQ(in.floatingData, out.floatingData);
+    EXPECT_DOUBLE_EQ(in.invert, out.invert);
+
+    EXPECT_EQ(in.excludes, out.excludes);
+
+    ASSERT_EQ(in.editedPoints.size(), out.editedPoints.size());
+    EXPECT_EQ(in.editedPoints[0].scan,   out.editedPoints[0].scan);
+    EXPECT_EQ(in.editedPoints[0].radius, out.editedPoints[0].radius);
+    EXPECT_DOUBLE_EQ(in.editedPoints[0].value, out.editedPoints[0].value);
+}
+
+TEST_F(TestUSDataIOEdits, ParameterElementsUseTheNamesReadEditsExpects) {
+    // Unknown tags are ignored, so verify their exact spellings.
+    QString file = path("names.xml");
+    ASSERT_EQ(US_DataIO::writeEdits(file, fullVelocity()), US_DataIO::OK);
+
+    QString text = slurp(file);
+    ASSERT_FALSE(text.isEmpty());
+
+    EXPECT_TRUE(text.contains("<!DOCTYPE UltraScanEdits>"));
+    EXPECT_TRUE(text.contains("<data_range "));
+    EXPECT_TRUE(text.contains("<od_limit "));
+    EXPECT_TRUE(text.contains("<plateau "));
+    EXPECT_TRUE(text.contains("<air_gap "));
+    EXPECT_TRUE(text.contains("<linear_baseline_correction "));
+    EXPECT_TRUE(text.contains("<subtract_ri_noise "));
+    EXPECT_FALSE(text.contains("dataRange"));
+}
+
+TEST_F(TestUSDataIOEdits, DefaultedSectionsAreOmitted) {
+    US_DataIO::EditValues out;
+    out.expType    = "Velocity";
+    out.runID      = "bare";
+    out.cell       = "1";
+    out.channel    = "A";
+    out.wavelength = "280";
+
+    QString file = path("bare.xml");
+    ASSERT_EQ(US_DataIO::writeEdits(file, out), US_DataIO::OK);
+
+    QString text = slurp(file);
+    EXPECT_FALSE(text.contains("<excludes>"));
+    EXPECT_FALSE(text.contains("<edited>"));
+    EXPECT_FALSE(text.contains("<lambdas>"));
+    EXPECT_FALSE(text.contains("<operations>"));
+    EXPECT_FALSE(text.contains("<air_gap"));
+    EXPECT_FALSE(text.contains("<linear_baseline_correction"));
+
+    US_DataIO::EditValues in;
+    ASSERT_EQ(US_DataIO::readEdits(file, in), US_DataIO::OK);
+
+    EXPECT_TRUE(in.excludes.isEmpty());
+    EXPECT_TRUE(in.editedPoints.isEmpty());
+    EXPECT_TRUE(in.lambdas.isEmpty());
+    EXPECT_EQ(in.noiseOrder, 0);
+    EXPECT_FALSE(in.removeSpikes);
+    EXPECT_FALSE(in.floatingData);
+    EXPECT_DOUBLE_EQ(in.invert, 1.0);
+    EXPECT_DOUBLE_EQ(in.gapTolerance, 0.0);
+}
+
+TEST_F(TestUSDataIOEdits, EquilibriumSpeedStepsSurviveARoundTrip) {
+    US_DataIO::EditValues out;
+    out.expType    = "Equilibrium";
+    out.runID      = "equil";
+    out.cell       = "3";
+    out.channel    = "B";
+    out.wavelength = "230";
+
+    for (int ii = 0; ii < 3; ii++) {
+        US_DataIO::SpeedData sd;
+        sd.speed      = 10000.0 + ii * 5000.0;
+        sd.first_scan = ii * 4;
+        sd.scan_count = 4;
+        sd.meniscus   = 5.90 + ii * 0.001;
+        sd.dataLeft   = 5.95 + ii * 0.001;
+        sd.dataRight   = 7.10 - ii * 0.001;
+        out.speedData << sd;
+    }
+
+    QString file = path("equil.xml");
+    ASSERT_EQ(US_DataIO::writeEdits(file, out), US_DataIO::OK);
+
+    US_DataIO::EditValues in;
+    ASSERT_EQ(US_DataIO::readEdits(file, in), US_DataIO::OK);
+
+    EXPECT_EQ(in.expType, out.expType);
+    ASSERT_EQ(in.speedData.size(), out.speedData.size());
+
+    for (int ii = 0; ii < out.speedData.size(); ii++) {
+        EXPECT_DOUBLE_EQ(in.speedData[ii].speed,     out.speedData[ii].speed);
+        EXPECT_EQ(in.speedData[ii].first_scan,       out.speedData[ii].first_scan);
+        EXPECT_EQ(in.speedData[ii].scan_count,       out.speedData[ii].scan_count);
+        EXPECT_DOUBLE_EQ(in.speedData[ii].meniscus,  out.speedData[ii].meniscus);
+        EXPECT_DOUBLE_EQ(in.speedData[ii].dataLeft,  out.speedData[ii].dataLeft);
+        EXPECT_DOUBLE_EQ(in.speedData[ii].dataRight, out.speedData[ii].dataRight);
+    }
+
+    // Top-level radii retain the final equilibrium speed step.
+    EXPECT_DOUBLE_EQ(in.meniscus,   out.speedData.last().meniscus);
+    EXPECT_DOUBLE_EQ(in.rangeLeft,  out.speedData.last().dataLeft);
+    EXPECT_DOUBLE_EQ(in.rangeRight, out.speedData.last().dataRight);
+}
+
+TEST_F(TestUSDataIOEdits, LambdasAreNeverWritten) {
+    US_DataIO::EditValues out;
+    out.expType    = "Velocity";
+    out.runID      = "mwl";
+    out.cell       = "1";
+    out.channel    = "A";
+    out.wavelength = "250-450";
+    out.lambdas << 250 << 280 << 350 << 450;
+
+    QString file = path("mwl.xml");
+    ASSERT_EQ(US_DataIO::writeEdits(file, out), US_DataIO::OK);
+
+    QString text = slurp(file);
+    EXPECT_FALSE(text.contains("<lambdas>"));
+    EXPECT_FALSE(text.contains("<lambda "));
+
+    // A wavelength range must still parse when <lambdas> is absent.
+    US_DataIO::EditValues in;
+    ASSERT_EQ(US_DataIO::readEdits(file, in), US_DataIO::OK);
+
+    EXPECT_TRUE(in.lambdas.isEmpty());
+    EXPECT_DOUBLE_EQ(in.meniscus, out.meniscus);
+    EXPECT_DOUBLE_EQ(in.bottom,   out.bottom);
+}
+
+TEST_F(TestUSDataIOEdits, WriteEditsReportsAnUnwritablePath) {
+    US_DataIO::EditValues ev = fullVelocity();
+    EXPECT_EQ(US_DataIO::writeEdits(path("no/such/dir/edit.xml"), ev),
+              US_DataIO::CANTOPEN);
 }

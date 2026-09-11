@@ -62,8 +62,32 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
 
       //!  Read centerpieces from local disk
       //!  \param centerpieces A list of centerpiece data
-      //!  \return A boolean indicating success 
+      //!  \return A boolean indicating success
       static bool read_centerpieces( QList< US_AbstractCenterpiece >& );
+
+      //! \brief Parse a centerpiece channel from a letter or an index.
+      //! A channel shares its position with its reference: A/B are channel 0,
+      //! C/D channel 1, and so on. Rejects anything else rather than letting
+      //! QString::toInt() silently yield channel 0.
+      //! \param value   Text naming the channel.
+      //! \param channel Set to the parsed channel index on success.
+      //! \param error   Set to an error message on failure.
+      //! \return true on success; otherwise, false.
+      static bool parse_channel( const QString& value, int& channel,
+                                 QString& error );
+
+      //! \brief Parse an index into the centerpiece list.
+      //! \param value Text naming the centerpiece.
+      //! \param index Set to the parsed list index on success.
+      //! \param error Set to an error message on failure.
+      //! \return true on success; otherwise, false.
+      static bool parse_index( const QString& value, int& index,
+                               QString& error );
+
+      //! \brief Validate a centerpiece index and one of its channels.
+      //! \param centerpiece Index into the centerpiece list.
+      //! \param channel     Channel within that centerpiece.
+      //! \return An empty string if valid; otherwise, an error message.
+      static QString validate( int centerpiece, int channel );
 };
 #endif
-
