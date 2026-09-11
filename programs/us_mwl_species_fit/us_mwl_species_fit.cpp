@@ -1208,8 +1208,10 @@ void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > a
   QRegularExpression rx( "[^A-Za-z0-9_-]" );
   for ( int i=0; i< analytes_profs_keys.size(); ++i )
     {
-      QString ana_desc = analytes_profs_keys[i];
-      analytes_profs_keys_mod << ana_desc.replace( rx,  "_" ) + ".txt";
+      QString ana_desc   = analytes_profs_keys[i];
+      QString ana_desc_s = ana_desc.replace( rx,  "_" ) + ".txt";
+      ana_desc_s.replace(QRegularExpression("_+"), "_");
+      analytes_profs_keys_mod << ana_desc_s;
     }
   
   int minnw       = 999999;
@@ -1832,6 +1834,9 @@ DbgLv(1) << "sfd:  menx menval meniscus" << menx << menval << meniscus;
       {
          rdata->setValue( jj, menx, menval );
       }
+
+      qDebug() << "Writing syncdata: fname, rdata->description -- "
+	       << fname << rdata->description;
 
       int stat        = US_DataIO::writeRawData( fname, synData[ kd ] );
 DbgLv(1) << "sfd:  stat fname" << stat << fname;
