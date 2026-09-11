@@ -74,6 +74,7 @@ public:
     bool integration_results_mask;    ///< Integration results mask.
     bool plots_mask;                  ///< Plots mask.
 
+    
     //Pseudo3D mask parameters
     bool pseudo3d_mask;               ///< Pseudo3D mask.
     bool pseudo3d_2dsait_s_ff0;       ///< Pseudo3D 2D SAIT s vs ff0 mask.

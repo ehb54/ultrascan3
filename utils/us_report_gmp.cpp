@@ -71,7 +71,5 @@ US_ReportGMP::US_ReportGMP()
   pseudo3d_pcsa_mw_d        = false; //true;
 
   //integration results
-  
-
 }
  

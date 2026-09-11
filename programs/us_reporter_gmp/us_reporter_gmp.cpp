@@ -3898,8 +3898,21 @@ void US_ReporterGMP::process_abde_plots( void )
 	   this, &US_ReporterGMP::get_abde_percents );
   connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel,
 	   this, &US_ReporterGMP::get_abde_data_per_channel );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_selected_signals_info,
+	   this, &US_ReporterGMP::get_abde_selected_signals );
 
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
+
+  //Build channel -> {"Analyte #1:":pretty, ...} map so the norm-profile plot
+  //legends can show human-readable analyte names instead of the sanitized
+  //filename tokens it uses internally as sample keys.
+  QMap< QString, QMap< QString, QString > > abde_channs_analytes_pretty;
+  for ( int i=0; i< abde_channList.size(); ++i )
+    {
+      abde_channs_analytes_pretty[ abde_channList[i] ] =
+	US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, abde_channList[i] );
+    }
+  sdiag_norm_profile->set_channels_analytes_pretty_names( abde_channs_analytes_pretty );
   
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
@@ -3944,9 +3957,9 @@ void US_ReporterGMP::get_abde_menisc( QMap< QString, double >& abde_menisc_p)
   qDebug() << "[in get_abde_menisc()] -- " << abde_menisc;
 }
 
-void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& abde_perc_p )
+void US_ReporterGMP::get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& abde_perc_p )
 {
-  abde_ranges_percents = abde_perc_p;
+  abde_ranges_percents     = abde_perc_p;
 }
 
 void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
@@ -3956,6 +3969,12 @@ void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QV
   // qDebug() << "Passed data_for_chan 2A: xvalues -- "   << abde_data_per_channel["2A"]["xvalues"];
   // qDebug() << "Passed data_for_chan 2A: yvaluesN -- "  << abde_data_per_channel["2A"]["yvaluesN"];
   // qDebug() << "Passed data_for_chan 2A: integralN -- " << abde_data_per_channel["2A"]["integralN"];
+}
+
+void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& selected_signals_p )
+{
+  abde_selected_signals = selected_signals_p;
+  qDebug() << "[in get_abde_selected_signals()] -- " << abde_selected_signals;
 }
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
@@ -7997,12 +8016,17 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	   break;
 	 }
      }
+   //Hoisted out of the if(mwl_abde) block below so the Integration Results
+   //section further down can reuse it to show human-readable analyte names
+   //instead of the sanitized sample keys, without a second DB round-trip.
+   QMap< QString, QString > channs_analytes_buffers;
    if( mwl_abde )
      {
        mstr +=    "\n" + indent( 2 )
 	          + tr( "<h3>Analytes and Buffer Used in MWL-Deconvolution:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
-       QMap< QString, QString > channs_analytes_buffers = get_channels_analytes_mwl_abde( abde_channame );
+       channs_analytes_buffers =
+	 US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, abde_channame );
 
        QMap < QString, QString >::iterator ab;
        for ( ab = channs_analytes_buffers.begin(); ab != channs_analytes_buffers.end(); ++ab )
@@ -8101,6 +8125,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
   
    document.print(&printer);
    mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
+   mstr += indent( 2 ) + "</table>\n";
    //END of ABDE distributions .csv format
    
    //Get Report for a channel && item(s)
@@ -8139,162 +8164,123 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    if ( do_integration )
      {
        int report_items_number = reportGMP-> reportItems.size();
-       
+
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
-       mstr += indent( 2 ) + "<table>\n";
-       mstr += table_row( tr( "Type:" ),
+
+       QString header_trftp = table_row( tr( "Type:" ),
 			  tr( "Range:"),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       for ( int kk = 0; kk < report_items_number; ++kk )
+
+       QStringList chann_samples = abde_ranges_percents[abde_channame].keys();
+       //If the user recorded a signal selection for this channel (via
+       //show_signal_selection_dialog() at Save-Profiles time), only include
+       //the samples they left checked. A channel absent from the map means
+       //no selection was recorded (a run saved before this feature existed)
+       //-- keep today's behavior and show every signal in that case.
+       bool have_selection = abde_selected_signals.contains( abde_channame );
+       for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	   QString type           = curr_item.type;
-	   QString method         = curr_item.method;
+	   QString c_sample = chann_samples[cs];
+	   if ( have_selection && !abde_selected_signals[abde_channame].contains( c_sample ) )
+	     continue;
+	   QString c_sample_display = prettify_abde_sample_name( channs_analytes_buffers, c_sample );
 	   
-	   QString int_val_r      = QString::number( curr_item.integration_val );
-	   double  frac_tot_r     = curr_item.total_percent;
-	   double  frac_tot_tol_r = curr_item.tolerance ;
-	   double  low            = curr_item.range_low;
-	   double  high           = curr_item.range_high;
-	   
-	   QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   QString range_alt = QString::number(low) + "-" + QString::number(high);
-	   
-	   //integrate over model_used
-	   double int_val_m = 0;
-	   
-	   double frac_tot_m = abde_ranges_percents[abde_channame][range_alt];
-	   
-	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
-	   
-	   // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	   // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	   // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
-	   
-	   qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-		    << "Inter. val. Sim -- "
-		    << wvl_abde
-		    << curr_item.type
-		    << curr_item.method
-		    << curr_item.range_low
-		    << curr_item.range_high
-		    << int_val_m;
-	   
-	   mstr += table_row( type,
-			      range,
-			  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-			      QString::number( frac_tot_tol_r ),
-			      tot_frac_passed );
+	   QString mstr_sample = "<h4>" + c_sample_display + " signal</h4>\n";
+	   mstr_sample += indent( 2 ) + "<table>\n";
+	   mstr_sample += header_trftp;
+       
+	   for ( int kk = 0; kk < report_items_number; ++kk )
+	     {
+	       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
+	       QString type           = curr_item.type;
+	       QString method         = curr_item.method;
+	       
+	       QString int_val_r      = QString::number( curr_item.integration_val );
+	       double  frac_tot_r     = curr_item.total_percent;
+	       double  frac_tot_tol_r = curr_item.tolerance ;
+	       double  low            = curr_item.range_low;
+	       double  high           = curr_item.range_high;
+	       
+	       QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	       QString range_alt = QString::number(low) + "-" + QString::number(high);
+	       
+	       //integrate over model_used
+	       double int_val_m = 0;
+	       
+	       double frac_tot_m     = abde_ranges_percents[abde_channame][ c_sample ][range_alt];
+	       
+	       QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+	       
+	       // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+	       // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+	       // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+	       
+	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+			<< "Inter. val. Sim -- "
+			<< wvl_abde
+			<< curr_item.type
+			<< curr_item.method
+			<< curr_item.range_low
+			<< curr_item.range_high
+			<< int_val_m;
+	       
+	       mstr_sample += table_row( type,
+					 range,
+					 QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+					 QString::number( frac_tot_tol_r ),
+					 tot_frac_passed );
+	     }
+	    mstr_sample   += indent( 2 ) + "</table>\n";
+	    mstr          += mstr_sample;
 	 }
-       mstr += indent( 2 ) + "</table>\n";
        //End of integration results
      }
- 
+   
    return mstr;
 }
 
-//ABDE: read all analytes (& possibly buffers) used in MWL-deconv.
-QMap< QString, QString > US_ReporterGMP::get_channels_analytes_mwl_abde( QString abde_channame )
+//NOTE: the per-channel analyte/buffer lookup that used to live here has moved
+//to US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, channame ),
+//so the Analysis-stage ABDE flow (US_Analysis_auto) can share it instead of
+//going without pretty analyte names. See call sites below.
+
+//Reduce a string to its lowercased letters/digits only, so that names which
+//differ only by which separator characters (space, ':', '-', '(', ')', '/',
+//'=', '_', ...) were substituted for filename-safety compare equal.
+static QString us_reportergmp_normalize_for_match( const QString& s )
 {
-  QMap< QString, QString > analytes_buffer_map;
-
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+  QString out;
+  out.reserve( s.size() );
+  foreach ( QChar c, s )
     {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) +  db.lastError() );
-      
-      return analytes_buffer_map;
+      if ( c.isLetterOrNumber() )
+	out += c.toLower();
     }
+  return out;
+}
 
-  for ( int ii = 0; ii < currProto.rpRange.nranges; ii++ )
+//Look up the human-readable analyte description matching a sanitized sample
+//key (as used for report/plot "sample" identifiers) within an already-fetched
+//channel->{"Analyte #1:":pretty, ...} map. Falls back to sample_key unchanged
+//if no match is found.
+QString US_ReporterGMP::prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key )
+{
+  QString target = us_reportergmp_normalize_for_match( sample_key );
+  if ( target.isEmpty() )
+    return sample_key;
+
+  QMap< QString, QString >::const_iterator it;
+  for ( it = channs_analytes_buffers.begin(); it != channs_analytes_buffers.end(); ++it )
     {
-      QString channel   = currProto.rpRange.chrngs[ ii ].channel;
-      QString channel_s = channel.split(",")[0].trimmed();
-      channel_s.replace(" / ","");
-      qDebug() << "[in get_channels_analytes_mwl_abde()], channel, channel_s, abde_channame;"
-	       <<  channel << channel_s << abde_channame;
+      if ( !it.key().startsWith( "Analyte #" ) )
+	continue;   //skip the "Buffer:" entry -- not a sample
 
-      if ( channel_s == abde_channame )
-	{
-	  QList< double > all_wvls = currProto.rpRange.chrngs[ ii ].wvlens;
-	  int    nwavl      = all_wvls.count();
-	  bool   buff_req   = currProto.rpRange.chrngs[ ii ].abde_buffer_spectrum;
-	  bool   mwl_deconv = currProto.rpRange.chrngs[ ii ].abde_mwl_deconvolution;
-	  
-	  if ( nwavl > 1 && mwl_deconv )
-	    {
-	      QString sol_id = currProto.rpSolut.chsols[ii].sol_id;
-	      US_Solution*   solution = new US_Solution;
-	      int solutionID = sol_id.toInt();
-	      
-	      int status = US_DB2::OK;
-	      status = solution->readFromDB  ( solutionID, &db );
-	      // Error reporting
-	      if ( status == US_DB2::NO_BUFFER )
-		{
-		  QMessageBox::information( this,
-					    tr( "Attention" ),
-					    tr( "The buffer this solution refers to was not found.\n"
-						"Please restore and try again.\n" ) );
-		  return analytes_buffer_map;
-		}
-	      
-	      else if ( status == US_DB2::NO_ANALYTE )
-		{
-		  QMessageBox::information( this,
-					    tr( "Attention" ),
-					    tr( "One of the analytes this solution refers to was not found.\n"
-						"Please restore and try again.\n" ) );
-		  return analytes_buffer_map;
-		}
-	      
-	      else if ( status != US_DB2::OK )
-		{
-		  QMessageBox::warning( this, tr( "Database Problem" ),
-					tr( "Database returned the following error: \n" ) +  db.lastError() );
-		  return analytes_buffer_map;
-		}
-	      //End of reading Solution:
-	      
-	      //Reading Analytes
-	      int num_analytes = solution->analyteInfo.size();
-	      for (int i=0; i < num_analytes; ++i )
-		{
-		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
-		  QString a_name     = analyte.description;
-		  QString a_ID       = analyte.analyteID;
-		  QString a_GUID     = analyte.analyteGUID;
-		  
-		  qDebug() << "[GMP REPORT] Solution "  << solution->solutionDesc
-			   << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
-			   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
-		  
-		  QString ana_name = "Analyte #" + QString::number(i+1) + ":";
-		  analytes_buffer_map[ ana_name ] = a_name;
-		}
-	      
-	      //Reading Buffers
-	      if ( buff_req ) //only if buffer spectrum required
-		{
-		  US_Buffer buffer = solution->buffer;
-		  QString b_name   = buffer.description;
-		  QString b_ID     = buffer.bufferID;
-		  qDebug() << "[GMP REPORT] Solution "  << solution->solutionDesc
-			   << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
-		  
-		  analytes_buffer_map[ "Buffer:" ] = b_name;
-		}
-	    }
-	}
+      if ( us_reportergmp_normalize_for_match( it.value() ) == target )
+	return it.value();
     }
-
-  return analytes_buffer_map;
+  return sample_key;   //no match -- fall back to the raw (sanitized) name
 }
 
 
