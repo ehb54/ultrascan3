@@ -658,6 +658,22 @@ class US_ReporterGMP : public US_Widgets
         double mmToPixels(QPrinter& printer, int mm);
 
         /**
+         * @brief Return the family name of the font that must be used for the
+         *        GMP report body text ("DejaVu Sans") and the fixed-width
+         *        sections ("DejaVu Sans Mono"). The font is loaded once, from
+         *        a copy shipped with the application, so that report
+         *        pagination is deterministic and identical across OS/distro
+         *        installs (Ubuntu, Oracle Linux, etc.) regardless of what
+         *        that system's fontconfig resolves "sans-serif" / "monospace"
+         *        to. Falls back to requesting the family by name (best
+         *        effort) if the embedded font file cannot be found/loaded.
+         * @param monospace If true, return the fixed-width report font;
+         *        otherwise the regular body font.
+         * @return The resolved, guaranteed-available font family name.
+         */
+        static QString reportFontFamily(bool monospace = false);
+
+        /**
          * @brief Write plot to file.
          * @param filename The file name
          * @param plot The QwtPlot object
