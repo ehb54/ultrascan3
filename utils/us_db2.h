@@ -309,6 +309,27 @@ public:
     */
     unsigned long mysqlEscapeString( QByteArray& to, QByteArray& from, unsigned long length ) override;
 
+    /*! \brief Composes a stored-procedure invocation from its arguments
+
+        The credentials are always passed as the first two procedure arguments.
+        Single quotes in any argument are escaped.  This is pure text assembly
+        with no connection involved, which is why it is testable on its own.
+
+        \param keyword    The leading SQL keyword, "CALL" or "SELECT"
+
+        \param arguments  The procedure name followed by its arguments
+
+        \param guid       The session guid, passed as the first argument
+
+        \param password   The user password, passed as the second argument
+
+        \return The composed query, or an empty string if arguments is empty
+    */
+    static QString composeQuery( const QString&     keyword,
+                                 const QStringList& arguments,
+                                 const QString&     guid,
+                                 const QString&     password );
+
 private:
     bool       connected;
 #ifndef NO_DB
