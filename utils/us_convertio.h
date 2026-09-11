@@ -90,6 +90,45 @@ class US_UTIL_EXTERN US_ConvertIO
          QString comment;         //!< Free text; may be empty
       };
 
+      /*! \brief A policy-free request to retrieve and decode one edited/raw
+                   data pair.
+
+          `editFilename` is the basename stored in editedData.  Most callers
+          leave `loadFilename` empty, making it the same name.  An MWL caller
+          may instead provide a logical name ending in `range@wavelength.xml`:
+          US_DataIO then reads the stored range edit and the selected raw AUC.
+
+          `rawFilename` may be supplied from a DB lookup.  If empty it is
+          derived from the logical load filename by US_DataIO's canonical
+          filename rule.
+
+          The download flags let a caller retain its own cache policy.  A file
+          whose flag is false must already exist in `directory`; this supports
+          US_DataLoader's checksum cache and US_QueryRmsd's in-memory raw cache
+          without putting either policy into this utility.
+      */
+      struct US_UTIL_EXTERN EditedDataReadRequest
+      {
+         QString directory;                 //!< Destination directory
+         QString editFilename;              //!< Stored edit XML basename
+         QString rawFilename;               //!< Raw AUC basename, or empty
+         QString loadFilename;              //!< Logical edit name, or empty
+         int     editedDataID = -1;          //!< editedData primary key
+         int     rawDataID    = -1;          //!< rawData primary key
+         bool    downloadEdit = true;        //!< Fetch edit blob when true
+         bool    downloadRaw  = true;        //!< Fetch raw blob when true
+      };
+
+      //! Non-database failures returned by readEditedDataFromDB().
+      enum EditedDataReadStatus
+      {
+         EDITED_DATA_INVALID_REQUEST = 1001,
+         EDITED_DATA_DIRECTORY_ERROR = 1002,
+         EDITED_DATA_FILE_MISSING    = 1003,
+         EDITED_DATA_DECODE_ERROR    = 1004,
+         EDITED_DATA_SHAPE_ERROR     = 1005
+      };
+
       // \brief Generic constructor for the US_ConvertIO class.
       US_ConvertIO( void );
 
@@ -145,6 +184,37 @@ class US_UTIL_EXTERN US_ConvertIO
       static int uploadEditedDataBlob( IUS_DB2* db, int editedDataID,
                                        const QString& filename,
                                        QString& error );
+
+      /*! \brief Download an edit XML blob to a full destination path.
+
+          This thin operation centralizes the stored-procedure name and error
+          handling for callers which need only the XML rather than a decoded
+          edited/raw pair.
+      */
+      static int downloadEditedDataBlob( IUS_DB2* db, int editedDataID,
+                                         const QString& filename,
+                                         QString& error );
+
+      /*! \brief Download a raw AUC blob to a full destination path. */
+      static int downloadRawDataBlob( IUS_DB2* db, int rawDataID,
+                                      const QString& filename,
+                                      QString& error );
+
+      /*! \brief Download as requested and decode one edited/raw data pair.
+
+          Selection of the IDs, cache/checksum decisions, destination
+          lifecycle, UI, and retry policy all remain with the caller.  Output
+          vectors are cleared on entry and assigned only after a complete,
+          exactly-one-pair decode, so callers never observe half-loaded state.
+
+          \returns IUS_DB2::OK; an underlying blob status; or an
+                   EditedDataReadStatus value for request, filesystem, or
+                   decode failures
+      */
+      static int readEditedDataFromDB(
+         IUS_DB2* db, const EditedDataReadRequest& request,
+         QVector< US_DataIO::EditedData >& editedData,
+         QVector< US_DataIO::RawData >& rawData, QString& error );
 
       /*! \brief Reads entire experiment and auc files from the database,
                  save to HD

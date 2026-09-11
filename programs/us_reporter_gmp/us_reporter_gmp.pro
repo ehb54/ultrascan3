@@ -8,6 +8,7 @@ QT           += printsupport
 QT           += datavisualization
 
 HEADERS       = us_reporter_gmp.h \
+                ../us_edited_data_loaders.h \
                 ../us_analysis_profile/us_analysis_profile.h  \
                 ../us_autoflow_analysis/us_autoflow_analysis.h \
                 ../us_ddist_combine/us_ddist_combine.h \
@@ -30,6 +31,7 @@ HEADERS       = us_reporter_gmp.h \
 
 SOURCES       = us_reporter_gmp_main.cpp       \
                 us_reporter_gmp.cpp            \
+                ../us_edited_data_loaders.cpp  \
                 ../us_analysis_profile/us_analysis_profile.cpp   \
                 ../us_analysis_profile/us_anapro_utils.cpp       \
                 ../us_autoflow_analysis/us_autoflow_analysis.cpp \

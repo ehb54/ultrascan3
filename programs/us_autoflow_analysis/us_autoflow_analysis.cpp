@@ -5,6 +5,7 @@
 #include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
+#include "us_edited_data_loaders.h"
 #include "us_settings.h"
 #include "us_convertio.h"
 #include "us_gui_settings.h"
@@ -1339,109 +1340,35 @@ bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information 
 {
   rawData.clear();
   editedData.clear();
-  
+
+  const auto fail = [ this ]( const QString& detail )
+  {
+    QApplication::restoreOverrideCursor();
+    QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
+    return false;
+  };
+
   US_Passwd   pw;
-  US_DB2* db = new US_DB2( pw.getPasswd() );
+  US_DB2 db( pw.getPasswd() );
     
-  if ( db->lastErrno() != US_DB2::OK )
+  if ( db.lastErrno() != US_DB2::OK )
     {
-      QApplication::restoreOverrideCursor();
-      QMessageBox::information( this,
-				tr( "DB Connection Problem" ),
-				tr( "There was an error connecting to the database:\n" )
-				+ db->lastError() );
-      
-      return false;
+      return fail( tr( "There was an error connecting to the database:\n" )
+                   + db.lastError() );
     }
 
-  int rID=0;
-  QString rfilename;
-  int eID=0;
-  QString efilename;
-  
-  //get EditedData filename && editedDataID for current triple, then infer rawDataID 
-  QStringList query;
-  query << "get_editedDataFilenamesIDs" << triple_information["filename"];
-  db->query( query );
+  const QString tripleName = triple_information[ "triple_name" ];
+  const QString runID      = triple_information[ "filename" ];
+  int editedDataID = -1;
+  QString error;
+  const int status = US_EditedDataLoaders::loadAutoflow(
+     &db, tripleName, runID, US_Settings::resultDir() + "/" + runID,
+     editedData, rawData, editedDataID, error );
 
-  qDebug() << "In loadData() Query: " << query;
-  qDebug() << "In loadData() Query: triple_information[ \"triple_name\" ]  -- " << triple_information[ "triple_name" ];
+  if ( status != IUS_DB2::OK )
+    return fail( error );
 
-  int latest_update_time = 1e100;
-
-  QString triple_name_actual = triple_information[ "triple_name" ];
-
-  if ( triple_name_actual.contains("Interference") )
-    triple_name_actual.replace( "Interference", "660" );
-  
-  while ( db->next() )
-    {
-      QString  filename            = db->value( 0 ).toString();
-      int      editedDataID        = db->value( 1 ).toInt();
-      int      rawDataID           = db->value( 2 ).toInt();
-      //QString  date                = US_Util::toUTCDatetimeText( db->value( 3 ).toDateTime().toString( "yyyy/MM/dd HH:mm" ), true );
-      QDateTime date               = db->value( 3 ).toDateTime();
-
-      QDateTime now = QDateTime::currentDateTime();
-               
-      if ( filename.contains( triple_name_actual ) ) 
-	{
-	  int time_to_now = date.secsTo(now);
-	  if ( time_to_now < latest_update_time )
-	    {
-	      latest_update_time = time_to_now;
-	      //qDebug() << "Edited profile MAX, NOW, DATE, sec-to-now -- " << latest_update_time << now << date << date.secsTo(now);
-
-	      rID       = rawDataID;
-	      eID       = editedDataID;
-	      efilename = filename;
-	    }
-	}
-    }
-
-  qDebug() << "In loadData() after Query ";
-  
-  QString edirpath  = US_Settings::resultDir() + "/" + triple_information[ "filename" ];
-  QDir edir( edirpath );
-  if (!edir.exists())
-    edir.mkpath( edirpath );
-  
-  QString efilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + efilename;
-
-  qDebug() << "In loadData() efilename: " << efilename;
-
-  
-  // Can check here if such filename exists
-  // QFileInfo check_file( efilepath );
-  // if ( check_file.exists() && check_file.isFile() )
-  //   qDebug() << "EditProfile file: " << efilepath << " exists";
-  // else
-  db->readBlobFromDB( efilepath, "download_editData", eID );
-
-  qDebug() << "In loadData() after readBlobFromDB ";
-
-  //Now download rawData corresponding to rID:
-  QString efilename_copy = efilename;
-  QStringList efilename_copy_list = efilename_copy.split(".");
-
-  rfilename = triple_information[ "filename" ] + "." + efilename_copy_list[2] + "."
-                                               + efilename_copy_list[3] + "."
-                                               + efilename_copy_list[4] + "."
-                                               + efilename_copy_list[5] + ".auc";
-  
-  QString rfilepath = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/" + rfilename;
-  //do we need to check for existance ?
-  db->readBlobFromDB( rfilepath, "download_aucData", rID );
-
-  qApp->processEvents();
-
-  qDebug() << "Loading eData, rawData: efilepath, rfilepath, eID, rID --- " << efilepath << rfilepath << eID << rID;
-
-  //Put downloaded data in memory:
-  QString uresdir = US_Settings::resultDir() + "/" + triple_information[ "filename" ] + "/"; 
-  US_DataIO::loadData( uresdir, efilename, editedData, rawData );
-
-  eID_global = eID;
+  eID_global = editedDataID;
 
   qDebug() << "END of loadData(), eID_global: " << eID_global;
 
@@ -2834,7 +2761,11 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   buffLoaded = false;
   haveSim    = false;
   
-  loadData( triple_info_map );
+  if ( ! loadData( triple_info_map ) )
+  {
+    progress_msg->close();
+    return;
+  }
   progress_msg->setValue( 1 );
   qApp->processEvents();
   
