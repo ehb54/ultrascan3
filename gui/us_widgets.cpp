@@ -329,21 +329,31 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   int totwid          = 0;
 #ifdef Q_OS_MAC
   // The counter's up/down buttons are unusably small with the native macOS
-  // style.  Give just those buttons a Fusion style - unlike the former
-  // QApplication::setStyle() call this leaves the style the user selected
-  // for the rest of the application alone.
-  static QStyle* btnstyle = QStyleFactory::create( "Fusion" );
+  // and Windows styles, so give just those buttons a Fusion style.  This is
+  // the same treatment, and the same test, that us_colorgradient applies.
+  // Every other style, the default US_Style( Fusion ) included, draws them
+  // correctly and is left alone: overriding it would drop the UltraScan
+  // shapes US_Style adds and ignore the style chosen in us_config.
+  //
+  // The name comes from US_GuiSettings, the same source US_Theme::apply()
+  // uses, rather than from qApp->style()->objectName(): US_Theme wraps the
+  // chosen style in US_Style, a QProxyStyle that leaves objectName empty.
+  QString stynam  = US_GuiSettings::guiStyle();
+  bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
 
-  if ( btnstyle != nullptr )
+  if ( needbsty )
   {
-     for ( int jj = 0; jj < children.size(); jj++ )
+     static QStyle* btnsty = QStyleFactory::create( "fusion" );
+
+     for ( int jj = 0; btnsty != nullptr  &&  jj < children.size(); jj++ )
      {
         QWidget* cwidg = (QWidget*)children.at( jj );
         QString clname = cwidg->metaObject()->className();
 
         if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
         {
-           cwidg->setStyle( btnstyle );
+           cwidg->setStyle( btnsty );
         }
      }
   }

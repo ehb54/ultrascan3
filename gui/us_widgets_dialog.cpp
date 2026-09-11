@@ -5,6 +5,8 @@
 #include "us_theme.h"
 #include "us_images.h"
 
+#include <QStyleFactory>
+
 
 US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_style ) 
    : QDialog( w, f )
@@ -287,16 +289,33 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+  // The counter's up/down buttons are unusably small with the native macOS
+  // and Windows styles, so give just those buttons a Fusion style.  This is
+  // the same treatment, and the same test, that us_colorgradient applies.
+  // Every other style, the default US_Style( Fusion ) included, draws them
+  // correctly and is left alone: overriding it would drop the UltraScan
+  // shapes US_Style adds and ignore the style chosen in us_config.
+  //
+  // The name comes from US_GuiSettings, the same source US_Theme::apply()
+  // uses, rather than from qApp->style()->objectName(): US_Theme wraps the
+  // chosen style in US_Style, a QProxyStyle that leaves objectName empty.
+  QString stynam  = US_GuiSettings::guiStyle();
+  bool    needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  if ( needbsty )
   {
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
+     static QStyle* btnsty = QStyleFactory::create( "fusion" );
 
-     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+     for ( int jj = 0; btnsty != nullptr  &&  jj < children.size(); jj++ )
      {
-        cwidg->setStyle( btnstyle );
+        QWidget* cwidg = (QWidget*)children.at( jj );
+        QString clname = cwidg->metaObject()->className();
+
+        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+        {
+           cwidg->setStyle( btnsty );
+        }
      }
   }
 #endif    // END: special button treatment for Mac
