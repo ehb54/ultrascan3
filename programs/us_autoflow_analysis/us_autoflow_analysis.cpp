@@ -6,6 +6,7 @@
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
+#include "us_convertio.h"
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
 #include "us_constants.h"
@@ -5808,7 +5809,11 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
    db.next();
    idEdit           = db.value( 0 ).toString().toInt();
 DbgLv(1) << "updDbEd: idEdit" << idEdit;
-   if ( db.writeBlobToDB( efilepath, "upload_editData", idEdit ) != US_DB2::OK )
+   // How the existing edit is found is unchanged; only the upload is shared.
+   QString upload_error;
+
+   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath,
+                                            upload_error ) != US_DB2::OK )
      {
        qDebug() << tr( "*ERROR* update_db_edit: " ) << db.lastError();
        //msg += tr( "*ERROR* update_db_edit: " );
