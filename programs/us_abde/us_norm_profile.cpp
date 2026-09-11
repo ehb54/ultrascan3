@@ -2876,7 +2876,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		      //a missing channel entry as "show every signal".
 		      QStringList sel_sigs;
 		      QJsonArray json_arr_sel = value_1.toArray();
-		      foreach(const QJsonValue& sel_val, json_arr_sel)
+		      //foreach(const QJsonValue& sel_val, json_arr_sel)
+		      for (const QJsonValue& sel_val : json_arr_sel)
 			sel_sigs << sel_val.toString();
 		      data_chann_selected_signals[key] = sel_sigs;
 		    }
