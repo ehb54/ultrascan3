@@ -3997,13 +3997,23 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    le_status->setText( tr( "Loading data from local disk ..." ) );
    qApp->processEvents();
 
-   // Check the runID
-   QStringList components =  dir.split( "/", Qt::SkipEmptyParts );
-   QString new_runID      = components.last();
+   // Read the run through the operation the corpus loader also uses.  It
+   // reports; this decides.  Everything the GUI recovered from before, it
+   // still recovers from -- the added detail only says more in the same
+   // messages, and no archive that loaded before stops loading here.
+   le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
+   qApp->processEvents();
+DbgLv(1) << "CGui: ldUS3Dk: call read";
+   US_ConvertIO::DiskRun diskRun;
+   QString               readError;
 
-   static const QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
-   if ( !rx.match( new_runID ).hasMatch() )
-   {
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   int status = US_ConvertIO::readDiskRun( dir, diskRun, readError );
+   QApplication::restoreOverrideCursor();
+
+   if ( status == US_Convert::INVALID_RUN  &&  diskRun.rawData.isEmpty() )
+   {  // An unusable directory name; the old code checked this itself and
+      // showed exactly this warning before reading anything.
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
             tr( "The runID name may consist only of alphanumeric\n"
@@ -4012,19 +4022,14 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    }
 
    // Set the runID and directory
-   runID       = new_runID;
+   runID       = diskRun.runID;
+   runType     = diskRun.runType;
+   allData     = diskRun.rawData;
+   all_tripinfo = diskRun.triples;
    le_runID ->setText( runID );
    le_runID2->setText( runID );
    le_dir   ->setText( dir );
    currentDir  = QString( dir );
-
-   // Reload the AUC data
-   le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
-   qApp->processEvents();
-DbgLv(1) << "CGui: ldUS3Dk: call read";
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   int status = US_Convert::readUS3Disk( dir, allData, all_tripinfo, runType );
-   QApplication::restoreOverrideCursor();
 
    if ( status == US_Convert::NODATA )
    {
@@ -4043,12 +4048,10 @@ DbgLv(1) << "CGui: ldUS3Dk: call read";
       return;
    }
 
-   // Now try to read the xml file
 DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
    le_status->setText( tr( "Loading data from Disk (experiment) ..." ) );
    qApp->processEvents();
-   ExpData.clear();
-   status = ExpData.readFromDisk( all_tripinfo, runType, runID, dir );
+   ExpData     = diskRun.experiment;
 
    if ( status == US_Convert::CANTOPEN )
    {
@@ -4071,10 +4074,12 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
    }
 
    else if ( status != US_Convert::OK )
-   {
+   {  // PARTIAL_XML, BADGUID and INVALID_RUN all land here.  The archive used
+      // to load with nothing said; it still loads, and now says what is wrong.
       QMessageBox::information( this,
          tr( "Error" ),
-         tr( "Unknown error: " ) + QString::number( status ) );
+         tr( "US3 run data ok, but the run is not self-consistent:\n" )
+         + readError );
    }
 
    // Now that we have the experiment, let's read the rest of the
