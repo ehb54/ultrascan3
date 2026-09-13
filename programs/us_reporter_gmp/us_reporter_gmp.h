@@ -279,11 +279,17 @@ class US_ReporterGMP : public US_Widgets
         QString expType;
         QStringList abde_channList;
         QMap<QString, QString >prot_details_at_report;
-        QMap< QString, QMap < QString, double>> abde_ranges_percents;
+        QMap< QString, QMap < QString, QMap < QString, double>>> abde_ranges_percents;
         QMap< QString, double > abde_rmsd;
         QMap< QString, double > abde_menisc;
         QMap<QString, QString > abde_plots_filenames;
         QMap< QString, QMap < QString, QVector<QVector<double>> > > abde_data_per_channel;
+        //! \brief channel -> list of raw sample keys the user picked (at
+        //! Save-Profiles time, in the Analysis stage) to appear in this
+        //! channel's Integration Results section. A channel missing from this
+        //! map means no selection was recorded (older saved run) -- treated
+        //! as "show every signal" in assemble_distrib_ABDE_html().
+        QMap< QString, QStringList > abde_selected_signals;
   
         QString current_date;                //!< Current date
 
@@ -552,7 +558,10 @@ class US_ReporterGMP : public US_Widgets
         QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
         QString distrib_info_abde( QString& ); //!< Generate distribution information
-        QMap< QString, QString > get_channels_analytes_mwl_abde( QString );
+        //NOTE: analyte/buffer lookup for a channel now lives in
+        //US_Norm_Profile::get_channels_analytes_mwl_abde() (shared with the
+        //Analysis-stage ABDE flow) -- call that instead of a local copy here.
+        QString prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key );
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
@@ -612,8 +621,9 @@ class US_ReporterGMP : public US_Widgets
         void get_abde_channels( QStringList& );
         void get_abde_rmsds(QMap< QString, double >&);
         void get_abde_menisc(QMap< QString, double >&);
-        void get_abde_percents(QMap< QString, QMap < QString, double>>&);
+        void get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
+        void get_abde_selected_signals( QMap< QString, QStringList >& );
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
