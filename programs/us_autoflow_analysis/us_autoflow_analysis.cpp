@@ -2,12 +2,14 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QXmlStreamReader>
 #include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
+#include "us_run_protocol.h"
 #include "us_constants.h"
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
@@ -254,6 +256,28 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
 	}
       
+      //Build channel -> {"Analyte #1:":pretty, ...} map (same lookup
+      //US_ReporterGMP uses) so this Analysis-stage norm-profile plot's
+      //legends show human-readable analyte names instead of the sanitized
+      //filename tokens it uses internally as sample keys. Previously this
+      //was only done on the GMP-report side, which is why legends looked
+      //right there but showed raw tokens here.
+      QString abde_proto_xml;
+      US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &abde_proto_xml, NULL, &db );
+      QXmlStreamReader abde_proto_xmli( abde_proto_xml );
+      US_RunProtocol currProto_abde;
+      currProto_abde.fromXml( abde_proto_xmli );
+
+      QMap< QString, QMap< QString, QString > > abde_channs_analytes_pretty;
+      for ( int ii = 0; ii < currProto_abde.rpRange.nranges; ii++ )
+	{
+	  QString channame = currProto_abde.rpRange.chrngs[ ii ].channel.split(",")[0].trimmed();
+	  channame.replace(" / ","");
+	  abde_channs_analytes_pretty[ channame ] =
+	    US_Norm_Profile::get_channels_analytes_mwl_abde( currProto_abde, channame );
+	}
+      sdiag_norm_profile->set_channels_analytes_pretty_names( abde_channs_analytes_pretty );
+
       emit close_analysissetup_msg();
 
       //call abde normalizer

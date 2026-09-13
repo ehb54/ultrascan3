@@ -15,6 +15,8 @@
 #include "qwt_legend.h"
 #include <qwt_scale_div.h>
 
+class US_RunProtocol;   //!< forward decl.; full type only needed in the .cpp
+
 //! \class US_Norm_Profile
 //! \brief A class for handling normalization profiles in the analysis.
 class US_Norm_Profile : public US_Widgets
@@ -31,6 +33,20 @@ class US_Norm_Profile : public US_Widgets
         void load_data_auto_report( QMap<QString,QString>& );
         QwtPlot* rp_data_plot();
         QString select_channel_public( int index );
+        void set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& );
+
+        //! \brief ABDE/MWL: read the analytes (& buffer, if used) for one channel's
+        //! solution out of a given run protocol. Shared by US_Norm_Profile itself
+        //! and by any caller (e.g. US_ReporterGMP) that already has a US_RunProtocol
+        //! loaded, so the lookup only has to be implemented once. On any DB/read
+        //! error this logs via qDebug() and returns an empty map -- callers should
+        //! not assume every channel yields entries (non-MWL channels legitimately
+        //! return empty).
+        //! \param proto        The run protocol to read channel/solution info from.
+        //! \param abde_channame The (sanitized) channel name to look up, e.g. "3A".
+        //! \return channel's {"Analyte #1:":pretty_name, ..., "Buffer:":pretty_name} map.
+        static QMap< QString, QString > get_channels_analytes_mwl_abde(
+                US_RunProtocol& proto, QString abde_channame );
 
     signals:
         //! \brief Signal emitted when the widget is closed.
@@ -40,8 +56,14 @@ class US_Norm_Profile : public US_Widgets
         void pass_channels_info( QStringList& );
         void pass_rmsd_info( QMap< QString, double >& );
         void pass_menisc_info( QMap< QString, double >& );
-        void pass_percents_info( QMap< QString, QMap < QString, double>>& );
+        void pass_percents_info( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
+        //! \brief channel -> list of (raw, sanitized) sample keys the user picked in
+        //! show_signal_selection_dialog() to appear in the Report's Integration
+        //! Results section. A channel missing from the map means "no selection was
+        //! recorded" (older saved run, pre-dating this feature) -- callers should
+        //! treat that as "show every signal", not as "show none".
+        void pass_selected_signals_info( QMap< QString, QStringList >& );
   
     protected:
         //! \brief Override of the close event to emit widgetClosed signal.
@@ -92,8 +114,26 @@ class US_Norm_Profile : public US_Widgets
         QMap< QString, double > data_per_channel_rmsd;
         QMap< QString, int > data_per_channel_norm_cb;
         QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents;
+        QMap< QString, QMap < QString, double>> data_per_channel_ranges_percents_dna;
+        QMap< QString, QMap < QString, QMap < QString, double>>> data_per_channel_ranges_percents_sample;
         QMap< QString, bool > data_per_channel_processed;
         QMap< QString, QString > prot_details;
+
+        //! \brief channel -> list of raw sample keys the user picked (in
+        //! show_signal_selection_dialog(), at Save-Profiles time) to appear in
+        //! the Report's Integration Results section. A channel absent from this
+        //! map (e.g. a run saved before this feature existed) means "no
+        //! selection was recorded" -- treat as "show every signal", not "show
+        //! none". Populated locally in save_auto() (Analysis stage) and, on
+        //! the GMP-report side, by parse_abde_analysis_jsons() reading it back
+        //! out of the saved JSON.
+        QMap< QString, QStringList > data_per_channel_selected_signals;
+
+        //! \brief channel -> {"Analyte #1:":pretty_name, "Analyte #2:":pretty_name, "Buffer:":..}
+        //! Set by US_ReporterGMP (which has DB/solution access) before ABDE plots are
+        //! rendered, so plot legends can show human-readable analyte names instead of
+        //! the sanitized filename tokens used internally as sample keys.
+        QMap< QString, QMap< QString, QString > > channs_analytes_pretty;
  
         QListWidget *lw_inpData; //!< List widget for input data.
         QListWidget *lw_selData; //!< List widget for selected data.
@@ -119,7 +159,7 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Select data for the plot.
         void selectData(void);
         void selectData_auto(void);
-        void find_percent_from_range( QString, QString, QString, QVector<double>, QVector< double > );
+        void find_percent_from_range( QString, QString, QString, QString, QVector<double>, QVector< double > );
 
         //! \brief Plot the selected data.
         void plotData(void);
@@ -142,6 +182,25 @@ class US_Norm_Profile : public US_Widgets
         //! \brief Enable or disable widgets.
         //! \param enable Boolean to enable or disable the widgets.
         void enableWidgets(bool enable);
+
+        //! \brief Look up the human-readable analyte description for a given
+        //! channel/sample-key (the sample key is the sanitized filename token
+        //! used internally, e.g. "AAV_capsid_-_empty_VP1_VP2_VP3_1_1_10_5_5_50_").
+        //! Falls back to returning sample_key unchanged if no match is found.
+        QString prettify_sample_name( QString channame, QString sample_key );
+
+        //! \brief At Save-Profiles time (after all channels are confirmed
+        //! normalized), let the user pick, per channel, which analyte signal(s)
+        //! should appear in the Report's "Integration Results: Fraction of
+        //! Total Concentration" section. Defaults every checkbox to checked,
+        //! so a user who doesn't touch anything keeps today's "show every
+        //! signal" behavior. Options come from data_per_channel_ranges_percents_sample
+        //! (already populated during this Analysis session -- no extra DB
+        //! round-trip needed), displayed via prettify_sample_name().
+        //! \param selected_signals [out] channel -> list of the raw (sanitized)
+        //!        sample keys the user left checked. Cleared and (re)filled here.
+        //! \return false if the user cancelled -- caller should abort the save.
+        bool show_signal_selection_dialog( QMap< QString, QStringList >& selected_signals );
 
     public slots:
         void load_data_auto( QMap<QString,QString>& );
@@ -167,9 +226,10 @@ class US_Norm_Profile : public US_Widgets
 					QMap <QString, QString>&,
 					QMap <QString, double>&,
 					QMap< QString, int >&,
-					QMap< QString, QMap < QString, double>>&,
+					QMap< QString, QMap< QString, QMap < QString, double>>>&,
 					QMap <QString, double>&,
-					QMap <QString, double>& );
+					QMap <QString, double>&,
+					QMap< QString, QStringList >& );
 
         //! \brief Slot to add or remove an item.
         //! \param item The list widget item.
