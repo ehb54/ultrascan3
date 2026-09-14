@@ -1380,6 +1380,35 @@ int US_DataIO::loadData( const QString&  directory,
    return result;
 }
 
+QString US_DataIO::rawFilenameForEdit( const QString& editFilename )
+{
+   const QString filename = QFileInfo( editFilename ).fileName();
+   const QStringList parts = filename.split( "." );
+
+   // loadData() indexes fields zero through four and interprets the final two
+   // as wavelength and suffix.  Rejecting a shorter name here prevents that
+   // later indexing from becoming an out-of-range access.
+   if ( parts.size() != 7  ||  parts.last().compare( "xml",
+                                                     Qt::CaseInsensitive ) != 0 )
+      return QString();
+
+   const QString filepart1 = filename.section( ".",  0, -7 );
+   const QString filepart2 = filename.section( ".", -5, -3 );
+   QString       wavelength = filename.section( ".", -2, -2 );
+
+   if ( filepart1.isEmpty()  ||  filepart2.isEmpty()
+        ||  wavelength.isEmpty() )
+      return QString();
+
+   if ( wavelength.contains( "-" )  &&  wavelength.contains( "@" ) )
+      wavelength = wavelength.section( "@", -1, -1 );
+
+   if ( wavelength.isEmpty() )
+      return QString();
+
+   return filepart1 + "." + filepart2 + "." + wavelength + ".auc";
+}
+
 // Load edited and raw data
 int US_DataIO::loadData( const QString&         directory, 
                          const QString&         editFilename,
@@ -1388,11 +1417,8 @@ int US_DataIO::loadData( const QString&         directory,
 {
    QString ftriple     = editFilename.section( ".", -2, -2 );
    // Determine raw file name by removing editID
-   QString rawDataFile = editFilename;
+   QString rawDataFile = rawFilenameForEdit( editFilename );
    QString edtFileRead = editFilename;
-   QString filepart1   = editFilename.section( ".",  0, -7 );
-   QString filepart2   = editFilename.section( ".", -5, -3 );
-   rawDataFile         = filepart1 + "." + filepart2 + ".";
    QString clambda     = ftriple     .section( ".", -1, -1 );
    bool    isMwl       = clambda.contains( "-" );
 
@@ -1404,7 +1430,8 @@ int US_DataIO::loadData( const QString&         directory,
                             + "." + elambda + ".xml";
    }
 
-   rawDataFile         = rawDataFile + clambda + ".auc";
+   if ( rawDataFile.isEmpty() )
+      throw CANTOPEN;
 
 //qDebug() << "dIO:ldEd: editFilename" << editFilename;
 //qDebug() << "dIO:ldEd: rawDataFile" << rawDataFile;

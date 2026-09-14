@@ -17,6 +17,7 @@ HEADERS       =  us_query_rmsd.h \
                  ../us_fematch/us_dmga_mc_stats.h    \
                  ../us_fematch/us_thread_worker.h    \
                  ../us_reporter_gmp/us_reporter_gmp.h \
+                 ../us_edited_data_loaders.h \
                  ../us_ddist_combine/us_ddist_combine.h \
                  ../us_ddist_combine/us_select_rundd.h  \
                  ../us_pseudo3d_combine/us_pseudo3d_combine.h \
@@ -41,6 +42,7 @@ SOURCES       =  us_query_rmsd.cpp \
                  ../us_fematch/us_dmga_mc_stats.cpp    \
                  ../us_fematch/us_thread_worker.cpp    \
                  ../us_reporter_gmp/us_reporter_gmp.cpp \
+                 ../us_edited_data_loaders.cpp \
                  ../us_ddist_combine/us_ddist_combine.cpp \
                  ../us_ddist_combine/us_select_rundd.cpp  \
                  ../us_pseudo3d_combine/us_pseudo3d_combine.cpp \
