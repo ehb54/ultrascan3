@@ -339,6 +339,23 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void           resid_resized();
 
    public:
+      // --- gui_script entry points (see the "sas" command in us_hydrodyn_script.cpp) ---
+
+      // what check_pr_error() should do about points with no usable error value when it
+      // cannot ask, i.e. under gui_script or batch. Default PR_ERRORS_REMOVE keeps the
+      // long standing behaviour for scripts written before the repair existed.
+      enum pr_errors_policy {
+         PR_ERRORS_REMOVE = 0,
+         PR_ERRORS_MINIMUM,
+         PR_ERRORS_VALUE
+      };
+
+      pr_errors_policy script_pr_errors_mode;
+      double           script_pr_errors_value;
+
+      bool script_set_pr_errors( const QString & arg,      QString & errormsg );
+      bool script_load_pr      ( const QString & filename, QString & errormsg );
+
       ScrollZoomer  *plot_resid_zoomer;
 
       QwtPlotGrid  *grid_pr;
