@@ -5,6 +5,7 @@
 #include <QToolTip>
 #include <QMessageBox>
 #include <QLineF>
+#include <QPointer>
 #include <qwt_scale_div.h>
 #include <qwt_scale_map.h>
 #include <qwt_picker_machine.h>
@@ -10216,6 +10217,18 @@ void US_Edit::correct_bll_for_triple_auto( void )
   sdiag_bll->update();
 
   sdiag_bll->show();
+
+  // See the matching comment in manual_edit_auto(): this->size() can be
+  // stale here, so re-apply once the event loop has settled geometry.
+  QPointer<US_Edit> self( this );
+  QTimer::singleShot( 0, this, [ self ]()
+  {
+    if ( self && self->sdiag_bll != NULL )
+      {
+        self->sdiag_bll->move  ( self->offset, self->offset );
+        self->sdiag_bll->resize( self->size() );
+      }
+  } );
 }
 
 
@@ -10274,6 +10287,24 @@ void US_Edit::manual_edit_auto( void )
   sdiag->show();
   //sdiag->trigger_resize();
   //resize_main ( );
+
+  // this->size() can still be stale right here -- e.g. right after
+  // switching to the Editing tab, before this panel's own geometry from
+  // its parent's layout has actually settled -- which is why the fix
+  // above alone only takes effect once the user manually resizes the
+  // window (that's what finally delivers a resizeEvent() with the
+  // correct, settled size). Re-apply the same sizing one event-loop tick
+  // later, by which point layout/geometry updates have been processed, so
+  // it is correct immediately without requiring any user interaction.
+  QPointer<US_Edit> self( this );
+  QTimer::singleShot( 0, this, [ self ]()
+  {
+    if ( self && self->sdiag != NULL )
+      {
+        self->sdiag->move  ( self->offset, self->offset );
+        self->sdiag->resize( self->size() );
+      }
+  } );
 }
 
 // Keep any nested "manual edit" sub-panel (sdiag / sdiag_bll), if one is
