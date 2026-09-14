@@ -9,7 +9,9 @@
 #include <QProcessEnvironment>
 #include <QXmlStreamReader>
 
+#include "us_convert.h"
 #include "us_dataIO.h"
+#include "us_experiment.h"
 #include "us_util.h"
 
 namespace
@@ -300,6 +302,49 @@ private slots:
 
       // ...but one simulated project behind them.
       QCOMPARE( projectGUIDs[ 0 ], projectGUIDs[ 1 ] );
+   }
+
+   void aSavedSpeedRunLoadsThroughTheDiskReaderChain()
+   {
+      // The one archive-shape integration case: a real simulator run driven
+      // through the same reader sequence US_ConvertGui::loadUS3Disk() uses, so
+      // the unit characterizations elsewhere are anchored to output the
+      // production writers actually produce.
+      for ( int rpm : { 40000, 50000 } )
+      {
+         const QString runID = speedRunID( rpm );
+         const QString dir   = speedDir( rpm ) + "/";
+
+         QVector< US_DataIO::RawData >   allData;
+         QList< US_Convert::TripleInfo > triples;
+         QString                         runType;
+
+         QCOMPARE( US_Convert::readUS3Disk( dir, allData, triples, runType ),
+                   (int)US_Convert::OK );
+         QCOMPARE( runType, QString( "RA" ) );
+         QCOMPARE( allData.size(), 1 );
+         QCOMPARE( triples.size(), 1 );
+         QCOMPARE( triples[ 0 ].tripleDesc, QString( "1 / S / 123" ) );
+
+         US_Experiment experiment;
+         experiment.clear();
+         QCOMPARE( experiment.readFromDisk( triples, runType, runID, dir ),
+                   (int)US_Convert::OK );
+
+         QCOMPARE( experiment.runID, runID );
+
+         // The experiment filled in what the filename scan left empty.
+         QCOMPARE( triples[ 0 ].tripleFilename,
+                   runID + ".RA.1.S.123.auc" );
+         QCOMPARE( US_Util::uuid_unparse(
+                      (unsigned char*)triples[ 0 ].tripleGUID ),
+                   US_Util::uuid_unparse(
+                      (unsigned char*)allData[ 0 ].rawGUID ) );
+
+         // A generated run names both records it depends on.
+         QVERIFY( ! experiment.project.projectGUID.isEmpty() );
+         QVERIFY( ! triples[ 0 ].solution.solutionGUID.isEmpty() );
+      }
    }
 };
 
