@@ -4,6 +4,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_iqq_load_csv.h"
 #include "../include/us_hydrodyn_saxs_load_csv.h"
+#include <QInputDialog>
 
 #define SLASH QDir::separator()
 
@@ -2662,6 +2663,8 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
    vector < double > r;
    vector < double > pr;
    vector < double > pr_error;
+   vector < bool >   pr_error_present;         // per point: did its line carry an error column?
+   unsigned int      pr_error_columns = 0;     // how many lines carried one
    // double new_r, new_pr, new_pr_error;
    QString res = "";
    unsigned int startline = 1;
@@ -4030,8 +4033,17 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
             startline = 0;
             QStringList qsl = firstLine.trimmed().split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             if ( qsl.size() >= 2 ) {
-               r.push_back( qsl[0].toDouble() );
-               pr.push_back( qsl[1].toDouble() );
+               r .push_back( qsl[ 0 ].toDouble() );
+               pr.push_back( qsl[ 1 ].toDouble() );
+               // this line is data, not a header, so its error column counts like any other
+               if ( qsl.size() > 2 ) {
+                  pr_error        .push_back( qsl[ 2 ].toDouble() );
+                  pr_error_present.push_back( true );
+                  pr_error_columns++;
+               } else {
+                  pr_error        .push_back( 0e0 );
+                  pr_error_present.push_back( false );
+               }
             }
          } else {
             editor->append(firstLine);
@@ -4070,18 +4082,21 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
          pr.push_back( qsl[1].toDouble() );
 
          if ( !normed_pr_present && qsl.size() > 2 ) {
-            pr_error.push_back( qsl[2].toDouble() );
+            pr_error        .push_back( qsl[ 2 ].toDouble() );
+            pr_error_present.push_back( true );
+            pr_error_columns++;
+         } else {
+            pr_error        .push_back( 0e0 );
+            pr_error_present.push_back( false );
          }
       }
       f.close();
       // US_Vector::printvector3( "pr load 0 r, pr, pr_error", r, pr, pr_error, 6 );
 
-      if ( pr_error.size() && pr.size() != pr_error.size() ) {
-         pr_error.clear();
-         editor_msg( "darkRed"
-                     ,QString( us_tr( "File %1 : some, but not all, data had apparent associated error values, all error values removed" ) )
-                     .arg( QFileInfo(filename).fileName() )
-                     );
+      // nothing carried an error column, so there are no errors to keep
+      if ( !pr_error_columns ) {
+         pr_error        .clear();
+         pr_error_present.clear();
       }
       
       while ( pop_last > 0 && r.size() )
@@ -4092,7 +4107,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, boo
       }
 
       if ( pr_error.size() ) {
-         pr_error.resize( r.size() );
+         pr_error        .resize( r.size() );
+         pr_error_present.resize( r.size() );
+         check_pr_error( filename, r, pr_error, pr_error_present );
       }
 
       QString use_filename = QFileInfo(filename).fileName() + " P(r)";

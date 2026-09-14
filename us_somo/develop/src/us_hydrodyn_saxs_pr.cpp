@@ -4,6 +4,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
 #include "../include/us_hydrodyn.h"
+#include <QInputDialog>
 
 #define SLASH QDir::separator()
 double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool allow_none )
@@ -70,6 +71,18 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool all
                         );
       }
    } else {
+      // No stored molecular weight, and get_mw() answers that by opening a modal dialog
+      // in a "while ( mw <= 0.0 )" loop. Under gui_script or batch there is nobody to
+      // close it, so the run hangs forever. Report and carry on without a weight instead:
+      // plot_one_pr() already treats -1 as "none" and turns normalisation off.
+      if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script ||
+           ( (US_Hydrodyn *) us_hydrodyn )->batch_active() ) {
+         QTextStream( stdout )
+            << QString( us_tr( "Notice: %1 : no molecular weight known, continuing without one\n" ) )
+            .arg( filename );
+         return allow_none ? -1e0 : 0e0;
+      }
+
       US_Hydrodyn_Saxs_Mw *smw = new US_Hydrodyn_Saxs_Mw(
                                                          msg,
                                                          &mw,
@@ -210,6 +223,223 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > r, vector < double > *pr 
    }
    */
 #endif
+}
+
+// list the r values at the given positions, capped so a wholly bad file does not flood the log
+static QString pr_error_r_list( const vector < double > & r,
+                                const vector < unsigned int > & pos,
+                                unsigned int max_show = 8 ) {
+   QStringList qsl;
+   for ( unsigned int i = 0; i < pos.size() && i < max_show; i++ ) {
+      qsl << QString( "%1" ).arg( r[ pos[ i ] ] );
+   }
+   QString msg = qsl.join( ", " );
+   if ( pos.size() > max_show ) {
+      msg += QString( us_tr( " ... and %1 more" ) ).arg( pos.size() - max_show );
+   }
+   return msg;
+}
+
+void US_Hydrodyn_Saxs::check_pr_error( const QString     & filename,
+                                       vector < double > & r,
+                                       vector < double > & pr_error,
+                                       vector < bool >   & pr_error_present ) {
+   if ( pr_error.size() != r.size() ||
+        pr_error.size() != pr_error_present.size() ) {
+      return;
+   }
+
+   // a P(r) point is only usable with an error if that error is strictly positive:
+   // a zero or negative value divides by zero in weighted fitting and breaks the plot
+
+   vector < unsigned int > no_column;
+   vector < unsigned int > not_positive;
+   double                  min_pr_error     = 0e0;
+   bool                    min_pr_error_set = false;
+
+   for ( unsigned int i = 0; i < pr_error.size(); i++ ) {
+      if ( !pr_error_present[ i ] ) {
+         no_column.push_back( i );
+         continue;
+      }
+      if ( pr_error[ i ] <= 0e0 ) {
+         not_positive.push_back( i );
+         continue;
+      }
+      if ( !min_pr_error_set || pr_error[ i ] < min_pr_error ) {
+         min_pr_error     = pr_error[ i ];
+         min_pr_error_set = true;
+      }
+   }
+
+   unsigned int unusable = no_column.size() + not_positive.size();
+   if ( !unusable ) {
+      return;
+   }
+
+   bool interactive =
+      !( (US_Hydrodyn *) us_hydrodyn )->gui_script &&
+      !( (US_Hydrodyn *) us_hydrodyn )->batch_active();
+
+   // editor_msg() only reaches the GUI text window. A scripted or batch run has nobody
+   // watching that, so the same lines go to stdout there or the run reports nothing.
+   auto report = [ & ]( const QString & color, const QString & msg ) {
+      editor_msg( color, msg );
+      if ( !interactive ) {
+         QTextStream( stdout ) << msg << "\n";
+      }
+   };
+
+   QString    name = QFileInfo( filename ).fileName();
+   QStringList detail;
+
+   if ( no_column.size() ) {
+      detail << QString( us_tr( "%1 of %2 points have no error value, at r = %3" ) )
+         .arg( no_column.size() )
+         .arg( pr_error.size() )
+         .arg( pr_error_r_list( r, no_column ) );
+   }
+   if ( not_positive.size() ) {
+      detail << QString( us_tr( "%1 of %2 points have a zero or negative error value, at r = %3" ) )
+         .arg( not_positive.size() )
+         .arg( pr_error.size() )
+         .arg( pr_error_r_list( r, not_positive ) );
+   }
+
+   for ( int i = 0; i < (int) detail.size(); i++ ) {
+      report( "darkRed", QString( us_tr( "File %1 : %2" ) ).arg( name ).arg( detail[ i ] ) );
+   }
+
+   double use_error = 0e0;
+   bool   repair    = false;
+
+   if ( !interactive ) {
+      // nobody to ask, so apply whatever the script asked for in advance
+      if ( script_pr_errors_mode == PR_ERRORS_MINIMUM && min_pr_error_set ) {
+         use_error = min_pr_error;
+         repair    = true;
+      } else if ( script_pr_errors_mode == PR_ERRORS_VALUE && script_pr_errors_value > 0e0 ) {
+         use_error = script_pr_errors_value;
+         repair    = true;
+      }
+   }
+
+   // only offer a repair when there is somebody at the keyboard and a sound value to offer
+   if ( interactive && min_pr_error_set ) {
+      switch ( QMessageBox::question( this,
+                                      us_tr( "UltraScan Notice" ),
+                                      QString( us_tr( "Please note:\n\n"
+                                                      "File %1\n\n"
+                                                      "%2\n\n"
+                                                      "P(r) needs a positive error value at every point, otherwise\n"
+                                                      "all the error values have to be dropped.\n\n"
+                                                      "What would you like to do?\n" ) )
+                                      .arg( name )
+                                      .arg( detail.join( "\n" ) ),
+                                      us_tr( "&Remove all error values" ),
+                                      QString( us_tr( "Set them to the &minimum error (%1)" ) ).arg( min_pr_error ),
+                                      us_tr( "Set them to a &value..." ),
+                                      1, // default
+                                      0  // escape
+                                      ) ) {
+      case 1 :
+         {
+            use_error = min_pr_error;
+            repair    = true;
+         }
+         break;
+      case 2 :
+         {
+            bool    ok = false;
+            QString qs = QInputDialog::getText( this,
+                                                windowTitle() + us_tr( " : P(r) error value" ),
+                                                us_tr( "Error value to use for the points listed above : " ),
+                                                QLineEdit::Normal,
+                                                QString( "%1" ).arg( min_pr_error ),
+                                                &ok );
+            if ( ok ) {
+               bool   valid = false;
+               double value = qs.toDouble( &valid );
+               if ( valid && value > 0e0 ) {
+                  use_error = value;
+                  repair    = true;
+               } else {
+                  editor_msg( "darkRed",
+                              QString( us_tr( "File %1 : \"%2\" is not a positive number" ) ).arg( name ).arg( qs ) );
+               }
+            }
+         }
+         break;
+      default :
+         break;
+      }
+   }
+
+   if ( repair ) {
+      for ( unsigned int i = 0; i < no_column.size(); i++ ) {
+         pr_error[ no_column[ i ] ] = use_error;
+      }
+      for ( unsigned int i = 0; i < not_positive.size(); i++ ) {
+         pr_error[ not_positive[ i ] ] = use_error;
+      }
+      report( "darkblue",
+              QString( us_tr( "File %1 : %2 error value(s) set to %3" ) )
+              .arg( name )
+              .arg( unusable )
+              .arg( use_error ) );
+      return;
+   }
+
+   pr_error.clear();
+   report( "darkRed",
+           QString( us_tr( "File %1 : all error values removed" ) ).arg( name ) );
+}
+
+// gui_script: "sas pr_errors remove | minimum | <positive value>"
+bool US_Hydrodyn_Saxs::script_set_pr_errors( const QString & arg, QString & errormsg ) {
+   errormsg = "";
+
+   if ( arg.toLower() == "remove" ) {
+      script_pr_errors_mode  = PR_ERRORS_REMOVE;
+      script_pr_errors_value = 0e0;
+      return true;
+   }
+
+   if ( arg.toLower() == "minimum" ) {
+      script_pr_errors_mode  = PR_ERRORS_MINIMUM;
+      script_pr_errors_value = 0e0;
+      return true;
+   }
+
+   bool   ok    = false;
+   double value = arg.toDouble( &ok );
+   if ( !ok || value <= 0e0 ) {
+      errormsg = us_tr( "expected remove, minimum or a positive value" );
+      return false;
+   }
+
+   script_pr_errors_mode  = PR_ERRORS_VALUE;
+   script_pr_errors_value = value;
+   return true;
+}
+
+// gui_script: "sas load_pr <file>". load_pr() is silent when the file will not open,
+// so the readability checks happen here where the script can be told what went wrong.
+bool US_Hydrodyn_Saxs::script_load_pr( const QString & filename, QString & errormsg ) {
+   errormsg = "";
+
+   QFileInfo fi( filename );
+   if ( !fi.exists() ) {
+      errormsg = us_tr( "file does not exist" );
+      return false;
+   }
+   if ( !fi.isFile() || !fi.isReadable() ) {
+      errormsg = us_tr( "file is not readable" );
+      return false;
+   }
+
+   load_pr( false, filename );
+   return true;
 }
 
 void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &pr )

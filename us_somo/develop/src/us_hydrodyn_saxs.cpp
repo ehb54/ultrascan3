@@ -95,6 +95,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    }
 
    last_selected_pdb_filename = "";
+   script_pr_errors_mode  = PR_ERRORS_REMOVE;
+   script_pr_errors_value = 0e0;
    external_running = false;
    rasmol = NULL;
    this->saxs_widget = saxs_widget;
