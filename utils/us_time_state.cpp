@@ -974,7 +974,7 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
          {  // Xml definitions characters also match, return with existing DB
             if ( fnamedb != tmst_fname )
             {  // If the file name differs, we must update the record
-               dbP->mysqlEscapeString( defs_ld, defs_da, defs_da.size() );
+               defs_ld = defs_da;   // composeQuery does the escaping
                query.clear();
                query << "update_timestate" << idTmst << idExp
                      << tmst_fname << defs_ld;
@@ -992,8 +992,8 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
       }
    }
 
-   // Escape definitions xml string, then create a new DB record
-   dbP->mysqlEscapeString( defs_ld, defs_da, defs_da.size() );
+   // composeQuery owns SQL escaping.
+   defs_ld = defs_da;
    query.clear();
    query << "new_timestate" << idExp << tmst_fname << defs_ld;
    stat         = dbP->statusQuery( query );
