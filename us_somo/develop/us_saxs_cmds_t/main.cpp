@@ -2453,13 +2453,14 @@ int main (int argc, char **argv)
 
    if ( cmds[ 0 ].toLower() == "autorg" )
    {
-      // usage: autorg [--json] [--key value ...] file ...
+      // usage: autorg [--json|--csv] [--key value ...] file ...
       bool        as_json = false;
+      bool        as_csv  = false;
       QStringList files;
       map < QString, QString > kv;
       QString     usage =
-         QString( "usage: %1 autorg [--json] [--key value ...] file ...\n"
-                  "       robust automatic Guinier range search; --json gives one JSON object per line\n" )
+         QString( "usage: %1 autorg [--json|--csv] [--key value ...] file ...\n"
+                  "       robust automatic Guinier range search; --json gives one JSON object per line, --csv one row per file\n" )
          .arg( argv[ 0 ] )
          + US_Autorg_Params::help();
 
@@ -2468,6 +2469,8 @@ int main (int argc, char **argv)
          if ( cmds[ p ] == "--json" )
          {
             as_json = true;
+         } else if ( cmds[ p ] == "--csv" ) {
+            as_csv = true;
          } else if ( cmds[ p ] == "--help" || cmds[ p ] == "-h" ) {
             QTextStream( stdout ) << usage;
             exit( 0 );
@@ -2504,8 +2507,10 @@ int main (int argc, char **argv)
 
       US_Saxs_Util usu;
       int          nfail = 0;
-      if ( !as_json )
+      if ( as_csv )
       {
+         QTextStream( stdout ) << US_Autorg_Result::csv_header();
+      } else if ( !as_json ) {
          QTextStream( stdout ) << US_Autorg_Result::text_header();
       }
       for ( int k = 0; k < (int) files.size(); ++k )
@@ -2523,7 +2528,7 @@ int main (int argc, char **argv)
          {
             ++nfail;
          }
-         QTextStream( stdout ) << ( as_json ? r.json() + "\n" : r.text() );
+         QTextStream( stdout ) << ( as_json ? r.json() + "\n" : ( as_csv ? r.csv() : r.text() ) );
       }
       exit( nfail ? errorbase - 2 : 0 );
    }

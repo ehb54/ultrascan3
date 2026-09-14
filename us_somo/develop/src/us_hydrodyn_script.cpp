@@ -398,6 +398,35 @@ void US_Hydrodyn::gui_script_run() {
                   }
                   ls.pop_front();
                }
+            } else if ( opt1 == "load_iq" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               while ( !ls.isEmpty() ) {
+                  if ( !saxs_plot_window->script_load_iq( ls.front(), errormsg ) ) {
+                     gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+                  }
+                  ls.pop_front();
+               }
+            } else if ( opt1 == "autorg" ) {
+               // sas autorg [csv <file>] [key value ...]
+               map < QString, QString > kv;
+               QString csvfile;
+               while ( ls.size() >= 2 ) {
+                  QString key = ls.front(); ls.pop_front();
+                  QString val = ls.front(); ls.pop_front();
+                  if ( key.toLower() == "csv" ) {
+                     csvfile = val;
+                  } else {
+                     kv[ key.toLower() ] = val;
+                  }
+               }
+               if ( !ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "parameters must be key value pairs, odd one: " + ls.front() );
+               }
+               if ( !saxs_plot_window->script_autorg( kv, csvfile, errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
             } else {
                gui_script_error( i, cmd, opt1 + ": unrecognized" );
             }

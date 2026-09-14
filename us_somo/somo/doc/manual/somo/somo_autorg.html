@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO automatic Guinier range search (autorg)</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>SOMO Automatic Guinier Range Search (autorg)</h1>
+</center>
+</td>
+</tr>
+</table>
+
+<p>
+<b>autorg</b> finds the Guinier region of a scattering curve automatically and reports the radius of
+gyration <i>R<sub>g</sub></i> and the forward scattering <i>I(0)</i> with their uncertainties, the
+<i>q</i> range used, a quality score in [0,1], and diagnostics for aggregation or repulsive interactions.
+It is available from the headless command line (<tt>us_saxs_cmds_t</tt>), from the JSON run type used
+by pipelines, and from the SAS window through <tt>gui_script</tt>. Every parameter of the search can be
+set from all three entry points, so defaults can be changed without rebuilding the program.
+The routine is additive to the existing <a href=somo_saxs_options.html>Guinier options</a>
+"<i>Search for best Guinier range</i>" mode, which is unchanged.
+</p>
+
+<h2>Algorithm</h2>
+<ol>
+<li><b>Cleaning.</b> Non-finite points and points with <i>q</i> &lt; 0 are dropped; points with
+<i>I(q)</i> &le; 0 are dropped when <i>dropneg</i> is on (the default) or cause a failure otherwise;
+the optional hard limits <i>qmin</i> / <i>qmax</i> are applied; unsorted <i>q</i> is sorted with a
+warning. Standard deviations are used for weighting only when every SD in the curve is positive and
+finite (<i>usesd</i> auto); otherwise the fit is unweighted with a warning, and a noise floor
+<i>sigfloor</i> in ln <i>I</i> keeps noise-free theoretical curves from looking "significantly" curved.</li>
+<li><b>Preliminary <i>R<sub>g</sub></i>.</b> For each starting point, the window is grown while its slope
+is either not yet significant or still satisfies <i>q&middot;R<sub>g</sub></i> &le; <i>qrgmax</i>. The
+longest valid window over all starts gives the preliminary <i>R<sub>g</sub></i>, so a short low-<i>q</i>
+upturn from aggregates (a valid Guinier region of a very large particle) loses to the particle itself.
+The search is then restricted to <i>q</i> &le; <i>regionfactor</i> &middot; <i>qrgmax</i> /
+<i>R<sub>g</sub></i>, which excludes spurious small-<i>R<sub>g</sub></i> fits to the high-<i>q</i> tail.</li>
+<li><b>Window enumeration.</b> Every window in the region with <i>minpts</i> to <i>maxpts</i> points is
+fitted (ln <i>I</i> versus <i>q</i><sup>2</sup>; ln <i>qI</i> or ln <i>q</i><sup>2</sup><i>I</i> for
+the cross-section and transverse types). A window is valid when the slope is negative and significant
+(|slope| / SD &ge; <i>slopet</i>), <i>q&middot;R<sub>g</sub></i> at its end is at most <i>qrgmax</i>
+(optionally at most <i>qrgmin</i> at its start), its <i>q&middot;R<sub>g</sub></i> span is at least
+<i>minspan</i>, and <i>R<sub>g</sub></i> lies within the optional <i>rgmin</i> / <i>rgmax</i> limits.</li>
+<li><b>Scoring.</b> Each valid window receives seven terms in [0,1]: (1) 1 / reduced &chi;<sup>2</sup>
+when above 1; (2) a curvature penalty from the t-statistic of a quadratic term (half at <i>curvt</i>);
+(3) the <i>q&middot;R<sub>g</sub></i> span divided by <i>qrgmax</i>; (4) coverage of the available Guinier
+region (weight 0 by default); (5) a start penalty 1 / (1 + <i>k</i>/<i>n</i>) where <i>k</i> counts skipped
+low-<i>q</i> points that lie within <i>skipz</i> SDs of the line, i.e. points there was no reason to skip;
+(6) forward consistency: when the points beyond the window but inside
+<i>q&middot;R<sub>g</sub></i> &le; <i>qrgmax</i> deviate significantly (|z| &gt; <i>fwdz</i>), a penalty
+of half at a mean deviation <i>fwddev</i> in ln <i>I</i>; (7) consensus, a Gaussian in the relative
+distance of the window's <i>R<sub>g</sub></i> from the quality weighted median <i>R<sub>g</sub></i> of all
+windows, width <i>constol</i>. The quality is the weighted geometric mean of the terms with exponents
+<i>weights</i>; the window of highest quality is reported.</li>
+<li><b>Results.</b> <i>R<sub>g</sub></i> and <i>I(0)</i> with SDs (inflated by the square root of the
+reduced &chi;<sup>2</sup> when it exceeds 1), the first and last point of the window (1-based, in the
+original file), the number of points used, skipped, dropped and removed, the <i>q</i> and
+<i>q&middot;R<sub>g</sub></i> range, the reduced &chi;<sup>2</sup>, the curvature t-statistic, the quality,
+and the mean and spread of <i>R<sub>g</sub></i> over the top <i>topfrac</i> of windows. Optional outlier
+rejection (<i>outlier</i> &gt; 0) removes points of the chosen window deviating by more than that many SDs
+and refits.</li>
+<li><b>Low-<i>q</i> diagnostics.</b> The skipped points and the first third of the window are compared
+with the line fitted to the rest of the window. A z-score above <i>aggthresh</i> with a mean deviation
+above <i>aggmindev</i> in ln <i>I</i> flags a low-<i>q</i> upturn (<b>aggregation</b>, or an intrinsically
+convex Guinier plot such as an elongated particle or a flexible chain); the mirror case flags a
+downturn (<b>repulsion</b>, interparticle interference). These are advisory: a single curve cannot
+separate aggregation from shape.</li>
+</ol>
+
+<h2>Parameters</h2>
+<table border=1 cellpadding=3>
+<tr><th>key</th><th>default</th><th>meaning</th></tr>
+<tr><td>type</td><td>rg</td><td>rg (Guinier), rc (cross-section, ln <i>qI</i>), rt (transverse, ln <i>q</i><sup>2</sup><i>I</i>)</td></tr>
+<tr><td>minpts</td><td>10</td><td>minimum points in a window (at least 4)</td></tr>
+<tr><td>maxpts</td><td>0</td><td>maximum points in a window, 0 = unlimited</td></tr>
+<tr><td>qrgmax</td><td>0</td><td>maximum <i>q&middot;R<sub>g</sub></i> at the window end; 0 = 1.3 for rg, 1.0 for rc and rt</td></tr>
+<tr><td>qrgmin</td><td>0</td><td>maximum <i>q&middot;R<sub>g</sub></i> at the window start, 0 = unlimited</td></tr>
+<tr><td>qmin, qmax</td><td>0</td><td>hard <i>q</i> limits, 0 = none</td></tr>
+<tr><td>rgmin, rgmax</td><td>0</td><td>reject windows with <i>R<sub>g</sub></i> outside these limits, 0 = none</td></tr>
+<tr><td>regionfactor</td><td>3</td><td>search only <i>q</i> &le; regionfactor &middot; qrgmax / preliminary <i>R<sub>g</sub></i></td></tr>
+<tr><td>usesd</td><td>auto</td><td>auto: weight by SDs when all are positive; 0: never; 1: require SDs</td></tr>
+<tr><td>dropneg</td><td>1</td><td>1 drops <i>I</i> &le; 0 points, 0 fails on them</td></tr>
+<tr><td>qscale</td><td>1</td><td>multiply <i>q</i> on input, e.g. 0.1 for nm<sup>-1</sup> data</td></tr>
+<tr><td>outlier</td><td>0</td><td>outlier rejection distance in SDs on the chosen window, 0 = off</td></tr>
+<tr><td>slopet</td><td>2</td><td>minimum |slope| / SD(slope) of a valid window</td></tr>
+<tr><td>minspan</td><td>0.2</td><td>minimum <i>q&middot;R<sub>g</sub></i> span of a valid window</td></tr>
+<tr><td>sigfloor</td><td>0.005</td><td>noise floor in ln <i>I</i> for unweighted fits</td></tr>
+<tr><td>curvt</td><td>2</td><td>curvature t-statistic giving a penalty of 1/2</td></tr>
+<tr><td>skipz</td><td>2</td><td>skipped low-<i>q</i> points within this many SDs of the line count against the window</td></tr>
+<tr><td>fwdz</td><td>3</td><td>|z| above which the points beyond the window inside <i>q&middot;R<sub>g</sub></i> &le; qrgmax are tested</td></tr>
+<tr><td>fwddev</td><td>0.02</td><td>mean deviation in ln <i>I</i> of those points giving a penalty of 1/2</td></tr>
+<tr><td>constol</td><td>0.1</td><td>relative <i>R<sub>g</sub></i> tolerance of the consensus term</td></tr>
+<tr><td>topfrac</td><td>0.1</td><td>fraction of windows, by quality, used for the <i>R<sub>g</sub></i> spread</td></tr>
+<tr><td>aggthresh</td><td>3</td><td>|z| of the low-<i>q</i> residuals flagging aggregation / repulsion</td></tr>
+<tr><td>aggmindev</td><td>0.01</td><td>minimum mean low-<i>q</i> deviation in ln <i>I</i> for those flags</td></tr>
+<tr><td>weights</td><td>1,1,1,0,1,1,1</td><td>exponents of the seven terms: chi2, curvature, span, coverage, start, forward, consensus</td></tr>
+<tr><td>debug</td><td>0</td><td>1 dumps every candidate window to standard error</td></tr>
+</table>
+
+<h2>Command line</h2>
+<pre>
+us_saxs_cmds_t autorg [--json|--csv] [--key value ...] file ...
+</pre>
+<p>
+Prints one table line per file (default), one JSON object per line (<tt>--json</tt>) or one CSV row per
+file (<tt>--csv</tt>). Input files may be whitespace or comma separated text with two (<i>q</i>, <i>I</i>)
+or three (<i>q</i>, <i>I</i>, SD) numeric columns; lines that do not start with two numbers are ignored,
+so headers and footers need not be removed. Example:
+</p>
+<pre>
+us_saxs_cmds_t autorg --minpts 12 --qrgmax 1.0 sample1.dat sample2.dat
+</pre>
+
+<h2>JSON run type</h2>
+<pre>
+us_saxs_cmds_t json '{"autorg":1,"files":["a.dat","b.dat"],"minpts":12}'
+us_saxs_cmds_t json '{"autorg":1,"name":"curve","q":[...],"i":[...],"e":[...]}'
+</pre>
+<p>
+The reply carries <tt>results</tt>, an array with one object per curve (<tt>ok</tt>, <tt>rg</tt>,
+<tt>rg_sd</tt>, <tt>i0</tt>, <tt>i0_sd</tt>, <tt>first</tt>, <tt>last</tt>, <tt>npts</tt>,
+<tt>qmin</tt>, <tt>qmax</tt>, <tt>qrgmin</tt>, <tt>qrgmax</tt>, <tt>chi2_red</tt>, <tt>curv_t</tt>,
+<tt>quality</tt>, <tt>lowq_z</tt>, <tt>lowq_dev</tt>, <tt>aggregation</tt>, <tt>repulsion</tt>,
+<tt>rg_spread_*</tt>, <tt>warnings</tt>, and <tt>errormsg</tt> when <tt>ok</tt> is false),
+<tt>nok</tt> (the number of curves analyzed) and <tt>params</tt> (the effective parameters).
+</p>
+
+<h2>gui_script</h2>
+<pre>
+sas open
+sas load_iq &lt;file&gt; [&lt;file&gt; ...]
+sas autorg [csv &lt;file&gt;] [key value ...]
+</pre>
+<p>
+<tt>sas load_iq</tt> loads curves into the SAS window without scaling; <tt>sas autorg</tt> runs the
+search on every loaded curve, writes the table to standard output and the SAS window editor, and
+optionally a CSV file with all result fields.
+</p>
+
+<h2>Notes</h2>
+<ul>
+<li>For globular particles the Guinier approximation up to <i>q&middot;R<sub>g</sub></i> = 1.3 is biased by
+one to three percent; precise data lead the search to shorter windows and smaller bias. For elongated
+particles and flexible chains set <i>qrgmax</i> to about 1.0 or lower.</li>
+<li>When the measured Guinier region holds fewer than <i>minpts</i> points the routine fails with a
+message giving the number of available points instead of returning a value from outside the region;
+lower <i>minpts</i> deliberately if that is acceptable.</li>
+<li>Data in nm<sup>-1</sup> produce a warning when the maximum <i>q</i> exceeds 2; use <i>qscale</i> 0.1.</li>
+</ul>
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on September 14, 2026.
+</font>
+</body>
+</html>

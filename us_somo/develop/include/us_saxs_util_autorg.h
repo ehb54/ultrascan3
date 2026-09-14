@@ -114,6 +114,8 @@ class US_EXTERN US_Autorg_Result
       QString  json() const;    // one JSON object, numbers unquoted
       QString  text() const;    // one human readable block
       static QString text_header();
+      QString  csv() const;     // one comma separated row
+      static QString csv_header();
 };
 
 #endif

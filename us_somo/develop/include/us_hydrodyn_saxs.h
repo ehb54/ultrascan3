@@ -21,6 +21,7 @@
 #include <qtimer.h>
 #include <qmutex.h>
 
+#include "us_saxs_util_autorg.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 
@@ -355,6 +356,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool script_set_pr_errors( const QString & arg,      QString & errormsg );
       bool script_load_pr      ( const QString & filename, QString & errormsg );
+      bool script_load_iq      ( const QString & filename, QString & errormsg );
+      bool script_autorg       ( const map < QString, QString > & kv, const QString & csvfile, QString & errormsg );
+      map < QString, US_Autorg_Result > autorg_results;   // last "sas autorg" results by curve name
 
       ScrollZoomer  *plot_resid_zoomer;
 

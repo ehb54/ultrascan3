@@ -394,6 +394,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_conc.cpp \
         src/us_hydrodyn_saxs_cormap.cpp \
         src/us_hydrodyn_saxs_external.cpp \
+        src/us_hydrodyn_saxs_autorg.cpp \
         src/us_hydrodyn_saxs_guinier.cpp \
         src/us_hydrodyn_saxs_fits.cpp \
         src/us_hydrodyn_saxs_ift.cpp \

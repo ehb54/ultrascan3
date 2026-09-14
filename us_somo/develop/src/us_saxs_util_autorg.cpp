@@ -588,6 +588,38 @@ QString US_Autorg_Result::text() const
    return line;
 }
 
+QString US_Autorg_Result::csv_header()
+{
+   return
+      "\"name\",\"ok\",\"type\",\"Rg\",\"Rg sd\",\"I(0)\",\"I(0) sd\",\"first point\",\"last point\",\"points used\","
+      "\"points skipped\",\"points dropped\",\"outliers removed\",\"points total\",\"SD weighting\","
+      "\"q min\",\"q max\",\"q*Rg min\",\"q*Rg max\",\"reduced chi2\",\"curvature t\",\"quality\","
+      "\"low-q z\",\"low-q deviation\",\"aggregation\",\"repulsion\",\"windows\","
+      "\"Rg spread mean\",\"Rg spread sd\",\"Rg spread min\",\"Rg spread max\",\"warnings\"\n";
+}
+
+QString US_Autorg_Result::csv() const
+{
+   QString w = warnings.join( "; " );
+   w.replace( "\"", "'" );
+   QStringList f;
+   f << "\"" + name + "\""
+     << ( ok ? "1" : "0" )
+     << type
+     << json_num( rg ) << json_num( rg_sd ) << json_num( i0 ) << json_num( i0_sd )
+     << QString::number( first ) << QString::number( last ) << QString::number( npts )
+     << QString::number( nskipped ) << QString::number( ndropped ) << QString::number( nremoved ) << QString::number( ntotal )
+     << ( sd_used ? "1" : "0" )
+     << json_num( qmin ) << json_num( qmax ) << json_num( qrgmin ) << json_num( qrgmax )
+     << json_num( chi2_red ) << json_num( curv_t ) << json_num( quality )
+     << json_num( lowq_z ) << json_num( lowq_dev )
+     << ( aggregation ? "1" : "0" ) << ( repulsion ? "1" : "0" )
+     << QString::number( nwindows )
+     << json_num( rg_spread_mean ) << json_num( rg_spread_sd ) << json_num( rg_spread_min ) << json_num( rg_spread_max )
+     << "\"" + ( ok ? w : errormsg ) + "\"";
+   return f.join( "," ) + "\n";
+}
+
 // ---------------------------------------------------------------- flexible reader
 
 // reads any whitespace or comma separated text file with at least two numeric columns
