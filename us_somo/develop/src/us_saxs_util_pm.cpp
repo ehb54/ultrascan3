@@ -67,6 +67,7 @@ QString US_Saxs_Util::run_json( QString & json )
          << "interpolate"
          << "nnls"
          << "bestcsv"
+         << "autorg"
 	;
       
       int count = 0;
@@ -161,6 +162,14 @@ QString US_Saxs_Util::run_json( QString & json )
             //return US_Json::compose( results );
 	 }
      }
+
+   if ( parameters.count( "autorg" ) )
+   {
+      if ( !run_autorg( parameters, results ) )
+      {
+         results[ "errors" ] = " autorg failed: " + results[ "errors" ];
+      }
+   }
    
    // if ( us_log )
    // {

@@ -2451,6 +2451,85 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
+   if ( cmds[ 0 ].toLower() == "autorg" )
+   {
+      // usage: autorg [--json] [--key value ...] file ...
+      bool        as_json = false;
+      QStringList files;
+      map < QString, QString > kv;
+      QString     usage =
+         QString( "usage: %1 autorg [--json] [--key value ...] file ...\n"
+                  "       robust automatic Guinier range search; --json gives one JSON object per line\n" )
+         .arg( argv[ 0 ] )
+         + US_Autorg_Params::help();
+
+      for ( int p = 1; p < (int) cmds.size(); ++p )
+      {
+         if ( cmds[ p ] == "--json" )
+         {
+            as_json = true;
+         } else if ( cmds[ p ] == "--help" || cmds[ p ] == "-h" ) {
+            QTextStream( stdout ) << usage;
+            exit( 0 );
+         } else if ( cmds[ p ].startsWith( "--" ) ) {
+            QString key = cmds[ p ].mid( 2 ).toLower();
+            if ( !US_Autorg_Params::keys().contains( key ) )
+            {
+               QTextStream( stderr ) << "unknown parameter --" << key << "\n" << usage;
+               exit( errorbase );
+            }
+            if ( p + 1 >= (int) cmds.size() )
+            {
+               QTextStream( stderr ) << "--" << key << " needs a value\n";
+               exit( errorbase );
+            }
+            kv[ key ] = cmds[ ++p ];
+         } else {
+            files << cmds[ p ];
+         }
+      }
+      if ( files.isEmpty() )
+      {
+         QTextStream( stderr ) << usage;
+         exit( errorbase );
+      }
+
+      US_Autorg_Params params;
+      QString          perr;
+      if ( !params.set( kv, perr ) )
+      {
+         QTextStream( stderr ) << perr << "\n";
+         exit( errorbase - 1 );
+      }
+
+      US_Saxs_Util usu;
+      int          nfail = 0;
+      if ( !as_json )
+      {
+         QTextStream( stdout ) << US_Autorg_Result::text_header();
+      }
+      for ( int k = 0; k < (int) files.size(); ++k )
+      {
+         US_Autorg_Result r;
+         if ( !usu.read_iq_flexible( files[ k ], files[ k ], 1e0 ) )
+         {
+            r.name     = files[ k ];
+            r.ok       = false;
+            r.errormsg = usu.errormsg;
+         } else {
+            usu.autorg( files[ k ], params, r );
+         }
+         if ( !r.ok )
+         {
+            ++nfail;
+         }
+         QTextStream( stdout ) << ( as_json ? r.json() + "\n" : r.text() );
+      }
+      exit( nfail ? errorbase - 2 : 0 );
+   }
+
+   errorbase -= 1000;
+
    if ( cmds[0].toLower() == "json" ) 
    {
       if ( cmds.size() != 2 ) 

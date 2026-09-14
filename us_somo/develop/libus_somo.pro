@@ -523,6 +523,7 @@ SOURCES *= \
         src/us_saxs_util_dammin.cpp \
         src/us_saxs_util_dmd.cpp \
         src/us_saxs_util_extern.cpp \
+        src/us_saxs_util_autorg.cpp \
         src/us_saxs_util_guinier.cpp \
         src/us_saxs_util_gui_only.cpp \
         src/us_saxs_util_hydrate.cpp \
@@ -926,6 +927,7 @@ HEADERS *= \
 #  us_sassoc.h \
         include/us_saxs_gp.h \
         include/us_saxs_util.h \
+        include/us_saxs_util_autorg.h \
         include/us_saxs_util_nsa.h \
 #  us_select_channel.h \
 #  us_selectmodel.h \
