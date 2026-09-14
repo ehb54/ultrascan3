@@ -1397,7 +1397,8 @@ pb_plateau->setVisible(false);
    main->addLayout( left );
    main->addLayout( plot );
    main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   main->setStretchFactor( plot, 2 );
+   //main->setStretchFactor( plot, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
