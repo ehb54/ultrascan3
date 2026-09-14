@@ -68,6 +68,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
  sdiag     = NULL;
  sdiag_bll = NULL;
+ offset    = 0;
 
   us_edit_auto_mode = true;
   us_edit_auto_mode_manual = false;
@@ -862,6 +863,10 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+   offset    = 0;
+
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = true;
    us_edit_auto_mode_manual_bll = false;
@@ -1456,6 +1461,10 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    gap_fringe   = 0.4;
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
+
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+   offset    = 0;
 
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
@@ -2091,6 +2100,10 @@ US_Edit::US_Edit() : US_Widgets()
    gap_fringe   = 0.4;
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
+
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+   offset    = 0;
 
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
@@ -10165,6 +10178,13 @@ void US_Edit::correct_bll_for_triple_auto( void )
   leftWidget  -> hide();
   rightWidget -> hide();
 
+  if ( sdiag_bll != NULL )
+    {
+      sdiag_bll->disconnect();
+      delete sdiag_bll;
+      sdiag_bll = NULL;
+    }
+
   int currChIndex = cb_triple->currentIndex();
   //int plotInd = index_data();
   int plotInd = plotndx;
@@ -10188,18 +10208,14 @@ void US_Edit::correct_bll_for_triple_auto( void )
 
   connect( sdiag_bll, &US_Edit::restore_main_view, this, &US_Edit::restore_view );
 
+  // Anchor at the parent's origin and fill its client area, same as
+  // manual_edit_auto() -- kept in sync by resizeEvent().
+  offset = 0;
+  sdiag_bll->move  ( offset, offset );
+  sdiag_bll->resize( this->size() );
+  sdiag_bll->update();
+
   sdiag_bll->show();
-
-  int offset = 20;
-  sdiag_bll->move(2*offset, 2*offset);
-  int newWidth  = this->width() - 3*offset;
-  int newHeight = this->height() - 4*offset;
-  sdiag_bll->setMaximumSize( newWidth, newHeight );
-  sdiag_bll->adjustSize();
-  sdiag_bll->resize( QSize(newWidth, newHeight ));
-  sdiag_bll->update();
-  sdiag_bll->update();
-
 }
 
 
@@ -10213,6 +10229,7 @@ void US_Edit::manual_edit_auto( void )
 
   if ( sdiag != NULL )
     {
+      sdiag->disconnect();
       delete sdiag;
       sdiag = NULL;
     }
@@ -10244,19 +10261,39 @@ void US_Edit::manual_edit_auto( void )
 
   //connect( sdiag, SIGNAL( man_data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
 
-  int offset = 20;
-  sdiag->move(2*offset, 2*offset);
-  int newWidth  = this->width() - 3*offset;
-  int newHeight = this->height() - 4*offset;
-  //sdiag->setMinimumSize( newWidth, newHeight );
-  //sdiag->setMaximumSize( newWidth, newHeight );
-  //sdiag->adjustSize();
-  sdiag->resize( QSize(newWidth, newHeight ));
+  // Anchor the manual-edit sub-panel at the parent's origin and size it to
+  // exactly fill the parent's current client area.  A resizeEvent() override
+  // keeps this in sync whenever the parent window is resized, so the
+  // sub-panel stays fully visible (no cut-off plot) and no longer appears
+  // shifted to the right/down.
+  offset = 0;
+  sdiag->move( offset, offset );
+  sdiag->resize( this->size() );
   sdiag->update();
 
   sdiag->show();
   //sdiag->trigger_resize();
   //resize_main ( );
+}
+
+// Keep any nested "manual edit" sub-panel (sdiag / sdiag_bll), if one is
+// currently active, sized to exactly fill this widget whenever it is
+// resized.
+void US_Edit::resizeEvent( QResizeEvent* event )
+{
+  QWidget::resizeEvent( event );
+
+  if ( sdiag != NULL )
+    {
+      sdiag->move  ( offset, offset );
+      sdiag->resize( this->size() );
+    }
+
+  if ( sdiag_bll != NULL )
+    {
+      sdiag_bll->move  ( offset, offset );
+      sdiag_bll->resize( this->size() );
+    }
 }
 
 // void US_Edit::trigger_resize()
@@ -10273,6 +10310,30 @@ void US_Edit::restore_view( void )
   upperWidget -> show();
   leftWidget  -> show();
   rightWidget -> show();
+
+  // This slot fires when the nested manual-edit sub-panel (sdiag or
+  // sdiag_bll) is cancelled (see close_manual_edit()), via the
+  // restore_main_view signal both sub-panels are connected to. Identify
+  // which one sent it and tear it down: null the pointer immediately (so
+  // resizeEvent() and any subsequent manual-edit invocation don't touch a
+  // stale/closing widget) and defer the actual delete, since we're still
+  // inside a slot invoked synchronously from that widget's own click
+  // handler (close_manual_edit() still runs `close()` on it after this
+  // returns) -- deleting it here outright would be a use-after-free.
+  QObject* src = sender();
+
+  if ( sdiag != NULL && src == sdiag )
+    {
+      sdiag->disconnect();
+      sdiag->deleteLater();
+      sdiag = NULL;
+    }
+  else if ( sdiag_bll != NULL && src == sdiag_bll )
+    {
+      sdiag_bll->disconnect();
+      sdiag_bll->deleteLater();
+      sdiag_bll = NULL;
+    }
 }
 
 // [Modify-per-triple]Update triple's Linear-baseline-correction edit params with those obtained manually...
@@ -15195,23 +15256,11 @@ void US_Edit::pass_values( void )
 //
 void US_Edit::close_manual_edit( void )
 {
+  // Tell the parent to restore its layouts; the parent's restore_view()
+  // slot also owns cleanup of the pointer it holds to this sub-panel
+  // (sdiag or sdiag_bll) -- see restore_view() for details.
   emit restore_main_view();
   close();
-
-  // if ( sdiag != NULL )
-  //   {
-  //     delete sdiag;
-  //     sdiag = NULL;
-  //   }
-
-  // if ( sdiag_bll != NULL )
-  //   {
-  //     delete sdiag_bll;
-  //     sdiag_bll = NULL;
-  //   }
-
-  // sdiag = NULL;
-  // sdiag_bll = NULL;
 }
 
 
@@ -15250,42 +15299,10 @@ void US_Edit::close_edit( void )
    close();
 }
 
-// //resize event
-
-// void US_Edit::resizeEvent(QResizeEvent *event)
-// {
-//   qDebug() << "US_EDIT resizing1...";
-//   int offset = 20;
-//   int new_main_w = this->width() - 3*offset;
-//   int new_main_h = this->height() - 4*offset;
-//   qDebug() << "US_EDIT resizing2...";
-
-//   if ( sdiag != NULL )
-//     {
-//       qDebug() << "Resizing sdiag...";
-//       //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
-//       if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
-// 	int newWidth = qMax( new_main_w, sdiag->width());
-// 	int newHeight = qMax( new_main_h, sdiag->height());
-
-// 	sdiag->setMaximumSize( newWidth, newHeight );
-// 	sdiag->resize( QSize(newWidth, newHeight) );
-// 	update();
-//       }
-
-//       //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
-//       if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
-// 	int newWidth = qMin( new_main_w, sdiag->width());
-// 	int newHeight = qMin( new_main_h, sdiag->height());
-
-// 	sdiag->setMaximumSize( newWidth, newHeight );
-// 	sdiag->resize( QSize(newWidth, newHeight) );
-// 	update();
-//       }
-//     }
-
-//   QWidget::resizeEvent(event);
-// }
+// Note: US_Edit::resizeEvent() is implemented above, right after
+// manual_edit_auto() / correct_bll_for_triple_auto() -- it keeps the
+// nested manual-edit sub-panel (sdiag / sdiag_bll) synced to this
+// widget's size whenever the window is resized.
 
 // void US_Edit::resize_main( void )
 // {

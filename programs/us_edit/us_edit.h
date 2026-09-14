@@ -50,6 +50,7 @@ class US_Edit : public US_Widgets
          QWidget* upperWidget;
          QWidget* leftWidget;
          QWidget* rightWidget;	 
+         int offset;
 
          QPointF fixedPoint;
          
@@ -441,9 +442,8 @@ class US_Edit : public US_Widgets
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
 
- // protected:
- //    void resizeEvent(QResizeEvent *event) override;	
-						  
+ protected:
+     void resizeEvent(QResizeEvent *event) override;
 
    public slots:
       void load_auto         ( QMap < QString, QString > & );
