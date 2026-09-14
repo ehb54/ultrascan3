@@ -751,7 +751,7 @@ bool US_Saxs_Util::autorg( const QString & tag, const US_Autorg_Params & params,
          ++ndropped;
          continue;
       }
-      double yy = log( ii ) + lnpow * log( qq );
+      double yy = log( ii ) + ( lnpow ? lnpow * log( qq ) : 0e0 );
       if ( !std::isfinite( yy ) )
       {
          ++ndropped;
@@ -1453,34 +1453,35 @@ bool US_Saxs_Util::run_autorg(
    results[ "results" ] = "[" + out.join( "," ) + "]";
    results[ "nok" ]     = QString::number( nok );
    {
-      map < QString, QString > p;
-      p[ "type" ]         = params.type;
-      p[ "minpts" ]       = QString::number( params.minpts );
-      p[ "maxpts" ]       = QString::number( params.maxpts );
-      p[ "qrgmax" ]       = json_num( params.effective_qrgmax() );
-      p[ "qrgmin" ]       = json_num( params.qrgmin );
-      p[ "qmin" ]         = json_num( params.qmin );
-      p[ "qmax" ]         = json_num( params.qmax );
-      p[ "rgmin" ]        = json_num( params.rgmin );
-      p[ "rgmax" ]        = json_num( params.rgmax );
-      p[ "regionfactor" ] = json_num( params.regionfactor );
-      p[ "usesd" ]        = QString::number( params.usesd );
-      p[ "dropneg" ]      = QString::number( params.dropneg ? 1 : 0 );
-      p[ "qscale" ]       = json_num( params.qscale );
-      p[ "outlier" ]      = json_num( params.outlier );
-      p[ "slopet" ]       = json_num( params.slopet );
-      p[ "minspan" ]      = json_num( params.minspan );
-      p[ "sigfloor" ]     = json_num( params.sigfloor );
-      p[ "curvt" ]        = json_num( params.curvt );
-      p[ "skipz" ]        = json_num( params.skipz );
-      p[ "fwdz" ]         = json_num( params.fwdz );
-      p[ "fwddev" ]       = json_num( params.fwddev );
-      p[ "constol" ]      = json_num( params.constol );
-      p[ "topfrac" ]      = json_num( params.topfrac );
-      p[ "aggthresh" ]    = json_num( params.aggthresh );
-      p[ "aggmindev" ]    = json_num( params.aggmindev );
-      p[ "weights" ]      = US_Json::encode_vector_double( params.weights );
-      results[ "params" ] = US_Json::compose( p );
+      QString p = "{";
+      p += "\"type\":" + json_str( params.type );
+      p += ",\"minpts\":" + QString::number( params.minpts );
+      p += ",\"maxpts\":" + QString::number( params.maxpts );
+      p += ",\"qrgmax\":" + json_num( params.effective_qrgmax() );
+      p += ",\"qrgmin\":" + json_num( params.qrgmin );
+      p += ",\"qmin\":" + json_num( params.qmin );
+      p += ",\"qmax\":" + json_num( params.qmax );
+      p += ",\"rgmin\":" + json_num( params.rgmin );
+      p += ",\"rgmax\":" + json_num( params.rgmax );
+      p += ",\"regionfactor\":" + json_num( params.regionfactor );
+      p += ",\"usesd\":" + QString::number( params.usesd );
+      p += ",\"dropneg\":" + QString::number( params.dropneg ? 1 : 0 );
+      p += ",\"qscale\":" + json_num( params.qscale );
+      p += ",\"outlier\":" + json_num( params.outlier );
+      p += ",\"slopet\":" + json_num( params.slopet );
+      p += ",\"minspan\":" + json_num( params.minspan );
+      p += ",\"sigfloor\":" + json_num( params.sigfloor );
+      p += ",\"curvt\":" + json_num( params.curvt );
+      p += ",\"skipz\":" + json_num( params.skipz );
+      p += ",\"fwdz\":" + json_num( params.fwdz );
+      p += ",\"fwddev\":" + json_num( params.fwddev );
+      p += ",\"constol\":" + json_num( params.constol );
+      p += ",\"topfrac\":" + json_num( params.topfrac );
+      p += ",\"aggthresh\":" + json_num( params.aggthresh );
+      p += ",\"aggmindev\":" + json_num( params.aggmindev );
+      p += ",\"weights\":" + US_Json::encode_vector_double( params.weights );
+      p += "}";
+      results[ "params" ] = p;
    }
    if ( !nok )
    {
