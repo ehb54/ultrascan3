@@ -61,12 +61,17 @@ int US_TimeState::open_write_data( QString fpath,
    time_first  = ftime;
    const_ti    = ( timeinc > 0.0 );
 
-   // Modify SetSpeed resolution if appropo debug_text present
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedResolution=" ) )
-         ss_reso     = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
+   // Modify SetSpeed resolution if appropo debug_text present.  Match on the
+   // same prefix the rest of the tree uses, so the abbreviated spelling of the
+   // setting reaches the timestate too, and keep the default when the value is
+   // unparsable or non-positive rather than rounding speeds against zero.
+   const QString dbgval = US_Settings::debug_value( "SetSpeedReso" );
+   if ( ! dbgval.isEmpty() )
+   {
+      bool ok       = false;
+      int  value    = dbgval.toInt( &ok );
+      if ( ok  &&  value > 0 )
+         ss_reso    = value;
    }
 
    fileo       = new QFile( filepath );
