@@ -9,7 +9,7 @@
     Required. vcpkg binary cache directory to populate.
 
 .PARAMETER QtVariant
-    qt6 (default) or qt5-qwt630.
+    qt6 (default) or qt5.
 
 .PARAMETER Profiles
     Profiles to install. Defaults to APP -- Windows ships no HPC build.
@@ -21,7 +21,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$CacheDir,
-    [ValidateSet('qt6', 'qt5-qwt630')][string]$QtVariant = 'qt6',
+    [ValidateSet('qt6', 'qt5')][string]$QtVariant = 'qt6',
     [string[]]$Profiles = @('APP'),
     [switch]$SkipBootstrap
 )
@@ -98,8 +98,8 @@ foreach ($ProfileName in $Profiles) {
     $Feature = switch ("$QtVariant-$ProfileName") {
         'qt6-APP'        { 'qt6-app' }
         'qt6-HPC'        { 'qt6-hpc' }
-        'qt5-qwt630-APP' { 'qt5-app' }
-        'qt5-qwt630-HPC' { 'qt5-hpc' }
+        'qt5-APP'        { 'qt5-app' }
+        'qt5-HPC'        { 'qt5-hpc' }
         default { throw "no vcpkg feature for $QtVariant/$ProfileName" }
     }
 

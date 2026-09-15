@@ -54,7 +54,7 @@ on:
         required: false
         default: qt6
         type: choice
-        options: [qt6, qt5-qwt630]
+        options: [qt6, qt5]
       ref:
         description: "Branch, tag or SHA"
         required: false
