@@ -892,6 +892,18 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    QHBoxLayout* main = new QHBoxLayout();
    leftWidget = new QWidget();
+   // Unlike the other US_Edit constructors, this one (Manual Edit) shows
+   // Scan Controls + Edit Controls + Linear Baseline Correction all at
+   // once, so its natural/minimum content width is larger. A QHBoxLayout
+   // distributes any *extra* space beyond each side's minimum according to
+   // the stretch factors below (2:3) regardless of whether a side actually
+   // needs it -- so leftWidget was being inflated well past its own
+   // content's requirements just because it had a nonzero stretch share.
+   // Capping its horizontal size policy at Maximum means it only ever
+   // takes what its content actually needs; every leftover pixel goes to
+   // the plot side instead, keeping this panel's left column comparable in
+   // width to the other US_Edit constructors.
+   leftWidget->setSizePolicy( QSizePolicy::Maximum, QSizePolicy::Preferred );
    QVBoxLayout* left = new QVBoxLayout( leftWidget );
    left->setSpacing        ( 0 );
    left->setContentsMargins( 0, 1, 0, 1 );
