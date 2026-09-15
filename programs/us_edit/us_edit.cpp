@@ -296,7 +296,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 
    lb_dataEnd     = us_label(      tr( "Data End:" ), -1 );
 //QLineEdit*
@@ -1085,7 +1085,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -1690,7 +1690,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -2325,7 +2325,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
