@@ -5,7 +5,6 @@
 #include <QToolTip>
 #include <QMessageBox>
 #include <QLineF>
-#include <QPointer>
 #include <qwt_scale_div.h>
 #include <qwt_scale_map.h>
 #include <qwt_picker_machine.h>
@@ -69,7 +68,6 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
  sdiag     = NULL;
  sdiag_bll = NULL;
- offset    = 0;
 
   us_edit_auto_mode = true;
   us_edit_auto_mode_manual = false;
@@ -86,7 +84,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -866,8 +864,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    sdiag     = NULL;
    sdiag_bll = NULL;
-   offset    = 0;
-
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = true;
    us_edit_auto_mode_manual_bll = false;
@@ -879,7 +876,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -894,7 +891,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -1394,11 +1392,12 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 2 );
-   //main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
@@ -1466,8 +1465,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    sdiag     = NULL;
    sdiag_bll = NULL;
-   offset    = 0;
-
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
    us_edit_auto_mode_manual_bll = true;
@@ -1479,7 +1477,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -1494,7 +1492,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -2009,10 +2008,12 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
@@ -2105,8 +2106,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
    sdiag     = NULL;
    sdiag_bll = NULL;
-   offset    = 0;
-
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
    us_edit_auto_mode_manual_bll = false;
@@ -2118,7 +2118,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -2133,7 +2133,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -2506,10 +2507,12 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    //hide abde base line corr. for now
@@ -10210,26 +10213,16 @@ void US_Edit::correct_bll_for_triple_auto( void )
 
   connect( sdiag_bll, &US_Edit::restore_main_view, this, &US_Edit::restore_view );
 
-  // Anchor at the parent's origin and fill its client area, same as
-  // manual_edit_auto() -- kept in sync by resizeEvent().
-  offset = 0;
-  sdiag_bll->move  ( offset, offset );
-  sdiag_bll->resize( this->size() );
-  sdiag_bll->update();
-
+  // Add the sub-panel into this widget's own top-level layout (the same
+  // QVBoxLayout that manages upperWidget/leftWidget/rightWidget). Since
+  // those are hidden above, and hidden widgets take no space in a Qt
+  // layout by default, sdiag_bll automatically receives the full area they
+  // vacated -- filled correctly immediately, and kept correct on every
+  // future resize of this widget, entirely by Qt's own layout engine (no
+  // manual move()/resize() bookkeeping, and no dependence on this->size()
+  // being settled yet at this point).
+  top->addWidget( sdiag_bll );
   sdiag_bll->show();
-
-  // See the matching comment in manual_edit_auto(): this->size() can be
-  // stale here, so re-apply once the event loop has settled geometry.
-  QPointer<US_Edit> self( this );
-  QTimer::singleShot( 0, this, [ self ]()
-  {
-    if ( self && self->sdiag_bll != NULL )
-      {
-        self->sdiag_bll->move  ( self->offset, self->offset );
-        self->sdiag_bll->resize( self->size() );
-      }
-  } );
 }
 
 
@@ -10275,57 +10268,16 @@ void US_Edit::manual_edit_auto( void )
 
   //connect( sdiag, SIGNAL( man_data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
 
-  // Anchor the manual-edit sub-panel at the parent's origin and size it to
-  // exactly fill the parent's current client area.  A resizeEvent() override
-  // keeps this in sync whenever the parent window is resized, so the
-  // sub-panel stays fully visible (no cut-off plot) and no longer appears
-  // shifted to the right/down.
-  offset = 0;
-  sdiag->move( offset, offset );
-  sdiag->resize( this->size() );
-  sdiag->update();
-
+  // Add the sub-panel into this widget's own top-level layout (the same
+  // QVBoxLayout that manages upperWidget/leftWidget/rightWidget). Since
+  // those are hidden above, and hidden widgets take no space in a Qt
+  // layout by default, sdiag automatically receives the full area they
+  // vacated -- filled correctly immediately, and kept correct on every
+  // future resize of this widget, entirely by Qt's own layout engine (no
+  // manual move()/resize() bookkeeping, and no dependence on this->size()
+  // being settled yet at this point).
+  top->addWidget( sdiag );
   sdiag->show();
-  //sdiag->trigger_resize();
-  //resize_main ( );
-
-  // this->size() can still be stale right here -- e.g. right after
-  // switching to the Editing tab, before this panel's own geometry from
-  // its parent's layout has actually settled -- which is why the fix
-  // above alone only takes effect once the user manually resizes the
-  // window (that's what finally delivers a resizeEvent() with the
-  // correct, settled size). Re-apply the same sizing one event-loop tick
-  // later, by which point layout/geometry updates have been processed, so
-  // it is correct immediately without requiring any user interaction.
-  QPointer<US_Edit> self( this );
-  QTimer::singleShot( 0, this, [ self ]()
-  {
-    if ( self && self->sdiag != NULL )
-      {
-        self->sdiag->move  ( self->offset, self->offset );
-        self->sdiag->resize( self->size() );
-      }
-  } );
-}
-
-// Keep any nested "manual edit" sub-panel (sdiag / sdiag_bll), if one is
-// currently active, sized to exactly fill this widget whenever it is
-// resized.
-void US_Edit::resizeEvent( QResizeEvent* event )
-{
-  QWidget::resizeEvent( event );
-
-  if ( sdiag != NULL )
-    {
-      sdiag->move  ( offset, offset );
-      sdiag->resize( this->size() );
-    }
-
-  if ( sdiag_bll != NULL )
-    {
-      sdiag_bll->move  ( offset, offset );
-      sdiag_bll->resize( this->size() );
-    }
 }
 
 // void US_Edit::trigger_resize()
@@ -10346,23 +10298,26 @@ void US_Edit::restore_view( void )
   // This slot fires when the nested manual-edit sub-panel (sdiag or
   // sdiag_bll) is cancelled (see close_manual_edit()), via the
   // restore_main_view signal both sub-panels are connected to. Identify
-  // which one sent it and tear it down: null the pointer immediately (so
-  // resizeEvent() and any subsequent manual-edit invocation don't touch a
-  // stale/closing widget) and defer the actual delete, since we're still
-  // inside a slot invoked synchronously from that widget's own click
-  // handler (close_manual_edit() still runs `close()` on it after this
-  // returns) -- deleting it here outright would be a use-after-free.
+  // which one sent it and tear it down: remove it from the top layout and
+  // null the pointer immediately (so any subsequent manual-edit invocation
+  // doesn't touch a stale/closing widget), and defer the actual delete,
+  // since we're still inside a slot invoked synchronously from that
+  // widget's own click handler (close_manual_edit() still runs `close()`
+  // on it after this returns) -- deleting it here outright would be a
+  // use-after-free.
   QObject* src = sender();
 
   if ( sdiag != NULL && src == sdiag )
     {
       sdiag->disconnect();
+      top->removeWidget( sdiag );
       sdiag->deleteLater();
       sdiag = NULL;
     }
   else if ( sdiag_bll != NULL && src == sdiag_bll )
     {
       sdiag_bll->disconnect();
+      top->removeWidget( sdiag_bll );
       sdiag_bll->deleteLater();
       sdiag_bll = NULL;
     }

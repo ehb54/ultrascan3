@@ -16,6 +16,8 @@
 //#include "us_license_t.h"
 //#include "us_license.h"
 
+class QVBoxLayout;
+
 class US_Edit : public US_Widgets
 {
    Q_OBJECT
@@ -50,7 +52,9 @@ class US_Edit : public US_Widgets
          QWidget* upperWidget;
          QWidget* leftWidget;
          QWidget* rightWidget;	 
-         int offset;
+         QVBoxLayout* top;  // this widget's own top-level layout; sdiag/sdiag_bll
+                             // are added into it so Qt keeps them auto-sized to
+                             // fill this widget (see manual_edit_auto()).
 
          QPointF fixedPoint;
          
@@ -441,9 +445,6 @@ class US_Edit : public US_Widgets
       bool isSet_edit_info_for_channel( QString, QString );
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
-
- protected:
-     void resizeEvent(QResizeEvent *event) override;
 
    public slots:
       void load_auto         ( QMap < QString, QString > & );
