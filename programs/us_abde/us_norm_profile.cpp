@@ -205,8 +205,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
-    picker->setRubberBandPen(QPen(Qt::red));
-    picker->setTrackerPen(QPen(Qt::red));
+    picker->setRubberBandPen(QPen(Qt::black));
+    picker->setTrackerPen(QPen(Qt::black));
     plotData();
     picker_state = XNONE;
 
@@ -453,8 +453,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
-    picker->setRubberBandPen(QPen(Qt::red));
-    picker->setTrackerPen(QPen(Qt::red));
+    picker->setRubberBandPen(QPen(Qt::black));
+    picker->setTrackerPen(QPen(Qt::black));
     plotData();
     picker_state = XNONE;
 
