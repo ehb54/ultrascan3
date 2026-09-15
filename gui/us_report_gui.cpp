@@ -249,6 +249,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   addRem_buttons     = NULL;
   reportmask         = NULL;
   lower_buttons      = NULL;
+  analytes_abde      = NULL;
 
   build_report_layout();
 
@@ -754,7 +755,37 @@ void US_ReportGui::build_report_layout( void )
   addRem_buttons->addWidget( pb_addRow,    row,  13, 1, 2 );
 
   main->addLayout( addRem_buttons );
-   
+
+  /**
+  //For ABDE: add layout for analyes' signal checkboxes
+  if ( abde_mode )
+    {
+      qDebug() << "Building Analytes ABDE header and layout -- ";
+      //Clean analytes; layout first:
+      if (  analytes_abde!= NULL && analytes_abde->layout() != NULL )
+	{
+	  QLayoutItem* item;
+	  while ( ( item = analytes_abde->layout()->takeAt( 0 ) ) != NULL )
+	    {
+	      delete item->widget();
+	      delete item;
+	    }
+	  delete analytes_abde;
+	}
+      analytes_abde     =  new QGridLayout();
+      analytes_abde     ->setSpacing         ( 2 );
+      analytes_abde     ->setContentsMargins ( 2, 2, 2, 2 );
+      //Banner
+      QLabel* bn_analytes_abde_t     = us_banner( tr( "Analyte Signal to Integrate" ) );
+      bn_analytes_abde_t->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+      
+      QStringList a_keys = report->analytes_check.keys();
+      for ( int i=0; i<a_keys.size(); ++i )
+       {
+	 
+       }
+    }
+  ***/
 
   //Build Report Mask header && button
   qDebug() << "Building Report Mask header and  Buttons Layout -- ";
