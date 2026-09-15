@@ -6536,6 +6536,14 @@ void US_Edit::plot_current( int index )
 
    data_plot->setTitle( title );
 
+   // Re-fit the (possibly multi-line) title's font to the plot's current
+   // width now that its text has changed, rather than waiting for the
+   // next resize to notice.
+   if ( plot != NULL )
+   {
+      plot->fitTitleToWidth();
+   }
+
    // Initialize include list
    init_includes();
 
@@ -8096,6 +8104,12 @@ DbgLv(1) << "PlMwl:  title" << title;
 
    data_plot->setTitle    ( title );
 
+   // See the matching comment near the other setTitle() call: re-fit the
+   // title's font to the plot's current width immediately.
+   if ( plot != NULL )
+   {
+      plot->fitTitleToWidth();
+   }
 
    data_plot->detachItems ( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;

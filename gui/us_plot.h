@@ -114,6 +114,15 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       //! \brief Access to the underlying QwtPlot
       QwtPlot* qwtPlot() const { return plot; }
 
+      //! \brief Shrink (or restore) the plot title's font so its longest
+      //! line fits within the plot's current width, instead of being
+      //! centered and clipped when the title text is wider than the
+      //! widget. Safe to call any time the title text changes or the plot
+      //! is resized; it always re-measures from the original intended
+      //! title size, so the font grows back if more room becomes
+      //! available.
+      void fitTitleToWidth();
+
       //! \brief Public method to return map colors list and count
       //! \param mcolors - Map colors reference for colors list return
       //! \returns Count of colors in color gradient list
