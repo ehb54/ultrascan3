@@ -84,7 +84,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -296,7 +296,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 
    lb_dataEnd     = us_label(      tr( "Data End:" ), -1 );
 //QLineEdit*
@@ -862,6 +862,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = true;
    us_edit_auto_mode_manual_bll = false;
@@ -873,7 +876,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -888,7 +891,22 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   // Unlike the other US_Edit constructors, this one (Manual Edit) shows
+   // Scan Controls + Edit Controls + Linear Baseline Correction all at
+   // once, so its natural/minimum content width is larger. A QHBoxLayout
+   // distributes any *extra* space beyond each side's minimum according to
+   // the stretch factors below (2:3) regardless of whether a side actually
+   // needs it -- so leftWidget was being inflated well past its own
+   // content's requirements just because it had a nonzero stretch share.
+   // Capping its horizontal size policy at Maximum means it only ever
+   // takes what its content actually needs; every leftover pixel goes to
+   // the plot side instead, keeping this panel's left column comparable in
+   // width to the other US_Edit constructors.
+   leftWidget->setSizePolicy( QSizePolicy::Maximum, QSizePolicy::Preferred );
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -1079,7 +1097,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -1388,10 +1406,14 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
@@ -1457,6 +1479,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
    us_edit_auto_mode_manual_bll = true;
@@ -1468,7 +1493,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -1483,7 +1508,10 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -1674,7 +1702,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -1998,10 +2026,14 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
@@ -2092,6 +2124,9 @@ US_Edit::US_Edit() : US_Widgets()
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
    us_edit_auto_mode_manual_bll = false;
@@ -2103,7 +2138,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -2118,7 +2153,10 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -2299,7 +2337,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -2491,10 +2529,14 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    //hide abde base line corr. for now
@@ -6494,6 +6536,14 @@ void US_Edit::plot_current( int index )
 
    data_plot->setTitle( title );
 
+   // Re-fit the (possibly multi-line) title's font to the plot's current
+   // width now that its text has changed, rather than waiting for the
+   // next resize to notice.
+   if ( plot != NULL )
+   {
+      plot->fitTitleToWidth();
+   }
+
    // Initialize include list
    init_includes();
 
@@ -8054,6 +8104,12 @@ DbgLv(1) << "PlMwl:  title" << title;
 
    data_plot->setTitle    ( title );
 
+   // See the matching comment near the other setTitle() call: re-fit the
+   // title's font to the plot's current width immediately.
+   if ( plot != NULL )
+   {
+      plot->fitTitleToWidth();
+   }
 
    data_plot->detachItems ( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;
@@ -10165,6 +10221,13 @@ void US_Edit::correct_bll_for_triple_auto( void )
   leftWidget  -> hide();
   rightWidget -> hide();
 
+  if ( sdiag_bll != NULL )
+    {
+      sdiag_bll->disconnect();
+      delete sdiag_bll;
+      sdiag_bll = NULL;
+    }
+
   int currChIndex = cb_triple->currentIndex();
   //int plotInd = index_data();
   int plotInd = plotndx;
@@ -10188,18 +10251,37 @@ void US_Edit::correct_bll_for_triple_auto( void )
 
   connect( sdiag_bll, &US_Edit::restore_main_view, this, &US_Edit::restore_view );
 
+  // Add the sub-panel into this widget's own top-level layout (the same
+  // QVBoxLayout that manages upperWidget/leftWidget/rightWidget). Since
+  // those are hidden above, and hidden widgets take no space in a Qt
+  // layout by default, sdiag_bll automatically receives the full area they
+  // vacated -- filled correctly immediately, and kept correct on every
+  // future resize of this widget, entirely by Qt's own layout engine (no
+  // manual move()/resize() bookkeeping, and no dependence on this->size()
+  // being settled yet at this point).
+  top->addWidget( sdiag_bll );
   sdiag_bll->show();
 
-  int offset = 20;
-  sdiag_bll->move(2*offset, 2*offset);
-  int newWidth  = this->width() - 3*offset;
-  int newHeight = this->height() - 4*offset;
-  sdiag_bll->setMaximumSize( newWidth, newHeight );
-  sdiag_bll->adjustSize();
-  sdiag_bll->resize( QSize(newWidth, newHeight ));
-  sdiag_bll->update();
-  sdiag_bll->update();
+  // Adding sdiag_bll to our layout only lets it fill *this* widget
+  // correctly -- but this widget's own size is itself only ever recomputed
+  // by US_EditingGui::resizeEvent(), which only runs in response to an
+  // actual resize event delivered to the top-level main window (see also
+  // US_EditingGui::resize_main(), connected to sdiag's data_loaded signal,
+  // which nudges the main window's size by 1px for exactly this reason).
+  // If this panel hasn't been through that cascade recently, its own size
+  // can still be stale here. Trigger the same nudge ourselves, via the
+  // actual top-level window rather than a hard dependency on
+  // US_EditingGui/mainw, so the whole chain -- main window -> this widget
+  // -> our layout -> sdiag_bll -- recomputes with accurate, current
+  // geometry every time this panel is opened.
+  QWidget* topLevel = this->window();
 
+  if ( topLevel != NULL )
+    {
+      QSize sz = topLevel->size();
+      topLevel->resize( sz.width() + 1, sz.height() + 1 );
+      topLevel->resize( sz );
+    }
 }
 
 
@@ -10213,6 +10295,7 @@ void US_Edit::manual_edit_auto( void )
 
   if ( sdiag != NULL )
     {
+      sdiag->disconnect();
       delete sdiag;
       sdiag = NULL;
     }
@@ -10244,19 +10327,62 @@ void US_Edit::manual_edit_auto( void )
 
   //connect( sdiag, SIGNAL( man_data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
 
-  int offset = 20;
-  sdiag->move(2*offset, 2*offset);
-  int newWidth  = this->width() - 3*offset;
-  int newHeight = this->height() - 4*offset;
-  //sdiag->setMinimumSize( newWidth, newHeight );
-  //sdiag->setMaximumSize( newWidth, newHeight );
-  //sdiag->adjustSize();
-  sdiag->resize( QSize(newWidth, newHeight ));
-  sdiag->update();
-
+  // Add the sub-panel into this widget's own top-level layout (the same
+  // QVBoxLayout that manages upperWidget/leftWidget/rightWidget). Since
+  // those are hidden above, and hidden widgets take no space in a Qt
+  // layout by default, sdiag automatically receives the full area they
+  // vacated -- filled correctly immediately, and kept correct on every
+  // future resize of this widget, entirely by Qt's own layout engine (no
+  // manual move()/resize() bookkeeping, and no dependence on this->size()
+  // being settled yet at this point).
+  top->addWidget( sdiag );
   sdiag->show();
-  //sdiag->trigger_resize();
-  //resize_main ( );
+
+  // See the matching comment in correct_bll_for_triple_auto(): force the
+  // same "nudge the top-level window size" resize cascade that
+  // US_EditingGui::resize_main() already relies on elsewhere in this
+  // codebase, so this widget's own size (and therefore sdiag's, via our
+  // layout) is recomputed from current, accurate geometry rather than
+  // whatever it happened to be the last time an actual resize event came
+  // through.
+  QWidget* topLevel = this->window();
+
+  if ( topLevel != NULL )
+    {
+      QSize sz = topLevel->size();
+      topLevel->resize( sz.width() + 1, sz.height() + 1 );
+      topLevel->resize( sz );
+    }
+}
+
+// Manual Edit's left column packs in noticeably more controls (Scan
+// Controls + Edit Controls + Linear Baseline Correction all shown at
+// once) than the other US_Edit constructors, giving it a naturally wider
+// minimum/preferred size. A size-policy cap (QSizePolicy::Maximum) only
+// limits growth *beyond* a widget's sizeHint -- it can't shrink the
+// widget below what its own content already claims to need, which is
+// exactly the ~524px this grid's content was reporting. So enforce a
+// hard ceiling here instead, proportional to this panel's own current
+// width, gated to only the Manual Edit constructor (us_edit_auto_mode_manual)
+// so the other constructors -- whose left columns are already a
+// reasonable size -- are left untouched.
+void US_Edit::resizeEvent( QResizeEvent* event )
+{
+  QWidget::resizeEvent( event );
+
+  if ( us_edit_auto_mode_manual && leftWidget != NULL )
+    {
+      leftWidget->setMaximumWidth( qMax( 200, int( this->width() * 0.40 ) ) );
+    }
+
+  // US_Plot::fitTitleToWidth() is opt-in, not automatic, so re-fit the
+  // plot title's font here on every resize of this panel -- otherwise it
+  // would only re-fit when the title text itself changes (switching
+  // triples/channels), not on a plain window resize.
+  if ( plot != NULL )
+    {
+      plot->fitTitleToWidth();
+    }
 }
 
 // void US_Edit::trigger_resize()
@@ -10273,6 +10399,33 @@ void US_Edit::restore_view( void )
   upperWidget -> show();
   leftWidget  -> show();
   rightWidget -> show();
+
+  // This slot fires when the nested manual-edit sub-panel (sdiag or
+  // sdiag_bll) is cancelled (see close_manual_edit()), via the
+  // restore_main_view signal both sub-panels are connected to. Identify
+  // which one sent it and tear it down: remove it from the top layout and
+  // null the pointer immediately (so any subsequent manual-edit invocation
+  // doesn't touch a stale/closing widget), and defer the actual delete,
+  // since we're still inside a slot invoked synchronously from that
+  // widget's own click handler (close_manual_edit() still runs `close()`
+  // on it after this returns) -- deleting it here outright would be a
+  // use-after-free.
+  QObject* src = sender();
+
+  if ( sdiag != NULL && src == sdiag )
+    {
+      sdiag->disconnect();
+      top->removeWidget( sdiag );
+      sdiag->deleteLater();
+      sdiag = NULL;
+    }
+  else if ( sdiag_bll != NULL && src == sdiag_bll )
+    {
+      sdiag_bll->disconnect();
+      top->removeWidget( sdiag_bll );
+      sdiag_bll->deleteLater();
+      sdiag_bll = NULL;
+    }
 }
 
 // [Modify-per-triple]Update triple's Linear-baseline-correction edit params with those obtained manually...
@@ -15195,23 +15348,11 @@ void US_Edit::pass_values( void )
 //
 void US_Edit::close_manual_edit( void )
 {
+  // Tell the parent to restore its layouts; the parent's restore_view()
+  // slot also owns cleanup of the pointer it holds to this sub-panel
+  // (sdiag or sdiag_bll) -- see restore_view() for details.
   emit restore_main_view();
   close();
-
-  // if ( sdiag != NULL )
-  //   {
-  //     delete sdiag;
-  //     sdiag = NULL;
-  //   }
-
-  // if ( sdiag_bll != NULL )
-  //   {
-  //     delete sdiag_bll;
-  //     sdiag_bll = NULL;
-  //   }
-
-  // sdiag = NULL;
-  // sdiag_bll = NULL;
 }
 
 
@@ -15250,42 +15391,10 @@ void US_Edit::close_edit( void )
    close();
 }
 
-// //resize event
-
-// void US_Edit::resizeEvent(QResizeEvent *event)
-// {
-//   qDebug() << "US_EDIT resizing1...";
-//   int offset = 20;
-//   int new_main_w = this->width() - 3*offset;
-//   int new_main_h = this->height() - 4*offset;
-//   qDebug() << "US_EDIT resizing2...";
-
-//   if ( sdiag != NULL )
-//     {
-//       qDebug() << "Resizing sdiag...";
-//       //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
-//       if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
-// 	int newWidth = qMax( new_main_w, sdiag->width());
-// 	int newHeight = qMax( new_main_h, sdiag->height());
-
-// 	sdiag->setMaximumSize( newWidth, newHeight );
-// 	sdiag->resize( QSize(newWidth, newHeight) );
-// 	update();
-//       }
-
-//       //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
-//       if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
-// 	int newWidth = qMin( new_main_w, sdiag->width());
-// 	int newHeight = qMin( new_main_h, sdiag->height());
-
-// 	sdiag->setMaximumSize( newWidth, newHeight );
-// 	sdiag->resize( QSize(newWidth, newHeight) );
-// 	update();
-//       }
-//     }
-
-//   QWidget::resizeEvent(event);
-// }
+// Note: US_Edit::resizeEvent() is implemented above, right after
+// manual_edit_auto() / correct_bll_for_triple_auto() -- it keeps the
+// nested manual-edit sub-panel (sdiag / sdiag_bll) synced to this
+// widget's size whenever the window is resized.
 
 // void US_Edit::resize_main( void )
 // {

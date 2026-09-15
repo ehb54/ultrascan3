@@ -155,6 +155,16 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     //plot->enableAxis( QwtPlot::yRight  , true );
     plot->setCanvasBackground(QBrush(Qt::white));
 
+    // Force US_Plot's lazily-created cross picker into existence now (it's
+    // normally only built the first time zoom mode is toggled), then
+    // darken its pen so the hover crosshair doesn't blend into the canvas.
+    usplot->setZoomEnabled( false );
+    if ( QwtPlotPicker* crossPicker = usplot->getPicker() )
+    {
+       crossPicker->setRubberBandPen( QPen( Qt::black ) );
+       crossPicker->setTrackerPen  ( QPen( Qt::black ) );
+    }
+
     QVBoxLayout* main_lyt = new QVBoxLayout();
     QHBoxLayout* body_lyt = new QHBoxLayout();
     QVBoxLayout* left_lyt = new QVBoxLayout();
@@ -195,8 +205,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
-    picker->setRubberBandPen(QPen(Qt::red));
-    picker->setTrackerPen(QPen(Qt::red));
+    picker->setRubberBandPen(QPen(Qt::black));
+    picker->setTrackerPen(QPen(Qt::black));
     plotData();
     picker_state = XNONE;
 
@@ -395,6 +405,16 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     plot->enableAxis( QwtPlot::yLeft  , true );
     plot->setCanvasBackground(QBrush(Qt::white));
 
+    // Force US_Plot's lazily-created cross picker into existence now (it's
+    // normally only built the first time zoom mode is toggled), then
+    // darken its pen so the hover crosshair doesn't blend into the canvas.
+    usplot->setZoomEnabled( false );
+    if ( QwtPlotPicker* crossPicker = usplot->getPicker() )
+    {
+       crossPicker->setRubberBandPen( QPen( Qt::black ) );
+       crossPicker->setTrackerPen  ( QPen( Qt::black ) );
+    }
+
     QVBoxLayout* main_lyt = new QVBoxLayout();
     QHBoxLayout* body_lyt = new QHBoxLayout();
     QVBoxLayout* left_lyt = new QVBoxLayout();
@@ -433,8 +453,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
-    picker->setRubberBandPen(QPen(Qt::red));
-    picker->setTrackerPen(QPen(Qt::red));
+    picker->setRubberBandPen(QPen(Qt::black));
+    picker->setTrackerPen(QPen(Qt::black));
     plotData();
     picker_state = XNONE;
 
