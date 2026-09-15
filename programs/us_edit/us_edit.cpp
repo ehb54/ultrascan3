@@ -893,6 +893,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    QHBoxLayout* main = new QHBoxLayout();
    leftWidget = new QWidget();
    QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -1394,6 +1396,8 @@ pb_plateau->setVisible(false);
 
    rightWidget = new QWidget();
    QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
    rightLayout->addLayout( plot );
 
    main->addWidget( leftWidget, 2 );
@@ -1494,6 +1498,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    QHBoxLayout* main = new QHBoxLayout();
    leftWidget = new QWidget();
    QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -2010,6 +2016,8 @@ pb_plateau->setVisible(false);
 
    rightWidget = new QWidget();
    QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
    rightLayout->addLayout( plot );
 
    main->addWidget( leftWidget, 2 );
@@ -2135,6 +2143,8 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    QHBoxLayout* main = new QHBoxLayout();
    leftWidget = new QWidget();
    QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -2509,6 +2519,8 @@ pb_plateau->setVisible(false);
 
    rightWidget = new QWidget();
    QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
    rightLayout->addLayout( plot );
 
    main->addWidget( leftWidget, 2 );
@@ -10223,6 +10235,27 @@ void US_Edit::correct_bll_for_triple_auto( void )
   // being settled yet at this point).
   top->addWidget( sdiag_bll );
   sdiag_bll->show();
+
+  // Adding sdiag_bll to our layout only lets it fill *this* widget
+  // correctly -- but this widget's own size is itself only ever recomputed
+  // by US_EditingGui::resizeEvent(), which only runs in response to an
+  // actual resize event delivered to the top-level main window (see also
+  // US_EditingGui::resize_main(), connected to sdiag's data_loaded signal,
+  // which nudges the main window's size by 1px for exactly this reason).
+  // If this panel hasn't been through that cascade recently, its own size
+  // can still be stale here. Trigger the same nudge ourselves, via the
+  // actual top-level window rather than a hard dependency on
+  // US_EditingGui/mainw, so the whole chain -- main window -> this widget
+  // -> our layout -> sdiag_bll -- recomputes with accurate, current
+  // geometry every time this panel is opened.
+  QWidget* topLevel = this->window();
+
+  if ( topLevel != NULL )
+    {
+      QSize sz = topLevel->size();
+      topLevel->resize( sz.width() + 1, sz.height() + 1 );
+      topLevel->resize( sz );
+    }
 }
 
 
@@ -10278,6 +10311,22 @@ void US_Edit::manual_edit_auto( void )
   // being settled yet at this point).
   top->addWidget( sdiag );
   sdiag->show();
+
+  // See the matching comment in correct_bll_for_triple_auto(): force the
+  // same "nudge the top-level window size" resize cascade that
+  // US_EditingGui::resize_main() already relies on elsewhere in this
+  // codebase, so this widget's own size (and therefore sdiag's, via our
+  // layout) is recomputed from current, accurate geometry rather than
+  // whatever it happened to be the last time an actual resize event came
+  // through.
+  QWidget* topLevel = this->window();
+
+  if ( topLevel != NULL )
+    {
+      QSize sz = topLevel->size();
+      topLevel->resize( sz.width() + 1, sz.height() + 1 );
+      topLevel->resize( sz );
+    }
 }
 
 // void US_Edit::trigger_resize()
