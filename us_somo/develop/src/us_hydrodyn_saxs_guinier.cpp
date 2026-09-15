@@ -293,7 +293,11 @@ void US_Hydrodyn_Saxs::run_guinier_Rt()
       "\"SD weighting\","
       ;
 
-   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" )
+   {
+      csvlog += "\"Robust automatic range fitting used\",";
+   } else if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
    {
       csvlog += "\"Automatic range fitting used\",";
@@ -527,7 +531,11 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
       "\"SD weighting\","
       ;
 
-   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" )
+   {
+      csvlog += "\"Robust automatic range fitting used\",";
+   } else if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
    {
       csvlog += "\"Automatic range fitting used\",";
@@ -667,7 +675,11 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
          ;
    }
 
-   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" )
+   {
+      csvlog += "\"Robust automatic range fitting used\",";
+   } else if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
    {
       csvlog += "\"Automatic range fitting used\",";
@@ -870,7 +882,53 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( !too_few_points )
    {
-      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" &&
+           (unsigned int) usu.wave[ "data" ].q.size() > pointsmin )
+      {
+         // robust automatic range search, see us_saxs_util_guinier_search.cpp
+         US_Guinier_Search_Params gsp;
+         US_Guinier_Search_Result gsr;
+         gsp.type   = "rg";
+         gsp.minpts = (int) pointsmin;
+         gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
+         gsp.qrgmax = sRgmaxlimit;
+         gsp.usesd  = use_SD_weighting ? -1 : 0;
+         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         {
+            editor->append( QString( "Error performing Guinier analysis on %1\n" + gsr.errormsg + "\n" )
+                            .arg( qsl_plotted_iq_names[ i ] ) );
+            return false;
+         }
+         beststart = gsr.first - 1;
+         bestend   = gsr.last  - 1;
+         a         = gsr.intercept;
+         b         = gsr.slope;
+         Rg        = gsr.rg;
+         sigb      = gsr.rg_sd;
+         I0        = gsr.i0;
+         siga      = gsr.i0_sd;
+         smin      = gsr.qmin;
+         smax      = gsr.qmax;
+         sRgmin    = gsr.qrgmin;
+         sRgmax    = gsr.qrgmax;
+         chi2      = gsr.chi2_red;
+         plotted_guinier_pts_removed.erase( i );
+         {
+            QString msg =
+               QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( gsr.quality, 0, 'f', 2 )
+               .arg( gsr.nwindows )
+               .arg( gsr.lowq_z, 0, 'f', 1 )
+               .arg( gsr.warnings.isEmpty() ? QString( "" ) : "; " + gsr.warnings.join( "; " ) );
+            editor_msg( "dark blue", msg );
+            if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
+            {
+               QTextStream( stdout ) << msg << "\n";
+            }
+         }
+      } else if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" &&
            (unsigned int) usu.wave[ "data" ].q.size() > pointsmin )
       {
@@ -1505,6 +1563,11 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       }         
    }
    editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground().color(), report );
+   if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
+   {
+      // nobody at the keyboard: the editor is invisible, echo the report
+      QTextStream( stdout ) << report;
+   }
 
    //   cout << csvlog;
    return true;
@@ -1619,7 +1682,53 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( !too_few_points )
    {
-      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" &&
+           (unsigned int) usu.wave[ "data" ].q.size() > pointsmin )
+      {
+         // robust automatic range search, see us_saxs_util_guinier_search.cpp
+         US_Guinier_Search_Params gsp;
+         US_Guinier_Search_Result gsr;
+         gsp.type   = "rc";
+         gsp.minpts = (int) pointsmin;
+         gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
+         gsp.qrgmax = sRgmaxlimit;
+         gsp.usesd  = use_SD_weighting ? -1 : 0;
+         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         {
+            editor->append( QString( "Error performing CS Guinier analysis on %1\n" + gsr.errormsg + "\n" )
+                            .arg( qsl_plotted_iq_names[ i ] ) );
+            return false;
+         }
+         beststart = gsr.first - 1;
+         bestend   = gsr.last  - 1;
+         a         = gsr.intercept;
+         b         = gsr.slope;
+         Rg        = gsr.rg;
+         sigb      = gsr.rg_sd;
+         I0        = gsr.i0;
+         siga      = gsr.i0_sd;
+         smin      = gsr.qmin;
+         smax      = gsr.qmax;
+         sRgmin    = gsr.qrgmin;
+         sRgmax    = gsr.qrgmax;
+         chi2      = gsr.chi2_red;
+         plotted_guinier_pts_removed.erase( i );
+         {
+            QString msg =
+               QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( gsr.quality, 0, 'f', 2 )
+               .arg( gsr.nwindows )
+               .arg( gsr.lowq_z, 0, 'f', 1 )
+               .arg( gsr.warnings.isEmpty() ? QString( "" ) : "; " + gsr.warnings.join( "; " ) );
+            editor_msg( "dark blue", msg );
+            if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
+            {
+               QTextStream( stdout ) << msg << "\n";
+            }
+         }
+      } else if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" &&
            (unsigned int)usu.wave[ "data" ].q.size() > pointsmin )
       {
@@ -2100,6 +2209,11 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       }         
    }
    editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground().color(), report );
+   if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
+   {
+      // nobody at the keyboard: the editor is invisible, echo the report
+      QTextStream( stdout ) << report;
+   }
 
    //   cout << csvlog;
    return true;
@@ -2217,7 +2331,53 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( !too_few_points )
    {
-      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" &&
+           (unsigned int) usu.wave[ "data" ].q.size() > pointsmin )
+      {
+         // robust automatic range search, see us_saxs_util_guinier_search.cpp
+         US_Guinier_Search_Params gsp;
+         US_Guinier_Search_Result gsr;
+         gsp.type   = "rt";
+         gsp.minpts = (int) pointsmin;
+         gsp.maxpts = pointsmax > 0 ? pointsmax : 0;
+         gsp.qrgmax = sRgmaxlimit;
+         gsp.usesd  = use_SD_weighting ? -1 : 0;
+         if ( !usu.guinier_search( "data", gsp, gsr ) )
+         {
+            editor->append( QString( "Error performing TV Guinier analysis on %1\n" + gsr.errormsg + "\n" )
+                            .arg( qsl_plotted_iq_names[ i ] ) );
+            return false;
+         }
+         beststart = gsr.first - 1;
+         bestend   = gsr.last  - 1;
+         a         = gsr.intercept;
+         b         = gsr.slope;
+         Rg        = gsr.rg;
+         sigb      = gsr.rg_sd;
+         I0        = gsr.i0;
+         siga      = gsr.i0_sd;
+         smin      = gsr.qmin;
+         smax      = gsr.qmax;
+         sRgmin    = gsr.qrgmin;
+         sRgmax    = gsr.qrgmax;
+         chi2      = gsr.chi2_red;
+         plotted_guinier_pts_removed.erase( i );
+         {
+            QString msg =
+               QString( us_tr( "Robust range search for %1: quality %2, %3 windows, low-q z %4%5" ) )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( gsr.quality, 0, 'f', 2 )
+               .arg( gsr.nwindows )
+               .arg( gsr.lowq_z, 0, 'f', 1 )
+               .arg( gsr.warnings.isEmpty() ? QString( "" ) : "; " + gsr.warnings.join( "; " ) );
+            editor_msg( "dark blue", msg );
+            if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
+            {
+               QTextStream( stdout ) << msg << "\n";
+            }
+         }
+      } else if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" &&
            (unsigned int)usu.wave[ "data" ].q.size() > pointsmin )
       {
@@ -2697,6 +2857,11 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
       }         
    }
    editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground().color(), report );
+   if ( ( (US_Hydrodyn *) us_hydrodyn )->gui_script )
+   {
+      // nobody at the keyboard: the editor is invisible, echo the report
+      QTextStream( stdout ) << report;
+   }
 
    //   cout << csvlog;
    return true;

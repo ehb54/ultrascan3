@@ -67,6 +67,7 @@ QString US_Saxs_Util::run_json( QString & json )
          << "interpolate"
          << "nnls"
          << "bestcsv"
+         << "guinier_search"
 	;
       
       int count = 0;
@@ -161,6 +162,14 @@ QString US_Saxs_Util::run_json( QString & json )
             //return US_Json::compose( results );
 	 }
      }
+
+   if ( parameters.count( "guinier_search" ) )
+   {
+      if ( !run_guinier_search( parameters, results ) )
+      {
+         results[ "errors" ] = " guinier_search failed: " + results[ "errors" ];
+      }
+   }
    
    // if ( us_log )
    // {
