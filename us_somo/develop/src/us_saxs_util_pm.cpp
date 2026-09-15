@@ -67,7 +67,7 @@ QString US_Saxs_Util::run_json( QString & json )
          << "interpolate"
          << "nnls"
          << "bestcsv"
-         << "autorg"
+         << "guinier_search"
 	;
       
       int count = 0;
@@ -163,11 +163,11 @@ QString US_Saxs_Util::run_json( QString & json )
 	 }
      }
 
-   if ( parameters.count( "autorg" ) )
+   if ( parameters.count( "guinier_search" ) )
    {
-      if ( !run_autorg( parameters, results ) )
+      if ( !run_guinier_search( parameters, results ) )
       {
-         results[ "errors" ] = " autorg failed: " + results[ "errors" ];
+         results[ "errors" ] = " guinier_search failed: " + results[ "errors" ];
       }
    }
    

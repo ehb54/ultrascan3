@@ -1,8 +1,8 @@
-#ifndef US_SAXS_UTIL_AUTORG_H
-#define US_SAXS_UTIL_AUTORG_H
+#ifndef US_SAXS_UTIL_GUINIER_SEARCH_H
+#define US_SAXS_UTIL_GUINIER_SEARCH_H
 
-// Robust automatic Guinier range search ("autorg") parameter and result structures.
-// See us_saxs_util_autorg.cpp for the algorithm and the manual page for the parameters.
+// Robust automatic Guinier range search ("guinier_search") parameter and result structures.
+// See us_saxs_util_guinier_search.cpp for the algorithm and the manual page for the parameters.
 
 #include <QtCore>
 #include <map>
@@ -11,10 +11,10 @@
 
 using namespace std;
 
-class US_EXTERN US_Autorg_Params
+class US_EXTERN US_Guinier_Search_Params
 {
    public:
-      US_Autorg_Params();
+      US_Guinier_Search_Params();
 
       // window constraints
       int      minpts;          // minimum points in a window (default 10)
@@ -63,10 +63,10 @@ class US_EXTERN US_Autorg_Params
       double   effective_qrgmax() const;
 };
 
-class US_EXTERN US_Autorg_Result
+class US_EXTERN US_Guinier_Search_Result
 {
    public:
-      US_Autorg_Result();
+      US_Guinier_Search_Result();
 
       bool     ok;
       QString  errormsg;

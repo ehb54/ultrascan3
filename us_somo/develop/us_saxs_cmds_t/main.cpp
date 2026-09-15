@@ -2451,18 +2451,18 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[ 0 ].toLower() == "autorg" )
+   if ( cmds[ 0 ].toLower() == "guinier_search" )
    {
-      // usage: autorg [--json|--csv] [--key value ...] file ...
+      // usage: guinier_search [--json|--csv] [--key value ...] file ...
       bool        as_json = false;
       bool        as_csv  = false;
       QStringList files;
       map < QString, QString > kv;
       QString     usage =
-         QString( "usage: %1 autorg [--json|--csv] [--key value ...] file ...\n"
+         QString( "usage: %1 guinier_search [--json|--csv] [--key value ...] file ...\n"
                   "       robust automatic Guinier range search; --json gives one JSON object per line, --csv one row per file\n" )
          .arg( argv[ 0 ] )
-         + US_Autorg_Params::help();
+         + US_Guinier_Search_Params::help();
 
       for ( int p = 1; p < (int) cmds.size(); ++p )
       {
@@ -2476,7 +2476,7 @@ int main (int argc, char **argv)
             exit( 0 );
          } else if ( cmds[ p ].startsWith( "--" ) ) {
             QString key = cmds[ p ].mid( 2 ).toLower();
-            if ( !US_Autorg_Params::keys().contains( key ) )
+            if ( !US_Guinier_Search_Params::keys().contains( key ) )
             {
                QTextStream( stderr ) << "unknown parameter --" << key << "\n" << usage;
                exit( errorbase );
@@ -2497,7 +2497,7 @@ int main (int argc, char **argv)
          exit( errorbase );
       }
 
-      US_Autorg_Params params;
+      US_Guinier_Search_Params params;
       QString          perr;
       if ( !params.set( kv, perr ) )
       {
@@ -2509,20 +2509,20 @@ int main (int argc, char **argv)
       int          nfail = 0;
       if ( as_csv )
       {
-         QTextStream( stdout ) << US_Autorg_Result::csv_header();
+         QTextStream( stdout ) << US_Guinier_Search_Result::csv_header();
       } else if ( !as_json ) {
-         QTextStream( stdout ) << US_Autorg_Result::text_header();
+         QTextStream( stdout ) << US_Guinier_Search_Result::text_header();
       }
       for ( int k = 0; k < (int) files.size(); ++k )
       {
-         US_Autorg_Result r;
+         US_Guinier_Search_Result r;
          if ( !usu.read_iq_flexible( files[ k ], files[ k ], 1e0 ) )
          {
             r.name     = files[ k ];
             r.ok       = false;
             r.errormsg = usu.errormsg;
          } else {
-            usu.autorg( files[ k ], params, r );
+            usu.guinier_search( files[ k ], params, r );
          }
          if ( !r.ok )
          {

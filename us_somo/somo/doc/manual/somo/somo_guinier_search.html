@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO automatic Guinier range search (autorg)</title>
+	<title>SOMO automatic Guinier range search (guinier_search)</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -12,14 +12,14 @@
 <td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
 <td>
 <center>
-<h1>SOMO Automatic Guinier Range Search (autorg)</h1>
+<h1>SOMO Automatic Guinier Range Search (guinier_search)</h1>
 </center>
 </td>
 </tr>
 </table>
 
 <p>
-<b>autorg</b> finds the Guinier region of a scattering curve automatically and reports the radius of
+<b>guinier_search</b> finds the Guinier region of a scattering curve automatically and reports the radius of
 gyration <i>R<sub>g</sub></i> and the forward scattering <i>I(0)</i> with their uncertainties, the
 <i>q</i> range used, a quality score in [0,1], and diagnostics for aggregation or repulsive interactions.
 It is available from the headless command line (<tt>us_saxs_cmds_t</tt>), from the JSON run type used
@@ -107,7 +107,7 @@ separate aggregation from shape.</li>
 
 <h2>Command line</h2>
 <pre>
-us_saxs_cmds_t autorg [--json|--csv] [--key value ...] file ...
+us_saxs_cmds_t guinier_search [--json|--csv] [--key value ...] file ...
 </pre>
 <p>
 Prints one table line per file (default), one JSON object per line (<tt>--json</tt>) or one CSV row per
@@ -116,13 +116,13 @@ or three (<i>q</i>, <i>I</i>, SD) numeric columns; lines that do not start with 
 so headers and footers need not be removed. Example:
 </p>
 <pre>
-us_saxs_cmds_t autorg --minpts 12 --qrgmax 1.0 sample1.dat sample2.dat
+us_saxs_cmds_t guinier_search --minpts 12 --qrgmax 1.0 sample1.dat sample2.dat
 </pre>
 
 <h2>JSON run type</h2>
 <pre>
-us_saxs_cmds_t json '{"autorg":1,"files":["a.dat","b.dat"],"minpts":12}'
-us_saxs_cmds_t json '{"autorg":1,"name":"curve","q":[...],"i":[...],"e":[...]}'
+us_saxs_cmds_t json '{"guinier_search":1,"files":["a.dat","b.dat"],"minpts":12}'
+us_saxs_cmds_t json '{"guinier_search":1,"name":"curve","q":[...],"i":[...],"e":[...]}'
 </pre>
 <p>
 The reply carries <tt>results</tt>, an array with one object per curve (<tt>ok</tt>, <tt>rg</tt>,
@@ -133,14 +133,30 @@ The reply carries <tt>results</tt>, an array with one object per curve (<tt>ok</
 <tt>nok</tt> (the number of curves analyzed) and <tt>params</tt> (the effective parameters).
 </p>
 
+<h2>Guinier options window</h2>
+<p>
+The checkbox <i>Robust automatic Guinier range search</i> in the <a href=somo_saxs_options.html>Guinier options</a>
+window routes the SAS window's <i>Process Guinier</i>, <i>Process CS Guinier</i> and <i>Process TV Guinier</i>
+buttons through this search, taking the <i>q</i> limits, the minimum and maximum number of points, the
+<i>q&middot;R</i> limit of the respective type and the SD weighting choice from that window; the remaining
+parameters keep their defaults. The quality, the number of windows examined and the low-<i>q</i>
+diagnostics appear in the message area, and the csv output records "Robust automatic range fitting used".
+</p>
+
 <h2>gui_script</h2>
 <pre>
 sas open
 sas load_iq &lt;file&gt; [&lt;file&gt; ...]
-sas autorg [csv &lt;file&gt;] [key value ...]
+sas guinier_search [csv &lt;file&gt;] [key value ...]
+sas guinier [rg|cs|tv]
+global guinier_robust_search 1
 </pre>
 <p>
-<tt>sas load_iq</tt> loads curves into the SAS window without scaling; <tt>sas autorg</tt> runs the
+<tt>sas guinier</tt> presses the corresponding <i>Process Guinier</i> button, honouring the Guinier options;
+with <tt>global guinier_robust_search 1</tt> beforehand it uses this search.
+</p>
+<p>
+<tt>sas load_iq</tt> loads curves into the SAS window without scaling; <tt>sas guinier_search</tt> runs the
 search on every loaded curve, writes the table to standard output and the SAS window editor, and
 optionally a CSV file with all result fields.
 </p>

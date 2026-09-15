@@ -1,6 +1,6 @@
-// Robust automatic Guinier range search ("autorg").
+// Robust automatic Guinier range search ("guinier_search").
 //
-// Algorithm outline (all parameters exposed through US_Autorg_Params):
+// Algorithm outline (all parameters exposed through US_Guinier_Search_Params):
 //   1. clean: keep finite points, q >= 0 (q > 0 for rc/rt), I > 0 (or fail when dropneg is off),
 //      inside the optional hard q limits; decide whether SDs are usable.
 //   2. preliminary Rg from windows starting at the first point, to bound the search region to
@@ -221,7 +221,7 @@ namespace {
 
 // ---------------------------------------------------------------- parameters
 
-US_Autorg_Params::US_Autorg_Params()
+US_Guinier_Search_Params::US_Guinier_Search_Params()
 {
    minpts       = 10;
    maxpts       = 0;
@@ -253,7 +253,7 @@ US_Autorg_Params::US_Autorg_Params()
    debug        = 0;
 }
 
-double US_Autorg_Params::effective_qrgmax() const
+double US_Guinier_Search_Params::effective_qrgmax() const
 {
    if ( qrgmax > 0e0 )
    {
@@ -262,7 +262,7 @@ double US_Autorg_Params::effective_qrgmax() const
    return type == "rg" ? 1.3e0 : 1e0;
 }
 
-QStringList US_Autorg_Params::keys()
+QStringList US_Guinier_Search_Params::keys()
 {
    QStringList known;
    known << "type" << "minpts" << "maxpts" << "qrgmax" << "qrgmin" << "qmin" << "qmax"
@@ -272,10 +272,10 @@ QStringList US_Autorg_Params::keys()
    return known;
 }
 
-QString US_Autorg_Params::help()
+QString US_Guinier_Search_Params::help()
 {
    return
-      "autorg parameters (key value), defaults in parentheses:\n"
+      "guinier_search parameters (key value), defaults in parentheses:\n"
       "  type         rg | rc | rt : Guinier, cross-section or transverse (rg)\n"
       "  minpts       minimum points in a window (10)\n"
       "  maxpts       maximum points in a window, 0 = unlimited (0)\n"
@@ -306,7 +306,7 @@ QString US_Autorg_Params::help()
       ;
 }
 
-bool US_Autorg_Params::set( const map < QString, QString > & kv, QString & errormsg )
+bool US_Guinier_Search_Params::set( const map < QString, QString > & kv, QString & errormsg )
 {
    errormsg = "";
    QStringList known = keys();
@@ -459,7 +459,7 @@ bool US_Autorg_Params::set( const map < QString, QString > & kv, QString & error
 
 // ---------------------------------------------------------------- result
 
-US_Autorg_Result::US_Autorg_Result()
+US_Guinier_Search_Result::US_Guinier_Search_Result()
 {
    ok             = false;
    rg             = 0e0;
@@ -495,7 +495,7 @@ US_Autorg_Result::US_Autorg_Result()
    rg_spread_max  = 0e0;
 }
 
-QString US_Autorg_Result::json() const
+QString US_Guinier_Search_Result::json() const
 {
    QStringList w;
    for ( int k = 0; k < (int) warnings.size(); ++k )
@@ -546,14 +546,14 @@ QString US_Autorg_Result::json() const
    return r;
 }
 
-QString US_Autorg_Result::text_header()
+QString US_Guinier_Search_Result::text_header()
 {
    return QString::asprintf( "%-40s %10s %8s %12s %10s %6s %6s %5s %9s %9s %6s %6s %7s %7s %s\n",
                              "name", "Rg", "Rg_sd", "I0", "I0_sd", "first", "last", "npts",
                              "qmin", "qmax", "qRgmin", "qRgmax", "quality", "lowq_z", "flags" );
 }
 
-QString US_Autorg_Result::text() const
+QString US_Guinier_Search_Result::text() const
 {
    if ( !ok )
    {
@@ -588,7 +588,7 @@ QString US_Autorg_Result::text() const
    return line;
 }
 
-QString US_Autorg_Result::csv_header()
+QString US_Guinier_Search_Result::csv_header()
 {
    return
       "\"name\",\"ok\",\"type\",\"Rg\",\"Rg sd\",\"I(0)\",\"I(0) sd\",\"first point\",\"last point\",\"points used\","
@@ -598,7 +598,7 @@ QString US_Autorg_Result::csv_header()
       "\"Rg spread mean\",\"Rg spread sd\",\"Rg spread min\",\"Rg spread max\",\"warnings\"\n";
 }
 
-QString US_Autorg_Result::csv() const
+QString US_Guinier_Search_Result::csv() const
 {
    QString w = warnings.join( "; " );
    w.replace( "\"", "'" );
@@ -698,12 +698,12 @@ bool US_Saxs_Util::read_iq_flexible( const QString & filename, const QString & t
    return true;
 }
 
-// ---------------------------------------------------------------- autorg
+// ---------------------------------------------------------------- guinier_search
 
-bool US_Saxs_Util::autorg( const QString & tag, const US_Autorg_Params & params, US_Autorg_Result & result )
+bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_Params & params, US_Guinier_Search_Result & result )
 {
    errormsg = "";
-   result   = US_Autorg_Result();
+   result   = US_Guinier_Search_Result();
    result.name = wave.count( tag ) && !wave[ tag ].filename.isEmpty() ? wave[ tag ].filename : tag;
    result.type = params.type;
 
@@ -715,7 +715,7 @@ bool US_Saxs_Util::autorg( const QString & tag, const US_Autorg_Params & params,
 
    {
       QString perr;
-      US_Autorg_Params check = params;
+      US_Guinier_Search_Params check = params;
       map < QString, QString > empty;
       if ( !check.set( empty, perr ) )
       {
@@ -1026,7 +1026,7 @@ bool US_Saxs_Util::autorg( const QString & tag, const US_Autorg_Params & params,
    if ( params.debug )
    {
       QTextStream( stderr )
-         << QString( "autorg %1: %2 usable points, preliminary Rg %3 from window %4-%5 "
+         << QString( "guinier_search %1: %2 usable points, preliminary Rg %3 from window %4-%5 "
                      "(first negative slope Rg %6), search region %7 points\n" )
          .arg( result.name ).arg( m ).arg( rg0 ).arg( pre_i + 1 ).arg( pre_j + 1 ).arg( rg0_first ).arg( nreg );
    }
@@ -1203,7 +1203,8 @@ bool US_Saxs_Util::autorg( const QString & tag, const US_Autorg_Params & params,
    if ( params.debug )
    {
       QTextStream ts( stderr );
-      ts << QString( "autorg %1: consensus Rg %2, %3 candidate windows\n" ).arg( result.name ).arg( rg_ref ).arg( cands.size() );
+      ts << QString( "guinier_search %1: consensus Rg %2, %3 candidate windows\n" )
+         .arg( result.name ).arg( rg_ref ).arg( cands.size() );
       ts << "    i    j    n       Rg   qRg0   qRg1  chi2r  curvt   chi2  curv   span   cov  start   fwd   cons  quality\n";
       for ( int k = 0; k < (int) cands.size(); ++k )
       {
@@ -1388,15 +1389,15 @@ bool US_Saxs_Util::autorg( const QString & tag, const US_Autorg_Params & params,
 
 // ---------------------------------------------------------------- json run type
 
-// input keys: "autorg" (run type), "files" (JSON array of file names) or "q","i"[,"e"] arrays,
-//             plus any US_Autorg_Params key
+// input keys: "guinier_search" (run type), "files" (JSON array of file names) or "q","i"[,"e"] arrays,
+//             plus any US_Guinier_Search_Params key
 // output:     "results" JSON array with one object per curve, "nok" successes, "params" effective parameters
-bool US_Saxs_Util::run_autorg(
+bool US_Saxs_Util::run_guinier_search(
                               map < QString, QString >           & parameters,
                               map < QString, QString >           & results
                               )
 {
-   US_Autorg_Params params;
+   US_Guinier_Search_Params params;
    QString perr;
    if ( !params.set( parameters, perr ) )
    {
@@ -1458,7 +1459,7 @@ bool US_Saxs_Util::run_autorg(
       }
       tags << tag;
    } else {
-      results[ "errors" ] = "autorg needs files or q and i arrays";
+      results[ "errors" ] = "guinier_search needs files or q and i arrays";
       return false;
    }
 
@@ -1466,14 +1467,14 @@ bool US_Saxs_Util::run_autorg(
    int nok = 0;
    for ( int k = 0; k < (int) tags.size(); ++k )
    {
-      US_Autorg_Result r;
+      US_Guinier_Search_Result r;
       if ( parameters.count( "files" ) && !read_iq_flexible( tags[ k ], tags[ k ], 1e0 ) )
       {
          r.name     = tags[ k ];
          r.ok       = false;
          r.errormsg = errormsg;
       } else {
-         autorg( tags[ k ], params, r );
+         guinier_search( tags[ k ], params, r );
       }
       if ( r.ok )
       {

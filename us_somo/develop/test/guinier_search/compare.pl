@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# compare.pl - tabulate SOMO autorg (json lines) vs truth.csv vs ATSAS autorg csv
+# compare.pl - tabulate SOMO guinier_search (json lines) vs truth.csv vs ATSAS autorg csv
 # usage: compare.pl truth.csv somo.jsonl [atsas.csv]
 use strict;
 use warnings;

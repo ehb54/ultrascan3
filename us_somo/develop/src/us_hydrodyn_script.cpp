@@ -408,8 +408,22 @@ void US_Hydrodyn::gui_script_run() {
                   }
                   ls.pop_front();
                }
-            } else if ( opt1 == "autorg" ) {
-               // sas autorg [csv <file>] [key value ...]
+            } else if ( opt1 == "guinier" ) {
+               // sas guinier [rg|cs|tv] : the SAS window's Process Guinier buttons, honouring the Guinier options
+               QString which = ls.isEmpty() ? QString( "rg" ) : ls.front().toLower();
+               if ( !ls.isEmpty() ) {
+                  ls.pop_front();
+               }
+               const char * method =
+                  which == "rg" ? "run_guinier_analysis" :
+                  which == "cs" ? "run_guinier_cs" :
+                  which == "tv" ? "run_guinier_Rt" : 0;
+               if ( !method ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs rg, cs or tv" );
+               }
+               QMetaObject::invokeMethod( saxs_plot_window, method, Qt::DirectConnection );
+            } else if ( opt1 == "guinier_search" ) {
+               // sas guinier_search [csv <file>] [key value ...]
                map < QString, QString > kv;
                QString csvfile;
                while ( ls.size() >= 2 ) {
@@ -424,7 +438,7 @@ void US_Hydrodyn::gui_script_run() {
                if ( !ls.isEmpty() ) {
                   gui_script_error( i, cmd + " " + opt1, "parameters must be key value pairs, odd one: " + ls.front() );
                }
-               if ( !saxs_plot_window->script_autorg( kv, csvfile, errormsg ) ) {
+               if ( !saxs_plot_window->script_guinier_search( kv, csvfile, errormsg ) ) {
                   gui_script_error( i, cmd + " " + opt1, errormsg );
                }
             } else {

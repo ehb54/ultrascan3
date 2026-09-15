@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# gen_synthetic.pl - synthetic SAXS curves with analytically known Rg for autorg validation
+# gen_synthetic.pl - synthetic SAXS curves with analytically known Rg for Guinier search validation
 #
 # usage: gen_synthetic.pl [outdir]
 # writes outdir/*.dat and outdir/truth.csv ( name, rg_true, i0_true, notes )

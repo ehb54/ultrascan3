@@ -1,11 +1,11 @@
-# autorg validation harness
+# guinier_search validation harness
 
 Synthetic curves with analytically known Rg plus a comparison table for the
-SOMO automatic Guinier range search (`us_saxs_cmds_t autorg`).
+SOMO automatic Guinier range search (`us_saxs_cmds_t guinier_search`).
 
 ```
 perl gen_synthetic.pl synth                      # 22 curves + synth/truth.csv
-us_saxs_cmds_t autorg --json synth/*.dat > somo.jsonl
+us_saxs_cmds_t guinier_search --json synth/*.dat > somo.jsonl
 perl compare.pl synth/truth.csv somo.jsonl [atsas.csv]   # SOMO vs truth [vs ATSAS autorg -f csv]
 ```
 
