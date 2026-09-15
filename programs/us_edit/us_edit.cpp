@@ -10341,6 +10341,27 @@ void US_Edit::manual_edit_auto( void )
     }
 }
 
+// Manual Edit's left column packs in noticeably more controls (Scan
+// Controls + Edit Controls + Linear Baseline Correction all shown at
+// once) than the other US_Edit constructors, giving it a naturally wider
+// minimum/preferred size. A size-policy cap (QSizePolicy::Maximum) only
+// limits growth *beyond* a widget's sizeHint -- it can't shrink the
+// widget below what its own content already claims to need, which is
+// exactly the ~524px this grid's content was reporting. So enforce a
+// hard ceiling here instead, proportional to this panel's own current
+// width, gated to only the Manual Edit constructor (us_edit_auto_mode_manual)
+// so the other constructors -- whose left columns are already a
+// reasonable size -- are left untouched.
+void US_Edit::resizeEvent( QResizeEvent* event )
+{
+  QWidget::resizeEvent( event );
+
+  if ( us_edit_auto_mode_manual && leftWidget != NULL )
+    {
+      leftWidget->setMaximumWidth( qMax( 200, int( this->width() * 0.40 ) ) );
+    }
+}
+
 // void US_Edit::trigger_resize()
 // {
 //   emit man_data_loaded();

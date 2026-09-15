@@ -446,6 +446,9 @@ class US_Edit : public US_Widgets
       void set_data_over_lamda();
       void xaxis_wavl_wgts_on( bool );
 
+ protected:
+     void resizeEvent( QResizeEvent* event ) override;
+
    public slots:
       void load_auto         ( QMap < QString, QString > & );
       void reset_editdata_panel ( void );
