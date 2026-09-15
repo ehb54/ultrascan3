@@ -10374,6 +10374,15 @@ void US_Edit::resizeEvent( QResizeEvent* event )
     {
       leftWidget->setMaximumWidth( qMax( 200, int( this->width() * 0.40 ) ) );
     }
+
+  // US_Plot::fitTitleToWidth() is opt-in, not automatic, so re-fit the
+  // plot title's font here on every resize of this panel -- otherwise it
+  // would only re-fit when the title text itself changes (switching
+  // triples/channels), not on a plain window resize.
+  if ( plot != NULL )
+    {
+      plot->fitTitleToWidth();
+    }
 }
 
 // void US_Edit::trigger_resize()

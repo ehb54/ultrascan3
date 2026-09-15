@@ -220,15 +220,6 @@ bool US_Plot::eventFilter( QObject* object, QEvent* event )
       toolBar->setPalette( toolBarColor() );
    }
 
-   // Re-fit the title's font whenever the plot itself is resized, so a
-   // multi-line title (e.g. "Run ID: ...") that was set for a wider window
-   // doesn't end up centered-and-clipped in a narrower one -- and grows
-   // back toward its original size if the plot widens again.
-   if ( object == plot && event->type() == QEvent::Resize )
-   {
-      fitTitleToWidth();
-   }
-
    return QObject::eventFilter( object, event );
 }
 
@@ -365,11 +356,6 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    qwtTitle.setFont( font );
    plot->setTitle( qwtTitle );
 
-   // Watch the plot for resizes so the title (which can be several lines,
-   // e.g. run ID + cell/channel/wavelength) shrinks to fit rather than
-   // being centered-and-clipped when it's wider than the plot.
-   plot->installEventFilter( this );
-
    plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
          .arg( US_GuiSettings::plotMargin() ) );
 
@@ -392,11 +378,6 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    }
   
    addWidget( plot );
-
-   // Best-effort initial fit; plot->width() may not reflect final layout
-   // geometry yet at construction time, but the eventFilter() hook above
-   // will re-run this as soon as the plot receives its real size.
-   fitTitleToWidth();
 
    // Setup canvas for double-click events
    setupCanvas();
@@ -430,7 +411,11 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 //! QwtPlot titles are centered and do not wrap or auto-shrink, so a
 //! multi-line title (e.g. "Run ID: ...\nCell: ...  Channel: ...
 //! Wavelength: ...") that is wider than the plot simply overflows past
-//! both edges, clipped by whatever sits alongside the plot. This always
+//! both edges, clipped by whatever sits alongside the plot. This is not
+//! wired up to run automatically (no event filter, no call from the
+//! constructor) -- it's purely opt-in. Call it yourself wherever your
+//! program sets/changes the title, and from your own resizeEvent() too if
+//! you want it to keep fitting as the plot is resized. Each call
 //! re-measures starting from the title's originally-intended size (rather
 //! than shrinking further from whatever size it happens to currently be),
 //! so the font grows back toward full size if the plot is widened again.
