@@ -328,6 +328,9 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \returns       Description of the failures, empty if there were none
       QString export_error    ( void );
 
+      //! One entry per failed triple in the last export.
+      QStringList export_errors() const;
+
       //! \brief A count of specified type
       //! \param key     Key string for which to map a value ("file",...)
       //! \returns       Number of values for the array with given key
@@ -465,7 +468,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       QString   dbfile;              //!< Full path .sqlite DB file
       QString   runID;               //!< Run ID
       QString   runType;             //!< Run Type (usually "RI")
-      QString   exp_error;           //!< Triples the last export could not write
+      QStringList exp_errors;        //!< Triples the last export could not write
 
    private slots:
 

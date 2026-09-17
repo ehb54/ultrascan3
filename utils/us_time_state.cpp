@@ -61,10 +61,7 @@ int US_TimeState::open_write_data( QString fpath,
    time_first  = ftime;
    const_ti    = ( timeinc > 0.0 );
 
-   // Modify SetSpeed resolution if appropo debug_text present.  Match on the
-   // same prefix the rest of the tree uses, so the abbreviated spelling of the
-   // setting reaches the timestate too, and keep the default when the value is
-   // unparsable or non-positive rather than rounding speeds against zero.
+   // Use a positive integer speed resolution, or keep the default.
    const QString dbgval = US_Settings::debug_value( "SetSpeedReso" );
    if ( ! dbgval.isEmpty() )
    {

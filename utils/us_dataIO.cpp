@@ -5,30 +5,26 @@
 #include "us_matrix.h"
 #include "us_util.h"
 #include "us_settings.h"
+#include <QSaveFile>
+#include <limits>
 
 // Static member definition
 const uint US_DataIO::format_version;
 
-// The oldest format version this reader can parse.  Versions 2 and 3 placed
-// their fields differently -- version 2 stored the radius limits as 2-byte
-// integers, and neither carried the cell and channel bytes that follow the
-// data type -- so nothing after the type lands where this code looks for it.
+// Versions 4 and 5 share the supported header layout.
 static const quint32 oldest_version = 4;
 
-// Resolution the stored speed is rounded to.  SetSpeedResolution is a
-// documented user setting (Advanced Settings, "Debug Text Options"), not a
-// developer leftover, so it is honored here; an absent, unparsable or
-// non-positive value leaves the default in place rather than rounding every
-// speed against zero.
 static double speed_resolution()
 {
+   const double default_resolution = 100.0;
    const QString dbgval = US_Settings::debug_value( "SetSpeedReso" );
-   if ( dbgval.isEmpty() ) return 100.0;
+   if ( dbgval.isEmpty() ) return default_resolution;
 
    bool   ok    = false;
    double value = dbgval.toDouble( &ok );
 
-   return ( ok  &&  value > 0.0 ) ? value : 100.0;
+   return ( ok && qIsFinite( value ) && value > 0.0 )
+          ? value : default_resolution;
 }
 
 // Return the count of readings points
@@ -288,39 +284,28 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
 int US_DataIO::writeRawData( const QString& file, RawData& data )
 {
-   // Validate before opening, so a rejected write leaves no partial file.
-   //
-   // The format stores the radius axis as an origin and a single spacing, and
-   // that spacing is derived from the first two entries.  Fewer than two of
-   // them cannot describe an axis, and reading xvalues[ 1 ] to find out would
-   // itself be out of bounds.
+   // The stored axis requires an origin and a positive spacing.
    if ( data.xvalues.size() < 2 ) return NODATA;
 
-   // Since only that origin and spacing survive the write, the reader rebuilds
-   // the axis as origin + n * spacing.  Reject what it cannot describe, by the
-   // measure that matters:  no reading may come back attached to a different
-   // grid point than the one it was recorded at.
-   //
-   // The tolerance is a whole step rather than a rounding margin, because a
-   // producer legitimately lands inside it -- us_mwl_species_sim snaps its last
-   // radius onto the cell bottom, displacing that one point by at most half a
-   // step.  A genuinely uneven axis accumulates well past this.
-   const double spacing = data.xvalues[ 1 ] - data.xvalues[ 0 ];
-   if ( ! ( spacing > 0.0 )  ||  qIsInf( spacing ) ) return NOT_USDATA;
+   const double origin  = data.xvalues[ 0 ];
+   const double spacing = data.xvalues[ 1 ] - origin;
+   if ( ! qIsFinite( origin ) || ! qIsFinite( spacing ) || spacing <= 0.0 )
+      return NOT_USDATA;
 
    for ( int ii = 2; ii < data.xvalues.size(); ii++ )
    {
-      const double rebuilt = data.xvalues[ 0 ] + spacing * ii;
-
-      if ( ! ( qAbs( data.xvalues[ ii ] - rebuilt ) <= spacing ) )
+      const double rebuilt = origin + spacing * ii;
+      // Allow accumulated rounding error and a half-step cell-bottom endpoint.
+      const double rounding = 8.0 * std::numeric_limits<double>::epsilon()
+                            * qMax( qAbs( origin ), qAbs( rebuilt ) ) * ( ii + 1 );
+      const double tolerance = rounding
+                             + ( ii == data.xvalues.size() - 1 ? spacing * 0.5 : 0.0 );
+      if ( ! ( data.xvalues[ ii ] > data.xvalues[ ii - 1 ] ) ||
+           ! ( qAbs( data.xvalues[ ii ] - rebuilt ) <= tolerance ) )
          return NOT_USDATA;
    }
 
-   // An absent interpolation bitmap means no point is interpolated and is
-   // filled in by writeScan().  One that is present but shorter than the
-   // readings it describes is an inconsistent scan: the producer tracked
-   // interpolation for some points and not others, and there is no defensible
-   // value to invent for the rest.
+   // A present interpolation bitmap must cover every reading.
    for ( int ii = 0; ii < data.scanData.size(); ii++ )
    {
       const Scan& sc = data.scanData[ ii ];
@@ -330,8 +315,7 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
          return NOT_USDATA;
    }
 
-   // Open the file for writing
-   QFile ff( file );
+   QSaveFile ff( file );
    if ( ! ff.open( QIODevice::WriteOnly ) ) return CANTOPEN;
    QDataStream ds( &ff );
 
@@ -364,10 +348,8 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    memset( desc, '\0', sizeof desc );  // bzero is not defined in WIN32
 
    QByteArray dd = data.description.toLatin1();
-   // Copy at most 239 bytes so the field is always terminated.  Filling all 240
-   // leaves no terminator, and every reader of this format builds a QString
-   // from the buffer as if there were one.
-   strncpy( desc, dd.data(), sizeof desc - 1 );
+   // Reserve one byte for the null terminator.
+   strncpy( desc, dd.constData(), sizeof desc - 1 );
    write( ds, desc, sizeof desc, crc );
 
    // Find min and max radius, data, and std deviation
@@ -480,9 +462,8 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    qToLittleEndian( crc, ui.u ); // crc
    ds.writeRawData( ui.c, 4 );
 
-   ff.close();
-
-   return OK;
+   if ( ds.status() != QDataStream::Ok || ! ff.flush() ) return CANTWRITE;
+   return ff.commit() ? OK : CANTWRITE;
 }
 
 void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data, 
@@ -560,10 +541,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
       }
    }
 
-   // Write interpolated flags.  An empty bitmap means no point is interpolated,
-   // which is the normal state for simulated data, so it is zero-filled here
-   // rather than read past the end of.  A bitmap that is present but too short
-   // for the readings is an inconsistent scan and is rejected by the caller.
+   // An empty interpolation bitmap is written as zeroes.
    int flagSize = ( valueCount + 7 ) / 8;
    QByteArray flags = data.interpolated;
    if ( flags.size() < flagSize ) flags = QByteArray( flagSize, '\0' );
@@ -590,8 +568,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
    int      err = OK;
    quint32  crc = 0xffffffffUL;
 
-   // Parse into a temporary and copy to the caller only once the whole file,
-   // checksum included, has proven valid.  On any error data is left untouched.
+   // Leave the destination unchanged if parsing fails.
    RawData  rd;
    rd.cell    = 0;
    rd.channel = ' ';
@@ -645,8 +622,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       // Get the guid
       read( ds, rd.rawGUID, 16, crc );
 
-      // Get the description.  The stored field need not be terminated, so the
-      // buffer carries one extra byte that always is.
+      // Terminate descriptions that fill all 240 stored bytes.
       char desc[ 241 ];
       read( ds, desc, 240, crc );
       desc[ 240 ] = '\0';
@@ -704,9 +680,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       u2.I = qFromLittleEndian( u1.I );
       double max_data2 = u2.f;
 
-      // A radius axis is generated from these two, so both must be finite and
-      // the spacing must ascend.  A flat or descending axis breaks the ordering
-      // that xindex() and its callers rely on.
+      // Require finite coordinates and an ascending radius axis.
       if ( qIsNaN( min_radius )  ||  qIsInf( min_radius ) ) throw NOT_USDATA;
       if ( qIsNaN( delta_radius ) || qIsInf( delta_radius ) ) throw NOT_USDATA;
       if ( delta_radius <= 0.0 ) throw NOT_USDATA;
@@ -716,8 +690,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
       if ( scan_count <= 0 ) throw NODATA;
 
-      // Every scan costs at least a marker and a scan header, so a count the
-      // file cannot possibly hold is rejected before the loop starts.
+      // Reject scan counts that exceed the available headers.
       const qint64 remaining = ff.size() - ff.pos();
       if ( (qint64)scan_count * scan_header_size > remaining ) throw NOT_USDATA;
 
@@ -772,9 +745,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
          if ( this_count <= 0 ) throw NODATA;
 
-         // Every scan describes the same radius axis, so the counts must agree.
-         // Otherwise pointCount() reports the last scan's count while earlier
-         // scans hold fewer readings, and indexing by it runs off the end.
+         // All scans share one radius axis.
          if ( ii == 0 ) valueCount = this_count;
          else if ( this_count != valueCount ) throw NOT_USDATA;
 
@@ -783,8 +754,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          double  factor2 = ( max_data2 - min_data2 ) / 65535.0;
          bool    stdDev  = ( min_data2 != 0.0 || max_data2 != 0.0 );
 
-         // Bound the loop and the bitmap allocation by what the file actually
-         // holds.  Computed in 64 bits so an extreme count cannot overflow.
+         // Check payload size in 64 bits to avoid count overflow.
          const qint64 need = (qint64)valueCount * ( stdDev ? 4 : 2 )
                            + ( (qint64)valueCount + 7 ) / 8;
          if ( need > ff.size() - ff.pos() ) throw NOT_USDATA;
@@ -847,7 +817,6 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       if ( ds.readRawData( (char*) &read_crc, 4 ) != 4 ) throw NOT_USDATA;
       if ( crc != qFromLittleEndian( read_crc ) ) throw BADCRC;
 
-      // Everything checks out:  hand the parsed data to the caller.
       data = rd;
 
    } catch( ioError error )
@@ -861,8 +830,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
 void US_DataIO::read( QDataStream& ds, char* cc, int len, quint32& crc )
 {
-   // A short read leaves the tail of cc uninitialized, so the caller must not
-   // see it and the crc must not absorb it.
+   // Reject short reads before using the buffer.
    if ( ds.readRawData( cc, len ) != len ) throw NOT_USDATA;
    crc = US_Crc::crc32( crc, (uchar*) cc, len );
 }
@@ -1807,6 +1775,7 @@ QString US_DataIO::errorString( int code )
       case OK        
          : return QObject::tr( "The operation completed successully" );
       case CANTOPEN  : return QObject::tr( "The file cannot be opened" );
+      case CANTWRITE : return QObject::tr( "The file could not be saved" );
       case BADCRC    : return QObject::tr( "The file was corrupted" );
       case NOT_USDATA: return QObject::tr( "The file was not valid scan data" );
       case BADTYPE   : return QObject::tr( "The filetype was not recognized" );

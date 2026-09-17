@@ -628,8 +628,6 @@ void US_RemoveRI::slt_save(void){
         }
     }
 
-    // A rejected write leaves no file behind, so announcing success here would
-    // hide triples that never reached the disk.
     if (! write_errors.isEmpty()) {
         le_status->setText(tr("%1 triple(s) FAILED to write!").arg(write_errors.size()));
         QMessageBox::warning(this, "Error!",
