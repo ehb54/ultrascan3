@@ -115,9 +115,7 @@ TEST(AucVersions, AVersionFourFileLoadsAndDecodesWavelengthByTheOlderRule)
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
-    // Version 4 has the layout of version 5, so only the version bytes change.
-    // It differs solely in the wavelength scale: v4 stored (nm - 180) * 100,
-    // v5 stores nm * 10, and the reader picks the rule from the version.
+    // Version 4 stores wavelength as (nm - 180) * 100; version 5 uses nm * 10.
     QByteArray body = currentBody(dir);
     body.replace(kVersionOffset, 2, "04");
 
@@ -131,9 +129,7 @@ TEST(AucVersions, AVersionFourFileLoadsAndDecodesWavelengthByTheOlderRule)
     EXPECT_EQ(data.channel, 'A');
     EXPECT_EQ(data.pointCount(), 8);
 
-    // The bytes hold 280.0 nm written by the v5 rule -- 2800 -- and reading
-    // them as v4 yields 2800 / 100 + 180.  A v4 file recorded at 280 nm holds
-    // 10000 instead; either way the decode follows the version, not the writer.
+    // The stored value 2800 decodes as 208 nm under version 4.
     EXPECT_NEAR(data.scanData[0].wavelength, 208.0, 1.0e-6);
 }
 

@@ -274,8 +274,7 @@ TEST(AucMutation, BitFlipInDescriptionPaddingIsCaughtByTheChecksum)
         << "expected zero padding after a short description";
 
     US_DataIO::RawData data;
-    // The layout is untouched -- no count, marker or field changes size.  This
-    // is the recipe that proves the checksum, and only the checksum, rejects it.
+    // Change a payload byte without updating the checksum.
     EXPECT_EQ(readWithTimingCheck(base.edit().flipBit(kDescPadding, 0x01).write("m04.auc"), data),
               US_DataIO::BADCRC);
 }
