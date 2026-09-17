@@ -33,10 +33,7 @@ int US_Project::readFromDisk( QString& guid )
 
    QXmlStreamReader xml( &file );
 
-   // Parse into a temporary and copy to the caller only once the whole document
-   // has parsed.  The fault in a malformed file is found part way through, so
-   // parsing in place would leave the fields read before it -- and no others --
-   // in an object the caller was told to discard.
+   // Leave the destination unchanged if parsing fails.
    US_Project pr;
 
    while ( ! xml.atEnd() )
@@ -68,7 +65,6 @@ int US_Project::readFromDisk( QString& guid )
 
    pr.saveStatus = HD_ONLY;
 
-   // Everything parsed:  hand the project to the caller.
    *this = pr;
 
    return IUS_DB2::OK;

@@ -1,19 +1,4 @@
-// UT-010: a per-test isolated UltraScan work tree.
-//
-// UT-003 gives each *process* a sandbox, which is enough under CTest because
-// gtest_discover_tests runs every case in its own process.  It is not enough
-// when several cases run in one process -- `./bin/test_us_utils --gtest_filter`
-// during development, or any future batching -- because they then share one
-// work root.  Files written by an earlier case are visible to a later one, so
-// results depend on execution order.
-//
-// Deriving a fixture from Us3FileTestBase gives that fixture its own work root
-// for the duration of each test, and restores the process sandbox afterwards.
-// US_Settings::dataDir(), resultDir(), reportDir() and archiveDir() are all
-// derived from workBaseDir(), so repointing the base isolates all of them.
-//
-// This helper only redirects paths.  It never wraps a production call and never
-// asserts on behalf of a test.
+// Give each test an isolated work directory and restore settings afterward.
 
 #pragma once
 

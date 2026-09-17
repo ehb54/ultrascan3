@@ -1054,8 +1054,6 @@ void US_ConvertScan::save_run() {
         }
     }
 
-    // A rejected write leaves no file behind, so a silent loop here would
-    // report a saved run that is missing triples.
     if (! write_errors.isEmpty()) {
         QMessageBox::warning(this, "Error!",
                              tr("%1 of %2 triple(s) could not be saved:\n\n%3")

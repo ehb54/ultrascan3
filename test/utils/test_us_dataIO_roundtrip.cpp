@@ -1,18 +1,4 @@
-// AUC-T02: valid read and write -> read round-trip through the public filename
-// API, with tolerances derived from the format rather than guessed.
-//
-// AUC-T01 established the error contract and the shape of a valid read.  This
-// suite covers what that left unexecuted: all six data types, the standard
-// deviation series, multi-byte interpolation bitmaps, and the quantization the
-// format applies to every stored quantity.
-//
-// Tolerances are computed from the encoding, not tuned until green.  Readings
-// are stored as a 16-bit fraction of the value range, so the round-trip error
-// bound is (max - min) / 65535 / 2 and nothing smaller is achievable.
-//
-// Everything runs on fixtures written by the production writer into a per-test
-// QTemporaryDir.  Two known-unsafe inputs are deliberately not exercised; see
-// the comments on kMaxSafeDescription and buildScan().
+// AUC round trips, format precision, and writer validation.
 
 #include "qt_test_base.h"
 #include "us_dataIO.h"
@@ -22,13 +8,17 @@
 #include <QFile>
 #include <QTemporaryDir>
 
+#if defined(Q_OS_UNIX) && GTEST_HAS_DEATH_TEST
+#include <csignal>
+#include <cstdio>
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
+
 namespace
 {
-// The writer copies the description into a 240-byte field with strncpy() and
-// the reader rebuilds it with QString(char*).  At exactly 240 characters the
-// field holds no terminator and the reader runs off the end of its buffer, so
-// 239 is the longest length that can be exercised safely.
-constexpr int kMaxSafeDescription = 239;
+// The 240-byte field reserves one byte for a null terminator.
+constexpr int kStoredDescriptionLimit = 239;
 
 // Readings and standard deviations are stored as 16-bit fractions of their
 // respective ranges.
@@ -37,10 +27,6 @@ double quantizationBound(double minValue, double maxValue)
     return (maxValue - minValue) / 65535.0 / 2.0;
 }
 
-// The interpolation bitmap is one bit per reading, rounded up to whole bytes.
-// The writer copies exactly that many bytes out of the QByteArray without
-// checking its length, so a short buffer would be an out-of-bounds read; every
-// fixture here sizes it correctly.
 int bitmapBytes(int pointCount)
 {
     return (pointCount + 7) / 8;
@@ -75,7 +61,7 @@ US_DataIO::RawData buildRawData(int scanCount, int pointCount,
     memcpy(data.rawGUID, "fedcba9876543210", 16);
     data.cell        = 2;
     data.channel     = 'B';
-    data.description = "AUC-T02 round-trip fixture";
+    data.description = "AUC round-trip fixture";
 
     for (int point = 0; point < pointCount; point++)
         data.xvalues << 5.8 + 0.01 * point;
@@ -131,7 +117,7 @@ TEST(AucRoundTrip, MetadataAndShapeAreCarriedThroughUnchanged)
 
     EXPECT_EQ(trip.data().cell, 2);
     EXPECT_EQ(trip.data().channel, 'B');
-    EXPECT_EQ(trip.data().description, QString("AUC-T02 round-trip fixture"));
+    EXPECT_EQ(trip.data().description, QString("AUC round-trip fixture"));
     EXPECT_EQ(QByteArray(trip.data().rawGUID, 16), QByteArray("fedcba9876543210"));
     EXPECT_EQ(trip.data().scanCount(), 5);
     EXPECT_EQ(trip.data().pointCount(), 32);
@@ -141,12 +127,12 @@ TEST(AucRoundTrip, MetadataAndShapeAreCarriedThroughUnchanged)
 TEST(AucRoundTrip, TheLongestSafeDescriptionIsPreservedExactly)
 {
     US_DataIO::RawData source = buildRawData(1, 8);
-    source.description = QString(kMaxSafeDescription, QChar('D'));
+    source.description = QString(kStoredDescriptionLimit, QChar('D'));
 
     RoundTrip trip(source);
     ASSERT_EQ(trip.result(), US_DataIO::OK);
-    EXPECT_EQ(trip.data().description.length(), kMaxSafeDescription);
-    EXPECT_EQ(trip.data().description, QString(kMaxSafeDescription, QChar('D')));
+    EXPECT_EQ(trip.data().description.length(), kStoredDescriptionLimit);
+    EXPECT_EQ(trip.data().description, QString(kStoredDescriptionLimit, QChar('D')));
 }
 
 // ---------------------------------------------------------------------------
@@ -297,8 +283,6 @@ TEST(AucRoundTrip, RpmIsRoundedToTheSpeedResolutionOnRead)
     RoundTrip trip(source);
     ASSERT_EQ(trip.result(), US_DataIO::OK);
 
-    // Not a round trip: the reader rounds RPM to the configured resolution,
-    // 100 by default.  AUC-T01 records the settings dependency behind this.
     EXPECT_NEAR(trip.data().scanData[0].rpm, 45100.0, 1.0e-9);
 }
 
@@ -340,11 +324,6 @@ TEST(AucRoundTrip, AnAxisAccumulatedByRepeatedAdditionIsStillUniformEnough)
 
 TEST(AucRoundTrip, AnEndpointSnappedOntoTheCellBottomIsStillAccepted)
 {
-    // us_mwl_species_sim builds its grid by accumulation but then overwrites
-    // the last radius with the cell bottom, which the point count only
-    // approximates.  That displaces one point by up to half a step, so the
-    // uniformity check has to leave room for it -- the file it writes today
-    // must keep being written.  us_astfem_sim has the same line commented out.
     const double meniscus = 5.8;
     const double bottom   = 7.2005;
     const double radinc   = 0.001;
@@ -383,18 +362,6 @@ TEST(AucRoundTrip, NonUniformRadiiAreRejectedRatherThanSilentlyResampled)
     source.xvalues.clear();
     source.xvalues << 5.80 << 5.81 << 5.83 << 5.86 << 5.90;
 
-    // The format keeps a first radius and one spacing, taken as xvalues[1] -
-    // xvalues[0], and the reader regenerates the vector arithmetically.  Until
-    // this was rejected the write returned OK and the file read back with a
-    // last radius of 5.84 instead of the 5.90 that was handed in -- readings
-    // relabelled with radii they were not measured at, no error reported.
-    //
-    // No acquisition path produces such an axis: the legacy Beckman, Optima,
-    // CFA and MWL importers all accumulate origin + n * step, the one path that
-    // reshapes an existing axis (splitting a triple into radial subsets) copies
-    // a contiguous run of an already uniform one, and the chromatic aberration
-    // correction in us_xpn_viewer -- the one place a user is warned and can
-    // continue -- subtracts the same per-wavelength constant from every point.
     const QString path = dir.path() + "/non-uniform.auc";
     EXPECT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::NOT_USDATA);
     EXPECT_FALSE(QFile::exists(path));
@@ -409,19 +376,8 @@ TEST(AucRoundTrip, NonUniformRadiiAreRejectedRatherThanSilentlyResampled)
     EXPECT_FALSE(QFile::exists(flatPath));
 }
 
-// ---------------------------------------------------------------------------
-// Interpolation bitmap consistency
-//
-// writeScan() copies ( pointCount + 7 ) / 8 bytes out of Scan::interpolated.
-// Nothing sized that array for it, so a producer that grew its readings without
-// growing the bitmap -- which us_astfem_sim did on its save path -- read past
-// the end of a QByteArray.
-// ---------------------------------------------------------------------------
-
 TEST(AucRoundTrip, AnAbsentInterpolationBitmapMeansNoPointIsInterpolated)
 {
-    // Simulated data never marks points as interpolated, so an empty bitmap is
-    // a legitimate state rather than a defect, and must round-trip as zeroes.
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
@@ -456,7 +412,6 @@ TEST(AucRoundTrip, AnInterpolationBitmapShorterThanItsReadingsIsRejected)
     const QString path = dir.path() + "/short-bitmap.auc";
     EXPECT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::NOT_USDATA);
 
-    // Rejected before the file was opened, so nothing was left behind.
     EXPECT_FALSE(QFile::exists(path));
 }
 
@@ -477,21 +432,11 @@ TEST(AucRoundTrip, AnOversizedInterpolationBitmapIsTruncatedToTheReadings)
     EXPECT_EQ(read.scanData[0].interpolated.size(), bitmapBytes(20));
 }
 
-// ---------------------------------------------------------------------------
-// Writer input validation
-//
-// Both cases below were recorded but deliberately not exercised before the
-// writer was hardened: each was an out-of-bounds read reached before any
-// validation ran.
-// ---------------------------------------------------------------------------
-
 TEST(AucRoundTrip, ADatasetWithFewerThanTwoRadiiIsRejected)
 {
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
-    // The radius spacing is derived from xvalues[ 0 ] and xvalues[ 1 ], so a
-    // single-point dataset used to read past the end of the vector.
     US_DataIO::RawData single = buildRawData(1, 1);
     const QString singlePath = dir.path() + "/one-radius.auc";
     EXPECT_EQ(US_DataIO::writeRawData(singlePath, single), US_DataIO::NODATA);
@@ -506,17 +451,14 @@ TEST(AucRoundTrip, ADatasetWithFewerThanTwoRadiiIsRejected)
 
 TEST(AucRoundTrip, ADescriptionAtTheFieldWidthIsTruncatedRatherThanLeftUnterminated)
 {
-    // The stored field is 240 bytes.  Filling all 240 left no terminator, and
-    // the reader then built a QString from a buffer with none.  239 characters
-    // is the most that survives.
     US_DataIO::RawData source = buildRawData(1, 8);
     source.description = QString(240, QChar('D'));
 
     RoundTrip trip(source);
     ASSERT_EQ(trip.result(), US_DataIO::OK);
 
-    EXPECT_EQ(trip.data().description.size(), kMaxSafeDescription);
-    EXPECT_EQ(trip.data().description, QString(kMaxSafeDescription, QChar('D')));
+    EXPECT_EQ(trip.data().description.size(), kStoredDescriptionLimit);
+    EXPECT_EQ(trip.data().description, QString(kStoredDescriptionLimit, QChar('D')));
 }
 
 TEST(AucRoundTrip, ADescriptionFarLongerThanTheFieldIsTruncatedToTheSameLength)
@@ -527,5 +469,98 @@ TEST(AucRoundTrip, ADescriptionFarLongerThanTheFieldIsTruncatedToTheSameLength)
     RoundTrip trip(source);
     ASSERT_EQ(trip.result(), US_DataIO::OK);
 
-    EXPECT_EQ(trip.data().description, QString(kMaxSafeDescription, QChar('E')));
+    EXPECT_EQ(trip.data().description, QString(kStoredDescriptionLimit, QChar('E')));
 }
+
+TEST(AucRoundTrip, RejectedWritesPreserveAnExistingFile)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const QString path = dir.path() + "/existing.auc";
+    auto valid = buildRawData(1, 8);
+    ASSERT_EQ(US_DataIO::writeRawData(path, valid), US_DataIO::OK);
+    QFile file(path);
+    ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+    const QByteArray original = file.readAll();
+    file.close();
+
+    for (int invalidCase = 0; invalidCase < 3; ++invalidCase)
+    {
+        auto invalid = valid;
+        if (invalidCase == 0) invalid.xvalues.resize(1);
+        if (invalidCase == 1) invalid.xvalues[3] += 0.002;
+        if (invalidCase == 2)
+        {
+            invalid = buildRawData(1, 20);
+            invalid.scanData[0].interpolated.resize(1);
+        }
+        EXPECT_NE(US_DataIO::writeRawData(path, invalid), US_DataIO::OK);
+        ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+        EXPECT_EQ(file.readAll(), original);
+        file.close();
+    }
+}
+
+TEST(AucRoundTrip, InteriorRadiusDeviationsAreRejected)
+{
+    for (double offset : { -0.25, 0.25, 1.0, -1.5 })
+    {
+        auto source = buildRawData(1, 8);
+        source.xvalues[3] += offset * 0.01;
+        RoundTrip trip(source);
+        EXPECT_EQ(trip.result(), US_DataIO::NOT_USDATA) << offset;
+    }
+}
+
+TEST(AucRoundTrip, EndpointAdjustmentIsLimitedToHalfAStep)
+{
+    for (double offset : { -0.5, 0.5, -0.501, 0.501 })
+    {
+        auto source = buildRawData(1, 8);
+        source.xvalues.last() += offset * 0.01;
+        RoundTrip trip(source);
+        EXPECT_EQ(trip.result(), qAbs(offset) <= 0.5
+                  ? US_DataIO::OK : US_DataIO::NOT_USDATA) << offset;
+    }
+}
+
+#if defined(Q_OS_UNIX) && GTEST_HAS_DEATH_TEST
+TEST(AucWriteFailure, FileSizeLimitPreservesTheDestination)
+{
+    ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const QString path = dir.path() + "/existing.auc";
+    const QByteArray original("existing destination");
+    QFile file(path);
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    ASSERT_EQ(file.write(original), original.size());
+    file.close();
+
+    // Small writes fail on flush; larger writes exceed the buffer while writing.
+    for (int points : { 8, 32768 })
+    {
+        auto source = buildRawData(1, points);
+        ASSERT_EXIT({
+            struct rlimit limit;
+            if (getrlimit(RLIMIT_FSIZE, &limit) != 0) _exit(2);
+            limit.rlim_cur = 128;
+            if (setrlimit(RLIMIT_FSIZE, &limit) != 0) _exit(3);
+            signal(SIGXFSZ, SIG_IGN);
+            const int status = US_DataIO::writeRawData(path, source);
+            if (status != US_DataIO::CANTWRITE)
+            {
+                fprintf(stderr, "points=%d write status=%d\n", points, status);
+                _exit(4);
+            }
+            if (!file.open(QIODevice::ReadOnly)) _exit(5);
+            if (file.readAll() != original) _exit(6);
+            file.close();
+            if (QDir(dir.path()).entryList(QDir::Files | QDir::Hidden)
+                != QStringList("existing.auc")) _exit(7);
+            dir.remove();
+            _exit(0);
+        }, ::testing::ExitedWithCode(0), "");
+    }
+}
+#endif

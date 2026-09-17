@@ -1,20 +1,4 @@
-// AUC-T03: which historical .auc format versions readRawData() must accept.
-//
-// The read-contract suite could only patch the version byte of a version 5
-// file, which the checksum then rejects, so historical acceptance was left
-// open.  These cases synthesize whole files at the older layouts -- checksum
-// recomputed over the bytes actually emitted -- and pin the answer:
-//
-//   version 5  current writer output.
-//   version 4  identical layout, wavelength on the pre-v5 scale; accepted.
-//   version 3  no cell/channel byte pair; every later field is displaced.
-//   version 2  also stores the radius limits as 2-byte integers.
-//
-// Versions 2 and 3 were dropped upstream in 2010 when cell and channel were
-// added to the header ("Updates format version and invalidates old auc files"),
-// and the version-2 read workaround was deleted in the same commit.  Nothing at
-// those versions has been loadable since, which is what the cases below prove
-// before the reader started naming them as unsupported versions.
+// Version 4 uses a different wavelength scale; versions 2 and 3 are unsupported.
 
 #include "qt_test_base.h"
 #include "us_crc.h"
@@ -43,7 +27,7 @@ US_DataIO::RawData makeRawData()
     memcpy(data.rawGUID, "0123456789abcdef", 16);
     data.cell        = 3;
     data.channel     = 'A';
-    data.description = "AUC-T03 version fixture";
+    data.description = "AUC version fixture";
 
     for (int point = 0; point < 8; point++)
         data.xvalues << 5.8 + 0.01 * point;
@@ -72,9 +56,7 @@ US_DataIO::RawData makeRawData()
     return data;
 }
 
-// Replace the trailing checksum with one computed over the preceding bytes, so
-// a rewritten file is internally consistent and reaches the layout checks
-// rather than short-circuiting on BADCRC.
+// Append the checksum for the supplied file body.
 QByteArray resealed(QByteArray body)
 {
     const quint32 crc =
@@ -164,13 +146,9 @@ TEST(AucVersions, AVersionThreeFileIsRejectedAsAnUnsupportedVersion)
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
-    // Version 3 wrote no cell or channel byte, so drop them and reseal.  With
-    // the version floor removed this file returns NOT_USDATA instead: the two
-    // bytes the reader takes for cell and channel displace everything after
-    // them, and the first scan marker is no longer where it is looked for.
-    // Nothing is lost by naming the version as the reason.
     QByteArray body = currentBody(dir);
     body.replace(kVersionOffset, 2, "03");
+    // Versions 2 and 3 omit the cell and channel bytes.
     body.remove(kCellOffset, 2);
 
     US_DataIO::RawData data;
@@ -185,14 +163,12 @@ TEST(AucVersions, AVersionTwoFileIsRejectedAsAnUnsupportedVersion)
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
-    // Version 2 also stored the first two radius values as 2-byte integers of
-    // millimeters rather than 4-byte floats.  With the version floor removed
-    // this file returns NODATA -- the displaced bytes decode to a reading count
-    // that is not positive.
     QByteArray body = currentBody(dir);
     body.replace(kVersionOffset, 2, "02");
+    // Versions 2 and 3 omit the cell and channel bytes.
     body.remove(kCellOffset, 2);
 
+    // Version 2 stores radius limits as 16-bit millimeter values.
     QByteArray radii(4, '\0');
     qToLittleEndian(static_cast<quint16>(5800),
                     reinterpret_cast<uchar*>(radii.data()));
@@ -212,9 +188,6 @@ TEST(AucVersions, AFileWithNoVersionFieldAtAllIsRejected)
     QTemporaryDir dir;
     ASSERT_TRUE(dir.isValid());
 
-    // Before October 2009 the magic number was followed directly by the data
-    // type, so the two type bytes land where the version is read.  "RA" decodes
-    // to 513, far above the current format version.
     QByteArray body = currentBody(dir);
     body.remove(kVersionOffset, 2);
 

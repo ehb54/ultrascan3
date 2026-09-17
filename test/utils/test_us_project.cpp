@@ -75,9 +75,6 @@ protected:
         return fullPath;
     }
 
-    // UT-009: the directory readFromDisk() actually searches.  UT-003 redirects
-    // US_Settings at the environment level, so this resolves inside the test
-    // sandbox and production path resolution is exercised rather than bypassed.
     QString projectsDir() {
         QString path;
         EXPECT_TRUE(US_Project().diskPath(path));
@@ -154,16 +151,6 @@ EXPECT_EQ(project->status, "submitted");
 EXPECT_EQ(project->saveStatus, US_Project::NOT_SAVED);
 }
 
-// Show Method Tests
-// UT-009: Show_DisplaysAllValues and NullPointer_HandlesSafely were removed.
-//
-// Both wrapped calls in EXPECT_NO_THROW without observing anything.  show()
-// writes to qDebug() and returns void, so there is no observable behavior to
-// assert from a unit test, and neither function is declared noexcept -- the
-// assertion could not fail for any implementation.  NullPointer_HandlesSafely
-// additionally involved no null pointers, and its clear() call duplicated
-// Clear_ResetsAllValues, which does assert the resulting state.
-
 // DiskPath Tests
 TEST_F(US_ProjectTest, DiskPath_ValidPath_ReturnsTrue) {
 QString path;
@@ -185,10 +172,6 @@ EXPECT_TRUE(dir.exists());
 
 // DiskFilename Tests
 TEST_F(US_ProjectTest, DiskFilename_ExistingFile_FindsCorrectly) {
-// UT-009: this used to write into tempDir -- a directory diskFilename() never
-// searches -- and then assert that the file existed and that the XML string
-// contained the guid the test had just interpolated into it.  diskFilename()
-// was called nowhere in the case.
 QString testGuid = "test-guid-456";
 const QString written = writeIntoProjectsDir(createTestProjectXml(testGuid),
                                              "P0000042.xml");
@@ -210,10 +193,6 @@ EXPECT_TRUE(filename.isEmpty());
 
 // ReadFromDisk Tests
 TEST_F(US_ProjectTest, ReadFromDisk_ValidFile_LoadsCorrectly) {
-// UT-009: this case used to parse xmlContent with its own QXmlStreamReader and
-// assert Qt returned the attributes it had just written -- readFromDisk() was
-// never called.  It now loads through production code and asserts the state
-// that lands in the object.
 QString testGuid = "test-guid-789";
 writeIntoProjectsDir(createTestProjectXml(testGuid, 99));
 
@@ -242,8 +221,6 @@ EXPECT_EQ(result, IUS_DB2::NO_PROJECT);
 }
 
 TEST_F(US_ProjectTest, ReadFromDisk_InvalidXml_ReturnsError) {
-// UT-009: previously ran a QXmlStreamReader over the invalid text in the test
-// body and asserted Qt flagged an error.  readFromDisk() was never called.
 writeIntoProjectsDir("This is not valid XML content", "P0000900.xml");
 
 QString guid = "guid-only-in-the-unparseable-file";
@@ -256,21 +233,17 @@ EXPECT_EQ(project->projectID, 0);
 
 // XML Parsing Edge Cases - Test via public methods
 TEST_F(US_ProjectTest, ReadFromDisk_ReplacesPreviouslyLoadedState) {
-// UT-009: replaces a case that parsed the XML in the test body and asserted the
-// string it had just built contained the elements it had just written.  Every
-// assertion held regardless of what US_Project did.
-//
-// The reload guarantee is what is actually worth pinning: readFromDisk() calls
-// clear() before parsing, so stale fields cannot survive into a new load.
 populateTestProject();
 project->notes = "stale notes that must not survive";
 
 QString testGuid = "test-guid-xml-parse";
-writeIntoProjectsDir(createTestProjectXml(testGuid, 99));
+QString xml = createTestProjectXml(testGuid, 99);
+xml.remove("<notes>Handle with care</notes>\n");
+writeIntoProjectsDir(xml);
 
 ASSERT_EQ(project->readFromDisk(testGuid), IUS_DB2::OK);
 
-EXPECT_EQ(project->notes, "Handle with care");
+EXPECT_TRUE(project->notes.isEmpty());
 EXPECT_EQ(project->projectID, 99);
 }
 
@@ -329,9 +302,6 @@ EXPECT_EQ(project->saveStatus, US_Project::BOTH);
 
 // Edge Cases and Error Conditions
 TEST_F(US_ProjectTest, ReadFromDisk_CorruptedXML_HandlesGracefully) {
-// UT-009: previously asserted that Qt's own parser reports an error on
-// malformed XML, which is Qt's contract rather than US_Project's.  It now goes
-// through readFromDisk() and pins what the caller actually observes.
 QString guid = "test-guid";
 writeIntoProjectsDir(
         "<?xml version=\"1.0\"?>\n"
@@ -341,9 +311,6 @@ writeIntoProjectsDir(
         "</project>\n"
         "</ProjectData>\n");
 
-// The malformed element is reached part way through the document, so the id and
-// guid ahead of it parse before the fault is found.  A rejected read must not
-// show them to the caller.
 project->projectID   = 77;
 project->projectGUID = "the guid held before the failed read";
 project->goals       = "the goals held before the failed read";
@@ -356,14 +323,6 @@ EXPECT_EQ(project->goals, "the goals held before the failed read");
 }
 
 TEST_F(US_ProjectTest, SaveToDisk_NewProjectGetsASequentialGeneratedFilename) {
-// UT-009: this used to build the string "P0000001.xml" in the test and assert
-// it contained "P" and ".xml".  get_filename() is private, but saveToDisk()
-// drives it, so the naming rule is observable through the file it leaves.
-//
-// UT-010: the absolute assertions below are only possible because
-// Us3FileTestBase gives this case its own work root.  Against the shared
-// sandbox this had to compare directory listings before and after, since
-// earlier cases had already saved projects there.
 const QString dir = projectsDir();
 ASSERT_TRUE(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files).isEmpty());
 

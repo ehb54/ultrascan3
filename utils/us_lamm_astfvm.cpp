@@ -575,8 +575,7 @@ DbgLv(2) << "SaltD:  salt ampl limit changes" << nchg;
       int wstat    = US_DataIO::writeRawData( safile, sa_data );
 
       if ( wstat != US_DataIO::OK )
-      {  // A QC dump, so failing it must not disturb the solve -- but the file
-         // silently not being there has cost debugging time before
+      {  // Report the QC write failure without interrupting the solve.
          qDebug() << "*ERROR* Unable to write salt QC data" << safile
                   << ":" << US_DataIO::errorString( wstat );
       }

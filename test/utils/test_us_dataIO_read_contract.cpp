@@ -1,14 +1,4 @@
-// AUC-T01: record the current behavior of US_DataIO::readRawData().
-//
-// This is a characterization suite.  It asserts what the parser does today, not
-// what it should do.  Assertions that encode behavior we intend to change are
-// marked OBSERVED-DEFECT; see UT-002/AUC-T01 report for the analysis.
-//
-// Fixtures are produced by the production writer into a per-test QTemporaryDir
-// and then mutated byte-wise, so there is no committed binary blob of unknown
-// provenance.  No huge-count or exhaustive-truncation input is exercised here:
-// the reader consumes scan and point counts before proving the input holds that
-// much, so those campaigns must wait for bounds hardening.
+// AUC reader status codes and destination-state guarantees.
 
 #include "qt_test_base.h"
 #include "us_dataIO.h"
@@ -38,7 +28,7 @@ US_DataIO::RawData makeRawData()
     memcpy(data.rawGUID, "0123456789abcdef", 16);
     data.cell        = 3;
     data.channel     = 'A';
-    data.description = "AUC-T01 characterization fixture";
+    data.description = "AUC reader fixture";
 
     for (int point = 0; point < 8; point++)
         data.xvalues << 5.8 + 0.01 * point;
@@ -148,7 +138,7 @@ TEST(AucReadContract, ValidFixtureRoundTripsThroughTheProductionWriterAndReader)
     EXPECT_EQ(QString::fromLatin1(data.type, 2), QString("RA"));
     EXPECT_EQ(data.cell, 3);
     EXPECT_EQ(data.channel, 'A');
-    EXPECT_EQ(data.description, QString("AUC-T01 characterization fixture"));
+    EXPECT_EQ(data.description, QString("AUC reader fixture"));
     EXPECT_EQ(QByteArray(data.rawGUID, 16), QByteArray("0123456789abcdef"));
 
     ASSERT_EQ(data.scanCount(), 2);
@@ -200,9 +190,6 @@ TEST(AucReadContract, EmptyFileIsRejectedAsNotUsData)
     ff.close();
 
     US_DataIO::RawData data;
-    // OBSERVED-DEFECT: the magic buffer is never initialized and the return
-    // value of QDataStream::readRawData() is ignored, so this verdict rests on
-    // uninitialized stack bytes not spelling "UCDA".
     EXPECT_EQ(US_DataIO::readRawData(empty, data), US_DataIO::NOT_USDATA);
     EXPECT_EQ(data.scanCount(), 0);
 }
@@ -246,8 +233,6 @@ TEST(AucReadContract, CorruptScanMarkerIsReportedAsNotUsDataRatherThanItsOwnCode
     ASSERT_EQ(fixture.bytes().mid(kFirstScanMark, 4), QByteArray("DATA"));
 
     US_DataIO::RawData data;
-    // OBSERVED: a damaged scan marker is not distinguished from a damaged file
-    // header -- both surface as NOT_USDATA.
     EXPECT_EQ(US_DataIO::readRawData(
                   fixture.mutated("bad_scan.auc", kFirstScanMark, "DAT?"), data),
               US_DataIO::NOT_USDATA);
@@ -274,13 +259,6 @@ TEST(AucReadContract, BytesAfterTheChecksumAreIgnored)
     AucFixture fixture;
 
     US_DataIO::RawData data;
-    // DECIDED: the reader stops at the checksum and never asks whether the file
-    // ended there.  This stays accepted.  Everything the caller receives is
-    // covered by the checksum, so trailing bytes cannot influence the parsed
-    // data, and no writer in this tree has ever emitted them -- QFile truncates
-    // on open, so even overwriting a longer file leaves no tail.  That rules out
-    // a benefit, not the existence of third-party or archival files carrying
-    // padding, and those must keep loading.
     EXPECT_EQ(US_DataIO::readRawData(
                   fixture.appended("trailing_junk.auc", QByteArray(8, '\x5a')), data),
               US_DataIO::OK);
@@ -292,23 +270,10 @@ TEST(AucReadContract, AnOlderVersionByteCannotBeExercisedByPatchingAlone)
     AucFixture fixture;
 
     US_DataIO::RawData data;
-    // The version field is covered by the checksum, and the version check runs
-    // before the checksum is verified.  So "06" short-circuits to BAD_VERSION
-    // (proved above) but "04" parses all the way through -- decoding wavelength
-    // by the pre-v5 rule -- and only then fails the checksum.
-    //
-    // Consequence for AUC-T03: historical-version acceptance cannot be tested
-    // by byte-patching a v5 fixture.  It needs a fixture written as that
-    // version, with a checksum computed over those bytes -- which is what
-    // test_us_dataIO_versions.cpp builds.
     EXPECT_EQ(US_DataIO::readRawData(
                   fixture.mutated("version_04.auc", kVersionOffset, "04"), data),
               US_DataIO::BADCRC);
 
-    // It still parses the scans on the way to that verdict, using the older
-    // wavelength rule -- (stored / 100) + 180 rather than (stored / 10) -- but
-    // since AUC-T05 that work is discarded rather than handed to the caller, so
-    // the decoded wavelength is no longer observable from here.
     EXPECT_EQ(data.scanCount(), 0);
 }
 
@@ -328,9 +293,6 @@ TEST(AucReadContract, ChecksumFailureLeavesTheDestinationUntouched)
     US_DataIO::RawData data;
     EXPECT_EQ(US_DataIO::readRawData(path, data), US_DataIO::BADCRC);
 
-    // Before AUC-T05 the scans were appended to the caller's structure as they
-    // were parsed, so a rejected file still yielded populated output and any
-    // caller ignoring the return code consumed plausible-looking data.
     EXPECT_EQ(data.scanCount(), 0);
     EXPECT_TRUE(data.xvalues.isEmpty());
 }
@@ -344,9 +306,6 @@ TEST(AucReadContract, AnAlreadyPopulatedDestinationIsReplacedRatherThanExtended)
 
     ASSERT_EQ(US_DataIO::readRawData(fixture.validPath(), data), US_DataIO::OK);
 
-    // Before AUC-T05 readRawData never cleared data.scanData, so this returned 4
-    // while xvalues held one scan's worth of radii -- the two members disagreed
-    // about the shape of the same dataset.
     EXPECT_EQ(data.scanCount(), 2);
     EXPECT_EQ(data.xvalues.size(), 8);
 }
@@ -375,15 +334,6 @@ TEST(AucReadContract, ParsedRpmDependsOnTheSetSpeedResoDebugSetting)
         configuredRpm = data.scanData[0].rpm;
     }
 
-    // Identical bytes decode to different RPM depending on a global user
-    // setting.  45130 rounds to 45100 at the default 100 rpm resolution and to
-    // 45150 at 50.  Any parser test must pin this setting.
-    //
-    // DECIDED: this is a supported feature, not a debugging leftover.  The
-    // manual documents SetSpeedResolution under Advanced Settings -> Debug Text
-    // Options, with the default of 100 this reader applies, and the same
-    // setting steers the timestate writer and the speed-step profiles that are
-    // matched against these speeds.  It stays.
     EXPECT_NEAR(defaultRpm, 45100.0, 1.0e-6);
     EXPECT_NEAR(configuredRpm, 45150.0, 1.0e-6);
     EXPECT_NE(defaultRpm, configuredRpm);
@@ -393,14 +343,13 @@ TEST(AucReadContract, AnUnusableSpeedResolutionSettingFallsBackToTheDefault)
 {
     AucFixture fixture;
 
-    // The setting used to be read with a bare toDouble(), so a value that is
-    // missing, non-numeric or zero produced a resolution of 0 and every scan
-    // in every file came back with a speed divided by it.
     const QStringList unusable = QStringList()
         << "SetSpeedResolution="
         << "SetSpeedResolution=abc"
         << "SetSpeedResolution=0"
-        << "SetSpeedResolution=-100";
+        << "SetSpeedResolution=-100"
+        << "SetSpeedResolution=inf"
+        << "SetSpeedResolution=nan";
 
     for (const QString& setting : unusable)
     {
