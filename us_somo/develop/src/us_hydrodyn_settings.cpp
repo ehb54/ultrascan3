@@ -3339,6 +3339,7 @@ void US_Hydrodyn::hard_coded_defaults()
 
    gparams                                                  .clear( );
    gparams[ "guinier_auto_fit" ]                            = "1";
+   gparams[ "guinier_robust_search" ]                       = "0";
    gparams[ "perdeuteration" ]                              = "0";
    gparams[ "guinier_qRtmax" ]                              = "1";
    gparams[ "guinier_electron_nucleon_ratio" ]              = "1.87e0";
