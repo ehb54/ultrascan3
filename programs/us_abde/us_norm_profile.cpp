@@ -4,6 +4,8 @@
 #include "us_norm_profile.h"
 #include "us_load_auc.h"
 #include "us_passwd.h"
+#include "us_run_protocol.h"
+#include "us_solution.h"
 #include <QFileInfo>
 
 //Alt. constr.
@@ -153,6 +155,16 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     //plot->enableAxis( QwtPlot::yRight  , true );
     plot->setCanvasBackground(QBrush(Qt::white));
 
+    // Force US_Plot's lazily-created cross picker into existence now (it's
+    // normally only built the first time zoom mode is toggled), then
+    // darken its pen so the hover crosshair doesn't blend into the canvas.
+    usplot->setZoomEnabled( false );
+    if ( QwtPlotPicker* crossPicker = usplot->getPicker() )
+    {
+       crossPicker->setRubberBandPen( QPen( Qt::black ) );
+       crossPicker->setTrackerPen  ( QPen( Qt::black ) );
+    }
+
     QVBoxLayout* main_lyt = new QVBoxLayout();
     QHBoxLayout* body_lyt = new QHBoxLayout();
     QVBoxLayout* left_lyt = new QVBoxLayout();
@@ -193,8 +205,8 @@ US_Norm_Profile::US_Norm_Profile( QString auto_mode ): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
-    picker->setRubberBandPen(QPen(Qt::red));
-    picker->setTrackerPen(QPen(Qt::red));
+    picker->setRubberBandPen(QPen(Qt::black));
+    picker->setTrackerPen(QPen(Qt::black));
     plotData();
     picker_state = XNONE;
 
@@ -393,6 +405,16 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     plot->enableAxis( QwtPlot::yLeft  , true );
     plot->setCanvasBackground(QBrush(Qt::white));
 
+    // Force US_Plot's lazily-created cross picker into existence now (it's
+    // normally only built the first time zoom mode is toggled), then
+    // darken its pen so the hover crosshair doesn't blend into the canvas.
+    usplot->setZoomEnabled( false );
+    if ( QwtPlotPicker* crossPicker = usplot->getPicker() )
+    {
+       crossPicker->setRubberBandPen( QPen( Qt::black ) );
+       crossPicker->setTrackerPen  ( QPen( Qt::black ) );
+    }
+
     QVBoxLayout* main_lyt = new QVBoxLayout();
     QHBoxLayout* body_lyt = new QHBoxLayout();
     QVBoxLayout* left_lyt = new QVBoxLayout();
@@ -431,8 +453,8 @@ US_Norm_Profile::US_Norm_Profile(): US_Widgets()
     picker->setRubberBand  ( QwtPicker::VLineRubberBand );
     picker->setMousePattern( QwtEventPattern::MouseSelect1,
                               Qt::LeftButton, Qt::ControlModifier );
-    picker->setRubberBandPen(QPen(Qt::red));
-    picker->setTrackerPen(QPen(Qt::red));
+    picker->setRubberBandPen(QPen(Qt::black));
+    picker->setTrackerPen(QPen(Qt::black));
     plotData();
     picker_state = XNONE;
 
@@ -557,6 +579,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   data_per_channel_ranges_percents_sample. clear();
   data_per_channel_processed. clear();
   data_per_channel_rmsd. clear();
+  data_per_channel_selected_signals. clear();
   
   //First, read autoflowAnalysisABDE record
   QMap<QString, QString> abde_analysis_parms =
@@ -575,7 +598,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     data_per_channel_norm_cb,
 			     data_per_channel_ranges_percents_sample,
 			     data_per_channel_rmsd,
-			     data_per_channel_meniscus );
+			     data_per_channel_meniscus,
+			     data_per_channel_selected_signals );
 
   parse_abde_analysis_jsons( abde_analysis_parms[ "filename_blc" ],
 			     protocol_details,
@@ -583,7 +607,8 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 			     data_per_channel_norm_cb,
 			     data_per_channel_ranges_percents_sample,
 			     data_per_channel_rmsd,
-			     data_per_channel_meniscus );
+			     data_per_channel_meniscus,
+			     data_per_channel_selected_signals );
   
   //set some fields
   protocol_details["abde_etype"]     = abde_analysis_parms["etype"];
@@ -600,6 +625,7 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
   emit pass_rmsd_info( data_per_channel_rmsd );
   emit pass_menisc_info( data_per_channel_meniscus );
   emit pass_percents_info( data_per_channel_ranges_percents_sample );
+  emit pass_selected_signals_info( data_per_channel_selected_signals );
   
 }
 
@@ -607,6 +633,246 @@ void US_Norm_Profile::load_data_auto_report( QMap<QString,QString> & protocol_de
 QwtPlot* US_Norm_Profile::rp_data_plot()
 {
   return plot;
+}
+
+//Store the channel -> {analyte-label: pretty-description} map computed by the
+//caller (US_ReporterGMP has DB/solution access to fetch analyte descriptions;
+//this class only sees sanitized filename tokens as sample keys).
+void US_Norm_Profile::set_channels_analytes_pretty_names( QMap< QString, QMap< QString, QString > >& chann_analytes_p )
+{
+  channs_analytes_pretty = chann_analytes_p;
+
+  //load_data_auto_report() already auto-selected and drew the first channel
+  //before this map could be built (it needs abde_channList, which only
+  //becomes known as a result of that same load). Force a redraw of whatever
+  //channel is currently on screen so its legend picks up the pretty names
+  //too -- switching to any other channel afterward already redraws normally
+  //via new_chann_auto(), so this only needs to cover the initial channel.
+  if ( us_auto_mode && cb_chann->count() > 0 )
+    plotData();
+}
+
+//Reduce a string to its lowercased letters/digits only, so that names which
+//differ only by which separator characters (space, ':', '-', '(', ')', '/',
+//'=', '_', ...) were substituted for filename-safety compare equal.
+static QString us_norm_profile_normalize_for_match( const QString& s )
+{
+  QString out;
+  out.reserve( s.size() );
+  foreach ( QChar c, s )
+    {
+      if ( c.isLetterOrNumber() )
+	out += c.toLower();
+    }
+  return out;
+}
+
+//Look up the human-readable analyte description matching a sanitized sample
+//key for the given channel. Falls back to the sample key itself if no match.
+QString US_Norm_Profile::prettify_sample_name( QString channame, QString sample_key )
+{
+  if ( !channs_analytes_pretty.contains( channame ) )
+    return sample_key;
+
+  QString target = us_norm_profile_normalize_for_match( sample_key );
+  if ( target.isEmpty() )
+    return sample_key;
+
+  const QMap< QString, QString >& analytes = channs_analytes_pretty[ channame ];
+  QMap< QString, QString >::const_iterator it;
+  for ( it = analytes.begin(); it != analytes.end(); ++it )
+    {
+      if ( !it.key().startsWith( "Analyte #" ) )
+	continue;   //skip the "Buffer:" entry -- not a sample
+
+      if ( us_norm_profile_normalize_for_match( it.value() ) == target )
+	return it.value();
+    }
+  return sample_key;   //no match -- fall back to the raw (sanitized) name
+}
+
+//At Save-Profiles time, let the user pick, per channel, which analyte
+//signal(s) should appear in the Report's Integration Results section.
+//Every checkbox defaults to checked, so a user who doesn't touch anything
+//gets today's "show every signal" behavior. Uses data already gathered
+//during this Analysis session (data_per_channel_ranges_percents_sample) --
+//no extra DB round-trip needed.
+bool US_Norm_Profile::show_signal_selection_dialog( QMap< QString, QStringList >& selected_signals )
+{
+  selected_signals.clear();
+
+  QDialog dialog( this );
+  dialog.setWindowTitle( tr( "Select Signals for Report" ) );
+
+  QVBoxLayout* main_lyt = new QVBoxLayout( &dialog );
+
+  QLabel* lb_instr = us_label( tr(
+      "Select which analyte signal(s) should appear in the Report's "
+      "\"Integration Results: Fraction of Total Concentration\" section, "
+      "for each channel:" ) );
+  lb_instr->setWordWrap( true );
+  main_lyt->addWidget( lb_instr );
+
+  QScrollArea* scroll = new QScrollArea( &dialog );
+  scroll->setWidgetResizable( true );
+  QWidget*     scroll_contents = new QWidget();
+  QVBoxLayout* scroll_lyt      = new QVBoxLayout( scroll_contents );
+
+  //channel -> {sample_key -> checkbox}, so we can read back what's checked
+  //once the dialog is accepted.
+  QMap< QString, QMap< QString, QCheckBox* > > chann_sample_ckbs;
+
+  for ( int i = 0; i < channList.size(); ++i )
+    {
+      QString channame = channList[ i ];
+      QStringList samples = data_per_channel_ranges_percents_sample[ channame ].keys();
+      if ( samples.isEmpty() )
+	continue;   //nothing computed yet for this channel -- nothing to pick
+
+      QGroupBox*   gb     = new QGroupBox( tr( "Channel " ) + channame );
+      QVBoxLayout* gb_lyt = new QVBoxLayout( gb );
+
+      for ( int s = 0; s < samples.size(); ++s )
+	{
+	  QString sample_key   = samples[ s ];
+	  QString display_name = prettify_sample_name( channame, sample_key );
+
+	  QCheckBox* ckb = new QCheckBox( display_name );
+	  ckb->setChecked( true );   //default: show every signal (today's behavior)
+	  if ( samples.size() == 1 )
+	    ckb->setEnabled( false );   //only one signal -- nothing to choose
+
+	  gb_lyt->addWidget( ckb );
+	  chann_sample_ckbs[ channame ][ sample_key ] = ckb;
+	}
+
+      scroll_lyt->addWidget( gb );
+    }
+
+  if ( chann_sample_ckbs.isEmpty() )
+    return true;   //nothing to pick from -- proceed with an empty (="show all") selection
+
+  scroll_lyt->addStretch();
+  scroll_contents->setLayout( scroll_lyt );
+  scroll->setWidget( scroll_contents );
+  main_lyt->addWidget( scroll );
+
+  QDialogButtonBox* btns = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel );
+  connect( btns, &QDialogButtonBox::accepted, &dialog, &QDialog::accept );
+  connect( btns, &QDialogButtonBox::rejected, &dialog, &QDialog::reject );
+  main_lyt->addWidget( btns );
+
+  dialog.resize( 480, 480 );
+
+  if ( dialog.exec() == QDialog::Rejected )
+    return false;
+
+  QMap< QString, QMap< QString, QCheckBox* > >::const_iterator ci;
+  for ( ci = chann_sample_ckbs.begin(); ci != chann_sample_ckbs.end(); ++ci )
+    {
+      QString channame = ci.key();
+      QMap< QString, QCheckBox* >::const_iterator cj;
+      for ( cj = ci.value().begin(); cj != ci.value().end(); ++cj )
+	{
+	  if ( cj.value()->isChecked() )
+	    selected_signals[ channame ] << cj.key();
+	}
+    }
+
+  return true;
+}
+
+//ABDE: read all analytes (& possibly buffer) used in MWL-deconv. for one
+//channel, out of an already-loaded run protocol. Shared static helper so
+//every caller that needs a channel -> {"Analyte #1:":pretty, ...} map
+//(this class, US_ReporterGMP, ...) goes through one implementation instead
+//of keeping independent copies that can silently drift out of sync -- which
+//is what previously left the Analysis-stage ABDE legends unprettified while
+//the GMP-report ones were correct.
+QMap< QString, QString > US_Norm_Profile::get_channels_analytes_mwl_abde(
+        US_RunProtocol& proto, QString abde_channame )
+{
+  QMap< QString, QString > analytes_buffer_map;
+
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[get_channels_analytes_mwl_abde] DB connection problem: "
+	       << db.lastError();
+      return analytes_buffer_map;
+    }
+
+  for ( int ii = 0; ii < proto.rpRange.nranges; ii++ )
+    {
+      QString channel   = proto.rpRange.chrngs[ ii ].channel;
+      QString channel_s = channel.split(",")[0].trimmed();
+      channel_s.replace(" / ","");
+
+      if ( channel_s == abde_channame )
+	{
+	  QList< double > all_wvls = proto.rpRange.chrngs[ ii ].wvlens;
+	  int    nwavl      = all_wvls.count();
+	  bool   buff_req   = proto.rpRange.chrngs[ ii ].abde_buffer_spectrum;
+	  bool   mwl_deconv = proto.rpRange.chrngs[ ii ].abde_mwl_deconvolution;
+
+	  if ( nwavl > 1 && mwl_deconv )
+	    {
+	      QString sol_id = proto.rpSolut.chsols[ii].sol_id;
+	      US_Solution*   solution = new US_Solution;
+	      int solutionID = sol_id.toInt();
+
+	      int status = US_DB2::OK;
+	      status = solution->readFromDB  ( solutionID, &db );
+	      // Error reporting
+	      if ( status == US_DB2::NO_BUFFER )
+		{
+		  qDebug() << "[get_channels_analytes_mwl_abde] The buffer this "
+			      "solution refers to was not found.";
+		  return analytes_buffer_map;
+		}
+
+	      else if ( status == US_DB2::NO_ANALYTE )
+		{
+		  qDebug() << "[get_channels_analytes_mwl_abde] One of the analytes "
+			      "this solution refers to was not found.";
+		  return analytes_buffer_map;
+		}
+
+	      else if ( status != US_DB2::OK )
+		{
+		  qDebug() << "[get_channels_analytes_mwl_abde] DB error: "
+			   << db.lastError();
+		  return analytes_buffer_map;
+		}
+	      //End of reading Solution:
+
+	      //Reading Analytes
+	      int num_analytes = solution->analyteInfo.size();
+	      for (int i=0; i < num_analytes; ++i )
+		{
+		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
+		  QString a_name     = analyte.description;
+
+		  QString ana_name = "Analyte #" + QString::number(i+1) + ":";
+		  analytes_buffer_map[ ana_name ] = a_name;
+		}
+
+	      //Reading Buffers
+	      if ( buff_req ) //only if buffer spectrum required
+		{
+		  US_Buffer buffer = solution->buffer;
+		  QString b_name   = buffer.description;
+
+		  analytes_buffer_map[ "Buffer:" ] = b_name;
+		}
+	    }
+	}
+    }
+
+  return analytes_buffer_map;
 }
 
 //For use in GMP REPORTing 
@@ -1370,7 +1636,7 @@ void US_Norm_Profile::plotData(void){
 		      }
 		    else
 		    **/
-		    legend = tr("(D)_") + channame + ": " + result_analyte;
+		    legend = tr("(D)_") + channame + ": " + prettify_sample_name( channame, result_analyte );
 		  }
 		else // SWL
 		  {
@@ -1511,7 +1777,7 @@ void US_Norm_Profile::plotData(void){
 		      }
 		    else
 		    ***/
-		    legend = tr("(I)_") + channame + ": " + result_analyte;
+		    legend = tr("(I)_") + channame + ": " + prettify_sample_name( channame, result_analyte );
 		    xp_intN_sample[ result_analyte ] = data_per_channel[ channame ]["midxval"][i];
 		    yp_intN_sample[ result_analyte ] = data_per_channel[ channame ]["integralN"][i];
 			
@@ -2109,13 +2375,27 @@ void US_Norm_Profile::save_auto( void )
   if (!areAllNormalized_auto( msg_u ) && abde_etype == "MWL" )
     {
       qDebug() << "NOT all channels NORMALIZED!!!";
-      int status = QMessageBox::warning( this,
-					 tr( "Channel Normalization" ),
-					 msg_u,
-					 QMessageBox::Ok, QMessageBox::Cancel );
+      QMessageBox::StandardButton status = QMessageBox::warning( this,
+						 tr( "Channel Normalization" ),
+						 msg_u,
+						 QMessageBox::Ok | QMessageBox::Cancel,
+						 QMessageBox::Cancel );
 
-      if ( status != 0 ) return;
+      //NOTE: this used to be the deprecated 3-int-button overload of
+      //QMessageBox::warning(), compared against "status != 0" -- but
+      //QMessageBox::Ok is 0x400, not 0, so that check was true (and the
+      //save silently aborted) no matter which button was clicked. Switched
+      //to the modern StandardButton overload and an explicit Ok check so
+      //clicking Ok actually proceeds.
+      if ( status != QMessageBox::Ok ) return;
     }
+
+  //Let the user pick, per channel, which analyte signal(s) should appear
+  //in the Report's Integration Results section (defaults to all, so a user
+  //who doesn't touch anything keeps today's "show every signal" behavior).
+  QMap< QString, QStringList > selected_signals;
+  if ( !show_signal_selection_dialog( selected_signals ) )
+    return;   //user cancelled -- abort the save, same as the check above
   //construct JSON to be saved && passed
   /***
       {
@@ -2187,10 +2467,28 @@ void US_Norm_Profile::save_auto( void )
 	  json_p += "},";
 	}
       json_p.chop(1);
-      json_p += "},";
+      json_p += "},";   //closes "percents":{...}
+
+      //which analyte-signal(s) the user picked (in show_signal_selection_dialog(),
+      //just above) to show in this channel's Integration Results section
+      json_p += "\"selected_signals\":[";
+      QStringList sel_for_chann = selected_signals.value( channame );
+      for ( int ss=0; ss<sel_for_chann.size(); ++ss )
+	json_p += "\"" + sel_for_chann[ss] + "\",";
+      if ( !sel_for_chann.isEmpty() )
+	json_p.chop(1);
+      json_p += "],";
+
+      json_p.chop(1);
+      json_p += "},";   //closes this channel's own object -- this closing brace
+                        //was previously missing here, which left the JSON
+                        //malformed (and silently unparseable on the Report
+                        //side) for any run with more than one ABDE channel;
+                        //the stray-comma compensation below has been adjusted
+                        //to match now that every channel object is properly closed.
     }
   json_p.chop(1);
-  json_p += "}}";
+  json_p += "}";
 
   qDebug() << "JSON: " << json_p;
 
@@ -2539,7 +2837,8 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 						 QMap< QString, int >& data_chann_x_norm_cb,
 						 QMap< QString, QMap< QString, QMap < QString, double>>>& data_chann_range_percent_sample,
 						 QMap <QString, double>&  data_chann_rmsd,
-						 QMap <QString, double>&  data_chann_menisc )
+						 QMap <QString, double>&  data_chann_menisc,
+						 QMap< QString, QStringList >& data_chann_selected_signals )
 {
   QString channels_to_radial_ranges;
   
@@ -2588,33 +2887,83 @@ void US_Norm_Profile::parse_abde_analysis_jsons( QString abde_analysis_parms_str
 		       double rmsd_val      = value_1.toString().toDouble();
 		       data_chann_rmsd[key] = rmsd_val;
 		    }
+		  else if ( key_1 == "selected_signals" )
+		    {
+		      //Which analyte-signal(s) the user picked, in
+		      //show_signal_selection_dialog(), to show in this
+		      //channel's Integration Results section. Absent from
+		      //older (pre-feature) saved runs -- callers should treat
+		      //a missing channel entry as "show every signal".
+		      QStringList sel_sigs;
+		      QJsonArray json_arr_sel = value_1.toArray();
+		      //foreach(const QJsonValue& sel_val, json_arr_sel)
+		      for (const QJsonValue& sel_val : json_arr_sel)
+			sel_sigs << sel_val.toString();
+		      data_chann_selected_signals[key] = sel_sigs;
+		    }
 		  else if ( key_1 == "percents" )
 		    {
 		      QStringList rad_ranges;
 		      QJsonObject json_obj_2 = value_1.toObject();
-		      foreach(const QString& key_2, json_obj_2.keys())
+
+		      //Detect which DB json format we're dealing with:
+		      // new format:  "percents":{ sample:{ range:percent, ... }, ... }
+		      // old format:  "percents":{ range:percent, ... }             (no sample tier)
+		      //Peek at the first child value under "percents" -- if it is
+		      //itself an object, we're in the new (nested-by-sample) format.
+		      bool new_percents_format = false;
+		      if ( !json_obj_2.isEmpty() )
 			{
-			  //key_2 == "AAV-DNA" (sample)
-			  QJsonObject json_obj_3 = json_obj_2.value(key_2).toObject();
-			  foreach(const QString& key_3, json_obj_3.keys())
+			  new_percents_format = json_obj_2.value( json_obj_2.keys().first() ).isObject();
+			}
+
+		      if ( new_percents_format )
+			{
+			  foreach(const QString& key_2, json_obj_2.keys())
 			    {
-			      QJsonValue value_3 = json_obj_3.value(key_3);
+			      //key_2 == "AAV-DNA" (sample)
+			      QJsonObject json_obj_3 = json_obj_2.value(key_2).toObject();
+			      foreach(const QString& key_3, json_obj_3.keys())
+				{
+				  QJsonValue value_3 = json_obj_3.value(key_3);
+				  
+				  //for ranges-to-percents
+				  double percent_c = value_3.toString().toDouble();
+				  data_chann_range_percent_sample[key][key_2][key_3] = percent_c;
 			      
+				  //ned to make somethimg like
+				  //protocol_details[ "channels_to_radial_ranges" ]
+				  //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
+				  rad_ranges << key_3;
+				}
+			    }
+			}
+		      else
+			{
+			  //Old (pre-multi-sample) DB format: "percents" is a flat
+			  //range->percent map with no sample tier, e.g.
+			  //{"5.8-7":"100"}. File it under a single default sample
+			  //name ("Sample") so downstream code, which keys off
+			  //data_chann_range_percent_sample[chan][sample][range],
+			  //works unchanged for old records.
+			  static const QString default_sample_name = "Sample";
+			  foreach(const QString& key_2, json_obj_2.keys())
+			    {
+			      QJsonValue value_2 = json_obj_2.value(key_2);
+
 			      //for ranges-to-percents
-			      double percent_c = value_3.toString().toDouble();
-			      data_chann_range_percent_sample[key][key_2][key_3] = percent_c;
-			  
-			      //ned to make somethimg like
-			      //protocol_details[ "channels_to_radial_ranges" ]
-			      //   = QString("2A:6.2-6.5,6.6-6.9;4A:6.1-6.5,6.6-6.94;4B:6.25-6.55,6.65-7");
-			      rad_ranges << key_3;
+			      double percent_c = value_2.toString().toDouble();
+			      data_chann_range_percent_sample[key][default_sample_name][key_2] = percent_c;
+
+			      rad_ranges << key_2;
 			    }
 			}
 		      rad_ranges.removeDuplicates();
 		      channels_to_radial_ranges += rad_ranges.join(",");
 		    }
 		}
-	      channels_to_radial_ranges.chop(1);
+	      if ( channels_to_radial_ranges.endsWith( ":" ) )
+		channels_to_radial_ranges.chop(1);
 	    }
 	  channels_to_radial_ranges += ";";
 	}

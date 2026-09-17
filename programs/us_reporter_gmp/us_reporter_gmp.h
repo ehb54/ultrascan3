@@ -284,6 +284,12 @@ class US_ReporterGMP : public US_Widgets
         QMap< QString, double > abde_menisc;
         QMap<QString, QString > abde_plots_filenames;
         QMap< QString, QMap < QString, QVector<QVector<double>> > > abde_data_per_channel;
+        //! \brief channel -> list of raw sample keys the user picked (at
+        //! Save-Profiles time, in the Analysis stage) to appear in this
+        //! channel's Integration Results section. A channel missing from this
+        //! map means no selection was recorded (older saved run) -- treated
+        //! as "show every signal" in assemble_distrib_ABDE_html().
+        QMap< QString, QStringList > abde_selected_signals;
   
         QString current_date;                //!< Current date
 
@@ -552,7 +558,10 @@ class US_ReporterGMP : public US_Widgets
         QString html_header_abde(QString, QString, QString); //!< Generate HTML header
         QString distrib_info(QMap<QString, QString>&); //!< Generate distribution information
         QString distrib_info_abde( QString& ); //!< Generate distribution information
-        QMap< QString, QString > get_channels_analytes_mwl_abde( QString );
+        //NOTE: analyte/buffer lookup for a channel now lives in
+        //US_Norm_Profile::get_channels_analytes_mwl_abde() (shared with the
+        //Analysis-stage ABDE flow) -- call that instead of a local copy here.
+        QString prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key );
   
         QString calc_replicates_averages(void); //!< Calculate replicates averages
         QString get_replicate_group_number(QString); //!< Get replicate group number
@@ -614,6 +623,7 @@ class US_ReporterGMP : public US_Widgets
         void get_abde_menisc(QMap< QString, double >&);
         void get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& );
         void get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&);
+        void get_abde_selected_signals( QMap< QString, QStringList >& );
 
         QMap<QString, QString> read_autoflowGMPReportEsign_record(QString); //!< Read autoflow GMP report electronic signature record
         void get_assigned_oper_revs(QJsonDocument, QStringList&); //!< Get assigned operator revisions
@@ -656,6 +666,22 @@ class US_ReporterGMP : public US_Widgets
          * @return The value in pixels
          */
         double mmToPixels(QPrinter& printer, int mm);
+
+        /**
+         * @brief Return the family name of the font that must be used for the
+         *        GMP report body text ("DejaVu Sans") and the fixed-width
+         *        sections ("DejaVu Sans Mono"). The font is loaded once, from
+         *        a copy shipped with the application, so that report
+         *        pagination is deterministic and identical across OS/distro
+         *        installs (Ubuntu, Oracle Linux, etc.) regardless of what
+         *        that system's fontconfig resolves "sans-serif" / "monospace"
+         *        to. Falls back to requesting the family by name (best
+         *        effort) if the embedded font file cannot be found/loaded.
+         * @param monospace If true, return the fixed-width report font;
+         *        otherwise the regular body font.
+         * @return The resolved, guaranteed-available font family name.
+         */
+        static QString reportFontFamily(bool monospace = false);
 
         /**
          * @brief Write plot to file.

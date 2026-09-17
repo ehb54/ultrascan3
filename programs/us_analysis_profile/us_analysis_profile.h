@@ -98,7 +98,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
       
-      QGridLayout* middle_h;
+     QGridLayout* middle_h;
+  //QHBoxLayout* middle_h;
       QVBoxLayout* left;
       QVBoxLayout* right;
       QScrollArea* scrollArea_r;
