@@ -165,14 +165,10 @@ TEST(AucRoundTrip, ReadingsReturnWithinTheSixteenBitQuantizationBound)
             worst = qMax(worst, qAbs(trip.data().scanData[scan].rvalues[point]
                                      - source.scanData[scan].rvalues[point]));
 
-    // Half a quantization step is the floor for this encoding; allow a little
-    // slack for the float storage of the range endpoints themselves.
+    // Allow half-step quantization error plus rounding of the stored endpoints.
     EXPECT_LE(worst, bound * 1.5)
         << "worst error " << worst << " exceeded the format bound " << bound;
 
-    // And the loss is real: if this were lossless the bound would be proving
-    // nothing.  Guards against the test passing because it compared a value
-    // with itself.
     EXPECT_GT(worst, 0.0) << "expected quantization loss, saw an exact match";
 }
 
@@ -405,8 +401,7 @@ TEST(AucRoundTrip, AnInterpolationBitmapShorterThanItsReadingsIsRejected)
     ASSERT_TRUE(dir.isValid());
 
     US_DataIO::RawData source = buildRawData(1, 20);
-    // Present but one byte short: the producer tracked interpolation for some
-    // points and not others, which has no coherent meaning.
+    // The bitmap is one byte short.
     source.scanData[0].interpolated = QByteArray(bitmapBytes(20) - 1, '\0');
 
     const QString path = dir.path() + "/short-bitmap.auc";

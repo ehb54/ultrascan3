@@ -335,8 +335,6 @@ EXPECT_EQ(QDir(dir).entryList(QStringList("P???????.xml"), QDir::Files, QDir::Na
 }
 
 TEST_F(US_ProjectTest, SaveToDisk_ExistingProjectReusesItsFileRatherThanAddingOne) {
-// The counterpart to the case above: a second save of the same guid must
-// overwrite rather than allocate P0000002.xml.
 const QString dir = projectsDir();
 populateTestProject();
 project->projectGUID = "12345678-1234-1234-1234-123456789012";
