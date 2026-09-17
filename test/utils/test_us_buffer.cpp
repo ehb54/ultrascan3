@@ -109,13 +109,6 @@ EXPECT_TRUE(comp.unit.isEmpty());
 EXPECT_TRUE(comp.range.isEmpty());
 // grad_form is the only non-QString member with a default initializer.
 EXPECT_FALSE(comp.grad_form);
-
-// UT-009: this case used to memset dens_coeff and visc_coeff to zero and then
-// assert they were zero, which tested memset.  Both arrays are plain doubles
-// with no default member initializer (us_buffer.h:16-17), so after default
-// construction they hold indeterminate values and there is nothing to assert.
-// Removed rather than rewritten: the requirement it appeared to check does not
-// exist.  See the UT-009 report.
 }
 
 TEST_F(US_BufferComponentTest, SaveToDBSuccess) {
