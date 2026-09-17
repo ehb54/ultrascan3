@@ -32,6 +32,7 @@ class US_EXTERN US_Guinier_Search_Params
       bool     dropneg;         // drop I <= 0 points instead of failing (default true)
       double   qscale;          // multiply q by this on input, e.g. 0.1 for nm^-1 data (default 1)
       double   outlier;         // outlier rejection distance in SDs on the chosen window, 0 = off
+      double   maxrelsd;        // drop points whose SD / I exceeds this fraction, 0 = off (default 0)
 
       // validity
       double   slopet;          // minimum |slope| / sd(slope) for a window to count (default 2)

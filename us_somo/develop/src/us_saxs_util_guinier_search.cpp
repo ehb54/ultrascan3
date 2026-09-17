@@ -236,6 +236,7 @@ US_Guinier_Search_Params::US_Guinier_Search_Params()
    dropneg      = true;
    qscale       = 1e0;
    outlier      = 0e0;
+   maxrelsd     = 0e0;
    slopet       = 2e0;
    minspan      = 0.2e0;
    sigfloor     = 0.005e0;
@@ -267,7 +268,7 @@ QStringList US_Guinier_Search_Params::keys()
    QStringList known;
    known << "type" << "minpts" << "maxpts" << "qrgmax" << "qrgmin" << "qmin" << "qmax"
          << "rgmin" << "rgmax" << "regionfactor" << "usesd" << "dropneg" << "qscale"
-         << "outlier" << "slopet" << "minspan" << "sigfloor" << "curvt" << "skipz" << "fwdz" << "fwddev"
+         << "outlier" << "maxrelsd" << "slopet" << "minspan" << "sigfloor" << "curvt" << "skipz" << "fwdz" << "fwddev"
          << "constol" << "topfrac" << "aggthresh" << "aggmindev" << "weights" << "debug";
    return known;
 }
@@ -290,6 +291,7 @@ QString US_Guinier_Search_Params::help()
       "  dropneg      1 drops I <= 0 points, 0 fails on them (1)\n"
       "  qscale       multiply q on input, e.g. 0.1 for nm^-1 data (1)\n"
       "  outlier      outlier rejection distance in SDs on the chosen window, 0 = off (0)\n"
+      "  maxrelsd     drop points whose SD/I exceeds this fraction, e.g. 0.1, 0 = off (0)\n"
       "  slopet       minimum |slope|/sd(slope) for a window to be valid (2)\n"
       "  minspan      minimum q*Rg span of a valid window (0.2)\n"
       "  sigfloor     noise floor in ln I used for unweighted fits (0.005)\n"
@@ -378,6 +380,7 @@ bool US_Guinier_Search_Params::set( const map < QString, QString > & kv, QString
             if ( key == "regionfactor" ) { regionfactor = d; }
             if ( key == "qscale" )       { qscale       = d; }
             if ( key == "outlier" )      { outlier      = d; }
+            if ( key == "maxrelsd" )     { maxrelsd     = d; }
             if ( key == "slopet" )       { slopet       = d; }
             if ( key == "minspan" )      { minspan      = d; }
             if ( key == "sigfloor" )     { sigfloor     = d; }
@@ -409,9 +412,9 @@ bool US_Guinier_Search_Params::set( const map < QString, QString > & kv, QString
       errormsg = "maxpts must be 0 or at least minpts";
       return false;
    }
-   if ( qrgmax < 0e0 || qrgmin < 0e0 || qmin < 0e0 || qmax < 0e0 || rgmin < 0e0 || rgmax < 0e0 || outlier < 0e0 )
+   if ( qrgmax < 0e0 || qrgmin < 0e0 || qmin < 0e0 || qmax < 0e0 || rgmin < 0e0 || rgmax < 0e0 || outlier < 0e0 || maxrelsd < 0e0 )
    {
-      errormsg = "qrgmax, qrgmin, qmin, qmax, rgmin, rgmax and outlier must be non-negative";
+      errormsg = "qrgmax, qrgmin, qmin, qmax, rgmin, rgmax, outlier and maxrelsd must be non-negative";
       return false;
    }
    if ( qmax > 0e0 && qmin >= qmax )
@@ -749,6 +752,8 @@ bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_
    vector < double > ey;
    int ndropped = 0;
    int nbadsd   = 0;
+   int nnoisy   = 0;
+   vector < double > noisy_q;
 
    for ( int k = 0; k < ntotal; ++k )
    {
@@ -798,6 +803,12 @@ bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_
             ++nbadsd;
             e = 0e0;
          } else {
+            if ( params.maxrelsd > 0e0 && e / ii > params.maxrelsd )
+            {
+               ++nnoisy;
+               noisy_q.push_back( qq );
+               continue;
+            }
             e /= ii;   // d ln I
          }
       }
@@ -1293,6 +1304,19 @@ bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_
    result.chi2_red  = bf.chi2_red;
    result.curv_t    = bw.curv_t;
    result.quality   = bw.quality;
+   if ( nnoisy )
+   {
+      int nlow = 0;
+      for ( int k = 0; k < (int) noisy_q.size(); ++k )
+      {
+         if ( noisy_q[ k ] <= result.qmax )
+         {
+            ++nlow;
+         }
+      }
+      result.warnings << QString( "%1 points with SD/I above %2 excluded, %3 of them below the end of the fitted range" )
+         .arg( nnoisy ).arg( params.maxrelsd ).arg( nlow );
+   }
 
    // ---- low-q test: skipped points plus the first third of the window, against the line
    //      fitted to the remaining two thirds ( falls back to the full window fit when that is too short )
@@ -1501,6 +1525,7 @@ bool US_Saxs_Util::run_guinier_search(
       p += ",\"dropneg\":" + QString::number( params.dropneg ? 1 : 0 );
       p += ",\"qscale\":" + json_num( params.qscale );
       p += ",\"outlier\":" + json_num( params.outlier );
+      p += ",\"maxrelsd\":" + json_num( params.maxrelsd );
       p += ",\"slopet\":" + json_num( params.slopet );
       p += ",\"minspan\":" + json_num( params.minspan );
       p += ",\"sigfloor\":" + json_num( params.sigfloor );

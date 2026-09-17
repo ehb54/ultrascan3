@@ -90,6 +90,7 @@ separate aggregation from shape.</li>
 <tr><td>dropneg</td><td>1</td><td>1 drops <i>I</i> &le; 0 points, 0 fails on them</td></tr>
 <tr><td>qscale</td><td>1</td><td>multiply <i>q</i> on input, e.g. 0.1 for nm<sup>-1</sup> data</td></tr>
 <tr><td>outlier</td><td>0</td><td>outlier rejection distance in SDs on the chosen window, 0 = off</td></tr>
+<tr><td>maxrelsd</td><td>0</td><td>exclude points whose SD / <i>I</i> exceeds this fraction (e.g. 0.1); off by default because such points carry little weight anyway</td></tr>
 <tr><td>slopet</td><td>2</td><td>minimum |slope| / SD(slope) of a valid window</td></tr>
 <tr><td>minspan</td><td>0.2</td><td>minimum <i>q&middot;R<sub>g</sub></i> span of a valid window</td></tr>
 <tr><td>sigfloor</td><td>0.005</td><td>noise floor in ln <i>I</i> for unweighted fits</td></tr>
