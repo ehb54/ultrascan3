@@ -41,6 +41,9 @@
 .PARAMETER pkg
     Build the Windows NSIS installer after compiling
 
+.PARAMETER configuration
+    Application configuration: Release (default) or Debug
+
 .PARAMETER help
     Show this help message
 
@@ -98,6 +101,9 @@ param(
     [ValidateSet("APP", "TEST", "HPC")]
     [string]$profile = "APP",
 
+    [ValidateSet("Release", "Debug")]
+    [string]$configuration = "Release",
+
     [switch]${rebuild},
     [switch]${clean},
     [switch]${purge-cache},
@@ -122,6 +128,7 @@ if (${help}) {
     Write-Host "Usage: build.bat [OPTIONS] [PROFILE]"
     Write-Host ""
     Write-Host "OPTIONS:"
+    Write-Host "  --configuration Debug    Use Debug dependencies and the debug CRT (default: Release)"
     Write-Host "  --rebuild                Tier 1: removes the CMake build directory, keeping its"
     Write-Host "                             vcpkg_installed\ dependencies. Fast - vcpkg packages"
     Write-Host "                             untouched. Does not repair damaged packages (vcpkg still"
@@ -226,10 +233,15 @@ function Test-UnsupportedBuildMatrix {
     }
 }
 
+$ConfigurationName = $configuration.ToLowerInvariant()
+if (${pkg} -and $configuration -eq "Debug") {
+    Write-Error "Windows installer packaging requires --configuration Release."
+    exit 1
+}
 if ($Arch -eq "arm64") {
-    $Preset = "windows-release$QtSuffix-arm64"
+    $Preset = "windows-$ConfigurationName$QtSuffix-arm64"
 } else {
-    $Preset = "windows-release$QtSuffix"
+    $Preset = "windows-$ConfigurationName$QtSuffix"
 }
 
 Test-UnsupportedBuildMatrix `
