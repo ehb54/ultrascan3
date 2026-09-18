@@ -50,28 +50,28 @@
   "targets": {
     "macos-arm64": {
       "kind": "archive",
-      "asset": "us3-toolchain-macos-arm64-qt6-34031578244.1.tar.zst",
-      "sha256": "7f84d88ad173c97e433ad8cd54b9b353ae1dde8619109236563c70432d64b394"
+      "asset": "us3-toolchain-macos-arm64-qt6-35361537633.1.tar.zst",
+      "sha256": "af348fd669c73118f28871ba544eb910c6b464a8bfec1e66715e9c89fbd529d4"
     },
     "macos-x64": {
       "kind": "archive",
-      "asset": "us3-toolchain-macos-x64-qt6-34031578244.1.tar.zst",
-      "sha256": "10eb794306c1487d08d57c9d23e8a4a653f051ffbe4bcba98d4aef532c507c67"
+      "asset": "us3-toolchain-macos-x64-qt6-35361537633.1.tar.zst",
+      "sha256": "5cab45dfffe93589bdb8a647829a2d1a793c5b84ec0552546a3368911057baac"
     },
     "windows-x64": {
       "kind": "archive",
-      "asset": "us3-toolchain-windows-x64-qt6-34031578244.1.tar.zst",
-      "sha256": "7cf25fb12a0527ee4f6fce15cb4cdbcf4b5279aa7fcb92b84a7f3fd9c1065ba6"
+      "asset": "us3-toolchain-windows-x64-qt6-35361537633.1.tar.zst",
+      "sha256": "1a135f157142efd0e17b5c6b3a927fd2b183ba325af00340881e9c4b01a4e509"
     },
     "ubuntu2404-x64": {
       "kind": "container",
       "image": "us3-toolchain-ubuntu2404",
-      "digest": "sha256:2a22a8387d47766e36271fa37f3c423f9dc67390714e6468bec001469cca1512"
+      "digest": "sha256:0945c6d7291b2e10cebef3b84623f370cd3161f65e14757b3e9147db72c9d39e"
     },
     "oraclelinux8-x64": {
       "kind": "container",
       "image": "us3-toolchain-oraclelinux8",
-      "digest": "sha256:369cc80d4cb81b3b01acc5f884046eac2f8b637553b54154e58b5aa6edc9db32"
+      "digest": "sha256:5e62acf82e120dccae52da6fa81d2dffd2112cddadab9453a90866ac795e65ce"
     }
   }
 }
