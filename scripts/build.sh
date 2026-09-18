@@ -23,6 +23,7 @@ REBUILD=false          # --rebuild: wipe build dir only (tier 1)
 CLEAN=false            # --clean:   wipe build dir + vcpkg installed/ for triplet (tier 2)
 PURGE_CACHE=false      # --purge-cache: additive to --clean, also wipes binary cache (tier 3)
 BUILD_PKG=false        # --pkg: build platform-native package
+BUILD_CONFIGURATION="release"
 PROFILE="APP"          # default profile
 QT_VARIANT="qt6"       # qt6 | qt5
 ARCH=""
@@ -31,6 +32,7 @@ US3_VCPKG_ROOT="${US3_VCPKG_ROOT:-}"
 # Parse options
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --debug)        BUILD_CONFIGURATION="debug"; shift ;;
     --rebuild)      REBUILD=true;               shift ;;
     --clean)        CLEAN=true;                 shift ;;
     --purge-cache)  PURGE_CACHE=true;            shift ;;
@@ -54,6 +56,8 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: $0 [OPTIONS] [PROFILE]"
       echo ""
       echo "OPTIONS:"
+      echo "  --debug              Build APP or TEST with debug symbols and no optimization."
+      echo "                         Dependencies retain the triplet's build configuration."
       echo "  --rebuild            Tier 1: removes the CMake build directory only,"
       echo "                         keeping its vcpkg_installed/ dependencies."
       echo "                         Fast - vcpkg packages are untouched. Use when you"
@@ -189,9 +193,13 @@ fi
 
 # HPC on Linux and macOS uses dedicated presets (separate binary dir, no GUI)
 if [[ "$PROFILE" == "HPC" && ( "$PLATFORM" == "Linux" || "$PLATFORM" == "macOS" ) ]]; then
+  if [ "$BUILD_CONFIGURATION" = "debug" ]; then
+    echo "ERROR: --debug is supported for APP and TEST; HPC has release presets only."
+    exit 1
+  fi
   CONFIGURE_PRESET="${PLATFORM_PREFIX}-hpc-release-${QT_VARIANT}${X64_SUFFIX}"
 else
-  CONFIGURE_PRESET="${PLATFORM_PREFIX}-release-${QT_VARIANT}${ARM64_SUFFIX}${X64_SUFFIX}"
+  CONFIGURE_PRESET="${PLATFORM_PREFIX}-${BUILD_CONFIGURATION}-${QT_VARIANT}${ARM64_SUFFIX}${X64_SUFFIX}"
 fi
 BUILD_PRESET="build-${CONFIGURE_PRESET}"
 
@@ -251,7 +259,8 @@ SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # macOS runners come with large preinstalled tools (Xcode simulators, etc.)
 # that consume significant disk. Free them before the build in CI.
 # =============================================================================
-if [ "$PLATFORM" = "macOS" ] && [ "${CI:-false}" = "true" ]; then
+if [ "$PLATFORM" = "macOS" ] && [ "${GITHUB_ACTIONS:-false}" = "true" ] \
+   && [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
   echo "=========================================="
   echo "macOS disk preflight"
   echo "=========================================="
@@ -285,15 +294,20 @@ if [ "$PLATFORM" = "Linux" ]; then
   df -h
 
   if [ "${CI:-false}" = "true" ]; then
-    echo "Freeing large preinstalled tool stacks not needed for UltraScan..."
-    SUDO=""; [ "$(id -u)" != "0" ] && SUDO="sudo"
-    $SUDO rm -rf /usr/share/dotnet || true
-    $SUDO rm -rf /opt/ghc || true
-    $SUDO rm -rf /usr/local/lib/android || true
-    $SUDO rm -rf /opt/hostedtoolcache/CodeQL || true
-    echo ""
-    echo "Disk after cleanup:"
-    df -h
+    # CI=true is also used by local automation. Only disposable hosted runners
+    # may remove preinstalled tools from outside the build directory.
+    if [ "${GITHUB_ACTIONS:-false}" = "true" ] \
+       && [ "${RUNNER_ENVIRONMENT:-}" = "github-hosted" ]; then
+      echo "Freeing large preinstalled tool stacks not needed for UltraScan..."
+      SUDO=""; [ "$(id -u)" != "0" ] && SUDO="sudo"
+      $SUDO rm -rf /usr/share/dotnet || true
+      $SUDO rm -rf /opt/ghc || true
+      $SUDO rm -rf /usr/local/lib/android || true
+      $SUDO rm -rf /opt/hostedtoolcache/CodeQL || true
+      echo ""
+      echo "Disk after cleanup:"
+      df -h
+    fi
 
     # In CI, prefer /mnt only if it is actually a different filesystem.
     if [ -z "$US3_SCRATCH_ROOT" ]; then

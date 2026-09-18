@@ -2,7 +2,7 @@
 # Copies Assistant.app into the build bin/ and writes a qt.conf that points
 # at the vcpkg Qt6 plugins directory so libqcocoa.dylib is found at runtime.
 # Also patches the rpath so Qt dylibs are found from the vcpkg lib dir.
-# Invoked as a post-build step on the `us` target (developer build only).
+# Invoked by stage_qt_assistant, or by us when documentation is disabled.
 #
 # Inputs (via -D):
 #   ASSISTANT_SRC   - path to source Assistant.app
@@ -10,10 +10,16 @@
 #   QT6_PLUGINS_DIR - vcpkg Qt6 plugins directory
 #   QT6_LIB_DIR     - vcpkg Qt6 lib directory
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
+
+find_program(CMAKE_INSTALL_NAME_TOOL NAMES install_name_tool REQUIRED)
+find_program(US3_CODESIGN_EXECUTABLE NAMES codesign REQUIRED)
 
 if(NOT EXISTS "${ASSISTANT_SRC}/Contents/MacOS/Assistant")
     message(FATAL_ERROR "StageAssistantDev: Assistant binary not found at ${ASSISTANT_SRC}")
+endif()
+if(NOT IS_DIRECTORY "${QT6_LIB_DIR}" OR NOT IS_DIRECTORY "${QT6_PLUGINS_DIR}")
+    message(FATAL_ERROR "StageAssistantDev: installed Qt library and plugin directories are required")
 endif()
 
 get_filename_component(BIN_DIR "${BIN_DIR}" ABSOLUTE)
@@ -27,8 +33,8 @@ file(COPY "${ASSISTANT_SRC}" DESTINATION "${BIN_DIR}")
 
 # Add vcpkg lib dir as rpath so Qt dylibs are found at runtime
 execute_process(
-    COMMAND install_name_tool -add_rpath "${QT6_LIB_DIR}" "${_BIN}"
-    ERROR_QUIET
+    COMMAND "${CMAKE_INSTALL_NAME_TOOL}" -add_rpath "${QT6_LIB_DIR}" "${_BIN}"
+    COMMAND_ERROR_IS_FATAL ANY
 )
 
 # Ensure libqsqlite.dylib is in Assistant's own PlugIns/sqldrivers/
@@ -48,6 +54,10 @@ endif()
 file(MAKE_DIRECTORY "${_DEST}/Contents/Resources")
 file(WRITE "${_DEST}/Contents/Resources/qt.conf"
 "[Paths]\nPlugins = ${QT6_PLUGINS_DIR}\nLibraries = ${QT6_LIB_DIR}\n")
+
+# install_name_tool invalidates the ARM64 signature of the copied executable.
+execute_process(COMMAND "${US3_CODESIGN_EXECUTABLE}" --force --sign - "${_DEST}"
+    COMMAND_ERROR_IS_FATAL ANY)
 
 message(STATUS "StageAssistantDev: staged ${_DEST}")
 message(STATUS "StageAssistantDev: rpath  -> ${QT6_LIB_DIR}")
