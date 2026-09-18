@@ -7,7 +7,7 @@
 # OPTIONS
 #   --cache-dir DIR   Required. vcpkg binary cache to populate.
 #   --qt6             Qt6 toolchain [default].
-#   --qt5-qwt630      Qt5 + Qwt 6.3.0 toolchain.
+#   --qt5             Qt5 + Qwt 6.3.0 toolchain.
 #   --profiles LIST   Space-separated profiles [default: platform-dependent].
 #   --arch x64|arm64  Target architecture [default: auto-detect].
 #   --skip-bootstrap  Do not run the OS bootstrap script (image already has it).
@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --cache-dir)      CACHE_DIR="$2"; shift 2 ;;
     --qt6)            QT_VARIANT="qt6"; shift ;;
-    --qt5-qwt630)     QT_VARIANT="qt5-qwt630"; shift ;;
+    --qt5)            QT_VARIANT="qt5"; shift ;;
     --profiles)       PROFILES="$2"; shift 2 ;;
     --arch)           ARCH="$2"; shift 2 ;;
     --skip-bootstrap) SKIP_BOOTSTRAP=true; shift ;;
@@ -147,8 +147,8 @@ for PROFILE in $PROFILES; do
   case "${QT_VARIANT}-${PROFILE}" in
     qt6-APP)        FEATURE="qt6-app" ;;
     qt6-HPC)        FEATURE="qt6-hpc" ;;
-    qt5-qwt630-APP) FEATURE="qt5-app" ;;
-    qt5-qwt630-HPC) FEATURE="qt5-hpc" ;;
+    qt5-APP)        FEATURE="qt5-app" ;;
+    qt5-HPC)        FEATURE="qt5-hpc" ;;
     *) echo "ERROR: no feature for ${QT_VARIANT}/${PROFILE}" >&2; exit 1 ;;
   esac
 
