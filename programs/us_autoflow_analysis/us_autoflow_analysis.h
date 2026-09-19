@@ -218,6 +218,7 @@ class US_Analysis_auto : public US_Widgets
             int mwlsim_nchannels;                                     /**< Number of channels being processed by the MWL sim/save pipeline (progress_msg_mwlsim). */
             int mwlsim_chan_idx;                                      /**< Index (0-based) of the channel currently being processed by the MWL sim/save pipeline. */
             QString mwlsim_chan_name;                                 /**< Name of the channel currently being processed, used to label progress_msg_mwlsim. */
+            int velmwl_channels_decided;                              /**< Count of channels_all resolved (already-decided & skipped, or freshly Accepted/Rejected) this VEL-MWL Analysis pass; see finalize_velmwl_analysis_if_complete(). */
 
             QVector< double > v_meni;                                /**< Vector of meniscus values. */
             QVector< double > v_bott;                                /**< Vector of bottom values. */
@@ -685,6 +686,60 @@ class US_Analysis_auto : public US_Widgets
          * @brief Updates the autoflow record at the time of analysis.
          */
         void update_autoflow_record_atAnalysis( void );
+
+        /**
+         * @brief Look up whether a VEL-MWL channel already has a recorded
+         * Accept/Reject decision (own or another session) -- checked
+         * BEFORE (re-)simulating/saving/opening US_MwlSpeciesFit for a
+         * channel, so a re-attached run doesn't repeat that work for a
+         * channel already decided in a prior session.
+         * @param autoflowID This run's autoflowID.
+         * @param chann The channel, in "N / X" canonical form.
+         * @param decision [out] "Accepted" or "Rejected" if found.
+         * @return true if a decision was found.
+         */
+        bool load_velmwl_channel_decision( QString autoflowID, QString chann,
+                                            QString& decision );
+
+        /**
+         * @brief Claim a VEL-MWL channel before starting its (expensive)
+         * simulate/save pipeline and US_MwlSpeciesFit's dialog, so an
+         * overlapping session working the same re-attached run can't
+         * duplicate that work on the same channel.
+         * @param autoflowID This run's autoflowID.
+         * @param chann The channel, in "N / X" canonical form.
+         * @return true only if this call is the one that claimed it.
+         */
+        bool claim_velmwl_channel( QString autoflowID, QString chann );
+
+        /**
+         * @brief Once every channel in channels_all has been resolved
+         * this pass (see velmwl_channels_decided), hands off to
+         * process_velmwl_after_all_channels_decided(). No-op if channels
+         * remain unresolved. Does NOT itself claim the run-wide VEL-MWL
+         * completion transition (autoflowAnalysisVelMwlStages stays
+         * 'unknown' here) -- that claim is process_velmwl_after_all_
+         * channels_decided()'s responsibility, once implemented, since
+         * there's more processing to do after this point before the run
+         * is genuinely complete.
+         */
+        void finalize_velmwl_analysis_if_complete( void );
+
+        /**
+         * @brief MOCK/STUB -- to be filled in later. Runs once every
+         * VEL-MWL channel has a recorded decision but before switching
+         * to Report -- there is further processing needed here first
+         * (not yet specified). Deliberately does NOT call
+         * update_autoflow_record_atAnalysis() or emit
+         * analysis_complete_auto() yet, and is NOT itself guarded
+         * against being called more than once. Once implemented, this
+         * function must claim the run-wide completion transition itself
+         * (autoflow_velmwl_analysis_status(), unknown->STARTED) and bail
+         * out if it doesn't win that claim, before doing the real work
+         * and, only on success, calling update_autoflow_record_
+         * atAnalysis() and emitting analysis_complete_auto().
+         */
+        void process_velmwl_after_all_channels_decided( void );
 
         /**
          * @brief Checks the fit meniscus status.

@@ -1319,6 +1319,7 @@ void US_Analysis_auto::gui_update( )
 	  //        multi-model stages (sims/save -- 30 units each, filled in
 	  //        proportionally as models are processed).
 	  mwlsim_nchannels    = channels_all.size();
+	  velmwl_channels_decided = 0;   //ALEXEY: count of channels_all resolved (already-decided & skipped, or freshly decided via Accept/Reject) this pass -- see finalize_velmwl_analysis_if_complete()
 	  progress_msg_mwlsim = new QProgressDialog( tr( "Preparing MWL species simulations..." ),
 						      QString(), 0, 100, this );
 	  progress_msg_mwlsim->setWindowFlags( Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint );
@@ -1331,6 +1332,48 @@ void US_Analysis_auto::gui_update( )
 	  //Run Simulation
 	  for ( int ca=0; ca<channels_all.size(); ++ca )
 	    {
+	      //ALEXEY: normalize channels_all[ca] (e.g. "2.A") to the
+	      //canonical "2 / A" form used wherever a channel's decision is
+	      //recorded/looked-up (US_MwlSpeciesFit::record_velmwl_channel_
+	      //decision() builds the same "N / X" string from the filename).
+	      QStringList ch_parts_c = channels_all[ ca ].split( "." );
+	      QString chan_norm_c = ( ch_parts_c.size() == 2 ) ?
+		( ch_parts_c[0] + " / " + ch_parts_c[1] ) : channels_all[ ca ];
+
+	      //ALEXEY: Check for an already-recorded decision BEFORE doing
+	      //any of the expensive simulate+save work below -- this is the
+	      //re-attachment case: a prior session already Accepted/Rejected
+	      //this channel, so don't re-simulate/re-save/re-open the fit
+	      //dialog for it at all, just count it resolved and move on.
+	      QString existing_decision_c;
+	      bool already_decided_c = load_velmwl_channel_decision(
+		  QString::number( autoflowID_passed ), chan_norm_c, existing_decision_c );
+
+	      if ( already_decided_c )
+		{
+		  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
+			   << "already" << existing_decision_c
+			   << "-- skipping simulation/save/fit for it.";
+
+		  ++velmwl_channels_decided;
+		  continue;
+		}
+
+	      //ALEXEY: Not yet decided -- claim it before starting the
+	      //expensive work, so an overlapping session (also re-attached
+	      //to this run) can't simultaneously simulate/save/decide the
+	      //same channel and clobber whichever decision lands last.
+	      bool claimed_c = claim_velmwl_channel(
+		  QString::number( autoflowID_passed ), chan_norm_c );
+
+	      if ( ! claimed_c )
+		{
+		  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
+			   << "is currently claimed/being processed by another "
+			      "session -- skipping it for this pass.";
+		  continue;
+		}
+
 	      QString ch_name_c, f_name_c;
 	      //Get filename, OR filenameS first???
 	      for ( int ta=0; ta<TriplesArray.size(); ++ta )
@@ -1417,7 +1460,16 @@ void US_Analysis_auto::gui_update( )
 	  //ALEXEY: All channels done -- close the centralized progress dialog
 	  progress_msg_mwlsim->setValue( progress_msg_mwlsim->maximum() );
 	  progress_msg_mwlsim->close();
-	    
+
+	  //ALEXEY: Covers the case where every channel in channels_all was
+	  //already decided (skipped above, above the "continue") -- no
+	  //US_MwlSpeciesFit gets created and so no accept/reject signal
+	  //ever fires to trigger the completion check, so check here too.
+	  //For channels freshly claimed this pass, this call is a no-op
+	  //until their Accept/Reject decisions come in later (see
+	  //velmwl_deconv_rejected()/accepted() below).
+	  finalize_velmwl_analysis_if_complete();
+
 	  return;
 	}
 
@@ -1641,15 +1693,24 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 }
 
 //slots for reject/accept Vel-MWL deconvoluton for a channel
-//  this info should go to DB on per-channel basis to"
-//   (1) when re-attached (abn if not proceeded to 2dsa-desktop), skip
-//   (2) for the report, reflect the status of accept/reject of the MWL-deconv. 
+//  (1) when re-attached, US_Analysis_auto's own channels_all loop above
+//      now checks load_velmwl_channel_decision()/claim_velmwl_channel()
+//      BEFORE (re-)simulating & saving a channel, so an already-decided
+//      channel never reaches here a second time.
+//  (2) for the report, US_ReporterGMP can read every channel's decision
+//      back via read_autoflowAnalysisVelMwl_record().
+//  Each also counts this channel as resolved and, once every channel in
+//  channels_all has been (see finalize_velmwl_analysis_if_complete()),
+//  switches the run to the Report stage -- exactly once.
 void US_Analysis_auto::velmwl_deconv_rejected( QString& chann_dec )
 {
   qDebug() << "[US_Autoflow_analysis]REJECT VEL-MWL deconvolution, channel -- "
 	   << chann_dec;
   sdiag->close();
   velmwl_fit_open = false;
+
+  ++velmwl_channels_decided;
+  finalize_velmwl_analysis_if_complete();
 }
 void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
 {
@@ -1657,6 +1718,133 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
 	   << chann_dec;
   sdiag->close();
   velmwl_fit_open = false;
+
+  ++velmwl_channels_decided;
+  finalize_velmwl_analysis_if_complete();
+}
+
+//ALEXEY: Once every channel in channels_all has been resolved this pass
+//(already-decided & skipped, or freshly Accepted/Rejected here), hands
+//off to process_velmwl_after_all_channels_decided() -- that TBD
+//function, NOT this one, is responsible for claiming the run-wide
+//"VEL-MWL analysis complete" transition (autoflow_velmwl_analysis_
+//status(), unknown->STARTED). Deliberately leaving that status as
+//'unknown' here: the whole point is that there's more processing to do
+//after all channels are decided but before the run is actually
+//complete, so the Stages row shouldn't claim STARTED until that later
+//processing has actually finished.
+void US_Analysis_auto::finalize_velmwl_analysis_if_complete( void )
+{
+  if ( channels_all.isEmpty() || velmwl_channels_decided < channels_all.size() )
+    return;   //still waiting on other channels this pass
+
+  qDebug() << "[US_Autoflow_analysis] All VEL-MWL channels resolved -- "
+	      "handing off to post-channel processing.";
+
+  process_velmwl_after_all_channels_decided();
+}
+
+//ALEXEY: MOCK/STUB -- to be filled in later.
+//
+//Called once every channel in channels_all has a recorded Accept/Reject
+//decision, but BEFORE switching to the Report stage. There is
+//additional VEL-MWL processing that needs to happen here first -- not
+//yet specified.
+//
+//NOTE: finalize_velmwl_analysis_if_complete() above does NOT guard
+//against calling this more than once (e.g. from two overlapping
+//sessions both re-attached to this run, or the post-loop check and an
+//accept/reject signal both crossing the completion threshold) -- it
+//deliberately leaves autoflowAnalysisVelMwlStages.analysisVelMwl at
+//'unknown' until the real work below exists. So once implemented, this
+//function itself must claim that run-wide completion transition first
+//(autoflow_velmwl_analysis_status(), unknown->STARTED -- see
+//finalize_velmwl_analysis_if_complete()'s old implementation, or
+//autoflow_abde_analysis_status() in us3_autoflow_procs.sql, for the
+//pattern) and bail out if it doesn't win that claim, THEN do the actual
+//processing, and only on success call update_autoflow_record_
+//atAnalysis() and emit analysis_complete_auto( protocol_details_at_
+//analysis ) to finally switch to Report.
+void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
+{
+  qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+	      "TODO -- not yet implemented. NOT switching to Report yet.";
+
+  //TODO: implement the remaining post-channel-decision processing here.
+  //Once it's done (and only then):
+  //  1. claim autoflow_velmwl_analysis_status() (unknown->STARTED);
+  //     bail if unique_start != 1 (already claimed/handled elsewhere)
+  //  2. do the actual processing
+  //  3. update_autoflow_record_atAnalysis();
+  //  4. emit analysis_complete_auto( protocol_details_at_analysis );
+}
+
+//ALEXEY: Look up whether a VEL-MWL channel already has a recorded
+//Accept/Reject decision (own or another session) -- e.g. this run is
+//being re-attached after the channel was already decided. Returns true
+//(and fills 'decision') if found, so the caller can skip re-simulating,
+//re-saving, and re-opening US_MwlSpeciesFit's dialog for this channel.
+bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString chann,
+						      QString& decision )
+{
+  decision.clear();
+  if ( autoflowID.isEmpty() || chann.isEmpty() )
+    return false;
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      delete db;
+      return false;
+    }
+
+  QStringList qry;
+  qry << "get_autoflowAnalysisVelMwl_channel_decision"
+      << autoflowID
+      << chann;
+  db->query( qry );
+
+  bool found = false;
+  if ( db->lastErrno() == US_DB2::OK && db->next() )
+    {
+      decision = db->value( 0 ).toString();
+      found    = ! decision.isEmpty();
+    }
+
+  delete db;
+  return found;
+}
+
+//ALEXEY: Claim a channel before starting its (expensive) simulate/save
+//pipeline and US_MwlSpeciesFit's deconvolution+dialog step, so an
+//overlapping session (also re-attached to this run) can't duplicate
+//that work and race to save a conflicting decision for the same
+//channel. Returns true only if this call is the one that claimed it.
+bool US_Analysis_auto::claim_velmwl_channel( QString autoflowID, QString chann )
+{
+  if ( autoflowID.isEmpty() || chann.isEmpty() )
+    return false;
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      delete db;
+      return false;
+    }
+
+  QStringList qry;
+  qry << "autoflow_velmwl_channel_claim"
+      << autoflowID
+      << chann;
+
+  int unique_start = db->statusQuery( qry );
+
+  delete db;
+  return ( unique_start == 1 );
 }
 
 

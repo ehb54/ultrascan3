@@ -207,6 +207,16 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	     }
 	   else //VEL-MWL
 	     {
+	       //ALEXEY: No "already decided?" or "claim" check here anymore --
+	       //that has to happen one level up, in US_Analysis_auto's
+	       //channels_all loop (us_autoflow_analysis.cpp), BEFORE the
+	       //(expensive) simulation + save pipeline runs for this channel
+	       //at all. By the time US_MwlSpeciesFit is constructed here, the
+	       //sim/save work for this channel has already happened, so
+	       //skipping only at this point would still waste that work on a
+	       //re-attached run's already-decided channel. This constructor
+	       //now assumes the caller has already established that this
+	       //channel genuinely needs (re-)processing.
 	       chann_to_process_velmwl = protocol_details[ "chan_to_analyse" ];
 	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ chann_to_process_velmwl ];
 	       
@@ -237,7 +247,6 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 	       buttonLayout->addWidget( pb_reject_velmwl );
 	       buttonLayout->addWidget( pb_accept_velmwl );
 	     }
-	   
 	   // //pass ranges from reportItems
 	   // protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
 	   // protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
@@ -252,13 +261,97 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 void US_MwlSpeciesFit::reject_velmwl()
 {
   qDebug() << "[Mwl-FIT]Rejecting VEL-MWL deconvolution results!";
+
+  QMessageBox::information( this,
+      tr( "Channel Deconvolution Rejected" ),
+      tr( "Channel %1 has been marked as REJECTED.\n\n"
+	  "This decision has been recorded. If this run is re-attached "
+	  "later, the channel will be skipped rather than re-processed." )
+      .arg( chann_to_process_velmwl ) );
+
+  record_velmwl_channel_decision( chann_to_process_velmwl, "Rejected" );
+  velmwl_channel_decisions[ chann_to_process_velmwl ] = "Rejected";
+
   emit reject_velmwl_s( chann_to_process_velmwl );
 }
 
 void US_MwlSpeciesFit::accept_velmwl()
 {
   qDebug() << "[Mwl-FIT]Accepting VEL-MWL deconvolution results!";
+
+  QMessageBox::information( this,
+      tr( "Channel Deconvolution Accepted" ),
+      tr( "Channel %1 has been marked as ACCEPTED.\n\n"
+	  "This decision has been recorded. If this run is re-attached "
+	  "later, the channel will be skipped rather than re-processed." )
+      .arg( chann_to_process_velmwl ) );
+
+  record_velmwl_channel_decision( chann_to_process_velmwl, "Accepted" );
+  velmwl_channel_decisions[ chann_to_process_velmwl ] = "Accepted";
+
   emit accept_velmwl_s( chann_to_process_velmwl );
+}
+
+//ALEXEY: Persist this channel's Accept/Reject decision into a dedicated
+//VEL-MWL DB table (one row per autoflowID+channel), mirroring how ABDE
+//analysis parameters/status are saved via US_Norm_Profile's
+//record_AnalysisABDE_status()/update_autoflow_record_atAnalysisABDE()
+//(a single JSON blob written into autoflowStatus once, at Save-Profiles
+//time for the whole run). The two schemes now match more closely than
+//that comment used to suggest: autoflowAnalysisVelMwl is likewise one
+//row per run (autoflowID UNIQUE), holding a JSON object keyed by
+//channel -- but unlike ABDE's one-time write, VEL-MWL channels are
+//decided one at a time as the pipeline works through channels_all in
+//US_Analysis_auto::get_ssf_dir_and_saveDB(), so this call updates just
+//this channel's key in that JSON object as soon as the user clicks
+//Accept/Reject, rather than writing the whole row at once.
+void US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString decision )
+{
+  QString autoflowID = protocol_details[ "autoflowID" ];
+  if ( autoflowID.isEmpty() )
+    {
+      qDebug() << "[Mwl-Fit] record_velmwl_channel_decision(): no autoflowID -- "
+		  "skipping DB save.";
+      return;
+    }
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+	  tr( "Could not connect to database: \n" ) + db->lastError() );
+      delete db;
+      return;
+    }
+
+  //Who is recording this decision (for the audit trail / report)
+  QStringList qry1;
+  qry1 << "get_user_info";
+  db->query( qry1 );
+  db->next();
+  int     u_ID     = db->value( 0 ).toInt();
+  QString u_fname  = db->value( 1 ).toString();
+  QString u_lname  = db->value( 2 ).toString();
+
+  QStringList qry;
+  qry << "update_autoflowAnalysisVelMwl_channel_decision"   //one row per run; this channel's key within it
+      << autoflowID
+      << chann
+      << decision
+      << QString::number( u_ID )
+      << ( u_lname + ", " + u_fname );
+
+  int status = db->statusQuery( qry );
+
+  if ( status != US_DB2::OK )
+    qDebug() << "[Mwl-Fit] Failed to save VEL-MWL channel decision to DB; status ="
+	     << status;
+  else
+    qDebug() << "[Mwl-Fit] Saved VEL-MWL decision:" << chann << "->" << decision;
+
+  delete db;
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
@@ -2102,6 +2195,7 @@ void US_MwlSpeciesFit::reset_data( void )
    chndescs_alt.clear();
    ch_reports.clear();
    protocol_details.clear();
+   velmwl_channel_decisions.clear();
    us_gmp_auto_mode = false;
 }
 

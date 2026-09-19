@@ -44,7 +44,15 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
              //chann.    //type[protein, DNA]  //ext. profile
         QString rmsd_for_gmp;
         QString chann_to_process_velmwl;
-        
+
+        //! \brief VEL-MWL channel -> Accept/Reject decision ("Accepted"/
+        //! "Rejected") made by the user for the current channel this
+        //! session. (Whether a channel needs (re-)processing at all --
+        //! i.e. whether it already has a decision from a prior session --
+        //! is decided one level up, by US_Analysis_auto, before this
+        //! class is ever constructed for that channel.)
+        QMap<QString, QString> velmwl_channel_decisions;
+
     private:
         int dbg_level;         //!< Debug level
         int nspecies;          //!< Number of species
@@ -94,6 +102,14 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
 
         //! \brief Get fit error
         void get_fit_error(void);
+
+        //! \brief Persist a VEL-MWL channel's Accept/Reject decision into
+        //! the run's single autoflowAnalysisVelMwl row (one row per
+        //! autoflowID, JSON-keyed by channel). Called once the user
+        //! clicks Accept/Reject here; the decision of whether this
+        //! channel needed (re-)processing at all is made one level up,
+        //! by US_Analysis_auto, before this class is even constructed.
+        void record_velmwl_channel_decision( QString chann, QString decision );
 
     private slots:
         //! \brief Write report to a text stream

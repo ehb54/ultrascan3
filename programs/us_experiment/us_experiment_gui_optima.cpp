@@ -10361,6 +10361,35 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
 	   db->statusQuery( qry );
 	 }
+
+       /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl ***/
+       /** (per-channel decisions, one row per run) AND                        ***/
+       /** autoflowAnalysisVelMwlStages (run-wide completion gate) records,    ***/
+       /** up front -- mirroring how ABDE seeds both its data and Stages       ***/
+       /** rows together just above. channelDecisions starts out as an empty  ***/
+       /** JSON object; each channel's key gets added later, one at a time,   ***/
+       /** as US_MwlSpeciesFit records that channel's Accept/Reject decision. ***/
+       /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,  ***/
+       /** by US_Analysis_auto, when every channel has finally been decided   ***/
+       /** (see finalize_velmwl_analysis_if_complete() in                     ***/
+       /** us_autoflow_analysis.cpp), gating the one-time switch to Report.   ***/
+       else if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+	 {
+	   qry. clear();
+	   qry << "new_autoflowAnalysisVelMwl_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+	   int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+	   qry. clear();
+	   qry << "new_autoflowAnalyisVelMwlStages_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
+	   db->statusQuery( qry );
+	 }
      }
 }
 
@@ -10662,6 +10691,35 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   // new autoflowAnalysisABDEStages record
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
+
+       /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl ***/
+       /** (per-channel decisions, one row per run) AND                        ***/
+       /** autoflowAnalysisVelMwlStages (run-wide completion gate) records,    ***/
+       /** up front -- mirroring how ABDE seeds both its data and Stages       ***/
+       /** rows together just above. channelDecisions starts out as an empty  ***/
+       /** JSON object; each channel's key gets added later, one at a time,   ***/
+       /** as US_MwlSpeciesFit records that channel's Accept/Reject decision. ***/
+       /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,  ***/
+       /** by US_Analysis_auto, when every channel has finally been decided   ***/
+       /** (see finalize_velmwl_analysis_if_complete() in                     ***/
+       /** us_autoflow_analysis.cpp), gating the one-time switch to Report.   ***/
+       else if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+	 {
+	   qry. clear();
+	   qry << "new_autoflowAnalysisVelMwl_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+	   int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+	   qry. clear();
+	   qry << "new_autoflowAnalyisVelMwlStages_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
 	   db->statusQuery( qry );
 	 }
      }
@@ -10982,6 +11040,35 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	   // new autoflowAnalysisABDEStages record
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
+
+       /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl ***/
+       /** (per-channel decisions, one row per run) AND                        ***/
+       /** autoflowAnalysisVelMwlStages (run-wide completion gate) records,    ***/
+       /** up front -- mirroring how ABDE seeds both its data and Stages       ***/
+       /** rows together just above. channelDecisions starts out as an empty  ***/
+       /** JSON object; each channel's key gets added later, one at a time,   ***/
+       /** as US_MwlSpeciesFit records that channel's Accept/Reject decision. ***/
+       /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,  ***/
+       /** by US_Analysis_auto, when every channel has finally been decided   ***/
+       /** (see finalize_velmwl_analysis_if_complete() in                     ***/
+       /** us_autoflow_analysis.cpp), gating the one-time switch to Report.   ***/
+       else if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+	 {
+	   qry. clear();
+	   qry << "new_autoflowAnalysisVelMwl_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+	   int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+	   qry. clear();
+	   qry << "new_autoflowAnalyisVelMwlStages_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
 	   db->statusQuery( qry );
 	 }
      }
