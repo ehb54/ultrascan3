@@ -1,37 +1,34 @@
 //! \file us_mwl_species_sim.cpp
+//!
+//! The US_MwlSpeciesSim implementation, kept separate from the application's
+//! main() in main.cpp so that a test can link this class without pulling in a
+//! second main(). us_astfem_sim splits us_clipdata.cpp for the same reason.
 
 #include <QApplication>
 
+#include "us_headless_cli.h"
 #include "us_mwl_species_sim.h"
 #include "us_data_loader.h"
 #include "us_select_runs.h"
 #include "us_astfem_rsa.h"
 #include "us_astfem_math.h"
+#include "us_math2.h"
+#include "us_sim_inputs.h"
+#include "us_hardware.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_util.h"
+#include "us_experiment.h"
+#include "us_convert.h"
+#include "us_sim_record.h"
 #include "us_passwd.h"
 #include "us_images.h"
 
 #include "qwt_picker_machine.h"
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
-//! \brief Main program. Loads translators and starts
-//         the class US_Convert.
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_MwlSpeciesSim w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 //! \brief Constructor for US_MwlSpeciesSim class
 US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
@@ -40,6 +37,8 @@ US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
    setPalette( US_GuiSettings::frameColor() );
 
    dbg_level   = US_Settings::us_debug();
+   // Only --runtype changes this; the GUI has no control for it.
+   run_type    = "RA";
    nmodels     = 0;
    tripx       = 0;
    dbload      = ( US_Settings::default_data_location() == 1 );
@@ -116,30 +115,30 @@ US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
    pb_prev    ->setEnabled( false );
    pb_next    ->setEnabled( false );
 
-   connect( pb_prefilt,  &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::pre_filt );
-   connect( pb_semodels, &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::select_models );
-   connect( pb_defbuff,  &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::define_buffer );
-   connect( pb_simparms, &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::sim_params );
-   connect( pb_selrotor, &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::select_rotor );
-   connect( pb_strtsims, &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::start_sims );
-   connect( pb_stopsims, &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::stop_sims );
-   connect( pb_savesims, &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::save_sims );
-   connect( pb_prev,     &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::prev_plot );
-   connect( pb_next,     &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::next_plot );
-   connect( pb_help,     &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::help );
-   connect( pb_close,    &QAbstractButton::clicked,
-            this,        &US_MwlSpeciesSim::close_all );
+   connect( pb_prefilt,  SIGNAL( clicked      () ),
+            this,        SLOT  ( pre_filt     () ) );
+   connect( pb_semodels, SIGNAL( clicked      () ),
+            this,        SLOT  ( select_models() ) );
+   connect( pb_defbuff,  SIGNAL( clicked      () ),
+            this,        SLOT  ( define_buffer() ) );
+   connect( pb_simparms, SIGNAL( clicked      () ),
+            this,        SLOT  ( sim_params   () ) );
+   connect( pb_selrotor, SIGNAL( clicked      () ),
+            this,        SLOT  ( select_rotor () ) );
+   connect( pb_strtsims, SIGNAL( clicked      () ),
+            this,        SLOT  ( start_sims   () ) );
+   connect( pb_stopsims, SIGNAL( clicked      () ),
+            this,        SLOT  ( stop_sims    () ) );
+   connect( pb_savesims, SIGNAL( clicked      () ),
+            this,        SLOT  ( save_sims    () ) );
+   connect( pb_prev,     SIGNAL( clicked      () ),
+            this,        SLOT  ( prev_plot    () ) );
+   connect( pb_next,     SIGNAL( clicked      () ),
+            this,        SLOT  ( next_plot    () ) );
+   connect( pb_help,     SIGNAL( clicked      () ),
+            this,        SLOT  ( help         () ) );
+   connect( pb_close,    SIGNAL( clicked      () ),
+            this,        SLOT  ( close_all    () ) );
 
    main->addLayout( left );
    main->addLayout( plot );
@@ -287,6 +286,10 @@ DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
    if ( nmodels < 1 )
       return;
 
+   // Before the totals below are summed, so the clip and the noise sigmas
+   // that read them see the scaled amplitudes.
+   apply_extinction_scaling();
+
    mtconcs.fill( 0.0, nmodels );
 
    QStringList runids;
@@ -358,8 +361,8 @@ void US_MwlSpeciesSim::define_buffer( void )
 DbgLv(1) << "SLOT: define_buffer";
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
-                    this, &US_MwlSpeciesSim::change_buffer );
+   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
+                    SLOT  ( change_buffer( US_Buffer ) ) );
 
    dialog->exec();
    qApp->processEvents();
@@ -380,7 +383,7 @@ void US_MwlSpeciesSim::sim_params( void )
 DbgLv(1) << "SLOT: sim_params";
    US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
    
-   connect( dialog, &US_SimParamsGui::complete, this, &US_MwlSpeciesSim::set_parameters );
+   connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
 
    dialog->exec();
 }
@@ -400,12 +403,12 @@ void US_MwlSpeciesSim::set_parameters( void )
    double duration     = simparams.speed_step[ 0 ].duration_hours * 3600.0
                        + simparams.speed_step[ 0 ].duration_minutes * 60.0;
    double rspeed       = (double)simparams.speed_step[ 0 ].rotorspeed;
-   double scn_rng      = (double)( simparams.speed_step[ 0 ].scans - 1 );
+   int    scans        = simparams.speed_step[ 0 ].scans;
    delay               = qRound( delay );
    duration            = qRound( duration );
    double pi_fac       = sq( M_PI / 30.0 );
    double tim_rng      = duration - delay;
-   double tim_inc      = tim_rng / scn_rng;
+   double tim_inc      = ( scans > 1 ) ? tim_rng / (double)( scans - 1 ) : 0.0;
    double w2t_fac      = sq( rspeed ) * pi_fac;
    double accel        = simparams.speed_step[ 0 ].acceleration;
    double w2t_inc      = tim_inc * w2t_fac;
@@ -430,14 +433,24 @@ void US_MwlSpeciesSim::set_parameters( void )
    simparams.speed_step[ 0 ].time_first  = tim_val;
    simparams.speed_step[ 0 ].w2t_first   = w2t_val;
 
-   while( tim_val < duration )
-   {  // Walk time and omega2t up to the last scan
-      tim_val            += tim_inc;
-      w2t_val            += w2t_inc;
-   }
+   if ( scans > 1 )
+   {
+      while( tim_val < duration )
+      {  // Walk time and omega2t up to the last scan
+         tim_val            += tim_inc;
+         w2t_val            += w2t_inc;
+      }
 
-   simparams.speed_step[ 0 ].time_last   = duration;
-   simparams.speed_step[ 0 ].w2t_last    = w2t_val;
+      simparams.speed_step[ 0 ].time_last = duration;
+      simparams.speed_step[ 0 ].w2t_last  = w2t_val;
+   }
+   else
+   {  // A one-scan run has only its first-scan time and omega-squared-t.
+      simparams.speed_step[ 0 ].time_last =
+         simparams.speed_step[ 0 ].time_first;
+      simparams.speed_step[ 0 ].w2t_last  =
+         simparams.speed_step[ 0 ].w2t_first;
+   }
    simparams.speed_step[ 0 ].set_speed   = (int)rspeed;
    simparams.speed_step[ 0 ].avg_speed   = rspeed;
 
@@ -460,8 +473,10 @@ DbgLv(1) << "SLOT: select_rotor";
      US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk,
                                                rotor, calibration );
    
-    connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
-             this,      &US_MwlSpeciesSim::assign_rotor );
+    connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
+                           US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+             this,      SLOT  ( assign_rotor            (
+                           US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
 
     rotorInfo->exec();
 }
@@ -476,6 +491,57 @@ void US_MwlSpeciesSim::assign_rotor( US_Rotor::Rotor& arotor,
    simparams.rotorcoeffs[1]   = rotor_calib.coeff2;
 DbgLv(1) << "assign_rotor: rotor" << rotor.name
  << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
+}
+
+// Scale every model's signal concentration by its extinction coefficient.
+//
+// Each model here is one wavelength, so the set of models is a sampling of the
+// analyte's absorbance spectrum. Without this, every wavelength simulates at
+// the amplitude its model file states, which for a set generated from one
+// species means every wavelength comes out identical: a multi-wavelength run
+// whose wavelengths carry no wavelength-dependent information at all.
+//
+// The scale factor is normalized against the strongest absorber in the set
+// rather than applied raw. Extinction coefficients are molar and run to five
+// figures, so multiplying a signal concentration of 1 by 10000 would ask for an
+// optical density no instrument produces, and the clip in build_rawdata() would
+// flatten it. Normalizing here lets a model file carry recognizable molar
+// extinctions while the strongest wavelength keeps the amplitude that file
+// asks for and the rest fall below it in the spectrum's proportions.
+//
+// Extinction defaults to zero (us_model.cpp) and every model written before
+// this existed carries zero, so a set with no extinction data takes the early
+// return and simulates exactly as it did before. That is what keeps existing
+// models, and the GUI paths that load them, unaffected.
+void US_MwlSpeciesSim::apply_extinction_scaling( void )
+{
+   double max_extinc  = 0.0;
+
+   for ( int jm = 0; jm < models.count(); jm++ )
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+         max_extinc      = qMax( max_extinc,
+                                 models[ jm ].components[ jc ].extinction );
+
+   if ( max_extinc <= 0.0 )
+   {  // No extinction data in this set: leave every amplitude as loaded.
+DbgLv(1) << "extinc: no extinction data; amplitudes unscaled";
+      return;
+   }
+
+   for ( int jm = 0; jm < models.count(); jm++ )
+   {
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+      {
+         US_Model::SimulationComponent* sc = &models[ jm ].components[ jc ];
+
+         // A component with no extinction of its own, in a set where others
+         // have it, absorbs nothing at this wavelength. Scaling it to zero is
+         // the honest reading of that, not a degenerate case to guard against.
+         sc->signal_concentration *= ( sc->extinction / max_extinc );
+      }
+   }
+DbgLv(1) << "extinc: scaled" << models.count() << "models; max extinction"
+ << max_extinc;
 }
 
 // Start the simulations for all chosen models
@@ -497,6 +563,11 @@ DbgLv(1) << "SLOT: start_sims";
    int kmodels    = 0;
    synData.clear();
    have_p1.clear();
+
+   // Drop the previous run's systematic noise so a re-run draws fresh
+   // vectors rather than reusing the ones the last run's wavelengths shared.
+   shared_ti.clear();
+   shared_ri.clear();
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -545,11 +616,310 @@ DbgLv(1) << "SLOT: stop_sims";
 void US_MwlSpeciesSim::save_sims( void )
 {
 DbgLv(1) << "SLOT: save_sims";
-   QString impdir     = US_Settings::importDir() + "/" + orunid + "/";
-   QString cell       = QString( orunid ).section( "-", -1, -1 ).left( 1 );
-   QString basefn     = orunid + ".RA." + cell + ".S.xxx.auc";
+   save_sims_to( US_Settings::importDir() + "/" + orunid );
+}
 
-   QDir().mkpath( impdir );
+// Run the simulation headlessly using command-line options.
+int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
+{
+   bool gui_needed      = !flags.contains( "close" );
+   bool error_occured   = false;
+   bool errors_to_cl    = flags.contains( "errors-cl" );
+
+   // Validated in main(); absent, the constructor's "RA" stands.
+   // Reproducible identity. Both stay empty unless asked for, so the desktop
+   // and every existing caller keep minting fresh GUIDs and stamping the clock.
+   if ( flags.contains( "guid-seed" ) )
+      guid_seed  = flags[ "guid-seed" ];
+
+   if ( flags.contains( "edit-timestamp" ) )
+      edit_stamp = flags[ "edit-timestamp" ];
+
+   if ( flags.contains( "runtype" ) && flags[ "runtype" ].length() == 2 )
+      run_type = flags[ "runtype" ];
+
+   // Each input is optional. Only an explicitly requested input that fails
+   // to load should prevent start_sims() below.
+   bool loaded_models    = true;
+   bool loaded_buffer    = true;
+   bool loaded_simparams = true;
+   bool loaded_rotor     = true;
+
+   if ( flags.contains( "models" ) && flags[ "models" ].length() > 0 )
+   {
+      QStringList paths = flags[ "models" ].split( ",", Qt::SkipEmptyParts );
+      loaded_models      = load_models_from_paths( paths );
+      if ( ! loaded_models )
+         reportHeadlessLoadFailure( "models", paths.join( "," ), errors_to_cl,
+                                     gui_needed, error_occured );
+   }
+
+   if ( flags.contains( "buffer" ) && flags[ "buffer" ].length() > 0 )
+   {
+      QString load_id     = flags[ "buffer" ];
+      US_BufferGui* dialog = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
+      bool success         = dialog->load_buffer( load_id, buffer );
+      dialog->close();
+      if ( ! success )
+      {
+         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_buffer      = false;
+      }
+      else
+      {
+         change_buffer( buffer );
+      }
+      delete dialog;
+   }
+
+   if ( flags.contains( "simparams" ) && flags[ "simparams" ].length() > 0 )
+   {
+      QString load_id      = flags[ "simparams" ];
+      US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
+      bool success          = dialog->load_params( load_id, simparams );
+      dialog->close();
+      if ( ! success )
+      {
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_simparams    = false;
+      }
+      else
+      {
+         // The file omits bottom_position; mirror the loaded at-rest bottom.
+         // An explicit --centerpiece overrides it below.
+         simparams.bottom_position = simparams.bottom;
+         set_parameters();
+      }
+      delete dialog;
+   }
+
+   if ( flags.contains( "rotor" ) && flags[ "rotor" ].length() > 0 )
+   {
+      US_Rotor::Rotor rotorval;
+      US_Rotor::RotorCalibration calibration;
+      QString rotor_id      = flags[ "rotor" ];
+      US_Disk_DB_Controls* disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+      int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                            : US_Disk_DB_Controls::Disk;
+      US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk, rotorval, calibration );
+      double coeff1 = 0.0;
+      double coeff2 = 0.0;
+      bool status = rotorInfo->load_rotor( rotor_id, coeff1, coeff2 );
+
+      if ( status )
+      {
+         rotor                     = rotorInfo->currentRotor;
+         rotor_calib                = rotorInfo->currentCalibration;
+         simparams.rotorcoeffs[0]   = coeff1;
+         simparams.rotorcoeffs[1]   = coeff2;
+         simparams.rotorCalID       = QString::number( rotorInfo->currentCalibration.ID );
+         rotorInfo->close();
+      }
+      else
+      {
+         rotorInfo->close();
+         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl,
+                                     gui_needed, error_occured );
+         loaded_rotor        = false;
+      }
+      delete rotorInfo;
+      delete disk_controls;
+   }
+
+   // A centerpiece selects the row geometry and overrides the loaded bottom.
+   // Preserve rotorCalID so its calibration remains in effect.
+   if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
+   {
+      int cp = 0;
+      int ch = 0;
+      QString parse_error;
+
+      if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
+           || ! US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ),
+                                          ch, parse_error ) )
+      {
+         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QString range_error = US_AbstractCenterpiece::validate( cp, ch );
+         if ( ! range_error.isEmpty() )
+         {
+            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
+                                            cp, ch ) )
+         {  // Ignoring this would silently fall back to the 7.2 default bottom
+            reportHeadlessLoadFailure( "centerpiece",
+               "hardware definitions could not be applied", errors_to_cl,
+               gui_needed, error_occured );
+         }
+      }
+   }
+
+   QString save_path;
+   if ( flags.contains( "save" ) && flags[ "save" ].length() > 0 )
+   {
+      save_path            = flags[ "save" ];
+      QDir dir( save_path );
+
+      // Accept a new output directory as well as an existing one.
+      if ( ! dir.exists()  &&  ! QDir().mkpath( save_path ) )
+      {
+         reportHeadlessLoadFailure( "save directory (could not create)",
+                                     save_path, errors_to_cl,
+                                     gui_needed, error_occured );
+      }
+      else
+      {
+         QFile file( dir.filePath( "tmp.txt" ) );
+         if ( ! file.open( QIODevice::WriteOnly ) )
+         {
+            reportHeadlessLoadFailure( "save directory (not writable)",
+                                        save_path, errors_to_cl,
+                                        gui_needed, error_occured );
+         }
+         else
+         {
+            file.close();
+            file.remove();
+         }
+      }
+   }
+
+   if ( ! error_occured && loaded_models && loaded_buffer && loaded_simparams && loaded_rotor )
+   {
+      if ( flags.contains( "start" ) )
+      {
+         start_sims();
+         if ( ! save_path.isEmpty()  &&  ! save_sims_to( save_path ) )
+         {
+            if ( errors_to_cl )
+               return 2;
+            error_occured       = true;
+            gui_needed          = true;
+         }
+      }
+   }
+   else
+   {
+      gui_needed             = true;
+   }
+
+   if ( error_occured )
+      return 2;
+   if ( gui_needed )
+      return 1;
+   return 0;
+}
+
+// Load models from explicit file paths and aggregate them as select_models()
+// does, without displaying the selection dialog.
+bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
+{
+   // mdescs is deliberately not filled here. It belongs to US_ModelLoader,
+   // which fills it with composite ";desc;filename;modelGUID;DB_id;editGUID"
+   // strings (us_model_loader.cpp:description), not with bare descriptions.
+   // Anything this path needs comes from models[].description directly, so
+   // leaving the member empty keeps it meaning exactly one thing.
+   models.clear();
+
+   for ( const QString& path : paths )
+   {
+      US_Model m;
+      if ( m.load( path ) != IUS_DB2::OK  ||  m.description.isEmpty() )
+      {
+         qDebug() << "Error loading model file" << path;
+         return false;
+      }
+      models  << m;
+   }
+
+   nmodels      = models.count();
+   if ( nmodels < 1 )
+      return false;
+
+   // Before the totals below are summed, so the clip and the noise sigmas
+   // that read them see the scaled amplitudes.
+   apply_extinction_scaling();
+
+   mtconcs.fill( 0.0, nmodels );
+
+   QStringList runids;
+   QStringList chans;
+   QStringList wavelns;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString mdesc  = models[ jm ].description;
+      QString runid  = QString( mdesc ).section( ".",  0, -4 );
+      QString triple = QString( mdesc ).section( ".", -3, -3 );
+      QString chan   = QString( triple ).left( 2 );
+      QString waveln = QString( triple ).mid( 2, 3 );
+
+      if ( ! runids.contains( runid ) )
+         runids  << runid;
+
+      if ( ! chans .contains( chan ) )
+         chans   << chan;
+
+      if ( ! wavelns.contains( waveln ) )
+         wavelns << waveln;
+
+      double tot_conc = 0.0;
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+         tot_conc      += models[ jm ].components[ jc ].signal_concentration;
+
+      mtconcs[ jm ]  = tot_conc;
+   }
+
+   int nruns      = runids .count();
+   int nchans     = chans  .count();
+   int nwavls     = wavelns.count();
+
+   if ( nruns != 1  ||  nchans != 1  ||  nwavls != nmodels )
+   {
+      qDebug() << "Model descriptions must identify one run and one channel,"
+                  " with one wavelength per model. Expected counts:"
+               << "runs=" << 1 << "channels=" << 1 << "wavelengths=" << nmodels
+               << "Actual counts: runs=" << nruns << "channels=" << nchans
+               << "wavelengths=" << nwavls;
+      return false;
+   }
+
+   mrunid         = runids[ 0 ];
+   orunid         = "ISSF-" + mrunid + "-" + chans[ 0 ];
+   QString triple = chans[ 0 ].left( 1 ) + "."
+                  + chans[ 0 ].mid( 1, 1 ) + "."
+                  + wavelns[ 0 ] + "-" + wavelns[ nwavls - 1 ];
+   le_triples->setText( triple );
+   le_runid  ->setText( orunid );
+
+   pb_strtsims->setEnabled( true );
+
+   return true;
+}
+
+// Save simulations to the requested directory instead of
+// US_Settings::importDir().
+bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
+{
+   QString impdir     = save_dir + "/";
+   // The generated model description owns the dataset triple.
+   QString cell       = model_cell   ( models[ 0 ].description );
+   QString channel    = model_channel( models[ 0 ].description );
+   QString basefn     = orunid + "." + run_type + "." + cell + "." + channel
+                      + ".xxx.auc";
+
+   if ( ! QDir().mkpath( impdir ) )
+   {
+      qDebug() << "Error: could not create save directory" << impdir;
+      return false;
+   }
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -559,11 +929,16 @@ DbgLv(1) << "SLOT: save_sims";
       QString fpath      = impdir + fname;
 DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
 
-      QString smsg       = tr( "Saving data: %1" ).arg( swavl );
-      te_status->setText( smsg );
+      te_status->setText( tr( "Saving data: %1" ).arg( swavl ) );
       qApp->processEvents();
 
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
+      int stat           = US_DataIO::writeRawData( fpath, synData[ jm ] );
+      if ( stat != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write" << fpath << "status" << stat;
+         te_status->setText( tr( "Error writing %1" ).arg( fname ) );
+         return false;
+      }
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
@@ -571,17 +946,195 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
    te_status->setText( smsga );
    qApp->processEvents();
 
-   // Build and save time state
    QString tfname     = orunid + ".time_state.tmst";
    QString tfpath     = impdir + tfname;
 DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
-   writeTimeState( tfpath, simparams, synData[ 0 ] );
+   // writeTimeState() reports failure by returning zero time points.
+   if ( writeTimeState( tfpath, simparams, synData[ 0 ] ) == 0 )
+   {
+      qDebug() << "Error: could not write time state" << tfpath;
+      return false;
+   }
 
    smsga             += tr( "\n\nTime State file\n%1\nhas been written" )
                         .arg( tfname );
    te_status->setText( smsga );
    qApp->processEvents();
+
+   // A database load needs the experiment and solution records too.
+   if ( ! write_experiment_record( impdir, cell, channel ) )
+   {
+      qDebug() << "Error: could not write the experiment record for" << orunid;
+      return false;
+   }
+
+   // Analysis programs require one edit file per wavelength.
+   if ( ! write_edit_files( impdir, cell, channel ) )
+      return false;
+
+   return true;
+}
+
+// Write the experiment and solution records a database load needs.
+//
+// us_astfem_sim has exported these since 2025; this simulator never did, so a
+// multi-wavelength archive carried scan data nothing could attribute to a
+// sample. US_Experiment::readFromDisk had no <runID>.<type>.xml to rebuild
+// triples from, and US_Solution::readFromDisk no record to hydrate chemistry
+// from. Both documents come from the same utils writers us_astfem_sim calls,
+// so what a multi-wavelength run exports is what a single-wavelength one does.
+bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
+                                                const QString& cell,
+                                                const QString& channel )
+{
+   if ( models.isEmpty()  ||  synData.isEmpty() )
+      return false;
+
+   // The record composition is shared with us_astfem_sim: same fields, same
+   // fixed values, so what a multi-wavelength run exports is what a
+   // single-wavelength one does.
+   US_Experiment experiment = US_SimRecord::experiment( rotor, simparams,
+                                                        orunid, run_type,
+                                                        guid_seed );
+
+   // One solution for the run. Every wavelength simulates the same species in
+   // the same buffer, and each analyte collects its extinction at every
+   // wavelength the run covers, which is what makes this a spectrum rather
+   // than a set of unrelated samples.
+   QList< double > wavelengths;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+      wavelengths << model_wavelength( models[ jm ].description ).toDouble();
+
+   US_Solution sol = US_SimRecord::solution( models, wavelengths, buffer );
+
+   // saveToDisk mints one only when this does not already hold a UUID, so
+   // seeding it here needs no change to US_Solution.
+   if ( ! guid_seed.isEmpty() )
+      sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
+
+   if ( sol.analyteInfo.isEmpty() )
+      return false;
+
+   sol.saveToDisk();
+
+   // One dataset per wavelength, matching the .auc files written above.
+   // saveToDisk splits cell, channel and wavelength back out of tripleDesc,
+   // so these have to agree with the names save_sims_to built.
+   QList< US_Convert::TripleInfo > triples;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      US_Convert::TripleInfo triple;
+      triple.clear();
+      triple.tripleID    = jm + 1;
+      // Keep the experiment triple consistent with the AUC filename.
+      triple.tripleDesc  = cell + " / " + channel + " / "
+                           + model_wavelength( models[ jm ].description );
+      triple.excluded    = false;
+      triple.centerpiece = 1;
+      triple.solution    = sol;
+      memcpy( triple.tripleGUID, synData[ jm ].rawGUID,
+              sizeof( triple.tripleGUID ) );
+
+      triples << triple;
+   }
+
+   return experiment.saveToDisk( triples, run_type, orunid, impdir,
+                                 simparams.speed_step ) == US_Convert::OK;
+}
+
+// Write an edit XML with stretched cell geometry beside each .auc file.
+// The wavelength a per-wavelength model description names. The derived models
+// a multi-wavelength run builds carry it in the third-from-last dot-separated
+// field, two characters in, as in "...-MWL.e280.model.xml".
+QString US_MwlSpeciesSim::model_wavelength( const QString& description )
+{
+   return description.section( ".", -3, -3 ).mid( 2, 3 );
+}
+
+// The generated triple field is <cell><channel><wavelength>, for example
+// "1A250".
+QString US_MwlSpeciesSim::model_cell( const QString& description )
+{
+   return description.section( ".", -3, -3 ).left( 1 );
+}
+
+QString US_MwlSpeciesSim::model_channel( const QString& description )
+{
+   return description.section( ".", -3, -3 ).mid( 1, 1 );
+}
+
+// On disk, each edit filename carries the plain wavelength of its dataset.
+// Band and "@" forms are lookup keys assembled by consumers in memory.
+QString US_MwlSpeciesSim::edit_wavelength_field( const QStringList& descriptions,
+                                                 int index )
+{
+   if ( index < 0  ||  index >= descriptions.count() )
+      return QString();
+
+   return model_wavelength( descriptions[ index ] );
+}
+
+bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
+                                          const QString& cell,
+                                          const QString& channel )
+{
+   QString now        = edit_stamp.isEmpty()
+                        ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" )
+                        : edit_stamp;
+   // Reuse the geometry init_rawdata() built the radial grid from; deriving
+   // the stretch again here puts the edit radii outside the data range.
+   double  meniscus   = curr_meniscus;
+   double  bottom     = curr_bottom;
+
+   if ( bottom <= meniscus )
+   {
+      QTextStream( stderr ) << "Error: cell geometry is unset; simulations "
+         "must run before edit files can be written" << Qt::endl;
+      return false;
+   }
+
+   // Taken from the models rather than from the mdescs member, which holds
+   // US_ModelLoader's composite ";desc;filename;modelGUID;DB_id;editGUID"
+   // strings and is empty on the headless path. model_wavelength() parses
+   // dot-separated fields of a bare description, so it needs this form.
+   QStringList model_descs;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+      model_descs << models[ jm ].description;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      QString swavl   = model_wavelength( model_descs[ jm ] );
+      QString wfield  = edit_wavelength_field( model_descs, jm );
+      // Field 2 of this name is what US_DataIO::loadData() uses as dataType,
+      // so it must track the tag written into the .auc header.
+      QString fname   = orunid + "." + now + "." + run_type + "." + cell
+                      + "." + channel + "." + wfield + ".xml";
+      US_DataIO::EditValues ev;
+      ev.expType    = "Velocity";
+      ev.runID      = orunid;
+      ev.cell       = cell;
+      ev.channel    = channel;
+      ev.wavelength = swavl;
+      ev.editGUID   = US_SimRecord::guid( guid_seed,
+                                          "edit." + swavl );
+      ev.dataGUID   = US_Util::uuid_unparse(
+         reinterpret_cast<uchar*>( synData[ jm ].rawGUID ) );
+
+      US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom );
+      ev.ODlimit    = US_SimRecord::maxOD( synData[ jm ] );
+
+      if ( US_DataIO::writeEdits( impdir + fname, ev ) != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write edit file" << impdir + fname;
+         return false;
+      }
+   }
+
+   return true;
 }
 
 // Bump the current plot to the previous channel
@@ -669,6 +1222,8 @@ void US_MwlSpeciesSim::init_simparams( void )
    simparams.meniscus          = 5.8;    // Meniscus for simulation
    simparams.bottom            = bottom; // Bottom for simulation
    simparams.bottom_position   = 7.2;
+   // Noise defaults to off. A --simparams file, or the simulation-parameters
+   // dialog, may raise any of these; build_rawdata() applies whatever is set.
    simparams.rnoise            = 0.0;
    simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
@@ -683,14 +1238,14 @@ void US_MwlSpeciesSim::init_simparams( void )
 // Initialize the base raw data object
 void US_MwlSpeciesSim::init_rawdata( void )
 {
-   QString guid       = US_Util::new_guid();
+   QString guid       = US_SimRecord::guid( guid_seed, "raw.base" );
    QString mdesc      = models[ 0 ].description;
    QString triple     = QString( mdesc ).section( ".", -3, -3 );
    QString waveln     = QString( triple ).mid( 2, 3 );
    rdata0.xvalues .clear();
    rdata0.scanData.clear();
-   rdata0.type[0]     = 'R';
-   rdata0.type[1]     = 'A';
+   rdata0.type[0]     = run_type.at( 0 ).toLatin1();
+   rdata0.type[1]     = run_type.at( 1 ).toLatin1();
    rdata0.cell        = 1;
    rdata0.channel     = 'S';
    rdata0.description = "Simulation";
@@ -736,9 +1291,10 @@ simparams.debug();
    int terpsize       = ( npoints + 7 ) / 8;
    double mwavelen    = waveln.toDouble();
    double timeval     = simparams.speed_step[ 0 ].time_first;
-   double timeinc     = ( simparams.speed_step[ 0 ].time_last
-                        - simparams.speed_step[ 0 ].time_first )
-                        / (double)( nscans - 1 );
+   double timeinc     = ( nscans > 1 )
+      ? ( simparams.speed_step[ 0 ].time_last
+        - simparams.speed_step[ 0 ].time_first ) / (double)( nscans - 1 )
+      : 0.0;
    double w2tval      = simparams.speed_step[ 0 ].w2t_first;
    double w2tinc      = timeinc * pow( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0, 2.0 );
 DbgLv(1) << "rdata0 tf tl" << simparams.speed_step[0].time_first << simparams.speed_step[0].time_last
@@ -764,6 +1320,151 @@ DbgLv(1) << "rdata0 tf tl" << simparams.speed_step[0].time_first << simparams.sp
 if(js==0  || js==(nscans-1))
  DbgLv(1) << "rdata0 sc seconds" << scan->seconds << "omg2t" << scan->omega2t << "js" << js;
    }
+}
+
+// Add radially invariant noise: one offset per scan, applied to every point
+// of that scan. The offsets are shared across wavelengths -- a lamp or
+// detector fluctuation during scan k moves every wavelength read in that
+// scan, so drawing them per wavelength would model N unrelated instruments.
+void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
+                                     double total_conc )
+{
+   if ( simparams.rinoise == 0.0 ) return;
+
+   int scans = rdata.scanData.size();
+
+   if ( shared_ri.size() != scans )
+   {  // First wavelength of the run draws it; the rest reuse it. Every
+      // wavelength has the same scan geometry, so the size check only ever
+      // fires once.
+      shared_ri.resize( scans );
+
+      for ( int ks = 0; ks < scans; ks++ )
+         shared_ri[ ks ] = US_Math2::box_muller( 0.0, 1.0 );
+   }
+
+   double sigma = total_conc * simparams.rinoise / 100;
+
+   for ( int ks = 0; ks < scans; ks++ )
+   {
+      double rinoise = shared_ri[ ks ] * sigma;
+
+      for ( int mp = 0; mp < rdata.pointCount(); mp++ )
+         rdata.scanData[ ks ].rvalues[ mp ] += rinoise;
+   }
+}
+
+// Add a constant baseline offset.
+void US_MwlSpeciesSim::add_baseline( US_DataIO::RawData& rdata )
+{
+   if ( simparams.baseline == 0.0 ) return;
+
+   for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
+      for ( int mp = 0; mp < rdata.pointCount(); mp++ )
+         rdata.scanData[ ks ].rvalues[ mp ] += simparams.baseline;
+}
+
+// Add per-point random noise. rnoise scales with the total concentration,
+// lrnoise with the local value; both may be active at once.
+void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
+                                         double total_conc )
+{
+   if ( simparams.rnoise == 0.0  &&  simparams.lrnoise == 0.0 ) return;
+
+   for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
+   {
+      for ( int mp = 0; mp < rdata.pointCount(); mp++ )
+      {
+         double value = rdata.scanData[ ks ].rvalues[ mp ];
+         double noise = 0.0;
+
+         if ( simparams.rnoise != 0.0 )
+            noise += US_Math2::box_muller( 0,
+                        total_conc * simparams.rnoise / 100 );
+
+         if ( simparams.lrnoise != 0.0 )
+            noise += US_Math2::box_muller( 0,
+                        value * simparams.lrnoise / 100 );
+
+         rdata.scanData[ ks ].rvalues[ mp ] = value + noise;
+      }
+   }
+}
+
+// Add time invariant noise: one vector over radius, added identically to
+// every scan.
+//
+// Built as a random walk rather than as independent draws, so its spread
+// grows with the point count instead of staying at sigma, and varies a lot
+// from one run to the next. At simpoints=200 the end-to-end drift is of
+// order sqrt(N) times sigma. Keep tinoise well below rnoise or it dominates
+// the dataset.
+//
+// The walk is shared across wavelengths. TI noise is by definition the part
+// that does not vary between scans, which means it comes from fixed features
+// of the optical path -- a scratch or a speck sits at one radius, and light
+// of every wavelength passing through that radius passes through it. Drawing
+// a separate walk per wavelength would model N unrelated scratches, and in a
+// global fit those partially cancel across datasets, handing the fit a noise
+// reduction real data would never give.
+void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
+                                     double total_conc )
+{
+   if ( simparams.tinoise == 0.0 ) return;
+
+   int points = rdata.pointCount();
+
+   if ( shared_ti.size() != points )
+   {  // First wavelength of the run draws it; the rest reuse it. Every
+      // wavelength has the same radial geometry, so the size check only ever
+      // fires once. Drawn at unit sigma and scaled below, so the magnitude
+      // of the noise does not change how many random numbers are consumed.
+      shared_ti.resize( points );
+
+      double val = US_Math2::box_muller( 0.0, 1.0 );
+
+      for ( int mp = 0; mp < points; mp++ )
+      {
+         val += US_Math2::box_muller( 0.0, 1.0 );
+         shared_ti[ mp ] = val;
+      }
+   }
+
+   double sigma = total_conc * simparams.tinoise / 100;
+
+   for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
+      for ( int mp = 0; mp < points; mp++ )
+         rdata.scanData[ ks ].rvalues[ mp ] += shared_ti[ mp ] * sigma;
+}
+
+// Apply all four noise terms to one wavelength's data.
+//
+// What is shared between wavelengths and what is not:
+//
+//  - The systematic terms (TI, RI) are drawn once per run and reused, since
+//    both come from the instrument rather than from the measurement -- see
+//    the comments on add_ti_noise() and add_ri_noise().
+//
+//  - The random terms (rnoise, lrnoise) are drawn per point per wavelength.
+//    That is measurement noise, and it genuinely is independent.
+//
+//  - Every sigma scales with this wavelength's own total concentration, so a
+//    wavelength where the analyte absorbs weakly gets proportionally less
+//    noise rather than the same absolute amount. This is a simplification:
+//    a fixed optical defect attenuates a roughly constant fraction of the
+//    transmitted light, which does not convert to a constant fraction of OD.
+//
+// Called after clipping and padding, so the meniscus spike and the zeroed
+// pad below it carry noise too, as they would in real data.
+void US_MwlSpeciesSim::apply_noise( US_DataIO::RawData& rdata,
+                                    double total_conc )
+{
+   // Order matches us_astfem_sim's finish(): lrnoise reads the running
+   // value, so anything applied before it feeds into its magnitude.
+   add_ri_noise    ( rdata, total_conc );
+   add_baseline    ( rdata );
+   add_random_noise( rdata, total_conc );
+   add_ti_noise    ( rdata, total_conc );
 }
 
 // Build the raw data for the current triple (model)
@@ -807,6 +1508,7 @@ DbgLv(1) << "rdata:  dltr sc1" << rdata.scanData[1].delta_r;
    QString waveln     = QString( triple ).mid( 2, 3 );
    double mwavelen    = waveln.toDouble();
    rdata.cell         = triple.left( 1 ).toInt();
+   rdata.channel      = triple.mid( 1, 1 ).at( 0 ).toLatin1();
    for ( int js = 0; js < nscan; js++ )
       rdata.scanData[ js ].wavelength = mwavelen;
 
@@ -848,7 +1550,15 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    double radval      = radv0;
 
    for ( int js = 0; js < nscan; js++ )                // Resize for pad
+   {
       rdata.scanData[ js ].rvalues.resize( npoint );
+
+      // The interpolation bitmap describes the readings, so it has to grow
+      // with them, exactly as in us_astfem_sim's save path. None of the
+      // simulated points is interpolated, so every bit is zero -- which is
+      // also why the pad shifting readings down by npad needs no bit shift.
+      rdata.scanData[ js ].interpolated.fill( '\0', ( npoint + 7 ) / 8 );
+   }
 
    for ( int jr = npoint - 1; jr >= 0; jr-- )
    {  // Set shifted values, starting at data end
@@ -884,8 +1594,12 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
       }
    }
 
+   // Add noise last, so the pad and the meniscus spike are noisy too
+   apply_noise( rdata, tot_conc );
+
    // Save the simulated data and plot it
-   QString guid       = US_Util::new_guid();
+   QString guid       = US_SimRecord::guid( guid_seed,
+                           QString( "raw.%1" ).arg( synData.count() ) );
    US_Util::uuid_parse( guid, (uchar*)rdata.rawGUID );
 
    synData << rdata;
@@ -1069,4 +1783,3 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
    return timestate.time_count();
 #endif
 }
-
