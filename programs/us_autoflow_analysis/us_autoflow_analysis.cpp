@@ -173,6 +173,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   dataSource         = protocol_details[ "dataSource" ];
 
   velmwl_fit_open = false;
+  velmwl_channel_claimed_c.clear();
 
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
@@ -1374,6 +1375,15 @@ void US_Analysis_auto::gui_update( )
 		  continue;
 		}
 
+	      //ALEXEY: Remember which channel we just claimed so
+	      //get_ssf_dir_and_saveDB() -- invoked later via signal,
+	      //once its own local chan_norm_c is out of scope -- can
+	      //revert this claim if it finds sdiag already open/left
+	      //over from an abandoned prior pass, instead of leaving
+	      //the channel permanently stuck at "STARTED" with no
+	      //decision.
+	      velmwl_channel_claimed_c = chan_norm_c;
+
 	      QString ch_name_c, f_name_c;
 	      //Get filename, OR filenameS first???
 	      for ( int ta=0; ta<TriplesArray.size(); ++ta )
@@ -1685,6 +1695,18 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
       qDebug() << "Closing/deleting MWL-fit (in VEL-MWL) widget!";
       sdiag->close();
       velmwl_fit_open = false;
+
+      //ALEXEY: This channel was claimed (status "STARTED") but its
+      //fit dialog is being force-closed here without an Accept/Reject
+      //ever having been recorded for it -- release the claim now so a
+      //later pass can re-claim this channel and actually get a
+      //decision for it, instead of it being silently skipped forever
+      //(see claim_velmwl_channel()/autoflow_velmwl_channel_claim_revert()).
+      if ( ! velmwl_channel_claimed_c.isEmpty() )
+	{
+	  revert_velmwl_channel_claim(
+	      QString::number( autoflowID_passed ), velmwl_channel_claimed_c );
+	}
     }
   panel->addWidget( sdiag );
   sdiag -> show(); //
@@ -1845,6 +1867,40 @@ bool US_Analysis_auto::claim_velmwl_channel( QString autoflowID, QString chann )
 
   delete db;
   return ( unique_start == 1 );
+}
+
+//ALEXEY: Release a channel's claim without recording a decision -- the
+//counterpart to claim_velmwl_channel() above, used when a channel's
+//US_MwlSpeciesFit dialog is found already open/left over (i.e.
+//abandoned mid-channel by a prior pass) and force-closed without an
+//Accept/Reject ever coming in. Without this, that channel's "STARTED"
+//claim row is never removed, so every later claim_velmwl_channel()
+//call for it keeps failing and the channel loop skips it forever --
+//exactly the same as if it had been decided, even though it hasn't.
+bool US_Analysis_auto::revert_velmwl_channel_claim( QString autoflowID, QString chann )
+{
+  if ( autoflowID.isEmpty() || chann.isEmpty() )
+    return false;
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      delete db;
+      return false;
+    }
+
+  QStringList qry;
+  qry << "autoflow_velmwl_channel_claim_revert"
+      << autoflowID
+      << chann;
+
+  db->statusQuery( qry );
+  bool ok = ( db->lastErrno() == US_DB2::OK );
+
+  delete db;
+  return ok;
 }
 
 

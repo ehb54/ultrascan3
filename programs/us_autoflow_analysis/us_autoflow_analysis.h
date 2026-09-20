@@ -219,6 +219,7 @@ class US_Analysis_auto : public US_Widgets
             int mwlsim_chan_idx;                                      /**< Index (0-based) of the channel currently being processed by the MWL sim/save pipeline. */
             QString mwlsim_chan_name;                                 /**< Name of the channel currently being processed, used to label progress_msg_mwlsim. */
             int velmwl_channels_decided;                              /**< Count of channels_all resolved (already-decided & skipped, or freshly Accepted/Rejected) this VEL-MWL Analysis pass; see finalize_velmwl_analysis_if_complete(). */
+            QString velmwl_channel_claimed_c;                         /**< Normalized ("N / X") channel currently claimed/in-flight this pass -- set right after claim_velmwl_channel() succeeds, used by get_ssf_dir_and_saveDB() to revert the claim if its US_MwlSpeciesFit dialog is found already open/abandoned. */
 
             QVector< double > v_meni;                                /**< Vector of meniscus values. */
             QVector< double > v_bott;                                /**< Vector of bottom values. */
@@ -711,6 +712,15 @@ class US_Analysis_auto : public US_Widgets
          * @return true only if this call is the one that claimed it.
          */
         bool claim_velmwl_channel( QString autoflowID, QString chann );
+
+        /**
+         * @brief Release a VEL-MWL channel's claim without a decision
+         * (e.g. its US_MwlSpeciesFit dialog was force-closed/left open
+         * from a prior pass) so a later claim_velmwl_channel() call for
+         * it can succeed again instead of being permanently blocked.
+         * Wraps autoflow_velmwl_channel_claim_revert().
+         */
+        bool revert_velmwl_channel_claim( QString autoflowID, QString chann );
 
         /**
          * @brief Once every channel in channels_all has been resolved
