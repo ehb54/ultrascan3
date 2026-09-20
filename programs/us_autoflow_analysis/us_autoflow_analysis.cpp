@@ -1323,7 +1323,15 @@ void US_Analysis_auto::gui_update( )
 	  velmwl_channels_decided = 0;   //ALEXEY: count of channels_all resolved (already-decided & skipped, or freshly decided via Accept/Reject) this pass -- see finalize_velmwl_analysis_if_complete()
 	  progress_msg_mwlsim = new QProgressDialog( tr( "Preparing MWL species simulations..." ),
 						      QString(), 0, 100, this );
-	  progress_msg_mwlsim->setWindowFlags( Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint );
+	  //ALEXEY: WindowStaysOnTopHint matches the other blocking
+	  //"processing in progress" dialogs in this codebase (e.g.
+	  //msg_analysis_update_finishing, msg_expsetup) -- without it,
+	  //this dialog is a plain independent Qt::Window with no owned-
+	  //window stacking tie to the main GMP window, so switching away
+	  //to another application and back re-raises the main window
+	  //above it, making it appear to have disappeared while the
+	  //channel is still processing underneath.
+	  progress_msg_mwlsim->setWindowFlags( Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint );
 	  progress_msg_mwlsim->setWindowModality( Qt::WindowModal );
 	  progress_msg_mwlsim->setWindowTitle( tr( "VELOCITY-MWL: Species Simulation && Save" ) );
 	  progress_msg_mwlsim->setAutoClose( false );
@@ -3525,7 +3533,11 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 
   // Show msg while data downloaded and simulated
   progress_msg = new QProgressDialog ("Downloading data and models...", QString(), 0, 5, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+  //ALEXEY: WindowStaysOnTopHint added -- matches the other blocking
+  //"processing in progress" dialogs in this codebase; without it this
+  //dialog can end up hidden behind the main window after switching
+  //away to another application and back (see progress_msg_mwlsim fix).
+  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint);
   progress_msg->setWindowModality(Qt::WindowModal);
   progress_msg->setWindowTitle(tr("Overlay Plot Generation"));
   progress_msg->setAutoClose( false );
@@ -6386,7 +6398,11 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
 
      //ALEXEY: Set progressDialog
      progress_msg_fmb = new QProgressDialog ("Updating edit profiles...", QString(), 0, nedtfs, this);
-     progress_msg_fmb->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
+     //ALEXEY: WindowStaysOnTopHint added -- matches the other blocking
+     //"processing in progress" dialogs in this codebase; without it this
+     //dialog can end up hidden behind the main window after switching
+     //away to another application and back (see progress_msg_mwlsim fix).
+     progress_msg_fmb->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint);
      progress_msg_fmb->setWindowModality(Qt::WindowModal);
      progress_msg_fmb->setWindowTitle( QString( tr("Updating Edit Profiles: %1")).arg( triple_information[ "triple_name" ] ));
      QFont font_d  = progress_msg_fmb->property("font").value<QFont>();
