@@ -109,7 +109,28 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! clicks Accept/Reject here; the decision of whether this
         //! channel needed (re-)processing at all is made one level up,
         //! by US_Analysis_auto, before this class is even constructed.
-        void record_velmwl_channel_decision( QString chann, QString decision );
+        //!
+        //! ALEXEY: First-decision-wins is enforced atomically inside
+        //! update_autoflowAnalysisVelMwl_channel_decision() (see
+        //! us3_autoflow_procs.sql), not by a separate check here -- a
+        //! client-side check-then-write would itself race two sessions
+        //! clicking at nearly the same moment. This call reports back
+        //! what the DB actually ended up recording for the channel,
+        //! which may not be what was just clicked if another session's
+        //! decision got there first.
+        //! \param chann              The channel, in "N / X" canonical form.
+        //! \param decision           "Accepted" or "Rejected" -- what THIS click asked to record.
+        //! \param recorded_decision  [out] "Accepted" or "Rejected" -- what's actually on record now.
+        //! \param recorded_decisionByName [out] Who recorded it (blank if this call recorded it and DB lookup of that name isn't needed).
+        //! \param recorded_decisionTs     [out] When it was recorded.
+        //! \return true if THIS call's decision is the one now on record
+        //!         (i.e. it won); false if an earlier decision (this or
+        //!         another session) already won this channel and this
+        //!         click was not recorded.
+        bool record_velmwl_channel_decision( QString chann, QString decision,
+                                              QString& recorded_decision,
+                                              QString& recorded_decisionByName,
+                                              QString& recorded_decisionTs );
 
     private slots:
         //! \brief Write report to a text stream

@@ -173,7 +173,6 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   dataSource         = protocol_details[ "dataSource" ];
 
   velmwl_fit_open = false;
-  velmwl_channel_claimed_c.clear();
 
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
@@ -1368,30 +1367,16 @@ void US_Analysis_auto::gui_update( )
 		  continue;
 		}
 
-	      //ALEXEY: Not yet decided -- claim it before starting the
-	      //expensive work, so an overlapping session (also re-attached
-	      //to this run) can't simultaneously simulate/save/decide the
-	      //same channel and clobber whichever decision lands last.
-	      bool claimed_c = claim_velmwl_channel(
-		  QString::number( autoflowID_passed ), chan_norm_c );
-
-	      if ( ! claimed_c )
-		{
-		  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
-			   << "is currently claimed/being processed by another "
-			      "session -- skipping it for this pass.";
-		  continue;
-		}
-
-	      //ALEXEY: Remember which channel we just claimed so
-	      //get_ssf_dir_and_saveDB() -- invoked later via signal,
-	      //once its own local chan_norm_c is out of scope -- can
-	      //revert this claim if it finds sdiag already open/left
-	      //over from an abandoned prior pass, instead of leaving
-	      //the channel permanently stuck at "STARTED" with no
-	      //decision.
-	      velmwl_channel_claimed_c = chan_norm_c;
-
+	      //ALEXEY: Not yet decided -- proceed with simulate/save/open
+	      //the fit dialog for it. Deliberately no separate "claim"
+	      //step here: the only thing that determines whether this
+	      //channel gets reprocessed is load_velmwl_channel_decision()
+	      //above. (An earlier version also wrote a transient "STARTED"
+	      //placeholder to guard against two overlapping sessions
+	      //racing the same channel, but that placeholder had no way to
+	      //get cleared on a hard crash and would then permanently
+	      //block reprocessing -- removed as not worth that failure
+	      //mode for what is, in practice, a single-session workflow.)
 	      QString ch_name_c, f_name_c;
 	      //Get filename, OR filenameS first???
 	      for ( int ta=0; ta<TriplesArray.size(); ++ta )
@@ -1703,18 +1688,6 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
       qDebug() << "Closing/deleting MWL-fit (in VEL-MWL) widget!";
       sdiag->close();
       velmwl_fit_open = false;
-
-      //ALEXEY: This channel was claimed (status "STARTED") but its
-      //fit dialog is being force-closed here without an Accept/Reject
-      //ever having been recorded for it -- release the claim now so a
-      //later pass can re-claim this channel and actually get a
-      //decision for it, instead of it being silently skipped forever
-      //(see claim_velmwl_channel()/autoflow_velmwl_channel_claim_revert()).
-      if ( ! velmwl_channel_claimed_c.isEmpty() )
-	{
-	  revert_velmwl_channel_claim(
-	      QString::number( autoflowID_passed ), velmwl_channel_claimed_c );
-	}
     }
   panel->addWidget( sdiag );
   sdiag -> show(); //
@@ -1724,7 +1697,7 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 
 //slots for reject/accept Vel-MWL deconvoluton for a channel
 //  (1) when re-attached, US_Analysis_auto's own channels_all loop above
-//      now checks load_velmwl_channel_decision()/claim_velmwl_channel()
+//      now checks load_velmwl_channel_decision()
 //      BEFORE (re-)simulating & saving a channel, so an already-decided
 //      channel never reaches here a second time.
 //  (2) for the report, US_ReporterGMP can read every channel's decision
@@ -1846,71 +1819,6 @@ bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString
   delete db;
   return found;
 }
-
-//ALEXEY: Claim a channel before starting its (expensive) simulate/save
-//pipeline and US_MwlSpeciesFit's deconvolution+dialog step, so an
-//overlapping session (also re-attached to this run) can't duplicate
-//that work and race to save a conflicting decision for the same
-//channel. Returns true only if this call is the one that claimed it.
-bool US_Analysis_auto::claim_velmwl_channel( QString autoflowID, QString chann )
-{
-  if ( autoflowID.isEmpty() || chann.isEmpty() )
-    return false;
-
-  US_Passwd pw;
-  US_DB2*   db = new US_DB2( pw.getPasswd() );
-
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      delete db;
-      return false;
-    }
-
-  QStringList qry;
-  qry << "autoflow_velmwl_channel_claim"
-      << autoflowID
-      << chann;
-
-  int unique_start = db->statusQuery( qry );
-
-  delete db;
-  return ( unique_start == 1 );
-}
-
-//ALEXEY: Release a channel's claim without recording a decision -- the
-//counterpart to claim_velmwl_channel() above, used when a channel's
-//US_MwlSpeciesFit dialog is found already open/left over (i.e.
-//abandoned mid-channel by a prior pass) and force-closed without an
-//Accept/Reject ever coming in. Without this, that channel's "STARTED"
-//claim row is never removed, so every later claim_velmwl_channel()
-//call for it keeps failing and the channel loop skips it forever --
-//exactly the same as if it had been decided, even though it hasn't.
-bool US_Analysis_auto::revert_velmwl_channel_claim( QString autoflowID, QString chann )
-{
-  if ( autoflowID.isEmpty() || chann.isEmpty() )
-    return false;
-
-  US_Passwd pw;
-  US_DB2*   db = new US_DB2( pw.getPasswd() );
-
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      delete db;
-      return false;
-    }
-
-  QStringList qry;
-  qry << "autoflow_velmwl_channel_claim_revert"
-      << autoflowID
-      << chann;
-
-  db->statusQuery( qry );
-  bool ok = ( db->lastErrno() == US_DB2::OK );
-
-  delete db;
-  return ok;
-}
-
 
 //Get editID from selected model
 void US_Analysis_auto::get_editID ( QString& e_ID )
@@ -4537,20 +4445,6 @@ void US_Analysis_auto::reset_analysis_panel( )
 	  qDebug() << "[in reset Analysis stage: ] Closing MWL-fit in VEL-MWL substage...";
 	  sdiag->close();
 	  velmwl_fit_open = false;
-
-	  //ALEXEY: User navigated away (e.g. back to "Manage Optima
-	  //Runs") without ever clicking Accept/Reject for the channel
-	  //that was open here -- its claim ("STARTED", no decision)
-	  //would otherwise be left stuck forever, since nothing else
-	  //reverts it on this path. Release it now so re-attaching to
-	  //this run later can re-claim and actually get a decision for
-	  //this channel, instead of it being silently skipped every
-	  //pass (see claim_velmwl_channel()/revert_velmwl_channel_claim()).
-	  if ( ! velmwl_channel_claimed_c.isEmpty() )
-	    {
-	      revert_velmwl_channel_claim(
-		  QString::number( autoflowID_passed ), velmwl_channel_claimed_c );
-	    }
 	}
     }
   else

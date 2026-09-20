@@ -262,34 +262,87 @@ void US_MwlSpeciesFit::reject_velmwl()
 {
   qDebug() << "[Mwl-FIT]Rejecting VEL-MWL deconvolution results!";
 
-  QMessageBox::information( this,
-      tr( "Channel Deconvolution Rejected" ),
-      tr( "Channel %1 has been marked as REJECTED.\n\n"
-	  "This decision has been recorded. If this run is re-attached "
-	  "later, the channel will be skipped rather than re-processed." )
-      .arg( chann_to_process_velmwl ) );
+  QString recorded_decision, recorded_decisionByName, recorded_decisionTs;
+  bool newly_recorded = record_velmwl_channel_decision( chann_to_process_velmwl, "Rejected",
+							  recorded_decision,
+							  recorded_decisionByName,
+							  recorded_decisionTs );
 
-  record_velmwl_channel_decision( chann_to_process_velmwl, "Rejected" );
-  velmwl_channel_decisions[ chann_to_process_velmwl ] = "Rejected";
+  if ( newly_recorded )
+    {
+      QMessageBox::information( this,
+	  tr( "Channel Deconvolution Rejected" ),
+	  tr( "Channel %1 has been marked as REJECTED.\n\n"
+	      "This decision has been recorded. If this run is re-attached "
+	      "later, the channel will be skipped rather than re-processed." )
+	  .arg( chann_to_process_velmwl ) );
+    }
+  else
+    {
+      //ALEXEY: First-decision-wins -- another session's decision for
+      //this channel got there first, between when this dialog opened
+      //and now. Don't tell the user their Reject was recorded, since
+      //it wasn't; tell them what actually is on record.
+      QMessageBox::information( this,
+	  tr( "Channel Already Decided" ),
+	  tr( "Channel %1 was already marked %2 by %3 at %4.\n\n"
+	      "Your Reject click was not recorded; moving on with the "
+	      "existing decision." )
+	  .arg( chann_to_process_velmwl, recorded_decision,
+		recorded_decisionByName, recorded_decisionTs ) );
+    }
 
-  emit reject_velmwl_s( chann_to_process_velmwl );
+  //ALEXEY: Reflect whatever actually won -- not necessarily what was
+  //just clicked -- both locally and in which signal fires, so the rest
+  //of the pipeline (US_Analysis_auto::velmwl_deconv_accepted()/
+  //rejected()) treats this channel according to its true recorded
+  //decision.
+  velmwl_channel_decisions[ chann_to_process_velmwl ] = recorded_decision;
+
+  if ( recorded_decision == "Accepted" )
+    emit accept_velmwl_s( chann_to_process_velmwl );
+  else
+    emit reject_velmwl_s( chann_to_process_velmwl );
 }
 
 void US_MwlSpeciesFit::accept_velmwl()
 {
   qDebug() << "[Mwl-FIT]Accepting VEL-MWL deconvolution results!";
 
-  QMessageBox::information( this,
-      tr( "Channel Deconvolution Accepted" ),
-      tr( "Channel %1 has been marked as ACCEPTED.\n\n"
-	  "This decision has been recorded. If this run is re-attached "
-	  "later, the channel will be skipped rather than re-processed." )
-      .arg( chann_to_process_velmwl ) );
+  QString recorded_decision, recorded_decisionByName, recorded_decisionTs;
+  bool newly_recorded = record_velmwl_channel_decision( chann_to_process_velmwl, "Accepted",
+							  recorded_decision,
+							  recorded_decisionByName,
+							  recorded_decisionTs );
 
-  record_velmwl_channel_decision( chann_to_process_velmwl, "Accepted" );
-  velmwl_channel_decisions[ chann_to_process_velmwl ] = "Accepted";
+  if ( newly_recorded )
+    {
+      QMessageBox::information( this,
+	  tr( "Channel Deconvolution Accepted" ),
+	  tr( "Channel %1 has been marked as ACCEPTED.\n\n"
+	      "This decision has been recorded. If this run is re-attached "
+	      "later, the channel will be skipped rather than re-processed." )
+	  .arg( chann_to_process_velmwl ) );
+    }
+  else
+    {
+      //ALEXEY: See reject_velmwl() above -- same first-decision-wins
+      //handling.
+      QMessageBox::information( this,
+	  tr( "Channel Already Decided" ),
+	  tr( "Channel %1 was already marked %2 by %3 at %4.\n\n"
+	      "Your Accept click was not recorded; moving on with the "
+	      "existing decision." )
+	  .arg( chann_to_process_velmwl, recorded_decision,
+		recorded_decisionByName, recorded_decisionTs ) );
+    }
 
-  emit accept_velmwl_s( chann_to_process_velmwl );
+  velmwl_channel_decisions[ chann_to_process_velmwl ] = recorded_decision;
+
+  if ( recorded_decision == "Accepted" )
+    emit accept_velmwl_s( chann_to_process_velmwl );
+  else
+    emit reject_velmwl_s( chann_to_process_velmwl );
 }
 
 //ALEXEY: Persist this channel's Accept/Reject decision into a dedicated
@@ -305,14 +358,34 @@ void US_MwlSpeciesFit::accept_velmwl()
 //US_Analysis_auto::get_ssf_dir_and_saveDB(), so this call updates just
 //this channel's key in that JSON object as soon as the user clicks
 //Accept/Reject, rather than writing the whole row at once.
-void US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString decision )
+//
+//ALEXEY: First-decision-wins. update_autoflowAnalysisVelMwl_channel_
+//decision() enforces this atomically (under its own row lock) rather
+//than this function checking first and writing second -- a
+//check-then-write here would itself race two sessions clicking at
+//nearly the same moment. Returns whether THIS call's decision won.
+bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString decision,
+                                                         QString& recorded_decision,
+                                                         QString& recorded_decisionByName,
+                                                         QString& recorded_decisionTs )
 {
+  //ALEXEY: Fallback for the two "couldn't consult the DB at all" cases
+  //below (no autoflowID, or connection failure) -- treat this click as
+  //authoritative locally rather than blocking the whole VEL-MWL flow
+  //on a missing autoflowID or a transient DB/network problem. This
+  //can't detect a genuine cross-session race in that case, but that's
+  //no worse than this function's previous, always-unconditional
+  //behavior.
+  recorded_decision       = decision;
+  recorded_decisionByName = QString();
+  recorded_decisionTs     = QString();
+
   QString autoflowID = protocol_details[ "autoflowID" ];
   if ( autoflowID.isEmpty() )
     {
       qDebug() << "[Mwl-Fit] record_velmwl_channel_decision(): no autoflowID -- "
 		  "skipping DB save.";
-      return;
+      return true;
     }
 
   US_Passwd pw;
@@ -323,7 +396,7 @@ void US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
       QMessageBox::warning( this, tr( "Connection Problem" ),
 	  tr( "Could not connect to database: \n" ) + db->lastError() );
       delete db;
-      return;
+      return true;
     }
 
   //Who is recording this decision (for the audit trail / report)
@@ -346,12 +419,38 @@ void US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
   int status = db->statusQuery( qry );
 
   if ( status != US_DB2::OK )
-    qDebug() << "[Mwl-Fit] Failed to save VEL-MWL channel decision to DB; status ="
-	     << status;
-  else
+    {
+      qDebug() << "[Mwl-Fit] Failed to save VEL-MWL channel decision to DB; status ="
+	       << status;
+      delete db;
+      return true;   //ALEXEY: same fallback as above -- couldn't get a real answer from the DB.
+    }
+
+  //ALEXEY: Second result set from update_autoflowAnalysisVelMwl_
+  //channel_decision() -- newly_recorded, recorded_decision,
+  //recorded_decisionByID, recorded_decisionByName, recorded_decisionTs
+  //(column 2, decisionByID, deliberately unused here). Tells us
+  //whether THIS call's decision is the one now on record, or whether
+  //an earlier call (this or another session) already won this channel
+  //first.
+  bool newly_recorded = true;
+  if ( db->next() )
+    {
+      newly_recorded          = db->value( 0 ).toBool();
+      recorded_decision       = db->value( 1 ).toString();
+      recorded_decisionByName = db->value( 3 ).toString();
+      recorded_decisionTs     = db->value( 4 ).toString();
+    }
+
+  if ( newly_recorded )
     qDebug() << "[Mwl-Fit] Saved VEL-MWL decision:" << chann << "->" << decision;
+  else
+    qDebug() << "[Mwl-Fit] VEL-MWL channel" << chann << "was already decided ("
+	     << recorded_decision << "by" << recorded_decisionByName
+	     << "at" << recorded_decisionTs << ") -- this click was not recorded.";
 
   delete db;
+  return newly_recorded;
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
