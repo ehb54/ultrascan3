@@ -14,19 +14,6 @@ const uint US_DataIO::format_version;
 // Versions 4 and 5 share the supported header layout.
 static const quint32 oldest_version = 4;
 
-static double speed_resolution()
-{
-   const double default_resolution = 100.0;
-   const QString dbgval = US_Settings::debug_value( "SetSpeedReso" );
-   if ( dbgval.isEmpty() ) return default_resolution;
-
-   bool   ok    = false;
-   double value = dbgval.toDouble( &ok );
-
-   return ( ok && qIsFinite( value ) && value > 0.0 )
-          ? value : default_resolution;
-}
-
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
 {
@@ -218,7 +205,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    if ( ! ff.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
    QTextStream ts( &ff );
 
-   double ss_reso      = speed_resolution();
+   double ss_reso      = US_Settings::speedResolution();
 
    // Read the description
    data.description = ts.readLine();
@@ -575,7 +562,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
    memset( rd.type,    0, sizeof rd.type    );
    memset( rd.rawGUID, 0, sizeof rd.rawGUID );
 
-   double ss_reso      = speed_resolution();
+   double ss_reso      = US_Settings::speedResolution();
 
    try
    {
