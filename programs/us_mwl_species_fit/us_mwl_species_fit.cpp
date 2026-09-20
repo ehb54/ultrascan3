@@ -416,12 +416,21 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
       << QString::number( u_ID )
       << ( u_lname + ", " + u_fname );
 
-  int status = db->statusQuery( qry );
+  //ALEXEY: Deliberately db->query() here, NOT db->statusQuery() --
+  //this proc returns a *second* result set beyond the status one (see
+  //update_autoflowAnalysisVelMwl_channel_decision() in
+  //us3_autoflow_procs.sql), and statusQuery() is only ever used
+  //elsewhere in this codebase for procs that return status alone;
+  //chaining a next() after it does not reach that second result set.
+  //load_velmwl_channel_decision() (US_Analysis_auto, same "status
+  //select then data select" shape) uses exactly this query()+
+  //lastErrno()+next() pattern, successfully.
+  db->query( qry );
 
-  if ( status != US_DB2::OK )
+  if ( db->lastErrno() != US_DB2::OK )
     {
       qDebug() << "[Mwl-Fit] Failed to save VEL-MWL channel decision to DB; status ="
-	       << status;
+	       << db->lastErrno();
       delete db;
       return true;   //ALEXEY: same fallback as above -- couldn't get a real answer from the DB.
     }
