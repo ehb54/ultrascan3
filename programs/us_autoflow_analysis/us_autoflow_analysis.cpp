@@ -4525,6 +4525,20 @@ void US_Analysis_auto::reset_analysis_panel( )
 	  qDebug() << "[in reset Analysis stage: ] Closing MWL-fit in VEL-MWL substage...";
 	  sdiag->close();
 	  velmwl_fit_open = false;
+
+	  //ALEXEY: User navigated away (e.g. back to "Manage Optima
+	  //Runs") without ever clicking Accept/Reject for the channel
+	  //that was open here -- its claim ("STARTED", no decision)
+	  //would otherwise be left stuck forever, since nothing else
+	  //reverts it on this path. Release it now so re-attaching to
+	  //this run later can re-claim and actually get a decision for
+	  //this channel, instead of it being silently skipped every
+	  //pass (see claim_velmwl_channel()/revert_velmwl_channel_claim()).
+	  if ( ! velmwl_channel_claimed_c.isEmpty() )
+	    {
+	      revert_velmwl_channel_claim(
+		  QString::number( autoflowID_passed ), velmwl_channel_claimed_c );
+	    }
 	}
     }
   else
