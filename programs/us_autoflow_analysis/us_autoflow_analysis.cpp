@@ -1570,6 +1570,8 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   sdiag -> show(); //
   velmwl_fit_open = true;
 
+  progress_msg_mwlsim->close(); //is this correct?
+
 }
 
 //ALEXEY: Gate for the VELOCITY-MWL per-channel pipeline. Scans
