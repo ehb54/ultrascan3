@@ -111,6 +111,15 @@
       }
     },
     {
+      "name": "windows-debug-base",
+      "hidden": true,
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/admin/cmake/development-triplets;${sourceDir}/admin/cmake/triplets",
+        "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+      }
+    },
+    {
       "name": "windows-arm64-base",
       "hidden": true,
       "inherits": "windows-base",
@@ -399,7 +408,7 @@
       "name": "windows-debug-qt5",
       "displayName": "Windows x64 Debug Qt5 Qwt6.3.0",
       "inherits": [
-        "debug-base",
+        "windows-debug-base",
         "windows-base",
         "base-qt5-app"
       ],
@@ -427,7 +436,7 @@
       "name": "windows-debug-qt6",
       "displayName": "Windows x64 Debug Qt6 Qwt6.3.0",
       "inherits": [
-        "debug-base",
+        "windows-debug-base",
         "windows-base",
         "base-qt6-app"
       ],
@@ -455,7 +464,7 @@
       "name": "windows-debug-qt5-arm64",
       "displayName": "Windows ARM64 Debug Qt5 Qwt6.3.0",
       "inherits": [
-        "debug-base",
+        "windows-debug-base",
         "windows-arm64-base",
         "base-qt5-app"
       ],
@@ -483,7 +492,7 @@
       "name": "windows-debug-qt6-arm64",
       "displayName": "Windows ARM64 Debug Qt6 Qwt6.3.0",
       "inherits": [
-        "debug-base",
+        "windows-debug-base",
         "windows-arm64-base",
         "base-qt6-app"
       ],
