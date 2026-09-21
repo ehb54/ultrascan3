@@ -1779,7 +1779,7 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
   //Next, save edit profiles (based on new menicsus && same edits )
   sdiag_edit = new US_Edit("AUTO");
   /** re-define some fields **/
-  protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir_mwl.section("/", -2, -2);
+  protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir_mwl.section("/", -1, -1);
   protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
   sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
   
