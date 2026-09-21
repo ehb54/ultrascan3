@@ -11,8 +11,7 @@ QString US_SimRecord::guid( const QString& seed, const QString& key )
    if ( seed.isEmpty() )
       return US_Util::new_guid();
 
-   // A fixed namespace of our own, so these identities cannot collide with
-   // version 5 UUIDs minted elsewhere from the same seed text.
+   // Use a fixed UUID namespace for simulation identities.
    static const QUuid ns( QString( "{cb2a4256-450e-4202-8e7f-dcb34d66b142}" ) );
 
    return QUuid::createUuidV5( ns, ( seed + "/" + key ).toUtf8() )
@@ -28,23 +27,17 @@ US_Experiment US_SimRecord::experiment( const US_Rotor::Rotor&         rotor,
    US_Experiment experiment;
    experiment.clear();
 
-   // clear() has already set the investigator from settings, blanked every
-   // GUID and date, and cleared the project, so only what a simulation
-   // actually determines is set here.
+   // clear() initializes investigator settings and clears record identifiers.
    experiment.expGUID             = guid( guidSeed, "experiment." + runID );
    experiment.expType             = "velocity";
    experiment.runID               = runID;
    experiment.project.projectDesc = "Simulation";
 
-   // US_Experiment::saveToDisk() writes the experiment XML before it saves the
-   // project, so an unset GUID here is serialized empty and the project the
-   // save then mints is one nothing references.  The key is not qualified by
-   // runID: the speed-specific runs of one multi-speed channel are the same
-   // simulated project.
+   // Set the project GUID before experiment XML is written.
+   // Speed-specific runs share this project key.
    experiment.project.projectGUID = guid( guidSeed, "project" );
 
-   // No real lab or instrument stands behind a simulated run; these are the
-   // first row of each, which is what a fresh LIMS instance seeds.
+   // Use the default lab and instrument IDs seeded by LIMS.
    experiment.labID               = 1;
    experiment.instrumentID        = 1;
 
@@ -56,8 +49,7 @@ US_Experiment US_SimRecord::experiment( const US_Rotor::Rotor&         rotor,
    experiment.rotorCoeff1         = simparams.rotorcoeffs[ 0 ];
    experiment.rotorCoeff2         = simparams.rotorcoeffs[ 1 ];
 
-   // A simulated run has no real calibration. Fixed rather than taken from
-   // the clock, so re-running the same inputs changes only the GUIDs.
+   // Use a fixed calibration date for reproducible records.
    experiment.rotorUpdated        = QDate( 2019, 1, 1 );
 
    experiment.opticalSystem       = runType.toLatin1();
@@ -97,8 +89,7 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
       // analyte.sequence has no corresponding SimulationComponent property
       analyte.grad_form   = ( first.coSedSolute == ic );
 
-      // One entry per model, so a run of several wavelengths yields a
-      // spectrum and a run of one yields a single reading.
+      // Collect one extinction value per model wavelength.
       for ( int jm = 0; jm < models.size(); jm++ )
       {
          if ( ic >= models[ jm ].components.size() )

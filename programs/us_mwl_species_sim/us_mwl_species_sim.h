@@ -43,12 +43,9 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \return 0 on success, 1 if the GUI is required, or 2 on error.
         int init_from_args(const QMap<QString, QString>& flags);
 
-        //! \brief The wavelength a per-wavelength model description names.
-        //! \param description A model description whose third-from-last
-        //!        dot-separated field carries the wavelength, as the temporary
-        //!        models a multi-wavelength run derives all do.
-        //! \return The three-digit wavelength, or an empty string if the
-        //!         description does not carry one.
+        //! \brief Extract a wavelength from a model description.
+        //! \param description Third-from-last dot-separated field contains the wavelength.
+        //! \return Three-digit wavelength, or empty if absent.
         static QString model_wavelength(const QString& description);
         //! \brief The cell of a model, from its description's triple field.
         static QString model_cell(const QString& description);
@@ -84,23 +81,13 @@ class US_MwlSpeciesSim : public US_Widgets
         bool write_experiment_record(const QString& impdir, const QString& cell,
                                     const QString& channel);
 
-        //! \brief Add the simparams noise terms to one wavelength's data.
-        //! Ported from us_astfem_sim's finish(), which applies the same four
-        //! terms in this same order to every speed step of one simulation.
-        //! Here the unit is one wavelength's dataset instead -- see the
-        //! comment on the definition for what is shared between wavelengths
-        //! and what is not.
-        //! \param rdata      The padded, clipped data for one wavelength.
-        //! \param total_conc Total signal concentration of that wavelength's
-        //!                   model; every sigma is a percentage of it.
+        //! \brief Apply systematic and random noise to one wavelength.
+        //! \param rdata Padded, clipped data.
+        //! \param total_conc Total signal concentration, used to scale noise.
         void apply_noise( US_DataIO::RawData& rdata, double total_conc );
 
-        //! \brief Scale each loaded model's signal concentration by that
-        //! component's extinction coefficient, so the wavelengths of a run
-        //! differ in amplitude the way an absorbance spectrum makes them
-        //! differ. Call after the models are loaded and before their total
-        //! concentrations are summed. A model set carrying no extinction
-        //! data is left exactly as it was.
+        //! \brief Scale concentrations by extinction relative to the set maximum.
+        //! Call before summing concentrations. All-zero extinction leaves the set unchanged.
         void apply_extinction_scaling( void );
 
         void add_ri_noise    ( US_DataIO::RawData& rdata, double total_conc );
@@ -108,11 +95,8 @@ class US_MwlSpeciesSim : public US_Widgets
         void add_random_noise( US_DataIO::RawData& rdata, double total_conc );
         void add_ti_noise    ( US_DataIO::RawData& rdata, double total_conc );
 
-        //! Unit-sigma systematic noise, drawn once for the run and reused by
-        //! every wavelength, each scaling it by its own concentration. Both
-        //! are built on first use and cleared by start_sims(). Empty whenever
-        //! the corresponding simparams term is zero, so a noise-free run
-        //! draws nothing and consumes no random numbers.
+        //! Unit-sigma noise shared across wavelengths and scaled by concentration.
+        //! Generated on first use and cleared by start_sims().
         QVector< double > shared_ti; //!< TI walk over radius, one per run
         QVector< double > shared_ri; //!< RI offsets, one per scan
 

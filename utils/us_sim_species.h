@@ -51,33 +51,16 @@ class US_UTIL_EXTERN US_SimSpecies
             //! components; values are not normalized as fractions.
             double signal_concentration;
 
-            //! Molar extinction coefficient of this species at the wavelength
-            //! the model represents. Distinct from signal_concentration: that
-            //! states how much material is loaded, this states how strongly it
-            //! absorbs. Zero, the default, means the species carries no
-            //! spectrum, and consumers that scale amplitude by extinction
-            //! leave such a model exactly as it is.
+            //! Molar extinction at the model wavelength; defaults to zero.
+            //! All-zero extinction leaves model-set concentrations unchanged.
             double extinction;
 
-            //! Which class of analyte this species is, as US_Analyte::analyte_t:
-            //! PROTEIN, DNA, RNA, or CARBOHYDRATE. Defaults to PROTEIN.
-            //!
-            //! Metadata only. No part of the hydrodynamic solution reads it, so
-            //! changing it does not change simulated data. It matters because
-            //! us_astfem_sim copies it into the solution record it writes for a
-            //! run, which is where a stored analyte type originates.
+            //! Analyte type for solution records; defaults to PROTEIN.
+            //! Does not affect hydrodynamic calculations.
             int analyte_type;
 
-            //! Persistent identity of this species, as a 36-character UUID.
-            //! Empty by default, which US_Model omits from the XML entirely.
-            //!
-            //! Like the type, it does not affect simulated data. It is the
-            //! species' identity in a database: us_astfem_sim copies it into
-            //! the solution record, and US_Analyte::write_db rejects anything
-            //! that is not exactly 36 characters, so a species left empty here
-            //! cannot be stored. Mint one value and keep it, rather than
-            //! generating a fresh one per run, or each run creates a new
-            //! analyte instead of matching the existing one.
+            //! Persistent analyte UUID (36 characters); empty is omitted from model XML.
+            //! Reuse the UUID across runs to match the same database analyte.
             QString analyte_guid;
       };
 

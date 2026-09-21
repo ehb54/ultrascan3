@@ -1,8 +1,4 @@
 //! \file us_mwl_species_sim.cpp
-//!
-//! The US_MwlSpeciesSim implementation, kept separate from the application's
-//! main() in main.cpp so that a test can link this class without pulling in a
-//! second main(). us_astfem_sim splits us_clipdata.cpp for the same reason.
 
 #include <QApplication>
 
@@ -286,8 +282,7 @@ DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
    if ( nmodels < 1 )
       return;
 
-   // Before the totals below are summed, so the clip and the noise sigmas
-   // that read them see the scaled amplitudes.
+   // Scale amplitudes before computing clipping limits and noise sigmas.
    apply_extinction_scaling();
 
    mtconcs.fill( 0.0, nmodels );
@@ -493,26 +488,8 @@ DbgLv(1) << "assign_rotor: rotor" << rotor.name
  << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
 
-// Scale every model's signal concentration by its extinction coefficient.
-//
-// Each model here is one wavelength, so the set of models is a sampling of the
-// analyte's absorbance spectrum. Without this, every wavelength simulates at
-// the amplitude its model file states, which for a set generated from one
-// species means every wavelength comes out identical: a multi-wavelength run
-// whose wavelengths carry no wavelength-dependent information at all.
-//
-// The scale factor is normalized against the strongest absorber in the set
-// rather than applied raw. Extinction coefficients are molar and run to five
-// figures, so multiplying a signal concentration of 1 by 10000 would ask for an
-// optical density no instrument produces, and the clip in build_rawdata() would
-// flatten it. Normalizing here lets a model file carry recognizable molar
-// extinctions while the strongest wavelength keeps the amplitude that file
-// asks for and the rest fall below it in the spectrum's proportions.
-//
-// Extinction defaults to zero (us_model.cpp) and every model written before
-// this existed carries zero, so a set with no extinction data takes the early
-// return and simulates exactly as it did before. That is what keeps existing
-// models, and the GUI paths that load them, unaffected.
+// Scale concentrations by extinction, normalized to the maximum extinction.
+// Leave concentrations unchanged when the entire model set has zero extinction.
 void US_MwlSpeciesSim::apply_extinction_scaling( void )
 {
    double max_extinc  = 0.0;
@@ -534,9 +511,7 @@ DbgLv(1) << "extinc: no extinction data; amplitudes unscaled";
       {
          US_Model::SimulationComponent* sc = &models[ jm ].components[ jc ];
 
-         // A component with no extinction of its own, in a set where others
-         // have it, absorbs nothing at this wavelength. Scaling it to zero is
-         // the honest reading of that, not a degenerate case to guard against.
+         // Zero extinction gives zero amplitude when the set has extinction data.
          sc->signal_concentration *= ( sc->extinction / max_extinc );
       }
    }
@@ -564,8 +539,7 @@ DbgLv(1) << "SLOT: start_sims";
    synData.clear();
    have_p1.clear();
 
-   // Drop the previous run's systematic noise so a re-run draws fresh
-   // vectors rather than reusing the ones the last run's wavelengths shared.
+   // Clear systematic noise before generating a new run.
    shared_ti.clear();
    shared_ri.clear();
 
@@ -626,9 +600,7 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    bool error_occured   = false;
    bool errors_to_cl    = flags.contains( "errors-cl" );
 
-   // Validated in main(); absent, the constructor's "RA" stands.
-   // Reproducible identity. Both stay empty unless asked for, so the desktop
-   // and every existing caller keep minting fresh GUIDs and stamping the clock.
+   // CLI overrides for output type and reproducible identifiers.
    if ( flags.contains( "guid-seed" ) )
       guid_seed  = flags[ "guid-seed" ];
 
@@ -638,8 +610,7 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    if ( flags.contains( "runtype" ) && flags[ "runtype" ].length() == 2 )
       run_type = flags[ "runtype" ];
 
-   // Each input is optional. Only an explicitly requested input that fails
-   // to load should prevent start_sims() below.
+   // Abort only when an explicitly requested input fails to load.
    bool loaded_models    = true;
    bool loaded_buffer    = true;
    bool loaded_simparams = true;
@@ -753,7 +724,7 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
          }
          else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
                                             cp, ch ) )
-         {  // Ignoring this would silently fall back to the 7.2 default bottom
+         {  // Reject invalid geometry instead of using the default bottom.
             reportHeadlessLoadFailure( "centerpiece",
                "hardware definitions could not be applied", errors_to_cl,
                gui_needed, error_occured );
@@ -821,11 +792,7 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
 // does, without displaying the selection dialog.
 bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 {
-   // mdescs is deliberately not filled here. It belongs to US_ModelLoader,
-   // which fills it with composite ";desc;filename;modelGUID;DB_id;editGUID"
-   // strings (us_model_loader.cpp:description), not with bare descriptions.
-   // Anything this path needs comes from models[].description directly, so
-   // leaving the member empty keeps it meaning exactly one thing.
+   // Use models[].description; mdescs contains GUI loader metadata.
    models.clear();
 
    for ( const QString& path : paths )
@@ -843,8 +810,7 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
    if ( nmodels < 1 )
       return false;
 
-   // Before the totals below are summed, so the clip and the noise sigmas
-   // that read them see the scaled amplitudes.
+   // Scale amplitudes before computing clipping limits and noise sigmas.
    apply_extinction_scaling();
 
    mtconcs.fill( 0.0, nmodels );
@@ -950,7 +916,7 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
    QString tfpath     = impdir + tfname;
 DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
-   // writeTimeState() reports failure by returning zero time points.
+   // Zero indicates a time-state write failure.
    if ( writeTimeState( tfpath, simparams, synData[ 0 ] ) == 0 )
    {
       qDebug() << "Error: could not write time state" << tfpath;
@@ -976,14 +942,7 @@ DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
    return true;
 }
 
-// Write the experiment and solution records a database load needs.
-//
-// us_astfem_sim has exported these since 2025; this simulator never did, so a
-// multi-wavelength archive carried scan data nothing could attribute to a
-// sample. US_Experiment::readFromDisk had no <runID>.<type>.xml to rebuild
-// triples from, and US_Solution::readFromDisk no record to hydrate chemistry
-// from. Both documents come from the same utils writers us_astfem_sim calls,
-// so what a multi-wavelength run exports is what a single-wavelength one does.
+// Write experiment and solution records for database loading.
 bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
                                                 const QString& cell,
                                                 const QString& channel )
@@ -991,17 +950,12 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
    if ( models.isEmpty()  ||  synData.isEmpty() )
       return false;
 
-   // The record composition is shared with us_astfem_sim: same fields, same
-   // fixed values, so what a multi-wavelength run exports is what a
-   // single-wavelength one does.
+   // Compose the shared simulation record fields.
    US_Experiment experiment = US_SimRecord::experiment( rotor, simparams,
                                                         orunid, run_type,
                                                         guid_seed );
 
-   // One solution for the run. Every wavelength simulates the same species in
-   // the same buffer, and each analyte collects its extinction at every
-   // wavelength the run covers, which is what makes this a spectrum rather
-   // than a set of unrelated samples.
+   // All wavelengths share one solution with the combined analyte spectra.
    QList< double > wavelengths;
 
    for ( int jm = 0; jm < nmodels; jm++ )
@@ -1009,8 +963,7 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
 
    US_Solution sol = US_SimRecord::solution( models, wavelengths, buffer );
 
-   // saveToDisk mints one only when this does not already hold a UUID, so
-   // seeding it here needs no change to US_Solution.
+   // Set the GUID before saveToDisk() can generate one.
    if ( ! guid_seed.isEmpty() )
       sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
 
@@ -1019,9 +972,7 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
 
    sol.saveToDisk();
 
-   // One dataset per wavelength, matching the .auc files written above.
-   // saveToDisk splits cell, channel and wavelength back out of tripleDesc,
-   // so these have to agree with the names save_sims_to built.
+   // Match each experiment triple to its saved AUC filename.
    QList< US_Convert::TripleInfo > triples;
 
    for ( int jm = 0; jm < nmodels; jm++ )
@@ -1045,10 +996,8 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
                                  simparams.speed_step ) == US_Convert::OK;
 }
 
-// Write an edit XML with stretched cell geometry beside each .auc file.
-// The wavelength a per-wavelength model description names. The derived models
-// a multi-wavelength run builds carry it in the third-from-last dot-separated
-// field, two characters in, as in "...-MWL.e280.model.xml".
+// Extract the wavelength from the third-from-last dot-separated field,
+// starting after its two-character prefix (for example, "e280").
 QString US_MwlSpeciesSim::model_wavelength( const QString& description )
 {
    return description.section( ".", -3, -3 ).mid( 2, 3 );
@@ -1096,10 +1045,7 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
       return false;
    }
 
-   // Taken from the models rather than from the mdescs member, which holds
-   // US_ModelLoader's composite ";desc;filename;modelGUID;DB_id;editGUID"
-   // strings and is empty on the headless path. model_wavelength() parses
-   // dot-separated fields of a bare description, so it needs this form.
+   // Parse bare model descriptions; mdescs contains GUI loader metadata.
    QStringList model_descs;
 
    for ( int jm = 0; jm < nmodels; jm++ )
@@ -1222,8 +1168,7 @@ void US_MwlSpeciesSim::init_simparams( void )
    simparams.meniscus          = 5.8;    // Meniscus for simulation
    simparams.bottom            = bottom; // Bottom for simulation
    simparams.bottom_position   = 7.2;
-   // Noise defaults to off. A --simparams file, or the simulation-parameters
-   // dialog, may raise any of these; build_rawdata() applies whatever is set.
+   // Noise defaults to off; simulation parameters control each term.
    simparams.rnoise            = 0.0;
    simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
@@ -1322,10 +1267,7 @@ if(js==0  || js==(nscans-1))
    }
 }
 
-// Add radially invariant noise: one offset per scan, applied to every point
-// of that scan. The offsets are shared across wavelengths -- a lamp or
-// detector fluctuation during scan k moves every wavelength read in that
-// scan, so drawing them per wavelength would model N unrelated instruments.
+// Add one offset per scan, shared across points and wavelengths.
 void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
                                      double total_conc )
 {
@@ -1334,9 +1276,7 @@ void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
    int scans = rdata.scanData.size();
 
    if ( shared_ri.size() != scans )
-   {  // First wavelength of the run draws it; the rest reuse it. Every
-      // wavelength has the same scan geometry, so the size check only ever
-      // fires once.
+   {  // Generate offsets once per run and reuse them across wavelengths.
       shared_ri.resize( scans );
 
       for ( int ks = 0; ks < scans; ks++ )
@@ -1391,22 +1331,8 @@ void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
    }
 }
 
-// Add time invariant noise: one vector over radius, added identically to
-// every scan.
-//
-// Built as a random walk rather than as independent draws, so its spread
-// grows with the point count instead of staying at sigma, and varies a lot
-// from one run to the next. At simpoints=200 the end-to-end drift is of
-// order sqrt(N) times sigma. Keep tinoise well below rnoise or it dominates
-// the dataset.
-//
-// The walk is shared across wavelengths. TI noise is by definition the part
-// that does not vary between scans, which means it comes from fixed features
-// of the optical path -- a scratch or a speck sits at one radius, and light
-// of every wavelength passing through that radius passes through it. Drawing
-// a separate walk per wavelength would model N unrelated scratches, and in a
-// global fit those partially cancel across datasets, handing the fit a noise
-// reduction real data would never give.
+// Add a radial random walk shared across scans and wavelengths.
+// Its spread grows approximately as sqrt(point count) times sigma.
 void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
                                      double total_conc )
 {
@@ -1415,10 +1341,7 @@ void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
    int points = rdata.pointCount();
 
    if ( shared_ti.size() != points )
-   {  // First wavelength of the run draws it; the rest reuse it. Every
-      // wavelength has the same radial geometry, so the size check only ever
-      // fires once. Drawn at unit sigma and scaled below, so the magnitude
-      // of the noise does not change how many random numbers are consumed.
+   {  // Generate one unit-sigma walk per run; scale it for each wavelength.
       shared_ti.resize( points );
 
       double val = US_Math2::box_muller( 0.0, 1.0 );
@@ -1437,25 +1360,9 @@ void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
          rdata.scanData[ ks ].rvalues[ mp ] += shared_ti[ mp ] * sigma;
 }
 
-// Apply all four noise terms to one wavelength's data.
-//
-// What is shared between wavelengths and what is not:
-//
-//  - The systematic terms (TI, RI) are drawn once per run and reused, since
-//    both come from the instrument rather than from the measurement -- see
-//    the comments on add_ti_noise() and add_ri_noise().
-//
-//  - The random terms (rnoise, lrnoise) are drawn per point per wavelength.
-//    That is measurement noise, and it genuinely is independent.
-//
-//  - Every sigma scales with this wavelength's own total concentration, so a
-//    wavelength where the analyte absorbs weakly gets proportionally less
-//    noise rather than the same absolute amount. This is a simplification:
-//    a fixed optical defect attenuates a roughly constant fraction of the
-//    transmitted light, which does not convert to a constant fraction of OD.
-//
-// Called after clipping and padding, so the meniscus spike and the zeroed
-// pad below it carry noise too, as they would in real data.
+// Apply noise after clipping and padding.
+// TI and RI terms are shared across wavelengths; random terms are independent.
+// Noise scales with concentration, an approximation of instrument noise.
 void US_MwlSpeciesSim::apply_noise( US_DataIO::RawData& rdata,
                                     double total_conc )
 {
@@ -1553,10 +1460,7 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    {
       rdata.scanData[ js ].rvalues.resize( npoint );
 
-      // The interpolation bitmap describes the readings, so it has to grow
-      // with them, exactly as in us_astfem_sim's save path. None of the
-      // simulated points is interpolated, so every bit is zero -- which is
-      // also why the pad shifting readings down by npad needs no bit shift.
+      // Extend the zeroed interpolation bitmap to cover the padded readings.
       rdata.scanData[ js ].interpolated.fill( '\0', ( npoint + 7 ) / 8 );
    }
 

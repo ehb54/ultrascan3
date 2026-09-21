@@ -110,8 +110,7 @@ TEST_F(US_SimInputsTest, ZeroAccelerationIsRejectedAtTheBuilderBoundary) {
 }
 
 TEST_F(US_SimInputsTest, AccelerationRoundingToZeroIsRejected) {
-    // The speed profile stores whole rpm/s, so a value under half an rpm/s
-    // would be stored as zero and stretch the ramp out forever.
+    // Acceleration below 0.5 rpm/s rounds to zero, preventing a finite ramp.
     US_SimInputs::Params p;
     p.acceleration = 0.4;
     US_SimulationParameters sp;
