@@ -84,10 +84,7 @@ qDebug() << "CG: nefmods" << nefmods;
 
    QGridLayout* colors = new QGridLayout();
 
-   // Check need to change style of buttons so that they can be colored.
-   // The name comes from US_GuiSettings, the same source US_Theme::apply()
-   // uses, rather than from qApp->style()->objectName(): US_Theme wraps the
-   // chosen style in US_Style, a QProxyStyle that leaves objectName empty.
+   // Use Fusion so macOS and Windows styles do not suppress button colors.
    QString stynam  = US_GuiSettings::guiStyle();
    QStyle* btnsty  = QStyleFactory::create( "fusion" );
    bool needbsty   = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
