@@ -1768,6 +1768,13 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
 
   ++velmwl_channels_decided;
 
+  //Save SSF- procuded data to DB
+  qDebug() << "[in velmwl_deconv_accepted(): ssf_dir ] -- "
+	   << protocol_details_at_analysis_velmwl["ssf_dir_name"];
+  protocol_details_at_analysis_velmwl[ "auto_flag_import"] = QString("VELMWL_IMPORT_SIM_ANALYSIS");
+  sdiag_convert = new US_ConvertGui("AUTO");
+  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
+  
   //ALEXEY: See velmwl_deconv_rejected() above.
   start_next_velmwl_channel();
 }
