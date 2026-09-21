@@ -85,9 +85,9 @@ qDebug() << "CG: nefmods" << nefmods;
    QGridLayout* colors = new QGridLayout();
 
    // Use Fusion so macOS and Windows styles do not suppress button colors.
-   QString stynam  = US_GuiSettings::guiStyle();
-   QStyle* btnsty  = QStyleFactory::create( "fusion" );
-   bool needbsty   = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
+   const QString stynam = US_GuiSettings::guiStyle();
+   static QStyle* const btnsty = QStyleFactory::create( "fusion" );
+   const bool needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
                      stynam.startsWith( "mac"    , Qt::CaseInsensitive );
    int c_row = 0;
 
@@ -95,7 +95,7 @@ qDebug() << "CG: nefmods" << nefmods;
    {
       pb_c[ ii ] = new MyButton( ii );
 
-      if ( needbsty )		// change button style for coloring if need be
+      if ( needbsty && btnsty != nullptr )
          pb_c[ ii ]->setStyle( btnsty );
 
       ct_c[ ii ] = us_counter( 2, 1.0, 101.0, 10.0 );
