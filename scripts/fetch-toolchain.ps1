@@ -49,6 +49,13 @@ update it produces.
 "@
 }
 
+if (-not $pin.PSObject.Properties['repository'] -or
+    -not $pin.PSObject.Properties['release_tag'] -or
+    [string]::IsNullOrWhiteSpace($pin.repository) -or
+    [string]::IsNullOrWhiteSpace($pin.release_tag)) {
+    throw "toolchain pin for '$Target' has no repository or release_tag."
+}
+
 if (-not $Dest) {
     $Dest = if ($env:US3_TOOLCHAIN_DIR) { $env:US3_TOOLCHAIN_DIR }
             else { Join-Path $env:LOCALAPPDATA 'ultrascan3\toolchain' }
@@ -61,16 +68,7 @@ if (-not (Test-Path $Stamp)) {
     New-Item -ItemType Directory -Force -Path $Dest | Out-Null
     $TmpArchive = Join-Path $Dest ".$($pin.asset).partial"
 
-    # Resolve the repository so forks use their own release assets.
-    $repo = $env:GITHUB_REPOSITORY
-    if (-not $repo) {
-        $origin = (git -C $SourceDir remote get-url origin 2>$null)
-        if ($origin) { $repo = $origin -replace '^git@[^:]+:', '' -replace '^https?://[^/]+/', '' -replace '\.git$', '' }
-    }
-    if (-not $repo) {
-        throw "cannot determine the GitHub repository to download from. Set GITHUB_REPOSITORY=<owner>/<repo> and retry."
-    }
-    $url  = "https://github.com/$repo/releases/download/$($lock.release_tag)/$($pin.asset)"
+    $url = "https://github.com/$($pin.repository)/releases/download/$($pin.release_tag)/$($pin.asset)"
 
     Write-Host "Fetching toolchain for $Target"
     Write-Host "  $url"

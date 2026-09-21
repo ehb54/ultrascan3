@@ -80,7 +80,7 @@ case "$_uname_s" in
 esac
 
 # Read the pin
-read -r KIND ASSET SHA256 IMAGE DIGEST RELEASE_TAG < <(
+read -r KIND ASSET SHA256 IMAGE DIGEST RELEASE_TAG REPO < <(
   python3 - "$LOCK_FILE" "$TARGET" <<'PY'
 import json, sys
 lock = json.load(open(sys.argv[1]))
@@ -94,7 +94,8 @@ fields = [
     target.get("sha256", "") or "-",
     target.get("image", "-"),
     target.get("digest", "") or "-",
-    lock.get("release_tag", "-"),
+    target.get("release_tag", "-"),
+    target.get("repository", "-"),
 ]
 print(" ".join(str(f) if f else "-" for f in fields))
 PY
@@ -134,6 +135,11 @@ else
     exit 1
   fi
 
+  if [ "$REPO" = "-" ] || [ "$RELEASE_TAG" = "-" ]; then
+    echo "ERROR: toolchain pin for '$TARGET' has no repository or release_tag." >&2
+    exit 1
+  fi
+
   if [ -z "$DEST" ]; then
     case "$_uname_s" in
       Darwin) DEST="${HOME}/Library/Caches/ultrascan3/toolchain" ;;
@@ -147,18 +153,6 @@ else
   if [ ! -f "$STAMP" ]; then
     mkdir -p "$DEST"
     TMP_ARCHIVE="${DEST}/.${ASSET}.partial"
-    # Resolve the repository so forks use their own release assets.
-    REPO="${GITHUB_REPOSITORY:-}"
-    if [ -z "$REPO" ]; then
-      ORIGIN="$(git -C "$SOURCE_DIR" remote get-url origin 2>/dev/null || echo "")"
-      REPO="$(printf '%s' "$ORIGIN" \
-        | sed -E 's#^git@[^:]+:##; s#^https?://[^/]+/##; s#\.git$##')"
-    fi
-    if [ -z "$REPO" ]; then
-      echo "ERROR: cannot determine the GitHub repository to download from." >&2
-      echo "       Set GITHUB_REPOSITORY=<owner>/<repo> and retry." >&2
-      exit 1
-    fi
     URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${ASSET}"
 
     echo "Fetching toolchain for ${TARGET}" >&2

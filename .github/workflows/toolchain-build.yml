@@ -46,6 +46,8 @@ jobs:
   # Resolve the pin once so every job agrees on tag and image names.
   plan:
     name: "Plan"
+    # Forks build toolchains only by manual dispatch.
+    if: github.repository == 'ehb54/ultrascan3' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       release_tag:    ${{ steps.lock.outputs.release_tag }}
@@ -283,18 +285,26 @@ jobs:
       # Artifacts preserve one digest per matrix leg.
       - name: Collect digest
         shell: bash
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
-          echo "Pushed digest: ${{ steps.build.outputs.digest }}"
           mkdir -p digests
-          printf '%s' "${{ steps.build.outputs.digest }}" > "digests/${{ matrix.target }}.digest"
+          python3 - <<'PY'
+          import json, os, pathlib
+
+          pin = {"image": os.environ["IMAGE"].lower(), "digest": os.environ["DIGEST"]}
+          pathlib.Path(f"digests/{os.environ['TARGET']}.json").write_text(json.dumps(pin))
+          PY
 
       - name: Upload digest
         uses: actions/upload-artifact@v7
         with:
           name: digest-${{ matrix.target }}
           overwrite: true
-          path: digests/${{ matrix.target }}.digest
+          path: digests/${{ matrix.target }}.json
           retention-days: 5
 
   # Publish artifacts and propose the new lock values for validation.
@@ -363,20 +373,23 @@ jobs:
               entry = lock["targets"].get(target)
               if entry is None:
                   continue
-              if entry.get("sha256") != digest or entry.get("asset") != asset:
-                  entry["sha256"] = digest
-                  entry["asset"] = asset
+              updated = dict(entry, sha256=digest, asset=asset,
+                             repository=os.environ["GITHUB_REPOSITORY"],
+                             release_tag=lock["release_tag"])
+              if entry != updated:
+                  entry.update(updated)
                   changed.append(target)
 
           # Container targets: read the pushed manifest digest.
-          for dpath in glob.glob("incoming/digest-*/*.digest"):
+          for dpath in glob.glob("incoming/digest-*/*.json"):
               target = pathlib.Path(dpath).stem
-              digest = pathlib.Path(dpath).read_text().strip()
+              published = json.loads(pathlib.Path(dpath).read_text())
               entry = lock["targets"].get(target)
-              if entry is None or not digest:
+              if entry is None or not published.get("digest"):
                   continue
-              if entry.get("digest") != digest:
-                  entry["digest"] = digest
+              updated = dict(entry, digest=published["digest"], image=published["image"])
+              if entry != updated:
+                  entry.update(updated)
                   changed.append(target)
 
           lock_path.write_text(json.dumps(lock, indent=2) + "\n")
@@ -534,46 +547,6 @@ jobs:
           set -euo pipefail
           gh pr merge "$PR" --squash --delete-branch
           echo "merged #$PR onto main"
-
-      # Retire archives only after the merged lock file stops referencing them.
-      - name: Retire superseded toolchain archives
-        if: needs.validate.result == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          # Read the post-merge lock file from main.
-          gh api \
-            -H "Accept: application/vnd.github.raw" \
-            "repos/${GITHUB_REPOSITORY}/contents/buildsys/toolchain.lock.json?ref=main" \
-            > merged-lock.json
-
-          python3 - <<'PY'
-          import json, subprocess
-
-          lock = json.load(open("merged-lock.json"))
-          tag  = lock["release_tag"]
-          keep = {t["asset"] for t in lock["targets"].values() if t.get("asset")}
-
-          # Refuse cleanup when the lock contains no archive references.
-          if not keep:
-              raise SystemExit(f"{tag}: merged lock file references no archives; refusing to delete")
-
-          print("referenced by main:", *sorted(keep), sep="\n  ")
-
-          assets = subprocess.run(
-              ["gh", "release", "view", tag, "--json", "assets", "--jq", ".assets[].name"],
-              check=True, capture_output=True, text=True,
-          ).stdout.split()
-
-          for name in assets:
-              # Leave unrelated release assets untouched.
-              if not name.startswith("us3-toolchain-") or name in keep:
-                  continue
-              print("retiring:", name)
-              subprocess.run(["gh", "release", "delete-asset", tag, name, "--yes"], check=True)
-          PY
 
       - name: Hold pin update
         if: needs.validate.result != 'success'
