@@ -50,19 +50,8 @@ inline bool handleStandardCliOptions( QCommandLineParser& parser,
    return false;
 }
 
-//! \brief Optical data types the headless simulators may tag their output with.
-//! These are the five of US_DataIO's six that are inert with respect to the
-//! simulators: nothing downstream of the type tag branches on them.
-//!
-//! "WA" is deliberately excluded. It is the one value that changes behaviour
-//! here, via the experiment-XML writer's `runType == "WA"` branch, and that
-//! branch has never executed -- it emits the model's single scalar wavelength
-//! under a "radius" attribute, which is wrong for anything but the multi-speed
-//! case it was written against. Accepting "WA" would activate untested code
-//! rather than exercise a real capability, and real WA data is organized
-//! differently anyway (its triple is cell/channel/radius, with the scan
-//! sweeping wavelength), so one simulation could not produce it regardless.
-//! Rework that branch before adding "WA" here.
+//! \brief Supported optical data types.
+//! WA is unsupported: it requires wavelength scans indexed by radius.
 inline QStringList supportedRunTypes()
 {
    return { "RA", "IP", "RI", "FI", "WI" };
@@ -166,14 +155,8 @@ inline QString cellOptionHelp()
           "within a run";
 }
 
-//! \brief Parse and validate the optional --noise-seed option.
-//!
-//! Seeding the generator makes a run's noise reproducible.  Zero is rejected
-//! rather than accepted, because US_Math2::randomize() reads it as "pick a
-//! seed from the clock" and would silently produce an unreproducible run.
-//!
-//! \return true if the caller should return immediately using exit_code;
-//! false if it should continue processing options.
+//! \brief Parse an optional --noise-seed. Zero is invalid because it selects the clock.
+//! \return true to return immediately with exit_code; false to continue.
 inline bool parseNoiseSeedOption( QCommandLineParser& parser,
                                   const QCommandLineOption& noise_seed_option,
                                   QMap<QString, QString>& args,
@@ -186,8 +169,7 @@ inline bool parseNoiseSeedOption( QCommandLineParser& parser,
    const QString  value = parser.value( noise_seed_option );
    const quint32  seed  = value.toUInt( &ok );
 
-   // toUInt() rejects an empty string, a sign, a non-decimal digit and any
-   // value past UINT_MAX, so only zero has to be excluded separately.
+   // Reject zero, which selects a clock-based seed.
    if ( ! ok  ||  seed == 0 )
    {
       QTextStream( stderr ) << "Invalid --noise-seed " << value

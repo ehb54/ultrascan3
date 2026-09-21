@@ -67,10 +67,10 @@ class US_Astfem_Sim : public US_Widgets
       QString        imageName;           //!< Full path template for movie frames ({imagedir}/frame{image_count}.png)
       QString        tmst_tfpath;         //!< Path to the timestate of the simulation in a temporary location
       QString        run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
-      int            sim_cell    = 1;    //!< Output cell; historical default 1
-      char           sim_channel = 'S';  //!< Output channel; historical default S
+      int            sim_cell    = 1;    //!< Output cell
+      char           sim_channel = 'S';  //!< Output channel
       uint           noise_seed  = 0;    //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
-      bool           noise_to_composite = true; //!< True on the ASTFEM path, where noise is applied to sim_data_all and the speed views derived from it
+      bool           noise_to_composite = true; //!< Apply ASTFEM noise to the composite before splitting by speed
       QString        guid_seed;           //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
       QString        edit_stamp;          //!< Fixed yyMMddhhmm for the edit filename, from --edit-timestamp; empty uses the clock
 

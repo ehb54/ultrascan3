@@ -1,8 +1,5 @@
 //! \file main.cpp
-//!
-//! The us_mwl_species_sim entry point. Only main() lives here; the
-//! US_MwlSpeciesSim implementation is in us_mwl_species_sim.cpp so that a test
-//! can link the class without linking a second main().
+//! \brief Entry point for us_mwl_species_sim.
 
 #include <QApplication>
 
@@ -26,8 +23,7 @@
 #include "qwt_picker_machine.h"
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
-//! \brief Main program. Loads translators and starts
-//         the class US_Convert.
+//! \brief Load translators and start US_MwlSpeciesSim.
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );

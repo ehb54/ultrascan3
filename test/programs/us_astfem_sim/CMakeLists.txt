@@ -31,9 +31,7 @@ us3_add_gui_test(test_us_astfem_noise_gui
 target_compile_definitions(test_us_astfem_noise_gui
         PRIVATE US_ASTFEM_SIM_NO_MAIN)
 
-# The persisted layout of a multi-speed run is a contract about files, so this
-# one drives the built simulator rather than its classes.  It therefore exists
-# only where the programs are built too, which the test-only profile is not.
+# Persistence tests require the simulator and input-generator executables.
 if(TARGET us_astfem_sim AND TARGET us_sim_inputs_gen)
     us3_add_gui_test(test_us_astfem_persist_gui
             SOURCES

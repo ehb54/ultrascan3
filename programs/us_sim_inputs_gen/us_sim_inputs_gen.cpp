@@ -62,10 +62,7 @@ static bool parse_svedberg( const QString& text, double& value, QString& error )
    return true;
 }
 
-// Accept an analyte type by name or by its US_Analyte::analyte_t number.
-//
-// The names are the ones US_Solution reads and writes, "Other" included, so a
-// model emitted here and a solution record written from it agree on spelling.
+// Accept an analyte type name or US_Analyte::analyte_t value.
 static bool parse_analyte_type( const QString& text, const QString& origin,
                                 int& type, QString& error )
 {
@@ -85,8 +82,7 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
          return true;
       }
 
-   // A bare number is accepted so a caller holding the stored value does not
-   // have to map it back to a name first.
+   // Accept numeric analyte type values.
    bool numeric = false;
    const int value = given.toInt( &numeric );
 
@@ -107,11 +103,7 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
    return false;
 }
 
-// Accept a persistent analyte identity, which must be a full UUID.
-//
-// Validation is repeated here rather than left to validateComponent() so the
-// message names the option the value came from; a mixture reports which of
-// several --component entries is wrong.
+// Validate an analyte UUID and report the originating option on failure.
 static bool parse_analyte_guid( const QString& text, const QString& origin,
                                 QString& guid, QString& error )
 {
@@ -178,8 +170,7 @@ static bool parse_component( const QCommandLineParser& parser,
       }
    }
 
-   // Not a coefficient, so it never sets any_supplied: a model given only
-   // --extinction still falls back to the default species below.
+   // Extinction does not count toward the required coefficient pair.
    if ( options.contains( "extinction" )
         &&  parser.isSet( *options.constFind( "extinction" ) ) )
    {
@@ -440,10 +431,7 @@ int main( int argc, char* argv[] )
       "value", "value" );
    parser.addOption( vbar20_option );
    coefficient_opts.insert( "vbar20", vbar20_option );
-   // Not a coefficient, so it is deliberately not in coefficient_opts: it is
-   // never part of the "exactly two of s, D, mw, f, f-f0" pair and must not
-   // count toward it. MWL mode is the main consumer, since that mode forbids
-   // --component and so has no other way to state a per-wavelength spectrum.
+   // Extinction is independent of the hydrodynamic coefficient pair.
    QCommandLineOption extinction_option( "extinction",
       "Molar extinction coefficient of the species at this model's "
       "wavelength; defaults to 0, meaning the model carries no spectrum and "
@@ -452,9 +440,7 @@ int main( int argc, char* argv[] )
       "value" );
    parser.addOption( extinction_option );
    coefficient_opts.insert( "extinction", extinction_option );
-   // Also not a coefficient, and for the same reason. Metadata: nothing in the
-   // hydrodynamic solution reads it, but us_astfem_sim copies it into the
-   // solution record it writes for a run.
+   // Analyte type is metadata for the solution record.
    QCommandLineOption analyte_type_option( "analyte-type",
       "Class of analyte this species is: Protein (the default), DNA, RNA, or "
       "Other. The numbers 0 to 3 are accepted for the same four in that order. "
@@ -462,9 +448,7 @@ int main( int argc, char* argv[] )
       "type" );
    parser.addOption( analyte_type_option );
    coefficient_opts.insert( "analyte-type", analyte_type_option );
-   // Also not a coefficient. Identity rather than physics: it is what lets a
-   // stored analyte be matched instead of created again, so it belongs in the
-   // committed model rather than being minted per run.
+   // Persist the analyte UUID across runs for database matching.
    QCommandLineOption analyte_guid_option( "analyte-guid",
       "Persistent identity of this species, as a 36-character UUID. Omitted "
       "from the model by default, which leaves the species unstorable in a "
@@ -474,9 +458,7 @@ int main( int argc, char* argv[] )
       "uuid" );
    parser.addOption( analyte_guid_option );
    coefficient_opts.insert( "analyte-guid", analyte_guid_option );
-   // Also not a coefficient. The single-component counterpart of
-   // --component "...,name=...", which cannot carry a name containing a comma
-   // because --component splits its fields on one.
+   // Allow commas in single-component names; --component uses comma delimiters.
    QCommandLineOption name_option( "name",
       "Descriptive name of this species, as it appears in the analyte record "
       "written for a run. Defaults to the US_Model default. For a "
@@ -568,8 +550,7 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      // The two forms describe the same thing at different arities, so
-      // combining them would leave the component order ambiguous.
+      // Single-species options and --component are mutually exclusive.
       bool uses_components = parser.isSet( component_option );
       bool uses_flags      = false;
 
