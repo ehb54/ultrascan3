@@ -1,7 +1,4 @@
-// us_mwl_species_sim writes one dataset per wavelength.  Each one gets a plain
-// edit file naming its own wavelength -- not a band, and not the "@" lookup key
-// -- and each edit names the raw data beside it.  That is a contract about the
-// files the program writes, so this drives the built simulator and reads them.
+// Verify one saved dataset and matching wavelength edit file per wavelength.
 
 #include "us3_gui_test_main.h"
 
@@ -97,9 +94,7 @@ private slots:
       QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
       env.insert( "HOME", home );
 
-      // See the astfem persistence test: the child is a full UltraScan program
-      // and an empty sandbox settings store leaves it unregistered, waiting on
-      // a modal dialog nothing here can dismiss.
+      // Use registered application settings to avoid a modal registration dialog.
       for ( const QString& name : { QStringLiteral( "US3_SETTINGS_ROOT" ),
                                     QStringLiteral( "US3_TEST_SANDBOX" ),
                                     QStringLiteral( "US3_TEST_SETTINGS_ROOT" ),

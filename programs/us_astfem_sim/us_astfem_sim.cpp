@@ -237,8 +237,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 {
    dbg_level           = US_Settings::us_debug();
    tmst_tfpath         = "";
-   // Only --runtype changes this. The GUI has no control for it, so an
-   // interactive run always produces RA, exactly as before.
+   // GUI runs default to RA; --runtype overrides the output type.
    run_type            = "RA";
 
    setWindowTitle( "UltraScan3 Simulation Module" );
@@ -412,8 +411,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check if model is to be loaded
    bool gui_needed = !flags.contains("close");
    bool error_occured = false;
-   // Each input is optional. Only an explicitly requested input that fails
-   // to load should prevent start_simulation() below.
+   // Abort only when an explicitly requested input fails to load.
    bool loaded_model = true;
    bool loaded_buffer = true;
    bool loaded_simparams = true;
@@ -532,7 +530,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          }
          else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
                                             cp, ch ) )
-         {  // Ignoring this would silently fall back to the 7.2 default bottom
+         {  // Reject invalid geometry instead of using the default bottom.
             reportHeadlessLoadFailure( "centerpiece",
                "hardware definitions could not be applied", errors_to_cl,
                gui_needed, error_occured );
@@ -540,10 +538,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       }
    }
 
-   // set the output data type if given. Already validated in main(); absent
-   // it keeps the constructor's "RA", which is what the GUI always uses.
-   // Reproducible identity. Both stay empty unless asked for, so the desktop
-   // and every existing caller keep minting fresh GUIDs and stamping the clock.
+   // CLI overrides for output type and reproducible identifiers.
    if ( flags.contains("guid-seed") )
       guid_seed  = flags["guid-seed"];
 
@@ -555,7 +550,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       run_type = flags["runtype"];
    }
 
-   // Preserve the historical 1/S defaults unless the CLI overrides them.
+   // Default output triple: cell 1, channel S.
    if ( flags.contains("cell") )
       sim_cell    = flags["cell"].toInt();
 
@@ -622,8 +617,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          start_simulation();
 
          if ( sim_failed )
-         {  // Saving here would write a dataset that was never simulated,
-            // and report success while doing it.
+         {  // Do not save an unsuccessful simulation.
             DbgLv(0) << "US_Astfem_Sim: simulation failed; nothing was saved";
             error_occured = true;
          }
@@ -1036,8 +1030,7 @@ DbgLv(1) << "start_simulation is called, steps:" << nstep;
       sim_datas[ jd ].type[0]    = run_type.at( 0 ).toLatin1();
       sim_datas[ jd ].type[1]    = run_type.at( 1 ).toLatin1();
 
-      // Each speed step is saved as its own run, so it carries its own raw
-      // GUID rather than a view of a shared one.
+      // Each speed step is a separate run with its own raw GUID.
       QString guid = US_SimRecord::guid( guid_seed,
                                          QString( "raw.%1" ).arg( jd ) );
       US_Util::uuid_parse( guid, (uchar*)sim_datas[ jd ].rawGUID );
@@ -1115,9 +1108,7 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
    simparams.sim    = true;
    simparams.firstScanIsConcentration = false;
 
-   // ASTFEM computes one composite dataset spanning every speed step; ASTFVM
-   // computes sim_datas[ 0 ] and leaves the composite empty.  Noise follows
-   // whichever the solver actually filled in.
+   // ASTFEM fills the composite dataset; ASTFVM fills sim_datas[ 0 ].
    noise_to_composite = ( simparams.meshType != US_SimulationParameters::ASTFVM );
 
    // Here we simulate on simulation grid and get
@@ -1224,8 +1215,7 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
 
       // Compute the simulation dataset
       if ( astfem->calculate( sim_data_all ) < 0 )
-      {  // Ignoring this would go on to save a dataset that was never
-         // simulated. The solver has already reported why it failed.
+      {  // Stop before saving if the solver fails.
          DbgLv(0) << "US_Astfem_Sim: simulation failed";
          sim_failed  = true;
          return;
@@ -1267,8 +1257,7 @@ void US_Astfem_Sim::finish( void )
 //DbgLv(1) << "FIN: comp size" << system.components.size();
 //DbgLv(1) << "FIN:  total_conc" << total_conc;
 
-   // Seeding here rather than at startup keeps every draw that contributes to
-   // the saved data downstream of the seed, whatever the solver consumed.
+   // Seed after the solver so its random draws do not affect output noise.
    if ( noise_seed != 0 )
       US_Math2::randomize( noise_seed );
 
@@ -1464,22 +1453,15 @@ void US_Astfem_Sim::ti_noise( void )
    csv_data_ti.setData( header, csv_data );
 }
 
-// The scan that speed step jd's scan ks contributes to.
-//
-// ASTFEM simulates one composite dataset covering every speed step, so noise
-// is applied there once and the per-speed datasets are derived from the result
-// afterward.  Applying it per speed instead would draw a separate noise series
-// for each step of what is one continuous experiment.  ASTFVM has no composite
-// -- it fills only sim_datas[ 0 ] -- so it keeps the per-speed traversal it has
-// always used.
+// Select the scan for speed step jd and scan ks.
+// ASTFEM noise uses the composite dataset; ASTFVM uses per-speed data.
 US_DataIO::Scan& US_Astfem_Sim::noise_scan( int jd, int scan_offset, int ks )
 {
    return noise_to_composite ? sim_data_all.scanData[ scan_offset + ks ]
                              : sim_datas[ jd ].scanData[ ks ];
 }
 
-// Copy the finalized composite scans out to the per-speed datasets that are
-// plotted and saved.  ASTFEM only; see noise_scan().
+// Copy finalized ASTFEM composite scans to the per-speed datasets.
 void US_Astfem_Sim::derive_speed_data( void )
 {
    int scan_offset = 0;
@@ -1674,14 +1656,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       }  // End:  multi-speed case
    }  // End:  output directory specified
    if ( !write_records )
-   {  // The simulated data has been written; the records that describe it have
-      // not. Gated separately from supress_dialog, which the two used to share:
-      // that made whether a run got an experiment record depend on whether it
-      // was allowed to raise a dialog, so the GUI's Save Simulation wrote scan
-      // data with no solution, no experiment record and no edit files, leaving
-      // nothing able to attribute the data to a sample. Kept off by default so
-      // the desktop keeps writing exactly what it always has; the headless
-      // caller, whose output is loaded into a database, asks for the records.
+   {  // Write experiment, solution, and edit records when requested.
       return true;
    }
 
@@ -1694,9 +1669,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
    QString runType = QString( QChar( sim_datas[0].type[ 0 ] ) )
                      + QString( QChar( sim_datas[0].type[ 1 ] ) );
 
-   // One solution for the run: the model's components in the run's buffer.
-   // Shared by every dataset, so it is composed and written once. The
-   // composition is shared with us_mwl_species_sim through US_SimRecord.
+   // All datasets share one solution: the model components and run buffer.
    QList< US_Model > models;
    QList< double >   wavelengths;
    models      << system;
@@ -1704,8 +1677,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
 
    US_Solution sol = US_SimRecord::solution( models, wavelengths, buffer );
 
-   // saveToDisk mints one only when this does not already hold a UUID, so
-   // seeding it here needs no change to US_Solution.
+   // Set the GUID before saveToDisk() can generate one.
    if ( ! guid_seed.isEmpty() )
       sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
 
@@ -1714,17 +1686,8 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
 
    sol.saveToDisk();
 
-   // One experiment record and one edit file per dataset, each written beside
-   // the data it describes.
-   //
-   // A single-speed run is one dataset in odir and this writes one of each
-   // there.  A multi-speed run has already written one complete run per speed
-   // into a sibling directory suffixed with the rpm, each with its own run ID
-   // and its own rawGUID: separate runs, not triples of one run.  Both
-   // documents name their run in the filename and their data by GUID in the
-   // body, so a single set written for the base run ID describes datasets that
-   // are not there and matches none of the ones that are, leaving every
-   // multi-speed dataset unloadable.
+   // Write experiment and edit records beside each dataset.
+   // Each speed-specific run has its own directory, run ID, and raw GUID.
    int     nspeed = simparams.speed_step.count();
    QString now    = edit_stamp.isEmpty()
                     ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" )
@@ -1736,14 +1699,11 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       QString edir       = odir;
       QString edit_runid = run_id;
 
-      // The speed steps this run covers.  A multi-speed dataset is a run of
-      // one speed, so its record carries only that step rather than all of
-      // them.
+      // A speed-specific run records only its own speed step.
       QVector< SP_SPEEDPROFILE > speed_steps = simparams.speed_step;
 
       if ( nspeed > 1 )
-      {  // The same suffix the save loop above used.  odir carries a trailing
-         // separator by this point, so it comes off and goes back on.
+      {  // Match the RPM suffix used when saving the data.
          QString spsufx     = QString::asprintf( "-%05d",
                                  simparams.speed_step[ jd ].rotorspeed );
          edir               = odir.left( odir.length() - 1 ) + spsufx + "/";
@@ -1753,8 +1713,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
          speed_steps << simparams.speed_step[ jd ];
       }
 
-      // The cell limits follow the rotor speed, and save_xla left af_params
-      // holding whichever speed it saved last, so re-derive this one's.
+      // Recompute cell limits for this speed; af_params holds the last saved speed.
       adjust_limits( (double)simparams.speed_step[ jd ].rotorspeed );
 
       QString cell       = QString::number( sim_data.cell );
@@ -1763,8 +1722,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       QString wl         = ( wavelength < 99 ) ? QString( "123" )
                                                : QString::number( wavelength );
 
-      // The record.  saveToDisk splits cell, channel and wavelength back out
-      // of tripleDesc, so the " / " separator matters.
+      // saveToDisk() parses tripleDesc using the " / " separator.
       US_Experiment experiment = US_SimRecord::experiment( rotor, simparams,
                                                            edit_runid, runType,
                                                            guid_seed );
@@ -1810,9 +1768,7 @@ DbgLv(1) << "EDT:WrXml:  waveln" << wl;
       ev.ODlimit    = US_SimRecord::maxOD( sim_data );
 
       if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
-      {  // Only the headless caller reaches this block, so report the failure
-         // the way the rest of that path does rather than with a modal dialog
-         // nothing would be there to dismiss.
+      {  // Report headless save failures without a modal dialog.
          qDebug() << "Error: could not write edit file" << edir + fname;
          return false;
       }

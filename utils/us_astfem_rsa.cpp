@@ -214,11 +214,7 @@ DbgLv(1) << "RSA:calc : timestate exists and timestateobject,sscount="
 DbgLv(1) << "RSA:calc: ss size" << nstep << "ssp size" << nspstep;
 
    if ( nspstep < 1 )
-   {  // The speed profile is still empty after the time state read above, so
-      // every work vector filled below stays empty and the speed-step loop
-      // would index them out of bounds. Stop here with a diagnosis instead:
-      // the time state either could not be written or could not be read back,
-      // which usually means its directory is missing or unwritable.
+   {  // Reject an empty speed profile before indexing the work vectors.
       DbgLv(0) << "US_Astfem_RSA::calculate: no simulation speed profile "
                    "after reading the time state -- cannot simulate. Speed "
                    "steps:" << nstep

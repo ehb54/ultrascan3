@@ -65,26 +65,19 @@ QString US_SimSpecies::validateComponent( const Component& c )
       return QString( "signal concentration must be finite and greater than "
                       "zero (got %1)" ).arg( c.signal_concentration );
 
-   // Zero is allowed and is the default: it means no spectrum was stated. A
-   // species that genuinely does not absorb at this wavelength is also zero,
-   // and the two are indistinguishable here by design.
+   // Zero extinction represents no spectrum or no absorption at this wavelength.
    if ( ! qIsFinite( c.extinction ) || c.extinction < 0.0 )
       return QString( "extinction must be finite and not negative (got %1)" )
          .arg( c.extinction );
 
-   // The enumerators are contiguous from PROTEIN to CARBOHYDRATE, so the range
-   // check is the whole of the validation.
+   // Analyte enum values are contiguous from PROTEIN to CARBOHYDRATE.
    if ( c.analyte_type < (int)US_Analyte::PROTEIN  ||
         c.analyte_type > (int)US_Analyte::CARBOHYDRATE )
       return QString( "analyte type must be between %1 and %2 (got %3)" )
          .arg( (int)US_Analyte::PROTEIN ).arg( (int)US_Analyte::CARBOHYDRATE )
          .arg( c.analyte_type );
 
-   // Empty is the default and means no identity was stated. Anything else must
-   // be a full UUID, because that is what a database will accept: US_Analyte
-   // rejects a GUID whose length is not 36, and the stored procedures apply the
-   // same 8-4-4-4-12 pattern. Catching it here reports the malformed value
-   // rather than leaving it to fail a database write much later.
+   // Accept an empty identity or a UUID in 8-4-4-4-12 format.
    if ( ! c.analyte_guid.isEmpty()  &&
         ! US_Util::UUID_REGEX.match( c.analyte_guid ).hasMatch() )
       return QString( "analyte GUID must be a 36-character UUID (got \"%1\")" )

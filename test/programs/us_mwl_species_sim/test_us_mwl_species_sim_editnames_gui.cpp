@@ -9,9 +9,7 @@
 
 namespace
 {
-// The description us_sim_inputs_gen writes, "<run>.<channel><wavelength>.
-// model.default". The wavelength is read out of it positionally, so a test
-// that invented its own shape would not be testing anything real.
+// Use the generator format: <run>.<channel><wavelength>.model.default.
 QString description(int wavelength)
 {
     return QString("ISSF-synth-mwl-001.1A%1.model.default")

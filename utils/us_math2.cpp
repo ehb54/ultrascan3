@@ -62,10 +62,7 @@ static libnnls libnnls0;
 
 */
 
-// The second value of each generated pair, held for the next call.  These are
-// file-scope rather than function-local so that reseeding can discard the held
-// value: a value carried across a reseed was drawn from the previous seed, and
-// would otherwise make a seeded sequence depend on how many draws preceded it.
+// Cache the second Gaussian value; reseeding clears it.
 static bool   bm_use_last = false;
 static double bm_y2       = 0.0;
 

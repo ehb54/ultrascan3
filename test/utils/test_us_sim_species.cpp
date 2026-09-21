@@ -257,8 +257,7 @@ TEST_F(US_SimSpeciesTest, ComponentDefaultsToNoSpectrum) {
     US_SimSpecies::Component c;
     US_Model::SimulationComponent sc_defaults;
 
-    // Zero is what makes the extinction-aware consumers leave a model alone,
-    // so a species nobody gave a spectrum to must land on exactly that.
+    // Default extinction is zero (no spectrum supplied).
     EXPECT_DOUBLE_EQ(c.extinction, sc_defaults.extinction);
     EXPECT_DOUBLE_EQ(c.extinction, 0.0);
 }
@@ -266,8 +265,7 @@ TEST_F(US_SimSpeciesTest, ComponentDefaultsToNoSpectrum) {
 TEST_F(US_SimSpeciesTest, ZeroExtinctionIsValidButNegativeIsNot) {
     US_SimSpecies::Component c = US_SimSpecies::defaultComponent();
 
-    // Unlike the loading concentration, zero is meaningful here: it says the
-    // species is transparent at this wavelength.
+    // Zero extinction is valid for a transparent species.
     c.extinction = 0.0;
     EXPECT_TRUE(US_SimSpecies::validateComponent(c).isEmpty());
 
@@ -315,8 +313,7 @@ TEST_F(US_SimSpeciesTest, AnalyteTypeOutsideTheEnumIsRejected) {
         EXPECT_TRUE(US_SimSpecies::validateComponent(c).isEmpty()) << type;
     }
 
-    // The value is written to the model verbatim and read back as an enum, so
-    // anything off the end would deserialize as a type that does not exist.
+    // Reject values outside the serialized analyte enum.
     c.analyte_type = static_cast<int>(US_Analyte::CARBOHYDRATE) + 1;
     EXPECT_FALSE(US_SimSpecies::validateComponent(c).isEmpty());
 
@@ -348,8 +345,7 @@ TEST_F(US_SimSpeciesTest, AnalyteTypeReachesTheModelPerComponent) {
 TEST_F(US_SimSpeciesTest, AnalyteGuidDefaultsToEmpty) {
     US_SimSpecies::Component c;
 
-    // Empty is what US_Model omits from the XML, so a species that states no
-    // identity produces the same model it always did.
+    // An empty analyte identity is omitted from the model XML.
     EXPECT_TRUE(c.analyte_guid.isEmpty());
     EXPECT_TRUE(US_SimSpecies::validateComponent(
                     US_SimSpecies::defaultComponent()).isEmpty());
@@ -362,13 +358,11 @@ TEST_F(US_SimSpeciesTest, AnalyteGuidMustBeAFullUuidIfGiven) {
     EXPECT_EQ(c.analyte_guid.size(), 36);
     EXPECT_TRUE(US_SimSpecies::validateComponent(c).isEmpty());
 
-    // US_Analyte::write_db rejects any GUID whose length is not 36, so a value
-    // that cannot be stored must not reach a model in the first place.
+    // Reject malformed UUIDs before model serialization.
     c.analyte_guid = "not-a-uuid";
     EXPECT_FALSE(US_SimSpecies::validateComponent(c).isEmpty());
 
-    // One character short: the length check alone would catch this, but the
-    // pattern has to reject it too.
+    // Reject a UUID one character short.
     c.analyte_guid = "865855e8-1356-4fc8-ac80-222b62f84e3";
     EXPECT_FALSE(US_SimSpecies::validateComponent(c).isEmpty());
 }
@@ -397,8 +391,7 @@ TEST_F(US_SimSpeciesTest, AnalyteGuidReachesTheModelPerComponent) {
 }
 
 TEST_F(US_SimSpeciesTest, ExtinctionIsIndependentOfLoadingConcentration) {
-    // The two are separate axes: how much material is loaded, and how strongly
-    // it absorbs. Setting one must not disturb the other.
+    // Loading concentration and extinction are independent.
     US_SimSpecies::Component c;
     c.mw                   = 66430.0;
     c.f_f0                 = 1.2;
@@ -499,8 +492,7 @@ TEST_F(US_SimSpeciesTest, MixtureValidationIdentifiesTheFailingComponent) {
 }
 
 TEST_F(US_SimSpeciesTest, SingleComponentModelStillBuildsThroughTheMixturePath) {
-    // model(Component) delegates to the mixture overload; the single-component
-    // callers must see no change.
+    // Single-component and mixture overloads produce equivalent models.
     US_SimSpecies::Component c = US_SimSpecies::defaultComponent();
     US_Model model = build(c);
 

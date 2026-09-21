@@ -422,10 +422,7 @@ EXPECT_DOUBLE_EQ(second1, second2) << "Same seed should produce same sequence";
 }
 
 TEST_F(TestUSMath2Unit, RandomizeRestartsGaussianSequenceAfterOddDrawCount) {
-// box_muller() generates two values per pair and holds the second one back for
-// the next call.  After an odd number of draws one value is still held, so a
-// reseed has to discard it or the next draw returns a value belonging to the
-// previous seed.
+// Reseeding must discard the cached second Gaussian value.
 uint seed = 98765;
 
 US_Math2::randomize(seed);

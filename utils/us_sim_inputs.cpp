@@ -80,8 +80,7 @@ QString US_SimInputs::validateParams( const Params& p )
       if ( ! qIsFinite( value ) )
          return "delay, noise, and baseline values must be finite";
 
-   // Scans are spread over the time left after the delay, so a delay that
-   // reaches the end of the run leaves no time to scan in.
+   // The scan delay must be shorter than the run duration.
    const double duration_min = p.duration_hours * 60.0 + p.duration_minutes;
    const double delay_min    = ( p.delay_hours >= 0 || p.delay_minutes >= 0.0 )
       ? qMax( 0, p.delay_hours ) * 60.0 + qMax( 0.0, p.delay_minutes )
@@ -149,9 +148,7 @@ bool US_SimInputs::simParams( const Params& p,
       sp.delay_minutes  = qMax( 0.0, p.delay_minutes );
    }
    else
-   {  // Store the derived delay as whole hours plus 0-59 minutes.
-      // Derive from the stored acceleration so the delay matches the ramp a
-      // consumer actually runs.  Validation guarantees it is at least 1.
+   {  // Derive delay from stored acceleration, in hours and remaining minutes.
       double accel_minutes = p.rpm / ( sp.acceleration * 60.0 );
       sp.delay_hours    = (int)( accel_minutes / 60.0 );
       sp.delay_minutes  = accel_minutes - ( sp.delay_hours * 60.0 );
@@ -205,8 +202,7 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
       return false;
    }
 
-   // Build both inputs before writing: construction reads hardware
-   // definitions from disk and can fail, leaving an unusable run on disk.
+   // Construct both inputs before writing; hardware loading can fail.
    US_SimulationParameters params;
    if ( ! simParams( params, error ) )
       return false;

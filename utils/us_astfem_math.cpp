@@ -28,12 +28,7 @@ int US_AstfemMath::writetimestate( const QString&           tmst_fpath,
 //DbgLv(1) << "AMATH:wrts::writetimestate : tmst_fpath=" << tmst_fpath;
 
    if ( timestate.open_write_data( tmst_fpath, 1.0, 0.0 ) != 0 )
-   {  // Report this rather than returning a success-shaped 0. A caller that
-      // cannot tell "wrote no times" from "could not open" goes on to read a
-      // time state that was never written, and the failure only surfaces much
-      // later as an empty speed profile -- see US_Astfem_RSA::calculate().
-      // The usual cause is a work directory that does not exist, such as a
-      // stale workBaseDir setting left pointing at a removed directory.
+   {  // Return an error when the time-state file cannot be opened.
       DbgLv(0) << "US_AstfemMath::writetimestate: could not open time state "
                    "for writing:" << tmst_fpath
                 << "-- check that its directory exists and is writable";

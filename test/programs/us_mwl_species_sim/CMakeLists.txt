@@ -1,6 +1,4 @@
-# Compile the same class implementation used by us_mwl_species_sim. Its source
-# is separate from the application's main() function, so the production program
-# does not need a test-only code path.
+# Link the simulator class without its application entry point.
 us3_add_gui_test(test_us_mwl_species_sim_editnames_gui
         SOURCES
             test_us_mwl_species_sim_editnames_gui.cpp
@@ -15,9 +13,7 @@ us3_add_gui_test(test_us_mwl_species_sim_editnames_gui
             programs;simulation
         )
 
-# What the program writes per wavelength is a contract about files, so this one
-# drives the built simulator.  It therefore exists only where the programs are
-# built too, which the test-only profile is not.
+# Persistence tests require the simulator and input-generator executables.
 if(TARGET us_mwl_species_sim AND TARGET us_sim_inputs_gen)
     us3_add_gui_test(test_us_mwl_species_sim_persist_gui
             SOURCES

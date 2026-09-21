@@ -158,8 +158,7 @@ private slots:
       sim.ri_noise();
       sim.derive_speed_data();
 
-      // One CSV per speed step, each covering that step's scans, because each
-      // step is saved as its own run beside its own noise record.
+      // Each speed step has its own CSV and noise record.
       QCOMPARE( sim.csv_data_ri.size(), 2 );
       QCOMPARE( sim.csv_data_ri[ 0 ].rowCount(), 1 );
       QCOMPARE( sim.csv_data_ri[ 1 ].rowCount(), 2 );
@@ -182,10 +181,7 @@ private slots:
 
    void astfvmNoiseStaysOnItsOwnPerSpeedDatasets()
    {
-      // ASTFVM fills only sim_datas[ 0 ] and leaves the composite empty, so
-      // the canonical-composite traversal must not be used there: indexing it
-      // by an offset accumulated across every speed step would run off the
-      // end.  Its historical per-speed behavior is preserved as found.
+      // ASTFVM fills sim_datas[ 0 ]; its composite dataset is empty.
       US_Astfem_Sim sim;
       configureTwoSpeeds( sim );
       sim.sim_data_all.scanData.clear();

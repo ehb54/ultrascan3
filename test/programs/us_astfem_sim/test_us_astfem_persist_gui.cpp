@@ -1,7 +1,4 @@
-// A multi-speed velocity simulation is persisted as one complete run per speed
-// step, in sibling directories suffixed with the rpm.  That contract lives in
-// the files the program writes, not in any object it holds, so this drives the
-// built simulator and reads what landed on disk.
+// Verify persisted multi-speed runs in their RPM-suffixed directories.
 
 #include "us3_gui_test_main.h"
 
@@ -123,8 +120,7 @@ private slots:
       const QString inputs = scratch.path() + "/inputs";
       outRoot              = scratch.path() + "/out";
 
-      // The simulator writes its working time state under $HOME/ultrascan, so
-      // the child process gets a home of its own rather than the real one.
+      // Isolate the child process working time state under a temporary HOME.
       const QString home = scratch.path() + "/home";
       QVERIFY( QDir().mkpath( inputs ) );
       QVERIFY( QDir().mkpath( outRoot + "/" + kRunID ) );
@@ -137,11 +133,7 @@ private slots:
       QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
       env.insert( "HOME", home );
 
-      // The child is a full UltraScan program and reads its own settings.
-      // Pointing it at this harness's empty sandbox store would leave it
-      // unregistered, and main1.inc answers that with a modal registration
-      // dialog that nothing here can dismiss, so the run has to be given the
-      // machine's normal settings instead.
+      // Use registered application settings to avoid a modal registration dialog.
       for ( const QString& name : { QStringLiteral( "US3_SETTINGS_ROOT" ),
                                     QStringLiteral( "US3_TEST_SANDBOX" ),
                                     QStringLiteral( "US3_TEST_SETTINGS_ROOT" ),
@@ -177,9 +169,7 @@ private slots:
                    "--edit-timestamp", kEditStamp,
                    "--noise-seed", "4242" } );
       if ( ! sim.waitForFinished( 300000 ) )
-      {  // The likeliest cause is an unregistered UltraScan on this machine:
-         // the program then waits on a registration dialog before it ever
-         // reaches the simulation.
+      {  // A missing registration can block the child on a modal dialog.
          sim.kill();
          sim.waitForFinished( 5000 );
          QFAIL( "us_astfem_sim did not finish; check that UltraScan is "
@@ -192,8 +182,7 @@ private slots:
 
    void eachSpeedStepIsItsOwnSavedRun()
    {
-      // The requested directory holds no data of its own.  A combined
-      // multi-speed run would put its .auc and records here instead.
+      // The base directory contains no combined multi-speed dataset.
       const QDir base( outRoot + "/" + kRunID );
       QVERIFY2( base.entryList( { "*.auc" }, QDir::Files ).isEmpty(),
                 "a combined multi-speed run was saved" );
@@ -281,8 +270,7 @@ private slots:
          const QString rawGUID = US_Util::uuid_unparse(
                                     (unsigned char*)data.rawGUID );
 
-         // The edit names the data it edits; a record written for a run that
-         // is not there would name a GUID no saved dataset has.
+         // Each edit references its saved dataset GUID.
          QCOMPARE( attributeOf( editPath, "rawDataGUID", "value" ),
                    rawGUID );
 
@@ -294,11 +282,11 @@ private slots:
          projectGUIDs << projectGUID;
       }
 
-      // Separate runs, so separate raw identities...
+      // Speed-specific runs have distinct raw GUIDs.
       QCOMPARE( rawGUIDs.size(), 2 );
       QVERIFY( rawGUIDs[ 0 ] != rawGUIDs[ 1 ] );
 
-      // ...but one simulated project behind them.
+      // All speed-specific runs share one project GUID.
       QCOMPARE( projectGUIDs[ 0 ], projectGUIDs[ 1 ] );
    }
 };
