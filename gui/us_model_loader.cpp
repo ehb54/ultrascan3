@@ -453,7 +453,7 @@ qDebug() << "LdM:    description" << model_descriptions[index].description;
       for ( int jj = 0; jj < nxmls; jj++ )
       {  // Loop through iteration contents looking for match
          const QString& mcont = xmls[ jj ];
-         if ( mdescr.contains( descMatch ) )
+         if ( mcont.contains( descMatch ) )
          {  // Found a matching description:  load the single and break
             model.load_string( mcont );
 qDebug() << "LdM:     match at jj" << jj << "ncomp" << model.components.size();
