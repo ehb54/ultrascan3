@@ -39,9 +39,12 @@ US_ClipData::US_ClipData( double& concentration, double& radius,
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "OK" ) );
 
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()   ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( ok()     ) );
+   connect( pb_help, &QPushButton::clicked,
+            this, &US_ClipData::help );
+   connect( pb_cancel, &QPushButton::clicked,
+            this, &US_ClipData::reject );
+   connect( pb_accept, &QPushButton::clicked,
+            this, &US_ClipData::ok );
 
    buttons->addWidget( pb_help );
    buttons->addWidget( pb_cancel );
