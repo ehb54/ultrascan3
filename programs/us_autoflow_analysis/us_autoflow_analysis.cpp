@@ -174,6 +174,14 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 
   velmwl_fit_open = false;
 
+  //ALEXEY: sdiag was never initialized here, so on the very first
+  //VEL-MWL channel of a run cleanup_velmwl_fit_widget()'s `if (!sdiag)`
+  //guard was testing an indeterminate/garbage pointer value rather than
+  //a real null -- when that garbage happened to be non-zero, close()
+  //dereferenced it and crashed. Initializing it here makes the guard
+  //correct for that first call.
+  sdiag = nullptr;
+
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
     {
