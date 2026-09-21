@@ -1320,6 +1320,7 @@ void US_Analysis_auto::gui_update( )
 	  //        proportionally as models are processed).
 	  mwlsim_nchannels    = channels_all.size();
 	  velmwl_channels_decided = 0;   //ALEXEY: count of channels_all resolved (already-decided & skipped, or freshly decided via Accept/Reject) this pass -- see finalize_velmwl_analysis_if_complete()
+	  mwlsim_chan_idx     = -1;      //ALEXEY: cursor into channels_all for start_next_velmwl_channel() -- -1 so it starts scanning from index 0
 	  progress_msg_mwlsim = new QProgressDialog( tr( "Preparing MWL species simulations..." ),
 						      QString(), 0, 100, this );
 	  //ALEXEY: Qt::Dialog (not Qt::Window) makes this a proper owned/
@@ -1339,141 +1340,15 @@ void US_Analysis_auto::gui_update( )
 	  progress_msg_mwlsim->setMinimumDuration( 0 );
 	  progress_msg_mwlsim->setMinimumWidth( 420 );
 
-	  //Run Simulation
-	  for ( int ca=0; ca<channels_all.size(); ++ca )
-	    {
-	      //ALEXEY: normalize channels_all[ca] (e.g. "2.A") to the
-	      //canonical "2 / A" form used wherever a channel's decision is
-	      //recorded/looked-up (US_MwlSpeciesFit::record_velmwl_channel_
-	      //decision() builds the same "N / X" string from the filename).
-	      QStringList ch_parts_c = channels_all[ ca ].split( "." );
-	      QString chan_norm_c = ( ch_parts_c.size() == 2 ) ?
-		( ch_parts_c[0] + " / " + ch_parts_c[1] ) : channels_all[ ca ];
-
-	      //ALEXEY: Check for an already-recorded decision BEFORE doing
-	      //any of the expensive simulate+save work below -- this is the
-	      //re-attachment case: a prior session already Accepted/Rejected
-	      //this channel, so don't re-simulate/re-save/re-open the fit
-	      //dialog for it at all, just count it resolved and move on.
-	      QString existing_decision_c;
-	      bool already_decided_c = load_velmwl_channel_decision(
-		  QString::number( autoflowID_passed ), chan_norm_c, existing_decision_c );
-
-	      if ( already_decided_c )
-		{
-		  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
-			   << "already" << existing_decision_c
-			   << "-- skipping simulation/save/fit for it.";
-
-		  ++velmwl_channels_decided;
-		  continue;
-		}
-
-	      //ALEXEY: Not yet decided -- proceed with simulate/save/open
-	      //the fit dialog for it. Deliberately no separate "claim"
-	      //step here: the only thing that determines whether this
-	      //channel gets reprocessed is load_velmwl_channel_decision()
-	      //above. (An earlier version also wrote a transient "STARTED"
-	      //placeholder to guard against two overlapping sessions
-	      //racing the same channel, but that placeholder had no way to
-	      //get cleared on a hard crash and would then permanently
-	      //block reprocessing -- removed as not worth that failure
-	      //mode for what is, in practice, a single-session workflow.)
-	      QString ch_name_c, f_name_c;
-	      //Get filename, OR filenameS first???
-	      for ( int ta=0; ta<TriplesArray.size(); ++ta )
-		{
-		  QString t_name_c = TriplesArray[ta];
-		  if( t_name_c.contains( channels_all[ca]) )
-		    {
-		      f_name_c  = get_filename( t_name_c );
-		      ch_name_c = channels_all[ca];
-		      break;
-		    }
-		}
-	      
-	      e_ID_for_velmwl.clear();
-
-	      //ALEXEY: (Re)start the progress dialog fresh for this channel
-	      start_mwlsim_channel_progress( ca, ch_name_c );
-	      	      
-	      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
-	      QString stage_n_c = QString( "2DSA-IT" );
-	      //QString ch_name_c = channels_all[ca];
-	      //QString f_name_c  = get_filename( f_name_c );
-	      QString mod_id_c  = QString("XXX");
-
-	      QStringList m_c_r_id;
-	      m_c_r_id << stage_n_c << ch_name_c << f_name_c << mod_id_c;
-	      qDebug() << "[Post-Analysis], m_t_r_id -- " << m_c_r_id;
-
-	      //now call sim. contructor
-	      sdiag_mwlsim = new US_MwlSpeciesSim();
-	      // connect( sdiag_mwlsim, SIGNAL( pass_editID_fromLoad( QString& ) ),
-	      // 	       this,         SLOT  ( get_editID ( QString& ) ) );
-	      // connect( sdiag_mwlsim, SIGNAL( pass_ssf_dir( QString& ) ),
-	      // 	       this,         SLOT  ( get_ssf_dir_and_saveDB ( QString& ) ) );
-
-	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_editID_fromLoad,
-		       this,         &US_Analysis_auto::get_editID );
-
-	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_ssf_dir,
-		       this,         &US_Analysis_auto::get_ssf_dir_and_saveDB );
-
-	      //ALEXEY: Feed this channel's stage progress into the centralized dialog
-	      connect( sdiag_mwlsim, &US_MwlSpeciesSim::stage_progress,
-		       this,         &US_Analysis_auto::update_mwlsim_progress );
-	            
-	      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
-
-	      /**
-		 -- Next: define buffer
-		 sdiag_mwlsim -> define_buffer_auto: encode Water
-		 -- Next: define sim parameters
-		 sdiag_mwlsim -> sim_params_auto
-		 -- Next: set Rotor to "Simulation" one
-		 sdiag_mwlsim -> select_rotor_auto
-		 -- Next: Start Simulation
-		 sdiag_mwlsim -> start_sims_auto
-	      **/
-	      sdiag_mwlsim -> define_buffer_auto( invID );
-
-	      QMap<QString, QString> run_params = read_run_params( f_name_c );
-	      sdiag_mwlsim -> sim_params_auto( run_params );
-
-	      /**
-		 Although we will select 'Default (Simulation)' rotor,
-		 should we select rotor *AFTER* setting simparams,
-		 as only AFTER the new rotorCoeffs will be applied
-		 DEFAULT rotorCoeffs in simparams are 0.0
-	      **/
-	      QStringList rotor_defs;
-	      rotor_defs << "Default" << "(Simulation)";
-	      sdiag_mwlsim -> select_rotor_auto( rotor_defs );
-
-	      /** Run Simulations **/
-	      sdiag_mwlsim -> start_sims_auto();
-
-	      /**
-		 After Sims completed, save to Disk & re-use US_Convrt && US_Edit to save into DB
-	       **/
-	      sdiag_mwlsim -> save_sims_auto();
-	      
-	      //sdiag_mwlsim->show(); //DEBUG ONLY
-	    }
-
-	  //ALEXEY: All channels done -- close the centralized progress dialog
-	  progress_msg_mwlsim->setValue( progress_msg_mwlsim->maximum() );
-	  progress_msg_mwlsim->close();
-
-	  //ALEXEY: Covers the case where every channel in channels_all was
-	  //already decided (skipped above, above the "continue") -- no
-	  //US_MwlSpeciesFit gets created and so no accept/reject signal
-	  //ever fires to trigger the completion check, so check here too.
-	  //For channels freshly claimed this pass, this call is a no-op
-	  //until their Accept/Reject decisions come in later (see
-	  //velmwl_deconv_rejected()/accepted() below).
-	  finalize_velmwl_analysis_if_complete();
+	  //ALEXEY: Launch only the FIRST channel that still needs
+	  //processing; start_next_velmwl_channel() stops right after
+	  //kicking off that one channel's pipeline instead of looping on
+	  //through channels_all, so US_MwlSpeciesFit's Accept/Reject
+	  //dialog for it is the only one on screen. velmwl_deconv_
+	  //accepted()/rejected() below re-call start_next_velmwl_channel()
+	  //once the user decides, which is what advances to the next
+	  //channel -- see start_next_velmwl_channel()'s header comment.
+	  start_next_velmwl_channel();
 
 	  return;
 	}
@@ -1697,6 +1572,166 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 
 }
 
+//ALEXEY: Gate for the VELOCITY-MWL per-channel pipeline. Scans
+//channels_all forward from mwlsim_chan_idx + 1: any channel that
+//already has a recorded decision is just counted and skipped (the
+//re-attachment case), and the scan STOPS at the first channel that
+//still needs deciding -- that one channel's simulate/save/convert/
+//edit/fit pipeline is launched and this function returns immediately
+//afterward, WITHOUT going on to the next channel. save_sims_auto()
+//below eventually (via the pass_ssf_dir signal, handled synchronously
+//by get_ssf_dir_and_saveDB()) constructs and shows this single
+//channel's US_MwlSpeciesFit dialog and leaves it up for the user.
+//velmwl_deconv_accepted()/rejected() call this function again once
+//that decision comes in, which is what actually advances to the next
+//channel -- this is the fix for the dialog for every channel opening
+//back-to-back instead of one at a time.
+//
+//If the scan reaches the end of channels_all without finding anything
+//left to launch (either because it was called after the true last
+//channel's decision, or because every remaining channel was already
+//decided), there is nothing more to start: close the centralized
+//progress dialog and hand off to finalize_velmwl_analysis_if_complete().
+void US_Analysis_auto::start_next_velmwl_channel( void )
+{
+  for ( int ca = mwlsim_chan_idx + 1; ca < channels_all.size(); ++ca )
+    {
+      //ALEXEY: normalize channels_all[ca] (e.g. "2.A") to the
+      //canonical "2 / A" form used wherever a channel's decision is
+      //recorded/looked-up (US_MwlSpeciesFit::record_velmwl_channel_
+      //decision() builds the same "N / X" string from the filename).
+      QStringList ch_parts_c = channels_all[ ca ].split( "." );
+      QString chan_norm_c = ( ch_parts_c.size() == 2 ) ?
+	( ch_parts_c[0] + " / " + ch_parts_c[1] ) : channels_all[ ca ];
+
+      //ALEXEY: Check for an already-recorded decision BEFORE doing
+      //any of the expensive simulate+save work below -- this is the
+      //re-attachment case: a prior session already Accepted/Rejected
+      //this channel, so don't re-simulate/re-save/re-open the fit
+      //dialog for it at all, just count it resolved and keep scanning.
+      QString existing_decision_c;
+      bool already_decided_c = load_velmwl_channel_decision(
+	  QString::number( autoflowID_passed ), chan_norm_c, existing_decision_c );
+
+      if ( already_decided_c )
+	{
+	  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
+		   << "already" << existing_decision_c
+		   << "-- skipping simulation/save/fit for it.";
+
+	  mwlsim_chan_idx = ca;
+	  ++velmwl_channels_decided;
+	  continue;
+	}
+
+      //ALEXEY: Not yet decided -- proceed with simulate/save/open
+      //the fit dialog for it, THEN RETURN (not continue): the next
+      //channel must not start until this one's Accept/Reject comes
+      //back in via velmwl_deconv_accepted()/rejected(). Deliberately
+      //no separate "claim" step here: the only thing that determines
+      //whether this channel gets reprocessed is load_velmwl_channel_
+      //decision() above. (An earlier version also wrote a transient
+      //"STARTED" placeholder to guard against two overlapping
+      //sessions racing the same channel, but that placeholder had no
+      //way to get cleared on a hard crash and would then permanently
+      //block reprocessing -- removed as not worth that failure mode
+      //for what is, in practice, a single-session workflow.)
+      QString ch_name_c, f_name_c;
+      //Get filename, OR filenameS first???
+      for ( int ta=0; ta<TriplesArray.size(); ++ta )
+	{
+	  QString t_name_c = TriplesArray[ta];
+	  if( t_name_c.contains( channels_all[ca]) )
+	    {
+	      f_name_c  = get_filename( t_name_c );
+	      ch_name_c = channels_all[ca];
+	      break;
+	    }
+	}
+
+      e_ID_for_velmwl.clear();
+
+      //ALEXEY: (Re)start the progress dialog fresh for this channel
+      start_mwlsim_channel_progress( ca, ch_name_c );
+
+      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
+      QString stage_n_c = QString( "2DSA-IT" );
+      QString mod_id_c  = QString("XXX");
+
+      QStringList m_c_r_id;
+      m_c_r_id << stage_n_c << ch_name_c << f_name_c << mod_id_c;
+      qDebug() << "[Post-Analysis], m_t_r_id -- " << m_c_r_id;
+
+      //now call sim. contructor
+      sdiag_mwlsim = new US_MwlSpeciesSim();
+
+      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_editID_fromLoad,
+	       this,         &US_Analysis_auto::get_editID );
+
+      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_ssf_dir,
+	       this,         &US_Analysis_auto::get_ssf_dir_and_saveDB );
+
+      //ALEXEY: Feed this channel's stage progress into the centralized dialog
+      connect( sdiag_mwlsim, &US_MwlSpeciesSim::stage_progress,
+	       this,         &US_Analysis_auto::update_mwlsim_progress );
+
+      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
+
+      /**
+	 -- Next: define buffer
+	 sdiag_mwlsim -> define_buffer_auto: encode Water
+	 -- Next: define sim parameters
+	 sdiag_mwlsim -> sim_params_auto
+	 -- Next: set Rotor to "Simulation" one
+	 sdiag_mwlsim -> select_rotor_auto
+	 -- Next: Start Simulation
+	 sdiag_mwlsim -> start_sims_auto
+      **/
+      sdiag_mwlsim -> define_buffer_auto( invID );
+
+      QMap<QString, QString> run_params = read_run_params( f_name_c );
+      sdiag_mwlsim -> sim_params_auto( run_params );
+
+      /**
+	 Although we will select 'Default (Simulation)' rotor,
+	 should we select rotor *AFTER* setting simparams,
+	 as only AFTER the new rotorCoeffs will be applied
+	 DEFAULT rotorCoeffs in simparams are 0.0
+      **/
+      QStringList rotor_defs;
+      rotor_defs << "Default" << "(Simulation)";
+      sdiag_mwlsim -> select_rotor_auto( rotor_defs );
+
+      /** Run Simulations **/
+      sdiag_mwlsim -> start_sims_auto();
+
+      /**
+	 After Sims completed, save to Disk & re-use US_Convrt && US_Edit to save into DB.
+	 This chain runs synchronously through to get_ssf_dir_and_saveDB(),
+	 which constructs & shows THIS channel's US_MwlSpeciesFit dialog and
+	 then returns control back here.
+       **/
+      sdiag_mwlsim -> save_sims_auto();
+
+      mwlsim_chan_idx = ca;
+
+      //ALEXEY: Stop -- do not advance to the next channel. This
+      //channel's fit dialog is now up, waiting on the user's Accept/
+      //Reject click (see velmwl_deconv_accepted()/rejected() below).
+      return;
+    }
+
+  //ALEXEY: Nothing left to launch -- either every remaining channel
+  //was already decided (skipped above via "continue"), or this call
+  //came from velmwl_deconv_accepted()/rejected() after the true last
+  //channel's decision. Either way, close the centralized progress
+  //dialog and check whether the whole VEL-MWL pass is complete.
+  progress_msg_mwlsim->setValue( progress_msg_mwlsim->maximum() );
+  progress_msg_mwlsim->close();
+
+  finalize_velmwl_analysis_if_complete();
+}
+
 //slots for reject/accept Vel-MWL deconvoluton for a channel
 //  (1) when re-attached, US_Analysis_auto's own channels_all loop above
 //      now checks load_velmwl_channel_decision()
@@ -1715,7 +1750,12 @@ void US_Analysis_auto::velmwl_deconv_rejected( QString& chann_dec )
   velmwl_fit_open = false;
 
   ++velmwl_channels_decided;
-  finalize_velmwl_analysis_if_complete();
+
+  //ALEXEY: This channel is now decided -- advance to the next
+  //undecided channel in channels_all (start_next_velmwl_channel()
+  //itself calls finalize_velmwl_analysis_if_complete() once there is
+  //nothing left to launch, so it subsumes the old direct call here).
+  start_next_velmwl_channel();
 }
 void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
 {
@@ -1725,7 +1765,9 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
   velmwl_fit_open = false;
 
   ++velmwl_channels_decided;
-  finalize_velmwl_analysis_if_complete();
+
+  //ALEXEY: See velmwl_deconv_rejected() above.
+  start_next_velmwl_channel();
 }
 
 //ALEXEY: Once every channel in channels_all has been resolved this pass

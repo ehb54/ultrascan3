@@ -731,6 +731,23 @@ class US_Analysis_auto : public US_Widgets
         void process_velmwl_after_all_channels_decided( void );
 
         /**
+         * @brief Drives the VELOCITY-MWL channel pipeline one channel at a
+         * time. Scans channels_all forward from mwlsim_chan_idx + 1,
+         * silently resolving (counting, not re-processing) any channel
+         * that already has a recorded decision, and stops at the first
+         * channel that still needs it -- launching that single channel's
+         * simulate/save/convert/edit/fit pipeline and then returning
+         * WITHOUT looping on to the next one. US_MwlSpeciesFit's dialog is
+         * left open for the user's Accept/Reject click; velmwl_deconv_
+         * accepted()/rejected() call this function again afterward to
+         * advance to the next channel. If the scan reaches the end of
+         * channels_all with nothing left to launch, it closes
+         * progress_msg_mwlsim and calls finalize_velmwl_analysis_if_
+         * complete() instead.
+         */
+        void start_next_velmwl_channel( void );
+
+        /**
          * @brief Checks the fit meniscus status.
          * @param analysisID The analysis ID.
          * @param status The status to check.
