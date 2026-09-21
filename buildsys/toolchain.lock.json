@@ -5,6 +5,7 @@
     "Container targets specify a full registry image path and digest.",
     "release_tag at the top level selects the release for newly published archives.",
     "Manual toolchain builds update only the targets they publish.",
+    "inputs_digest records each published target's build inputs; missing values require a rebuild.",
     "Keep published artifacts available for older revisions and forks.",
     "The vcpkg baseline remains in vcpkg.json."
   ],
