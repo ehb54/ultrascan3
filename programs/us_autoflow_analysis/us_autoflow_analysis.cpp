@@ -1547,6 +1547,17 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   qDebug() << "For MWL-fit; \"chann_to_analyse\" -- " 
 	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
 
+  //ALEXEY: Retire the previous channel's fit widget (if any) before
+  //constructing this channel's -- removes it from panel and schedules
+  //it for deletion instead of leaving it as a hidden, closed widget
+  //accumulating in panel for the rest of the run. (This replaces the
+  //old post-construction "close sdiag if left open" check that used
+  //to sit after the `sdiag = new US_MwlSpeciesFit(...)` line below:
+  //that check tested the just-constructed sdiag itself, which is never
+  //visible immediately after construction, so it could never actually
+  //catch the previous widget.)
+  cleanup_velmwl_fit_widget();
+
   //ALEXEY: The US_MwlSpeciesFit constructor runs loadSpecs_auto()+specFitData()
   //        synchronously for VEL-MWL, so mark "fit" as started before it and
   //        completed right after -- the dialog it shows is then left up to
@@ -1558,20 +1569,33 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 	   this,  &US_Analysis_auto::velmwl_deconv_rejected );
   connect( sdiag, &US_MwlSpeciesFit::accept_velmwl_s,
 	   this,  &US_Analysis_auto::velmwl_deconv_accepted );
-  //close sdiag if left open:
-  bool mwl_fit_open = sdiag->isVisible();
-  if ( mwl_fit_open )
-    {
-      qDebug() << "Closing/deleting MWL-fit (in VEL-MWL) widget!";
-      sdiag->close();
-      velmwl_fit_open = false;
-    }
   panel->addWidget( sdiag );
   sdiag -> show(); //
   velmwl_fit_open = true;
 
-  progress_msg_mwlsim->close(); //is this correct?
+}
 
+//ALEXEY: Retires the current VEL-MWL species-fit widget (sdiag), if
+//any: closes it, removes it from its panel, and schedules it for
+//deletion. Safe to call from inside a slot that sdiag's own signal
+//invoked -- deleteLater() defers the actual delete to the next trip
+//through the event loop rather than destroying sdiag out from under
+//its own currently-executing call stack. No-op if sdiag is already
+//null (e.g. called twice in a row, or before the first channel's
+//widget has been created).
+void US_Analysis_auto::cleanup_velmwl_fit_widget( void )
+{
+  if ( ! sdiag )
+    return;
+
+  sdiag->close();
+
+  if ( panel )
+    panel->removeWidget( sdiag );
+
+  sdiag->deleteLater();
+  sdiag = nullptr;
+  velmwl_fit_open = false;
 }
 
 //ALEXEY: Gate for the VELOCITY-MWL per-channel pipeline. Scans
@@ -1748,8 +1772,7 @@ void US_Analysis_auto::velmwl_deconv_rejected( QString& chann_dec )
 {
   qDebug() << "[US_Autoflow_analysis]REJECT VEL-MWL deconvolution, channel -- "
 	   << chann_dec;
-  sdiag->close();
-  velmwl_fit_open = false;
+  cleanup_velmwl_fit_widget();
 
   ++velmwl_channels_decided;
 
@@ -1763,26 +1786,10 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
 {
   qDebug() << "[US_Autoflow_analysis]ACCEPT VEL-MWL deconvolution, channel -- "
 	   << chann_dec;
-  sdiag->close();
-  velmwl_fit_open = false;
+  cleanup_velmwl_fit_widget();
 
   ++velmwl_channels_decided;
 
-  //Save SSF- procuded data to DB
-  qDebug() << "[in velmwl_deconv_accepted(): ssf_dir ] -- "
-	   << protocol_details_at_analysis_velmwl["ssf_dir_name"];
-  QString ssf_dir_mwl = protocol_details_at_analysis_velmwl["ssf_dir_name"];
-  protocol_details_at_analysis_velmwl[ "auto_flag_import"] = QString("VELMWL_IMPORT_SIM_ANALYSIS");
-  sdiag_convert = new US_ConvertGui("AUTO");
-  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
-
-  //Next, save edit profiles (based on new menicsus && same edits )
-  sdiag_edit = new US_Edit("AUTO");
-  /** re-define some fields **/
-  protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir_mwl.section("/", -1, -1);
-  protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
-  sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
-  
   //ALEXEY: See velmwl_deconv_rejected() above.
   start_next_velmwl_channel();
 }
@@ -4505,8 +4512,7 @@ void US_Analysis_auto::reset_analysis_panel( )
       if ( velmwl_fit_open )
 	{
 	  qDebug() << "[in reset Analysis stage: ] Closing MWL-fit in VEL-MWL substage...";
-	  sdiag->close();
-	  velmwl_fit_open = false;
+	  cleanup_velmwl_fit_widget();
 	}
     }
   else

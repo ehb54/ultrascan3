@@ -748,6 +748,18 @@ class US_Analysis_auto : public US_Widgets
         void start_next_velmwl_channel( void );
 
         /**
+         * @brief Retires the current VEL-MWL species-fit widget (sdiag),
+         * if any: closes it, removes it from panel, and schedules it for
+         * deletion via deleteLater() (safe to call from inside a slot
+         * that sdiag's own signal invoked). Called just before a new
+         * channel's US_MwlSpeciesFit is constructed, and when the whole
+         * analysis panel is torn down -- so closed channels' widgets
+         * don't pile up as a growing stack of hidden QWidgets in panel
+         * for the lifetime of the run. No-op if sdiag is already null.
+         */
+        void cleanup_velmwl_fit_widget( void );
+
+        /**
          * @brief Checks the fit meniscus status.
          * @param analysisID The analysis ID.
          * @param status The status to check.
