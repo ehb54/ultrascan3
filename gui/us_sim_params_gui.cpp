@@ -1244,8 +1244,11 @@ void US_SimParamsGui::set_run_params( QMap< QString, QString > run_parms )
   cnt_temperature   ->setValue( run_parms["temperature"].toDouble() );
 
   cnt_meniscus      ->setValue( run_parms["meniscus"].toDouble() );
-  cnt_bottom        ->setValue( run_parms["data_right"].toDouble() );
-
+  //cnt_bottom        ->setValue( run_parms["data_right"].toDouble() );
+  cnt_bottom        ->setValue( run_parms["bottom"].toDouble() );
+  
   qDebug() << "[in SimparamsGui], run_parms[\"data_right\"].toDouble() -- "
 	   << run_parms["data_right"].toDouble();
+  qDebug() << "[in SimparamsGui], run_parms[\"bottom\"].toDouble() -- "
+	   << run_parms["bottom"].toDouble();
 }
