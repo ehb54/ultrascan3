@@ -325,7 +325,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   counter->setNumButtons( buttons );
   counter->setRange     ( low, high );
   counter->setValue     ( value );
-  QList< QObject* > children = counter->children();
+  const QList< QObject* > children = counter->children();
   int totwid          = 0;
   // macOS and Windows styles make counter buttons too small; use Fusion.
   const QString stynam = US_GuiSettings::guiStyle();
@@ -344,11 +344,10 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
      }
   }
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  for ( QObject* const child : children )
   {  // Accumulate total width of button widgets
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
-     if ( clname.contains( "Button" ) )
+     QWidget* const cwidg = qobject_cast< QWidget* >( child );
+     if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
      {
         cwidg->adjustSize();
         totwid        += cwidg->width();

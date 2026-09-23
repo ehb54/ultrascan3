@@ -88,7 +88,7 @@ qDebug() << "CG: nefmods" << nefmods;
    const QString stynam = US_GuiSettings::guiStyle();
    static QStyle* btnsty = QStyleFactory::create( "fusion" );
    const bool needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
-                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+                         stynam.startsWith( "mac"    , Qt::CaseInsensitive );
    int c_row = 0;
 
    for ( int ii = 0; ii < 11; ii++ )
