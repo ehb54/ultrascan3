@@ -1,6 +1,7 @@
 //! \file us_2dsa.cpp
 
 #include <QApplication>
+#include <QTimer>
 #include <QtSvg>
 
 #include "us_2dsa.h"
@@ -280,13 +281,29 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
       // VEL-MWL channel. Mirrors US_MwlSpeciesFit's accept_velmwl_s()
       // pattern. Otherwise, stay on this same US_2dsa instance and run
       // the next species with the same (default) fit settings.
+      //
+      // ALEXEY: run_2dsa_auto() for the next species is deferred via
+      // QTimer::singleShot(0, ...) rather than called directly here --
+      // we are still on the call stack of the JUST-FINISHED species'
+      // US_AnalysisControl2D::completed_process()/save() (which is what
+      // called down into here), and run_2dsa_auto() retires that same
+      // analcd/processor pair (analcd->close(), a fresh
+      // US_AnalysisControl2D + US_2dsaProcess) to start the next one.
+      // Doing that inline, still nested inside the old object's own
+      // in-progress member-function call, risks exactly the kind of
+      // stale-state/duplicate-completion overlap that produced doubled,
+      // mis-labeled saves here (same class of issue as the reentrant
+      // channel-to-channel advance at the US_Analysis_auto level -- see
+      // twodsa_channel_complete()). Posting it instead lets this call
+      // stack (and the old analcd's) fully unwind and return to the Qt
+      // event loop first, so the next species starts clean.
       if ( us_gmp_auto_mode )
       {
          ++auto_triple_idx;
 
          if ( auto_triple_idx < dataList.size() )
          {
-            run_2dsa_auto();
+            QTimer::singleShot( 0, this, &US_2dsa::run_2dsa_auto );
          }
          else
          {

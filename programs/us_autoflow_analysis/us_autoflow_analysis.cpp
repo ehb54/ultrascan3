@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QXmlStreamReader>
 #include <QtNumeric>
+#include <QTimer>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
@@ -2067,7 +2068,20 @@ void US_Analysis_auto::twodsa_channel_complete( QString& chann, bool success )
   // short of emitting analysis_complete_auto(), surfacing the failure to
   // the user).
 
-  start_next_2dsa_channel();
+  // ALEXEY: Deferred via QTimer::singleShot(0, ...) rather than called
+  // directly -- twodsa_complete_s() (which reached this slot) was
+  // emitted from deep inside the just-finished channel's own US_2dsa::
+  // analysis_done()/save() call chain, itself nested inside that
+  // channel's US_AnalysisControl2D::completed_process(). Calling
+  // start_next_2dsa_channel() -- which retires that sdiag_2dsa
+  // (cleanup_2dsa_widget(): close()+deleteLater()) and immediately
+  // constructs the next channel's US_2dsa, synchronously running its
+  // whole fit+save -- inline here means that entire next channel runs
+  // nested inside the previous one's still-unwinding call stack. See
+  // US_2dsa::run_2dsa_auto()'s own header comment for the identical
+  // issue found one level down (between a channel's own S/1, S/2, ...
+  // species) and why posting instead of calling directly avoids it.
+  QTimer::singleShot( 0, this, &US_Analysis_auto::start_next_2dsa_channel );
 }
 
 //ALEXEY: Retires the current 2DSA widget (sdiag_2dsa), if any. Mirrors
