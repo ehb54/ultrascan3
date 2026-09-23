@@ -296,9 +296,9 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
 
   if ( needbsty  &&  btnsty != nullptr )
   {
-     for ( int jj = 0; jj < children.size(); jj++ )
+     for ( QObject* const child : children )
      {
-        QWidget* cwidg = qobject_cast< QWidget* >( children.at( jj ) );
+        QWidget* const cwidg = qobject_cast< QWidget* >( child );
 
         if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
            cwidg->setStyle( btnsty );
