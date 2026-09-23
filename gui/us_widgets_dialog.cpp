@@ -290,22 +290,18 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   int totwid          = 0;
   // macOS and Windows styles make counter buttons too small; use Fusion.
   const QString stynam = US_GuiSettings::guiStyle();
-  const bool needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
-                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+  const bool needbsty  = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                         stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+  static QStyle* btnsty = QStyleFactory::create( "fusion" );
 
-  if ( needbsty )
+  if ( needbsty  &&  btnsty != nullptr )
   {
-     static QStyle* const btnsty = QStyleFactory::create( "fusion" );
-
-     for ( int jj = 0; btnsty != nullptr  &&  jj < children.size(); jj++ )
+     for ( int jj = 0; jj < children.size(); jj++ )
      {
-        QWidget* const cwidg = (QWidget*)children.at( jj );
-        const QString clname = cwidg->metaObject()->className();
+        QWidget* cwidg = qobject_cast< QWidget* >( children.at( jj ) );
 
-        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
-        {
+        if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
            cwidg->setStyle( btnsty );
-        }
      }
   }
 

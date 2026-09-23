@@ -86,7 +86,7 @@ qDebug() << "CG: nefmods" << nefmods;
 
    // Use Fusion so macOS and Windows styles do not suppress button colors.
    const QString stynam = US_GuiSettings::guiStyle();
-   static QStyle* const btnsty = QStyleFactory::create( "fusion" );
+   static QStyle* btnsty = QStyleFactory::create( "fusion" );
    const bool needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
                      stynam.startsWith( "mac"    , Qt::CaseInsensitive );
    int c_row = 0;
