@@ -2265,6 +2265,7 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
   run_parms["meniscus"]   = QString::number( meniscus_p );
   run_parms["data_left"]  = QString::number( data_left );
   run_parms["data_right"] = QString::number( data_right );
+  run_parms["bottom"]     = QString::number( bottom );
 
   //also, copy to protocol_details_map for further use
   protocol_details_at_analysis_velmwl["meniscus"]   = QString::number( meniscus_p );
