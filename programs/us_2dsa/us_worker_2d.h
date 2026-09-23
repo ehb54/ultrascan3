@@ -1,6 +1,6 @@
 //! \file us_worker_2d.h
-#ifndef US_THREAD_WORKER_H
-#define US_THREAD_WORKER_H
+#ifndef US_THREAD_WORKER_2D_H
+#define US_THREAD_WORKER_2D_H
 
 #include <QtCore>
 

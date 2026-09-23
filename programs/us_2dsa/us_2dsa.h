@@ -49,6 +49,35 @@ class US_2dsa : public US_AnalysisBase2
         //! \brief Constructor for the US_2dsa class.
         US_2dsa();
 
+        //! \brief Auto-mode constructor -- used by US_Analysis_auto's
+        //! VELOCITY-MWL post-processing (process_velmwl_after_all_
+        //! channels_decided(), via start_next_2dsa_channel(), in
+        //! us_autoflow_analysis.cpp) to run a 2DSA-IT analysis, headlessly,
+        //! for a single Approved VEL-MWL channel's deconvolved data.
+        //! Mirrors US_MwlSpeciesFit's auto constructor: this one loads the
+        //! channel's edited data (load(), via a protocol_details-driven
+        //! US_DataLoader -- see US_MwlSpeciesFit::load()'s us_gmp_auto_mode
+        //! branch for the pattern), then runs the fit and saves results,
+        //! all synchronously, emitting twodsa_complete_s() when done. No
+        //! GUI interaction is required; the widget is not intended to stay
+        //! visible (the caller may still add/show it in a panel purely to
+        //! keep plots/reports inspectable, exactly as US_MwlSpeciesFit's
+        //! dialog is left up after its own auto constructor runs).
+        //! \param protocol_details_p Run-wide + per-channel protocol
+        //!        details (same map threaded through the VEL-MWL pipeline
+        //!        -- see US_Analysis_auto::protocol_details_at_analysis_
+        //!        velmwl). Must include at least:
+        //!          "chan_to_analyse"  -- the channel, "N / X" canonical form
+        //!          "autoflowID"       -- this run's autoflowID
+        //!          "invID_passed"     -- investigator ID
+        //!        plus whatever US_DataLoader's protocol_details-driven
+        //!        constructor needs to locate/load THIS channel's
+        //!        deconvolved edit (e.g. runID/editID or the ssf/edit
+        //!        directory info already threaded through by
+        //!        US_MwlSpeciesFit/US_Edit -- see get_ssf_dir_and_saveDB()
+        //!        and US_Edit::load_auto_velmwl() in us_autoflow_analysis.cpp).
+        US_2dsa( QMap<QString, QString> & protocol_details_p );
+
         //! \brief Function to handle analysis completion.
         //! \param status The status of the analysis.
         void analysis_done(int status);
@@ -100,6 +129,22 @@ class US_2dsa : public US_AnalysisBase2
         //! \return QString of the temporary ID name.
         QString temp_Id_name();
 
+        //! \brief true when this instance was constructed via the
+        //! protocol_details-taking (auto) constructor -- gates the
+        //! headless load()/fit/save path exactly as US_MwlSpeciesFit::
+        //! us_gmp_auto_mode gates its own auto path.
+        bool us_gmp_auto_mode;
+
+        //! \brief Run-wide + per-channel protocol details, passed in via
+        //! the auto constructor. See US_MwlSpeciesFit::protocol_details
+        //! for the analogous field.
+        QMap<QString, QString> protocol_details;
+
+        //! \brief The VEL-MWL channel ("N / X" canonical form) this
+        //! instance is auto-processing -- protocol_details["chan_to_analyse"],
+        //! cached for convenience/reporting (see twodsa_complete_s()).
+        QString chann_to_process_2dsa;
+
     private:
         QGridLayout* progressLayout; //!< Layout for progress display.
 
@@ -150,6 +195,27 @@ class US_2dsa : public US_AnalysisBase2
 
         int dbg_level; //!< Debug level.
         int baserss; //!< Base RSS value.
+
+        //! \brief Shared dataset/simparams setup for row `drow` of
+        //! dataList, factored out of open_fitcntl() so both the
+        //! interactive Fit Control path and the headless auto path
+        //! (run_2dsa_auto()) build `dset` identically. Returns false (and
+        //! leaves dset unchanged) if drow is out of range.
+        //! \param drow Index into dataList/lw_triples of the triple to fit.
+        bool prep_fit_dataset( int drow );
+
+        //! \brief Headless equivalent of open_fitcntl() + a user's "Start
+        //! Fit"/Save click, for us_gmp_auto_mode. Calls prep_fit_dataset()
+        //! for the (single) loaded triple, then constructs
+        //! US_AnalysisControl2D and calls its fit_auto() -- which runs a
+        //! full uniform-grid 2DSA-IT fit at that dialog's default
+        //! parameters (no GUI shown) and, on completion, calls back into
+        //! THIS widget's existing analysis_done( 2 ) itself (its
+        //! completed_process()'s auto_mode branch does what a user's
+        //! "Save Results" click would). That callback is what triggers
+        //! save() and, from there, twodsa_complete_s() below -- no new
+        //! completion-signal plumbing is needed on the US_2dsa side.
+        void run_2dsa_auto( void );
 
     private slots:
         //! \brief Slot to open the residual plot.
@@ -207,6 +273,21 @@ class US_2dsa : public US_AnalysisBase2
 
         void reset_data();
         void reset_gui();
+
+    signals:
+        //! \brief Emitted once, at the end of the headless auto path
+        //! (run_2dsa_auto() -> analysis_done( 2 ) -> save()), reporting
+        //! this channel's 2DSA-IT fit+save outcome back to the caller
+        //! (US_Analysis_auto::twodsa_channel_complete(), which advances
+        //! to the next Approved channel -- see start_next_2dsa_channel()
+        //! in us_autoflow_analysis.cpp). Mirrors US_MwlSpeciesFit's
+        //! accept_velmwl_s()/reject_velmwl_s() signals. Never emitted for
+        //! interactively-constructed (non-auto) instances.
+        //! \param chann   The channel just processed, "N / X" canonical form.
+        //! \param success false if the fit or save step failed -- the
+        //!        caller should treat this channel as unresolved rather
+        //!        than advancing past it silently.
+        void twodsa_complete_s( QString& chann, bool success );
 };
 
 #endif // US_2DSA_H

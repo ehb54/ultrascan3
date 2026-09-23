@@ -40,7 +40,16 @@ HEADERS       = us_com_project_gui.h \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
                 ../us_mwl_species_fit/us_load_run_noise.h \
                 ../us_abde/us_norm_profile.h \
-                ../us_mwl_species_sim/us_mwl_species_sim.h
+                ../us_mwl_species_sim/us_mwl_species_sim.h \
+                ../us_2dsa/us_2dsa.h \
+                ../us_2dsa/us_worker_calcnorm.h \
+                ../us_2dsa/us_worker_2d.h \
+                ../us_2dsa/us_show_norm.h \
+                ../us_2dsa/us_resplot_2d.h \
+                ../us_2dsa/us_plot_control_2d.h \
+                ../us_2dsa/us_adv_analysis_2d.h \
+                ../us_2dsa/us_2dsa_process.h \
+                ../us_2dsa/us_analysis_control_2d.h
                 
                 
 
@@ -79,7 +88,16 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
                 ../us_mwl_species_fit/us_load_run_noise.cpp \
                 ../us_abde/us_norm_profile.cpp \
-                ../us_mwl_species_sim/us_mwl_species_sim.cpp
+                ../us_mwl_species_sim/us_mwl_species_sim.cpp \
+                ../us_2dsa/us_2dsa.cpp \
+                ../us_2dsa/us_worker_calcnorm.cpp \
+                ../us_2dsa/us_worker_2d.cpp \
+                ../us_2dsa/us_show_norm.cpp \
+                ../us_2dsa/us_resplot_2d.cpp \
+                ../us_2dsa/us_plot_control_2d.cpp \
+                ../us_2dsa/us_adv_analysis_2d.cpp \
+                ../us_2dsa/us_2dsa_process.cpp \
+                ../us_2dsa/us_analysis_control_2d.cpp
                 
                 
                 

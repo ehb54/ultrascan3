@@ -30,7 +30,14 @@
 #define setPBMaximum(a)   setRange(1,a)
 
 // Function to compare solute points for sorting
-bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
+// ALEXEY: internal linkage (static) -- us_pseudo3d_combine.cpp defines an
+// identically-named, identically-signatured free function of its own;
+// both used to link fine only because they were never part of the same
+// executable. Now that us_autoflow_analysis links both us_2dsa (this
+// file) and us_pseudo3d_combine, an externally-linked copy here collides
+// at link time ("multiple definition"). Only used within this file (see
+// the std::sort() call below), so static costs nothing.
+static bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );

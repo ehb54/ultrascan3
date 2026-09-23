@@ -38,6 +38,7 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
 {
    parentw        = p;
    processor      = 0;
+   auto_mode      = false;
    dbg_level      = US_Settings::us_debug();
    grtype         = US_2dsaProcess::UGRID;
    baserss        = 0;
@@ -681,6 +682,22 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    pb_save   ->setEnabled( false );
 }
 
+// ALEXEY: Headless equivalent of a "Start Fit" click -- see header doc.
+// start() itself needs no changes: it already just reads current widget
+// values (ct_lolimits, ct_uplimits, ct_nstepss, ct_lolimitk, ct_uplimitk,
+// ct_nstepsk, ct_thrdcnt, and the ck_* checkboxes), which are left at
+// their constructor defaults here -- s x1e-13 in [1,10] over 64 grid
+// points, f/f0 in [1,4] over 64 grid points, thread count = ideal thread
+// count, no TI/RI noise fitting, no meniscus/bottom fit, no Monte Carlo.
+// Setting auto_mode here is what makes completed_process() call save()
+// itself once the fit finishes (see its alldone branch) and makes
+// memory_check() log instead of popping a blocking confirmation dialog.
+void US_AnalysisControl2D::fit_auto( void )
+{
+   auto_mode  = true;
+   start();
+}
+
 // stop fit button clicked
 void US_AnalysisControl2D::stop_fit()
 {
@@ -1137,6 +1154,17 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
       pb_stopfit->setEnabled( false );
       pb_plot   ->setEnabled( true  );
       pb_save   ->setEnabled( true  );
+
+      if ( auto_mode )
+      {
+         // ALEXEY: No user is present to click "Save Results" in the
+         // headless (VEL-MWL post-processing) path -- do exactly what
+         // that click would do. save() itself calls
+         // mainw->analysis_done( 2 ), which is what actually persists
+         // the fit results and (in US_2dsa's auto mode) reports
+         // completion back to US_Analysis_auto via twodsa_complete_s().
+         save();
+      }
    }
 
    else if ( mmitnum > 0  &&  stage > 0 )
@@ -1349,12 +1377,37 @@ int US_AnalysisControl2D::memory_check( )
 
       if ( memneed > memtot )
       {
-         QMessageBox::critical( this, title,
-             tr( "Memory needed for this fit exceeds total available." )
-             + memp + tr( "This fit will not proceed.\n"
-                          "Re-parameterize the fit with adjusted\n"
-                          "Grid Refinements and/or Thread Count." ) );
+         // ALEXEY: Genuinely can't proceed either way (not enough memory
+         // to exist, not a judgment call) -- log instead of a blocking
+         // dialog in auto_mode, but the abort (status = 1) stands either
+         // way. See fit_auto()'s header comment: this is the one
+         // parameter-driven (not data-driven) early-return start() can
+         // hit, and the default grid (64x64, ideal thread count) is
+         // sized to make it unlikely in practice.
+         if ( auto_mode )
+            qDebug() << "[US_AnalysisControl2D] memory_check(): needed"
+                     << memneed << "MB exceeds total" << memtot
+                     << "MB -- aborting fit (auto mode).";
+         else
+            QMessageBox::critical( this, title,
+                tr( "Memory needed for this fit exceeds total available." )
+                + memp + tr( "This fit will not proceed.\n"
+                             "Re-parameterize the fit with adjusted\n"
+                             "Grid Refinements and/or Thread Count." ) );
          status          = 1;
+      }
+
+      else if ( auto_mode )
+      {
+         // ALEXEY: High-but-survivable memory use is exactly the kind of
+         // judgment call an operator would normally make ("Yes" to
+         // proceed) -- no one is present to answer a modal dialog here,
+         // and blocking on msgBox.exec() with nobody to click it would
+         // hang the whole VEL-MWL post-processing pipeline. Log and
+         // proceed, same as an operator clicking "Yes".
+         qDebug() << "[US_AnalysisControl2D] memory_check(): needed"
+                  << memneed << "MB is a high percentage of available"
+                  << memava << "MB -- proceeding anyway (auto mode).";
       }
 
       else

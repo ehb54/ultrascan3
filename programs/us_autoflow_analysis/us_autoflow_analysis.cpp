@@ -182,6 +182,11 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   //correct for that first call.
   sdiag = nullptr;
 
+  sdiag_2dsa       = nullptr;
+  twodsa_open      = false;
+  twodsa_chan_idx  = -1;
+  twodsa_nchannels = 0;
+
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
     {
@@ -1812,7 +1817,20 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
   //Next, save edit profiles (based on new menicsus && same edits )
   sdiag_edit = new US_Edit("AUTO");
   /** re-define some fields **/
+  // ALEXEY: US_Edit::load_auto_velmwl() below still needs "filename"
+  // locally -- keep computing it here for that purpose. It is no longer
+  // separately persisted to the DB from this function: US_MwlSpeciesFit::
+  // accept_velmwl() now writes this same value (recomputed from
+  // ssf_dir_name, which it already has in its own protocol_details) into
+  // channelDecisions atomically with the Accept decision itself, via
+  // record_velmwl_channel_decision() -- see that function's header
+  // comment in us_mwl_species_fit.h. That removes the old, separate
+  // fire-and-forget DB write that used to live here (and the window
+  // where a channel could be on record as "Accepted" with no filename
+  // yet, which process_velmwl_after_all_channels_decided() had to
+  // defensively detect and skip).
   protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir_mwl.section("/", -1, -1);
+
   protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
   sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
     
@@ -1841,39 +1859,232 @@ void US_Analysis_auto::finalize_velmwl_analysis_if_complete( void )
   process_velmwl_after_all_channels_decided();
 }
 
-//ALEXEY: MOCK/STUB -- to be filled in later.
-//
-//Called once every channel in channels_all has a recorded Accept/Reject
-//decision, but BEFORE switching to the Report stage. There is
-//additional VEL-MWL processing that needs to happen here first -- not
-//yet specified.
-//
-//NOTE: finalize_velmwl_analysis_if_complete() above does NOT guard
-//against calling this more than once (e.g. from two overlapping
-//sessions both re-attached to this run, or the post-loop check and an
-//accept/reject signal both crossing the completion threshold) -- it
-//deliberately leaves autoflowAnalysisVelMwlStages.analysisVelMwl at
-//'unknown' until the real work below exists. So once implemented, this
-//function itself must claim that run-wide completion transition first
-//(autoflow_velmwl_analysis_status(), unknown->STARTED -- see
-//finalize_velmwl_analysis_if_complete()'s old implementation, or
-//autoflow_abde_analysis_status() in us3_autoflow_procs.sql, for the
-//pattern) and bail out if it doesn't win that claim, THEN do the actual
-//processing, and only on success call update_autoflow_record_
-//atAnalysis() and emit analysis_complete_auto( protocol_details_at_
-//analysis ) to finally switch to Report.
+//ALEXEY: Called once every channel in channels_all has a recorded
+//Accept/Reject decision, but BEFORE switching to the Report stage.
+//First claims the run-wide VEL-MWL completion transition
+//(autoflow_velmwl_analysis_status(), unknown->STARTED) -- if another
+//session (e.g. a re-attach racing this same call) already won it, back
+//off entirely rather than re-running the 2DSA-IT pipeline a second
+//time. Then reads back every channel's decision
+//(read_autoflowAnalysisVelMwl_record()) and keeps only the Approved
+//("Accepted") ones that also have a recorded filename -- Rejected
+//channels are disregarded entirely, per spec. Finally drives
+//start_next_2dsa_channel() to run a headless 2DSA-IT fit+save for each
+//Approved channel, one at a time; that function is the one that
+//eventually calls update_autoflow_record_atAnalysis() and emits
+//analysis_complete_auto() once the list is exhausted.
 void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 {
   qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
-	      "TODO -- not yet implemented. NOT switching to Report yet.";
+	      "claiming run-wide VEL-MWL completion, then starting 2DSA-IT "
+	      "post-processing for Approved channels.";
 
-  //TODO: implement the remaining post-channel-decision processing here.
-  //Once it's done (and only then):
-  //  1. claim autoflow_velmwl_analysis_status() (unknown->STARTED);
-  //     bail if unique_start != 1 (already claimed/handled elsewhere)
-  //  2. do the actual processing
-  //  3. update_autoflow_record_atAnalysis();
-  //  4. emit analysis_complete_auto( protocol_details_at_analysis );
+  // Claim the run-wide "VEL-MWL analysis complete" transition FIRST -- if
+  // another session already won it, back off entirely rather than
+  // re-running the 2DSA-IT pipeline a second time. See
+  // autoflow_velmwl_analysis_status() in us3_autoflow_procs.sql.
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		  "DB connection failed -- aborting, run stays 'unknown' for retry.";
+      delete db;
+      return;
+    }
+
+  QStringList qry_claim;
+  /**
+  qry_claim << "autoflow_velmwl_analysis_status"
+	    << QString::number( autoflowID_passed );
+  db->query( qry_claim );
+
+  int unique_start = 0;
+  if ( db->lastErrno() == US_DB2::OK && db->next() )
+    unique_start = db->value( 0 ).toInt();
+
+  if ( unique_start != 1 )
+    {
+      qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		  "completion already claimed elsewhere -- backing off.";
+      delete db;
+      return;
+    }
+  **/
+    
+  // Read back every channel's decision; keep only "Accepted" ones that
+  // also have a recorded filename (now written atomically with the
+  // decision itself -- see US_MwlSpeciesFit::record_velmwl_channel_
+  // decision()). "Rejected" channels, and any not yet in channelDecisions
+  // at all (should not happen here since finalize_velmwl_analysis_if_
+  // complete() only calls us once channels_all is fully resolved), are
+  // disregarded.
+  QStringList qry_read;
+  qry_read << "read_autoflowAnalysisVelMwl_record"
+	   << QString::number( autoflowID_passed );
+  db->query( qry_read );
+
+  channels_2dsa_approved.clear();
+  channels_2dsa_filenames.clear();
+
+  if ( db->lastErrno() == US_DB2::OK && db->next() )
+    {
+      QString decisions_json = db->value( 0 ).toString();
+      QJsonDocument jdoc = QJsonDocument::fromJson( decisions_json.toUtf8() );
+      QJsonObject   jobj = jdoc.object();
+
+      for ( auto it = jobj.constBegin(); it != jobj.constEnd(); ++it )
+	{
+	  QJsonObject chdec   = it.value().toObject();
+	  QString decision    = chdec.value( "decision" ).toString();
+	  QString chan_fname  = chdec.value( "filename" ).toString();
+
+	  if ( decision == "Accepted" )
+	    {
+	      if ( chan_fname.isEmpty() )
+		{
+		  // Accepted, but no filename on record -- should only
+		  // happen for an older run that predates the filename
+		  // being written atomically with the decision (see
+		  // US_MwlSpeciesFit::record_velmwl_channel_decision()).
+		  // Can't load data for this channel; log and skip it
+		  // rather than handing US_2dsa an empty filename.
+		  qDebug() << "[US_Autoflow_analysis] channel" << it.key()
+			   << "is Accepted but has no filename on record -- "
+			      "skipping 2DSA-IT for this channel.";
+		  continue;
+		}
+	      channels_2dsa_approved  << it.key();
+	      channels_2dsa_filenames[ it.key() ] = chan_fname;
+	    }
+	}
+    }
+  else
+    {
+      qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		  "could not read channel decisions -- reverting completion claim.";
+      QStringList qry_revert;
+      qry_revert << "autoflow_velmwl_analysis_status_revert"
+		 << QString::number( autoflowID_passed );
+      db->query( qry_revert );
+      delete db;
+      return;
+    }
+
+  delete db;
+
+  qDebug() << "[US_Autoflow_analysis] Approved VEL-MWL channels for 2DSA-IT:"
+	   << channels_2dsa_approved;
+
+  // Seed this stage's protocol_details from the VEL-MWL stage's map --
+  // carries forward autoflowID/invID_passed/protocolName/etc.
+  // "chan_to_analyse" and "filename" get overwritten per-channel by
+  // start_next_2dsa_channel().
+  protocol_details_at_analysis_2dsa = protocol_details_at_analysis_velmwl;
+  twodsa_chan_idx  = -1;   // start_next_2dsa_channel() scans from idx+1
+  twodsa_nchannels = channels_2dsa_approved.size();
+
+  /**
+  if ( channels_2dsa_approved.isEmpty() )
+    {
+      // Nothing was Approved (or nothing Approved had a usable filename)
+      // -- nothing to simulate. Finish the run.
+      update_autoflow_record_atAnalysis();
+      emit analysis_complete_auto( protocol_details_at_analysis );
+      return;
+    }
+  **/
+  
+  start_next_2dsa_channel();
+}
+
+//ALEXEY: Drives the 2DSA-IT pipeline one Approved channel at a time --
+//see header doc. Deliberately RETURNs (not loops) after launching a
+//channel: the next one starts only once twodsa_channel_complete() fires
+//for this one, exactly mirroring start_next_velmwl_channel()'s
+//single-channel-at-a-time shape (US_2dsa's auto constructor runs
+//synchronously today, so in practice this currently completes in one
+//pass regardless -- but keeping the same shape as the VEL-MWL stage
+//means this keeps working unchanged once US_2dsa's fit step becomes
+//asynchronous, e.g. once US_AnalysisControl2D::fit_auto() drives
+//US_SolveSim on a real thread).
+void US_Analysis_auto::start_next_2dsa_channel( void )
+{
+  ++twodsa_chan_idx;
+  
+  if ( twodsa_chan_idx >= channels_2dsa_approved.size() )
+    {
+      // All Approved channels processed -- the VEL-MWL run is complete.
+      
+      
+      /**
+      update_autoflow_record_atAnalysis();
+      emit analysis_complete_auto( protocol_details_at_analysis );
+      **/
+      
+      return;
+    }
+  
+  QString chan_norm = channels_2dsa_approved[ twodsa_chan_idx ];
+
+  qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << ( twodsa_chan_idx + 1 )
+	   << "of" << twodsa_nchannels << "--" << chan_norm;
+
+  cleanup_2dsa_widget();   // retire the previous channel's widget, if any
+
+  protocol_details_at_analysis_2dsa[ "chan_to_analyse" ] = chan_norm;
+  protocol_details_at_analysis_2dsa[ "filename" ]        = channels_2dsa_filenames[ chan_norm ];
+
+  sdiag_2dsa = new US_2dsa( protocol_details_at_analysis_2dsa );
+  connect( sdiag_2dsa, &US_2dsa::twodsa_complete_s,
+	   this,       &US_Analysis_auto::twodsa_channel_complete );
+
+  if ( panel )
+    panel->addWidget( sdiag_2dsa );
+  twodsa_open = true;
+
+  // ALEXEY: US_2dsa's current auto constructor (see us_2dsa.cpp) runs
+  // load()+run_2dsa_auto() synchronously and emits twodsa_complete_s()
+  // before returning here (once US_AnalysisControl2D::fit_auto() exists
+  // -- see that file's TODO) -- so by the time `new US_2dsa(...)` above
+  // returns, twodsa_channel_complete() has typically already fired and
+  // advanced twodsa_chan_idx further. That is fine: this function's own
+  // job is done once it has launched (or, in practice, already finished)
+  // this one channel.
+}
+
+//ALEXEY: Slot for US_2dsa::twodsa_complete_s() -- advance to the next
+//Approved channel. Mirrors velmwl_deconv_accepted()/rejected().
+void US_Analysis_auto::twodsa_channel_complete( QString& chann, bool success )
+{
+  qDebug() << "[US_Autoflow_analysis] 2DSA-IT complete for channel" << chann
+	   << "-- success:" << success;
+
+  // NOTE: a failed channel is currently just logged and the pipeline
+  // moves on -- see this function's header doc if a failure should
+  // instead halt the run (e.g. leave the completion claim made but stop
+  // short of emitting analysis_complete_auto(), surfacing the failure to
+  // the user).
+
+  start_next_2dsa_channel();
+}
+
+//ALEXEY: Retires the current 2DSA widget (sdiag_2dsa), if any. Mirrors
+//cleanup_velmwl_fit_widget() exactly.
+void US_Analysis_auto::cleanup_2dsa_widget( void )
+{
+  if ( ! sdiag_2dsa )
+    return;
+
+  sdiag_2dsa->close();
+
+  if ( panel )
+    panel->removeWidget( sdiag_2dsa );
+
+  sdiag_2dsa->deleteLater();
+  sdiag_2dsa  = nullptr;
+  twodsa_open = false;
 }
 
 //ALEXEY: Look up whether a VEL-MWL channel already has a recorded

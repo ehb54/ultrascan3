@@ -32,7 +32,16 @@ HEADERS       =  us_query_rmsd.h \
                  ../us_edit/us_get_edit.h \
                  ../us_edit/us_select_lambdas.h \
                  ../us_edit/us_exclude_profile.h \
-                 ../us_edit/us_edit_scan.h
+                 ../us_edit/us_edit_scan.h \
+                 ../us_2dsa/us_2dsa.h \
+                 ../us_2dsa/us_worker_calcnorm.h \
+                 ../us_2dsa/us_worker_2d.h \
+                 ../us_2dsa/us_show_norm.h \
+                 ../us_2dsa/us_resplot_2d.h \
+                 ../us_2dsa/us_plot_control_2d.h \
+                 ../us_2dsa/us_adv_analysis_2d.h \
+                 ../us_2dsa/us_2dsa_process.h \
+                 ../us_2dsa/us_analysis_control_2d.h
 
 
 SOURCES       =  us_query_rmsd.cpp \
@@ -63,6 +72,15 @@ SOURCES       =  us_query_rmsd.cpp \
                  ../us_edit/us_get_edit.cpp \
                  ../us_edit/us_select_lambdas.cpp \
                  ../us_edit/us_exclude_profile.cpp \
-                 ../us_edit/us_edit_scan.cpp               
+                 ../us_edit/us_edit_scan.cpp               \
+                 ../us_2dsa/us_2dsa.cpp \
+                 ../us_2dsa/us_worker_calcnorm.cpp \
+                 ../us_2dsa/us_worker_2d.cpp \
+                 ../us_2dsa/us_show_norm.cpp \
+                 ../us_2dsa/us_resplot_2d.cpp \
+                 ../us_2dsa/us_plot_control_2d.cpp \
+                 ../us_2dsa/us_adv_analysis_2d.cpp \
+                 ../us_2dsa/us_2dsa_process.cpp \
+                 ../us_2dsa/us_analysis_control_2d.cpp
                  
 

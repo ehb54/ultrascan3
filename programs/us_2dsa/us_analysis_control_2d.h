@@ -40,6 +40,25 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! \param p       Pointer to the parent of this widget
       US_AnalysisControl2D( QList< SS_DATASET* >&, bool&, QWidget* p = 0 );
       enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
+      //! \brief Headless equivalent of the user clicking "Start Fit" --
+      //! for US_2dsa's auto (VEL-MWL post-processing) constructor, via
+      //! US_2dsa::run_2dsa_auto(), to run a 2DSA-IT fit with no GUI
+      //! interaction, using the default grid/fit parameters this dialog
+      //! is constructed with (see the .cpp constructor -- a full uniform
+      //! grid fit, no noise fitting, no meniscus/bottom fit, no Monte
+      //! Carlo). Sets auto_mode, which also makes completed_process()
+      //! call save() itself once the fit finishes (instead of just
+      //! enabling the Save Results button and waiting for a click that
+      //! will never come), and makes memory_check() log instead of
+      //! popping a blocking confirmation dialog. See start()'s and
+      //! memory_check()'s own comments for the couple of *other*,
+      //! data-dependent (not parameter-dependent) QMessageBox::critical
+      //! early-returns in start() -- e.g. a buoyancy-sign mismatch for
+      //! an unusual analyte -- that are NOT guarded by auto_mode; those
+      //! remain a known residual risk of this headless path hanging on
+      //! a modal dialog for those specific, uncommon inputs.
+      void fit_auto( void );
       US_Model  model2 ;
       //void calculate_norms( US_Model& ) ;
       void set_comp_attr     ( US_Model::SimulationComponent&,
@@ -58,6 +77,11 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       US_Model                         cusmodel;
 
       bool&         loadDB;
+
+      //! \brief Set true by fit_auto() -- see completed_process()'s
+      //! alldone branch (auto-saves instead of waiting for a click) and
+      //! memory_check() (logs instead of a blocking confirmation dialog).
+      bool          auto_mode;
 
       int           dbg_level;
       int           ncsteps;

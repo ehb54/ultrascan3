@@ -262,11 +262,14 @@ void US_MwlSpeciesFit::reject_velmwl()
 {
   qDebug() << "[Mwl-FIT]Rejecting VEL-MWL deconvolution results!";
 
-  QString recorded_decision, recorded_decisionByName, recorded_decisionTs;
+  //ALEXEY: Nothing to persist for a Reject -- pass an empty filename.
+  QString recorded_decision, recorded_decisionByName, recorded_decisionTs, recorded_filename;
   bool newly_recorded = record_velmwl_channel_decision( chann_to_process_velmwl, "Rejected",
+							  QString(),
 							  recorded_decision,
 							  recorded_decisionByName,
-							  recorded_decisionTs );
+							  recorded_decisionTs,
+							  recorded_filename );
 
   if ( newly_recorded )
     {
@@ -309,11 +312,20 @@ void US_MwlSpeciesFit::accept_velmwl()
 {
   qDebug() << "[Mwl-FIT]Accepting VEL-MWL deconvolution results!";
 
-  QString recorded_decision, recorded_decisionByName, recorded_decisionTs;
+  //ALEXEY: Same value US_Analysis_auto::velmwl_deconv_accepted() used to
+  //derive independently from ssf_dir_name for its own, separate filename
+  //write -- computed here instead so it can go out atomically with the
+  //decision below, in a single DB call.
+  QString ssf_dir_mwl        = protocol_details[ "ssf_dir_name" ];
+  QString filename_for_chann = ssf_dir_mwl.section( "/", -1, -1 );
+
+  QString recorded_decision, recorded_decisionByName, recorded_decisionTs, recorded_filename;
   bool newly_recorded = record_velmwl_channel_decision( chann_to_process_velmwl, "Accepted",
+							  filename_for_chann,
 							  recorded_decision,
 							  recorded_decisionByName,
-							  recorded_decisionTs );
+							  recorded_decisionTs,
+							  recorded_filename );
 
   if ( newly_recorded )
     {
@@ -365,9 +377,11 @@ void US_MwlSpeciesFit::accept_velmwl()
 //check-then-write here would itself race two sessions clicking at
 //nearly the same moment. Returns whether THIS call's decision won.
 bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString decision,
+                                                         QString filename,
                                                          QString& recorded_decision,
                                                          QString& recorded_decisionByName,
-                                                         QString& recorded_decisionTs )
+                                                         QString& recorded_decisionTs,
+                                                         QString& recorded_filename )
 {
   //ALEXEY: Fallback for the two "couldn't consult the DB at all" cases
   //below (no autoflowID, or connection failure) -- treat this click as
@@ -379,6 +393,7 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
   recorded_decision       = decision;
   recorded_decisionByName = QString();
   recorded_decisionTs     = QString();
+  recorded_filename       = filename;
 
   QString autoflowID = protocol_details[ "autoflowID" ];
   if ( autoflowID.isEmpty() )
@@ -414,7 +429,15 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
       << chann
       << decision
       << QString::number( u_ID )
-      << ( u_lname + ", " + u_fname );
+      << ( u_lname + ", " + u_fname )
+      << filename;   //ALEXEY: new -- persisted atomically with the decision instead of
+                      //via a second, separate write from US_Analysis_auto::
+                      //velmwl_deconv_accepted(). Empty for Reject. REQUIRES
+                      //update_autoflowAnalysisVelMwl_channel_decision() in
+                      //us3_autoflow_procs.sql to accept this extra parameter
+                      //and store it under the channel's "filename" JSON key
+                      //(the key process_velmwl_after_all_channels_decided()
+                      //already reads back) -- see the header doc comment.
 
   //ALEXEY: Deliberately db->query() here, NOT db->statusQuery() --
   //this proc returns a *second* result set beyond the status one (see
@@ -437,11 +460,16 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
 
   //ALEXEY: Second result set from update_autoflowAnalysisVelMwl_
   //channel_decision() -- newly_recorded, recorded_decision,
-  //recorded_decisionByID, recorded_decisionByName, recorded_decisionTs
-  //(column 2, decisionByID, deliberately unused here). Tells us
-  //whether THIS call's decision is the one now on record, or whether
-  //an earlier call (this or another session) already won this channel
-  //first.
+  //recorded_decisionByID, recorded_decisionByName, recorded_decisionTs,
+  //recorded_filename (column 2, decisionByID, deliberately unused here).
+  //Tells us whether THIS call's decision is the one now on record, or
+  //whether an earlier call (this or another session) already won this
+  //channel -- and with it, whose filename actually got persisted.
+  //recorded_filename (column 5) is new: falls back to the locally-passed
+  //`filename` above if the proc hasn't been migrated yet to return it (an
+  //older/unmigrated proc simply won't populate a 6th column, and
+  //QSqlQuery::value() on an out-of-range index returns an invalid,
+  //empty-string QVariant).
   bool newly_recorded = true;
   if ( db->next() )
     {
@@ -449,6 +477,8 @@ bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString de
       recorded_decision       = db->value( 1 ).toString();
       recorded_decisionByName = db->value( 3 ).toString();
       recorded_decisionTs     = db->value( 4 ).toString();
+      QString recorded_fname_col = db->value( 5 ).toString();
+      recorded_filename       = recorded_fname_col.isEmpty() ? filename : recorded_fname_col;
     }
 
   if ( newly_recorded )

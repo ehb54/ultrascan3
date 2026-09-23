@@ -23,6 +23,16 @@
 #include "../us_mwl_species_sim/us_mwl_species_sim.h"
 #include "../us_edit/us_edit.h"
 
+#include "../us_2dsa/us_2dsa.h"
+#include "../us_2dsa/us_worker_calcnorm.h"
+#include "../us_2dsa/us_worker_2d.h"
+#include "../us_2dsa/us_show_norm.h"
+#include "../us_2dsa/us_resplot_2d.h"
+#include "../us_2dsa/us_plot_control_2d.h"
+#include "../us_2dsa/us_adv_analysis_2d.h"
+#include "../us_2dsa/us_2dsa_process.h"
+#include "../us_2dsa/us_analysis_control_2d.h"
+
 
 #include "us_analysis_base2.h"
 #include "us_images.h"
@@ -54,6 +64,8 @@ class US_Analysis_auto : public US_Widgets
         US_MwlSpeciesSim* sdiag_mwlsim;
         US_Edit*          sdiag_edit;
         bool velmwl_fit_open;
+        US_2dsa*          sdiag_2dsa;        //!< Current channel's headless 2DSA-IT widget (VEL-MWL post-processing).
+        bool twodsa_open;                    //!< True while sdiag_2dsa is live (mirrors velmwl_fit_open).
 
         QTreeWidget     *treeWidget;                             /**< Tree widget for displaying analysis data. */
         QMap<QString, QTreeWidgetItem *> topItem;                /**< Top-level items in the tree widget. */
@@ -210,6 +222,7 @@ class US_Analysis_auto : public US_Widgets
 
             QMap < QString, QString > protocol_details_at_analysis;  /**< Protocol details at the time of analysis. */
             QMap < QString, QString > protocol_details_at_analysis_velmwl; 
+            QMap < QString, QString > protocol_details_at_analysis_2dsa;  /**< Seeded from protocol_details_at_analysis_velmwl at the start of process_velmwl_after_all_channels_decided(); "chan_to_analyse" and "filename" are overwritten per-channel by start_next_2dsa_channel(). */
             bool fitmen_bad_vals;                                    /**< Flag for bad FitMeniscus values. */
             bool no_fm_data_auto;                                    /**< Flag indicating no FitMeniscus data automatically. */
 
@@ -219,6 +232,11 @@ class US_Analysis_auto : public US_Widgets
             int mwlsim_chan_idx;                                      /**< Index (0-based) of the channel currently being processed by the MWL sim/save pipeline. */
             QString mwlsim_chan_name;                                 /**< Name of the channel currently being processed, used to label progress_msg_mwlsim. */
             int velmwl_channels_decided;                              /**< Count of channels_all resolved (already-decided & skipped, or freshly Accepted/Rejected) this VEL-MWL Analysis pass; see finalize_velmwl_analysis_if_complete(). */
+
+            QStringList channels_2dsa_approved;                       /**< Approved (Accepted) VEL-MWL channels, "N / X" form -- built once in process_velmwl_after_all_channels_decided(), consumed one at a time by start_next_2dsa_channel(). */
+            QMap<QString, QString> channels_2dsa_filenames;           /**< channel -> deconvolved-edit filename (from channelDecisions[chan]["filename"], written atomically with the Accept decision by US_MwlSpeciesFit::record_velmwl_channel_decision()), keyed the same as channels_2dsa_approved. What US_DataLoader actually needs to load this channel's data. */
+            int twodsa_chan_idx;                                      /**< Cursor into channels_2dsa_approved -- -1 so start_next_2dsa_channel() starts at index 0. */
+            int twodsa_nchannels;                                     /**< channels_2dsa_approved.size(), cached for progress reporting. */
 
             QVector< double > v_meni;                                /**< Vector of meniscus values. */
             QVector< double > v_bott;                                /**< Vector of bottom values. */
@@ -715,20 +733,59 @@ class US_Analysis_auto : public US_Widgets
         void finalize_velmwl_analysis_if_complete( void );
 
         /**
-         * @brief MOCK/STUB -- to be filled in later. Runs once every
-         * VEL-MWL channel has a recorded decision but before switching
-         * to Report -- there is further processing needed here first
-         * (not yet specified). Deliberately does NOT call
-         * update_autoflow_record_atAnalysis() or emit
-         * analysis_complete_auto() yet, and is NOT itself guarded
-         * against being called more than once. Once implemented, this
-         * function must claim the run-wide completion transition itself
-         * (autoflow_velmwl_analysis_status(), unknown->STARTED) and bail
-         * out if it doesn't win that claim, before doing the real work
-         * and, only on success, calling update_autoflow_record_
-         * atAnalysis() and emitting analysis_complete_auto().
+         * @brief Runs once every VEL-MWL channel in channels_all has a
+         * recorded Accept/Reject decision (see finalize_velmwl_analysis_
+         * if_complete()), but before switching to the Report stage.
+         * First claims the run-wide VEL-MWL completion transition
+         * (autoflow_velmwl_analysis_status(), unknown->STARTED) so a
+         * re-attached/overlapping session backs off instead of re-running
+         * this; only the caller that wins the claim proceeds. Reads back
+         * every channel's decision (read_autoflowAnalysisVelMwl_record())
+         * and keeps only the Approved ("Accepted") ones with a recorded
+         * filename -- Rejected channels are disregarded entirely, per
+         * spec, as are (logged) Accepted channels missing a filename.
+         * The filename is now written atomically with the decision (see
+         * US_MwlSpeciesFit::record_velmwl_channel_decision()), so the
+         * missing-filename case should only occur for an older run that
+         * predates that change. Then drives start_next_2dsa_
+         * channel() to run a headless 2DSA-IT US_2dsa fit+save for each
+         * Approved channel, one at a time, before finally calling
+         * update_autoflow_record_atAnalysis() and emitting
+         * analysis_complete_auto() to switch to Report.
          */
         void process_velmwl_after_all_channels_decided( void );
+
+        /**
+         * @brief Drives the 2DSA-IT post-processing pipeline one Approved
+         * VEL-MWL channel at a time, exactly as start_next_velmwl_channel()
+         * drives the species-fit stage: pulls the next channel from
+         * channels_2dsa_approved, constructs a headless US_2dsa for it
+         * (which loads that channel's deconvolved data -- via
+         * channels_2dsa_filenames -- and runs+saves the fit synchronously
+         * in its auto constructor), and returns. When channels_2dsa_
+         * approved is exhausted, finishes the VEL-MWL run
+         * (update_autoflow_record_atAnalysis() + analysis_complete_auto()).
+         */
+        void start_next_2dsa_channel( void );
+
+        /**
+         * @brief Slot connected to US_2dsa::twodsa_complete_s() -- retires
+         * the current channel's US_2dsa (cleanup_2dsa_widget()) and
+         * advances to the next Approved channel via start_next_2dsa_
+         * channel(). A false `success` is logged but does not stop the
+         * pipeline; adjust here if a failed channel should instead halt
+         * the run for operator attention.
+         * @param chann   The channel just processed.
+         * @param success Whether the fit+save completed successfully.
+         */
+        void twodsa_channel_complete( QString& chann, bool success );
+
+        /**
+         * @brief Retires the current 2DSA widget (sdiag_2dsa), if any --
+         * closes it, removes it from panel, schedules it for deletion.
+         * Mirrors cleanup_velmwl_fit_widget() exactly.
+         */
+        void cleanup_2dsa_widget( void );
 
         /**
          * @brief Drives the VELOCITY-MWL channel pipeline one channel at a

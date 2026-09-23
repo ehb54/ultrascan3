@@ -24,21 +24,12 @@
 #include "us_loadable_noise.h"
 #include "us_show_norm.h"
 
-//! \brief Main program for us_2dsa. Loads translators and starts
-//         the class US_2dsa.
-
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_2dsa w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
+// ALEXEY: main() moved out to us_2dsa_main.cpp, mirroring
+// us_mwl_species_fit.cpp/us_mwl_species_fit_main.cpp's split -- US_2dsa
+// is now also constructed headlessly (see the protocol_details-taking
+// auto constructor below), so it needs to be linkable as a plain
+// class from us_autoflow_analysis.cpp without pulling in a second
+// main() and colliding with the real one.
 
 // constructor, based on AnalysisBase
 US_2dsa::US_2dsa() : US_AnalysisBase2()
@@ -163,6 +154,46 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 
    dsets.clear();
    dsets << &dset;
+
+   us_gmp_auto_mode = false;
+}
+
+// ALEXEY: Auto-mode constructor -- runs a headless 2DSA-IT fit+save for a
+// single Approved VEL-MWL channel. Built identically to the interactive
+// constructor above (same widgets/layout -- kept even though most of it
+// is never seen, exactly as US_MwlSpeciesFit's auto constructor keeps its
+// own widget setup, since AnalysisBase2/this class assume those controls
+// exist) and then, instead of returning idle, drives load() -> run_2dsa_
+// auto() synchronously, emitting twodsa_complete_s() when done. See
+// us_2dsa.h's declaration for the expected protocol_details_p contents.
+US_2dsa::US_2dsa( QMap<QString, QString> & protocol_details_p ) : US_2dsa()
+{
+   us_gmp_auto_mode      = true;
+   this->protocol_details = protocol_details_p;
+   chann_to_process_2dsa  = protocol_details[ "chan_to_analyse" ];
+
+   setWindowTitle( tr( "2-Dimensional Spectrum Analysis (VEL-MWL, channel %1)" )
+                    .arg( chann_to_process_2dsa ) );
+
+   qDebug() << "[US_2dsa] auto constructor: channel" << chann_to_process_2dsa;
+
+   // Load THIS channel's deconvolved edited data (see load()'s
+   // us_gmp_auto_mode branch below -- mirrors US_MwlSpeciesFit::load()).
+   load();
+
+   if ( ! dataLoaded )
+   {
+      qDebug() << "[US_2dsa] auto constructor: load() failed for channel"
+               << chann_to_process_2dsa;
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      return;
+   }
+
+   // Run the fit and (on completion, via analysis_done( 2 )) save it --
+   // see run_2dsa_auto()'s header comment for the one outstanding
+   // dependency (US_AnalysisControl2D::fit_auto()).
+   run_2dsa_auto();
 }
 
 // slot to handle the completion of a 2-D spectrum analysis stage
@@ -236,6 +267,20 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
    else if ( savedata )
    {  // Save the data and reports
       save();
+
+      // ALEXEY: In auto mode, this channel's fit+save is now complete --
+      // report back to the caller (US_Analysis_auto::twodsa_channel_
+      // complete(), via start_next_2dsa_channel() in
+      // us_autoflow_analysis.cpp) so it can advance to the next Approved
+      // VEL-MWL channel. Mirrors US_MwlSpeciesFit's accept_velmwl_s()
+      // pattern -- see run_2dsa_auto()'s header comment for the
+      // remaining piece (US_AnalysisControl2D::fit_auto()) that this
+      // relies on to actually reach here headlessly.
+      if ( us_gmp_auto_mode )
+      {
+         bool success = true;
+         emit twodsa_complete_s( chann_to_process_2dsa, success );
+      }
    }
 
    // For multiple models (e.g., Fit-Meniscus) report on best
@@ -275,7 +320,74 @@ DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom"
 // load the experiment data, mostly thru AnalysisBase; then disable view,save
 void US_2dsa::load( void )
 {
-   US_AnalysisBase2::load();       // load edited experiment data
+   if ( us_gmp_auto_mode )
+   {
+      // ALEXEY: Headless equivalent of US_AnalysisBase2::load(), mirroring
+      // US_MwlSpeciesFit::load()'s own us_gmp_auto_mode branch: build a
+      // protocol_details-driven US_DataLoader instead of the interactive
+      // one, and skip dialog->exec() entirely -- US_DataLoader's
+      // protocol_details-taking constructor is responsible for resolving
+      // and loading exactly this channel's (chann_to_process_2dsa /
+      // protocol_details["chan_to_analyse"]) deconvolved edited data
+      // without prompting, the same way it resolves the run's raw data
+      // for US_MwlSpeciesFit's own auto path.
+      dataLoaded = false;
+      dataList     .clear();
+      rawList      .clear();
+      excludedScans.clear();
+      triples      .clear();
+      savedValues  .clear();
+
+      lw_triples->disconnect();
+      lw_triples->clear();
+      ct_from   ->disconnect();
+      ct_from   ->setValue( 0 );
+
+      const bool edlast = true;
+      const int  dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                                   : US_Disk_DB_Controls::Disk;
+      QString description;
+
+      US_DataLoader* dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList,
+                                       triples, description, protocol_details, "none" );
+      connect( dialog, &US_DataLoader::changed, this, &US_2dsa::update_disk_db );
+      connect( dialog, &US_DataLoader::progress, this, &US_2dsa::set_progress );
+
+      if ( dataList.isEmpty() )
+      {
+         qDebug() << "[US_2dsa] load(): auto US_DataLoader returned no data"
+                  << "for channel" << chann_to_process_2dsa;
+         return;
+      }
+
+      if ( disk_controls->db() )
+         directory = tr( "(database)" );
+      else
+      {
+         directory = description.section( description.left( 1 ), 4, 4 );
+         directory = directory.left( directory.lastIndexOf( "/" ) );
+      }
+
+      for ( int ii = 0; ii < triples.size(); ii++ )
+         lw_triples->addItem( triples.at( ii ) );
+
+      const int nscans  = dataList[ 0 ].scanCount();
+
+      for ( int ii = 0; ii < nscans; ii++ )
+         savedValues << dataList[ 0 ].scanData[ ii ].rvalues;
+
+      noiflags.fill( -1,            dataList.size() );
+      allExcls.fill( excludedScans, dataList.size() );
+      rinoises.fill( US_Noise(),    dataList.size() );
+      tinoises.fill( US_Noise(),    dataList.size() );
+      lw_triples->setCurrentRow( 0 );
+
+      dataLoaded = true;
+      emit dataAreLoaded();
+      qApp->processEvents();
+   }
+   else
+      US_AnalysisBase2::load();       // load edited experiment data (interactive)
 
    if ( !dataLoaded )  return;
 
@@ -1067,11 +1179,14 @@ void US_2dsa::open_3dplot()
    eplotcd->show();
 }
 
-// Open fit analysis control window
-void US_2dsa::open_fitcntl()
+// ALEXEY: Factored out of open_fitcntl() (unchanged behavior) so the
+// headless auto path (run_2dsa_auto()) can build `dset`/simparams
+// identically without going through the interactive dialog below.
+// Returns false (dset left untouched) if drow is out of range.
+bool US_2dsa::prep_fit_dataset( int drow )
 {
-   int    drow     = lw_triples->currentRow();
-   if ( drow < 0 )   return;
+   if ( drow < 0  ||  drow >= dataList.size() )   return false;
+
    edata           = &dataList[ drow ];
    double avTemp   = edata->average_temperature();
    double vbar20   = US_Math2::calcCommonVbar( solution_rec, 20.0   );
@@ -1171,6 +1286,15 @@ if(dbg_level>0) dset.simparams.debug();
       dbP    = NULL;
    }
 
+   return true;
+}
+
+// Open fit analysis control window
+void US_2dsa::open_fitcntl()
+{
+   int    drow     = lw_triples->currentRow();
+   if ( ! prep_fit_dataset( drow ) )   return;
+
    if ( analcd != 0 )
    {
       acd_pos  = analcd->pos();
@@ -1183,6 +1307,37 @@ if(dbg_level>0) dset.simparams.debug();
    analcd->move( acd_pos );
    analcd->show();
    qApp->processEvents();
+}
+
+// ALEXEY: Headless equivalent of open_fitcntl(), for us_gmp_auto_mode.
+// Builds `dset` exactly as the interactive path does (prep_fit_dataset()),
+// for the single triple this auto-loaded (see load()'s auto branch --
+// always dataList[0] for a VEL-MWL channel's deconvolved edit), then
+// constructs US_AnalysisControl2D exactly as open_fitcntl() does and
+// calls its fit_auto() -- the headless equivalent of a "Start Fit" click
+// (runs a full uniform-grid fit at that dialog's default parameters; see
+// its own header comment for exactly what those are). On completion,
+// fit_auto()'s own auto-mode handling calls back into this->
+// analysis_done( 2 ) itself (what a "Save Results" click would do),
+// exactly as the interactive path does on a real click -- so nothing
+// else is needed here: analysis_done( 2 ) already calls save() and (see
+// its own auto-mode hook, above) already emits twodsa_complete_s() from
+// there once that's done.
+void US_2dsa::run_2dsa_auto( void )
+{
+   if ( ! us_gmp_auto_mode )   return;
+
+   if ( dataList.isEmpty()  ||  ! prep_fit_dataset( 0 ) )
+   {
+      qDebug() << "[US_2dsa] run_2dsa_auto(): no data loaded for channel"
+               << chann_to_process_2dsa << "-- aborting.";
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      return;
+   }
+
+   analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
+   analcd->fit_auto();
 }
 
 // Distribution information HTML string
