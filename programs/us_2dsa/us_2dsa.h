@@ -145,6 +145,21 @@ class US_2dsa : public US_AnalysisBase2
         //! cached for convenience/reporting (see twodsa_complete_s()).
         QString chann_to_process_2dsa;
 
+        //! \brief Index into dataList/lw_triples of the deconvolved
+        //! species (e.g. S/1, S/2 -- US_MwlSpeciesFit's per-species
+        //! output for this one physical channel) currently being
+        //! processed by run_2dsa_auto(), within THIS channel's US_2dsa
+        //! instance. A channel Approved at the VEL-MWL stage can
+        //! resolve to more than one species, each needing its own
+        //! independent 2DSA-IT fit; this cursor is what lets a single
+        //! US_2dsa instance walk all of them sequentially -- with the
+        //! same (default) US_AnalysisControl2D fit settings each time --
+        //! before finally reporting the whole channel done. Advanced by
+        //! analysis_done()'s auto-mode branch after each species'
+        //! fit+save; twodsa_complete_s() is only emitted once
+        //! auto_triple_idx reaches dataList.size().
+        int auto_triple_idx;
+
     private:
         QGridLayout* progressLayout; //!< Layout for progress display.
 

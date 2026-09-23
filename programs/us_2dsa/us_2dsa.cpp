@@ -169,6 +169,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 US_2dsa::US_2dsa( QMap<QString, QString> & protocol_details_p ) : US_2dsa()
 {
    us_gmp_auto_mode      = true;
+   auto_triple_idx        = 0;
    this->protocol_details = protocol_details_p;
    chann_to_process_2dsa  = protocol_details[ "chan_to_analyse" ];
 
@@ -268,18 +269,30 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
    {  // Save the data and reports
       save();
 
-      // ALEXEY: In auto mode, this channel's fit+save is now complete --
+      // ALEXEY: A VEL-MWL-Approved channel can resolve to more than one
+      // deconvolved species (S/1, S/2, ... -- see US_MwlSpeciesFit's
+      // per-species output), each loaded as its own row of dataList/
+      // lw_triples by load()'s auto branch. Only once every species for
+      // THIS channel has been fit+saved is the channel actually done --
       // report back to the caller (US_Analysis_auto::twodsa_channel_
       // complete(), via start_next_2dsa_channel() in
       // us_autoflow_analysis.cpp) so it can advance to the next Approved
       // VEL-MWL channel. Mirrors US_MwlSpeciesFit's accept_velmwl_s()
-      // pattern -- see run_2dsa_auto()'s header comment for the
-      // remaining piece (US_AnalysisControl2D::fit_auto()) that this
-      // relies on to actually reach here headlessly.
+      // pattern. Otherwise, stay on this same US_2dsa instance and run
+      // the next species with the same (default) fit settings.
       if ( us_gmp_auto_mode )
       {
-         bool success = true;
-         emit twodsa_complete_s( chann_to_process_2dsa, success );
+         ++auto_triple_idx;
+
+         if ( auto_triple_idx < dataList.size() )
+         {
+            run_2dsa_auto();
+         }
+         else
+         {
+            bool success = true;
+            emit twodsa_complete_s( chann_to_process_2dsa, success );
+         }
       }
    }
 
@@ -1311,29 +1324,40 @@ void US_2dsa::open_fitcntl()
 
 // ALEXEY: Headless equivalent of open_fitcntl(), for us_gmp_auto_mode.
 // Builds `dset` exactly as the interactive path does (prep_fit_dataset()),
-// for the single triple this auto-loaded (see load()'s auto branch --
-// always dataList[0] for a VEL-MWL channel's deconvolved edit), then
-// constructs US_AnalysisControl2D exactly as open_fitcntl() does and
-// calls its fit_auto() -- the headless equivalent of a "Start Fit" click
-// (runs a full uniform-grid fit at that dialog's default parameters; see
-// its own header comment for exactly what those are). On completion,
-// fit_auto()'s own auto-mode handling calls back into this->
+// for the species/triple at auto_triple_idx (see load()'s auto branch --
+// a VEL-MWL-Approved channel's deconvolved edit can carry more than one
+// species, each its own row of dataList; analysis_done()'s savedata
+// branch advances auto_triple_idx and calls back in here for each one in
+// turn), then constructs US_AnalysisControl2D exactly as open_fitcntl()
+// does and calls its fit_auto() -- the headless equivalent of a "Start
+// Fit" click (runs a full uniform-grid fit at that dialog's default
+// parameters -- the same settings every time this is called for this
+// channel; see its own header comment for exactly what those are). On
+// completion, fit_auto()'s own auto-mode handling calls back into this->
 // analysis_done( 2 ) itself (what a "Save Results" click would do),
 // exactly as the interactive path does on a real click -- so nothing
 // else is needed here: analysis_done( 2 ) already calls save() and (see
-// its own auto-mode hook, above) already emits twodsa_complete_s() from
-// there once that's done.
+// its own auto-mode hook, above) already decides there whether to loop
+// back into run_2dsa_auto() for the next species or emit
+// twodsa_complete_s() for the whole channel.
 void US_2dsa::run_2dsa_auto( void )
 {
    if ( ! us_gmp_auto_mode )   return;
 
-   if ( dataList.isEmpty()  ||  ! prep_fit_dataset( 0 ) )
+   if ( dataList.isEmpty()  ||  ! prep_fit_dataset( auto_triple_idx ) )
    {
       qDebug() << "[US_2dsa] run_2dsa_auto(): no data loaded for channel"
-               << chann_to_process_2dsa << "-- aborting.";
+               << chann_to_process_2dsa << "species index" << auto_triple_idx
+               << "-- aborting.";
       bool success = false;
       emit twodsa_complete_s( chann_to_process_2dsa, success );
       return;
+   }
+
+   if ( analcd != 0 )
+   {  // retire the previous species' control dialog before starting the
+      // next one (mirrors open_fitcntl()'s own close()-before-replace).
+      analcd->close();
    }
 
    analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
