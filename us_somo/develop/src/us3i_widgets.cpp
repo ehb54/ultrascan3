@@ -308,26 +308,24 @@ QwtCounter* US3i_widgets::us_counter( int buttons, double low, double high,
   counter->setValue     ( value );
   QList< QObject* > children = counter->children();
   int totwid          = 0;
-  // macOS and Windows styles make counter buttons too small; use Fusion.
-  const QString stynam = US3i_GuiSettings::guiStyle();
-  const bool needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
-                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+#ifdef Q_OS_MAC
+#if QT_VERSION < 0x050000
+  QStyle *btnstyle = new QPlastiqueStyle();
+#else
+  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+#endif
 
-  if ( needbsty )
+  for ( int jj = 0; jj < children.size(); jj++ )
   {
-     static QStyle* const btnsty = QStyleFactory::create( "fusion" );
+     QWidget* cwidg = (QWidget*)children.at( jj );
+     QString clname = cwidg->metaObject()->className();
 
-     for ( int jj = 0; btnsty != nullptr  &&  jj < children.size(); jj++ )
+     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
      {
-        QWidget* const cwidg = (QWidget*)children.at( jj );
-        const QString clname = cwidg->metaObject()->className();
-
-        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
-        {
-           cwidg->setStyle( btnsty );
-        }
+        cwidg->setStyle( btnstyle );
      }
   }
+#endif    // END: special button treatment for Mac
 
   for ( int jj = 0; jj < children.size(); jj++ )
   {  // Accumulate total width of button widgets
