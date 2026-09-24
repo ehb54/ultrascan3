@@ -95,6 +95,9 @@ class US_UTIL_EXTERN US_Settings
     //! \brief Set the temperature tolerance for runs
     static void        set_tempTolerance( double );
 
+    //! \brief Get the set-speed rounding resolution in RPM
+    static double      speedResolution( void );
+
     //! \brief Get the Beckman Bug flag
     static bool        beckmanBug( void );
     //! \brief Set the Beckman Bug flag

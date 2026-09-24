@@ -572,7 +572,13 @@ DbgLv(2) << "SaltD:  salt ampl limit changes" << nchg;
 
       dir.mkpath( safile );
       safile       = safile + "/salt_data.RA.1.S.260.auc";
-      US_DataIO::writeRawData( safile, sa_data );
+      int wstat    = US_DataIO::writeRawData( safile, sa_data );
+
+      if ( wstat != US_DataIO::OK )
+      {  // Report the QC write failure without interrupting the solve.
+         qDebug() << "*ERROR* Unable to write salt QC data" << safile
+                  << ":" << US_DataIO::errorString( wstat );
+      }
    }
 
    delete astfem;                           // astfem solver no longer needed

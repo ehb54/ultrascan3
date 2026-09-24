@@ -278,14 +278,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
 
    le_timeCorr->setText( QString::asprintf( "%d m %02d s", minutes, seconds ) );
 
-   int ss_reso         = 100;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
-   }
+   double ss_reso      = US_Settings::speedResolution();
 
    // Set rpm list widget
    int i = 0;
@@ -296,7 +289,7 @@ qDebug() << "dtails: ds 1, scan 1: secs,omg2t,rpm" << s1tim << s1omg << s1rpm;
       foreach( scan, data.scanData )
       {
          // Round to closest 100 rpm (or other resolution)
-         int rpm  = (int)qRound( scan.rpm / (double)ss_reso ) * ss_reso;
+         int rpm  = (int)( qRound( scan.rpm / ss_reso ) * ss_reso );
          map.insert( rpm, triples[ i ] + " / " + QString::number( scanNumber ) );
          scanNumber++;
       }

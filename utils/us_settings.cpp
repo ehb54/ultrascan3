@@ -2,6 +2,8 @@
 #include "us_settings.h"
 #include "us_defines.h"
 
+#include <QtNumeric>
+
 QSettings::Format US_SettingsStore::format( void )
 {
    static const QSettings::Format resolved = []
@@ -186,6 +188,21 @@ void US_Settings::set_tempTolerance( double tempTolerance )
     settings.remove( "tempTolerance" );
   else
     settings.setValue( "tempTolerance", tempTolerance );
+}
+
+// Set-speed resolution
+double US_Settings::speedResolution( void )
+{
+  const double default_resolution = 100.0;  // Default SetSpeedResolution
+  const QString dbgval = debug_value( "SetSpeedReso" );
+  if ( dbgval.isEmpty() )  return default_resolution;
+
+  bool   ok    = false;
+  double value = dbgval.toDouble( &ok );
+
+  // Callers divide by this
+  return ( ok  &&  qIsFinite( value )  &&  value > 0.0 )
+         ? value : default_resolution;
 }
 
 // Beckman Bug
