@@ -171,6 +171,7 @@ US_2dsa::US_2dsa( QMap<QString, QString> & protocol_details_p ) : US_2dsa()
 {
    us_gmp_auto_mode      = true;
    auto_triple_idx        = 0;
+   auto_last_tripleID     = "";
    this->protocol_details = protocol_details_p;
    chann_to_process_2dsa  = protocol_details[ "chan_to_analyse" ];
 
@@ -1374,7 +1375,7 @@ void US_2dsa::run_2dsa_auto( void )
             << "dataList.size()" << dataList.size()
             << "this" << (void*)this;
 
-   if ( dataList.isEmpty()  ||  ! prep_fit_dataset( auto_triple_idx ) )
+   if ( dataList.isEmpty()  ||  auto_triple_idx >= dataList.size() )
    {
       qDebug() << "[US_2dsa] run_2dsa_auto(): no data loaded for channel"
                << chann_to_process_2dsa << "species index" << auto_triple_idx
@@ -1384,8 +1385,62 @@ void US_2dsa::run_2dsa_auto( void )
       return;
    }
 
+   // ALEXEY: Advance the triple-list selection to match auto_triple_idx
+   // BEFORE building dset/starting the fit. This mirrors what happens
+   // interactively when a user clicks the next row in lw_triples: it
+   // fires new_triple( auto_triple_idx ) (clears models/noises/plot,
+   // restores edata->dataType, calls US_AnalysisBase2::new_triple()) and,
+   // critically, keeps lw_triples->currentRow() in sync with
+   // auto_triple_idx for the rest of this species' fit. mw_editdata()
+   // re-derives edata from lw_triples->currentRow(), so without this the
+   // fit machinery silently falls back to whatever triple was selected
+   // last (previously always species 1, since load() only ever sets row
+   // 0) even though prep_fit_dataset() below points edata/dset at the
+   // right species at this instant.
+   lw_triples->setCurrentRow( auto_triple_idx );
+
+   if ( ! prep_fit_dataset( auto_triple_idx ) )
+   {
+      qDebug() << "[US_2dsa] run_2dsa_auto(): prep_fit_dataset failed for"
+               << "channel" << chann_to_process_2dsa << "species index"
+               << auto_triple_idx << "-- aborting.";
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      return;
+   }
+
    qDebug() << "[US_2dsa] run_2dsa_auto(): fitting edata cell/channel/wvln"
             << edata->cell << edata->channel << edata->wavelength;
+
+   // ALEXEY: Sanity check -- confirm the triple actually advanced. This is
+   // the same string save() uses (tripleID = cell+channel+wavelength) to
+   // label the report/model files, e.g. "2S1". The lw_triples->
+   // setCurrentRow() call above is what's supposed to guarantee this
+   // differs from the previous species (by keeping mw_editdata()'s
+   // lw_triples->currentRow()-based lookup in sync with auto_triple_idx);
+   // this check is the regression guard in case that ever silently stops
+   // working again (e.g. a future change to new_triple()/mw_editdata()
+   // reintroduces the stale-selection bug this was added to fix). Fail
+   // loudly here rather than silently re-fitting/re-saving the same
+   // triple under a new model number.
+   QString tripleID = edata->cell + edata->channel + edata->wavelength;
+
+   if ( auto_triple_idx > 0  &&  tripleID == auto_last_tripleID )
+   {
+      qCritical() << "[US_2dsa] run_2dsa_auto(): SANITY CHECK FAILED --"
+                  << "channel" << chann_to_process_2dsa
+                  << "auto_triple_idx" << auto_triple_idx
+                  << "resolved to tripleID" << tripleID
+                  << "which is IDENTICAL to the previous species'"
+                     " tripleID. The triple selection did not advance --"
+                     " aborting this channel instead of re-fitting/"
+                     "re-saving" << tripleID << "a second time.";
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      return;
+   }
+
+   auto_last_tripleID = tripleID;
 
    if ( analcd != 0 )
    {  // retire the previous species' control dialog before starting the

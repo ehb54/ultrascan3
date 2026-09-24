@@ -160,6 +160,20 @@ class US_2dsa : public US_AnalysisBase2
         //! auto_triple_idx reaches dataList.size().
         int auto_triple_idx;
 
+        //! \brief cell+channel+wavelength ("tripleID", same string save()
+        //! uses to label reports/models -- e.g. "2S1") of the triple most
+        //! recently handed to US_AnalysisControl2D::fit_auto() by
+        //! run_2dsa_auto(). Used purely as a regression guard: if the
+        //! NEXT species' tripleID comes back identical to this one, the
+        //! triple selection failed to actually advance (e.g. lw_triples'
+        //! current row / edata got reset to a previous species by
+        //! something -- such as mw_editdata() re-deriving edata from
+        //! lw_triples->currentRow() -- before fit_auto() used it), and
+        //! run_2dsa_auto() aborts loudly instead of silently re-fitting
+        //! and re-saving the same triple under a new model number. Empty
+        //! before the first species of a channel.
+        QString auto_last_tripleID;
+
     private:
         QGridLayout* progressLayout; //!< Layout for progress display.
 
