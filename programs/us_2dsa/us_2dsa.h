@@ -246,6 +246,22 @@ class US_2dsa : public US_AnalysisBase2
         //! completion-signal plumbing is needed on the US_2dsa side.
         void run_2dsa_auto( void );
 
+        //! \brief Override of US_AnalysisBase2::update() -- called by
+        //! new_triple() (itself triggered by lw_triples->setCurrentRow()
+        //! in run_2dsa_auto()) to refresh runID/solution/buffer state for
+        //! the newly-selected triple. In us_gmp_auto_mode, the base
+        //! implementation's two QMessageBox::warning() calls (on a
+        //! failed solution/buffer fetch for that triple) would block the
+        //! headless pipeline waiting on a human to click OK -- the same
+        //! class of problem save()'s QMessageBox::information() had. We
+        //! can't gate those at the source without editing the shared
+        //! US_AnalysisBase2::update() itself, so instead this override
+        //! runs the base implementation but auto-dismisses (and logs)
+        //! any QMessageBox it raises while us_gmp_auto_mode is true,
+        //! rather than duplicating update()'s solution/buffer-fetch
+        //! logic here.
+        void update( int selection ) override;
+
     private slots:
         //! \brief Slot to open the residual plot.
         void open_resplot(void);

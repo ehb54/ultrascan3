@@ -1463,6 +1463,48 @@ void US_2dsa::run_2dsa_auto( void )
    analcd->fit_auto();
 }
 
+// ALEXEY: Override of US_AnalysisBase2::update() -- see header comment.
+// Runs the base class's own update() unchanged (same runID/solution/
+// buffer refresh logic for the given triple), but in us_gmp_auto_mode
+// watches for it popping up a QMessageBox (its two un-gated
+// QMessageBox::warning() calls on a solution/buffer fetch failure) and
+// auto-dismisses it instead of leaving the headless pipeline blocked on
+// a human OK click. QMessageBox::warning()/exec() run a nested event
+// loop, so a QTimer ticking on this same thread still fires while it's
+// up -- that's what lets us catch and close it from here without
+// touching US_AnalysisBase2::update() itself.
+void US_2dsa::update( int selection )
+{
+   if ( ! us_gmp_auto_mode )
+   {
+      US_AnalysisBase2::update( selection );
+      return;
+   }
+
+   QTimer dismisser;
+   dismisser.setInterval( 50 );
+
+   connect( &dismisser, &QTimer::timeout, this, [this]()
+   {
+      QMessageBox* box =
+         qobject_cast<QMessageBox*>( QApplication::activeModalWidget() );
+
+      if ( box != nullptr )
+      {
+         qWarning() << "[US_2dsa] update(): auto-mode -- dismissing"
+                    << "blocking QMessageBox" << box->windowTitle()
+                    << ":" << box->text();
+         box->close();
+      }
+   } );
+
+   dismisser.start();
+
+   US_AnalysisBase2::update( selection );
+
+   dismisser.stop();
+}
+
 // Distribution information HTML string
 QString US_2dsa::distrib_info()
 {
