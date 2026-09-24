@@ -738,7 +738,7 @@ void US_AnalysisControl2D::apply_auto_fit_params( const QMap< QString, QString >
 DbgLv(1) << "AC:apply_auto_fit_params: s" << ct_lolimits->value() << ct_uplimits->value()
          << ct_nstepss->value() << "k" << ct_lolimitk->value() << ct_uplimitk->value()
          << ct_nstepsk->value() << "iters" << ct_iters->value()
-	 << "threads" << ct_thrdcnt;
+	 << "threads" << ct_thrdcnt->value();
 }
 
 // stop fit button clicked
