@@ -398,6 +398,49 @@ void US_Hydrodyn::gui_script_run() {
                   }
                   ls.pop_front();
                }
+            } else if ( opt1 == "load_iq" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               while ( !ls.isEmpty() ) {
+                  if ( !saxs_plot_window->script_load_iq( ls.front(), errormsg ) ) {
+                     gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+                  }
+                  ls.pop_front();
+               }
+            } else if ( opt1 == "guinier" ) {
+               // sas guinier [rg|cs|tv] : the SAS window's Process Guinier buttons, honouring the Guinier options
+               QString which = ls.isEmpty() ? QString( "rg" ) : ls.front().toLower();
+               if ( !ls.isEmpty() ) {
+                  ls.pop_front();
+               }
+               const char * method =
+                  which == "rg" ? "run_guinier_analysis" :
+                  which == "cs" ? "run_guinier_cs" :
+                  which == "tv" ? "run_guinier_Rt" : 0;
+               if ( !method ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs rg, cs or tv" );
+               }
+               QMetaObject::invokeMethod( saxs_plot_window, method, Qt::DirectConnection );
+            } else if ( opt1 == "guinier_search" ) {
+               // sas guinier_search [csv <file>] [key value ...]
+               map < QString, QString > kv;
+               QString csvfile;
+               while ( ls.size() >= 2 ) {
+                  QString key = ls.front(); ls.pop_front();
+                  QString val = ls.front(); ls.pop_front();
+                  if ( key.toLower() == "csv" ) {
+                     csvfile = val;
+                  } else {
+                     kv[ key.toLower() ] = val;
+                  }
+               }
+               if ( !ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "parameters must be key value pairs, odd one: " + ls.front() );
+               }
+               if ( !saxs_plot_window->script_guinier_search( kv, csvfile, errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
             } else {
                gui_script_error( i, cmd, opt1 + ": unrecognized" );
             }

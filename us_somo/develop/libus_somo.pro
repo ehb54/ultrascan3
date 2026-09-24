@@ -394,6 +394,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_conc.cpp \
         src/us_hydrodyn_saxs_cormap.cpp \
         src/us_hydrodyn_saxs_external.cpp \
+        src/us_hydrodyn_saxs_guinier_search.cpp \
         src/us_hydrodyn_saxs_guinier.cpp \
         src/us_hydrodyn_saxs_fits.cpp \
         src/us_hydrodyn_saxs_ift.cpp \
@@ -523,6 +524,7 @@ SOURCES *= \
         src/us_saxs_util_dammin.cpp \
         src/us_saxs_util_dmd.cpp \
         src/us_saxs_util_extern.cpp \
+        src/us_saxs_util_guinier_search.cpp \
         src/us_saxs_util_guinier.cpp \
         src/us_saxs_util_gui_only.cpp \
         src/us_saxs_util_hydrate.cpp \
@@ -926,6 +928,7 @@ HEADERS *= \
 #  us_sassoc.h \
         include/us_saxs_gp.h \
         include/us_saxs_util.h \
+        include/us_saxs_util_guinier_search.h \
         include/us_saxs_util_nsa.h \
 #  us_select_channel.h \
 #  us_selectmodel.h \

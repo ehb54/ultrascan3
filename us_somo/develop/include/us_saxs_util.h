@@ -24,6 +24,7 @@
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
 #include "us_json.h"
+#include "us_saxs_util_guinier_search.h"
 #include "us_timer.h"
 #include "us_file_util.h"
 #include "us_vector.h"
@@ -294,6 +295,18 @@ class US_EXTERN US_Saxs_Util
                      int gsm_type,
                      long max_iterations
                      );
+
+      // robust automatic Guinier range search, see us_saxs_util_guinier_search.cpp
+      bool read_iq_flexible( const QString & filename, const QString & tag, double qscale = 1e0 );
+      bool guinier_search  (
+                            const QString                  & tag,
+                            const US_Guinier_Search_Params & params,
+                            US_Guinier_Search_Result       & result
+                            );
+      bool run_guinier_search      (
+                            map < QString, QString >           & parameters,
+                            map < QString, QString >           & results
+                            );
 
       bool guinier_plot(QString outtag, QString tag);
 
