@@ -1978,6 +1978,45 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
   qDebug() << "[US_Autoflow_analysis] Approved VEL-MWL channels for 2DSA-IT:"
 	   << channels_2dsa_approved;
 
+  // ALEXEY: Load this run's 2DSA Analysis-Profile settings (per-channel
+  // s_min/s_max/s_grpts/k_min/k_max/k_grpts grid parameters) ONCE here,
+  // via the exact US_AnalysisProfileGui::inherit_protocol() pattern
+  // US_ReporterGMP uses to obtain cAP2 (US_ReporterGMP::currAProf.ap2DSA)
+  // -- the dialog class is constructed purely as a data loader and never
+  // shown/exec'd. Cached in cAP2_2dsa; start_next_2dsa_channel() looks up
+  // each channel's matching parms[] entry from it below, before that
+  // channel's US_2dsa is constructed, so US_AnalysisControl2D::
+  // apply_auto_fit_params() has something to apply ahead of Start Fit.
+  {
+    US_Passwd pw_ap;
+    US_DB2    db_ap( pw_ap.getPasswd() );
+
+    if ( db_ap.lastErrno() == US_DB2::OK )
+      {
+	US_RunProtocol currProto;
+	QString xmlstr_ap( "" );
+	US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,
+					    &xmlstr_ap, NULL, &db_ap );
+	QXmlStreamReader xmli_ap( xmlstr_ap );
+	currProto.fromXml( xmli_ap );
+
+	US_AnalysisProfileGui* aprof_loader = new US_AnalysisProfileGui;
+	aprof_loader->inherit_protocol( &currProto );
+	cAP2_2dsa = aprof_loader->currProf.ap2DSA;
+	delete aprof_loader;
+
+	qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		    "loaded 2DSA Analysis Profile -- channels in profile:"
+		 << cAP2_2dsa.parms.size();
+      }
+    else
+      {
+	qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		    "could not connect to DB to load the 2DSA Analysis Profile -- "
+		    "channels will fall back to US_AnalysisControl2D's own defaults.";
+      }
+  }
+
   // Seed this stage's protocol_details from the VEL-MWL stage's map --
   // carries forward autoflowID/invID_passed/protocolName/etc.
   // "chan_to_analyse" and "filename" get overwritten per-channel by
@@ -2036,6 +2075,69 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
 
   protocol_details_at_analysis_2dsa[ "chan_to_analyse" ] = chan_norm;
   protocol_details_at_analysis_2dsa[ "filename" ]        = channels_2dsa_filenames[ chan_norm ];
+
+  // ALEXEY: Look up this channel's grid-fit parameters (s_min/s_max/
+  // s_grpts/k_min/k_max/k_grpts) from the 2DSA Analysis Profile loaded
+  // once in process_velmwl_after_all_channels_decided() (cAP2_2dsa), and
+  // thread them into protocol_details_at_analysis_2dsa for US_2dsa's
+  // auto constructor to pick up -- see US_AnalysisControl2D::
+  // apply_auto_fit_params(), called from US_2dsa::run_2dsa_auto() before
+  // each species' Start Fit. Matched with whitespace/"/" stripped from
+  // both sides: US_AnalysisProfileGui::inherit_protocol() builds
+  // parms[].channel via chname.replace(" / ", ""), so a channel this
+  // codebase calls "2 / S" is stored there as the compact "2S" -- not
+  // chan_norm's own "N / X" form.
+  QString chan_norm_compact = QString( chan_norm ).remove( ' ' ).remove( '/' ).remove( '.' );
+  int     ap2_match_idx     = -1;
+
+  for ( int pi = 0; pi < cAP2_2dsa.parms.size(); ++pi )
+    {
+      QString p_compact = QString( cAP2_2dsa.parms[ pi ].channel )
+			   .remove( ' ' ).remove( '/' ).remove( '.' );
+
+      if ( p_compact.compare( chan_norm_compact, Qt::CaseInsensitive ) == 0 )
+	{
+	  ap2_match_idx = pi;
+	  break;
+	}
+    }
+
+  if ( ap2_match_idx >= 0 )
+    {
+      const US_AnaProfile::AnaProf2DSA::Parm2DSA& ap =
+         cAP2_2dsa.parms[ ap2_match_idx ];
+
+      protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( ap.s_min   );
+      protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( ap.s_max   );
+      protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( ap.s_grpts );
+      protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( ap.k_min   );
+      protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( ap.k_max   );
+      protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( ap.k_grpts );
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
+	       << "Analysis Profile grid: s[" << ap.s_min << "," << ap.s_max
+	       << "] x" << ap.s_grpts << "  f/f0[" << ap.k_min << ","
+	       << ap.k_max << "] x" << ap.k_grpts;
+    }
+  else
+    {
+      // Not found in the profile for this channel -- clear any stale
+      // values left over from a previous channel's lookup (this map is
+      // reused across channels) so US_AnalysisControl2D::
+      // apply_auto_fit_params() correctly falls back to its own
+      // defaults for this one, rather than silently reapplying the
+      // last matched channel's grid.
+      protocol_details_at_analysis_2dsa.remove( "s_min" );
+      protocol_details_at_analysis_2dsa.remove( "s_max" );
+      protocol_details_at_analysis_2dsa.remove( "s_grpts" );
+      protocol_details_at_analysis_2dsa.remove( "k_min" );
+      protocol_details_at_analysis_2dsa.remove( "k_max" );
+      protocol_details_at_analysis_2dsa.remove( "k_grpts" );
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
+	       << "not found in 2DSA Analysis Profile -- falling back to "
+		  "US_AnalysisControl2D's own default grid settings.";
+    }
 
   sdiag_2dsa = new US_2dsa( protocol_details_at_analysis_2dsa );
   connect( sdiag_2dsa, &US_2dsa::twodsa_complete_s,
@@ -2265,7 +2367,6 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
   run_parms["meniscus"]   = QString::number( meniscus_p );
   run_parms["data_left"]  = QString::number( data_left );
   run_parms["data_right"] = QString::number( data_right );
-  run_parms["bottom"]     = QString::number( bottom );
 
   //also, copy to protocol_details_map for further use
   protocol_details_at_analysis_velmwl["meniscus"]   = QString::number( meniscus_p );

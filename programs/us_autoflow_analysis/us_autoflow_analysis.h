@@ -8,6 +8,7 @@
 #include "../us_fit_meniscus/us_fit_meniscus.h"
 #include "../us_fematch/us_fematch.h"
 #include "../us_mwl_species_fit/us_mwl_species_fit.h"
+#include "../us_analysis_profile/us_analysis_profile.h"
 #include "../us_mwl_species_fit/us_mwl_sf_plot3d.h"
 #include "../us_mwl_species_fit/us_load_run_noise.h"
 #include "us_convert.h"
@@ -237,6 +238,19 @@ class US_Analysis_auto : public US_Widgets
             QMap<QString, QString> channels_2dsa_filenames;           /**< channel -> deconvolved-edit filename (from channelDecisions[chan]["filename"], written atomically with the Accept decision by US_MwlSpeciesFit::record_velmwl_channel_decision()), keyed the same as channels_2dsa_approved. What US_DataLoader actually needs to load this channel's data. */
             int twodsa_chan_idx;                                      /**< Cursor into channels_2dsa_approved -- -1 so start_next_2dsa_channel() starts at index 0. */
             int twodsa_nchannels;                                     /**< channels_2dsa_approved.size(), cached for progress reporting. */
+
+            //! \brief This run's 2DSA Analysis-Profile settings (grid
+            //! limits/points per channel) -- loaded once in process_
+            //! velmwl_after_all_channels_decided() via the same
+            //! US_AnalysisProfileGui::inherit_protocol() pattern
+            //! US_ReporterGMP uses (constructed, never shown), and
+            //! consulted per-channel by start_next_2dsa_channel() to
+            //! populate protocol_details_at_analysis_2dsa's s_min/s_max/
+            //! s_grpts/k_min/k_max/k_grpts before each channel's US_2dsa
+            //! is constructed. See US_AnalysisControl2D::
+            //! apply_auto_fit_params() (us_analysis_control_2d.cpp) for
+            //! where those values actually get applied to the fit.
+            US_AnaProfile::AnaProf2DSA cAP2_2dsa;
 
             QVector< double > v_meni;                                /**< Vector of meniscus values. */
             QVector< double > v_bott;                                /**< Vector of bottom values. */

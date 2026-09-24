@@ -698,6 +698,48 @@ void US_AnalysisControl2D::fit_auto( void )
    start();
 }
 
+// ALEXEY: Apply Analysis-Profile-sourced grid-fit parameters ahead of a
+// headless fit_auto() run (see this method's header comment). Called
+// from US_2dsa::run_2dsa_auto() right after this dialog is constructed,
+// before fit_auto() itself -- so the counters/checkbox below are set,
+// and their normal valueChanged/toggled-connected slots (grid_change(),
+// slim_change(), klim_change(), kstep_change(), checkIterate()) fire
+// exactly as they would from a user's own interaction, keeping the
+// displayed grid-repetition/estimated-memory summaries consistent.
+void US_AnalysisControl2D::apply_auto_fit_params( const QMap< QString, QString >& params )
+{
+   if ( params.contains( "s_min" ) )
+      ct_lolimits->setValue( params.value( "s_min" ).toDouble() );
+
+   if ( params.contains( "s_max" ) )
+      ct_uplimits->setValue( params.value( "s_max" ).toDouble() );
+
+   if ( params.contains( "s_grpts" ) )
+      ct_nstepss->setValue( params.value( "s_grpts" ).toDouble() );
+
+   if ( params.contains( "k_min" ) )
+      ct_lolimitk->setValue( params.value( "k_min" ).toDouble() );
+
+   if ( params.contains( "k_max" ) )
+      ct_uplimitk->setValue( params.value( "k_max" ).toDouble() );
+
+   if ( params.contains( "k_grpts" ) )
+      ct_nstepsk->setValue( params.value( "k_grpts" ).toDouble() );
+
+   // Per requirement: always run the iterative-refinement method with a
+   // fixed 10 iterations, regardless of what the Analysis Profile (or
+   // this dialog's own default) specifies for either. checkIterate(true)
+   // (fired by setChecked(), via the ck_iters->toggled connection) sets
+   // ct_iters to its own default of 3 -- explicitly override that with
+   // 10 afterward.
+   ck_iters->setChecked( true );
+   ct_iters ->setValue( 10 );
+
+DbgLv(1) << "AC:apply_auto_fit_params: s" << ct_lolimits->value() << ct_uplimits->value()
+         << ct_nstepss->value() << "k" << ct_lolimitk->value() << ct_uplimitk->value()
+         << ct_nstepsk->value() << "iters" << ct_iters->value();
+}
+
 // stop fit button clicked
 void US_AnalysisControl2D::stop_fit()
 {

@@ -59,6 +59,27 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! remain a known residual risk of this headless path hanging on
       //! a modal dialog for those specific, uncommon inputs.
       void fit_auto( void );
+
+      //! \brief Apply Analysis-Profile-sourced grid-fit parameters ahead
+      //! of a headless fit_auto() run -- called from US_2dsa::
+      //! run_2dsa_auto() right after this dialog is constructed and
+      //! before fit_auto() itself. Any of the six keys below that is
+      //! present in `params` overrides this dialog's own default for
+      //! that field (see the constructor's ct_lolimits/ct_uplimits/
+      //! ct_nstepss/ct_lolimitk/ct_uplimitk/ct_nstepsk setup); a key
+      //! that's absent leaves the corresponding field at its existing
+      //! (default) value. Regardless of what's in `params`, this also
+      //! unconditionally turns on the iterative-refinement method
+      //! (ck_iters) with a fixed 10 iterations (ct_iters) -- that
+      //! requirement is independent of the Analysis Profile's own
+      //! contents, so it is not read from `params`.
+      //! \param params  Flat string-keyed fit parameters, expected keys
+      //!        (all optional): "s_min", "s_max", "s_grpts", "k_min",
+      //!        "k_max", "k_grpts" -- mirroring US_AnaProfile::
+      //!        AnaProf2DSA's per-channel parms[] fields of the same
+      //!        names (see US_ReporterGMP for that struct's use).
+      void apply_auto_fit_params( const QMap< QString, QString >& params );
+
       US_Model  model2 ;
       //void calculate_norms( US_Model& ) ;
       void set_comp_attr     ( US_Model::SimulationComponent&,

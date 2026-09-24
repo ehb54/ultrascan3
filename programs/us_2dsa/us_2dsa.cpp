@@ -177,7 +177,8 @@ US_2dsa::US_2dsa( QMap<QString, QString> & protocol_details_p ) : US_2dsa()
    setWindowTitle( tr( "2-Dimensional Spectrum Analysis (VEL-MWL, channel %1)" )
                     .arg( chann_to_process_2dsa ) );
 
-   qDebug() << "[US_2dsa] auto constructor: channel" << chann_to_process_2dsa;
+   qDebug() << "[US_2dsa] auto constructor: channel" << chann_to_process_2dsa
+            << "this" << (void*)this;
 
    // Load THIS channel's deconvolved edited data (see load()'s
    // us_gmp_auto_mode branch below -- mirrors US_MwlSpeciesFit::load()).
@@ -300,6 +301,13 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
       if ( us_gmp_auto_mode )
       {
          ++auto_triple_idx;
+
+         qDebug() << "[US_2dsa] analysis_done(2): channel"
+                  << chann_to_process_2dsa << "just-saved edata cell/channel/wvln"
+                  << edata->cell << edata->channel << edata->wavelength
+                  << "auto_triple_idx now" << auto_triple_idx
+                  << "dataList.size()" << dataList.size()
+                  << "this" << (void*)this;
 
          if ( auto_triple_idx < dataList.size() )
          {
@@ -1361,6 +1369,11 @@ void US_2dsa::run_2dsa_auto( void )
 {
    if ( ! us_gmp_auto_mode )   return;
 
+   qDebug() << "[US_2dsa] run_2dsa_auto(): channel" << chann_to_process_2dsa
+            << "auto_triple_idx" << auto_triple_idx
+            << "dataList.size()" << dataList.size()
+            << "this" << (void*)this;
+
    if ( dataList.isEmpty()  ||  ! prep_fit_dataset( auto_triple_idx ) )
    {
       qDebug() << "[US_2dsa] run_2dsa_auto(): no data loaded for channel"
@@ -1371,6 +1384,9 @@ void US_2dsa::run_2dsa_auto( void )
       return;
    }
 
+   qDebug() << "[US_2dsa] run_2dsa_auto(): fitting edata cell/channel/wvln"
+            << edata->cell << edata->channel << edata->wavelength;
+
    if ( analcd != 0 )
    {  // retire the previous species' control dialog before starting the
       // next one (mirrors open_fitcntl()'s own close()-before-replace).
@@ -1378,6 +1394,17 @@ void US_2dsa::run_2dsa_auto( void )
    }
 
    analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
+
+   // ALEXEY: Apply this channel's Analysis-Profile grid-fit parameters
+   // (s_min/s_max/s_grpts/k_min/k_max/k_grpts -- populated into
+   // protocol_details by US_Analysis_auto::start_next_2dsa_channel(),
+   // per-channel, before this US_2dsa was even constructed) and force
+   // the iterative-refinement method on at 10 iterations, BEFORE
+   // fit_auto()/Start Fit. See US_AnalysisControl2D::
+   // apply_auto_fit_params()'s own header comment for exactly what this
+   // does and doesn't override.
+   analcd->apply_auto_fit_params( protocol_details );
+
    analcd->fit_auto();
 }
 
