@@ -237,6 +237,7 @@ US_Guinier_Search_Params::US_Guinier_Search_Params()
    qscale       = 1e0;
    outlier      = 0e0;
    maxrelsd     = 0e0;
+   fixed        = 0;
    slopet       = 2e0;
    minspan      = 0.2e0;
    sigfloor     = 0.005e0;
@@ -268,7 +269,7 @@ QStringList US_Guinier_Search_Params::keys()
    QStringList known;
    known << "type" << "minpts" << "maxpts" << "qrgmax" << "qrgmin" << "qmin" << "qmax"
          << "rgmin" << "rgmax" << "regionfactor" << "usesd" << "dropneg" << "qscale"
-         << "outlier" << "maxrelsd" << "slopet" << "minspan" << "sigfloor" << "curvt" << "skipz" << "fwdz" << "fwddev"
+         << "outlier" << "maxrelsd" << "fixed" << "slopet" << "minspan" << "sigfloor" << "curvt" << "skipz" << "fwdz" << "fwddev"
          << "constol" << "topfrac" << "aggthresh" << "aggmindev" << "weights" << "debug";
    return known;
 }
@@ -292,6 +293,7 @@ QString US_Guinier_Search_Params::help()
       "  qscale       multiply q on input, e.g. 0.1 for nm^-1 data (1)\n"
       "  outlier      outlier rejection distance in SDs on the chosen window, 0 = off (0)\n"
       "  maxrelsd     drop points whose SD/I exceeds this fraction, e.g. 0.1, 0 = off (0)\n"
+      "  fixed        1 fits exactly the qmin..qmax range instead of searching (0)\n"
       "  slopet       minimum |slope|/sd(slope) for a window to be valid (2)\n"
       "  minspan      minimum q*Rg span of a valid window (0.2)\n"
       "  sigfloor     noise floor in ln I used for unweighted fits (0.005)\n"
@@ -346,6 +348,8 @@ bool US_Guinier_Search_Params::set( const map < QString, QString > & kv, QString
          maxpts = val.toInt( &ok );
       } else if ( key == "debug" ) {
          debug = val.toInt( &ok );
+      } else if ( key == "fixed" ) {
+         fixed = val.toInt( &ok ) ? 1 : 0;
       } else if ( key == "weights" ) {
          QString w = val;
          w.replace( QRegularExpression( "[\\[\\]\\s]" ), "" );
@@ -425,6 +429,11 @@ bool US_Guinier_Search_Params::set( const map < QString, QString > & kv, QString
    if ( rgmax > 0e0 && rgmin >= rgmax )
    {
       errormsg = "rgmin must be below rgmax";
+      return false;
+   }
+   if ( fixed && !( qmin > 0e0 && qmax > 0e0 ) )
+   {
+      errormsg = "fixed needs both qmin and qmax";
       return false;
    }
    if ( regionfactor < 1e0 )
@@ -1042,9 +1051,44 @@ bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_
          .arg( result.name ).arg( m ).arg( rg0 ).arg( pre_i + 1 ).arg( pre_j + 1 ).arg( rg0_first ).arg( nreg );
    }
 
-   // ---- 3. enumerate windows
+   // ---- 3. enumerate windows ( or, in fixed mode, the single window the caller asked for )
    vector < window > cands;
-   for ( int i = 0; i + params.minpts - 1 < nreg; ++i )
+   if ( params.fixed )
+   {
+      window c;
+      c.i = 0;
+      c.j = m - 1;
+      c.n = m;
+      fit_line( x, y, w, use_sd, c.f );
+      if ( !( c.f.b < 0e0 ) || !std::isfinite( c.f.b ) )
+      {
+         result.errormsg = errormsg = "the requested range has a non-negative slope";
+         return false;
+      }
+      c.rg     = sqrt( -mult * c.f.b );
+      c.qrg0   = qv[ 0 ] * c.rg;
+      c.qrg1   = qv[ m - 1 ] * c.rg;
+      c.curv_t = curvature_t( x, y, w, use_sd, params.sigfloor );
+      c.terms[ 0 ] = use_sd && c.f.chi2_red > 1e0 ? 1e0 / c.f.chi2_red : 1e0;
+      c.terms[ 1 ] = 1e0 / ( 1e0 + ( c.curv_t / params.curvt ) * ( c.curv_t / params.curvt ) );
+      c.terms[ 2 ] = std::min( 1e0, ( c.qrg1 - c.qrg0 ) / qrgmax );
+      c.terms[ 3 ] = 1e0;
+      c.terms[ 4 ] = 1e0;
+      c.terms[ 5 ] = 1e0;
+      c.terms[ 6 ] = 1e0;
+      c.q0 = 1e0;
+      for ( int t = 0; t < 6; ++t )
+      {
+         c.q0 *= pow( c.terms[ t ], params.weights[ t ] );
+      }
+      c.quality = 0e0;
+      cands.push_back( c );
+      if ( c.qrg1 > qrgmax )
+      {
+         result.warnings << QString( "requested range ends at q*Rg %1, above the limit %2" ).arg( c.qrg1, 0, 'f', 2 ).arg( qrgmax );
+      }
+   }
+   for ( int i = 0; !params.fixed && i + params.minpts - 1 < nreg; ++i )
    {
       int violations = 0;
       for ( int j = i + params.minpts - 1; j < nreg; ++j )
@@ -1526,6 +1570,7 @@ bool US_Saxs_Util::run_guinier_search(
       p += ",\"qscale\":" + json_num( params.qscale );
       p += ",\"outlier\":" + json_num( params.outlier );
       p += ",\"maxrelsd\":" + json_num( params.maxrelsd );
+      p += ",\"fixed\":" + QString::number( params.fixed );
       p += ",\"slopet\":" + json_num( params.slopet );
       p += ",\"minspan\":" + json_num( params.minspan );
       p += ",\"sigfloor\":" + json_num( params.sigfloor );
