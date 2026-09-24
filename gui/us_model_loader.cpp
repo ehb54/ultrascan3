@@ -449,14 +449,11 @@ qDebug() << "LdM:    description" << model_descriptions[index].description;
       QString sdescr     = model_descriptions[ index ].description;
       QStringList xmls;
       int nxmls          = model2.mc_iter_xmls( xmls );
-
+      const QString descMatch = "description=\"" + sdescr + "\"";
       for ( int jj = 0; jj < nxmls; jj++ )
       {  // Loop through iteration contents looking for match
-         QString mcont      = xmls[ jj ];
-         int kk             = mcont.indexOf( "description=" );
-         QString mdescr     = QString( mcont ).mid( kk, 100 )
-                              .section( '"', 1, 1 );
-         if ( mdescr == sdescr )
+         const QString& mcont = xmls[ jj ];
+         if ( mcont.contains( descMatch ) )
          {  // Found a matching description:  load the single and break
             model.load_string( mcont );
 qDebug() << "LdM:     match at jj" << jj << "ncomp" << model.components.size();
