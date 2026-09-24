@@ -1733,7 +1733,7 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
       sdiag_mwlsim -> define_buffer_auto( invID );
 
       QMap<QString, QString> run_params = read_run_params( f_name_c );
-      qDebug() << "run_params[bootom]=" << run_params["bootom"];
+      qDebug() << "run_params[bottom]=" << run_params["bottom"];
       sdiag_mwlsim -> sim_params_auto( run_params );
 
       /**
@@ -2383,6 +2383,7 @@ QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
   run_parms["meniscus"]   = QString::number( meniscus_p );
   run_parms["data_left"]  = QString::number( data_left );
   run_parms["data_right"] = QString::number( data_right );
+  run_parms["bottom"]     = QString::number( bottom );
 
   //also, copy to protocol_details_map for further use
   protocol_details_at_analysis_velmwl["meniscus"]   = QString::number( meniscus_p );
