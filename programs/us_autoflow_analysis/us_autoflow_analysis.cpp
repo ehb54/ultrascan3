@@ -2095,6 +2095,11 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       QString p_compact = QString( cAP2_2dsa.parms[ pi ].channel )
 			   .remove( ' ' ).remove( '/' ).remove( '.' );
 
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: cAP2_2dsa.parms[ pi ].channel -- " << cAP2_2dsa.parms[ pi ].channel;
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: p_compact -- " << p_compact;
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: chan_norm -- " << chan_norm;
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: chan_norm_compact -- " << chan_norm_compact;
+
       if ( p_compact.compare( chan_norm_compact, Qt::CaseInsensitive ) == 0 )
 	{
 	  ap2_match_idx = pi;
