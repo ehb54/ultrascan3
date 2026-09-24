@@ -4522,14 +4522,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
    strncpy( optSysPtr, allData[ 0 ].type, 2 );
    optSysPtr[ 2 ] = '\0';
 
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
+   double ss_reso      = US_Settings::speedResolution();
 
    // A list of unique rpms
    ExpData.rpms.clear();
@@ -4644,14 +4637,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
    strncpy( optSysPtr, allData[ 0 ].type, 2 );
    optSysPtr[ 2 ] = '\0';
 
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
+   double ss_reso      = US_Settings::speedResolution();
 
    // A list of unique rpms
    ExpData.rpms.clear();

@@ -20,7 +20,7 @@ on:
   push:
     branches: [main]
     paths:
-      # Rebuild only for inputs that affect dependency binaries.
+      # Plan selects the targets affected by these inputs.
       - "vcpkg.json"
       - "vcpkg-configuration.json"
       - "buildsys/vcpkg/overlay-ports/**"
@@ -30,6 +30,10 @@ on:
       - "buildsys/docker/**"
       - "scripts/build-toolchain.sh"
       - "scripts/build-toolchain.ps1"
+      - "scripts/bootstrap-linux.sh"
+      - "scripts/bootstrap-macos.sh"
+      - "scripts/bootstrap-windows.ps1"
+      - ".dockerignore"
       - ".github/workflows/toolchain-build.yml"
 
 permissions:
@@ -46,12 +50,16 @@ jobs:
   # Resolve the pin once so every job agrees on tag and image names.
   plan:
     name: "Plan"
+    # Forks build toolchains only by manual dispatch.
+    if: github.repository == 'ehb54/ultrascan3' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       release_tag:    ${{ steps.lock.outputs.release_tag }}
       vcpkg_commit:   ${{ steps.lock.outputs.vcpkg_commit }}
       archive_matrix: ${{ steps.lock.outputs.archive_matrix }}
       image_matrix:   ${{ steps.lock.outputs.image_matrix }}
+      fingerprints:  ${{ steps.lock.outputs.fingerprints }}
+      build_any:     ${{ steps.lock.outputs.build_any }}
     steps:
       - uses: actions/checkout@v5
         with: { fetch-depth: 1 }
@@ -61,6 +69,7 @@ jobs:
         shell: bash
         env:
           SELECTED: ${{ inputs.targets || 'all' }}
+          EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
           # The matrix is built in Python rather than selected with a job-level `if:`.
@@ -68,7 +77,7 @@ jobs:
           # evaluated before its matrix expands, so it cannot read matrix context.
           # Filtering the matrix itself is the only form that works.
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, os
+          import hashlib, json, os, subprocess
 
           lock = json.load(open("buildsys/toolchain.lock.json"))
           manifest = json.load(open("vcpkg.json"))
@@ -88,12 +97,62 @@ jobs:
                "image": "us3-toolchain-ubuntu2404", "group": "linux"},
           ]
 
-          keep = lambda rows: [r for r in rows if sel in ("all", r["group"])]
+          common = [
+              "vcpkg.json", "vcpkg-configuration.json",
+              "buildsys/vcpkg/overlay-ports", "qwtplot3d",
+              "admin/cmake/triplets", "admin/cmake/toolchain.cmake",
+              # Include runner, action, and build-argument changes.
+              ".github/workflows/toolchain-build.yml",
+          ]
+          drivers = {
+              "macos": ["scripts/build-toolchain.sh", "scripts/bootstrap-macos.sh"],
+              "windows": ["scripts/build-toolchain.ps1", "scripts/bootstrap-windows.ps1"],
+              "linux": ["scripts/build-toolchain.sh", "scripts/bootstrap-linux.sh", ".dockerignore"],
+          }
+          fingerprints = {}
+          report = ["### Toolchain plan", "", "| Target | Decision | Reason |",
+                    "| --- | --- | --- |"]
+
+          def select(rows):
+              selected = []
+              for row in rows:
+                  target = row["target"]
+                  paths = common + drivers[row["group"]]
+                  if "dockerfile" in row:
+                      paths += [row["dockerfile"], row["dockerfile"] + ".dockerignore"]
+                  # The index records checked-out content, paths, and file modes.
+                  tracked = subprocess.check_output(["git", "ls-files", "-s", "-z", "--", *paths])
+                  digest = hashlib.sha256(target.encode() + b"\0" + tracked).hexdigest()
+                  fingerprints[target] = digest
+                  pin = lock["targets"].get(target, {})
+                  published = (pin.get("image") and pin.get("digest") if "dockerfile" in row
+                               else all(pin.get(key) for key in ("repository", "release_tag", "asset", "sha256")))
+                  if sel not in ("all", row["group"]):
+                      build, reason = False, "not selected"
+                  elif os.environ["EVENT"] == "workflow_dispatch":
+                      build, reason = True, "manual rebuild"
+                  elif not published:
+                      build, reason = True, "missing artifact pin"
+                  elif pin.get("inputs_digest") != digest:
+                      build, reason = True, "changed or unrecorded inputs"
+                  else:
+                      build, reason = False, "inputs unchanged"
+                  if build:
+                      selected.append(row)
+                  report.append(f"| {target} | {'build' if build else 'skip'} | {reason} |")
+              return selected
+
+          wanted_archives = select(archives)
+          wanted_images = select(images)
 
           print(f"release_tag={lock['release_tag']}")
           print(f"vcpkg_commit={manifest['builtin-baseline']}")
-          print("archive_matrix=" + json.dumps({"include": keep(archives)}))
-          print("image_matrix="   + json.dumps({"include": keep(images)}))
+          print("archive_matrix=" + json.dumps({"include": wanted_archives}))
+          print("image_matrix=" + json.dumps({"include": wanted_images}))
+          print("fingerprints=" + json.dumps(fingerprints))
+          print(f"build_any={'true' if wanted_archives or wanted_images else 'false'}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("\n".join(report) + "\n")
           PY
 
           echo "--- plan ---"
@@ -283,25 +342,33 @@ jobs:
       # Artifacts preserve one digest per matrix leg.
       - name: Collect digest
         shell: bash
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
-          echo "Pushed digest: ${{ steps.build.outputs.digest }}"
           mkdir -p digests
-          printf '%s' "${{ steps.build.outputs.digest }}" > "digests/${{ matrix.target }}.digest"
+          python3 - <<'PY'
+          import json, os, pathlib
+
+          pin = {"image": os.environ["IMAGE"].lower(), "digest": os.environ["DIGEST"]}
+          pathlib.Path(f"digests/{os.environ['TARGET']}.json").write_text(json.dumps(pin))
+          PY
 
       - name: Upload digest
         uses: actions/upload-artifact@v7
         with:
           name: digest-${{ matrix.target }}
           overwrite: true
-          path: digests/${{ matrix.target }}.digest
+          path: digests/${{ matrix.target }}.json
           retention-days: 5
 
   # Publish artifacts and propose the new lock values for validation.
   publish:
     name: "Publish and pin"
     needs: [plan, archive, image]
-    if: always() && needs.plan.result == 'success' && !cancelled()
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.build_any == 'true' && !cancelled()
     runs-on: ubuntu-24.04
     outputs:
       pin_any:    ${{ steps.pin.outputs.any }}
@@ -347,6 +414,8 @@ jobs:
       - name: Update toolchain pin
         id: pin
         shell: bash
+        env:
+          FINGERPRINTS: ${{ needs.plan.outputs.fingerprints }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -354,6 +423,7 @@ jobs:
 
           lock_path = pathlib.Path("buildsys/toolchain.lock.json")
           lock = json.loads(lock_path.read_text())
+          fingerprints = json.loads(os.environ["FINGERPRINTS"])
           changed = []
 
           # Archive targets: read the checksum recorded beside each archive.
@@ -363,20 +433,25 @@ jobs:
               entry = lock["targets"].get(target)
               if entry is None:
                   continue
-              if entry.get("sha256") != digest or entry.get("asset") != asset:
-                  entry["sha256"] = digest
-                  entry["asset"] = asset
+              updated = dict(entry, sha256=digest, asset=asset,
+                             inputs_digest=fingerprints[target],
+                             repository=os.environ["GITHUB_REPOSITORY"],
+                             release_tag=lock["release_tag"])
+              if entry != updated:
+                  entry.update(updated)
                   changed.append(target)
 
           # Container targets: read the pushed manifest digest.
-          for dpath in glob.glob("incoming/digest-*/*.digest"):
+          for dpath in glob.glob("incoming/digest-*/*.json"):
               target = pathlib.Path(dpath).stem
-              digest = pathlib.Path(dpath).read_text().strip()
+              published = json.loads(pathlib.Path(dpath).read_text())
               entry = lock["targets"].get(target)
-              if entry is None or not digest:
+              if entry is None or not published.get("digest"):
                   continue
-              if entry.get("digest") != digest:
-                  entry["digest"] = digest
+              updated = dict(entry, digest=published["digest"], image=published["image"],
+                             inputs_digest=fingerprints[target])
+              if entry != updated:
+                  entry.update(updated)
                   changed.append(target)
 
           lock_path.write_text(json.dumps(lock, indent=2) + "\n")
@@ -534,46 +609,6 @@ jobs:
           set -euo pipefail
           gh pr merge "$PR" --squash --delete-branch
           echo "merged #$PR onto main"
-
-      # Retire archives only after the merged lock file stops referencing them.
-      - name: Retire superseded toolchain archives
-        if: needs.validate.result == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          # Read the post-merge lock file from main.
-          gh api \
-            -H "Accept: application/vnd.github.raw" \
-            "repos/${GITHUB_REPOSITORY}/contents/buildsys/toolchain.lock.json?ref=main" \
-            > merged-lock.json
-
-          python3 - <<'PY'
-          import json, subprocess
-
-          lock = json.load(open("merged-lock.json"))
-          tag  = lock["release_tag"]
-          keep = {t["asset"] for t in lock["targets"].values() if t.get("asset")}
-
-          # Refuse cleanup when the lock contains no archive references.
-          if not keep:
-              raise SystemExit(f"{tag}: merged lock file references no archives; refusing to delete")
-
-          print("referenced by main:", *sorted(keep), sep="\n  ")
-
-          assets = subprocess.run(
-              ["gh", "release", "view", tag, "--json", "assets", "--jq", ".assets[].name"],
-              check=True, capture_output=True, text=True,
-          ).stdout.split()
-
-          for name in assets:
-              # Leave unrelated release assets untouched.
-              if not name.startswith("us3-toolchain-") or name in keep:
-                  continue
-              print("retiring:", name)
-              subprocess.run(["gh", "release", "delete-asset", tag, name, "--yes"], check=True)
-          PY
 
       - name: Hold pin update
         if: needs.validate.result != 'success'

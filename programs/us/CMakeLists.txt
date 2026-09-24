@@ -68,12 +68,6 @@ if(APPLE)
 endif()
 
 if(WIN32 AND USE_QT6)
-    file(TO_CMAKE_PATH "${VCPKG_INSTALLED_DIR}" CLEAN_VCPKG_INSTALLED_DIR)
-    file(GENERATE
-            OUTPUT "$<TARGET_FILE_DIR:us>/qt.conf"
-            CONTENT "[Paths]\nPlugins=${CLEAN_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/Qt6/plugins\n"
-            CONDITION "$<CONFIG:Debug>"
-    )
     if(WINDEPLOYQT_EXECUTABLE)
         add_custom_command(TARGET us POST_BUILD
                 COMMAND $<$<NOT:$<CONFIG:Debug>>:${WINDEPLOYQT_EXECUTABLE}>
@@ -107,7 +101,10 @@ endif()
 # points at the vcpkg plugins directory so libqcocoa.dylib is found at runtime.
 # This is the dev-build equivalent of the --pkg MacDeploy staging path.
 # =============================================================================
-if(APPLE AND USE_QT6)
+if(APPLE AND USE_QT6 AND TARGET stage_qt_assistant)
+    # The documentation target owns this bundle; do not stage it concurrently.
+    add_dependencies(us stage_qt_assistant)
+elseif(APPLE AND USE_QT6)
     set(_VCPKG_ASSISTANT
         "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/qttools/bin/Assistant.app")
 
@@ -127,6 +124,8 @@ if(APPLE AND USE_QT6)
                 "-DBIN_DIR=$<TARGET_FILE_DIR:us>/../../.."
                 -DQT6_PLUGINS_DIR=${_VCPKG_QT6_PLUGINS}
                 -DQT6_LIB_DIR=${_VCPKG_QT6_LIB}
+                "-DCMAKE_INSTALL_NAME_TOOL=${CMAKE_INSTALL_NAME_TOOL}"
+                "-DUS3_CODESIGN_EXECUTABLE=${US3_CODESIGN_EXECUTABLE}"
                 -P "${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/StageAssistantDev.cmake"
             COMMENT "Staging Qt Assistant.app for developer build"
             VERBATIM

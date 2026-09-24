@@ -84,26 +84,18 @@ qDebug() << "CG: nefmods" << nefmods;
 
    QGridLayout* colors = new QGridLayout();
 
-   // Check need to change style of buttons so that they can be colored
-   QString stynam  = qApp->style()->objectName();
-#if QT_VERSION > 0x050000
-   QStyle* btnsty  = QStyleFactory::create( "fusion" );
-   bool needbsty   = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
-                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
-#else
-   QStyle* btnsty  = new QPlastiqueStyle();   // style sure to be colorable
-   bool needbsty   = stynam.startsWith( "windowsv", Qt::CaseInsensitive ) ||
-                     stynam.startsWith( "windowsx", Qt::CaseInsensitive ) ||
-                     stynam.startsWith( "mac"     , Qt::CaseInsensitive );
-#endif
-qDebug() << "stynam" << stynam << "needbsty" << needbsty;
+   // Use Fusion so macOS and Windows styles do not suppress button colors.
+   const QString stynam = US_GuiSettings::guiStyle();
+   static QStyle* btnsty = QStyleFactory::create( "fusion" );
+   const bool needbsty = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
+                         stynam.startsWith( "mac"    , Qt::CaseInsensitive );
    int c_row = 0;
 
    for ( int ii = 0; ii < 11; ii++ )
    {
       pb_c[ ii ] = new MyButton( ii );
 
-      if ( needbsty )		// change button style for coloring if need be
+      if ( needbsty && btnsty != nullptr )
          pb_c[ ii ]->setStyle( btnsty );
 
       ct_c[ ii ] = us_counter( 2, 1.0, 101.0, 10.0 );

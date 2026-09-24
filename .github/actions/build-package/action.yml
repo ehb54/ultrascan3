@@ -10,7 +10,7 @@ inputs:
     description: "APP | HPC | TEST"
     required: true
   qt_variant:
-    description: "qt6 | qt5-qwt630"
+    description: "qt6 | qt5"
     required: true
   clean_tier:
     description: "incremental | rebuild | clean"

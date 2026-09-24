@@ -26,7 +26,7 @@
 .PARAMETER qt6
     Build with Qt6 + Qwt6.3.0 [default]
 
-.PARAMETER qt5-qwt630
+.PARAMETER qt5
     Build with Qt5 + Qwt6.3.0
 
 .PARAMETER arch
@@ -40,6 +40,9 @@
 
 .PARAMETER pkg
     Build the Windows NSIS installer after compiling
+
+.PARAMETER configuration
+    Application configuration: Release (default) or Debug
 
 .PARAMETER help
     Show this help message
@@ -98,12 +101,15 @@ param(
     [ValidateSet("APP", "TEST", "HPC")]
     [string]$profile = "APP",
 
+    [ValidateSet("Release", "Debug")]
+    [string]$configuration = "Release",
+
     [switch]${rebuild},
     [switch]${clean},
     [switch]${purge-cache},
     [switch]${pkg},
     [switch]${qt6},
-    [switch]${qt5-qwt630},
+    [switch]$qt5,
     [string]${arch}       = "",
     [string]${vcpkg-root} = "",
     [switch]${repair-vcpkg},
@@ -122,6 +128,7 @@ if (${help}) {
     Write-Host "Usage: build.bat [OPTIONS] [PROFILE]"
     Write-Host ""
     Write-Host "OPTIONS:"
+    Write-Host "  --configuration Debug    Use Debug dependencies and the debug CRT (default: Release)"
     Write-Host "  --rebuild                Tier 1: removes the CMake build directory, keeping its"
     Write-Host "                             vcpkg_installed\ dependencies. Fast - vcpkg packages"
     Write-Host "                             untouched. Does not repair damaged packages (vcpkg still"
@@ -134,7 +141,7 @@ if (${help}) {
     Write-Host "                             Use when switching compilers or suspecting cache corruption."
     Write-Host "  --pkg                    Build the Windows NSIS installer"
     Write-Host "  --qt6                    Build with Qt6 + Qwt6.3.0 [default]"
-    Write-Host "  --qt5-qwt630             Build with Qt5 + Qwt6.3.0"
+    Write-Host "  --qt5                    Build with Qt5 + Qwt6.3.0"
     Write-Host "  --arch x64               Target x64 architecture [default: auto-detect]"
     Write-Host "  --arch arm64             Target ARM64 architecture"
     Write-Host "  --vcpkg-root <path>      Path to vcpkg installation"
@@ -179,7 +186,7 @@ if (${help}) {
 # RESOLVE QT VERSION
 # =============================================================================
 $QtSuffix = "-qt6"
-if (${qt5-qwt630}.IsPresent) { $QtSuffix = "-qt5-qwt630" }
+if ($qt5.IsPresent) { $QtSuffix = "-qt5" }
 
 $profile = $profile.ToUpperInvariant()
 
@@ -219,17 +226,22 @@ function Test-UnsupportedBuildMatrix {
         Write-Host "ERROR: Qt5 on Windows ARM64 is not supported in this build configuration." -ForegroundColor Red
         Write-Host ""
         Write-Host "Recommended alternatives:" -ForegroundColor Yellow
-        Write-Host "  --qt5-qwt630 --arch x64"
+        Write-Host "  --qt5 --arch x64"
         Write-Host "  --qt6 --arch arm64"
         Write-Host ""
         exit 1
     }
 }
 
+$ConfigurationName = $configuration.ToLowerInvariant()
+if (${pkg} -and $configuration -eq "Debug") {
+    Write-Error "Windows installer packaging requires --configuration Release."
+    exit 1
+}
 if ($Arch -eq "arm64") {
-    $Preset = "windows-release$QtSuffix-arm64"
+    $Preset = "windows-$ConfigurationName$QtSuffix-arm64"
 } else {
-    $Preset = "windows-release$QtSuffix"
+    $Preset = "windows-$ConfigurationName$QtSuffix"
 }
 
 Test-UnsupportedBuildMatrix `
@@ -436,7 +448,7 @@ if ($env:GITHUB_ACTIONS -eq "true") {
 Write-Host "Selected build profile : ${profile}"
 $QtLabel = switch ($QtSuffix) {
     "-qt6"        { "Qt6 (Qwt 6.3.0)" }
-    "-qt5-qwt630" { "Qt5 (Qwt 6.3.0)" }
+    "-qt5"        { "Qt5 (Qwt 6.3.0)" }
     default       { $QtSuffix }
 }
 Write-Host "Selected Qt variant    : $QtLabel"
@@ -1127,7 +1139,7 @@ if ($profile -ne "HPC") {
         $QtToolsFeature = "qt6-app (qttools[assistant])"
     } else {
         $ExpectedTool   = Join-Path $VcpkgInstalledDir "$TargetTriplet\tools\qt5-tools\bin\windeployqt.exe"
-        $QtToolsFeature = "qt5-app / qt5-qwt630-app (qt5-tools)"
+        $QtToolsFeature = "qt5-app (qt5-tools)"
     }
 
     if (-not (Test-Path $ExpectedTool)) {
