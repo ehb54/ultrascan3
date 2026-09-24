@@ -2113,21 +2113,21 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
       const US_AnaProfile::AnaProf2DSA::Parm2DSA& ap =
          cAP2_2dsa.parms[ ap2_match_idx ];
 
-      //TEMP - must be uncommented as this is read form AProfile
-      // protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( ap.s_min   );
-      // protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( ap.s_max   );
-      // protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( ap.s_grpts );
-      // protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( ap.k_min   );
-      // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( ap.k_max   );
-      // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( ap.k_grpts );
+      //TEMP - must be uncommented as this is read from AProfile settings
+      protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( ap.s_min   );
+      protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( ap.s_max   );
+      protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( ap.s_grpts );
+      protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( ap.k_min   );
+      protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( ap.k_max   );
+      protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( ap.k_grpts );
 
-      //For TEST ONLY
-      protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( 1   );
-      protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( 130 );
-      protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( 98  );
-      protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( 1   );
-      protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5   );
-      protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
+      // //For TEST ONLY!!! MUST BE COMMENTED OUT
+      // protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( 1   );
+      // protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( 130 );
+      // protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( 98  );
+      // protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( 1   );
+      // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5   );
+      // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
 
       qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
 	       << "Analysis Profile grid: s[" << ap.s_min << "," << ap.s_max

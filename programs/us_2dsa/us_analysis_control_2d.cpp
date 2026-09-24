@@ -731,9 +731,10 @@ void US_AnalysisControl2D::apply_auto_fit_params( const QMap< QString, QString >
    // this dialog's own default) specifies for either. checkIterate(true)
    // (fired by setChecked(), via the ck_iters->toggled connection) sets
    // ct_iters to its own default of 3 -- explicitly override that with
-   // 10 afterward.
-   ck_iters->setChecked( true );
-   ct_iters ->setValue( 2 );
+   // 2 afterward.
+   ck_iters   -> setChecked( true );
+   ct_iters   -> setValue( 2 );
+   ct_thrdcnt -> setValue( 8 );
 
 DbgLv(1) << "AC:apply_auto_fit_params: s" << ct_lolimits->value() << ct_uplimits->value()
          << ct_nstepss->value() << "k" << ct_lolimitk->value() << ct_uplimitk->value()
