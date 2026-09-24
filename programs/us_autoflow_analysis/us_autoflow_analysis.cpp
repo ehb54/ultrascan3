@@ -1733,6 +1733,7 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
       sdiag_mwlsim -> define_buffer_auto( invID );
 
       QMap<QString, QString> run_params = read_run_params( f_name_c );
+      qDebug() << "run_params[bootom]=" << run_params["bootom"];
       sdiag_mwlsim -> sim_params_auto( run_params );
 
       /**
