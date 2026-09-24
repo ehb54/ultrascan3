@@ -90,7 +90,7 @@ separate aggregation from shape.</li>
 <tr><td>dropneg</td><td>1</td><td>1 drops <i>I</i> &le; 0 points, 0 fails on them</td></tr>
 <tr><td>qscale</td><td>1</td><td>multiply <i>q</i> on input, e.g. 0.1 for nm<sup>-1</sup> data</td></tr>
 <tr><td>outlier</td><td>0</td><td>outlier rejection distance in SDs on the chosen window, 0 = off</td></tr>
-<tr><td>fixed</td><td>0</td><td>1 fits exactly the qmin to qmax range (no search) and reports the same diagnostics; needs both limits</td></tr>
+<tr><td>fixed</td><td>0</td><td>1 fits the qmin to qmax range (no search) and reports the same diagnostics; needs both limits. An explicit qrgmax then drops points from the end of the range until q&middot;R<sub>g</sub> satisfies it (never below minpts points); qrgmax 0 means no limit in this mode</td></tr>
 <tr><td>maxrelsd</td><td>0</td><td>exclude points whose SD / <i>I</i> exceeds this fraction (e.g. 0.1); off by default because such points carry little weight anyway</td></tr>
 <tr><td>slopet</td><td>2</td><td>minimum |slope| / SD(slope) of a valid window</td></tr>
 <tr><td>minspan</td><td>0.2</td><td>minimum <i>q&middot;R<sub>g</sub></i> span of a valid window</td></tr>

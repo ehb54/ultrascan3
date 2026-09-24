@@ -293,7 +293,7 @@ QString US_Guinier_Search_Params::help()
       "  qscale       multiply q on input, e.g. 0.1 for nm^-1 data (1)\n"
       "  outlier      outlier rejection distance in SDs on the chosen window, 0 = off (0)\n"
       "  maxrelsd     drop points whose SD/I exceeds this fraction, e.g. 0.1, 0 = off (0)\n"
-      "  fixed        1 fits exactly the qmin..qmax range instead of searching (0)\n"
+      "  fixed        1 fits the qmin..qmax range instead of searching; qrgmax then trims its end, 0 = no limit (0)\n"
       "  slopet       minimum |slope|/sd(slope) for a window to be valid (2)\n"
       "  minspan      minimum q*Rg span of a valid window (0.2)\n"
       "  sigfloor     noise floor in ln I used for unweighted fits (0.005)\n"
@@ -1066,9 +1066,33 @@ bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_
          return false;
       }
       c.rg     = sqrt( -mult * c.f.b );
-      c.qrg0   = qv[ 0 ] * c.rg;
-      c.qrg1   = qv[ m - 1 ] * c.rg;
-      c.curv_t = curvature_t( x, y, w, use_sd, params.sigfloor );
+      // an explicit q*Rg limit still operates on the requested range: drop points from its end until
+      // q*Rg at the end satisfies it ( blank / 0 = no limit in this mode ), keeping at least minpts points
+      if ( params.qrgmax > 0e0 )
+      {
+         int trimmed = 0;
+         while ( qv[ c.j ] * c.rg > params.qrgmax && c.j - c.i + 1 > params.minpts )
+         {
+            --c.j;
+            ++trimmed;
+            c.n = c.j - c.i + 1;
+            fit_line( sub( x, c.i, c.j ), sub( y, c.i, c.j ), sub( w, c.i, c.j ), use_sd, c.f );
+            if ( !( c.f.b < 0e0 ) || !std::isfinite( c.f.b ) )
+            {
+               result.errormsg = errormsg = "the requested range has a non-negative slope after applying the q*Rg limit";
+               return false;
+            }
+            c.rg = sqrt( -mult * c.f.b );
+         }
+         if ( trimmed )
+         {
+            result.warnings << QString( "%1 points dropped from the end of the requested range to satisfy q*Rg <= %2" )
+               .arg( trimmed ).arg( params.qrgmax );
+         }
+      }
+      c.qrg0   = qv[ c.i ] * c.rg;
+      c.qrg1   = qv[ c.j ] * c.rg;
+      c.curv_t = curvature_t( sub( x, c.i, c.j ), sub( y, c.i, c.j ), sub( w, c.i, c.j ), use_sd, params.sigfloor );
       c.terms[ 0 ] = use_sd && c.f.chi2_red > 1e0 ? 1e0 / c.f.chi2_red : 1e0;
       c.terms[ 1 ] = 1e0 / ( 1e0 + ( c.curv_t / params.curvt ) * ( c.curv_t / params.curvt ) );
       c.terms[ 2 ] = std::min( 1e0, ( c.qrg1 - c.qrg0 ) / qrgmax );
@@ -1083,9 +1107,10 @@ bool US_Saxs_Util::guinier_search( const QString & tag, const US_Guinier_Search_
       }
       c.quality = 0e0;
       cands.push_back( c );
-      if ( c.qrg1 > qrgmax )
+      if ( params.qrgmax > 0e0 && c.qrg1 > params.qrgmax )
       {
-         result.warnings << QString( "requested range ends at q*Rg %1, above the limit %2" ).arg( c.qrg1, 0, 'f', 2 ).arg( qrgmax );
+         result.warnings << QString( "requested range still ends at q*Rg %1 with minpts %2 points, above the limit %3" )
+            .arg( c.qrg1, 0, 'f', 2 ).arg( params.minpts ).arg( params.qrgmax );
       }
    }
    for ( int i = 0; !params.fixed && i + params.minpts - 1 < nreg; ++i )
