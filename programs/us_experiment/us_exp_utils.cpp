@@ -4015,12 +4015,12 @@ void US_ExperGuiUpload::initPanel()
    have_optic        = ( sibIValue( "optical",   "alldone"  ) > 0 );
    have_range        = ( sibIValue( "ranges",    "alldone"  ) > 0 );
 DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
- << have_run << have_proj << have_cells << have_solus << have_range;
-   proto_ena         = ( have_cells  &&  have_solus  &&  have_optic  &&
+	 << have_run << have_proj << have_cells << have_solus << have_optic << have_range;
+   proto_ena         = ( have_cells  &&
+			 have_solus  &&
+			 //have_optic  &&
                          have_range );
-   // subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
-   //                       connected );
-
+   
    if ( mainw->automode )
      {
        bool connectivity_s = ( rpRotor->importData && !rpRotor->importDataDisk.isEmpty() ) ?
