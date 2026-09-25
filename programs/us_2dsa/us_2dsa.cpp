@@ -190,7 +190,7 @@ US_2dsa::US_2dsa( QMap<QString, QString> & protocol_details_p ) : US_2dsa()
       qDebug() << "[US_2dsa] auto constructor: load() failed for channel"
                << chann_to_process_2dsa;
       bool success = false;
-      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      emit twodsa_complete_s( chann_to_process_2dsa, success, 0 );
       return;
    }
 
@@ -326,7 +326,7 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
          else
          {
             bool success = true;
-            emit twodsa_complete_s( chann_to_process_2dsa, success );
+            emit twodsa_complete_s( chann_to_process_2dsa, success, dataList.size() );
          }
       }
    }
@@ -1417,7 +1417,7 @@ void US_2dsa::run_2dsa_auto( void )
                << chann_to_process_2dsa << "species index" << auto_triple_idx
                << "-- aborting.";
       bool success = false;
-      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      emit twodsa_complete_s( chann_to_process_2dsa, success, 0 );
       return;
    }
 
@@ -1441,7 +1441,7 @@ void US_2dsa::run_2dsa_auto( void )
                << "channel" << chann_to_process_2dsa << "species index"
                << auto_triple_idx << "-- aborting.";
       bool success = false;
-      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      emit twodsa_complete_s( chann_to_process_2dsa, success, auto_triple_idx );
       return;
    }
 
@@ -1474,7 +1474,7 @@ void US_2dsa::run_2dsa_auto( void )
       else
       {
          bool success = true;
-         emit twodsa_complete_s( chann_to_process_2dsa, success );
+         emit twodsa_complete_s( chann_to_process_2dsa, success, dataList.size() );
       }
       return;
    }
@@ -1506,7 +1506,7 @@ void US_2dsa::run_2dsa_auto( void )
                      " aborting this channel instead of re-fitting/"
                      "re-saving" << tripleID << "a second time.";
       bool success = false;
-      emit twodsa_complete_s( chann_to_process_2dsa, success );
+      emit twodsa_complete_s( chann_to_process_2dsa, success, auto_triple_idx );
       return;
    }
 

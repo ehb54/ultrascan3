@@ -247,6 +247,7 @@ class US_Analysis_auto : public US_Widgets
             int twodsa_chan_idx;                                      /**< Cursor into channels_2dsa_approved -- -1 so start_next_2dsa_channel() starts at index 0. */
             int twodsa_nchannels;                                     /**< channels_2dsa_approved.size(), cached for progress reporting. */
             QString twodsa_chan_name;                                 /**< Name of the channel currently being processed, used to label progress_msg_2dsa. */
+            int twodsa_nspecies_total;                                /**< Running total of species (models) completed across all Approved channels processed so far this pass -- accumulated in twodsa_channel_complete() from US_2dsa::twodsa_complete_s()'s nspecies, reset to 0 alongside twodsa_chan_idx/twodsa_nchannels. Used to give an exact count in start_next_2dsa_channel()'s "All Channels Processed" summary. */
 
             //! \brief This run's 2DSA Analysis-Profile settings (grid
             //! limits/points per channel) -- loaded once in process_
@@ -798,10 +799,13 @@ class US_Analysis_auto : public US_Widgets
          * channel(). A false `success` is logged but does not stop the
          * pipeline; adjust here if a failed channel should instead halt
          * the run for operator attention.
-         * @param chann   The channel just processed.
-         * @param success Whether the fit+save completed successfully.
+         * @param chann    The channel just processed.
+         * @param success  Whether the fit+save completed successfully.
+         * @param nspecies Species (S1, S2, ...) completed for this
+         *        channel -- accumulated into twodsa_nspecies_total for
+         *        start_next_2dsa_channel()'s completion summary.
          */
-        void twodsa_channel_complete( QString& chann, bool success );
+        void twodsa_channel_complete( QString& chann, bool success, int nspecies );
 
         /**
          * @brief Retires the current 2DSA widget (sdiag_2dsa), if any --

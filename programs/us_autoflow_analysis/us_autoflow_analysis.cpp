@@ -187,6 +187,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   twodsa_open      = false;
   twodsa_chan_idx  = -1;
   twodsa_nchannels = 0;
+  twodsa_nspecies_total = 0;
   progress_msg_2dsa = nullptr;   // ALEXEY: see progress_msg_mwlsim's own
                                   // construction site (process_velmwl_
                                   // after_all_channels_decided()) -- kept
@@ -2179,6 +2180,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
   protocol_details_at_analysis_2dsa = protocol_details_at_analysis_velmwl;
   twodsa_chan_idx  = -1;   // start_next_2dsa_channel() scans from idx+1
   twodsa_nchannels = channels_2dsa_approved.size();
+  twodsa_nspecies_total = 0;   // accumulated by twodsa_channel_complete()
 
   // progress_msg_2dsa was already constructed and shown at the top of
   // this function -- see that comment for why. From here on it's driven
@@ -2216,14 +2218,46 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
   if ( twodsa_chan_idx >= channels_2dsa_approved.size() )
     {
       // All Approved channels processed -- the VEL-MWL run is complete.
+      // Every channel's US_2dsa auto-fit (run_2dsa_auto()) already loops
+      // over that channel's species (S1, S2, ...) itself before firing
+      // twodsa_complete_s(), so by the time the cursor runs off the end
+      // of channels_2dsa_approved here, every species of every Approved
+      // channel has a model recorded in autoflowAnalysisVelMwl. Tell the
+      // user before handing off to Report, matching the "All Triples
+      // Processed !" notice shown at the analogous transition earlier
+      // in the pipeline (see the non-VELOCITY-MWL branch above).
 
       if ( progress_msg_2dsa )
         progress_msg_2dsa->hide();
 
-      /**
+      QString msg_text;
+
+      if ( twodsa_nchannels > 0 )
+        {
+          msg_text = QString( tr( "2DSA-IT model fitting is complete for all "
+                                   "%1 Approved channel(s) -- %2 species "
+                                   "model(s) total now recorded."
+                                   "\n\nThe program will proceed to the "
+                                   "Reporting stage." ) )
+                       .arg( twodsa_nchannels )
+                       .arg( twodsa_nspecies_total );
+        }
+      else
+        {
+          msg_text = tr( "No VEL-MWL channels were Approved for 2DSA-IT "
+                          "processing, so there was nothing to fit."
+                          "\n\nThe program will proceed to the Reporting "
+                          "stage." );
+        }
+
+      QMessageBox::information( this,
+                                 tr( "VELOCITY-MWL: All Channels Processed !" ),
+                                 msg_text );
+
+      /****
       update_autoflow_record_atAnalysis();
       emit analysis_complete_auto( protocol_details_at_analysis );
-      **/
+      ****/
       
       return;
     }
@@ -2350,10 +2384,17 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
 
 //ALEXEY: Slot for US_2dsa::twodsa_complete_s() -- advance to the next
 //Approved channel. Mirrors velmwl_deconv_accepted()/rejected().
-void US_Analysis_auto::twodsa_channel_complete( QString& chann, bool success )
+void US_Analysis_auto::twodsa_channel_complete( QString& chann, bool success, int nspecies )
 {
   qDebug() << "[US_Autoflow_analysis] 2DSA-IT complete for channel" << chann
-	   << "-- success:" << success;
+	   << "-- success:" << success << "species completed:" << nspecies;
+
+  // ALEXEY: Accumulated regardless of success -- nspecies is already an
+  // honest count of species actually completed for this channel (see
+  // US_2dsa::twodsa_complete_s()'s doc), zero for a channel that failed
+  // before reaching any species. Consumed by start_next_2dsa_channel()'s
+  // completion summary once every Approved channel has reported in.
+  twodsa_nspecies_total += nspecies;
 
   // NOTE: a failed channel is currently just logged and the pipeline
   // moves on -- see this function's header doc if a failure should

@@ -379,7 +379,19 @@ class US_2dsa : public US_AnalysisBase2
         //! \param success false if the fit or save step failed -- the
         //!        caller should treat this channel as unresolved rather
         //!        than advancing past it silently.
-        void twodsa_complete_s( QString& chann, bool success );
+        //! \param nspecies Number of this channel's species (S1, S2, ...)
+        //!        actually completed -- fit+saved or skipped as already
+        //!        recorded -- by the time this fires. Equal to dataList.
+        //!        size() whenever success is true (every species in the
+        //!        channel got there); on a failure it's however many
+        //!        completed before the species that failed, so the
+        //!        caller (US_Analysis_auto::twodsa_channel_complete(),
+        //!        which accumulates this into a run-wide total for the
+        //!        "All Channels Processed" summary -- see start_next_
+        //!        2dsa_channel() in us_autoflow_analysis.cpp) gets an
+        //!        honest count either way, never a species claimed as
+        //!        done that wasn't.
+        void twodsa_complete_s( QString& chann, bool success, int nspecies );
 
         //! \brief Progress reporting for the headless auto path, for a
         //! centralized progress dialog (US_Analysis_auto::
