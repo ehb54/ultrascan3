@@ -1664,6 +1664,8 @@ void US_2dsa::record_2dsa_model_in_velmwl( void )
        << species
        << model.modelGUID;
 
+   qDebug() << "qry -- " << qry;
+
    // ALEXEY: "First model wins" (same rule/reason as US_MwlSpeciesFit::
    // record_velmwl_channel_decision() -- see this procedure's own header
    // comment): the DB row for this exact channel+species is only ever
