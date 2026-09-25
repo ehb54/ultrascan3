@@ -92,18 +92,15 @@ class US_UTIL_EXTERN US_SimSpecies
       static QString validateComponents( const QVector< Component >& components );
 
       //! \brief Create a single-component absorbance model from a species.
-      //! Validation is enforced here rather than left to the caller.
+      //! Validates input first; returns false on failure.
       //! \param c     Species to build.
       //! \param model Model populated only on success.
       //! \param error Error message on failure; empty on success.
       static bool model( const Component& c, US_Model& model, QString& error );
 
       //! \brief Create a multi-component absorbance model from a mixture.
-      //! Components keep the given order and each carries its own
-      //! concentration, so a mixture such as a monomer/dimer pair is one
-      //! model rather than several.
-      //! Validation and coefficient calculation are enforced here rather than
-      //! left to the caller.
+      //! Builds one model containing all components, in the given order.
+      //! Validates input first; returns false on failure.
       //! \param components Species to build.
       //! \param model      Model populated only on success.
       //! \param error      Error message on failure; empty on success.

@@ -169,7 +169,6 @@ inline bool parseNoiseSeedOption( QCommandLineParser& parser,
    const QString  value = parser.value( noise_seed_option );
    const quint32  seed  = value.toUInt( &ok );
 
-   // Reject zero, which selects a clock-based seed.
    if ( ! ok  ||  seed == 0 )
    {
       QTextStream( stderr ) << "Invalid --noise-seed " << value

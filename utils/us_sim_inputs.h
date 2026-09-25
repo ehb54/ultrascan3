@@ -61,7 +61,7 @@ class US_UTIL_EXTERN US_SimInputs
 
       //! \brief Create parameters for a single-speed simulation.
       //! Geometry is stored at rest; simulation consumers apply rotor stretch.
-      //! Validation is enforced here rather than left to the caller.
+      //! Validates input first; returns false on failure.
       //! \param p      Run conditions.
       //! \param params Parameters populated only on success.
       //! \param error  Error message on failure; empty on success.
