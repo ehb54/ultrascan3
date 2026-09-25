@@ -157,6 +157,14 @@ class US_Analysis_auto : public US_Widgets
                                                                         and species deconvolution/fit (US_MwlSpeciesFit), driven via
                                                                         update_mwlsim_progress(). */
 
+        QProgressDialog * progress_msg_2dsa;                     /**< Progress dialog shown on a per-channel basis (restarted at 0 for each
+                                                                        Approved VEL-MWL channel) for the headless 2DSA-IT post-processing
+                                                                        pipeline driven by US_2dsa's auto constructor: this channel's edited-
+                                                                        data load, then each deconvolved species' (S/1, S/2, ...) fit and
+                                                                        save -- driven via update_2dsa_progress(). US_2dsa is never shown
+                                                                        (or added to `panel`) on this path -- this dialog is the only
+                                                                        visible indication that 2DSA-IT processing is under way. */
+
         
     private:
         QVector< US_DataIO::RawData > rawData;                   /**< Vector of raw data. */
@@ -238,6 +246,7 @@ class US_Analysis_auto : public US_Widgets
             QMap<QString, QString> channels_2dsa_filenames;           /**< channel -> deconvolved-edit filename (from channelDecisions[chan]["filename"], written atomically with the Accept decision by US_MwlSpeciesFit::record_velmwl_channel_decision()), keyed the same as channels_2dsa_approved. What US_DataLoader actually needs to load this channel's data. */
             int twodsa_chan_idx;                                      /**< Cursor into channels_2dsa_approved -- -1 so start_next_2dsa_channel() starts at index 0. */
             int twodsa_nchannels;                                     /**< channels_2dsa_approved.size(), cached for progress reporting. */
+            QString twodsa_chan_name;                                 /**< Name of the channel currently being processed, used to label progress_msg_2dsa. */
 
             //! \brief This run's 2DSA Analysis-Profile settings (grid
             //! limits/points per channel) -- loaded once in process_
@@ -898,6 +907,45 @@ class US_Analysis_auto : public US_Widgets
          * @param total Total number of steps within the stage.
          */
         void update_mwlsim_progress( const QString& stage, int step, int total );
+
+        /**
+         * @brief (Re)starts progress_msg_2dsa for a new Approved VEL-MWL
+         *        channel, resetting the bar back to 0-100. Each channel's
+         *        2DSA-IT post-processing (this channel's data load, then
+         *        each deconvolved species' fit+save) is fully headless --
+         *        no approve/reject gate like the VEL-MWL sim stage has --
+         *        so the dialog restarts fresh once per channel, exactly
+         *        mirroring start_mwlsim_channel_progress().
+         * @param chan_idx  Index (0-based) of the channel about to be processed.
+         * @param chan_name Name of the channel about to be processed.
+         */
+        void start_2dsa_channel_progress( int chan_idx, const QString& chan_name );
+
+        /**
+         * @brief Updates progress_msg_2dsa as US_2dsa's auto path (via
+         *        US_2dsa::twodsa_progress_s(), connected in
+         *        start_next_2dsa_channel()) reports progress for the
+         *        channel currently being processed. NOTE: because
+         *        US_2dsa's auto constructor calls load() synchronously
+         *        before returning to start_next_2dsa_channel() (where the
+         *        twodsa_progress_s connection is made), this channel's
+         *        very first "load" tick is emitted before anything is
+         *        connected to receive it and is silently missed -- the
+         *        dialog simply stays at "Starting..." until the first
+         *        "fit" update arrives (those genuinely happen later, via
+         *        WorkerThread2D's asynchronous progress_update signal, so
+         *        they are never missed). Not worth restructuring
+         *        US_2dsa's constructor over; see that file if this ever
+         *        needs to be gapless.
+         * @param stage          "load", "fit", or "save" -- see
+         *        US_2dsa::twodsa_progress_s()'s own header comment.
+         * @param species_idx    0-based species index ("fit"/"save" only).
+         * @param species_count  Number of species this channel resolved
+         *        to ("fit"/"save" only).
+         * @param step, total    Progress within `stage`.
+         */
+        void update_2dsa_progress( const QString& stage, int species_idx,
+                                    int species_count, int step, int total );
 
     signals:
         /**

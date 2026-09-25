@@ -270,7 +270,13 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
 
    else if ( savedata )
    {  // Save the data and reports
+      if ( us_gmp_auto_mode )
+         emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 0, 1 );
+
       save();
+
+      if ( us_gmp_auto_mode )
+         emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 1, 1 );
 
       // ALEXEY: A VEL-MWL-Approved channel can resolve to more than one
       // deconvolved species (S/1, S/2, ... -- see US_MwlSpeciesFit's
@@ -387,6 +393,8 @@ void US_2dsa::load( void )
                                                    : US_Disk_DB_Controls::Disk;
       QString description;
 
+      emit twodsa_progress_s( "load", -1, -1, 0, 1 );
+
       US_DataLoader* dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList,
                                        triples, description, protocol_details, "none" );
       connect( dialog, &US_DataLoader::changed, this, &US_2dsa::update_disk_db );
@@ -396,8 +404,11 @@ void US_2dsa::load( void )
       {
          qDebug() << "[US_2dsa] load(): auto US_DataLoader returned no data"
                   << "for channel" << chann_to_process_2dsa;
+         emit twodsa_progress_s( "load", -1, 0, 1, 1 );
          return;
       }
+
+      emit twodsa_progress_s( "load", -1, dataList.size(), 1, 1 );
 
       if ( disk_controls->db() )
          directory = tr( "(database)" );
@@ -1450,6 +1461,20 @@ void US_2dsa::run_2dsa_auto( void )
 
    analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
 
+   // ALEXEY: Relay analcd's own (never-shown, since analcd is never
+   // show()n on this path) fit-progress counters up as twodsa_progress_s
+   // ("fit", ...) -- see relay_fit_progress()/twodsa_progress_s()'s own
+   // header comments. Reconnected fresh here every species, since analcd
+   // itself is rebuilt every species (the qt::UniqueConnection default
+   // isn't a concern -- the old analcd this replaces is a different
+   // object entirely, so there's nothing stale to accumulate).
+   connect( analcd, &US_AnalysisControl2D::fit_progress_s,
+            this,   &US_2dsa::relay_fit_progress );
+
+   // Prime the progress consumer with this species' identity right away,
+   // rather than waiting for analcd's first real fit_progress_s tick.
+   emit twodsa_progress_s( "fit", auto_triple_idx, dataList.size(), 0, 1 );
+
    // ALEXEY: Apply this channel's Analysis-Profile grid-fit parameters
    // (s_min/s_max/s_grpts/k_min/k_max/k_grpts -- populated into
    // protocol_details by US_Analysis_auto::start_next_2dsa_channel(),
@@ -1461,6 +1486,14 @@ void US_2dsa::run_2dsa_auto( void )
    analcd->apply_auto_fit_params( protocol_details );
 
    analcd->fit_auto();
+}
+
+// ALEXEY: See header comment. Relays analcd's fit_progress_s up as
+// twodsa_progress_s( "fit", ... ), stamped with which species (of how
+// many) this progress belongs to.
+void US_2dsa::relay_fit_progress( int step, int total )
+{
+   emit twodsa_progress_s( "fit", auto_triple_idx, dataList.size(), step, total );
 }
 
 // ALEXEY: Override of US_AnalysisBase2::update() -- see header comment.

@@ -319,6 +319,13 @@ class US_2dsa : public US_AnalysisBase2
         void reset_data();
         void reset_gui();
 
+        //! \brief Relays analcd's fit_progress_s( step, total ) up as
+        //! twodsa_progress_s( "fit", auto_triple_idx, dataList.size(),
+        //! step, total ). Connected fresh in run_2dsa_auto() each time
+        //! analcd is (re)constructed, since a new US_AnalysisControl2D
+        //! is built per species -- see run_2dsa_auto()'s own comment.
+        void relay_fit_progress( int step, int total );
+
     signals:
         //! \brief Emitted once, at the end of the headless auto path
         //! (run_2dsa_auto() -> analysis_done( 2 ) -> save()), reporting
@@ -333,6 +340,29 @@ class US_2dsa : public US_AnalysisBase2
         //!        caller should treat this channel as unresolved rather
         //!        than advancing past it silently.
         void twodsa_complete_s( QString& chann, bool success );
+
+        //! \brief Progress reporting for the headless auto path, for a
+        //! centralized progress dialog (US_Analysis_auto::
+        //! progress_msg_2dsa, driven via update_2dsa_progress()) to
+        //! consume -- mirrors US_MwlSpeciesSim::stage_progress()'s role
+        //! for the VEL-MWL sim/save pipeline. Never emitted for
+        //! interactively-constructed (non-auto) instances.
+        //! \param stage          "load" (this channel's US_DataLoader
+        //!        call, once per channel, species_idx/species_count not
+        //!        yet meaningful -- pass -1/-1), "fit" (relayed from
+        //!        analcd's fit_progress_s -- see relay_fit_progress()),
+        //!        or "save" (bracketing US_2dsa::save() -- step/total
+        //!        0/1 then 1/1).
+        //! \param species_idx    0-based index into dataList/lw_triples
+        //!        of the species ("fit"/"save" only; -1 for "load").
+        //! \param species_count  dataList.size() ("fit"/"save" only; -1
+        //!        for "load", since it isn't known until load() returns).
+        //! \param step, total    Progress within `stage` -- for "fit",
+        //!        the same ncsteps/nctotal driving analcd's own
+        //!        (unshown) b_progress; for "load"/"save", a simple 0/1
+        //!        -> 1/1 bracket around the call.
+        void twodsa_progress_s( QString stage, int species_idx,
+                                int species_count, int step, int total );
 };
 
 #endif // US_2DSA_H

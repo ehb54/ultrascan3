@@ -1035,6 +1035,7 @@ void US_AnalysisControl2D::update_progress( int ksteps )
    }
 
    b_progress->setValue( ncsteps );
+   emit fit_progress_s( ncsteps, nctotal );
 DbgLv(2) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
 }
 
@@ -1070,6 +1071,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 DbgLv(1) << "AC:cs: BB";
    b_progress->setValue(   ncsteps );
 DbgLv(1) << "AC:cs: CC";
+   emit fit_progress_s( ncsteps, nctotal );
 
    qApp->processEvents();
 }
@@ -1081,6 +1083,7 @@ void US_AnalysisControl2D::completed_process( int stage )
 DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
+   emit fit_progress_s( nctotal, nctotal );
    qApp->processEvents();
 
    if ( stage == 6 )

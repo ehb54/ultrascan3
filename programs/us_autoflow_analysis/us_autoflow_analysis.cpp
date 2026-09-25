@@ -187,6 +187,12 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   twodsa_open      = false;
   twodsa_chan_idx  = -1;
   twodsa_nchannels = 0;
+  progress_msg_2dsa = nullptr;   // ALEXEY: see progress_msg_mwlsim's own
+                                  // construction site (process_velmwl_
+                                  // after_all_channels_decided()) -- kept
+                                  // explicitly null until then, same as
+                                  // sdiag above, rather than left
+                                  // indeterminate.
 
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
@@ -1522,6 +1528,103 @@ void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, i
   qApp->processEvents();
 }
 
+// (Re)start progress_msg_2dsa for a new Approved VEL-MWL channel. Called
+// once at the top of each channel's 2DSA-IT processing (from
+// start_next_2dsa_channel(), BEFORE `new US_2dsa(...)` -- that constructor
+// runs load() synchronously, so the dialog needs to already be up and
+// labeled before that call, not after) so the bar always runs 0-100 for
+// the channel currently in flight. Mirrors start_mwlsim_channel_progress()
+// exactly, minus the approve/reject gating VEL-MWL sim has (2DSA-IT needs
+// none).
+void US_Analysis_auto::start_2dsa_channel_progress( int chan_idx, const QString& chan_name )
+{
+  twodsa_chan_idx  = chan_idx;
+  twodsa_chan_name = chan_name;
+
+  if ( ! progress_msg_2dsa )
+    return;
+
+  progress_msg_2dsa->setLabelText( tr( "Channel %1 of %2 (%3): Starting..." )
+                                    .arg( twodsa_chan_idx + 1 ).arg( twodsa_nchannels )
+                                    .arg( twodsa_chan_name ) );
+  progress_msg_2dsa->setValue( 0 );
+  progress_msg_2dsa->show();
+  qApp->processEvents();
+}
+
+// Update progress_msg_2dsa as US_2dsa's auto path reports progress for the
+// channel currently being processed -- see this function's header comment
+// (us_autoflow_analysis.h) for the one known gap (this channel's very
+// first "load" tick, missed because it's emitted before the
+// twodsa_progress_s connection in start_next_2dsa_channel() exists).
+//
+// The bar always spans 0-100 for the current CHANNEL (see
+// start_2dsa_channel_progress()) -- not the current species. A channel can
+// resolve to more than one deconvolved species (S/1, S/2, ...), each
+// needing its own fit+save, so the remaining (100 - w_load) units are
+// split evenly across however many species this channel has
+// (species_count), and each species' own slice is further split between
+// its "fit" and "save" stages.
+void US_Analysis_auto::update_2dsa_progress( const QString& stage, int species_idx,
+                                              int species_count, int step, int total )
+{
+  if ( ! progress_msg_2dsa )
+    return;
+
+  const int w_load = 10;   // one-shot: this channel's US_DataLoader call
+
+  int     within = 0;
+  QString label;
+
+  if ( stage == "load" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = qRound( w_load * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Loading channel data..." )
+             : tr( "Channel data loaded" );
+    }
+  else if ( stage == "fit"  ||  stage == "save" )
+    {
+      const int    nspec        = qMax( species_count, 1 );
+      const double per_species  = (double)( 100 - w_load ) / (double)nspec;
+      const double base_species = w_load + species_idx * per_species;
+      const double frac         = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+
+      if ( stage == "fit" )
+        {
+          within = qRound( base_species + 0.7 * per_species * frac );
+          label  = tr( "Species %1 of %2: running 2DSA-IT fit (%3%)" )
+                    .arg( species_idx + 1 ).arg( nspec )
+                    .arg( total > 0 ? qRound( 100.0 * step / total ) : 0 );
+        }
+      else   // "save"
+        {
+          within = qRound( base_species + 0.7 * per_species
+                            + 0.3 * per_species * frac );
+          label  = ( frac < 1.0 )
+                 ? tr( "Species %1 of %2: saving results..." )
+                    .arg( species_idx + 1 ).arg( nspec )
+                 : tr( "Species %1 of %2: results saved" )
+                    .arg( species_idx + 1 ).arg( nspec );
+        }
+    }
+  else
+    {
+      within = 0;
+      label  = stage;
+    }
+
+  QString text = tr( "Channel %1 of %2 (%3): %4" )
+                 .arg( twodsa_chan_idx + 1 ).arg( twodsa_nchannels )
+                 .arg( twodsa_chan_name ).arg( label );
+
+  progress_msg_2dsa->setLabelText( text );
+  progress_msg_2dsa->setValue( qBound( 0, within, 100 ) );
+
+  qApp->processEvents();
+}
+
 //Get SSF dir
 void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
 {
@@ -2026,6 +2129,24 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
   twodsa_chan_idx  = -1;   // start_next_2dsa_channel() scans from idx+1
   twodsa_nchannels = channels_2dsa_approved.size();
 
+  // ALEXEY: Centralized progress dialog for the 2DSA-IT post-processing
+  // pipeline, mirroring progress_msg_mwlsim above exactly (same
+  // construction/window-flag rationale). US_2dsa's fit+save for each
+  // Approved channel needs no human interaction at all (unlike
+  // US_MwlSpeciesFit's Accept/Reject step), so unlike progress_msg_mwlsim
+  // this dialog is never handed off to / hidden for a decision widget --
+  // it is the only visible indication of 2DSA-IT processing, for as long
+  // as this stage runs. See start_2dsa_channel_progress()/
+  // update_2dsa_progress()'s own header comments for how it's driven.
+  progress_msg_2dsa = new QProgressDialog( tr( "Preparing 2DSA-IT analysis..." ),
+                                            QString(), 0, 100, this );
+  progress_msg_2dsa->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint );
+  progress_msg_2dsa->setWindowModality( Qt::WindowModal );
+  progress_msg_2dsa->setWindowTitle( tr( "VELOCITY-MWL: 2DSA-IT Analysis" ) );
+  progress_msg_2dsa->setAutoClose( false );
+  progress_msg_2dsa->setMinimumDuration( 0 );
+  progress_msg_2dsa->setMinimumWidth( 420 );
+
   /**
   if ( channels_2dsa_approved.isEmpty() )
     {
@@ -2057,8 +2178,10 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
   if ( twodsa_chan_idx >= channels_2dsa_approved.size() )
     {
       // All Approved channels processed -- the VEL-MWL run is complete.
-      
-      
+
+      if ( progress_msg_2dsa )
+        progress_msg_2dsa->hide();
+
       /**
       update_autoflow_record_atAnalysis();
       emit analysis_complete_auto( protocol_details_at_analysis );
@@ -2155,12 +2278,26 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
 		  "US_AnalysisControl2D's own default grid settings.";
     }
 
+  // ALEXEY: Start/label progress_msg_2dsa BEFORE constructing sdiag_2dsa --
+  // that constructor calls load() synchronously, so the dialog needs to
+  // already be visible for this channel before any of that runs (see
+  // update_2dsa_progress()'s header comment for the one tick this still
+  // can't catch in time).
+  start_2dsa_channel_progress( twodsa_chan_idx, chan_norm );
+
   sdiag_2dsa = new US_2dsa( protocol_details_at_analysis_2dsa );
   connect( sdiag_2dsa, &US_2dsa::twodsa_complete_s,
 	   this,       &US_Analysis_auto::twodsa_channel_complete );
+  connect( sdiag_2dsa, &US_2dsa::twodsa_progress_s,
+	   this,       &US_Analysis_auto::update_2dsa_progress );
 
-  if ( panel )
-    panel->addWidget( sdiag_2dsa );
+  // ALEXEY: Deliberately NOT added to `panel` (unlike sdiag/US_MwlSpeciesFit,
+  // which needs a human Accept/Reject click and so must be shown). 2DSA-IT
+  // needs no user interaction at all -- progress_msg_2dsa above is the
+  // only UI this stage should surface. `panel` here is a QVBoxLayout on
+  // this widget's own window, so adding sdiag_2dsa to it previously made
+  // US_2dsa appear embedded in the autoflow monitor window itself for the
+  // whole run.
   twodsa_open = true;
 
   // ALEXEY: US_2dsa's current auto constructor (see us_2dsa.cpp) runs
@@ -2211,8 +2348,8 @@ void US_Analysis_auto::cleanup_2dsa_widget( void )
 
   sdiag_2dsa->close();
 
-  if ( panel )
-    panel->removeWidget( sdiag_2dsa );
+  // ALEXEY: no matching panel->removeWidget() -- sdiag_2dsa is no longer
+  // ever added to panel (see start_next_2dsa_channel()).
 
   sdiag_2dsa->deleteLater();
   sdiag_2dsa  = nullptr;

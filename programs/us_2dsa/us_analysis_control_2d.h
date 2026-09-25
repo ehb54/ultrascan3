@@ -85,6 +85,18 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       void set_comp_attr     ( US_Model::SimulationComponent&,
                              US_Solute&, int );
 
+   signals:
+      //! \brief Forwards this dialog's own internal fit-progress counters
+      //! (ncsteps/nctotal -- the same values driving b_progress below) to
+      //! whatever constructed this dialog. Added so US_2dsa's headless
+      //! auto path (US_2dsa::run_2dsa_auto()) can relay real per-
+      //! iteration fit progress up to a centralized progress dialog
+      //! (US_Analysis_auto::progress_msg_2dsa) even though this dialog
+      //! itself is never shown on that path. Emitted from
+      //! update_progress()/reset_steps() alongside their existing
+      //! b_progress updates -- no other behavior change.
+      void fit_progress_s( int step, int total );
+
    public slots:
       void update_progress (  int  );
       void completed_process( int  );
