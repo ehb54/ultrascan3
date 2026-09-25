@@ -276,7 +276,10 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
       save();
 
       if ( us_gmp_auto_mode )
+      {
+         record_2dsa_model_in_velmwl();
          emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 1, 1 );
+      }
 
       // ALEXEY: A VEL-MWL-Approved channel can resolve to more than one
       // deconvolved species (S/1, S/2, ... -- see US_MwlSpeciesFit's
@@ -1442,6 +1445,38 @@ void US_2dsa::run_2dsa_auto( void )
       return;
    }
 
+   // ALEXEY: Skip this species entirely if a model is already recorded
+   // for it in autoflowAnalysisVelMwl -- i.e. a prior, since-abandoned
+   // run of this same channel already fit+saved+recorded it (see
+   // update_autoflowAnalysisVelMwl_channel_2dsaModel()'s "first model
+   // wins" rule), and this is a later re-run picking the channel back
+   // up. Re-fitting it would waste real time (a full 2DSA-IT grid fit)
+   // for a model record_2dsa_model_in_velmwl() would then just refuse
+   // to link anyway, since the DB write would lose that race. Advancing
+   // past a skipped species uses the exact same "next species" pattern
+   // as a just-completed one below (deferred via QTimer::singleShot()
+   // for the same reentrancy reason -- see that comment).
+   if ( us_gmp_auto_mode  &&  species_model_already_recorded( auto_triple_idx ) )
+   {
+      qDebug() << "[US_2dsa] run_2dsa_auto(): channel" << chann_to_process_2dsa
+               << "species index" << auto_triple_idx << "already has a model"
+               << "on record -- skipping its fit and moving to the next"
+               << "species.";
+
+      ++auto_triple_idx;
+
+      if ( auto_triple_idx < dataList.size() )
+      {
+         QTimer::singleShot( 0, this, &US_2dsa::run_2dsa_auto );
+      }
+      else
+      {
+         bool success = true;
+         emit twodsa_complete_s( chann_to_process_2dsa, success );
+      }
+      return;
+   }
+
    qDebug() << "[US_2dsa] run_2dsa_auto(): fitting edata cell/channel/wvln"
             << edata->cell << edata->channel << edata->wavelength;
 
@@ -1516,6 +1551,157 @@ void US_2dsa::run_2dsa_auto( void )
 void US_2dsa::relay_fit_progress( int step, int total )
 {
    emit twodsa_progress_s( "fit", auto_triple_idx, dataList.size(), step, total );
+}
+
+// ALEXEY: See header comment. Read-side counterpart of
+// record_2dsa_model_in_velmwl() below -- looks up whether dataList/
+// lw_triples row `drow` already has a model recorded in
+// autoflowAnalysisVelMwl.channelDecisions[ chann_to_process_2dsa ]
+// .models[ "S"+dataList[drow].wavelength ], via get_
+// autoflowAnalysisVelMwl_channel_2dsaModel(). Any failure to determine
+// this one way or the other (missing protocol_details fields, DB
+// connection failure) is treated as "not recorded" -- i.e. the species
+// gets fit -- rather than silently skipping a species this call
+// couldn't actually confirm is already done; a spurious re-fit is
+// wasted time, a spurious skip is a missing model.
+bool US_2dsa::species_model_already_recorded( int drow )
+{
+   QString autoflowID_s = protocol_details.value( "autoflowID" );
+
+   if ( autoflowID_s.isEmpty()  ||  chann_to_process_2dsa.isEmpty()
+        ||  drow < 0  ||  drow >= dataList.size() )
+      return false;
+
+   QString species = "S" + dataList[ drow ].wavelength;
+
+   US_Passwd pw;
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      qWarning() << "[US_2dsa] species_model_already_recorded(): DB"
+                 << "connection failed -- assuming channel"
+                 << chann_to_process_2dsa << "species" << species
+                 << "has NOT been fit yet (will fit it now).";
+      delete dbP;
+      return false;
+   }
+
+   QStringList qry;
+   qry << "get_autoflowAnalysisVelMwl_channel_2dsaModel"
+       << autoflowID_s
+       << chann_to_process_2dsa
+       << species;
+
+   dbP->query( qry );
+
+   bool recorded = false;
+
+   if ( dbP->lastErrno() == US_DB2::OK  &&  dbP->next() )
+   {
+      QString recorded_modelGUID = dbP->value( 0 ).toString();
+      recorded = ! recorded_modelGUID.isEmpty();
+
+      if ( recorded )
+         qDebug() << "[US_2dsa] species_model_already_recorded(): channel"
+                  << chann_to_process_2dsa << "species" << species
+                  << "already has model" << recorded_modelGUID
+                  << "on record.";
+   }
+   // else: US_DB2::NO_AUTOFLOW_RECORD (nothing recorded yet) or any
+   // other error -- either way, nothing this call could confirm as
+   // recorded, so `recorded` stays false and the species gets fit.
+
+   delete dbP;
+
+   return recorded;
+}
+
+// ALEXEY: See header comment. Writes this species' modelGUID into
+// autoflowAnalysisVelMwl.channelDecisions[ chann_to_process_2dsa ]
+// .models[ "S"+edata->wavelength ], via a small dedicated DB connection
+// (save() may have already used/closed its own via disk_controls->db(),
+// and this write happens after save() has fully returned).
+void US_2dsa::record_2dsa_model_in_velmwl( void )
+{
+   if ( ! us_gmp_auto_mode )
+      return;
+
+   QString autoflowID_s = protocol_details.value( "autoflowID" );
+   QString species       = "S" + edata->wavelength;
+
+   if ( autoflowID_s.isEmpty()  ||  chann_to_process_2dsa.isEmpty()
+        ||  model.modelGUID.isEmpty() )
+   {
+      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): missing"
+                 << "autoflowID" << autoflowID_s << "/ channel"
+                 << chann_to_process_2dsa << "/ modelGUID" << model.modelGUID
+                 << "-- not recording species" << species
+                 << "'s model in autoflowAnalysisVelMwl.";
+      return;
+   }
+
+   US_Passwd pw;
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
+
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB connection"
+                 << "failed -- channel" << chann_to_process_2dsa << "species"
+                 << species << "'s model" << model.modelGUID << "not"
+                 << "recorded in autoflowAnalysisVelMwl (its report/model"
+                 << "files on disk/DB are unaffected).";
+      delete dbP;
+      return;
+   }
+
+   QStringList qry;
+   qry << "update_autoflowAnalysisVelMwl_channel_2dsaModel"
+       << autoflowID_s
+       << chann_to_process_2dsa
+       << species
+       << model.modelGUID;
+
+   // ALEXEY: "First model wins" (same rule/reason as US_MwlSpeciesFit::
+   // record_velmwl_channel_decision() -- see this procedure's own header
+   // comment): the DB row for this exact channel+species is only ever
+   // written once, so this call may lose the race to an earlier
+   // session -- or to an earlier, since-abandoned run of this same
+   // channel -- rather than to a genuine failure. The procedure returns
+   // a second result set reporting what actually ended up recorded
+   // (newly_recorded, recorded_modelGUID), the same shape as
+   // update_autoflowAnalysisVelMwl_channel_decision() -- so
+   // query()+next() is required here, not statusQuery().
+   dbP->query( qry );
+
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB write"
+                 << "failed for channel" << chann_to_process_2dsa
+                 << "species" << species << "model" << model.modelGUID
+                 << ":" << dbP->lastError();
+   }
+   else if ( dbP->next() )
+   {
+      bool    newly_recorded    = dbP->value( 0 ).toBool();
+      QString recorded_modelGUID = dbP->value( 1 ).toString();
+
+      if ( newly_recorded )
+         qDebug() << "[US_2dsa] record_2dsa_model_in_velmwl(): recorded"
+                  << "channel" << chann_to_process_2dsa << "species"
+                  << species << "model" << model.modelGUID
+                  << "in autoflowAnalysisVelMwl.";
+      else
+         qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): channel"
+                    << chann_to_process_2dsa << "species" << species
+                    << "already had a model on record"
+                    << "(" << recorded_modelGUID << ") -- this species'"
+                    << "freshly fit model" << model.modelGUID << "was"
+                    << "NOT recorded over it (its report/model files on"
+                    << "disk/DB are unaffected, just not linked here).";
+   }
+
+   delete dbP;
 }
 
 // ALEXEY: Override of US_AnalysisBase2::update() -- see header comment.

@@ -246,6 +246,46 @@ class US_2dsa : public US_AnalysisBase2
         //! completion-signal plumbing is needed on the US_2dsa side.
         void run_2dsa_auto( void );
 
+        //! \brief Records this species' just-saved model into the run's
+        //! autoflowAnalysisVelMwl row, alongside its Accept/Reject
+        //! decision -- via update_autoflowAnalysisVelMwl_channel_
+        //! 2dsaModel(protocol_details["autoflowID"], chann_to_process_2dsa,
+        //! "S"+edata->wavelength, model.modelGUID). Called from
+        //! analysis_done()'s savedata branch, right after save() returns
+        //! (so model.modelGUID reflects what was actually just written),
+        //! only in us_gmp_auto_mode -- interactively-constructed instances
+        //! have no autoflowID to record against.
+        //!
+        //! FIRST MODEL WINS for a given channel+species: that procedure
+        //! never overwrites an already-recorded modelGUID for this exact
+        //! channel+species key, whether it lost the race to another
+        //! session fitting the same channel concurrently, or to an
+        //! earlier, since-abandoned run of this same channel (e.g. one
+        //! that fit S1 but crashed before reaching S2 -- S1's original
+        //! model stands even though this later run still re-fits and
+        //! re-saves S1 on disk/DB). Losing that race is logged as a
+        //! qWarning(), not an error -- it does not mean this call, or
+        //! this species' save(), failed.
+        //!
+        //! A failure here (missing protocol_details fields, DB
+        //! connection failure, or the DB write itself failing) is
+        //! likewise logged and swallowed rather than surfaced or
+        //! retried: the species' model/report files are already safely
+        //! written to disk/DB by save() by this point -- this is
+        //! supplementary bookkeeping for the Report stage, not part of
+        //! what makes the fit itself succeed or fail.
+        void record_2dsa_model_in_velmwl( void );
+
+        //! \brief Read-side counterpart of record_2dsa_model_in_velmwl()
+        //! above -- checks whether dataList/lw_triples row `drow`
+        //! already has a model recorded in autoflowAnalysisVelMwl (via
+        //! get_autoflowAnalysisVelMwl_channel_2dsaModel()), so
+        //! run_2dsa_auto() can skip re-fitting a species a prior,
+        //! since-abandoned run of this channel already finished. Returns
+        //! false (fit it) whenever this can't be confirmed one way or
+        //! the other -- see this function's own .cpp comment.
+        bool species_model_already_recorded( int drow );
+
         //! \brief Override of US_AnalysisBase2::update() -- called by
         //! new_triple() (itself triggered by lw_triples->setCurrentRow()
         //! in run_2dsa_auto()) to refresh runID/solution/buffer state for
