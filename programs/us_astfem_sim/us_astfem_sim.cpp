@@ -133,9 +133,9 @@ int main( int argc, char* argv[] )
    if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
       return cli_exit_code;
 
-   // Parse command-specific options.
+   // parse command-specific options
 
-   // Parse the database setting.
+   // parse the database setting
    int default_data_location = US_Settings::default_data_location();
    if ( parser.isSet( ignore_db_option ) )
    {
@@ -161,7 +161,7 @@ int main( int argc, char* argv[] )
    {
       args["rotor"] = parser.value( rotor_option );
    }
-   // Parse centerpiece and channel indices.
+   // parse centerpiece and channel indices
    if ( parser.isSet( centerpiece_option ) )
    {
       args["centerpiece"] = parser.value( centerpiece_option );
@@ -1746,7 +1746,6 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
          return false;
       }
 
-      // The edit file.
       QString fname = edit_runid + "." + now + "." + runType + "." + cell + "."
                       + channel + "." + wl + ".xml";
 

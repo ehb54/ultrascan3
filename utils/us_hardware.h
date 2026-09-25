@@ -67,8 +67,7 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
 
       //! \brief Parse a centerpiece channel from a letter or an index.
       //! A channel shares its position with its reference: A/B are channel 0,
-      //! C/D channel 1, and so on. Rejects anything else rather than letting
-      //! QString::toInt() silently yield channel 0.
+      //! C/D channel 1, and so on. Rejects anything else.
       //! \param value   Text naming the channel.
       //! \param channel Set to the parsed channel index on success.
       //! \param error   Set to an error message on failure.

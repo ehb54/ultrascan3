@@ -487,8 +487,6 @@ DbgLv(1) << "assign_rotor: rotor" << rotor.name
  << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
 
-// Scale concentrations by extinction, normalized to the maximum extinction.
-// Leave concentrations unchanged when the entire model set has zero extinction.
 void US_MwlSpeciesSim::apply_extinction_scaling( void )
 {
    double max_extinc  = 0.0;
@@ -592,7 +590,6 @@ DbgLv(1) << "SLOT: save_sims";
    save_sims_to( US_Settings::importDir() + "/" + orunid );
 }
 
-// Run the simulation headlessly using command-line options.
 int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
 {
    bool gui_needed      = !flags.contains( "close" );
@@ -787,8 +784,6 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    return 0;
 }
 
-// Load models from explicit file paths and aggregate them as select_models()
-// does, without displaying the selection dialog.
 bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 {
    // Use models[].description; mdescs contains GUI loader metadata.
@@ -869,8 +864,6 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
    return true;
 }
 
-// Save simulations to the requested directory instead of
-// US_Settings::importDir().
 bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
 {
    QString impdir     = save_dir + "/";
@@ -1014,8 +1007,6 @@ QString US_MwlSpeciesSim::model_channel( const QString& description )
    return description.section( ".", -3, -3 ).mid( 1, 1 );
 }
 
-// On disk, each edit filename carries the plain wavelength of its dataset.
-// Band and "@" forms are lookup keys assembled by consumers in memory.
 QString US_MwlSpeciesSim::edit_wavelength_field( const QStringList& descriptions,
                                                  int index )
 {
@@ -1032,8 +1023,7 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
    QString now        = edit_stamp.isEmpty()
                         ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" )
                         : edit_stamp;
-   // Reuse the geometry init_rawdata() built the radial grid from; deriving
-   // the stretch again here puts the edit radii outside the data range.
+   // Use the geometry init_rawdata() built the grid from.
    double  meniscus   = curr_meniscus;
    double  bottom     = curr_bottom;
 
