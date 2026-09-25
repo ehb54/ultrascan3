@@ -1598,7 +1598,7 @@ void US_Analysis_auto::update_2dsa_progress( const QString& stage, int species_i
                     .arg( species_idx + 1 ).arg( nspec )
                     .arg( total > 0 ? qRound( 100.0 * step / total ) : 0 );
         }
-      else   // "save"
+      else if ( stage == "save" )
         {
           within = qRound( base_species + 0.7 * per_species
                             + 0.3 * per_species * frac );
@@ -1606,6 +1606,14 @@ void US_Analysis_auto::update_2dsa_progress( const QString& stage, int species_i
                  ? tr( "Species %1 of %2: saving results..." )
                     .arg( species_idx + 1 ).arg( nspec )
                  : tr( "Species %1 of %2: results saved" )
+                    .arg( species_idx + 1 ).arg( nspec );
+        }
+      else   // "skip" -- already had a model on record; jump straight
+             // to this species' slice being fully done, no fit/save
+             // fractions to show progress through.
+        {
+          within = qRound( base_species + per_species );
+          label  = tr( "Species %1 of %2: already fit -- skipping" )
                     .arg( species_idx + 1 ).arg( nspec );
         }
     }

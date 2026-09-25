@@ -1463,6 +1463,8 @@ void US_2dsa::run_2dsa_auto( void )
                << "on record -- skipping its fit and moving to the next"
                << "species.";
 
+      emit twodsa_progress_s( "skip", auto_triple_idx, dataList.size(), 1, 1 );
+
       ++auto_triple_idx;
 
       if ( auto_triple_idx < dataList.size() )

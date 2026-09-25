@@ -937,7 +937,7 @@ class US_Analysis_auto : public US_Widgets
          *        they are never missed). Not worth restructuring
          *        US_2dsa's constructor over; see that file if this ever
          *        needs to be gapless.
-         * @param stage          "load", "fit", or "save" -- see
+         * @param stage          "load", "fit", "save", or "skip" -- see
          *        US_2dsa::twodsa_progress_s()'s own header comment.
          * @param species_idx    0-based species index ("fit"/"save" only).
          * @param species_count  Number of species this channel resolved

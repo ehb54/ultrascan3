@@ -391,8 +391,11 @@ class US_2dsa : public US_AnalysisBase2
         //!        call, once per channel, species_idx/species_count not
         //!        yet meaningful -- pass -1/-1), "fit" (relayed from
         //!        analcd's fit_progress_s -- see relay_fit_progress()),
-        //!        or "save" (bracketing US_2dsa::save() -- step/total
-        //!        0/1 then 1/1).
+        //!        "save" (bracketing US_2dsa::save() -- step/total 0/1
+        //!        then 1/1), or "skip" (a species already had a model
+        //!        recorded from a prior, incomplete run of this channel
+        //!        -- see species_model_already_recorded() -- so its fit
+        //!        never ran at all; emitted once, step/total 1/1).
         //! \param species_idx    0-based index into dataList/lw_triples
         //!        of the species ("fit"/"save" only; -1 for "load").
         //! \param species_count  dataList.size() ("fit"/"save" only; -1
