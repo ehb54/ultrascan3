@@ -14,6 +14,8 @@ RUN apt-get update -qq && \
         libgl2ps-dev \
         libgtest-dev \
         libgmock-dev \
+        lcov \
+        gcovr \
         git && \
     rm -rf /var/lib/apt/lists/*
 

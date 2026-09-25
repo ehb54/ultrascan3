@@ -21,4 +21,25 @@ Consumed by the root `CMakeLists.txt` and by `build.sh`/`build.ps1`.
 |-----------|---------|
 | `packaging/` | Platform-specific deploy and package CMake modules (macOS PKG, Linux tarball, Windows NSIS). See [`packaging/README.md`](packaging/README.md). |
 | `triplets/` | vcpkg overlay triplets for all supported platform/arch combinations. |
+| `development-triplets/` | Windows Debug overrides that build both dependency configurations. |
 
+## Windows linking
+
+Keep `CMAKE_JOB_POOL_LINK=us3_link` and `CMAKE_JOB_POOLS=us3_link=1` in
+`windows-base`. Executables share `bin/`, and vcpkg copies their DLLs after
+each link. Parallel links can race on these files and fail with access errors.
+Serializing links keeps build-tree executables runnable locally and in CI.
+
+## Debug builds
+
+Select a Debug preset in CMake or your IDE; no wrapper is required.
+Alternatively, use `scripts/build.sh --debug --qt6 APP` on macOS/Linux or
+`scripts/build.bat APP --configuration Debug --qt6` on Windows.
+
+Windows Debug presets use `development-triplets/` to build Debug and Release
+dependencies, with the matching CRT and Qt plugins. Release presets keep
+release-only dependencies. The first Debug build may need to compile Qt.
+
+macOS/Linux Debug presets currently reuse release dependencies to save build
+time and disk space. UltraScan itself has debug symbols and no optimization;
+stepping through dependency internals requires separate Debug dependencies.

@@ -24,6 +24,27 @@ message(STATUS "UltraScan3 version: ${US3_VERSION_STRING}")
 message(STATUS "UltraScan3 description: ${US3_DESCRIPTION}")
 
 # =============================================================================
+# VERSION FILE CONSISTENCY CHECK
+# =============================================================================
+# The root VERSION file is a plain-text convenience copy of the version for
+# tooling/humans that don't want to parse us_defines.h. It is not generated
+# automatically -- it must be bumped by hand alongside US_Version -- but the
+# build fails fast if the two are ever allowed to drift apart.
+set(_us3_version_file "${CMAKE_SOURCE_DIR}/VERSION")
+if(EXISTS "${_us3_version_file}")
+    file(READ "${_us3_version_file}" _us3_version_file_content)
+    string(STRIP "${_us3_version_file_content}" _us3_version_file_content)
+    if(NOT _us3_version_file_content STREQUAL US3_VERSION_STRING)
+        message(FATAL_ERROR
+            "VERSION file (\"${_us3_version_file_content}\") does not match "
+            "US_Version in utils/us_defines.h (\"${US3_VERSION_STRING}\"). "
+            "Update VERSION to match before configuring.")
+    endif()
+else()
+    message(FATAL_ERROR "Root VERSION file not found at ${_us3_version_file}")
+endif()
+
+# =============================================================================
 # VERSION HEADER GENERATION
 # =============================================================================
 # Generate us/us_revision.h only when Git state changes (not on every build)
@@ -210,6 +231,36 @@ endif()
 # Configuration-based definitions
 if(US3_NO_DB)
     add_compile_definitions(NO_DB)
+endif()
+
+# =============================================================================
+# COVERAGE INSTRUMENTATION
+# =============================================================================
+# Instrument libraries and tests consistently; filter reports to production code.
+# Coverage measures execution only and enforces no threshold.
+option(US3_COVERAGE "Instrument the build for gcov line and branch coverage" OFF)
+
+if(US3_COVERAGE)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR
+                "US3_COVERAGE requires GCC or Clang; got ${CMAKE_CXX_COMPILER_ID}")
+    endif()
+
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING
+                "US3_COVERAGE is intended for a Debug build; "
+                "optimized builds attribute lines unreliably")
+    endif()
+
+    # Disable optimization for accurate line attribution.
+    # Record absolute source paths on GCC for reports run from any directory.
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(-fprofile-abs-path)
+    endif()
+
+    message(STATUS "Coverage instrumentation enabled (US3_COVERAGE=ON)")
 endif()
 
 # Platform-specific definitions
@@ -781,7 +832,10 @@ if(NOT US3_NO_DB)
 endif()
 
 # Platform-specific libraries
-if(UNIX AND NOT APPLE)
+# GLU/X11 are display libraries only needed by the GUI (gui/, programs/us_*).
+# HPC is headless (US3_PROFILE=HPC builds only us_mpi_analysis, no GUI), so
+# don't require them there -- a bare HPC-only host may not have them installed.
+if(UNIX AND NOT APPLE AND NOT US3_PROFILE STREQUAL "HPC")
     find_library(GLU_LIBRARY GLU REQUIRED)
     find_package(X11 REQUIRED)
 elseif(WIN32)
@@ -897,6 +951,12 @@ else ()
     message(STATUS "qhelpgenerator not found - Qt help files will not be built")
 endif ()
 
+if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
+    find_program(CMAKE_OTOOL NAMES otool REQUIRED)
+    find_program(CMAKE_INSTALL_NAME_TOOL NAMES install_name_tool REQUIRED)
+    find_program(US3_CODESIGN_EXECUTABLE NAMES codesign REQUIRED)
+endif()
+
 if(BUILD_DOCUMENTATION AND NOT US3_PROFILE STREQUAL "HPC")
     add_subdirectory(doc/manual)
 endif()
@@ -914,6 +974,16 @@ endif()
 if(BUILD_TESTING)
     add_compile_definitions(US3_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     add_subdirectory(test)
+endif()
+
+# IDE launches need the plugins from the same Qt configuration as the linked
+# libraries. Derive this from the imported plugin target rather than assuming
+# that every installation has debug/ or uses the same Qt5/Qt6 directory layout.
+if(WIN32 AND TARGET ${QT_VERSION_BASE}::QWindowsIntegrationPlugin)
+    file(GENERATE
+        OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<BOOL:${CMAKE_CONFIGURATION_TYPES}>:$<CONFIG>/>qt.conf"
+        CONTENT "[Paths]\nPlugins = $<TARGET_FILE_DIR:${QT_VERSION_BASE}::QWindowsIntegrationPlugin>/..\n"
+    )
 endif()
 
 # =============================================================================
@@ -975,6 +1045,12 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
         set(_VCPKG_TOOLS_STA5 "")
     endif()
 
+    # Rediscover the installed tool when the cache points at our previous copy.
+    # Otherwise reconfigure compares the wrapper against itself and misses Qt updates.
+    if(MACDEPLOYQT_EXECUTABLE STREQUAL "${CMAKE_BINARY_DIR}/tools/macdeployqt-dyn/macdeployqt")
+        unset(MACDEPLOYQT_EXECUTABLE CACHE)
+        unset(MACDEPLOYQT_EXECUTABLE)
+    endif()
     find_program(MACDEPLOYQT_EXECUTABLE macdeployqt
         HINTS
             # vcpkg dynamic triplet (unlikely to have it, but try first)
@@ -1063,6 +1139,23 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
         # HostPrefix is intentionally omitted so no search redirects to arm64-osx/.
         get_filename_component(_DYN_TRIPLET_ROOT
             "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}" ABSOLUTE)
+        # qt.conf controls Qt's deployment searches, but dyld must load Qt before
+        # the tool can read it. Moving the binary breaks its loader-relative RPATH.
+        # Repair only our build-tree copy, including copies from earlier configures.
+        execute_process(COMMAND "${CMAKE_OTOOL}" -l "${_MACDEPLOYQT_DYN_PATH}"
+            OUTPUT_VARIABLE _macdeployqt_load_commands
+            COMMAND_ERROR_IS_FATAL ANY)
+        string(FIND "${_macdeployqt_load_commands}"
+            "path ${_DYN_TRIPLET_ROOT}/lib (offset " _macdeployqt_rpath_pos)
+        if(_macdeployqt_rpath_pos EQUAL -1)
+            execute_process(COMMAND "${CMAKE_INSTALL_NAME_TOOL}"
+                -add_rpath "${_DYN_TRIPLET_ROOT}/lib" "${_MACDEPLOYQT_DYN_PATH}"
+                COMMAND_ERROR_IS_FATAL ANY)
+            # Modifying Mach-O load commands invalidates its signature on ARM64.
+            execute_process(COMMAND "${US3_CODESIGN_EXECUTABLE}" --force --sign -
+                "${_MACDEPLOYQT_DYN_PATH}"
+                COMMAND_ERROR_IS_FATAL ANY)
+        endif()
         file(WRITE "${_DYN_QT_CONF}"
             "# Auto-generated by UltraScan3 CMakeLists.txt (Option A)\n"
             "# Points macdeployqt at the dynamic triplet: ${_DYN_TRIPLET_ROOT}\n"
@@ -1195,6 +1288,7 @@ if(APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DVCPKG_LIB_DIR=${_VCPKG_LIB_DIR}
                 -DVCPKG_PLUGIN_DIR=${_VCPKG_PLUGIN_DIR}
                 -DVCPKG_PLUGIN_DIR_STA=${_VCPKG_PLUGIN_DIR_STA}
@@ -1457,6 +1551,7 @@ if(WIN32 AND US3_BUILD_PROGRAMS)
                 -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DVCPKG_PLUGIN_DIR=${_WIN_VCPKG_PLUGIN_DIR}
                 -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/windows/WinDeploy.cmake
             DEPENDS ${_deploy_windows_deps}
@@ -1727,6 +1822,7 @@ if(UNIX AND NOT APPLE AND US3_BUILD_PROGRAMS AND NOT US3_PROFILE STREQUAL "HPC")
                 -DSOMO_BIN_DIR=${CMAKE_SOURCE_DIR}/bin
                 -DSOMO_LIB_DIR=${CMAKE_SOURCE_DIR}/lib
                 -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+                -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
                 -DQCH_DIR=${CMAKE_BINARY_DIR}/bin
                 -DASSISTANT_EXE=${_LNX_ASSISTANT_EXE}
                 -DVCPKG_LIB_DIR=${_LNX_VCPKG_LIB_DIR}
@@ -1848,6 +1944,7 @@ if(UNIX AND NOT APPLE AND US3_PROFILE STREQUAL "HPC")
             -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
             -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+            -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
             -DVCPKG_LIB_DIR=${_HPC_VCPKG_LIB_DIR}
             -DUS3_VERSION_STRING=${US3_VERSION_STRING}
             -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/linux/LinuxHpcDeploy.cmake
@@ -1922,6 +2019,7 @@ if(APPLE AND US3_PROFILE STREQUAL "HPC")
             -DBIN_DIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             -DLIB_DIR=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
             -DLICENSE_FILE=${CMAKE_SOURCE_DIR}/LICENSE.txt
+            -DVERSION_FILE=${CMAKE_SOURCE_DIR}/VERSION
             -DVCPKG_LIB_DIR=${_MAC_HPC_VCPKG_LIB_DIR}
             -DUS3_VERSION_STRING=${US3_VERSION_STRING}
             -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacHpcDeploy.cmake

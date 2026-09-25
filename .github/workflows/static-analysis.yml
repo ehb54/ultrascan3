@@ -440,10 +440,11 @@ jobs:
           cat pr-comment.md || echo "No PR comment generated"
 
       - name: Upload Analysis Reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: critical-analysis-reports
+          overwrite: true
           path: |
             clang-tidy-results.json
             clang-tidy-summary.txt
@@ -454,7 +455,7 @@ jobs:
             compile_commands.json
 
       - name: Comment PR with Results
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         continue-on-error: true
         with:

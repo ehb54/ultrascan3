@@ -30,7 +30,7 @@ The UltraScan is multi-platform and can be installed on Windows, Macintosh, and 
 
     * Microsoft Windows: Download the installation file and execute it on your computer. When prompted for an installation directory, please choose C:\Program Files\UltraScan, this is the expected path. If your international version of Windows has a different path, please create this subdirectory first before installation. On Windows 7, also install in C:\Program Files\UltraScan, not in C:\Program Files (x86)\UltraScan. You may have to run the program as Administrator.
 
-    * Mac OS-X: Download and Double-click the installation package. If you have not previously installed XQuartz, you will be requested to do so. XQuartz can be downloaded from https://www.xquartz.org.
+    * Mac OS-X: Download and Double-click the installation package.
 
     * Linux, Unix/X11: To install the tar.xz package for any distribution, please follow these steps:
 
@@ -47,4 +47,3 @@ After downloading the tar.xz package, you need to uncompress and extract it in a
     You can run these to start the UltraScan GUI and the US-SOMO GUI respectively. 
 
 :doc:`Register the software <register>`. UltraScan development is funded by NIH and your registration helps us document usage of the software to NIH. Only operating system, and the number of active users for any given year are shared with the NIH. Registrations are free, and valid for one year. After that they have to be renewed (also free).
-

@@ -773,6 +773,37 @@ else()
 endif()
 
 # =========================================================================
+# 11c) Fetch and stage rasmol (used by SoMo's PDB/molecule viewer)
+#
+#      Uses the statically-linked, X11-less SDL3 build of rasmol from
+#      https://github.com/ehb54/rasmol (somo-modernize branch). This has no
+#      XQuartz/X11 runtime dependency, unlike the legacy X11 rasmol that
+#      previously required XQuartz on macOS (see pkg/macos/preinstall).
+#      Best-effort: a network failure here does not fail the packaging build,
+#      it just leaves the SoMo molecule-viewer feature unavailable.
+# =========================================================================
+set(_rasmol_base_url "https://raw.githubusercontent.com/ehb54/rasmol/somo-modernize/binaries/macos-universal")
+message(STATUS "Fetching rasmol (macos-universal) → bin/")
+file(DOWNLOAD "${_rasmol_base_url}/rasmol" "${S_BIN}/rasmol"
+     STATUS _rasmol_dl_status)
+list(GET _rasmol_dl_status 0 _rasmol_dl_code)
+if(_rasmol_dl_code EQUAL 0)
+    file(DOWNLOAD "${_rasmol_base_url}/rasmol.hlp" "${S_BIN}/rasmol.hlp" STATUS _rasmol_hlp_status)
+    file(CHMOD "${S_BIN}/rasmol"
+         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                      GROUP_READ GROUP_EXECUTE
+                      WORLD_READ WORLD_EXECUTE)
+    list(GET _rasmol_hlp_status 0 _rasmol_hlp_code)
+    if(NOT _rasmol_hlp_code EQUAL 0)
+        message(WARNING "Failed to download rasmol.hlp — rasmol help will be unavailable")
+    endif()
+else()
+    list(GET _rasmol_dl_status 1 _rasmol_dl_msg)
+    message(WARNING "Failed to download rasmol (${_rasmol_dl_msg}) — SoMo molecule viewer will be unavailable")
+    file(REMOVE "${S_BIN}/rasmol")
+endif()
+
+# =========================================================================
 # 12) Copy license.txt
 # =========================================================================
 if(LICENSE_FILE AND EXISTS "${LICENSE_FILE}")
@@ -783,6 +814,11 @@ if(LICENSE_FILE AND EXISTS "${LICENSE_FILE}")
     if(NOT "${lic_name}" STREQUAL "license.txt")
         file(RENAME "${STAGE_DIR}/${lic_name}" "${STAGE_DIR}/license.txt")
     endif()
+endif()
+
+if(VERSION_FILE AND EXISTS "${VERSION_FILE}")
+    message(STATUS "Copying VERSION")
+    file(COPY "${VERSION_FILE}" DESTINATION "${STAGE_DIR}")
 endif()
 
 # =========================================================================

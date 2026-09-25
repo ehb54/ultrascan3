@@ -1,17 +1,6 @@
 name: UltraScan3 Release
 
-# ============================================================================
-# Triggered by a v* tag push (permanent versioned release).
-# Calls ultrascan-reusable-build.yml (from ehb54/uslims_version_workflows)
-# directly for each platform/profile in parallel — does NOT invoke the local
-# build-<platform>.yml reusable workflows. Once all platform builds succeed,
-# publish-release downloads all artifacts, renames to stable filenames, and
-# creates a permanent versioned GitHub Release.
-#
-# Release builds are cache-consumer only: require_exact_cache_hit=true,
-# save_cache=false. Caches must be pre-warmed by the nightly build before
-# a release tag is pushed.
-# ============================================================================
+# Builds and publishes the versioned release for a v* tag.
 
 run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
 
@@ -23,110 +12,60 @@ on:
 permissions:
   contents: write
   actions: write
+  packages: read
 
 jobs:
 
-  # --- Group 1 (parallel) ---------------------------------------------------
+  validate-version:
+    name: "Validate release tag and VERSION"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
 
-  ubuntu-app:
-    name: "Ubuntu 24.04 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      qt_variant:              qt6
-      profile:                 APP
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+      - name: Require tag to match VERSION
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '\r\n' < VERSION)
+          expected_tag="v${version}"
 
-  ubuntu-hpc:
-    name: "Ubuntu 24.04 HPC"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      qt_variant:              qt6
-      profile:                 HPC
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}-HPC', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "::error::Release tag '$GITHUB_REF_NAME' does not match VERSION '$version' (expected '$expected_tag')."
+            exit 1
+          fi
 
-  macos-arm:
-    name: "macOS ARM APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  macos-15
-      qt_variant:              qt6
-      profile:                 APP
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}-arm', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+          echo "Validated release $GITHUB_REF_NAME against VERSION $version."
 
-  oraclelinux8-app:
-    name: "Oracle Linux 8 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      cache_os_label:          oraclelinux8
-      qt_variant:              qt6
-      profile:                 APP
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+  # PLATFORM BUILDS
+  # Build all targets against buildsys/toolchain.lock.json.
 
-  oraclelinux8-hpc:
-    name: "Oracle Linux 8 HPC"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
+  build:
+    name: "${{ matrix.label }}"
+    needs: validate-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: ubuntu2404-x64,   profile: APP, label: "Ubuntu 24.04 APP",   platform: Ubuntu-24.04-x86_64 }
+          - { target: ubuntu2404-x64,   profile: HPC, label: "Ubuntu 24.04 HPC",   platform: HPC-Ubuntu-24.04-x86_64 }
+          - { target: oraclelinux8-x64, profile: APP, label: "Oracle Linux 8 APP", platform: RHEL-8-x86_64 }
+          - { target: oraclelinux8-x64, profile: HPC, label: "Oracle Linux 8 HPC", platform: HPC-RHEL-8-x86_64 }
+          - { target: macos-arm64,      profile: APP, label: "macOS arm64 APP",    platform: macOS-arm64 }
+          - { target: macos-x64,        profile: APP, label: "macOS x86_64 APP",   platform: macOS-x86_64 }
+          - { target: windows-x64,      profile: APP, label: "Windows x86_64 APP", platform: Windows-x86_64 }
+    uses: ./.github/workflows/app-build.yml
     with:
-      ref:                     ${{ github.ref }}
-      runner:                  ubuntu-24.04
-      cache_os_label:          oraclelinux8
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
       qt_variant:              qt6
-      profile:                 HPC
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}-HPC', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
-
-  macos-intel:
-    name: "macOS Intel APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
       ref:                     ${{ github.ref }}
-      runner:                  macos-15-intel
-      qt_variant:              qt6
-      profile:                 APP
       clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
+      artifact_name:           ${{ format('release-{0}-{1}', github.ref_name, matrix.platform) }}
       artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
-
-  windows:
-    name: "Windows x64 APP"
-    uses: ehb54/uslims_version_workflows/.github/workflows/ultrascan-reusable-build.yml@aacc200d0c68de5d0840c15567b484aac9a8018e
-    with:
-      ref:                     ${{ github.ref }}
-      runner:                  windows-2022
-      qt_variant:              qt6
-      profile:                 APP
-      clean_tier:              incremental
-      artifact_name_prefix:    ${{ format('release-{0}', github.ref_name) }}
-      artifact_retention_days: 7
-      require_exact_cache_hit: true
-      save_cache:              false
+    secrets: inherit
 
   # --------------------------------------------------------------------------
   # PUBLISH RELEASE
@@ -136,7 +75,7 @@ jobs:
   # --------------------------------------------------------------------------
   publish-release:
     name: "Publish release ${{ github.ref_name }}"
-    needs: [ubuntu-app, ubuntu-hpc, macos-arm, oraclelinux8-app, oraclelinux8-hpc, macos-intel, windows]
+    needs: [validate-version, build]
     if: success()
     runs-on: ubuntu-24.04
     steps:
@@ -176,25 +115,25 @@ jobs:
           echo "Staging release assets..."
 
           cp_first_find "UltraScan3-macos-installer-arm64-${VERSION}.pkg" \
-            find artifacts -type f -path '*release-*-arm-macos-15-*/*' -name '*.pkg'
+            find artifacts -type f -path '*release-*-macOS-arm64/*' -name '*.pkg'
 
           cp_first_find "UltraScan3-macos-installer-x86_64-${VERSION}.pkg" \
-            find artifacts -type f -path '*release-*-macos-15-intel-*/*' -name '*.pkg'
+            find artifacts -type f -path '*release-*-macOS-x86_64/*' -name '*.pkg'
 
           cp_first_find "us3-Windows-x86_64-${VERSION}-setup.exe" \
-            find artifacts -type f -path '*release-*-windows-2022-*/*' -name '*.exe'
+            find artifacts -type f -path '*release-*-Windows-x86_64/*' -name '*.exe'
 
           cp_first_find "us3-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-ubuntu-24.04-*/*' ! -path '*HPC*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-Ubuntu-24.04-x86_64/*' ! -path '*HPC*' -name '*.tar.xz'
 
           cp_first_find "us3-HPC-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-HPC-ubuntu-24.04-*/*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-HPC-Ubuntu-24.04-x86_64/*' -name '*.tar.xz'
 
           cp_first_find "us3-redhat-8.10-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-oraclelinux8-*/*' ! -path '*HPC*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-RHEL-8-x86_64/*' ! -path '*HPC*' -name '*.tar.xz'
 
           cp_first_find "us3-HPC-redhat-8.10-x86_64-${VERSION}.tar.xz" \
-            find artifacts -type f -path '*release-*-HPC-oraclelinux8-*/*' -name '*.tar.xz'
+            find artifacts -type f -path '*release-*-HPC-RHEL-8-x86_64/*' -name '*.tar.xz'
 
           echo "Assets ready:"
           ls -lh release-assets/

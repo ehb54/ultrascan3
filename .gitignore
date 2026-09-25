@@ -1,6 +1,10 @@
 local.pri
 .*
 !/.gitignore
+# The blanket dot-rule above also hides .github, which silently made every
+# newly added workflow, composite action and issue template untracked until
+# someone noticed and force-added it. Re-include the directory explicitly.
+!/.github/
 *.o
 tmp/
 moc/
@@ -22,6 +26,8 @@ gui/qrc_images.cpp
 
 /build/
 /build-docker/
+/build-docker-nodb/
+/build-docker-coverage/
 /cmake-build-debug/
 doc/manual/build
 /vcpkg/
@@ -33,5 +39,5 @@ configure-arm64.log
 programs/us/us.rc
 CMakeUserPresets.json
 __pycache__
-/CLAUDE.md
 *.pyc
+/build-mac/

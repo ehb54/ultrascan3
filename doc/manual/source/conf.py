@@ -111,12 +111,13 @@ def generate_version_metadata(source_dir: str | os.PathLike[str]) -> dict[str, s
         "VERSION_FULL": version_full,
     }
 
-# Read root VERSION file at ../../../../VERSION aka /VERSION
+# Read the repository's root VERSION file.
 version_file = Path(__file__).parent.parent.parent.parent / "VERSION"
-version = "v4.2.0" # match default in utils/us_defines.h
-if version_file.exists():
-    with open(version_file, "r") as f:
-        version = 'v' + f.read().strip()
+if not version_file.is_file():
+    raise FileNotFoundError(f"Required version file not found: {version_file}")
+
+with open(version_file, "r") as f:
+    version = 'v' + f.read().strip()
 
 meta = generate_version_metadata(os.path.dirname(__file__))
 release = version + ' ' + meta["VERSION_FULL"]
