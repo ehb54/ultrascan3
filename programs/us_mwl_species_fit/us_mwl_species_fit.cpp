@@ -1660,6 +1660,10 @@ DbgLv(0) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
          synData[ kd ].scanData[ ks ] = edata->scanData[ jj ];
          synData[ kd ].scanData[ ks ].rvalues.fill( 0.0, kradp );
          synData[ kd ].scanData[ ks ].stddevs.fill( 0.0, kradp );
+
+         // Resize and clear the interpolation bitmap for the fitted readings.
+         synData[ kd ].scanData[ ks ].interpolated
+            .fill( '\0', ( kradp + 7 ) / 8 );
          synData[ kd ].scanData[ ks ].wavelength  = wavl;
          ks++;
 
@@ -1840,6 +1844,14 @@ DbgLv(1) << "sfd:  menx menval meniscus" << menx << menval << meniscus;
 
       int stat        = US_DataIO::writeRawData( fname, synData[ kd ] );
 DbgLv(1) << "sfd:  stat fname" << stat << fname;
+
+      if ( stat != US_DataIO::OK )
+      {
+         QMessageBox::warning( this, tr( "Species File Write Failed" ),
+            tr( "The species data could not be written to\n%1\n\n%2" )
+            .arg( fname ).arg( US_DataIO::errorString( stat ) ) );
+         return;
+      }
    }
 QDateTime time9=QDateTime::currentDateTime();
 DbgLv(1) << "sfd: (C)D0 cmn" << ms << mr << synData[0].value(ms,mr);

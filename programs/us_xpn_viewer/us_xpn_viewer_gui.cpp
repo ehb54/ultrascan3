@@ -2,6 +2,7 @@
 #include <QtSql>
 #include <qwt_scale_div.h>
 #include "us_xpn_viewer_gui.h"
+#include "us_xpn_export.h"
 #include "us_tmst_plot.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -5001,95 +5002,41 @@ void US_XpnDataViewer::connect_ranges( bool conn )
    }
 }
 
-// export_auc data in us_com_project -- CORRECTED
+// Export data for automated processing.
 void US_XpnDataViewer::export_auc_auto( bool& tmstampOK )
 {
    inExport = true;
 
-   int nfiles = 0;
-   int noptsy     = cb_optsys->count();
-   qDebug() << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
+   const int noptsy = cb_optsys->count();
+   QVector<int> optics;
+   for ( int osx = 0; osx < noptsy; ++osx ) optics << osx;
 
-   //--- One optics type -----//
-   if ( noptsy == 1 )
-     {
-       correct_radii();      // Perform chromatic aberration radius corrections
-       nfiles     = xpn_data->export_auc_auto( allData, tmstampOK  );
-     }
+   const auto result = us_xpn_export_optics( optics, [&]( int osx ) {
+      if ( noptsy > 1 ) cb_optsys->setCurrentIndex( osx );
+      correct_radii();
+      const int files = xpn_data->export_auc_auto( allData, tmstampOK );
+      return US_XpnExportResult{ files - ( noptsy > 1 ? 2 : 0 ),
+                                 xpn_data->export_errors() };
+   } );
+   const int nfiles = result.files;
+   const QStringList& experrs = result.errors;
 
-   //--- Combined optics type -----//
-   if ( noptsy > 1 )
-   {  // Export data from Optical Systems other than currently selected one
+   if ( experrs.isEmpty() )
+   {
+      le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   }
 
-     //xpn_data->set_run_values( runID, runType );    
-     //xpn_data->build_rawData( allData );            
-     
-     //int currsx     = cb_optsys->currentIndex();
+   else
+   {  // A triple the writer refused is not in that count
+      qDebug() << "*ERROR* AUC export incomplete:" << experrs.join( "; " );
+      le_status  ->setText( tr( "%1 AUC/TMST files written, %2 triple(s) FAILED" )
+                            .arg( nfiles ).arg( experrs.count() ) );
+   }
 
-      for ( int osx = 0; osx < noptsy; osx++ )
-      {
-	//if ( osx == currsx )  continue;   // Skip already-handled opt sys
-
-	 qDebug() << "Current index: " << osx;
-
-	 //ALEXEY: somewhere here OR in ::changeOptics_auto() make sure to xpn_data->reimport_data() for other optics!!!
-	 // Look at the reloadData_auto()
-	 
-         cb_optsys->setCurrentIndex( osx );   
-         correct_radii();                  // Chromatic aberration correction if needed
-         int kfiles     = xpn_data->export_auc_auto( allData, tmstampOK ) - 2;  // Export data
-         nfiles        += kfiles;          // Total files written
-      }
-
-      // Restore Optical System selection to what it was before
-      // cb_optsys->setCurrentIndex( currsx );   //ALEXEY <-- not needed to repeat data build!!!
-    }
-
-   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
    qApp->processEvents();
 }
    
-/*
-// export_auc data in us_com_project
-void US_XpnDataViewer::export_auc_auto()
-{
 
-   inExport = true;
-   correct_radii();      // Perform chromatic aberration radius corrections
-
-   int nfiles     = xpn_data->export_auc( allData );
-//   int noptsy     = cb_optsys->children().count();
-   int noptsy     = cb_optsys->count();
-DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
- qDebug() << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
-
-   if ( noptsy > 1 )
-   {  // Export data from Optical Systems other than currently selected one
-      int currsx     = cb_optsys->currentIndex();
-
-      for ( int osx = 0; osx < noptsy; osx++ )
-      {
-         if ( osx == currsx )  continue;   // Skip already-handled opt sys
-
-	 qDebug() << "Current index: " << osx;
-
-	 //ALEXEY: somewhere here OR in ::changeOptics_auto() make sure to xpn_data->reimport_data() for other optics!!!
-	 // Look at the reloadData_auto()
-	 
-         cb_optsys->setCurrentIndex( osx );   
-         correct_radii();                  // Chromatic aberration correction if needed
-         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
-         nfiles        += kfiles;          // Total files written
-      }
-
-      // Restore Optical System selection to what it was before
-      // cb_optsys->setCurrentIndex( currsx );   //ALEXEY <-- not needed to repeat data build!!!
-    }
-
-   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
-   qApp->processEvents();
-}
-*/
 
 
 // Slot to export to openAUC
@@ -5142,43 +5089,36 @@ DbgLv(1) << "ExpAuc: new_runID" << new_runID;
       xpn_data->set_run_values( runID, runType );  // Set run ID for export
    }
 
-   // Export the AUC data to a local directory and build TMST
-DbgLv(1) << "ExpAuc: BEFORE correct_radii() !!!!";
-   correct_radii();      // Perform chromatic aberration radius corrections
-DbgLv(1) << "ExpAuc: AFTER correct_radii() !!!!";
-   int nfiles     = xpn_data->export_auc( allData );  // Export AUC/TMST
+   const int currsx = cb_optsys->currentIndex();
+   QVector<int> optics;
+   optics << currsx;
+   for ( int osx = 0; osx < cb_optsys->count(); ++osx )
+      if ( osx != currsx ) optics << osx;
 
-   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
-   haveTmst       = QFile( tspath ).exists();
+   const auto result = us_xpn_export_optics( optics, [&]( int osx ) {
+      if ( osx != currsx ) cb_optsys->setCurrentIndex( osx );
+      correct_radii();
+      const int files = xpn_data->export_auc( allData );
+      return US_XpnExportResult{ files - ( osx != currsx ? 2 : 0 ),
+                                 xpn_data->export_errors() };
+   } );
+   if ( cb_optsys->count() > 1 ) cb_optsys->setCurrentIndex( currsx );
 
+   const int nfiles = result.files;
+   const QStringList& experrs = result.errors;
+   haveTmst = QFile( currentDir + "/" + runID + ".time_state.tmst" ).exists();
    pb_showtmst->setEnabled( haveTmst );
-   qApp->processEvents();
-DbgLv(1) << "ExpAuc: haveTmst" << haveTmst << "tmst file" << tspath;
-//   int noptsy     = cb_optsys->children().count();
-   int noptsy     = cb_optsys->count();
-DbgLv(1) << "ExpAucA: noptsy koptsy" << noptsy << cb_optsys->children().count();
-
-   qDebug() << "Optical Systems Count: (noptsy) = " << cb_optsys->children().count();
-   
-   if ( noptsy > 1 )
-   {  // Export data from Optical Systems other than currently selected one
-      int currsx     = cb_optsys->currentIndex();
-
-      for ( int osx = 0; osx < noptsy; osx++ )
-      {
-         if ( osx == currsx )  continue;   // Skip already-handled opt sys
-
-         cb_optsys->setCurrentIndex( osx );
-         correct_radii();                  // Chromatic aberration correction if needed
-         int kfiles     = xpn_data->export_auc( allData ) - 2;  // Export data
-         nfiles        += kfiles;          // Total files written
-      }
-
-      // Restore Optical System selection to what it was before
-      cb_optsys->setCurrentIndex( currsx );
-   }
 
    le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+
+   if ( ! experrs.isEmpty() )
+   {
+      le_status->setText( tr( "%1 AUC/TMST files written, %2 triple(s) FAILED" )
+                         .arg( nfiles ).arg( experrs.count() ) );
+      QMessageBox::warning( this, tr( "AUC Export Incomplete" ),
+         tr( "Some triples could not be written:\n\n%1" )
+         .arg( experrs.join( "\n" ) ) );
+   }
 }
 
 // Slot to handle a change in scan exclude "from" value

@@ -56,14 +56,7 @@ simparams.debug();
    int t_acc            = 1; // Used for time when accelerated up to the specified rotor speed
    double rate          = 1.0;
    double speed         = 1000.0;
-   int ss_reso          = 100;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
-   }
+   double ss_reso       = US_Settings::speedResolution();
    US_SimulationParameters::SpeedProfile* sp;
    US_SimulationParameters::SpeedProfile* sp_prev;
 DbgLv(1) << "AMATH:wrts: writetimestate : no of scans" << nscans;
@@ -157,7 +150,7 @@ DbgLv(0)<< "AMATH:wrts: rate is given by user : t_acc from timestate" << t_acc <
          else
             rpm         = speed;
 
-         int set_speed  = (int)qRound( rpm / (double)ss_reso ) * ss_reso;
+         int set_speed  = (int)( qRound( rpm / ss_reso ) * ss_reso );
 
          double om1t = rpm * M_PI / 30.0;
          omega2t    += sq( om1t );
@@ -191,7 +184,7 @@ if((scan_nbr>0)||(ii<(d1+2))||((ii>(tacc-2))&&(ii<(tacc+2)))||((ii+3)>d2))
    duration      += 10;
    d1             = itime + 1;
    int step       = nspeed - 1;
-   int set_speed  = (int)qRound( rpm / (double)ss_reso ) * ss_reso;
+   int set_speed  = (int)( qRound( rpm / ss_reso ) * ss_reso );
    scan_nbr       = 0;
    double omg2ti  = pow( ( rpm * M_PI / 30.0 ), 2.0 );
 

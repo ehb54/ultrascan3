@@ -325,35 +325,29 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   counter->setNumButtons( buttons );
   counter->setRange     ( low, high );
   counter->setValue     ( value );
-  QList< QObject* > children = counter->children();
+  const QList< QObject* > children = counter->children();
   int totwid          = 0;
-#ifdef Q_OS_MAC
-  // The counter's up/down buttons are unusably small with the native macOS
-  // style.  Give just those buttons a Fusion style - unlike the former
-  // QApplication::setStyle() call this leaves the style the user selected
-  // for the rest of the application alone.
-  static QStyle* btnstyle = QStyleFactory::create( "Fusion" );
+  // macOS and Windows styles make counter buttons too small; use Fusion.
+  const QString stynam = US_GuiSettings::guiStyle();
+  const bool needbsty  = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                         stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+  static QStyle* btnsty = QStyleFactory::create( "fusion" );
 
-  if ( btnstyle != nullptr )
+  if ( needbsty  &&  btnsty != nullptr )
   {
-     for ( int jj = 0; jj < children.size(); jj++ )
+     for ( QObject* const child : children )
      {
-        QWidget* cwidg = (QWidget*)children.at( jj );
-        QString clname = cwidg->metaObject()->className();
+        QWidget* const cwidg = qobject_cast< QWidget* >( child );
 
-        if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
-        {
-           cwidg->setStyle( btnstyle );
-        }
+        if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
+           cwidg->setStyle( btnsty );
      }
   }
-#endif    // END: special button treatment for Mac
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  for ( QObject* const child : children )
   {  // Accumulate total width of button widgets
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
-     if ( clname.contains( "Button" ) )
+     QWidget* const cwidg = qobject_cast< QWidget* >( child );
+     if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
      {
         cwidg->adjustSize();
         totwid        += cwidg->width();

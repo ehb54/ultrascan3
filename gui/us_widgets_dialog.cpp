@@ -5,6 +5,8 @@
 #include "us_theme.h"
 #include "us_images.h"
 
+#include <QStyleFactory>
+
 
 US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f, bool set_style ) 
    : QDialog( w, f )
@@ -284,28 +286,29 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   counter->setNumButtons( buttons );
   counter->setRange     ( low, high );
   counter->setValue     ( value );
-  QList< QObject* > children = counter->children();
+  const QList< QObject* > children = counter->children();
   int totwid          = 0;
-#ifdef Q_OS_MAC
-  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+  // macOS and Windows styles make counter buttons too small; use Fusion.
+  const QString stynam = US_GuiSettings::guiStyle();
+  const bool needbsty  = stynam.startsWith( "windows", Qt::CaseInsensitive )  ||
+                         stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+  static QStyle* btnsty = QStyleFactory::create( "fusion" );
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  if ( needbsty  &&  btnsty != nullptr )
   {
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
-
-     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+     for ( QObject* const child : children )
      {
-        cwidg->setStyle( btnstyle );
+        QWidget* const cwidg = qobject_cast< QWidget* >( child );
+
+        if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
+           cwidg->setStyle( btnsty );
      }
   }
-#endif    // END: special button treatment for Mac
 
-  for ( int jj = 0; jj < children.size(); jj++ )
+  for ( QObject* const child : children )
   {  // Accumulate total width of button widgets
-     QWidget* cwidg = (QWidget*)children.at( jj );
-     QString clname = cwidg->metaObject()->className();
-     if ( clname.contains( "Button" ) )
+     QWidget* const cwidg = qobject_cast< QWidget* >( child );
+     if ( cwidg != nullptr  &&  cwidg->inherits( "QAbstractButton" ) )
      {
         cwidg->adjustSize();
         totwid        += cwidg->width();
