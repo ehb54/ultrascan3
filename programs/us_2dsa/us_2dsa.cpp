@@ -1071,7 +1071,25 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    {
       resplotd = new US_ResidPlot2D( this );
       resplotd->move( rbd_pos );
-      resplotd->setVisible( true );
+
+      // ALEXEY: save() needs resplotd constructed/laid out purely so
+      // rp_data_plot2()/rp_data_plot1() below have real QwtPlot geometry
+      // to render plot1File/plot2File/plot4File from -- it was never
+      // meant to be seen here (that's open_resplot()'s job, for the
+      // interactive Plot button / analysis_done(1), both skipped in
+      // auto mode -- see completed_process()'s own comment). In auto
+      // mode, WA_DontShowOnScreen + show() takes it through a normal
+      // show()/resize() lifecycle (so the plots inside it lay out
+      // exactly as they would interactively) without ever painting
+      // anything on screen, instead of setVisible(true).
+      if ( us_gmp_auto_mode )
+      {
+         resplotd->setAttribute( Qt::WA_DontShowOnScreen, true );
+         resplotd->show();
+      }
+      else
+         resplotd->setVisible( true );
+
       connect( resplotd.data(), &QObject::destroyed, this, &US_2dsa::resplot_done );
    }
 
