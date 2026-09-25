@@ -1984,10 +1984,45 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 	      "claiming run-wide VEL-MWL completion, then starting 2DSA-IT "
 	      "post-processing for Approved channels.";
 
+  // ALEXEY: Centralized progress dialog for the 2DSA-IT post-processing
+  // pipeline, mirroring progress_msg_mwlsim above exactly (same
+  // construction/window-flag rationale). US_2dsa's fit+save for each
+  // Approved channel needs no human interaction at all (unlike
+  // US_MwlSpeciesFit's Accept/Reject step), so unlike progress_msg_mwlsim
+  // this dialog is never handed off to / hidden for a decision widget --
+  // it is the only visible indication of 2DSA-IT processing, for as long
+  // as this stage runs. See start_2dsa_channel_progress()/
+  // update_2dsa_progress()'s own header comments for how it's driven.
+  //
+  // ALEXEY: Constructed and shown HERE, at the very top of this function
+  // -- i.e. right as the last VEL-MWL channel decision hands off to 2DSA-
+  // IT post-processing -- rather than after the DB round-trips below (the
+  // run-wide completion claim, reading back channel decisions, loading
+  // the 2DSA Analysis Profile). Those aren't instantaneous and previously
+  // ran with no visible feedback at all between the last US_MwlSpeciesFit
+  // decision and the first channel's own progress; the setLabelText()
+  // calls threaded through this function keep something on screen for
+  // that whole gap, before start_2dsa_channel_progress() ever gets a
+  // channel to actually report progress for.
+  progress_msg_2dsa = new QProgressDialog( tr( "Preparing 2DSA-IT analysis..." ),
+                                            QString(), 0, 100, this );
+  progress_msg_2dsa->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint );
+  progress_msg_2dsa->setWindowModality( Qt::WindowModal );
+  progress_msg_2dsa->setWindowTitle( tr( "VELOCITY-MWL: 2DSA-IT Analysis" ) );
+  progress_msg_2dsa->setAutoClose( false );
+  progress_msg_2dsa->setMinimumDuration( 0 );
+  progress_msg_2dsa->setMinimumWidth( 420 );
+  progress_msg_2dsa->setValue( 0 );
+  progress_msg_2dsa->show();
+  qApp->processEvents();
+
   // Claim the run-wide "VEL-MWL analysis complete" transition FIRST -- if
   // another session already won it, back off entirely rather than
   // re-running the 2DSA-IT pipeline a second time. See
   // autoflow_velmwl_analysis_status() in us3_autoflow_procs.sql.
+  progress_msg_2dsa->setLabelText( tr( "Finalizing VEL-MWL completion..." ) );
+  qApp->processEvents();
+
   US_Passwd pw;
   US_DB2*   db = new US_DB2( pw.getPasswd() );
 
@@ -1995,6 +2030,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
     {
       qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
 		  "DB connection failed -- aborting, run stays 'unknown' for retry.";
+      progress_msg_2dsa->hide();
       delete db;
       return;
     }
@@ -2025,6 +2061,9 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
   // at all (should not happen here since finalize_velmwl_analysis_if_
   // complete() only calls us once channels_all is fully resolved), are
   // disregarded.
+  progress_msg_2dsa->setLabelText( tr( "Reading channel decisions..." ) );
+  qApp->processEvents();
+
   QStringList qry_read;
   qry_read << "read_autoflowAnalysisVelMwl_record"
 	   << QString::number( autoflowID_passed );
@@ -2073,6 +2112,7 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
       qry_revert << "autoflow_velmwl_analysis_status_revert"
 		 << QString::number( autoflowID_passed );
       db->query( qry_revert );
+      progress_msg_2dsa->hide();
       delete db;
       return;
     }
@@ -2081,6 +2121,9 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 
   qDebug() << "[US_Autoflow_analysis] Approved VEL-MWL channels for 2DSA-IT:"
 	   << channels_2dsa_approved;
+
+  progress_msg_2dsa->setLabelText( tr( "Loading 2DSA Analysis Profile..." ) );
+  qApp->processEvents();
 
   // ALEXEY: Load this run's 2DSA Analysis-Profile settings (per-channel
   // s_min/s_max/s_grpts/k_min/k_max/k_grpts grid parameters) ONCE here,
@@ -2129,23 +2172,10 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
   twodsa_chan_idx  = -1;   // start_next_2dsa_channel() scans from idx+1
   twodsa_nchannels = channels_2dsa_approved.size();
 
-  // ALEXEY: Centralized progress dialog for the 2DSA-IT post-processing
-  // pipeline, mirroring progress_msg_mwlsim above exactly (same
-  // construction/window-flag rationale). US_2dsa's fit+save for each
-  // Approved channel needs no human interaction at all (unlike
-  // US_MwlSpeciesFit's Accept/Reject step), so unlike progress_msg_mwlsim
-  // this dialog is never handed off to / hidden for a decision widget --
-  // it is the only visible indication of 2DSA-IT processing, for as long
-  // as this stage runs. See start_2dsa_channel_progress()/
-  // update_2dsa_progress()'s own header comments for how it's driven.
-  progress_msg_2dsa = new QProgressDialog( tr( "Preparing 2DSA-IT analysis..." ),
-                                            QString(), 0, 100, this );
-  progress_msg_2dsa->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint );
-  progress_msg_2dsa->setWindowModality( Qt::WindowModal );
-  progress_msg_2dsa->setWindowTitle( tr( "VELOCITY-MWL: 2DSA-IT Analysis" ) );
-  progress_msg_2dsa->setAutoClose( false );
-  progress_msg_2dsa->setMinimumDuration( 0 );
-  progress_msg_2dsa->setMinimumWidth( 420 );
+  // progress_msg_2dsa was already constructed and shown at the top of
+  // this function -- see that comment for why. From here on it's driven
+  // by start_2dsa_channel_progress()/update_2dsa_progress() as each
+  // Approved channel is processed.
 
   /**
   if ( channels_2dsa_approved.isEmpty() )
