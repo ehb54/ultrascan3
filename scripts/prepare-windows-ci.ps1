@@ -47,17 +47,26 @@ $CleanupCandidates = @(
     "C:\Program Files (x86)\Microsoft SDKs\Azure"
 ) | Where-Object { $_ } | Select-Object -Unique
 
-foreach ($Candidate in $CleanupCandidates) {
-    if (-not (Test-Path -LiteralPath $Candidate)) { continue }
+# Build trees and vcpkg state live on RUNNER_TEMP's drive, so C: rarely needs
+# reclaiming; the deletions below cost ~20 minutes when they do run.
+$MinFreeGB = if ($env:US3_WINDOWS_MIN_FREE_GB) { [double]$env:US3_WINDOWS_MIN_FREE_GB } else { 40 }
+$SystemFreeGB = (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace / 1GB
 
-    Write-Host "Removing unused runner component: $Candidate"
-    try {
-        Remove-Item -LiteralPath $Candidate -Recurse -Force -ErrorAction Stop
-    }
-    catch {
-        # Runner images occasionally hold a file open. Partial cleanup still
-        # provides useful headroom and must not obscure the actual build.
-        Write-Warning "Could not completely remove ${Candidate}: $($_.Exception.Message)"
+if ($SystemFreeGB -ge $MinFreeGB) {
+    Write-Host ("Skipping runner cleanup: C: has {0:N1} GB free (threshold {1} GB)." -f $SystemFreeGB, $MinFreeGB)
+} else {
+    foreach ($Candidate in $CleanupCandidates) {
+        if (-not (Test-Path -LiteralPath $Candidate)) { continue }
+
+        Write-Host "Removing unused runner component: $Candidate"
+        # rd deletes natively; Remove-Item -Recurse is far slower on trees with
+        # many small files such as dotnet and ghcup.
+        cmd /c "rd /s /q `"$Candidate`" >nul 2>&1"
+        if (Test-Path -LiteralPath $Candidate) {
+            # Runner images occasionally hold a file open. Partial cleanup still
+            # provides useful headroom and must not obscure the actual build.
+            Write-Warning "Could not completely remove $Candidate"
+        }
     }
 }
 
