@@ -209,7 +209,7 @@ private slots:
          QCOMPARE( US_DataIO::readRawData( aucPath, data ),
                    (int)US_DataIO::OK );
 
-         // The identity the model gave this dataset, not a fixed 1/S default.
+         // Cell and channel come from the model description.
          QCOMPARE( (int)data.cell, 1 );
          QCOMPARE( (char)data.channel, 'A' );
 
