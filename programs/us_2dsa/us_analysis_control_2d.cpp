@@ -1195,7 +1195,15 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
    {
       mainw->analysis_done( -2 );
 
-      mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
+      // ALEXEY: Skip this branch entirely in headless auto mode --
+      // analysis_done(1) opens US_2dsa's 2-D Spectrum Analysis Data/
+      // Residuals Viewer (open_3dplot()/open_resplot()), which has no
+      // business appearing on an unattended pipeline; analysis_done(0)
+      // is a no-op (neither plotdata nor savedata) either way. save()
+      // below -- not this call -- is what actually persists this
+      // species' results in auto mode.
+      if ( ! auto_mode )
+         mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
 
       pb_strtfit->setEnabled( true  );
       pb_stopfit->setEnabled( false );

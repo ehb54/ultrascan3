@@ -1172,7 +1172,11 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    }
 
    QApplication::restoreOverrideCursor();
-   QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+
+   if ( ! us_gmp_auto_mode )
+      QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+   else
+      qDebug() << "[US_2dsa] save(): auto-mode write complete:" << wmsg;
 }
 
 // Return pointer to main window edited data
