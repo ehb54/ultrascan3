@@ -176,6 +176,7 @@ int main( int argc, char* argv[] )
    if ( parser.isSet( errors_option ) )
    {
       args["errors-cl"] = "true";
+      application.setProperty( "us3_headless", true );
    }
    // parse run type
    if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
@@ -210,9 +211,10 @@ int main( int argc, char* argv[] )
       args["guid-seed"] = parser.value( guid_seed_option );
    }
    // parse edit-timestamp
-   if ( parser.isSet( edit_stamp_option ) && !parser.value( edit_stamp_option ).isEmpty() )
+   if ( parseEditTimestampOption( parser, edit_stamp_option, args,
+                                  cli_exit_code ) )
    {
-      args["edit-timestamp"] = parser.value( edit_stamp_option );
+      return cli_exit_code;
    }
    // parse close
    if ( parser.isSet( close_option ) )

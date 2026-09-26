@@ -102,6 +102,9 @@ int main( int argc, char* argv[] )
    auto description_option = QCommandLineOption("description",
       descriptionOptionHelp(), "text");
    parser.addOption(description_option);
+   auto noise_seed_option = QCommandLineOption("noise-seed",
+      noiseSeedOptionHelp(), "seed");
+   parser.addOption(noise_seed_option);
 
    int cli_exit_code = 0;
    if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
@@ -147,6 +150,7 @@ int main( int argc, char* argv[] )
    if ( parser.isSet( errors_option ) )
    {
       args["errors-cl"] = "true";
+      application.setProperty( "us3_headless", true );
    }
    if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
    {
@@ -154,6 +158,10 @@ int main( int argc, char* argv[] )
    }
    if ( parseDescriptionOption( parser, description_option, args,
                                 cli_exit_code ) )
+   {
+      return cli_exit_code;
+   }
+   if ( parseNoiseSeedOption( parser, noise_seed_option, args, cli_exit_code ) )
    {
       return cli_exit_code;
    }
@@ -165,9 +173,10 @@ int main( int argc, char* argv[] )
    {
       args["guid-seed"] = parser.value( guid_seed_option );
    }
-   if ( parser.isSet( edit_stamp_option ) && !parser.value( edit_stamp_option ).isEmpty() )
+   if ( parseEditTimestampOption( parser, edit_stamp_option, args,
+                                  cli_exit_code ) )
    {
-      args["edit-timestamp"] = parser.value( edit_stamp_option );
+      return cli_exit_code;
    }
    if ( parser.isSet( close_option ) )
    {
