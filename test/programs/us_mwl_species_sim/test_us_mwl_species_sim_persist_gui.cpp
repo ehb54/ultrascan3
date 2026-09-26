@@ -15,6 +15,7 @@ const char* const kRunID     = "mwl-run";
 const char* const kChannel   = "1A";
 const char* const kGuidSeed  = "us3-mwl-persist-regression";
 const char* const kEditStamp = "2401010000";
+const char* const kDescription = "MWL persist test";
 const QStringList kWavelengths { "280", "410" };
 
 const char* const kSimParams =
@@ -143,7 +144,8 @@ private slots:
                    "--rotor", "1", "--runtype", "RA",
                    "--save", outDir,
                    "--guid-seed", kGuidSeed,
-                   "--edit-timestamp", kEditStamp } );
+                   "--edit-timestamp", kEditStamp,
+                   "--description", kDescription } );
 
       if ( ! sim.waitForFinished( 300000 ) )
       {
@@ -219,6 +221,7 @@ private slots:
 
          // Cell and channel come from the model description.
          QCOMPARE( (int)data.cell, 1 );
+         QCOMPARE( data.description, QString( kDescription ) );
          QCOMPARE( (char)data.channel, 'A' );
 
          const QString rawGUID = US_Util::uuid_unparse(

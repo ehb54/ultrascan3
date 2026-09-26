@@ -99,6 +99,9 @@ int main( int argc, char* argv[] )
    auto run_type_option = QCommandLineOption("runtype",
       runTypeOptionHelp(), "runtype");
    parser.addOption(run_type_option);
+   auto description_option = QCommandLineOption("description",
+      descriptionOptionHelp(), "text");
+   parser.addOption(description_option);
 
    int cli_exit_code = 0;
    if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
@@ -146,6 +149,11 @@ int main( int argc, char* argv[] )
       args["errors-cl"] = "true";
    }
    if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
+   {
+      return cli_exit_code;
+   }
+   if ( parseDescriptionOption( parser, description_option, args,
+                                cli_exit_code ) )
    {
       return cli_exit_code;
    }

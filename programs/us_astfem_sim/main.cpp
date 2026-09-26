@@ -56,9 +56,10 @@ int main( int argc, char* argv[] )
       "index");
    parser.addOption(centerpiece_option);
    auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
-      "Row within the centerpiece (default: 0), given either as a channel "
-      "letter (A-H, where a channel and its reference share a row, so A and B "
-      "are row 0) or as a bare row index",
+      "Row within the centerpiece, given either as a channel letter (A-H, "
+      "where a channel and its reference share a row, so A and B are row 0) "
+      "or as a bare row index. Defaults to the row of --channel, else 0; "
+      "must match --channel when both are given",
       "channel");
    parser.addOption(centerpiece_channel_option);
    auto movie_option = QCommandLineOption("movie",
@@ -100,6 +101,9 @@ int main( int argc, char* argv[] )
    auto run_type_option = QCommandLineOption("runtype",
       runTypeOptionHelp(), "runtype");
    parser.addOption(run_type_option);
+   auto description_option = QCommandLineOption("description",
+      descriptionOptionHelp(), "text");
+   parser.addOption(description_option);
    auto cell_option = QCommandLineOption("cell", cellOptionHelp(), "cell");
    parser.addOption(cell_option);
    auto channel_option = QCommandLineOption("channel", channelOptionHelp(),
@@ -175,6 +179,12 @@ int main( int argc, char* argv[] )
    }
    // parse run type
    if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
+   {
+      return cli_exit_code;
+   }
+   // parse description
+   if ( parseDescriptionOption( parser, description_option, args,
+                                cli_exit_code ) )
    {
       return cli_exit_code;
    }
