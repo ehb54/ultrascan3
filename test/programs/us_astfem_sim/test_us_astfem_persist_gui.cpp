@@ -337,6 +337,16 @@ private slots:
                   .contains( "--channel C is centerpiece row 1" ) );
    }
 
+   void intensityRunTypesAreRejected()
+   {
+      // Simulated concentration cannot be tagged as intensity data.
+      for ( const QString& type : { QString( "RI" ), QString( "WI" ) } )
+      {
+         QVERIFY2( rejectedRun( { "--runtype", type }, 1 )
+                      .contains( "Invalid --runtype" ), qPrintable( type ) );
+      }
+   }
+
    void descriptionTooLongForTheAucFormatIsRejected()
    {
       QVERIFY( rejectedRun( { "--description", QString( 240, 'x' ) }, 1 )
