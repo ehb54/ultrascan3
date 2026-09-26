@@ -20,7 +20,9 @@ QStringList descriptions(const QList<int>& wavelengths)
 {
     QStringList list;
     for (int wavelength : wavelengths)
+    {
         list << description(wavelength);
+    }
 
     return list;
 }

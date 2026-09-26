@@ -11,8 +11,12 @@ namespace
 QPushButton* buttonWithText(QWidget& window, const QString& expected)
 {
     for (QPushButton* button : window.findChildren<QPushButton*>())
+    {
         if (button->text() == expected)
+        {
             return button;
+        }
+    }
 
     return nullptr;
 }

@@ -56,29 +56,41 @@ QString US_SimInputs::validateParams( const Params& p )
    {
       if ( ! qIsFinite( check.value ) ||
            ( check.allow_zero ? check.value < 0.0 : check.value <= 0.0 ) )
+      {
          return QString( "%1 must be finite and %2 (got %3)" )
             .arg( check.name )
             .arg( check.allow_zero ? "zero or greater" : "greater than zero" )
             .arg( check.value );
+      }
    }
 
    if ( p.scans < 1 )
+   {
       return QString( "scans must be at least 1 (got %1)" ).arg( p.scans );
+   }
 
    if ( p.duration_hours == 0 && p.duration_minutes <= 0.0 )
+   {
       return "run duration must be greater than zero";
+   }
 
    // The speed profile stores acceleration as a whole number of rpm/s, and a
    // rounded value of zero makes the acceleration ramp infinitely long.
    if ( qRound( p.acceleration ) < 1 )
+   {
       return QString( "acceleration must be at least 1 rpm/s (got %1)" )
          .arg( p.acceleration );
+   }
 
    const double finite_values[] = { p.delay_minutes, p.rnoise, p.lrnoise,
       p.tinoise, p.rinoise, p.baseline };
    for ( double value : finite_values )
+   {
       if ( ! qIsFinite( value ) )
+      {
          return "delay, noise, and baseline values must be finite";
+      }
+   }
 
    // The scan delay must be shorter than the run duration.
    const double duration_min = p.duration_hours * 60.0 + p.duration_minutes;
@@ -87,27 +99,37 @@ QString US_SimInputs::validateParams( const Params& p )
       : p.rpm / ( qRound( p.acceleration ) * 60.0 );
 
    if ( delay_min >= duration_min )
+   {
       return QString( "delay (%1 min) must be shorter than the run duration"
                       " (%2 min)" ).arg( delay_min ).arg( duration_min );
+   }
 
    if ( p.meshType < US_SimulationParameters::ASTFEM ||
         p.meshType > US_SimulationParameters::ASTFVM )
+   {
       return "mesh type is out of range";
+   }
    if ( p.gridType < US_SimulationParameters::FIXED ||
         p.gridType > US_SimulationParameters::MOVING )
+   {
       return "grid type is out of range";
+   }
 
    QString hardware_error = US_AbstractCenterpiece::validate(
       p.centerpiece, p.centerpiece_channel );
    if ( ! hardware_error.isEmpty() )
+   {
       return hardware_error;
+   }
 
    QMap< QString, QString > rotor_map;
    bool loaded_rotors = US_Hardware::readRotorMap( rotor_map );
    if ( p.rotor_calibr != "0" &&
         ( ! loaded_rotors || ! rotor_map.contains( p.rotor_calibr ) ) )
+   {
       return QString( "rotor calibration ID %1 was not found" )
          .arg( p.rotor_calibr );
+   }
 
    return QString();
 }
@@ -118,7 +140,9 @@ bool US_SimInputs::simParams( const Params& p,
 {
    error = validateParams( p );
    if ( ! error.isEmpty() )
+   {
       return false;
+   }
 
    US_SimulationParameters sp_out;
    US_SimulationParameters::SpeedProfile sp;
@@ -205,11 +229,15 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
    // Construct both inputs before writing; hardware loading can fail.
    US_SimulationParameters params;
    if ( ! simParams( params, error ) )
+   {
       return false;
+   }
 
    US_Model model;
    if ( ! US_SimSpecies::model( model, error ) )
+   {
       return false;
+   }
 
    if ( params.save_simparms( outdir.filePath( "sp_default.xml" ) ) != 0 )
    {

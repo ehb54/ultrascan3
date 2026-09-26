@@ -1,48 +1,40 @@
 //! \file main.cpp
-//! \brief Entry point for us_mwl_species_sim.
+//! \brief Entry point for us_astfem_sim.
 
 #include <QApplication>
 
-#include "us_headless_cli.h"
-#include "us_mwl_species_sim.h"
-#include "us_data_loader.h"
-#include "us_select_runs.h"
-#include "us_astfem_rsa.h"
-#include "us_astfem_math.h"
-#include "us_math2.h"
-#include "us_sim_inputs.h"
-#include "us_hardware.h"
-#include "us_license_t.h"
 #include "us_license.h"
+#include "us_license_t.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_util.h"
-#include "us_passwd.h"
-#include "us_images.h"
+#include "us_defines.h"
+#include "us_headless_cli.h"
+#include "us_astfem_sim.h"
 
-#include "qwt_picker_machine.h"
-#define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
-
-//! \brief Load translators and start US_MwlSpeciesSim.
+//! \brief Main program for US_Astfem_Sim.  Loads translators and starts
+//! the class US_Astfem_Sim.
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
-
+   QApplication::setApplicationName("us_astfem_sim");
+   QApplication::setApplicationDisplayName("US Astfem Simulation Module");
+   QApplication::setApplicationVersion( US_Version );
+   QApplication::setOrganizationDomain("https://ultrascan.aucsoltions.com");
+   QApplication::setOrganizationName("AUC Solutions, LLC");
    #include "main1.inc"
 
-   // License is OK.  Start up.
-
-   US_MwlSpeciesSim w;
+   // License is OK. Start up.
+   US_Astfem_Sim w;
 
    QCommandLineParser parser;
    auto help_option = QCommandLineOption({"help", "h", "?"},
       "Display command-line help");
    parser.addOption(help_option);
    auto version_option = parser.addVersionOption();
-   auto models_option = QCommandLineOption("models",
-      "Comma-separated list of model file paths, one per wavelength",
-      "models");
-   parser.addOption(models_option);
+   auto model_option = QCommandLineOption("model",
+      "Load a model from a file path, GUID, or database ID",
+      "model");
+   parser.addOption(model_option);
    auto buffer_option = QCommandLineOption("buffer",
       "Load a buffer from a file path, GUID, or database ID",
       "buffer");
@@ -69,12 +61,21 @@ int main( int argc, char* argv[] )
       "are row 0) or as a bare row index",
       "channel");
    parser.addOption(centerpiece_channel_option);
+   auto movie_option = QCommandLineOption("movie",
+      "Show the simulation as a movie");
+   parser.addOption(movie_option);
+   auto time_correction_option = QCommandLineOption("timecorr",
+      "Use time correction");
+   parser.addOption(time_correction_option);
    auto start_option = QCommandLineOption("start",
-      "Start simulations automatically");
+      "Start simulation automatically");
    parser.addOption(start_option);
    auto save_option = QCommandLineOption("save",
-      "Save simulation data to a directory",
-      "save");
+      "Directory to write the run into; its last path component becomes the "
+      "run ID. Writes several files, not one: the .auc data, the time-state "
+      "pair, the edit file, and any noise CSVs. A multi-speed run instead "
+      "writes one sibling directory per speed, suffixed with -<rpm>",
+      "dir");
    parser.addOption(save_option);
    auto guid_seed_option = QCommandLineOption("guid-seed",
       "Derive this run's experiment, raw and edit GUIDs from this text "
@@ -83,7 +84,7 @@ int main( int argc, char* argv[] )
       "text");
    parser.addOption(guid_seed_option);
    auto edit_stamp_option = QCommandLineOption("edit-timestamp",
-      "Stamp the edit filenames with this yyMMddhhmm instead of the current "
+      "Stamp the edit filename with this yyMMddhhmm instead of the current "
       "clock, so the run's filenames are reproducible too",
       "yyMMddhhmm");
    parser.addOption(edit_stamp_option);
@@ -99,36 +100,51 @@ int main( int argc, char* argv[] )
    auto run_type_option = QCommandLineOption("runtype",
       runTypeOptionHelp(), "runtype");
    parser.addOption(run_type_option);
+   auto cell_option = QCommandLineOption("cell", cellOptionHelp(), "cell");
+   parser.addOption(cell_option);
+   auto channel_option = QCommandLineOption("channel", channelOptionHelp(),
+      "channel");
+   parser.addOption(channel_option);
+   auto noise_seed_option = QCommandLineOption("noise-seed",
+      noiseSeedOptionHelp(), "seed");
+   parser.addOption(noise_seed_option);
 
+   QMap<QString, QString> args;
    int cli_exit_code = 0;
    if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
    {
       return cli_exit_code;
    }
 
+   // parse command-specific options
+
+   // parse the database setting
    int default_data_location = US_Settings::default_data_location();
    if ( parser.isSet( ignore_db_option ) )
    {
       US_Settings::set_default_data_location( 2 );
    }
-
-   QMap<QString, QString> args;
-   if ( parser.isSet( models_option ) && !parser.value( models_option ).isEmpty() )
+   // parse model
+   if ( parser.isSet( model_option ) && !parser.value( model_option ).isEmpty() )
    {
-      args["models"] = parser.value( models_option );
+      args["model"] = parser.value( model_option );
    }
+   // parse buffer
    if ( parser.isSet( buffer_option ) && !parser.value( buffer_option ).isEmpty() )
    {
       args["buffer"] = parser.value( buffer_option );
    }
+   // parse simulation parameters
    if ( parser.isSet( sim_parameters_option ) && !parser.value( sim_parameters_option ).isEmpty() )
    {
       args["simparams"] = parser.value( sim_parameters_option );
    }
+   // parse rotor
    if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
    {
       args["rotor"] = parser.value( rotor_option );
    }
+   // parse centerpiece and channel indices
    if ( parser.isSet( centerpiece_option ) )
    {
       args["centerpiece"] = parser.value( centerpiece_option );
@@ -137,50 +153,68 @@ int main( int argc, char* argv[] )
    {
       args["centerpiece-channel"] = parser.value( centerpiece_channel_option );
    }
+   // parse movie
+   if ( parser.isSet( movie_option ) )
+   {
+      args["movie"] = "true";
+   }
+   // parse time correction
+   if ( parser.isSet( time_correction_option ) )
+   {
+      args["timecorr"] = "true";
+   }
+   // parse start
    if ( parser.isSet( start_option ) )
    {
       args["start"] = "true";
    }
+   // parse errors
    if ( parser.isSet( errors_option ) )
    {
       args["errors-cl"] = "true";
    }
+   // parse run type
    if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
    {
       return cli_exit_code;
    }
+   // parse the cell/channel triple
+   if ( parseTripleOptions( parser, cell_option, channel_option, args,
+                            cli_exit_code ) )
+   {
+      return cli_exit_code;
+   }
+   // parse the noise seed
+   if ( parseNoiseSeedOption( parser, noise_seed_option, args, cli_exit_code ) )
+   {
+      return cli_exit_code;
+   }
+   // parse save
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
    {
       args["save"] = parser.value( save_option ).replace("\\", "/");
    }
+   // parse guid-seed
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
    {
       args["guid-seed"] = parser.value( guid_seed_option );
    }
+   // parse edit-timestamp
    if ( parser.isSet( edit_stamp_option ) && !parser.value( edit_stamp_option ).isEmpty() )
    {
       args["edit-timestamp"] = parser.value( edit_stamp_option );
    }
+   // parse close
    if ( parser.isSet( close_option ) )
    {
       args["close"] = "true";
    }
-
-   int init_status = args.isEmpty() ? 1 : w.init_from_args( args );
-
+   int init_status = w.init_from_args(args);
    if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
    {
+      // revert the previously changed default data location
       US_Settings::set_default_data_location( default_data_location );
    }
-
-   if ( init_status == 1 && args.contains( "errors-cl" ) )
-   {
-      QTextStream(stderr) << "GUI would be required to complete this run "
-         "(some inputs were omitted or could not be loaded); exiting without it "
-         "because --errors-cl was set." << Qt::endl;
-      return init_status;
-   }
-
-   // Show the GUI if no options were supplied or user interaction is needed.
+   // Show the GUI only if needed.
    return showGuiIfNeeded( w, init_status, args );
 }

@@ -380,20 +380,26 @@ QString US_AbstractCenterpiece::validate( int centerpiece, int channel )
 {
    QList< US_AbstractCenterpiece > cp_list;
    if ( ! US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
+   {
       return "no centerpiece definitions could be loaded";
+   }
 
    if ( centerpiece < 0 || centerpiece >= cp_list.size() )
+   {
       return QString( "centerpiece index %1 is out of range (0-%2)" )
          .arg( centerpiece ).arg( cp_list.size() - 1 );
+   }
 
    // Validate against the per-row geometry lists used by setHardware().
    // The XML channels count can differ from the number of rows.
    const US_AbstractCenterpiece& cp = cp_list[ centerpiece ];
    int channel_count = qMin( cp.bottom_position.size(), cp.path_length.size() );
    if ( channel < 0 || channel >= channel_count )
+   {
       return QString( "centerpiece-channel index %1 is out of range for "
          "centerpiece %2 (0-%3)" )
          .arg( channel ).arg( centerpiece ).arg( channel_count - 1 );
+   }
 
    return QString();
 }

@@ -39,7 +39,9 @@ bool writeText( const QString& path, const QString& text )
    QFile file( path );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
       return false;
+   }
 
    return file.write( text.toUtf8() ) == text.toUtf8().size();
 }
@@ -50,7 +52,9 @@ QString attributeOf( const QString& path, const QString& element,
    QFile file( path );
 
    if ( ! file.open( QIODevice::ReadOnly ) )
+   {
       return QString();
+   }
 
    QXmlStreamReader xml( &file );
 
@@ -59,7 +63,9 @@ QString attributeOf( const QString& path, const QString& element,
       xml.readNext();
 
       if ( xml.isStartElement()  &&  xml.name().toString() == element )
+      {
          return xml.attributes().value( attribute ).toString();
+      }
    }
 
    return QString();
@@ -99,7 +105,9 @@ private slots:
                                     QStringLiteral( "US3_TEST_SANDBOX" ),
                                     QStringLiteral( "US3_TEST_SETTINGS_ROOT" ),
                                     QStringLiteral( "US3_TEST_WORK_ROOT" ) } )
+      {
          env.remove( name );
+      }
 
       QStringList models;
       QProcess gen;

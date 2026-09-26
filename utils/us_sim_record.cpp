@@ -9,7 +9,9 @@
 QString US_SimRecord::guid( const QString& seed, const QString& key )
 {
    if ( seed.isEmpty() )
+   {
       return US_Util::new_guid();
+   }
 
    // Use a fixed UUID namespace for simulation identities.
    static const QUuid ns( QString( "{cb2a4256-450e-4202-8e7f-dcb34d66b142}" ) );
@@ -67,7 +69,9 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
    US_Solution solution;
 
    if ( models.isEmpty()  ||  models.size() != wavelengths.size() )
+   {
       return solution;
+   }
 
    const US_Model& first = models[ 0 ];
    QString         desc  = "";
@@ -93,7 +97,9 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
       for ( int jm = 0; jm < models.size(); jm++ )
       {
          if ( ic >= models[ jm ].components.size() )
+         {
             continue;
+         }
 
          analyte.extinction[ wavelengths[ jm ] ]
             = models[ jm ].components[ ic ].extinction;
@@ -104,7 +110,9 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
       analyteInfo.amount  = comp.signal_concentration;
 
       if ( ic > 0 )
+      {
          desc += " ";
+      }
       desc += comp.name;
 
       solution.analyteInfo.append( analyteInfo );
@@ -125,7 +133,9 @@ double US_SimRecord::maxOD( US_DataIO::RawData& data )
    for ( int ii = 0; ii < nscans; ii++ )
    {
       for ( int kk = 0; kk < npoints; kk++ )
+      {
          maxc = qMax( maxc, data.value( ii, kk ) );
+      }
    }
 
    return maxc;

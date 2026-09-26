@@ -58,48 +58,68 @@ US_SimSpecies::Component US_SimSpecies::defaultComponent()
 QString US_SimSpecies::validateComponent( const Component& c )
 {
    if ( ! qIsFinite( c.vbar20 ) || c.vbar20 <= 0.0 )
+   {
       return QString( "vbar20 must be finite and greater than zero (got %1)" )
          .arg( c.vbar20 );
+   }
 
    if ( ! qIsFinite( c.signal_concentration ) || c.signal_concentration <= 0.0 )
+   {
       return QString( "signal concentration must be finite and greater than "
                       "zero (got %1)" ).arg( c.signal_concentration );
+   }
 
    // Zero extinction represents no spectrum or no absorption at this wavelength.
    if ( ! qIsFinite( c.extinction ) || c.extinction < 0.0 )
+   {
       return QString( "extinction must be finite and not negative (got %1)" )
          .arg( c.extinction );
+   }
 
    // Analyte enum values are contiguous from PROTEIN to CARBOHYDRATE.
    if ( c.analyte_type < (int)US_Analyte::PROTEIN  ||
         c.analyte_type > (int)US_Analyte::CARBOHYDRATE )
+   {
       return QString( "analyte type must be between %1 and %2 (got %3)" )
          .arg( (int)US_Analyte::PROTEIN ).arg( (int)US_Analyte::CARBOHYDRATE )
          .arg( c.analyte_type );
+   }
 
    // Accept an empty identity or a UUID in 8-4-4-4-12 format.
    if ( ! c.analyte_guid.isEmpty()  &&
         ! US_Util::UUID_REGEX.match( c.analyte_guid ).hasMatch() )
+   {
       return QString( "analyte GUID must be a 36-character UUID (got \"%1\")" )
          .arg( c.analyte_guid );
+   }
 
    // Only s may legitimately be negative; zero is unsolvable for all three.
    if ( c.s.supplied && ( ! qIsFinite( c.s.value ) || c.s.value == 0.0 ) )
+   {
       return QString( "s must be finite and nonzero (got %1)" ).arg( c.s.value );
+   }
    if ( c.mw.supplied && ( ! qIsFinite( c.mw.value ) || c.mw.value <= 0.0 ) )
+   {
       return QString( "mw must be finite and greater than zero (got %1)" )
          .arg( c.mw.value );
+   }
    if ( c.D.supplied && ( ! qIsFinite( c.D.value ) || c.D.value <= 0.0 ) )
+   {
       return QString( "D must be finite and greater than zero (got %1)" )
          .arg( c.D.value );
+   }
    if ( c.f.supplied && ( ! qIsFinite( c.f.value ) || c.f.value <= 0.0 ) )
+   {
       return QString( "f must be finite and greater than zero (got %1)" )
          .arg( c.f.value );
+   }
    if ( c.f_f0.supplied &&
         ( ! qIsFinite( c.f_f0.value ) || c.f_f0.value < 1.0 ) )
+   {
       return QString( "f-f0 must be finite and at least 1.0, since a particle cannot be "
                       "more compact than the equivalent sphere (got %1)" )
          .arg( c.f_f0.value );
+   }
 
    // calc_coefficients() requires exactly two inputs.
    QStringList supplied;
@@ -110,20 +130,26 @@ QString US_SimSpecies::validateComponent( const Component& c )
       names << coeff.name;
 
       if ( ( c.*( coeff.field ) ).supplied )
+      {
          supplied << coeff.name;
+      }
    }
 
    if ( supplied.size() != 2 )
+   {
       return QString( "exactly two of %1 must be given (got %2: %3)" )
          .arg( names.join( ", " ) )
          .arg( supplied.size() )
          .arg( supplied.isEmpty() ? QString( "none" ) : supplied.join( ", " ) );
+   }
 
    // D and f are the one pair calc_coefficients() has no branch for: both
    // describe transport without fixing the mass, so the system is undetermined.
    if ( supplied.contains( "D" )  &&  supplied.contains( "f" ) )
+   {
       return "D and f cannot be given as the only pair; add or substitute one "
              "of s, mw, or f-f0";
+   }
 
    // Explain sedimentation/buoyancy sign errors before coefficient calculation.
    if ( c.s.supplied )
@@ -132,10 +158,12 @@ QString US_SimSpecies::validateComponent( const Component& c )
 
       if ( ( c.s.value < 0.0  &&  buoyancy > 0.0 )  ||
            ( c.s.value > 0.0  &&  buoyancy < 0.0 ) )
+      {
          return QString( "the sign of s (%1) disagrees with the buoyancy "
                          "implied by vbar20 (%2); a species floats only when "
                          "vbar20 exceeds %3 mL/g" )
             .arg( c.s.value ).arg( c.vbar20 ).arg( 1.0 / DENS_20W );
+      }
    }
 
    return QString();
@@ -144,14 +172,18 @@ QString US_SimSpecies::validateComponent( const Component& c )
 QString US_SimSpecies::validateComponents( const QVector< Component >& components )
 {
    if ( components.isEmpty() )
+   {
       return "at least one component must be given";
+   }
 
    for ( int ii = 0; ii < components.count(); ii++ )
    {
       QString error = validateComponent( components[ ii ] );
 
       if ( ! error.isEmpty() )
+      {
          return QString( "component %1: %2" ).arg( ii + 1 ).arg( error );
+      }
    }
 
    return QString();
@@ -168,7 +200,9 @@ bool US_SimSpecies::model( const QVector< Component >& components,
 {
    error = validateComponents( components );
    if ( ! error.isEmpty() )
+   {
       return false;
+   }
 
    US_Model candidate;
    candidate.description  = "us3-sim-inputs generated protein model v1";
@@ -193,7 +227,9 @@ bool US_SimSpecies::model( const QVector< Component >& components,
       sc.analyteGUID          = c.analyte_guid;
 
       if ( ! c.name.isEmpty() )
+      {
          sc.name = c.name;
+      }
 
       candidate.components << sc;
    }

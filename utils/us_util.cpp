@@ -188,6 +188,12 @@ QString US_Util::expanded_triple( const QString& ccw, bool spaces )
    return ( cell + sep + chan + sep + wvln );
 }
 
+// Channel letters in database channel-number order
+QString US_Util::channel_letters( void )
+{
+   return "SABCDEFGH";
+}
+
 bool US_Util::is_valid_uuid(const QString& uuid)
 {
    return UUID_REGEX.match(uuid).hasMatch();
@@ -225,7 +231,9 @@ bool US_Util::ithTime( int timeinc )
 {
    // Handle unconditional reporting and avoid division by zero.
    if ( timeinc < 2 )
+   {
       return true;
+   }
 
    // Sample one residue for a 1-in-timeinc reporting rate.
    int rannum  = rand() % timeinc;

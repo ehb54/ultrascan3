@@ -15,6 +15,8 @@
 
 #include <climits>
 
+#include "us_util.h"
+
 //! \brief Handle --help, --version, and parsing errors consistently.
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue processing options.
@@ -51,10 +53,10 @@ inline bool handleStandardCliOptions( QCommandLineParser& parser,
 }
 
 //! \brief Supported optical data types.
-//! WA is unsupported: it requires wavelength scans indexed by radius.
+//! RI and WI would need conversion to intensity; WA and WI are wavelength scans.
 inline QStringList supportedRunTypes()
 {
-   return { "RA", "IP", "RI", "FI", "WI" };
+   return { "RA", "IP", "FI" };
 }
 
 //! \brief Parse and validate an optional --runtype option.
@@ -66,7 +68,9 @@ inline bool parseRunTypeOption( QCommandLineParser& parser,
                                  int& exit_code )
 {
    if ( ! parser.isSet( run_type_option ) )
+   {
       return false;
+   }
 
    const QString run_type = parser.value( run_type_option ).toUpper();
 
@@ -90,12 +94,6 @@ inline QString runTypeOptionHelp()
         + supportedRunTypes().join( ", " ) + "; default RA). Affects the type "
           "tag and the derived file names only -- the simulated data is "
           "identical for every type";
-}
-
-//! Recognized channel letters in their persisted numbering order.
-inline QString channelLetters()
-{
-   return "SABCDEFGH";
 }
 
 //! \brief Parse and validate the optional --cell and --channel options.
@@ -132,10 +130,10 @@ inline bool parseTripleOptions( QCommandLineParser& parser,
    {
       const QString channel = parser.value( channel_option ).toUpper();
 
-      if ( channel.length() != 1  ||  ! channelLetters().contains( channel ) )
+      if ( channel.length() != 1  ||  ! US_Util::channel_letters().contains( channel ) )
       {
          QTextStream( stderr ) << "Invalid --channel " << channel
-            << "; expected one of " << channelLetters() << Qt::endl;
+            << "; expected one of " << US_Util::channel_letters() << Qt::endl;
          QApplication::exit( 1 );
          exit_code = 1;
          return true;
@@ -163,7 +161,9 @@ inline bool parseNoiseSeedOption( QCommandLineParser& parser,
                                   int& exit_code )
 {
    if ( ! parser.isSet( noise_seed_option ) )
+   {
       return false;
+   }
 
    bool ok = false;
    const QString  value = parser.value( noise_seed_option );
@@ -186,17 +186,18 @@ inline bool parseNoiseSeedOption( QCommandLineParser& parser,
 //! \brief Help text for the --noise-seed option, shared by the simulators.
 inline QString noiseSeedOptionHelp()
 {
-   return "Seed for the noise generator (1 to 4294967295). Given the same "
-          "seed and the same inputs, a run's noise is reproducible; omitted, "
-          "the generator is left as it is";
+   return QString( "Seed for the noise generator (1 to %1). Given the same "
+                   "seed and the same inputs, a run's noise is reproducible; "
+                   "omitted, the generator is left as it is" ).arg( UINT_MAX );
 }
 
 //! \brief Help text for the --channel option, shared by the simulators.
 inline QString channelOptionHelp()
 {
-   return "Channel letter to tag the output with (" + channelLetters()
-        + "; default S). S is the single-channel centerpiece case; A and B "
-          "are the two channels of a standard two-channel centerpiece";
+   return "Channel letter to tag the output with (" + US_Util::channel_letters()
+        + "; default S). S is a single-channel centerpiece. A-H are the "
+          "channels of a multi-channel centerpiece, in sample/reference pairs "
+          "A/B, C/D, E/F and G/H";
 }
 
 //! \brief Handle an input-loading failure during a headless run.

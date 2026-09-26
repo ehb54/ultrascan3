@@ -843,7 +843,9 @@ DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
 
    }
    else
+   {
       hardware_ok = false;
+   }
 
    if ( US_Hardware::readRotorMap( db, rotor_map ) )
    {  // Get rotor coefficients by matching calibration ID
