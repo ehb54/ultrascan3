@@ -65,8 +65,8 @@ int main( int argc, char* argv[] )
    parser.addOption(centerpiece_option);
    auto centerpiece_channel_option = QCommandLineOption("centerpiece-channel",
       "Row within the centerpiece (default: 0), given either as a channel "
-      "letter (A-H, where a channel and its reference share a row, so A and B "
-      "are row 0) or as a bare row index",
+      "letter (S or A-H; a channel and its reference share a row, so S, A and "
+      "B are row 0) or as a bare row index",
       "channel");
    parser.addOption(centerpiece_channel_option);
    auto start_option = QCommandLineOption("start",
