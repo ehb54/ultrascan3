@@ -44,7 +44,9 @@ bool writeText( const QString& path, const QString& text )
    QFile file( path );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
       return false;
+   }
 
    return file.write( text.toUtf8() ) == text.toUtf8().size();
 }
@@ -56,7 +58,9 @@ QVector< int > speedStepsOf( const QString& path )
    QFile file( path );
 
    if ( ! file.open( QIODevice::ReadOnly ) )
+   {
       return speeds;
+   }
 
    QXmlStreamReader xml( &file );
 
@@ -65,7 +69,9 @@ QVector< int > speedStepsOf( const QString& path )
       xml.readNext();
 
       if ( xml.isStartElement()  &&  xml.name().toString() == "speedstep" )
+      {
          speeds << xml.attributes().value( "rotorspeed" ).toInt();
+      }
    }
 
    return speeds;
@@ -77,7 +83,9 @@ QString attributeOf( const QString& path, const QString& element,
    QFile file( path );
 
    if ( ! file.open( QIODevice::ReadOnly ) )
+   {
       return QString();
+   }
 
    QXmlStreamReader xml( &file );
 
@@ -86,7 +94,9 @@ QString attributeOf( const QString& path, const QString& element,
       xml.readNext();
 
       if ( xml.isStartElement()  &&  xml.name().toString() == element )
+      {
          return xml.attributes().value( attribute ).toString();
+      }
    }
 
    return QString();
@@ -97,8 +107,10 @@ class US_AstfemSimPersistTest : public QObject
 {
    Q_OBJECT
 
-   QTemporaryDir  scratch;
-   QString        outRoot;
+   QTemporaryDir        scratch;
+   QString              outRoot;
+   QString              inputs;
+   QProcessEnvironment  env;
 
    // Path of the sibling run directory a speed step is saved into.
    QString speedDir( int rpm ) const
@@ -117,7 +129,7 @@ private slots:
    {
       QVERIFY( scratch.isValid() );
 
-      const QString inputs = scratch.path() + "/inputs";
+      inputs               = scratch.path() + "/inputs";
       outRoot              = scratch.path() + "/out";
 
       // Isolate the child process working time state under a temporary HOME.
@@ -130,7 +142,7 @@ private slots:
 
       QVERIFY( writeText( inputs + "/simparams.xml", kSimParams ) );
 
-      QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+      env = QProcessEnvironment::systemEnvironment();
       env.insert( "HOME", home );
 
       // Use registered application settings to avoid a modal registration dialog.
@@ -138,7 +150,9 @@ private slots:
                                     QStringLiteral( "US3_TEST_SANDBOX" ),
                                     QStringLiteral( "US3_TEST_SETTINGS_ROOT" ),
                                     QStringLiteral( "US3_TEST_WORK_ROOT" ) } )
+      {
          env.remove( name );
+      }
 
       QProcess gen;
       gen.setProcessEnvironment( env );
@@ -247,6 +261,53 @@ private slots:
             lastTime = scan.seconds;
          }
       }
+   }
+
+   void riNoiseRecordCoversEachScanOfItsStep()
+   {
+      for ( int rpm : { 40000, 50000 } )
+      {
+         const QString runID = speedRunID( rpm );
+         US_DataIO::RawData data;
+         QCOMPARE( US_DataIO::readRawData(
+                      speedDir( rpm ) + "/" + runID + ".RA.1.S.123.auc",
+                      data ),
+                   (int)US_DataIO::OK );
+
+         QFile csv( speedDir( rpm ) + "/ASTFEM_RI_NOISE.csv" );
+         QVERIFY( csv.open( QIODevice::ReadOnly | QIODevice::Text ) );
+         QStringList rows = QString::fromUtf8( csv.readAll() )
+                               .split( "\n", Qt::SkipEmptyParts );
+         QVERIFY( ! rows.isEmpty() );
+         rows.removeFirst();   // header
+
+         // One noise row per scan of this step, at that scan's time.
+         QCOMPARE( rows.size(), kScansPerStep );
+         for ( int scan = 0; scan < rows.size(); scan++ )
+         {
+            QCOMPARE( qRound( rows[ scan ].section( ",", 0, 0 ).toDouble() ),
+                      qRound( data.scanData[ scan ].seconds ) );
+         }
+      }
+   }
+
+   void cellBeyondTheRotorHoleCountIsRejected()
+   {
+      // Rotor 2 is an AN60, which has 4 holes.
+      QProcess sim;
+      sim.setProcessEnvironment( env );
+      sim.start( US_ASTFEM_SIM_EXE,
+                 { "--no-db", "--errors-cl", "--close",
+                   "--model",     inputs + "/model.xml",
+                   "--buffer",    inputs + "/buffer.xml",
+                   "--simparams", inputs + "/simparams.xml",
+                   "--rotor", "2", "--cell", "5" } );
+      QVERIFY( sim.waitForFinished( 60000 ) );
+
+      QCOMPARE( sim.exitStatus(), QProcess::NormalExit );
+      QCOMPARE( sim.exitCode(), 2 );
+      QVERIFY( QString::fromUtf8( sim.readAllStandardError() )
+                  .contains( "has only 4 holes" ) );
    }
 
    void speedRunsShareAProjectButNotARawIdentity()

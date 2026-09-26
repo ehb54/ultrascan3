@@ -102,7 +102,9 @@ int main( int argc, char* argv[] )
 
    int cli_exit_code = 0;
    if ( handleStandardCliOptions( parser, help_option, version_option, cli_exit_code ) )
+   {
       return cli_exit_code;
+   }
 
    int default_data_location = US_Settings::default_data_location();
    if ( parser.isSet( ignore_db_option ) )
@@ -112,31 +114,57 @@ int main( int argc, char* argv[] )
 
    QMap<QString, QString> args;
    if ( parser.isSet( models_option ) && !parser.value( models_option ).isEmpty() )
+   {
       args["models"] = parser.value( models_option );
+   }
    if ( parser.isSet( buffer_option ) && !parser.value( buffer_option ).isEmpty() )
+   {
       args["buffer"] = parser.value( buffer_option );
+   }
    if ( parser.isSet( sim_parameters_option ) && !parser.value( sim_parameters_option ).isEmpty() )
+   {
       args["simparams"] = parser.value( sim_parameters_option );
+   }
    if ( parser.isSet( rotor_option ) && !parser.value( rotor_option ).isEmpty() )
+   {
       args["rotor"] = parser.value( rotor_option );
+   }
    if ( parser.isSet( centerpiece_option ) )
+   {
       args["centerpiece"] = parser.value( centerpiece_option );
+   }
    if ( parser.isSet( centerpiece_channel_option ) )
+   {
       args["centerpiece-channel"] = parser.value( centerpiece_channel_option );
+   }
    if ( parser.isSet( start_option ) )
+   {
       args["start"] = "true";
+   }
    if ( parser.isSet( errors_option ) )
+   {
       args["errors-cl"] = "true";
+   }
    if ( parseRunTypeOption( parser, run_type_option, args, cli_exit_code ) )
+   {
       return cli_exit_code;
+   }
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
+   {
       args["save"] = parser.value( save_option ).replace("\\", "/");
+   }
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
+   {
       args["guid-seed"] = parser.value( guid_seed_option );
+   }
    if ( parser.isSet( edit_stamp_option ) && !parser.value( edit_stamp_option ).isEmpty() )
+   {
       args["edit-timestamp"] = parser.value( edit_stamp_option );
+   }
    if ( parser.isSet( close_option ) )
+   {
       args["close"] = "true";
+   }
 
    int init_status = args.isEmpty() ? 1 : w.init_from_args( args );
 
