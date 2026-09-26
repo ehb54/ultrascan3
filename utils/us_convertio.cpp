@@ -220,7 +220,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       // Write cell table record
       QStringList parts    = triple->tripleDesc.split(" / ");
       const QString& cell         = parts[ 0 ];
-      QString letters("SABCDEFGH");
+      QString letters      = US_Util::channel_letters();
       const QString& channel      = parts[ 1 ];
       int     channelNum   = letters.indexOf( channel );
       QString eccc         = cell + ":" + QString::number( channelNum )
@@ -497,7 +497,7 @@ qDebug() << " rRDD: read BlobFromDB (loop)";
    while ( db->next() )
    {
       struct cellInfo cell;
-      QString letters("SABCDEFGH");
+      QString letters    = US_Util::channel_letters();
       cell.cellName      = db->value( 2 ).toString();
       cell.channelName   = QString( letters[ qMax( 0, db->value( 3 ).toInt() ) ] );
       cell.centerpieceID = db->value( 4 ).toInt();

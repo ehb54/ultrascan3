@@ -3,6 +3,7 @@
 set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(us_astfem_sim
+    ${src_dir}/main.cpp
     ${src_dir}/us_astfem_sim.cpp
     ${src_dir}/us_clipdata.cpp
 )

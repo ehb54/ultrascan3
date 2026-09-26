@@ -19,7 +19,9 @@ static QString coefficient_help( const US_SimSpecies::Coefficient& coeff )
    QString help( coeff.description );
 
    if ( QString( coeff.name ) == "s" )
+   {
       help += "; append S for Svedbergs (for example, 4.5S or 4.5e-13)";
+   }
 
    return help;
 }
@@ -33,7 +35,9 @@ static bool parse_svedberg( const QString& text, double& value, QString& error )
                       && ! trimmed.endsWith( "eS", Qt::CaseInsensitive );
 
    if ( svedberg )
+   {
       trimmed.chop( 1 );
+   }
 
    bool numeric = false;
    value        = trimmed.toDouble( &numeric );
@@ -76,11 +80,13 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
    const QString given = text.trimmed();
 
    for ( const QPair< QString, int >& name : names )
+   {
       if ( given.compare( name.first, Qt::CaseInsensitive ) == 0 )
       {
          type = name.second;
          return true;
       }
+   }
 
    // Accept numeric analyte type values.
    bool numeric = false;
@@ -96,7 +102,9 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
    QStringList accepted;
 
    for ( const QPair< QString, int >& name : names )
+   {
       accepted << QString( "%1 (%2)" ).arg( name.first ).arg( name.second );
+   }
 
    error = QString( "%1 \"%2\" is not one of %3" )
       .arg( origin, given, accepted.join( ", " ) );
@@ -133,7 +141,9 @@ static bool parse_component( const QCommandLineParser& parser,
    {
       const QString name = coeff.name;
       if ( ! parser.isSet( *options.constFind( name ) ) )
+      {
          continue;
+      }
 
       any_supplied = true;
       const QString text = parser.value( *options.constFind( name ) );
@@ -142,7 +152,9 @@ static bool parse_component( const QCommandLineParser& parser,
       if ( name == "s" )
       {
          if ( ! parse_svedberg( text, value, error ) )
+         {
             return false;
+         }
       }
       else
       {
@@ -191,7 +203,9 @@ static bool parse_component( const QCommandLineParser& parser,
       if ( ! parse_analyte_type(
                 parser.value( *options.constFind( "analyte-type" ) ),
                 "--analyte-type", supplied.analyte_type, error ) )
+      {
          return false;
+      }
    }
 
    if ( options.contains( "analyte-guid" )
@@ -200,7 +214,9 @@ static bool parse_component( const QCommandLineParser& parser,
       if ( ! parse_analyte_guid(
                 parser.value( *options.constFind( "analyte-guid" ) ),
                 "--analyte-guid", supplied.analyte_guid, error ) )
+      {
          return false;
+      }
    }
 
    if ( options.contains( "name" )
@@ -226,7 +242,9 @@ static bool parse_component( const QCommandLineParser& parser,
 
    error = US_SimSpecies::validateComponent( supplied );
    if ( ! error.isEmpty() )
+   {
       return false;
+   }
 
    component = supplied;
    return true;
@@ -275,7 +293,9 @@ static bool parse_component_spec( const QString& spec,
       {
          if ( ! parse_analyte_type( text, "--component type",
                                     supplied.analyte_type, error ) )
+         {
             return false;
+         }
          continue;
       }
 
@@ -284,7 +304,9 @@ static bool parse_component_spec( const QString& spec,
       {
          if ( ! parse_analyte_guid( text, "--component guid",
                                     supplied.analyte_guid, error ) )
+         {
             return false;
+         }
          continue;
       }
 
@@ -293,8 +315,12 @@ static bool parse_component_spec( const QString& spec,
       const US_SimSpecies::Coefficient* match = nullptr;
 
       for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+      {
          if ( key == coeff.name )
+         {
             match = &coeff;
+         }
+      }
 
       if ( match == nullptr  &&  key != "vbar20"  &&  key != "conc"
                              &&  key != "extinction" )
@@ -302,7 +328,9 @@ static bool parse_component_spec( const QString& spec,
          QStringList names;
 
          for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+         {
             names << coeff.name;
+         }
 
          names << "vbar20" << "conc" << "extinction" << "type" << "guid"
                << "name";
@@ -317,7 +345,9 @@ static bool parse_component_spec( const QString& spec,
       if ( key == "s" )
       {
          if ( ! parse_svedberg( text.trimmed(), value, error ) )
+         {
             return false;
+         }
       }
       else
       {
@@ -361,7 +391,9 @@ static bool parse_component_spec( const QString& spec,
 
    error = US_SimSpecies::validateComponent( supplied );
    if ( ! error.isEmpty() )
+   {
       return false;
+   }
 
    component = supplied;
    return true;
@@ -555,8 +587,12 @@ int main( int argc, char* argv[] )
       bool uses_flags      = false;
 
       for ( const QString& name : coefficient_opts.keys() )
+      {
          if ( parser.isSet( *coefficient_opts.constFind( name ) ) )
+         {
             uses_flags = true;
+         }
+      }
 
       if ( uses_components && uses_flags )
       {
@@ -627,6 +663,7 @@ int main( int argc, char* argv[] )
       }
 
       for ( const US_SimSpecies::Component& c : components )
+      {
          if ( c.name.contains( "." ) )
          {
             QTextStream( stderr ) << "Error: a component name must not contain "
@@ -634,6 +671,7 @@ int main( int argc, char* argv[] )
                << c.name << "\")" << Qt::endl;
             return 1;
          }
+      }
 
       US_Model model_out;
       if ( ! US_SimSpecies::model( components, model_out, component_error ) )
@@ -646,10 +684,14 @@ int main( int argc, char* argv[] )
       // An unnamed component takes the description, which is unambiguous only
       // when it is the sole component.
       for ( int ii = 0; ii < model_out.components.count(); ii++ )
+      {
          if ( components[ ii ].name.isEmpty() )
+         {
             model_out.components[ ii ].name = ( components.count() == 1 )
                ? description
                : QString( "%1 %2" ).arg( description ).arg( ii + 1 );
+         }
+      }
 
       if ( model_out.write( parser.value( out_option ) ) != IUS_DB2::OK )
       {
@@ -731,7 +773,10 @@ int main( int argc, char* argv[] )
       bool ok = true;
       auto opt_double = [&]( const QCommandLineOption& opt, double def )
       {
-         if ( ! parser.isSet( opt ) ) return def;
+         if ( ! parser.isSet( opt ) )
+         {
+            return def;
+         }
          bool this_ok = false;
          double v = parser.value( opt ).toDouble( &this_ok );
          ok = ok && this_ok;
@@ -739,7 +784,10 @@ int main( int argc, char* argv[] )
       };
       auto opt_int = [&]( const QCommandLineOption& opt, int def )
       {
-         if ( ! parser.isSet( opt ) ) return def;
+         if ( ! parser.isSet( opt ) )
+         {
+            return def;
+         }
          bool this_ok = false;
          int v = parser.value( opt ).toInt( &this_ok );
          ok = ok && this_ok;
@@ -842,7 +890,9 @@ int main( int argc, char* argv[] )
       }
 
       if ( parser.isSet( rotor_calibration_option ) )
+      {
          sp_params.rotor_calibr = parser.value( rotor_calibration_option );
+      }
       sp_params.band_forming = parser.isSet( band_forming_option );
 
       US_SimulationParameters sp_out;

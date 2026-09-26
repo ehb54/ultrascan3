@@ -1106,7 +1106,10 @@ int US_DataIO::writeEdits( const QString& filename, const EditValues& p )
 {
    QFile ff( filename );
 
-   if ( ! ff.open( QIODevice::WriteOnly | QIODevice::Text ) ) return CANTOPEN;
+   if ( ! ff.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return CANTOPEN;
+   }
 
    // Match the eight-decimal radius format produced by us_edit.
    const char fmt = 'f';

@@ -111,30 +111,30 @@ US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
    pb_prev    ->setEnabled( false );
    pb_next    ->setEnabled( false );
 
-   connect( pb_prefilt, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::pre_filt );
-   connect( pb_semodels, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::select_models );
-   connect( pb_defbuff, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::define_buffer );
-   connect( pb_simparms, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::sim_params );
-   connect( pb_selrotor, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::select_rotor );
-   connect( pb_strtsims, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::start_sims );
-   connect( pb_stopsims, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::stop_sims );
-   connect( pb_savesims, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::save_sims );
-   connect( pb_prev, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::prev_plot );
-   connect( pb_next, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::next_plot );
-   connect( pb_help, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::help );
-   connect( pb_close, &QPushButton::clicked,
-            this, &US_MwlSpeciesSim::close_all );
+   connect( pb_prefilt,  &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::pre_filt );
+   connect( pb_semodels, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::select_models );
+   connect( pb_defbuff,  &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::define_buffer );
+   connect( pb_simparms, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::sim_params );
+   connect( pb_selrotor, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::select_rotor );
+   connect( pb_strtsims, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::start_sims );
+   connect( pb_stopsims, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::stop_sims );
+   connect( pb_savesims, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::save_sims );
+   connect( pb_prev,     &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::prev_plot );
+   connect( pb_next,     &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::next_plot );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::help );
+   connect( pb_close,    &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::close_all );
 
    main->addLayout( left );
    main->addLayout( plot );
@@ -492,9 +492,13 @@ void US_MwlSpeciesSim::apply_extinction_scaling( void )
    double max_extinc  = 0.0;
 
    for ( int jm = 0; jm < models.count(); jm++ )
+   {
       for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+      {
          max_extinc      = qMax( max_extinc,
                                  models[ jm ].components[ jc ].extinction );
+      }
+   }
 
    if ( max_extinc <= 0.0 )
    {  // No extinction data in this set: leave every amplitude as loaded.
@@ -598,13 +602,19 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
 
    // CLI overrides for output type and reproducible identifiers.
    if ( flags.contains( "guid-seed" ) )
+   {
       guid_seed  = flags[ "guid-seed" ];
+   }
 
    if ( flags.contains( "edit-timestamp" ) )
+   {
       edit_stamp = flags[ "edit-timestamp" ];
+   }
 
    if ( flags.contains( "runtype" ) && flags[ "runtype" ].length() == 2 )
+   {
       run_type = flags[ "runtype" ];
+   }
 
    // Abort only when an explicitly requested input fails to load.
    bool loaded_models    = true;
@@ -617,8 +627,10 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       QStringList paths = flags[ "models" ].split( ",", Qt::SkipEmptyParts );
       loaded_models      = load_models_from_paths( paths );
       if ( ! loaded_models )
+      {
          reportHeadlessLoadFailure( "models", paths.join( "," ), errors_to_cl,
                                      gui_needed, error_occured );
+      }
    }
 
    if ( flags.contains( "buffer" ) && flags[ "buffer" ].length() > 0 )
@@ -766,7 +778,9 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
          if ( ! save_path.isEmpty()  &&  ! save_sims_to( save_path ) )
          {
             if ( errors_to_cl )
+            {
                return 2;
+            }
             error_occured       = true;
             gui_needed          = true;
          }
@@ -778,9 +792,13 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    }
 
    if ( error_occured )
+   {
       return 2;
+   }
    if ( gui_needed )
+   {
       return 1;
+   }
    return 0;
 }
 
@@ -802,7 +820,9 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 
    nmodels      = models.count();
    if ( nmodels < 1 )
+   {
       return false;
+   }
 
    // Scale amplitudes before computing clipping limits and noise sigmas.
    apply_extinction_scaling();
@@ -822,17 +842,25 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
       QString waveln = QString( triple ).mid( 2, 3 );
 
       if ( ! runids.contains( runid ) )
+      {
          runids  << runid;
+      }
 
       if ( ! chans .contains( chan ) )
+      {
          chans   << chan;
+      }
 
       if ( ! wavelns.contains( waveln ) )
+      {
          wavelns << waveln;
+      }
 
       double tot_conc = 0.0;
       for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+      {
          tot_conc      += models[ jm ].components[ jc ].signal_concentration;
+      }
 
       mtconcs[ jm ]  = tot_conc;
    }
@@ -929,7 +957,9 @@ DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
    // Analysis programs require one edit file per wavelength.
    if ( ! write_edit_files( impdir, cell, channel ) )
+   {
       return false;
+   }
 
    return true;
 }
@@ -940,7 +970,9 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
                                                 const QString& channel )
 {
    if ( models.isEmpty()  ||  synData.isEmpty() )
+   {
       return false;
+   }
 
    // Compose the shared simulation record fields.
    US_Experiment experiment = US_SimRecord::experiment( rotor, simparams,
@@ -951,16 +983,22 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
    QList< double > wavelengths;
 
    for ( int jm = 0; jm < nmodels; jm++ )
+   {
       wavelengths << model_wavelength( models[ jm ].description ).toDouble();
+   }
 
    US_Solution sol = US_SimRecord::solution( models, wavelengths, buffer );
 
    // Set the GUID before saveToDisk() can generate one.
    if ( ! guid_seed.isEmpty() )
+   {
       sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
+   }
 
    if ( sol.analyteInfo.isEmpty() )
+   {
       return false;
+   }
 
    sol.saveToDisk();
 
@@ -1011,7 +1049,9 @@ QString US_MwlSpeciesSim::edit_wavelength_field( const QStringList& descriptions
                                                  int index )
 {
    if ( index < 0  ||  index >= descriptions.count() )
+   {
       return QString();
+   }
 
    return model_wavelength( descriptions[ index ] );
 }
@@ -1038,7 +1078,9 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
    QStringList model_descs;
 
    for ( int jm = 0; jm < nmodels; jm++ )
+   {
       model_descs << models[ jm ].description;
+   }
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -1260,7 +1302,10 @@ if(js==0  || js==(nscans-1))
 void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
                                      double total_conc )
 {
-   if ( simparams.rinoise == 0.0 ) return;
+   if ( simparams.rinoise == 0.0 )
+   {
+      return;
+   }
 
    int scans = rdata.scanData.size();
 
@@ -1269,7 +1314,9 @@ void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
       shared_ri.resize( scans );
 
       for ( int ks = 0; ks < scans; ks++ )
+      {
          shared_ri[ ks ] = US_Math2::box_muller( 0.0, 1.0 );
+      }
    }
 
    double sigma = total_conc * simparams.rinoise / 100;
@@ -1279,18 +1326,27 @@ void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
       double rinoise = shared_ri[ ks ] * sigma;
 
       for ( int mp = 0; mp < rdata.pointCount(); mp++ )
+      {
          rdata.scanData[ ks ].rvalues[ mp ] += rinoise;
+      }
    }
 }
 
 // Add a constant baseline offset.
 void US_MwlSpeciesSim::add_baseline( US_DataIO::RawData& rdata )
 {
-   if ( simparams.baseline == 0.0 ) return;
+   if ( simparams.baseline == 0.0 )
+   {
+      return;
+   }
 
    for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
+   {
       for ( int mp = 0; mp < rdata.pointCount(); mp++ )
+      {
          rdata.scanData[ ks ].rvalues[ mp ] += simparams.baseline;
+      }
+   }
 }
 
 // Add per-point random noise. rnoise scales with the total concentration,
@@ -1298,7 +1354,10 @@ void US_MwlSpeciesSim::add_baseline( US_DataIO::RawData& rdata )
 void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
                                          double total_conc )
 {
-   if ( simparams.rnoise == 0.0  &&  simparams.lrnoise == 0.0 ) return;
+   if ( simparams.rnoise == 0.0  &&  simparams.lrnoise == 0.0 )
+   {
+      return;
+   }
 
    for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
    {
@@ -1308,12 +1367,16 @@ void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
          double noise = 0.0;
 
          if ( simparams.rnoise != 0.0 )
+         {
             noise += US_Math2::box_muller( 0,
                         total_conc * simparams.rnoise / 100 );
+         }
 
          if ( simparams.lrnoise != 0.0 )
+         {
             noise += US_Math2::box_muller( 0,
                         value * simparams.lrnoise / 100 );
+         }
 
          rdata.scanData[ ks ].rvalues[ mp ] = value + noise;
       }
@@ -1325,7 +1388,10 @@ void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
 void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
                                      double total_conc )
 {
-   if ( simparams.tinoise == 0.0 ) return;
+   if ( simparams.tinoise == 0.0 )
+   {
+      return;
+   }
 
    int points = rdata.pointCount();
 
@@ -1345,8 +1411,12 @@ void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
    double sigma = total_conc * simparams.tinoise / 100;
 
    for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
+   {
       for ( int mp = 0; mp < points; mp++ )
+      {
          rdata.scanData[ ks ].rvalues[ mp ] += shared_ti[ mp ] * sigma;
+      }
+   }
 }
 
 // Apply noise after clipping and padding.

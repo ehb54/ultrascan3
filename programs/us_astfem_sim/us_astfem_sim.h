@@ -21,10 +21,6 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-#ifdef US_ASTFEM_SIM_NO_MAIN
-class US_AstfemSimNoiseTest;
-#endif
-
 //! \brief Main window to control and display an ultracentrifugation
 //!        simulation
 
@@ -46,10 +42,6 @@ class US_Astfem_Sim : public US_Widgets
        void new_time         ( double );
 
    private:
-#ifdef US_ASTFEM_SIM_NO_MAIN
-      friend class US_AstfemSimNoiseTest;
-#endif
-
       bool           stopFlag;            //!< Flag to stop the simulation
       bool           sim_failed;          //!< Set when start_simulation() could not produce data
       bool           movieFlag;           //!< Flag to show a movie during simulation

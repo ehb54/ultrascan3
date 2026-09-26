@@ -1575,7 +1575,7 @@ QMap< QString, double > US_Buoyancy::get_data_conf_from_edit_profile ( QString r
   while ( db.next() )
     {
       struct cellInfo cell;
-      QString letters("SABCDEFGH");
+      QString letters    = US_Util::channel_letters();
       cell.cellName      = db. value( 2 ).toString();
       cell.channelName   = QString( letters[ qMax( 0, db. value( 3 ).toInt() ) ] );
       cell.centerpieceID = db. value( 4 ).toInt();

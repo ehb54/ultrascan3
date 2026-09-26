@@ -503,7 +503,9 @@ protected:
 
     QString slurp(const QString& file) {
         QFile ff(file);
-        if (!ff.open(QIODevice::ReadOnly | QIODevice::Text)) return QString();
+        if (!ff.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            return QString();
+        }
         QString text = QString::fromUtf8(ff.readAll());
         ff.close();
         return text;

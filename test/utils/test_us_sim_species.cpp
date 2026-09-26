@@ -523,8 +523,9 @@ TEST_F(US_SimSpeciesTest, ConcentrationsAreAbsoluteAndSumToTheModelTotal) {
 
     US_Model model = build(QVector<US_SimSpecies::Component>() << first << second);
     double total = 0.0;
-    for (const US_Model::SimulationComponent& component : model.components)
+    for (const US_Model::SimulationComponent& component : model.components) {
         total += component.signal_concentration;
+    }
 
     EXPECT_DOUBLE_EQ(total, 5.5);
 }
