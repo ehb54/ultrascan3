@@ -370,6 +370,53 @@ bool US_DB2::connect(
 #endif
 
 #ifdef NO_DB
+bool US_DB2::connectAuthenticated( const QString&, const QString&,
+                                   const QString&, const QString&,
+                                   const QString&, const QString&,
+                                   QString& err )
+{
+   err = "Database support is disabled";
+   return false;
+}
+#else
+bool US_DB2::connectAuthenticated( const QString& host, const QString& dbname,
+                                   const QString& user,
+                                   const QString& password,
+                                   const QString& personGUID,
+                                   const QString& personPassword,
+                                   QString& err )
+{
+   if ( ! connect( host, dbname, user, password, err ) )
+      return false;
+
+   guid   = personGUID;
+   userPW = personPassword;
+
+   // validate_user takes (guid, email, password), so the US3 password goes in
+   // the first caller-argument slot and the credential slot composeQuery
+   // reserves for a password is the empty email.  Both are escaped either way,
+   // so a password carrying a quote or a backslash is a failed login rather
+   // than a broken query.
+   query( composeQuery( "CALL",
+                        QStringList() << "validate_user" << userPW,
+                        guid, QString() ) );
+
+   if ( db_errno != OK )
+   {
+      err = error;
+      return false;
+   }
+
+   // Leave the row where the profile connect leaves it, so callers that read
+   // value() straight after connecting behave the same either way.
+   next();
+   email = value( 1 ).toString();
+
+   return connected;
+}
+#endif
+
+#ifdef NO_DB
 bool US_DB2::beginTransaction( QString& transaction_error )
 {
    transaction_error = "Database support is disabled";
