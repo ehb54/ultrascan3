@@ -95,11 +95,6 @@ class US_MwlSpeciesSim : public US_Widgets
         void add_random_noise( US_DataIO::RawData& rdata, double total_conc );
         void add_ti_noise    ( US_DataIO::RawData& rdata, double total_conc );
 
-        //! Unit-sigma noise shared across wavelengths and scaled by concentration.
-        //! Generated on first use and cleared by start_sims().
-        QVector< double > shared_ti; //!< TI walk over radius, one per run
-        QVector< double > shared_ri; //!< RI offsets, one per scan
-
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
         int tripx;             //!< Triple index
