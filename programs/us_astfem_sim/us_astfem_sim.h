@@ -60,6 +60,7 @@ class US_Astfem_Sim : public US_Widgets
       QString        tmst_tfpath;         //!< Path to the timestate of the simulation in a temporary location
       QString        run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
       int            sim_cell    = 1;    //!< Output cell
+      QString        sim_description = "Simulation"; //!< Output data description, from --description
       char           sim_channel = 'S';  //!< Output channel
       uint           noise_seed  = 0;    //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
       bool           noise_to_composite = true; //!< Apply ASTFEM noise to the composite before splitting by speed
