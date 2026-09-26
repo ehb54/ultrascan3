@@ -709,8 +709,6 @@ DbgLv(1) << "SLOT: start_sims";
    have_p1.clear();
 
    // Clear systematic noise before generating a new run.
-   shared_ti.clear();
-   shared_ri.clear();
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -1436,7 +1434,6 @@ void US_MwlSpeciesSim::init_simparams( void )
 // Initialize the base raw data object
 void US_MwlSpeciesSim::init_rawdata( void )
 {
-   QString guid       = US_SimRecord::guid( guid_seed, "raw.base" );
    QString mdesc      = models[ 0 ].description;
    QString triple     = QString( mdesc ).section( ".", -3, -3 );
    QString waveln     = QString( triple ).mid( 2, 3 );
@@ -1444,10 +1441,7 @@ void US_MwlSpeciesSim::init_rawdata( void )
    rdata0.scanData.clear();
    rdata0.type[0]     = run_type.at( 0 ).toLatin1();
    rdata0.type[1]     = run_type.at( 1 ).toLatin1();
-   rdata0.cell        = 1;
-   rdata0.channel     = 'S';
    rdata0.description = sim_description;
-   US_Util::uuid_parse( guid, (uchar*)rdata0.rawGUID );
 //*DEBUG*
 simparams.debug();
 //*DEBUG*
@@ -1520,7 +1514,7 @@ if(js==0  || js==(nscans-1))
    }
 }
 
-// Add one offset per scan, shared across points and wavelengths.
+// Add one offset per scan, shared across the points of this wavelength.
 void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
                                      double total_conc )
 {
@@ -1529,23 +1523,11 @@ void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
       return;
    }
 
-   int scans = rdata.scanData.size();
-
-   if ( shared_ri.size() != scans )
-   {  // Generate offsets once per run and reuse them across wavelengths.
-      shared_ri.resize( scans );
-
-      for ( int ks = 0; ks < scans; ks++ )
-      {
-         shared_ri[ ks ] = US_Math2::box_muller( 0.0, 1.0 );
-      }
-   }
-
    double sigma = total_conc * simparams.rinoise / 100;
 
-   for ( int ks = 0; ks < scans; ks++ )
+   for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
    {
-      double rinoise = shared_ri[ ks ] * sigma;
+      double rinoise = US_Math2::box_muller( 0.0, sigma );
 
       for ( int mp = 0; mp < rdata.pointCount(); mp++ )
       {
@@ -1605,7 +1587,7 @@ void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
    }
 }
 
-// Add a radial random walk shared across scans and wavelengths.
+// Add a radial random walk shared across the scans of this wavelength.
 // Its spread grows approximately as sqrt(point count) times sigma.
 void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
                                      double total_conc )
@@ -1615,34 +1597,28 @@ void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
       return;
    }
 
-   int points = rdata.pointCount();
+   int    points = rdata.pointCount();
+   double sigma  = total_conc * simparams.tinoise / 100;
+   QVector< double > walk( points );
+   double val    = US_Math2::box_muller( 0.0, sigma );
 
-   if ( shared_ti.size() != points )
-   {  // Generate one unit-sigma walk per run; scale it for each wavelength.
-      shared_ti.resize( points );
-
-      double val = US_Math2::box_muller( 0.0, 1.0 );
-
-      for ( int mp = 0; mp < points; mp++ )
-      {
-         val += US_Math2::box_muller( 0.0, 1.0 );
-         shared_ti[ mp ] = val;
-      }
+   for ( int mp = 0; mp < points; mp++ )
+   {
+      val       += US_Math2::box_muller( 0.0, sigma );
+      walk[ mp ] = val;
    }
-
-   double sigma = total_conc * simparams.tinoise / 100;
 
    for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
    {
       for ( int mp = 0; mp < points; mp++ )
       {
-         rdata.scanData[ ks ].rvalues[ mp ] += shared_ti[ mp ] * sigma;
+         rdata.scanData[ ks ].rvalues[ mp ] += walk[ mp ];
       }
    }
 }
 
 // Apply noise after clipping and padding.
-// TI and RI terms are shared across wavelengths; random terms are independent.
+// Each wavelength gets its own TI, RI, and random noise.
 // Noise scales with concentration, an approximation of instrument noise.
 void US_MwlSpeciesSim::apply_noise( US_DataIO::RawData& rdata,
                                     double total_conc )
@@ -1799,11 +1775,6 @@ int US_MwlSpeciesSim::writeTimeState( const QString&           tmst_fpath,
                                       US_SimulationParameters& simparams,
                                       US_DataIO::RawData&      sim_data )
 {
-#if 0     // New writetimestate function is in AstfemMath
-   simparams.sim      = true;
-   US_AstfemMath::writeTimeState( tmst_fpath, simparams, sim_data );
-#endif
-#if 1     // New writetimestate function is NOT in AstfemMath (duplicate here)
    const bool spsim     = true;
    US_TimeState timestate;
    int nspeed           = simparams.speed_step.size();
@@ -1966,5 +1937,4 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
    timestate.write_defs( 1.0 );
 
    return timestate.time_count();
-#endif
 }
