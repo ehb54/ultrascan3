@@ -5,6 +5,8 @@
 #include "us_gzip.h"
 #include "us_util.h"
 
+#include <QRegularExpression>
+
 #define CIPHER \
 /* TLS 1.2 (Prioritize Galois/Counter Mode) */ \
 "ECDHE-ECDSA-AES256-GCM-SHA384:" \
@@ -610,42 +612,53 @@ void US_DB2::query( const QStringList& arguments )
    query( buildQuery( arguments ) );
 }
 
-QString US_DB2::buildQuery( const QStringList& arguments )
+QString US_DB2::composeQuery( const QString&     keyword,
+                              const QStringList& arguments,
+                              const QString&     guid,
+                              const QString&     password )
 {
-   QString newquery = "CALL " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
+   // The procedure name is arguments[ 0 ], so an empty list has nothing to call.
+   if ( arguments.isEmpty() ) return QString();
+
+   // The name is a SQL identifier, not a quoted literal, so escaping cannot
+   // make it safe -- it is interpolated as written.  Accept only a plain
+   // identifier and refuse anything else rather than emit it.
+   static const QRegularExpression procName( "\\A[A-Za-z_][A-Za-z0-9_]*\\z" );
+   if ( ! procName.match( arguments[ 0 ] ).hasMatch() ) return QString();
+
+   // Backslash first:  escaping the quotes first would then double the
+   // backslashes this step inserts.
+   auto escaped = []( QString value )
+   {
+      value.replace( "\\", "\\\\" );
+      value.replace( "'", "\\'" );
+      return value;
+   };
+
+   // The credentials are quoted literals like every other argument and are
+   // escaped like them.  They used to be interpolated as written, which was
+   // survivable while both came from a stored profile and is not now that a
+   // caller can pass a password straight from a command line.
+   QString newquery = keyword + " " + arguments[ 0 ]
+                    + "('" + escaped( guid ) + "', '" + escaped( password )
+                    + "'";
 
    for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
+      newquery += ", '" + escaped( arguments[ i ] ) + "'";
 
    newquery += ")";
 
-//qDebug() << "NewQuery:" << newquery;
    return newquery;
+}
+
+QString US_DB2::buildQuery( const QStringList& arguments )
+{
+   return composeQuery( "CALL", arguments, guid, userPW );
 }
 
 QString US_DB2::buildQuerySelect( const QStringList& arguments )
 {
-   QString newquery = "SELECT " + arguments[ 0 ]
-                    + "('" + guid + "', '" + userPW + "'";
-
-   for ( int i = 1; i < arguments.size(); i++ )
-   {
-      QString arg = arguments[ i ];
-      arg.replace( "'", "\\'" );
-
-      newquery += ", '" + arg + "'";
-   }
-
-   newquery += ")";
-
-//qDebug() << "NewQuerySelect:" << newquery;
-   return newquery;
+   return composeQuery( "SELECT", arguments, guid, userPW );
 }
 
 #ifdef NO_DB
