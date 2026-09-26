@@ -1,6 +1,7 @@
 //! \file us_convertio.cpp
 
 #include <QDomDocument>
+#include <QRegularExpression>
 
 #include "us_settings.h"
 #include "us_db2.h"
@@ -12,6 +13,213 @@
 // Generic constructor
 US_ConvertIO::US_ConvertIO( void )
 {
+}
+
+// ----------------------------------------------------------------------------
+// Reading one run directory.
+//
+// US_ConvertGui and the corpus loader both used to open their own copy of this
+// sequence.  What they legitimately differ on is how strict to be, so the
+// sequence is shared and the strictness is not: this reports and the caller
+// decides.
+// ----------------------------------------------------------------------------
+
+namespace
+{
+//! The run ID rule US_ConvertGui has always applied to a directory basename.
+bool runIdIsUsable( const QString& runID )
+{
+   static const QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
+
+   return rx.match( runID ).hasMatch();
+}
+
+//! "runID.runType." prefix fields of an AUC basename, or empty if malformed.
+QPair< QString, QString > runFieldsOf( const QString& filename )
+{
+   const QStringList parts = filename.split( "." );
+
+   if ( parts.size() < 5 )
+      return QPair< QString, QString >();
+
+   return QPair< QString, QString >( parts[ 0 ], parts[ 1 ] );
+}
+}
+
+int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
+                               QString& error )
+{
+   run = DiskRun();
+   error.clear();
+
+   // US_Convert::readUS3Disk() builds each path as `dir + filename` with no
+   // separator of its own, so the separator has to be here.  Without it the
+   // read gets past the empty-directory check and then fails opening
+   // "<dir><filename>", reporting a caller's path mistake as a corrupt file.
+   QString dir = QString( directory ).replace( "\\", "/" );
+
+   while ( dir.endsWith( "/" ) )
+      dir.chop( 1 );
+
+   run.runID     = dir.section( "/", -1, -1 );
+   run.directory = dir + "/";
+
+   if ( ! runIdIsUsable( run.runID ) )
+   {
+      error = QString( "\"%1\" cannot be a run ID: a run directory name may "
+                       "hold only letters, digits, the underscore and the "
+                       "hyphen, and at most 80 of them" ).arg( run.runID );
+      return US_Convert::INVALID_RUN;
+   }
+
+   const int rawStatus = US_Convert::readUS3Disk( run.directory, run.rawData,
+                                                  run.triples, run.runType );
+
+   if ( rawStatus != US_Convert::OK )
+   {
+      error = ( rawStatus == US_Convert::NODATA )
+              ? QString( "No .auc files were found in %1" ).arg( run.directory )
+              : QString( "A data file in %1 could not be read" )
+                .arg( run.directory );
+      return rawStatus;
+   }
+
+   // Everything downstream indexes scans.  US_SimulationParameters::
+   // computeSpeedSteps() in particular dereferences (*scans)[0] with no size
+   // guard, so a dataset with no scans has to be caught here, before any
+   // consumer of this run reaches it.
+   if ( run.rawData.isEmpty() )
+   {
+      error = QString( "%1 holds no raw data" ).arg( run.directory );
+      return US_Convert::INVALID_RUN;
+   }
+
+   for ( int ii = 0; ii < run.rawData.size(); ii++ )
+   {
+      if ( run.rawData[ ii ].scanData.isEmpty() )
+      {
+         error = QString( "The data file for %1 has no scans" )
+                 .arg( run.triples[ ii ].tripleDesc );
+         return US_Convert::INVALID_RUN;
+      }
+   }
+
+   // Filenames carrying more than one run ID or run type.  Reported, not
+   // rejected: US_Convert::readUS3Disk() takes the first file's run type for
+   // the whole run and says nothing, which is how a directory holding two
+   // runs reads as one.
+   QStringList runIDs;
+   QStringList runTypes;
+   QDir        listing( run.directory );
+
+   for ( const QString& name : listing.entryList( QStringList( "*.auc" ),
+                                                  QDir::Files | QDir::Readable,
+                                                  QDir::Name ) )
+   {
+      const QPair< QString, QString > fields = runFieldsOf( name );
+
+      if ( fields.first.isEmpty() )
+         continue;
+
+      if ( ! runIDs.contains( fields.first ) )
+         runIDs << fields.first;
+
+      if ( ! runTypes.contains( fields.second ) )
+         runTypes << fields.second;
+   }
+
+   // Held rather than returned.  Reading stops here only for things that make
+   // the rest of the read impossible or unsafe; a directory holding two runs
+   // is neither, and US_ConvertGui loads such an archive today with its
+   // experiment metadata intact.  Returning now would take that away.
+   QString mixedDetail;
+
+   if ( runTypes.size() > 1 )
+      mixedDetail = QString( "the data files name more than one run type "
+                             "(%1); only %2 was read" )
+                    .arg( runTypes.join( ", " ), run.runType );
+
+   else if ( runIDs.size() > 1 )
+      mixedDetail = QString( "the data files name more than one run (%1)" )
+                    .arg( runIDs.join( ", " ) );
+
+   QString detail;
+   const int expStatus = run.experiment.readFromDisk(
+      run.triples, run.runType, run.runID, run.directory,
+      run.speedSteps, detail );
+
+   if ( expStatus != US_Convert::OK )
+   {
+      const QString file = run.runID + "." + run.runType + ".xml";
+
+      if ( expStatus == US_Convert::CANTOPEN )
+         error = QString( "The experiment record %1 could not be opened" )
+                 .arg( run.directory + file );
+
+      else if ( expStatus == US_Convert::BADXML )
+         error = QString( "The experiment record %1 is not well-formed XML" )
+                 .arg( run.directory + file );
+
+      else
+         error = QString( "%1 and the data files in %2 disagree: %3" )
+                 .arg( file, run.directory, detail );
+
+      // A directory holding two runs explains a dataset mismatch, so it is
+      // named ahead of the mismatch it caused.
+      if ( ! mixedDetail.isEmpty() )
+      {
+         if ( expStatus == US_Convert::CANTOPEN
+              ||  expStatus == US_Convert::BADXML )
+         {  // The record itself is unreadable, which no amount of run mixing
+            // explains away.  Report that, and the mixing alongside it.
+            error += QString( ". Also, %1" ).arg( mixedDetail );
+            return expStatus;
+         }
+
+         error = QString( "The run in %1 is not one run: %2. As a result, %3" )
+                 .arg( run.directory, mixedDetail, detail );
+         return US_Convert::INVALID_RUN;
+      }
+
+      return expStatus;
+   }
+
+   if ( ! mixedDetail.isEmpty() )
+   {
+      error = QString( "The run in %1 is not one run: %2" )
+              .arg( run.directory, mixedDetail );
+      return US_Convert::INVALID_RUN;
+   }
+
+   // Every triple now has a dataset, so each must name the raw data it sits
+   // beside.  A triple with a zero GUID is the dangerous direction: nothing
+   // downstream checks it, and writeRawDataToDB() would unparse and store it.
+   for ( int ii = 0; ii < run.triples.size(); ii++ )
+   {
+      const US_Convert::TripleInfo& triple = run.triples[ ii ];
+
+      if ( triple.tripleFilename.isEmpty() )
+      {
+         error = QString( "The experiment record names no data file for %1" )
+                 .arg( triple.tripleDesc );
+         return US_Convert::PARTIAL_XML;
+      }
+
+      const QString tripleGUID = US_Util::uuid_unparse(
+         (unsigned char*)const_cast< char* >( triple.tripleGUID ) );
+      const QString rawGUID = US_Util::uuid_unparse(
+         (unsigned char*)run.rawData[ ii ].rawGUID );
+
+      if ( tripleGUID != rawGUID )
+      {
+         error = QString( "The experiment record gives %1 the identity %2, "
+                          "but its data file carries %3" )
+                 .arg( triple.tripleDesc, tripleGUID, rawGUID );
+         return US_Convert::BADGUID;
+      }
+   }
+
+   return US_Convert::OK;
 }
 
 // ----------------------------------------------------------------------------
