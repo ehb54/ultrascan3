@@ -529,6 +529,11 @@ DbgLv(1) << "SLOT: start_sims";
    if ( nmodels < 1 )
       return;
 
+   if ( noise_seed != 0 )
+   {
+      US_Math2::randomize( noise_seed );
+   }
+
    // Create the template rawData for all to be created
    init_rawdata();
 
@@ -617,6 +622,11 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    if ( flags.contains( "description" ) )
    {
       sim_description = flags[ "description" ];
+   }
+
+   if ( flags.contains( "noise-seed" ) )
+   {
+      noise_seed = flags[ "noise-seed" ].toUInt();
    }
 
    // Abort only when an explicitly requested input fails to load.
@@ -739,6 +749,12 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
             reportHeadlessLoadFailure( "centerpiece",
                "hardware definitions could not be applied", errors_to_cl,
                gui_needed, error_occured );
+         }
+         else
+         {  // Record the selected centerpiece in the experiment record.
+            QList< US_AbstractCenterpiece > cp_list;
+            US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
+            sim_centerpiece_id = cp_list[ cp ].serial_number;
          }
       }
    }
@@ -1017,7 +1033,7 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
       triple.tripleDesc  = cell + " / " + channel + " / "
                            + model_wavelength( models[ jm ].description );
       triple.excluded    = false;
-      triple.centerpiece = 1;
+      triple.centerpiece = sim_centerpiece_id;
       triple.solution    = sol;
       memcpy( triple.tripleGUID, synData[ jm ].rawGUID,
               sizeof( triple.tripleGUID ) );
@@ -1562,6 +1578,8 @@ int US_MwlSpeciesSim::writeTimeState( const QString&           tmst_fpath,
    US_TimeState timestate;
    int nspeed           = simparams.speed_step.size();
 
+   int status           = 0;  // Nonzero once any write fails
+
    if ( timestate.open_write_data( tmst_fpath, 1.0, 0.0 ) != 0 )
    {
 DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
@@ -1686,7 +1704,7 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
          timestate.set_value( "Temperature", temperature );
          timestate.set_value( "Step",        step        );
          timestate.set_value( "Scan",        scan_nbr    );
-         timestate.flush_record();
+         status |= timestate.flush_record();
       }
    }
 
@@ -1711,13 +1729,14 @@ DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
       timestate.set_value( "Step",        step        );
       timestate.set_value( "Scan",        scan_nbr    );
 
-      timestate.flush_record();
+      status |= timestate.flush_record();
    }
 
-   timestate.close_write_data();
+   status |= timestate.close_write_data();
    timestate.setImportType( US_TimeState::IMPORT_TYPE::MWRS );
    timestate.setTimeStateType( US_TimeState::TIMESTATE_TYPE::CALCULATED );
-   timestate.write_defs( 1.0 );
+   status |= timestate.write_defs( 1.0 );
 
-   return timestate.time_count();
+   // Zero tells the caller the time state was not written.
+   return ( status == 0 ) ? timestate.time_count() : 0;
 }
