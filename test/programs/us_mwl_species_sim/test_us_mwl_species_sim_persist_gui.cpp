@@ -118,7 +118,7 @@ private slots:
       {
          gen.start( US_SIM_INPUTS_GEN_EXE,
                     { "--out", inputs, "--run-id", kRunID,
-                      "--channel", kChannel, "--wavelength", wavelength } );
+                      "--cell", "1", "--channel", "A", "--wavelength", wavelength } );
          QVERIFY( gen.waitForFinished( 60000 ) );
          QCOMPARE( gen.exitCode(), 0 );
 

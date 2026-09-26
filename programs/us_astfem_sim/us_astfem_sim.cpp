@@ -349,9 +349,9 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
 
    // A centerpiece selects the row geometry and overrides the loaded bottom.
    // Preserve rotorCalID so its calibration remains in effect.
-   // A channel letter A-H implies its centerpiece row (A/B are row 0).
+   // A channel letter implies its centerpiece row (S, A and B are row 0).
    int channel_row = -1;
-   if ( flags.contains("channel")  &&  flags["channel"] != "S" )
+   if ( flags.contains("channel") )
    {
       QString unused;
       US_AbstractCenterpiece::parse_channel( flags["channel"], channel_row,

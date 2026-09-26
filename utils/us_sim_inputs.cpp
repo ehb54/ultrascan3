@@ -122,6 +122,19 @@ QString US_SimInputs::validateParams( const Params& p )
       return hardware_error;
    }
 
+   // Analysis ignores the band volume unless the centerpiece forms a band.
+   if ( p.band_forming )
+   {
+      QList< US_AbstractCenterpiece > cp_list;
+      US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
+      if ( cp_list[ p.centerpiece ].shape != "band forming" )
+      {
+         return QString( "band forming requires a band-forming centerpiece "
+                         "(centerpiece %1 is \"%2\")" )
+            .arg( p.centerpiece ).arg( cp_list[ p.centerpiece ].name );
+      }
+   }
+
    QMap< QString, QString > rotor_map;
    bool loaded_rotors = US_Hardware::readRotorMap( rotor_map );
    if ( p.rotor_calibr != "0" &&

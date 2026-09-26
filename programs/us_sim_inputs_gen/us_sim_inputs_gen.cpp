@@ -7,6 +7,7 @@
 #include <QCommandLineParser>
 #include <QTextStream>
 #include <QDir>
+#include <QRegularExpression>
 
 #include "us_sim_inputs.h"
 #include "us_hardware.h"
@@ -66,15 +67,31 @@ static bool parse_svedberg( const QString& text, double& value, QString& error )
    return true;
 }
 
+// Keys accepted in a --component value.
+static const QStringList& component_keys()
+{
+   static const QStringList keys = []
+   {
+      QStringList names;
+      for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+      {
+         names << coeff.name;
+      }
+      names << "vbar20" << "conc" << "extinction" << "type" << "guid" << "name";
+      return names;
+   }();
+   return keys;
+}
+
 // Accept an analyte type name or US_Analyte::analyte_t value.
 static bool parse_analyte_type( const QString& text, const QString& origin,
                                 int& type, QString& error )
 {
    static const QVector< QPair< QString, int > > names = {
-      { "Protein", (int)US_Analyte::PROTEIN      },
-      { "DNA",     (int)US_Analyte::DNA          },
-      { "RNA",     (int)US_Analyte::RNA          },
-      { "Other",   (int)US_Analyte::CARBOHYDRATE },
+      { "Protein", static_cast< int >( US_Analyte::PROTEIN )      },
+      { "DNA",     static_cast< int >( US_Analyte::DNA )          },
+      { "RNA",     static_cast< int >( US_Analyte::RNA )          },
+      { "Other",   static_cast< int >( US_Analyte::CARBOHYDRATE ) },
    };
 
    const QString given = text.trimmed();
@@ -92,8 +109,8 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
    bool numeric = false;
    const int value = given.toInt( &numeric );
 
-   if ( numeric  &&  value >= (int)US_Analyte::PROTEIN
-                 &&  value <= (int)US_Analyte::CARBOHYDRATE )
+   if ( numeric  &&  value >= static_cast< int >( US_Analyte::PROTEIN )
+                 &&  value <= static_cast< int >( US_Analyte::CARBOHYDRATE ) )
    {
       type = value;
       return true;
@@ -325,17 +342,8 @@ static bool parse_component_spec( const QString& spec,
       if ( match == nullptr  &&  key != "vbar20"  &&  key != "conc"
                              &&  key != "extinction" )
       {
-         QStringList names;
-
-         for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
-         {
-            names << coeff.name;
-         }
-
-         names << "vbar20" << "conc" << "extinction" << "type" << "guid"
-               << "name";
          error = QString( "--component key \"%1\" is not one of %2" )
-            .arg( key, names.join( ", " ) );
+            .arg( key, component_keys().join( ", " ) );
          return false;
       }
 
@@ -417,11 +425,17 @@ int main( int argc, char* argv[] )
       "for --emit-model, --emit-buffer, or --emit-simparams", "path" );
    parser.addOption( out_option );
    QCommandLineOption runid_option( "run-id",
-      "Run ID for a per-wavelength MWL model; requires --channel and --wavelength",
+      "Run ID for a per-wavelength MWL model; requires --channel and "
+      "--wavelength",
       "id" );
    parser.addOption( runid_option );
+   QCommandLineOption cell_option( "cell",
+      "Cell (rotor hole) of a per-wavelength MWL model (1 to 8; default 1)",
+      "cell" );
+   parser.addOption( cell_option );
    QCommandLineOption channel_option( "channel",
-      "Two-character cell and channel code (for example, 1A)", "channel" );
+      "Channel letter of a per-wavelength MWL model (one of "
+      + US_Util::channel_letters() + ")", "channel" );
    parser.addOption( channel_option );
    QCommandLineOption wavelength_option( "wavelength",
       "Three-digit wavelength in nm (for example, 280)", "nm" );
@@ -568,8 +582,9 @@ int main( int argc, char* argv[] )
    QCommandLineOption centerpiece_option( "centerpiece", "Centerpiece list index", "index" );
    parser.addOption( centerpiece_option );
    QCommandLineOption centerpiece_channel_option( "centerpiece-channel",
-      "Channel index within the centerpiece (not an instrument channel "
-      "label like \"1A\")", "index" );
+      "Row within the centerpiece (default: 0), given either as a channel "
+      "letter (S or A-H; a channel and its reference share a row, so S, A and "
+      "B are row 0) or as a bare row index", "channel" );
    parser.addOption( centerpiece_channel_option );
 
    parser.process( app );
@@ -813,8 +828,17 @@ int main( int argc, char* argv[] )
       sp_params.baseline            = opt_double( sp_baseline_option, sp_params.baseline );
       sp_params.band_volume         = opt_double( band_volume_option, sp_params.band_volume );
       sp_params.centerpiece         = opt_int( centerpiece_option, sp_params.centerpiece );
-      sp_params.centerpiece_channel = opt_int( centerpiece_channel_option,
-                                                sp_params.centerpiece_channel );
+      if ( parser.isSet( centerpiece_channel_option ) )
+      {
+         QString channel_error;
+         if ( ! US_AbstractCenterpiece::parse_channel(
+                   parser.value( centerpiece_channel_option ),
+                   sp_params.centerpiece_channel, channel_error ) )
+         {
+            QTextStream( stderr ) << "Error: " << channel_error << Qt::endl;
+            return 1;
+         }
+      }
 
       if ( ! ok )
       {
@@ -823,41 +847,13 @@ int main( int argc, char* argv[] )
          return 1;
       }
 
-      // Numeric parsing alone does not reject invalid negative values.
-      struct { const char* name; double value; bool allow_zero; } positive[] = {
-         { "--speed",             sp_params.rpm,               false },
-         { "--acceleration",      sp_params.acceleration,      false },
-         { "--scans",             (double)sp_params.scans,     false },
-         { "--points",            (double)sp_params.simpoints, false },
-         { "--radial-resolution", sp_params.radial_resolution, false },
-         { "--duration-hrs",      (double)sp_params.duration_hours,  true },
-         { "--duration-mins",     sp_params.duration_minutes,        true },
-         { "--band-volume",       sp_params.band_volume,             true },
-      };
-
-      for ( const auto& check : positive )
+      // Omitting both delay options selects the acceleration time; an
+      // explicit negative value would be silently treated as zero.
+      if ( ( parser.isSet( delay_hrs_option )  &&  sp_params.delay_hours < 0 )
+           || ( parser.isSet( delay_mins_option )  &&  sp_params.delay_minutes < 0.0 ) )
       {
-         if ( check.allow_zero ? ( check.value < 0.0 ) : ( check.value <= 0.0 ) )
-         {
-            QTextStream( stderr ) << "Error: " << check.name << " must be "
-               << ( check.allow_zero ? "zero or greater" : "greater than zero" )
-               << " (got " << check.value << ")" << Qt::endl;
-            return 1;
-         }
-      }
-
-      if ( sp_params.duration_hours == 0  &&  sp_params.duration_minutes <= 0.0 )
-      {
-         QTextStream( stderr ) << "Error: the run duration must be greater "
-            "than zero" << Qt::endl;
-         return 1;
-      }
-
-      QString cp_error = US_AbstractCenterpiece::validate(
-         sp_params.centerpiece, sp_params.centerpiece_channel );
-      if ( ! cp_error.isEmpty() )
-      {
-         QTextStream( stderr ) << "Error: " << cp_error << Qt::endl;
+         QTextStream( stderr ) << "Error: --delay-hrs and --delay-mins must be "
+            "zero or greater; omit both to use the acceleration time" << Qt::endl;
          return 1;
       }
 
@@ -874,7 +870,7 @@ int main( int argc, char* argv[] )
                << mesh_names.join( "|" ) << Qt::endl;
             return 1;
          }
-         sp_params.meshType = (US_SimulationParameters::MeshType)idx;
+         sp_params.meshType = static_cast< US_SimulationParameters::MeshType >( idx );
       }
 
       if ( parser.isSet( grid_type_option ) )
@@ -886,7 +882,7 @@ int main( int argc, char* argv[] )
                << grid_names.join( "|" ) << Qt::endl;
             return 1;
          }
-         sp_params.gridType = (US_SimulationParameters::GridType)idx;
+         sp_params.gridType = static_cast< US_SimulationParameters::GridType >( idx );
       }
 
       if ( parser.isSet( rotor_calibration_option ) )
@@ -928,33 +924,43 @@ int main( int argc, char* argv[] )
    }
 
    bool has_runid      = parser.isSet( runid_option );
+   bool has_cell       = parser.isSet( cell_option );
    bool has_channel    = parser.isSet( channel_option );
    bool has_wavelength = parser.isSet( wavelength_option );
 
-   if ( has_runid || has_channel || has_wavelength )
+   if ( has_runid || has_cell || has_channel || has_wavelength )
    {
       // One model per wavelength, described in the convention
       // us_mwl_species_sim parses; buffer and simparms are shared across them.
       if ( ! ( has_runid && has_channel && has_wavelength ) )
       {
          QTextStream( stderr ) << "Error: --run-id, --channel, and "
-            "--wavelength must all be given together" << Qt::endl;
+            "--wavelength must all be given for an MWL model" << Qt::endl;
          return 1;
       }
 
       QString run_id    = parser.value( runid_option );
-      QString channel   = parser.value( channel_option );
+      QString cell      = has_cell ? parser.value( cell_option ) : QString( "1" );
+      QString letter    = parser.value( channel_option ).toUpper();
       QString wavelength = parser.value( wavelength_option );
 
-      if ( channel.length() != 2 )
+      bool cell_ok = false;
+      const int cell_nbr = cell.toInt( &cell_ok );
+      if ( ! cell_ok  ||  cell_nbr < 1  ||  cell_nbr > 8 )
       {
-         QTextStream( stderr ) << "Error: --channel must be exactly two "
-            "characters" << Qt::endl;
+         QTextStream( stderr ) << "Error: --cell must be 1 to 8" << Qt::endl;
          return 1;
       }
-      bool wl_ok = false;
-      wavelength.toInt( &wl_ok );
-      if ( ! wl_ok || wavelength.length() != 3 )
+      if ( letter.length() != 1  ||  ! US_Util::channel_letters().contains( letter ) )
+      {
+         QTextStream( stderr ) << "Error: --channel must be one of "
+            << US_Util::channel_letters() << Qt::endl;
+         return 1;
+      }
+      const QString channel = QString::number( cell_nbr ) + letter;
+      // Three digits with no sign, as the model description requires.
+      static const QRegularExpression wavelength_rx( "^[1-9][0-9]{2}$" );
+      if ( ! wavelength_rx.match( wavelength ).hasMatch() )
       {
          QTextStream( stderr ) << "Error: --wavelength must be a 3-digit "
             "number" << Qt::endl;

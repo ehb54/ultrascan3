@@ -109,6 +109,20 @@ TEST_F(US_SimInputsTest, ZeroAccelerationIsRejectedAtTheBuilderBoundary) {
     EXPECT_TRUE(error.contains("acceleration"));
 }
 
+TEST_F(US_SimInputsTest, BandFormingRequiresABandFormingCenterpiece) {
+    US_SimInputs::Params p;
+    p.band_forming = true;
+    p.centerpiece  = 1;    // Epon 2-channel standard
+    US_SimulationParameters sp;
+    QString error;
+
+    EXPECT_FALSE(US_SimInputs::simParams(p, sp, error));
+    EXPECT_TRUE(error.contains("band-forming centerpiece"));
+
+    p.centerpiece = 6;     // Epon 2-channel band forming
+    EXPECT_TRUE(US_SimInputs::simParams(p, sp, error)) << error.toStdString();
+}
+
 TEST_F(US_SimInputsTest, AccelerationRoundingToZeroIsRejected) {
     // Acceleration below 0.5 rpm/s rounds to zero, preventing a finite ramp.
     US_SimInputs::Params p;

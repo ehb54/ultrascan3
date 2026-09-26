@@ -19,22 +19,18 @@ INCLUDEPATH += ../../utils ..
 unix:!macx {
   LIBS      += -L../../lib -lus_utils
   LIBS      += -lcrypto
-  LIBS      += -L$$MYSQLDIR -lmysqlclient
-  INCLUDEPATH += $$MYSQLPATH
   DEFINES   += INTEL LINUX
 }
 
 win32 {
   LIBS      += -L../../lib -lus_utils$${VER}
-  LIBS      += $$MYSQLLIB
   LIBS      += -L$$OPENSSL/lib -lssl -lcrypto
-  INCLUDEPATH += $$MYSQLPATH/include $$OPENSSL/include $$QTPATH/include
+  INCLUDEPATH += $$OPENSSL/include $$QTPATH/include
   DEFINES   += INTEL
 }
 
 macx {
-  LIBS      += -L../../lib -lus_utils -lmysqlclient
-  INCLUDEPATH += $$MYSQLPATH/include
+  LIBS      += -L../../lib -lus_utils
   DEFINES   += MAC OSX
 }
 

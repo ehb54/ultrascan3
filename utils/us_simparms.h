@@ -136,7 +136,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    static int ssProfFromTimeState( US_TimeState*, QVector< SimSpeedProf >& );
 
    //! \brief Set edit radii from simulated cell geometry.
-   //! Bottom-side insets scale for short columns; optical offsets remain fixed.
+   //! The data range spans the column from just past the meniscus to the bottom.
    //! \param edits    Reference to the edit values to fill in
    //! \param meniscus Meniscus radius of the simulated cell
    //! \param bottom   Bottom radius of the simulated cell

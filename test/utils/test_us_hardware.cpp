@@ -14,6 +14,7 @@ TEST_F(US_AbstractCenterpieceTest, ParseChannelAcceptsLetters) {
     const struct { const char* text; int channel; } cases[] = {
         {"A", 0}, {"B", 0}, {"C", 1}, {"D", 1},
         {"E", 2}, {"F", 2}, {"G", 3}, {"H", 3},
+        {"S", 0}, {"s", 0},          // single channel
         {"a", 0}, {"d", 1},          // case-insensitive
         {" C ", 1},                  // surrounding whitespace
     };
