@@ -395,6 +395,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
                "hardware definitions could not be applied", errors_to_cl,
                gui_needed, error_occured );
          }
+         else
+         {  // Record the selected centerpiece in the experiment record.
+            QList< US_AbstractCenterpiece > cp_list;
+            US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
+            sim_centerpiece_id = cp_list[ cp ].serial_number;
+         }
       }
    }
 
@@ -832,7 +838,10 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
                             .toString( "yyMMddhhmmss" )
                           + ".time_state.tmst";
 
-   US_AstfemMath::writetimestate( tmst_tfpath, simparams, sim_data_all );
+   if ( US_AstfemMath::writetimestate( tmst_tfpath, simparams, sim_data_all ) < 0 )
+   {
+      qDebug() << "Error: could not write time state" << tmst_tfpath;
+   }
 
    simparams.simSpeedsFromTimeState( tmst_tfpath );
 //*DEBUG*
@@ -1100,9 +1109,14 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
 
       // Compute the simulation dataset
       if ( astfem->calculate( sim_data_all ) < 0 )
-      {  // Stop before saving if the solver fails.
+      {  // Stop before saving if the solver fails; restore the controls
+         // that finish() would otherwise reset.
          DbgLv(0) << "US_Astfem_Sim: simulation failed";
          sim_failed  = true;
+         pb_stop ->setEnabled( false );
+         pb_start->setEnabled( true );
+         delete astfem;
+         astfem      = NULL;
          return;
       }
       calc_over();
@@ -1443,7 +1457,12 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
 
          else
          {  // Create timestate file pair in imports subdirectory
-            US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas[ 0 ] );
+            if ( US_AstfemMath::writetimestate( tmst_fpath, simparams,
+                                                sim_datas[ 0 ] ) < 0 )
+            {
+               qDebug() << "Error: could not write time state" << tmst_fpath;
+               return false;
+            }
          }
 
          // Save TI noises
@@ -1497,7 +1516,12 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
             QString xdef_fpath1 =  odir1 + "/" + run_id1 + ".time_state.xml";
             QDir().mkpath( odir1 );
 
-            US_AstfemMath::writetimestate( tmst_fpath1, simparams, sim_datas[ 0 ] );
+            if ( US_AstfemMath::writetimestate( tmst_fpath1, simparams,
+                                                sim_datas[ 0 ] ) < 0 )
+            {
+               qDebug() << "Error: could not write time state" << tmst_fpath1;
+               return false;
+            }
 
             for ( int jd = 0; jd < nstep; jd++ )
             {
@@ -1624,7 +1648,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       triple.tripleID    = 1;
       triple.tripleDesc  = cell + " / " + channel + " / " + wl;
       triple.excluded    = false;
-      triple.centerpiece = 1;
+      triple.centerpiece = sim_centerpiece_id;
       triple.solution    = sol;
       memcpy( triple.tripleGUID, sim_data.rawGUID, sizeof( triple.tripleGUID ) );
 

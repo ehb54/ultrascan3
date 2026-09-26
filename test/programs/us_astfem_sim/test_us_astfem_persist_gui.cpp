@@ -204,7 +204,8 @@ private slots:
                    "--guid-seed", kGuidSeed,
                    "--edit-timestamp", kEditStamp,
                    "--noise-seed", "4242",
-                   "--description", kDescription } );
+                   "--description", kDescription,
+                   "--centerpiece", "3" } );
       if ( ! sim.waitForFinished( 300000 ) )
       {  // A missing registration can block the child on a modal dialog.
          sim.kill();
@@ -335,6 +336,27 @@ private slots:
       QVERIFY( rejectedRun( { "--rotor", "1", "--centerpiece", "3",
                               "--channel", "C", "--centerpiece-channel", "A" } )
                   .contains( "--channel C is centerpiece row 1" ) );
+   }
+
+   void experimentRecordNamesTheSelectedCenterpiece()
+   {
+      // Centerpiece index 3 is the Epon 6-channel rectangular, ID 4.
+      for ( int rpm : { 40000, 50000 } )
+      {
+         const QString expPath = speedDir( rpm ) + "/" + speedRunID( rpm )
+                               + ".RA.xml";
+         QCOMPARE( attributeOf( expPath, "centerpiece", "id" ), QString( "4" ) );
+      }
+   }
+
+   void invalidEditTimestampsAreRejected()
+   {
+      // Not ten digits, and ten digits that are not a real date.
+      for ( const QString& stamp : { QString( "abc" ), QString( "2413320000" ) } )
+      {
+         QVERIFY2( rejectedRun( { "--edit-timestamp", stamp }, 1 )
+                      .contains( "Invalid --edit-timestamp" ), qPrintable( stamp ) );
+      }
    }
 
    void intensityRunTypesAreRejected()

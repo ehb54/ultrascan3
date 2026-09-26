@@ -77,8 +77,9 @@ class US_MwlSpeciesSimPersistTest : public QObject
 {
    Q_OBJECT
 
-   QTemporaryDir scratch;
-   QString       outDir;
+   QTemporaryDir       scratch;
+   QString             outDir;
+   QProcessEnvironment env;
    QString       savedRunID;   // the program derives it from the models
 
 private slots:
@@ -98,7 +99,7 @@ private slots:
 
       QVERIFY( writeText( inputs + "/simparams.xml", kSimParams ) );
 
-      QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+      env = QProcessEnvironment::systemEnvironment();
       env.insert( "HOME", home );
 
       // Use registered application settings to avoid a modal registration dialog.
@@ -236,6 +237,19 @@ private slots:
       // Separate datasets of one run, so separate raw identities.
       QCOMPARE( rawGUIDs.size(), kWavelengths.size() );
       QVERIFY( rawGUIDs[ 0 ] != rawGUIDs[ 1 ] );
+   }
+
+   void noiseSeedIsValidated()
+   {
+      // Zero would select a clock-based seed, so it is rejected.
+      QProcess sim;
+      sim.setProcessEnvironment( env );
+      sim.start( US_MWL_SPECIES_SIM_EXE,
+                 { "--no-db", "--errors-cl", "--close", "--noise-seed", "0" } );
+      QVERIFY( sim.waitForFinished( 60000 ) );
+      QCOMPARE( sim.exitCode(), 1 );
+      QVERIFY( QString::fromUtf8( sim.readAllStandardError() )
+                  .contains( "--noise-seed" ) );
    }
 
    void theRunHasOneExperimentRecordNamingAProject()

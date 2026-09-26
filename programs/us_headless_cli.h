@@ -12,6 +12,8 @@
 #include <QMap>
 #include <QString>
 #include <QStringList>
+#include <QDateTime>
+#include <QRegularExpression>
 
 #include <climits>
 
@@ -84,6 +86,37 @@ inline bool parseRunTypeOption( QCommandLineParser& parser,
    }
 
    args["runtype"] = run_type;
+   return false;
+}
+
+//! \brief Parse and validate an optional --edit-timestamp option.
+//! The value names edit files, so it must be a real yyMMddhhmm time.
+//! \return true if the caller should return immediately using exit_code;
+//! false if it should continue processing options.
+inline bool parseEditTimestampOption( QCommandLineParser& parser,
+                                      const QCommandLineOption& stamp_option,
+                                      QMap<QString, QString>& args,
+                                      int& exit_code )
+{
+   if ( ! parser.isSet( stamp_option ) )
+   {
+      return false;
+   }
+
+   const QString stamp = parser.value( stamp_option );
+   static const QRegularExpression digits( "^[0-9]{10}$" );
+
+   if ( ! digits.match( stamp ).hasMatch()
+        ||  ! QDateTime::fromString( stamp, "yyMMddhhmm" ).isValid() )
+   {
+      QTextStream( stderr ) << "Invalid --edit-timestamp " << stamp
+         << "; expected yyMMddhhmm" << Qt::endl;
+      QApplication::exit( 1 );
+      exit_code = 1;
+      return true;
+   }
+
+   args["edit-timestamp"] = stamp;
    return false;
 }
 
