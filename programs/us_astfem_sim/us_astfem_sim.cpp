@@ -28,6 +28,13 @@
 #include "us_lamm_astfvm.h"
 #include "us_time_state.h"
 
+// Directory and run-ID suffix for one speed of a multi-speed run.
+// Six digits cover the simulator's 100000 rpm maximum.
+static QString speed_suffix( int rpm )
+{
+   return QString::asprintf( "-%06d", rpm );
+}
+
 // US_Astfem_Sim constructor
 US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    : US_Widgets( true, p, f )
@@ -342,18 +349,36 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
 
    // A centerpiece selects the row geometry and overrides the loaded bottom.
    // Preserve rotorCalID so its calibration remains in effect.
+   // A channel letter A-H implies its centerpiece row (A/B are row 0).
+   int channel_row = -1;
+   if ( flags.contains("channel")  &&  flags["channel"] != "S" )
+   {
+      QString unused;
+      US_AbstractCenterpiece::parse_channel( flags["channel"], channel_row,
+                                             unused );
+   }
+
    if ( flags.contains("centerpiece") || flags.contains("centerpiece-channel") )
    {
       int cp = 0;
-      int ch = 0;
+      int ch = qMax( 0, channel_row );
       QString parse_error;
 
       if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
-           || ! US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ),
-                                          ch, parse_error ) )
+           || ( flags.contains("centerpiece-channel")
+                && ! US_AbstractCenterpiece::parse_channel(
+                        flags["centerpiece-channel"], ch, parse_error ) ) )
       {
          reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
                                      gui_needed, error_occured );
+      }
+      else if ( channel_row >= 0  &&  ch != channel_row )
+      {
+         reportHeadlessLoadFailure( "centerpiece",
+            QString( "--channel %1 is centerpiece row %2, but "
+                     "--centerpiece-channel selects row %3" )
+               .arg( flags["channel"] ).arg( channel_row ).arg( ch ),
+            errors_to_cl, gui_needed, error_occured );
       }
       else
       {
@@ -387,6 +412,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    if ( flags.contains("runtype") && flags["runtype"].length() == 2 )
    {
       run_type = flags["runtype"];
+   }
+
+   if ( flags.contains("description") )
+   {
+      sim_description = flags["description"];
    }
 
    // Default output triple: cell 1, channel S.
@@ -712,7 +742,7 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
 
    sim_data_all.cell        = sim_cell;
    sim_data_all.channel     = sim_channel;
-   sim_data_all.description = "Simulation";
+   sim_data_all.description = sim_description;
 
    int points    = qRound( ( simparams.bottom - simparams.meniscus ) /
                             simparams.radial_resolution ) + 1;
@@ -892,7 +922,7 @@ DbgLv(1) << "start_simulation is called, steps:" << nstep;
 
       sim_datas[ jd ].cell        = sim_cell;
       sim_datas[ jd ].channel     = sim_channel;
-      sim_datas[ jd ].description = "Simulation";
+      sim_datas[ jd ].description = sim_description;
 
       simparams.meniscus      = meniscus_ar;
       simparams.bottom        = simparams.bottom_position;
@@ -1091,6 +1121,7 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
             this, &US_Astfem_Sim::show_progress );
       connect( astfvm, &US_LammAstfvm::calc_done,
             this, &US_Astfem_Sim::calc_over );
+      astfvm->set_buffer( buffer );
       astfvm->calculate( sim_datas[ 0 ] );
    }
 
@@ -1438,7 +1469,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
             for ( int jd = 0; jd < nstep; jd++ )
             {
                int ispeed          = simparams.speed_step[ jd ].rotorspeed;
-               QString spsufx      = QString::asprintf( "-%05d", ispeed );
+               QString spsufx      = speed_suffix( ispeed );
                QString run_id1     =  run_id + spsufx;
                QString odir1       =  odir   + spsufx;
                QString tmst_fpath1 =  odir1 + "/" + run_id1 + ".time_state.tmst";
@@ -1459,7 +1490,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
             //  copy them to the other each speed's subdirectory,
             //  and save AUC data in all
             int ispeed          = simparams.speed_step[ 0 ].rotorspeed;
-            QString spsufx      = QString::asprintf( "-%05d", ispeed );
+            QString spsufx      = speed_suffix( ispeed );
             QString run_id1     =  run_id + spsufx;
             QString odir1       =  odir   + spsufx;
             QString tmst_fpath1 =  odir1 + "/" + run_id1 + ".time_state.tmst";
@@ -1471,7 +1502,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
             for ( int jd = 0; jd < nstep; jd++ )
             {
                ispeed              = simparams.speed_step[ jd ].rotorspeed;
-               spsufx              = QString::asprintf( "-%05d", ispeed );
+               spsufx              = speed_suffix( ispeed );
                QString run_id2     =  run_id + spsufx;
                QString odir2       =  odir   + spsufx;
                QDir().mkpath( odir2 );
@@ -1495,7 +1526,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
          for ( int ii = 0; ii < nstep; ii++ )
          {
             int ispeed          = simparams.speed_step[ ii ].rotorspeed;
-            QString spsufx      = QString::asprintf( "-%05d", ispeed );
+            QString spsufx      = speed_suffix( ispeed );
             QDir dir( odir + spsufx );
 
             if ( csv_data_ti.rowCount() > 0 )
@@ -1551,8 +1582,8 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
 
    // Write experiment and edit records beside each dataset.
    // Each speed-specific run has its own directory, run ID, and raw GUID.
-   int     nspeed = simparams.speed_step.count();
-   QString now    = edit_stamp.isEmpty()
+   const int nspeed = simparams.speed_step.count();
+   QString   now    = edit_stamp.isEmpty()
                     ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" )
                     : edit_stamp;
 
@@ -1563,17 +1594,15 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       QString edit_runid = run_id;
 
       // A speed-specific run records only its own speed step.
-      QVector< SP_SPEEDPROFILE > speed_steps = simparams.speed_step;
+      QVector< SP_SPEEDPROFILE > speed_steps = ( nspeed > 1 )
+         ? QVector< SP_SPEEDPROFILE >{ simparams.speed_step[ jd ] }
+         : simparams.speed_step;
 
       if ( nspeed > 1 )
       {  // Match the RPM suffix used when saving the data.
-         QString spsufx     = QString::asprintf( "-%05d",
-                                 simparams.speed_step[ jd ].rotorspeed );
+         QString spsufx     = speed_suffix( simparams.speed_step[ jd ].rotorspeed );
          edir               = odir.left( odir.length() - 1 ) + spsufx + "/";
          edit_runid         = run_id + spsufx;
-
-         speed_steps.clear();
-         speed_steps << simparams.speed_step[ jd ];
       }
 
       // Recompute cell limits for this speed; af_params holds the last saved speed.

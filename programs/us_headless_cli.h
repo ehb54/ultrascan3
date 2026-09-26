@@ -87,6 +87,43 @@ inline bool parseRunTypeOption( QCommandLineParser& parser,
    return false;
 }
 
+//! \brief Parse and validate an optional --description option.
+//! The AUC format stores the description as at most 239 Latin-1 characters.
+//! \return true if the caller should return immediately using exit_code;
+//! false if it should continue processing options.
+inline bool parseDescriptionOption( QCommandLineParser& parser,
+                                    const QCommandLineOption& description_option,
+                                    QMap<QString, QString>& args,
+                                    int& exit_code )
+{
+   if ( ! parser.isSet( description_option ) )
+   {
+      return false;
+   }
+
+   const QString description = parser.value( description_option );
+
+   if ( description.isEmpty()  ||  description.length() > 239
+        ||  QString::fromLatin1( description.toLatin1() ) != description )
+   {
+      QTextStream( stderr ) << "Invalid --description; expected 1 to 239 "
+         "Latin-1 characters" << Qt::endl;
+      QApplication::exit( 1 );
+      exit_code = 1;
+      return true;
+   }
+
+   args["description"] = description;
+   return false;
+}
+
+//! \brief Help text for the --description option, shared by the simulators.
+inline QString descriptionOptionHelp()
+{
+   return "Description stored with the simulated data (default "
+          "\"Simulation\"; up to 239 Latin-1 characters)";
+}
+
 //! \brief Help text for the --runtype option, shared by the simulators.
 inline QString runTypeOptionHelp()
 {

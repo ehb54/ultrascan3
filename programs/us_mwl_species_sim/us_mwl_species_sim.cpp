@@ -616,6 +616,11 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       run_type = flags[ "runtype" ];
    }
 
+   if ( flags.contains( "description" ) )
+   {
+      sim_description = flags[ "description" ];
+   }
+
    // Abort only when an explicitly requested input fails to load.
    bool loaded_models    = true;
    bool loaded_buffer    = true;
@@ -1224,7 +1229,7 @@ void US_MwlSpeciesSim::init_rawdata( void )
    rdata0.type[1]     = run_type.at( 1 ).toLatin1();
    rdata0.cell        = 1;
    rdata0.channel     = 'S';
-   rdata0.description = "Simulation";
+   rdata0.description = sim_description;
    US_Util::uuid_parse( guid, (uchar*)rdata0.rawGUID );
 //*DEBUG*
 simparams.debug();

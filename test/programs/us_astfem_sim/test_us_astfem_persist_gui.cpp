@@ -15,6 +15,7 @@ const char* const kRunID    = "persist-run";
 const char* const kGuidSeed = "us3-persist-regression";
 const char* const kEditStamp = "2401010000";
 const int         kScansPerStep = 3;
+const char* const kDescription = "ASTFEM persist test";
 
 // Two speed steps of the same length, small enough to simulate quickly.
 const char* const kSimParams =
@@ -116,12 +117,33 @@ class US_AstfemSimPersistTest : public QObject
    QString speedDir( int rpm ) const
    {
       return outRoot + "/" + QString( kRunID )
-           + QString::asprintf( "-%05d", rpm );
+           + QString::asprintf( "-%06d", rpm );
    }
 
    QString speedRunID( int rpm ) const
    {
-      return QString( kRunID ) + QString::asprintf( "-%05d", rpm );
+      return QString( kRunID ) + QString::asprintf( "-%06d", rpm );
+   }
+
+   // Run the simulator with invalid options; return its stderr, or an empty
+   // string if it did not exit with exit_code.
+   QString rejectedRun( const QStringList& extra, int exit_code = 2 )
+   {
+      QProcess sim;
+      sim.setProcessEnvironment( env );
+      sim.start( US_ASTFEM_SIM_EXE,
+                 QStringList{ "--no-db", "--errors-cl", "--close",
+                              "--model",     inputs + "/model.xml",
+                              "--buffer",    inputs + "/buffer.xml",
+                              "--simparams", inputs + "/simparams.xml" }
+                 + extra );
+      if ( ! sim.waitForFinished( 60000 )
+           || sim.exitStatus() != QProcess::NormalExit
+           || sim.exitCode() != exit_code )
+      {
+         return QString();
+      }
+      return QString::fromUtf8( sim.readAllStandardError() );
    }
 
 private slots:
@@ -181,7 +203,8 @@ private slots:
                    "--save", outRoot + "/" + kRunID,
                    "--guid-seed", kGuidSeed,
                    "--edit-timestamp", kEditStamp,
-                   "--noise-seed", "4242" } );
+                   "--noise-seed", "4242",
+                   "--description", kDescription } );
       if ( ! sim.waitForFinished( 300000 ) )
       {  // A missing registration can block the child on a modal dialog.
          sim.kill();
@@ -249,6 +272,7 @@ private slots:
 
          QCOMPARE( data.scanCount(), kScansPerStep );
          QCOMPARE( (int)data.cell, 1 );
+         QCOMPARE( data.description, QString( kDescription ) );
          QCOMPARE( (char)data.channel, 'S' );
 
          for ( const US_DataIO::Scan& scan : data.scanData )
@@ -294,20 +318,29 @@ private slots:
    void cellBeyondTheRotorHoleCountIsRejected()
    {
       // Rotor 2 is an AN60, which has 4 holes.
-      QProcess sim;
-      sim.setProcessEnvironment( env );
-      sim.start( US_ASTFEM_SIM_EXE,
-                 { "--no-db", "--errors-cl", "--close",
-                   "--model",     inputs + "/model.xml",
-                   "--buffer",    inputs + "/buffer.xml",
-                   "--simparams", inputs + "/simparams.xml",
-                   "--rotor", "2", "--cell", "5" } );
-      QVERIFY( sim.waitForFinished( 60000 ) );
-
-      QCOMPARE( sim.exitStatus(), QProcess::NormalExit );
-      QCOMPARE( sim.exitCode(), 2 );
-      QVERIFY( QString::fromUtf8( sim.readAllStandardError() )
+      QVERIFY( rejectedRun( { "--rotor", "2", "--cell", "5" } )
                   .contains( "has only 4 holes" ) );
+   }
+
+   void channelMissingFromTheCenterpieceIsRejected()
+   {
+      // Centerpiece 1 is a 2-channel centerpiece: only row 0 (A/B) exists.
+      QVERIFY( rejectedRun( { "--rotor", "1", "--centerpiece", "1",
+                              "--channel", "C" } )
+                  .contains( "out of range" ) );
+   }
+
+   void channelAndCenterpieceChannelMustAgree()
+   {
+      QVERIFY( rejectedRun( { "--rotor", "1", "--centerpiece", "3",
+                              "--channel", "C", "--centerpiece-channel", "A" } )
+                  .contains( "--channel C is centerpiece row 1" ) );
+   }
+
+   void descriptionTooLongForTheAucFormatIsRejected()
+   {
+      QVERIFY( rejectedRun( { "--description", QString( 240, 'x' ) }, 1 )
+                  .contains( "Invalid --description" ) );
    }
 
    void speedRunsShareAProjectButNotARawIdentity()
