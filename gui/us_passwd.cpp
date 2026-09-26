@@ -9,6 +9,15 @@ QString US_Passwd::getPasswd( void  )
   QString pw = g.passwd();
   if ( ! pw.isEmpty() ) return pw;
 
+  // A headless run has no one to answer the password dialog.
+  if ( qApp != nullptr && qApp->property( "us3_headless" ).toBool() )
+  {
+    qWarning() << "Error: the master password is not available to this "
+                  "headless run; start UltraScan to unlock the database, "
+                  "or use --no-db";
+    return QString();
+  }
+
   // See if the master pasword has been set
   QByteArray currentHash = US_Settings::UltraScanPW();
 

@@ -188,6 +188,12 @@ QString US_Util::expanded_triple( const QString& ccw, bool spaces )
    return ( cell + sep + chan + sep + wvln );
 }
 
+// Channel letters in database channel-number order
+QString US_Util::channel_letters( void )
+{
+   return "SABCDEFGH";
+}
+
 bool US_Util::is_valid_uuid(const QString& uuid)
 {
    return UUID_REGEX.match(uuid).hasMatch();
@@ -220,12 +226,18 @@ void US_Util::uuid_parse( const QString& in, unsigned char* uu )
    }
 }
 
-// Return a flag true if this is the ith time an error occurred;
-// in truth, that a random number over the given range has hit 1.
+// Return true with probability 1/timeinc; always true for timeinc <= 1.
 bool US_Util::ithTime( int timeinc )
 {
+   // Handle unconditional reporting and avoid division by zero.
+   if ( timeinc < 2 )
+   {
+      return true;
+   }
+
+   // Sample one residue for a 1-in-timeinc reporting rate.
    int rannum  = rand() % timeinc;
-   return ( rannum == 1 );
+   return ( rannum == 0 );
 }
 
 // Return a flag if an XML attribute string represents true or false.
