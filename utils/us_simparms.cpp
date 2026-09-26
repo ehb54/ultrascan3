@@ -829,9 +829,9 @@ DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
       else
       {
          // Pick up centerpiece info by centerpiece and row indexes.
-         QStringList shapes;
-         shapes << "sector" << "standard" << "rectangular" << "band forming"
-                << "meniscus matching" << "circular" << "synthetic";
+         static const QStringList shapes = { "sector", "standard",
+            "rectangular", "band forming", "meniscus matching", "circular",
+            "synthetic" };
          QString shape   = cp_list[ cp ].shape;
          bottom_position = cp_list[ cp ].bottom_position[ ch ];
          cp_pathlen      = cp_list[ cp ].path_length    [ ch ];
@@ -1304,24 +1304,25 @@ DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
 }
 
 // Set the edit radii implied by a simulated cell geometry.
+// Simulated data has no optical artifacts, so the fit range spans the column.
 void US_SimulationParameters::editRadiiFromCell( US_DataIO::EditValues& edits,
       double meniscus, double bottom )
 {
-   // Scale bottom-side insets for columns shorter than the reference geometry.
-   const double standard_column = 1.4;
+   // Starts the range past the meniscus reading, which us_mwl_species_sim
+   // sets to a spike; half the default 0.001 cm radial resolution.
+   const double past_meniscus   = 0.0005;
+   const double baseline_offset = 0.0055;   // cm past the meniscus
+   const double plateau_inset   = 0.3;      // cm before the bottom
+   const double standard_column = 1.4;     // cm; shorter columns scale the inset
 
-   double column     = bottom - meniscus;
-   double fract      = qMin( 1.0, column / standard_column );
+   double fract      = qMin( 1.0, ( bottom - meniscus ) / standard_column );
 
    edits.meniscus    = meniscus;
    edits.bottom      = bottom;
-
-   // Meniscus-side insets are fixed optical offsets.
-   edits.rangeLeft   = meniscus + 0.0005;
-   edits.baseline    = meniscus + 0.0055;
-
-   edits.rangeRight  = bottom - 0.1 * fract;
-   edits.plateau     = bottom - 0.3 * fract;
+   edits.rangeLeft   = meniscus + past_meniscus;
+   edits.rangeRight  = bottom;
+   edits.baseline    = meniscus + baseline_offset;
+   edits.plateau     = bottom - plateau_inset * fract;
 }
 
 // Create a referenced simulation speed step profile from an opened

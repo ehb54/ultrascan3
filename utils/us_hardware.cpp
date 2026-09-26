@@ -338,6 +338,12 @@ bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
       return false;
    }
 
+   if ( trimmed.compare( "S", Qt::CaseInsensitive ) == 0 )
+   {  // A single-channel centerpiece has only row 0
+      channel = 0;
+      return true;
+   }
+
    if ( trimmed.length() == 1 )
    {
       int letter_index = letters.indexOf( trimmed.toUpper() );
@@ -353,7 +359,7 @@ bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
    if ( ! numeric )
    {
       error = QString( "centerpiece-channel \"%1\" is neither a channel letter "
-                       "(A-H) nor a channel index" ).arg( value );
+                       "(S or A-H) nor a channel index" ).arg( value );
       return false;
    }
 

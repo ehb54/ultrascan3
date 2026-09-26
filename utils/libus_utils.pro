@@ -149,3 +149,4 @@ contains( DEFINES, NO_DB ) {
    LIBS         += -L$${MPIPATH}/lib
    INCLUDE      += -I$${MPIPATH}/include
 }
+
