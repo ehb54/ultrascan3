@@ -24,6 +24,9 @@ public:
     MOCK_METHOD(bool, connect, (const QString& host, const QString& dbname,
             const QString& user, const QString& password,
             QString& error), (override));
+    MOCK_METHOD(bool, beginTransaction, (QString& error), (override));
+    MOCK_METHOD(bool, commitTransaction, (QString& error), (override));
+    MOCK_METHOD(bool, rollbackTransaction, (QString& error), (override));
 
     // Test connection methods
     MOCK_METHOD(bool, test_db_connection,
@@ -107,6 +110,12 @@ public:
                                ::testing::An<const QString&>(), ::testing::An<const QString&>(),
                                ::testing::An<QString&>()))
                 .WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, beginTransaction(::testing::_))
+                .WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, commitTransaction(::testing::_))
+                .WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, rollbackTransaction(::testing::_))
+                .WillByDefault(::testing::Return(true));
 
         // Default successful queries
         ON_CALL(*mock, statusQuery(::testing::An<const QString&>()))
@@ -137,6 +146,9 @@ public:
                 .WillByDefault(::testing::Return(true));
         ON_CALL(*mock, connect(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
                 .WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, beginTransaction(::testing::_)).WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, commitTransaction(::testing::_)).WillByDefault(::testing::Return(true));
+        ON_CALL(*mock, rollbackTransaction(::testing::_)).WillByDefault(::testing::Return(true));
 
         // Default successful queries
         ON_CALL(*mock, statusQuery(::testing::An<const QString&>()))

@@ -373,7 +373,7 @@ int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID,
 QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData, 
                                        QList< US_Convert::TripleInfo >& triples,
                                        const QString& dir,
-                                       US_DB2* db )
+                                       IUS_DB2* db )
 {
    const int channelID = 1;
    QString error = QString( "" );
@@ -651,7 +651,7 @@ qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
 
 // Function to read the experiment info and binary auc files to disk
 QString US_ConvertIO::readDBExperiment( QString runID, QString dir,
-					US_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps,
+					IUS_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps,
 					const QString invid_p )
 
 {
@@ -792,7 +792,7 @@ qDebug() << "rDBE:    xdefs WRITTEN";
 QString US_ConvertIO::readRawDataFromDB( US_Experiment& ExpData, 
                                        QList< US_Convert::TripleInfo >& triples,
                                        QString& dir,
-                                       US_DB2* db )
+                                       IUS_DB2* db )
 {
    // Get the rawDataID's that correspond to this experiment
 qDebug() << " rRDD: build raw list";
@@ -958,7 +958,7 @@ qDebug() << " rRDD: build TripleInfo";
 
 int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
                                  QList< US_Convert::TripleInfo >& triples,
-                                 US_DB2* db )
+                                 IUS_DB2* db )
 {
    if ( US_Settings::us_inv_ID() == -1 )
       return US_DB2::NO_PERSON;
@@ -1131,7 +1131,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 //Copy for use in Autoflow
 int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
                                  QList< US_Convert::TripleInfo >& triples,
-                                 US_DB2* db )
+                                 IUS_DB2* db )
 {
    if ( US_Settings::us_inv_ID() == -1 )
       return US_DB2::NO_PERSON;
