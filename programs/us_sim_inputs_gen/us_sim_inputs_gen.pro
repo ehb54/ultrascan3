@@ -16,21 +16,28 @@ CONFIG      -= app_bundle
 DEPENDPATH  += ../../utils ..
 INCLUDEPATH += ../../utils ..
 
+# libus_utils does not carry its MySQL dependency on every platform, so each
+# program linking it must link the client library too.
+
 unix:!macx {
   LIBS      += -L../../lib -lus_utils
   LIBS      += -lcrypto
+  LIBS      += -L$$MYSQLDIR -lmysqlclient
+  INCLUDEPATH += $$MYSQLPATH
   DEFINES   += INTEL LINUX
 }
 
 win32 {
   LIBS      += -L../../lib -lus_utils$${VER}
+  LIBS      += $$MYSQLLIB
   LIBS      += -L$$OPENSSL/lib -lssl -lcrypto
-  INCLUDEPATH += $$OPENSSL/include $$QTPATH/include
+  INCLUDEPATH += $$MYSQLPATH/include $$OPENSSL/include $$QTPATH/include
   DEFINES   += INTEL
 }
 
 macx {
-  LIBS      += -L../../lib -lus_utils
+  LIBS      += -L../../lib -lus_utils -lmysqlclient
+  INCLUDEPATH += $$MYSQLPATH/include
   DEFINES   += MAC OSX
 }
 
