@@ -76,6 +76,10 @@ public:
                          const QString& user, const QString& password,
                          QString& err) = 0;
 
+    virtual bool beginTransaction(QString& error) = 0;
+    virtual bool commitTransaction(QString& error) = 0;
+    virtual bool rollbackTransaction(QString& error) = 0;
+
     // Query methods (used in US_Project and tests)
     virtual void query(const QString& sqlQuery) = 0;
     virtual void query(const QStringList& arguments) = 0;

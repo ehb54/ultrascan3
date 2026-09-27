@@ -7,8 +7,9 @@
 #include "us_extern.h"
 #include "us_convert.h"
 #include "us_experiment.h"
+// The interface only: no signature here names the concrete connection type,
+// so nothing that includes this header has to pull in mysql.h with it.
 #include "ius_db2.h"
-#include "us_db2.h"
 
 struct cellInfo
 {
@@ -152,7 +153,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db         An opened db connection
           \param speedsteps Reference for returned experiment speed steps vector
       */
-      static QString readDBExperiment( QString, QString, US_DB2*,
+      static QString readDBExperiment( QString, QString, IUS_DB2*,
 				       QVector< SP_SPEEDPROFILE >&, const QString = QString("") );
 
       /*! \brief Writes a new DB rawData record for each triple
@@ -170,7 +171,7 @@ class US_UTIL_EXTERN US_ConvertIO
                  US_Experiment& , 
                  QList< US_Convert::TripleInfo >& ,
                  const QString&,
-                 US_DB2* = 0 );
+                 IUS_DB2* = 0 );
 
       /*! \brief Checks some info that was read from disk with values from DB
 
@@ -185,18 +186,18 @@ class US_UTIL_EXTERN US_ConvertIO
       static int checkDiskData( 
                  US_Experiment&,
                  QList< US_Convert::TripleInfo >& ,
-                 US_DB2* = 0 );
+                 IUS_DB2* = 0 );
       static int checkDiskData_auto( 
                  US_Experiment&,
                  QList< US_Convert::TripleInfo >& ,
-                 US_DB2* = 0 );
+                 IUS_DB2* = 0 );
 
    private:
       static QString readRawDataFromDB( 
                  US_Experiment& , 
                  QList< US_Convert::TripleInfo >& ,
                  QString& ,
-                 US_DB2* = 0 );
+                 IUS_DB2* = 0 );
       
 };
 #endif
