@@ -27,7 +27,10 @@ class US_UTIL_EXTERN US_Convert
          BADXML,       //!< XML not formed correctly
          BADGUID,      //!< GUID read in the XML was not found in the database
          PARTIAL_XML,  //!< XML data has not been entered for all c/c/w combos
-         NOT_WRITTEN   //!< Data was not written
+         NOT_WRITTEN,  //!< Data was not written
+         INVALID_RUN   //!< The run is structurally contradictory; see the
+                       //!< accompanying detail string.  Appended at the end so
+                       //!< no existing value is renumbered
       };
 
       //! \brief Class to contain a list of scans to exclude from a data set
