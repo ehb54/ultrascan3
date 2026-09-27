@@ -35,7 +35,9 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param tmst_fpath  Full path to timestate file to examine
       //! \param simparams   Simulation parameters, including speed steps info
       //! \param sim_data    Raw data with scans to examine
-      //! \returns Flag:  0 if the file write succeeded
+      //! \returns The number of time entries written, or -1 if the file could
+      //!          not be opened for writing. Note that 0 means a successful
+      //!          write of an empty time state, not a failure.
       static int  writetimestate( const QString& tmst_fpath, US_SimulationParameters& simparams,
                                   US_DataIO::RawData& sim_data );
 

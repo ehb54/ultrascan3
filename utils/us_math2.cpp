@@ -62,20 +62,21 @@ static libnnls libnnls0;
 
 */
 
+// Cache the second Gaussian value; reseeding clears it.
+static bool   bm_use_last = false;
+static double bm_y2       = 0.0;
+
 double US_Math2::box_muller( double m, double s )   
 {
-   static bool  use_last = false;
-
    double        x1;
    double        x2;
    double        w;
    double        y1;
-   static double y2;
 
-   if ( use_last )  // Use value from previous call 
+   if ( bm_use_last )  // Use value from previous call
    {
-      y1       = y2;
-      use_last = false;
+      y1          = bm_y2;
+      bm_use_last = false;
    }
    else
    {
@@ -86,10 +87,10 @@ double US_Math2::box_muller( double m, double s )
          w = sq( x1 ) + sq( x2 );
       } while ( w >= 1.0 );
 
-      w        = sqrt( ( -2.0 * log( w ) ) / w );
-      y1       = x1 * w;
-      y2       = x2 * w;
-      use_last = true;
+      w           = sqrt( ( -2.0 * log( w ) ) / w );
+      y1          = x1 * w;
+      bm_y2       = x2 * w;
+      bm_use_last = true;
    }
 
    return m + y1 * s;
@@ -818,6 +819,7 @@ uint US_Math2::randomize( void )
 #endif
 
    get_random_generator().seed( seed );
+   bm_use_last = false;
    return seed;
 }
 
@@ -830,6 +832,7 @@ uint US_Math2::randomize( uint seed )
    else
    {
       get_random_generator().seed( seed );
+      bm_use_last = false;
    }
 
    return seed;

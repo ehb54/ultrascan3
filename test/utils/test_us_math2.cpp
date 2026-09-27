@@ -421,6 +421,26 @@ EXPECT_DOUBLE_EQ(first1, first2) << "Same seed should produce same sequence";
 EXPECT_DOUBLE_EQ(second1, second2) << "Same seed should produce same sequence";
 }
 
+TEST_F(TestUSMath2Unit, RandomizeRestartsGaussianSequenceAfterOddDrawCount) {
+// Reseeding must discard the cached second Gaussian value.
+uint seed = 98765;
+
+US_Math2::randomize(seed);
+double first1 = US_Math2::box_muller(0.0, 1.0);
+double second1 = US_Math2::box_muller(0.0, 1.0);
+
+// One draw leaves the cached second value of the pair outstanding.
+US_Math2::randomize(seed);
+US_Math2::box_muller(0.0, 1.0);
+
+US_Math2::randomize(seed);
+double first2 = US_Math2::box_muller(0.0, 1.0);
+double second2 = US_Math2::box_muller(0.0, 1.0);
+
+EXPECT_DOUBLE_EQ(first1, first2) << "Reseeding after an odd draw count should restart the Gaussian sequence";
+EXPECT_DOUBLE_EQ(second1, second2) << "Reseeding after an odd draw count should restart the Gaussian sequence";
+}
+
 // ============================================================================
 // GAUSSIAN SMOOTHING TESTS
 // ============================================================================

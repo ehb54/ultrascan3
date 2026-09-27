@@ -106,6 +106,12 @@ class US_UTIL_EXTERN US_Util
       //! \returns      Uncompressed triple string ("c/c/w" or "c / c / w")
       static QString expanded_triple( const QString& ccw, bool spaces = true );
 
+      //! \brief Channel letters in database channel-number order.
+      //!
+      //! S (single channel) is 0, A is 1, B is 2, and so on.
+      //! \returns "SABCDEFGH"
+      static QString channel_letters( void );
+
       //! \brief Return a flag if this is the i'th time an error occurs.
       //!
       //! \param timeinc Incidence increment to detect (default=10000).

@@ -13,8 +13,8 @@ class US_UTIL_EXTERN US_BufferComponent
       QString componentID;       //!< The BufferComponentID field in the DB.
       QString name;              //!< The buffer component's description. 
       QString unit;              //!< The buffer component value's unit.
-      double  dens_coeff[ 6 ];   //!< The density coefficients. 
-      double  visc_coeff[ 6 ];   //!< The viscosity coefficients. 
+      double  dens_coeff[ 6 ]{ 0.0 };   //!< The density coefficients.
+      double  visc_coeff[ 6 ]{ 0.0 };   //!< The viscosity coefficients.
       QString range;             //!< The buffer component's range. 
       bool    grad_form{false};         //!< Flag if gradient forming.
 
