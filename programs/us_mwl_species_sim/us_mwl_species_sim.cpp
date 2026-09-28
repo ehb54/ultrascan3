@@ -737,7 +737,12 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
       te_status->setText( smsg );
       qApp->processEvents();
 
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
+      int wrc            = US_DataIO::writeRawData( fpath, synData[ jm ] );
+
+      if ( wrc != US_DataIO::OK )
+      {  // Do not let a failed write pass silently
+         qDebug() << "save_sims: writeRawData FAILED rc =" << wrc << fpath;
+      }
 
       emit stage_progress( "save", jm + 1, nmodels );
    }
@@ -1026,7 +1031,12 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    double radval      = radv0;
 
    for ( int js = 0; js < nscan; js++ )                // Resize for pad
+   {
       rdata.scanData[ js ].rvalues.resize( npoint );
+      // Keep the interpolation bitmap in step with the readings, so that
+      // US_DataIO::writeRawData() accepts the padded scan
+      rdata.scanData[ js ].interpolated.fill( 0, ( npoint + 7 ) / 8 );
+   }
 
    for ( int jr = npoint - 1; jr >= 0; jr-- )
    {  // Set shifted values, starting at data end
