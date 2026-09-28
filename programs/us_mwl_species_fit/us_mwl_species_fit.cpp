@@ -2063,6 +2063,43 @@ DbgLv(1) << "sfd: (A)D1 cmn" << ms << mr << synData[1].value(ms,mr);
    if ( ! QDir().exists( dirSyn ) )
       QDir().mkpath( dirSyn );
 
+   if ( us_gmp_auto_mode )
+   {  // GMP autoflow: remove stale output left by a previous run of this
+      //  channel, so that old files can never be mixed with the new ones.
+      //  Only this channel's files are removed: the folder is shared by
+      //  all channels of the run (run-wide name), so files written earlier
+      //  for other channels must be kept.
+      QDir    sdir( dirSyn );
+      QString stalepfx = runSyn + ".RA." + cellch + ".";
+
+      if ( sdir.exists() )
+      {
+         QStringList sfiles = sdir.entryList( QDir::Files | QDir::Hidden );
+         int         nstale = 0;
+
+         for ( int ii = 0; ii < sfiles.size(); ii++ )
+         {
+            if ( ! sfiles.at( ii ).startsWith( stalepfx ) )
+               continue;
+
+            if ( ! sdir.remove( sfiles.at( ii ) ) )
+            {
+               qDebug() << "sfd: could not delete stale file"
+                        << sdir.filePath( sfiles.at( ii ) );
+               QApplication::restoreOverrideCursor();
+               QMessageBox::warning( this, tr( "Species File Cleanup Failed" ),
+                  tr( "The previous species-fit file could not be deleted:\n%1" )
+                  .arg( sdir.filePath( sfiles.at( ii ) ) ) );
+               return;
+            }
+            nstale++;
+         }
+
+         qDebug() << "sfd: deleted" << nstale << "stale file(s) in" << dirSyn
+                  << "for channel" << cellch;
+      }
+   }
+
    QString basefn = dirSyn + "/" + runSyn + ".RA." + cellch + ".000.auc";
 DbgLv(1) << "sfd: cellch" << cellch << "basefn" << basefn;
    QString msg    = tr( "Species-Fit Simulations have been produced.\n\n"
