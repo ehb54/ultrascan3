@@ -710,6 +710,51 @@ DbgLv(1) << "SLOT: stop_sims";
 //Fro VEL-MWL:GMP
 void US_MwlSpeciesSim::save_sims_auto( void )
 {
+  // GMP autoflow only: empty the output directory of any earlier run, so that
+  //  stale files can never be mixed with the newly simulated ones.
+  //  (Same directory name as in save_sims(); it is specific to this run
+  //   AND channel, since orunid = "ISSF-" + run ID + "-" + cell/channel.)
+  if ( orunid.isEmpty() )
+    {
+      qDebug() << "save_sims_auto: empty orunid -- nothing saved";
+      QMessageBox::warning( this, tr( "Save Simulations" ),
+         tr( "No run ID is set; the simulations cannot be saved." ) );
+      return;
+    }
+
+  QString impdir = US_Settings::importDir() + "/" + orunid + "/";
+  QDir    idir( impdir );
+
+  if ( idir.exists() )
+    {
+      QFileInfoList entries = idir.entryInfoList( QDir::Files | QDir::Dirs |
+                                                  QDir::Hidden | QDir::System |
+                                                  QDir::NoDotAndDotDot );
+      int nstale = 0;
+
+      for ( int ii = 0; ii < entries.size(); ii++ )
+        {
+          const QFileInfo& fi = entries.at( ii );
+          bool ok = ( fi.isDir() && !fi.isSymLink() )
+                    ? QDir( fi.absoluteFilePath() ).removeRecursively()
+                    : QFile::remove( fi.absoluteFilePath() );
+
+          if ( !ok )
+            {
+              qDebug() << "save_sims_auto: could not delete stale entry"
+                       << fi.absoluteFilePath();
+              QMessageBox::warning( this, tr( "Simulation Cleanup Failed" ),
+                 tr( "A previous simulation file could not be deleted:\n%1" )
+                 .arg( fi.absoluteFilePath() ) );
+              return;
+            }
+          nstale++;
+        }
+
+      qDebug() << "save_sims_auto: deleted" << nstale
+               << "stale entr(y/ies) in" << impdir;
+    }
+
   save_sims();
   
 }   

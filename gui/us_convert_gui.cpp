@@ -1523,6 +1523,8 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   impType     = getImports_auto( details_at_live_update["ssf_dir_name"] );
   qDebug() << "impType, IMPORT AUC auto..." << impType;
   importAUC();
+  if ( allData.isEmpty() )
+    return;
   
   //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
   if ( us_convert_auto_mode ) 
@@ -1826,6 +1828,8 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
    {
      qDebug() << "IMPORT AUC auto...";
      importAUC();
+     if ( allData.isEmpty() )
+       return;
      
      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
      if ( us_convert_auto_mode ) 
@@ -1978,6 +1982,8 @@ void US_ConvertGui::process_optics()
    {
      qDebug() << "IMPORT AUC auto...";
      importAUC();
+     if ( allData.isEmpty() )
+       return;
      
      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
      if ( us_convert_auto_mode ) 
@@ -2342,6 +2348,18 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
          QDir::Files | QDir::Readable, QDir::Name );
    allData     .clear();
    all_tripinfo.clear();
+
+   if ( files.isEmpty() )
+   {  // Nothing to import (e.g. the simulation output was not written)
+      QApplication::restoreOverrideCursor();
+      qDebug() << "importAUC: no .auc files found in" << importDir;
+      le_status->setText( tr( "No AUC data found to import." ) );
+      QMessageBox::warning( this, tr( "Import AUC Data" ),
+         tr( "No .auc files were found in\n%1\n\n"
+             "The data may not have been written, so nothing can be imported." )
+         .arg( importDir ) );
+      return;
+   }
 
    // *** Determine 1st runType to process *************//
    if ( runType_combined_IP_RI )
