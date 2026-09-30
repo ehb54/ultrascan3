@@ -11772,7 +11772,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
       else
 	run_analysis = tr("NO");
       
-      if ( expType == "VELOCITY" )
+      if ( expType == "VELOCITY"  ||  expType == "VELOCITY-MWL" )
 	{
 	  QString loading_ratio  = QString::number( currAProf.lc_ratios[ i ] );
 	  QString ratio_tol      = QString::number( currAProf.lc_tolers[ i ] );
@@ -11926,7 +11926,8 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	    
 	  int chann_wvl_number = chann_wvls.size();
 
-	  //for ABDE, identify only 1st wvl in the cahnnel, and proceed with it only!
+	  //for ABDE and VELOCITY-MWL, identify only 1st wvl in the cahnnel, and proceed with it only!
+	  //(report parameters/items are defined per channel there, not per wavelength)
 	  QString wvl_abde  = QString::number( chann_wvls[0] );
 	  
 	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
@@ -11934,7 +11935,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 	      QString wvl            = QString::number( chann_wvls[ jj ] );
 
 	      //abde
-	      if ( expType == "ABDE" && wvl != wvl_abde )
+	      if ( ( expType == "ABDE" || expType == "VELOCITY-MWL" ) && wvl != wvl_abde )
 		continue;
 	      
 	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
@@ -11960,7 +11961,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 		    ;
 
 
-		  if ( expType == "VELOCITY" )
+		  if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
 		    {
 		      html_analysis_profile += tr(
 						  "<table style=\"margin-left:70px\">"
@@ -12011,7 +12012,7 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
 			.arg( QString::number( kk + 1 ) )                                 //1
 			;
 
-		      if ( expType == "VELOCITY" )
+		      if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
 			{
 			  html_analysis_profile += tr(
 						      "<table style=\"margin-left:110px\">"
