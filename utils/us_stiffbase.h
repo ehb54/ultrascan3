@@ -31,6 +31,18 @@ class US_UTIL_EXTERN US_StiffBase
       //! \param Stif Stif matrix
       void CompLocalStif( int, double [4][2], double, double, double** );
 
+      //! \brief  Integration over a rectangle [x0,x1] x [0,dt] (fixed mesh
+      //!         element), equal to CompLocalStif( 4, ... ) with the same
+      //!         Gauss rule, from reference moments precomputed at setup
+      //! \param x0   Left radius of the element
+      //! \param x1   Right radius of the element
+      //! \param dt   Time step
+      //! \param D    Diffusion coefficient
+      //! \param sw2  Omega-squared
+      //! \param Stif Stif matrix
+      void CompLocalStifRect( double, double, double, double, double,
+                              double** ) const;
+
    private:
       // parameters for triangular elements
       int      n_gaussT; // number of Gauss pts for numerical quadrature
@@ -59,6 +71,16 @@ class US_UTIL_EXTERN US_StiffBase
 
       // compute all basis functions and their derivatives at Gauss pts
       void LinearBasis( void );
+
+      // Moments over the reference quad of products of basis functions
+      //  (phi) and derivatives (d/dxi = phi1, d/deta = phi2), weighted by
+      //  1, xi or xi^2, for rectangle elements (CompLocalStifRect):
+      //  A = phi2_j phi_i, B = phi1_j phi1_i, C = phi_j phi1_i
+      double   momA[ 2 ][ 4 ][ 4 ];
+      double   momB[ 2 ][ 4 ][ 4 ];
+      double   momC[ 3 ][ 4 ][ 4 ];
+
+      void RectMoments( void );
 }; 
 #endif
 

@@ -36,6 +36,7 @@ US_StiffBase::US_StiffBase()
 
       SetGauss();
       LinearBasis();
+      RectMoments();
 
 }
 
@@ -128,6 +129,76 @@ void US_StiffBase::CompLocalStif( int NK, double xd[4][2],
         
             Stif[ j ][ i ] += tmp * jcbv[ 0 ] * wt;
          }
+      }
+   }
+}
+
+// On the rectangle [x0,x1] x [0,dt] the mapping is affine:  x = x0 + h*xi,
+//  t = dt*eta, det(J) = h*dt, d/dx = (1/h) d/dxi, d/dt = (1/dt) d/deta.  The
+//  integrand of CompLocalStif is then a polynomial in xi and eta, which the
+//  Gauss rule integrates exactly, so
+//  Stif[j][i] = h (x0 A0 + h A1) + (D dt/h) (x0 B0 + h B1)
+//             - sw2 dt (x0^2 C0 + 2 x0 h C1 + h^2 C2)
+//  with the reference moments A, B, C (RectMoments).
+void US_StiffBase::CompLocalStifRect( double x0, double x1, double dt,
+      double D, double sw2, double** Stif ) const
+{
+   double h   = x1 - x0;
+   double fa0 = h * x0;
+   double fa1 = h * h;
+   double fb0 = D * dt / h * x0;
+   double fb1 = D * dt;
+   double fc0 = sw2 * dt * x0 * x0;
+   double fc1 = sw2 * dt * 2.0 * x0 * h;
+   double fc2 = sw2 * dt * h * h;
+
+   for ( int j = 0; j < 4; j++ )
+   {
+      for ( int i = 0; i < 4; i++ )
+      {
+         Stif[ j ][ i ] = fa0 * momA[ 0 ][ j ][ i ] + fa1 * momA[ 1 ][ j ][ i ]
+                        + fb0 * momB[ 0 ][ j ][ i ] + fb1 * momB[ 1 ][ j ][ i ]
+                        - fc0 * momC[ 0 ][ j ][ i ] - fc1 * momC[ 1 ][ j ][ i ]
+                        - fc2 * momC[ 2 ][ j ][ i ];
+      }
+   }
+}
+
+// Reference moments for CompLocalStifRect, from the quadrilateral Gauss rule
+void US_StiffBase::RectMoments( void )
+{
+   for ( int j = 0; j < 4; j++ )
+   {
+      for ( int i = 0; i < 4; i++ )
+      {
+         double sa[ 2 ] = { 0.0, 0.0 };
+         double sb[ 2 ] = { 0.0, 0.0 };
+         double sc[ 3 ] = { 0.0, 0.0, 0.0 };
+
+         for ( int k = 0; k < n_gaussQ; k++ )
+         {
+            double wt = xgQ[ k ].w;
+            double xi = xgQ[ k ].x;
+            double fa = wt * phiQ2[ k ][ j ] * phiQ [ k ][ i ];
+            double fb = wt * phiQ1[ k ][ j ] * phiQ1[ k ][ i ];
+            double fc = wt * phiQ [ k ][ j ] * phiQ1[ k ][ i ];
+
+            sa[ 0 ] += fa;
+            sa[ 1 ] += fa * xi;
+            sb[ 0 ] += fb;
+            sb[ 1 ] += fb * xi;
+            sc[ 0 ] += fc;
+            sc[ 1 ] += fc * xi;
+            sc[ 2 ] += fc * xi * xi;
+         }
+
+         momA[ 0 ][ j ][ i ] = sa[ 0 ];
+         momA[ 1 ][ j ][ i ] = sa[ 1 ];
+         momB[ 0 ][ j ][ i ] = sb[ 0 ];
+         momB[ 1 ][ j ][ i ] = sb[ 1 ];
+         momC[ 0 ][ j ][ i ] = sc[ 0 ];
+         momC[ 1 ][ j ][ i ] = sc[ 1 ];
+         momC[ 2 ][ j ][ i ] = sc[ 2 ];
       }
    }
 }

@@ -636,37 +636,35 @@ double US_AstfemMath::maxval( const QVector< US_Model::SimulationComponent >& va
    return maximum;
 }
 
+// Allocate a zeroed val1 x val2 x val3 array as one block of values and one
+//  block of row pointers (three allocations instead of val1*(val2+1)+1)
 void US_AstfemMath::initialize_3d(
       int val1, int val2, int val3, double**** matrix )
 {
    *matrix = new double** [ val1 ];
 
+   if ( val1 < 1  ||  val2 < 1 )
+      return;
+
+   double**  rows   = new double* [ (size_t)val1 * val2 ];
+   double*   values = new double  [ (size_t)val1 * val2 * val3 ]();
+
    for ( int i = 0; i < val1; i++ )
    {
-      (*matrix)[ i ] = new double *[ val2 ];
+      (*matrix)[ i ] = rows + (size_t)i * val2;
 
       for ( int j = 0; j < val2; j++ )
-      {
-         (*matrix)[ i ][ j ] = new double [ val3 ];
-
-         for ( int k = 0; k < val3; k++ )
-         {
-            (*matrix)[ i ][ j ][ k ] = 0.0;
-         }
-      }
+         (*matrix)[ i ][ j ] = values + ( (size_t)i * val2 + j ) * val3;
    }
 }
 
+// Free an array allocated by initialize_3d
 void US_AstfemMath::clear_3d( int val1, int val2, double*** matrix )
 {
-   for ( int i = 0; i < val1; i++ )
+   if ( val1 > 0  &&  val2 > 0 )
    {
-      for ( int j = 0; j < val2; j++ )
-      {
-         delete [] matrix[ i ][ j ];
-      }
-
-      delete [] matrix[ i ];
+      delete [] matrix[ 0 ][ 0 ];     // values
+      delete [] matrix[ 0 ];          // row pointers
    }
 
    delete [] matrix;

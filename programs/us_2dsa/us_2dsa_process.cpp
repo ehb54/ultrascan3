@@ -459,7 +459,9 @@ DbgLv(1) << "2P:FC:  abort" << abort;
    tkdepths << wtask.depth;
 
    // This time, input solutes are all the subgrid-computed ones where
-   // the concentration is positive.
+   // the concentration is positive, each once:  after refinement
+   // iterations, every task returns the solutes added from the previous
+   // iteration.
    std::sort( c_solutes[ depth ].begin(), c_solutes[ depth ].end() );
 DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    wtask.isolutes.clear();
@@ -467,8 +469,13 @@ DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    for ( int ii = 0; ii < c_solutes[ depth ].size(); ii++ )
    {
       if ( c_solutes[ depth ][ ii ].c > 0.0 )
+      {
+         if ( ! wtask.isolutes.isEmpty()  &&
+              c_solutes[ depth ][ ii ] == wtask.isolutes.last() )
+            continue;       // skip a duplicate solute (sorted input)
+
          wtask.isolutes << c_solutes[ depth ][ ii ];
-         
+      }
    }
 //DbgLv(1) << "norm_size_final_compute" << wtask.isolutes.size() << wtask.Anorm.size();
 
@@ -1181,8 +1188,10 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
          emit message_update( pmessage_head() +
             tr( "Computing depth 1 solutions and beyond ..." ), false );
 
+         // (Merge tasks at depth 2 or more may already be queued:  lowering
+         //  maxdepth below their depth would leave their results unmerged)
          int maxdepsv   = maxdepth;
-         maxdepth       = 1;
+         maxdepth       = qMax( maxdepth, 1 );
 
          if ( nextc <= maxtsols  &&  maxdepsv < 1 )
             maxdepth       = 0;  // handle no depth 1 jobs yet submitted
@@ -1321,13 +1330,22 @@ void US_2dsaProcess::queue_task( WorkPacket2D& wtask, double llss, double llsk,
    wtask.dsets    = dsets;         // pointer to experiment data
    wtask.isolutes = isolutes;      // solutes for calc_residuals task
 
+   if ( depth > 0 )
+   {  // Merge task:  drop duplicate solutes.  After refinement iterations,
+      // every subgrid returns the solutes added from the previous iteration.
+      std::sort( wtask.isolutes.begin(), wtask.isolutes.end() );
+      wtask.isolutes.erase( std::unique( wtask.isolutes.begin(),
+                                         wtask.isolutes.end() ),
+                            wtask.isolutes.end() );
+   }
+
    if ( jgrefine == (-2) )
       wtask.typeref  = jgrefine;   // mark if model-ratio grid refinement
 
    wtask.csolutes.clear();         // clear output vectors
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
-   int nrisols    = isolutes.size();
+   int nrisols    = wtask.isolutes.size();
    ntisols       += nrisols;
 if ( taskx < 9 || taskx > (nsubgrid-4) )
 DbgLv(1) << "QT: taskx" << taskx << " isolutes size tot" << nrisols << ntisols;

@@ -215,8 +215,10 @@ class US_UTIL_EXTERN US_Math2
       vector end-to-end, and the parameter a_dim1 contains the length of
       each column
 
-      Function returns 0 if succesful, 1, if iteration count exceeded 3*N,
-      or 2 in case of invalid problem dimensions or memory allocation error.
+      Function returns 0 if succesful, 1, if iteration count exceeded the
+      limit (3*N by default), or 2 in case of invalid problem dimensions or
+      memory allocation error.  At the iteration limit, x[] holds the last
+      feasible (not optimal) solution and rnorm its residual norm.
 
       Instead of pointers for working space, NULL can be given to let this
       function to allocate and free the required memory.
@@ -248,6 +250,8 @@ class US_UTIL_EXTERN US_Math2
       
       \param zzp    An m-array of working space, zz[].
       \param indexp An n-array of working space, index[].
+      \param itmax  Iteration limit (least-squares solves); 0 or less
+                    selects 3*n, as in Lawson & Hanson.
       */
 
       static int nnls(
@@ -257,7 +261,8 @@ class US_UTIL_EXTERN US_Math2
          double* rnorm  = NULL,
          double* wp     = NULL,  
          double* zzp    = NULL, 
-         int*    indexp = NULL
+         int*    indexp = NULL,
+         int     itmax  = 0
          );
 
       /*! \brief Remove high frequency noise from a signal

@@ -869,7 +869,8 @@ DbgLv(1) << "CR: cc ee" << cc << ee << "ks ka" << ks << ka << "nnls_a sz"
 DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
             int colx       = cc - count_cut;
 
-            for ( int aa = 0; aa < nsolutes; aa++ )
+            // Use ksolutes rows, the column length assumed after norm cuts
+            for ( int aa = 0; aa < ksolutes; aa++ )
             {
                nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
             }
@@ -1062,7 +1063,8 @@ DbgLv(1) << "CR: ks ka" << ks << ka
          {  // For Tikhonov Regularization append to each column
             int colx       = cc - count_cut;
 
-            for ( int aa = 0; aa < nsolutes; aa++ )
+            // Use ksolutes rows, the column length assumed after norm cuts
+            for ( int aa = 0; aa < ksolutes; aa++ )
             {
                nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
             }
@@ -1159,9 +1161,6 @@ DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut
    }
 
    nsolutes     = banddthr ? ksols : nsolutes;
-   int ntotinoi = ntinois  * nsolutes;
-   int ntorinoi = nrinois  * nsolutes;
-   int nsolutsq = nsolutes * nsolutes;
 
    if ( signal_wanted  &&  kstep > 0 )  // If signals and steps done, report
       emit work_progress( kstep );
@@ -1227,112 +1226,36 @@ DbgLv(1) << "   CR:200  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 DbgLv(1)<<"subha_nnls_a size: " << nnls_a.size() << nscans << npoints << "nsolutes=" << nsolutes;
 //------------------------------------------
 
-   if ( calc_ti )
-   {  // Compute TI Noise (and, optionally, RI Noise)
+   if ( calc_ti  ||  calc_ri )
+   {  // Compute concentrations with TI and/or RI noise algebraically removed
       if ( abort ) return;
-      QVector< double > a_tilde ( nrinois,  0.0 );
-      QVector< double > a_bar   ( ntinois,  0.0 );
-      QVector< double > L_tildes( ntorinoi, 0.0 );
-      QVector< double > L_bars  ( ntotinoi, 0.0 );
-      QVector< double > small_a ( nsolutsq, 0.0 );
-      QVector< double > small_b ( nsolutes, 0.0 );
-      QVector< double > L       ( ntotal,   0.0 );
-      QVector< double > L_tilde ( nrinois,  0.0 );
-      QVector< double > L_bar   ( ntinois,  0.0 );
+      QVector< int > dscans;     // Scans of each data set
+      QVector< int > dpoints;    // Radial points of each data set
 
-      // Compute a_tilde, the average experiment signal at each time
-      if ( calc_ri )
-         compute_a_tilde( a_tilde, nnls_b );
+      for ( int ee = offset; ee < lim_offs; ee++ )
+      {
+         dscans  << data_sets[ ee ]->run_data.scanCount();
+         dpoints << data_sets[ ee ]->run_data.pointCount();
+      }
+DbgLv(1) << "  noise NNLS: noisflag" << noisflag << "nscans npoints" << dscans
+ << dpoints << "nsolutes narows" << nsolutes << narows;
 
-      // Compute a_bar, the average experiment signal at each radius
-      compute_a_bar( a_bar, a_tilde, nnls_b );
+      int nnlsrc    = nnls_noise( noisflag, dscans, dpoints, nsolutes, narows,
+                                  nnls_a, nnls_b, nnls_x, tinvec, rinvec );
 
-      // Compute L_tildes, the average signal at each radius (if RI noise)
-      if ( calc_ri )
-         compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
-
-      // Compute L_bars
-      compute_L_bars( nsolutes, nrinois, ntinois, ntotal,
-                      L_bars, nnls_a, L_tildes );
-
-      // Set up small_a, small_b for alternate nnls
-DbgLv(1) << "  set SMALL_A+B";
-      ti_small_a_and_b( nsolutes, ntotal, ntinois, small_a, small_b, a_bar, L_bars, nnls_a, nnls_b );
-      if ( abort ) return;
-
-      // Do NNLS to compute concentrations (nnls_x)
-DbgLv(1) << "  noise small NNLS";
-      US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes, small_b.data(), nnls_x.data() );
-
-      if ( abort ) return;
-
-      // This is Sum( concentration * Lamm ) for the models after NNLS
-      compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
-
-      // Now L contains the best fit sum of L equations
-      // Compute L_tilde, the average model signal at each radius
-
-      if ( calc_ri )
-         compute_L_tilde( L_tilde, L );
-
-      // Compute L_bar, the average model signal at each radius
-      compute_L_bar( L_bar, L, L_tilde );
-
-      // Compute ti noise
-      for ( int ii = 0; ii < ntinois; ii++ )
-         tinvec[ ii ] = a_bar[ ii ] - L_bar[ ii ];
-
-      if ( calc_ri )
-      {  // Compute RI_noise
-         for ( int ii = 0; ii < nrinois; ii++ )
-            rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
+      if ( nnlsrc == 1 )
+      {  // Iteration limit:  concentrations are feasible, but not optimal
+DbgLv(0) << "CR: *WARNING* NNLS iteration limit reached, nsolutes narows"
+ << nsolutes << narows;
       }
 
-      if ( signal_wanted )
-         emit work_progress( kstodo );  // Report noise NNLS steps done
-   }  // End tinoise and optional rinoise calculation
-
-   else if ( calc_ri )
-   {  // Compute RI noise (when RI only)
       if ( abort ) return;
-      QVector< double > a_tilde ( nrinois,  0.0 );
-      QVector< double > L_tildes( ntorinoi, 0.0 );
-      QVector< double > small_a ( nsolutsq, 0.0 );
-      QVector< double > small_b ( nsolutes, 0.0 );
-      QVector< double > L       ( ntotal,   0.0 );
-      QVector< double > L_tilde ( nrinois,  0.0 );
-
-      // Compute a_tilde, the average experiment signal at each time
-      compute_a_tilde( a_tilde, nnls_b );
-
-      // Compute L_tildes, the average signal at each radius
-      compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
-
-      // Set up small_a, small_b for the nnls
-      if ( abort ) return;
-
-      ri_small_a_and_b( nsolutes, ntotal, nrinois,
-                        small_a, small_b, a_tilde, L_tildes, nnls_a, nnls_b );
-      if ( abort ) return;
-
-      US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
-                      small_b.data(), nnls_x.data() );
-      if ( abort ) return;
-
-      // This is sum( concentration * Lamm ) for the models after NNLS
-      compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
-
-      // Now L contains the best fit sum of L equations
-      // Compute L_tilde, the average model signal at each radius
-      compute_L_tilde( L_tilde, L );
-
-      // Compute ri_noise  (Is this correct????)
-      for ( int ii = 0; ii < nrinois; ii++ )
-         rinvec[ ii ] = a_tilde[ ii ] - L_tilde[ ii ];
 
       if ( signal_wanted )
-         emit work_progress( kstodo );     // Report noise NNLS steps done
-   }  // End rinoise alone calculation
+      {  // Report noise and NNLS steps done
+         emit work_progress( sq( nsolutes ) / 10 + kstodo );
+      }
+   }  // End tinoise and/or rinoise calculation
 
    else
    {  // No TI or RI noise
@@ -1350,9 +1273,15 @@ DbgLv(1) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size
       }
 
 //DebugTime("BEG:clcr-nl");
-      US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
-                      nnls_b.data(), nnls_x.data() );
+      int nnlsrc    = US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
+                                      nnls_b.data(), nnls_x.data() );
 //DebugTime("END:clcr-nl");
+
+      if ( nnlsrc == 1 )
+      {  // Iteration limit:  concentrations are feasible, but not optimal
+DbgLv(0) << "CR: *WARNING* NNLS iteration limit reached, nsolutes narows"
+ << nsolutes << narows;
+      }
 
 DbgLv(2) << "   CR:211  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 if(lim_offs>1&&(thrnrank==1||thrnrank==11))
@@ -1765,393 +1694,149 @@ void US_SolveSim::abort_work()
    abort = true;
 }
 
-// Compute a_tilde, the average experiment signal at each time
-void US_SolveSim::compute_a_tilde( QVector< double >& a_tilde,
-                                   const QVector< double >& nnls_b )
+// Remove noise means from the data rows of one vector (B or an A column):
+//  subtract the per-scan means (RI), then the per-radius means of the
+//  result (TI); return the removed means in v_tilde and v_bar
+static void remove_noise_means( double* vals, int nscans, int npoints,
+                                bool calc_ti, bool calc_ri,
+                                double* v_tilde, double* v_bar )
 {
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int    npoints  = edata->pointCount();
-   int    nscans   = edata->scanCount();
-   int    jb       = 0;
-   double avgscale = 1.0 / (double)npoints;
-
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-        a_tilde[ ss ] += nnls_b[ jb++ ];
-
-      a_tilde[ ss ] *= avgscale;
-   }
-}
-
-// Compute L_tildes, the average signal at each radius
-void US_SolveSim::compute_L_tildes( int                      nrinois,
-                                    int                      nsolutes,
-                                    QVector< double >&       L_tildes,
-                                    const QVector< double >& nnls_a )
-{
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int    npoints  = edata->pointCount();
-   int    nscans   = edata->scanCount();
-   double avgscale = 1.0 / (double)npoints;
-   int    a_index  = 0;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int t_index      = cc * nrinois;
+   if ( calc_ri )
+   {  // Per-scan means:  average over radius at each time
+      double avgscale = 1.0 / (double)npoints;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         for ( int rr = 0; rr < npoints; rr++ )
-            L_tildes[ t_index ] += nnls_a[ a_index++ ];
-
-         L_tildes[ t_index++ ] *= avgscale;
-      }
-   }
-}
-
-// Compute L_tilde, the average model signal at each radius
-void US_SolveSim::compute_L_tilde( QVector< double >&       L_tilde,
-                                   const QVector< double >& L )
-{
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int    npoints  = edata->pointCount();
-   int    nscans   = edata->scanCount();
-   double avgscale = 1.0 / (double)npoints;
-   int    index    = 0;
-
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      for ( int rr = 0; rr < npoints; rr++ )
-         L_tilde[ ss ] += L[ index++ ];
-
-      L_tilde[ ss ] *= avgscale;
-   }
-}
-
-void US_SolveSim::compute_L( int                      ntotal,
-                             int                      nsolutes,
-                             QVector< double >&       L,
-                             const QVector< double >& nnls_a,
-                             const QVector< double >& nnls_x )
-{
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int    npoints  = edata->pointCount();
-   int    nscans   = edata->scanCount();
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      double concentration = nnls_x[ cc ];
-
-      if ( concentration > 0.0 )
-      {
-         int r_index = cc * ntotal;
-         int count   = 0;
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            for ( int rr = 0; rr < npoints; rr++ )
-            {
-               L[ count++ ] += ( concentration * nnls_a[ r_index++ ] );
-            }
-         }
-      }
-   }
-}
-
-void US_SolveSim::ri_small_a_and_b( int                      nsolutes,
-                                    int                      ntotal,
-                                    int                      nrinois,
-                                    QVector< double >&       small_a,
-                                    QVector< double >&       small_b,
-                                    const QVector< double >& a_tilde,
-                                    const QVector< double >& L_tildes,
-                                    const QVector< double >& nnls_a,
-                                    const QVector< double >& nnls_b )
-{
-DebugTime("BEG:ri_smab");
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int npoints = edata->pointCount();
-   int nscans  = edata->scanCount();
-   int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
-   int incprg  = nsolutes / 20;         // increment between reports
-   incprg      = qMax( incprg,  1 );
-   incprg      = qMin( incprg, 10 );
-   int jsols   = qMax( 1, nsolutes );
-   int jstprg  = ( kstodo * incprg ) / jsols;     // steps for each report
-   int kstep   = 0;                               // progress counter
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int    jsa2  = cc * ntotal;
-      int    jst2  = cc * nrinois;
-      int    jjna  = jsa2;
-      int    jjnb  = 0;
-      int    jjlt  = jst2;
-      double sum_b = small_b[ cc ];
-
-      for ( int ss = 0; ss < nscans; ss++ )
-      {
-         // small_b[ cc ] +=
-         //    ( edata->value( ss, rr ) - a_tilde[ ss ] )
-         //    *
-         //    ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-         //      -
-         //      L_tildes[ cc * nrinois + ss ] );
-         double atil  = a_tilde [ ss ];
-         double Ltil  = L_tildes[ jjlt++ ];
+         double* svals  = vals + (size_t)ss * npoints;
+         double  sum    = 0.0;
 
          for ( int rr = 0; rr < npoints; rr++ )
-         {
-            sum_b += ( ( nnls_b[ jjnb++ ] - atil )
-                     * ( nnls_a[ jjna++ ] - Ltil ) );
-         }
+            sum           += svals[ rr ];
 
-      }
-
-      small_b[ cc ] = sum_b;
-
-      for ( int kk = 0; kk < nsolutes; kk++ )
-      {
-         //small_a[ kk * nsolutes + cc ] +=
-         //   ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-         //     -
-         //     L_tildes[ kk * nrinois + ss  ]
-         //   )
-         //   *
-         //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-         //     -
-         //     L_tildes[ cc * nrinois + ss ] );
-         int    jjma  = kk * nsolutes + cc;
-         int    jja1  = kk * ntotal;
-         int    jja2  = jsa2;
-         int    jjt1  = kk * nrinois;
-         int    jjt2  = jst2;
-         double sum_a = small_a[ jjma ];
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            double Ltil1 = L_tildes[ jjt1++ ];
-            double Ltil2 = L_tildes[ jjt2++ ];
-
-            for ( int rr = 0; rr < npoints; rr++ )
-            {
-               sum_a += ( ( nnls_a[ jja1++ ] - Ltil1 )
-                        * ( nnls_a[ jja2++ ] - Ltil2 ) );
-            }
-         }
-
-         small_a[ jjma ] = sum_a;
-      }
-
-      if ( signal_wanted  &&  ++kstep == incprg )
-      {
-         emit work_progress( jstprg );
-         kstodo   -= jstprg;
-         kstep     = 0;
-      }
-
-      if ( abort ) return;
-   }
-
-   if ( signal_wanted  &&  kstodo > 0 )
-      emit work_progress( kstodo );
-DebugTime("END:ri_smab");
-}
-
-void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
-                                    int                      ntotal,
-                                    int                      ntinois,
-                                    QVector< double >&       small_a,
-                                    QVector< double >&       small_b,
-                                    const QVector< double >& a_bar,
-                                    const QVector< double >& L_bars,
-                                    const QVector< double >& nnls_a,
-                                    const QVector< double >& nnls_b )
-{
-   DebugTime("BEG:ti-smab");
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int npoints = edata->pointCount();
-   int nscans  = edata->scanCount();
-   int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
-   int incprg  = nsolutes / 20;         // increment between reports
-   incprg      = qMax( incprg,  1 );
-   incprg      = qMin( incprg, 10 );
-
-DbgLv(1)<< "ti_small_a_and_b: nsolutes=" << nsolutes;
-
-   int jsols   = qMax( 1, nsolutes );
-   int jstprg  = ( kstodo * incprg ) / jsols;     // steps for each report
-   int kstep   = 0;                               // progress counter
-//DbgLv(1)<< "ti_small_ : np ns nn nso" << npoints << nscans << ntinois << nsolutes
-// << "szb sza" << nnls_b.size() << nnls_a.size() << "nto" << ntotal;
-
-//int svsa=0;
-   small_a.fill( 0.0 );
-   small_b.fill( 0.0 );
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int jjsa  = cc;
-      int jssa  = cc * ntotal;
-      int jssb  = cc * ntinois;
-      int jjna  = jssa;
-      int jjnb  = 0;
-
-      //small_b[ cc ] +=
-      //   ( edata->value( ss, rr ) - a_bar[ rr ] )
-      //     *
-      //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-      //     -
-      //     L_bars[ cc * ntinois + rr ] );
-      double sum_b = small_b[ cc ];
-
-      for ( int ss = 0; ss < nscans; ss++ )
-      {
-         int jjlb  = jssb;
+         v_tilde[ ss ]  = sum * avgscale;
 
          for ( int rr = 0; rr < npoints; rr++ )
-         {
-            sum_b  += ( ( nnls_b[ jjnb++ ] - a_bar [ rr ]     )
-                      * ( nnls_a[ jjna++ ] - L_bars[ jjlb++ ] ) );
-         }
+            svals[ rr ]   -= v_tilde[ ss ];
       }
-
-      small_b[ cc ] = sum_b;
-
-      //small_a[ kk * nsolutes + cc ] +=
-      //   ( nnls_a[ kk * ntotal  + ss * npoints + rr ]
-      //     -
-      //     L_bars[ kk * ntinois + rr ] )
-      //   *
-      //   ( nnls_a[ cc * ntotal  + ss * npoints + rr ]
-      //     -
-      //     L_bars[ cc * ntinois + rr ] );
-      for ( int kk = 0; kk < nsolutes; kk++ )
-      {
-         int    jjna1 = kk * ntotal;
-         int    jjna2 = jssa;
-         int    jslb1 = kk * ntinois;
-         int    jslb2 = jssb;
-         double sum_a = small_a[ jjsa ];
-
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            int jjlb1 = jslb1;
-            int jjlb2 = jslb2;
-
-            for ( int rr = 0; rr < npoints; rr++ )
-            {
-               sum_a += ( ( nnls_a[ jjna1++ ] - L_bars[ jjlb1++ ] )
-                        * ( nnls_a[ jjna2++ ] - L_bars[ jjlb2++ ] ) );
-            }
-         }
-
-         small_a[ jjsa ] = sum_a;
-//svsa=jjsa;
-         jjsa     += nsolutes;
-      }
-
-      if ( signal_wanted  &&  ++kstep == incprg )
-      {
-         emit work_progress( jstprg );
-         kstodo   -= jstprg;
-         kstep     = 0;
-      }
-
-      if ( abort ) return;
    }
 
-//DbgLv(1)<< "ti_small_:   nsb nsa" << small_b.size() << small_a.size()
-// << "jsb jsa" << nsolutes << svsa << "a0 an b0 bn"
-// << small_a[0] << small_a[svsa] << small_b[0] << small_b[nsolutes-1];
-
-   if ( signal_wanted  &&  kstodo > 0 )
-      emit work_progress( kstodo );
-
-   DebugTime("END:ti-smab");
-}
-
-void US_SolveSim::compute_L_bar( QVector< double >&       L_bar,
-                                 const QVector< double >& L,
-                                 const QVector< double >& L_tilde )
-{
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int npoints = edata->pointCount();
-   int nscans  = edata->scanCount();
-   double avgscale = 1.0 / (double)nscans;
-
-   for ( int rr = 0; rr < npoints; rr++)
-   {
-      // Note  L_tilde is always zero when rinoise has not been requested
-      for ( int ss = 0; ss < nscans; ss++ )
-         L_bar[ rr ] += ( L[ ss * npoints + rr ] - L_tilde[ ss ] );
-
-      L_bar[ rr ] *= avgscale;
-   }
-}
-
-// Calculate the average measured concentration at each radius point
-void US_SolveSim::compute_a_bar( QVector< double >&       a_bar,
-                                 const QVector< double >& a_tilde,
-                                 const QVector< double >& nnls_b )
-{
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int npoints = edata->pointCount();
-   int nscans  = edata->scanCount();
-   double avgscale = 1.0 / (double)nscans;
-
-   for ( int rr = 0; rr < npoints; rr++ )
-   {
-      int jb      = rr;
-
-      // Note: a_tilde is always zero when rinoise has not been requested
-      for ( int ss = 0; ss < nscans; ss++ )
-      {
-         a_bar[ rr ] += ( nnls_b[ jb ] - a_tilde[ ss ] );
-         jb          += npoints;
-      }
-
-      a_bar[ rr ] *= avgscale;
-   }
-}
-
-// Calculate the average simulated concentration at each radius point
-void US_SolveSim::compute_L_bars( int                      nsolutes,
-                                  int                      nrinois,
-                                  int                      ntinois,
-                                  int                      ntotal,
-                                  QVector< double >&       L_bars,
-                                  const QVector< double >& nnls_a,
-                                  const QVector< double >& L_tildes )
-{
-   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
-   int npoints = edata->pointCount();
-   int nscans  = edata->scanCount();
-   double avgscale = 1.0 / (double)nscans;
-
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      int solute_offset = cc * ntotal;
+   if ( calc_ti )
+   {  // Per-radius means:  average over time at each radius
+      double avgscale = 1.0 / (double)nscans;
 
       for ( int rr = 0; rr < npoints; rr++ )
+         v_bar[ rr ]    = 0.0;
+
+      for ( int ss = 0; ss < nscans; ss++ )
       {
-         int r_index = cc * ntinois + rr;
+         double* svals  = vals + (size_t)ss * npoints;
 
-         for ( int ss = 0; ss < nscans; ss++ )
-         {
-            // Note: L_tildes is always zero when rinoise has not been
-            // requested
+         for ( int rr = 0; rr < npoints; rr++ )
+            v_bar[ rr ]   += svals[ rr ];
+      }
 
-            int n_index = solute_offset + ss * npoints + rr;
-            int s_index = cc * nrinois + ss;
+      for ( int rr = 0; rr < npoints; rr++ )
+         v_bar[ rr ]   *= avgscale;
 
-            L_bars[ r_index ] += ( nnls_a[ n_index ] - L_tildes[ s_index ] );
-         }
+      for ( int ss = 0; ss < nscans; ss++ )
+      {
+         double* svals  = vals + (size_t)ss * npoints;
 
-         L_bars[ r_index ] *= avgscale;
+         for ( int rr = 0; rr < npoints; rr++ )
+            svals[ rr ]   -= v_bar[ rr ];
       }
    }
+}
+
+// Compute concentrations by NNLS with TI and/or RI noise algebraically removed
+int US_SolveSim::nnls_noise( int noisflag, const QVector< int >& nscans,
+                             const QVector< int >& npoints,
+                             int nsolutes, int narows,
+                             QVector< double >& nnls_a,
+                             QVector< double >& nnls_b,
+                             QVector< double >& nnls_x,
+                             QVector< double >& tinvec,
+                             QVector< double >& rinvec )
+{
+   bool calc_ti  = ( ( noisflag & 1 ) != 0 );
+   bool calc_ri  = ( ( noisflag & 2 ) != 0 );
+   int  ndsets   = nscans.size();
+   int  ntinois  = 0;       // TI noise values of all data sets
+   int  nrinois  = 0;       // RI noise values of all data sets
+
+   for ( int ee = 0; ee < ndsets; ee++ )
+   {
+      ntinois      += npoints[ ee ];
+      nrinois      += nscans [ ee ];
+   }
+
+   QVector< double > a_tilde ( nrinois, 0.0 );                // Data scan means
+   QVector< double > a_bar   ( ntinois, 0.0 );                // Data radius means
+   QVector< double > L_tildes( static_cast< qsizetype >( nsolutes ) * nrinois,
+                               0.0 );                         // Sim scan means
+   QVector< double > L_bars  ( static_cast< qsizetype >( nsolutes ) * ntinois,
+                               0.0 );                         // Sim radius means
+
+   // Project data and simulations onto the complement of the noise
+   //  subspace, one data set at a time (data rows only; any Tikhonov rows
+   //  below are noise-free)
+   size_t krow   = 0;       // First data row of a data set
+   int    kti    = 0;       // First TI noise value of a data set
+   int    kri    = 0;       // First RI noise value of a data set
+
+   for ( int ee = 0; ee < ndsets; ee++ )
+   {
+      remove_noise_means( nnls_b.data() + krow, nscans[ ee ], npoints[ ee ],
+                          calc_ti, calc_ri, a_tilde.data() + kri,
+                          a_bar.data() + kti );
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         remove_noise_means( nnls_a.data() + (size_t)cc * narows + krow,
+                             nscans[ ee ], npoints[ ee ], calc_ti, calc_ri,
+                             L_tildes.data() + (size_t)cc * nrinois + kri,
+                             L_bars.data() + (size_t)cc * ntinois + kti );
+      }
+
+      krow         += (size_t)nscans[ ee ] * npoints[ ee ];
+      kti          += npoints[ ee ];
+      kri          += nscans [ ee ];
+   }
+
+   // Concentrations are the NNLS solution of the projected system
+   int rc        = US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
+                                   nnls_b.data(), nnls_x.data() );
+
+   // Noise is the data mean less the mean of the fitted simulations
+   if ( calc_ti )
+   {
+      for ( int rr = 0; rr < ntinois; rr++ )
+      {
+         double        tinoi  = a_bar[ rr ];
+         const double* lbars  = L_bars.constData() + rr;
+
+         for ( int cc = 0; cc < nsolutes; cc++ )
+            tinoi        -= nnls_x[ cc ] * lbars[ (size_t)cc * ntinois ];
+
+         tinvec[ rr ]  = tinoi;
+      }
+   }
+
+   if ( calc_ri )
+   {
+      for ( int ss = 0; ss < nrinois; ss++ )
+      {
+         double        rinoi  = a_tilde[ ss ];
+         const double* ltils  = L_tildes.constData() + ss;
+
+         for ( int cc = 0; cc < nsolutes; cc++ )
+            rinoi        -= nnls_x[ cc ] * ltils[ (size_t)cc * nrinois ];
+
+         rinvec[ ss ]  = rinoi;
+      }
+   }
+
+   return rc;
 }
 
 // Debug message with thread/processor number and elapsed time value
