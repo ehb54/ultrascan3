@@ -2254,10 +2254,10 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
                                  tr( "VELOCITY-MWL: All Channels Processed !" ),
                                  msg_text );
 
-      /****/
+      /**** TEMPORARILY!!! 
       update_autoflow_record_atAnalysis();
       emit analysis_complete_auto( protocol_details_at_analysis );
-      /****/
+      ****/
       
       return;
     }
