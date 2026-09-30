@@ -72,6 +72,12 @@ class US_Integral : public US_Widgets
         void set_range_lines( const QList< QPair< double, double > >& ranges )
         { range_lines = ranges; }
 
+        //! \brief Non-interactive (GMP report): build the distributions from
+        //!        models that the caller has already loaded
+        //! \param models  Loaded models, in the order curves are wanted
+        //! \return        Number of models used
+        int  load_distro_models_auto( const QList< US_Model >& models );
+
         //! \brief Non-interactive x-axis selection + replot
         //! \param attr  0:s  1:f/f0  2:molar mass  3:D  5:vbar  6:Rh
         void select_x_axis_auto( int attr );

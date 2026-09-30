@@ -315,6 +315,7 @@ class US_ReporterGMP : public US_Widgets
         int nchan_ranges;                    //!< Number of channel ranges
 
         QString editing_time_abde;
+        QString editing_time_velmwl;   //!< VELOCITY-MWL: time of data editing
 
         //! VELOCITY-MWL: Approved channels (e.g. "2A") having recorded 2DSA-IT models;
         //! filled by read_velmwl_channels() from autoflowAnalysisVelMwl
@@ -626,7 +627,13 @@ class US_ReporterGMP : public US_Widgets
         double interp_sval(double, double*, double*, int); //!< Interpolate s-value
         void plotres(QMap<QString, QString>&); //!< Plot residuals
         void plot_pseudo3D(QString, QString); //!< Plot pseudo 3D
-        void process_velmwl_integral_plots( void ); //!< VELOCITY-MWL: per-channel Integral plots from recorded 2DSA-IT model GUIDs
+        //! VELOCITY-MWL: per-channel "VELOCITY-MWL Analysis" report section (integration results
+        //! vs. analysis-profile report items, distributions, Integral plots), from recorded 2DSA-IT model GUIDs
+        void process_velmwl_analysis( void );
+        int  load_velmwl_models( const QString&, QList< US_Model >&, QStringList& ); //!< load channel's species models by GUID
+        US_ReportGMP* velmwl_channel_report( const QString& );  //!< channel's report (1st wavelength) from the analysis profile
+        QString html_header_velmwl( QString, QString, QString ); //!< HTML header of the VELOCITY-MWL section
+        QString distrib_info_velmwl( const QString&, const QList< US_Model >&, const QStringList&, bool ); //!< Timestamps, species, integration results
         bool modelGuidExistsForStage(QString, QString); //!< Check if model GUID exists for stage
         bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
         void process_combined_plots(QString); //!< Process combined plots

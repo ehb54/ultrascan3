@@ -625,6 +625,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   velmwl_chan_species. clear();
   velmwl_chan_guids. clear();
   velmwl_chan_fname. clear();
+  editing_time_velmwl. clear();
   
   prot_details_at_report = protocol_details;
   
@@ -1688,6 +1689,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   velmwl_chan_species. clear();
   velmwl_chan_guids. clear();
   velmwl_chan_fname. clear();
+  editing_time_velmwl. clear();
 
   prot_details_at_report = protocol_details;
 
@@ -2673,6 +2675,8 @@ namespace
     { "Integral Plot - Partial Spec. Volume (vbar)", 5, "vbar", false, "",    1.0    },
     { "Integral Plot - Hydrodynamic Radius (Rh)",  6, "Rh",   false, "",      1.0    }
   };
+  const char* velmwl_integration_label = "Integration Results";   //!< per-channel mask item
+
   const int n_velmwl_integral_features =
     int( sizeof( velmwl_integral_features ) / sizeof( velmwl_integral_features[ 0 ] ) );
 }
@@ -2767,6 +2771,14 @@ void US_ReporterGMP::build_perChanTree_velmwl ( void )
       chanItem[ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
 
       int checked_masks = 0;
+
+      //Integration Results (report items vs. models), on by default
+      featItemNameList.clear();
+      featItemNameList << "" << indent.repeated( 2 ) + QString( velmwl_integration_label );
+      QTreeWidgetItem* intItem = new QTreeWidgetItem( chanItem[ chanItemName ], featItemNameList, wiubase );
+      intItem->setCheckState( 0, Qt::Checked );
+      ++checked_masks;
+
       for ( int kk = 0; kk < n_velmwl_integral_features; ++kk )
 	{
 	  featItemNameList.clear();
@@ -3754,7 +3766,7 @@ void US_ReporterGMP::generate_report( void )
 	}
       else if ( expType == "VELOCITY-MWL" )
 	{
-	  process_velmwl_integral_plots();
+	  process_velmwl_analysis();
 	}
       else if ( expType == "ABDE" )
 	{
@@ -3856,7 +3868,7 @@ void US_ReporterGMP::generate_report( void )
 	}
       else if ( expType == "VELOCITY-MWL" )
 	{
-	  process_velmwl_integral_plots();
+	  process_velmwl_analysis();
 	}
       else if ( expType == "ABDE" )
 	{
@@ -4071,13 +4083,260 @@ void US_ReporterGMP::generate_report( void )
   
 }
 
-// VELOCITY-MWL: for every Approved ("Accepted") channel recorded in
-// autoflowAnalysisVelMwl (read into velmwl_* by read_velmwl_channels()),
-// load the models of its deconvolved species (S1, S2, ...) by modelGUID into
-// US_Integral and write the integral-distribution plots selected in the
-// per-channel report mask (perChanMask_edited_velmwl) into the report:
-// one plot per channel and selected plot type, one curve per species.
-void US_ReporterGMP::process_velmwl_integral_plots( void )
+//VELOCITY-MWL: the channel's report (parameters + report items), defined
+//per channel: first wavelength's, as for ABDE. nullptr if not found.
+US_ReportGMP* US_ReporterGMP::velmwl_channel_report( const QString& chan_tag )
+{
+  for ( int ich = 0; ich < currAProf.pchans.count(); ++ich )
+    {
+      QString channel_desc_alt = chndescs_alt[ ich ];
+      if ( channel_desc_alt.split( ":" )[ 0 ] == chan_tag  &&
+	   ch_wvls.contains( channel_desc_alt )  &&  ! ch_wvls[ channel_desc_alt ].isEmpty() )
+	{
+	  QString wvl0 = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
+	  if ( ch_reports[ channel_desc_alt ].contains( wvl0 ) )
+	    return &( ch_reports[ channel_desc_alt ][ wvl0 ] );
+	}
+    }
+  return nullptr;
+}
+
+//VELOCITY-MWL: load the models of the channel's deconvolved species by
+//modelGUID (2 single-row queries per model). 'species' returns the species
+//names (S1, S2, ...) of the models that were actually loaded, in step with 'models'.
+int US_ReporterGMP::load_velmwl_models( const QString& chan_tag,
+					QList< US_Model >& models, QStringList& species )
+{
+  models .clear();
+  species.clear();
+
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[VEL-MWL] load models: DB connection failed:" << db.lastError();
+      return 0;
+    }
+
+  const QStringList guids = velmwl_chan_guids  [ chan_tag ];
+  const QStringList specs = velmwl_chan_species[ chan_tag ];
+
+  for ( int ii = 0; ii < guids.size(); ++ii )
+    {
+      const QString guid = guids[ ii ].trimmed();
+      US_Model      mdl;
+      int rc = mdl.load( true, guid, &db );
+
+      //load() does not check that the GUID was found: verify what came back
+      if ( rc != US_DB2::OK  ||  mdl.components.isEmpty()  ||
+	   mdl.modelGUID.compare( guid, Qt::CaseInsensitive ) != 0 )
+	{
+	  qDebug() << "[VEL-MWL] model not loaded, chan/species/GUID/rc --"
+		   << chan_tag << specs.value( ii ) << guid << rc;
+	  continue;
+	}
+
+      models  << mdl;
+      species << specs.value( ii );
+    }
+
+  return models.size();
+}
+
+//VELOCITY-MWL: header of the section, same as ABDE's with own title
+QString US_ReporterGMP::html_header_velmwl( QString title, QString runName, QString chanName )
+{
+  QString s = html_header_abde( title, runName, chanName );
+  s.replace( "<h1>ABDE Analysis", "<h1>VELOCITY-MWL Analysis" );
+  return s;
+}
+
+//Fraction (%) of a model's total signal concentration whose component values
+//of given type lie within [low,high] -- the same integration (and range units)
+//as used for the VELOCITY report; supported = false for unknown types
+static double velmwl_range_fraction( const US_Model& mdl, const QString& type,
+				     double low, double high, bool& supported )
+{
+  supported = true;
+  double sum_c = 0.0;
+  double int_c = 0.0;
+
+  for ( int ii = 0; ii < mdl.components.size(); ++ii )
+    {
+      const US_Model::SimulationComponent& sc = mdl.components[ ii ];
+      double conc = sc.signal_concentration;
+      sum_c      += conc;
+
+      double v, lo, hi;
+      if      ( type == "s"    ) { v = sc.s;    lo = low * 1.0e-13; hi = high * 1.0e-13; }
+      else if ( type == "D"    ) { v = sc.D;    lo = low * 1.0e-7;  hi = high * 1.0e-7;  }
+      else if ( type == "f/f0" ) { v = sc.f_f0; lo = low;           hi = high;           }
+      else if ( type == "MW"   ) { v = sc.mw;   lo = low * 1.0e3;   hi = high * 1.0e3;   }  // kDa -> Da
+      else { supported = false; return 0.0; }
+
+      if ( v >= lo  &&  v <= hi )
+	int_c += conc;
+    }
+
+  return ( sum_c > 0.0 ) ? ( int_c / sum_c ) * 100.0 : 0.0;
+}
+
+//VELOCITY-MWL: timestamps, species (models) used, analysis settings,
+//distribution info (separate .pdf), and Integration Results: for each species
+//model, the fraction of total concentration within each report item's range
+//compared with the item's target (+/- tolerance) from the analysis profile.
+QString US_ReporterGMP::distrib_info_velmwl( const QString& chan_tag,
+					     const QList< US_Model >& models,
+					     const QStringList& species,
+					     bool do_integration )
+{
+  //Timestamps
+  QString analysed;
+  for ( int im = 0; im < models.size(); ++im )
+    if ( models[ im ].timeCreated > analysed )     // 'YYYY-MM-DD hh:mm:ss' sorts as text
+      analysed = models[ im ].timeCreated;
+
+  QString mstr = "\n" + indent( 2 ) + tr( "<h3>Timestamps:</h3>\n" )
+               + indent( 2 ) + "<table>\n";
+  if ( ! editing_time_velmwl.isEmpty() )
+    mstr += table_row( tr( "Data Edited at:" ), editing_time_velmwl + " (UTC)" );
+  if ( ! analysed.isEmpty() )
+    mstr += table_row( tr( "Analysed at:" ), analysed + " (UTC)" );
+  mstr += indent( 2 ) + "</table>\n";
+
+  //Species (deconvolved) whose models are used
+  mstr += "\n" + indent( 2 ) + tr( "<h3>Deconvolved Species (Models Used):</h3>\n" )
+        + indent( 2 ) + "<table>\n";
+  for ( int im = 0; im < models.size(); ++im )
+    mstr += table_row( species[ im ] + ":", models[ im ].dataDescrip );
+  mstr += indent( 2 ) + "</table>\n";
+
+  //Analysis settings
+  mstr += "\n" + indent( 2 ) + tr( "<h3>Data Analysis Settings:</h3>\n" )
+        + indent( 2 ) + "<table>\n";
+  for ( int im = 0; im < models.size(); ++im )
+    {
+      double vari = models[ im ].variance;
+      double rmsd = ( vari > 0.0 ) ? sqrt( vari ) : 0.0;
+      mstr += table_row( tr( "Residual RMS Deviation, " ) + species[ im ] + ":",
+			 ( rmsd > 0.0 ) ? QString::number( rmsd ) : tr( "(none)" ) );
+      mstr += table_row( tr( "Number of Components, " ) + species[ im ] + ":",
+			 QString::number( models[ im ].components.size() ) );
+    }
+  mstr += indent( 2 ) + "</table>\n";
+
+  //Distribution Information - to a separate .pdf file
+  QString subDirName = runName + "-run" + runID;
+  QString dirName    = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+
+  QString html_d = "Species, s20 (1e-13 s), D20 (1e-7 cm^2/s), MW (Da), f/f0, vbar20 (mL/g), "
+                   "Signal Concentration<br>";
+  for ( int im = 0; im < models.size(); ++im )
+    {
+      html_d += species[ im ] + ": " + models[ im ].dataDescrip + "<br>";
+      for ( int ic = 0; ic < models[ im ].components.size(); ++ic )
+	{
+	  const US_Model::SimulationComponent& sc = models[ im ].components[ ic ];
+	  html_d += species[ im ] + ", "
+	    + QString::asprintf( "%10.4e", sc.s * 1.0e13 ) + ", "
+	    + QString::asprintf( "%10.4e", sc.D * 1.0e7  ) + ", "
+	    + QString::asprintf( "%10.4e", sc.mw         ) + ", "
+	    + QString::asprintf( "%10.4e", sc.f_f0       ) + ", "
+	    + QString::asprintf( "%10.4e", sc.vbar20     ) + ", "
+	    + QString::asprintf( "%10.4e", sc.signal_concentration ) + "<br>";
+	}
+    }
+
+  QString f_path      = dirName + "/" + "VelMwl_distro_" + chan_tag + ".pdf";
+  QString f_path_only = "VelMwl_distro_" + chan_tag + ".pdf";
+  QTextDocument document;
+  document.setHtml( html_d );
+
+  QPrinter printer( QPrinter::PrinterResolution );
+  printer.setOutputFormat( QPrinter::PdfFormat );
+  printer.setPageSize( QPageSize( QPageSize::Letter ) );
+  printer.setOutputFileName( f_path );
+  printer.setFullPage( true );
+  printer.setPageMargins( QMarginsF( 0, 0, 0, 0 ), QPageLayout::Millimeter );
+  document.print( &printer );
+
+  mstr += "\n" + indent( 2 ) + tr( "<h3>Distribution Information:</h3>\n" );
+  mstr += indent( 2 ) + "<table>\n";
+  mstr += "<a href=\"./" + f_path_only + "\">View Model Distributions</a>";
+  mstr += indent( 2 ) + "</table>\n";
+
+  //Integration Results
+  if ( do_integration )
+    {
+      US_ReportGMP* reportGMP = velmwl_channel_report( chan_tag );
+      if ( reportGMP == nullptr )
+	return mstr;
+
+      mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
+
+      QString header_trftp = table_row( tr( "Type:" ),
+					tr( "Range:" ),
+					tr( "Fraction % from Model (target):" ),
+					tr( "Tolerance, %:" ),
+					tr( "PASSED ?" ) );
+
+      for ( int im = 0; im < models.size(); ++im )
+	{
+	  QString mstr_sp = "<h4>" + species[ im ] + ": " + models[ im ].dataDescrip + " signal</h4>\n";
+	  mstr_sp += indent( 2 ) + "<table>\n";
+	  mstr_sp += header_trftp;
+
+	  for ( int kk = 0; kk < reportGMP->reportItems.size(); ++kk )
+	    {
+	      US_ReportGMP::ReportItem curr_item = reportGMP->reportItems[ kk ];
+	      QString type       = curr_item.type;
+	      double  frac_tot_r = curr_item.total_percent;
+	      double  tol_r      = curr_item.tolerance;
+	      double  low        = curr_item.range_low;
+	      double  high       = curr_item.range_high;
+	      QString range      = "[" + QString::number( low ) + " - " + QString::number( high ) + "]";
+
+	      bool   supported;
+	      double frac_tot_m  = velmwl_range_fraction( models[ im ], type, low, high, supported );
+
+	      if ( ! supported )
+		{
+		  mstr_sp += table_row( type, range,
+					tr( "n/a" ) + " (" + QString::number( frac_tot_r ) + "%)",
+					QString::number( tol_r ), tr( "n/a" ) );
+		  continue;
+		}
+
+	      QString passed = ( qAbs( frac_tot_m - frac_tot_r ) <= tol_r ) ? "YES" : "NO";
+
+	      mstr_sp += table_row( type, range,
+				    QString::asprintf( "%5.2f%%", frac_tot_m )
+				    + " (" + QString::number( frac_tot_r ) + "%)",
+				    QString::number( tol_r ),
+				    passed );
+	    }
+
+	  mstr_sp += indent( 2 ) + "</table>\n";
+	  mstr    += mstr_sp;
+	}
+    }
+
+  return mstr;
+}
+
+// VELOCITY-MWL: the "VELOCITY-MWL Analysis" section, for every Approved
+// ("Accepted") channel recorded in autoflowAnalysisVelMwl (read into velmwl_*
+// by read_velmwl_channels()) and switched on in the per-channel report mask
+// (perChanMask_edited_velmwl):
+//  - models of the channel's deconvolved species (S1, S2, ...) are loaded by
+//    modelGUID;
+//  - timestamps, species, distributions and Integration Results (fractions from
+//    the models compared with the analysis-profile report items) are written;
+//  - the selected integral-distribution plots are generated by US_Integral
+//    (one plot per plot type, one curve per species).
+void US_ReporterGMP::process_velmwl_analysis( void )
 {
   if ( velmwl_channList.isEmpty() )
     read_velmwl_channels();               // e.g. tree was not built
@@ -4100,14 +4359,18 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
       if ( perChanMask_edited_velmwl.ShowChannelParts.contains( key_m )  &&
 	   ! perChanMask_edited_velmwl.ShowChannelParts[ key_m ] )
 	{
-	  qDebug() << "[VEL-MWL integral] channel" << chan_tag << "switched off in mask.";
+	  qDebug() << "[VEL-MWL] channel" << chan_tag << "switched off in mask.";
 	  continue;
 	}
 
-      //Which plot types are switched on for this channel
+      //Which features are switched on for this channel
       const QMap< QString, QString > feats =
 	perChanMask_edited_velmwl.ShowChannelItemParts.value( key_m );
-      QList< int > todo;
+
+      QString int_lbl = QString( velmwl_integration_label ).trimmed();
+      bool do_integration = feats.contains( int_lbl ) ? bool( feats[ int_lbl ].toInt() ) : true;
+
+      QList< int > todo;                  // integral plot types
       for ( int kk = 0; kk < n_velmwl_integral_features; ++kk )
 	{
 	  QString lbl = QString( velmwl_integral_features[ kk ].label ).trimmed();
@@ -4117,32 +4380,51 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	    todo << kk;
 	}
 
-      if ( todo.isEmpty() )
+      if ( ! do_integration  &&  todo.isEmpty() )
 	continue;
 
-      //Report items of the channel (defined per channel: 1st wavelength's are used)
-      decltype( US_ReportGMP().reportItems ) ritems;   // container type as defined in US_ReportGMP
-      for ( int ich = 0; ich < currAProf.pchans.count(); ++ich )
-	{
-	  QString channel_desc_alt = chndescs_alt[ ich ];
-	  if ( channel_desc_alt.split( ":" )[ 0 ] == chan_tag  &&
-	       ch_wvls.contains( channel_desc_alt )  &&  ! ch_wvls[ channel_desc_alt ].isEmpty() )
-	    {
-	      QString wvl0 = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
-	      ritems       = ch_reports[ channel_desc_alt ][ wvl0 ].reportItems;
-	      break;
-	    }
-	}
+      //Load the species models (once per channel; used for integration and plots)
+      QList< US_Model > models;
+      QStringList       species;
+      int nloaded = load_velmwl_models( chan_tag, models, species );
 
-      US_Integral* integ = new US_Integral();
-      int nloaded        = integ->load_distro_auto( QString::number( invID ),
-						    velmwl_chan_guids[ chan_tag ] );
-
-      qDebug() << "[VEL-MWL integral] channel" << chan_tag
+      qDebug() << "[VEL-MWL] channel" << chan_tag
 	       << "species" << velmwl_chan_species[ chan_tag ]
 	       << "GUIDs"   << velmwl_chan_guids[ chan_tag ] << "loaded" << nloaded;
 
       if ( nloaded < 1 )
+	{
+	  html_assembled += "<p class=\"pagebreak \">\n";
+	  html_assembled += html_header_velmwl( "US_Fematch", FileName, chan_tag );
+	  html_assembled += "<p>No species models could be loaded for this channel.</p>\n</p>\n";
+	  continue;
+	}
+
+      //Section: header, timestamps, species, distributions, integration results
+      html_assembled += "<p class=\"pagebreak \">\n";
+      html_assembled += html_header_velmwl( "US_Fematch", FileName, chan_tag );
+      html_assembled += distrib_info_velmwl( chan_tag, models, species, do_integration );
+      if ( nloaded < velmwl_chan_guids[ chan_tag ].size() )
+	html_assembled += "<p>Note: " + QString::number( nloaded ) + " of "
+	  + QString::number( velmwl_chan_guids[ chan_tag ].size() )
+	  + " species models could be loaded.</p>\n";
+      html_assembled += "</p>\n";
+      html_assembled += "</body></html>";
+
+      //Integral plots
+      if ( todo.isEmpty() )
+	continue;
+
+      //Report-item ranges of the channel, drawn on the plots
+      decltype( US_ReportGMP().reportItems ) ritems;
+      US_ReportGMP* reportGMP = velmwl_channel_report( chan_tag );
+      if ( reportGMP != nullptr )
+	ritems = reportGMP->reportItems;
+
+      US_Integral* integ = new US_Integral();
+      int nint           = integ->load_distro_models_auto( models );
+
+      if ( nint < 1 )
 	{
 	  delete integ;
 	  continue;
@@ -4172,14 +4454,8 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	  imgFiles << imgFile;
 	}
 
-      QString hdr = "<p class=\"pagebreak \">\n<h3>Integral Distributions, Channel "
-	+ chan_tag + " (Deconvolved Species: "
-	+ velmwl_chan_species[ chan_tag ].join( ", " ) + ")</h3>\n";
-      if ( nloaded < velmwl_chan_guids[ chan_tag ].size() )
-	hdr += "<p>Note: " + QString::number( nloaded ) + " of "
-	  + QString::number( velmwl_chan_guids[ chan_tag ].size() )
-	  + " species models could be loaded.</p>\n";
-      html_assembled += hdr;
+      html_assembled += "<h3>Integral Distributions, Channel " + chan_tag
+	+ " (Deconvolved Species: " + species.join( ", " ) + ")</h3>\n";
 
       assemble_plots_html( imgFiles );
 
@@ -7584,6 +7860,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 
   if ( expType == "ABDE" )
     editing_time_abde = editRIts;
+  else if ( expType == "VELOCITY-MWL" )
+    editing_time_velmwl = editRIts;
 
   html_assembled += tr( "<h3 align=left>Meniscus Position Determination, Edit Profiles Saving (4. EDITING)</h3>" );
   

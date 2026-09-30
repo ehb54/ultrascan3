@@ -982,6 +982,27 @@ int US_Integral::load_distro_auto( const QString& /*invID*/,
    if ( models.isEmpty() )
       return 0;
 
+   return load_distro_models_auto( models );
+}
+
+// Build the distributions from already-loaded models (GMP report), no dialog
+int US_Integral::load_distro_models_auto( const QList< US_Model >& models )
+{
+   if ( models.isEmpty() )
+      return 0;
+
+   short_legend_labels = true;      // compact legend for the report plots
+
+   QStringList descrs;
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // Same composite description string US_ModelLoader::description()
+      // makes: first character is the separator for section() parsing
+      const US_Model& mdl = models[ jj ];
+      QString sep = mdl.description.contains( ";" ) ? "^" : ";";
+      descrs << sep + mdl.description + sep /*filename*/ + sep + mdl.modelGUID
+                    + sep /*DB id*/ + sep + mdl.editGUID;
+   }
+
    mdescs = descrs;
 
    te_distr_info->setText(
