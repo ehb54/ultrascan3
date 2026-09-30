@@ -1,0 +1,18 @@
+//! \file us_integral_gmp_main.cpp
+#include "us_integral.h"
+#include "us_license_t.h"
+#include "us_license.h"
+
+// main program
+int main( int argc, char* argv[] )
+{
+   QApplication application( argc, argv );
+
+   #include "main1.inc"
+
+   // License is OK.  Start up.
+   
+   US_Integral w;
+   w.show();                   //!< \memberof QWidget
+   return application.exec();  //!< \memberof QApplication
+}
