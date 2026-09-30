@@ -147,6 +147,16 @@ class US_Integral : public US_Widgets
         //! vertical lines on the plot (e.g. analysis-profile report-item ranges)
         QList< QPair< double, double > >  range_lines;
 
+        //! If true (GMP report), legend entries show only the model/species
+        //! name, without the trailing " (run-info)[n]" part of the label
+        bool          short_legend_labels;
+
+        //! \brief Report mode: grow the plot so the legend is not cut
+        void fit_legend_to_plot( void );
+
+        //! \brief Legend text for distribution \p ii
+        QString legend_label( int ii ) const;
+
         //! \brief (Re)draw the range lines (columns of symbols, one symbol type per range)
         void draw_range_markers( void );
 

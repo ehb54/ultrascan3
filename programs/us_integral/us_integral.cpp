@@ -2,6 +2,7 @@
 
 #include "qwt_symbol.h"
 #include "qwt_plot_curve.h"
+#include <QRegularExpression>
 #include <QApplication>
 #include <cmath>
 #include "us_integral.h"
@@ -63,6 +64,7 @@ bool distro_lessthan_r(const S_Solute &solu1, const S_Solute &solu2)
 US_Integral::US_Integral() : US_Widgets()
 {
    dbg_level = US_Settings::us_debug();
+   short_legend_labels = false;
 
    // Set up the GUI
    setWindowTitle( tr( "Integral" ) );
@@ -495,11 +497,8 @@ DbgLv(1) << "DaPl: (3)tstr" << tstr;
    if ( ncurvs == 1 )
    {
       // Plot a single line
-      data_plot->detachItems( QwtPlotItem::Rtti_PlotLegend, true );
-      QwtLegend *legend = new QwtLegend;
-      data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
       QColor colr1( Qt::blue );
-      data_curv      = us_curve( data_plot, curvtitl );
+      data_curv      = us_curve( data_plot, legend_label( 0 ) );
       data_curv->setItemAttribute( QwtPlotItem::Legend, true );
       data_curv->setPen  ( QPen( QBrush( colr1 ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
@@ -508,18 +507,20 @@ DbgLv(1) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
  << "yy" << yy[0] << yy[npoint-1];
       data_curv->setSamples( xx, yy, npoint );
 
+      // Insert the legend after the curve exists, so its layout is current
+      data_plot->detachItems( QwtPlotItem::Rtti_PlotLegend, true );
+      QwtLegend *legend = new QwtLegend;
+      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
+
       draw_range_markers();
       data_plot->replot();
+      if ( short_legend_labels )
+         fit_legend_to_plot();
       return;
    }
 
    // Plot multiple lines, one for each model
-   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
-   QwtLegend *legend = new QwtLegend;
-   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-   legend->setFont( sfont );
-   data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
-
    QColor lncolr1[] = { QColor( Qt::blue ),
                         QColor( Qt::red ),
                         QColor( Qt::green ),
@@ -558,7 +559,7 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
 
    for ( int ii = 0; ii < ncurvs; ii++ )
    {  // Draw each model line
-      curvtitl       = alldis[ ii ].label;
+      curvtitl       = legend_label( ii );
       data_curv      = us_curve( data_plot, curvtitl );
       data_curv->setPen( QPen( QBrush( lncolrs[ ii ] ), 3.0, Qt::SolidLine ) );
       switch ( plot_x )
@@ -587,8 +588,62 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
       data_curv->setItemAttribute( QwtPlotItem::Legend, true );
       data_curv->setSamples( xx, yy, npoint );
    }
+
+   // Insert the legend after all curves exist (as US_Norm_Profile does), so
+   // the legend layout is computed for the final set of entries
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QwtLegend *legend = new QwtLegend;
+   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( sfont );
+   data_plot->insertLegend( legend, QwtPlot::BottomLegend  );
+
    draw_range_markers();
    data_plot->replot();
+   if ( short_legend_labels )
+      fit_legend_to_plot();
+}
+
+// Report mode: make sure the (bottom) legend is not cut. If the legend needs
+// more height than the layout gave it, grow the plot by the missing amount.
+void US_Integral::fit_legend_to_plot( void )
+{
+   data_plot->updateLayout();
+
+   QwtLegend* lg = qobject_cast< QwtLegend* >( data_plot->legend() );
+   if ( lg == nullptr )
+      return;
+
+   for ( int pass = 0; pass < 3; pass++ )
+   {
+      int need = lg->heightForWidth( lg->width() );
+      int have = lg->height();
+DbgLv(1) << "FitLg: pass need have plot-h" << pass << need << have << data_plot->height();
+
+      if ( need <= have )
+         break;
+
+      int newh = data_plot->height() + ( need - have ) + 4;
+      data_plot->setMinimumHeight( newh );
+      data_plot->resize( data_plot->width(), newh );
+      data_plot->replot();
+   }
+}
+
+// Legend text of a distribution: full label, or (report mode) just the
+// model/species name -- the label has the form "<name> (<run info>)[<n>]"
+QString US_Integral::legend_label( int ii ) const
+{
+   QString lbl = alldis[ ii ].label;
+
+   if ( short_legend_labels )
+   {
+      QRegularExpression rx( "^(.*) \\(.*\\)\\[\\d+\\]$" );
+      QRegularExpressionMatch mt = rx.match( lbl );
+      if ( mt.hasMatch() )
+         lbl = mt.captured( 1 ).trimmed();
+   }
+
+   return lbl;
 }
 
 // Draw the vertical range lines (low and high edge of each range) as
@@ -896,6 +951,8 @@ int US_Integral::load_distro_auto( const QString& /*invID*/,
 
    QList< US_Model > models;
    QStringList       descrs;
+
+   short_legend_labels = true;      // compact legend for the report plots
 
    for ( int ii = 0; ii < modelGUIDs.size(); ii++ )
    {
