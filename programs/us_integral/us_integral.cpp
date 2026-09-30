@@ -674,7 +674,7 @@ void US_Integral::draw_range_markers( void )
                                           QwtSymbol::Diamond,
                                           QwtSymbol::Ellipse };
    const int nsyms   = 6;
-   const int nypts   = 51;                 // symbols along y in [0,1]
+   const int nypts   = 31;                 // symbols along y in [0,1] (spacing ~3.3%)
    QVector< double > yv( nypts );
    for ( int kk = 0; kk < nypts; kk++ )
       yv[ kk ] = (double)kk / (double)( nypts - 1 );
@@ -692,8 +692,8 @@ void US_Integral::draw_range_markers( void )
          rcurve->setItemAttribute( QwtPlotItem::Legend, false );
          rcurve->setSymbol( new QwtSymbol( symstyles[ ii % nsyms ],
                                            QBrush( Qt::black ),
-                                           QPen( Qt::black, 1.5 ),
-                                           QSize( 7, 7 ) ) );
+                                           QPen( Qt::black, 1.0 ),
+                                           QSize( 5, 5 ) ) );
          rcurve->setSamples( xv, yv );
          rcurve->attach( data_plot );
       }
