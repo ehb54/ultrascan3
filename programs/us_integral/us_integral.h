@@ -147,7 +147,7 @@ class US_Integral : public US_Widgets
         //! vertical lines on the plot (e.g. analysis-profile report-item ranges)
         QList< QPair< double, double > >  range_lines;
 
-        //! \brief (Re)draw the vertical range lines on the data plot
+        //! \brief (Re)draw the range lines (columns of symbols, one symbol type per range)
         void draw_range_markers( void );
 
     private slots:

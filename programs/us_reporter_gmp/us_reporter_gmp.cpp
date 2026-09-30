@@ -4149,7 +4149,6 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	}
 
       QStringList imgFiles;
-      bool have_ranges = false;
       for ( int it = 0; it < todo.size(); ++it )
 	{
 	  const VelMwlIntegralFeature& f = velmwl_integral_features[ todo[ it ] ];
@@ -4163,8 +4162,6 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 		  ranges << qMakePair( ritems[ ir ].range_low  * f.ritem_scale,
 				       ritems[ ir ].range_high * f.ritem_scale );
 	    }
-	  if ( ! ranges.isEmpty() )
-	    have_ranges = true;
 	  integ->set_range_lines( ranges );
 
 	  integ->select_x_axis_auto( f.attr );
@@ -4182,9 +4179,6 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	hdr += "<p>Note: " + QString::number( nloaded ) + " of "
 	  + QString::number( velmwl_chan_guids[ chan_tag ].size() )
 	  + " species models could be loaded.</p>\n";
-      if ( have_ranges )
-	hdr += "<p>Vertical lines mark the ranges of the analysis profile's report items "
-	  "(each range: low and high edge, same line style).</p>\n";
       html_assembled += hdr;
 
       assemble_plots_html( imgFiles );

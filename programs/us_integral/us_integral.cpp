@@ -1,5 +1,7 @@
 ﻿//! \file us_integral.cpp
 
+#include "qwt_symbol.h"
+#include "qwt_plot_curve.h"
 #include <QApplication>
 #include <cmath>
 #include "us_integral.h"
@@ -589,19 +591,38 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
    data_plot->replot();
 }
 
-// Draw the vertical range lines (low and high edge of each range);
-// each range uses its own line style so that its two edges pair up
+// Draw the vertical range lines (low and high edge of each range) as
+// columns of symbols, as in the ABDE plots; each range uses its own symbol
+// (+, x, *, triangle, ...) so that its two edges pair up
 void US_Integral::draw_range_markers( void )
 {
-   // remove any markers left from a previous plot (other x-axis)
-   data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker, true );
+   const QString rtitle( "__range_line__" );
+
+   // remove any range lines left from a previous plot
+   QwtPlotItemList citems = data_plot->itemList( QwtPlotItem::Rtti_PlotCurve );
+   for ( int ii = 0; ii < citems.size(); ii++ )
+   {
+      if ( citems[ ii ]->title().text() == rtitle )
+      {
+         citems[ ii ]->detach();
+         delete citems[ ii ];
+      }
+   }
 
    if ( range_lines.isEmpty() )
       return;
 
-   const Qt::PenStyle styles[] = { Qt::DashLine, Qt::DotLine,
-                                   Qt::DashDotLine, Qt::DashDotDotLine };
-   const int nstyles = 4;
+   const QwtSymbol::Style symstyles[] = { QwtSymbol::Cross,     // +
+                                          QwtSymbol::XCross,    // x
+                                          QwtSymbol::Star1,     // *
+                                          QwtSymbol::UTriangle,
+                                          QwtSymbol::Diamond,
+                                          QwtSymbol::Ellipse };
+   const int nsyms   = 6;
+   const int nypts   = 51;                 // symbols along y in [0,1]
+   QVector< double > yv( nypts );
+   for ( int kk = 0; kk < nypts; kk++ )
+      yv[ kk ] = (double)kk / (double)( nypts - 1 );
 
    for ( int ii = 0; ii < range_lines.size(); ii++ )
    {
@@ -609,12 +630,17 @@ void US_Integral::draw_range_markers( void )
 
       for ( int jj = 0; jj < 2; jj++ )
       {
-         QwtPlotMarker* marker = new QwtPlotMarker();
-         marker->setLineStyle( QwtPlotMarker::VLine );
-         marker->setXValue   ( edges[ jj ] );
-         marker->setLinePen  ( QPen( QBrush( Qt::black ), 2.0,
-                                     styles[ ii % nstyles ] ) );
-         marker->attach( data_plot );
+         QVector< double > xv( nypts, edges[ jj ] );
+
+         QwtPlotCurve* rcurve = new QwtPlotCurve( rtitle );
+         rcurve->setStyle( QwtPlotCurve::NoCurve );     // symbols only
+         rcurve->setItemAttribute( QwtPlotItem::Legend, false );
+         rcurve->setSymbol( new QwtSymbol( symstyles[ ii % nsyms ],
+                                           QBrush( Qt::black ),
+                                           QPen( Qt::black, 1.5 ),
+                                           QSize( 7, 7 ) ) );
+         rcurve->setSamples( xv, yv );
+         rcurve->attach( data_plot );
       }
    }
 }
