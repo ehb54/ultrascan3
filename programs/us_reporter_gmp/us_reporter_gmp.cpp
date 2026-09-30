@@ -5,6 +5,9 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QCollator>
 
 #include "us_reporter_gmp.h"
 #include "us_settings.h"
@@ -3547,22 +3550,25 @@ void US_ReporterGMP::generate_report( void )
   
   if ( auto_mode )
     {
-      for ( int i=0; i<Array_of_triples.size(); ++i )
+      if ( expType != "VELOCITY-MWL" ) 
 	{
-	  currentTripleName = Array_of_triples[i];
-	      
-	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
-	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
-	  
-	  for ( int j = 0; j < models_to_do.size(); ++j )
+	  for ( int i=0; i<Array_of_triples.size(); ++i )
 	    {
-	      simulate_triple ( currentTripleName, models_to_do[ j ] );
-
-	      //Pseudo3D Distr.
-	      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
-
-	      //Individual Combo plots
-	      process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
+	      currentTripleName = Array_of_triples[i];
+	      
+	      //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
+	      QStringList models_to_do = Triple_to_Models[ currentTripleName ];
+	      
+	      for ( int j = 0; j < models_to_do.size(); ++j )
+		{
+		  simulate_triple ( currentTripleName, models_to_do[ j ] );
+		  
+		  //Pseudo3D Distr.
+		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
+		  
+		  //Individual Combo plots
+		  process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
+		}
 	    }
 	}
 
@@ -3574,6 +3580,10 @@ void US_ReporterGMP::generate_report( void )
 	  
 	  //Replicas' averages
 	  assemble_replicate_av_integration_html();
+	}
+      else if ( expType == "VELOCITY-MWL" )
+	{
+	  process_velmwl_integral_plots();
 	}
       else if ( expType == "ABDE" )
 	{
@@ -3620,44 +3630,46 @@ void US_ReporterGMP::generate_report( void )
     }
   else
     { //Will be modified for stand-alone GMP Reporter based on edited tree JSON
-      for ( int i=0; i<Array_of_triples.size(); ++i )
+      if ( expType != "VELOCITY-MWL" )
 	{
-	  currentTripleName = Array_of_triples[i];
-	  
-	  //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
-	  QStringList models_to_do = Triple_to_Models[ currentTripleName ];
-	  
-	  for ( int j = 0; j < models_to_do.size(); ++j )
+	  for ( int i=0; i<Array_of_triples.size(); ++i )
 	    {
-	      QString triplename_alt = currentTripleName;
-	      triplename_alt.replace(".","");
-
-	      //'S' data
-	      if ( dataSource . contains("DiskAUC:Absorbance") &&  simulatedData )
-		triplename_alt = triplename_alt. replace( "S", "A");
-
-	      qDebug() << "Triple / Model " <<  triplename_alt << " / " <<  models_to_do[ j ] << "has items ? "
-		       << perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ]
-		       << perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ];
+	      currentTripleName = Array_of_triples[i];
 	      
-	      if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
-		   perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ||
-		   perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] ) 
+	      //here should be cycle over triple's models ( 2DSA-IT, 2DSA-MC etc..)
+	      QStringList models_to_do = Triple_to_Models[ currentTripleName ];
+	      
+	      for ( int j = 0; j < models_to_do.size(); ++j )
 		{
-		  simulate_triple ( currentTripleName, models_to_do[ j ] );
-
-		  //Pseudo3D Distr.
-		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
-
-		  //Individual Combo plots
-		  qDebug() << "INDCOMBO, perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] -- "
-			   << triplename_alt << models_to_do[ j ]
-			   << perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ];
-		  process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
+		  QString triplename_alt = currentTripleName;
+		  triplename_alt.replace(".","");
+		  
+		  //'S' data
+		  if ( dataSource . contains("DiskAUC:Absorbance") &&  simulatedData )
+		    triplename_alt = triplename_alt. replace( "S", "A");
+		  
+		  qDebug() << "Triple / Model " <<  triplename_alt << " / " <<  models_to_do[ j ] << "has items ? "
+			   << perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ]
+			   << perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ];
+		  
+		  if ( perChanMask_edited. has_tripleModel_items     [ triplename_alt ][ models_to_do[ j ] ] ||
+		       perChanMask_edited. has_tripleModelPlot_items [ triplename_alt ][ models_to_do[ j ] ] ||
+		       perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] ) 
+		    {
+		      simulate_triple ( currentTripleName, models_to_do[ j ] );
+		      
+		      //Pseudo3D Distr.
+		      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
+		      
+		      //Individual Combo plots
+		      qDebug() << "INDCOMBO, perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] -- "
+			       << triplename_alt << models_to_do[ j ]
+			       << perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ];
+		      process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
+		    }
 		}
 	    }
 	}
-
       if ( expType == "VELOCITY" )
 	{
 	  //Combined Plots
@@ -3670,6 +3682,10 @@ void US_ReporterGMP::generate_report( void )
 	  //Replicas' averages
 	  if ( miscMask_edited. ShowMiscParts[ "Replicate Groups Averaging" ] ) 
 	    assemble_replicate_av_integration_html();
+	}
+      else if ( expType == "VELOCITY-MWL" )
+	{
+	  process_velmwl_integral_plots();
 	}
       else if ( expType == "ABDE" )
 	{
@@ -3882,6 +3898,124 @@ void US_ReporterGMP::generate_report( void )
 	}
     }
   
+}
+
+// VELOCITY-MWL: for every Approved ("Accepted") channel recorded in
+// autoflowAnalysisVelMwl, take the modelGUIDs of its deconvolved species
+// (S1, S2, ...) -- recorded there by US_2dsa once each species' 2DSA-IT
+// model was saved -- load those models in the background into US_Integral,
+// and write the resulting sedimentation-coefficient integral plot
+// (one plot per channel, one curve per species) into the report.
+void US_ReporterGMP::process_velmwl_integral_plots( void )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[VEL-MWL integral] DB connection failed -- no integral plots.";
+      return;
+    }
+
+  QStringList qry;
+  qry << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
+  db.query( qry );
+
+  if ( db.lastErrno() != US_DB2::OK  ||  ! db.next() )
+    {
+      qDebug() << "[VEL-MWL integral] no autoflowAnalysisVelMwl record for autoflowID"
+	       << AutoflowID_auto;
+      return;
+    }
+
+  QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+
+  // Approved channels -> data filename and species modelGUIDs (S1, S2, ... order)
+  QCollator collator;
+  collator.setNumericMode( true );        // S2 < S10
+
+  QStringList                  chans;      // e.g. "2 / A"
+  QMap< QString, QString >     chan_fname; // channel -> filename recorded at Accept
+  QMap< QString, QStringList > chan_species;
+  QMap< QString, QStringList > chan_guids;
+
+  for ( auto it = jobj.constBegin(); it != jobj.constEnd(); ++it )
+    {
+      QJsonObject chdec = it.value().toObject();
+
+      if ( chdec.value( "decision" ).toString() != "Accepted" )
+	continue;                         // Rejected/undecided channels: disregard
+
+      QJsonObject mobj    = chdec.value( "models" ).toObject();
+      QStringList species = mobj.keys();
+      std::sort( species.begin(), species.end(),
+		 [&collator]( const QString& a, const QString& b )
+		 { return collator.compare( a, b ) < 0; } );
+
+      QStringList guids;
+      for ( int ii = 0; ii < species.size(); ++ii )
+	guids << mobj.value( species[ ii ] ).toString();
+
+      if ( guids.isEmpty() )
+	{
+	  qDebug() << "[VEL-MWL integral] channel" << it.key()
+		   << "is Accepted but has no recorded model GUIDs -- skipped.";
+	  continue;
+	}
+
+      chans << it.key();
+      chan_fname  [ it.key() ] = chdec.value( "filename" ).toString();
+      chan_species[ it.key() ] = species;
+      chan_guids  [ it.key() ] = guids;
+    }
+
+  chans.sort();
+  qDebug() << "[VEL-MWL integral] Approved channels with models -- " << chans;
+
+  if ( chans.isEmpty() )
+    return;
+
+  QString subDirName = runName + "-run" + runID;
+  QString dirName    = US_Settings::reportDir() + "/" + subDirName;
+  mkdir( US_Settings::reportDir(), subDirName );
+  const QString svgext( ".svgz" );
+  const QString pngext( ".png" );
+
+  for ( int ic = 0; ic < chans.size(); ++ic )
+    {
+      const QString chan = chans[ ic ];
+      QString chan_tag   = QString( chan ).remove( ' ' ).remove( '/' );   // "2 / A" -> "2A"
+
+      US_Integral* integ = new US_Integral();
+      int nloaded        = integ->load_distro_auto( QString::number( invID ),
+						    chan_guids[ chan ] );
+
+      qDebug() << "[VEL-MWL integral] channel" << chan << "species" << chan_species[ chan ]
+	       << "GUIDs" << chan_guids[ chan ] << "loaded" << nloaded;
+
+      if ( nloaded < 1 )
+	{
+	  delete integ;
+	  continue;
+	}
+
+      integ->select_x_axis_auto( 0 );     // sedimentation coefficient
+
+      QString imgFile = dirName + "/" + "VelMwl_integral." + chan_tag + ".s20" + svgext;
+      write_plot( imgFile, integ->rp_data_plot() );
+      imgFile.replace( svgext, pngext );
+
+      QString hdr = "<p class=\"pagebreak \">\n<h3>Integral Distributions, Channel "
+	+ chan_tag + " (Deconvolved Species: " + chan_species[ chan ].join( ", " ) + ")</h3>\n";
+      if ( nloaded < chan_guids[ chan ].size() )
+	hdr += "<p>Note: " + QString::number( nloaded ) + " of "
+	  + QString::number( chan_guids[ chan ].size() ) + " species models could be loaded.</p>\n";
+      html_assembled += hdr;
+
+      assemble_plots_html( QStringList() << imgFile );
+
+      delete integ;
+    }
 }
 
 void US_ReporterGMP::process_abde_plots( void )

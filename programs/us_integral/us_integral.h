@@ -18,7 +18,7 @@
 #include "qwt_scale_draw.h"
 
 //! \brief Distribution structure
-typedef struct distro_sys
+typedef struct integral_distro_sys
 {
     QList< S_Solute >   in_distro;      //!< Raw input distribution
     QList< S_Solute >   nm_distro;      //!< Normalized concentration distribution
@@ -33,7 +33,7 @@ typedef struct distro_sys
     int                 distro_type;    //!< Distribution type flag
     int                 solutionID;     //!< Associated solution database ID
     double              tot_conc;       //!< Total concentration
-} DisSys;
+} IntegralDisSys;
 
 //! \brief Less-than function for sorting distributions by S_Solute attribute
 bool distro_lessthan_s(const S_Solute&, const S_Solute&);
@@ -55,6 +55,21 @@ class US_Integral : public US_Widgets
         //! \brief Function to get x-axis value
         //! \return x-axis value
         int get_x();
+
+        //! \brief Non-interactive (GMP report): load models by modelGUID and
+        //!        build the distributions; plots sedimentation-coefficient
+        //!        integral (boundary fraction) curves, one curve per model
+        //! \param invID       Investigator ID (string, as in get_model_desc)
+        //! \param modelGUIDs  Model GUIDs, in the order curves are wanted
+        //! \return            Number of models loaded
+        int  load_distro_auto( const QString& invID, const QStringList& modelGUIDs );
+
+        //! \brief Non-interactive x-axis selection + replot
+        //! \param attr  0:s  1:f/f0  2:molar mass  3:D  5:vbar  6:Rh
+        void select_x_axis_auto( int attr );
+
+        //! \brief Pointer to the plot (for saving image in report)
+        QwtPlot* rp_data_plot( void ) { return data_plot; }
 
     private:
 
@@ -100,7 +115,7 @@ class US_Integral : public US_Widgets
         QButtonGroup* bg_x_axis;         //!< x-axis button group
         QButtonGroup* bg_di_avg;         //!< Distribution average button group
 
-        QVector< DisSys >             alldis;    //!< All distributions
+        QVector< IntegralDisSys >             alldis;    //!< All distributions
 
         QVector< double >             v_bfracs;  //!< Boundary fraction vector
         QVector< QVector< double > >  v_vbars;   //!< Vector of vbars per fraction
@@ -150,7 +165,7 @@ class US_Integral : public US_Widgets
 
         //! \brief Slot to resort solution
         //! \param distributions Vector of distributions to be resorted
-        void resort_sol(QVector< DisSys >& distributions);
+        void resort_sol(QVector< IntegralDisSys >& distributions);
 
         //! \brief Slot to reset the interface
         void reset();

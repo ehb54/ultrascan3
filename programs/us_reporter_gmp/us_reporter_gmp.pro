@@ -41,7 +41,9 @@ HEADERS       = us_reporter_gmp.h \
                 ../us_2dsa/us_plot_control_2d.h \
                 ../us_2dsa/us_adv_analysis_2d.h \
                 ../us_2dsa/us_2dsa_process.h \
-                ../us_2dsa/us_analysis_control_2d.h
+                ../us_2dsa/us_analysis_control_2d.h \
+                ../us_integral/us_integral.h \
+                ../us_integral/us_delete_models.h
                                 
 
 SOURCES       = us_reporter_gmp_main.cpp       \
@@ -80,7 +82,10 @@ SOURCES       = us_reporter_gmp_main.cpp       \
                 ../us_2dsa/us_plot_control_2d.cpp \
                 ../us_2dsa/us_adv_analysis_2d.cpp \
                 ../us_2dsa/us_2dsa_process.cpp \
-                ../us_2dsa/us_analysis_control_2d.cpp
+                ../us_2dsa/us_analysis_control_2d.cpp \
+                ../us_integral/us_integral.cpp \
+                ../us_integral/us_delete_models.cpp
+                
                 
                 
                 

@@ -4,7 +4,7 @@
 #include "us_gui_settings.h"
 
 // Constructor:  remove-distributions dialog widget
-US_DeleteModels::US_DeleteModels( QVector< DisSys >& adistros,
+US_DeleteModels::US_DeleteModels( QVector< IntegralDisSys >& adistros,
     QWidget* p ) : US_WidgetsDialog( p, Qt::WindowFlags() ), distros( adistros )
 {
    setObjectName( "US_DeleteModels" );

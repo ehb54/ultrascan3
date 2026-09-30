@@ -19,10 +19,10 @@ class US_DeleteModels : public US_WidgetsDialog
       //! \brief US_RemoveModels constructor
       //! \param adistros Pointer to model distributions list
       //! \param p        Pointer to the parent of this widget
-      US_DeleteModels( QVector< DisSys >&, QWidget* p = 0 );
+      US_DeleteModels( QVector< IntegralDisSys >&, QWidget* p = 0 );
 
    private:
-      QVector< DisSys >&  distros; // Reference to model distributions vector
+      QVector< IntegralDisSys >&  distros; // Reference to model distributions vector
 
       int           nd_orig;       // Number of distributions in original
       int           nd_removed;    // Number of total distributions removed

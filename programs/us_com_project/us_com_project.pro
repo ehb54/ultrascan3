@@ -49,7 +49,9 @@ HEADERS       = us_com_project_gui.h \
                 ../us_2dsa/us_plot_control_2d.h \
                 ../us_2dsa/us_adv_analysis_2d.h \
                 ../us_2dsa/us_2dsa_process.h \
-                ../us_2dsa/us_analysis_control_2d.h
+                ../us_2dsa/us_analysis_control_2d.h \
+                ../us_integral/us_integral.h \
+                ../us_integral/us_delete_models.h
                 
                 
 
@@ -97,7 +99,9 @@ SOURCES       = us_com_project_main.cpp \
                 ../us_2dsa/us_plot_control_2d.cpp \
                 ../us_2dsa/us_adv_analysis_2d.cpp \
                 ../us_2dsa/us_2dsa_process.cpp \
-                ../us_2dsa/us_analysis_control_2d.cpp
+                ../us_2dsa/us_analysis_control_2d.cpp \
+                ../us_integral/us_integral.cpp \
+                ../us_integral/us_delete_models.cpp
                 
                 
                 

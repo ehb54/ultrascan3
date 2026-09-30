@@ -18,6 +18,7 @@
 #include "us_extern.h"
 #include "us_select_item.h"
 #include "../us_abde/us_norm_profile.h"
+#include "../us_integral/us_integral.h"
 
 /**
  * @class US_ReporterGMP
@@ -72,6 +73,7 @@ class US_ReporterGMP : public US_Widgets
         QString ap_xml;                     //!< XML string for analysis profile
 
         US_Norm_Profile*  sdiag_norm_profile;
+        US_Integral*  sdiag_integral;
   
         US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
         US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
@@ -609,6 +611,7 @@ class US_ReporterGMP : public US_Widgets
         double interp_sval(double, double*, double*, int); //!< Interpolate s-value
         void plotres(QMap<QString, QString>&); //!< Plot residuals
         void plot_pseudo3D(QString, QString); //!< Plot pseudo 3D
+        void process_velmwl_integral_plots( void ); //!< VELOCITY-MWL: per-channel Integral plots from recorded 2DSA-IT model GUIDs
         bool modelGuidExistsForStage(QString, QString); //!< Check if model GUID exists for stage
         bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
         void process_combined_plots(QString); //!< Process combined plots

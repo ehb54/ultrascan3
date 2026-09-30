@@ -6,8 +6,6 @@
 #include "us_delete_models.h"
 #include "us_select_runs.h"
 #include "us_model.h"
-#include "us_license_t.h"
-#include "us_license.h"
 #include "us_solution_vals.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -22,19 +20,6 @@
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 
-// main program
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_Integral w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 // LessThan method for S_Solute sed
 bool distro_lessthan_s(const S_Solute &solu1, const S_Solute &solu2)
@@ -408,7 +393,7 @@ void US_Integral::plot_data( void )
    if ( syssiz < 1 )
       return;
 
-   DisSys* tsys   = (DisSys*)&alldis.at( 0 );
+   IntegralDisSys* tsys   = (IntegralDisSys*)&alldis.at( 0 );
    plot_x         = ( plot_x < 0 ) ? plot_x_select() : plot_x;
 DbgLv(1) << "DaPl: plot_x" << plot_x;
 
@@ -648,7 +633,7 @@ void US_Integral::load_distro()
 // Create distributions from a loaded model
 void US_Integral::load_distro( US_Model model, QString mdescr )
 {
-   DisSys      tsys;
+   IntegralDisSys      tsys;
    S_Solute    sol_in;
    S_Solute    sol_nm;
    S_Solute    sol_bf;
@@ -835,7 +820,83 @@ DbgLv(1) << "LD:  model:" << model.description;
 DbgLv(1) << "LD: RETURN";
 }
 
-void US_Integral::resort_sol(QVector< DisSys>& list_dist)
+// Load distributions for models given by GUID, with no dialog (GMP report).
+// Each model is fetched directly with US_Model::load( true, guid, db )
+// (get_modelID + get_model_info: two single-row queries), rather than via
+// US_ModelLoader, which would first list ALL of the investigator's models.
+int US_Integral::load_distro_auto( const QString& /*invID*/,
+                                   const QStringList& modelGUIDs )
+{
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "load_distro_auto: DB connection failed:" << db.lastError();
+      return 0;
+   }
+
+   QList< US_Model > models;
+   QStringList       descrs;
+
+   for ( int ii = 0; ii < modelGUIDs.size(); ii++ )
+   {
+      const QString guid = modelGUIDs[ ii ].trimmed();
+      US_Model      model;
+
+      int rc = model.load( true, guid, &db );
+
+      // load_db() does not check that get_modelID returned a row, so
+      // verify that what came back really is the requested model
+      if ( rc != US_DB2::OK  ||  model.components.isEmpty()  ||
+           model.modelGUID.compare( guid, Qt::CaseInsensitive ) != 0 )
+      {
+         qDebug() << "load_distro_auto: model not loaded, rc/GUID -- "
+                  << rc << guid;
+         continue;
+      }
+
+      // Same composite description string US_ModelLoader::description()
+      // makes: first character is the separator for section() parsing
+      QString sep = model.description.contains( ";" ) ? "^" : ";";
+      descrs << sep + model.description + sep /*filename*/ + sep + model.modelGUID
+                    + sep /*DB id*/ + sep + model.editGUID;
+      models << model;
+   }
+
+   if ( models.isEmpty() )
+      return 0;
+
+   mdescs = descrs;
+
+   te_distr_info->setText(
+      QString( models[ 0 ].description ).section( ".", 0, -4 ) );
+
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // Same per-model processing as the interactive load_distro()
+      load_distro( models[ jj ], descrs[ jj ] );
+   }
+
+   pb_rmvdist->setEnabled( true );
+   pb_save   ->setEnabled( true );
+
+   select_x_axis_auto( ATTR_S );
+
+   return models.count();
+}
+
+// Select x axis without user interaction and replot
+void US_Integral::select_x_axis_auto( int attr )
+{
+   QAbstractButton* btn = bg_x_axis->button( attr );
+
+   if ( btn != nullptr )
+      btn->setChecked( true );
+
+   select_x_axis( attr );
+}
+
+void US_Integral::resort_sol(QVector< IntegralDisSys>& list_dist)
 {
 
    // Go through all dsitributions
@@ -1078,7 +1139,7 @@ void US_Integral::build_bf_distro( int modx )
    if ( alldis.size() <= modx )
       return;
 
-   DisSys* tsys     = (DisSys*)&alldis.at( modx );
+   IntegralDisSys* tsys     = (IntegralDisSys*)&alldis.at( modx );
 DbgLv(1) << "BldBf: modx" << modx;
 
    tsys->bf_distro.clear();
