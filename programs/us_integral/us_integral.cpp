@@ -506,6 +506,7 @@ DbgLv(1) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint-1]
  << "yy" << yy[0] << yy[npoint-1];
       data_curv->setSamples( xx, yy, npoint );
 
+      draw_range_markers();
       data_plot->replot();
       return;
    }
@@ -584,7 +585,38 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
       data_curv->setItemAttribute( QwtPlotItem::Legend, true );
       data_curv->setSamples( xx, yy, npoint );
    }
+   draw_range_markers();
    data_plot->replot();
+}
+
+// Draw the vertical range lines (low and high edge of each range);
+// each range uses its own line style so that its two edges pair up
+void US_Integral::draw_range_markers( void )
+{
+   // remove any markers left from a previous plot (other x-axis)
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker, true );
+
+   if ( range_lines.isEmpty() )
+      return;
+
+   const Qt::PenStyle styles[] = { Qt::DashLine, Qt::DotLine,
+                                   Qt::DashDotLine, Qt::DashDotDotLine };
+   const int nstyles = 4;
+
+   for ( int ii = 0; ii < range_lines.size(); ii++ )
+   {
+      double edges[ 2 ] = { range_lines[ ii ].first, range_lines[ ii ].second };
+
+      for ( int jj = 0; jj < 2; jj++ )
+      {
+         QwtPlotMarker* marker = new QwtPlotMarker();
+         marker->setLineStyle( QwtPlotMarker::VLine );
+         marker->setXValue   ( edges[ jj ] );
+         marker->setLinePen  ( QPen( QBrush( Qt::black ), 2.0,
+                                     styles[ ii % nstyles ] ) );
+         marker->attach( data_plot );
+      }
+   }
 }
 
 // Plot data based on current plot type index

@@ -64,6 +64,14 @@ class US_Integral : public US_Widgets
         //! \return            Number of models loaded
         int  load_distro_auto( const QString& invID, const QStringList& modelGUIDs );
 
+        //! \brief Set ranges to be drawn as vertical lines on the plot.
+        //!        Values must be in the units of the x-axis that will be
+        //!        plotted (s: 1e-13 s; D: 1e-7 cm^2/s; MW: Da; f/f0: none).
+        //!        Applies to subsequent plots; pass an empty list to clear.
+        //! \param ranges  List of (low,high) pairs; each pair gets its own line style
+        void set_range_lines( const QList< QPair< double, double > >& ranges )
+        { range_lines = ranges; }
+
         //! \brief Non-interactive x-axis selection + replot
         //! \param attr  0:s  1:f/f0  2:molar mass  3:D  5:vbar  6:Rh
         void select_x_axis_auto( int attr );
@@ -134,6 +142,13 @@ class US_Integral : public US_Widgets
 
         QStringList   pfilts;           //!< Pre-filter string list
         QStringList   mdescs;           //!< Model descriptions string list
+
+        //! Ranges (low,high), in the units of the current x-axis, drawn as
+        //! vertical lines on the plot (e.g. analysis-profile report-item ranges)
+        QList< QPair< double, double > >  range_lines;
+
+        //! \brief (Re)draw the vertical range lines on the data plot
+        void draw_range_markers( void );
 
     private slots:
 

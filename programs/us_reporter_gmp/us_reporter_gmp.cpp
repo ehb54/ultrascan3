@@ -2660,16 +2660,18 @@ namespace
     int         attr;
     const char* tag;
     bool        on_by_default;
+    const char* ritem_type;   //!< report-item type whose ranges are drawn ("" = none)
+    double      ritem_scale;  //!< report-item range -> plot x-axis units
   };
 
   const VelMwlIntegralFeature velmwl_integral_features[] =
   {
-    { "Integral Plot - Sedimentation Coeff. (s)",  0, "s20",  true  },
-    { "Integral Plot - Molar Mass (MW)",           2, "MW",   false },
-    { "Integral Plot - Diffusion Coeff. (D)",      3, "D",    false },
-    { "Integral Plot - Frictional Ratio (f/f0)",   1, "ff0",  false },
-    { "Integral Plot - Partial Spec. Volume (vbar)", 5, "vbar", false },
-    { "Integral Plot - Hydrodynamic Radius (Rh)",  6, "Rh",   false }
+    { "Integral Plot - Sedimentation Coeff. (s)",  0, "s20",  true,  "s",    1.0    },
+    { "Integral Plot - Molar Mass (MW)",           2, "MW",   false, "MW",    1000.0 },  // kDa -> Da
+    { "Integral Plot - Diffusion Coeff. (D)",      3, "D",    false, "D",     1.0    },
+    { "Integral Plot - Frictional Ratio (f/f0)",   1, "ff0",  false, "f/f0",  1.0    },
+    { "Integral Plot - Partial Spec. Volume (vbar)", 5, "vbar", false, "",    1.0    },
+    { "Integral Plot - Hydrodynamic Radius (Rh)",  6, "Rh",   false, "",      1.0    }
   };
   const int n_velmwl_integral_features =
     int( sizeof( velmwl_integral_features ) / sizeof( velmwl_integral_features[ 0 ] ) );
@@ -4118,6 +4120,20 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
       if ( todo.isEmpty() )
 	continue;
 
+      //Report items of the channel (defined per channel: 1st wavelength's are used)
+      decltype( US_ReportGMP().reportItems ) ritems;   // container type as defined in US_ReportGMP
+      for ( int ich = 0; ich < currAProf.pchans.count(); ++ich )
+	{
+	  QString channel_desc_alt = chndescs_alt[ ich ];
+	  if ( channel_desc_alt.split( ":" )[ 0 ] == chan_tag  &&
+	       ch_wvls.contains( channel_desc_alt )  &&  ! ch_wvls[ channel_desc_alt ].isEmpty() )
+	    {
+	      QString wvl0 = QString::number( ch_wvls[ channel_desc_alt ][ 0 ] );
+	      ritems       = ch_reports[ channel_desc_alt ][ wvl0 ].reportItems;
+	      break;
+	    }
+	}
+
       US_Integral* integ = new US_Integral();
       int nloaded        = integ->load_distro_auto( QString::number( invID ),
 						    velmwl_chan_guids[ chan_tag ] );
@@ -4133,9 +4149,23 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	}
 
       QStringList imgFiles;
+      bool have_ranges = false;
       for ( int it = 0; it < todo.size(); ++it )
 	{
 	  const VelMwlIntegralFeature& f = velmwl_integral_features[ todo[ it ] ];
+
+	  //Report-item ranges of this plot's type, drawn as vertical lines
+	  QList< QPair< double, double > > ranges;
+	  if ( QString( f.ritem_type ).size() )
+	    {
+	      for ( int ir = 0; ir < ritems.size(); ++ir )
+		if ( ritems[ ir ].type == QString( f.ritem_type ) )
+		  ranges << qMakePair( ritems[ ir ].range_low  * f.ritem_scale,
+				       ritems[ ir ].range_high * f.ritem_scale );
+	    }
+	  if ( ! ranges.isEmpty() )
+	    have_ranges = true;
+	  integ->set_range_lines( ranges );
 
 	  integ->select_x_axis_auto( f.attr );
 
@@ -4152,6 +4182,9 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	hdr += "<p>Note: " + QString::number( nloaded ) + " of "
 	  + QString::number( velmwl_chan_guids[ chan_tag ].size() )
 	  + " species models could be loaded.</p>\n";
+      if ( have_ranges )
+	hdr += "<p>Vertical lines mark the ranges of the analysis profile's report items "
+	  "(each range: low and high edge, same line style).</p>\n";
       html_assembled += hdr;
 
       assemble_plots_html( imgFiles );
