@@ -621,6 +621,10 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   abde_menisc. clear();
   abde_plots_filenames. clear();
   abde_data_per_channel. clear();
+  velmwl_channList. clear();
+  velmwl_chan_species. clear();
+  velmwl_chan_guids. clear();
+  velmwl_chan_fname. clear();
   
   prot_details_at_report = protocol_details;
   
@@ -711,6 +715,12 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   else if ( expType == "ABDE" )
      {
        build_perChanTree_abde();
+       progress_msg->setValue( 10 );
+       qApp->processEvents();
+     }
+  else if ( expType == "VELOCITY-MWL" )
+     {
+       build_perChanTree_velmwl();
        progress_msg->setValue( 10 );
        qApp->processEvents();
      }
@@ -1674,6 +1684,10 @@ void US_ReporterGMP::load_gmp_run ( void )
   abde_menisc. clear();
   abde_plots_filenames. clear();
   abde_data_per_channel. clear();
+  velmwl_channList. clear();
+  velmwl_chan_species. clear();
+  velmwl_chan_guids. clear();
+  velmwl_chan_fname. clear();
 
   prot_details_at_report = protocol_details;
 
@@ -1758,6 +1772,12 @@ void US_ReporterGMP::load_gmp_run ( void )
    else if ( expType == "ABDE" )
      {
        build_perChanTree_abde();
+       progress_msg->setValue( 9 );
+       qApp->processEvents();
+     }
+   else if ( expType == "VELOCITY-MWL" )
+     {
+       build_perChanTree_velmwl();
        progress_msg->setValue( 9 );
        qApp->processEvents();
      }
@@ -2626,6 +2646,155 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
   //reconnect
   connect( item -> treeWidget(), &QTreeWidget::itemChanged,
 	   this,                 &US_ReporterGMP::changedItem );
+}
+
+//VELOCITY-MWL per-channel report features (Integral plots), shared by the
+//tree builder and the report generator:  { tree-item label, US_Integral
+//x-axis attribute (see US_Integral::select_x_axis_auto), file-name tag,
+//checked by default }
+namespace
+{
+  struct VelMwlIntegralFeature
+  {
+    const char* label;
+    int         attr;
+    const char* tag;
+    bool        on_by_default;
+  };
+
+  const VelMwlIntegralFeature velmwl_integral_features[] =
+  {
+    { "Integral Plot - Sedimentation Coeff. (s)",  0, "s20",  true  },
+    { "Integral Plot - Molar Mass (MW)",           2, "MW",   false },
+    { "Integral Plot - Diffusion Coeff. (D)",      3, "D",    false },
+    { "Integral Plot - Frictional Ratio (f/f0)",   1, "ff0",  false },
+    { "Integral Plot - Partial Spec. Volume (vbar)", 5, "vbar", false },
+    { "Integral Plot - Hydrodynamic Radius (Rh)",  6, "Rh",   false }
+  };
+  const int n_velmwl_integral_features =
+    int( sizeof( velmwl_integral_features ) / sizeof( velmwl_integral_features[ 0 ] ) );
+}
+
+//Read Approved channels and their deconvolved-species model GUIDs from the
+//run's autoflowAnalysisVelMwl record into velmwl_* members.
+bool US_ReporterGMP::read_velmwl_channels( void )
+{
+  velmwl_channList   .clear();
+  velmwl_chan_species.clear();
+  velmwl_chan_guids  .clear();
+  velmwl_chan_fname  .clear();
+
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[VEL-MWL] DB connection failed -- no channels read.";
+      return false;
+    }
+
+  QStringList qry;
+  qry << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
+  db.query( qry );
+
+  if ( db.lastErrno() != US_DB2::OK  ||  ! db.next() )
+    {
+      qDebug() << "[VEL-MWL] no autoflowAnalysisVelMwl record for autoflowID" << AutoflowID_auto;
+      return false;
+    }
+
+  QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+
+  QCollator collator;
+  collator.setNumericMode( true );        // S2 < S10
+
+  for ( auto it = jobj.constBegin(); it != jobj.constEnd(); ++it )
+    {
+      QJsonObject chdec = it.value().toObject();
+
+      if ( chdec.value( "decision" ).toString() != "Accepted" )
+	continue;                         // Rejected/undecided channels: disregard
+
+      QJsonObject mobj    = chdec.value( "models" ).toObject();
+      QStringList species = mobj.keys();
+      std::sort( species.begin(), species.end(),
+		 [&collator]( const QString& a, const QString& b )
+		 { return collator.compare( a, b ) < 0; } );
+
+      QStringList guids;
+      for ( int ii = 0; ii < species.size(); ++ii )
+	guids << mobj.value( species[ ii ] ).toString();
+
+      if ( guids.isEmpty() )
+	{
+	  qDebug() << "[VEL-MWL] channel" << it.key()
+		   << "is Accepted but has no recorded model GUIDs -- skipped.";
+	  continue;
+	}
+
+      QString chan_tag = QString( it.key() ).remove( ' ' ).remove( '/' );   // "2 / A" -> "2A"
+
+      velmwl_channList << chan_tag;
+      velmwl_chan_fname  [ chan_tag ] = chdec.value( "filename" ).toString();
+      velmwl_chan_species[ chan_tag ] = species;
+      velmwl_chan_guids  [ chan_tag ] = guids;
+    }
+
+  velmwl_channList.sort();
+  qDebug() << "[VEL-MWL] Approved channels with models -- " << velmwl_channList;
+
+  return ! velmwl_channList.isEmpty();
+}
+
+//build perChanTree: VELOCITY-MWL
+//One top-level item per Approved channel ("Channel 2A"), with one checkable
+//child per Integral plot type -- the same 2-level layout/JSON as ABDE.
+void US_ReporterGMP::build_perChanTree_velmwl ( void )
+{
+  QStringList chanItemNameList, featItemNameList;
+  QString indent( "  " );
+  int wiubase = (int)QTreeWidgetItem::UserType;
+
+  read_velmwl_channels();
+
+  for ( int ic = 0; ic < velmwl_channList.size(); ++ic )
+    {
+      QString chanItemName = "Channel " + velmwl_channList[ ic ];
+      chanItemNameList.clear();
+      chanItemNameList << "" << indent + chanItemName;
+      chanItem[ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
+
+      int checked_masks = 0;
+      for ( int kk = 0; kk < n_velmwl_integral_features; ++kk )
+	{
+	  featItemNameList.clear();
+	  featItemNameList << "" << indent.repeated( 2 ) + QString( velmwl_integral_features[ kk ].label );
+	  QTreeWidgetItem* featItem = new QTreeWidgetItem( chanItem[ chanItemName ], featItemNameList, wiubase );
+
+	  if ( velmwl_integral_features[ kk ].on_by_default )
+	    {
+	      featItem->setCheckState( 0, Qt::Checked );
+	      ++checked_masks;
+	    }
+	  else
+	    featItem->setCheckState( 0, Qt::Unchecked );
+	}
+
+      chanItem[ chanItemName ]->setCheckState( 0, checked_masks ? Qt::Checked : Qt::Unchecked );
+    }
+
+  perChanTree->expandAll();
+  perChanTree->resizeColumnToContents( 0 );
+  perChanTree->resizeColumnToContents( 1 );
+
+  if ( first_time_perChan_tree_build )
+    {
+      perChanTree->setMinimumHeight( (perChanTree->height())*2.0 );
+      first_time_perChan_tree_build = false;
+    }
+
+  connect( perChanTree, &QTreeWidget::itemChanged,
+	   this,        &US_ReporterGMP::changedItem );
 }
 
 //build perChanTree:ABDE
@@ -3901,78 +4070,17 @@ void US_ReporterGMP::generate_report( void )
 }
 
 // VELOCITY-MWL: for every Approved ("Accepted") channel recorded in
-// autoflowAnalysisVelMwl, take the modelGUIDs of its deconvolved species
-// (S1, S2, ...) -- recorded there by US_2dsa once each species' 2DSA-IT
-// model was saved -- load those models in the background into US_Integral,
-// and write the resulting sedimentation-coefficient integral plot
-// (one plot per channel, one curve per species) into the report.
+// autoflowAnalysisVelMwl (read into velmwl_* by read_velmwl_channels()),
+// load the models of its deconvolved species (S1, S2, ...) by modelGUID into
+// US_Integral and write the integral-distribution plots selected in the
+// per-channel report mask (perChanMask_edited_velmwl) into the report:
+// one plot per channel and selected plot type, one curve per species.
 void US_ReporterGMP::process_velmwl_integral_plots( void )
 {
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
+  if ( velmwl_channList.isEmpty() )
+    read_velmwl_channels();               // e.g. tree was not built
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      qDebug() << "[VEL-MWL integral] DB connection failed -- no integral plots.";
-      return;
-    }
-
-  QStringList qry;
-  qry << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
-  db.query( qry );
-
-  if ( db.lastErrno() != US_DB2::OK  ||  ! db.next() )
-    {
-      qDebug() << "[VEL-MWL integral] no autoflowAnalysisVelMwl record for autoflowID"
-	       << AutoflowID_auto;
-      return;
-    }
-
-  QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
-
-  // Approved channels -> data filename and species modelGUIDs (S1, S2, ... order)
-  QCollator collator;
-  collator.setNumericMode( true );        // S2 < S10
-
-  QStringList                  chans;      // e.g. "2 / A"
-  QMap< QString, QString >     chan_fname; // channel -> filename recorded at Accept
-  QMap< QString, QStringList > chan_species;
-  QMap< QString, QStringList > chan_guids;
-
-  for ( auto it = jobj.constBegin(); it != jobj.constEnd(); ++it )
-    {
-      QJsonObject chdec = it.value().toObject();
-
-      if ( chdec.value( "decision" ).toString() != "Accepted" )
-	continue;                         // Rejected/undecided channels: disregard
-
-      QJsonObject mobj    = chdec.value( "models" ).toObject();
-      QStringList species = mobj.keys();
-      std::sort( species.begin(), species.end(),
-		 [&collator]( const QString& a, const QString& b )
-		 { return collator.compare( a, b ) < 0; } );
-
-      QStringList guids;
-      for ( int ii = 0; ii < species.size(); ++ii )
-	guids << mobj.value( species[ ii ] ).toString();
-
-      if ( guids.isEmpty() )
-	{
-	  qDebug() << "[VEL-MWL integral] channel" << it.key()
-		   << "is Accepted but has no recorded model GUIDs -- skipped.";
-	  continue;
-	}
-
-      chans << it.key();
-      chan_fname  [ it.key() ] = chdec.value( "filename" ).toString();
-      chan_species[ it.key() ] = species;
-      chan_guids  [ it.key() ] = guids;
-    }
-
-  chans.sort();
-  qDebug() << "[VEL-MWL integral] Approved channels with models -- " << chans;
-
-  if ( chans.isEmpty() )
+  if ( velmwl_channList.isEmpty() )
     return;
 
   QString subDirName = runName + "-run" + runID;
@@ -3981,17 +4089,42 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
   const QString svgext( ".svgz" );
   const QString pngext( ".png" );
 
-  for ( int ic = 0; ic < chans.size(); ++ic )
+  for ( int ic = 0; ic < velmwl_channList.size(); ++ic )
     {
-      const QString chan = chans[ ic ];
-      QString chan_tag   = QString( chan ).remove( ' ' ).remove( '/' );   // "2 / A" -> "2A"
+      const QString chan_tag = velmwl_channList[ ic ];
+      const QString key_m    = "Channel " + chan_tag;
+
+      //Channel switched off in the mask (no mask entry => keep default: shown)
+      if ( perChanMask_edited_velmwl.ShowChannelParts.contains( key_m )  &&
+	   ! perChanMask_edited_velmwl.ShowChannelParts[ key_m ] )
+	{
+	  qDebug() << "[VEL-MWL integral] channel" << chan_tag << "switched off in mask.";
+	  continue;
+	}
+
+      //Which plot types are switched on for this channel
+      const QMap< QString, QString > feats =
+	perChanMask_edited_velmwl.ShowChannelItemParts.value( key_m );
+      QList< int > todo;
+      for ( int kk = 0; kk < n_velmwl_integral_features; ++kk )
+	{
+	  QString lbl = QString( velmwl_integral_features[ kk ].label ).trimmed();
+	  bool on = feats.contains( lbl ) ? bool( feats[ lbl ].toInt() )
+	                                  : velmwl_integral_features[ kk ].on_by_default;
+	  if ( on )
+	    todo << kk;
+	}
+
+      if ( todo.isEmpty() )
+	continue;
 
       US_Integral* integ = new US_Integral();
       int nloaded        = integ->load_distro_auto( QString::number( invID ),
-						    chan_guids[ chan ] );
+						    velmwl_chan_guids[ chan_tag ] );
 
-      qDebug() << "[VEL-MWL integral] channel" << chan << "species" << chan_species[ chan ]
-	       << "GUIDs" << chan_guids[ chan ] << "loaded" << nloaded;
+      qDebug() << "[VEL-MWL integral] channel" << chan_tag
+	       << "species" << velmwl_chan_species[ chan_tag ]
+	       << "GUIDs"   << velmwl_chan_guids[ chan_tag ] << "loaded" << nloaded;
 
       if ( nloaded < 1 )
 	{
@@ -3999,20 +4132,29 @@ void US_ReporterGMP::process_velmwl_integral_plots( void )
 	  continue;
 	}
 
-      integ->select_x_axis_auto( 0 );     // sedimentation coefficient
+      QStringList imgFiles;
+      for ( int it = 0; it < todo.size(); ++it )
+	{
+	  const VelMwlIntegralFeature& f = velmwl_integral_features[ todo[ it ] ];
 
-      QString imgFile = dirName + "/" + "VelMwl_integral." + chan_tag + ".s20" + svgext;
-      write_plot( imgFile, integ->rp_data_plot() );
-      imgFile.replace( svgext, pngext );
+	  integ->select_x_axis_auto( f.attr );
+
+	  QString imgFile = dirName + "/" + "VelMwl_integral." + chan_tag + "." + f.tag + svgext;
+	  write_plot( imgFile, integ->rp_data_plot() );
+	  imgFile.replace( svgext, pngext );
+	  imgFiles << imgFile;
+	}
 
       QString hdr = "<p class=\"pagebreak \">\n<h3>Integral Distributions, Channel "
-	+ chan_tag + " (Deconvolved Species: " + chan_species[ chan ].join( ", " ) + ")</h3>\n";
-      if ( nloaded < chan_guids[ chan ].size() )
+	+ chan_tag + " (Deconvolved Species: "
+	+ velmwl_chan_species[ chan_tag ].join( ", " ) + ")</h3>\n";
+      if ( nloaded < velmwl_chan_guids[ chan_tag ].size() )
 	hdr += "<p>Note: " + QString::number( nloaded ) + " of "
-	  + QString::number( chan_guids[ chan ].size() ) + " species models could be loaded.</p>\n";
+	  + QString::number( velmwl_chan_guids[ chan_tag ].size() )
+	  + " species models could be loaded.</p>\n";
       html_assembled += hdr;
 
-      assemble_plots_html( QStringList() << imgFile );
+      assemble_plots_html( imgFiles );
 
       delete integ;
     }
@@ -12971,6 +13113,8 @@ void US_ReporterGMP::gui_to_parms( void )
     parse_edited_perChan_mask_json( editedMask_perChan, perChanMask_edited );
   else if ( expType == "ABDE" )
     parse_edited_perChan_mask_json_abde( editedMask_perChan, perChanMask_edited_abde );
+  else if ( expType == "VELOCITY-MWL" )
+    parse_edited_perChan_mask_json_velmwl( editedMask_perChan, perChanMask_edited_velmwl );
 
   //tree-to-json: combPlotsTree
   QString editedMask_combPlots = tree_to_json ( topItemCombPlots );
@@ -13173,6 +13317,15 @@ void US_ReporterGMP::parse_edited_perChan_mask_json_abde( const QString maskJson
 	MaskStr.ShowChannelParts[ key ] = false;
     }
   
+}
+
+//Pasre reportMask JSON: perChan: VELOCITY-MWL
+//Same JSON shape as ABDE ({channel: [ {feature: "0"|"2", ...} ]}), so the
+//ABDE parser is reused as is.
+void US_ReporterGMP::parse_edited_perChan_mask_json_velmwl( const QString maskJson, PerChanReportMaskStructureVelMwl & MaskStr )
+{
+  qDebug() << "[in parse_edited_perChan_mask_json_velmwl()] ";
+  parse_edited_perChan_mask_json_abde( maskJson, MaskStr );
 }
 
 //Pasre reportMask JSON: perChan

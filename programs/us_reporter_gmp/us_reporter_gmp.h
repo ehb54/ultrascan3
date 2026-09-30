@@ -149,6 +149,11 @@ class US_ReporterGMP : public US_Widgets
         };
 
         PerChanReportMaskStructureABDE perChanMask_edited_abde;
+
+        //! VELOCITY-MWL per-channel mask: same shape as ABDE's
+        //! (channel -> on/off; channel -> feature -> "0"/"2")
+        typedef PerChanReportMaskStructureABDE PerChanReportMaskStructureVelMwl;
+        PerChanReportMaskStructureVelMwl perChanMask_edited_velmwl;
         PerChanReportMaskStructure perChanMask_edited; //!< Edited per-channel report mask structure
 
         struct CombPlotsReportMaskStructure
@@ -310,6 +315,13 @@ class US_ReporterGMP : public US_Widgets
         int nchan_ranges;                    //!< Number of channel ranges
 
         QString editing_time_abde;
+
+        //! VELOCITY-MWL: Approved channels (e.g. "2A") having recorded 2DSA-IT models;
+        //! filled by read_velmwl_channels() from autoflowAnalysisVelMwl
+        QStringList                  velmwl_channList;
+        QMap< QString, QStringList > velmwl_chan_species;  //!< channel -> species names (S1, S2, ...)
+        QMap< QString, QStringList > velmwl_chan_guids;    //!< channel -> modelGUIDs (same order)
+        QMap< QString, QString >     velmwl_chan_fname;    //!< channel -> filename recorded at Accept
         QString analysis_time_abde;
 
         QVector<QString> Array_of_triples;   //!< Array of triples
@@ -380,6 +392,8 @@ class US_ReporterGMP : public US_Widgets
         void build_miscTree(void); //!< Build miscellaneous tree
         void build_perChanTree(void); //!< Build per-channel tree
         void build_perChanTree_abde(void); //!< Build per-channel tree
+        void build_perChanTree_velmwl(void); //!< Build per-channel tree: VELOCITY-MWL (Integral plots)
+        bool read_velmwl_channels(void);   //!< Read Approved channels & model GUIDs from autoflowAnalysisVelMwl
         void build_combPlotsTree(void); //!< Build combined plots tree
         void gui_to_parms(void); //!< Convert GUI to parameters
 
@@ -388,6 +402,7 @@ class US_ReporterGMP : public US_Widgets
         void parse_edited_gen_mask_json(const QString, GenReportMaskStructure&); //!< Parse edited general mask JSON
         void parse_edited_perChan_mask_json(const QString, PerChanReportMaskStructure&); //!< Parse edited per-channel mask JSON
         void parse_edited_perChan_mask_json_abde(const QString, PerChanReportMaskStructureABDE&);
+        void parse_edited_perChan_mask_json_velmwl(const QString, PerChanReportMaskStructureVelMwl&);
         void parse_edited_combPlots_mask_json(const QString, CombPlotsReportMaskStructure&); //!< Parse edited combined plots mask JSON
         void parse_edited_misc_mask_json(const QString, MiscReportMaskStructure&); //!< Parse edited miscellaneous mask JSON
 
