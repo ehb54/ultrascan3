@@ -2448,6 +2448,40 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
   if ( ! available.isEmpty() )
     show_velmwl_species_selection_dialog( available, labels, selected );   // returns once confirmed
 
+  // (2b) GMP submission form (audit trail: user, password, comment) -- same
+  // form/behaviour as ABDE's save_auto(). Shown BEFORE the run-wide claim, so a
+  // dismissed form leaves autoflowAnalysisVelMwlStages at 'unknown'.
+  QStringList qry_user;
+  qry_user << "get_user_info";
+  db.query( qry_user );
+  db.next();
+  QString user_submitter = db.value( 2 ).toString() + ", " + db.value( 1 ).toString();   // lname, fname
+
+  QMap< QString, QString > gmp_submitter_map;
+  while ( true )
+    {
+      US_Passwd pw_at;
+      gmp_submitter_map = pw_at.getPasswd_auditTrail( "GMP Run VELOCITY-MWL Form",
+						     "Please fill out GMP run VELOCITY-MWL-Analysis form:",
+						     user_submitter );
+
+      if ( ! gmp_submitter_map.isEmpty() )
+	break;
+
+      // Form dismissed / not accepted. It is required to proceed to REPORT.
+      if ( QMessageBox::question( this, tr( "GMP Form Required" ),
+				  tr( "The GMP VELOCITY-MWL-Analysis form must be filled out "
+				      "to proceed to the REPORT stage.\n\nFill it out now?\n\n"
+				      "(If you choose No, the run stays in the ANALYSIS stage; "
+				      "re-attach to the run to retry.)" ),
+				  QMessageBox::Yes | QMessageBox::No,
+				  QMessageBox::Yes ) != QMessageBox::Yes )
+	return;
+    }
+
+  qDebug() << "[VEL-MWL] Submitter map: " << gmp_submitter_map.keys()
+	   << gmp_submitter_map[ "User:" ] << gmp_submitter_map[ "Comment:" ];
+
   // (3) claim the run-wide ANALYSIS -> REPORT transition (unknown -> STARTED)
   QStringList qry_claim;
   qry_claim << "autoflow_velmwl_analysis_status" << QString::number( autoflowID_passed );
@@ -2496,7 +2530,7 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
     }
 
   // (5) autoflowStatus: analysisVelMwl / analysisVelMwlts
-  if ( ! record_AnalysisVelMwl_status() )
+  if ( ! record_AnalysisVelMwl_status( gmp_submitter_map[ "Comment:" ] ) )
     {
       db.query( qry_revert );
       return;
@@ -2584,7 +2618,7 @@ bool US_Analysis_auto::show_velmwl_species_selection_dialog( const QMap< QString
     }
 }
 
-bool US_Analysis_auto::record_AnalysisVelMwl_status( void )
+bool US_Analysis_auto::record_AnalysisVelMwl_status( const QString& comment )
 {
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -2611,7 +2645,7 @@ bool US_Analysis_auto::record_AnalysisVelMwl_status( void )
   // same shape as analysisABDE: { "Person":[{...}], "Comment":"..." }
   QJsonObject status_json;
   status_json[ "Person"  ] = QJsonArray( { person } );
-  status_json[ "Comment" ] = QString( "" );
+  status_json[ "Comment" ] = comment;
 
   if ( ! autoflowStatusID )
     {

@@ -734,7 +734,8 @@ class US_Analysis_auto : public US_Widgets
          * Approved channel's 2DSA-IT models are recorded. (1) reads the species
          * (models) recorded per Approved channel, (2) lets the user pick which
          * species appear in the Report's Integration Results (per channel),
-         * (3) claims the run-wide transition (autoflowAnalysisVelMwlStages,
+         * (3) asks the user to fill out the GMP submission form (password/
+         * comment, as in ABDE) and claims the run-wide transition (autoflowAnalysisVelMwlStages,
          * unknown->STARTED; backs off if another session won it), (4) saves the
          * selections as JSON in autoflowAnalysisVelMwl.speciesSelections,
          * (5) records analysisVelMwl/analysisVelMwlts in autoflowStatus,
@@ -759,9 +760,10 @@ class US_Analysis_auto : public US_Widgets
         /**
          * @brief Writes analysisVelMwl/analysisVelMwlts into the run's
          * autoflowStatus record (analogue of US_Norm_Profile::record_AnalysisABDE_status()).
+         * @param comment the "Comment:" entered in the GMP submission form.
          * @return false if the record could not be identified/updated.
          */
-        bool record_AnalysisVelMwl_status( void );
+        bool record_AnalysisVelMwl_status( const QString& comment );
 
         /**
          * @brief Look up whether a VEL-MWL channel already has a recorded
