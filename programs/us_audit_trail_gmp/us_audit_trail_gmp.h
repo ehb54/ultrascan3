@@ -109,6 +109,7 @@ class US_auditTrailGMP : public US_Widgets
 
   void user_interactions_analysis( QString, QString, QString,  QVector< QGroupBox * >&);
   void user_interactions_analysis_abde( QString, QString, QString, QVector< QGroupBox * >& );
+  void user_interactions_analysis_velmwl( QString, QString, QString, QVector< QGroupBox * >& );
 
         //! \brief Reset the panel.
         void reset_panel(void);
@@ -163,7 +164,8 @@ class US_auditTrailGMP : public US_Widgets
                                         QString& expType, QString& date, QString& filename, QString& projectName,
                                         QString& solutionName, QString& bufferName, QString& analyteName,
                                         QString& gradientName, QString& hardwareName, QString& aprofileName,
-                                        QString& aprofileGUID, QString& dataSource, QString&, QString&  );
+                                        QString& aprofileGUID, QString& dataSource, QString&, QString&,
+                                        QString& /*analysisVelMwlJson*/, QString& /*analysisVelMwlts*/ );
 
         //! \brief Parse the autoflow status JSON.
         //! \param json The JSON string.

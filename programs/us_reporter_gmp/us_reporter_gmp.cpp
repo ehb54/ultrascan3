@@ -625,6 +625,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   velmwl_chan_species. clear();
   velmwl_chan_guids. clear();
   velmwl_chan_fname. clear();
+  velmwl_chan_selected_species. clear();
   editing_time_velmwl. clear();
   
   prot_details_at_report = protocol_details;
@@ -1689,6 +1690,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   velmwl_chan_species. clear();
   velmwl_chan_guids. clear();
   velmwl_chan_fname. clear();
+  velmwl_chan_selected_species. clear();
   editing_time_velmwl. clear();
 
   prot_details_at_report = protocol_details;
@@ -2689,6 +2691,7 @@ bool US_ReporterGMP::read_velmwl_channels( void )
   velmwl_chan_species.clear();
   velmwl_chan_guids  .clear();
   velmwl_chan_fname  .clear();
+  velmwl_chan_selected_species.clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -2710,6 +2713,10 @@ bool US_ReporterGMP::read_velmwl_channels( void )
     }
 
   QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+
+  // Species the user picked for the Integration Results (column 2): a channel
+  // missing here (older run, or nothing recorded) means "show every species".
+  QJsonObject selobj = QJsonDocument::fromJson( db.value( 2 ).toString().toUtf8() ).object();
 
   QCollator collator;
   collator.setNumericMode( true );        // S2 < S10
@@ -2744,6 +2751,15 @@ bool US_ReporterGMP::read_velmwl_channels( void )
       velmwl_chan_fname  [ chan_tag ] = chdec.value( "filename" ).toString();
       velmwl_chan_species[ chan_tag ] = species;
       velmwl_chan_guids  [ chan_tag ] = guids;
+
+      if ( selobj.contains( it.key() ) )
+	{
+	  QStringList sel;
+	  QJsonArray  sarr = selobj.value( it.key() ).toObject().value( "selected" ).toArray();
+	  for ( int is = 0; is < sarr.size(); ++is )
+	    sel << sarr[ is ].toString();
+	  velmwl_chan_selected_species[ chan_tag ] = sel;
+	}
     }
 
   velmwl_channList.sort();
@@ -4282,8 +4298,13 @@ QString US_ReporterGMP::distrib_info_velmwl( const QString& chan_tag,
 					tr( "Tolerance, %:" ),
 					tr( "PASSED ?" ) );
 
+      const bool filter_sp = velmwl_chan_selected_species.contains( chan_tag );
+
       for ( int im = 0; im < models.size(); ++im )
 	{
+	  if ( filter_sp && ! velmwl_chan_selected_species[ chan_tag ].contains( species[ im ] ) )
+	    continue;                           // species not chosen for the Report
+
 	  QString mstr_sp = "<h4>" + species[ im ] + ": " + models[ im ].dataDescrip + " signal</h4>\n";
 	  mstr_sp += indent( 2 ) + "<table>\n";
 	  mstr_sp += header_trftp;

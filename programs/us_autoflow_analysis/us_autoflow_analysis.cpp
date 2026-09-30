@@ -5,6 +5,12 @@
 #include <QXmlStreamReader>
 #include <QtNumeric>
 #include <QTimer>
+#include <QCollator>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QGroupBox>
+#include <QScrollArea>
+#include <QCheckBox>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
@@ -2254,11 +2260,10 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
                                  tr( "VELOCITY-MWL: All Channels Processed !" ),
                                  msg_text );
 
-      /**** TEMPORARILY!!! 
-      update_autoflow_record_atAnalysis();
-      emit analysis_complete_auto( protocol_details_at_analysis );
-      ****/
-      
+      // All Approved channels are fitted: species selection for the Report,
+      // run-wide claim, DB records, and the switch to the REPORT stage.
+      finalize_velmwl_species_selection();
+
       return;
     }
   
@@ -2380,6 +2385,257 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
   // advanced twodsa_chan_idx further. That is fine: this function's own
   // job is done once it has launched (or, in practice, already finished)
   // this one channel.
+}
+
+//ALEXEY: VELOCITY-MWL: last step of the ANALYSIS stage -- see header doc.
+//Order matters and mirrors ABDE's save_auto(): user selection FIRST (a cancelled
+//or failed attempt leaves autoflowAnalysisVelMwlStages at 'unknown', so nothing
+//to undo), THEN the run-wide claim, then the DB writes, then the stage switch.
+void US_Analysis_auto::finalize_velmwl_species_selection( void )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + db.lastError() +
+			    tr( "\n\nThe run stays in the ANALYSIS stage; re-attach to retry." ) );
+      return;
+    }
+
+  // (1) species recorded per Approved channel: channelDecisions[chan].models keys
+  QMap< QString, QStringList > available;
+  QMap< QString, QString >     labels;
+
+  QStringList qry_read;
+  qry_read << "read_autoflowAnalysisVelMwl_record" << QString::number( autoflowID_passed );
+  db.query( qry_read );
+
+  if ( db.lastErrno() == US_DB2::OK && db.next() )
+    {
+      QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+
+      QCollator collator;
+      collator.setNumericMode( true );   // S2 < S10
+
+      for ( int ic = 0; ic < channels_2dsa_approved.size(); ++ic )
+	{
+	  QString     chan  = channels_2dsa_approved[ ic ];
+	  QJsonObject mobj  = jobj.value( chan ).toObject().value( "models" ).toObject();
+	  QStringList specs = mobj.keys();
+	  std::sort( specs.begin(), specs.end(),
+		     [&collator]( const QString& a, const QString& b )
+		     { return collator.compare( a, b ) < 0; } );
+
+	  for ( int is = 0; is < specs.size(); ++is )
+	    {
+	      QString label = specs[ is ];
+	      US_Model mdl;
+	      int rc = mdl.load( true, mobj.value( specs[ is ] ).toString(), &db );
+	      if ( rc == US_DB2::OK && ! mdl.dataDescrip.isEmpty() )
+		label += ": " + mdl.dataDescrip;     // same text the Report shows per species
+	      labels[ chan + "|" + specs[ is ] ] = label;
+	    }
+
+	  if ( ! specs.isEmpty() )
+	    available[ chan ] = specs;
+	}
+    }
+
+  // (2) user's selection (nothing to choose when no channel has a recorded species)
+  QMap< QString, QStringList > selected;
+  if ( ! available.isEmpty() )
+    show_velmwl_species_selection_dialog( available, labels, selected );   // returns once confirmed
+
+  // (3) claim the run-wide ANALYSIS -> REPORT transition (unknown -> STARTED)
+  QStringList qry_claim;
+  qry_claim << "autoflow_velmwl_analysis_status" << QString::number( autoflowID_passed );
+  int unique_start = db.statusQuery( qry_claim );
+
+  if ( unique_start != 1 )
+    {
+      QMessageBox::information( this,
+				tr( "The Program State Updated / Being Updated" ),
+				tr( "The program advanced or is advancing to the next stage!\n\n"
+				    "This happened because you or a different user has already "
+				    "completed the VELOCITY-MWL analysis in a different program "
+				    "session, and the program is proceeding to the next stage.\n\n"
+				    "The program will return to the autoflow runs dialog where "
+				    "you can re-attach to the actual current stage of the run. "
+				    "Please allow some time for the status to be updated." ) );
+      emit analysis_back_to_initAutoflow();
+      return;
+    }
+
+  QStringList qry_revert;
+  qry_revert << "autoflow_velmwl_analysis_status_revert" << QString::number( autoflowID_passed );
+
+  // (4) selections -> autoflowAnalysisVelMwl.speciesSelections (JSON)
+  QJsonObject sel_json;
+  for ( auto it = available.constBegin(); it != available.constEnd(); ++it )
+    {
+      QJsonObject co;
+      co[ "selected"  ] = QJsonArray::fromStringList( selected.value( it.key() ) );
+      co[ "available" ] = QJsonArray::fromStringList( it.value() );
+      sel_json[ it.key() ] = co;
+    }
+
+  QStringList qry_sel;
+  qry_sel << "update_autoflowAnalysisVelMwl_species_selections"
+	  << QString::number( autoflowID_passed )
+	  << QString::fromUtf8( QJsonDocument( sel_json ).toJson( QJsonDocument::Compact ) );
+
+  if ( db.statusQuery( qry_sel ) != US_DB2::OK )
+    {
+      db.query( qry_revert );
+      QMessageBox::warning( this, tr( "AutoflowAnalysisVelMwl Record Not Updated" ),
+			    tr( "The species selection could not be saved.\n\n"
+				"The run stays in the ANALYSIS stage; re-attach to retry." ) );
+      return;
+    }
+
+  // (5) autoflowStatus: analysisVelMwl / analysisVelMwlts
+  if ( ! record_AnalysisVelMwl_status() )
+    {
+      db.query( qry_revert );
+      return;
+    }
+
+  // (6) switch to REPORT
+  update_autoflow_record_atAnalysis();
+  emit analysis_complete_auto( protocol_details_at_analysis );
+}
+
+bool US_Analysis_auto::show_velmwl_species_selection_dialog( const QMap< QString, QStringList >& available,
+							     const QMap< QString, QString >&     labels,
+							     QMap< QString, QStringList >&       selected )
+{
+  QDialog dialog( this );
+  dialog.setWindowTitle( tr( "Select Species for Report" ) );
+  dialog.setWindowFlag( Qt::WindowCloseButtonHint, false );   // confirmation is required
+
+  QVBoxLayout* main_lyt = new QVBoxLayout( &dialog );
+
+  QLabel* lb_instr = us_label( tr(
+      "Select which species should appear in the Report's "
+      "\"Integration Results: Fraction of Total Concentration\" section, "
+      "for each channel:" ) );
+  lb_instr->setWordWrap( true );
+  main_lyt->addWidget( lb_instr );
+
+  QScrollArea* scroll          = new QScrollArea( &dialog );
+  scroll->setWidgetResizable( true );
+  QWidget*     scroll_contents = new QWidget();
+  QVBoxLayout* scroll_lyt      = new QVBoxLayout( scroll_contents );
+
+  QMap< QString, QMap< QString, QCheckBox* > > ckbs;   // channel -> species -> checkbox
+
+  for ( auto it = available.constBegin(); it != available.constEnd(); ++it )
+    {
+      QGroupBox*   gb     = new QGroupBox( tr( "Channel " ) + it.key() );
+      QVBoxLayout* gb_lyt = new QVBoxLayout( gb );
+
+      for ( const QString& sp : it.value() )
+	{
+	  QCheckBox* ckb = new QCheckBox( labels.value( it.key() + "|" + sp, sp ) );
+	  ckb->setChecked( true );                       // default: report every species
+	  if ( it.value().size() == 1 )
+	    ckb->setEnabled( false );                    // nothing to choose
+	  gb_lyt->addWidget( ckb );
+	  ckbs[ it.key() ][ sp ] = ckb;
+	}
+      scroll_lyt->addWidget( gb );
+    }
+
+  scroll_lyt->addStretch();
+  scroll->setWidget( scroll_contents );
+  main_lyt->addWidget( scroll );
+
+  QDialogButtonBox* btns = new QDialogButtonBox( QDialogButtonBox::Ok );
+  connect( btns, &QDialogButtonBox::accepted, &dialog, &QDialog::accept );
+  main_lyt->addWidget( btns );
+  dialog.resize( 480, 480 );
+
+  while ( true )
+    {
+      if ( dialog.exec() != QDialog::Accepted )
+	continue;                                        // Esc: ask again
+
+      selected.clear();
+      QStringList empty_chans;
+
+      for ( auto ci = ckbs.constBegin(); ci != ckbs.constEnd(); ++ci )
+	{
+	  for ( auto cj = ci.value().constBegin(); cj != ci.value().constEnd(); ++cj )
+	    if ( cj.value()->isChecked() )
+	      selected[ ci.key() ] << cj.key();
+
+	  if ( selected.value( ci.key() ).isEmpty() )
+	    empty_chans << ci.key();
+	}
+
+      if ( empty_chans.isEmpty() )
+	return true;
+
+      QMessageBox::warning( &dialog, tr( "Species Selection" ),
+			    tr( "Please select at least one species for channel(s): " )
+			    + empty_chans.join( ", " ) );
+    }
+}
+
+bool US_Analysis_auto::record_AnalysisVelMwl_status( void )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + db.lastError() );
+      return false;
+    }
+
+  QStringList qry;
+  qry << "get_user_info";
+  db.query( qry );
+  db.next();
+
+  QJsonObject person;
+  person[ "ID"    ] = QString::number( db.value( 0 ).toInt() );
+  person[ "fname" ] = db.value( 1 ).toString();
+  person[ "lname" ] = db.value( 2 ).toString();
+  person[ "email" ] = db.value( 4 ).toString();
+  person[ "level" ] = QString::number( db.value( 5 ).toInt() );
+
+  // same shape as analysisABDE: { "Person":[{...}], "Comment":"..." }
+  QJsonObject status_json;
+  status_json[ "Person"  ] = QJsonArray( { person } );
+  status_json[ "Comment" ] = QString( "" );
+
+  if ( ! autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (analysisVelMwl): There was a problem with identifying "
+				"a record in autoflowStatus table for a given run! \n" ) );
+      return false;
+    }
+
+  qry.clear();
+  qry << "update_autoflowStatusAnalysisVelMwl_record"
+      << QString::number( autoflowStatusID )
+      << QString::number( autoflowID_passed )
+      << QString::fromUtf8( QJsonDocument( status_json ).toJson( QJsonDocument::Compact ) );
+
+  if ( db.statusQuery( qry ) != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Not Updated" ),
+			    tr( "autoflowStatus (analysisVelMwl) could not be updated.\n\n"
+				"The run stays in the ANALYSIS stage; re-attach to retry." ) );
+      return false;
+    }
+
+  return true;
 }
 
 //ALEXEY: Slot for US_2dsa::twodsa_complete_s() -- advance to the next

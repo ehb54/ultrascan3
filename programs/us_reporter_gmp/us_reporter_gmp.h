@@ -323,6 +323,7 @@ class US_ReporterGMP : public US_Widgets
         QMap< QString, QStringList > velmwl_chan_species;  //!< channel -> species names (S1, S2, ...)
         QMap< QString, QStringList > velmwl_chan_guids;    //!< channel -> modelGUIDs (same order)
         QMap< QString, QString >     velmwl_chan_fname;    //!< channel -> filename recorded at Accept
+        QMap< QString, QStringList > velmwl_chan_selected_species; //!< channel -> species chosen for Integration Results; channel absent = show all
         QString analysis_time_abde;
 
         QVector<QString> Array_of_triples;   //!< Array of triples

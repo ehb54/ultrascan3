@@ -730,6 +730,40 @@ class US_Analysis_auto : public US_Widgets
         void update_autoflow_record_atAnalysis( void );
 
         /**
+         * @brief VELOCITY-MWL: final ANALYSIS -> REPORT step, run once every
+         * Approved channel's 2DSA-IT models are recorded. (1) reads the species
+         * (models) recorded per Approved channel, (2) lets the user pick which
+         * species appear in the Report's Integration Results (per channel),
+         * (3) claims the run-wide transition (autoflowAnalysisVelMwlStages,
+         * unknown->STARTED; backs off if another session won it), (4) saves the
+         * selections as JSON in autoflowAnalysisVelMwl.speciesSelections,
+         * (5) records analysisVelMwl/analysisVelMwlts in autoflowStatus,
+         * (6) updates the autoflow record to REPORT and emits
+         * analysis_complete_auto(). Any failure after (3) reverts the claim so a
+         * re-attach can retry; the run then simply stays in ANALYSIS.
+         */
+        void finalize_velmwl_species_selection( void );
+
+        /**
+         * @brief Modal dialog: per Approved channel, checkboxes for its species
+         * (all checked by default; at least one per channel is required). Cannot
+         * be cancelled -- re-shown until confirmed, as the Report stage needs it.
+         * @param available channel ("N / X") -> species keys (S1, S2, ...).
+         * @param labels    "channel|species" -> display text.
+         * @param selected  [out] channel -> species left checked.
+         */
+        bool show_velmwl_species_selection_dialog( const QMap< QString, QStringList >& available,
+                                                   const QMap< QString, QString >&     labels,
+                                                   QMap< QString, QStringList >&       selected );
+
+        /**
+         * @brief Writes analysisVelMwl/analysisVelMwlts into the run's
+         * autoflowStatus record (analogue of US_Norm_Profile::record_AnalysisABDE_status()).
+         * @return false if the record could not be identified/updated.
+         */
+        bool record_AnalysisVelMwl_status( void );
+
+        /**
          * @brief Look up whether a VEL-MWL channel already has a recorded
          * Accept/Reject decision (own or another session) -- checked
          * BEFORE (re-)simulating/saving/opening US_MwlSpeciesFit for a
