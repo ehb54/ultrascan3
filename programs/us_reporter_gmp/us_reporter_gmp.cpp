@@ -4475,6 +4475,10 @@ void US_ReporterGMP::process_velmwl_analysis( void )
 	  imgFiles << imgFile;
 	}
 
+      //Start a new page for the title AND its plots, so the title is never
+      //left alone at the bottom of the previous page (same pagebreak
+      //paragraph the other sections use).
+      html_assembled += "<p class=\"pagebreak \">\n";
       html_assembled += "<h3>Integral Distributions, Channel " + chan_tag
 	+ " (Deconvolved Species: " + species.join( ", " ) + ")</h3>\n";
 
