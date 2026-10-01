@@ -54,6 +54,8 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       //! data confirmed present in the DB (already saved, or saved just now)
       bool import_ssf_succeeded  ( void ) const { return import_ssf_ok; }
       bool import_ssf_ok = false;
+      //! true if this run's ID exists in the DB (does NOT depend on saveStatus)
+      bool runInDB_auto( void );
       void download_data_auto ( QMap < QString, QString > & ) ;
       bool copyDirectory(const QString &, const QString &);
 

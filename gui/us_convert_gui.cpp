@@ -1525,7 +1525,10 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   qDebug() << "impType, IMPORT AUC auto..." << impType;
   importAUC();
   if ( allData.isEmpty() )
-    return;
+    {
+      qDebug() << "[import_ssf_data_auto] FAILED: importAUC() produced no data";
+      return;
+    }
   
   //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
   if ( us_convert_auto_mode ) 
@@ -1541,7 +1544,12 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   editRuninfo_auto();
   
   if( dataSavedOtherwise )
-    return;
+    {
+      //Run was already in the DB (saveUS3DB-type path elsewhere) -- success iff it is there
+      import_ssf_ok = runInDB_auto();
+      qDebug() << "[import_ssf_data_auto] dataSavedOtherwise; run in DB:" << import_ssf_ok;
+      return;
+    }
   
   //debug
   qDebug() << "Before reading protocol: out_triples, out_channles -- "
@@ -1579,7 +1587,14 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   // (1) check for if saved already?
   // (2) switch to Reporting stage
   
-  if( isSaved_auto() )
+  bool already_saved_dbg = isSaved_auto();
+  qDebug() << "[import_ssf_data_auto] runID:" << ExpData.runID
+           << "invID:" << ExpData.invID
+           << "DB mode:" << disk_controls->db()
+           << "saveStatus:" << (int)saveStatus
+           << "already saved:" << already_saved_dbg;
+
+  if( already_saved_dbg )
     {
       qDebug() << "SSF Already saved!";
       import_ssf_ok = true;   // already in the DB: nothing more to do
@@ -1592,7 +1607,10 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
 
   //saveUS3DB() reports failures only via message boxes and early returns,
   //so confirm the outcome by asking the DB whether the run is there now.
-  import_ssf_ok = isSaved_auto();
+  //NB: do NOT use isSaved_auto() here: a successful saveUS3DB() sets
+  //saveStatus = BOTH, which makes isSaved_auto() return false.
+  import_ssf_ok = runInDB_auto();
+  qDebug() << "[import_ssf_data_auto] after save; run in DB:" << import_ssf_ok;
 
   //capture a new "filemane" for VEL-MWL:
   QString auto_flag_ = details_at_live_update[ "auto_flag_import" ];
@@ -7280,6 +7298,19 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 
 //Check if runID already saved into DB
+bool US_ConvertGui::runInDB_auto( void )
+{
+   ExpData.runID = le_runID -> text();
+
+   US_Passwd pw;
+   US_DB2 db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+     return false;
+
+   return ( ExpData.checkRunID_auto( ExpData.invID, &db ) == US_DB2::OK );
+}
+
 bool US_ConvertGui::isSaved_auto( void )
 {
    bool isDataSaved = false;

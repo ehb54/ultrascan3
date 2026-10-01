@@ -1648,6 +1648,8 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   sdiag_convert = new US_ConvertGui("AUTO");
   update_mwlsim_progress( "convert", 0, 1 );
   sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
+  qDebug() << "[get_ssf_dir_and_saveDB] sim-stage import succeeded:"
+           << sdiag_convert->import_ssf_succeeded();
   update_mwlsim_progress( "convert", 1, 1 );
 
   //Next, save edit profiles (based on new menicsus && same edits )
