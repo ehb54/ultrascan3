@@ -325,6 +325,7 @@ class US_ReporterGMP : public US_Widgets
         QMap< QString, QString >     velmwl_chan_fname;    //!< channel -> filename recorded at Accept
         QMap< QString, QStringList > velmwl_chan_selected_species; //!< channel -> species chosen for Integration Results; channel absent = show all
         QString analysis_time_abde;
+        QString analysis_time_velmwl;
 
         QVector<QString> Array_of_triples;   //!< Array of triples
         QVector<QString> Array_of_tripleNames; //!< Array of triple names
@@ -365,6 +366,7 @@ class US_ReporterGMP : public US_Widgets
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
         void user_interactions_analysis( QString, QString );
         void user_interactions_analysis_abde( QString, QString );
+        void user_interactions_analysis_velmwl( QString, QString );
   
         void assemble_run_details_html(void); //!< Assemble run details in HTML
         int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
@@ -373,7 +375,8 @@ class US_ReporterGMP : public US_Widgets
         void read_autoflowStatus_record(QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
-                                        QString&, QString&, QString&, QString&); //!< Read autoflow status record
+                                        QString&, QString&, QString&, QString&,
+                                        QString&, QString&); //!< Read autoflow status record (last 2: analysisVelMwl json/ts)
         QMap<QString, QMap<QString, QString>> parse_autoflowStatus_json(const QString, const QString); //!< Parse autoflow status JSON
         QMap<QString, QString> parse_autoflowStatus_analysis_json(const QString); //!< Parse autoflow status analysis JSON
 

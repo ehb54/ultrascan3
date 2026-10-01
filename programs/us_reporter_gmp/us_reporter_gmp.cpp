@@ -7512,6 +7512,7 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
   QMap < QString, QString > data_types_edit_ts;
   QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
   QString analysisABDEJson, analysisABDEts;
+  QString analysisVelMwlJson, analysisVelMwlts;
   
   // //TEMP: DEBUG
   // importRIJson =
@@ -7535,7 +7536,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
 			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
 			      analysisCancelJson, createdGMPrunJson, createdGMPrunts,
-			      analysisABDEJson, analysisABDEts); 
+			      analysisABDEJson, analysisABDEts,
+			      analysisVelMwlJson, analysisVelMwlts ); 
   /////////////////////////////
 
   //1. GMP run creation
@@ -8024,6 +8026,8 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     user_interactions_analysis( analysisJson, analysisCancelJson );
   else if ( expType == "ABDE" )
     user_interactions_analysis_abde( analysisABDEJson, analysisABDEts );
+  else if ( expType == "VELOCITY-MWL" )
+    user_interactions_analysis_velmwl( analysisVelMwlJson, analysisVelMwlts );
   //End of 5. ANALYSIS
   
   html_assembled += "</p>\n";
@@ -8080,6 +8084,179 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
 			   "</table>"
 			   )
     .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    ;
+  //Signals the user selected (Save Profiles dialog) for the Report's Integration
+  //Results: autoflowAnalysisABDE.xnorms_percents JSON -> per channel
+  //"selected_signals" (chosen) and "percents" keys (available).
+  //A channel without "selected_signals" = older run: every signal is shown.
+  QString signals_html;
+  {
+    US_Passwd pw_sg;
+    US_DB2    db_sg( pw_sg.getPasswd() );
+
+    if ( db_sg.lastErrno() == US_DB2::OK )
+      {
+	QStringList qry_sg;
+	qry_sg << "read_autoflowAnalysisABDE_record" << AutoflowID_auto;
+	db_sg.query( qry_sg );
+
+	if ( db_sg.lastErrno() == US_DB2::OK && db_sg.next() )
+	  {
+	    QJsonObject root = QJsonDocument::fromJson( db_sg.value( 2 ).toString().toUtf8() ).object();
+
+	    for ( auto it = root.constBegin(); it != root.constEnd(); ++it )
+	      {
+		if ( it.key() == "filename" || it.key() == "blcorrs" || !it.value().isObject() )
+		  continue;                       //not a channel
+
+		QJsonObject co = it.value().toObject();
+		QStringList s_all;
+		QJsonObject pobj = co.value( "percents" ).toObject();
+		for ( auto pi = pobj.constBegin(); pi != pobj.constEnd(); ++pi )
+		  if ( pi.value().isObject() )    //new (per-sample) format only
+		    s_all << pi.key();
+
+		QString line;
+		if ( co.contains( "selected_signals" ) )
+		  {
+		    //pretty analyte names (MWL only; falls back to the sanitized key)
+		    QMap< QString, QString > pretty =
+		      US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, it.key() );
+
+		    QStringList s_sel;
+		    QJsonArray  a1 = co.value( "selected_signals" ).toArray();
+		    for ( int k = 0; k < a1.size(); ++k )
+		      s_sel << prettify_abde_sample_name( pretty, a1[ k ].toString() );
+
+		    QStringList s_all_p;
+		    for ( int k = 0; k < s_all.size(); ++k )
+		      s_all_p << prettify_abde_sample_name( pretty, s_all[ k ] );
+
+		    line = it.key() + ": " + s_sel.join( ", " );
+		    if ( !s_all_p.isEmpty() )
+		      line += "  (of " + s_all_p.join( ", " ) + ")";
+		  }
+		else
+		  line = it.key() + ": " + tr( "no selection recorded (all signals shown)" );
+
+		signals_html += "<tr><td>" + line.toHtmlEscaped() + "</td></tr>";
+	      }
+	  }
+      }
+  }
+
+  if ( !signals_html.isEmpty() )
+    html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Signals Selected for Report (Integration Results): </i></b> </caption>"
+			   "</table>"
+			   "<table style=\"margin-left:25px\">"
+			   "%1"
+			   "</table>"
+			   )
+      .arg( signals_html )     //1
+      ;
+
+  html_assembled += tr("<hr>");
+  
+}
+
+//do user-interactions-analysis separately:VELOCITY-MWL
+void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJson, QString analysisVelMwlts )
+{
+  html_assembled += tr( "<h3 align=left>VELOCITY-MWL Analysis: Species Selection for Report (5. ANALYSIS)</h3>" );
+  QMap< QString, QMap < QString, QString > > status_map_c = parse_autoflowStatus_json( analysisVelMwlJson, "" );
+
+  //html_assembled += tr("<br>");
+  html_assembled += tr(
+		           "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Person" ][ "ID"] )                       //1
+    .arg( status_map_c[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map_c[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map_c[ "Person" ][ "email" ] )                   //4
+    .arg( status_map_c[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Time of VELOCITY-MWL analysis completion: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Completed at:     %1 (UTC) </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( analysisVelMwlts )     //1
+    ;
+
+  analysis_time_velmwl = analysisVelMwlts;
+  
+  // Single-cell table (see note above): label and value can no longer be
+  // separated by a page break.
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<tr><td><b><i>Comment at the Time of VELOCITY-MWL Analysis Completion: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map_c[ "Comment" ][ "comment"] )     //1
+    ;
+  //Species selected for the Report's Integration Results (autoflowAnalysisVelMwl.speciesSelections)
+  QString species_html;
+  {
+    US_Passwd pw_sp;
+    US_DB2    db_sp( pw_sp.getPasswd() );
+
+    if ( db_sp.lastErrno() == US_DB2::OK )
+      {
+	QStringList qry_sp;
+	qry_sp << "read_autoflowAnalysisVelMwl_record" << AutoflowID_auto;
+	db_sp.query( qry_sp );
+
+	if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
+	  {
+	    QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object();
+
+	    for ( auto it = sel.constBegin(); it != sel.constEnd(); ++it )
+	      {
+		QJsonObject co = it.value().toObject();
+		QStringList s_sel, s_all;
+		QJsonArray  a1 = co.value( "selected"  ).toArray();
+		QJsonArray  a2 = co.value( "available" ).toArray();
+		for ( int i = 0; i < a1.size(); ++i ) s_sel << a1[ i ].toString();
+		for ( int i = 0; i < a2.size(); ++i ) s_all << a2[ i ].toString();
+
+		QString line = it.key() + ": " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
+		species_html += "<tr><td>" + line.toHtmlEscaped() + "</td></tr>";
+	      }
+	  }
+      }
+  }
+
+  if ( species_html.isEmpty() )
+    species_html = "<tr><td>" + tr( "No species selection recorded (all species shown in the Report)." ).toHtmlEscaped() + "</td></tr>";
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Species Selected for Report (Integration Results): </i></b> </caption>"
+			   "</table>"
+			   "<table style=\"margin-left:25px\">"
+			   "%1"
+			   "</table>"
+			   )
+    .arg( species_html )     //1
     ;
   html_assembled += tr("<hr>");
   
@@ -8351,7 +8528,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 						 QString& analysisJson,
 						 QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson, QString& skipOptimats,
 						 QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts,
-						 QString& analysisABDEJson, QString& analysisABDEts )
+						 QString& analysisABDEJson, QString& analysisABDEts,
+						 QString& analysisVelMwlJson, QString& analysisVelMwlts )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -8371,6 +8549,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
   createdGMPrunts   .clear();
   analysisABDEJson  .clear();
   analysisABDEts    .clear();
+  analysisVelMwlJson.clear();
+  analysisVelMwlts  .clear();
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -8416,6 +8596,8 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson, QString&
 	  
 	  analysisABDEJson = db.value( 16 ).toString();
 	  analysisABDEts   = db.value( 17 ).toString();
+	  analysisVelMwlJson = db.value( 18 ).toString();
+	  analysisVelMwlts   = db.value( 19 ).toString();
 	}
     }
 
