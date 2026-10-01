@@ -777,7 +777,26 @@ class US_Analysis_auto : public US_Widgets
          * @return true if a decision was found.
          */
         bool load_velmwl_channel_decision( QString autoflowID, QString chann,
-                                            QString& decision );
+                                            QString& decision, bool* prep_done = nullptr );
+
+        /**
+         * @brief Marks this channel's post-Accept preparation (Convert import
+         * + Edit profile save) as complete in channelDecisions[chann].prepDone.
+         * Until this runs, an Accepted channel is NOT considered finished and
+         * will be redone on re-attach rather than skipped.
+         * @param chann The channel, in "N / X" canonical form.
+         * @return true if the DB write succeeded.
+         */
+        bool mark_velmwl_channel_prep_done( const QString& chann );
+
+        /**
+         * @brief Discards an Accepted-but-incomplete (prepDone == 0) decision
+         * so the channel can be re-simulated and re-decided. No effect on
+         * Rejected or fully prepared channels.
+         * @param chann The channel, in "N / X" canonical form.
+         * @return true if the DB call succeeded.
+         */
+        bool reset_velmwl_incomplete_channel( const QString& chann );
 
         /**
          * @brief Once every channel in channels_all has been resolved

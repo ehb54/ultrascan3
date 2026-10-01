@@ -50,6 +50,10 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       bool usmode;
       bool us_import_ssf_abde;
       void import_ssf_data_auto  ( QMap < QString, QString > & ) ;
+      //! true only if the last import_ssf_data_auto() call ended with the run's
+      //! data confirmed present in the DB (already saved, or saved just now)
+      bool import_ssf_succeeded  ( void ) const { return import_ssf_ok; }
+      bool import_ssf_ok = false;
       void download_data_auto ( QMap < QString, QString > & ) ;
       bool copyDirectory(const QString &, const QString &);
 

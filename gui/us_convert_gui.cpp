@@ -1492,6 +1492,7 @@ bool US_ConvertGui::copyDirectory(const QString &sourcePath, const QString &dest
 //alt. import_auto_ssf (for [ABDE-MWL])
 void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
 {
+  import_ssf_ok          = false;   // set true below only on confirmed success
   us_import_ssf_abde     = true;
   dataSavedOtherwise     = false;
   runType_combined_IP_RI = false;
@@ -1581,12 +1582,17 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   if( isSaved_auto() )
     {
       qDebug() << "SSF Already saved!";
+      import_ssf_ok = true;   // already in the DB: nothing more to do
       return;
     }
     
   saveUS3DB();          
   writeTimeStateDisk(); // do we need timestate?
   writeTimeStateDB();   // do we need timestate?
+
+  //saveUS3DB() reports failures only via message boxes and early returns,
+  //so confirm the outcome by asking the DB whether the run is there now.
+  import_ssf_ok = isSaved_auto();
 
   //capture a new "filemane" for VEL-MWL:
   QString auto_flag_ = details_at_live_update[ "auto_flag_import" ];

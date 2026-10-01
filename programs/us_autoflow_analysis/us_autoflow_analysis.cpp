@@ -1771,8 +1771,37 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
       //this channel, so don't re-simulate/re-save/re-open the fit
       //dialog for it at all, just count it resolved and keep scanning.
       QString existing_decision_c;
+      bool    prep_done_c = true;
       bool already_decided_c = load_velmwl_channel_decision(
-	  QString::number( autoflowID_passed ), chan_norm_c, existing_decision_c );
+	  QString::number( autoflowID_passed ), chan_norm_c, existing_decision_c, &prep_done_c );
+
+      //ALEXEY: A decision alone does not mean the channel is finished.
+      //"Accepted" is recorded the moment the user clicks Accept, BEFORE
+      //velmwl_deconv_accepted() has run the Convert import + Edit profile
+      //save that 2DSA-IT depends on. If the program was closed/crashed in
+      //between, the channel looks decided but its edited data is missing.
+      //Such a channel (prepDone == 0) is discarded and reprocessed from
+      //scratch below. Rejected channels need nothing further.
+      if ( already_decided_c && existing_decision_c == "Accepted" && ! prep_done_c )
+	{
+	  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
+		   << "was Accepted but its import/edit never completed -- reprocessing.";
+
+	  if ( reset_velmwl_incomplete_channel( chan_norm_c ) )
+	    already_decided_c = false;
+	  else
+	    {
+	      //Could not clear the stale record: reprocessing would just
+	      //re-hit it, so stop rather than skip into a broken 2DSA-IT.
+	      QMessageBox::warning( this, tr( "VELOCITY-MWL: Channel Not Ready" ),
+				    tr( "Channel %1 was accepted earlier, but its data import/edit "
+					"did not finish, and the record could not be reset.\n\n"
+					"Re-attach to retry." ).arg( chan_norm_c ) );
+	      if ( progress_msg_mwlsim )
+		progress_msg_mwlsim->close();
+	      return;
+	    }
+	}
 
       if ( already_decided_c )
 	{
@@ -1953,6 +1982,38 @@ void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
 
   protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
   sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
+
+  //ALEXEY: Import + edit are both done: only now flag the channel as
+  //ready for 2DSA-IT (channelDecisions[chan].prepDone = 1). "chan_to_analyse"
+  //is already in the canonical "N / X" form (set in get_ssf_dir_and_saveDB()).
+  QString chan_ready = protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
+  if ( chan_ready.isEmpty() )
+    chan_ready = chann_dec;
+
+  //ALEXEY: Only flag the channel if US_ConvertGui confirmed the data is in
+  //the DB AND US_Edit saved every triple's edit profile without error.
+  bool imp_ok  = sdiag_convert->import_ssf_succeeded();
+  bool edit_ok = sdiag_edit   ->velmwl_edit_succeeded();
+
+  if ( imp_ok && edit_ok )
+    {
+      if ( ! mark_velmwl_channel_prep_done( chan_ready ) )
+	qDebug() << "[US_Autoflow_analysis] WARNING: could not mark channel" << chan_ready
+		 << "as prepared; it will be redone on re-attach.";
+    }
+  else
+    {
+      qDebug() << "[US_Autoflow_analysis] channel" << chan_ready
+	       << "NOT marked ready -- import ok:" << imp_ok << ", edit ok:" << edit_ok;
+      QMessageBox::warning( this, tr( "VELOCITY-MWL: Channel Data Not Saved" ),
+			    tr( "Channel %1 was accepted, but saving its data to the database "
+				"did not complete (import: %2, edit profile: %3).\n\n"
+				"This channel will be skipped for 2DSA-IT, and redone when "
+				"the run is re-attached." )
+			    .arg( chan_ready )
+			    .arg( imp_ok  ? tr( "OK" ) : tr( "failed" ) )
+			    .arg( edit_ok ? tr( "OK" ) : tr( "failed" ) ) );
+    }
     
   //ALEXEY: See velmwl_deconv_rejected() above.
   start_next_velmwl_channel();
@@ -2098,6 +2159,18 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 	  QJsonObject chdec   = it.value().toObject();
 	  QString decision    = chdec.value( "decision" ).toString();
 	  QString chan_fname  = chdec.value( "filename" ).toString();
+
+	  //prepDone absent => older record, treat as complete.
+	  int chan_prep = chdec.contains( "prepDone" ) ?
+	    chdec.value( "prepDone" ).toVariant().toInt() : 1;
+
+	  if ( decision == "Accepted" && chan_prep == 0 )
+	    {
+	      qDebug() << "[US_Autoflow_analysis] channel" << it.key()
+		       << "is Accepted but its import/edit is incomplete -- "
+			  "skipping 2DSA-IT for this channel.";
+	      continue;
+	    }
 
 	  if ( decision == "Accepted" )
 	    {
@@ -2731,9 +2804,11 @@ void US_Analysis_auto::cleanup_2dsa_widget( void )
 //(and fills 'decision') if found, so the caller can skip re-simulating,
 //re-saving, and re-opening US_MwlSpeciesFit's dialog for this channel.
 bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString chann,
-						      QString& decision )
+						      QString& decision, bool* prep_done )
 {
   decision.clear();
+  if ( prep_done )
+    *prep_done = true;
   if ( autoflowID.isEmpty() || chann.isEmpty() )
     return false;
 
@@ -2757,10 +2832,47 @@ bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString
     {
       decision = db->value( 0 ).toString();
       found    = ! decision.isEmpty();
+
+      //Column 1 (prepDone): '0' only for an Accepted channel whose
+      //import/edit never finished; anything else counts as complete.
+      if ( prep_done )
+	*prep_done = ( db->value( 1 ).toString() != "0" );
     }
 
   delete db;
   return found;
+}
+
+//ALEXEY: Flags a channel as fully prepared for 2DSA-IT -- see header doc.
+bool US_Analysis_auto::mark_velmwl_channel_prep_done( const QString& chann )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  if ( db.lastErrno() != US_DB2::OK )
+    return false;
+
+  QStringList qry;
+  qry << "update_autoflowAnalysisVelMwl_channel_prepDone"
+      << QString::number( autoflowID_passed )
+      << chann;
+
+  return db.statusQuery( qry ) == US_DB2::OK;
+}
+
+//ALEXEY: Clears a stale Accepted/prepDone==0 record -- see header doc.
+bool US_Analysis_auto::reset_velmwl_incomplete_channel( const QString& chann )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  if ( db.lastErrno() != US_DB2::OK )
+    return false;
+
+  QStringList qry;
+  qry << "reset_autoflowAnalysisVelMwl_channel_incomplete"
+      << QString::number( autoflowID_passed )
+      << chann;
+
+  return db.statusQuery( qry ) == US_DB2::OK;
 }
 
 //Get editID from selected model

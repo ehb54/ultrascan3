@@ -3005,6 +3005,7 @@ void US_Edit::gap_check( void )
 //For VEL-MWL:GMP
 void US_Edit::load_auto_velmwl( QMap < QString, QString > & details_at_editing )
 {
+  velmwl_edit_ok = false;   // set true only after every triple's save succeeded
   load_auto( details_at_editing );
 }
 
@@ -3821,8 +3822,13 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
        /** DEBUG *********************************************/
 
        //and save edit profiles
+       bool all_saved = ( cb_triple->count() > 0 );
        for ( int trx = 0; trx < cb_triple->count(); trx++ )
-	 write_mwl_auto( trx );
+	 {
+	   write_mwl_auto( trx );
+	   all_saved = all_saved && mwl_auto_write_ok;
+	 }
+       velmwl_edit_ok = all_saved;
 	        
        return;
      }
@@ -13507,6 +13513,7 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl_auto( int trx )
 {
+  mwl_auto_write_ok = false;   // every early 'return' below is a failure
 
   US_Passwd pw;
   US_DB2* dbP            = new US_DB2( pw.getPasswd() );
@@ -13783,6 +13790,8 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
    // ck_writemwl ->setEnabled( false );
    le_info->setText( saved_info );
    qApp->processEvents();
+
+   mwl_auto_write_ok = true;    // reached the end: XML and DB writes all succeeded
 
    if ( runType_combined_IP_RI )
      cb_triple->disconnect();

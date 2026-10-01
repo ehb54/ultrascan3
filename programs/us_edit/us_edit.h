@@ -45,6 +45,11 @@ class US_Edit : public US_Widgets
 	 bool all_loaded;
 	 bool is_spike_auto;
          void load_auto_velmwl( QMap < QString, QString > &  ); 
+         //! true only if the last load_auto_velmwl() saved the edit profile
+         //! (XML + DB record) for every triple without error
+         bool velmwl_edit_succeeded( void ) const { return velmwl_edit_ok; }
+         bool velmwl_edit_ok     = false;
+         bool mwl_auto_write_ok  = false;
 
       private:
 	 US_Edit*       sdiag;
