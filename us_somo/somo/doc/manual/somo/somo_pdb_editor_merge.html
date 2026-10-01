@@ -145,10 +145,9 @@ the PDB Editor.<p>
 <li>Press <b><i>Compute Guess</i></b>. A row appears for chain A, proposing <b><i>Merge</i></b> 1-48, the
 residues the recipient lacks, and <b><i>Fit</i></b> 49-51, the first three residues the two structures
 share.<p>
-<li><span style="color:#CC0000">Widen the fit range.</span> Double-click the <b><i>Fit end</i></b> cell, type
-55 and press Return, so that all seven shared residues are used. A fit on three residues, as proposed by
-<b><i>Compute Guess</i></b>, can place the merged residues wrongly; see
-<a href="#Limitations">Notes and current limitations</a>.<p>
+<li>Widen the fit range: double-click the <b><i>Fit end</i></b> cell, type 55 and press Return, so that all
+seven shared residues are used. Three residues are the minimum; a superposition on more residues is less
+sensitive to local differences between the two structures.<p>
 <li>Press <b><i>Validate</i></b>. The message area should report <i>Validation OK</i>; otherwise it lists what
 is wrong (see <a href="#Validate">Validate</a>).<p>
 <li>Press <b><i>Trial</i></b>. The spliced structure is added to the right panel of the PDB Editor as a new
@@ -390,17 +389,15 @@ and both become inactive once either has been used, until the next <b><i>Compute
 <ul>
 <li><b><i>Extra Chains</i></b> adds, for every regular row and every extra chain, a + row with the fit range
 of that regular row, as it stands when the button is pressed. With several regular rows this gives several
-rows per extra chain, and all but one must be deleted with <b><i>Delete Rows</i></b>.
-<span style="color:#CC0000">This button currently leaves the new rows without a chain name, and they cannot
-be used; see <a href="#Limitations">Notes and current limitations</a>.</span><p>
+rows per extra chain, and all but one must be deleted with <b><i>Delete Rows</i></b>.<p>
 <li><b><i>Only Closest Chains</i></b> adds a single + row per extra chain. Among the chains of the regular
 rows, it picks the one with the atom closest to the extra chain in the donor, and proposes a fit on three
 residues centered on the closest residue. Each extra chain is thus placed by the part of the structure it
 actually touches, which matters when the two structures differ in conformation. The message area reports each
 closest pair of atoms and their distance. All atom pairs are compared, which takes a few seconds for chains
-of a few thousand atoms and longer for larger ones; <b><i>Stop</i></b> interrupts the search.
-<span style="color:#CC0000">Widen the proposed three-residue fits before going further</span>, for example to
-six residues on either side of the proposed center.<p>
+of a few thousand atoms and longer for larger ones; <b><i>Stop</i></b> interrupts the search. As for any
+fit, widening the proposed three residues, for example to six residues on either side of the proposed
+center, makes the placement less sensitive to local differences between the two structures.<p>
 </ul>
 If the fit range of a + row lies in the part of the base chain that is being added, and therefore is not in
 the recipient, the fit range of the base chain's own row is used instead, with the message <i>Notice: setting
@@ -485,14 +482,10 @@ A,1,48,49,55,,
 </pre>
 <b><i>Load</i></b> reads such a file back, ignoring its first line. The file does not record the structures,
 so load <b><i>Chains From</i></b> and <b><i>Chains To</i></b> first, and do not press
-<b><i>Compute Guess</i></b> afterwards, since it clears the table. Loading produces a series of
-<i>Internal error: chain start map entry missing</i> messages. They are harmless, but they mean that the
-automatic adjustments described in <a href="#Table">Editing the table</a> are not applied to the loaded rows,
-so check any later edit with <b><i>Validate</i></b>.
-<p>
-<span style="color:#CC0000">A file saved with empty cells, as in the example above, cannot currently be
-loaded safely, and + rows are not restored; see <a href="#Limitations">Notes and current
-limitations</a>.</span>
+<b><i>Compute Guess</i></b> afterwards, since it clears the table. The automatic adjustments described in
+<a href="#Table">Editing the table</a> depend on <b><i>Compute Guess</i></b> and are not applied to loaded rows:
+editing one reports <i>Internal error: chain start map entry missing</i> and leaves the other cells as they
+are, so check any such edit with <b><i>Validate</i></b>.
 <p>
 
 <hr>
@@ -570,10 +563,9 @@ too, and an added chain is taken with all its records. Remove unwanted waters an
 first.<p>
 <li>Hydrogen atoms play no part in the fit and are carried over with the merged residues, so both structures
 should have hydrogens, or neither.<p>
-<li>The <b><i>Chains To</i></b> file should end with an END (or ENDMDL) record: <b><i>Start</i></b> ignores
-its last line otherwise, which loses an atom if that line is an atom record.<p>
 <li>For <b><i>Start</i></b> with a multi-model <b><i>Chains To</i></b> file, give every model a different
-model number.<p>
+model number. Models sharing a number are written as <tt>1</tt>, <tt>1-1</tt>, <tt>1-2</tt> and so on,
+which strict PDB readers may not accept.<p>
 </ul>
 
 <hr>
@@ -583,43 +575,14 @@ model number.<p>
 
 <ul>
 <li>
-<span style="color:#CC0000">Because of a defect in the superposition routine, a fit on exactly three residues,
-as proposed by <b><i>Compute Guess</i></b> and <b><i>Only Closest Chains</i></b>, places the moved atoms with
-a wrong rotation about half of the time.</span> In tests with randomly oriented donors, 5 of 10 splices on a
-three-residue fit misplaced the merged residues, by 2 to 32 &Aring; RMSD, and in 5 of 6 runs of
-<b><i>Only Closest Chains</i></b> at least one added chain was misplaced, by up to 130 &Aring;. With four or
-more fit residues no misplacement was seen. Always widen every fit range, including those of the
-+ rows, to at least four residues, and preferably more, and check the result with <b><i>Trial</i></b> and
-<b><i>Visualize</i></b>.<p>
+<span style="color:#CC0000">The steric clash filter applies no tolerance</span>, so ordinary hydrogen bonds
+and close packing count as clashes; see <a href="#Ensembles">Ensembles and the steric clash filter</a>.<p>
 <li>
-<span style="color:#CC0000"><b><i>Extra Chains</i></b> creates rows with an empty <b><i>Chain</i></b>
-cell</span>, which then fail validation with <i>Chain  missing in "Chains From" PDB</i>. Use
-<b><i>Only Closest Chains</i></b> instead, and delete any + rows that are not wanted with
-<b><i>Delete Rows</i></b>.<p>
+Rows read from a <tt>.csc</tt> file do not get the automatic adjustments of the table; see
+<a href="#Files">Saving and loading the table</a>.<p>
 <li>
-<span style="color:#CC0000">Loading a <tt>.csc</tt> file in which a line ends with an empty cell, as
-<b><i>Save</i></b> writes a row without a cut, leaves that cell undefined, and SOMO then crashes at the next
-<b><i>Validate</i></b>, <b><i>Trial</i></b>, <b><i>Start</i></b> or <b><i>Save</i></b>.</span> Before
-loading such a file, edit it in a text editor to put 0 in every empty cell, for example
-<tt>A,1,48,49,55,0,0</tt>. The <b><i>Chain</i></b> cell of + rows is also emptied on loading, so + rows have
-to be created again.<p>
-<li>
-<span style="color:#CC0000">With <b><i>Filter out steric clashes from results</i></b> checked, SOMO crashes when
-a clash is found in a <b><i>Chains To</i></b> file without MODEL records.</span> Enclose the atom records of
-such a file in <tt>MODEL        1</tt> and <tt>ENDMDL</tt> records. The filter is also very strict; see
-<a href="#Ensembles">Ensembles and the steric clash filter</a>.<p>
-<li>
-<span style="color:#CC0000"><b><i>Start</i></b> never finishes when three or more models of the
-<b><i>Chains To</i></b> file have the same model number.</span> Give every model a different number.<p>
-<li>
-<span style="color:#CC0000">Cancelling the <b><i>Target</i></b> file dialog sets the target to <tt>.pdb</tt>,
-and <b><i>Start</i></b> then writes a file of that name in the current directory.</span> Press
-<b><i>Target</i></b> again and choose a name.<p>
-<li>
-<span style="color:#CC0000">When the <b><i>Chains To</i></b> structure has chains without a row in the
-table, the <b><i>From -&gt;</i></b> and <b><i>To -&gt;</i></b> buttons may copy a range without applying the
-automatic adjustments</span>, reporting <i>Internal error: row out of range</i>. Check the row and press
-<b><i>Validate</i></b>.<p>
+The SEQRES, HELIX and SHEET records copied to the <b><i>Target</i></b> describe the recipient only; see
+<a href="#Run">Trial, Start and the output file</a>.<p>
 <li>
 The message area opens with the notice <i>THIS WINDOW IS UNDER DEVELOPMENT</i>.<p>
 </ul>
