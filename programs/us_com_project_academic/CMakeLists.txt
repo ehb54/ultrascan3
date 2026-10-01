@@ -88,6 +88,10 @@ set(CROSS_DIR_SOURCES
         ../us_2dsa/us_adv_analysis_2d.cpp
         ../us_2dsa/us_2dsa_process.cpp
         ../us_2dsa/us_analysis_control_2d.cpp
+
+        # us_integral
+        ../us_integral/us_integral.cpp
+        ../us_integral/us_delete_models.cpp
         )
 
 # Cross-directory headers from .pro file
@@ -132,6 +136,8 @@ set(CROSS_DIR_HEADERS
         ../us_2dsa/us_adv_analysis_2d.h
         ../us_2dsa/us_2dsa_process.h
         ../us_2dsa/us_analysis_control_2d.h
+        ../us_integral/us_integral.h
+        ../us_integral/us_delete_models.h
         )
 
 # Find UI and resource files
@@ -178,6 +184,7 @@ target_include_directories(us_comproject_academic PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_abde
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_mwl_species_sim
         ${CMAKE_CURRENT_SOURCE_DIR}/../us_2dsa
+        ${CMAKE_CURRENT_SOURCE_DIR}/../us_integral
         )
 
 # Link libraries
