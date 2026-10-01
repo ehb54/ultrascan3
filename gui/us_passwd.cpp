@@ -2,6 +2,19 @@
 #include "us_passwd.h"
 #include "us_settings.h"
 #include "us_global.h"
+#include <QApplication>
+
+// Window to anchor (and center) the password dialogs against: the owner's
+// top-level window if it has a parent, otherwise the currently active window.
+// US_Passwd objects are normally created parentless on the stack and never
+// shown, so using 'this' as the parent makes Qt center the dialog over an
+// unshown 0,0-positioned widget, i.e. in the top-left corner of the screen.
+static QWidget* anchor_window( QWidget* self )
+{
+  QWidget* p = self->parentWidget();
+  if ( p ) return p->window();
+  return QApplication::activeWindow();   // may be nullptr -> centered on screen
+}
 
 QString US_Passwd::getPasswd( void  )
 {
@@ -14,7 +27,7 @@ QString US_Passwd::getPasswd( void  )
 
   if ( currentHash.isEmpty() )
   {
-    QMessageBox::information( this,
+    QMessageBox::information( anchor_window( this ),
           tr( "Password Error" ),
           tr( "The Master Password has not been set." ) );
 
@@ -26,7 +39,7 @@ QString US_Passwd::getPasswd( void  )
   {
     bool ok;
     pw = QInputDialog::getText( 
-         this, 
+         anchor_window( this ), 
          tr( "Master Password" ),
          tr( "Please input your Master Password" ),
          QLineEdit::Password, 
@@ -42,7 +55,7 @@ QString US_Passwd::getPasswd( void  )
 
     if ( hash == currentHash ) break;
     
-    QMessageBox::information( this,
+    QMessageBox::information( anchor_window( this ),
           tr( "Password Error" ),
           tr( "The password is incorrect." ) );
   }
@@ -67,7 +80,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 
   if ( currentHash.isEmpty() )
   {
-    QMessageBox::information( this,
+    QMessageBox::information( anchor_window( this ),
           tr( "Password Error" ),
           tr( "The Master Password has not been set." ) );
 
@@ -79,7 +92,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
   // Ask the user to input the password
   while ( true ) 
   {
-    QDialog dialog(this);
+    QDialog dialog( anchor_window( this ) );
     dialog.setWindowTitle( title );
     QFont font_d  = dialog.property("font").value<QFont>();
     QFontMetrics fm(font_d);
@@ -185,7 +198,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     if ( hash == currentHash && !form_map["Comment:"].isEmpty()  )
       break;
     
-    QMessageBox::critical( this,
+    QMessageBox::critical( anchor_window( this ),
           tr( "No Comment and/or Password Error" ),
           tr( "<font color='red'><b>ERROR:</b></font> The Comment field is empty, or the password is incorrect." ) );
   }
