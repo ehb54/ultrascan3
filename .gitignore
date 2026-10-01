@@ -5,6 +5,10 @@ local.pri
 # newly added workflow, composite action and issue template untracked until
 # someone noticed and force-added it. Re-include the directory explicitly.
 !/.github/
+!/.clang-format
+!/.clang-tidy
+!/.pre-commit-config.yaml
+!/.githooks/
 *.o
 tmp/
 moc/

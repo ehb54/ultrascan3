@@ -1,0 +1,41 @@
+name: Code Style
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.c'
+      - '**.cc'
+      - '**.cpp'
+      - '**.cxx'
+      - '**.h'
+      - '**.hpp'
+      - '.clang-format'
+      - 'scripts/check-format.sh'
+      - 'scripts/check-conventions.py'
+      - '.github/workflows/code-style.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  clang-format:
+    name: clang-format (changed lines)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install clang-format 18
+        run: sudo apt-get update && sudo apt-get install -y clang-format-18
+      - name: Check changed lines
+        env:
+          CLANG_FORMAT: clang-format-18
+          GIT_CLANG_FORMAT: git-clang-format-18
+        run: |
+          git fetch origin "${{ github.base_ref || 'main' }}"
+          scripts/check-format.sh "$(git merge-base HEAD "origin/${{ github.base_ref || 'main' }}")"

@@ -1,0 +1,79 @@
+# UltraScan III code style, derived from the coding standards wiki
+# (https://github.com/ehb54/ultrascan3/wiki/UltraScan-III-Coding-Standards)
+# and the existing sources. Pinned for clang-format 18.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Indentation: 3 spaces, never tabs
+IndentWidth: 3
+TabWidth: 3
+UseTab: Never
+ContinuationIndentWidth: 3
+AccessModifierOffset: 0
+IndentAccessModifiers: true
+IndentCaseLabels: true
+NamespaceIndentation: None
+IndentPPDirectives: None
+
+# Braces: on their own line (as in the existing code base)
+BreakBeforeBraces: Allman
+InsertBraces: true
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+
+# Line length
+ColumnLimit: 132
+ReflowComments: false
+
+# Spacing: "if ( x )", "foo( a, b )", "a[ i ]", "QList< int >", "foo()"
+SpaceBeforeParens: ControlStatements
+SpacesInParens: Custom
+SpacesInParensOptions:
+  InConditionalStatements: true
+  InCStyleCasts: false
+  Other: true
+SpacesInSquareBrackets: true
+SpacesInAngles: Always
+SpacesInContainerLiterals: true
+SpaceInEmptyParentheses: false
+SpaceAfterCStyleCast: true
+SpaceBeforeAssignmentOperators: true
+Cpp11BracedListStyle: false
+
+# Pointers and references bind to the type: "QLabel* lbl", "double& x"
+PointerAlignment: Left
+DerivePointerAlignment: false
+ReferenceAlignment: Pointer
+
+# Align related declarations / assignments
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+AlignAfterOpenBracket: Align
+AlignOperands: Align
+AlignTrailingComments: true
+BinPackParameters: false
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakBeforeBinaryOperators: None
+BreakConstructorInitializers: AfterColon
+
+# Sort includes within each block; keep blocks and blank lines
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+FixNamespaceComments: false
+AlwaysBreakAfterReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 1000
+PackConstructorInitializers: CurrentLine
+StatementMacros: [ Q_OBJECT, Q_GADGET, Q_DECLARE_METATYPE ]
