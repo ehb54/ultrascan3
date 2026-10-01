@@ -643,8 +643,9 @@ void US_AstfemMath::initialize_3d(
 {
    *matrix = new double** [ val1 ];
 
-   if ( val1 < 1  ||  val2 < 1 )
+   if ( val1 < 1  ||  val2 < 1 ) {
       return;
+   }
 
    double**  rows   = new double* [ (size_t)val1 * val2 ];
    double*   values = new double  [ (size_t)val1 * val2 * val3 ]();

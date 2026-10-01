@@ -876,13 +876,16 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                     double* wp,  
                     double* zzp,
                     int*    indexp,
-                    int     itmax
+                    int     itmax,
+                    const bool* abort_flag
                   ) 
 {
 #ifdef _BF_NNLS_
    /* If there is an external NNLS algorithm implementation, execute it */
+   /* (it has no iteration limit or abort hook:  use the internal solver */
+   /*  when either is requested) */
    qDebug() << "BF-NNLS: NNLS size (m, n) = (" << m << ", " << n << ")";
-   if ( libnnls0.nnls != NULL ) {
+   if ( libnnls0.nnls != NULL  &&  itmax <= 0  &&  abort_flag == NULL ) {
       qDebug() << "BF-NNLS: Using libnnls";
       return libnnls0.nnls( a, a_dim1, m, n, b, x, rnorm, wp, zzp, indexp );
    }
@@ -951,10 +954,19 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
    int ja_dim1;
 
    if ( itmax <= 0 )
-      itmax     = n * 3;
-
-   while ( iz1 <= iz2 && nsetp < m ) 
    {
+      itmax     = n * 3;
+   }
+
+   while ( iz1 <= iz2 && nsetp < m )
+   {
+      /* Quit with the current (feasible) X if an abort was requested */
+      if ( abort_flag != nullptr  &&  *abort_flag )
+      {
+         ret = 3;
+         break;
+      }
+
       /* Compute components of the dual (negative gradient) vector W[] */
       for ( iz = iz1; iz <= iz2; iz++ ) 
       {
@@ -1156,7 +1168,7 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
             /* be because of the way alpha was determined. If any are */
             /* infeasible it is due to round-off error. Any that are */
             /* nonpositive will be set to zero and moved from set P to set Z */
-            for( jj = 0, pfeas = 1; jj < nsetp; jj++ )
+            for ( jj = 0, pfeas = 1; jj < nsetp; jj++ )
             {
                k = index[ jj ]; 
                if ( x[ k ] <= 0.0 ) 
@@ -1216,7 +1228,9 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
          d1 = b[ ii ];
 
          for ( l = ii; l < nsetp; l++ )
+         {
             d1 -= a[ ii + index[ l ] * a_dim1 ] * x[ index[ l ] ];
+         }
 
          sm += d1 * d1;
       }

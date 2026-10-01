@@ -116,12 +116,15 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //!                  turn), if noisflag has 1
     //! \param rinvec    Output RI noise (nscans values of each data set in
     //!                  turn), if noisflag has 2
+    //! \param abort_flag Optional pointer to a flag that stops the NNLS
+    //!                  solve (return code 3) when it becomes true
     //! \returns         Return code of US_Math2::nnls
-    static int nnls_noise( int, const QVector< int >&, const QVector< int >&,
-                           int, int,
-                           QVector< double >&, QVector< double >&,
-                           QVector< double >&, QVector< double >&,
-                           QVector< double >& );
+    static int nnls_noise( int noisflag, const QVector< int >& nscans, const QVector< int >& npoints,
+                           int nsolutes, int narows,
+                           QVector< double >& nnls_a, QVector< double >& nnls_b,
+                           QVector< double >& nnls_x, QVector< double >& tinvec,
+                           QVector< double >& rinvec,
+                           const bool* abort_flag = nullptr );
 
   public slots:
 

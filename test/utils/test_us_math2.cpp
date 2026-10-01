@@ -590,8 +590,8 @@ TEST_F(TestUSMath2Unit, NnlsSatisfiesKuhnTuckerConditions) {
         int ncols = 1 + ( trial / 11 ) % 10;
         QVector< double > amat( mrows * ncols );
         QVector< double > bvec( mrows );
-        for ( double& val : amat ) val = uni( gen );
-        for ( double& val : bvec ) val = uni( gen );
+        for ( double& val : amat ) { val = uni( gen ); }
+        for ( double& val : bvec ) { val = uni( gen ); }
         QVector< double > awork = amat;   // nnls overwrites A and b
         QVector< double > bwork = bvec;
         QVector< double > xvec( ncols, -1.0 );
@@ -602,26 +602,67 @@ TEST_F(TestUSMath2Unit, NnlsSatisfiesKuhnTuckerConditions) {
             << "trial " << trial;
 
         QVector< double > resid = bvec;   // b - A x
-        for ( int jj = 0; jj < ncols; jj++ )
-            for ( int ii = 0; ii < mrows; ii++ )
+        for ( int jj = 0; jj < ncols; jj++ ) {
+            for ( int ii = 0; ii < mrows; ii++ ) {
                 resid[ ii ] -= amat[ jj * mrows + ii ] * xvec[ jj ];
+            }
+        }
 
         double rsumsq = 0.0;
-        for ( double val : resid ) rsumsq += val * val;
+        for ( const double val : resid ) { rsumsq += val * val; }
         EXPECT_NEAR(rnorm, sqrt( rsumsq ), 1e-10) << "trial " << trial;
 
         for ( int jj = 0; jj < ncols; jj++ ) {
             double dual = 0.0;
-            for ( int ii = 0; ii < mrows; ii++ )
+            for ( int ii = 0; ii < mrows; ii++ ) {
                 dual += amat[ jj * mrows + ii ] * resid[ ii ];
+            }
 
             EXPECT_GE(xvec[ jj ], 0.0) << "trial " << trial << " col " << jj;
-            if ( xvec[ jj ] > 0.0 )
+            if ( xvec[ jj ] > 0.0 ) {
                 EXPECT_NEAR(dual, 0.0, 1e-9) << "trial " << trial << " col " << jj;
-            else
+            } else {
                 EXPECT_LE(dual, 1e-9) << "trial " << trial << " col " << jj;
+            }
         }
     }
+}
+
+TEST_F(TestUSMath2Unit, NnlsAbortFlagStopsWithFeasibleSolution) {
+    // A raised abort flag stops nnls at the next outer iteration (return 3)
+    // with x >= 0 and the residual norm of that x
+    double amat[ 12 ] = { 1.0, 0.0, 0.0, 0.0,    // Column-major 4 x 3
+                          0.0, 1.0, 0.0, 0.0,
+                          0.0, 0.0, 1.0, 0.0 };
+    double bvec[ 4 ]  = { 1.0, 2.0, 3.0, 4.0 };
+    double xvec[ 3 ]  = { -1.0, -1.0, -1.0 };
+    double rnorm      = -1.0;
+    bool   abort_flag = true;
+
+    int ret = US_Math2::nnls( amat, 4, 4, 3, bvec, xvec, &rnorm,
+                              NULL, NULL, NULL, 0, &abort_flag );
+
+    EXPECT_EQ(ret, 3);
+    for ( int jj = 0; jj < 3; jj++ ) {
+        EXPECT_EQ(xvec[ jj ], 0.0);
+    }
+    EXPECT_NEAR(rnorm, sqrt( 30.0 ), 1e-12);
+
+    // A lowered flag does not change the result
+    double amat2[ 12 ] = { 1.0, 0.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0, 0.0,
+                           0.0, 0.0, 1.0, 0.0 };
+    double bvec2[ 4 ]  = { 1.0, 2.0, 3.0, 4.0 };
+    abort_flag         = false;
+
+    ret = US_Math2::nnls( amat2, 4, 4, 3, bvec2, xvec, &rnorm,
+                          NULL, NULL, NULL, 0, &abort_flag );
+
+    EXPECT_EQ(ret, 0);
+    EXPECT_NEAR(xvec[ 0 ], 1.0, 1e-12);
+    EXPECT_NEAR(xvec[ 1 ], 2.0, 1e-12);
+    EXPECT_NEAR(xvec[ 2 ], 3.0, 1e-12);
+    EXPECT_NEAR(rnorm, 4.0, 1e-12);
 }
 
 TEST_F(TestUSMath2Unit, NnlsIterationLimitReturnsLastFeasibleSolution) {
@@ -636,8 +677,8 @@ TEST_F(TestUSMath2Unit, NnlsIterationLimitReturnsLastFeasibleSolution) {
     for ( int trial = 0; trial < 50; trial++ ) {
         QVector< double > amat( mrows * ncols );
         QVector< double > bvec( mrows );
-        for ( double& val : amat ) val = uni( gen );
-        for ( double& val : bvec ) val = uni( gen );
+        for ( double& val : amat ) { val = uni( gen ); }
+        for ( double& val : bvec ) { val = uni( gen ); }
 
         QVector< double > awork = amat;   // nnls overwrites A and b
         QVector< double > bwork = bvec;
@@ -659,12 +700,13 @@ TEST_F(TestUSMath2Unit, NnlsIterationLimitReturnsLastFeasibleSolution) {
             QVector< double > resid = bvec;   // b - A x
             for ( int jj = 0; jj < ncols; jj++ ) {
                 EXPECT_GE(xvec[ jj ], 0.0) << "trial " << trial << " itmax " << itmax;
-                for ( int ii = 0; ii < mrows; ii++ )
+                for ( int ii = 0; ii < mrows; ii++ ) {
                     resid[ ii ] -= amat[ jj * mrows + ii ] * xvec[ jj ];
+                }
             }
 
             double rsumsq = 0.0;
-            for ( double val : resid ) rsumsq += val * val;
+            for ( double val : resid ) { rsumsq += val * val; }
             EXPECT_NEAR(rnorm, sqrt( rsumsq ), 1e-12)
                 << "trial " << trial << " itmax " << itmax;
 

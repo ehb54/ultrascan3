@@ -82,6 +82,7 @@ US_SolveSim::Simulation::Simulation()
    variance      = 0.0;
    xnormsq       = 0.0;
    alpha         = 0.0;
+   maxrss        = 0;
    variances.clear();
    ti_noise .clear();
    ri_noise .clear();
@@ -90,6 +91,18 @@ US_SolveSim::Simulation::Simulation()
    dbg_level     = 0;
    dbg_timing    = false;
    noisflag      = 0;
+}
+
+// Append the Tikhonov rows of one A column: ksolutes values, the alpha
+//  diagonal element at row colx.  The column length is ksolutes (the solutes
+//  count before any norm cut), as the rebuild after norm cuts assumes.
+static void append_tikhonov_rows( QVector< double >& nnls_a, int& ka,
+                                  const int colx, const int ksolutes, const double alphad )
+{
+   for ( int aa = 0; aa < ksolutes; aa++ )
+   {
+      nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
+   }
 }
 
 // Static function to check the grid size implied by data and model
@@ -594,12 +607,7 @@ DbgLv(1) << "CR: NNLS A filled lo" << lim_offs;
          //----------------------------------------
          if ( tikreg )
          {  // For Tikhonov Regularization append to each column
-            int colx       = cc - count_cut;
-
-            for ( int aa = 0; aa < ksolutes; aa++ )
-            {
-               nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
-            }
+            append_tikhonov_rows( nnls_a, ka, cc - count_cut, ksolutes, alphad );
          }
 
          // Compute Norm of A column:  square root of sum-of-squares
@@ -867,13 +875,7 @@ DbgLv(1) << "CR: cc ee" << cc << ee << "ks ka" << ks << ka << "nnls_a sz"
          if ( tikreg )
          {  // For Tikhonov Regularization append to each column
 DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
-            int colx       = cc - count_cut;
-
-            // Use ksolutes rows, the column length assumed after norm cuts
-            for ( int aa = 0; aa < ksolutes; aa++ )
-            {
-               nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
-            }
+            append_tikhonov_rows( nnls_a, ka, cc - count_cut, ksolutes, alphad );
          }
          norm_a         = norm_a > 0.0 ? sqrt( norm_a ) : 0.0;
 
@@ -1061,13 +1063,7 @@ DbgLv(1) << "CR: ks ka" << ks << ka
 
          if ( tikreg )
          {  // For Tikhonov Regularization append to each column
-            int colx       = cc - count_cut;
-
-            // Use ksolutes rows, the column length assumed after norm cuts
-            for ( int aa = 0; aa < ksolutes; aa++ )
-            {
-               nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
-            }
+            append_tikhonov_rows( nnls_a, ka, cc - count_cut, ksolutes, alphad );
          }
 
          norm_a         = norm_a > 0.0 ? sqrt( norm_a ) : 0.0;
@@ -1237,16 +1233,17 @@ DbgLv(1)<<"subha_nnls_a size: " << nnls_a.size() << nscans << npoints << "nsolut
          dscans  << data_sets[ ee ]->run_data.scanCount();
          dpoints << data_sets[ ee ]->run_data.pointCount();
       }
-DbgLv(1) << "  noise NNLS: noisflag" << noisflag << "nscans npoints" << dscans
- << dpoints << "nsolutes narows" << nsolutes << narows;
+      DbgLv(1) << "  noise NNLS: noisflag" << noisflag << "nscans npoints" << dscans
+               << dpoints << "nsolutes narows" << nsolutes << narows;
 
       int nnlsrc    = nnls_noise( noisflag, dscans, dpoints, nsolutes, narows,
-                                  nnls_a, nnls_b, nnls_x, tinvec, rinvec );
+                                  nnls_a, nnls_b, nnls_x, tinvec, rinvec,
+                                  &abort );
 
       if ( nnlsrc == 1 )
       {  // Iteration limit:  concentrations are feasible, but not optimal
-DbgLv(0) << "CR: *WARNING* NNLS iteration limit reached, nsolutes narows"
- << nsolutes << narows;
+         DbgLv(0) << "CR: *WARNING* NNLS iteration limit reached, nsolutes narows"
+                  << nsolutes << narows;
       }
 
       if ( abort ) return;
@@ -1274,13 +1271,14 @@ DbgLv(1) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size
 
 //DebugTime("BEG:clcr-nl");
       int nnlsrc    = US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
-                                      nnls_b.data(), nnls_x.data() );
+                                      nnls_b.data(), nnls_x.data(), nullptr,
+                                      nullptr, nullptr, nullptr, 0, &abort );
 //DebugTime("END:clcr-nl");
 
       if ( nnlsrc == 1 )
       {  // Iteration limit:  concentrations are feasible, but not optimal
-DbgLv(0) << "CR: *WARNING* NNLS iteration limit reached, nsolutes narows"
- << nsolutes << narows;
+         DbgLv(0) << "CR: *WARNING* NNLS iteration limit reached, nsolutes narows"
+                  << nsolutes << narows;
       }
 
 DbgLv(2) << "   CR:211  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
@@ -1697,8 +1695,8 @@ void US_SolveSim::abort_work()
 // Remove noise means from the data rows of one vector (B or an A column):
 //  subtract the per-scan means (RI), then the per-radius means of the
 //  result (TI); return the removed means in v_tilde and v_bar
-static void remove_noise_means( double* vals, int nscans, int npoints,
-                                bool calc_ti, bool calc_ri,
+static void remove_noise_means( double* vals, const int nscans, const int npoints,
+                                const bool calc_ti, const bool calc_ri,
                                 double* v_tilde, double* v_bar )
 {
    if ( calc_ri )
@@ -1707,16 +1705,20 @@ static void remove_noise_means( double* vals, int nscans, int npoints,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals  = vals + (size_t)ss * npoints;
+         double* svals  = vals + static_cast<size_t>(ss) * npoints;
          double  sum    = 0.0;
 
          for ( int rr = 0; rr < npoints; rr++ )
+         {
             sum           += svals[ rr ];
+         }
 
          v_tilde[ ss ]  = sum * avgscale;
 
          for ( int rr = 0; rr < npoints; rr++ )
+         {
             svals[ rr ]   -= v_tilde[ ss ];
+         }
       }
    }
 
@@ -1729,38 +1731,45 @@ static void remove_noise_means( double* vals, int nscans, int npoints,
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals  = vals + (size_t)ss * npoints;
+         const double* svals  = vals + static_cast<size_t>(ss) * npoints;
 
          for ( int rr = 0; rr < npoints; rr++ )
+         {
             v_bar[ rr ]   += svals[ rr ];
+         }
       }
 
       for ( int rr = 0; rr < npoints; rr++ )
+      {
          v_bar[ rr ]   *= avgscale;
+      }
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
-         double* svals  = vals + (size_t)ss * npoints;
+         double* svals  = vals + static_cast<size_t>(ss) * npoints;
 
          for ( int rr = 0; rr < npoints; rr++ )
+         {
             svals[ rr ]   -= v_bar[ rr ];
+         }
       }
    }
 }
 
 // Compute concentrations by NNLS with TI and/or RI noise algebraically removed
-int US_SolveSim::nnls_noise( int noisflag, const QVector< int >& nscans,
+int US_SolveSim::nnls_noise( const int noisflag, const QVector< int >& nscans,
                              const QVector< int >& npoints,
-                             int nsolutes, int narows,
+                             const int nsolutes, const int narows,
                              QVector< double >& nnls_a,
                              QVector< double >& nnls_b,
                              QVector< double >& nnls_x,
                              QVector< double >& tinvec,
-                             QVector< double >& rinvec )
+                             QVector< double >& rinvec,
+                             const bool* abort_flag )
 {
-   bool calc_ti  = ( ( noisflag & 1 ) != 0 );
-   bool calc_ri  = ( ( noisflag & 2 ) != 0 );
-   int  ndsets   = nscans.size();
+   const bool calc_ti  = ( ( noisflag & 1 ) != 0 );
+   const bool calc_ri  = ( ( noisflag & 2 ) != 0 );
+   const int  ndsets   = nscans.size();
    int  ntinois  = 0;       // TI noise values of all data sets
    int  nrinois  = 0;       // RI noise values of all data sets
 
@@ -1792,20 +1801,21 @@ int US_SolveSim::nnls_noise( int noisflag, const QVector< int >& nscans,
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
-         remove_noise_means( nnls_a.data() + (size_t)cc * narows + krow,
+         remove_noise_means( nnls_a.data() + static_cast<size_t>(cc) * narows + krow,
                              nscans[ ee ], npoints[ ee ], calc_ti, calc_ri,
-                             L_tildes.data() + (size_t)cc * nrinois + kri,
-                             L_bars.data() + (size_t)cc * ntinois + kti );
+                             L_tildes.data() + static_cast<size_t>(cc) * nrinois + kri,
+                             L_bars.data() + static_cast<size_t>(cc) * ntinois + kti );
       }
 
-      krow         += (size_t)nscans[ ee ] * npoints[ ee ];
+      krow         += static_cast<size_t>(nscans[ee]) * npoints[ ee ];
       kti          += npoints[ ee ];
       kri          += nscans [ ee ];
    }
 
    // Concentrations are the NNLS solution of the projected system
-   int rc        = US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
-                                   nnls_b.data(), nnls_x.data() );
+   const int rc        = US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
+                                   nnls_b.data(), nnls_x.data(), nullptr,
+                                   nullptr, nullptr, nullptr, 0, abort_flag );
 
    // Noise is the data mean less the mean of the fitted simulations
    if ( calc_ti )
@@ -1816,7 +1826,9 @@ int US_SolveSim::nnls_noise( int noisflag, const QVector< int >& nscans,
          const double* lbars  = L_bars.constData() + rr;
 
          for ( int cc = 0; cc < nsolutes; cc++ )
-            tinoi        -= nnls_x[ cc ] * lbars[ (size_t)cc * ntinois ];
+         {
+            tinoi        -= nnls_x[ cc ] * lbars[ static_cast<size_t>(cc) * ntinois ];
+         }
 
          tinvec[ rr ]  = tinoi;
       }
@@ -1830,7 +1842,9 @@ int US_SolveSim::nnls_noise( int noisflag, const QVector< int >& nscans,
          const double* ltils  = L_tildes.constData() + ss;
 
          for ( int cc = 0; cc < nsolutes; cc++ )
-            rinoi        -= nnls_x[ cc ] * ltils[ (size_t)cc * nrinois ];
+         {
+            rinoi        -= nnls_x[ cc ] * ltils[ static_cast<size_t>(cc) * nrinois ];
+         }
 
          rinvec[ ss ]  = rinoi;
       }
