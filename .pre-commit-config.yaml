@@ -1,0 +1,11 @@
+# Install: pip install pre-commit && pre-commit install
+# Requires clang-format 18 incl. git-clang-format (apt install clang-format-18).
+repos:
+  - repo: local
+    hooks:
+      - id: us3-clang-format
+        name: UltraScan III code style (changed lines)
+        entry: scripts/check-format.sh --staged
+        language: system
+        types_or: [c, c++]
+        pass_filenames: false
