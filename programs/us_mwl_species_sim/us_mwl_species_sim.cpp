@@ -562,8 +562,14 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
       QString smsg       = tr( "Saving data: %1" ).arg( swavl );
       te_status->setText( smsg );
       qApp->processEvents();
+      
+      int wrc            = US_DataIO::writeRawData( fpath, synData[ jm ] );
 
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
+      if ( wrc != US_DataIO::OK )
+      {  // Do not let a failed write pass silently
+         qDebug() << "save_sims: writeRawData FAILED rc =" << wrc << fpath;
+      }
+      
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
@@ -848,8 +854,11 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    double radval      = radv0;
 
    for ( int js = 0; js < nscan; js++ )                // Resize for pad
-      rdata.scanData[ js ].rvalues.resize( npoint );
-
+     {
+       rdata.scanData[ js ].rvalues.resize( npoint );
+       rdata.scanData[ js ].interpolated.fill( 0, ( npoint + 7 ) / 8 );
+     }
+   
    for ( int jr = npoint - 1; jr >= 0; jr-- )
    {  // Set shifted values, starting at data end
       int kr             = jr - npad;                  // Old value index
