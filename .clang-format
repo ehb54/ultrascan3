@@ -36,8 +36,8 @@ SpacesInParensOptions:
   InConditionalStatements: true
   InCStyleCasts: false
   Other: true
-SpacesInSquareBrackets: true
-SpacesInAngles: Always
+SpacesInSquareBrackets: false
+SpacesInAngles: Never
 SpacesInContainerLiterals: true
 SpaceInEmptyParentheses: false
 SpaceAfterCStyleCast: true
