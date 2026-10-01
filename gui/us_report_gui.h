@@ -31,6 +31,10 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       bool abde_mode;
       void abde_mode_passed( void );
 
+      //VELOCITY-MWL: ABDE-like editor, but Type is fixed to 's', Method to '2DSA-IT'
+      bool velmwl_mode;
+      void velmwl_mode_passed( void );
+
    signals:
       void  cancel_changes       ( QMap <QString, US_ReportGMP> & );
       void  apply_to_all_reports ( US_ReportGMP* );

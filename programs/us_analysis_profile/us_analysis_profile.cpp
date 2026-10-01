@@ -2565,6 +2565,9 @@ void US_AnaprofPanGen::setReport( void )
    //abde
    if ( mainw->abde_mode_aprofile )
      reportGui->abde_mode_passed();
+   //VELOCITY-MWL
+   else if ( mainw->velmwl_mode_aprofile )
+     reportGui->velmwl_mode_passed();
    
    reportGui->show();
 
