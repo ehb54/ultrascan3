@@ -270,6 +270,29 @@ DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
             }
          }
 
+         // Every worker has finished its current assignment.  Some workers
+         // may have sent READY after their last result while the master was
+         // writing output; consume those messages before sending SHUTDOWN so
+         // no unexpected READY message remains at MPI_Finalize.
+         for ( int ii = 1; ii < gcores_count; ii++ )
+         {
+            if ( worker_status[ ii ] != READY )
+            {
+               int        sizes[ 4 ];
+               MPI_Status status;
+
+               MPI_Recv( sizes,
+                         4,
+                         MPI_INT,
+                         ii,
+                         MPI_Job::READY,
+                         my_communicator,
+                         &status );
+
+               worker_status[ ii ] = READY;
+            }
+         }
+
          shutdown_all();  // All done
          break;           // Break out of main loop.
       }
@@ -1291,4 +1314,3 @@ void US_MPI_Analysis::cache_result( Result& result )
    cached_results << result;
    return;
 }
-

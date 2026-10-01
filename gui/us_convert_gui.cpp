@@ -9235,6 +9235,12 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
 	QMap<QString, QString> leg_types = US_Convert::exploreLegacyData( currentDir );
 	if ( leg_types.isEmpty() )
 	{
+		QApplication::restoreOverrideCursor();
+		le_status->setText( tr( "No importable data found." ) );
+		QMessageBox::warning( this, tr( "Import Experimental Data" ),
+			tr( "No importable data files were found in\n%1\n\n"
+			    "Expected Beckman raw files (e.g. 000001.RA1), MWL data, "
+			    "or .auc files." ).arg( currentDir ) );
 		return false;
 	}
 	if ( leg_types.size() == 1 )
@@ -9270,7 +9276,14 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:RD:   rdLegDat RTN  lDsz" << legacyData.size();
 
-   if ( legacyData.size() == 0 ) return( false );
+   if ( legacyData.size() == 0 )
+   {
+      le_status->setText( tr( "No data could be read." ) );
+      QMessageBox::warning( this, tr( "Import Experimental Data" ),
+         tr( "Files were found, but no %1 data could be read from\n%2" )
+         .arg( runType ).arg( currentDir ) );
+      return( false );
+   }
 
    // if runType has changed, let's clear out xml data too
    if ( oldRunType != runType ) ExpData.clear();
@@ -9293,7 +9306,14 @@ DbgLv(1) << "CGui:CV: IN";
 DbgLv(1) << "CGui:CV: kadata katrip runType" << kadata << katrip << runType;
    QApplication::restoreOverrideCursor();
 
-   if ( kadata == 0 ) return( false );
+   if ( kadata == 0 )
+   {
+      le_status->setText( tr( "No data could be converted." ) );
+      QMessageBox::warning( this, tr( "Import Experimental Data" ),
+         tr( "The data read from\n%1\ncould not be converted." )
+         .arg( currentDir ) );
+      return( false );
+   }
 
    le_description->setText( allData[ 0 ].description );
    saveDescription = QString( allData[ 0 ].description );
