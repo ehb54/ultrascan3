@@ -2666,20 +2666,10 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
    US_AstfemMath::initialize_3d( Nx, 4, 4, &Stif );
 #endif
 
-   double xd[ 4 ][ 2 ];     // coord for vertices of quad elem
-
    for ( int k = 0; k < Nx - 1; k++ )
-   {  // loop for all elem
-      xd[ 0 ][ 0 ] = xA[ k ];
-      xd[ 0 ][ 1 ] = 0.0;
-      xd[ 1 ][ 0 ] = xA[ k + 1 ];
-      xd[ 1 ][ 1 ] = 0.0;
-      xd[ 2 ][ 0 ] = xA[ k + 1 ];
-      xd[ 2 ][ 1 ] = af_params.dt;
-      xd[ 3 ][ 0 ] = xA[ k ];
-      xd[ 3 ][ 1 ] = af_params.dt;
-
-      stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
+   {  // loop for all elem:  rectangles [ x_k, x_k+1 ] x [ 0, dt ]
+      stfb0.CompLocalStifRect( xA[ k ], xA[ k + 1 ], af_params.dt, D, sw2,
+                               Stif[ k ] );
    }
 
    // Assemble coefficient matrices
