@@ -2056,7 +2056,7 @@ csv US_Hydrodyn_Saxs_Screen::plots_to_csv()
          data.push_back( QString("%1").arg( average_radiuss[ i ][ j ] ) );
          data.push_back( QString("%1").arg( average_delta_rhos[ i ][ j ] ) );
          data.push_back( QString("%1").arg( target_rgs[ i ][ j ] ) );
-         data.push_back( QString("%1").arg( use_chi2s[ i ][ j ] ) );
+         data.push_back( QString("%1").arg( (int) use_chi2s[ i ][ j ] ) );
          data.push_back( QString("%1").arg( chi2_bests[ i ][ j ] ) );
          data.push_back( QString("%1").arg( chi2_nnlss[ i ][ j ] ) );
          data.push_back( QString("%1").arg( radiis[ i ][ j ].size() ) );

@@ -1,6 +1,6 @@
 //! \file us3i_util.h
-#ifndef US_UTIL_H
-#define US_UTIL_H
+#ifndef US3I_UTIL_H
+#define US3I_UTIL_H
 
 #include <QtCore>
 

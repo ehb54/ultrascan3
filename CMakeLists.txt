@@ -193,6 +193,7 @@ option(US3_NO_DB "Build without database support (for supercomputer backends)" O
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
 option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
 option(BUILD_DOCUMENTATION "Build Sphinx documentation" ON)
+option(US3_BUILD_SOMO "Build the SOMO/US-SOMO hydrodynamics suite (us_somo)" OFF)
 
 # High-level profile to make builds scriptable:
 #   APP  = desktop/user build (GUI + programs + DB)
@@ -1012,8 +1013,14 @@ endif()
 # =============================================================================
 # SoMo BUILD (CMake native)
 # =============================================================================
-# build has errors
-# add_subdirectory(us_somo)
+# Opt-in via -DUS3_BUILD_SOMO=ON. SOMO is a Qt-GUI suite (needs Qt + Multimedia +
+# Qwt), so it is incompatible with the headless HPC profile. It vendors its own
+# utils fork and is otherwise self-contained; the forwarder us_somo/CMakeLists.txt
+# delegates to us_somo/develop. Requires an APP feature that provides
+# qt5-multimedia/qtmultimedia + qwt (qt5-app / qt6-app).
+if(US3_BUILD_SOMO AND NOT US3_PROFILE STREQUAL "HPC")
+    add_subdirectory(us_somo)
+endif()
 
 # =============================================================================
 # macOS DEPLOYMENT (folder-based layout)
