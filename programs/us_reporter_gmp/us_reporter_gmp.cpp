@@ -646,19 +646,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   lb_hdr1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 12, this);
-  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setModal( true );
-  progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
-  QFont font_d  = progress_msg->property("font").value<QFont>();
-  QFontMetrics fm(font_d);
-  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
-  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
-  progress_msg ->setMinimumWidth( pixelsWide*2 );
-  progress_msg->adjustSize();
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 1, tr( "Loading run protocol" ), tr( "Accessing run's protocol..." ), 12 );
   qApp->processEvents();
 
   progress_msg->setValue( 1 );
@@ -733,7 +721,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
-  progress_msg->close();
+  //Dialog stays up: generate_report() (below) carries on with the next stage
   
   //compose a message on missing models
   QString msg_missing_models = missing_models_msg();
@@ -741,6 +729,7 @@ void US_ReporterGMP::loadRun_auto ( QMap < QString, QString > & protocol_details
   //Inform user that current configuraiton corresponds to GMP report
   if ( !GMP_report )
     {
+      gmp_progress_hide();   //show the message on its own; next stage re-shows the dialog
       QMessageBox::information( this, tr( "Report Profile Uploaded" ),
 				tr( "<font color='red'><b>ATTENTION:</b> There are missing models for certain triples: </font><br><br>"
 				    "%1<br><br>"
@@ -1643,19 +1632,7 @@ void US_ReporterGMP::load_gmp_run ( void )
 
   
   //show progress dialog
-  progress_msg = new QProgressDialog ("Accessing run's protocol...", QString(), 0, 11, this);
-  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setModal( true );
-  progress_msg->setWindowTitle(tr("Assessing Run's Protocol"));
-  QFont font_d  = progress_msg->property("font").value<QFont>();
-  QFontMetrics fm(font_d);
-  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
-  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
-  progress_msg ->setMinimumWidth( pixelsWide*2 );
-  progress_msg->adjustSize();
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 1, tr( "Loading run protocol" ), tr( "Accessing run's protocol..." ), 11 );
   qApp->processEvents();
   
   // Get detailed info on the autoflow record
@@ -1798,7 +1775,7 @@ void US_ReporterGMP::load_gmp_run ( void )
   
   progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
-  progress_msg->close();
+  gmp_progress_hide();
 
   //Enable some buttons
   //process runname: if combined, correct for nicer appearance
@@ -3664,9 +3641,100 @@ void US_ReporterGMP::reset_report_panel ( void )
 }
 
 
+// ---------------------------------------------------------------------------
+// Progress dialog helpers.  ONE US_GmpProgress serves the whole run; it is only
+// hidden (never closed / re-created) between stages.  Stages (autoflow, 4 steps):
+//   1 Loading run protocol   2 Report: general information
+//   3 Report: models, simulations and plots   4 Creating PDF report
+// Stand-alone: loading a run is "Step 1 of 1"; Generate Report is steps 1-3
+// (canonical stages 2-4).
+// ---------------------------------------------------------------------------
+US_GmpProgress* US_ReporterGMP::gmp_progress( void )
+{
+  // Child of the top-level window: the autoflow main window when embedded, or
+  // the reporter itself when stand-alone.  (Resolved lazily: in autoflow the
+  // reporter is re-parented after construction.)
+  QWidget* top = window();
+  if ( progress_msg  &&  progress_msg->parentWidget() != top  &&  ! progress_msg->isVisible() )
+    {
+      delete progress_msg;
+      progress_msg = nullptr;
+    }
+  if ( ! progress_msg )
+    progress_msg = new US_GmpProgress( top );
+
+  return progress_msg;
+}
+
+void US_ReporterGMP::gmp_stage( int n, const QString& title, const QString& detail, int step_max )
+{
+  int num   = n;
+  int total = 4;
+  if ( ! auto_mode )
+    {
+      if ( n == 1 ) { num = 1;     total = 1; }
+      else          { num = n - 1; total = 3; }
+    }
+  gmp_progress()->setStage( num, total, title, detail, step_max );
+}
+
+void US_ReporterGMP::gmp_busy( const QString& detail )
+{
+  gmp_progress()->setBusy( detail );
+}
+
+void US_ReporterGMP::gmp_progress_hide( void )
+{
+  if ( progress_msg )
+    progress_msg->finish();
+}
+
+// Number of (triple,model) simulations Part 2 will run (mirrors generate_report()'s loops)
+int US_ReporterGMP::count_part2_jobs( void )
+{
+  if ( expType == "VELOCITY-MWL" )
+    return 0;
+
+  int njobs = 0;
+  for ( int i = 0; i < Array_of_triples.size(); ++i )
+    {
+      QString     triple = Array_of_triples[ i ];
+      QStringList models = Triple_to_Models[ triple ];
+
+      for ( int j = 0; j < models.size(); ++j )
+	{
+	  if ( auto_mode )
+	    {
+	      ++njobs;
+	      continue;
+	    }
+
+	  QString triplename_alt = triple;
+	  triplename_alt.replace( ".", "" );
+	  if ( dataSource.contains( "DiskAUC:Absorbance" )  &&  simulatedData )
+	    triplename_alt = triplename_alt.replace( "S", "A" );
+
+	  if ( perChanMask_edited.has_tripleModel_items     [ triplename_alt ][ models[ j ] ] ||
+	       perChanMask_edited.has_tripleModelPlot_items [ triplename_alt ][ models[ j ] ] ||
+	       perChanMask_edited.has_tripleModelIndCombo_items[ triplename_alt ][ models[ j ] ] )
+	    ++njobs;
+	}
+    }
+  return njobs;
+}
+
+
 //Generate report
 void US_ReporterGMP::generate_report( void )
 {
+  //Whatever path leaves this function (incl. early returns), the progress dialog gets hidden
+  struct ProgressGuard
+  {
+    US_ReporterGMP* r;
+    explicit ProgressGuard( US_ReporterGMP* p ) : r( p ) {}
+    ~ProgressGuard() { r->gmp_progress_hide(); }
+  } progress_guard( this );
+
   //create main folder & clean it of anything
   QString subDirName  = runName + "-run" + runID;
   QString dirName     = US_Settings::reportDir() + "/" + subDirName;
@@ -3675,14 +3743,11 @@ void US_ReporterGMP::generate_report( void )
   remove_files_by_mask( dirName, f_exts );
   ///////////////////////////////////////////////////
   
-  progress_msg->setWindowTitle(tr("Generating Report"));
-  progress_msg->setLabelText( "Generating Report: Part 1..." );
   int msg_range = currProto.rpSolut.nschan + 5;
 
   qDebug() << "Generate report: msg_range -- " << msg_range;
-  progress_msg->setRange( 0, msg_range );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 2, tr( "Generating report - general information" ),
+             tr( "Assembling report header, solutions, optics and run details..." ), msg_range );
   qApp->processEvents();
 
   //reset html assembled strings
@@ -3732,11 +3797,17 @@ void US_ReporterGMP::generate_report( void )
   html_assembled += "</body>\n</html>";
   
   progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
   qApp->processEvents();
   
 
   //Part 2
+  //(same dialog: overall bar = (triple,model) jobs, step bar = current job)
+  part2_total = count_part2_jobs();
+  part2_done  = 0;
+  gmp_stage( 3, tr( "Generating report - models, simulations and plots" ),
+             tr( "Preparing models and simulations..." ), 1 );
+  if ( part2_total > 0 )
+    gmp_progress()->setOverall( 0, part2_total, tr( "Triple/model 0 of %1" ).arg( part2_total ) );
 
   //Get proper filename
   QStringList fileNameList;
@@ -3763,9 +3834,11 @@ void US_ReporterGMP::generate_report( void )
 		  simulate_triple ( currentTripleName, models_to_do[ j ] );
 		  
 		  //Pseudo3D Distr.
+		  gmp_busy( tr( "Plotting pseudo-3D distribution: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[ j ] ) );
 		  plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 		  
 		  //Individual Combo plots
+		  gmp_busy( tr( "Generating individual combined plots: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[ j ] ) );
 		  process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
 		}
 	    }
@@ -3778,14 +3851,17 @@ void US_ReporterGMP::generate_report( void )
 	    process_combined_plots( fileNameList[i] );
 	  
 	  //Replicas' averages
+	  gmp_busy( tr( "Averaging replicate groups..." ) );
 	  assemble_replicate_av_integration_html();
 	}
       else if ( expType == "VELOCITY-MWL" )
 	{
+	  gmp_busy( tr( "Processing VELOCITY-MWL channels..." ) );
 	  process_velmwl_analysis();
 	}
       else if ( expType == "ABDE" )
 	{
+	  gmp_busy( tr( "Processing ABDE plots..." ) );
 	  process_abde_plots();
 
 	  for (int ac=0; ac<abde_channList.size(); ++ac)
@@ -3858,12 +3934,14 @@ void US_ReporterGMP::generate_report( void )
 		      simulate_triple ( currentTripleName, models_to_do[ j ] );
 		      
 		      //Pseudo3D Distr.
+		      gmp_busy( tr( "Plotting pseudo-3D distribution: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[ j ] ) );
 		      plot_pseudo3D( currentTripleName, models_to_do[ j ]);
 		      
 		      //Individual Combo plots
 		      qDebug() << "INDCOMBO, perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ] -- "
 			       << triplename_alt << models_to_do[ j ]
 			       << perChanMask_edited. has_tripleModelIndCombo_items[ triplename_alt ][ models_to_do[ j ] ];
+		      gmp_busy( tr( "Generating individual combined plots: %1, model %2" ).arg( currentTripleName ).arg( models_to_do[ j ] ) );
 		      process_combined_plots_individual ( currentTripleName, models_to_do[ j ] );
 		    }
 		}
@@ -3880,10 +3958,14 @@ void US_ReporterGMP::generate_report( void )
 	  
 	  //Replicas' averages
 	  if ( miscMask_edited. ShowMiscParts[ "Replicate Groups Averaging" ] ) 
-	    assemble_replicate_av_integration_html();
+	    {
+	      gmp_busy( tr( "Averaging replicate groups..." ) );
+	      assemble_replicate_av_integration_html();
+	    }
 	}
       else if ( expType == "VELOCITY-MWL" )
 	{
+	  gmp_busy( tr( "Processing VELOCITY-MWL channels..." ) );
 	  process_velmwl_analysis();
 	}
       else if ( expType == "ABDE" )
@@ -3892,6 +3974,7 @@ void US_ReporterGMP::generate_report( void )
 	  //contruct basic channel description: RMDS, Comparison, Integration (percents)
 	  
 	  qDebug() << "Assembling plots ABDE!";
+	  gmp_busy( tr( "Processing ABDE plots..." ) );
 	  process_abde_plots();
 	  for (int ac=0; ac<abde_channList.size(); ++ac)
 	    {
@@ -3937,6 +4020,7 @@ void US_ReporterGMP::generate_report( void )
 
   //Create .PDF file && write to Db:
   write_pdf_report( );
+  gmp_progress_hide();      //end of the progress dialog's life for this run
   qApp->processEvents();
 
   pb_view_report -> setEnabled( true );
@@ -4842,13 +4926,17 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
 void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_model )
 {
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog (QString("Downloading data and models for triple %1...").arg( triplesname ), QString(), 0, 5, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Generating Report: Part 2..."));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  //One dialog for the whole of Part 2 (never re-created per triple/model):
+  //overall bar = (triple,model) job k of N, step bar = work within this job.
+  gmp_stage( 3, tr( "Generating report - models, simulations and plots" ),
+             tr( "Downloading data and models for triple %1..." ).arg( triplesname ), 5 );
+  {
+    int k    = ++part2_done;
+    int kmax = qMax( part2_total, k );
+    gmp_progress()->setOverall( k - 1, kmax,
+                                tr( "Triple/model %1 of %2:   %3  /  %4" )
+                                .arg( k ).arg( kmax ).arg( triplesname ).arg( stage_model ) );
+  }
   qApp->processEvents();
   
   speed_steps  .clear();
@@ -5104,9 +5192,7 @@ void US_ReporterGMP::simulate_triple( const QString triplesname, QString stage_m
   simulateModel( triple_info_map );
 
   
-  qDebug() << "Closing sim_msg-- ";
-  //msg_sim->accept();
-  progress_msg->close();
+  //Dialog stays up (next triple/model, combined plots, PDF...)
   qApp->processEvents();
 
   /*
@@ -6138,7 +6224,7 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
   //start_time = QDateTime::currentDateTime();
   int ncomp  = model.components.size();
   //compress   = le_compress->text().toDouble();
-  progress_msg->setRange( 1, ncomp );
+  progress_msg->setRange( 0, ncomp );
   // progress_msg->reset();
   
   nthread    = US_Settings::threads();
@@ -6776,13 +6862,9 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   //estimate # of combined plots
   int combpl_number = 3*3;
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog (QString("Generating combined plots..."), QString(), 0, combpl_number, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Combined Plots"));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 3, tr( "Generating report - models, simulations and plots" ),
+             tr( "Generating combined plots..." ), combpl_number );
+  progress_msg->hideOverall();
   qApp->processEvents();
 
   int pr_cp_val = 0;
@@ -6952,7 +7034,6 @@ void US_ReporterGMP::process_combined_plots ( QString filename_passed )
   html_assembled += "</p>\n";
   
   progress_msg->setValue( progress_msg->maximum() );
-  progress_msg->close();
   qApp->processEvents();
 }
 
@@ -11618,7 +11699,7 @@ QString US_ReporterGMP::get_filename( QString triple_name )
 }
 
 //Start assembling PDF file
-void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
+void US_ReporterGMP::assemble_pdf( US_GmpProgress * progress_msg )
 {
 
   QString rptpage;
@@ -13048,6 +13129,9 @@ void US_ReporterGMP::write_pdf_report( void )
   //printer.setFullPage(false);
   
   printDocument(printer, &textDocument ); //, 0);
+
+  if ( auto_mode )
+    gmp_busy( tr( "Archiving the report and saving it to the database..." ) );
   
   /*************************************************************/
 
@@ -13316,24 +13400,13 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
   const int pageCount = doc->pageCount();
   // QProgressDialog dialog( QObject::tr( "Printing" ), QObject::tr( "Cancel" ), 0, pageCount, parentWidget );
   // dialog.setWindowModality( Qt::ApplicationModal );
-  progress_msg = new QProgressDialog ("Preparing .PDF...", QString(), 0, pageCount, this);
-  progress_msg->setWindowFlags(Qt::Tool | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setModal( true );
-  progress_msg->setWindowTitle(tr("Printing..."));
-  QFont font_d  = progress_msg->property("font").value<QFont>();
-  QFontMetrics fm(font_d);
-  int pixelsWide = fm.horizontalAdvance( progress_msg->windowTitle() );
-  qDebug() << "Progress_msg: pixelsWide -- " << pixelsWide;
-  progress_msg ->setMinimumWidth( pixelsWide*2 );
-  progress_msg->adjustSize();
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  gmp_stage( 4, tr( "Creating PDF report" ), tr( "Rendering PDF pages..." ), pageCount );
   qApp->processEvents();
   
   bool firstPage = true;
   for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex)
     {
+      progress_msg->setLabelText( tr( "Rendering PDF page %1 of %2..." ).arg( pageIndex + 1 ).arg( pageCount ) );
       progress_msg->setValue( pageIndex );
       
       if (!firstPage)
@@ -13347,8 +13420,7 @@ void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QW
       firstPage = false;
     }
   
-  qApp->processEvents();
-  progress_msg->close();
+  progress_msg->setValue( progress_msg->maximum() );
   qApp->processEvents();
 }
 
