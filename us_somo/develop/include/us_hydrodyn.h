@@ -391,6 +391,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void read_hybrid_file( QString filename );
       
       void fix_N1_non_pbr( struct PDB_model & model );
+      QString vdwf_key( const PDB_atom & atom, bool chain_first ); // vdwf "residue|atom" key
 
       // info routines (in us_hydrodyn_info.cpp
 

@@ -1501,6 +1501,32 @@ int US_Hydrodyn::calc_vdw_beads()
    return ( any_errors ? -1 : 0 );
 }
 
+// vdwf "residue|atom" lookup key for an atom of a PDB_chain; chain_first: it is the chain's atom 0
+// The chain's N-terminal N is keyed N1 (N1- for an unconverted PRO). It is normally atom 0, but
+// with the Peptide Bond Rule off (e.g. any broken chain) create_beads() sorts each residue's atoms
+// by bead, which moves PRO's N (bead 1) behind CA/C/O. fix_N1_non_pbr() has already retyped that
+// N as residue N1/N1-, so recognise the retyping too; otherwise the key is "N1-|N", which is in no
+// table, and the vdW build fails (ultrascan-tickets#1093).
+
+QString US_Hydrodyn::vdwf_key( const PDB_atom & atom, bool chain_first ) {
+   QString use_res_name  = atom.name != "OXT" ? atom.p_residue->name : "OXT";
+   QString use_atom_name = atom.p_residue->name == "N1" ? "N1" : atom.name;
+
+   if ( atom.name == "N" &&
+        ( chain_first ||
+          atom.p_residue->name == "N1" ||
+          atom.p_residue->name == "N1-" ) ) {
+      if ( use_res_name == "PRO" ) {
+         use_res_name = "N1-";
+      } else {
+         use_res_name = "N1";
+      }
+      use_atom_name = use_res_name;
+   }
+
+   return QString( "%1|%2" ).arg( use_res_name ).arg( use_atom_name );
+}
+
 // 2 pass, 1st to compute com
 // 2nd upon hydration, find vector from bead to com and OT by multiplier
 // add global multiplier for OT 
@@ -1730,24 +1756,7 @@ int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
          //    << " p_atom->hybrid.name " << this_atom->p_atom->hybrid.name
          //    << endl;
 
-         QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
-         QString use_atom_name = this_atom->p_residue->name == "N1" ? "N1" : this_atom->name;
-
-         if ( !k &&
-              this_atom->name == "N" ) {
-            if ( use_res_name == "PRO" ) {
-               use_res_name = "N1-";
-            } else {
-               use_res_name = "N1";
-            }
-            use_atom_name = use_res_name;
-         }
-              
-         QString res_idx =
-            QString("%1|%2")
-            .arg( use_res_name )
-            .arg( use_atom_name )
-            ;
+         QString res_idx = vdwf_key( *this_atom, !k );
 
          double saxs_excl_vol;
          {
