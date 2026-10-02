@@ -1484,6 +1484,14 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
       bool    save_file ( QString file, bool &overwrite, bool &cancel );
       bool    save_files_csv( QStringList files );
 
+      // header text for saved & viewed data, the abscissa of UV-Vis data is
+      // time for A(t) curves and wavelength for A(lambda) curves, not q
+      QString header_units       ( const QString & file );
+      QString header_column_names( const QString & file, bool use_errors );
+      QString header_field       ( const QString &           file,
+                                   map < QString, double > & values,
+                                   const QString &           format );
+
       csv                          csv_conc;
       US_Hydrodyn_Dad_Conc *conc_window;
       bool                         conc_widget;
