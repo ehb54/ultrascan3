@@ -671,11 +671,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
       }
       if ( qsl[ i ].length() > 30 && qsl[ i ].contains( rx_atom ) )
       {
-#if QT_VERSION >= 0x040000
          qsl[ i ].data()[ 22 ] = ' ';
-#else
-         qsl[ i ].at( 22 ) = ' ';
-#endif
       }
       QStringList qsl_line = (qsl[ i ] ).split( rx_whitespace , Qt::SkipEmptyParts );
       if ( qsl_line[ 0 ] == "multiple-rotate:" )

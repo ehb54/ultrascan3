@@ -88,60 +88,29 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
    ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   plot->enableGridXMin();
-   plot->enableGridYMin();
-#else
    plot_grid = new QwtPlotGrid;
    plot_grid->enableXMin( true );
    plot_grid->enableYMin( true );
-#endif
    plot->setPalette( PALET_NORMAL );
    AUTFBACK( plot );
-#if QT_VERSION < 0x040000
-   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    plot_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    plot_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    plot_grid->attach( plot );
-#endif
    plot->setAxisTitle(QwtPlot::xBottom, parameters.count( "xlegend" ) ? parameters[ "xlegend" ] : us_tr( "Start Frame" ) );
    plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Average Red Cluster Size" ) );
-#if QT_VERSION < 0x040000
-   plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle("");
-#if QT_VERSION < 0x040000
-   plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
    plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
-#if QT_VERSION < 0x040000
-   plot->setAutoLegend( true );
-   plot->setLegendPosition( QwtPlot::Right );
-   plot->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
-
-#else
    // {
    //    QwtLegend* legend_pd = new QwtLegend;
    //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
    //    guinier_plot->insertLegend( legend_pd, QwtPlot::BottomLegend );
    // }
-#endif
 
    plot_name = windowTitle().replace( "US-SOMO:", "" ).replace( " ", "_" );
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget ) {
@@ -157,60 +126,29 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    ((QWidget *)hb_plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)hb_plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_hb_plot( const QPoint & ) ) );
    ((QWidget *)hb_plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   hb_plot->enableGridXMin();
-   hb_plot->enableGridYMin();
-#else
    hb_plot_grid = new QwtPlotGrid;
    hb_plot_grid->enableXMin( true );
    hb_plot_grid->enableYMin( true );
-#endif
    hb_plot->setPalette( PALET_NORMAL );
    AUTFBACK( hb_plot );
-#if QT_VERSION < 0x040000
-   hb_plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   hb_plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    hb_plot_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    hb_plot_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    hb_plot_grid->attach( hb_plot );
-#endif
    hb_plot->setAxisTitle(QwtPlot::xBottom, parameters.count( "xlegend" ) ? parameters[ "xlegend" ] : us_tr( "Start Frame" ) );
    hb_plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Average Red Cluster Size" ) );
-#if QT_VERSION < 0x040000
-   hb_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   hb_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    hb_plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   hb_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    hb_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   hb_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    hb_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    hb_plot->setMargin(USglobal->config_list.margin);
    hb_plot->setTitle("");
-#if QT_VERSION < 0x040000
-   hb_plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
    hb_plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    hb_plot->setCanvasBackground(USglobal->global_colors.plot);
 
-#if QT_VERSION < 0x040000
-   hb_plot->setAutoLegend( true );
-   hb_plot->setLegendPosition( QwtPlot::Right );
-   hb_plot->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
-
-#else
    // {
    //    QwtLegend* legend_pd = new QwtLegend;
    //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
    //    guinier_plot->insertLegend( legend_pd, QwtPlot::BottomLegend );
    // }
-#endif
 
    hb_plot_name = windowTitle().replace( "US-SOMO:", "" ).replace( " ", "_" ) + "_hb";
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget ) {
@@ -226,35 +164,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    editor->setReadOnly(true);
    editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   // QFrame *frame;
-   // frame = new QFrame( qs_left );
-   // frame->setMinimumHeight(minHeight1);
-
-   // m = new QMenuBar( frame );  m->setObjectName( "menu" );
-   // m->setMinimumHeight(minHeight1 - 5);
-   // m->setPalette( PALET_NORMAL );
-
-   // QPopupMenu * file = new QPopupMenu(editor);
-   // m->insertItem( us_tr("&File"), file );
-   // file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
-   // file->insertItem( us_tr("Save"),  this, SLOT(save()),    ALT+Key_S );
-   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
-# endif
-#endif
    
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 9 );
@@ -266,35 +175,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    hb_editor->setReadOnly(true);
    hb_editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   // QFrame *frame;
-   // frame = new QFrame( qs_right );
-   // frame->setMinimumHeight(minHeight1);
-
-   // m = new QMenuBar( frame );  m->setObjectName( "menu" );
-   // m->setMinimumHeight(minHeight1 - 5);
-   // m->setPalette( PALET_NORMAL );
-
-   // QPopupMenu * file = new QPopupMenu(hb_editor);
-   // m->insertItem( us_tr("&File"), file );
-   // file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
-   // file->insertItem( us_tr("Save"),  this, SLOT(save()),    ALT+Key_S );
-   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
-# endif
-#endif
 
    hb_editor->setWordWrapMode (QTextOption::WordWrap);
    hb_editor->setMinimumHeight( minHeight1 * 9 );
@@ -602,23 +482,9 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             }
 
             {
-#if QT_VERSION < 0x040000
-               long curve;
-               curve = plot->insertCurve( "baseline_best_sumq", QwtPlot::xBottom, QwtPlot::yRight );
-               plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( "baseline_best_sumq" );
                curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-               plot->setCurvePen( curve, QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
-               plot->setCurveData( curve,
-                                   (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                   (double *)&vdparameters[ "sumqy" ][ 0 ],
-                                   vdparameters[ "sumqx" ].size()
-                                   );
-#else
                curve->setPen( QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
                curve->setSamples(
                               (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -627,7 +493,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                               );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach( plot );
-#endif
             }
          }
 
@@ -643,24 +508,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             }
 
             QString curvename = QString( us_tr( "Baseline avg. I(q) for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#if QT_VERSION < 0x040000
-            long curve;
-            curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-            plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( curvename );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-            plot->setCurvePen( curve, QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::SolidLine ) );
-            plot->setCurveData( curve,
-                                (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                (double *)&vdparameters[ "sumqmaxqy" ][ 0 ],
-                                vdparameters[ "sumqx" ].size()
-                                );
-#else
             curve->setPen( QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::SolidLine ) );
             curve->setSamples(
                            (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -669,7 +520,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                            );
             curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach( plot );
-#endif
             if ( vdparameters.count( "sumqmaxqysdm" ) &&
                  vdparameters.count( "sumqmaxqysdp" ) ) {
                for ( int i = 0; i < (int) vdparameters[ "sumqx" ].size(); ++i ) {
@@ -682,29 +532,11 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                }
 
                {
-#if QT_VERSION < 0x050000
-                  QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#else
                   QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#endif
-#if QT_VERSION < 0x040000
-                  long curve;
-                  curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-                  plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                   QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                   curve->setStyle( QwtPlotCurve::Lines );
                   curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
                   
-#if QT_VERSION < 0x040000
-                  plot->setCurvePen( curve, QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
-                  plot->setCurveData( curve, 
-                                      (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                      (double *)&vdparameters[ "sumqmaxqysdm" ][ 0 ],
-                                      vdparameters[ "sumqx" ].size()
-                                      );
-#else
                   curve->setPen( QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
                   curve->setSamples(
                                  (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -713,33 +545,13 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                                  );
                   curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                   curve->attach( plot );
-#endif
                }
                {
-#if QT_VERSION < 0x050000
-                  QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#else
                   QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#endif
-#if QT_VERSION < 0x040000
-                  long curve;
-                  curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-                  plot->setCurveStyle( curve, QwtCurve::Lines );
-                  plot->enableLegend( false, curve );
-#else
                   QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                   curve->setStyle( QwtPlotCurve::Lines );
                   curve->setItemAttribute( QwtPlotItem::Legend, false );
-#endif
                   
-#if QT_VERSION < 0x040000
-                  plot->setCurvePen( curve, QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
-                  plot->setCurveData( curve, 
-                                      (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                      (double *)&vdparameters[ "sumqmaxqysdp" ][ 0 ],
-                                      vdparameters[ "sumqx" ].size()
-                                      );
-#else
                   curve->setPen( QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
                   curve->setSamples(
                                  (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -748,7 +560,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                                  );
                   curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                   curve->attach( plot );
-#endif
                }
             }
          }
@@ -763,25 +574,14 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             y[ 0 ] = y[ 1 ] = 0;
 
             QString curvename = "Zero intensity\n(on right axis)";
-#if QT_VERSION < 0x040000
-            long curve;
-            curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-            plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( curvename );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-            plot->setCurvePen( curve, QPen( Qt::magenta, 2 * use_line_width, Qt::SolidLine ) );
-            plot->setCurveData( curve, x, y, 2 );
-#else
             curve->setPen( QPen( Qt::magenta, 2 * use_line_width, Qt::SolidLine ) );
             curve->setSamples( x, y, 2 );
             curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach( plot );
-#endif
          }
 
          if ( false && dparameters.count( "blanks_avg_maxq_sd" ) ) {
@@ -797,55 +597,28 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             }
 
             {
-#if QT_VERSION < 0x050000
-               QString curvename = "Average ±1 SD of total blanks intensity\n(on right axis)";
-#else
                QString curvename = "Average \u00b11 SD of total blanks intensity\n(on right axis)";
-#endif
 
-#if QT_VERSION < 0x040000
-               long curve;
-               curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-               plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                curve->setStyle( QwtPlotCurve::Lines );
                curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-               plot->setCurvePen( curve, QPen( Qt::magenta, 2 * use_line_width, Qt::DotLine ) );
-               plot->setCurveData( curve, x, y, 2 );
-#else
                curve->setPen( QPen( Qt::magenta, 2 * use_line_width, Qt::DotLine ) );
                curve->setSamples( x, y, 2 );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach( plot );
-#endif
             }
             {
                QString curvename = "Average -1 SD of total blanks intensity\n(on right axis)";
                y[ 0 ] = y[ 1 ] = -dparameters[ "blanks_avg_maxq_sd" ];
-#if QT_VERSION < 0x040000
-               long curve;
-               curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-               plot->setCurveStyle( curve, QwtCurve::Lines );
-               plot->enableLegend( false, curve );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                curve->setStyle( QwtPlotCurve::Lines );
                curve->setItemAttribute( QwtPlotItem::Legend, false );
-#endif
 
-#if QT_VERSION < 0x040000
-               plot->setCurvePen( curve, QPen( Qt::magenta, 2 * use_line_width, Qt::DotLine ) );
-               plot->setCurveData( curve, x, y, 2 );
-#else
                curve->setPen( QPen( Qt::magenta, 2 * use_line_width, Qt::DotLine ) );
                curve->setSamples( x, y, 2 );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach( plot );
-#endif
             }
          }
       }         
@@ -862,25 +635,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             : "Baseline avg. red cluster size\nabove blanks' avg. +1 SD"
             ;
 
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot->insertCurve( curvename );
-         plot->setCurveStyle( curve, QwtCurve::Sticks );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( curvename );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot->setCurvePen( curve, QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
-         plot->setCurveData( curve,
-                             (double *)&vdparameters[ "x" ][ 0 ],
-                             (double *)&vdparameters[ "y" ][ 0 ],
-                             vdparameters[ "x" ].size()
-                             );
-         plot->setCurveBaseline( curve, -0.5 );
-#else
          curve->setPen( QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&vdparameters[ "x" ][ 0 ],
@@ -890,7 +648,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                         );
          curve->setBaseline( -0.5 );
          curve->attach( plot );
-#endif
       }
 
       if ( vdparameters.count( "yx" ) ) {
@@ -905,25 +662,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             : "Baseline best avg. red cluster size\nabove blanks' avg. +1 SD"
             ;
 
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot->insertCurve( curvename );
-         plot->setCurveStyle( curve, QwtCurve::Sticks );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( curvename );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot->setCurvePen( curve, QPen( Qt::yellow, 2 * use_line_width, Qt::SolidLine ) );
-         plot->setCurveData( curve,
-                             (double *)&vdparameters[ "yx" ][ 0 ],
-                             (double *)&vdparameters[ "yy" ][ 0 ],
-                             vdparameters[ "yx" ].size()
-                             );
-         plot->setCurveBaseline( curve, -0.5 );
-#else
          curve->setPen( QPen( Qt::yellow, 2 * use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&vdparameters[ "yx" ][ 0 ],
@@ -933,7 +675,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                         );
          curve->setBaseline( -0.5 );
          curve->attach( plot );
-#endif
       }
 
       if ( vdparameters.count( "gx" ) ) {
@@ -945,25 +686,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
          QString curvename = "Baseline avg. red cluster size\nequal or below blanks' avg. +1 SD";
 
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot->insertCurve( curvename );
-         plot->setCurveStyle( curve, QwtCurve::Sticks );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( curvename );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot->setCurvePen( curve, QPen( Qt::cyan, 2 * use_line_width, Qt::SolidLine ) );
-         plot->setCurveData( curve,
-                             (double *)&vdparameters[ "gx" ][ 0 ],
-                             (double *)&vdparameters[ "gy" ][ 0 ],
-                             vdparameters[ "gx" ].size()
-                             );
-         plot->setCurveBaseline( curve, -0.5 );
-#else
          curve->setPen( QPen( Qt::cyan, 2 * use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&vdparameters[ "gx" ][ 0 ],
@@ -973,7 +699,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                         );
          curve->setBaseline( -0.5 );
          curve->attach( plot );
-#endif
       }
 
       if ( vdparameters.count( "wx" ) ) {
@@ -987,25 +712,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             ? "Baseline best red pair %\n"
             : "Baseline best avg. red cluster size\nequal or below blanks' avg. +1 SD"
             ;
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot->insertCurve( curvename );
-         plot->setCurveStyle( curve, QwtCurve::Sticks );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( curvename );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot->setCurvePen( curve, QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
-         plot->setCurveData( curve,
-                             (double *)&vdparameters[ "wx" ][ 0 ],
-                             (double *)&vdparameters[ "wy" ][ 0 ],
-                             vdparameters[ "wx" ].size()
-                             );
-         plot->setCurveBaseline( curve, -0.5 );
-#else
          curve->setPen( QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&vdparameters[ "wx" ][ 0 ],
@@ -1015,7 +725,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                         );
          curve->setBaseline( -0.5 );
          curve->attach( plot );
-#endif
       }
 
       if ( dparameters.count( "blanksaverage" ) ) {
@@ -1029,48 +738,26 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
          QString curvename = us_tr( "Blanks' avg. red cluster size" );
 
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot->insertCurve( curvename );
-         plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( curvename );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot->setCurvePen( curve, QPen( Qt::green, 2 * use_line_width, Qt::SolidLine ) );
-         plot->setCurveData( curve, x, y, 2 );
-#else
          curve->setPen( QPen( Qt::green, 2 * use_line_width, Qt::SolidLine ) );
          curve->setSamples( x, y, 2 );
          curve->attach( plot );
-#endif
 
          if ( dparameters.count( "blanksaveragesd" ) ) {
 
             y[ 0 ] = y[ 1 ] = y[ 0 ] + dparameters[ "blanksaveragesd" ];
 
             QString curvename = us_tr( "Blanks' avg. red cluster size +1 SD" );
-#if QT_VERSION < 0x040000
-            long curve;
-            curve = plot->insertCurve( curvename );
-            plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( curvename );
             curve->setStyle( QwtPlotCurve::Lines );
             curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-            plot->setCurvePen( curve, QPen( Qt::green, 2 * use_line_width, Qt::DotLine ) );
-            plot->setCurveData( curve, x, y, 2 );
-#else
             curve->setPen( QPen( Qt::green, 2 * use_line_width, Qt::DotLine ) );
             curve->setSamples( x, y, 2 );
             curve->attach( plot );
-#endif
          }
       }
 
@@ -1124,23 +811,9 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                }
 
                {
-#if QT_VERSION < 0x040000
-                  long curve;
-                  curve = hb_plot->insertCurve( "baseline_best_sumq", QwtPlot::xBottom, QwtPlot::yRight );
-                  hb_plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                   QwtPlotCurve *curve = new QwtPlotCurve( "baseline_best_sumq" );
                   curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-                  hb_plot->setCurvePen( curve, QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
-                  hb_plot->setCurveData( curve,
-                                      (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                      (double *)&vdparameters[ "sumqy" ][ 0 ],
-                                      vdparameters[ "sumqx" ].size()
-                                      );
-#else
                   curve->setPen( QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
                   curve->setSamples(
                                  (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -1149,7 +822,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                                  );
                   curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                   curve->attach( hb_plot );
-#endif
                }
             }
 
@@ -1165,24 +837,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                }
 
                QString curvename = QString( us_tr( "Baseline avg. I(q) for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#if QT_VERSION < 0x040000
-               long curve;
-               curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-               hb_plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                curve->setStyle( QwtPlotCurve::Lines );
                curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-               hb_plot->setCurvePen( curve, QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::SolidLine ) );
-               hb_plot->setCurveData( curve,
-                                   (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                   (double *)&vdparameters[ "sumqmaxqy" ][ 0 ],
-                                   vdparameters[ "sumqx" ].size()
-                                   );
-#else
                curve->setPen( QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::SolidLine ) );
                curve->setSamples(
                               (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -1191,7 +849,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                               );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach( hb_plot );
-#endif
                if ( vdparameters.count( "sumqmaxqysdm" ) &&
                     vdparameters.count( "sumqmaxqysdp" ) ) {
                   for ( int i = 0; i < (int) vdparameters[ "sumqx" ].size(); ++i ) {
@@ -1204,30 +861,12 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                   }
 
                   {
-#if QT_VERSION < 0x050000
-                     QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#else
                      QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#endif
 
-#if QT_VERSION < 0x040000
-                     long curve;
-                     curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-                     hb_plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                      QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                      curve->setStyle( QwtPlotCurve::Lines );
                      curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
                   
-#if QT_VERSION < 0x040000
-                     hb_plot->setCurvePen( curve, QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
-                     hb_plot->setCurveData( curve, 
-                                         (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                         (double *)&vdparameters[ "sumqmaxqysdm" ][ 0 ],
-                                         vdparameters[ "sumqx" ].size()
-                                         );
-#else
                      curve->setPen( QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
                      curve->setSamples(
                                     (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -1236,34 +875,14 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                                     );
                      curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                      curve->attach( hb_plot );
-#endif
                   }
                   {
-#if QT_VERSION < 0x050000
-                     QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#else
                      QString curvename = QString( us_tr( "Baseline avg. I(q) \u00b11 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
-#endif
 
-#if QT_VERSION < 0x040000
-                     long curve;
-                     curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-                     hb_plot->setCurveStyle( curve, QwtCurve::Lines );
-                     hb_plot->enableLegend( false, curve );
-#else
                      QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                      curve->setStyle( QwtPlotCurve::Lines );
                      curve->setItemAttribute( QwtPlotItem::Legend, false );
-#endif
                   
-#if QT_VERSION < 0x040000
-                     hb_plot->setCurvePen( curve, QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
-                     hb_plot->setCurveData( curve, 
-                                         (double *)&vdparameters[ "sumqx" ][ 0 ],
-                                         (double *)&vdparameters[ "sumqmaxqysdp" ][ 0 ],
-                                         vdparameters[ "sumqx" ].size()
-                                         );
-#else
                      curve->setPen( QPen( QColor( 255, 165, 0 ) /* orange */, 2 * use_line_width, Qt::DotLine ) );
                      curve->setSamples(
                                     (double *)&vdparameters[ "sumqx" ][ 0 ],
@@ -1272,7 +891,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                                     );
                      curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                      curve->attach( hb_plot );
-#endif
                   }
                }
             }
@@ -1287,25 +905,14 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                y[ 0 ] = y[ 1 ] = 0;
 
                QString curvename = "Zero intensity\n(on right axis)";
-#if QT_VERSION < 0x040000
-               long curve;
-               curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
-               hb_plot->setCurveStyle( curve, QwtCurve::Lines );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( curvename );
                curve->setStyle( QwtPlotCurve::Lines );
                curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-               hb_plot->setCurvePen( curve, QPen( Qt::magenta, 2 * use_line_width, Qt::SolidLine ) );
-               hb_plot->setCurveData( curve, x, y, 2 );
-#else
                curve->setPen( QPen( Qt::magenta, 2 * use_line_width, Qt::SolidLine ) );
                curve->setSamples( x, y, 2 );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach( hb_plot );
-#endif
             }
          }         
 
@@ -1318,25 +925,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
             QString curvename = "Baseline red pair % greater than minimum value";
 
-#if QT_VERSION < 0x040000
-            long curve;
-            curve = hb_plot->insertCurve( curvename );
-            hb_plot->setCurveStyle( curve, QwtCurve::Sticks );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( curvename );
             curve->setStyle( QwtPlotCurve::Sticks );
             curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-            hb_plot->setCurvePen( curve, QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
-            hb_plot->setCurveData( curve,
-                                (double *)&vdparameters[ "hb_x" ][ 0 ],
-                                (double *)&vdparameters[ "hb_y" ][ 0 ],
-                                vdparameters[ "hb_x" ].size()
-                                );
-            hb_plot->setCurveBaseline( curve, -0.5 );
-#else
             curve->setPen( QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
             curve->setSamples(
                            (double *)&vdparameters[ "hb_x" ][ 0 ],
@@ -1346,7 +938,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                            );
             curve->setBaseline( -0.5 );
             curve->attach( hb_plot );
-#endif
          }
 
          if ( vdparameters.count( "hb_wx" ) ) {
@@ -1357,25 +948,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
             }
 
             QString curvename = "Baseline best red pair %";
-#if QT_VERSION < 0x040000
-            long curve;
-            curve = hb_plot->insertCurve( curvename );
-            hb_plot->setCurveStyle( curve, QwtCurve::Sticks );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( curvename );
             curve->setStyle( QwtPlotCurve::Sticks );
             curve->setItemAttribute( QwtPlotItem::Legend, true );
-#endif
 
-#if QT_VERSION < 0x040000
-            hb_plot->setCurvePen( curve, QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
-            hb_plot->setCurveData( curve,
-                                (double *)&vdparameters[ "hb_wx" ][ 0 ],
-                                (double *)&vdparameters[ "hb_wy" ][ 0 ],
-                                vdparameters[ "hb_wx" ].size()
-                                );
-            hb_plot->setCurveBaseline( curve, -0.5 );
-#else
             curve->setPen( QPen( Qt::white, 2 * use_line_width, Qt::SolidLine ) );
             curve->setSamples(
                            (double *)&vdparameters[ "hb_wx" ][ 0 ],
@@ -1385,7 +961,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                            );
             curve->setBaseline( -0.5 );
             curve->attach( hb_plot );
-#endif
          }
 
          if ( !hb_plot_zoomer )
@@ -1406,7 +981,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
       }
    }
 
-#if QT_VERSION >= 0x040000
    {
        QwtLegend* legend_pd = new QwtLegend;
        // QPalette mp = PALET_NORMAL;
@@ -1431,7 +1005,6 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
    plot->legend()->setVisible( true );
    hb_plot->legend()->setVisible( true );
-#endif
 
    plot->replot();
    hb_plot->replot();

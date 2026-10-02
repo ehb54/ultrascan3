@@ -19,22 +19,14 @@
 #include <qwt_plot.h>
 #include "us3i_plot.h"
 
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
-#else
-#  include "qwt/scrollbar.h"
-#  include "qwt/scrollzoomer.h"
-#endif
 
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-     #pragma warning ( disable: 4251 )
-# endif
 #endif      
 
 class US_EXTERN US_Hydrodyn_Saxs_Guinier_Frames : public QFrame
@@ -90,9 +82,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Guinier_Frames : public QFrame
 
    private:
       ScrollZoomer *                          plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid *                           grid;
-#endif
 
       void                                    setupGUI();
 
@@ -126,9 +116,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Guinier_Frames : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

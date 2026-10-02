@@ -57,22 +57,14 @@ US_Cmdline_App::US_Cmdline_App(
 
    connect( &timer,  SIGNAL( timeout()         ), this, SLOT( timeout()        ) );
 
-#if QT_VERSION < 0x040000
-   process.setArguments( args );
-#else
    QString prog = args.front();
    args.pop_front();
-#endif
 
    query_response_pos = 0;
    run_to_end         = false;
 
-#if QT_VERSION < 0x040000
-   if ( !process.start() )
-#else
    process.start( prog, args);
    if ( !process.waitForStarted() )
-#endif
    {
       // us_qdebug( "error starting" );
       *error_msg += QString( "Error: could not start process: %1\n" ).arg( args[ 0 ] );
@@ -103,28 +95,7 @@ void US_Cmdline_App::readFromStdout()
    // us_qdebug( "readFromStdout()" );
    QString qs;
    QString text;
-#if QT_VERSION < 0x040000
-   do {
-      qs = process.readLineStdout();
-      // if ( stdout )
-      // {
-      //    *stdout << qs;
-      // }
-      text += qs + "\n";
-   } while ( qs != QString() );
-
-   do {
-      QString read = process.readStdout();
-      // if ( stdout )
-      // {
-      //    *stdout << qs;
-      // }
-      qs = QString( "%1" ).arg( read );
-      text += qs;
-   } while ( qs.length() );
-#else
    text = QString( process.readAllStandardOutput() );
-#endif
    
    // us_qdebug( QString( "received <%1>" ).arg( text ) );
 
@@ -174,14 +145,10 @@ void US_Cmdline_App::readFromStdout()
                return;
             }
             // us_qdebug( QString( "sent     <%1> to application"   ).arg( response[ query_response_pos ] ) );
-#if QT_VERSION < 0x040000
-            process.writeToStdin( response[ query_response_pos ] + "\n" );
-#else
             {
                QByteArray qba = QString( response[ query_response_pos ] + "\n" ).toUtf8();
                process.write( qba.constData(), qba.size() );
             }
-#endif
             query_response_pos++;
          } else {
             // us_qdebug( "now run to end of application" );
@@ -207,11 +174,7 @@ void US_Cmdline_App::finished( int, QProcess::ExitStatus )
 {
    // us_qdebug( "finished( int, QProcess::ExitStatus )" );
 
-#if QT_VERSION < 0x040000
-   if ( !process.normalExit() )
-#else
    if ( process.exitCode() != QProcess::NormalExit )
-#endif
    {
       *error_msg += "Error: process did not exit normally\n";
    }

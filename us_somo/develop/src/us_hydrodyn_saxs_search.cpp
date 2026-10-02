@@ -83,7 +83,7 @@ US_Hydrodyn_Saxs_Search::~US_Hydrodyn_Saxs_Search()
 void US_Hydrodyn_Saxs_Search::setupGUI()
 {
    int minHeight1 = 30;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -224,35 +224,6 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -283,7 +254,6 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(300);
@@ -341,7 +311,7 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    hbl_bottom->addSpacing(4);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -750,11 +720,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
 
    if ( running )
    {
-#if QT_VERSION < 0x040000
-      editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  QColor( "dark gray" ) );
-#else
       editor->setTextBackgroundColor( QColor( "dark gray" ) );
-#endif
       if ( lbl_current_target->text().isEmpty() )
       {
          editor_msg_qc(saxs_window->plot_colors
@@ -777,11 +743,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
          }
          editor_msg("black", msg + "\n");
       }
-#if QT_VERSION < 0x040000
-      editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  QColor( "white" ) );
-#else
       editor->setTextBackgroundColor( QColor( "white" ) );
-#endif
    }
       
    // restore values

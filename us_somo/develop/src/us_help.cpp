@@ -40,24 +40,6 @@ void US_Help::show_html_file( QString helpFile )
 
 void US_Help::openBrowser()
 {
-#if QT_VERSION < 0x040000
-  proc = new QProcess( this );
-# ifdef Q_OS_MAC
-  proc->addArgument( "open" );
-  proc->addArgument( "-a" );
-# endif
-  proc->addArgument( USglobal->config_list.browser );
-  proc->addArgument( URL );
-
-  if ( ! proc->start() ) // Error
-  {
-    US_Static::us_message(
-        us_tr( "UltraScan Error:" ), 
-        us_tr( "Can't start browser window...\n"
-            "Please make sure you have the configured browser installed\n\n"
-            "Currently configured: " + USglobal->config_list.browser ) );
-  }
-#else
   {
      QProcess * process = new QProcess( this );
      QString prog = USglobal->config_list.browser;
@@ -81,7 +63,6 @@ void US_Help::openBrowser()
                                  "Currently configured: " + USglobal->config_list.browser ) );
      }
   }
-#endif
 }
 
 

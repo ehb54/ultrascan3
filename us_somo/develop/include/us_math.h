@@ -176,28 +176,6 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
    double stretch_with_rotor_list(int rotor, unsigned int rpm, vector < rotorInfo > *rotor_list);
 
-#if QT_VERSION < 0x040000 && defined(WIN32)
-  /* The following was derived from glibc source for IA32 architecture. */
-int __fpclassifyf (float x);
-
-  /* All floating-point numbers can be put in one of these categories.  */
-  enum
-  {
-     FP_NAN,
-# define FP_NAN FP_NAN
-     FP_INFINITE,
-# define FP_INFINITE FP_INFINITE
-     FP_ZERO,
-# define FP_ZERO FP_ZERO
-     FP_SUBNORMAL,
-# define FP_SUBNORMAL FP_SUBNORMAL
-     FP_NORMAL
-# define FP_NORMAL FP_NORMAL
-  };
-
-# define isnormal(x) ( __fpclassifyf (x) == FP_NORMAL)
-
-#endif // WIN32
 
 float int_vol_2sphere(float r1, float r2, float d);
 

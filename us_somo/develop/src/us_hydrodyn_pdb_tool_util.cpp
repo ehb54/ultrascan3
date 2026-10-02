@@ -172,121 +172,8 @@ set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QTreeWi
 
 {
    set < QTreeWidgetItem * > result;
-#if QT_VERSION < 0x040000
-   vector < vector < QTreeWidgetItem * > > lv_models  = separate_models( lv );
-   vector < QStringList >                qsl_models = separate_models( lv == lv_csv  ? csv1 : csv2[ csv2_pos ] );
-   vector < QString >                    models     = get_models( lv );
-
-   if ( lv_models.size() != qsl_models.size() ||
-        models.size() != lv_models.size() )
-   {
-      editor_msg( "red", 
-                  QString( us_tr( "Error: NACCESS splitting models size mismatch %1 vs %2 vs %3" ) )
-                  .arg( lv_models.size() )
-                  .arg( qsl_models.size() )
-                  .arg( models.size() )
-                  );
-      return result;
-   }
-
-   // get a temp pdb file
-
-   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_tmp_dir + QDir::separator();
-
-   unsigned int pos = 0;
-   QString filename;
-
-   do {
-      filename = QString("%1temp%2.pdb").arg( use_dir ).arg( pos++ );
-   } while( QFile::exists( filename ) );
-
-   QFile f( filename );
-
-   for ( int i = 0; i < (int) qsl_models.size(); ++i )
-   {
-      if ( !f.open( QIODevice::WriteOnly ) )
-      {
-         QMessageBox::warning( this, windowTitle(),
-                               QString(us_tr("Could not open %1 for writing!")).arg( filename ) );
-         return result;
-      }
-
-      QTextStream t( &f );
-      for ( int j = 0; j < (int) qsl_models[ i ].size(); ++j )
-      {
-         t << qsl_models[ i ][ j ];
-      }
-      f.close();
-
-      naccess_run( filename );
-      while ( naccess_running )
-      {
-         mQThread::msleep( 333 );
-         qApp->processEvents();
-      }
-      if ( !naccess_result_data.size() )
-      {
-         editor_msg( "red", QString( us_tr( "Error: NACCESS did not return any results for model %1" ) ).arg( i + 1 ) );
-         return result;
-      }
-      set < QString > exposed;
-      for ( int j = 0; j < (int) naccess_result_data.size(); ++j )
-      {
-         cout << naccess_result_data[ j ] << endl;
-         if ( naccess_result_data[ j ].left( 3 ) == "RES" )
-         {
-            QString residue = 
-               naccess_result_data[ j ].mid( 4, 3 ) + "~" +
-               naccess_result_data[ j ].mid( 8, 1 ).trimmed() + "~" +
-               naccess_result_data[ j ].mid( 9, 4 ).trimmed()
-               ;
-            double this_asa    = naccess_result_data[ j ].mid( 23, 5 ).trimmed().toDouble();
-            double this_asa_sc = naccess_result_data[ j ].mid( 36, 5 ).trimmed().toDouble();
-            double this_asa_mc = naccess_result_data[ j ].mid( 49, 5 ).trimmed().toDouble();
-            if ( sc_or_mc )
-            {
-               this_asa = this_asa_sc > this_asa_mc ? this_asa_sc : this_asa_mc;
-            }
-            if ( this_asa >= max_asa )
-            {
-               // cout << QString( "'%1'\n" ).arg( residue );
-               exposed.insert( residue );
-            }
-         }               
-      }
-      for ( set < QString >::iterator it = exposed.begin();
-            it != exposed.end();
-            it++ )
-      {
-         cout << *it << endl;
-      }
-
-      QTreeWidgetItemIterator it( lv );
-      while ( (*it) ) 
-      {
-         QTreeWidgetItem *item = (*it);
-         if ( get_model_id( item ) == models[ i ] &&
-              exposed.count( QString( "%1~%2~%3" )
-                             .arg( get_residue_name( item ) )
-                             .arg( get_chain_id( item ).trimmed() )
-                             .arg( get_residue_number( item ) ) ) &&
-              ( !only_selected || is_selected( item ) ) )
-         {
-            result.insert( item );
-            cout << QString( "Adding Model %1 %2~%3~%4 to exposed\n" )
-               .arg( models[ i ] )
-               .arg( get_residue_name( item ) )
-               .arg( get_chain_id( item ) )
-               .arg( get_residue_number( item ) )
-               ;
-         }
-         ++it;
-      }
-   }
-# else
    QMessageBox::warning( this, windowTitle(),
                          us_tr( "NACCESS is not currently supported" ) );
-#endif
 
    return result;
 }
@@ -498,105 +385,18 @@ vector < QString > US_Hydrodyn_Pdb_Tool::get_models( QTreeWidget *lv )
 
 bool US_Hydrodyn_Pdb_Tool::naccess_run( QString /* pdb */ )
 {
-#if QT_VERSION < 0x040000
-   naccess_running = false;
-   naccess_last_pdb = pdb;
-   naccess_result_data.clear( );
-   QString prog = 
-      USglobal->config_list.system_dir + SLASH + "bin"
-#if defined(BIN64)
-      "64"
-#endif
-      + SLASH
-      + "naccess" 
-      ;
-
-   QString radii = 
-      USglobal->config_list.system_dir + SLASH + "bin"
-#if defined(BIN64)
-      "64"
-#endif
-      + SLASH
-      + "vdw.radii" 
-      ;
-
-   {
-      QFileInfo qfi(prog);
-      if ( !qfi.exists() )
-      {
-         editor_msg("red", QString("Naccess program '%1' does not exist\n").arg(prog));
-         return false;
-      }
-      if ( !qfi.isExecutable() )
-      {
-         editor_msg("red", QString("Naccess program '%1' is not executable\n").arg(prog));
-         return false;
-      }
-   }
-
-   {
-      QFileInfo qfi(radii);
-      if ( !qfi.exists() )
-      {
-         editor_msg("red", QString("Naccess support file '%1' does not exist\n").arg(radii));
-         return false;
-      }
-   }
-
-   QFileInfo fi( pdb );
-   if ( !fi.exists() )
-   {
-      editor_msg("red", QString("Naccess called but PDB file '%1' does not exist\n").arg(pdb));
-      return false;
-   }
-
-   naccess = new QProcess( this );
-   //   naccess->setWorkingDirectory( dir );
-   naccess->addArgument( prog );
-   naccess->addArgument( pdb );
-   naccess->addArgument( "-p" );
-   naccess->addArgument( QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.probe_radius ) );
-   // naccess->addArgument( "-z" );
-   // naccess->addArgument( QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.asab1_step ) );
-   
-   connect( naccess, SIGNAL(readyReadStandardOutput()), this, SLOT(naccess_readFromStdout()) );
-   connect( naccess, SIGNAL(readyReadStandardError()), this, SLOT(naccess_readFromStderr()) );
-   connect( naccess, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(naccess_finished( int, QProcess::ExitStatus )) );
-   connect( naccess, SIGNAL(started()), this, SLOT(naccess_started()) );
-
-   editor->append("\n\nStarting Naccess\n");
-   naccess->start();
-   naccess_running = true;
-
-   return true;
-#else
    return false;
-#endif
 }
 
 void US_Hydrodyn_Pdb_Tool::naccess_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( naccess->canReadLineStdout() )
-   {
-      editor_msg("brown", naccess->readLineStdout() + "\n");
-   }
-#else
    editor_msg( "brown", QString( naccess->readAllStandardOutput() ) );
-#endif   
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn_Pdb_Tool::naccess_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( naccess->canReadLineStderr() )
-   {
-      editor_msg("red", naccess->readLineStderr() + "\n");
-   }
-#else
    editor_msg( "red", QString( naccess->readAllStandardError() ) );
-#endif   
    //  qApp->processEvents();
 }
    
@@ -740,18 +540,6 @@ void US_Hydrodyn_Pdb_Tool::select_residues_with_atoms_selected( QTreeWidget *lv 
       if ( !item->isSelected() &&
            US_Static::lvi_depth( item ) == 2 )
       {
-#if QT_VERSION < 0x040000
-         QTreeWidgetItem *myChild = item->firstChild();
-         while ( myChild )
-         {
-            if ( myChild->isSelected() )
-            {
-               item->setSelected( true );
-               break;
-            }
-            myChild = myChild->nextSibling();
-         }
-#else
          {
             int children = item->childCount();
             if ( children ) { 
@@ -765,7 +553,6 @@ void US_Hydrodyn_Pdb_Tool::select_residues_with_atoms_selected( QTreeWidget *lv 
                }
             }
          }
-#endif
       }
       ++it;
    }

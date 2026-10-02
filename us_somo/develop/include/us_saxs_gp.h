@@ -12,9 +12,6 @@
 //  all sphere sizes discretize to this
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 extern  map < QString, double > sgp_params;
@@ -117,9 +114,6 @@ public:
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

@@ -42,9 +42,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Config_Server : public QDialog
       QLabel        *lbl_title;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
       vector < QLabel    *> lbls;
@@ -54,9 +51,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Config_Server : public QDialog
       map < QString, QString > our_system_map;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
       QPushButton   *pb_save_config;

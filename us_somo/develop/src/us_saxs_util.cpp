@@ -4070,11 +4070,7 @@ bool US_Saxs_Util::wiki(QString &result)
 
       QString this_data_line = 
          QString(
-#if QT_VERSION < 0x040000
-                 "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
-#else
                  "|| %1 || %2 || %3 || %4 || %5 || %6 || %7 || %8 || %9 || %10 || %11 || %12 || %13 || %14 || %15 || %16 || %17 || %18 ||\n"
-#endif
                  )
          .arg(saxs_conc_names[i])
          .arg(wave_types[saxs_conc_names[i]])
@@ -4529,19 +4525,11 @@ bool US_Saxs_Util::wiki(QString &result)
 
                   result += 
                      QString(
-#if QT_VERSION < 0x040000
-                             "=== Sample SAXS %1 WAXS %1 ===\n"
-                             "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || alpha || beta || constant || nrmsd || fit comments ||\n"
-                             "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || || || || || ||\n"
-                             "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || || || || || ||\n"
-                             "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
-#else
                              "=== Sample SAXS %1 WAXS %2 ===\n"
                              "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || alpha || beta || constant || nrmsd || fit comments ||\n"
                              "|| %3 || %4 || %5 || %6 || %7 || %8 || %9 || || || || || ||\n"
                              "|| %10 || %11 || %12 || %13 || %14 || %15 || %16 || || || || || ||\n"
                              "|| %17 || %18 || %19 || %20 || %21 || %22 || %23 || %24 || %25 || %26 || %27 || %28 ||\n"
-#endif
                              )
                      .arg(wave_names_vector[i])
                      .arg(wave_names_vector[j])
@@ -4790,11 +4778,7 @@ bool US_Saxs_Util::wiki(QString &result)
             
             QString this_data_line = 
                QString(
-#if QT_VERSION < 0x040000
-                       "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
-#else
                        "|| %1 || %2 || %3 || %4 || %5 || %6 || %7 || %8 || %9 || %10 || %11 || %12 || %13 || %14 || %15 || %16 || %17 || %18 ||\n"
-#endif
                        )
                .arg(saxs_conc_names[i])
                .arg(wave_types[saxs_conc_names[i]])
@@ -4976,11 +4960,7 @@ bool US_Saxs_Util::wiki(QString &result)
             
             QString this_data_line = 
                QString(
-#if QT_VERSION < 0x040000
-                       "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
-#else
                        "|| %1 || %2 || %3 || %4 || %5 || %6 || %7 || %8 || %9 || %10 || %11 || %12 || %13 || %14 || %15 || %16 || %17 || %18 ||\n"
-#endif
                        )
                .arg(saxs_conc_names[i])
                .arg(wave_types[saxs_conc_names[i]])
@@ -5707,13 +5687,8 @@ bool US_Saxs_Util::run_gnom(
 
       QString cmd = 
          QString(
-#if QT_VERSION < 0x040000
-                 "mkgnom.pl %1 %1%1_gnom_ %1 %1 %1 %1 %1 %1\n"
-                 "mv %1%1%1*.png %1%1\n"
-#else
                  "mkgnom.pl %1 %2%3_gnom_ %4 %5 %6 %7 %8 %9\n"
                  "mv %10%11%12*.png %13%14\n"
-#endif
                  )
          .arg(dir)
          .arg(prefix)

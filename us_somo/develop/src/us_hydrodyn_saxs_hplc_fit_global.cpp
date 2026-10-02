@@ -639,49 +639,22 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    ((QWidget *)plot_test->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_test->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_test( const QPoint & ) ) );
    ((QWidget *)plot_test->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   // plot_test->enableOutline(true);
-   // plot_test->setOutlinePen(Qt::white);
-   // plot_test->setOutlineStyle(Qwt::VLine);
-   plot_test->enableGridXMin();
-   plot_test->enableGridYMin();
-#else
    grid_test = new QwtPlotGrid;
    grid_test->enableXMin( true );
    grid_test->enableYMin( true );
-#endif
    plot_test->setPalette( PALET_NORMAL );
    AUTFBACK( plot_test );
-#if QT_VERSION < 0x040000
-   plot_test->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_test->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_test->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_test->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_test->attach( plot_test );
-#endif
    plot_test->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_test->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#if QT_VERSION < 0x040000
-   plot_test->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_test->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_test->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_test->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_test->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_test->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_test->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_test->setMargin(USglobal->config_list.margin);
    plot_test->setTitle("");
-#if QT_VERSION < 0x040000
-   plot_test->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
    plot_test->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    plot_test->setCanvasBackground(USglobal->global_colors.plot);
    plot_test->hide();
 
@@ -2959,14 +2932,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test_mode()
       plot_test_zoomer      = (ScrollZoomer *) 0;
    }
 
-#if QT_VERSION >= 0x040000
    test_curve = new QwtPlotCurve( "test" );
    test_curve->setStyle( QwtPlotCurve::Lines );
    test_curve->attach( plot_test );
-#else
-   test_curve = plot_test->insertCurve( "test" );
-   plot_test->setCurveStyle( test_curve, QwtCurve::Lines );
-#endif
 
    plot_test->show();
 
@@ -3025,14 +2993,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
    vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
    vector < double > t = hplc_win->unified_ggaussian_t;
 
-#if QT_VERSION < 0x040000
-   plot_test->setCurveData( test_curve, 
-                            (double *)&( t[ 0 ] ),
-                            (double *)&( gsum[ 0 ] ),
-                            t.size()
-                            );
-   plot_test->setCurvePen( test_curve, QPen( Qt::green, 1, Qt::SolidLine ) );
-#else
    test_curve->setSamples(
                        (double *)&( t[ 0 ] ),
                        (double *)&( gsum[ 0 ] ),
@@ -3040,7 +3000,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
                        );
 
    test_curve->setPen( QPen( Qt::green, 1, Qt::SolidLine ) );
-#endif
 
    double miny = gsum[ 0 ];
    double maxy = gsum[ 0 ];

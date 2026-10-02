@@ -23,24 +23,16 @@
 #include "us3i_plot.h"
 #include <qwt_thermo.h>
 
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
-#else
-#  include "qwt/scrollbar.h"
-#  include "qwt/scrollzoomer.h"
-#endif
 
 #include "us_mqt.h"
 
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-     #pragma warning ( disable: 4251 )
-# endif
 #endif      
 
 class uhs_index_pair {
@@ -166,9 +158,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 
    private:
       ScrollZoomer  *plot_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_grid;
-#endif
 
       mQwtPlot      *plot_cluster;
       US_Plot       *usp_plot_cluster;
@@ -177,9 +167,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 
    private:
       ScrollZoomer  *plot_cluster_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_cluster_grid;
-#endif
 
       vector < vector < double > >            pvaluepairs;
       vector < vector < double > >            adjpvaluepairs;
@@ -233,9 +221,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

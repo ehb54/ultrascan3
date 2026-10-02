@@ -1054,7 +1054,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       bl->addWidget( lbl_editor );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
       bl->addWidget( frame );
 #endif
       bl->addWidget( editor );
@@ -2104,30 +2104,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::clean_selected()
 
 bool US_Hydrodyn_Saxs_Hplc_Svd::all_children_selected( QTreeWidgetItem *lvi )
 {
-#if QT_VERSION < 0x040000
-   if ( lvi->childCount() )
-   {
-      QTreeWidgetItem *myChild = lvi->firstChild();
-      while( myChild ) 
-      {
-         if ( myChild->childCount() )
-         {
-            if ( !all_children_selected( myChild ) )
-            {
-               return false;
-            }
-         } else {
-            if ( !is_selected( myChild ) )
-            {
-               return false;
-            }
-         }
-         myChild = myChild->nextSibling();
-      }
-   } else {
-      return lvi->isSelected();
-   }
-#else
    int children = lvi->childCount();
    if ( children ) { 
       for ( int i = 0; i < children; ++i ) {
@@ -2150,7 +2126,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::all_children_selected( QTreeWidgetItem *lvi )
    } else {
       return lvi->isSelected();
    }
-#endif
 
    return true;
 }
@@ -2415,12 +2390,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
          }
       }
 
-#if QT_VERSION < 0x040000
-      lvi = new QTreeWidgetItem( mode_i_of_t ? i_q_child : i_t_child, lvi, fname );
-#else
       lvi = new QTreeWidgetItem( mode_i_of_t ? i_q_child : i_t_child, lvi );
       lvi->setText( 0, fname );
-#endif      
    
       f_pos       [ fname ] = f_qs.size();
       f_qs_string [ fname ] = t_qs;
@@ -3302,12 +3273,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    if ( svd_F_nonzero )
    {
-#if QT_VERSION < 0x040000
-      lvinext = new QTreeWidgetItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
-#else
       lvinext = new QTreeWidgetItem( lvi, evs );
       lvinext->setText( 0, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
-#endif
       last_recon_chi = sqrt( chi2 ) / ( n * m - 1e0 );
       // new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
    }      
@@ -3541,20 +3508,12 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
       }
    }
 
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ), name );
-
-   // copy over I(q), ignore SVs, rmsd since these are not computed
-
-   QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ), mode_i_of_t ? "I(t)" : "I(q)" );
-#else
    QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ) );
    lvi->setText( 0, name );
    // copy over I(q), ignore SVs, rmsd since these are not computed
 
    QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ) );
    iqs->setText( 0, mode_i_of_t ? "I(t)" : "I(q)" );
-#endif
 
    QString head = hplc_win->qstring_common_head( files, true );
    QString tag  = head;
@@ -3583,12 +3542,8 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
    for ( int i = 0; i < (int)files.size(); ++i )
    {
       QString this_name = tag + last_svd_data[ i ].mid( head.length(), files[ i ].length() - head.length() );
-#if QT_VERSION < 0x040000
-      lvinext = new QTreeWidgetItem( iqs, lvinext, this_name );
-#else
       lvinext = new QTreeWidgetItem( iqs, lvinext );
       lvinext->setText( 0, this_name );
-#endif
       result << this_name;
       
       f_pos      [ this_name ] = f_pos.size();
