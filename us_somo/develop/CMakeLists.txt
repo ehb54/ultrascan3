@@ -177,23 +177,34 @@ endif()
 # so both must exist before compilation. Both need git, and both rewrite their
 # header only when its contents change.
 # On main both scripts are tracked and the headers are untracked build output.
-# somo-dev instead commits both headers and has dropped revision.sh, so a script
-# runs only when it is present; otherwise the committed header is used as is.
+# somo-dev instead commits both headers (and has dropped revision.sh). A build
+# must not rewrite a tracked file, so a committed header is used as is, and a
+# script runs only for a header git does not track.
 # TODO: these write into the SOURCE tree and shell out to git — prefer a
 # CMake-native generator writing into ${CMAKE_CURRENT_BINARY_DIR} (see
 # admin/cmake/GenerateVersion.cmake).
 get_filename_component(SOMO_REPO_ROOT "${SOMO_ROOT}/../.." ABSOLUTE)
+find_package(Git QUIET)
 set(SOMO_GENHEADER_COMMANDS "")
 set(SOMO_GENHEADER_BYPRODUCTS "")
 foreach(kind version revision)
-    if(EXISTS ${SOMO_ROOT}/${kind}.sh)
+    set(_hdr include/us_${kind}.h)
+    set(_rc 1)
+    if(GIT_FOUND)
+        execute_process(COMMAND ${GIT_EXECUTABLE} ls-files --error-unmatch ${_hdr}
+                        WORKING_DIRECTORY ${SOMO_ROOT}
+                        RESULT_VARIABLE _rc OUTPUT_QUIET ERROR_QUIET)
+    endif()
+    if(_rc EQUAL 0)
+        message(STATUS "SOMO: using the committed ${_hdr}")
+    elseif(EXISTS ${SOMO_ROOT}/${kind}.sh)
         list(APPEND SOMO_GENHEADER_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh ${kind}.sh)
-        list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/include/us_${kind}.h)
-    elseif(EXISTS ${SOMO_ROOT}/include/us_${kind}.h)
-        message(STATUS "SOMO: no ${kind}.sh; using the committed include/us_${kind}.h")
+        list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/${_hdr})
+    elseif(EXISTS ${SOMO_ROOT}/${_hdr})
+        message(STATUS "SOMO: no ${kind}.sh; using the existing ${_hdr}")
     else()
-        message(FATAL_ERROR "SOMO: neither ${kind}.sh nor include/us_${kind}.h exists")
+        message(FATAL_ERROR "SOMO: neither ${kind}.sh nor ${_hdr} exists")
     endif()
 endforeach()
 if(SOMO_GENHEADER_COMMANDS)
