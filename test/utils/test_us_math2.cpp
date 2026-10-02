@@ -637,7 +637,7 @@ TEST_F(TestUSMath2Unit, NnlsAbortFlagStopsWithFeasibleSolution) {
     double bvec[ 4 ]  = { 1.0, 2.0, 3.0, 4.0 };
     double xvec[ 3 ]  = { -1.0, -1.0, -1.0 };
     double rnorm      = -1.0;
-    std::atomic<bool>   abort_flag = true;
+    std::atomic<bool>   abort_flag{ true };
 
     int ret = US_Math2::nnls( amat, 4, 4, 3, bvec, xvec, &rnorm,
                               NULL, NULL, NULL, 0, &abort_flag );
