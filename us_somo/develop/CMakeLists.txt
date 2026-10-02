@@ -1,5 +1,5 @@
 # =============================================================================
-# us_somo / US-SOMO  —  CMake build  (SKELETON — not yet buildable end-to-end)
+# us_somo / US-SOMO  —  CMake build
 # =============================================================================
 # Builds the SOMO hydrodynamics / SAXS suite. Two classes of application:
 #   GUI apps — a single main.cpp that LINKS libus_somo (+ qwt):
@@ -31,9 +31,13 @@
 # repo-root overlay-ports (qwt / qwtplot3d / qt5-multimedia) and the same
 # builtin-baseline as the root. It has qt5 (default) and qt6 features — select
 # Qt6 with: --x-feature=qt6 (or -DVCPKG_MANIFEST_FEATURES=qt6 -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON).
-# When built from the root instead, the root vcpkg.json (qt5-* / qt6-app
+# When built from the root instead, the root vcpkg.json (qt5-app / qt6-app
 # features) already provides every dep SOMO needs, and this manifest is simply
 # ignored (vcpkg reads the manifest at the top-level source).
+#
+# SOURCE LISTS come from the qmake files at configure time (libus_somo.pro and
+# each app's .pro, via cmake/SomoQmakeSources.cmake), so qmake and CMake build
+# the same files on every branch while both build systems are in use.
 # =============================================================================
 
 # --- standalone bootstrap (skipped when included via add_subdirectory) --------
@@ -98,16 +102,37 @@ endif()
 
 # --- dependencies (all third-party) ------------------------------------------
 # Qt5 AND Qt6: PR #335 made the SOMO code compatible with both; CI/CodeQL test
-# both, and the qmake build is Qt5 today with a planned move to Qt6. Use the
-# version-agnostic idiom so this follows whichever Qt the (GUI) build selects,
-# and link Qt${QT_VERSION_MAJOR}::... throughout.
+# both, and the qmake build is Qt5 today with a planned move to Qt6. Link
+# Qt${QT_VERSION_MAJOR}::... throughout, with the major version chosen as:
+#   - root build: the root's choice (it sets QT_VERSION_MAJOR from USE_QT6).
+#     Re-detecting here could pick the other Qt when both are installed, and
+#     SOMO would then build against a different Qt than the rest of UltraScan.
+#   - standalone with -DUSE_QT6=ON|OFF: as asked.
+#   - standalone otherwise: Qt6 if it has every component SOMO needs, else Qt5.
+#     (A bare Qt6 qtbase is not enough: vcpkg's Qt5 builds install one as the
+#     host tool that builds qwt.)
 # NOTE: Multimedia is required (sounds/). The root manifest's qt5-app/qt6-app
 # features include qt5-multimedia / qtmultimedia, and the standalone vcpkg.json
 # provides both via its qt5 / qt6 features.
 # TODO(Qt6): QtOpenGL split in Qt6 — if the code uses QOpenGLWidget, add the
 # OpenGLWidgets component for QT_VERSION_MAJOR==6.
 set(SOMO_QT_COMPONENTS Core Gui Widgets Network Xml Svg PrintSupport OpenGL Concurrent Multimedia)
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+if(NOT SOMO_STANDALONE AND DEFINED QT_VERSION_MAJOR)
+    # root build: keep the root's QT_VERSION_MAJOR
+elseif(DEFINED USE_QT6)
+    if(USE_QT6)
+        set(QT_VERSION_MAJOR 6)
+    else()
+        set(QT_VERSION_MAJOR 5)
+    endif()
+else()
+    find_package(Qt6 QUIET COMPONENTS ${SOMO_QT_COMPONENTS})
+    if(Qt6_FOUND)
+        set(QT_VERSION_MAJOR 6)
+    else()
+        set(QT_VERSION_MAJOR 5)
+    endif()
+endif()
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${SOMO_QT_COMPONENTS})
 message(STATUS "SOMO: building against Qt${QT_VERSION_MAJOR} (${Qt${QT_VERSION_MAJOR}_VERSION})")
 find_package(OpenGL REQUIRED)
@@ -149,27 +174,50 @@ endif()
 #   version.sh  -> include/us_version.h   (needs $us3      = repo root; reads utils/us_defines.h)
 #   revision.sh -> include/us_revision.h  (needs $ULTRASCAN = repo root; git log)
 # us_config.cpp includes us_version.h, and many src/ files include us_revision.h,
-# so both must exist before compilation. Both need git.
+# so both must exist before compilation. Both need git, and both rewrite their
+# header only when its contents change.
+# On main both scripts are tracked and the headers are untracked build output.
+# somo-dev instead commits both headers and has dropped revision.sh, so a script
+# runs only when it is present; otherwise the committed header is used as is.
 # TODO: these write into the SOURCE tree and shell out to git — prefer a
 # CMake-native generator writing into ${CMAKE_CURRENT_BINARY_DIR} (see
-# admin/cmake/GenerateVersion.cmake). Generated headers are gitignored.
+# admin/cmake/GenerateVersion.cmake).
 get_filename_component(SOMO_REPO_ROOT "${SOMO_ROOT}/../.." ABSOLUTE)
-add_custom_target(us_somo_genheaders ALL
-    COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh version.sh
-    COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh revision.sh
-    WORKING_DIRECTORY ${SOMO_ROOT}
-    BYPRODUCTS ${SOMO_ROOT}/include/us_version.h ${SOMO_ROOT}/include/us_revision.h
-    COMMENT "Generating SOMO us_version.h / us_revision.h")
+set(SOMO_GENHEADER_COMMANDS "")
+set(SOMO_GENHEADER_BYPRODUCTS "")
+foreach(kind version revision)
+    if(EXISTS ${SOMO_ROOT}/${kind}.sh)
+        list(APPEND SOMO_GENHEADER_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh ${kind}.sh)
+        list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/include/us_${kind}.h)
+    elseif(EXISTS ${SOMO_ROOT}/include/us_${kind}.h)
+        message(STATUS "SOMO: no ${kind}.sh; using the committed include/us_${kind}.h")
+    else()
+        message(FATAL_ERROR "SOMO: neither ${kind}.sh nor include/us_${kind}.h exists")
+    endif()
+endforeach()
+if(SOMO_GENHEADER_COMMANDS)
+    add_custom_target(us_somo_genheaders ALL
+        ${SOMO_GENHEADER_COMMANDS}
+        WORKING_DIRECTORY ${SOMO_ROOT}
+        BYPRODUCTS ${SOMO_GENHEADER_BYPRODUCTS}
+        COMMENT "Generating SOMO version headers")
+else()
+    add_custom_target(us_somo_genheaders)   # nothing to generate
+endif()
 
 # --- the library: libus_somo -------------------------------------------------
-# AUTHORITATIVE source/header lists, extracted from libus_somo.pro (SOURCES /
-# HEADERS) into somo_lib_sources.cmake — NOT a glob of src/*.cpp. Globbing is
-# wrong here: several src/ TUs are app-specific and must not be in the lib, and
-# the lib also pulls in shd_mpi/shs_use.cpp. Regenerate the .cmake from the .pro
-# if the source set changes. Apps are thin main() wrappers that link this lib.
-include(${SOMO_ROOT}/somo_lib_sources.cmake)   # -> SOMO_LIB_SOURCES / SOMO_LIB_HEADERS (paths relative to develop/)
-list(TRANSFORM SOMO_LIB_SOURCES PREPEND "${SOMO_ROOT}/")
-list(TRANSFORM SOMO_LIB_HEADERS PREPEND "${SOMO_ROOT}/")
+# Source/header lists are libus_somo.pro's SOURCES / HEADERS, read at configure
+# time — NOT a glob of src/*.cpp. Globbing is wrong here: several src/ TUs are
+# app-specific and must not be in the lib, and the lib also pulls in
+# shd_mpi/shs_use.cpp. The .pro lists the generated us_revision.h, which
+# us_somo_genheaders produces, so it is left out here.
+include(${SOMO_ROOT}/cmake/SomoQmakeSources.cmake)
+somo_qmake_sources(${SOMO_ROOT}/libus_somo.pro SOMO_LIB_SOURCES SOMO_LIB_HEADERS
+    EXCLUDE "/include/us_(revision|version)\\.h$")
+list(LENGTH SOMO_LIB_SOURCES _n_src)
+list(LENGTH SOMO_LIB_HEADERS _n_hdr)
+message(STATUS "SOMO: libus_somo.pro lists ${_n_src} sources, ${_n_hdr} headers")
 
 add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
 add_dependencies(us_somo us_somo_genheaders)
@@ -186,7 +234,9 @@ set_source_files_properties(
     ${SOMO_ROOT}/src/qwt/scrollzoomer.cpp
     PROPERTIES SKIP_AUTOMOC ON)
 
-target_include_directories(us_somo PUBLIC ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_QWT_INCLUDE_DIR})
+# grpy/ is the header-only GRPY driver module (libus_somo.pro: INCLUDEPATH += $$PWD/grpy)
+target_include_directories(us_somo PUBLIC
+    ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/grpy ${SOMO_QWT_INCLUDE_DIR})
 
 target_compile_definitions(us_somo PUBLIC NO_DB THREAD NO_EDITOR_PRINT)
 if(UNIX AND NOT APPLE)
@@ -235,25 +285,23 @@ endif()
 #   2) Standalone command-line / MPI tools (include cmdline.pri): main.cpp plus
 #      a CURATED subset of ../src/*.cpp compiled DIRECTLY into the executable.
 #      They do NOT link libus_somo and do NOT link qwt (confirmed by ldd of the
-#      deployed us_saxs_cmds_t). Their exact source subsets live in
-#      somo_app_sources.cmake, extracted from each tool's own .pro.
+#      deployed us_saxs_cmds_t).
+# Each app's sources are read from its own .pro (which pulls main.cpp in from
+# generic.pri / cmdline.pri), the same way as the library's.
 # =============================================================================
-include(${SOMO_ROOT}/somo_app_sources.cmake)   # -> SOMO_TOOL_<name>_SOURCES / _HEADERS
 
 # GUI app: main.cpp + link libus_somo (generic.pri: SOURCES=main.cpp, -lus_somo -lqwt)
-function(somo_add_gui_app tgt subdir)
-    add_executable(${tgt} ${SOMO_ROOT}/${subdir}/main.cpp)
+function(somo_add_gui_app tgt pro)
+    somo_qmake_sources(${SOMO_ROOT}/${pro} _srcs _hdrs)
+    add_executable(${tgt} ${_srcs} ${_hdrs})
     target_link_libraries(${tgt} PRIVATE us_somo)
     target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
     add_dependencies(${tgt} us_somo_genheaders)
 endfunction()
 
-# Standalone tool: explicit ../src subset, no libus_somo, no qwt (cmdline.pri).
+# Standalone tool: its .pro's ../src subset, no libus_somo, no qwt (cmdline.pri).
 function(somo_add_tool tgt)
-    set(_srcs ${SOMO_TOOL_${tgt}_SOURCES})
-    set(_hdrs ${SOMO_TOOL_${tgt}_HEADERS})
-    list(TRANSFORM _srcs PREPEND "${SOMO_ROOT}/")
-    list(TRANSFORM _hdrs PREPEND "${SOMO_ROOT}/")
+    somo_qmake_sources(${SOMO_ROOT}/${tgt}/${tgt}.pro _srcs _hdrs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
     # Tools compile SOMO headers that #include <qwt_*.h> (the qwt code paths are
     # compiled out under -DCMDLINE, so no qwt LINK is needed — matching the qmake
@@ -274,9 +322,9 @@ function(somo_add_tool tgt)
 endfunction()
 
 # --- GUI applications --------------------------------------------------------
-somo_add_gui_app(us3_somo   us3_hydrodyn)     # main GUI -> us3_somo binary
-somo_add_gui_app(us_admin   us_admin)
-somo_add_gui_app(us3_config us3_config)
+somo_add_gui_app(us3_somo   us3_hydrodyn/us3_hydrodyn.pro)   # main GUI -> us3_somo binary
+somo_add_gui_app(us_admin   us_admin/us_admin.pro)
+somo_add_gui_app(us3_config us3_config/us3_config.pro)
 
 # --- standalone tools --------------------------------------------------------
 somo_add_tool(us_saxs_cmds_t)                 # non-MPI SAXS command-line tool
@@ -290,18 +338,17 @@ set(SOMO_INSTALL_TARGETS
 if(SOMO_ENABLE_MPI)
     find_package(MPI REQUIRED CXX)
 
+    # USE_MPI is the code's MPI guard (DEFINES += USE_MPI in both MPI .pro files)
     somo_add_tool(us_saxs_cmds_mpi)
     target_link_libraries(us_saxs_cmds_mpi PRIVATE MPI::MPI_CXX)
-    # TODO: MPI flags come from a custom qmake mkspec in the qmake build, not the
-    # .pro — confirm whether a project-specific MPI guard define is also needed.
-    target_compile_definitions(us_saxs_cmds_mpi PRIVATE OMPI_SKIP_MPICXX)
+    target_compile_definitions(us_saxs_cmds_mpi PRIVATE USE_MPI OMPI_SKIP_MPICXX)
     target_include_directories(us_saxs_cmds_mpi PRIVATE ${MPI_CXX_INCLUDE_DIRS})
     list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_mpi)
 
     if(SOMO_ENABLE_CUDA)
         somo_add_tool(us_saxs_cmds_mpi_cuda)
         target_link_libraries(us_saxs_cmds_mpi_cuda PRIVATE MPI::MPI_CXX)
-        target_compile_definitions(us_saxs_cmds_mpi_cuda PRIVATE OMPI_SKIP_MPICXX CUDA)
+        target_compile_definitions(us_saxs_cmds_mpi_cuda PRIVATE USE_MPI OMPI_SKIP_MPICXX CUDA)
         target_include_directories(us_saxs_cmds_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_DIRS})
         list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_mpi_cuda)
     endif()
