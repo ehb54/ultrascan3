@@ -1017,7 +1017,7 @@ endif()
 # Qwt), so it is incompatible with the headless HPC profile. It vendors its own
 # utils fork and is otherwise self-contained; the forwarder us_somo/CMakeLists.txt
 # delegates to us_somo/develop. Requires an APP feature that provides
-# qt5-multimedia/qtmultimedia + qwt + qwtplot3d (qt5-app / qt6-app).
+# qt5-multimedia/qtmultimedia + qwt (qt5-app / qt6-app).
 if(US3_BUILD_SOMO AND NOT US3_PROFILE STREQUAL "HPC")
     add_subdirectory(us_somo)
 endif()

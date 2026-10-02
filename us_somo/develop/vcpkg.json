@@ -16,8 +16,7 @@
         "qt5-base",
         "qt5-svg",
         "qt5-multimedia",
-        "qwt-6-3-0-qt5",
-        "qwtplot3d-qwt-6-3-0-qt5"
+        "qwt-6-3-0-qt5"
       ]
     },
     "qt6": {
@@ -26,8 +25,7 @@
         "qtbase",
         "qtsvg",
         "qtmultimedia",
-        "qwt-6-3-0-qt6",
-        "qwtplot3d-qwt-6-3-0-qt6"
+        "qwt-6-3-0-qt6"
       ]
     }
   }

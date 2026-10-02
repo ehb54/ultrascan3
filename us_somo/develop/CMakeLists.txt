@@ -18,9 +18,9 @@
 #
 # KEY FACT (verified): SOMO is SELF-CONTAINED. It VENDORS its own fork of the
 # us_utils sources (src/us_math.cpp, us_matrix.cpp, us_saxs_util*.cpp, ...) and
-# does NOT link UltraScan3::Utils. Its only couplings are third-party: Qt5,
-# Qwt, QwtPlot3D, OpenGL, zlib, OpenSSL. Runtime ldd of the deployed us3_somo
-# confirms: libus_somo.so.10 + qwt + Qt + system libs, no libus_utils.so.
+# does NOT link UltraScan3::Utils. Its only couplings are third-party: Qt5/Qt6,
+# Qwt, OpenGL, zlib, OpenSSL. Runtime ldd of the deployed us3_somo confirms:
+# libus_somo.so.10 + qwt + Qt + system libs, no libus_utils.so.
 #
 # DUAL-MODE: this file configures standalone
 #     cmake -S us_somo/develop -B build --toolchain <vcpkg>/scripts/buildsystems/vcpkg.cmake
@@ -28,7 +28,7 @@
 #
 # In standalone mode the third-party deps come from this directory's own
 # vcpkg.json (+ vcpkg-configuration.json), a minimal manifest that reuses the
-# repo-root overlay-ports (qwt / qwtplot3d / qt5-multimedia) and the same
+# repo-root overlay-ports (qwt / qt5-multimedia) and the same
 # builtin-baseline as the root. It has qt5 (default) and qt6 features — select
 # Qt6 with: --x-feature=qt6 (or -DVCPKG_MANIFEST_FEATURES=qt6 -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON).
 # When built from the root instead, the root vcpkg.json (qt5-app / qt6-app
@@ -161,13 +161,9 @@ if(NOT SOMO_QWT_INCLUDE_DIR)
 endif()
 message(STATUS "SOMO: qwt headers at ${SOMO_QWT_INCLUDE_DIR}")
 
-# QwtPlot3D — SOMO carries its own 3dplot/ tree.
-# TODO: decide between (a) reusing root qwtplot3d::qwtplot3d, or
-#       (b) add_subdirectory(3dplot) for the SOMO-local copy.
-if(NOT TARGET qwtplot3d::qwtplot3d)
-    # add_subdirectory(3dplot)   # TODO: provide 3dplot/CMakeLists.txt
-    message(WARNING "SOMO: no qwtplot3d::qwtplot3d target yet (3dplot TODO)")
-endif()
+# No QwtPlot3D: no SOMO source includes a qwt3d header, and the 3dplot/ entries
+# in libus_somo.pro are commented out, so neither the SOMO-local 3dplot/ tree
+# nor the root's qwtplot3d::qwtplot3d is linked (nor was it under qmake).
 
 # --- generated version headers -----------------------------------------------
 # SOMO generates two headers via shell scripts (as in the qmake build):
@@ -251,9 +247,6 @@ target_link_libraries(us_somo PUBLIC
     Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
     Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
     Qwt::Qwt OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
-if(TARGET qwtplot3d::qwtplot3d)
-    target_link_libraries(us_somo PUBLIC qwtplot3d::qwtplot3d)
-endif()
 if(UNIX AND NOT APPLE)
     target_link_libraries(us_somo PUBLIC GLU)   # TODO: find_library(GLU) for robustness
 endif()
