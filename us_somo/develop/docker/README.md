@@ -9,28 +9,36 @@ all of UltraScan and install the distro Qt/qwt).
 ## Usage
 
 ```sh
-# 1. Build the environment image (once; ~3 min)
+# 1. Build the environment image (once; a few minutes)
 docker build -t somo-cmake-env us_somo/develop/docker
 
-# 2. Configure + build SOMO (bind-mounts the repo; first run ~40 min while
-#    vcpkg builds Qt, then minutes thanks to the cached binary volume)
-us_somo/develop/docker/build.sh qt5     # Qt5 (default)
-us_somo/develop/docker/build.sh qt6     # Qt6 (selects the qt6 vcpkg feature)
+# 2. Configure + build (bind-mounts the repo)
+us_somo/develop/docker/build.sh qt5        # standalone SOMO, Qt5 (default)
+us_somo/develop/docker/build.sh qt6        # standalone SOMO, Qt6
+us_somo/develop/docker/build.sh root-qt5   # whole repo, linux-release-qt5 preset, US3_BUILD_SOMO=ON
+us_somo/develop/docker/build.sh root-qt6   # whole repo, linux-release-qt6 preset, US3_BUILD_SOMO=ON
 ```
 
-Artifacts land in `us_somo/develop/build-docker/<feature>/{bin,lib}` (gitignored).
-The vcpkg binary cache persists in the `somo-vcpkg-cache` docker volume, so
-re-runs and the qt5↔qt6 switch don't rebuild Qt from scratch.
+Standalone artifacts land in `us_somo/develop/build-docker/<mode>/{bin,lib}`,
+root builds in `build/linux-release-qt5|qt6/{bin,lib}` (both gitignored). The
+root modes build only the SOMO targets.
+
+The first build of each Qt takes a long time while vcpkg compiles it; the
+binary cache in the `somo-vcpkg-cache` docker volume makes later builds, and
+other modes using the same Qt, restore it instead.
 
 ## Notes
 
-- `build.sh` picks the triplet from the container arch: `x64-linux-dynamic` on
-  amd64, `arm64-linux-dynamic` on arm64. Dynamic (not the default static
-  `x64-linux`) because SOMO needs shared Qt.
-- Parallelism defaults to all logical CPUs (`JOBS=` to override). The i9 host
-  reports 16 (hyperthreading). An Apple-Silicon (M1) host has fewer cores but is
-  much faster per core — build there natively (arm64 image, `arm64-linux-dynamic`)
-  rather than emulating amd64.
+- All modes use the root's vcpkg toolchain wrapper and overlay triplets
+  (`admin/cmake/toolchain.cmake`, `admin/cmake/triplets`), so SOMO is built the
+  way the rest of UltraScan is: the wrapper picks `arm64-linux` or
+  `x64-linux-dynamic` from the container's architecture (both dynamic and
+  release-only), installs host tools into the target tree, and keeps each
+  build's vcpkg packages in its own build directory.
+- Build natively for the host (an arm64 image on Apple Silicon) rather than
+  emulating amd64.
+- `JOBS=` overrides the parallelism (default: all logical CPUs). Lower it if
+  the Docker VM runs short of memory while compiling Qt.
 - The generated `include/us_version.h` / `include/us_revision.h` (from
   `version.sh` / `revision.sh`, which need git + the repo root) are produced by
   the `us_somo_genheaders` CMake target and are gitignored.

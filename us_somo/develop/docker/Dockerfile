@@ -20,7 +20,7 @@ FROM ubuntu:${UBUNTU}
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      build-essential g++ cmake ninja-build git \
+      build-essential g++ ninja-build git \
       curl zip unzip tar ca-certificates pkg-config \
       autoconf automake autoconf-archive libtool libtool-bin libltdl-dev \
       gettext autopoint perl bison flex gperf nasm \
@@ -37,6 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libfontconfig1-dev libfreetype6-dev libdbus-1-dev libglib2.0-dev \
       libasound2-dev libpulse-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# CMake from PyPI: the repo's CMakePresets.json (schema 4) needs >= 3.23, and
+# 22.04's apt cmake is 3.22. Stay on 3.x, which is what the presets target.
+RUN python3 -m pip install --no-cache-dir "cmake>=3.28,<4" && cmake --version
 
 # vcpkg — full clone so the manifest's pinned builtin-baseline resolves.
 ENV VCPKG_ROOT=/opt/vcpkg
