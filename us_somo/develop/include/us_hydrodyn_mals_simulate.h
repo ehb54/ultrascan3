@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include "us_uhshs_data.h"
 
 using namespace std;
 
@@ -26,25 +27,6 @@ using namespace std;
      #pragma warning ( disable: 4251 )
 # endif
 #endif      
-
-#ifndef UHSHS_DATA_STRUCT_DEFINED
-#define UHSHS_DATA_STRUCT_DEFINED
-struct uhshs_data {
-   QLabel     * lbl_name;
-
-   QLabel     * lbl_i_mult;
-   QLineEdit  * le_i_mult;
-
-   QLabel     * lbl_center;
-   QLineEdit  * le_center;
-
-   QLabel     * lbl_width;
-   QLineEdit  * le_width;
-
-   QCheckBox  * cb_alpha;
-   QLineEdit  * le_alpha;
-};
-#endif
 
 class US_EXTERN US_Hydrodyn_Mals_Simulate : public QFrame
 {
