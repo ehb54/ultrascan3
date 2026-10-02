@@ -30,7 +30,6 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
    bool signal_wanted ) : QObject(), data_sets( data_sets ),
    thrnrank( thrnrank ), signal_wanted( signal_wanted )
 {
-   abort        = false;     // Default: no abort
    dbg_level    = 0;         // Default: no debug prints
    dbg_timing   = false;     // Default: no debug timing prints
    banddthr     = false;     // Default: no bandform data_threshold
@@ -1246,6 +1245,11 @@ DbgLv(1)<<"subha_nnls_a size: " << nnls_a.size() << nscans << npoints << "nsolut
                   << nsolutes << narows;
       }
 
+      if ( nnlsrc == 2 )
+      {
+         DbgLv(0 ) << "CR: *WARNING* NNLS failed due to invalid dimensions, nsolutes dscans dpoints narows" << nsolutes << dscans << dpoints << narows;
+      }
+
       if ( abort ) return;
 
       if ( signal_wanted )
@@ -1689,7 +1693,7 @@ DebugTime("END:calcres");
 // Set abort flag
 void US_SolveSim::abort_work()
 {
-   abort = true;
+   abort.store( true, std::memory_order_relaxed );
 }
 
 // Remove noise means from the data rows of one vector (B or an A column):
@@ -1727,7 +1731,9 @@ static void remove_noise_means( double* vals, const int nscans, const int npoint
       double avgscale = 1.0 / (double)nscans;
 
       for ( int rr = 0; rr < npoints; rr++ )
-         v_bar[ rr ]    = 0.0;
+      {
+         v_bar[ rr ] = 0.0;
+      }
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -1765,7 +1771,7 @@ int US_SolveSim::nnls_noise( const int noisflag, const QVector< int >& nscans,
                              QVector< double >& nnls_x,
                              QVector< double >& tinvec,
                              QVector< double >& rinvec,
-                             const bool* abort_flag )
+                             const std::atomic<bool>* abort_flag )
 {
    const bool calc_ti  = ( ( noisflag & 1 ) != 0 );
    const bool calc_ri  = ( ( noisflag & 2 ) != 0 );
@@ -1795,12 +1801,22 @@ int US_SolveSim::nnls_noise( const int noisflag, const QVector< int >& nscans,
 
    for ( int ee = 0; ee < ndsets; ee++ )
    {
+      /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
+      if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+      {
+         return 3;
+      }
       remove_noise_means( nnls_b.data() + krow, nscans[ ee ], npoints[ ee ],
                           calc_ti, calc_ri, a_tilde.data() + kri,
                           a_bar.data() + kti );
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
+         /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
+         if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+         {
+            return 3;
+         }
          remove_noise_means( nnls_a.data() + static_cast<size_t>(cc) * narows + krow,
                              nscans[ ee ], npoints[ ee ], calc_ti, calc_ri,
                              L_tildes.data() + static_cast<size_t>(cc) * nrinois + kri,
@@ -1827,6 +1843,11 @@ int US_SolveSim::nnls_noise( const int noisflag, const QVector< int >& nscans,
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
+            /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
+            if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+            {
+               return 3;
+            }
             tinoi        -= nnls_x[ cc ] * lbars[ static_cast<size_t>(cc) * ntinois ];
          }
 
@@ -1843,6 +1864,11 @@ int US_SolveSim::nnls_noise( const int noisflag, const QVector< int >& nscans,
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
+            /* Quit, Return code doesn't matter since calling function also returns without reading anything*/
+            if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+            {
+               return 3;
+            }
             rinoi        -= nnls_x[ cc ] * ltils[ static_cast<size_t>(cc) * nrinois ];
          }
 

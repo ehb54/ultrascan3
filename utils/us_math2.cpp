@@ -877,7 +877,7 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                     double* zzp,
                     int*    indexp,
                     int     itmax,
-                    const bool* abort_flag
+                    const std::atomic<bool>* abort_flag
                   ) 
 {
 #ifdef _BF_NNLS_
@@ -961,7 +961,7 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
    while ( iz1 <= iz2 && nsetp < m )
    {
       /* Quit with the current (feasible) X if an abort was requested */
-      if ( abort_flag != nullptr  &&  *abort_flag )
+      if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
       {
          ret = 3;
          break;

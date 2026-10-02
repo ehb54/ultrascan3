@@ -270,7 +270,7 @@ class US_UTIL_EXTERN US_Math2
          double* zzp    = nullptr,
          int*    indexp = nullptr,
          int     itmax  = 0,
-         const bool* abort_flag = nullptr
+         const std::atomic<bool>* abort_flag = nullptr
          );
 
       /*! \brief Remove high frequency noise from a signal

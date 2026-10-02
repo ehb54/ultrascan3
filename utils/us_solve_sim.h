@@ -124,7 +124,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
                            QVector< double >& nnls_a, QVector< double >& nnls_b,
                            QVector< double >& nnls_x, QVector< double >& tinvec,
                            QVector< double >& rinvec,
-                           const bool* abort_flag = nullptr );
+                           const std::atomic<bool>* abort_flag = nullptr );
 
   public slots:
 
@@ -174,7 +174,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     int                noisflag;      // Calc-noise flag (0-3 for no|ti|ri|both)
     int                dbg_level;     // Debug level
     bool               dbg_timing;    // Flag whether to print timings
-    bool               abort;         // Flag to abort at next opportunity
+    std::atomic<bool>  abort{false};         // Flag to abort at next opportunity
     bool               calc_ti;       // Calculate-TI-noise flag
     bool               calc_ri;       // Calculate-RI-noise flag
     bool               banddthr;      // Band-forming data threshold peak enhance
