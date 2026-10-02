@@ -84,7 +84,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -296,7 +296,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 
    lb_dataEnd     = us_label(      tr( "Data End:" ), -1 );
 //QLineEdit*
@@ -353,44 +353,44 @@ pb_plateau->setVisible(false);
    le_bll_slope        -> setVisible( false );
    le_bll_intercept    -> setVisible( false );
 
-   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
-   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
-   connect( pb_investigator, SIGNAL( clicked() ),
-                             SLOT  ( sel_investigator()         ) );
-   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
-   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ),
-                             SLOT  ( new_triple_auto         ( int ) ) );
-   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
-   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
-   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
-   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
-   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
-   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+   connect( pb_excludeRange, &QAbstractButton::clicked, this, &US_Edit::exclude_range );
+   connect( pb_details,      &QAbstractButton::clicked, this, &US_Edit::details );
+   connect( pb_report,       &QAbstractButton::clicked, this, &US_Edit::view_report );
+   connect( pb_investigator, &QAbstractButton::clicked,
+                             this, &US_Edit::sel_investigator );
+   connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
+                             this, &US_Edit::new_triple_auto );
+   connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
+   connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
+   connect( pb_exclusion_click, &QAbstractButton::clicked, this, &US_Edit::toggle_exclusion_click_mode );
+   connect( pb_include,      &QAbstractButton::clicked, this, &US_Edit::include );
+   connect( pb_meniscus,     &QAbstractButton::clicked, this, &US_Edit::set_meniscus );
+   connect( pb_airGap,       &QAbstractButton::clicked, this, &US_Edit::set_airGap );
 //   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
 //   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
-   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
-   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
-                             SLOT  ( od_radius_limit( double ) ) );
-   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
-   connect( pb_residuals,    SIGNAL( clicked() ),
-                             SLOT  ( subtract_residuals() ) );
-   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
-   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes_auto() ) );
-   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
-   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo_auto()      ) );
-   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
-   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_dataEnd,      &QAbstractButton::clicked, this, &US_Edit::set_dataRange );
+   connect( ct_odlim,        &QwtCounter::valueChanged,
+                             this, &US_Edit::od_radius_limit );
+   connect( pb_noise,        &QAbstractButton::clicked, this, &US_Edit::noise );
+   connect( pb_residuals,    &QAbstractButton::clicked,
+                             this, &US_Edit::subtract_residuals );
+   connect( pb_invert,       &QAbstractButton::clicked, this, &US_Edit::invert_values );
+   connect( pb_spikes,       &QAbstractButton::clicked, this, &US_Edit::remove_spikes_auto );
+   connect( pb_priorEdits,   &QAbstractButton::clicked, this, &US_Edit::apply_prior );
+   connect( pb_undo,         &QAbstractButton::clicked, this, &US_Edit::undo_auto );
+   connect( pb_reviewep,     &QAbstractButton::clicked, this, &US_Edit::review_edits );
+   connect( pb_nexteqtr,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
 
-   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple_auto()   ) );
-   connect( pb_priorChan,    SIGNAL( clicked() ), SLOT( prior_triple_auto()  ) );
+   connect( pb_nextChan,     &QAbstractButton::clicked, this, &US_Edit::next_triple_auto );
+   connect( pb_priorChan,    &QAbstractButton::clicked, this, &US_Edit::prior_triple_auto );
 
-   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
-   connect( pb_write,        SIGNAL( clicked() ), SLOT( write_auto()  ) );
-   connect( pb_emanual,      SIGNAL( clicked() ), SLOT( manual_edit_auto()  ) );
-   connect( pb_bll_modify,   SIGNAL( clicked() ), SLOT( correct_bll_for_triple_auto() ) );
+   connect( pb_float,        &QAbstractButton::clicked, this, &US_Edit::floating );
+   connect( pb_write,        &QAbstractButton::clicked, this, &US_Edit::write_auto );
+   connect( pb_emanual,      &QAbstractButton::clicked, this, &US_Edit::manual_edit_auto );
+   connect( pb_bll_modify,   &QAbstractButton::clicked, this, &US_Edit::correct_bll_for_triple_auto );
 
-   connect ( this, SIGNAL( process_next_optics () ), SLOT ( process_optics_auto () )  );
+   connect ( this, &US_Edit::process_next_optics, this, &US_Edit::process_optics_auto  );
 
    // Lay out specs widgets and layouts
    int s_row = 0;
@@ -531,10 +531,10 @@ pb_plateau->setVisible(false);
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
 
-   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
-   connect( pb_accept, SIGNAL( clicked()    ),
-            this,      SLOT  ( close_edit() ) );
+   connect( pb_reset,  &QAbstractButton::clicked, this, &US_Edit::reset );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_Edit::help );
+   connect( pb_accept, &QAbstractButton::clicked,
+            this,      &US_Edit::close_edit );
 
    buttons->addWidget( pb_reset );
    buttons->addWidget( pb_help );
@@ -862,6 +862,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = true;
    us_edit_auto_mode_manual_bll = false;
@@ -873,7 +876,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -888,7 +891,22 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   // Unlike the other US_Edit constructors, this one (Manual Edit) shows
+   // Scan Controls + Edit Controls + Linear Baseline Correction all at
+   // once, so its natural/minimum content width is larger. A QHBoxLayout
+   // distributes any *extra* space beyond each side's minimum according to
+   // the stretch factors below (2:3) regardless of whether a side actually
+   // needs it -- so leftWidget was being inflated well past its own
+   // content's requirements just because it had a nonzero stretch share.
+   // Capping its horizontal size policy at Maximum means it only ever
+   // takes what its content actually needs; every leftover pixel goes to
+   // the plot side instead, keeping this panel's left column comparable in
+   // width to the other US_Edit constructors.
+   leftWidget->setSizePolicy( QSizePolicy::Maximum, QSizePolicy::Preferred );
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -1079,7 +1097,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -1122,7 +1140,7 @@ pb_plateau->setVisible(false);
    le_bll_slope                = us_lineedit( "", 0, true );
    QLabel* lb_bll_intercept    = us_label(      tr( "Y-intercept:" ), -1 );
    le_bll_intercept            = us_lineedit( "", 0, true );
-   connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
+   connect( pb_baseline_correct, &QAbstractButton::clicked, this, &US_Edit::set_linear_baseline_corr );
 
    //Information field for baseline correction
    QTextEdit*     le_info;
@@ -1145,39 +1163,39 @@ pb_plateau->setVisible(false);
    le_info->setFont(le_info_font);
 
 
-   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
-   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
-   connect( pb_investigator, SIGNAL( clicked() ),
-                             SLOT  ( sel_investigator()         ) );
-   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
-   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ),
-                             SLOT  ( new_triple         ( int ) ) );
-   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
-   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
-   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
-   connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
+   connect( pb_excludeRange, &QAbstractButton::clicked, this, &US_Edit::exclude_range );
+   connect( pb_details,      &QAbstractButton::clicked, this, &US_Edit::details );
+   connect( pb_report,       &QAbstractButton::clicked, this, &US_Edit::view_report );
+   connect( pb_investigator, &QAbstractButton::clicked,
+                             this, &US_Edit::sel_investigator );
+   connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
+                             this, &US_Edit::new_triple );
+   connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
+   connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
+   connect( pb_exclusion_click, &QAbstractButton::clicked, this, &US_Edit::toggle_exclusion_click_mode );
+   connect( pb_removeAllbutLast,        &QAbstractButton::clicked, this, &US_Edit::exclude_all_but_last );
 
-   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
-   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
-   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+   connect( pb_include,      &QAbstractButton::clicked, this, &US_Edit::include );
+   connect( pb_meniscus,     &QAbstractButton::clicked, this, &US_Edit::set_meniscus );
+   connect( pb_airGap,       &QAbstractButton::clicked, this, &US_Edit::set_airGap );
 //   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
 //   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
-   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
-   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
-                             SLOT  ( od_radius_limit( double ) ) );
-   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
-   connect( pb_residuals,    SIGNAL( clicked() ),
-                             SLOT  ( subtract_residuals() ) );
-   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
-   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
-   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
-   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
-   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
-   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
-   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+   connect( pb_dataEnd,      &QAbstractButton::clicked, this, &US_Edit::set_dataRange );
+   connect( ct_odlim,        &QwtCounter::valueChanged,
+                             this, &US_Edit::od_radius_limit );
+   connect( pb_noise,        &QAbstractButton::clicked, this, &US_Edit::noise );
+   connect( pb_residuals,    &QAbstractButton::clicked,
+                             this, &US_Edit::subtract_residuals );
+   connect( pb_invert,       &QAbstractButton::clicked, this, &US_Edit::invert_values );
+   connect( pb_spikes,       &QAbstractButton::clicked, this, &US_Edit::remove_spikes );
+   connect( pb_priorEdits,   &QAbstractButton::clicked, this, &US_Edit::apply_prior );
+   connect( pb_undo,         &QAbstractButton::clicked, this, &US_Edit::undo );
+   connect( pb_reviewep,     &QAbstractButton::clicked, this, &US_Edit::review_edits );
+   connect( pb_nexteqtr,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
+   connect( pb_nextChan,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
+   connect( pb_float,        &QAbstractButton::clicked, this, &US_Edit::floating );
+   connect( pb_write,        &QAbstractButton::clicked, this, &US_Edit::write );
 
    // Lay out specs widgets and layouts
    int s_row = 0;
@@ -1298,9 +1316,9 @@ pb_plateau->setVisible(false);
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
    pb_pass    = us_pushbutton( tr( "Accept Changes for a Channel" ), false );
 
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close_manual_edit()  ) );
-   connect( pb_pass,   SIGNAL( clicked()    ),
-	    this,      SLOT  ( pass_values() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_Edit::close_manual_edit );
+   connect( pb_pass,   &QAbstractButton::clicked,
+	    this,      &US_Edit::pass_values );
 
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_pass );
@@ -1388,10 +1406,14 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
@@ -1457,6 +1479,9 @@ US_Edit::US_Edit( QVector< US_DataIO::RawData > allData, QStringList  triples,
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
    us_edit_auto_mode_manual_bll = true;
@@ -1468,7 +1493,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data Manually" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -1483,7 +1508,10 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -1674,7 +1702,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -1717,7 +1745,7 @@ pb_plateau->setVisible(false);
    le_bll_slope                = us_lineedit( "", 0, true );
    QLabel* lb_bll_intercept    = us_label(      tr( "Y-intercept:" ), -1 );
    le_bll_intercept            = us_lineedit( "", 0, true );
-   connect( pb_baseline_correct, SIGNAL( clicked() ), SLOT( set_linear_baseline_corr()  ) );
+   connect( pb_baseline_correct, &QAbstractButton::clicked, this, &US_Edit::set_linear_baseline_corr );
 
    //Information field for baseline correction
    QTextEdit*     le_info;
@@ -1739,39 +1767,39 @@ pb_plateau->setVisible(false);
 			));
    le_info->setFont(le_info_font);
 
-   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
-   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
-   connect( pb_investigator, SIGNAL( clicked() ),
-                             SLOT  ( sel_investigator()         ) );
-   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
-   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ),
-                             SLOT  ( new_triple         ( int ) ) );
-   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
-   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
-   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
-   connect( pb_removeAllbutLast,        SIGNAL( clicked() ), SLOT( exclude_all_but_last()     ) );
+   connect( pb_excludeRange, &QAbstractButton::clicked, this, &US_Edit::exclude_range );
+   connect( pb_details,      &QAbstractButton::clicked, this, &US_Edit::details );
+   connect( pb_report,       &QAbstractButton::clicked, this, &US_Edit::view_report );
+   connect( pb_investigator, &QAbstractButton::clicked,
+                             this, &US_Edit::sel_investigator );
+   connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
+                             this, &US_Edit::new_triple );
+   connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
+   connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
+   connect( pb_exclusion_click, &QAbstractButton::clicked, this, &US_Edit::toggle_exclusion_click_mode );
+   connect( pb_removeAllbutLast,        &QAbstractButton::clicked, this, &US_Edit::exclude_all_but_last );
 
-   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
-   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
-   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+   connect( pb_include,      &QAbstractButton::clicked, this, &US_Edit::include );
+   connect( pb_meniscus,     &QAbstractButton::clicked, this, &US_Edit::set_meniscus );
+   connect( pb_airGap,       &QAbstractButton::clicked, this, &US_Edit::set_airGap );
 //   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
 //   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
-   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
-   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
-                             SLOT  ( od_radius_limit( double ) ) );
-   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
-   connect( pb_residuals,    SIGNAL( clicked() ),
-                             SLOT  ( subtract_residuals() ) );
-   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
-   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
-   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
-   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
-   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
-   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
-   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+   connect( pb_dataEnd,      &QAbstractButton::clicked, this, &US_Edit::set_dataRange );
+   connect( ct_odlim,        &QwtCounter::valueChanged,
+                             this, &US_Edit::od_radius_limit );
+   connect( pb_noise,        &QAbstractButton::clicked, this, &US_Edit::noise );
+   connect( pb_residuals,    &QAbstractButton::clicked,
+                             this, &US_Edit::subtract_residuals );
+   connect( pb_invert,       &QAbstractButton::clicked, this, &US_Edit::invert_values );
+   connect( pb_spikes,       &QAbstractButton::clicked, this, &US_Edit::remove_spikes );
+   connect( pb_priorEdits,   &QAbstractButton::clicked, this, &US_Edit::apply_prior );
+   connect( pb_undo,         &QAbstractButton::clicked, this, &US_Edit::undo );
+   connect( pb_reviewep,     &QAbstractButton::clicked, this, &US_Edit::review_edits );
+   connect( pb_nexteqtr,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
+   connect( pb_nextChan,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
+   connect( pb_float,        &QAbstractButton::clicked, this, &US_Edit::floating );
+   connect( pb_write,        &QAbstractButton::clicked, this, &US_Edit::write );
 
    // Lay out specs widgets and layouts
    int s_row = 0;
@@ -1892,9 +1920,9 @@ pb_plateau->setVisible(false);
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
    pb_pass    = us_pushbutton( tr( "Accept New Baseline Corrections" ), false );
 
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close_manual_edit()  ) );
-   connect( pb_pass,   SIGNAL( clicked()    ),
-	    this,      SLOT  ( pass_values_bll() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_Edit::close_manual_edit );
+   connect( pb_pass,   &QAbstractButton::clicked,
+	    this,      &US_Edit::pass_values_bll );
 
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_pass );
@@ -1998,10 +2026,14 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    qDebug() << "US_Edit manual setup 1";
@@ -2092,6 +2124,9 @@ US_Edit::US_Edit() : US_Widgets()
    bottom       = 0.0;
 DbgLv(1) << " 0)gap_fringe" << gap_fringe;
 
+   sdiag     = NULL;
+   sdiag_bll = NULL;
+  
    us_edit_auto_mode = false;
    us_edit_auto_mode_manual = false;
    us_edit_auto_mode_manual_bll = false;
@@ -2103,7 +2138,7 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QVBoxLayout* top = new QVBoxLayout( this );
+   top = new QVBoxLayout( this );
    top->setSpacing         ( 2 );
    top->setContentsMargins ( 2, 2, 2, 2 );
 
@@ -2118,7 +2153,10 @@ DbgLv(1) << " 0)gap_fringe" << gap_fringe;
    top->addLayout( runInfo );
 
    QHBoxLayout* main = new QHBoxLayout();
-   QVBoxLayout* left = new QVBoxLayout;
+   leftWidget = new QWidget();
+   QVBoxLayout* left = new QVBoxLayout( leftWidget );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
@@ -2299,7 +2337,7 @@ pb_plateau->setVisible(false);
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
-   pb_dataEnd     = us_pushbutton( tr( "Specify Top/Bottom:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel*
@@ -2334,37 +2372,37 @@ pb_plateau->setVisible(false);
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
                                    ck_writemwl, true );
 
-   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
-   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
-   connect( pb_investigator, SIGNAL( clicked() ),
-                             SLOT  ( sel_investigator()         ) );
-   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
-   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ),
-                             SLOT  ( new_triple         ( int ) ) );
-   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
-   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
-   connect( pb_exclusion_click, SIGNAL( clicked() ), SLOT( toggle_exclusion_click_mode() ) );
-   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
-   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
-   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+   connect( pb_excludeRange, &QAbstractButton::clicked, this, &US_Edit::exclude_range );
+   connect( pb_details,      &QAbstractButton::clicked, this, &US_Edit::details );
+   connect( pb_report,       &QAbstractButton::clicked, this, &US_Edit::view_report );
+   connect( pb_investigator, &QAbstractButton::clicked,
+                             this, &US_Edit::sel_investigator );
+   connect( pb_load,         &QAbstractButton::clicked, this, &US_Edit::load );
+   connect( cb_triple,       qOverload< int >( &QComboBox::currentIndexChanged ),
+                             this, &US_Edit::new_triple );
+   connect( pb_exclusion,    &QAbstractButton::clicked, this, &US_Edit::exclusion );
+   connect( pb_edit1,        &QAbstractButton::clicked, this, &US_Edit::edit_scan );
+   connect( pb_exclusion_click, &QAbstractButton::clicked, this, &US_Edit::toggle_exclusion_click_mode );
+   connect( pb_include,      &QAbstractButton::clicked, this, &US_Edit::include );
+   connect( pb_meniscus,     &QAbstractButton::clicked, this, &US_Edit::set_meniscus );
+   connect( pb_airGap,       &QAbstractButton::clicked, this, &US_Edit::set_airGap );
 //   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
 //   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
-   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
-   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
-                             SLOT  ( od_radius_limit( double ) ) );
-   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
-   connect( pb_residuals,    SIGNAL( clicked() ),
-                             SLOT  ( subtract_residuals() ) );
-   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
-   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
-   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
-   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
-   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
-   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
-   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
-   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+   connect( pb_dataEnd,      &QAbstractButton::clicked, this, &US_Edit::set_dataRange );
+   connect( ct_odlim,        &QwtCounter::valueChanged,
+                             this, &US_Edit::od_radius_limit );
+   connect( pb_noise,        &QAbstractButton::clicked, this, &US_Edit::noise );
+   connect( pb_residuals,    &QAbstractButton::clicked,
+                             this, &US_Edit::subtract_residuals );
+   connect( pb_invert,       &QAbstractButton::clicked, this, &US_Edit::invert_values );
+   connect( pb_spikes,       &QAbstractButton::clicked, this, &US_Edit::remove_spikes );
+   connect( pb_priorEdits,   &QAbstractButton::clicked, this, &US_Edit::apply_prior );
+   connect( pb_undo,         &QAbstractButton::clicked, this, &US_Edit::undo );
+   connect( pb_reviewep,     &QAbstractButton::clicked, this, &US_Edit::review_edits );
+   connect( pb_nexteqtr,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
+   connect( pb_nextChan,     &QAbstractButton::clicked, this, &US_Edit::next_triple );
+   connect( pb_float,        &QAbstractButton::clicked, this, &US_Edit::floating );
+   connect( pb_write,        &QAbstractButton::clicked, this, &US_Edit::write );
 
    // Lay out specs widgets and layouts
    int s_row = 0;
@@ -2461,10 +2499,10 @@ pb_plateau->setVisible(false);
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
 
-   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
-   connect( pb_accept, SIGNAL( clicked()    ),
-            this,      SLOT  ( close_edit() ) );
+   connect( pb_reset,  &QAbstractButton::clicked, this, &US_Edit::reset );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_Edit::help );
+   connect( pb_accept, &QAbstractButton::clicked,
+            this,      &US_Edit::close_edit );
 
    buttons->addWidget( pb_reset );
    buttons->addWidget( pb_help );
@@ -2491,10 +2529,14 @@ pb_plateau->setVisible(false);
    left->addStretch();
    left->addLayout( buttons );
 
-   main->addLayout( left );
-   main->addLayout( plot );
-   main->setStretchFactor( left, 2 );
-   main->setStretchFactor( plot, 3 );
+   rightWidget = new QWidget();
+   QVBoxLayout* rightLayout = new QVBoxLayout( rightWidget );
+   rightLayout->setSpacing        ( 0 );
+   rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   rightLayout->addLayout( plot );
+
+   main->addWidget( leftWidget, 2 );
+   main->addWidget( rightWidget, 3 );
    top ->addLayout( main );
 
    //hide abde base line corr. for now
@@ -3132,8 +3174,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    for (int index = 0; index < cb_triple->count(); index++)
      qDebug() << cb_triple->itemText(index);
 
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple_auto    ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Edit::new_triple_auto );
    triple_index = 0;
    data_index   = 0;
 
@@ -3152,8 +3194,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
       ct_gaps->setValue     ( 0.4 );
       ct_gaps->setNumButtons( 3 );
 
-      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                        SLOT  ( set_fringe_tolerance( double ) ) );
+      connect( ct_gaps, &QwtCounter::valueChanged,
+                        this, &US_Edit::set_fringe_tolerance );
    }
    else
    {
@@ -3381,15 +3423,15 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
                exclude_scan_by_click( pos );
          }
       });
-      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                     SLOT  ( mouse   ( const QPointF& ) ) );
+      connect( pick, &US_PlotPicker::cMouseUp,
+                     this, &US_Edit::mouse );
 
       pb_priorEdits->disconnect();
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+      connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::prior_equil );
       plot_scan();
 
-      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_rpmval         ( int ) ) );
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
+                          this, &US_Edit::new_rpmval );
    }
 
    else
@@ -3414,7 +3456,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       //pb_write   ->setText( tr( "Save Current Edit Profile" ) );
 
       pb_priorEdits->disconnect();
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+      connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::apply_prior );
 DbgLv(1) << "LD():  triples size" << triples.size();
       if ( notMwl )
          plot_current( 0 );
@@ -3436,11 +3478,11 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_float     ->setEnabled( true );
    pb_undo      ->setEnabled( true );
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_from );
 
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_to );
 
    step = MENISCUS;
    set_pbColors( pb_meniscus );
@@ -3628,8 +3670,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->disconnect();
       cb_triple->clear();
       cb_triple->addItems( celchns );
-      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_triple_auto    ( int ) ) );
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                          this, &US_Edit::new_triple_auto );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
       odlimit   = 1.8;
@@ -3679,8 +3721,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    // Set up OD limit and any MWL controls
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
-   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-            this,      SLOT  ( od_radius_limit    ( double ) ) );
+   connect( ct_odlim,  &QwtCounter::valueChanged,
+            this,      &US_Edit::od_radius_limit );
 
    qDebug() << "IS MWL? " << isMwl;
    show_mwl_controls( isMwl );
@@ -4051,9 +4093,22 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 	       if ( channelname_.contains(ci.key()) )
 		 {
 		   qDebug() << "Channel, AProfile SCANSS: " << channelname_ << ", " << ci.key() << ": " << ci.value();
-		   editProfile_scans_excl[ triple_name ] = ci.value();
+		   QStringList scans_set = ci.value();
+
+		   //check
+		   if (scans_set[2] == QString("0") )
+		     scans_set[2] = QString::number(1);
+		   
+		   editProfile_scans_excl[ triple_name ] = scans_set;
 		   break;
 		 }
+	       
+	       // if ( channelname_.contains(ci.key()) )
+	       // 	 {
+	       // 	   qDebug() << "Channel, AProfile SCANSS: " << channelname_ << ", " << ci.key() << ": " << ci.value();
+	       // 	   editProfile_scans_excl[ triple_name ] = ci.value();
+	       // 	   break;
+	       // 	 }
 	       ++ci;
 	     }
 
@@ -5102,10 +5157,10 @@ void US_Edit::load( void )
    US_LoadAUC* dialog =
       new US_LoadAUC( isLocal, allData, triples, workingDir );
 
-   connect( dialog, SIGNAL( progress      ( QString ) ),
-            this,   SLOT  ( progress_load ( QString ) ) );
-   connect( dialog, SIGNAL( changed       ( bool )    ),
-            this,   SLOT  ( update_disk_db( bool )    ) );
+   connect( dialog, &US_LoadAUC::progress,
+            this,   &US_Edit::progress_load );
+   connect( dialog, &US_LoadAUC::changed,
+            this,   &US_Edit::update_disk_db );
 
    if ( dialog->exec() == QDialog::Rejected )  return;
 
@@ -5128,8 +5183,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    }
 
    cb_triple->addItems( triples );
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Edit::new_triple );
    triple_index = 0;
    data_index   = 0;
 
@@ -5148,8 +5203,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
       ct_gaps->setValue     ( 0.4 );
       ct_gaps->setNumButtons( 3 );
 
-      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                        SLOT  ( set_fringe_tolerance( double ) ) );
+      connect( ct_gaps, &QwtCounter::valueChanged,
+                        this, &US_Edit::set_fringe_tolerance );
    }
    else
    {
@@ -5356,8 +5411,8 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       }
 
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                     SLOT  ( mouse   ( const QPointF& ) ) );
+      connect( pick, &US_PlotPicker::cMouseUp,
+                     this, &US_Edit::mouse );
       // Enable hover tooltips
       pick->setStateMachine( new QwtPickerTrackerMachine() );
       connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
@@ -5377,11 +5432,11 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       });
 
       pb_priorEdits->disconnect();
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+      connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::prior_equil );
       plot_scan();
 
-      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_rpmval         ( int ) ) );
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
+                          this, &US_Edit::new_rpmval );
    }
 
    else
@@ -5401,7 +5456,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       pb_write   ->setText( tr( "Save Current Edit Profile" ) );
 
       pb_priorEdits->disconnect();
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+      connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::apply_prior );
 DbgLv(1) << "LD():  triples size" << triples.size();
       if ( notMwl )
          plot_current( 0 );
@@ -5423,11 +5478,11 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_float     ->setEnabled( true );
    pb_undo      ->setEnabled( true );
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_from );
 
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_to );
 
    step = MENISCUS;
    set_pbColors( pb_meniscus );
@@ -5677,8 +5732,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->disconnect();
       cb_triple->clear();
       cb_triple->addItems( celchns );
-      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_triple         ( int ) ) );
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                          this, &US_Edit::new_triple );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
       odlimit   = 1.8;
@@ -5723,8 +5778,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    // Set up OD limit and any MWL controls
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
-   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-            this,      SLOT  ( od_radius_limit    ( double ) ) );
+   connect( ct_odlim,  &QwtCounter::valueChanged,
+            this,      &US_Edit::od_radius_limit );
 
    show_mwl_controls( isMwl );
 
@@ -5761,8 +5816,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    }
 
    cb_triple->addItems( triples );
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Edit::new_triple );
    triple_index = 0;
    data_index   = 0;
 
@@ -5781,8 +5836,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
       ct_gaps->setValue     ( 0.4 );
       ct_gaps->setNumButtons( 3 );
 
-      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                        SLOT  ( set_fringe_tolerance( double ) ) );
+      connect( ct_gaps, &QwtCounter::valueChanged,
+                        this, &US_Edit::set_fringe_tolerance );
    }
    else
    {
@@ -6009,11 +6064,11 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       });
 
       pb_priorEdits->disconnect();
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( prior_equil() ) );
+      connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::prior_equil );
       plot_scan();
 
-      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_rpmval         ( int ) ) );
+      connect( cb_rpms,   qOverload< int >( &QComboBox::currentIndexChanged ),
+                          this, &US_Edit::new_rpmval );
    }
 
    else
@@ -6033,7 +6088,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       pb_write   ->setText( tr( "Save Current Edit Profile" ) );
 
       pb_priorEdits->disconnect();
-      connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
+      connect( pb_priorEdits, &QAbstractButton::clicked, this, &US_Edit::apply_prior );
 DbgLv(1) << "LD():  triples size" << triples.size();
       if ( notMwl )
          plot_current( 0 );
@@ -6055,11 +6110,11 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_float     ->setEnabled( true );
    pb_undo      ->setEnabled( true );
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_from );
 
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_to );
 
    step = MENISCUS;
    set_pbColors( pb_meniscus );
@@ -6246,8 +6301,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->disconnect();
       cb_triple->clear();
       cb_triple->addItems( celchns );
-      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_triple         ( int ) ) );
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                          this, &US_Edit::new_triple );
       pb_nextChan->setEnabled( celchns.size() > 1 );
 
       odlimit   = 1.8;
@@ -6292,8 +6347,8 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    // Set up OD limit and any MWL controls
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
-   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-            this,      SLOT  ( od_radius_limit    ( double ) ) );
+   connect( ct_odlim,  &QwtCounter::valueChanged,
+            this,      &US_Edit::od_radius_limit );
 
    show_mwl_controls( isMwl );
 
@@ -6481,6 +6536,14 @@ void US_Edit::plot_current( int index )
 
    data_plot->setTitle( title );
 
+   // Re-fit the (possibly multi-line) title's font to the plot's current
+   // width now that its text has changed, rather than waiting for the
+   // next resize to notice.
+   if ( plot != NULL )
+   {
+      plot->fitTitleToWidth();
+   }
+
    // Initialize include list
    init_includes();
 
@@ -6495,8 +6558,8 @@ void US_Edit::plot_current( int index )
    ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
-   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                  SLOT  ( mouse   ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseUp,
+                  this, &US_Edit::mouse );
    // Enable hover tooltips
    pick->setStateMachine( new QwtPickerTrackerMachine() );
    connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
@@ -7021,13 +7084,13 @@ DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
 		      <<  fixedPoint.y();
 
 	     pick->setStateMachine(new QwtPickerTrackerMachine());
-	     connect(pick, SIGNAL(moved(const QPointF&)), this, SLOT(onMouseMoved(const QPointF&)));
+	     connect(pick, &QwtPlotPicker::moved, this, &US_Edit::onMouseMoved);
 
 	     break;
 	   }
 	 else
 	   {
-	     disconnect(pick, SIGNAL(moved(const QPointF&)), 0, 0);
+	     disconnect(pick, &QwtPlotPicker::moved, nullptr, nullptr);
 	     if ( line_to_mouse != NULL )
 	       {
 		 line_to_mouse->detach();
@@ -8041,6 +8104,12 @@ DbgLv(1) << "PlMwl:  title" << title;
 
    data_plot->setTitle    ( title );
 
+   // See the matching comment near the other setTitle() call: re-fit the
+   // title's font to the plot's current width immediately.
+   if ( plot != NULL )
+   {
+      plot->fitTitleToWidth();
+   }
 
    data_plot->detachItems ( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;
@@ -8109,8 +8178,8 @@ DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
          cc->setSamples( rr, vv, npoint );
       }
       pick     ->disconnect();
-      connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                     SLOT  ( mouse   ( const QPointF& ) ) );
+      connect( pick, &US_PlotPicker::cMouseUp,
+                     this, &US_Edit::mouse );
       // Enable hover tooltips
       pick->setStateMachine( new QwtPickerTrackerMachine() );
       connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
@@ -8190,8 +8259,8 @@ DbgLv(1) << "PlMwl:  retn fr replot()";
    ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
-   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                  SLOT  ( mouse   ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseUp,
+                  this, &US_Edit::mouse );
    // Enable hover tooltips
    pick->setStateMachine( new QwtPickerTrackerMachine() );
    connect( pick, &US_PlotPicker::moved, this, &US_Edit::show_scan_tooltip );
@@ -8223,8 +8292,8 @@ void US_Edit::focus_from( double scan )
       ct_to->setValue( scan );
       to = from;
 
-      connect( ct_to, SIGNAL( valueChanged ( double ) ),
-                      SLOT  ( focus_to     ( double ) ) );
+      connect( ct_to, &QwtCounter::valueChanged,
+                      this, &US_Edit::focus_to );
    }
 
    focus( from, to );
@@ -8242,8 +8311,8 @@ void US_Edit::focus_to( double scan )
       ct_from->setValue( scan );
       from = to;
 
-      connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                        SLOT  ( focus_from   ( double ) ) );
+      connect( ct_from, &QwtCounter::valueChanged,
+                        this, &US_Edit::focus_from );
    }
 
    focus( from, to );
@@ -8335,14 +8404,14 @@ void US_Edit::reset_excludes( void )
    ct_from->disconnect();
    ct_from->setValue  ( 0 );
    ct_from->setMaximum( includes.size() );
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_from );
 
    ct_to->disconnect();
    ct_to->setValue  ( 0 );
    ct_to->setMaximum( includes.size() );
-   connect( ct_to, SIGNAL( valueChanged ( double ) ),
-                   SLOT  ( focus_to   ( double ) ) );
+   connect( ct_to, &QwtCounter::valueChanged,
+                   this, &US_Edit::focus_to );
 
    pb_excludeRange->setEnabled( false );
    pb_edit1       ->setEnabled( false );
@@ -8386,14 +8455,14 @@ void US_Edit::exclusion( void )
    reset_excludes();
    US_ExcludeProfile* exclude = new US_ExcludeProfile( includes );
 
-   connect( exclude, SIGNAL( update_exclude_profile( QList< int > ) ),
-            this   , SLOT  ( update_excludes       ( QList< int > ) ) );
+   connect( exclude, &US_ExcludeProfile::update_exclude_profile,
+            this   , &US_Edit::update_excludes );
 
-   connect( exclude, SIGNAL( cancel_exclude_profile( void ) ),
-            this   , SLOT  ( cancel_excludes       ( void ) ) );
+   connect( exclude, &US_ExcludeProfile::cancel_exclude_profile,
+            this   , &US_Edit::cancel_excludes );
 
-   connect( exclude, SIGNAL( finish_exclude_profile( QList< int > ) ),
-            this   , SLOT  ( finish_excludes       ( QList< int > ) ) );
+   connect( exclude, &US_ExcludeProfile::finish_exclude_profile,
+            this   , &US_Edit::finish_excludes );
 
    exclude->exec();
    qApp->processEvents();
@@ -8433,8 +8502,8 @@ void US_Edit::edit_scan( void )
 
    US_EditScan* dialog = new US_EditScan( data.scanData[ scan ], data.xvalues,
          invert, range_left, range_right );
-   connect( dialog, SIGNAL( scan_updated( QList< QPointF > ) ),
-                    SLOT  ( update_scan ( QList< QPointF > ) ) );
+   connect( dialog, &US_EditScan::scan_updated,
+                    this, &US_Edit::update_scan );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -9240,8 +9309,8 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    reset_triple();
 
    // Need to reconnect after reset
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple_auto    ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Edit::new_triple_auto );
 
    QString otdt   = dataType;
 
@@ -9316,13 +9385,13 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
 
    init_includes();
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_from );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_to );
 
-   connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                     SLOT  ( set_fringe_tolerance( double ) ) );
+   connect( ct_gaps, &QwtCounter::valueChanged,
+                     this, &US_Edit::set_fringe_tolerance );
 
    if ( expIsEquil )
    {  // Equilibrium
@@ -9391,8 +9460,8 @@ DbgLv(1) << "EDT:NewTr:   men" << meniscus << "dx" << idax;
       ct_gaps->setNumButtons( 3 );
 DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
 
-      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                        SLOT  ( set_fringe_tolerance( double ) ) );
+      connect( ct_gaps, &QwtCounter::valueChanged,
+                        this, &US_Edit::set_fringe_tolerance );
    }
    else
    {
@@ -9661,8 +9730,8 @@ DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made << 
       {
          cb_triple->disconnect();
          cb_triple->setCurrentIndex( triple_index );
-         connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                             SLOT  ( new_triple         ( int ) ) );
+         connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                             this, &US_Edit::new_triple );
          return;
       }
    }
@@ -9711,8 +9780,8 @@ DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    reset_triple();
 
    // Need to reconnect after reset
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Edit::new_triple );
 
    QString otdt   = dataType;
    edata          = outData[ data_index ];
@@ -9764,13 +9833,13 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax << "dataType" <<
 
    init_includes();
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_from );
+   connect( ct_to,   &QwtCounter::valueChanged,
+                     this, &US_Edit::focus_to );
 
-   connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                     SLOT  ( set_fringe_tolerance( double ) ) );
+   connect( ct_gaps, &QwtCounter::valueChanged,
+                     this, &US_Edit::set_fringe_tolerance );
 
    if ( expIsEquil )
    {  // Equilibrium
@@ -9893,8 +9962,8 @@ DbgLv(1) << "EDT:NewTr:   men" << meniscus << "dx" << idax;
       ct_gaps->setNumButtons( 3 );
 DbgLv(1) << " 2)gap_fringe" << gap_fringe << "idax" << idax;
 
-      connect( ct_gaps, SIGNAL( valueChanged        ( double ) ),
-                        SLOT  ( set_fringe_tolerance( double ) ) );
+      connect( ct_gaps, &QwtCounter::valueChanged,
+                        this, &US_Edit::set_fringe_tolerance );
    }
    else
    {
@@ -10152,6 +10221,13 @@ void US_Edit::correct_bll_for_triple_auto( void )
   leftWidget  -> hide();
   rightWidget -> hide();
 
+  if ( sdiag_bll != NULL )
+    {
+      sdiag_bll->disconnect();
+      delete sdiag_bll;
+      sdiag_bll = NULL;
+    }
+
   int currChIndex = cb_triple->currentIndex();
   //int plotInd = index_data();
   int plotInd = plotndx;
@@ -10167,26 +10243,45 @@ void US_Edit::correct_bll_for_triple_auto( void )
   sdiag_bll->setLineWidth(2);
 
   //add slots
-  connect( sdiag_bll, SIGNAL( pass_edit_params_blc( QMap< QString, QStringList> & ) ),
-	   this,  SLOT( update_triple_edit_params_blc_modified (  QMap < QString, QStringList > &) ) );
+  connect( sdiag_bll, &US_Edit::pass_edit_params_blc,
+	   this,  &US_Edit::update_triple_edit_params_blc_modified );
 
   //connect( sdiag_bll, SIGNAL( pass_edit_params_blc_plot( int ) ),
   //	   this,  SLOT( update_triple_edit_params_blc_modified_plot ( int ) ) );
 
-  connect( sdiag_bll, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
+  connect( sdiag_bll, &US_Edit::restore_main_view, this, &US_Edit::restore_view );
 
+  // Add the sub-panel into this widget's own top-level layout (the same
+  // QVBoxLayout that manages upperWidget/leftWidget/rightWidget). Since
+  // those are hidden above, and hidden widgets take no space in a Qt
+  // layout by default, sdiag_bll automatically receives the full area they
+  // vacated -- filled correctly immediately, and kept correct on every
+  // future resize of this widget, entirely by Qt's own layout engine (no
+  // manual move()/resize() bookkeeping, and no dependence on this->size()
+  // being settled yet at this point).
+  top->addWidget( sdiag_bll );
   sdiag_bll->show();
 
-  int offset = 20;
-  sdiag_bll->move(2*offset, 2*offset);
-  int newWidth  = this->width() - 3*offset;
-  int newHeight = this->height() - 4*offset;
-  sdiag_bll->setMaximumSize( newWidth, newHeight );
-  sdiag_bll->adjustSize();
-  sdiag_bll->resize( QSize(newWidth, newHeight ));
-  sdiag_bll->update();
-  sdiag_bll->update();
+  // Adding sdiag_bll to our layout only lets it fill *this* widget
+  // correctly -- but this widget's own size is itself only ever recomputed
+  // by US_EditingGui::resizeEvent(), which only runs in response to an
+  // actual resize event delivered to the top-level main window (see also
+  // US_EditingGui::resize_main(), connected to sdiag's data_loaded signal,
+  // which nudges the main window's size by 1px for exactly this reason).
+  // If this panel hasn't been through that cascade recently, its own size
+  // can still be stale here. Trigger the same nudge ourselves, via the
+  // actual top-level window rather than a hard dependency on
+  // US_EditingGui/mainw, so the whole chain -- main window -> this widget
+  // -> our layout -> sdiag_bll -- recomputes with accurate, current
+  // geometry every time this panel is opened.
+  QWidget* topLevel = this->window();
 
+  if ( topLevel != NULL )
+    {
+      QSize sz = topLevel->size();
+      topLevel->resize( sz.width() + 1, sz.height() + 1 );
+      topLevel->resize( sz );
+    }
 }
 
 
@@ -10200,6 +10295,7 @@ void US_Edit::manual_edit_auto( void )
 
   if ( sdiag != NULL )
     {
+      sdiag->disconnect();
       delete sdiag;
       sdiag = NULL;
     }
@@ -10218,32 +10314,75 @@ void US_Edit::manual_edit_auto( void )
   // sdiag->setWindowModality(Qt::ApplicationModal);
   /***************************************************************************************************/
 
-  connect( sdiag, SIGNAL( pass_edit_params( QMap< QString, QStringList> & ) ),
-	   this,  SLOT( update_triple_edit_params (  QMap < QString, QStringList > &) ) );
+  connect( sdiag, &US_Edit::pass_edit_params,
+	   this,  &US_Edit::update_triple_edit_params );
 
-  connect( sdiag, SIGNAL( pass_edit_params_includes( QMap< QString, QList<int> > & ) ),
-	   this,  SLOT( update_triple_edit_params_includes (  QMap< QString, QList<int> > &) ) );
+  connect( sdiag, &US_Edit::pass_edit_params_includes,
+	   this,  &US_Edit::update_triple_edit_params_includes );
 
-  connect( sdiag, SIGNAL( pass_edit_params_blc( QMap< QString, QStringList> & ) ),
-	   this,  SLOT( update_triple_edit_params_blc (  QMap < QString, QStringList > &) ) );
+  connect( sdiag, &US_Edit::pass_edit_params_blc,
+	   this,  &US_Edit::update_triple_edit_params_blc );
 
-  connect( sdiag, SIGNAL( restore_main_view( ) ), this, SLOT( restore_view( ) ) );
+  connect( sdiag, &US_Edit::restore_main_view, this, &US_Edit::restore_view );
 
   //connect( sdiag, SIGNAL( man_data_loaded(  ) ), this, SLOT( resize_main ( ) ) );
 
-  int offset = 20;
-  sdiag->move(2*offset, 2*offset);
-  int newWidth  = this->width() - 3*offset;
-  int newHeight = this->height() - 4*offset;
-  //sdiag->setMinimumSize( newWidth, newHeight );
-  //sdiag->setMaximumSize( newWidth, newHeight );
-  //sdiag->adjustSize();
-  sdiag->resize( QSize(newWidth, newHeight ));
-  sdiag->update();
-
+  // Add the sub-panel into this widget's own top-level layout (the same
+  // QVBoxLayout that manages upperWidget/leftWidget/rightWidget). Since
+  // those are hidden above, and hidden widgets take no space in a Qt
+  // layout by default, sdiag automatically receives the full area they
+  // vacated -- filled correctly immediately, and kept correct on every
+  // future resize of this widget, entirely by Qt's own layout engine (no
+  // manual move()/resize() bookkeeping, and no dependence on this->size()
+  // being settled yet at this point).
+  top->addWidget( sdiag );
   sdiag->show();
-  //sdiag->trigger_resize();
-  //resize_main ( );
+
+  // See the matching comment in correct_bll_for_triple_auto(): force the
+  // same "nudge the top-level window size" resize cascade that
+  // US_EditingGui::resize_main() already relies on elsewhere in this
+  // codebase, so this widget's own size (and therefore sdiag's, via our
+  // layout) is recomputed from current, accurate geometry rather than
+  // whatever it happened to be the last time an actual resize event came
+  // through.
+  QWidget* topLevel = this->window();
+
+  if ( topLevel != NULL )
+    {
+      QSize sz = topLevel->size();
+      topLevel->resize( sz.width() + 1, sz.height() + 1 );
+      topLevel->resize( sz );
+    }
+}
+
+// Manual Edit's left column packs in noticeably more controls (Scan
+// Controls + Edit Controls + Linear Baseline Correction all shown at
+// once) than the other US_Edit constructors, giving it a naturally wider
+// minimum/preferred size. A size-policy cap (QSizePolicy::Maximum) only
+// limits growth *beyond* a widget's sizeHint -- it can't shrink the
+// widget below what its own content already claims to need, which is
+// exactly the ~524px this grid's content was reporting. So enforce a
+// hard ceiling here instead, proportional to this panel's own current
+// width, gated to only the Manual Edit constructor (us_edit_auto_mode_manual)
+// so the other constructors -- whose left columns are already a
+// reasonable size -- are left untouched.
+void US_Edit::resizeEvent( QResizeEvent* event )
+{
+  QWidget::resizeEvent( event );
+
+  if ( us_edit_auto_mode_manual && leftWidget != NULL )
+    {
+      leftWidget->setMaximumWidth( qMax( 200, int( this->width() * 0.40 ) ) );
+    }
+
+  // US_Plot::fitTitleToWidth() is opt-in, not automatic, so re-fit the
+  // plot title's font here on every resize of this panel -- otherwise it
+  // would only re-fit when the title text itself changes (switching
+  // triples/channels), not on a plain window resize.
+  if ( plot != NULL )
+    {
+      plot->fitTitleToWidth();
+    }
 }
 
 // void US_Edit::trigger_resize()
@@ -10260,6 +10399,33 @@ void US_Edit::restore_view( void )
   upperWidget -> show();
   leftWidget  -> show();
   rightWidget -> show();
+
+  // This slot fires when the nested manual-edit sub-panel (sdiag or
+  // sdiag_bll) is cancelled (see close_manual_edit()), via the
+  // restore_main_view signal both sub-panels are connected to. Identify
+  // which one sent it and tear it down: remove it from the top layout and
+  // null the pointer immediately (so any subsequent manual-edit invocation
+  // doesn't touch a stale/closing widget), and defer the actual delete,
+  // since we're still inside a slot invoked synchronously from that
+  // widget's own click handler (close_manual_edit() still runs `close()`
+  // on it after this returns) -- deleting it here outright would be a
+  // use-after-free.
+  QObject* src = sender();
+
+  if ( sdiag != NULL && src == sdiag )
+    {
+      sdiag->disconnect();
+      top->removeWidget( sdiag );
+      sdiag->deleteLater();
+      sdiag = NULL;
+    }
+  else if ( sdiag_bll != NULL && src == sdiag_bll )
+    {
+      sdiag_bll->disconnect();
+      top->removeWidget( sdiag_bll );
+      sdiag_bll->deleteLater();
+      sdiag_bll = NULL;
+    }
 }
 
 // [Modify-per-triple]Update triple's Linear-baseline-correction edit params with those obtained manually...
@@ -12527,8 +12693,8 @@ void US_Edit::next_triple_auto( void )
      {
        cb_triple->disconnect();
        cb_triple->setCurrentIndex( row );
-       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-		SLOT  ( new_triple_auto    ( int ) ) );
+       connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+		this, &US_Edit::new_triple_auto );
 
        if ( le_edtrsp->isVisible() )
 	 {
@@ -12590,8 +12756,8 @@ void US_Edit::prior_triple_auto( void )
     {
       cb_triple->disconnect();
       cb_triple->setCurrentIndex( row );
-      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-	       SLOT  ( new_triple_auto    ( int ) ) );
+      connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+	       this, &US_Edit::new_triple_auto );
 
       int dax = index_data();
       data    = *outData[ dax ];
@@ -12619,8 +12785,8 @@ void US_Edit::next_triple( void )
 
    cb_triple->disconnect();
    cb_triple->setCurrentIndex( row );
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( new_triple         ( int ) ) );
+   connect( cb_triple, qOverload< int >( &QComboBox::currentIndexChanged ),
+                       this, &US_Edit::new_triple );
 
    if ( le_edtrsp->isVisible() )
    {
@@ -12753,30 +12919,30 @@ void US_Edit::connect_mwl_ctrls( bool conn )
 {
    if ( conn )
    {
-      connect( rb_lrange, SIGNAL( toggled            ( bool   ) ),
-               this,      SLOT  ( lselect_range_on   ( bool   ) ) );
-      connect( rb_custom, SIGNAL( toggled            ( bool   ) ),
-               this,      SLOT  ( lselect_custom_on  ( bool   ) ) );
-      connect( ct_ldelta, SIGNAL( valueChanged       ( double ) ),
-               this,      SLOT  ( ldelta_value       ( double ) ) );
-      connect( cb_lstart, SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_start_value ( int    ) ) );
-      connect( cb_lend,   SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_end_value   ( int    ) ) );
-      connect( rb_radius, SIGNAL( toggled            ( bool   ) ),
-               this,      SLOT  ( xaxis_radius_on    ( bool   ) ) );
-      connect( rb_waveln, SIGNAL( toggled            ( bool   ) ),
-               this,      SLOT  ( xaxis_waveln_on    ( bool   ) ) );
-      connect( pb_custom, SIGNAL( clicked            (        ) ),
-               this,      SLOT  ( lambda_custom_list (        ) ) );
-      connect( pb_incall, SIGNAL( clicked            (        ) ),
-               this,      SLOT  ( lambda_include_all (        ) ) );
-      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
-      connect( pb_larrow, SIGNAL( clicked            (        ) ),
-               this,      SLOT  ( lambda_plot_prev   (        ) ) );
-      connect( pb_rarrow, SIGNAL( clicked            (        ) ),
-               this,      SLOT  ( lambda_plot_next   (        ) ) );
+      connect( rb_lrange, &QAbstractButton::toggled,
+               this,      &US_Edit::lselect_range_on );
+      connect( rb_custom, &QAbstractButton::toggled,
+               this,      &US_Edit::lselect_custom_on );
+      connect( ct_ldelta, &QwtCounter::valueChanged,
+               this,      &US_Edit::ldelta_value );
+      connect( cb_lstart, qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,      &US_Edit::lambda_start_value );
+      connect( cb_lend,   qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,      &US_Edit::lambda_end_value );
+      connect( rb_radius, &QAbstractButton::toggled,
+               this,      &US_Edit::xaxis_radius_on );
+      connect( rb_waveln, &QAbstractButton::toggled,
+               this,      &US_Edit::xaxis_waveln_on );
+      connect( pb_custom, &QAbstractButton::clicked,
+               this,      &US_Edit::lambda_custom_list );
+      connect( pb_incall, &QAbstractButton::clicked,
+               this,      &US_Edit::lambda_include_all );
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,      &US_Edit::lambda_plot_value );
+      connect( pb_larrow, &QAbstractButton::clicked,
+               this,      &US_Edit::lambda_plot_prev );
+      connect( pb_rarrow, &QAbstractButton::clicked,
+               this,      &US_Edit::lambda_plot_next );
    }
 
    else
@@ -12938,8 +13104,8 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
       cb_lplot->disconnect();
       cb_lplot->clear();
       cb_lplot->addItems( expc_wvlns );
-      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,      &US_Edit::lambda_plot_value );
       cb_lplot->setCurrentIndex( plotx );
    }
 
@@ -13013,8 +13179,8 @@ DbgLv(1) << "xaxis_radius_on  checked" << checked;
       cb_lplot->disconnect();
       cb_lplot->clear();
       cb_lplot->addItems( expc_wvlns );
-      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,      &US_Edit::lambda_plot_value );
       cb_lplot->setCurrentIndex( expc_wvlns.size() / 2 );
 
       xaxis_wavl_wgts_on( false );
@@ -13040,8 +13206,8 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
           expd_radii << xval;
       }
       cb_lplot->addItems( expc_radii );
-      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,      &US_Edit::lambda_plot_value );
       cb_lplot->setCurrentIndex( expc_radii.size() / 2 );
 
       xaxis_wavl_wgts_on( true );
@@ -13160,8 +13326,8 @@ DbgLv(1) << "lambda_custom_list  clicked";
 
    US_SelectLambdas* sel_lambd = new US_SelectLambdas( rawi_wvlns );
 
-   connect( sel_lambd, SIGNAL( new_lambda_list( QVector< int > ) ),
-            this,      SLOT  ( lambda_new_list( QVector< int > ) ) );
+   connect( sel_lambd, &US_SelectLambdas::new_lambda_list,
+            this,      &US_Edit::lambda_new_list );
 
    if ( sel_lambd->exec() == QDialog::Accepted )
    {
@@ -13174,8 +13340,8 @@ DbgLv(1) << "  lambda_custom_list  ACCEPTED";
          cb_lplot->disconnect();
          cb_lplot->clear();
          cb_lplot->addItems( expc_wvlns );
-         connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
-                  this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+         connect( cb_lplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+                  this,      &US_Edit::lambda_plot_value );
          cb_lplot->setCurrentIndex( plotx );
       }
 
@@ -14440,8 +14606,8 @@ DbgLv(1) << "BL: DD : baseline bl" << baseline << bl;
 
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
-   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-            this,      SLOT  ( od_radius_limit    ( double ) ) );
+   connect( ct_odlim,  &QwtCounter::valueChanged,
+            this,      &US_Edit::od_radius_limit );
 
    set_pbColors( NULL );
    step        = FINISHED;
@@ -15182,23 +15348,11 @@ void US_Edit::pass_values( void )
 //
 void US_Edit::close_manual_edit( void )
 {
+  // Tell the parent to restore its layouts; the parent's restore_view()
+  // slot also owns cleanup of the pointer it holds to this sub-panel
+  // (sdiag or sdiag_bll) -- see restore_view() for details.
   emit restore_main_view();
   close();
-
-  // if ( sdiag != NULL )
-  //   {
-  //     delete sdiag;
-  //     sdiag = NULL;
-  //   }
-
-  // if ( sdiag_bll != NULL )
-  //   {
-  //     delete sdiag_bll;
-  //     sdiag_bll = NULL;
-  //   }
-
-  // sdiag = NULL;
-  // sdiag_bll = NULL;
 }
 
 
@@ -15237,42 +15391,10 @@ void US_Edit::close_edit( void )
    close();
 }
 
-// //resize event
-
-// void US_Edit::resizeEvent(QResizeEvent *event)
-// {
-//   qDebug() << "US_EDIT resizing1...";
-//   int offset = 20;
-//   int new_main_w = this->width() - 3*offset;
-//   int new_main_h = this->height() - 4*offset;
-//   qDebug() << "US_EDIT resizing2...";
-
-//   if ( sdiag != NULL )
-//     {
-//       qDebug() << "Resizing sdiag...";
-//       //if (mainw->width() - offset > sdiag->width() || mainw->height() - 2*offset > sdiag->height()) {
-//       if ( new_main_w > sdiag->width() || new_main_h > sdiag->height()) {
-// 	int newWidth = qMax( new_main_w, sdiag->width());
-// 	int newHeight = qMax( new_main_h, sdiag->height());
-
-// 	sdiag->setMaximumSize( newWidth, newHeight );
-// 	sdiag->resize( QSize(newWidth, newHeight) );
-// 	update();
-//       }
-
-//       //if (mainw->width() < sdiag->width() || mainw->height() < sdiag->height()) {
-//       if ( new_main_w < sdiag->width() ||  new_main_h < sdiag->height() ) {
-// 	int newWidth = qMin( new_main_w, sdiag->width());
-// 	int newHeight = qMin( new_main_h, sdiag->height());
-
-// 	sdiag->setMaximumSize( newWidth, newHeight );
-// 	sdiag->resize( QSize(newWidth, newHeight) );
-// 	update();
-//       }
-//     }
-
-//   QWidget::resizeEvent(event);
-// }
+// Note: US_Edit::resizeEvent() is implemented above, right after
+// manual_edit_auto() / correct_bll_for_triple_auto() -- it keeps the
+// nested manual-edit sub-panel (sdiag / sdiag_bll) synced to this
+// widget's size whenever the window is resized.
 
 // void US_Edit::resize_main( void )
 // {

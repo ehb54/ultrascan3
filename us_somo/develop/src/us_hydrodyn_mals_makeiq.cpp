@@ -2111,7 +2111,7 @@ bool US_Hydrodyn_Mals::create_unified_ggaussian_target( QStringList & files, boo
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_cb_gg_smooth" ] == "true"
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "mals_gg_smooth" )
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_gg_smooth" ].toInt() > 0 ) {
-         editor_msg( "darkred", QString( "Experimental smoothing points %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_gg_smooth" ].toInt() ) );
+         editor_msg( "darkred", QString( "Smoothing radius %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
       }
 
       if ( !initial_ggaussian_fit( files, only_init_unset ) )

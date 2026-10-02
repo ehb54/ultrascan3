@@ -1,0 +1,138 @@
+name: UltraScan3 On-Demand Build
+
+# Runs selected platform builds for a branch, tag, or SHA.
+# Artifact names identify the version, run, commit, and platform.
+
+run-name: "On-Demand [${{ inputs.ref }}] ${{ inputs.platforms }} by @${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+
+      ref:
+        description: "Branch, tag, or SHA to build"
+        required: true
+        default: "main"
+        type: string
+
+      platforms:
+        description: "Platforms to build"
+        required: true
+        default: "ubuntu"
+        type: choice
+        options:
+          - all
+          - ubuntu
+          - macos-arm
+          - macos-intel
+          - windows
+          - oraclelinux8
+          - linux          # ubuntu + oraclelinux8
+          - macos          # macos-arm + macos-intel
+
+      clean_tier:
+        description: "Clean tier"
+        required: true
+        default: incremental
+        type: choice
+        options:
+          - incremental
+          - rebuild
+          - clean
+          - clean-purge-cache
+
+      artifact_retention_days:
+        description: "Artifact retention (days)"
+        required: true
+        default: "7"
+        type: choice
+        options: ["3","7","14","30"]
+
+permissions:
+  contents: write
+  actions: write
+  packages: read
+
+jobs:
+
+  metadata:
+    name: "Resolve build identity"
+    runs-on: ubuntu-24.04
+    outputs:
+      version:   ${{ steps.identity.outputs.version }}
+      short_sha: ${{ steps.identity.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+
+      - name: Read version and commit
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '\r\n' < VERSION)
+          if [[ ! "$version" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "Invalid VERSION value for an artifact name: $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$(git rev-parse --short=8 HEAD)" >> "$GITHUB_OUTPUT"
+
+  # PLATFORM BUILDS
+  # The matrix is built in Python rather than selected with a job-level `if:`.
+  # This is a GitHub Actions constraint, not a preference: a job's `if:` is
+  # evaluated before its matrix expands, so it cannot read matrix context.
+  # Filtering the matrix itself is the only form that works.
+
+  select:
+    name: "Select platforms"
+    needs: metadata
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.s.outputs.matrix }}
+    steps:
+      - id: s
+        shell: bash
+        env:
+          SELECTED: ${{ inputs.platforms }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+
+          sel = os.environ["SELECTED"]
+          rows = [
+            {"target": "ubuntu2404-x64",   "profile": "APP", "label": "Ubuntu 24.04 APP",   "platform": "Ubuntu-24.04-x86_64",     "groups": ["ubuntu", "linux"]},
+            {"target": "ubuntu2404-x64",   "profile": "HPC", "label": "Ubuntu 24.04 HPC",   "platform": "HPC-Ubuntu-24.04-x86_64", "groups": ["ubuntu", "linux"]},
+            {"target": "oraclelinux8-x64", "profile": "APP", "label": "Oracle Linux 8 APP", "platform": "RHEL-8-x86_64",           "groups": ["oraclelinux8", "linux"]},
+            {"target": "oraclelinux8-x64", "profile": "HPC", "label": "Oracle Linux 8 HPC", "platform": "HPC-RHEL-8-x86_64",       "groups": ["oraclelinux8", "linux"]},
+            {"target": "macos-arm64",      "profile": "APP", "label": "macOS arm64 APP",    "platform": "macOS-arm64",             "groups": ["macos-arm", "macos"]},
+            {"target": "macos-x64",        "profile": "APP", "label": "macOS x86_64 APP",   "platform": "macOS-x86_64",            "groups": ["macos-intel", "macos"]},
+            {"target": "windows-x64",      "profile": "APP", "label": "Windows x86_64 APP", "platform": "Windows-x86_64",          "groups": ["windows"]},
+          ]
+          keep = [r for r in rows if sel == "all" or sel in r["groups"]]
+          for r in keep:
+              r.pop("groups")
+          print("matrix=" + json.dumps({"include": keep}))
+          PY
+          cat "$GITHUB_OUTPUT"
+
+  build:
+    name: "${{ matrix.label }}"
+    needs: [metadata, select]
+    if: fromJson(needs.select.outputs.matrix).include[0] != null
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.select.outputs.matrix) }}
+    uses: ./.github/workflows/app-build.yml
+    with:
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
+      qt_variant:              qt6
+      ref:                     ${{ inputs.ref }}
+      clean_tier:              ${{ inputs.clean_tier }}
+      artifact_name:           ${{ format('UltraScan3-{0}-build-{1}-{2}-{3}', needs.metadata.outputs.version, github.run_number, needs.metadata.outputs.short_sha, matrix.platform) }}
+      artifact_retention_days: ${{ fromJson(inputs.artifact_retention_days) }}
+    secrets: inherit

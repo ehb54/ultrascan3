@@ -162,46 +162,46 @@ US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
    ct_rxscale  ->setSingleStep(  0.01 );
    ct_ryscale  ->setSingleStep(  0.01 );
 
-   connect( ck_xmwt, SIGNAL( toggled( bool ) ),
-            this,    SLOT( xmwtCheck( bool ) ) );
-   connect( ck_ymwt, SIGNAL( toggled( bool ) ),
-            this,    SLOT( ymwtCheck( bool ) ) );
-   connect( ck_xsed, SIGNAL( toggled( bool ) ),
-            this,    SLOT( xsedCheck( bool ) ) );
-   connect( ck_ysed, SIGNAL( toggled( bool ) ),
-            this,    SLOT( ysedCheck( bool ) ) );
-   connect( ck_xdif, SIGNAL( toggled( bool ) ),
-            this,    SLOT( xdifCheck( bool ) ) );
-   connect( ck_ydif, SIGNAL( toggled( bool ) ),
-            this,    SLOT( ydifCheck( bool ) ) );
-   connect( ck_xfco, SIGNAL( toggled( bool ) ),
-            this,    SLOT( xfcoCheck( bool ) ) );
-   connect( ck_yfco, SIGNAL( toggled( bool ) ),
-            this,    SLOT( yfcoCheck( bool ) ) );
-   connect( ck_xfra, SIGNAL( toggled( bool ) ),
-            this,    SLOT( xfraCheck( bool ) ) );
-   connect( ck_yfra, SIGNAL( toggled( bool ) ),
-            this,    SLOT( yfraCheck( bool ) ) );
-   connect( ck_xvba, SIGNAL( toggled( bool ) ),
-            this,    SLOT( xvbaCheck( bool ) ) );
-   connect( ck_yvba, SIGNAL( toggled( bool ) ),
-            this,    SLOT( yvbaCheck( bool ) ) );
+   connect( ck_xmwt, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::xmwtCheck );
+   connect( ck_ymwt, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::ymwtCheck );
+   connect( ck_xsed, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::xsedCheck );
+   connect( ck_ysed, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::ysedCheck );
+   connect( ck_xdif, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::xdifCheck );
+   connect( ck_ydif, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::ydifCheck );
+   connect( ck_xfco, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::xfcoCheck );
+   connect( ck_yfco, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::yfcoCheck );
+   connect( ck_xfra, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::xfraCheck );
+   connect( ck_yfra, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::yfraCheck );
+   connect( ck_xvba, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::xvbaCheck );
+   connect( ck_yvba, &QAbstractButton::toggled,
+            this,    &US_PlotControlFem::yvbaCheck );
 
-   connect( ct_zscalefac, SIGNAL( valueChanged( double ) ),
-            this,         SLOT(    zscal_value( double ) ) );
-   connect( ct_gridreso , SIGNAL( valueChanged( double ) ),
-            this,         SLOT(    gridr_value( double ) ) );
-   connect( ct_peaksmoo , SIGNAL( valueChanged( double ) ),
-            this,         SLOT(    peaks_value( double ) ) );
-   connect( ct_peakwidth, SIGNAL( valueChanged( double ) ),
-            this,         SLOT(    peakw_value( double ) ) );
+   connect( ct_zscalefac, &QwtCounter::valueChanged,
+            this,         &US_PlotControlFem::zscal_value );
+   connect( ct_gridreso , &QwtCounter::valueChanged,
+            this,         &US_PlotControlFem::gridr_value );
+   connect( ct_peaksmoo , &QwtCounter::valueChanged,
+            this,         &US_PlotControlFem::peaks_value );
+   connect( ct_peakwidth, &QwtCounter::valueChanged,
+            this,         &US_PlotControlFem::peakw_value );
 
-   connect( pb_plot3d, SIGNAL( clicked() ),
-            this,      SLOT( plot3_btn() ) );
-   connect( pb_help,   SIGNAL( clicked() ),
-            this,      SLOT( help()      ) );
-   connect( pb_close,  SIGNAL( clicked() ),
-            this,      SLOT( close_all() ) );
+   connect( pb_plot3d, &QAbstractButton::clicked,
+            this,      &US_PlotControlFem::plot3_btn );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_PlotControlFem::help );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &US_PlotControlFem::close_all );
 
    plot3d_w = 0;
 
@@ -423,8 +423,8 @@ void US_PlotControlFem::plot3_btn()
    if ( plot3d_w == 0 )
    {
       plot3d_w = new US_Plot3D( this, model );
-      connect( plot3d_w, SIGNAL( has_closed() ),
-               this,     SLOT(   plot_close() )  );
+      connect( plot3d_w, &US_Plot3D::has_closed,
+               this,     &US_PlotControlFem::plot_close  );
    }
 
    plot3d_w->setTypes     ( typex, typey, typez );
@@ -447,8 +447,8 @@ void US_PlotControlFem::plot3_btn_auto()
    if ( plot3d_w == 0 )
    {
      plot3d_w = new US_Plot3D( this, model );
-     connect( plot3d_w, SIGNAL( has_closed() ),
-               this,     SLOT(   plot_close() )  );
+     connect( plot3d_w, &US_Plot3D::has_closed,
+               this,     &US_PlotControlFem::plot_close  );
    }
 
    plot3d_w->setTypes     ( typex, typey, typez );

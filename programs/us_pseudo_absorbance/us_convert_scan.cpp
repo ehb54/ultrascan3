@@ -276,9 +276,9 @@ US_ConvertScan::US_ConvertScan() : US_Widgets()
     // connect(ct_smooth, &QwtCounter::valueChanged, this, &US_ConvertScan::update_scan_smooth);
     connect(ct_maxod, &QwtCounter::valueChanged, this, &US_ConvertScan::plot_absorbance);
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-    connect(chkb_abs_int, &QCheckBox::stateChanged, this, &US_ConvertScan::plot_ref_state);
+    connect(chkb_abs_int, US_CB_STATE_CHANGED, this, &US_ConvertScan::plot_ref_state);
 #else
-    connect(chkb_abs_int, &QCheckBox::checkStateChanged, this, &US_ConvertScan::plot_ref_state);
+    connect(chkb_abs_int, US_CB_STATE_CHANGED, this, &US_ConvertScan::plot_ref_state);
 #endif
 }
 
@@ -774,7 +774,7 @@ void US_ConvertScan::set_wavl_ctrl(){
     // connect(cb_plot_id, QOverload<int>::of(&QComboBox::currentIndexChanged),
     //         [=](int index){ select_id(index); });
 
-    connect(cb_plot_id, SIGNAL(currentIndexChanged(int)), this, SLOT(select_id(int)));
+    connect(cb_plot_id, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_ConvertScan::select_id);
     select_id(wavl_id);
 }
 
@@ -1040,6 +1040,7 @@ void US_ConvertScan::save_run() {
     dir.setPath(dir.absoluteFilePath(abs_runid));
     // load timestate if available
     int loading_timestate = load_timestate(run_list.at(0), dir);
+    QStringList write_errors;
     for (int ii = 0; ii < out_rawdata.size(); ii++) {
         US_DataIO::RawData rawdata = out_rawdata.at(ii);
         int cell = rawdata.cell;
@@ -1047,7 +1048,17 @@ void US_ConvertScan::save_run() {
         double wvl = rawdata.scanData.at(0).wavelength;
         QString fn = fileName.arg(abs_runid).arg(cell).arg(channel).arg(wvl);
         QFileInfo fileInfo(dir, fn);
-        US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawdata);
+        int wstat = US_DataIO::writeRawData(fileInfo.absoluteFilePath(), rawdata);
+        if (wstat != US_DataIO::OK) {
+            write_errors << tr("%1: %2").arg(fn, US_DataIO::errorString(wstat));
+        }
+    }
+
+    if (! write_errors.isEmpty()) {
+        QMessageBox::warning(this, "Error!",
+                             tr("%1 of %2 triple(s) could not be saved:\n\n%3")
+                             .arg(write_errors.size()).arg(out_rawdata.size())
+                             .arg(write_errors.join("\n")));
     }
 
 }
@@ -1161,7 +1172,7 @@ void US_ConvertScan::set_table(){
         combo->setCurrentIndex(cid);
 
         tb_triple->setCellWidget(ii, 2, combo);
-        connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(select_refscan(int)));
+        connect(combo, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_ConvertScan::select_refscan);
 
         // connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
         //         [=](int index){ select_refscan(index); });

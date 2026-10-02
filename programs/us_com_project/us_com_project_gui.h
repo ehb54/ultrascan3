@@ -181,6 +181,10 @@ class US_ExperGui : public US_WidgetsDialog
       void resizeEvent(QResizeEvent *event) override;
      
       
+   public slots:
+      void pass_used_instruments( QStringList & );
+      void allow_dataDisk_only( void );
+
    private slots:
       void manageExperiment ( void );        // Slot for exp.  button clicked
       void us_exp_is_closed_set_button( void );
@@ -188,10 +192,8 @@ class US_ExperGui : public US_WidgetsDialog
       void to_import( QMap < QString, QString > & protocol_details );
       //void clear_experiment( QString & protocolName);
       void exp_cleared( void );
-      void pass_used_instruments( QStringList & );
       void expsetup_msg_closed( void );
       void to_initAutoflow( void );
-      void allow_dataDisk_only( void );
       
       
    signals:
@@ -226,12 +228,14 @@ class US_ObservGui : public US_WidgetsDialog
  protected:
       void resizeEvent(QResizeEvent *event) override;
       
- private slots:
+ public slots:
       void process_protocol_details( QMap < QString, QString > & protocol_details );
+      void reset_live_update( void );
+
+ private slots:
       //void to_post_processing( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii );
       void to_post_processing( QMap < QString, QString > & );
       void to_close_program( void );
-      void reset_live_update( void );
       void processes_stopped_passed( void );
       void to_initAutoflow_xpnviewer ( void );
  signals:
@@ -263,14 +267,16 @@ class US_PostProdGui : public US_WidgetsDialog
  protected:
     void resizeEvent(QResizeEvent *event) override;
       
-  private slots:
+  public slots:
     //void import_data_us_convert( QString & currDir, QString & protocolName, QString & invID_passed, QString & correctRadii  );
     void import_data_us_convert( QMap < QString, QString > &);
+    void reset_lims_import( void );
+
+  private slots:
     
     void to_editing(  QMap < QString, QString > & );
     //void to_experiment( QString & protocolName );
     void to_initAutoflow( void );
-    void reset_lims_import( void );
     void resize_main( void );
         
   signals:
@@ -302,9 +308,11 @@ class US_EditingGui : public US_WidgetsDialog
  protected:
     void resizeEvent(QResizeEvent *event) override;
       
- private slots:
+ public slots:
    void do_editing( QMap < QString, QString > & );
    void reset_data_editing( void );
+
+ private slots:
    void to_analysis( QMap < QString, QString > & );
    void to_report( QMap < QString, QString > & );
    void resize_main( void );
@@ -337,8 +345,10 @@ class US_AnalysisGui : public US_WidgetsDialog
  protected:
     void resizeEvent(QResizeEvent *event) override;
       
- private slots:
+ public slots:
    void do_analysis( QMap < QString, QString > & );
+
+ private slots:
    void processes_stopped_passed( void );
    void analysissetup_msg_closed( void );
    void to_initAutoflow( void );
@@ -372,9 +382,11 @@ class US_ReportStageGui : public US_WidgetsDialog
  protected:
     void resizeEvent(QResizeEvent *event) override;
       
-  private slots:
+  public slots:
     void do_report( QMap < QString, QString > & );
     void reset_reporting( void );
+
+  private slots:
 
   signals:
     void start_report( QMap < QString, QString > & );
@@ -401,9 +413,11 @@ class US_eSignaturesGui: public US_WidgetsDialog
  protected:
     void resizeEvent(QResizeEvent *event) override;
       
-  private slots:
+  public slots:
     void do_esign( QMap < QString, QString > & );
     void reset_esigning( void );
+
+  private slots:
 
   signals:
     void start_esign( QMap < QString, QString > & );

@@ -116,30 +116,30 @@ US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
    pb_prev    ->setEnabled( false );
    pb_next    ->setEnabled( false );
 
-   connect( pb_prefilt,  SIGNAL( clicked      () ),
-            this,        SLOT  ( pre_filt     () ) );
-   connect( pb_semodels, SIGNAL( clicked      () ),
-            this,        SLOT  ( select_models() ) );
-   connect( pb_defbuff,  SIGNAL( clicked      () ),
-            this,        SLOT  ( define_buffer() ) );
-   connect( pb_simparms, SIGNAL( clicked      () ),
-            this,        SLOT  ( sim_params   () ) );
-   connect( pb_selrotor, SIGNAL( clicked      () ),
-            this,        SLOT  ( select_rotor () ) );
-   connect( pb_strtsims, SIGNAL( clicked      () ),
-            this,        SLOT  ( start_sims   () ) );
-   connect( pb_stopsims, SIGNAL( clicked      () ),
-            this,        SLOT  ( stop_sims    () ) );
-   connect( pb_savesims, SIGNAL( clicked      () ),
-            this,        SLOT  ( save_sims    () ) );
-   connect( pb_prev,     SIGNAL( clicked      () ),
-            this,        SLOT  ( prev_plot    () ) );
-   connect( pb_next,     SIGNAL( clicked      () ),
-            this,        SLOT  ( next_plot    () ) );
-   connect( pb_help,     SIGNAL( clicked      () ),
-            this,        SLOT  ( help         () ) );
-   connect( pb_close,    SIGNAL( clicked      () ),
-            this,        SLOT  ( close_all    () ) );
+   connect( pb_prefilt,  &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::pre_filt );
+   connect( pb_semodels, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::select_models );
+   connect( pb_defbuff,  &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::define_buffer );
+   connect( pb_simparms, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::sim_params );
+   connect( pb_selrotor, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::select_rotor );
+   connect( pb_strtsims, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::start_sims );
+   connect( pb_stopsims, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::stop_sims );
+   connect( pb_savesims, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::save_sims );
+   connect( pb_prev,     &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::prev_plot );
+   connect( pb_next,     &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::next_plot );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::help );
+   connect( pb_close,    &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesSim::close_all );
 
    main->addLayout( left );
    main->addLayout( plot );
@@ -358,8 +358,8 @@ void US_MwlSpeciesSim::define_buffer( void )
 DbgLv(1) << "SLOT: define_buffer";
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
-                    SLOT  ( change_buffer( US_Buffer ) ) );
+   connect( dialog, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
+                    this, &US_MwlSpeciesSim::change_buffer );
 
    dialog->exec();
    qApp->processEvents();
@@ -380,7 +380,7 @@ void US_MwlSpeciesSim::sim_params( void )
 DbgLv(1) << "SLOT: sim_params";
    US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
    
-   connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
+   connect( dialog, &US_SimParamsGui::complete, this, &US_MwlSpeciesSim::set_parameters );
 
    dialog->exec();
 }
@@ -460,10 +460,8 @@ DbgLv(1) << "SLOT: select_rotor";
      US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk,
                                                rotor, calibration );
    
-    connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
-                           US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-             this,      SLOT  ( assign_rotor            (
-                           US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+    connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
+             this,      &US_MwlSpeciesSim::assign_rotor );
 
     rotorInfo->exec();
 }
@@ -564,8 +562,14 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
       QString smsg       = tr( "Saving data: %1" ).arg( swavl );
       te_status->setText( smsg );
       qApp->processEvents();
+      
+      int wrc            = US_DataIO::writeRawData( fpath, synData[ jm ] );
 
-      US_DataIO::writeRawData( fpath, synData[ jm ] );
+      if ( wrc != US_DataIO::OK )
+      {  // Do not let a failed write pass silently
+         qDebug() << "save_sims: writeRawData FAILED rc =" << wrc << fpath;
+      }
+      
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
@@ -850,8 +854,11 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    double radval      = radv0;
 
    for ( int js = 0; js < nscan; js++ )                // Resize for pad
-      rdata.scanData[ js ].rvalues.resize( npoint );
-
+     {
+       rdata.scanData[ js ].rvalues.resize( npoint );
+       rdata.scanData[ js ].interpolated.fill( 0, ( npoint + 7 ) / 8 );
+     }
+   
    for ( int jr = npoint - 1; jr >= 0; jr-- )
    {  // Set shifted values, starting at data end
       int kr             = jr - npad;                  // Old value index

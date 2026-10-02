@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO Mals Module Options Panel</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO SAS MALS Module Options Panel</h2></center>
+<h3><center>Last updated: September 2024 </center></h3><p>
+
+<center>
+<img SRC="somo-MALS_options.png" ALT="SOMO MALS options">
+</center>
+<p>
+
+The first two options deal with parameters related to the CorMap-based <i>P</i>-value pair analysis of datasets (see <a href=cormap.html>here</a>).<p>
+<ul>
+<li>
+The <i>Global PVP Analysis maximum q [A^-1]</i> field defines the upper <i>q</i> value limit (<b><i>default: 0.05 &Aring;<sup>-1</sup></b></i>).<p>
+<li>
+The <i>Global PVP Analysis alpha</i> field defines an inizialization parameter (<b><i>default: 0.01</b></i>)<p>
+</ul>
+
+The next set of options deals with the <b><i>Gaussian mode</b></i>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_options_new_Gaussians.png" ALT="Somo-MALS Options Gaussians section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+Four alternative round checkboxes are available in the first line:<p>
+<ul>
+<li>
+<b><i>Standard Gaussian</i></b>. This will generate symmetrical Gaussians (<b><i>default option</b></i>).<p>
+<li>
+<b><i>GMG (Half-Gaussian modified Gaussian)</i></b>. This will generate skewed Gaussians according to this equation:.
+
+<p><center>
+<img SRC="GMG.png" ALT="GMG equation">
+</center>
+<p>
+
+where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a<sub>3</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, and <i>distorsion</i>, respectively, of the half-Gaussian modified Gaussian(s).<p>
+
+<li>
+<b><i>EMC (Exponentially modified Gaussian)</i></b>. This will generate skewed Gaussians according to this equation:.
+
+<p><center>
+<img SRC="EMG.png" ALT="EMG equation">
+</center>
+<p>
+
+where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a<sub>3</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, and <i>distorsion</i>, respectively, of the exponentially modified Gaussian(s).<p>
+
+<li>
+<b><i>EMG+GMG</i></b>. This will generate skewed Gaussians according to this equation:.
+
+<p><center>
+<img SRC="EMG_GMG.png" ALT="EMG+GMG equation">
+</center>
+<p>
+
+where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, <i>a<sub>3</sub></i>, and <i>a<sub>4</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, <i>distorsion 1</i>, and <i>distorsion 2</i>, respectively, of the exponentially + half-Gaussian modified Gaussian(s).<p>
+
+Note: you can switch between these different Gaussian modes also from the <b><i>MALS</i></b> main screen (<b><i>Gaussian options</i></b> button).<p>
+<li>
+The <b><i>Maximum absolute value of EMG and GMG distortions:</b></i> field sets limits to the distortions to avoid unreasonably skewed Gaussians (<b><i>default: 50</i></b>).<p>
+<li>
+The <i><b>Clear cached Gaussian values</i></b> button allows to clear all Gaussian data produced during the current session.<p>
+</ul>
+
+The final section of this module presents a set of <b><i>Miscellaneous Options</b></i>:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_options_new_misc.png" ALT="Somo-MALS Options Miscellaneous Options section"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+The first button on the left-side, <b><i>Concentration Detector Properties</b></i>, will lead to another pop-up panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_options_conc_detector.png" ALT="Somo-MALS Options Concentration Detector Properties"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+where you can choose between two mutually exclusive options which concentration detector is utilized sequentially (or in parallel) in your chromatographic system. This sub-module is fully described <a href=somo_mals_dctr.html>here</a>.<p>
+
+The button on the right-side, <b><i>MALS Processing Parameters</b></i>, will also open another pop-up panel:
+<p>
+<center>
+<table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<td><center><img SRC="somo-MALS_param.png" ALT="Somo-MALS Options MALS Processing Parameters"></td>
+</tr> 
+</table>
+</center>
+<td align=justify>
+<p>
+
+In this sub-module you can set/modify several parameters that are used in the <b><i>MALS</b></i> module  to convert "raw" <i>R</i>(<i>&theta;</i>) data to an absolute scale. These operations utilize the parameters listed in this module, which is fully described <a href=mals_parameters.html>here</a>.<p>
+
+<hr>
+The <i><b>Load FASTA sequence from file</i></b> button is an application, still under development, that will calculate the <i>partial specific volume PSV</i> from an amino acid sequence in the <i>FASTA</i> format.<p>
+
+Below those buttons there are a series of check buttons:<p>
+<ul>
+<li>
+The <b><i>Save CSV transposed</b></i> checkboxis allows saving the *.csv files produced in the <b><i>MALS</b></i> module in transposed format. <b><i>Default: unchecked</b></i>.<p> 
+
+<li>
+The <b><i>Limit Guinier Maximum q*Rg</b></i> allows to set this limit to a specified value when performing the linear regression in the Guinier analysis to calculate the <i>R<sub>g</sub></i> and <i>I</i>(0) from the <i>I</i>(<i>q</i>) vs <i>q</i> datasets in the <b><i>Trial make I(q)</i></b> function (see the corresponding section in the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</b> main Help page</i></a>). <b><i>Default: checked</b></i> with <b><i>1.1</b></i> as the limiting product.<p>
+</ul>
+
+Three other checkboxes are then presented, labeled as "<i>Experimental</i>" as of <span style="color:#CC0000">July 2024</span>, pending their full validation in a publication (Brookes and Rocco, manuscript in preparation). They were developed to deal with <i>SEC-SAXS</i> data that have many more <i>q</i>-points available, and usually with greater oscillations in respect to <i>SEC-MALS</i> data. Their applicability to <i>SEC-MALS</i> data has not yet been tested.<p>
+<ul>
+<li>
+<i>Experimental: Global Gaussian Initialization smoothing. Maximum smoothing points:</i> followed by a field that becomes available if this checkbox is selected (<b><i>default: unchecked</b></i> and <b><i>3</b></i> maximum smoothing points). This feature was developed to avoid local minimima problems when propagating a set of Gaussians optimized on a few chromatograms to all other chromatograms. Especially for high scattering angles, very noisy data, local spikes can lead the optimization of the individual fits to stop before reaching a true global minimum. Smoothing at the fit level alleviates this problem. <span style="color:#CC0000">Importantly</span>, the final decomposition is done on the <i>original</i>, <b>not</b> on the <i>smoothed</i> curves.<p>
+<li>
+<i>Experimental: Global Gaussian cyclic fit</i>. If this checkbox is selected, during the initial <i>Global Gaussian</i> fitting instead of directly fitting the all Gaussian curves simultaneously, each Gaussian first is fit sequentially, keeping the others fixed, followed by fitting all Gaussians simultaneously. This procedure has provided in our still limited tests (as of <span style="color:#CC0000">July 2024</span>) a significant improvement of the individual fits in the global Gaussian decomposition, with fits with bad <i>p-values</i> going globally from 20-30% to 2-3% of the total (Brookes and Rocco, manuscript in preparation). <b><i>Default: unchecked</b></i>. <span style="color:#CC0000">Note:</span> this option can be run <i>coupled</i> to the previous one, with potential additional gains in the quality of the fits.<p> 
+<li>
+<i>Experimental: Global Gaussian - Enable legacy Gaussian fit display</i>. To compare Global Gaussian results obtained without and with the previous two options, selecting this checkbox will enable the display of the individual resulting Gaussians superimposed to the experimental curves. <b><i>Default: unchecked</b></i>.<p> 
+</ul>
+The last checkboxis:<p>
+<ul>
+<li>
+<b><i>Make I(q): drop curves below % of Gaussian max intensity</b></i>. When recreating <i>I</i>(<i>q</i>) vs. <i>q</i> using Gaussians,  they will be generated for all times for all Gaussians. This option will cut-off the tails of each decomposed peak where the signal is already near baseline values, based on a percent value in respect to the maximum intensity of each peak, to avoid generating meaningless extra <i>I</i>(<i>q</i>) vs. <i>q</i> data. <b><i>Default: 1%</b></i>.<p>  
+</ul>
+
+Pressing <i><b>Quit</i></b> will exit from this module without saving any changes. Pressing <b><i>Ok</i></b> will exit saving any changes made.<p>
+
+<br>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:brookes@uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on September 13, 2024
+</font>
+</body>
+</html>

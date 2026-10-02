@@ -74,44 +74,40 @@ US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_resolu->setSingleStep( 1 );
-   connect( ct_resolu, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_resolu( double ) ) );
+   connect( ct_resolu, &QwtCounter::valueChanged,
+            this,      &US_show_norm::update_resolu );
 
    QLabel* lb_xreso      = us_label( tr( "X Resolution:" ) );
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_xreso->setSingleStep( 1 );
-   connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_xreso( double ) ) );
+   connect( ct_xreso,  &QwtCounter::valueChanged,
+            this,      &US_show_norm::update_xreso );
 
    QLabel* lb_yreso      = us_label( tr( "Y Resolution:" ) );
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_yreso->setSingleStep( 1 );
-   connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_yreso( double ) ) );
+   connect( ct_yreso,  &QwtCounter::valueChanged,
+            this,      &US_show_norm::update_yreso );
 
    QLabel* lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zfloor     = us_counter( 3, 50.0, 150.0, 1.0 );
    ct_zfloor->setSingleStep( 1 );
-   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_zfloor( double ) ) );
+   connect( ct_zfloor, &QwtCounter::valueChanged,
+            this,      &US_show_norm::update_zfloor );
 
    us_checkbox( tr( "Autoscale X and Y" ), ck_autosxy, true );
-   connect( ck_autosxy, SIGNAL( clicked() ),
-            this,       SLOT( select_autosxy() ) );
+   connect( ck_autosxy, &QAbstractButton::clicked,
+            this,       &US_show_norm::select_autosxy );
 
    us_checkbox( tr( "Autoscale Z" ), ck_autoscz, true );
-   connect( ck_autoscz, SIGNAL( clicked() ),
-            this,       SLOT( select_autoscz() ) );
-
-   us_checkbox( tr( "Continuous Loop" ), ck_conloop, true );
-   connect( ck_conloop, SIGNAL( clicked() ),
-            this,       SLOT( select_conloop() ) );
+   connect( ck_autoscz, &QAbstractButton::clicked,
+            this,       &US_show_norm::select_autoscz );
 
    us_checkbox( tr( "Z as Percentage" ), ck_zpcent,  false );
 
@@ -123,40 +119,32 @@ US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
 
    ct_plt_kmin   = us_counter( 3, 0.5, 50.0, 1.0 );
    ct_plt_kmin->setSingleStep( 1 );
-   connect( ct_plt_kmin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_kmin( double ) ) );
+   connect( ct_plt_kmin, &QwtCounter::valueChanged,
+            this,        &US_show_norm::update_plot_kmin );
 
    lb_plt_kmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
    lb_plt_kmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_kmax   = us_counter( 3, 1.0, 50.0, 4.0 );
    ct_plt_kmax->setSingleStep( 1 );
-   connect( ct_plt_kmax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_kmax( double ) ) );
+   connect( ct_plt_kmax, &QwtCounter::valueChanged,
+            this,        &US_show_norm::update_plot_kmax );
 
    lb_plt_smin   = us_label( tr( "Plot Limit s Minimum:" ) );
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_smin   = us_counter( 3, -10.0, 10000.0, 1.0 );
    ct_plt_smin->setSingleStep( 1 );
-   connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_smin( double ) ) );
+   connect( ct_plt_smin, &QwtCounter::valueChanged,
+            this,        &US_show_norm::update_plot_smin );
 
    lb_plt_smax   = us_label( tr( "Plot Limit s Maximum:" ) );
    lb_plt_smax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_smax   = us_counter( 3, 0.0, 10000.0, 10.0 );
    ct_plt_smax->setSingleStep( 1 );
-   connect( ct_plt_smax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_smax( double ) ) );
-
-   QLabel* lb_curr_distr = us_label( tr( "Current Distro:" ) );
-   lb_curr_distr->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_curr_distr = us_counter( 3, 0.0, 10.0, 0.0 );
-   ct_curr_distr->setSingleStep( 1 );
-   connect( ct_curr_distr, SIGNAL( valueChanged     ( double ) ),
-            this,          SLOT(   update_curr_distr( double ) ) );
+   connect( ct_plt_smax, &QwtCounter::valueChanged,
+            this,        &US_show_norm::update_plot_smax );
 
    te_distr_info = us_textedit();
    te_distr_info->setText    ( tr( "Run:  runID.triple (method)\n" )
@@ -218,23 +206,22 @@ US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
 
    pb_refresh    = us_pushbutton( tr( "Refresh" ) );
    pb_refresh->setEnabled(  true );
-   connect( pb_refresh, SIGNAL( clicked() ),
-            this,       SLOT( plot_data() ) );
+   connect( pb_refresh, &QPushButton::clicked, this, qOverload<>(&US_show_norm::plot_data) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT( reset() ) );
+   connect( pb_reset,   &QAbstractButton::clicked,
+            this,       &US_show_norm::reset );
 
    pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
    pb_ldcolor->setEnabled( true );
-   connect( pb_ldcolor, SIGNAL( clicked() ),
-            this,       SLOT( load_color() ) );
+   connect( pb_ldcolor, &QAbstractButton::clicked,
+            this,       &US_show_norm::load_color );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT( close() ) );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &QWidget::close );
 
    QFontMetrics fm( ct_plt_smax->font() );
    ct_plt_smax->adjustSize();
@@ -252,7 +239,6 @@ US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
    spec->addWidget( ct_zfloor,     s_row++, 4, 1, 4 );
    spec->addWidget( ck_autosxy,    s_row,   0, 1, 4 );
    spec->addWidget( ck_autoscz,    s_row++, 4, 1, 4 );
-   spec->addWidget( ck_conloop,    s_row,   0, 1, 4 );
    spec->addWidget( ck_zpcent,     s_row++, 4, 1, 4 );
    spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
    spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
@@ -264,8 +250,6 @@ US_show_norm::US_show_norm(  US_Model* model, bool& cnst_vbar, QWidget* p )
    spec->addWidget( ct_plt_smin,   s_row++, 4, 1, 4 );
    spec->addWidget( lb_plt_smax,   s_row,   0, 1, 4 );
    spec->addWidget( ct_plt_smax,   s_row++, 4, 1, 4 );
-   spec->addWidget( lb_curr_distr, s_row,   0, 1, 4 );
-   spec->addWidget( ct_curr_distr, s_row++, 4, 1, 4 );
    spec->addWidget( te_distr_info, s_row,   0, 2, 8 ); s_row += 2;
    spec->addWidget( le_cmap_name,  s_row++, 0, 1, 8 );
    spec->addWidget( lb_x_axis,     s_row,   0, 1, 2 );
@@ -387,8 +371,6 @@ void US_show_norm::reset( void )
    ck_autosxy->setChecked( auto_sxy );
    auto_scz   = true;
    ck_autoscz->setChecked( auto_scz );
-   cont_loop  = false;
-   ck_conloop->setChecked( cont_loop );
    ck_savepl ->setChecked( false     );
    ck_locsave->setChecked( true      );
 

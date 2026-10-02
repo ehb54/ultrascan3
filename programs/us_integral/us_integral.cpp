@@ -130,49 +130,49 @@ US_Integral::US_Integral() : US_Widgets()
    // Various other GUI elements 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ) );
    pb_refresh->setEnabled(  false );
-   connect( pb_refresh, SIGNAL( clicked() ),
-            this,       SLOT( plot_data() ) );
+   connect( pb_refresh, &QAbstractButton::clicked,
+            this,       qOverload<>( &US_Integral::plot_data ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
-   connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT( reset() ) );
+   connect( pb_reset,   &QAbstractButton::clicked,
+            this,       &US_Integral::reset );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,   &US_Integral::update_disk_db );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
 
    le_prefilt    = us_lineedit( tr( "" ), -1, true );
-   connect( pb_prefilt, SIGNAL( clicked() ),
-            this,       SLOT( select_prefilt() ) );
+   connect( pb_prefilt, &QAbstractButton::clicked,
+            this,       &US_Integral::select_prefilt );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution(s)" ) );
    pb_lddistr->setEnabled( true );
-   connect( pb_lddistr, SIGNAL( clicked() ),
-            this,       SLOT( load_distro() ) );
+   connect( pb_lddistr, &QAbstractButton::clicked,
+            this,       qOverload<>( &US_Integral::load_distro ) );
 
    pb_rmvdist    = us_pushbutton( tr( "Remove Distribution(s)" ) );
    pb_rmvdist->setEnabled( false );
-   connect( pb_rmvdist, SIGNAL( clicked() ),
-            this,       SLOT( remove_distro() ) );
+   connect( pb_rmvdist, &QAbstractButton::clicked,
+            this,       &US_Integral::remove_distro );
 
    pb_save       = us_pushbutton( tr( "Save" ) );
    pb_save   ->setEnabled( false );
-   connect( pb_save,    SIGNAL( clicked() ),
-            this,       SLOT( save()         ) );
+   connect( pb_save,    &QAbstractButton::clicked,
+            this,       &US_Integral::save );
 
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT( help() ) );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_Integral::help );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT( close() ) );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &QWidget::close );
 
    // Order plot components on the left side
    int s_row = 0;
@@ -217,14 +217,14 @@ US_Integral::US_Integral() : US_Widgets()
    ct_boundaryPos->setValue(  0 );
    ct_smoothing  ->setValue(  1 );
 
-   connect( ct_division,    SIGNAL( valueChanged( double ) ),
-            this,           SLOT(  update_divis(  double ) ) );
-   connect( ct_boundaryPct, SIGNAL( valueChanged( double ) ),
-            this,           SLOT(  update_divis(  double ) ) );
-   connect( ct_boundaryPos, SIGNAL( valueChanged( double ) ),
-            this,           SLOT(  update_divis(  double ) ) );
-   connect( ct_smoothing,   SIGNAL( valueChanged( double ) ),
-            this,           SLOT(  update_divis(  double ) ) );
+   connect( ct_division,    &QwtCounter::valueChanged,
+            this,           &US_Integral::update_divis );
+   connect( ct_boundaryPct, &QwtCounter::valueChanged,
+            this,           &US_Integral::update_divis );
+   connect( ct_boundaryPos, &QwtCounter::valueChanged,
+            this,           &US_Integral::update_divis );
+   connect( ct_smoothing,   &QwtCounter::valueChanged,
+            this,           &US_Integral::update_divis );
 
    spec->addWidget( lb_analysis       , s_row++, 0, 1, 8 );
    spec->addWidget( lb_division       , s_row,   0, 1, 4 );
@@ -621,8 +621,8 @@ void US_Integral::load_distro()
    US_ModelLoader dialog( loadDB, mfilter, models, mdescs, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
-   connect( &dialog, SIGNAL(   changed( bool ) ),
-            this, SLOT( update_disk_db( bool ) ) );
+   connect( &dialog, &US_ModelLoader::changed,
+            this, &US_Integral::update_disk_db );
    QApplication::restoreOverrideCursor();
 
    if ( dialog.exec() != QDialog::Accepted )
@@ -985,8 +985,8 @@ void US_Integral::select_prefilt( void )
 
    US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
    srdiag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT  ( update_disk_db( bool ) ) );
+   connect( &srdiag, &US_SelectRuns::dkdb_changed,
+            this,    &US_Integral::update_disk_db );
 
    if ( srdiag.exec() == QDialog::Accepted )
       nruns         = pfilts.size();

@@ -179,120 +179,120 @@ US_Plot3D::US_Plot3D( QWidget* p, US_Model* m, QVector< QVector3D >* d )
    ck_mouse ->setChecked( true  );
    ck_shade ->setChecked( true  );
 
-   connect( pb_std,      SIGNAL( clicked()       ),
-            this,        SLOT(   std_button()    ) );
-   connect( pb_light,    SIGNAL( clicked()       ),
-            this,        SLOT(   light_button()  ) );
+   connect( pb_std,      &QPushButton::clicked,
+            this,        &US_Plot3D::std_button );
+   connect( pb_light,    &QPushButton::clicked,
+            this,        &US_Plot3D::light_button );
 
-   connect( cb_ifmt,     SIGNAL( activated( int ) ),
-            this,        SLOT( ifmt_chosen( int ) ) );
+   connect( cb_ifmt,     qOverload< int >( &QComboBox::activated ),
+            this,        &US_Plot3D::ifmt_chosen );
 
-   connect( ck_light,    SIGNAL( stateChanged( int ) ),
-            this,        SLOT(    light_check( int ) ) );
-   connect( ck_ortho,    SIGNAL( stateChanged( int ) ),
-            this,        SLOT(    ortho_check( int ) ) );
-   connect( ck_legend,   SIGNAL( stateChanged( int ) ),
-            this,        SLOT(    legnd_check( int ) ) );
-   connect( ck_autosc,   SIGNAL( stateChanged( int ) ),
-            this,        SLOT(    autsc_check( int ) ) );
-   connect( ck_mouse,    SIGNAL( stateChanged( int ) ),
-            this,        SLOT(    mouse_check( int ) ) );
-   connect( ck_shade,    SIGNAL( stateChanged( int ) ),
-            this,        SLOT(    shade_check( int ) ) );
+   connect( ck_light,    US_CB_STATE_CHANGED,
+            this,        &US_Plot3D::light_check );
+   connect( ck_ortho,    US_CB_STATE_CHANGED,
+            this,        &US_Plot3D::ortho_check );
+   connect( ck_legend,   US_CB_STATE_CHANGED,
+            this,        &US_Plot3D::legnd_check );
+   connect( ck_autosc,   US_CB_STATE_CHANGED,
+            this,        &US_Plot3D::autsc_check );
+   connect( ck_mouse,    US_CB_STATE_CHANGED,
+            this,        &US_Plot3D::mouse_check );
+   connect( ck_shade,    US_CB_STATE_CHANGED,
+            this,        &US_Plot3D::shade_check );
 
-   connect( poffsSlider, SIGNAL( valueChanged( int ) ),
-            this,        SLOT(   poffs_slide(  int ) ) );
-   connect( resolSlider, SIGNAL( valueChanged( int ) ),
-            this,        SLOT(   resol_slide(  int ) ) );
-   connect( normlSlider, SIGNAL( valueChanged( int ) ),
-            this,        SLOT(   norml_slide(  int ) ) );
-   connect( normqSlider, SIGNAL( valueChanged( int ) ),
-            this,        SLOT(   normq_slide(  int ) ) );
+   connect( poffsSlider, &QSlider::valueChanged,
+            this,        &US_Plot3D::poffs_slide );
+   connect( resolSlider, &QSlider::valueChanged,
+            this,        &US_Plot3D::resol_slide );
+   connect( normlSlider, &QSlider::valueChanged,
+            this,        &US_Plot3D::norml_slide );
+   connect( normqSlider, &QSlider::valueChanged,
+            this,        &US_Plot3D::normq_slide );
 
    timer  = new QTimer( this );
-   connect( movieAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT(   movie_toggle( bool ) ) );
-   connect( timer,       SIGNAL( timeout()            ),
-            this,        SLOT(   rotate()             ) );
-   connect( openAct,     SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   open_file()          ) );
-   connect( saveAct,     SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   dump_contents()      ) );
-   connect( exitAct,     SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   close_all()          ) );
+   connect( movieAct,    &QAction::toggled,
+            this,        &US_Plot3D::movie_toggle );
+   connect( timer,       &QTimer::timeout,
+            this,        &US_Plot3D::rotate );
+   connect( openAct,     &QAction::triggered,
+            this,        &US_Plot3D::open_file );
+   connect( saveAct,     &QAction::triggered,
+            this,        &US_Plot3D::dump_contents );
+   connect( exitAct,     &QAction::triggered,
+            this,        &US_Plot3D::close_all );
 
-   connect( coaxesAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_axes_co()       ) );
-   connect( cobackAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_back_co()       ) );
-   connect( comeshAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_mesh_co()       ) );
-   connect( conumbAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_numb_co()       ) );
-   connect( colablAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_labl_co()       ) );
-   connect( cocaptAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_capt_co()       ) );
-   connect( codataAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_data_co()       ) );
-   connect( corsetAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   reset_colors()       ) );
+   connect( coaxesAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_axes_co );
+   connect( cobackAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_back_co );
+   connect( comeshAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_mesh_co );
+   connect( conumbAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_numb_co );
+   connect( colablAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_labl_co );
+   connect( cocaptAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_capt_co );
+   connect( codataAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_data_co );
+   connect( corsetAct,   &QAction::triggered,
+            this,        &US_Plot3D::reset_colors );
 
-   connect( fnnumbAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_numb_fn()       ) );
-   connect( fnaxesAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_axes_fn()       ) );
-   connect( fncaptAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   pick_capt_fn()       ) );
-   connect( fnrsetAct,   SIGNAL( triggered(    bool ) ),
-            this,        SLOT(   reset_fonts()        ) );
+   connect( fnnumbAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_numb_fn );
+   connect( fnaxesAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_axes_fn );
+   connect( fncaptAct,   &QAction::triggered,
+            this,        &US_Plot3D::pick_capt_fn );
+   connect( fnrsetAct,   &QAction::triggered,
+            this,        &US_Plot3D::reset_fonts );
 
-   connect( frameAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( frame_axes_on(  bool ) ) );
-   connect( boxAct,      SIGNAL( toggled(      bool ) ),
-            this,        SLOT( box_axes_on(    bool ) ) );
-   connect( noneAct,     SIGNAL( toggled(      bool ) ),
-            this,        SLOT( no_axes_on(     bool ) ) );
+   connect( frameAct,    &QAction::toggled,
+            this,        &US_Plot3D::frame_axes_on );
+   connect( boxAct,      &QAction::toggled,
+            this,        &US_Plot3D::box_axes_on );
+   connect( noneAct,     &QAction::toggled,
+            this,        &US_Plot3D::no_axes_on );
 
-   connect( gridfrAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_front_on(  bool ) ) );
-   connect( gridbAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_back_on(   bool ) ) );
-   connect( gridrAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_right_on(  bool ) ) );
-   connect( gridlAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_left_on(   bool ) ) );
-   connect( gridcAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_ceil_on(   bool ) ) );
-   connect( gridfAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_floor_on(  bool ) ) );
-   connect( gridbAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_back_on(   bool ) ) );
-   connect( gridbAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT( grid_back_on(   bool ) ) );
+   connect( gridfrAct,   &QAction::toggled,
+            this,        &US_Plot3D::grid_front_on );
+   connect( gridbAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_back_on );
+   connect( gridrAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_right_on );
+   connect( gridlAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_left_on );
+   connect( gridcAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_ceil_on );
+   connect( gridfAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_floor_on );
+   connect( gridbAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_back_on );
+   connect( gridbAct,    &QAction::toggled,
+            this,        &US_Plot3D::grid_back_on );
 
-   connect( scattdAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( data_points_on( bool ) ) );
-   connect( wirefrAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( data_wirefr_on( bool ) ) );
-   connect( hiddlnAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( data_hidden_on( bool ) ) );
-   connect( polygnAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( data_polygn_on( bool ) ) );
-   connect( fdmeshAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( data_fimesh_on( bool ) ) );
-   connect( nodataAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( data_none_on(   bool ) ) );
+   connect( scattdAct,   &QAction::toggled,
+            this,        &US_Plot3D::data_points_on );
+   connect( wirefrAct,   &QAction::toggled,
+            this,        &US_Plot3D::data_wirefr_on );
+   connect( hiddlnAct,   &QAction::toggled,
+            this,        &US_Plot3D::data_hidden_on );
+   connect( polygnAct,   &QAction::toggled,
+            this,        &US_Plot3D::data_polygn_on );
+   connect( fdmeshAct,   &QAction::toggled,
+            this,        &US_Plot3D::data_fimesh_on );
+   connect( nodataAct,   &QAction::toggled,
+            this,        &US_Plot3D::data_none_on );
 
-   connect( fldataAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( floor_data_on(  bool ) ) );
-   connect( flisolAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( floor_isol_on(  bool ) ) );
-   connect( flemptAct,   SIGNAL( toggled(      bool ) ),
-            this,        SLOT( floor_empty_on( bool ) ) );
+   connect( fldataAct,   &QAction::toggled,
+            this,        &US_Plot3D::floor_data_on );
+   connect( flisolAct,   &QAction::toggled,
+            this,        &US_Plot3D::floor_isol_on );
+   connect( flemptAct,   &QAction::toggled,
+            this,        &US_Plot3D::floor_empty_on );
 
-   connect( normsAct,    SIGNAL( toggled(      bool ) ),
-            this,        SLOT(   normals_on(   bool ) ) );
+   connect( normsAct,    &QAction::toggled,
+            this,        &US_Plot3D::normals_on );
 
    dataWidget->coordinates()->setLineSmooth( true );
    //dataWidget->coordinates()->setGridLinesColr( RGBA( 0.35, 0.35, 0.35, 1 ) );

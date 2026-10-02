@@ -26,7 +26,7 @@ endif()
 # Get git commit count as build number
 execute_process(
         COMMAND git rev-list --count HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${US3_SOURCE_DIR}
         OUTPUT_VARIABLE BUILD_NUMBER
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
@@ -38,7 +38,7 @@ endif()
 
 execute_process(
         COMMAND git rev-parse --short=7 HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${US3_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_REVISION
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
@@ -51,7 +51,7 @@ endif()
 # Get git branch
 execute_process(
         COMMAND git rev-parse --abbrev-ref HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${US3_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_BRANCH
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
@@ -69,7 +69,7 @@ set(LOCAL_CHANGES "")
 # 1) Unstaged changes to tracked files?
 execute_process(
         COMMAND git diff --quiet --exit-code
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${US3_SOURCE_DIR}
         RESULT_VARIABLE GIT_DIFF_WORKTREE_RC
         ERROR_QUIET
 )
@@ -77,7 +77,7 @@ execute_process(
 # 2) Staged changes to tracked files?
 execute_process(
         COMMAND git diff --quiet --cached --exit-code
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${US3_SOURCE_DIR}
         RESULT_VARIABLE GIT_DIFF_INDEX_RC
         ERROR_QUIET
 )
@@ -93,7 +93,7 @@ execute_process(
         COMMAND env TZ=UTC0 git log -1
         --date=format-local:%Y-%m-%d\ %H:%M:%S\ UTC
         --format=%cd
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${US3_SOURCE_DIR}
         OUTPUT_VARIABLE REVISION_DATE
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
@@ -131,16 +131,14 @@ if(EXISTS "${REVISION_HEADER_SOURCE}")
     file(READ "${REVISION_HEADER_SOURCE}" OLD_CONTENT)
 endif()
 
-# Only write if content has changed
+# Always write the build-dir copy — it may be absent after a cache restore
+# or incremental build that skipped a full configure.
+file(WRITE "${REVISION_HEADER_BUILD}" "${NEW_CONTENT}")
+
+# Only write the source-tree copy if content has changed
 if(NOT "${OLD_CONTENT}" STREQUAL "${NEW_CONTENT}")
     file(WRITE "${REVISION_HEADER_SOURCE}" "${NEW_CONTENT}")
-    file(WRITE "${REVISION_HEADER_BUILD}" "${NEW_CONTENT}")
     message(STATUS "Updated us_revision.h: build ${BUILD_NUMBER}, rev ${GIT_REVISION}${LOCAL_CHANGES}, ${REVISION_DATE}")
 else()
     message(STATUS "us_revision.h unchanged: build ${BUILD_NUMBER}, rev ${GIT_REVISION}${LOCAL_CHANGES}")
-    # Always keep the build-dir copy in sync (it may be absent after a clean)
-    if(NOT EXISTS "${REVISION_HEADER_BUILD}")
-        file(WRITE "${REVISION_HEADER_BUILD}" "${NEW_CONTENT}")
-        message(STATUS "Wrote missing build-dir us_revision.h")
-    endif()
 endif()

@@ -644,8 +644,8 @@ void US_pcsaProcess::submit_job( WorkPacketPc& wtask, int thrx )
 
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
-            this, SLOT(   process_job(   WorkerThreadPc* ) ) );
+   connect( wthr, &WorkerThreadPc::work_complete,
+            this, &US_pcsaProcess::process_job );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
  << "sk ek" << wtask.str_y << wtask.end_y << "maxrss" << maxrss;
 

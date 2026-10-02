@@ -64,11 +64,11 @@ US_ProjectGui::US_ProjectGui(
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_ProjectGui::resetAll );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_ProjectGui::help );
    buttons->addWidget( pb_help );
 
    pb_accept = us_pushbutton( tr( "Close" ) );
@@ -76,63 +76,63 @@ US_ProjectGui::US_ProjectGui(
    if ( signal )
    {
       QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-      connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+      connect( pb_cancel, &QAbstractButton::clicked, this, &US_ProjectGui::cancel );
       buttons->addWidget( pb_cancel );
 
       pb_accept -> setText( tr( "Accept" ) );
    }
 
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_ProjectGui::accept );
    buttons->addWidget( pb_accept );
    
    // Global signals
-   connect( generalTab, SIGNAL( source_changed ( bool ) ),
-                        SLOT  ( source_changed ( bool ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::source_changed,
+                        this, &US_ProjectGui::source_changed );
 
-   connect( generalTab, SIGNAL( newProject ( ) ),
-                        SLOT  ( newProject ( ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::newProject,
+                        this, &US_ProjectGui::newProject );
 
-   connect( generalTab, SIGNAL( load       ( ) ),
-                        SLOT  ( load       ( ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::load,
+                        this, &US_ProjectGui::load );
 
-   connect( generalTab, SIGNAL( selectProject( QListWidgetItem* ) ),
-                        SLOT  ( selectProject( QListWidgetItem* ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::selectProject,
+                        this, &US_ProjectGui::selectProject );
 
-   connect( generalTab, SIGNAL( saveDescription( const QString& ) ),
-                        SLOT  ( saveDescription( const QString& ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::saveDescription,
+                        this, &US_ProjectGui::saveDescription );
 
-   connect( generalTab, SIGNAL( save           ( ) ),
-                        SLOT  ( saveProject    ( ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::save,
+                        this, &US_ProjectGui::saveProject );
 
-   connect( generalTab, SIGNAL( deleteProject  ( ) ),
-                        SLOT  ( deleteProject  ( ) ) );
+   connect( generalTab, &US_ProjectGuiGeneral::deleteProject,
+                        this, &US_ProjectGui::deleteProject );
 
-   connect( goalsTab,   SIGNAL( goalsTabChanged ( ) ),
-                        SLOT  ( tabTextChanged  ( ) ) );
+   connect( goalsTab,   &US_ProjectGuiGoals::goalsTabChanged,
+                        this, [this]() { tabTextChanged(); } );
 
-   connect( moleculesTab,SIGNAL( moleculesTabChanged ( ) ),
-                         SLOT  ( tabTextChanged      ( ) ) );
+   connect( moleculesTab,&US_ProjectGuiMolecules::moleculesTabChanged,
+                         this, [this]() { tabTextChanged(); } );
 
-   connect( purityTab,   SIGNAL( purityTabChanged ( const QString& ) ),
-                         SLOT  ( tabTextChanged   ( const QString& ) ) );
+   connect( purityTab,   &US_ProjectGuiPurity::purityTabChanged,
+                         this, [this]() { tabTextChanged(); } );
 
-   connect( expenseTab,  SIGNAL( expenseTabChanged ( ) ),
-                         SLOT  ( tabTextChanged    ( ) ) );
+   connect( expenseTab,  &US_ProjectGuiExpense::expenseTabChanged,
+                         this, [this]() { tabTextChanged(); } );
 
-   connect( bufferComponentsTab,SIGNAL( bufferComponentsTabChanged ( ) ),
-                                SLOT  ( tabTextChanged             ( ) ) );
+   connect( bufferComponentsTab,&US_ProjectGuiBufferComponents::bufferComponentsTabChanged,
+                                this, [this]() { tabTextChanged(); } );
 
-   connect( saltInformationTab, SIGNAL( saltInformationTabChanged ( ) ),
-                                SLOT  ( tabTextChanged            ( ) ) );
+   connect( saltInformationTab, &US_ProjectGuiSaltInformation::saltInformationTabChanged,
+                                this, [this]() { tabTextChanged(); } );
 
-   connect( auc_questionsTab,   SIGNAL( AUC_questionsTabChanged ( ) ),
-                                SLOT  ( tabTextChanged          ( ) ) );
+   connect( auc_questionsTab,   &US_ProjectGuiAUC_questions::AUC_questionsTabChanged,
+                                this, [this]() { tabTextChanged(); } );
 
-   connect( expDesignTab,SIGNAL( expDesignTabChanged ( ) ),
-                         SLOT  ( tabTextChanged      ( ) ) );
+   connect( expDesignTab,&US_ProjectGuiExpDesign::expDesignTabChanged,
+                         this, [this]() { tabTextChanged(); } );
 
-   connect( notesTab,    SIGNAL( notesTabChanged ( ) ),
-                         SLOT  ( tabTextChanged  ( ) ) );
+   connect( notesTab,    &US_ProjectGuiNotes::notesTabChanged,
+                         this, [this]() { tabTextChanged(); } );
 
    // Now let's assemble the page
    
@@ -678,8 +678,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    investigatorID = invID;
 
    // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    QGridLayout* general      = new QGridLayout( this );
    general->setSpacing         ( 2 );
@@ -694,7 +693,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    if ( US_Settings::us_inv_level() > 2 )
    {
       QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-      connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+      connect( pb_investigator, &QAbstractButton::clicked, this, &US_ProjectGuiGeneral::sel_investigator );
       general->addWidget( pb_investigator, row, 0 );
    }
    else
@@ -713,15 +712,15 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Radio buttons
    disk_controls = new US_Disk_DB_Controls( select_db_disk );
-   connect( disk_controls, SIGNAL( changed       ( bool ) ),
-                           SIGNAL( source_changed( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_ProjectGuiGeneral::source_changed );
    general->addLayout( disk_controls, row++, 1, 1, 2 );
 
    // Row 3
    lw_projects = us_listwidget();
    lw_projects-> setSortingEnabled( true );
-   connect( lw_projects, SIGNAL( itemClicked    ( QListWidgetItem* ) ),
-                         SIGNAL( selectProject  ( QListWidgetItem* ) ) );
+   connect( lw_projects, &QListWidget::itemClicked,
+                         this, &US_ProjectGuiGeneral::selectProject );
 
    int add_rows = ( US_Settings::us_debug() == 0 ) ? 6 : 8;
 
@@ -729,20 +728,20 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Row 4
    pb_query = us_pushbutton( tr( "Query Projects" ), true );
-   connect( pb_query, SIGNAL( clicked() ), SIGNAL( load() ) );
+   connect( pb_query, &QAbstractButton::clicked, this, &US_ProjectGuiGeneral::load );
    general->addWidget( pb_query, row, 1 );
 
    pb_save = us_pushbutton( tr( "Save Project" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SIGNAL( save() ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_ProjectGuiGeneral::save );
    general->addWidget( pb_save, row++, 2 );
 
    // Row 5
    pb_newProject = us_pushbutton( tr( "New Project" ), true );
-   connect( pb_newProject, SIGNAL( clicked() ), SIGNAL( newProject() ) );
+   connect( pb_newProject, &QAbstractButton::clicked, this, &US_ProjectGuiGeneral::newProject );
    general->addWidget( pb_newProject, row, 1 );
 
    pb_del = us_pushbutton( tr( "Delete Project" ), false );
-   connect( pb_del, SIGNAL( clicked() ), SIGNAL( deleteProject() ) );
+   connect( pb_del, &QAbstractButton::clicked, this, &US_ProjectGuiGeneral::deleteProject );
    general->addWidget( pb_del, row++, 2 );
 
    // Row 6
@@ -751,8 +750,8 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Row 7
    le_projectDesc = us_lineedit( "", 1 );
-   connect( le_projectDesc, SIGNAL( textEdited      ( const QString&   ) ),
-                            SIGNAL( saveDescription ( const QString&   ) ) );
+   connect( le_projectDesc, &QLineEdit::textEdited,
+                            this, &US_ProjectGuiGeneral::saveDescription );
    general->addWidget( le_projectDesc, row++, 1, 1, 2 );
 
    // Row 8
@@ -805,8 +804,8 @@ void US_ProjectGuiGeneral::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, *investigatorID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT  ( assign_investigator  ( int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_ProjectGuiGeneral::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -858,8 +857,8 @@ US_ProjectGuiGoals::US_ProjectGuiGoals( void ) : US_Widgets()
    goals->addWidget( lb_goals );
 
    te_goals = us_textedit();
-   connect( te_goals, SIGNAL( textChanged   () ), 
-                      SIGNAL( goalsTabChanged() ) );
+   connect( te_goals, &QTextEdit::textChanged, 
+                      this, &US_ProjectGuiGoals::goalsTabChanged );
    goals->addWidget( te_goals );
    te_goals->setReadOnly( false );
    setLayout( goals );
@@ -892,8 +891,8 @@ US_ProjectGuiMolecules::US_ProjectGuiMolecules( void ) : US_Widgets()
    molecules->addWidget( lb_molecules );
 
    te_molecules = us_textedit();
-   connect( te_molecules, SIGNAL( textChanged        () ), 
-                          SIGNAL( moleculesTabChanged() ) );
+   connect( te_molecules, &QTextEdit::textChanged, 
+                          this, &US_ProjectGuiMolecules::moleculesTabChanged );
    molecules->addWidget( te_molecules );
    te_molecules->setReadOnly( false );
    setLayout( molecules );
@@ -920,8 +919,8 @@ US_ProjectGuiPurity::US_ProjectGuiPurity( void ) : US_Widgets()
    purity->addWidget( lb_purity );
 
    le_purity = us_lineedit();
-   connect( le_purity, SIGNAL( textChanged     ( const QString& ) ), 
-                       SIGNAL( purityTabChanged( const QString& ) ) );
+   connect( le_purity, &QLineEdit::textChanged, 
+                       this, &US_ProjectGuiPurity::purityTabChanged );
    purity->addWidget( le_purity );
    le_purity->setReadOnly( false );
    setLayout( purity );
@@ -954,8 +953,8 @@ US_ProjectGuiExpense::US_ProjectGuiExpense( void ) : US_Widgets()
    expense->addWidget( lb_expense );
 
    te_expense = us_textedit();
-   connect( te_expense, SIGNAL( textChanged      () ), 
-                        SIGNAL( expenseTabChanged() ) );
+   connect( te_expense, &QTextEdit::textChanged, 
+                        this, &US_ProjectGuiExpense::expenseTabChanged );
    expense->addWidget( te_expense );
    te_expense->setReadOnly( false );
    setLayout( expense );
@@ -991,8 +990,8 @@ US_ProjectGuiBufferComponents::US_ProjectGuiBufferComponents( void ) : US_Widget
    bufferComponents->addWidget( lb_bufferComponents );
 
    te_bufferComponents = us_textedit();
-   connect( te_bufferComponents, SIGNAL( textChanged               () ), 
-                                 SIGNAL( bufferComponentsTabChanged() ) );
+   connect( te_bufferComponents, &QTextEdit::textChanged, 
+                                 this, &US_ProjectGuiBufferComponents::bufferComponentsTabChanged );
    bufferComponents->addWidget( te_bufferComponents );
    te_bufferComponents->setReadOnly( false );
    setLayout( bufferComponents );
@@ -1030,8 +1029,8 @@ US_ProjectGuiSaltInformation::US_ProjectGuiSaltInformation( void ) : US_Widgets(
    saltInformation->addWidget( lb_saltInformation );
 
    te_saltInformation = us_textedit();
-   connect( te_saltInformation, SIGNAL( textChanged              () ), 
-                                SIGNAL( saltInformationTabChanged() ) );
+   connect( te_saltInformation, &QTextEdit::textChanged, 
+                                this, &US_ProjectGuiSaltInformation::saltInformationTabChanged );
    saltInformation->addWidget( te_saltInformation );
    te_saltInformation->setReadOnly( false );
    setLayout( saltInformation );
@@ -1058,8 +1057,8 @@ US_ProjectGuiAUC_questions::US_ProjectGuiAUC_questions( void ) : US_Widgets()
    auc_questions->addWidget( lb_auc_questions );
 
    te_auc_questions = us_textedit();
-   connect( te_auc_questions, SIGNAL( textChanged            () ), 
-                              SIGNAL( AUC_questionsTabChanged() ) );
+   connect( te_auc_questions, &QTextEdit::textChanged, 
+                              this, &US_ProjectGuiAUC_questions::AUC_questionsTabChanged );
    auc_questions->addWidget( te_auc_questions );
    te_auc_questions->setReadOnly( false );
    setLayout( auc_questions );
@@ -1084,8 +1083,8 @@ US_ProjectGuiExpDesign::US_ProjectGuiExpDesign( void ) : US_Widgets()
    exp_design->addWidget( lb_exp_design );
 
    te_exp_design = us_textedit();
-   connect( te_exp_design, SIGNAL( textChanged        () ), 
-                           SIGNAL( expDesignTabChanged() ) );
+   connect( te_exp_design, &QTextEdit::textChanged, 
+                           this, &US_ProjectGuiExpDesign::expDesignTabChanged );
    exp_design->addWidget( te_exp_design );
    te_exp_design->setReadOnly( false );
 
@@ -1110,8 +1109,8 @@ US_ProjectGuiNotes::US_ProjectGuiNotes( void ) : US_Widgets()
    notes->addWidget( lb_notes );
 
    te_notes = us_textedit();
-   connect( te_notes, SIGNAL( textChanged    () ), 
-                      SIGNAL( notesTabChanged() ) );
+   connect( te_notes, &QTextEdit::textChanged, 
+                      this, &US_ProjectGuiNotes::notesTabChanged );
    notes->addWidget( te_notes );
    te_notes->setReadOnly( false );
 

@@ -1,0 +1,11 @@
+rigid dumbbell                  Model name
+20.                             Temperature
+0.01                            Solvent viscosity
+1.E+3                           Molecular weight
+0.9                             Specific volume
+1.0                             Solution density
+1.E-8                           Unit length [cm]
+2                               Number of beads
+  0.0     0.0     0.0     20.0
+  0.0     50.0    0.0     30.0
+  0.0     0.0     50.0    30.0

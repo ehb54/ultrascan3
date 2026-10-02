@@ -1381,7 +1381,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pr_widgets.push_back( cnt_bin_size );
 
 
-   lbl_smooth = new QLabel(us_tr(" Smoothing: "), this);
+   lbl_smooth = new QLabel(us_tr(" Smoothing radius: "), this);
    lbl_smooth->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_smooth->setMinimumHeight(minHeight1);
    lbl_smooth->setPalette( PALET_LABEL );
@@ -6569,16 +6569,24 @@ void US_Hydrodyn_Saxs::saxs_hplc()
       if ( !( i % 500 ) ) {
          qDebug() << "saxs_hplc plotting curve " << i;
       }
+      double this_conc, this_psv, this_I0se;
+      get_conc_csv_values( qsl_plotted_iq_names[ i ], this_conc, this_psv, this_I0se );
       if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                    plotted_q[ i ],
                                                                    plotted_I[ i ],
-                                                                   plotted_I_error[ i ] );
+                                                                   plotted_I_error[ i ],
+                                                                   false,
+                                                                   true,
+                                                                   this_conc );
       } else {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                    plotted_q[ i ],
-                                                                   plotted_I[ i ] );
+                                                                   plotted_I[ i ],
+                                                                   false,
+                                                                   true,
+                                                                   this_conc );
       }
    }
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->update_enables();

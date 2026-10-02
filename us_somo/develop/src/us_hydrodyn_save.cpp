@@ -34,7 +34,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       vector < QString > expert_mode_data =
          {
             "__SECTION__",
-            "Main hydro results:",
+            "Main hydro",
 
             "results.name", 
             "Model name", 
@@ -169,7 +169,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
             "__SECTION__",
-            "Additional SMI results:",
+            "SMI",
 
             "cen_of_res_x",
             "Centre of resistance [ X, Y, Z ] [nm]",
@@ -204,7 +204,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             // "Corrected Einstein's radius [nm]",
 
             "__SECTION__",
-            "Additional ZENO results:",
+            "ZENO",
 
             "results.s20w_sd", 
             "Sedimentation coefficient s.d.",
@@ -251,7 +251,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Skin Thickness",
 
             "__SECTION__",
-            "Additional GRPY results:",
+            "GRPY",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
@@ -306,7 +306,34 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
-            "Additional vdW results:",
+            "GRPY options",
+
+            "hydro.grpy_single",
+            "GRPY single precision",
+            "GRPY single precision",
+
+            "hydro.grpy_shell",
+            "GRPY shell reduction",
+            "GRPY shell reduction",
+
+            "hydro.grpy_shell_tol",
+            "GRPY shell reduction target accuracy [%]",
+            "GRPY shell target accuracy [%]",
+
+            "hydro.grpy_shell_require_eta",
+            "GRPY shell reduction intrinsic viscosity required",
+            "GRPY shell viscosity required",
+
+            "grpy_shell_err",
+            "GRPY shell reduction estimated error [%]",
+            "GRPY shell estimated error [%]",
+
+            "grpy_shell_worst",
+            "GRPY shell reduction worst quantity",
+            "GRPY shell worst quantity",
+
+            "__SECTION__",
+            "vdW",
 
             "vdw_theo_waters",
             "vdW Theoretical waters",
@@ -321,7 +348,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "vdW Exposed waters",
 
             "__SECTION__",
-            "Solvent conditions:",
+            "Solvent",
 
             "hydro.solvent_name", 
             "Solvent name", 
@@ -350,7 +377,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results and options:",
+            "ASA",
 
             "__BREAK__",
 
@@ -379,7 +406,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "ASA vdW+GRPY Threshold [%]",
 
             "__SECTION__",
-            "Fractal Dimension:",
+            "Fractal dim.",
 
             "fractal_dimension_parameters",
             "Fractal dimension parameters",
@@ -439,7 +466,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       vector < QString > non_expert_mode_data =
          {
             "__SECTION__",
-            "Main hydro results:",
+            "Main hydro",
 
             "results.name", 
             "Model name", 
@@ -574,7 +601,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
             "__SECTION__",
-            "Additional SMI results:",
+            "SMI",
 
             "cen_of_res_x",
             "Centre of resistance [ X, Y, Z ] [nm]",
@@ -589,7 +616,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Centre of diffusion [ X, Y, Z ] [nm]",
 
             "__SECTION__",
-            "Additional ZENO results:",
+            "ZENO",
 
             "results.s20w_sd", 
             "Sedimentation coefficient s.d.",
@@ -636,7 +663,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Skin Thickness",
 
             "__SECTION__",
-            "Additional GRPY results:",
+            "GRPY",
 
             "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
@@ -691,7 +718,34 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "GRPY Einstein's radius [nm]",
             
             "__SECTION__",
-            "Additional vdW results:",
+            "GRPY options",
+
+            "hydro.grpy_single",
+            "GRPY single precision",
+            "GRPY single precision",
+
+            "hydro.grpy_shell",
+            "GRPY shell reduction",
+            "GRPY shell reduction",
+
+            "hydro.grpy_shell_tol",
+            "GRPY shell reduction target accuracy [%]",
+            "GRPY shell target accuracy [%]",
+
+            "hydro.grpy_shell_require_eta",
+            "GRPY shell reduction intrinsic viscosity required",
+            "GRPY shell viscosity required",
+
+            "grpy_shell_err",
+            "GRPY shell reduction estimated error [%]",
+            "GRPY shell estimated error [%]",
+
+            "grpy_shell_worst",
+            "GRPY shell reduction worst quantity",
+            "GRPY shell worst quantity",
+
+            "__SECTION__",
+            "vdW",
 
             "vdw_theo_waters",
             "vdW Theoretical waters",
@@ -706,7 +760,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "vdW Exposed waters",
 
             "__SECTION__",
-            "Solvent conditions:",
+            "Solvent",
 
             "hydro.solvent_name", 
             "Solvent name", 
@@ -735,7 +789,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "pH",
 
             "__SECTION__",
-            "ASA results and options:",
+            "ASA",
 
             "__BREAK__",
 
@@ -764,7 +818,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "ASA vdW+GRPY Threshold [%]",
 
             "__SECTION__",
-            "Fractal Dimension:",
+            "Fractal dim.",
 
             "fractal_dimension_parameters",
             "Fractal dimension parameters",
@@ -1353,6 +1407,53 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          continue;
       }
 
+      if ( field[i] == "hydro.grpy_single" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.grpy_single);
+         field_to_save_data_type[field[i]] = DT_BOOL;
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_shell" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.grpy_shell);
+         field_to_save_data_type[field[i]] = DT_BOOL;
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_shell_tol" )
+      {
+         // stored as a fraction, reported as the percentage the user entered
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_shell_tol_pct);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "hydro.grpy_shell_require_eta" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.grpy_shell_require_eta);
+         field_to_save_data_type[field[i]] = DT_BOOL;
+         continue;
+      }
+
+      if ( field[i] == "grpy_shell_err" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_shell_err);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'g';
+         continue;
+      }
+
+      if ( field[i] == "grpy_shell_worst" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.grpy_shell_worst);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
+         continue;
+      }
+
       if ( field[i] == "grpy_einst_rad" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.grpy_einst_rad);
@@ -1683,7 +1784,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry(global_Xpos, global_Ypos, 640, 480);
+   // 880 rather than 640: nine tabs of titles did not fit, and the titles above were
+   // shortened for the same reason. Qt does not grow a tab to fit multiple lines -- the
+   // height is fixed regardless of newlines -- so wrapping them is not an option without
+   // a custom QTabBar.
+   setGeometry(global_Xpos, global_Ypos, 880, 480);
 }
 
 US_Hydrodyn_Save::~US_Hydrodyn_Save()
@@ -2999,6 +3104,9 @@ save_data US_Hydrodyn_Save::save_data_initialized() {
    data.cor_int_visc          = 0e0;
    data.cor_einst_rad         = 0e0;
    data.grpy_einst_rad        = 0e0;
+   data.grpy_shell_tol_pct    = 0e0;
+   data.grpy_shell_err        = 0e0;
+   data.grpy_shell_worst      = "";
    data.rel_times_tau_1       = 0e0;
    data.rel_times_tau_2       = 0e0;
    data.rel_times_tau_3       = 0e0;

@@ -108,14 +108,14 @@ US_NoiseLoader::US_NoiseLoader( IUS_DB2* db, QStringList& mieGUIDs,
       tw_noises->expandItem( items.at( 0 ) );
    }
 
-   connect( tw_noises,  SIGNAL( itemSelectionChanged() ),
-            this,       SLOT(   itemsSelected()        ) );
-   connect( pb_detail,  SIGNAL( clicked()      ),
-            this,       SLOT(   view_details() ) );
-   connect( pb_cancel,  SIGNAL( clicked()      ),
-            this,       SLOT(   cancelled()    ) );
-   connect( pb_load,    SIGNAL( clicked()      ),
-            this,       SLOT(   selected()     ) );
+   connect( tw_noises,  &QTreeWidget::itemSelectionChanged,
+            this,       &US_NoiseLoader::itemsSelected );
+   connect( pb_detail,  &QAbstractButton::clicked,
+            this,       &US_NoiseLoader::view_details );
+   connect( pb_cancel,  &QAbstractButton::clicked,
+            this,       &US_NoiseLoader::cancelled );
+   connect( pb_load,    &QAbstractButton::clicked,
+            this,       &US_NoiseLoader::selected );
 
    // Compute the OD range of the edited data
    if ( edata != NULL )

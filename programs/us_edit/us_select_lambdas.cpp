@@ -49,8 +49,8 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    pb_add        = us_pushbutton( tr( "Add  ===>" ) );
    pb_remove     = us_pushbutton( tr( "<===  Remove" ) );
 
-   connect( pb_add,    SIGNAL( clicked() ), SLOT( add_selections() ) );
-   connect( pb_remove, SIGNAL( clicked() ), SLOT( rmv_selections() ) );
+   connect( pb_add,    &QAbstractButton::clicked, this, &US_SelectLambdas::add_selections );
+   connect( pb_remove, &QAbstractButton::clicked, this, &US_SelectLambdas::rmv_selections );
 
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -60,10 +60,10 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
                 pb_accept = us_pushbutton( tr( "Accept" ) );
 
-   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset()  ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()   ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( done()   ) );
+   connect( pb_reset,  &QAbstractButton::clicked, this, &US_SelectLambdas::reset );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_SelectLambdas::help );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectLambdas::cancel );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectLambdas::done );
 
    pb_accept->setEnabled( false );
    buttons->addWidget( pb_reset  );

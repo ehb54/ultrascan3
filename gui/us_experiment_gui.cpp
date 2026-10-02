@@ -1,4 +1,4 @@
-//! \file us_convert/us_experiment_gui.cpp
+//! \file us_experiment_gui.cpp
 
 #include "us_experiment_gui.h"
 #include "us_passwd.h"
@@ -41,15 +41,15 @@ US_ExperimentGui::US_ExperimentGui(
    QLabel* lb_label = us_label( tr( "Label:" ) );
    experiment->addWidget( lb_label, row++, 0, 1, 2 );
    le_label         = us_lineedit();
-   connect( le_label, SIGNAL( editingFinished () ),
-                      SLOT  ( saveLabel       () ) );
+   connect( le_label, &QLineEdit::editingFinished,
+                      this, &US_ExperimentGui::saveLabel );
    experiment->addWidget( le_label, row++, 0, 1, 2 );
 
    // Project
    QLabel* lb_project = us_label( tr( "Project:" ) );
    experiment->addWidget( lb_project, row, 0 );
-   QPushButton* pb_project = us_pushbutton( tr( "Select Project" ) );
-   connect( pb_project, SIGNAL( clicked() ), SLOT( selectProject() ) );
+   pb_project = us_pushbutton( tr( "Select Project" ) );
+   connect( pb_project, &QPushButton::clicked, this, &US_ExperimentGui::selectProject );
    pb_project->setEnabled( true );
    experiment->addWidget( pb_project, row++, 1 );
 
@@ -94,8 +94,8 @@ US_ExperimentGui::US_ExperimentGui(
    QLabel* lb_hardware_banner = us_banner( tr( "Hardware: " ) );
    hardware->addWidget( lb_hardware_banner, row++, 0, 1, 2 );
 
-   QPushButton* pb_rotor = us_pushbutton( tr( "Select Lab / Rotor / Calibration" ) );
-   connect( pb_rotor, SIGNAL( clicked() ), SLOT( selectRotor() ) );
+   pb_rotor = us_pushbutton( tr( "Select Lab / Rotor / Calibration" ) );
+   connect( pb_rotor, &QPushButton::clicked, this, &US_ExperimentGui::selectRotor );
    pb_rotor->setEnabled( true );
    hardware->addWidget( pb_rotor, row++, 0, 1, 2 );
 
@@ -112,15 +112,16 @@ US_ExperimentGui::US_ExperimentGui(
    row += 2;
 
    // The rotor speed information won't change
-   foreach ( double rpm, expInfo.rpms )
+   for ( auto& rpm : expInfo.rpms ) {
       lw_rotorSpeeds -> addItem( QString::number( rpm ) );
+   }
 
    // instrumentID
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
    hardware->addWidget( lb_instrument, row, 0 );
    cb_instrument = new US_SelectBox( this );
-   connect( cb_instrument, SIGNAL( activated        ( int ) ),
-                           SLOT  ( change_instrument( int ) ) );
+   connect( cb_instrument, qOverload<int>(&QComboBox::activated),
+                           this, &US_ExperimentGui::change_instrument );
    hardware->addWidget( cb_instrument, row++, 1 );
 
    // operatorID
@@ -142,15 +143,15 @@ US_ExperimentGui::US_ExperimentGui(
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QPushButton::clicked, this, &US_ExperimentGui::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+   connect( pb_cancel, &QPushButton::clicked, this, &US_ExperimentGui::cancel );
    buttons->addWidget( pb_cancel );
 
    pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_accept, &QPushButton::clicked, this, &US_ExperimentGui::accept );
    buttons->addWidget( pb_accept );
 
    // Now let's assemble the page
@@ -170,7 +171,7 @@ US_ExperimentGui::US_ExperimentGui(
    if ( US_Settings::us_inv_level() > 2 )
    {
       QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-      connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
+      connect( pb_investigator, &QPushButton::clicked, this, &US_ExperimentGui::selectInvestigator );
       main->addWidget( pb_investigator, row, 0 );
    }
    else
@@ -184,8 +185,8 @@ US_ExperimentGui::US_ExperimentGui(
    main->addWidget( le_investigator, row++, 1 );
 
    disk_controls = new US_Disk_DB_Controls( select_db_disk );
-   connect( disk_controls, SIGNAL( changed       ( bool ) ),
-                           SLOT  ( source_changed( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_ExperimentGui::source_changed );
    main->addLayout( disk_controls, row++, 0, 1, 2 );
 
    main->addLayout( experiment, row, 0 );
@@ -339,9 +340,9 @@ bool US_ExperimentGui::load( void )
          US_Rotor::readLabsDB( labList, &db );
 
       int linssize       = 0;
-      for ( int ii = 0; ii < labList.size(); ii++ )
+      for (auto & ii : labList)
       {
-         linssize        = qMax( linssize, labList[ ii ].instruments.size() );
+         linssize        = qMax( linssize, ii.instruments.size() );
       }
 
       if ( linssize == 0 )
@@ -380,7 +381,7 @@ bool US_ExperimentGui::load( void )
 void US_ExperimentGui::reload( void )
 {
 qDebug() << "ExpG:reload: IN labList size" << labList.size();
-   if ( lab_changed && labList.size() > 0 )
+   if ( lab_changed && !labList.empty() )
    {
       // Find labList info for this lab
       currentLab = 0;
@@ -388,7 +389,7 @@ qDebug() << "ExpG:reload: IN labList size" << labList.size();
       for ( int i = 0; i < labList.size(); i++ )
       {
           if ( labList[ i ].ID == expInfo.labID  &&
-               labList[ i ].instruments.size() > 0 )
+               !labList[ i ].instruments.empty() )
           {
              found = true;
              currentLab = i;
@@ -404,7 +405,7 @@ qDebug() << "ExpG:reload:  found" << found << "cLab" << currentLab;
          currentLab = 0;
          for ( int ii = 0; ii < labList.size(); ii++ )
          {
-            if ( labList[ ii ].instruments.size() > 0 )
+            if ( !labList[ ii ].instruments.empty() )
             {
                currentLab = ii;
                expInfo.labID = labList[ ii ].ID;
@@ -439,8 +440,8 @@ void US_ExperimentGui::selectInvestigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT  ( assignInvestigator   ( int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_ExperimentGui::assignInvestigator );
 
    inv_dialog->exec();
 }
@@ -517,15 +518,15 @@ void US_ExperimentGui::selectProject( void )
    US_ProjectGui* projInfo = new US_ProjectGui( true, dbdisk, project );
 
    connect( projInfo,
-      SIGNAL( updateProjectGuiSelection( US_Project& ) ),
-      SLOT  ( assignProject            ( US_Project& ) ) );
+      &US_ProjectGui::updateProjectGuiSelection,
+      this, &US_ExperimentGui::assignProject );
 
    connect( projInfo,
-      SIGNAL( cancelProjectGuiSelection( ) ),
-      SLOT  ( cancelProject            ( ) ) );
+      &US_ProjectGui::cancelProjectGuiSelection,
+      this, &US_ExperimentGui::cancelProject );
 
-   connect( projInfo, SIGNAL( use_db        ( bool ) ),
-                      SLOT  ( update_disk_db( bool ) ) );
+   connect( projInfo, &US_ProjectGui::use_db,
+                      this, &US_ExperimentGui::update_disk_db );
 
    projInfo->exec();
    delete projInfo;
@@ -592,7 +593,7 @@ qDebug() << "ExpG: setInstrL:  instruments size" << instruments.size();
    }
 
    cb_instrument->clear();
-   if ( options.size() > 0 )
+   if ( !options.empty() )
    {
       cb_instrument->addOptions( options );
 
@@ -636,10 +637,8 @@ qDebug() << "ExpG:sOL:    insz" << insz;
 
 qDebug() << "ExpG:sOL:   opts size" << options.size();
    cb_operator->clear();
-   if ( options.size() > 0 )
+   if ( !options.empty() )
    {
-      int currentOperator = 0;
-
       if ( ! disk_controls->db() )
       {
          struct listInfo disk_only;
@@ -653,6 +652,7 @@ qDebug() << "ExpG:sOL:   opts size" << options.size();
 
       else
       {
+         int currentOperator = 0;
          cb_operator->addOptions( options );
 
          // is the operator ID in the list?
@@ -716,14 +716,14 @@ void US_ExperimentGui::selectRotor( void )
                                              dbdisk,
                                              rotor, calibration );
 
-   connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-                       SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
+                       this, &US_ExperimentGui::assignRotor );
 
-   connect( rotorInfo, SIGNAL( RotorCalibrationCanceled( ) ),
-                       SLOT  ( cancelRotor             ( ) ) );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationCanceled,
+                       this, &US_ExperimentGui::cancelRotor );
 
-   connect( rotorInfo, SIGNAL( use_db        ( bool ) ),
-                       SLOT  ( update_disk_db( bool ) ) );
+   connect( rotorInfo, &US_RotorGui::use_db,
+                       this, &US_ExperimentGui::update_disk_db );
 
    rotorInfo->exec();
 }

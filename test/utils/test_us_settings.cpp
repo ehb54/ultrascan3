@@ -195,3 +195,33 @@ QString status = US_Settings::status();
 // Should be empty if no errors
 EXPECT_TRUE(status.isEmpty() || !status.contains("error", Qt::CaseInsensitive));
 }
+
+// Test set-speed resolution
+TEST_F(US_SettingsTest, SpeedResolutionDefault) {
+US_Settings::set_debug_text(QStringList());
+EXPECT_DOUBLE_EQ(US_Settings::speedResolution(), 100.0);
+}
+
+TEST_F(US_SettingsTest, SpeedResolutionFromDebugText) {
+US_Settings::set_debug_text(QStringList() << "SetSpeedReso=50");
+EXPECT_DOUBLE_EQ(US_Settings::speedResolution(), 50.0);
+
+// The manual spells it SetSpeedResolution; matching is on the prefix
+US_Settings::set_debug_text(QStringList() << "SetSpeedResolution=25");
+EXPECT_DOUBLE_EQ(US_Settings::speedResolution(), 25.0);
+}
+
+TEST_F(US_SettingsTest, SpeedResolutionRejectsBadValues) {
+const QStringList unusable = QStringList()
+    << "SetSpeedReso="
+    << "SetSpeedReso=abc"
+    << "SetSpeedReso=0"
+    << "SetSpeedReso=-100"
+    << "SetSpeedReso=inf"
+    << "SetSpeedReso=nan";
+
+for (const QString& setting : unusable) {
+    US_Settings::set_debug_text(QStringList() << setting);
+    EXPECT_DOUBLE_EQ(US_Settings::speedResolution(), 100.0) << setting.toStdString();
+}
+}

@@ -259,54 +259,54 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    optimize_options();
 
-   connect( ck_unifgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkUniGrid(  bool ) ) );
-   connect( ck_custgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkCusGrid(  bool ) ) );
-   connect( ck_menisc, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_bottom, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMonteCar( bool ) ) );
-   connect( ck_iters,  SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkIterate(  bool ) ) );
-   connect( ck_varvbar, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkVaryVbar( bool ) ) );
+   connect( ck_unifgr, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkUniGrid );
+   connect( ck_custgr, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkCusGrid );
+   connect( ck_menisc, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkMeniscus );
+   connect( ck_bottom, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkMeniscus );
+   connect( ck_mcarlo, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkMonteCar );
+   connect( ck_iters,  &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkIterate );
+   connect( ck_varvbar, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkVaryVbar );
 
-   connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_thrdcnt,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   slim_change()          ) );
-   connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   slim_change()          ) );
-   connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   klim_change()          ) );
-   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   kstep_change()         ) );
+   connect( ct_nstepss,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
+   connect( ct_nstepsk,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
+   connect( ct_thrdcnt,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
+   connect( ct_lolimits, &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::slim_change );
+   connect( ct_uplimits, &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::slim_change );
+   connect( ct_lolimitk, &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::klim_change );
+   connect( ct_nstepsk,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::kstep_change );
 
-   connect( pb_strtfit, SIGNAL( clicked()   ),
-            this,       SLOT(   start()     ) );
-   connect( pb_stopfit, SIGNAL( clicked()   ),
-            this,       SLOT(   stop_fit()  ) );
-   connect( pb_ldmodel, SIGNAL( clicked()   ),
-            this,       SLOT(  load_model() ) );
-   connect( pb_plot,    SIGNAL( clicked()   ),
-            this,       SLOT(   plot()      ) );
-   connect( pb_save,    SIGNAL( clicked()   ),
-            this,       SLOT(   save()      ) );
-   connect( pb_help,    SIGNAL( clicked()   ),
-            this,       SLOT(   help()      ) );
-   connect( pb_close,   SIGNAL( clicked()   ),
-            this,       SLOT(   close_all() ) );
-   connect( pb_advance, SIGNAL( clicked()   ),
-            this,       SLOT(   advanced()  ) );
-   connect( pb_anorm,   SIGNAL( clicked()          ),
-            this,       SLOT(   calculate_norms( ) ) );
+   connect( pb_strtfit, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::start );
+   connect( pb_stopfit, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::stop_fit );
+   connect( pb_ldmodel, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::load_model );
+   connect( pb_plot,    &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::plot );
+   connect( pb_save,    &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::save );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::help );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::close_all );
+   connect( pb_advance, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::advanced );
+   connect( pb_anorm,   &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::calculate_norms );
 
    edata          = &dsets[ 0 ]->run_data;
 
@@ -376,8 +376,8 @@ void US_AnalysisControl2D::checkUniGrid(  bool checked )
    ck_custgr ->disconnect();
    ck_custgr ->setChecked( ! checked );
    pb_ldmodel->setEnabled( ! checked );
-   connect( ck_custgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkCusGrid(  bool ) ) );
+   connect( ck_custgr, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkCusGrid );
 }
 
 // Handle custom grid checked
@@ -641,14 +641,14 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    ti_noise->count = 0;
    ri_noise->count = 0;
 
-   connect( processor, SIGNAL( progress_update(   int ) ),
-            this,      SLOT(   update_progress(   int ) ) );
-   connect( processor, SIGNAL( message_update(    QString, bool ) ),
-            this,      SLOT(   progress_message(  QString, bool ) ) );
-   connect( processor, SIGNAL( stage_complete(    int, int )  ),
-            this,      SLOT(   reset_steps(       int, int )  ) );
-   connect( processor, SIGNAL( process_complete(  int  ) ),
-            this,      SLOT(   completed_process( int  ) ) );
+   connect( processor, &US_2dsaProcess::progress_update,
+            this,      &US_AnalysisControl2D::update_progress );
+   connect( processor, &US_2dsaProcess::message_update,
+            this,      &US_AnalysisControl2D::progress_message );
+   connect( processor, &US_2dsaProcess::stage_complete,
+            this,      &US_AnalysisControl2D::reset_steps );
+   connect( processor, &US_2dsaProcess::process_complete,
+            this,      &US_AnalysisControl2D::completed_process );
 
    int mxiter    = (int)ct_iters->value();
    int mniter    = ( ck_menisc->isChecked() ||
@@ -832,13 +832,13 @@ DbgLv(1) << "GC: 5)ngrrep" << ngrrep << "nss nks" << nsteps << nstepk;
 
    ct_nstepss->disconnect();
    ct_nstepss->setValue( nsteps );
-   connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
+   connect( ct_nstepss,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
 
    ct_nstepsk->disconnect();
    ct_nstepsk->setValue( nstepk );
-   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
+   connect( ct_nstepsk,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
 
    if ( parentw )
    {  // Get the starting base rss memory of this dataset and parameters
@@ -1237,11 +1237,11 @@ DbgLv(1) << "aac2:define_work" << workin.thrn << workin.nthrd;
       
       wthr->define_work( workin );
 
-      connect( wthr, SIGNAL( work_progress( int ) ),
-               this, SLOT  ( norm_progress( int ) ) );
+      connect( wthr, &WorkerThreadCalcNorm::work_progress,
+               this, &US_AnalysisControl2D::norm_progress );
 
-      connect( wthr, SIGNAL( work_complete( WorkerThreadCalcNorm* ) ),
-               this, SLOT  ( norm_complete( WorkerThreadCalcNorm* ) ) );
+      connect( wthr, &WorkerThreadCalcNorm::work_complete,
+               this, &US_AnalysisControl2D::norm_complete );
 
       wthr->start();
    }

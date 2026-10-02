@@ -118,14 +118,14 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    ct_peakwid  ->setEnabled( !ck_contour->isChecked() );
    ct_gridres  ->setEnabled( !ck_contour->isChecked() );
 
-   connect( pb_plot3d,   SIGNAL( clicked()   ),
-            this,        SLOT  ( plot3_btn() ) );
-   connect( ck_contour,  SIGNAL( toggled     ( bool ) ),
-            this,        SLOT  ( ptype_toggle( bool ) ) );
-   connect( pb_help,     SIGNAL( clicked()   ),
-            this,        SLOT  ( help()      ) );
-   connect( pb_close,    SIGNAL( clicked()   ),
-            this,        SLOT  ( close_all() ) );
+   connect( pb_plot3d,   &QAbstractButton::clicked,
+            this,        &US_VhwCPlotControl::plot3_btn );
+   connect( ck_contour,  &QAbstractButton::toggled,
+            this,        &US_VhwCPlotControl::ptype_toggle );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_VhwCPlotControl::help );
+   connect( pb_close,    &QAbstractButton::clicked,
+            this,        &US_VhwCPlotControl::close_all );
 
    plot3d_w = 0;
 

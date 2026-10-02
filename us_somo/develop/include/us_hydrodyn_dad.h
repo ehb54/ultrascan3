@@ -196,6 +196,27 @@ class US_EXTERN US_Hydrodyn_Dad : public QFrame
                              const QString     & tag
                              );
 
+      // gui_script support ( us3_somo -g, the "dad" commands ).  when
+      // script_mode is set, the dialogs dad_load() would otherwise raise are
+      // answered from these values, so the module can run with no interaction.
+      // a zero script_lambda_end means load the full wavelength range
+
+      bool          script_mode;
+      double        script_start_time_seconds;
+      double        script_collection_interval_seconds;
+      double        script_lambda_start;
+      double        script_lambda_end;
+
+      bool          script_load        ( const QString & filename, QString & errormsg );
+      bool          script_load_lambdas( const QString & filename, QString & errormsg );
+      // note: create_i_of_q_ng()'s t_min/t_max only apply in test I(q) mode,
+      // so no time range is offered here.  use script_select() to choose which
+      // of the resulting curves to keep
+      bool          script_make_a_of_lambda( QString & errormsg );
+      bool          script_save        ( const QString & dir, QString & errormsg );
+      QStringList   script_files       ( bool selected_only = false );
+      bool          script_select      ( const QString & match, QString & errormsg );
+
    private:
 #if QT_VERSION < 0x040000
       Mesh2MainWindow *plot3d_window;

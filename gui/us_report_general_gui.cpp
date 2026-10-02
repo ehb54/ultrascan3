@@ -318,8 +318,8 @@ void US_ReportGenGui::build_layout( void )
   treeWidget->resizeColumnToContents( 0 );
   treeWidget->resizeColumnToContents( 1 );
 
-  connect( treeWidget, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( treeWidget, &QTreeWidget::itemChanged,
+  	   this,       &US_ReportGenGui::changedItem );
 
   
   // int ihgt        = le_chan_desc->height();
@@ -356,8 +356,8 @@ void US_ReportGenGui::build_layout( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_selection() ) );
-  connect( pb_accept, SIGNAL( clicked() ), SLOT( update_selection() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &US_ReportGenGui::cancel_selection );
+  connect( pb_accept, &QAbstractButton::clicked, this, &US_ReportGenGui::update_selection );
 
   lower_buttons->addWidget( pb_cancel );
   lower_buttons->addWidget( pb_accept );
@@ -427,8 +427,8 @@ void US_ReportGenGui::changedItem( QTreeWidgetItem* item, int col )
     }
 
   //reconnect
-  connect( item -> treeWidget(), SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-	   this,       SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( item -> treeWidget(), &QTreeWidget::itemChanged,
+	   this,       &US_ReportGenGui::changedItem );
 }
 
 /*

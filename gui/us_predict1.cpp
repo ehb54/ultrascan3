@@ -40,8 +40,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    setPalette( US_GuiSettings::frameColor() );
 
    // Very light gray
-   QPalette gray =  US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray =  US_GuiSettings::readonlyColor();
 
    QBoxLayout* main = new QVBoxLayout( this );
    main->setSpacing         ( 2 );
@@ -53,7 +52,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    int c_row = 0;
 
    QPushButton* pb_solution = us_pushbutton( tr( "Select Solution" ) );
-   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
+   connect( pb_solution, &QAbstractButton::clicked, this, &US_Predict1::get_solution );
    controls->addWidget( pb_solution, c_row++, 0, 1, 2 );
 
    // Basic values
@@ -80,34 +79,34 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    else
    {
       QPushButton* pb_density = us_pushbutton( tr( "Density" ) );
-      connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+      connect( pb_density, &QAbstractButton::clicked, this, &US_Predict1::get_buffer );
       controls->addWidget( pb_density, c_row, 0 );
 
       le_density = us_lineedit();
       le_density->setText( QString::number( DENS_20W, 'f', 4 ) );
-      connect( le_density, SIGNAL( textChanged( const QString& ) ),
-                           SLOT  ( density    ( const QString& ) ) );
+      connect( le_density, &QLineEdit::textChanged,
+                           this, &US_Predict1::density );
       controls->addWidget( le_density, c_row++, 1 );
 
       QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
-      connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+      connect( pb_viscosity, &QAbstractButton::clicked, this, &US_Predict1::get_buffer );
       controls->addWidget( pb_viscosity, c_row, 0 );
 
       le_viscosity = us_lineedit();
       le_viscosity->setText( QString::number( VISC_20W, 'f', 4 ) );
-      connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
-                             SLOT  ( viscosity  ( const QString& ) ) );
+      connect( le_viscosity, &QLineEdit::textChanged, 
+                             this, &US_Predict1::viscosity );
       controls->addWidget( le_viscosity, c_row++, 1 );
    }
    US_Math2::data_correction( temperature, solution );
    QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20" ) + DEGC + ")" );
-   connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
+   connect( pb_vbar, &QAbstractButton::clicked, this, &US_Predict1::get_peptide );
    controls->addWidget( pb_vbar, c_row, 0 );
 
    le_vbar = us_lineedit();
    le_vbar->setText( QString::number( solution.vbar20, 'e', 4 ) );
-   connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
-                     SLOT  ( vbar       ( const QString& ) ) );
+   connect( le_vbar, &QLineEdit::textChanged, 
+                     this, &US_Predict1::vbar );
    controls->addWidget( le_vbar, c_row++, 1 );
 
    QLabel* lb_mw = us_label( tr( "Molecular Weight:" ) );
@@ -115,8 +114,8 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    le_mw = us_lineedit();
    le_mw->setText( QString::number( mw, 'e', 3 ) );
-   connect( le_mw, SIGNAL( textChanged( const QString& ) ), 
-                   SLOT  ( update_mw  ( const QString& ) ) );
+   connect( le_mw, &QLineEdit::textChanged, 
+                   this, &US_Predict1::update_mw );
    controls->addWidget( le_mw, c_row++, 1 );
 
    QLabel* lb_temperature = us_label( 
@@ -133,8 +132,8 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    }
    else
    {
-      connect( le_temperature, SIGNAL( textChanged( const QString& ) ), 
-                               SLOT  ( degC       ( const QString& ) ) );
+      connect( le_temperature, &QLineEdit::textChanged, 
+                               this, &US_Predict1::degC );
    }
    controls->addWidget( le_temperature, c_row++, 1 );
 
@@ -144,8 +143,8 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    le_axial = us_lineedit();
    le_axial->setText( QString::number( ratio, 'f', 3 ) );
-   connect( le_axial, SIGNAL( editingFinished( void ) ), 
-                      SLOT  ( update_ratio   ( void ) ) );
+   connect( le_axial, &QLineEdit::editingFinished, 
+                      this, &US_Predict1::update_ratio );
    controls->addWidget( le_axial, c_row++, 1 );
 
    // Max x range
@@ -154,8 +153,8 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    le_max_x = us_lineedit();
    le_max_x->setText( QString::number( max_x, 'f', 3 ) );
-   connect( le_max_x, SIGNAL( textChanged ( const QString& ) ), 
-                      SLOT  ( update_max_x   ( const QString& ) ) );
+   connect( le_max_x, &QLineEdit::textChanged, 
+                      this, &US_Predict1::update_max_x );
    controls->addWidget( le_max_x, c_row++, 1 );
 
    // Information
@@ -173,15 +172,15 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    QBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_Predict1::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_close );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( complete() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_Predict1::complete );
    buttons->addWidget( pb_accept );
 
    controls->addLayout( buttons, c_row++, 0, 1, 2 );
@@ -202,12 +201,12 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    pick = new US_PlotPicker( plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   connect( pick, SIGNAL( moved    ( const QPointF& ) ),
-                  SLOT  ( new_value( const QPointF& ) ) );
-   connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
-                  SLOT  ( new_value( const QPointF& ) ) );
-   connect( pick, SIGNAL( mouseUp  ( const QPointF& ) ),
-                  SLOT  ( mouseU   ( const QPointF& ) ) );
+   connect( pick, &QwtPlotPicker::moved,
+                  this, &US_Predict1::new_value );
+   connect( pick, &US_PlotPicker::mouseDown,
+                  this, &US_Predict1::new_value );
+   connect( pick, &US_PlotPicker::mouseUp,
+                  this, &US_Predict1::mouseU );
 
    QwtPlotGrid* grid = us_grid( plot );
    grid->attach( plot );
@@ -380,11 +379,11 @@ void US_Predict1::get_peptide( void )
    US_AnalyteGui* dialog = 
       new US_AnalyteGui( true, analyte.analyteGUID );
 
-   connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
-                    SLOT  ( update_vbar ( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_AnalyteGui::valueChanged ),
+                    this, &US_Predict1::update_vbar );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ),
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_AnalyteGui::use_db,
+                    this, &US_Predict1::source_changed );
    dialog->exec();
 }
 
@@ -407,11 +406,11 @@ void US_Predict1::get_buffer( void )
 
    US_BufferGui* dialog = new US_BufferGui( true, buffer, access );
 
-   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
-                    SLOT  ( update_buffer( US_Buffer ) ) );
+   connect( dialog, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
+                    this, &US_Predict1::update_buffer );
 
-   connect( dialog, SIGNAL( use_db        ( bool ) ),
-                    SLOT  ( source_changed( bool ) ) );
+   connect( dialog, &US_BufferGui::use_db,
+                    this, &US_Predict1::source_changed );
 
    dialog->exec();
 }
@@ -460,8 +459,8 @@ void US_Predict1::new_value( const QPointF& p )
    le_axial ->disconnect();
    le_axial->setText( QString::number( ratio, 'f', 3 ) );
 
-   connect( le_axial, SIGNAL( editingFinished( void ) ), 
-                      SLOT  ( update_ratio   ( void ) ) );
+   connect( le_axial, &QLineEdit::editingFinished, 
+                      this, &US_Predict1::update_ratio );
    update();
 }
 
@@ -506,8 +505,8 @@ void US_Predict1::mouseU( const QPointF& p )
    
    le_axial->setText( QString::number( ratio, 'f', 3 ) );
 
-   connect( le_axial, SIGNAL( editingFinished( void ) ), 
-                      SLOT  ( update_ratio   ( void ) ) );
+   connect( le_axial, &QLineEdit::editingFinished, 
+                      this, &US_Predict1::update_ratio );
    update();
    //debug();
 }
@@ -648,8 +647,8 @@ void US_Predict1::debug( void )
 void US_Predict1::get_solution( void )
 {
    US_SolutionGui* dialog = new US_SolutionGui( 1, 1, true );
-   connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-                    SLOT  ( update_solution           ( US_Solution ) ) );
+   connect( dialog, &US_SolutionGui::updateSolutionGuiSelection,
+                    this, &US_Predict1::update_solution );
    dialog->setWindowTitle( tr( "Solutions" ) );
    dialog->exec();
 }
@@ -684,8 +683,8 @@ void US_Predict1::update_solution( US_Solution soln )
    else
    {
      US_Choice* dialog = new US_Choice( soln );
-     connect( dialog, SIGNAL( choice( int ) ),
-                      SLOT  ( choose( int ) ) );
+     connect( dialog, &US_Choice::choice,
+                      this, &US_Predict1::choose );
      dialog->exec();
      qApp->processEvents();
 

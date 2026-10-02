@@ -67,6 +67,8 @@ QString DAD_Lambdas::summary_rich() {
 }
 
 bool DAD_Lambdas::load( const QString & filename, const QStringList & filelines, QString & errormsg ) {
+   TSO << "DAD_Lambdas::load()\n";
+   
    if ( !filelines.size() ) {
       errormsg = us_tr( "Empty file" );
       return false;
@@ -74,15 +76,45 @@ bool DAD_Lambdas::load( const QString & filename, const QStringList & filelines,
 
    QStringList use_filelines;
 
-   for ( auto l1 : filelines ) {
-      QStringList qsl = l1.split( ", " );
-      for ( auto l2 : qsl ) {
-         l2 = l2.trimmed();
-         if ( !l2.isEmpty() ) {
-            use_filelines << l2.trimmed();
+   bool use_comma_separated_format = false;
+
+   {
+      bool first = true;;
+
+      for ( auto l1 : filelines ) {
+         l1 = l1.trimmed();
+         if ( first ) {
+            first = false;
+            if ( l1.contains( QRegularExpression( "^Index\\s+" ) ) ) {
+               continue;
+            }
+         }
+
+         if ( l1.contains( QRegularExpression( "^\\d+\\.\\d+\\s+\\d+\\.\\d+$" ) ) ) {
+            QStringList qsl = l1.split( QRegularExpression( "\\s+" ) );
+            if ( qsl.size() == 2 )  {
+               use_filelines << qsl[ 1 ];
+            }
+         }
+      }
+      use_comma_separated_format = use_filelines.size() == 0;
+   }
+
+   if ( use_comma_separated_format ) {
+      for ( auto l1 : filelines ) {
+         QStringList qsl = l1.split( QRegularExpression( "\\s*,?\\s+" ) );
+         for ( auto l2 : qsl ) {
+            l2 = l2.trimmed();
+            if ( !l2.isEmpty() ) {
+               use_filelines << l2.trimmed();
+            }
          }
       }
    }
+
+   // for ( auto const & line : use_filelines ) {
+   //    TSO << "line " << line << "\n";
+   // }
 
    vector < double > new_lambdas;
 
@@ -486,6 +518,13 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    this->us_hydrodyn = us_hydrodyn;
    started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
    dad_options_widget = 0;
+
+   script_mode                        = false;
+   script_start_time_seconds          = 0e0;
+   script_collection_interval_seconds = 1e0;
+   script_lambda_start                = 0e0;
+   script_lambda_end                  = 0e0;
+
    suppress_plot            = false;
    powerfit_fit_curve       = (QwtPlotCurve *) 0;
    powerfit_corrected_curve = (QwtPlotCurve *) 0;
@@ -585,6 +624,9 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_ampl_width_min"        ) ||
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_width_min"        ] = "1e-12";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_ampl_min"        ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_ampl_min"              ] = "1e-12";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_lock_min_retry"        ) ||
         !started_in_expert_mode ) {
@@ -4552,7 +4594,7 @@ void US_Hydrodyn_Dad::smooth( QStringList files )
    bool ok;
    int smoothing = US_Static::getInteger(
                                             us_tr( "SOMO: HPLC enter smoothing" ),
-                                            us_tr( "Enter the number of points of smoothing:" ),
+                                            us_tr( "Enter the smoothing radius:" ),
                                             1, 
                                             1,
                                             50,

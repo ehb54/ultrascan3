@@ -94,41 +94,41 @@ DbgLv(1) << "GUI setup begun";
 
    pb_reset      = us_pushbutton( tr( "Reset" ), false );
    dctlLayout->addWidget( pb_reset,  row,   0, 1, 4 );
-   connect( pb_reset,   SIGNAL( clicked()     ),
-            this,       SLOT  (   reset()     ) );
+   connect( pb_reset,   &QAbstractButton::clicked,
+            this,       &US_ManageData::reset );
 
    pb_scanda     = us_pushbutton( tr( "Scan Data" ) );
    dctlLayout->addWidget( pb_scanda, row++, 4, 1, 4 );
-   connect( pb_scanda,  SIGNAL( clicked()     ),
-            this,       SLOT( scan_data()     ) );
+   connect( pb_scanda,  &QAbstractButton::clicked,
+            this,       &US_ManageData::scan_data );
 
    pb_hsedit     = us_pushbutton( tr( "Show All Edits" ) );
    dctlLayout->addWidget( pb_hsedit, row,   0, 1, 4 );
-   connect( pb_hsedit,  SIGNAL( clicked()     ),
-            this,       SLOT( toggle_edits()  ) );
+   connect( pb_hsedit,  &QAbstractButton::clicked,
+            this,       &US_ManageData::toggle_edits );
 
    pb_hsmodl     = us_pushbutton( tr( "Show All Models" ) );
    dctlLayout->addWidget( pb_hsmodl, row++, 4, 1, 4 );
-   connect( pb_hsmodl,  SIGNAL( clicked()     ),
-            this,       SLOT( toggle_models() ) );
+   connect( pb_hsmodl,  &QAbstractButton::clicked,
+            this,       &US_ManageData::toggle_models );
 
    pb_hsnois     = us_pushbutton( tr( "Show All Noises" ) );
    dctlLayout->addWidget( pb_hsnois, row,   0, 1, 4 );
-   connect( pb_hsnois,  SIGNAL( clicked()     ),
-            this,       SLOT( toggle_noises() ) );
+   connect( pb_hsnois,  &QAbstractButton::clicked,
+            this,       &US_ManageData::toggle_noises );
 
    pb_helpdt     = us_pushbutton( tr( "Data Tree Help" ) );
    dctlLayout->addWidget( pb_helpdt, row++, 4, 1, 4 );
 
    pb_help       = us_pushbutton( tr( "Help" ) );
    dctlLayout->addWidget( pb_help,   row,   0, 1, 4 );
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT(   help()    ) );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_ManageData::help );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    dctlLayout->addWidget( pb_close,  row++, 4, 1, 4 );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT(   close()   ) );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &QWidget::close );
 
    QLabel* lb_runid  = us_label( tr( "RunID:" ) );
    cb_runid      = us_comboBox();
@@ -136,8 +136,8 @@ DbgLv(1) << "GUI setup begun";
    cb_runid  ->addItem( tr( "Select individual run" ) );
    dctlLayout->addWidget( lb_runid,  row,   0, 1, 2 );
    dctlLayout->addWidget( cb_runid,  row++, 2, 1, 6 );
-   connect( cb_runid,   SIGNAL( activated     ( int ) ),
-            this,       SLOT(   selected_runID( int ) ) );
+   connect( cb_runid,   qOverload< int >( &QComboBox::activated ),
+            this,       qOverload< int >( &US_ManageData::selected_runID ) );
 
    QLabel* lb_triple = us_label( tr( "Triple:" ) );
    cb_triple     = us_comboBox();
@@ -154,8 +154,8 @@ DbgLv(1) << "GUI setup begun";
    cb_source ->addItem( "Exclude DB-Only Trees" );
    dctlLayout->addWidget( lb_source, row,   0, 1, 2 );
    dctlLayout->addWidget( cb_source, row++, 2, 1, 6 );
-   connect( cb_source,  SIGNAL( currentIndexChanged( QString ) ),
-            this,       SLOT(   reset              (         ) ) );
+   connect( cb_source,  &QComboBox::currentTextChanged,
+            this,       &US_ManageData::reset );
 
    pb_invtor->setToolTip( 
       tr( "Use an Investigator dialog to set the database person ID" ) );
@@ -259,8 +259,8 @@ DbgLv(1) << "te_status size" << te_status->size();
    tw_recs->setAutoFillBackground( true );
    tw_recs->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
-   connect( tw_recs, SIGNAL( itemPressed( QTreeWidgetItem*, int ) ),
-            this,    SLOT(   clickedItem( QTreeWidgetItem* ) ) );
+   connect( tw_recs, &QTreeWidget::itemPressed,
+            this,    &US_ManageData::clickedItem );
 
    reset_hsbuttons( false, true, true, true );  // hs button labels,tooltips
 
@@ -296,8 +296,8 @@ DbgLv(1) << "te_status size" << te_status->size();
    }
 DbgLv(1) << "db passwd complete";
 
-   connect( pb_invtor,  SIGNAL( clicked()          ),
-            this,       SLOT(   sel_investigator() ) );
+   connect( pb_invtor,  &QAbstractButton::clicked,
+            this,       &US_ManageData::sel_investigator );
 DbgLv(1) << "GUI setup complete";
 
    // Create an object to handle the data itself
@@ -318,8 +318,8 @@ DbgLv(1) << "GUI setup complete";
 DbgLv(1) << "classes setup complete";
 
    // Set up initial state of GUI
-   connect( pb_helpdt,  SIGNAL( clicked()     ),
-            da_tree,    SLOT( dtree_help() ) );
+   connect( pb_helpdt,  &QAbstractButton::clicked,
+            da_tree,    &US_DataTree::dtree_help );
 
    reset();
 }
@@ -515,8 +515,8 @@ void US_ManageData::sel_investigator()
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT(   assign_investigator  ( int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_ManageData::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -716,8 +716,8 @@ DbgLv(0) << "selected_runID: selrunID" << selrunID;
          cb_runid->addItem( tr( "Select individual run" ) );
          cb_runid->addItem( srunID );
          cb_runid->setCurrentIndex( 2 );
-         connect( cb_runid,   SIGNAL( activated     ( int ) ),
-                  this,       SLOT(   selected_runID( int ) ) );
+         connect( cb_runid,   qOverload< int >( &QComboBox::activated ),
+                  this,       qOverload< int >( &US_ManageData::selected_runID ) );
       }
    }
 
