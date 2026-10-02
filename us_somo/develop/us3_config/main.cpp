@@ -81,7 +81,6 @@ int main ( int argc, char **argv )
       configuration->show();
  //      a.setMainWidget(configuration);
       a.setDesktopSettingsAware(false);
-#if QT_VERSION >= 0x040000
       {
          QString icon = 
             configuration->USglobal->config_list.system_dir + "/etc/" + "somo3_config_128x128.ico";
@@ -90,7 +89,6 @@ int main ( int argc, char **argv )
             a.setWindowIcon( QIcon( icon ) );
          }
       }
-#endif
 
       return a.exec();
    }

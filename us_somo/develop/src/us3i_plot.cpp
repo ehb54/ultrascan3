@@ -3,18 +3,10 @@
 
 #include <QtSvg>
 #include "us3i_plot.h"
-#if QT_VERSION > 0x050000
 #include <QtPrintSupport>
 #include "qwt_picker_machine.h"
 #include "qwt_picker.h"
 #define canvasBackground() canvasBackground().color()
-#else
-#define majorPen(a)    majPen(a)
-#define minorPen(a)    minPen(a)
-#define setSymbol(a)   setSymbol(*a)
-#define drawSymbol(a,b) draw(a,b)
-#define QwtLogScaleEngine QwtLog10ScaleEngine
-#endif
 
 #include "us3i_gui_settings.h"
 #include "us3i_gui_util.h"
@@ -34,15 +26,9 @@
 US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
    : QwtPlotZoomer( xAxis, yAxis, canvas )
 {
-#if QT_VERSION < 0x050000
-   setSelectionFlags( QwtPicker::DragSelection | QwtPicker::CornerToCorner );
-   setTrackerMode   ( QwtPicker::AlwaysOff );
-   setRubberBand    ( QwtPicker::NoRubberBand );
-#else
    setStateMachine  ( new QwtPickerDragRectMachine() );
    setTrackerMode   ( QwtPicker::ActiveOnly );
    setRubberBand    ( QwtPicker::RectRubberBand );
-#endif
 
    // RightButton: zoom out by 1
    // Ctrl+RightButton: zoom out to full size
@@ -139,9 +125,7 @@ US_Plot::US_Plot( mQwtPlot*& parent_plot, const QString& title,
   
    plot->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
    plot->setAutoReplot( false );
-#if QT_VERSION > 0x050000
    plot->setAutoDelete( false );
-#endif
   
    QFont font( US3i_GuiSettings::fontFamily(),
                US3i_GuiSettings::fontSize(),
@@ -153,12 +137,8 @@ US_Plot::US_Plot( mQwtPlot*& parent_plot, const QString& title,
    qwtTitle.setFont( font );
    plot->setTitle( qwtTitle );
 
-#if QT_VERSION > 0x050000
    plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
          .arg( US3i_GuiSettings::plotMargin() ) );
-#else
-   plot->setMargin( US3i_GuiSettings::plotMargin() );
-#endif
 
    font.setPointSizeF( US3i_GuiSettings::fontSize() * 1.0 );
    qwtTitle.setFont( font );
@@ -196,28 +176,16 @@ void US_Plot::zoom( bool on )
       zoomer->setTrackerMode  ( QwtPicker::ActiveOnly );
       zoomer->setTrackerPen   ( QColor( Qt::white ) );
 
-#if QT_VERSION < 0x050000
-      connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
-                       SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
-#else
       connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ), 
                        SIGNAL ( zoomedCorners( QRectF        ) ) );
-#endif
       
       panner = new QwtPlotPanner( plot->canvas() );
       panner->setMouseButton( Qt::MiddleButton );
 
-#if QT_VERSION > 0x050000
       picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                      QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
                      plot->canvas() );
       picker->setStateMachine ( new QwtPickerDragRectMachine() );
-#else
-      picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
-                     QwtPicker::PointSelection | QwtPicker::DragSelection,
-                     QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
-                     plot->canvas() );
-#endif
 
       picker->setRubberBandPen( QColor( Qt::green ) );
       picker->setRubberBand   ( QwtPicker::CrossRubberBand );
@@ -302,19 +270,7 @@ void US_Plot::print( void )
 
    if ( dialog.exec() == QDialog::Accepted )
    {
-#if QT_VERSION > 0x050000
        plot->drawCanvas( new QPainter( &printer ) );
-#else
-       QwtPlotPrintFilter filter;
-       if ( printer.colorMode() == QPrinter::GrayScale )
-       {
-           int options = QwtPlotPrintFilter::PrintAll;
-           options    &= ~QwtPlotPrintFilter::PrintBackground;
-           options    |= QwtPlotPrintFilter::PrintFrameWithScales;
-           filter.setOptions( options );
-       }
-       plot->print( printer, filter );
-#endif
    }
 }
 
@@ -706,11 +662,7 @@ void US_PlotConfig::selectCanvasColor( void )
    {
       pal.setColor( QPalette::Window, col );
       lb_showCanvasColor->setPalette( pal );
-#if QT_VERSION > 0x050000
       plot->setCanvasBackground( QBrush( col ) );
-#else
-      plot->setCanvasBackground( col );
-#endif
       plot->replot();
    }
 }
@@ -797,7 +749,6 @@ void US_PlotConfig::updateLegendFont( void )
          tr( "The layout does not exist.  Set the legend position first." ) );
       return;
    }
-#if QT_VERSION > 0x050000
    else
    {
       // For Qwt6/Qt5, more than a legend setFont() is needed
@@ -807,7 +758,6 @@ void US_PlotConfig::updateLegendFont( void )
             "Font cannot be changed." ) );
       return;
    }
-#endif
 
    QFont font = plot->legend()->font();
 
@@ -817,13 +767,8 @@ void US_PlotConfig::updateLegendFont( void )
 
    if ( ok )
    {
-#if QT_VERSION > 0x050000
       // For Qwt6/Qt5, more than a legend setFont() is needed
       plot->legend()->setFont( newFont );
-#else
-      // For Qwt5/Qt4, only a legend setFont() is needed
-      plot->legend()->setFont( newFont );
-#endif
       setLegendFontString();
       plot->replot();
    }
@@ -986,11 +931,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
       return;
    }
 
-#if QT_VERSION > 0x050000
    QwtSymbol *selSymbol  = (QwtSymbol*)firstSelectedCurve->symbol();
-#else
-   QwtSymbol *selSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
-#endif
 
    // Set up the dialog
    int row = 0;
@@ -1287,11 +1228,7 @@ void US_PlotCurveConfig::selectSymbolOutlineColor( void )
 
 void US_PlotCurveConfig::apply( void )
 {
-#if QT_VERSION > 0x050000
    QwtSymbol *oldSymbol  = (QwtSymbol*)firstSelectedCurve->symbol();
-#else
-   QwtSymbol *oldSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
-#endif
    oldSymbol             = ( oldSymbol != NULL ) ? oldSymbol : new QwtSymbol;
    QPen      symbolPen   = oldSymbol->pen();
    QBrush    symbolBrush = oldSymbol->brush();
@@ -1587,19 +1524,11 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QLabel* lb_scaleTo   = us_label( tr( "To:" ) );
    QLabel* lb_scaleStep = us_label( tr( "Step:" ) );
 
-#if QT_VERSION > 0x050000
    le_scaleFrom = us_lineedit( 
          QString::number( plot->axisScaleDiv( axis ).lowerBound() ), 1 );
    
    le_scaleTo   = us_lineedit( 
          QString::number( plot->axisScaleDiv( axis ).upperBound() ), 1 );
-#else
-   le_scaleFrom = us_lineedit( 
-         QString::number( plot->axisScaleDiv( axis )->lowerBound() ), 1 );
-   
-   le_scaleTo   = us_lineedit( 
-         QString::number( plot->axisScaleDiv( axis )->upperBound() ), 1 );
-#endif
    
    le_scaleStep = us_lineedit( 
          QString::number( plot->axisStepSize( axis )           ), 1 );
@@ -1623,11 +1552,6 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QGridLayout* rb1 = us_radiobutton( tr( "Linear"      ), rb_linear, true  );
    QGridLayout* rb2 = us_radiobutton( tr( "Logarithmic" ), rb_log   , false );
 
-#if QT_VERSION > 0x050000
-#else
-   if ( plot->axisScaleEngine( axis )->transformation()->type() == 
-         QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
-#endif
 
    scaleRadio->addLayout( rb1 );
    scaleRadio->addLayout( rb2 );
@@ -1814,18 +1738,6 @@ void US_PlotAxisConfig::apply( void )
      plot->setAxisScale( axis, from, to, step );
 
    // Scale type - Linear or Log  -- Do nothing if unchanged
-#if QT_VERSION > 0x050000
-#else
-   int plotType = plot->axisScaleEngine( axis )->transformation()->type();
-   if ( ( plotType == QwtScaleTransformation::Log10  && rb_linear->isChecked() ) 
-     || ( plotType == QwtScaleTransformation::Linear && rb_log   ->isChecked() ) )
-   {
-      if ( rb_linear->isChecked() ) 
-         plot->setAxisScaleEngine( axis, new QwtLinearScaleEngine );
-      else  
-         plot->setAxisScaleEngine( axis, new QwtLogScaleEngine );
-   }
-#endif
 
    // Set scale reference
    double reference = le_reference->text().toDouble();
@@ -2129,11 +2041,7 @@ void US_PlotGridConfig::apply( void )
 US_PlotPicker::US_PlotPicker( QwtPlot* plot ) 
   : QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft, plot->canvas() )
 {
-#if QT_VERSION < 0x050000
-   setSelectionFlags( QwtPicker::PointSelection );
-#else
    setStateMachine ( new QwtPickerDragPointMachine() );
-#endif
    setTrackerMode  ( QwtPicker::AlwaysOn );
    setRubberBand   ( QwtPicker::CrossRubberBand );
 

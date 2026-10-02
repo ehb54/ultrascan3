@@ -36,9 +36,6 @@
 #include "../include/us_hydrodyn_pdbdefs.h"
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 using namespace std;
@@ -254,9 +251,6 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

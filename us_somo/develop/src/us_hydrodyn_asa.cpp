@@ -40,27 +40,6 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-#if QT_VERSION < 0x040000
-   bg_asa_method = new QGroupBox(2, Qt::Vertical, "ASA Method:", this);
-   bg_asa_method->setExclusive(true);
-   connect(bg_asa_method, SIGNAL(clicked(int)), this, SLOT(select_asa_method(int)));
-
-   cb_surfracer = new QCheckBox(bg_asa_method);
-   cb_surfracer->setText(us_tr(" Voronoi Tesselation (Surfrace, Tsodikov et al.)"));
-   cb_surfracer->setEnabled(true);
-   cb_surfracer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_surfracer->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_surfracer );
-
-   cb_asab1 = new QCheckBox(bg_asa_method);
-   cb_asab1->setText(us_tr(" Rolling Sphere (ASAB1, Lee && Richards' Method)"));
-   cb_asab1->setEnabled(true);
-   cb_asab1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_asab1->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_asab1 );
-
-   bg_asa_method->setButton((*asa).method);
-#else
    bg_asa_method = new QGroupBox("ASA Method:");
 
    rb_surfracer = new QRadioButton();
@@ -93,7 +72,6 @@ void US_Hydrodyn_ASA::setupGUI()
    default : qDebug() << "asa missing asa method selection error"; break;
    }
    
-#endif
    
    lbl_probe_radius = new QLabel(us_tr(" ASA Probe Radius [" + UNICODE_ANGSTROM_QS + "]: "), this);
    Q_CHECK_PTR(lbl_probe_radius);

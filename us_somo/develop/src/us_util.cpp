@@ -518,17 +518,8 @@ int copy(const QString &sourcefile, const QString &destfile)
 */
 void view_image(
                 const QString 
-#if QT_VERSION < 0x040000
-                &filename
-#endif
                 )
 {
-#if QT_VERSION < 0x040000
-   US_ImageViewer *us_imgviewer;
-   us_imgviewer = new US_ImageViewer(0, "new window", Qt::WDestructiveClose | Qt::WResizeNoErase);
-   us_imgviewer->openFile(filename);
-   us_imgviewer->show();   
-#endif
 }
 
 
@@ -581,68 +572,27 @@ for (int i=0; i<8; i++)
 
 bool US_Static::lv_any_selected( QTreeWidget *lv ) {
    bool any_selected = false;
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            any_selected = true;
-         }
-
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-#else
    any_selected = lv->selectedItems().count() > 0;
-#endif
    return any_selected;
 }
 
 bool US_Static::lv_any_unselected( QTreeWidget *lv ) {
    bool any_unselected = false;
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( !lvi->isSelected() )
-         {
-            any_unselected = true;
-         }
-
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-#else
    QTreeWidgetItemIterator it( lv , QTreeWidgetItemIterator::Unselected );
    any_unselected = *it;
-#endif
    return any_unselected;
 }
 
 void US_Static::lv_select_all_or_none( QTreeWidget *lv ) {
    bool any_not_selected = US_Static::lv_any_unselected( lv );
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv->firstChild();
-   if ( lvi )
-   {
-      do {
-         lv->setSelected( lvi, any_not_selected );
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-#else
    if ( any_not_selected ) {
       lv->selectAll();
    } else {
       lv->clearSelection();
    }
-#endif
 }
       
 int US_Static::lvi_depth( QTreeWidgetItem *lvi ) {
-#if QT_VERSION < 0x040000
-   return lvi->depth();
-#else
    int depth = 0;
    while ( lvi ) {
       depth++;
@@ -652,13 +602,9 @@ int US_Static::lvi_depth( QTreeWidgetItem *lvi ) {
       --depth;
    }
    return depth;
-#endif
 }
 
 QTreeWidgetItem * US_Static::lv_lastItem( QTreeWidget *lv ) {
-#if QT_VERSION < 0x040000
-   return lv->lastItem();
-#else
    QTreeWidgetItemIterator it( lv );
    QTreeWidgetItem *lvi = (QTreeWidgetItem *)0;
 
@@ -667,10 +613,8 @@ QTreeWidgetItem * US_Static::lv_lastItem( QTreeWidget *lv ) {
       ++it;
    }
    return lvi;
-#endif
 }
 
-#if QT_VERSION >= 0x040000
 // QString us_tr( QString qs ) {
 //    return QObject::tr( qPrintable( qs ) );
 // }
@@ -693,11 +637,7 @@ double US_Static::getDouble(const QString & title, const QString & label, double
 }
 
 int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char * ) {
-#if QT_VERSION >= 0x050000
    return QInputDialog::getInt(parent, title, label, value, min, max, step, ok );
-#else
-   return QInputDialog::getInteger(parent, title, label, value, min, max, step, ok );
-#endif
 }
 
 QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char * ) {
@@ -714,4 +654,3 @@ int US_Static::us_message(const QString & title, const QString & text, const QSt
    }
    return QMessageBox::information( parent, title, text );
 }
-#endif

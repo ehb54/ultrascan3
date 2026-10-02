@@ -32,10 +32,8 @@
 #include "us_hydrodyn_saxs.h"
 
 #include "qwt_wheel.h"
-#if QT_VERSION >= 0x040000
 #include "qwt_plot_marker.h"
 #include "qwt_symbol.h"
-#endif
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 
@@ -139,9 +137,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QString saxs_header_iqq;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
       vector < vector < double > > qs;
       vector < vector < double > > Is;
@@ -170,9 +165,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       map < QString, double >                 guinier_rgs;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
       csv  current_csv();
 

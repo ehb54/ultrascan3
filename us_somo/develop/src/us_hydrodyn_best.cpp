@@ -127,7 +127,7 @@ US_Hydrodyn_Best::~US_Hydrodyn_Best()
 void US_Hydrodyn_Best::setupGUI()
 {
    int minHeight1 = 24;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 25;
 #endif
 
@@ -281,14 +281,6 @@ void US_Hydrodyn_Best::setupGUI()
    connect( rb_70_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
    input_widgets.push_back( rb_70_qtest );
 
-#if QT_VERSION < 0x040000
-   bg_qtest_level = new QGroupBox( this );
-   int bg_pos = 0;
-   bg_qtest_level->setExclusive(true);
-   bg_qtest_level->addButton( rb_90_qtest, bg_pos++ );
-   bg_qtest_level->addButton( rb_80_qtest, bg_pos++ );
-   bg_qtest_level->addButton( rb_70_qtest, bg_pos++ );
-#else
    bg_qtest_level = new QGroupBox();
    bg_qtest_level->setFlat( true );
 
@@ -299,7 +291,6 @@ void US_Hydrodyn_Best::setupGUI()
       bl->addWidget( rb_70_qtest );
       bg_qtest_level->setLayout( bl );
    }
-#endif
 
    // ------ editor section
 
@@ -317,40 +308,6 @@ void US_Hydrodyn_Best::setupGUI()
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      mb_editor = new QMenuBar( this );
-      AUTFBACK( mb_editor );
-
-      mb_editor->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   editor_widgets.push_back( frame );
-
-   mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
-   mb_editor->setMinimumHeight(minHeight1 - 5);
-   mb_editor->setPalette( PALET_NORMAL );
-   AUTFBACK( mb_editor );
-
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   mb_editor->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    mb_editor = new QMenuBar( this );
    mb_editor->setObjectName( "menu" );
@@ -384,7 +341,6 @@ void US_Hydrodyn_Best::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
@@ -400,49 +356,22 @@ void US_Hydrodyn_Best::setupGUI()
    ((QWidget *)plot_data->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_data->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
    ((QWidget *)plot_data->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   // plot_data->enableOutline(true);
-   // plot_data->setOutlinePen(Qt::white);
-   // plot_data->setOutlineStyle(Qwt::VLine);
-   plot_data->enableGridXMin();
-   plot_data->enableGridYMin();
-#else
    grid_data = new QwtPlotGrid;
    grid_data->enableXMin( true );
    grid_data->enableYMin( true );
-#endif
    plot_data->setPalette( PALET_NORMAL );
    AUTFBACK( plot_data );
-#if QT_VERSION < 0x040000
-   plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_data->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_data->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_data->attach( plot_data );
-#endif
    plot_data->setAxisTitle(QwtPlot::xBottom, us_tr( "1/Triangles"      ) ); 
    plot_data->setAxisTitle(QwtPlot::yLeft,   us_tr( "Parameter [a.u.]" ) );
-#if QT_VERSION < 0x040000
-   plot_data->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_data->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_data->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_data->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_data->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_data->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_data->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_data->setMargin(USglobal->config_list.margin);
    plot_data->setTitle("");
-#if QT_VERSION < 0x040000
-   plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
    plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
    lbl_points = new mQLabel( "Linear:", this );
@@ -515,7 +444,7 @@ void US_Hydrodyn_Best::setupGUI()
       }
       bl->addWidget( lbl_editor );
 
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
       bl->addWidget( frame );
 #endif
       bl->addWidget( editor );
@@ -1080,13 +1009,8 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
    for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
    {
-#if QT_VERSION < 0x040000
-      long curve = plot_data->insertCurve( "plot" );
-      plot_data->setCurveStyle( curve, QwtCurve::Dots );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "plot" );
       curve->setStyle( QwtPlotCurve::Dots );
-#endif
 
       QwtSymbol sym;
       if ( selected_points   .count( i ) &&
@@ -1126,15 +1050,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          sym.setBrush( Qt::red );
       }
 
-#if QT_VERSION < 0x040000
-      plot_data->setCurveData( curve, 
-                               (double *)&( one_over_triangles[ i ] ),
-                               (double *)&( parameter_data[ text ][ i ] ),
-                               1
-                               );
-      plot_data->setCurveStyle( curve, QwtCurve::Lines);
-      plot_data->setCurveSymbol( curve, sym );
-#else
       curve->setSamples(
                      (double *)&( one_over_triangles[ i ] ),
                      (double *)&( parameter_data[ text ][ i ] ),
@@ -1145,7 +1060,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       curve->attach( plot_data );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-#endif
    }      
    
 
@@ -1232,23 +1146,9 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          y[ 1 ] = a + x[ 1 ] * b;
 
          {
-#if QT_VERSION < 0x040000
-            long curve = plot_data->insertCurve( "plot lr" );
-            plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( "plot lr" );
             curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-            plot_data->setCurveData( curve, 
-                                     (double *)&( x[ 0 ] ),
-                                     (double *)&( y[ 0 ] ),
-                                     2
-                                     );
-            plot_data->setCurvePen( curve, QPen( Qt::green, 2, SolidLine));
-
-#else
             curve->setSamples(
                            (double *)&( x[ 0 ] ),
                            (double *)&( y[ 0 ] ),
@@ -1257,7 +1157,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
             curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
             curve->attach( plot_data );
-#endif
             double min = y[ 0 ] < y[ 1 ] ? y[ 0 ] : y[ 1 ];
             double max = y[ 0 ] < y[ 1 ] ? y[ 1 ] : y[ 0 ];
             if ( miny > min )
@@ -1275,23 +1174,9 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                double yp[ 2 ];
                yp[ 0 ] = y[ 0 ] + last_siga;
                yp[ 1 ] = y[ 1 ] + last_siga;
-#if QT_VERSION < 0x040000
-               long curve = plot_data->insertCurve( "plot lr p" );
-               plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( "plot lr p" );
                curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-               plot_data->setCurveData( curve, 
-                                        (double *)&( x[ 0 ] ),
-                                        (double *)&( yp[ 0 ] ),
-                                        2
-                                        );
-               plot_data->setCurvePen( curve, QPen( Qt::darkGreen, 2, Qt::DashDotLine));
-
-#else
                curve->setSamples(
                               (double *)&( x[ 0 ] ),
                               (double *)&( yp[ 0 ] ),
@@ -1300,7 +1185,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
                curve->setPen( QPen( Qt::green, 1, Qt::DashDotLine ) );
                curve->attach( plot_data );
-#endif
                // double min = yp[ 0 ] < yp[ 1 ] ? yp[ 0 ] : yp[ 1 ];
                // double max = yp[ 0 ] < yp[ 1 ] ? yp[ 1 ] : yp[ 0 ];
                // if ( miny > min )
@@ -1316,23 +1200,9 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                double ym[ 2 ];
                ym[ 0 ] = y[ 0 ] - last_siga;
                ym[ 1 ] = y[ 1 ] - last_siga;
-#if QT_VERSION < 0x040000
-               long curve = plot_data->insertCurve( "plot lr m" );
-               plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
                QwtPlotCurve *curve = new QwtPlotCurve( "plot lr m" );
                curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-               plot_data->setCurveData( curve, 
-                                        (double *)&( x[ 0 ] ),
-                                        (double *)&( ym[ 0 ] ),
-                                        2
-                                        );
-               plot_data->setCurvePen( curve, QPen( Qt::darkGreen, 2, Qt::DashDotLine));
-
-#else
                curve->setSamples(
                               (double *)&( x[ 0 ] ),
                               (double *)&( ym[ 0 ] ),
@@ -1341,7 +1211,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
                curve->setPen( QPen( Qt::green, 1, Qt::DashDotLine ) );
                curve->attach( plot_data );
-#endif
                // double min = ym[ 0 ] < ym[ 1 ] ? ym[ 0 ] : ym[ 1 ];
                // double max = ym[ 0 ] < ym[ 1 ] ? ym[ 1 ] : ym[ 0 ];
                // if ( miny > min )
@@ -1432,23 +1301,9 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
             y[ i ] = exp( a + b * x[ i ] * log( x[ i ] ) );
          }
       
-#if QT_VERSION < 0x040000
-         long curve = plot_data->insertCurve( "plot lr ln" );
-         plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "plot lr ln" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-         plot_data->setCurveData( curve, 
-                                  (double *)&( x[ 0 ] ),
-                                  (double *)&( y[ 0 ] ),
-                                  UHB_PTS
-                                  );
-         plot_data->setCurvePen( curve, QPen( Qt::darkMagenta, 2, SolidLine));
-
-#else
          curve->setSamples(
                         (double *)&( x[ 0 ] ),
                         (double *)&( y[ 0 ] ),
@@ -1457,7 +1312,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
          curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
          curve->attach( plot_data );
-#endif
 
          double min = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ 0 ] : y[ UHB_PTS - 1 ];
          double max = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ UHB_PTS - 1 ] : y[ 0 ];
@@ -1716,23 +1570,9 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                y[ i ] = a + b * exp( c * x[ i ] );
             }
       
-#if QT_VERSION < 0x040000
-            long curve = plot_data->insertCurve( "plot lm exp" );
-            plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
             QwtPlotCurve *curve = new QwtPlotCurve( "plot lm exp" );
             curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
-#if QT_VERSION < 0x040000
-            plot_data->setCurveData( curve, 
-                                     (double *)&( x[ 0 ] ),
-                                     (double *)&( y[ 0 ] ),
-                                     UHB_PTS
-                                     );
-            plot_data->setCurvePen( curve, QPen( Qt::yellow, 2, SolidLine));
-
-#else
             curve->setSamples(
                            (double *)&( x[ 0 ] ),
                            (double *)&( y[ 0 ] ),
@@ -1741,7 +1581,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
             curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
             curve->attach( plot_data );
-#endif
 
             double min = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ 0 ] : y[ UHB_PTS - 1 ];
             double max = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ UHB_PTS - 1 ] : y[ 0 ];
@@ -1776,9 +1615,6 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    if ( do_recompute_tau &&
         tau_input_set.count( text ) )
    {
