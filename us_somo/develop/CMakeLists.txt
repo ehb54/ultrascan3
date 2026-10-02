@@ -74,6 +74,16 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-fvisibility=default)
 endif()
 
+# The root switches off the Qt APIs deprecated up to 6.9
+# (add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060900)). SOMO still
+# uses some of them (Qt::ALT + Qt::Key_X, older QMessageBox overloads, ...; 89
+# source files under Qt 6), and its qmake builds, CodeQL's included
+# (admin/codeql/docker/local.pri.somo), leave them on. Drop the define for this
+# subtree; Qt 5 ignores it either way.
+get_directory_property(_somo_defs COMPILE_DEFINITIONS)
+list(FILTER _somo_defs EXCLUDE REGEX "^QT_DISABLE_DEPRECATED_UP_TO(=|$)")
+set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${_somo_defs}")
+
 # Qt codegen — scoped to this subtree only (root already sets these globally,
 # but standalone mode needs them too).
 set(CMAKE_AUTOMOC ON)
