@@ -741,12 +741,14 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   QMap < QString, QString > data_types_edit_ts;
   QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
   QString analysisABDEJson, analysisABDEts;
+  QString analysisVelMwlJson, analysisVelMwlts;
 
   read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
 			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
 			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
 			      analysisCancelJson, createdGMPrunJson, createdGMPrunts,
-			      analysisABDEJson, analysisABDEts); 
+			      analysisABDEJson, analysisABDEts,
+			      analysisVelMwlJson, analysisVelMwlts );
 
   QMap< QString, QMap < QString, QString > > status_map;
   QMap < QString, QString >::iterator im;
@@ -1546,6 +1548,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       	user_interactions_analysis( name, analysisJson, analysisCancelJson, groupBoxes );
       else if ( expType == "ABDE" )
       	user_interactions_analysis_abde( name, analysisABDEJson, analysisABDEts, groupBoxes );
+      else if ( expType == "VELOCITY-MWL" )
+      	user_interactions_analysis_velmwl( name, analysisVelMwlJson, analysisVelMwlts, groupBoxes );
     }
  
   else if ( s_name == "E-SIGNATURES" )
@@ -1890,6 +1894,230 @@ void US_auditTrailGMP::user_interactions_analysis_abde( QString name, QString an
 			   "</table>"
 			   )
     .arg( status_map[ "Comment" ][ "comment"] )     //1
+    ;
+  html_assembled += tr("<hr>");
+  
+}
+
+//do user-interactions-analysis separately:VELOCITY-MWL
+void US_auditTrailGMP::user_interactions_analysis_velmwl( QString name, QString analysisVelMwlJson,
+							QString analysisVelMwlts, QVector< QGroupBox * >& groupBoxes )
+{
+  html_assembled += tr( "<h3 align=left>VELOCITY-MWL Analysis: Species Selection for Report (5. ANALYSIS)</h3>" );
+  QMap< QString, QMap < QString, QString > > status_map = parse_autoflowStatus_json( analysisVelMwlJson, "" );
+    
+  //GUI
+  QHBoxLayout* genL   = new QHBoxLayout();
+  genL->setSpacing        ( 2 );
+  genL->setContentsMargins( 20, 10, 20, 15 );
+  
+  //Person
+  QLabel* lb_init         = us_label( tr("Performed by:") );
+  QLabel* lb_ID           = us_label( tr("User ID:") );
+  QLabel* lb_name         = us_label( tr("Name:") );
+  QLabel* lb_email        = us_label( tr("E-mail:") );
+  QLabel* lb_level        = us_label( tr("Level:") );
+  QLineEdit* le_ID        = us_lineedit( status_map[ "Person" ][ "ID"], 0, true);
+  QLineEdit* le_name      = us_lineedit( status_map[ "Person" ][ "lname" ] + "," + status_map[ "Person" ][ "fname"], 0, true);
+  QLineEdit* le_email     = us_lineedit( status_map[ "Person" ][ "email" ], 0, true);
+  QLineEdit* le_level     = us_lineedit( status_map[ "Person" ][ "level" ], 0, true);
+  
+  QGridLayout* genL1  = new QGridLayout();
+  QVBoxLayout* genL11 = new QVBoxLayout();
+  
+  int row=0;
+  genL1 -> addWidget( lb_init,      row++,   0,  1,  6  );
+  genL1 -> addWidget( lb_ID,        row,     1,  1,  2  );
+  genL1 -> addWidget( le_ID,        row++,   3,  1,  3  );
+  genL1 -> addWidget( lb_name,      row,     1,  1,  2  );
+  genL1 -> addWidget( le_name,      row++,   3,  1,  3  );
+  genL1 -> addWidget( lb_email,     row,     1,  1,  2  );
+  genL1 -> addWidget( le_email,     row++,   3,  1,  3  );
+  genL1 -> addWidget( lb_level,     row,     1,  1,  2  );
+  genL1 -> addWidget( le_level,     row++,   3,  1,  3  );
+  
+  genL11 -> addLayout( genL1);
+  genL11 -> addStretch();
+  
+  //TimeStamp
+  QGridLayout* genL2  = new QGridLayout();
+  QVBoxLayout* genL21 = new QVBoxLayout();
+  
+  QLabel* lb_time         = us_label( tr("Time of VELOCITY-MWL analysis completion:") );
+  lb_time->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  QLabel* lb_time1        = us_label( tr("Completed at:") );
+  QLineEdit* le_time1     = us_lineedit( analysisVelMwlts + " (UTC)", 0, true );
+  
+  row=0;
+  genL2 -> addWidget( lb_time,      row++,   0,  1,  6  );
+  genL2 -> addWidget( lb_time1,     row,     1,  1,  2  );
+  genL2 -> addWidget( le_time1,     row++,   3,  1,  3  );
+  
+  genL21 -> addLayout( genL2);
+  genL21 -> addStretch();
+  
+  // int ihgt        = lb_time1->height();
+  // QSpacerItem* spacer2 = new QSpacerItem( 20, 3*ihgt, QSizePolicy::Expanding);
+  // genL2->setRowStretch( 1, 1 );
+  // genL2->addItem( spacer2,  row++,  0, 1, 6 );
+  
+  //Comment
+  QGridLayout* genL3  = new QGridLayout();
+  QVBoxLayout* genL31 = new QVBoxLayout();
+  
+  QLabel* lb_comm         = us_label( tr("Comment at the Time of VELOCITY-MWL Analysis Completion:") );
+  lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  QLabel* lb_comm1        = us_label( tr("Comment:") );
+  
+  QTextEdit* te_comm1    = us_textedit();
+  te_comm1    -> setFixedHeight  ( RowHeight * 2 );
+  te_comm1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+				US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_comm1, true );
+  te_comm1 -> setText( status_map[ "Comment" ][ "comment" ] );
+  
+  row=0;
+  genL3 -> addWidget( lb_comm,      row++,   0,  1,  6  );
+  genL3 -> addWidget( lb_comm1,     row,     1,  1,  2  );
+  genL3 -> addWidget( te_comm1,     row++,   3,  1,  3  );
+  
+  genL31 -> addLayout( genL3);
+  genL31 -> addStretch();
+  
+  //Species selected for the Report's Integration Results (autoflowAnalysisVelMwl.speciesSelections)
+  QString species_txt, species_html;
+  {
+    US_Passwd pw_sp( this );
+    US_DB2    db_sp( pw_sp.getPasswd() );
+
+    if ( db_sp.lastErrno() == US_DB2::OK )
+      {
+	QStringList qry_sp;
+	qry_sp << "read_autoflowAnalysisVelMwl_record" << autoflowID_passed;
+	db_sp.query( qry_sp );
+
+	if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
+	  {
+	    QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object();
+
+	    for ( auto it = sel.constBegin(); it != sel.constEnd(); ++it )
+	      {
+		QJsonObject co = it.value().toObject();
+		QStringList s_sel, s_all;
+		QJsonArray  a1 = co.value( "selected"  ).toArray();
+		QJsonArray  a2 = co.value( "available" ).toArray();
+		for ( int i = 0; i < a1.size(); ++i ) s_sel << a1[ i ].toString();
+		for ( int i = 0; i < a2.size(); ++i ) s_all << a2[ i ].toString();
+
+		QString line = it.key() + ": " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
+		species_txt  += line + "\n";
+		species_html += "<tr><td>" + line.toHtmlEscaped() + "</td></tr>";
+	      }
+	  }
+      }
+  }
+
+  if ( species_txt.isEmpty() )
+    {
+      species_txt  = tr( "No species selection recorded (all species shown in the Report)." );
+      species_html = "<tr><td>" + species_txt.toHtmlEscaped() + "</td></tr>";
+    }
+
+  QGridLayout* genL4  = new QGridLayout();
+  QVBoxLayout* genL41 = new QVBoxLayout();
+
+  QLabel* lb_spec         = us_label( tr("Species Selected for Report (Integration Results):") );
+  lb_spec->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+  QTextEdit* te_spec      = us_textedit();
+  te_spec    -> setFixedHeight  ( RowHeight * 3 );
+  te_spec    ->setFont( QFont( US_Widgets::fixedFont().family(),
+			       US_GuiSettings::fontSize() - 1) );
+  us_setReadOnly( te_spec, true );
+  te_spec -> setText( species_txt.trimmed() );
+
+  row=0;
+  genL4 -> addWidget( lb_spec,      row++,   0,  1,  6  );
+  genL4 -> addWidget( te_spec,      row++,   1,  1,  5  );
+
+  genL41 -> addLayout( genL4 );
+  genL41 -> addStretch();
+
+  //assemble
+  genL->addLayout( genL11);
+  genL->addLayout( genL21);
+  genL->addLayout( genL31);
+  genL->addLayout( genL41);
+  
+  //Set GroupBox
+  QGroupBox *groupBox = new QGroupBox ( name );
+  QPalette p = groupBox->palette();
+  p.setColor(QPalette::Dark, Qt::white);
+  groupBox->setPalette(p);
+  
+  groupBox-> setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 10px; margin: 0 5px; background-color: black; color: white; padding: 0 3px;}  QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid grey; background-color: rgba(204, 204, 204, 255);} QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, 255);} QLabel {background-color: rgb(105,105,105);}");
+  
+  groupBox->setFlat(true);
+  
+  groupBox->setLayout(genL);
+  groupBoxes. push_back( groupBox );
+  
+  
+  //html_assembled += tr("<br>");
+  html_assembled += tr(
+		          "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr><td>User ID: </td> <td>%1</td></tr>"
+			   "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+			   "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+			   "<tr><td>Level: </td><td> %5 </td></tr>"
+			   "</table>"
+			   )
+    .arg( status_map[ "Person" ][ "ID"] )                       //1
+    .arg( status_map[ "Person" ][ "lname" ] )                   //2
+    .arg( status_map[ "Person" ][ "fname" ] )                   //3
+    .arg( status_map[ "Person" ][ "email" ] )                   //4
+    .arg( status_map[ "Person" ][ "level" ] )                   //5
+    ;
+
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Time of VELOCITY-MWL analysis completion: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Completed at:     %1 (UTC) </td>"
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( analysisVelMwlts )     //1
+    ;
+  
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Comment at the Time of VELOCITY-MWL Analysis Completion: </i></b> </caption>"
+			   "</table>"
+			   
+			   "<table style=\"margin-left:25px\">"
+			   "<tr>"
+			   "<td> Comment:  %1 </td> "
+			   "</tr>"
+			   "</table>"
+			   )
+    .arg( status_map[ "Comment" ][ "comment"] )     //1
+    ;
+  html_assembled += tr(
+			   "<table style=\"margin-left:10px\">"
+			   "<caption align=left> <b><i>Species Selected for Report (Integration Results): </i></b> </caption>"
+			   "</table>"
+			   "<table style=\"margin-left:25px\">"
+			   "%1"
+			   "</table>"
+			   )
+    .arg( species_html )     //1
     ;
   html_assembled += tr("<hr>");
   
@@ -2309,7 +2537,8 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QStrin
 						   QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson,
 						   QString& skipOptimats,
 						   QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts,
-						   QString& analysisABDEJson, QString& analysisABDEts )
+						   QString& analysisABDEJson, QString& analysisABDEts,
+						   QString& analysisVelMwlJson, QString& analysisVelMwlts )
 {
   importRIJson.clear();
   importRIts  .clear();
@@ -2329,6 +2558,8 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QStrin
   createdGMPrunts   .clear();
   analysisABDEJson  .clear();
   analysisABDEts    .clear();
+  analysisVelMwlJson.clear();
+  analysisVelMwlts  .clear();
 
   US_Passwd pw( this );
   US_DB2    db( pw.getPasswd() );
@@ -2376,6 +2607,9 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QStrin
 
 	  analysisABDEJson = db.value( 16 ).toString();
 	  analysisABDEts   = db.value( 17 ).toString();
+
+	  analysisVelMwlJson = db.value( 18 ).toString();
+	  analysisVelMwlts   = db.value( 19 ).toString();
 	}
     }
 

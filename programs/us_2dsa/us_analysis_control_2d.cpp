@@ -38,6 +38,7 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
 {
    parentw        = p;
    processor      = 0;
+   auto_mode      = false;
    dbg_level      = US_Settings::us_debug();
    grtype         = US_2dsaProcess::UGRID;
    baserss        = 0;
@@ -681,6 +682,66 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    pb_save   ->setEnabled( false );
 }
 
+// ALEXEY: Headless equivalent of a "Start Fit" click -- see header doc.
+// start() itself needs no changes: it already just reads current widget
+// values (ct_lolimits, ct_uplimits, ct_nstepss, ct_lolimitk, ct_uplimitk,
+// ct_nstepsk, ct_thrdcnt, and the ck_* checkboxes), which are left at
+// their constructor defaults here -- s x1e-13 in [1,10] over 64 grid
+// points, f/f0 in [1,4] over 64 grid points, thread count = ideal thread
+// count, no TI/RI noise fitting, no meniscus/bottom fit, no Monte Carlo.
+// Setting auto_mode here is what makes completed_process() call save()
+// itself once the fit finishes (see its alldone branch) and makes
+// memory_check() log instead of popping a blocking confirmation dialog.
+void US_AnalysisControl2D::fit_auto( void )
+{
+   auto_mode  = true;
+   start();
+}
+
+// ALEXEY: Apply Analysis-Profile-sourced grid-fit parameters ahead of a
+// headless fit_auto() run (see this method's header comment). Called
+// from US_2dsa::run_2dsa_auto() right after this dialog is constructed,
+// before fit_auto() itself -- so the counters/checkbox below are set,
+// and their normal valueChanged/toggled-connected slots (grid_change(),
+// slim_change(), klim_change(), kstep_change(), checkIterate()) fire
+// exactly as they would from a user's own interaction, keeping the
+// displayed grid-repetition/estimated-memory summaries consistent.
+void US_AnalysisControl2D::apply_auto_fit_params( const QMap< QString, QString >& params )
+{
+   if ( params.contains( "s_min" ) )
+      ct_lolimits->setValue( params.value( "s_min" ).toDouble() );
+
+   if ( params.contains( "s_max" ) )
+      ct_uplimits->setValue( params.value( "s_max" ).toDouble() );
+
+   if ( params.contains( "s_grpts" ) )
+      ct_nstepss->setValue( params.value( "s_grpts" ).toDouble() );
+
+   if ( params.contains( "k_min" ) )
+      ct_lolimitk->setValue( params.value( "k_min" ).toDouble() );
+
+   if ( params.contains( "k_max" ) )
+      ct_uplimitk->setValue( params.value( "k_max" ).toDouble() );
+
+   if ( params.contains( "k_grpts" ) )
+      ct_nstepsk->setValue( params.value( "k_grpts" ).toDouble() );
+
+   // Per requirement: always run the iterative-refinement method with a
+   // fixed 10 iterations, regardless of what the Analysis Profile (or
+   // this dialog's own default) specifies for either. checkIterate(true)
+   // (fired by setChecked(), via the ck_iters->toggled connection) sets
+   // ct_iters to its own default of 3 -- explicitly override that with
+   // 2 afterward.
+   ck_iters   -> setChecked( true );
+   ct_iters   -> setValue( 2 );
+   ct_thrdcnt -> setValue( 8 );
+
+DbgLv(1) << "AC:apply_auto_fit_params: s" << ct_lolimits->value() << ct_uplimits->value()
+         << ct_nstepss->value() << "k" << ct_lolimitk->value() << ct_uplimitk->value()
+         << ct_nstepsk->value() << "iters" << ct_iters->value()
+	 << "threads" << ct_thrdcnt->value();
+}
+
 // stop fit button clicked
 void US_AnalysisControl2D::stop_fit()
 {
@@ -974,6 +1035,7 @@ void US_AnalysisControl2D::update_progress( int ksteps )
    }
 
    b_progress->setValue( ncsteps );
+   emit fit_progress_s( ncsteps, nctotal );
 DbgLv(2) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
 }
 
@@ -1009,6 +1071,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 DbgLv(1) << "AC:cs: BB";
    b_progress->setValue(   ncsteps );
 DbgLv(1) << "AC:cs: CC";
+   emit fit_progress_s( ncsteps, nctotal );
 
    qApp->processEvents();
 }
@@ -1020,6 +1083,7 @@ void US_AnalysisControl2D::completed_process( int stage )
 DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
+   emit fit_progress_s( nctotal, nctotal );
    qApp->processEvents();
 
    if ( stage == 6 )
@@ -1131,12 +1195,31 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
    {
       mainw->analysis_done( -2 );
 
-      mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
+      // ALEXEY: Skip this branch entirely in headless auto mode --
+      // analysis_done(1) opens US_2dsa's 2-D Spectrum Analysis Data/
+      // Residuals Viewer (open_3dplot()/open_resplot()), which has no
+      // business appearing on an unattended pipeline; analysis_done(0)
+      // is a no-op (neither plotdata nor savedata) either way. save()
+      // below -- not this call -- is what actually persists this
+      // species' results in auto mode.
+      if ( ! auto_mode )
+         mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
 
       pb_strtfit->setEnabled( true  );
       pb_stopfit->setEnabled( false );
       pb_plot   ->setEnabled( true  );
       pb_save   ->setEnabled( true  );
+
+      if ( auto_mode )
+      {
+         // ALEXEY: No user is present to click "Save Results" in the
+         // headless (VEL-MWL post-processing) path -- do exactly what
+         // that click would do. save() itself calls
+         // mainw->analysis_done( 2 ), which is what actually persists
+         // the fit results and (in US_2dsa's auto mode) reports
+         // completion back to US_Analysis_auto via twodsa_complete_s().
+         save();
+      }
    }
 
    else if ( mmitnum > 0  &&  stage > 0 )
@@ -1349,12 +1432,37 @@ int US_AnalysisControl2D::memory_check( )
 
       if ( memneed > memtot )
       {
-         QMessageBox::critical( this, title,
-             tr( "Memory needed for this fit exceeds total available." )
-             + memp + tr( "This fit will not proceed.\n"
-                          "Re-parameterize the fit with adjusted\n"
-                          "Grid Refinements and/or Thread Count." ) );
+         // ALEXEY: Genuinely can't proceed either way (not enough memory
+         // to exist, not a judgment call) -- log instead of a blocking
+         // dialog in auto_mode, but the abort (status = 1) stands either
+         // way. See fit_auto()'s header comment: this is the one
+         // parameter-driven (not data-driven) early-return start() can
+         // hit, and the default grid (64x64, ideal thread count) is
+         // sized to make it unlikely in practice.
+         if ( auto_mode )
+            qDebug() << "[US_AnalysisControl2D] memory_check(): needed"
+                     << memneed << "MB exceeds total" << memtot
+                     << "MB -- aborting fit (auto mode).";
+         else
+            QMessageBox::critical( this, title,
+                tr( "Memory needed for this fit exceeds total available." )
+                + memp + tr( "This fit will not proceed.\n"
+                             "Re-parameterize the fit with adjusted\n"
+                             "Grid Refinements and/or Thread Count." ) );
          status          = 1;
+      }
+
+      else if ( auto_mode )
+      {
+         // ALEXEY: High-but-survivable memory use is exactly the kind of
+         // judgment call an operator would normally make ("Yes" to
+         // proceed) -- no one is present to answer a modal dialog here,
+         // and blocking on msgBox.exec() with nobody to click it would
+         // hang the whole VEL-MWL post-processing pipeline. Log and
+         // proceed, same as an operator clicking "Yes".
+         qDebug() << "[US_AnalysisControl2D] memory_check(): needed"
+                  << memneed << "MB is a high percentage of available"
+                  << memava << "MB -- proceeding anyway (auto mode).";
       }
 
       else

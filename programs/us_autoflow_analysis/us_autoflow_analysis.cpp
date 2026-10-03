@@ -4,6 +4,13 @@
 #include <QJsonObject>
 #include <QXmlStreamReader>
 #include <QtNumeric>
+#include <QTimer>
+#include <QCollator>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QGroupBox>
+#include <QScrollArea>
+#include <QCheckBox>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
@@ -14,7 +21,6 @@
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
 #include "../us_fematch/us_thread_worker.h"
-#include "../us_mwl_species_fit/us_mwl_species_fit.h"
 
 #define MIN_NTC   25
 
@@ -31,7 +37,8 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
                        
   //setPalette( US_GuiSettings::frameColor() );
   
-  QVBoxLayout* panel  = new QVBoxLayout( this );
+  //QVBoxLayout* panel  = new QVBoxLayout( this );
+  panel  = new QVBoxLayout( this );
   panel->setSpacing        ( 2 );
   panel->setContentsMargins( 2, 2, 2, 2 );
 
@@ -152,6 +159,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   Manual_update.clear();
   History_read.clear();
   Process_2dsafm.clear();
+
+  TriplesArray. clear();
   
   AProfileGUID       = protocol_details[ "aprofileguid" ];
   ProtocolName_auto  = protocol_details[ "protocolName" ];
@@ -170,6 +179,28 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   autoflow_expType   = protocol_details[ "expType" ];
   dataSource         = protocol_details[ "dataSource" ];
 
+  velmwl_fit_open = false;
+
+  //ALEXEY: sdiag was never initialized here, so on the very first
+  //VEL-MWL channel of a run cleanup_velmwl_fit_widget()'s `if (!sdiag)`
+  //guard was testing an indeterminate/garbage pointer value rather than
+  //a real null -- when that garbage happened to be non-zero, close()
+  //dereferenced it and crashed. Initializing it here makes the guard
+  //correct for that first call.
+  sdiag = nullptr;
+
+  sdiag_2dsa       = nullptr;
+  twodsa_open      = false;
+  twodsa_chan_idx  = -1;
+  twodsa_nchannels = 0;
+  twodsa_nspecies_total = 0;
+  progress_msg_2dsa = nullptr;   // ALEXEY: see progress_msg_mwlsim's own
+                                  // construction site (process_velmwl_
+                                  // after_all_channels_decided()) -- kept
+                                  // explicitly null until then, same as
+                                  // sdiag above, rather than left
+                                  // indeterminate.
+
   //hide if ABDE, close message
   if ( autoflow_expType == "ABDE")
     {
@@ -184,11 +215,16 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   else
     {
       sdiag_norm_profile->hide();
+      lb_hdr1     ->show();
+      pb_show_all ->show();
+      pb_hide_all ->show();
+      treeWidget  ->show();
     }
+ 
   
-
   //Copy protocol details
-  protocol_details_at_analysis = protocol_details;
+  protocol_details_at_analysis        = protocol_details;
+  protocol_details_at_analysis_velmwl = protocol_details;
 
   US_Passwd pw;
   US_DB2    db( pw.getPasswd() );
@@ -328,7 +364,11 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //Define triple's channels
       QStringList triple_name_parts = triple_name.split(".");
       channels_all << triple_name_parts[0] + "." + triple_name_parts[1];
+
+      //Form QStringList of triples
+      TriplesArray << triple_name;
     }
+  TriplesArray. removeDuplicates();
   
   //Group requestIDs by channel, exclude "Intereference" runs
   channels_all.removeDuplicates();
@@ -1267,13 +1307,66 @@ void US_Analysis_auto::gui_update( )
       QString msg_text = "All triples have been processed.";
       
       if ( failed_triples )
-	msg_text += QString("\n\nNOTE: analyses for the following triples FAILED: \n\n%1").arg( Failed_triples_list.join(", ") );
+	msg_text += QString("\n\nNOTE: analyses for the following triples FAILED: \n\n%1")
+	  .arg( Failed_triples_list.join(", ") );
 
       if ( canceled_triples )
-	msg_text += QString("\n\nNOTE: analyses for the following triples have been CANCELED: \n\n%1").arg( Canceled_triples_list.join(", ") );
+	msg_text += QString("\n\nNOTE: analyses for the following triples have been CANCELED: \n\n%1")
+	  .arg( Canceled_triples_list.join(", ") );
+
+      //For VELOCITY-MWL: Stop here, inform user on proceeding with:
+      //1. Pre-Fit Simulating
+      //2. Deconvolution (Species Fit)
+      //3. Simulating (2DSA-IT, desktop)
+
+      if ( autoflow_expType == "VELOCITY-MWL" )
+	{
+	  msg_text += QString( tr("\n\nThe program will proceed with the"
+				  "MWL pre-fit species simulations and MWL species deconvolution.") );
+	  QMessageBox::information( this,
+				    tr( "All Triples Processed !" ),
+				    msg_text  );
+	  in_gui_update  = false;
+
+	  //hide remnants from mpi-analysis
+	  lb_hdr1     ->hide();
+	  pb_show_all ->hide();
+	  pb_hide_all ->hide();
+	  treeWidget  ->hide();
+	  
+	  //ALEXEY: Centralized progress dialog for the VELOCITY-MWL post-analysis
+	  //        pipeline (species simulate + save), driven by US_MwlSpeciesSim's
+	  //        stage_progress() signal. Each channel is gated by a separate
+	  //        approve/reject decision made in US_MwlSpeciesFit once its own
+	  //        species fit completes, so the dialog is shown on a per-channel
+	  //        basis: it restarts at 0 for every channel rather than
+	  //        accumulating progress across channels. Within a channel, the
+	  //        100 units are split between the four single-shot stages
+	  //        (models/buffer/params/rotor -- 10 units each) and the two
+	  //        multi-model stages (sims/save -- 30 units each, filled in
+	  //        proportionally as models are processed).
+	  mwlsim_nchannels    = channels_all.size();
+	  velmwl_channels_decided = 0;   //ALEXEY: count of channels_all resolved (already-decided & skipped, or freshly decided via Accept/Reject) this pass -- see finalize_velmwl_analysis_if_complete()
+	  mwlsim_chan_idx     = -1;      //ALEXEY: cursor into channels_all for start_next_velmwl_channel() -- -1 so it starts scanning from index 0
+	  //Single, persistent, non-closable progress dialog (US_GmpProgress): created
+	  //once as a child of the main window, re-used for every channel, only ever
+	  //hidden (never closed) -- shown/titled by start_mwlsim_channel_progress().
+	  US_GmpProgress::acquire( this, progress_msg_mwlsim )->setWindowTitle( tr( "Autoflow Analysis" ) );
+
+	  //ALEXEY: Launch only the FIRST channel that still needs
+	  //processing; start_next_velmwl_channel() stops right after
+	  //kicking off that one channel's pipeline instead of looping on
+	  //through channels_all, so US_MwlSpeciesFit's Accept/Reject
+	  //dialog for it is the only one on screen. velmwl_deconv_
+	  //accepted()/rejected() below re-call start_next_velmwl_channel()
+	  //once the user decides, which is what advances to the next
+	  //channel -- see start_next_velmwl_channel()'s header comment.
+	  start_next_velmwl_channel();
+
+	  return;
+	}
 
       msg_text +=  QString("\n\nThe program will proceed to the Reporting stage. ");
-
       //Update autoflow record at Analysis completion
       update_autoflow_record_atAnalysis();
 
@@ -1296,11 +1389,1617 @@ void US_Analysis_auto::gui_update( )
   in_gui_update  = false; 
 }
 
+// (Re)start progress_msg_mwlsim for a new channel. Called once at the top
+// of each channel's processing so the bar always runs 0-100 for the
+// channel currently in flight, rather than accumulating across channels --
+// each channel is independently gated by an approve/reject decision in
+// US_MwlSpeciesFit before the pipeline moves on to the next one.
+void US_Analysis_auto::start_mwlsim_channel_progress( int chan_idx, const QString& chan_name )
+{
+  mwlsim_chan_idx  = chan_idx;
+  mwlsim_chan_name = chan_name;
+
+  if ( ! progress_msg_mwlsim )
+    return;
+
+  progress_msg_mwlsim->setStage( 1, 2, tr( "VELOCITY-MWL species simulation and save" ),
+                                  tr( "Starting..." ), 100 );
+  progress_msg_mwlsim->setOverall( mwlsim_chan_idx, qMax( mwlsim_nchannels, 1 ),
+                                   tr( "Channel %1 of %2:   %3" )
+                                   .arg( mwlsim_chan_idx + 1 ).arg( mwlsim_nchannels )
+                                   .arg( mwlsim_chan_name ) );
+  qApp->processEvents();
+}
+
+// Update the centralized progress dialog (progress_msg_mwlsim) as the
+// VELOCITY-MWL pipeline for the current channel reports progress. The
+// pipeline runs, in order: select models -> define buffer -> set sim
+// parameters -> select rotor -> simulate models -> save raw data (all
+// reported by US_MwlSpeciesSim::stage_progress()), then import & save to
+// the database (US_ConvertGui), update the edit profile (US_Edit), and
+// finally run the species deconvolution/fit (US_MwlSpeciesFit) -- the
+// last three reported directly by get_ssf_dir_and_saveDB() below. The bar
+// always spans 0-100 for the current channel alone -- see
+// start_mwlsim_channel_progress().
+void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, int total )
+{
+  if ( ! progress_msg_mwlsim )
+    return;
+
+  // Weight of each macro-stage within the channel's 100 progress units.
+  const int w_models  = 10;
+  const int w_buffer  =  5;
+  const int w_params  =  5;
+  const int w_rotor   =  5;
+  const int w_sims    = 20;
+  const int w_save    = 15;
+  const int w_convert = 15;
+  const int w_edit    = 10;
+  const int w_fit     = 15;
+  // 10 + 5 + 5 + 5 + 20 + 15 + 15 + 10 + 15 == 100
+
+  const int base_buffer  = w_models;
+  const int base_params  = base_buffer  + w_buffer;
+  const int base_rotor   = base_params  + w_params;
+  const int base_sims    = base_rotor   + w_rotor;
+  const int base_save    = base_sims    + w_sims;
+  const int base_convert = base_save    + w_save;
+  const int base_edit    = base_convert + w_convert;
+  const int base_fit     = base_edit    + w_edit;
+
+  int    within = 0;
+  QString label;
+
+  if ( stage == "models" )
+    {
+      within = w_models;
+      label  = tr( "Loading models" );
+    }
+  else if ( stage == "buffer" )
+    {
+      within = base_buffer + w_buffer;
+      label  = tr( "Defining buffer" );
+    }
+  else if ( stage == "params" )
+    {
+      within = base_params + w_params;
+      label  = tr( "Setting simulation parameters" );
+    }
+  else if ( stage == "rotor" )
+    {
+      within = base_rotor + w_rotor;
+      label  = tr( "Selecting rotor" );
+    }
+  else if ( stage == "sims" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_sims + qRound( w_sims * frac );
+      label  = tr( "Simulating model %1 of %2" ).arg( step ).arg( total );
+    }
+  else if ( stage == "save" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_save + qRound( w_save * frac );
+      label  = tr( "Saving simulation %1 of %2" ).arg( step ).arg( total );
+    }
+  else if ( stage == "convert" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_convert + qRound( w_convert * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Importing and saving to database (US_Convert)..." )
+             : tr( "Import and database save complete" );
+    }
+  else if ( stage == "edit" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_edit + qRound( w_edit * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Updating edit profile (US_Edit)..." )
+             : tr( "Edit profile updated" );
+    }
+  else if ( stage == "fit" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_fit + qRound( w_fit * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Running species deconvolution/fit (US_MwlSpeciesFit)..." )
+             : tr( "Species deconvolution/fit ready for review" );
+    }
+  else
+    {
+      within = 0;
+      label  = stage;
+    }
+
+  //(channel k of n is shown by the overall bar -- see start_mwlsim_channel_progress())
+  progress_msg_mwlsim->setLabelText( label );
+  progress_msg_mwlsim->setValue( within );
+
+  qApp->processEvents();
+}
+
+// (Re)start progress_msg_2dsa for a new Approved VEL-MWL channel. Called
+// once at the top of each channel's 2DSA-IT processing (from
+// start_next_2dsa_channel(), BEFORE `new US_2dsa(...)` -- that constructor
+// runs load() synchronously, so the dialog needs to already be up and
+// labeled before that call, not after) so the bar always runs 0-100 for
+// the channel currently in flight. Mirrors start_mwlsim_channel_progress()
+// exactly, minus the approve/reject gating VEL-MWL sim has (2DSA-IT needs
+// none).
+void US_Analysis_auto::start_2dsa_channel_progress( int chan_idx, const QString& chan_name )
+{
+  twodsa_chan_idx  = chan_idx;
+  twodsa_chan_name = chan_name;
+
+  if ( ! progress_msg_2dsa )
+    return;
+
+  progress_msg_2dsa->setStage( 2, 2, tr( "VELOCITY-MWL 2DSA-IT analysis" ),
+                               tr( "Starting..." ), 100 );
+  progress_msg_2dsa->setOverall( twodsa_chan_idx, qMax( twodsa_nchannels, 1 ),
+                                 tr( "Channel %1 of %2:   %3" )
+                                 .arg( twodsa_chan_idx + 1 ).arg( twodsa_nchannels )
+                                 .arg( twodsa_chan_name ) );
+  qApp->processEvents();
+}
+
+// Update progress_msg_2dsa as US_2dsa's auto path reports progress for the
+// channel currently being processed -- see this function's header comment
+// (us_autoflow_analysis.h) for the one known gap (this channel's very
+// first "load" tick, missed because it's emitted before the
+// twodsa_progress_s connection in start_next_2dsa_channel() exists).
+//
+// The bar always spans 0-100 for the current CHANNEL (see
+// start_2dsa_channel_progress()) -- not the current species. A channel can
+// resolve to more than one deconvolved species (S/1, S/2, ...), each
+// needing its own fit+save, so the remaining (100 - w_load) units are
+// split evenly across however many species this channel has
+// (species_count), and each species' own slice is further split between
+// its "fit" and "save" stages.
+void US_Analysis_auto::update_2dsa_progress( const QString& stage, int species_idx,
+                                              int species_count, int step, int total )
+{
+  if ( ! progress_msg_2dsa )
+    return;
+
+  const int w_load = 10;   // one-shot: this channel's US_DataLoader call
+
+  int     within = 0;
+  QString label;
+
+  if ( stage == "load" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = qRound( w_load * frac );
+      label  = ( frac < 1.0 )
+             ? tr( "Loading channel data..." )
+             : tr( "Channel data loaded" );
+    }
+  else if ( stage == "fit"  ||  stage == "save" )
+    {
+      const int    nspec        = qMax( species_count, 1 );
+      const double per_species  = (double)( 100 - w_load ) / (double)nspec;
+      const double base_species = w_load + species_idx * per_species;
+      const double frac         = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+
+      if ( stage == "fit" )
+        {
+          within = qRound( base_species + 0.7 * per_species * frac );
+          label  = tr( "Species %1 of %2: running 2DSA-IT fit (%3%)" )
+                    .arg( species_idx + 1 ).arg( nspec )
+                    .arg( total > 0 ? qRound( 100.0 * step / total ) : 0 );
+        }
+      else if ( stage == "save" )
+        {
+          within = qRound( base_species + 0.7 * per_species
+                            + 0.3 * per_species * frac );
+          label  = ( frac < 1.0 )
+                 ? tr( "Species %1 of %2: saving results..." )
+                    .arg( species_idx + 1 ).arg( nspec )
+                 : tr( "Species %1 of %2: results saved" )
+                    .arg( species_idx + 1 ).arg( nspec );
+        }
+      else   // "skip" -- already had a model on record; jump straight
+             // to this species' slice being fully done, no fit/save
+             // fractions to show progress through.
+        {
+          within = qRound( base_species + per_species );
+          label  = tr( "Species %1 of %2: already fit -- skipping" )
+                    .arg( species_idx + 1 ).arg( nspec );
+        }
+    }
+  else
+    {
+      within = 0;
+      label  = stage;
+    }
+
+  //(channel k of n is shown by the overall bar -- see start_2dsa_channel_progress())
+  progress_msg_2dsa->setLabelText( label );
+  progress_msg_2dsa->setValue( qBound( 0, within, 100 ) );
+
+  qApp->processEvents();
+}
+
+//Get SSF dir
+void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
+{
+  protocol_details_at_analysis_velmwl["ssf_dir_name"] = ssf_dir;
+  protocol_details_at_analysis_velmwl[ "auto_flag_import"] = QString("VELMWL_IMPORT_SIM_ANALYSIS");
+  sdiag_convert = new US_ConvertGui("AUTO");
+  update_mwlsim_progress( "convert", 0, 1 );
+  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
+  qDebug() << "[get_ssf_dir_and_saveDB] sim-stage import succeeded:"
+           << sdiag_convert->import_ssf_succeeded();
+  update_mwlsim_progress( "convert", 1, 1 );
+
+  //Next, save edit profiles (based on new menicsus && same edits )
+  sdiag_edit = new US_Edit("AUTO");
+  update_mwlsim_progress( "edit", 0, 1 );
+  /** re-define some fields **/
+  protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir.section("/", -2, -2);
+  protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
+  sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
+  update_mwlsim_progress( "edit", 1, 1 );
+  //sdiag_edit -> show(); //DEBUG
+
+  //Call MWL-Fit:
+  protocol_details_at_analysis_velmwl[ "auto_flag_mwlfit"] = QString("VELMWL_MWLFIT_SIM_ANALYSIS");
+  QString f_name = protocol_details_at_analysis_velmwl[ "filename" ];
+  QStringList parts_fname = f_name.split('-');
+  QString chan_to_analyse = parts_fname.last();
+
+  QRegularExpression re("^(\\d+)([A-Za-z]+)$");
+  QRegularExpressionMatch match = re.match(chan_to_analyse);
+
+  QString result_chann;
+  if (match.hasMatch())
+    result_chann = match.captured(1) + " / " + match.captured(2);
+    
+  protocol_details_at_analysis_velmwl[ "chan_to_analyse" ] = result_chann;
+  qDebug() << "For MWL-fit; \"filename\" should be \"ISSF-xxx\" -- "
+	   << protocol_details_at_analysis_velmwl[ "filename" ];
+  qDebug() << "For MWL-fit; \"chann_to_analyse\" -- " 
+	   << protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
+
+  //ALEXEY: Retire the previous channel's fit widget (if any) before
+  //constructing this channel's -- removes it from panel and schedules
+  //it for deletion instead of leaving it as a hidden, closed widget
+  //accumulating in panel for the rest of the run. (This replaces the
+  //old post-construction "close sdiag if left open" check that used
+  //to sit after the `sdiag = new US_MwlSpeciesFit(...)` line below:
+  //that check tested the just-constructed sdiag itself, which is never
+  //visible immediately after construction, so it could never actually
+  //catch the previous widget.)
+  cleanup_velmwl_fit_widget();
+
+  //ALEXEY: The US_MwlSpeciesFit constructor runs loadSpecs_auto()+specFitData()
+  //        synchronously for VEL-MWL, so mark "fit" as started before it and
+  //        completed right after -- the dialog it shows is then left up to
+  //        the user for the approve/reject decision.
+  update_mwlsim_progress( "fit", 0, 1 );
+  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  update_mwlsim_progress( "fit", 1, 1 );
+  connect( sdiag, &US_MwlSpeciesFit::reject_velmwl_s,
+	   this,  &US_Analysis_auto::velmwl_deconv_rejected );
+  connect( sdiag, &US_MwlSpeciesFit::accept_velmwl_s,
+	   this,  &US_Analysis_auto::velmwl_deconv_accepted );
+  panel->addWidget( sdiag );
+  sdiag -> show(); //
+  velmwl_fit_open = true;
+
+  if ( progress_msg_mwlsim )
+    progress_msg_mwlsim->hide();
+  
+}
+
+//ALEXEY: Retires the current VEL-MWL species-fit widget (sdiag), if
+//any: closes it, removes it from its panel, and schedules it for
+//deletion. Safe to call from inside a slot that sdiag's own signal
+//invoked -- deleteLater() defers the actual delete to the next trip
+//through the event loop rather than destroying sdiag out from under
+//its own currently-executing call stack. No-op if sdiag is already
+//null (e.g. called twice in a row, or before the first channel's
+//widget has been created).
+void US_Analysis_auto::cleanup_velmwl_fit_widget( void )
+{
+  if ( ! sdiag )
+    return;
+
+  sdiag->close();
+
+  if ( panel )
+    panel->removeWidget( sdiag );
+
+  sdiag->deleteLater();
+  sdiag = nullptr;
+  velmwl_fit_open = false;
+}
+
+//ALEXEY: Gate for the VELOCITY-MWL per-channel pipeline. Scans
+//channels_all forward from mwlsim_chan_idx + 1: any channel that
+//already has a recorded decision is just counted and skipped (the
+//re-attachment case), and the scan STOPS at the first channel that
+//still needs deciding -- that one channel's simulate/save/convert/
+//edit/fit pipeline is launched and this function returns immediately
+//afterward, WITHOUT going on to the next channel. save_sims_auto()
+//below eventually (via the pass_ssf_dir signal, handled synchronously
+//by get_ssf_dir_and_saveDB()) constructs and shows this single
+//channel's US_MwlSpeciesFit dialog and leaves it up for the user.
+//velmwl_deconv_accepted()/rejected() call this function again once
+//that decision comes in, which is what actually advances to the next
+//channel -- this is the fix for the dialog for every channel opening
+//back-to-back instead of one at a time.
+//
+//If the scan reaches the end of channels_all without finding anything
+//left to launch (either because it was called after the true last
+//channel's decision, or because every remaining channel was already
+//decided), there is nothing more to start: close the centralized
+//progress dialog and hand off to finalize_velmwl_analysis_if_complete().
+void US_Analysis_auto::start_next_velmwl_channel( void )
+{
+  for ( int ca = mwlsim_chan_idx + 1; ca < channels_all.size(); ++ca )
+    {
+      //ALEXEY: normalize channels_all[ca] (e.g. "2.A") to the
+      //canonical "2 / A" form used wherever a channel's decision is
+      //recorded/looked-up (US_MwlSpeciesFit::record_velmwl_channel_
+      //decision() builds the same "N / X" string from the filename).
+      QStringList ch_parts_c = channels_all[ ca ].split( "." );
+      QString chan_norm_c = ( ch_parts_c.size() == 2 ) ?
+	( ch_parts_c[0] + " / " + ch_parts_c[1] ) : channels_all[ ca ];
+
+      //ALEXEY: Check for an already-recorded decision BEFORE doing
+      //any of the expensive simulate+save work below -- this is the
+      //re-attachment case: a prior session already Accepted/Rejected
+      //this channel, so don't re-simulate/re-save/re-open the fit
+      //dialog for it at all, just count it resolved and keep scanning.
+      QString existing_decision_c;
+      bool    prep_done_c = true;
+      bool already_decided_c = load_velmwl_channel_decision(
+	  QString::number( autoflowID_passed ), chan_norm_c, existing_decision_c, &prep_done_c );
+
+      //ALEXEY: A decision alone does not mean the channel is finished.
+      //"Accepted" is recorded the moment the user clicks Accept, BEFORE
+      //velmwl_deconv_accepted() has run the Convert import + Edit profile
+      //save that 2DSA-IT depends on. If the program was closed/crashed in
+      //between, the channel looks decided but its edited data is missing.
+      //Such a channel (prepDone == 0) is discarded and reprocessed from
+      //scratch below. Rejected channels need nothing further.
+      if ( already_decided_c && existing_decision_c == "Accepted" && ! prep_done_c )
+	{
+	  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
+		   << "was Accepted but its import/edit never completed -- reprocessing.";
+
+	  if ( reset_velmwl_incomplete_channel( chan_norm_c ) )
+	    already_decided_c = false;
+	  else
+	    {
+	      //Could not clear the stale record: reprocessing would just
+	      //re-hit it, so stop rather than skip into a broken 2DSA-IT.
+	      QMessageBox::warning( this, tr( "VELOCITY-MWL: Channel Not Ready" ),
+				    tr( "Channel %1 was accepted earlier, but its data import/edit "
+					"did not finish, and the record could not be reset.\n\n"
+					"Re-attach to retry." ).arg( chan_norm_c ) );
+	      if ( progress_msg_mwlsim )
+		progress_msg_mwlsim->finish();
+	      return;
+	    }
+	}
+
+      if ( already_decided_c )
+	{
+	  qDebug() << "[US_Autoflow_analysis] VEL-MWL channel" << chan_norm_c
+		   << "already" << existing_decision_c
+		   << "-- skipping simulation/save/fit for it.";
+
+	  mwlsim_chan_idx = ca;
+	  ++velmwl_channels_decided;
+	  continue;
+	}
+
+      //ALEXEY: Not yet decided -- proceed with simulate/save/open
+      //the fit dialog for it, THEN RETURN (not continue): the next
+      //channel must not start until this one's Accept/Reject comes
+      //back in via velmwl_deconv_accepted()/rejected(). Deliberately
+      //no separate "claim" step here: the only thing that determines
+      //whether this channel gets reprocessed is load_velmwl_channel_
+      //decision() above. (An earlier version also wrote a transient
+      //"STARTED" placeholder to guard against two overlapping
+      //sessions racing the same channel, but that placeholder had no
+      //way to get cleared on a hard crash and would then permanently
+      //block reprocessing -- removed as not worth that failure mode
+      //for what is, in practice, a single-session workflow.)
+      QString ch_name_c, f_name_c;
+      //Get filename, OR filenameS first???
+      for ( int ta=0; ta<TriplesArray.size(); ++ta )
+	{
+	  QString t_name_c = TriplesArray[ta];
+	  if( t_name_c.contains( channels_all[ca]) )
+	    {
+	      f_name_c  = get_filename( t_name_c );
+	      ch_name_c = channels_all[ca];
+	      break;
+	    }
+	}
+
+      e_ID_for_velmwl.clear();
+
+      //ALEXEY: (Re)start the progress dialog fresh for this channel
+      start_mwlsim_channel_progress( ca, ch_name_c );
+
+      //Can VELOCITY-MWL be multiple-optics-experiment? OR UV/vis. only?
+      QString stage_n_c = QString( "2DSA-IT" );
+      QString mod_id_c  = QString("XXX");
+
+      QStringList m_c_r_id;
+      m_c_r_id << stage_n_c << ch_name_c << f_name_c << mod_id_c;
+      qDebug() << "[Post-Analysis], m_t_r_id -- " << m_c_r_id;
+
+      //now call sim. contructor
+      sdiag_mwlsim = new US_MwlSpeciesSim();
+
+      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_editID_fromLoad,
+	       this,         &US_Analysis_auto::get_editID );
+
+      connect( sdiag_mwlsim, &US_MwlSpeciesSim::pass_ssf_dir,
+	       this,         &US_Analysis_auto::get_ssf_dir_and_saveDB );
+
+      //ALEXEY: Feed this channel's stage progress into the centralized dialog
+      connect( sdiag_mwlsim, &US_MwlSpeciesSim::stage_progress,
+	       this,         &US_Analysis_auto::update_mwlsim_progress );
+
+      sdiag_mwlsim -> select_models_auto( QString::number( invID ), m_c_r_id );
+
+      /**
+	 -- Next: define buffer
+	 sdiag_mwlsim -> define_buffer_auto: encode Water
+	 -- Next: define sim parameters
+	 sdiag_mwlsim -> sim_params_auto
+	 -- Next: set Rotor to "Simulation" one
+	 sdiag_mwlsim -> select_rotor_auto
+	 -- Next: Start Simulation
+	 sdiag_mwlsim -> start_sims_auto
+      **/
+      sdiag_mwlsim -> define_buffer_auto( invID );
+
+      QMap<QString, QString> run_params = read_run_params( f_name_c );
+      qDebug() << "run_params[bottom]=" << run_params["bottom"];
+      sdiag_mwlsim -> sim_params_auto( run_params );
+
+      /**
+	 Although we will select 'Default (Simulation)' rotor,
+	 should we select rotor *AFTER* setting simparams,
+	 as only AFTER the new rotorCoeffs will be applied
+	 DEFAULT rotorCoeffs in simparams are 0.0
+      **/
+      QStringList rotor_defs;
+      rotor_defs << "Default" << "(Simulation)";
+      sdiag_mwlsim -> select_rotor_auto( rotor_defs );
+
+      /** Run Simulations **/
+      sdiag_mwlsim -> start_sims_auto();
+
+      /**
+	 After Sims completed, save to Disk & re-use US_Convrt && US_Edit to save into DB.
+	 This chain runs synchronously through to get_ssf_dir_and_saveDB(),
+	 which constructs & shows THIS channel's US_MwlSpeciesFit dialog and
+	 then returns control back here.
+       **/
+      sdiag_mwlsim -> save_sims_auto();
+
+      mwlsim_chan_idx = ca;
+
+      //ALEXEY: Stop -- do not advance to the next channel. This
+      //channel's fit dialog is now up, waiting on the user's Accept/
+      //Reject click (see velmwl_deconv_accepted()/rejected() below).
+      return;
+    }
+
+  //ALEXEY: Nothing left to launch -- either every remaining channel
+  //was already decided (skipped above via "continue"), or this call
+  //came from velmwl_deconv_accepted()/rejected() after the true last
+  //channel's decision. Either way, close the centralized progress
+  //dialog and check whether the whole VEL-MWL pass is complete.
+  progress_msg_mwlsim->setValue( progress_msg_mwlsim->maximum() );
+  progress_msg_mwlsim->finish();
+
+  finalize_velmwl_analysis_if_complete();
+}
+
+//slots for reject/accept Vel-MWL deconvoluton for a channel
+//  (1) when re-attached, US_Analysis_auto's own channels_all loop above
+//      now checks load_velmwl_channel_decision()
+//      BEFORE (re-)simulating & saving a channel, so an already-decided
+//      channel never reaches here a second time.
+//  (2) for the report, US_ReporterGMP can read every channel's decision
+//      back via read_autoflowAnalysisVelMwl_record().
+//  Each also counts this channel as resolved and, once every channel in
+//  channels_all has been (see finalize_velmwl_analysis_if_complete()),
+//  switches the run to the Report stage -- exactly once.
+void US_Analysis_auto::velmwl_deconv_rejected( QString& chann_dec )
+{
+  qDebug() << "[US_Autoflow_analysis]REJECT VEL-MWL deconvolution, channel -- "
+	   << chann_dec;
+  cleanup_velmwl_fit_widget();
+
+  ++velmwl_channels_decided;
+
+  //ALEXEY: This channel is now decided -- advance to the next
+  //undecided channel in channels_all (start_next_velmwl_channel()
+  //itself calls finalize_velmwl_analysis_if_complete() once there is
+  //nothing left to launch, so it subsumes the old direct call here).
+  start_next_velmwl_channel();
+}
+void US_Analysis_auto::velmwl_deconv_accepted( QString& chann_dec )
+{
+  qDebug() << "[US_Autoflow_analysis]ACCEPT VEL-MWL deconvolution, channel -- "
+	   << chann_dec;
+  cleanup_velmwl_fit_widget();
+
+  ++velmwl_channels_decided;
+
+    //Save SSF- procuded data to DB
+  qDebug() << "[in velmwl_deconv_accepted(): ssf_dir ] -- "
+	   << protocol_details_at_analysis_velmwl["ssf_dir_name"];
+  QString ssf_dir_mwl = protocol_details_at_analysis_velmwl["ssf_dir_name"];
+  protocol_details_at_analysis_velmwl[ "auto_flag_import"] = QString("VELMWL_IMPORT_SIM_ANALYSIS");
+  sdiag_convert = new US_ConvertGui("AUTO");
+  sdiag_convert->import_ssf_data_auto( protocol_details_at_analysis_velmwl );
+
+  //Next, save edit profiles (based on new menicsus && same edits )
+  sdiag_edit = new US_Edit("AUTO");
+  /** re-define some fields **/
+  // ALEXEY: US_Edit::load_auto_velmwl() below still needs "filename"
+  // locally -- keep computing it here for that purpose. It is no longer
+  // separately persisted to the DB from this function: US_MwlSpeciesFit::
+  // accept_velmwl() now writes this same value (recomputed from
+  // ssf_dir_name, which it already has in its own protocol_details) into
+  // channelDecisions atomically with the Accept decision itself, via
+  // record_velmwl_channel_decision() -- see that function's header
+  // comment in us_mwl_species_fit.h. That removes the old, separate
+  // fire-and-forget DB write that used to live here (and the window
+  // where a channel could be on record as "Accepted" with no filename
+  // yet, which process_velmwl_after_all_channels_decided() had to
+  // defensively detect and skip).
+  protocol_details_at_analysis_velmwl[ "filename" ]  = ssf_dir_mwl.section("/", -1, -1);
+
+  protocol_details_at_analysis_velmwl[ "auto_flag_edit"] = QString("VELMWL_EDIT_SIM_ANALYSIS");
+  sdiag_edit -> load_auto_velmwl( protocol_details_at_analysis_velmwl );
+
+  //ALEXEY: Import + edit are both done: only now flag the channel as
+  //ready for 2DSA-IT (channelDecisions[chan].prepDone = 1). "chan_to_analyse"
+  //is already in the canonical "N / X" form (set in get_ssf_dir_and_saveDB()).
+  QString chan_ready = protocol_details_at_analysis_velmwl[ "chan_to_analyse" ];
+  if ( chan_ready.isEmpty() )
+    chan_ready = chann_dec;
+
+  //ALEXEY: Only flag the channel if US_ConvertGui confirmed the data is in
+  //the DB AND US_Edit saved every triple's edit profile without error.
+  bool imp_ok  = sdiag_convert->import_ssf_succeeded();
+  bool edit_ok = sdiag_edit   ->velmwl_edit_succeeded();
+
+  if ( imp_ok && edit_ok )
+    {
+      if ( ! mark_velmwl_channel_prep_done( chan_ready ) )
+	qDebug() << "[US_Autoflow_analysis] WARNING: could not mark channel" << chan_ready
+		 << "as prepared; it will be redone on re-attach.";
+    }
+  else
+    {
+      qDebug() << "[US_Autoflow_analysis] channel" << chan_ready
+	       << "NOT marked ready -- import ok:" << imp_ok << ", edit ok:" << edit_ok;
+      QMessageBox::warning( this, tr( "VELOCITY-MWL: Channel Data Not Saved" ),
+			    tr( "Channel %1 was accepted, but saving its data to the database "
+				"did not complete (import: %2, edit profile: %3).\n\n"
+				"This channel will be skipped for 2DSA-IT, and redone when "
+				"the run is re-attached." )
+			    .arg( chan_ready )
+			    .arg( imp_ok  ? tr( "OK" ) : tr( "failed" ) )
+			    .arg( edit_ok ? tr( "OK" ) : tr( "failed" ) ) );
+    }
+    
+  //ALEXEY: See velmwl_deconv_rejected() above.
+  start_next_velmwl_channel();
+}
+
+//ALEXEY: Once every channel in channels_all has been resolved this pass
+//(already-decided & skipped, or freshly Accepted/Rejected here), hands
+//off to process_velmwl_after_all_channels_decided() -- that TBD
+//function, NOT this one, is responsible for claiming the run-wide
+//"VEL-MWL analysis complete" transition (autoflow_velmwl_analysis_
+//status(), unknown->STARTED). Deliberately leaving that status as
+//'unknown' here: the whole point is that there's more processing to do
+//after all channels are decided but before the run is actually
+//complete, so the Stages row shouldn't claim STARTED until that later
+//processing has actually finished.
+void US_Analysis_auto::finalize_velmwl_analysis_if_complete( void )
+{
+  if ( channels_all.isEmpty() || velmwl_channels_decided < channels_all.size() )
+    return;   //still waiting on other channels this pass
+
+  qDebug() << "[US_Autoflow_analysis] All VEL-MWL channels resolved -- "
+	      "handing off to post-channel processing.";
+
+  process_velmwl_after_all_channels_decided();
+}
+
+//ALEXEY: Called once every channel in channels_all has a recorded
+//Accept/Reject decision, but BEFORE switching to the Report stage.
+//First claims the run-wide VEL-MWL completion transition
+//(autoflow_velmwl_analysis_status(), unknown->STARTED) -- if another
+//session (e.g. a re-attach racing this same call) already won it, back
+//off entirely rather than re-running the 2DSA-IT pipeline a second
+//time. Then reads back every channel's decision
+//(read_autoflowAnalysisVelMwl_record()) and keeps only the Approved
+//("Accepted") ones that also have a recorded filename -- Rejected
+//channels are disregarded entirely, per spec. Finally drives
+//start_next_2dsa_channel() to run a headless 2DSA-IT fit+save for each
+//Approved channel, one at a time; that function is the one that
+//eventually calls update_autoflow_record_atAnalysis() and emits
+//analysis_complete_auto() once the list is exhausted.
+void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
+{
+  qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+	      "claiming run-wide VEL-MWL completion, then starting 2DSA-IT "
+	      "post-processing for Approved channels.";
+
+  // ALEXEY: Centralized progress dialog for the 2DSA-IT post-processing
+  // pipeline, mirroring progress_msg_mwlsim above exactly (same
+  // construction/window-flag rationale). US_2dsa's fit+save for each
+  // Approved channel needs no human interaction at all (unlike
+  // US_MwlSpeciesFit's Accept/Reject step), so unlike progress_msg_mwlsim
+  // this dialog is never handed off to / hidden for a decision widget --
+  // it is the only visible indication of 2DSA-IT processing, for as long
+  // as this stage runs. See start_2dsa_channel_progress()/
+  // update_2dsa_progress()'s own header comments for how it's driven.
+  //
+  // ALEXEY: Constructed and shown HERE, at the very top of this function
+  // -- i.e. right as the last VEL-MWL channel decision hands off to 2DSA-
+  // IT post-processing -- rather than after the DB round-trips below (the
+  // run-wide completion claim, reading back channel decisions, loading
+  // the 2DSA Analysis Profile). Those aren't instantaneous and previously
+  // ran with no visible feedback at all between the last US_MwlSpeciesFit
+  // decision and the first channel's own progress; the setLabelText()
+  // calls threaded through this function keep something on screen for
+  // that whole gap, before start_2dsa_channel_progress() ever gets a
+  // channel to actually report progress for.
+  US_GmpProgress::acquire( this, progress_msg_2dsa )->setWindowTitle( tr( "Autoflow Analysis" ) );
+  progress_msg_2dsa->setStage( 2, 2, tr( "VELOCITY-MWL 2DSA-IT analysis" ),
+                               tr( "Preparing 2DSA-IT analysis..." ), 100 );
+  progress_msg_2dsa->hideOverall();   // per-channel overall bar appears with the first channel
+  qApp->processEvents();
+
+  // Claim the run-wide "VEL-MWL analysis complete" transition FIRST -- if
+  // another session already won it, back off entirely rather than
+  // re-running the 2DSA-IT pipeline a second time. See
+  // autoflow_velmwl_analysis_status() in us3_autoflow_procs.sql.
+  progress_msg_2dsa->setLabelText( tr( "Finalizing VEL-MWL completion..." ) );
+  qApp->processEvents();
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		  "DB connection failed -- aborting, run stays 'unknown' for retry.";
+      progress_msg_2dsa->hide();
+      delete db;
+      return;
+    }
+
+  QStringList qry_claim;
+  /**
+  qry_claim << "autoflow_velmwl_analysis_status"
+	    << QString::number( autoflowID_passed );
+  db->query( qry_claim );
+
+  int unique_start = 0;
+  if ( db->lastErrno() == US_DB2::OK && db->next() )
+    unique_start = db->value( 0 ).toInt();
+
+  if ( unique_start != 1 )
+    {
+      qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		  "completion already claimed elsewhere -- backing off.";
+      delete db;
+      return;
+    }
+  **/
+    
+  // Read back every channel's decision; keep only "Accepted" ones that
+  // also have a recorded filename (now written atomically with the
+  // decision itself -- see US_MwlSpeciesFit::record_velmwl_channel_
+  // decision()). "Rejected" channels, and any not yet in channelDecisions
+  // at all (should not happen here since finalize_velmwl_analysis_if_
+  // complete() only calls us once channels_all is fully resolved), are
+  // disregarded.
+  progress_msg_2dsa->setLabelText( tr( "Reading channel decisions..." ) );
+  qApp->processEvents();
+
+  QStringList qry_read;
+  qry_read << "read_autoflowAnalysisVelMwl_record"
+	   << QString::number( autoflowID_passed );
+  db->query( qry_read );
+
+  channels_2dsa_approved.clear();
+  channels_2dsa_filenames.clear();
+
+  if ( db->lastErrno() == US_DB2::OK && db->next() )
+    {
+      QString decisions_json = db->value( 0 ).toString();
+      QJsonDocument jdoc = QJsonDocument::fromJson( decisions_json.toUtf8() );
+      QJsonObject   jobj = jdoc.object();
+
+      for ( auto it = jobj.constBegin(); it != jobj.constEnd(); ++it )
+	{
+	  QJsonObject chdec   = it.value().toObject();
+	  QString decision    = chdec.value( "decision" ).toString();
+	  QString chan_fname  = chdec.value( "filename" ).toString();
+
+	  //prepDone absent => older record, treat as complete.
+	  int chan_prep = chdec.contains( "prepDone" ) ?
+	    chdec.value( "prepDone" ).toVariant().toInt() : 1;
+
+	  if ( decision == "Accepted" && chan_prep == 0 )
+	    {
+	      qDebug() << "[US_Autoflow_analysis] channel" << it.key()
+		       << "is Accepted but its import/edit is incomplete -- "
+			  "skipping 2DSA-IT for this channel.";
+	      continue;
+	    }
+
+	  if ( decision == "Accepted" )
+	    {
+	      if ( chan_fname.isEmpty() )
+		{
+		  // Accepted, but no filename on record -- should only
+		  // happen for an older run that predates the filename
+		  // being written atomically with the decision (see
+		  // US_MwlSpeciesFit::record_velmwl_channel_decision()).
+		  // Can't load data for this channel; log and skip it
+		  // rather than handing US_2dsa an empty filename.
+		  qDebug() << "[US_Autoflow_analysis] channel" << it.key()
+			   << "is Accepted but has no filename on record -- "
+			      "skipping 2DSA-IT for this channel.";
+		  continue;
+		}
+	      channels_2dsa_approved  << it.key();
+	      channels_2dsa_filenames[ it.key() ] = chan_fname;
+	    }
+	}
+    }
+  else
+    {
+      qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		  "could not read channel decisions -- reverting completion claim.";
+      QStringList qry_revert;
+      qry_revert << "autoflow_velmwl_analysis_status_revert"
+		 << QString::number( autoflowID_passed );
+      db->query( qry_revert );
+      progress_msg_2dsa->hide();
+      delete db;
+      return;
+    }
+
+  delete db;
+
+  qDebug() << "[US_Autoflow_analysis] Approved VEL-MWL channels for 2DSA-IT:"
+	   << channels_2dsa_approved;
+
+  progress_msg_2dsa->setLabelText( tr( "Loading 2DSA Analysis Profile..." ) );
+  qApp->processEvents();
+
+  // ALEXEY: Load this run's 2DSA Analysis-Profile settings (per-channel
+  // s_min/s_max/s_grpts/k_min/k_max/k_grpts grid parameters) ONCE here,
+  // via the exact US_AnalysisProfileGui::inherit_protocol() pattern
+  // US_ReporterGMP uses to obtain cAP2 (US_ReporterGMP::currAProf.ap2DSA)
+  // -- the dialog class is constructed purely as a data loader and never
+  // shown/exec'd. Cached in cAP2_2dsa; start_next_2dsa_channel() looks up
+  // each channel's matching parms[] entry from it below, before that
+  // channel's US_2dsa is constructed, so US_AnalysisControl2D::
+  // apply_auto_fit_params() has something to apply ahead of Start Fit.
+  {
+    US_Passwd pw_ap;
+    US_DB2    db_ap( pw_ap.getPasswd() );
+
+    if ( db_ap.lastErrno() == US_DB2::OK )
+      {
+	US_RunProtocol currProto;
+	QString xmlstr_ap( "" );
+	US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,
+					    &xmlstr_ap, NULL, &db_ap );
+	QXmlStreamReader xmli_ap( xmlstr_ap );
+	currProto.fromXml( xmli_ap );
+
+	US_AnalysisProfileGui* aprof_loader = new US_AnalysisProfileGui;
+	aprof_loader->inherit_protocol( &currProto );
+	cAP2_2dsa = aprof_loader->currProf.ap2DSA;
+	delete aprof_loader;
+
+	qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		    "loaded 2DSA Analysis Profile -- channels in profile:"
+		 << cAP2_2dsa.parms.size();
+      }
+    else
+      {
+	qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
+		    "could not connect to DB to load the 2DSA Analysis Profile -- "
+		    "channels will fall back to US_AnalysisControl2D's own defaults.";
+      }
+  }
+
+  // Seed this stage's protocol_details from the VEL-MWL stage's map --
+  // carries forward autoflowID/invID_passed/protocolName/etc.
+  // "chan_to_analyse" and "filename" get overwritten per-channel by
+  // start_next_2dsa_channel().
+  protocol_details_at_analysis_2dsa = protocol_details_at_analysis_velmwl;
+  twodsa_chan_idx  = -1;   // start_next_2dsa_channel() scans from idx+1
+  twodsa_nchannels = channels_2dsa_approved.size();
+  twodsa_nspecies_total = 0;   // accumulated by twodsa_channel_complete()
+
+  // progress_msg_2dsa was already constructed and shown at the top of
+  // this function -- see that comment for why. From here on it's driven
+  // by start_2dsa_channel_progress()/update_2dsa_progress() as each
+  // Approved channel is processed.
+
+  /**
+  if ( channels_2dsa_approved.isEmpty() )
+    {
+      // Nothing was Approved (or nothing Approved had a usable filename)
+      // -- nothing to simulate. Finish the run.
+      update_autoflow_record_atAnalysis();
+      emit analysis_complete_auto( protocol_details_at_analysis );
+      return;
+    }
+  **/
+  
+  start_next_2dsa_channel();
+}
+
+//ALEXEY: Drives the 2DSA-IT pipeline one Approved channel at a time --
+//see header doc. Deliberately RETURNs (not loops) after launching a
+//channel: the next one starts only once twodsa_channel_complete() fires
+//for this one, exactly mirroring start_next_velmwl_channel()'s
+//single-channel-at-a-time shape (US_2dsa's auto constructor runs
+//synchronously today, so in practice this currently completes in one
+//pass regardless -- but keeping the same shape as the VEL-MWL stage
+//means this keeps working unchanged once US_2dsa's fit step becomes
+//asynchronous, e.g. once US_AnalysisControl2D::fit_auto() drives
+//US_SolveSim on a real thread).
+void US_Analysis_auto::start_next_2dsa_channel( void )
+{
+  ++twodsa_chan_idx;
+  
+  if ( twodsa_chan_idx >= channels_2dsa_approved.size() )
+    {
+      // All Approved channels processed -- the VEL-MWL run is complete.
+      // Every channel's US_2dsa auto-fit (run_2dsa_auto()) already loops
+      // over that channel's species (S1, S2, ...) itself before firing
+      // twodsa_complete_s(), so by the time the cursor runs off the end
+      // of channels_2dsa_approved here, every species of every Approved
+      // channel has a model recorded in autoflowAnalysisVelMwl. Tell the
+      // user before handing off to Report, matching the "All Triples
+      // Processed !" notice shown at the analogous transition earlier
+      // in the pipeline (see the non-VELOCITY-MWL branch above).
+
+      if ( progress_msg_2dsa )
+        progress_msg_2dsa->hide();
+
+      QString msg_text;
+
+      if ( twodsa_nchannels > 0 )
+        {
+          msg_text = QString( tr( "2DSA-IT model fitting is complete for all "
+                                   "%1 Approved channel(s) -- %2 species "
+                                   "model(s) total now recorded."
+                                   "\n\nThe program will proceed to the "
+                                   "Reporting stage." ) )
+                       .arg( twodsa_nchannels )
+                       .arg( twodsa_nspecies_total );
+        }
+      else
+        {
+          msg_text = tr( "No VEL-MWL channels were Approved for 2DSA-IT "
+                          "processing, so there was nothing to fit."
+                          "\n\nThe program will proceed to the Reporting "
+                          "stage." );
+        }
+
+      QMessageBox::information( this,
+                                 tr( "VELOCITY-MWL: All Channels Processed !" ),
+                                 msg_text );
+
+      // All Approved channels are fitted: species selection for the Report,
+      // run-wide claim, DB records, and the switch to the REPORT stage.
+      finalize_velmwl_species_selection();
+
+      return;
+    }
+  
+  QString chan_norm = channels_2dsa_approved[ twodsa_chan_idx ];
+
+  qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << ( twodsa_chan_idx + 1 )
+	   << "of" << twodsa_nchannels << "--" << chan_norm;
+
+  cleanup_2dsa_widget();   // retire the previous channel's widget, if any
+
+  protocol_details_at_analysis_2dsa[ "chan_to_analyse" ] = chan_norm;
+  protocol_details_at_analysis_2dsa[ "filename" ]        = channels_2dsa_filenames[ chan_norm ];
+
+  // ALEXEY: Look up this channel's grid-fit parameters (s_min/s_max/
+  // s_grpts/k_min/k_max/k_grpts) from the 2DSA Analysis Profile loaded
+  // once in process_velmwl_after_all_channels_decided() (cAP2_2dsa), and
+  // thread them into protocol_details_at_analysis_2dsa for US_2dsa's
+  // auto constructor to pick up -- see US_AnalysisControl2D::
+  // apply_auto_fit_params(), called from US_2dsa::run_2dsa_auto() before
+  // each species' Start Fit. Matched with whitespace/"/" stripped from
+  // both sides: US_AnalysisProfileGui::inherit_protocol() builds
+  // parms[].channel via chname.replace(" / ", ""), so a channel this
+  // codebase calls "2 / S" is stored there as the compact "2S" -- not
+  // chan_norm's own "N / X" form.
+  QString chan_norm_compact = QString( chan_norm ).remove( ' ' ).remove( '/' ).remove( '.' );
+  int     ap2_match_idx     = -1;
+
+  for ( int pi = 0; pi < cAP2_2dsa.parms.size(); ++pi )
+    {
+      // QString p_compact = QString( cAP2_2dsa.parms[ pi ].channel )
+      // 			   .remove( ' ' ).remove( '/' ).remove( '.' );
+      QString p_compact = QString( cAP2_2dsa.parms[ pi ].channel ).split(":")[0].trimmed();
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: cAP2_2dsa.parms[ pi ].channel -- " << cAP2_2dsa.parms[ pi ].channel;
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: chan_norm -- " << chan_norm;
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: p_compact -- " << p_compact;
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: chan_norm_compact -- " << chan_norm_compact;
+
+      if ( p_compact.compare( chan_norm_compact, Qt::CaseInsensitive ) == 0 )
+	{
+	  ap2_match_idx = pi;
+	  break;
+	}
+    }
+
+  if ( ap2_match_idx >= 0 )
+    {
+      const US_AnaProfile::AnaProf2DSA::Parm2DSA& ap =
+         cAP2_2dsa.parms[ ap2_match_idx ];
+
+      //TEMP - must be uncommented as this is read from AProfile settings
+      protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( ap.s_min   );
+      protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( ap.s_max   );
+      protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( ap.s_grpts );
+      protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( ap.k_min   );
+      protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( ap.k_max   );
+      protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( ap.k_grpts );
+
+      // //For TEST ONLY!!! MUST BE COMMENTED OUT
+      // protocol_details_at_analysis_2dsa[ "s_min" ]   = QString::number( 1   );
+      // protocol_details_at_analysis_2dsa[ "s_max" ]   = QString::number( 130 );
+      // protocol_details_at_analysis_2dsa[ "s_grpts" ] = QString::number( 98  );
+      // protocol_details_at_analysis_2dsa[ "k_min" ]   = QString::number( 1   );
+      // protocol_details_at_analysis_2dsa[ "k_max" ]   = QString::number( 1.5   );
+      // protocol_details_at_analysis_2dsa[ "k_grpts" ] = QString::number( 28 );
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
+	       << "Analysis Profile grid: s[" << ap.s_min << "," << ap.s_max
+	       << "] x" << ap.s_grpts << "  f/f0[" << ap.k_min << ","
+	       << ap.k_max << "] x" << ap.k_grpts;
+    }
+  else
+    {
+      // Not found in the profile for this channel -- clear any stale
+      // values left over from a previous channel's lookup (this map is
+      // reused across channels) so US_AnalysisControl2D::
+      // apply_auto_fit_params() correctly falls back to its own
+      // defaults for this one, rather than silently reapplying the
+      // last matched channel's grid.
+      protocol_details_at_analysis_2dsa.remove( "s_min" );
+      protocol_details_at_analysis_2dsa.remove( "s_max" );
+      protocol_details_at_analysis_2dsa.remove( "s_grpts" );
+      protocol_details_at_analysis_2dsa.remove( "k_min" );
+      protocol_details_at_analysis_2dsa.remove( "k_max" );
+      protocol_details_at_analysis_2dsa.remove( "k_grpts" );
+
+      qDebug() << "[US_Autoflow_analysis] 2DSA-IT: channel" << chan_norm
+	       << "not found in 2DSA Analysis Profile -- falling back to "
+		  "US_AnalysisControl2D's own default grid settings.";
+    }
+
+  // ALEXEY: Start/label progress_msg_2dsa BEFORE constructing sdiag_2dsa --
+  // that constructor calls load() synchronously, so the dialog needs to
+  // already be visible for this channel before any of that runs (see
+  // update_2dsa_progress()'s header comment for the one tick this still
+  // can't catch in time).
+  start_2dsa_channel_progress( twodsa_chan_idx, chan_norm );
+
+  sdiag_2dsa = new US_2dsa( protocol_details_at_analysis_2dsa );
+  connect( sdiag_2dsa, &US_2dsa::twodsa_complete_s,
+	   this,       &US_Analysis_auto::twodsa_channel_complete );
+  connect( sdiag_2dsa, &US_2dsa::twodsa_progress_s,
+	   this,       &US_Analysis_auto::update_2dsa_progress );
+
+  // ALEXEY: Deliberately NOT added to `panel` (unlike sdiag/US_MwlSpeciesFit,
+  // which needs a human Accept/Reject click and so must be shown). 2DSA-IT
+  // needs no user interaction at all -- progress_msg_2dsa above is the
+  // only UI this stage should surface. `panel` here is a QVBoxLayout on
+  // this widget's own window, so adding sdiag_2dsa to it previously made
+  // US_2dsa appear embedded in the autoflow monitor window itself for the
+  // whole run.
+  twodsa_open = true;
+
+  // ALEXEY: US_2dsa's current auto constructor (see us_2dsa.cpp) runs
+  // load()+run_2dsa_auto() synchronously and emits twodsa_complete_s()
+  // before returning here (once US_AnalysisControl2D::fit_auto() exists
+  // -- see that file's TODO) -- so by the time `new US_2dsa(...)` above
+  // returns, twodsa_channel_complete() has typically already fired and
+  // advanced twodsa_chan_idx further. That is fine: this function's own
+  // job is done once it has launched (or, in practice, already finished)
+  // this one channel.
+}
+
+//ALEXEY: VELOCITY-MWL: last step of the ANALYSIS stage -- see header doc.
+//Order matters and mirrors ABDE's save_auto(): user selection FIRST (a cancelled
+//or failed attempt leaves autoflowAnalysisVelMwlStages at 'unknown', so nothing
+//to undo), THEN the run-wide claim, then the DB writes, then the stage switch.
+void US_Analysis_auto::finalize_velmwl_species_selection( void )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + db.lastError() +
+			    tr( "\n\nThe run stays in the ANALYSIS stage; re-attach to retry." ) );
+      return;
+    }
+
+  // (1) species recorded per Approved channel: channelDecisions[chan].models keys
+  QMap< QString, QStringList > available;
+  QMap< QString, QString >     labels;
+
+  QStringList qry_read;
+  qry_read << "read_autoflowAnalysisVelMwl_record" << QString::number( autoflowID_passed );
+  db.query( qry_read );
+
+  if ( db.lastErrno() == US_DB2::OK && db.next() )
+    {
+      QJsonObject jobj = QJsonDocument::fromJson( db.value( 0 ).toString().toUtf8() ).object();
+
+      QCollator collator;
+      collator.setNumericMode( true );   // S2 < S10
+
+      for ( int ic = 0; ic < channels_2dsa_approved.size(); ++ic )
+	{
+	  QString     chan  = channels_2dsa_approved[ ic ];
+	  QJsonObject mobj  = jobj.value( chan ).toObject().value( "models" ).toObject();
+	  QStringList specs = mobj.keys();
+	  std::sort( specs.begin(), specs.end(),
+		     [&collator]( const QString& a, const QString& b )
+		     { return collator.compare( a, b ) < 0; } );
+
+	  for ( int is = 0; is < specs.size(); ++is )
+	    {
+	      QString label = specs[ is ];
+	      US_Model mdl;
+	      int rc = mdl.load( true, mobj.value( specs[ is ] ).toString(), &db );
+	      if ( rc == US_DB2::OK && ! mdl.dataDescrip.isEmpty() )
+		label += ": " + mdl.dataDescrip;     // same text the Report shows per species
+	      labels[ chan + "|" + specs[ is ] ] = label;
+	    }
+
+	  if ( ! specs.isEmpty() )
+	    available[ chan ] = specs;
+	}
+    }
+
+  // (2) user's selection (nothing to choose when no channel has a recorded species)
+  QMap< QString, QStringList > selected;
+  if ( ! available.isEmpty() )
+    show_velmwl_species_selection_dialog( available, labels, selected );   // returns once confirmed
+
+  // (2b) GMP submission form (audit trail: user, password, comment) -- same
+  // form/behaviour as ABDE's save_auto(). Shown BEFORE the run-wide claim, so a
+  // dismissed form leaves autoflowAnalysisVelMwlStages at 'unknown'.
+  QStringList qry_user;
+  qry_user << "get_user_info";
+  db.query( qry_user );
+  db.next();
+  QString user_submitter = db.value( 2 ).toString() + ", " + db.value( 1 ).toString();   // lname, fname
+
+  QMap< QString, QString > gmp_submitter_map;
+  while ( true )
+    {
+      //Parent = this: the form is then a child dialog of the main window and is
+      //centered over it (a parentless US_Passwd falls back to activeWindow(), which
+      //can be null/another window right after the species-selection dialog closes)
+      US_Passwd pw_at( this );
+      gmp_submitter_map = pw_at.getPasswd_auditTrail( "GMP Run VELOCITY-MWL Form",
+						     "Please fill out GMP run VELOCITY-MWL-Analysis form:",
+						     user_submitter );
+
+      if ( ! gmp_submitter_map.isEmpty() )
+	break;
+
+      // Form dismissed / not accepted. It is required to proceed to REPORT.
+      if ( QMessageBox::question( this, tr( "GMP Form Required" ),
+				  tr( "The GMP VELOCITY-MWL-Analysis form must be filled out "
+				      "to proceed to the REPORT stage.\n\nFill it out now?\n\n"
+				      "(If you choose No, the run stays in the ANALYSIS stage; "
+				      "re-attach to the run to retry.)" ),
+				  QMessageBox::Yes | QMessageBox::No,
+				  QMessageBox::Yes ) != QMessageBox::Yes )
+	return;
+    }
+
+  qDebug() << "[VEL-MWL] Submitter map: " << gmp_submitter_map.keys()
+	   << gmp_submitter_map[ "User:" ] << gmp_submitter_map[ "Comment:" ];
+
+  // (3) claim the run-wide ANALYSIS -> REPORT transition (unknown -> STARTED)
+  QStringList qry_claim;
+  qry_claim << "autoflow_velmwl_analysis_status" << QString::number( autoflowID_passed );
+  int unique_start = db.statusQuery( qry_claim );
+
+  if ( unique_start != 1 )
+    {
+      QMessageBox::information( this,
+				tr( "The Program State Updated / Being Updated" ),
+				tr( "The program advanced or is advancing to the next stage!\n\n"
+				    "This happened because you or a different user has already "
+				    "completed the VELOCITY-MWL analysis in a different program "
+				    "session, and the program is proceeding to the next stage.\n\n"
+				    "The program will return to the autoflow runs dialog where "
+				    "you can re-attach to the actual current stage of the run. "
+				    "Please allow some time for the status to be updated." ) );
+      emit analysis_back_to_initAutoflow();
+      return;
+    }
+
+  QStringList qry_revert;
+  qry_revert << "autoflow_velmwl_analysis_status_revert" << QString::number( autoflowID_passed );
+
+  // (4) selections -> autoflowAnalysisVelMwl.speciesSelections (JSON)
+  QJsonObject sel_json;
+  for ( auto it = available.constBegin(); it != available.constEnd(); ++it )
+    {
+      QJsonObject co;
+      co[ "selected"  ] = QJsonArray::fromStringList( selected.value( it.key() ) );
+      co[ "available" ] = QJsonArray::fromStringList( it.value() );
+      sel_json[ it.key() ] = co;
+    }
+
+  QStringList qry_sel;
+  qry_sel << "update_autoflowAnalysisVelMwl_species_selections"
+	  << QString::number( autoflowID_passed )
+	  << QString::fromUtf8( QJsonDocument( sel_json ).toJson( QJsonDocument::Compact ) );
+
+  if ( db.statusQuery( qry_sel ) != US_DB2::OK )
+    {
+      db.query( qry_revert );
+      QMessageBox::warning( this, tr( "AutoflowAnalysisVelMwl Record Not Updated" ),
+			    tr( "The species selection could not be saved.\n\n"
+				"The run stays in the ANALYSIS stage; re-attach to retry." ) );
+      return;
+    }
+
+  // (5) autoflowStatus: analysisVelMwl / analysisVelMwlts
+  if ( ! record_AnalysisVelMwl_status( gmp_submitter_map[ "Comment:" ] ) )
+    {
+      db.query( qry_revert );
+      return;
+    }
+
+  // (6) switch to REPORT
+  update_autoflow_record_atAnalysis();
+  emit analysis_complete_auto( protocol_details_at_analysis );
+}
+
+bool US_Analysis_auto::show_velmwl_species_selection_dialog( const QMap< QString, QStringList >& available,
+							     const QMap< QString, QString >&     labels,
+							     QMap< QString, QStringList >&       selected )
+{
+  QDialog dialog( this );
+  dialog.setWindowTitle( tr( "Select Species for Report" ) );
+  dialog.setWindowFlag( Qt::WindowCloseButtonHint, false );   // confirmation is required
+
+  QVBoxLayout* main_lyt = new QVBoxLayout( &dialog );
+
+  QLabel* lb_instr = us_label( tr(
+      "Select which species should appear in the Report's "
+      "\"Integration Results: Fraction of Total Concentration\" section, "
+      "for each channel:" ) );
+  lb_instr->setWordWrap( true );
+  main_lyt->addWidget( lb_instr );
+
+  QScrollArea* scroll          = new QScrollArea( &dialog );
+  scroll->setWidgetResizable( true );
+  QWidget*     scroll_contents = new QWidget();
+  QVBoxLayout* scroll_lyt      = new QVBoxLayout( scroll_contents );
+
+  QMap< QString, QMap< QString, QCheckBox* > > ckbs;   // channel -> species -> checkbox
+
+  for ( auto it = available.constBegin(); it != available.constEnd(); ++it )
+    {
+      QGroupBox*   gb     = new QGroupBox( tr( "Channel " ) + it.key() );
+      QVBoxLayout* gb_lyt = new QVBoxLayout( gb );
+
+      for ( const QString& sp : it.value() )
+	{
+	  QCheckBox* ckb = new QCheckBox( labels.value( it.key() + "|" + sp, sp ) );
+	  ckb->setChecked( true );                       // default: report every species
+	  if ( it.value().size() == 1 )
+	    ckb->setEnabled( false );                    // nothing to choose
+	  gb_lyt->addWidget( ckb );
+	  ckbs[ it.key() ][ sp ] = ckb;
+	}
+      scroll_lyt->addWidget( gb );
+    }
+
+  scroll_lyt->addStretch();
+  scroll->setWidget( scroll_contents );
+  main_lyt->addWidget( scroll );
+
+  QDialogButtonBox* btns = new QDialogButtonBox( QDialogButtonBox::Ok );
+  connect( btns, &QDialogButtonBox::accepted, &dialog, &QDialog::accept );
+  main_lyt->addWidget( btns );
+  dialog.resize( 480, 480 );
+
+  while ( true )
+    {
+      if ( dialog.exec() != QDialog::Accepted )
+	continue;                                        // Esc: ask again
+
+      selected.clear();
+      QStringList empty_chans;
+
+      for ( auto ci = ckbs.constBegin(); ci != ckbs.constEnd(); ++ci )
+	{
+	  for ( auto cj = ci.value().constBegin(); cj != ci.value().constEnd(); ++cj )
+	    if ( cj.value()->isChecked() )
+	      selected[ ci.key() ] << cj.key();
+
+	  if ( selected.value( ci.key() ).isEmpty() )
+	    empty_chans << ci.key();
+	}
+
+      if ( empty_chans.isEmpty() )
+	return true;
+
+      QMessageBox::warning( &dialog, tr( "Species Selection" ),
+			    tr( "Please select at least one species for channel(s): " )
+			    + empty_chans.join( ", " ) );
+    }
+}
+
+bool US_Analysis_auto::record_AnalysisVelMwl_status( const QString& comment )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database: \n" ) + db.lastError() );
+      return false;
+    }
+
+  QStringList qry;
+  qry << "get_user_info";
+  db.query( qry );
+  db.next();
+
+  QJsonObject person;
+  person[ "ID"    ] = QString::number( db.value( 0 ).toInt() );
+  person[ "fname" ] = db.value( 1 ).toString();
+  person[ "lname" ] = db.value( 2 ).toString();
+  person[ "email" ] = db.value( 4 ).toString();
+  person[ "level" ] = QString::number( db.value( 5 ).toInt() );
+
+  // same shape as analysisABDE: { "Person":[{...}], "Comment":"..." }
+  QJsonObject status_json;
+  status_json[ "Person"  ] = QJsonArray( { person } );
+  status_json[ "Comment" ] = comment;
+
+  if ( ! autoflowStatusID )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Problem" ),
+			    tr( "autoflowStatus (analysisVelMwl): There was a problem with identifying "
+				"a record in autoflowStatus table for a given run! \n" ) );
+      return false;
+    }
+
+  qry.clear();
+  qry << "update_autoflowStatusAnalysisVelMwl_record"
+      << QString::number( autoflowStatusID )
+      << QString::number( autoflowID_passed )
+      << QString::fromUtf8( QJsonDocument( status_json ).toJson( QJsonDocument::Compact ) );
+
+  if ( db.statusQuery( qry ) != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "AutoflowStatus Record Not Updated" ),
+			    tr( "autoflowStatus (analysisVelMwl) could not be updated.\n\n"
+				"The run stays in the ANALYSIS stage; re-attach to retry." ) );
+      return false;
+    }
+
+  return true;
+}
+
+//ALEXEY: Slot for US_2dsa::twodsa_complete_s() -- advance to the next
+//Approved channel. Mirrors velmwl_deconv_accepted()/rejected().
+void US_Analysis_auto::twodsa_channel_complete( QString& chann, bool success, int nspecies )
+{
+  qDebug() << "[US_Autoflow_analysis] 2DSA-IT complete for channel" << chann
+	   << "-- success:" << success << "species completed:" << nspecies;
+
+  // ALEXEY: Accumulated regardless of success -- nspecies is already an
+  // honest count of species actually completed for this channel (see
+  // US_2dsa::twodsa_complete_s()'s doc), zero for a channel that failed
+  // before reaching any species. Consumed by start_next_2dsa_channel()'s
+  // completion summary once every Approved channel has reported in.
+  twodsa_nspecies_total += nspecies;
+
+  // NOTE: a failed channel is currently just logged and the pipeline
+  // moves on -- see this function's header doc if a failure should
+  // instead halt the run (e.g. leave the completion claim made but stop
+  // short of emitting analysis_complete_auto(), surfacing the failure to
+  // the user).
+
+  // ALEXEY: Deferred via QTimer::singleShot(0, ...) rather than called
+  // directly -- twodsa_complete_s() (which reached this slot) was
+  // emitted from deep inside the just-finished channel's own US_2dsa::
+  // analysis_done()/save() call chain, itself nested inside that
+  // channel's US_AnalysisControl2D::completed_process(). Calling
+  // start_next_2dsa_channel() -- which retires that sdiag_2dsa
+  // (cleanup_2dsa_widget(): close()+deleteLater()) and immediately
+  // constructs the next channel's US_2dsa, synchronously running its
+  // whole fit+save -- inline here means that entire next channel runs
+  // nested inside the previous one's still-unwinding call stack. See
+  // US_2dsa::run_2dsa_auto()'s own header comment for the identical
+  // issue found one level down (between a channel's own S/1, S/2, ...
+  // species) and why posting instead of calling directly avoids it.
+  QTimer::singleShot( 0, this, &US_Analysis_auto::start_next_2dsa_channel );
+}
+
+//ALEXEY: Retires the current 2DSA widget (sdiag_2dsa), if any. Mirrors
+//cleanup_velmwl_fit_widget() exactly.
+void US_Analysis_auto::cleanup_2dsa_widget( void )
+{
+  if ( ! sdiag_2dsa )
+    return;
+
+  sdiag_2dsa->close();
+
+  // ALEXEY: no matching panel->removeWidget() -- sdiag_2dsa is no longer
+  // ever added to panel (see start_next_2dsa_channel()).
+
+  sdiag_2dsa->deleteLater();
+  sdiag_2dsa  = nullptr;
+  twodsa_open = false;
+}
+
+//ALEXEY: Look up whether a VEL-MWL channel already has a recorded
+//Accept/Reject decision (own or another session) -- e.g. this run is
+//being re-attached after the channel was already decided. Returns true
+//(and fills 'decision') if found, so the caller can skip re-simulating,
+//re-saving, and re-opening US_MwlSpeciesFit's dialog for this channel.
+bool US_Analysis_auto::load_velmwl_channel_decision( QString autoflowID, QString chann,
+						      QString& decision, bool* prep_done )
+{
+  decision.clear();
+  if ( prep_done )
+    *prep_done = true;
+  if ( autoflowID.isEmpty() || chann.isEmpty() )
+    return false;
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      delete db;
+      return false;
+    }
+
+  QStringList qry;
+  qry << "get_autoflowAnalysisVelMwl_channel_decision"
+      << autoflowID
+      << chann;
+  db->query( qry );
+
+  bool found = false;
+  if ( db->lastErrno() == US_DB2::OK && db->next() )
+    {
+      decision = db->value( 0 ).toString();
+      found    = ! decision.isEmpty();
+
+      //Column 1 (prepDone): '0' only for an Accepted channel whose
+      //import/edit never finished; anything else counts as complete.
+      if ( prep_done )
+	*prep_done = ( db->value( 1 ).toString() != "0" );
+    }
+
+  delete db;
+  return found;
+}
+
+//ALEXEY: Flags a channel as fully prepared for 2DSA-IT -- see header doc.
+bool US_Analysis_auto::mark_velmwl_channel_prep_done( const QString& chann )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  if ( db.lastErrno() != US_DB2::OK )
+    return false;
+
+  QStringList qry;
+  qry << "update_autoflowAnalysisVelMwl_channel_prepDone"
+      << QString::number( autoflowID_passed )
+      << chann;
+
+  return db.statusQuery( qry ) == US_DB2::OK;
+}
+
+//ALEXEY: Clears a stale Accepted/prepDone==0 record -- see header doc.
+bool US_Analysis_auto::reset_velmwl_incomplete_channel( const QString& chann )
+{
+  US_Passwd pw;
+  US_DB2    db( pw.getPasswd() );
+  if ( db.lastErrno() != US_DB2::OK )
+    return false;
+
+  QStringList qry;
+  qry << "reset_autoflowAnalysisVelMwl_channel_incomplete"
+      << QString::number( autoflowID_passed )
+      << chann;
+
+  return db.statusQuery( qry ) == US_DB2::OK;
+}
+
+//Get editID from selected model
+void US_Analysis_auto::get_editID ( QString& e_ID )
+{
+  e_ID_for_velmwl = e_ID;
+}
+
+//Read basic run params from protocol && editData
+QMap< QString, QString > US_Analysis_auto::read_run_params( QString f_name_c )
+{
+  QMap< QString, QString > run_parms;
+  
+  US_Passwd pw;
+  QString masterPW = pw.getPasswd();
+  US_DB2 db( masterPW );
+  
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Read protocol: Could not connect to database \n" ) + db.lastError() );
+      return run_parms;
+    }
+  
+  US_RunProtocol currProto;
+  QString xmlstr( "" );
+  US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID,  &xmlstr, NULL, &db );
+  QXmlStreamReader xmli( xmlstr );
+  currProto. fromXml( xmli );
+
+  //speed
+  run_parms["speed"] = QString::number( currProto. rpSpeed. ssteps[0].speed );
+
+  //acceleration
+  run_parms["accel"] = QString::number( currProto. rpSpeed. ssteps[0].accel );
+  
+  //Duration
+  QList< int > hms_dur;
+  double duration = currProto. rpSpeed. ssteps[0].duration;
+  US_RunProtocol::timeToList( duration, hms_dur );
+  run_parms["duration_h"] = QString::number( hms_dur[ 1 ] );
+  run_parms["duration_m"] = QString::number( hms_dur[ 2 ] );
+
+  //Delay
+  QList< int > hms_delay_stage;
+  double delay_stage = currProto. rpSpeed. ssteps[0].delay_stage;
+  US_RunProtocol::timeToList( delay_stage, hms_delay_stage );
+  run_parms["delay_h"] = QString::number( hms_delay_stage[ 1 ] );
+  run_parms["delay_m"] = QString::number( hms_delay_stage[ 2 ] );
+
+  //Temperature
+  run_parms["temperature"] = QString::number( currProto. temperature );
+
+  //Edit parms: meniscus && bottom
+  qDebug() << "[VEL-MWL: in read_run_params() ], editGUID -- " << e_ID_for_velmwl;
+  QStringList query;
+  query << "get_editID" << e_ID_for_velmwl;
+  db.query( query );
+  db.next();
+  QString editID  = db.value( 0 ).toString();
+
+  QString edirpath  = US_Settings::resultDir() + "/" + f_name_c;
+  QDir edir( edirpath );
+  if (!edir.exists())
+    edir.mkpath( edirpath );
+
+  query.clear();
+  query << "get_editedData" << editID;
+  db.query( query );
+  db.next();
+  QString efilename  = db.value( 3 ).toString();
+  
+  QString efilepath = edirpath + "/" + efilename;
+  db.readBlobFromDB( efilepath, "download_editData", editID.toInt() );
+
+  //read XML section && extract meniscus value
+  double meniscus_p = 0;
+  double bottom     = 0;
+  double data_left  = 0;
+  double data_right = 0;
+  double plateau    = 0;
+  double baseline   = 0;
+  double od_limit   = 0;
+  
+  QFile pfile( efilepath );
+  // Skip if there is a file-open problem
+  if ( pfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+    {
+      // Capture the XML as a string and start XML reader
+      QTextStream tsi( &pfile );
+      QString xmlstr      = tsi.readAll();
+      pfile.close();
+      QXmlStreamReader xmli( xmlstr );
+      
+      while( ! xmli.atEnd() )
+	{  
+	  xmli.readNext();
+
+	  if ( xmli.isStartElement() )
+	    {
+	      QXmlStreamAttributes attr = xmli.attributes();
+	      QString ename       = xmli.name().toString();
+	      if ( ename == "meniscus" )
+		meniscus_p  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "bottom" )
+		bottom  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "data_range" )
+		{
+		  data_left                 = attr.value( "left" ).toDouble();
+		  data_right                = attr.value( "right" ).toDouble();
+		}
+	      else if ( ename == "plateau" )
+		plateau  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "baseline" )
+		baseline  = attr.value( "radius" ).toDouble();
+	      else if ( ename == "od_limit" )
+		od_limit  = attr.value( "value" ).toDouble();
+	    }
+	}
+    }
+
+  qDebug() << "EditProfile: filename, path, ID, data_left, data_right -- "
+	   << efilename << efilepath << editID << data_left << data_right;
+
+  //put in map
+  run_parms["meniscus"]   = QString::number( meniscus_p );
+  run_parms["data_left"]  = QString::number( data_left );
+  run_parms["data_right"] = QString::number( data_right );
+  run_parms["bottom"]     = QString::number( bottom );
+
+  //also, copy to protocol_details_map for further use
+  protocol_details_at_analysis_velmwl["meniscus"]   = QString::number( meniscus_p );
+  protocol_details_at_analysis_velmwl["data_left"]  = QString::number( data_left );
+  protocol_details_at_analysis_velmwl["data_right"] = QString::number( data_right );
+  protocol_details_at_analysis_velmwl["bottom"]     = QString::number( bottom );
+  protocol_details_at_analysis_velmwl["baseline"]   = QString::number( baseline );
+  protocol_details_at_analysis_velmwl["plateau"]    = QString::number( plateau );
+  protocol_details_at_analysis_velmwl["od_limit"]   = QString::number( od_limit );
+  
+  return run_parms;
+}
 
 //Update autoflow record upon Analysis completion
 void US_Analysis_auto::update_autoflow_record_atAnalysis( void )
 {
-   // Check DB connection
+  // Check DB connection
    US_Passwd pw;
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
@@ -2308,7 +4007,7 @@ void US_Analysis_auto::simulateModel( )
   //start_time = QDateTime::currentDateTime();
   int ncomp  = model.components.size();
   //compress   = le_compress->text().toDouble();
-  progress_msg->setRange( 1, ncomp );
+  progress_msg->setRange( 0, ncomp );
   // progress_msg->reset();
   
   nthread    = US_Settings::threads();
@@ -2778,13 +4477,9 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   /********************************/
 
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog ("Downloading data and models...", QString(), 0, 5, this);
-  progress_msg->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Overlay Plot Generation"));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  US_GmpProgress::acquire( this, progress_msg )->setWindowTitle( tr( "Autoflow Analysis" ) );
+  progress_msg->setStage( 1, 0, tr( "Overlay plot generation" ),
+                          tr( "Downloading data and models..." ), 5 );
   
   // msg_sim = new QMessageBox(this);
   // msg_sim->setIcon(QMessageBox::Information);
@@ -3035,7 +4730,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
-  progress_msg->close();
+  progress_msg->finish();
   qApp->processEvents();
   
   /*
@@ -3772,6 +5467,13 @@ void US_Analysis_auto::reset_analysis_panel( )
       //ALEXEY: now we should wait for completion of the last timer_update shot...
       connect(timer_end_process, &QTimer::timeout, this, &US_Analysis_auto::end_process);
       timer_end_process->start(1000);     // 5 sec
+
+      //for VEL-MWL stage of VELOCITY:
+      if ( velmwl_fit_open )
+	{
+	  qDebug() << "[in reset Analysis stage: ] Closing MWL-fit in VEL-MWL substage...";
+	  cleanup_velmwl_fit_widget();
+	}
     }
   else
     {
@@ -3833,6 +5535,8 @@ void US_Analysis_auto::reset_auto( )
   History_read.clear();
   Completed_triples.clear();
   Process_2dsafm.clear();
+
+  TriplesArray. clear();
   //TO DO MORE later - DB stop etc..
 }
 
@@ -5615,21 +7319,10 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
    {  // Apply to all wavelengths in a cell/channel
 
      //ALEXEY: Set progressDialog
-     progress_msg_fmb = new QProgressDialog ("Updating edit profiles...", QString(), 0, nedtfs, this);
-     progress_msg_fmb->setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
-     progress_msg_fmb->setWindowModality(Qt::WindowModal);
-     progress_msg_fmb->setWindowTitle( QString( tr("Updating Edit Profiles: %1")).arg( triple_information[ "triple_name" ] ));
-     QFont font_d  = progress_msg_fmb->property("font").value<QFont>();
-     QFontMetrics fm(font_d);
-     int pixelsWide = fm.horizontalAdvance( progress_msg_fmb->windowTitle() );
-     qDebug() << "Progress_msg_fmb: pixelsWide -- " << pixelsWide;
-     progress_msg_fmb ->setMinimumWidth( pixelsWide*2 );
-     progress_msg_fmb->adjustSize();
-     
-     progress_msg_fmb->setAutoClose( false );
-     progress_msg_fmb->setValue( 0 );
-     //progress_msg_fmb->setRange( 1, nedtfs );
-     progress_msg_fmb->show();
+     US_GmpProgress::acquire( this, progress_msg_fmb )->setWindowTitle( tr( "Autoflow Analysis" ) );
+     progress_msg_fmb->setStage( 1, 0, tr( "Updating edit profiles" ),
+                                 tr( "Triple %1: updating edit profiles for all wavelengths..." )
+                                 .arg( triple_information[ "triple_name" ] ), nedtfs );
      ////////////////////////////
 
       QString dmsg   = "";
@@ -5691,6 +7384,11 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 	      .arg( lefval );
 	    
 	    triple_information[ "failed" ] = reason_for_failure;
+
+	    //progress dialog is not user-closable: hide it on this early exit
+	    if ( progress_msg_fmb != NULL )
+	      progress_msg_fmb->finish();
+
 	    delete_jobs_at_fitmen( triple_information );
 
 	    return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
@@ -5805,7 +7503,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
    if ( progress_msg_fmb != NULL )
      {
        progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
-       progress_msg_fmb->close();
+       progress_msg_fmb->finish();
        qApp->processEvents();
      }
 

@@ -3002,6 +3002,13 @@ void US_Edit::gap_check( void )
    }
 }
 
+//For VEL-MWL:GMP
+void US_Edit::load_auto_velmwl( QMap < QString, QString > & details_at_editing )
+{
+  velmwl_edit_ok = false;   // set true only after every triple's save succeeded
+  load_auto( details_at_editing );
+}
+
 // Load an AUC data set
 void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 {
@@ -3045,6 +3052,8 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
   qDebug() << "autoflowID_passed, dataSource, ProtocolName_auto, autoflow_expType : "
 	   << autoflowID_passed << dataSource << ProtocolName_auto << autoflow_expType;
 
+  auto_flag_          = details_at_editing[ "auto_flag_edit" ];
+    
   // Deal with different filenames if any.... //////////////////////////
   filename_runID_passed = details_at_editing[ "filename" ];
   runType_combined_IP_RI = false;
@@ -3077,6 +3086,21 @@ void US_Edit::load_auto( QMap < QString, QString > & details_at_editing )
 
       qDebug() << "IN EDIT - filename_base for combined runs: " << filename_runID_auto_base;
 
+    }
+
+  if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_EDIT_SIM_ANALYSIS" )
+    {
+      qDebug() << "[US_Edit: VEL-MWL:GMP], auto_flag_, filename : "
+	       << auto_flag_
+	       << filename_runID_passed;
+      qDebug() << "[US_Edit: VEL-MWL:GMP], "
+	       << details_at_editing["meniscus"]
+	       << details_at_editing["data_left"] 
+	       << details_at_editing["data_right"] 
+	       << details_at_editing["bottom"]     
+	       << details_at_editing["baseline"]   
+	       << details_at_editing["plateau"]    
+	       << details_at_editing["od_limit"];
     }
 
   ///////////////////////////////////////////////////////////////////////
@@ -3732,7 +3756,82 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
    //all_loaded = true;
    le_status->setText( tr( "Data loaded..." ) );
 
-   emit data_loaded(); 
+   emit data_loaded();
+
+
+   /******* FOR VEL-MWL ext *********************************************/
+   if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_EDIT_SIM_ANALYSIS" )
+     {
+       /** DEBUG **********************************************/
+       iwavl_edit_ref        .resize( cb_triple->count() );
+       iwavl_edit_ref_index  .resize( cb_triple->count() );
+       triple_plot_first_time.resize( cb_triple->count() );
+       for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	 {
+	   iwavl_edit_ref[ trx ] = 0;
+	   iwavl_edit_ref_index[ trx ] = 0;
+	   triple_plot_first_time[ trx ] = 0;
+	 }
+       /** DEBUG ********************************************/
+
+       for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	 {
+	   QString triple_name = cb_triple->itemText( trx );
+
+	   meniscus    = details_at_editing_local["meniscus"].toDouble();
+	   range_left  = details_at_editing_local["data_left"].toDouble();
+	   range_right = details_at_editing_local["data_right"].toDouble();
+	   bottom      = details_at_editing_local["bottom"].toDouble();    
+	   baseline    = details_at_editing_local["baseline"].toDouble();   
+	   plateau     = details_at_editing_local["plateau"].toDouble();   
+	   baseline_od = details_at_editing_local["od_limit"].toDouble();
+	   
+	   triple_info.clear();
+	   triple_info <<  QString::number(meniscus)
+		       <<  QString::number(range_left)
+		       <<  QString::number(range_right)
+		       <<  QString::number(plateau)
+		       <<  QString::number(baseline)
+		       <<  QString::number(baseline_od)
+		       <<  QString("spike_false");
+
+	   editProfile[ triple_name ] = triple_info;
+	   qDebug() << "[FOR VEL-MWL]: triple_info -- " << triple_info;
+
+	   /** DEBUG ********************************************/
+	   plotndx  = cb_lplot->currentIndex();
+	   iwavl_edit_ref[ trx ]       = expi_wvlns[ plotndx ];
+	   iwavl_edit_ref_index[ trx ] = plotndx;
+
+	   QStringList scan_excl = {"0","0","1"};
+	   editProfile_scans_excl[ triple_name ] = scan_excl;
+
+	   le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+	   le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+	   le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+	   step = PLATEAU;
+	   next_step();
+	   /** DEBUG ********************************************/
+	   
+	 }
+       if ( editProfile.count() == cb_triple->count() )
+	 all_loaded = true;
+       /** DEBUG *********************************************/
+       new_triple_auto( 0 ); 
+       //new_triple(0);
+       /** DEBUG *********************************************/
+
+       //and save edit profiles
+       bool all_saved = ( cb_triple->count() > 0 );
+       for ( int trx = 0; trx < cb_triple->count(); trx++ )
+	 {
+	   write_mwl_auto( trx );
+	   all_saved = all_saved && mwl_auto_write_ok;
+	 }
+       velmwl_edit_ok = all_saved;
+	        
+       return;
+     }
    
    // editProfile.clear();
    // centerpieceParameters.clear();
@@ -13414,6 +13513,7 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl_auto( int trx )
 {
+  mwl_auto_write_ok = false;   // every early 'return' below is a failure
 
   US_Passwd pw;
   US_DB2* dbP            = new US_DB2( pw.getPasswd() );
@@ -13483,14 +13583,21 @@ void US_Edit::write_mwl_auto( int trx )
      }
 
    //old way: just read form centerpiece
-   double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+   if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_EDIT_SIM_ANALYSIS" )
+     {
+       bottom = details_at_editing_local[ "bottom" ].toDouble();
+     }
+   else
+     {
+       double bottom_cent = centerpieceParameters[ trx ][1].toDouble();  //Should be from centerpiece info from protocol
+       US_SimulationParameters simparams;
+       simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
+       bottom         = simparams.bottom;
+       qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- "
+		<< bottom_cent << ", " << bottom; 
+     }
+    
    
-   US_SimulationParameters simparams;
-   simparams.initFromData( dbP, data, idInv_auto.toInt(), false, runID, dataType );
-   bottom         = simparams.bottom;
-
-   qDebug() << "[in write_mwl_auto()]: bottom_cent, bottom -- "
-	    << bottom_cent << ", " << bottom; 
    // End of base parameters
 
    //Is this needed ?
@@ -13683,6 +13790,8 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
    // ck_writemwl ->setEnabled( false );
    le_info->setText( saved_info );
    qApp->processEvents();
+
+   mwl_auto_write_ok = true;    // reached the end: XML and DB writes all succeeded
 
    if ( runType_combined_IP_RI )
      cb_triple->disconnect();

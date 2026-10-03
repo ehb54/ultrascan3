@@ -78,6 +78,12 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 
    disk_controls = new US_Disk_DB_Controls;
 
+   //wrap into widgets
+   wrapper_lo_edlast     = new QWidget;
+   wrapper_disk_controls = new QWidget;
+   wrapper_lo_edlast     ->setLayout( lo_edlast );
+   wrapper_disk_controls ->setLayout( disk_controls );
+
    pb_view    = us_pushbutton( tr( "View Data Report" ) );
    pb_save    = us_pushbutton( tr( "Save Data" ) );
 
@@ -88,8 +94,10 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    int row = 0;
    analysisLayout->addWidget( pb_load,       row,   0, 1, 1 );
    analysisLayout->addWidget( pb_details,    row++, 1, 1, 1 );
-   analysisLayout->addLayout( lo_edlast,     row,   0, 1, 1 );
-   analysisLayout->addLayout( disk_controls, row++, 1, 1, 1 );
+   // analysisLayout->addLayout( lo_edlast,     row,   0, 1, 1 );
+   // analysisLayout->addLayout( disk_controls, row++, 1, 1, 1 );
+   analysisLayout->addWidget( wrapper_lo_edlast,     row,   0, 1, 1 );
+   analysisLayout->addWidget( wrapper_disk_controls, row++, 1, 1, 1 );   
    analysisLayout->addWidget( pb_view,       row,   0, 1, 1 );
    analysisLayout->addWidget( pb_save,       row++, 1, 1, 1 );
 

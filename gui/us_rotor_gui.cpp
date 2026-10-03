@@ -1170,3 +1170,30 @@ void US_RotorGui::connect_error( const QString& error )
          tr( "Could not connect to database \n" ) + error );
 }
 
+
+//For VEL-MWL: GMP
+void US_RotorGui::selectSimRotor( QStringList rotor_defs )
+{
+  for (int i = 0; i < lw_rotors->count(); ++i)
+    {
+      QListWidgetItem* item = lw_rotors->item(i);
+      QString text = item->text();
+
+      bool containsAll = std::all_of(rotor_defs.begin(), rotor_defs.end(),
+				     [&text](const QString &s) {
+				       return text.contains(s, Qt::CaseInsensitive);
+				     });
+      if (containsAll)
+	{
+	  selectRotor(item);
+	  break;
+	}
+    }
+
+  qDebug() << "[in US_RotorGui::selectSimRotor()], rotorname "
+	   << currentRotor.name << currentRotor.ID
+	   << ", " << currentCalibration.rotorID;
+  
+  emit RotorCalibrationSelected ( currentRotor, currentCalibration );
+  //close();
+}

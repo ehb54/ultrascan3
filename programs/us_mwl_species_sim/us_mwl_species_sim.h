@@ -37,6 +37,12 @@ class US_MwlSpeciesSim : public US_Widgets
     public:
         //! \brief Constructor for US_MwlSpeciesSim
         US_MwlSpeciesSim();
+        void select_models_auto( QString, QStringList );
+        void define_buffer_auto( int );
+        void select_rotor_auto( QStringList );
+        void sim_params_auto( QMap< QString, QString> );
+        void start_sims_auto( void );
+        void save_sims_auto( void );
 
     private:
         int dbg_level;         //!< Debug level
@@ -101,7 +107,7 @@ class US_MwlSpeciesSim : public US_Widgets
 
         //! \brief Select models
         void select_models(void);
-
+        
         //! \brief Define buffer
         void define_buffer(void);
 
@@ -164,6 +170,19 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Show help information
         void help(void)
         { showHelp.show_help("manual/multi-wavelength/mwl_species_sim.html"); };
+
+    signals:
+        void pass_editID_fromLoad( QString& );
+        void pass_ssf_dir( QString& );
+
+        //! \brief Reports progress through the auto-mode pipeline
+        //! ( select_models_auto(), define_buffer_auto(), sim_params_auto(),
+        //!   select_rotor_auto(), start_sims_auto(), save_sims_auto() ),
+        //! so a caller can drive a centralized progress dialog.
+        //! \param stage Stage identifier: "models","buffer","params","rotor","sims","save"
+        //! \param step  Current step within the stage (1-based)
+        //! \param total Total number of steps within the stage
+        void stage_progress( const QString& stage, int step, int total );
 };
 
 #endif // US_MWL_SPECIES_SIM_H

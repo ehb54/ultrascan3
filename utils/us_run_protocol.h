@@ -35,6 +35,9 @@ class US_UTIL_EXTERN US_RunProtocol
 	    QString     opername; 
 	    QString     instrname;
 
+	    //vel-mwl
+	    bool        vel_mwl_prot;
+	    
 	    //data form Disk
 	    QString     importDataDisk;
 	    bool        importData;

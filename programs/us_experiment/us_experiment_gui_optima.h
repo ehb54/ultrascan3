@@ -182,6 +182,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QStringList unique_runTypes;
       bool ra_data_type;
       bool ra_data_sim;
+      bool vel_mwl;
       bool isMwl;
       QMap<QString, QString> run_details;
       QStringList channels_for_dataDisk;
@@ -222,6 +223,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       QComboBox*   cb_optima;
       QStringList  sl_optimas;
   QCheckBox* ck_disksource;
+  QCheckBox* ck_velmwl;
   QCheckBox* ck_absorbance_t;
   QCheckBox* ck_absorbance_pa;
   QPushButton* pb_importDisk;
@@ -301,6 +303,7 @@ class US_ExperGuiRotor : public US_WidgetsDialog
       void changeExpType( int );   // Slot for change in exp. type
       void changeOptima ( int );   // Slot for change in exp. type
 
+  void velMwlChecked( bool );
   void importDisk( void );
   void importDiskChecked( bool );
   void dataDiskAbsChecked( bool );
@@ -1143,6 +1146,7 @@ class US_ExperimentMain : public US_Widgets
       bool    us_prot_dev_mode;
       bool    global_reset;
       bool    us_abde_mode;
+      bool    us_velmwl_mode;
       bool    expPanelSet;
 
   QMap <QString, QString> protocol_details_passed; 
@@ -1153,6 +1157,7 @@ class US_ExperimentMain : public US_Widgets
       void    unset_abde_mode_aprofile( void );
       void    abde_sv_mode_change_reset_reports( QString  );
       void    enable_disable_prev_next_btns( void );
+      void    setUnset_velmwl_mode_aprofile ( bool );
 
       QStringList instruments_in_use;
       QStringList instruments_no_permit;

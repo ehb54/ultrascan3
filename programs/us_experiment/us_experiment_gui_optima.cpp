@@ -49,6 +49,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    usmode = false;
    us_prot_dev_mode = false;
    us_abde_mode = false;
+   us_velmwl_mode = false;
    expPanelSet = false;
    
    global_reset = false;
@@ -493,6 +494,13 @@ void US_ExperimentMain::unset_abde_mode_aprofile( void )
   
 }
 
+//set | unset Vel-MWL mode
+void US_ExperimentMain::setUnset_velmwl_mode_aprofile( bool set_value )
+{
+  us_velmwl_mode = set_value;
+  epanAProfile->sdiag-> velmwl_mode_aprofile = set_value;
+}
+
 //re-initialize respectively AProfile's report/reportItem portions
 void US_ExperimentMain::abde_sv_mode_change_reset_reports( QString exptype )
 {
@@ -553,8 +561,7 @@ void US_ExperimentMain::us_mode_passed( void )
   
 }
 
-
-	  
+ 
 
 void US_ExperimentMain::auto_mode_passed( void )
 {
@@ -1366,6 +1373,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    // rpSubmt             = &(mainw->currProto.rpSubmt);
    ra_data_type = false;
    ra_data_sim  = false;
+   vel_mwl      = false;
 
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1401,6 +1409,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
 
+		//add MWL experiment checkbox for Velocity
+		ck_velmwl = new QCheckBox( tr("Treat as MWL"), this );
+		ck_velmwl ->setAutoFillBackground( true );
+		ck_velmwl ->setChecked( false );
+		
 		//select data source from disk
 		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
 		ck_disksource ->setAutoFillBackground( true );
@@ -1444,7 +1457,8 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    genL->addWidget( cb_operator,        row++,   1, 1, 1 );
 
    genL->addWidget( lb_exptype,         row,     0, 1, 1 );
-   genL->addWidget( cb_exptype,         row++,   1, 1, 1 );
+   genL->addWidget( cb_exptype,         row,     1, 1, 1 );
+   genL->addWidget( ck_velmwl,          row++,   2, 1, 1 );
 
    genL->addWidget( ck_disksource,     row++,   0, 1, 4 );
    genL->addWidget( pb_importDisk,     row,     1, 1, 1 );
@@ -1454,14 +1468,16 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
 
    //connect checkbox & import
+   connect( ck_velmwl,      &QAbstractButton::toggled,
+          this,           &US_ExperGuiRotor::velMwlChecked );
    connect( ck_disksource, &QAbstractButton::toggled,
-	    this,           &US_ExperGuiRotor::importDiskChecked );
+          this,           &US_ExperGuiRotor::importDiskChecked );
    connect( pb_importDisk,      &QAbstractButton::clicked,
-	    this,           &US_ExperGuiRotor::importDisk );
+          this,           &US_ExperGuiRotor::importDisk );
    // connect( ck_absorbance_t, SIGNAL( toggled     ( bool ) ),
-   // 	    this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
+   //             this,           SLOT  ( dataDiskAbsChecked( bool ) ) );
    connect( ck_absorbance_pa, &QAbstractButton::toggled,
-    	    this,           &US_ExperGuiRotor::dataDiskPseudoAbsChecked );
+          this,           &US_ExperGuiRotor::dataDiskPseudoAbsChecked );
 
    genL->addItem  ( spacer1,         row++, 0, 1, 4 );
 
@@ -1641,9 +1657,11 @@ void US_ExperGuiRotor::reset_dataSource_public( void )
   ck_absorbance_t  ->setChecked( false );
   ck_absorbance_pa ->setChecked( false );
   ck_absorbance_pa ->setEnabled( false );
+  ck_velmwl        ->setChecked( false );
   importDataPath = "";
   ra_data_type = false;
   ra_data_sim  = false;
+  vel_mwl      = false;
 }
 
 void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_details )
@@ -1660,6 +1678,7 @@ void US_ExperGuiRotor::set_dataSource_public( QMap <QString, QString>& pd_detail
   rpRotor->importData_absorbance_pa = false;
   ra_data_type = false;
   ra_data_sim  = false;
+  vel_mwl      = false;
   
   QString dataSource_pd = pd_details["dataSource"];
   if ( dataSource_pd.contains("dataDiskAUC") ) 
@@ -1772,6 +1791,12 @@ void US_ExperGuiRotor::dataDiskPseudoAbsChecked( bool checked )
 }
 
 
+//Velocity MWL checked
+void US_ExperGuiRotor::velMwlChecked( bool checked )
+{
+  vel_mwl = checked;
+  mainw->setUnset_velmwl_mode_aprofile( checked ); 
+}
 
 // Check import disk
 void US_ExperGuiRotor::importDiskChecked( bool checked )
@@ -1985,8 +2010,14 @@ void US_ExperGuiRotor::importDisk( void )
       QStringList chann_list = chan_wvls.keys();
       if ( chann_list.size() != 2 )
 	{
-	  wvl_inconsistent = true;
-	  break;
+	  qDebug() << "no matching channel for " << cell_f << "\\" << chann_list
+		   << ", but that's fine ... if this is channel A...";
+
+	  if ( chann_list[0] == "B" )
+	    {
+	      wvl_inconsistent = true;  
+	      break;
+	    }
 	}
       else
 	{
@@ -2003,13 +2034,12 @@ void US_ExperGuiRotor::importDisk( void )
 	}
     }
 
-  if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
+    if ( wvl_inconsistent && !ra_data_sim && files.size() != 1 )
     {
       QMessageBox::critical(this, "Bad Data", "Wavelengths mistatch for one or two cell/channels...");
       return;
     }
-  
-  
+   
   //proceed
   for ( int trx = 0; trx < files.size(); trx++ )
     {
@@ -2110,8 +2140,10 @@ void US_ExperGuiRotor::importDisk( void )
       ck_absorbance_t  -> setChecked( false );
       ck_absorbance_pa -> setChecked( false );
       ck_absorbance_pa -> setEnabled( false );
+      ck_velmwl        -> setChecked( false );
       ra_data_type = false;
       ra_data_sim  = false;
+      vel_mwl      = false;
 
       isMwl        = false;
       allData     .clear();
@@ -2644,18 +2676,21 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	}
       
       US_RunProtocol::RunProtoOptics::OpticSys os_a, os_b;
+      QString a_ch_n = chann_list[i] + " / A";
       os_a.channel   = chann_list[i] + " / A, sample [right]";
       os_a.scan1     = scan1_str;
       os_a.scan2     = scan2_str;
       os_a.scan3     = scan3_str;
 
+      QString b_ch_n = chann_list[i] + " / B";
       os_b.channel   = chann_list[i] + " / B, reference [left]";
       os_b.scan1     = scan1_str;
       os_b.scan2     = scan2_str;
       os_b.scan3     = scan3_str;
 
-      rpOptic->chopts << os_a;
-      if ( ops_types.contains("RI") && !ra_data_sim )
+      if ( channels_for_dataDisk.contains( a_ch_n ) )
+	rpOptic->chopts << os_a;
+      if ( channels_for_dataDisk.contains( b_ch_n ) && ops_types.contains("RI") && !ra_data_sim )
 	rpOptic->chopts << os_b;
     }
   //rpOptic->nochan = chann_list.size()*2;
@@ -2673,30 +2708,38 @@ QMap <QString, QStringList> US_ExperGuiRotor::build_protocol_for_data_import( QM
 	continue;
 	
       //A channel
-      rng_a.channel = chann_list[i] + " / A, sample [right]";
-      rng_a.lo_rad  = 5.75;
-      rng_a.hi_rad  = 7.25;
-      for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
+      QString a_ch_n = chann_list[i] + " / A";
+      if ( channels_for_dataDisk.contains( a_ch_n ) )
 	{
-	  double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
-	  rng_a.wvlens << wvl_c;
-	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
+	  rng_a.channel = chann_list[i] + " / A, sample [right]";
+	  rng_a.lo_rad  = 5.75;
+	  rng_a.hi_rad  = 7.25;
+	  for (int j=0; j<chann_to_wvls[ chann_list[i] + "A" ].size(); ++j )
+	    {
+	      double wvl_c = chann_to_wvls[ chann_list[i] + "A" ][j].toDouble();
+	      rng_a.wvlens << wvl_c;
+	      qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "A, is" << wvl_c; 
+	    }
+	  rpRange->chrngs << rng_a;
 	}
-      rpRange->chrngs << rng_a;
-
+      
       if ( ra_data_sim )
 	continue;
       //B channel
-      rng_b.channel = chann_list[i] + " / B, reference [left]";
-      rng_b.lo_rad  = 5.75;
-      rng_b.hi_rad  = 7.25;
-      for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
+      QString b_ch_n = chann_list[i] + " / B";
+      if ( channels_for_dataDisk.contains( b_ch_n ) )
 	{
-	  double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
-	  rng_b.wvlens << wvl_c;
-	  qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+	  rng_b.channel = chann_list[i] + " / B, reference [left]";
+	  rng_b.lo_rad  = 5.75;
+	  rng_b.hi_rad  = 7.25;
+	  for (int j=0; j<chann_to_wvls[ chann_list[i] + "B" ].size(); ++j )
+	    {
+	      double wvl_c = chann_to_wvls[ chann_list[i] + "B" ][j].toDouble();
+	      rng_b.wvlens << wvl_c;
+	      qDebug() << "Wvl# " << j << " for channel, " << chann_list[i] + "B, is" << wvl_c; 
+	    }
+	  rpRange->chrngs << rng_b;
 	}
-      rpRange->chrngs << rng_b;
     }
   //rpRange-> nranges = chann_list.size()*2;
   rpRange-> nranges = rpRange->chrngs.size();
@@ -2845,6 +2888,9 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
                    << "Other";
 
    cb_exptype->addItems( experimentTypes );
+
+   connect( cb_exptype,   SIGNAL( activated       ( int ) ),
+            this,         SLOT  ( changeExpType   ( int ) ) );
    changeExpType( 0 );
 }
 
@@ -2941,6 +2987,15 @@ void US_ExperGuiRotor::changeExpType( int ndx )
 {
   //changed             = true;
   cb_exptype->setCurrentIndex( ndx );
+  QString exptype_sel = cb_exptype->currentText();
+
+  if ( exptype_sel == "Velocity" )
+    ck_velmwl->setVisible(true);
+  else
+    {
+      ck_velmwl->setVisible(false);
+      ck_velmwl->setChecked(false);
+    }
 }
 
 // Slot for change in Operator selection
@@ -3037,8 +3092,10 @@ DbgLv(1) << "EGR: chgRotor calibs count" << calibs.count();
 	  ck_absorbance_t  -> setChecked( false );
 	  ck_absorbance_pa -> setChecked( false );
 	  ck_absorbance_pa -> setEnabled( false);
+	  ck_velmwl        -> setChecked( false ); 
 	  ra_data_type = false;
 	  ra_data_sim  = false;
+	  vel_mwl      = false;
 
 	  importDisk_cleanProto();
 	}
@@ -8715,6 +8772,7 @@ void US_ExperGuiUpload::submitExperiment_dataDisk()
   protocol_details[ "operatorID" ]     = QString::number( rpRotor->operID );
   //define exp.Type
   QString exp_t = ( mainw->us_abde_mode ) ? "ABDE" : "VELOCITY";
+  exp_t = ( mainw->us_velmwl_mode ) ? "VELOCITY-MWL" : exp_t;
   protocol_details[ "expType" ] = exp_t;
   
   //protocol_details[ "experimentId" ]   = QString::number(ExpDefId);    // NULL  
@@ -9917,6 +9975,8 @@ void US_ExperGuiUpload::submitExperiment()
 	 //define exp.Type!!
 	 if ( mainw->us_abde_mode ) 
 	   protocol_details[ "expType" ] = "ABDE";
+	 else if ( mainw->us_velmwl_mode )
+	   protocol_details[ "expType" ] = "VELOCITY-MWL";
 	 else
 	   protocol_details[ "expType" ] = "VELOCITY";
       }
@@ -10301,6 +10361,35 @@ void US_ExperGuiUpload::add_autoflow_record_dataDisk( QMap< QString, QString> & 
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
 	   db->statusQuery( qry );
 	 }
+
+       /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl ***/
+       /** (per-channel decisions, one row per run) AND                        ***/
+       /** autoflowAnalysisVelMwlStages (run-wide completion gate) records,    ***/
+       /** up front -- mirroring how ABDE seeds both its data and Stages       ***/
+       /** rows together just above. channelDecisions starts out as an empty  ***/
+       /** JSON object; each channel's key gets added later, one at a time,   ***/
+       /** as US_MwlSpeciesFit records that channel's Accept/Reject decision. ***/
+       /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,  ***/
+       /** by US_Analysis_auto, when every channel has finally been decided   ***/
+       /** (see finalize_velmwl_analysis_if_complete() in                     ***/
+       /** us_autoflow_analysis.cpp), gating the one-time switch to Report.   ***/
+       else if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+	 {
+	   qry. clear();
+	   qry << "new_autoflowAnalysisVelMwl_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+	   int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+	   qry. clear();
+	   qry << "new_autoflowAnalyisVelMwlStages_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
+	   db->statusQuery( qry );
+	 }
      }
 }
 
@@ -10602,6 +10691,35 @@ void US_ExperGuiUpload::add_autoflow_record( QMap< QString, QString> & protocol_
 	   // new autoflowAnalysisABDEStages record
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
+
+       /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl ***/
+       /** (per-channel decisions, one row per run) AND                        ***/
+       /** autoflowAnalysisVelMwlStages (run-wide completion gate) records,    ***/
+       /** up front -- mirroring how ABDE seeds both its data and Stages       ***/
+       /** rows together just above. channelDecisions starts out as an empty  ***/
+       /** JSON object; each channel's key gets added later, one at a time,   ***/
+       /** as US_MwlSpeciesFit records that channel's Accept/Reject decision. ***/
+       /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,  ***/
+       /** by US_Analysis_auto, when every channel has finally been decided   ***/
+       /** (see finalize_velmwl_analysis_if_complete() in                     ***/
+       /** us_autoflow_analysis.cpp), gating the one-time switch to Report.   ***/
+       else if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+	 {
+	   qry. clear();
+	   qry << "new_autoflowAnalysisVelMwl_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+	   int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+	   qry. clear();
+	   qry << "new_autoflowAnalyisVelMwlStages_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
 	   db->statusQuery( qry );
 	 }
      }
@@ -10922,6 +11040,35 @@ void US_ExperGuiUpload::add_autoflow_record_protDev( QMap< QString, QString> & p
 	   // new autoflowAnalysisABDEStages record
 	   qry. clear();
 	   qry << "new_autoflowAnalyisABDEstages_record" << protocol_details[ "autoflowID" ];
+	   db->statusQuery( qry );
+	 }
+
+       /************ IF VELOCITY-MWL - create the run's autoflowAnalysisVelMwl ***/
+       /** (per-channel decisions, one row per run) AND                        ***/
+       /** autoflowAnalysisVelMwlStages (run-wide completion gate) records,    ***/
+       /** up front -- mirroring how ABDE seeds both its data and Stages       ***/
+       /** rows together just above. channelDecisions starts out as an empty  ***/
+       /** JSON object; each channel's key gets added later, one at a time,   ***/
+       /** as US_MwlSpeciesFit records that channel's Accept/Reject decision. ***/
+       /** analysisVelMwl starts 'unknown' and is claimed -> 'STARTED' once,  ***/
+       /** by US_Analysis_auto, when every channel has finally been decided   ***/
+       /** (see finalize_velmwl_analysis_if_complete() in                     ***/
+       /** us_autoflow_analysis.cpp), gating the one-time switch to Report.   ***/
+       else if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+	 {
+	   qry. clear();
+	   qry << "new_autoflowAnalysisVelMwl_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalysisVelMwl_record qry -- " << qry;
+	   int autoflowAnalysisVelMwl_ID = db->functionQuery( qry );
+	   qDebug() << "autoflowAnalysisVelMwl_ID: " << autoflowAnalysisVelMwl_ID;
+
+	   qry. clear();
+	   qry << "new_autoflowAnalyisVelMwlStages_record"
+	       << protocol_details[ "autoflowID" ];
+
+	   qDebug() << "new_autoflowAnalyisVelMwlStages_record qry -- " << qry;
 	   db->statusQuery( qry );
 	 }
      }

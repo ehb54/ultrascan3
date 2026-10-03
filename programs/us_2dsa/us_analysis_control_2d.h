@@ -40,10 +40,62 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! \param p       Pointer to the parent of this widget
       US_AnalysisControl2D( QList< SS_DATASET* >&, bool&, QWidget* p = 0 );
       enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
+      //! \brief Headless equivalent of the user clicking "Start Fit" --
+      //! for US_2dsa's auto (VEL-MWL post-processing) constructor, via
+      //! US_2dsa::run_2dsa_auto(), to run a 2DSA-IT fit with no GUI
+      //! interaction, using the default grid/fit parameters this dialog
+      //! is constructed with (see the .cpp constructor -- a full uniform
+      //! grid fit, no noise fitting, no meniscus/bottom fit, no Monte
+      //! Carlo). Sets auto_mode, which also makes completed_process()
+      //! call save() itself once the fit finishes (instead of just
+      //! enabling the Save Results button and waiting for a click that
+      //! will never come), and makes memory_check() log instead of
+      //! popping a blocking confirmation dialog. See start()'s and
+      //! memory_check()'s own comments for the couple of *other*,
+      //! data-dependent (not parameter-dependent) QMessageBox::critical
+      //! early-returns in start() -- e.g. a buoyancy-sign mismatch for
+      //! an unusual analyte -- that are NOT guarded by auto_mode; those
+      //! remain a known residual risk of this headless path hanging on
+      //! a modal dialog for those specific, uncommon inputs.
+      void fit_auto( void );
+
+      //! \brief Apply Analysis-Profile-sourced grid-fit parameters ahead
+      //! of a headless fit_auto() run -- called from US_2dsa::
+      //! run_2dsa_auto() right after this dialog is constructed and
+      //! before fit_auto() itself. Any of the six keys below that is
+      //! present in `params` overrides this dialog's own default for
+      //! that field (see the constructor's ct_lolimits/ct_uplimits/
+      //! ct_nstepss/ct_lolimitk/ct_uplimitk/ct_nstepsk setup); a key
+      //! that's absent leaves the corresponding field at its existing
+      //! (default) value. Regardless of what's in `params`, this also
+      //! unconditionally turns on the iterative-refinement method
+      //! (ck_iters) with a fixed 10 iterations (ct_iters) -- that
+      //! requirement is independent of the Analysis Profile's own
+      //! contents, so it is not read from `params`.
+      //! \param params  Flat string-keyed fit parameters, expected keys
+      //!        (all optional): "s_min", "s_max", "s_grpts", "k_min",
+      //!        "k_max", "k_grpts" -- mirroring US_AnaProfile::
+      //!        AnaProf2DSA's per-channel parms[] fields of the same
+      //!        names (see US_ReporterGMP for that struct's use).
+      void apply_auto_fit_params( const QMap< QString, QString >& params );
+
       US_Model  model2 ;
       //void calculate_norms( US_Model& ) ;
       void set_comp_attr     ( US_Model::SimulationComponent&,
                              US_Solute&, int );
+
+   signals:
+      //! \brief Forwards this dialog's own internal fit-progress counters
+      //! (ncsteps/nctotal -- the same values driving b_progress below) to
+      //! whatever constructed this dialog. Added so US_2dsa's headless
+      //! auto path (US_2dsa::run_2dsa_auto()) can relay real per-
+      //! iteration fit progress up to a centralized progress dialog
+      //! (US_Analysis_auto::progress_msg_2dsa) even though this dialog
+      //! itself is never shown on that path. Emitted from
+      //! update_progress()/reset_steps() alongside their existing
+      //! b_progress updates -- no other behavior change.
+      void fit_progress_s( int step, int total );
 
    public slots:
       void update_progress (  int  );
@@ -58,6 +110,11 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       US_Model                         cusmodel;
 
       bool&         loadDB;
+
+      //! \brief Set true by fit_auto() -- see completed_process()'s
+      //! alldone branch (auto-saves instead of waiting for a click) and
+      //! memory_check() (logs instead of a blocking confirmation dialog).
+      bool          auto_mode;
 
       int           dbg_level;
       int           ncsteps;
