@@ -3,6 +3,7 @@
 #define US_ANALYSIS_AUTO_H
 
 #include "us_widgets.h"
+#include "us_gmp_progress.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "../us_fit_meniscus/us_fit_meniscus.h"
@@ -147,9 +148,9 @@ class US_Analysis_auto : public US_Widgets
         QString aa_tripleInfo();
 
         QMessageBox * msg_sim;                                   /**< Message box for simulation messages. */
-        QProgressDialog * progress_msg;                          /**< Progress dialog for showing progress messages. */
+        US_GmpProgress * progress_msg = nullptr;                          /**< Progress dialog for showing progress messages. */
 
-        QProgressDialog * progress_msg_mwlsim;                   /**< Progress dialog shown on a per-channel basis (restarted at 0 for each
+        US_GmpProgress * progress_msg_mwlsim = nullptr;                   /**< Progress dialog shown on a per-channel basis (restarted at 0 for each
                                                                         channel) for the full VELOCITY-MWL post-analysis pipeline: species
                                                                         simulation ( US_MwlSpeciesSim::select_models_auto(), define_buffer_auto(),
                                                                         sim_params_auto(), select_rotor_auto(), start_sims_auto(), save_sims_auto() ),
@@ -157,7 +158,7 @@ class US_Analysis_auto : public US_Widgets
                                                                         and species deconvolution/fit (US_MwlSpeciesFit), driven via
                                                                         update_mwlsim_progress(). */
 
-        QProgressDialog * progress_msg_2dsa;                     /**< Progress dialog shown on a per-channel basis (restarted at 0 for each
+        US_GmpProgress * progress_msg_2dsa = nullptr;                     /**< Progress dialog shown on a per-channel basis (restarted at 0 for each
                                                                         Approved VEL-MWL channel) for the headless 2DSA-IT post-processing
                                                                         pipeline driven by US_2dsa's auto constructor: this channel's edited-
                                                                         data load, then each deconvolved species' (S/1, S/2, ...) fit and
@@ -235,7 +236,7 @@ class US_Analysis_auto : public US_Widgets
             bool fitmen_bad_vals;                                    /**< Flag for bad FitMeniscus values. */
             bool no_fm_data_auto;                                    /**< Flag indicating no FitMeniscus data automatically. */
 
-            QProgressDialog * progress_msg_fmb;                      /**< Progress dialog for FitMeniscus. */
+            US_GmpProgress * progress_msg_fmb = nullptr;                      /**< Progress dialog for FitMeniscus. */
 
             int mwlsim_nchannels;                                     /**< Number of channels being processed by the MWL sim/save pipeline (progress_msg_mwlsim). */
             int mwlsim_chan_idx;                                      /**< Index (0-based) of the channel currently being processed by the MWL sim/save pipeline. */

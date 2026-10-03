@@ -1348,24 +1348,10 @@ void US_Analysis_auto::gui_update( )
 	  mwlsim_nchannels    = channels_all.size();
 	  velmwl_channels_decided = 0;   //ALEXEY: count of channels_all resolved (already-decided & skipped, or freshly decided via Accept/Reject) this pass -- see finalize_velmwl_analysis_if_complete()
 	  mwlsim_chan_idx     = -1;      //ALEXEY: cursor into channels_all for start_next_velmwl_channel() -- -1 so it starts scanning from index 0
-	  progress_msg_mwlsim = new QProgressDialog( tr( "Preparing MWL species simulations..." ),
-						      QString(), 0, 100, this );
-	  //ALEXEY: Qt::Dialog (not Qt::Window) makes this a proper owned/
-	  //transient child of `this` -- grouped with the main GMP window
-	  //by the window manager (no separate taskbar entry/minimize-
-	  //restore controls of its own, which plain Qt::Window was giving
-	  //it) instead of behaving like a fully independent top-level
-	  //window. WindowStaysOnTopHint is kept alongside it, matching
-	  //the other blocking "processing in progress" dialogs in this
-	  //codebase (e.g. msg_analysis_update_finishing, msg_expsetup),
-	  //so it still doesn't get hidden behind the main window if you
-	  //switch away to another application and back while it's up.
-	  progress_msg_mwlsim->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint );
-	  progress_msg_mwlsim->setWindowModality( Qt::WindowModal );
-	  progress_msg_mwlsim->setWindowTitle( tr( "VELOCITY-MWL: Species Simulation && Save" ) );
-	  progress_msg_mwlsim->setAutoClose( false );
-	  progress_msg_mwlsim->setMinimumDuration( 0 );
-	  progress_msg_mwlsim->setMinimumWidth( 420 );
+	  //Single, persistent, non-closable progress dialog (US_GmpProgress): created
+	  //once as a child of the main window, re-used for every channel, only ever
+	  //hidden (never closed) -- shown/titled by start_mwlsim_channel_progress().
+	  US_GmpProgress::acquire( this, progress_msg_mwlsim )->setWindowTitle( tr( "Autoflow Analysis" ) );
 
 	  //ALEXEY: Launch only the FIRST channel that still needs
 	  //processing; start_next_velmwl_channel() stops right after
@@ -1416,11 +1402,12 @@ void US_Analysis_auto::start_mwlsim_channel_progress( int chan_idx, const QStrin
   if ( ! progress_msg_mwlsim )
     return;
 
-  progress_msg_mwlsim->setLabelText( tr( "Channel %1 of %2 (%3): Starting..." )
-				      .arg( mwlsim_chan_idx + 1 ).arg( mwlsim_nchannels )
-				      .arg( mwlsim_chan_name ) );
-  progress_msg_mwlsim->setValue( 0 );
-  progress_msg_mwlsim->show();
+  progress_msg_mwlsim->setStage( 1, 2, tr( "VELOCITY-MWL species simulation and save" ),
+                                  tr( "Starting..." ), 100 );
+  progress_msg_mwlsim->setOverall( mwlsim_chan_idx, qMax( mwlsim_nchannels, 1 ),
+                                   tr( "Channel %1 of %2:   %3" )
+                                   .arg( mwlsim_chan_idx + 1 ).arg( mwlsim_nchannels )
+                                   .arg( mwlsim_chan_name ) );
   qApp->processEvents();
 }
 
@@ -1525,11 +1512,8 @@ void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, i
       label  = stage;
     }
 
-  QString text = tr( "Channel %1 of %2 (%3): %4" )
-                 .arg( mwlsim_chan_idx + 1 ).arg( mwlsim_nchannels )
-                 .arg( mwlsim_chan_name ).arg( label );
-
-  progress_msg_mwlsim->setLabelText( text );
+  //(channel k of n is shown by the overall bar -- see start_mwlsim_channel_progress())
+  progress_msg_mwlsim->setLabelText( label );
   progress_msg_mwlsim->setValue( within );
 
   qApp->processEvents();
@@ -1551,11 +1535,12 @@ void US_Analysis_auto::start_2dsa_channel_progress( int chan_idx, const QString&
   if ( ! progress_msg_2dsa )
     return;
 
-  progress_msg_2dsa->setLabelText( tr( "Channel %1 of %2 (%3): Starting..." )
-                                    .arg( twodsa_chan_idx + 1 ).arg( twodsa_nchannels )
-                                    .arg( twodsa_chan_name ) );
-  progress_msg_2dsa->setValue( 0 );
-  progress_msg_2dsa->show();
+  progress_msg_2dsa->setStage( 2, 2, tr( "VELOCITY-MWL 2DSA-IT analysis" ),
+                               tr( "Starting..." ), 100 );
+  progress_msg_2dsa->setOverall( twodsa_chan_idx, qMax( twodsa_nchannels, 1 ),
+                                 tr( "Channel %1 of %2:   %3" )
+                                 .arg( twodsa_chan_idx + 1 ).arg( twodsa_nchannels )
+                                 .arg( twodsa_chan_name ) );
   qApp->processEvents();
 }
 
@@ -1630,11 +1615,8 @@ void US_Analysis_auto::update_2dsa_progress( const QString& stage, int species_i
       label  = stage;
     }
 
-  QString text = tr( "Channel %1 of %2 (%3): %4" )
-                 .arg( twodsa_chan_idx + 1 ).arg( twodsa_nchannels )
-                 .arg( twodsa_chan_name ).arg( label );
-
-  progress_msg_2dsa->setLabelText( text );
+  //(channel k of n is shown by the overall bar -- see start_2dsa_channel_progress())
+  progress_msg_2dsa->setLabelText( label );
   progress_msg_2dsa->setValue( qBound( 0, within, 100 ) );
 
   qApp->processEvents();
@@ -1800,7 +1782,7 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
 					"did not finish, and the record could not be reset.\n\n"
 					"Re-attach to retry." ).arg( chan_norm_c ) );
 	      if ( progress_msg_mwlsim )
-		progress_msg_mwlsim->close();
+		progress_msg_mwlsim->finish();
 	      return;
 	    }
 	}
@@ -1920,7 +1902,7 @@ void US_Analysis_auto::start_next_velmwl_channel( void )
   //channel's decision. Either way, close the centralized progress
   //dialog and check whether the whole VEL-MWL pass is complete.
   progress_msg_mwlsim->setValue( progress_msg_mwlsim->maximum() );
-  progress_msg_mwlsim->close();
+  progress_msg_mwlsim->finish();
 
   finalize_velmwl_analysis_if_complete();
 }
@@ -2082,16 +2064,10 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
   // calls threaded through this function keep something on screen for
   // that whole gap, before start_2dsa_channel_progress() ever gets a
   // channel to actually report progress for.
-  progress_msg_2dsa = new QProgressDialog( tr( "Preparing 2DSA-IT analysis..." ),
-                                            QString(), 0, 100, this );
-  progress_msg_2dsa->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint );
-  progress_msg_2dsa->setWindowModality( Qt::WindowModal );
-  progress_msg_2dsa->setWindowTitle( tr( "VELOCITY-MWL: 2DSA-IT Analysis" ) );
-  progress_msg_2dsa->setAutoClose( false );
-  progress_msg_2dsa->setMinimumDuration( 0 );
-  progress_msg_2dsa->setMinimumWidth( 420 );
-  progress_msg_2dsa->setValue( 0 );
-  progress_msg_2dsa->show();
+  US_GmpProgress::acquire( this, progress_msg_2dsa )->setWindowTitle( tr( "Autoflow Analysis" ) );
+  progress_msg_2dsa->setStage( 2, 2, tr( "VELOCITY-MWL 2DSA-IT analysis" ),
+                               tr( "Preparing 2DSA-IT analysis..." ), 100 );
+  progress_msg_2dsa->hideOverall();   // per-channel overall bar appears with the first channel
   qApp->processEvents();
 
   // Claim the run-wide "VEL-MWL analysis complete" transition FIRST -- if
@@ -4028,7 +4004,7 @@ void US_Analysis_auto::simulateModel( )
   //start_time = QDateTime::currentDateTime();
   int ncomp  = model.components.size();
   //compress   = le_compress->text().toDouble();
-  progress_msg->setRange( 1, ncomp );
+  progress_msg->setRange( 0, ncomp );
   // progress_msg->reset();
   
   nthread    = US_Settings::threads();
@@ -4498,18 +4474,9 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   /********************************/
 
   // Show msg while data downloaded and simulated
-  progress_msg = new QProgressDialog ("Downloading data and models...", QString(), 0, 5, this);
-  //ALEXEY: Qt::Dialog (not Qt::Window) -- proper owned/transient child
-  //of `this` rather than a dissociated, independent top-level window;
-  //WindowStaysOnTopHint kept so it still doesn't end up hidden behind
-  //the main window after switching away to another application and
-  //back (see progress_msg_mwlsim fix, same reasoning).
-  progress_msg->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint);
-  progress_msg->setWindowModality(Qt::WindowModal);
-  progress_msg->setWindowTitle(tr("Overlay Plot Generation"));
-  progress_msg->setAutoClose( false );
-  progress_msg->setValue( 0 );
-  progress_msg->show();
+  US_GmpProgress::acquire( this, progress_msg )->setWindowTitle( tr( "Autoflow Analysis" ) );
+  progress_msg->setStage( 1, 0, tr( "Overlay plot generation" ),
+                          tr( "Downloading data and models..." ), 5 );
   
   // msg_sim = new QMessageBox(this);
   // msg_sim->setIcon(QMessageBox::Information);
@@ -4760,7 +4727,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   
   qDebug() << "Closing sim_msg-- ";
   //msg_sim->accept();
-  progress_msg->close();
+  progress_msg->finish();
   qApp->processEvents();
   
   /*
@@ -7349,26 +7316,10 @@ DbgLv(1) << " eupd:   ixmlin ixblin" << ixmlin << ixblin << "ncmlin ncblin" << n
    {  // Apply to all wavelengths in a cell/channel
 
      //ALEXEY: Set progressDialog
-     progress_msg_fmb = new QProgressDialog ("Updating edit profiles...", QString(), 0, nedtfs, this);
-     //ALEXEY: Qt::Dialog (not Qt::Window) -- proper owned/transient
-     //child of `this` rather than a dissociated, independent top-level
-     //window; WindowStaysOnTopHint kept so it still doesn't end up
-     //hidden behind the main window after switching away to another
-     //application and back (see progress_msg_mwlsim fix, same reasoning).
-     progress_msg_fmb->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint);
-     progress_msg_fmb->setWindowModality(Qt::WindowModal);
-     progress_msg_fmb->setWindowTitle( QString( tr("Updating Edit Profiles: %1")).arg( triple_information[ "triple_name" ] ));
-     QFont font_d  = progress_msg_fmb->property("font").value<QFont>();
-     QFontMetrics fm(font_d);
-     int pixelsWide = fm.horizontalAdvance( progress_msg_fmb->windowTitle() );
-     qDebug() << "Progress_msg_fmb: pixelsWide -- " << pixelsWide;
-     progress_msg_fmb ->setMinimumWidth( pixelsWide*2 );
-     progress_msg_fmb->adjustSize();
-     
-     progress_msg_fmb->setAutoClose( false );
-     progress_msg_fmb->setValue( 0 );
-     //progress_msg_fmb->setRange( 1, nedtfs );
-     progress_msg_fmb->show();
+     US_GmpProgress::acquire( this, progress_msg_fmb )->setWindowTitle( tr( "Autoflow Analysis" ) );
+     progress_msg_fmb->setStage( 1, 0, tr( "Updating edit profiles" ),
+                                 tr( "Triple %1: updating edit profiles for all wavelengths..." )
+                                 .arg( triple_information[ "triple_name" ] ), nedtfs );
      ////////////////////////////
 
       QString dmsg   = "";
@@ -7430,6 +7381,11 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 	      .arg( lefval );
 	    
 	    triple_information[ "failed" ] = reason_for_failure;
+
+	    //progress dialog is not user-closable: hide it on this early exit
+	    if ( progress_msg_fmb != NULL )
+	      progress_msg_fmb->finish();
+
 	    delete_jobs_at_fitmen( triple_information );
 
 	    return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
@@ -7544,7 +7500,7 @@ DbgLv(1) << " eupd:       idEdit" << idEdit;
    if ( progress_msg_fmb != NULL )
      {
        progress_msg_fmb->setValue( progress_msg_fmb->maximum() );  //ALEXEY -- bug fixed..
-       progress_msg_fmb->close();
+       progress_msg_fmb->finish();
        qApp->processEvents();
      }
 
