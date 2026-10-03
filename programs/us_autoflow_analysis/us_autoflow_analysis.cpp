@@ -2511,7 +2511,10 @@ void US_Analysis_auto::finalize_velmwl_species_selection( void )
   QMap< QString, QString > gmp_submitter_map;
   while ( true )
     {
-      US_Passwd pw_at;
+      //Parent = this: the form is then a child dialog of the main window and is
+      //centered over it (a parentless US_Passwd falls back to activeWindow(), which
+      //can be null/another window right after the species-selection dialog closes)
+      US_Passwd pw_at( this );
       gmp_submitter_map = pw_at.getPasswd_auditTrail( "GMP Run VELOCITY-MWL Form",
 						     "Please fill out GMP run VELOCITY-MWL-Analysis form:",
 						     user_submitter );
