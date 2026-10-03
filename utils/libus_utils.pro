@@ -75,9 +75,8 @@ HEADERS      = us_ana_profile.h   \
                us_vector.h        \
                us_xpn_data.h      \
                us_zsolute.h       \
-               us_utils_qt.h      \
-               us_gmp_progress.h
-
+               us_utils_qt.h      
+         
 SOURCES      = us_ana_profile.cpp   \
                us_analyte.cpp       \
                us_archive.cpp       \
