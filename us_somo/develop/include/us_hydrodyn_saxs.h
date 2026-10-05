@@ -21,7 +21,6 @@
 #include <qtimer.h>
 #include <qmutex.h>
 
-#include "us_saxs_util_guinier_search.h"
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 
@@ -35,6 +34,7 @@
 
 
 #include "us_util.h"
+#include "us_saxs_util_guinier_search.h"
 #include "us_hydrodyn_pdbdefs.h"
 // #ifndef WIN32
 #include "us_hydrodyn_saxs_iqq_residuals.h"
