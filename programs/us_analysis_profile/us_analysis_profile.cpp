@@ -732,9 +732,29 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 	     //Also, clean  currProf->ch_reports first  (since it will be re-created form DB here )
 	     currProf.ch_reports.clear();  // <-- Will this cause crash - as this omits "B:Interf." cannels ??
 
+	     // Progress bookkeeping: each report counts as 100 units, split across its items
+	     int rep_total = 0, rep_done = 0;
+	     for ( auto it = currProf.ch_report_ids.constBegin(); it != currProf.ch_report_ids.constEnd(); ++it )
+	       rep_total += it.value().size();
+	     const int RUNITS = 100;
+
+	     // ONE DB connection for all reports (was: a new connection per report)
+	     US_Passwd rpw;
+	     US_DB2 rdb( rpw.getPasswd() );
+	     bool db_ok = true;
+	     if ( rdb.lastErrno() != US_DB2::OK )
+	       {
+		 QMessageBox::warning( this, tr( "Connection Problem" ),
+				       tr( "Reading Report: Could not connect to database: \n" ) + rdb.lastError() );
+		 db_ok = false;
+	       }
+
+	     if ( progress_cb && rep_total > 0 && db_ok )
+	       progress_cb( 0, rep_total * RUNITS, tr( "Reading reports from DB..." ) );
+	     
 	     // iterate over QMap ch_report_ids[ chdesc_alt ]
 	     QMap<QString, QList <int >>::iterator ri;
-	     for ( ri = currProf.ch_report_ids.begin(); ri != currProf.ch_report_ids.end(); ++ri )
+	     for ( ri = currProf.ch_report_ids.begin(); db_ok && ri != currProf.ch_report_ids.end(); ++ri )
 	       {
 		 QString channel_alt_desc = ri.key();
 		 //int     reportID         = ri.value();
@@ -751,8 +771,23 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		     qDebug() << "Reading reportItems form DB: channel_alt_desc, reportID  -- " << channel_alt_desc << ", " << reportID;
 		 
 		     //retrieve report from DB
+		     QString rep_detail = tr( "Reading report %1 of %2 (%3)..." )
+		                            .arg( rep_done + 1 ).arg( rep_total ).arg( channel_alt_desc );
+		     if ( progress_cb )
+		       progress_cb( rep_done * RUNITS, rep_total * RUNITS, rep_detail );
+
+		     std::function< void( int, int ) > item_cb;
+		     if ( progress_cb )
+		       item_cb = [ & ]( int idone, int itotal )
+		       {
+			 if ( itotal <= 0 ) return;
+			 progress_cb( rep_done * RUNITS + ( RUNITS * idone ) / itotal,
+				      rep_total * RUNITS,
+				      tr( "%1 item %2 of %3" ).arg( rep_detail ).arg( idone ).arg( itotal ) );
+		       };
+
 		     US_ReportGMP * reportFromDB = new US_ReportGMP();
-		     get_report_by_ID( reportFromDB, reportID );
+		     get_report_by_ID( reportFromDB, reportID, &rdb, item_cb );
 		     
 		     
 		     //ALEXEY_NEW_REPORT: here the QMap< QString, QMap < QString(wvl), US_ReportGMP > > currProf.ch_reports will be filled
@@ -766,6 +801,8 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		     
 		     //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
 		     currProf.ch_reports[ channel_alt_desc ][ wvl_read ] = *reportFromDB;
+		     delete reportFromDB;      // was leaked
+		     ++rep_done;
 
 		     qDebug() << "Filling currProf.ch_reports from DB: channel_alt_desc, wvl_read -- " << channel_alt_desc << ", " << wvl_read;
 		   }
@@ -794,6 +831,8 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 		   }
 		 //END of replicating ch_reports for ABDE
 	       }
+	     if ( progress_cb && rep_total > 0 )
+	       progress_cb( rep_total * RUNITS, rep_total * RUNITS, QString() );
 	   }
       }
    }
@@ -924,16 +963,24 @@ DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
 }
 
 //retrieve Report by ID from DB into ReportGMP structure
-void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int reportID )
+void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int reportID,
+                                              US_DB2* db_in,
+                                              const std::function< void( int, int ) >& item_cb )
 {
-  US_DB2* db  = NULL;
-  US_Passwd pw;
-  db            = new US_DB2( pw.getPasswd() );
-  if ( db->lastErrno() != US_DB2::OK )
+  // Use caller's open connection if given; else connect here (and clean up on exit)
+  QScopedPointer< US_DB2 > db_own;
+  US_DB2* db  = db_in;
+  if ( ! db )
     {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
-      return;
+      US_Passwd pw;
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db        = db_own.data();
+      if ( db->lastErrno() != US_DB2::OK )
+        {
+          QMessageBox::warning( this, tr( "Connection Problem" ),
+                                tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
+          return;
+        }
     }
 
   //Read parent Report
@@ -1055,6 +1102,10 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	}
       
       // reportItem information
+      const int n_items = reportItemsIDs.size();
+      int       i_item  = 0;
+      if ( item_cb )
+	item_cb( 0, n_items );
       foreach ( int ID, reportItemsIDs )
 	{
 	  qry.clear();
@@ -1080,6 +1131,9 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	  reportItem_read.passed                = QString("N/A");
   
 	  reportFromDB->reportItems.push_back( reportItem_read );
+
+	  if ( item_cb )
+	    item_cb( ++i_item, n_items );
 	}
       
     }

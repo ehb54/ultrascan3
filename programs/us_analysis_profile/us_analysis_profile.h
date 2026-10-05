@@ -3,6 +3,7 @@
 #ifndef US_APROFG_H
 #define US_APROFG_H
 
+#include <functional>
 #include <QApplication>
 #include <QtSql>
 
@@ -461,7 +462,16 @@ class US_AnalysisProfileGui : public US_Widgets
       void    auto_mode_passed( void ); 
       void    auto_name_passed( QString&, QString& ); 
       void    inherit_protocol( US_RunProtocol* );
-      void    get_report_by_ID( US_ReportGMP*, int );
+      //! \brief Read one report (and its reportItems) from the DB.
+      //! \param db       Open DB connector to reuse (NULL: connect here)
+      //! \param item_cb  Optional ( items_done, items_total ) progress hook
+      void    get_report_by_ID( US_ReportGMP*, int, US_DB2* db = NULL,
+                                const std::function< void( int, int ) >& item_cb
+                                   = std::function< void( int, int ) >() );
+
+      //! Optional progress hook for inherit_protocol(): ( done, total, detail ).
+      //! Empty by default, so other users of this class are unaffected.
+      std::function< void( int, int, const QString& ) > progress_cb;
 
       int     scanCount;
       int     scanCount_int;

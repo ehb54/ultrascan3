@@ -3,6 +3,7 @@
 #ifndef US_EXPERIMENT_H
 #define US_EXPERIMENT_H
 
+#include <functional>
 #include <QApplication>
 #if !(defined(_WIN32) || defined(_WIN64) || defined(Q_OS_WIN))
 #include <unistd.h>
@@ -11,6 +12,7 @@
 #include <QtSql>
 #include <QSslSocket>
 
+#include "us_gmp_progress.h"
 #include "us_run_protocol.h"
 #include "us_protocol_util.h"
 #include "../us_analysis_profile/us_analysis_profile.h"
@@ -1111,6 +1113,18 @@ class US_ExperimentMain : public US_Widgets
       QStringList childLValue ( const QString, const QString );
       // \brief Initialize all the panels
       void        initPanels  ( void );
+      // \brief Same, with a progress dialog that follows the (slow) DB reading of the
+      //         Analysis Profile's reports/reportItems; for use when a protocol is loaded.
+      //         continue_stage: the dialog is already up (caller covered earlier load steps):
+      //         bar 10..95 and left open; otherwise it is shown here (0..95) and finished here.
+      void        initPanels_with_progress( bool continue_stage = false );
+      // \brief The single protocol-loading progress dialog (US_GmpProgress): a child of this
+      //         widget's top-level window, window-modal, centered over it, not closable.
+      US_GmpProgress* load_progress( void );
+      US_GmpProgress* progress_load = nullptr;
+      // \brief Optional hook ( done, total, detail ) forwarded to the Analysis Profile reader
+      //         (US_AnalysisProfileGui::progress_cb) by US_ExperGuiAProfile::initPanel()
+      std::function< void( int, int, const QString& ) > aprof_progress_cb;
       // \brief Get a named abstract centerpiece information object
       bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
       // \brief Get the list of protocol names and summary-data strings
@@ -1236,6 +1250,8 @@ class US_ExperimentMain : public US_Widgets
       void to_editing_data( QMap < QString, QString > & );
       void exp_cleared ( void );
       void close_expsetup_msg( void );
+      //! Analysis Profile read progress while a protocol loads (autoflow path): done, total, detail
+      void aprofile_read_progress( int, int, const QString& );
       void back_to_initAutoflow( void );
       
       

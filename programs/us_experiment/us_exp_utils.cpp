@@ -575,6 +575,49 @@ DbgLv(1) << "main:  Up:iP:";
 DbgLv(1) << "main: iP DONE";
 }
 
+// The one protocol-loading progress dialog: child of the top-level window (the autoflow main
+// window when this program is embedded in it), window-modal, centered over it
+US_GmpProgress* US_ExperimentMain::load_progress( void )
+{
+   US_GmpProgress::acquire( this, progress_load )->setWindowTitle( tr( "Loading Protocol" ) );
+   return progress_load;
+}
+
+// initPanels() with a progress dialog: reading the Analysis Profile's reports/reportItems
+// from the DB (in US_ExperGuiAProfile::initPanel()) is what takes long when a protocol is loaded.
+void US_ExperimentMain::initPanels_with_progress( bool continue_stage )
+{
+   US_GmpProgress* pg = load_progress();
+   const int base     = continue_stage ? 10 : 0;
+   const int span     = 95 - base;
+
+   if ( continue_stage )
+   {
+      pg->setLabelText( tr( "Initializing protocol panels..." ) );
+      pg->setValue( base );
+   }
+   else
+      pg->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Initializing protocol panels..." ), 100 );
+
+   aprof_progress_cb = [ pg, base, span ]( int done, int total, const QString& detail )
+   {
+      if ( total <= 0 )
+         return;
+      pg->setLabelText( detail.isEmpty() ? QObject::tr( "Reading Analysis Profile..." ) : detail );
+      pg->setValue( qBound( base, base + span * done / total, 95 ) );
+   };
+
+   initPanels();
+
+   aprof_progress_cb = nullptr;      // lambda refers to the dialog: clear it
+   pg->setValue( 95 );
+   if ( ! continue_stage )
+   {
+      pg->setValue( pg->maximum() );
+      pg->finish();
+   }
+}
+
 //========================= End:   Main      section =========================
 
 
@@ -3880,7 +3923,9 @@ DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
    sdiag->currProf.protoID    = mainw->currProto.protoID;
 DbgLv(1) << "EGAp:inP:  sdiag inherit" << "proto GUID ID"
  << mainw->currProto.protoGUID << mainw->currProto.protoID;
+   sdiag->progress_cb = mainw->aprof_progress_cb;     // set only while a protocol is being loaded
    sdiag->inherit_protocol( currProto );
+   sdiag->progress_cb = nullptr;
 DbgLv(1) << "EGAp:inP:  sdiag initPanels()";
    mainw->currAProf           = sdiag->currProf;
    sdiag->initPanels();

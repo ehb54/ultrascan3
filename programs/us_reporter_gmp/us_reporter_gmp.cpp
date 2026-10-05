@@ -2082,7 +2082,35 @@ void US_ReporterGMP::read_protocol_and_reportMasks( void )
 
   //read AProfile into US_AnaProfile structure
   sdiag = new US_AnalysisProfileGui;
+
+  // Reflect the (slow) DB reading of reports/reportItems in the progress bar
+  const int     stage_max = progress_msg->maximum();   // 12 / 11 depending on load path
+  const QString stage_dt  = tr( "Accessing run's protocol..." );
+  bool          in_subrange = false;
+
+  sdiag->progress_cb = [ this, stage_max, &in_subrange ]( int done, int total, const QString& detail )
+  {
+     if ( total <= 0 )
+       return;
+     if ( ! in_subrange )
+       {
+	 progress_msg->setRange( 0, total );      // bar now shows report-reading progress
+	 in_subrange = true;
+       }
+     if ( ! detail.isEmpty() )
+       progress_msg->setLabelText( detail );
+     progress_msg->setValue( done );
+     qApp->processEvents();
+  };
+
   sdiag->inherit_protocol( &currProto );
+  sdiag->progress_cb = nullptr;                   // lambda captures a local: clear it
+
+  if ( in_subrange )                              // restore the stage's own scale
+    {
+      progress_msg->setRange( 0, stage_max );
+      progress_msg->setLabelText( stage_dt );
+    }
   progress_msg->setValue( 4 );
   qApp->processEvents();
 

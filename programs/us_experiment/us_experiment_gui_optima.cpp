@@ -452,7 +452,14 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
   //set dataDisk flag if protocol refers dataDisk
   epanRotor->set_dataSource_public( protocol_details );
   
+  // Autoflow path: no dialog here -- forward Analysis Profile read progress as a signal
+  // (the caller that owns the "setting up experiment" message can show it)
+  aprof_progress_cb = [ this ]( int done, int total, const QString& detail )
+  {
+    emit aprofile_read_progress( done, total, detail );
+  };
   initPanels();
+  aprof_progress_cb = nullptr;
   
   qDebug() << "In load_protocol: currProto.investigator 2 --  " <<  currProto.investigator;
  
@@ -1157,6 +1164,10 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
 
    if ( pdiag->exec() == QDialog::Accepted )
    {  // Accept in dialog:  get selected protocol name and its XML
+     // One progress dialog, attached to the top-level window, for the whole load
+     mainw->load_progress()->setStage( 1, 0, tr( "Loading Protocol" ),
+                                       tr( "Resetting experiment panels..." ), 100 );
+     mainw->load_progress()->setValue( 1 );
      DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0] << "protID" << protdata[prx][2];
 
      qDebug() << "In load_protocol: before RESET, currProto->investigator: -- " << currProto->investigator;
@@ -1167,6 +1178,8 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
+      mainw->load_progress()->setLabelText( tr( "Reading protocol..." ) );
+      mainw->load_progress()->setValue( 4 );
       protoID               = US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
 DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length()
 	 << "protoID" << protoID;
@@ -1183,6 +1196,8 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    }
 
    // Now that we have a protocol XML, convert it to internal controls
+   mainw->load_progress()->setLabelText( tr( "Applying protocol..." ) );
+   mainw->load_progress()->setValue( 8 );
    QXmlStreamReader xmli( xmlstr );
    mainw->loadProto.fromXml( xmli );
    mainw->loadProto.protoID = protoID;
@@ -1223,7 +1238,8 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
 
    qDebug() << "In load_protocol: currProto->investigator 1 --  " <<  currProto->investigator;
       
-   mainw->initPanels();
+   mainw->initPanels_with_progress( true );
+   mainw->load_progress()->finish();      // before any warning message boxes below
    // If there is a linked AnalysisProfile, copy to loadAProto!!!
    //SET epanAProf->sdiag->loadProf TO epanAProf->sdiag->currProf
    US_AnaProfile aprof_curr_read   = *(mainw->get_aprofile());
@@ -1262,7 +1278,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
 			     tr( "Use of R&D Protocol in GMP Framework" ),
 			     msg_rd_in_gmp);
        
-       mainw->initPanels();
+       mainw->initPanels_with_progress();
        return;
      }
 
@@ -1286,7 +1302,7 @@ DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
        qDebug() << "LEGACY[AFTER]mainw->currProto.rpSpeed.ssteps.size(), nsteps -- "
 		<< mainw->currProto.rpSpeed.ssteps.size() << mainw->currProto.rpSpeed.nstep;
 
-       mainw->initPanels();
+       mainw->initPanels_with_progress();
 
        return;
      }

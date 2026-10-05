@@ -1435,8 +1435,9 @@ void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, i
   const int w_save    = 15;
   const int w_convert = 15;
   const int w_edit    = 10;
-  const int w_fit     = 15;
-  // 10 + 5 + 5 + 5 + 20 + 15 + 15 + 10 + 15 == 100
+  const int w_aprof   =  5;   // reading the Analysis Profile (reports/reportItems) in US_MwlSpeciesFit
+  const int w_fit     = 10;
+  // 10 + 5 + 5 + 5 + 20 + 15 + 15 + 10 + 5 + 10 == 100
 
   const int base_buffer  = w_models;
   const int base_params  = base_buffer  + w_buffer;
@@ -1445,7 +1446,8 @@ void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, i
   const int base_save    = base_sims    + w_sims;
   const int base_convert = base_save    + w_save;
   const int base_edit    = base_convert + w_convert;
-  const int base_fit     = base_edit    + w_edit;
+  const int base_aprof   = base_edit    + w_edit;
+  const int base_fit     = base_aprof   + w_aprof;
 
   int    within = 0;
   QString label;
@@ -1497,6 +1499,12 @@ void US_Analysis_auto::update_mwlsim_progress( const QString& stage, int step, i
       label  = ( frac < 1.0 )
              ? tr( "Updating edit profile (US_Edit)..." )
              : tr( "Edit profile updated" );
+    }
+  else if ( stage == "aprof" )
+    {
+      double frac = ( total > 0 ) ? ( (double)step / (double)total ) : 1.0;
+      within = base_aprof + qRound( w_aprof * frac );
+      label  = tr( "Reading Analysis Profile from database..." );
     }
   else if ( stage == "fit" )
     {
@@ -1678,8 +1686,23 @@ void US_Analysis_auto::get_ssf_dir_and_saveDB ( QString& ssf_dir )
   //        synchronously for VEL-MWL, so mark "fit" as started before it and
   //        completed right after -- the dialog it shows is then left up to
   //        the user for the approve/reject decision.
-  update_mwlsim_progress( "fit", 0, 1 );
-  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl );
+  // Analysis Profile is read (from DB) inside the constructor first: reflect it in the bar
+  // ("aprof" stage), then hand over to the "fit" stage once all reports are read.
+  update_mwlsim_progress( "aprof", 0, 1 );
+  auto aprof_progress = [ this ]( int done, int total, const QString& detail )
+  {
+    if ( ! progress_msg_mwlsim || total <= 0 )
+      return;
+    if ( done >= total )
+      {
+	update_mwlsim_progress( "fit", 0, 1 );               // reading finished; fit/deconvolution next
+	return;
+      }
+    update_mwlsim_progress( "aprof", done, total );        // bar position (and default label)
+    if ( ! detail.isEmpty() )
+      progress_msg_mwlsim->setLabelText( detail );         // report k of N / item i of n
+  };
+  sdiag = new US_MwlSpeciesFit( protocol_details_at_analysis_velmwl, aprof_progress );
   update_mwlsim_progress( "fit", 1, 1 );
   connect( sdiag, &US_MwlSpeciesFit::reject_velmwl_s,
 	   this,  &US_Analysis_auto::velmwl_deconv_rejected );
@@ -2214,9 +2237,21 @@ void US_Analysis_auto::process_velmwl_after_all_channels_decided( void )
 	currProto.fromXml( xmli_ap );
 
 	US_AnalysisProfileGui* aprof_loader = new US_AnalysisProfileGui;
+	// Reading reports/reportItems from the DB is the slow part: drive the step bar
+	// (stage range is 0..100) and detail line from it.
+	aprof_loader->progress_cb = [ this ]( int done, int total, const QString& detail )
+	{
+	  if ( ! progress_msg_2dsa || total <= 0 )
+	    return;
+	  if ( ! detail.isEmpty() )
+	    progress_msg_2dsa->setLabelText( detail );
+	  progress_msg_2dsa->setValue( qBound( 0, qRound( 100.0 * done / total ), 100 ) );
+	};
 	aprof_loader->inherit_protocol( &currProto );
+	aprof_loader->progress_cb = nullptr;
 	cAP2_2dsa = aprof_loader->currProf.ap2DSA;
 	delete aprof_loader;
+	progress_msg_2dsa->setValue( 0 );
 
 	qDebug() << "[US_Autoflow_analysis] process_velmwl_after_all_channels_decided(): "
 		    "loaded 2DSA Analysis Profile -- channels in profile:"

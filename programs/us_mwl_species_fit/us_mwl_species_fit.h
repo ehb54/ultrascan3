@@ -24,12 +24,20 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! \brief Constructor for US_MwlSpeciesFit
         US_MwlSpeciesFit();
 
-        US_MwlSpeciesFit( QMap<QString, QString> &);
+        //! \brief Auto-mode constructor.
+        //! \param aprof_progress  Optional hook ( done, total, detail ) forwarded to
+        //!        US_AnalysisProfileGui::progress_cb while read_protocol() reads the
+        //!        Analysis Profile (reports/reportItems) from the DB. read_protocol()
+        //!        runs inside this constructor, so it has to be passed in here.
+        US_MwlSpeciesFit( QMap<QString, QString> &,
+                          const std::function< void( int, int, const QString& ) >& aprof_progress
+                             = std::function< void( int, int, const QString& ) >() );
 
         bool us_gmp_auto_mode;
         QMap<QString, QString> protocol_details;
         US_RunProtocol currProto;           //!< Current run protocol
         US_AnalysisProfileGui* sdiag_aprof; //!< Analysis profile GUI dialog
+        std::function< void( int, int, const QString& ) > aprof_progress_cb; //!< Analysis-profile read progress (optional)
         US_AnaProfile currAProf;            //!< Current analysis profile
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QStringList chndescs;               //!< Channel descriptions
