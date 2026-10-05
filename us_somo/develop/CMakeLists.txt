@@ -19,14 +19,19 @@
 # KEY FACT (verified): SOMO is SELF-CONTAINED. It VENDORS its own fork of the
 # us_utils sources (src/us_math.cpp, us_matrix.cpp, us_saxs_util*.cpp, ...) and
 # does NOT link UltraScan3::Utils. Its only couplings are third-party: Qt5/Qt6,
-# Qwt, OpenGL, zlib, OpenSSL. Runtime ldd of the deployed us3_somo confirms:
+# Qwt, OpenGL, zlib. Runtime ldd of the deployed us3_somo confirms:
 # libus_somo.so.10 + qwt + Qt + system libs, no libus_utils.so.
 #
-# DUAL-MODE: this file configures standalone
-#     cmake -S us_somo/develop -B build --toolchain <vcpkg>/scripts/buildsystems/vcpkg.cmake
-# OR when pulled in from the root UltraScan3 build via add_subdirectory(us_somo).
+# Three ways to configure it:
+#   - standalone against an existing Qt and a qmake-built Qwt, as the qmake
+#     build uses them (macOS and MSYS2 packaging included):
+#         cmake -S us_somo/develop -B build -DCMAKE_PREFIX_PATH=$QTDIR
+#     with Qwt from $QWTDIR (or -DQWTDIR=...), as qt5env sets it;
+#   - standalone with vcpkg:
+#         cmake -S us_somo/develop -B build --toolchain <vcpkg>/scripts/buildsystems/vcpkg.cmake
+#   - from the root UltraScan3 build via add_subdirectory(us_somo).
 #
-# In standalone mode the third-party deps come from this directory's own
+# With vcpkg, the third-party deps come from this directory's own
 # vcpkg.json (+ vcpkg-configuration.json), a minimal manifest that reuses the
 # repo-root overlay-ports (qwt / qt5-multimedia) and the same
 # builtin-baseline as the root. It has qt5 (default) and qt6 features — select
@@ -43,6 +48,13 @@
 # --- standalone bootstrap (skipped when included via add_subdirectory) --------
 if(NOT DEFINED PROJECT_NAME)
     cmake_minimum_required(VERSION 3.21)
+    # CMake 4 no longer picks a macOS SDK, so the compiler takes the system
+    # default one, which need not match the selected Xcode (an older Xcode's
+    # clang cannot parse a newer SDK's libc++ headers). Use the selected
+    # Xcode's SDK, as qmake does (xcrun --sdk macosx --show-sdk-path).
+    if(CMAKE_HOST_APPLE AND NOT CMAKE_OSX_SYSROOT AND NOT DEFINED ENV{SDKROOT})
+        set(CMAKE_OSX_SYSROOT macosx CACHE STRING "macOS SDK, by name or path")
+    endif()
     project(us_somo VERSION 10.0.0 LANGUAGES CXX C)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -84,6 +96,21 @@ get_directory_property(_somo_defs COMPILE_DEFINITIONS)
 list(FILTER _somo_defs EXCLUDE REGEX "^QT_DISABLE_DEPRECATED_UP_TO(=|$)")
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${_somo_defs}")
 
+# CMake's Release-type configurations add -DNDEBUG, which compiles out
+# assert(); qmake's release builds never define it. SOMO has live asserts
+# (ZENO in us_zeno_cxx*, us_eigen.cpp, the global fits), so keep them, as
+# qmake does, by dropping NDEBUG for this subtree: from the per-configuration
+# flags, and from the compile options the root adds for Release.
+foreach(_lang C CXX)
+    foreach(_cfg RELEASE RELWITHDEBINFO MINSIZEREL)
+        string(REGEX REPLACE "(^| )[-/]DNDEBUG( |$)" " "
+            CMAKE_${_lang}_FLAGS_${_cfg} "${CMAKE_${_lang}_FLAGS_${_cfg}}")
+    endforeach()
+endforeach()
+get_directory_property(_somo_opts COMPILE_OPTIONS)
+list(FILTER _somo_opts EXCLUDE REGEX "^[-/]DNDEBUG$")
+set_directory_properties(PROPERTIES COMPILE_OPTIONS "${_somo_opts}")
+
 # Qt codegen — scoped to this subtree only (root already sets these globally,
 # but standalone mode needs them too).
 set(CMAKE_AUTOMOC ON)
@@ -97,18 +124,31 @@ option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
 
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-# us_register.cpp derives PLATFORM/TITLE from an arch macro (its own #if chain
-# sets the strings right before use). Define INTEL on Linux so that #if block
-# fires. This is needed in BOTH standalone and root builds: the string-valued
-# -DPLATFORM="intel"/-DTITLE="Intel" that add_compile_definitions() emits does
-# NOT survive CMake's quote-escaping into a usable macro (this bites the root's
-# own line 209 definition too — it just never mattered because only
-# us_register.cpp uses PLATFORM as a bare macro). The bareword INTEL is immune,
-# and since the parent's PLATFORM/TITLE don't actually take effect there is no
-# redefinition clash. APPLE is covered by MAC, Windows by WIN32.
-if(UNIX AND NOT APPLE)
-    add_compile_definitions(INTEL)
+# Platform macros, as qmake defines them (uname.pri, local.pri, libus_somo.pro),
+# so each platform compiles the same #ifdef branches as its qmake build. They
+# apply to every SOMO target: the library, the GUI apps and the tools.
+#   macOS:   UNIX MACX OSX MAC (the qmake build also adds OPTERON on Intel
+#            Macs, which only feeds the PLATFORM strings that MAC overrides)
+#   Windows: WIN32 MINGW __WIN64__
+#   Linux:   UNIX LINUX BIN64, and INTEL for us_register.cpp, which derives
+#            PLATFORM/TITLE from an arch macro (its own #if chain sets the
+#            strings right before use). INTEL is needed in BOTH standalone and
+#            root builds: the string-valued -DPLATFORM="intel"/-DTITLE="Intel"
+#            that add_compile_definitions() emits does NOT survive CMake's
+#            quote-escaping into a usable macro (this bites the root's own
+#            definition too — it just never mattered because only
+#            us_register.cpp uses PLATFORM as a bare macro). The bareword INTEL
+#            is immune, and since the parent's PLATFORM/TITLE don't actually
+#            take effect there is no redefinition clash. On macOS MAC sets the
+#            strings, on Windows WIN32.
+if(WIN32)
+    set(SOMO_PLATFORM_DEFINES WIN32 MINGW __WIN64__)
+elseif(APPLE)
+    set(SOMO_PLATFORM_DEFINES UNIX MACX OSX MAC)
+else()
+    set(SOMO_PLATFORM_DEFINES UNIX LINUX BIN64 INTEL)
 endif()
+add_compile_definitions(${SOMO_PLATFORM_DEFINES})
 
 # --- dependencies (all third-party) ------------------------------------------
 # Qt5 AND Qt6: PR #335 made the SOMO code compatible with both; CI/CodeQL test
@@ -145,27 +185,45 @@ else()
 endif()
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${SOMO_QT_COMPONENTS})
 message(STATUS "SOMO: building against Qt${QT_VERSION_MAJOR} (${Qt${QT_VERSION_MAJOR}_VERSION})")
-find_package(OpenGL REQUIRED)
+find_package(OpenGL  REQUIRED)
 find_package(ZLIB    REQUIRED)
-find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)   # us_zeno_cxx.cpp uses std::thread
 
-# Qwt — reuse root's resolver/alias if we were add_subdirectory'd; otherwise
-# resolve here (vcpkg 'unofficial-qwt', or system via admin/cmake/FindQwt.cmake).
+# Qwt, from the first of:
+#   1. the root build's Qwt::Qwt (when add_subdirectory'd),
+#   2. vcpkg's unofficial-qwt,
+#   3. a Qwt built by qmake in QWTDIR (as the qmake build and the macOS and
+#      MSYS2 packaging use it): library in lib/ (qwt.framework on macOS),
+#      headers in src/. QWTDIR defaults to $QWTDIR, which qt5env sets.
+set(QWTDIR "$ENV{QWTDIR}" CACHE PATH "Qwt built by qmake: library in lib/, headers in src/ (default: $QWTDIR)")
 if(NOT TARGET Qwt::Qwt)
     find_package(unofficial-qwt CONFIG QUIET)
     if(unofficial-qwt_FOUND AND NOT TARGET Qwt::Qwt)
         add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
     endif()
 endif()
+if(NOT TARGET Qwt::Qwt AND QWTDIR)
+    find_library(SOMO_QWT_LIBRARY NAMES qwt HINTS ${QWTDIR}/lib NO_DEFAULT_PATH)
+    if(SOMO_QWT_LIBRARY)
+        add_library(Qwt::Qwt INTERFACE IMPORTED)
+        set_target_properties(Qwt::Qwt PROPERTIES INTERFACE_LINK_LIBRARIES "${SOMO_QWT_LIBRARY}")
+        message(STATUS "SOMO: qwt library ${SOMO_QWT_LIBRARY}")
+    endif()
+endif()
 if(NOT TARGET Qwt::Qwt)
-    message(FATAL_ERROR "SOMO: Qwt not found (need a Qwt::Qwt target)")
+    message(FATAL_ERROR "SOMO: Qwt not found. Set QWTDIR (qt5env does) or pass -DQWTDIR=<qwt build dir>, or configure with vcpkg.")
 endif()
 
-# SOMO does `#include <qwt_counter.h>` (flat, like the qmake QWTPATH/include
+# SOMO does `#include <qwt_counter.h>` (flat, like the qmake QWTPATH/src
 # layout), but vcpkg nests the headers under include/qwt/. The Qwt::Qwt target's
 # interface include (the vcpkg include root) is therefore not enough — add the
 # directory that actually contains the qwt headers.
-find_path(SOMO_QWT_INCLUDE_DIR NAMES qwt_counter.h PATH_SUFFIXES qwt qwt6 qt5/qwt)
+set(_somo_qwt_hints "")
+if(QWTDIR)
+    set(_somo_qwt_hints ${QWTDIR}/src ${QWTDIR}/include ${QWTDIR}/lib/qwt.framework/Headers)
+endif()
+find_path(SOMO_QWT_INCLUDE_DIR NAMES qwt_counter.h HINTS ${_somo_qwt_hints}
+    PATH_SUFFIXES qwt qwt6 qt5/qwt)
 if(NOT SOMO_QWT_INCLUDE_DIR)
     message(FATAL_ERROR "SOMO: qwt headers (qwt_counter.h) not found on the include path")
 endif()
@@ -245,18 +303,16 @@ target_include_directories(us_somo PUBLIC
     ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/grpy ${SOMO_QWT_INCLUDE_DIR})
 
 target_compile_definitions(us_somo PUBLIC NO_DB THREAD NO_EDITOR_PRINT)
-if(UNIX AND NOT APPLE)
-    target_compile_definitions(us_somo PUBLIC UNIX LINUX BIN64)
-elseif(APPLE)
-    target_compile_definitions(us_somo PUBLIC OSX MAC)
-elseif(WIN32)
-    target_compile_definitions(us_somo PUBLIC MINGW WIN32)
+if(WIN32)
+    # include/us_extern.h & co. export with these only while building the DLL
+    # (libus_somo.pro's win32 block); the apps import without them.
+    target_compile_definitions(us_somo PRIVATE US_MAKE_DLL US_MAKE_GUI_DLL)
 endif()
 
 target_link_libraries(us_somo PUBLIC
     Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
     Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
-    Qwt::Qwt OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
+    Qwt::Qwt OpenGL::GL ZLIB::ZLIB Threads::Threads)
 if(UNIX AND NOT APPLE)
     target_link_libraries(us_somo PUBLIC GLU)   # TODO: find_library(GLU) for robustness
 endif()
@@ -316,9 +372,8 @@ function(somo_add_tool tgt)
     target_link_libraries(${tgt} PRIVATE
         Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
         Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
-        OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
+        OpenGL::GL ZLIB::ZLIB Threads::Threads)
     if(UNIX AND NOT APPLE)
-        target_compile_definitions(${tgt} PRIVATE UNIX LINUX BIN64)
         target_link_libraries(${tgt} PRIVATE GLU)
     endif()
     add_dependencies(${tgt} us_somo_genheaders)
@@ -329,13 +384,18 @@ somo_add_gui_app(us3_somo   us3_hydrodyn/us3_hydrodyn.pro)   # main GUI -> us3_s
 somo_add_gui_app(us_admin   us_admin/us_admin.pro)
 somo_add_gui_app(us3_config us3_config/us3_config.pro)
 
+set(SOMO_INSTALL_TARGETS
+    us_somo us3_somo us_admin us3_config)
+
 # --- standalone tools --------------------------------------------------------
-somo_add_tool(us_saxs_cmds_t)                 # non-MPI SAXS command-line tool
+# Unix only, as under qmake (us_somo.pro builds it in a unix: scope, and
+# cmdline.pri stops with an error on win32).
+if(NOT WIN32)
+    somo_add_tool(us_saxs_cmds_t)             # non-MPI SAXS command-line tool
+    list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_t)
+endif()
 # us_cluster_server_t (2011) dropped: its us_cluster_server_global.h includes
 # <q3socket.h> (Qt3Support), removed since Qt5 — it cannot build on Qt5/Qt6.
-
-set(SOMO_INSTALL_TARGETS
-    us_somo us3_somo us_admin us3_config us_saxs_cmds_t)
 
 # --- optional MPI tools ------------------------------------------------------
 if(SOMO_ENABLE_MPI)
