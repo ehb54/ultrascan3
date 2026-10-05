@@ -18,9 +18,16 @@ From a terminal, in `us_somo/develop` after sourcing `qt5env`:
 In the MSYS2 MINGW64 shell use the `qt5-msys2` preset. CMake there must be a
 Windows build of CMake, such as the zip from cmake.org.
 
-Everything lands in `build/<preset>/`: the programs in `bin/`, the library in
-`lib/` (in `bin/` on Windows). After editing sources, only the build step is
-needed; it reruns the configure step itself when a `.pro` file changes.
+The compiler warnings are qmake's (`-Wall -Wextra`, with the macOS
+packaging's `-Wno-deprecated*`). To see each compile and link command, add
+`--verbose` to the build command; `build/<preset>/compile_commands.json` lists
+the exact command for each file.
+
+Everything lands in `build/<preset>/`: the programs in `bin/` (on macOS as
+`.app` bundles, as qmake builds them, so `bin/us3_somo.app/Contents/MacOS/us3_somo`),
+the library in `lib/` (in `bin/` on Windows). After editing sources, only the
+build step is needed; it reruns the configure step itself when a `.pro` file
+changes.
 
 To run the programs, source `qt5env` first. On macOS they find the Qwt
 framework through its `DYLD_FRAMEWORK_PATH`; on Windows put `$QTDIR/bin` and

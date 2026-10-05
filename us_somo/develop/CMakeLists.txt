@@ -55,6 +55,18 @@ if(NOT DEFINED PROJECT_NAME)
     if(CMAKE_HOST_APPLE AND NOT CMAKE_OSX_SYSROOT AND NOT DEFINED ENV{SDKROOT})
         set(CMAKE_OSX_SYSROOT macosx CACHE STRING "macOS SDK, by name or path")
     endif()
+    # Lowest macOS to run on: as the macOS packaging builds (and qmake's
+    # defaults), 11.0 on Apple silicon and 10.13 on Intel.
+    if(CMAKE_HOST_APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET
+       AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+        execute_process(COMMAND uname -m OUTPUT_VARIABLE _somo_arch
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(_somo_arch STREQUAL "arm64")
+            set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Lowest macOS version to run on")
+        else()
+            set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "Lowest macOS version to run on")
+        endif()
+    endif()
     project(us_somo VERSION 10.0.0 LANGUAGES CXX C)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -84,6 +96,22 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
 # under qmake); restore it for this subtree — a later -fvisibility flag wins.
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-fvisibility=default)
+endif()
+
+# Warnings as qmake builds show them: its default warn_on (-Wall -Wextra), plus
+# -Wno-non-virtual-dtor on Linux (libus_somo.pro) and, on macOS, the
+# -Wno-deprecated* -Wno-unused-result that the macOS packaging's local.pri
+# adds (SOMO still uses many Qt APIs deprecated in Qt 5).
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(APPLE)
+        # ahead of -Wall -Wextra, where qmake's command lines have them, so
+        # -Wextra turns back on what it groups (e.g. -Wdeprecated-copy)
+        add_compile_options(-Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result)
+    endif()
+    add_compile_options(-Wall -Wextra)
+    if(UNIX AND NOT APPLE)
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-non-virtual-dtor>)
+    endif()
 endif()
 
 # The root switches off the Qt APIs deprecated up to 6.9
@@ -350,9 +378,43 @@ endif()
 # =============================================================================
 
 # GUI app: main.cpp + link libus_somo (generic.pri: SOURCES=main.cpp, -lus_somo -lqwt)
+# macOS: an .app bundle, as qmake builds every program there, with the keys of
+# the Info.plist qmake writes and the icon the .pro names (macx:ICON). SOMO
+# relies on the bundles: it starts us3_config and us_admin as
+# <system dir>/bin/<name>.app, and finds its install directory from the
+# .app/Contents in its own path.
+function(somo_mac_bundle tgt pro)
+    if(NOT APPLE)
+        return()
+    endif()
+    set(SOMO_BUNDLE_EXECUTABLE ${tgt})
+    string(REPLACE "_" "-" _id ${tgt})
+    set(SOMO_BUNDLE_IDENTIFIER "com.yourcompany.${_id}")
+    set(SOMO_BUNDLE_ICON "")
+    file(STRINGS ${pro} _icon REGEX "^[ \t]*macx[ \t]*:[ \t]*ICON[ \t]*=")
+    if(_icon)
+        list(GET _icon 0 _icon)
+        string(REGEX REPLACE "^[^=]*=[ \t]*([^ \t#]+).*$" "\\1" _icon "${_icon}")
+        get_filename_component(_pro_dir ${pro} DIRECTORY)
+        get_filename_component(_icon ${_icon} ABSOLUTE BASE_DIR ${_pro_dir})
+        get_filename_component(SOMO_BUNDLE_ICON ${_icon} NAME)
+        target_sources(${tgt} PRIVATE ${_icon})
+        set_source_files_properties(${_icon} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    endif()
+    configure_file(${SOMO_ROOT}/cmake/Info.plist.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/${tgt}.Info.plist @ONLY)
+    set_target_properties(${tgt} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/${tgt}.Info.plist)
+endfunction()
+
 function(somo_add_gui_app tgt pro)
     somo_qmake_sources(${SOMO_ROOT}/${pro} _srcs _hdrs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
+    # On Windows a windowed program with Qt's WinMain, as qmake builds it, so
+    # no console window opens with it (ignored on other platforms).
+    set_target_properties(${tgt} PROPERTIES WIN32_EXECUTABLE TRUE)
+    somo_mac_bundle(${tgt} ${SOMO_ROOT}/${pro})
     target_link_libraries(${tgt} PRIVATE us_somo)
     target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
     add_dependencies(${tgt} us_somo_genheaders)
@@ -377,6 +439,7 @@ function(somo_add_tool tgt)
         target_link_libraries(${tgt} PRIVATE GLU)
     endif()
     add_dependencies(${tgt} us_somo_genheaders)
+    somo_mac_bundle(${tgt} ${SOMO_ROOT}/${tgt}/${tgt}.pro)
 endfunction()
 
 # --- GUI applications --------------------------------------------------------
@@ -420,6 +483,7 @@ endif()
 # --- install -----------------------------------------------------------------
 install(TARGETS ${SOMO_INSTALL_TARGETS}
         RUNTIME DESTINATION bin
+        BUNDLE  DESTINATION bin
         LIBRARY DESTINATION lib)
 
 message(STATUS "SOMO: standalone=${SOMO_STANDALONE} "
