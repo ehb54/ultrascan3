@@ -429,6 +429,12 @@ class US_UTIL_EXTERN US_RunProtocol
 
       QString      framework;
 
+      //! \brief Sanitize a name for use in file/path names.
+      //!        strict=false: replace / \\ : * ? " < > | and control chars with '_'
+      //!        strict=true : replace everything except A-Z a-z 0-9 _ - with '_'
+      //!        (same rule as the Run Name). Result is trimmed.
+      static QString sanitize_name( const QString&, bool strict = false );
+
    private:
 };
 #endif

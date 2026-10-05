@@ -1,5 +1,6 @@
 //! \file us_run_protocol.cpp
 #include "us_run_protocol.h"
+#include <QRegularExpression>
 #include "us_constants.h"
 #include "us_settings.h"
 #include "us_util.h"
@@ -7,6 +8,16 @@
 #ifndef _TR_
 #define _TR_(a) QObject::tr(a)
 #endif
+
+// Sanitize a name (protocol name, label, file name); see header for modes
+QString US_RunProtocol::sanitize_name( const QString& name, bool strict )
+{
+   static const QRegularExpression rx_safe  ( "[/\\\\:*?\"<>|\\x00-\\x1f]" );
+   static const QRegularExpression rx_strict( "[^A-Za-z0-9_-]" );
+   QString out = name.trimmed();
+   out.replace( strict ? rx_strict : rx_safe, "_" );
+   return out;
+}
 
 // RunProtocol constructor
 US_RunProtocol::US_RunProtocol()

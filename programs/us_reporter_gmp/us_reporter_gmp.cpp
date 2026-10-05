@@ -13077,7 +13077,7 @@ void US_ReporterGMP::write_pdf_report( void )
   mkdir( US_Settings::reportDir(), subDirName );
     
   //QString fileName  = runName + ".pdf";
-  QString fileName  = ProtocolName_auto + ".pdf"; //Use unique protocol name for .pdf filename
+  QString fileName  = US_RunProtocol::sanitize_name( ProtocolName_auto ) + ".pdf"; //Use unique protocol name for .pdf filename; strip path chars (legacy names may contain "/")
   
   //filePath  = US_Settings::tmpDir() + "/" + fileName;
   filePath  = dirName + "/" + fileName;

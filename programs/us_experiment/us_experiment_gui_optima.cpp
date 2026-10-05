@@ -929,6 +929,20 @@ void US_ExperGuiGeneral::label_name_entered( void )
   */
   /***********************************************************************************/
   
+  // Replace characters that are unsafe in paths (e.g. '/') with '_'
+  lname = US_RunProtocol::sanitize_name( lname );
+  if ( lname != old_lname )
+    {
+      QMessageBox::warning( this,
+			    tr( "Label Changed" ),
+			    tr( "The label may not contain any of the characters\n"
+				"/ \\ : * ? \" < > |\n"
+				"They have been replaced by underscores.\n"
+				"New label:\n  " )
+			    + lname );
+      changed           = true;
+    }
+
   // Limit label's length to 60 characters
   if ( lname.length() > 60 )
     {
@@ -1300,6 +1314,19 @@ void US_ExperGuiGeneral::update_protdata( void )
 void US_ExperGuiGeneral::changed_protocol( void )
 {
    QString protoname    = le_protocol->text();
+   QString old_pname    = protoname;
+   protoname            = US_RunProtocol::sanitize_name( protoname, true );
+
+   if ( protoname != old_pname )
+   {  // Invalid characters were replaced: tell the user, update the edit box
+      QMessageBox::warning( this,
+         tr( "Protocol Name Changed" ),
+         tr( "The protocol name has been changed. It may consist only\n"
+             "of alphanumeric characters or underscore or hyphen.\n"
+             "New protocol name:\n  " )
+            + protoname );
+      le_protocol->setText( protoname );
+   }
 
    if ( pr_names.contains( protoname )  ||  protoname.trimmed() == "" )
    {
@@ -7449,12 +7476,20 @@ DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
           "Then click on <b>OK</b> to accept the new name<br/>"
           "or on <b>Cancel</b> to abort the Run Protocol save.<br/>" );
 
-   // Keep displaying the dialog text until a unique name is given
+   // Keep displaying the dialog text until a unique, path-safe name is given
+   newpname            = US_RunProtocol::sanitize_name( newpname, true );
+   if ( newpname != old_protoname  &&  ! old_protoname.trimmed().isEmpty() )
+      QMessageBox::information( this,
+         tr( "Protocol Name Changed" ),
+         tr( "The protocol name may consist only of alphanumeric\n"
+             "characters, underscore or hyphen. It has been changed to:\n  " )
+            + newpname );
    while( prnames.contains( newpname )  ||  newpname.trimmed().isEmpty() )
    {
       newpname            = QInputDialog::getText( this,
                                tr( "Enter New Run Protocol Name/Description" ),
                                msg, QLineEdit::Normal, newpname, &ok );
+      newpname            = US_RunProtocol::sanitize_name( newpname, true );  // [A-Za-z0-9_-] only
 
       if ( ! ok )
       {  // Cancel:  abort the save
