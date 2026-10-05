@@ -1,0 +1,38 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "qt5-env",
+      "hidden": true,
+      "description": "Qt 5 and the qmake-built Qwt from QTDIR and QWTDIR, as qt5env sets them for the qmake build",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "USE_QT6": "OFF",
+        "CMAKE_PREFIX_PATH": "$env{QTDIR}",
+        "QWTDIR": "$env{QWTDIR}"
+      }
+    },
+    {
+      "name": "qt5",
+      "displayName": "Qt 5 from qt5env",
+      "description": "Qt 5 and Qwt from QTDIR and QWTDIR (macOS, Linux)",
+      "inherits": "qt5-env",
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "qt5-msys2",
+      "displayName": "Qt 5 from qt5env, MSYS2 MinGW64",
+      "description": "Qt 5 and Qwt from QTDIR and QWTDIR; run in the MSYS2 MINGW64 shell",
+      "inherits": "qt5-env",
+      "generator": "MSYS Makefiles",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "qt5",       "configurePreset": "qt5" },
+    { "name": "qt5-msys2", "configurePreset": "qt5-msys2" }
+  ]
+}
