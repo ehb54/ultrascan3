@@ -152,6 +152,14 @@ option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
 
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
+# macOS: qmake's builds also search @executable_path/../Frameworks, which is
+# where a packaged app finds Qt and libus_somo (the macOS packaging links each
+# bundle's Contents/Frameworks to the package's Frameworks), so a CMake build
+# can be packaged the same way. Builds still run from the build tree too.
+if(APPLE)
+    list(APPEND CMAKE_BUILD_RPATH "@executable_path/../Frameworks")
+endif()
+
 # Platform macros, as qmake defines them (uname.pri, local.pri, libus_somo.pro),
 # so each platform compiles the same #ifdef branches as its qmake build. They
 # apply to every SOMO target: the library, the GUI apps and the tools.
@@ -325,6 +333,13 @@ message(STATUS "SOMO: libus_somo.pro lists ${_n_src} sources, ${_n_hdr} headers"
 add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
 add_dependencies(us_somo us_somo_genheaders)
 set_target_properties(us_somo PROPERTIES VERSION 10.0.0 SOVERSION 10)  # libus_somo.so.10
+if(WIN32)
+    # us_somo10.dll, as qmake names it, with MinGW's import library libus_somo10.a
+    set_target_properties(us_somo PROPERTIES OUTPUT_NAME us_somo10 PREFIX "")
+    if(MINGW)
+        set_target_properties(us_somo PROPERTIES IMPORT_SUFFIX .a)
+    endif()
+endif()
 
 # grpy/ is the header-only GRPY driver module (libus_somo.pro: INCLUDEPATH += $$PWD/grpy)
 target_include_directories(us_somo PUBLIC
