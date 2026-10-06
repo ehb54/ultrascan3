@@ -20,6 +20,41 @@
 
 #define MIN_NTC 25
 
+// Build a plain-text transcript of a panel's visible fields for AT-SPI.
+// QTreeWidget::setItemWidget() embeds a widget into a tree cell purely for
+// painting; Qt's item-view accessibility interface (QAccessibleTableCell)
+// never walks into that embedded widget's children -- it only ever reads
+// Qt::AccessibleTextRole/Qt::AccessibleDescriptionRole/Qt::DisplayRole off
+// the tree item's own model data. This reads the already-displayed widget
+// text (read-only, no effect on the embedded widget or its behavior) and
+// stores it as that data so AT-SPI has something to report for the cell.
+static QString us_accessibleSummary( QWidget* panel )
+{
+   QStringList parts;
+   const QList<QWidget*> kids = panel->findChildren<QWidget*>();
+
+   for ( QWidget* kid : kids )
+   {
+      if ( QLabel* lb = qobject_cast<QLabel*>( kid ) )
+      {
+         if ( ! lb->text().isEmpty() )
+            parts << lb->text();
+      }
+      else if ( QLineEdit* le = qobject_cast<QLineEdit*>( kid ) )
+      {
+         if ( ! le->text().isEmpty() )
+            parts << le->text();
+      }
+      else if ( QTextEdit* te = qobject_cast<QTextEdit*>( kid ) )
+      {
+         if ( ! te->toPlainText().isEmpty() )
+            parts << te->toPlainText();
+      }
+   }
+
+   return parts.join( "; " );
+}
+
 // Constructor
 US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
 {
@@ -542,6 +577,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   QLabel*      lb_runloaded  = us_banner( tr( "Loaded GMP Run:" ), 1 );
   QLabel*      lb_runName    = us_label(  tr( "GMP Run Name:" ), 1  );
   QLineEdit*   le_runName    = us_lineedit( gmpRunName_passed, 0, true );
+  le_runName->setAccessibleName( tr( "Loaded GMP Run Name" ) );
+  lb_runName->setBuddy( le_runName );
 
   //QLabel* bn_viewAPDF = us_banner( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ), 1 );
   pb_viewAPDF  =  us_pushbutton( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ) );
@@ -561,6 +598,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //eSigners Info Tree
   QLabel*      lb_esigners  = us_banner(      tr( "e-Signers Information:" ), 1 );
   eSignTree = new QTreeWidget();
+  eSignTree->setAccessibleName( tr( "Audit Signatures" ) );
   QStringList esigns_theads;
   esigns_theads << "Selected" << "Details";
   eSignTree->setHeaderLabels( esigns_theads );
@@ -586,6 +624,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   QTreeWidgetItem* eSignItem_childItem = new QTreeWidgetItem();
   esigntItem -> addChild( eSignItem_childItem );
   eSignTree  -> setItemWidget( eSignItem_childItem, 1, groupBox_esign );
+  eSignItem_childItem->setData( 1, Qt::AccessibleTextRole,
+                                 us_accessibleSummary( groupBox_esign ) );
 
   int max_width = fmet.horizontalAdvance( esignItemName );
   max_width *= 2;
@@ -599,6 +639,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //user Intaracitons Info Tree
   QLabel*      lb_uints  = us_banner(      tr( "User INPUTS:" ), 1 );
   uInteractionsTree = new QTreeWidget();
+  uInteractionsTree->setAccessibleName( tr( "Audit Run Events" ) );
   QStringList uints_theads;
   uints_theads << "Selected" << "Details";
   uInteractionsTree->setHeaderLabels( uints_theads );
@@ -634,6 +675,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 	  QTreeWidgetItem* Item_childItem = new QTreeWidgetItem();
 	  uintsItem -> addChild( Item_childItem );
 	  uInteractionsTree  -> setItemWidget( Item_childItem, 1, groupBox_stages[j] );
+	  Item_childItem->setData( 1, Qt::AccessibleTextRole,
+	                           us_accessibleSummary( groupBox_stages[j] ) );
 	}
     }
   uInteractionsTree->header()->resizeSection(0, max_width );

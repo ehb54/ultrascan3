@@ -682,7 +682,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
                 le_runid->setAccessibleName( tr( "Run Name" ) );
                 lb_runid->setBuddy( le_runid );
                 le_protocol     = us_lineedit( "", 0, false );
+                le_protocol->setAccessibleName( tr( "Protocol Name" ) );
                 le_project      = us_lineedit( "", 0, true  );
+                le_project->setAccessibleName( tr( "Project" ) );
 
 		//ct_tempera      = us_counter ( 2, 0,  40, 20 );
 		ct_tempera      = us_spinbox();
@@ -733,6 +735,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       : "";
    QString invtxt  = invnbr + US_Settings::us_inv_name();
    le_investigator = us_lineedit( invtxt, 0, true );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
 DbgLv(1) << "EGGe:main: invtxt" << invtxt
  << "invlev" << US_Settings::us_inv_level()
  << "invenab" << pb_investigator->isEnabled();
@@ -1388,10 +1391,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    int          ihgt        = pb_advrotor->height();
                 cb_lab      = new QComboBox( this );
                 cb_lab->setAccessibleName( tr( "Laboratory" ) );
+                lb_lab->setBuddy( cb_lab );
                 cb_rotor    = new QComboBox( this );
                 cb_rotor->setAccessibleName( tr( "Rotor" ) );
+                lb_rotor->setBuddy( cb_rotor );
                 cb_calibr   = new QComboBox( this );
                 cb_calibr->setAccessibleName( tr( "Calibration" ) );
+                lb_calibr->setBuddy( cb_calibr );
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
 
@@ -1401,6 +1407,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
                 cb_optima->setAccessibleName( tr( "Instrument" ) );
+                lb_instrument->setBuddy( cb_optima );
    //QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
 		lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
@@ -1410,10 +1417,12 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 lb_operator   = us_label( tr( "Select Operator:" ) );
                 cb_operator   = new QComboBox( this );
                 cb_operator->setAccessibleName( tr( "Operator" ) );
+                lb_operator->setBuddy( cb_operator );
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
                 cb_exptype->setAccessibleName( tr( "Experiment Type" ) );
+                lb_exptype->setBuddy( cb_exptype );
 
 		//select data source from disk
 		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
@@ -1551,6 +1560,11 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    cb_choose_rev      -> setAccessibleName( tr( "Choose Reviewer" ) );
    cb_choose_appr     -> setAccessibleName( tr( "Choose Approver" ) );
    cb_choose_sme      -> setAccessibleName( tr( "Choose SME" ) );
+
+   lb_choose_oper -> setBuddy( cb_choose_operator );
+   lb_choose_rev  -> setBuddy( cb_choose_rev );
+   lb_choose_appr -> setBuddy( cb_choose_appr );
+   lb_choose_sme  -> setBuddy( cb_choose_sme );
    
    row = 0;
    //revOperGMPRunGrid -> addItem  ( spacer1,         row++, 0, 1, 15 );
@@ -3274,10 +3288,10 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_delay_hh->setEnabled(false);
    sb_delay_mm->setEnabled(false);
    sb_delay_ss->setEnabled(false);
-   sb_delay_dd->setAccessibleName( tr( "Delay to First Scan Days" ) );
-   sb_delay_hh->setAccessibleName( tr( "Delay to First Scan Hours" ) );
-   sb_delay_mm->setAccessibleName( tr( "Delay to First Scan Minutes" ) );
-   sb_delay_ss->setAccessibleName( tr( "Delay to First Scan Seconds" ) );
+   sb_delay_dd->setAccessibleName( tr( "Delay to First Scan Days (UV/visible)" ) );
+   sb_delay_hh->setAccessibleName( tr( "Delay to First Scan Hours (UV/visible)" ) );
+   sb_delay_mm->setAccessibleName( tr( "Delay to First Scan Minutes (UV/visible)" ) );
+   sb_delay_ss->setAccessibleName( tr( "Delay to First Scan Seconds (UV/visible)" ) );
 
    //Interference
    QHBoxLayout* lo_delaylay_int    = us_ddhhmmsslay( 0, 0,0,0,0, &sb_delay_int_dd, &sb_delay_int_hh, &sb_delay_int_mm,  &sb_delay_int_ss );
@@ -3285,26 +3299,26 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    sb_delay_int_hh->setEnabled(false);
    sb_delay_int_mm->setEnabled(false);
    sb_delay_int_ss->setEnabled(false);
-   sb_delay_int_dd->setAccessibleName( tr( "Delay to First Scan Days" ) );
-   sb_delay_int_hh->setAccessibleName( tr( "Delay to First Scan Hours" ) );
-   sb_delay_int_mm->setAccessibleName( tr( "Delay to First Scan Minutes" ) );
-   sb_delay_int_ss->setAccessibleName( tr( "Delay to First Scan Seconds" ) );
+   sb_delay_int_dd->setAccessibleName( tr( "Delay to First Scan Days (Interference)" ) );
+   sb_delay_int_hh->setAccessibleName( tr( "Delay to First Scan Hours (Interference)" ) );
+   sb_delay_int_mm->setAccessibleName( tr( "Delay to First Scan Minutes (Interference)" ) );
+   sb_delay_int_ss->setAccessibleName( tr( "Delay to First Scan Seconds (Interference)" ) );
 
    //UV-vis
    QHBoxLayout* lo_scnintlay               = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss );
    sb_scnint_dd->setEnabled(false);
-   sb_scnint_dd->setAccessibleName( tr( "Scan Interval Days" ) );
-   sb_scnint_hh->setAccessibleName( tr( "Scan Interval Hours" ) );
-   sb_scnint_mm->setAccessibleName( tr( "Scan Interval Minutes" ) );
-   sb_scnint_ss->setAccessibleName( tr( "Scan Interval Seconds" ) );
+   sb_scnint_dd->setAccessibleName( tr( "Scan Interval Days (UV/visible)" ) );
+   sb_scnint_hh->setAccessibleName( tr( "Scan Interval Hours (UV/visible)" ) );
+   sb_scnint_mm->setAccessibleName( tr( "Scan Interval Minutes (UV/visible)" ) );
+   sb_scnint_ss->setAccessibleName( tr( "Scan Interval Seconds (UV/visible)" ) );
 
    //Interference
    QHBoxLayout* lo_scnintlay_int           = us_ddhhmmsslay( 0, 0,0,0,0, &sb_scnint_int_dd, &sb_scnint_int_hh, &sb_scnint_int_mm,  &sb_scnint_int_ss );
    sb_scnint_int_dd->setEnabled(false);
-   sb_scnint_int_dd->setAccessibleName( tr( "Scan Interval Days" ) );
-   sb_scnint_int_hh->setAccessibleName( tr( "Scan Interval Hours" ) );
-   sb_scnint_int_mm->setAccessibleName( tr( "Scan Interval Minutes" ) );
-   sb_scnint_int_ss->setAccessibleName( tr( "Scan Interval Seconds" ) );
+   sb_scnint_int_dd->setAccessibleName( tr( "Scan Interval Days (Interference)" ) );
+   sb_scnint_int_hh->setAccessibleName( tr( "Scan Interval Hours (Interference)" ) );
+   sb_scnint_int_mm->setAccessibleName( tr( "Scan Interval Minutes (Interference)" ) );
+   sb_scnint_int_ss->setAccessibleName( tr( "Scan Interval Seconds (Interference)" ) );
 
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
@@ -4792,6 +4806,8 @@ DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
       clabl  ->setObjectName( strow + ": label" );
       cb_cenp->setObjectName( strow + ": centerpiece" );
       cb_wind->setObjectName( strow + ": windows" );
+      cb_cenp->setAccessibleName( tr( "Centerpiece (Cell %1)" ).arg( ii + 1 ) );
+      cb_wind->setAccessibleName( tr( "Windows (Cell %1)" ).arg( ii + 1 ) );
 
       genL->addWidget( clabl,   row,   0, 1, 1 );
       genL->addWidget( cb_cenp, row,   1, 1, 6 );
@@ -5091,10 +5107,10 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       QString strow       = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
       cb_solu->setObjectName( strow + ": solution" );
-      cb_solu->setAccessibleName( tr( "Solution" ) );
+      cb_solu->setAccessibleName( tr( "Solution (Channel %1)" ).arg( schan ) );
       pb_comm->setObjectName( strow + ": addcomm" );
       le_comm->setObjectName( strow + ": mancomm" );
-      le_comm->setAccessibleName( tr( "Solution Comment" ) );
+      le_comm->setAccessibleName( tr( "Solution Comment (Channel %1)" ).arg( schan ) );
 
       genL->addWidget( cclabl,  row,    0, 1, 2 );
       genL->addWidget( cb_solu, row,    2, 1, 3 );
@@ -5979,6 +5995,9 @@ DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
       ck_osys1->setObjectName( strow + ": optsys1" );
       ck_osys2->setObjectName( strow + ": optsys2" );
       ck_osys3->setObjectName( strow + ": optsys3" );
+      ck_osys1->setAccessibleName( opsys1 + tr( " (Cell %1)" ).arg( scel ) );
+      ck_osys2->setAccessibleName( opsys2 + tr( " (Cell %1)" ).arg( scel ) );
+      ck_osys3->setAccessibleName( opsys3 + tr( " (Cell %1)" ).arg( scel ) );
 
       genL->addWidget( cclabl,   row,    0, 1, 1 );
       genL->addLayout( lo_osyss, row++,  1, 1, 3 );

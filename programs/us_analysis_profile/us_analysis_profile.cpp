@@ -1650,6 +1650,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_analysisrun ->setChecked( true );
       QString strow  = QString::number( ii );
       ck_analysisrun ->setObjectName( strow + ": Run" );
+      ck_analysisrun ->setAccessibleName( tr( "Run Analysis (Channel %1)" ).arg( schan ) );
       genL->addWidget( ck_analysisrun,  row,  8, 1, 1, Qt::AlignHCenter );
       connect( ck_analysisrun, &QAbstractButton::toggled,
                this,           &US_AnaprofPanGen::runChecked );
@@ -1662,6 +1663,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_reportrun ->setAutoFillBackground( true );
       ck_reportrun ->setChecked( true );
       ck_reportrun ->setObjectName( strow + ": RunReport" );
+      ck_reportrun ->setAccessibleName( tr( "Run Report (Channel %1)" ).arg( schan ) );
       genL->addWidget( ck_reportrun,  row,  9, 1, 1, Qt::AlignHCenter );
       connect( ck_reportrun, &QAbstractButton::toggled,
                this,         &US_AnaprofPanGen::reportRunChecked );
@@ -1684,6 +1686,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       //Replicate Groups
       sb_repl_group  = us_spinbox();
       sb_repl_group->setObjectName( strow + ": Replicate --chann_name--" + schan );
+      sb_repl_group->setAccessibleName( tr( "Replicate Group (Channel %1)" ).arg( schan ) );
       sb_repl_group ->setMaximum( nchn );
       genL->addWidget( sb_repl_group,  row,  11, 1, 1, Qt::AlignHCenter );
       // connect( sb_repl_group, SIGNAL( clicked     ( ) ),
@@ -1698,6 +1701,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
+      ck_mwvprefs ->setAccessibleName( tr( "Multiwavelength Preferences (Channel %1)" ).arg( schan ) );
 
       connect( ck_mwvprefs, &QAbstractButton::toggled,
                this,        &US_AnaprofPanGen::mwvChecked );
