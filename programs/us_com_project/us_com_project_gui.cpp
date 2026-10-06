@@ -760,7 +760,7 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
   //Else, continue with closure
   qDebug() << "data_location_disk: " <<  data_location_disk;
   
-  window_closed = true;
+  window_closed = true;   // from now on initAutoflowPanel()/initRecordsDialogue() refuse to open the runs dialogue
   
   if ( !data_location_disk )
     {
@@ -1198,6 +1198,15 @@ void US_InitDialogueGui::resizeEvent(QResizeEvent *event)
 // Init Autoflow Panel
 void US_InitDialogueGui::initAutoflowPanel( void )
 {
+  // The program is closing (US_ComProjectMain::closeEvent() was confirmed): a late/queued call
+  // (e.g. from a stage-finishing slot or a timer, delivered by processEvents()) must NOT open a
+  // new, blocking "Select Optima Run to Follow" dialogue.
+  if ( mainw->window_closed )
+    {
+      qDebug() << "initAutoflowPanel(): program is closing -- not opening the runs dialogue.";
+      return;
+    }
+
   runStatesUpdated = false;
   initRecords();
   initRecordsDialogue();
@@ -1568,6 +1577,16 @@ void US_InitDialogueGui::initRecordsDialogue( void )
   occupied_instruments.clear();
   
   QString autoflow_id_selected("");
+
+  // Same guard right before the blocking exec(): the program may have started closing while the
+  // autoflow records were being read/prepared above.
+  if ( mainw->window_closed )
+    {
+      qDebug() << "initRecordsDialogue(): program is closing -- not exec()-ing the runs dialogue.";
+      pdiag_autoflow->close();
+      initDialogueOpen = false;
+      return;
+    }
   
   if ( pdiag_autoflow->exec() == QDialog::Accepted )
     autoflow_id_selected  = autoflowdata[ prx ][ 0 ];
