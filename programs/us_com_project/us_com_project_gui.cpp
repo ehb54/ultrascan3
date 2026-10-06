@@ -764,14 +764,30 @@ void US_ComProjectMain::closeEvent( QCloseEvent* event )
   
   if ( !data_location_disk )
     {
+      qDebug() << "closeEvent: emitting us_comproject_closed()";
       emit us_comproject_closed();
+      qDebug() << "closeEvent: us_comproject_closed() done; closing init dialogue";
       close_initDialogue();
+      qDebug() << "closeEvent: init dialogue closed";
             
       qApp->processEvents();
+      qDebug() << "closeEvent: processEvents() #1 done";
     }
   
   qApp->processEvents();
+  qDebug() << "closeEvent: processEvents() #2 done; accepting";
   event->accept();
+
+  // DIAGNOSTICS: which top-level windows are still visible?  Any of them keeps the application
+  // alive (quitOnLastWindowClosed only fires when the LAST visible top-level window closes).
+  for ( QWidget* w : QApplication::topLevelWidgets() )
+    if ( w != this  &&  w->isVisible() )
+      qDebug() << "closeEvent: still visible top-level:" << w->metaObject()->className()
+               << w->objectName() << w->windowTitle() << w->geometry();
+
+  // SAFETY NET: leave ALL (possibly nested) event loops and quit, even if a stray top-level
+  // window or a nested exec() is still around.
+  QTimer::singleShot( 0, qApp, &QCoreApplication::quit );
 }
 
 void US_ComProjectMain::to_autoflow_records( void )
@@ -785,9 +801,17 @@ void US_ComProjectMain::close_initDialogue( void )
   qDebug() << "initDialogue: true/false 2 : " << epanInit->initDialogueOpen ;
 
   if ( epanInit-> initDialogueOpen)
-    epanInit->pdiag_autoflow->close();
+    {
+      qDebug() << "close_initDialogue: closing pdiag_autoflow";
+      epanInit->pdiag_autoflow->close();
+      qDebug() << "close_initDialogue: pdiag_autoflow closed";
+    }
   if ( epanInit-> initMsgNorecOpen)
-    epanInit->msg_norec->reject();
+    {
+      qDebug() << "close_initDialogue: rejecting msg_norec";
+      epanInit->msg_norec->reject();
+      qDebug() << "close_initDialogue: msg_norec rejected";
+    }
   //msg_norec->close();
 }
 
