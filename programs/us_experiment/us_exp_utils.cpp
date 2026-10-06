@@ -1146,6 +1146,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 
    setCbCurrentText( cb_exptype,  rpRotor->exptype );
 
+   // changeExpType() is connected to activated() (user selection only), so it is NOT called when the
+   // experiment type is set programmatically (loading a protocol): sync the "Treat as MWL" checkbox
+   // visibility here -- it must be visible ONLY for the Velocity type.
+   const bool is_velocity = ( cb_exptype->currentText() == "Velocity" );
+   ck_velmwl->setVisible( is_velocity );
+
    changed              = was_changed;   // Restore changed state
    DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
 	    << "cb_rotor text" << cb_rotor->currentText();
@@ -1160,7 +1166,7 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
        
        qDebug() << "rpRotor->vel_mwl_prot " << rpRotor->vel_mwl_prot; 
-       ck_velmwl ->setChecked( rpRotor->vel_mwl_prot );
+       ck_velmwl ->setChecked( is_velocity && rpRotor->vel_mwl_prot );
      }
 
    //Show current oper(s) & rev(s)
