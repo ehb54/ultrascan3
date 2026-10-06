@@ -216,6 +216,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Generate GMP or Custom Report from Completed GMP Run:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Loaded Run" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
   pb_view_report   = us_pushbutton( tr( "View Generated Report" ) );
@@ -227,6 +229,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   //Filename path
   QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info =  us_textedit();
+  te_fpath_info->setAccessibleName( tr( "Report File Location" ) );
   QFontMetrics m (te_fpath_info -> font());
   int RowHeight  = m.lineSpacing();
   RowHeight *= 3;
@@ -238,12 +241,15 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions_db     = us_banner( tr( "Download and View GMP Report from DB:" ), 1 );
   QLabel*      lb_loaded_run_db  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run_db               = us_lineedit( tr(""), 0, true );
+  le_loaded_run_db->setAccessibleName( tr( "Loaded Run" ) );
+  lb_loaded_run_db->setBuddy( le_loaded_run_db );
   QPushButton* pb_loadreport_db  = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
   pb_view_report_db              = us_pushbutton( tr( "View Downloaded Report" ) );
 
   //Filename DB path
   QLabel*      lb_fpath_info_db  = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info_db =  us_textedit();
+  te_fpath_info_db->setAccessibleName( tr( "Report File Location" ) );
   te_fpath_info_db -> setFixedHeight  ( RowHeight );
   te_fpath_info_db -> setText( tr( "" ) );
   us_setReadOnly( te_fpath_info_db, true );
@@ -319,6 +325,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -333,6 +340,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -347,6 +355,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( chan_theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -359,6 +368,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -510,6 +520,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -524,6 +535,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -539,6 +551,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -551,6 +564,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );

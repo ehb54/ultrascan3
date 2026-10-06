@@ -103,6 +103,8 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 	QLabel* label = us_label( form_labels[i] );
 
 	lineEdit->setObjectName( form_labels[i] );
+	lineEdit->setAccessibleName( form_labels[i].left( form_labels[i].length() - 1 ) );
+	label->setBuddy( lineEdit );
 
 	if ( form_labels[i] == "Master Password:" )
 	  lineEdit->setEchoMode(QLineEdit::Password);

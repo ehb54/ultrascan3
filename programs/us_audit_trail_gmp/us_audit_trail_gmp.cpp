@@ -2589,6 +2589,7 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  
 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
 	  le_name -> setObjectName( "name: " + current_reviewer );
+	  le_name -> setAccessibleName( tr( "Signer Name" ) );
 	  QString u_role;
 	  if ( JsonListName. contains("operator") )
 	    u_role = "Operator";
@@ -2598,6 +2599,7 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	    u_role = "Approver";
 	      
 	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
+	  le_role -> setAccessibleName( tr( "Signer Role" ) );
 
 	  //TimeDate && Comment
 	  QString e_date, e_decision, e_comment;
@@ -2623,9 +2625,11 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 		}
 	    }
 	  QLineEdit* le_date    = us_lineedit( e_date, 0, true );
+	  le_date -> setAccessibleName( tr( "Signing Date" ) );
 	  
 	  //QLineEdit* le_comment = us_lineedit( e_comment, 0, true );
 	  QTextEdit* te_comment    = us_textedit();
+	  te_comment -> setAccessibleName( tr( "Signing Comment" ) );
 	  te_comment    -> setFixedHeight  ( RowHeight * 2 );
 	  te_comment    ->setFont( QFont( US_Widgets::fixedFont().family(),
 					  US_GuiSettings::fontSize() - 1) );
@@ -2633,8 +2637,9 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  te_comment -> setText( e_comment );
 	  
 	  
-	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d ); 
+	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d );
 	  le_stat -> setObjectName( "status: " + current_reviewer );
+	  le_stat -> setAccessibleName( tr( "Signing Status" ) );
 
 	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
 
