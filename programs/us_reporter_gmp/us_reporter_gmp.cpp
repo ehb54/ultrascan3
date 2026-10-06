@@ -11891,6 +11891,12 @@ void US_ReporterGMP::assemble_pdf( US_GmpProgress * progress_msg )
 
   QString run_id = ( dataSource == "INSTRUMENT" ) ? runID : "N/A";
   QString instr_name = ( dataSource == "INSTRUMENT" ) ? currProto. rpRotor.instrname : "dataDisk";
+
+  //Experiment type as shown in the report: protocol's rpRotor.exptype is just "Velocity"
+  //for VELOCITY-MWL runs, so use the run's expType to report it correctly
+  QString exp_type_disp = currProto. rpRotor.exptype;
+  if ( expType == "VELOCITY-MWL" )
+    exp_type_disp = "Velocity-MWL";
   
   html_operator = tr(     
     "<h3 align=left>Optima Machine/Operator </h3>"
@@ -11910,7 +11916,7 @@ void US_ReporterGMP::assemble_pdf( US_GmpProgress * progress_msg )
     .arg( opers_a  )                       //3
     .arg( revs_a  )                        //4
     .arg( apprs_a  )                       //5
-    .arg( currProto. rpRotor.exptype )     //6
+    .arg( exp_type_disp )                  //6
     ;
   //OPERATOR | REVIEWERS | APPROVERS: end 	  
 
