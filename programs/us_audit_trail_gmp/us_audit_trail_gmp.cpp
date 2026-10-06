@@ -20,14 +20,7 @@
 
 #define MIN_NTC 25
 
-// Build a plain-text transcript of a panel's visible fields for AT-SPI.
-// QTreeWidget::setItemWidget() embeds a widget into a tree cell purely for
-// painting; Qt's item-view accessibility interface (QAccessibleTableCell)
-// never walks into that embedded widget's children -- it only ever reads
-// Qt::AccessibleTextRole/Qt::AccessibleDescriptionRole/Qt::DisplayRole off
-// the tree item's own model data. This reads the already-displayed widget
-// text (read-only, no effect on the embedded widget or its behavior) and
-// stores it as that data so AT-SPI has something to report for the cell.
+// QTreeWidget::setItemWidget() content is invisible to AT-SPI; this reads the already-displayed text as a stand-in.
 static QString us_accessibleSummary( QWidget* panel )
 {
    QStringList parts;
