@@ -48,6 +48,8 @@ class US_GmpProgress : public QDialog
       lb_stage   = new QLabel( this );
       lb_stage->setFont( QFont( fam, fsz + 1, QFont::Bold ) );
       lb_stage->setAlignment( Qt::AlignCenter );
+      lb_stage->setWordWrap( true );     // long stage titles wrap instead of being cut off
+      lb_stage->setMinimumHeight( lb_stage->fontMetrics().lineSpacing() + 4 );
 
       QFrame* line = new QFrame( this );
       line->setFrameShape ( QFrame::HLine );
