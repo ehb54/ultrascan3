@@ -136,6 +136,7 @@ void US_ReportGenGui::build_layout( void )
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   treeWidget->setHeaderLabels( theads );
+  treeWidget->setAccessibleName( tr( "General Report Settings" ) );
   treeWidget->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genL->addWidget(treeWidget);

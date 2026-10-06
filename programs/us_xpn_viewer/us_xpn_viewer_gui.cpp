@@ -317,17 +317,25 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
    QLabel*      lb_dir      = us_label( tr( "Directory" ), -1 );
                  le_dir      = us_lineedit( "", -1, true );
+                 le_dir->setAccessibleName( tr( "Directory" ) );
+                 lb_dir->setBuddy( le_dir );
 
    QLabel*      lb_dbhost   = us_label( tr( "DB Host" ), -1 );
                  le_dbhost   = us_lineedit( "", -1, true );
+                 le_dbhost->setAccessibleName( tr( "DB Host" ) );
+                 lb_dbhost->setBuddy( le_dbhost );
 
    QLabel*      lb_runID    = us_label( tr( "Run ID:" ), -1 );
                  le_runID    = new US_LineEdit_RE( "", -1, false );
+                 le_runID->setAccessibleName( tr( "Run ID" ) );
+                 lb_runID->setBuddy( le_runID );
 
    QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
                 cb_cellchn  = us_comboBox();
+                cb_cellchn->setAccessibleName( tr( "Cell/Channel" ) );
 
                 le_colmap   = us_lineedit( "cm-rainbow", -1, true );
+                le_colmap->setAccessibleName( tr( "Color Map" ) );
 
    int rhgt     = le_runID->height();
 
@@ -337,18 +345,23 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
    QLabel*      lb_rstart   = us_label( tr( "Radius Start:"   ), -1 );
                  cb_rstart   = us_comboBox();
+                 cb_rstart->setAccessibleName( tr( "Radius Start" ) );
    QLabel*      lb_rend     = us_label( tr( "Radius End:"     ), -1 );
                  cb_rend     = us_comboBox();
+                 cb_rend->setAccessibleName( tr( "Radius End" ) );
    QLabel*      lb_lrange    = us_label( tr( "%1 Range:"   ).arg( chlamb ), -1 );
                 le_lrange    = us_lineedit( "280 only", -1, true );
+                le_lrange->setAccessibleName( tr( "Wavelength Range" ) );
 		ptype_mw     = tr( "Plot %1:"    ).arg( chlamb );
 		ptype_tr     = tr( "Wavelength:" );
 		prectype     = ptype_tr;
 
                 lb_pltrec   = us_label( prectype, -1 );
                 cb_pltrec   = us_comboBox();
+                cb_pltrec->setAccessibleName( tr( "Plot Record Type" ) );
    QLabel*      lb_optsys   = us_label( tr( "Optical System:" ), -1 );
                 cb_optsys   = us_comboBox();
+                cb_optsys->setAccessibleName( tr( "Optical System" ) );
 
                 pb_prev     = us_pushbutton( tr( "Previous" ) );
                 pb_next     = us_pushbutton( tr( "Next" ) );
@@ -360,6 +373,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
    QLabel*      lb_rinterv  = us_label( tr( "Update Interval Seconds:" ), -1 );
                 ct_rinterv  = us_counter( 2, 10, 3600, 1 );
+                ct_rinterv->setAccessibleName( tr( "Update Interval Seconds" ) );
    ct_rinterv->setFont( sfont );
    ct_rinterv->setMinimumWidth( lwid );
    ct_rinterv->resize( rhgt, swid );
@@ -373,7 +387,9 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    QLabel*      lb_from     = us_label( tr( "From:" ) );
    QLabel*      lb_to       = us_label( tr( "To:" ) );
                 ct_from     = us_counter( 3, 0, 500, 1 );
+                ct_from->setAccessibleName( tr( "Scan Focus From" ) );
                 ct_to       = us_counter( 3, 0, 500, 1 );
+                ct_to->setAccessibleName( tr( "Scan Focus To" ) );
                 pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
                 pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
    ct_from  ->setFont( sfont );
@@ -392,6 +408,7 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
    //QLabel*      lb_status   = us_banner( tr( "Status" ) );
    //lb_status->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
 
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
@@ -400,12 +417,18 @@ US_XpnDataViewer::US_XpnDataViewer(QString auto_mode) : US_Widgets()
 
    QLabel* lb_stage = us_label( tr( "Current Stage:" ), -1 );
    le_stage = us_lineedit( tr( "" ), -1, true  );
+   le_stage->setAccessibleName( tr( "Current Stage" ) );
+   lb_stage->setBuddy( le_stage );
 
    QLabel* lb_totscans = us_label( tr( "Collected #scans:" ), -1 );
    le_totscans = us_lineedit( tr( "" ), -1, true  );
+   le_totscans->setAccessibleName( tr( "Collected Scans" ) );
+   lb_totscans->setBuddy( le_totscans );
 
    QLabel* lb_omega2T = us_label( tr( "%1<sup>2</sup> t:"   ).arg( chomega ), -1 );
-   le_omega2T = us_lineedit( tr( "" ), -1, true  );   
+   le_omega2T = us_lineedit( tr( "" ), -1, true  );
+   le_omega2T->setAccessibleName( tr( "Omega Squared T" ) );
+   lb_omega2T->setBuddy( le_omega2T );
    
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
@@ -604,6 +627,7 @@ if(mcknt>0)
                                    tr( "Intensity" ) );
 
    data_plot->setMinimumSize( 400, 400 );
+   data_plot->setAccessibleName( tr( "Intensity Plot" ) );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -634,10 +658,16 @@ if(mcknt>0)
    
    QLabel*      lb_elapsed     = us_label( tr( "Elapsed Time:" ), -1 );
                 le_elapsed     = us_lineedit( "00:00:00", -1, true );
+                le_elapsed->setAccessibleName( tr( "Elapsed Time" ) );
+                lb_elapsed->setBuddy( le_elapsed );
    QLabel*      lb_running     = us_label( tr( "Running Time:" ), -1 );
-                le_running     = us_lineedit( "00:00:00", -1, true );		
+                le_running     = us_lineedit( "00:00:00", -1, true );
+                le_running->setAccessibleName( tr( "Running Time" ) );
+                lb_running->setBuddy( le_running );
    QLabel*      lb_remaining   = us_label( tr( "Remaining Time:" ), -1 );
                 le_remaining   = us_lineedit( "00:00:00", -1, true );
+                le_remaining->setAccessibleName( tr( "Remaining Time" ) );
+                lb_remaining->setBuddy( le_remaining );
 
 		
    time_params-> addWidget( lb_elapsed,   row_params,   0, 1, 2 );
@@ -710,6 +740,7 @@ if(mcknt>0)
   
    //data_plot_rpm->setMinimumSize( 50, 400 );
 
+   data_plot_rpm->setAccessibleName( tr( "RPM and Temperature Plot" ) );
    data_plot_rpm->enableAxis( QwtPlot::xBottom, true );
    data_plot_rpm->enableAxis( QwtPlot::yLeft  , true );
    data_plot_rpm->enableAxis( QwtPlot::yRight , true );
@@ -920,8 +951,11 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    QLabel*      lb_dbhost   = us_label( tr( "DB Host" ), -1 );
                 //le_dbhost   = us_lineedit( "", -1, true );
    cb_optima           = new QComboBox( this );                                // New
+   cb_optima->setAccessibleName( tr( "Instrument" ) );
    QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) ); //New
    le_optima_connected = us_lineedit( "", 0, true );                           //New
+   le_optima_connected->setAccessibleName( tr( "Connection Status" ) );
+   lb_optima_connected->setBuddy( le_optima_connected );
    
    //ALEXEY: new way <--------------------------------------------- //New
    US_Passwd pw;
@@ -950,8 +984,10 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
 
    QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
                 cb_cellchn  = us_comboBox();
+                cb_cellchn->setAccessibleName( tr( "Cell/Channel" ) );
 
                 le_colmap   = us_lineedit( "cm-rainbow", -1, true );
+                le_colmap->setAccessibleName( tr( "Color Map" ) );
 
    int rhgt     = le_runID->height();
    ptype_mw     = tr( "Plot %1:"    ).arg( chlamb );
@@ -966,10 +1002,13 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
                 cb_rend     = us_comboBox();
    QLabel*      lb_lrange   = us_label( tr( "%1 Range:"   ).arg( chlamb ), -1 );
                 le_lrange   = us_lineedit( "280 only", -1, true );
+                le_lrange->setAccessibleName( tr( "Wavelength Range" ) );
                 lb_pltrec   = us_label( prectype, -1 );
                 cb_pltrec   = us_comboBox();
+                cb_pltrec->setAccessibleName( tr( "Plot Record Type" ) );
    QLabel*      lb_optsys   = us_label( tr( "Optical System:" ), -1 );
                 cb_optsys   = us_comboBox();
+                cb_optsys->setAccessibleName( tr( "Optical System" ) );
 
                 pb_prev     = us_pushbutton( tr( "Previous" ) );
                 pb_next     = us_pushbutton( tr( "Next" ) );
@@ -979,6 +1018,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
    QLabel*      lb_rinterv  = us_label( tr( "Update Interval Seconds:" ), -1 );
                 ct_rinterv  = us_counter( 2, 10, 3600, 1 );
+                ct_rinterv->setAccessibleName( tr( "Update Interval Seconds" ) );
    ct_rinterv->setFont( sfont );
    ct_rinterv->setMinimumWidth( lwid );
    ct_rinterv->resize( rhgt, swid );
@@ -992,7 +1032,9 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    QLabel*      lb_from     = us_label( tr( "From:" ) );
    QLabel*      lb_to       = us_label( tr( "To:" ) );
                 ct_from     = us_counter( 3, 0, 500, 1 );
+                ct_from->setAccessibleName( tr( "Scan Focus From" ) );
                 ct_to       = us_counter( 3, 0, 500, 1 );
+                ct_to->setAccessibleName( tr( "Scan Focus To" ) );
                 pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
                 pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
    ct_from  ->setFont( sfont );
@@ -1009,6 +1051,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    // Status and standard pushbuttons
    QLabel*      lb_status   = us_banner( tr( "Status" ) );
                 le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
@@ -1138,6 +1181,7 @@ if(mcknt>0)
                                    tr( "Intensity" ) );
 
    data_plot->setMinimumSize( 600, 400 );
+   data_plot->setAccessibleName( tr( "Intensity Plot" ) );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );

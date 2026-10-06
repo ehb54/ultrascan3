@@ -1182,8 +1182,10 @@ US_AnaprofPanGen::US_AnaprofPanGen( QWidget* topw )
 //   genL       ->setObjectName( "GeneralLayout" );
    pb_aproname->setObjectName( "Aprof Button" );
    le_aproname->setObjectName( "Aprof LineEdit" );
+   le_aproname->setAccessibleName( tr( "Analysis Profile Name" ) );
    pb_protname->setObjectName( "Proto Button" );
    le_protname->setObjectName( "Proto LineEdit" );
+   le_protname->setAccessibleName( tr( "Protocol Name" ) );
 
    //pb_scan_excl->setObjectName( "Scan Exclusion" );
 
@@ -1546,11 +1548,17 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       QString stchan      = QString::number( ii ) + ": ";
       le_chann->setObjectName( stchan + "channel" );
+      le_chann->setAccessibleName( tr( "Channel" ) );
       le_lcrat->setObjectName( stchan + "loadconc_ratio" );
+      le_lcrat->setAccessibleName( tr( "Load Concentration Ratio" ) );
       le_lctol->setObjectName( stchan + "loadconc_tolerance" );
+      le_lctol->setAccessibleName( tr( "Load Concentration Tolerance" ) );
       le_ldvol->setObjectName( stchan + "load_volume" );
+      le_ldvol->setAccessibleName( tr( "Load Volume" ) );
       le_lvtol->setObjectName( stchan + "loadvol_tolerance" );
+      le_lvtol->setAccessibleName( tr( "Load Volume Tolerance" ) );
       le_daend->setObjectName( stchan + "dataend" );
+      le_daend->setAccessibleName( tr( "Data End" ) );
 
       //set Validators for fields
       le_lcrat ->setValidator(validator);
@@ -1584,9 +1592,11 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 
       QLineEdit *le_ref_ch  =  us_lineedit( "", 0, true  );
       le_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
+      le_ref_ch ->setAccessibleName( tr( "Reference Channel" ) );
       
       sb_use_ref_ch  = us_spinbox();
       sb_use_ref_ch ->setObjectName( stchan + "RefUseChan --chann_name--" + schan );
+      sb_use_ref_ch ->setAccessibleName( tr( "Use Reference Channel" ) );
       sb_use_ref_ch ->setMinimum( 0 );
       sb_use_ref_ch ->setMaximum( int(nchn/2.0) );
       sb_use_ref_ch -> setEnabled( false );
@@ -3769,10 +3779,12 @@ DbgLv(1) << "APpc: IN";
 
    
    cb_curvtype     = new QComboBox( this );
+   cb_curvtype->setAccessibleName( tr( "Curve Type" ) );
    cb_curvtype->addItems( sl_curvtype );
    cb_curvtype->setCurrentIndex( 0 );
    
    cb_xaxistyp     = new QComboBox( this );
+   cb_xaxistyp->setAccessibleName( tr( "X-Axis Type" ) );
    //cb_xaxistyp->addItems( sl_axistype );
    cb_xaxistyp->addItems( sl_xaxistype );
    cb_xaxistyp->setEnabled( false );
@@ -3782,9 +3794,12 @@ DbgLv(1) << "APpc: IN";
 
    //Add objectName
    le_xmin      -> setObjectName( "xmin" );
+   le_xmin      -> setAccessibleName( tr( "X-Axis Minimum" ) );
    le_xmax      -> setObjectName( "xmax" );
+   le_xmax      -> setAccessibleName( tr( "X-Axis Maximum" ) );
 
    cb_yaxistyp     = new QComboBox( this );
+   cb_yaxistyp->setAccessibleName( tr( "Y-Axis Type" ) );
    //cb_yaxistyp->addItems( sl_axistype );
    cb_yaxistyp->addItems( sl_yaxistype );
    //cb_yaxistyp->setCurrentIndex( 1 );
@@ -3794,9 +3809,12 @@ DbgLv(1) << "APpc: IN";
 
    //Add objectName
    le_ymin      -> setObjectName( "ymin" );
+   le_ymin      -> setAccessibleName( tr( "Y-Axis Minimum" ) );
    le_ymax      -> setObjectName( "ymax" );
+   le_ymax      -> setAccessibleName( tr( "Y-Axis Maximum" ) );
 
    cb_zaxistyp     = new QComboBox( this );
+   cb_zaxistyp->setAccessibleName( tr( "Z-Axis Type" ) );
    cb_zaxistyp->addItems( sl_zaxistyp );
    cb_zaxistyp->setEnabled( false );
 
@@ -3804,6 +3822,7 @@ DbgLv(1) << "APpc: IN";
    le_zvalue       = us_lineedit( "0", 0, false );
    //Add objectName
    le_zvalue      -> setObjectName( "zvalue" );
+   le_zvalue      -> setAccessibleName( tr( "Z-Axis Value" ) );
    
    
    le_varcount     = us_lineedit( "10", 0, false );

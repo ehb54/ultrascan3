@@ -258,6 +258,7 @@ void US_RotorGui::setupGui( int select_db_disk )
    QLabel* lbl_lab = us_label( tr( " Please select a Laboratory:" ) );
    top->addWidget( lbl_lab, row, 0, 1, 2 );
    cb_lab = new QComboBox( this );
+   cb_lab->setAccessibleName( tr( "Laboratory" ) );
    connect( cb_lab, qOverload< int >( &QComboBox::activated ),                                         
                     this, &US_RotorGui::changeLab );
    top->addWidget( cb_lab, row++, 2, 1, 2 );
@@ -272,6 +273,7 @@ void US_RotorGui::setupGui( int select_db_disk )
 
    // List the rotors for selection
    lw_rotors = us_listwidget();
+   lw_rotors->setAccessibleName( tr( "Rotors" ) );
    lw_rotors-> setSortingEnabled( false );
    connect( lw_rotors, &QListWidget::itemClicked,
                        this, &US_RotorGui::selectRotor );
@@ -285,6 +287,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_name, row, 2 );
 
    le_name = us_lineedit( "", -1 );
+   le_name->setAccessibleName( tr( "Rotor Name" ) );
+   lbl_name->setBuddy( le_name );
    le_name->setText( tr("< not selected >"));
    le_name->setPalette ( gray );
    le_name->setReadOnly( true );
@@ -296,6 +300,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_serialNumber, row, 2 );
 
    le_serialNumber = us_lineedit( "", -1 );
+   le_serialNumber->setAccessibleName( tr( "Rotor Serial Number" ) );
+   lbl_serialNumber->setBuddy( le_serialNumber );
    le_serialNumber->setText( tr("< not selected >"));
    le_serialNumber->setPalette ( gray );
    le_serialNumber->setReadOnly( true );
@@ -312,6 +318,7 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( pb_saveCalibration, row++, 2, 1, 2);
 
    lw_calibrations = us_listwidget();
+   lw_calibrations->setAccessibleName( tr( "Calibrations" ) );
    lw_calibrations-> setSortingEnabled( false ); // comes out of mysql sorted
    connect( lw_calibrations, &QListWidget::itemClicked,
                              this, &US_RotorGui::selectCalibration );
@@ -329,6 +336,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_calibName, row, 2 );
 
    le_calibrationLabel = us_lineedit( "", -1 );
+   le_calibrationLabel->setAccessibleName( tr( "Calibration Name" ) );
+   lbl_calibName->setBuddy( le_calibrationLabel );
    le_calibrationLabel->setText( tr("< not available >"));
    le_calibrationLabel->setPalette ( gray );
    le_calibrationLabel->setReadOnly( true );
@@ -340,6 +349,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_coefficients, row, 2 );
 
    le_coefficient1 = us_lineedit( "", -1 );
+   le_coefficient1->setAccessibleName( tr( "Rotor Stretch Coefficient 1" ) );
+   lbl_coefficients->setBuddy( le_coefficient1 );
    le_coefficient1->setText( tr("< not available >"));
    le_coefficient1->setPalette ( gray );
    le_coefficient1->setReadOnly( true );
@@ -349,6 +360,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_date, row, 2 );
 
    le_coefficient2 = us_lineedit( "", -1 );
+   le_coefficient2->setAccessibleName( tr( "Rotor Stretch Coefficient 2" ) );
+   lbl_date->setBuddy( le_coefficient2 );
    le_coefficient2->setText( tr("< not available >"));
    le_coefficient2->setPalette ( gray );
    le_coefficient2->setReadOnly( true );
@@ -358,6 +371,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_force, row, 2 );
 
    le_omega2t = us_lineedit( "", -1 );
+   le_omega2t->setAccessibleName( tr( "Rotor omega2t" ) );
+   lbl_force->setBuddy( le_omega2t );
    le_omega2t->setText( tr("< not available >"));
    le_omega2t->setPalette ( gray );
    le_omega2t->setReadOnly( true );

@@ -3861,6 +3861,8 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   QLabel*     lb_runID   = us_label( tr( "RunID:" ) );
   QLineEdit*  le_runID   = us_lineedit( "", 0, true );
   le_runID -> setObjectName("runID");
+  le_runID -> setAccessibleName( tr( "Run ID" ) );
+  lb_runID -> setBuddy( le_runID );
 
   //Delete button
   QPushButton* pb_delete = new QPushButton( tr( "Cancel" ) );
@@ -3875,37 +3877,51 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   QLabel*     lb_owner   = us_label( tr( "Owner:" ) );
   QLineEdit*  le_owner   = us_lineedit( "", 0, true );
   le_owner -> setObjectName("owner");
+  le_owner -> setAccessibleName( tr( "Owner" ) );
+  lb_owner -> setBuddy( le_owner );
 
   //Last Msg
   QLabel*     lb_lastmsg = us_label( tr( "Last Message:" ) );
   QLineEdit*  le_lastmsg = us_lineedit( "", 0, true );
   le_lastmsg -> setObjectName("lastmsg");
+  le_lastmsg -> setAccessibleName( tr( "Last Message" ) );
+  lb_lastmsg -> setBuddy( le_lastmsg );
 
   //Status
   QLabel*     lb_status  = us_label( tr( "Status:" ) );
   QLineEdit*  le_status  = us_lineedit( "", 0, true );
   le_status -> setObjectName("status");
+  le_status -> setAccessibleName( tr( "Status" ) );
+  lb_status -> setBuddy( le_status );
 
   //Analysis Type
   QLabel*     lb_anatype = us_label( tr( "Analysis Type:" ) );
   QLineEdit*  le_anatype = us_lineedit( "", 0, true );
   le_anatype -> setObjectName("anatype");
+  le_anatype -> setAccessibleName( tr( "Analysis Type" ) );
+  lb_anatype -> setBuddy( le_anatype );
 
   //Submitted On
   QLabel*     lb_submit  = us_label( tr( "Submitted on:" ) );
   QLineEdit*  le_submit  = us_lineedit( "", 0, true );
   le_submit -> setObjectName("submit");
+  le_submit -> setAccessibleName( tr( "Submitted On" ) );
+  lb_submit -> setBuddy( le_submit );
 
   //Running On
   QLabel*     lb_cluster  = us_label( tr( "Running on:" ) );
   QLineEdit*  le_cluster  = us_lineedit( "", 0, true  );
   le_cluster -> setObjectName("cluster");
+  le_cluster -> setAccessibleName( tr( "Running On" ) );
+  lb_cluster -> setBuddy( le_cluster );
   le_cluster->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
   
   //Last Status Update
   QLabel*     lb_lastupd  = us_label( tr( "Last Status Update:" ) );
   QLineEdit*  le_lastupd  = us_lineedit( "", 0, true );
   le_lastupd -> setObjectName("lastupd");
+  le_lastupd -> setAccessibleName( tr( "Last Status Update" ) );
+  lb_lastupd -> setBuddy( le_lastupd );
   
   
   genL->addWidget( lb_runID,   row,    0, 1, 2 );

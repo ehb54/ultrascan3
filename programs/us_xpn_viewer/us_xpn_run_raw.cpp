@@ -23,6 +23,8 @@ US_XpnRunRaw::US_XpnRunRaw( QString& runDesc, QStringList& rdLists )
    QHBoxLayout* search       = new QHBoxLayout;
    QLabel*      lb_search    = us_label( tr( "Search" ) );
                 le_search    = us_lineedit( "" );
+                le_search->setAccessibleName( tr( "Search" ) );
+                lb_search->setBuddy( le_search );
    search      ->addWidget( lb_search );
    search      ->addWidget( le_search );
    connect( le_search, &QLineEdit::textChanged,
@@ -35,6 +37,7 @@ qDebug() << "XRR:  load_runs() return";
 
    // Tree
    tw                     = new QTableWidget( runInfo.size(), 11, this );
+   tw->setAccessibleName( tr( "Raw Runs" ) );
    populate_list();
 qDebug() << "XRR:  populate_list() return";
 

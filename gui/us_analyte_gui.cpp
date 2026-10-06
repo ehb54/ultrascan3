@@ -115,22 +115,50 @@ US_AnalyteMgrSelect::US_AnalyteMgrSelect( int *invID, int *select_db_disk,
    QGridLayout* gfbox   = us_checkbox( tr( "Gradient-Forming" ), ck_gradform );
 
    le_search            = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
    le_molecwt           = us_lineedit( "", -1, true );
+   le_molecwt->setAccessibleName( tr( "Molecular Weight" ) );
+   lb_molecwt->setBuddy( le_molecwt );
    le_vbar20            = us_lineedit( "", -1, true );
+   le_vbar20->setAccessibleName( tr( "VBar" ) );
+   lb_vbar20->setBuddy( le_vbar20 );
    le_residue           = us_lineedit( "", -1, true );
+   le_residue->setAccessibleName( tr( "Residue Count" ) );
+   lb_residue->setBuddy( le_residue );
    le_e280              = us_lineedit( "", -1, true );
+   le_e280->setAccessibleName( tr( "E280" ) );
+   lb_e280->setBuddy( le_e280 );
    le_strand            = us_lineedit( tr( "Double Stranded" ), -1, true );
+   le_strand->setAccessibleName( tr( "Strand" ) );
+   lb_strand->setBuddy( le_strand );
    le_3prime            = us_lineedit( tr( "Hydroxyl" ),        -1, true );
+   le_3prime->setAccessibleName( tr( "Three Prime" ) );
+   lb_3prime->setBuddy( le_3prime );
    le_5prime            = us_lineedit( tr( "Phospate" ),        -1, true );
+   le_5prime->setAccessibleName( tr( "Five Prime" ) );
+   lb_5prime->setBuddy( le_5prime );
    le_sodium            = us_lineedit( "1.00", -1, true );
+   le_sodium->setAccessibleName( tr( "Sodium, Na+" ) );
+   lb_sodium->setBuddy( le_sodium );
    le_potassium         = us_lineedit( "0.00", -1, true );
+   le_potassium->setAccessibleName( tr( "Potassium, K+" ) );
+   lb_potassium->setBuddy( le_potassium );
    le_lithium           = us_lineedit( "0.34", -1, true );
+   le_lithium->setAccessibleName( tr( "Lithium, Li+" ) );
+   lb_lithium->setBuddy( le_lithium );
    le_magnesium         = us_lineedit( "0.00", -1, true );
+   le_magnesium->setAccessibleName( tr( "Magnesium, Mg+" ) );
+   lb_magnesium->setBuddy( le_magnesium );
    le_calcium           = us_lineedit( "0.00", -1, true );
+   le_calcium->setAccessibleName( tr( "Calcium, Ca+" ) );
+   lb_calcium->setBuddy( le_calcium );
 
    lw_analyte_list      = us_listwidget();
+   lw_analyte_list->setAccessibleName( tr( "Analytes" ) );
    lw_analyte_list->setSelectionMode( QAbstractItemView::ExtendedSelection );
    te_analyte_smry      = us_textedit();
+   te_analyte_smry->setAccessibleName( tr( "Analyte Summary" ) );
    te_analyte_smry->setTextColor( Qt::blue );
    te_analyte_smry->setFont( QFont( US_Widgets::fixedFont().family(),
                                     US_GuiSettings::fontSize() ) );
@@ -1409,6 +1437,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    
    lb_descrip   = us_label( tr( "Analyte Name:" ) );
    le_descrip   = us_lineedit( "New Analyte", 0, false );
+   le_descrip->setAccessibleName( tr( "Analyte Name" ) );
+   lb_descrip->setBuddy( le_descrip );
    connect( le_descrip, &QLineEdit::editingFinished, this, &US_AnalyteMgrNew::new_description );
 
    // Start Protein widget /////////////////////////////////////////////////
@@ -1424,6 +1454,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     protein_info->addWidget( lb_protein_mw, prow, 0 );
 
     le_protein_mw = us_lineedit( "0", 0, false );
+    le_protein_mw->setAccessibleName( tr( "Molecular Weight" ) );
+    lb_protein_mw->setBuddy( le_protein_mw );
     protein_info->addWidget( le_protein_mw, prow, 1 );
 
     QLabel* lb_protein_vbar20 = us_label( 
@@ -1431,6 +1463,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     protein_info->addWidget( lb_protein_vbar20, prow, 2 );
 
     le_protein_vbar20 = us_lineedit(  "0.0000", 0, false );
+    le_protein_vbar20->setAccessibleName( tr( "VBar at 20C" ) );
+    lb_protein_vbar20->setBuddy( le_protein_vbar20 );
     connect( le_protein_vbar20, &QLineEdit::textChanged, this, &US_AnalyteMgrNew::value_changed );
     protein_info->addWidget( le_protein_vbar20, prow++, 3 );
 
@@ -1443,6 +1477,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     protein_info->addWidget( lb_protein_temp, prow, 0 );
 
     le_protein_temp = us_lineedit( QString::number( temperature, 'f', 1 ) );
+    le_protein_temp->setAccessibleName( tr( "Temperature" ) );
+    lb_protein_temp->setBuddy( le_protein_temp );
   
     if ( signal_tmp )
     {
@@ -1461,12 +1497,16 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
     le_protein_vbar = us_lineedit( "0.0000", 0, true );
+    le_protein_vbar->setAccessibleName( tr( "VBar at T" ) );
+    lb_protein_vbar->setBuddy( le_protein_vbar );
     protein_info->addWidget( le_protein_vbar, prow++, 3 );
     
     QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
     protein_info->addWidget( lb_protein_residues, prow, 0 );
 
     le_protein_residues = us_lineedit( "0", 0, true );
+    le_protein_residues->setAccessibleName( tr( "Residue Count" ) );
+    lb_protein_residues->setBuddy( le_protein_residues );
     protein_info->addWidget( le_protein_residues, prow, 1 );
       
     QLabel* lb_protein_e280     = us_label(
@@ -1475,6 +1515,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     
     //le_protein_e280 = us_lineedit( "0", 0, true );
     le_protein_e280 = us_lineedit( "0", 0, false );
+    le_protein_e280->setAccessibleName( tr( "E280" ) );
+    lb_protein_e280->setBuddy( le_protein_e280 );
     connect( le_protein_e280, &QLineEdit::textChanged,
 	                      this, &US_AnalyteMgrNew::value_changed_e280 );
 
@@ -1565,6 +1607,7 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    ratios->addWidget( lb_sodium, 1, 0 );
 
    ct_sodium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_sodium->setAccessibleName( tr( "Sodium, Na+" ) );
    ct_sodium->setSingleStep( 0.01 );
    connect( ct_sodium, &QwtCounter::valueChanged,
                         this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
@@ -1574,6 +1617,7 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    ratios->addWidget( lb_potassium, 2, 0 );
 
    ct_potassium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_potassium->setAccessibleName( tr( "Potassium, K+" ) );
    ct_potassium->setSingleStep( 0.01 );
    connect( ct_potassium, &QwtCounter::valueChanged,
 	                 this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
@@ -1583,6 +1627,7 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    ratios->addWidget( lb_lithium, 3, 0 );
 
    ct_lithium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_lithium->setAccessibleName( tr( "Lithium, Li+" ) );
    ct_lithium->setSingleStep( 0.01 );
    connect( ct_lithium, &QwtCounter::valueChanged,
                          this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
@@ -1592,6 +1637,7 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    ratios->addWidget( lb_magnesium, 4, 0 );
 
    ct_magnesium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_magnesium->setAccessibleName( tr( "Magnesium, Mg+" ) );
    ct_magnesium->setSingleStep( 0.01 );
    connect( ct_magnesium, &QwtCounter::valueChanged,
                            this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
@@ -1601,6 +1647,7 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    ratios->addWidget( lb_calcium, 5, 0 );
 
    ct_calcium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_calcium->setAccessibleName( tr( "Calcium, Ca+" ) );
    ct_calcium->setSingleStep( 0.01 );
    connect( ct_calcium, &QwtCounter::valueChanged,
                          this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
@@ -1613,6 +1660,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    nucle_data->addWidget( lb_nucle_mw, 0, 0 );
 
    le_nucle_mw = us_lineedit( "", -2, true );
+   le_nucle_mw->setAccessibleName( tr( "Molecular Weight" ) );
+   lb_nucle_mw->setBuddy( le_nucle_mw );
    nucle_data->addWidget( le_nucle_mw, 0, 1, 1, 3 );
 
    QLabel* lb_nucle_vbar = us_label( 
@@ -1620,6 +1669,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    nucle_data->addWidget( lb_nucle_vbar, 1, 0 );
 
    le_nucle_vbar = us_lineedit( "0.5500" );
+   le_nucle_vbar->setAccessibleName( tr( "VBar" ) );
+   lb_nucle_vbar->setBuddy( le_nucle_vbar );
    connect( le_nucle_vbar, &QLineEdit::textChanged,
                             this, &US_AnalyteMgrNew::value_changed );
    nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
@@ -1644,6 +1695,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    carbs_info->addWidget( lb_carbs_mw,   1, 0 );
 
    le_carbs_mw = us_lineedit( "" );
+   le_carbs_mw->setAccessibleName( tr( "Molecular Weight" ) );
+   lb_carbs_mw->setBuddy( le_carbs_mw );
    carbs_info->addWidget( le_carbs_mw,   1, 1 );
 
    QLabel* lb_carbs_vbar = us_label( 
@@ -1651,6 +1704,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    carbs_info->addWidget( lb_carbs_vbar, 1, 2 );
 
    le_carbs_vbar = us_lineedit( "" );
+   le_carbs_vbar->setAccessibleName( tr( "VBar" ) );
+   lb_carbs_vbar->setBuddy( le_carbs_vbar );
    carbs_info->addWidget( le_carbs_vbar, 1, 3 );
 
    // End Carbohydrates widget //////////////////////////////////////////
@@ -2765,6 +2820,7 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
    QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
    le_descrip    = us_lineedit( analyte->description );
+   le_descrip->setAccessibleName( tr( "Description" ) );
 
    bn_modana->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -2942,6 +2998,7 @@ US_AnalyteMgrSettings::US_AnalyteMgrSettings( int *invID, int *select_db_disk )
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );

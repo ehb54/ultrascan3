@@ -32,6 +32,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_start, row, 0 );
 
    ct_start = us_counter( 3, 1.0, scanCount, 1.0 );
+   ct_start->setAccessibleName( tr( "Start Exclusion at Scan" ) );
    ct_start->setSingleStep( 1.0 );
    QFontMetrics fm( ct_start->font() );
    ct_start->setMinimumWidth( fm.maxWidth() * 10 );
@@ -45,6 +46,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_stop, row, 0 );
 
    ct_stop = us_counter( 3, 1.0, scanCount, scanCount );
+   ct_stop->setAccessibleName( tr( "Stop Exclusion at Scan" ) );
    ct_stop->setSingleStep( 1.0 );
    connect( ct_stop, &QwtCounter::valueChanged,
                      this, &US_ExcludeProfile::update_stop );
@@ -55,6 +57,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_nth, row, 0 );
 
    ct_nth = us_counter( 2, 1.0, scanCount, 1.0 );
+   ct_nth->setAccessibleName( tr( "Include Every Nth Scan" ) );
    ct_nth->setSingleStep( 1.0 );
    connect( ct_nth, &QwtCounter::valueChanged,
                     this, &US_ExcludeProfile::update );
@@ -65,6 +68,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_remaining, row, 0 );
 
    le_remaining = us_lineedit( QString::number( scanCount ) + tr( " scans" ), -1, true );
+   le_remaining->setAccessibleName( tr( "Remaining Scans" ) );
    main->addWidget( le_remaining, row++, 1 );
 
    // Row
@@ -72,6 +76,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_excluded, row, 0 );
 
    le_excluded = us_lineedit( tr( "0 scans" ), -1, true );
+   le_excluded->setAccessibleName( tr( "Excluded Scans" ) );
    main->addWidget( le_excluded, row++, 1 );
 
    // Button Row
