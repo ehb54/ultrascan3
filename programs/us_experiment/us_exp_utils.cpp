@@ -2598,6 +2598,8 @@ DbgLv(1) << "EGSo:inP: call rbS";
       }
       cc_labls[ ii ]->setText( channel );
       setCbCurrentText( cc_solus[ ii ], solution );
+      cc_solus[ ii ]->setAccessibleName( tr( "Solution (Channel %1)" ).arg( channel ) );
+      cc_mancomms[ ii ]->setAccessibleName( tr( "Solution Comment (Channel %1)" ).arg( channel ) );
 
       //sols. comments:
        QString protocol_comment("");
@@ -2994,6 +2996,9 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       QCheckBox* ckbox1   = (QCheckBox*)cc_osyss[ ii ]->button( 1 );
       QCheckBox* ckbox2   = (QCheckBox*)cc_osyss[ ii ]->button( 2 );
       QCheckBox* ckbox3   = (QCheckBox*)cc_osyss[ ii ]->button( 3 );
+      ckbox1->setAccessibleName( ckbox1->text() + tr( " (Cell %1)" ).arg( channel ) );
+      ckbox2->setAccessibleName( ckbox2->text() + tr( " (Cell %1)" ).arg( channel ) );
+      ckbox3->setAccessibleName( ckbox3->text() + tr( " (Cell %1)" ).arg( channel ) );
       QString ckscan1     = ckbox1->text();
       QString ckscan2     = ckbox2->text();
       QString ckscan3     = ckbox3->text();
@@ -3296,6 +3301,8 @@ DbgLv(1) << "EGRn:inP:    ii" << ii << "channel" << channel;
 
       cc_lrads[ ii ]->setValue( locrads[ ii ] );
       cc_hrads[ ii ]->setValue( hicrads[ ii ] );
+      cc_lrads[ ii ]->setAccessibleName( tr( "Radius From (Channel %1)" ).arg( channel ) );
+      cc_hrads[ ii ]->setAccessibleName( tr( "Radius To (Channel %1)" ).arg( channel ) );
 
       //abde
       cc_buff_sp_ck[ ii ]->setChecked( abde_buff[ ii ] );

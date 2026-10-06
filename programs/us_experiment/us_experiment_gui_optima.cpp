@@ -716,6 +716,8 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
+   // QSpinBox has no "stepSize" property, so Qt's accessible interface always reads it as invalid (CRASH-01).
+   ct_tempera->setProperty( "stepSize", QVariant::fromValue( double( ct_tempera->singleStep() ) ) );
 
    //delay
    ct_tedelay->setSingleStep( 1 );
@@ -1506,13 +1508,21 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    lb_smes_to_assign   = us_label( "SME List:" );
 
    pb_add_oper      = us_pushbutton( tr( "Add to List" ) );
+   pb_add_oper->setAccessibleName( tr( "Add Operator to List" ) );
    pb_remove_oper   = us_pushbutton( tr( "Remove Last" ) );
+   pb_remove_oper->setAccessibleName( tr( "Remove Last Operator" ) );
    pb_add_rev       = us_pushbutton( tr( "Add to List" ) );
+   pb_add_rev->setAccessibleName( tr( "Add Reviewer to List" ) );
    pb_remove_rev    = us_pushbutton( tr( "Remove Last" ) );
+   pb_remove_rev->setAccessibleName( tr( "Remove Last Reviewer" ) );
    pb_add_appr      = us_pushbutton( tr( "Add to List" ) );
+   pb_add_appr->setAccessibleName( tr( "Add Approver to List" ) );
    pb_remove_appr   = us_pushbutton( tr( "Remove Last" ) );
+   pb_remove_appr->setAccessibleName( tr( "Remove Last Approver" ) );
    pb_add_sme       = us_pushbutton( tr( "Add to List" ) );
+   pb_add_sme->setAccessibleName( tr( "Add SME to List" ) );
    pb_remove_sme    = us_pushbutton( tr( "Remove Last" ) );
+   pb_remove_sme->setAccessibleName( tr( "Remove Last SME" ) );
 
    te_opers_to_assign    = us_textedit();
    //te_opers_to_assign    ->setTextColor( Qt::blue );
@@ -4808,6 +4818,10 @@ DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
       cb_wind->setObjectName( strow + ": windows" );
       cb_cenp->setAccessibleName( tr( "Centerpiece (Cell %1)" ).arg( ii + 1 ) );
       cb_wind->setAccessibleName( tr( "Windows (Cell %1)" ).arg( ii + 1 ) );
+      // Combo Name is always the selected value on Linux; buddy relations carry purpose instead.
+      clabl->setBuddy( cb_cenp );
+      QLabel* lb_wind_a11y = us_label( tr( "Windows" ) );   // accessibility-only, never shown
+      lb_wind_a11y->setBuddy( cb_wind );
 
       genL->addWidget( clabl,   row,   0, 1, 1 );
       genL->addWidget( cb_cenp, row,   1, 1, 6 );
