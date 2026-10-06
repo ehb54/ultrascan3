@@ -8336,19 +8336,43 @@ void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJs
 
 	if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
 	  {
-	    QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object();
+	    QJsonObject dec = QJsonDocument::fromJson( db_sp.value( 0 ).toString().toUtf8() ).object();  //channels' decisions
+	    QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object();  //species selections
 
-	    for ( auto it = sel.constBegin(); it != sel.constEnd(); ++it )
+	    // All channels, whether decided (Approved/Rejected) or having a species selection
+	    QStringList chan_keys = dec.keys();
+	    for ( const QString& k : sel.keys() )
+	      if ( ! chan_keys.contains( k ) )
+		chan_keys << k;
+	    QCollator collator;
+	    collator.setNumericMode( true );
+	    std::sort( chan_keys.begin(), chan_keys.end(),
+		       [&collator]( const QString& x, const QString& y )
+		       { return collator.compare( x, y ) < 0; } );
+
+	    for ( const QString& key : chan_keys )
 	      {
-		QJsonObject co = it.value().toObject();
-		QStringList s_sel, s_all;
-		QJsonArray  a1 = co.value( "selected"  ).toArray();
-		QJsonArray  a2 = co.value( "available" ).toArray();
-		for ( int i = 0; i < a1.size(); ++i ) s_sel << a1[ i ].toString();
-		for ( int i = 0; i < a2.size(); ++i ) s_all << a2[ i ].toString();
+		QString decision = dec.value( key ).toObject().value( "decision" ).toString();
+		bool    rejected = ( decision == "Rejected" );
+		QString dec_lbl  = ( decision == "Accepted" ) ? tr( "Approved" )
+		                 : ( rejected ? tr( "Rejected" ) : tr( "Not decided" ) );
 
-		QString line = it.key() + ": " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
-		species_html += "<tr><td>" + line.toHtmlEscaped() + "</td></tr>";
+		QString line = key + ": " + dec_lbl;
+		if ( sel.contains( key ) )
+		  {
+		    QJsonObject co = sel.value( key ).toObject();
+		    QStringList s_sel, s_all;
+		    QJsonArray  a1 = co.value( "selected"  ).toArray();
+		    QJsonArray  a2 = co.value( "available" ).toArray();
+		    for ( int i = 0; i < a1.size(); ++i ) s_sel << a1[ i ].toString();
+		    for ( int i = 0; i < a2.size(); ++i ) s_all << a2[ i ].toString();
+		    line += " -- " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
+		  }
+
+		QString cell = line.toHtmlEscaped();
+		if ( rejected )
+		  cell = "<font color=\"red\">" + cell + "</font>";
+		species_html += "<tr><td>" + cell + "</td></tr>";
 	      }
 	  }
       }
@@ -8359,7 +8383,7 @@ void US_ReporterGMP::user_interactions_analysis_velmwl( QString analysisVelMwlJs
 
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Species Selected for Report (Integration Results): </i></b> </caption>"
+			   "<caption align=left> <b><i>Channels' Decisions and Species Selected for Report (Integration Results): </i></b> </caption>"
 			   "</table>"
 			   "<table style=\"margin-left:25px\">"
 			   "%1"
