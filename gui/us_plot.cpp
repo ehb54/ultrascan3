@@ -244,6 +244,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( toolBarColor() );
    toolBar->setOrientation( Qt::Vertical );
+   toolBar->setAccessibleName( title.isEmpty() ? tr( "Plot Tools" ) : title + tr( " Plot Tools" ) );
 
    // Recolor the bar when the color scheme is switched while it is on screen
    toolBar->installEventFilter( this );
