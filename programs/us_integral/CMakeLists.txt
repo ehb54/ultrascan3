@@ -4,6 +4,7 @@ set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(us_integral
     ${src_dir}/us_integral.cpp
+    ${src_dir}/us_integral_main.cpp
     ${src_dir}/us_delete_models.cpp
 )
 

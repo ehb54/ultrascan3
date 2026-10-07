@@ -19,8 +19,11 @@
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
-US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details_p ) : US_AnalysisBase2()
+US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details_p,
+                                    const std::function< void( int, int, const QString& ) >& aprof_progress )
+  : US_AnalysisBase2()
 {
+     aprof_progress_cb = aprof_progress;   // must be set before read_protocol() runs (below)
      setWindowTitle( tr( "MWL Species Fit Analysis" ) );
 
    dbg_level   = US_Settings::us_debug();
@@ -184,24 +187,69 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
 		    << triple_text << ", " << triple_text_1;
 
 	   //
-	   if( !channels_to_analyse.contains( triple_text_1 ) )
+	   QString auto_flag_ = protocol_details[ "auto_flag_mwlfit" ];
+	   if ( auto_flag_.isEmpty() && auto_flag_ != "VELMWL_MWLFIT_SIM_ANALYSIS" )
 	     {
-	       qDebug() << "Channel " << triple_text_1 << " will NOT be analysed!";
-	       continue;
+	       if( !channels_to_analyse.contains( triple_text_1 ) )
+		 {
+		   qDebug() << "Channel " << triple_text_1 << " will NOT be analysed!";
+		   continue;
+		 }
+	       
+	       if ( this->protocol_details["abde_etype"] == "MWL" )
+		 {
+		   //associate ext. profiles
+		   QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
+		   
+		   loadSpecs_auto( analytes_profs );
+		   specFitData();
+		   
+		   //save ssf-dir name for future DB save
+		   protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
+		 }
 	     }
-
-	   if ( this->protocol_details["abde_etype"] == "MWL" )
+	   else //VEL-MWL
 	     {
-	       //associate ext. profiles
-	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ triple_text ];
+	       //ALEXEY: No "already decided?" or "claim" check here anymore --
+	       //that has to happen one level up, in US_Analysis_auto's
+	       //channels_all loop (us_autoflow_analysis.cpp), BEFORE the
+	       //(expensive) simulation + save pipeline runs for this channel
+	       //at all. By the time US_MwlSpeciesFit is constructed here, the
+	       //sim/save work for this channel has already happened, so
+	       //skipping only at this point would still waste that work on a
+	       //re-attached run's already-decided channel. This constructor
+	       //now assumes the caller has already established that this
+	       //channel genuinely needs (re-)processing.
+	       chann_to_process_velmwl = protocol_details[ "chan_to_analyse" ];
+	       QMap< QString, QMap< double, double > > analytes_profs = extinction_profiles_per_channel[ chann_to_process_velmwl ];
 	       
 	       loadSpecs_auto( analytes_profs );
 	       specFitData();
-	       
+		   
 	       //save ssf-dir name for future DB save
 	       protocol_details_p["ssf_dir_name"] = this->protocol_details["ssf_dir_name"];
+
+	       //update GUI
+	       pb_loadsfit  ->hide();
+	       pb_sfitdata  ->hide();
+	       pb_load      ->hide();
+	       pb_details   ->hide();
+	       pb_view      ->hide();
+	       pb_save      ->hide();
+	       pb_reset     ->hide();
+	       pb_help      ->hide();
+	       pb_close     ->hide();
+	       wrapper_lo_edlast ->hide();
+	       wrapper_disk_controls ->hide();
+	       
+	       pb_reject_velmwl    = us_pushbutton( tr( "Reject Channel Deconvolution" ) );
+	       pb_accept_velmwl    = us_pushbutton( tr( "Accept Channel Deconvolution" ) );
+	       connect( pb_reject_velmwl, &QPushButton::clicked, this, &US_MwlSpeciesFit::reject_velmwl );
+	       connect( pb_accept_velmwl, &QPushButton::clicked, this, &US_MwlSpeciesFit::accept_velmwl );
+	       
+	       buttonLayout->addWidget( pb_reject_velmwl );
+	       buttonLayout->addWidget( pb_accept_velmwl );
 	     }
-	   
 	   // //pass ranges from reportItems
 	   // protocol_details_p["channels_to_radial_ranges"] = this->protocol_details[ "channels_to_radial_ranges" ];
 	   // protocol_details_p[ "directory_for_gmp" ] = this->protocol_details[ "directory_for_gmp" ];
@@ -209,7 +257,242 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
        rmsd_for_gmp.chop(1);
        protocol_details_p[ "rmsds_for_gmp" ] = rmsd_for_gmp;
        qDebug() << "RMDSs -- " << rmsd_for_gmp;
+       qDebug() << "SSF DIR -- " << protocol_details_p["ssf_dir_name"];
      }
+}
+
+void US_MwlSpeciesFit::reject_velmwl()
+{
+  qDebug() << "[Mwl-FIT]Rejecting VEL-MWL deconvolution results!";
+
+  //ALEXEY: Nothing to persist for a Reject -- pass an empty filename.
+  QString recorded_decision, recorded_decisionByName, recorded_decisionTs, recorded_filename;
+  bool newly_recorded = record_velmwl_channel_decision( chann_to_process_velmwl, "Rejected",
+							  QString(),
+							  recorded_decision,
+							  recorded_decisionByName,
+							  recorded_decisionTs,
+							  recorded_filename );
+
+  if ( newly_recorded )
+    {
+      QMessageBox::information( this,
+	  tr( "Channel Deconvolution Rejected" ),
+	  tr( "Channel %1 has been marked as REJECTED.\n\n"
+	      "This decision has been recorded. If this run is re-attached "
+	      "later, the channel will be skipped rather than re-processed." )
+	  .arg( chann_to_process_velmwl ) );
+    }
+  else
+    {
+      //ALEXEY: First-decision-wins -- another session's decision for
+      //this channel got there first, between when this dialog opened
+      //and now. Don't tell the user their Reject was recorded, since
+      //it wasn't; tell them what actually is on record.
+      QMessageBox::information( this,
+	  tr( "Channel Already Decided" ),
+	  tr( "Channel %1 was already marked %2 by %3 at %4.\n\n"
+	      "Your Reject click was not recorded; moving on with the "
+	      "existing decision." )
+	  .arg( chann_to_process_velmwl, recorded_decision,
+		recorded_decisionByName, recorded_decisionTs ) );
+    }
+
+  //ALEXEY: Reflect whatever actually won -- not necessarily what was
+  //just clicked -- both locally and in which signal fires, so the rest
+  //of the pipeline (US_Analysis_auto::velmwl_deconv_accepted()/
+  //rejected()) treats this channel according to its true recorded
+  //decision.
+  velmwl_channel_decisions[ chann_to_process_velmwl ] = recorded_decision;
+
+  if ( recorded_decision == "Accepted" )
+    emit accept_velmwl_s( chann_to_process_velmwl );
+  else
+    emit reject_velmwl_s( chann_to_process_velmwl );
+}
+
+void US_MwlSpeciesFit::accept_velmwl()
+{
+  qDebug() << "[Mwl-FIT]Accepting VEL-MWL deconvolution results!";
+
+  //ALEXEY: Same value US_Analysis_auto::velmwl_deconv_accepted() used to
+  //derive independently from ssf_dir_name for its own, separate filename
+  //write -- computed here instead so it can go out atomically with the
+  //decision below, in a single DB call.
+  QString ssf_dir_mwl        = protocol_details[ "ssf_dir_name" ];
+  QString filename_for_chann = ssf_dir_mwl.section( "/", -1, -1 );
+
+  QString recorded_decision, recorded_decisionByName, recorded_decisionTs, recorded_filename;
+  bool newly_recorded = record_velmwl_channel_decision( chann_to_process_velmwl, "Accepted",
+							  filename_for_chann,
+							  recorded_decision,
+							  recorded_decisionByName,
+							  recorded_decisionTs,
+							  recorded_filename );
+
+  if ( newly_recorded )
+    {
+      QMessageBox::information( this,
+	  tr( "Channel Deconvolution Accepted" ),
+	  tr( "Channel %1 has been marked as ACCEPTED.\n\n"
+	      "This decision has been recorded. If this run is re-attached "
+	      "later, the channel will be skipped rather than re-processed." )
+	  .arg( chann_to_process_velmwl ) );
+    }
+  else
+    {
+      //ALEXEY: See reject_velmwl() above -- same first-decision-wins
+      //handling.
+      QMessageBox::information( this,
+	  tr( "Channel Already Decided" ),
+	  tr( "Channel %1 was already marked %2 by %3 at %4.\n\n"
+	      "Your Accept click was not recorded; moving on with the "
+	      "existing decision." )
+	  .arg( chann_to_process_velmwl, recorded_decision,
+		recorded_decisionByName, recorded_decisionTs ) );
+    }
+
+  velmwl_channel_decisions[ chann_to_process_velmwl ] = recorded_decision;
+
+  if ( recorded_decision == "Accepted" )
+    emit accept_velmwl_s( chann_to_process_velmwl );
+  else
+    emit reject_velmwl_s( chann_to_process_velmwl );
+}
+
+//ALEXEY: Persist this channel's Accept/Reject decision into a dedicated
+//VEL-MWL DB table (one row per autoflowID+channel), mirroring how ABDE
+//analysis parameters/status are saved via US_Norm_Profile's
+//record_AnalysisABDE_status()/update_autoflow_record_atAnalysisABDE()
+//(a single JSON blob written into autoflowStatus once, at Save-Profiles
+//time for the whole run). The two schemes now match more closely than
+//that comment used to suggest: autoflowAnalysisVelMwl is likewise one
+//row per run (autoflowID UNIQUE), holding a JSON object keyed by
+//channel -- but unlike ABDE's one-time write, VEL-MWL channels are
+//decided one at a time as the pipeline works through channels_all in
+//US_Analysis_auto::get_ssf_dir_and_saveDB(), so this call updates just
+//this channel's key in that JSON object as soon as the user clicks
+//Accept/Reject, rather than writing the whole row at once.
+//
+//ALEXEY: First-decision-wins. update_autoflowAnalysisVelMwl_channel_
+//decision() enforces this atomically (under its own row lock) rather
+//than this function checking first and writing second -- a
+//check-then-write here would itself race two sessions clicking at
+//nearly the same moment. Returns whether THIS call's decision won.
+bool US_MwlSpeciesFit::record_velmwl_channel_decision( QString chann, QString decision,
+                                                         QString filename,
+                                                         QString& recorded_decision,
+                                                         QString& recorded_decisionByName,
+                                                         QString& recorded_decisionTs,
+                                                         QString& recorded_filename )
+{
+  //ALEXEY: Fallback for the two "couldn't consult the DB at all" cases
+  //below (no autoflowID, or connection failure) -- treat this click as
+  //authoritative locally rather than blocking the whole VEL-MWL flow
+  //on a missing autoflowID or a transient DB/network problem. This
+  //can't detect a genuine cross-session race in that case, but that's
+  //no worse than this function's previous, always-unconditional
+  //behavior.
+  recorded_decision       = decision;
+  recorded_decisionByName = QString();
+  recorded_decisionTs     = QString();
+  recorded_filename       = filename;
+
+  QString autoflowID = protocol_details[ "autoflowID" ];
+  if ( autoflowID.isEmpty() )
+    {
+      qDebug() << "[Mwl-Fit] record_velmwl_channel_decision(): no autoflowID -- "
+		  "skipping DB save.";
+      return true;
+    }
+
+  US_Passwd pw;
+  US_DB2*   db = new US_DB2( pw.getPasswd() );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+	  tr( "Could not connect to database: \n" ) + db->lastError() );
+      delete db;
+      return true;
+    }
+
+  //Who is recording this decision (for the audit trail / report)
+  QStringList qry1;
+  qry1 << "get_user_info";
+  db->query( qry1 );
+  db->next();
+  int     u_ID     = db->value( 0 ).toInt();
+  QString u_fname  = db->value( 1 ).toString();
+  QString u_lname  = db->value( 2 ).toString();
+
+  QStringList qry;
+  qry << "update_autoflowAnalysisVelMwl_channel_decision"   //one row per run; this channel's key within it
+      << autoflowID
+      << chann
+      << decision
+      << QString::number( u_ID )
+      << ( u_lname + ", " + u_fname )
+      << filename;   //ALEXEY: new -- persisted atomically with the decision instead of
+                      //via a second, separate write from US_Analysis_auto::
+                      //velmwl_deconv_accepted(). Empty for Reject. REQUIRES
+                      //update_autoflowAnalysisVelMwl_channel_decision() in
+                      //us3_autoflow_procs.sql to accept this extra parameter
+                      //and store it under the channel's "filename" JSON key
+                      //(the key process_velmwl_after_all_channels_decided()
+                      //already reads back) -- see the header doc comment.
+
+  //ALEXEY: Deliberately db->query() here, NOT db->statusQuery() --
+  //this proc returns a *second* result set beyond the status one (see
+  //update_autoflowAnalysisVelMwl_channel_decision() in
+  //us3_autoflow_procs.sql), and statusQuery() is only ever used
+  //elsewhere in this codebase for procs that return status alone;
+  //chaining a next() after it does not reach that second result set.
+  //load_velmwl_channel_decision() (US_Analysis_auto, same "status
+  //select then data select" shape) uses exactly this query()+
+  //lastErrno()+next() pattern, successfully.
+  db->query( qry );
+
+  if ( db->lastErrno() != US_DB2::OK )
+    {
+      qDebug() << "[Mwl-Fit] Failed to save VEL-MWL channel decision to DB; status ="
+	       << db->lastErrno();
+      delete db;
+      return true;   //ALEXEY: same fallback as above -- couldn't get a real answer from the DB.
+    }
+
+  //ALEXEY: Second result set from update_autoflowAnalysisVelMwl_
+  //channel_decision() -- newly_recorded, recorded_decision,
+  //recorded_decisionByID, recorded_decisionByName, recorded_decisionTs,
+  //recorded_filename (column 2, decisionByID, deliberately unused here).
+  //Tells us whether THIS call's decision is the one now on record, or
+  //whether an earlier call (this or another session) already won this
+  //channel -- and with it, whose filename actually got persisted.
+  //recorded_filename (column 5) is new: falls back to the locally-passed
+  //`filename` above if the proc hasn't been migrated yet to return it (an
+  //older/unmigrated proc simply won't populate a 6th column, and
+  //QSqlQuery::value() on an out-of-range index returns an invalid,
+  //empty-string QVariant).
+  bool newly_recorded = true;
+  if ( db->next() )
+    {
+      newly_recorded          = db->value( 0 ).toBool();
+      recorded_decision       = db->value( 1 ).toString();
+      recorded_decisionByName = db->value( 3 ).toString();
+      recorded_decisionTs     = db->value( 4 ).toString();
+      QString recorded_fname_col = db->value( 5 ).toString();
+      recorded_filename       = recorded_fname_col.isEmpty() ? filename : recorded_fname_col;
+    }
+
+  if ( newly_recorded )
+    qDebug() << "[Mwl-Fit] Saved VEL-MWL decision:" << chann << "->" << decision;
+  else
+    qDebug() << "[Mwl-Fit] VEL-MWL channel" << chann << "was already decided ("
+	     << recorded_decision << "by" << recorded_decisionByName
+	     << "at" << recorded_decisionTs << ") -- this click was not recorded.";
+
+  delete db;
+  return newly_recorded;
 }
 
 US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
@@ -965,7 +1248,9 @@ bool US_MwlSpeciesFit::read_protocol(QStringList& msg_to_user)
 
   //read AProfile to later pass ranges
   sdiag_aprof = new US_AnalysisProfileGui;
+  sdiag_aprof->progress_cb = aprof_progress_cb;     // report DB reading of reports/reportItems
   sdiag_aprof->inherit_protocol( &currProto );
+  sdiag_aprof->progress_cb = nullptr;
   currAProf   = sdiag_aprof->currProf;
   //Channel reports
   ch_reports             = currAProf.ch_reports;
@@ -1299,8 +1584,8 @@ void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > a
    int ktspec     = nspecies * celchns.count();
    synData.fill( rawList[ 0 ], ktspec );
    have_p1.fill( false,        ktspec );
-DbgLv(1) << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
- << have_p1.size();
+   qDebug() << "Species ktspec sD,hvp sizes" << ktspec << synData.size()
+	    << have_p1.size();
 
    pb_sfitdata->setEnabled( true );
 }
@@ -1679,18 +1964,18 @@ QDateTime time2=QDateTime::currentDateTime();
 
    int narows     = klambda;
 DbgLv(1) << "sfd: narows kscan inclsize" << narows << kscan << inclscns.size();
-
+ 
    synFitError[ccx].clear();
    for (int ii = 0; ii < lambdas.size(); ii++)
        synFitError[ccx].wavelenghts << (double) lambdas.at(ii);
    synFitError[ccx].xValues << synData.at(kdstart).xvalues.mid(krpad);
-
+   
    for ( int ii = 0; ii < kscan; ii++ )
    {  // Loop through non-excluded scans
       int js         = inclscns[ ii ];
       int jr         = radxs;
 DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
-
+  
       synFitError[ccx].includedScans << js;
       QVector< QVector< QVector < double > > > orgSp_rpwl;
       for ( int jj = krpad; jj < kradp; jj++, jr++ )
@@ -1702,7 +1987,7 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
          {  // Store scan,radius reading for each wavelength in channel
 	   // nnls_b[ kk ]   = rawList[ trx ].value( js, jr );
 	   nnls_b[ kk ]   = dataList[ trx ].value( js, jr );
-	   
+
 	   //for GMP auto-processing, make base-line correcitons
 	   if ( us_gmp_auto_mode )
 	     {
@@ -1713,7 +1998,7 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 	       // 		<< dataList[ trx ].bl_corr_slope
 	       // 		<< dataList[ trx ].bl_corr_yintercept;
 	       nnls_b[ kk ]  -= ( dataList[ trx ].xvalues[ jr ]*dataList[ trx ].bl_corr_slope
-				  + dataList[ trx ].bl_corr_yintercept); 
+				  + dataList[ trx ].bl_corr_yintercept);
 	     }
 	 }
 DbgLv(1) << "sfd: NNLS b:" << nnls_b[0] << nnls_b[klambda-1];
@@ -1782,6 +2067,43 @@ DbgLv(1) << "sfd: (A)D1 cmn" << ms << mr << synData[1].value(ms,mr);
 
    if ( ! QDir().exists( dirSyn ) )
       QDir().mkpath( dirSyn );
+
+   if ( us_gmp_auto_mode )
+   {  // GMP autoflow: remove stale output left by a previous run of this
+      //  channel, so that old files can never be mixed with the new ones.
+      //  Only this channel's files are removed: the folder is shared by
+      //  all channels of the run (run-wide name), so files written earlier
+      //  for other channels must be kept.
+      QDir    sdir( dirSyn );
+      QString stalepfx = runSyn + ".RA." + cellch + ".";
+
+      if ( sdir.exists() )
+      {
+         QStringList sfiles = sdir.entryList( QDir::Files | QDir::Hidden );
+         int         nstale = 0;
+
+         for ( int ii = 0; ii < sfiles.size(); ii++ )
+         {
+            if ( ! sfiles.at( ii ).startsWith( stalepfx ) )
+               continue;
+
+            if ( ! sdir.remove( sfiles.at( ii ) ) )
+            {
+               qDebug() << "sfd: could not delete stale file"
+                        << sdir.filePath( sfiles.at( ii ) );
+               QApplication::restoreOverrideCursor();
+               QMessageBox::warning( this, tr( "Species File Cleanup Failed" ),
+                  tr( "The previous species-fit file could not be deleted:\n%1" )
+                  .arg( sdir.filePath( sfiles.at( ii ) ) ) );
+               return;
+            }
+            nstale++;
+         }
+
+         qDebug() << "sfd: deleted" << nstale << "stale file(s) in" << dirSyn
+                  << "for channel" << cellch;
+      }
+   }
 
    QString basefn = dirSyn + "/" + runSyn + ".RA." + cellch + ".000.auc";
 DbgLv(1) << "sfd: cellch" << cellch << "basefn" << basefn;
@@ -2065,6 +2387,7 @@ void US_MwlSpeciesFit::reset_data( void )
    chndescs_alt.clear();
    ch_reports.clear();
    protocol_details.clear();
+   velmwl_channel_decisions.clear();
    us_gmp_auto_mode = false;
 }
 

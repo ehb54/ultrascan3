@@ -5,6 +5,7 @@
 #include <QPrinter>
 
 #include "us_widgets.h"
+#include "us_gmp_progress.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_run_protocol.h"
@@ -18,6 +19,8 @@
 #include "us_extern.h"
 #include "us_select_item.h"
 #include "../us_abde/us_norm_profile.h"
+#include "../us_integral/us_integral.h"
+
 
 /**
  * @class US_ReporterGMP
@@ -66,12 +69,21 @@ class US_ReporterGMP : public US_Widgets
         bool auto_mode;                     //!< Flag for auto mode
         QLabel* lb_hdr1;                    //!< Header label
 
-        QProgressDialog* progress_msg;      //!< Progress message dialog
+        US_GmpProgress* progress_msg = nullptr;   //!< The ONE progress dialog (lazily created by gmp_progress(); only ever hidden)
+        int part2_total = 0;                //!< Report Part 2: number of (triple,model) jobs
+        int part2_done  = 0;                //!< Report Part 2: jobs started so far
+
+        US_GmpProgress* gmp_progress( void );   //!< Create-if-needed progress dialog, child of window()
+        void gmp_stage( int, const QString&, const QString& = QString(), int = 1 ); //!< Enter report stage 1..4 (see .cpp)
+        void gmp_busy( const QString& );        //!< Detail text + indeterminate step bar
+        void gmp_progress_hide( void );         //!< Hide the progress dialog
+        int  count_part2_jobs( void );          //!< Number of (triple,model) simulations Part 2 will run
         US_RunProtocol currProto;           //!< Current run protocol
 
         QString ap_xml;                     //!< XML string for analysis profile
 
         US_Norm_Profile*  sdiag_norm_profile;
+        US_Integral*  sdiag_integral;
   
         US_Pseudo3D_Combine* sdiag_pseudo3d; //!< Pseudo3D combine dialog
         US_DDistr_Combine* sdiag_combplot;   //!< D distribution combine dialog
@@ -147,6 +159,11 @@ class US_ReporterGMP : public US_Widgets
         };
 
         PerChanReportMaskStructureABDE perChanMask_edited_abde;
+
+        //! VELOCITY-MWL per-channel mask: same shape as ABDE's
+        //! (channel -> on/off; channel -> feature -> "0"/"2")
+        typedef PerChanReportMaskStructureABDE PerChanReportMaskStructureVelMwl;
+        PerChanReportMaskStructureVelMwl perChanMask_edited_velmwl;
         PerChanReportMaskStructure perChanMask_edited; //!< Edited per-channel report mask structure
 
         struct CombPlotsReportMaskStructure
@@ -308,7 +325,17 @@ class US_ReporterGMP : public US_Widgets
         int nchan_ranges;                    //!< Number of channel ranges
 
         QString editing_time_abde;
+        QString editing_time_velmwl;   //!< VELOCITY-MWL: time of data editing
+
+        //! VELOCITY-MWL: Approved channels (e.g. "2A") having recorded 2DSA-IT models;
+        //! filled by read_velmwl_channels() from autoflowAnalysisVelMwl
+        QStringList                  velmwl_channList;
+        QMap< QString, QStringList > velmwl_chan_species;  //!< channel -> species names (S1, S2, ...)
+        QMap< QString, QStringList > velmwl_chan_guids;    //!< channel -> modelGUIDs (same order)
+        QMap< QString, QString >     velmwl_chan_fname;    //!< channel -> filename recorded at Accept
+        QMap< QString, QStringList > velmwl_chan_selected_species; //!< channel -> species chosen for Integration Results; channel absent = show all
         QString analysis_time_abde;
+        QString analysis_time_velmwl;
 
         QVector<QString> Array_of_triples;   //!< Array of triples
         QVector<QString> Array_of_tripleNames; //!< Array of triple names
@@ -335,7 +362,7 @@ class US_ReporterGMP : public US_Widgets
 
         void get_current_date(void); //!< Get the current date
         void format_needed_params(void); //!< Format needed parameters
-        void assemble_pdf(QProgressDialog*); //!< Assemble PDF
+        void assemble_pdf(US_GmpProgress*); //!< Assemble PDF
         void add_solution_details(const QString, const QString, QString&); //!< Add solution details
         void assemble_parts(QString&); //!< Assemble parts
         int list_all_gmp_reports_db(QList<QStringList>&, US_DB2*); //!< List all GMP reports from DB
@@ -349,6 +376,7 @@ class US_ReporterGMP : public US_Widgets
         void assemble_user_inputs_html(void); //!< Assemble user inputs in HTML
         void user_interactions_analysis( QString, QString );
         void user_interactions_analysis_abde( QString, QString );
+        void user_interactions_analysis_velmwl( QString, QString );
   
         void assemble_run_details_html(void); //!< Assemble run details in HTML
         int get_expID_by_runID_invID(US_DB2*, QString); //!< Get experiment ID by run ID and investigator ID
@@ -357,7 +385,8 @@ class US_ReporterGMP : public US_Widgets
         void read_autoflowStatus_record(QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
                                         QString&, QString&, QString&, QString&, QString&,
-                                        QString&, QString&, QString&, QString&); //!< Read autoflow status record
+                                        QString&, QString&, QString&, QString&,
+                                        QString&, QString&); //!< Read autoflow status record (last 2: analysisVelMwl json/ts)
         QMap<QString, QMap<QString, QString>> parse_autoflowStatus_json(const QString, const QString); //!< Parse autoflow status JSON
         QMap<QString, QString> parse_autoflowStatus_analysis_json(const QString); //!< Parse autoflow status analysis JSON
 
@@ -378,6 +407,8 @@ class US_ReporterGMP : public US_Widgets
         void build_miscTree(void); //!< Build miscellaneous tree
         void build_perChanTree(void); //!< Build per-channel tree
         void build_perChanTree_abde(void); //!< Build per-channel tree
+        void build_perChanTree_velmwl(void); //!< Build per-channel tree: VELOCITY-MWL (Integral plots)
+        bool read_velmwl_channels(void);   //!< Read Approved channels & model GUIDs from autoflowAnalysisVelMwl
         void build_combPlotsTree(void); //!< Build combined plots tree
         void gui_to_parms(void); //!< Convert GUI to parameters
 
@@ -386,6 +417,7 @@ class US_ReporterGMP : public US_Widgets
         void parse_edited_gen_mask_json(const QString, GenReportMaskStructure&); //!< Parse edited general mask JSON
         void parse_edited_perChan_mask_json(const QString, PerChanReportMaskStructure&); //!< Parse edited per-channel mask JSON
         void parse_edited_perChan_mask_json_abde(const QString, PerChanReportMaskStructureABDE&);
+        void parse_edited_perChan_mask_json_velmwl(const QString, PerChanReportMaskStructureVelMwl&);
         void parse_edited_combPlots_mask_json(const QString, CombPlotsReportMaskStructure&); //!< Parse edited combined plots mask JSON
         void parse_edited_misc_mask_json(const QString, MiscReportMaskStructure&); //!< Parse edited miscellaneous mask JSON
 
@@ -609,6 +641,13 @@ class US_ReporterGMP : public US_Widgets
         double interp_sval(double, double*, double*, int); //!< Interpolate s-value
         void plotres(QMap<QString, QString>&); //!< Plot residuals
         void plot_pseudo3D(QString, QString); //!< Plot pseudo 3D
+        //! VELOCITY-MWL: per-channel "VELOCITY-MWL Analysis" report section (integration results
+        //! vs. analysis-profile report items, distributions, Integral plots), from recorded 2DSA-IT model GUIDs
+        void process_velmwl_analysis( void );
+        int  load_velmwl_models( const QString&, QList< US_Model >&, QStringList& ); //!< load channel's species models by GUID
+        US_ReportGMP* velmwl_channel_report( const QString& );  //!< channel's report (1st wavelength) from the analysis profile
+        QString html_header_velmwl( QString, QString, QString ); //!< HTML header of the VELOCITY-MWL section
+        QString distrib_info_velmwl( const QString&, const QList< US_Model >&, const QStringList&, bool ); //!< Timestamps, species, integration results
         bool modelGuidExistsForStage(QString, QString); //!< Check if model GUID exists for stage
         bool modelGuidExistsForStage_ind(QString, QString, QString); //!< Check if model GUID exists for stage (individual)
         void process_combined_plots(QString); //!< Process combined plots

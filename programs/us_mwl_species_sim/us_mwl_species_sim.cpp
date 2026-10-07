@@ -18,20 +18,6 @@
 #include "qwt_picker_machine.h"
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 
-//! \brief Main program. Loads translators and starts
-//         the class US_Convert.
-int main( int argc, char* argv[] )
-{
-   QApplication application( argc, argv );
-
-   #include "main1.inc"
-
-   // License is OK.  Start up.
-   
-   US_MwlSpeciesSim w;
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
-}
 
 //! \brief Constructor for US_MwlSpeciesSim class
 US_MwlSpeciesSim::US_MwlSpeciesSim() : US_Widgets()
@@ -352,6 +338,139 @@ DbgLv(1) << "  smdls: nmodels" << nmodels << "nruns" << nruns
    pb_strtsims->setEnabled( true );
 }
 
+// Select a set of models
+void US_MwlSpeciesSim::select_models_auto( QString invID_passed, QStringList m_t_r_id )
+{
+DbgLv(1) << "SLOT: select_models";
+   // Get a set of descriptions for distribution data
+DbgLv(1) << "  smdls: call ML dbload" << dbload << "mfilt" << mfilt
+ << "pfilts" << pfilts;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   //US_ModelLoader dialog( dbload, mfilt, models, mdescs, pfilts );
+   US_ModelLoader dialog( true, mfilt, models, mdescs, pfilts, invID_passed );
+   dialog. accepted_multiple_auto ( m_t_r_id );
+
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
+   nmodels        = models.count();
+
+   emit stage_progress( "models", 1, 1 );
+
+   if ( nmodels < 1 )
+      return;
+
+   mtconcs.fill( 0.0, nmodels );
+
+   QStringList runids;
+   QStringList chans;
+   QStringList wavelns;
+
+   for ( int jm = 0; jm < nmodels; jm++ )
+   {
+      // Accumulate runs, channels, wavelengths present in models
+      QString mdesc  = models[ jm ].description;
+      QString runid  = QString( mdesc ).section( ".",  0, -4 );
+      QString triple = QString( mdesc ).section( ".", -3, -3 );
+      QString chan   = QString( triple ).left( 2 );
+      QString waveln = QString( triple ).mid( 2, 3 );
+
+      if ( ! runids.contains( runid ) )
+         runids  << runid;
+
+      if ( ! chans .contains( chan ) )
+         chans   << chan;
+
+      if ( ! wavelns.contains( waveln ) )
+         wavelns << waveln;
+
+
+      // Compute and save the total concentration in each model
+      double tot_conc = 0.0;
+
+      for ( int jc = 0; jc < models[ jm ].components.count(); jc++ )
+      {
+         tot_conc      += models[ jm ].components[ jc ].signal_concentration;
+      }
+
+      mtconcs[ jm ]  = tot_conc;
+     
+   }
+
+   int nruns      = runids .count();
+   int nchans     = chans  .count();
+   int nwavls     = wavelns.count();
+DbgLv(1) << "  smdls: nmodels" << nmodels << "nruns" << nruns
+ << "nchans" << nchans << "nwavls" << nwavls;
+
+   if ( nruns != 1  ||  nchans != 1  ||  nwavls != nmodels )
+   {
+      qDebug() << "expected: runs chans wavelns" << 1 << 1 << nmodels;
+      qDebug() << "have:     runs chans wavelns" << nruns << nchans << nwavls;
+   }
+
+   mrunid         = runids[ 0 ];
+   orunid         = "ISSF-" + mrunid + "-" + chans[ 0 ];
+   QString triple = chans[ 0 ].left( 1 ) + "."
+                  + chans[ 0 ].mid( 1, 1 ) + "."
+                  + wavelns[ 0 ] + "-" + wavelns[ nwavls - 1 ];
+   le_triples->setText( triple );
+   le_runid  ->setText( orunid );
+
+   pb_strtsims->setEnabled( true );
+
+   //pass editID from one of the models
+   QString editID = models[0].editGUID;
+
+   emit pass_editID_fromLoad( editID );
+}
+
+
+//Select buffer (water) for VEL-MWL:GMP
+void US_MwlSpeciesSim::define_buffer_auto( int invID_p )
+{
+  US_Passwd pw;
+  US_DB2 db( pw.getPasswd() );
+
+  if ( db.lastErrno() != IUS_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+  
+  QStringList q;
+  q << "get_buffer_desc" << QString::number( invID_p );
+  db.query( q );
+
+  QString buffID_w;
+  while ( db.next() )
+    {
+      QString buffID  = db.value( 0 ).toString();
+      QString desc    = db.value( 1 ).toString();
+
+      if (QString::compare(desc, "water", Qt::CaseInsensitive) == 0)
+	{
+	  buffID_w = buffID;
+	  break;
+	}
+    }
+
+  qDebug() << "[buffID_w] -- " << buffID_w;
+  buffer.readFromDB( &db, buffID_w );
+  qDebug() << "[in us_mwl_sp_sim's define_buffer_auto()] : "
+	   << buffer.person
+	   << buffer.description
+	   << buffer.compressibility
+	   << buffer.density
+	   << buffer.viscosity;
+
+  change_buffer( buffer );
+
+  emit stage_progress( "buffer", 1, 1 );
+}
+
+
 // Define the buffer for the run
 void US_MwlSpeciesSim::define_buffer( void )
 {
@@ -383,6 +502,23 @@ DbgLv(1) << "SLOT: sim_params";
    connect( dialog, &US_SimParamsGui::complete, this, &US_MwlSpeciesSim::set_parameters );
 
    dialog->exec();
+}
+
+// For VEL-MWL:GMP
+void US_MwlSpeciesSim::sim_params_auto( QMap< QString, QString > run_params )
+{
+  US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
+  
+  connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
+
+  dialog -> set_run_params( run_params ); 
+
+  //then accept
+  dialog->accepted_auto();
+  
+  //dialog->exec();
+
+  emit stage_progress( "params", 1, 1 );
 }
 
 // Set simulation parameter as selected in the simparams dialog
@@ -447,6 +583,28 @@ simparams.debug();
 //*DEBUG*
 }
 
+// Select a rotor for VEL-MWL:GMP
+void US_MwlSpeciesSim::select_rotor_auto( QStringList r_defs )
+{
+  US_Rotor::Rotor rotor;
+  US_Rotor::RotorCalibration calibration;
+  
+  int dbdisk = US_Disk_DB_Controls::DB;
+  
+  US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk,
+					    rotor, calibration );
+
+  connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
+						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+	   this,      SLOT  ( assign_rotor            (
+						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+  rotorInfo->selectSimRotor( r_defs );
+  
+  //rotorInfo->exec();
+
+  emit stage_progress( "rotor", 1, 1 );
+}
+
 // Select a rotor
 void US_MwlSpeciesSim::select_rotor( void )
 {
@@ -474,10 +632,16 @@ void US_MwlSpeciesSim::assign_rotor( US_Rotor::Rotor& arotor,
    rotor_calib                = calibration;
    simparams.rotorcoeffs[0]   = rotor_calib.coeff1;
    simparams.rotorcoeffs[1]   = rotor_calib.coeff2;
-DbgLv(1) << "assign_rotor: rotor" << rotor.name
- << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
+   qDebug() << "assign_rotor: rotor" << rotor.name
+	    << "coeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
 
+//For VEL-MWL:GMP
+void US_MwlSpeciesSim::start_sims_auto( void )
+{
+  start_sims();
+}
+  
 // Start the simulations for all chosen models
 void US_MwlSpeciesSim::start_sims( void )
 {
@@ -516,6 +680,8 @@ DbgLv(1) << " sims: build from model" << model.description;
          break;
 
       build_rawdata();
+
+      emit stage_progress( "sims", jm + 1, nmodels );
    }
 
    if ( kmodels == nmodels )
@@ -540,6 +706,59 @@ void US_MwlSpeciesSim::stop_sims( void )
 DbgLv(1) << "SLOT: stop_sims";
    stopFlag        = true;
 }
+
+//Fro VEL-MWL:GMP
+void US_MwlSpeciesSim::save_sims_auto( void )
+{
+  // GMP autoflow only: empty the output directory of any earlier run, so that
+  //  stale files can never be mixed with the newly simulated ones.
+  //  (Same directory name as in save_sims(); it is specific to this run
+  //   AND channel, since orunid = "ISSF-" + run ID + "-" + cell/channel.)
+  if ( orunid.isEmpty() )
+    {
+      qDebug() << "save_sims_auto: empty orunid -- nothing saved";
+      QMessageBox::warning( this, tr( "Save Simulations" ),
+         tr( "No run ID is set; the simulations cannot be saved." ) );
+      return;
+    }
+
+  QString impdir = US_Settings::importDir() + "/" + orunid + "/";
+  QDir    idir( impdir );
+
+  if ( idir.exists() )
+    {
+      QFileInfoList entries = idir.entryInfoList( QDir::Files | QDir::Dirs |
+                                                  QDir::Hidden | QDir::System |
+                                                  QDir::NoDotAndDotDot );
+      int nstale = 0;
+
+      for ( int ii = 0; ii < entries.size(); ii++ )
+        {
+          const QFileInfo& fi = entries.at( ii );
+          bool ok = ( fi.isDir() && !fi.isSymLink() )
+                    ? QDir( fi.absoluteFilePath() ).removeRecursively()
+                    : QFile::remove( fi.absoluteFilePath() );
+
+          if ( !ok )
+            {
+              qDebug() << "save_sims_auto: could not delete stale entry"
+                       << fi.absoluteFilePath();
+              QMessageBox::warning( this, tr( "Simulation Cleanup Failed" ),
+                 tr( "A previous simulation file could not be deleted:\n%1" )
+                 .arg( fi.absoluteFilePath() ) );
+              return;
+            }
+          nstale++;
+        }
+
+      qDebug() << "save_sims_auto: deleted" << nstale
+               << "stale entr(y/ies) in" << impdir;
+    }
+
+  save_sims();
+  
+}   
+  
 
 // Save simulations to an imports directory, along with time state
 void US_MwlSpeciesSim::save_sims( void )
@@ -569,7 +788,6 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
       {  // Do not let a failed write pass silently
          qDebug() << "save_sims: writeRawData FAILED rc =" << wrc << fpath;
       }
-      
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
@@ -588,6 +806,8 @@ DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
                         .arg( tfname );
    te_status->setText( smsga );
    qApp->processEvents();
+
+   emit pass_ssf_dir( impdir );
 }
 
 // Bump the current plot to the previous channel
@@ -854,11 +1074,13 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    double radval      = radv0;
 
    for ( int js = 0; js < nscan; js++ )                // Resize for pad
-     {
-       rdata.scanData[ js ].rvalues.resize( npoint );
-       rdata.scanData[ js ].interpolated.fill( 0, ( npoint + 7 ) / 8 );
-     }
-   
+   {
+      rdata.scanData[ js ].rvalues.resize( npoint );
+      // Keep the interpolation bitmap in step with the readings, so that
+      // US_DataIO::writeRawData() accepts the padded scan
+      rdata.scanData[ js ].interpolated.fill( 0, ( npoint + 7 ) / 8 );
+   }
+
    for ( int jr = npoint - 1; jr >= 0; jr-- )
    {  // Set shifted values, starting at data end
       int kr             = jr - npad;                  // Old value index
