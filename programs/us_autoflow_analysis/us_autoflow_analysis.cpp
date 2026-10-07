@@ -710,22 +710,38 @@ void US_Analysis_auto::gui_update( )
 	      qDebug() << "To process stage - " << to_process_array[i].toString();
 
 	      QGroupBox * to_process_stage_groupbox = NULL;
+	      QTreeWidgetItem* to_process_stage_item = NULL;
 	      QString stage_to_process = to_process_array[i].toString();
 
 	      if ( stage_to_process == "FITMEN" || stage_to_process == "FITMEN_AUTO" )
 		continue;
-	      
-	      
+
+
 	      if ( stage_to_process == "2DSA" )
-		to_process_stage_groupbox = groupbox_2DSA[ triple_curr ];
+		{
+		  to_process_stage_groupbox = groupbox_2DSA[ triple_curr ];
+		  to_process_stage_item     = childItem_2DSA[ triple_curr ];
+		}
 	      if ( stage_to_process == "2DSA_FM" )
-		to_process_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+		{
+		  to_process_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+		  to_process_stage_item     = childItem_2DSA_FM [ triple_curr ];
+		}
 	      if ( stage_to_process == "2DSA_IT" )
-		to_process_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		{
+		  to_process_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		  to_process_stage_item     = childItem_2DSA_IT [ triple_curr ];
+		}
 	      if ( stage_to_process == "2DSA_MC" )
-		to_process_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		{
+		  to_process_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		  to_process_stage_item     = childItem_2DSA_MC [ triple_curr ];
+		}
 	      if ( stage_to_process == "PCSA" )
-		to_process_stage_groupbox = groupbox_PCSA [ triple_curr ];
+		{
+		  to_process_stage_groupbox = groupbox_PCSA [ triple_curr ];
+		  to_process_stage_item     = childItem_PCSA [ triple_curr ];
+		}
 
 	      if ( to_process_stage_groupbox != NULL ) 
 		{
@@ -770,6 +786,11 @@ void US_Analysis_auto::gui_update( )
 		  
 		  //cluster
 		  lineedit_cluster -> setText( "N/A" );
+
+		  if ( to_process_stage_item )
+		    to_process_stage_item->setData( 1, Qt::AccessibleTextRole,
+		                                     stage_to_process + " (" + triple_curr + "): "
+		                                     + us_accessibleSummary( to_process_stage_groupbox ) );
 		}
 	    }
 	}
@@ -782,6 +803,7 @@ void US_Analysis_auto::gui_update( )
 	  for (int i=0; i < processed_array.size(); ++i )
 	    {
 	      QGroupBox * processed_stage_groupbox = NULL;
+	      QTreeWidgetItem* processed_stage_item = NULL;
 	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg,
 		stage_createTime, stage_updateTime, stage_HPCAnalysisRequestID;
 	      
@@ -812,34 +834,51 @@ void US_Analysis_auto::gui_update( )
 		  if ( groupbox_2DSA_IT.contains( triple_curr ) )
 		    {
 		      processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		      processed_stage_item     = childItem_2DSA_IT [ triple_curr ];
 		      stage_name = "2DSA-IT";
 		    }
-		  
+
 		  else if ( groupbox_2DSA_MC.contains( triple_curr ) )
 		    {
 		      processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		      processed_stage_item     = childItem_2DSA_MC [ triple_curr ];
 		      stage_name = "2DSA-MC";
 		    }
-		  
+
 		  qDebug() << "CANCELED status for triple/stage (FITMEN) -- " << triple_curr_key << "/" << submitted.toString();
 
 		  stage_HPCAnalysisRequestID = "N/A";
 		  stage_createTime = "N/A";
 		  stage_updateTime = "N/A";
 		  stage_status = "CANCELED";
-		  
+
 		}
-	      
+
 	      if ( stage_name == "2DSA" )
-		processed_stage_groupbox = groupbox_2DSA[ triple_curr ];
+		{
+		  processed_stage_groupbox = groupbox_2DSA[ triple_curr ];
+		  processed_stage_item     = childItem_2DSA[ triple_curr ];
+		}
 	      if ( stage_name == "2DSA_FM" )
-		processed_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+		{
+		  processed_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+		  processed_stage_item     = childItem_2DSA_FM [ triple_curr ];
+		}
 	      if ( stage_name == "2DSA_IT" )
-		processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		{
+		  processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		  processed_stage_item     = childItem_2DSA_IT [ triple_curr ];
+		}
 	      if ( stage_name == "2DSA_MC" )
-		processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		{
+		  processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		  processed_stage_item     = childItem_2DSA_MC [ triple_curr ];
+		}
 	      if ( stage_name == "PCSA" )
-		processed_stage_groupbox = groupbox_PCSA [ triple_curr ];
+		{
+		  processed_stage_groupbox = groupbox_PCSA [ triple_curr ];
+		  processed_stage_item     = childItem_PCSA [ triple_curr ];
+		}
 
 	      if ( processed_stage_groupbox != NULL )
 		{
@@ -886,9 +925,14 @@ void US_Analysis_auto::gui_update( )
 		  //cluster
 		  lineedit_cluster -> setText( cluster );
 
-		  
+		  if ( processed_stage_item )
+		    processed_stage_item->setData( 1, Qt::AccessibleTextRole,
+		                                    stage_name + " (" + triple_curr + "): "
+		                                    + us_accessibleSummary( processed_stage_groupbox ) );
+
+
 		  if ( stage_status == "COMPLETE" || stage_status == "complete" )
-		    pb_overlay->setEnabled( true ); 
+		    pb_overlay->setEnabled( true );
 		  
 		  //IF Canceled by user:
 		  if ( stage_status == "CANCELED" || stage_status == "canceled" )
@@ -1088,16 +1132,33 @@ void US_Analysis_auto::gui_update( )
 	      
 	  //QGroupBox * current_stage_groupbox;
 	  
+	  QTreeWidgetItem* current_stage_item = NULL;
+
 	  if ( submitted.toString() == "2DSA" )
-	    current_stage_groupbox = groupbox_2DSA[ triple_curr ];
+	    {
+	      current_stage_groupbox = groupbox_2DSA[ triple_curr ];
+	      current_stage_item     = childItem_2DSA[ triple_curr ];
+	    }
 	  if ( submitted.toString() == "2DSA_FM" )
-	    current_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+	    {
+	      current_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
+	      current_stage_item     = childItem_2DSA_FM [ triple_curr ];
+	    }
 	  if ( submitted.toString() == "2DSA_IT" )
-	    current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+	    {
+	      current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+	      current_stage_item     = childItem_2DSA_IT [ triple_curr ];
+	    }
 	  if ( submitted.toString() == "2DSA_MC" )
-	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+	    {
+	      current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+	      current_stage_item     = childItem_2DSA_MC [ triple_curr ];
+	    }
 	  if ( submitted.toString() == "PCSA" )
-	    current_stage_groupbox = groupbox_PCSA [ triple_curr ];
+	    {
+	      current_stage_groupbox = groupbox_PCSA [ triple_curr ];
+	      current_stage_item     = childItem_PCSA [ triple_curr ];
+	    }
 
 	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
 	  if ( ( submitted.toString() == "FITMEN" || submitted.toString() == "FITMEN_AUTO" )
@@ -1106,12 +1167,14 @@ void US_Analysis_auto::gui_update( )
 	      if ( groupbox_2DSA_IT.contains( triple_curr ) )
 		{
 		  current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+		  current_stage_item     = childItem_2DSA_IT [ triple_curr ];
 		  stage_name = "2DSA-IT";
 		}
-	      
+
 	      else if ( groupbox_2DSA_MC.contains( triple_curr ) )
 		{
 		  current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
+		  current_stage_item     = childItem_2DSA_MC [ triple_curr ];
 		  stage_name = "2DSA-MC";
 		}
 	      
@@ -1188,8 +1251,12 @@ void US_Analysis_auto::gui_update( )
 	      //cluster
 	      lineedit_cluster -> setText( cluster );
 
+	      if ( current_stage_item )
+	        current_stage_item->setData( 1, Qt::AccessibleTextRole,
+	                                      stage_name + " (" + triple_curr + "): "
+	                                      + us_accessibleSummary( current_stage_groupbox ) );
 
-	      //if complete 
+	      //if complete
 	      if ( status == "COMPLETE" )
 		{
 		  pb_overlay->setEnabled( true );
