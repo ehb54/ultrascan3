@@ -623,8 +623,9 @@ if(mcknt>0)
 //   QBoxLayout* plot = new US_Plot( data_plot,
    plot             = new US_Plot( data_plot,
                                    tr( "Intensity Data" ),
-                                   tr( "Radius (in cm)" ), 
+                                   tr( "Radius (in cm)" ),
                                    tr( "Intensity" ) );
+   plot->setToolBarAccessibleName( tr( "Radial Intensity Plot Tools" ) );
 
    data_plot->setMinimumSize( 400, 400 );
    data_plot->setAccessibleName( tr( "Intensity Plot" ) );
@@ -723,6 +724,7 @@ if(mcknt>0)
    //plot RPM
    plot_rpm             = new US_Plot( data_plot_rpm, "", tr( "Elapsed Time (minutes)" ),
                                                           tr( "RPM" ) );
+   plot_rpm->setToolBarAccessibleName( tr( "RPM and Temperature Plot Tools" ) );
    QFont tfont( US_GuiSettings::fontFamily(),
                 US_GuiSettings::fontSize(),
                 QFont::Bold );
@@ -1177,8 +1179,9 @@ if(mcknt>0)
 //   QBoxLayout* plot = new US_Plot( data_plot,
    plot             = new US_Plot( data_plot,
                                    tr( "Intensity Data" ),
-                                   tr( "Radius (in cm)" ), 
+                                   tr( "Radius (in cm)" ),
                                    tr( "Intensity" ) );
+   plot->setToolBarAccessibleName( tr( "Radial Intensity Plot Tools" ) );
 
    data_plot->setMinimumSize( 600, 400 );
    data_plot->setAccessibleName( tr( "Intensity Plot" ) );

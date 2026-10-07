@@ -420,6 +420,11 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 //! re-measures starting from the title's originally-intended size (rather
 //! than shrinking further from whatever size it happens to currently be),
 //! so the font grows back toward full size if the plot is widened again.
+void US_Plot::setToolBarAccessibleName( const QString& name )
+{
+   toolBar->setAccessibleName( name );
+}
+
 void US_Plot::fitTitleToWidth()
 {
    if ( plot == nullptr )
