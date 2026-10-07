@@ -24,6 +24,34 @@ const QColor colorGreen     ( 50, 205, 50 );
 const QColor colorYellow    ( 255, 255, 102 );
 const QColor colorBlue      ( 95, 152, 238 );
 
+// QTreeWidget::setItemWidget() content is invisible to AT-SPI; this reads the already-displayed text as a stand-in.
+static QString us_accessibleSummary( QWidget* panel )
+{
+   QStringList parts;
+   const QList<QWidget*> kids = panel->findChildren<QWidget*>();
+
+   for ( QWidget* kid : kids )
+   {
+      if ( QLabel* lb = qobject_cast<QLabel*>( kid ) )
+      {
+         if ( ! lb->text().isEmpty() )
+            parts << lb->text();
+      }
+      else if ( QLineEdit* le = qobject_cast<QLineEdit*>( kid ) )
+      {
+         if ( ! le->text().isEmpty() )
+            parts << le->text();
+      }
+      else if ( QTextEdit* te = qobject_cast<QTextEdit*>( kid ) )
+      {
+         if ( ! te->toPlainText().isEmpty() )
+            parts << te->toPlainText();
+      }
+   }
+
+   return parts.join( "; " );
+}
+
 // Constructor
 US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 {
@@ -429,6 +457,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
+	  childItem_2DSA [ triple_curr ] ->setData( 1, Qt::AccessibleTextRole,
+	                                            us_accessibleSummary( groupbox_2DSA[ triple_curr ] ) );
 	}
     
       
@@ -441,6 +471,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_FM [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_FM [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_FM [ triple_curr ] , 1, groupbox_2DSA_FM[ triple_curr ] );
+	  childItem_2DSA_FM [ triple_curr ] ->setData( 1, Qt::AccessibleTextRole,
+	                                               us_accessibleSummary( groupbox_2DSA_FM[ triple_curr ] ) );
 	}
 
       if ( job3run )  //FITMEN
@@ -457,6 +489,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_IT [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_IT [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_IT [ triple_curr ] , 1, groupbox_2DSA_IT [ triple_curr ] );
+	  childItem_2DSA_IT [ triple_curr ] ->setData( 1, Qt::AccessibleTextRole,
+	                                               us_accessibleSummary( groupbox_2DSA_IT [ triple_curr ] ) );
 	}
       
       if ( job5run )  //2DSA-MC
@@ -468,6 +502,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_MC [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_MC [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_MC [ triple_curr ] , 1, groupbox_2DSA_MC [ triple_curr ] );
+	  childItem_2DSA_MC [ triple_curr ] ->setData( 1, Qt::AccessibleTextRole,
+	                                               us_accessibleSummary( groupbox_2DSA_MC [ triple_curr ] ) );
 	}
 
       if ( job6run_pcsa )  //PCSA
@@ -479,6 +515,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_PCSA [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_PCSA [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_PCSA [ triple_curr ] , 1, groupbox_PCSA [ triple_curr ] );
+	  childItem_PCSA [ triple_curr ] ->setData( 1, Qt::AccessibleTextRole,
+	                                           us_accessibleSummary( groupbox_PCSA [ triple_curr ] ) );
 	}
     }
   

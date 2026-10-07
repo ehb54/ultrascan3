@@ -140,6 +140,8 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
+  cb_wvl -> setAccessibleName( tr( "Wavelength" ) );
+  lb_wvl -> setBuddy( cb_wvl );
   connect( cb_wvl,  qOverload< int >( &QComboBox::currentIndexChanged ),
             this,   &US_ReportGui::changeWvl );
   /////////////////////////////////////////////////////////////////////////////
@@ -236,6 +238,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   QFont le_info_font( US_Widgets::fixedFont().family(),
 		      US_GuiSettings::fontSize() );
   le_info = us_textedit();
+  le_info->setAccessibleName( tr( "Report Parameter Units and File Information" ) );
   QFontMetrics m (le_info -> font()) ;
   int RowHeight = m.lineSpacing() ;
   le_info -> setFixedHeight  (2 * RowHeight) ;
@@ -392,6 +395,8 @@ void US_ReportGui::build_report_layout( void )
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
+  cb_wvl -> setAccessibleName( tr( "Wavelength" ) );
+  lb_wvl -> setBuddy( cb_wvl );
   connect( cb_wvl,  SIGNAL( currentIndexChanged( int ) ),
             this,   SLOT  ( changeWvl          ( int ) ) );
   /////////////////////////////////////////////////////////////////////////////
@@ -673,6 +678,11 @@ void US_ReportGui::build_report_layout( void )
       cb_type      -> setAccessibleName( tr( "Analysis Type" ) );
       cb_method    -> setObjectName( stchan + "method" );
       cb_method    -> setAccessibleName( tr( "Method" ) );
+      // Combo Name is always the selected value on Linux; a per-row buddy relation carries purpose.
+      QLabel* lb_type_a11y   = us_label( tr( "Type" ) );     // accessibility-only, never shown
+      QLabel* lb_method_a11y = us_label( tr( "Method" ) );   // accessibility-only, never shown
+      lb_type_a11y  ->setBuddy( cb_type );
+      lb_method_a11y->setBuddy( cb_method );
       le_low       -> setObjectName( stchan + "low" );
       le_low       -> setAccessibleName( tr( "Low Value" ) );
       le_high      -> setObjectName( stchan + "high" );
@@ -890,63 +900,75 @@ void US_ReportGui::build_report_layout( void )
   ck_2dsait_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_s_ff0 ->setChecked( report -> pseudo3d_2dsait_s_ff0 );
   ck_2dsait_s_ff0 ->setAutoFillBackground( true  );
+  ck_2dsait_s_ff0 ->setAccessibleName( tr( "2DSA-IT Pseudo3D s versus f/f0" ) );
 
   ck_2dsait_s_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_s_d ->setChecked( report -> pseudo3d_2dsait_s_d );
   ck_2dsait_s_d ->setAutoFillBackground( true  );
+  ck_2dsait_s_d ->setAccessibleName( tr( "2DSA-IT Pseudo3D s versus D" ) );
 
   ck_2dsait_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_mw_ff0 ->setChecked( report -> pseudo3d_2dsait_mw_ff0 );
   ck_2dsait_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_2dsait_mw_ff0 ->setAccessibleName( tr( "2DSA-IT Pseudo3D MW versus f/f0" ) );
+
   ck_2dsait_mw_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_mw_d ->setChecked( report -> pseudo3d_2dsait_mw_d );
   ck_2dsait_mw_d ->setAutoFillBackground( true  );
+  ck_2dsait_mw_d ->setAccessibleName( tr( "2DSA-IT Pseudo3D MW versus D" ) );
 
   //2DSA-MC checkboxes
   ck_2dsamc_s_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_s_ff0 ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
   ck_2dsamc_s_ff0 ->setAutoFillBackground( true  );
+  ck_2dsamc_s_ff0 ->setAccessibleName( tr( "2DSA-MC Pseudo3D s versus f/f0" ) );
 
   ck_2dsamc_s_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_s_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
   ck_2dsamc_s_d ->setAutoFillBackground( true  );
+  ck_2dsamc_s_d ->setAccessibleName( tr( "2DSA-MC Pseudo3D s versus D" ) );
 
   ck_2dsamc_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_mw_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
   ck_2dsamc_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_2dsamc_mw_ff0 ->setAccessibleName( tr( "2DSA-MC Pseudo3D MW versus f/f0" ) );
+
   ck_2dsamc_mw_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_mw_d ->setChecked( report -> pseudo3d_2dsamc_mw_d );
   ck_2dsamc_mw_d ->setAutoFillBackground( true  );
+  ck_2dsamc_mw_d ->setAccessibleName( tr( "2DSA-MC Pseudo3D MW versus D" ) );
 
   //PCSA checkboxes
   ck_pcsa_s_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_s_ff0 ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
   ck_pcsa_s_ff0 ->setAutoFillBackground( true  );
+  ck_pcsa_s_ff0 ->setAccessibleName( tr( "PCSA Pseudo3D s versus f/f0" ) );
 
   ck_pcsa_s_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_s_d ->setChecked( report -> pseudo3d_pcsa_s_d );
   ck_pcsa_s_d ->setAutoFillBackground( true  );
+  ck_pcsa_s_d ->setAccessibleName( tr( "PCSA Pseudo3D s versus D" ) );
 
   ck_pcsa_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_mw_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
   ck_pcsa_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_pcsa_mw_ff0 ->setAccessibleName( tr( "PCSA Pseudo3D MW versus f/f0" ) );
+
   ck_pcsa_mw_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_mw_d ->setChecked( report -> pseudo3d_pcsa_mw_d );
-  ck_pcsa_mw_d ->setAutoFillBackground( true  );  
+  ck_pcsa_mw_d ->setAutoFillBackground( true  );
+  ck_pcsa_mw_d ->setAccessibleName( tr( "PCSA Pseudo3D MW versus D" ) );
   
   QGridLayout *gbox = new QGridLayout;
   gbox              ->setSpacing         ( 1 );
