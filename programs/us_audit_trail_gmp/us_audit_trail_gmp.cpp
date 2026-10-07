@@ -1083,6 +1083,52 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
 	  status_map = parse_autoflowStatus_json( json_str, im.key() );
 
+	  //VELOCITY-MWL & ABDE: if an entire channel was dropped, do not list that channel's triples separately
+	  if ( ( expType == "VELOCITY-MWL" || expType == "ABDE" ) && status_map. contains( "DroppedItems" ) )
+	    {
+	      QStringList dropped_chans;
+	      QStringList chan_keys;
+	      chan_keys << "Channels" << "Selected Channel";
+	      for ( int kk = 0; kk < chan_keys.size(); kk++ )
+	        {
+	          if ( status_map[ "DroppedItems" ].contains( chan_keys[ kk ] ) )
+	            {
+	              QStringList cl = status_map[ "DroppedItems" ][ chan_keys[ kk ] ].split( ",", Qt::SkipEmptyParts );
+	              for ( int cc = 0; cc < cl.size(); cc++ )
+	                dropped_chans << cl[ cc ].simplified().remove( " / " ).remove( " " );   // "3 / B" -> "3B"
+	            }
+	        }
+
+	      if ( !dropped_chans.isEmpty() )
+	        {
+	          //profile-based list ("3B.230"):
+	          QStringList tr_kept;
+	          for ( int tt = 0; tt < dtype_opt_dropped_triples.size(); tt++ )
+	            {
+	              if ( !dropped_chans.contains( dtype_opt_dropped_triples[ tt ].section( ".", 0, 0 ).simplified() ) )
+	                tr_kept << dtype_opt_dropped_triples[ tt ];
+	            }
+	          dtype_opt_dropped_triples = tr_kept;
+
+	          //recorded list:
+	          if ( status_map[ "DroppedItems" ].contains( "Triples" ) )
+	            {
+	              QStringList rec = status_map[ "DroppedItems" ][ "Triples" ].split( ",", Qt::SkipEmptyParts );
+	              QStringList rec_kept;
+	              for ( int rr = 0; rr < rec.size(); rr++ )
+	                {
+	                  if ( !dropped_chans.contains( rec[ rr ].section( ".", 0, 0 ).simplified() ) )
+	                    rec_kept << rec[ rr ].trimmed();
+	                }
+
+	              if ( rec_kept.isEmpty() )
+	                status_map[ "DroppedItems" ].remove( "Triples" );
+	              else
+	                status_map[ "DroppedItems" ][ "Triples" ] = rec_kept.join( ", " );
+	            }
+	        }
+	    }
+
 	  //GUI
 	  QHBoxLayout* genL   = new QHBoxLayout();
 	  genL->setSpacing        ( 2 );
