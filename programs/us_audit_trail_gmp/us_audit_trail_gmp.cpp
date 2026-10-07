@@ -4,6 +4,8 @@
 #include <QProgressDialog>
 #include <QApplication>
 #include <QKeyEvent>
+#include <QCollator>
+#include <algorithm>
 //#include <QThread>    
 
 
@@ -1984,8 +1986,9 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString name, QString 
   genL31 -> addLayout( genL3);
   genL31 -> addStretch();
   
-  //Species selected for the Report's Integration Results (autoflowAnalysisVelMwl.speciesSelections)
-  QString species_txt, species_html;
+  //Channels' decisions (Approved/Rejected) and species selected for the Report's Integration Results
+  //(autoflowAnalysisVelMwl: column 0 - channels' decisions, column 2 - speciesSelections)
+  QString species_txt, species_html, species_html_gui;
   {
     US_Passwd pw_sp( this );
     US_DB2    db_sp( pw_sp.getPasswd() );
@@ -1998,20 +2001,46 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString name, QString 
 
 	if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
 	  {
-	    QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object();
+	    QJsonObject dec = QJsonDocument::fromJson( db_sp.value( 0 ).toString().toUtf8() ).object();  //channels' decisions
+	    QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object();  //species selections
 
-	    for ( auto it = sel.constBegin(); it != sel.constEnd(); ++it )
+	    // All channels, whether decided (Approved/Rejected) or having a species selection
+	    QStringList chan_keys = dec.keys();
+	    for ( const QString& k : sel.keys() )
+	      if ( ! chan_keys.contains( k ) )
+		chan_keys << k;
+	    QCollator collator;
+	    collator.setNumericMode( true );
+	    std::sort( chan_keys.begin(), chan_keys.end(),
+		       [&collator]( const QString& x, const QString& y )
+		       { return collator.compare( x, y ) < 0; } );
+
+	    for ( const QString& key : chan_keys )
 	      {
-		QJsonObject co = it.value().toObject();
-		QStringList s_sel, s_all;
-		QJsonArray  a1 = co.value( "selected"  ).toArray();
-		QJsonArray  a2 = co.value( "available" ).toArray();
-		for ( int i = 0; i < a1.size(); ++i ) s_sel << a1[ i ].toString();
-		for ( int i = 0; i < a2.size(); ++i ) s_all << a2[ i ].toString();
+		QString decision = dec.value( key ).toObject().value( "decision" ).toString();
+		bool    rejected = ( decision == "Rejected" );
+		QString dec_lbl  = ( decision == "Accepted" ) ? tr( "Approved" )
+		                 : ( rejected ? tr( "Rejected" ) : tr( "Not decided" ) );
 
-		QString line = it.key() + ": " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
-		species_txt  += line + "\n";
-		species_html += "<tr><td>" + line.toHtmlEscaped() + "</td></tr>";
+		QString line = key + ": " + dec_lbl;
+		if ( sel.contains( key ) )
+		  {
+		    QJsonObject co = sel.value( key ).toObject();
+		    QStringList s_sel, s_all;
+		    QJsonArray  a1 = co.value( "selected"  ).toArray();
+		    QJsonArray  a2 = co.value( "available" ).toArray();
+		    for ( int i = 0; i < a1.size(); ++i ) s_sel << a1[ i ].toString();
+		    for ( int i = 0; i < a2.size(); ++i ) s_all << a2[ i ].toString();
+		    line += " -- " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
+		  }
+
+		QString cell = line.toHtmlEscaped();
+		if ( rejected )
+		  cell = "<font color=\"red\">" + cell + "</font>";
+
+		species_txt      += line + "\n";
+		species_html     += "<tr><td>" + cell + "</td></tr>";
+		species_html_gui += cell + "<br>";
 	      }
 	  }
       }
@@ -2019,21 +2048,22 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString name, QString 
 
   if ( species_txt.isEmpty() )
     {
-      species_txt  = tr( "No species selection recorded (all species shown in the Report)." );
-      species_html = "<tr><td>" + species_txt.toHtmlEscaped() + "</td></tr>";
+      species_txt      = tr( "No species selection recorded (all species shown in the Report)." );
+      species_html     = "<tr><td>" + species_txt.toHtmlEscaped() + "</td></tr>";
+      species_html_gui = species_txt.toHtmlEscaped();
     }
 
   QGridLayout* genL4  = new QGridLayout();
   QVBoxLayout* genL41 = new QVBoxLayout();
 
-  QLabel* lb_spec         = us_label( tr("Species Selected for Report (Integration Results):") );
+  QLabel* lb_spec         = us_label( tr("Channels' Decisions and Species Selected for Report (Integration Results):") );
   lb_spec->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
   QTextEdit* te_spec      = us_textedit();
   te_spec    -> setFixedHeight  ( RowHeight * 3 );
   te_spec    ->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() - 1) );
   us_setReadOnly( te_spec, true );
-  te_spec -> setText( species_txt.trimmed() );
+  te_spec -> setHtml( species_html_gui );
 
   row=0;
   genL4 -> addWidget( lb_spec,      row++,   0,  1,  6  );
@@ -2111,7 +2141,7 @@ void US_auditTrailGMP::user_interactions_analysis_velmwl( QString name, QString 
     ;
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Species Selected for Report (Integration Results): </i></b> </caption>"
+			   "<caption align=left> <b><i>Channels' Decisions and Species Selected for Report (Integration Results): </i></b> </caption>"
 			   "</table>"
 			   "<table style=\"margin-left:25px\">"
 			   "%1"
