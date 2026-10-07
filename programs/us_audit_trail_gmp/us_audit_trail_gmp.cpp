@@ -1275,6 +1275,33 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 		}
 	      html_assembled += tr( "</table>" );
 
+	      //Names of the actually dropped triples / channels (recorded at 3. IMPORT; the only source for VEL-MWL):
+	      if ( status_map. contains("DroppedItems") )
+		{
+		  QString items_html;
+		  QMap < QString, QString >::iterator di;
+		  for ( di = status_map[ "DroppedItems" ].begin(); di != status_map[ "DroppedItems" ].end(); ++di )
+		    {
+		      if ( di.key() == "Triples" )
+		        {
+		          // skip only if the profile-based list above already contains every recorded triple
+		          QStringList rec = di.value().split( ",", Qt::SkipEmptyParts );
+		          bool all_listed = !rec.isEmpty();
+		          for ( int rr = 0; rr < rec.size(); rr++ )
+		            if ( !dtype_opt_dropped_triples.contains( rec[ rr ].trimmed() ) )
+		              all_listed = false;
+		          if ( all_listed )
+		            continue;
+		        }
+
+		      comm_list << di.key() + " dropped:\n" + di.value();
+		      items_html += "<tr><td> " + di.key().toHtmlEscaped() + " dropped: </td>"
+			            "<td style=\"color:red;\"> " + di.value().toHtmlEscaped() + " </td></tr>";
+		    }
+		  if ( !items_html.isEmpty() )
+		    html_assembled += "<table style=\"margin-left:25px\">" + items_html + "</table>";
+		}
+
 	      QTextEdit* te_drop_c1    = us_textedit();
 	      te_drop_c1    -> setFixedHeight  ( RowHeight * 2 );
 	      te_drop_c1    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -2711,6 +2738,20 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
 	    }
 
 	  status_map[ key ] = dropped_map;
+	}
+
+      if ( key == "DroppedItems" )   // import: names of actually dropped triples / channels
+	{
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > dropped_items_map;
+
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      foreach(const QString& array_key, json_array[i].toObject().keys())
+		dropped_items_map[ array_key ] = json_array[i].toObject().value(array_key).toString();
+	    }
+
+	  status_map[ key ] = dropped_items_map;
 	}
       
 

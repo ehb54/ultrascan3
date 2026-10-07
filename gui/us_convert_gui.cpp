@@ -1182,6 +1182,7 @@ void US_ConvertGui::reset_auto( void )
    ExpData     .clear();
 
    drop_operations. clear();
+   drop_items. clear();
    scan_difference_map. clear();
    
    if ( isMwl )
@@ -6548,6 +6549,26 @@ void US_ConvertGui::cancel_reference( void )
 }
 
 // Drop selected triples
+//Record the name of a dropped triple / channel (reported at 3. IMPORT in Reporter & Audit Trail)
+void US_ConvertGui::add_drop_item( const QString& dropType, const QString& item )
+{
+  if ( ! drop_items[ runType ][ dropType ].contains( item ) )
+    drop_items[ runType ][ dropType ] << item;
+}
+
+//"2 / A / 280" -> "2A.280"
+QString US_ConvertGui::drop_triple_name( QString triple )
+{
+  QStringList parts = triple.split( "/" );
+  for ( int ii = 0; ii < parts.size(); ii++ )
+    parts[ ii ] = parts[ ii ].simplified();
+
+  if ( parts.size() >= 3 )
+    return parts[ 0 ] + parts[ 1 ] + "." + parts[ 2 ];
+
+  return triple.simplified();
+}
+
 void US_ConvertGui::drop_reference( void )
 {
   qDebug() << "runType -- " << runType;
@@ -6605,6 +6626,8 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	    DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel tripleDesc" << ss << trx << selected[ss] <<  all_tripinfo[ trx ].tripleDesc;
          }
       }
+
+      QStringList chans_auto_dropped;   // channels dropped because their representative triple was dropped
 
       //ALEXEY: If autoflow: - check if Mwl; if yes, check for all selected triples if it's a reference wvl for EDIT & 2DSA_FM & FITMEN...
       //        if yes, inform user that all channel will be selected for drop-out, confirm... 
@@ -6672,6 +6695,8 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
 		  //Mark channel to be dropped - for exclusion of the report
 		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
+		  if ( ! chans_auto_dropped.contains( celchn ) )
+		    chans_auto_dropped << celchn;
 		  qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
 		  
 		  for ( int trx = 0; trx < all_triples.size(); trx++ )
@@ -6705,6 +6730,12 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 		  drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	      **/
 	      drop_operations[ runType ][ "Triples" ] = t_comment;
+
+	      //names of dropped triples (and channels dropped along with their representative triple):
+	      for ( int ss = 0; ss < selsiz; ss++ )
+		add_drop_item( "Triples", drop_triple_name( selected[ ss ] ) );
+	      for ( int cc = 0; cc < chans_auto_dropped.size(); cc++ )
+		add_drop_item( "Channels", chans_auto_dropped[ cc ] );
 	    }
 	}
           
@@ -7010,12 +7041,15 @@ void US_ConvertGui::drop_channel()
   if ( status != QMessageBox::Ok ) return;
 
    //identify all dropped channels
+   QStringList chans_dropped_now;
    for (int ii = 0; ii < lw_triple->count(); ii++)
      {
        QString channel_cell = lw_triple->item( ii )->text().section( "/", 0, 1 ).simplified();
        if ( channel_cell.contains( chann ) )
 	 {
 	   channels_to_drop[ QString( channel_cell ).replace(" / ","") ] = true;
+	   if ( ! chans_dropped_now.contains( channel_cell ) )
+	     chans_dropped_now << channel_cell;
 	   qDebug() << "DROP All A's/B's: Channel_cell for EXCLUSION -- " << channel_cell;
 	 }
      }
@@ -7046,6 +7080,9 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	   **/
 	   drop_operations[ runType ][ "Channels" ] = t_comment;
+
+	   for ( int cc = 0; cc < chans_dropped_now.size(); cc++ )
+	     add_drop_item( "Channels", chans_dropped_now[ cc ] );
 	 }
      }
    
@@ -7162,6 +7199,7 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	   **/
 	   drop_operations[ runType ][ "Selected Channel" ] = t_comment;
+	   add_drop_item( "Selected Channel", celchn );
 	 }
      }
    
@@ -8110,6 +8148,18 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importRI_Json += "}]";
 	}
 
+      //Names of the actually dropped triples / channels (recorded in drop_items):
+      if ( !drop_items[ runType ]. isEmpty() )
+	{
+	  importRI_Json += ", \"DroppedItems\": ";
+	  importRI_Json += "[{";
+	  QMap<QString, QStringList>::iterator di;
+	  for ( di = drop_items[ runType ].begin(); di != drop_items[ runType ].end(); ++di )
+	    importRI_Json += "\"" + di.key() + "\": \"" + di.value().join( ", " ) + "\",";
+	  importRI_Json.chop(1);
+	  importRI_Json += "}]";
+	}
+
       //Now check if check_scans() found a mismatch between expected and
       //collected scan counts for any triple in this run:
       if ( !scan_difference_map[ runType ].isEmpty() )
@@ -8181,6 +8231,18 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	      qDebug() << "QMAP: drop_operations[ runType ], key / value -- " << runType << jj.key() << jj.value();
 	      importIP_Json += "\"" + jj.key() + "\": \"" + jj.value() + "\",";
 	    }
+	  importIP_Json.chop(1);
+	  importIP_Json += "}]";
+	}
+
+      //Names of the actually dropped triples / channels (recorded in drop_items):
+      if ( !drop_items[ runType ]. isEmpty() )
+	{
+	  importIP_Json += ", \"DroppedItems\": ";
+	  importIP_Json += "[{";
+	  QMap<QString, QStringList>::iterator di;
+	  for ( di = drop_items[ runType ].begin(); di != drop_items[ runType ].end(); ++di )
+	    importIP_Json += "\"" + di.key() + "\": \"" + di.value().join( ", " ) + "\",";
 	  importIP_Json.chop(1);
 	  importIP_Json += "}]";
 	}
