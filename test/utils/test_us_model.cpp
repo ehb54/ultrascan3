@@ -66,7 +66,7 @@ protected:
                 "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
                 "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
                 "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
-                "coSedSolute=\"-1\" subGrids=\"0\">\n"
+                "coSedSolute=\"-1\">\n"
                 "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
                 "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
                 "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
@@ -85,7 +85,7 @@ EXPECT_EQ(model->variance, 0.0);
 EXPECT_EQ(model->meniscus, 0.0);
 EXPECT_EQ(model->bottom, 0.0);
 EXPECT_EQ(model->alphaRP, 0.0);
-EXPECT_EQ(model->subGrids, 0);
+EXPECT_EQ(model->subGrids, 1);
 EXPECT_THAT(model->description, QStringEq("New Model"));
 EXPECT_EQ(model->optics, US_Model::ABSORBANCE);
 EXPECT_EQ(model->analysis, US_Model::MANUAL);

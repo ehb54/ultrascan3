@@ -82,7 +82,7 @@ US_Model::US_Model()
    meniscus        = 0.0;
    bottom          = 0.0;
    alphaRP         = 0.0;
-   subGrids        = 0;
+   subGrids        = 1;
    description     = "New Model";
    optics          = ABSORBANCE;
    analysis        = MANUAL;
@@ -701,9 +701,8 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             dataDescrip     = a.value( "dataDescrip"    ).toString();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
-            QString subgs   = a.value( "subGrids"       ).toString();
-            subGrids        = subgs.isEmpty() ? subGrids
-                                              : subgs.toInt();
+            int     subgs   = a.value( "subGrids"       ).toString().toInt();
+            subGrids        = subgs > 0 ? subGrids : subgs;
             QString anal1   = a.value( "type"           ).toString();
             QString anal2   = a.value( "analysisType"   ).toString();
             analysis        = anal1.isEmpty() ? analysis
@@ -1276,8 +1275,10 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    if ( alphaRP  != 0.0 )
       xml.writeAttribute( "alphaRP",     QString::number( alphaRP      ) );
    xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
-   if ( subGrids != 0.0 )
+   if ( subGrids > 1 )
+   {
       xml.writeAttribute( "subGrids",    QString::number( subGrids     ) );
+   }
    xml.writeAttribute   ( "opticsType",  QString::number( optics       ) );
    xml.writeAttribute   ( "analysisType",QString::number( analysis     ) );
    xml.writeAttribute   ( "globalType",  QString::number( global       ) );
