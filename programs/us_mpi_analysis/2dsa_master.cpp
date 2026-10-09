@@ -6,6 +6,13 @@
 #include "us_simparms.h"
 #include "us_constants.h"
 
+// Drop duplicate solutes from a sorted merge-job solute vector
+static void unique_solutes( QVector< US_Solute >& solutes )
+{
+   solutes.erase( std::unique( solutes.begin(), solutes.end() ),
+                  solutes.end() );
+}
+
 void US_MPI_Analysis::_2dsa_master( void )
 {
    init_solutes();
@@ -1137,6 +1144,7 @@ DbgLv(1) << "Mast:    process_solutes:      worker" << worker
       job.mpi_job.dataset_offset = current_dataset;
       job.mpi_job.dataset_count  = datasets_to_process;
       std::sort( job.solutes.begin(), job.solutes.end() );
+      unique_solutes( job.solutes );
       add_to_queue( job );
 
 DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
@@ -1200,6 +1208,7 @@ DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
          job.mpi_job.dataset_count  = datasets_to_process;
          max_depth                  = qMax( next_d, max_depth );
          std::sort( job.solutes.begin(), job.solutes.end() );
+         unique_solutes( job.solutes );
          add_to_queue( job );
 DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
 
@@ -1239,6 +1248,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
                            ? data_sets[ current_dataset ]->run_data.bottom
                            : bottom_values  [ bottom_run   ];
       std::sort( job.solutes.begin(), job.solutes.end() );
+      unique_solutes( job.solutes );
 DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
  << max_depth << "  nsvs=" << simulation_values.solutes.size();
 

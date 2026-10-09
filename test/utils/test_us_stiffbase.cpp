@@ -1,5 +1,6 @@
 #include "qt_test_base.h"
 #include "us_stiffbase.h"
+#include <algorithm>
 #include <cmath>
 
 class US_StiffBaseTest : public QtTestBase {
@@ -319,4 +320,47 @@ EXPECT_NEAR(stif1[i][j], stif2[i][j], tolerance)
 
 deleteMatrix(stif1, 4);
 deleteMatrix(stif2, 4);
+}
+
+TEST_F( US_StiffBaseTest, RectangleElementMatchesQuadrilateralQuadrature ) {
+    // Fixed-mesh elements [x0,x1] x [0,dt]:  the closed form from reference
+    // moments must match the Gauss quadrature of CompLocalStif( 4, ... ), with
+    // the vertices ordered as in US_Astfem_RSA::ComputeCoefMatrixFixedMesh
+    double** stifQ = createMatrix( 4 );
+    double** stifR = createMatrix( 4 );
+    double maxerr = 0.0;
+
+    for ( const double x0 : { 5.9, 6.5, 7.1 } ) {
+        for ( const double h : { 0.001, 0.0065, 0.05 } ) {
+            for ( const double dt : { 0.1, 2.0, 30.0, 300.0 } ) {
+                for ( const double D : { 1.0e-7, 6.0e-7 } ) {
+                    for ( const double sw2 : { 0.0, 1.4e-5, 5.5e-5 } ) {
+                        double xd[4][2] = {
+                                {x0, 0.0}, {x0 + h, 0.0}, {x0 + h, dt}, {x0, dt}
+                        };
+                        stiffBase->CompLocalStif( 4, xd, D, sw2, stifQ );
+                        stiffBase->CompLocalStifRect( x0, x0 + h, dt, D, sw2, stifR );
+
+                        double scale = 0.0;
+                        for ( int i = 0; i < 4; i++ ) {
+                            for ( int j = 0; j < 4; j++ ) {
+                                scale = std::max( scale, std::abs( stifQ[i][j] ) );
+                            }
+                        }
+
+                        for ( int i = 0; i < 4; i++ ) {
+                            for ( int j = 0; j < 4; j++ ) {
+                                maxerr = std::max( maxerr, std::abs( stifR[i][j] - stifQ[i][j] ) / scale );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    EXPECT_LT( maxerr, 1e-10 ) << "Rectangle stiffness differs from quadrature";
+
+    deleteMatrix( stifQ, 4 );
+    deleteMatrix( stifR, 4 );
 }
