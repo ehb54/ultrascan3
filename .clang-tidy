@@ -1,0 +1,14 @@
+# Security/correctness checks come first and are reported as errors;
+# style checks (UltraScan III coding conventions) are reported as warnings and are auto-fixable.
+Checks: >
+  -*,
+  clang-analyzer-core.*,
+  clang-analyzer-security.*,
+  bugprone-use-after-move,
+  bugprone-dangling-handle,
+  bugprone-assert-side-effect,
+  modernize-use-nullptr,
+  modernize-redundant-void-arg
+WarningsAsErrors: 'clang-analyzer-*,bugprone-*'
+HeaderFilterRegex: '^.*/(gui|utils|programs)/.*\.h$'
+FormatStyle: file
