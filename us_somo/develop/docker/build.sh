@@ -4,16 +4,17 @@
 #
 #   us_somo/develop/docker/build.sh [qt5|qt6|root-qt5|root-qt6]
 #
-#   qt5, qt6            standalone: cmake -S us_somo/develop, with SOMO's own
-#                       vcpkg.json (qt5 / qt6 feature)
+#   qt5, qt6            SOMO only: us_somo/develop's vcpkg-qt5 / vcpkg-qt6 preset
 #   root-qt5, root-qt6  the whole repo with the linux-release-qt5 / -qt6 preset
 #                       and -DUS3_BUILD_SOMO=ON, building only the SOMO targets
 #
-# Every mode uses the root's vcpkg toolchain wrapper and overlay triplets
+# Every mode uses the root's vcpkg setup: the root manifest (qt5-app / qt6-app
+# feature), the toolchain wrapper and the overlay triplets
 # (admin/cmake/toolchain.cmake, admin/cmake/triplets): dynamic, release-only,
-# host tools in the target tree, as in the main UltraScan build. The wrapper
-# keeps each build's vcpkg packages in its own build tree; the binary cache in
-# a named volume means only the first build of each Qt compiles it.
+# host tools in the target tree, as in the main UltraScan build. So all modes
+# install the same packages; the wrapper keeps each build's vcpkg packages in
+# its own build tree, and the binary cache in a named volume means only the
+# first build of each Qt compiles it.
 #
 # Bind-mounts the repo read-write (vcpkg + version scripts need git; the
 # generated headers are gitignored).
@@ -51,24 +52,17 @@ docker run --rm -i \
     export VCPKG_ROOT=/opt/vcpkg
     export VCPKG_MAX_CONCURRENCY="$JOBS"
     export VCPKG_DEFAULT_BINARY_CACHE=/vcpkg-cache
-    SOMO_TARGETS="us_somo us3_somo us_admin us3_config us_saxs_cmds_t"
+    SOMO_TARGETS="us_somo us3_somo us3_admin us3_config us_saxs_cmds_t"
 
     case "$MODE" in
       qt5|qt6)
-        BUILD="/src/us_somo/develop/build-docker/$MODE"
-        ARGS=( -DUSE_QT6=OFF )
-        if [ "$MODE" = "qt6" ]; then
-          ARGS=( -DUSE_QT6=ON -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON -DVCPKG_MANIFEST_FEATURES=qt6 )
-        fi
-        echo "=== configuring standalone SOMO ($MODE) ==="
-        cmake -S /src/us_somo/develop -B "$BUILD" -G Ninja \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-          -DCMAKE_TOOLCHAIN_FILE=/src/admin/cmake/toolchain.cmake \
-          -DVCPKG_OVERLAY_TRIPLETS=/src/admin/cmake/triplets \
-          "${ARGS[@]}"
+        PRESET="vcpkg-$MODE"
+        BUILD="/src/us_somo/develop/build/$PRESET"
+        echo "=== configuring SOMO only, preset $PRESET ==="
+        cd /src/us_somo/develop
+        cmake --preset "$PRESET"
         echo "=== building ==="
-        cmake --build "$BUILD" --parallel "$JOBS"
+        cmake --build --preset "$PRESET" --parallel "$JOBS"
         ;;
       root-qt5|root-qt6)
         PRESET="linux-release-${MODE#root-}"

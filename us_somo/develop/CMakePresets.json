@@ -29,10 +29,55 @@
       "inherits": "qt5-env",
       "generator": "MSYS Makefiles",
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "vcpkg-base",
+      "hidden": true,
+      "description": "vcpkg as the root presets set it up: the root manifest, and admin/cmake's toolchain wrapper and overlay triplets, so the packages and the binary cache are the same as a root build's; they install in <build dir>/vcpkg_installed. Only SOMO is built.",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/../../admin/cmake/toolchain.cmake",
+        "VCPKG_MANIFEST_DIR": "${sourceDir}/../..",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/../../admin/cmake/triplets"
+      },
+      "environment": { "VCPKG_DISABLE_METRICS": "1" },
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "vcpkg-qt5",
+      "displayName": "Qt 5 from vcpkg",
+      "description": "Qt 5 and Qwt from vcpkg, with the root manifest's qt5-app feature (macOS, Linux)",
+      "inherits": "vcpkg-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "VCPKG_MANIFEST_FEATURES": "qt5-app", "USE_QT6": "OFF" }
+    },
+    {
+      "name": "vcpkg-qt6",
+      "displayName": "Qt 6 from vcpkg",
+      "description": "Qt 6 and Qwt from vcpkg, with the root manifest's qt6-app feature (macOS, Linux)",
+      "inherits": "vcpkg-base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "VCPKG_MANIFEST_FEATURES": "qt6-app", "USE_QT6": "ON" }
+    },
+    {
+      "name": "vcpkg-qt5-debug",
+      "displayName": "Qt 5 from vcpkg, Debug",
+      "inherits": "vcpkg-qt5",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "vcpkg-qt6-debug",
+      "displayName": "Qt 6 from vcpkg, Debug",
+      "inherits": "vcpkg-qt6",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
     }
   ],
   "buildPresets": [
-    { "name": "qt5",       "configurePreset": "qt5" },
-    { "name": "qt5-msys2", "configurePreset": "qt5-msys2" }
+    { "name": "qt5",             "configurePreset": "qt5" },
+    { "name": "qt5-msys2",       "configurePreset": "qt5-msys2" },
+    { "name": "vcpkg-qt5",       "configurePreset": "vcpkg-qt5" },
+    { "name": "vcpkg-qt6",       "configurePreset": "vcpkg-qt6" },
+    { "name": "vcpkg-qt5-debug", "configurePreset": "vcpkg-qt5-debug" },
+    { "name": "vcpkg-qt6-debug", "configurePreset": "vcpkg-qt6-debug" }
   ]
 }
