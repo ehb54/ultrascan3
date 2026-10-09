@@ -177,13 +177,13 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       class tbSyData
       {
          public:
-            int       dataId;        //!< Data table entry ID
+            int       dataId{-1};    //!< Data table entry ID
             int       runId;         //!< Run ID
-            int       exptime;       //!< Time in seconds from exp. start
-            int       stageNum;      //!< Stage number
-            double    tempera;       //!< Temperature
-            double    speed;         //!< Speed in revs per minute
-            double    omgSqT;        //!< OmegaSquaredT
+            int       exptime{-1};   //!< Time in seconds from exp. start
+            int       stageNum{0};   //!< Stage number
+            double    tempera{20.0}; //!< Temperature
+            double    speed{0.0};    //!< Speed in revs per minute
+            double    omgSqT{0.0};   //!< OmegaSquaredT
             QDateTime expstart;      //!< Experiment start
       };
 
