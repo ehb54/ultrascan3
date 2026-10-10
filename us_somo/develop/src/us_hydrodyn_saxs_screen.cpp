@@ -78,11 +78,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    }
 
    t_csv->setMaximumHeight( t_csv->height() );
-#if QT_VERSION < 0x040000
-   editor->setMaximumWidth( editor->width() + editor->width() / 20 );
-#else
    editor->setMaximumWidth( ( (int)csv_width * 35 ) / 100 );
-#endif
 
    max_y_range = 0e0;
 
@@ -101,7 +97,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    int minHeight1  = 30;
    int minHeight1b = 75;
    int minHeight2  = 45;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3  = 30;
 #endif
 
@@ -287,35 +283,6 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -346,7 +313,6 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -363,19 +329,12 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
    // plot_dist->setOutlineStyle(Qwt::VLine);
-#if QT_VERSION < 0x040000
-   plot_dist->enableGridXMin();
-   plot_dist->enableGridYMin();
-   plot_dist->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_dist->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    QwtPlotGrid* grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
    grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine));
    grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine));
    grid->attach( plot_dist );
-#endif
    plot_dist->setPalette( PALET_NORMAL );
    AUTFBACK( plot_dist );
    plot_dist->setAxisTitle(QwtPlot::xBottom, us_tr("Radius (A)"));
@@ -383,12 +342,6 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot_dist->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot_dist->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
 //    plot_dist->setMargin(USglobal->config_list.margin);
    plot_dist->setTitle("");
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
@@ -508,7 +461,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    hbl_bottom->addSpacing(4);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -1196,15 +1149,6 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    lbl_pos_range->setText( QString( "%1 of %2" ).arg( i + 1 ).arg( messages[ current_row ].size() ) );
    
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
-#if QT_VERSION < 0x040000
-   long curvekey = plot_dist->insertCurve("Radii histogram");
-   plot_dist->setCurveStyle( curvekey, QwtCurve::Sticks);
-   plot_dist->setCurveData ( curvekey, 
-                             (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
-                             (double *)&( intensitys[ current_row ][ i ][ 0 ] ), 
-                             radiis[ current_row ][ i ].size() );
-   plot_dist->setCurvePen  ( curvekey, QPen( "yellow", pen_width, SolidLine ) );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( us_tr( "Radii histogram" ) );
    curve->setStyle( QwtPlotCurve::Sticks );
    curve->setSamples( (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
@@ -1214,27 +1158,9 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    curve->attach( plot_dist );
    int    sizeym = ( plot_dist->height() * 45 ) / 100;
    double ymark  = ( curve->minYValue() + curve->maxYValue() ) * 0.40;
-#endif
 
    if ( cb_plot_best->isChecked() )
    {
-#if QT_VERSION < 0x040000
-      long qpmkey = plot_dist->insertMarker();
-      plot_dist->setMarkerLineStyle ( qpmkey, QwtMarker::VLine);
-      plot_dist->setMarkerPos       ( qpmkey, best_fit_radiuss[ current_row ][ i ], 0e0 );
-      plot_dist->setMarkerLabelAlign( qpmkey, AlignRight|AlignTop );
-      plot_dist->setMarkerPen       ( qpmkey, QPen( green, 2, DashDotDotLine));
-      plot_dist->setMarkerFont      ( qpmkey, QFont("Helvetica", 11, QFont::Bold));
-      plot_dist->setMarkerLabelText ( qpmkey, QString("Best individual\nfit at %1%2")
-                                      .arg( best_fit_radiuss[ current_row ][ i ] )
-                                      .arg( cb_plot_chi2->isChecked() ?
-                                            QString("\n%1 = %2")
-                                            .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
-                                            .arg( chi2_bests[ current_row ][ i ] )
-                                            :
-                                            "" )
-                                      );
-#else
       QwtPlotMarker* marker1 = new QwtPlotMarker;
       marker1->setSymbol( new QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( Qt::green, 2, Qt::DashLine ),
@@ -1248,28 +1174,10 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
          .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
          .arg( chi2_bests[ current_row ][ i ] ) : "" ) );
       marker1->attach( plot_dist );
-#endif
    }
 
    if ( cb_plot_average->isChecked() )
    {
-#if QT_VERSION < 0x040000
-      long qpmkey2 = plot_dist->insertMarker();
-      plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
-      plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ current_row ][ i ], 0e0 );
-      plot_dist->setMarkerLabelAlign( qpmkey2, cb_plot_best->isChecked() ? AlignLeft|AlignTop : AlignRight|AlignTop );
-      plot_dist->setMarkerPen       ( qpmkey2, QPen( QColor( 255, 141, 0 ), 2, DashLine));
-      plot_dist->setMarkerFont      ( qpmkey2, QFont("Helvetica", 11, QFont::Bold));
-      plot_dist->setMarkerLabelText ( qpmkey2, QString("\n\n\nAverage fit\n at %1%2")
-                                      .arg( average_radiuss[ current_row ][ i ] ) 
-                                      .arg( cb_plot_chi2->isChecked() ?
-                                            QString("\nNNLS %1 = %2")
-                                            .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
-                                            .arg( chi2_nnlss[ current_row ][ i ] )
-                                            :
-                                            "" )
-                                      );
-#else
       QwtPlotMarker* marker2 = new QwtPlotMarker;
       marker2->setSymbol( new QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( QColor( 255, 141, 0 ), 2, Qt::DashLine ),
@@ -1284,21 +1192,11 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
          .arg( use_chi2s[ current_row ][ i ] ? "nchi" : "nrmsd" )
          .arg( chi2_nnlss[ current_row ][ i ] ) : "" ) );
       marker2->attach( plot_dist );
-#endif
    }
 
    if ( cb_plot_rg->isChecked() &&
         target_rgs[ current_row ][ i ] != 0e0 )
    {
-#if QT_VERSION < 0x040000
-      long qpmkey3 = plot_dist->insertMarker();
-      plot_dist->setMarkerLineStyle ( qpmkey3, QwtMarker::VLine);
-      plot_dist->setMarkerPos       ( qpmkey3, target_rgs[ current_row ][ i ], 0e0 );
-      plot_dist->setMarkerLabelAlign( qpmkey3, AlignRight|AlignCenter );
-      plot_dist->setMarkerPen       ( qpmkey3, QPen( "blue", 2, DashLine));
-      plot_dist->setMarkerFont      ( qpmkey3, QFont("Helvetica", 11, QFont::Bold));
-      plot_dist->setMarkerLabelText ( qpmkey3, QString("Guinier Rg\n%1").arg( target_rgs[ current_row ][ i ] ) );
-#else
       QwtPlotMarker* marker3 = new QwtPlotMarker;
       marker3->setSymbol( new QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),
@@ -1308,7 +1206,6 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       marker3->setLabel( QString( "Guinier Rg\n%1" )
          .arg( target_rgs[ current_row ][ i ] ) );
       marker3->attach( plot_dist );
-#endif
    }
 
    plot_dist->setAxisScale( QwtPlot::xBottom, 0.0, max_x_range );
@@ -1698,13 +1595,6 @@ void US_Hydrodyn_Saxs_Screen::clear_plot()
 {
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_dist->replot();
-#if QT_VERSION < 0x040000
-   if ( plot_dist_zoomer )
-   {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
-   }
-#endif
    lbl_message->setText("");
    lbl_message2->setText("");
    lbl_message3->setText("");

@@ -422,10 +422,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH, false );
 
    sync_conc_csv();
-#if QT_VERSION >= 0x040000
    set_saxs_legend();
    set_pr_legend();
-#endif
 
    // #define TEST_PR_SD_ZEROS
 #if defined( TEST_PR_SD_ZEROS )
@@ -704,7 +702,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( rb_sans );
    iq_widgets.push_back( rb_sans );
 
-#if 1 // QT_VERSION < 0x040000
    bg_saxs_sans = new QButtonGroup( this );
    int bg_pos = 0;
    bg_saxs_sans->setExclusive(true);
@@ -712,19 +709,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_saxs_sans->addButton( rb_sans, bg_pos++ );
    connect(bg_saxs_sans, SIGNAL(buttonClicked(int)), SLOT(set_saxs_sans(int)));
    // iq_widgets.push_back( bg_saxs_sans );
-#else
-   bg_saxs_sans = new QGroupBox();
-   bg_saxs_sans->setFlat( true );
-
-   connect( rb_saxs, SIGNAL( clicked() ), this, SLOT( set_saxs_sans() ) );
-   connect( rb_sans, SIGNAL( clicked() ), this, SLOT( set_saxs_sans() ) );
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_saxs );
-      bl->addWidget( rb_sans );
-      bg_saxs_sans->setLayout( bl );
-   }
-#endif
 
    rb_saxs_iq_native_debye = new QRadioButton(us_tr("F-DB"), this);
    rb_saxs_iq_native_debye->setEnabled(true);
@@ -798,7 +782,6 @@ void US_Hydrodyn_Saxs::setupGUI()
       iq_widgets.push_back( rb_saxs_iq_sastbx );
    }
 
-#if 1 // QT_VERSION < 0x040000
    bg_saxs_iq = new QButtonGroup( this );
    bg_pos = 0;
    bg_saxs_iq->setExclusive(true);
@@ -823,46 +806,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
    connect(bg_saxs_iq, SIGNAL(buttonClicked(int)), SLOT(set_saxs_iq(int)));
    // iq_widgets.push_back( bg_saxs_iq );
-#else
-   bg_saxs_iq = new QGroupBox();
-   bg_saxs_iq->setFlat( true );
-
-   connect( rb_saxs_iq_native_debye, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   connect( rb_saxs_iq_native_sh, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   if ( started_in_expert_mode ) {
-      connect( rb_saxs_iq_native_hybrid, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-      connect( rb_saxs_iq_native_hybrid2, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-      connect( rb_saxs_iq_native_hybrid3, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   }
-   connect( rb_saxs_iq_native_fast, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   if ( started_in_expert_mode ) {
-      connect( rb_saxs_iq_foxs, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   }
-   connect( rb_saxs_iq_crysol, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   if ( started_in_expert_mode ) {
-      connect( rb_saxs_iq_sastbx, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
-   }
-      
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_saxs_iq_native_debye );
-      bl->addWidget( rb_saxs_iq_native_sh );
-      if ( started_in_expert_mode ) {
-         bl->addWidget( rb_saxs_iq_native_hybrid );
-         bl->addWidget( rb_saxs_iq_native_hybrid2 );
-         bl->addWidget( rb_saxs_iq_native_hybrid3 );
-      }
-      bl->addWidget( rb_saxs_iq_native_fast );
-      if ( started_in_expert_mode ) {
-         bl->addWidget( rb_saxs_iq_foxs );
-      }
-      bl->addWidget( rb_saxs_iq_crysol );
-      if ( started_in_expert_mode ) {
-         bl->addWidget( rb_saxs_iq_sastbx );
-      }
-      bg_saxs_iq->setLayout( bl );
-   }
-#endif
 
    rb_sans_iq_native_debye = new QRadioButton(us_tr("F-DB"), this);
    rb_sans_iq_native_debye->setEnabled(true);
@@ -916,7 +859,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( rb_sans_iq_cryson );
    iq_widgets.push_back( rb_sans_iq_cryson );
 
-#if 1 // QT_VERSION < 0x040000
    bg_sans_iq = new QButtonGroup( this );
    bg_pos = 0;
    bg_sans_iq->setExclusive(true);
@@ -932,34 +874,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_sans_iq->addButton( rb_sans_iq_cryson, bg_pos++ );
    connect(bg_sans_iq, SIGNAL(buttonClicked(int)), SLOT(set_sans_iq(int)));
    // iq_widgets.push_back( bg_sans_iq );
-#else
-   bg_sans_iq = new QGroupBox();
-   bg_sans_iq->setFlat( true );
-
-   connect( rb_sans_iq_native_debye, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-   connect( rb_sans_iq_native_sh, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-   if ( started_in_expert_mode ) {
-      connect( rb_sans_iq_native_hybrid, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-      connect( rb_sans_iq_native_hybrid2, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-      connect( rb_sans_iq_native_hybrid3, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-   }
-   connect( rb_sans_iq_native_fast, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-   connect( rb_sans_iq_cryson, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
-
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_sans_iq_native_debye );
-      bl->addWidget( rb_sans_iq_native_sh );
-      if ( started_in_expert_mode ) {
-         bl->addWidget( rb_sans_iq_native_hybrid );
-         bl->addWidget( rb_sans_iq_native_hybrid2 );
-         bl->addWidget( rb_sans_iq_native_hybrid3 );
-      }
-      bl->addWidget( rb_sans_iq_native_fast );
-      bl->addWidget( rb_sans_iq_cryson );
-      bg_sans_iq->setLayout( bl );
-   }
-#endif
 
    lbl_iqq_suffix = new QLabel(us_tr(" File suffix: "), this);
    lbl_iqq_suffix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -1433,7 +1347,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( rb_curve_sans );
    pr_widgets.push_back( rb_curve_sans );
 
-#if 1 // QT_VERSION < 0x040000
    bg_curve = new QButtonGroup( this );
    bg_pos = 0;
    bg_curve->setExclusive(true);
@@ -1443,21 +1356,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_curve->addButton( rb_curve_sans, bg_pos++ );
    connect(bg_curve, SIGNAL(buttonClicked(int)), SLOT(set_curve(int)));
    // pr_widgets.push_back( bg_curve );
-#else
-   bg_curve = new QGroupBox();
-   bg_curve->setFlat( true );
-
-   connect( rb_curve_raw, SIGNAL( clicked() ), this, SLOT( set_curve() ) );
-   connect( rb_curve_saxs, SIGNAL( clicked() ), this, SLOT( set_curve() ) );
-   connect( rb_curve_sans, SIGNAL( clicked() ), this, SLOT( set_curve() ) );
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_curve_raw );
-      bl->addWidget( rb_curve_saxs );
-      bl->addWidget( rb_curve_sans );
-      bg_curve->setLayout( bl );
-   }
-#endif
    cb_normalize = new QCheckBox(this);
    cb_normalize->setText(us_tr(" Normalize"));
    cb_normalize->setEnabled(true);
@@ -1628,27 +1526,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_info[ "US-SOMO SAXS Main" ] = plot_saxs;
 
    iq_widgets.push_back( plot_saxs );
-#if QT_VERSION < 0x040000
-   // plot_saxs->enableOutline(true);
-   plot_saxs->setOutlinePen(Qt::white);
-   plot_saxs->setOutlineStyle(Qwt::VLine);
-   plot_saxs->enableGridXMin();
-   plot_saxs->enableGridYMin();
-#else
    grid_saxs = new QwtPlotGrid;
    grid_saxs->enableXMin( true );
    grid_saxs->enableYMin( true );
-#endif
    plot_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( plot_saxs );
-#if QT_VERSION < 0x040000
-   plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_saxs->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_saxs->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_saxs );
-#endif
    plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
    plot_saxs->setAxisTitle( QwtPlot::yLeft,   
                             cb_kratky ->isChecked() ? 
@@ -1656,41 +1541,18 @@ void US_Hydrodyn_Saxs::setupGUI()
                             ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? us_tr( "q*I(q) (log scale)" ) : 
                               ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q) (log scale)" ) : us_tr( "I(q) (log scale)" ) ) )
                             );
-#if QT_VERSION < 0x040000
-   plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
-   plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_saxs->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_saxs->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_saxs->setMargin(USglobal->config_list.margin);
    plot_saxs->setTitle("");
 
-#if QT_VERSION < 0x040000
-   plot_saxs->setAxisOptions(QwtPlot::yLeft, 
-                             cb_kratky->isChecked() ? 
-                             QwtAutoScale::None :
-                             QwtAutoScale::Logarithmic
-                             );
-#else
    plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
                                  cb_kratky->isChecked() ?
                                  new QwtLogScaleEngine(10) :  // fix this
                                  new QwtLogScaleEngine(10));
    // plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
-#endif
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
-#if QT_VERSION < 0x040000
-   plot_saxs->setAutoLegend( false );
-   plot_saxs->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
-   connect( plot_saxs, SIGNAL( legendClicked( long ) ), SLOT( plot_saxs_clicked( long ) ) );
-#endif
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
    plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
@@ -1706,51 +1568,23 @@ void US_Hydrodyn_Saxs::setupGUI()
    ((QWidget *)plot_pr->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "US-SOMO SAXS p(r)" ] = plot_pr;
    pr_widgets.push_back( plot_pr );
-#if QT_VERSION < 0x040000
-   // plot_pr->enableOutline(true);
-   plot_pr->setOutlinePen(Qt::white);
-   plot_pr->setOutlineStyle(Qwt::VLine);
-   plot_pr->enableGridXMin();
-   plot_pr->enableGridYMin();
-#else
    grid_pr = new QwtPlotGrid;
    grid_pr->enableXMin( true );
    grid_pr->enableYMin( true );
-#endif
    plot_pr->setPalette( PALET_NORMAL );
    AUTFBACK( plot_pr );
-#if QT_VERSION < 0x040000
-   plot_pr->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_pr->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_pr->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_pr->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_pr->attach( plot_pr );
-#endif
    plot_pr->setAxisTitle(QwtPlot::xBottom, us_tr("Distance (Angstrom)"));
    plot_pr->setAxisTitle(QwtPlot::yLeft, us_tr("Frequency"));
-#if QT_VERSION < 0x040000
-   plot_pr->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
-   plot_pr->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_pr->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_pr->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_pr->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_pr->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-#endif
    plot_pr->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_pr->setMargin(USglobal->config_list.margin);
    plot_pr->setTitle(us_tr("P(r) Distribution Curve"));
    plot_pr->setCanvasBackground(USglobal->global_colors.plot);
 
-#if QT_VERSION < 0x040000
-   plot_pr->setAutoLegend( false );
-   plot_pr->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
-   connect( plot_pr, SIGNAL( legendClicked( long ) ), SLOT( plot_pr_clicked( long ) ) );
-#endif
 
 //   plot_resid = new QwtPlot(this);
    usp_plot_resid = new US_Plot( plot_resid, "", "", "", this );
@@ -1766,27 +1600,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    // doesn't seem useful
    // plot_resid->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
    plot_info[ "US-SOMO SAXS resid" ] = plot_resid;
-#if QT_VERSION < 0x040000
-   // plot_resid->enableOutline(true);
-   // plot_resid->setOutlinePen(Qt::white);
-   // plot_resid->setOutlineStyle(Qwt::VLine);
-   plot_resid->enableGridXMin();
-   plot_resid->enableGridYMin();
-#else
    grid_resid = new QwtPlotGrid;
    grid_resid->enableXMin( true );
    grid_resid->enableYMin( true );
-#endif
    plot_resid->setPalette( PALET_NORMAL );
    AUTFBACK( plot_resid );
-#if QT_VERSION < 0x040000
-   plot_resid->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_resid->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_resid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_resid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_resid->attach( plot_resid );
-#endif
    // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom) or Frame"));
    // plot_resid->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
    plot_resid->setAxisTitle( QwtPlot::xBottom, plot_saxs->axisTitle( QwtPlot::xBottom ) );
@@ -1897,10 +1718,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-#if QT_VERSION >= 0x050000
    connect( qwtw_wheel, SIGNAL( wheelPressed() ), SLOT( wheel_pressed() ) );
    connect( qwtw_wheel, SIGNAL( wheelReleased() ), SLOT( wheel_released() ) );
-#endif
    manual_guinier_widgets.push_back( qwtw_wheel );
    qwtw_wheel->setMinimumWidth ( 350 );
    
@@ -1938,41 +1757,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    editor->setMinimumWidth(300);
    editor->setMinimumHeight(minHeight1 * 6);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight0);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
@@ -2005,7 +1789,6 @@ void US_Hydrodyn_Saxs::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
    editor->setWordWrapMode (QTextOption::WordWrap);
    // editor->setWordWrapMode (QTextOption::NoWrap);
 
@@ -2226,7 +2009,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    //   background->addWidget(pb_load_pr, j, 0);
    // background->addWidget(pb_clear_plot_pr, j, 1);
    
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    background->addWidget( frame , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 #endif
@@ -5169,11 +4952,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       sleep(1);
       cout << " sleep 1 e done" << endl;
 #endif
-#if QT_VERSION < 0x040000
-      long Iq = plot_saxs->insertCurve("I(q) vs q");
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "I(q) vs q" );
-#endif
 
       QString name = 
          QString("%1_%2")
@@ -5191,13 +4970,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#if QT_VERSION < 0x040000
-      plotted_Iq.push_back(Iq);
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
       plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
       plotted_q.push_back(q);
       {
          vector < double > q2(q.size());
@@ -5217,13 +4991,6 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       {
          plotted_I[p][i] = log10(plotted_I[p][i]);
       }
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              (double *)&(plotted_I[p][0]), q_points);
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
       curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -5232,7 +4999,6 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
       plot_saxs->replot();
 
       // save the data to a file
@@ -5420,15 +5186,9 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_I_error.clear( );
    plot_saxs->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_saxs->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_saxs->replot();
-#if QT_VERSION < 0x040000
-   plotted_Gp.clear( );
-   plotted_cs_Gp.clear( );
-   plotted_Rt_Gp.clear( );
-#else
    plotted_Gp_curves.clear( );
    plotted_cs_Gp_curves.clear( );
    plotted_Rt_Gp_curves.clear( );
-#endif
    plotted_guinier_valid.clear( );
    plotted_guinier_plotted.clear( );
    plotted_guinier_lowq2.clear( );
@@ -5454,10 +5214,8 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_Rt_guinier_x.clear( );
    plotted_Rt_guinier_y.clear( );
 
-#if QT_VERSION >= 0x040000
    saxs_legend_vis = false;
    set_saxs_legend(); 
-#endif
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
@@ -6453,13 +6211,8 @@ void US_Hydrodyn_Saxs::reset_screen_csv()
    tmp_data.push_back("Radius (A)");
    tmp_data.push_back("Y");
    tmp_data.push_back(".5");
-#if QT_VERSION < 0x040000
-   tmp_data.push_back("1000");
-   tmp_data.push_back("1001");
-#else
    tmp_data.push_back("100");
    tmp_data.push_back("101");
-#endif
    tmp_data.push_back("");
 
    screen_csv.prepended_names.push_back(tmp_data[0]);

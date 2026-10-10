@@ -225,14 +225,6 @@ void US_Hydrodyn_Mals_Saxs_Movie::setupGUI()
    rb_save_bmp->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_bmp );
 
-#if QT_VERSION < 0x040000
-   bg_save = new QGroupBox( this );
-   int bg_pos = 0;
-   bg_save->setExclusive(true);
-   bg_save->addButton( rb_save_png, bg_pos++ );
-   bg_save->addButton( rb_save_jpeg, bg_pos++ );
-   bg_save->addButton( rb_save_bmp, bg_pos++ );
-#else
    bg_save = new QGroupBox();
    bg_save->setFlat( true );
 
@@ -243,7 +235,6 @@ void US_Hydrodyn_Mals_Saxs_Movie::setupGUI()
       bl->addWidget( rb_save_bmp );
       bg_save->setLayout( bl );
    }
-#endif
 
    cb_save_overwrite = new QCheckBox(this);
    cb_save_overwrite->setText(us_tr("Overwrite"));

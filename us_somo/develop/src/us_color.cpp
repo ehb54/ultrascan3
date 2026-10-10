@@ -23,9 +23,6 @@ US_Color::US_Color(QWidget *p, const char* ) : QFrame( p )
   y[0] = 1;
   y[1] = 2;
 
-#if QT_VERSION < 0x040000
-  uint c1;
-#endif
 
   setPalette( PALET_FRAME );
   setWindowTitle(us_tr("Color Configuration for UltraScan"));
@@ -43,46 +40,26 @@ US_Color::US_Color(QWidget *p, const char* ) : QFrame( p )
 
 
   plot = new QwtPlot(this);
-#if QT_VERSION < 0x040000
-  plot->enableOutline(true);
-  plot->setOutlinePen(Qt::white);
-  plot->setOutlineStyle(Qwt::Cross);
-  plot->enableGridXMin();
-  plot->enableGridYMin();
-#else
   grid = new QwtPlotGrid;
   grid->enableXMin( true );
   grid->enableYMin( true );
-#endif
   plot->setTitle(us_tr("Sample Plot"));
   plot->setPalette( PALET_NORMAL );
   AUTFBACK( plot );
-#if QT_VERSION < 0x040000
-  plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
-  plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
-#else
   grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
   grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
   grid->attach( plot );
-#endif
   plot->setCanvasBackground(temp_colors.plot);    //new version
   plot->setAxisTitle(QwtPlot::xBottom, us_tr("X-axis"));
   plot->setAxisTitle(QwtPlot::yLeft, us_tr("Y-axis"));
 //   plot->setMargin(USglobal->config_list.margin);
   plot->setMinimumSize(width*2-10, height*9);
-#if QT_VERSION < 0x040000
-  c1 = plot->insertCurve("Sample 1");
-  plot->setCurveStyle(c1, QwtCurve::Lines);
-  plot->setCurvePen(c1, Qt::yellow);
-  plot->setCurveData(c1, x, y, 2);
-#else
   curve = new QwtPlotCurve( "Sample 1" );
   curve->setStyle( QwtPlotCurve::Lines );
   curve->setPen( QPen( Qt::yellow ) );
   curve->setSamples( x, y, 2 );
   curve->attach( plot );
   plot->replot();
-#endif
   plot->show();
 
   
@@ -812,13 +789,8 @@ void US_Color::selected_scheme(int scheme)
       AUTFBACK( cmbb_margin );
       progress->setPalette( PALET_NORMAL );
       AUTFBACK( progress );
-#if QT_VERSION < 0x040000
-      plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
-      plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
-#else
       grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
       grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
-#endif
       //plot->setPlotBackground(temp_colors.plot);    //old version
       plot->setCanvasBackground(temp_colors.plot);    //new version
       plot->setPalette( PALET_NORMAL );
@@ -1199,22 +1171,14 @@ void US_Color::pick_color1()
     case 5:
     {
       temp_colors.major_ticks = color1;
-#if QT_VERSION < 0x040000
-      plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
-#else
       grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
-#endif
       plot->replot();
       break;
     }
     case 6:
     {
       temp_colors.minor_ticks = color1;
-#if QT_VERSION < 0x040000
-      plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
-#else
       grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
-#endif
       plot->replot();
       break;
     }
@@ -1650,13 +1614,8 @@ void US_Color::apply()
   pb_color6->setPalette( PALET_PUSHB );
   plot->setPalette( PALET_NORMAL );
   AUTFBACK( plot );
-#if QT_VERSION < 0x040000
-  plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-  plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
   grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
   grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
-#endif
   plot->setCanvasBackground(temp_colors.plot);
 //   plot->setMargin(USglobal->config_list.margin);
   cnt->setPalette( PALET_NORMAL );

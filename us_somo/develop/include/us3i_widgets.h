@@ -3,15 +3,8 @@
 #define US_WIDGETS_H
 
 #include <QtCore>
-#if QT_VERSION > 0x050000
 #include <QtWidgets>
 #include "qwt_picker_machine.h"
-#else
-#include <QtGui>
-#define setSingleStep(a) setStep(a)
-#define setMinorPen(a) setMinPen(a)
-#define setMajorPen(a) setMajPen(a)
-#endif
 #include "qwt_counter.h"
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"

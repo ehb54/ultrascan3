@@ -2,17 +2,12 @@
 #define US_MULTI_COLUMN_H
 
 #include "us_saxs_util.h"
-#if QT_VERSION >= 0x040000
 # include "qdebug.h"
-#endif
 #include "us_vector.h"
 //Added by qt3to4:
 #include <QTextStream>
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 class umc_sortable_double {
@@ -1504,9 +1499,6 @@ class US_Multi_Column
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

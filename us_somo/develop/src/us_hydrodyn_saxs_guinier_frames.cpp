@@ -194,16 +194,6 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
    ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   plot->enableOutline(true);
-   plot->setOutlinePen(Qt::white);
-   plot->setOutlineStyle(Qwt::VLine);
-   plot->enableGridXMin();
-   plot->enableGridYMin();
-   plot->setPalette( USglobal->global_colors.cg_plot );
-   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -211,7 +201,6 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
-#endif
    plot->setAxisTitle(QwtPlot::xBottom, parameters[ "xbottom" ] );
    plot->setAxisTitle(QwtPlot::yLeft  , parameters[ "yleft"   ] + us_tr( " 'Diamonds'" ) );
    if ( parameters.count( "yright1" ) ) {
@@ -224,18 +213,8 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
       cb_yright2->show();
    }      
 
-#if QT_VERSION < 0x040000
-   plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle( parameters[ "title" ] );
@@ -390,18 +369,11 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
          // us_qdebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
          
          {
-#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name );
             curve->setStyle ( QwtPlotCurve::NoCurve );
             curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
             curve->setSamples  ( & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
             curve->attach   ( plot );
-#else
-            long curve = plot->insertCurve( this_name );
-            plot->setCurveStyle ( curve, QwtCurve::NoCurve );
-            plot->setCurveSymbol( curve, sym );
-            plot->setCurveData  ( curve, & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
-#endif
          }
 
          if ( (*this_plot)[ 3 ][ i ] > 0e0 ) {
@@ -411,18 +383,11 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             x[ 0 ] = x[ 1 ] = (*this_plot)[ 1 ][ i ];
             y[ 0 ] = (*this_plot)[ 2 ][ i ] - (*this_plot)[ 3 ][ i ];
             y[ 1 ] = (*this_plot)[ 2 ][ i ] + (*this_plot)[ 3 ][ i ];
-#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_errorbar" );
             curve->setStyle ( QwtPlotCurve::Lines );
             curve->setPen   ( use_pen );
             curve->setSamples  ( x, y, 2 );
             curve->attach   ( plot );
-#else
-            long curve = plot->insertCurve( this_name + "_errorbar" );
-            plot->setCurveStyle ( curve, QwtCurve::Lines );
-            plot->setCurvePen   ( curve, use_pen  );
-            plot->setCurveData  ( curve, x, y, 2 );
-#endif
          }
       }
 
@@ -431,18 +396,11 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             .arg( parameters[ "yleft" ] );
 
          QPen use_pen = QPen( Qt::cyan, use_line_width, Qt::DotLine );
-#if QT_VERSION >= 0x040000
          QwtPlotCurve *curve = new QwtPlotCurve( this_name );
          curve->setStyle ( QwtPlotCurve::Lines );
          curve->setPen   ( use_pen );
          curve->setSamples  ( & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
          curve->attach   ( plot );
-#else
-         long curve = plot->insertCurve( this_name );
-         plot->setCurveStyle ( curve, QwtCurve::Lines );
-         plot->setCurvePen   ( curve, use_pen  );
-         plot->setCurveData  ( curve, & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
-#endif
       }
    }
 
@@ -493,19 +451,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             // us_qdebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
          
             {
-#if QT_VERSION >= 0x040000
                QwtPlotCurve *curve = new QwtPlotCurve( this_name );
                curve->setStyle ( QwtPlotCurve::NoCurve );
                curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
                curve->setSamples  ( & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach   ( plot );
-#else
-               long curve = plot->insertCurve( this_name, QwtPlot::xBottom , QwtPlot::yRight );
-               plot->setCurveStyle ( curve, QwtCurve::NoCurve );
-               plot->setCurveSymbol( curve, sym );
-               plot->setCurveData  ( curve, & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
-#endif
             }
             {
                double x[ 2 ];
@@ -514,19 +465,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
                x[ 0 ] = x[ 1 ] = (*this_plot)[ 1 ][ i ];
                y[ 0 ] = (*this_plot)[ 2 ][ i ] - (*this_plot)[ 3 ][ i ];
                y[ 1 ] = (*this_plot)[ 2 ][ i ] + (*this_plot)[ 3 ][ i ];
-#if QT_VERSION >= 0x040000
                QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_errorbar" );
                curve->setStyle ( QwtPlotCurve::Lines );
                curve->setPen   ( use_pen );
                curve->setSamples  ( x, y, 2 );
                curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach   ( plot );
-#else
-               long curve = plot->insertCurve( this_name + "_errorbar", QwtPlot::xBottom , QwtPlot::yRight );
-               plot->setCurveStyle ( curve, QwtCurve::Lines );
-               plot->setCurvePen   ( curve, use_pen );
-               plot->setCurveData  ( curve, x, y, 2 );
-#endif
                // us_qdebug( QString( "double check plot mw eb x %1 %2 y %3 %4" ).arg( x[0] ).arg( x[1] ).arg( y[0] ).arg( y[1] ) );
             }
          }
@@ -536,19 +480,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
                .arg( parameters[ use_right ] );
 
             QPen use_pen = QPen( Qt::red, use_line_width, Qt::DotLine );
-#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name );
             curve->setStyle ( QwtPlotCurve::Lines );
             curve->setPen   ( use_pen );
             curve->setSamples  ( & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
             curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach   ( plot );
-#else
-            long curve = plot->insertCurve( this_name, QwtPlot::xBottom, QwtPlot::yRight );
-            plot->setCurveStyle ( curve, QwtCurve::Lines );
-            plot->setCurvePen   ( curve, use_pen  );
-            plot->setCurveData  ( curve, & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
-#endif
          }
       } else {
          plot->enableAxis  ( QwtPlot::yRight, false );
@@ -592,19 +529,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             QString this_name = QString( "reference curve" );
 
             QPen use_pen = QPen( Qt::green, use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name );
             curve->setStyle ( QwtPlotCurve::Lines );
             curve->setPen   ( use_pen );
             curve->setSamples  ( & ref_t[ 0 ], & y[ 0 ], y.size() );
             curve->setAxes( QwtPlot::xBottom , QwtPlot::yLeft );
             curve->attach   ( plot );
-#else
-            long curve = plot->insertCurve( this_name, QwtPlot::xBottom, QwtPlot::yLeft );
-            plot->setCurveStyle ( curve, QwtCurve::Lines );
-            plot->setCurvePen   ( curve, use_pen  );
-            plot->setCurveData  ( curve, & ref_t[ 0 ], & y[ 0 ], y.size() );
-#endif
          }
          
       }
@@ -671,9 +601,6 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
    {
       plot_zoomer = new ScrollZoomer(plot->canvas());
       plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    }
 
    plot->replot();
