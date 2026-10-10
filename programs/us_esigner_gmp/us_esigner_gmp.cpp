@@ -180,10 +180,15 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   QLabel* lb_apprs_to_assign  = us_label( "Approvers to Assign:" );
   
   le_run_name       = us_lineedit( tr(""), 0, true );
+  le_run_name->setAccessibleName( tr( "Run Name" ) );
+  lb_run_name->setBuddy( le_run_name );
   le_optima_name    = us_lineedit( tr(""), 0, true );
+  le_optima_name->setAccessibleName( tr( "Optima" ) );
+  lb_optima_name->setBuddy( le_optima_name );
 
 
   te_operator_names    = us_textedit();
+  te_operator_names->setAccessibleName( tr( "Assigned Operators" ) );
   //te_operator_names    ->setTextColor( Qt::blue );
   te_operator_names    -> setFixedHeight  ( RowHeight * 2 );
   te_operator_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -191,6 +196,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   us_setReadOnly( te_operator_names, true );
 
   te_reviewer_names    = us_textedit();
+  te_reviewer_names->setAccessibleName( tr( "Assigned Reviewers" ) );
   //te_reviewer_names    ->setTextColor( Qt::blue );
   te_reviewer_names    -> setFixedHeight  ( RowHeight * 3 );
   te_reviewer_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -199,6 +205,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
 
   te_appr_names    = us_textedit();
+  te_appr_names->setAccessibleName( tr( "Assigned Approvers" ) );
   //te_appr_names    ->setTextColor( Qt::blue );
   te_appr_names    -> setFixedHeight  ( RowHeight * 3 );
   te_appr_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -207,6 +214,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
 
   te_opers_to_assign    = us_textedit();
+  te_opers_to_assign->setAccessibleName( tr( "Operators to Assign" ) );
   //te_opers_to_assign    ->setTextColor( Qt::blue );
   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 2 );
   te_opers_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -214,6 +222,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   us_setReadOnly( te_opers_to_assign, true );
 
   te_revs_to_assign    = us_textedit();
+  te_revs_to_assign->setAccessibleName( tr( "Reviewers to Assign" ) );
   //te_revs_to_assign    ->setTextColor( Qt::blue );
   te_revs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -221,6 +230,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   us_setReadOnly( te_revs_to_assign, true );
 
   te_apprs_to_assign    = us_textedit();
+  te_apprs_to_assign->setAccessibleName( tr( "Approvers to Assign" ) );
   //te_apprs_to_assign    ->setTextColor( Qt::blue );
   te_apprs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
   te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -229,8 +239,11 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   
   
   cb_choose_operator   = new QComboBox( this );
+  cb_choose_operator->setAccessibleName( tr( "Choose Operator" ) );
   cb_choose_rev        = new QComboBox( this );
+  cb_choose_rev->setAccessibleName( tr( "Choose Reviewer" ) );
   cb_choose_appr       = new QComboBox( this );
+  cb_choose_appr->setAccessibleName( tr( "Choose Approver" ) );
    
   row = 0;
   revOperGMPRunGrid -> addWidget( bn_revOperGMP,          row++,    0,  1,  14 );
@@ -308,6 +321,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
 
   QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report:" ) );
   le_loaded_run_db          = us_lineedit( tr(""), 0, true );
+  le_loaded_run_db->setAccessibleName( tr( "Loaded GMP Report" ) );
+  lb_loaded_run_db->setBuddy( le_loaded_run_db );
   
   //Filename path
   QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
@@ -319,6 +334,8 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   //Status
   QLabel*      lb_eSign_status = us_label( tr( "e-Signing Status:" ) );
   le_eSign_status              = us_lineedit( tr(""), 0, true );
+  le_eSign_status->setAccessibleName( tr( "e-Signing Status" ) );
+  lb_eSign_status->setBuddy( le_eSign_status );
   pb_view_eSigns  =  us_pushbutton( tr( "View e-Signatures" ) );
   pb_view_eSigns  -> setEnabled( false );
   
@@ -422,10 +439,15 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   QLabel* lb_apprs_to_assign  = us_label( "Approvers to Assign:" );
   
   le_run_name       = us_lineedit( tr(""), 0, true );
+  le_run_name->setAccessibleName( tr( "Run Name" ) );
+  lb_run_name->setBuddy( le_run_name );
   le_optima_name    = us_lineedit( tr(""), 0, true );
+  le_optima_name->setAccessibleName( tr( "Optima" ) );
+  lb_optima_name->setBuddy( le_optima_name );
 
 
   te_operator_names    = us_textedit();
+  te_operator_names->setAccessibleName( tr( "Assigned Operators" ) );
   //te_operator_names    ->setTextColor( Qt::blue );
   te_operator_names    -> setFixedHeight  ( RowHeight * 2 );
   te_operator_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -433,6 +455,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   us_setReadOnly( te_operator_names, true );
 
   te_reviewer_names    = us_textedit();
+  te_reviewer_names->setAccessibleName( tr( "Assigned Reviewers" ) );
   //te_reviewer_names    ->setTextColor( Qt::blue );
   te_reviewer_names    -> setFixedHeight  ( RowHeight * 3 );
   te_reviewer_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -441,6 +464,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
 
 
   te_appr_names    = us_textedit();
+  te_appr_names->setAccessibleName( tr( "Assigned Approvers" ) );
   //te_appr_names    ->setTextColor( Qt::blue );
   te_appr_names    -> setFixedHeight  ( RowHeight * 3 );
   te_appr_names    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -449,6 +473,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
 
 
   te_opers_to_assign    = us_textedit();
+  te_opers_to_assign->setAccessibleName( tr( "Operators to Assign" ) );
   //te_opers_to_assign    ->setTextColor( Qt::blue );
   te_opers_to_assign    -> setFixedHeight  ( RowHeight * 2 );
   te_opers_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -456,6 +481,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   us_setReadOnly( te_opers_to_assign, true );
 
   te_revs_to_assign    = us_textedit();
+  te_revs_to_assign->setAccessibleName( tr( "Reviewers to Assign" ) );
   //te_revs_to_assign    ->setTextColor( Qt::blue );
   te_revs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
   te_revs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -463,6 +489,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   us_setReadOnly( te_revs_to_assign, true );
 
   te_apprs_to_assign    = us_textedit();
+  te_apprs_to_assign->setAccessibleName( tr( "Approvers to Assign" ) );
   //te_apprs_to_assign    ->setTextColor( Qt::blue );
   te_apprs_to_assign    -> setFixedHeight  ( RowHeight * 3 );
   te_apprs_to_assign    ->setFont( QFont( US_Widgets::fixedFont().family(),
@@ -471,8 +498,11 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   
   
   cb_choose_operator   = new QComboBox( this );
+  cb_choose_operator->setAccessibleName( tr( "Choose Operator" ) );
   cb_choose_rev        = new QComboBox( this );
+  cb_choose_rev->setAccessibleName( tr( "Choose Reviewer" ) );
   cb_choose_appr       = new QComboBox( this );
+  cb_choose_appr->setAccessibleName( tr( "Choose Approver" ) );
    
   int row = 0;
   revOperGMPRunGrid -> addWidget( bn_revOperGMP,          row++,    0,  1,  14 );
@@ -823,9 +853,13 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
 
   QLabel* lb_loaded_run_db  = us_label( tr( "Loaded GMP Report:" ) );
   le_loaded_run_db          = us_lineedit( tr(""), 0, true );
+  le_loaded_run_db->setAccessibleName( tr( "Loaded GMP Report" ) );
+  lb_loaded_run_db->setBuddy( le_loaded_run_db );
   
   QLabel*      lb_eSign_status = us_label( tr( "e-Signing Status:" ) );
   le_eSign_status              = us_lineedit( tr(""), 0, true );
+  le_eSign_status->setAccessibleName( tr( "e-Signing Status" ) );
+  lb_eSign_status->setBuddy( le_eSign_status );
 
   pb_view_report_db  =  us_pushbutton( tr( "Review Generated Report" ) );
   pb_view_report_db  -> setEnabled( false );
@@ -911,6 +945,7 @@ void US_eSignaturesGMP::display_reviewers_auto( int& row, QMap< QString, QString
 	  
 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
 	  le_name -> setObjectName( "name: " + current_reviewer );
+	  le_name -> setAccessibleName( tr( "Signer Name" ) );
 	  QString u_role;
 	  if ( JsonListName. contains("operator") )
 	    u_role = "Operator";
@@ -920,9 +955,11 @@ void US_eSignaturesGMP::display_reviewers_auto( int& row, QMap< QString, QString
 	    u_role = "Approver";
 	      
 	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
+	  le_role -> setAccessibleName( tr( "Signer Role" ) );
 	  
-	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d ); 
+	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d );
 	  le_stat -> setObjectName( "status: " + current_reviewer );
+	  le_stat -> setAccessibleName( tr( "Signing Status" ) );
 
 	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
 	  

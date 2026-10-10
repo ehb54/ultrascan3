@@ -199,6 +199,7 @@ US_ComProjectMain::US_ComProjectMain(QString us_mode) : US_Widgets()
 
 
    logWidget = us_textedit();
+   logWidget->setAccessibleName( tr( "Status Log" ) );
    logWidget->setMaximumHeight(30);
    logWidget->setReadOnly(true);
    logWidget->append("Log comes here...");

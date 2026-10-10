@@ -22,6 +22,8 @@ US_XpnRunAuc::US_XpnRunAuc( QString& runID )
    QHBoxLayout* search       = new QHBoxLayout;
    QLabel*      lb_search    = us_label( tr( "Search" ) );
                 le_search    = us_lineedit( "" );
+                le_search->setAccessibleName( tr( "Search" ) );
+                lb_search->setBuddy( le_search );
    search      ->addWidget( lb_search );
    search      ->addWidget( le_search );
    connect( le_search, &QLineEdit::textChanged,
@@ -32,6 +34,7 @@ US_XpnRunAuc::US_XpnRunAuc( QString& runID )
 
    // Tree
    tw                     = new QTableWidget( runInfo.size(), 3, this );
+   tw->setAccessibleName( tr( "AUC Runs" ) );
    populate_list();
 
    // Button Row

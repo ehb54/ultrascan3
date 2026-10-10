@@ -216,6 +216,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Generate GMP or Custom Report from Completed GMP Run:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Run Selected for Report Generation" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
   pb_view_report   = us_pushbutton( tr( "View Generated Report" ) );
@@ -227,6 +229,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   //Filename path
   QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info =  us_textedit();
+  te_fpath_info->setAccessibleName( tr( "Generated Report File Location" ) );
   QFontMetrics m (te_fpath_info -> font());
   int RowHeight  = m.lineSpacing();
   RowHeight *= 3;
@@ -238,12 +241,15 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions_db     = us_banner( tr( "Download and View GMP Report from DB:" ), 1 );
   QLabel*      lb_loaded_run_db  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run_db               = us_lineedit( tr(""), 0, true );
+  le_loaded_run_db->setAccessibleName( tr( "Downloaded Report Run" ) );
+  lb_loaded_run_db->setBuddy( le_loaded_run_db );
   QPushButton* pb_loadreport_db  = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
   pb_view_report_db              = us_pushbutton( tr( "View Downloaded Report" ) );
 
   //Filename DB path
   QLabel*      lb_fpath_info_db  = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info_db =  us_textedit();
+  te_fpath_info_db->setAccessibleName( tr( "Downloaded Report File Location" ) );
   te_fpath_info_db -> setFixedHeight  ( RowHeight );
   te_fpath_info_db -> setText( tr( "" ) );
   us_setReadOnly( te_fpath_info_db, true );
@@ -319,6 +325,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -333,6 +340,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -347,6 +355,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( chan_theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -359,6 +368,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -450,6 +460,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Run Selected for Report Generation" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
 
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
@@ -510,6 +522,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -524,6 +537,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -539,6 +553,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -551,6 +566,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -2364,6 +2380,8 @@ void US_ReporterGMP::build_miscTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       miscItem [ topItemName ] = new QTreeWidgetItem( miscTree, topItemNameList, wiubase );
+      miscItem [ topItemName ] ->setData( 0, Qt::AccessibleTextRole, topItemName );
+      miscItem [ topItemName ] ->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       miscItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
     }
@@ -2399,6 +2417,8 @@ void US_ReporterGMP::build_genTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       topItem [ topItemName ] = new QTreeWidgetItem( genTree, topItemNameList, wiubase );
+      topItem [ topItemName ] ->setData( 0, Qt::AccessibleTextRole, topItemName );
+      topItem [ topItemName ] ->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       //Solutions: add 1-level children
       if( topItemName.contains("Solutions") )
@@ -2410,6 +2430,11 @@ void US_ReporterGMP::build_genTree ( void )
 	      solutionItemNameList.clear();
 	      solutionItemNameList << "" << indent.repeated( 2 ) + solutionItemName;
 	      solutionItem [ solutionItemName ] = new QTreeWidgetItem( topItem [ topItemName ], solutionItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + solutionItemName;
+	        solutionItem [ solutionItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        solutionItem [ solutionItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 
 	      if ( solutionItems_vals[ is ].toInt() )
 		{
@@ -2440,6 +2465,11 @@ void US_ReporterGMP::build_genTree ( void )
 	      analysisItemNameList.clear();
 	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
 	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + analysisItemName;
+	        analysisItem [ analysisItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        analysisItem [ analysisItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 	      
 	      //General analysis
 	      if( analysisItemName.contains("General") )
@@ -2451,6 +2481,11 @@ void US_ReporterGMP::build_genTree ( void )
 		      analysisGenItemNameList.clear();
 		      analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
 		      analysisGenItem [ analysisGenItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisGenItemNameList, wiubase);
+		      {
+		        QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisGenItemName;
+		        analysisGenItem [ analysisGenItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+		        analysisGenItem [ analysisGenItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+		      }
 
 		      if ( analysisGenItems_vals[ iag ].toInt() )
 			{
@@ -2479,6 +2514,11 @@ void US_ReporterGMP::build_genTree ( void )
 		      analysis2DSAItemNameList.clear();
 		      analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
 		      analysis2DSAItem [ analysis2DSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysis2DSAItemNameList, wiubase);
+		      {
+		        QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysis2DSAItemName;
+		        analysis2DSAItem [ analysis2DSAItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+		        analysis2DSAItem [ analysis2DSAItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+		      }
 
 		      if ( analysis2DSAItems_vals[ ia2 ].toInt() )
 			{
@@ -2508,6 +2548,11 @@ void US_ReporterGMP::build_genTree ( void )
 		      analysisPCSAItemNameList.clear();
 		      analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
 		      analysisPCSAItem [ analysisPCSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisPCSAItemNameList, wiubase);
+		      {
+		        QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisPCSAItemName;
+		        analysisPCSAItem [ analysisPCSAItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+		        analysisPCSAItem [ analysisPCSAItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+		      }
 
 		      if ( analysisPCSAItems_vals[ iap ].toInt() )
 			{
@@ -2662,6 +2707,8 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
       chanItemNameList.clear();
       chanItemNameList << "" << indent + chanItemName;
       chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
+      chanItem [ chanItemName ] ->setData( 0, Qt::AccessibleTextRole, chanItemName );
+      chanItem [ chanItemName ] ->setData( 1, Qt::AccessibleTextRole, chanItemName );
 
       //go over report items
       int report_items_number = reportGMP.reportItems.size();
@@ -2693,7 +2740,12 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
 	  tripleMaskItemNameList.clear();
 	  tripleMaskItemNameList << "" << indent.repeated( 2 ) + tripleMaskItemName;
 	  tripleMaskItem [ chanItemName ] = new QTreeWidgetItem(  chanItem [ chanItemName ], tripleMaskItemNameList, wiubase);
-	  
+	  {
+	    QString a11yPath = chanItemName + " / " + tripleMaskItemName;
+	    tripleMaskItem [ chanItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	    tripleMaskItem [ chanItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	  }
+
 	  if ( tripleReportMasksList_vals[ kk ] )
 	    {
 	      tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
@@ -2769,7 +2821,9 @@ void US_ReporterGMP::build_perChanTree ( void )
 	  chanItemNameList.clear();
 	  chanItemNameList << "" << indent + chanItemName;
 	  chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
-	  
+	  chanItem [ chanItemName ] ->setData( 0, Qt::AccessibleTextRole, chanItemName );
+	  chanItem [ chanItemName ] ->setData( 1, Qt::AccessibleTextRole, chanItemName );
+
 	  //QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
 	  QList < double > chann_wvls                  = ch_wvls[ channel_desc_alt ];
 	  QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
@@ -2807,6 +2861,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 	      tripleItemNameList.clear();
 	      tripleItemNameList << "" << indent.repeated( 2 ) + tripleItemName;
 	      tripleItem [ tripleItemName ] = new QTreeWidgetItem( chanItem [ chanItemName ], tripleItemNameList, wiubase);
+	      {
+	        QString a11yPath = chanItemName + " / " + tripleItemName;
+	        tripleItem [ tripleItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        tripleItem [ tripleItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 
 	      US_ReportGMP reportGMP = chann_reports[ wvl ];
 
@@ -2866,6 +2925,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 		  tripleItemModelNameList.clear();
 		  tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
 		  tripleModelItem [ tripleModelName ] = new QTreeWidgetItem(  tripleItem [ tripleItemName ], tripleItemModelNameList, wiubase);
+		  {
+		    QString a11yPath = chanItemName + " / " + tripleItemName + " / " + tripleItemModelName;
+		    tripleModelItem [ tripleModelName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+		    tripleModelItem [ tripleModelName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+		  }
 
 		  //Populate tripleReportMasksList && values from scratch
 		  tripleReportMasksList.clear();
@@ -2912,7 +2976,10 @@ void US_ReporterGMP::build_perChanTree ( void )
 		      tripleMaskItemNameList.clear();
 		      tripleMaskItemNameList << "" << indent.repeated( 4 ) + tripleMaskItemName;
 		      tripleMaskItem [ tripleModelName ] = new QTreeWidgetItem(  tripleModelItem [ tripleModelName ], tripleMaskItemNameList, wiubase);
-		      
+		      QString a11yPathMask = chanItemName + " / " + tripleItemName + " / " + tripleItemModelName + " / " + tripleMaskItemName;
+		      tripleMaskItem [ tripleModelName ] ->setData( 0, Qt::AccessibleTextRole, a11yPathMask );
+		      tripleMaskItem [ tripleModelName ] ->setData( 1, Qt::AccessibleTextRole, a11yPathMask );
+
 		      if ( tripleReportMasksList_vals[ kk ] )
 			{
 			  tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
@@ -2943,6 +3010,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 			      tripleMaskItemPlotNameList.clear();
 			      tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
 			      tripleMaskPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPlotNameList, wiubase);
+			      {
+			        QString a11yPath = a11yPathMask + " / " + tripleMaskItemPlotName;
+			        tripleMaskPlotItem [ tripleModelName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+			        tripleMaskPlotItem [ tripleModelName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+			      }
 
 			      if ( tripleReportMasksList_vals[ kk ] )
 				{
@@ -2996,6 +3068,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 			      tripleMaskItemPseudoNameList.clear();
 			      tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
 			      tripleMaskPseudoItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPseudoNameList, wiubase);
+			      {
+			        QString a11yPath = a11yPathMask + " / " + tripleMaskItemPseudoName;
+			        tripleMaskPseudoItem [ tripleModelName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+			        tripleMaskPseudoItem [ tripleModelName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+			      }
 
 			      if ( tripleReportMasksPseudoList_vals[ ps ] )
 				{
@@ -3045,6 +3122,11 @@ void US_ReporterGMP::build_perChanTree ( void )
 
 			      tripleMaskIndComboPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ],
 												    individualPlotNameList, wiubase);
+			      {
+			        QString a11yPath = a11yPathMask + " / " + individualPlotName_name;
+			        tripleMaskIndComboPlotItem [ tripleModelName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+			        tripleMaskIndComboPlotItem [ tripleModelName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+			      }
 			      //Checked/no
 			      qDebug() << "To show/no Ind.ComboPlots -- "
 				       << tripleReportMasksList_vals[ kk ]
@@ -3177,6 +3259,8 @@ void US_ReporterGMP::build_combPlotsTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + tm.key();
       topItemCombPlots [ tm.key() ] = new QTreeWidgetItem( combPlotsTree, topItemNameList, wiubase );
+      topItemCombPlots [ tm.key() ] ->setData( 0, Qt::AccessibleTextRole, tm.key() );
+      topItemCombPlots [ tm.key() ] ->setData( 1, Qt::AccessibleTextRole, tm.key() );
 
       topItemCombPlots [ tm.key() ] ->setCheckState( 0, Qt::Checked );
 
@@ -3186,6 +3270,11 @@ void US_ReporterGMP::build_combPlotsTree ( void )
 	  ItemNameList.clear();
 	  ItemNameList << "" << indent.repeated( 2 ) + unique_models[ i ];
 	  ItemCombPlots [ modelName ] = new QTreeWidgetItem( topItemCombPlots [ tm.key() ], ItemNameList, wiubase);
+	  {
+	    QString a11yPath = tm.key() + " / " + unique_models[ i ];
+	    ItemCombPlots [ modelName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	    ItemCombPlots [ modelName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	  }
 
 	  ItemCombPlots [ modelName ] ->setCheckState( 0, Qt::Checked );
 	}

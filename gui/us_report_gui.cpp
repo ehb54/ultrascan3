@@ -78,11 +78,21 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
     le_av_intensity->setEnabled( false );
 
   le_tot_conc      -> setObjectName( "tot_conc" );
+  le_tot_conc      -> setAccessibleName( tr( "Total Concentration" ) );
+  lb_tot_conc      -> setBuddy( le_tot_conc );
   le_rmsd_limit    -> setObjectName( "rmsd" );
+  le_rmsd_limit    -> setAccessibleName( tr( "RMSD Upper Limit" ) );
+  lb_rmsd_limit    -> setBuddy( le_rmsd_limit );
   le_av_intensity  -> setObjectName( "av_intensity" );
-  
+  le_av_intensity  -> setAccessibleName( tr( "Minimum Intensity" ) );
+  lb_av_intensity  -> setBuddy( le_av_intensity );
+
   le_tot_conc_tol  -> setObjectName( "tot_conc_tol" );
+  le_tot_conc_tol  -> setAccessibleName( tr( "Total Concentration Tolerance" ) );
+  lb_tot_conc_tol  -> setBuddy( le_tot_conc_tol );
   le_duration_tol  -> setObjectName( "duration_tol" );
+  le_duration_tol  -> setAccessibleName( tr( "Experiment Duration Tolerance" ) );
+  lb_duration_tol  -> setBuddy( le_duration_tol );
 
   //set connecitons btw textChanged() and slot
   connect( le_tot_conc,   &QLineEdit::textChanged,
@@ -130,6 +140,8 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
+  cb_wvl -> setAccessibleName( tr( "Wavelength" ) );
+  lb_wvl -> setBuddy( cb_wvl );
   connect( cb_wvl,  qOverload< int >( &QComboBox::currentIndexChanged ),
             this,   &US_ReportGui::changeWvl );
   /////////////////////////////////////////////////////////////////////////////
@@ -215,6 +227,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 	   this,         &US_ReportGui::upload_files );
 
   le_ufiles      = us_lineedit( "",  0, true  );
+  le_ufiles->setAccessibleName( tr( "Uploaded Files" ) );
   row = 0;
   ufiles->addWidget( pb_upload_files,  row,    0, 1, 2 );
   ufiles->addWidget( le_ufiles,        row,    2, 1, 4 );
@@ -225,6 +238,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   QFont le_info_font( US_Widgets::fixedFont().family(),
 		      US_GuiSettings::fontSize() );
   le_info = us_textedit();
+  le_info->setAccessibleName( tr( "Report Parameter Units and File Information" ) );
   QFontMetrics m (le_info -> font()) ;
   int RowHeight = m.lineSpacing() ;
   le_info -> setFixedHeight  (2 * RowHeight) ;
@@ -325,11 +339,21 @@ void US_ReportGui::build_report_layout( void )
     le_av_intensity->setEnabled( false );
 
   le_tot_conc      -> setObjectName( "tot_conc" );
+  le_tot_conc      -> setAccessibleName( tr( "Total Concentration" ) );
+  lb_tot_conc      -> setBuddy( le_tot_conc );
   le_rmsd_limit    -> setObjectName( "rmsd" );
+  le_rmsd_limit    -> setAccessibleName( tr( "RMSD Upper Limit" ) );
+  lb_rmsd_limit    -> setBuddy( le_rmsd_limit );
   le_av_intensity  -> setObjectName( "av_intensity" );
-  
+  le_av_intensity  -> setAccessibleName( tr( "Minimum Intensity" ) );
+  lb_av_intensity  -> setBuddy( le_av_intensity );
+
   le_tot_conc_tol  -> setObjectName( "tot_conc_tol" );
+  le_tot_conc_tol  -> setAccessibleName( tr( "Total Concentration Tolerance" ) );
+  lb_tot_conc_tol  -> setBuddy( le_tot_conc_tol );
   le_duration_tol  -> setObjectName( "duration_tol" );
+  le_duration_tol  -> setAccessibleName( tr( "Experiment Duration Tolerance" ) );
+  lb_duration_tol  -> setBuddy( le_duration_tol );
 
   //set connecitons btw textChanged() and slot
   connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
@@ -371,6 +395,8 @@ void US_ReportGui::build_report_layout( void )
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
+  cb_wvl -> setAccessibleName( tr( "Wavelength" ) );
+  lb_wvl -> setBuddy( cb_wvl );
   connect( cb_wvl,  SIGNAL( currentIndexChanged( int ) ),
             this,   SLOT  ( changeWvl          ( int ) ) );
   /////////////////////////////////////////////////////////////////////////////
@@ -649,14 +675,28 @@ void US_ReportGui::build_report_layout( void )
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
       cb_type      -> setObjectName( stchan + "type" );
+      cb_type      -> setAccessibleName( tr( "Analysis Type" ) );
       cb_method    -> setObjectName( stchan + "method" );
+      cb_method    -> setAccessibleName( tr( "Method" ) );
+      // Combo Name is always the selected value on Linux; a per-row buddy relation carries purpose.
+      QLabel* lb_type_a11y   = us_label( tr( "Type" ) );     // accessibility-only, never shown
+      QLabel* lb_method_a11y = us_label( tr( "Method" ) );   // accessibility-only, never shown
+      lb_type_a11y  ->setBuddy( cb_type );
+      lb_method_a11y->setBuddy( cb_method );
       le_low       -> setObjectName( stchan + "low" );
+      le_low       -> setAccessibleName( tr( "Low Value" ) );
       le_high      -> setObjectName( stchan + "high" );
+      le_high      -> setAccessibleName( tr( "High Value" ) );
       le_intval    -> setObjectName( stchan + "intval" );
+      le_intval    -> setAccessibleName( tr( "Integration Value" ) );
       le_total     -> setObjectName( stchan + "total" );
+      le_total     -> setAccessibleName( tr( "Total" ) );
       le_tol       -> setObjectName( stchan + "tol" );
+      le_tol       -> setAccessibleName( tr( "Tolerance" ) );
       ck_combined_plot -> setObjectName( stchan + "combined_plot" );
+      ck_combined_plot -> setAccessibleName( tr( "Combined Plot" ) );
       ck_ind_plot -> setObjectName( stchan + "ind_combined_plot" );
+      ck_ind_plot -> setAccessibleName( tr( "Individual Combined Plot" ) );
             
       //set connecitons btw textChanged() and slot
       connect( le_low, &QLineEdit::textChanged,
@@ -860,63 +900,75 @@ void US_ReportGui::build_report_layout( void )
   ck_2dsait_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_s_ff0 ->setChecked( report -> pseudo3d_2dsait_s_ff0 );
   ck_2dsait_s_ff0 ->setAutoFillBackground( true  );
+  ck_2dsait_s_ff0 ->setAccessibleName( tr( "2DSA-IT Pseudo3D s versus f/f0" ) );
 
   ck_2dsait_s_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_s_d ->setChecked( report -> pseudo3d_2dsait_s_d );
   ck_2dsait_s_d ->setAutoFillBackground( true  );
+  ck_2dsait_s_d ->setAccessibleName( tr( "2DSA-IT Pseudo3D s versus D" ) );
 
   ck_2dsait_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_mw_ff0 ->setChecked( report -> pseudo3d_2dsait_mw_ff0 );
   ck_2dsait_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_2dsait_mw_ff0 ->setAccessibleName( tr( "2DSA-IT Pseudo3D MW versus f/f0" ) );
+
   ck_2dsait_mw_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_mw_d ->setChecked( report -> pseudo3d_2dsait_mw_d );
   ck_2dsait_mw_d ->setAutoFillBackground( true  );
+  ck_2dsait_mw_d ->setAccessibleName( tr( "2DSA-IT Pseudo3D MW versus D" ) );
 
   //2DSA-MC checkboxes
   ck_2dsamc_s_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_s_ff0 ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
   ck_2dsamc_s_ff0 ->setAutoFillBackground( true  );
+  ck_2dsamc_s_ff0 ->setAccessibleName( tr( "2DSA-MC Pseudo3D s versus f/f0" ) );
 
   ck_2dsamc_s_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_s_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
   ck_2dsamc_s_d ->setAutoFillBackground( true  );
+  ck_2dsamc_s_d ->setAccessibleName( tr( "2DSA-MC Pseudo3D s versus D" ) );
 
   ck_2dsamc_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_mw_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
   ck_2dsamc_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_2dsamc_mw_ff0 ->setAccessibleName( tr( "2DSA-MC Pseudo3D MW versus f/f0" ) );
+
   ck_2dsamc_mw_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_mw_d ->setChecked( report -> pseudo3d_2dsamc_mw_d );
   ck_2dsamc_mw_d ->setAutoFillBackground( true  );
+  ck_2dsamc_mw_d ->setAccessibleName( tr( "2DSA-MC Pseudo3D MW versus D" ) );
 
   //PCSA checkboxes
   ck_pcsa_s_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_s_ff0 ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
   ck_pcsa_s_ff0 ->setAutoFillBackground( true  );
+  ck_pcsa_s_ff0 ->setAccessibleName( tr( "PCSA Pseudo3D s versus f/f0" ) );
 
   ck_pcsa_s_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_s_d ->setChecked( report -> pseudo3d_pcsa_s_d );
   ck_pcsa_s_d ->setAutoFillBackground( true  );
+  ck_pcsa_s_d ->setAccessibleName( tr( "PCSA Pseudo3D s versus D" ) );
 
   ck_pcsa_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_mw_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
   ck_pcsa_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_pcsa_mw_ff0 ->setAccessibleName( tr( "PCSA Pseudo3D MW versus f/f0" ) );
+
   ck_pcsa_mw_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_mw_d ->setChecked( report -> pseudo3d_pcsa_mw_d );
-  ck_pcsa_mw_d ->setAutoFillBackground( true  );  
+  ck_pcsa_mw_d ->setAutoFillBackground( true  );
+  ck_pcsa_mw_d ->setAccessibleName( tr( "PCSA Pseudo3D MW versus D" ) );
   
   QGridLayout *gbox = new QGridLayout;
   gbox              ->setSpacing         ( 1 );
@@ -2067,24 +2119,28 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
   ck_2dsait_s ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_s ->setChecked(  );
   ck_2dsait_s ->setObjectName("s_it");
+  ck_2dsait_s ->setAccessibleName( tr( "2DSA-IT Sedimentation Coefficient" ) );
   ck_2dsait_s ->setAutoFillBackground( true  );
 
   ck_2dsait_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_d ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_d ->setChecked(  );
   ck_2dsait_d ->setObjectName("d_it");
+  ck_2dsait_d ->setAccessibleName( tr( "2DSA-IT Diffusion Coefficient" ) );
   ck_2dsait_d ->setAutoFillBackground( true  );
 
   ck_2dsait_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsait_ff0 ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_ff0 ->setChecked(  );
   ck_2dsait_ff0 ->setObjectName("ff0_it");
+  ck_2dsait_ff0 ->setAccessibleName( tr( "2DSA-IT Frictional Ratio" ) );
   ck_2dsait_ff0 ->setAutoFillBackground( true  );
   
   ck_2dsait_mw       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_mw ->setChecked( report -> pseudo3d_2dsait_mw_d );
   ck_2dsait_mw ->setObjectName("mw_it");
+  ck_2dsait_mw ->setAccessibleName( tr( "2DSA-IT Molecular Weight" ) );
   ck_2dsait_mw ->setAutoFillBackground( true  );
 
   //2DSA-MC checkboxes
@@ -2092,24 +2148,28 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
   ck_2dsamc_s ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_s ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
   ck_2dsamc_s ->setObjectName("s_mc");
+  ck_2dsamc_s ->setAccessibleName( tr( "2DSA-MC Sedimentation Coefficient" ) );
   ck_2dsamc_s ->setAutoFillBackground( true  );
 
   ck_2dsamc_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_d ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
   ck_2dsamc_d ->setObjectName("d_mc");
+  ck_2dsamc_d ->setAccessibleName( tr( "2DSA-MC Diffusion Coefficient" ) );
   ck_2dsamc_d ->setAutoFillBackground( true  );
 
   ck_2dsamc_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_ff0 ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
   ck_2dsamc_ff0 ->setObjectName("ff0_mc");
+  ck_2dsamc_ff0 ->setAccessibleName( tr( "2DSA-MC Frictional Ratio" ) );
   ck_2dsamc_ff0 ->setAutoFillBackground( true  );
   
   ck_2dsamc_mw       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_mw ->setChecked( report -> pseudo3d_2dsamc_mw_d );
   ck_2dsamc_mw ->setObjectName("mw_mc");
+  ck_2dsamc_mw ->setAccessibleName( tr( "2DSA-MC Molecular Weight" ) );
   ck_2dsamc_mw ->setAutoFillBackground( true  );
 
   //PCSA checkboxes
@@ -2117,24 +2177,28 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
   ck_pcsa_s ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_s ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
   ck_pcsa_s -> setObjectName("s_pcsa");
+  ck_pcsa_s -> setAccessibleName( tr( "PCSA Sedimentation Coefficient" ) );
   ck_pcsa_s ->setAutoFillBackground( true  );
 
   ck_pcsa_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_d ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_d ->setChecked( report -> pseudo3d_pcsa_s_d );
   ck_pcsa_d -> setObjectName("d_pcsa");
+  ck_pcsa_d -> setAccessibleName( tr( "PCSA Diffusion Coefficient" ) );
   ck_pcsa_d ->setAutoFillBackground( true  );
 
   ck_pcsa_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_ff0 ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
   ck_pcsa_ff0 -> setObjectName("ff0_pcsa");
+  ck_pcsa_ff0 -> setAccessibleName( tr( "PCSA Frictional Ratio" ) );
   ck_pcsa_ff0 ->setAutoFillBackground( true  );
   
   ck_pcsa_mw       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_mw ->setChecked( report -> pseudo3d_pcsa_mw_d );
   ck_pcsa_mw -> setObjectName("mw_pcsa");
+  ck_pcsa_mw -> setAccessibleName( tr( "PCSA Molecular Weight" ) );
   ck_pcsa_mw ->setAutoFillBackground( true  );  
   
   QGridLayout *gbox = new QGridLayout();

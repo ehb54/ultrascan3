@@ -136,6 +136,7 @@ void US_ReportGenGui::build_layout( void )
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   treeWidget->setHeaderLabels( theads );
+  treeWidget->setAccessibleName( tr( "General Report Settings" ) );
   treeWidget->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genL->addWidget(treeWidget);
@@ -153,6 +154,8 @@ void US_ReportGenGui::build_layout( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       topItem [ topItemName ] = new QTreeWidgetItem( treeWidget, topItemNameList, wiubase );
+      topItem [ topItemName ] ->setData( 0, Qt::AccessibleTextRole, topItemName );
+      topItem [ topItemName ] ->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       //Solutions: add 1-level children
       if( topItemName.contains("Solutions") )
@@ -164,6 +167,11 @@ void US_ReportGenGui::build_layout( void )
 	      solutionItemNameList.clear();
 	      solutionItemNameList << "" << indent.repeated( 2 ) + solutionItemName;
 	      solutionItem [ solutionItemName ] = new QTreeWidgetItem( topItem [ topItemName ], solutionItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + solutionItemName;
+	        solutionItem [ solutionItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        solutionItem [ solutionItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 
 	      if ( solutionItems_vals[ is ].toInt() )
 		{
@@ -190,6 +198,11 @@ void US_ReportGenGui::build_layout( void )
 	      analysisItemNameList.clear();
 	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
 	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + analysisItemName;
+	        analysisItem [ analysisItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        analysisItem [ analysisItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 	      
 	      //General analysis
 	      if( analysisItemName.contains("General") )
@@ -201,6 +214,11 @@ void US_ReportGenGui::build_layout( void )
 		      analysisGenItemNameList.clear();
 		      analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
 		      analysisGenItem [ analysisGenItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisGenItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisGenItemName;
+	        analysisGenItem [ analysisGenItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        analysisGenItem [ analysisGenItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 
 		      if ( analysisGenItems_vals[ iag ].toInt() )
 			{
@@ -229,6 +247,11 @@ void US_ReportGenGui::build_layout( void )
 		      analysis2DSAItemNameList.clear();
 		      analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
 		      analysis2DSAItem [ analysis2DSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysis2DSAItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysis2DSAItemName;
+	        analysis2DSAItem [ analysis2DSAItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        analysis2DSAItem [ analysis2DSAItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 
 		      if ( analysis2DSAItems_vals[ ia2 ].toInt() )
 			{
@@ -258,6 +281,11 @@ void US_ReportGenGui::build_layout( void )
 		      analysisPCSAItemNameList.clear();
 		      analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
 		      analysisPCSAItem [ analysisPCSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisPCSAItemNameList, wiubase);
+	      {
+	        QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisPCSAItemName;
+	        analysisPCSAItem [ analysisPCSAItemName ] ->setData( 0, Qt::AccessibleTextRole, a11yPath );
+	        analysisPCSAItem [ analysisPCSAItemName ] ->setData( 1, Qt::AccessibleTextRole, a11yPath );
+	      }
 
 		      if ( analysisPCSAItems_vals[ iap ].toInt() )
 			{

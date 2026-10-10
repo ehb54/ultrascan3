@@ -20,6 +20,34 @@
 
 #define MIN_NTC 25
 
+// QTreeWidget::setItemWidget() content is invisible to AT-SPI; this reads the already-displayed text as a stand-in.
+static QString us_accessibleSummary( QWidget* panel )
+{
+   QStringList parts;
+   const QList<QWidget*> kids = panel->findChildren<QWidget*>();
+
+   for ( QWidget* kid : kids )
+   {
+      if ( QLabel* lb = qobject_cast<QLabel*>( kid ) )
+      {
+         if ( ! lb->text().isEmpty() )
+            parts << lb->text();
+      }
+      else if ( QLineEdit* le = qobject_cast<QLineEdit*>( kid ) )
+      {
+         if ( ! le->text().isEmpty() )
+            parts << le->text();
+      }
+      else if ( QTextEdit* te = qobject_cast<QTextEdit*>( kid ) )
+      {
+         if ( ! te->toPlainText().isEmpty() )
+            parts << te->toPlainText();
+      }
+   }
+
+   return parts.join( "; " );
+}
+
 // Constructor
 US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
 {
@@ -542,6 +570,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   QLabel*      lb_runloaded  = us_banner( tr( "Loaded GMP Run:" ), 1 );
   QLabel*      lb_runName    = us_label(  tr( "GMP Run Name:" ), 1  );
   QLineEdit*   le_runName    = us_lineedit( gmpRunName_passed, 0, true );
+  le_runName->setAccessibleName( tr( "Loaded GMP Run Name" ) );
+  lb_runName->setBuddy( le_runName );
 
   //QLabel* bn_viewAPDF = us_banner( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ), 1 );
   pb_viewAPDF  =  us_pushbutton( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ) );
@@ -561,6 +591,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //eSigners Info Tree
   QLabel*      lb_esigners  = us_banner(      tr( "e-Signers Information:" ), 1 );
   eSignTree = new QTreeWidget();
+  eSignTree->setAccessibleName( tr( "Audit Signatures" ) );
   QStringList esigns_theads;
   esigns_theads << "Selected" << "Details";
   eSignTree->setHeaderLabels( esigns_theads );
@@ -586,6 +617,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   QTreeWidgetItem* eSignItem_childItem = new QTreeWidgetItem();
   esigntItem -> addChild( eSignItem_childItem );
   eSignTree  -> setItemWidget( eSignItem_childItem, 1, groupBox_esign );
+  eSignItem_childItem->setData( 1, Qt::AccessibleTextRole,
+                                 us_accessibleSummary( groupBox_esign ) );
 
   int max_width = fmet.horizontalAdvance( esignItemName );
   max_width *= 2;
@@ -599,6 +632,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //user Intaracitons Info Tree
   QLabel*      lb_uints  = us_banner(      tr( "User INPUTS:" ), 1 );
   uInteractionsTree = new QTreeWidget();
+  uInteractionsTree->setAccessibleName( tr( "Audit Run Events" ) );
   QStringList uints_theads;
   uints_theads << "Selected" << "Details";
   uInteractionsTree->setHeaderLabels( uints_theads );
@@ -634,6 +668,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 	  QTreeWidgetItem* Item_childItem = new QTreeWidgetItem();
 	  uintsItem -> addChild( Item_childItem );
 	  uInteractionsTree  -> setItemWidget( Item_childItem, 1, groupBox_stages[j] );
+	  Item_childItem->setData( 1, Qt::AccessibleTextRole,
+	                           us_accessibleSummary( groupBox_stages[j] ) );
 	}
     }
   uInteractionsTree->header()->resizeSection(0, max_width );
@@ -2589,6 +2625,7 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  
 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
 	  le_name -> setObjectName( "name: " + current_reviewer );
+	  le_name -> setAccessibleName( tr( "Signer Name" ) );
 	  QString u_role;
 	  if ( JsonListName. contains("operator") )
 	    u_role = "Operator";
@@ -2598,6 +2635,7 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	    u_role = "Approver";
 	      
 	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
+	  le_role -> setAccessibleName( tr( "Signer Role" ) );
 
 	  //TimeDate && Comment
 	  QString e_date, e_decision, e_comment;
@@ -2623,9 +2661,11 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 		}
 	    }
 	  QLineEdit* le_date    = us_lineedit( e_date, 0, true );
+	  le_date -> setAccessibleName( tr( "Signing Date" ) );
 	  
 	  //QLineEdit* le_comment = us_lineedit( e_comment, 0, true );
 	  QTextEdit* te_comment    = us_textedit();
+	  te_comment -> setAccessibleName( tr( "Signing Comment" ) );
 	  te_comment    -> setFixedHeight  ( RowHeight * 2 );
 	  te_comment    ->setFont( QFont( US_Widgets::fixedFont().family(),
 					  US_GuiSettings::fontSize() - 1) );
@@ -2633,8 +2673,9 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  te_comment -> setText( e_comment );
 	  
 	  
-	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d ); 
+	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d );
 	  le_stat -> setObjectName( "status: " + current_reviewer );
+	  le_stat -> setAccessibleName( tr( "Signing Status" ) );
 
 	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
 

@@ -99,6 +99,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    }
 
    le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
 
    // Radio buttons
    disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
@@ -107,6 +108,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Display status
    QLabel* lb_status = us_label(      tr( "Status:" ) );
    le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
@@ -144,6 +147,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
+   ct_tolerance->setAccessibleName( tr( "Separation Tolerance" ) );
    ct_tolerance->setSingleStep( 1 );
 
    // Set up MWL controls
@@ -157,8 +161,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
    cb_lambstrt  = us_comboBox();
+   cb_lambstrt->setAccessibleName( tr( "Wavelength Start" ) );
    cb_lambstop  = us_comboBox();
+   cb_lambstop->setAccessibleName( tr( "Wavelength End" ) );
    cb_lambplot  = us_comboBox();
+   cb_lambplot->setAccessibleName( tr( "Plot Wavelength" ) );
    pb_lambprev  = us_pushbutton( "previous", true, -2 );
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
@@ -173,17 +180,23 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
 
    le_runID2           = new US_LineEdit_RE( "", 1, true );
+   le_runID2->setAccessibleName( tr( "Run ID" ) );
+   lb_runID2->setBuddy( le_runID2 );
    le_runID2  ->setMaxChars(250);
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
    QLabel* lb_dir      = us_label(    tr( "Directory:" ) );
    le_dir              = us_lineedit( "", 1, true );
+   le_dir->setAccessibleName( tr( "Directory" ) );
+   lb_dir->setBuddy( le_dir );
 
    // Description
    lb_description      = us_label(    tr( "Description:" ), 0 );
    //lb_description ->setMaximumWidth( 175 );
    le_description      = us_lineedit( "", 1, true );
+   le_description->setAccessibleName( tr( "Description" ) );
+   lb_description->setBuddy( le_description );
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
@@ -192,6 +205,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             tr( "Cell / Channel / Wavelength" ) );
    lb_triple->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_triple           = us_listwidget();
+   lw_triple->setAccessibleName( tr( "Cell, Channel, and Wavelength" ) );
    // QLabel* lb_ccwinfo  = us_label(
    //                          tr( "Enter Associated Triple (c/c/w) Info:" ) );
    QLabel* lb_ccwinfo  = us_label(
@@ -201,6 +215,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Set up centerpiece drop-down
    cb_centerpiece      = new US_SelectBox( this );
+   cb_centerpiece->setAccessibleName( tr( "Centerpiece" ) );
    centerpieceInfo();
    cb_centerpiece -> load();
 
@@ -230,17 +245,21 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
+   le_solutionDesc->setAccessibleName( tr( "Solution" ) );
+   lb_solution->setBuddy( le_solutionDesc );
    // Scan Controls
    lb_scan             = us_banner(     tr( "Scan Controls" ) );
    // Scan focus from
    lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setAccessibleName( tr( "Scan Focus From" ) );
    ct_from->setSingleStep( 1 );
    // Scan focus to
    lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setAccessibleName( tr( "Scan Focus To" ) );
    ct_to->setSingleStep( 1 );
 
    // Exclude and Include pushbuttons
@@ -364,6 +383,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                                    true, "Raw", "rainbow" );
 
    data_plot->setMinimumSize( 400, 300 );
+   data_plot->setAccessibleName( tr( "Absorbance Data Plot" ) );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -708,6 +728,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    }
 
    le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
 
    // Radio buttons
    disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
@@ -716,6 +737,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Display status
    QLabel* lb_status = us_label(      tr( "Status:" ) );
    le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
@@ -753,6 +776,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
+   ct_tolerance->setAccessibleName( tr( "Separation Tolerance" ) );
    ct_tolerance->setSingleStep( 1 );
 
    // Set up MWL controls
@@ -765,8 +789,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
    cb_lambstrt  = us_comboBox();
+   cb_lambstrt->setAccessibleName( tr( "Wavelength Start" ) );
    cb_lambstop  = us_comboBox();
+   cb_lambstop->setAccessibleName( tr( "Wavelength End" ) );
    cb_lambplot  = us_comboBox();
+   cb_lambplot->setAccessibleName( tr( "Plot Wavelength" ) );
    pb_lambprev  = us_pushbutton( "previous", true, -2 );
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
@@ -779,16 +806,22 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
    le_runID2           = new US_LineEdit_RE( "", 1 );
+   le_runID2->setAccessibleName( tr( "Run ID" ) );
+   lb_runID2->setBuddy( le_runID2 );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
    QLabel* lb_dir      = us_label(    tr( "Directory:" ) );
    le_dir              = us_lineedit( "", 1, true );
+   le_dir->setAccessibleName( tr( "Directory" ) );
+   lb_dir->setBuddy( le_dir );
 
    // Description
    lb_description      = us_label(    tr( "Description:" ), 0 );
    //lb_description ->setMaximumWidth( 175 );
    le_description      = us_lineedit( "", 1 );
+   le_description->setAccessibleName( tr( "Description" ) );
+   lb_description->setBuddy( le_description );
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
@@ -796,6 +829,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_triple           = us_banner(
                             tr( "Cell / Channel / Wavelength" ), -1 );
    lw_triple           = us_listwidget();
+   lw_triple->setAccessibleName( tr( "Cell, Channel, and Wavelength" ) );
    QLabel* lb_ccwinfo  = us_label(
                             tr( "Enter Associated Triple (c/c/w) Info:" ) );
 
@@ -805,6 +839,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Set up centerpiece drop-down
    cb_centerpiece      = new US_SelectBox( this );
+   cb_centerpiece->setAccessibleName( tr( "Centerpiece" ) );
    centerpieceInfo();
    cb_centerpiece -> load();
 
@@ -826,17 +861,21 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
+   le_solutionDesc->setAccessibleName( tr( "Solution" ) );
+   lb_solution->setBuddy( le_solutionDesc );
    // Scan Controls
    lb_scan             = us_banner(     tr( "Scan Controls" ) );
    // Scan focus from
    lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setAccessibleName( tr( "Scan Focus From" ) );
    ct_from->setSingleStep( 1 );
    // Scan focus to
    lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setAccessibleName( tr( "Scan Focus To" ) );
    ct_to->setSingleStep( 1 );
 
    // Exclude and Include pushbuttons
@@ -913,6 +952,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                                    true, "", "rainbow" );
 
    data_plot->setMinimumSize( 500, 300 );
+   data_plot->setAccessibleName( tr( "Absorbance Data Plot" ) );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );

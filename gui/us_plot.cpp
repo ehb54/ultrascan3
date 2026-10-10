@@ -244,6 +244,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    toolBar->setAutoFillBackground( true );
    toolBar->setPalette( toolBarColor() );
    toolBar->setOrientation( Qt::Vertical );
+   toolBar->setAccessibleName( title.isEmpty() ? tr( "Plot Tools" ) : title + tr( " Plot Tools" ) );
 
    // Recolor the bar when the color scheme is switched while it is on screen
    toolBar->installEventFilter( this );
@@ -419,6 +420,11 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 //! re-measures starting from the title's originally-intended size (rather
 //! than shrinking further from whatever size it happens to currently be),
 //! so the font grows back toward full size if the plot is widened again.
+void US_Plot::setToolBarAccessibleName( const QString& name )
+{
+   toolBar->setAccessibleName( name );
+}
+
 void US_Plot::fitTitleToWidth()
 {
    if ( plot == nullptr )
