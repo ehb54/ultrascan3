@@ -77,24 +77,24 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    ct_nisols     = us_counter( 3, 0.0, 1000.0, 0.0 );
    ct_nisols->setSingleStep( 1 );
    ct_nisols->setEnabled( true );
-   connect( ct_nisols, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_nisols( double ) ) );
+   connect( ct_nisols, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_nisols );
 
    lb_wxbuck     = us_label( tr( "Width of s Bucket:" ) );
    lb_wxbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_wxbuck     = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_wxbuck->setSingleStep( 1 );
-   connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_wxbuck( double ) ) );
+   connect( ct_wxbuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_wxbuck );
 
    lb_hybuck     = us_label( tr( "Height of f/f0 Bucket:" ) );
    lb_hybuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_hybuck     = us_counter( 3, 0.0, 1.0, 0.0 );
    ct_hybuck->setSingleStep( 1 );
-   connect( ct_hybuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_hybuck( double ) ) );
+   connect( ct_hybuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_hybuck );
 
    lb_info2      = us_banner( tr( "Pseudo-3D Controls" ) );
 
@@ -103,61 +103,61 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_resolu->setSingleStep( 1 );
-   connect( ct_resolu, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_resolu( double ) ) );
+   connect( ct_resolu, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_resolu );
 
    lb_xreso      = us_label( tr( "X Resolution:" ) );
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_xreso->setSingleStep( 1 );
-   connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_xreso( double ) ) );
+   connect( ct_xreso,  &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_xreso );
 
    lb_yreso      = us_label( tr( "Y Resolution:" ) );
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
    ct_yreso->setSingleStep( 1 );
-   connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_yreso( double ) ) );
+   connect( ct_yreso,  &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_yreso );
 
    lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zfloor     = us_counter( 3, 50.0, 150.0, 1.0 );
    ct_zfloor->setSingleStep( 1 );
-   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_zfloor( double ) ) );
+   connect( ct_zfloor, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_zfloor );
 
    lb_autlim     = us_label( tr( "Automatic Plot Limits" ) );
    lb_autlim->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    us_checkbox( tr( "(unselect to override)             " ), ck_autlim, true );
-   connect( ck_autlim, SIGNAL( clicked() ),
-            this,       SLOT( select_autolim() ) );
+   connect( ck_autlim, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::select_autolim );
 
    lb_plxmin     = us_label( tr( "Plot Limit s Min:" ) );
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plxmin     = us_counter( 3, -10000.0, 10000.0, 0.0 );
    ct_plxmin->setSingleStep( 1 );
-   connect( ct_plxmin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plxmin( double ) ) );
+   connect( ct_plxmin, &QwtCounter::valueChanged,
+            this,        &US_GA_Initialize::update_plxmin );
 
    lb_plxmax     = us_label( tr( "Plot Limit s Max:" ) );
    ct_plxmax     = us_counter( 3, -100.0, 10000.0, 0.0 );
    ct_plxmax->setSingleStep( 1 );
-   connect( ct_plxmax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plxmax( double ) ) );
+   connect( ct_plxmax, &QwtCounter::valueChanged,
+            this,        &US_GA_Initialize::update_plxmax );
 
    lb_plymin     = us_label( tr( "Plot Limit f/f0 Min:" ) );
    lb_plymin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plymin     = us_counter( 3, 0.5, 50.0, 0.0 );
    ct_plymin->setSingleStep( 1 );
-   connect( ct_plymin, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT(   update_plymin( double ) ) );
+   connect( ct_plymin, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_plymin );
    
    lb_plymax     = us_label( tr( "Plot Limit f/f0 Max:" ) );
    lb_plymax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -165,16 +165,16 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    ct_plymax     = us_counter( 3, 1.0, 50.0, 1.0 );
    ct_plymax->setSingleStep( 1 );
    ct_plymax->setValue( 1.34567e+01 );
-   connect( ct_plymax, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT(   update_plymax( double ) ) );
+   connect( ct_plymax, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_plymax );
 
    lw_sbin_data = us_listwidget( );
-   connect( lw_sbin_data, SIGNAL( pressed(       const QModelIndex& ) ),
-            this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
-   connect( lw_sbin_data, SIGNAL( doubleClicked( const QModelIndex& ) ),
-            this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
-   connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
-            this,         SLOT(   newrow_sbdata(     int )            ) );
+   connect( lw_sbin_data, &QAbstractItemView::pressed,
+            this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
+   connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
+            this,         &US_GA_Initialize::dclick_sbdata );
+   connect( lw_sbin_data, &QListWidget::currentRowChanged,
+            this,         &US_GA_Initialize::newrow_sbdata );
 
            attr_x      = 0;
            attr_y      = 1;
@@ -232,26 +232,26 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,   &US_GA_Initialize::update_disk_db );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
-   connect( pb_prefilt, SIGNAL( clicked() ),
-            this,       SLOT(   select_prefilt() ) );
+   connect( pb_prefilt, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::select_prefilt );
 
    le_prefilt    = us_lineedit  ( "", -1, true );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution" ) );
-   connect( pb_lddistr, SIGNAL( clicked() ),
-            this,       SLOT(   load_distro() ) );
+   connect( pb_lddistr, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::load_distro );
 
    pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
-   connect( pb_ldcolor, SIGNAL( clicked() ),
-            this,       SLOT(   load_color() ) );
+   connect( pb_ldcolor, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::load_color );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Plot" ), false );
-   connect( pb_refresh, SIGNAL( clicked() ),
-            this,       SLOT(   replot_data() ) );
+   connect( pb_refresh, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::replot_data );
 
    plot_dim   = 3;          // default plot dimension
    us_radiobutton( tr( "1-Dimensional Plot" ), rb_1dplot, false );
@@ -266,46 +266,46 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    
    pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ),
                                   false );
-   connect( pb_mandrsb, SIGNAL( clicked() ),
-            this,       SLOT(   manDrawSb() ) );
+   connect( pb_mandrsb, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::manDrawSb );
 
    pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps / Sort" ),
                                   false );
-   connect( pb_ckovrlp, SIGNAL( clicked()       ),
-            this,       SLOT(   checkOverlaps() ) );
+   connect( pb_ckovrlp, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::checkOverlaps );
 
    pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ),
                                   false );
-   connect( pb_autassb, SIGNAL( clicked() ),
-            this,       SLOT(   autoAssignSb() ) );
+   connect( pb_autassb, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::autoAssignSb );
 
    pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ), false );
-   connect( pb_resetsb, SIGNAL( clicked() ),
-            this,       SLOT( resetSb() ) );
+   connect( pb_resetsb, &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::resetSb );
 
    pb_reset      = us_pushbutton( tr( "Reset" ), false );
-   connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT(   reset() ) );
+   connect( pb_reset,   &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::reset );
 
    pb_view       = us_pushbutton( tr( "View Statistics" ), false );
-   connect( pb_view,    SIGNAL( clicked() ),
-            this,       SLOT(   view()  ) );
+   connect( pb_view,    &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::view );
 
    pb_save       = us_pushbutton( tr( "Save" ), false );
-   connect( pb_save,    SIGNAL( clicked() ),
-            this,       SLOT(   save() ) );
+   connect( pb_save,    &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::save );
 
    pb_loadsb     = us_pushbutton( tr( "Load Solute Bins" ), false );
-   connect( pb_loadsb,  SIGNAL( clicked()   ),
-            this,       SLOT(   load_bins() ) );
+   connect( pb_loadsb,  &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::load_bins );
 
    pb_help       = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT(   help() ) );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_GA_Initialize::help );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT(   close() ) );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &QWidget::close );
 
    te_status    = us_textedit( );
    te_status->setTextBackgroundColor( Qt::white );
@@ -681,10 +681,10 @@ DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
    pick->setRubberBand(    QwtPicker::RectRubberBand );
 
    // set up to capture position and dimensions of solute bin
-   connect( pick, SIGNAL(  mouseDown( const QPointF& ) ),
-            this, SLOT( getMouseDown( const QPointF& ) ) );
-   connect( pick, SIGNAL( mouseUp(    const QPointF& ) ),
-            this, SLOT( getMouseUp(   const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::mouseDown,
+            this, &US_GA_Initialize::getMouseDown );
+   connect( pick, &US_PlotPicker::mouseUp,
+            this, &US_GA_Initialize::getMouseUp );
 
    pb_ckovrlp->setEnabled( false );
 
@@ -719,10 +719,10 @@ DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
           rinc  = pow( 10.0, rpwr - 3 );
    hybuck       = qRound( hybuck / rinc ) * rinc;
    ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_wxbuck( double ) ) );
-   connect( ct_hybuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_hybuck( double ) ) );
+   connect( ct_wxbuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_wxbuck );
+   connect( ct_hybuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_hybuck );
 
    manbuks      = true;
 }
@@ -1220,8 +1220,8 @@ void US_GA_Initialize::select_autolim()
    ct_wxbuck->setSingleStep( rinc );
    ct_wxbuck->setValue( wxbuck );
    ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_wxbuck( double ) ) );
+   connect( ct_wxbuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_wxbuck );
 }
 
 void US_GA_Initialize::select_plot_dim( int id )
@@ -1277,8 +1277,8 @@ void US_GA_Initialize::load_distro()
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
-   connect( &dialog, SIGNAL(   changed( bool ) ),
-            this, SLOT( update_disk_db( bool ) ) );
+   connect( &dialog, &US_ModelLoader::changed,
+            this, &US_GA_Initialize::update_disk_db );
    QApplication::restoreOverrideCursor();
 
    QString         mfnam;
@@ -1664,10 +1664,10 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    ct_hybuck->setRange( 0.0, kmax );
    ct_hybuck->setSingleStep( kinc );
    ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_wxbuck( double ) ) );
-   connect( ct_hybuck, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_hybuck( double ) ) );
+   connect( ct_wxbuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_wxbuck );
+   connect( ct_hybuck, &QwtCounter::valueChanged,
+            this,      &US_GA_Initialize::update_hybuck );
 
    // Update help and status text
    QString hmsg = tr(
@@ -1957,12 +1957,12 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
       {
          removeSoluteBin( sx );
       }
-      connect( lw_sbin_data, SIGNAL( pressed(       const QModelIndex& ) ),
-               this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
-      connect( lw_sbin_data, SIGNAL( doubleClicked( const QModelIndex& ) ),
-               this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
-      connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
-               this,         SLOT(   newrow_sbdata(     int )            ) );
+      connect( lw_sbin_data, &QAbstractItemView::pressed,
+               this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
+      connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
+               this,         &US_GA_Initialize::dclick_sbdata );
+      connect( lw_sbin_data, &QListWidget::currentRowChanged,
+               this,         &US_GA_Initialize::newrow_sbdata );
 
       int rx      = qMin( sx, ( nibuks - 1 ) );
       if ( rx >= 0 )
@@ -2166,8 +2166,8 @@ void US_GA_Initialize::select_prefilt( void )
 
    US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
    srdiag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT(   update_disk_db( bool ) ) );
+   connect( &srdiag, &US_SelectRuns::dkdb_changed,
+            this,    &US_GA_Initialize::update_disk_db );
 
    if ( srdiag.exec() == QDialog::Accepted )
       nruns      = pfilts.size();

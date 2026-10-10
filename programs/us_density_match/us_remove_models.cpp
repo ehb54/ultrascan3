@@ -42,19 +42,19 @@ US_RemoveModels::US_RemoveModels( QVector< DisSys >& adistros,
    mainLayout ->addWidget( te_status,  row,   0, 2, 5 );
    row         += 2;
 
-   connect( pb_remove,  SIGNAL( clicked()  ),
-            this,       SLOT(   remove()   ) );
-   connect( pb_restore, SIGNAL( clicked()  ),
-            this,       SLOT(   restore()  ) );
-   connect( pb_help,    SIGNAL( clicked()  ),
-            this,       SLOT(   help()     ) );
-   connect( pb_cancel,  SIGNAL( clicked()  ),
-            this,       SLOT(   reject()   ) );
-   connect( pb_accept,  SIGNAL( clicked()  ),
-            this,       SLOT(   accepted() ) );
+   connect( pb_remove,  &QAbstractButton::clicked,
+            this,       &US_RemoveModels::remove );
+   connect( pb_restore, &QAbstractButton::clicked,
+            this,       &US_RemoveModels::restore );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_RemoveModels::help );
+   connect( pb_cancel,  &QAbstractButton::clicked,
+            this,       &QDialog::reject );
+   connect( pb_accept,  &QAbstractButton::clicked,
+            this,       &US_RemoveModels::accepted );
 
-   connect( lw_distrs,  SIGNAL( itemSelectionChanged() ),
-            this,       SLOT(   selectionsChanged()    ) );
+   connect( lw_distrs,  &QListWidget::itemSelectionChanged,
+            this,       &US_RemoveModels::selectionsChanged );
 
    // Build list of original model descriptions
    nd_orig      = distros.count();

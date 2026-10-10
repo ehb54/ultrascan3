@@ -52,8 +52,8 @@ debug("location="+location);
   daemon.start( assisloc, args );
   daemon.waitForStarted();
 
-  connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),
-                    SLOT  ( close    ( int, QProcess::ExitStatus ) ) );
+  connect( &daemon, qOverload< int, QProcess::ExitStatus >( &QProcess::finished ),
+                    this, &US_HelpDaemon::close );
 //show(page);
 }
 
@@ -130,9 +130,6 @@ int main( int argc, char* argv[] )
    application.initialize();
 #endif
   US_HelpDaemon* daemon = new US_HelpDaemon( message );
- 
-  QObject::connect( &application, SIGNAL( messageReceived( const QString& ) ),
-                    daemon,       SLOT  ( show           ( const QString& ) ) );
 
   return application.exec();
 }

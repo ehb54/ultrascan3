@@ -283,20 +283,20 @@ DbgLv(1) << "cnG:main: elements defined";
    main->addWidget( pb_close,       row,    4, 1,  4 );
    main->addWidget( pb_accept,      row++,  8, 1,  4 );
 
-   connect( le_extinction,  SIGNAL( editingFinished() ), 
-                            SLOT  ( set_molar      () ) );
-   connect( pb_load_c0,     SIGNAL( clicked() ), 
-                            SLOT  ( load_c0() ) );
-   connect( ck_co_sed,      SIGNAL( stateChanged( int ) ), 
-                            SLOT  ( co_sed      ( int ) ) );
-   connect( pb_recompute,   SIGNAL( clicked   () ), 
-                            SLOT  ( check_selects() ) );
-   connect( pb_help,        SIGNAL( clicked   () ), 
-                            SLOT  ( help      () ) );
-   connect( pb_close,       SIGNAL( clicked   () ), 
-                            SLOT  ( close     () ) );
-   connect( pb_accept,      SIGNAL( clicked   () ), 
-                            SLOT  ( acceptProp() ) );
+   connect( le_extinction,  &QLineEdit::editingFinished, 
+                            this, &US_ConstraintsEdit::set_molar );
+   connect( pb_load_c0,     &QAbstractButton::clicked,
+                            this, &US_ConstraintsEdit::load_c0 );
+   connect( ck_co_sed,      US_CB_STATE_CHANGED, 
+                            this, &US_ConstraintsEdit::co_sed );
+   connect( pb_recompute,   &QAbstractButton::clicked, 
+                            this, &US_ConstraintsEdit::check_selects );
+   connect( pb_help,        &QAbstractButton::clicked, 
+                            this, &US_ConstraintsEdit::help );
+   connect( pb_close,       &QAbstractButton::clicked, 
+                            this, &QWidget::close );
+   connect( pb_accept,      &QAbstractButton::clicked, 
+                            this, &US_ConstraintsEdit::acceptProp );
    pb_accept->setEnabled( false );
 DbgLv(1) << "cnG:main: connections made";
    const QString clets( "ABCDEFGHIJ" );
@@ -437,10 +437,10 @@ DbgLv(1) << "cnG:main:  bmodel load rtn";
          lw_assocs->addItem( "(none)" );
    }
 
-   connect( lw_comps,  SIGNAL( currentRowChanged ( int ) ), 
-                       SLOT  ( component_select  ( int ) ) );
-   connect( lw_assocs, SIGNAL( currentRowChanged ( int ) ), 
-                       SLOT  ( association_select( int ) ) );
+   connect( lw_comps,  &QListWidget::currentRowChanged, 
+                       this, &US_ConstraintsEdit::component_select );
+   connect( lw_assocs, &QListWidget::currentRowChanged, 
+                       this, &US_ConstraintsEdit::association_select );
 
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
@@ -624,8 +624,8 @@ void US_ConstraintsEdit::co_sed( int new_state )
          {
              ck_co_sed->disconnect();
              ck_co_sed->setChecked( false );
-             connect( ck_co_sed, SIGNAL( stateChanged( int ) ), 
-                                 SLOT  ( co_sed      ( int ) ) );
+             connect( ck_co_sed, US_CB_STATE_CHANGED, 
+                                 this, &US_ConstraintsEdit::co_sed );
              return;
          }
       }
@@ -752,32 +752,32 @@ void US_ConstraintsEdit::comps_connect( bool c_on )
 {
    if ( c_on )
    {  // Turn connections on
-      connect( ck_flt_vbar,    SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_vbar( bool ) ) );
-      connect( ck_sel_mw,      SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( check_mw  ( bool ) ) );
-      connect( ck_flt_mw,      SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_mw  ( bool ) ) );
-      connect( ck_log_mw,      SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( logsc_mw  ( bool ) ) );
-      connect( ck_sel_ff0,     SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( check_ff0 ( bool ) ) );
-      connect( ck_flt_ff0,     SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_ff0 ( bool ) ) );
-      connect( ck_sel_s,       SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( check_s   ( bool ) ) );
-      connect( ck_flt_s,       SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_s   ( bool ) ) );
-      connect( ck_sel_D,       SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( check_D   ( bool ) ) );
-      connect( ck_flt_D,       SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_D   ( bool ) ) );
-      connect( ck_sel_f,       SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( check_f   ( bool ) ) );
-      connect( ck_flt_f,       SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_f   ( bool ) ) );
-      connect( ck_flt_conc,    SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_conc( bool ) ) );
+      connect( ck_flt_vbar,    &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_vbar );
+      connect( ck_sel_mw,      &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::check_mw );
+      connect( ck_flt_mw,      &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_mw );
+      connect( ck_log_mw,      &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::logsc_mw );
+      connect( ck_sel_ff0,     &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::check_ff0 );
+      connect( ck_flt_ff0,     &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_ff0 );
+      connect( ck_sel_s,       &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::check_s );
+      connect( ck_flt_s,       &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_s );
+      connect( ck_sel_D,       &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::check_D );
+      connect( ck_flt_D,       &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_D );
+      connect( ck_sel_f,       &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::check_f );
+      connect( ck_flt_f,       &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_f );
+      connect( ck_flt_conc,    &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_conc );
    }
    else
    {  // Turn connections off
@@ -802,14 +802,14 @@ void US_ConstraintsEdit::assocs_connect( bool c_on )
 {
    if ( c_on )
    {  // Turn connections on
-      connect( ck_flt_kd,      SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_kd  ( bool ) ) );
-      connect( ck_log_kd,      SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( logsc_kd  ( bool ) ) );
-      connect( ck_flt_koff,    SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( float_koff( bool ) ) );
-      connect( ck_log_koff,    SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( logsc_koff( bool ) ) );
+      connect( ck_flt_kd,      &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_kd );
+      connect( ck_log_kd,      &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::logsc_kd );
+      connect( ck_flt_koff,    &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::float_koff );
+      connect( ck_log_koff,    &QAbstractButton::toggled, 
+                               this, &US_ConstraintsEdit::logsc_koff );
    }
    else
    {  // Turn connections off

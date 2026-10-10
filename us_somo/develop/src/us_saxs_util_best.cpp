@@ -71,9 +71,10 @@ bool US_Saxs_Util::run_best()
    QString pdb_stripped;
    QStringList exclude_atoms_list;
    QStringList exclude_residues_list;
-   exclude_residues_list 
-      << "HOH"
-      ;
+   for ( const auto & water : pdb_parse_water_names() )   // light and heavy water alike
+   {
+      exclude_residues_list << water;
+   }
 
    if ( !strip_pdb( pdb_stripped,
                     control_parameters[ "inputfilenoread" ],

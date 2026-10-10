@@ -1,0 +1,6 @@
+{
+  "name": "at-spi2-core",
+  "version": "2.44.1",
+  "description": "No-op stub: UltraScan3 does not use the AT-SPI2 accessibility bus. The upstream port requires libXtst-devel which is unavailable on Rocky/RHEL 8 without EPEL extras. Qt5 accessibility support is not needed for UltraScan3 builds.",
+  "supports": "linux"
+}

@@ -1,0 +1,195 @@
+// Version 4 uses a different wavelength scale; versions 2 and 3 are unsupported.
+
+#include "qt_test_base.h"
+#include "us_crc.h"
+#include "us_dataIO.h"
+
+#include <QByteArray>
+#include <QFile>
+#include <QTemporaryDir>
+#include <QtEndian>
+
+namespace
+{
+// Header layout of a version 5 file, from writeRawData():  4 magic + 2 version
+// + 2 type + 1 cell + 1 channel + 16 GUID + 240 description = 266, then seven
+// 4-byte floats, then the 2-byte scan count.
+constexpr int kVersionOffset = 4;
+constexpr int kCellOffset    = 8;
+constexpr int kFloatsOffset  = 266;
+
+constexpr double kWavelength = 280.0;
+
+US_DataIO::RawData makeRawData()
+{
+    US_DataIO::RawData data;
+    memcpy(data.type, "RA", 2);
+    memcpy(data.rawGUID, "0123456789abcdef", 16);
+    data.cell        = 3;
+    data.channel     = 'A';
+    data.description = "AUC version fixture";
+
+    for (int point = 0; point < 8; point++)
+        data.xvalues << 5.8 + 0.01 * point;
+
+    for (int scan = 0; scan < 2; scan++)
+    {
+        US_DataIO::Scan sc;
+        sc.temperature = 20.0;
+        sc.rpm         = 45000.0;
+        sc.seconds     = 100 * (scan + 1);
+        sc.omega2t     = 1.0e10 * (scan + 1);
+        sc.wavelength  = kWavelength;
+        sc.delta_r     = 0.01;
+        sc.nz_stddev   = false;
+
+        for (int point = 0; point < 8; point++)
+        {
+            sc.rvalues << 0.1 * (point + 1) + scan;
+            sc.stddevs << 0.0;
+        }
+
+        sc.interpolated = QByteArray(1, '\0');
+        data.scanData << sc;
+    }
+
+    return data;
+}
+
+// Append the checksum for the supplied file body.
+QByteArray resealed(QByteArray body)
+{
+    const quint32 crc =
+        US_Crc::crc32(0xffffffffUL,
+                      reinterpret_cast<const unsigned char*>(body.constData()),
+                      static_cast<unsigned int>(body.size()));
+
+    quint32 stored = 0;
+    qToLittleEndian(crc, reinterpret_cast<uchar*>(&stored));
+    body.append(reinterpret_cast<const char*>(&stored), 4);
+    return body;
+}
+
+QString writeBytes(const QTemporaryDir& dir, const QString& name,
+                   const QByteArray& bytes)
+{
+    const QString target = dir.path() + "/" + name;
+    QFile ff(target);
+    EXPECT_TRUE(ff.open(QIODevice::WriteOnly));
+    ff.write(bytes);
+    ff.close();
+    return target;
+}
+
+// A freshly written version 5 file, minus its checksum.
+QByteArray currentBody(const QTemporaryDir& dir)
+{
+    US_DataIO::RawData source = makeRawData();
+    const QString      path   = dir.path() + "/v5.auc";
+    EXPECT_EQ(US_DataIO::writeRawData(path, source), US_DataIO::OK);
+
+    QFile ff(path);
+    EXPECT_TRUE(ff.open(QIODevice::ReadOnly));
+    QByteArray bytes = ff.readAll();
+    return bytes.left(bytes.size() - 4);
+}
+}
+
+// ---------------------------------------------------------------------------
+// Accepted versions
+// ---------------------------------------------------------------------------
+
+TEST(AucVersions, TheCurrentWriterEmitsVersionFive)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    const QByteArray body = currentBody(dir);
+    ASSERT_GT(body.size(), kFloatsOffset);
+    EXPECT_EQ(body.mid(kVersionOffset, 2), QByteArray("05"));
+    EXPECT_EQ(US_DataIO::format_version, 5u);
+}
+
+TEST(AucVersions, AVersionFourFileLoadsAndDecodesWavelengthByTheOlderRule)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    // Version 4 stores wavelength as (nm - 180) * 100; version 5 uses nm * 10.
+    QByteArray body = currentBody(dir);
+    body.replace(kVersionOffset, 2, "04");
+
+    US_DataIO::RawData data;
+    ASSERT_EQ(US_DataIO::readRawData(
+                  writeBytes(dir, "v4.auc", resealed(body)), data),
+              US_DataIO::OK);
+
+    ASSERT_EQ(data.scanCount(), 2);
+    EXPECT_EQ(data.cell, 3);
+    EXPECT_EQ(data.channel, 'A');
+    EXPECT_EQ(data.pointCount(), 8);
+
+    // The stored value 2800 decodes as 208 nm under version 4.
+    EXPECT_NEAR(data.scanData[0].wavelength, 208.0, 1.0e-6);
+}
+
+// ---------------------------------------------------------------------------
+// Rejected versions
+// ---------------------------------------------------------------------------
+
+TEST(AucVersions, AVersionThreeFileIsRejectedAsAnUnsupportedVersion)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    QByteArray body = currentBody(dir);
+    body.replace(kVersionOffset, 2, "03");
+    // Versions 2 and 3 omit the cell and channel bytes.
+    body.remove(kCellOffset, 2);
+
+    US_DataIO::RawData data;
+    EXPECT_EQ(US_DataIO::readRawData(
+                  writeBytes(dir, "v3.auc", resealed(body)), data),
+              US_DataIO::BAD_VERSION);
+    EXPECT_EQ(data.scanCount(), 0);
+}
+
+TEST(AucVersions, AVersionTwoFileIsRejectedAsAnUnsupportedVersion)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    QByteArray body = currentBody(dir);
+    body.replace(kVersionOffset, 2, "02");
+    // Versions 2 and 3 omit the cell and channel bytes.
+    body.remove(kCellOffset, 2);
+
+    // Version 2 stores radius limits as 16-bit millimeter values.
+    QByteArray radii(4, '\0');
+    qToLittleEndian(static_cast<quint16>(5800),
+                    reinterpret_cast<uchar*>(radii.data()));
+    qToLittleEndian(static_cast<quint16>(5870),
+                    reinterpret_cast<uchar*>(radii.data() + 2));
+    body.replace(kFloatsOffset - 2, 8, radii);
+
+    US_DataIO::RawData data;
+    EXPECT_EQ(US_DataIO::readRawData(
+                  writeBytes(dir, "v2.auc", resealed(body)), data),
+              US_DataIO::BAD_VERSION);
+    EXPECT_EQ(data.scanCount(), 0);
+}
+
+TEST(AucVersions, AFileWithNoVersionFieldAtAllIsRejected)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+
+    QByteArray body = currentBody(dir);
+    body.remove(kVersionOffset, 2);
+
+    US_DataIO::RawData data;
+    EXPECT_EQ(US_DataIO::readRawData(
+                  writeBytes(dir, "v0.auc", resealed(body)), data),
+              US_DataIO::BAD_VERSION);
+    EXPECT_EQ(data.scanCount(), 0);
+}

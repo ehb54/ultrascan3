@@ -30,8 +30,7 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    setWindowModality( Qt::WindowModal );
    
    // Very light gray
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    QGridLayout* main = new QGridLayout( this );
    main->setContentsMargins( 2, 2, 2, 2 );
@@ -84,8 +83,8 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    tw->setDragDropMode( QAbstractItemView::DropOnly );
    tw->horizontalHeader()->setStretchLastSection( true );
 
-   connect( tw, SIGNAL( cellChanged( int, int ) ), 
-                SLOT  ( changed    ( int, int ) ) );
+   connect( tw, &QTableWidget::cellChanged, 
+                this, &US_AssociationsGui::changed );
 
    main->addWidget( tw, row, 0, 5, 2 );
    row += 5;
@@ -112,17 +111,17 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
    QBoxLayout* buttonbox = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help") );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help()) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_AssociationsGui::help );
    buttonbox->addWidget( pb_help );
 
    QPushButton* pb_close = us_pushbutton( tr( "Cancel") );
    buttonbox->addWidget( pb_close );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
 
    //QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
    pb_accept = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_accept );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( complete()) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_AssociationsGui::complete );
 
    main->addLayout( buttonbox, row++, 0, 1, 2 );
 
@@ -227,8 +226,8 @@ void US_AssociationsGui::changed( int row, int col )
       tw->setCellWidget( row, col, w );
    }
    
-   connect( tw, SIGNAL( cellChanged( int, int ) ), 
-                SLOT  ( changed    ( int, int ) ) );
+   connect( tw, &QTableWidget::cellChanged, 
+                this, &US_AssociationsGui::changed );
 
    if ( row == tw->rowCount() - 1 ) new_row();
 }
@@ -240,9 +239,9 @@ void US_AssociationsGui::new_row( void )
    tw->setRowCount ( count + 1 );
    tw->setRowHeight( count, fm->height() + 4 );
 
-   QPushButton* pb = new US_PushButton( "D", count );
+   US_PushButton* pb = new US_PushButton( "D", count );
    pb->setMaximumWidth( fm->horizontalAdvance( "D" ) + 6 );
-   connect( pb, SIGNAL( pushed( int ) ), SLOT( del( int ) ) );
+   connect( pb, &US_PushButton::pushed, this, &US_AssociationsGui::del );
 
    tw->setCellWidget( count, 0, pb );
 }

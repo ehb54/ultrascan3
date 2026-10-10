@@ -64,7 +64,6 @@ class US_show_norm : public US_WidgetsDialog
       QwtCounter*   ct_plt_kmax;
       QwtCounter*   ct_plt_smin;
       QwtCounter*   ct_plt_smax;
-      QwtCounter*   ct_curr_distr;
      
       QwtPlot*      data_plot;
 
@@ -79,7 +78,6 @@ class US_show_norm : public US_WidgetsDialog
 
       QCheckBox*    ck_autosxy;
       QCheckBox*    ck_autoscz;
-      QCheckBox*    ck_conloop;
       QCheckBox*    ck_plot_sk;
       QCheckBox*    ck_plot_wk;
       QCheckBox*    ck_plot_sv;

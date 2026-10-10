@@ -123,35 +123,35 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    lfullLayout->addLayout( leftLayout  );
    lfullLayout->addWidget( spl1        );
 
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,    SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,    &US_vHW_Combine::update_disk_db );
 
-   connect( pb_loadda, SIGNAL( clicked()    ),
-            this,      SLOT(   load()       ) );
-   connect( pb_saveda, SIGNAL( clicked()    ),
-            this,      SLOT(   save()       ) );
-   connect( pb_resetd, SIGNAL( clicked()    ),
-            this,      SLOT(   reset_data() ) );
-   connect( pb_resetp, SIGNAL( clicked()    ),
-            this,      SLOT(   reset_plot() ) );
-   connect( pb_plot3d, SIGNAL( clicked()    ),
-            this,      SLOT(   plot_3d()    ) );
-   connect( pb_help,   SIGNAL( clicked()    ),
-            this,      SLOT(   help()       ) );
-   connect( pb_close,  SIGNAL( clicked()    ),
-            this,      SLOT(   close()      ) );
+   connect( pb_loadda, &QAbstractButton::clicked,
+            this,      &US_vHW_Combine::load );
+   connect( pb_saveda, &QAbstractButton::clicked,
+            this,      &US_vHW_Combine::save );
+   connect( pb_resetd, &QAbstractButton::clicked,
+            this,      &US_vHW_Combine::reset_data );
+   connect( pb_resetp, &QAbstractButton::clicked,
+            this,      &US_vHW_Combine::reset_plot );
+   connect( pb_plot3d, &QAbstractButton::clicked,
+            this,      &US_vHW_Combine::plot_3d );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_vHW_Combine::help );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &QWidget::close );
 
-   connect( ck_distrib,  SIGNAL( stateChanged( int) ),
-            this,        SLOT(   plot_data()        ) );
-   connect( ck_envelope, SIGNAL( stateChanged( int) ),
-            this,        SLOT(   plot_data()        ) );
-   connect( ck_intconc,  SIGNAL( stateChanged( int) ),
-            this,        SLOT(   plot_data()        ) );
+   connect( ck_distrib,  US_CB_STATE_CHANGED,
+            this,        &US_vHW_Combine::plot_data );
+   connect( ck_envelope, US_CB_STATE_CHANGED,
+            this,        &US_vHW_Combine::plot_data );
+   connect( ck_intconc,  US_CB_STATE_CHANGED,
+            this,        &US_vHW_Combine::plot_data );
 
-   connect( lw_runids,   SIGNAL( currentRowChanged( int ) ),
-            this,        SLOT(   runid_select(      int ) ) );
-   connect( lw_triples,  SIGNAL( currentRowChanged( int ) ),
-            this,        SLOT(   triple_select(     int ) ) );
+   connect( lw_runids,   &QListWidget::currentRowChanged,
+            this,        &US_vHW_Combine::runid_select );
+   connect( lw_triples,  &QListWidget::currentRowChanged,
+            this,        &US_vHW_Combine::triple_select );
 
    QBoxLayout* plot = new US_Plot( data_plot1,
          tr( "G(s) Distributions" ),
@@ -223,8 +223,8 @@ void US_vHW_Combine::load( void )
 
    // Open a dialog and get the runID(s)
    US_SelectRunid srdiag( dkdb_cntrls->db(), runids );
-   connect( &srdiag,      SIGNAL( changed( bool ) ),
-            this,    SLOT( update_disk_db( bool ) ) );
+   connect( &srdiag,      &US_SelectRunid::changed,
+            this,    &US_vHW_Combine::update_disk_db );
    srdiag.exec();
 
    int nruns    = runids.size();
@@ -1616,8 +1616,8 @@ DbgLv(0) << "xyzd size" << xyzdat.size();
       p3d_pltw     = NULL;
       p3d_ctld     = new US_VhwCPlotControl( this, &xyzdat, p_type );
 
-      connect( p3d_ctld,  SIGNAL( has_closed()     ),
-               this,      SLOT  ( control_closed() ) ); 
+      connect( p3d_ctld,  &US_VhwCPlotControl::has_closed,
+               this,      &US_vHW_Combine::control_closed ); 
 
       // Position near upper right of the desktop
       int cx       = QGuiApplication::primaryScreen()->availableSize().width() - p3d_ctld->width() - 40;

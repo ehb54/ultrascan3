@@ -16,11 +16,11 @@ US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject
   
   reply = manager->post( httpPost, request.toLatin1().data() );
     
-  connect( reply, SIGNAL( finished    ( void ) ), 
-           this,  SLOT  ( postFinished( void ) ) );
+  connect( reply, &QNetworkReply::finished, 
+           this,  &US_HttpPost::postFinished );
   
-  connect( reply, SIGNAL( error    ( QNetworkReply::NetworkError ) ),
-           this,  SLOT  ( postError( QNetworkReply::NetworkError ) ) );
+  connect( reply, &QNetworkReply::errorOccurred,
+           this,  &US_HttpPost::postError );
   
 }
 

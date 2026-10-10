@@ -40,15 +40,15 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    QLabel* lb_label = us_label( tr( "Label:" ) );
    experiment->addWidget( lb_label, row++, 0, 1, 2 );
    le_label = us_lineedit();
-   connect( le_label, SIGNAL( editingFinished () ),
-                      SLOT  ( saveLabel       () ) );
+   connect( le_label, &QLineEdit::editingFinished,
+                      this, &US_ExperimentGuiRa::saveLabel );
    experiment->addWidget( le_label, row++, 0, 1, 2 );
 
    // Project
    QLabel* lb_project = us_label( tr( "Project:" ) );
    experiment->addWidget( lb_project, row, 0 );
    QPushButton* pb_project = us_pushbutton( tr( "Select Project" ) );
-   connect( pb_project, SIGNAL( clicked() ), SLOT( selectProject() ) );
+   connect( pb_project, &QAbstractButton::clicked, this, &US_ExperimentGuiRa::selectProject );
    pb_project->setEnabled( true );
    experiment->addWidget( pb_project, row++, 1 );
 
@@ -94,7 +94,7 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    hardware->addWidget( lb_hardware_banner, row++, 0, 1, 2 );
 
    QPushButton* pb_rotor = us_pushbutton( tr( "Select Lab / Rotor / Calibration" ) );
-   connect( pb_rotor, SIGNAL( clicked() ), SLOT( selectRotor() ) );
+   connect( pb_rotor, &QAbstractButton::clicked, this, &US_ExperimentGuiRa::selectRotor );
    pb_rotor->setEnabled( true );
    hardware->addWidget( pb_rotor, row++, 0, 1, 2 );
 
@@ -114,8 +114,8 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
    hardware->addWidget( lb_instrument, row, 0 );
    cb_instrument = new US_SelectBoxRa( this );
-   connect( cb_instrument, SIGNAL( activated        ( int ) ),
-                           SLOT  ( change_instrument( int ) ) );
+   connect( cb_instrument, qOverload< int >( &QComboBox::activated ),
+                           this, &US_ExperimentGuiRa::change_instrument );
    hardware->addWidget( cb_instrument, row++, 1 );
 
    // operatorID
@@ -137,15 +137,15 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_ExperimentGuiRa::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_ExperimentGuiRa::cancel );
    buttons->addWidget( pb_cancel );
 
    pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_ExperimentGuiRa::accept );
    buttons->addWidget( pb_accept );
 
    // Now let's assemble the page
@@ -165,7 +165,7 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    if ( US_Settings::us_inv_level() > 2 )
    {
       QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-      connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
+      connect( pb_investigator, &QAbstractButton::clicked, this, &US_ExperimentGuiRa::selectInvestigator );
       main->addWidget( pb_investigator, row, 0 );
    }
    else
@@ -179,8 +179,8 @@ US_ExperimentGuiRa::US_ExperimentGuiRa(
    main->addWidget( le_investigator, row++, 1 );
 
    disk_controls = new US_Disk_DB_Controls( select_db_disk );
-   connect( disk_controls, SIGNAL( changed       ( bool ) ),
-                           SLOT  ( source_changed( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_ExperimentGuiRa::source_changed );
    main->addLayout( disk_controls, row++, 0, 1, 2 );
 
    main->addLayout( experiment, row, 0 );
@@ -412,8 +412,8 @@ void US_ExperimentGuiRa::selectInvestigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
 
    connect( inv_dialog, 
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT  ( assignInvestigator   ( int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_ExperimentGuiRa::assignInvestigator );
 
    inv_dialog->exec();
 }
@@ -490,15 +490,15 @@ void US_ExperimentGuiRa::selectProject( void )
    US_ProjectGui* projInfo = new US_ProjectGui( true, dbdisk, project );
 
    connect( projInfo, 
-      SIGNAL( updateProjectGuiSelection( US_Project& ) ),
-      SLOT  ( assignProject            ( US_Project& ) ) );
+      &US_ProjectGui::updateProjectGuiSelection,
+      this, &US_ExperimentGuiRa::assignProject );
 
    connect( projInfo, 
-      SIGNAL( cancelProjectGuiSelection( ) ),
-      SLOT  ( cancelProject            ( ) ) );
+      &US_ProjectGui::cancelProjectGuiSelection,
+      this, &US_ExperimentGuiRa::cancelProject );
 
-   connect( projInfo, SIGNAL( use_db        ( bool ) ),
-                      SLOT  ( update_disk_db( bool ) ) );
+   connect( projInfo, &US_ProjectGui::use_db,
+                      this, &US_ExperimentGuiRa::update_disk_db );
 
    projInfo->exec();
    delete projInfo;
@@ -676,14 +676,14 @@ void US_ExperimentGuiRa::selectRotor( void )
                                              dbdisk,
                                              rotor, calibration );
 
-   connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-                       SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
+                       this, &US_ExperimentGuiRa::assignRotor );
 
-   connect( rotorInfo, SIGNAL( RotorCalibrationCanceled( ) ),
-                       SLOT  ( cancelRotor             ( ) ) );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationCanceled,
+                       this, &US_ExperimentGuiRa::cancelRotor );
 
-   connect( rotorInfo, SIGNAL( use_db        ( bool ) ),
-                       SLOT  ( update_disk_db( bool ) ) );
+   connect( rotorInfo, &US_RotorGui::use_db,
+                       this, &US_ExperimentGuiRa::update_disk_db );
 
    rotorInfo->exec();
 }

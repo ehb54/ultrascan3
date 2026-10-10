@@ -93,19 +93,19 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
   QGridLayout* buttons = new QGridLayout();
 
   pb_reset = us_pushbutton( tr( "Reset to Last Saved" ) );
-  connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
+  connect( pb_reset, &QAbstractButton::clicked, this, &US_Advanced::reset );
   buttons->addWidget( pb_reset, row++, 0, 1, 3 );
 
   pb_save   = us_pushbutton( tr( "Save" ) );
-  connect( pb_save,  SIGNAL( clicked() ), this, SLOT( save() ) );
+  connect( pb_save,  &QAbstractButton::clicked, this, &US_Advanced::save );
   buttons->addWidget( pb_save,  row,   0, 1, 1 );
 
   pb_help   = us_pushbutton( tr( "Help" ) );
-  connect( pb_help,  SIGNAL( clicked() ), this, SLOT( help() ) );
+  connect( pb_help,  &QAbstractButton::clicked, this, &US_Advanced::help );
   buttons->addWidget( pb_help,  row,   1, 1, 1 );
 
   pb_close  = us_pushbutton( tr( "Close" ) );
-  connect( pb_close, SIGNAL( clicked() ), this, SLOT( close() ) );
+  connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
   buttons->addWidget( pb_close, row++, 2, 1, 1 );
 
   topbox->addLayout( buttons );

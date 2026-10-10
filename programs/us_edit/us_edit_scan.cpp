@@ -80,31 +80,31 @@ US_EditScan::US_EditScan( US_DataIO::Scan&         s,
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_EditScan::reset );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_EditScan::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( done() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_EditScan::done );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );
 
-   connect( pick, SIGNAL( cMouseDownRaw( QMouseEvent* ) ),
-                  SLOT  ( start_drag   ( QMouseEvent* ) ) );
+   connect( pick, &US_PlotPicker::cMouseDownRaw,
+                  this, &US_EditScan::start_drag );
 
-   connect( pick, SIGNAL( cMouseUp     ( const QPointF& ) ),
-                  SLOT  ( end_drag     ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseUp,
+                  this, &US_EditScan::end_drag );
    
-   connect( pick, SIGNAL( cMouseDrag   ( const QPointF& ) ),
-                  SLOT  ( drag         ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseDrag,
+                  this, &US_EditScan::drag );
 }
 
 void US_EditScan::done( void )

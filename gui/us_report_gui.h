@@ -48,6 +48,7 @@ class US_GUI_EXTERN US_ReportGui: public US_Widgets
       QGridLayout* addRem_buttons;
       QHBoxLayout* lower_buttons;
       QGridLayout* reportmask;
+      QGridLayout* analytes_abde;
 
       QLabel* bn_report_t;
 

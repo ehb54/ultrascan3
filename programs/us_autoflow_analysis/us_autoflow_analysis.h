@@ -582,12 +582,14 @@ class US_Analysis_auto : public US_Widgets
          */
         void update_progress( int );
 
+    public slots:
+        void initPanel( QMap < QString, QString > & );
+
     private slots:
         /**
          * @brief Initializes the panel with the given data.
          * @param panelData A map containing the panel data.
          */
-        void initPanel( QMap < QString, QString > & );
 
         /**
          * @brief Shows all elements in the UI.

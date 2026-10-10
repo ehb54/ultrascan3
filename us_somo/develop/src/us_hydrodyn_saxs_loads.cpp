@@ -1148,6 +1148,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       nnls_target = "\"" + grid_target + "\"";
    }
    bool clear_plot_first    = true;
+   bool extrapolate_c0      = false;
 
    US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
       new US_Hydrodyn_Saxs_Iqq_Load_Csv(
@@ -1171,6 +1172,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &use_SDs_for_fitting_iqq,
                                         &nnls_target,
                                         &clear_plot_first,
+                                        &extrapolate_c0,
                                         1 || U_EXPT,
                                         us_hydrodyn
                                         );
@@ -1230,6 +1232,12 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       ift_to_process.replaceInStrings( QRegularExpression( "^\""), "" ).replaceInStrings( QRegularExpression( "\"$"), "" );
       QTextStream( stdout ) << "ift_to_process:\n" << ift_to_process.join( "\n" ) << Qt::endl;
       call_ift( true );
+      return;
+   }
+
+   // setup for extrapolation to zero concentration
+   if ( extrapolate_c0 ) {
+      do_extrap_c0( qsl_sel_names, qsl_data, name_to_errors_map, q, filename );
       return;
    }
 
@@ -2041,6 +2049,36 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
          return;
       }
 
+      // try to read Conc:/PSV:/I0se: from the file's header comment line, same
+      // convention & regexes as US_Hydrodyn_Saxs_Hplc::load_file()
+      bool   has_conc = false;
+      double this_conc = 0e0;
+      double this_psv  = our_saxs_options->psv;
+      double this_I0se = our_saxs_options->I0_exp;
+      if ( ext == "dat" || ext == "txt" || ext == "sprr" )
+      {
+         QRegularExpression rx_conc( "Conc:\\s*(\\S+)(\\s|$)" );
+         QRegularExpression rx_psv ( " PSV:\\s*(\\S+)(\\s|$)" );
+         QRegularExpression rx_I0se( " I0se:\\s*(\\S+)(\\s|$)" );
+
+         QRegularExpressionMatch rx_conc_m = rx_conc.match( qv[ 0 ] );
+         if ( rx_conc_m.hasMatch() )
+         {
+            has_conc  = true;
+            this_conc = rx_conc_m.captured( 1 ).toDouble();
+         }
+         QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
+         if ( rx_psv_m.hasMatch() )
+         {
+            this_psv = rx_psv_m.captured( 1 ).toDouble();
+         }
+         QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
+         if ( rx_I0se_m.hasMatch() )
+         {
+            this_I0se = rx_I0se_m.captured( 1 ).toDouble();
+         }
+      }
+
       unsigned int number_of_fields = 0;
       if ( qv.size() > 3 )
       {
@@ -2472,6 +2510,10 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QS
             plot_one_iqq(q, I, I_error, QFileInfo(filename).fileName() + tag1);
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
+         }
+         if ( has_conc )
+         {
+            update_conc_csv( QFileInfo(filename).fileName() + tag1, this_conc, this_psv, this_I0se );
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
@@ -4631,6 +4673,36 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          return;
       }
 
+      // try to read Conc:/PSV:/I0se: from the file's header comment line, same
+      // convention & regexes as US_Hydrodyn_Saxs_Hplc::load_file()
+      bool   has_conc = false;
+      double this_conc = 0e0;
+      double this_psv  = our_saxs_options->psv;
+      double this_I0se = our_saxs_options->I0_exp;
+      if ( ext == "dat" || ext == "txt" || ext == "sprr" )
+      {
+         QRegularExpression rx_conc( "Conc:\\s*(\\S+)(\\s|$)" );
+         QRegularExpression rx_psv ( " PSV:\\s*(\\S+)(\\s|$)" );
+         QRegularExpression rx_I0se( " I0se:\\s*(\\S+)(\\s|$)" );
+
+         QRegularExpressionMatch rx_conc_m = rx_conc.match( qv[ 0 ] );
+         if ( rx_conc_m.hasMatch() )
+         {
+            has_conc  = true;
+            this_conc = rx_conc_m.captured( 1 ).toDouble();
+         }
+         QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
+         if ( rx_psv_m.hasMatch() )
+         {
+            this_psv = rx_psv_m.captured( 1 ).toDouble();
+         }
+         QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
+         if ( rx_I0se_m.hasMatch() )
+         {
+            this_I0se = rx_I0se_m.captured( 1 ).toDouble();
+         }
+      }
+
       unsigned int number_of_fields = 0;
       if ( qv.size() > 3 )
       {
@@ -4928,6 +5000,10 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             plot_one_iqq(q, I, I_error, QFileInfo(filename).fileName() + tag1);
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
+         }
+         if ( has_conc )
+         {
+            update_conc_csv( QFileInfo(filename).fileName() + tag1, this_conc, this_psv, this_I0se );
          }
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );

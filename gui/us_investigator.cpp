@@ -30,14 +30,12 @@ US_Investigator::US_Investigator( bool signal, int inv )
    main->addWidget( lb_search, row, 0 );
 
    le_search = us_lineedit();
-   connect( le_search, SIGNAL( textChanged( const QString& ) ), 
-                       SLOT  ( limit_names( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged, this, &US_Investigator::limit_names );
    main->addWidget( le_search, row++, 1 );
 
    // List widget
    lw_names = us_listwidget();
-   connect( lw_names, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
-                      SLOT  ( get_inv_data     ( QListWidgetItem* ) ) );
+   connect( lw_names, &QListWidget::itemDoubleClicked, this, &US_Investigator::get_inv_data );
    main->addWidget( lw_names, row, 0, 4, 2 );
    row += 4;
 
@@ -58,8 +56,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
    QLabel* lb_invGuid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_invGuid, row, 0 );
 
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    le_invGuid = us_lineedit();
    le_invGuid->setReadOnly( true );
@@ -143,11 +140,11 @@ US_Investigator::US_Investigator( bool signal, int inv )
    // Pushbuttons
    QHBoxLayout* buttons1 = new QHBoxLayout;
    pb_queryDB = us_pushbutton( tr( "Query DB" ) );
-   connect( pb_queryDB, SIGNAL( clicked() ), SLOT( queryDB() ) );
+   connect( pb_queryDB, &QPushButton::clicked, this, &US_Investigator::queryDB );
    buttons1->addWidget( pb_queryDB, row );
 
    pb_update = us_pushbutton( tr( "Update DB" ), false );
-   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
+   connect( pb_update, &QPushButton::clicked, this, &US_Investigator::update );
    buttons1->addWidget( pb_update, row++ );
    main->addLayout( buttons1, row++, 0, 1, 2 );
 
@@ -155,11 +152,11 @@ US_Investigator::US_Investigator( bool signal, int inv )
    QBoxLayout* buttons2 = new QHBoxLayout;
  
    pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QPushButton::clicked, this, &US_Investigator::reset );
    buttons2->addWidget( pb_reset );
  
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QPushButton::clicked, this, &US_Investigator::help );
    buttons2->addWidget( pb_help );
    
    int lev = US_Settings::us_inv_level();
@@ -167,7 +164,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
    if ( signal_wanted )
    {
       QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-      connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+      connect( pb_cancel, &QPushButton::clicked, this, &QDialog::reject );
       buttons2->addWidget( pb_cancel );
 
       pb_close = us_pushbutton( tr( "Accept" ) );
@@ -176,7 +173,7 @@ US_Investigator::US_Investigator( bool signal, int inv )
    else
       pb_close = us_pushbutton( tr( "Close" ) );
    
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QPushButton::clicked, this, &US_Investigator::close );
    buttons2->addWidget( pb_close );
     
    main->addLayout( buttons2, row++, 0, 1, 2 );
@@ -233,14 +230,12 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    main->addWidget( lb_search, row, 0 );
 
    le_search = us_lineedit();
-   connect( le_search, SIGNAL( textChanged( const QString& ) ), 
-                       SLOT  ( limit_names( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged, this, &US_Investigator::limit_names );
    main->addWidget( le_search, row++, 1 );
 
    // List widget
    lw_names = us_listwidget();
-   connect( lw_names, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
-                      SLOT  ( get_inv_data     ( QListWidgetItem* ) ) );
+   connect( lw_names, &QListWidget::itemDoubleClicked, this, &US_Investigator::get_inv_data );
    main->addWidget( lw_names, row, 0, 4, 2 );
    row += 4;
 
@@ -261,8 +256,7 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    QLabel* lb_invGuid = us_label( tr( "Global Identifier:" ) );
    main->addWidget( lb_invGuid, row, 0 );
 
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    le_invGuid = us_lineedit();
    le_invGuid->setReadOnly( true );
@@ -346,11 +340,11 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    // Pushbuttons
    QHBoxLayout* buttons1 = new QHBoxLayout;
    pb_queryDB = us_pushbutton( tr( "Query DB" ) );
-   connect( pb_queryDB, SIGNAL( clicked() ), SLOT( queryDB() ) );
+   connect( pb_queryDB, &QPushButton::clicked, this, &US_Investigator::queryDB );
    buttons1->addWidget( pb_queryDB, row );
 
    pb_update = us_pushbutton( tr( "Update DB" ), false );
-   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
+   connect( pb_update, &QPushButton::clicked, this, &US_Investigator::update );
    buttons1->addWidget( pb_update, row++ );
    main->addLayout( buttons1, row++, 0, 1, 2 );
 
@@ -358,11 +352,11 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    QBoxLayout* buttons2 = new QHBoxLayout;
  
    pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, &QPushButton::clicked, this, &US_Investigator::reset );
    buttons2->addWidget( pb_reset );
  
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QPushButton::clicked, this, &US_Investigator::help );
    buttons2->addWidget( pb_help );
    
    int lev = US_Settings::us_inv_level();
@@ -370,7 +364,7 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    if ( signal_wanted )
    {
       QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-      connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+      connect( pb_cancel, &QPushButton::clicked, this, &QDialog::reject );
       buttons2->addWidget( pb_cancel );
 
       pb_close = us_pushbutton( tr( "Accept" ) );
@@ -379,7 +373,7 @@ US_Investigator::US_Investigator( QString auto_mode, bool signal, int inv )
    else
       pb_close = us_pushbutton( tr( "Close" ) );
    
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QPushButton::clicked, this, &US_Investigator::close );
    buttons2->addWidget( pb_close );
     
    main->addLayout( buttons2, row++, 0, 1, 2 );

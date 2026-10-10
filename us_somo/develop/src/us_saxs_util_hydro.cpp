@@ -2836,6 +2836,7 @@ bool US_Saxs_Util::hard_coded_defaults( map < QString, QString > &results, map <
    hydro.overlap = 0.0;               // overlap
 
    pdb_parse.skip_hydrogen = true;
+   pdb_parse.skip_deuterium = true;
    pdb_parse.skip_water = true;
    pdb_parse.alternate = true;
    pdb_parse.find_sh = false;
@@ -11629,8 +11630,9 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
          if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
          {
             if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
-               str1.mid(17,3) != "HOH")
-            {                  
+               !( pdb_parse.skip_deuterium && pdb_parse_is_deuterium( str1 ) ) &&
+               !pdb_parse_is_water( str1.mid(17,3) ))
+            {
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
                {
                   if (str1.mid(16,1) == "A")

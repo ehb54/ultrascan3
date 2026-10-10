@@ -37,8 +37,8 @@ US_MrecsLoader::US_MrecsLoader( bool dbSrc, QString& search,
    dbP               = NULL;
 
    pb_filtvmrecs   = us_pushbutton( tr( "Search" ) );
-   connect( pb_filtvmrecs, SIGNAL( clicked() ),
-            this,          SLOT( list_vmrecs() ) );
+   connect( pb_filtvmrecs, &QAbstractButton::clicked,
+            this,          &US_MrecsLoader::list_vmrecs );
 
    QString edGUID  = editGUID;
    can_edit        = !editGUID.isEmpty();
@@ -52,10 +52,10 @@ US_MrecsLoader::US_MrecsLoader( bool dbSrc, QString& search,
 qDebug() << "Bld: edit" << do_edit << " dsearch" << dsearch;
 
    le_mfilter      = us_lineedit( dsearch, -1, false );
-   connect( le_mfilter,    SIGNAL( returnPressed() ),
-            this,          SLOT(   list_vmrecs()   ) );
-   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
-            this,          SLOT(   msearch(     const QString& ) ) );
+   connect( le_mfilter,    &QLineEdit::returnPressed,
+            this,          &US_MrecsLoader::list_vmrecs );
+   connect( le_mfilter,    &QLineEdit::textChanged,
+            this,          &US_MrecsLoader::msearch );
 
    int row          = 0;
    top->addWidget( pb_filtvmrecs,   row,   0 );
@@ -71,8 +71,8 @@ qDebug() << "Bld: edit" << do_edit << " dsearch" << dsearch;
    // Advanced Mrecs List Options
    QGridLayout* lo_edit    = us_checkbox( tr( "Filter by Edit" ),
                                           ck_edit,    do_edit  );
-   connect( ck_edit,   SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_edit  ( bool ) ) );
+   connect( ck_edit,   &QAbstractButton::toggled,
+                       this, &US_MrecsLoader::change_edit );
 
    main->addLayout( lo_edit );
 
@@ -85,11 +85,11 @@ qDebug() << "Bld: edit" << do_edit << " dsearch" << dsearch;
    QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
                 pb_accept   = us_pushbutton( tr( "Accept" ) );
 
-   connect( pb_delete,  SIGNAL( clicked() ), this, SLOT( delete_mrecs()    ) );
-   connect( pb_details, SIGNAL( clicked() ), this, SLOT( show_mrecs_info() ) );
-   connect( pb_help,    SIGNAL( clicked() ), this, SLOT( help()            ) );
-   connect( pb_cancel,  SIGNAL( clicked() ), this, SLOT( cancelled()       ) );
-   connect( pb_accept,  SIGNAL( clicked() ), this, SLOT( accepted()        ) );
+   connect( pb_delete,  &QAbstractButton::clicked, this, &US_MrecsLoader::delete_mrecs );
+   connect( pb_details, &QAbstractButton::clicked, this, &US_MrecsLoader::show_mrecs_info );
+   connect( pb_help,    &QAbstractButton::clicked, this, &US_MrecsLoader::help );
+   connect( pb_cancel,  &QAbstractButton::clicked, this, &US_MrecsLoader::cancelled );
+   connect( pb_accept,  &QAbstractButton::clicked, this, &US_MrecsLoader::accepted );
 
    buttons->addWidget( pb_details );
    buttons->addWidget( pb_delete  );
@@ -265,7 +265,7 @@ QDateTime time1=QDateTime::currentDateTime();
 QDateTime time2=QDateTime::currentDateTime();
    const QString uaGUID( "00000000-0000-0000-0000-000000000000" );
    QString mfilt = le_mfilter->text();
-   le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
+   QObject::disconnect( le_mfilter, &QLineEdit::textChanged, nullptr, nullptr );
    bool listdesc = !mfilt.isEmpty();         // description filtered?
    bool listedit = do_edit;                  // edit filtered?
    bool listall  = !listdesc;                // unfiltered by description?
@@ -589,7 +589,7 @@ qDebug() << " (3)m_d_u size" << mrecs_descrs_recs.size();
    }
 qDebug() << " (4)m_d size" << mrecs_descriptions.size();
 
-   lw_vmrecs->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   QObject::disconnect( lw_vmrecs, &QListWidget::currentRowChanged, nullptr, nullptr );
    lw_vmrecs->clear();
    int maxlch   = 0;
 
@@ -627,10 +627,10 @@ qDebug() << "Timing: Time6" << time0.msecsTo(time6) << time2.msecsTo(time6);
 
    resize( width, height );
 
-   connect( lw_vmrecs,     SIGNAL( currentRowChanged( int )      ),
-            this,          SLOT(   row_selected     ( int )      ) );
-   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
-            this,          SLOT(   msearch(     const QString& ) ) );
+   connect( lw_vmrecs,     &QListWidget::currentRowChanged,
+            this,          &US_MrecsLoader::row_selected );
+   connect( le_mfilter,    &QLineEdit::textChanged,
+            this,          &US_MrecsLoader::msearch );
 }
 
 // Cancel button:  no models returned

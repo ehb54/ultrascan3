@@ -93,20 +93,20 @@ DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
 
    show_plot();
 
-   connect( pb_plot_type,   SIGNAL( clicked()    ),
-            this,           SLOT  ( type_plot()  ) );
-   connect( pb_help,        SIGNAL( clicked()    ),
-            this,           SLOT  ( help()       ) );
-   connect( pb_close,       SIGNAL( clicked()        ),
-            this,           SLOT  ( save_and_close() ) );
-   connect( pb_histogram,   SIGNAL( clicked()    ),
-            this,           SLOT  ( hide_histo() ) );
-   connect( pb_envelope,    SIGNAL( clicked()    ),
-            this,           SLOT  ( hide_envel() ) );
-   connect( ct_sensitivity, SIGNAL( valueChanged(  double ) ),
-            this,           SLOT  ( change_sensit( double ) ) );
-   connect( ct_smoothing,   SIGNAL( valueChanged(  double ) ),
-            this,           SLOT  ( change_smooth( double ) ) );
+   connect( pb_plot_type,   &QAbstractButton::clicked,
+            this,           &US_DistribPlot::type_plot );
+   connect( pb_help,        &QAbstractButton::clicked,
+            this,           &US_DistribPlot::help );
+   connect( pb_close,       &QAbstractButton::clicked,
+            this,           &US_DistribPlot::save_and_close );
+   connect( pb_histogram,   &QAbstractButton::clicked,
+            this,           &US_DistribPlot::hide_histo );
+   connect( pb_envelope,    &QAbstractButton::clicked,
+            this,           &US_DistribPlot::hide_envel );
+   connect( ct_sensitivity, &QwtCounter::valueChanged,
+            this,           &US_DistribPlot::change_sensit );
+   connect( ct_smoothing,   &QwtCounter::valueChanged,
+            this,           &US_DistribPlot::change_smooth );
 }
 
 // Generate distribution,histogram plots and save the SVG files
