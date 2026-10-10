@@ -32,6 +32,9 @@ From a terminal, in `us_somo/develop` after sourcing `qt5env`:
     cmake --preset qt5
     cmake --build --preset qt5 -j 8
 
+The `qt6` preset does the same for Qt 6, with `QTDIR` and `QWTDIR` pointing at
+Qt 6 and a Qwt built against it.
+
 In the MSYS2 MINGW64 shell use the `qt5-msys2` preset. CMake there must be a
 Windows build of CMake, such as the zip from cmake.org.
 

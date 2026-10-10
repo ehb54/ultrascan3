@@ -1,21 +1,44 @@
 # Builds SOMO (us_somo/develop) with CMake: on its own, as SOMO development
-# does, and as part of the root build. Linux uses the distribution's Qt 5 and
-# Qwt, macOS Homebrew's Qt 6 and Qwt. MSVC is not covered: SOMO does not build
-# with it yet (ehb54/ultrascan-tickets#1131), and the root build skips it there.
+# does, and as part of the root build. Linux uses the usbuildtest images (Qt
+# and a qmake-built Qwt, which the CodeQL SOMO jobs also use), macOS
+# Homebrew's Qt 6 and Qwt. MSVC is not covered: SOMO does not build with it
+# yet (ehb54/ultrascan-tickets#1131), and the root build skips it there.
 name: "SOMO CMake build"
 
+# Only changes that can affect SOMO's build: its sources, qmake files and
+# CMake files, the helper programs its build tree gets, and the root's CMake.
 on:
   push:
-    branches: [ main ]
+    branches: [ main, somo-dev ]
     paths:
-      - 'us_somo/**'
+      - 'us_somo/**.h'
+      - 'us_somo/**.hpp'
+      - 'us_somo/**.cpp'
+      - 'us_somo/**.xpm'
+      - 'us_somo/**.pro'
+      - 'us_somo/**.pri'
+      - 'us_somo/**CMakeLists.txt'
+      - 'us_somo/**CMakePresets.json'
+      - 'us_somo/**.cmake'
+      - 'us_somo/**.in'
+      - 'us_somo/add_to_bin/**'
       - 'CMakeLists.txt'
       - 'admin/cmake/**'
       - '.github/workflows/somo-cmake-build.yml'
   pull_request:
-    branches: [ main ]
+    branches: [ main, somo-dev ]
     paths:
-      - 'us_somo/**'
+      - 'us_somo/**.h'
+      - 'us_somo/**.hpp'
+      - 'us_somo/**.cpp'
+      - 'us_somo/**.xpm'
+      - 'us_somo/**.pro'
+      - 'us_somo/**.pri'
+      - 'us_somo/**CMakeLists.txt'
+      - 'us_somo/**CMakePresets.json'
+      - 'us_somo/**.cmake'
+      - 'us_somo/**.in'
+      - 'us_somo/add_to_bin/**'
       - 'CMakeLists.txt'
       - 'admin/cmake/**'
       - '.github/workflows/somo-cmake-build.yml'
@@ -46,43 +69,50 @@ env:
 
 jobs:
   linux-somo-only:
-    name: Linux, SOMO only (Qt 5)
-    runs-on: ubuntu-24.04
+    name: Linux, SOMO only (${{ matrix.qt }})
+    runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - qt: Qt 5.15.10
+            image: ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0
+            preset: qt5
+          - qt: Qt 6.8.3
+            image: ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0
+            preset: qt6
+          - qt: Qt 6.10.0
+            image: ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0
+            preset: qt6
+    # The images set QTDIR and QWTDIR, which the qt5 and qt6 presets read.
+    container:
+      image: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Qt 5 and Qwt
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-              cmake g++ make \
-              qtbase5-dev libqt5opengl5-dev libqt5svg5-dev qtmultimedia5-dev \
-              libqwt-qt5-dev libglu1-mesa-dev zlib1g-dev
+      - name: Allow git to read the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      # QWTDIR is a Qwt built by qmake: the library in lib/, the headers in src/.
-      # Ubuntu installs it as libqwt-qt5 with the headers in /usr/include/qwt.
-      - name: Point QTDIR and QWTDIR at the distribution's Qt and Qwt
-        run: |
-          q=$RUNNER_TEMP/qwt
-          mkdir -p $q/lib
-          ln -s "$(dpkg -L libqwt-qt5-dev | grep '/libqwt-qt5\.so$')" $q/lib/libqwt.so
-          ln -s /usr/include/qwt $q/src
-          echo "QTDIR=/usr" >> $GITHUB_ENV
-          echo "QWTDIR=$q" >> $GITHUB_ENV
+      - name: Make sure CMake is there
+        run: command -v cmake || { apt-get update -qq && apt-get install -y -qq cmake; }
 
       - name: Configure
         working-directory: us_somo/develop
-        run: cmake --preset qt5
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
         working-directory: us_somo/develop
-        run: cmake --build --preset qt5 -- -j$(nproc)
+        run: cmake --build --preset ${{ matrix.preset }} -- -j$(nproc)
 
+      # The images set ULTRASCAN=/ultrascan3, which SOMO would take as its
+      # system directory on its first start; unset, it uses its build tree.
       - name: Run a batch from the build tree
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
+          unset ULTRASCAN
+          b=$GITHUB_WORKSPACE/us_somo/develop/build/${{ matrix.preset }}/bin/us3_somo
           export HOME=$RUNNER_TEMP/somo-home
           w=$RUNNER_TEMP/somo-run
           mkdir -p $HOME $w
@@ -90,31 +120,33 @@ jobs:
           printf '%s' "$SOMO_BATCH" > $w/batch.txt
           cd $w
           for i in 1 2; do
-            timeout 600 $GITHUB_WORKSPACE/us_somo/develop/build/qt5/bin/us3_somo -I -g batch.txt 1HEL.pdb
+            timeout 600 $b -I -g batch.txt 1HEL.pdb
           done
           grep -a 'Translational diffusion coefficient' $HOME/ultrascan/somo/ci.hydro_res
 
+  # somo-dev does not carry the root's CMake files, so only main gets this job.
   linux-root:
-    name: Linux, SOMO in the root build (Qt 5)
-    runs-on: ubuntu-24.04
+    name: Linux, SOMO in the root build (Qt 6.10.0)
+    if: github.ref_name != 'somo-dev' && github.base_ref != 'somo-dev'
+    runs-on: ubuntu-latest
     timeout-minutes: 60
+    container:
+      image: ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-              cmake build-essential pkg-config git \
-              libmysqlclient-dev libarchive-dev libgl2ps-dev \
-              libqwt-qt5-dev libqwt-qt5-6 \
-              libqt5datavisualization5-dev libqt5svg5-dev qtmultimedia5-dev \
-              libqt5opengl5-dev libglu1-mesa-dev
+      - name: Allow git to read the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
+      # As the Qt 6 unit tests configure the root in this image: FindQwt.cmake
+      # reads QWTPATH, and the image exports QWTDIR only.
       - name: Configure
         run: |
-          cmake -S . -B build \
+          export QWTPATH="$QWTDIR"
+          export CMAKE_PREFIX_PATH="$QTDIR:$QWTDIR:${CMAKE_PREFIX_PATH:-}"
+          cmake -S . -B build -G Ninja \
               -DCMAKE_BUILD_TYPE=Release \
+              -DUSE_QT6=ON \
               -DUS3_BUILD_SOMO=ON \
               -DUS3_BUILD_PROGRAMS=OFF \
               -DBUILD_TESTING=OFF \
@@ -123,7 +155,7 @@ jobs:
 
       - name: Build the SOMO targets
         run: |
-          cmake --build build -j$(nproc) \
+          cmake --build build \
               --target us_somo us3_somo us3_admin us3_config us_saxs_cmds_t
 
   macos-somo-only:

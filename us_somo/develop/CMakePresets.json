@@ -3,9 +3,9 @@
   "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
   "configurePresets": [
     {
-      "name": "qt5-env",
+      "name": "qt-env",
       "hidden": true,
-      "description": "Qt 5 and the qmake-built Qwt from QTDIR and QWTDIR, as qt5env sets them for the qmake build",
+      "description": "Qt and the qmake-built Qwt from QTDIR and QWTDIR, as qt5env sets them for the qmake build",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -19,14 +19,22 @@
       "name": "qt5",
       "displayName": "Qt 5 from qt5env",
       "description": "Qt 5 and Qwt from QTDIR and QWTDIR (macOS, Linux)",
-      "inherits": "qt5-env",
+      "inherits": "qt-env",
+      "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "qt6",
+      "displayName": "Qt 6 from QTDIR and QWTDIR",
+      "description": "Qt 6 and a Qwt built for it from QTDIR and QWTDIR (macOS, Linux)",
+      "inherits": "qt-env",
+      "cacheVariables": { "USE_QT6": "ON" },
       "condition": { "type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
     {
       "name": "qt5-msys2",
       "displayName": "Qt 5 from qt5env, MSYS2 MinGW64",
       "description": "Qt 5 and Qwt from QTDIR and QWTDIR; run in the MSYS2 MINGW64 shell",
-      "inherits": "qt5-env",
+      "inherits": "qt-env",
       "generator": "MSYS Makefiles",
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
     },
@@ -74,6 +82,7 @@
   ],
   "buildPresets": [
     { "name": "qt5",             "configurePreset": "qt5" },
+    { "name": "qt6",             "configurePreset": "qt6" },
     { "name": "qt5-msys2",       "configurePreset": "qt5-msys2" },
     { "name": "vcpkg-qt5",       "configurePreset": "vcpkg-qt5" },
     { "name": "vcpkg-qt6",       "configurePreset": "vcpkg-qt6" },
