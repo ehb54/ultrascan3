@@ -45,6 +45,7 @@ US_Hydrodyn_Mals_Fit::US_Hydrodyn_Mals_Fit(
    gaussian_type_size = mals_win->gaussian_type_size;
 
    mals_ampl_width_min       = ( ( US_Hydrodyn * ) ( mals_win->us_hydrodyn ) )->gparams[ "mals_ampl_width_min"        ].toDouble();
+   mals_ampl_min             = ( ( US_Hydrodyn * ) ( mals_win->us_hydrodyn ) )->gparams[ "mals_ampl_min"              ].toDouble();
    mals_lock_min_retry       = ( ( US_Hydrodyn * ) ( mals_win->us_hydrodyn ) )->gparams[ "mals_lock_min_retry"        ] == "true" ? true : false;
    mals_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( mals_win->us_hydrodyn ) )->gparams[ "mals_lock_min_retry_mult"   ].toDouble();
    mals_maxfpk_restart       = ( ( US_Hydrodyn * ) ( mals_win->us_hydrodyn ) )->gparams[ "mals_maxfpk_restart"        ] == "true" ? true : false;
@@ -1514,7 +1515,7 @@ bool US_Hydrodyn_Mals_Fit::setup_run()
          MFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = mals_ampl_width_min;
+         double min = mals_ampl_min;
          double max = mals_win->gauss_max_height;
          // qDebug() << "mals_fit:: gauss_max_height " << max;
          if ( cb_pct_amplitude->isChecked() )
@@ -1523,9 +1524,9 @@ bool US_Hydrodyn_Mals_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < mals_ampl_width_min )
+         if ( min < mals_ampl_min )
          {
-            min = mals_ampl_width_min;
+            min = mals_ampl_min;
          }
          if ( max > mals_win->gauss_max_height )
          {
@@ -1848,7 +1849,7 @@ bool US_Hydrodyn_Mals_Fit::lock_zeros( vector < double > & par )
       if ( !cb_fix_curves[ pos ]->isChecked() ) {
 
          if ( !cb_fix_amplitude->isChecked() ) {
-            if ( tmp_gaussians[ 0 + i ] <= mals_ampl_width_min * mals_lock_min_retry_mult ) {
+            if ( tmp_gaussians[ 0 + i ] <= mals_ampl_min * mals_lock_min_retry_mult ) {
                to_lock.insert( pos + 1 );
                continue;
             }

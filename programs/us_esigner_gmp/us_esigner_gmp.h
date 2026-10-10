@@ -174,10 +174,14 @@ class US_eSignaturesGMP : public US_Widgets
 
     public slots:
 
-    private slots:
+    public slots:
         //! \brief Initialize the auto panel.
         //! \param details The details map for initialization.
         void initPanel_auto(QMap<QString, QString>& details);
+        //! \brief Reset the eSign panel.
+        void reset_esign_panel(void);
+
+    private slots:
 
         //! \brief Display reviewers for auto mode.
         //! \param index The index of the reviewer.
@@ -456,8 +460,6 @@ class US_eSignaturesGMP : public US_Widgets
         //! \param eSignID The eSign ID.
         void write_download_eSignatures_DB(QString runID, QString eSignID);
 
-        //! \brief Reset the eSign panel.
-        void reset_esign_panel(void);
 
         //! \brief Paint a page with the given parameters.
         //! \param printer The printer object.

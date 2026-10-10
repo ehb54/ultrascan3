@@ -378,6 +378,11 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
   QMap < QString, int >  channels_abde_use_refs;					   
 							   
 
+  public slots:
+      //void import_data_auto  (QString &, QString &, QString &, QString &);
+      void import_data_auto  ( QMap < QString, QString > & ) ;
+      void reset_limsimport_panel( void );
+
   private slots:
       //! \brief Select the current investigator
       void sel_investigator( void );
@@ -387,8 +392,6 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      //void import_data_auto  (QString &, QString &, QString &, QString &);
-      void import_data_auto  ( QMap < QString, QString > & ) ;
       
       QMap < QString, QString > read_autoflow_record( int );
       int  read_autoflow_stages_record( int );
@@ -461,7 +464,6 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       
       void resetAll          ( void );
       void resetAll_auto     ( void );
-      void reset_limsimport_panel( void );
       
       void source_changed    ( bool );
       void update_disk_db    ( bool );

@@ -47,13 +47,13 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( le_viscosity, c_row++, 1 );
 
    QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20 " ) + DEGC + ")" );
-   connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
+   connect( pb_vbar, &QAbstractButton::clicked, this, &US_Predict2::get_peptide );
    controls->addWidget( pb_vbar, c_row, 0 );
 
    le_vbar = us_lineedit();
    le_vbar->setText( QString::number( TYPICAL_VBAR, 'f', 4 ) );
-   connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
-                     SLOT  ( vbar       ( const QString& ) ) );
+   connect( le_vbar, &QLineEdit::textChanged, 
+                     this, &US_Predict2::vbar );
    controls->addWidget( le_vbar, c_row++, 1 );
 
    QLabel* lb_temperature = us_label( tr( "Temperature (" ) + DEGC + "):" );
@@ -71,16 +71,16 @@ US_Predict2::US_Predict2() : US_Widgets()
    controls->addWidget( lb_param1, c_row, 0 );
 
    le_param1 = us_lineedit();
-   connect( le_param1, SIGNAL( textChanged  ( const QString& ) ), 
-                       SLOT  ( update_param1( const QString& ) ) );
+   connect( le_param1, &QLineEdit::textChanged, 
+                       this, &US_Predict2::update_param1 );
    controls->addWidget( le_param1, c_row++, 1 );
 
    lb_param2 = us_label( tr( "Diff. Coefficient:" ) );
    controls->addWidget( lb_param2, c_row, 0 );
 
    le_param2 = us_lineedit();
-   connect( le_param2, SIGNAL( textChanged  ( const QString& ) ), 
-                       SLOT  ( update_param2( const QString& ) ) );
+   connect( le_param2, &QLineEdit::textChanged, 
+                       this, &US_Predict2::update_param2 );
    controls->addWidget( le_param2, c_row++, 1 );
 
    main->addLayout( controls, row, 0, 7, 1 );
@@ -201,29 +201,29 @@ US_Predict2::US_Predict2() : US_Widgets()
 
    pb_mw_s = us_pushbutton( 
          tr( "Molecular Weight + Sedimentation Coeff." ) );
-   connect( pb_mw_s, SIGNAL( clicked() ), SLOT( do_mw_s() ) );
+   connect( pb_mw_s, &QAbstractButton::clicked, this, &US_Predict2::do_mw_s );
    buttons->addWidget( pb_mw_s, b_row, 0 );
 
    pb_mw_d = us_pushbutton( 
          tr( "Molecular Weight + Diffusion Coeff." ) );
-   connect( pb_mw_d, SIGNAL( clicked() ), SLOT( do_mw_d() ) );
+   connect( pb_mw_d, &QAbstractButton::clicked, this, &US_Predict2::do_mw_d );
    buttons->addWidget( pb_mw_d, b_row, 1 );
 
    pb_s_d = us_pushbutton( 
          tr( "Sedimentation Coeff. + Diffusion Coeff." ) );
-   connect( pb_s_d, SIGNAL( clicked() ), SLOT( do_s_d() ) );
+   connect( pb_s_d, &QAbstractButton::clicked, this, &US_Predict2::do_s_d );
    buttons->addWidget( pb_s_d, b_row++, 2 );
 
    QPushButton* pb_reset = us_pushbutton( tr( "Update" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( update() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_Predict2::update );
    buttons->addWidget( pb_reset, b_row, 0 );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_Predict2::help );
    buttons->addWidget( pb_help, b_row, 1 );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->addWidget( pb_accept, b_row++, 2 );
 
    row = 8;
@@ -637,8 +637,8 @@ void US_Predict2::get_buffer( void )
    }
 
    US_BufferGui* buffer_dialog = new US_BufferGui( true );
-   connect( buffer_dialog, SIGNAL( valueChanged ( double, double ) ),
-                           SLOT  ( update_buffer( double, double ) ) );
+   connect( buffer_dialog, qOverload< double, double >( &US_BufferGui::valueChanged ),
+                           this, &US_Predict2::update_buffer );
    buffer_dialog->setWindowTitle( tr( "Buffer Calculation" ) );
    buffer_dialog->exec();
 }
@@ -669,8 +669,8 @@ void US_Predict2::get_peptide( void )
 #endif
 
    US_AnalyteGui* dialog = new US_AnalyteGui( true );
-   connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
-                    SLOT  ( update_vbar ( US_Analyte ) ) );
+   connect( dialog, qOverload< US_Analyte >( &US_AnalyteGui::valueChanged ),
+                    this, &US_Predict2::update_vbar );
    dialog->setWindowTitle( tr( "VBar Calculation" ) );
    dialog->exec();
 }
@@ -696,8 +696,8 @@ void US_Predict2::get_solution( void )
    }
 
    US_SolutionGui* dialog = new US_SolutionGui( 1, 1, true );
-   connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-                    SLOT  ( update_solution           ( US_Solution ) ) );
+   connect( dialog, &US_SolutionGui::updateSolutionGuiSelection,
+                    this, &US_Predict2::update_solution );
    dialog->setWindowTitle( tr( "VBar Calculation" ) );
    dialog->exec();
 }
@@ -728,8 +728,8 @@ void US_Predict2::update_solution( US_Solution solution )
    else
    {
      US_Choice* dialog = new US_Choice( solution );
-     connect( dialog, SIGNAL( choice( int ) ),
-                      SLOT  ( choose( int ) ) );
+     connect( dialog, &US_Choice::choice,
+                      this, &US_Predict2::choose );
      dialog->exec();
      qApp->processEvents();
 

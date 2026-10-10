@@ -106,6 +106,9 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void checkbox      ( void );
       bool keep_standard ( void );
 
+    public slots:
+      void disable_gui   ( void );
+
     private slots:
       void newAnalyte    ( void );
       void update        ( int );
@@ -123,7 +126,6 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void source_changed( bool );
       void check_molar   ( bool );
       void check_signal  ( bool );
-      void disable_gui   ( void );
            
       void del_component ( void );
       void edit_component( void );

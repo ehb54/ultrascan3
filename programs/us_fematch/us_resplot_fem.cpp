@@ -133,31 +133,31 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
 
-   connect( ck_plteda, SIGNAL( toggled( bool ) ),
-            this,      SLOT( pedaCheck( bool ) ) );
-   connect( ck_subtin, SIGNAL( toggled( bool ) ),
-            this,      SLOT( stinCheck( bool ) ) );
-   connect( ck_subrin, SIGNAL( toggled( bool ) ),
-            this,      SLOT( srinCheck( bool ) ) );
-   connect( ck_pltsda, SIGNAL( toggled( bool ) ),
-            this,      SLOT( psdaCheck( bool ) ) );
-   connect( ck_addtin, SIGNAL( toggled( bool ) ),
-            this,      SLOT( atinCheck( bool ) ) );
-   connect( ck_addrin, SIGNAL( toggled( bool ) ),
-            this,      SLOT( arinCheck( bool ) ) );
-   connect( ck_pltres, SIGNAL( toggled( bool ) ),
-            this,      SLOT( presCheck( bool ) ) );
-   connect( ck_plttin, SIGNAL( toggled( bool ) ),
-            this,      SLOT( ptinCheck( bool ) ) );
-   connect( ck_pltrin, SIGNAL( toggled( bool ) ),
-            this,      SLOT( prinCheck( bool ) ) );
-   connect( ck_pltran, SIGNAL( toggled( bool ) ),
-            this,      SLOT( pranCheck( bool ) ) );
-   connect( ck_shorbm, SIGNAL( toggled( bool ) ),
-            this,      SLOT( srbmCheck( bool ) ) );
+   connect( ck_plteda, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::pedaCheck );
+   connect( ck_subtin, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::stinCheck );
+   connect( ck_subrin, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::srinCheck );
+   connect( ck_pltsda, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::psdaCheck );
+   connect( ck_addtin, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::atinCheck );
+   connect( ck_addrin, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::arinCheck );
+   connect( ck_pltres, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::presCheck );
+   connect( ck_plttin, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::ptinCheck );
+   connect( ck_pltrin, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::prinCheck );
+   connect( ck_pltran, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::pranCheck );
+   connect( ck_shorbm, &QAbstractButton::toggled,
+            this,      &US_ResidPlotFem::srbmCheck );
 
-   connect( pb_close,  SIGNAL( clicked()   ),
-            this,      SLOT( close_all()   ) );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &US_ResidPlotFem::close_all );
 
    have_ed   = false;
    have_sd   = false;
@@ -522,8 +522,8 @@ void US_ResidPlotFem::srbmCheck( bool chkd )
 	  	  
 	  if ( have_bm )
 	    {  // if bitmap exists already, detect when closed
-	      connect( resbmap, SIGNAL( destroyed()   ),
-		       this,    SLOT( resids_closed() ) );
+	      connect( resbmap, &QObject::destroyed,
+		       this,    &US_ResidPlotFem::resids_closed );
 	    }
 	  
 	  plot_data();
@@ -1087,8 +1087,8 @@ void US_ResidPlotFem::plot_rdata()
 	qDebug() << "ResBitMap: NO window yet";
 	
          resbmap = new US_ResidsBitmap( resids );
-         connect( resbmap, SIGNAL( destroyed() ),
-                  this,    SLOT(   resids_closed() ) );
+         connect( resbmap, &QObject::destroyed,
+                  this,    &US_ResidPlotFem::resids_closed );
          resbmap->move( this->pos() + QPoint( 100, 100 ) );
 
 	 if ( !a_mode.isEmpty() && a_mode == "ANALYSIS" )
@@ -1129,8 +1129,8 @@ DbgLv(1) << "Resids BitMap Closed!!!";
 	 {
 	   ck_shorbm->disconnect();
 	   ck_shorbm->setChecked( false );
-	   connect( ck_shorbm, SIGNAL( toggled( bool ) ),
-		    this,      SLOT( srbmCheck( bool ) ) );
+	   connect( ck_shorbm, &QAbstractButton::toggled,
+		    this,      &US_ResidPlotFem::srbmCheck );
 	 }
      }
 }
@@ -1140,14 +1140,14 @@ void US_ResidPlotFem::connect_pboxes( bool conn )
 {
    if ( conn )
    {  // Connect slots for plot boxes
-      connect( ck_pltres, SIGNAL( toggled( bool ) ),
-               this,      SLOT( presCheck( bool ) ) );
-      connect( ck_plttin, SIGNAL( toggled( bool ) ),
-               this,      SLOT( ptinCheck( bool ) ) );
-      connect( ck_pltrin, SIGNAL( toggled( bool ) ),
-               this,      SLOT( prinCheck( bool ) ) );
-      connect( ck_pltran, SIGNAL( toggled( bool ) ),
-               this,      SLOT( pranCheck( bool ) ) );
+      connect( ck_pltres, &QAbstractButton::toggled,
+               this,      &US_ResidPlotFem::presCheck );
+      connect( ck_plttin, &QAbstractButton::toggled,
+               this,      &US_ResidPlotFem::ptinCheck );
+      connect( ck_pltrin, &QAbstractButton::toggled,
+               this,      &US_ResidPlotFem::prinCheck );
+      connect( ck_pltran, &QAbstractButton::toggled,
+               this,      &US_ResidPlotFem::pranCheck );
    }
 
    else

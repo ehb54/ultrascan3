@@ -49,8 +49,8 @@ US_DataLoader::US_DataLoader(
 
    // Disk/ DB
    disk_controls       = new US_Disk_DB_Controls( local );
-   connect( disk_controls, SIGNAL( changed     ( bool ) ),
-                           SLOT( update_disk_db( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_DataLoader::update_disk_db );
    top->addLayout( disk_controls, row++, 0, 1, 2 );
 
    // Investigator
@@ -58,7 +58,7 @@ US_DataLoader::US_DataLoader(
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    int invlev          = US_Settings::us_inv_level();
    pb_invest->setEnabled( ( invlev > 2 )  && disk_controls->db() );
-   connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
+   connect( pb_invest, &QAbstractButton::clicked, this, &US_DataLoader::get_person );
    top->addWidget( pb_invest, row, 0 );
 
    QString inv_name    = ( ( invlev > 0 )
@@ -76,8 +76,8 @@ US_DataLoader::US_DataLoader(
    le_dfilter          = us_lineedit();
    top->addWidget( le_dfilter, row++, 1 );
 
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_DataLoader::search );
 
    main->addLayout( top );
 
@@ -113,10 +113,10 @@ US_DataLoader::US_DataLoader(
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_shedit );
    buttons->addWidget( pb_accept );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_shedit, SIGNAL( clicked() ), SLOT( selected()  ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_DataLoader::help );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_DataLoader::cancelled );
+   connect( pb_shedit, &QAbstractButton::clicked, this, &US_DataLoader::selected );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_DataLoader::accepted );
 
    main->addLayout( buttons );
 
@@ -169,8 +169,8 @@ US_DataLoader::US_DataLoader(
 
    // Disk/ DB
    disk_controls       = new US_Disk_DB_Controls( local );
-   connect( disk_controls, SIGNAL( changed     ( bool ) ),
-                           SLOT( update_disk_db( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_DataLoader::update_disk_db );
    top->addLayout( disk_controls, row++, 0, 1, 2 );
 
    // Investigator
@@ -178,7 +178,7 @@ US_DataLoader::US_DataLoader(
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    int invlev          = US_Settings::us_inv_level();
    pb_invest->setEnabled( ( invlev > 2 )  && disk_controls->db() );
-   connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
+   connect( pb_invest, &QAbstractButton::clicked, this, &US_DataLoader::get_person );
    top->addWidget( pb_invest, row, 0 );
 
    QString inv_name    = ( ( invlev > 0 )
@@ -196,8 +196,8 @@ US_DataLoader::US_DataLoader(
    le_dfilter          = us_lineedit();
    top->addWidget( le_dfilter, row++, 1 );
 
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_DataLoader::search );
 
    main->addLayout( top );
 
@@ -233,10 +233,10 @@ US_DataLoader::US_DataLoader(
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_shedit );
    buttons->addWidget( pb_accept );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_shedit, SIGNAL( clicked() ), SLOT( selected()  ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_DataLoader::help );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_DataLoader::cancelled );
+   connect( pb_shedit, &QAbstractButton::clicked, this, &US_DataLoader::selected );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_DataLoader::accepted );
 
    main->addLayout( buttons );
 
@@ -669,8 +669,8 @@ void US_DataLoader::get_person()
 
    connect(
       dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT(   update_person(         int ) ));
+      &US_Investigator::investigator_accepted,
+      this, &US_DataLoader::update_person);
 
    dialog->exec();
 }
@@ -1809,8 +1809,8 @@ void US_DataLoader::update_disk_db( bool db )
 
    le_dfilter->disconnect();
    le_dfilter->clear();
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_DataLoader::search );
    pb_invest->setEnabled( ( US_Settings::us_inv_level() > 0 ) && db );
 
    list_data();

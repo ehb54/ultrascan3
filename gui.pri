@@ -43,7 +43,13 @@ win32 {
   LIBS       += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
   LIBS       += -L../../lib -lus_gui$${VER} -lus_utils$${VER}
 
-  DEFINES     += INTEL
+  # Applications must see the shared libraries as imports.  Without these the
+  # us_gui/us_utils and qwt classes lose __declspec(dllimport) in application
+  # translation units, MinGW resolves them through local import thunks, and the
+  # pointer-to-member form of connect() cannot match the signal address held by
+  # the library.  The CMake build already defines both for every application
+  # target (CMakeLists.txt US_MAKE_DLL, programs/CMakeLists.txt QWT_DLL).
+  DEFINES     += INTEL US_MAKE_DLL QWT_DLL
 
   #QMAKE_LFLAGS           += /MACHINE:X86 /INCREMENTAL:NO 
   #QMAKE_CXXFLAGS_DEBUG   += /wd4996

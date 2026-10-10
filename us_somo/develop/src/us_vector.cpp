@@ -273,6 +273,44 @@ vector < double > US_Vector::intersection( vector < vector < double > > &x )
    return result;
 }
 
+map < double, double > US_Vector::canonical_map( vector < vector < double > > & grids, double reltol )
+{
+   map < double, double > result;
+
+   // gather all distinct values
+   map < double, bool > seen;
+   for ( unsigned int g = 0; g < ( unsigned int ) grids.size(); g++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) grids[ g ].size(); i++ )
+      {
+         seen[ grids[ g ][ i ] ] = true;
+      }
+   }
+
+   // seen is sorted ascending (map); cluster consecutive values within reltol.
+   // representative = first (smallest) value of each cluster.
+   double rep  = 0e0;
+   double prev = 0e0;
+   bool   first = true;
+   for ( map < double, bool >::iterator it = seen.begin(); it != seen.end(); it++ )
+   {
+      double v = it->first;
+      if ( first )
+      {
+         rep   = v;
+         first = false;
+      }
+      else if ( fabs( v - prev ) > reltol * fabs( v ) )
+      {
+         rep = v; // gap too large: start a new cluster
+      }
+      result[ v ] = rep;
+      prev = v;
+   }
+
+   return result;
+}
+
 vector < double > US_Vector::vunion( vector < double > &x,  vector < double > &y )
 {
    list < double > lx;

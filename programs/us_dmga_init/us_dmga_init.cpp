@@ -98,24 +98,24 @@ US_DMGA_Init::US_DMGA_Init() : US_Widgets()
    main->addWidget( pb_close,       row++,  2, 1, 2 );
 
    // Signals and slots
-   connect( dkdb_cntrls,    SIGNAL( changed       ( bool ) ), 
-                            SLOT  ( update_disk_db( bool ) ) );
-   connect( pb_loadmodel,   SIGNAL( clicked           () ), 
-                            SLOT  ( load_model        () ) );
-   connect( pb_loadconstr,  SIGNAL( clicked           () ), 
-                            SLOT  ( load_constraints  () ) );
-   connect( pb_defmodel,    SIGNAL( clicked           () ), 
-                            SLOT  ( define_model      () ) );
-   connect( pb_defconstr,   SIGNAL( clicked           () ), 
-                            SLOT  ( define_constraints() ) );
-   connect( pb_savemodel,   SIGNAL( clicked           () ), 
-                            SLOT  ( save_model        () ) );
-   connect( pb_saveconstr,  SIGNAL( clicked           () ), 
-                            SLOT  ( save_constraints  () ) );
-   connect( pb_help,        SIGNAL( clicked   () ), 
-                            SLOT  ( help      () ) );
-   connect( pb_close,       SIGNAL( clicked   () ), 
-                            SLOT  ( close     () ) );
+   connect( dkdb_cntrls,    &US_Disk_DB_Controls::changed, 
+                            this, &US_DMGA_Init::update_disk_db );
+   connect( pb_loadmodel,   &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::load_model );
+   connect( pb_loadconstr,  &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::load_constraints );
+   connect( pb_defmodel,    &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::define_model );
+   connect( pb_defconstr,   &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::define_constraints );
+   connect( pb_savemodel,   &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::save_model );
+   connect( pb_saveconstr,  &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::save_constraints );
+   connect( pb_help,        &QAbstractButton::clicked, 
+                            this, &US_DMGA_Init::help );
+   connect( pb_close,       &QAbstractButton::clicked, 
+                            this, &QWidget::close );
 
    resize( 500, 200 );
 
@@ -148,8 +148,8 @@ DbgLv(1) << "dGA:load_model";
 //eGUID="00000000-0000-0000-0000-000000000000";
    US_ModelLoader mldiag( loadDB, mfilt, bmodel, mdesc, eGUID );
 
-   connect( &mldiag, SIGNAL( changed       ( bool ) ),
-                     SLOT  ( update_disk_db( bool ) ) );
+   connect( &mldiag, &US_ModelLoader::changed,
+                     this, &US_DMGA_Init::update_disk_db );
 
    if ( mldiag.exec() == QDialog::Accepted )
    {
@@ -174,8 +174,8 @@ DbgLv(1) << "dGA:define_model";
    le_status->setText( tr( "Editing or creating a base model" ) );
    qApp->processEvents();
 
-   connect( mddiag,  SIGNAL( valueChanged  ( US_Model ) ),
-                     SLOT  ( new_base_model( US_Model ) ) );
+   connect( mddiag,  &US_ModelGui::valueChanged,
+                     this, &US_DMGA_Init::new_base_model );
 
    mddiag->exec();
 
@@ -207,8 +207,8 @@ DbgLv(1) << "dGA:load_constraints";
 
    US_ModelLoader mldiag( loadDB, mfilt, cmodel, mdesc, eGUID );
 
-   connect( &mldiag, SIGNAL( changed       ( bool ) ),
-                     SLOT  ( update_disk_db( bool ) ) );
+   connect( &mldiag, &US_ModelLoader::changed,
+                     this, &US_DMGA_Init::update_disk_db );
    if ( mldiag.exec() != QDialog::Accepted )
       return;
 

@@ -338,6 +338,10 @@ class US_XpnDataViewer : public US_Widgets
 
      void           timeToList( int&, QList< int >& );
 	 
+  public slots:
+     void   check_for_data ( QMap < QString, QString > & );
+     void   reset_liveupdate_panel ( void );
+
   private slots:
      void   reset          ( void );
      void   reset_auto     ( void );
@@ -350,10 +354,8 @@ class US_XpnDataViewer : public US_Widgets
   
      //QMap <QString, QString> returnSelectedInstrument( US_DB2* = 0 );
      bool   load_xpn_raw_auto   ( void );
-     void   check_for_data ( QMap < QString, QString > & );
      void   check_for_sysdata ( void );
 
-     void   reset_liveupdate_panel ( void );
      
      //void   retrieve_xpn_raw_auto ( QString & );
      void   retrieve_xpn_raw_auto ( void );

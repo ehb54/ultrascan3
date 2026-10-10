@@ -147,58 +147,58 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
    // Signals and Slots
-   connect( pb_loadMwl,   SIGNAL( clicked()      ),
-            this,         SLOT  ( load_mwl_raw() ) );
-   connect( pb_loadAUC,   SIGNAL( clicked()      ),
-            this,         SLOT  ( load_auc_mwl() ) );
-   connect( pb_reset,     SIGNAL( clicked()  ),
-            this,         SLOT  ( resetAll() ) );
-   connect( pb_details,   SIGNAL( clicked()    ),
-            this,         SLOT  ( runDetails() ) );
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh( )            ) );
-   connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRadius( )            ) );
-   connect( cb_rend,      SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRadius( )            ) );
-   connect( cb_lstart,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeLambda( )            ) );
-   connect( cb_lend,      SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeLambda( )            ) );
-   connect( ct_recavg,    SIGNAL( valueChanged( double     ) ),
-            this,         SLOT  ( changeAverage()            ) );
-   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRecord( )            ) );
-   connect( ck_xwavlen,   SIGNAL( toggled      ( bool ) ),
-            this,         SLOT  ( changeRectype( bool ) ) );
-   connect( pb_prev,      SIGNAL( clicked()  ),
-            this,         SLOT  ( prevPlot() ) );
-   connect( pb_next,      SIGNAL( clicked()  ),
-            this,         SLOT  ( nextPlot() ) );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
-   connect( pb_exclude,   SIGNAL( clicked()       ),
-            this,         SLOT  ( exclude_scans() ) );
-   connect( pb_include,   SIGNAL( clicked()       ),
-            this,         SLOT  ( include_scans() ) );
-   connect( pb_plot2d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( changeCellCh()  ) );
-   connect( pb_movie2d,   SIGNAL( clicked()       ),
-            this,         SLOT  ( show_2d_movie() ) );
-   connect( pb_plot3d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( plot_3d()       ) );
-   connect( pb_movie3d,   SIGNAL( clicked()       ),
-            this,         SLOT  ( show_3d_movie() ) );
-   connect( pb_svplot,    SIGNAL( clicked()       ),
-            this,         SLOT  ( save_plot()     ) );
-   connect( pb_svmovie,   SIGNAL( clicked()       ),
-            this,         SLOT  ( save_movie()    ) );
-   connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT  ( help()     ) );
-   connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT  ( close()    ) );
+   connect( pb_loadMwl,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::load_mwl_raw );
+   connect( pb_loadAUC,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::load_auc_mwl );
+   connect( pb_reset,     &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::resetAll );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::runDetails );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeCellCh );
+   connect( cb_rstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeRadius );
+   connect( cb_rend,      qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeRadius );
+   connect( cb_lstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeLambda );
+   connect( cb_lend,      qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeLambda );
+   connect( ct_recavg,    &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::changeAverage );
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeRecord );
+   connect( ck_xwavlen,   &QAbstractButton::toggled,
+            this,         &US_MwlRawViewer::changeRectype );
+   connect( pb_prev,      &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::prevPlot );
+   connect( pb_next,      &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::nextPlot );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::exclude_to );
+   connect( pb_exclude,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::exclude_scans );
+   connect( pb_include,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::include_scans );
+   connect( pb_plot2d,    &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::changeCellCh );
+   connect( pb_movie2d,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::show_2d_movie );
+   connect( pb_plot3d,    &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::plot_3d );
+   connect( pb_movie3d,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::show_3d_movie );
+   connect( pb_svplot,    &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::save_plot );
+   connect( pb_svmovie,   &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::save_movie );
+   connect( pb_help,      &QAbstractButton::clicked,
+            this,         &US_MwlRawViewer::help );
+   connect( pb_close,     &QAbstractButton::clicked,
+            this,         &QWidget::close );
 
    // Do the left-side layout
    int row = 0;
@@ -346,8 +346,8 @@ void US_MwlRawViewer::reset( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid          = us_grid( data_plot );
    data_plot->replot();
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeCellCh );
 
    last_xmin       = -1.0;
    last_xmax       = -1.0;
@@ -540,8 +540,8 @@ DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
    cb_cellchn->disconnect();
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );
-   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
+   connect( cb_cellchn,   qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlRawViewer::changeCellCh );
 
    nlambda      = mwl_data.lambdas_raw( lambdas );
    int wvlo     = lambdas[ 0 ];
@@ -1208,8 +1208,8 @@ DbgLv(1) << "chgRadius";
          cb_pltrec->addItem( citem );
       }
 
-      connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-               this,         SLOT  ( changeRecord( )            ) );
+      connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_MwlRawViewer::changeRecord );
 
       recx           = ( radxe - radxs ) / 2;
       cb_pltrec->setCurrentIndex( recx );
@@ -1237,8 +1237,8 @@ DbgLv(1) << "chgLambda";
          cb_pltrec->addItem( citem );
       }
 
-      connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-               this,         SLOT  ( changeRecord( )            ) );
+      connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_MwlRawViewer::changeRecord );
 
       recx           = ( lmbxe - lmbxs ) / 2;
       cb_pltrec->setCurrentIndex( recx );
@@ -1538,18 +1538,18 @@ void US_MwlRawViewer::connect_ranges( bool conn )
 {
    if ( conn )
    {  // Connect the range-related controls
-      connect( cb_cellchn, SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeCellCh(            ) ) );
-      connect( cb_rstart,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRadius(            ) ) );
-      connect( cb_rend,    SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRadius(            ) ) );
-      connect( cb_lstart,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeLambda(            ) ) );
-      connect( cb_lend,    SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeLambda(            ) ) );
-      connect( cb_pltrec,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRecord(            ) ) );
+      connect( cb_cellchn, qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlRawViewer::changeCellCh );
+      connect( cb_rstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlRawViewer::changeRadius );
+      connect( cb_rend,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlRawViewer::changeRadius );
+      connect( cb_lstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlRawViewer::changeLambda );
+      connect( cb_lend,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlRawViewer::changeLambda );
+      connect( cb_pltrec,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlRawViewer::changeRecord );
    }
 
    else
@@ -1574,8 +1574,8 @@ void US_MwlRawViewer::exclude_from( double sfr )
       ct_to  ->disconnect();
       ct_to  ->setValue( scan_from );
 
-      connect( ct_to,        SIGNAL( valueChanged( double ) ),
-               this,         SLOT  ( exclude_to  ( double ) ) );
+      connect( ct_to,        &QwtCounter::valueChanged,
+               this,         &US_MwlRawViewer::exclude_to );
    }
 
    plot_current();
@@ -1592,8 +1592,8 @@ void US_MwlRawViewer::exclude_to( double sto )
       ct_from->disconnect();
       ct_from->setValue( scan_to );
 
-      connect( ct_from,      SIGNAL( valueChanged( double ) ),
-               this,         SLOT  ( exclude_from( double ) ) );
+      connect( ct_from,      &QwtCounter::valueChanged,
+               this,         &US_MwlRawViewer::exclude_from );
    }
 
    plot_current();
@@ -1627,10 +1627,10 @@ DbgLv(1) << "Excl: kscan" << kscan;
    ct_to     ->disconnect();
    ct_from   ->setMaximum( kscan );
    ct_to     ->setMaximum( kscan );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::exclude_to );
    ct_to     ->setValue( 0 );
    pb_include->setEnabled( true );
 }
@@ -1654,10 +1654,10 @@ DbgLv(1) << "Incl: nscan" << nscan << "kscn ecnt" << kscan << excludes.count();
    ct_to     ->disconnect();
    ct_from   ->setMaximum( kscan );
    ct_to     ->setMaximum( kscan );
-   connect( ct_from,      SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,        SIGNAL( valueChanged( double ) ),
-            this,         SLOT  ( exclude_to  ( double ) ) );
+   connect( ct_from,      &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::exclude_from );
+   connect( ct_to,        &QwtCounter::valueChanged,
+            this,         &US_MwlRawViewer::exclude_to );
    ct_to     ->setValue( 0 );
    pb_include->setEnabled( false );
 }
@@ -1698,8 +1698,8 @@ DbgLv(1) << "Plt3D:  open MPC";
       int cx       = 40;
       int cy       = 40;
       p3d_ctld->move( cx, cy );
-      connect( p3d_ctld, SIGNAL( has_closed()     ),
-               this,     SLOT  ( p3dctrl_closed() ) );
+      connect( p3d_ctld, &US_MwlPlotControl::has_closed,
+               this,     &US_MwlRawViewer::p3dctrl_closed );
    }
 
    else

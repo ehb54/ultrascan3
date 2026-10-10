@@ -81,22 +81,22 @@ US_Reporter::US_Reporter() : US_Widgets()
    dctlLayout->addWidget( pb_help,    row,   0, 1, 2 );
    dctlLayout->addWidget( pb_close,   row++, 2, 1, 2 );
 
-   connect( cb_runids,  SIGNAL( currentIndexChanged( int ) ),
-            this,       SLOT(   new_runid(           int ) ) );
-   connect( pb_view,    SIGNAL( clicked()      ),
-            this,       SLOT(   view()         ) );
-   connect( pb_save,    SIGNAL( clicked()      ),
-            this,       SLOT(   save()         ) );
-   connect( pb_loadpr,  SIGNAL( clicked()      ),
-            this,       SLOT(   load_profile() ) );
-   connect( pb_savepr,  SIGNAL( clicked()      ),
-            this,       SLOT(   save_profile() ) );
-   connect( pb_syncdb,  SIGNAL( clicked()      ),
-            this,       SLOT(   sync_db()      ) );
-   connect( pb_help,    SIGNAL( clicked()      ),
-            this,       SLOT(   help()         ) );
-   connect( pb_close,   SIGNAL( clicked()      ),
-            this,       SLOT(   close()        ) );
+   connect( cb_runids,  qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,       &US_Reporter::new_runid );
+   connect( pb_view,    &QAbstractButton::clicked,
+            this,       &US_Reporter::view );
+   connect( pb_save,    &QAbstractButton::clicked,
+            this,       &US_Reporter::save );
+   connect( pb_loadpr,  &QAbstractButton::clicked,
+            this,       &US_Reporter::load_profile );
+   connect( pb_savepr,  &QAbstractButton::clicked,
+            this,       &US_Reporter::save_profile );
+   connect( pb_syncdb,  &QAbstractButton::clicked,
+            this,       &US_Reporter::sync_db );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_Reporter::help );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &QWidget::close );
 
    cb_runids->setToolTip(
       tr( "Select the Run for which to produce a composite report" ) );
@@ -134,10 +134,10 @@ US_Reporter::US_Reporter() : US_Widgets()
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter   ( this );
 
-   connect( tw_recs, SIGNAL( itemPressed( QTreeWidgetItem*, int ) ),
-            this,    SLOT(   clickedItem( QTreeWidgetItem*      ) ) );
-   connect( tw_recs, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-            this,    SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+   connect( tw_recs, &QTreeWidget::itemPressed,
+            this,    &US_Reporter::clickedItem );
+   connect( tw_recs, &QTreeWidget::itemChanged,
+            this,    &US_Reporter::changedItem );
 
    // put layouts together for overall layout
    leftLayout->addLayout( dctlLayout );
@@ -198,12 +198,12 @@ DbgLv(1) << " context menu row" << row + 1;
    QAction* viewact = new QAction( tr( "View Item" ),    this );
    QAction* saveact = new QAction( tr( "Save As" ),      this );
 
-   connect( showact, SIGNAL( triggered() ),
-            this,    SLOT( item_show()   ) );
-   connect( viewact, SIGNAL( triggered() ),
-            this,    SLOT( item_view()   ) );
-   connect( saveact, SIGNAL( triggered() ),
-            this,    SLOT( item_save()   ) );
+   connect( showact, &QAction::triggered,
+            this,    &US_Reporter::item_show );
+   connect( viewact, &QAction::triggered,
+            this,    &US_Reporter::item_view );
+   connect( saveact, &QAction::triggered,
+            this,    &US_Reporter::item_save );
 
    cmenu->addAction( showact );
    cmenu->addAction( viewact );

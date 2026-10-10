@@ -366,16 +366,38 @@ if(APPLE AND QHELPGENERATOR_EXECUTABLE)
             endforeach()
         endif()
 
-        add_custom_target(stage_qt_assistant ALL
-            COMMAND ${CMAKE_COMMAND}
-                -DASSISTANT_SOURCE=${ASSISTANT_SOURCE}
-                -DDEST_DIR=${DOC_OUTPUT_DIR}
-                -DMACDEPLOYQT=${_MACDEPLOYQT}
-                -DQSQLITE_PLUGIN=${_QSQLITE_PLUGIN_ARG}
-                -DQT_LIB_DIR=${_QT_LIB_DIR}
-                -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacOsDeployQtAssistant.cmake
-            COMMENT "Staging self-contained Assistant.app into ${DOC_OUTPUT_DIR}"
-        )
+        # Developer builds can use the same installed Qt libraries as the app.
+        # Keep self-contained deployment in the packaging targets; copying the
+        # tool into bin/ otherwise invalidates its loader-relative Qt paths.
+        if(USE_QT6 AND ASSISTANT_SOURCE MATCHES "/tools/qttools/bin/Assistant.app$"
+           AND _QSQLITE_PLUGIN)
+            get_filename_component(_assistant_plugins "${_QSQLITE_PLUGIN}/../.." ABSOLUTE)
+            get_filename_component(_assistant_libs "${Qt6_DIR}/../../lib" ABSOLUTE)
+            add_custom_target(stage_qt_assistant ALL
+                COMMAND ${CMAKE_COMMAND}
+                    -DASSISTANT_SRC=${ASSISTANT_SOURCE}
+                    -DBIN_DIR=${DOC_OUTPUT_DIR}
+                    -DQT6_PLUGINS_DIR=${_assistant_plugins}
+                    -DQT6_LIB_DIR=${_assistant_libs}
+                    "-DCMAKE_INSTALL_NAME_TOOL=${CMAKE_INSTALL_NAME_TOOL}"
+                    "-DUS3_CODESIGN_EXECUTABLE=${US3_CODESIGN_EXECUTABLE}"
+                    -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/StageAssistantDev.cmake
+                COMMENT "Staging Qt Assistant for the development build"
+                VERBATIM
+            )
+        else()
+            add_custom_target(stage_qt_assistant ALL
+                COMMAND ${CMAKE_COMMAND}
+                    -DASSISTANT_SOURCE=${ASSISTANT_SOURCE}
+                    -DDEST_DIR=${DOC_OUTPUT_DIR}
+                    -DMACDEPLOYQT=${_MACDEPLOYQT}
+                    -DQSQLITE_PLUGIN=${_QSQLITE_PLUGIN_ARG}
+                    -DQT_LIB_DIR=${_QT_LIB_DIR}
+                    -P ${CMAKE_SOURCE_DIR}/admin/cmake/packaging/macos/MacOsDeployQtAssistant.cmake
+                COMMENT "Staging self-contained Assistant.app into ${DOC_OUTPUT_DIR}"
+                VERBATIM
+            )
+        endif()
         add_dependencies(documentation stage_qt_assistant)
     else()
         message(WARNING "Qt Assistant not found — help viewer will not be available in bin/")

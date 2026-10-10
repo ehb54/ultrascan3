@@ -52,15 +52,15 @@ US_MwlSpeciesFit::US_MwlSpeciesFit( QMap<QString, QString> & protocol_details_p 
    pb_prev    ->setEnabled( false );
    pb_next    ->setEnabled( false );
 
-   connect( pb_loadsfit, SIGNAL( clicked()     ),
-            this,        SLOT  ( loadSpecs() ) );
-   connect( pb_sfitdata, SIGNAL( clicked()     ),
-            this,        SLOT  ( specFitData() ) );
-   connect( pb_prev,  SIGNAL( clicked() ), SLOT( prev_plot() ) );
-   connect( pb_next,  SIGNAL( clicked() ), SLOT( next_plot() ) );
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_loadsfit, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesFit::loadSpecs );
+   connect( pb_sfitdata, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesFit::specFitData );
+   connect( pb_prev,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::prev_plot );
+   connect( pb_next,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::next_plot );
+   connect( pb_help,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::help );
+   connect( pb_view,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::view );
+   connect( pb_save,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::save );
 
    // Destroy all parameter rows from AnalysisBase
    int nrow   = parameterLayout->rowCount();
@@ -105,7 +105,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
    sf_lyt->addWidget(le_fit_error);
    sf_lyt->addWidget(pb_plot3d);
    controlsLayout->addLayout(sf_lyt, row, 0, 1, 2);
-   connect(pb_plot3d, SIGNAL(clicked()), this, SLOT(rmsd_3dplot()));
+   connect(pb_plot3d, &QAbstractButton::clicked, this, &US_MwlSpeciesFit::rmsd_3dplot);
 
    data_plot1->setTitle( tr( "Output Data Set" ) );
    data_plot2->setTitle( tr( "Input Data Set" ) );
@@ -244,15 +244,15 @@ US_MwlSpeciesFit::US_MwlSpeciesFit() : US_AnalysisBase2()
    pb_prev    ->setEnabled( false );
    pb_next    ->setEnabled( false );
 
-   connect( pb_loadsfit, SIGNAL( clicked()     ),
-            this,        SLOT  ( loadSpecs() ) );
-   connect( pb_sfitdata, SIGNAL( clicked()     ),
-            this,        SLOT  ( specFitData() ) );
-   connect( pb_prev,  SIGNAL( clicked() ), SLOT( prev_plot() ) );
-   connect( pb_next,  SIGNAL( clicked() ), SLOT( next_plot() ) );
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_loadsfit, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesFit::loadSpecs );
+   connect( pb_sfitdata, &QAbstractButton::clicked,
+            this,        &US_MwlSpeciesFit::specFitData );
+   connect( pb_prev,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::prev_plot );
+   connect( pb_next,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::next_plot );
+   connect( pb_help,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::help );
+   connect( pb_view,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::view );
+   connect( pb_save,  &QAbstractButton::clicked, this, &US_MwlSpeciesFit::save );
 
    // Destroy all parameter rows from AnalysisBase
    int nrow   = parameterLayout->rowCount();
@@ -297,7 +297,7 @@ DbgLv(1) << "  irow" << irow << "icol" << icol;
    sf_lyt->addWidget(le_fit_error);
    sf_lyt->addWidget(pb_plot3d);
    controlsLayout->addLayout(sf_lyt, row, 0, 1, 2);
-   connect(pb_plot3d, SIGNAL(clicked()), this, SLOT(rmsd_3dplot()));
+   connect(pb_plot3d, &QAbstractButton::clicked, this, &US_MwlSpeciesFit::rmsd_3dplot);
 
    data_plot1->setTitle( tr( "Output Data Set" ) );
    data_plot2->setTitle( tr( "Input Data Set" ) );
@@ -787,9 +787,9 @@ void US_MwlSpeciesFit::load( void )
      dialog = new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, "none" );
    
 
-   connect( dialog, SIGNAL( changed( bool ) ), SLOT( update_disk_db( bool ) ) );
-   connect( dialog, SIGNAL( progress    ( const QString ) ), 
-                    SLOT  ( set_progress( const QString ) ) );
+   connect( dialog, &US_DataLoader::changed, this, &US_MwlSpeciesFit::update_disk_db );
+   connect( dialog, &US_DataLoader::progress, 
+                    this, &US_MwlSpeciesFit::set_progress );
 
    if ( !us_gmp_auto_mode )
      {
@@ -830,8 +830,8 @@ DbgLv(1) << "ldnois:  nscans" << nscans << "ntrips" << ntrips;
    pb_save    ->setEnabled( true );
    pb_exclude ->setEnabled( true );
 
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_from( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_MwlSpeciesFit::exclude_from );
 
    dataLoaded = true;
    emit dataAreLoaded();
@@ -923,8 +923,8 @@ DbgLv(1) << "  trip" << ii << "noise subtraction  noisf" << noisf
    synFitError.clear();
    synFitError.resize( celchns.count() );
 
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-                        SLOT  ( new_triple       ( int ) ) );
+   connect( lw_triples, &QListWidget::currentRowChanged,
+                        this, &US_MwlSpeciesFit::new_triple );
    lw_triples->setCurrentRow( 0 );
 
    pb_loadsfit->setEnabled( true );
@@ -1208,8 +1208,10 @@ void US_MwlSpeciesFit::loadSpecs_auto( QMap< QString, QMap< double, double > > a
   QRegularExpression rx( "[^A-Za-z0-9_-]" );
   for ( int i=0; i< analytes_profs_keys.size(); ++i )
     {
-      QString ana_desc = analytes_profs_keys[i];
-      analytes_profs_keys_mod << ana_desc.replace( rx,  "_" ) + ".txt";
+      QString ana_desc   = analytes_profs_keys[i];
+      QString ana_desc_s = ana_desc.replace( rx,  "_" ) + ".txt";
+      ana_desc_s.replace(QRegularExpression("_+"), "_");
+      analytes_profs_keys_mod << ana_desc_s;
     }
   
   int minnw       = 999999;
@@ -1658,6 +1660,10 @@ DbgLv(0) << "sfd:     jj" << jj << "ks" << ks << "kd" << kd;
          synData[ kd ].scanData[ ks ] = edata->scanData[ jj ];
          synData[ kd ].scanData[ ks ].rvalues.fill( 0.0, kradp );
          synData[ kd ].scanData[ ks ].stddevs.fill( 0.0, kradp );
+
+         // Resize and clear the interpolation bitmap for the fitted readings.
+         synData[ kd ].scanData[ ks ].interpolated
+            .fill( '\0', ( kradp + 7 ) / 8 );
          synData[ kd ].scanData[ ks ].wavelength  = wavl;
          ks++;
 
@@ -1833,8 +1839,19 @@ DbgLv(1) << "sfd:  menx menval meniscus" << menx << menval << meniscus;
          rdata->setValue( jj, menx, menval );
       }
 
+      qDebug() << "Writing syncdata: fname, rdata->description -- "
+	       << fname << rdata->description;
+
       int stat        = US_DataIO::writeRawData( fname, synData[ kd ] );
 DbgLv(1) << "sfd:  stat fname" << stat << fname;
+
+      if ( stat != US_DataIO::OK )
+      {
+         QMessageBox::warning( this, tr( "Species File Write Failed" ),
+            tr( "The species data could not be written to\n%1\n\n%2" )
+            .arg( fname ).arg( US_DataIO::errorString( stat ) ) );
+         return;
+      }
    }
 QDateTime time9=QDateTime::currentDateTime();
 DbgLv(1) << "sfd: (C)D0 cmn" << ms << mr << synData[0].value(ms,mr);

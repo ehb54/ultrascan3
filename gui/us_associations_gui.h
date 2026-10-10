@@ -41,11 +41,13 @@ class US_GUI_EXTERN US_AssociationsGui : public US_WidgetsDialog
       void set_component( int, int, int );
       bool combine_reactants( US_Model::Association* );
 
+   public slots:
+      void disable_gui   ( void );
+
    private slots:
       void changed      ( int, int );
       void del          ( int      );
       void complete     ( void     );
-      void disable_gui   ( void );
 
       void help    ( void )
       { showhelp.show_help( "associations.html" ); };

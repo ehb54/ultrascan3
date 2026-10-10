@@ -241,8 +241,8 @@ void US_CombPlotsGui::build_layout ( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_update() ) );
-  connect( pb_accept, SIGNAL( clicked() ), SLOT( update_parms() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &US_CombPlotsGui::cancel_update );
+  connect( pb_accept, &QAbstractButton::clicked, this, &US_CombPlotsGui::update_parms );
 
   lower_buttons->addWidget( pb_cancel );
   lower_buttons->addWidget( pb_accept );

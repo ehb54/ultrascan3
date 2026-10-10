@@ -278,6 +278,67 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    editor_msg("dark blue", QString::asprintf( "Anhydrous volume %.2f A^3", total_vol ));
 }
 
+// The order in which beads are emitted to every bead-model output, including the .grpy
+// input handed to GRPY. Extracted from write_bead_model() so that anything needing to map a
+// position in one of those files back to a bead -- notably the GRPY shell-reduction models,
+// which record their selection as indices into the .grpy bead list -- uses the SAME order by
+// construction. Note bead_output.sequence == 1 REORDERS the model, so assuming bead_model
+// order for that mapping would silently select the wrong beads.
+void US_Hydrodyn::bead_model_output_order( vector < PDB_atom > *model,
+                                           vector < PDB_atom * > & use_model )
+{
+   use_model.clear();
+   switch (bead_output.sequence) {
+   case 0: // as in original pdb file
+   case 2: // include bead-original residue correspondence
+      for (unsigned int i = 0; i < model->size(); i++) {
+         use_model.push_back(&(*model)[i]);
+      }
+      break;
+   case 1: // exposed sidechain -> exposed main chain -> buried
+      {
+         map < unsigned int, bool > used;
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 1 &&
+                (*model)[i].chain == 1) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
+         }
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 1 &&
+                (*model)[i].chain == 0) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
+         }
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 0 &&
+                (*model)[i].chain == 1) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
+         }
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ((*model)[i].visibility == 0 &&
+                (*model)[i].chain == 0) {
+               use_model.push_back(&(*model)[i]);
+               used[ i ] = true;
+            }
+         }
+         for (unsigned int i = 0; i < model->size(); i++) {
+            if ( !used.count( i ) )
+            {
+               use_model.push_back(&(*model)[i]);
+            }
+         }
+      }
+      // falls through, as before -- default does nothing
+   default :
+      break;
+   }
+}
+
 void US_Hydrodyn::write_bead_model(
                                    QString fname,
                                    vector < PDB_atom > *model,
@@ -335,55 +396,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
 #endif
 
    vector <PDB_atom *> use_model;
-   switch (bead_output.sequence) {
-   case 0: // as in original pdb file
-   case 2: // include bead-original residue correspondence
-      for (unsigned int i = 0; i < model->size(); i++) {
-         use_model.push_back(&(*model)[i]);
-      }
-      break;
-   case 1: // exposed sidechain -> exposed main chain -> buried
-      {
-         map < unsigned int, bool > used;
-         for (unsigned int i = 0; i < model->size(); i++) {
-            if ((*model)[i].visibility == 1 &&
-                (*model)[i].chain == 1) {
-               use_model.push_back(&(*model)[i]);
-               used[ i ] = true;
-            }
-         }
-         for (unsigned int i = 0; i < model->size(); i++) {
-            if ((*model)[i].visibility == 1 &&
-                (*model)[i].chain == 0) {
-               use_model.push_back(&(*model)[i]);
-               used[ i ] = true;
-            }
-         }
-         for (unsigned int i = 0; i < model->size(); i++) {
-            if ((*model)[i].visibility == 0 &&
-                (*model)[i].chain == 1) {
-               use_model.push_back(&(*model)[i]);
-               used[ i ] = true;
-            }
-         }
-         for (unsigned int i = 0; i < model->size(); i++) {
-            if ((*model)[i].visibility == 0 &&
-                (*model)[i].chain == 0) {
-               use_model.push_back(&(*model)[i]);
-               used[ i ] = true;
-            }
-         }
-         for (unsigned int i = 0; i < model->size(); i++) {
-            if ( !used.count( i ) )
-            {
-               use_model.push_back(&(*model)[i]);
-            }
-         }
-      }
-
-   default :
-      break;
-   }
+   bead_model_output_order( model, use_model );
 
    FILE *fsomo = (FILE *)0;
    FILE *fbeams = (FILE *)0;

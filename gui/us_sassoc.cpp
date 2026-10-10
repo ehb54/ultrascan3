@@ -44,16 +44,16 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    params->addWidget( lb_assoc1, row, 0 );
 
    le_assoc1 = us_lineedit( QString::number( stoich1, 'f', 4 ) );
-   connect( le_assoc1, SIGNAL( textChanged   ( const QString& ) ),
-                       SLOT(   update_stoich1( const QString& ) ) );
+   connect( le_assoc1, &QLineEdit::textChanged,
+                       this, qOverload< const QString& >( &US_Sassoc::update_stoich1 ) );
    params->addWidget( le_assoc1, row++, 1 );
 
    QLabel* lb_assoc2 = us_label( "Association2:" );
    params->addWidget( lb_assoc2, row, 0 );
 
    le_assoc2 = us_lineedit( QString::number( stoich2, 'f', 4 ) );
-   connect( le_assoc2, SIGNAL( textChanged   ( const QString& ) ),
-                       SLOT(   update_stoich2( const QString& ) ) );
+   connect( le_assoc2, &QLineEdit::textChanged,
+                       this, qOverload< const QString& >( &US_Sassoc::update_stoich2 ) );
    params->addWidget( le_assoc2, row++, 1 );
 
    // Equlibrium constants
@@ -64,28 +64,28 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    params->addWidget( lb_equil1, row, 0 );
 
    le_equil1 = us_lineedit( QString::number( eq0, 'g', 3 ) );
-   connect( le_equil1, SIGNAL( textChanged( const QString& ) ), 
-                       SLOT  ( update_eq1 ( const QString& ) ) ); 
+   connect( le_equil1, &QLineEdit::textChanged, 
+                       this, qOverload< const QString& >( &US_Sassoc::update_eq1 ) ); 
    params->addWidget( le_equil1, row++, 1 );
 
    c_equil1 = us_counter( 3, -100.0, 100.0, eq0 );
    c_equil1->setSingleStep( 0.01 );
-   connect( c_equil1, SIGNAL( valueChanged   ( double ) ), 
-                      SLOT  ( update_eq1Count( double ) ) );
+   connect( c_equil1, &QwtCounter::valueChanged, 
+                      this, qOverload< double >( &US_Sassoc::update_eq1Count ) );
    params->addWidget( c_equil1, row++, 0, 1, 2 );
 
    QLabel* lb_equil2 = us_label( "ln( Constant2 ):" );
    params->addWidget( lb_equil2, row, 0 );
 
    le_equil2 = us_lineedit( QString::number( eq1, 'g', 3 ) );
-   connect( le_equil2, SIGNAL( textChanged( const QString& ) ), 
-                       SLOT  ( update_eq2 ( const QString& ) ) ); 
+   connect( le_equil2, &QLineEdit::textChanged, 
+                       this, qOverload< const QString& >( &US_Sassoc::update_eq2 ) ); 
    params->addWidget( le_equil2, row++, 1 );
 
    c_equil2 = us_counter( 3, -100.0, 100.0, eq1 );
    c_equil2->setSingleStep( 0.01 );
-   connect( c_equil2, SIGNAL( valueChanged   ( double ) ), 
-                      SLOT  ( update_eq2Count( double ) ) );
+   connect( c_equil2, &QwtCounter::valueChanged, 
+                      this, qOverload< double >( &US_Sassoc::update_eq2Count ) );
    params->addWidget( c_equil2, row++, 0, 1, 2 );
 
    controls->addLayout( params );
@@ -118,15 +118,15 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
 
    // Buttons
    QPushButton* pb_save = us_pushbutton( tr( "Save Data to File" ) );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_save, &QAbstractButton::clicked, this, &US_Sassoc::save );
    controls->addWidget( pb_save ); 
    
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, qOverload<>( &US_Sassoc::help ) );
    controls->addWidget( pb_help ); 
    
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    controls->addWidget( pb_close ); 
    
    main->addLayout( controls );
@@ -141,14 +141,14 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    plot->setAxisScaleEngine( QwtPlot::xBottom, new QwtLogScaleEngine );
    pick = new US_PlotPicker( plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
-   connect( pick, SIGNAL( selected ( const QPointF& ) ),
-                  SLOT  ( new_value( const QPointF& ) ) );
-   connect( pick, SIGNAL( moved    ( const QPointF& ) ),
-                  SLOT  ( new_value( const QPointF& ) ) );
-   connect( pick, SIGNAL( mouseDown( const QPointF& ) ),
-                  SLOT  ( mouseD   ( const QPointF& ) ) );
-   connect( pick, SIGNAL( mouseUp  ( const QPointF& ) ),
-                  SLOT  ( mouseU   ( const QPointF& ) ) );
+   connect( pick, qOverload< const QPointF& >( &QwtPlotPicker::selected ),
+                  this, &US_Sassoc::new_value );
+   connect( pick, &QwtPlotPicker::moved,
+                  this, &US_Sassoc::new_value );
+   connect( pick, &US_PlotPicker::mouseDown,
+                  this, &US_Sassoc::mouseD );
+   connect( pick, &US_PlotPicker::mouseUp,
+                  this, &US_Sassoc::mouseU );
 
    // Initialize x
    double       c   = 1.0e-10;  // Lower concentration range limit

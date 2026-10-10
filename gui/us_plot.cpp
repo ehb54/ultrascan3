@@ -25,6 +25,7 @@
 #include "qwt_scale_map.h"
 #include "qwt_scale_widget.h"
 #include "qwt_symbol.h"
+#include "qwt_plot_spectrogram.h"
 
 #include <QMouseEvent>
 #include <QEvent>
@@ -171,6 +172,57 @@ bool US_DoubleClickEventFilter::eventFilter( QObject* object, QEvent* event )
 
 /*********************       US_Plot Class      *************************/
 
+namespace
+{
+   //! The palette of the plot tool bar
+   QPalette toolBarColor( void )
+   {
+      QPalette p = US_GuiSettings::plotColor();
+
+      const QList< QPalette::ColorGroup > groups =
+         QList< QPalette::ColorGroup >()
+            << QPalette::Active << QPalette::Inactive << QPalette::Disabled;
+
+      for ( const auto g : groups )
+      {
+         const QColor bg = p.color( g, QPalette::Window     );
+         const QColor fg = p.color( g, QPalette::WindowText );
+
+         // Contrast has to be added in the direction that is available
+         const bool dark = ( bg.lightness() < 128 );
+
+         p.setColor( g, QPalette::Button    , bg );
+         p.setColor( g, QPalette::ButtonText, fg );
+         p.setColor( g, QPalette::Text      , fg );
+         p.setColor( g, QPalette::Base      , bg );
+
+         p.setColor( g, QPalette::Midlight,                       // hover
+                     dark ? bg.lighter( 135 ) : bg.darker( 108 ) );
+         p.setColor( g, QPalette::Dark,                           // pressed
+                     dark ? bg.lighter( 165 ) : bg.darker( 118 ) );
+         p.setColor( g, QPalette::Mid,                            // outline
+                     dark ? bg.lighter( 150 ) : bg.darker( 125 ) );
+      }
+
+      return p;
+   }
+}
+
+bool US_Plot::eventFilter( QObject* object, QEvent* event )
+{
+   // A widget that carries a palette of its own keeps it when the application
+   // palette is replaced, so the tool bar has to be rebuilt from the new
+   // plot colors by hand.
+   if ( object == toolBar  &&
+        ( event->type() == QEvent::ApplicationPaletteChange ||
+          event->type() == QEvent::StyleChange ) )
+   {
+      toolBar->setPalette( toolBarColor() );
+   }
+
+   return QObject::eventFilter( object, event );
+}
+
 // A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
       const QString& x_axis, const QString& y_axis, const bool cmEnab,
@@ -188,10 +240,13 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
                      US_GuiSettings::fontSize() - 2 );
 
    // Add the tool bar 
-   QToolBar* toolBar = new QToolBar;
+   toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
-   toolBar->setPalette( US_GuiSettings::plotColor() );
+   toolBar->setPalette( toolBarColor() );
    toolBar->setOrientation( Qt::Vertical );
+
+   // Recolor the bar when the color scheme is switched while it is on screen
+   toolBar->installEventFilter( this );
 
    btnZoom = new QToolButton( toolBar );
    btnZoom->setText( "Zoom" );
@@ -348,6 +403,86 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
       cmfpath        = US_Settings::etcDir() + "/" + cmfpath;
    }
    qDebug() << "UP:main: cmfpath" << cmfpath;
+}
+
+//! \brief Shrink (or restore) the plot title's font so its longest line
+//! fits within the plot's current width.
+//!
+//! QwtPlot titles are centered and do not wrap or auto-shrink, so a
+//! multi-line title (e.g. "Run ID: ...\nCell: ...  Channel: ...
+//! Wavelength: ...") that is wider than the plot simply overflows past
+//! both edges, clipped by whatever sits alongside the plot. This is not
+//! wired up to run automatically (no event filter, no call from the
+//! constructor) -- it's purely opt-in. Call it yourself wherever your
+//! program sets/changes the title, and from your own resizeEvent() too if
+//! you want it to keep fitting as the plot is resized. Each call
+//! re-measures starting from the title's originally-intended size (rather
+//! than shrinking further from whatever size it happens to currently be),
+//! so the font grows back toward full size if the plot is widened again.
+void US_Plot::fitTitleToWidth()
+{
+   if ( plot == nullptr )
+   {
+      return;
+   }
+
+   QwtText qwtTitle = plot->title();
+   const QString text = qwtTitle.text();
+
+   if ( text.isEmpty() )
+   {
+      return;
+   }
+
+   // Prefer the canvas width (the title sits directly above it, edge to
+   // edge) and fall back to the plot's own width if the canvas isn't
+   // available yet.
+   int availableWidth = ( plot->canvas() != nullptr )
+                         ? plot->canvas()->width()
+                         : plot->width();
+
+   if ( availableWidth <= 0 )
+   {
+      return;
+   }
+
+   // A little breathing room so the text doesn't sit flush against the
+   // plot's edges.
+   availableWidth -= 10;
+
+   const QStringList lines = text.split( "\n" );
+
+   QFont font = qwtTitle.font();
+   const qreal originalPointSize = US_GuiSettings::fontSize() * 1.4;
+   const qreal minPointSize      = 7.0;
+   qreal pointSize                = originalPointSize;
+
+   for ( ; pointSize > minPointSize; pointSize -= 0.5 )
+   {
+      font.setPointSizeF( pointSize );
+      QFontMetrics fm( font );
+
+      int maxLineWidth = 0;
+
+      for ( const QString& line : lines )
+      {
+         maxLineWidth = qMax( maxLineWidth, fm.horizontalAdvance( line ) );
+      }
+
+      if ( maxLineWidth <= availableWidth )
+      {
+         break;
+      }
+   }
+
+   if ( qFuzzyCompare( font.pointSizeF(), qwtTitle.font().pointSizeF() ) )
+   {
+      return;  // Already at the right size -- avoid a redundant setTitle().
+   }
+
+   font.setPointSizeF( pointSize );
+   qwtTitle.setFont( font );
+   plot->setTitle( qwtTitle );
 }
 
 void US_Plot::setupCanvas()

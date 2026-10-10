@@ -79,8 +79,50 @@ class US_GUI_EXTERN US_Theme
          Dark     //!< Dark scheme
       };
 
+      //! \brief The palette family a widget belongs to
+      /*!  Every UltraScan widget is built with a palette of its own so that
+           the color configuration panel can recolor each kind of widget
+           separately.  A widget palette does not follow
+           QApplication::setPalette(), so a widget that is already on screen
+           when the color scheme changes would keep its old colors.  Tagging
+           it with the family it came from is what lets restyle() rebuild it.
+      */
+      enum Role
+      {
+         NoRole = 0,   //!< Not tagged - restyle() leaves the widget alone
+         Frame,        //!< Window or dialog background
+         Banner,       //!< Section banner
+         Label,        //!< Form field caption
+         Pushbutton,   //!< Push button
+         Edit,         //!< Editable entry field, list or table
+         ReadOnly,     //!< Read-only entry field
+         Normal,       //!< Every other widget
+         Lcd,          //!< LCD panel
+         PlotFrame     //!< Plot frame and its tool bar
+      };
+
+      //! \brief Name of the dynamic property that carries the Role
+      static const char* roleProperty() { return "usRole"; }
+
       //! \brief Name of the dynamic property that tags a section banner
-      static const char* bannerProperty() { return "usRole"; }
+      //! \note Distinct from roleProperty(): this one is a style sheet hook
+      static const char* bannerProperty() { return "usBanner"; }
+
+      //! \brief The palette a Role currently resolves to
+      static QPalette paletteFor( Role );
+
+      //! \brief Tag a widget with its palette family and apply that palette
+      /*!  This is what the us_* widget factories call in place of a bare
+           setPalette(), and it is what makes the widget follow a later
+           light/dark switch.
+      */
+      static void    tag             ( QWidget*, Role );
+
+      //! \brief Re-apply the current palettes to every tagged widget
+      /*!  Called by apply().  Safe to call at any time; widgets that were
+           never tagged, and colors a program set itself, are left alone.
+      */
+      static void    restyle         ( void );
 
       //! \brief The color scheme currently in effect
       static Scheme  scheme          ( void );
@@ -132,6 +174,15 @@ class US_GUI_EXTERN US_Theme
 
       //! \brief Forget what was applied last, so the next apply() rebuilds all
       static void    invalidate      ( void );
+
+      //! \brief Counter that changes whenever the stored colors are rewritten
+      /*!  apply() folds this into the signature it compares, which is how a
+           color change made in one UltraScan program reaches the others.
+      */
+      static int     serial          ( void );
+
+      //! \brief Advance serial(), announcing that the stored colors changed
+      static void    bumpSerial      ( void );
 };
 
 #endif

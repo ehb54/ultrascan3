@@ -29,11 +29,11 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
 {
    astfem_rsa = new US_Astfem_RSA( model, simparams );
    
-   connect( astfem_rsa, SIGNAL( new_scan   ( QVector< double >*, double* ) ),
-                        SLOT(   check_equil( QVector< double >*, double* ) ) );
+   connect( astfem_rsa, &US_Astfem_RSA::new_scan,
+                        this, &US_EquilTime::check_equil );
    
-   connect( astfem_rsa, SIGNAL( new_time( double ) ),
-                        SLOT(   set_time( double ) ) );
+   connect( astfem_rsa, &US_Astfem_RSA::new_time,
+                        this, &US_EquilTime::set_time );
    
    setWindowTitle( tr( "Equilibrium Time Prediction" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -55,7 +55,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    int b_row = 0;
 
    pb_changeModel = us_pushbutton( tr( "Set / Change / Review Model") );
-   connect ( pb_changeModel, SIGNAL( clicked() ) , SLOT( change_model() ) );
+   connect ( pb_changeModel, &QAbstractButton::clicked , this, &US_EquilTime::change_model );
    buttons1->addWidget( pb_changeModel, b_row++, 0, 1, 2 );
 
    left->addLayout( buttons1, row, 0, 3, 2 );
@@ -95,8 +95,8 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    channelGroup->addButton( rb_outer , OUTER  );
    channelGroup->addButton( rb_center, CENTER );
    channelGroup->addButton( rb_custom, CUSTOM );
-   connect( channelGroup, SIGNAL( buttonClicked( int ) ),
-                          SLOT  ( new_channel  ( int ) ) );
+   connect( channelGroup, &QButtonGroup::idClicked,
+                          this, &US_EquilTime::new_channel );
 
    current_position = INNER;
 
@@ -158,8 +158,8 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    QButtonGroup* speedGroup = new QButtonGroup;
    speedGroup->addButton( rb_sigma, SIGMA );
    speedGroup->addButton( rb_rpm  , RPM   );
-   connect( speedGroup,  SIGNAL( buttonClicked( int ) ), 
-                         SLOT  ( update_speeds( int ) ) );
+   connect( speedGroup,  &QButtonGroup::idClicked, 
+                         this, &US_EquilTime::update_speeds );
 
    QGridLayout* speedType = new QGridLayout;
    speedType->setContentsMargins( 2, 2, 2, 2 );
@@ -179,8 +179,8 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    cnt_lowspeed = us_counter( 3, 0.01, 10.0, sigma_start );
    cnt_lowspeed->setSingleStep( 0.01 );
    left->addWidget( cnt_lowspeed, row++, 1 );
-   connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
-                          SLOT  ( new_lowspeed( double ) ) );
+   connect( cnt_lowspeed, &QwtCounter::valueChanged,
+                          this, &US_EquilTime::new_lowspeed );
 
    // High speed
    lb_highspeed  = us_label( tr( "High Speed (sigma):" ) );
@@ -189,8 +189,8 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    cnt_highspeed = us_counter( 3, 0.01, 10.0, sigma_stop );
    cnt_highspeed->setSingleStep( 0.01 );
    left->addWidget( cnt_highspeed, row++, 1 );
-   connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
-                           SLOT  ( new_highspeed( double ) ) );
+   connect( cnt_highspeed, &QwtCounter::valueChanged,
+                           this, &US_EquilTime::new_highspeed );
    // Speed steps
    QLabel* lb_speedsteps = us_label( tr( "Speed Steps:"        ) );
    left->addWidget( lb_speedsteps, row, 0 );
@@ -198,8 +198,8 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    cnt_speedsteps = us_counter( 3, 1.0, 100.0, speed_count );
    cnt_speedsteps->setSingleStep( 1.0 );
    left->addWidget( cnt_speedsteps, row++, 1 );
-   connect( cnt_speedsteps, SIGNAL( valueChanged ( double ) ),
-                            SLOT  ( new_speedstep( double ) ) );
+   connect( cnt_speedsteps, &QwtCounter::valueChanged,
+                            this, &US_EquilTime::new_speedstep );
    // Speed list
    QLabel* lb_speedlist  = us_label( tr( "Current Speed List:" ) );
    left->addWidget( lb_speedlist, row, 0 );
@@ -237,15 +237,15 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
 
    pb_estimate = us_pushbutton( tr( "Estimate Times" ) );
    pb_estimate->setEnabled( false );
-   connect( pb_estimate, SIGNAL( clicked() ), SLOT( simulate() ) );
+   connect( pb_estimate, &QAbstractButton::clicked, this, &US_EquilTime::simulate );
    buttons2->addWidget( pb_estimate, b_row++, 0, 1, 2 ); 
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_EquilTime::help );
    buttons2->addWidget( pb_help, b_row, 0 ); 
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    buttons2->addWidget( pb_close, b_row++, 1 ); 
 
    left->addLayout( buttons2, row, 0, 2, 2 );
@@ -478,11 +478,11 @@ void US_EquilTime::update_speeds( int type )
       cnt_highspeed->setSingleStep( 0.01 );
       cnt_highspeed->setValue( sigma_stop );
       
-      connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
-                             SLOT  ( new_lowspeed( double ) ) );
+      connect( cnt_lowspeed, &QwtCounter::valueChanged,
+                             this, &US_EquilTime::new_lowspeed );
 
-      connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
-                              SLOT  ( new_highspeed( double ) ) );
+      connect( cnt_highspeed, &QwtCounter::valueChanged,
+                              this, &US_EquilTime::new_highspeed );
 
       if ( fabs( sigma_stop - sigma_start ) < 0.1 ) speed_count = 1;
       cnt_speedsteps->setValue( speed_count );
@@ -527,11 +527,11 @@ void US_EquilTime::update_speeds( int type )
       cnt_highspeed ->setSingleStep( 100 );
       cnt_highspeed ->setValue( rpm_stop );
       
-      connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
-                             SLOT  ( new_lowspeed( double ) ) );
+      connect( cnt_lowspeed, &QwtCounter::valueChanged,
+                             this, &US_EquilTime::new_lowspeed );
 
-      connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
-                              SLOT  ( new_highspeed( double ) ) );
+      connect( cnt_highspeed, &QwtCounter::valueChanged,
+                              this, &US_EquilTime::new_highspeed );
 
       if ( fabs( rpm_stop - rpm_start ) < 100.0 ) speed_count = 1;
       cnt_speedsteps->setValue( speed_count );
@@ -563,8 +563,8 @@ void US_EquilTime::update_speeds( int type )
 void US_EquilTime::change_model( void )
 {
    US_ModelGui* dialog = new US_ModelGui( model );
-   connect( dialog, SIGNAL( valueChanged( US_Model ) ), 
-                    SLOT  ( set_model   ( US_Model ) ) );
+   connect( dialog, &US_ModelGui::valueChanged, 
+                    this, &US_EquilTime::set_model );
    dialog->exec();
 }
 

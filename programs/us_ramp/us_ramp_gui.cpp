@@ -334,46 +334,46 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Connect signals and slots
    if ( isadmin )
-      connect( pb_investigator, SIGNAL( clicked()          ),
-                                SLOT(   sel_investigator() ) );
+      connect( pb_investigator, &QAbstractButton::clicked,
+                                this, &US_RampGui::sel_investigator );
 //    connect( disk_controls,  SIGNAL( changed       ( bool ) ),
 //                             SLOT  ( source_changed( bool ) ) );
 //    connect( pb_importlechner,      SIGNAL( clicked()     ),
 //                             SLOT(   import()      ) );
-   connect( pb_editRuninfo, SIGNAL( clicked()     ),
-                            SLOT(   editRuninfo(void) ) );
-   connect( pb_loadUS3,     SIGNAL( clicked()     ),
-                            SLOT(   loadUS3()     ) );
+   connect( pb_editRuninfo, &QAbstractButton::clicked,
+                            this, &US_RampGui::editRuninfo );
+   connect( pb_loadUS3,     &QAbstractButton::clicked,
+                            this, [this]() { loadUS3(); } );
 //    connect( pb_details,     SIGNAL( clicked()     ),
 //                             SLOT(   runDetails()  ) );
-   connect( pb_importmwlramp,      SIGNAL( clicked()     ),
-                            SLOT(  importMWL(void)   ) );
+   connect( pb_importmwlramp,      &QAbstractButton::clicked,
+                            this, &US_RampGui::importMWL );
 //    connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
 //                             SLOT  ( toleranceValueChanged( double ) ) );
-   connect( le_description, SIGNAL( textEdited( QString )      ),
-                            SLOT  ( changeDescription()        ) );
-   connect( lw_triple,      SIGNAL( itemSelectionChanged()     ),
-                            SLOT  ( changeCellchan()             ) );
-   connect( cb_centerpiece, SIGNAL( activated          ( int ) ), 
-                            SLOT  ( getCenterpieceIndex( int ) ) );
-   connect( pb_solution,    SIGNAL( clicked()          ),
-                            SLOT(   getSolutionInfo()  ) );
-   connect( pb_applyAll,    SIGNAL( clicked()          ),
-                            SLOT(   tripleApplyAll()   ) );
-   connect( pb_reference,   SIGNAL( clicked()          ),
-                            SLOT(   define_reference() ) );
+   connect( le_description, &QLineEdit::textEdited,
+                            this, &US_RampGui::changeDescription );
+   connect( lw_triple,      &QListWidget::itemSelectionChanged,
+                            this, &US_RampGui::changeCellchan );
+   connect( cb_centerpiece, qOverload< int >( &QComboBox::activated ), 
+                            this, &US_RampGui::getCenterpieceIndex );
+   connect( pb_solution,    &QAbstractButton::clicked,
+                            this, &US_RampGui::getSolutionInfo );
+   connect( pb_applyAll,    &QAbstractButton::clicked,
+                            this, &US_RampGui::tripleApplyAll );
+   connect( pb_reference,   &QAbstractButton::clicked,
+                            this, &US_RampGui::define_reference );
 //    connect( pb_cancelref,   SIGNAL( clicked()          ),
 //                             SLOT(   cancel_reference() ) );
-   connect( pb_dropScan,    SIGNAL( clicked()          ),
-                            SLOT(   drop_reference()   ) );
-   connect( pb_reset,       SIGNAL( clicked()  ),
-                            SLOT(   resetAll() ) );
-   connect( pb_help,        SIGNAL( clicked()  ),
-                            SLOT(   help()     ) );
-   connect( pb_saveUS3,     SIGNAL( clicked()  ),
-                            SLOT(   saveUS3()  ) );
-   connect( pb_close,       SIGNAL( clicked()  ),
-                            SLOT(   close() )  );
+   connect( pb_dropScan,    &QAbstractButton::clicked,
+                            this, &US_RampGui::drop_reference );
+   connect( pb_reset,       &QAbstractButton::clicked,
+                            this, &US_RampGui::resetAll );
+   connect( pb_help,        &QAbstractButton::clicked,
+                            this, &US_RampGui::help );
+   connect( pb_saveUS3,     &QAbstractButton::clicked,
+                            this, &US_RampGui::saveUS3 );
+   connect( pb_close,       &QAbstractButton::clicked,
+                            this, &QWidget::close  );
 
    // Now let's assemble the page
    
@@ -595,8 +595,8 @@ void US_RampGui::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, ExpData.invID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT  ( assign_investigator  ( int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_RampGui::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -719,8 +719,8 @@ void US_RampGui::enableRunIDControl( bool setEnable )
    if ( setEnable )
    {
       us_setReadOnly( le_runID2, false );
-      connect( le_runID2, SIGNAL( textEdited( QString ) ),
-                          SLOT  ( runIDChanged(  )      ) );
+      connect( le_runID2, &QLineEdit::textEdited,
+                          this, &US_RampGui::runIDChanged );
    }
 
    else
@@ -1353,14 +1353,14 @@ DbgLv(1) << "CGui: gExpInf: IN";
                                                      ExpData,
                                                      dbdisk );
 
-   connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExperimentRa& ) ),
-            this   , SLOT  ( updateExpInfo         ( US_ExperimentRa& ) ) );
+   connect( expInfo, &US_ExperimentGuiRa::updateExpInfoSelection,
+            this   , &US_RampGui::updateExpInfo );
 
-   connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
-            this   , SLOT  ( cancelExpInfo         () ) );
+   connect( expInfo, &US_ExperimentGuiRa::cancelExpInfoSelection,
+            this   , &US_RampGui::cancelExpInfo );
 
-   connect( expInfo, SIGNAL( use_db        ( bool ) ),
-                     SLOT  ( update_disk_db( bool ) ) );
+   //connect( expInfo, SIGNAL( use_db        ( bool ) ),
+   //                  SLOT  ( update_disk_db( bool ) ) );
 
    expInfo->exec();
 DbgLv(1) << "CGui: gExpInf: RTN";
@@ -1404,14 +1404,14 @@ void US_RampGui::getSolutionInfo( void )
                                      dbdisk, // data source
                                      solution );
 
-   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-            this,         SLOT  ( updateSolutionInfo        ( US_Solution ) ) );
+   connect( solutionInfo, &US_SolutionGui::updateSolutionGuiSelection,
+            this,         &US_RampGui::updateSolutionInfo );
 
-   connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
-            this,         SLOT  ( cancelSolutionInfo        () ) );
+   connect( solutionInfo, &US_SolutionGui::cancelSolutionGuiSelection,
+            this,         &US_RampGui::cancelSolutionInfo );
 
-   connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
-                          SLOT  ( update_disk_db( bool ) ) );
+   //connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
+   //                       SLOT  ( update_disk_db( bool ) ) );
 
    solutionInfo->exec();
 }
@@ -1586,8 +1586,8 @@ DbgLv(1) << " sTI:  lambda" << lambda << "nlambda" << nlambda;
  
    mwl_connect(true);
    lw_triple->setCurrentRow( cellchan );
-   connect( lw_triple, SIGNAL( itemSelectionChanged() ),
-                       SLOT  ( changeCellchan        () ) );
+   connect( lw_triple, &QListWidget::itemSelectionChanged,
+                       this, &US_RampGui::changeCellchan );
 }
 /////////////////////////////////////////////////////////////////////////
 // Makes no sense for MWL-Erlangen due to lack of temperature measurement
@@ -2778,12 +2778,12 @@ void US_RampGui::mwl_connect( bool connect_on )
 //                this,         SLOT  ( lambdaStartChanged ( int    ) ) );
 //       connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
 //                this,         SLOT  ( lambdaEndChanged   ( int    ) ) );
-      connect( cb_lambplot,  SIGNAL( currentIndexChanged( int    ) ),
-               this,         SLOT  ( lambdaPlotChanged  ( int    ) ) );
-      connect( pb_lambprev,  SIGNAL( clicked            (        ) ),
-               this,         SLOT  ( lambdaPrevClicked  (        ) ) );
-      connect( pb_lambnext,  SIGNAL( clicked            (        ) ),
-               this,         SLOT  ( lambdaNextClicked  (        ) ) );
+      connect( cb_lambplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_RampGui::lambdaPlotChanged );
+      connect( pb_lambprev,  &QAbstractButton::clicked,
+               this,         &US_RampGui::lambdaPrevClicked );
+      connect( pb_lambnext,  &QAbstractButton::clicked,
+               this,         &US_RampGui::lambdaNextClicked );
    }
 
    else

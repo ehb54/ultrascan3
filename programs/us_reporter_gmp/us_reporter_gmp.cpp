@@ -1,6 +1,10 @@
 #include <QPrinter>
 #include <QPdfWriter>
 #include <QPainter>
+#include <QFontDatabase>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 
 #include "us_reporter_gmp.h"
 #include "us_settings.h"
@@ -283,30 +287,30 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   pb_collapse_all   ->setEnabled( false );
   pb_view_report_db ->setEnabled( false );
   
-  connect( pb_help,    SIGNAL( clicked()      ),
-	   this,       SLOT(   help()         ) );
-  connect( pb_close,   SIGNAL( clicked()      ),
-	   this,       SLOT(   close()        ) );
+  connect( pb_help,    &QAbstractButton::clicked,
+	   this,       &US_ReporterGMP::help );
+  connect( pb_close,   &QAbstractButton::clicked,
+	   this,       &QWidget::close );
 
-  connect( pb_loadrun,      SIGNAL( clicked()      ),
-	   this,            SLOT(   load_gmp_run()   ) );
-  connect( pb_gen_report,   SIGNAL( clicked()      ),
-	   this,            SLOT(   generate_report()   ) );
-  connect( pb_view_report,  SIGNAL( clicked()      ),
-	   this,            SLOT(   view_report()   ) );
-  connect( pb_select_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( select_all()   ) );
-  connect( pb_unselect_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   unselect_all()   ) );
-  connect( pb_expand_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( expand_all()   ) );
-  connect( pb_collapse_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   collapse_all()   ) ); 
+  connect( pb_loadrun,      &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::load_gmp_run );
+  connect( pb_gen_report,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::generate_report );
+  connect( pb_view_report,  &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::view_report );
+  connect( pb_select_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::select_all );
+  connect( pb_unselect_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::unselect_all );
+  connect( pb_expand_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::expand_all );
+  connect( pb_collapse_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::collapse_all ); 
 
-  connect( pb_loadreport_db,  SIGNAL( clicked()      ),
-  	   this,              SLOT(   load_gmp_report_db()   ) );
-  connect( pb_view_report_db, SIGNAL( clicked()      ),
-	   this,              SLOT(   view_report_db()   ) );
+  connect( pb_loadreport_db,  &QAbstractButton::clicked,
+  	   this,              &US_ReporterGMP::load_gmp_report_db );
+  connect( pb_view_report_db, &QAbstractButton::clicked,
+	   this,              &US_ReporterGMP::view_report_db );
   
   //rightLayout: genTree
   QLabel*      lb_gentree  = us_banner(      tr( "General Report Profile Settings:" ), 1 );
@@ -479,25 +483,25 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   pb_expand_all  ->setEnabled( false );
   pb_collapse_all->setEnabled( false );
   
-  connect( pb_help,    SIGNAL( clicked()      ),
-	   this,       SLOT(   help()         ) );
-  connect( pb_close,   SIGNAL( clicked()      ),
-	   this,       SLOT(   close()        ) );
+  connect( pb_help,    &QAbstractButton::clicked,
+	   this,       &US_ReporterGMP::help );
+  connect( pb_close,   &QAbstractButton::clicked,
+	   this,       &QWidget::close );
 
-  connect( pb_loadrun,      SIGNAL( clicked()      ),
-	   this,            SLOT(   load_gmp_run()   ) );
-  connect( pb_gen_report,   SIGNAL( clicked()      ),
-	   this,            SLOT(   generate_report()   ) );
-  connect( pb_view_report,  SIGNAL( clicked()      ),
-	   this,            SLOT(   view_report()   ) );
-  connect( pb_select_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( select_all()   ) );
-  connect( pb_unselect_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   unselect_all()   ) );
-  connect( pb_expand_all,   SIGNAL( clicked()      ),
-	   this,            SLOT( expand_all()   ) );
-  connect( pb_collapse_all, SIGNAL( clicked()      ),
-	   this,            SLOT(   collapse_all()   ) ); 
+  connect( pb_loadrun,      &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::load_gmp_run );
+  connect( pb_gen_report,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::generate_report );
+  connect( pb_view_report,  &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::view_report );
+  connect( pb_select_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::select_all );
+  connect( pb_unselect_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::unselect_all );
+  connect( pb_expand_all,   &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::expand_all );
+  connect( pb_collapse_all, &QAbstractButton::clicked,
+	   this,            &US_ReporterGMP::collapse_all ); 
     
   //rightLayout: genTree
   QLabel*      lb_gentree  = us_banner(      tr( "General Report Profile Settings:" ), 1 );
@@ -575,8 +579,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   pb_view_report_auto   = us_pushbutton( tr( "View Report" ) );
   genL->addWidget( pb_view_report_auto );
   pb_view_report_auto ->setVisible( false );
-  connect( pb_view_report_auto,  SIGNAL( clicked()      ),
-	   this,                 SLOT(   view_report()   ) );
+  connect( pb_view_report_auto,  &QAbstractButton::clicked,
+	   this,                 &US_ReporterGMP::view_report );
   superLayout -> addLayout( genL );
   
   // Hide layouts
@@ -2376,8 +2380,8 @@ void US_ReporterGMP::build_miscTree ( void )
   //     first_time_misc_tree_build = false;
   //   }
   
-  connect( miscTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
-  	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
+  connect( miscTree, &QTreeWidget::itemChanged,
+  	   this,    &US_ReporterGMP::changedItem );
 
 }
 
@@ -2553,8 +2557,8 @@ void US_ReporterGMP::build_genTree ( void )
       first_time_gen_tree_build = false;
     }
   
-  connect( genTree, SIGNAL( itemChanged   ( QTreeWidgetItem*, int ) ),
-  	   this,    SLOT  ( changedItem   ( QTreeWidgetItem*, int ) ) );
+  connect( genTree, &QTreeWidget::itemChanged,
+  	   this,    &US_ReporterGMP::changedItem );
 
 }
 
@@ -2617,8 +2621,8 @@ void US_ReporterGMP::changedItem( QTreeWidgetItem* item, int col )
     }
 
   //reconnect
-  connect( item -> treeWidget(), SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-	   this,                 SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( item -> treeWidget(), &QTreeWidget::itemChanged,
+	   this,                 &US_ReporterGMP::changedItem );
 }
 
 //build perChanTree:ABDE
@@ -2719,8 +2723,8 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
       first_time_perChan_tree_build = false;
     }
   
-  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( perChanTree, &QTreeWidget::itemChanged,
+  	   this,        &US_ReporterGMP::changedItem );
 }
   
 //build perChanTree
@@ -3134,8 +3138,8 @@ void US_ReporterGMP::build_perChanTree ( void )
       first_time_perChan_tree_build = false;
     }
   
-  connect( perChanTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,        SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( perChanTree, &QTreeWidget::itemChanged,
+  	   this,        &US_ReporterGMP::changedItem );
 }
 
 
@@ -3194,8 +3198,8 @@ void US_ReporterGMP::build_combPlotsTree ( void )
 
   //combPlotsTree->setMaximumHeight(30);
 
-  connect( combPlotsTree, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
-  	   this,          SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
+  connect( combPlotsTree, &QTreeWidget::itemChanged,
+  	   this,          &US_ReporterGMP::changedItem );
   
 }
 
@@ -3884,18 +3888,31 @@ void US_ReporterGMP::process_abde_plots( void )
 {
   //read, parse
   sdiag_norm_profile = new US_Norm_Profile("AUTO");
-  connect( sdiag_norm_profile, SIGNAL( pass_channels_info( QStringList& )),
-	   this, SLOT( get_abde_channels(QStringList&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_rmsd_info( QMap< QString, double >& )),
-	   this, SLOT( get_abde_rmsds(QMap< QString, double >&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_menisc_info( QMap< QString, double >& )),
-	   this, SLOT( get_abde_menisc(QMap< QString, double >&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_percents_info( QMap< QString, QMap < QString, double>>& )),
-	   this, SLOT( get_abde_percents(QMap< QString, QMap < QString, double>>&) ) );
-  connect( sdiag_norm_profile, SIGNAL( pass_data_per_channel( QMap< QString, QMap < QString, QVector<QVector<double>> > >& )),
-	   this, SLOT( get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >&) ) );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_channels_info,
+	   this, &US_ReporterGMP::get_abde_channels );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_rmsd_info,
+	   this, &US_ReporterGMP::get_abde_rmsds );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_menisc_info,
+	   this, &US_ReporterGMP::get_abde_menisc );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_percents_info,
+	   this, &US_ReporterGMP::get_abde_percents );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_data_per_channel,
+	   this, &US_ReporterGMP::get_abde_data_per_channel );
+  connect( sdiag_norm_profile, &US_Norm_Profile::pass_selected_signals_info,
+	   this, &US_ReporterGMP::get_abde_selected_signals );
 
   sdiag_norm_profile->load_data_auto_report( prot_details_at_report );
+
+  //Build channel -> {"Analyte #1:":pretty, ...} map so the norm-profile plot
+  //legends can show human-readable analyte names instead of the sanitized
+  //filename tokens it uses internally as sample keys.
+  QMap< QString, QMap< QString, QString > > abde_channs_analytes_pretty;
+  for ( int i=0; i< abde_channList.size(); ++i )
+    {
+      abde_channs_analytes_pretty[ abde_channList[i] ] =
+	US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, abde_channList[i] );
+    }
+  sdiag_norm_profile->set_channels_analytes_pretty_names( abde_channs_analytes_pretty );
   
   //Process all channels & capture plots
   QString subDirName  = runName + "-run" + runID;
@@ -3940,9 +3957,9 @@ void US_ReporterGMP::get_abde_menisc( QMap< QString, double >& abde_menisc_p)
   qDebug() << "[in get_abde_menisc()] -- " << abde_menisc;
 }
 
-void US_ReporterGMP::get_abde_percents(QMap< QString, QMap < QString, double>>& abde_perc_p )
+void US_ReporterGMP::get_abde_percents( QMap< QString, QMap < QString, QMap < QString, double>>>& abde_perc_p )
 {
-  abde_ranges_percents = abde_perc_p;
+  abde_ranges_percents     = abde_perc_p;
 }
 
 void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QVector<QVector<double>> > >& data_per_chan)
@@ -3952,6 +3969,12 @@ void US_ReporterGMP::get_abde_data_per_channel(QMap< QString, QMap < QString, QV
   // qDebug() << "Passed data_for_chan 2A: xvalues -- "   << abde_data_per_channel["2A"]["xvalues"];
   // qDebug() << "Passed data_for_chan 2A: yvaluesN -- "  << abde_data_per_channel["2A"]["yvaluesN"];
   // qDebug() << "Passed data_for_chan 2A: integralN -- " << abde_data_per_channel["2A"]["integralN"];
+}
+
+void US_ReporterGMP::get_abde_selected_signals( QMap< QString, QStringList >& selected_signals_p )
+{
+  abde_selected_signals = selected_signals_p;
+  qDebug() << "[in get_abde_selected_signals()] -- " << abde_selected_signals;
 }
 
 //read eSign GMP record for assigned oper(s) && rev(s) && status
@@ -5550,8 +5573,8 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  //*DEBUG*
 	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 	  
-	  connect( astfem_rsa, SIGNAL( current_component( int ) ),
-	   	   this,       SLOT  ( update_progress  ( int ) ) );
+	  connect( astfem_rsa, &US_Astfem_RSA::current_component,
+	   	   this,       &US_ReporterGMP::update_progress );
 	  astfem_rsa->set_debug_flag( dbg_level );
 	  solution_rec.buffer.compressibility = compress;
 	  solution_rec.buffer.manual          = manual;
@@ -5638,13 +5661,13 @@ void US_ReporterGMP::simulateModel( QMap < QString, QString> & tripleInfo )
 	  tworkers << tworker;
 	  wthreads << wthread;
 	  
-	  connect( wthread, SIGNAL( started()         ),
-		   tworker, SLOT  ( calc_simulation() ) );
+	  connect( wthread, &QThread::started,
+		   tworker, &ThreadWorker::calc_simulation );
 	  
-	  connect( tworker, SIGNAL( work_progress  ( int, int ) ),
-	   	   this,    SLOT(   thread_progress( int, int ) ) );
-	  connect( tworker, SIGNAL( work_complete  ( int )      ),
-		   this,    SLOT(   thread_complete( int )      ) );
+	  connect( tworker, &ThreadWorker::work_progress,
+	   	   this,    &US_ReporterGMP::thread_progress );
+	  connect( tworker, &ThreadWorker::work_complete,
+		   this,    &US_ReporterGMP::thread_complete );
 	  
 	  wthread->start();
 	}
@@ -6950,15 +6973,15 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
     .arg( createdGMPrunts )     //1
     ;
   
+  // NOTE: label ("caption") and value are kept in ONE table (instead of
+  // two separate <table> elements) so that QTextDocument cannot place a page
+  // break between them -- see printDocument()/paintPage() for why a page
+  // break landing between two adjacent, separately-tabled blocks was
+  // possible, and platform-dependent (see reportFontFamily()).
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of GMP Run Initiation: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of GMP Run Initiation: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
     .arg( status_map_c[ "Comment" ][ "comment"] )     //1
@@ -7149,15 +7172,13 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
 	.arg( data_types_import_ts[ im.key() ] )     //2
 	;
       
+      // Label + value kept in a single table (see note above) to prevent the
+      // page-break/pagination drift previously seen between "Comment at the
+      // Time of Data Saving:" and its "Comment: ..." value.
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of Data Saving: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
 	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
@@ -7364,27 +7385,24 @@ void US_ReporterGMP::assemble_user_inputs_html( void )
       html_assembled += tr( "</table>" );
 
       //Edit Profiles Saved:
+      // Single-cell table (see note above).
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Edit Profiles Saved on: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr><td> %1 (UTC)</td>"
+			   "<tr><td><b><i>Edit Profiles Saved on: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> %1 (UTC)</td></tr>"
 			   "</table>"
 			   )
 	.arg( data_types_edit_ts[ im.key() ] )           //1
 	;
 
+      // This is the specific label/value pair ("Comment at the Time of Data
+      // Saving:" / "Comment: ...") that was previously observed splitting
+      // across the page 7/8 boundary on some OS installs; kept as a single
+      // table so it can no longer be separated by a page break.
       html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of Data Saving: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of Data Saving: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
 	.arg( status_map[ "Comment when SAVED" ][ "comment_when_saved"] )     //1
@@ -7447,15 +7465,12 @@ void US_ReporterGMP::user_interactions_analysis_abde( QString analysisABDEJson, 
 
   analysis_time_abde = analysisABDEts;
   
+  // Single-cell table (see note above): label and value can no longer be
+  // separated by a page break.
   html_assembled += tr(
 			   "<table style=\"margin-left:10px\">"
-			   "<caption align=left> <b><i>Comment at the Time of ABDE Profile Processing: </i></b> </caption>"
-			   "</table>"
-			   
-			   "<table style=\"margin-left:25px\">"
-			   "<tr>"
-			   "<td> Comment:  %1 </td> "
-			   "</tr>"
+			   "<tr><td><b><i>Comment at the Time of ABDE Profile Processing: </i></b></td></tr>"
+			   "<tr><td style=\"padding-left:15px\"> Comment:  %1 </td></tr>"
 			   "</table>"
 			   )
     .arg( status_map_c[ "Comment" ][ "comment"] )     //1
@@ -8001,12 +8016,17 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
 	   break;
 	 }
      }
+   //Hoisted out of the if(mwl_abde) block below so the Integration Results
+   //section further down can reuse it to show human-readable analyte names
+   //instead of the sanitized sample keys, without a second DB round-trip.
+   QMap< QString, QString > channs_analytes_buffers;
    if( mwl_abde )
      {
        mstr +=    "\n" + indent( 2 )
 	          + tr( "<h3>Analytes and Buffer Used in MWL-Deconvolution:</h3>\n" )
                   + indent( 2 ) + "<table>\n";
-       QMap< QString, QString > channs_analytes_buffers = get_channels_analytes_mwl_abde( abde_channame );
+       channs_analytes_buffers =
+	 US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, abde_channame );
 
        QMap < QString, QString >::iterator ab;
        for ( ab = channs_analytes_buffers.begin(); ab != channs_analytes_buffers.end(); ++ab )
@@ -8105,6 +8125,7 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
   
    document.print(&printer);
    mstr += "<a href=\"./" + f_model_path_str_only + "\">View Model Distributions</a>";
+   mstr += indent( 2 ) + "</table>\n";
    //END of ABDE distributions .csv format
    
    //Get Report for a channel && item(s)
@@ -8143,162 +8164,123 @@ QString US_ReporterGMP::distrib_info_abde( QString& abde_channame  )
    if ( do_integration )
      {
        int report_items_number = reportGMP-> reportItems.size();
-       
+
        mstr += "\n" + indent( 2 ) + tr( "<h3>Integration Results: Fraction of Total Concentration:</h3>\n" );
-       mstr += indent( 2 ) + "<table>\n";
-       mstr += table_row( tr( "Type:" ),
+
+       QString header_trftp = table_row( tr( "Type:" ),
 			  tr( "Range:"),
 			  tr( "Fraction % from Model (target):" ),
 			  tr( "Tolerance, %:"),
 			  tr( "PASSED ?" ));
-       for ( int kk = 0; kk < report_items_number; ++kk )
+
+       QStringList chann_samples = abde_ranges_percents[abde_channame].keys();
+       //If the user recorded a signal selection for this channel (via
+       //show_signal_selection_dialog() at Save-Profiles time), only include
+       //the samples they left checked. A channel absent from the map means
+       //no selection was recorded (a run saved before this feature existed)
+       //-- keep today's behavior and show every signal in that case.
+       bool have_selection = abde_selected_signals.contains( abde_channame );
+       for (int cs=0; cs< chann_samples.size(); ++cs )
 	 {
-	   US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
-	   QString type           = curr_item.type;
-	   QString method         = curr_item.method;
+	   QString c_sample = chann_samples[cs];
+	   if ( have_selection && !abde_selected_signals[abde_channame].contains( c_sample ) )
+	     continue;
+	   QString c_sample_display = prettify_abde_sample_name( channs_analytes_buffers, c_sample );
 	   
-	   QString int_val_r      = QString::number( curr_item.integration_val );
-	   double  frac_tot_r     = curr_item.total_percent;
-	   double  frac_tot_tol_r = curr_item.tolerance ;
-	   double  low            = curr_item.range_low;
-	   double  high           = curr_item.range_high;
-	   
-	   QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
-	   QString range_alt = QString::number(low) + "-" + QString::number(high);
-	   
-	   //integrate over model_used
-	   double int_val_m = 0;
-	   
-	   double frac_tot_m = abde_ranges_percents[abde_channame][range_alt];
-	   
-	   QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
-	   
-	   // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
-	   // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
-	   // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
-	   
-	   qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
-		    << "Inter. val. Sim -- "
-		    << wvl_abde
-		    << curr_item.type
-		    << curr_item.method
-		    << curr_item.range_low
-		    << curr_item.range_high
-		    << int_val_m;
-	   
-	   mstr += table_row( type,
-			      range,
-			  QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
-			      QString::number( frac_tot_tol_r ),
-			      tot_frac_passed );
+	   QString mstr_sample = "<h4>" + c_sample_display + " signal</h4>\n";
+	   mstr_sample += indent( 2 ) + "<table>\n";
+	   mstr_sample += header_trftp;
+       
+	   for ( int kk = 0; kk < report_items_number; ++kk )
+	     {
+	       US_ReportGMP::ReportItem curr_item = reportGMP-> reportItems[ kk ];
+	       QString type           = curr_item.type;
+	       QString method         = curr_item.method;
+	       
+	       QString int_val_r      = QString::number( curr_item.integration_val );
+	       double  frac_tot_r     = curr_item.total_percent;
+	       double  frac_tot_tol_r = curr_item.tolerance ;
+	       double  low            = curr_item.range_low;
+	       double  high           = curr_item.range_high;
+	       
+	       QString range     = "[" + QString::number(low) + " - " + QString::number(high) + "]";
+	       QString range_alt = QString::number(low) + "-" + QString::number(high);
+	       
+	       //integrate over model_used
+	       double int_val_m = 0;
+	       
+	       double frac_tot_m     = abde_ranges_percents[abde_channame][ c_sample ][range_alt];
+	       
+	       QString tot_frac_passed = ( qAbs( frac_tot_m - frac_tot_r ) <= frac_tot_tol_r ) ? "YES" : "NO";
+	       
+	       // reportGMP-> reportItems[ kk ]. integration_val_sim = int_val_m;
+	       // reportGMP-> reportItems[ kk ]. total_percent_sim   = frac_tot_m;
+	       // reportGMP-> reportItems[ kk ]. passed              = tot_frac_passed;
+	       
+	       qDebug() << "In distrib_info(), fill simulated integration vals: for chann/wvl/type/method/low/high, "
+			<< "Inter. val. Sim -- "
+			<< wvl_abde
+			<< curr_item.type
+			<< curr_item.method
+			<< curr_item.range_low
+			<< curr_item.range_high
+			<< int_val_m;
+	       
+	       mstr_sample += table_row( type,
+					 range,
+					 QString::asprintf( "%5.2f%%", frac_tot_m ) + " (" + QString::number( frac_tot_r ) + "%)",
+					 QString::number( frac_tot_tol_r ),
+					 tot_frac_passed );
+	     }
+	    mstr_sample   += indent( 2 ) + "</table>\n";
+	    mstr          += mstr_sample;
 	 }
-       mstr += indent( 2 ) + "</table>\n";
        //End of integration results
      }
- 
+   
    return mstr;
 }
 
-//ABDE: read all analytes (& possibly buffers) used in MWL-deconv.
-QMap< QString, QString > US_ReporterGMP::get_channels_analytes_mwl_abde( QString abde_channame )
+//NOTE: the per-channel analyte/buffer lookup that used to live here has moved
+//to US_Norm_Profile::get_channels_analytes_mwl_abde( currProto, channame ),
+//so the Analysis-stage ABDE flow (US_Analysis_auto) can share it instead of
+//going without pretty analyte names. See call sites below.
+
+//Reduce a string to its lowercased letters/digits only, so that names which
+//differ only by which separator characters (space, ':', '-', '(', ')', '/',
+//'=', '_', ...) were substituted for filename-safety compare equal.
+static QString us_reportergmp_normalize_for_match( const QString& s )
 {
-  QMap< QString, QString > analytes_buffer_map;
-
-  US_Passwd pw;
-  QString masterPW = pw.getPasswd();
-  US_DB2 db( masterPW );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+  QString out;
+  out.reserve( s.size() );
+  foreach ( QChar c, s )
     {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Database returned the following error: \n" ) +  db.lastError() );
-      
-      return analytes_buffer_map;
+      if ( c.isLetterOrNumber() )
+	out += c.toLower();
     }
+  return out;
+}
 
-  for ( int ii = 0; ii < currProto.rpRange.nranges; ii++ )
+//Look up the human-readable analyte description matching a sanitized sample
+//key (as used for report/plot "sample" identifiers) within an already-fetched
+//channel->{"Analyte #1:":pretty, ...} map. Falls back to sample_key unchanged
+//if no match is found.
+QString US_ReporterGMP::prettify_abde_sample_name( QMap< QString, QString >& channs_analytes_buffers, QString sample_key )
+{
+  QString target = us_reportergmp_normalize_for_match( sample_key );
+  if ( target.isEmpty() )
+    return sample_key;
+
+  QMap< QString, QString >::const_iterator it;
+  for ( it = channs_analytes_buffers.begin(); it != channs_analytes_buffers.end(); ++it )
     {
-      QString channel   = currProto.rpRange.chrngs[ ii ].channel;
-      QString channel_s = channel.split(",")[0].trimmed();
-      channel_s.replace(" / ","");
-      qDebug() << "[in get_channels_analytes_mwl_abde()], channel, channel_s, abde_channame;"
-	       <<  channel << channel_s << abde_channame;
+      if ( !it.key().startsWith( "Analyte #" ) )
+	continue;   //skip the "Buffer:" entry -- not a sample
 
-      if ( channel_s == abde_channame )
-	{
-	  QList< double > all_wvls = currProto.rpRange.chrngs[ ii ].wvlens;
-	  int    nwavl      = all_wvls.count();
-	  bool   buff_req   = currProto.rpRange.chrngs[ ii ].abde_buffer_spectrum;
-	  bool   mwl_deconv = currProto.rpRange.chrngs[ ii ].abde_mwl_deconvolution;
-	  
-	  if ( nwavl > 1 && mwl_deconv )
-	    {
-	      QString sol_id = currProto.rpSolut.chsols[ii].sol_id;
-	      US_Solution*   solution = new US_Solution;
-	      int solutionID = sol_id.toInt();
-	      
-	      int status = US_DB2::OK;
-	      status = solution->readFromDB  ( solutionID, &db );
-	      // Error reporting
-	      if ( status == US_DB2::NO_BUFFER )
-		{
-		  QMessageBox::information( this,
-					    tr( "Attention" ),
-					    tr( "The buffer this solution refers to was not found.\n"
-						"Please restore and try again.\n" ) );
-		  return analytes_buffer_map;
-		}
-	      
-	      else if ( status == US_DB2::NO_ANALYTE )
-		{
-		  QMessageBox::information( this,
-					    tr( "Attention" ),
-					    tr( "One of the analytes this solution refers to was not found.\n"
-						"Please restore and try again.\n" ) );
-		  return analytes_buffer_map;
-		}
-	      
-	      else if ( status != US_DB2::OK )
-		{
-		  QMessageBox::warning( this, tr( "Database Problem" ),
-					tr( "Database returned the following error: \n" ) +  db.lastError() );
-		  return analytes_buffer_map;
-		}
-	      //End of reading Solution:
-	      
-	      //Reading Analytes
-	      int num_analytes = solution->analyteInfo.size();
-	      for (int i=0; i < num_analytes; ++i )
-		{
-		  US_Analyte analyte = solution->analyteInfo[ i ].analyte;
-		  QString a_name     = analyte.description;
-		  QString a_ID       = analyte.analyteID;
-		  QString a_GUID     = analyte.analyteGUID;
-		  
-		  qDebug() << "[GMP REPORT] Solution "  << solution->solutionDesc
-			   << ", (GUID)Analyte " << "(" << a_GUID << ")" << a_name
-			   << ", (ID)Analyte " << "(" << a_ID << ")" << a_name;
-		  
-		  QString ana_name = "Analyte #" + QString::number(i+1) + ":";
-		  analytes_buffer_map[ ana_name ] = a_name;
-		}
-	      
-	      //Reading Buffers
-	      if ( buff_req ) //only if buffer spectrum required
-		{
-		  US_Buffer buffer = solution->buffer;
-		  QString b_name   = buffer.description;
-		  QString b_ID     = buffer.bufferID;
-		  qDebug() << "[GMP REPORT] Solution "  << solution->solutionDesc
-			   << ", (ID)Buffer " << "(" << b_ID << ")" << b_name;
-		  
-		  analytes_buffer_map[ "Buffer:" ] = b_name;
-		}
-	    }
-	}
+      if ( us_reportergmp_normalize_for_match( it.value() ) == target )
+	return it.value();
     }
-
-  return analytes_buffer_map;
+  return sample_key;   //no match -- fall back to the raw (sanitized) name
 }
 
 
@@ -10878,7 +10860,12 @@ void US_ReporterGMP::assemble_pdf( QProgressDialog * progress_msg )
   rptpage  += "    }\n";
   rptpage  += "    .datatext\n";
   rptpage  += "    {\n";
-  rptpage  += "      font-family: monospace;\n";
+  // Pin to the exact fixed-width font we ship (see reportFontFamily()),
+  // with the generic "monospace" keyword only as a last-resort fallback,
+  // instead of relying solely on fontconfig's "monospace" alias -- which
+  // is what let this section's layout/metrics (and therefore page breaks)
+  // differ across OS installs.
+  rptpage  += "      font-family: \"" + US_ReporterGMP::reportFontFamily( true ) + "\", monospace;\n";
   rptpage  += "    }\n";
 
   //rptpage  += "   @media print { footer { position: fixed; bottom: 0; } }";
@@ -12249,7 +12236,16 @@ void US_ReporterGMP::write_pdf_report( void )
   textDocument.setHtml( html_assembled );
 
   qDebug() << "Default QtextDoc font1: " << textDocument.defaultFont();
+
+  // Pin the body font to the font we ship with the app (see
+  // reportFontFamily()), instead of leaving the family unset and letting it
+  // resolve to whatever "sans-serif" happens to fontconfig-match on the
+  // machine generating the report (Noto Sans on Ubuntu 24 vs DejaVu Sans on
+  // Oracle Linux, for example). This is what previously caused identical
+  // HTML to paginate differently -- with page 7/8 splitting a label from its
+  // value -- purely because of which OS built the PDF.
   QFont t_f = textDocument.defaultFont();
+  t_f. setFamily( US_ReporterGMP::reportFontFamily( false ) );
   t_f. setPointSize( 7 );
   textDocument. setDefaultFont( t_f );
   qDebug() << "Default QtextDoc font2: " << textDocument.defaultFont();
@@ -12439,6 +12435,78 @@ void US_ReporterGMP::write_pdf_report( void )
 double US_ReporterGMP::mmToPixels(QPrinter& printer, int mm)
 {
   return mm * 0.039370147 * printer.resolution();
+}
+
+
+// Load (once) and return the family name of the font that GMP reports must
+// use, regardless of platform. This is the fix for the pagination drift seen
+// between Ubuntu 24 (fc-match sans-serif -> "Noto Sans") and Oracle Linux
+// (fc-match sans-serif -> "DejaVu Sans"): letting QTextDocument fall back to
+// the *system* default font means two different distros lay out identical
+// HTML with two different sets of glyph metrics, which shifts where the
+// pixel-height-based page breaks in printDocument()/paintPage() land -
+// occasionally splitting a label from its value across a page boundary
+// (e.g. "Comment at the Time of Data Saving:" / "Comment: sa" on pages 7/8).
+//
+// Embedding the exact font file we ship removes that platform dependency:
+// every install renders with byte-identical metrics, so pagination is
+// reproducible everywhere.
+QString US_ReporterGMP::reportFontFamily(bool monospace)
+{
+  static QString regularFamily;
+  static QString monoFamily;
+
+  QString& cached  = monospace ? monoFamily : regularFamily;
+  if ( !cached.isEmpty() )
+    return cached;
+
+  const QString fname   = monospace ? "DejaVuSansMono.ttf" : "DejaVuSans.ttf";
+  const QString fallbackFamily = monospace ? "DejaVu Sans Mono" : "DejaVu Sans";
+
+  // Fonts are shipped alongside the application (e.g. installed under
+  // <app_dir>/fonts/ or /etc/upmc/ultrascan3/fonts/ as part of the package).
+  // Try the most likely locations in order; the first one found wins.
+  QStringList candidatePaths;
+  candidatePaths << QCoreApplication::applicationDirPath() + "/fonts/" + fname
+                 << QCoreApplication::applicationDirPath() + "/../fonts/" + fname
+                 << qEnvironmentVariable( "ULTRASCAN3" ) + "/fonts/" + fname
+                 << qEnvironmentVariable( "ULTRASCAN" )  + "/etc/fonts/" + fname;
+
+  int fontId = -1;
+  for ( const QString& path : candidatePaths )
+    {
+      if ( path.isEmpty() || !QFileInfo::exists( path ) )
+        continue;
+
+      fontId = QFontDatabase::addApplicationFont( path );
+      if ( fontId != -1 )
+        break;
+    }
+
+  if ( fontId != -1 )
+    {
+      const QStringList families = QFontDatabase::applicationFontFamilies( fontId );
+      if ( !families.isEmpty() )
+        {
+          cached = families.at( 0 );
+          qDebug() << "US_ReporterGMP::reportFontFamily: embedded font loaded -- "
+                    << cached << " from " << candidatePaths;
+          return cached;
+        }
+    }
+
+  // Embedded font file wasn't found/loadable - fall back to asking for the
+  // family by name. This is best-effort only: if the target system doesn't
+  // have "DejaVu Sans[ Mono]" installed, Qt/fontconfig will substitute
+  // something else and the platform-dependent pagination drift can recur.
+  // (Ship the .ttf files with the installer to avoid relying on this path.)
+  qWarning() << "US_ReporterGMP::reportFontFamily: embedded font file not found"
+                " (looked in:" << candidatePaths << "); falling back to"
+                " requesting family by name:" << fallbackFamily
+             << "-- report pagination may not be fully OS-independent"
+                " until the font file is shipped with the application.";
+  cached = fallbackFamily;
+  return cached;
 }
 
 void US_ReporterGMP::printDocument(QPrinter& printer, QTextDocument* doc) //, QWidget* parentWidget)

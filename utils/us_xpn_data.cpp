@@ -2476,19 +2476,13 @@ DbgLv(1) << "rBldRawD   timi1" << timi1 << "timi2" << timi2
 int US_XpnData::export_auc( QVector< US_DataIO::RawData >& allData )
 {
    int nfiles        = 0;
+   exp_errors.clear();
 #if 0
    if ( ! is_raw )
       return nfiles;
 #endif
 
-   int ss_reso        = 100;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
-   }
+   double ss_reso     = US_Settings::speedResolution();
    int ntrips        = allData.count();
    QString ftype     = QString( allData[ 0 ].type[ 0 ] ) +
                        QString( allData[ 0 ].type[ 1 ] );
@@ -2540,7 +2534,15 @@ DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trno
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 
-      US_DataIO::writeRawData( fpath, *rdata );
+      int wstat         = US_DataIO::writeRawData( fpath, *rdata );
+
+      if ( wstat != US_DataIO::OK )
+      {  // Do not count a file the writer refused, and remember why
+         qDebug() << "*ERROR* Unable to write" << fpath
+                  << ":" << US_DataIO::errorString( wstat );
+         exp_errors << fname + ": " + US_DataIO::errorString( wstat );
+         continue;
+      }
 
       nfiles++;
 
@@ -2713,7 +2715,7 @@ DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
          double tempera    = uscan->temperature;
          double omega2t    = uscan->omega2t;
          double time       = uscan->seconds;
-         double setSpeed   = qRound( rawSpeed / (double)ss_reso ) * (double)ss_reso;
+         double setSpeed   = qRound( rawSpeed / ss_reso ) * ss_reso;
 
          // Find the speed step (stage) to which this scan belongs
          int jstage        = 0;
@@ -2828,7 +2830,7 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             time_c++;
             // Set scan number to matching-time scan or 0
             int scannbr       = sctimes.indexOf( time_c );
-            int isSpeed       = (int)qRound( speed_n / (double)ss_reso ) * ss_reso;
+            int isSpeed       = (int)( qRound( speed_n / ss_reso ) * ss_reso );
             //DbgLv(1) << "expA:                 scan" << scannbr;
             scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
             rawSpeed         = speed_n;
@@ -2860,7 +2862,7 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             tempera          += tempe_i;
 
             omg2t_sm         += sq( rawSpeed * M_PI / 30.0 );
-            int isSpeed       = (int)qRound( rawSpeed / (double)ss_reso ) * ss_reso;
+            int isSpeed       = (int)( qRound( rawSpeed / ss_reso ) * ss_reso );
 
             // Set scan number to matching-time scan or 0
             int scannbr       = sctimes.indexOf( time_c );
@@ -2904,19 +2906,13 @@ DbgLv(1) << "expA: TMST files written.";
 int US_XpnData::export_auc_auto( QVector< US_DataIO::RawData >& allData, bool& tmstampOK )
 {
    int nfiles        = 0;
+   exp_errors.clear();
 #if 0
    if ( ! is_raw )
       return nfiles;
 #endif
 
-   int ss_reso        = 100;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toInt();
-   }
+   double ss_reso     = US_Settings::speedResolution();
    int ntrips        = allData.count();
    QString ftype     = QString( allData[ 0 ].type[ 0 ] ) +
                        QString( allData[ 0 ].type[ 1 ] );
@@ -2968,7 +2964,15 @@ DbgLv(1) << "expA: ii" << ii << "trnodes[ii]" << trnodes[ii] << "trnode" << trno
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
 
-      US_DataIO::writeRawData( fpath, *rdata );
+      int wstat         = US_DataIO::writeRawData( fpath, *rdata );
+
+      if ( wstat != US_DataIO::OK )
+      {  // Do not count a file the writer refused, and remember why
+         qDebug() << "*ERROR* Unable to write" << fpath
+                  << ":" << US_DataIO::errorString( wstat );
+         exp_errors << fname + ": " + US_DataIO::errorString( wstat );
+         continue;
+      }
 
       nfiles++;
 
@@ -3142,7 +3146,7 @@ DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
          double tempera    = uscan->temperature;
          double omega2t    = uscan->omega2t;
          double time       = uscan->seconds;
-         double setSpeed   = qRound( rawSpeed / (double)ss_reso ) * (double)ss_reso;
+         double setSpeed   = qRound( rawSpeed / ss_reso ) * ss_reso;
 
          // Find the speed step (stage) to which this scan belongs
          int jstage        = 0;
@@ -3263,7 +3267,7 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             time_c++;
             // Set scan number to matching-time scan or 0
             int scannbr       = sctimes.indexOf( time_c );
-            int isSpeed       = (int)qRound( speed_n / (double)ss_reso ) * ss_reso;
+            int isSpeed       = (int)( qRound( speed_n / ss_reso ) * ss_reso );
             //DbgLv(1) << "expA:                 scan" << scannbr;
             scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
             rawSpeed         = speed_n;
@@ -3296,7 +3300,7 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             tempera          += tempe_i;
 
             omg2t_sm         += sq( rawSpeed * M_PI / 30.0 );
-            int isSpeed       = (int)qRound( rawSpeed / (double)ss_reso ) * ss_reso;
+            int isSpeed       = (int)( qRound( rawSpeed / ss_reso ) * ss_reso );
 
             // Set scan number to matching-time scan or 0
             int scannbr       = sctimes.indexOf( time_c );
@@ -3338,6 +3342,17 @@ DbgLv(1) << "expA: TMST files written.";
 
 
 
+
+// Report on triples the last export could not write
+QString US_XpnData::export_error( void )
+{
+   return exp_errors.join( "\n" );
+}
+
+QStringList US_XpnData::export_errors() const
+{
+   return exp_errors;
+}
 
 // Return a count of a specified type
 int US_XpnData::countOf( QString key )

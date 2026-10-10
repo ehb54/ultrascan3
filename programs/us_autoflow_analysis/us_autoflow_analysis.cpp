@@ -2,12 +2,14 @@
 #include <QJsonValue>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QXmlStreamReader>
 #include <QtNumeric>
 
 #include "us_autoflow_analysis.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_protocol_util.h"
+#include "us_run_protocol.h"
 #include "us_constants.h"
 #include "us_solution_vals.h"
 #include "us_lamm_astfvm.h"
@@ -44,11 +46,11 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
   buttons->addWidget( pb_show_all );
   buttons->addWidget( pb_hide_all );
 
-  connect( pb_show_all,   SIGNAL( clicked()    ),
-	   this,          SLOT  ( show_all() ) );
+  connect( pb_show_all,   &QAbstractButton::clicked,
+	   this,          &US_Analysis_auto::show_all );
   
-  connect( pb_hide_all,   SIGNAL( clicked()    ),
-	   this,          SLOT  ( hide_all() ) );
+  connect( pb_hide_all,   &QAbstractButton::clicked,
+	   this,          &US_Analysis_auto::hide_all );
   
   panel->addLayout(buttons);
   
@@ -66,12 +68,12 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   //for (SSF-)ABDE
   sdiag_norm_profile = new US_Norm_Profile("AUTO");
-  connect( this, SIGNAL( process_abde( QMap < QString, QString > & ) ),
-	   sdiag_norm_profile, SLOT( load_data_auto ( QMap < QString, QString > & )  ) );
-  connect( sdiag_norm_profile, SIGNAL( abde_to_report( QMap < QString, QString > &) ),
-	   this, SLOT( proceed_abde_to_report( QMap < QString, QString > &) ) );
-  connect( sdiag_norm_profile, SIGNAL( back_to_runManager( ) ),
-	   this, SLOT( back_to_initAutoflow() ));
+  connect( this, &US_Analysis_auto::process_abde,
+	   sdiag_norm_profile, &US_Norm_Profile::load_data_auto );
+  connect( sdiag_norm_profile, &US_Norm_Profile::abde_to_report,
+	   this, &US_Analysis_auto::proceed_abde_to_report );
+  connect( sdiag_norm_profile, &US_Norm_Profile::back_to_runManager,
+	   this, &US_Analysis_auto::back_to_initAutoflow);
   panel->addWidget( sdiag_norm_profile );
   sdiag_norm_profile->hide();
   
@@ -254,6 +256,28 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  qDebug() << "Dir for GMP: " << protocol_details_at_analysis["directory_for_gmp"];
 	}
       
+      //Build channel -> {"Analyte #1:":pretty, ...} map (same lookup
+      //US_ReporterGMP uses) so this Analysis-stage norm-profile plot's
+      //legends show human-readable analyte names instead of the sanitized
+      //filename tokens it uses internally as sample keys. Previously this
+      //was only done on the GMP-report side, which is why legends looked
+      //right there but showed raw tokens here.
+      QString abde_proto_xml;
+      US_ProtocolUtil::read_record_auto( ProtocolName_auto, invID, &abde_proto_xml, NULL, &db );
+      QXmlStreamReader abde_proto_xmli( abde_proto_xml );
+      US_RunProtocol currProto_abde;
+      currProto_abde.fromXml( abde_proto_xmli );
+
+      QMap< QString, QMap< QString, QString > > abde_channs_analytes_pretty;
+      for ( int ii = 0; ii < currProto_abde.rpRange.nranges; ii++ )
+	{
+	  QString channame = currProto_abde.rpRange.chrngs[ ii ].channel.split(",")[0].trimmed();
+	  channame.replace(" / ","");
+	  abde_channs_analytes_pretty[ channame ] =
+	    US_Norm_Profile::get_channels_analytes_mwl_abde( currProto_abde, channame );
+	}
+      sdiag_norm_profile->set_channels_analytes_pretty_names( abde_channs_analytes_pretty );
+
       emit close_analysissetup_msg();
 
       //call abde normalizer
@@ -467,7 +491,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
   //TEST: QTimer for GroupBoxes' GUI update
   timer_end_process = new QTimer;
   timer_update      = new QTimer;
-  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
   timer_update->start(5000);     // 5 sec
 
   //gui_update_temp();
@@ -902,7 +926,7 @@ void US_Analysis_auto::gui_update( )
 	      
 	      //Stop timer here, and restart after processed automatically
 	      timer_update -> stop();
-	      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	      disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
 	      in_gui_update  = false;
 	      qDebug() << "Update stopped at FITMEN_AUTO for triple -- " << triple_curr_key;
 	      
@@ -981,14 +1005,14 @@ void US_Analysis_auto::gui_update( )
 	      FitMen->setWindowFlags( Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint);
 	      FitMen->setWindowModality(Qt::ApplicationModal);
 	      /***************************************************************************************************/
-	      connect( FitMen, SIGNAL( editProfiles_updated(  QMap < QString, QString > & ) ),
-		       this, SLOT( update_autoflowAnalysis_statuses (  QMap < QString, QString > &) ) );
+	      connect( FitMen, &US_FitMeniscus::editProfiles_updated,
+		       this, &US_Analysis_auto::update_autoflowAnalysis_statuses );
 
-	      connect( FitMen, SIGNAL( editProfiles_updated_earlier( ) ),
-		       this, SLOT( editProfiles_updated_earlier( ) ) );
+	      connect( FitMen, &US_FitMeniscus::editProfiles_updated_earlier,
+		       this, &US_Analysis_auto::editProfiles_updated_earlier );
 
-	      connect( FitMen, SIGNAL( triple_analysis_processed( ) ),
-		       this, SLOT( triple_analysis_processed( ) ) );
+	      connect( FitMen, &US_FitMeniscus::triple_analysis_processed,
+		       this, &US_Analysis_auto::triple_analysis_processed );
 
 	      // connect( FitMen, SIGNAL( bad_meniscus_values( QMap < QString, QString > & ) ),  //This will take care of BAD values
 	      // 	       this, SLOT( delete_jobs_at_fitmen( QMap < QString, QString > & ) ) );
@@ -1000,7 +1024,7 @@ void US_Analysis_auto::gui_update( )
 
 	      //Stop timer here, and restart with the editProfile_updated signal ??
 	      timer_update -> stop();
-	      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	      disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
 	      
 	      qDebug() << "Update stopped at FITMEN for triple -- " << triple_curr_key;
 	      
@@ -1235,7 +1259,7 @@ void US_Analysis_auto::gui_update( )
       if ( timer_update -> isActive() ) 
 	{
 	  timer_update -> stop();
-	  disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	  disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
 	  
 	  qDebug() << "Update stopped upon final completion...";
 	}
@@ -2322,8 +2346,8 @@ void US_Analysis_auto::simulateModel( )
 	  //*DEBUG*
 	  US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
 	  
-	  connect( astfem_rsa, SIGNAL( current_component( int ) ),
-	   	   this,       SLOT  ( update_progress  ( int ) ) );
+	  connect( astfem_rsa, &US_Astfem_RSA::current_component,
+	   	   this,       &US_Analysis_auto::update_progress );
 	  astfem_rsa->set_debug_flag( dbg_level );
 	  solution_rec.buffer.compressibility = compress;
 	  solution_rec.buffer.manual          = manual;
@@ -2410,13 +2434,13 @@ void US_Analysis_auto::simulateModel( )
 	  tworkers << tworker;
 	  wthreads << wthread;
 	  
-	  connect( wthread, SIGNAL( started()         ),
-		   tworker, SLOT  ( calc_simulation() ) );
+	  connect( wthread, &QThread::started,
+		   tworker, &ThreadWorker::calc_simulation );
 	  
-	  connect( tworker, SIGNAL( work_progress  ( int, int ) ),
-	   	   this,    SLOT(   thread_progress( int, int ) ) );
-	  connect( tworker, SIGNAL( work_complete  ( int )      ),
-		   this,    SLOT(   thread_complete( int )      ) );
+	  connect( tworker, &ThreadWorker::work_progress,
+	   	   this,    &US_Analysis_auto::thread_progress );
+	  connect( tworker, &ThreadWorker::work_complete,
+		   this,    &US_Analysis_auto::thread_complete );
 	  
 	  wthread->start();
 	}
@@ -2601,7 +2625,7 @@ void US_Analysis_auto::plotres( )
    resplotd->setWindowModality(Qt::ApplicationModal);
    resplotd->show();
    
-   connect( resplotd, SIGNAL( on_close() ), this, SLOT( resplot_done() ) );
+   connect( resplotd.data(), &US_ResidPlotFem::on_close, this, &US_Analysis_auto::resplot_done );
 }
 
 
@@ -2614,7 +2638,7 @@ void US_Analysis_auto::resplot_done()
   //Restart timer (if not Active):
   if ( !timer_update -> isActive() && !all_processed ) 
     {
-      connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+      connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
       timer_update->start(5000);
       
       qDebug() << "Timer restarted after RESPLOT closed -- ";
@@ -2745,7 +2769,7 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
   if ( timer_update -> isActive() ) 
     {
       timer_update -> stop();
-      disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+      disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
     
       qDebug() << "Update stopped at View Fit for triple -- " << triple_stage;
     
@@ -3230,7 +3254,7 @@ void US_Analysis_auto::delete_jobs_at_fitmen( QMap < QString, QString > & triple
     }
       
   //Restart timer:
-  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
   timer_update->start(5000);
 
   qDebug() << "Timer restarted after Canceling jobs at FITMEN (processed by other means) for channel -- " << channel_n;
@@ -3471,7 +3495,7 @@ void US_Analysis_auto::update_autoflowAnalysis_statuses (  QMap < QString, QStri
   update_autoflowAnalysis_status_at_fitmen( dbP, requestID_list );
 
   //Restart timer:
-  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
   timer_update->start(5000);
 
   qDebug() << "Timer restarted after updating EditProfiles for channel -- " << channel_name;
@@ -3611,7 +3635,7 @@ void US_Analysis_auto::record_or_update_analysis_meniscus_status( US_DB2* db, QS
 void US_Analysis_auto::editProfiles_updated_earlier ( void )
 {
   //Restart timer:
-  connect(timer_update, SIGNAL(timeout()), this, SLOT( gui_update ( ) ));
+  connect(timer_update, &QTimer::timeout, this, &US_Analysis_auto::gui_update);
   timer_update->start(5000);
 
   qDebug() << "Timer restarted: editProfiles were updated EARLIER -- ";
@@ -3740,13 +3764,13 @@ void US_Analysis_auto::reset_analysis_panel( )
       if ( timer_update -> isActive() ) 
 	{
 	  timer_update -> stop();
-	  disconnect(timer_update, SIGNAL(timeout()), 0, 0);
+	  disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
 	  
 	  qDebug() << "Stopping timer_update !!!!";
 	}
       
       //ALEXEY: now we should wait for completion of the last timer_update shot...
-      connect(timer_end_process, SIGNAL(timeout()), this, SLOT( end_process ( ) ));
+      connect(timer_end_process, &QTimer::timeout, this, &US_Analysis_auto::end_process);
       timer_end_process->start(1000);     // 5 sec
     }
   else
@@ -3773,7 +3797,7 @@ void US_Analysis_auto::end_process( )
     {
       
       timer_end_process->stop();
-      disconnect(timer_end_process, SIGNAL( timeout() ), 0, 0);   //Disconnect timer from anything
+      disconnect(timer_end_process, &QTimer::timeout, nullptr, nullptr);   //Disconnect timer from anything
       
       qDebug() << "ANALYSIS UPDATE panel has been reset!";
       qDebug() << "AFTER: in_gui_update: " << in_gui_update;

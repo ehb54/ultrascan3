@@ -38,8 +38,8 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
 
    ct_order = us_counter( 1, 4.0, 9.0, (double)order );
    ct_order->setSingleStep( 1.0 );
-   connect( ct_order, SIGNAL( valueChanged ( double ) ),
-                      SLOT  ( draw_fit     ( double ) ) );
+   connect( ct_order, &QwtCounter::valueChanged,
+                      this, &US_RiNoise::draw_fit );
    spin->addWidget( ct_order );
    info->addLayout( spin );
 
@@ -47,11 +47,11 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &QDialog::accept );
    buttons->addWidget( pb_accept );
 
    info->addLayout( buttons );

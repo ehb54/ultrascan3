@@ -183,22 +183,22 @@ US_EqModelControl::US_EqModelControl(
    ct_grunpar->setSingleStep( 1 );
    ct_grunpar->setValue( 1 );
 
-   connect( ct_grunpar, SIGNAL( valueChanged( double ) ),
-            this,  SLOT( global_comp_changed( double ) ) );
-   connect( pb_vbar20,  SIGNAL( clicked()       ),
-            this,       SLOT(   set_vbar()      ) );
-   connect( rb_mwfloat, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( rb_vbfloat, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( rb_l1float, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( rb_l2float, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( rb_l3float, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( rb_l4float, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
+   connect( ct_grunpar, &QwtCounter::valueChanged,
+            this,  &US_EqModelControl::global_comp_changed );
+   connect( pb_vbar20,  &QAbstractButton::clicked,
+            this,       &US_EqModelControl::set_vbar );
+   connect( rb_mwfloat, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( rb_vbfloat, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( rb_l1float, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( rb_l2float, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( rb_l3float, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( rb_l4float, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
 
    // Local layout
    lb_lbanner           = us_banner(
@@ -346,22 +346,22 @@ US_EqModelControl::US_EqModelControl(
    us_setReadOnly( le_blbound, true );
    us_setReadOnly( le_ambound, true );
 
-   connect( ct_lrunpar, SIGNAL( valueChanged( double ) ),
-            this,   SLOT( local_comp_changed( double ) ) );
-   connect( ct_scansel, SIGNAL( valueChanged( double ) ),
-            this,       SLOT(   scan_changed( double ) ) );
-   connect( rb_blfloat, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( rb_amfloat, SIGNAL( toggled( bool ) ),
-            this,       SLOT(   update_floats() ) );
-   connect( pb_plenapp, SIGNAL( clicked()       ),
-            this,       SLOT( pathlen_applyto() ) );
-   connect( pb_density, SIGNAL( clicked()       ),
-            this,       SLOT(   set_density()   ) );
-   connect( pb_densapp, SIGNAL( clicked()       ),
-            this,       SLOT( density_applyto() ) );
-   connect( pb_extiapp, SIGNAL( clicked()       ),
-            this,       SLOT( extinct_applyto() ) );
+   connect( ct_lrunpar, &QwtCounter::valueChanged,
+            this,   &US_EqModelControl::local_comp_changed );
+   connect( ct_scansel, &QwtCounter::valueChanged,
+            this,       &US_EqModelControl::scan_changed );
+   connect( rb_blfloat, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( rb_amfloat, &QAbstractButton::toggled,
+            this,       &US_EqModelControl::update_floats );
+   connect( pb_plenapp, &QAbstractButton::clicked,
+            this,       &US_EqModelControl::pathlen_applyto );
+   connect( pb_density, &QAbstractButton::clicked,
+            this,       &US_EqModelControl::set_density );
+   connect( pb_densapp, &QAbstractButton::clicked,
+            this,       &US_EqModelControl::density_applyto );
+   connect( pb_extiapp, &QAbstractButton::clicked,
+            this,       &US_EqModelControl::extinct_applyto );
    ct_lrunpar->setRange( 1, runfit.nbr_comps );
    ct_lrunpar->setSingleStep( 1 );
    ct_scansel->setRange( 1, scanfits.size() );
@@ -376,8 +376,8 @@ US_EqModelControl::US_EqModelControl(
 
    QPushButton* pb_help  = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( selected() ) );
+   connect( pb_help,  &QAbstractButton::clicked, this, &US_EqModelControl::help );
+   connect( pb_close, &QAbstractButton::clicked, this, &US_EqModelControl::selected );
    buttons->addStretch( );
    buttons->addWidget( pb_help );
    buttons->addWidget( pb_close );
@@ -765,28 +765,28 @@ void US_EqModelControl::update_lvals( void )
 // Connect global value GUI components to update slot
 void US_EqModelControl::connect_global( void )
 {
-   connect( le_mwguess, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_mwbound, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_vbguess, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_vbbound, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l1guess, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l1bound, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l2guess, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l2bound, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l3guess, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l3bound, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l4guess, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
-   connect( le_l4bound, SIGNAL( editingFinished() ), SLOT( update_gvals() ) );
+   connect( le_mwguess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_mwbound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_vbguess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_vbbound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l1guess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l1bound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l2guess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l2bound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l3guess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l3bound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l4guess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
+   connect( le_l4bound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_gvals );
 }
 
 // Connect local value GUI components to update slot
 void US_EqModelControl::connect_local( void )
 {
-   connect( le_amguess, SIGNAL( editingFinished() ), SLOT( update_lvals() ) );
-   connect( le_ambound, SIGNAL( editingFinished() ), SLOT( update_lvals() ) );
-   connect( le_blguess, SIGNAL( editingFinished() ), SLOT( update_lvals() ) );
-   connect( le_blbound, SIGNAL( editingFinished() ), SLOT( update_lvals() ) );
-   connect( le_extinct, SIGNAL( editingFinished() ), SLOT( update_lvals() ) );
+   connect( le_amguess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_lvals );
+   connect( le_ambound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_lvals );
+   connect( le_blguess, &QLineEdit::editingFinished, this, &US_EqModelControl::update_lvals );
+   connect( le_blbound, &QLineEdit::editingFinished, this, &US_EqModelControl::update_lvals );
+   connect( le_extinct, &QLineEdit::editingFinished, this, &US_EqModelControl::update_lvals );
 }
 
 // Disconnect global value GUI components
@@ -911,8 +911,8 @@ void US_EqModelControl::set_vbar()
 {
    int            dbdisk = runfit.dbdisk;
    US_AnalyteGui* adiag  = new US_AnalyteGui( true, QString(), dbdisk );
-   connect( adiag, SIGNAL( valueChanged( US_Analyte ) ),
-            this,  SLOT  ( assignVbar  ( US_Analyte ) ) );
+   connect( adiag, qOverload< US_Analyte >( &US_AnalyteGui::valueChanged ),
+            this,  &US_EqModelControl::assignVbar );
    adiag->exec();
    qApp->processEvents();
 }
@@ -923,8 +923,8 @@ void US_EqModelControl::set_density()
    US_Buffer buff;
    int            dbdisk = runfit.dbdisk;
    US_BufferGui*  bdiag  = new US_BufferGui( true, buff, dbdisk );
-   connect( bdiag, SIGNAL( valueChanged(  US_Buffer ) ),
-            this,  SLOT  ( assignDensity( US_Buffer ) ) );
+   connect( bdiag, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
+            this,  &US_EqModelControl::assignDensity );
    bdiag->exec();
    qApp->processEvents();
 }

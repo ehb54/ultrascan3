@@ -33,7 +33,8 @@ int US_Project::readFromDisk( QString& guid )
 
    QXmlStreamReader xml( &file );
 
-   clear();
+   // Leave the destination unchanged if parsing fails.
+   US_Project pr;
 
    while ( ! xml.atEnd() )
    {
@@ -44,25 +45,27 @@ int US_Project::readFromDisk( QString& guid )
          if ( xml.name() == "project" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            projectID   = a.value( "id" ).toString().toInt();
-            projectGUID = a.value( "guid" ).toString();
-            lastUpdated = QFileInfo( filename ).lastModified().toUTC();
+            pr.projectID   = a.value( "id" ).toString().toInt();
+            pr.projectGUID = a.value( "guid" ).toString();
+            pr.lastUpdated = QFileInfo( filename ).lastModified().toUTC();
 
-            readProjectInfo( xml );
+            pr.readProjectInfo( xml );
          }
       }
    }
 
    file.close();
 
-   if ( xml.hasError() ) 
+   if ( xml.hasError() )
    {
       qDebug() << "Error: xml error: \n"
                << xml.errorString();
       return IUS_DB2::DBERROR;
    }
 
-   saveStatus = HD_ONLY;
+   pr.saveStatus = HD_ONLY;
+
+   *this = pr;
 
    return IUS_DB2::OK;
 }

@@ -35,8 +35,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
                               : US_Disk_DB_Controls::Disk;
 
    dkdb_cntrls         = new US_Disk_DB_Controls( ddstate );
-   connect( dkdb_cntrls, SIGNAL( changed       ( bool ) ),
-            this,        SLOT  ( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_SelectEdits::update_disk_db );
 
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    if ( US_Settings::us_inv_level() < 3 )
@@ -44,8 +44,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    QString invnum      = QString::number( US_Settings::us_inv_ID() ) + ": ";
    QString invusr      = US_Settings::us_inv_name();
    le_invest           = us_lineedit( invnum + invusr, 0, true );
-   connect( pb_invest, SIGNAL( clicked()    ),
-                       SLOT  ( get_person() ) );
+   connect( pb_invest, &QAbstractButton::clicked,
+                       this, &US_SelectEdits::get_person );
 
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
@@ -58,8 +58,8 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    top->addWidget( lb_filtdata, row,   0, 1, 1 );
    top->addWidget( le_dfilter,  row++, 1, 1, 3 );
 
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_SelectEdits::search );
 
    main->addLayout( top );
 
@@ -87,15 +87,15 @@ US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_SelectEdits::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectEdits::cancelled );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select PreFilter(s)" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectEdits::accepted );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );
@@ -525,8 +525,8 @@ void US_SelectEdits::get_person()
    int invID     = US_Settings::us_inv_ID();
    US_Investigator* dialog = new US_Investigator( true, invID );
 
-   connect( dialog, SIGNAL( investigator_accepted( int ) ),
-                    SLOT(   update_person(         int ) ) );
+   connect( dialog, &US_Investigator::investigator_accepted,
+                    this, &US_SelectEdits::update_person );
 
    dialog->exec();
 }

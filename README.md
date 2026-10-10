@@ -29,6 +29,26 @@ One could also take hints from this [Dockerfile](https://github.com/ehb54/ultras
 
 Please create an issue or [contact us](https://www.ultrascan3.aucsolutions.com/contacts.php) if you have further questions.
 
+### Toolchains in forks
+
+GitHub application builds use the artifact locations and checksums in
+`buildsys/toolchain.lock.json`. Forks inherit upstream toolchains when they sync;
+automatic toolchain builds and scheduled nightlies run only in `ehb54/ultrascan3`.
+
+On pushes, toolchain builds select targets whose tracked inputs differ from their
+published `inputs_digest`. Platform scripts and Dockerfiles affect their targets;
+shared dependency inputs and toolchain workflow changes affect all targets. Pins
+without a fingerprint rebuild once to record it. Unchanged targets are skipped,
+and a run with no selected targets does not publish or commit pins.
+
+To test dependency changes in a fork, run **Toolchain build** manually on a feature
+branch. Manual runs rebuild the selected targets even when their inputs match.
+The workflow publishes to the fork and updates the pins for those targets on
+that branch. Unselected targets keep their existing sources. Uncheck `open_pr` to
+publish without committing pins; on `main`, enabling it creates a pin PR that is
+automatically merged after validation. Published archives are retained so older
+revisions and forks can still fetch their pinned dependencies.
+
 ### Container environment
 
 Assuming you are experienced with containers...
