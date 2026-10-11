@@ -1391,13 +1391,13 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QLabel*      lb_calibr   = us_label( tr( "Calibration:" ) );
    QPushButton* pb_advrotor = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
    int          ihgt        = pb_advrotor->height();
-                cb_lab      = new QComboBox( this );
+   cb_lab      = new QComboBox( this );
    cb_lab->setAccessibleName( tr( "Laboratory" ) );
    lb_lab->setBuddy( cb_lab );
-                cb_rotor    = new QComboBox( this );
+   cb_rotor    = new QComboBox( this );
    cb_rotor->setAccessibleName( tr( "Rotor" ) );
    lb_rotor->setBuddy( cb_rotor );
-                cb_calibr   = new QComboBox( this );
+   cb_calibr   = new QComboBox( this );
    cb_calibr->setAccessibleName( tr( "Calibration" ) );
    lb_calibr->setBuddy( cb_calibr );
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
@@ -1405,24 +1405,24 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    QLabel*      lb_optima_banner    = us_banner( tr( "Select Optima Machine and Experiment Type " ) );
    //QLabel*      lb_instrument = us_label( tr( "Instrument:" ) );
-                lb_instrument = us_label( tr( "Instrument:" ) );
+   lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
-                cb_optima           = new QComboBox( this );
+   cb_optima           = new QComboBox( this );
    cb_optima->setAccessibleName( tr( "Instrument" ) );
    lb_instrument->setBuddy( cb_optima );
    //QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
-		lb_optima_connected = us_label( tr( "Connection Status: " ) );
-                le_optima_connected = us_lineedit( "", 0, true );
+   lb_optima_connected = us_label( tr( "Connection Status: " ) );
+   le_optima_connected = us_lineedit( "", 0, true );
    le_optima_connected->setAccessibleName( tr( "Connection Status" ) );
    lb_optima_connected->setBuddy( le_optima_connected );
 
-                lb_operator   = us_label( tr( "Select Operator:" ) );
-                cb_operator   = new QComboBox( this );
+   lb_operator   = us_label( tr( "Select Operator:" ) );
+   cb_operator   = new QComboBox( this );
    cb_operator->setAccessibleName( tr( "Operator" ) );
    lb_operator->setBuddy( cb_operator );
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
-                cb_exptype    = new QComboBox( this );
+   cb_exptype    = new QComboBox( this );
    cb_exptype->setAccessibleName( tr( "Experiment Type" ) );
    lb_exptype->setBuddy( cb_exptype );
 

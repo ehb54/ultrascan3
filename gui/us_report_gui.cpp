@@ -619,6 +619,8 @@ void US_ReportGui::build_report_layout( void )
   QCheckBox* ck_combined_plot;
   QCheckBox* ck_ind_plot;
     
+  containerWidget = new QWidget;
+
   for ( int ii = 0; ii < r_item_num; ii++ )
     {
       US_ReportGMP::ReportItem curr_item = report->reportItems[ ii ];
@@ -682,6 +684,9 @@ void US_ReportGui::build_report_layout( void )
       // Zero size keeps these out of view without hide(), which would also hide them from AT-SPI.
       QLabel* lb_type_a11y   = us_label( tr( "Type" ) );
       QLabel* lb_method_a11y = us_label( tr( "Method" ) );
+      // Qt resolves buddy relations among siblings; the row layout reparents the combos here.
+      lb_type_a11y  ->setParent( containerWidget );
+      lb_method_a11y->setParent( containerWidget );
       lb_type_a11y  ->setFixedSize( 0, 0 );
       lb_method_a11y->setFixedSize( 0, 0 );
       lb_type_a11y  ->setBuddy( cb_type );
@@ -753,7 +758,6 @@ void US_ReportGui::build_report_layout( void )
 
   //add Scroll Area to genL
   scrollArea      = new QScrollArea;
-  containerWidget = new QWidget;
   containerWidget->setLayout( genL );
   scrollArea     ->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
   scrollArea     ->setWidgetResizable( true );
