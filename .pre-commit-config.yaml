@@ -1,5 +1,5 @@
 # Install: pip install pre-commit && pre-commit install
-# Requires clang-format 18 incl. git-clang-format (apt install clang-format-18).
+# Requires clang-format 18 incl. git-clang-format and pygments (apt install clang-format-18 python3-pygments).
 repos:
   - repo: local
     hooks:

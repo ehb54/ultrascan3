@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks (or fixes) the UltraScan III code style (.clang-format) on CHANGED LINES only.
 #
-# Also runs scripts/check-conventions.py (nullptr, f(), connect syntax, guards, \file header).
+# Also runs scripts/check-conventions.py (connect syntax, EOF newline, guards, \file header; needs pygments).
 #
 # usage: scripts/check-format.sh [--fix] [--staged | <base-ref>]
 #   --staged    check the staged changes (pre-commit hook)          [default]

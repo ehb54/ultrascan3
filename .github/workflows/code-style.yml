@@ -30,8 +30,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Install clang-format 18
-        run: sudo apt-get update && sudo apt-get install -y clang-format-18
+      - name: Install clang-format 18 and pygments
+        run: sudo apt-get update && sudo apt-get install -y clang-format-18 python3-pygments
       - name: Check changed lines
         env:
           CLANG_FORMAT: clang-format-18

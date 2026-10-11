@@ -10,5 +10,5 @@ Checks: >
   modernize-use-nullptr,
   modernize-redundant-void-arg
 WarningsAsErrors: 'clang-analyzer-*,bugprone-*'
-HeaderFilterRegex: '^.*/(gui|utils|programs)/.*\.h$'
+HeaderFilterRegex: '^.*/(gui|utils|programs|test)/.*\.h$'
 FormatStyle: file
