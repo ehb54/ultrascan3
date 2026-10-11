@@ -893,6 +893,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_hplc_svd.h \
         include/us_hydrodyn_saxs_hplc_baseline_best.h \
         include/us_hydrodyn_saxs_hplc_simulate.h \
+        include/us_uhshs_data.h \
         include/us_hydrodyn_saxs_1d.h \
         include/us_hydrodyn_saxs_2d.h \
         include/us_hydrodyn_supc.h \

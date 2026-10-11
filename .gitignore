@@ -20,6 +20,9 @@ gui/qrc_images.cpp
 /programs/us/us_revision.h
 /us_somo/develop/include/us_revision.h
 /us_somo/develop/include/us_version.h
+/us_somo/develop/build-docker/
+/us_somo/develop/build/
+/us_somo/develop/CMakeUserPresets.json
 *~
 *.pro.user
 *object_script*
