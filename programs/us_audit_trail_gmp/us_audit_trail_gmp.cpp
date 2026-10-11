@@ -2625,7 +2625,6 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	  
 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
 	  le_name -> setObjectName( "name: " + current_reviewer );
-	  le_name -> setAccessibleName( tr( "Signer Name" ) );
 	  QString u_role;
 	  if ( JsonListName. contains("operator") )
 	    u_role = "Operator";
@@ -2633,9 +2632,10 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	    u_role = "Reviewer";
 	  else if ( JsonListName. contains("approver") )
 	    u_role = "Approver";
-	      
+	  le_name -> setAccessibleName( tr( "Signer Name (%1)" ).arg( u_role ) );
+
 	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
-	  le_role -> setAccessibleName( tr( "Signer Role" ) );
+	  le_role -> setAccessibleName( tr( "Signer Role (%1)" ).arg( current_reviewer ) );
 
 	  //TimeDate && Comment
 	  QString e_date, e_decision, e_comment;

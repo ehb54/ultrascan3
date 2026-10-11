@@ -679,8 +679,11 @@ void US_ReportGui::build_report_layout( void )
       cb_method    -> setObjectName( stchan + "method" );
       cb_method    -> setAccessibleName( tr( "Method" ) );
       // Combo Name is always the selected value on Linux; a per-row buddy relation carries purpose.
-      QLabel* lb_type_a11y   = us_label( tr( "Type" ) );     // accessibility-only, never shown
-      QLabel* lb_method_a11y = us_label( tr( "Method" ) );   // accessibility-only, never shown
+      // Zero size keeps these out of view without hide(), which would also hide them from AT-SPI.
+      QLabel* lb_type_a11y   = us_label( tr( "Type" ) );
+      QLabel* lb_method_a11y = us_label( tr( "Method" ) );
+      lb_type_a11y  ->setFixedSize( 0, 0 );
+      lb_method_a11y->setFixedSize( 0, 0 );
       lb_type_a11y  ->setBuddy( cb_type );
       lb_method_a11y->setBuddy( cb_method );
       le_low       -> setObjectName( stchan + "low" );

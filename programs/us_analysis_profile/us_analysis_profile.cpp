@@ -1548,17 +1548,17 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       
       QString stchan      = QString::number( ii ) + ": ";
       le_chann->setObjectName( stchan + "channel" );
-      le_chann->setAccessibleName( tr( "Channel" ) );
+      le_chann->setAccessibleName( tr( "Channel (Row %1)" ).arg( ii + 1 ) );
       le_lcrat->setObjectName( stchan + "loadconc_ratio" );
-      le_lcrat->setAccessibleName( tr( "Load Concentration Ratio" ) );
+      le_lcrat->setAccessibleName( tr( "Load Concentration Ratio (Row %1)" ).arg( ii + 1 ) );
       le_lctol->setObjectName( stchan + "loadconc_tolerance" );
-      le_lctol->setAccessibleName( tr( "Load Concentration Tolerance" ) );
+      le_lctol->setAccessibleName( tr( "Load Concentration Tolerance (Row %1)" ).arg( ii + 1 ) );
       le_ldvol->setObjectName( stchan + "load_volume" );
-      le_ldvol->setAccessibleName( tr( "Load Volume" ) );
+      le_ldvol->setAccessibleName( tr( "Load Volume (Row %1)" ).arg( ii + 1 ) );
       le_lvtol->setObjectName( stchan + "loadvol_tolerance" );
-      le_lvtol->setAccessibleName( tr( "Load Volume Tolerance" ) );
+      le_lvtol->setAccessibleName( tr( "Load Volume Tolerance (Row %1)" ).arg( ii + 1 ) );
       le_daend->setObjectName( stchan + "dataend" );
-      le_daend->setAccessibleName( tr( "Data End" ) );
+      le_daend->setAccessibleName( tr( "Data End (Row %1)" ).arg( ii + 1 ) );
 
       //set Validators for fields
       le_lcrat ->setValidator(validator);

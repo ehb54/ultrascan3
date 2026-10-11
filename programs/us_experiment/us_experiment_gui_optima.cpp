@@ -1392,14 +1392,14 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QPushButton* pb_advrotor = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
    int          ihgt        = pb_advrotor->height();
                 cb_lab      = new QComboBox( this );
-                cb_lab->setAccessibleName( tr( "Laboratory" ) );
-                lb_lab->setBuddy( cb_lab );
+   cb_lab->setAccessibleName( tr( "Laboratory" ) );
+   lb_lab->setBuddy( cb_lab );
                 cb_rotor    = new QComboBox( this );
-                cb_rotor->setAccessibleName( tr( "Rotor" ) );
-                lb_rotor->setBuddy( cb_rotor );
+   cb_rotor->setAccessibleName( tr( "Rotor" ) );
+   lb_rotor->setBuddy( cb_rotor );
                 cb_calibr   = new QComboBox( this );
-                cb_calibr->setAccessibleName( tr( "Calibration" ) );
-                lb_calibr->setBuddy( cb_calibr );
+   cb_calibr->setAccessibleName( tr( "Calibration" ) );
+   lb_calibr->setBuddy( cb_calibr );
    QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
 
@@ -1408,23 +1408,23 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 lb_instrument = us_label( tr( "Instrument:" ) );
    //le_instrument = us_lineedit(   "", 1, true );
                 cb_optima           = new QComboBox( this );
-                cb_optima->setAccessibleName( tr( "Instrument" ) );
-                lb_instrument->setBuddy( cb_optima );
+   cb_optima->setAccessibleName( tr( "Instrument" ) );
+   lb_instrument->setBuddy( cb_optima );
    //QLabel*      lb_optima_connected = us_label( tr( "Connection Status: " ) );
 		lb_optima_connected = us_label( tr( "Connection Status: " ) );
                 le_optima_connected = us_lineedit( "", 0, true );
-                le_optima_connected->setAccessibleName( tr( "Connection Status" ) );
-                lb_optima_connected->setBuddy( le_optima_connected );
+   le_optima_connected->setAccessibleName( tr( "Connection Status" ) );
+   lb_optima_connected->setBuddy( le_optima_connected );
 
                 lb_operator   = us_label( tr( "Select Operator:" ) );
                 cb_operator   = new QComboBox( this );
-                cb_operator->setAccessibleName( tr( "Operator" ) );
-                lb_operator->setBuddy( cb_operator );
+   cb_operator->setAccessibleName( tr( "Operator" ) );
+   lb_operator->setBuddy( cb_operator );
 
    QLabel*      lb_exptype    = us_label( tr( "Experiment Type:" ) );
                 cb_exptype    = new QComboBox( this );
-                cb_exptype->setAccessibleName( tr( "Experiment Type" ) );
-                lb_exptype->setBuddy( cb_exptype );
+   cb_exptype->setAccessibleName( tr( "Experiment Type" ) );
+   lb_exptype->setBuddy( cb_exptype );
 
 		//select data source from disk
 		ck_disksource = new QCheckBox( tr("Select Data Source:"), this );
@@ -4820,7 +4820,9 @@ DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
       cb_wind->setAccessibleName( tr( "Windows (Cell %1)" ).arg( ii + 1 ) );
       // Combo Name is always the selected value on Linux; buddy relations carry purpose instead.
       clabl->setBuddy( cb_cenp );
-      QLabel* lb_wind_a11y = us_label( tr( "Windows" ) );   // accessibility-only, never shown
+      // Zero size keeps this out of view without hide(), which would also hide it from AT-SPI.
+      QLabel* lb_wind_a11y = us_label( tr( "Windows" ) );
+      lb_wind_a11y->setFixedSize( 0, 0 );
       lb_wind_a11y->setBuddy( cb_wind );
 
       genL->addWidget( clabl,   row,   0, 1, 1 );
@@ -6009,9 +6011,9 @@ DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
       ck_osys1->setObjectName( strow + ": optsys1" );
       ck_osys2->setObjectName( strow + ": optsys2" );
       ck_osys3->setObjectName( strow + ": optsys3" );
-      ck_osys1->setAccessibleName( opsys1 + tr( " (Cell %1)" ).arg( scel ) );
-      ck_osys2->setAccessibleName( opsys2 + tr( " (Cell %1)" ).arg( scel ) );
-      ck_osys3->setAccessibleName( opsys3 + tr( " (Cell %1)" ).arg( scel ) );
+      ck_osys1->setAccessibleName( tr( "%1 (Cell %2)" ).arg( opsys1 ).arg( scel ) );
+      ck_osys2->setAccessibleName( tr( "%1 (Cell %2)" ).arg( opsys2 ).arg( scel ) );
+      ck_osys3->setAccessibleName( tr( "%1 (Cell %2)" ).arg( opsys3 ).arg( scel ) );
 
       genL->addWidget( cclabl,   row,    0, 1, 1 );
       genL->addLayout( lo_osyss, row++,  1, 1, 3 );
