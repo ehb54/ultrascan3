@@ -10,19 +10,14 @@
 set -uo pipefail
 
 fix=()
-[ "${1:-}" = "--fix" ] && { fix=(-fix); shift; }
+[ "${1:-}" = "--fix" ] && { fix=(--fix); shift; }
 base=${1:?usage: $0 [--fix] <base-ref> [compile-db-dir]}
 db=${2:-.}
 
 cd "$(git rev-parse --show-toplevel)"
-tidy=${CLANG_TIDY:-clang-tidy}
-diffpy=${CLANG_TIDY_DIFF:-$(command -v clang-tidy-diff.py || command -v clang-tidy-diff-18.py || true)}
-[ -n "$diffpy" ] || { echo "error: clang-tidy-diff.py not found" >&2; exit 2; }
 [ -f "$db/compile_commands.json" ] || { echo "error: $db/compile_commands.json not found" >&2; exit 2; }
 
-git diff -U0 --no-color "$base" -- 'gui/*.cpp' 'gui/*.h' 'utils/*.cpp' 'utils/*.h' \
-                                   'programs/*.cpp' 'programs/*.h' 'test/*.cpp' 'test/*.h' |
-   python3 "$diffpy" -p1 -path "$db" -clang-tidy-binary "$tidy" "${fix[@]}" -quiet > tidy.log 2>&1 || true
+python3 scripts/clang-tidy-changed.py ${fix[@]+"${fix[@]}"} "$base" "$db" > tidy.log 2>&1 || true
 
 python3 - "$PWD" <<'PY'
 import re, sys
