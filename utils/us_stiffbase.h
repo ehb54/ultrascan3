@@ -40,8 +40,7 @@ class US_UTIL_EXTERN US_StiffBase
       //! \param D    Diffusion coefficient
       //! \param sw2  Omega-squared
       //! \param Stif Stif matrix
-      void CompLocalStifRect( double, double, double, double, double,
-                              double** ) const;
+      void CompLocalStifRect( double x0, double x1, double dt, double D, double sw2, double** Stif ) const;
 
    private:
       // parameters for triangular elements
@@ -80,7 +79,7 @@ class US_UTIL_EXTERN US_StiffBase
       double   momB[ 2 ][ 4 ][ 4 ];
       double   momC[ 3 ][ 4 ][ 4 ];
 
-      void RectMoments( void );
+      void     RectMoments();
 }; 
 #endif
 

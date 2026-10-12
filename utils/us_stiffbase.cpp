@@ -140,17 +140,21 @@ void US_StiffBase::CompLocalStif( int NK, double xd[4][2],
 //  Stif[j][i] = h (x0 A0 + h A1) + (D dt/h) (x0 B0 + h B1)
 //             - sw2 dt (x0^2 C0 + 2 x0 h C1 + h^2 C2)
 //  with the reference moments A, B, C (RectMoments).
-void US_StiffBase::CompLocalStifRect( double x0, double x1, double dt,
-      double D, double sw2, double** Stif ) const
+void US_StiffBase::CompLocalStifRect( const double x0,
+                                      const double x1,
+                                      const double dt,
+                                      const double D,
+                                      const double sw2,
+                                      double**     Stif ) const
 {
-   double h   = x1 - x0;
-   double fa0 = h * x0;
-   double fa1 = h * h;
-   double fb0 = D * dt / h * x0;
-   double fb1 = D * dt;
-   double fc0 = sw2 * dt * x0 * x0;
-   double fc1 = sw2 * dt * 2.0 * x0 * h;
-   double fc2 = sw2 * dt * h * h;
+   const double h   = x1 - x0;
+   const double fa0 = h * x0;
+   const double fa1 = h * h;
+   const double fb0 = D * dt / h * x0;
+   const double fb1 = D * dt;
+   const double fc0 = sw2 * dt * x0 * x0;
+   const double fc1 = sw2 * dt * 2.0 * x0 * h;
+   const double fc2 = sw2 * dt * h * h;
 
    for ( int j = 0; j < 4; j++ )
    {
@@ -165,7 +169,7 @@ void US_StiffBase::CompLocalStifRect( double x0, double x1, double dt,
 }
 
 // Reference moments for CompLocalStifRect, from the quadrilateral Gauss rule
-void US_StiffBase::RectMoments( void )
+void US_StiffBase::RectMoments()
 {
    for ( int j = 0; j < 4; j++ )
    {
@@ -177,11 +181,11 @@ void US_StiffBase::RectMoments( void )
 
          for ( int k = 0; k < n_gaussQ; k++ )
          {
-            double wt = xgQ[ k ].w;
-            double xi = xgQ[ k ].x;
-            double fa = wt * phiQ2[ k ][ j ] * phiQ [ k ][ i ];
-            double fb = wt * phiQ1[ k ][ j ] * phiQ1[ k ][ i ];
-            double fc = wt * phiQ [ k ][ j ] * phiQ1[ k ][ i ];
+            const double wt = xgQ[k].w;
+            const double xi = xgQ[k].x;
+            const double fa = wt * phiQ2[k][j] * phiQ[k][i];
+            const double fb = wt * phiQ1[k][j] * phiQ1[k][i];
+            const double fc = wt * phiQ[k][j] * phiQ1[k][i];
 
             sa[ 0 ] += fa;
             sa[ 1 ] += fa * xi;
