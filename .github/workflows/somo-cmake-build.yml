@@ -156,7 +156,7 @@ jobs:
       - name: Build the SOMO targets
         run: |
           cmake --build build \
-              --target us_somo us3_somo us3_admin us3_config us_saxs_cmds_t
+              --target us_somo us3_somo us3_config us_saxs_cmds_t
 
       # The root build puts SOMO in build/us_somo/, laid out to run from there.
       - name: Run a batch from the build tree

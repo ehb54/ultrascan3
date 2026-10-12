@@ -52,7 +52,7 @@ docker run --rm -i \
     export VCPKG_ROOT=/opt/vcpkg
     export VCPKG_MAX_CONCURRENCY="$JOBS"
     export VCPKG_DEFAULT_BINARY_CACHE=/vcpkg-cache
-    SOMO_TARGETS="us_somo us3_somo us3_admin us3_config us_saxs_cmds_t"
+    SOMO_TARGETS="us_somo us3_somo us3_config us_saxs_cmds_t"
 
     case "$MODE" in
       qt5|qt6)

@@ -2,10 +2,11 @@
 
 The CMake build compiles the same files as qmake: it reads the source lists
 from `libus_somo.pro` and each program's `.pro` when it configures. It builds
-`libus_somo` and the programs `us3_somo`, `us_admin` (CMake target
-`us3_admin`), `us3_config` and (not on Windows, as under qmake)
-`us_saxs_cmds_t`. The MPI and CUDA tools are not in the CMake build yet; qmake
-still builds them.
+`libus_somo` and the programs `us3_somo`, `us3_config` and (not on Windows, as
+under qmake) `us_saxs_cmds_t`. The MPI and CUDA tools are not in the CMake
+build yet; qmake still builds them. `us_admin`, UltraScan II's
+administrator-password program, is not built: nothing uses it
+(ehb54/ultrascan-tickets#1138).
 
 On Windows SOMO builds with MinGW (MSYS2), as qmake builds it for the
 packages. MSVC does not compile it yet (ehb54/ultrascan-tickets#1131): the

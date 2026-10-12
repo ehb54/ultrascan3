@@ -5,13 +5,14 @@
 #   GUI programs — a single main.cpp that LINKS libus_somo (+ qwt):
 #     libus_somo          shared library (SONAME .10) — the bulk of the code
 #     us3_somo            main GUI program         (us3_hydrodyn/main.cpp)
-#     us_admin            admin GUI                (us_admin/; CMake target us3_admin)
 #     us3_config          config GUI               (us3_config/)
 #   Command-line tool — compiles a curated ../src subset directly, NO lib, NO qwt:
 #     us_saxs_cmds_t      SAXS command-line tool   (us_saxs_cmds_t/). Unix only,
 #                         as under qmake: cmdline.pri stops with an error on
 #                         Windows, and the code is POSIX.
 #   (us_cluster_server_t dropped: needs Qt3Support / q3socket.h, gone since Qt5)
+#   (us_admin not built: UltraScan II's administrator-password program, which
+#    nothing uses; its removal from SOMO is ehb54/ultrascan-tickets#1138)
 #   The MPI and CUDA tools (us_saxs_cmds_mpi, us_saxs_cmds_mpi_cuda) are not
 #   in the CMake build yet: neither has been built or tested with it. qmake
 #   still builds them.
@@ -407,7 +408,7 @@ endif()
 # PROGRAMS — two distinct classes (verified against the .pro files + ldd):
 #
 #   1) GUI programs (include generic.pri): a single main.cpp that LINKS
-#      libus_somo (which pulls qwt transitively).  -> us3_somo, us_admin, us3_config
+#      libus_somo (which pulls qwt transitively).  -> us3_somo, us3_config
 #
 #   2) Command-line tools (include cmdline.pri): main.cpp plus a CURATED subset
 #      of ../src/*.cpp compiled DIRECTLY into the executable. They do NOT link
@@ -420,8 +421,8 @@ endif()
 # GUI app: main.cpp + link libus_somo (generic.pri: SOURCES=main.cpp, -lus_somo -lqwt)
 # macOS: an .app bundle, as qmake builds every program there, with the keys of
 # the Info.plist qmake writes and the icon the .pro names (macx:ICON). SOMO
-# relies on the bundles: it starts us3_config and us_admin as
-# <system dir>/bin/<name>.app, and finds its install directory from the
+# relies on the bundles: it starts us3_config as
+# <system dir>/bin/us3_config.app, and finds its install directory from the
 # .app/Contents in its own path.
 function(somo_mac_bundle tgt pro)
     if(NOT APPLE)
@@ -459,14 +460,9 @@ function(somo_mac_bundle tgt pro)
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/${tgt}.Info.plist)
 endfunction()
 
-# somo_add_gui_app(<target> <pro> [OUTPUT_NAME <program file name>])
 function(somo_add_gui_app tgt pro)
-    cmake_parse_arguments(PARSE_ARGV 2 _arg "" "OUTPUT_NAME" "")
     somo_qmake_sources(${SOMO_ROOT}/${pro} _srcs _hdrs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
-    if(_arg_OUTPUT_NAME)
-        set_target_properties(${tgt} PROPERTIES OUTPUT_NAME ${_arg_OUTPUT_NAME})
-    endif()
     # On Windows a windowed program with Qt's WinMain, as qmake builds it, so
     # no console window opens with it (ignored on other platforms).
     set_target_properties(${tgt} PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -506,14 +502,14 @@ endfunction()
 
 # --- GUI programs ------------------------------------------------------------
 somo_add_gui_app(us3_somo   us3_hydrodyn/us3_hydrodyn.pro)   # main GUI -> us3_somo binary
-# The target is us3_admin, like SOMO's other GUI targets, so in the root build
-# it cannot be taken for one of UltraScan's us_* programs. The program keeps
-# qmake's name, us_admin: SOMO starts it by that name, and the packages ship it.
-somo_add_gui_app(us3_admin  us_admin/us_admin.pro OUTPUT_NAME us_admin)
+# us_admin (us_admin/) is not built: UltraScan II's administrator-password
+# program. No SOMO menu starts it, nothing reads the password it sets, and it
+# stops without an UltraScan II license file. Removing it from SOMO is
+# ehb54/ultrascan-tickets#1138.
 somo_add_gui_app(us3_config us3_config/us3_config.pro)
 
 set(SOMO_INSTALL_TARGETS
-    us_somo us3_somo us3_admin us3_config)
+    us_somo us3_somo us3_config)
 
 # --- command-line tool -------------------------------------------------------
 # Unix only, as under qmake (us_somo.pro builds it in a unix: scope, and
