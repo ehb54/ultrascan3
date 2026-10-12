@@ -7,10 +7,9 @@
 #include "us_constants.h"
 
 // Drop duplicate solutes from a sorted merge-job solute vector
-static void unique_solutes( QVector< US_Solute >& solutes )
+static void unique_solutes( QVector<US_Solute>& solutes )
 {
-   solutes.erase( std::unique( solutes.begin(), solutes.end() ),
-                  solutes.end() );
+   solutes.erase( std::unique( solutes.begin(), solutes.end() ), solutes.end() );
 }
 
 void US_MPI_Analysis::_2dsa_master( void )
@@ -1249,8 +1248,8 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
                            : bottom_values  [ bottom_run   ];
       std::sort( job.solutes.begin(), job.solutes.end() );
       unique_solutes( job.solutes );
-DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
- << max_depth << "  nsvs=" << simulation_values.solutes.size();
+      DbgLv( 1 ) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth + 1 << max_depth
+                 << "  nsvs=" << simulation_values.solutes.size();
 
       calculated_solutes[ depth ].clear();
       csol_size = 0;

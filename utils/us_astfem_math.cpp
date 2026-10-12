@@ -643,29 +643,30 @@ void US_AstfemMath::initialize_3d(
 {
    *matrix = new double** [ val1 ];
 
-   if ( val1 < 1  ||  val2 < 1 ) {
+   if ( val1 < 1 || val2 < 1 )
+   {
       return;
    }
 
-   double**  rows   = new double* [ (size_t)val1 * val2 ];
-   double*   values = new double  [ (size_t)val1 * val2 * val3 ]();
+   double** rows   = new double*[(size_t) val1 * val2];
+   double*  values = new double[(size_t) val1 * val2 * val3]();
 
    for ( int i = 0; i < val1; i++ )
    {
-      (*matrix)[ i ] = rows + (size_t)i * val2;
+      ( *matrix )[i] = rows + (size_t) i * val2;
 
       for ( int j = 0; j < val2; j++ )
-         (*matrix)[ i ][ j ] = values + ( (size_t)i * val2 + j ) * val3;
+         ( *matrix )[i][j] = values + ( (size_t) i * val2 + j ) * val3;
    }
 }
 
 // Free an array allocated by initialize_3d
 void US_AstfemMath::clear_3d( int val1, int val2, double*** matrix )
 {
-   if ( val1 > 0  &&  val2 > 0 )
+   if ( val1 > 0 && val2 > 0 )
    {
-      delete [] matrix[ 0 ][ 0 ];     // values
-      delete [] matrix[ 0 ];          // row pointers
+      delete[] matrix[0][0]; // values
+      delete[] matrix[0];    // row pointers
    }
 
    delete [] matrix;

@@ -444,16 +444,16 @@ DbgLv(1) << "2P:FC:  abort" << abort;
 
    max_rss();
 
-   WorkPacket2D wtask{};          // value-initialized: typeref, iter, state...
+   WorkPacket2D wtask{}; // value-initialized: typeref, iter, state...
 
    int depth      = maxdepth++;
    wtask.thrn     = 0;
    wtask.taskx    = tkdepths.size();
    wtask.depth    = maxdepth;
    wtask.noisf    = noisflag;    // in this case, we use the noise flag
-   wtask.typeref  = UGRID;       // unconstrained final pass
-   wtask.iter     = r_iter;
-   wtask.state    = READY;
+   wtask.typeref           = UGRID;       // unconstrained final pass
+   wtask.iter              = r_iter;
+   wtask.state             = READY;
    wtask.dsets    = dsets;
    wtask.csolutes.clear();
    wtask.ti_noise.clear();
@@ -473,10 +473,9 @@ DbgLv(1) << "2P:FC:  szSoluC" << c_solutes[ depth ].size();
    {
       if ( c_solutes[ depth ][ ii ].c > 0.0 )
       {
-         if ( ! wtask.isolutes.isEmpty()  &&
-              c_solutes[ depth ][ ii ] == wtask.isolutes.last() )
+         if ( !wtask.isolutes.isEmpty() && c_solutes[depth][ii] == wtask.isolutes.last() )
          {
-            continue;       // skip a duplicate solute (sorted input)
+            continue; // skip a duplicate solute (sorted input)
          }
 
          wtask.isolutes << c_solutes[ depth ][ ii ];
@@ -1190,8 +1189,7 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
 
          emit stage_complete( kcsteps, nctotal );
 
-         emit message_update( pmessage_head() +
-            tr( "Computing depth 1 solutions and beyond ..." ), false );
+         emit message_update( pmessage_head() + tr( "Computing depth 1 solutions and beyond ..." ), false );
       }
    }
 
@@ -1257,28 +1255,26 @@ DbgLv(1) << pmsg;
 DbgLv(1) << "THR_FIN: *NONEW* jqempty" << job_queue.isEmpty()
  << " ReadyWorkerNdx" << wkstates.indexOf( READY );
       if ( depth < maxdepth )
-      {  // If done at depth less than max, see need to queue new tasks:
+      { // If done at depth less than max, see need to queue new tasks:
          //  first at the next two depths, if they hold solutes; if neither
          //  does and no worker is busy, at the lowest deeper depth that does
          //  (otherwise nothing would ever run again)
-         int nqueued  = 0;
+         int nqueued = 0;
 
          for ( int dd = depth + 1; dd <= maxdepth; dd++ )
          {
-            if ( dd > depth + 2  &&
-                 ( nqueued > 0  ||  wkstates.indexOf( WORKING ) >= 0 ) )
+            if ( dd > depth + 2 && ( nqueued > 0 || wkstates.indexOf( WORKING ) >= 0 ) )
             {
                break;
             }
 
             while ( c_solutes.size() < ( dd + 1 ) )
             {
-               c_solutes << QVector< US_Solute >();
+               c_solutes << QVector<US_Solute>();
             }
-DbgLv(1) << "THR_FIN:  dd" << dd << "jad(dd)" << jobs_at_depth(dd)
- << "csize" << c_solutes[dd].size();
+            DbgLv( 1 ) << "THR_FIN:  dd" << dd << "jad(dd)" << jobs_at_depth( dd ) << "csize" << c_solutes[dd].size();
 
-            if ( jobs_at_depth( dd ) != 0  ||  c_solutes[ dd ].size() == 0 )
+            if ( jobs_at_depth( dd ) != 0 || c_solutes[dd].size() == 0 )
             {
                continue;
             }
@@ -1286,28 +1282,26 @@ DbgLv(1) << "THR_FIN:  dd" << dd << "jad(dd)" << jobs_at_depth(dd)
             // queue a task to handle remaining solutes at this depth
             WorkPacket2D wtask = wresult;
             int taskx    = tkdepths.size();
-DbgLv(1) << "THR_FIN:    QT: /NONEW/taskx depth solsz" << taskx << dd
- << c_solutes[dd].size();
-            queue_task( wtask, slolim, klolim, taskx, dd, jnois,
-                        c_solutes[ dd ] );
+            DbgLv( 1 ) << "THR_FIN:    QT: /NONEW/taskx depth solsz" << taskx << dd << c_solutes[dd].size();
+            queue_task( wtask, slolim, klolim, taskx, dd, jnois, c_solutes[dd] );
 
-            c_solutes[ dd ].clear();
+            c_solutes[dd].clear();
             nqueued++;
 
             thrx         = wkstates.indexOf( READY );
 
             if ( thrx < 0 )
-            {  // no worker free:  the task stays queued for the next one
+            { // no worker free:  the task stays queued for the next one
                continue;
             }
 
-            wtask        = next_job();
+            wtask = next_job();
 
             submit_job( wtask, thrx );
-DbgLv(1) << "THR_FIN:    QT: /NONEW/ thrx" << thrx;
+            DbgLv( 1 ) << "THR_FIN:    QT: /NONEW/ thrx" << thrx;
             kstask++;                 // bump count of started worker threads
          }
-      }  // END: ( depth < maxdepth )
+      } // END: ( depth < maxdepth )
    } // END: ( kstsksv == kstask )
 }
 
@@ -1328,12 +1322,10 @@ void US_2dsaProcess::queue_task( WorkPacket2D& wtask, double llss, double llsk,
    wtask.isolutes = isolutes;      // solutes for calc_residuals task
 
    if ( depth > 0 )
-   {  // Merge task:  drop duplicate solutes.  After refinement iterations,
+   { // Merge task:  drop duplicate solutes.  After refinement iterations,
       // every subgrid returns the solutes added from the previous iteration.
       std::sort( wtask.isolutes.begin(), wtask.isolutes.end() );
-      wtask.isolutes.erase( std::unique( wtask.isolutes.begin(),
-                                         wtask.isolutes.end() ),
-                            wtask.isolutes.end() );
+      wtask.isolutes.erase( std::unique( wtask.isolutes.begin(), wtask.isolutes.end() ), wtask.isolutes.end() );
    }
 
    if ( jgrefine == (-2) )
@@ -1342,7 +1334,7 @@ void US_2dsaProcess::queue_task( WorkPacket2D& wtask, double llss, double llsk,
    wtask.csolutes.clear();         // clear output vectors
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
-   int nrisols    = wtask.isolutes.size();
+   int nrisols = wtask.isolutes.size();
    ntisols       += nrisols;
 if ( taskx < 9 || taskx > (nsubgrid-4) )
 DbgLv(1) << "QT: taskx" << taskx << " isolutes size tot" << nrisols << ntisols;

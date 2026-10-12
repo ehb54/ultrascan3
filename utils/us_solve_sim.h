@@ -119,14 +119,19 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param abort_flag Optional pointer to a flag that stops the NNLS
     //!                  solve (return code 3) when it becomes true
     //! \returns         Return code of US_Math2::nnls
-    static int nnls_noise( int noisflag, const QVector< int >& nscans, const QVector< int >& npoints,
-                           int nsolutes, int narows,
-                           QVector< double >& nnls_a, QVector< double >& nnls_b,
-                           QVector< double >& nnls_x, QVector< double >& tinvec,
-                           QVector< double >& rinvec,
+    static int nnls_noise( int                      noisflag,
+                           const QVector<int>&      nscans,
+                           const QVector<int>&      npoints,
+                           int                      nsolutes,
+                           int                      narows,
+                           QVector<double>&         nnls_a,
+                           QVector<double>&         nnls_b,
+                           QVector<double>&         nnls_x,
+                           QVector<double>&         tinvec,
+                           QVector<double>&         rinvec,
                            const std::atomic<bool>* abort_flag = nullptr );
 
-  public slots:
+ public slots:
 
     //! \brief Static function to check if implied grid size is beyond limits
     //! \param data_sets The set of data sets for which to check
@@ -174,13 +179,13 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     int                noisflag;      // Calc-noise flag (0-3 for no|ti|ri|both)
     int                dbg_level;     // Debug level
     bool               dbg_timing;    // Flag whether to print timings
-    std::atomic<bool>  abort{false};         // Flag to abort at next opportunity
+    std::atomic<bool>  abort{ false }; // Flag to abort at next opportunity
     bool               calc_ti;       // Calculate-TI-noise flag
     bool               calc_ri;       // Calculate-RI-noise flag
     bool               banddthr;      // Band-forming data threshold peak enhance
     QDateTime          startCalc;     // Start calc time for elapsed time prints
 
-  private slots:
+ private slots:
     // Limit data to thresholds
     bool data_threshold    ( US_DataIO::RawData*,
                              double, double, double, double );

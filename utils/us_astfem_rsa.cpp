@@ -2667,9 +2667,8 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
 #endif
 
    for ( int k = 0; k < Nx - 1; k++ )
-   {  // loop for all elem:  rectangles [ x_k, x_k+1 ] x [ 0, dt ]
-      stfb0.CompLocalStifRect( xA[ k ], xA[ k + 1 ], af_params.dt, D, sw2,
-                               Stif[ k ] );
+   { // loop for all elem:  rectangles [ x_k, x_k+1 ] x [ 0, dt ]
+      stfb0.CompLocalStifRect( xA[k], xA[k + 1], af_params.dt, D, sw2, Stif[k] );
    }
 
    // Assemble coefficient matrices

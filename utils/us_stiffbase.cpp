@@ -37,7 +37,6 @@ US_StiffBase::US_StiffBase()
       SetGauss();
       LinearBasis();
       RectMoments();
-
 }
 
 US_StiffBase::~US_StiffBase()
@@ -160,10 +159,8 @@ void US_StiffBase::CompLocalStifRect( const double x0,
    {
       for ( int i = 0; i < 4; i++ )
       {
-         Stif[ j ][ i ] = fa0 * momA[ 0 ][ j ][ i ] + fa1 * momA[ 1 ][ j ][ i ]
-                        + fb0 * momB[ 0 ][ j ][ i ] + fb1 * momB[ 1 ][ j ][ i ]
-                        - fc0 * momC[ 0 ][ j ][ i ] - fc1 * momC[ 1 ][ j ][ i ]
-                        - fc2 * momC[ 2 ][ j ][ i ];
+         Stif[j][i] = fa0 * momA[0][j][i] + fa1 * momA[1][j][i] + fb0 * momB[0][j][i] + fb1 * momB[1][j][i] - fc0 * momC[0][j][i] -
+                      fc1 * momC[1][j][i] - fc2 * momC[2][j][i];
       }
    }
 }
@@ -175,9 +172,9 @@ void US_StiffBase::RectMoments()
    {
       for ( int i = 0; i < 4; i++ )
       {
-         double sa[ 2 ] = { 0.0, 0.0 };
-         double sb[ 2 ] = { 0.0, 0.0 };
-         double sc[ 3 ] = { 0.0, 0.0, 0.0 };
+         double sa[2] = { 0.0, 0.0 };
+         double sb[2] = { 0.0, 0.0 };
+         double sc[3] = { 0.0, 0.0, 0.0 };
 
          for ( int k = 0; k < n_gaussQ; k++ )
          {
@@ -187,22 +184,22 @@ void US_StiffBase::RectMoments()
             const double fb = wt * phiQ1[k][j] * phiQ1[k][i];
             const double fc = wt * phiQ[k][j] * phiQ1[k][i];
 
-            sa[ 0 ] += fa;
-            sa[ 1 ] += fa * xi;
-            sb[ 0 ] += fb;
-            sb[ 1 ] += fb * xi;
-            sc[ 0 ] += fc;
-            sc[ 1 ] += fc * xi;
-            sc[ 2 ] += fc * xi * xi;
+            sa[0] += fa;
+            sa[1] += fa * xi;
+            sb[0] += fb;
+            sb[1] += fb * xi;
+            sc[0] += fc;
+            sc[1] += fc * xi;
+            sc[2] += fc * xi * xi;
          }
 
-         momA[ 0 ][ j ][ i ] = sa[ 0 ];
-         momA[ 1 ][ j ][ i ] = sa[ 1 ];
-         momB[ 0 ][ j ][ i ] = sb[ 0 ];
-         momB[ 1 ][ j ][ i ] = sb[ 1 ];
-         momC[ 0 ][ j ][ i ] = sc[ 0 ];
-         momC[ 1 ][ j ][ i ] = sc[ 1 ];
-         momC[ 2 ][ j ][ i ] = sc[ 2 ];
+         momA[0][j][i] = sa[0];
+         momA[1][j][i] = sa[1];
+         momB[0][j][i] = sb[0];
+         momB[1][j][i] = sb[1];
+         momC[0][j][i] = sc[0];
+         momC[1][j][i] = sc[1];
+         momC[2][j][i] = sc[2];
       }
    }
 }

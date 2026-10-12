@@ -75,9 +75,9 @@ class US_UTIL_EXTERN US_StiffBase
       //  (phi) and derivatives (d/dxi = phi1, d/deta = phi2), weighted by
       //  1, xi or xi^2, for rectangle elements (CompLocalStifRect):
       //  A = phi2_j phi_i, B = phi1_j phi1_i, C = phi_j phi1_i
-      double   momA[ 2 ][ 4 ][ 4 ];
-      double   momB[ 2 ][ 4 ][ 4 ];
-      double   momC[ 3 ][ 4 ][ 4 ];
+      double   momA[2][4][4];
+      double   momB[2][4][4];
+      double   momC[3][4][4];
 
       void     RectMoments();
 }; 

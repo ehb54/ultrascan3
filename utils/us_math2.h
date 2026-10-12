@@ -261,17 +261,18 @@ class US_UTIL_EXTERN US_Math2
                     3 = aborted through abort_flag
       */
 
-      static int nnls(
-         double* a, int a_dim1, int m, int n,
-         double* b,
-         double* x,
-         double* rnorm  = nullptr,
-         double* wp     = nullptr,
-         double* zzp    = nullptr,
-         int*    indexp = nullptr,
-         int     itmax  = 0,
-         const std::atomic<bool>* abort_flag = nullptr
-         );
+      static int    nnls( double*                  a,
+                          int                      a_dim1,
+                          int                      m,
+                          int                      n,
+                          double*                  b,
+                          double*                  x,
+                          double*                  rnorm      = nullptr,
+                          double*                  wp         = nullptr,
+                          double*                  zzp        = nullptr,
+                          int*                     indexp     = nullptr,
+                          int                      itmax      = 0,
+                          const std::atomic<bool>* abort_flag = nullptr );
 
       /*! \brief Remove high frequency noise from a signal
           \param array   Data to be smoothed.  This array will be modified.
