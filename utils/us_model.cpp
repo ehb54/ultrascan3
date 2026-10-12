@@ -701,7 +701,7 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             dataDescrip     = a.value( "dataDescrip"    ).toString();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
-            int     subgs   = a.value( "subGrids"       ).toString().toInt();
+            int subgs       = a.value( "subGrids" ).toString().toInt();
             subGrids        = subgs > 0 ? subGrids : subgs;
             QString anal1   = a.value( "type"           ).toString();
             QString anal2   = a.value( "analysisType"   ).toString();
