@@ -110,7 +110,7 @@ class US_UTIL_EXTERN US_Util
       //!
       //! S (single channel) is 0, A is 1, B is 2, and so on.
       //! \returns "SABCDEFGH"
-      static QString channel_letters( void );
+      static QString            channel_letters( void );
 
       //! \brief Return a flag if this is the i'th time an error occurs.
       //!

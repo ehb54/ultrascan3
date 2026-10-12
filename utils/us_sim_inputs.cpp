@@ -1,8 +1,8 @@
 //! \file us_sim_inputs.cpp
 #include "us_sim_inputs.h"
+#include "us_constants.h"
 #include "us_hardware.h"
 #include "us_util.h"
-#include "us_constants.h"
 #include <QDir>
 #include <QStringList>
 
@@ -13,14 +13,14 @@ US_SimInputs::Params::Params()
    US_SimulationParameters::SpeedProfile step_defaults;
 
    // Match the run conditions constructed by us_astfem_sim.
-   rpm                 = 45000.0;
-   duration_hours      = 2;
-   duration_minutes    = 30.0;
-   scans               = 30;
+   rpm              = 45000.0;
+   duration_hours   = 2;
+   duration_minutes = 30.0;
+   scans            = 30;
 
    // Negative means "derive from the time needed to reach speed".
-   delay_hours         = -1;
-   delay_minutes       = -1.0;
+   delay_hours   = -1;
+   delay_minutes = -1.0;
 
    acceleration        = step_defaults.acceleration;
    simpoints           = sp_defaults.simpoints;
@@ -41,21 +41,25 @@ US_SimInputs::Params::Params()
 
 QString US_SimInputs::validateParams( const Params& p )
 {
-   struct PositiveValue { const char* name; double value; bool allow_zero; };
+   struct PositiveValue
+   {
+         const char* name;
+         double      value;
+         bool        allow_zero;
+   };
    const PositiveValue positive[] = {
-      { "speed",             p.rpm,               false },
-      { "acceleration",      p.acceleration,      false },
-      { "points",            (double)p.simpoints, false },
+      { "speed", p.rpm, false },
+      { "acceleration", p.acceleration, false },
+      { "points", (double) p.simpoints, false },
       { "radial resolution", p.radial_resolution, false },
-      { "duration hours",    (double)p.duration_hours, true },
-      { "duration minutes",  p.duration_minutes,       true },
-      { "band volume",       p.band_volume,            true },
+      { "duration hours", (double) p.duration_hours, true },
+      { "duration minutes", p.duration_minutes, true },
+      { "band volume", p.band_volume, true },
    };
 
    for ( const PositiveValue& check : positive )
    {
-      if ( ! qIsFinite( check.value ) ||
-           ( check.allow_zero ? check.value < 0.0 : check.value <= 0.0 ) )
+      if ( !qIsFinite( check.value ) || ( check.allow_zero ? check.value < 0.0 : check.value <= 0.0 ) )
       {
          return QString( "%1 must be finite and %2 (got %3)" )
             .arg( check.name )
@@ -91,15 +95,13 @@ QString US_SimInputs::validateParams( const Params& p )
    // rounded value of zero makes the acceleration ramp infinitely long.
    if ( qRound( p.acceleration ) < 1 )
    {
-      return QString( "acceleration must be at least 1 rpm/s (got %1)" )
-         .arg( p.acceleration );
+      return QString( "acceleration must be at least 1 rpm/s (got %1)" ).arg( p.acceleration );
    }
 
-   const double finite_values[] = { p.delay_minutes, p.rnoise, p.lrnoise,
-      p.tinoise, p.rinoise, p.baseline };
+   const double finite_values[] = { p.delay_minutes, p.rnoise, p.lrnoise, p.tinoise, p.rinoise, p.baseline };
    for ( double value : finite_values )
    {
-      if ( ! qIsFinite( value ) )
+      if ( !qIsFinite( value ) )
       {
          return "delay, noise, and baseline values must be finite";
       }
@@ -108,22 +110,22 @@ QString US_SimInputs::validateParams( const Params& p )
    // The scan delay must be shorter than the run duration.
    const double duration_min = p.duration_hours * 60.0 + p.duration_minutes;
    const double delay_min    = ( p.delay_hours >= 0 || p.delay_minutes >= 0.0 )
-      ? qMax( 0, p.delay_hours ) * 60.0 + qMax( 0.0, p.delay_minutes )
-      : p.rpm / ( qRound( p.acceleration ) * 60.0 );
+                                  ? qMax( 0, p.delay_hours ) * 60.0 + qMax( 0.0, p.delay_minutes )
+                                  : p.rpm / ( qRound( p.acceleration ) * 60.0 );
 
    if ( delay_min >= duration_min )
    {
       return QString( "delay (%1 min) must be shorter than the run duration"
-                      " (%2 min)" ).arg( delay_min ).arg( duration_min );
+                      " (%2 min)" )
+         .arg( delay_min )
+         .arg( duration_min );
    }
 
-   if ( p.meshType < US_SimulationParameters::ASTFEM ||
-        p.meshType > US_SimulationParameters::ASTFVM )
+   if ( p.meshType < US_SimulationParameters::ASTFEM || p.meshType > US_SimulationParameters::ASTFVM )
    {
       return "mesh type is out of range";
    }
-   if ( p.gridType < US_SimulationParameters::FIXED ||
-        p.gridType > US_SimulationParameters::MOVING )
+   if ( p.gridType < US_SimulationParameters::FIXED || p.gridType > US_SimulationParameters::MOVING )
    {
       return "grid type is out of range";
    }
@@ -141,51 +143,45 @@ QString US_SimInputs::validateParams( const Params& p )
 // failure path, so this does not cost an extra read on a successful call.
 static QString hardwareFailureReason( const US_SimInputs::Params& p )
 {
-   QString hardware_error = US_AbstractCenterpiece::validate(
-      p.centerpiece, p.centerpiece_channel );
-   if ( ! hardware_error.isEmpty() )
+   QString hardware_error = US_AbstractCenterpiece::validate( p.centerpiece, p.centerpiece_channel );
+   if ( !hardware_error.isEmpty() )
    {
       return hardware_error;
    }
 
-   QMap< QString, QString > rotor_map;
-   bool loaded_rotors = US_Hardware::readRotorMap( rotor_map );
-   if ( p.rotor_calibr != "0" &&
-        ( ! loaded_rotors || ! rotor_map.contains( p.rotor_calibr ) ) )
+   QMap<QString, QString> rotor_map;
+   bool                   loaded_rotors = US_Hardware::readRotorMap( rotor_map );
+   if ( p.rotor_calibr != "0" && ( !loaded_rotors || !rotor_map.contains( p.rotor_calibr ) ) )
    {
-      return QString( "rotor calibration ID %1 was not found" )
-         .arg( p.rotor_calibr );
+      return QString( "rotor calibration ID %1 was not found" ).arg( p.rotor_calibr );
    }
 
    return "hardware definitions changed or could not be loaded";
 }
 
-bool US_SimInputs::simParams( const Params& p,
-                              US_SimulationParameters& params_out,
-                              QString& error )
+bool US_SimInputs::simParams( const Params& p, US_SimulationParameters& params_out, QString& error )
 {
    error = validateParams( p );
-   if ( ! error.isEmpty() )
+   if ( !error.isEmpty() )
    {
       return false;
    }
 
-   US_SimulationParameters sp_out;
+   US_SimulationParameters               sp_out;
    US_SimulationParameters::SpeedProfile sp;
 
-   if ( ! sp_out.setHardware( NULL, p.rotor_calibr, p.centerpiece,
-                              p.centerpiece_channel ) )
+   if ( !sp_out.setHardware( NULL, p.rotor_calibr, p.centerpiece, p.centerpiece_channel ) )
    {
       error = hardwareFailureReason( p );
       return false;
    }
 
    // Analysis ignores the band volume unless the centerpiece forms a band.
-   if ( p.band_forming  &&  ! sp_out.band_forming )
+   if ( p.band_forming && !sp_out.band_forming )
    {
       error = QString( "band forming requires a band-forming centerpiece "
-                      "(centerpiece %1 is not band-forming)" )
-         .arg( p.centerpiece );
+                       "(centerpiece %1 is not band-forming)" )
+                 .arg( p.centerpiece );
       return false;
    }
 
@@ -198,13 +194,14 @@ bool US_SimInputs::simParams( const Params& p,
    if ( p.radial_resolution >= column_length )
    {
       error = QString( "radial resolution (%1) must be smaller than the "
-                      "centerpiece column length (%2)" )
-         .arg( p.radial_resolution ).arg( column_length );
+                       "centerpiece column length (%2)" )
+                 .arg( p.radial_resolution )
+                 .arg( column_length );
       return false;
    }
 
    sp_out.mesh_radius.clear();
-   sp_out.speed_step .clear();
+   sp_out.speed_step.clear();
 
    sp.duration_hours    = p.duration_hours;
    sp.duration_minutes  = p.duration_minutes;
@@ -215,16 +212,16 @@ bool US_SimInputs::simParams( const Params& p,
    sp.acceleration      = qRound( p.acceleration );
    sp.acceleration_flag = true;
 
-   if ( p.delay_hours >= 0  ||  p.delay_minutes >= 0.0 )
-   {  // Caller supplied a delay
-      sp.delay_hours    = qMax( 0,   p.delay_hours   );
-      sp.delay_minutes  = qMax( 0.0, p.delay_minutes );
+   if ( p.delay_hours >= 0 || p.delay_minutes >= 0.0 )
+   { // Caller supplied a delay
+      sp.delay_hours   = qMax( 0, p.delay_hours );
+      sp.delay_minutes = qMax( 0.0, p.delay_minutes );
    }
    else
-   {  // Derive delay from stored acceleration, in hours and remaining minutes.
+   { // Derive delay from stored acceleration, in hours and remaining minutes.
       double accel_minutes = p.rpm / ( sp.acceleration * 60.0 );
-      sp.delay_hours    = (int)( accel_minutes / 60.0 );
-      sp.delay_minutes  = accel_minutes - ( sp.delay_hours * 60.0 );
+      sp.delay_hours       = (int) ( accel_minutes / 60.0 );
+      sp.delay_minutes     = accel_minutes - ( sp.delay_hours * 60.0 );
    }
 
    sp_out.speed_step << sp;
@@ -251,8 +248,7 @@ bool US_SimInputs::simParams( const Params& p,
    return true;
 }
 
-bool US_SimInputs::simParams( US_SimulationParameters& params_out,
-                              QString& error )
+bool US_SimInputs::simParams( US_SimulationParameters& params_out, QString& error )
 {
    return simParams( Params(), params_out, error );
 }
@@ -261,7 +257,7 @@ US_Buffer US_SimInputs::buffer()
 {
    US_Buffer buffer_out;
    buffer_out.description = "us3-sim-inputs generated water buffer v1";
-   buffer_out.GUID         = US_Util::new_guid();
+   buffer_out.GUID        = US_Util::new_guid();
 
    return buffer_out;
 }
@@ -269,7 +265,7 @@ US_Buffer US_SimInputs::buffer()
 bool US_SimInputs::writeAll( const QString& dir, QString& error )
 {
    QDir outdir( dir );
-   if ( ! outdir.exists() )
+   if ( !outdir.exists() )
    {
       error = QString( "output directory %1 does not exist" ).arg( dir );
       return false;
@@ -277,13 +273,13 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
 
    // Construct both inputs before writing; hardware loading can fail.
    US_SimulationParameters params;
-   if ( ! simParams( params, error ) )
+   if ( !simParams( params, error ) )
    {
       return false;
    }
 
    US_Model model;
-   if ( ! US_SimSpecies::model( model, error ) )
+   if ( !US_SimSpecies::model( model, error ) )
    {
       return false;
    }
@@ -300,7 +296,7 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
       return false;
    }
 
-   if ( ! buffer().writeToDisk( outdir.filePath( "buffer_default.xml" ) ) )
+   if ( !buffer().writeToDisk( outdir.filePath( "buffer_default.xml" ) ) )
    {
       error = "could not write buffer_default.xml";
       return false;

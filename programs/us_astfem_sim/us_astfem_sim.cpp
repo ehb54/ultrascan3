@@ -3,31 +3,30 @@
 #include <QApplication>
 #include <QTemporaryFile>
 
-#include "us_settings.h"
+#include "us_astfem_math.h"
+#include "us_astfem_rsa.h"
+#include "us_astfem_sim.h"
+#include "us_buffer_gui.h"
+#include "us_clipdata.h"
+#include "us_convert.h"
+#include "us_db2.h"
+#include "us_defines.h"
+#include "us_experiment.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_headless_cli.h"
-#include "us_astfem_sim.h"
-#include "us_sim_params_gui.h"
-#include "us_math2.h"
-#include "us_astfem_math.h"
-#include "us_sim_inputs.h"
 #include "us_hardware.h"
-#include "us_defines.h"
-#include "us_clipdata.h"
-#include "us_rotor_gui.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_gui_util.h"
-#include "us_model_gui.h"
-#include "us_buffer_gui.h"
-#include "us_util.h"
-#include "us_experiment.h"
-#include "us_convert.h"
-#include "us_sim_record.h"
-#include "us_astfem_rsa.h"
+#include "us_headless_cli.h"
 #include "us_lamm_astfvm.h"
+#include "us_math2.h"
+#include "us_model_gui.h"
+#include "us_passwd.h"
+#include "us_rotor_gui.h"
+#include "us_settings.h"
+#include "us_sim_inputs.h"
+#include "us_sim_params_gui.h"
+#include "us_sim_record.h"
 #include "us_time_state.h"
+#include "us_util.h"
 
 // Directory and run-ID suffix for one speed of a multi-speed run.
 // Six digits cover the simulator's 100000 rpm maximum.
@@ -50,7 +49,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    init_simparams();
    meniscus_ar                 = 5.8 + simparams.bottom_position - 7.2;
    stopFlag            = false;
-   sim_failed          = false;
+   sim_failed                  = false;
    movieFlag           = false;
    save_movie          = false;
    time_correctionFlag = false;
@@ -221,19 +220,18 @@ static int rotor_hole_count( const US_Rotor::Rotor& rotor, bool from_db )
 
    if ( from_db )
    {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      US_Passwd               pw;
+      US_DB2                  db( pw.getPasswd() );
       US_Rotor::AbstractRotor arotor;
 
-      if ( db.lastErrno() != IUS_DB2::OK
-           || arotor.readDB( rotor.abstractRotorID, &db ) != US_Rotor::ROTOR_OK )
+      if ( db.lastErrno() != IUS_DB2::OK || arotor.readDB( rotor.abstractRotorID, &db ) != US_Rotor::ROTOR_OK )
       {
          return -1;
       }
       return arotor.numHoles;
    }
 
-   QVector< US_Rotor::AbstractRotor > arotors;
+   QVector<US_Rotor::AbstractRotor> arotors;
    US_Rotor::readAbstractRotorsDisk( arotors );
 
    for ( const US_Rotor::AbstractRotor& arotor : arotors )
@@ -252,11 +250,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    bool gui_needed = !flags.contains("close");
    bool error_occured = false;
    // Abort only when an explicitly requested input fails to load.
-   bool loaded_model = true;
-   bool loaded_buffer = true;
+   bool loaded_model     = true;
+   bool loaded_buffer    = true;
    bool loaded_simparams = true;
-   bool loaded_rotor = true;
-   int  rotor_holes  = -1;
+   bool loaded_rotor     = true;
+   int  rotor_holes      = -1;
    bool errors_to_cl = flags.contains("errors-cl");
    // load model
    if ( flags.contains("model") && flags["model"].length() > 0 ) {
@@ -266,12 +264,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_model( model_id, temp_model );
       dialog->close();
       if ( !success ) {
-         reportHeadlessLoadFailure( "model", model_id, errors_to_cl,
-                                     gui_needed, error_occured );
+         reportHeadlessLoadFailure( "model", model_id, errors_to_cl, gui_needed, error_occured );
          loaded_model = false;
       }
       else {
-         change_model(temp_model);
+         change_model( temp_model );
       }
       delete dialog;
    }
@@ -282,12 +279,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_buffer( load_id, buffer );
       dialog->close();
       if ( !success ) {
-         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl,
-                                     gui_needed, error_occured );
+         reportHeadlessLoadFailure( "buffer", load_id, errors_to_cl, gui_needed, error_occured );
          loaded_buffer = false;
       }
       else {
-         change_buffer(buffer);
+         change_buffer( buffer );
       }
       delete dialog;
    }
@@ -298,15 +294,14 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       bool success = dialog->load_params( load_id, simparams );
       dialog->close();
       if ( !success ) {
-         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl,
-                                     gui_needed, error_occured );
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl, gui_needed, error_occured );
          loaded_simparams = false;
       }
       else {
          // The file omits bottom_position; mirror the loaded at-rest bottom.
          // An explicit --centerpiece overrides it below.
          simparams.bottom_position = simparams.bottom;
-         set_parameters( );
+         set_parameters();
       }
       delete dialog;
    }
@@ -334,14 +329,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          simparams.rotorcoeffs[0]   = coeff1;
          simparams.rotorcoeffs[1]   = coeff2;
          simparams.rotorCalID = QString::number( rotorInfo->currentCalibration.ID );
-         rotor_holes = rotor_hole_count( this->rotor,
-                                         dbdisk == US_Disk_DB_Controls::DB );
+         rotor_holes                = rotor_hole_count( this->rotor, dbdisk == US_Disk_DB_Controls::DB );
          rotorInfo->close();
       }
       else {
          rotorInfo->close();
-         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl,
-                                     gui_needed, error_occured );
+         reportHeadlessLoadFailure( "rotor", rotor_id, errors_to_cl, gui_needed, error_occured );
          loaded_rotor = false;
       }
       delete rotorInfo;
@@ -352,103 +345,103 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // Preserve rotorCalID so its calibration remains in effect.
    // A channel letter implies its centerpiece row (S, A and B are row 0).
    int channel_row = -1;
-   if ( flags.contains("channel") )
+   if ( flags.contains( "channel" ) )
    {
       QString unused;
-      US_AbstractCenterpiece::parse_channel( flags["channel"], channel_row,
-                                             unused );
+      US_AbstractCenterpiece::parse_channel( flags["channel"], channel_row, unused );
    }
 
-   if ( flags.contains("centerpiece") || flags.contains("centerpiece-channel") )
+   if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
    {
-      int cp = 0;
-      int ch = qMax( 0, channel_row );
+      int     cp = 0;
+      int     ch = qMax( 0, channel_row );
       QString parse_error;
 
-      if ( ! US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error )
-           || ( flags.contains("centerpiece-channel")
-                && ! US_AbstractCenterpiece::parse_channel(
-                        flags["centerpiece-channel"], ch, parse_error ) ) )
+      if ( !US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error ) ||
+           ( flags.contains( "centerpiece-channel" ) &&
+             !US_AbstractCenterpiece::parse_channel( flags["centerpiece-channel"], ch, parse_error ) ) )
       {
-         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl,
-                                     gui_needed, error_occured );
+         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl, gui_needed, error_occured );
       }
-      else if ( channel_row >= 0  &&  ch != channel_row )
+      else if ( channel_row >= 0 && ch != channel_row )
       {
          reportHeadlessLoadFailure( "centerpiece",
-            QString( "--channel %1 is centerpiece row %2, but "
-                     "--centerpiece-channel selects row %3" )
-               .arg( flags["channel"] ).arg( channel_row ).arg( ch ),
-            errors_to_cl, gui_needed, error_occured );
+                                    QString( "--channel %1 is centerpiece row %2, but "
+                                             "--centerpiece-channel selects row %3" )
+                                       .arg( flags["channel"] )
+                                       .arg( channel_row )
+                                       .arg( ch ),
+                                    errors_to_cl,
+                                    gui_needed,
+                                    error_occured );
       }
       else
       {
          QString range_error = US_AbstractCenterpiece::validate( cp, ch );
-         if ( ! range_error.isEmpty() )
+         if ( !range_error.isEmpty() )
          {
-            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl,
-                                        gui_needed, error_occured );
+            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl, gui_needed, error_occured );
          }
-         else if ( ! simparams.setHardware( NULL, simparams.rotorCalID,
-                                            cp, ch ) )
-         {  // Reject invalid geometry instead of using the default bottom.
-            reportHeadlessLoadFailure( "centerpiece",
-               "hardware definitions could not be applied", errors_to_cl,
-               gui_needed, error_occured );
+         else if ( !simparams.setHardware( NULL, simparams.rotorCalID, cp, ch ) )
+         { // Reject invalid geometry instead of using the default bottom.
+            reportHeadlessLoadFailure(
+               "centerpiece", "hardware definitions could not be applied", errors_to_cl, gui_needed, error_occured );
          }
          else
-         {  // Record the selected centerpiece in the experiment record.
-            QList< US_AbstractCenterpiece > cp_list;
+         { // Record the selected centerpiece in the experiment record.
+            QList<US_AbstractCenterpiece> cp_list;
             US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
-            sim_centerpiece_id = cp_list[ cp ].serial_number;
+            sim_centerpiece_id = cp_list[cp].serial_number;
          }
       }
    }
 
    // CLI overrides for output type and reproducible identifiers.
-   if ( flags.contains("guid-seed") )
+   if ( flags.contains( "guid-seed" ) )
    {
-      guid_seed  = flags["guid-seed"];
+      guid_seed = flags["guid-seed"];
    }
 
-   if ( flags.contains("edit-timestamp") )
+   if ( flags.contains( "edit-timestamp" ) )
    {
       edit_stamp = flags["edit-timestamp"];
    }
 
-   if ( flags.contains("runtype") && flags["runtype"].length() == 2 )
+   if ( flags.contains( "runtype" ) && flags["runtype"].length() == 2 )
    {
       run_type = flags["runtype"];
    }
 
-   if ( flags.contains("description") )
+   if ( flags.contains( "description" ) )
    {
       sim_description = flags["description"];
    }
 
    // Default output triple: cell 1, channel S.
-   if ( flags.contains("cell") )
+   if ( flags.contains( "cell" ) )
    {
-      sim_cell    = flags["cell"].toInt();
+      sim_cell = flags["cell"].toInt();
 
       // The CLI allows 1 to 8; a loaded rotor may have fewer holes.
-      if ( rotor_holes > 0  &&  sim_cell > rotor_holes )
+      if ( rotor_holes > 0 && sim_cell > rotor_holes )
       {
-         reportHeadlessLoadFailure( "cell",
-            QString( "%1: rotor %2 has only %3 holes" )
-               .arg( sim_cell ).arg( rotor.name ).arg( rotor_holes ),
-            errors_to_cl, gui_needed, error_occured );
+         reportHeadlessLoadFailure(
+            "cell",
+            QString( "%1: rotor %2 has only %3 holes" ).arg( sim_cell ).arg( rotor.name ).arg( rotor_holes ),
+            errors_to_cl,
+            gui_needed,
+            error_occured );
       }
    }
 
-   if ( flags.contains("channel") )
+   if ( flags.contains( "channel" ) )
    {
       sim_channel = flags["channel"].at( 0 ).toLatin1();
    }
 
-   if ( flags.contains("noise-seed") )
+   if ( flags.contains( "noise-seed" ) )
    {
-      noise_seed  = flags["noise-seed"].toUInt();
+      noise_seed = flags["noise-seed"].toUInt();
    }
    // set movie flag if needed
    if ( flags.contains("movie") )
@@ -468,7 +461,8 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       // Check whether the path exists and is writable.
       QString save_path = flags["save"];
       QDir dir( save_path );
-      if ( !dir.exists() ) {
+      if ( !dir.exists() )
+      {
          if ( errors_to_cl )
          {
             qDebug() << "Error: save directory does not exist:" << save_path;
@@ -482,12 +476,13 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       // noise, ...) would otherwise sit alongside the new output and
       // confuse a later loadData(). Checked before the writability probe
       // below, so that probe file is never mistaken for pre-existing content.
-      else if ( dir.exists()  &&  ! dir.isEmpty()  &&  ! flags.contains( "overwrite" ) )
+      else if ( dir.exists() && !dir.isEmpty() && !flags.contains( "overwrite" ) )
       {
          if ( errors_to_cl )
          {
             qDebug() << "Error: save directory is not empty; pass "
-               "--overwrite to reuse it:" << save_path;
+                        "--overwrite to reuse it:"
+                     << save_path;
             exit( 2 );
          }
          error_occured = true;
@@ -506,7 +501,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
                exit( 2 );
             }
             error_occured = true;
-            gui_needed = true;
+            gui_needed    = true;
          }
       }
    }
@@ -520,17 +515,17 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          start_simulation();
 
          if ( sim_failed )
-         {  // Do not save an unsuccessful simulation.
-            DbgLv(0) << "US_Astfem_Sim: simulation failed; nothing was saved";
+         { // Do not save an unsuccessful simulation.
+            DbgLv( 0 ) << "US_Astfem_Sim: simulation failed; nothing was saved";
             error_occured = true;
          }
          else if ( flags.contains( "save" ) && flags["save"].length() > 0 )
          {
             // check if path is accessible and writable
             QString save_path = flags["save"];
-            if ( ! save_simulation( save_path, true, true ) )
+            if ( !save_simulation( save_path, true, true ) )
             {
-               DbgLv(0) << "US_Astfem_Sim: save_simulation failed for" << save_path;
+               DbgLv( 0 ) << "US_Astfem_Sim: save_simulation failed for" << save_path;
                error_occured = true;
             }
          }
@@ -601,8 +596,7 @@ void US_Astfem_Sim::new_model( void )
 {
    system = US_Model();
    US_ModelGui* dialog = new US_ModelGui( system );
-   connect( dialog, &US_ModelGui::valueChanged,
-            this, &US_Astfem_Sim::change_model );
+   connect( dialog, &US_ModelGui::valueChanged, this, &US_Astfem_Sim::change_model );
    dialog->exec();
 }
 
@@ -632,8 +626,7 @@ void US_Astfem_Sim::new_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, qOverload< US_Buffer >( &US_BufferGui::valueChanged ),
-            this, &US_Astfem_Sim::change_buffer );
+   connect( dialog, qOverload<US_Buffer>( &US_BufferGui::valueChanged ), this, &US_Astfem_Sim::change_buffer );
 
    dialog->exec();
    qApp->processEvents();
@@ -713,8 +706,7 @@ DbgLv(1) << "dbdisk_from_us_astfem_sim" << dbdisk;
                                              dbdisk,
                                              rotor, calibration );
 
-   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
-            this, &US_Astfem_Sim::assignRotor );
+   connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected, this, &US_Astfem_Sim::assignRotor );
    rotorInfo->exec();
 DbgLv(1) << "simparams_rotorcoeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
@@ -738,8 +730,7 @@ DbgLv(1) << "SimPar:MAIN:simp: nspeed" << simparams.speed_step.count()
 
    US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
 
-   connect( dialog, &US_SimParamsGui::complete,
-            this, &US_Astfem_Sim::set_parameters );
+   connect( dialog, &US_SimParamsGui::complete, this, &US_Astfem_Sim::set_parameters );
 
    dialog->exec();
 }
@@ -757,8 +748,8 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
    // Initialize all-speed raw data
    sim_data_all.xvalues .clear();
    sim_data_all.scanData.clear();
-   sim_data_all.type[0]    = run_type.at( 0 ).toLatin1();
-   sim_data_all.type[1]    = run_type.at( 1 ).toLatin1();
+   sim_data_all.type[0] = run_type.at( 0 ).toLatin1();
+   sim_data_all.type[1] = run_type.at( 1 ).toLatin1();
 
    QString guid = US_SimRecord::guid( guid_seed, "raw.all" );
    US_Util::uuid_parse( guid, (uchar*)sim_data_all.rawGUID );
@@ -786,58 +777,61 @@ DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
 //DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
 // << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
-   // Fill in speed steps with scan times and omega^2t; build raw data
-   double s_speed = 0.0;
-   int nstep      = simparams.speed_step.count();
+// Fill in speed steps with scan times and omega^2t; build raw data
+double s_speed = 0.0;
+int    nstep   = simparams.speed_step.count();
 
-   double previous_speed = 0.0;
-   double previous_time  = 0.0;
-   double previous_w2t   = 0.0;
-   for ( int jj = 0; jj < nstep; jj++ ) {
-      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ jj ];
-      if ( nstep > 0  &&  sp->set_speed < 1.0 )
-      {  // For multi-speed, insure values for set and average speeds
-         s_speed        = qRound( sp->rotorspeed * 0.01 ) * 100.0;
-         sp->set_speed  = s_speed;
-         sp->avg_speed  = sp->rotorspeed;
-      }
-      const double target_speed = ( sp->set_speed == 0.0 ) ? sp->rotorspeed : sp->set_speed;
-      const double delay    = qRound(sp->delay_hours    * 3600.0 + sp->delay_minutes    * 60.0);
-      const double duration = qRound(sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0);
-      const double scanning_time = duration - delay;
-      const double time_between_scans = ( sp->scans > 1 )
-         ? scanning_time / static_cast<double>( sp->scans - 1 )
-         : 0.0;
-      US_DataIO::Scan scandata;
-      scandata.temperature = simparams.temperature;
-      scandata.rpm         = target_speed;
-      scandata.wavelength  = system.wavelength;
-      scandata.plateau     = 0.0;
-      scandata.delta_r     = simparams.radial_resolution;
-      scandata.rvalues     .fill( 0.0, points   );
-      for (int s = 0; s < sp->scans; s++) {
-         scandata.seconds = static_cast<double>(qRound(previous_time + delay + time_between_scans * s));
-         scandata.omega2t = US_AstfemMath::calc_omega2t(previous_w2t, previous_speed, previous_time,
-            target_speed, sp->acceleration, scandata.seconds);
-         if (s == 0) {
-            sp->time_first = scandata.seconds;
-            sp->w2t_first  = scandata.omega2t;
-            if ( sp->scans == 1 ) {
-               sp->time_last = sp->time_first;
-               sp->w2t_last  = sp->w2t_first;
-            }
-         }
-         else if ( s == sp->scans - 1) {
-            sp->time_last  = scandata.seconds;
-            sp->w2t_last   = scandata.omega2t;
-         }
-         DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
-         sim_data_all.scanData << scandata;
-      }
-      previous_speed = target_speed;
-      previous_time  = sp->time_last;
-      previous_w2t   = sp->w2t_last;
+double previous_speed = 0.0;
+double previous_time  = 0.0;
+double previous_w2t   = 0.0;
+for ( int jj = 0; jj < nstep; jj++ )
+{
+   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[jj];
+   if ( nstep > 0 && sp->set_speed < 1.0 )
+   { // For multi-speed, insure values for set and average speeds
+      s_speed       = qRound( sp->rotorspeed * 0.01 ) * 100.0;
+      sp->set_speed = s_speed;
+      sp->avg_speed = sp->rotorspeed;
    }
+   const double    target_speed       = ( sp->set_speed == 0.0 ) ? sp->rotorspeed : sp->set_speed;
+   const double    delay              = qRound( sp->delay_hours * 3600.0 + sp->delay_minutes * 60.0 );
+   const double    duration           = qRound( sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0 );
+   const double    scanning_time      = duration - delay;
+   const double    time_between_scans = ( sp->scans > 1 ) ? scanning_time / static_cast<double>( sp->scans - 1 ) : 0.0;
+   US_DataIO::Scan scandata;
+   scandata.temperature = simparams.temperature;
+   scandata.rpm         = target_speed;
+   scandata.wavelength  = system.wavelength;
+   scandata.plateau     = 0.0;
+   scandata.delta_r     = simparams.radial_resolution;
+   scandata.rvalues.fill( 0.0, points );
+   for ( int s = 0; s < sp->scans; s++ )
+   {
+      scandata.seconds = static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
+      scandata.omega2t = US_AstfemMath::calc_omega2t(
+         previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, scandata.seconds );
+      if ( s == 0 )
+      {
+         sp->time_first = scandata.seconds;
+         sp->w2t_first  = scandata.omega2t;
+         if ( sp->scans == 1 )
+         {
+            sp->time_last = sp->time_first;
+            sp->w2t_last  = sp->w2t_first;
+         }
+      }
+      else if ( s == sp->scans - 1 )
+      {
+         sp->time_last = scandata.seconds;
+         sp->w2t_last  = scandata.omega2t;
+      }
+      DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
+      sim_data_all.scanData << scandata;
+   }
+   previous_speed = target_speed;
+   previous_time  = sp->time_last;
+   previous_w2t   = sp->w2t_last;
+}
 
    // Create a timestate for this speed profile set
    if ( !tmst_tfpath.isEmpty()  ||
@@ -904,51 +898,50 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 void US_Astfem_Sim::start_simulation( void )
 {
 //DbgLv(1) << "start_simulation is called";
-   sim_failed     = false;
-   double current_time;  // Used for current time
-   double delay;         // Acceleration time of the rotor from one speed to other
-   double increment;     // Used to update omega_2_t in experimental grid
-   double duration;      // Used for time left after acceleration zone
+sim_failed = false;
+double        current_time; // Used for current time
+double        delay;        // Acceleration time of the rotor from one speed to other
+double        increment;    // Used to update omega_2_t in experimental grid
+double        duration;     // Used for time left after acceleration zone
 
-   int size_cv    = system.components.size();// Number of components in the system
-   QVector< bool >  reactVec( size_cv );     // Boolean array showing reaction case between system
+int           size_cv = system.components.size(); // Number of components in the system
+QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
 
-   //moviePlot->autoRefresh();
+//moviePlot->autoRefresh();
 
-   moviePlot->replot();
-   curve_count    = 0;
-   image_count    = 0;
-   int nstep      = simparams.speed_step.size();
-   double rpm     = simparams.speed_step[ 0 ].rotorspeed; // Rotor speed for first speed step
-   dataPlotClear( scanPlot );
-   scanPlot ->setAxisAutoScale( QwtPlot::xBottom );
-   scanPlot ->replot();
+moviePlot->replot();
+curve_count  = 0;
+image_count  = 0;
+int    nstep = simparams.speed_step.size();
+double rpm   = simparams.speed_step[0].rotorspeed; // Rotor speed for first speed step
+dataPlotClear( scanPlot );
+scanPlot->setAxisAutoScale( QwtPlot::xBottom );
+scanPlot->replot();
 
-   pb_stop   ->setEnabled( true  );
-   pb_start  ->setEnabled( false );
-   pb_saveSim->setEnabled( false );
+pb_stop->setEnabled( true );
+pb_start->setEnabled( false );
+pb_saveSim->setEnabled( false );
 
-   // The astfem/astfvm simulation routines expects a dataset structure that
-   // is initialized with a time and radius grid, and all concentration points
-   // need to be set to zero. Each speed is a separate mfem_data set.
-   sim_datas.resize( nstep );
+// The astfem/astfvm simulation routines expects a dataset structure that
+// is initialized with a time and radius grid, and all concentration points
+// need to be set to zero. Each speed is a separate mfem_data set.
+sim_datas.resize( nstep );
 DbgLv(1) << "start_simulation is called, steps:" << nstep;
    // Experimental grid setting starts from here
    for ( int jd = 0; jd < nstep; jd++ )
    {
       sim_datas[ jd ].xvalues .clear();
       sim_datas[ jd ].scanData.clear();
-      sim_datas[ jd ].type[0]    = run_type.at( 0 ).toLatin1();
-      sim_datas[ jd ].type[1]    = run_type.at( 1 ).toLatin1();
+      sim_datas[jd].type[0] = run_type.at( 0 ).toLatin1();
+      sim_datas[jd].type[1] = run_type.at( 1 ).toLatin1();
 
       // Each speed step is a separate run with its own raw GUID.
-      QString guid = US_SimRecord::guid( guid_seed,
-                                         QString( "raw.%1" ).arg( jd ) );
+      QString guid = US_SimRecord::guid( guid_seed, QString( "raw.%1" ).arg( jd ) );
       US_Util::uuid_parse( guid, (uchar*)sim_datas[ jd ].rawGUID );
 
-      sim_datas[ jd ].cell        = sim_cell;
-      sim_datas[ jd ].channel     = sim_channel;
-      sim_datas[ jd ].description = sim_description;
+      sim_datas[jd].cell        = sim_cell;
+      sim_datas[jd].channel     = sim_channel;
+      sim_datas[jd].description = sim_description;
 
       simparams.meniscus      = meniscus_ar;
       simparams.bottom        = simparams.bottom_position;
@@ -1063,18 +1056,12 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
 
       astfem = new US_Astfem_RSA( system_corrected, simparams );
 
-      connect( astfem, &US_Astfem_RSA::new_scan,
-            this, &US_Astfem_Sim::update_movie_plot );
-      connect( astfem, &US_Astfem_RSA::current_component,
-            this, &US_Astfem_Sim::update_progress );
-      connect( astfem, &US_Astfem_RSA::new_time,
-            this, &US_Astfem_Sim::update_time );
-      connect( astfem, &US_Astfem_RSA::current_speed,
-            this, &US_Astfem_Sim::update_speed );
-      connect( astfem, &US_Astfem_RSA::calc_progress,
-            this, &US_Astfem_Sim::show_progress );
-      connect( astfem, &US_Astfem_RSA::calc_done,
-            this, &US_Astfem_Sim::calc_over );
+      connect( astfem, &US_Astfem_RSA::new_scan, this, &US_Astfem_Sim::update_movie_plot );
+      connect( astfem, &US_Astfem_RSA::current_component, this, &US_Astfem_Sim::update_progress );
+      connect( astfem, &US_Astfem_RSA::new_time, this, &US_Astfem_Sim::update_time );
+      connect( astfem, &US_Astfem_RSA::current_speed, this, &US_Astfem_Sim::update_speed );
+      connect( astfem, &US_Astfem_RSA::calc_progress, this, &US_Astfem_Sim::show_progress );
+      connect( astfem, &US_Astfem_RSA::calc_done, this, &US_Astfem_Sim::calc_over );
 
       astfem->set_movie_flag( ck_movie->isChecked() );
 //      astfem->setStopFlag( stopFlag );
@@ -1126,14 +1113,14 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
 
       // Compute the simulation dataset
       if ( astfem->calculate( sim_data_all ) < 0 )
-      {  // Stop before saving if the solver fails; restore the controls
+      { // Stop before saving if the solver fails; restore the controls
          // that finish() would otherwise reset.
-         DbgLv(0) << "US_Astfem_Sim: simulation failed";
-         sim_failed  = true;
-         pb_stop ->setEnabled( false );
+         DbgLv( 0 ) << "US_Astfem_Sim: simulation failed";
+         sim_failed = true;
+         pb_stop->setEnabled( false );
          pb_start->setEnabled( true );
          delete astfem;
-         astfem      = NULL;
+         astfem = NULL;
          return;
       }
       calc_over();
@@ -1142,16 +1129,11 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
    {
       astfvm = new US_LammAstfvm( system, simparams );
 
-      connect( astfvm, &US_LammAstfvm::new_scan,
-            this, &US_Astfem_Sim::update_movie_plot );
-      connect( astfvm, &US_LammAstfvm::comp_progress,
-            this, &US_Astfem_Sim::update_progress );
-      connect( astfvm, &US_LammAstfvm::new_time,
-            this, &US_Astfem_Sim::update_time );
-      connect( astfvm, &US_LammAstfvm::calc_progress,
-            this, &US_Astfem_Sim::show_progress );
-      connect( astfvm, &US_LammAstfvm::calc_done,
-            this, &US_Astfem_Sim::calc_over );
+      connect( astfvm, &US_LammAstfvm::new_scan, this, &US_Astfem_Sim::update_movie_plot );
+      connect( astfvm, &US_LammAstfvm::comp_progress, this, &US_Astfem_Sim::update_progress );
+      connect( astfvm, &US_LammAstfvm::new_time, this, &US_Astfem_Sim::update_time );
+      connect( astfvm, &US_LammAstfvm::calc_progress, this, &US_Astfem_Sim::show_progress );
+      connect( astfvm, &US_LammAstfvm::calc_done, this, &US_Astfem_Sim::calc_over );
       astfvm->set_buffer( buffer );
       astfvm->calculate( sim_datas[ 0 ] );
    }
@@ -1239,13 +1221,13 @@ void US_Astfem_Sim::ri_noise( void )
       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
       {
          double rinoise = US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
-         US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
+         US_DataIO::Scan& scan    = noise_scan( jd, scan_offset, ks );
          tv << scan.seconds;
          rv << rinoise;
 
          for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
          {
-            scan.rvalues[ mp ] += rinoise;
+            scan.rvalues[mp] += rinoise;
          }
       }
       csv_data << tv;
@@ -1253,7 +1235,7 @@ void US_Astfem_Sim::ri_noise( void )
       US_CSV_Data csv;
       csv.setData( header, csv_data );
       csv_data_ri << csv;
-      scan_offset += sim_datas[ jd ].scanData.size();
+      scan_offset += sim_datas[jd].scanData.size();
    }
 }
 
@@ -1267,11 +1249,13 @@ void US_Astfem_Sim::baseline( void )
    {
        for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
        {
-           US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
-           for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              scan.rvalues[ mp ] += simparams.baseline;
+          US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
+          for ( int mp = 0; mp < sim_datas[jd].pointCount(); mp++ )
+          {
+             scan.rvalues[mp] += simparams.baseline;
+          }
        }
-       scan_offset += sim_datas[ jd ].scanData.size();
+       scan_offset += sim_datas[jd].scanData.size();
    }
 }
 
@@ -1280,20 +1264,21 @@ void US_Astfem_Sim::random_noise( void )
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
    // Add random noise
    if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
-   {  int scan_offset = 0;
+   {
+      int scan_offset = 0;
       for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
       {
           for ( int j = 0; j < sim_datas[ jd ].scanData.size(); j++ )
           {
-              US_DataIO::Scan& scan = noise_scan( jd, scan_offset, j );
-              for ( int k = 0; k < sim_datas[ jd ].pointCount(); k++ )
-              {
-                  scan.rvalues[ k ] +=
-                  US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ) + // based on total concentration
-                  US_Math2::box_muller( 0, scan.rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
-              }//'k' loop
+             US_DataIO::Scan& scan = noise_scan( jd, scan_offset, j );
+             for ( int k = 0; k < sim_datas[jd].pointCount(); k++ )
+             {
+                scan.rvalues[k] +=
+                   US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ) +      // based on total concentration
+                   US_Math2::box_muller( 0, scan.rvalues[k] * simparams.lrnoise / 100 ); // based on local concentration
+             } //'k' loop
           }//'j' loop
-          scan_offset += sim_datas[ jd ].scanData.size();
+          scan_offset += sim_datas[jd].scanData.size();
        }//'i' loop
    }
    if ( simparams.rnoise != 0.0  &&  simparams.lrnoise == 0.0 )
@@ -1303,30 +1288,30 @@ void US_Astfem_Sim::random_noise( void )
       {
           for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
           {
-              US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
-              for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              {
-                  scan.rvalues[ mp ] +=
-                  US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
-              }
+             US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
+             for ( int mp = 0; mp < sim_datas[jd].pointCount(); mp++ )
+             {
+                scan.rvalues[mp] += US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
+             }
           }
-          scan_offset += sim_datas[ jd ].scanData.size();
+          scan_offset += sim_datas[jd].scanData.size();
        }
    }
    if ( simparams.rnoise == 0.0 && simparams.lrnoise != 0.0)
-   {  int scan_offset = 0;
+   {
+      int scan_offset = 0;
       for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
       {
           for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
           {
-              US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
-              for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
-              {
-                  scan.rvalues[ mp ] +=
-                  US_Math2::box_muller( 0, scan.rvalues[ mp ] * simparams.lrnoise / 100 ); // based on local concentration
-              }
+             US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
+             for ( int mp = 0; mp < sim_datas[jd].pointCount(); mp++ )
+             {
+                scan.rvalues[mp] +=
+                   US_Math2::box_muller( 0, scan.rvalues[mp] * simparams.lrnoise / 100 ); // based on local concentration
+             }
           }
-          scan_offset += sim_datas[ jd ].scanData.size();
+          scan_offset += sim_datas[jd].scanData.size();
       }
    }
 }
@@ -1357,10 +1342,10 @@ void US_Astfem_Sim::ti_noise( void )
          US_DataIO::Scan& scan = noise_scan( jd, scan_offset, ks );
          for ( int mp = 0; mp < points; mp++ )
          {
-            scan.rvalues[ mp ] += tinoise[ mp ];
+            scan.rvalues[mp] += tinoise[mp];
          }
       }
-      scan_offset += sim_datas[ jd ].scanData.size();
+      scan_offset += sim_datas[jd].scanData.size();
    }
 
    // save the TI into a csv file
@@ -1376,8 +1361,7 @@ void US_Astfem_Sim::ti_noise( void )
 // ASTFEM noise uses the composite dataset; ASTFVM uses per-speed data.
 US_DataIO::Scan& US_Astfem_Sim::noise_scan( int jd, int scan_offset, int ks )
 {
-   return noise_to_composite ? sim_data_all.scanData[ scan_offset + ks ]
-                             : sim_datas[ jd ].scanData[ ks ];
+   return noise_to_composite ? sim_data_all.scanData[scan_offset + ks] : sim_datas[jd].scanData[ks];
 }
 
 // Copy finalized ASTFEM composite scans to the per-speed datasets.
@@ -1387,28 +1371,26 @@ void US_Astfem_Sim::derive_speed_data( void )
 
    for ( int jd = 0; jd < sim_datas.size(); jd++ )
    {
-      if ( scan_offset + sim_datas[ jd ].scanData.size()
-           > sim_data_all.scanData.size() )
+      if ( scan_offset + sim_datas[jd].scanData.size() > sim_data_all.scanData.size() )
       {
-         DbgErr(1) << "ASIM:derive_speed_data: per-speed scan count exceeds "
-            "the composite's scan count; sim_failed set";
+         DbgErr( 1 ) << "ASIM:derive_speed_data: per-speed scan count exceeds "
+                        "the composite's scan count; sim_failed set";
          sim_failed = true;
          return;
       }
 
-      for ( int js = 0; js < sim_datas[ jd ].scanData.size(); js++ )
+      for ( int js = 0; js < sim_datas[jd].scanData.size(); js++ )
       {
-         sim_datas[ jd ].scanData[ js ] =
-            sim_data_all.scanData[ scan_offset + js ];
+         sim_datas[jd].scanData[js] = sim_data_all.scanData[scan_offset + js];
       }
 
-      scan_offset += sim_datas[ jd ].scanData.size();
+      scan_offset += sim_datas[jd].scanData.size();
    }
 
    if ( scan_offset != sim_data_all.scanData.size() )
    {
-      DbgErr(1) << "ASIM:derive_speed_data: per-speed scan counts do not sum "
-         "to the composite's scan count; sim_failed set";
+      DbgErr( 1 ) << "ASIM:derive_speed_data: per-speed scan counts do not sum "
+                     "to the composite's scan count; sim_failed set";
       sim_failed = true;
    }
 }
@@ -1449,8 +1431,7 @@ DbgLv(1) << "ASIM:svscn: IN";
    save_simulation( odir );
 }
 
-bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog,
-                                     bool write_records )
+bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog, bool write_records )
 {
    QString run_id      = odir.section( "/", -1, -1 );
    int nstep           = simparams.speed_step.size();
@@ -1467,7 +1448,7 @@ bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog,
       {  // Single-speed case
          QDir dir ( odir );
 
-         if ( ! save_xla( odir, sim_datas[ 0 ], 0, supress_dialog ) )
+         if ( !save_xla( odir, sim_datas[0], 0, supress_dialog ) )
          {
             return false;
          }
@@ -1488,8 +1469,7 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
 
          else
          {  // Create timestate file pair in imports subdirectory
-            if ( US_AstfemMath::writetimestate( tmst_fpath, simparams,
-                                                sim_datas[ 0 ] ) < 0 )
+            if ( US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas[0] ) < 0 )
             {
                qDebug() << "Error: could not write time state" << tmst_fpath;
                return false;
@@ -1510,23 +1490,23 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       }  // End:  single-speed case
 
       else
-      {  // Multi-speed case: each speed step is saved as its own complete run
+      { // Multi-speed case: each speed step is saved as its own complete run
          //  in a sibling directory suffixed with the rpm
-DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
+         DbgLv( 1 ) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
          if ( have_tmst )
          {  // Copy temporary timestate file pairs to each speed's subdirectory
             //  and save AUC data there
             for ( int jd = 0; jd < nstep; jd++ )
             {
                int ispeed          = simparams.speed_step[ jd ].rotorspeed;
-               QString spsufx      = speed_suffix( ispeed );
+               QString spsufx          = speed_suffix( ispeed );
                QString run_id1     =  run_id + spsufx;
                QString odir1       =  odir   + spsufx;
                QString tmst_fpath1 =  odir1 + "/" + run_id1 + ".time_state.tmst";
                QString xdef_fpath1 =  odir1 + "/" + run_id1 + ".time_state.xml";
                QDir().mkpath( odir1 );
 
-               if ( ! save_xla( odir1, sim_datas[ jd ], jd, supress_dialog ) )
+               if ( !save_xla( odir1, sim_datas[jd], jd, supress_dialog ) )
                {
                   return false;
                }
@@ -1543,15 +1523,14 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
             //  copy them to the other each speed's subdirectory,
             //  and save AUC data in all
             int ispeed          = simparams.speed_step[ 0 ].rotorspeed;
-            QString spsufx      = speed_suffix( ispeed );
+            QString spsufx          = speed_suffix( ispeed );
             QString run_id1     =  run_id + spsufx;
             QString odir1       =  odir   + spsufx;
             QString tmst_fpath1 =  odir1 + "/" + run_id1 + ".time_state.tmst";
             QString xdef_fpath1 =  odir1 + "/" + run_id1 + ".time_state.xml";
             QDir().mkpath( odir1 );
 
-            if ( US_AstfemMath::writetimestate( tmst_fpath1, simparams,
-                                                sim_datas[ 0 ] ) < 0 )
+            if ( US_AstfemMath::writetimestate( tmst_fpath1, simparams, sim_datas[0] ) < 0 )
             {
                qDebug() << "Error: could not write time state" << tmst_fpath1;
                return false;
@@ -1565,7 +1544,7 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
                QString odir2       =  odir   + spsufx;
                QDir().mkpath( odir2 );
 
-               if ( ! save_xla( odir2, sim_datas[ jd ], jd, supress_dialog ) )
+               if ( !save_xla( odir2, sim_datas[jd], jd, supress_dialog ) )
                {
                   return false;
                }
@@ -1587,27 +1566,25 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
          for ( int ii = 0; ii < nstep; ii++ )
          {
             int ispeed          = simparams.speed_step[ ii ].rotorspeed;
-            QString spsufx      = speed_suffix( ispeed );
-            QDir dir( odir + spsufx );
+            QString spsufx          = speed_suffix( ispeed );
+            QDir    dir( odir + spsufx );
 
             if ( csv_data_ti.rowCount() > 0 )
             {
-               csv_data_ti.setFilePath(
-                  dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
+               csv_data_ti.setFilePath( dir.absoluteFilePath( "ASTFEM_TI_NOISE.csv" ) );
                save_csv_noise( csv_data_ti );
             }
 
-            if ( ii < csv_data_ri.size()  &&  csv_data_ri[ ii ].rowCount() > 0 )
+            if ( ii < csv_data_ri.size() && csv_data_ri[ii].rowCount() > 0 )
             {
-               csv_data_ri[ ii ].setFilePath(
-                  dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
-               save_csv_noise( csv_data_ri[ ii ] );
+               csv_data_ri[ii].setFilePath( dir.absoluteFilePath( "ASTFEM_RI_NOISE.csv" ) );
+               save_csv_noise( csv_data_ri[ii] );
             }
          }
-      }  // End:  multi-speed case
+      } // End:  multi-speed case
    }  // End:  output directory specified
    if ( !write_records )
-   {  // Write experiment, solution, and edit records when requested.
+   { // Write experiment, solution, and edit records when requested.
       return true;
    }
 
@@ -1617,19 +1594,18 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       odir += "/";
    }
 
-   QString runType = QString( QChar( sim_datas[0].type[ 0 ] ) )
-                     + QString( QChar( sim_datas[0].type[ 1 ] ) );
+   QString         runType = QString( QChar( sim_datas[0].type[0] ) ) + QString( QChar( sim_datas[0].type[1] ) );
 
    // All datasets share one solution: the model components and run buffer.
-   QList< US_Model > models;
-   QList< double >   wavelengths;
-   models      << system;
+   QList<US_Model> models;
+   QList<double>   wavelengths;
+   models << system;
    wavelengths << system.wavelength;
 
    US_Solution sol = US_SimRecord::solution( models, wavelengths, buffer );
 
    // Set the GUID before saveToDisk() can generate one.
-   if ( ! guid_seed.isEmpty() )
+   if ( !guid_seed.isEmpty() )
    {
       // Key by run ID so reusing a seed with different inputs does not
       // silently overwrite a different run's stored solution.
@@ -1646,41 +1622,35 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
    // Write experiment and edit records beside each dataset.
    // Each speed-specific run has its own directory, run ID, and raw GUID.
    const int nspeed = simparams.speed_step.count();
-   QString   now    = edit_stamp.isEmpty()
-                    ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" )
-                    : edit_stamp;
+   QString   now    = edit_stamp.isEmpty() ? QDateTime::currentDateTimeUtc().toString( "yyMMddhhmm" ) : edit_stamp;
 
    for ( int jd = 0; jd < nspeed; jd++ )
    {
-      US_DataIO::RawData& sim_data = sim_datas[ jd ];
-      QString edir       = odir;
-      QString edit_runid = run_id;
+      US_DataIO::RawData&      sim_data   = sim_datas[jd];
+      QString                  edir       = odir;
+      QString                  edit_runid = run_id;
 
       // A speed-specific run records only its own speed step.
-      QVector< SP_SPEEDPROFILE > speed_steps = ( nspeed > 1 )
-         ? QVector< SP_SPEEDPROFILE >{ simparams.speed_step[ jd ] }
-         : simparams.speed_step;
+      QVector<SP_SPEEDPROFILE> speed_steps =
+         ( nspeed > 1 ) ? QVector<SP_SPEEDPROFILE>{ simparams.speed_step[jd] } : simparams.speed_step;
 
       if ( nspeed > 1 )
-      {  // Match the RPM suffix used when saving the data.
-         QString spsufx     = speed_suffix( simparams.speed_step[ jd ].rotorspeed );
-         edir               = odir.left( odir.length() - 1 ) + spsufx + "/";
-         edit_runid         = run_id + spsufx;
+      { // Match the RPM suffix used when saving the data.
+         QString spsufx = speed_suffix( simparams.speed_step[jd].rotorspeed );
+         edir           = odir.left( odir.length() - 1 ) + spsufx + "/";
+         edit_runid     = run_id + spsufx;
       }
 
       // Recompute cell limits for this speed; af_params holds the last saved speed.
-      adjust_limits( (double)simparams.speed_step[ jd ].rotorspeed );
+      adjust_limits( (double) simparams.speed_step[jd].rotorspeed );
 
-      QString cell       = QString::number( sim_data.cell );
-      QString channel    = QString( sim_data.channel );
-      double  wavelength = sim_data.scanData.first().wavelength;
-      QString wl         = ( wavelength < 99 ) ? QString( "123" )
-                                               : QString::number( wavelength );
+      QString                cell       = QString::number( sim_data.cell );
+      QString                channel    = QString( sim_data.channel );
+      double                 wavelength = sim_data.scanData.first().wavelength;
+      QString                wl         = ( wavelength < 99 ) ? QString( "123" ) : QString::number( wavelength );
 
       // saveToDisk() parses tripleDesc using the " / " separator.
-      US_Experiment experiment = US_SimRecord::experiment( rotor, simparams,
-                                                           edit_runid, runType,
-                                                           guid_seed );
+      US_Experiment          experiment = US_SimRecord::experiment( rotor, simparams, edit_runid, runType, guid_seed );
 
       US_Convert::TripleInfo triple;
       triple.clear();
@@ -1691,21 +1661,18 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
       triple.solution    = sol;
       memcpy( triple.tripleGUID, sim_data.rawGUID, sizeof( triple.tripleGUID ) );
 
-      QList< US_Convert::TripleInfo > triples;
+      QList<US_Convert::TripleInfo> triples;
       triples << triple;
 
-      if ( experiment.saveToDisk( triples, runType, edit_runid, edir,
-                                  speed_steps ) != US_Convert::OK )
+      if ( experiment.saveToDisk( triples, runType, edit_runid, edir, speed_steps ) != US_Convert::OK )
       {
-         qDebug() << "Error: could not write the experiment record for"
-                  << edit_runid;
+         qDebug() << "Error: could not write the experiment record for" << edit_runid;
          return false;
       }
 
-      QString fname = edit_runid + "." + now + "." + runType + "." + cell + "."
-                      + channel + "." + wl + ".xml";
+      QString fname = edit_runid + "." + now + "." + runType + "." + cell + "." + channel + "." + wl + ".xml";
 
-DbgLv(1) << "EDT:WrXml:  waveln" << wl;
+      DbgLv( 1 ) << "EDT:WrXml:  waveln" << wl;
 
       US_DataIO::EditValues ev;
       ev.expType    = "Velocity";
@@ -1714,15 +1681,13 @@ DbgLv(1) << "EDT:WrXml:  waveln" << wl;
       ev.channel    = channel;
       ev.wavelength = wl;
       ev.editGUID   = US_SimRecord::guid( guid_seed, "edit." + edit_runid );
-      ev.dataGUID   = US_Util::uuid_unparse(
-                         reinterpret_cast<uchar*>( sim_data.rawGUID ) );
+      ev.dataGUID   = US_Util::uuid_unparse( reinterpret_cast<uchar*>( sim_data.rawGUID ) );
 
-      US_SimulationParameters::editRadiiFromCell( ev, af_params.current_meniscus,
-                                                      af_params.current_bottom );
-      ev.ODlimit    = US_SimRecord::maxOD( sim_data );
+      US_SimulationParameters::editRadiiFromCell( ev, af_params.current_meniscus, af_params.current_bottom );
+      ev.ODlimit = US_SimRecord::maxOD( sim_data );
 
       if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
-      {  // Report headless save failures without a modal dialog.
+      { // Report headless save failures without a modal dialog.
          qDebug() << "Error: could not write edit file" << edir + fname;
          return false;
       }
@@ -1849,9 +1814,9 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          dthresh        = maxc;
       }
    } else
-   {  // Headless: match the GUI's cancel-dialog default of no clipping.
-      maxrad         = brad;
-      dthresh        = maxc;
+   { // Headless: match the GUI's cancel-dialog default of no clipping.
+      maxrad  = brad;
+      dthresh = maxc;
    }
 
 
@@ -1886,14 +1851,17 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
  << "maxc dthresh" << maxc << dthresh;
 
       // Report that some readings were threshold-limited
-      if ( ! supress_dialog )
-      {
-         QMessageBox::information( this,
-               tr( "OD Values Limited to Threshold" ),
-               tr( "%1 readings in %2 scans were reset to the threshold "
-                   "value of %3.\nThe maximum OD before thresholding was %4." )
-               .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
-      }
+if ( !supress_dialog )
+{
+   QMessageBox::information( this,
+                             tr( "OD Values Limited to Threshold" ),
+                             tr( "%1 readings in %2 scans were reset to the threshold "
+                                 "value of %3.\nThe maximum OD before thresholding was %4." )
+                                .arg( nchange )
+                                .arg( nmodscn )
+                                .arg( dthresh )
+                                .arg( maxc ) );
+}
    }
 
 
@@ -1972,14 +1940,14 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
       lb_progress->setText( tr( "Save failed" ) );
       if ( supress_dialog )
       {
-         qDebug() << "Error: could not write simulated data to" << ofname
-                  << "-" << US_DataIO::errorString( wstat );
+         qDebug() << "Error: could not write simulated data to" << ofname << "-" << US_DataIO::errorString( wstat );
       }
       else
       {
-         QMessageBox::critical( this, tr( "Simulation Save Failed" ),
-            tr( "The simulated data could not be written to\n%1\n\n%2" )
-            .arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
+         QMessageBox::critical(
+            this,
+            tr( "Simulation Save Failed" ),
+            tr( "The simulated data could not be written to\n%1\n\n%2" ).arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
       }
       return false;
    }

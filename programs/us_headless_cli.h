@@ -7,13 +7,13 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QTextStream>
+#include <QDateTime>
 #include <QDebug>
 #include <QMap>
+#include <QRegularExpression>
 #include <QString>
 #include <QStringList>
-#include <QDateTime>
-#include <QRegularExpression>
+#include <QTextStream>
 
 #include <climits>
 
@@ -22,12 +22,12 @@
 //! \brief Handle --help, --version, and parsing errors consistently.
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue processing options.
-inline bool handleStandardCliOptions( QCommandLineParser& parser,
-                                       const QCommandLineOption& help_option,
-                                       const QCommandLineOption& version_option,
-                                       int& exit_code )
+inline bool handleStandardCliOptions( QCommandLineParser&       parser,
+                                      const QCommandLineOption& help_option,
+                                      const QCommandLineOption& version_option,
+                                      int&                      exit_code )
 {
-   if ( ! parser.parse( QApplication::arguments() ) )
+   if ( !parser.parse( QApplication::arguments() ) )
    {
       QTextStream( stderr ) << qUtf8Printable( parser.errorText() ) << Qt::endl;
       exit_code = 1;
@@ -36,9 +36,10 @@ inline bool handleStandardCliOptions( QCommandLineParser& parser,
    if ( parser.isSet( version_option ) )
    {
       QTextStream( stdout ) << QString::asprintf( "%s (%s)\nVersion %s\n\n",
-         qUtf8Printable( QApplication::applicationDisplayName() ),
-         qUtf8Printable( QApplication::applicationName() ),
-         qUtf8Printable( QApplication::applicationVersion() ) ) << Qt::endl;
+                                                  qUtf8Printable( QApplication::applicationDisplayName() ),
+                                                  qUtf8Printable( QApplication::applicationName() ),
+                                                  qUtf8Printable( QApplication::applicationVersion() ) )
+                            << Qt::endl;
       exit_code = 0;
       return true;
    }
@@ -61,22 +62,22 @@ inline QStringList supportedRunTypes()
 //! \brief Parse and validate an optional --runtype option.
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue processing options.
-inline bool parseRunTypeOption( QCommandLineParser& parser,
-                                 const QCommandLineOption& run_type_option,
-                                 QMap<QString, QString>& args,
-                                 int& exit_code )
+inline bool parseRunTypeOption( QCommandLineParser&       parser,
+                                const QCommandLineOption& run_type_option,
+                                QMap<QString, QString>&   args,
+                                int&                      exit_code )
 {
-   if ( ! parser.isSet( run_type_option ) )
+   if ( !parser.isSet( run_type_option ) )
    {
       return false;
    }
 
    const QString run_type = parser.value( run_type_option ).toUpper();
 
-   if ( ! supportedRunTypes().contains( run_type ) )
+   if ( !supportedRunTypes().contains( run_type ) )
    {
-      QTextStream( stderr ) << "Invalid --runtype " << run_type
-         << "; expected one of " << supportedRunTypes().join( ", " ) << Qt::endl;
+      QTextStream( stderr ) << "Invalid --runtype " << run_type << "; expected one of " << supportedRunTypes().join( ", " )
+                            << Qt::endl;
       exit_code = 1;
       return true;
    }
@@ -89,24 +90,22 @@ inline bool parseRunTypeOption( QCommandLineParser& parser,
 //! The value names edit files, so it must be a real yyMMddhhmm time.
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue processing options.
-inline bool parseEditTimestampOption( QCommandLineParser& parser,
+inline bool parseEditTimestampOption( QCommandLineParser&       parser,
                                       const QCommandLineOption& stamp_option,
-                                      QMap<QString, QString>& args,
-                                      int& exit_code )
+                                      QMap<QString, QString>&   args,
+                                      int&                      exit_code )
 {
-   if ( ! parser.isSet( stamp_option ) )
+   if ( !parser.isSet( stamp_option ) )
    {
       return false;
    }
 
-   const QString stamp = parser.value( stamp_option );
+   const QString                   stamp = parser.value( stamp_option );
    static const QRegularExpression digits( "^[0-9]{10}$" );
 
-   if ( ! digits.match( stamp ).hasMatch()
-        ||  ! QDateTime::fromString( stamp, "yyMMddhhmm" ).isValid() )
+   if ( !digits.match( stamp ).hasMatch() || !QDateTime::fromString( stamp, "yyMMddhhmm" ).isValid() )
    {
-      QTextStream( stderr ) << "Invalid --edit-timestamp " << stamp
-         << "; expected yyMMddhhmm" << Qt::endl;
+      QTextStream( stderr ) << "Invalid --edit-timestamp " << stamp << "; expected yyMMddhhmm" << Qt::endl;
       exit_code = 1;
       return true;
    }
@@ -119,23 +118,23 @@ inline bool parseEditTimestampOption( QCommandLineParser& parser,
 //! The AUC format stores the description as at most 239 Latin-1 characters.
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue processing options.
-inline bool parseDescriptionOption( QCommandLineParser& parser,
+inline bool parseDescriptionOption( QCommandLineParser&       parser,
                                     const QCommandLineOption& description_option,
-                                    QMap<QString, QString>& args,
-                                    int& exit_code )
+                                    QMap<QString, QString>&   args,
+                                    int&                      exit_code )
 {
-   if ( ! parser.isSet( description_option ) )
+   if ( !parser.isSet( description_option ) )
    {
       return false;
    }
 
    const QString description = parser.value( description_option );
 
-   if ( description.isEmpty()  ||  description.length() > 239
-        ||  QString::fromLatin1( description.toLatin1() ) != description )
+   if ( description.isEmpty() || description.length() > 239 || QString::fromLatin1( description.toLatin1() ) != description )
    {
       QTextStream( stderr ) << "Invalid --description; expected 1 to 239 "
-         "Latin-1 characters" << Qt::endl;
+                               "Latin-1 characters"
+                            << Qt::endl;
       exit_code = 1;
       return true;
    }
@@ -154,8 +153,8 @@ inline QString descriptionOptionHelp()
 //! \brief Help text for the --runtype option, shared by the simulators.
 inline QString runTypeOptionHelp()
 {
-   return "Two-character optical data type to tag the output with ("
-        + supportedRunTypes().join( ", " ) + "; default RA). Affects the type "
+   return "Two-character optical data type to tag the output with (" + supportedRunTypes().join( ", " ) +
+          "; default RA). Affects the type "
           "tag and the derived file names only -- the simulated data is "
           "identical for every type";
 }
@@ -166,22 +165,21 @@ inline QString runTypeOptionHelp()
 //!
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue processing options.
-inline bool parseTripleOptions( QCommandLineParser& parser,
+inline bool parseTripleOptions( QCommandLineParser&       parser,
                                 const QCommandLineOption& cell_option,
                                 const QCommandLineOption& channel_option,
-                                QMap<QString, QString>& args,
-                                int& exit_code )
+                                QMap<QString, QString>&   args,
+                                int&                      exit_code )
 {
    if ( parser.isSet( cell_option ) )
    {
-      bool ok = false;
+      bool      ok   = false;
       const int cell = parser.value( cell_option ).toInt( &ok );
 
       // Eight is the largest supported rotor hole count.
-      if ( ! ok  ||  cell < 1  ||  cell > 8 )
+      if ( !ok || cell < 1 || cell > 8 )
       {
-         QTextStream( stderr ) << "Invalid --cell "
-            << parser.value( cell_option ) << "; expected 1 to 8" << Qt::endl;
+         QTextStream( stderr ) << "Invalid --cell " << parser.value( cell_option ) << "; expected 1 to 8" << Qt::endl;
          exit_code = 1;
          return true;
       }
@@ -193,10 +191,9 @@ inline bool parseTripleOptions( QCommandLineParser& parser,
    {
       const QString channel = parser.value( channel_option ).toUpper();
 
-      if ( channel.length() != 1  ||  ! US_Util::channel_letters().contains( channel ) )
+      if ( channel.length() != 1 || !US_Util::channel_letters().contains( channel ) )
       {
-         QTextStream( stderr ) << "Invalid --channel " << channel
-            << "; expected one of " << US_Util::channel_letters() << Qt::endl;
+         QTextStream( stderr ) << "Invalid --channel " << channel << "; expected one of " << US_Util::channel_letters() << Qt::endl;
          exit_code = 1;
          return true;
       }
@@ -217,24 +214,23 @@ inline QString cellOptionHelp()
 
 //! \brief Parse an optional --noise-seed. Zero is invalid because it selects the clock.
 //! \return true to return immediately with exit_code; false to continue.
-inline bool parseNoiseSeedOption( QCommandLineParser& parser,
+inline bool parseNoiseSeedOption( QCommandLineParser&       parser,
                                   const QCommandLineOption& noise_seed_option,
-                                  QMap<QString, QString>& args,
-                                  int& exit_code )
+                                  QMap<QString, QString>&   args,
+                                  int&                      exit_code )
 {
-   if ( ! parser.isSet( noise_seed_option ) )
+   if ( !parser.isSet( noise_seed_option ) )
    {
       return false;
    }
 
-   bool ok = false;
-   const QString  value = parser.value( noise_seed_option );
-   const quint32  seed  = value.toUInt( &ok );
+   bool          ok    = false;
+   const QString value = parser.value( noise_seed_option );
+   const quint32 seed  = value.toUInt( &ok );
 
-   if ( ! ok  ||  seed == 0 )
+   if ( !ok || seed == 0 )
    {
-      QTextStream( stderr ) << "Invalid --noise-seed " << value
-         << "; expected a decimal value from 1 to " << UINT_MAX << Qt::endl;
+      QTextStream( stderr ) << "Invalid --noise-seed " << value << "; expected a decimal value from 1 to " << UINT_MAX << Qt::endl;
       exit_code = 1;
       return true;
    }
@@ -249,14 +245,15 @@ inline QString noiseSeedOptionHelp()
 {
    return QString( "Seed for the noise generator (1 to %1). Given the same "
                    "seed and the same inputs, a run's noise is reproducible; "
-                   "omitted, the generator is left as it is" ).arg( UINT_MAX );
+                   "omitted, the generator is left as it is" )
+      .arg( UINT_MAX );
 }
 
 //! \brief Help text for the --channel option, shared by the simulators.
 inline QString channelOptionHelp()
 {
-   return "Channel letter to tag the output with (" + US_Util::channel_letters()
-        + "; default S). S is a single-channel centerpiece. A-H are the "
+   return "Channel letter to tag the output with (" + US_Util::channel_letters() +
+          "; default S). S is a single-channel centerpiece. A-H are the "
           "channels of a multi-channel centerpiece, in sample/reference pairs "
           "A/B, C/D, E/F and G/H";
 }
@@ -264,9 +261,11 @@ inline QString channelOptionHelp()
 //! \brief Handle an input-loading failure during a headless run.
 //! With --errors-cl, log the failure and exit with status 2. Otherwise, mark
 //! the run as requiring the GUI.
-inline void reportHeadlessLoadFailure( const QString& what, const QString& id,
-                                        bool errors_to_cl,
-                                        bool& gui_needed, bool& error_occured )
+inline void reportHeadlessLoadFailure( const QString& what,
+                                       const QString& id,
+                                       bool           errors_to_cl,
+                                       bool&          gui_needed,
+                                       bool&          error_occured )
 {
    if ( errors_to_cl )
    {
@@ -280,11 +279,9 @@ inline void reportHeadlessLoadFailure( const QString& what, const QString& id,
 //! \brief Show the GUI if the headless run could not finish.
 //! If --errors-cl is set, return the initialization status without opening
 //! the GUI.
-template <typename Widget>
-inline int showGuiIfNeeded( Widget& w, int init_status,
-                             const QMap<QString, QString>& args )
+template <typename Widget> inline int showGuiIfNeeded( Widget& w, int init_status, const QMap<QString, QString>& args )
 {
-   if ( init_status != 0 && ! args.contains( "errors-cl" ) )
+   if ( init_status != 0 && !args.contains( "errors-cl" ) )
    {
       w.show();
       return QApplication::exec();

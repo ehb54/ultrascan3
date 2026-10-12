@@ -290,9 +290,8 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
       if ( ! ( data.xvalues[ ii ] > data.xvalues[ ii - 1 ] ) ||
            ! ( qAbs( data.xvalues[ ii ] - rebuilt ) <= tolerance ) )
       {
-         qDebug() << "US_DataIO::writeRawData: invalid radius at point" << ii
-                  << "of" << data.xvalues.size() << ":" << data.xvalues[ ii ]
-                  << "expected" << rebuilt << "tolerance" << tolerance;
+         qDebug() << "US_DataIO::writeRawData: invalid radius at point" << ii << "of" << data.xvalues.size() << ":"
+                  << data.xvalues[ii] << "expected" << rebuilt << "tolerance" << tolerance;
          return NOT_USDATA;
       }
    }
@@ -305,10 +304,8 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
 
       if ( sc.interpolated.size() < ( sc.rvalues.size() + 7 ) / 8 )
       {
-         qDebug() << "US_DataIO::writeRawData: scan" << ii << "has an"
-                  << "interpolation bitmap of" << sc.interpolated.size()
-                  << "bytes for" << sc.rvalues.size() << "readings, which"
-                  << "needs" << ( sc.rvalues.size() + 7 ) / 8
+         qDebug() << "US_DataIO::writeRawData: scan" << ii << "has an" << "interpolation bitmap of" << sc.interpolated.size()
+                  << "bytes for" << sc.rvalues.size() << "readings, which" << "needs" << ( sc.rvalues.size() + 7 ) / 8
                   << "-- the bitmap was not resized with the readings";
          return NOT_USDATA;
       }

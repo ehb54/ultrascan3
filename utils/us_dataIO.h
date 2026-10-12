@@ -173,8 +173,8 @@ class US_UTIL_EXTERN US_DataIO
             plateau      = 0.0;
             baseline     = 0.0;
 
-	    bl_corr_slope = 0.0;
-	    bl_corr_yintercept = 0.0; 
+            bl_corr_slope      = 0.0;
+            bl_corr_yintercept = 0.0;
 
             //! Air Gap is only for interference data
             airGapLeft   = 0.0;

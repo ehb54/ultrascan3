@@ -213,15 +213,16 @@ DbgLv(1) << "RSA:calc : timestate exists and timestateobject,sscount="
    int nspstep  = simparams.sim_speed_prof.size(); // Number of speed profiles
 DbgLv(1) << "RSA:calc: ss size" << nstep << "ssp size" << nspstep;
 
-   if ( nspstep < 1 )
-   {  // Reject an empty speed profile before indexing the work vectors.
-      DbgLv(0) << "US_Astfem_RSA::calculate: no simulation speed profile "
-                   "after reading the time state -- cannot simulate. Speed "
-                   "steps:" << nstep
-                << "  Check that the work directory holding the time state "
-                   "exists and is writable.";
-      return -1;
-   }
+if ( nspstep < 1 )
+{ // Reject an empty speed profile before indexing the work vectors.
+   DbgLv( 0 ) << "US_Astfem_RSA::calculate: no simulation speed profile "
+                 "after reading the time state -- cannot simulate. Speed "
+                 "steps:"
+              << nstep
+              << "  Check that the work directory holding the time state "
+                 "exists and is writable.";
+   return -1;
+}
 
    for ( int istep = 0; istep < nspstep; istep++ )
    {  // Fill time,omega2t work vectors for each step
@@ -2536,8 +2537,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
       xA           = x.data();
 
-      DbgErr() << "Use exponential grid only!(1/10000 reported):  Np Nf Nm"
-         << Np << Nf << Nm << "m b nu0" << m << b << nu0;
+      DbgErr() << "Use exponential grid only!(1/10000 reported):  Np Nf Nm" << Np << Nf << Nm << "m b nu0" << m << b << nu0;
    }
    else
    {

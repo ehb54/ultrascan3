@@ -66,14 +66,14 @@ static libnnls libnnls0;
 static bool   bm_use_last = false;
 static double bm_y2       = 0.0;
 
-double US_Math2::box_muller( double m, double s )   
+double        US_Math2::box_muller( double m, double s )
 {
    double        x1;
    double        x2;
    double        w;
    double        y1;
 
-   if ( bm_use_last )  // Use value from previous call
+   if ( bm_use_last ) // Use value from previous call
    {
       y1          = bm_y2;
       bm_use_last = false;

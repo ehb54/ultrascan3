@@ -43,7 +43,7 @@ class US_Astfem_Sim : public US_Widgets
 
    private:
       bool           stopFlag;            //!< Flag to stop the simulation
-      bool           sim_failed;          //!< Set when start_simulation() could not produce data
+      bool                    sim_failed;          //!< Set when start_simulation() could not produce data
       bool           movieFlag;           //!< Flag to show a movie during simulation
       bool           save_movie;          //!< Flag to save the generated frames
       bool           time_correctionFlag; //!< Flag to apply time correction - Currently not implemented/connected
@@ -58,15 +58,15 @@ class US_Astfem_Sim : public US_Widgets
       QString        imagedir;            //!< Path to the image dir
       QString        imageName;           //!< Full path template for movie frames ({imagedir}/frame{image_count}.png)
       QString        tmst_tfpath;         //!< Path to the timestate of the simulation in a temporary location
-      QString        run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
-      int            sim_cell    = 1;    //!< Output cell
-      QString        sim_description = "Simulation"; //!< Output data description, from --description
-      int            sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
-      char           sim_channel = 'S';  //!< Output channel
-      uint           noise_seed  = 0;    //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
-      bool           noise_to_composite = true; //!< Apply ASTFEM noise to the composite before splitting by speed
-      QString        guid_seed;           //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
-      QString        edit_stamp;          //!< Fixed yyMMddhhmm for the edit filename, from --edit-timestamp; empty uses the clock
+      QString                 run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
+      int                     sim_cell           = 1;            //!< Output cell
+      QString                 sim_description    = "Simulation"; //!< Output data description, from --description
+      int                     sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
+      char                    sim_channel        = 'S'; //!< Output channel
+      uint                    noise_seed         = 0;   //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
+      bool                    noise_to_composite = true; //!< Apply ASTFEM noise to the composite before splitting by speed
+      QString                 guid_seed;                 //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
+      QString                 edit_stamp; //!< Fixed yyMMddhhmm for the edit filename, from --edit-timestamp; empty uses the clock
 
       QCheckBox*     ck_movie;            //!< Pointer to QCheckbox for movie display
       QCheckBox*     ck_savemovie;        //!< Pointer to QCheckbox for saving movie frames
@@ -117,17 +117,16 @@ class US_Astfem_Sim : public US_Widgets
       void   init_simparams ( void );
       void   adjust_limits  ( double );
       double stretch        ( double*, double );
-      bool   save_xla       ( const QString&, US_DataIO::RawData, int, bool supress_dialog = false );
+      bool                             save_xla( const QString&, US_DataIO::RawData, int, bool supress_dialog = false );
       void   finish         ( void );
       void   ri_noise       ( void );
       void   baseline       ( void );
       void   random_noise   ( void );
       void   ti_noise       ( void );
-      void   derive_speed_data( void );
-      US_DataIO::Scan& noise_scan( int, int, int );
+      void                             derive_speed_data( void );
+      US_DataIO::Scan&                 noise_scan( int, int, int );
       void   plot           ( int  );
-      bool save_simulation  ( QString odir, bool supress_dialog = false,
-                              bool write_records  = false );
+      bool                             save_simulation( QString odir, bool supress_dialog = false, bool write_records = false );
       void save_csv_noise   ( US_CSV_Data& );
 
    private slots:

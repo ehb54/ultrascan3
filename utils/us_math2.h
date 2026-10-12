@@ -207,7 +207,7 @@ class US_UTIL_EXTERN US_Math2
       //! \brief Set the sysem random sequence.
       //! Also discards any Gaussian value box_muller() is holding, so the
       //! sequence that follows depends only on the seed.
-      //! \param seed A predetermined seed 
+      //! \param seed A predetermined seed
       //! \return The seed used to set the system time
       static uint randomize( uint );
 

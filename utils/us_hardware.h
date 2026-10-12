@@ -73,21 +73,19 @@ class US_UTIL_EXTERN US_AbstractCenterpiece
       //! \param channel Set to the parsed channel index on success.
       //! \param error   Set to an error message on failure.
       //! \return true on success; otherwise, false.
-      static bool parse_channel( const QString& value, int& channel,
-                                 QString& error );
+      static bool     parse_channel( const QString& value, int& channel, QString& error );
 
       //! \brief Parse an index into the centerpiece list.
       //! \param value Text naming the centerpiece.
       //! \param index Set to the parsed list index on success.
       //! \param error Set to an error message on failure.
       //! \return true on success; otherwise, false.
-      static bool parse_index( const QString& value, int& index,
-                               QString& error );
+      static bool     parse_index( const QString& value, int& index, QString& error );
 
       //! \brief Validate a centerpiece index and one of its channels.
       //! \param centerpiece Index into the centerpiece list.
       //! \param channel     Channel within that centerpiece.
       //! \return An empty string if valid; otherwise, an error message.
-      static QString validate( int centerpiece, int channel );
+      static QString  validate( int centerpiece, int channel );
 };
 #endif

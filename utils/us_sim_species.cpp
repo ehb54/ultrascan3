@@ -1,9 +1,9 @@
 //! \file us_sim_species.cpp
 #include "us_sim_species.h"
-#include "us_util.h"
 #include "us_constants.h"
-#include <QStringList>
+#include "us_util.h"
 #include <QMap>
+#include <QStringList>
 
 US_SimSpecies::Coeff::Coeff()
 {
@@ -23,21 +23,20 @@ US_SimSpecies::Component::Component()
    // extinction, and the analyte type always have the library defaults.
    US_Model::SimulationComponent sc_defaults;
 
-   vbar20        = sc_defaults.vbar20;
+   vbar20               = sc_defaults.vbar20;
    signal_concentration = sc_defaults.signal_concentration;
    extinction           = sc_defaults.extinction;
    analyte_type         = sc_defaults.analyte_type;
 }
 
-const QVector< US_SimSpecies::Coefficient >& US_SimSpecies::coefficients()
+const QVector<US_SimSpecies::Coefficient>& US_SimSpecies::coefficients()
 {
-   static const QVector< Coefficient > table = {
-      { "s",    "Sedimentation coefficient in seconds", &Component::s    },
-      { "D",    "Diffusion coefficient (cm^2/s)",       &Component::D    },
-      { "mw",   "Molecular weight (Da)",                &Component::mw   },
-      { "f",    "Frictional coefficient (g/s)",         &Component::f    },
-      { "f-f0", "Frictional ratio (1.0 = perfect sphere)",
-                                                        &Component::f_f0 },
+   static const QVector<Coefficient> table = {
+      { "s", "Sedimentation coefficient in seconds", &Component::s },
+      { "D", "Diffusion coefficient (cm^2/s)", &Component::D },
+      { "mw", "Molecular weight (Da)", &Component::mw },
+      { "f", "Frictional coefficient (g/s)", &Component::f },
+      { "f-f0", "Frictional ratio (1.0 = perfect sphere)", &Component::f_f0 },
    };
 
    return table;
@@ -47,7 +46,7 @@ US_SimSpecies::Component US_SimSpecies::defaultComponent()
 {
    // Do not copy the default f; it would become a third supplied coefficient.
    US_Model::SimulationComponent sc_defaults;
-   Component c;
+   Component                     c;
 
    c.vbar20 = sc_defaults.vbar20;
    c.mw     = sc_defaults.mw;
@@ -58,64 +57,57 @@ US_SimSpecies::Component US_SimSpecies::defaultComponent()
 
 QString US_SimSpecies::validateComponent( const Component& c )
 {
-   if ( ! qIsFinite( c.vbar20 ) || c.vbar20 <= 0.0 )
+   if ( !qIsFinite( c.vbar20 ) || c.vbar20 <= 0.0 )
    {
-      return QString( "vbar20 must be finite and greater than zero (got %1)" )
-         .arg( c.vbar20 );
+      return QString( "vbar20 must be finite and greater than zero (got %1)" ).arg( c.vbar20 );
    }
 
-   if ( ! qIsFinite( c.signal_concentration ) || c.signal_concentration <= 0.0 )
+   if ( !qIsFinite( c.signal_concentration ) || c.signal_concentration <= 0.0 )
    {
       return QString( "signal concentration must be finite and greater than "
-                      "zero (got %1)" ).arg( c.signal_concentration );
+                      "zero (got %1)" )
+         .arg( c.signal_concentration );
    }
 
    // Zero extinction represents no spectrum or no absorption at this wavelength.
-   if ( ! qIsFinite( c.extinction ) || c.extinction < 0.0 )
+   if ( !qIsFinite( c.extinction ) || c.extinction < 0.0 )
    {
-      return QString( "extinction must be finite and not negative (got %1)" )
-         .arg( c.extinction );
+      return QString( "extinction must be finite and not negative (got %1)" ).arg( c.extinction );
    }
 
    // Analyte enum values are contiguous from PROTEIN to CARBOHYDRATE.
-   if ( c.analyte_type < (int)US_Analyte::PROTEIN  ||
-        c.analyte_type > (int)US_Analyte::CARBOHYDRATE )
+   if ( c.analyte_type < (int) US_Analyte::PROTEIN || c.analyte_type > (int) US_Analyte::CARBOHYDRATE )
    {
       return QString( "analyte type must be between %1 and %2 (got %3)" )
-         .arg( (int)US_Analyte::PROTEIN ).arg( (int)US_Analyte::CARBOHYDRATE )
+         .arg( (int) US_Analyte::PROTEIN )
+         .arg( (int) US_Analyte::CARBOHYDRATE )
          .arg( c.analyte_type );
    }
 
    // Accept an empty identity or a UUID in 8-4-4-4-12 format.
-   if ( ! c.analyte_guid.isEmpty()  &&
-        ! US_Util::UUID_REGEX.match( c.analyte_guid ).hasMatch() )
+   if ( !c.analyte_guid.isEmpty() && !US_Util::UUID_REGEX.match( c.analyte_guid ).hasMatch() )
    {
-      return QString( "analyte GUID must be a 36-character UUID (got \"%1\")" )
-         .arg( c.analyte_guid );
+      return QString( "analyte GUID must be a 36-character UUID (got \"%1\")" ).arg( c.analyte_guid );
    }
 
    // Only s may legitimately be negative; zero is unsolvable for all three.
-   if ( c.s.supplied && ( ! qIsFinite( c.s.value ) || c.s.value == 0.0 ) )
+   if ( c.s.supplied && ( !qIsFinite( c.s.value ) || c.s.value == 0.0 ) )
    {
       return QString( "s must be finite and nonzero (got %1)" ).arg( c.s.value );
    }
-   if ( c.mw.supplied && ( ! qIsFinite( c.mw.value ) || c.mw.value <= 0.0 ) )
+   if ( c.mw.supplied && ( !qIsFinite( c.mw.value ) || c.mw.value <= 0.0 ) )
    {
-      return QString( "mw must be finite and greater than zero (got %1)" )
-         .arg( c.mw.value );
+      return QString( "mw must be finite and greater than zero (got %1)" ).arg( c.mw.value );
    }
-   if ( c.D.supplied && ( ! qIsFinite( c.D.value ) || c.D.value <= 0.0 ) )
+   if ( c.D.supplied && ( !qIsFinite( c.D.value ) || c.D.value <= 0.0 ) )
    {
-      return QString( "D must be finite and greater than zero (got %1)" )
-         .arg( c.D.value );
+      return QString( "D must be finite and greater than zero (got %1)" ).arg( c.D.value );
    }
-   if ( c.f.supplied && ( ! qIsFinite( c.f.value ) || c.f.value <= 0.0 ) )
+   if ( c.f.supplied && ( !qIsFinite( c.f.value ) || c.f.value <= 0.0 ) )
    {
-      return QString( "f must be finite and greater than zero (got %1)" )
-         .arg( c.f.value );
+      return QString( "f must be finite and greater than zero (got %1)" ).arg( c.f.value );
    }
-   if ( c.f_f0.supplied &&
-        ( ! qIsFinite( c.f_f0.value ) || c.f_f0.value < 1.0 ) )
+   if ( c.f_f0.supplied && ( !qIsFinite( c.f_f0.value ) || c.f_f0.value < 1.0 ) )
    {
       return QString( "f-f0 must be finite and at least 1.0, since a particle cannot be "
                       "more compact than the equivalent sphere (got %1)" )
@@ -146,7 +138,7 @@ QString US_SimSpecies::validateComponent( const Component& c )
 
    // D and f are the one pair calc_coefficients() has no branch for: both
    // describe transport without fixing the mass, so the system is undetermined.
-   if ( supplied.contains( "D" )  &&  supplied.contains( "f" ) )
+   if ( supplied.contains( "D" ) && supplied.contains( "f" ) )
    {
       return "D and f cannot be given as the only pair; add or substitute one "
              "of s, mw, or f-f0";
@@ -164,23 +156,25 @@ QString US_SimSpecies::validateComponent( const Component& c )
          return QString( "vbar20 (%1) is too close to the density-matched "
                          "value of %2 mL/g; s cannot determine a finite "
                          "molecular weight there" )
-            .arg( c.vbar20 ).arg( 1.0 / DENS_20W );
+            .arg( c.vbar20 )
+            .arg( 1.0 / DENS_20W );
       }
 
-      if ( ( c.s.value < 0.0  &&  buoyancy > 0.0 )  ||
-           ( c.s.value > 0.0  &&  buoyancy < 0.0 ) )
+      if ( ( c.s.value < 0.0 && buoyancy > 0.0 ) || ( c.s.value > 0.0 && buoyancy < 0.0 ) )
       {
          return QString( "the sign of s (%1) disagrees with the buoyancy "
                          "implied by vbar20 (%2); a species floats only when "
                          "vbar20 exceeds %3 mL/g" )
-            .arg( c.s.value ).arg( c.vbar20 ).arg( 1.0 / DENS_20W );
+            .arg( c.s.value )
+            .arg( c.vbar20 )
+            .arg( 1.0 / DENS_20W );
       }
    }
 
    return QString();
 }
 
-QString US_SimSpecies::validateComponents( const QVector< Component >& components )
+QString US_SimSpecies::validateComponents( const QVector<Component>& components )
 {
    if ( components.isEmpty() )
    {
@@ -189,9 +183,9 @@ QString US_SimSpecies::validateComponents( const QVector< Component >& component
 
    for ( int ii = 0; ii < components.count(); ii++ )
    {
-      QString error = validateComponent( components[ ii ] );
+      QString error = validateComponent( components[ii] );
 
-      if ( ! error.isEmpty() )
+      if ( !error.isEmpty() )
       {
          return QString( "component %1: %2" ).arg( ii + 1 ).arg( error );
       }
@@ -200,27 +194,25 @@ QString US_SimSpecies::validateComponents( const QVector< Component >& component
    return QString();
 }
 
-bool US_SimSpecies::model( const Component& c, US_Model& model_out,
-                           QString& error )
+bool US_SimSpecies::model( const Component& c, US_Model& model_out, QString& error )
 {
-   return model( QVector< Component >() << c, model_out, error );
+   return model( QVector<Component>() << c, model_out, error );
 }
 
-bool US_SimSpecies::model( const QVector< Component >& components,
-                           US_Model& model_out, QString& error )
+bool US_SimSpecies::model( const QVector<Component>& components, US_Model& model_out, QString& error )
 {
    error = validateComponents( components );
-   if ( ! error.isEmpty() )
+   if ( !error.isEmpty() )
    {
       return false;
    }
 
    // Label by analyte type when every component shares one; "Other" covers
    // CARBOHYDRATE and any other value, mirroring parse_analyte_type().
-   static const QMap< int, QString > type_names = {
-      { (int)US_Analyte::PROTEIN, "protein" },
-      { (int)US_Analyte::DNA,     "DNA"     },
-      { (int)US_Analyte::RNA,     "RNA"     },
+   static const QMap<int, QString> type_names = {
+      { (int) US_Analyte::PROTEIN, "protein" },
+      { (int) US_Analyte::DNA, "DNA" },
+      { (int) US_Analyte::RNA, "RNA" },
    };
    QString type_label = type_names.value( components.first().analyte_type, "Other" );
    for ( const Component& c : components )
@@ -233,11 +225,10 @@ bool US_SimSpecies::model( const QVector< Component >& components,
    }
 
    US_Model candidate;
-   candidate.description  = QString( "us3-sim-inputs generated %1 model v1" )
-      .arg( type_label );
-   candidate.modelGUID    = US_Util::new_guid();
-   candidate.optics       = US_Model::ABSORBANCE;
-   candidate.analysis     = US_Model::MANUAL;
+   candidate.description = QString( "us3-sim-inputs generated %1 model v1" ).arg( type_label );
+   candidate.modelGUID   = US_Util::new_guid();
+   candidate.optics      = US_Model::ABSORBANCE;
+   candidate.analysis    = US_Model::MANUAL;
 
    for ( const Component& c : components )
    {
@@ -255,7 +246,7 @@ bool US_SimSpecies::model( const QVector< Component >& components,
       sc.analyte_type         = c.analyte_type;
       sc.analyteGUID          = c.analyte_guid;
 
-      if ( ! c.name.isEmpty() )
+      if ( !c.name.isEmpty() )
       {
          sc.name = c.name;
       }
@@ -264,7 +255,7 @@ bool US_SimSpecies::model( const QVector< Component >& components,
    }
 
    // Solves each component independently; components do not interact.
-   if ( ! candidate.update_coefficients() )
+   if ( !candidate.update_coefficients() )
    {
       error = "US_Model could not calculate a complete coefficient set";
       return false;

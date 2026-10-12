@@ -28,10 +28,10 @@ int US_AstfemMath::writetimestate( const QString&           tmst_fpath,
 //DbgLv(1) << "AMATH:wrts::writetimestate : tmst_fpath=" << tmst_fpath;
 
    if ( timestate.open_write_data( tmst_fpath, 1.0, 0.0 ) != 0 )
-   {  // Return an error when the time-state file cannot be opened.
-      DbgLv(0) << "US_AstfemMath::writetimestate: could not open time state "
-                   "for writing:" << tmst_fpath
-                << "-- check that its directory exists and is writable";
+   { // Return an error when the time-state file cannot be opened.
+      DbgLv( 0 ) << "US_AstfemMath::writetimestate: could not open time state "
+                    "for writing:"
+                 << tmst_fpath << "-- check that its directory exists and is writable";
       return -1;
    }
 

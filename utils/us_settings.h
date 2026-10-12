@@ -112,9 +112,9 @@ class US_UTIL_EXTERN US_Settings
     //! without persisting it. Takes precedence over the stored setting;
     //! lets concurrent headless runs use --no-db without racing on or
     //! permanently changing the user's stored setting.
-    static void        set_default_data_location_override( int );
+    static void               set_default_data_location_override( int );
     //! \brief Clear the process-only default data location override.
-    static void        clear_default_data_location_override( void );
+    static void               clear_default_data_location_override( void );
 
     //! \brief Get the US_Debug setting
     static int         us_debug( void );
