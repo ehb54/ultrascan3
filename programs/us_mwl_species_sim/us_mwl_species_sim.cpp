@@ -5,6 +5,7 @@
 
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
+#include "us_buffer_gui.h"
 #include "us_convert.h"
 #include "us_data_loader.h"
 #include "us_experiment.h"
@@ -16,9 +17,11 @@
 #include "us_math2.h"
 #include "us_mwl_species_sim.h"
 #include "us_passwd.h"
+#include "us_rotor_gui.h"
 #include "us_select_runs.h"
 #include "us_settings.h"
 #include "us_sim_inputs.h"
+#include "us_sim_params_gui.h"
 #include "us_sim_record.h"
 #include "us_util.h"
 

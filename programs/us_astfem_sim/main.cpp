@@ -21,11 +21,9 @@ int main( int argc, char* argv[] )
    QApplication::setApplicationVersion( US_Version );
    QApplication::setOrganizationDomain( "https://ultrascan.aucsoltions.com" );
    QApplication::setOrganizationName( "AUC Solutions, LLC" );
-#include "main1.inc"
-
-   // License is OK. Start up.
-   US_Astfem_Sim      w;
-
+   // --help/--version/a parse error should work without a license, so the
+   // command-line parser is built and checked before main1.inc's license
+   // dialog, not after it.
    QCommandLineParser parser;
    auto               help_option = QCommandLineOption( { "help", "h", "?" }, "Display command-line help" );
    parser.addOption( help_option );
@@ -107,6 +105,11 @@ int main( int argc, char* argv[] )
       return cli_exit_code;
    }
 
+#include "main1.inc"
+
+   // License is OK. Start up.
+   US_Astfem_Sim w;
+
    // parse command-specific options
 
    // parse the database setting: a process-only override, never persisted,
@@ -136,11 +139,11 @@ int main( int argc, char* argv[] )
       args["rotor"] = parser.value( rotor_option );
    }
    // parse centerpiece and channel indices
-   if ( parser.isSet( centerpiece_option ) )
+   if ( parser.isSet( centerpiece_option ) && !parser.value( centerpiece_option ).isEmpty() )
    {
       args["centerpiece"] = parser.value( centerpiece_option );
    }
-   if ( parser.isSet( centerpiece_channel_option ) )
+   if ( parser.isSet( centerpiece_channel_option ) && !parser.value( centerpiece_channel_option ).isEmpty() )
    {
       args["centerpiece-channel"] = parser.value( centerpiece_channel_option );
    }
