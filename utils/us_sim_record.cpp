@@ -107,7 +107,11 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
 
       US_Solution::AnalyteInfo analyteInfo;
       analyteInfo.analyte = analyte;
-      analyteInfo.amount  = comp.signal_concentration;
+      // AnalyteInfo::amount is a molar quantity; signal_concentration is OD.
+      // Convert the same way the analysis programs do.
+      analyteInfo.amount  = ( comp.extinction > 0.0 )
+         ? ( comp.signal_concentration / comp.extinction )
+         : 0.0;
 
       if ( ic > 0 )
       {

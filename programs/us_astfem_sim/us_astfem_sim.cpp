@@ -1,6 +1,7 @@
 //! \file us_astfem_sim.cpp
 
 #include <QApplication>
+#include <QTemporaryFile>
 
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -476,13 +477,17 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          error_occured = true;
          gui_needed = true;
       }
-      // Check whether a file can be created in the directory.
-      QFile file(dir.filePath( "tmp.txt" ) );
-      if ( !file.open(QIODevice::WriteOnly ) )
+      // A stale file from a previous run into the same directory (an edit
+      // XML with a different timestamp, a noise CSV from a run that had
+      // noise, ...) would otherwise sit alongside the new output and
+      // confuse a later loadData(). Checked before the writability probe
+      // below, so that probe file is never mistaken for pre-existing content.
+      else if ( dir.exists()  &&  ! dir.isEmpty()  &&  ! flags.contains( "overwrite" ) )
       {
          if ( errors_to_cl )
          {
-            qDebug() << "Error: save directory is not writable:" << save_path;
+            qDebug() << "Error: save directory is not empty; pass "
+               "--overwrite to reuse it:" << save_path;
             exit( 2 );
          }
          error_occured = true;
@@ -490,10 +495,18 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       }
       else
       {
-         file.close();
-         if ( file.exists() )
+         // Check whether a file can be created in the directory, without
+         // risking a collision with a same-named file the user already has.
+         QTemporaryFile probe( dir.filePath( "us_astfem_sim_writable_XXXXXX" ) );
+         if ( !probe.open() )
          {
-            file.remove();
+            if ( errors_to_cl )
+            {
+               qDebug() << "Error: save directory is not writable:" << save_path;
+               exit( 2 );
+            }
+            error_occured = true;
+            gui_needed = true;
          }
       }
    }
@@ -515,7 +528,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          {
             // check if path is accessible and writable
             QString save_path = flags["save"];
-            save_simulation( save_path, true, true );
+            if ( ! save_simulation( save_path, true, true ) )
+            {
+               DbgLv(0) << "US_Astfem_Sim: save_simulation failed for" << save_path;
+               error_occured = true;
+            }
          }
       }
    }
@@ -1370,8 +1387,14 @@ void US_Astfem_Sim::derive_speed_data( void )
 
    for ( int jd = 0; jd < sim_datas.size(); jd++ )
    {
-      Q_ASSERT( scan_offset + sim_datas[ jd ].scanData.size()
-                <= sim_data_all.scanData.size() );
+      if ( scan_offset + sim_datas[ jd ].scanData.size()
+           > sim_data_all.scanData.size() )
+      {
+         DbgErr(1) << "ASIM:derive_speed_data: per-speed scan count exceeds "
+            "the composite's scan count; sim_failed set";
+         sim_failed = true;
+         return;
+      }
 
       for ( int js = 0; js < sim_datas[ jd ].scanData.size(); js++ )
       {
@@ -1382,7 +1405,12 @@ void US_Astfem_Sim::derive_speed_data( void )
       scan_offset += sim_datas[ jd ].scanData.size();
    }
 
-   Q_ASSERT( scan_offset == sim_data_all.scanData.size() );
+   if ( scan_offset != sim_data_all.scanData.size() )
+   {
+      DbgErr(1) << "ASIM:derive_speed_data: per-speed scan counts do not sum "
+         "to the composite's scan count; sim_failed set";
+      sim_failed = true;
+   }
 }
 
 void US_Astfem_Sim::save_scans( void )
@@ -1439,7 +1467,10 @@ bool US_Astfem_Sim::save_simulation( QString odir, bool supress_dialog,
       {  // Single-speed case
          QDir dir ( odir );
 
-         save_xla( odir, sim_datas[ 0 ], 0, supress_dialog );
+         if ( ! save_xla( odir, sim_datas[ 0 ], 0, supress_dialog ) )
+         {
+            return false;
+         }
 
          // Create a timestate in the same directory
          QString tmst_fbase = run_id  + ".time_state.tmst";
@@ -1495,7 +1526,10 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
                QString xdef_fpath1 =  odir1 + "/" + run_id1 + ".time_state.xml";
                QDir().mkpath( odir1 );
 
-               save_xla( odir1, sim_datas[ jd ], jd, supress_dialog );
+               if ( ! save_xla( odir1, sim_datas[ jd ], jd, supress_dialog ) )
+               {
+                  return false;
+               }
 
                QFile::remove( tmst_fpath1 );
                QFile::remove( xdef_fpath1 );
@@ -1531,7 +1565,10 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
                QString odir2       =  odir   + spsufx;
                QDir().mkpath( odir2 );
 
-               save_xla( odir2, sim_datas[ jd ], jd );
+               if ( ! save_xla( odir2, sim_datas[ jd ], jd, supress_dialog ) )
+               {
+                  return false;
+               }
 
                if ( jd > 0 )
                {
@@ -1594,7 +1631,9 @@ DbgLv(1) << "ASIM:svscn: m-speed  have_tmst" << have_tmst;
    // Set the GUID before saveToDisk() can generate one.
    if ( ! guid_seed.isEmpty() )
    {
-      sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
+      // Key by run ID so reusing a seed with different inputs does not
+      // silently overwrite a different run's stored solution.
+      sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution." + run_id );
    }
 
    if ( sol.analyteInfo.isEmpty() )
@@ -1724,7 +1763,7 @@ void US_Astfem_Sim::update_progress( int component )
    }
 }
 
-void US_Astfem_Sim::save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1, bool supress_dialog )
+bool US_Astfem_Sim::save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1, bool supress_dialog )
 {
 
 DbgLv(1) << "save_xla_is_called";
@@ -1810,8 +1849,9 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          dthresh        = maxc;
       }
    } else
-   {
-      dthresh = total_conc * 2.0;
+   {  // Headless: match the GUI's cancel-dialog default of no clipping.
+      maxrad         = brad;
+      dthresh        = maxc;
    }
 
 
@@ -1930,14 +1970,23 @@ DbgLv(1) << "Sim:SV: after_write_rawdata" << ofname;
    {  // Nothing was saved, so do not report completion
       progress->setValue( total_scans );
       lb_progress->setText( tr( "Save failed" ) );
-      QMessageBox::critical( this, tr( "Simulation Save Failed" ),
-         tr( "The simulated data could not be written to\n%1\n\n%2" )
-         .arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
-      return;
+      if ( supress_dialog )
+      {
+         qDebug() << "Error: could not write simulated data to" << ofname
+                  << "-" << US_DataIO::errorString( wstat );
+      }
+      else
+      {
+         QMessageBox::critical( this, tr( "Simulation Save Failed" ),
+            tr( "The simulated data could not be written to\n%1\n\n%2" )
+            .arg( ofname ).arg( US_DataIO::errorString( wstat ) ) );
+      }
+      return false;
    }
 
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
+   return true;
 }
 
 

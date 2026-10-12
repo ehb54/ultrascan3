@@ -32,8 +32,6 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_MwlSpeciesSim w;
-
    QCommandLineParser parser;
    auto help_option = QCommandLineOption({"help", "h", "?"},
       "Display command-line help");
@@ -76,6 +74,12 @@ int main( int argc, char* argv[] )
       "Save simulation data to a directory",
       "save");
    parser.addOption(save_option);
+   auto overwrite_option = QCommandLineOption("overwrite",
+      "Allow --save into a directory that already has files in it; without "
+      "it, a non-empty save directory is an error, since a previous run's "
+      "files (for example, edit XMLs with a stale timestamp) would otherwise "
+      "be left alongside the new ones");
+   parser.addOption(overwrite_option);
    auto guid_seed_option = QCommandLineOption("guid-seed",
       "Derive this run's experiment, raw and edit GUIDs from this text "
       "instead of minting random ones, so simulating the same inputs twice "
@@ -112,11 +116,16 @@ int main( int argc, char* argv[] )
       return cli_exit_code;
    }
 
-   int default_data_location = US_Settings::default_data_location();
+   // A process-only override, never persisted, so headless runs cannot race
+   // on or permanently change the user's setting.
    if ( parser.isSet( ignore_db_option ) )
    {
-      US_Settings::set_default_data_location( 2 );
+      US_Settings::set_default_data_location_override( 2 );
    }
+
+   // Constructed after --no-db is applied: the constructor reads dbload
+   // from the current default data location.
+   US_MwlSpeciesSim w;
 
    QMap<QString, QString> args;
    if ( parser.isSet( models_option ) && !parser.value( models_option ).isEmpty() )
@@ -169,6 +178,10 @@ int main( int argc, char* argv[] )
    {
       args["save"] = parser.value( save_option ).replace("\\", "/");
    }
+   if ( parser.isSet( overwrite_option ) )
+   {
+      args["overwrite"] = "true";
+   }
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
    {
       args["guid-seed"] = parser.value( guid_seed_option );
@@ -184,11 +197,6 @@ int main( int argc, char* argv[] )
    }
 
    int init_status = args.isEmpty() ? 1 : w.init_from_args( args );
-
-   if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
-   {
-      US_Settings::set_default_data_location( default_data_location );
-   }
 
    if ( init_status == 1 && args.contains( "errors-cl" ) )
    {

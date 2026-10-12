@@ -30,7 +30,6 @@ inline bool handleStandardCliOptions( QCommandLineParser& parser,
    if ( ! parser.parse( QApplication::arguments() ) )
    {
       QTextStream( stderr ) << qUtf8Printable( parser.errorText() ) << Qt::endl;
-      QApplication::exit( 1 );
       exit_code = 1;
       return true;
    }
@@ -40,14 +39,12 @@ inline bool handleStandardCliOptions( QCommandLineParser& parser,
          qUtf8Printable( QApplication::applicationDisplayName() ),
          qUtf8Printable( QApplication::applicationName() ),
          qUtf8Printable( QApplication::applicationVersion() ) ) << Qt::endl;
-      QApplication::exit( 0 );
       exit_code = 0;
       return true;
    }
    if ( parser.isSet( help_option ) )
    {
       QTextStream( stdout ) << qUtf8Printable( parser.helpText() ) << Qt::endl;
-      QApplication::exit( 0 );
       exit_code = 0;
       return true;
    }
@@ -80,7 +77,6 @@ inline bool parseRunTypeOption( QCommandLineParser& parser,
    {
       QTextStream( stderr ) << "Invalid --runtype " << run_type
          << "; expected one of " << supportedRunTypes().join( ", " ) << Qt::endl;
-      QApplication::exit( 1 );
       exit_code = 1;
       return true;
    }
@@ -111,7 +107,6 @@ inline bool parseEditTimestampOption( QCommandLineParser& parser,
    {
       QTextStream( stderr ) << "Invalid --edit-timestamp " << stamp
          << "; expected yyMMddhhmm" << Qt::endl;
-      QApplication::exit( 1 );
       exit_code = 1;
       return true;
    }
@@ -141,7 +136,6 @@ inline bool parseDescriptionOption( QCommandLineParser& parser,
    {
       QTextStream( stderr ) << "Invalid --description; expected 1 to 239 "
          "Latin-1 characters" << Qt::endl;
-      QApplication::exit( 1 );
       exit_code = 1;
       return true;
    }
@@ -188,7 +182,6 @@ inline bool parseTripleOptions( QCommandLineParser& parser,
       {
          QTextStream( stderr ) << "Invalid --cell "
             << parser.value( cell_option ) << "; expected 1 to 8" << Qt::endl;
-         QApplication::exit( 1 );
          exit_code = 1;
          return true;
       }
@@ -204,7 +197,6 @@ inline bool parseTripleOptions( QCommandLineParser& parser,
       {
          QTextStream( stderr ) << "Invalid --channel " << channel
             << "; expected one of " << US_Util::channel_letters() << Qt::endl;
-         QApplication::exit( 1 );
          exit_code = 1;
          return true;
       }
@@ -243,7 +235,6 @@ inline bool parseNoiseSeedOption( QCommandLineParser& parser,
    {
       QTextStream( stderr ) << "Invalid --noise-seed " << value
          << "; expected a decimal value from 1 to " << UINT_MAX << Qt::endl;
-      QApplication::exit( 1 );
       exit_code = 1;
       return true;
    }

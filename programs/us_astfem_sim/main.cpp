@@ -78,6 +78,12 @@ int main( int argc, char* argv[] )
       "writes one sibling directory per speed, suffixed with -<rpm>",
       "dir");
    parser.addOption(save_option);
+   auto overwrite_option = QCommandLineOption("overwrite",
+      "Allow --save into a directory that already has files in it; without "
+      "it, a non-empty save directory is an error, since a previous run's "
+      "files (for example, edit XMLs with a stale timestamp) would otherwise "
+      "be left alongside the new ones");
+   parser.addOption(overwrite_option);
    auto guid_seed_option = QCommandLineOption("guid-seed",
       "Derive this run's experiment, raw and edit GUIDs from this text "
       "instead of minting random ones, so simulating the same inputs twice "
@@ -122,11 +128,11 @@ int main( int argc, char* argv[] )
 
    // parse command-specific options
 
-   // parse the database setting
-   int default_data_location = US_Settings::default_data_location();
+   // parse the database setting: a process-only override, never persisted,
+   // so headless runs cannot race on or permanently change the user's setting
    if ( parser.isSet( ignore_db_option ) )
    {
-      US_Settings::set_default_data_location( 2 );
+      US_Settings::set_default_data_location_override( 2 );
    }
    // parse model
    if ( parser.isSet( model_option ) && !parser.value( model_option ).isEmpty() )
@@ -205,6 +211,10 @@ int main( int argc, char* argv[] )
    {
       args["save"] = parser.value( save_option ).replace("\\", "/");
    }
+   if ( parser.isSet( overwrite_option ) )
+   {
+      args["overwrite"] = "true";
+   }
    // parse guid-seed
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
    {
@@ -222,11 +232,6 @@ int main( int argc, char* argv[] )
       args["close"] = "true";
    }
    int init_status = w.init_from_args(args);
-   if ( default_data_location != US_Settings::default_data_location() && parser.isSet( ignore_db_option ) )
-   {
-      // revert the previously changed default data location
-      US_Settings::set_default_data_location( default_data_location );
-   }
    // Show the GUI only if needed.
    return showGuiIfNeeded( w, init_status, args );
 }
