@@ -1927,10 +1927,22 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE" && !protDev_bool )
+     if ( expType == "ABDE" ) 
        {
-	 absorbance_conversion_abde();
-	 return;
+	 if ( !protDev_bool )
+	   {
+	     absorbance_conversion_abde();
+	     return;
+	   }
+	 else
+	   {
+	     pb_reference  ->setEnabled( false );
+	     referenceDefined = true;
+  	     lw_todoinfo->clear();
+	     pb_saveUS3 ->setEnabled( true );
+	     enableRunIDControl( false );
+	     return;
+	   }
        }
 
      return;
@@ -2074,11 +2086,30 @@ void US_ConvertGui::process_optics()
        } 
      //end of auto-processing reference range
 
-     if ( expType == "ABDE" && !protDev_bool )
+     //ABDE case
+     if ( expType == "ABDE" ) 
        {
-	 absorbance_conversion_abde();
-	 return;
+	 if ( !protDev_bool )
+	   {
+	     absorbance_conversion_abde();
+	     return;
+	   }
+	 else
+	   {
+	     pb_reference  ->setEnabled( false );
+	     referenceDefined = true;
+  	     lw_todoinfo->clear();
+	     pb_saveUS3 ->setEnabled( true );
+	     enableRunIDControl( false );
+	     return;
+	   }
        }
+     
+     // if ( expType == "ABDE" && !protDev_bool )
+     //   {
+     // 	 absorbance_conversion_abde();
+     // 	 return;
+     //   }
      
      return;
    }
