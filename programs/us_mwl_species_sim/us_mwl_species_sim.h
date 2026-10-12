@@ -14,6 +14,7 @@
 #include "us_plot.h"
 #include "us_colorgradIO.h"
 #include "us_spectrodata.h"
+#include "us_csv_data.h"
 
 #include "qwt_plot_marker.h"
 #include "qwt_plot_spectrogram.h"
@@ -84,16 +85,17 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Apply systematic and random noise to one wavelength.
         //! \param rdata Padded, clipped data.
         //! \param total_conc Total signal concentration, used to scale noise.
-        void apply_noise( US_DataIO::RawData& rdata, double total_conc );
+        void apply_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
 
         //! \brief Scale concentrations by extinction relative to the set maximum.
         //! Call before summing concentrations. All-zero extinction leaves the set unchanged.
         void apply_extinction_scaling( void );
 
-        void add_ri_noise    ( US_DataIO::RawData& rdata, double total_conc );
+        void add_ri_noise    ( US_DataIO::RawData& rdata, double total_conc, int model_index );
         void add_baseline    ( US_DataIO::RawData& rdata );
         void add_random_noise( US_DataIO::RawData& rdata, double total_conc );
-        void add_ti_noise    ( US_DataIO::RawData& rdata, double total_conc );
+        void add_ti_noise    ( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void save_csv_noise  ( US_CSV_Data& csv );
 
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
@@ -124,6 +126,11 @@ class US_MwlSpeciesSim : public US_Widgets
         QVector<US_DataIO::RawData> synData; //!< Synthetic data vector
         QList<US_Model> models;              //!< List of models
         QVector<bool> have_p1;               //!< Flags for p1 availability
+
+        //! Ground-truth noise actually applied, one entry per model/wavelength,
+        //! so it can be written beside each dataset for validation.
+        QVector<US_CSV_Data> csv_data_ti;
+        QVector<US_CSV_Data> csv_data_ri;
 
         US_DataIO::RawData rdata0;           //!< Raw data
         US_SimulationParameters simparams;   //!< Simulation parameters

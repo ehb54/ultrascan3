@@ -69,6 +69,19 @@ QString US_SimInputs::validateParams( const Params& p )
       return QString( "scans must be at least 1 (got %1)" ).arg( p.scans );
    }
 
+   // No ultracentrifuge rotor runs this fast; catch an order-of-magnitude typo
+   // rather than let the simulator spin forever on it.
+   if ( p.rpm > 200000.0 )
+   {
+      return QString( "speed must be 200000 rpm or less (got %1)" ).arg( p.rpm );
+   }
+
+   // Bounds memory and run time; a legitimate run rarely needs more than this.
+   if ( p.scans > 10000 )
+   {
+      return QString( "scans must be 10000 or less (got %1)" ).arg( p.scans );
+   }
+
    if ( p.duration_hours == 0 && p.duration_minutes <= 0.0 )
    {
       return "run duration must be greater than zero";
@@ -115,24 +128,24 @@ QString US_SimInputs::validateParams( const Params& p )
       return "grid type is out of range";
    }
 
+   // Hardware (centerpiece, channel, rotor calibration) is not checked here.
+   // simParams() calls setHardware() right after this, which already reads
+   // it; re-reading it here to pre-validate would read it twice on every
+   // call. See hardwareFailureReason() below for the failure path.
+
+   return QString();
+}
+
+// Re-derive a specific reason for a setHardware() failure, by checking the
+// same hardware definitions it just tried to load. Only called on that
+// failure path, so this does not cost an extra read on a successful call.
+static QString hardwareFailureReason( const US_SimInputs::Params& p )
+{
    QString hardware_error = US_AbstractCenterpiece::validate(
       p.centerpiece, p.centerpiece_channel );
    if ( ! hardware_error.isEmpty() )
    {
       return hardware_error;
-   }
-
-   // Analysis ignores the band volume unless the centerpiece forms a band.
-   if ( p.band_forming )
-   {
-      QList< US_AbstractCenterpiece > cp_list;
-      US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
-      if ( cp_list[ p.centerpiece ].shape != "band forming" )
-      {
-         return QString( "band forming requires a band-forming centerpiece "
-                         "(centerpiece %1 is \"%2\")" )
-            .arg( p.centerpiece ).arg( cp_list[ p.centerpiece ].name );
-      }
    }
 
    QMap< QString, QString > rotor_map;
@@ -144,7 +157,7 @@ QString US_SimInputs::validateParams( const Params& p )
          .arg( p.rotor_calibr );
    }
 
-   return QString();
+   return "hardware definitions changed or could not be loaded";
 }
 
 bool US_SimInputs::simParams( const Params& p,
@@ -163,7 +176,30 @@ bool US_SimInputs::simParams( const Params& p,
    if ( ! sp_out.setHardware( NULL, p.rotor_calibr, p.centerpiece,
                               p.centerpiece_channel ) )
    {
-      error = "hardware definitions changed or could not be loaded";
+      error = hardwareFailureReason( p );
+      return false;
+   }
+
+   // Analysis ignores the band volume unless the centerpiece forms a band.
+   if ( p.band_forming  &&  ! sp_out.band_forming )
+   {
+      error = QString( "band forming requires a band-forming centerpiece "
+                      "(centerpiece %1 is not band-forming)" )
+         .arg( p.centerpiece );
+      return false;
+   }
+
+   // A radial_resolution that does not fit at least a handful of grid
+   // points between the at-rest meniscus (below) and the centerpiece's
+   // at-rest bottom produces a degenerate mesh.
+   const double at_rest_meniscus = 5.8;
+   const double column_length    = sp_out.bottom_position - at_rest_meniscus;
+
+   if ( p.radial_resolution >= column_length )
+   {
+      error = QString( "radial resolution (%1) must be smaller than the "
+                      "centerpiece column length (%2)" )
+         .arg( p.radial_resolution ).arg( column_length );
       return false;
    }
 

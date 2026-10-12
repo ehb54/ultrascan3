@@ -12,6 +12,7 @@
 #include "us_sim_inputs.h"
 #include "us_hardware.h"
 #include "us_util.h"
+#include "us_sim_record.h"
 #include "us_defines.h"
 
 // Derive option help from the same coefficient table used for validation.
@@ -32,8 +33,9 @@ static QString coefficient_help( const US_SimSpecies::Coefficient& coeff )
 static bool parse_svedberg( const QString& text, double& value, QString& error )
 {
    QString trimmed = text.trimmed();
-   bool    svedberg = trimmed.endsWith( "S", Qt::CaseInsensitive )
-                      && ! trimmed.endsWith( "eS", Qt::CaseInsensitive );
+   // Matches a trailing Svedberg suffix on plain or scientific notation (4.5S, 4e1S).
+   static const QRegularExpression svedberg_rx( "^[-+0-9.eE]+[sS]$" );
+   bool    svedberg = svedberg_rx.match( trimmed ).hasMatch();
 
    if ( svedberg )
    {
@@ -145,6 +147,89 @@ static bool parse_analyte_guid( const QString& text, const QString& origin,
    return true;
 }
 
+// Parse and apply one of s, D, mw, f, f-f0, vbar20, conc, or extinction to
+// `supplied`; `key` must already be known to be one of these. The
+// coefficient-pair fields (s, D, mw, f, f-f0) also set any_supplied, since
+// calc_coefficients() needs exactly two of them. `origin` names the field
+// for error messages ("--s" in flag mode, "--component s" in --component
+// mode). Shared by parse_component and parse_component_spec.
+static bool apply_component_value( const QString& key, const QString& text,
+                                    const QString& origin,
+                                    US_SimSpecies::Component& supplied,
+                                    bool& any_supplied, QString& error )
+{
+   if ( key == "vbar20" )
+   {
+      bool numeric = false;
+      supplied.vbar20 = text.toDouble( &numeric );
+      if ( ! numeric )
+      {
+         error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
+         return false;
+      }
+      return true;
+   }
+
+   if ( key == "conc" )
+   {
+      bool numeric = false;
+      supplied.signal_concentration = text.toDouble( &numeric );
+      if ( ! numeric )
+      {
+         error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
+         return false;
+      }
+      return true;
+   }
+
+   if ( key == "extinction" )
+   {
+      bool numeric = false;
+      supplied.extinction = text.toDouble( &numeric );
+      if ( ! numeric )
+      {
+         error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
+         return false;
+      }
+      return true;
+   }
+
+   // One of the coefficient-pair fields: s, D, mw, f, or f-f0.
+   const US_SimSpecies::Coefficient* match = nullptr;
+
+   for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
+   {
+      if ( key == coeff.name )
+      {
+         match = &coeff;
+      }
+   }
+
+   double value = 0.0;
+
+   if ( key == "s" )
+   {
+      if ( ! parse_svedberg( text, value, error ) )
+      {
+         return false;
+      }
+   }
+   else
+   {
+      bool numeric = false;
+      value        = text.toDouble( &numeric );
+      if ( ! numeric )
+      {
+         error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
+         return false;
+      }
+   }
+
+   any_supplied               = true;
+   supplied.*( match->field ) = value;
+   return true;
+}
+
 // Leave omitted coefficients unsupplied unless no coefficient was given.
 static bool parse_component( const QCommandLineParser& parser,
                              const QMap< QString, QCommandLineOption >& options,
@@ -162,39 +247,32 @@ static bool parse_component( const QCommandLineParser& parser,
          continue;
       }
 
-      any_supplied = true;
       const QString text = parser.value( *options.constFind( name ) );
-      double        value = 0.0;
-
-      if ( name == "s" )
+      if ( ! apply_component_value( name, text, "--" + name, supplied,
+                                    any_supplied, error ) )
       {
-         if ( ! parse_svedberg( text, value, error ) )
-         {
-            return false;
-         }
+         return false;
       }
-      else
-      {
-         bool numeric = false;
-         value        = text.toDouble( &numeric );
-         if ( ! numeric )
-         {
-            error = QString( "--%1 \"%2\" is not numeric" ).arg( name, text );
-            return false;
-         }
-      }
-
-      supplied.*( coeff.field ) = value;
    }
 
    if ( parser.isSet( *options.constFind( "vbar20" ) ) )
    {
-      bool numeric = false;
-      supplied.vbar20 = parser.value( *options.constFind( "vbar20" ) ).toDouble( &numeric );
-      if ( ! numeric )
+      const QString text = parser.value( *options.constFind( "vbar20" ) );
+      if ( ! apply_component_value( "vbar20", text, "--vbar20", supplied,
+                                    any_supplied, error ) )
       {
-         error = QString( "--vbar20 \"%1\" is not numeric" )
-            .arg( parser.value( *options.constFind( "vbar20" ) ) );
+         return false;
+      }
+   }
+
+   // Concentration does not count toward the required coefficient pair.
+   if ( options.contains( "conc" )
+        &&  parser.isSet( *options.constFind( "conc" ) ) )
+   {
+      const QString text = parser.value( *options.constFind( "conc" ) );
+      if ( ! apply_component_value( "conc", text, "--conc", supplied,
+                                    any_supplied, error ) )
+      {
          return false;
       }
    }
@@ -203,13 +281,10 @@ static bool parse_component( const QCommandLineParser& parser,
    if ( options.contains( "extinction" )
         &&  parser.isSet( *options.constFind( "extinction" ) ) )
    {
-      bool numeric = false;
-      supplied.extinction = parser.value( *options.constFind( "extinction" ) )
-                               .toDouble( &numeric );
-      if ( ! numeric )
+      const QString text = parser.value( *options.constFind( "extinction" ) );
+      if ( ! apply_component_value( "extinction", text, "--extinction", supplied,
+                                    any_supplied, error ) )
       {
-         error = QString( "--extinction \"%1\" is not numeric" )
-            .arg( parser.value( *options.constFind( "extinction" ) ) );
          return false;
       }
    }
@@ -245,16 +320,18 @@ static bool parse_component( const QCommandLineParser& parser,
    if ( ! any_supplied )
    {  // Only the non-coefficient options, or nothing at all
       double  vbar20       = supplied.vbar20;
+      double  conc         = supplied.signal_concentration;
       double  extinction   = supplied.extinction;
       int     analyte_type = supplied.analyte_type;
       QString analyte_guid = supplied.analyte_guid;
       QString name         = supplied.name;
-      supplied              = US_SimSpecies::defaultComponent();
-      supplied.vbar20       = vbar20;
-      supplied.extinction   = extinction;
-      supplied.analyte_type = analyte_type;
-      supplied.analyte_guid = analyte_guid;
-      supplied.name         = name;
+      supplied                     = US_SimSpecies::defaultComponent();
+      supplied.vbar20              = vbar20;
+      supplied.signal_concentration = conc;
+      supplied.extinction          = extinction;
+      supplied.analyte_type        = analyte_type;
+      supplied.analyte_guid        = analyte_guid;
+      supplied.name                = name;
    }
 
    error = US_SimSpecies::validateComponent( supplied );
@@ -275,6 +352,7 @@ static bool parse_component_spec( const QString& spec,
 {
    US_SimSpecies::Component supplied;
    bool                     any_supplied = false;
+   QStringList              seen_keys;
 
    const QStringList fields = spec.split( ",", Qt::SkipEmptyParts );
 
@@ -298,6 +376,14 @@ static bool parse_component_spec( const QString& spec,
       const QString key  = field.left( split_at ).trimmed();
       // Only the key is trimmed; a name may legitimately end in a space.
       const QString text = field.mid( split_at + 1 );
+
+      if ( seen_keys.contains( key ) )
+      {
+         error = QString( "--component key \"%1\" is given more than once" )
+            .arg( key );
+         return false;
+      }
+      seen_keys << key;
 
       if ( key == "name" )
       {
@@ -329,17 +415,17 @@ static bool parse_component_spec( const QString& spec,
 
       // Resolve the key before reading the value, so an unknown key is
       // reported as such rather than as a malformed number.
-      const US_SimSpecies::Coefficient* match = nullptr;
+      bool is_coefficient = false;
 
       for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
       {
          if ( key == coeff.name )
          {
-            match = &coeff;
+            is_coefficient = true;
          }
       }
 
-      if ( match == nullptr  &&  key != "vbar20"  &&  key != "conc"
+      if ( ! is_coefficient  &&  key != "vbar20"  &&  key != "conc"
                              &&  key != "extinction" )
       {
          error = QString( "--component key \"%1\" is not one of %2" )
@@ -347,48 +433,11 @@ static bool parse_component_spec( const QString& spec,
          return false;
       }
 
-      double value   = 0.0;
-      bool   numeric = false;
-
-      if ( key == "s" )
+      if ( ! apply_component_value( key, text.trimmed(), "--component " + key,
+                                    supplied, any_supplied, error ) )
       {
-         if ( ! parse_svedberg( text.trimmed(), value, error ) )
-         {
-            return false;
-         }
+         return false;
       }
-      else
-      {
-         value = text.trimmed().toDouble( &numeric );
-
-         if ( ! numeric )
-         {
-            error = QString( "--component %1 \"%2\" is not numeric" )
-               .arg( key, text.trimmed() );
-            return false;
-         }
-      }
-
-      if ( key == "vbar20" )
-      {
-         supplied.vbar20 = value;
-         continue;
-      }
-
-      if ( key == "conc" )
-      {
-         supplied.signal_concentration = value;
-         continue;
-      }
-
-      if ( key == "extinction" )
-      {
-         supplied.extinction = value;
-         continue;
-      }
-
-      any_supplied               = true;
-      supplied.*( match->field ) = value;
    }
 
    if ( ! any_supplied )
@@ -424,6 +473,12 @@ int main( int argc, char* argv[] )
       "Output path: an existing directory in default or MWL mode, or a file "
       "for --emit-model, --emit-buffer, or --emit-simparams", "path" );
    parser.addOption( out_option );
+   QCommandLineOption guid_seed_option( "guid-seed",
+      "Derive the generated buffer's and model's GUIDs from this text instead "
+      "of minting random ones, so generating the same inputs twice produces "
+      "the same identities. Use a value unique to the run",
+      "text" );
+   parser.addOption( guid_seed_option );
    QCommandLineOption runid_option( "run-id",
       "Run ID for a per-wavelength MWL model; requires --channel and "
       "--wavelength",
@@ -477,6 +532,13 @@ int main( int argc, char* argv[] )
       "value", "value" );
    parser.addOption( vbar20_option );
    coefficient_opts.insert( "vbar20", vbar20_option );
+   // Concentration is independent of the hydrodynamic coefficient pair.
+   QCommandLineOption conc_option( "conc",
+      "This species' absolute signal concentration; defaults to 1. For a "
+      "multi-component model use --component \"...,conc=...\" instead",
+      "value" );
+   parser.addOption( conc_option );
+   coefficient_opts.insert( "conc", conc_option );
    // Extinction is independent of the hydrodynamic coefficient pair.
    QCommandLineOption extinction_option( "extinction",
       "Molar extinction coefficient of the species at this model's "
@@ -555,25 +617,27 @@ int main( int argc, char* argv[] )
    parser.addOption( points_option );
    QCommandLineOption acceleration_option( "acceleration", "Rotor acceleration (rpm/s)", "value" );
    parser.addOption( acceleration_option );
-   QCommandLineOption rnoise_option( "rnoise", "Random noise, proportional to total concentration", "value" );
+   QCommandLineOption rnoise_option( "rnoise", "Random noise (% of total concentration)", "value" );
    parser.addOption( rnoise_option );
-   QCommandLineOption lrnoise_option( "lrnoise", "Random noise, proportional to local concentration", "value" );
+   QCommandLineOption lrnoise_option( "lrnoise", "Random noise (% of local concentration)", "value" );
    parser.addOption( lrnoise_option );
-   QCommandLineOption tinoise_option( "tinoise", "Time-invariant noise", "value" );
+   QCommandLineOption tinoise_option( "tinoise", "Time-invariant noise (% of concentration)", "value" );
    parser.addOption( tinoise_option );
-   QCommandLineOption rinoise_option( "rinoise", "Radially invariant noise", "value" );
+   QCommandLineOption rinoise_option( "rinoise", "Radially invariant noise (% of concentration)", "value" );
    parser.addOption( rinoise_option );
-   QCommandLineOption sp_baseline_option( "baseline", "Constant baseline offset", "value" );
+   QCommandLineOption sp_baseline_option( "baseline", "Constant baseline offset (OD)", "value" );
    parser.addOption( sp_baseline_option );
-   QCommandLineOption radial_resolution_option( "radial-resolution", "Radial grid spacing", "value" );
+   QCommandLineOption radial_resolution_option( "radial-resolution", "Radial grid spacing (cm)", "value" );
    parser.addOption( radial_resolution_option );
-   QCommandLineOption mesh_type_option( "mesh-type", "ASTFEM|Claverie|MovingHat|User|ASTFVM", "type" );
+   QCommandLineOption mesh_type_option( "mesh-type",
+      "ASTFEM|Claverie|MovingHat|ASTFVM (User is not supported here: there is "
+      "no option to supply a mesh file)", "type" );
    parser.addOption( mesh_type_option );
    QCommandLineOption grid_type_option( "grid-type", "Fixed|Moving", "type" );
    parser.addOption( grid_type_option );
    QCommandLineOption band_forming_option( "band-forming", "Use a band-forming centerpiece" );
    parser.addOption( band_forming_option );
-   QCommandLineOption band_volume_option( "band-volume", "Loading volume for a band-forming centerpiece", "value" );
+   QCommandLineOption band_volume_option( "band-volume", "Loading volume for a band-forming centerpiece (mL)", "value" );
    parser.addOption( band_volume_option );
    QCommandLineOption rotor_calibration_option( "rotor-calibration",
       "Rotor calibration ID (default \"0\", a built-in zero-stretch-correction "
@@ -612,9 +676,9 @@ int main( int argc, char* argv[] )
       if ( uses_components && uses_flags )
       {
          QTextStream( stderr ) << "Error: --component cannot be combined with "
-            "--s, --D, --mw, --f, --f-f0, --vbar20, --extinction, "
+            "--s, --D, --mw, --f, --f-f0, --vbar20, --conc, --extinction, "
             "--analyte-type, --analyte-guid, or --name; state every component as its "
-            "own --component, using its extinction=, type=, and guid= keys"
+            "own --component, using its conc=, extinction=, type=, and guid= keys"
             << Qt::endl;
          return 1;
       }
@@ -695,6 +759,10 @@ int main( int argc, char* argv[] )
          return 1;
       }
       model_out.description = description;
+      // Override the random GUID US_SimSpecies::model() minted, so the
+      // output is reproducible when --guid-seed is given.
+      model_out.modelGUID   = US_SimRecord::guid(
+         parser.value( guid_seed_option ), "model" );
 
       // An unnamed component takes the description, which is unambiguous only
       // when it is the sole component.
@@ -758,7 +826,8 @@ int main( int argc, char* argv[] )
       US_Buffer buffer_out;
       buffer_out.description = parser.isSet( model_description_option )
          ? parser.value( model_description_option ) : QString( "us_sim_inputs_gen emitted buffer" );
-      buffer_out.GUID            = US_Util::new_guid();
+      buffer_out.GUID            = US_SimRecord::guid(
+         parser.value( guid_seed_option ), "buffer" );
       buffer_out.density         = density;
       buffer_out.viscosity       = viscosity;
       buffer_out.pH              = ph;
@@ -863,11 +932,19 @@ int main( int argc, char* argv[] )
 
       if ( parser.isSet( mesh_type_option ) )
       {
-         int idx = mesh_names.indexOf( parser.value( mesh_type_option ) );
+         const QString mesh_value = parser.value( mesh_type_option );
+         int idx = mesh_names.indexOf( mesh_value );
          if ( idx < 0 )
          {
             QTextStream( stderr ) << "Error: --mesh-type must be one of "
                << mesh_names.join( "|" ) << Qt::endl;
+            return 1;
+         }
+         if ( mesh_value == "User" )
+         {
+            QTextStream( stderr ) << "Error: --mesh-type User requires a mesh "
+               "file, which this tool has no option to supply; use ASTFEM, "
+               "Claverie, MovingHat, or ASTFVM instead" << Qt::endl;
             return 1;
          }
          sp_params.meshType = static_cast< US_SimulationParameters::MeshType >( idx );
@@ -996,7 +1073,11 @@ int main( int argc, char* argv[] )
       }
       model.description = QString( "%1.%2%3.model.default" )
                            .arg( run_id, channel, wavelength );
-      model.modelGUID    = US_Util::new_guid();
+      // Override the random GUID US_SimSpecies::model() minted. Keyed by
+      // run ID, channel, and wavelength so each per-wavelength model in the
+      // same run gets a distinct, reproducible identity.
+      model.modelGUID    = US_SimRecord::guid( parser.value( guid_seed_option ),
+         "model." + run_id + "." + channel + "." + wavelength );
 
       QString fname = QString( "model_%1_%2.xml" ).arg( channel, wavelength );
       if ( model.write( outdir.filePath( fname ) ) != IUS_DB2::OK )

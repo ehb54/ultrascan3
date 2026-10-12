@@ -829,7 +829,7 @@ DbgLv(1) << "sH: cp ch cp_id" << cp << ch << cp_id;
       else
       {
          // Pick up centerpiece info by centerpiece and row indexes.
-         static const QStringList shapes = { "sector", "standard",
+         const QStringList shapes = { "sector", "standard",
             "rectangular", "band forming", "meniscus matching", "circular",
             "synthetic" };
          QString shape   = cp_list[ cp ].shape;

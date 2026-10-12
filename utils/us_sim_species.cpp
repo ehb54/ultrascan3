@@ -3,6 +3,7 @@
 #include "us_util.h"
 #include "us_constants.h"
 #include <QStringList>
+#include <QMap>
 
 US_SimSpecies::Coeff::Coeff()
 {
@@ -156,6 +157,16 @@ QString US_SimSpecies::validateComponent( const Component& c )
    {
       double buoyancy = 1.0 - ( c.vbar20 * DENS_20W );
 
+      // vbar20 at the density-matched point makes calc_coefficients() solve
+      // for an infinite molecular weight.
+      if ( qAbs( buoyancy ) < 1.0e-6 )
+      {
+         return QString( "vbar20 (%1) is too close to the density-matched "
+                         "value of %2 mL/g; s cannot determine a finite "
+                         "molecular weight there" )
+            .arg( c.vbar20 ).arg( 1.0 / DENS_20W );
+      }
+
       if ( ( c.s.value < 0.0  &&  buoyancy > 0.0 )  ||
            ( c.s.value > 0.0  &&  buoyancy < 0.0 ) )
       {
@@ -204,8 +215,26 @@ bool US_SimSpecies::model( const QVector< Component >& components,
       return false;
    }
 
+   // Label by analyte type when every component shares one; "Other" covers
+   // CARBOHYDRATE and any other value, mirroring parse_analyte_type().
+   static const QMap< int, QString > type_names = {
+      { (int)US_Analyte::PROTEIN, "protein" },
+      { (int)US_Analyte::DNA,     "DNA"     },
+      { (int)US_Analyte::RNA,     "RNA"     },
+   };
+   QString type_label = type_names.value( components.first().analyte_type, "Other" );
+   for ( const Component& c : components )
+   {
+      if ( c.analyte_type != components.first().analyte_type )
+      {
+         type_label = "mixed";
+         break;
+      }
+   }
+
    US_Model candidate;
-   candidate.description  = "us3-sim-inputs generated protein model v1";
+   candidate.description  = QString( "us3-sim-inputs generated %1 model v1" )
+      .arg( type_label );
    candidate.modelGUID    = US_Util::new_guid();
    candidate.optics       = US_Model::ABSORBANCE;
    candidate.analysis     = US_Model::MANUAL;

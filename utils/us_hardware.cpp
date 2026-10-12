@@ -1,6 +1,7 @@
 //! \file us_hardware.cpp
 #include "us_hardware.h"
 #include "us_settings.h"
+#include "us_util.h"
 
 // Read rotor information and generate a rotorCalID,coeffs map from Local
 bool US_Hardware::readRotorMap( QMap< QString, QString >& rotor_map )
@@ -329,7 +330,8 @@ bool US_AbstractCenterpiece::read_centerpieces(
 bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
                                             QString& error )
 {
-   const QString letters = "ABCDEFGH";
+   // channel_letters() leads with "S" for the single-channel case, handled below.
+   const QString letters = US_Util::channel_letters().mid( 1 );
    const QString trimmed = value.trimmed();
 
    if ( trimmed.isEmpty() )

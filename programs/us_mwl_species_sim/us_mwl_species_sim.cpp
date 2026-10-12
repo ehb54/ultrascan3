@@ -1,6 +1,7 @@
 //! \file us_mwl_species_sim.cpp
 
 #include <QApplication>
+#include <QTemporaryFile>
 
 #include "us_headless_cli.h"
 #include "us_mwl_species_sim.h"
@@ -546,6 +547,10 @@ DbgLv(1) << "SLOT: start_sims";
    have_p1.clear();
 
    // Clear systematic noise before generating a new run.
+   csv_data_ti.clear();
+   csv_data_ri.clear();
+   csv_data_ti.resize( nmodels );
+   csv_data_ri.resize( nmodels );
 
    for ( int jm = 0; jm < nmodels; jm++ )
    {
@@ -772,19 +777,27 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
                                      save_path, errors_to_cl,
                                      gui_needed, error_occured );
       }
+      else if ( dir.exists()  &&  ! dir.isEmpty()
+                &&  ! flags.contains( "overwrite" ) )
+      {
+         // A stale file from a previous run into the same directory (an
+         // edit XML with a different timestamp, a noise CSV from a run
+         // that had noise, ...) would otherwise sit alongside the new
+         // output and confuse a later loadData().
+         reportHeadlessLoadFailure(
+            "save directory (not empty; pass --overwrite to reuse it)",
+            save_path, errors_to_cl, gui_needed, error_occured );
+      }
       else
       {
-         QFile file( dir.filePath( "tmp.txt" ) );
-         if ( ! file.open( QIODevice::WriteOnly ) )
+         // A uniquely-named temp file, so a real user file named tmp.txt
+         // is never truncated and removed by this probe.
+         QTemporaryFile probe( dir.filePath( "us_mwl_species_sim_writable_XXXXXX" ) );
+         if ( ! probe.open() )
          {
             reportHeadlessLoadFailure( "save directory (not writable)",
                                         save_path, errors_to_cl,
                                         gui_needed, error_occured );
-         }
-         else
-         {
-            file.close();
-            file.remove();
          }
       }
    }
@@ -1011,7 +1024,9 @@ bool US_MwlSpeciesSim::write_experiment_record( const QString& impdir,
    // Set the GUID before saveToDisk() can generate one.
    if ( ! guid_seed.isEmpty() )
    {
-      sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution" );
+      // Key by run ID so reusing a seed with different inputs does not
+      // silently overwrite a different run's stored solution.
+      sol.solutionGUID = US_SimRecord::guid( guid_seed, "solution." + orunid );
    }
 
    if ( sol.analyteInfo.isEmpty() )
@@ -1115,8 +1130,10 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
       ev.cell       = cell;
       ev.channel    = channel;
       ev.wavelength = swavl;
+      // Key by run ID and model index, not just wavelength: two models at
+      // the same wavelength (a supported case) would otherwise collide.
       ev.editGUID   = US_SimRecord::guid( guid_seed,
-                                          "edit." + swavl );
+                                          "edit." + orunid + "." + QString::number( jm ) );
       ev.dataGUID   = US_Util::uuid_unparse(
          reinterpret_cast<uchar*>( synData[ jm ].rawGUID ) );
 
@@ -1127,6 +1144,21 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir,
       {
          qDebug() << "Error: could not write edit file" << impdir + fname;
          return false;
+      }
+
+      // Ground truth for the noise actually applied to this wavelength,
+      // so it can be validated against fitted noise.
+      if ( jm < csv_data_ti.size()  &&  csv_data_ti[ jm ].rowCount() > 0 )
+      {
+         csv_data_ti[ jm ].setFilePath(
+            impdir + "MWL_TI_NOISE." + swavl + ".csv" );
+         save_csv_noise( csv_data_ti[ jm ] );
+      }
+      if ( jm < csv_data_ri.size()  &&  csv_data_ri[ jm ].rowCount() > 0 )
+      {
+         csv_data_ri[ jm ].setFilePath(
+            impdir + "MWL_RI_NOISE." + swavl + ".csv" );
+         save_csv_noise( csv_data_ri[ jm ] );
       }
    }
 
@@ -1315,7 +1347,7 @@ if(js==0  || js==(nscans-1))
 
 // Add one offset per scan, shared across the points of this wavelength.
 void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
-                                     double total_conc )
+                                     double total_conc, int model_index )
 {
    if ( simparams.rinoise == 0.0 )
    {
@@ -1323,6 +1355,8 @@ void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
    }
 
    double sigma = total_conc * simparams.rinoise / 100;
+   QVector< double > tv;
+   QVector< double > rv;
 
    for ( int ks = 0; ks < rdata.scanData.size(); ks++ )
    {
@@ -1332,6 +1366,19 @@ void US_MwlSpeciesSim::add_ri_noise( US_DataIO::RawData& rdata,
       {
          rdata.scanData[ ks ].rvalues[ mp ] += rinoise;
       }
+
+      tv << rdata.scanData[ ks ].seconds;
+      rv << rinoise;
+   }
+
+   if ( model_index >= 0  &&  model_index < csv_data_ri.size() )
+   {
+      QStringList header;
+      header << "Time (s)" << "RI noise (OD)";
+      QVector< QVector< double > > csv_data;
+      csv_data << tv;
+      csv_data << rv;
+      csv_data_ri[ model_index ].setData( header, csv_data );
    }
 }
 
@@ -1389,7 +1436,7 @@ void US_MwlSpeciesSim::add_random_noise( US_DataIO::RawData& rdata,
 // Add a radial random walk shared across the scans of this wavelength.
 // Its spread grows approximately as sqrt(point count) times sigma.
 void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
-                                     double total_conc )
+                                     double total_conc, int model_index )
 {
    if ( simparams.tinoise == 0.0 )
    {
@@ -1414,20 +1461,35 @@ void US_MwlSpeciesSim::add_ti_noise( US_DataIO::RawData& rdata,
          rdata.scanData[ ks ].rvalues[ mp ] += walk[ mp ];
       }
    }
+
+   if ( model_index >= 0  &&  model_index < csv_data_ti.size() )
+   {
+      QStringList header{ "Radial Points (cm)", "TI noise (OD)" };
+      QVector< QVector< double > > csv_data;
+      csv_data << rdata.xvalues;
+      csv_data << walk;
+      csv_data_ti[ model_index ].setData( header, csv_data );
+   }
+}
+
+void US_MwlSpeciesSim::save_csv_noise( US_CSV_Data& csv )
+{
+   if ( csv.columnCount() != 2 ) return;
+   csv.writeFile( "," );
 }
 
 // Apply noise after clipping and padding.
 // Each wavelength gets its own TI, RI, and random noise.
 // Noise scales with concentration, an approximation of instrument noise.
 void US_MwlSpeciesSim::apply_noise( US_DataIO::RawData& rdata,
-                                    double total_conc )
+                                    double total_conc, int model_index )
 {
    // Order matches us_astfem_sim's finish(): lrnoise reads the running
    // value, so anything applied before it feeds into its magnitude.
-   add_ri_noise    ( rdata, total_conc );
+   add_ri_noise    ( rdata, total_conc, model_index );
    add_baseline    ( rdata );
    add_random_noise( rdata, total_conc );
-   add_ti_noise    ( rdata, total_conc );
+   add_ti_noise    ( rdata, total_conc, model_index );
 }
 
 // Build the raw data for the current triple (model)
@@ -1504,6 +1566,10 @@ DbgLv(1) << "bldraw:  " << tripx << "tot_conc max_od" << tot_conc << max_od;
 DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    }
 
+   // Add noise before padding, so the pad and the meniscus spike stay clean,
+   // matching us_astfem_sim's save_xla.
+   apply_noise( rdata, tot_conc, tripx );
+
    // Pad start of data and set meniscus value spike
    double mspike      = tot_conc * 1.5;
    npoint             = rdata0.pointCount() + npad;
@@ -1554,12 +1620,10 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
       }
    }
 
-   // Add noise last, so the pad and the meniscus spike are noisy too
-   apply_noise( rdata, tot_conc );
-
-   // Save the simulated data and plot it
+   // Save the simulated data and plot it. Key by run ID and dataset index so
+   // reusing a seed across different runs does not collide.
    QString guid       = US_SimRecord::guid( guid_seed,
-                           QString( "raw.%1" ).arg( synData.count() ) );
+                           QString( "raw.%1.%2" ).arg( orunid ).arg( synData.count() ) );
    US_Util::uuid_parse( guid, (uchar*)rdata.rawGUID );
 
    synData << rdata;

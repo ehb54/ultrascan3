@@ -117,7 +117,7 @@ class US_Astfem_Sim : public US_Widgets
       void   init_simparams ( void );
       void   adjust_limits  ( double );
       double stretch        ( double*, double );
-      void   save_xla       ( const QString&, US_DataIO::RawData, int, bool supress_dialog = false );
+      bool   save_xla       ( const QString&, US_DataIO::RawData, int, bool supress_dialog = false );
       void   finish         ( void );
       void   ri_noise       ( void );
       void   baseline       ( void );

@@ -1104,7 +1104,7 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, EditValues& parameters )
 
 int US_DataIO::writeEdits( const QString& filename, const EditValues& p )
 {
-   QFile ff( filename );
+   QSaveFile ff( filename );
 
    if ( ! ff.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
@@ -1304,7 +1304,10 @@ int US_DataIO::writeEdits( const QString& filename, const EditValues& p )
    xml.writeEndElement  ();  // experiment
    xml.writeEndDocument ();
 
-   ff.close();
+   if ( xml.hasError()  ||  ! ff.commit() )
+   {
+      return CANTWRITE;
+   }
 
    return OK;
 }
