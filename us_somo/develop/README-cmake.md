@@ -112,4 +112,7 @@ These need the whole repository, as on main: they use the root's vcpkg setup
   `$VCPKG_ROOT`, or `~/vcpkg`.
 - From the repository root: the root presets with `-DUS3_BUILD_SOMO=ON`
   build SOMO along with the rest of UltraScan (not under MSVC, see above).
+  SOMO's programs and library land in `build/<preset>/us_somo/bin` and
+  `lib`, laid out as above so the programs run from there. The root's own
+  `etc/` is UltraScan's, so SOMO's cannot share it.
 - `docker/` holds a Linux build environment for both; see its README.

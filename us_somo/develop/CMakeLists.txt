@@ -76,7 +76,12 @@ if(NOT DEFINED PROJECT_NAME)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
     set(SOMO_STANDALONE ON)
 else()
-    set(SOMO_STANDALONE OFF)   # inherit output dirs from root
+    # In the root build, SOMO gets a us_somo/ subtree of the build directory,
+    # laid out so its programs run from there (see "a build tree the programs
+    # run from" below). UltraScan's own bin/, lib/ and etc/ stay as they are.
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/us_somo/bin)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/us_somo/lib)
+    set(SOMO_STANDALONE OFF)
 endif()
 
 # MSVC has never compiled SOMO. The root build skips SOMO under MSVC (see the
@@ -520,7 +525,7 @@ endif()
 # us_cluster_server_t (2011) dropped: its us_cluster_server_global.h includes
 # <q3socket.h> (Qt3Support), removed since Qt5 — it cannot build on Qt5/Qt6.
 
-# --- a build tree the programs run from (SOMO only) --------------------------
+# --- a build tree the programs run from -------------------------------------
 # SOMO takes the directory above its program's bin/ as its system directory:
 # always on Linux and Windows (US_Config::read()), and on macOS when ULTRASCAN
 # is not set. It expects somo/ there (somo/doc), and etc/ (the reference
@@ -529,36 +534,38 @@ endif()
 # (bin64/ on Linux), inside that layout. Give the build tree the same layout,
 # so the programs run from it: link somo/ and etc/ to us_somo's (or copy them,
 # where links cannot be made, as on Windows without the privilege), and copy
-# this platform's helpers next to the programs, as makesomo.sh does. A root
-# build leaves its output directory, which UltraScan shares, alone.
-if(SOMO_STANDALONE)
-    get_filename_component(_somo_top "${SOMO_ROOT}/.." ABSOLUTE)   # us_somo
-    foreach(_d somo etc)
-        set(_dst "${CMAKE_BINARY_DIR}/${_d}")
-        if(EXISTS "${_somo_top}/${_d}" AND NOT EXISTS "${_dst}" AND NOT IS_SYMLINK "${_dst}")
-            file(CREATE_LINK "${_somo_top}/${_d}" "${_dst}" SYMBOLIC RESULT _rc)
-            if(NOT _rc EQUAL 0)
-                file(COPY "${_somo_top}/${_d}" DESTINATION "${CMAKE_BINARY_DIR}")
-            endif()
+# this platform's helpers next to the programs, as makesomo.sh does. A
+# SOMO-only build does this in its build directory. The root build does it in
+# its us_somo/ subtree, because the root's own etc/ is UltraScan's (a link to
+# the repository's etc/).
+get_filename_component(_somo_out "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/.." ABSOLUTE)
+get_filename_component(_somo_top "${SOMO_ROOT}/.." ABSOLUTE)   # us_somo
+foreach(_d somo etc)
+    set(_dst "${_somo_out}/${_d}")
+    if(EXISTS "${_somo_top}/${_d}" AND NOT EXISTS "${_dst}" AND NOT IS_SYMLINK "${_dst}")
+        file(MAKE_DIRECTORY "${_somo_out}")
+        file(CREATE_LINK "${_somo_top}/${_d}" "${_dst}" SYMBOLIC RESULT _rc)
+        if(NOT _rc EQUAL 0)
+            file(COPY "${_somo_top}/${_d}" DESTINATION "${_somo_out}")
         endif()
-    endforeach()
-    if(WIN32)
-        set(_somo_helpers_glob "*_win64.exe")
-    elseif(APPLE)
-        set(_somo_helpers_glob "*_osx*")
-    else()
-        set(_somo_helpers_glob "*_linux64")
     endif()
-    file(GLOB _somo_helpers "${_somo_top}/add_to_bin/${_somo_helpers_glob}")
-    if(_somo_helpers)
-        file(COPY ${_somo_helpers} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-    endif()
-    # On Linux SOMO is built with BIN64 (as qmake does) and looks for the
-    # helpers in bin64/, which makesomo.sh links to bin/ in an installation.
-    if(UNIX AND NOT APPLE AND NOT EXISTS "${CMAKE_BINARY_DIR}/bin64"
-       AND NOT IS_SYMLINK "${CMAKE_BINARY_DIR}/bin64")
-        file(CREATE_LINK bin "${CMAKE_BINARY_DIR}/bin64" SYMBOLIC)
-    endif()
+endforeach()
+if(WIN32)
+    set(_somo_helpers_glob "*_win64.exe")
+elseif(APPLE)
+    set(_somo_helpers_glob "*_osx*")
+else()
+    set(_somo_helpers_glob "*_linux64")
+endif()
+file(GLOB _somo_helpers "${_somo_top}/add_to_bin/${_somo_helpers_glob}")
+if(_somo_helpers)
+    file(COPY ${_somo_helpers} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
+# On Linux SOMO is built with BIN64 (as qmake does) and looks for the
+# helpers in bin64/, which makesomo.sh links to bin/ in an installation.
+if(UNIX AND NOT APPLE AND NOT EXISTS "${_somo_out}/bin64"
+   AND NOT IS_SYMLINK "${_somo_out}/bin64")
+    file(CREATE_LINK bin "${_somo_out}/bin64" SYMBOLIC)
 endif()
 
 # --- install -----------------------------------------------------------------
@@ -573,3 +580,4 @@ else()
     set(_somo_how "as part of the UltraScan build")
 endif()
 message(STATUS "SOMO: configured ${_somo_how}; ADOLC=${SOMO_ENABLE_ADOLC}")
+message(STATUS "SOMO: programs in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")

@@ -158,6 +158,24 @@ jobs:
           cmake --build build \
               --target us_somo us3_somo us3_admin us3_config us_saxs_cmds_t
 
+      # The root build puts SOMO in build/us_somo/, laid out to run from there.
+      - name: Run a batch from the build tree
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          unset ULTRASCAN
+          b=$GITHUB_WORKSPACE/build/us_somo/bin/us3_somo
+          export HOME=$RUNNER_TEMP/somo-home
+          w=$RUNNER_TEMP/somo-run
+          mkdir -p $HOME $w
+          cp us_somo/somo/demo/1HEL.pdb $w/
+          printf '%s' "$SOMO_BATCH" > $w/batch.txt
+          cd $w
+          for i in 1 2; do
+            timeout 600 $b -I -g batch.txt 1HEL.pdb
+          done
+          grep -a 'Translational diffusion coefficient' $HOME/ultrascan/somo/ci.hydro_res
+
   macos-somo-only:
     name: macOS, SOMO only (Qt 6)
     runs-on: macos-latest
