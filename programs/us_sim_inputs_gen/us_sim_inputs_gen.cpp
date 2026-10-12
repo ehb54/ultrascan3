@@ -3,17 +3,17 @@
 //! Uses US_SimInputs without GUI interaction, database access, or network
 //! access.
 
-#include <QCoreApplication>
 #include <QCommandLineParser>
-#include <QTextStream>
+#include <QCoreApplication>
 #include <QDir>
 #include <QRegularExpression>
+#include <QTextStream>
 
-#include "us_sim_inputs.h"
-#include "us_hardware.h"
-#include "us_util.h"
-#include "us_sim_record.h"
 #include "us_defines.h"
+#include "us_hardware.h"
+#include "us_sim_inputs.h"
+#include "us_sim_record.h"
+#include "us_util.h"
 
 // Derive option help from the same coefficient table used for validation.
 static QString coefficient_help( const US_SimSpecies::Coefficient& coeff )
@@ -32,10 +32,10 @@ static QString coefficient_help( const US_SimSpecies::Coefficient& coeff )
 // likely suffix omission instead of applying a value 1e13 times too large.
 static bool parse_svedberg( const QString& text, double& value, QString& error )
 {
-   QString trimmed = text.trimmed();
+   QString                         trimmed = text.trimmed();
    // Matches a trailing Svedberg suffix on plain or scientific notation (4.5S, 4e1S).
    static const QRegularExpression svedberg_rx( "^[-+0-9.eE]+[sS]$" );
-   bool    svedberg = svedberg_rx.match( trimmed ).hasMatch();
+   bool                            svedberg = svedberg_rx.match( trimmed ).hasMatch();
 
    if ( svedberg )
    {
@@ -45,7 +45,7 @@ static bool parse_svedberg( const QString& text, double& value, QString& error )
    bool numeric = false;
    value        = trimmed.toDouble( &numeric );
 
-   if ( ! numeric )
+   if ( !numeric )
    {
       error = QString( "--s \"%1\" is not numeric" ).arg( text );
       return false;
@@ -62,7 +62,7 @@ static bool parse_svedberg( const QString& text, double& value, QString& error )
    {
       error = QString( "--s %1 is too large to be a value in seconds; append "
                        "S for Svedbergs (--s %1S) or give seconds directly" )
-         .arg( text );
+                 .arg( text );
       return false;
    }
 
@@ -86,19 +86,18 @@ static const QStringList& component_keys()
 }
 
 // Accept an analyte type name or US_Analyte::analyte_t value.
-static bool parse_analyte_type( const QString& text, const QString& origin,
-                                int& type, QString& error )
+static bool parse_analyte_type( const QString& text, const QString& origin, int& type, QString& error )
 {
-   static const QVector< QPair< QString, int > > names = {
-      { "Protein", static_cast< int >( US_Analyte::PROTEIN )      },
-      { "DNA",     static_cast< int >( US_Analyte::DNA )          },
-      { "RNA",     static_cast< int >( US_Analyte::RNA )          },
-      { "Other",   static_cast< int >( US_Analyte::CARBOHYDRATE ) },
+   static const QVector<QPair<QString, int>> names = {
+      { "Protein", static_cast<int>( US_Analyte::PROTEIN ) },
+      { "DNA", static_cast<int>( US_Analyte::DNA ) },
+      { "RNA", static_cast<int>( US_Analyte::RNA ) },
+      { "Other", static_cast<int>( US_Analyte::CARBOHYDRATE ) },
    };
 
    const QString given = text.trimmed();
 
-   for ( const QPair< QString, int >& name : names )
+   for ( const QPair<QString, int>& name : names )
    {
       if ( given.compare( name.first, Qt::CaseInsensitive ) == 0 )
       {
@@ -108,11 +107,10 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
    }
 
    // Accept numeric analyte type values.
-   bool numeric = false;
-   const int value = given.toInt( &numeric );
+   bool      numeric = false;
+   const int value   = given.toInt( &numeric );
 
-   if ( numeric  &&  value >= static_cast< int >( US_Analyte::PROTEIN )
-                 &&  value <= static_cast< int >( US_Analyte::CARBOHYDRATE ) )
+   if ( numeric && value >= static_cast<int>( US_Analyte::PROTEIN ) && value <= static_cast<int>( US_Analyte::CARBOHYDRATE ) )
    {
       type = value;
       return true;
@@ -120,26 +118,23 @@ static bool parse_analyte_type( const QString& text, const QString& origin,
 
    QStringList accepted;
 
-   for ( const QPair< QString, int >& name : names )
+   for ( const QPair<QString, int>& name : names )
    {
       accepted << QString( "%1 (%2)" ).arg( name.first ).arg( name.second );
    }
 
-   error = QString( "%1 \"%2\" is not one of %3" )
-      .arg( origin, given, accepted.join( ", " ) );
+   error = QString( "%1 \"%2\" is not one of %3" ).arg( origin, given, accepted.join( ", " ) );
    return false;
 }
 
 // Validate an analyte UUID and report the originating option on failure.
-static bool parse_analyte_guid( const QString& text, const QString& origin,
-                                QString& guid, QString& error )
+static bool parse_analyte_guid( const QString& text, const QString& origin, QString& guid, QString& error )
 {
    const QString given = text.trimmed();
 
-   if ( ! US_Util::UUID_REGEX.match( given ).hasMatch() )
+   if ( !US_Util::UUID_REGEX.match( given ).hasMatch() )
    {
-      error = QString( "%1 \"%2\" is not a 36-character UUID" )
-         .arg( origin, given );
+      error = QString( "%1 \"%2\" is not a 36-character UUID" ).arg( origin, given );
       return false;
    }
 
@@ -153,16 +148,18 @@ static bool parse_analyte_guid( const QString& text, const QString& origin,
 // calc_coefficients() needs exactly two of them. `origin` names the field
 // for error messages ("--s" in flag mode, "--component s" in --component
 // mode). Shared by parse_component and parse_component_spec.
-static bool apply_component_value( const QString& key, const QString& text,
-                                    const QString& origin,
-                                    US_SimSpecies::Component& supplied,
-                                    bool& any_supplied, QString& error )
+static bool apply_component_value( const QString&            key,
+                                   const QString&            text,
+                                   const QString&            origin,
+                                   US_SimSpecies::Component& supplied,
+                                   bool&                     any_supplied,
+                                   QString&                  error )
 {
    if ( key == "vbar20" )
    {
-      bool numeric = false;
+      bool numeric    = false;
       supplied.vbar20 = text.toDouble( &numeric );
-      if ( ! numeric )
+      if ( !numeric )
       {
          error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
          return false;
@@ -172,9 +169,9 @@ static bool apply_component_value( const QString& key, const QString& text,
 
    if ( key == "conc" )
    {
-      bool numeric = false;
+      bool numeric                  = false;
       supplied.signal_concentration = text.toDouble( &numeric );
-      if ( ! numeric )
+      if ( !numeric )
       {
          error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
          return false;
@@ -184,9 +181,9 @@ static bool apply_component_value( const QString& key, const QString& text,
 
    if ( key == "extinction" )
    {
-      bool numeric = false;
+      bool numeric        = false;
       supplied.extinction = text.toDouble( &numeric );
-      if ( ! numeric )
+      if ( !numeric )
       {
          error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
          return false;
@@ -209,7 +206,7 @@ static bool apply_component_value( const QString& key, const QString& text,
 
    if ( key == "s" )
    {
-      if ( ! parse_svedberg( text, value, error ) )
+      if ( !parse_svedberg( text, value, error ) )
       {
          return false;
       }
@@ -218,7 +215,7 @@ static bool apply_component_value( const QString& key, const QString& text,
    {
       bool numeric = false;
       value        = text.toDouble( &numeric );
-      if ( ! numeric )
+      if ( !numeric )
       {
          error = QString( "%1 \"%2\" is not numeric" ).arg( origin, text );
          return false;
@@ -231,10 +228,11 @@ static bool apply_component_value( const QString& key, const QString& text,
 }
 
 // Leave omitted coefficients unsupplied unless no coefficient was given.
-static bool parse_component( const QCommandLineParser& parser,
-                             const QMap< QString, QCommandLineOption >& options,
-                             US_SimSpecies::Component& component,
-                             bool& any_supplied, QString& error )
+static bool parse_component( const QCommandLineParser&                parser,
+                             const QMap<QString, QCommandLineOption>& options,
+                             US_SimSpecies::Component&                component,
+                             bool&                                    any_supplied,
+                             QString&                                 error )
 {
    US_SimSpecies::Component supplied;
    any_supplied = false;
@@ -242,14 +240,13 @@ static bool parse_component( const QCommandLineParser& parser,
    for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
    {
       const QString name = coeff.name;
-      if ( ! parser.isSet( *options.constFind( name ) ) )
+      if ( !parser.isSet( *options.constFind( name ) ) )
       {
          continue;
       }
 
       const QString text = parser.value( *options.constFind( name ) );
-      if ( ! apply_component_value( name, text, "--" + name, supplied,
-                                    any_supplied, error ) )
+      if ( !apply_component_value( name, text, "--" + name, supplied, any_supplied, error ) )
       {
          return false;
       }
@@ -258,84 +255,74 @@ static bool parse_component( const QCommandLineParser& parser,
    if ( parser.isSet( *options.constFind( "vbar20" ) ) )
    {
       const QString text = parser.value( *options.constFind( "vbar20" ) );
-      if ( ! apply_component_value( "vbar20", text, "--vbar20", supplied,
-                                    any_supplied, error ) )
+      if ( !apply_component_value( "vbar20", text, "--vbar20", supplied, any_supplied, error ) )
       {
          return false;
       }
    }
 
    // Concentration does not count toward the required coefficient pair.
-   if ( options.contains( "conc" )
-        &&  parser.isSet( *options.constFind( "conc" ) ) )
+   if ( options.contains( "conc" ) && parser.isSet( *options.constFind( "conc" ) ) )
    {
       const QString text = parser.value( *options.constFind( "conc" ) );
-      if ( ! apply_component_value( "conc", text, "--conc", supplied,
-                                    any_supplied, error ) )
+      if ( !apply_component_value( "conc", text, "--conc", supplied, any_supplied, error ) )
       {
          return false;
       }
    }
 
    // Extinction does not count toward the required coefficient pair.
-   if ( options.contains( "extinction" )
-        &&  parser.isSet( *options.constFind( "extinction" ) ) )
+   if ( options.contains( "extinction" ) && parser.isSet( *options.constFind( "extinction" ) ) )
    {
       const QString text = parser.value( *options.constFind( "extinction" ) );
-      if ( ! apply_component_value( "extinction", text, "--extinction", supplied,
-                                    any_supplied, error ) )
+      if ( !apply_component_value( "extinction", text, "--extinction", supplied, any_supplied, error ) )
       {
          return false;
       }
    }
 
-   if ( options.contains( "analyte-type" )
-        &&  parser.isSet( *options.constFind( "analyte-type" ) ) )
+   if ( options.contains( "analyte-type" ) && parser.isSet( *options.constFind( "analyte-type" ) ) )
    {
-      if ( ! parse_analyte_type(
-                parser.value( *options.constFind( "analyte-type" ) ),
-                "--analyte-type", supplied.analyte_type, error ) )
+      if ( !parse_analyte_type(
+              parser.value( *options.constFind( "analyte-type" ) ), "--analyte-type", supplied.analyte_type, error ) )
       {
          return false;
       }
    }
 
-   if ( options.contains( "analyte-guid" )
-        &&  parser.isSet( *options.constFind( "analyte-guid" ) ) )
+   if ( options.contains( "analyte-guid" ) && parser.isSet( *options.constFind( "analyte-guid" ) ) )
    {
-      if ( ! parse_analyte_guid(
-                parser.value( *options.constFind( "analyte-guid" ) ),
-                "--analyte-guid", supplied.analyte_guid, error ) )
+      if ( !parse_analyte_guid(
+              parser.value( *options.constFind( "analyte-guid" ) ), "--analyte-guid", supplied.analyte_guid, error ) )
       {
          return false;
       }
    }
 
-   if ( options.contains( "name" )
-        &&  parser.isSet( *options.constFind( "name" ) ) )
+   if ( options.contains( "name" ) && parser.isSet( *options.constFind( "name" ) ) )
    {
       supplied.name = parser.value( *options.constFind( "name" ) ).trimmed();
    }
 
-   if ( ! any_supplied )
-   {  // Only the non-coefficient options, or nothing at all
-      double  vbar20       = supplied.vbar20;
-      double  conc         = supplied.signal_concentration;
-      double  extinction   = supplied.extinction;
-      int     analyte_type = supplied.analyte_type;
-      QString analyte_guid = supplied.analyte_guid;
-      QString name         = supplied.name;
-      supplied                     = US_SimSpecies::defaultComponent();
-      supplied.vbar20              = vbar20;
+   if ( !any_supplied )
+   { // Only the non-coefficient options, or nothing at all
+      double  vbar20                = supplied.vbar20;
+      double  conc                  = supplied.signal_concentration;
+      double  extinction            = supplied.extinction;
+      int     analyte_type          = supplied.analyte_type;
+      QString analyte_guid          = supplied.analyte_guid;
+      QString name                  = supplied.name;
+      supplied                      = US_SimSpecies::defaultComponent();
+      supplied.vbar20               = vbar20;
       supplied.signal_concentration = conc;
-      supplied.extinction          = extinction;
-      supplied.analyte_type        = analyte_type;
-      supplied.analyte_guid        = analyte_guid;
-      supplied.name                = name;
+      supplied.extinction           = extinction;
+      supplied.analyte_type         = analyte_type;
+      supplied.analyte_guid         = analyte_guid;
+      supplied.name                 = name;
    }
 
    error = US_SimSpecies::validateComponent( supplied );
-   if ( ! error.isEmpty() )
+   if ( !error.isEmpty() )
    {
       return false;
    }
@@ -346,15 +333,13 @@ static bool parse_component( const QCommandLineParser& parser,
 
 // Parse one --component: comma-separated key=value pairs, the keys being
 // the coefficient names plus vbar20, conc, and name.
-static bool parse_component_spec( const QString& spec,
-                                  US_SimSpecies::Component& component,
-                                  QString& error )
+static bool parse_component_spec( const QString& spec, US_SimSpecies::Component& component, QString& error )
 {
    US_SimSpecies::Component supplied;
    bool                     any_supplied = false;
    QStringList              seen_keys;
 
-   const QStringList fields = spec.split( ",", Qt::SkipEmptyParts );
+   const QStringList        fields = spec.split( ",", Qt::SkipEmptyParts );
 
    if ( fields.isEmpty() )
    {
@@ -368,8 +353,7 @@ static bool parse_component_spec( const QString& spec,
 
       if ( split_at < 1 )
       {
-         error = QString( "--component field \"%1\" is not key=value" )
-            .arg( field.trimmed() );
+         error = QString( "--component field \"%1\" is not key=value" ).arg( field.trimmed() );
          return false;
       }
 
@@ -379,8 +363,7 @@ static bool parse_component_spec( const QString& spec,
 
       if ( seen_keys.contains( key ) )
       {
-         error = QString( "--component key \"%1\" is given more than once" )
-            .arg( key );
+         error = QString( "--component key \"%1\" is given more than once" ).arg( key );
          return false;
       }
       seen_keys << key;
@@ -394,8 +377,7 @@ static bool parse_component_spec( const QString& spec,
       // Handled before the numeric parse below: the value is normally a name.
       if ( key == "type" )
       {
-         if ( ! parse_analyte_type( text, "--component type",
-                                    supplied.analyte_type, error ) )
+         if ( !parse_analyte_type( text, "--component type", supplied.analyte_type, error ) )
          {
             return false;
          }
@@ -405,8 +387,7 @@ static bool parse_component_spec( const QString& spec,
       // Also never numeric.
       if ( key == "guid" )
       {
-         if ( ! parse_analyte_guid( text, "--component guid",
-                                    supplied.analyte_guid, error ) )
+         if ( !parse_analyte_guid( text, "--component guid", supplied.analyte_guid, error ) )
          {
             return false;
          }
@@ -425,29 +406,26 @@ static bool parse_component_spec( const QString& spec,
          }
       }
 
-      if ( ! is_coefficient  &&  key != "vbar20"  &&  key != "conc"
-                             &&  key != "extinction" )
+      if ( !is_coefficient && key != "vbar20" && key != "conc" && key != "extinction" )
       {
-         error = QString( "--component key \"%1\" is not one of %2" )
-            .arg( key, component_keys().join( ", " ) );
+         error = QString( "--component key \"%1\" is not one of %2" ).arg( key, component_keys().join( ", " ) );
          return false;
       }
 
-      if ( ! apply_component_value( key, text.trimmed(), "--component " + key,
-                                    supplied, any_supplied, error ) )
+      if ( !apply_component_value( key, text.trimmed(), "--component " + key, supplied, any_supplied, error ) )
       {
          return false;
       }
    }
 
-   if ( ! any_supplied )
+   if ( !any_supplied )
    {
       error = "--component requires exactly two of s, D, mw, f, and f-f0";
       return false;
    }
 
    error = US_SimSpecies::validateComponent( supplied );
-   if ( ! error.isEmpty() )
+   if ( !error.isEmpty() )
    {
       return false;
    }
@@ -463,64 +441,61 @@ int main( int argc, char* argv[] )
    QCoreApplication::setApplicationVersion( US_Version );
 
    QCommandLineParser parser;
-   parser.setApplicationDescription(
-      "Generate reproducible model, buffer, and simulation-parameter inputs for "
-      "headless UltraScan simulation runs." );
+   parser.setApplicationDescription( "Generate reproducible model, buffer, and simulation-parameter inputs for "
+                                     "headless UltraScan simulation runs." );
    parser.addHelpOption();
    parser.addVersionOption();
 
    QCommandLineOption out_option( "out",
-      "Output path: an existing directory in default or MWL mode, or a file "
-      "for --emit-model, --emit-buffer, or --emit-simparams", "path" );
+                                  "Output path: an existing directory in default or MWL mode, or a file "
+                                  "for --emit-model, --emit-buffer, or --emit-simparams",
+                                  "path" );
    parser.addOption( out_option );
    QCommandLineOption guid_seed_option( "guid-seed",
-      "Derive the generated buffer's and model's GUIDs from this text instead "
-      "of minting random ones, so generating the same inputs twice produces "
-      "the same identities. Use a value unique to the run",
-      "text" );
+                                        "Derive the generated buffer's and model's GUIDs from this text instead "
+                                        "of minting random ones, so generating the same inputs twice produces "
+                                        "the same identities. Use a value unique to the run",
+                                        "text" );
    parser.addOption( guid_seed_option );
    QCommandLineOption runid_option( "run-id",
-      "Run ID for a per-wavelength MWL model; requires --channel and "
-      "--wavelength",
-      "id" );
+                                    "Run ID for a per-wavelength MWL model; requires --channel and "
+                                    "--wavelength",
+                                    "id" );
    parser.addOption( runid_option );
-   QCommandLineOption cell_option( "cell",
-      "Cell (rotor hole) of a per-wavelength MWL model (1 to 8; default 1)",
-      "cell" );
+   QCommandLineOption cell_option( "cell", "Cell (rotor hole) of a per-wavelength MWL model (1 to 8; default 1)", "cell" );
    parser.addOption( cell_option );
-   QCommandLineOption channel_option( "channel",
-      "Channel letter of a per-wavelength MWL model (one of "
-      + US_Util::channel_letters() + ")", "channel" );
+   QCommandLineOption channel_option(
+      "channel", "Channel letter of a per-wavelength MWL model (one of " + US_Util::channel_letters() + ")", "channel" );
    parser.addOption( channel_option );
-   QCommandLineOption wavelength_option( "wavelength",
-      "Three-digit wavelength in nm (for example, 280)", "nm" );
+   QCommandLineOption wavelength_option( "wavelength", "Three-digit wavelength in nm (for example, 280)", "nm" );
    parser.addOption( wavelength_option );
 
    // Generate model and buffer files from physical parameters supplied by the
    // caller. US_Model and US_Buffer serialize the resulting values.
    QCommandLineOption emit_model_option( "emit-model",
-      "Write a model XML from explicit physical parameters to the file "
-      "specified by --out; requires exactly two of --s, --D, --mw, --f, and "
-      "--f-f0, from which the remaining three are calculated; --vbar20, "
-      "--analyte-type, --analyte-guid, --name, and --description are optional. For a "
-      "mixture, use --component instead" );
+                                         "Write a model XML from explicit physical parameters to the file "
+                                         "specified by --out; requires exactly two of --s, --D, --mw, --f, and "
+                                         "--f-f0, from which the remaining three are calculated; --vbar20, "
+                                         "--analyte-type, --analyte-guid, --name, and --description are optional. For a "
+                                         "mixture, use --component instead" );
    parser.addOption( emit_model_option );
    QCommandLineOption component_option( "component",
-      "One component of a multi-component model, given as comma-separated "
-      "key=value pairs: exactly two of s, D, mw, f, f-f0, plus optional "
-      "vbar20, conc (this species' absolute signal concentration, default 1; "
-      "the model total is the sum across components), extinction (molar "
-      "extinction coefficient at this model's wavelength, default 0 for no "
-      "spectrum), type (Protein, DNA, RNA, or Other; default Protein), guid "
-      "(this species' persistent 36-character UUID; omitted by default), and "
-      "name. Repeat once "
-      "per component, for example "
-      "--component \"s=4.58S,mw=66430,vbar20=0.733,conc=0.75,name=BSA Monomer\". "
-      "Each component states its own coefficient pair. Cannot be combined "
-      "with the single-component options above", "spec" );
+                                        "One component of a multi-component model, given as comma-separated "
+                                        "key=value pairs: exactly two of s, D, mw, f, f-f0, plus optional "
+                                        "vbar20, conc (this species' absolute signal concentration, default 1; "
+                                        "the model total is the sum across components), extinction (molar "
+                                        "extinction coefficient at this model's wavelength, default 0 for no "
+                                        "spectrum), type (Protein, DNA, RNA, or Other; default Protein), guid "
+                                        "(this species' persistent 36-character UUID; omitted by default), and "
+                                        "name. Repeat once "
+                                        "per component, for example "
+                                        "--component \"s=4.58S,mw=66430,vbar20=0.733,conc=0.75,name=BSA Monomer\". "
+                                        "Each component states its own coefficient pair. Cannot be combined "
+                                        "with the single-component options above",
+                                        "spec" );
    parser.addOption( component_option );
 
-   QMap< QString, QCommandLineOption > coefficient_opts;
+   QMap<QString, QCommandLineOption> coefficient_opts;
    for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
    {
       QCommandLineOption option( coeff.name, coefficient_help( coeff ), "value" );
@@ -528,61 +503,63 @@ int main( int argc, char* argv[] )
       coefficient_opts.insert( coeff.name, option );
    }
    QCommandLineOption vbar20_option( "vbar20",
-      "Partial specific volume at 20 C (mL/g); defaults to the typical protein "
-      "value", "value" );
+                                     "Partial specific volume at 20 C (mL/g); defaults to the typical protein "
+                                     "value",
+                                     "value" );
    parser.addOption( vbar20_option );
    coefficient_opts.insert( "vbar20", vbar20_option );
    // Concentration is independent of the hydrodynamic coefficient pair.
    QCommandLineOption conc_option( "conc",
-      "This species' absolute signal concentration; defaults to 1. For a "
-      "multi-component model use --component \"...,conc=...\" instead",
-      "value" );
+                                   "This species' absolute signal concentration; defaults to 1. For a "
+                                   "multi-component model use --component \"...,conc=...\" instead",
+                                   "value" );
    parser.addOption( conc_option );
    coefficient_opts.insert( "conc", conc_option );
    // Extinction is independent of the hydrodynamic coefficient pair.
    QCommandLineOption extinction_option( "extinction",
-      "Molar extinction coefficient of the species at this model's "
-      "wavelength; defaults to 0, meaning the model carries no spectrum and "
-      "consumers that scale amplitude by extinction leave it unchanged. For a "
-      "multi-component model use --component \"...,extinction=...\" instead",
-      "value" );
+                                         "Molar extinction coefficient of the species at this model's "
+                                         "wavelength; defaults to 0, meaning the model carries no spectrum and "
+                                         "consumers that scale amplitude by extinction leave it unchanged. For a "
+                                         "multi-component model use --component \"...,extinction=...\" instead",
+                                         "value" );
    parser.addOption( extinction_option );
    coefficient_opts.insert( "extinction", extinction_option );
    // Analyte type is metadata for the solution record.
    QCommandLineOption analyte_type_option( "analyte-type",
-      "Class of analyte this species is: Protein (the default), DNA, RNA, or "
-      "Other. The numbers 0 to 3 are accepted for the same four in that order. "
-      "For a multi-component model use --component \"...,type=...\" instead",
-      "type" );
+                                           "Class of analyte this species is: Protein (the default), DNA, RNA, or "
+                                           "Other. The numbers 0 to 3 are accepted for the same four in that order. "
+                                           "For a multi-component model use --component \"...,type=...\" instead",
+                                           "type" );
    parser.addOption( analyte_type_option );
    coefficient_opts.insert( "analyte-type", analyte_type_option );
    // Persist the analyte UUID across runs for database matching.
    QCommandLineOption analyte_guid_option( "analyte-guid",
-      "Persistent identity of this species, as a 36-character UUID. Omitted "
-      "from the model by default, which leaves the species unstorable in a "
-      "database. Mint one value and keep it: a fresh GUID per run creates a "
-      "new analyte rather than matching the existing one. For a "
-      "multi-component model use --component \"...,guid=...\" instead",
-      "uuid" );
+                                           "Persistent identity of this species, as a 36-character UUID. Omitted "
+                                           "from the model by default, which leaves the species unstorable in a "
+                                           "database. Mint one value and keep it: a fresh GUID per run creates a "
+                                           "new analyte rather than matching the existing one. For a "
+                                           "multi-component model use --component \"...,guid=...\" instead",
+                                           "uuid" );
    parser.addOption( analyte_guid_option );
    coefficient_opts.insert( "analyte-guid", analyte_guid_option );
    // Allow commas in single-component names; --component uses comma delimiters.
    QCommandLineOption name_option( "name",
-      "Descriptive name of this species, as it appears in the analyte record "
-      "written for a run. Defaults to the US_Model default. For a "
-      "multi-component model use --component \"...,name=...\" instead",
-      "text" );
+                                   "Descriptive name of this species, as it appears in the analyte record "
+                                   "written for a run. Defaults to the US_Model default. For a "
+                                   "multi-component model use --component \"...,name=...\" instead",
+                                   "text" );
    parser.addOption( name_option );
    coefficient_opts.insert( "name", name_option );
    QCommandLineOption model_description_option( "description",
-      "Model or buffer description; a model description must not contain "
-      "\".\", which us_mwl_species_sim treats as a field separator", "text" );
+                                                "Model or buffer description; a model description must not contain "
+                                                "\".\", which us_mwl_species_sim treats as a field separator",
+                                                "text" );
    parser.addOption( model_description_option );
 
    QCommandLineOption emit_buffer_option( "emit-buffer",
-      "Write a buffer XML from explicit physical parameters (requires "
-      "--density, --viscosity, and --ph) to the file specified by --out; "
-      "--description is optional" );
+                                          "Write a buffer XML from explicit physical parameters (requires "
+                                          "--density, --viscosity, and --ph) to the file specified by --out; "
+                                          "--description is optional" );
    parser.addOption( emit_buffer_option );
    QCommandLineOption density_option( "density", "Buffer density (g/mL)", "value" );
    parser.addOption( density_option );
@@ -594,8 +571,8 @@ int main( int argc, char* argv[] )
    // Use US_SimInputs::simParams() defaults for omitted options; omitting
    // every option reproduces sp_default.xml.
    QCommandLineOption emit_simparams_option( "emit-simparams",
-      "Write a simulation-parameter XML to the file specified by --out; all "
-      "run-condition options are optional and use documented defaults" );
+                                             "Write a simulation-parameter XML to the file specified by --out; all "
+                                             "run-condition options are optional and use documented defaults" );
    parser.addOption( emit_simparams_option );
    QCommandLineOption speed_option( "speed", "Rotor speed (rpm)", "value" );
    parser.addOption( speed_option );
@@ -604,12 +581,12 @@ int main( int argc, char* argv[] )
    QCommandLineOption duration_mins_option( "duration-mins", "Minutes component of the run duration", "value" );
    parser.addOption( duration_mins_option );
    QCommandLineOption delay_hrs_option( "delay-hrs",
-      "Hours component of the delay before the first scan; defaults to the "
-      "time needed to reach speed. Useful for aligning scan times across runs "
-      "at different speeds", "value" );
+                                        "Hours component of the delay before the first scan; defaults to the "
+                                        "time needed to reach speed. Useful for aligning scan times across runs "
+                                        "at different speeds",
+                                        "value" );
    parser.addOption( delay_hrs_option );
-   QCommandLineOption delay_mins_option( "delay-mins",
-      "Minutes component of the delay before the first scan", "value" );
+   QCommandLineOption delay_mins_option( "delay-mins", "Minutes component of the delay before the first scan", "value" );
    parser.addOption( delay_mins_option );
    QCommandLineOption scans_option( "scans", "Number of scans", "value" );
    parser.addOption( scans_option );
@@ -630,8 +607,9 @@ int main( int argc, char* argv[] )
    QCommandLineOption radial_resolution_option( "radial-resolution", "Radial grid spacing (cm)", "value" );
    parser.addOption( radial_resolution_option );
    QCommandLineOption mesh_type_option( "mesh-type",
-      "ASTFEM|Claverie|MovingHat|ASTFVM (User is not supported here: there is "
-      "no option to supply a mesh file)", "type" );
+                                        "ASTFEM|Claverie|MovingHat|ASTFVM (User is not supported here: there is "
+                                        "no option to supply a mesh file)",
+                                        "type" );
    parser.addOption( mesh_type_option );
    QCommandLineOption grid_type_option( "grid-type", "Fixed|Moving", "type" );
    parser.addOption( grid_type_option );
@@ -640,22 +618,24 @@ int main( int argc, char* argv[] )
    QCommandLineOption band_volume_option( "band-volume", "Loading volume for a band-forming centerpiece (mL)", "value" );
    parser.addOption( band_volume_option );
    QCommandLineOption rotor_calibration_option( "rotor-calibration",
-      "Rotor calibration ID (default \"0\", a built-in zero-stretch-correction "
-      "entry rather than a rotor file)", "id" );
+                                                "Rotor calibration ID (default \"0\", a built-in zero-stretch-correction "
+                                                "entry rather than a rotor file)",
+                                                "id" );
    parser.addOption( rotor_calibration_option );
    QCommandLineOption centerpiece_option( "centerpiece", "Centerpiece list index", "index" );
    parser.addOption( centerpiece_option );
    QCommandLineOption centerpiece_channel_option( "centerpiece-channel",
-      "Row within the centerpiece (default: 0), given either as a channel "
-      "letter (S or A-H; a channel and its reference share a row, so S, A and "
-      "B are row 0) or as a bare row index", "channel" );
+                                                  "Row within the centerpiece (default: 0), given either as a channel "
+                                                  "letter (S or A-H; a channel and its reference share a row, so S, A and "
+                                                  "B are row 0) or as a bare row index",
+                                                  "channel" );
    parser.addOption( centerpiece_channel_option );
 
    parser.process( app );
 
    if ( parser.isSet( emit_model_option ) )
    {
-      if ( ! parser.isSet( out_option ) )
+      if ( !parser.isSet( out_option ) )
       {
          QTextStream( stderr ) << "Error: --out <file path> is required" << Qt::endl;
          return 1;
@@ -676,15 +656,15 @@ int main( int argc, char* argv[] )
       if ( uses_components && uses_flags )
       {
          QTextStream( stderr ) << "Error: --component cannot be combined with "
-            "--s, --D, --mw, --f, --f-f0, --vbar20, --conc, --extinction, "
-            "--analyte-type, --analyte-guid, or --name; state every component as its "
-            "own --component, using its conc=, extinction=, type=, and guid= keys"
-            << Qt::endl;
+                                  "--s, --D, --mw, --f, --f-f0, --vbar20, --conc, --extinction, "
+                                  "--analyte-type, --analyte-guid, or --name; state every component as its "
+                                  "own --component, using its conc=, extinction=, type=, and guid= keys"
+                               << Qt::endl;
          return 1;
       }
 
-      QVector< US_SimSpecies::Component > components;
-      QString component_error;
+      QVector<US_SimSpecies::Component> components;
+      QString                           component_error;
 
       if ( uses_components )
       {
@@ -692,7 +672,7 @@ int main( int argc, char* argv[] )
          {
             US_SimSpecies::Component component;
 
-            if ( ! parse_component_spec( spec, component, component_error ) )
+            if ( !parse_component_spec( spec, component, component_error ) )
             {
                QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
                return 1;
@@ -705,19 +685,19 @@ int main( int argc, char* argv[] )
       {
          // --emit-model requires an explicitly defined species.
          US_SimSpecies::Component component;
-         bool any_supplied = false;
+         bool                     any_supplied = false;
 
-         if ( ! parse_component( parser, coefficient_opts, component,
-                                 any_supplied, component_error ) )
+         if ( !parse_component( parser, coefficient_opts, component, any_supplied, component_error ) )
          {
             QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
             return 1;
          }
-         if ( ! any_supplied )
+         if ( !any_supplied )
          {
             QTextStream( stderr ) << "Error: --emit-model requires exactly two "
-               "of --s, --D, --mw, --f, and --f-f0, or one --component per "
-               "species" << Qt::endl;
+                                     "of --s, --D, --mw, --f, and --f-f0, or one --component per "
+                                     "species"
+                                  << Qt::endl;
             return 1;
          }
 
@@ -725,19 +705,19 @@ int main( int argc, char* argv[] )
       }
 
       component_error = US_SimSpecies::validateComponents( components );
-      if ( ! component_error.isEmpty() )
+      if ( !component_error.isEmpty() )
       {
          QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
          return 1;
       }
 
-      QString description = parser.isSet( model_description_option )
-         ? parser.value( model_description_option ) : QString( "us_sim_inputs_gen emitted model" );
+      QString description = parser.isSet( model_description_option ) ? parser.value( model_description_option )
+                                                                     : QString( "us_sim_inputs_gen emitted model" );
       if ( description.contains( "." ) )
       {
          QTextStream( stderr ) << "Error: a model --description must not "
-            "contain \".\"; us_mwl_species_sim splits descriptions on it"
-            << Qt::endl;
+                                  "contain \".\"; us_mwl_species_sim splits descriptions on it"
+                               << Qt::endl;
          return 1;
       }
 
@@ -746,14 +726,14 @@ int main( int argc, char* argv[] )
          if ( c.name.contains( "." ) )
          {
             QTextStream( stderr ) << "Error: a component name must not contain "
-               "\".\"; us_mwl_species_sim splits descriptions on it (got \""
-               << c.name << "\")" << Qt::endl;
+                                     "\".\"; us_mwl_species_sim splits descriptions on it (got \""
+                                  << c.name << "\")" << Qt::endl;
             return 1;
          }
       }
 
       US_Model model_out;
-      if ( ! US_SimSpecies::model( components, model_out, component_error ) )
+      if ( !US_SimSpecies::model( components, model_out, component_error ) )
       {
          QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
          return 1;
@@ -761,25 +741,22 @@ int main( int argc, char* argv[] )
       model_out.description = description;
       // Override the random GUID US_SimSpecies::model() minted, so the
       // output is reproducible when --guid-seed is given.
-      model_out.modelGUID   = US_SimRecord::guid(
-         parser.value( guid_seed_option ), "model" );
+      model_out.modelGUID   = US_SimRecord::guid( parser.value( guid_seed_option ), "model" );
 
       // An unnamed component takes the description, which is unambiguous only
       // when it is the sole component.
       for ( int ii = 0; ii < model_out.components.count(); ii++ )
       {
-         if ( components[ ii ].name.isEmpty() )
+         if ( components[ii].name.isEmpty() )
          {
-            model_out.components[ ii ].name = ( components.count() == 1 )
-               ? description
-               : QString( "%1 %2" ).arg( description ).arg( ii + 1 );
+            model_out.components[ii].name =
+               ( components.count() == 1 ) ? description : QString( "%1 %2" ).arg( description ).arg( ii + 1 );
          }
       }
 
       if ( model_out.write( parser.value( out_option ) ) != IUS_DB2::OK )
       {
-         QTextStream( stderr ) << "Error: could not write "
-            << parser.value( out_option ) << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write " << parser.value( out_option ) << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
@@ -788,46 +765,46 @@ int main( int argc, char* argv[] )
 
    if ( parser.isSet( emit_buffer_option ) )
    {
-      if ( ! ( parser.isSet( density_option ) && parser.isSet( viscosity_option ) && parser.isSet( ph_option ) ) )
+      if ( !( parser.isSet( density_option ) && parser.isSet( viscosity_option ) && parser.isSet( ph_option ) ) )
       {
          QTextStream( stderr ) << "Error: --emit-buffer requires --density, --viscosity, and --ph" << Qt::endl;
          return 1;
       }
-      if ( ! parser.isSet( out_option ) )
+      if ( !parser.isSet( out_option ) )
       {
          QTextStream( stderr ) << "Error: --out <file path> is required" << Qt::endl;
          return 1;
       }
 
-      bool ok_d = false, ok_v = false, ok_p = false;
+      bool   ok_d = false, ok_v = false, ok_p = false;
       double density   = parser.value( density_option ).toDouble( &ok_d );
       double viscosity = parser.value( viscosity_option ).toDouble( &ok_v );
       double ph        = parser.value( ph_option ).toDouble( &ok_p );
-      if ( ! ok_d || ! ok_v || ! ok_p )
+      if ( !ok_d || !ok_v || !ok_p )
       {
          QTextStream( stderr ) << "Error: values for --density, --viscosity, "
-            "and --ph must be numeric" << Qt::endl;
+                                  "and --ph must be numeric"
+                               << Qt::endl;
          return 1;
       }
 
       if ( density <= 0.0 || viscosity <= 0.0 )
       {
          QTextStream( stderr ) << "Error: --density and --viscosity must be "
-            "greater than zero" << Qt::endl;
+                                  "greater than zero"
+                               << Qt::endl;
          return 1;
       }
       if ( ph < 0.0 || ph > 14.0 )
       {
-         QTextStream( stderr ) << "Error: --ph must be between 0 and 14"
-            << Qt::endl;
+         QTextStream( stderr ) << "Error: --ph must be between 0 and 14" << Qt::endl;
          return 1;
       }
 
       US_Buffer buffer_out;
-      buffer_out.description = parser.isSet( model_description_option )
-         ? parser.value( model_description_option ) : QString( "us_sim_inputs_gen emitted buffer" );
-      buffer_out.GUID            = US_SimRecord::guid(
-         parser.value( guid_seed_option ), "buffer" );
+      buffer_out.description     = parser.isSet( model_description_option ) ? parser.value( model_description_option )
+                                                                            : QString( "us_sim_inputs_gen emitted buffer" );
+      buffer_out.GUID            = US_SimRecord::guid( parser.value( guid_seed_option ), "buffer" );
       buffer_out.density         = density;
       buffer_out.viscosity       = viscosity;
       buffer_out.pH              = ph;
@@ -836,10 +813,9 @@ int main( int argc, char* argv[] )
       // from buffer components.
       buffer_out.manual          = true;
 
-      if ( ! buffer_out.writeToDisk( parser.value( out_option ) ) )
+      if ( !buffer_out.writeToDisk( parser.value( out_option ) ) )
       {
-         QTextStream( stderr ) << "Error: could not write "
-            << parser.value( out_option ) << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write " << parser.value( out_option ) << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
@@ -848,81 +824,82 @@ int main( int argc, char* argv[] )
 
    if ( parser.isSet( emit_simparams_option ) )
    {
-      if ( ! parser.isSet( out_option ) )
+      if ( !parser.isSet( out_option ) )
       {
          QTextStream( stderr ) << "Error: --out <file path> is required" << Qt::endl;
          return 1;
       }
 
-      bool ok = true;
+      bool ok         = true;
       auto opt_double = [&]( const QCommandLineOption& opt, double def )
       {
-         if ( ! parser.isSet( opt ) )
+         if ( !parser.isSet( opt ) )
          {
             return def;
          }
-         bool this_ok = false;
-         double v = parser.value( opt ).toDouble( &this_ok );
-         ok = ok && this_ok;
+         bool   this_ok = false;
+         double v       = parser.value( opt ).toDouble( &this_ok );
+         ok             = ok && this_ok;
          return this_ok ? v : def;
       };
       auto opt_int = [&]( const QCommandLineOption& opt, int def )
       {
-         if ( ! parser.isSet( opt ) )
+         if ( !parser.isSet( opt ) )
          {
             return def;
          }
          bool this_ok = false;
-         int v = parser.value( opt ).toInt( &this_ok );
-         ok = ok && this_ok;
+         int  v       = parser.value( opt ).toInt( &this_ok );
+         ok           = ok && this_ok;
          return this_ok ? v : def;
       };
 
       // Use shared defaults for omitted options.
       US_SimInputs::Params sp_params;
 
-      sp_params.rpm                 = opt_double( speed_option, sp_params.rpm );
-      sp_params.duration_hours      = opt_int( duration_hrs_option, sp_params.duration_hours );
-      sp_params.duration_minutes    = opt_double( duration_mins_option, sp_params.duration_minutes );
-      sp_params.delay_hours         = opt_int( delay_hrs_option, sp_params.delay_hours );
-      sp_params.delay_minutes       = opt_double( delay_mins_option, sp_params.delay_minutes );
-      sp_params.scans               = opt_int( scans_option, sp_params.scans );
-      sp_params.acceleration        = opt_double( acceleration_option, sp_params.acceleration );
-      sp_params.simpoints           = opt_int( points_option, sp_params.simpoints );
-      sp_params.radial_resolution   = opt_double( radial_resolution_option, sp_params.radial_resolution );
-      sp_params.rnoise              = opt_double( rnoise_option, sp_params.rnoise );
-      sp_params.lrnoise             = opt_double( lrnoise_option, sp_params.lrnoise );
-      sp_params.tinoise             = opt_double( tinoise_option, sp_params.tinoise );
-      sp_params.rinoise             = opt_double( rinoise_option, sp_params.rinoise );
-      sp_params.baseline            = opt_double( sp_baseline_option, sp_params.baseline );
-      sp_params.band_volume         = opt_double( band_volume_option, sp_params.band_volume );
-      sp_params.centerpiece         = opt_int( centerpiece_option, sp_params.centerpiece );
+      sp_params.rpm               = opt_double( speed_option, sp_params.rpm );
+      sp_params.duration_hours    = opt_int( duration_hrs_option, sp_params.duration_hours );
+      sp_params.duration_minutes  = opt_double( duration_mins_option, sp_params.duration_minutes );
+      sp_params.delay_hours       = opt_int( delay_hrs_option, sp_params.delay_hours );
+      sp_params.delay_minutes     = opt_double( delay_mins_option, sp_params.delay_minutes );
+      sp_params.scans             = opt_int( scans_option, sp_params.scans );
+      sp_params.acceleration      = opt_double( acceleration_option, sp_params.acceleration );
+      sp_params.simpoints         = opt_int( points_option, sp_params.simpoints );
+      sp_params.radial_resolution = opt_double( radial_resolution_option, sp_params.radial_resolution );
+      sp_params.rnoise            = opt_double( rnoise_option, sp_params.rnoise );
+      sp_params.lrnoise           = opt_double( lrnoise_option, sp_params.lrnoise );
+      sp_params.tinoise           = opt_double( tinoise_option, sp_params.tinoise );
+      sp_params.rinoise           = opt_double( rinoise_option, sp_params.rinoise );
+      sp_params.baseline          = opt_double( sp_baseline_option, sp_params.baseline );
+      sp_params.band_volume       = opt_double( band_volume_option, sp_params.band_volume );
+      sp_params.centerpiece       = opt_int( centerpiece_option, sp_params.centerpiece );
       if ( parser.isSet( centerpiece_channel_option ) )
       {
          QString channel_error;
-         if ( ! US_AbstractCenterpiece::parse_channel(
-                   parser.value( centerpiece_channel_option ),
-                   sp_params.centerpiece_channel, channel_error ) )
+         if ( !US_AbstractCenterpiece::parse_channel(
+                 parser.value( centerpiece_channel_option ), sp_params.centerpiece_channel, channel_error ) )
          {
             QTextStream( stderr ) << "Error: " << channel_error << Qt::endl;
             return 1;
          }
       }
 
-      if ( ! ok )
+      if ( !ok )
       {
          QTextStream( stderr ) << "Error: one or more values supplied to "
-            "--emit-simparams are not numeric" << Qt::endl;
+                                  "--emit-simparams are not numeric"
+                               << Qt::endl;
          return 1;
       }
 
       // Omitting both delay options selects the acceleration time; an
       // explicit negative value would be silently treated as zero.
-      if ( ( parser.isSet( delay_hrs_option )  &&  sp_params.delay_hours < 0 )
-           || ( parser.isSet( delay_mins_option )  &&  sp_params.delay_minutes < 0.0 ) )
+      if ( ( parser.isSet( delay_hrs_option ) && sp_params.delay_hours < 0 ) ||
+           ( parser.isSet( delay_mins_option ) && sp_params.delay_minutes < 0.0 ) )
       {
          QTextStream( stderr ) << "Error: --delay-hrs and --delay-mins must be "
-            "zero or greater; omit both to use the acceleration time" << Qt::endl;
+                                  "zero or greater; omit both to use the acceleration time"
+                               << Qt::endl;
          return 1;
       }
 
@@ -933,21 +910,21 @@ int main( int argc, char* argv[] )
       if ( parser.isSet( mesh_type_option ) )
       {
          const QString mesh_value = parser.value( mesh_type_option );
-         int idx = mesh_names.indexOf( mesh_value );
+         int           idx        = mesh_names.indexOf( mesh_value );
          if ( idx < 0 )
          {
-            QTextStream( stderr ) << "Error: --mesh-type must be one of "
-               << mesh_names.join( "|" ) << Qt::endl;
+            QTextStream( stderr ) << "Error: --mesh-type must be one of " << mesh_names.join( "|" ) << Qt::endl;
             return 1;
          }
          if ( mesh_value == "User" )
          {
             QTextStream( stderr ) << "Error: --mesh-type User requires a mesh "
-               "file, which this tool has no option to supply; use ASTFEM, "
-               "Claverie, MovingHat, or ASTFVM instead" << Qt::endl;
+                                     "file, which this tool has no option to supply; use ASTFEM, "
+                                     "Claverie, MovingHat, or ASTFVM instead"
+                                  << Qt::endl;
             return 1;
          }
-         sp_params.meshType = static_cast< US_SimulationParameters::MeshType >( idx );
+         sp_params.meshType = static_cast<US_SimulationParameters::MeshType>( idx );
       }
 
       if ( parser.isSet( grid_type_option ) )
@@ -955,11 +932,10 @@ int main( int argc, char* argv[] )
          int idx = grid_names.indexOf( parser.value( grid_type_option ) );
          if ( idx < 0 )
          {
-            QTextStream( stderr ) << "Error: --grid-type must be one of "
-               << grid_names.join( "|" ) << Qt::endl;
+            QTextStream( stderr ) << "Error: --grid-type must be one of " << grid_names.join( "|" ) << Qt::endl;
             return 1;
          }
-         sp_params.gridType = static_cast< US_SimulationParameters::GridType >( idx );
+         sp_params.gridType = static_cast<US_SimulationParameters::GridType>( idx );
       }
 
       if ( parser.isSet( rotor_calibration_option ) )
@@ -969,8 +945,8 @@ int main( int argc, char* argv[] )
       sp_params.band_forming = parser.isSet( band_forming_option );
 
       US_SimulationParameters sp_out;
-      QString simparams_error;
-      if ( ! US_SimInputs::simParams( sp_params, sp_out, simparams_error ) )
+      QString                 simparams_error;
+      if ( !US_SimInputs::simParams( sp_params, sp_out, simparams_error ) )
       {
          QTextStream( stderr ) << "Error: " << simparams_error << Qt::endl;
          return 1;
@@ -978,25 +954,23 @@ int main( int argc, char* argv[] )
 
       if ( sp_out.save_simparms( parser.value( out_option ) ) != 0 )
       {
-         QTextStream( stderr ) << "Error: could not write "
-            << parser.value( out_option ) << Qt::endl;
+         QTextStream( stderr ) << "Error: could not write " << parser.value( out_option ) << Qt::endl;
          return 2;
       }
       QTextStream( stdout ) << "Wrote " << parser.value( out_option ) << Qt::endl;
       return 0;
    }
 
-   if ( ! parser.isSet( out_option ) )
+   if ( !parser.isSet( out_option ) )
    {
       QTextStream( stderr ) << "Error: --out <dir> is required" << Qt::endl;
       return 1;
    }
 
    QDir outdir( parser.value( out_option ) );
-   if ( ! outdir.exists() )
+   if ( !outdir.exists() )
    {
-      QTextStream( stderr ) << "Error: output directory does not exist: "
-         << outdir.path() << Qt::endl;
+      QTextStream( stderr ) << "Error: output directory does not exist: " << outdir.path() << Qt::endl;
       return 1;
    }
 
@@ -1009,38 +983,39 @@ int main( int argc, char* argv[] )
    {
       // One model per wavelength, described in the convention
       // us_mwl_species_sim parses; buffer and simparms are shared across them.
-      if ( ! ( has_runid && has_channel && has_wavelength ) )
+      if ( !( has_runid && has_channel && has_wavelength ) )
       {
          QTextStream( stderr ) << "Error: --run-id, --channel, and "
-            "--wavelength must all be given for an MWL model" << Qt::endl;
+                                  "--wavelength must all be given for an MWL model"
+                               << Qt::endl;
          return 1;
       }
 
-      QString run_id    = parser.value( runid_option );
-      QString cell      = has_cell ? parser.value( cell_option ) : QString( "1" );
-      QString letter    = parser.value( channel_option ).toUpper();
-      QString wavelength = parser.value( wavelength_option );
+      QString   run_id     = parser.value( runid_option );
+      QString   cell       = has_cell ? parser.value( cell_option ) : QString( "1" );
+      QString   letter     = parser.value( channel_option ).toUpper();
+      QString   wavelength = parser.value( wavelength_option );
 
-      bool cell_ok = false;
+      bool      cell_ok  = false;
       const int cell_nbr = cell.toInt( &cell_ok );
-      if ( ! cell_ok  ||  cell_nbr < 1  ||  cell_nbr > 8 )
+      if ( !cell_ok || cell_nbr < 1 || cell_nbr > 8 )
       {
          QTextStream( stderr ) << "Error: --cell must be 1 to 8" << Qt::endl;
          return 1;
       }
-      if ( letter.length() != 1  ||  ! US_Util::channel_letters().contains( letter ) )
+      if ( letter.length() != 1 || !US_Util::channel_letters().contains( letter ) )
       {
-         QTextStream( stderr ) << "Error: --channel must be one of "
-            << US_Util::channel_letters() << Qt::endl;
+         QTextStream( stderr ) << "Error: --channel must be one of " << US_Util::channel_letters() << Qt::endl;
          return 1;
       }
-      const QString channel = QString::number( cell_nbr ) + letter;
+      const QString                   channel = QString::number( cell_nbr ) + letter;
       // Three digits with no sign, as the model description requires.
       static const QRegularExpression wavelength_rx( "^[1-9][0-9]{2}$" );
-      if ( ! wavelength_rx.match( wavelength ).hasMatch() )
+      if ( !wavelength_rx.match( wavelength ).hasMatch() )
       {
          QTextStream( stderr ) << "Error: --wavelength must be a 3-digit "
-            "number" << Qt::endl;
+                                  "number"
+                               << Qt::endl;
          return 1;
       }
 
@@ -1049,35 +1024,34 @@ int main( int argc, char* argv[] )
       if ( parser.isSet( component_option ) )
       {
          QTextStream( stderr ) << "Error: --component is not supported for "
-            "per-wavelength MWL models; each wavelength model carries one "
-            "species" << Qt::endl;
+                                  "per-wavelength MWL models; each wavelength model carries one "
+                                  "species"
+                               << Qt::endl;
          return 1;
       }
 
       // MWL mode permits the default species when coefficients are omitted.
       US_SimSpecies::Component component;
-      bool    any_supplied = false;
-      QString component_error;
-      if ( ! parse_component( parser, coefficient_opts, component,
-                              any_supplied, component_error ) )
+      bool                     any_supplied = false;
+      QString                  component_error;
+      if ( !parse_component( parser, coefficient_opts, component, any_supplied, component_error ) )
       {
          QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
          return 1;
       }
 
       US_Model model;
-      if ( ! US_SimSpecies::model( component, model, component_error ) )
+      if ( !US_SimSpecies::model( component, model, component_error ) )
       {
          QTextStream( stderr ) << "Error: " << component_error << Qt::endl;
          return 1;
       }
-      model.description = QString( "%1.%2%3.model.default" )
-                           .arg( run_id, channel, wavelength );
+      model.description = QString( "%1.%2%3.model.default" ).arg( run_id, channel, wavelength );
       // Override the random GUID US_SimSpecies::model() minted. Keyed by
       // run ID, channel, and wavelength so each per-wavelength model in the
       // same run gets a distinct, reproducible identity.
-      model.modelGUID    = US_SimRecord::guid( parser.value( guid_seed_option ),
-         "model." + run_id + "." + channel + "." + wavelength );
+      model.modelGUID =
+         US_SimRecord::guid( parser.value( guid_seed_option ), "model." + run_id + "." + channel + "." + wavelength );
 
       QString fname = QString( "model_%1_%2.xml" ).arg( channel, wavelength );
       if ( model.write( outdir.filePath( fname ) ) != IUS_DB2::OK )
@@ -1091,14 +1065,13 @@ int main( int argc, char* argv[] )
 
    // Default mode writes the simulation parameters, model, and buffer files.
    QString write_error;
-   if ( ! US_SimInputs::writeAll( outdir.path(), write_error ) )
+   if ( !US_SimInputs::writeAll( outdir.path(), write_error ) )
    {
-      QTextStream( stderr ) << "Error: could not write default inputs to "
-         << outdir.path() << ": " << write_error
-         << Qt::endl;
+      QTextStream( stderr ) << "Error: could not write default inputs to " << outdir.path() << ": " << write_error << Qt::endl;
       return 2;
    }
    QTextStream( stdout ) << "Wrote sp_default.xml, model_default.xml, "
-      "buffer_default.xml to " << outdir.path() << Qt::endl;
+                            "buffer_default.xml to "
+                         << outdir.path() << Qt::endl;
    return 0;
 }

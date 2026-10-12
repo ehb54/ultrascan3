@@ -2,19 +2,25 @@
 #ifndef US_MWL_SPECIES_SIM_H
 #define US_MWL_SPECIES_SIM_H
 
-#include "us_extern.h"
-#include "us_simparms.h"
-#include "us_sim_params_gui.h"
-#include "us_widgets.h"
-#include "us_help.h"
-#include "us_simparms.h"
-#include "us_rotor_gui.h"
+// A caller may have already included us_license.h, whose unguarded
+// "spacing" macro collides with the spacing() methods Qwt headers declare
+// (pulled in below, directly and via us_spectrodata.h).
+#ifdef spacing
+#undef spacing
+#endif
+
 #include "us_buffer_gui.h"
+#include "us_colorgradIO.h"
+#include "us_csv_data.h"
+#include "us_extern.h"
+#include "us_help.h"
 #include "us_model_loader.h"
 #include "us_plot.h"
-#include "us_colorgradIO.h"
+#include "us_rotor_gui.h"
+#include "us_sim_params_gui.h"
+#include "us_simparms.h"
 #include "us_spectrodata.h"
-#include "us_csv_data.h"
+#include "us_widgets.h"
 
 #include "qwt_plot_marker.h"
 #include "qwt_plot_spectrogram.h"
@@ -42,16 +48,16 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \brief Run the simulation headlessly using command-line options.
         //! \param flags Parsed input, output, and execution options.
         //! \return 0 on success, 1 if the GUI is required, or 2 on error.
-        int init_from_args(const QMap<QString, QString>& flags);
+        int            init_from_args( const QMap<QString, QString>& flags );
 
         //! \brief Extract a wavelength from a model description.
         //! \param description Third-from-last dot-separated field contains the wavelength.
         //! \return Three-digit wavelength, or empty if absent.
-        static QString model_wavelength(const QString& description);
+        static QString model_wavelength( const QString& description );
         //! \brief The cell of a model, from its description's triple field.
-        static QString model_cell(const QString& description);
+        static QString model_cell( const QString& description );
         //! \brief The channel letter of a model, from its description's triple field.
-        static QString model_channel(const QString& description);
+        static QString model_channel( const QString& description );
 
         //! \brief The wavelength field of one dataset's edit filename.
         //!
@@ -62,40 +68,37 @@ class US_MwlSpeciesSim : public US_Widgets
         //! \param descriptions Every model description in the run, in order.
         //! \param index Which of them this edit file is being written for.
         //! \return The filename field, empty if index is out of range.
-        static QString edit_wavelength_field(const QStringList& descriptions,
-                                             int index);
+        static QString edit_wavelength_field( const QStringList& descriptions, int index );
 
-    private:
+     private:
         //! \brief Load and aggregate models without displaying a selection dialog.
-        bool load_models_from_paths(const QStringList& paths);
+        bool            load_models_from_paths( const QStringList& paths );
 
         //! \brief Save simulations to save_dir instead of US_Settings::importDir().
-        bool save_sims_to(const QString& save_dir);
-        bool write_edit_files(const QString& impdir, const QString& cell,
-                              const QString& channel);
+        bool            save_sims_to( const QString& save_dir );
+        bool            write_edit_files( const QString& impdir, const QString& cell, const QString& channel );
 
         //! \brief Write the experiment and solution records a database load
         //! needs, through the same utils writers us_astfem_sim uses.
         //! \param impdir The import directory the run was saved into.
         //! \param cell   The cell the run's datasets belong to.
         //! \return true if both documents were written.
-        bool write_experiment_record(const QString& impdir, const QString& cell,
-                                    const QString& channel);
+        bool            write_experiment_record( const QString& impdir, const QString& cell, const QString& channel );
 
         //! \brief Apply systematic and random noise to one wavelength.
         //! \param rdata Padded, clipped data.
         //! \param total_conc Total signal concentration, used to scale noise.
-        void apply_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void            apply_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
 
         //! \brief Scale concentrations by extinction relative to the set maximum.
         //! Call before summing concentrations. All-zero extinction leaves the set unchanged.
-        void apply_extinction_scaling( void );
+        void            apply_extinction_scaling( void );
 
-        void add_ri_noise    ( US_DataIO::RawData& rdata, double total_conc, int model_index );
-        void add_baseline    ( US_DataIO::RawData& rdata );
-        void add_random_noise( US_DataIO::RawData& rdata, double total_conc );
-        void add_ti_noise    ( US_DataIO::RawData& rdata, double total_conc, int model_index );
-        void save_csv_noise  ( US_CSV_Data& csv );
+        void            add_ri_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void            add_baseline( US_DataIO::RawData& rdata );
+        void            add_random_noise( US_DataIO::RawData& rdata, double total_conc );
+        void            add_ti_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void            save_csv_noise( US_CSV_Data& csv );
 
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
@@ -108,18 +111,18 @@ class US_MwlSpeciesSim : public US_Widgets
 
         //! Stretched cell geometry, set by init_rawdata() and reused by every
         //! consumer so the data grid and the edit files cannot disagree.
-        double curr_meniscus = 0.0;  //!< Current meniscus
-        double curr_bottom   = 0.0;  //!< Current bottom
+        double          curr_meniscus = 0.0; //!< Current meniscus
+        double          curr_bottom   = 0.0; //!< Current bottom
 
         QString mfilt;         //!< Model filter
         QString mrunid;        //!< Model run ID
         QString orunid;        //!< Original run ID
-        QString run_type;      //!< Two-character optical data type tag, "RA" unless overridden by --runtype
-        QString sim_description = "Simulation"; //!< Output data description, from --description
-        int     sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
-        uint    noise_seed = 0;         //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
-        QString guid_seed;     //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
-        QString edit_stamp;    //!< Fixed yyMMddhhmm for the edit filenames, from --edit-timestamp; empty uses the clock
+        QString         run_type;      //!< Two-character optical data type tag, "RA" unless overridden by --runtype
+        QString         sim_description    = "Simulation"; //!< Output data description, from --description
+        int             sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
+        uint            noise_seed         = 0; //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
+        QString         guid_seed;              //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
+        QString         edit_stamp; //!< Fixed yyMMddhhmm for the edit filenames, from --edit-timestamp; empty uses the clock
 
         QVector<double> mtconcs; //!< Model concentrations
 
@@ -129,8 +132,8 @@ class US_MwlSpeciesSim : public US_Widgets
 
         //! Ground-truth noise actually applied, one entry per model/wavelength,
         //! so it can be written beside each dataset for validation.
-        QVector<US_CSV_Data> csv_data_ti;
-        QVector<US_CSV_Data> csv_data_ri;
+        QVector<US_CSV_Data>        csv_data_ti;
+        QVector<US_CSV_Data>        csv_data_ri;
 
         US_DataIO::RawData rdata0;           //!< Raw data
         US_SimulationParameters simparams;   //!< Simulation parameters
@@ -139,7 +142,7 @@ class US_MwlSpeciesSim : public US_Widgets
         US_Buffer buffer;                    //!< Buffer
 
         QStringList pfilts;                  //!< Pre-filter list
-        QStringList mdescs;                  //!< Composite model descriptions as US_ModelLoader returns them; empty on the headless path
+        QStringList  mdescs; //!< Composite model descriptions as US_ModelLoader returns them; empty on the headless path
 
         US_Help showHelp;                    //!< Help dialog
 

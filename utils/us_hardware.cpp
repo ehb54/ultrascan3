@@ -327,8 +327,7 @@ bool US_AbstractCenterpiece::read_centerpieces(
    return read_centerpieces( NULL, centerpieces );
 }
 
-bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
-                                            QString& error )
+bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel, QString& error )
 {
    // channel_letters() leads with "S" for the single-channel case, handled below.
    const QString letters = US_Util::channel_letters().mid( 1 );
@@ -341,7 +340,7 @@ bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
    }
 
    if ( trimmed.compare( "S", Qt::CaseInsensitive ) == 0 )
-   {  // A single-channel centerpiece has only row 0
+   { // A single-channel centerpiece has only row 0
       channel = 0;
       return true;
    }
@@ -350,7 +349,7 @@ bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
    {
       int letter_index = letters.indexOf( trimmed.toUpper() );
       if ( letter_index >= 0 )
-      {  // A channel and its reference share a position, so A/B are 0
+      { // A channel and its reference share a position, so A/B are 0
          channel = letter_index / 2;
          return true;
       }
@@ -358,10 +357,11 @@ bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
 
    bool numeric = false;
    int  parsed  = trimmed.toInt( &numeric );
-   if ( ! numeric )
+   if ( !numeric )
    {
       error = QString( "centerpiece-channel \"%1\" is neither a channel letter "
-                       "(S or A-H) nor a channel index" ).arg( value );
+                       "(S or A-H) nor a channel index" )
+                 .arg( value );
       return false;
    }
 
@@ -369,12 +369,11 @@ bool US_AbstractCenterpiece::parse_channel( const QString& value, int& channel,
    return true;
 }
 
-bool US_AbstractCenterpiece::parse_index( const QString& value, int& index,
-                                     QString& error )
+bool US_AbstractCenterpiece::parse_index( const QString& value, int& index, QString& error )
 {
    bool numeric = false;
    int  parsed  = value.trimmed().toInt( &numeric );
-   if ( ! numeric )
+   if ( !numeric )
    {
       error = QString( "centerpiece \"%1\" is not a numeric index" ).arg( value );
       return false;
@@ -386,27 +385,28 @@ bool US_AbstractCenterpiece::parse_index( const QString& value, int& index,
 
 QString US_AbstractCenterpiece::validate( int centerpiece, int channel )
 {
-   QList< US_AbstractCenterpiece > cp_list;
-   if ( ! US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
+   QList<US_AbstractCenterpiece> cp_list;
+   if ( !US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
    {
       return "no centerpiece definitions could be loaded";
    }
 
    if ( centerpiece < 0 || centerpiece >= cp_list.size() )
    {
-      return QString( "centerpiece index %1 is out of range (0-%2)" )
-         .arg( centerpiece ).arg( cp_list.size() - 1 );
+      return QString( "centerpiece index %1 is out of range (0-%2)" ).arg( centerpiece ).arg( cp_list.size() - 1 );
    }
 
    // Validate against the per-row geometry lists used by setHardware().
    // The XML channels count can differ from the number of rows.
-   const US_AbstractCenterpiece& cp = cp_list[ centerpiece ];
-   int channel_count = qMin( cp.bottom_position.size(), cp.path_length.size() );
+   const US_AbstractCenterpiece& cp            = cp_list[centerpiece];
+   int                           channel_count = qMin( cp.bottom_position.size(), cp.path_length.size() );
    if ( channel < 0 || channel >= channel_count )
    {
       return QString( "centerpiece-channel index %1 is out of range for "
-         "centerpiece %2 (0-%3)" )
-         .arg( channel ).arg( centerpiece ).arg( channel_count - 1 );
+                      "centerpiece %2 (0-%3)" )
+         .arg( channel )
+         .arg( centerpiece )
+         .arg( channel_count - 1 );
    }
 
    return QString();

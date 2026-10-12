@@ -173,8 +173,8 @@ class US_UTIL_EXTERN US_DataIO
             plateau      = 0.0;
             baseline     = 0.0;
 
-	    bl_corr_slope = 0.0;
-	    bl_corr_yintercept = 0.0; 
+            bl_corr_slope      = 0.0;
+            bl_corr_yintercept = 0.0;
 
             //! Air Gap is only for interference data
             airGapLeft   = 0.0;
@@ -309,7 +309,7 @@ class US_UTIL_EXTERN US_DataIO
           \param parameters The edit values to write
           \returns          OK, or CANTOPEN if the file could not be opened
       */
-      static int     writeEdits  ( const QString&, const EditValues& );
+      static int     writeEdits( const QString&, const EditValues& );
 
       /*! A string describing the last read or write error
           \param code  The error code to be described

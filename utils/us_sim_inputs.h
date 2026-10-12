@@ -2,11 +2,11 @@
 #ifndef US_SIM_INPUTS_H
 #define US_SIM_INPUTS_H
 
+#include "us_buffer.h"
 #include "us_extern.h"
 #include "us_model.h"
-#include "us_buffer.h"
-#include "us_simparms.h"
 #include "us_sim_species.h"
+#include "us_simparms.h"
 
 //! \brief Generate minimal, valid inputs for headless simulations.
 //! Uses each input class's defaults and serializer, without hand-written XML,
@@ -22,42 +22,42 @@ class US_UTIL_EXTERN US_SimInputs
          public:
             Params();
 
-            double  rpm;                 //!< Rotor speed, also used to derive
-                                         //!< the meniscus and bottom positions
-            int     duration_hours;
-            double  duration_minutes;
+            double                            rpm; //!< Rotor speed, also used to derive
+                                                   //!< the meniscus and bottom positions
+            int                               duration_hours;
+            double                            duration_minutes;
 
             //! Delay before the first scan. Leave both negative to derive it
             //! from the time needed to reach speed; set them to align scan
             //! times across runs at different speeds.
-            int     delay_hours;
-            double  delay_minutes;
+            int                               delay_hours;
+            double                            delay_minutes;
 
-            int     scans;
-            double  acceleration;
-            int     simpoints;
-            double  radial_resolution;
+            int                               scans;
+            double                            acceleration;
+            int                               simpoints;
+            double                            radial_resolution;
             US_SimulationParameters::MeshType meshType;
             US_SimulationParameters::GridType gridType;
-            double  rnoise;
-            double  lrnoise;
-            double  tinoise;
-            double  rinoise;
-            double  baseline;
-            bool    band_forming;
-            double  band_volume;
+            double                            rnoise;
+            double                            lrnoise;
+            double                            tinoise;
+            double                            rinoise;
+            double                            baseline;
+            bool                              band_forming;
+            double                            band_volume;
 
             //! Rotor calibration ID. "0" selects zero stretch correction.
-            QString rotor_calibr;
+            QString                           rotor_calibr;
 
-            int     centerpiece;         //!< Centerpiece list index
-            int     centerpiece_channel; //!< Row within that centerpiece; not
-                                         //!< an instrument channel label
+            int                               centerpiece;         //!< Centerpiece list index
+            int                               centerpiece_channel; //!< Row within that centerpiece; not
+                                                                   //!< an instrument channel label
       };
 
       //! \brief Validate run conditions before constructing parameters.
       //! \return An empty string if valid; otherwise, an error message.
-      static QString validateParams( const Params& p );
+      static QString   validateParams( const Params& p );
 
       //! \brief Create parameters for a single-speed simulation.
       //! Geometry is stored at rest; simulation consumers apply rotor stretch.
@@ -65,14 +65,13 @@ class US_UTIL_EXTERN US_SimInputs
       //! \param p      Run conditions.
       //! \param params Parameters populated only on success.
       //! \param error  Error message on failure; empty on success.
-      static bool simParams( const Params& p, US_SimulationParameters& params,
-                             QString& error );
+      static bool      simParams( const Params& p, US_SimulationParameters& params, QString& error );
 
       //! \brief Create default single-speed simulation parameters.
       //! Construction reads hardware definitions from disk, so it can fail.
       //! \param params Parameters populated only on success.
       //! \param error  Error message on failure; empty on success.
-      static bool simParams( US_SimulationParameters& params, QString& error );
+      static bool      simParams( US_SimulationParameters& params, QString& error );
 
       //! \brief Create a default buffer using water properties at 20 C.
       static US_Buffer buffer();
@@ -83,7 +82,7 @@ class US_UTIL_EXTERN US_SimInputs
       //! \param dir   Existing output directory.
       //! \param error Error message on failure; empty on success.
       //! \return true on success; otherwise, false.
-      static bool writeAll( const QString& dir, QString& error );
+      static bool      writeAll( const QString& dir, QString& error );
 };
 
 #endif // US_SIM_INPUTS_H

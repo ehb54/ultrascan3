@@ -16,8 +16,7 @@ QString US_SimRecord::guid( const QString& seed, const QString& key )
    // Use a fixed UUID namespace for simulation identities.
    static const QUuid ns( QString( "{cb2a4256-450e-4202-8e7f-dcb34d66b142}" ) );
 
-   return QUuid::createUuidV5( ns, ( seed + "/" + key ).toUtf8() )
-          .toString().mid( 1, 36 );
+   return QUuid::createUuidV5( ns, ( seed + "/" + key ).toUtf8() ).toString().mid( 1, 36 );
 }
 
 US_Experiment US_SimRecord::experiment( const US_Rotor::Rotor&         rotor,
@@ -40,40 +39,38 @@ US_Experiment US_SimRecord::experiment( const US_Rotor::Rotor&         rotor,
    experiment.project.projectGUID = guid( guidSeed, "project" );
 
    // Use the default lab and instrument IDs seeded by LIMS.
-   experiment.labID               = 1;
-   experiment.instrumentID        = 1;
+   experiment.labID        = 1;
+   experiment.instrumentID = 1;
 
-   experiment.rotorID             = rotor.ID;
-   experiment.rotorGUID           = rotor.GUID;
-   experiment.rotorSerial         = rotor.serialNumber;
-   experiment.rotorName           = rotor.name;
-   experiment.calibrationID       = simparams.rotorCalID.toInt();
-   experiment.rotorCoeff1         = simparams.rotorcoeffs[ 0 ];
-   experiment.rotorCoeff2         = simparams.rotorcoeffs[ 1 ];
+   experiment.rotorID       = rotor.ID;
+   experiment.rotorGUID     = rotor.GUID;
+   experiment.rotorSerial   = rotor.serialNumber;
+   experiment.rotorName     = rotor.name;
+   experiment.calibrationID = simparams.rotorCalID.toInt();
+   experiment.rotorCoeff1   = simparams.rotorcoeffs[0];
+   experiment.rotorCoeff2   = simparams.rotorcoeffs[1];
 
    // Use a fixed calibration date for reproducible records.
-   experiment.rotorUpdated        = QDate( 2019, 1, 1 );
+   experiment.rotorUpdated = QDate( 2019, 1, 1 );
 
-   experiment.opticalSystem       = runType.toLatin1();
-   experiment.runTemp             = QString::number( simparams.temperature );
-   experiment.label               = runID;
-   experiment.comments            = "Auto exported";
+   experiment.opticalSystem = runType.toLatin1();
+   experiment.runTemp       = QString::number( simparams.temperature );
+   experiment.label         = runID;
+   experiment.comments      = "Auto exported";
 
    return experiment;
 }
 
-US_Solution US_SimRecord::solution( const QList< US_Model >& models,
-                                    const QList< double >&   wavelengths,
-                                    const US_Buffer&         buffer )
+US_Solution US_SimRecord::solution( const QList<US_Model>& models, const QList<double>& wavelengths, const US_Buffer& buffer )
 {
    US_Solution solution;
 
-   if ( models.isEmpty()  ||  models.size() != wavelengths.size() )
+   if ( models.isEmpty() || models.size() != wavelengths.size() )
    {
       return solution;
    }
 
-   const US_Model& first = models[ 0 ];
+   const US_Model& first = models[0];
    QString         desc  = "";
 
    solution.buffer = buffer;
@@ -81,11 +78,11 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
 
    for ( int ic = 0; ic < first.components.size(); ic++ )
    {
-      const US_Model::SimulationComponent& comp = first.components[ ic ];
+      const US_Model::SimulationComponent& comp = first.components[ic];
 
-      US_Analyte analyte;
+      US_Analyte                           analyte;
       analyte.extinction.clear();
-      analyte.type        = static_cast< US_Analyte::analyte_t >( comp.analyte_type );
+      analyte.type        = static_cast<US_Analyte::analyte_t>( comp.analyte_type );
       analyte.vbar20      = comp.vbar20;
       analyte.mw          = comp.mw;
       analyte.description = comp.name;
@@ -96,22 +93,19 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
       // Collect one extinction value per model wavelength.
       for ( int jm = 0; jm < models.size(); jm++ )
       {
-         if ( ic >= models[ jm ].components.size() )
+         if ( ic >= models[jm].components.size() )
          {
             continue;
          }
 
-         analyte.extinction[ wavelengths[ jm ] ]
-            = models[ jm ].components[ ic ].extinction;
+         analyte.extinction[wavelengths[jm]] = models[jm].components[ic].extinction;
       }
 
       US_Solution::AnalyteInfo analyteInfo;
       analyteInfo.analyte = analyte;
       // AnalyteInfo::amount is a molar quantity; signal_concentration is OD.
       // Convert the same way the analysis programs do.
-      analyteInfo.amount  = ( comp.extinction > 0.0 )
-         ? ( comp.signal_concentration / comp.extinction )
-         : 0.0;
+      analyteInfo.amount  = ( comp.extinction > 0.0 ) ? ( comp.signal_concentration / comp.extinction ) : 0.0;
 
       if ( ic > 0 )
       {
@@ -122,8 +116,8 @@ US_Solution US_SimRecord::solution( const QList< US_Model >& models,
       solution.analyteInfo.append( analyteInfo );
    }
 
-   desc                   += " | " + buffer.description;
-   solution.solutionDesc   = desc;
+   desc += " | " + buffer.description;
+   solution.solutionDesc = desc;
 
    return solution;
 }

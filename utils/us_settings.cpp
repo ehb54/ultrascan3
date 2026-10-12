@@ -222,12 +222,14 @@ void US_Settings::set_beckmanBug( bool setBug )
 }
 
 // Default data location  1 = DB, 2 = Disk
-static int dataLocationOverride = -1;   // -1: no process-only override set
+static int dataLocationOverride = -1; // -1: no process-only override set
 
 int US_Settings::default_data_location( void )
 {
-  if ( dataLocationOverride >= 0 )
-    return dataLocationOverride;
+   if ( dataLocationOverride >= 0 )
+   {
+      return dataLocationOverride;
+   }
   US_SettingsStore settings;
   return settings.value( "dataLocation", 2 ).toInt();
 }
@@ -243,12 +245,12 @@ void US_Settings::set_default_data_location( int location )
 
 void US_Settings::set_default_data_location_override( int location )
 {
-  dataLocationOverride = location;
+   dataLocationOverride = location;
 }
 
 void US_Settings::clear_default_data_location_override( void )
 {
-  dataLocationOverride = -1;
+   dataLocationOverride = -1;
 }
 
 // us_debug
