@@ -1927,7 +1927,7 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE")
+     if ( expType == "ABDE" && !protDev_bool )
        {
 	 absorbance_conversion_abde();
 	 return;
@@ -2074,7 +2074,7 @@ void US_ConvertGui::process_optics()
        } 
      //end of auto-processing reference range
 
-     if ( expType == "ABDE" )
+     if ( expType == "ABDE" && !protDev_bool )
        {
 	 absorbance_conversion_abde();
 	 return;
