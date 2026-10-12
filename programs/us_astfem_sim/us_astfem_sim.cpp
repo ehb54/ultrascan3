@@ -1,6 +1,7 @@
 //! \file us_astfem_sim.cpp
 
 #include <QApplication>
+#include <QScopedPointer>
 #include <QTemporaryFile>
 
 #include "us_astfem_math.h"
@@ -47,9 +48,9 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    setWindowTitle( "UltraScan3 Simulation Module" );
    setPalette( US_GuiSettings::frameColor() );
    init_simparams();
-   meniscus_ar                 = 5.8 + simparams.bottom_position - 7.2;
+   meniscus_ar         = 5.8 + simparams.bottom_position - 7.2;
    stopFlag            = false;
-   sim_failed                  = false;
+   sim_failed          = false;
    movieFlag           = false;
    save_movie          = false;
    time_correctionFlag = false;
@@ -210,40 +211,6 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    change_status();
 }
 
-// Number of cell holes in a rotor's type, or -1 if it cannot be read.
-static int rotor_hole_count( const US_Rotor::Rotor& rotor, bool from_db )
-{
-   if ( rotor.abstractRotorID < 1 )
-   {
-      return -1;
-   }
-
-   if ( from_db )
-   {
-      US_Passwd               pw;
-      US_DB2                  db( pw.getPasswd() );
-      US_Rotor::AbstractRotor arotor;
-
-      if ( db.lastErrno() != IUS_DB2::OK || arotor.readDB( rotor.abstractRotorID, &db ) != US_Rotor::ROTOR_OK )
-      {
-         return -1;
-      }
-      return arotor.numHoles;
-   }
-
-   QVector<US_Rotor::AbstractRotor> arotors;
-   US_Rotor::readAbstractRotorsDisk( arotors );
-
-   for ( const US_Rotor::AbstractRotor& arotor : arotors )
-   {
-      if ( arotor.ID == rotor.abstractRotorID )
-      {
-         return arotor.numHoles;
-      }
-   }
-   return -1;
-}
-
 // Initialize the simulation from command-line arguments.
 int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // check if model is to be loaded
@@ -329,7 +296,14 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          simparams.rotorcoeffs[0]   = coeff1;
          simparams.rotorcoeffs[1]   = coeff2;
          simparams.rotorCalID = QString::number( rotorInfo->currentCalibration.ID );
-         rotor_holes                = rotor_hole_count( this->rotor, dbdisk == US_Disk_DB_Controls::DB );
+         {
+            // Built only for the DB case: holeCount() takes a plain
+            // IUS_DB2*, so the password prompt (a gui-layer concern) stays
+            // here rather than inside the utils-layer US_Rotor.
+            US_Passwd              pw;
+            QScopedPointer<US_DB2> holeDb( dbdisk == US_Disk_DB_Controls::DB ? new US_DB2( pw.getPasswd() ) : nullptr );
+            rotor_holes = US_Rotor::holeCount( this->rotor, holeDb.data() );
+         }
          rotorInfo->close();
       }
       else {
@@ -471,37 +445,81 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          error_occured = true;
          gui_needed = true;
       }
-      // A stale file from a previous run into the same directory (an edit
-      // XML with a different timestamp, a noise CSV from a run that had
-      // noise, ...) would otherwise sit alongside the new output and
-      // confuse a later loadData(). Checked before the writability probe
-      // below, so that probe file is never mistaken for pre-existing content.
-      else if ( dir.exists() && !dir.isEmpty() && !flags.contains( "overwrite" ) )
-      {
-         if ( errors_to_cl )
-         {
-            qDebug() << "Error: save directory is not empty; pass "
-                        "--overwrite to reuse it:"
-                     << save_path;
-            exit( 2 );
-         }
-         error_occured = true;
-         gui_needed = true;
-      }
       else
       {
-         // Check whether a file can be created in the directory, without
-         // risking a collision with a same-named file the user already has.
-         QTemporaryFile probe( dir.filePath( "us_astfem_sim_writable_XXXXXX" ) );
-         if ( !probe.open() )
+         // A stale file from a previous run into the same directory (an
+         // edit XML with a different timestamp, a noise CSV from a run
+         // that had noise, ...) would otherwise sit alongside the new
+         // output and confuse a later loadData(). A multi-speed run
+         // writes each speed step into a sibling directory suffixed with
+         // its rpm (see speed_suffix()) rather than into save_path itself,
+         // so save_path alone can look empty while a stale per-speed
+         // directory from an earlier run is not; check those too.
+         QStringList candidate_dirs;
+         candidate_dirs << save_path;
+         for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+         {
+            candidate_dirs << save_path + speed_suffix( simparams.speed_step[jd].rotorspeed );
+         }
+
+         QStringList nonempty_dirs;
+         for ( const QString& candidate : candidate_dirs )
+         {
+            QDir cdir( candidate );
+            if ( cdir.exists() && !cdir.isEmpty() )
+            {
+               nonempty_dirs << candidate;
+            }
+         }
+
+         if ( !nonempty_dirs.isEmpty() && !flags.contains( "overwrite" ) )
          {
             if ( errors_to_cl )
             {
-               qDebug() << "Error: save directory is not writable:" << save_path;
+               qDebug() << "Error: save directory is not empty; pass "
+                           "--overwrite to reuse it:"
+                        << nonempty_dirs;
                exit( 2 );
             }
             error_occured = true;
             gui_needed    = true;
+         }
+         else
+         {
+            // --overwrite: clear stale content from a previous run instead
+            // of leaving it to mix with the new output.
+            for ( const QString& candidate : nonempty_dirs )
+            {
+               QDir               cdir( candidate );
+               const QStringList& entries = cdir.entryList( QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot );
+
+               for ( const QString& entry : entries )
+               {
+                  QFileInfo info( cdir.filePath( entry ) );
+                  if ( info.isDir() )
+                  {
+                     QDir( info.filePath() ).removeRecursively();
+                  }
+                  else
+                  {
+                     QFile::remove( info.filePath() );
+                  }
+               }
+            }
+
+            // Check whether a file can be created in the directory, without
+            // risking a collision with a same-named file the user already has.
+            QTemporaryFile probe( dir.filePath( "us_astfem_sim_writable_XXXXXX" ) );
+            if ( !probe.open() )
+            {
+               if ( errors_to_cl )
+               {
+                  qDebug() << "Error: save directory is not writable:" << save_path;
+                  exit( 2 );
+               }
+               error_occured = true;
+               gui_needed    = true;
+            }
          }
       }
    }

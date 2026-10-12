@@ -202,6 +202,16 @@ static bool apply_component_value( const QString&            key,
       }
    }
 
+   // Both callers only reach here after confirming key names a coefficient
+   // (parse_component via coefficient_opts, parse_component_spec via
+   // is_coefficient), but don't trust that invariant across the call
+   // boundary: dereferencing a null match would be a crash, not a subtle bug.
+   if ( match == nullptr )
+   {
+      error = QString( "%1: \"%2\" is not a recognized coefficient" ).arg( origin, key );
+      return false;
+   }
+
    double value = 0.0;
 
    if ( key == "s" )
@@ -831,26 +841,26 @@ int main( int argc, char* argv[] )
       }
 
       bool ok         = true;
-      auto opt_double = [&]( const QCommandLineOption& opt, double def )
+      auto opt_double = [&]( const QCommandLineOption& opt, const double def )
       {
          if ( !parser.isSet( opt ) )
          {
             return def;
          }
-         bool   this_ok = false;
-         double v       = parser.value( opt ).toDouble( &this_ok );
-         ok             = ok && this_ok;
+         bool         this_ok = false;
+         const double v       = parser.value( opt ).toDouble( &this_ok );
+         ok                   = ok && this_ok;
          return this_ok ? v : def;
       };
-      auto opt_int = [&]( const QCommandLineOption& opt, int def )
+      auto opt_int = [&]( const QCommandLineOption& opt, const int def )
       {
          if ( !parser.isSet( opt ) )
          {
             return def;
          }
-         bool this_ok = false;
-         int  v       = parser.value( opt ).toInt( &this_ok );
-         ok           = ok && this_ok;
+         bool      this_ok = false;
+         const int v       = parser.value( opt ).toInt( &this_ok );
+         ok                = ok && this_ok;
          return this_ok ? v : def;
       };
 
@@ -972,6 +982,44 @@ int main( int argc, char* argv[] )
    {
       QTextStream( stderr ) << "Error: output directory does not exist: " << outdir.path() << Qt::endl;
       return 1;
+   }
+
+   // Past this point, neither --emit-model, --emit-buffer, nor
+   // --emit-simparams was given (each returns above), so none of the
+   // simulation-parameter options below are read by anything: MWL mode
+   // only writes a model, and default mode writes nothing but
+   // US_SimInputs::writeAll()'s own defaults. Reject them instead of
+   // silently ignoring a value the caller clearly meant to take effect.
+   const QList<const QCommandLineOption*> simparams_only_opts = {
+      &speed_option,
+      &duration_hrs_option,
+      &duration_mins_option,
+      &delay_hrs_option,
+      &delay_mins_option,
+      &scans_option,
+      &points_option,
+      &acceleration_option,
+      &rnoise_option,
+      &lrnoise_option,
+      &tinoise_option,
+      &rinoise_option,
+      &sp_baseline_option,
+      &radial_resolution_option,
+      &mesh_type_option,
+      &grid_type_option,
+      &band_forming_option,
+      &band_volume_option,
+      &rotor_calibration_option,
+      &centerpiece_option,
+      &centerpiece_channel_option,
+   };
+   for ( const QCommandLineOption* opt : simparams_only_opts )
+   {
+      if ( parser.isSet( *opt ) )
+      {
+         QTextStream( stderr ) << "Error: --" << opt->names().first() << " has no effect without --emit-simparams" << Qt::endl;
+         return 1;
+      }
    }
 
    bool has_runid      = parser.isSet( runid_option );

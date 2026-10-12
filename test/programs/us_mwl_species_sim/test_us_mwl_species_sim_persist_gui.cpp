@@ -7,6 +7,7 @@
 #include <QProcessEnvironment>
 #include <QXmlStreamReader>
 
+#include "us3_dev_license.h"
 #include "us_dataIO.h"
 #include "us_util.h"
 
@@ -95,6 +96,7 @@ class US_MwlSpeciesSimPersistTest : public QObject
          QVERIFY( QDir().mkpath( home + "/ultrascan/tmp" ) );
          QVERIFY( QDir().mkpath( home + "/ultrascan/imports" ) );
          QVERIFY( QDir().mkpath( home + "/ultrascan/results" ) );
+         registerDevLicenseFor( home );
 
          QVERIFY( writeText( inputs + "/simparams.xml", kSimParams ) );
 

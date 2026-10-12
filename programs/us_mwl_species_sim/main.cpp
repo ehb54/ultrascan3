@@ -26,12 +26,11 @@
 //! \brief Load translators and start US_MwlSpeciesSim.
 int main( int argc, char* argv[] )
 {
-   QApplication application( argc, argv );
+   QApplication       application( argc, argv );
 
-#include "main1.inc"
-
-   // License is OK.  Start up.
-
+   // --help/--version/a parse error should work without a license, so the
+   // command-line parser is built and checked before main1.inc's license
+   // dialog, not after it.
    QCommandLineParser parser;
    auto               help_option = QCommandLineOption( { "help", "h", "?" }, "Display command-line help" );
    parser.addOption( help_option );
@@ -97,6 +96,10 @@ int main( int argc, char* argv[] )
    {
       return cli_exit_code;
    }
+
+#include "main1.inc"
+
+   // License is OK.  Start up.
 
    // A process-only override, never persisted, so headless runs cannot race
    // on or permanently change the user's setting.

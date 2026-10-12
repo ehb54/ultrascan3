@@ -104,8 +104,11 @@ US_Solution US_SimRecord::solution( const QList<US_Model>& models, const QList<d
       US_Solution::AnalyteInfo analyteInfo;
       analyteInfo.analyte = analyte;
       // AnalyteInfo::amount is a molar quantity; signal_concentration is OD.
-      // Convert the same way the analysis programs do.
-      analyteInfo.amount  = ( comp.extinction > 0.0 ) ? ( comp.signal_concentration / comp.extinction ) : 0.0;
+      // Convert the same way the analysis programs do. With no extinction,
+      // the conversion is undefined, not zero; fall back to 1 so the
+      // species still has a nonzero amount instead of silently vanishing
+      // from the solution record.
+      analyteInfo.amount  = ( comp.extinction > 0.0 ) ? ( comp.signal_concentration / comp.extinction ) : 1.0;
 
       if ( ic > 0 )
       {

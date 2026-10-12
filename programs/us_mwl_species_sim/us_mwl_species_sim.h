@@ -3,33 +3,23 @@
 #define US_MWL_SPECIES_SIM_H
 
 // A caller may have already included us_license.h, whose unguarded
-// "spacing" macro collides with the spacing() methods Qwt headers declare
-// (pulled in below, directly and via us_spectrodata.h).
+// "spacing" macro collides with the spacing() methods some Qwt headers
+// declare (us_widgets.h pulls in qwt_plot.h, which needs its own axis
+// scale draws). Kept as a defense-in-depth guard even after trimming this
+// header's own, actually-unused Qwt includes below.
 #ifdef spacing
 #undef spacing
 #endif
 
-#include "us_buffer_gui.h"
-#include "us_colorgradIO.h"
+#include "us_buffer.h"
 #include "us_csv_data.h"
 #include "us_extern.h"
 #include "us_help.h"
 #include "us_model_loader.h"
 #include "us_plot.h"
-#include "us_rotor_gui.h"
-#include "us_sim_params_gui.h"
+#include "us_rotor.h"
 #include "us_simparms.h"
-#include "us_spectrodata.h"
 #include "us_widgets.h"
-
-#include "qwt_plot_marker.h"
-#include "qwt_plot_spectrogram.h"
-#include "qwt_plot_layout.h"
-#include "qwt_plot_zoomer.h"
-#include "qwt_plot_panner.h"
-#include "qwt_scale_widget.h"
-#include "qwt_scale_draw.h"
-#include "qwt_color_map.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()

@@ -130,7 +130,18 @@ QString US_SimInputs::validateParams( const Params& p )
       return "grid type is out of range";
    }
 
-   // Hardware (centerpiece, channel, rotor calibration) is not checked here.
+   // A negative centerpiece is not out-of-range to setHardware(): it means
+   // "look up by serial number" instead of by list index (see its cp < 0
+   // branch). The CLI only ever means a list index, so a negative value
+   // here is a bad index, not a serial lookup; left unchecked, a mistyped
+   // negative silently falls back to centerpiece 0 when no serial matches,
+   // instead of failing.
+   if ( p.centerpiece < 0 )
+   {
+      return QString( "centerpiece must be zero or greater (got %1)" ).arg( p.centerpiece );
+   }
+
+   // The rest of hardware (channel, rotor calibration) is not checked here.
    // simParams() calls setHardware() right after this, which already reads
    // it; re-reading it here to pre-validate would read it twice on every
    // call. See hardwareFailureReason() below for the failure path.
@@ -232,7 +243,7 @@ bool US_SimInputs::simParams( const Params& p, US_SimulationParameters& params_o
    sp_out.gridType          = p.gridType;
    // The simulation-parameter file contract stores at-rest radii. Consumers
    // add the calibration stretch for each speed step exactly once.
-   sp_out.meniscus          = 5.8;
+   sp_out.meniscus          = at_rest_meniscus;
    sp_out.bottom            = sp_out.bottom_position;
    sp_out.rnoise            = p.rnoise;
    sp_out.lrnoise           = p.lrnoise;
