@@ -1888,10 +1888,18 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      //TEMPORARY !!!!
      if ( dataType == "RI" && expType != "ABDE" &&
 	  dataSource != "dataDiskAUC:Absorbance" &&
-	  dataSource != "dataDiskAUC:PseudoAbsorbance" &&
-	  !protDev_bool
-	  )
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
+	 if ( protDev_bool && dataSource.contains("dataDiskAUC") )
+	   {
+	     pb_reference  ->setEnabled( false );
+	     referenceDefined = true;
+	     lw_todoinfo->clear();
+	     pb_saveUS3 ->setEnabled( true );
+	     enableRunIDControl( false );
+	     return;
+	   }
+	 
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
 	 
@@ -1935,17 +1943,6 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
 	 return;
        }
 
-     //prot DEV case: do not do any conversions
-     if ( protDev_bool )
-       {
-	 pb_reference  ->setEnabled( false );
-	 referenceDefined = true;
-	 lw_todoinfo->clear();
-	 pb_saveUS3 ->setEnabled( true );
-	 enableRunIDControl( false );
-	 return;
-       }
-     
      return;
    }
   
@@ -2054,9 +2051,18 @@ void US_ConvertGui::process_optics()
      
      if ( dataType == "RI" && expType != "ABDE" &&
 	  dataSource != "dataDiskAUC:Absorbance" &&
-	  dataSource != "dataDiskAUC:PseudoAbsorbance" &&
-	  !protDev_bool )
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
+	 if ( protDev_bool && dataSource.contains("dataDiskAUC") )
+	   {
+	     pb_reference  ->setEnabled( false );
+	     referenceDefined = true;
+	     lw_todoinfo->clear();
+	     pb_saveUS3 ->setEnabled( true );
+	     enableRunIDControl( false );
+	     return;
+	   }
+	 
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
 
@@ -2095,17 +2101,6 @@ void US_ConvertGui::process_optics()
 	 return;
        }
 
-     //prot DEV case: do not do any conversions
-     if ( protDev_bool )
-       {
-	 pb_reference  ->setEnabled( false );
-	 referenceDefined = true;
-	 lw_todoinfo->clear();
-	 pb_saveUS3 ->setEnabled( true );
-	 enableRunIDControl( false );
-	 return;
-       }
-     
      return;
    }
 }
