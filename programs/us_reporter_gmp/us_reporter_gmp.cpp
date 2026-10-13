@@ -4028,7 +4028,9 @@ void US_ReporterGMP::generate_report( void )
           if ( combPlotsMask_edited.has_combo_plots )
           {
              for ( int i = 0; i < fileNameList.size(); ++i )
+             {
                 process_combined_plots( fileNameList[i] );
+             }
           }
 
           //Replicas' averages
@@ -4188,55 +4190,51 @@ void US_ReporterGMP::generate_report( void )
 	  return;
 	}
 
-      //Update autoflowGMPReportEsign record with eSignStatusJson
-      qry. clear();
-      qry << "update_gmp_review_record_by_esigner"
-	  << eSign_details[ "ID" ]
-	  << AutoflowID_auto
-	  << eSignStatusJson
-	  << "NO";
-      
-      qDebug() << "Update \"to_sign\": qry -- " << qry;
-      db->query( qry );
+   //Update autoflowGMPReportEsign record with eSignStatusJson
+   qry.clear();
+   qry << "update_gmp_review_record_by_esigner" << eSign_details["ID"] << AutoflowID_auto << eSignStatusJson << "NO";
 
-      
-      /************************************************************************/
-      //copy autoflow record to autoflowHistory table:
-      //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
-      
-      qry. clear();
-      qry << "new_autoflow_history_record" << AutoflowID_auto;
-      qDebug() << "Query for autoflowHistory -- " << qry;
-      db->query( qry );
+   qDebug() << "Update \"to_sign\": qry -- " << qry;
+   db->query( qry );
 
-      /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
-      //delete autoflow record
-      qry.clear();
-      qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
-      db->statusQuery( qry );
-      /****/
 
-      //Inform user of the PDF location
-      QMessageBox msgBox_a;
-      msgBox_a.setText( tr( "Report PDF Ready!" ) );
-      msgBox_a.setInformativeText(
-         tr( "Report PDF was saved at: \n%1\n\n"
-             "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
-             "\n\n"
-             "Reviwer(s) of the current GMP report will be notified." )
-            .arg( filePath ) );
+   /************************************************************************/
+   //copy autoflow record to autoflowHistory table:
+   //INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID=${ID}//
 
-      msgBox_a.setWindowTitle( tr( "Report Generation Complete" ) );
-      QPushButton* Open = msgBox_a.addButton( tr( "View Report" ), QMessageBox::YesRole );
-      //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+   qry.clear();
+   qry << "new_autoflow_history_record" << AutoflowID_auto;
+   qDebug() << "Query for autoflowHistory -- " << qry;
+   db->query( qry );
 
-      msgBox_a.setIcon( QMessageBox::Information );
-      msgBox_a.exec();
+   /*** TEST - DO NOT delete parent autoflow YET --------------------------------- **/
+   //delete autoflow record
+   qry.clear();
+   qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
+   db->statusQuery( qry );
+   /****/
 
-      if ( msgBox_a.clickedButton() == Open )
-      {
-         view_report();
-      }
+   //Inform user of the PDF location
+   QMessageBox msgBox_a;
+   msgBox_a.setText( tr( "Report PDF Ready!" ) );
+   msgBox_a.setInformativeText(
+      tr( "Report PDF was saved at: \n%1\n\n"
+          "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
+          "\n\n"
+          "Reviwer(s) of the current GMP report will be notified." )
+         .arg( filePath ) );
+
+   msgBox_a.setWindowTitle( tr( "Report Generation Complete" ) );
+   QPushButton* Open = msgBox_a.addButton( tr( "View Report" ), QMessageBox::YesRole );
+   //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+
+   msgBox_a.setIcon( QMessageBox::Information );
+   msgBox_a.exec();
+
+   if ( msgBox_a.clickedButton() == Open )
+   {
+      view_report();
+   }
     }
     else
     {
@@ -12963,8 +12961,8 @@ void US_ReporterGMP::assemble_pdf( US_GmpProgress* progress_msg )
               }
            }
         }
-       }
-	}
+     }
+   }
       
       html_analysis_profile += tr(
 				  "<br>"

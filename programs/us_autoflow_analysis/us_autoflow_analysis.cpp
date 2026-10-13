@@ -1122,122 +1122,127 @@ void US_Analysis_auto::gui_update( )
 	      status_msg = "Job has been scheduled for deletion";
 	      status = "CANCELED";
 
-	      if ( fitmen_bad_vals  )
-		status = "FAILED";
-	      
-	      create_time = "N/A";
-	      update_time = "N/A";
-	    }
-
-	  if ( current_stage_groupbox != NULL )
-	    {
-	      QLineEdit * lineedit_runid    = current_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_owner    = current_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastmsg  = current_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_status   = current_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_anatype  = current_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_submit   = current_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_cluster  = current_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
-
-	      QPushButton * pb_delete       = current_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
-	      QPushButton * pb_overlay      = current_stage_groupbox->findChild<QPushButton *>("overlay", Qt::FindDirectChildrenOnly);
-
-	      //QString triple_stage = triple_curr_key + ":" + submitted.toString();
-	      //delete button: if running && admin_user || user_owner, enable; otherwise, disable (should be disabled earlier)
-	      if ( US_Settings::us_inv_level() > 3 || US_Settings::us_inv_ID() == invID )
-		if ( !pb_delete->isEnabled() )
-		  {
-		    pb_delete->setEnabled( true );
-		    
-		    //signalMapper->setMapping ( pb_delete, triple_stage );
-		  }
-	      	          
-	      //runID
-	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_HPCAnalysisRequestID + ")";
-	      lineedit_runid -> setText(runid_text);
-	      
-	      //owner
-	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-	      lineedit_owner -> setText( investigator_text );
-	      
-	      //lastMsg
-	      lineedit_lastmsg -> setText( status_msg );
-	  
-	      //status
-	      if ( status == "READY" || status == "SUBMITTED" )
-		{
-		  lineedit_status -> setText( "QUEUED" );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(95, 152, 238); }");
-		}
-	      else
-		{
-		  lineedit_status -> setText( status );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
-		}
-	      
-	      //analysis type
-	      lineedit_anatype -> setText( stage_name );
-	      
-	      //submit
-	      lineedit_submit -> setText( create_time );
-	      
-	      //updated
-	      lineedit_lastupd -> setText( update_time );
-	      
-	      //cluster
-	      lineedit_cluster -> setText( cluster );
-
-
-         //if complete
-         if ( status == "COMPLETE" )
+         if ( fitmen_bad_vals )
          {
-            pb_overlay->setEnabled( true );
-            pb_delete->setEnabled( false );
-            lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }" );
+            status = "FAILED";
+         }
 
-            // && if final stage
-            if ( !to_process_array.size() )
-            {
-               topItem[triple_curr]->setForeground( 0, QBrush( colorGreen ) );
-               /****
+         create_time = "N/A";
+         update_time = "N/A";
+       }
+
+       if ( current_stage_groupbox != NULL )
+       {
+          QLineEdit*   lineedit_runid   = current_stage_groupbox->findChild<QLineEdit*>( "runID", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_owner   = current_stage_groupbox->findChild<QLineEdit*>( "owner", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_lastmsg = current_stage_groupbox->findChild<QLineEdit*>( "lastmsg", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_status  = current_stage_groupbox->findChild<QLineEdit*>( "status", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_anatype = current_stage_groupbox->findChild<QLineEdit*>( "anatype", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_submit  = current_stage_groupbox->findChild<QLineEdit*>( "submit", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_cluster = current_stage_groupbox->findChild<QLineEdit*>( "cluster", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_lastupd = current_stage_groupbox->findChild<QLineEdit*>( "lastupd", Qt::FindDirectChildrenOnly );
+
+          QPushButton* pb_delete  = current_stage_groupbox->findChild<QPushButton*>( "delete", Qt::FindDirectChildrenOnly );
+          QPushButton* pb_overlay = current_stage_groupbox->findChild<QPushButton*>( "overlay", Qt::FindDirectChildrenOnly );
+
+          //QString triple_stage = triple_curr_key + ":" + submitted.toString();
+          //delete button: if running && admin_user || user_owner, enable; otherwise, disable (should be disabled earlier)
+          if ( US_Settings::us_inv_level() > 3 || US_Settings::us_inv_ID() == invID )
+          {
+             if ( !pb_delete->isEnabled() )
+             {
+                pb_delete->setEnabled( true );
+
+                //signalMapper->setMapping ( pb_delete, triple_stage );
+             }
+          }
+
+          //runID
+          QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_HPCAnalysisRequestID + ")";
+          lineedit_runid->setText( runid_text );
+
+          //owner
+          QString investigator_text =
+             investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] + ")";
+          lineedit_owner->setText( investigator_text );
+
+          //lastMsg
+          lineedit_lastmsg->setText( status_msg );
+
+          //status
+          if ( status == "READY" || status == "SUBMITTED" )
+          {
+             lineedit_status->setText( "QUEUED" );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(95, 152, 238); }" );
+          }
+          else
+          {
+             lineedit_status->setText( status );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }" );
+          }
+
+          //analysis type
+          lineedit_anatype->setText( stage_name );
+
+          //submit
+          lineedit_submit->setText( create_time );
+
+          //updated
+          lineedit_lastupd->setText( update_time );
+
+          //cluster
+          lineedit_cluster->setText( cluster );
+
+
+          //if complete
+          if ( status == "COMPLETE" )
+          {
+             pb_overlay->setEnabled( true );
+             pb_delete->setEnabled( false );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }" );
+
+             // && if final stage
+             if ( !to_process_array.size() )
+             {
+                topItem[triple_curr]->setForeground( 0, QBrush( colorGreen ) );
+                /****
 			   ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
 			   Completed_triples[ triple_curr ] = true;
 			   At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
 			   If NO - stop timer, show Msg that everything completed.
 		      **/
 
-               /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
-               //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
-               /*******************************************************************************************/
+                /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+                //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
+                /*******************************************************************************************/
 
-               qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[triple_curr_key];
-            }
-         }
+                qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[triple_curr_key];
+             }
+          }
 
-         //check if failed -- due to the abortion/deletion of the job
-         if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled" )
-         {
-            pb_overlay->setEnabled( false );
-            pb_delete->setEnabled( false );
-            lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }" );
-            topItem[triple_curr]->setForeground( 0, QBrush( colorRed ) );
+          //check if failed -- due to the abortion/deletion of the job
+          if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled" )
+          {
+             pb_overlay->setEnabled( false );
+             pb_delete->setEnabled( false );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }" );
+             topItem[triple_curr]->setForeground( 0, QBrush( colorRed ) );
 
-            /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
-            //Completed_triples[ triple_curr_key ] = true;
-            /*******************************************************************************************/
+             /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+             //Completed_triples[ triple_curr_key ] = true;
+             /*******************************************************************************************/
 
-            if ( status == "FAILED" || status == "failed" )
-            {
-               Failed_triples[triple_curr_key] = true;
-               qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-            }
-            if ( status == "CANCELED" || status == "canceled" )
-            {
-               Canceled_triples[triple_curr_key] = true;
-               qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-            }
-         }
+             if ( status == "FAILED" || status == "failed" )
+             {
+                Failed_triples[triple_curr_key] = true;
+                qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+             }
+             if ( status == "CANCELED" || status == "canceled" )
+             {
+                Canceled_triples[triple_curr_key] = true;
+                qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+             }
+          }
        }
    }
     }
@@ -7476,9 +7481,10 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
          {
 	    //cancel job && restart timer();
 	    fitmen_bad_vals = true;
-	    QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
-	      .arg( mennew )
-	      .arg( lefval );
+       QString reason_for_failure =
+          QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2" )
+             .arg( mennew )
+             .arg( lefval );
 
        triple_information["failed"] = reason_for_failure;
 
@@ -7491,7 +7497,7 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
        delete_jobs_at_fitmen( triple_information );
 
        return; //ALEXEY - if one wvl in a triple fails, ALL fail!!!
-          //continue;
+               //continue;
          }
 
          demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings

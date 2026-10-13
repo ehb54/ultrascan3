@@ -2106,9 +2106,9 @@ void US_ConvertGui::process_optics()
              first_time_plot_auto = false;
              return;
           }
-    // else if (msgBox.clickedButton() == Manual) {
-	 //   cancel_reference();
-	 // }
+          // else if (msgBox.clickedButton() == Manual) {
+          //   cancel_reference();
+          // }
        } 
      //end of auto-processing reference range
 
@@ -6771,8 +6771,8 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
               all_tripinfo[trx].excluded = true;
               DbgLv( 1 ) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
            }
-		    }
-		}
+        }
+      }
 	    }
 	}
       //END of adiitional drop-out

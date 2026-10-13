@@ -82,7 +82,7 @@ class US_Edit : public US_Widgets
        public:
           int            scan;
           QList<QPointF> changes;
-      };
+    };
 
       QList< Edits >                    changed_points;
       US_DataIO::RawData                data;

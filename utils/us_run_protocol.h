@@ -40,8 +40,8 @@ class US_UTIL_EXTERN US_RunProtocol
 
        //data form Disk
        QString          importDataDisk;
-       bool        importData;
-	    bool        importData_absorbance_t;
+       bool             importData;
+       bool        importData_absorbance_t;
 	    bool        importData_absorbance_pa;
 
             QString     labGUID;       //!< Laboratory GUID
