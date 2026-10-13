@@ -12963,7 +12963,7 @@ void US_ReporterGMP::assemble_pdf( US_GmpProgress* progress_msg )
         }
      }
    }
-      
+
       html_analysis_profile += tr(
 				  "<br>"
 				  )

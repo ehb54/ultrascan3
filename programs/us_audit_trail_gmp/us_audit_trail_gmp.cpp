@@ -1158,8 +1158,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
      QHBoxLayout* genL = new QHBoxLayout();
      genL->setSpacing( 2 );
      genL->setContentsMargins( 20, 10, 20, 15 );
-	  
-	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+
+     QHBoxLayout* genL_sec_row = new QHBoxLayout();
 	  genL_sec_row->setSpacing        ( 2 );
 	  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
 	  
@@ -1389,8 +1389,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
          te_drop_c1->setFixedHeight( RowHeight * 2 );
          te_drop_c1->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
          us_setReadOnly( te_drop_c1, true );
-	      
-	      te_drop_c1 -> setText( comm_list.join(",\n") );
+
+         te_drop_c1 -> setText( comm_list.join(",\n") );
 	      genL5 -> addWidget( te_drop_c1,     row++,   3,  1,  3  );
 	 		  
 	      genL51 -> addLayout( genL5);

@@ -1058,77 +1058,87 @@ void US_Analysis_auto::gui_update( )
 		       
 	      FitMen->show();
 
-	      Manual_update[ triple_curr_key ] = true;
+         Manual_update[triple_curr_key] = true;
 
-	      //Stop timer here, and restart with the editProfile_updated signal ??
-	      timer_update -> stop();
-	      disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
-	      
-	      qDebug() << "Update stopped at FITMEN for triple -- " << triple_curr_key;
-	      
-	      in_gui_update  = false;
+         //Stop timer here, and restart with the editProfile_updated signal ??
+         timer_update->stop();
+         disconnect( timer_update, &QTimer::timeout, nullptr, nullptr );
 
-	      if ( FitMen -> no_fm_data )
-		{
-		  FitMen->close();
-		  
-		  delete_jobs_at_fitmen( triple_info_map );
-		}
+         qDebug() << "Update stopped at FITMEN for triple -- " << triple_curr_key;
 
-	      if ( FitMen -> bad_men_vals )
-		{
-		  FitMen->close();
-		  fitmen_bad_vals = true;
-		  
-		  delete_jobs_at_fitmen( triple_info_map );
-		}
+         in_gui_update = false;
 
-	      return;
-	    }
-	      
-	  //QGroupBox * current_stage_groupbox;
-	  
-	  if ( submitted.toString() == "2DSA" )
-	    current_stage_groupbox = groupbox_2DSA[ triple_curr ];
-	  if ( submitted.toString() == "2DSA_FM" )
-	    current_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
-	  if ( submitted.toString() == "2DSA_IT" )
-	    current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-	  if ( submitted.toString() == "2DSA_MC" )
-	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-	  if ( submitted.toString() == "PCSA" )
-	    current_stage_groupbox = groupbox_PCSA [ triple_curr ];
-
-	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
-	  if ( ( submitted.toString() == "FITMEN" || submitted.toString() == "FITMEN_AUTO" )
-	       && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
-	    {
-	      if ( groupbox_2DSA_IT.contains( triple_curr ) )
-		{
-		  current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-		  stage_name = "2DSA-IT";
-		}
-	      
-	      else if ( groupbox_2DSA_MC.contains( triple_curr ) )
-		{
-		  current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-		  stage_name = "2DSA-MC";
-		}
-	      
-	      //current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-	      //stage_name = "2DSA-IT";
-	      
-	      curr_HPCAnalysisRequestID = "N/A";
-	      status_msg = "Job has been scheduled for deletion";
-	      status = "CANCELED";
-
-         if ( fitmen_bad_vals )
+         if ( FitMen->no_fm_data )
          {
-            status = "FAILED";
+            FitMen->close();
+
+            delete_jobs_at_fitmen( triple_info_map );
          }
 
-         create_time = "N/A";
-         update_time = "N/A";
+         if ( FitMen->bad_men_vals )
+         {
+            FitMen->close();
+            fitmen_bad_vals = true;
+
+            delete_jobs_at_fitmen( triple_info_map );
+         }
+
+         return;
+       }
+
+       //QGroupBox * current_stage_groupbox;
+
+       if ( submitted.toString() == "2DSA" )
+       {
+          current_stage_groupbox = groupbox_2DSA[triple_curr];
+       }
+       if ( submitted.toString() == "2DSA_FM" )
+       {
+          current_stage_groupbox = groupbox_2DSA_FM[triple_curr];
+       }
+       if ( submitted.toString() == "2DSA_IT" )
+       {
+          current_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+       }
+       if ( submitted.toString() == "2DSA_MC" )
+       {
+          current_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+       }
+       if ( submitted.toString() == "PCSA" )
+       {
+          current_stage_groupbox = groupbox_PCSA[triple_curr];
+       }
+
+       //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
+       if ( ( submitted.toString() == "FITMEN" || submitted.toString() == "FITMEN_AUTO" ) &&
+            ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled" ) )
+       {
+          if ( groupbox_2DSA_IT.contains( triple_curr ) )
+          {
+             current_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+             stage_name             = "2DSA-IT";
+          }
+
+          else if ( groupbox_2DSA_MC.contains( triple_curr ) )
+          {
+             current_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+             stage_name             = "2DSA-MC";
+          }
+
+          //current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+          //stage_name = "2DSA-IT";
+
+          curr_HPCAnalysisRequestID = "N/A";
+          status_msg                = "Job has been scheduled for deletion";
+          status                    = "CANCELED";
+
+          if ( fitmen_bad_vals )
+          {
+             status = "FAILED";
+          }
+
+          create_time = "N/A";
+          update_time = "N/A";
        }
 
        if ( current_stage_groupbox != NULL )

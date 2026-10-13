@@ -6773,7 +6773,7 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
            }
         }
       }
-	    }
+       }
 	}
       //END of adiitional drop-out
 
