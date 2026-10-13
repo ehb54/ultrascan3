@@ -2008,16 +2008,16 @@ DbgLv(1) << "sfd: sc" << ii << "js jr" << js << jr;
 
       //for GMP auto-processing, make base-line correcitons
       if ( us_gmp_auto_mode )
-	     {
-	       // qDebug() << "[Triple DESC (Cell/Chann/Wvl/bll_slope/bll_yint.): ] "
-	       // 		<< dataList[ trx ].cell
-	       // 		<< dataList[ trx ].channel
-	       // 		<< dataList[ trx ].wavelength
-	       // 		<< dataList[ trx ].bl_corr_slope
-	       // 		<< dataList[ trx ].bl_corr_yintercept;
-          nnls_b[kk] -= ( dataList[trx].xvalues[jr] * dataList[trx].bl_corr_slope + dataList[trx].bl_corr_yintercept );
-        }
-    }
+      {
+         // qDebug() << "[Triple DESC (Cell/Chann/Wvl/bll_slope/bll_yint.): ] "
+         // 		<< dataList[ trx ].cell
+         // 		<< dataList[ trx ].channel
+         // 		<< dataList[ trx ].wavelength
+         // 		<< dataList[ trx ].bl_corr_slope
+         // 		<< dataList[ trx ].bl_corr_yintercept;
+         nnls_b[kk] -= ( dataList[trx].xvalues[jr] * dataList[trx].bl_corr_slope + dataList[trx].bl_corr_yintercept );
+      }
+         }
 DbgLv(1) << "sfd: NNLS b:" << nnls_b[0] << nnls_b[klambda-1];
 
          QVector< double > sv_nnls_b = nnls_b;
@@ -2086,7 +2086,7 @@ DbgLv(1) << "sfd: (A)D1 cmn" << ms << mr << synData[1].value(ms,mr);
       QDir().mkpath( dirSyn );
 
    if ( us_gmp_auto_mode )
-   {  // GMP autoflow: remove stale output left by a
+   { // GMP autoflow: remove stale output left by a
       // previous run of this
       //  channel, so that old files can never be mixed with the new ones.
       //  Only this channel's files are removed: the folder is shared by

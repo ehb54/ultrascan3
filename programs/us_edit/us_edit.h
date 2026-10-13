@@ -55,24 +55,33 @@ class US_Edit : public US_Widgets
     bool mwl_auto_write_ok = false;
 
  private:
-    US_Edit*       sdiag;
-         US_Edit*       sdiag_bll;
-         QWidget* upperWidget;
-         QWidget* leftWidget;
-         QWidget* rightWidget;	 
-         QVBoxLayout* top;  // this widget's own top-level layout; sdiag/sdiag_bll
-                             // are added into it so Qt keeps them auto-sized to
-                             // fill this widget (see manual_edit_auto()).
+    US_Edit*     sdiag;
+    US_Edit*     sdiag_bll;
+    QWidget*     upperWidget;
+    QWidget*     leftWidget;
+    QWidget*     rightWidget;
+    QVBoxLayout* top; // this widget's own top-level layout; sdiag/sdiag_bll
+                      // are added into it so Qt keeps them auto-sized to
+                      // fill this widget (see manual_edit_auto()).
 
-         QPointF fixedPoint;
-         
-      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, BASELINE_LINEAR_CORR, FINISHED } step;
+    QPointF      fixedPoint;
 
-      class Edits
-      {
-         public:
-            int scan;
-            QList< QPointF > changes;
+    enum
+    {
+       MENISCUS,
+       AIRGAP,
+       RANGE,
+       PLATEAU,
+       BASELINE,
+       BASELINE_LINEAR_CORR,
+       FINISHED
+    } step;
+
+    class Edits
+    {
+       public:
+          int            scan;
+          QList<QPointF> changes;
       };
 
       QList< Edits >                    changed_points;

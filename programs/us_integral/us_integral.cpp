@@ -998,7 +998,7 @@ int US_Integral::load_distro_models_auto( const QList<US_Model>& models )
 
    QStringList descrs;
    for ( int jj = 0; jj < models.count(); jj++ )
-   {  // Same composite description string
+   { // Same composite description string
       // US_ModelLoader::description()
       // makes: first character is the separator for section() parsing
       const US_Model& mdl = models[jj];

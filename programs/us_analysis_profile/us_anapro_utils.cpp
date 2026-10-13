@@ -372,7 +372,7 @@ use_db=false;
           currProf->ch_reports[chan_desc][c_wvl]                     = triple_reports_ref[wvl_ref];
           currProf->ch_reports[chan_desc][c_wvl].experiment_duration = exp_dur_;
        }
-	  else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
+     else //check if some channel's report still contain 's'/'2DSA' etc. (caused by adding/removing wvl(s)/channels)
 	    {
 	      if ( mainw->abde_mode_aprofile )
 		{

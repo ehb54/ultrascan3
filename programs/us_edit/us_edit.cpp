@@ -13512,7 +13512,7 @@ void US_Edit::write_mwl_auto( int trx )
       QMessageBox::warning( this, tr( "Connection Problem" ),
 			    tr( "Could not connect to database: \n" ) + dbP->lastError() );
       return;
-    }
+   }
 
   // triple_index = trx;
 

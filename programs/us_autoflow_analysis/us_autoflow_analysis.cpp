@@ -1189,208 +1189,209 @@ void US_Analysis_auto::gui_update( )
 	      lineedit_cluster -> setText( cluster );
 
 
-	      //if complete 
-	      if ( status == "COMPLETE" )
-		{
-		  pb_overlay->setEnabled( true );
-		  pb_delete->setEnabled( false );
-		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
-		  		  
-		  // && if final stage
-		  if ( !to_process_array.size() )
-		    {
-		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
-		      /****
+         //if complete
+         if ( status == "COMPLETE" )
+         {
+            pb_overlay->setEnabled( true );
+            pb_delete->setEnabled( false );
+            lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }" );
+
+            // && if final stage
+            if ( !to_process_array.size() )
+            {
+               topItem[triple_curr]->setForeground( 0, QBrush( colorGreen ) );
+               /****
 			   ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
 			   Completed_triples[ triple_curr ] = true;
 			   At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
 			   If NO - stop timer, show Msg that everything completed.
 		      **/
 
-		      /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
-		      //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
-		      /*******************************************************************************************/
-		      
-		      qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
-		      
-		    }
-		}
+               /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+               //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
+               /*******************************************************************************************/
 
-	      //check if failed -- due to the abortion/deletion of the job
-	      if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled")
-		{
-		  pb_overlay->setEnabled( false );
-		  pb_delete->setEnabled( false );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
-		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+               qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[triple_curr_key];
+            }
+         }
 
-		  /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
-		  //Completed_triples[ triple_curr_key ] = true;
-		  /*******************************************************************************************/
+         //check if failed -- due to the abortion/deletion of the job
+         if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled" )
+         {
+            pb_overlay->setEnabled( false );
+            pb_delete->setEnabled( false );
+            lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }" );
+            topItem[triple_curr]->setForeground( 0, QBrush( colorRed ) );
 
-		  if ( status == "FAILED" || status == "failed" )
-		    {
-		      Failed_triples   [ triple_curr_key ] = true;
-		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-		    }
-		  if ( status == "CANCELED" || status == "canceled")
-		    {
-		      Canceled_triples   [ triple_curr_key ] = true;
-		      qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-		    }
-		}
-	    }
-	}
+            /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+            //Completed_triples[ triple_curr_key ] = true;
+            /*******************************************************************************************/
+
+            if ( status == "FAILED" || status == "failed" )
+            {
+               Failed_triples[triple_curr_key] = true;
+               qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+            }
+            if ( status == "CANCELED" || status == "canceled" )
+            {
+               Canceled_triples[triple_curr_key] = true;
+               qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+            }
+         }
+       }
+   }
     }
 
-  // Check if all triples completed //
-  all_processed = true;
-  QMap<QString, bool>::iterator td;
-  for ( td = Completed_triples.begin(); td != Completed_triples.end(); ++td )
+    // Check if all triples completed //
+    all_processed = true;
+    QMap<QString, bool>::iterator td;
+    for ( td = Completed_triples.begin(); td != Completed_triples.end(); ++td )
     {
-      qDebug() << "Key/Value of Completed_triples: " << td.key() << "/" << td.value();
-      if ( !td.value() )
-	{
-	  all_processed = false;
-	  break;
-	}
+       qDebug() << "Key/Value of Completed_triples: " << td.key() << "/" << td.value();
+       if ( !td.value() )
+       {
+          all_processed = false;
+          break;
+       }
     }
-  qDebug() << "all_processed: " << all_processed;
+    qDebug() << "all_processed: " << all_processed;
 
-  //check if there are failed triples
-  bool failed_triples = false;
-  QStringList Failed_triples_list;
-    
-  QMap<QString, bool>::iterator tdf;
-  for ( tdf = Failed_triples.begin(); tdf != Failed_triples.end(); ++tdf )
+    //check if there are failed triples
+    bool                          failed_triples = false;
+    QStringList                   Failed_triples_list;
+
+    QMap<QString, bool>::iterator tdf;
+    for ( tdf = Failed_triples.begin(); tdf != Failed_triples.end(); ++tdf )
     {
-      qDebug() << "Key/Value of Failed_triples: " << tdf.key() << "/" << tdf.value();
-      if ( tdf.value() )
-	{
-	  Failed_triples_list << tdf.key();
-	  failed_triples = true;
-	}
+       qDebug() << "Key/Value of Failed_triples: " << tdf.key() << "/" << tdf.value();
+       if ( tdf.value() )
+       {
+          Failed_triples_list << tdf.key();
+          failed_triples = true;
+       }
     }
-  qDebug() << "Failed_triples exist ? Name(s): " << failed_triples << Failed_triples_list;
-  
-  //check if there are canceled triples
-  bool canceled_triples = false;
-  QStringList Canceled_triples_list;
-  
-  QMap<QString, bool>::iterator tdc;
-  for ( tdc = Canceled_triples.begin(); tdc != Canceled_triples.end(); ++tdc )
+    qDebug() << "Failed_triples exist ? Name(s): " << failed_triples << Failed_triples_list;
+
+    //check if there are canceled triples
+    bool                          canceled_triples = false;
+    QStringList                   Canceled_triples_list;
+
+    QMap<QString, bool>::iterator tdc;
+    for ( tdc = Canceled_triples.begin(); tdc != Canceled_triples.end(); ++tdc )
     {
-      qDebug() << "Key/Value of Canceled_triples: " << tdc.key() << "/" << tdc.value();
-      if ( tdc.value() )
-	{
-	  Canceled_triples_list << tdc.key();
-	  canceled_triples = true;
-	}
+       qDebug() << "Key/Value of Canceled_triples: " << tdc.key() << "/" << tdc.value();
+       if ( tdc.value() )
+       {
+          Canceled_triples_list << tdc.key();
+          canceled_triples = true;
+       }
     }
-  qDebug() << "Canceled_triples exist ? Name(s): " << canceled_triples << Canceled_triples_list;
-  
-  
-  //If all triples processed, show msg && Stop update timer
-  if ( all_processed )
+    qDebug() << "Canceled_triples exist ? Name(s): " << canceled_triples << Canceled_triples_list;
+
+
+    //If all triples processed, show msg && Stop update timer
+    if ( all_processed )
     {
-      //stop timer
-      if ( timer_update -> isActive() ) 
-	{
-	  timer_update -> stop();
-	  disconnect(timer_update, &QTimer::timeout, nullptr, nullptr);
-	  
-	  qDebug() << "Update stopped upon final completion...";
-	}
-      
-      QString msg_text = "All triples have been processed.";
-      
-      if ( failed_triples )
-         msg_text +=
-            QString( "\n\nNOTE: analyses for the following triples FAILED: \n\n%1" ).arg( Failed_triples_list.join( ", " ) );
+       //stop timer
+       if ( timer_update->isActive() )
+       {
+          timer_update->stop();
+          disconnect( timer_update, &QTimer::timeout, nullptr, nullptr );
 
-      if ( canceled_triples )
-         msg_text += QString( "\n\nNOTE: analyses for the following triples have "
-                              "been CANCELED: \n\n%1" )
-                        .arg( Canceled_triples_list.join( ", " ) );
+          qDebug() << "Update stopped upon final completion...";
+       }
 
-      // For VELOCITY-MWL: Stop here, inform user on proceeding with:
-      // 1. Pre-Fit Simulating
-      // 2. Deconvolution (Species Fit)
-      // 3. Simulating (2DSA-IT, desktop)
+       QString msg_text = "All triples have been processed.";
 
-      if ( autoflow_expType == "VELOCITY-MWL" )
-      {
-         msg_text += QString( tr( "\n\nThe program will proceed with the"
-                                  "MWL pre-fit species simulations and MWL species deconvolution." ) );
-         QMessageBox::information( this, tr( "All Triples Processed !" ), msg_text );
-         in_gui_update = false;
+       if ( failed_triples )
+       {
+          msg_text +=
+             QString( "\n\nNOTE: analyses for the following triples FAILED: \n\n%1" ).arg( Failed_triples_list.join( ", " ) );
+       }
 
-         // hide remnants from mpi-analysis
-         lb_hdr1->hide();
-         pb_show_all->hide();
-         pb_hide_all->hide();
-         treeWidget->hide();
+       if ( canceled_triples )
+       {
+          msg_text += QString( "\n\nNOTE: analyses for the following triples have "
+                               "been CANCELED: \n\n%1" )
+                         .arg( Canceled_triples_list.join( ", " ) );
+       }
 
-         // ALEXEY: Centralized progress dialog for the VELOCITY-MWL
-         // post-analysis
-         //         pipeline (species simulate + save), driven by
-         //         US_MwlSpeciesSim's stage_progress() signal. Each channel is
-         //         gated by a separate approve/reject decision made in
-         //         US_MwlSpeciesFit once its own species fit completes, so the
-         //         dialog is shown on a per-channel basis: it restarts at 0 for
-         //         every channel rather than accumulating progress across
-         //         channels. Within a channel, the 100 units are split between
-         //         the four single-shot stages (models/buffer/params/rotor -- 10
-         //         units each) and the two multi-model stages (sims/save -- 30
-         //         units each, filled in proportionally as models are
-         //         processed).
-         mwlsim_nchannels        = channels_all.size();
-         velmwl_channels_decided = 0;  // ALEXEY: count of channels_all resolved (already-decided &
-                                       // skipped, or freshly decided via Accept/Reject) this pass --
-                                       // see finalize_velmwl_analysis_if_complete()
-         mwlsim_chan_idx         = -1; // ALEXEY: cursor into channels_all for
-                                       // start_next_velmwl_channel() -- -1 so it starts
-                                       // scanning from index 0
-         // Single, persistent, non-closable progress dialog (US_GmpProgress):
-         // created once as a child of the main window, re-used for every
-         // channel, only ever hidden (never closed) -- shown/titled by
-         // start_mwlsim_channel_progress().
-         US_GmpProgress::acquire( this, progress_msg_mwlsim )->setWindowTitle( tr( "Autoflow Analysis" ) );
+       // For VELOCITY-MWL: Stop here, inform user on proceeding with:
+       // 1. Pre-Fit Simulating
+       // 2. Deconvolution (Species Fit)
+       // 3. Simulating (2DSA-IT, desktop)
 
-         // ALEXEY: Launch only the FIRST channel that still needs
-         // processing; start_next_velmwl_channel() stops right after
-         // kicking off that one channel's pipeline instead of looping on
-         // through channels_all, so US_MwlSpeciesFit's Accept/Reject
-         // dialog for it is the only one on screen. velmwl_deconv_
-         // accepted()/rejected() below re-call start_next_velmwl_channel()
-         // once the user decides, which is what advances to the next
-         // channel -- see start_next_velmwl_channel()'s header comment.
-         start_next_velmwl_channel();
+       if ( autoflow_expType == "VELOCITY-MWL" )
+       {
+          msg_text += QString( tr( "\n\nThe program will proceed with the"
+                                   "MWL pre-fit species simulations and MWL species deconvolution." ) );
+          QMessageBox::information( this, tr( "All Triples Processed !" ), msg_text );
+          in_gui_update = false;
 
-         return;
-      }
+          // hide remnants from mpi-analysis
+          lb_hdr1->hide();
+          pb_show_all->hide();
+          pb_hide_all->hide();
+          treeWidget->hide();
 
-      msg_text += QString( "\n\nThe program will proceed to the Reporting stage. " );
-      //Update autoflow record at Analysis completion
-      update_autoflow_record_atAnalysis();
+          // ALEXEY: Centralized progress dialog for the VELOCITY-MWL
+          // post-analysis
+          //         pipeline (species simulate + save), driven by
+          //         US_MwlSpeciesSim's stage_progress() signal. Each channel is
+          //         gated by a separate approve/reject decision made in
+          //         US_MwlSpeciesFit once its own species fit completes, so the
+          //         dialog is shown on a per-channel basis: it restarts at 0 for
+          //         every channel rather than accumulating progress across
+          //         channels. Within a channel, the 100 units are split between
+          //         the four single-shot stages (models/buffer/params/rotor -- 10
+          //         units each) and the two multi-model stages (sims/save -- 30
+          //         units each, filled in proportionally as models are
+          //         processed).
+          mwlsim_nchannels        = channels_all.size();
+          velmwl_channels_decided = 0;  // ALEXEY: count of channels_all resolved (already-decided &
+                                        // skipped, or freshly decided via Accept/Reject) this pass --
+                                        // see finalize_velmwl_analysis_if_complete()
+          mwlsim_chan_idx         = -1; // ALEXEY: cursor into channels_all for
+                                        // start_next_velmwl_channel() -- -1 so it starts
+                                        // scanning from index 0
+          // Single, persistent, non-closable progress dialog (US_GmpProgress):
+          // created once as a child of the main window, re-used for every
+          // channel, only ever hidden (never closed) -- shown/titled by
+          // start_mwlsim_channel_progress().
+          US_GmpProgress::acquire( this, progress_msg_mwlsim )->setWindowTitle( tr( "Autoflow Analysis" ) );
 
-      if ( failed_triples || canceled_triples )
-	{
-	  QMessageBox::information( this,
-				    tr( "All Triples Processed !" ),
-				    msg_text  );
-	}
-      
-      in_gui_update  = false; 
-      
-      //ALEXEY: Append with info on failed triples when bad_meniscus values:
-      protocol_details_at_analysis[ "failed" ] = "";
+          // ALEXEY: Launch only the FIRST channel that still needs
+          // processing; start_next_velmwl_channel() stops right after
+          // kicking off that one channel's pipeline instead of looping on
+          // through channels_all, so US_MwlSpeciesFit's Accept/Reject
+          // dialog for it is the only one on screen. velmwl_deconv_
+          // accepted()/rejected() below re-call start_next_velmwl_channel()
+          // once the user decides, which is what advances to the next
+          // channel -- see start_next_velmwl_channel()'s header comment.
+          start_next_velmwl_channel();
 
-      //ALEXEY: Switch to next stage (Report)
-      emit analysis_complete_auto( protocol_details_at_analysis );  
+          return;
+       }
+
+       msg_text += QString( "\n\nThe program will proceed to the Reporting stage. " );
+       //Update autoflow record at Analysis completion
+       update_autoflow_record_atAnalysis();
+
+       if ( failed_triples || canceled_triples )
+       {
+          QMessageBox::information( this, tr( "All Triples Processed !" ), msg_text );
+       }
+
+       in_gui_update = false;
+
+       //ALEXEY: Append with info on failed triples when bad_meniscus values:
+       protocol_details_at_analysis["failed"] = "";
+
+       //ALEXEY: Switch to next stage (Report)
+       emit analysis_complete_auto( protocol_details_at_analysis );
     }
 
-  in_gui_update  = false; 
+    in_gui_update = false;
 }
 
 // (Re)start progress_msg_mwlsim for a new channel. Called once at the top
@@ -7478,8 +7479,8 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 	    QString reason_for_failure = QString( "The selected Meniscus value, %1 , extends into the data range whose left-side value is %2")
 	      .arg( mennew )
 	      .arg( lefval );
-	    
-	    triple_information[ "failed" ] = reason_for_failure;
+
+       triple_information["failed"] = reason_for_failure;
 
        // progress dialog is not user-closable: hide it on this early exit
        if ( progress_msg_fmb != NULL )
@@ -7489,8 +7490,8 @@ DbgLv(1) << " eupd:       ixmlin ixblin ixllin" << ixmlin << ixblin << ixllin;
 
        delete_jobs_at_fitmen( triple_information );
 
-       return;  //ALEXEY - if one wvl in a triple fails, ALL fail!!!
-            //continue;
+       return; //ALEXEY - if one wvl in a triple fails, ALL fail!!!
+          //continue;
          }
 
          demval        = s_meni.length() - ncmval;  // Deltas in old,new value strings

@@ -1155,8 +1155,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
      }
 
      //GUI
-     QHBoxLayout* genL   = new QHBoxLayout();
-	  genL->setSpacing        ( 2 );
+     QHBoxLayout* genL = new QHBoxLayout();
+     genL->setSpacing        ( 2 );
 	  genL->setContentsMargins( 20, 10, 20, 15 );
 	  
 	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
@@ -1386,8 +1386,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
          }
 
          QTextEdit* te_drop_c1 = us_textedit();
-         te_drop_c1    -> setFixedHeight  ( RowHeight * 2 );
-	      te_drop_c1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+         te_drop_c1->setFixedHeight( RowHeight * 2 );
+         te_drop_c1    ->setFont( QFont( US_Widgets::fixedFont().family(),
 						 US_GuiSettings::fontSize() - 1) );
 	      us_setReadOnly( te_drop_c1, true );
 	      
@@ -2741,7 +2741,7 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson,
       QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
-    }
+   }
 
   QStringList qry;
   qry.clear();

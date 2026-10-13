@@ -1199,7 +1199,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
       //ALEXEY: need to reset everything:
       mainw->reset();
       qDebug() << "In load_protocol: after RESET, currProto->investigator: -- " << currProto->investigator;
-     
+
       QString pname         = protdata[ prx ][ 0 ];
 
       // Get the protocol XML that matches the selected protocol name
@@ -1359,7 +1359,7 @@ void US_ExperGuiGeneral::changed_protocol( void )
    protoname            = US_RunProtocol::sanitize_name( protoname, true );
 
    if ( protoname != old_pname )
-   {  // Invalid characters were replaced: tell the
+   { // Invalid characters were replaced: tell the
       // user, update the edit box
       QMessageBox::warning( this,
                             tr( "Protocol Name Changed" ),
@@ -1660,12 +1660,18 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 US_Passwd pw;
                 US_DB2*   dbP = ( sibSValue( "general", "dbdisk" ) == "DB" ) ? new US_DB2( pw.getPasswd() ) : NULL;
                 if ( dbP != NULL )
+                {
                    US_Rotor::readLabsDB( labs, dbP );
+                }
                 else
+                {
                    US_Rotor::readLabsDisk( labs );
+                }
 
                 for ( int ii = 0; ii < labs.count(); ii++ )
+                {
                    sl_labs << QString::number( labs[ii].ID ) + ": " + labs[ii].name;
+                }
 
                 cb_lab->clear();
                 cb_lab->addItems( sl_labs );
@@ -1695,7 +1701,9 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
                 ck_absorbance_pa->setEnabled( false );
                 importDataPath = "";
                 if ( mainw->us_prot_dev_mode )
+                {
                    ck_disksource->hide();
+                }
 
                 initPanel();
 

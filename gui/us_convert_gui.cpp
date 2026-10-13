@@ -2105,8 +2105,8 @@ void US_ConvertGui::process_optics()
              process_reference_auto( centerpoint_ref_def );
              first_time_plot_auto = false;
              return;
-	   }
-	 // else if (msgBox.clickedButton() == Manual) {
+          }
+    // else if (msgBox.clickedButton() == Manual) {
 	 //   cancel_reference();
 	 // }
        } 
@@ -6761,15 +6761,16 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
         qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
 
         for ( int trx = 0; trx < all_triples.size(); trx++ )
-		    {  // Mark matching triples as excluded
-		      QString tcelchn = QString( all_triples[ trx ] )       // "2 / B"
-			.section( "/", 0, 1 ).simplified();
-		      
-		      if ( tcelchn == celchn )
-			{
-			  all_tripinfo[ trx ].excluded = true;
-			  DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
-			}
+        {                                                // Mark matching triples as excluded
+           QString tcelchn = QString( all_triples[trx] ) // "2 / B"
+                                .section( "/", 0, 1 )
+                                .simplified();
+
+           if ( tcelchn == celchn )
+           {
+              all_tripinfo[trx].excluded = true;
+              DbgLv( 1 ) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
+           }
 		    }
 		}
 	    }
@@ -6804,8 +6805,8 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
          }
        }
    }
-          
-      
+
+
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
       build_output_data();

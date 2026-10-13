@@ -4022,80 +4022,80 @@ void US_ReporterGMP::generate_report( void )
              }
           }
        }
-      if ( expType == "VELOCITY" )
-	{
-	  //Combined Plots
-	  if ( combPlotsMask_edited. has_combo_plots )
-	    {
-	      for ( int i=0; i<fileNameList.size(); ++i )
-		process_combined_plots( fileNameList[i] );
-	    }
-	  
-	  //Replicas' averages
-       if ( miscMask_edited.ShowMiscParts["Replicate Groups Averaging"] )
+       if ( expType == "VELOCITY" )
        {
-          gmp_busy( tr( "Averaging replicate groups..." ) );
-          assemble_replicate_av_integration_html();
+          //Combined Plots
+          if ( combPlotsMask_edited.has_combo_plots )
+          {
+             for ( int i = 0; i < fileNameList.size(); ++i )
+                process_combined_plots( fileNameList[i] );
+          }
+
+          //Replicas' averages
+          if ( miscMask_edited.ShowMiscParts["Replicate Groups Averaging"] )
+          {
+             gmp_busy( tr( "Averaging replicate groups..." ) );
+             assemble_replicate_av_integration_html();
+          }
        }
-   }
-   else if ( expType == "VELOCITY-MWL" )
-   {
-      gmp_busy( tr( "Processing VELOCITY-MWL channels..." ) );
-      process_velmwl_analysis();
-   }
-   else if ( expType == "ABDE" )
-   {
-      // go over channels, check if ABDE profile plots exists,
-      // contruct basic channel description: RMDS, Comparison, Integration
-      // (percents)
+       else if ( expType == "VELOCITY-MWL" )
+       {
+          gmp_busy( tr( "Processing VELOCITY-MWL channels..." ) );
+          process_velmwl_analysis();
+       }
+       else if ( expType == "ABDE" )
+       {
+          // go over channels, check if ABDE profile plots exists,
+          // contruct basic channel description: RMDS, Comparison, Integration
+          // (percents)
 
-      qDebug() << "Assembling plots ABDE!";
-      gmp_busy( tr( "Processing ABDE plots..." ) );
-      process_abde_plots();
-      for ( int ac = 0; ac < abde_channList.size(); ++ac )
-      {
-         QString key_m = "Channel " + abde_channList[ac];
-         if ( !perChanMask_edited_abde.ShowChannelParts[key_m] )
-         {
-            QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
-            QDir().remove( f_name_mask );
-            f_name_mask.replace( ".png", ".svgz" );
-            QDir().remove( f_name_mask );
-            continue;
-         }
+          qDebug() << "Assembling plots ABDE!";
+          gmp_busy( tr( "Processing ABDE plots..." ) );
+          process_abde_plots();
+          for ( int ac = 0; ac < abde_channList.size(); ++ac )
+          {
+             QString key_m = "Channel " + abde_channList[ac];
+             if ( !perChanMask_edited_abde.ShowChannelParts[key_m] )
+             {
+                QString f_name_mask = abde_plots_filenames[abde_channList[ac]];
+                QDir().remove( f_name_mask );
+                f_name_mask.replace( ".png", ".svgz" );
+                QDir().remove( f_name_mask );
+                continue;
+             }
 
-         // else: go over features for a channel:
-         bool                   do_integration       = true;
-         bool                   do_plots             = true;
-         QMap<QString, QString> channs_features      = perChanMask_edited_abde.ShowChannelItemParts[key_m];
-         QStringList            channs_features_keys = channs_features.keys();
-         for ( int fc = 0; fc < channs_features_keys.size(); ++fc )
-         {
-            QString fc_key     = channs_features_keys[fc];
-            bool    do_feature = ( channs_features[fc_key].toInt() ) ? true : false;
-            if ( fc_key.contains( "Integration" ) )
-            {
-               do_integration = do_feature;
-            }
-            else if ( fc_key.contains( "Plots" ) )
-            {
-               do_plots = do_feature;
-            }
-         }
+             // else: go over features for a channel:
+             bool                   do_integration       = true;
+             bool                   do_plots             = true;
+             QMap<QString, QString> channs_features      = perChanMask_edited_abde.ShowChannelItemParts[key_m];
+             QStringList            channs_features_keys = channs_features.keys();
+             for ( int fc = 0; fc < channs_features_keys.size(); ++fc )
+             {
+                QString fc_key     = channs_features_keys[fc];
+                bool    do_feature = ( channs_features[fc_key].toInt() ) ? true : false;
+                if ( fc_key.contains( "Integration" ) )
+                {
+                   do_integration = do_feature;
+                }
+                else if ( fc_key.contains( "Plots" ) )
+                {
+                   do_plots = do_feature;
+                }
+             }
 
-         // display channel info: RMSD, exp. params, integration ranges &
-         // percents
-         assemble_distrib_ABDE_html( abde_channList[ac] );
+             // display channel info: RMSD, exp. params, integration ranges &
+             // percents
+             assemble_distrib_ABDE_html( abde_channList[ac] );
 
-         // assemble ABDE plot
-         if ( do_plots )
-         {
-            QStringList abdePlots;
-            abdePlots << abde_plots_filenames[abde_channList[ac]];
-            assemble_plots_html( abdePlots );
-         }
-      }
-   }
+             // assemble ABDE plot
+             if ( do_plots )
+             {
+                QStringList abdePlots;
+                abdePlots << abde_plots_filenames[abde_channList[ac]];
+                assemble_plots_html( abdePlots );
+             }
+          }
+       }
     }
   //End of Part 2
 
@@ -4214,54 +4214,54 @@ void US_ReporterGMP::generate_report( void )
       qry.clear();
       qry << "delete_autoflow_record_by_id" << AutoflowID_auto;
       db->statusQuery( qry );
-      /****/ 
+      /****/
 
       //Inform user of the PDF location
       QMessageBox msgBox_a;
-      msgBox_a.setText(tr("Report PDF Ready!"));
-      msgBox_a.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
-				      "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
-				      "\n\n"
-				      "Reviwer(s) of the current GMP report will be notified.")
-				  .arg( filePath ) );
-				    
-      msgBox_a.setWindowTitle(tr("Report Generation Complete"));
-      QPushButton *Open      = msgBox_a.addButton(tr("View Report"), QMessageBox::YesRole);
+      msgBox_a.setText( tr( "Report PDF Ready!" ) );
+      msgBox_a.setInformativeText(
+         tr( "Report PDF was saved at: \n%1\n\n"
+             "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button at the bottom."
+             "\n\n"
+             "Reviwer(s) of the current GMP report will be notified." )
+            .arg( filePath ) );
+
+      msgBox_a.setWindowTitle( tr( "Report Generation Complete" ) );
+      QPushButton* Open = msgBox_a.addButton( tr( "View Report" ), QMessageBox::YesRole );
       //QPushButton *Cancel  = msgBox_a.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-      msgBox_a.setIcon(QMessageBox::Information);
+
+      msgBox_a.setIcon( QMessageBox::Information );
       msgBox_a.exec();
-      
-      if (msgBox_a.clickedButton() == Open)
-	{
-	  view_report();
-	}
-      
+
+      if ( msgBox_a.clickedButton() == Open )
+      {
+         view_report();
+      }
     }
-  else
+    else
     {
-      te_fpath_info  -> setText( filePath );
-      
-      //Inform user of the PDF location
-      QMessageBox msgBox;
-      msgBox.setText(tr("Report PDF Ready!"));
-      msgBox.setInformativeText(tr( "Report PDF was saved at: \n%1\n\n"
-				    "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button on the left.")
-				.arg( filePath ) );
-				    
-      msgBox.setWindowTitle(tr("Report Generation Complete"));
-      QPushButton *Open      = msgBox.addButton(tr("View Report"), QMessageBox::YesRole);
-      //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
-	      
-      msgBox.setIcon(QMessageBox::Information);
-      msgBox.exec();
-      
-      if (msgBox.clickedButton() == Open)
-	{
-	  view_report();
-	}
+       te_fpath_info->setText( filePath );
+
+       //Inform user of the PDF location
+       QMessageBox msgBox;
+       msgBox.setText( tr( "Report PDF Ready!" ) );
+       msgBox.setInformativeText(
+          tr( "Report PDF was saved at: \n%1\n\n"
+              "When this dialog is closed, the report can be re-opened by clicking \'View Generated Report\' button on the left." )
+             .arg( filePath ) );
+
+       msgBox.setWindowTitle( tr( "Report Generation Complete" ) );
+       QPushButton* Open = msgBox.addButton( tr( "View Report" ), QMessageBox::YesRole );
+       //QPushButton *Cancel  = msgBox.addButton(tr("Ignore Data"), QMessageBox::RejectRole);
+
+       msgBox.setIcon( QMessageBox::Information );
+       msgBox.exec();
+
+       if ( msgBox.clickedButton() == Open )
+       {
+          view_report();
+       }
     }
-  
 }
 
 // VELOCITY-MWL: the channel's report (parameters + report items), defined
@@ -8938,7 +8938,7 @@ void US_ReporterGMP::read_autoflowStatus_record( QString& importRIJson,
       QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
-    }
+   }
 
   QStringList qry;
   qry << "read_autoflow_status_record" << autoflowStatusID;
@@ -12110,7 +12110,7 @@ void US_ReporterGMP::assemble_pdf( US_GmpProgress* progress_msg )
 			)
 	.arg( str_failed_stage_missing_models )
 	;
-    }
+   }
   //End of failed|missing
 			
 			
@@ -12829,146 +12829,141 @@ void US_ReporterGMP::assemble_pdf( US_GmpProgress* progress_msg )
      QString                        wvl_abde = QString::number( chann_wvls[0] );
 
      for ( int jj = 0; jj < chann_wvl_number; ++jj )
-	    {
-	      QString wvl            = QString::number( chann_wvls[ jj ] );
+     {
+        QString wvl = QString::number( chann_wvls[jj] );
 
-	      //abde
-         if ( ( expType == "ABDE" || expType == "VELOCITY-MWL" ) && wvl != wvl_abde )
-         {
-            continue;
-         }
-
-         QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
-	      US_ReportGMP reportGMP = chann_reports[ wvl ];
-
-	      //Exp. duration entered in the Channel Report Editor
-	      QList< int > hms_tot;
-	      double total_time = reportGMP.experiment_duration;
-	      US_RunProtocol::timeToList( total_time, hms_tot );
-	      QString exp_dur_str =
-		QString::number( hms_tot[ 0 ] ) + "d " +
-		QString::number( hms_tot[ 1 ] ) + "h " +
-		QString::number( hms_tot[ 2 ] ) + "m ";
-
-	      if ( genMask_edited.ShowAnalysisGenParts[ "Report Parameters (per-triple)" ].toInt()  )
-		{
-		  html_analysis_profile += tr(
-					      "<table style=\"margin-left:50px\">"
-					      "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
-					      "</table>"
-					      )
-		    .arg( triple_name )                                             //1
-		    ;
-
-        if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+        //abde
+        if ( ( expType == "ABDE" || expType == "VELOCITY-MWL" ) && wvl != wvl_abde )
         {
-           html_analysis_profile += tr( "<table style=\"margin-left:70px\">"
-                                        "<tr><td> Total Concentration:           </td>  "
-                                        "<td> %1 </td> </tr>"
-                                        "<tr><td> Total Concentration Tolerance: </td>  "
-                                        "<td> %2 </td> </tr>"
-                                        "<tr><td> RMSD (upper limit):            </td>  "
-                                        "<td> %3 </td> </tr>"
-                                        "<tr><td> Average Intensity:             </td>  "
-                                        "<td> %4 </td> </tr>"
-                                        "<tr><td> Experiment Duration:           </td>  "
-                                        "<td> %5 </td> </tr>"
-                                        "<tr><td> Experiment Duration Tolerance: </td>  "
-                                        "<td> %6 </td> </tr>"
-                                        "</table>" )
-                                       .arg( QString::number( reportGMP.tot_conc ) )                // 1
-                                       .arg( QString::number( reportGMP.tot_conc_tol ) )            // 2
-                                       .arg( QString::number( reportGMP.rmsd_limit ) )              // 3
-                                       .arg( QString::number( reportGMP.av_intensity ) )            // 4
-                                       .arg( exp_dur_str )                                          // 5
-                                       .arg( QString::number( reportGMP.experiment_duration_tol ) ) // 6
-              ;
+           continue;
         }
-        else if ( expType == "ABDE" )
+
+        QString      triple_name = channel_desc.split( ":" )[0] + "/" + wvl;
+        US_ReportGMP reportGMP   = chann_reports[wvl];
+
+        //Exp. duration entered in the Channel Report Editor
+        QList<int>   hms_tot;
+        double       total_time = reportGMP.experiment_duration;
+        US_RunProtocol::timeToList( total_time, hms_tot );
+        QString exp_dur_str =
+           QString::number( hms_tot[0] ) + "d " + QString::number( hms_tot[1] ) + "h " + QString::number( hms_tot[2] ) + "m ";
+
+        if ( genMask_edited.ShowAnalysisGenParts["Report Parameters (per-triple)"].toInt() )
         {
-           html_analysis_profile += tr( "<table style=\"margin-left:70px\">"
-                                        "<tr><td> Experiment Duration:           </td>  "
-                                        "<td> %1 </td> </tr>"
-                                        "<tr><td> Experiment Duration Tolerance: </td>  "
-                                        "<td> %2 </td> </tr>"
+           html_analysis_profile += tr( "<table style=\"margin-left:50px\">"
+                                        "<tr><td> <b><i> Report Parameters for Triple: </i> &nbsp;&nbsp;&nbsp; %1 </b></td> </tr>"
                                         "</table>" )
-                                       .arg( exp_dur_str )                                          // 1
-                                       .arg( QString::number( reportGMP.experiment_duration_tol ) ) // 2
+                                       .arg( triple_name ) //1
               ;
+
+           if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+           {
+              html_analysis_profile += tr( "<table style=\"margin-left:70px\">"
+                                           "<tr><td> Total Concentration:           </td>  "
+                                           "<td> %1 </td> </tr>"
+                                           "<tr><td> Total Concentration Tolerance: </td>  "
+                                           "<td> %2 </td> </tr>"
+                                           "<tr><td> RMSD (upper limit):            </td>  "
+                                           "<td> %3 </td> </tr>"
+                                           "<tr><td> Average Intensity:             </td>  "
+                                           "<td> %4 </td> </tr>"
+                                           "<tr><td> Experiment Duration:           </td>  "
+                                           "<td> %5 </td> </tr>"
+                                           "<tr><td> Experiment Duration Tolerance: </td>  "
+                                           "<td> %6 </td> </tr>"
+                                           "</table>" )
+                                          .arg( QString::number( reportGMP.tot_conc ) )                // 1
+                                          .arg( QString::number( reportGMP.tot_conc_tol ) )            // 2
+                                          .arg( QString::number( reportGMP.rmsd_limit ) )              // 3
+                                          .arg( QString::number( reportGMP.av_intensity ) )            // 4
+                                          .arg( exp_dur_str )                                          // 5
+                                          .arg( QString::number( reportGMP.experiment_duration_tol ) ) // 6
+                 ;
+           }
+           else if ( expType == "ABDE" )
+           {
+              html_analysis_profile += tr( "<table style=\"margin-left:70px\">"
+                                           "<tr><td> Experiment Duration:           </td>  "
+                                           "<td> %1 </td> </tr>"
+                                           "<tr><td> Experiment Duration Tolerance: </td>  "
+                                           "<td> %2 </td> </tr>"
+                                           "</table>" )
+                                          .arg( exp_dur_str )                                          // 1
+                                          .arg( QString::number( reportGMP.experiment_duration_tol ) ) // 2
+                 ;
+           }
         }
-      }
 
-         //Now go over ReportItems for the current triple:
-	      int report_items_number = reportGMP.reportItems.size();
+        //Now go over ReportItems for the current triple:
+        int report_items_number = reportGMP.reportItems.size();
 
-	      for ( int kk = 0; kk < report_items_number; ++kk )
-		{
-		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
+        for ( int kk = 0; kk < report_items_number; ++kk )
+        {
+           US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[kk];
 
-		  if ( genMask_edited.ShowAnalysisGenParts[ "Report Item Parameters (per-triple)" ].toInt()  )
-		    {
-		      html_analysis_profile += tr(
-						  "<table style=\"margin-left:90px\">"
-						  "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
-						  "</table>"
-						  )
-			.arg( QString::number( kk + 1 ) )                                 //1
-			;
+           if ( genMask_edited.ShowAnalysisGenParts["Report Item Parameters (per-triple)"].toInt() )
+           {
+              html_analysis_profile +=
+                 tr( "<table style=\"margin-left:90px\">"
+                     "<tr><td> <b><i> Report Item #%1: </i> &nbsp;&nbsp; Type | Method Parameters </b></td> </tr>"
+                     "</table>" )
+                    .arg( QString::number( kk + 1 ) ) //1
+                 ;
 
-            if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
-            {
-               html_analysis_profile += tr( "<table style=\"margin-left:110px\">"
-                                            "<tr><td> Type:                  </td>  <td> %1 "
-                                            "</td> </tr>"
-                                            "<tr><td> Method:                </td>  <td> %2 "
-                                            "</td> </tr>"
-                                            "<tr><td> Range Low:             </td>  <td> %3 "
-                                            "</td> </tr>"
-                                            "<tr><td> Range High:            </td>  <td> %4 "
-                                            "</td> </tr>"
-                                            "<tr><td> Integration Value:     </td>  <td> %5 "
-                                            "</td> </tr>"
-                                            "<tr><td> Tolerance (%):         </td>  <td> %6 "
-                                            "</td> </tr>"
-                                            "<tr><td> Fraction of Total (%): </td>  <td> %7 "
-                                            "</td> </tr>"
-                                            "</table>" )
-                                           .arg( curr_item.type )                               // 1
-                                           .arg( curr_item.method )                             // 2
-                                           .arg( QString::number( curr_item.range_low ) )       // 3
-                                           .arg( QString::number( curr_item.range_high ) )      // 4
-                                           .arg( QString::number( curr_item.integration_val ) ) // 5
-                                           .arg( QString::number( curr_item.tolerance ) )       // 6
-                                           .arg( QString::number( curr_item.total_percent ) )   // 7
-                  ;
-            }
-            else if ( expType == "ABDE" )
-            {
-               html_analysis_profile += tr( "<table style=\"margin-left:110px\">"
-                                            "<tr><td> Type:                  </td>  <td> %1 "
-                                            "</td> </tr>"
-                                            "<tr><td> Method:                </td>  <td> %2 "
-                                            "</td> </tr>"
-                                            "<tr><td> Range Low:             </td>  <td> %3 "
-                                            "</td> </tr>"
-                                            "<tr><td> Range High:            </td>  <td> %4 "
-                                            "</td> </tr>"
-                                            "<tr><td> Tolerance (%):         </td>  <td> %5 "
-                                            "</td> </tr>"
-                                            "<tr><td> Fraction of Total (%): </td>  <td> %6 "
-                                            "</td> </tr>"
-                                            "</table>" )
-                                           .arg( curr_item.type )                             // 1
-                                           .arg( curr_item.method )                           // 2
-                                           .arg( QString::number( curr_item.range_low ) )     // 3
-                                           .arg( QString::number( curr_item.range_high ) )    // 4
-                                           .arg( QString::number( curr_item.tolerance ) )     // 5
-                                           .arg( QString::number( curr_item.total_percent ) ) // 6
-                  ;
-            }
-          }
-      }
-	    }
+              if ( expType == "VELOCITY" || expType == "VELOCITY-MWL" )
+              {
+                 html_analysis_profile += tr( "<table style=\"margin-left:110px\">"
+                                              "<tr><td> Type:                  </td>  <td> %1 "
+                                              "</td> </tr>"
+                                              "<tr><td> Method:                </td>  <td> %2 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range Low:             </td>  <td> %3 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range High:            </td>  <td> %4 "
+                                              "</td> </tr>"
+                                              "<tr><td> Integration Value:     </td>  <td> %5 "
+                                              "</td> </tr>"
+                                              "<tr><td> Tolerance (%):         </td>  <td> %6 "
+                                              "</td> </tr>"
+                                              "<tr><td> Fraction of Total (%): </td>  <td> %7 "
+                                              "</td> </tr>"
+                                              "</table>" )
+                                             .arg( curr_item.type )                               // 1
+                                             .arg( curr_item.method )                             // 2
+                                             .arg( QString::number( curr_item.range_low ) )       // 3
+                                             .arg( QString::number( curr_item.range_high ) )      // 4
+                                             .arg( QString::number( curr_item.integration_val ) ) // 5
+                                             .arg( QString::number( curr_item.tolerance ) )       // 6
+                                             .arg( QString::number( curr_item.total_percent ) )   // 7
+                    ;
+              }
+              else if ( expType == "ABDE" )
+              {
+                 html_analysis_profile += tr( "<table style=\"margin-left:110px\">"
+                                              "<tr><td> Type:                  </td>  <td> %1 "
+                                              "</td> </tr>"
+                                              "<tr><td> Method:                </td>  <td> %2 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range Low:             </td>  <td> %3 "
+                                              "</td> </tr>"
+                                              "<tr><td> Range High:            </td>  <td> %4 "
+                                              "</td> </tr>"
+                                              "<tr><td> Tolerance (%):         </td>  <td> %5 "
+                                              "</td> </tr>"
+                                              "<tr><td> Fraction of Total (%): </td>  <td> %6 "
+                                              "</td> </tr>"
+                                              "</table>" )
+                                             .arg( curr_item.type )                             // 1
+                                             .arg( curr_item.method )                           // 2
+                                             .arg( QString::number( curr_item.range_low ) )     // 3
+                                             .arg( QString::number( curr_item.range_high ) )    // 4
+                                             .arg( QString::number( curr_item.tolerance ) )     // 5
+                                             .arg( QString::number( curr_item.total_percent ) ) // 6
+                    ;
+              }
+           }
+        }
+       }
 	}
       
       html_analysis_profile += tr(

@@ -114,7 +114,9 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
         lineEdit->setObjectName( form_labels[i] );
 
         if ( form_labels[i] == "Master Password:" )
+        {
            lineEdit->setEchoMode( QLineEdit::Password );
+        }
 
 
         if ( form_labels[i] == "User:" )
@@ -126,7 +128,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
         form.addRow( label, lineEdit );
 
         fields << lineEdit;
-      }
+     }
     //for e-Sigs, add RadioButtons Approve | Reject
     QList<QRadioButton*> fields_radio;
     QStringList form_labels_radio = { "Approve", "Reject" }; 

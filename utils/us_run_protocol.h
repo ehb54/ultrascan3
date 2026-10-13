@@ -39,8 +39,8 @@ class US_UTIL_EXTERN US_RunProtocol
        bool             vel_mwl_prot;
 
        //data form Disk
-       QString     importDataDisk;
-	    bool        importData;
+       QString          importDataDisk;
+       bool        importData;
 	    bool        importData_absorbance_t;
 	    bool        importData_absorbance_pa;
 

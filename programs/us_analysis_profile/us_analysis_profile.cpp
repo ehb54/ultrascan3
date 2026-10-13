@@ -759,7 +759,7 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
         }
 
         // iterate over QMap ch_report_ids[ chdesc_alt ]
-        QMap<QString, QList <int >>::iterator ri;
+        QMap<QString, QList<int>>::iterator ri;
         for ( ri = currProf.ch_report_ids.begin(); db_ok && ri != currProf.ch_report_ids.end(); ++ri )
         {
            QString    channel_alt_desc = ri.key();
@@ -1106,7 +1106,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP*                     
       
       //was read from DB
       reportFromDB->DBread = true;
-    }
+   }
 
   //Read children: reportItems-by-reportID && insert them to parent report
   reportFromDB->reportItems.clear();

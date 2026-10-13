@@ -1609,7 +1609,7 @@ void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
       model_descriptions.clear();
 
       for ( int ii = 0; ii < modelsCount; ii++ )
-      {  // get row of selection then index in original descriptions
+      { // get row of selection then index in original descriptions
          // list
          QString lmdesc = selmods[ii]->text();
          QString mdesc  = alt_description( lmdesc, false );
