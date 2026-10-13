@@ -399,6 +399,28 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
       return;
     }
 
+  //dataSource: read it straight from the parent run's autoflowHistory record
+  //(Instrument | dataDiskAUC | dataDiskAUC:Absorbance | dataDiskAUC:PseudoAbsorbance)
+  {
+    QStringList qhist;
+    qhist << "read_autoflow_history_record" << protocol_details[ "autoflowID" ];
+    db.query( qhist );
+    if ( db.lastErrno() == US_DB2::OK )
+      {
+	while ( db.next() )
+	  {
+	    QString ds_hist = db.value( 27 ).toString();   // dataSource column
+	    qDebug() << "PD load: dataSource passed, from autoflowHistory -- "
+		     << protocol_details[ "dataSource" ] << ds_hist;
+	    if ( !ds_hist.isEmpty() )
+	      {
+		protocol_details[ "dataSource" ] = ds_hist;
+		dataSource_pd                    = ds_hist;
+	      }
+	  }
+      }
+  }
+
   //Important: set investigator in US_Settings!!!
   QStringList query;
   query << "get_person_info" << protocol_details[ "invID_passed" ];
