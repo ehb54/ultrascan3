@@ -1182,7 +1182,7 @@ void US_ConvertGui::reset_auto( void )
    ExpData     .clear();
 
    drop_operations. clear();
-   drop_items. clear();
+   drop_items.clear();
    scan_difference_map. clear();
    
    if ( isMwl )
@@ -1493,7 +1493,7 @@ bool US_ConvertGui::copyDirectory(const QString &sourcePath, const QString &dest
 //alt. import_auto_ssf (for [ABDE-MWL])
 void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
 {
-  import_ssf_ok          = false;   // set true below only on confirmed success
+  import_ssf_ok = false; // set true below only on confirmed success
   us_import_ssf_abde     = true;
   dataSavedOtherwise     = false;
   runType_combined_IP_RI = false;
@@ -1525,12 +1525,11 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   impType     = getImports_auto( details_at_live_update["ssf_dir_name"] );
   qDebug() << "impType, IMPORT AUC auto..." << impType;
   importAUC();
-  if ( allData.isEmpty() )
-    {
-      qDebug() << "[import_ssf_data_auto] FAILED: importAUC() produced no data";
-      return;
-    }
-  
+  if (allData.isEmpty()) {
+    qDebug() << "[import_ssf_data_auto] FAILED: importAUC() produced no data";
+    return;
+  }
+
   //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
   if ( us_convert_auto_mode ) 
     {
@@ -1543,15 +1542,16 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   //emit data_loaded();
   
   editRuninfo_auto();
-  
-  if( dataSavedOtherwise )
-    {
-      //Run was already in the DB (saveUS3DB-type path elsewhere) -- success iff it is there
-      import_ssf_ok = runInDB_auto();
-      qDebug() << "[import_ssf_data_auto] dataSavedOtherwise; run in DB:" << import_ssf_ok;
-      return;
-    }
-  
+
+  if (dataSavedOtherwise) {
+    // Run was already in the DB (saveUS3DB-type path elsewhere) -- success iff
+    // it is there
+    import_ssf_ok = runInDB_auto();
+    qDebug() << "[import_ssf_data_auto] dataSavedOtherwise; run in DB:"
+             << import_ssf_ok;
+    return;
+  }
+
   //debug
   qDebug() << "Before reading protocol: out_triples, out_channles -- "
 	   << out_triples << ", \n "
@@ -1587,39 +1587,36 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   //And save to DB -- Will probably be a separate funciton with:
   // (1) check for if saved already?
   // (2) switch to Reporting stage
-  
+
   bool already_saved_dbg = isSaved_auto();
   qDebug() << "[import_ssf_data_auto] runID:" << ExpData.runID
-           << "invID:" << ExpData.invID
-           << "DB mode:" << disk_controls->db()
+           << "invID:" << ExpData.invID << "DB mode:" << disk_controls->db()
            << "saveStatus:" << (int)saveStatus
            << "already saved:" << already_saved_dbg;
 
-  if( already_saved_dbg )
-    {
-      qDebug() << "SSF Already saved!";
-      import_ssf_ok = true;   // already in the DB: nothing more to do
-      return;
-    }
-    
+  if (already_saved_dbg) {
+    qDebug() << "SSF Already saved!";
+    import_ssf_ok = true; // already in the DB: nothing more to do
+    return;
+  }
+
   saveUS3DB();          
   writeTimeStateDisk(); // do we need timestate?
   writeTimeStateDB();   // do we need timestate?
 
-  //saveUS3DB() reports failures only via message boxes and early returns,
-  //so confirm the outcome by asking the DB whether the run is there now.
-  //NB: do NOT use isSaved_auto() here: a successful saveUS3DB() sets
-  //saveStatus = BOTH, which makes isSaved_auto() return false.
+  // saveUS3DB() reports failures only via message boxes and early returns,
+  // so confirm the outcome by asking the DB whether the run is there now.
+  // NB: do NOT use isSaved_auto() here: a successful saveUS3DB() sets
+  // saveStatus = BOTH, which makes isSaved_auto() return false.
   import_ssf_ok = runInDB_auto();
   qDebug() << "[import_ssf_data_auto] after save; run in DB:" << import_ssf_ok;
 
-  //capture a new "filemane" for VEL-MWL:
-  QString auto_flag_ = details_at_live_update[ "auto_flag_import" ];
-  if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_IMPORT_SIM_ANALYSIS" )
-    {
-      qDebug() << "Saved filename -- " << details_at_live_update[ "filename" ];
-    }
-    
+  // capture a new "filemane" for VEL-MWL:
+  QString auto_flag_ = details_at_live_update["auto_flag_import"];
+  if (!auto_flag_.isEmpty() && auto_flag_ == "VELMWL_IMPORT_SIM_ANALYSIS") {
+    qDebug() << "Saved filename -- " << details_at_live_update["filename"];
+  }
+
   //message? (will likely be shown in the parent AUTO-analysis widget)
   // QMessageBox::information( this,
   // 			    tr( "[ABDE-SSF]Save is Complete" ),
@@ -1853,9 +1850,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
    {
      qDebug() << "IMPORT AUC auto...";
      importAUC();
-     if ( allData.isEmpty() )
+     if (allData.isEmpty())
        return;
-     
+
      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
      if ( us_convert_auto_mode ) 
        {
@@ -1886,75 +1883,76 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" &&
-	  dataSource != "dataDiskAUC:Absorbance" &&
-	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
-       {
-	 if ( protDev_bool && dataSource.contains("dataDiskAUC") )
-	   {
-	     pb_reference  ->setEnabled( false );
-	     referenceDefined = true;
-	     lw_todoinfo->clear();
-	     pb_saveUS3 ->setEnabled( true );
-	     enableRunIDControl( false );
-	     return;
-	   }
-	 
-     	 // double low_ref  = 5.87 - 0.005;
-     	 // double high_ref = 5.87 + 0.005;
-	 
-	 centerpoint_ref_def = 5.87;
-	 plot_last_scans( centerpoint_ref_def );
-	 //process_reference_auto( centerpoint_ref_def );
-	 
-	 auto_ref_scan = true;
-	 
-	 QMessageBox msgBox;
-     	 msgBox.setText(QString( tr("ATTENTION: Reference scans will be defined automatically "
-				    "based on the guess value of %1cm for the air absorbance region above the meniscus.") ).
-			arg( centerpoint_ref_def ) );
-	 msgBox.setInformativeText( tr( "You may review and proceed with saving the data, "
-					"or choose to reset reference scans definitions by clicking 'Undo Reference Scans' "
-					"and subsequently defining them manually by clicking 'Define Reference Scans' button."));
-				    
-     	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-     	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
-     	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
-      	 
-     	 msgBox.setIcon(QMessageBox::Question);
-     	 msgBox.exec();
-      
-     	 if (msgBox.clickedButton() == Automatic)
-	   {
-	     process_reference_auto( centerpoint_ref_def );
-	     first_time_plot_auto = false;
-	     return;
-	   }
-	 // else if (msgBox.clickedButton() == Manual) {
-     	 //   cancel_reference();
-     	 // }
+     if (dataType == "RI" && expType != "ABDE" &&
+         dataSource != "dataDiskAUC:Absorbance" &&
+         dataSource != "dataDiskAUC:PseudoAbsorbance") {
+       if (protDev_bool && dataSource.contains("dataDiskAUC")) {
+         pb_reference->setEnabled(false);
+         referenceDefined = true;
+         lw_todoinfo->clear();
+         pb_saveUS3->setEnabled(true);
+         enableRunIDControl(false);
+         return;
        }
+
+       // double low_ref  = 5.87 - 0.005;
+       // double high_ref = 5.87 + 0.005;
+
+       centerpoint_ref_def = 5.87;
+       plot_last_scans(centerpoint_ref_def);
+       // process_reference_auto( centerpoint_ref_def );
+
+       auto_ref_scan = true;
+
+       QMessageBox msgBox;
+       msgBox.setText(
+           QString(
+               tr("ATTENTION: Reference scans will be defined automatically "
+                  "based on the guess value of %1cm for the air absorbance "
+                  "region above the meniscus."))
+               .arg(centerpoint_ref_def));
+       msgBox.setInformativeText(
+           tr("You may review and proceed with saving the data, "
+              "or choose to reset reference scans definitions by clicking "
+              "'Undo Reference Scans' "
+              "and subsequently defining them manually by clicking 'Define "
+              "Reference Scans' button."));
+
+       msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
+       QPushButton *Automatic =
+           msgBox.addButton(tr("OK "), QMessageBox::YesRole);
+       // QPushButton *Manual     = msgBox.addButton(tr("Define Manually"),
+       // QMessageBox::YesRole);
+
+       msgBox.setIcon(QMessageBox::Question);
+       msgBox.exec();
+
+       if (msgBox.clickedButton() == Automatic) {
+         process_reference_auto(centerpoint_ref_def);
+         first_time_plot_auto = false;
+         return;
+       }
+       // else if (msgBox.clickedButton() == Manual) {
+       //   cancel_reference();
+       // }
+     }
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE" )  
-       {
-	 if ( !protDev_bool )
-	   {
-	     absorbance_conversion_abde();
-	     return;
-	   }
-	 else
-	   {
-	     pb_reference  ->setEnabled( false );
-	     referenceDefined = true;
-	     lw_todoinfo->clear();
-	     pb_saveUS3 ->setEnabled( true );
-	     enableRunIDControl( false );
-	     return;
-	   }
+     if (expType == "ABDE") {
+       if (!protDev_bool) {
+         absorbance_conversion_abde();
+         return;
+       } else {
+         pb_reference->setEnabled(false);
+         referenceDefined = true;
+         lw_todoinfo->clear();
+         pb_saveUS3->setEnabled(true);
+         enableRunIDControl(false);
+         return;
        }
-     
+     }
+
      return;
    }
   
@@ -2029,9 +2027,9 @@ void US_ConvertGui::process_optics()
    {
      qDebug() << "IMPORT AUC auto...";
      importAUC();
-     if ( allData.isEmpty() )
+     if (allData.isEmpty())
        return;
-     
+
      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
      if ( us_convert_auto_mode ) 
        {
@@ -2065,17 +2063,16 @@ void US_ConvertGui::process_optics()
 	  dataSource != "dataDiskAUC:Absorbance" &&
 	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
-	 if ( protDev_bool && dataSource.contains("dataDiskAUC") )
-	   {
-	     pb_reference  ->setEnabled( false );
-	     referenceDefined = true;
-	     lw_todoinfo->clear();
-	     pb_saveUS3 ->setEnabled( true );
-	     enableRunIDControl( false );
-	     return;
-	   }
-	 
-	 // double low_ref  = 5.87 - 0.005;
+       if (protDev_bool && dataSource.contains("dataDiskAUC")) {
+         pb_reference->setEnabled(false);
+         referenceDefined = true;
+         lw_todoinfo->clear();
+         pb_saveUS3->setEnabled(true);
+         enableRunIDControl(false);
+         return;
+       }
+
+         // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
 
 	 centerpoint_ref_def = 5.87;
@@ -2106,25 +2103,21 @@ void US_ConvertGui::process_optics()
        } 
      //end of auto-processing reference range
 
-     //ABDE case
-     if ( expType == "ABDE" )   
-       {
-	 if ( !protDev_bool )
-	   {
-	     absorbance_conversion_abde();
-	     return;
-	   }
-	 else
-	   {
-	     pb_reference  ->setEnabled( false );
-	     referenceDefined = true;
-	     lw_todoinfo->clear();
-	     pb_saveUS3 ->setEnabled( true );
-	     enableRunIDControl( false );
-	     return;
-	   }
+       // ABDE case
+       if (expType == "ABDE") {
+         if (!protDev_bool) {
+           absorbance_conversion_abde();
+           return;
+         } else {
+           pb_reference->setEnabled(false);
+           referenceDefined = true;
+           lw_todoinfo->clear();
+           pb_saveUS3->setEnabled(true);
+           enableRunIDControl(false);
+           return;
+         }
        }
-     
+
      return;
    }
 }
@@ -6594,22 +6587,22 @@ void US_ConvertGui::cancel_reference( void )
 }
 
 // Drop selected triples
-//Record the name of a dropped triple / channel (reported at 3. IMPORT in Reporter & Audit Trail)
-void US_ConvertGui::add_drop_item( const QString& dropType, const QString& item )
-{
-  if ( ! drop_items[ runType ][ dropType ].contains( item ) )
-    drop_items[ runType ][ dropType ] << item;
+// Record the name of a dropped triple / channel (reported at 3. IMPORT in
+// Reporter & Audit Trail)
+void US_ConvertGui::add_drop_item(const QString &dropType,
+                                  const QString &item) {
+  if (!drop_items[runType][dropType].contains(item))
+    drop_items[runType][dropType] << item;
 }
 
 //"2 / A / 280" -> "2A.280"
-QString US_ConvertGui::drop_triple_name( QString triple )
-{
-  QStringList parts = triple.split( "/" );
-  for ( int ii = 0; ii < parts.size(); ii++ )
-    parts[ ii ] = parts[ ii ].simplified();
+QString US_ConvertGui::drop_triple_name(QString triple) {
+  QStringList parts = triple.split("/");
+  for (int ii = 0; ii < parts.size(); ii++)
+    parts[ii] = parts[ii].simplified();
 
-  if ( parts.size() >= 3 )
-    return parts[ 0 ] + parts[ 1 ] + "." + parts[ 2 ];
+  if (parts.size() >= 3)
+    return parts[0] + parts[1] + "." + parts[2];
 
   return triple.simplified();
 }
@@ -6672,7 +6665,8 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
          }
       }
 
-      QStringList chans_auto_dropped;   // channels dropped because their representative triple was dropped
+      QStringList chans_auto_dropped; // channels dropped because their
+                                      // representative triple was dropped
 
       //ALEXEY: If autoflow: - check if Mwl; if yes, check for all selected triples if it's a reference wvl for EDIT & 2DSA_FM & FITMEN...
       //        if yes, inform user that all channel will be selected for drop-out, confirm... 
@@ -6740,9 +6734,9 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
 		  //Mark channel to be dropped - for exclusion of the report
 		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
-		  if ( ! chans_auto_dropped.contains( celchn ) )
-		    chans_auto_dropped << celchn;
-		  qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
+                  if (!chans_auto_dropped.contains(celchn))
+                    chans_auto_dropped << celchn;
+                  qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
 		  
 		  for ( int trx = 0; trx < all_triples.size(); trx++ )
 		    {  // Mark matching triples as excluded
@@ -6776,12 +6770,13 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	      **/
 	      drop_operations[ runType ][ "Triples" ] = t_comment;
 
-	      //names of dropped triples (and channels dropped along with their representative triple):
-	      for ( int ss = 0; ss < selsiz; ss++ )
-		add_drop_item( "Triples", drop_triple_name( selected[ ss ] ) );
-	      for ( int cc = 0; cc < chans_auto_dropped.size(); cc++ )
-		add_drop_item( "Channels", chans_auto_dropped[ cc ] );
-	    }
+              // names of dropped triples (and channels dropped along with their
+              // representative triple):
+              for (int ss = 0; ss < selsiz; ss++)
+                add_drop_item("Triples", drop_triple_name(selected[ss]));
+              for (int cc = 0; cc < chans_auto_dropped.size(); cc++)
+                add_drop_item("Channels", chans_auto_dropped[cc]);
+            }
 	}
           
       
@@ -7086,17 +7081,17 @@ void US_ConvertGui::drop_channel()
   if ( status != QMessageBox::Ok ) return;
 
    //identify all dropped channels
-   QStringList chans_dropped_now;
-   for (int ii = 0; ii < lw_triple->count(); ii++)
-     {
-       QString channel_cell = lw_triple->item( ii )->text().section( "/", 0, 1 ).simplified();
-       if ( channel_cell.contains( chann ) )
-	 {
-	   channels_to_drop[ QString( channel_cell ).replace(" / ","") ] = true;
-	   if ( ! chans_dropped_now.contains( channel_cell ) )
-	     chans_dropped_now << channel_cell;
-	   qDebug() << "DROP All A's/B's: Channel_cell for EXCLUSION -- " << channel_cell;
-	 }
+  QStringList chans_dropped_now;
+  for (int ii = 0; ii < lw_triple->count(); ii++) {
+    QString channel_cell =
+        lw_triple->item(ii)->text().section("/", 0, 1).simplified();
+    if (channel_cell.contains(chann)) {
+      channels_to_drop[QString(channel_cell).replace(" / ", "")] = true;
+      if (!chans_dropped_now.contains(channel_cell))
+        chans_dropped_now << channel_cell;
+      qDebug() << "DROP All A's/B's: Channel_cell for EXCLUSION -- "
+               << channel_cell;
+    }
      }
        
    for ( int trx = 0; trx < all_triples.size(); trx++ )
@@ -7126,9 +7121,9 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 	   **/
 	   drop_operations[ runType ][ "Channels" ] = t_comment;
 
-	   for ( int cc = 0; cc < chans_dropped_now.size(); cc++ )
-	     add_drop_item( "Channels", chans_dropped_now[ cc ] );
-	 }
+           for (int cc = 0; cc < chans_dropped_now.size(); cc++)
+             add_drop_item("Channels", chans_dropped_now[cc]);
+         }
      }
    
      
@@ -7244,8 +7239,8 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	   **/
 	   drop_operations[ runType ][ "Selected Channel" ] = t_comment;
-	   add_drop_item( "Selected Channel", celchn );
-	 }
+           add_drop_item("Selected Channel", celchn);
+         }
      }
    
    
@@ -7381,17 +7376,16 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 
 //Check if runID already saved into DB
-bool US_ConvertGui::runInDB_auto( void )
-{
-   ExpData.runID = le_runID -> text();
+bool US_ConvertGui::runInDB_auto(void) {
+  ExpData.runID = le_runID->text();
 
-   US_Passwd pw;
-   US_DB2 db( pw.getPasswd() );
+  US_Passwd pw;
+  US_DB2 db(pw.getPasswd());
 
-   if ( db.lastErrno() != US_DB2::OK )
-     return false;
+  if (db.lastErrno() != US_DB2::OK)
+    return false;
 
-   return ( ExpData.checkRunID_auto( ExpData.invID, &db ) == US_DB2::OK );
+  return (ExpData.checkRunID_auto(ExpData.invID, &db) == US_DB2::OK);
 }
 
 bool US_ConvertGui::isSaved_auto( void )
@@ -8193,17 +8187,19 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importRI_Json += "}]";
 	}
 
-      //Names of the actually dropped triples / channels (recorded in drop_items):
-      if ( !drop_items[ runType ]. isEmpty() )
-	{
-	  importRI_Json += ", \"DroppedItems\": ";
-	  importRI_Json += "[{";
-	  QMap<QString, QStringList>::iterator di;
-	  for ( di = drop_items[ runType ].begin(); di != drop_items[ runType ].end(); ++di )
-	    importRI_Json += "\"" + di.key() + "\": \"" + di.value().join( ", " ) + "\",";
-	  importRI_Json.chop(1);
-	  importRI_Json += "}]";
-	}
+        // Names of the actually dropped triples / channels (recorded in
+        // drop_items):
+        if (!drop_items[runType].isEmpty()) {
+          importRI_Json += ", \"DroppedItems\": ";
+          importRI_Json += "[{";
+          QMap<QString, QStringList>::iterator di;
+          for (di = drop_items[runType].begin();
+               di != drop_items[runType].end(); ++di)
+            importRI_Json +=
+                "\"" + di.key() + "\": \"" + di.value().join(", ") + "\",";
+          importRI_Json.chop(1);
+          importRI_Json += "}]";
+        }
 
       //Now check if check_scans() found a mismatch between expected and
       //collected scan counts for any triple in this run:
@@ -8280,17 +8276,19 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importIP_Json += "}]";
 	}
 
-      //Names of the actually dropped triples / channels (recorded in drop_items):
-      if ( !drop_items[ runType ]. isEmpty() )
-	{
-	  importIP_Json += ", \"DroppedItems\": ";
-	  importIP_Json += "[{";
-	  QMap<QString, QStringList>::iterator di;
-	  for ( di = drop_items[ runType ].begin(); di != drop_items[ runType ].end(); ++di )
-	    importIP_Json += "\"" + di.key() + "\": \"" + di.value().join( ", " ) + "\",";
-	  importIP_Json.chop(1);
-	  importIP_Json += "}]";
-	}
+        // Names of the actually dropped triples / channels (recorded in
+        // drop_items):
+        if (!drop_items[runType].isEmpty()) {
+          importIP_Json += ", \"DroppedItems\": ";
+          importIP_Json += "[{";
+          QMap<QString, QStringList>::iterator di;
+          for (di = drop_items[runType].begin();
+               di != drop_items[runType].end(); ++di)
+            importIP_Json +=
+                "\"" + di.key() + "\": \"" + di.value().join(", ") + "\",";
+          importIP_Json.chop(1);
+          importIP_Json += "}]";
+        }
 
       //Now check if check_scans() found a mismatch between expected and
       //collected scan counts for any triple in this run:

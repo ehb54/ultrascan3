@@ -25,19 +25,24 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         US_MwlSpeciesFit();
 
         //! \brief Auto-mode constructor.
-        //! \param aprof_progress  Optional hook ( done, total, detail ) forwarded to
-        //!        US_AnalysisProfileGui::progress_cb while read_protocol() reads the
-        //!        Analysis Profile (reports/reportItems) from the DB. read_protocol()
-        //!        runs inside this constructor, so it has to be passed in here.
-        US_MwlSpeciesFit( QMap<QString, QString> &,
-                          const std::function< void( int, int, const QString& ) >& aprof_progress
-                             = std::function< void( int, int, const QString& ) >() );
+        //! \param aprof_progress  Optional hook ( done, total, detail )
+        //! forwarded to
+        //!        US_AnalysisProfileGui::progress_cb while read_protocol()
+        //!        reads the Analysis Profile (reports/reportItems) from the DB.
+        //!        read_protocol() runs inside this constructor, so it has to be
+        //!        passed in here.
+        US_MwlSpeciesFit(
+            QMap<QString, QString> &,
+            const std::function<void(int, int, const QString &)>
+                &aprof_progress =
+                    std::function<void(int, int, const QString &)>());
 
         bool us_gmp_auto_mode;
         QMap<QString, QString> protocol_details;
         US_RunProtocol currProto;           //!< Current run protocol
         US_AnalysisProfileGui* sdiag_aprof; //!< Analysis profile GUI dialog
-        std::function< void( int, int, const QString& ) > aprof_progress_cb; //!< Analysis-profile read progress (optional)
+        std::function<void(int, int, const QString &)>
+            aprof_progress_cb; //!< Analysis-profile read progress (optional)
         US_AnaProfile currAProf;            //!< Current analysis profile
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QStringList chndescs;               //!< Channel descriptions
@@ -61,7 +66,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! class is ever constructed for that channel.)
         QMap<QString, QString> velmwl_channel_decisions;
 
-    private:
+      private:
         int dbg_level;         //!< Debug level
         int nspecies;          //!< Number of species
         int jspec;             //!< Current species index
@@ -98,8 +103,8 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QPushButton* pb_next;     //!< Next plot button
         QPushButton* pb_plot3d;   //!< 3D plot button
 
-        QPushButton* pb_reject_velmwl;
-        QPushButton* pb_accept_velmwl;
+        QPushButton *pb_reject_velmwl;
+        QPushButton *pb_accept_velmwl;
 
         QLineEdit* le_fit_error; //!< Line edit for fit error
 
@@ -148,26 +153,31 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! result set (see the qry/db->next() handling below); that SQL
         //! change is not part of this file.
         //! \param chann              The channel, in "N / X" canonical form.
-        //! \param decision           "Accepted" or "Rejected" -- what THIS click asked to record.
-        //! \param filename           Deconvolved-edit filename to persist alongside an Accept
-        //!                           (pass an empty string for Reject -- there is nothing to store).
-        //! \param recorded_decision  [out] "Accepted" or "Rejected" -- what's actually on record now.
-        //! \param recorded_decisionByName [out] Who recorded it (blank if this call recorded it and DB lookup of that name isn't needed).
-        //! \param recorded_decisionTs     [out] When it was recorded.
-        //! \param recorded_filename       [out] Filename actually on record now for this channel
-        //!                                (may differ from `filename` if another session's Accept won first).
+        //! \param decision           "Accepted" or "Rejected" -- what THIS
+        //! click asked to record. \param filename           Deconvolved-edit
+        //! filename to persist alongside an Accept
+        //!                           (pass an empty string for Reject -- there
+        //!                           is nothing to store).
+        //! \param recorded_decision  [out] "Accepted" or "Rejected" -- what's
+        //! actually on record now. \param recorded_decisionByName [out] Who
+        //! recorded it (blank if this call recorded it and DB lookup of that
+        //! name isn't needed). \param recorded_decisionTs     [out] When it was
+        //! recorded. \param recorded_filename       [out] Filename actually on
+        //! record now for this channel
+        //!                                (may differ from `filename` if
+        //!                                another session's Accept won first).
         //! \return true if THIS call's decision is the one now on record
         //!         (i.e. it won); false if an earlier decision (this or
         //!         another session) already won this channel and this
         //!         click was not recorded.
-        bool record_velmwl_channel_decision( QString chann, QString decision,
-                                              QString filename,
-                                              QString& recorded_decision,
-                                              QString& recorded_decisionByName,
-                                              QString& recorded_decisionTs,
-                                              QString& recorded_filename );
+        bool record_velmwl_channel_decision(QString chann, QString decision,
+                                            QString filename,
+                                            QString &recorded_decision,
+                                            QString &recorded_decisionByName,
+                                            QString &recorded_decisionTs,
+                                            QString &recorded_filename);
 
-    private slots:
+      private slots:
         //! \brief Write report to a text stream
         //! \param ts QTextStream to write the report to
         void write_report(QTextStream& ts);
@@ -187,9 +197,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         bool read_protocol(QStringList &);
         bool validExtinctionProfile( QString, QList< double >,
 				     QList< double >, QStringList& );
-        void reject_velmwl( void );
-        void accept_velmwl( void );
-         
+        void reject_velmwl(void);
+        void accept_velmwl(void);
+
         //! \brief Perform species fit data analysis
         void specFitData(void);
 
@@ -230,10 +240,10 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         void reset();
         void reset_data();
         void reset_gui();
- 
-    signals:
-        void reject_velmwl_s( QString& );
-        void accept_velmwl_s( QString& );
+
+      signals:
+        void reject_velmwl_s(QString &);
+        void accept_velmwl_s(QString &);
 };
 
 #endif // US_MWL_SPECIES_FIT_H

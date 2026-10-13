@@ -1561,123 +1561,116 @@ qDebug() << "Timing: accept-load: mcount" << modelsCount
    close();
 }
 
-
 // Accept button:  set up to return model information: mod. copy for GMP:VEl-MWL
-void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
-{
-   QList< ModelDesc >        allmods = model_descriptions;
-   //QList< QListWidgetItem* > selmods = lw_models->selectedItems();
-   QList< QListWidgetItem* > selmods;
+void US_ModelLoader::accepted_multiple_auto(QStringList m_t_r_id) {
+  QList<ModelDesc> allmods = model_descriptions;
+  // QList< QListWidgetItem* > selmods = lw_models->selectedItems();
+  QList<QListWidgetItem *> selmods;
 
-   QString model_passed   = m_t_r_id[ 0 ];
-   QString triple_passed  = m_t_r_id[ 1 ];
-   QString runid_passed   = m_t_r_id[ 2 ];
-   QString modelid_passed = m_t_r_id[ 3 ];
+  QString model_passed = m_t_r_id[0];
+  QString triple_passed = m_t_r_id[1];
+  QString runid_passed = m_t_r_id[2];
+  QString modelid_passed = m_t_r_id[3];
 
-   triple_passed.remove(".");
-   
-   qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed << modelid_passed;
-   
-   //check for precise name overlapp: must contain model, tripe, run:
-   for(int i = 0; i < lw_models->count(); ++i)
-     {
-       QListWidgetItem* item = lw_models->item(i);
-       QString model_text    = item->text();
+  triple_passed.remove(".");
 
-       QString triple_from_mtext = item->text().split(".")[1];
+  qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed
+           << triple_passed << runid_passed << modelid_passed;
 
-       //get original description of the model
-       QString mdesc   = alt_description( model_text, false );
-       int     mdx     = modelIndex( mdesc, allmods );
-       QString modelID = allmods.at( mdx ).DB_id;
+  // check for precise name overlapp: must contain model, tripe, run:
+  for (int i = 0; i < lw_models->count(); ++i) {
+    QListWidgetItem *item = lw_models->item(i);
+    QString model_text = item->text();
 
-       qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- "
-		<< mdesc << mdx << modelID << triple_from_mtext;
-       
-       if ( model_text.contains( model_passed ) &&
-	    triple_from_mtext.contains( triple_passed ) &&
-	    model_text.contains( runid_passed ) )
-	 {
-	   selmods << item;
-	   qDebug() << "In accepted_auto(): model_passed, triple_passed, runid_passed, model_text, modelID -- "
-		    << model_passed << triple_passed << runid_passed  << model_text << modelID; 
-	 }
-     }
+    QString triple_from_mtext = item->text().split(".")[1];
 
-   
-   modelsCount = selmods.size();
+    // get original description of the model
+    QString mdesc = alt_description(model_text, false);
+    int mdx = modelIndex(mdesc, allmods);
+    QString modelID = allmods.at(mdx).DB_id;
 
-   if ( modelsCount > 0 )
-   {  // loop through selections
-      model_descriptions.clear();
+    qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- " << mdesc << mdx
+             << modelID << triple_from_mtext;
 
-      for ( int ii = 0; ii < modelsCount; ii++ )
-      {  // get row of selection then index in original descriptions list
-         QString lmdesc = selmods[ ii ]->text();
-         QString mdesc  = alt_description( lmdesc, false );
-         int     mdx    = modelIndex( mdesc, allmods );
+    if (model_text.contains(model_passed) &&
+        triple_from_mtext.contains(triple_passed) &&
+        model_text.contains(runid_passed)) {
+      selmods << item;
+      qDebug() << "In accepted_auto(): model_passed, triple_passed, "
+                  "runid_passed, model_text, modelID -- "
+               << model_passed << triple_passed << runid_passed << model_text
+               << modelID;
+    }
+  }
 
-         // repopulate descriptions with only selected row(s)
-         model_descriptions.append( allmods.at( mdx ) );
-      }
-   }
+  modelsCount = selmods.size();
 
-   else
-   {
-      QMessageBox::information( this,
-            tr( "No Model Selected" ),
-            tr( "You have not selected a model.\nSelect+Accept or Cancel" ) );
-      return;
-   }
+  if (modelsCount > 0) { // loop through selections
+    model_descriptions.clear();
 
-qDebug() << "ACC: multi" << multi;
-   if ( ! multi )
-   {  // in single-select mode, load the model and set the description
-qDebug() << "ACC: load... (single)";
-      load_model( omodel, 0 );
-qDebug() << "ACC: ...loaded (single)";
-      odescr     = description( 0 );
-qDebug() << "ACC: odescr" << odescr;
-   }
+    for (int ii = 0; ii < modelsCount;
+         ii++) { // get row of selection then index in original descriptions
+                 // list
+      QString lmdesc = selmods[ii]->text();
+      QString mdesc = alt_description(lmdesc, false);
+      int mdx = modelIndex(mdesc, allmods);
 
-   else
-   {  // in multiple-select mode, load all models and descriptions
-      omodels.clear();
-      odescrs.clear();
+      // repopulate descriptions with only selected row(s)
+      model_descriptions.append(allmods.at(mdx));
+    }
+  }
 
-QDateTime time1=QDateTime::currentDateTime();
-qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
-      for ( int ii = 0; ii < modelsCount; ii++ )
-      {
-         load_model( model, ii );
+  else {
+    QMessageBox::information(
+        this, tr("No Model Selected"),
+        tr("You have not selected a model.\nSelect+Accept or Cancel"));
+    return;
+  }
 
-         omodels << model;
-         odescrs << description( ii );
-      }
-qDebug() << "ACC: ...loaded (multi)";
-QDateTime time2=QDateTime::currentDateTime();
-qDebug() << "Timing: accept-load: mcount" << modelsCount
- << "time(ms)" << time1.msecsTo(time2);
-   }
+  qDebug() << "ACC: multi" << multi;
+  if (!multi) { // in single-select mode, load the model and set the description
+    qDebug() << "ACC: load... (single)";
+    load_model(omodel, 0);
+    qDebug() << "ACC: ...loaded (single)";
+    odescr = description(0);
+    qDebug() << "ACC: odescr" << odescr;
+  }
 
-   // Return search string that reflects current state
-   dsearch    = le_mfilter->text();
+  else { // in multiple-select mode, load all models and descriptions
+    omodels.clear();
+    odescrs.clear();
 
-   if ( do_edit )
-      dsearch    = "=e " + dsearch;
-   if ( do_single )
-      dsearch    = "=s " + dsearch;
-   if ( do_unasgn )
-      dsearch    = "=u " + dsearch;
-   if ( do_manual )
-      dsearch    = "=m " + dsearch;
+    QDateTime time1 = QDateTime::currentDateTime();
+    qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
+    for (int ii = 0; ii < modelsCount; ii++) {
+      load_model(model, ii);
 
-   dsearch    = dsearch.simplified();
+      omodels << model;
+      odescrs << description(ii);
+    }
+    qDebug() << "ACC: ...loaded (multi)";
+    QDateTime time2 = QDateTime::currentDateTime();
+    qDebug() << "Timing: accept-load: mcount" << modelsCount << "time(ms)"
+             << time1.msecsTo(time2);
+  }
 
-   accept();        // signal that selection was accepted
-   close();
+  // Return search string that reflects current state
+  dsearch = le_mfilter->text();
+
+  if (do_edit)
+    dsearch = "=e " + dsearch;
+  if (do_single)
+    dsearch = "=s " + dsearch;
+  if (do_unasgn)
+    dsearch = "=u " + dsearch;
+  if (do_manual)
+    dsearch = "=m " + dsearch;
+
+  dsearch = dsearch.simplified();
+
+  accept(); // signal that selection was accepted
+  close();
 }
-
 
 // Filter events to catch right-mouse-button-click on list widget
 bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )

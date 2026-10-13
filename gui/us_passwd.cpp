@@ -1,7 +1,7 @@
 //! \file us_passwd.cpp
 #include "us_passwd.h"
-#include "us_settings.h"
 #include "us_global.h"
+#include "us_settings.h"
 #include <QApplication>
 
 // Window to anchor (and center) the password dialogs against: the owner's
@@ -9,11 +9,11 @@
 // US_Passwd objects are normally created parentless on the stack and never
 // shown, so using 'this' as the parent makes Qt center the dialog over an
 // unshown 0,0-positioned widget, i.e. in the top-left corner of the screen.
-static QWidget* anchor_window( QWidget* self )
-{
-  QWidget* p = self->parentWidget();
-  if ( p ) return p->window();
-  return QApplication::activeWindow();   // may be nullptr -> centered on screen
+static QWidget *anchor_window(QWidget *self) {
+  QWidget *p = self->parentWidget();
+  if (p)
+    return p->window();
+  return QApplication::activeWindow(); // may be nullptr -> centered on screen
 }
 
 QString US_Passwd::getPasswd( void  )
@@ -27,9 +27,8 @@ QString US_Passwd::getPasswd( void  )
 
   if ( currentHash.isEmpty() )
   {
-    QMessageBox::information( anchor_window( this ),
-          tr( "Password Error" ),
-          tr( "The Master Password has not been set." ) );
+    QMessageBox::information(anchor_window(this), tr("Password Error"),
+                             tr("The Master Password has not been set."));
 
     return QString();
   }
@@ -38,13 +37,9 @@ QString US_Passwd::getPasswd( void  )
   while ( true ) 
   {
     bool ok;
-    pw = QInputDialog::getText( 
-         anchor_window( this ), 
-         tr( "Master Password" ),
-         tr( "Please input your Master Password" ),
-         QLineEdit::Password, 
-         QString(), 
-         &ok );
+    pw = QInputDialog::getText(anchor_window(this), tr("Master Password"),
+                               tr("Please input your Master Password"),
+                               QLineEdit::Password, QString(), &ok);
 
     // If the user cancelled, return a null string
     if ( ! ok ) return QString();
@@ -54,10 +49,9 @@ QString US_Passwd::getPasswd( void  )
           QCryptographicHash::hash( pw.toLatin1(), QCryptographicHash::Sha1 );
 
     if ( hash == currentHash ) break;
-    
-    QMessageBox::information( anchor_window( this ),
-          tr( "Password Error" ),
-          tr( "The password is incorrect." ) );
+
+    QMessageBox::information(anchor_window(this), tr("Password Error"),
+                             tr("The password is incorrect."));
   }
 
   // Save the password in global memory and return
@@ -80,9 +74,8 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 
   if ( currentHash.isEmpty() )
   {
-    QMessageBox::information( anchor_window( this ),
-          tr( "Password Error" ),
-          tr( "The Master Password has not been set." ) );
+    QMessageBox::information(anchor_window(this), tr("Password Error"),
+                             tr("The Master Password has not been set."));
 
     return form_map;
   }
@@ -92,7 +85,7 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
   // Ask the user to input the password
   while ( true ) 
   {
-    QDialog dialog( anchor_window( this ) );
+    QDialog dialog(anchor_window(this));
     dialog.setWindowTitle( title );
     QFont font_d  = dialog.property("font").value<QFont>();
     QFontMetrics fm(font_d);
@@ -197,10 +190,11 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 
     if ( hash == currentHash && !form_map["Comment:"].isEmpty()  )
       break;
-    
-    QMessageBox::critical( anchor_window( this ),
-          tr( "No Comment and/or Password Error" ),
-          tr( "<font color='red'><b>ERROR:</b></font> The Comment field is empty, or the password is incorrect." ) );
+
+    QMessageBox::critical(
+        anchor_window(this), tr("No Comment and/or Password Error"),
+        tr("<font color='red'><b>ERROR:</b></font> The Comment field is empty, "
+           "or the password is incorrect."));
   }
 
   // // Save the password in global memory and return

@@ -35,10 +35,10 @@ class US_UTIL_EXTERN US_RunProtocol
 	    QString     opername; 
 	    QString     instrname;
 
-	    //vel-mwl
-	    bool        vel_mwl_prot;
-	    
-	    //data form Disk
+            // vel-mwl
+            bool vel_mwl_prot;
+
+            //data form Disk
 	    QString     importDataDisk;
 	    bool        importData;
 	    bool        importData_absorbance_t;
@@ -430,12 +430,12 @@ class US_UTIL_EXTERN US_RunProtocol
       QString      framework;
 
       //! \brief Sanitize a name for use in file/path names.
-      //!        strict=false: replace / \\ : * ? " < > | and control chars with '_'
-      //!        strict=true : replace everything except A-Z a-z 0-9 _ - with '_'
-      //!        (same rule as the Run Name). Result is trimmed.
-      static QString sanitize_name( const QString&, bool strict = false );
+      //!        strict=false: replace / \\ : * ? " < > | and control chars with
+      //!        '_' strict=true : replace everything except A-Z a-z 0-9 _ -
+      //!        with '_' (same rule as the Run Name). Result is trimmed.
+      static QString sanitize_name(const QString &, bool strict = false);
 
-   private:
+    private:
 };
 #endif
 

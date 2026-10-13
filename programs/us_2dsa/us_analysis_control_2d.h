@@ -58,7 +58,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! an unusual analyte -- that are NOT guarded by auto_mode; those
       //! remain a known residual risk of this headless path hanging on
       //! a modal dialog for those specific, uncommon inputs.
-      void fit_auto( void );
+      void fit_auto(void);
 
       //! \brief Apply Analysis-Profile-sourced grid-fit parameters ahead
       //! of a headless fit_auto() run -- called from US_2dsa::
@@ -78,14 +78,14 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //!        "k_max", "k_grpts" -- mirroring US_AnaProfile::
       //!        AnaProf2DSA's per-channel parms[] fields of the same
       //!        names (see US_ReporterGMP for that struct's use).
-      void apply_auto_fit_params( const QMap< QString, QString >& params );
+      void apply_auto_fit_params(const QMap<QString, QString> &params);
 
       US_Model  model2 ;
       //void calculate_norms( US_Model& ) ;
       void set_comp_attr     ( US_Model::SimulationComponent&,
                              US_Solute&, int );
 
-   signals:
+    signals:
       //! \brief Forwards this dialog's own internal fit-progress counters
       //! (ncsteps/nctotal -- the same values driving b_progress below) to
       //! whatever constructed this dialog. Added so US_2dsa's headless
@@ -95,9 +95,9 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! itself is never shown on that path. Emitted from
       //! update_progress()/reset_steps() alongside their existing
       //! b_progress updates -- no other behavior change.
-      void fit_progress_s( int step, int total );
+      void fit_progress_s(int step, int total);
 
-   public slots:
+    public slots:
       void update_progress (  int  );
       void completed_process( int  );
       void progress_message(  QString, bool = true );
@@ -114,7 +114,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! \brief Set true by fit_auto() -- see completed_process()'s
       //! alldone branch (auto-saves instead of waiting for a click) and
       //! memory_check() (logs instead of a blocking confirmation dialog).
-      bool          auto_mode;
+      bool auto_mode;
 
       int           dbg_level;
       int           ncsteps;
