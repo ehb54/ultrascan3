@@ -31,18 +31,15 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //!        reads the Analysis Profile (reports/reportItems) from the DB.
         //!        read_protocol() runs inside this constructor, so it has to be
         //!        passed in here.
-        US_MwlSpeciesFit(
-            QMap<QString, QString> &,
-            const std::function<void(int, int, const QString &)>
-                &aprof_progress =
-                    std::function<void(int, int, const QString &)>());
+        US_MwlSpeciesFit( QMap<QString, QString>&,
+                          const std::function<void( int, int, const QString& )>& aprof_progress =
+                             std::function<void( int, int, const QString& )>() );
 
         bool us_gmp_auto_mode;
         QMap<QString, QString> protocol_details;
         US_RunProtocol currProto;           //!< Current run protocol
         US_AnalysisProfileGui* sdiag_aprof; //!< Analysis profile GUI dialog
-        std::function<void(int, int, const QString &)>
-            aprof_progress_cb; //!< Analysis-profile read progress (optional)
+        std::function<void( int, int, const QString& )>          aprof_progress_cb; //!< Analysis-profile read progress (optional)
         US_AnaProfile currAProf;            //!< Current analysis profile
         QMap<QString, QMap<QString, US_ReportGMP>> ch_reports; //!< Channel reports
         QStringList chndescs;               //!< Channel descriptions
@@ -56,7 +53,7 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QMap< QString, QMap< QString, QMap< double, double > > > extinction_profiles_per_channel;
              //chann.    //type[protein, DNA]  //ext. profile
         QString rmsd_for_gmp;
-        QString chann_to_process_velmwl;
+        QString                                                  chann_to_process_velmwl;
 
         //! \brief VEL-MWL channel -> Accept/Reject decision ("Accepted"/
         //! "Rejected") made by the user for the current channel this
@@ -64,9 +61,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //! i.e. whether it already has a decision from a prior session --
         //! is decided one level up, by US_Analysis_auto, before this
         //! class is ever constructed for that channel.)
-        QMap<QString, QString> velmwl_channel_decisions;
+        QMap<QString, QString>                                   velmwl_channel_decisions;
 
-      private:
+     private:
         int dbg_level;         //!< Debug level
         int nspecies;          //!< Number of species
         int jspec;             //!< Current species index
@@ -103,8 +100,8 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         QPushButton* pb_next;     //!< Next plot button
         QPushButton* pb_plot3d;   //!< 3D plot button
 
-        QPushButton *pb_reject_velmwl;
-        QPushButton *pb_accept_velmwl;
+        QPushButton*                pb_reject_velmwl;
+        QPushButton*                pb_accept_velmwl;
 
         QLineEdit* le_fit_error; //!< Line edit for fit error
 
@@ -170,14 +167,15 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         //!         (i.e. it won); false if an earlier decision (this or
         //!         another session) already won this channel and this
         //!         click was not recorded.
-        bool record_velmwl_channel_decision(QString chann, QString decision,
-                                            QString filename,
-                                            QString &recorded_decision,
-                                            QString &recorded_decisionByName,
-                                            QString &recorded_decisionTs,
-                                            QString &recorded_filename);
+        bool                        record_velmwl_channel_decision( QString  chann,
+                                                                    QString  decision,
+                                                                    QString  filename,
+                                                                    QString& recorded_decision,
+                                                                    QString& recorded_decisionByName,
+                                                                    QString& recorded_decisionTs,
+                                                                    QString& recorded_filename );
 
-      private slots:
+     private slots:
         //! \brief Write report to a text stream
         //! \param ts QTextStream to write the report to
         void write_report(QTextStream& ts);
@@ -197,8 +195,8 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         bool read_protocol(QStringList &);
         bool validExtinctionProfile( QString, QList< double >,
 				     QList< double >, QStringList& );
-        void reject_velmwl(void);
-        void accept_velmwl(void);
+        void reject_velmwl( void );
+        void accept_velmwl( void );
 
         //! \brief Perform species fit data analysis
         void specFitData(void);
@@ -241,9 +239,9 @@ class US_MwlSpeciesFit : public US_AnalysisBase2
         void reset_data();
         void reset_gui();
 
-      signals:
-        void reject_velmwl_s(QString &);
-        void accept_velmwl_s(QString &);
+     signals:
+        void reject_velmwl_s( QString& );
+        void accept_velmwl_s( QString& );
 };
 
 #endif // US_MWL_SPECIES_FIT_H

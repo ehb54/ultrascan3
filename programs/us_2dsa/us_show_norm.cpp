@@ -37,10 +37,9 @@
 // file) and us_pseudo3d_combine, an externally-linked copy here collides
 // at link time ("multiple definition"). Only used within this file (see
 // the std::sort() call below), so static costs nothing.
-static bool distro_lessthan(
-    const S_Solute &solu1,
-    const S_Solute &solu2) { // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
-  return (solu1.s < solu2.s) || ((solu1.s == solu2.s) && (solu1.k < solu2.k));
+static bool distro_lessthan( const S_Solute& solu1, const S_Solute& solu2 )
+{ // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
+   return ( solu1.s < solu2.s ) || ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
 
 //------------------------------------------------------------------------

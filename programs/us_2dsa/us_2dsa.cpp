@@ -167,35 +167,34 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 // exist) and then, instead of returning idle, drives load() -> run_2dsa_
 // auto() synchronously, emitting twodsa_complete_s() when done. See
 // us_2dsa.h's declaration for the expected protocol_details_p contents.
-US_2dsa::US_2dsa(QMap<QString, QString> &protocol_details_p) : US_2dsa() {
-  us_gmp_auto_mode = true;
-  auto_triple_idx = 0;
-  auto_last_tripleID = "";
-  this->protocol_details = protocol_details_p;
-  chann_to_process_2dsa = protocol_details["chan_to_analyse"];
+US_2dsa::US_2dsa( QMap<QString, QString>& protocol_details_p ) : US_2dsa()
+{
+   us_gmp_auto_mode       = true;
+   auto_triple_idx        = 0;
+   auto_last_tripleID     = "";
+   this->protocol_details = protocol_details_p;
+   chann_to_process_2dsa  = protocol_details["chan_to_analyse"];
 
-  setWindowTitle(tr("2-Dimensional Spectrum Analysis (VEL-MWL, channel %1)")
-                     .arg(chann_to_process_2dsa));
+   setWindowTitle( tr( "2-Dimensional Spectrum Analysis (VEL-MWL, channel %1)" ).arg( chann_to_process_2dsa ) );
 
-  qDebug() << "[US_2dsa] auto constructor: channel" << chann_to_process_2dsa
-           << "this" << (void *)this;
+   qDebug() << "[US_2dsa] auto constructor: channel" << chann_to_process_2dsa << "this" << (void*) this;
 
-  // Load THIS channel's deconvolved edited data (see load()'s
-  // us_gmp_auto_mode branch below -- mirrors US_MwlSpeciesFit::load()).
-  load();
+   // Load THIS channel's deconvolved edited data (see load()'s
+   // us_gmp_auto_mode branch below -- mirrors US_MwlSpeciesFit::load()).
+   load();
 
-  if (!dataLoaded) {
-    qDebug() << "[US_2dsa] auto constructor: load() failed for channel"
-             << chann_to_process_2dsa;
-    bool success = false;
-    emit twodsa_complete_s(chann_to_process_2dsa, success, 0);
-    return;
-  }
+   if ( !dataLoaded )
+   {
+      qDebug() << "[US_2dsa] auto constructor: load() failed for channel" << chann_to_process_2dsa;
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success, 0 );
+      return;
+   }
 
-  // Run the fit and (on completion, via analysis_done( 2 )) save it --
-  // see run_2dsa_auto()'s header comment for the one outstanding
-  // dependency (US_AnalysisControl2D::fit_auto()).
-  run_2dsa_auto();
+   // Run the fit and (on completion, via analysis_done( 2 )) save it --
+   // see run_2dsa_auto()'s header comment for the one outstanding
+   // dependency (US_AnalysisControl2D::fit_auto()).
+   run_2dsa_auto();
 }
 
 // slot to handle the completion of a 2-D spectrum analysis stage
@@ -268,60 +267,64 @@ DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
 
    else if ( savedata )
    {  // Save the data and reports
-     if (us_gmp_auto_mode)
-       emit twodsa_progress_s("save", auto_triple_idx, dataList.size(), 0, 1);
+      if ( us_gmp_auto_mode )
+      {
+         emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 0, 1 );
+      }
 
-     save();
+      save();
 
-     if (us_gmp_auto_mode) {
-       record_2dsa_model_in_velmwl();
-       emit twodsa_progress_s("save", auto_triple_idx, dataList.size(), 1, 1);
-     }
+      if ( us_gmp_auto_mode )
+      {
+         record_2dsa_model_in_velmwl();
+         emit twodsa_progress_s( "save", auto_triple_idx, dataList.size(), 1, 1 );
+      }
 
-     // ALEXEY: A VEL-MWL-Approved channel can resolve to more than one
-     // deconvolved species (S/1, S/2, ... -- see US_MwlSpeciesFit's
-     // per-species output), each loaded as its own row of dataList/
-     // lw_triples by load()'s auto branch. Only once every species for
-     // THIS channel has been fit+saved is the channel actually done --
-     // report back to the caller (US_Analysis_auto::twodsa_channel_
-     // complete(), via start_next_2dsa_channel() in
-     // us_autoflow_analysis.cpp) so it can advance to the next Approved
-     // VEL-MWL channel. Mirrors US_MwlSpeciesFit's accept_velmwl_s()
-     // pattern. Otherwise, stay on this same US_2dsa instance and run
-     // the next species with the same (default) fit settings.
-     //
-     // ALEXEY: run_2dsa_auto() for the next species is deferred via
-     // QTimer::singleShot(0, ...) rather than called directly here --
-     // we are still on the call stack of the JUST-FINISHED species'
-     // US_AnalysisControl2D::completed_process()/save() (which is what
-     // called down into here), and run_2dsa_auto() retires that same
-     // analcd/processor pair (analcd->close(), a fresh
-     // US_AnalysisControl2D + US_2dsaProcess) to start the next one.
-     // Doing that inline, still nested inside the old object's own
-     // in-progress member-function call, risks exactly the kind of
-     // stale-state/duplicate-completion overlap that produced doubled,
-     // mis-labeled saves here (same class of issue as the reentrant
-     // channel-to-channel advance at the US_Analysis_auto level -- see
-     // twodsa_channel_complete()). Posting it instead lets this call
-     // stack (and the old analcd's) fully unwind and return to the Qt
-     // event loop first, so the next species starts clean.
-     if (us_gmp_auto_mode) {
-       ++auto_triple_idx;
+      // ALEXEY: A VEL-MWL-Approved channel can resolve to more than one
+      // deconvolved species (S/1, S/2, ... -- see US_MwlSpeciesFit's
+      // per-species output), each loaded as its own row of dataList/
+      // lw_triples by load()'s auto branch. Only once every species for
+      // THIS channel has been fit+saved is the channel actually done --
+      // report back to the caller (US_Analysis_auto::twodsa_channel_
+      // complete(), via start_next_2dsa_channel() in
+      // us_autoflow_analysis.cpp) so it can advance to the next Approved
+      // VEL-MWL channel. Mirrors US_MwlSpeciesFit's accept_velmwl_s()
+      // pattern. Otherwise, stay on this same US_2dsa instance and run
+      // the next species with the same (default) fit settings.
+      //
+      // ALEXEY: run_2dsa_auto() for the next species is deferred via
+      // QTimer::singleShot(0, ...) rather than called directly here --
+      // we are still on the call stack of the JUST-FINISHED species'
+      // US_AnalysisControl2D::completed_process()/save() (which is what
+      // called down into here), and run_2dsa_auto() retires that same
+      // analcd/processor pair (analcd->close(), a fresh
+      // US_AnalysisControl2D + US_2dsaProcess) to start the next one.
+      // Doing that inline, still nested inside the old object's own
+      // in-progress member-function call, risks exactly the kind of
+      // stale-state/duplicate-completion overlap that produced doubled,
+      // mis-labeled saves here (same class of issue as the reentrant
+      // channel-to-channel advance at the US_Analysis_auto level -- see
+      // twodsa_channel_complete()). Posting it instead lets this call
+      // stack (and the old analcd's) fully unwind and return to the Qt
+      // event loop first, so the next species starts clean.
+      if ( us_gmp_auto_mode )
+      {
+         ++auto_triple_idx;
 
-       qDebug() << "[US_2dsa] analysis_done(2): channel"
-                << chann_to_process_2dsa << "just-saved edata cell/channel/wvln"
-                << edata->cell << edata->channel << edata->wavelength
-                << "auto_triple_idx now" << auto_triple_idx << "dataList.size()"
-                << dataList.size() << "this" << (void *)this;
+         qDebug() << "[US_2dsa] analysis_done(2): channel" << chann_to_process_2dsa << "just-saved edata cell/channel/wvln"
+                  << edata->cell << edata->channel << edata->wavelength << "auto_triple_idx now" << auto_triple_idx
+                  << "dataList.size()" << dataList.size() << "this" << (void*) this;
 
-       if (auto_triple_idx < dataList.size()) {
-         QTimer::singleShot(0, this, &US_2dsa::run_2dsa_auto);
-       } else {
-         bool success = true;
-         emit twodsa_complete_s(chann_to_process_2dsa, success,
-                                dataList.size());
-       }
-     }
+         if ( auto_triple_idx < dataList.size() )
+         {
+            QTimer::singleShot( 0, this, &US_2dsa::run_2dsa_auto );
+         }
+         else
+         {
+            bool success = true;
+            emit twodsa_complete_s( chann_to_process_2dsa, success, dataList.size() );
+         }
+      }
    }
 
    // For multiple models (e.g., Fit-Meniscus) report on best
@@ -361,122 +364,131 @@ DbgLv(1) << "FitMens Done: BEST rmsd,meniscus,bottom"
 // load the experiment data, mostly thru AnalysisBase; then disable view,save
 void US_2dsa::load( void )
 {
-  if (us_gmp_auto_mode) {
-    // ALEXEY: Headless equivalent of US_AnalysisBase2::load(), mirroring
-    // US_MwlSpeciesFit::load()'s own us_gmp_auto_mode branch: build a
-    // protocol_details-driven US_DataLoader instead of the interactive
-    // one, and skip dialog->exec() entirely -- US_DataLoader's
-    // protocol_details-taking constructor is responsible for resolving
-    // and loading exactly this channel's (chann_to_process_2dsa /
-    // protocol_details["chan_to_analyse"]) deconvolved edited data
-    // without prompting, the same way it resolves the run's raw data
-    // for US_MwlSpeciesFit's own auto path.
-    dataLoaded = false;
-    dataList.clear();
-    rawList.clear();
-    excludedScans.clear();
-    triples.clear();
-    savedValues.clear();
+   if ( us_gmp_auto_mode )
+   {
+      // ALEXEY: Headless equivalent of US_AnalysisBase2::load(), mirroring
+      // US_MwlSpeciesFit::load()'s own us_gmp_auto_mode branch: build a
+      // protocol_details-driven US_DataLoader instead of the interactive
+      // one, and skip dialog->exec() entirely -- US_DataLoader's
+      // protocol_details-taking constructor is responsible for resolving
+      // and loading exactly this channel's (chann_to_process_2dsa /
+      // protocol_details["chan_to_analyse"]) deconvolved edited data
+      // without prompting, the same way it resolves the run's raw data
+      // for US_MwlSpeciesFit's own auto path.
+      dataLoaded = false;
+      dataList.clear();
+      rawList.clear();
+      excludedScans.clear();
+      triples.clear();
+      savedValues.clear();
 
-    lw_triples->disconnect();
-    lw_triples->clear();
-    ct_from->disconnect();
-    ct_from->setValue(0);
+      lw_triples->disconnect();
+      lw_triples->clear();
+      ct_from->disconnect();
+      ct_from->setValue( 0 );
 
-    const bool edlast = true;
-    const int dbdisk = (disk_controls->db()) ? US_Disk_DB_Controls::DB
-                                             : US_Disk_DB_Controls::Disk;
-    QString description;
+      const bool     edlast = true;
+      const int      dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB : US_Disk_DB_Controls::Disk;
+      QString        description;
 
-    emit twodsa_progress_s("load", -1, -1, 0, 1);
+      emit           twodsa_progress_s( "load", -1, -1, 0, 1 );
 
-    US_DataLoader *dialog =
-        new US_DataLoader(edlast, dbdisk, rawList, dataList, triples,
-                          description, protocol_details, "none");
-    connect(dialog, &US_DataLoader::changed, this, &US_2dsa::update_disk_db);
-    connect(dialog, &US_DataLoader::progress, this, &US_2dsa::set_progress);
+      US_DataLoader* dialog =
+         new US_DataLoader( edlast, dbdisk, rawList, dataList, triples, description, protocol_details, "none" );
+      connect( dialog, &US_DataLoader::changed, this, &US_2dsa::update_disk_db );
+      connect( dialog, &US_DataLoader::progress, this, &US_2dsa::set_progress );
 
-    if (dataList.isEmpty()) {
-      qDebug() << "[US_2dsa] load(): auto US_DataLoader returned no data"
-               << "for channel" << chann_to_process_2dsa;
-      emit twodsa_progress_s("load", -1, 0, 1, 1);
+      if ( dataList.isEmpty() )
+      {
+         qDebug() << "[US_2dsa] load(): auto US_DataLoader returned no data" << "for channel" << chann_to_process_2dsa;
+         emit twodsa_progress_s( "load", -1, 0, 1, 1 );
+         return;
+      }
+
+      emit twodsa_progress_s( "load", -1, dataList.size(), 1, 1 );
+
+      if ( disk_controls->db() )
+      {
+         directory = tr( "(database)" );
+      }
+      else
+      {
+         directory = description.section( description.left( 1 ), 4, 4 );
+         directory = directory.left( directory.lastIndexOf( "/" ) );
+      }
+
+      for ( int ii = 0; ii < triples.size(); ii++ )
+      {
+         lw_triples->addItem( triples.at( ii ) );
+      }
+
+      const int nscans = dataList[0].scanCount();
+
+      for ( int ii = 0; ii < nscans; ii++ )
+      {
+         savedValues << dataList[0].scanData[ii].rvalues;
+      }
+
+      noiflags.fill( -1, dataList.size() );
+      allExcls.fill( excludedScans, dataList.size() );
+      rinoises.fill( US_Noise(), dataList.size() );
+      tinoises.fill( US_Noise(), dataList.size() );
+      lw_triples->setCurrentRow( 0 );
+
+      dataLoaded = true;
+      emit dataAreLoaded();
+      qApp->processEvents();
+   }
+   else
+   {
+      US_AnalysisBase2::load(); // load edited experiment data (interactive)
+   }
+
+   if ( !dataLoaded )
+   {
       return;
-    }
+   }
 
-    emit twodsa_progress_s("load", -1, dataList.size(), 1, 1);
+   pb_view->setEnabled( false ); // disable view,save buttons for now
+   pb_save->setEnabled( false );
 
-    if (disk_controls->db())
-      directory = tr("(database)");
-    else {
-      directory = description.section(description.left(1), 4, 4);
-      directory = directory.left(directory.lastIndexOf("/"));
-    }
+   loadDB  = disk_controls->db();
+   edata   = &dataList[0]; // point to first loaded data
+   baserss = 0;
+   speed_steps.clear();
+   ti_noises.clear();
+   ri_noises.clear();
 
-    for (int ii = 0; ii < triples.size(); ii++)
-      lw_triples->addItem(triples.at(ii));
+   // Get speed steps from disk or DB experiment
+   if ( loadDB )
+   { // Fetch the speed steps for the experiment from the database
+      US_Passwd   pw;
+      IUS_DB2*    dbP = new US_DB2( pw.getPasswd() );
+      QStringList query;
+      QString     expID;
+      int         idExp = 0;
+      query << "get_experiment_info_by_runID" << runID << QString::number( US_Settings::us_inv_ID() );
+      dbP->query( query );
 
-    const int nscans = dataList[0].scanCount();
+      if ( dbP->lastErrno() == IUS_DB2::OK )
+      {
+         dbP->next();
+         idExp = dbP->value( 1 ).toInt();
+         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
 
-    for (int ii = 0; ii < nscans; ii++)
-      savedValues << dataList[0].scanData[ii].rvalues;
+         DbgLv( 1 ) << "2dsa_load: speed step count" << speed_steps.count() << "idExp" << idExp;
+         if ( speed_steps.count() > 0 )
+         {
+            DbgLv( 1 ) << "2dsa_load:  speed step_ w2tfirst w2tlast timefirst timelast" << speed_steps[0].w2t_first
+                       << speed_steps[0].w2t_last << speed_steps[0].time_first << speed_steps[0].time_last;
+         }
 
-    noiflags.fill(-1, dataList.size());
-    allExcls.fill(excludedScans, dataList.size());
-    rinoises.fill(US_Noise(), dataList.size());
-    tinoises.fill(US_Noise(), dataList.size());
-    lw_triples->setCurrentRow(0);
+         // Check out whether we need to read TimeState from the DB
+         QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
 
-    dataLoaded = true;
-    emit dataAreLoaded();
-    qApp->processEvents();
-  } else
-    US_AnalysisBase2::load(); // load edited experiment data (interactive)
-
-  if (!dataLoaded)
-    return;
-
-  pb_view->setEnabled(false); // disable view,save buttons for now
-  pb_save->setEnabled(false);
-
-  loadDB = disk_controls->db();
-  edata = &dataList[0]; // point to first loaded data
-  baserss = 0;
-  speed_steps.clear();
-  ti_noises.clear();
-  ri_noises.clear();
-
-  // Get speed steps from disk or DB experiment
-  if (loadDB) { // Fetch the speed steps for the experiment from the database
-    US_Passwd pw;
-    IUS_DB2 *dbP = new US_DB2(pw.getPasswd());
-    QStringList query;
-    QString expID;
-    int idExp = 0;
-    query << "get_experiment_info_by_runID" << runID
-          << QString::number(US_Settings::us_inv_ID());
-    dbP->query(query);
-
-    if (dbP->lastErrno() == IUS_DB2::OK) {
-      dbP->next();
-      idExp = dbP->value(1).toInt();
-      US_SimulationParameters::speedstepsFromDB(dbP, idExp, speed_steps);
-
-      DbgLv(1) << "2dsa_load: speed step count" << speed_steps.count()
-               << "idExp" << idExp;
-      if (speed_steps.count() > 0)
-        DbgLv(1)
-            << "2dsa_load:  speed step_ w2tfirst w2tlast timefirst timelast"
-            << speed_steps[0].w2t_first << speed_steps[0].w2t_last
-            << speed_steps[0].time_first << speed_steps[0].time_last;
-
-      // Check out whether we need to read TimeState from the DB
-      QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/" +
-                           runID + ".time_state.tmst";
-
-      bool newfile = US_TimeState::dbSyncToLF(dbP, tmst_fpath, idExp);
-      DbgLv(0) << "2DS:LD: newfile" << newfile << "idExp" << idExp
-               << "tmst_fpath" << tmst_fpath;
-    }
+         bool    newfile = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+         DbgLv( 0 ) << "2DS:LD: newfile" << newfile << "idExp" << idExp << "tmst_fpath" << tmst_fpath;
+      }
    }
 
    else
@@ -1075,11 +1087,15 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       // show()/resize() lifecycle (so the plots inside it lay out
       // exactly as they would interactively) without ever painting
       // anything on screen, instead of setVisible(true).
-      if (us_gmp_auto_mode) {
-        resplotd->setAttribute(Qt::WA_DontShowOnScreen, true);
-        resplotd->show();
-      } else
-        resplotd->setVisible(true);
+      if ( us_gmp_auto_mode )
+      {
+         resplotd->setAttribute( Qt::WA_DontShowOnScreen, true );
+         resplotd->show();
+      }
+      else
+      {
+         resplotd->setVisible( true );
+      }
 
       connect( resplotd.data(), &QObject::destroyed, this, &US_2dsa::resplot_done );
    }
@@ -1182,10 +1198,14 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
    QApplication::restoreOverrideCursor();
 
-   if (!us_gmp_auto_mode)
-     QMessageBox::information(this, tr("Successfully Written"), wmsg);
+   if ( !us_gmp_auto_mode )
+   {
+      QMessageBox::information( this, tr( "Successfully Written" ), wmsg );
+   }
    else
-     qDebug() << "[US_2dsa] save(): auto-mode write complete:" << wmsg;
+   {
+      qDebug() << "[US_2dsa] save(): auto-mode write complete:" << wmsg;
+   }
 }
 
 // Return pointer to main window edited data
@@ -1246,123 +1266,135 @@ void US_2dsa::open_3dplot()
 // headless auto path (run_2dsa_auto()) can build `dset`/simparams
 // identically without going through the interactive dialog below.
 // Returns false (dset left untouched) if drow is out of range.
-bool US_2dsa::prep_fit_dataset(int drow) {
-  if (drow < 0 || drow >= dataList.size())
-    return false;
+bool US_2dsa::prep_fit_dataset( int drow )
+{
+   if ( drow < 0 || drow >= dataList.size() )
+   {
+      return false;
+   }
 
-  edata = &dataList[drow];
-  double avTemp = edata->average_temperature();
-  double vbar20 = US_Math2::calcCommonVbar(solution_rec, 20.0);
-  double vbartb = US_Math2::calcCommonVbar(solution_rec, avTemp);
+   edata                         = &dataList[drow];
+   double                 avTemp = edata->average_temperature();
+   double                 vbar20 = US_Math2::calcCommonVbar( solution_rec, 20.0 );
+   double                 vbartb = US_Math2::calcCommonVbar( solution_rec, avTemp );
 
-  US_Math2::SolutionData sd;
-  sd.density = density;
-  sd.viscosity = viscosity;
-  sd.vbar20 = vbar20;
-  sd.vbar = vbartb;
-  sd.manual = manual;
-  US_Math2::data_correction(avTemp, sd);
-  DbgLv(0) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction
-           << "manual" << sd.manual << "vbar20" << vbar20;
-  DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
-           << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
-  US_Passwd pw;
-  loadDB = disk_controls->db();
-  US_DB2 *dbP = loadDB ? new US_DB2(pw.getPasswd()) : NULL;
+   US_Math2::SolutionData sd;
+   sd.density   = density;
+   sd.viscosity = viscosity;
+   sd.vbar20    = vbar20;
+   sd.vbar      = vbartb;
+   sd.manual    = manual;
+   US_Math2::data_correction( avTemp, sd );
+   DbgLv( 0 ) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction << "manual" << sd.manual << "vbar20" << vbar20;
+   DbgLv( 0 ) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt << sd.viscosity_tb << sd.density << sd.density_wt
+              << sd.density_tb;
+   US_Passwd pw;
+   loadDB      = disk_controls->db();
+   US_DB2* dbP = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
-  // Initialize simulation parameters from data.
-  // Skip adding speed steps if this is multi-speed, initially,
-  // but set speed steps to the experiment vector.
-  dset.simparams.initFromData(dbP, dataList[drow], !exp_steps);
-  edata->bottom = (edata->bottom > 0.0) ? edata->bottom : 0.0;
-  //                     dset.simparams.bottom;
-  DbgLv(1) << "2DSA:o_fit: ebottom" << edata->bottom;
+   // Initialize simulation parameters from data.
+   // Skip adding speed steps if this is multi-speed, initially,
+   // but set speed steps to the experiment vector.
+   dset.simparams.initFromData( dbP, dataList[drow], !exp_steps );
+   edata->bottom = ( edata->bottom > 0.0 ) ? edata->bottom : 0.0;
+   //                     dset.simparams.bottom;
+   DbgLv( 1 ) << "2DSA:o_fit: ebottom" << edata->bottom;
 
-  if (exp_steps) {
-    dset.simparams.speed_step = speed_steps;
-  }
+   if ( exp_steps )
+   {
+      dset.simparams.speed_step = speed_steps;
+   }
 
-  // Build a TimeState object now if possible
-  DbgLv(1) << "2dsa : checking timestate object need";
-  dset.simparams.sim = (dataList[drow].channel == "S");
-  bool need_tsfile = true;
-  QString tmst_fpath =
-      US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
-  QFileInfo check_file(tmst_fpath);
+   // Build a TimeState object now if possible
+   DbgLv( 1 ) << "2dsa : checking timestate object need";
+   dset.simparams.sim    = ( dataList[drow].channel == "S" );
+   bool      need_tsfile = true;
+   QString   tmst_fpath  = US_Settings::resultDir() + "/" + runID + "/" + runID + ".time_state.tmst";
+   QFileInfo check_file( tmst_fpath );
 
-  US_AstfemMath::initSimData(sdata, dataList[drow], 0.0);
+   US_AstfemMath::initSimData( sdata, dataList[drow], 0.0 );
 
-  if (check_file.exists() && check_file.isFile()) {
-    bool intv_1sec = US_AstfemMath::timestate_onesec(tmst_fpath, sdata);
-    DbgLv(1) << "2dsa :  intv_1sec" << intv_1sec;
+   if ( check_file.exists() && check_file.isFile() )
+   {
+      bool intv_1sec = US_AstfemMath::timestate_onesec( tmst_fpath, sdata );
+      DbgLv( 1 ) << "2dsa :  intv_1sec" << intv_1sec;
 
-    if (intv_1sec) {
-      dset.simparams.simSpeedsFromTimeState(tmst_fpath);
-      DbgLv(1) << "2dsa :   tsobj,ssp created";
-      need_tsfile = false;
-    }
-    DbgLv(1) << "2dsa : timestate file exists" << tmst_fpath
-             << " timestateobject = " << dset.simparams.tsobj
-             << "stepscount=" << dset.simparams.speed_step.size();
-  }
+      if ( intv_1sec )
+      {
+         dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+         DbgLv( 1 ) << "2dsa :   tsobj,ssp created";
+         need_tsfile = false;
+      }
+      DbgLv( 1 ) << "2dsa : timestate file exists" << tmst_fpath << " timestateobject = " << dset.simparams.tsobj
+                 << "stepscount=" << dset.simparams.speed_step.size();
+   }
 
-  if (need_tsfile) {
-    QString tmst_fpath =
-        US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-    US_AstfemMath::writetimestate(tmst_fpath, dset.simparams, sdata);
+   if ( need_tsfile )
+   {
+      QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
+      US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
 
-    dset.simparams.simSpeedsFromTimeState(tmst_fpath);
-    DbgLv(1) << "2dsa : timestate newly created.  timestateobject = "
-             << dset.simparams.tsobj << "exp_steps=" << exp_steps << "sspknt"
-             << dset.simparams.sim_speed_prof.count();
-  }
+      dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+      DbgLv( 1 ) << "2dsa : timestate newly created.  timestateobject = " << dset.simparams.tsobj << "exp_steps=" << exp_steps
+                 << "sspknt" << dset.simparams.sim_speed_prof.count();
+   }
 
-  //   if ( dset.simparams.sim_speed_prof.count() > 1 )
-  //   {  // If from multi-speed, compute speed steps from sim speed profile
-  //      dset.simparams.speedstepsFromSSprof();
-  //   }
-  // Compute speed steps from sim speed profile
-  dset.simparams.speedstepsFromSSprof();
+   //   if ( dset.simparams.sim_speed_prof.count() > 1 )
+   //   {  // If from multi-speed, compute speed steps from sim speed profile
+   //      dset.simparams.speedstepsFromSSprof();
+   //   }
+   // Compute speed steps from sim speed profile
+   dset.simparams.speedstepsFromSSprof();
 
-  dset.run_data = dataList[drow];
-  dset.viscosity = viscosity;
-  dset.density = density;
-  dset.temperature = avTemp;
-  dset.vbar20 = vbar20;
-  dset.vbartb = vbartb;
-  dset.s20w_correction = sd.s20w_correction;
-  dset.D20w_correction = sd.D20w_correction;
-  dset.manual = manual;
-  DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
-           << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
-  DbgLv(1) << "SimulationParameter --";
-  if (dbg_level > 0)
-    dset.simparams.debug();
+   dset.run_data        = dataList[drow];
+   dset.viscosity       = viscosity;
+   dset.density         = density;
+   dset.temperature     = avTemp;
+   dset.vbar20          = vbar20;
+   dset.vbartb          = vbartb;
+   dset.s20w_correction = sd.s20w_correction;
+   dset.D20w_correction = sd.D20w_correction;
+   dset.manual          = manual;
+   DbgLv( 1 ) << "Bottom" << dset.simparams.bottom << "rotorcoeffs" << dset.simparams.rotorcoeffs[0]
+              << dset.simparams.rotorcoeffs[1];
+   DbgLv( 1 ) << "SimulationParameter --";
+   if ( dbg_level > 0 )
+   {
+      dset.simparams.debug();
+   }
 
-  if (dbP != NULL) {
-    delete dbP;
-    dbP = NULL;
-  }
+   if ( dbP != NULL )
+   {
+      delete dbP;
+      dbP = NULL;
+   }
 
-  return true;
+   return true;
 }
 
 // Open fit analysis control window
-void US_2dsa::open_fitcntl() {
-  int drow = lw_triples->currentRow();
-  if (!prep_fit_dataset(drow))
-    return;
+void US_2dsa::open_fitcntl()
+{
+   int drow = lw_triples->currentRow();
+   if ( !prep_fit_dataset( drow ) )
+   {
+      return;
+   }
 
-  if (analcd != 0) {
-    acd_pos = analcd->pos();
-    analcd->close();
-  } else
-    acd_pos = this->pos() + QPoint(500, 50);
+   if ( analcd != 0 )
+   {
+      acd_pos = analcd->pos();
+      analcd->close();
+   }
+   else
+   {
+      acd_pos = this->pos() + QPoint( 500, 50 );
+   }
 
-  analcd = new US_AnalysisControl2D(dsets, loadDB, this);
-  analcd->move(acd_pos);
-  analcd->show();
-  qApp->processEvents();
+   analcd = new US_AnalysisControl2D( dsets, loadDB, this );
+   analcd->move( acd_pos );
+   analcd->show();
+   qApp->processEvents();
 }
 
 // ALEXEY: Headless equivalent of open_fitcntl(), for us_gmp_auto_mode.
@@ -1383,148 +1415,151 @@ void US_2dsa::open_fitcntl() {
 // its own auto-mode hook, above) already decides there whether to loop
 // back into run_2dsa_auto() for the next species or emit
 // twodsa_complete_s() for the whole channel.
-void US_2dsa::run_2dsa_auto(void) {
-  if (!us_gmp_auto_mode)
-    return;
+void US_2dsa::run_2dsa_auto( void )
+{
+   if ( !us_gmp_auto_mode )
+   {
+      return;
+   }
 
-  qDebug() << "[US_2dsa] run_2dsa_auto(): channel" << chann_to_process_2dsa
-           << "auto_triple_idx" << auto_triple_idx << "dataList.size()"
-           << dataList.size() << "this" << (void *)this;
+   qDebug() << "[US_2dsa] run_2dsa_auto(): channel" << chann_to_process_2dsa << "auto_triple_idx" << auto_triple_idx
+            << "dataList.size()" << dataList.size() << "this" << (void*) this;
 
-  if (dataList.isEmpty() || auto_triple_idx >= dataList.size()) {
-    qDebug() << "[US_2dsa] run_2dsa_auto(): no data loaded for channel"
-             << chann_to_process_2dsa << "species index" << auto_triple_idx
-             << "-- aborting.";
-    bool success = false;
-    emit twodsa_complete_s(chann_to_process_2dsa, success, 0);
-    return;
-  }
+   if ( dataList.isEmpty() || auto_triple_idx >= dataList.size() )
+   {
+      qDebug() << "[US_2dsa] run_2dsa_auto(): no data loaded for channel" << chann_to_process_2dsa << "species index"
+               << auto_triple_idx << "-- aborting.";
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success, 0 );
+      return;
+   }
 
-  // ALEXEY: Advance the triple-list selection to match auto_triple_idx
-  // BEFORE building dset/starting the fit. This mirrors what happens
-  // interactively when a user clicks the next row in lw_triples: it
-  // fires new_triple( auto_triple_idx ) (clears models/noises/plot,
-  // restores edata->dataType, calls US_AnalysisBase2::new_triple()) and,
-  // critically, keeps lw_triples->currentRow() in sync with
-  // auto_triple_idx for the rest of this species' fit. mw_editdata()
-  // re-derives edata from lw_triples->currentRow(), so without this the
-  // fit machinery silently falls back to whatever triple was selected
-  // last (previously always species 1, since load() only ever sets row
-  // 0) even though prep_fit_dataset() below points edata/dset at the
-  // right species at this instant.
-  lw_triples->setCurrentRow(auto_triple_idx);
+   // ALEXEY: Advance the triple-list selection to match auto_triple_idx
+   // BEFORE building dset/starting the fit. This mirrors what happens
+   // interactively when a user clicks the next row in lw_triples: it
+   // fires new_triple( auto_triple_idx ) (clears models/noises/plot,
+   // restores edata->dataType, calls US_AnalysisBase2::new_triple()) and,
+   // critically, keeps lw_triples->currentRow() in sync with
+   // auto_triple_idx for the rest of this species' fit. mw_editdata()
+   // re-derives edata from lw_triples->currentRow(), so without this the
+   // fit machinery silently falls back to whatever triple was selected
+   // last (previously always species 1, since load() only ever sets row
+   // 0) even though prep_fit_dataset() below points edata/dset at the
+   // right species at this instant.
+   lw_triples->setCurrentRow( auto_triple_idx );
 
-  if (!prep_fit_dataset(auto_triple_idx)) {
-    qDebug() << "[US_2dsa] run_2dsa_auto(): prep_fit_dataset failed for"
-             << "channel" << chann_to_process_2dsa << "species index"
-             << auto_triple_idx << "-- aborting.";
-    bool success = false;
-    emit twodsa_complete_s(chann_to_process_2dsa, success, auto_triple_idx);
-    return;
-  }
+   if ( !prep_fit_dataset( auto_triple_idx ) )
+   {
+      qDebug() << "[US_2dsa] run_2dsa_auto(): prep_fit_dataset failed for" << "channel" << chann_to_process_2dsa << "species index"
+               << auto_triple_idx << "-- aborting.";
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success, auto_triple_idx );
+      return;
+   }
 
-  // ALEXEY: Skip this species entirely if a model is already recorded
-  // for it in autoflowAnalysisVelMwl -- i.e. a prior, since-abandoned
-  // run of this same channel already fit+saved+recorded it (see
-  // update_autoflowAnalysisVelMwl_channel_2dsaModel()'s "first model
-  // wins" rule), and this is a later re-run picking the channel back
-  // up. Re-fitting it would waste real time (a full 2DSA-IT grid fit)
-  // for a model record_2dsa_model_in_velmwl() would then just refuse
-  // to link anyway, since the DB write would lose that race. Advancing
-  // past a skipped species uses the exact same "next species" pattern
-  // as a just-completed one below (deferred via QTimer::singleShot()
-  // for the same reentrancy reason -- see that comment).
-  if (us_gmp_auto_mode && species_model_already_recorded(auto_triple_idx)) {
-    qDebug() << "[US_2dsa] run_2dsa_auto(): channel" << chann_to_process_2dsa
-             << "species index" << auto_triple_idx << "already has a model"
-             << "on record -- skipping its fit and moving to the next"
-             << "species.";
+   // ALEXEY: Skip this species entirely if a model is already recorded
+   // for it in autoflowAnalysisVelMwl -- i.e. a prior, since-abandoned
+   // run of this same channel already fit+saved+recorded it (see
+   // update_autoflowAnalysisVelMwl_channel_2dsaModel()'s "first model
+   // wins" rule), and this is a later re-run picking the channel back
+   // up. Re-fitting it would waste real time (a full 2DSA-IT grid fit)
+   // for a model record_2dsa_model_in_velmwl() would then just refuse
+   // to link anyway, since the DB write would lose that race. Advancing
+   // past a skipped species uses the exact same "next species" pattern
+   // as a just-completed one below (deferred via QTimer::singleShot()
+   // for the same reentrancy reason -- see that comment).
+   if ( us_gmp_auto_mode && species_model_already_recorded( auto_triple_idx ) )
+   {
+      qDebug() << "[US_2dsa] run_2dsa_auto(): channel" << chann_to_process_2dsa << "species index" << auto_triple_idx
+               << "already has a model" << "on record -- skipping its fit and moving to the next" << "species.";
 
-    emit twodsa_progress_s("skip", auto_triple_idx, dataList.size(), 1, 1);
+      emit twodsa_progress_s( "skip", auto_triple_idx, dataList.size(), 1, 1 );
 
-    ++auto_triple_idx;
+      ++auto_triple_idx;
 
-    if (auto_triple_idx < dataList.size()) {
-      QTimer::singleShot(0, this, &US_2dsa::run_2dsa_auto);
-    } else {
-      bool success = true;
-      emit twodsa_complete_s(chann_to_process_2dsa, success, dataList.size());
-    }
-    return;
-  }
+      if ( auto_triple_idx < dataList.size() )
+      {
+         QTimer::singleShot( 0, this, &US_2dsa::run_2dsa_auto );
+      }
+      else
+      {
+         bool success = true;
+         emit twodsa_complete_s( chann_to_process_2dsa, success, dataList.size() );
+      }
+      return;
+   }
 
-  qDebug() << "[US_2dsa] run_2dsa_auto(): fitting edata cell/channel/wvln"
-           << edata->cell << edata->channel << edata->wavelength;
+   qDebug() << "[US_2dsa] run_2dsa_auto(): fitting edata cell/channel/wvln" << edata->cell << edata->channel << edata->wavelength;
 
-  // ALEXEY: Sanity check -- confirm the triple actually advanced. This is
-  // the same string save() uses (tripleID = cell+channel+wavelength) to
-  // label the report/model files, e.g. "2S1". The lw_triples->
-  // setCurrentRow() call above is what's supposed to guarantee this
-  // differs from the previous species (by keeping mw_editdata()'s
-  // lw_triples->currentRow()-based lookup in sync with auto_triple_idx);
-  // this check is the regression guard in case that ever silently stops
-  // working again (e.g. a future change to new_triple()/mw_editdata()
-  // reintroduces the stale-selection bug this was added to fix). Fail
-  // loudly here rather than silently re-fitting/re-saving the same
-  // triple under a new model number.
-  QString tripleID = edata->cell + edata->channel + edata->wavelength;
+   // ALEXEY: Sanity check -- confirm the triple actually advanced. This is
+   // the same string save() uses (tripleID = cell+channel+wavelength) to
+   // label the report/model files, e.g. "2S1". The lw_triples->
+   // setCurrentRow() call above is what's supposed to guarantee this
+   // differs from the previous species (by keeping mw_editdata()'s
+   // lw_triples->currentRow()-based lookup in sync with auto_triple_idx);
+   // this check is the regression guard in case that ever silently stops
+   // working again (e.g. a future change to new_triple()/mw_editdata()
+   // reintroduces the stale-selection bug this was added to fix). Fail
+   // loudly here rather than silently re-fitting/re-saving the same
+   // triple under a new model number.
+   QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
-  if (auto_triple_idx > 0 && tripleID == auto_last_tripleID) {
-    qCritical() << "[US_2dsa] run_2dsa_auto(): SANITY CHECK FAILED --"
-                << "channel" << chann_to_process_2dsa << "auto_triple_idx"
-                << auto_triple_idx << "resolved to tripleID" << tripleID
-                << "which is IDENTICAL to the previous species'"
-                   " tripleID. The triple selection did not advance --"
-                   " aborting this channel instead of re-fitting/"
-                   "re-saving"
-                << tripleID << "a second time.";
-    bool success = false;
-    emit twodsa_complete_s(chann_to_process_2dsa, success, auto_triple_idx);
-    return;
-  }
+   if ( auto_triple_idx > 0 && tripleID == auto_last_tripleID )
+   {
+      qCritical() << "[US_2dsa] run_2dsa_auto(): SANITY CHECK FAILED --" << "channel" << chann_to_process_2dsa << "auto_triple_idx"
+                  << auto_triple_idx << "resolved to tripleID" << tripleID
+                  << "which is IDENTICAL to the previous species'"
+                     " tripleID. The triple selection did not advance --"
+                     " aborting this channel instead of re-fitting/"
+                     "re-saving"
+                  << tripleID << "a second time.";
+      bool success = false;
+      emit twodsa_complete_s( chann_to_process_2dsa, success, auto_triple_idx );
+      return;
+   }
 
-  auto_last_tripleID = tripleID;
+   auto_last_tripleID = tripleID;
 
-  if (analcd !=
-      0) { // retire the previous species' control dialog before starting the
-    // next one (mirrors open_fitcntl()'s own close()-before-replace).
-    analcd->close();
-  }
+   if ( analcd != 0 )
+   { // retire the previous species' control dialog before starting the
+      // next one (mirrors open_fitcntl()'s own close()-before-replace).
+      analcd->close();
+   }
 
-  analcd = new US_AnalysisControl2D(dsets, loadDB, this);
+   analcd = new US_AnalysisControl2D( dsets, loadDB, this );
 
-  // ALEXEY: Relay analcd's own (never-shown, since analcd is never
-  // show()n on this path) fit-progress counters up as twodsa_progress_s
-  // ("fit", ...) -- see relay_fit_progress()/twodsa_progress_s()'s own
-  // header comments. Reconnected fresh here every species, since analcd
-  // itself is rebuilt every species (the qt::UniqueConnection default
-  // isn't a concern -- the old analcd this replaces is a different
-  // object entirely, so there's nothing stale to accumulate).
-  connect(analcd, &US_AnalysisControl2D::fit_progress_s, this,
-          &US_2dsa::relay_fit_progress);
+   // ALEXEY: Relay analcd's own (never-shown, since analcd is never
+   // show()n on this path) fit-progress counters up as twodsa_progress_s
+   // ("fit", ...) -- see relay_fit_progress()/twodsa_progress_s()'s own
+   // header comments. Reconnected fresh here every species, since analcd
+   // itself is rebuilt every species (the qt::UniqueConnection default
+   // isn't a concern -- the old analcd this replaces is a different
+   // object entirely, so there's nothing stale to accumulate).
+   connect( analcd, &US_AnalysisControl2D::fit_progress_s, this, &US_2dsa::relay_fit_progress );
 
-  // Prime the progress consumer with this species' identity right away,
-  // rather than waiting for analcd's first real fit_progress_s tick.
-  emit twodsa_progress_s("fit", auto_triple_idx, dataList.size(), 0, 1);
+   // Prime the progress consumer with this species' identity right away,
+   // rather than waiting for analcd's first real fit_progress_s tick.
+   emit twodsa_progress_s( "fit", auto_triple_idx, dataList.size(), 0, 1 );
 
-  // ALEXEY: Apply this channel's Analysis-Profile grid-fit parameters
-  // (s_min/s_max/s_grpts/k_min/k_max/k_grpts -- populated into
-  // protocol_details by US_Analysis_auto::start_next_2dsa_channel(),
-  // per-channel, before this US_2dsa was even constructed) and force
-  // the iterative-refinement method on at 10 iterations, BEFORE
-  // fit_auto()/Start Fit. See US_AnalysisControl2D::
-  // apply_auto_fit_params()'s own header comment for exactly what this
-  // does and doesn't override.
-  analcd->apply_auto_fit_params(protocol_details);
+   // ALEXEY: Apply this channel's Analysis-Profile grid-fit parameters
+   // (s_min/s_max/s_grpts/k_min/k_max/k_grpts -- populated into
+   // protocol_details by US_Analysis_auto::start_next_2dsa_channel(),
+   // per-channel, before this US_2dsa was even constructed) and force
+   // the iterative-refinement method on at 10 iterations, BEFORE
+   // fit_auto()/Start Fit. See US_AnalysisControl2D::
+   // apply_auto_fit_params()'s own header comment for exactly what this
+   // does and doesn't override.
+   analcd->apply_auto_fit_params( protocol_details );
 
-  analcd->fit_auto();
+   analcd->fit_auto();
 }
 
 // ALEXEY: See header comment. Relays analcd's fit_progress_s up as
 // twodsa_progress_s( "fit", ... ), stamped with which species (of how
 // many) this progress belongs to.
-void US_2dsa::relay_fit_progress(int step, int total) {
-  emit twodsa_progress_s("fit", auto_triple_idx, dataList.size(), step, total);
+void US_2dsa::relay_fit_progress( int step, int total )
+{
+   emit twodsa_progress_s( "fit", auto_triple_idx, dataList.size(), step, total );
 }
 
 // ALEXEY: See header comment. Read-side counterpart of
@@ -1538,51 +1573,53 @@ void US_2dsa::relay_fit_progress(int step, int total) {
 // gets fit -- rather than silently skipping a species this call
 // couldn't actually confirm is already done; a spurious re-fit is
 // wasted time, a spurious skip is a missing model.
-bool US_2dsa::species_model_already_recorded(int drow) {
-  QString autoflowID_s = protocol_details.value("autoflowID");
+bool US_2dsa::species_model_already_recorded( int drow )
+{
+   QString autoflowID_s = protocol_details.value( "autoflowID" );
 
-  if (autoflowID_s.isEmpty() || chann_to_process_2dsa.isEmpty() || drow < 0 ||
-      drow >= dataList.size())
-    return false;
+   if ( autoflowID_s.isEmpty() || chann_to_process_2dsa.isEmpty() || drow < 0 || drow >= dataList.size() )
+   {
+      return false;
+   }
 
-  QString species = "S" + dataList[drow].wavelength;
+   QString   species = "S" + dataList[drow].wavelength;
 
-  US_Passwd pw;
-  US_DB2 *dbP = new US_DB2(pw.getPasswd());
+   US_Passwd pw;
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
 
-  if (dbP->lastErrno() != US_DB2::OK) {
-    qWarning() << "[US_2dsa] species_model_already_recorded(): DB"
-               << "connection failed -- assuming channel"
-               << chann_to_process_2dsa << "species" << species
-               << "has NOT been fit yet (will fit it now).";
-    delete dbP;
-    return false;
-  }
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      qWarning() << "[US_2dsa] species_model_already_recorded(): DB" << "connection failed -- assuming channel"
+                 << chann_to_process_2dsa << "species" << species << "has NOT been fit yet (will fit it now).";
+      delete dbP;
+      return false;
+   }
 
-  QStringList qry;
-  qry << "get_autoflowAnalysisVelMwl_channel_2dsaModel" << autoflowID_s
-      << chann_to_process_2dsa << species;
+   QStringList qry;
+   qry << "get_autoflowAnalysisVelMwl_channel_2dsaModel" << autoflowID_s << chann_to_process_2dsa << species;
 
-  dbP->query(qry);
+   dbP->query( qry );
 
-  bool recorded = false;
+   bool recorded = false;
 
-  if (dbP->lastErrno() == US_DB2::OK && dbP->next()) {
-    QString recorded_modelGUID = dbP->value(0).toString();
-    recorded = !recorded_modelGUID.isEmpty();
+   if ( dbP->lastErrno() == US_DB2::OK && dbP->next() )
+   {
+      QString recorded_modelGUID = dbP->value( 0 ).toString();
+      recorded                   = !recorded_modelGUID.isEmpty();
 
-    if (recorded)
-      qDebug() << "[US_2dsa] species_model_already_recorded(): channel"
-               << chann_to_process_2dsa << "species" << species
-               << "already has model" << recorded_modelGUID << "on record.";
-  }
-  // else: US_DB2::NO_AUTOFLOW_RECORD (nothing recorded yet) or any
-  // other error -- either way, nothing this call could confirm as
-  // recorded, so `recorded` stays false and the species gets fit.
+      if ( recorded )
+      {
+         qDebug() << "[US_2dsa] species_model_already_recorded(): channel" << chann_to_process_2dsa << "species" << species
+                  << "already has model" << recorded_modelGUID << "on record.";
+      }
+   }
+   // else: US_DB2::NO_AUTOFLOW_RECORD (nothing recorded yet) or any
+   // other error -- either way, nothing this call could confirm as
+   // recorded, so `recorded` stays false and the species gets fit.
 
-  delete dbP;
+   delete dbP;
 
-  return recorded;
+   return recorded;
 }
 
 // ALEXEY: See header comment. Writes this species' modelGUID into
@@ -1590,78 +1627,78 @@ bool US_2dsa::species_model_already_recorded(int drow) {
 // .models[ "S"+edata->wavelength ], via a small dedicated DB connection
 // (save() may have already used/closed its own via disk_controls->db(),
 // and this write happens after save() has fully returned).
-void US_2dsa::record_2dsa_model_in_velmwl(void) {
-  if (!us_gmp_auto_mode)
-    return;
+void US_2dsa::record_2dsa_model_in_velmwl( void )
+{
+   if ( !us_gmp_auto_mode )
+   {
+      return;
+   }
 
-  QString autoflowID_s = protocol_details.value("autoflowID");
-  QString species = "S" + edata->wavelength;
+   QString autoflowID_s = protocol_details.value( "autoflowID" );
+   QString species      = "S" + edata->wavelength;
 
-  if (autoflowID_s.isEmpty() || chann_to_process_2dsa.isEmpty() ||
-      model.modelGUID.isEmpty()) {
-    qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): missing"
-               << "autoflowID" << autoflowID_s << "/ channel"
-               << chann_to_process_2dsa << "/ modelGUID" << model.modelGUID
-               << "-- not recording species" << species
-               << "'s model in autoflowAnalysisVelMwl.";
-    return;
-  }
+   if ( autoflowID_s.isEmpty() || chann_to_process_2dsa.isEmpty() || model.modelGUID.isEmpty() )
+   {
+      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): missing" << "autoflowID" << autoflowID_s << "/ channel"
+                 << chann_to_process_2dsa << "/ modelGUID" << model.modelGUID << "-- not recording species" << species
+                 << "'s model in autoflowAnalysisVelMwl.";
+      return;
+   }
 
-  US_Passwd pw;
-  US_DB2 *dbP = new US_DB2(pw.getPasswd());
+   US_Passwd pw;
+   US_DB2*   dbP = new US_DB2( pw.getPasswd() );
 
-  if (dbP->lastErrno() != US_DB2::OK) {
-    qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB connection"
-               << "failed -- channel" << chann_to_process_2dsa << "species"
-               << species << "'s model" << model.modelGUID << "not"
-               << "recorded in autoflowAnalysisVelMwl (its report/model"
-               << "files on disk/DB are unaffected).";
-    delete dbP;
-    return;
-  }
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB connection" << "failed -- channel" << chann_to_process_2dsa
+                 << "species" << species << "'s model" << model.modelGUID << "not"
+                 << "recorded in autoflowAnalysisVelMwl (its report/model" << "files on disk/DB are unaffected).";
+      delete dbP;
+      return;
+   }
 
-  QStringList qry;
-  qry << "update_autoflowAnalysisVelMwl_channel_2dsaModel" << autoflowID_s
-      << chann_to_process_2dsa << species << model.modelGUID;
+   QStringList qry;
+   qry << "update_autoflowAnalysisVelMwl_channel_2dsaModel" << autoflowID_s << chann_to_process_2dsa << species << model.modelGUID;
 
-  qDebug() << "qry -- " << qry;
+   qDebug() << "qry -- " << qry;
 
-  // ALEXEY: "First model wins" (same rule/reason as US_MwlSpeciesFit::
-  // record_velmwl_channel_decision() -- see this procedure's own header
-  // comment): the DB row for this exact channel+species is only ever
-  // written once, so this call may lose the race to an earlier
-  // session -- or to an earlier, since-abandoned run of this same
-  // channel -- rather than to a genuine failure. The procedure returns
-  // a second result set reporting what actually ended up recorded
-  // (newly_recorded, recorded_modelGUID), the same shape as
-  // update_autoflowAnalysisVelMwl_channel_decision() -- so
-  // query()+next() is required here, not statusQuery().
-  dbP->query(qry);
+   // ALEXEY: "First model wins" (same rule/reason as US_MwlSpeciesFit::
+   // record_velmwl_channel_decision() -- see this procedure's own header
+   // comment): the DB row for this exact channel+species is only ever
+   // written once, so this call may lose the race to an earlier
+   // session -- or to an earlier, since-abandoned run of this same
+   // channel -- rather than to a genuine failure. The procedure returns
+   // a second result set reporting what actually ended up recorded
+   // (newly_recorded, recorded_modelGUID), the same shape as
+   // update_autoflowAnalysisVelMwl_channel_decision() -- so
+   // query()+next() is required here, not statusQuery().
+   dbP->query( qry );
 
-  if (dbP->lastErrno() != US_DB2::OK) {
-    qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB write"
-               << "failed for channel" << chann_to_process_2dsa << "species"
-               << species << "model" << model.modelGUID << ":"
-               << dbP->lastError();
-  } else if (dbP->next()) {
-    bool newly_recorded = dbP->value(0).toBool();
-    QString recorded_modelGUID = dbP->value(1).toString();
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): DB write" << "failed for channel" << chann_to_process_2dsa
+                 << "species" << species << "model" << model.modelGUID << ":" << dbP->lastError();
+   }
+   else if ( dbP->next() )
+   {
+      bool    newly_recorded     = dbP->value( 0 ).toBool();
+      QString recorded_modelGUID = dbP->value( 1 ).toString();
 
-    if (newly_recorded)
-      qDebug() << "[US_2dsa] record_2dsa_model_in_velmwl(): recorded"
-               << "channel" << chann_to_process_2dsa << "species" << species
-               << "model" << model.modelGUID << "in autoflowAnalysisVelMwl.";
-    else
-      qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): channel"
-                 << chann_to_process_2dsa << "species" << species
-                 << "already had a model on record" << "(" << recorded_modelGUID
-                 << ") -- this species'" << "freshly fit model"
-                 << model.modelGUID << "was"
-                 << "NOT recorded over it (its report/model files on"
-                 << "disk/DB are unaffected, just not linked here).";
-  }
+      if ( newly_recorded )
+      {
+         qDebug() << "[US_2dsa] record_2dsa_model_in_velmwl(): recorded" << "channel" << chann_to_process_2dsa << "species"
+                  << species << "model" << model.modelGUID << "in autoflowAnalysisVelMwl.";
+      }
+      else
+      {
+         qWarning() << "[US_2dsa] record_2dsa_model_in_velmwl(): channel" << chann_to_process_2dsa << "species" << species
+                    << "already had a model on record" << "(" << recorded_modelGUID << ") -- this species'" << "freshly fit model"
+                    << model.modelGUID << "was" << "NOT recorded over it (its report/model files on"
+                    << "disk/DB are unaffected, just not linked here).";
+      }
+   }
 
-  delete dbP;
+   delete dbP;
 }
 
 // ALEXEY: Override of US_AnalysisBase2::update() -- see header comment.
@@ -1674,32 +1711,37 @@ void US_2dsa::record_2dsa_model_in_velmwl(void) {
 // loop, so a QTimer ticking on this same thread still fires while it's
 // up -- that's what lets us catch and close it from here without
 // touching US_AnalysisBase2::update() itself.
-void US_2dsa::update(int selection) {
-  if (!us_gmp_auto_mode) {
-    US_AnalysisBase2::update(selection);
-    return;
-  }
+void US_2dsa::update( int selection )
+{
+   if ( !us_gmp_auto_mode )
+   {
+      US_AnalysisBase2::update( selection );
+      return;
+   }
 
-  QTimer dismisser;
-  dismisser.setInterval(50);
+   QTimer dismisser;
+   dismisser.setInterval( 50 );
 
-  connect(&dismisser, &QTimer::timeout, this, [this]() {
-    QMessageBox *box =
-        qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+   connect( &dismisser,
+            &QTimer::timeout,
+            this,
+            [this]()
+            {
+               QMessageBox* box = qobject_cast<QMessageBox*>( QApplication::activeModalWidget() );
 
-    if (box != nullptr) {
-      qWarning() << "[US_2dsa] update(): auto-mode -- dismissing"
-                 << "blocking QMessageBox" << box->windowTitle() << ":"
-                 << box->text();
-      box->close();
-    }
-  });
+               if ( box != nullptr )
+               {
+                  qWarning() << "[US_2dsa] update(): auto-mode -- dismissing" << "blocking QMessageBox" << box->windowTitle() << ":"
+                             << box->text();
+                  box->close();
+               }
+            } );
 
-  dismisser.start();
+   dismisser.start();
 
-  US_AnalysisBase2::update(selection);
+   US_AnalysisBase2::update( selection );
 
-  dismisser.stop();
+   dismisser.stop();
 }
 
 // Distribution information HTML string

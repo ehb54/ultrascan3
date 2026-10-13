@@ -106,8 +106,8 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       QPushButton* pb_exclude;      //!< Pushbutton to exclude specified scans
       QPushButton* pb_reset_exclude;//!< PB to revert the excluded scan range
 
-      QWidget *wrapper_lo_edlast;
-      QWidget *wrapper_disk_controls;
+      QWidget*                          wrapper_lo_edlast;
+      QWidget*                          wrapper_disk_controls;
 
       QLineEdit*   le_id;           //!< Display the current RunID
       QLineEdit*   le_temp;         //!< Display/change the temperature used

@@ -10,12 +10,13 @@
 #endif
 
 // Sanitize a name (protocol name, label, file name); see header for modes
-QString US_RunProtocol::sanitize_name(const QString &name, bool strict) {
-  static const QRegularExpression rx_safe("[/\\\\:*?\"<>|\\x00-\\x1f]");
-  static const QRegularExpression rx_strict("[^A-Za-z0-9_-]");
-  QString out = name.trimmed();
-  out.replace(strict ? rx_strict : rx_safe, "_");
-  return out;
+QString US_RunProtocol::sanitize_name( const QString& name, bool strict )
+{
+   static const QRegularExpression rx_safe( "[/\\\\:*?\"<>|\\x00-\\x1f]" );
+   static const QRegularExpression rx_strict( "[^A-Za-z0-9_-]" );
+   QString                         out = name.trimmed();
+   out.replace( strict ? rx_strict : rx_safe, "_" );
+   return out;
 }
 
 // RunProtocol constructor
@@ -331,21 +332,21 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             instrname   = attr.value( "instname" ).toString();
 
             // Velocity-MWL: backward comp.
-            if (attr.hasAttribute("vel_mwl_prot")) {
-              qDebug() << "reading ROTOR: vel_mwl_prot is present!";
-              (attr.value("vel_mwl_prot").toString().toInt())
-                  ? vel_mwl_prot = true
-                  : vel_mwl_prot = false;
-              qDebug() << "reading ROTOR: vel_mwl_prot is present! "
-                       << ", value: " << vel_mwl_prot;
-            } else {
-              qDebug() << "reading ROTOR: vel_mwl_prot is NOT present!";
-              vel_mwl_prot = false;
+            if ( attr.hasAttribute( "vel_mwl_prot" ) )
+            {
+               qDebug() << "reading ROTOR: vel_mwl_prot is present!";
+               ( attr.value( "vel_mwl_prot" ).toString().toInt() ) ? vel_mwl_prot = true : vel_mwl_prot = false;
+               qDebug() << "reading ROTOR: vel_mwl_prot is present! " << ", value: " << vel_mwl_prot;
+            }
+            else
+            {
+               qDebug() << "reading ROTOR: vel_mwl_prot is NOT present!";
+               vel_mwl_prot = false;
             }
          }
 
          else
-           break;
+            break;
       }
 
       else if ( xmli.isEndElement()  &&  ename == "rotor" )
@@ -377,7 +378,7 @@ bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute( "exptype",     exptype );
 
    // Velocity-MWL
-   xmlo.writeAttribute("vel_mwl_prot", QString::number(vel_mwl_prot));
+   xmlo.writeAttribute( "vel_mwl_prot", QString::number( vel_mwl_prot ) );
 
    xmlo.writeAttribute( "labguid",     labGUID );
    xmlo.writeAttribute( "rotguid",     rotGUID );

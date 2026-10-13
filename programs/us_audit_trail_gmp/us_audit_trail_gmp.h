@@ -109,43 +109,39 @@ class US_auditTrailGMP : public US_Widgets
 
   void user_interactions_analysis( QString, QString, QString,  QVector< QGroupBox * >&);
   void user_interactions_analysis_abde( QString, QString, QString, QVector< QGroupBox * >& );
-  void user_interactions_analysis_velmwl(QString, QString, QString,
-                                         QVector<QGroupBox *> &);
+  void                         user_interactions_analysis_velmwl( QString, QString, QString, QVector<QGroupBox*>& );
 
   //! \brief Reset the panel.
-  void reset_panel(void);
+  void                         reset_panel( void );
 
   //! \brief Create a group box for eSign.
   //! \param title The title of the group box.
   //! \return The created group box.
-  QGroupBox *createGroup_eSign(QString title);
+  QGroupBox*                   createGroup_eSign( QString title );
 
   //! \brief Create group boxes for stages.
   //! \param title The title of the group boxes.
   //! \param subtitle The subtitle of the group boxes.
   //! \return A vector of the created group boxes.
-  QVector<QGroupBox *> createGroup_stages(QString title, QString subtitle);
+  QVector<QGroupBox*>          createGroup_stages( QString title, QString subtitle );
 
   //! \brief Display the reviewers for auto section.
   //! \param index The index of the reviewer.
   //! \param details The details of the reviewers.
   //! \param role The role of the reviewer.
   //! \param layout The layout to add the reviewers to.
-  void display_reviewers_auto(int &index, QMap<QString, QString> details,
-                              QString role, QGridLayout *layout);
+  void                   display_reviewers_auto( int& index, QMap<QString, QString> details, QString role, QGridLayout* layout );
 
   //! \brief Read the autoflow record.
   //! \param id The ID of the autoflow record.
   //! \return A map containing the details of the autoflow record.
-  QMap<QString, QString> read_autoflow_record(int id);
+  QMap<QString, QString> read_autoflow_record( int id );
 
   //! \brief Check the eSign status for GMP report in auto section.
   //! \param id The ID of the eSign record.
   //! \param details The details map for eSign.
   //! \return The QLineEdit with the eSign status.
-  QLineEdit *
-  check_eSign_status_for_gmpReport_auto(QString id,
-                                        QMap<QString, QString> details);
+  QLineEdit*             check_eSign_status_for_gmpReport_auto( QString id, QMap<QString, QString> details );
 
   //! \brief Read the autoflow status record.
   //! \param status The status of the autoflow.
@@ -164,106 +160,108 @@ class US_auditTrailGMP : public US_Widgets
   //! \param aprofileName The analysis profile name.
   //! \param aprofileGUID The analysis profile GUID.
   //! \param dataSource The data source.
-  void read_autoflowStatus_record(
-      QString &status, QString &runID, QString &protocolName,
-      QString &investigatorName, QString &expType, QString &date,
-      QString &filename, QString &projectName, QString &solutionName,
-      QString &bufferName, QString &analyteName, QString &gradientName,
-      QString &hardwareName, QString &aprofileName, QString &aprofileGUID,
-      QString &dataSource, QString &, QString &,
-      QString & /*analysisVelMwlJson*/, QString & /*analysisVelMwlts*/);
+  void                   read_autoflowStatus_record( QString& status,
+                                                     QString& runID,
+                                                     QString& protocolName,
+                                                     QString& investigatorName,
+                                                     QString& expType,
+                                                     QString& date,
+                                                     QString& filename,
+                                                     QString& projectName,
+                                                     QString& solutionName,
+                                                     QString& bufferName,
+                                                     QString& analyteName,
+                                                     QString& gradientName,
+                                                     QString& hardwareName,
+                                                     QString& aprofileName,
+                                                     QString& aprofileGUID,
+                                                     QString& dataSource,
+                                                     QString&,
+                                                     QString&,
+                                                     QString& /*analysisVelMwlJson*/,
+                                                     QString& /*analysisVelMwlts*/ );
 
   //! \brief Parse the autoflow status JSON.
   //! \param json The JSON string.
   //! \param key The key for the JSON.
   //! \return A map of the parsed autoflow status.
-  QMap<QString, QMap<QString, QString>>
-  parse_autoflowStatus_json(const QString json, const QString key);
+  QMap<QString, QMap<QString, QString>> parse_autoflowStatus_json( const QString json, const QString key );
 
   //! \brief Parse the autoflow status analysis JSON.
   //! \param json The JSON string.
   //! \return A map of the parsed analysis status.
-  QMap<QString, QString> parse_autoflowStatus_analysis_json(QString json);
+  QMap<QString, QString>                parse_autoflowStatus_analysis_json( QString json );
 
   //! \brief Read the report lists from the analysis profile.
   //! \param reportList The list of reports.
   //! \param methodList The list of methods.
-  void read_reportLists_from_aprofile(QStringList &reportList,
-                                      QStringList &methodList);
+  void                                  read_reportLists_from_aprofile( QStringList& reportList, QStringList& methodList );
 
   //! \brief Read the report lists from XML.
   //! \param xml The XML stream reader.
   //! \param reports The map to store the report details.
   //! \param methods The map to store the method details.
   //! \return True if the report lists were read successfully, false otherwise.
-  bool readReportLists(QXmlStreamReader &xml, QMap<QString, QString> &reports,
-                       QMap<QString, QString> &methods);
+  bool        readReportLists( QXmlStreamReader& xml, QMap<QString, QString>& reports, QMap<QString, QString>& methods );
 
   //! \brief Read the 2DSA settings from XML.
   //! \param xml The XML stream reader.
   //! \return True if the 2DSA settings were read successfully, false otherwise.
-  bool read_2dsa_settings(QXmlStreamReader &xml);
+  bool        read_2dsa_settings( QXmlStreamReader& xml );
 
   //! \brief Build the list of dropped triples.
   //! \param db The database connection.
   //! \param details The details map.
   //! \return The list of dropped triples.
-  QStringList buildDroppedTriplesList(US_DB2 *db,
-                                      QMap<QString, QString> details);
+  QStringList buildDroppedTriplesList( US_DB2* db, QMap<QString, QString> details );
 
   //! \brief Assemble the initial GMP data.
   //! \param statusMap The map of the status.
   //! \param runID The run ID.
-  void assemble_GMP_init(QMap<QString, QMap<QString, QString>> statusMap,
-                         QString runID);
+  void        assemble_GMP_init( QMap<QString, QMap<QString, QString>> statusMap, QString runID );
 
   //! \brief Assemble the live update for GMP.
   //! \param statusMap The map of the status.
   //! \param runID The run ID.
   //! \param status The status of the GMP.
-  void assemble_GMP_live_update(QMap<QString, QMap<QString, QString>> statusMap,
-                                QString runID, QString status);
+  void        assemble_GMP_live_update( QMap<QString, QMap<QString, QString>> statusMap, QString runID, QString status );
 
   //! \brief Assemble the GMP import data.
   //! \param statusMap The map of the status.
   //! \param runID The run ID.
   //! \param status The status of the GMP.
-  void assemble_GMP_import(QMap<QString, QMap<QString, QString>> statusMap,
-                           QString runID, QString status);
+  void        assemble_GMP_import( QMap<QString, QMap<QString, QString>> statusMap, QString runID, QString status );
 
   //! \brief Assemble the GMP editing data.
   //! \param statusMap The map of the status.
   //! \param runID The run ID.
   //! \param status The status of the GMP.
-  void assemble_GMP_editing(QMap<QString, QMap<QString, QString>> statusMap,
-                            QString runID, QString status);
+  void        assemble_GMP_editing( QMap<QString, QMap<QString, QString>> statusMap, QString runID, QString status );
 
   //! \brief Assemble the GMP analysis fitmen data.
   //! \param details The details map.
-  void assemble_GMP_analysis_fitmen(QMap<QString, QString> details);
+  void        assemble_GMP_analysis_fitmen( QMap<QString, QString> details );
 
   //! \brief Assemble the GMP analysis cancelled data.
   //! \param details The details map.
   //! \param status The status of the GMP.
-  void assemble_GMP_analysis_cancelled(QMap<QString, QString> details,
-                                       QString status);
+  void        assemble_GMP_analysis_cancelled( QMap<QString, QString> details, QString status );
 
   //! \brief Assemble the GMP eSign reassign data.
   //! \param statusMap The map of the status.
-  void
-  assemble_GMP_esign_reassign(QMap<QString, QMap<QString, QString>> statusMap);
+  void        assemble_GMP_esign_reassign( QMap<QString, QMap<QString, QString>> statusMap );
 
   //! \brief Assemble the eSignatures.
   //! \param details The details map.
-  void assemble_esigs(QMap<QString, QString> details);
+  void        assemble_esigs( QMap<QString, QString> details );
 
   //! \brief Initialize the HTML content.
-  void initHTML(void);
+  void        initHTML( void );
 
   //! \brief Close the HTML content.
-  void closeHTML(void);
+  void        closeHTML( void );
 
-signals:
+  signals:
 };
 
 #endif // US_AUDITTRAIL_GMP_H

@@ -76,7 +76,7 @@ class US_2dsa : public US_AnalysisBase2
         //!        directory info already threaded through by
         //!        US_MwlSpeciesFit/US_Edit -- see get_ssf_dir_and_saveDB()
         //!        and US_Edit::load_auto_velmwl() in us_autoflow_analysis.cpp).
-        US_2dsa(QMap<QString, QString> &protocol_details_p);
+        US_2dsa( QMap<QString, QString>& protocol_details_p );
 
         //! \brief Function to handle analysis completion.
         //! \param status The status of the analysis.
@@ -133,7 +133,7 @@ class US_2dsa : public US_AnalysisBase2
         //! protocol_details-taking (auto) constructor -- gates the
         //! headless load()/fit/save path exactly as US_MwlSpeciesFit::
         //! us_gmp_auto_mode gates its own auto path.
-        bool us_gmp_auto_mode;
+        bool                   us_gmp_auto_mode;
 
         //! \brief Run-wide + per-channel protocol details, passed in via
         //! the auto constructor. See US_MwlSpeciesFit::protocol_details
@@ -143,7 +143,7 @@ class US_2dsa : public US_AnalysisBase2
         //! \brief The VEL-MWL channel ("N / X" canonical form) this
         //! instance is auto-processing -- protocol_details["chan_to_analyse"],
         //! cached for convenience/reporting (see twodsa_complete_s()).
-        QString chann_to_process_2dsa;
+        QString                chann_to_process_2dsa;
 
         //! \brief Index into dataList/lw_triples of the deconvolved
         //! species (e.g. S/1, S/2 -- US_MwlSpeciesFit's per-species
@@ -158,7 +158,7 @@ class US_2dsa : public US_AnalysisBase2
         //! analysis_done()'s auto-mode branch after each species'
         //! fit+save; twodsa_complete_s() is only emitted once
         //! auto_triple_idx reaches dataList.size().
-        int auto_triple_idx;
+        int                    auto_triple_idx;
 
         //! \brief cell+channel+wavelength ("tripleID", same string save()
         //! uses to label reports/models -- e.g. "2S1") of the triple most
@@ -172,9 +172,9 @@ class US_2dsa : public US_AnalysisBase2
         //! run_2dsa_auto() aborts loudly instead of silently re-fitting
         //! and re-saving the same triple under a new model number. Empty
         //! before the first species of a channel.
-        QString auto_last_tripleID;
+        QString                auto_last_tripleID;
 
-      private:
+     private:
         QGridLayout* progressLayout; //!< Layout for progress display.
 
         US_Editor* te_results; //!< Text editor for results.
@@ -231,7 +231,7 @@ class US_2dsa : public US_AnalysisBase2
         //! (run_2dsa_auto()) build `dset` identically. Returns false (and
         //! leaves dset unchanged) if drow is out of range.
         //! \param drow Index into dataList/lw_triples of the triple to fit.
-        bool prep_fit_dataset(int drow);
+        bool                           prep_fit_dataset( int drow );
 
         //! \brief Headless equivalent of open_fitcntl() + a user's "Start
         //! Fit"/Save click, for us_gmp_auto_mode. Calls prep_fit_dataset()
@@ -244,7 +244,7 @@ class US_2dsa : public US_AnalysisBase2
         //! "Save Results" click would). That callback is what triggers
         //! save() and, from there, twodsa_complete_s() below -- no new
         //! completion-signal plumbing is needed on the US_2dsa side.
-        void run_2dsa_auto(void);
+        void                           run_2dsa_auto( void );
 
         //! \brief Records this species' just-saved model into the run's
         //! autoflowAnalysisVelMwl row, alongside its Accept/Reject
@@ -274,7 +274,7 @@ class US_2dsa : public US_AnalysisBase2
         //! written to disk/DB by save() by this point -- this is
         //! supplementary bookkeeping for the Report stage, not part of
         //! what makes the fit itself succeed or fail.
-        void record_2dsa_model_in_velmwl(void);
+        void                           record_2dsa_model_in_velmwl( void );
 
         //! \brief Read-side counterpart of record_2dsa_model_in_velmwl()
         //! above -- checks whether dataList/lw_triples row `drow`
@@ -284,7 +284,7 @@ class US_2dsa : public US_AnalysisBase2
         //! since-abandoned run of this channel already finished. Returns
         //! false (fit it) whenever this can't be confirmed one way or
         //! the other -- see this function's own .cpp comment.
-        bool species_model_already_recorded(int drow);
+        bool                           species_model_already_recorded( int drow );
 
         //! \brief Override of US_AnalysisBase2::update() -- called by
         //! new_triple() (itself triggered by lw_triples->setCurrentRow()
@@ -300,9 +300,9 @@ class US_2dsa : public US_AnalysisBase2
         //! any QMessageBox it raises while us_gmp_auto_mode is true,
         //! rather than duplicating update()'s solution/buffer-fetch
         //! logic here.
-        void update(int selection) override;
+        void                           update( int selection ) override;
 
-      private slots:
+     private slots:
         //! \brief Slot to open the residual plot.
         void open_resplot(void);
 
@@ -364,9 +364,9 @@ class US_2dsa : public US_AnalysisBase2
         //! step, total ). Connected fresh in run_2dsa_auto() each time
         //! analcd is (re)constructed, since a new US_AnalysisControl2D
         //! is built per species -- see run_2dsa_auto()'s own comment.
-        void relay_fit_progress(int step, int total);
+        void    relay_fit_progress( int step, int total );
 
-      signals:
+     signals:
         //! \brief Emitted once, at the end of the headless auto path
         //! (run_2dsa_auto() -> analysis_done( 2 ) -> save()), reporting
         //! this channel's 2DSA-IT fit+save outcome back to the caller
@@ -391,7 +391,7 @@ class US_2dsa : public US_AnalysisBase2
         //!        2dsa_channel() in us_autoflow_analysis.cpp) gets an
         //!        honest count either way, never a species claimed as
         //!        done that wasn't.
-        void twodsa_complete_s(QString &chann, bool success, int nspecies);
+        void twodsa_complete_s( QString& chann, bool success, int nspecies );
 
         //! \brief Progress reporting for the headless auto path, for a
         //! centralized progress dialog (US_Analysis_auto::
@@ -416,8 +416,7 @@ class US_2dsa : public US_AnalysisBase2
         //!        the same ncsteps/nctotal driving analcd's own
         //!        (unshown) b_progress; for "load"/"save", a simple 0/1
         //!        -> 1/1 bracket around the call.
-        void twodsa_progress_s(QString stage, int species_idx,
-                               int species_count, int step, int total);
+        void twodsa_progress_s( QString stage, int species_idx, int species_count, int step, int total );
 };
 
 #endif // US_2DSA_H

@@ -19,10 +19,10 @@ class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
 		US_SimParamsGui( US_SimulationParameters& params );
 
       bool load_params( const QString& load_init, US_SimulationParameters& params );
-      void set_run_params(QMap<QString, QString>);
-      void accepted_auto(void);
+      void set_run_params( QMap<QString, QString> );
+      void accepted_auto( void );
 
-    signals:
+   signals:
       void complete( void );
 
    private:

@@ -396,7 +396,7 @@ void US_Integral::plot_data( void )
    if ( syssiz < 1 )
       return;
 
-   IntegralDisSys *tsys = (IntegralDisSys *)&alldis.at(0);
+   IntegralDisSys* tsys = (IntegralDisSys*) &alldis.at( 0 );
    plot_x         = ( plot_x < 0 ) ? plot_x_select() : plot_x;
 DbgLv(1) << "DaPl: plot_x" << plot_x;
 
@@ -495,28 +495,29 @@ DbgLv(1) << "DaPl: (3)tstr" << tstr;
 
    if ( ncurvs == 1 )
    {
-     // Plot a single line
-     QColor colr1(Qt::blue);
-     data_curv = us_curve(data_plot, legend_label(0));
-     data_curv->setItemAttribute(QwtPlotItem::Legend, true);
-     data_curv->setPen(QPen(QBrush(colr1), 3.0, Qt::SolidLine));
-     data_curv->setStyle(QwtPlotCurve::Lines);
+      // Plot a single line
+      QColor colr1( Qt::blue );
+      data_curv = us_curve( data_plot, legend_label( 0 ) );
+      data_curv->setItemAttribute( QwtPlotItem::Legend, true );
+      data_curv->setPen( QPen( QBrush( colr1 ), 3.0, Qt::SolidLine ) );
+      data_curv->setStyle( QwtPlotCurve::Lines );
 
-     DbgLv(1) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint - 1]
-              << "yy" << yy[0] << yy[npoint - 1];
-     data_curv->setSamples(xx, yy, npoint);
+      DbgLv( 1 ) << "DaPl:   npoint" << npoint << "xx" << xx[0] << xx[npoint - 1] << "yy" << yy[0] << yy[npoint - 1];
+      data_curv->setSamples( xx, yy, npoint );
 
-     // Insert the legend after the curve exists, so its layout is current
-     data_plot->detachItems(QwtPlotItem::Rtti_PlotLegend, true);
-     QwtLegend *legend = new QwtLegend;
-     legend->setFrameStyle(QFrame::Box | QFrame::Sunken);
-     data_plot->insertLegend(legend, QwtPlot::BottomLegend);
+      // Insert the legend after the curve exists, so its layout is current
+      data_plot->detachItems( QwtPlotItem::Rtti_PlotLegend, true );
+      QwtLegend* legend = new QwtLegend;
+      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      data_plot->insertLegend( legend, QwtPlot::BottomLegend );
 
-     draw_range_markers();
-     data_plot->replot();
-     if (short_legend_labels)
-       fit_legend_to_plot();
-     return;
+      draw_range_markers();
+      data_plot->replot();
+      if ( short_legend_labels )
+      {
+         fit_legend_to_plot();
+      }
+      return;
    }
 
    // Plot multiple lines, one for each model
@@ -558,28 +559,29 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
 
    for ( int ii = 0; ii < ncurvs; ii++ )
    {  // Draw each model line
-     curvtitl = legend_label(ii);
-     data_curv = us_curve(data_plot, curvtitl);
-     data_curv->setPen(QPen(QBrush(lncolrs[ii]), 3.0, Qt::SolidLine));
-     switch (plot_x) {
-     case ATTR_S:
-       xx = v_sedcs[ii].data();
-       break;
-     case ATTR_D:
-       xx = v_difcs[ii].data();
-       break;
-     case ATTR_W:
-       xx = v_mmass[ii].data();
-       break;
-     case ATTR_K:
-       xx = v_frats[ii].data();
-       break;
-     case ATTR_V:
-       xx = v_vbars[ii].data();
-       break;
-     case ATTR_R:
-       xx = v_rhs[ii].data();
-       break;
+      curvtitl  = legend_label( ii );
+      data_curv = us_curve( data_plot, curvtitl );
+      data_curv->setPen( QPen( QBrush( lncolrs[ii] ), 3.0, Qt::SolidLine ) );
+      switch ( plot_x )
+      {
+         case ATTR_S:
+            xx = v_sedcs[ii].data();
+            break;
+         case ATTR_D:
+            xx = v_difcs[ii].data();
+            break;
+         case ATTR_W:
+            xx = v_mmass[ii].data();
+            break;
+         case ATTR_K:
+            xx = v_frats[ii].data();
+            break;
+         case ATTR_V:
+            xx = v_vbars[ii].data();
+            break;
+         case ATTR_R:
+            xx = v_rhs[ii].data();
+            break;
       }
 
       data_curv->setStyle( QwtPlotCurve::Lines );
@@ -589,102 +591,120 @@ DbgLv(1) << "pC:  pos" << pos << "color" << QColor(colormap->rgb(colorinterv,pos
 
    // Insert the legend after all curves exist (as US_Norm_Profile does), so
    // the legend layout is computed for the final set of entries
-   QFont sfont(US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1);
-   QwtLegend *legend = new QwtLegend;
-   legend->setFrameStyle(QFrame::Box | QFrame::Sunken);
-   legend->setFont(sfont);
-   data_plot->insertLegend(legend, QwtPlot::BottomLegend);
+   QFont      sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QwtLegend* legend = new QwtLegend;
+   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( sfont );
+   data_plot->insertLegend( legend, QwtPlot::BottomLegend );
 
    draw_range_markers();
    data_plot->replot();
-   if (short_legend_labels)
-     fit_legend_to_plot();
+   if ( short_legend_labels )
+   {
+      fit_legend_to_plot();
+   }
 }
 
 // Report mode: make sure the (bottom) legend is not cut. If the legend needs
 // more height than the layout gave it, grow the plot by the missing amount.
-void US_Integral::fit_legend_to_plot(void) {
-  data_plot->updateLayout();
+void US_Integral::fit_legend_to_plot( void )
+{
+   data_plot->updateLayout();
 
-  QwtLegend *lg = qobject_cast<QwtLegend *>(data_plot->legend());
-  if (lg == nullptr)
-    return;
+   QwtLegend* lg = qobject_cast<QwtLegend*>( data_plot->legend() );
+   if ( lg == nullptr )
+   {
+      return;
+   }
 
-  for (int pass = 0; pass < 3; pass++) {
-    int need = lg->heightForWidth(lg->width());
-    int have = lg->height();
-    DbgLv(1) << "FitLg: pass need have plot-h" << pass << need << have
-             << data_plot->height();
+   for ( int pass = 0; pass < 3; pass++ )
+   {
+      int need = lg->heightForWidth( lg->width() );
+      int have = lg->height();
+      DbgLv( 1 ) << "FitLg: pass need have plot-h" << pass << need << have << data_plot->height();
 
-    if (need <= have)
-      break;
+      if ( need <= have )
+      {
+         break;
+      }
 
-    int newh = data_plot->height() + (need - have) + 4;
-    data_plot->setMinimumHeight(newh);
-    data_plot->resize(data_plot->width(), newh);
-    data_plot->replot();
-  }
+      int newh = data_plot->height() + ( need - have ) + 4;
+      data_plot->setMinimumHeight( newh );
+      data_plot->resize( data_plot->width(), newh );
+      data_plot->replot();
+   }
 }
 
 // Legend text of a distribution: full label, or (report mode) just the
 // model/species name -- the label has the form "<name> (<run info>)[<n>]"
-QString US_Integral::legend_label(int ii) const {
-  QString lbl = alldis[ii].label;
+QString US_Integral::legend_label( int ii ) const
+{
+   QString lbl = alldis[ii].label;
 
-  if (short_legend_labels) {
-    QRegularExpression rx("^(.*) \\(.*\\)\\[\\d+\\]$");
-    QRegularExpressionMatch mt = rx.match(lbl);
-    if (mt.hasMatch())
-      lbl = mt.captured(1).trimmed();
-  }
+   if ( short_legend_labels )
+   {
+      QRegularExpression      rx( "^(.*) \\(.*\\)\\[\\d+\\]$" );
+      QRegularExpressionMatch mt = rx.match( lbl );
+      if ( mt.hasMatch() )
+      {
+         lbl = mt.captured( 1 ).trimmed();
+      }
+   }
 
-  return lbl;
+   return lbl;
 }
 
 // Draw the vertical range lines (low and high edge of each range) as
 // columns of symbols, as in the ABDE plots; each range uses its own symbol
 // (+, x, *, triangle, ...) so that its two edges pair up
-void US_Integral::draw_range_markers(void) {
-  const QString rtitle("__range_line__");
+void US_Integral::draw_range_markers( void )
+{
+   const QString   rtitle( "__range_line__" );
 
-  // remove any range lines left from a previous plot
-  QwtPlotItemList citems = data_plot->itemList(QwtPlotItem::Rtti_PlotCurve);
-  for (int ii = 0; ii < citems.size(); ii++) {
-    if (citems[ii]->title().text() == rtitle) {
-      citems[ii]->detach();
-      delete citems[ii];
-    }
-  }
+   // remove any range lines left from a previous plot
+   QwtPlotItemList citems = data_plot->itemList( QwtPlotItem::Rtti_PlotCurve );
+   for ( int ii = 0; ii < citems.size(); ii++ )
+   {
+      if ( citems[ii]->title().text() == rtitle )
+      {
+         citems[ii]->detach();
+         delete citems[ii];
+      }
+   }
 
-  if (range_lines.isEmpty())
-    return;
+   if ( range_lines.isEmpty() )
+   {
+      return;
+   }
 
-  const QwtSymbol::Style symstyles[] = {
-      QwtSymbol::Cross,  // +
-      QwtSymbol::XCross, // x
-      QwtSymbol::Star1,  // *
-      QwtSymbol::UTriangle, QwtSymbol::Diamond, QwtSymbol::Ellipse};
-  const int nsyms = 6;
-  const int nypts = 31; // symbols along y in [0,1] (spacing ~3.3%)
-  QVector<double> yv(nypts);
-  for (int kk = 0; kk < nypts; kk++)
-    yv[kk] = (double)kk / (double)(nypts - 1);
+   const QwtSymbol::Style symstyles[] = { QwtSymbol::Cross,  // +
+                                          QwtSymbol::XCross, // x
+                                          QwtSymbol::Star1,  // *
+                                          QwtSymbol::UTriangle, QwtSymbol::Diamond, QwtSymbol::Ellipse };
+   const int              nsyms       = 6;
+   const int              nypts       = 31; // symbols along y in [0,1] (spacing ~3.3%)
+   QVector<double>        yv( nypts );
+   for ( int kk = 0; kk < nypts; kk++ )
+   {
+      yv[kk] = (double) kk / (double) ( nypts - 1 );
+   }
 
-  for (int ii = 0; ii < range_lines.size(); ii++) {
-    double edges[2] = {range_lines[ii].first, range_lines[ii].second};
+   for ( int ii = 0; ii < range_lines.size(); ii++ )
+   {
+      double edges[2] = { range_lines[ii].first, range_lines[ii].second };
 
-    for (int jj = 0; jj < 2; jj++) {
-      QVector<double> xv(nypts, edges[jj]);
+      for ( int jj = 0; jj < 2; jj++ )
+      {
+         QVector<double> xv( nypts, edges[jj] );
 
-      QwtPlotCurve *rcurve = new QwtPlotCurve(rtitle);
-      rcurve->setStyle(QwtPlotCurve::NoCurve); // symbols only
-      rcurve->setItemAttribute(QwtPlotItem::Legend, false);
-      rcurve->setSymbol(new QwtSymbol(symstyles[ii % nsyms], QBrush(Qt::black),
-                                      QPen(Qt::black, 1.0), QSize(5, 5)));
-      rcurve->setSamples(xv, yv);
-      rcurve->attach(data_plot);
-    }
-  }
+         QwtPlotCurve*   rcurve = new QwtPlotCurve( rtitle );
+         rcurve->setStyle( QwtPlotCurve::NoCurve ); // symbols only
+         rcurve->setItemAttribute( QwtPlotItem::Legend, false );
+         rcurve->setSymbol( new QwtSymbol( symstyles[ii % nsyms], QBrush( Qt::black ), QPen( Qt::black, 1.0 ), QSize( 5, 5 ) ) );
+         rcurve->setSamples( xv, yv );
+         rcurve->attach( data_plot );
+      }
+   }
 }
 
 // Plot data based on current plot type index
@@ -733,24 +753,24 @@ void US_Integral::load_distro()
 // Create distributions from a loaded model
 void US_Integral::load_distro( US_Model model, QString mdescr )
 {
-  IntegralDisSys tsys;
-  S_Solute sol_in;
-  S_Solute sol_nm;
-  S_Solute sol_bf;
-  QList<S_Solute> wk_distro;
+   IntegralDisSys  tsys;
+   S_Solute        sol_in;
+   S_Solute        sol_nm;
+   S_Solute        sol_bf;
+   QList<S_Solute> wk_distro;
 
-  model.update_coefficients(); // fill in any missing coefficients
+   model.update_coefficients(); // fill in any missing coefficients
 
-  QString mdesc = mdescr.section(mdescr.left(1), 1, 1);
+   QString mdesc = mdescr.section( mdescr.left( 1 ), 1, 1 );
 
-  tsys.run_name = mdesc.section(".", 0, -3);
-  QString asys = mdesc.section(".", -2, -2);
-  tsys.analys_name = asys.section("_", 0, -4) + "_" + asys.section("_", -2, -1);
-  tsys.method = model.typeText();
-  tsys.method = (mdesc.contains("-CG")) ? tsys.method.replace("2DSA", "2DSA-CG")
-                                        : tsys.method;
-  if (model.global == US_Model::GLOBAL) {
-    tsys.method = QString(mdesc).section('.', 2, 2).section('_', 2, 2);
+   tsys.run_name    = mdesc.section( ".", 0, -3 );
+   QString asys     = mdesc.section( ".", -2, -2 );
+   tsys.analys_name = asys.section( "_", 0, -4 ) + "_" + asys.section( "_", -2, -1 );
+   tsys.method      = model.typeText();
+   tsys.method      = ( mdesc.contains( "-CG" ) ) ? tsys.method.replace( "2DSA", "2DSA-CG" ) : tsys.method;
+   if ( model.global == US_Model::GLOBAL )
+   {
+      tsys.method = QString( mdesc ).section( '.', 2, 2 ).section( '_', 2, 2 );
    }
    tsys.editGUID     = model.editGUID;
 DbgLv(1) << "LD: method" << tsys.method << "mdesc" << mdesc;
@@ -920,125 +940,135 @@ DbgLv(1) << "LD: RETURN";
 // Each model is fetched directly with US_Model::load( true, guid, db )
 // (get_modelID + get_model_info: two single-row queries), rather than via
 // US_ModelLoader, which would first list ALL of the investigator's models.
-int US_Integral::load_distro_auto(const QString & /*invID*/,
-                                  const QStringList &modelGUIDs) {
-  US_Passwd pw;
-  US_DB2 db(pw.getPasswd());
+int US_Integral::load_distro_auto( const QString& /*invID*/, const QStringList& modelGUIDs )
+{
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  if (db.lastErrno() != US_DB2::OK) {
-    qDebug() << "load_distro_auto: DB connection failed:" << db.lastError();
-    return 0;
-  }
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      qDebug() << "load_distro_auto: DB connection failed:" << db.lastError();
+      return 0;
+   }
 
-  QList<US_Model> models;
-  QStringList descrs;
+   QList<US_Model> models;
+   QStringList     descrs;
 
-  short_legend_labels = true; // compact legend for the report plots
+   short_legend_labels = true; // compact legend for the report plots
 
-  for (int ii = 0; ii < modelGUIDs.size(); ii++) {
-    const QString guid = modelGUIDs[ii].trimmed();
-    US_Model model;
+   for ( int ii = 0; ii < modelGUIDs.size(); ii++ )
+   {
+      const QString guid = modelGUIDs[ii].trimmed();
+      US_Model      model;
 
-    int rc = model.load(true, guid, &db);
+      int           rc = model.load( true, guid, &db );
 
-    // load_db() does not check that get_modelID returned a row, so
-    // verify that what came back really is the requested model
-    if (rc != US_DB2::OK || model.components.isEmpty() ||
-        model.modelGUID.compare(guid, Qt::CaseInsensitive) != 0) {
-      qDebug() << "load_distro_auto: model not loaded, rc/GUID -- " << rc
-               << guid;
-      continue;
-    }
+      // load_db() does not check that get_modelID returned a row, so
+      // verify that what came back really is the requested model
+      if ( rc != US_DB2::OK || model.components.isEmpty() || model.modelGUID.compare( guid, Qt::CaseInsensitive ) != 0 )
+      {
+         qDebug() << "load_distro_auto: model not loaded, rc/GUID -- " << rc << guid;
+         continue;
+      }
 
-    // Same composite description string US_ModelLoader::description()
-    // makes: first character is the separator for section() parsing
-    QString sep = model.description.contains(";") ? "^" : ";";
-    descrs << sep + model.description + sep /*filename*/ + sep +
-                  model.modelGUID + sep /*DB id*/ + sep + model.editGUID;
-    models << model;
-  }
+      // Same composite description string US_ModelLoader::description()
+      // makes: first character is the separator for section() parsing
+      QString sep = model.description.contains( ";" ) ? "^" : ";";
+      descrs << sep + model.description + sep /*filename*/ + sep + model.modelGUID + sep /*DB id*/ + sep + model.editGUID;
+      models << model;
+   }
 
-  if (models.isEmpty())
-    return 0;
+   if ( models.isEmpty() )
+   {
+      return 0;
+   }
 
-  return load_distro_models_auto(models);
+   return load_distro_models_auto( models );
 }
 
 // Build the distributions from already-loaded models (GMP report), no dialog
-int US_Integral::load_distro_models_auto(const QList<US_Model> &models) {
-  if (models.isEmpty())
-    return 0;
+int US_Integral::load_distro_models_auto( const QList<US_Model>& models )
+{
+   if ( models.isEmpty() )
+   {
+      return 0;
+   }
 
-  short_legend_labels = true; // compact legend for the report plots
+   short_legend_labels = true; // compact legend for the report plots
 
-  QStringList descrs;
-  for (int jj = 0; jj < models.count();
-       jj++) { // Same composite description string
-               // US_ModelLoader::description()
-    // makes: first character is the separator for section() parsing
-    const US_Model &mdl = models[jj];
-    QString sep = mdl.description.contains(";") ? "^" : ";";
-    descrs << sep + mdl.description + sep /*filename*/ + sep + mdl.modelGUID +
-                  sep /*DB id*/ + sep + mdl.editGUID;
-  }
+   QStringList descrs;
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // Same composite description string
+      // US_ModelLoader::description()
+      // makes: first character is the separator for section() parsing
+      const US_Model& mdl = models[jj];
+      QString         sep = mdl.description.contains( ";" ) ? "^" : ";";
+      descrs << sep + mdl.description + sep /*filename*/ + sep + mdl.modelGUID + sep /*DB id*/ + sep + mdl.editGUID;
+   }
 
-  mdescs = descrs;
+   mdescs = descrs;
 
-  te_distr_info->setText(QString(models[0].description).section(".", 0, -4));
+   te_distr_info->setText( QString( models[0].description ).section( ".", 0, -4 ) );
 
-  for (int jj = 0; jj < models.count();
-       jj++) { // Same per-model processing as the interactive load_distro()
-    load_distro(models[jj], descrs[jj]);
-  }
+   for ( int jj = 0; jj < models.count(); jj++ )
+   { // Same per-model processing as the interactive load_distro()
+      load_distro( models[jj], descrs[jj] );
+   }
 
-  pb_rmvdist->setEnabled(true);
-  pb_save->setEnabled(true);
+   pb_rmvdist->setEnabled( true );
+   pb_save->setEnabled( true );
 
-  select_x_axis_auto(ATTR_S);
+   select_x_axis_auto( ATTR_S );
 
-  return models.count();
+   return models.count();
 }
 
 // Select x axis without user interaction and replot
-void US_Integral::select_x_axis_auto(int attr) {
-  QAbstractButton *btn = bg_x_axis->button(attr);
+void US_Integral::select_x_axis_auto( int attr )
+{
+   QAbstractButton* btn = bg_x_axis->button( attr );
 
-  if (btn != nullptr)
-    btn->setChecked(true);
+   if ( btn != nullptr )
+   {
+      btn->setChecked( true );
+   }
 
-  select_x_axis(attr);
+   select_x_axis( attr );
 }
 
-void US_Integral::resort_sol(QVector<IntegralDisSys> &list_dist) {
+void US_Integral::resort_sol( QVector<IntegralDisSys>& list_dist )
+{
+   // Go through all dsitributions
+   for ( int jj = 0; jj < list_dist.size(); jj++ )
+   {
+      S_Solute        sol_nm;
+      S_Solute        sol_bf;
+      QList<S_Solute> wk_distro = list_dist[jj].in_distro;
+      // Sort the distribution again
+      sort_distro( wk_distro, true );
 
-  // Go through all dsitributions
-  for (int jj = 0; jj < list_dist.size(); jj++) {
-    S_Solute sol_nm;
-    S_Solute sol_bf;
-    QList<S_Solute> wk_distro = list_dist[jj].in_distro;
-    // Sort the distribution again
-    sort_distro(wk_distro, true);
+      list_dist[jj].nm_distro.clear();
+      int nsolnm = wk_distro.size();
 
-    list_dist[jj].nm_distro.clear();
-    int nsolnm = wk_distro.size();
-
-    // Redo Normalization
-    for (int ii = 0; ii < nsolnm; ii++) {
-      sol_nm = wk_distro[ii];
-      sol_nm.c /= list_dist[jj].tot_conc;
-      list_dist[jj].nm_distro << sol_nm;
-    }
-    // Create version of distribution with boundary fraction
-    list_dist[jj].bo_distro.clear();
-    double sum_co = 0.0;
-    for (int ii = 0; ii < nsolnm; ii++) {
-      sol_nm = list_dist[jj].nm_distro[ii]; // norm'd solute point
-      sum_co += sol_nm.c;                   // concentration integral
-      sol_bf = sol_nm;                      // boundary fraction solute point
-      sol_bf.f = sum_co;                    // with boundary fraction for "f"
-      list_dist[jj].bo_distro << sol_bf;    // save to boundary distros
-    }
-  }
+      // Redo Normalization
+      for ( int ii = 0; ii < nsolnm; ii++ )
+      {
+         sol_nm = wk_distro[ii];
+         sol_nm.c /= list_dist[jj].tot_conc;
+         list_dist[jj].nm_distro << sol_nm;
+      }
+      // Create version of distribution with boundary fraction
+      list_dist[jj].bo_distro.clear();
+      double sum_co = 0.0;
+      for ( int ii = 0; ii < nsolnm; ii++ )
+      {
+         sol_nm = list_dist[jj].nm_distro[ii]; // norm'd solute point
+         sum_co += sol_nm.c;                   // concentration integral
+         sol_bf   = sol_nm;                    // boundary fraction solute point
+         sol_bf.f = sum_co;                    // with boundary fraction for "f"
+         list_dist[jj].bo_distro << sol_bf;    // save to boundary distros
+      }
+   }
 }
 
 // Determine type of plot currently selected
@@ -1248,8 +1278,8 @@ void US_Integral::build_bf_distro( int modx )
    if ( alldis.size() <= modx )
       return;
 
-   IntegralDisSys *tsys = (IntegralDisSys *)&alldis.at(modx);
-   DbgLv(1) << "BldBf: modx" << modx;
+   IntegralDisSys* tsys = (IntegralDisSys*) &alldis.at( modx );
+   DbgLv( 1 ) << "BldBf: modx" << modx;
 
    tsys->bf_distro.clear();
    int    nsolbo    = tsys->bo_distro.size();

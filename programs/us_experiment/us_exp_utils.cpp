@@ -578,44 +578,50 @@ DbgLv(1) << "main: iP DONE";
 // The one protocol-loading progress dialog: child of the top-level window (the
 // autoflow main window when this program is embedded in it), window-modal,
 // centered over it
-US_GmpProgress *US_ExperimentMain::load_progress(void) {
-  US_GmpProgress::acquire(this, progress_load)
-      ->setWindowTitle(tr("Loading Protocol"));
-  return progress_load;
+US_GmpProgress* US_ExperimentMain::load_progress( void )
+{
+   US_GmpProgress::acquire( this, progress_load )->setWindowTitle( tr( "Loading Protocol" ) );
+   return progress_load;
 }
 
 // initPanels() with a progress dialog: reading the Analysis Profile's
 // reports/reportItems from the DB (in US_ExperGuiAProfile::initPanel()) is what
 // takes long when a protocol is loaded.
-void US_ExperimentMain::initPanels_with_progress(bool continue_stage) {
-  US_GmpProgress *pg = load_progress();
-  const int base = continue_stage ? 10 : 0;
-  const int span = 95 - base;
+void US_ExperimentMain::initPanels_with_progress( bool continue_stage )
+{
+   US_GmpProgress* pg   = load_progress();
+   const int       base = continue_stage ? 10 : 0;
+   const int       span = 95 - base;
 
-  if (continue_stage) {
-    pg->setLabelText(tr("Initializing protocol panels..."));
-    pg->setValue(base);
-  } else
-    pg->setStage(1, 0, tr("Loading Protocol"),
-                 tr("Initializing protocol panels..."), 100);
+   if ( continue_stage )
+   {
+      pg->setLabelText( tr( "Initializing protocol panels..." ) );
+      pg->setValue( base );
+   }
+   else
+   {
+      pg->setStage( 1, 0, tr( "Loading Protocol" ), tr( "Initializing protocol panels..." ), 100 );
+   }
 
-  aprof_progress_cb = [pg, base, span](int done, int total,
-                                       const QString &detail) {
-    if (total <= 0)
-      return;
-    pg->setLabelText(
-        detail.isEmpty() ? QObject::tr("Reading Analysis Profile...") : detail);
-    pg->setValue(qBound(base, base + span * done / total, 95));
-  };
+   aprof_progress_cb = [pg, base, span]( int done, int total, const QString& detail )
+   {
+      if ( total <= 0 )
+      {
+         return;
+      }
+      pg->setLabelText( detail.isEmpty() ? QObject::tr( "Reading Analysis Profile..." ) : detail );
+      pg->setValue( qBound( base, base + span * done / total, 95 ) );
+   };
 
-  initPanels();
+   initPanels();
 
-  aprof_progress_cb = nullptr; // lambda refers to the dialog: clear it
-  pg->setValue(95);
-  if (!continue_stage) {
-    pg->setValue(pg->maximum());
-    pg->finish();
-  }
+   aprof_progress_cb = nullptr; // lambda refers to the dialog: clear it
+   pg->setValue( 95 );
+   if ( !continue_stage )
+   {
+      pg->setValue( pg->maximum() );
+      pg->finish();
+   }
 }
 
 //========================= End:   Main      section =========================
@@ -1150,8 +1156,8 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
    // is NOT called when the experiment type is set programmatically (loading a
    // protocol): sync the "Treat as MWL" checkbox visibility here -- it must be
    // visible ONLY for the Velocity type.
-   const bool is_velocity = (cb_exptype->currentText() == "Velocity");
-   ck_velmwl->setVisible(is_velocity);
+   const bool is_velocity = ( cb_exptype->currentText() == "Velocity" );
+   ck_velmwl->setVisible( is_velocity );
 
    changed              = was_changed;   // Restore changed state
    DbgLv(1) << "EGRo: inP:  rotID" << rpRotor->rotID << "rotor" << rpRotor->rotor
@@ -1171,13 +1177,13 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
      // Development (previously this was inside the !us_prot_dev_mode block, so
      // it was never checked in PD)
      qDebug() << "rpRotor->vel_mwl_prot " << rpRotor->vel_mwl_prot;
-     ck_velmwl->setChecked(is_velocity && rpRotor->vel_mwl_prot);
+     ck_velmwl->setChecked( is_velocity && rpRotor->vel_mwl_prot );
 
      // Show current oper(s) & rev(s)
-     te_opers_to_assign->setText(rpRotor->operListAssign);
-     te_revs_to_assign->setText(rpRotor->revListAssign);
-     te_apprs_to_assign->setText(rpRotor->apprListAssign);
-     te_smes_to_assign->setText(rpRotor->smeListAssign);
+     te_opers_to_assign->setText( rpRotor->operListAssign );
+     te_revs_to_assign->setText( rpRotor->revListAssign );
+     te_apprs_to_assign->setText( rpRotor->apprListAssign );
+     te_smes_to_assign->setText( rpRotor->smeListAssign );
 
      // initiate global reviewers list:
      init_grevs();
@@ -1189,58 +1195,58 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
 
      // BAsed on mode [usmode - R&D], hide/show oper/rev section:
      // show Assign oper/rev ONLY for GMP:
-     qDebug() << "In Rotor: mainw->automode, mainw->usmode -- "
-              << mainw->automode << ", " << mainw->usmode;
-     if (mainw->usmode) {
-       lb_operator_reviewer_banner -> hide();
-       lb_choose_oper -> hide();
-       cb_choose_operator -> hide();
-       pb_add_oper        -> hide();
+     qDebug() << "In Rotor: mainw->automode, mainw->usmode -- " << mainw->automode << ", " << mainw->usmode;
+     if ( mainw->usmode )
+     {
+        lb_operator_reviewer_banner->hide();
+        lb_choose_oper->hide();
+        cb_choose_operator->hide();
+        pb_add_oper->hide();
 
-       lb_choose_rev -> hide();
-       cb_choose_rev -> hide();
-       pb_add_rev    -> hide();
+        lb_choose_rev->hide();
+        cb_choose_rev->hide();
+        pb_add_rev->hide();
 
-       lb_choose_appr -> hide();
-       cb_choose_appr -> hide();
-       pb_add_appr    -> hide();
+        lb_choose_appr->hide();
+        cb_choose_appr->hide();
+        pb_add_appr->hide();
 
-       lb_choose_sme -> hide();
-       cb_choose_sme -> hide();
-       pb_add_sme    -> hide();
+        lb_choose_sme->hide();
+        cb_choose_sme->hide();
+        pb_add_sme->hide();
 
-       lb_opers_to_assign -> hide();
-       te_opers_to_assign -> hide();
-       pb_remove_oper     -> hide();
+        lb_opers_to_assign->hide();
+        te_opers_to_assign->hide();
+        pb_remove_oper->hide();
 
-       lb_revs_to_assign -> hide();
-       te_revs_to_assign -> hide();
-       pb_remove_rev     -> hide();
+        lb_revs_to_assign->hide();
+        te_revs_to_assign->hide();
+        pb_remove_rev->hide();
 
-       lb_apprs_to_assign -> hide();
-       te_apprs_to_assign -> hide();
-       pb_remove_appr     -> hide();
+        lb_apprs_to_assign->hide();
+        te_apprs_to_assign->hide();
+        pb_remove_appr->hide();
 
-       lb_smes_to_assign -> hide();
-       te_smes_to_assign -> hide();
-       pb_remove_sme     -> hide();
+        lb_smes_to_assign->hide();
+        te_smes_to_assign->hide();
+        pb_remove_sme->hide();
 
-       //show Operator Info:
-       lb_operator -> setVisible(true);
-       cb_operator -> setVisible(true);
+        //show Operator Info:
+        lb_operator->setVisible( true );
+        cb_operator->setVisible( true );
 
-       //Hide data disk upload
-       pb_importDisk    -> hide();
-       le_dataDiskPath  -> hide();
-       ck_disksource    -> hide();
-       ck_absorbance_t  -> hide();
-       ck_absorbance_pa -> hide();
-       ck_velmwl->hide();
-       rpRotor->importData = false;
-       rpRotor->importData_absorbance_t  = false;
-       rpRotor->importData_absorbance_pa = false;
-       rpRotor->importDataDisk = "";
-       rpRotor->vel_mwl_prot = false;
+        //Hide data disk upload
+        pb_importDisk->hide();
+        le_dataDiskPath->hide();
+        ck_disksource->hide();
+        ck_absorbance_t->hide();
+        ck_absorbance_pa->hide();
+        ck_velmwl->hide();
+        rpRotor->importData               = false;
+        rpRotor->importData_absorbance_t  = false;
+        rpRotor->importData_absorbance_pa = false;
+        rpRotor->importDataDisk           = "";
+        rpRotor->vel_mwl_prot             = false;
      }
 
 
@@ -1699,7 +1705,7 @@ qDebug() << "NAME OF THE ROTOR IN SAVE: rot, rpRotor->rotor: " << rot << ", "  <
        rpRotor->importData                = ck_disksource    ->isChecked();
        rpRotor->importData_absorbance_t   = ck_absorbance_t  ->isChecked();
        rpRotor->importData_absorbance_pa  = ck_absorbance_pa ->isChecked();
-       rpRotor->vel_mwl_prot = ck_velmwl->isChecked();
+       rpRotor->vel_mwl_prot              = ck_velmwl->isChecked();
      }
    
 qDebug() << "OPERATORID / INSTRUMENT / ExpType in SAVE: "
@@ -3087,9 +3093,10 @@ DbgLv(1) << "EGOp:inP:  ii" << ii << "channel" << channel
       ckbox2->setVisible( ! ckscan2.contains( notinst ) );
       ckbox3->setVisible( ! ckscan3.contains( notinst ) );
 
-      if (mainw->us_velmwl_mode) {
-        ckbox2->setChecked(false);
-        ckbox2->setEnabled(false);
+      if ( mainw->us_velmwl_mode )
+      {
+         ckbox2->setChecked( false );
+         ckbox2->setEnabled( false );
       }
    }
 
@@ -3723,58 +3730,62 @@ DbgLv(1) << "EGRn:inP:  #Wvl for cell: " << j << " is: " << Total_wvl[i];
      }
 
    //For abde only, show buff_spectra cks
-     if (mainw->us_abde_mode || mainw->us_velmwl_mode) {
-       qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
-       for ( int ii = 0; ii < nrnchan; ii++ )
-	 {
-	   //check if channel MWL
-	   int kswavl       = swvlens[ ii ].count();
-	   QString chanName = rchans[ ii ];;
-	   QStringList msg_to_user;     
-	   
-	   if( kswavl > 1 && iStwoOrMoreAnalytesSpectra_forChannel( chanName, msg_to_user, "INIT", -1 ) ) 
-	     {
-	       genL->addWidget( cc_buff_sp[ ii ], ii,  16, 1, 2 );
-	       cc_buff_sp[ ii ]-> setVisible( true );
-	       //cc_buff_sp_ck[ ii ]->setChecked( false );
+     if ( mainw->us_abde_mode || mainw->us_velmwl_mode )
+     {
+        qDebug() << "ABDE, adding cks " << mainw->us_abde_mode;
+        for ( int ii = 0; ii < nrnchan; ii++ )
+        {
+           //check if channel MWL
+           int     kswavl   = swvlens[ii].count();
+           QString chanName = rchans[ii];
+           ;
+           QStringList msg_to_user;
 
-	       qDebug() << "[add]o_name " << cc_buff_sp[ ii ]->objectName();
+           if ( kswavl > 1 && iStwoOrMoreAnalytesSpectra_forChannel( chanName, msg_to_user, "INIT", -1 ) )
+           {
+              genL->addWidget( cc_buff_sp[ii], ii, 16, 1, 2 );
+              cc_buff_sp[ii]->setVisible( true );
+              //cc_buff_sp_ck[ ii ]->setChecked( false );
 
-	       //define channel as MWL-deconv.
-	       abde_mwl_deconv[ ii ] = true;
-	     }
-	   else
-	     {
-	       genL->removeWidget( cc_buff_sp[ ii ] );
-	       cc_buff_sp[ ii ]-> setVisible( false );
+              qDebug() << "[add]o_name " << cc_buff_sp[ii]->objectName();
 
-	       //also, reset abde_buff[ ii ], abde_mwl_deconv[ ii ]
-	       abde_buff[ ii ]       = false;
-	       abde_mwl_deconv[ ii ] = false;
-	     }
-	 }
-     } else {
-       qDebug() << "ABDE, removing cks " << mainw->us_abde_mode;
-       for ( int ii = 0; ii < nrnchan; ii++ )
-	 {
-	   // QString o_name = QString::number( ii ) + ": ck_buff_spectrum_container";
-	   qDebug() << "[remove]o_name " << cc_buff_sp[ ii ]->objectName();
-	   
-	   // QWidget* c_w = genL->findChild<QWidget *>( o_name, Qt::FindChildrenRecursively ); //Qt::FindDirectChildrenOnly);
-	   // if ( c_w != NULL )
-	   //   {
-	   //     qDebug() << "Widget found!";
-	   //     genL->removeWidget( c_w );
-	   //     delete c_w;
-	   //  }
+              //define channel as MWL-deconv.
+              abde_mwl_deconv[ii] = true;
+           }
+           else
+           {
+              genL->removeWidget( cc_buff_sp[ii] );
+              cc_buff_sp[ii]->setVisible( false );
 
-	   genL->removeWidget( cc_buff_sp[ ii ] );
-	   cc_buff_sp[ ii ]-> setVisible( false );
+              //also, reset abde_buff[ ii ], abde_mwl_deconv[ ii ]
+              abde_buff[ii]       = false;
+              abde_mwl_deconv[ii] = false;
+           }
+        }
+     }
+     else
+     {
+        qDebug() << "ABDE, removing cks " << mainw->us_abde_mode;
+        for ( int ii = 0; ii < nrnchan; ii++ )
+        {
+           // QString o_name = QString::number( ii ) + ": ck_buff_spectrum_container";
+           qDebug() << "[remove]o_name " << cc_buff_sp[ii]->objectName();
 
-	   //also, reset abde_buff[ ii ]
-	   abde_buff[ ii ]       = false;
-	   abde_mwl_deconv[ ii ] = false;
-	 }
+           // QWidget* c_w = genL->findChild<QWidget *>( o_name, Qt::FindChildrenRecursively ); //Qt::FindDirectChildrenOnly);
+           // if ( c_w != NULL )
+           //   {
+           //     qDebug() << "Widget found!";
+           //     genL->removeWidget( c_w );
+           //     delete c_w;
+           //  }
+
+           genL->removeWidget( cc_buff_sp[ii] );
+           cc_buff_sp[ii]->setVisible( false );
+
+           //also, reset abde_buff[ ii ]
+           abde_buff[ii]       = false;
+           abde_mwl_deconv[ii] = false;
+        }
      }
 }
 
@@ -3928,9 +3939,8 @@ DbgLv(1) << "EGAp:inP:  sdiag" << sdiag;
    sdiag->currProf.protoID    = mainw->currProto.protoID;
 DbgLv(1) << "EGAp:inP:  sdiag inherit" << "proto GUID ID"
  << mainw->currProto.protoGUID << mainw->currProto.protoID;
-sdiag->progress_cb =
-    mainw->aprof_progress_cb; // set only while a protocol is being loaded
-sdiag->inherit_protocol(currProto);
+sdiag->progress_cb = mainw->aprof_progress_cb; // set only while a protocol is being loaded
+sdiag->inherit_protocol( currProto );
 sdiag->progress_cb = nullptr;
 DbgLv(1) << "EGAp:inP:  sdiag initPanels()";
    mainw->currAProf           = sdiag->currProf;
@@ -4209,150 +4219,138 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    
    //[ABDE] Here, check for existence of valid extinction profiles for analytes (and optionally buffers) in the MWL-channels 
    //If not, inform user, disable "Submit"/"Save Protocol" buttons
-     if (mainw->us_abde_mode || mainw->us_velmwl_mode) {
-       QString e_mode = (mainw->us_abde_mode) ? "ABDE" : "VEL-MWL";
-       QString e_mode_mwl = (mainw->us_abde_mode) ? "ABDE-MWL" : "VEL-MWL";
-       qDebug() << "Submit::init: " << e_mode << "_MODE ";
-       QStringList msg_to_user;
-       
-       //first, check if this is abde-mixed (MWL & SWL) experiement
-       //disallow, and enforce to be either MWL or SWL
-       
-       //second, if MWL, enforce it to be MWL-DECONV.
-       //meaning each non-ref. channel must have solution with 2 solutes... 
-       if ( !ifMixedABDE( msg_to_user ) )
-       	 {
-       	   pb_submit->setEnabled( false );
-       	   pb_saverp->setEnabled( false );
+     if ( mainw->us_abde_mode || mainw->us_velmwl_mode )
+     {
+        QString e_mode     = ( mainw->us_abde_mode ) ? "ABDE" : "VEL-MWL";
+        QString e_mode_mwl = ( mainw->us_abde_mode ) ? "ABDE-MWL" : "VEL-MWL";
+        qDebug() << "Submit::init: " << e_mode << "_MODE ";
+        QStringList msg_to_user;
 
-       	   msg_to_user.removeDuplicates();
+        //first, check if this is abde-mixed (MWL & SWL) experiement
+        //disallow, and enforce to be either MWL or SWL
 
-           QString otype_channs =
-               (e_mode.contains("ABDE"))
-                   ? tr("\n\nCurrent Ranges settings do not correspond to "
-                        "either multi-wavelength (MWL) or "
-                        "single-wavelength (SWL) experiment."
-                        "\nPlease modify wavelengths settings in the tab "
-                        "7:Ranges, to ensure "
-                        "all channels are either MWL or SWL."
-                        "\n\nSaving protocol or run submission to the Optima "
-                        "are not possible "
-                        "until this problem is resolved.")
-                   : tr("\n\nCurrent Ranges settings do not correspond to "
-                        "multi-wavelength (MWL) experiment."
-                        "\nPlease modify wavelengths settings in the tab "
-                        "7:Ranges, to ensure "
-                        "all channels are MWL."
-                        "\n\nSaving protocol or run submission to the Optima "
-                        "are not possible "
-                        "until this problem is resolved.");
+        //second, if MWL, enforce it to be MWL-DECONV.
+        //meaning each non-ref. channel must have solution with 2 solutes...
+        if ( !ifMixedABDE( msg_to_user ) )
+        {
+           pb_submit->setEnabled( false );
+           pb_saverp->setEnabled( false );
 
-           QMessageBox::critical(this,
-                                 tr("ATTENTION: Invalid Ranges Settings (") +
-                                     e_mode + tr(")"),
-                                 msg_to_user.join("\n") + otype_channs);
+           msg_to_user.removeDuplicates();
+
+           QString otype_channs = ( e_mode.contains( "ABDE" ) ) ? tr( "\n\nCurrent Ranges settings do not correspond to "
+                                                                      "either multi-wavelength (MWL) or "
+                                                                      "single-wavelength (SWL) experiment."
+                                                                      "\nPlease modify wavelengths settings in the tab "
+                                                                      "7:Ranges, to ensure "
+                                                                      "all channels are either MWL or SWL."
+                                                                      "\n\nSaving protocol or run submission to the Optima "
+                                                                      "are not possible "
+                                                                      "until this problem is resolved." )
+                                                                : tr( "\n\nCurrent Ranges settings do not correspond to "
+                                                                      "multi-wavelength (MWL) experiment."
+                                                                      "\nPlease modify wavelengths settings in the tab "
+                                                                      "7:Ranges, to ensure "
+                                                                      "all channels are MWL."
+                                                                      "\n\nSaving protocol or run submission to the Optima "
+                                                                      "are not possible "
+                                                                      "until this problem is resolved." );
+
+           QMessageBox::critical(
+              this, tr( "ATTENTION: Invalid Ranges Settings (" ) + e_mode + tr( ")" ), msg_to_user.join( "\n" ) + otype_channs );
            return;
-	 }
+        }
 
-             
-       if ( !extinctionProfilesExist( msg_to_user ) )
-       	 {
-       	   pb_submit->setEnabled( false );
-       	   pb_saverp->setEnabled( false );
 
-       	   msg_to_user.removeDuplicates();
-
-	   if (msg_to_user.join(",").contains("Single Analyte Defined;"))
-	     {
-             QMessageBox::critical(
-                 this,
-                 tr("ATTENTION: Solution with a Single Analyte (") + e_mode +
-                     tr(")"),
-                 msg_to_user.join("\n") +
-                     tr("\n\nThe solution for the above specified channel has "
-                        "only "
-                        "one analyte. At least two analytes with valid "
-                        "extinction profiles "
-                        "are required for the currently defined ") +
-                     e_mode_mwl +
-                     tr(" experiment.\n"
-                        "Please modify the solution, or select a different one "
-                        "to satisfy these "
-                        "requirements."
-                        "\n\nSaving protocol or run submission to the Optima "
-                        "are not possible "
-                        "until this problem is resolved."));
-             }
-	   else if (msg_to_user.join(",").contains(" Invalid Extinction Profile(s);"))
-	     {
-               QMessageBox::critical(
-                   this,
-                   tr("ATTENTION: Invalid Extinction Profile(s) (") +
-                       e_mode_mwl + tr(")"),
-                   msg_to_user.join("\n") +
-                       tr("\n\nPlease upload valid extinction profiles for "
-                          "above specified analytes "
-                          "and/or buffers using following UltraScan's "
-                          "programs: \n\"Database:Manage Analytes\""
-                          "\n\"Database:Manage Buffer Data\"\n\n"
-                          "Saving protocol or run submission to the Optima are "
-                          "not possible "
-                          "until this problem is resolved."));
-             }
-	   else
-	     {
-               QMessageBox::critical(
-                   this,
-                   tr("ATTENTION: Invalid Extinction Profiles (") + e_mode_mwl +
-                       tr(")"),
-                   msg_to_user.join("\n") +
-                       tr("\n\nPlease upload valid extinction profiles for "
-                          "above specified analytes "
-                          "and/or buffers using following UltraScan's "
-                          "programs: \n\"Database:Manage Analytes\""
-                          "\n\"Database:Manage Buffer Data\"\n\n"
-                          "Saving protocol or run submission to the Optima are "
-                          "not possible "
-                          "until this problem is resolved."));
-             }
-	   return;
-       	 }
-
-         // Check for the correct settings in AProfile for 'Use Reference#':
-         // ABDE only:
-         if (!useReferenceNumbersSet(msg_to_user) && !mainw->us_velmwl_mode) {
+        if ( !extinctionProfilesExist( msg_to_user ) )
+        {
            pb_submit->setEnabled( false );
-	   pb_saverp->setEnabled( false );
-	   
-	   msg_to_user.removeDuplicates();
-	   
-	   QMessageBox::critical( this,
-				  tr( "ATTENTION: Reference Channels NOT set Properly (ABDE)" ),
-				  msg_to_user.join("\n") +
-				  tr("\n\nPlease define references for all sample channels "
-				     "in the tab 8. AProfile: ABDE Settings. \n\n"
-				     "Saving protocol or run submission to the Optima are not possible "
-				     "until this problem is resolved."));
-	   return;
-         }
+           pb_saverp->setEnabled( false );
 
-       //Check for Matching Wvls in Refs. && Samples:
-         if (!samplesReferencesWvlsMatch(msg_to_user) &&
-             !mainw->us_velmwl_mode) {
+           msg_to_user.removeDuplicates();
+
+           if ( msg_to_user.join( "," ).contains( "Single Analyte Defined;" ) )
+           {
+              QMessageBox::critical( this,
+                                     tr( "ATTENTION: Solution with a Single Analyte (" ) + e_mode + tr( ")" ),
+                                     msg_to_user.join( "\n" ) +
+                                        tr( "\n\nThe solution for the above specified channel has "
+                                            "only "
+                                            "one analyte. At least two analytes with valid "
+                                            "extinction profiles "
+                                            "are required for the currently defined " ) +
+                                        e_mode_mwl +
+                                        tr( " experiment.\n"
+                                            "Please modify the solution, or select a different one "
+                                            "to satisfy these "
+                                            "requirements."
+                                            "\n\nSaving protocol or run submission to the Optima "
+                                            "are not possible "
+                                            "until this problem is resolved." ) );
+           }
+           else if ( msg_to_user.join( "," ).contains( " Invalid Extinction Profile(s);" ) )
+           {
+              QMessageBox::critical( this,
+                                     tr( "ATTENTION: Invalid Extinction Profile(s) (" ) + e_mode_mwl + tr( ")" ),
+                                     msg_to_user.join( "\n" ) + tr( "\n\nPlease upload valid extinction profiles for "
+                                                                    "above specified analytes "
+                                                                    "and/or buffers using following UltraScan's "
+                                                                    "programs: \n\"Database:Manage Analytes\""
+                                                                    "\n\"Database:Manage Buffer Data\"\n\n"
+                                                                    "Saving protocol or run submission to the Optima are "
+                                                                    "not possible "
+                                                                    "until this problem is resolved." ) );
+           }
+           else
+           {
+              QMessageBox::critical( this,
+                                     tr( "ATTENTION: Invalid Extinction Profiles (" ) + e_mode_mwl + tr( ")" ),
+                                     msg_to_user.join( "\n" ) + tr( "\n\nPlease upload valid extinction profiles for "
+                                                                    "above specified analytes "
+                                                                    "and/or buffers using following UltraScan's "
+                                                                    "programs: \n\"Database:Manage Analytes\""
+                                                                    "\n\"Database:Manage Buffer Data\"\n\n"
+                                                                    "Saving protocol or run submission to the Optima are "
+                                                                    "not possible "
+                                                                    "until this problem is resolved." ) );
+           }
+           return;
+        }
+
+        // Check for the correct settings in AProfile for 'Use Reference#':
+        // ABDE only:
+        if ( !useReferenceNumbersSet( msg_to_user ) && !mainw->us_velmwl_mode )
+        {
            pb_submit->setEnabled( false );
-	   pb_saverp->setEnabled( false );
-	   
-	   msg_to_user.removeDuplicates();
+           pb_saverp->setEnabled( false );
 
-	   QMessageBox::critical( this,
-				  tr( "ATTENTION: Ranges Settings for Refs./Samples are Incorrect (ABDE)" ),
-				  msg_to_user.join("\n") +
-				  tr("\n\nPlease revise wavelengths settings "
-				     "in the tab 7:Ranges to correct the above error(s). \n\n"
-				     "Saving protocol or run submission to the Optima are not possible "
-				     "until this problem is resolved."));
-	   return;
-         }
+           msg_to_user.removeDuplicates();
+
+           QMessageBox::critical( this,
+                                  tr( "ATTENTION: Reference Channels NOT set Properly (ABDE)" ),
+                                  msg_to_user.join( "\n" ) + tr( "\n\nPlease define references for all sample channels "
+                                                                 "in the tab 8. AProfile: ABDE Settings. \n\n"
+                                                                 "Saving protocol or run submission to the Optima are not possible "
+                                                                 "until this problem is resolved." ) );
+           return;
+        }
+
+        //Check for Matching Wvls in Refs. && Samples:
+        if ( !samplesReferencesWvlsMatch( msg_to_user ) && !mainw->us_velmwl_mode )
+        {
+           pb_submit->setEnabled( false );
+           pb_saverp->setEnabled( false );
+
+           msg_to_user.removeDuplicates();
+
+           QMessageBox::critical( this,
+                                  tr( "ATTENTION: Ranges Settings for Refs./Samples are Incorrect (ABDE)" ),
+                                  msg_to_user.join( "\n" ) + tr( "\n\nPlease revise wavelengths settings "
+                                                                 "in the tab 7:Ranges to correct the above error(s). \n\n"
+                                                                 "Saving protocol or run submission to the Optima are not possible "
+                                                                 "until this problem is resolved." ) );
+           return;
+        }
      }
 
    //DEBUG
@@ -4786,8 +4784,10 @@ bool US_ExperGuiUpload::ifMixedABDE( QStringList&  msg_to_user)
     all_chann_same_wvl_type = false;
 
   // here check for VEL-MWL: if all_wvl_types[0] != "MWL" - must be all MWL!!
-  if (all_wvl_types[0] != "MWL" && mainw->us_velmwl_mode)
-    all_chann_same_wvl_type = false;
+  if ( all_wvl_types[0] != "MWL" && mainw->us_velmwl_mode )
+  {
+     all_chann_same_wvl_type = false;
+  }
 
   qDebug() << "[in ifMixedABDE()] " <<  msg_to_user;
   

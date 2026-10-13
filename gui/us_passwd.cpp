@@ -9,11 +9,14 @@
 // US_Passwd objects are normally created parentless on the stack and never
 // shown, so using 'this' as the parent makes Qt center the dialog over an
 // unshown 0,0-positioned widget, i.e. in the top-left corner of the screen.
-static QWidget *anchor_window(QWidget *self) {
-  QWidget *p = self->parentWidget();
-  if (p)
-    return p->window();
-  return QApplication::activeWindow(); // may be nullptr -> centered on screen
+static QWidget* anchor_window( QWidget* self )
+{
+   QWidget* p = self->parentWidget();
+   if ( p )
+   {
+      return p->window();
+   }
+   return QApplication::activeWindow(); // may be nullptr -> centered on screen
 }
 
 QString US_Passwd::getPasswd( void  )
@@ -27,19 +30,21 @@ QString US_Passwd::getPasswd( void  )
 
   if ( currentHash.isEmpty() )
   {
-    QMessageBox::information(anchor_window(this), tr("Password Error"),
-                             tr("The Master Password has not been set."));
+     QMessageBox::information( anchor_window( this ), tr( "Password Error" ), tr( "The Master Password has not been set." ) );
 
-    return QString();
+     return QString();
   }
 
   // Ask the user to input the password
   while ( true ) 
   {
     bool ok;
-    pw = QInputDialog::getText(anchor_window(this), tr("Master Password"),
-                               tr("Please input your Master Password"),
-                               QLineEdit::Password, QString(), &ok);
+    pw = QInputDialog::getText( anchor_window( this ),
+                                tr( "Master Password" ),
+                                tr( "Please input your Master Password" ),
+                                QLineEdit::Password,
+                                QString(),
+                                &ok );
 
     // If the user cancelled, return a null string
     if ( ! ok ) return QString();
@@ -50,8 +55,7 @@ QString US_Passwd::getPasswd( void  )
 
     if ( hash == currentHash ) break;
 
-    QMessageBox::information(anchor_window(this), tr("Password Error"),
-                             tr("The password is incorrect."));
+    QMessageBox::information( anchor_window( this ), tr( "Password Error" ), tr( "The password is incorrect." ) );
   }
 
   // Save the password in global memory and return
@@ -74,10 +78,9 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
 
   if ( currentHash.isEmpty() )
   {
-    QMessageBox::information(anchor_window(this), tr("Password Error"),
-                             tr("The Master Password has not been set."));
+     QMessageBox::information( anchor_window( this ), tr( "Password Error" ), tr( "The Master Password has not been set." ) );
 
-    return form_map;
+     return form_map;
   }
 
   bool reject_chosen = false;
@@ -85,44 +88,44 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
   // Ask the user to input the password
   while ( true ) 
   {
-    QDialog dialog(anchor_window(this));
-    dialog.setWindowTitle( title );
-    QFont font_d  = dialog.property("font").value<QFont>();
-    QFontMetrics fm(font_d);
-    int pixelsWide = fm.horizontalAdvance( dialog.windowTitle() );
-    qDebug() << "pixelsWide -- " << pixelsWide;
-    dialog.setMinimumWidth( pixelsWide*3 );
-    QFormLayout form(&dialog);
-        
-    // Add some text above the fields
-    form.addRow(new QLabel( i_text ));
-    
-    // Add the lineEdits with their respective labels
-    QList<QLineEdit *> fields;
-    QStringList form_labels = { "User:", "Comment:", "Master Password:" }; 
-    for(int i = 0; i < form_labels.size(); ++i)
-      {
-	//QLineEdit *lineEdit = new QLineEdit(&dialog);
-	QLineEdit *lineEdit = us_lineedit();
-	//QString label = form_labels[i];
+     QDialog dialog( anchor_window( this ) );
+     dialog.setWindowTitle( title );
+     QFont        font_d = dialog.property( "font" ).value<QFont>();
+     QFontMetrics fm( font_d );
+     int          pixelsWide = fm.horizontalAdvance( dialog.windowTitle() );
+     qDebug() << "pixelsWide -- " << pixelsWide;
+     dialog.setMinimumWidth( pixelsWide * 3 );
+     QFormLayout form( &dialog );
 
-	QLabel* label = us_label( form_labels[i] );
+     // Add some text above the fields
+     form.addRow( new QLabel( i_text ) );
 
-	lineEdit->setObjectName( form_labels[i] );
+     // Add the lineEdits with their respective labels
+     QList<QLineEdit*> fields;
+     QStringList       form_labels = { "User:", "Comment:", "Master Password:" };
+     for ( int i = 0; i < form_labels.size(); ++i )
+     {
+        //QLineEdit *lineEdit = new QLineEdit(&dialog);
+        QLineEdit* lineEdit = us_lineedit();
+        //QString label = form_labels[i];
 
-	if ( form_labels[i] == "Master Password:" )
-	  lineEdit->setEchoMode(QLineEdit::Password);
-	
-	
-	if ( form_labels[i] == "User:" )
-	  {
-	    lineEdit->setText( user_s );
-	    us_setReadOnly( lineEdit, true );
-	  }
-	
-	form.addRow( label, lineEdit);
-	
-	fields << lineEdit;
+        QLabel*    label = us_label( form_labels[i] );
+
+        lineEdit->setObjectName( form_labels[i] );
+
+        if ( form_labels[i] == "Master Password:" )
+           lineEdit->setEchoMode( QLineEdit::Password );
+
+
+        if ( form_labels[i] == "User:" )
+        {
+           lineEdit->setText( user_s );
+           us_setReadOnly( lineEdit, true );
+        }
+
+        form.addRow( label, lineEdit );
+
+        fields << lineEdit;
       }
     //for e-Sigs, add RadioButtons Approve | Reject
     QList<QRadioButton*> fields_radio;
@@ -191,10 +194,10 @@ QMap < QString, QString >  US_Passwd::getPasswd_auditTrail( QString title, QStri
     if ( hash == currentHash && !form_map["Comment:"].isEmpty()  )
       break;
 
-    QMessageBox::critical(
-        anchor_window(this), tr("No Comment and/or Password Error"),
-        tr("<font color='red'><b>ERROR:</b></font> The Comment field is empty, "
-           "or the password is incorrect."));
+    QMessageBox::critical( anchor_window( this ),
+                           tr( "No Comment and/or Password Error" ),
+                           tr( "<font color='red'><b>ERROR:</b></font> The Comment field is empty, "
+                               "or the password is incorrect." ) );
   }
 
   // // Save the password in global memory and return
