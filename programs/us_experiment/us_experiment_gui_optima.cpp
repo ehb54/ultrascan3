@@ -451,6 +451,10 @@ void US_ExperimentMain::accept_passed_protocol_details(  QMap < QString, QString
 
   //set dataDisk flag if protocol refers dataDisk
   epanRotor->set_dataSource_public( protocol_details );
+
+  //Vel-MWL: autoflow record's expType is authoritative (covers protocols lacking vel_mwl_prot)
+  if ( protocol_details[ "expType" ] == "VELOCITY-MWL" )
+    currProto.rpRotor.vel_mwl_prot = true;
   
   // Autoflow path: no dialog here -- forward Analysis Profile read progress as a signal
   // (the caller that owns the "setting up experiment" message can show it)

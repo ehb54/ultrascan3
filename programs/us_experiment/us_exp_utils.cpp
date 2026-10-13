@@ -1165,9 +1165,12 @@ DbgLv(1) << "EGRo: inP: calib_entr" << cal_entr;
        rpRotor->importData_absorbance_t  = ck_absorbance_t->isChecked();
        rpRotor->importData_absorbance_pa = ck_absorbance_pa->isChecked();
        
-       qDebug() << "rpRotor->vel_mwl_prot " << rpRotor->vel_mwl_prot; 
-       ck_velmwl ->setChecked( is_velocity && rpRotor->vel_mwl_prot );
      }
+
+   // "Treat as MWL": set from the protocol in ALL modes, including Protocol Development
+   // (previously this was inside the !us_prot_dev_mode block, so it was never checked in PD)
+   qDebug() << "rpRotor->vel_mwl_prot " << rpRotor->vel_mwl_prot;
+   ck_velmwl ->setChecked( is_velocity && rpRotor->vel_mwl_prot );
 
    //Show current oper(s) & rev(s)
    te_opers_to_assign -> setText( rpRotor->operListAssign );
