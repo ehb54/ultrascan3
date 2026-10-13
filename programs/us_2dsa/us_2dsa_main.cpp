@@ -1,4 +1,4 @@
-//! \brief Main program. Loads translators and starts
+//! \file us_2dsa_main.cpp
 //         the class US_2dsa.
 
 #include "us_2dsa.h"

@@ -509,7 +509,7 @@ void US_MwlSpeciesSim::sim_params_auto( QMap< QString, QString > run_params )
 {
   US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
   
-  connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
+  connect( dialog, &US_SimParamsGui::complete, this, &US_MwlSpeciesSim::set_parameters );
 
   dialog -> set_run_params( run_params ); 
 
@@ -594,10 +594,8 @@ void US_MwlSpeciesSim::select_rotor_auto( QStringList r_defs )
   US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk,
 					    rotor, calibration );
 
-  connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
-						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
-	   this,      SLOT  ( assign_rotor            (
-						       US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+  connect( rotorInfo, &US_RotorGui::RotorCalibrationSelected,
+           this,      &US_MwlSpeciesSim::assign_rotor );
   rotorInfo->selectSimRotor( r_defs );
   
   //rotorInfo->exec();

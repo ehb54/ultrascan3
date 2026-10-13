@@ -1,4 +1,4 @@
-//! \brief Main program. Loads translators and starts
+//! \file us_mwl_species_sim_main.cpp
 //         the class US_Convert.
 
 

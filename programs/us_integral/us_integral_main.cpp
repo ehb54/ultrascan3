@@ -1,4 +1,4 @@
-//! \file us_integral_gmp_main.cpp
+//! \file us_integral_main.cpp
 #include "us_integral.h"
 #include "us_license_t.h"
 #include "us_license.h"

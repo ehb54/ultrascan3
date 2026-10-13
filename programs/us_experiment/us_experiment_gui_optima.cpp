@@ -2958,8 +2958,8 @@ qDebug() << "ASSIGNING INSTRUMENTS: " << instrument.name;
 
    cb_exptype->addItems( experimentTypes );
 
-   connect( cb_exptype,   SIGNAL( activated       ( int ) ),
-            this,         SLOT  ( changeExpType   ( int ) ) );
+   connect( cb_exptype,   qOverload< int >( &QComboBox::activated ),
+            this,         &US_ExperGuiRotor::changeExpType );
    changeExpType( 0 );
 }
 
