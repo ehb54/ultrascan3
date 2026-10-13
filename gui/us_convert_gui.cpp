@@ -1888,7 +1888,9 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      //TEMPORARY !!!!
      if ( dataType == "RI" && expType != "ABDE" &&
 	  dataSource != "dataDiskAUC:Absorbance" &&
-	  dataSource != "dataDiskAUC:PseudoAbsorbance"  )
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" &&
+	  !protDev_bool
+	  )
        {
      	 // double low_ref  = 5.87 - 0.005;
      	 // double high_ref = 5.87 + 0.005;
@@ -1927,24 +1929,23 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE" ) 
+     if ( expType == "ABDE" && !protDev_bool ) 
        {
-	 if ( !protDev_bool )
-	   {
-	     absorbance_conversion_abde();
-	     return;
-	   }
-	 else
-	   {
-	     pb_reference  ->setEnabled( false );
-	     referenceDefined = true;
-  	     lw_todoinfo->clear();
-	     pb_saveUS3 ->setEnabled( true );
-	     enableRunIDControl( false );
-	     return;
-	   }
+	 absorbance_conversion_abde();
+	 return;
        }
 
+     //prot DEV case: do not do any conversions
+     if ( protDev_bool )
+       {
+	 pb_reference  ->setEnabled( false );
+	 referenceDefined = true;
+	 lw_todoinfo->clear();
+	 pb_saveUS3 ->setEnabled( true );
+	 enableRunIDControl( false );
+	 return;
+       }
+     
      return;
    }
   
@@ -2053,7 +2054,8 @@ void US_ConvertGui::process_optics()
      
      if ( dataType == "RI" && expType != "ABDE" &&
 	  dataSource != "dataDiskAUC:Absorbance" &&
-	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
+	  dataSource != "dataDiskAUC:PseudoAbsorbance" &&
+	  !protDev_bool )
        {
 	 // double low_ref  = 5.87 - 0.005;
 	 // double high_ref = 5.87 + 0.005;
@@ -2087,29 +2089,22 @@ void US_ConvertGui::process_optics()
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE" ) 
+     if ( expType == "ABDE" && !protDev_bool ) 
        {
-	 if ( !protDev_bool )
-	   {
-	     absorbance_conversion_abde();
-	     return;
-	   }
-	 else
-	   {
-	     pb_reference  ->setEnabled( false );
-	     referenceDefined = true;
-  	     lw_todoinfo->clear();
-	     pb_saveUS3 ->setEnabled( true );
-	     enableRunIDControl( false );
-	     return;
-	   }
+	 absorbance_conversion_abde();
+	 return;
        }
-     
-     // if ( expType == "ABDE" && !protDev_bool )
-     //   {
-     // 	 absorbance_conversion_abde();
-     // 	 return;
-     //   }
+
+     //prot DEV case: do not do any conversions
+     if ( protDev_bool )
+       {
+	 pb_reference  ->setEnabled( false );
+	 referenceDefined = true;
+	 lw_todoinfo->clear();
+	 pb_saveUS3 ->setEnabled( true );
+	 enableRunIDControl( false );
+	 return;
+       }
      
      return;
    }
