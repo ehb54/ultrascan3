@@ -19,6 +19,7 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
+#include <qlineedit.h>
 
 //! \brief Less-than function for sorting S_Solute values
 bool distro_lessthan( const S_Solute&, const S_Solute& );
@@ -42,11 +43,12 @@ class US_GA_Initialize : public US_Widgets
       QLabel*       lb_wxbuck;
       QLabel*       lb_hybuck;
       QLabel*       lb_info2;
+      QLabel*       lb_info3;
+      QLabel*       lb_info4;
       QLabel*       lb_resolu;
       QLabel*       lb_xreso;
       QLabel*       lb_yreso;
       QLabel*       lb_zfloor;
-      QLabel*       lb_autlim;
       QLabel*       lb_plxmin;
       QLabel*       lb_plxmax;
       QLabel*       lb_plymin;
@@ -56,6 +58,10 @@ class US_GA_Initialize : public US_Widgets
       QTextEdit*    te_pctl_help;
       QTextEdit*    te_status;
       QLineEdit*    le_prefilt;
+      QLineEdit*    le_plxmin;     
+      QLineEdit*    le_plxmax;     
+      QLineEdit*    le_plymin;     
+      QLineEdit*    le_plymax;     
 
       US_Help       showHelp;
  
@@ -66,10 +72,6 @@ class US_GA_Initialize : public US_Widgets
       QwtCounter*   ct_xreso;
       QwtCounter*   ct_yreso;
       QwtCounter*   ct_zfloor;
-      QwtCounter*   ct_plxmin;     
-      QwtCounter*   ct_plxmax;     
-      QwtCounter*   ct_plymin;     
-      QwtCounter*   ct_plymax;     
 
       QwtPlot*             data_plot;
       QwtPlotSpectrogram*  d_spectrogram;
@@ -102,22 +104,16 @@ class US_GA_Initialize : public US_Widgets
       QRadioButton* rb_x_mw;
       QRadioButton* rb_x_vbar;
       QRadioButton* rb_x_D;
-      QRadioButton* rb_x_f;
       QRadioButton* rb_x_rh;
       QRadioButton* rb_y_s;
       QRadioButton* rb_y_ff0;
       QRadioButton* rb_y_mw;
       QRadioButton* rb_y_vbar;
       QRadioButton* rb_y_D;
-      QRadioButton* rb_y_f;
       QRadioButton* rb_y_rh;
-      QRadioButton* rb_1dplot;
-      QRadioButton* rb_2dplot;
-      QRadioButton* rb_3dplot;
       
       QButtonGroup* bg_x_axis;
       QButtonGroup* bg_y_axis;
-      QButtonGroup* bg_plot;
 
       QCheckBox*    ck_autlim;
       
@@ -150,7 +146,6 @@ class US_GA_Initialize : public US_Widgets
       int           mc_iters;
       int           patm_id;
       int           patm_dlay;
-      int           plot_dim;
       int           distro_type;
       int           sxset;
       int           psdsiz;
@@ -191,6 +186,8 @@ class US_GA_Initialize : public US_Widgets
 
       QStringList   pfilts;
 
+      void str2double   ( QLineEdit*, double&, int );
+
    private slots:
 
       void update_nisols( double );
@@ -200,16 +197,13 @@ class US_GA_Initialize : public US_Widgets
       void update_xreso(  double );
       void update_yreso(  double );
       void update_zfloor( double );
-      void update_plxmin( double );
-      void update_plxmax( double );
-      void update_plymin( double );
-      void update_plymax( double );
+      void update_plxmin( void );
+      void update_plxmax( void );
+      void update_plymin( void );
+      void update_plymax( void );
       void replot_data( void );
-      void plot_1dim(   void );
-      void plot_2dim(   void );
       void plot_3dim(   void );
       void select_autolim( void );
-      void select_plot_dim( int );
       void check_draw_btn( void );
       void select_prefilt( void );
       void load_distro (   void );
