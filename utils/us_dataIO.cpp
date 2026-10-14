@@ -503,7 +503,8 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    qToLittleEndian( valueCount, ui.u );
    write( ds, ui.c, 4, crc );
 
-   // Write readings
+   // Write readings.  A zero range (constant values) has a zero step and
+   // stores every value as 0, the minimum, rather than rounding 0/0 = NaN.
    double  delta  = ( pp.max_data1 - pp.min_data1 ) / 65535;
    double  delta2 = ( pp.max_data2 - pp.min_data2 ) / 65535;
 
@@ -514,7 +515,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    {
       double rval = data.rvalues[ ii ];
       // reading
-      si = (quint16) qRound( ( rval - pp.min_data1 ) / delta );
+      si          = ( delta > 0.0 ) ? (quint16) qRound( ( rval - pp.min_data1 ) / delta ) : 0;
       qToLittleEndian( si, ui.u );
       write( ds, ui.c, 2, crc );
 
@@ -522,7 +523,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
       if ( stdDev )
       {
          double sval = data.stddevs[ ii ];
-         si = (quint16) qRound( ( sval - pp.min_data2 ) / delta2 );
+         si          = ( delta2 > 0.0 ) ? (quint16) qRound( ( sval - pp.min_data2 ) / delta2 ) : 0;
          qToLittleEndian( si, ui.u );
          write( ds, ui.c, 2, crc );
       }
@@ -855,6 +856,185 @@ int US_DataIO::readEdits( const QString& filename, EditValues& parameters )
    if ( error ) return BADXML;
 
    return OK;
+}
+
+int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters )
+{
+   QFile ff( filename );
+   if ( !ff.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return CANTOPEN;
+   }
+
+   const EditValues& ev      = parameters;
+   QString           expType = ev.expType.isEmpty() ? QString( "Velocity" ) : ev.expType;
+   bool              isEquil = ( expType == "Equilibrium" );
+
+   QXmlStreamWriter  xml( &ff );
+   xml.setAutoFormatting( true );
+   xml.writeStartDocument();
+   xml.writeDTD( "<!DOCTYPE UltraScanEdits>" );
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute( "type", expType );
+
+   xml.writeStartElement( "identification" );
+   xml.writeStartElement( "runid" );
+   xml.writeAttribute( "value", ev.runID );
+   xml.writeEndElement();
+   xml.writeStartElement( "editGUID" );
+   xml.writeAttribute( "value", ev.editGUID );
+   xml.writeEndElement();
+   xml.writeStartElement( "rawDataGUID" );
+   xml.writeAttribute( "value", ev.dataGUID );
+   xml.writeEndElement();
+   xml.writeEndElement(); // identification
+
+   xml.writeStartElement( "run" );
+   xml.writeAttribute( "cell", ev.cell );
+   xml.writeAttribute( "channel", ev.channel );
+   xml.writeAttribute( "wavelength", ev.wavelength );
+
+   if ( !ev.lambdas.isEmpty() )
+   {
+      xml.writeStartElement( "lambdas" );
+      for ( int ii = 0; ii < ev.lambdas.size(); ii++ )
+      {
+         xml.writeStartElement( "lambda" );
+         xml.writeAttribute( "value", QString::number( ev.lambdas[ii] ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement(); // lambdas
+   }
+
+   if ( !ev.excludes.isEmpty() )
+   {
+      xml.writeStartElement( "excludes" );
+      for ( int ii = 0; ii < ev.excludes.size(); ii++ )
+      {
+         xml.writeStartElement( "exclude" );
+         xml.writeAttribute( "scan", QString::number( ev.excludes[ii] ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement(); // excludes
+   }
+
+   if ( !ev.editedPoints.isEmpty() )
+   {
+      xml.writeStartElement( "edited" );
+      for ( int ii = 0; ii < ev.editedPoints.size(); ii++ )
+      {
+         const EditedPoint& ep = ev.editedPoints[ii];
+         xml.writeStartElement( "edit" );
+         xml.writeAttribute( "scan", QString::number( ep.scan ) );
+         xml.writeAttribute( "radius", QString::number( ep.radius ) );
+         xml.writeAttribute( "value", QString::number( ep.value, 'f', 8 ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement(); // edited
+   }
+
+   xml.writeStartElement( "parameters" );
+
+   // Air gap only applies to interference data and differs from the default
+   if ( ev.airGapLeft != 0.0 || ev.airGapRight != 9.0 )
+   {
+      xml.writeStartElement( "air_gap" );
+      xml.writeAttribute( "left", QString::number( ev.airGapLeft, 'f', 8 ) );
+      xml.writeAttribute( "right", QString::number( ev.airGapRight, 'f', 8 ) );
+      xml.writeAttribute( "tolerance", QString::number( ev.gapTolerance, 'f', 8 ) );
+      xml.writeEndElement();
+   }
+
+   if ( !isEquil )
+   {
+      xml.writeStartElement( "meniscus" );
+      xml.writeAttribute( "radius", QString::number( ev.meniscus, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "bottom" );
+      xml.writeAttribute( "radius", QString::number( ev.bottom, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "data_range" );
+      xml.writeAttribute( "left", QString::number( ev.rangeLeft, 'f', 8 ) );
+      xml.writeAttribute( "right", QString::number( ev.rangeRight, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "plateau" );
+      xml.writeAttribute( "radius", QString::number( ev.plateau, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "baseline" );
+      xml.writeAttribute( "radius", QString::number( ev.baseline, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "od_limit" );
+      xml.writeAttribute( "value", QString::number( ev.ODlimit, 'f', 8 ) );
+      xml.writeEndElement();
+
+      if ( ev.bl_corr_slope != 0.0 || ev.bl_corr_yintercept != 0.0 )
+      {
+         xml.writeStartElement( "linear_baseline_correction" );
+         xml.writeAttribute( "slope", QString::number( ev.bl_corr_slope, 'f', 8 ) );
+         xml.writeAttribute( "y_intercept", QString::number( ev.bl_corr_yintercept, 'f', 8 ) );
+         xml.writeEndElement();
+      }
+   }
+
+   else
+   {
+      for ( int ii = 0; ii < ev.speedData.size(); ii++ )
+      {
+         const SpeedData& sd = ev.speedData[ii];
+         xml.writeStartElement( "speed" );
+         xml.writeAttribute( "value", QString::number( sd.speed ) );
+         xml.writeAttribute( "scanStart", QString::number( sd.first_scan ) );
+         xml.writeAttribute( "scanCount", QString::number( sd.scan_count ) );
+         xml.writeStartElement( "meniscus" );
+         xml.writeAttribute( "radius", QString::number( sd.meniscus, 'f', 8 ) );
+         xml.writeEndElement();
+         xml.writeStartElement( "data_range" );
+         xml.writeAttribute( "left", QString::number( sd.dataLeft, 'f', 8 ) );
+         xml.writeAttribute( "right", QString::number( sd.dataRight, 'f', 8 ) );
+         xml.writeEndElement();
+         xml.writeEndElement(); // speed
+      }
+   }
+
+   xml.writeEndElement(); // parameters
+
+   if ( ev.noiseOrder > 0 || ev.removeSpikes || ev.invert == -1.0 || ev.floatingData )
+   {
+      xml.writeStartElement( "operations" );
+
+      if ( ev.noiseOrder > 0 )
+      {
+         xml.writeStartElement( "subtract_ri_noise" );
+         xml.writeAttribute( "order", QString::number( ev.noiseOrder ) );
+         xml.writeEndElement();
+      }
+
+      if ( ev.removeSpikes )
+      {
+         xml.writeStartElement( "remove_spikes" );
+         xml.writeEndElement();
+      }
+
+      if ( ev.invert == -1.0 )
+      {
+         xml.writeStartElement( "invert" );
+         xml.writeEndElement();
+      }
+
+      if ( ev.floatingData )
+      {
+         xml.writeStartElement( "floating_data" );
+         xml.writeEndElement();
+      }
+
+      xml.writeEndElement(); // operations
+   }
+
+   xml.writeEndElement(); // run
+   xml.writeEndElement(); // experiment
+   xml.writeEndDocument();
+
+   return ff.error() == QFile::NoError ? OK : CANTWRITE;
 }
 
 void US_DataIO::ident( QXmlStreamReader& xml, EditValues& parameters )
