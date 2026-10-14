@@ -2966,14 +2966,10 @@ void US_ReporterGMP::build_perChanTree ( void )
 
            //Populate tripleReportMasksList && values from scratch
            tripleReportMasksList.clear();
-           tripleReportMasksList << "Total Concentration"
-                                 << "RMSD Limit"
+           tripleReportMasksList << "Total Concentration" << "RMSD Limit"
                                  << "Minimum Intensity"
                                  //<< "Experiment Duration"
-                                 << "Loading Volume"
-                                 << "Integration Results"
-                                 << "Plots"
-                                 << "Pseudo3d Distributions";
+                                 << "Loading Volume" << "Integration Results" << "Plots" << "Pseudo3d Distributions";
 
            tripleReportMasksList_vals.clear();
            tripleReportMasksList_vals << reportGMP.tot_conc_mask << reportGMP.rmsd_limit_mask
@@ -3068,10 +3064,8 @@ void US_ReporterGMP::build_perChanTree ( void )
               if ( tripleMaskItemName.contains( "Pseudo3d" ) )
               {
                  tripleReportMasksPseudoList.clear();
-                 tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution"
-                                             << "Pseudo3d s-vs-D Distribution"
-                                             << "Pseudo3d MW-vs-f/f0 Distribution"
-                                             << "Pseudo3d MW-vs-D Distribution";
+                 tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution" << "Pseudo3d s-vs-D Distribution"
+                                             << "Pseudo3d MW-vs-f/f0 Distribution" << "Pseudo3d MW-vs-D Distribution";
 
                  tripleReportMasksPseudoList_vals.clear();
                  if ( tripleItemModelName.contains( "2DSA-IT" ) )
