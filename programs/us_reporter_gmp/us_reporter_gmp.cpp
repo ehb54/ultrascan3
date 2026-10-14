@@ -216,6 +216,8 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Generate GMP or Custom Report from Completed GMP Run:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Run Selected for Report Generation" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
   pb_view_report   = us_pushbutton( tr( "View Generated Report" ) );
@@ -227,6 +229,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   //Filename path
   QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info =  us_textedit();
+  te_fpath_info->setAccessibleName( tr( "Generated Report File Location" ) );
   QFontMetrics m (te_fpath_info -> font());
   int RowHeight  = m.lineSpacing();
   RowHeight *= 3;
@@ -238,12 +241,15 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QLabel*      bn_actions_db     = us_banner( tr( "Download and View GMP Report from DB:" ), 1 );
   QLabel*      lb_loaded_run_db  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run_db               = us_lineedit( tr(""), 0, true );
+  le_loaded_run_db->setAccessibleName( tr( "Downloaded Report Run" ) );
+  lb_loaded_run_db->setBuddy( le_loaded_run_db );
   QPushButton* pb_loadreport_db  = us_pushbutton( tr( "Load GMP Report from DB (.PDF)" ) );
   pb_view_report_db              = us_pushbutton( tr( "View Downloaded Report" ) );
 
   //Filename DB path
   QLabel*      lb_fpath_info_db  = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info_db =  us_textedit();
+  te_fpath_info_db->setAccessibleName( tr( "Downloaded Report File Location" ) );
   te_fpath_info_db -> setFixedHeight  ( RowHeight );
   te_fpath_info_db -> setText( tr( "" ) );
   us_setReadOnly( te_fpath_info_db, true );
@@ -319,6 +325,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -333,6 +340,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -347,6 +355,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( chan_theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -359,6 +368,7 @@ US_ReporterGMP::US_ReporterGMP() : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -450,6 +460,8 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QLabel*      bn_actions     = us_banner( tr( "Actions:" ), 1 );
   QLabel*      lb_loaded_run  = us_label( tr( "Loaded Run:" ) );
   le_loaded_run               = us_lineedit( tr(""), 0, true );
+  le_loaded_run->setAccessibleName( tr( "Run Selected for Report Generation" ) );
+  lb_loaded_run->setBuddy( le_loaded_run );
 
   QPushButton* pb_loadrun       = us_pushbutton( tr( "Load GMP Run" ) );
   pb_gen_report    = us_pushbutton( tr( "Generate Report" ) );
@@ -510,6 +522,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList theads;
   theads << "Selected" << "Protocol Settings";
   genTree->setHeaderLabels( theads );
+  genTree->setAccessibleName( tr( "General Report Settings" ) );
   genTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   genTree->installEventFilter   ( this );
@@ -524,6 +537,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList misc_theads;
   misc_theads << "Selected" << "Protocol Settings";
   miscTree->setHeaderLabels( misc_theads );
+  miscTree->setAccessibleName( tr( "Miscellaneous Report Settings" ) );
   miscTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			      US_GuiSettings::fontSize() + 1 ) );
   miscTree->installEventFilter   ( this );
@@ -539,6 +553,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList chan_theads;
   chan_theads << "Selected" << "Protocol Settings";
   perChanTree->setHeaderLabels( theads );
+  perChanTree->setAccessibleName( tr( "Per-Channel Report Settings" ) );
   perChanTree->setFont( QFont( US_Widgets::fixedFont().family(),
 			       US_GuiSettings::fontSize() + 1 ) );
   perChanTreeLayout->addWidget( lb_chantree );
@@ -551,6 +566,7 @@ US_ReporterGMP::US_ReporterGMP( QString a_mode ) : US_Widgets()
   QStringList combplots_theads;
   combplots_theads << "Selected" << "Protocol Settings";
   combPlotsTree->setHeaderLabels( combplots_theads );
+  combPlotsTree->setAccessibleName( tr( "Combined Plots Report Settings" ) );
   combPlotsTree->setFont( QFont( US_Widgets::fixedFont().family(),
 				 US_GuiSettings::fontSize() + 1 ) );
   combPlotsLayout->addWidget( lb_combplots );
@@ -2364,6 +2380,8 @@ void US_ReporterGMP::build_miscTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       miscItem [ topItemName ] = new QTreeWidgetItem( miscTree, topItemNameList, wiubase );
+      miscItem[topItemName]->setData( 0, Qt::AccessibleTextRole, topItemName );
+      miscItem[topItemName]->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       miscItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
     }
@@ -2399,6 +2417,8 @@ void US_ReporterGMP::build_genTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + topItemName;
       topItem [ topItemName ] = new QTreeWidgetItem( genTree, topItemNameList, wiubase );
+      topItem[topItemName]->setData( 0, Qt::AccessibleTextRole, topItemName );
+      topItem[topItemName]->setData( 1, Qt::AccessibleTextRole, topItemName );
 
       //Solutions: add 1-level children
       if( topItemName.contains("Solutions") )
@@ -2410,22 +2430,32 @@ void US_ReporterGMP::build_genTree ( void )
 	      solutionItemNameList.clear();
 	      solutionItemNameList << "" << indent.repeated( 2 ) + solutionItemName;
 	      solutionItem [ solutionItemName ] = new QTreeWidgetItem( topItem [ topItemName ], solutionItemNameList, wiubase);
+         {
+            QString a11yPath = topItemName + " / " + solutionItemName;
+            solutionItem[solutionItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+            solutionItem[solutionItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+         }
 
-	      if ( solutionItems_vals[ is ].toInt() )
-		{
-		  solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Checked );
-		  ++checked_childs;
-		}
-	      else
-		solutionItem [ solutionItemName ] ->setCheckState( 0, Qt::Unchecked );
-	    }
-	  if ( checked_childs )
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
-	  
-	}
-      
+         if ( solutionItems_vals[is].toInt() )
+         {
+            solutionItem[solutionItemName]->setCheckState( 0, Qt::Checked );
+            ++checked_childs;
+         }
+         else
+         {
+            solutionItem[solutionItemName]->setCheckState( 0, Qt::Unchecked );
+         }
+       }
+       if ( checked_childs )
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Checked );
+       }
+       else
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Unchecked );
+       }
+   }
+
       //Analysis Profile: add 2-levelchildren
       else if ( topItemName.contains("Analysis Profile") )
 	{
@@ -2440,98 +2470,137 @@ void US_ReporterGMP::build_genTree ( void )
 	      analysisItemNameList.clear();
 	      analysisItemNameList << "" << indent.repeated( 2 ) + analysisItemName;
 	      analysisItem [ analysisItemName ] = new QTreeWidgetItem( topItem [ topItemName ], analysisItemNameList, wiubase);
-	      
-	      //General analysis
-	      if( analysisItemName.contains("General") )
-		{
-		  int checked_gen = 0;
-		  for ( int iag=0; iag < analysisGenItems.size(); ++iag )
-		    {
-		      QString analysisGenItemName = analysisGenItems[ iag ];
-		      analysisGenItemNameList.clear();
-		      analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
-		      analysisGenItem [ analysisGenItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisGenItemNameList, wiubase);
+         {
+            QString a11yPath = topItemName + " / " + analysisItemName;
+            analysisItem[analysisItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+            analysisItem[analysisItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+         }
 
-		      if ( analysisGenItems_vals[ iag ].toInt() )
-			{
-			  analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_gen;
-			}
-		      else
-			analysisGenItem [ analysisGenItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+         //General analysis
+         if ( analysisItemName.contains( "General" ) )
+         {
+            int checked_gen = 0;
+            for ( int iag = 0; iag < analysisGenItems.size(); ++iag )
+            {
+               QString analysisGenItemName = analysisGenItems[iag];
+               analysisGenItemNameList.clear();
+               analysisGenItemNameList << "" << indent.repeated( 3 ) + analysisGenItemName;
+               analysisGenItem[analysisGenItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysisGenItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisGenItemName;
+                  analysisGenItem[analysisGenItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysisGenItem[analysisGenItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_gen )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
-	      //2DSA analysis
-	      if( analysisItemName.contains("2DSA") )
-		{
-		  int checked_2dsa = 0;
-		  for ( int ia2=0; ia2 < analysis2DSAItems.size(); ++ia2 )
-		    {
-		      QString analysis2DSAItemName = analysis2DSAItems[ ia2 ];
-		      analysis2DSAItemNameList.clear();
-		      analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
-		      analysis2DSAItem [ analysis2DSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysis2DSAItemNameList, wiubase);
+               if ( analysisGenItems_vals[iag].toInt() )
+               {
+                  analysisGenItem[analysisGenItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_gen;
+               }
+               else
+               {
+                  analysisGenItem[analysisGenItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-		      if ( analysis2DSAItems_vals[ ia2 ].toInt() )
-			{
-			  analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_2dsa;
-			}
-		      else
-			analysis2DSAItem [ analysis2DSAItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+            if ( checked_gen )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
+         //2DSA analysis
+         if ( analysisItemName.contains( "2DSA" ) )
+         {
+            int checked_2dsa = 0;
+            for ( int ia2 = 0; ia2 < analysis2DSAItems.size(); ++ia2 )
+            {
+               QString analysis2DSAItemName = analysis2DSAItems[ia2];
+               analysis2DSAItemNameList.clear();
+               analysis2DSAItemNameList << "" << indent.repeated( 3 ) + analysis2DSAItemName;
+               analysis2DSAItem[analysis2DSAItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysis2DSAItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysis2DSAItemName;
+                  analysis2DSAItem[analysis2DSAItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysis2DSAItem[analysis2DSAItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_2dsa )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
+               if ( analysis2DSAItems_vals[ia2].toInt() )
+               {
+                  analysis2DSAItem[analysis2DSAItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_2dsa;
+               }
+               else
+               {
+                  analysis2DSAItem[analysis2DSAItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
 
-	      //PCSA analysis
-	      if( analysisItemName.contains("PCSA") )
-		{
-		  int checked_pcsa = 0;
-		  for ( int iap=0; iap < analysisPCSAItems.size(); ++iap )
-		    {
-		      QString analysisPCSAItemName = analysisPCSAItems[ iap ];
-		      analysisPCSAItemNameList.clear();
-		      analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
-		      analysisPCSAItem [ analysisPCSAItemName ] = new QTreeWidgetItem( analysisItem [ analysisItemName ], analysisPCSAItemNameList, wiubase);
+            if ( checked_2dsa )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
 
-		      if ( analysisPCSAItems_vals[ iap ].toInt() )
-			{
-			  analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_pcsa;
-			}
-		      else
-			analysisPCSAItem [ analysisPCSAItemName ] ->setCheckState( 0, Qt::Unchecked );
-		    }
+         //PCSA analysis
+         if ( analysisItemName.contains( "PCSA" ) )
+         {
+            int checked_pcsa = 0;
+            for ( int iap = 0; iap < analysisPCSAItems.size(); ++iap )
+            {
+               QString analysisPCSAItemName = analysisPCSAItems[iap];
+               analysisPCSAItemNameList.clear();
+               analysisPCSAItemNameList << "" << indent.repeated( 3 ) + analysisPCSAItemName;
+               analysisPCSAItem[analysisPCSAItemName] =
+                  new QTreeWidgetItem( analysisItem[analysisItemName], analysisPCSAItemNameList, wiubase );
+               {
+                  QString a11yPath = topItemName + " / " + analysisItemName + " / " + analysisPCSAItemName;
+                  analysisPCSAItem[analysisPCSAItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                  analysisPCSAItem[analysisPCSAItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+               }
 
-		  if ( checked_pcsa )
-		    {
-		      analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Checked );
-		      ++checked_childs;
-		    }
-		  else
-		    analysisItem [ analysisItemName ] ->setCheckState( 0, Qt::Unchecked );
-		}
-	    }
-	  if ( checked_childs )
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    topItem [ topItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+               if ( analysisPCSAItems_vals[iap].toInt() )
+               {
+                  analysisPCSAItem[analysisPCSAItemName]->setCheckState( 0, Qt::Checked );
+                  ++checked_pcsa;
+               }
+               else
+               {
+                  analysisPCSAItem[analysisPCSAItemName]->setCheckState( 0, Qt::Unchecked );
+               }
+            }
+
+            if ( checked_pcsa )
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Checked );
+               ++checked_childs;
+            }
+            else
+            {
+               analysisItem[analysisItemName]->setCheckState( 0, Qt::Unchecked );
+            }
+         }
+       }
+       if ( checked_childs )
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Checked );
+       }
+       else
+       {
+          topItem[topItemName]->setCheckState( 0, Qt::Unchecked );
+       }
+   }
 
       //set checked/unchecked for top-level item
       else
@@ -2662,6 +2731,8 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
       chanItemNameList.clear();
       chanItemNameList << "" << indent + chanItemName;
       chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
+      chanItem[chanItemName]->setData( 0, Qt::AccessibleTextRole, chanItemName );
+      chanItem[chanItemName]->setData( 1, Qt::AccessibleTextRole, chanItemName );
 
       //go over report items
       int report_items_number = reportGMP.reportItems.size();
@@ -2693,15 +2764,22 @@ void US_ReporterGMP::build_perChanTree_abde ( void )
 	  tripleMaskItemNameList.clear();
 	  tripleMaskItemNameList << "" << indent.repeated( 2 ) + tripleMaskItemName;
 	  tripleMaskItem [ chanItemName ] = new QTreeWidgetItem(  chanItem [ chanItemName ], tripleMaskItemNameList, wiubase);
-	  
-	  if ( tripleReportMasksList_vals[ kk ] )
-	    {
-	      tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
-	      ++checked_masks;
-	    }
-	  else
-	    tripleMaskItem [ chanItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+     {
+        QString a11yPath = chanItemName + " / " + tripleMaskItemName;
+        tripleMaskItem[chanItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+        tripleMaskItem[chanItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+     }
+
+     if ( tripleReportMasksList_vals[kk] )
+     {
+        tripleMaskItem[chanItemName]->setCheckState( 0, Qt::Checked );
+        ++checked_masks;
+     }
+     else
+     {
+        tripleMaskItem[chanItemName]->setCheckState( 0, Qt::Unchecked );
+     }
+   }
 
       if ( checked_masks )
 	chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
@@ -2769,328 +2847,375 @@ void US_ReporterGMP::build_perChanTree ( void )
 	  chanItemNameList.clear();
 	  chanItemNameList << "" << indent + chanItemName;
 	  chanItem [ chanItemName ] = new QTreeWidgetItem( perChanTree, chanItemNameList, wiubase );
-	  
-	  //QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
-	  QList < double > chann_wvls                  = ch_wvls[ channel_desc_alt ];
-	  QMap < QString, US_ReportGMP > chann_reports = ch_reports[ channel_desc_alt ];
+     chanItem[chanItemName]->setData( 0, Qt::AccessibleTextRole, chanItemName );
+     chanItem[chanItemName]->setData( 1, Qt::AccessibleTextRole, chanItemName );
 
-	  qDebug() << "channel_desc_alt , channel_desc: "   << channel_desc_alt << " , " <<  channel_desc;
-	  qDebug() << "chann_wvls [ channel_desc ] -- "     << chann_wvls;
-	  qDebug() << "chann_wvls [ channel_desc_alt ] -- " << ch_wvls[ channel_desc_alt ];
-	  
-	  int chann_wvl_number = chann_wvls.size();
+     //QList < double > chann_wvls                  = ch_wvls[ channel_desc ];
+     QList<double>               chann_wvls    = ch_wvls[channel_desc_alt];
+     QMap<QString, US_ReportGMP> chann_reports = ch_reports[channel_desc_alt];
 
-	  int checked_triples = 0;
-	  for ( int jj = 0; jj < chann_wvl_number; ++jj )
-	    {
-	      QString wvl            = QString::number( chann_wvls[ jj ] );
-	      QString triple_name    = channel_desc.split(":")[ 0 ] + "/" + wvl;
+     qDebug() << "channel_desc_alt , channel_desc: " << channel_desc_alt << " , " << channel_desc;
+     qDebug() << "chann_wvls [ channel_desc ] -- " << chann_wvls;
+     qDebug() << "chann_wvls [ channel_desc_alt ] -- " << ch_wvls[channel_desc_alt];
 
-	      //Push to Array_of_triples;
-	      //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
-	      QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString(".") + channel_desc_alt.section( ":", 0, 0 )[1];
+     int chann_wvl_number = chann_wvls.size();
 
-	      if ( channel_desc_alt.contains( "Interf" ) ) 
-		tripleName += ".Interference";
-	      else
-		tripleName += "." + wvl;
+     int checked_triples = 0;
+     for ( int jj = 0; jj < chann_wvl_number; ++jj )
+     {
+        QString wvl         = QString::number( chann_wvls[jj] );
+        QString triple_name = channel_desc.split( ":" )[0] + "/" + wvl;
 
-	      //'S' data
-	      if ( dataSource. contains("DiskAUC:Absorbance") && simulatedData )
-		tripleName = tripleName.replace( ".A.", ".S." );
-	      	      
-	      qDebug() << "[in build_perChanTree()]: TripleName -- " << tripleName; 
-	      Array_of_triples.push_back( tripleName );
+        //Push to Array_of_triples;
+        //QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + "." + channel_desc_alt.section( ":", 0, 0 )[1] + "." + wvl;
+        QString tripleName = channel_desc_alt.section( ":", 0, 0 )[0] + QString( "." ) + channel_desc_alt.section( ":", 0, 0 )[1];
 
-	      //Triple item: child-level 1 in a perChanTree
-	      QString tripleItemName = wvl + " nm Wavelength";
-	      tripleItemNameList.clear();
-	      tripleItemNameList << "" << indent.repeated( 2 ) + tripleItemName;
-	      tripleItem [ tripleItemName ] = new QTreeWidgetItem( chanItem [ chanItemName ], tripleItemNameList, wiubase);
+        if ( channel_desc_alt.contains( "Interf" ) )
+        {
+           tripleName += ".Interference";
+        }
+        else
+        {
+           tripleName += "." + wvl;
+        }
 
-	      US_ReportGMP reportGMP = chann_reports[ wvl ];
+        //'S' data
+        if ( dataSource.contains( "DiskAUC:Absorbance" ) && simulatedData )
+        {
+           tripleName = tripleName.replace( ".A.", ".S." );
+        }
 
-	      //Identify which type-methods will be in Combined ptols
-	      int report_items_number = reportGMP.reportItems.size();
-	      for ( int kk = 0; kk < report_items_number; ++kk )
-		{
-		  US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[ kk ];
-		  QString type           = curr_item.type;
-		  QString method         = curr_item.method;
-		  if( method.contains ("PCSA") )
-		    method = "PCSA";
-		  int     combPlot       = curr_item.combined_plot;
+        qDebug() << "[in build_perChanTree()]: TripleName -- " << tripleName;
+        Array_of_triples.push_back( tripleName );
 
-		  QString t_m = type + "," + method;
-		  if ( combPlot )
-		    comboPlotsMapTypes[ t_m ] = 1;
+        //Triple item: child-level 1 in a perChanTree
+        QString tripleItemName = wvl + " nm Wavelength";
+        tripleItemNameList.clear();
+        tripleItemNameList << "" << indent.repeated( 2 ) + tripleItemName;
+        tripleItem[tripleItemName] = new QTreeWidgetItem( chanItem[chanItemName], tripleItemNameList, wiubase );
+        {
+           QString a11yPath = chanItemName + " / " + tripleItemName;
+           tripleItem[tripleItemName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+           tripleItem[tripleItemName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+        }
 
-		  //Use ind_combined_plot here, to mark if ind. plots for triple's reportItem is to be plot
-		  int     ind_combPlot   = curr_item.ind_combined_plot;
-		  QString range_l_h = QString::number( curr_item.range_low ) + ":" + QString::number( curr_item.range_high );
+        US_ReportGMP reportGMP = chann_reports[wvl];
 
-		  if ( Triple_to_Models[ tripleName ].contains( method ))
-		    {
-		      if ( ind_combPlot )
-			{
-			  //QMap< QString (triple), QMap< QString( type_method ), QStringList( ranges ) > >
-			  indComboPlotsMapTripleTypeRangeBool[ tripleName ][ t_m ][range_l_h] = true;
-			}
-		      else
-			indComboPlotsMapTripleTypeRangeBool[ tripleName ][ t_m ][range_l_h] = false;
-		    }
-		}
-	      ////////////////////////////////////////////////////////
-	      
-	      qDebug() << "For triple, " << tripleName << ", and models: " << Triple_to_Models[ tripleName ]
-		       << reportGMP. tot_conc_mask
-		       << reportGMP. rmsd_limit_mask
-		       << reportGMP. av_intensity_mask
-		       << reportGMP. experiment_duration_mask
-		       << reportGMP. integration_results_mask
-		       << reportGMP. plots_mask
-		       << reportGMP. pseudo3d_mask;
-	      
-	  
-	      //define models per triple:
-	      tripleReportModelsList.clear();
-	      tripleReportModelsList = Triple_to_Models[ tripleName ];
-	      
-	      int checked_masks = 0;
-	      //start triple's models
-	      for ( int mm = 0; mm < tripleReportModelsList.size(); ++mm )
-		{
-		  //Triple's mask params: child-level 3 in a perChanTree
-		  QString tripleItemModelName = tripleReportModelsList[ mm ] + " Model";
-		  QString tripleModelName     = tripleItemName + "," + tripleItemModelName;
-		  tripleItemModelNameList.clear();
-		  tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
-		  tripleModelItem [ tripleModelName ] = new QTreeWidgetItem(  tripleItem [ tripleItemName ], tripleItemModelNameList, wiubase);
+        //Identify which type-methods will be in Combined ptols
+        int          report_items_number = reportGMP.reportItems.size();
+        for ( int kk = 0; kk < report_items_number; ++kk )
+        {
+           US_ReportGMP::ReportItem curr_item = reportGMP.reportItems[kk];
+           QString                  type      = curr_item.type;
+           QString                  method    = curr_item.method;
+           if ( method.contains( "PCSA" ) )
+           {
+              method = "PCSA";
+           }
+           int     combPlot = curr_item.combined_plot;
 
-		  //Populate tripleReportMasksList && values from scratch
-		  tripleReportMasksList.clear();
-		  tripleReportMasksList << "Total Concentration"
-					<< "RMSD Limit"
-					<< "Minimum Intensity"
-		    //<< "Experiment Duration"
-					<< "Loading Volume"
-					<< "Integration Results"
-					<< "Plots"
-					<< "Pseudo3d Distributions";
-		  
-		  tripleReportMasksList_vals.clear();
-		  tripleReportMasksList_vals << reportGMP. tot_conc_mask
-					     << reportGMP. rmsd_limit_mask
-					     << reportGMP. av_intensity_mask
-		    //<< reportGMP. experiment_duration_mask
-					     << true
-					     << reportGMP. integration_results_mask
-					     << reportGMP. plots_mask
-					     << reportGMP. pseudo3d_mask;
-		  
-		  //Here: add "Individual Distributions" to tripleReportMasksList IF there is/are type-method(s) matching current model:
-		  QStringList type_methods_list = indComboPlotsMapTripleTypeRangeBool[ tripleName ].keys();
-		  for ( int tm=0; tm<type_methods_list.size(); tm++ )
-		    {
-		      //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
-		      QString c_method = type_methods_list[ tm ].split(",")[1];
-		      if ( c_method == tripleReportModelsList[ mm ] )
-			{
-			  qDebug() << "In Model, list, ind. : " <<  type_methods_list << tripleReportModelsList[ mm ];
-			  tripleReportMasksList      << "Individual Combined Distributions";
-			  tripleReportMasksList_vals << true;
+           QString t_m = type + "," + method;
+           if ( combPlot )
+           {
+              comboPlotsMapTypes[t_m] = 1;
+           }
 
-			  break;
-			}
-		    }
-		  
-		  //start triple's masks
-		  for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
-		    {
-		      //Triple's mask params: child-level 3 in a perChanTree
-		      QString tripleMaskItemName = tripleReportMasksList[ kk ];
-		      tripleMaskItemNameList.clear();
-		      tripleMaskItemNameList << "" << indent.repeated( 4 ) + tripleMaskItemName;
-		      tripleMaskItem [ tripleModelName ] = new QTreeWidgetItem(  tripleModelItem [ tripleModelName ], tripleMaskItemNameList, wiubase);
-		      
-		      if ( tripleReportMasksList_vals[ kk ] )
-			{
-			  tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-			  ++checked_masks;
-			}
-		      else
-			tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-		      
-		      //plots
-		      if ( tripleMaskItemName.contains("Plots") )
-			{
-			  tripleReportMasksPlotList.clear();
-			  tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
-						    << "Experiment-Simulation Residuals";
-			  
-						    // << "Sedimentation Coefficient Distribution"
-						    // << "Molecular Weight Distribution"
-						    // << "Diffusion Coefficient Distribution"
-						    // << "f/f0-vs-s 2D Model"
-						    // << "f/f0-vs-MW 2D Model"
-						    // << "D-vs-s 2D Model"
-						    // << "D-vs-MW 2D Model";
-			  //<< "3D Model Plot";
-								  
-			  for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
-			    {
-			      QString tripleMaskItemPlotName = tripleReportMasksPlotList[ hh ];
-			      tripleMaskItemPlotNameList.clear();
-			      tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
-			      tripleMaskPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPlotNameList, wiubase);
+           //Use ind_combined_plot here, to mark if ind. plots for triple's reportItem is to be plot
+           int     ind_combPlot = curr_item.ind_combined_plot;
+           QString range_l_h    = QString::number( curr_item.range_low ) + ":" + QString::number( curr_item.range_high );
 
-			      if ( tripleReportMasksList_vals[ kk ] )
-				{
-				  tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-				  ++checked_masks;
-				}
-			      else
-				tripleMaskPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			    }
-			}
-		      //end of triple's masks
-		      
-		      //pseudo3d distr.
-		      if ( tripleMaskItemName.contains("Pseudo3d") )
-			{
-			  tripleReportMasksPseudoList.clear();
-			  tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution"
-						      << "Pseudo3d s-vs-D Distribution"
-						      << "Pseudo3d MW-vs-f/f0 Distribution"
-						      << "Pseudo3d MW-vs-D Distribution";
+           if ( Triple_to_Models[tripleName].contains( method ) )
+           {
+              if ( ind_combPlot )
+              {
+                 //QMap< QString (triple), QMap< QString( type_method ), QStringList( ranges ) > >
+                 indComboPlotsMapTripleTypeRangeBool[tripleName][t_m][range_l_h] = true;
+              }
+              else
+              {
+                 indComboPlotsMapTripleTypeRangeBool[tripleName][t_m][range_l_h] = false;
+              }
+           }
+        }
+        ////////////////////////////////////////////////////////
 
-			  tripleReportMasksPseudoList_vals. clear();
-			  if ( tripleItemModelName.contains( "2DSA-IT" )  )
-			    {
-			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsait_s_ff0
-							       << reportGMP. pseudo3d_2dsait_s_d
-							       << reportGMP. pseudo3d_2dsait_mw_ff0
-							       << reportGMP. pseudo3d_2dsait_mw_d;
-			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-IT) -- " << tripleReportMasksPseudoList_vals;
-			    }
-			  else if ( tripleItemModelName.contains( "2DSA-MC" ) )
-			    {
-			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_2dsamc_s_ff0
-							       << reportGMP. pseudo3d_2dsamc_s_d
-							       << reportGMP. pseudo3d_2dsamc_mw_ff0
-							       << reportGMP. pseudo3d_2dsamc_mw_d;
-			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-MC) -- " << tripleReportMasksPseudoList_vals;
-			    }
-			  else if ( tripleItemModelName.contains( "PCSA" ) )
-			    {
-			      tripleReportMasksPseudoList_vals << reportGMP. pseudo3d_pcsa_s_ff0
-							       << reportGMP. pseudo3d_pcsa_s_d
-							       << reportGMP. pseudo3d_pcsa_mw_ff0
-							       << reportGMP. pseudo3d_pcsa_mw_d;
-			      qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (PCSA) -- " << tripleReportMasksPseudoList_vals;
-			    }
-			  			  
-			  for ( int ps = 0; ps < tripleReportMasksPseudoList.size(); ++ps )
-			    {
-			      QString tripleMaskItemPseudoName = tripleReportMasksPseudoList[ ps ];
-			      tripleMaskItemPseudoNameList.clear();
-			      tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
-			      tripleMaskPseudoItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ], tripleMaskItemPseudoNameList, wiubase);
+        qDebug() << "For triple, " << tripleName << ", and models: " << Triple_to_Models[tripleName] << reportGMP.tot_conc_mask
+                 << reportGMP.rmsd_limit_mask << reportGMP.av_intensity_mask << reportGMP.experiment_duration_mask
+                 << reportGMP.integration_results_mask << reportGMP.plots_mask << reportGMP.pseudo3d_mask;
 
-			      if ( tripleReportMasksPseudoList_vals[ ps ] )
-				{
-				  tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-				  ++checked_masks;
-				}
-			      else
-				tripleMaskPseudoItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			    }
-			}
-		      //end of pseudo3d distr. masks
 
-		      //Individual Combined Distro
-		      if ( tripleMaskItemName.contains("Individual") )
-			{
-			  tripleReportMasksIndividualPlotList.clear();
-			  //populate tripleReportMasksIndividualPlotList based on type-method entries in the reportItem:
-			  QStringList types_methods_list = indComboPlotsMapTripleTypeRangeBool[ tripleName ].keys();
-			  for ( int tm=0; tm<types_methods_list.size(); tm++ )
-			    {
-			      //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
-			      QString c_method = types_methods_list[ tm ].split(",")[1];
-			      QString c_type   = types_methods_list[ tm ].split(",")[0];
-			      if ( c_method ==  tripleReportModelsList[ mm ] )
-				{
-				  QMap< QString, bool> c_ranges_bool = indComboPlotsMapTripleTypeRangeBool[ tripleName ][ types_methods_list[ tm ] ];
-				  QMap<QString, bool>::iterator r_bool;
-				  for ( r_bool = c_ranges_bool.begin(); r_bool != c_ranges_bool.end(); ++r_bool )
-				    {
-				      QString r_key = r_bool.key();
-				      bool r_value  = r_bool.value();
-				      QString to_show_ind = r_value ? "YES" : "NO";
-				      QString c_type_range = c_type + "[" + r_key + "]" + "--" + to_show_ind;
-				      tripleReportMasksIndividualPlotList << c_type_range;
-				    }
-				}
-			    }
-			  //Now, mark checkboxes
-			  bool top_ind_comboPlot = false;
-			  for ( int icp = 0; icp < tripleReportMasksIndividualPlotList.size(); ++icp )
-			    {
-			      QString individualPlotName = tripleReportMasksIndividualPlotList[ icp ];
-			      QString individualPlotName_name = tripleReportMasksIndividualPlotList[ icp ].split("--")[0];
-			      QString individualPlotName_show = tripleReportMasksIndividualPlotList[ icp ].split("--")[1];
-			      QStringList individualPlotNameList;
-			      individualPlotNameList << "" << indent.repeated( 5 ) + individualPlotName_name;
+        //define models per triple:
+        tripleReportModelsList.clear();
+        tripleReportModelsList = Triple_to_Models[tripleName];
 
-			      tripleMaskIndComboPlotItem [ tripleModelName ] = new QTreeWidgetItem( tripleMaskItem [ tripleModelName ],
-												    individualPlotNameList, wiubase);
-			      //Checked/no
-			      qDebug() << "To show/no Ind.ComboPlots -- "
-				       << tripleReportMasksList_vals[ kk ]
-				       << individualPlotName_show;
-			      if ( tripleReportMasksList_vals[ kk ] && individualPlotName_show=="YES")
-				{
-				  tripleMaskIndComboPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-				  ++checked_masks;
-				  top_ind_comboPlot = true;
-				}
-			      else
-				tripleMaskIndComboPlotItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			    }
+        int checked_masks = 0;
+        //start triple's models
+        for ( int mm = 0; mm < tripleReportModelsList.size(); ++mm )
+        {
+           //Triple's mask params: child-level 3 in a perChanTree
+           QString tripleItemModelName = tripleReportModelsList[mm] + " Model";
+           QString tripleModelName     = tripleItemName + "," + tripleItemModelName;
+           tripleItemModelNameList.clear();
+           tripleItemModelNameList << "" << indent.repeated( 3 ) + tripleItemModelName;
+           tripleModelItem[tripleModelName] = new QTreeWidgetItem( tripleItem[tripleItemName], tripleItemModelNameList, wiubase );
+           {
+              QString a11yPath = chanItemName + " / " + tripleItemName + " / " + tripleItemModelName;
+              tripleModelItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+              tripleModelItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+           }
 
-			  //Now, set top-level, model-specific Ind. Comboplot item
-			  if ( top_ind_comboPlot )
-			    tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-			  else
-			    tripleMaskItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-			}
-		      //end of Individual Combined plots
-		    }
-		  
-		  if ( checked_masks )
-		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Checked );
-		  else
-		    tripleModelItem [ tripleModelName ] ->setCheckState( 0, Qt::Unchecked );
-		  
-		}
-	      //end of triple's models
+           //Populate tripleReportMasksList && values from scratch
+           tripleReportMasksList.clear();
+           tripleReportMasksList << "Total Concentration" << "RMSD Limit"
+                                 << "Minimum Intensity"
+                                 //<< "Experiment Duration"
+                                 << "Loading Volume" << "Integration Results" << "Plots" << "Pseudo3d Distributions";
 
-	      if ( checked_masks )
-		{
-		  tripleItem [ tripleItemName ] ->setCheckState( 0, Qt::Checked );
-		  ++checked_triples;
-		}
-	      else
-		tripleItem [ tripleItemName ] ->setCheckState( 0, Qt::Unchecked );
-	    }
-	  
-	  //set checked/unchecked for channel (parent)
-	  if ( checked_triples )
-	    chanItem [ chanItemName ] ->setCheckState( 0, Qt::Checked );
-	  else
-	    chanItem [ chanItemName ] ->setCheckState( 0, Qt::Unchecked );
-	}
+           tripleReportMasksList_vals.clear();
+           tripleReportMasksList_vals << reportGMP.tot_conc_mask << reportGMP.rmsd_limit_mask
+                                      << reportGMP.av_intensity_mask
+                                      //<< reportGMP. experiment_duration_mask
+                                      << true << reportGMP.integration_results_mask << reportGMP.plots_mask
+                                      << reportGMP.pseudo3d_mask;
+
+           //Here: add "Individual Distributions" to tripleReportMasksList IF there is/are type-method(s) matching current model:
+           QStringList type_methods_list = indComboPlotsMapTripleTypeRangeBool[tripleName].keys();
+           for ( int tm = 0; tm < type_methods_list.size(); tm++ )
+           {
+              //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
+              QString c_method = type_methods_list[tm].split( "," )[1];
+              if ( c_method == tripleReportModelsList[mm] )
+              {
+                 qDebug() << "In Model, list, ind. : " << type_methods_list << tripleReportModelsList[mm];
+                 tripleReportMasksList << "Individual Combined Distributions";
+                 tripleReportMasksList_vals << true;
+
+                 break;
+              }
+           }
+
+           //start triple's masks
+           for ( int kk = 0; kk < tripleReportMasksList.size(); ++kk )
+           {
+              //Triple's mask params: child-level 3 in a perChanTree
+              QString tripleMaskItemName = tripleReportMasksList[kk];
+              tripleMaskItemNameList.clear();
+              tripleMaskItemNameList << "" << indent.repeated( 4 ) + tripleMaskItemName;
+              tripleMaskItem[tripleModelName] =
+                 new QTreeWidgetItem( tripleModelItem[tripleModelName], tripleMaskItemNameList, wiubase );
+              QString a11yPathMask =
+                 chanItemName + " / " + tripleItemName + " / " + tripleItemModelName + " / " + tripleMaskItemName;
+              tripleMaskItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPathMask );
+              tripleMaskItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPathMask );
+
+              if ( tripleReportMasksList_vals[kk] )
+              {
+                 tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                 ++checked_masks;
+              }
+              else
+              {
+                 tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+              }
+
+              //plots
+              if ( tripleMaskItemName.contains( "Plots" ) )
+              {
+                 tripleReportMasksPlotList.clear();
+                 tripleReportMasksPlotList << "Experiment-Simulation Velocity Data (noise corrected) "
+                                           << "Experiment-Simulation Residuals";
+
+                 // << "Sedimentation Coefficient Distribution"
+                 // << "Molecular Weight Distribution"
+                 // << "Diffusion Coefficient Distribution"
+                 // << "f/f0-vs-s 2D Model"
+                 // << "f/f0-vs-MW 2D Model"
+                 // << "D-vs-s 2D Model"
+                 // << "D-vs-MW 2D Model";
+                 //<< "3D Model Plot";
+
+                 for ( int hh = 0; hh < tripleReportMasksPlotList.size(); ++hh )
+                 {
+                    QString tripleMaskItemPlotName = tripleReportMasksPlotList[hh];
+                    tripleMaskItemPlotNameList.clear();
+                    tripleMaskItemPlotNameList << "" << indent.repeated( 5 ) + tripleMaskItemPlotName;
+                    tripleMaskPlotItem[tripleModelName] =
+                       new QTreeWidgetItem( tripleMaskItem[tripleModelName], tripleMaskItemPlotNameList, wiubase );
+                    {
+                       QString a11yPath = a11yPathMask + " / " + tripleMaskItemPlotName;
+                       tripleMaskPlotItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                       tripleMaskPlotItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+                    }
+
+                    if ( tripleReportMasksList_vals[kk] )
+                    {
+                       tripleMaskPlotItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                       ++checked_masks;
+                    }
+                    else
+                    {
+                       tripleMaskPlotItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                    }
+                 }
+              }
+              //end of triple's masks
+
+              //pseudo3d distr.
+              if ( tripleMaskItemName.contains( "Pseudo3d" ) )
+              {
+                 tripleReportMasksPseudoList.clear();
+                 tripleReportMasksPseudoList << "Pseudo3d s-vs-f/f0 Distribution" << "Pseudo3d s-vs-D Distribution"
+                                             << "Pseudo3d MW-vs-f/f0 Distribution" << "Pseudo3d MW-vs-D Distribution";
+
+                 tripleReportMasksPseudoList_vals.clear();
+                 if ( tripleItemModelName.contains( "2DSA-IT" ) )
+                 {
+                    tripleReportMasksPseudoList_vals << reportGMP.pseudo3d_2dsait_s_ff0 << reportGMP.pseudo3d_2dsait_s_d
+                                                     << reportGMP.pseudo3d_2dsait_mw_ff0 << reportGMP.pseudo3d_2dsait_mw_d;
+                    qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-IT) -- "
+                             << tripleReportMasksPseudoList_vals;
+                 }
+                 else if ( tripleItemModelName.contains( "2DSA-MC" ) )
+                 {
+                    tripleReportMasksPseudoList_vals << reportGMP.pseudo3d_2dsamc_s_ff0 << reportGMP.pseudo3d_2dsamc_s_d
+                                                     << reportGMP.pseudo3d_2dsamc_mw_ff0 << reportGMP.pseudo3d_2dsamc_mw_d;
+                    qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (2DSA-MC) -- "
+                             << tripleReportMasksPseudoList_vals;
+                 }
+                 else if ( tripleItemModelName.contains( "PCSA" ) )
+                 {
+                    tripleReportMasksPseudoList_vals << reportGMP.pseudo3d_pcsa_s_ff0 << reportGMP.pseudo3d_pcsa_s_d
+                                                     << reportGMP.pseudo3d_pcsa_mw_ff0 << reportGMP.pseudo3d_pcsa_mw_d;
+                    qDebug() << "In pseudo3d tree: tripleReportMasksPseudoList_vals (PCSA) -- " << tripleReportMasksPseudoList_vals;
+                 }
+
+                 for ( int ps = 0; ps < tripleReportMasksPseudoList.size(); ++ps )
+                 {
+                    QString tripleMaskItemPseudoName = tripleReportMasksPseudoList[ps];
+                    tripleMaskItemPseudoNameList.clear();
+                    tripleMaskItemPseudoNameList << "" << indent.repeated( 5 ) + tripleMaskItemPseudoName;
+                    tripleMaskPseudoItem[tripleModelName] =
+                       new QTreeWidgetItem( tripleMaskItem[tripleModelName], tripleMaskItemPseudoNameList, wiubase );
+                    {
+                       QString a11yPath = a11yPathMask + " / " + tripleMaskItemPseudoName;
+                       tripleMaskPseudoItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                       tripleMaskPseudoItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+                    }
+
+                    if ( tripleReportMasksPseudoList_vals[ps] )
+                    {
+                       tripleMaskPseudoItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                       ++checked_masks;
+                    }
+                    else
+                    {
+                       tripleMaskPseudoItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                    }
+                 }
+              }
+              //end of pseudo3d distr. masks
+
+              //Individual Combined Distro
+              if ( tripleMaskItemName.contains( "Individual" ) )
+              {
+                 tripleReportMasksIndividualPlotList.clear();
+                 //populate tripleReportMasksIndividualPlotList based on type-method entries in the reportItem:
+                 QStringList types_methods_list = indComboPlotsMapTripleTypeRangeBool[tripleName].keys();
+                 for ( int tm = 0; tm < types_methods_list.size(); tm++ )
+                 {
+                    //select type-method for current model only! [e.g. {s,D}-2DSA-IT for 2DSA-IT model]
+                    QString c_method = types_methods_list[tm].split( "," )[1];
+                    QString c_type   = types_methods_list[tm].split( "," )[0];
+                    if ( c_method == tripleReportModelsList[mm] )
+                    {
+                       QMap<QString, bool> c_ranges_bool = indComboPlotsMapTripleTypeRangeBool[tripleName][types_methods_list[tm]];
+                       QMap<QString, bool>::iterator r_bool;
+                       for ( r_bool = c_ranges_bool.begin(); r_bool != c_ranges_bool.end(); ++r_bool )
+                       {
+                          QString r_key        = r_bool.key();
+                          bool    r_value      = r_bool.value();
+                          QString to_show_ind  = r_value ? "YES" : "NO";
+                          QString c_type_range = c_type + "[" + r_key + "]" + "--" + to_show_ind;
+                          tripleReportMasksIndividualPlotList << c_type_range;
+                       }
+                    }
+                 }
+                 //Now, mark checkboxes
+                 bool top_ind_comboPlot = false;
+                 for ( int icp = 0; icp < tripleReportMasksIndividualPlotList.size(); ++icp )
+                 {
+                    QString     individualPlotName      = tripleReportMasksIndividualPlotList[icp];
+                    QString     individualPlotName_name = tripleReportMasksIndividualPlotList[icp].split( "--" )[0];
+                    QString     individualPlotName_show = tripleReportMasksIndividualPlotList[icp].split( "--" )[1];
+                    QStringList individualPlotNameList;
+                    individualPlotNameList << "" << indent.repeated( 5 ) + individualPlotName_name;
+
+                    tripleMaskIndComboPlotItem[tripleModelName] =
+                       new QTreeWidgetItem( tripleMaskItem[tripleModelName], individualPlotNameList, wiubase );
+                    {
+                       QString a11yPath = a11yPathMask + " / " + individualPlotName_name;
+                       tripleMaskIndComboPlotItem[tripleModelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+                       tripleMaskIndComboPlotItem[tripleModelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+                    }
+                    //Checked/no
+                    qDebug() << "To show/no Ind.ComboPlots -- " << tripleReportMasksList_vals[kk] << individualPlotName_show;
+                    if ( tripleReportMasksList_vals[kk] && individualPlotName_show == "YES" )
+                    {
+                       tripleMaskIndComboPlotItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                       ++checked_masks;
+                       top_ind_comboPlot = true;
+                    }
+                    else
+                    {
+                       tripleMaskIndComboPlotItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                    }
+                 }
+
+                 //Now, set top-level, model-specific Ind. Comboplot item
+                 if ( top_ind_comboPlot )
+                 {
+                    tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+                 }
+                 else
+                 {
+                    tripleMaskItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+                 }
+              }
+              //end of Individual Combined plots
+           }
+
+           if ( checked_masks )
+           {
+              tripleModelItem[tripleModelName]->setCheckState( 0, Qt::Checked );
+           }
+           else
+           {
+              tripleModelItem[tripleModelName]->setCheckState( 0, Qt::Unchecked );
+           }
+        }
+        //end of triple's models
+
+        if ( checked_masks )
+        {
+           tripleItem[tripleItemName]->setCheckState( 0, Qt::Checked );
+           ++checked_triples;
+        }
+        else
+        {
+           tripleItem[tripleItemName]->setCheckState( 0, Qt::Unchecked );
+        }
+     }
+
+     //set checked/unchecked for channel (parent)
+     if ( checked_triples )
+     {
+        chanItem[chanItemName]->setCheckState( 0, Qt::Checked );
+     }
+     else
+     {
+        chanItem[chanItemName]->setCheckState( 0, Qt::Unchecked );
+     }
+   }
     }
 
   //Now check if tripleItem tree widgets have any children (have any models):
@@ -3177,6 +3302,8 @@ void US_ReporterGMP::build_combPlotsTree ( void )
       topItemNameList.clear();
       topItemNameList << "" << indent + tm.key();
       topItemCombPlots [ tm.key() ] = new QTreeWidgetItem( combPlotsTree, topItemNameList, wiubase );
+      topItemCombPlots[tm.key()]->setData( 0, Qt::AccessibleTextRole, tm.key() );
+      topItemCombPlots[tm.key()]->setData( 1, Qt::AccessibleTextRole, tm.key() );
 
       topItemCombPlots [ tm.key() ] ->setCheckState( 0, Qt::Checked );
 
@@ -3186,9 +3313,14 @@ void US_ReporterGMP::build_combPlotsTree ( void )
 	  ItemNameList.clear();
 	  ItemNameList << "" << indent.repeated( 2 ) + unique_models[ i ];
 	  ItemCombPlots [ modelName ] = new QTreeWidgetItem( topItemCombPlots [ tm.key() ], ItemNameList, wiubase);
+     {
+        QString a11yPath = tm.key() + " / " + unique_models[i];
+        ItemCombPlots[modelName]->setData( 0, Qt::AccessibleTextRole, a11yPath );
+        ItemCombPlots[modelName]->setData( 1, Qt::AccessibleTextRole, a11yPath );
+     }
 
-	  ItemCombPlots [ modelName ] ->setCheckState( 0, Qt::Checked );
-	}
+     ItemCombPlots[modelName]->setCheckState( 0, Qt::Checked );
+   }
     }
 
   combPlotsTree->expandAll();

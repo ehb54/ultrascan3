@@ -24,6 +24,40 @@ const QColor colorGreen     ( 50, 205, 50 );
 const QColor colorYellow    ( 255, 255, 102 );
 const QColor colorBlue      ( 95, 152, 238 );
 
+// QTreeWidget::setItemWidget() content is invisible to AT-SPI; this reads the already-displayed text as a stand-in.
+static QString us_accessibleSummary( QWidget* panel )
+{
+   QStringList           parts;
+   const QList<QWidget*> kids = panel->findChildren<QWidget*>();
+
+   for ( QWidget* kid : kids )
+   {
+      if ( QLabel* lb = qobject_cast<QLabel*>( kid ) )
+      {
+         if ( !lb->text().isEmpty() )
+         {
+            parts << lb->text();
+         }
+      }
+      else if ( QLineEdit* le = qobject_cast<QLineEdit*>( kid ) )
+      {
+         if ( !le->text().isEmpty() )
+         {
+            parts << le->text();
+         }
+      }
+      else if ( QTextEdit* te = qobject_cast<QTextEdit*>( kid ) )
+      {
+         if ( !te->toPlainText().isEmpty() )
+         {
+            parts << te->toPlainText();
+         }
+      }
+   }
+
+   return parts.join( "; " );
+}
+
 // Constructor
 US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 {
@@ -429,9 +463,10 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA [ triple_curr ] , 1, groupbox_2DSA[ triple_curr ] );
-	}
-    
-      
+     childItem_2DSA[triple_curr]->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupbox_2DSA[triple_curr] ) );
+   }
+
+
       if ( job2run )  //2DSA-FM
 	{
 	  QString stage_name( tr("2DSA-FM") );
@@ -441,7 +476,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_FM [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_FM [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_FM [ triple_curr ] , 1, groupbox_2DSA_FM[ triple_curr ] );
-	}
+     childItem_2DSA_FM[triple_curr]->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupbox_2DSA_FM[triple_curr] ) );
+   }
 
       if ( job3run )  //FITMEN
 	{
@@ -457,8 +493,9 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_IT [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_IT [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_IT [ triple_curr ] , 1, groupbox_2DSA_IT [ triple_curr ] );
-	}
-      
+     childItem_2DSA_IT[triple_curr]->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupbox_2DSA_IT[triple_curr] ) );
+   }
+
       if ( job5run )  //2DSA-MC
 	{
 	  QString stage_name( tr("2DSA-MC") );
@@ -468,7 +505,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_2DSA_MC [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_2DSA_MC [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_2DSA_MC [ triple_curr ] , 1, groupbox_2DSA_MC [ triple_curr ] );
-	}
+     childItem_2DSA_MC[triple_curr]->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupbox_2DSA_MC[triple_curr] ) );
+   }
 
       if ( job6run_pcsa )  //PCSA
 	{
@@ -479,7 +517,8 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
 	  childItem_PCSA [ triple_curr ] = new QTreeWidgetItem();
 	  topItem [ triple_curr ] -> addChild( childItem_PCSA [ triple_curr ] );
 	  treeWidget->setItemWidget( childItem_PCSA [ triple_curr ] , 1, groupbox_PCSA [ triple_curr ] );
-	}
+     childItem_PCSA[triple_curr]->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupbox_PCSA[triple_curr] ) );
+   }
     }
   
   qDebug() << "Triple Max Size: " << int(max_width);
@@ -672,69 +711,96 @@ void US_Analysis_auto::gui_update( )
 	      qDebug() << "To process stage - " << to_process_array[i].toString();
 
 	      QGroupBox * to_process_stage_groupbox = NULL;
-	      QString stage_to_process = to_process_array[i].toString();
+         QTreeWidgetItem* to_process_stage_item     = NULL;
+         QString          stage_to_process          = to_process_array[i].toString();
 
-	      if ( stage_to_process == "FITMEN" || stage_to_process == "FITMEN_AUTO" )
-		continue;
-	      
-	      
-	      if ( stage_to_process == "2DSA" )
-		to_process_stage_groupbox = groupbox_2DSA[ triple_curr ];
-	      if ( stage_to_process == "2DSA_FM" )
-		to_process_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
-	      if ( stage_to_process == "2DSA_IT" )
-		to_process_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-	      if ( stage_to_process == "2DSA_MC" )
-		to_process_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-	      if ( stage_to_process == "PCSA" )
-		to_process_stage_groupbox = groupbox_PCSA [ triple_curr ];
+         if ( stage_to_process == "FITMEN" || stage_to_process == "FITMEN_AUTO" )
+         {
+            continue;
+         }
 
-	      if ( to_process_stage_groupbox != NULL ) 
-		{
-		  // update GUI
-		  QLineEdit * lineedit_runid    = to_process_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_owner    = to_process_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_lastmsg  = to_process_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_status   = to_process_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_anatype  = to_process_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_submit   = to_process_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_cluster  = to_process_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_lastupd  = to_process_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
 
-		  QPushButton * pb_delete       = to_process_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
+         if ( stage_to_process == "2DSA" )
+         {
+            to_process_stage_groupbox = groupbox_2DSA[triple_curr];
+            to_process_stage_item     = childItem_2DSA[triple_curr];
+         }
+         if ( stage_to_process == "2DSA_FM" )
+         {
+            to_process_stage_groupbox = groupbox_2DSA_FM[triple_curr];
+            to_process_stage_item     = childItem_2DSA_FM[triple_curr];
+         }
+         if ( stage_to_process == "2DSA_IT" )
+         {
+            to_process_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+            to_process_stage_item     = childItem_2DSA_IT[triple_curr];
+         }
+         if ( stage_to_process == "2DSA_MC" )
+         {
+            to_process_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+            to_process_stage_item     = childItem_2DSA_MC[triple_curr];
+         }
+         if ( stage_to_process == "PCSA" )
+         {
+            to_process_stage_groupbox = groupbox_PCSA[triple_curr];
+            to_process_stage_item     = childItem_PCSA[triple_curr];
+         }
 
-		  //delete button
-		  pb_delete -> setEnabled( false );
-		  
-		  //runID
-		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: N/A)";
-		  lineedit_runid -> setText(runid_text);
-		  
-		  //owner
-		  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-		  lineedit_owner -> setText( investigator_text );
-		  
-		  //lastMsg
-		  lineedit_lastmsg -> setText( "N/A" );
-		  
-		  //status
-		  lineedit_status   ->setText( "Waiting for prior stage(s) to complete" );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb( 255, 255, 102 ); }");
-		  
-		  //analysis type
-		  lineedit_anatype -> setText( stage_to_process );
-		  
-		  //submit
-		  lineedit_submit -> setText( "N/A" );
-		  
-		  //updated
-		  lineedit_lastupd -> setText( "N/A" );
-		  
-		  //cluster
-		  lineedit_cluster -> setText( "N/A" );
-		}
-	    }
-	}
+         if ( to_process_stage_groupbox != NULL )
+         {
+            // update GUI
+            QLineEdit* lineedit_runid   = to_process_stage_groupbox->findChild<QLineEdit*>( "runID", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_owner   = to_process_stage_groupbox->findChild<QLineEdit*>( "owner", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_lastmsg = to_process_stage_groupbox->findChild<QLineEdit*>( "lastmsg", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_status  = to_process_stage_groupbox->findChild<QLineEdit*>( "status", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_anatype = to_process_stage_groupbox->findChild<QLineEdit*>( "anatype", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_submit  = to_process_stage_groupbox->findChild<QLineEdit*>( "submit", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_cluster = to_process_stage_groupbox->findChild<QLineEdit*>( "cluster", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_lastupd = to_process_stage_groupbox->findChild<QLineEdit*>( "lastupd", Qt::FindDirectChildrenOnly );
+
+            QPushButton* pb_delete = to_process_stage_groupbox->findChild<QPushButton*>( "delete", Qt::FindDirectChildrenOnly );
+
+            //delete button
+            pb_delete->setEnabled( false );
+
+            //runID
+            QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: N/A)";
+            lineedit_runid->setText( runid_text );
+
+            //owner
+            QString investigator_text =
+               investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] + ")";
+            lineedit_owner->setText( investigator_text );
+
+            //lastMsg
+            lineedit_lastmsg->setText( "N/A" );
+
+            //status
+            lineedit_status->setText( "Waiting for prior stage(s) to complete" );
+            lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb( 255, 255, 102 ); }" );
+
+            //analysis type
+            lineedit_anatype->setText( stage_to_process );
+
+            //submit
+            lineedit_submit->setText( "N/A" );
+
+            //updated
+            lineedit_lastupd->setText( "N/A" );
+
+            //cluster
+            lineedit_cluster->setText( "N/A" );
+
+            if ( to_process_stage_item )
+            {
+               to_process_stage_item->setData( 1,
+                                               Qt::AccessibleTextRole,
+                                               stage_to_process + " (" + triple_curr +
+                                                  "): " + us_accessibleSummary( to_process_stage_groupbox ) );
+            }
+         }
+       }
+   }
 
       //processed
       if ( processed.isUndefined())
@@ -744,152 +810,175 @@ void US_Analysis_auto::gui_update( )
 	  for (int i=0; i < processed_array.size(); ++i )
 	    {
 	      QGroupBox * processed_stage_groupbox = NULL;
-	      QString stage_name, stage_gfacID, stage_status, stage_statusMsg,
-		stage_createTime, stage_updateTime, stage_HPCAnalysisRequestID;
-	      
-	      foreach(const QString& key, processed_array[i].toObject().keys())
-		{
-		  QJsonObject newObj = processed_array[i].toObject().value(key).toObject();
-		  
-		  qDebug() << "Processed stage - " << key << ": gfacID, status, statusMsg -- "
-			   << newObj["gfacID"]   .toString()
-			   << newObj["HPCAnalysisRequestID"]. toString()
-			   << newObj["status"]   .toString()
-			   << newObj["statusMsg"].toString()
-			   << newObj["createTime"].toString()
-			   << newObj["updateTime"].toString();
+         QTreeWidgetItem* processed_stage_item     = NULL;
+         QString          stage_name, stage_gfacID, stage_status, stage_statusMsg, stage_createTime, stage_updateTime,
+            stage_HPCAnalysisRequestID;
 
-		  stage_name   = key;
-		  stage_gfacID = newObj["gfacID"]   .toString();
-		  stage_HPCAnalysisRequestID = newObj["HPCAnalysisRequestID"]   .toString();
-		  stage_status = newObj["status"]   .toString();
-		  stage_statusMsg = newObj["statusMsg"].toString();
-		  stage_createTime = newObj["createTime"].toString();
-		  stage_updateTime = newObj["updateTime"].toString();
-		}
+         foreach ( const QString& key, processed_array[i].toObject().keys() )
+         {
+            QJsonObject newObj = processed_array[i].toObject().value( key ).toObject();
 
-	      //IF Canceled by user:
-	      if ( stage_name.contains("FITMEN") && ( stage_status == "CANCELED" || stage_status == "canceled" ) )
-		{
-		  if ( groupbox_2DSA_IT.contains( triple_curr ) )
-		    {
-		      processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-		      stage_name = "2DSA-IT";
-		    }
-		  
-		  else if ( groupbox_2DSA_MC.contains( triple_curr ) )
-		    {
-		      processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-		      stage_name = "2DSA-MC";
-		    }
-		  
-		  qDebug() << "CANCELED status for triple/stage (FITMEN) -- " << triple_curr_key << "/" << submitted.toString();
+            qDebug() << "Processed stage - " << key << ": gfacID, status, statusMsg -- " << newObj["gfacID"].toString()
+                     << newObj["HPCAnalysisRequestID"].toString() << newObj["status"].toString() << newObj["statusMsg"].toString()
+                     << newObj["createTime"].toString() << newObj["updateTime"].toString();
 
-		  stage_HPCAnalysisRequestID = "N/A";
-		  stage_createTime = "N/A";
-		  stage_updateTime = "N/A";
-		  stage_status = "CANCELED";
-		  
-		}
-	      
-	      if ( stage_name == "2DSA" )
-		processed_stage_groupbox = groupbox_2DSA[ triple_curr ];
-	      if ( stage_name == "2DSA_FM" )
-		processed_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
-	      if ( stage_name == "2DSA_IT" )
-		processed_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-	      if ( stage_name == "2DSA_MC" )
-		processed_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-	      if ( stage_name == "PCSA" )
-		processed_stage_groupbox = groupbox_PCSA [ triple_curr ];
+            stage_name                 = key;
+            stage_gfacID               = newObj["gfacID"].toString();
+            stage_HPCAnalysisRequestID = newObj["HPCAnalysisRequestID"].toString();
+            stage_status               = newObj["status"].toString();
+            stage_statusMsg            = newObj["statusMsg"].toString();
+            stage_createTime           = newObj["createTime"].toString();
+            stage_updateTime           = newObj["updateTime"].toString();
+         }
 
-	      if ( processed_stage_groupbox != NULL )
-		{
-		  // update GUI
-		  QLineEdit * lineedit_runid    = processed_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_owner    = processed_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_lastmsg  = processed_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_status   = processed_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_anatype  = processed_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_submit   = processed_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_cluster  = processed_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-		  QLineEdit * lineedit_lastupd  = processed_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+         //IF Canceled by user:
+         if ( stage_name.contains( "FITMEN" ) && ( stage_status == "CANCELED" || stage_status == "canceled" ) )
+         {
+            if ( groupbox_2DSA_IT.contains( triple_curr ) )
+            {
+               processed_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+               processed_stage_item     = childItem_2DSA_IT[triple_curr];
+               stage_name               = "2DSA-IT";
+            }
 
-		  QPushButton * pb_delete       = processed_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
-		  QPushButton * pb_overlay      = processed_stage_groupbox->findChild<QPushButton *>("overlay", Qt::FindDirectChildrenOnly);
+            else if ( groupbox_2DSA_MC.contains( triple_curr ) )
+            {
+               processed_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+               processed_stage_item     = childItem_2DSA_MC[triple_curr];
+               stage_name               = "2DSA-MC";
+            }
 
-		  //delete
-		  pb_delete->setEnabled( false );
+            qDebug() << "CANCELED status for triple/stage (FITMEN) -- " << triple_curr_key << "/" << submitted.toString();
 
-		  //runID
-		  QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_HPCAnalysisRequestID + ")";
-		  lineedit_runid -> setText(runid_text);
+            stage_HPCAnalysisRequestID = "N/A";
+            stage_createTime           = "N/A";
+            stage_updateTime           = "N/A";
+            stage_status               = "CANCELED";
+         }
 
-		  //owner
-		  QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-		  lineedit_owner -> setText( investigator_text );
-		  
-		  //lastMsg
-		  lineedit_lastmsg -> setText( stage_statusMsg );
-		  
-		  //status
-		  lineedit_status -> setText( stage_status );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb( 2, 88, 57 ); color : white; }");
-		  
-		  //analysis type
-		  lineedit_anatype -> setText( stage_name );
-		  
-		  //submit
-		  lineedit_submit -> setText( stage_createTime );
-		  
-		  //updated
-		  lineedit_lastupd -> setText( stage_updateTime );
-		  
-		  //cluster
-		  lineedit_cluster -> setText( cluster );
+         if ( stage_name == "2DSA" )
+         {
+            processed_stage_groupbox = groupbox_2DSA[triple_curr];
+            processed_stage_item     = childItem_2DSA[triple_curr];
+         }
+         if ( stage_name == "2DSA_FM" )
+         {
+            processed_stage_groupbox = groupbox_2DSA_FM[triple_curr];
+            processed_stage_item     = childItem_2DSA_FM[triple_curr];
+         }
+         if ( stage_name == "2DSA_IT" )
+         {
+            processed_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+            processed_stage_item     = childItem_2DSA_IT[triple_curr];
+         }
+         if ( stage_name == "2DSA_MC" )
+         {
+            processed_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+            processed_stage_item     = childItem_2DSA_MC[triple_curr];
+         }
+         if ( stage_name == "PCSA" )
+         {
+            processed_stage_groupbox = groupbox_PCSA[triple_curr];
+            processed_stage_item     = childItem_PCSA[triple_curr];
+         }
 
-		  
-		  if ( stage_status == "COMPLETE" || stage_status == "complete" )
-		    pb_overlay->setEnabled( true ); 
-		  
-		  //IF Canceled by user:
-		  if ( stage_status == "CANCELED" || stage_status == "canceled" )
-		    {
-		      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
-		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
-		      
-		      pb_delete->setEnabled( false );
-		      pb_overlay->setEnabled( false );
-		      
-		      Completed_triples[ triple_curr_key ] = true;
-		      Canceled_triples [ triple_curr_key ] = true;
-		      qDebug() << "CANCELED status( Processed ) for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-		    }
-		  if ( stage_status == "FAILED" || stage_status == "failed" )
-		    {
-		      lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
-		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+         if ( processed_stage_groupbox != NULL )
+         {
+            // update GUI
+            QLineEdit* lineedit_runid   = processed_stage_groupbox->findChild<QLineEdit*>( "runID", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_owner   = processed_stage_groupbox->findChild<QLineEdit*>( "owner", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_lastmsg = processed_stage_groupbox->findChild<QLineEdit*>( "lastmsg", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_status  = processed_stage_groupbox->findChild<QLineEdit*>( "status", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_anatype = processed_stage_groupbox->findChild<QLineEdit*>( "anatype", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_submit  = processed_stage_groupbox->findChild<QLineEdit*>( "submit", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_cluster = processed_stage_groupbox->findChild<QLineEdit*>( "cluster", Qt::FindDirectChildrenOnly );
+            QLineEdit* lineedit_lastupd = processed_stage_groupbox->findChild<QLineEdit*>( "lastupd", Qt::FindDirectChildrenOnly );
 
-		      pb_delete->setEnabled( false );
-		      pb_overlay->setEnabled( false );
-		      
-		      Completed_triples[ triple_curr_key ] = true;
-		      Failed_triples [ triple_curr_key ] = true;
-		      qDebug() << "FAILED status( Processed ) for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-		    }
-		}
-	    }
-	      
-	  //when re-attaching by reading history record for triple
-	  if ( !to_process_array.size() && History_read[ triple_curr_key ] &&
-	       !status.contains("CANCELED") && !status.contains("canceled") &&
-	       !status.contains("FAILED") && !status.contains("failed") )
-	    {
-	      qDebug() << "Setting triple to complete - read from History, status = " << status;
-	      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
-	    }
-	}
-      
+            QPushButton* pb_delete  = processed_stage_groupbox->findChild<QPushButton*>( "delete", Qt::FindDirectChildrenOnly );
+            QPushButton* pb_overlay = processed_stage_groupbox->findChild<QPushButton*>( "overlay", Qt::FindDirectChildrenOnly );
+
+            //delete
+            pb_delete->setEnabled( false );
+
+            //runID
+            QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + stage_HPCAnalysisRequestID + ")";
+            lineedit_runid->setText( runid_text );
+
+            //owner
+            QString investigator_text =
+               investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] + ")";
+            lineedit_owner->setText( investigator_text );
+
+            //lastMsg
+            lineedit_lastmsg->setText( stage_statusMsg );
+
+            //status
+            lineedit_status->setText( stage_status );
+            lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb( 2, 88, 57 ); color : white; }" );
+
+            //analysis type
+            lineedit_anatype->setText( stage_name );
+
+            //submit
+            lineedit_submit->setText( stage_createTime );
+
+            //updated
+            lineedit_lastupd->setText( stage_updateTime );
+
+            //cluster
+            lineedit_cluster->setText( cluster );
+
+            if ( processed_stage_item )
+            {
+               processed_stage_item->setData( 1,
+                                              Qt::AccessibleTextRole,
+                                              stage_name + " (" + triple_curr +
+                                                 "): " + us_accessibleSummary( processed_stage_groupbox ) );
+            }
+
+
+            if ( stage_status == "COMPLETE" || stage_status == "complete" )
+            {
+               pb_overlay->setEnabled( true );
+            }
+
+            //IF Canceled by user:
+            if ( stage_status == "CANCELED" || stage_status == "canceled" )
+            {
+               lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }" );
+               topItem[triple_curr]->setForeground( 0, QBrush( colorRed ) );
+
+               pb_delete->setEnabled( false );
+               pb_overlay->setEnabled( false );
+
+               Completed_triples[triple_curr_key] = true;
+               Canceled_triples[triple_curr_key]  = true;
+               qDebug() << "CANCELED status( Processed ) for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+            }
+            if ( stage_status == "FAILED" || stage_status == "failed" )
+            {
+               lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }" );
+               topItem[triple_curr]->setForeground( 0, QBrush( colorRed ) );
+
+               pb_delete->setEnabled( false );
+               pb_overlay->setEnabled( false );
+
+               Completed_triples[triple_curr_key] = true;
+               Failed_triples[triple_curr_key]    = true;
+               qDebug() << "FAILED status( Processed ) for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+            }
+         }
+       }
+
+       //when re-attaching by reading history record for triple
+       if ( !to_process_array.size() && History_read[triple_curr_key] && !status.contains( "CANCELED" ) &&
+            !status.contains( "canceled" ) && !status.contains( "FAILED" ) && !status.contains( "failed" ) )
+       {
+          qDebug() << "Setting triple to complete - read from History, status = " << status;
+          topItem[triple_curr]->setForeground( 0, QBrush( colorGreen ) );
+       }
+   }
+
       //submitted -- current active stage
       if ( submitted.isUndefined())
 	qDebug() << "Nothing submitted yet !!";
@@ -1046,163 +1135,193 @@ void US_Analysis_auto::gui_update( )
 		}
 
 	      return;
-	    }
-	      
-	  //QGroupBox * current_stage_groupbox;
-	  
-	  if ( submitted.toString() == "2DSA" )
-	    current_stage_groupbox = groupbox_2DSA[ triple_curr ];
-	  if ( submitted.toString() == "2DSA_FM" )
-	    current_stage_groupbox = groupbox_2DSA_FM [ triple_curr ];
-	  if ( submitted.toString() == "2DSA_IT" )
-	    current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-	  if ( submitted.toString() == "2DSA_MC" )
-	    current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-	  if ( submitted.toString() == "PCSA" )
-	    current_stage_groupbox = groupbox_PCSA [ triple_curr ];
+       }
 
-	  //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
-	  if ( ( submitted.toString() == "FITMEN" || submitted.toString() == "FITMEN_AUTO" )
-	       && ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled") )
-	    {
-	      if ( groupbox_2DSA_IT.contains( triple_curr ) )
-		{
-		  current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-		  stage_name = "2DSA-IT";
-		}
-	      
-	      else if ( groupbox_2DSA_MC.contains( triple_curr ) )
-		{
-		  current_stage_groupbox = groupbox_2DSA_MC [ triple_curr ];
-		  stage_name = "2DSA-MC";
-		}
-	      
-	      //current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
-	      //stage_name = "2DSA-IT";
-	      
-	      curr_HPCAnalysisRequestID = "N/A";
-	      status_msg = "Job has been scheduled for deletion";
-	      status = "CANCELED";
+       //QGroupBox * current_stage_groupbox;
 
-	      if ( fitmen_bad_vals  )
-		status = "FAILED";
-	      
-	      create_time = "N/A";
-	      update_time = "N/A";
-	    }
+       QTreeWidgetItem* current_stage_item = NULL;
 
-	  if ( current_stage_groupbox != NULL )
-	    {
-	      QLineEdit * lineedit_runid    = current_stage_groupbox->findChild<QLineEdit *>("runID", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_owner    = current_stage_groupbox->findChild<QLineEdit *>("owner", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastmsg  = current_stage_groupbox->findChild<QLineEdit *>("lastmsg", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_status   = current_stage_groupbox->findChild<QLineEdit *>("status", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_anatype  = current_stage_groupbox->findChild<QLineEdit *>("anatype", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_submit   = current_stage_groupbox->findChild<QLineEdit *>("submit", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_cluster  = current_stage_groupbox->findChild<QLineEdit *>("cluster", Qt::FindDirectChildrenOnly);
-	      QLineEdit * lineedit_lastupd  = current_stage_groupbox->findChild<QLineEdit *>("lastupd", Qt::FindDirectChildrenOnly);
+       if ( submitted.toString() == "2DSA" )
+       {
+          current_stage_groupbox = groupbox_2DSA[triple_curr];
+          current_stage_item     = childItem_2DSA[triple_curr];
+       }
+       if ( submitted.toString() == "2DSA_FM" )
+       {
+          current_stage_groupbox = groupbox_2DSA_FM[triple_curr];
+          current_stage_item     = childItem_2DSA_FM[triple_curr];
+       }
+       if ( submitted.toString() == "2DSA_IT" )
+       {
+          current_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+          current_stage_item     = childItem_2DSA_IT[triple_curr];
+       }
+       if ( submitted.toString() == "2DSA_MC" )
+       {
+          current_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+          current_stage_item     = childItem_2DSA_MC[triple_curr];
+       }
+       if ( submitted.toString() == "PCSA" )
+       {
+          current_stage_groupbox = groupbox_PCSA[triple_curr];
+          current_stage_item     = childItem_PCSA[triple_curr];
+       }
 
-	      QPushButton * pb_delete       = current_stage_groupbox->findChild<QPushButton *>("delete", Qt::FindDirectChildrenOnly);
-	      QPushButton * pb_overlay      = current_stage_groupbox->findChild<QPushButton *>("overlay", Qt::FindDirectChildrenOnly);
+       //Special case: children triple of the channel, while parent triple (selected wvl) is CANCELED
+       if ( ( submitted.toString() == "FITMEN" || submitted.toString() == "FITMEN_AUTO" ) &&
+            ( nextWaitStatus == "CANCELED" || nextWaitStatus == "canceled" ) )
+       {
+          if ( groupbox_2DSA_IT.contains( triple_curr ) )
+          {
+             current_stage_groupbox = groupbox_2DSA_IT[triple_curr];
+             current_stage_item     = childItem_2DSA_IT[triple_curr];
+             stage_name             = "2DSA-IT";
+          }
 
-	      //QString triple_stage = triple_curr_key + ":" + submitted.toString();
-	      //delete button: if running && admin_user || user_owner, enable; otherwise, disable (should be disabled earlier)
-	      if ( US_Settings::us_inv_level() > 3 || US_Settings::us_inv_ID() == invID )
-		if ( !pb_delete->isEnabled() )
-		  {
-		    pb_delete->setEnabled( true );
-		    
-		    //signalMapper->setMapping ( pb_delete, triple_stage );
-		  }
-	      	          
-	      //runID
-	      QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_HPCAnalysisRequestID + ")";
-	      lineedit_runid -> setText(runid_text);
-	      
-	      //owner
-	      QString investigator_text = investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] +  ")";
-	      lineedit_owner -> setText( investigator_text );
-	      
-	      //lastMsg
-	      lineedit_lastmsg -> setText( status_msg );
-	  
-	      //status
-	      if ( status == "READY" || status == "SUBMITTED" )
-		{
-		  lineedit_status -> setText( "QUEUED" );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(95, 152, 238); }");
-		}
-	      else
-		{
-		  lineedit_status -> setText( status );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }");
-		}
-	      
-	      //analysis type
-	      lineedit_anatype -> setText( stage_name );
-	      
-	      //submit
-	      lineedit_submit -> setText( create_time );
-	      
-	      //updated
-	      lineedit_lastupd -> setText( update_time );
-	      
-	      //cluster
-	      lineedit_cluster -> setText( cluster );
+          else if ( groupbox_2DSA_MC.contains( triple_curr ) )
+          {
+             current_stage_groupbox = groupbox_2DSA_MC[triple_curr];
+             current_stage_item     = childItem_2DSA_MC[triple_curr];
+             stage_name             = "2DSA-MC";
+          }
 
+          //current_stage_groupbox = groupbox_2DSA_IT [ triple_curr ];
+          //stage_name = "2DSA-IT";
 
-	      //if complete 
-	      if ( status == "COMPLETE" )
-		{
-		  pb_overlay->setEnabled( true );
-		  pb_delete->setEnabled( false );
-		  lineedit_status          -> setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }");
-		  		  
-		  // && if final stage
-		  if ( !to_process_array.size() )
-		    {
-		      topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorGreen ) );
-		      /****
+          curr_HPCAnalysisRequestID = "N/A";
+          status_msg                = "Job has been scheduled for deletion";
+          status                    = "CANCELED";
+
+          if ( fitmen_bad_vals )
+          {
+             status = "FAILED";
+          }
+
+          create_time = "N/A";
+          update_time = "N/A";
+       }
+
+       if ( current_stage_groupbox != NULL )
+       {
+          QLineEdit*   lineedit_runid   = current_stage_groupbox->findChild<QLineEdit*>( "runID", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_owner   = current_stage_groupbox->findChild<QLineEdit*>( "owner", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_lastmsg = current_stage_groupbox->findChild<QLineEdit*>( "lastmsg", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_status  = current_stage_groupbox->findChild<QLineEdit*>( "status", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_anatype = current_stage_groupbox->findChild<QLineEdit*>( "anatype", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_submit  = current_stage_groupbox->findChild<QLineEdit*>( "submit", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_cluster = current_stage_groupbox->findChild<QLineEdit*>( "cluster", Qt::FindDirectChildrenOnly );
+          QLineEdit*   lineedit_lastupd = current_stage_groupbox->findChild<QLineEdit*>( "lastupd", Qt::FindDirectChildrenOnly );
+
+          QPushButton* pb_delete  = current_stage_groupbox->findChild<QPushButton*>( "delete", Qt::FindDirectChildrenOnly );
+          QPushButton* pb_overlay = current_stage_groupbox->findChild<QPushButton*>( "overlay", Qt::FindDirectChildrenOnly );
+
+          //QString triple_stage = triple_curr_key + ":" + submitted.toString();
+          //delete button: if running && admin_user || user_owner, enable; otherwise, disable (should be disabled earlier)
+          if ( US_Settings::us_inv_level() > 3 || US_Settings::us_inv_ID() == invID )
+          {
+             if ( !pb_delete->isEnabled() )
+             {
+                pb_delete->setEnabled( true );
+
+                //signalMapper->setMapping ( pb_delete, triple_stage );
+             }
+          }
+
+          //runID
+          QString runid_text = filename + " ( " + triple_curr + " )  " + defaultDB + " (ID: " + curr_HPCAnalysisRequestID + ")";
+          lineedit_runid->setText( runid_text );
+
+          //owner
+          QString investigator_text =
+             investigator_details["email"] + " (" + investigator_details["fname"] + " " + investigator_details["lname"] + ")";
+          lineedit_owner->setText( investigator_text );
+
+          //lastMsg
+          lineedit_lastmsg->setText( status_msg );
+
+          //status
+          if ( status == "READY" || status == "SUBMITTED" )
+          {
+             lineedit_status->setText( "QUEUED" );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(95, 152, 238); }" );
+          }
+          else
+          {
+             lineedit_status->setText( status );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(50, 205, 50); }" );
+          }
+
+          //analysis type
+          lineedit_anatype->setText( stage_name );
+
+          //submit
+          lineedit_submit->setText( create_time );
+
+          //updated
+          lineedit_lastupd->setText( update_time );
+
+          //cluster
+          lineedit_cluster->setText( cluster );
+
+          if ( current_stage_item )
+          {
+             current_stage_item->setData( 1,
+                                          Qt::AccessibleTextRole,
+                                          stage_name + " (" + triple_curr +
+                                             "): " + us_accessibleSummary( current_stage_groupbox ) );
+          }
+
+          //if complete
+          if ( status == "COMPLETE" )
+          {
+             pb_overlay->setEnabled( true );
+             pb_delete->setEnabled( false );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(2, 88, 57); color : white; }" );
+
+             // && if final stage
+             if ( !to_process_array.size() )
+             {
+                topItem[triple_curr]->setForeground( 0, QBrush( colorGreen ) );
+                /****
 			   ALEXEY: maybe update QMap < triple_curr , bool > Completed_triples with TRUE (defined as all FALSES at the beginning):
 			   Completed_triples[ triple_curr ] = true;
 			   At the end of update cycle over triples, check if there is at least one FALSE value in the  Completed_triple QMap.
 			   If NO - stop timer, show Msg that everything completed.
 		      **/
 
-		      /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
-		      //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
-		      /*******************************************************************************************/
-		      
-		      qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[ triple_curr_key ];
-		      
-		    }
-		}
+                /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+                //Completed_triples[ triple_curr_key ] = true;  // May cause race conditions!!!!
+                /*******************************************************************************************/
 
-	      //check if failed -- due to the abortion/deletion of the job
-	      if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled")
-		{
-		  pb_overlay->setEnabled( false );
-		  pb_delete->setEnabled( false );
-		  lineedit_status   -> setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }");
-		  topItem [ triple_curr ]  -> setForeground( 0,  QBrush( colorRed ));
+                qDebug() << "set Completed_triples[ " << triple_curr_key << " ] to " << Completed_triples[triple_curr_key];
+             }
+          }
 
-		  /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
-		  //Completed_triples[ triple_curr_key ] = true;
-		  /*******************************************************************************************/
+          //check if failed -- due to the abortion/deletion of the job
+          if ( status == "FAILED" || status == "failed" || status == "CANCELED" || status == "canceled" )
+          {
+             pb_overlay->setEnabled( false );
+             pb_delete->setEnabled( false );
+             lineedit_status->setStyleSheet( "QLineEdit { background-color:  rgb(210, 0, 0); color : white; }" );
+             topItem[triple_curr]->setForeground( 0, QBrush( colorRed ) );
 
-		  if ( status == "FAILED" || status == "failed" )
-		    {
-		      Failed_triples   [ triple_curr_key ] = true;
-		      qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-		    }
-		  if ( status == "CANCELED" || status == "canceled")
-		    {
-		      Canceled_triples   [ triple_curr_key ] = true;
-		      qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
-		    }
-		}
-	    }
-	}
+             /** Comment the line BELOW as this MAY cause RACE CONDITIONS !!!!!***************************/
+             //Completed_triples[ triple_curr_key ] = true;
+             /*******************************************************************************************/
+
+             if ( status == "FAILED" || status == "failed" )
+             {
+                Failed_triples[triple_curr_key] = true;
+                qDebug() << "FAILED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+             }
+             if ( status == "CANCELED" || status == "canceled" )
+             {
+                Canceled_triples[triple_curr_key] = true;
+                qDebug() << "CANCELED status for triple/stage -- " << triple_curr_key << "/" << submitted.toString();
+             }
+          }
+       }
+   }
     }
 
   // Check if all triples completed //
@@ -3861,6 +3980,8 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   QLabel*     lb_runID   = us_label( tr( "RunID:" ) );
   QLineEdit*  le_runID   = us_lineedit( "", 0, true );
   le_runID -> setObjectName("runID");
+  le_runID->setAccessibleName( tr( "Run ID" ) );
+  lb_runID->setBuddy( le_runID );
 
   //Delete button
   QPushButton* pb_delete = new QPushButton( tr( "Cancel" ) );
@@ -3875,39 +3996,53 @@ QGroupBox * US_Analysis_auto::createGroup( QString & triple_name )
   QLabel*     lb_owner   = us_label( tr( "Owner:" ) );
   QLineEdit*  le_owner   = us_lineedit( "", 0, true );
   le_owner -> setObjectName("owner");
+  le_owner->setAccessibleName( tr( "Owner" ) );
+  lb_owner->setBuddy( le_owner );
 
   //Last Msg
   QLabel*     lb_lastmsg = us_label( tr( "Last Message:" ) );
   QLineEdit*  le_lastmsg = us_lineedit( "", 0, true );
   le_lastmsg -> setObjectName("lastmsg");
+  le_lastmsg->setAccessibleName( tr( "Last Message" ) );
+  lb_lastmsg->setBuddy( le_lastmsg );
 
   //Status
   QLabel*     lb_status  = us_label( tr( "Status:" ) );
   QLineEdit*  le_status  = us_lineedit( "", 0, true );
   le_status -> setObjectName("status");
+  le_status->setAccessibleName( tr( "Status" ) );
+  lb_status->setBuddy( le_status );
 
   //Analysis Type
   QLabel*     lb_anatype = us_label( tr( "Analysis Type:" ) );
   QLineEdit*  le_anatype = us_lineedit( "", 0, true );
   le_anatype -> setObjectName("anatype");
+  le_anatype->setAccessibleName( tr( "Analysis Type" ) );
+  lb_anatype->setBuddy( le_anatype );
 
   //Submitted On
   QLabel*     lb_submit  = us_label( tr( "Submitted on:" ) );
   QLineEdit*  le_submit  = us_lineedit( "", 0, true );
   le_submit -> setObjectName("submit");
+  le_submit->setAccessibleName( tr( "Submitted On" ) );
+  lb_submit->setBuddy( le_submit );
 
   //Running On
   QLabel*     lb_cluster  = us_label( tr( "Running on:" ) );
   QLineEdit*  le_cluster  = us_lineedit( "", 0, true  );
   le_cluster -> setObjectName("cluster");
+  le_cluster->setAccessibleName( tr( "Running On" ) );
+  lb_cluster->setBuddy( le_cluster );
   le_cluster->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Preferred);
   
   //Last Status Update
   QLabel*     lb_lastupd  = us_label( tr( "Last Status Update:" ) );
   QLineEdit*  le_lastupd  = us_lineedit( "", 0, true );
   le_lastupd -> setObjectName("lastupd");
-  
-  
+  le_lastupd->setAccessibleName( tr( "Last Status Update" ) );
+  lb_lastupd->setBuddy( le_lastupd );
+
+
   genL->addWidget( lb_runID,   row,    0, 1, 2 );
   genL->addWidget( le_runID,   row,    2, 1, 8 );
 
