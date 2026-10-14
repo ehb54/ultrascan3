@@ -202,8 +202,7 @@ void US_MPI_Analysis::_2dsa_master( void )
 
          if ( simulation_values.noisflag == 0 )
          {
-            DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << tripleID << ")"
-                       << " :  model was output.";
+            DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << tripleID << ")" << " :  model was output.";
          }
          else
          {
