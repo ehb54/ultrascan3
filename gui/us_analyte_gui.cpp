@@ -1479,7 +1479,7 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     le_protein_temp = us_lineedit( QString::number( temperature, 'f', 1 ) );
     le_protein_temp->setAccessibleName( tr( "Temperature" ) );
     lb_protein_temp->setBuddy( le_protein_temp );
-  
+
     if ( signal_tmp )
     {
        us_setReadOnly( le_protein_temp, true );

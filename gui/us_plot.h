@@ -115,7 +115,7 @@ class US_GUI_EXTERN US_Plot : public QHBoxLayout
       QwtPlot* qwtPlot() const { return plot; }
 
       //! \brief Override the toolbar's accessible name (distinguishes multiple US_Plots sharing a title)
-      void setToolBarAccessibleName( const QString& name );
+      void                   setToolBarAccessibleName( const QString& name );
 
       //! \brief Shrink (or restore) the plot title's font so its longest
       //! line fits within the plot's current width, instead of being

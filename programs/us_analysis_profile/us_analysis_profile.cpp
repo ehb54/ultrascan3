@@ -1592,11 +1592,11 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
 
       QLineEdit *le_ref_ch  =  us_lineedit( "", 0, true  );
       le_ref_ch ->setObjectName( stchan + "RefChan --chann_name--" + schan );
-      le_ref_ch ->setAccessibleName( tr( "Reference Channel" ) );
-      
+      le_ref_ch->setAccessibleName( tr( "Reference Channel" ) );
+
       sb_use_ref_ch  = us_spinbox();
       sb_use_ref_ch ->setObjectName( stchan + "RefUseChan --chann_name--" + schan );
-      sb_use_ref_ch ->setAccessibleName( tr( "Use Reference Channel" ) );
+      sb_use_ref_ch->setAccessibleName( tr( "Use Reference Channel" ) );
       sb_use_ref_ch ->setMinimum( 0 );
       sb_use_ref_ch ->setMaximum( int(nchn/2.0) );
       sb_use_ref_ch -> setEnabled( false );
@@ -1650,7 +1650,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_analysisrun ->setChecked( true );
       QString strow  = QString::number( ii );
       ck_analysisrun ->setObjectName( strow + ": Run" );
-      ck_analysisrun ->setAccessibleName( tr( "Run Analysis (Channel %1)" ).arg( schan ) );
+      ck_analysisrun->setAccessibleName( tr( "Run Analysis (Channel %1)" ).arg( schan ) );
       genL->addWidget( ck_analysisrun,  row,  8, 1, 1, Qt::AlignHCenter );
       connect( ck_analysisrun, &QAbstractButton::toggled,
                this,           &US_AnaprofPanGen::runChecked );
@@ -1663,7 +1663,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_reportrun ->setAutoFillBackground( true );
       ck_reportrun ->setChecked( true );
       ck_reportrun ->setObjectName( strow + ": RunReport" );
-      ck_reportrun ->setAccessibleName( tr( "Run Report (Channel %1)" ).arg( schan ) );
+      ck_reportrun->setAccessibleName( tr( "Run Report (Channel %1)" ).arg( schan ) );
       genL->addWidget( ck_reportrun,  row,  9, 1, 1, Qt::AlignHCenter );
       connect( ck_reportrun, &QAbstractButton::toggled,
                this,         &US_AnaprofPanGen::reportRunChecked );
@@ -1701,7 +1701,7 @@ DbgLv(1) << "Ge:SL:  ii" << ii << "schan" << schan;
       ck_mwvprefs ->setAutoFillBackground( true );
       ck_mwvprefs ->setChecked( false );
       ck_mwvprefs ->setObjectName( strow + ": MWV" );
-      ck_mwvprefs ->setAccessibleName( tr( "Multiwavelength Preferences (Channel %1)" ).arg( schan ) );
+      ck_mwvprefs->setAccessibleName( tr( "Multiwavelength Preferences (Channel %1)" ).arg( schan ) );
 
       connect( ck_mwvprefs, &QAbstractButton::toggled,
                this,        &US_AnaprofPanGen::mwvChecked );
@@ -3100,18 +3100,18 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    le_kmax         = us_lineedit( "4", 0, false );
    le_kgrpts       = us_lineedit( "64", 0, false );
    le_grreps       = us_lineedit( "8", 0, false );
-   le_smin  ->setAccessibleName( tr( "Sedimentation Coefficient Minimum" ) );
-   le_smax  ->setAccessibleName( tr( "Sedimentation Coefficient Maximum" ) );
+   le_smin->setAccessibleName( tr( "Sedimentation Coefficient Minimum" ) );
+   le_smax->setAccessibleName( tr( "Sedimentation Coefficient Maximum" ) );
    le_sgrpts->setAccessibleName( tr( "Sedimentation Coefficient Grid Points" ) );
-   le_kmin  ->setAccessibleName( tr( "Frictional Ratio Minimum" ) );
-   le_kmax  ->setAccessibleName( tr( "Frictional Ratio Maximum" ) );
+   le_kmin->setAccessibleName( tr( "Frictional Ratio Minimum" ) );
+   le_kmax->setAccessibleName( tr( "Frictional Ratio Maximum" ) );
    le_kgrpts->setAccessibleName( tr( "Frictional Ratio Grid Points" ) );
    le_grreps->setAccessibleName( tr( "Grid Repetitions" ) );
-   lb_smin  ->setBuddy( le_smin );
-   lb_smax  ->setBuddy( le_smax );
+   lb_smin->setBuddy( le_smin );
+   lb_smax->setBuddy( le_smax );
    lb_sgrpts->setBuddy( le_sgrpts );
-   lb_kmin  ->setBuddy( le_kmin );
-   lb_kmax  ->setBuddy( le_kmax );
+   lb_kmin->setBuddy( le_kmin );
+   lb_kmax->setBuddy( le_kmax );
    lb_kgrpts->setBuddy( le_kgrpts );
    lb_grreps->setBuddy( le_grreps );
 
@@ -3119,11 +3119,11 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    le_custmg_name  = us_lineedit( "", 0, true );
    lb_custmg       = us_label ( tr( "CG GUID:" ) );
    lb_custmg_name  = us_label ( tr( "CG Name:" ) );
-   le_custmg      ->setAccessibleName( tr( "Custom Grid GUID" ) );
-   le_custmg_name ->setAccessibleName( tr( "Custom Grid Name" ) );
-   lb_custmg      ->setBuddy( le_custmg );
-   lb_custmg_name ->setBuddy( le_custmg_name );
-   
+   le_custmg->setAccessibleName( tr( "Custom Grid GUID" ) );
+   le_custmg_name->setAccessibleName( tr( "Custom Grid Name" ) );
+   lb_custmg->setBuddy( le_custmg );
+   lb_custmg_name->setBuddy( le_custmg_name );
+
    ck_varyvb       = new QCheckBox( "VV", this );
    ck_varyvb->setPalette( US_GuiSettings::normalColor() );
    ck_varyvb->setChecked( false );
@@ -3142,27 +3142,27 @@ US_AnaprofPan2DSA::US_AnaprofPan2DSA( QWidget* topw )
    ck_j1run ->setPalette( US_GuiSettings::normalColor() );
    ck_j1run ->setChecked( true );
    ck_j1run ->setAutoFillBackground( true  );
-   ck_j1run ->setAccessibleName( tr( "Run 2DSA" ) );
+   ck_j1run->setAccessibleName( tr( "Run 2DSA" ) );
    ck_j2run        = new QCheckBox( tr( "Run" ), this );
    ck_j2run ->setPalette( US_GuiSettings::normalColor() );
    ck_j2run ->setChecked( true );
    ck_j2run ->setAutoFillBackground( true  );
-   ck_j2run ->setAccessibleName( tr( "Run 2DSA-FM" ) );
+   ck_j2run->setAccessibleName( tr( "Run 2DSA-FM" ) );
    ck_j3run        = new QCheckBox( tr( "Run" ), this );
    ck_j3run ->setPalette( US_GuiSettings::normalColor() );
    ck_j3run ->setChecked( true );
    ck_j3run ->setAutoFillBackground( true  );
-   ck_j3run ->setAccessibleName( tr( "Run FITMEN" ) );
+   ck_j3run->setAccessibleName( tr( "Run FITMEN" ) );
    ck_j4run        = new QCheckBox( tr( "Run" ), this );
    ck_j4run ->setPalette( US_GuiSettings::normalColor() );
    ck_j4run ->setChecked( true );
    ck_j4run ->setAutoFillBackground( true  );
-   ck_j4run ->setAccessibleName( tr( "Run 2DSA-IT" ) );
+   ck_j4run->setAccessibleName( tr( "Run 2DSA-IT" ) );
    ck_j5run        = new QCheckBox( tr( "Run" ), this );
    ck_j5run ->setPalette( US_GuiSettings::normalColor() );
    ck_j5run ->setChecked( true );
    ck_j5run ->setAutoFillBackground( true  );
-   ck_j5run ->setAccessibleName( tr( "Run 2DSA-MC" ) );
+   ck_j5run->setAccessibleName( tr( "Run 2DSA-MC" ) );
    le_j2gpts       = us_lineedit( "10", 0, false );
    le_j2mrng       = us_lineedit( "0.03", 0, false );
    le_j2iter       = us_lineedit( "1", 0, false );
@@ -3836,9 +3836,9 @@ DbgLv(1) << "APpc: IN";
 
    //Add objectName
    le_xmin      -> setObjectName( "xmin" );
-   le_xmin      -> setAccessibleName( tr( "X-Axis Minimum" ) );
+   le_xmin->setAccessibleName( tr( "X-Axis Minimum" ) );
    le_xmax      -> setObjectName( "xmax" );
-   le_xmax      -> setAccessibleName( tr( "X-Axis Maximum" ) );
+   le_xmax->setAccessibleName( tr( "X-Axis Maximum" ) );
 
    cb_yaxistyp     = new QComboBox( this );
    cb_yaxistyp->setAccessibleName( tr( "Y-Axis Type" ) );
@@ -3851,9 +3851,9 @@ DbgLv(1) << "APpc: IN";
 
    //Add objectName
    le_ymin      -> setObjectName( "ymin" );
-   le_ymin      -> setAccessibleName( tr( "Y-Axis Minimum" ) );
+   le_ymin->setAccessibleName( tr( "Y-Axis Minimum" ) );
    le_ymax      -> setObjectName( "ymax" );
-   le_ymax      -> setAccessibleName( tr( "Y-Axis Maximum" ) );
+   le_ymax->setAccessibleName( tr( "Y-Axis Maximum" ) );
 
    cb_zaxistyp     = new QComboBox( this );
    cb_zaxistyp->setAccessibleName( tr( "Z-Axis Type" ) );
@@ -3864,9 +3864,9 @@ DbgLv(1) << "APpc: IN";
    le_zvalue       = us_lineedit( "0", 0, false );
    //Add objectName
    le_zvalue      -> setObjectName( "zvalue" );
-   le_zvalue      -> setAccessibleName( tr( "Z-Axis Value" ) );
-   
-   
+   le_zvalue->setAccessibleName( tr( "Z-Axis Value" ) );
+
+
    le_varcount     = us_lineedit( "10", 0, false );
    le_grfiters     = us_lineedit( "3", 0, false );
    le_crpoints     = us_lineedit( "200", 0, false );
@@ -3898,12 +3898,12 @@ DbgLv(1) << "APpc: IN";
    ck_tinoise ->setPalette( US_GuiSettings::normalColor() );
    ck_tinoise ->setChecked( false );
    ck_tinoise ->setAutoFillBackground( true  );
-   ck_tinoise ->setAccessibleName( tr( "Fit Time-Invariant Noise" ) );
+   ck_tinoise->setAccessibleName( tr( "Fit Time-Invariant Noise" ) );
    ck_rinoise      = new QCheckBox( "RI", this );
    ck_rinoise ->setPalette( US_GuiSettings::normalColor() );
    ck_rinoise ->setChecked( false );
    ck_rinoise ->setAutoFillBackground( true  );
-   ck_rinoise ->setAccessibleName( tr( "Fit Radially-Invariant Noise" ) );
+   ck_rinoise->setAccessibleName( tr( "Fit Radially-Invariant Noise" ) );
    QLabel*  lb_chnpro  = us_banner( tr( "Per-Channel Profile" ) );
    cb_chnsel       = new QComboBox( this );
    sl_chnsel       = sibLValue( "general", "channels" );
@@ -3911,8 +3911,8 @@ DbgLv(1) << "APpc: IN";
    cb_chnsel->setCurrentIndex( cchx );
    cb_chnsel->setAccessibleName( tr( "Channel" ) );
    lb_chnsel->setBuddy( cb_chnsel );
-//   int ihgt            = lb_curvtype->height();
-//   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
+   //   int ihgt            = lb_curvtype->height();
+   //   QSpacerItem* spacer1 = new QSpacerItem( 20, ihgt );
 
    // Create main layout rows
    int row             = 0;

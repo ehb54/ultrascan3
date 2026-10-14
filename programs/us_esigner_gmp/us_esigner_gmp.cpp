@@ -244,7 +244,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   cb_choose_rev->setAccessibleName( tr( "Choose Reviewer" ) );
   cb_choose_appr       = new QComboBox( this );
   cb_choose_appr->setAccessibleName( tr( "Choose Approver" ) );
-   
+
   row = 0;
   revOperGMPRunGrid -> addWidget( bn_revOperGMP,          row++,    0,  1,  14 );
 
@@ -323,7 +323,7 @@ US_eSignaturesGMP::US_eSignaturesGMP() : US_Widgets()
   le_loaded_run_db          = us_lineedit( tr(""), 0, true );
   le_loaded_run_db->setAccessibleName( tr( "Loaded GMP Report" ) );
   lb_loaded_run_db->setBuddy( le_loaded_run_db );
-  
+
   //Filename path
   QLabel*      lb_fpath_info = us_label( tr( "Report File \nLocation:" ) );
   te_fpath_info =  us_textedit();
@@ -503,7 +503,7 @@ US_eSignaturesGMP::US_eSignaturesGMP( QStringList reassign ) : US_Widgets()
   cb_choose_rev->setAccessibleName( tr( "Choose Reviewer" ) );
   cb_choose_appr       = new QComboBox( this );
   cb_choose_appr->setAccessibleName( tr( "Choose Approver" ) );
-   
+
   int row = 0;
   revOperGMPRunGrid -> addWidget( bn_revOperGMP,          row++,    0,  1,  14 );
 
@@ -855,7 +855,7 @@ void US_eSignaturesGMP::initPanel_auto( QMap < QString, QString > & protocol_det
   le_loaded_run_db          = us_lineedit( tr(""), 0, true );
   le_loaded_run_db->setAccessibleName( tr( "Loaded GMP Report" ) );
   lb_loaded_run_db->setBuddy( le_loaded_run_db );
-  
+
   QLabel*      lb_eSign_status = us_label( tr( "e-Signing Status:" ) );
   le_eSign_status              = us_lineedit( tr(""), 0, true );
   le_eSign_status->setAccessibleName( tr( "e-Signing Status" ) );
@@ -945,28 +945,34 @@ void US_eSignaturesGMP::display_reviewers_auto( int& row, QMap< QString, QString
 	  
 	  QLineEdit* le_name = us_lineedit( current_reviewer, 0, true );
 	  le_name -> setObjectName( "name: " + current_reviewer );
-	  le_name -> setAccessibleName( tr( "Signer Name" ) );
-	  QString u_role;
-	  if ( JsonListName. contains("operator") )
-	    u_role = "Operator";
-	  else if ( JsonListName. contains("reviewer") )
-	    u_role = "Reviewer";
-	  else if ( JsonListName. contains("approver") )
-	    u_role = "Approver";
-	      
-	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
-	  le_role -> setAccessibleName( tr( "Signer Role" ) );
-	  
-	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d );
-	  le_stat -> setObjectName( "status: " + current_reviewer );
-	  le_stat -> setAccessibleName( tr( "Signing Status" ) );
+     le_name->setAccessibleName( tr( "Signer Name" ) );
+     QString u_role;
+     if ( JsonListName.contains( "operator" ) )
+     {
+        u_role = "Operator";
+     }
+     else if ( JsonListName.contains( "reviewer" ) )
+     {
+        u_role = "Reviewer";
+     }
+     else if ( JsonListName.contains( "approver" ) )
+     {
+        u_role = "Approver";
+     }
 
-	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
-	  
-	  eSignersGrid_auto -> addWidget( le_name,      row,      0,  1,  4 );
-	  eSignersGrid_auto -> addWidget( le_role,      row,      4,  1,  2 );
-	  eSignersGrid_auto -> addWidget( le_stat,      row++,    6,  1,  2 );
-	}
+     QLineEdit* le_role = us_lineedit( u_role, 0, true );
+     le_role->setAccessibleName( tr( "Signer Role" ) );
+
+     QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d );
+     le_stat->setObjectName( "status: " + current_reviewer );
+     le_stat->setAccessibleName( tr( "Signing Status" ) );
+
+     qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
+
+     eSignersGrid_auto->addWidget( le_name, row, 0, 1, 4 );
+     eSignersGrid_auto->addWidget( le_role, row, 4, 1, 2 );
+     eSignersGrid_auto->addWidget( le_stat, row++, 6, 1, 2 );
+   }
     }
 }
 

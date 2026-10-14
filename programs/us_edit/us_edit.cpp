@@ -293,8 +293,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
    le_dataRange   = us_lineedit( "", 1, true );
    le_dataRange->setAccessibleName( tr( "Data Range" ) );
-pb_dataRange->setVisible(false);
-le_dataRange->setVisible(false);
+   pb_dataRange->setVisible( false );
+   le_dataRange->setVisible( false );
    // Plateau
    pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
 pb_plateau->setVisible(false);
@@ -305,13 +305,13 @@ pb_plateau->setVisible(false);
    le_baseline    = us_lineedit( "", 1, true );
    le_baseline->setAccessibleName( tr( "Baseline" ) );
 
-//*NEW STUFF
-//QLabel*
+   //*NEW STUFF
+   //QLabel*
    lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
 //QLineEdit*
    le_dataStart   = us_lineedit( "", 1, true );
    le_dataStart->setAccessibleName( tr( "Data Start" ) );
-//QPushButton*
+   //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
    pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 
@@ -319,7 +319,7 @@ pb_plateau->setVisible(false);
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, true );
    le_dataEnd->setAccessibleName( tr( "Data End" ) );
-//QLabel*
+   //QLabel*
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton*
    pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
@@ -1117,8 +1117,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
    le_dataRange   = us_lineedit( "", 1, true );
    le_dataRange->setAccessibleName( tr( "Data Range" ) );
-pb_dataRange->setVisible(false);
-le_dataRange->setVisible(false);
+   pb_dataRange->setVisible( false );
+   le_dataRange->setVisible( false );
    // Plateau
    pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
 pb_plateau->setVisible(false);
@@ -1129,19 +1129,19 @@ pb_plateau->setVisible(false);
    le_baseline    = us_lineedit( "", 1, true );
    le_baseline->setAccessibleName( tr( "Baseline" ) );
 
-//*NEW STUFF
-//QLabel*
+   //*NEW STUFF
+   //QLabel*
    lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
 //QLineEdit*
    le_dataStart   = us_lineedit( "", 1, true );
    le_dataStart->setAccessibleName( tr( "Data Start" ) );
-//QPushButton*
+   //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
    pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
    le_dataEnd->setAccessibleName( tr( "Data End" ) );
-//QLabel*
+   //QLabel*
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton*
    pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
@@ -1744,8 +1744,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
    le_dataRange   = us_lineedit( "", 1, true );
    le_dataRange->setAccessibleName( tr( "Data Range" ) );
-pb_dataRange->setVisible(false);
-le_dataRange->setVisible(false);
+   pb_dataRange->setVisible( false );
+   le_dataRange->setVisible( false );
    // Plateau
    pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
 pb_plateau->setVisible(false);
@@ -1756,19 +1756,19 @@ pb_plateau->setVisible(false);
    le_baseline    = us_lineedit( "", 1, true );
    le_baseline->setAccessibleName( tr( "Baseline" ) );
 
-//*NEW STUFF
-//QLabel*
+   //*NEW STUFF
+   //QLabel*
    lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
 //QLineEdit*
    le_dataStart   = us_lineedit( "", 1, true );
    le_dataStart->setAccessibleName( tr( "Data Start" ) );
-//QPushButton*
+   //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
    pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
    le_dataEnd->setAccessibleName( tr( "Data End" ) );
-//QLabel*
+   //QLabel*
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton*
    pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
@@ -2403,8 +2403,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
    le_dataRange   = us_lineedit( "", 1, true );
    le_dataRange->setAccessibleName( tr( "Data Range" ) );
-pb_dataRange->setVisible(false);
-le_dataRange->setVisible(false);
+   pb_dataRange->setVisible( false );
+   le_dataRange->setVisible( false );
    // Plateau
    pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
 pb_plateau->setVisible(false);
@@ -2415,19 +2415,19 @@ pb_plateau->setVisible(false);
    le_baseline    = us_lineedit( "", 1, true );
    le_baseline->setAccessibleName( tr( "Baseline" ) );
 
-//*NEW STUFF
-//QLabel*
+   //*NEW STUFF
+   //QLabel*
    lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
 //QLineEdit*
    le_dataStart   = us_lineedit( "", 1, true );
    le_dataStart->setAccessibleName( tr( "Data Start" ) );
-//QPushButton*
+   //QPushButton*
    //pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
    pb_dataEnd     = us_pushbutton( tr( "Top/Bottom:" ), false );
 //QLineEdit*
    le_dataEnd     = us_lineedit( "", 1, false );
    le_dataEnd->setAccessibleName( tr( "Data End" ) );
-//QLabel*
+   //QLabel*
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton*
    pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
