@@ -362,18 +362,11 @@ DbgLv(1) << "w:" << my_rank << ":Recv:NEWDATA  joblen" << job_length;
                   gb_need         = qRound( gb_need * 1000.0 ) * 0.001;
                   double gb_used  = (double)memused / mb_bytes;
                   gb_used         = qRound( gb_used * 1000.0 ) * 0.001;
-                  long pgavail    = sysconf( _SC_PHYS_PAGES );
-                  long pgsize     = sysconf( _SC_PAGE_SIZE );
-                  long memavail   = pgavail * pgsize;
+                  qint64 memavail         = 0;
+                  qint64 memcurav         = 0; // Stays 0 where not reported (macOS)
+                  phys_memory( memavail, memcurav );
                   double gb_avail = (double)memavail / gb_bytes;
                   gb_avail        = qRound( gb_avail * 1000.0 ) * 0.001;
-#ifdef _SC_AVPHYS_PAGES
-                  long pgcurav    = sysconf( _SC_AVPHYS_PAGES );
-                  long memcurav   = pgcurav * pgsize;
-#else
-                  // _SC_AVPHYS_PAGES is Linux-only; on macOS report 0
-                  long memcurav   = 0L;
-#endif
                   double gb_curav = (double)memcurav / gb_bytes;
                   gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
 
