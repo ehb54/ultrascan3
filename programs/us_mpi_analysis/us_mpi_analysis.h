@@ -115,6 +115,7 @@ class US_MPI_Analysis : public QObject
         QVector< double > maxods;          //!< Maximum OD values
         QVector< double > mc_data;         //!< Monte Carlo data
         QVector< double > sigmas;          //!< Sigma values
+        QVector<double>   mc_base_data;    //!< 2DSA simulation of the unmodified data, indexed like sigmas
         QVector< long > work_rss;          //!< Work RSS
 
         double meniscus_range;   //!< Meniscus range (Master only)
@@ -150,7 +151,8 @@ class US_MPI_Analysis : public QObject
            UDPMSG,
            DONEITER,
            DONELAST,
-           STOPITER
+           STOPITER,
+           MCBASE
         };
 
         bool fit_meni;           //!< Fit meniscus flag
@@ -415,6 +417,8 @@ class US_MPI_Analysis : public QObject
         int                    pm_next_unit( int );
         bool                   pm_iteration_done( int, int& );
         int                    pm_dataset_done( int );
+        void                   pm_send_mc_base( void );
+        void                   pm_recv_mc_base( void );
         void                   wait_workers_ready( void );
         void     submit_pcsa       ( Sa_Job&, int );
         void     add_to_queue      ( Sa_Job& );

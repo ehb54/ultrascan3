@@ -136,6 +136,22 @@ TEST( EditFileRoundTrip, AirGapAndLambdasSurvive )
    EXPECT_DOUBLE_EQ( out.gapTolerance, in.gapTolerance );
 }
 
+TEST( EditFileRoundTrip, WavelengthRangeWithoutLambdasSurvives )
+{
+   US_DataIO::EditValues in = velocityEdits();
+   in.wavelength            = "250-280";
+
+   int                         status = -1;
+   const US_DataIO::EditValues out    = roundTrip( in, &status );
+   ASSERT_EQ( status, US_DataIO::OK );
+
+   EXPECT_TRUE( out.lambdas.isEmpty() );
+   EXPECT_EQ( out.wavelength, in.wavelength );
+   EXPECT_DOUBLE_EQ( out.meniscus, in.meniscus );
+   EXPECT_EQ( out.excludes, in.excludes );
+   EXPECT_EQ( out.noiseOrder, in.noiseOrder );
+}
+
 TEST( EditFileRoundTrip, EquilibriumSpeedStepsSurvive )
 {
    US_DataIO::EditValues in = velocityEdits();

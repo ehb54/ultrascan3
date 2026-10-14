@@ -1045,6 +1045,18 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
    {
       if ( count_datasets < 2  ||  mgroup_count > ( count_datasets + 2 ) )
          mgroup_count = 1;
+
+      // The supervisor starts every group on a dataset of its own, so use
+      //  no more groups than datasets, and groups of equal size
+      if ( mgroup_count > count_datasets )
+      {
+         mgroup_count = count_datasets;
+
+         while ( mgroup_count > 1 && ( proc_count % mgroup_count ) != 0 )
+         {
+            mgroup_count--;
+         }
+      }
    }
    else
    {

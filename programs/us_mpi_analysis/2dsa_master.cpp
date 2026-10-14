@@ -14,6 +14,24 @@ static void unique_solutes( QVector<US_Solute>& solutes )
    solutes.erase( std::unique( solutes.begin(), solutes.end() ), solutes.end() );
 }
 
+// SplitMix64 finalizer
+static quint64 mix64( quint64 zz )
+{
+   zz += 0x9e3779b97f4a7c15ULL;
+   zz = ( zz ^ ( zz >> 30 ) ) * 0xbf58476d1ce4e5b9ULL;
+   zz = ( zz ^ ( zz >> 27 ) ) * 0x94d049bb133111ebULL;
+   return zz ^ ( zz >> 31 );
+}
+
+// Monte Carlo seed for one dataset and iteration of a fixed-seed job, so
+//  that nearby seeds, datasets and iterations give unrelated streams
+static uint mc_seed( uint seed, int dataset, int iteration )
+{
+   quint64 zz    = mix64( mix64( mix64( seed ) ^ (quint32) dataset ) ^ (quint32) iteration );
+   uint    mixed = (uint) ( zz ^ ( zz >> 32 ) );
+   return ( mixed != 0 ) ? mixed : 1; // Zero would ask for a time-based seed
+}
+
 // 2DSA master.  The same loop serves a single master and the group masters
 //  of a parallel-masters job, where a supervisor hands out Monte Carlo
 //  iterations (pm_mc) or the datasets of a composite job (pm_comp).
@@ -76,6 +94,15 @@ void US_MPI_Analysis::_2dsa_master( void )
 
    start_2dsa_dataset( first_dataset, false );
 
+   if ( pm_mc && pm_iter > 1 )
+   { // Only group 0 fits the unmodified data:  take the Monte Carlo sigmas
+      //  and base simulation from it and start on this group's iteration
+      pm_recv_mc_base();
+      max_iterations = max_iters_all;
+      mc_iteration   = pm_iter - 1;
+      set_monteCarlo();
+   }
+
    while ( true )
    {
       run_2dsa_jobs();
@@ -112,20 +139,13 @@ void US_MPI_Analysis::_2dsa_master( void )
       DbgLv( 1 ) << " master loop-BOT: dssize" << data_sets.size() << "ds_to_p" << datasets_to_process << "curr_ds"
                  << current_dataset;
 
-      // A parallel Monte Carlo group fits the unmodified data to get the
-      //  Monte Carlo sigmas; only the group doing iteration 1 writes it
-      bool skip_write = ( pm_mc && mc_iteration == 0 && pm_iter > 1 );
-
-      if ( !skip_write )
+      if ( is_global_fit )
       {
-         if ( is_global_fit )
-         {
-            write_global();
-         }
-         else
-         {
-            write_output();
-         }
+         write_global();
+      }
+      else
+      {
+         write_output();
       }
 
       // Fit meniscus
@@ -154,13 +174,17 @@ void US_MPI_Analysis::_2dsa_master( void )
 
          if ( pm_mc )
          { // Report a written iteration and get the next one
-            if ( !skip_write )
+            if ( mc_iteration == 0 )
+            { // Group 0 fit the unmodified data:  share its sigmas and
+               //  base simulation with the groups waiting for them
+               set_gaussians();
+               pm_send_mc_base();
+            }
+
+            mc_iteration = pm_iter;
+            if ( !pm_iteration_done( super, pm_iter ) )
             {
-               mc_iteration = pm_iter;
-               if ( !pm_iteration_done( super, pm_iter ) )
-               {
-                  break; // Group is done
-               }
+               break; // Group is done
             }
 
             mc_iteration = pm_iter - 1;
@@ -239,6 +263,7 @@ void US_MPI_Analysis::start_2dsa_dataset( int dataset, bool workers_ready )
    meniscus_run    = 0;
    bottom_run      = 0;
    mc_iteration    = 0;
+   sigmas.clear(); // Monte Carlo sigmas come from this dataset's base fit
 
    // Monte Carlo refines the fit to the unmodified data at least 5 times
    max_iterations = ( mc_iterations > 1 && max_iters_all < 2 ) ? 5 : max_iters_all;
@@ -380,10 +405,45 @@ bool US_MPI_Analysis::pm_iteration_done( int super, int& pm_iter )
    return ( pm_iter > 0 );
 }
 
+// Parallel Monte Carlo: send the sigmas and base simulation of group 0's fit
+//  to the unmodified data to the other group masters.  The supervisor starts
+//  group ii on iteration ii + 1, so groups 1 to mc_iterations - 1 wait for
+//  them and the rest got STOPITER.
+void US_MPI_Analysis::pm_send_mc_base( void )
+{
+   QVector<double> base = sigmas + mc_base_data;
+   int             ngrp = qMin( mgroup_count, mc_iterations );
+
+   for ( int gg = 1; gg < ngrp; gg++ )
+   {
+      MPI_Send( base.data(), base.size(), MPI_DOUBLE, gg * gcores_count, MCBASE, MPI_COMM_WORLD );
+   }
+}
+
+// Parallel Monte Carlo: get the sigmas and base simulation from group 0
+void US_MPI_Analysis::pm_recv_mc_base( void )
+{
+   int        count;
+   MPI_Status status;
+
+   MPI_Probe( 1, MCBASE, MPI_COMM_WORLD, &status ); // Group 0 master rank
+   MPI_Get_count( &status, MPI_DOUBLE, &count );
+
+   QVector<double> base( count );
+   MPI_Recv( base.data(), count, MPI_DOUBLE, 1, MCBASE, MPI_COMM_WORLD, &status );
+
+   sigmas       = base.mid( 0, count / 2 );
+   mc_base_data = base.mid( count / 2 );
+}
+
 // Parallel composite: report the finished dataset to the supervisor and
 //  get the next one.  Returns count_datasets if the group is done.
 int US_MPI_Analysis::pm_dataset_done( int super )
 {
+   // A reduction for time must be in the message, since the supervisor
+   //  answers a dataset-done message with the next dataset
+   time_datasets_left();
+
    int ittest = current_dataset + mgroup_count;
 
    if ( ittest >= count_datasets )
@@ -409,13 +469,6 @@ int US_MPI_Analysis::pm_dataset_done( int super )
    { // If group 0 master, create an intermediate archive
       update_outputs();
       DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << " : Intermediate archive was created.";
-   }
-
-   time_datasets_left();
-
-   if ( ittest >= count_datasets )
-   {
-      return count_datasets; // Dataset count was reduced for time
    }
 
    return pm_next_unit( super );
@@ -783,7 +836,7 @@ DbgLv(1) << "ScaledData fill/solclear complete";
 void US_MPI_Analysis::begin_fit_context( void )
 {
    meniscus_value = ( meniscus_points == 1 ) ? data_sets[current_dataset]->run_data.meniscus : meniscus_values[meniscus_run];
-   bottom_value   = ( bottom_points == 1 ) ? data_sets[current_dataset]->run_data.bottom : bottom_values[bottom_run];
+   bottom_value   = ( bottom_points == 1 ) ? dataset_bottom( current_dataset ) : bottom_values[bottom_run];
 
    bool sim_changed =
       ( fit_context.dataset != current_dataset || fit_context.meniscus != meniscus_value || fit_context.bottom != bottom_value );
@@ -897,18 +950,12 @@ void US_MPI_Analysis::set_monteCarlo( void )
    DbgLv( 1 ) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solutes[max_depth].size() << "simvsols size"
               << simulation_values.solutes.size();
 
-   // Set up new data modified by a gaussian distribution.
-   // A parallel-masters group other than the first starts at a later
-   // iteration, so also set the gaussians if this process has none yet.
-   if ( mc_iteration == 1 || sigmas.isEmpty() )
+   // Set up new data modified by a gaussian distribution.  The sigmas come
+   //  from the fit to the unmodified data, which this process just did
+   //  unless it got them from parallel-masters group 0.
+   if ( sigmas.isEmpty() )
    {
       set_gaussians();
-
-      sim_data1      = simulation_values.sim_data;
-
-      double fitrmsd = sqrt( simulation_values.variance );
-      qDebug() << "  MC_Iteration 1 Simulation RMSD"
-               << QString::number( fitrmsd, 'f', 7 );
    }
 
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
@@ -924,26 +971,24 @@ void US_MPI_Analysis::set_monteCarlo( void )
    }
    mc_data.resize( ds_points );
 DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
-DbgLv(1) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count()
- << "tot-scans" << sim_data1.scanCount();
-int mcdscn=sim_data1.scanCount();
+DbgLv( 1 ) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count() << "base-size" << mc_base_data.count();
 int sigsiz=sigmas.count();
 int mcdsiz=mc_data.count();
-   int    index      = 0;
-   int    scnx       = 0;
-   double varrmsd    = 0.0;
-   double varisum    = 0.0;
-   double varimin    = 1.0;
-   double varimax    = -1.0;
-   double datasum    = 0.0;
+int    index   = 0;
+double varrmsd = 0.0;
+double varisum = 0.0;
+double varimin = 1.0;
+double varimax = -1.0;
+double datasum = 0.0;
 
-   // With a fixed seed, seed each iteration from the seed and the iteration
-   //  index, so its data do not depend on which master group computes it
-   uint   seed = parameters["seed"].toUInt();
-   if ( seed != 0 )
-   {
-      US_Math2::randomize( seed + (uint) mc_iteration );
-   }
+// With a fixed seed, seed each iteration from the seed, dataset and
+//  iteration index, so its data do not depend on which master group
+//  computes it, and differ between datasets and nearby seeds
+uint   seed = parameters["seed"].toUInt();
+if ( seed != 0 )
+{
+   US_Math2::randomize( mc_seed( seed, current_dataset, mc_iteration ) );
+}
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
@@ -954,31 +999,35 @@ int mcdsiz=mc_data.count();
       int radius_points = edata->pointCount();
 int indxh=((scan_count/2)*radius_points)+(radius_points/2);
 
-      for ( int ss = 0; ss < scan_count; ss++, scnx++ )
+for ( int ss = 0; ss < scan_count; ss++ )
+{
+   for ( int rr = 0; rr < radius_points; rr++ )
+   {
+      if ( index >= sigsiz )
       {
-         for ( int rr = 0; rr < radius_points; rr++ )
-         {
-if(scnx>=mcdscn)
-DbgLv(1) << "sMC:  *ERR* scnx" << scnx << "mcdscn" << mcdscn << "ee,ss,rr" << ee << ss << rr;
-if(index>=sigsiz)
-DbgLv(1) << "sMC:  *ERR* index" << index << "sigsiz" << sigsiz << "ee,ss,rr" << ee << ss << rr;
-if(index>=mcdsiz)
-DbgLv(1) << "sMC:  *ERR* index" << index << "mcdsiz" << mcdsiz << "ee,ss,rr" << ee << ss << rr;
-            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-            double mcdata    = sim_data1.value( scnx, rr ) + variation;
-            varrmsd         += sq( variation );
-            varisum         += variation;
-            varimin          = qMin( varimin, variation );
-            varimax          = qMax( varimax, variation );
-            datasum         += mcdata;
-
-if ( index<5 || index>(total_points-6) || (index>(indxh-4)&&index<(indxh+3)) )
-DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(scnx,rr)
- << "sigma" << sigmas[index] << "vari" << variation << "mdat" << mcdata;
-
-            mc_data[ index++ ] = mcdata;
-         }
+         DbgLv( 1 ) << "sMC:  *ERR* index" << index << "sigsiz" << sigsiz << "ee,ss,rr" << ee << ss << rr;
       }
+      if ( index >= mcdsiz )
+      {
+         DbgLv( 1 ) << "sMC:  *ERR* index" << index << "mcdsiz" << mcdsiz << "ee,ss,rr" << ee << ss << rr;
+      }
+      double variation = US_Math2::box_muller( 0.0, sigmas[index] );
+      double mcdata    = mc_base_data[index] + variation;
+      varrmsd += sq( variation );
+      varisum += variation;
+      varimin = qMin( varimin, variation );
+      varimax = qMax( varimax, variation );
+      datasum += mcdata;
+
+      if ( index < 5 || index > ( total_points - 6 ) || ( index > ( indxh - 4 ) && index < ( indxh + 3 ) ) )
+      {
+         DbgLv( 1 ) << "sMC:  index" << index << "sdat" << mc_base_data[index] << "sigma" << sigmas[index] << "vari" << variation
+                    << "mdat" << mcdata;
+      }
+
+      mc_data[index++] = mcdata;
+   }
+}
    }
 DbgLv(1) << "sMC:   mcdata sum" << datasum;
 
@@ -1063,7 +1112,9 @@ DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCo
    calc_residuals( ds_start, ds_count, simulation_values );
 
    sigmas.clear();
+   mc_base_data.clear();
    res_data          = &simulation_values.residuals;
+   US_DataIO::RawData* sim_data      = &simulation_values.sim_data;
    int scnx          = 0;
 DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->pointCount();
 
@@ -1074,17 +1125,21 @@ DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->po
       int radius_points = edata->pointCount();
 DbgLv(1) << "sGA:   ee" << ee << "scans points" << scan_count << radius_points;
 
-      // Place the residuals magnitudes into a single vector for convenience
-      for ( int ss = 0; ss < scan_count; ss++, scnx++ )
-      {
-         for ( int rr = 0; rr < radius_points; rr++ )
-         {
-            sigmas << qAbs( res_data->value( scnx, rr ) );
-         }
-      }
+// Place the residuals magnitudes and the simulation into single
+//  vectors, indexed like the Monte Carlo data
+for ( int ss = 0; ss < scan_count; ss++, scnx++ )
+{
+   for ( int rr = 0; rr < radius_points; rr++ )
+   {
+      sigmas << qAbs( res_data->value( scnx, rr ) );
+      mc_base_data << sim_data->value( scnx, rr );
+   }
+}
    }
 int ssz=sigmas.size();
 DbgLv(1) << "sGA:   sigmas size" << ssz << "sigmas[mm]" << sigmas[ssz/2];
+
+qDebug() << "  MC_Iteration 1 Simulation RMSD" << QString::number( sqrt( simulation_values.variance ), 'f', 7 );
 }
 
 // Reset for a refinement iteration

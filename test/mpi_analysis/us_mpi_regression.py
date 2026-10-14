@@ -114,6 +114,11 @@ CASES = {
         "method": "2DSA", "datasets": [DS_A, DS_B], "np": 2,
         "params": dict(GRID_2DSA), "global_fit": True,
     },
+    "2dsa_global_mc": {
+        # Monte Carlo residuals span all datasets after the global write
+        "method": "2DSA", "datasets": [DS_A, DS_B], "np": 2,
+        "params": dict(GRID_2DSA, mc_iterations="3"), "global_fit": True,
+    },
     "2dsa_composite": {
         "method": "2DSA", "datasets": [DS_A, DS_B], "np": 2,
         "params": dict(GRID_2DSA),

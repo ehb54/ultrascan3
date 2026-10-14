@@ -894,7 +894,9 @@ int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters
    xml.writeAttribute( "channel", ev.channel );
    xml.writeAttribute( "wavelength", ev.wavelength );
 
-   if ( !ev.lambdas.isEmpty() )
+   // readEdits reads up to </lambdas> for a wavelength range, so always
+   //  write the element for one
+   if ( !ev.lambdas.isEmpty() || ev.wavelength.contains( "-" ) )
    {
       xml.writeStartElement( "lambdas" );
       for ( int ii = 0; ii < ev.lambdas.size(); ii++ )
@@ -1034,7 +1036,10 @@ int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters
    xml.writeEndElement(); // experiment
    xml.writeEndDocument();
 
-   return ff.error() == QFile::NoError ? OK : CANTWRITE;
+   // A buffered write error only shows up when the file is flushed
+   ff.close();
+
+   return ( !xml.hasError() && ff.error() == QFile::NoError ) ? OK : CANTWRITE;
 }
 
 void US_DataIO::ident( QXmlStreamReader& xml, EditValues& parameters )
