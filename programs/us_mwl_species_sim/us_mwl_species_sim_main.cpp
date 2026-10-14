@@ -1,9 +1,9 @@
 //! \file us_mwl_species_sim_main.cpp
 //         the class US_Convert.
 
+#include "us_mwl_species_sim.h"
 #include "us_license.h"
 #include "us_license_t.h"
-#include "us_mwl_species_sim.h"
 
 int main( int argc, char* argv[] )
 {
