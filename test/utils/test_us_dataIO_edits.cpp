@@ -11,32 +11,32 @@ namespace
 US_DataIO::EditValues velocityEdits()
 {
    US_DataIO::EditValues ev;
-   ev.expType = "Velocity";
-   ev.runID = "demo-run";
-   ev.cell = "2";
-   ev.channel = "B";
+   ev.expType    = "Velocity";
+   ev.runID      = "demo-run";
+   ev.cell       = "2";
+   ev.channel    = "B";
    ev.wavelength = "280";
-   ev.editGUID = "11111111-2222-4333-8444-555555555555";
-   ev.dataGUID = "66666666-7777-4888-8999-aaaaaaaaaaaa";
-   ev.meniscus = 5.912345;
-   ev.bottom = 7.18;
-   ev.rangeLeft = 6.0;
+   ev.editGUID   = "11111111-2222-4333-8444-555555555555";
+   ev.dataGUID   = "66666666-7777-4888-8999-aaaaaaaaaaaa";
+   ev.meniscus   = 5.912345;
+   ev.bottom     = 7.18;
+   ev.rangeLeft  = 6.0;
    ev.rangeRight = 7.05;
-   ev.plateau = 6.9;
-   ev.baseline = 7.1;
-   ev.ODlimit = 1.25;
+   ev.plateau    = 6.9;
+   ev.baseline   = 7.1;
+   ev.ODlimit    = 1.25;
    ev.excludes << 0 << 3 << 7;
-   ev.noiseOrder = 2;
-   ev.removeSpikes = true;
-   ev.invert = -1.0;
-   ev.floatingData = true;
-   ev.bl_corr_slope = 0.125;
+   ev.noiseOrder         = 2;
+   ev.removeSpikes       = true;
+   ev.invert             = -1.0;
+   ev.floatingData       = true;
+   ev.bl_corr_slope      = 0.125;
    ev.bl_corr_yintercept = -0.5;
 
    US_DataIO::EditedPoint ep;
-   ep.scan = 4;
+   ep.scan   = 4;
    ep.radius = 17;
-   ep.value = 0.4375;
+   ep.value  = 0.4375;
    ev.editedPoints << ep;
    return ev;
 }
@@ -45,20 +45,22 @@ US_DataIO::EditValues roundTrip( const US_DataIO::EditValues& in, int* status )
 {
    QTemporaryDir dir;
    const QString path = dir.path() + "/run.e1.RI.2.B.280.xml";
-   *status = US_DataIO::writeEdits( path, in );
+   *status            = US_DataIO::writeEdits( path, in );
 
    US_DataIO::EditValues out;
    if ( *status == US_DataIO::OK )
+   {
       *status = US_DataIO::readEdits( path, out );
+   }
    return out;
 }
 }
 
 TEST( EditFileRoundTrip, VelocityValuesSurvive )
 {
-   const US_DataIO::EditValues in = velocityEdits();
-   int status = -1;
-   const US_DataIO::EditValues out = roundTrip( in, &status );
+   const US_DataIO::EditValues in     = velocityEdits();
+   int                         status = -1;
+   const US_DataIO::EditValues out    = roundTrip( in, &status );
    ASSERT_EQ( status, US_DataIO::OK );
 
    EXPECT_EQ( out.expType, in.expType );
@@ -94,15 +96,15 @@ TEST( EditFileRoundTrip, DefaultsWriteNoOptionalElements )
    US_DataIO::EditValues in = velocityEdits();
    in.excludes.clear();
    in.editedPoints.clear();
-   in.noiseOrder = 0;
-   in.removeSpikes = false;
-   in.invert = 1.0;
-   in.floatingData = false;
-   in.bl_corr_slope = 0.0;
+   in.noiseOrder         = 0;
+   in.removeSpikes       = false;
+   in.invert             = 1.0;
+   in.floatingData       = false;
+   in.bl_corr_slope      = 0.0;
    in.bl_corr_yintercept = 0.0;
 
-   int status = -1;
-   const US_DataIO::EditValues out = roundTrip( in, &status );
+   int                         status = -1;
+   const US_DataIO::EditValues out    = roundTrip( in, &status );
    ASSERT_EQ( status, US_DataIO::OK );
 
    EXPECT_TRUE( out.excludes.isEmpty() );
@@ -118,14 +120,14 @@ TEST( EditFileRoundTrip, DefaultsWriteNoOptionalElements )
 TEST( EditFileRoundTrip, AirGapAndLambdasSurvive )
 {
    US_DataIO::EditValues in = velocityEdits();
-   in.wavelength = "250-280";
+   in.wavelength            = "250-280";
    in.lambdas << 250 << 260 << 280;
-   in.airGapLeft = 5.81;
-   in.airGapRight = 5.86;
+   in.airGapLeft   = 5.81;
+   in.airGapRight  = 5.86;
    in.gapTolerance = 0.03;
 
-   int status = -1;
-   const US_DataIO::EditValues out = roundTrip( in, &status );
+   int                         status = -1;
+   const US_DataIO::EditValues out    = roundTrip( in, &status );
    ASSERT_EQ( status, US_DataIO::OK );
 
    EXPECT_EQ( out.lambdas, in.lambdas );
@@ -137,22 +139,22 @@ TEST( EditFileRoundTrip, AirGapAndLambdasSurvive )
 TEST( EditFileRoundTrip, EquilibriumSpeedStepsSurvive )
 {
    US_DataIO::EditValues in = velocityEdits();
-   in.expType = "Equilibrium";
+   in.expType               = "Equilibrium";
 
    for ( int ii = 0; ii < 2; ii++ )
    {
       US_DataIO::SpeedData sd;
-      sd.speed = 20000.0 + 5000.0 * ii;
+      sd.speed      = 20000.0 + 5000.0 * ii;
       sd.first_scan = 1 + 8 * ii;
       sd.scan_count = 8;
-      sd.meniscus = 5.9 + 0.01 * ii;
-      sd.dataLeft = 6.0 + 0.01 * ii;
-      sd.dataRight = 6.2 + 0.01 * ii;
+      sd.meniscus   = 5.9 + 0.01 * ii;
+      sd.dataLeft   = 6.0 + 0.01 * ii;
+      sd.dataRight  = 6.2 + 0.01 * ii;
       in.speedData << sd;
    }
 
-   int status = -1;
-   const US_DataIO::EditValues out = roundTrip( in, &status );
+   int                         status = -1;
+   const US_DataIO::EditValues out    = roundTrip( in, &status );
    ASSERT_EQ( status, US_DataIO::OK );
 
    ASSERT_EQ( out.speedData.size(), 2 );
@@ -170,6 +172,5 @@ TEST( EditFileRoundTrip, EquilibriumSpeedStepsSurvive )
 
 TEST( EditFileRoundTrip, UnwritablePathReportsCantOpen )
 {
-   EXPECT_EQ( US_DataIO::writeEdits("/nonexistent-dir/x.xml", velocityEdits()),
-              US_DataIO::CANTOPEN );
+   EXPECT_EQ( US_DataIO::writeEdits( "/nonexistent-dir/x.xml", velocityEdits() ), US_DataIO::CANTOPEN );
 }

@@ -215,26 +215,36 @@ TEST( AucRoundTrip, ConstantReadingsReturnExactly )
    // A zero data range must not divide by a zero quantization step.
    US_DataIO::RawData source = buildRawData( 2, 8 );
    for ( US_DataIO::Scan& sc : source.scanData )
+   {
       sc.rvalues.fill( 0.0 );
+   }
 
    RoundTrip trip( source );
    ASSERT_EQ( trip.result(), US_DataIO::OK );
    for ( const US_DataIO::Scan& sc : trip.data().scanData )
+   {
       for ( double value : sc.rvalues )
+      {
          EXPECT_EQ( value, 0.0 );
+      }
+   }
 }
 
 TEST( AucRoundTrip, ConstantNonZeroStandardDeviationsReturnExactly )
 {
    US_DataIO::RawData source = buildRawData( 2, 8, "RA", /*withStdDev=*/true );
    for ( US_DataIO::Scan& sc : source.scanData )
+   {
       sc.stddevs.fill( 0.002 );
+   }
 
    RoundTrip trip( source );
    ASSERT_EQ( trip.result(), US_DataIO::OK );
    ASSERT_EQ( trip.data().scanData[0].stddevs.size(), 8 );
    for ( double value : trip.data().scanData[0].stddevs )
+   {
       EXPECT_FLOAT_EQ( value, 0.002 );
+   }
 }
 
 // ---------------------------------------------------------------------------
