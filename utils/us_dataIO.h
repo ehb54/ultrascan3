@@ -295,6 +295,12 @@ class US_UTIL_EXTERN US_DataIO
       */
       static int     readEdits   ( const QString&, EditValues& );
 
+      /*! Write a set of edit parameters in xml format, as read by readEdits
+          \param filename   The filename to be written
+          \param parameters The edit parameters to write
+      */
+      static int     writeEdits( const QString&, const EditValues& );
+
       /*! A string describing the last read or write error
           \param code  The error code to be described
       */

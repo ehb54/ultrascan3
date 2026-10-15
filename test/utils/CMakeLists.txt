@@ -26,6 +26,14 @@ else()
     endif()
 endif()
 
+# On MSVC GoogleTest compiles gtest into gmock (and each *_main) instead of
+# linking it.  As DLLs every copy keeps its own UnitTest, so a SCOPED_TRACE
+# pushed in one is popped from another's empty stack.  test_us_utils has its
+# own main, and gmock alone carries the whole gtest runtime.
+if(MSVC)
+    set(GTEST_LIBRARIES gmock)
+endif()
+
 include_directories(
         ${CMAKE_SOURCE_DIR}/test/utils
         ${CMAKE_SOURCE_DIR}/test/utils/mock

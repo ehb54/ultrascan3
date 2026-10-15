@@ -48,3 +48,8 @@ if(TARGET UltraScan3::Gui_Static)
 else()
     message(STATUS "test: skipping GUI and program tests (no UltraScan3::Gui_Static in this variant)")
 endif()
+
+# us_mpi_analysis regression tests need the MPI program (NO_DB/HPC builds).
+if(TARGET us_mpi_analysis)
+    add_subdirectory(mpi_analysis)
+endif()
