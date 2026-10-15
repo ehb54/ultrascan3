@@ -32,7 +32,7 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
 {
    dbg_level    = 0;         // Default: no debug prints
    dbg_timing   = false;     // Default: no debug timing prints
-   simcache     = 0;         // Default: no simulation cache
+   simcache     = nullptr;   // Default: no simulation cache
    banddthr     = false;     // Default: no bandform data_threshold
 
    // If band-forming, possibly read in threshold control values
@@ -499,28 +499,33 @@ else
 
 //DebugTime("BEG: clcr-NA-astfem");
 DbgLv( 2 ) << "solve_sim_2: smeni sbott" << dset->simparams.meniscus << dset->simparams.bottom;
-DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
+DbgLv( 2 ) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 QByteArray         simkey = simulate( model, dset, edata, simdat );
 US_DataIO::RawData rawsim; // As simulated, for cache
-if ( simcache != 0 )
+if ( simcache != nullptr )
 {
    rawsim = simdat; //  (shared unless modified)
 }
 //DebugTime("END: clcr-NA-astfem");
-DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
-            if ( abort ) return;
+DbgLv( 2 ) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
+if ( abort )
+{
+   return;
+}
 
-            if ( banddthr )
-            {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
-                  continue;
+if ( banddthr )
+{ // If band forming, hold data within thresholds; skip if all-zero
+   if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+   {
+      continue;
+   }
 
-               ksols++;
-            }
+   ksols++;
+}
 
             simulations << simdat;   // Save simulation (each dataset,solute)
 
-            if ( simcache != 0 )
+            if ( simcache != nullptr )
             { // Keep key and simulation, to keep any survivor in the cache
                simkeys << simkey;
                rawsims << rawsim;
@@ -805,7 +810,7 @@ DbgLv(1) << "solve_sim_2: timestate file does not exist" << tmst_fpath << dset->
 
             QByteArray         simkey = simulate( model, dset, edata, simdat );
             US_DataIO::RawData rawsim; // As simulated, for cache
-            if ( simcache != 0 )
+            if ( simcache != nullptr )
             {
                rawsim = simdat; //  (shared unless modified)
             }
@@ -837,7 +842,7 @@ DbgLv(1) << "CR: sdat:"
 
             simulations << simdat;   // Save simulation (each datset,solute)
 
-            if ( simcache != 0 )
+            if ( simcache != nullptr )
             { // Keep key and simulation, to keep any survivor in the cache
                simkeys << simkey;
                rawsims << rawsim;

@@ -61,29 +61,29 @@ class US_UTIL_EXTERN US_SimCache
       //! cap is 25% of the memory now available, at least 256 MB and at
       //! most 4 GB.
       //! \returns  A new cache owned by the caller, or a null pointer
-      static US_SimCache* create_default( void );
+      static US_SimCache* create_default();
 
       //! \brief The default memory cap in bytes (0 if caching is off)
-      static qint64       default_max_bytes( void );
+      static qint64       default_max_bytes();
 
       //! \brief Key of the inputs of a simulation besides its component:
       //!        the simulation parameters and the experiment's grid
       //! \param simparams  Simulation parameters of the data set
       //! \param edata      Experiment data whose grid is simulated
       //! \returns          Key (a hash of the values)
-      static QByteArray   dataset_key( const US_SimulationParameters&, const US_DataIO::EditedData& );
+      static QByteArray   dataset_key( const US_SimulationParameters& simparams, const US_DataIO::EditedData& edata );
 
       //! \brief Key of a simulation
       //! \param dskey  Key of the data set (from dataset_key)
       //! \param comp   Simulated component (experimental space)
       //! \returns      Key
-      static QByteArray   sim_key( const QByteArray&, const US_Model::SimulationComponent& );
+      static QByteArray   sim_key( const QByteArray& dskey, const US_Model::SimulationComponent& comp );
 
       //! \brief Get a simulation
       //! \param key     Simulation key
       //! \param simdat  Returned simulation, if found
       //! \returns       Flag whether found
-      bool                fetch( const QByteArray&, US_DataIO::RawData& );
+      bool                fetch( const QByteArray& key, US_DataIO::RawData& simdat );
 
       //! \brief Store a simulation, or mark a stored one as a survivor
       //! \param key       Simulation key
@@ -91,16 +91,16 @@ class US_UTIL_EXTERN US_SimCache
       //! \param survivor  Flag the solute survived a NNLS:  keep it, evicting
       //!                  other simulations if need be
       //! \returns         Flag whether the simulation is now in the cache
-      bool                store( const QByteArray&, const US_DataIO::RawData&, bool );
+      bool                store( const QByteArray& key, const US_DataIO::RawData& simdat, bool survivor );
 
       //! \brief Remove all simulations (the counts are kept)
-      void                clear( void );
+      void                clear();
 
       //! \brief Counts of cache use
-      Stats               stats( void ) const;
+      Stats               stats() const;
 
       //! \brief One-line text of the counts
-      QString             stats_text( void ) const;
+      QString             stats_text() const;
 
       //! \brief Approximate bytes a simulation takes in the cache
       static qint64       sim_bytes( const US_DataIO::RawData& );
