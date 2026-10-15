@@ -2,6 +2,8 @@
 
 #include <QApplication>
 #include <qchar.h>
+#include <qglobal.h>
+#include <qlabel.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qnamespace.h>
@@ -473,27 +475,21 @@ void US_GA_Initialize::reset( void )
    auto_lim   = true;
    ck_autlim->setChecked( auto_lim );
 
+   attr_y     = ATTR_K;
    plymin     = 1.0;
    plymax     = 4.0;
-   // ct_plymin->setRange( 0.5, 50 );
-   // ct_plymin->setSingleStep( 0.01 );
-   // ct_plymin->setValue( plymin );
-   // ct_plymin->setEnabled( false );
-   // ct_plymax->setRange( 1.0, 50 );
-   // ct_plymax->setSingleStep( 0.01 );
-   // ct_plymax->setValue( plymax );
-   // ct_plymax->setEnabled( false );
+   le_plymin->clear();
+   le_plymax->clear();
+   rb_y_ff0->setChecked( true );
 
+   attr_x     = ATTR_S;
    plxmin     = 1.0;
    plxmax     = 10.0;
-   // ct_plxmin->setRange( -10000.0, 10000.0 );
-   // ct_plxmin->setSingleStep( 0.01 );
-   // ct_plxmin->setValue( plxmin );
-   // ct_plxmin->setEnabled( false );
-   // ct_plxmax->setRange( 0.0, 10000.0 );
-   // ct_plxmax->setSingleStep( 0.01 );
-   // ct_plxmax->setValue( plxmax );
-   // ct_plxmax->setEnabled( false );
+   le_plxmin->clear();
+   le_plxmax->clear();
+   rb_x_s->setChecked( true );
+
+   update_plot_labels();
 
    // default to white-cyan-magenta-red-black color map
    colormap   = new QwtLinearColorMap( Qt::white, Qt::black );
@@ -938,58 +934,41 @@ void US_GA_Initialize::update_hybuck( double dval )
    hybuck    = dval;
 }
 
-void US_GA_Initialize::str2double( QLineEdit* le, double& val, int attr )
+void US_GA_Initialize::str2double( QLineEdit* le, double& val )
 {
   bool ok;
   double newval = le->text().toDouble( &ok );
   if (ok)
   {
-    if ( attr == ATTR_S )
-    {
-      newval *= 1e-13;    
-    }
-    else if ( attr == ATTR_W )
-    {
-      newval *= 1e3;
-    }
     val = newval;
   } else {
     QMessageBox::warning(this, "Warning!", "Please enter a number!");
-    double sval = val;
-    if ( attr == ATTR_S )
-    {
-      sval *= 1e+13;    
-    }
-    else if ( attr == ATTR_W )
-    {
-      sval *= 1e-3;
-    }
-    le->setText(QString::number(sval));
+    le->setText(QString::number(val));
   }
 }
 
 // update plot limit s min
 void US_GA_Initialize::update_plxmin( )
 {
-  str2double( le_plxmin, plxmin, attr_x );
+  str2double( le_plxmin, plxmin );
 }
 
 // update plot limit s max
 void US_GA_Initialize::update_plxmax( )
 {
-  str2double( le_plxmax, plxmax, attr_x );
+  str2double( le_plxmax, plxmax );
 }
 
 // update plot limit f/f0 min
 void US_GA_Initialize::update_plymin( )
 {
-  str2double( le_plymin, plymin, attr_y );
+  str2double( le_plymin, plymin );
 }
 
 // update plot limit f/f0 max
 void US_GA_Initialize::update_plymax( )
 {
-  str2double( le_plymax, plymax, attr_y );
+  str2double( le_plymax, plymax );
 }
 
 // select automatic plot limits
@@ -1321,22 +1300,6 @@ void US_GA_Initialize::load_color()
 // set plot x,y limits
 void US_GA_Initialize::set_limits()
 {
-   
-   const QStringList labels = {"s [Sv]", "f / f0", "MW [kDa]", "vbar [mL/g]", "D [cm^2/s]", "f [g/s]", "Rh [nm]" };
-   xa_title = anno_title( attr_x );
-   ya_title = anno_title( attr_y );
-   QString xlabel = labels.at( attr_x );
-   QString ylabel = labels.at( attr_y );
-   lb_plxmin->setText( tr( "Min. % " ).arg( xlabel ) );
-   lb_plxmax->setText( tr( "Max. % " ).arg( xlabel ) );
-   lb_plymin->setText( tr( "Min. % " ).arg( ylabel ) );
-   lb_plymax->setText( tr( "Max. % " ).arg( ylabel ) );
-   lb_wxbuck->setText( tr( "Width of "   ) + xlabel + tr( " Bucket:"  ) );
-   lb_hybuck->setText( tr( "Height of "  ) + ylabel + tr( " Bucket:"  ) );
-   
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
-
    resetSb();
    sdistro     = &xy_distro;
    soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
@@ -2022,6 +1985,7 @@ void US_GA_Initialize::select_x_axis( int ival )
    rb_y_vbar->setEnabled( attr_x != ATTR_V );
    rb_y_D   ->setEnabled( attr_x != ATTR_D );
    rb_y_rh  ->setEnabled( attr_x != ATTR_R );
+   update_plot_labels();
 
    if ( sk_distro.empty() )
    {
@@ -2043,6 +2007,7 @@ void US_GA_Initialize::select_y_axis( int ival )
    rb_x_vbar->setEnabled( attr_y != ATTR_V );
    rb_x_D   ->setEnabled( attr_y != ATTR_D );
    rb_x_rh  ->setEnabled( attr_y != ATTR_R );
+   update_plot_labels();
 
    if ( sk_distro.empty() )
    {
@@ -2087,22 +2052,38 @@ void US_GA_Initialize::build_xy_distro()
    sort_distro( xy_distro, true );
 }
 
+void US_GA_Initialize::update_plot_labels()
+{
+   const QStringList labels = {"s", "f/f0", "MW", "Vbar", "D", "f", "Rh" };
+   QString xlabel = labels.at( attr_x );
+   QString ylabel = labels.at( attr_y );
+   lb_plxmin->setText( tr( "Min. %1: " ).arg( xlabel ) );
+   lb_plxmax->setText( tr( "Max. %1: " ).arg( xlabel ) );
+   lb_plymin->setText( tr( "Min. %1: " ).arg( ylabel ) );
+   lb_plymax->setText( tr( "Max. %1: " ).arg( ylabel ) );
+   lb_wxbuck->setText( tr( "Width of "   ) + xlabel + tr( " Bucket:"  ) );
+   lb_hybuck->setText( tr( "Height of "  ) + ylabel + tr( " Bucket:"  ) );
+   xa_title = anno_title( attr_x );
+   ya_title = anno_title( attr_y );
+   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+}
+
 // Set annotation title for a plot index
 QString US_GA_Initialize::anno_title( int pltndx )
 {
    QString a_title;
 
    if      ( pltndx == ATTR_S )
-      a_title  = tr( "Sedimentation Coefficient (1e-13)"
-                     " for water at 20" ) + DEGC;
+      a_title  = tr( "Sedimentation Coefficient (Sv)" );
    else if ( pltndx == ATTR_K )
       a_title  = tr( "Frictional Ratio f/f0" );
    else if ( pltndx == ATTR_W )
-      a_title  = tr( "Molecular Weight (Dalton)" );
+      a_title  = tr( "Molecular Weight (Da)" );
    else if ( pltndx == ATTR_V )
-      a_title  = tr( "Vbar at 20" ) + DEGC;
+      a_title  = tr( "Vbar (ml / g)" );
    else if ( pltndx == ATTR_D )
-      a_title  = tr( "Diffusion Coefficient" );
+      a_title  = tr( "Diffusion Coefficient (cm^2 / s)" );
    else if ( pltndx == ATTR_R )
       a_title  = tr( "Hydrodynamic Radius (nm)" );
 

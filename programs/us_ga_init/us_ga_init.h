@@ -186,8 +186,6 @@ class US_GA_Initialize : public US_Widgets
 
       QStringList   pfilts;
 
-      void str2double   ( QLineEdit*, double&, int );
-
    private slots:
 
       void update_nisols( double );
@@ -240,6 +238,8 @@ class US_GA_Initialize : public US_Widgets
       void select_y_axis   ( int );
       void build_xy_distro ( void );
       void load_bins       ( void );
+      void str2double      ( QLineEdit*, double& );
+      void update_plot_labels ( void );
       QString anno_title   ( int  );
       QString anno_label   ( int  );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
