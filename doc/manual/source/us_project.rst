@@ -30,7 +30,7 @@ Using this window, you can manage project information on your local disk or in t
 .. note::
     All of the fields are required to be completed before saving the project information. 
 
-* **Delete Project** To delete a project, select the appropriate project in the click on project to select widget, and then click the **Delete Project** button. After making the appropriate changes, be sure to click the **Save Project** button to save your changes. 
+* **Delete Project** To delete a project, select the appropriate project in the click on project to select widget, click the **Delete Project** button, and confirm. A project in the database is not deleted while experiments are linked to it; the window lists those experiments instead. Move them to another project or delete them, then delete the project.
 
 Projects Functions:
 ====================
@@ -51,7 +51,7 @@ Projects Functions:
   * - **New Project**
     - Creates a new project by returning all values to their defaults. Work through each tab to change the current contents as appropriate, and then click on the Save Project button.
   * - **Delete Project**
-    - Deletes the current project from the database or hard disk.
+    - Deletes the current project from the database or hard disk, after confirmation. A project in the database is not deleted while experiments are linked to it.
   * - **Project Name**
     - The name of the project currently selected in the Click on project to select list widget, or a new name when creating a new project definition in the database or on the hard disk.
   * - **Global Identifier**
