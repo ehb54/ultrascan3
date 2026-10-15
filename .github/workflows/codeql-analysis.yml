@@ -131,12 +131,11 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          # These jobs perform a manual build (not autobuild); declaring this
-          # explicitly stops CodeQL from attempting an overlay-base database
-          # (which requires build-mode: none) and then falling back, e.g.:
-          # "Cannot build an overlay database because build-mode is set to
-          # 'undefined' instead of 'none'. Falling back to creating a normal
-          # full database instead."
+          # These jobs perform a manual build (not autobuild), so say so.
+          # This does not silence "Cannot build an overlay database because
+          # build-mode is set to ... instead of 'none'": overlay databases
+          # need build-mode: none, which is not used for this C++ build. The
+          # notice is harmless; CodeQL builds a full database instead.
           build-mode: manual
           # Disable TRAP caching: multiple matrix legs build the same language
           # concurrently with different toolchains/containers, and they were
@@ -192,12 +191,11 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          # These jobs perform a manual build (not autobuild); declaring this
-          # explicitly stops CodeQL from attempting an overlay-base database
-          # (which requires build-mode: none) and then falling back, e.g.:
-          # "Cannot build an overlay database because build-mode is set to
-          # 'undefined' instead of 'none'. Falling back to creating a normal
-          # full database instead."
+          # These jobs perform a manual build (not autobuild), so say so.
+          # This does not silence "Cannot build an overlay database because
+          # build-mode is set to ... instead of 'none'": overlay databases
+          # need build-mode: none, which is not used for this C++ build. The
+          # notice is harmless; CodeQL builds a full database instead.
           build-mode: manual
           # Disable TRAP caching: multiple matrix legs build the same language
           # concurrently with different toolchains/containers, and they were
@@ -315,12 +313,11 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          # These jobs perform a manual build (not autobuild); declaring this
-          # explicitly stops CodeQL from attempting an overlay-base database
-          # (which requires build-mode: none) and then falling back, e.g.:
-          # "Cannot build an overlay database because build-mode is set to
-          # 'undefined' instead of 'none'. Falling back to creating a normal
-          # full database instead."
+          # These jobs perform a manual build (not autobuild), so say so.
+          # This does not silence "Cannot build an overlay database because
+          # build-mode is set to ... instead of 'none'": overlay databases
+          # need build-mode: none, which is not used for this C++ build. The
+          # notice is harmless; CodeQL builds a full database instead.
           build-mode: manual
           # Disable TRAP caching: multiple matrix legs build the same language
           # concurrently with different toolchains/containers, and they were
