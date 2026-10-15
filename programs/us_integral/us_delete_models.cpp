@@ -4,8 +4,9 @@
 #include "us_gui_settings.h"
 
 // Constructor:  remove-distributions dialog widget
-US_DeleteModels::US_DeleteModels( QVector< DisSys >& adistros,
-    QWidget* p ) : US_WidgetsDialog( p, Qt::WindowFlags() ), distros( adistros )
+US_DeleteModels::US_DeleteModels( QVector<IntegralDisSys>& adistros, QWidget* p ) :
+    US_WidgetsDialog( p, Qt::WindowFlags() ),
+    distros( adistros )
 {
    setObjectName( "US_DeleteModels" );
    setPalette( US_GuiSettings::frameColor() );
@@ -14,77 +15,70 @@ US_DeleteModels::US_DeleteModels( QVector< DisSys >& adistros,
    // Lay out the GUI
    setWindowTitle( tr( "Remove Model Distributions" ) );
 
-   mainLayout      = new QGridLayout( this );
+   mainLayout = new QGridLayout( this );
 
-   mainLayout->setSpacing        ( 2 );
+   mainLayout->setSpacing( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
 
-   QLabel* lb_mtitle = us_banner( tr( "Select Models to Remove"         ) );
+   QLabel* lb_mtitle = us_banner( tr( "Select Models to Remove" ) );
    lw_distrs         = us_listwidget();
 
-   pb_restore   = us_pushbutton( tr( "Restore" ) );
-   pb_remove    = us_pushbutton( tr( "Remove"  ) );
-   pb_help      = us_pushbutton( tr( "Help"    ) );
-   pb_cancel    = us_pushbutton( tr( "Cancel"  ) );
-   pb_accept    = us_pushbutton( tr( "Accept"  ) );
+   pb_restore = us_pushbutton( tr( "Restore" ) );
+   pb_remove  = us_pushbutton( tr( "Remove" ) );
+   pb_help    = us_pushbutton( tr( "Help" ) );
+   pb_cancel  = us_pushbutton( tr( "Cancel" ) );
+   pb_accept  = us_pushbutton( tr( "Accept" ) );
 
-   te_status    = us_textedit();
+   te_status = us_textedit();
 
-   int row      = 0;
-   mainLayout ->addWidget( lb_mtitle,  row++, 0, 1, 5 );
-   mainLayout ->addWidget( lw_distrs,  row,   0, 9, 5 );
-   row         += 9;
-   mainLayout ->addWidget( pb_remove,  row,   0, 1, 1 );
-   mainLayout ->addWidget( pb_restore, row,   1, 1, 1 );
-   mainLayout ->addWidget( pb_help,    row,   2, 1, 1 );
-   mainLayout ->addWidget( pb_cancel,  row,   3, 1, 1 );
-   mainLayout ->addWidget( pb_accept,  row++, 4, 1, 1 );
-   mainLayout ->addWidget( te_status,  row,   0, 2, 5 );
-   row         += 2;
+   int row = 0;
+   mainLayout->addWidget( lb_mtitle, row++, 0, 1, 5 );
+   mainLayout->addWidget( lw_distrs, row, 0, 9, 5 );
+   row += 9;
+   mainLayout->addWidget( pb_remove, row, 0, 1, 1 );
+   mainLayout->addWidget( pb_restore, row, 1, 1, 1 );
+   mainLayout->addWidget( pb_help, row, 2, 1, 1 );
+   mainLayout->addWidget( pb_cancel, row, 3, 1, 1 );
+   mainLayout->addWidget( pb_accept, row++, 4, 1, 1 );
+   mainLayout->addWidget( te_status, row, 0, 2, 5 );
+   row += 2;
 
-   connect( pb_remove,  &QAbstractButton::clicked,
-            this,       &US_DeleteModels::remove );
-   connect( pb_restore, &QAbstractButton::clicked,
-            this,       &US_DeleteModels::restore );
-   connect( pb_help,    &QAbstractButton::clicked,
-            this,       &US_DeleteModels::help );
-   connect( pb_cancel,  &QAbstractButton::clicked,
-            this,       &QDialog::reject );
-   connect( pb_accept,  &QAbstractButton::clicked,
-            this,       &US_DeleteModels::accepted );
+   connect( pb_remove, &QAbstractButton::clicked, this, &US_DeleteModels::remove );
+   connect( pb_restore, &QAbstractButton::clicked, this, &US_DeleteModels::restore );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_DeleteModels::help );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_DeleteModels::accepted );
 
-   connect( lw_distrs,  &QListWidget::itemSelectionChanged,
-            this,       &US_DeleteModels::selectionsChanged );
+   connect( lw_distrs, &QListWidget::itemSelectionChanged, this, &US_DeleteModels::selectionsChanged );
 
    // Build list of original model descriptions
-   nd_orig      = distros.count();
-   int maxdlen  = 0;
+   nd_orig     = distros.count();
+   int maxdlen = 0;
 
    for ( int jj = 0; jj < nd_orig; jj++ )
    {
-      QString runid  = distros[ jj ].run_name;
-      QString analy  = distros[ jj ].analys_name;
-      QString method = distros[ jj ].method;
-      QString edid   = analy.section( "_",  0, -4 );
+      QString runid  = distros[jj].run_name;
+      QString analy  = distros[jj].analys_name;
+      QString method = distros[jj].method;
+      QString edid   = analy.section( "_", 0, -4 );
       QString anid   = analy.section( "_", -3, -3 );
       QString iter   = analy.section( "_", -2, -1 );
-      QString mdesc  = runid + "." + edid + "_" + anid + "_" + method
-         + "_" + iter;
+      QString mdesc  = runid + "." + edid + "_" + anid + "_" + method + "_" + iter;
 
       mdesc_orig << mdesc;
 
-      maxdlen        = qMax( maxdlen, mdesc.length() );
+      maxdlen = qMax( maxdlen, mdesc.length() );
    }
 
    // Set up the list widget with the original models
    restore();
 
-   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+   QFont        font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
-   int fhigh = fm.lineSpacing();
-   int fwide = fm.horizontalAdvance( QChar( '6' ) );
-   int lhigh = fhigh * 10 + 12;
-   int lwide = fwide * ( maxdlen + 2 );
+   int          fhigh = fm.lineSpacing();
+   int          fwide = fm.horizontalAdvance( QChar( '6' ) );
+   int          lhigh = fhigh * 10 + 12;
+   int          lwide = fwide * ( maxdlen + 2 );
 
    lw_distrs->setMinimumHeight( lhigh );
    lw_distrs->resize( lwide, lhigh );
@@ -93,9 +87,9 @@ US_DeleteModels::US_DeleteModels( QVector< DisSys >& adistros,
    te_status->setMaximumHeight( fhigh * 2 + 12 );
    us_setReadOnly( te_status, true );
    te_status->setTextColor( Qt::blue );
-   te_status->setText(
-      tr( "The list shows all the original %1 distributions.\n"
-          "No models are currently selected for removal." ).arg( nd_orig ) );
+   te_status->setText( tr( "The list shows all the original %1 distributions.\n"
+                           "No models are currently selected for removal." )
+                          .arg( nd_orig ) );
 
    adjustSize();
    int wwide = qMax( 500, lwide );
