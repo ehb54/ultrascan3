@@ -62,6 +62,7 @@ HEADERS      = us_ana_profile.h   \
                us_run_protocol.h  \
                us_settings.h      \
                us_simparms.h      \
+               us_sim_cache.h     \
                us_solute.h        \
                us_solution.h      \
                us_solution_vals.h \
@@ -119,6 +120,7 @@ SOURCES      = us_ana_profile.cpp   \
                us_run_protocol.cpp  \
                us_settings.cpp      \
                us_simparms.cpp      \
+               us_sim_cache.cpp     \
                us_solute.cpp        \
                us_solution.cpp      \
                us_solution_vals.cpp \

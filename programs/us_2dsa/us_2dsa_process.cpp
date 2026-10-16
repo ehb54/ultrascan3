@@ -116,9 +116,12 @@ DbgLv(1) << "2P(2dsaProc): start_fit()";
    itvaris  .clear();
    ical_sols.clear();
 
-DbgLv(1) << "2P:SF: sll sul nss" << slolim << suplim << nssteps
- << " kll kul nks" << klolim << kuplim << nksteps
- << " ngref nthr noif" << ngrefine << nthreads << noisflag;
+   // Cache of solute simulations, shared by the tasks of this fit
+   //  (debug text "SimCache=off" disables it, "SimCacheMB=N" sets its cap)
+   simcache.reset( US_SimCache::create_default() );
+
+   DbgLv( 1 ) << "2P:SF: sll sul nss" << slolim << suplim << nssteps << " kll kul nks" << klolim << kuplim << nksteps
+              << " ngref nthr noif" << ngrefine << nthreads << noisflag;
 
    timer.start();              // start a timer to measure run time
 
@@ -408,6 +411,7 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
    maxdepth  = 0;
    ntisols   = 0;
    ntcsols   = 0;
+   simcache.reset();
 
    emit message_update( pmessage_head() +
    tr( "All computations have been aborted." ), false );
@@ -832,6 +836,11 @@ DbgLv(1) << "done: vari bvol" << vari << bvol
    pmsg += tr( "Maximum memory used:  " )
            + QString::number( qRound( memmb ) ) + " MB";
 
+   if ( simcache )
+   {
+      pmsg += "\n" + simcache->stats_text();
+   }
+
    emit message_update( pmsg, false );          // signal final message
 
    int thrx   = wresult.thrn - 1;
@@ -992,6 +1001,7 @@ DbgLv(1) << "MENISC: k_iter mm_iter mtiter mmtype" << k_iter << mm_iter << mtite
    s_variance         = QString::number( vari_curr );
    s_meniscus         = QString::number( edata->meniscus );
    s_bottom           = QString::number( edata->bottom );
+   simcache.reset(); // free the simulation cache
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
@@ -1057,6 +1067,7 @@ DbgLv(1) << " GET_VAL: rfit mcit vari meni bott"
 void US_2dsaProcess::submit_job( WorkPacket2D& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
+   wtask.simcache     = simcache;
 
    WorkerThread2D* wthr = new WorkerThread2D( this );
    wthreads[ thrx ]   = wthr;
@@ -1594,6 +1605,12 @@ DbgLv(1) << "SET_MEN: bmeniscus bbottom" << bmeniscus << bbottom;
 DbgLv(1) << "SET_MEN: emeniscus ebottom" << edata->meniscus << edata->bottom;
    simparms->meniscus = edata->meniscus;
    simparms->bottom   = edata->bottom;
+
+   // Simulations of other meniscus,bottom values are of no further use
+   if ( simcache )
+   {
+      simcache->clear();
+   }
 DbgLv(1) << "SET_MEN: k_iter m_iter b_iter" << k_iter << m_iter << b_iter
  << "meniscus bottom" << edata->meniscus << simparms->bottom << "bbot" << bbottom;
 
