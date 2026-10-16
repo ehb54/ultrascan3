@@ -438,7 +438,6 @@ void US_GA_Initialize::reset( void )
 
    minmax     = false;
    zoom       = false;
-   nibuks     = 0;
    ct_wxbuck->setRange( 0, 200 );
    ct_hybuck->setRange( 0,  50 );
    ct_wxbuck->setSingleStep( 0.1 );
@@ -733,7 +732,7 @@ void US_GA_Initialize::autoAssignSb( void )
    soludata->clearBuckets();
    erase_buckets( true );
 
-   nibuks      = soludata->autoCalcBins( nisols, wxbuck, hybuck );
+   int nibuks      = soludata->autoCalcBins( nisols, wxbuck, hybuck );
 
    for ( int jj = 0; jj < nibuks; jj++ )
    {  // draw the auto-assigned buckets and add lines to list widget
@@ -766,7 +765,6 @@ void US_GA_Initialize::resetSb( void )
 
    erase_buckets( true );     // erase bucket rectangles from plot and delete
 
-   nibuks   = 0;
    pb_save   ->setEnabled( false );
    pb_view   ->setEnabled( false );
    pb_ckovrlp->setEnabled( false );
@@ -1190,24 +1188,16 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
 
    soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
 
-   nibuks       = 0;
-   //wxbuck       = ( plxmax - plxmin ) / 20.0;
-   //hybuck       = ( plymax - plymin ) / 20.0;
-   // wxbuck       = ( plxmax - plxmin ) * 0.08;
-   // hybuck       = ( plymax - plymin ) * 0.2;
-   // ct_wxbuck->setValue( wxbuck );
-   // ct_hybuck->setValue( hybuck );
-   // ct_nisols->setValue( double( nisols ) );
-   ct_wxbuck->setEnabled(  true );
-   ct_hybuck->setEnabled(  true );
+   ct_wxbuck->setEnabled( !monte_carlo );
+   ct_hybuck->setEnabled( !monte_carlo );
    pb_refresh->setEnabled( true );
    pb_mandrsb->setEnabled( true );
    pb_loadsb ->setEnabled( true );
 
-   if ( monte_carlo )
-   {
-      manDrawSb( );
-   }
+   // if ( monte_carlo )
+   // {
+   //    manDrawSb( );
+   // }
 }
 
 // load the color map from a file
@@ -1322,10 +1312,8 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    le_plymax->setText( QString::number( plymax ) );
 
    // Set bucket width,height values
-   //double wxbuck       = ( plxmax - plxmin ) / 20.0;
-   //double hybuck       = ( plymax - plymin ) / 20.0;
-   double wxbuck       = ( plxmax - plxmin ) * 0.1;
-   double hybuck       = ( plymax - plymin ) * 0.2;
+   double wxbuck       = ( smax - smin ) * 0.1;
+   double hybuck       = ( kmax - kmin ) * 0.2;
    int    spwr  = qRound( log10( wxbuck ) );
    int    kpwr  = qRound( log10( hybuck ) );
    smax         = pow( 10.0, spwr + 3 );
@@ -1467,6 +1455,7 @@ void US_GA_Initialize::highlight_solute( QwtPlotCurve* bc1 )
    if ( bc1 == NULL )
       return;
 
+   int nibuks = soludata->bucketsCount();
    if ( nibuks > 0  &&  pc1 != NULL )
    {  // re-color previous bucket yellow or blue
       pc1->setPen( pbukpen );
@@ -1508,6 +1497,7 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
    p2     = p;              // save the second rubberband point
 
    // draw the bucket rectangle
+   int nibuks = soludata->bucketsCount();
    bc1    = drawBucketRect( nibuks, p1, p2 );
 
    // highlight it (and turn off highlight for previous)
@@ -1642,6 +1632,7 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
       connect( lw_sbin_data, &QListWidget::currentRowChanged,
                this,         &US_GA_Initialize::newrow_sbdata );
 
+      int nibuks = soludata->bucketsCount();
       int rx      = qMin( sx, ( nibuks - 1 ) );
       if ( rx >= 0 )
       {
@@ -1752,6 +1743,7 @@ QwtPlotCurve* US_GA_Initialize::bucketCurveAt( int sx )
 void US_GA_Initialize::erase_buckets( bool delflag )
 {
 
+   int nibuks = soludata->bucketsCount();
    for ( int jj = 0; jj < nibuks; jj++ )
    {
       QwtPlotCurve* bc1 = bucketCurveAt( jj );
@@ -1763,7 +1755,6 @@ void US_GA_Initialize::erase_buckets( bool delflag )
             delete bc1;
       }
    }
-   nibuks   = 0;
 
    data_plot->replot();
 
@@ -1780,9 +1771,9 @@ void US_GA_Initialize::erase_buckets( )
 void US_GA_Initialize::removeSoluteBin( int sx )
 {
    // Remove the solute bin
-   int bsize = soludata->bucketsCount();
+   // int bsize = soludata->bucketsCount();
    soludata->removeBucketAt( sx );
-   nibuks    = bsize - 1;
+   // nibuks    = bsize - 1;
 
    // Reset the buckets plot and list
    resetPlotAndList( sx );
@@ -1792,11 +1783,10 @@ void US_GA_Initialize::removeSoluteBin( int sx )
 void US_GA_Initialize::resetPlotAndList( int hlx )
 {
    // Replace the List Widget contents and redraw bin rectangles
-   int kibuks  = soludata->bucketsCount();
+   int nibuks = soludata->bucketsCount();
    lw_sbin_data->clear();
    erase_buckets( );
-DbgLv(1) << "rPAL:kibuks nibuks" << kibuks << nibuks;
-   nibuks      = kibuks;
+DbgLv(1) << "rPAL: nibuks" <<  nibuks;
    ct_nisols->setValue( (double)nibuks );
 
    for ( int jj = 0; jj < nibuks; jj++ )
@@ -2102,7 +2092,7 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
    resetPlotAndList( hlx );
 
    is_saved       = false;
-   nibuks         = soludata->bucketsCount();
+   int nibuks         = soludata->bucketsCount();
    pb_save   ->setEnabled( attr_x == ATTR_V  ||
                            attr_y == ATTR_V  ||
                            attr_z == ATTR_V );

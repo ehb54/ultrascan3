@@ -136,7 +136,6 @@ class US_GA_Initialize : public US_Widgets
       double        yreso;
       double        zfloor;
 
-      int           nibuks;
       int           mc_iters;
       int           patm_id;
       int           patm_dlay;
