@@ -7,6 +7,7 @@
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qnamespace.h>
+#include <qpen.h>
 
 #include "us_ga_init.h"
 #include "us_select_runs.h"
@@ -45,8 +46,6 @@ bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
 
-const double epsilon = 0.0005;   // equivalence magnitude ratio radius
-
 // US_GA_Initialize class constructor
 US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 {
@@ -80,27 +79,21 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_nisols     = us_label( tr( "Number of Initial Solutes:" ) );
    lb_nisols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_nisols     = us_counter( 3, 0.0, 1000.0, 0.0 );
+   ct_nisols     = us_counter( 3, 1.0, 1000.0, 1.0 );
    ct_nisols->setSingleStep( 1 );
    ct_nisols->setEnabled( true );
-   connect( ct_nisols, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_nisols );
 
    lb_wxbuck     = us_label( tr( "Width of s Bucket:" ) );
    lb_wxbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_wxbuck     = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_wxbuck->setSingleStep( 1 );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
 
    lb_hybuck     = us_label( tr( "Height of f/f0 Bucket:" ) );
    lb_hybuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_hybuck     = us_counter( 3, 0.0, 1.0, 0.0 );
    ct_hybuck->setSingleStep( 1 );
-   connect( ct_hybuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_hybuck );
 
    lb_info2      = us_banner( tr( "Pseudo-3D Controls" ) );
 
@@ -136,12 +129,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( ct_zfloor, &QwtCounter::valueChanged,
             this,      &US_GA_Initialize::update_zfloor );
 
-   lb_info3      = us_banner( tr( "Plot Controls" ) );
-
-   us_checkbox( tr( "Automatic Plot Limits" ), ck_autlim, true );
-   connect( ck_autlim, &QAbstractButton::clicked,
-            this,       &US_GA_Initialize::select_autolim );
-
    lb_plxmin     = us_label( tr( "Min. s [S]:" ) );
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmin     = us_lineedit();
@@ -165,14 +152,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    le_plymax     = us_lineedit();
    connect( le_plymax, &QLineEdit::editingFinished,
             this,      &US_GA_Initialize::update_plymax );
-
-   lw_sbin_data = us_listwidget( );
-   connect( lw_sbin_data, &QAbstractItemView::pressed,
-            this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-   connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
-            this,         &US_GA_Initialize::dclick_sbdata );
-   connect( lw_sbin_data, &QListWidget::currentRowChanged,
-            this,         &US_GA_Initialize::newrow_sbdata );
 
            attr_x      = 0;
            attr_y      = 1;
@@ -222,6 +201,16 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_x_axis );
    connect( bg_y_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_y_axis );
 
+   lb_info3      = us_banner( tr( "Bucket List" ) );
+   lw_sbin_data = us_listwidget( );
+   connect( lw_sbin_data, &QAbstractItemView::pressed,
+            this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
+   connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
+            this,         &US_GA_Initialize::dclick_sbdata );
+   connect( lw_sbin_data, &QListWidget::currentRowChanged,
+            this,         &US_GA_Initialize::newrow_sbdata );
+
+
    lb_info4      = us_banner( tr( "Data Controls" ) );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
@@ -249,6 +238,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ),
                                   false );
+   pb_mandrsb->setCheckable( true );
+   
    connect( pb_mandrsb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::manDrawSb );
 
@@ -319,17 +310,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( ct_yreso,     s_row++, 4, 1, 4 );
    spec->addWidget( lb_zfloor,    s_row,   0, 1, 4 );
    spec->addWidget( ct_zfloor,    s_row++, 4, 1, 4 );
-   spec->addWidget( lb_info3,     s_row++, 0, 1, 8 );
-   spec->addWidget( ck_autlim,    s_row++, 0, 1, 8, Qt::AlignCenter );
-   spec->addWidget( lb_plxmin,    s_row,   0, 1, 2 );
-   spec->addWidget( le_plxmin,    s_row,   2, 1, 2 );
-   spec->addWidget( lb_plxmax,    s_row,   4, 1, 2 );
-   spec->addWidget( le_plxmax,    s_row++, 6, 1, 2 );
-   spec->addWidget( lb_plymin,    s_row,   0, 1, 2 );
-   spec->addWidget( le_plymin,    s_row,   2, 1, 2 );
-   spec->addWidget( lb_plymax,    s_row,   4, 1, 2 );
-   spec->addWidget( le_plymax,    s_row++, 6, 1, 2 );
-   spec->addWidget( lw_sbin_data, s_row++, 0, 1, 8 );
    spec->addWidget( lb_x_axis,    s_row,   0, 1, 2 );
    spec->addLayout( gl_x_s,       s_row,   2, 1, 1 );
    spec->addLayout( gl_x_ff0,     s_row,   3, 1, 1 );
@@ -344,6 +324,16 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addLayout( gl_y_vbar,    s_row,   5, 1, 1 );
    spec->addLayout( gl_y_D,       s_row,   6, 1, 1 );
    spec->addLayout( gl_y_rh,      s_row++, 7, 1, 1 );
+   spec->addWidget( lb_plxmin,    s_row,   0, 1, 2 );
+   spec->addWidget( le_plxmin,    s_row,   2, 1, 2 );
+   spec->addWidget( lb_plxmax,    s_row,   4, 1, 2 );
+   spec->addWidget( le_plxmax,    s_row++, 6, 1, 2 );
+   spec->addWidget( lb_plymin,    s_row,   0, 1, 2 );
+   spec->addWidget( le_plymin,    s_row,   2, 1, 2 );
+   spec->addWidget( lb_plymax,    s_row,   4, 1, 2 );
+   spec->addWidget( le_plymax,    s_row++, 6, 1, 2 );
+   spec->addWidget( lb_info3,     s_row++, 0, 1, 8 );
+   spec->addWidget( lw_sbin_data, s_row++, 0, 1, 8 );
    spec->addWidget( lb_info4,     s_row++, 0, 1, 8 );
    spec->addLayout( dkdb_cntrls,  s_row++, 0, 1, 8 );
    spec->addWidget( le_prefilt,   s_row++, 0, 1, 8 );
@@ -411,7 +401,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
-   sdistro    = &xy_distro;
    attr_x     = 0;          // default X type: s
    attr_y     = 1;          // default Y type: f/f0
    attr_z     = 3;          // default Z (fixed) type:  vbar
@@ -421,8 +410,16 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    is_saved   = false;      // files have been saved
    pfilts.clear();          // default prefilter edits list
    binfpath   = US_Settings::resultDir();
-   pick       = NULL;
-   pickpen    = NULL;
+   pick       = new US_PlotPicker( data_plot );
+   pickpen    = new QPen();
+   pick->setStateMachine(  new QwtPickerDragRectMachine() );
+   pick->setRubberBandPen( *pickpen );
+   pick->setTrackerPen(    *pickpen );
+   pick->setRubberBand(    QwtPicker::RectRubberBand );
+   connect( pick, &US_PlotPicker::mouseDown,
+            this, &US_GA_Initialize::getMouseDown );
+   connect( pick, &US_PlotPicker::mouseUp,
+            this, &US_GA_Initialize::getMouseUp );
    
    reset();
 }
@@ -441,17 +438,13 @@ void US_GA_Initialize::reset( void )
 
    minmax     = false;
    zoom       = false;
-   nisols     = 0;
    nibuks     = 0;
-   wxbuck     = 0.0;
-   hybuck     = 0.0;
-   ct_nisols->setValue( (double)nisols );
    ct_wxbuck->setRange( 0, 200 );
    ct_hybuck->setRange( 0,  50 );
    ct_wxbuck->setSingleStep( 0.1 );
    ct_hybuck->setSingleStep( 0.01 );
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
+   ct_wxbuck->setValue( 0.0 );
+   ct_hybuck->setValue( 0.0 );
 
    resolu     = 90.0;
    ct_resolu->setRange( 1, 100 );
@@ -473,21 +466,21 @@ void US_GA_Initialize::reset( void )
    ct_zfloor->setValue( (double)zfloor );
 
    auto_lim   = true;
-   ck_autlim->setChecked( auto_lim );
 
-   attr_y     = ATTR_K;
-   plymin     = 1.0;
-   plymax     = 4.0;
-   le_plymin->clear();
-   le_plymax->clear();
-   rb_y_ff0->setChecked( true );
-
-   attr_x     = ATTR_S;
-   plxmin     = 1.0;
-   plxmax     = 10.0;
-   le_plxmin->clear();
-   le_plxmax->clear();
+   attr_x = ATTR_S;
+   plxmin = 1.0;
+   plxmax = 10.0;
    rb_x_s->setChecked( true );
+
+   attr_y = ATTR_K;
+   plymin = 1.0;
+   plymax = 4.0;
+   rb_y_ff0->setChecked( true );
+   
+   le_plxmin->setText( QString::number( plxmin ) );
+   le_plxmax->setText( QString::number( plxmax ) );
+   le_plymin->setText( QString::number( plymin ) );
+   le_plymax->setText( QString::number( plymax ) );
 
    update_plot_labels();
 
@@ -632,70 +625,58 @@ void US_GA_Initialize::manDrawSb( void )
 {
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
-
-   // create a new plot picker to draw rectangles around solute points
-   if ( pick    != NULL )  delete pick;
-   if ( pickpen != NULL )  delete pickpen;
-   pick         = new US_PlotPicker( data_plot );
+   qDebug() << "MANDRAW";
 
    // make sure rubber band and tracker show up against background
-   QColor bg    = data_plot->canvasBackground();
-   int csum     = bg.red() + bg.green() + bg.blue();
-   pickpen      = new QPen( ( csum > 600 ) ? cblack : cwhite );
+   QColor bg  = data_plot->canvasBackground();
+   int csum   = bg.red() + bg.green() + bg.blue();
+   pickpen->setColor(( csum > 600 ) ? cblack : cwhite );
 DbgLv(1) << "manDr: bg" << bg << "csum" << csum;
 DbgLv(1) << "manDr:   pickpen" << pickpen->brush().color();
 DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
 
-   pick->setStateMachine(  new QwtPickerDragRectMachine() );
-   pick->setRubberBandPen( *pickpen );
-   pick->setTrackerPen(    *pickpen );
-   pick->setRubberBand(    QwtPicker::RectRubberBand );
 
-   // set up to capture position and dimensions of solute bin
-   connect( pick, &US_PlotPicker::mouseDown,
-            this, &US_GA_Initialize::getMouseDown );
-   connect( pick, &US_PlotPicker::mouseUp,
-            this, &US_GA_Initialize::getMouseUp );
+   // // set up to capture position and dimensions of solute bin
 
-   pb_ckovrlp->setEnabled( false );
+   // pb_ckovrlp->setEnabled( false );
 
-   double xrange = qAbs( plxmax - plxmin );
-   double yrange = qAbs( plymax - plymin );
+   // double xrange = qAbs( plxmax - plxmin );
+   // double yrange = qAbs( plymax - plymin );
    
-   if ( xrange == 0.0 )
-   {
-      xrange = 1.0e-1;
-   }
+   // if ( xrange == 0.0 )
+   // {
+   //    xrange = 1.0e-1;
+   // }
    
-   if ( yrange <= 0.0 )
-   {
-      yrange = 1.0e-1;
-   }
+   // if ( yrange <= 0.0 )
+   // {
+   //    yrange = 1.0e-1;
+   // }
    
-   //wxbuck       = ( plxmax - plxmin ) / 10.0;
-   //hybuck       = ( plymax - plymin ) / 10.0;
-   wxbuck       = xrange * 0.08;
-   hybuck       = yrange * 0.2;
-   ct_wxbuck->disconnect( );
-   ct_hybuck->disconnect( );
-   int    rpwr  = qRound( log10( wxbuck ) );
-   double rmax  = pow( 10.0, rpwr + 3 );
-   double rinc  = pow( 10.0, rpwr - 3 );
-   wxbuck       = qRound( wxbuck / rinc ) * rinc;
-   ct_wxbuck->setRange( 0.0, rmax );
-   ct_wxbuck->setSingleStep( rinc );
-   ct_wxbuck->setValue( wxbuck );
-          rpwr  = qRound( log10( hybuck ) );
-          rmax  = pow( 10.0, rpwr + 3 );
-          rinc  = pow( 10.0, rpwr - 3 );
-   hybuck       = qRound( hybuck / rinc ) * rinc;
-   ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
-   connect( ct_hybuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_hybuck );
+   // //wxbuck       = ( plxmax - plxmin ) / 10.0;
+   // //hybuck       = ( plymax - plymin ) / 10.0;
+   // wxbuck       = xrange * 0.08;
+   // hybuck       = yrange * 0.2;
+   // ct_wxbuck->disconnect( );
+   // ct_hybuck->disconnect( );
+   // int    rpwr  = qRound( log10( wxbuck ) );
+   // double rmax  = pow( 10.0, rpwr + 3 );
+   // double rinc  = pow( 10.0, rpwr - 3 );
+   // wxbuck       = qRound( wxbuck / rinc ) * rinc;
+   // ct_wxbuck->setRange( 0.0, rmax );
+   // ct_wxbuck->setSingleStep( rinc );
+   // ct_wxbuck->setValue( wxbuck );
+   //        rpwr  = qRound( log10( hybuck ) );
+   //        rmax  = pow( 10.0, rpwr + 3 );
+   //        rinc  = pow( 10.0, rpwr - 3 );
+   // hybuck       = qRound( hybuck / rinc ) * rinc;
+   // ct_hybuck->setValue( hybuck );
+   // connect( ct_wxbuck, &QwtCounter::valueChanged,
+   //          this,      &US_GA_Initialize::update_wxbuck );
+   // connect( ct_hybuck, &QwtCounter::valueChanged,
+   //          this,      &US_GA_Initialize::update_hybuck );
 
-   manbuks      = true;
+   // manbuks      = true;
 }
 
 // Check for bin overlaps
@@ -744,7 +725,9 @@ void US_GA_Initialize::autoAssignSb( void )
       QMessageBox::information( this, "Information", "Autoassign is disabled when Rh is selected.");
       return;
    }
-   nisols      = ( nisols == 0 ) ? sdistro->size() : nisols;
+   int nisols    = ct_nisols->value();
+   double wxbuck = ct_wxbuck->value();
+   double hybuck = ct_hybuck->value();
    pc1         = NULL;
    lw_sbin_data->clear();
    soludata->clearBuckets();
@@ -794,12 +777,10 @@ void US_GA_Initialize::resetSb( void )
 // (re)plot data
 void US_GA_Initialize::replot_data()
 {
-   if ( sdistro->isEmpty()  ||  sdistro->size() == 0 )
+   if ( xy_distro.isEmpty() )
       return;
 
    resetSb();
-
-   sdistro   = &xy_distro;
 
    plot_3dim();
 
@@ -835,31 +816,21 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    d_spectrogram->setData    ( spec_dat );
    d_spectrogram->attach( data_plot );
 
-   QRectF drect;
+   QRectF drect = QRectF( plxmin, plymin,
+                        ( plxmax - plxmin ), ( plymax - plymin ) );
 
-   if ( auto_lim )
-   {
-      drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
-   }
-
-   else
-   {
-      drect = QRectF( plxmin, plymin,
-            ( plxmax - plxmin ), ( plymax - plymin ) );
-   }
-
-   double zmax = sdistro->at( 0 ).c;
+   double zmax = xy_distro.at( 0 ).c;
    double zmin = 0.0;
 
-   for ( int jj = 0; jj < sdistro->size(); jj++ )
+   for ( int jj = 0; jj < xy_distro.size(); jj++ )
    {
-      zmin  = qMin( zmin, sdistro->at( jj ).c );
-      zmax  = qMax( zmax, sdistro->at( jj ).c );
+      zmin  = qMin( zmin, xy_distro.at( jj ).c );
+      zmax  = qMax( zmax, xy_distro.at( jj ).c );
    }
 
    spec_dat->setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat->setZRange( zmin, zmax );
-   spec_dat->setRaster( sdistro );
+   spec_dat->setRaster( &xy_distro );
 
    // Set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
@@ -916,24 +887,6 @@ void US_GA_Initialize::update_zfloor( double dval )
    zfloor = dval;
 }
 
-// update number of initial solutes
-void US_GA_Initialize::update_nisols( double dval )
-{
-   nisols    = qRound( dval );
-}
-
-// update width in s of buckets
-void US_GA_Initialize::update_wxbuck( double dval )
-{
-   wxbuck    = dval;
-}
-
-// update height in f/f0 of buckets
-void US_GA_Initialize::update_hybuck( double dval )
-{
-   hybuck    = dval;
-}
-
 void US_GA_Initialize::str2double( QLineEdit* le, double& val )
 {
   bool ok;
@@ -971,33 +924,34 @@ void US_GA_Initialize::update_plymax( )
   str2double( le_plymax, plymax );
 }
 
-// select automatic plot limits
-void US_GA_Initialize::select_autolim()
-{
-   auto_lim   = ck_autlim->isChecked();
-   // ct_plymin->setEnabled( !auto_lim );
-   // ct_plymax->setEnabled( !auto_lim );
-   // ct_plxmin->setEnabled( !auto_lim );
-   // ct_plxmax->setEnabled( !auto_lim );
-   if ( auto_lim )
-   {
-      set_limits();
-   }
 
-   //wxbuck       = ( plxmax - plxmin ) / 20;
-   //hybuck       = ( plymax - plymin ) / 20;
-   wxbuck       = ( plxmax - plxmin ) * 0.08;
-   hybuck       = ( plymax - plymin ) * 0.2;
-   double rmax  = wxbuck * 10.0;
-   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
-   ct_wxbuck->disconnect( );
-   ct_wxbuck->setRange( 0.0, rmax );
-   ct_wxbuck->setSingleStep( rinc );
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
-}
+// select automatic plot limits
+// void US_GA_Initialize::select_autolim()
+// {
+//    auto_lim   = ck_autlim->isChecked();
+//    // ct_plymin->setEnabled( !auto_lim );
+//    // ct_plymax->setEnabled( !auto_lim );
+//    // ct_plxmin->setEnabled( !auto_lim );
+//    // ct_plxmax->setEnabled( !auto_lim );
+//    if ( auto_lim )
+//    {
+//       set_limits();
+//    }
+
+//    //wxbuck       = ( plxmax - plxmin ) / 20;
+//    //hybuck       = ( plymax - plymin ) / 20;
+//    wxbuck       = ( plxmax - plxmin ) * 0.08;
+//    hybuck       = ( plymax - plymin ) * 0.2;
+//    double rmax  = wxbuck * 10.0;
+//    double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+//    ct_wxbuck->disconnect( );
+//    ct_wxbuck->setRange( 0.0, rmax );
+//    ct_wxbuck->setSingleStep( rinc );
+//    ct_wxbuck->setValue( wxbuck );
+//    ct_hybuck->setValue( hybuck );
+//    connect( ct_wxbuck, &QwtCounter::valueChanged,
+//             this,      &US_GA_Initialize::update_wxbuck );
+// }
 
 void US_GA_Initialize::check_draw_btn()
 {
@@ -1031,8 +985,6 @@ void US_GA_Initialize::load_distro()
    double          vmax   = 1e-39;
    double          dmin   = 1e+39;
    double          dmax   = 1e-39;
-   double          fmin   = 1e+39;
-   double          fmax   = 1e-39;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
@@ -1150,8 +1102,6 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
          vmax      = qMax( vmax, sol_sk.v );
          dmin      = qMin( dmin, sol_sk.d );
          dmax      = qMax( dmax, sol_sk.d );
-         fmin      = qMin( fmin, sol_sk.f );
-         fmax      = qMax( fmax, sol_sk.f );
 //DbgLv(2) << "Solute jj s w k c d" << jj << sol_s.s << sol_w.s << sol_s.k
 //   << sol_s.c << sol_s.d << " vb" << model.components[jj].vbar20;
 
@@ -1160,8 +1110,7 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
       }
 
       // sort and reduce distributions
-      sdistro   = &xy_distro;
-      psdsiz    = sdistro->size();
+      psdsiz    = xy_distro.size();
       sort_distro( sk_distro, false );
       sort_distro( xy_distro, true  );
 DbgLv(1) << "Solute psdsiz sdsiz xdsiz" << psdsiz << sk_distro.size()
@@ -1224,31 +1173,31 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
 
    pb_resetsb->setEnabled( true );
 
-   nisols       = sdistro->size();
+   // nisols       = sdistro->size();
    s_attr       = "\"" + s_attr + "\".";
    dfilname     = "(" + mfnam + ") " + mdesc;
    stdfline     = "  " + dfilname;
    stfxline     = tr( "The components fixed attribute is " ) + s_attr;
-   stnpline     = tr( "The number of distribution points is %1" )
-                  .arg( nisols );
-   if ( nisols != psdsiz )
-      stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
+   // stnpline     = tr( "The number of distribution points is %1" )
+   //                .arg( nisols );
+   // if ( nisols != psdsiz )
+   //    stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
 
    te_status->setText( stcmline + "\n" + stdiline + "\n"
          + stdfline + "\n" + stfxline + "\n" + stnpline + "." );
 
    replot_data();
 
-   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
+   soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
 
    nibuks       = 0;
    //wxbuck       = ( plxmax - plxmin ) / 20.0;
    //hybuck       = ( plymax - plymin ) / 20.0;
-   wxbuck       = ( plxmax - plxmin ) * 0.08;
-   hybuck       = ( plymax - plymin ) * 0.2;
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
-   ct_nisols->setValue( double( nisols ) );
+   // wxbuck       = ( plxmax - plxmin ) * 0.08;
+   // hybuck       = ( plymax - plymin ) * 0.2;
+   // ct_wxbuck->setValue( wxbuck );
+   // ct_hybuck->setValue( hybuck );
+   // ct_nisols->setValue( double( nisols ) );
    ct_wxbuck->setEnabled(  true );
    ct_hybuck->setEnabled(  true );
    pb_refresh->setEnabled( true );
@@ -1301,8 +1250,7 @@ void US_GA_Initialize::load_color()
 void US_GA_Initialize::set_limits()
 {
    resetSb();
-   sdistro     = &xy_distro;
-   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
+   soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
    
    // find min,max for S distributions
    double smin = +1.0e99;
@@ -1311,10 +1259,10 @@ void US_GA_Initialize::set_limits()
    double kmax = -1.0e99;
    double sinc;
    double kinc;
-   for ( int jj = 0; jj < sdistro->size(); jj++ )
+   for ( int jj = 0; jj < xy_distro.size(); jj++ )
    {
-      double sval = sdistro->at( jj ).s;
-      double kval = sdistro->at( jj ).k;
+      double sval = xy_distro.at( jj ).s;
+      double kval = xy_distro.at( jj ).k;
       smin        = qMin( smin, sval );
       smax        = qMax( smax, sval );
       kmin        = qMin( kmin, kval );
@@ -1326,8 +1274,8 @@ DbgLv(1) << "SL: distr skmin,max" << smin << smax << kmin << kmax;
    sinc      = ( smax - smin ) / 10.0;
    kinc      = ( kmax - kmin ) / 10.0;
 DbgLv(1) << "SL: adj sinc kinc" << sinc << kinc;
-   sinc      = ( sinc == 0.0 || sdistro->size() == 1 ) ? ( smin * 0.05 ) : sinc;
-   kinc      = ( kinc == 0.0 || sdistro->size() == 1 ) ? ( kmin * 0.05 ) : kinc;
+   sinc      = ( sinc == 0.0 || xy_distro.size() == 1 ) ? ( smin * 0.05 ) : sinc;
+   kinc      = ( kinc == 0.0 || xy_distro.size() == 1 ) ? ( kmin * 0.05 ) : kinc;
 DbgLv(1) << "SL:  adj sinc kinc" << sinc << kinc;
 
    smin     -= sinc;
@@ -1336,16 +1284,6 @@ DbgLv(1) << "SL:  adj sinc kinc" << sinc << kinc;
    kmax     += kinc;
 DbgLv(1) << "SL: adj smin,max" << smin << smax
  << "kmin,max" << kmin << kmax;
-
-   // ct_plxmin->setRange( smin, smax );
-   // ct_plxmax->setRange( smin, smax );
-   // ct_plxmin->setSingleStep( sinc / 10.0 );
-   // ct_plxmax->setSingleStep( sinc / 10.0 );
-
-   // ct_plymin->setRange( kmin, kmax );
-   // ct_plymax->setRange( kmin, kmax );
-   // ct_plymin->setSingleStep( kinc / 10.0 );
-   // ct_plymax->setSingleStep( kinc / 10.0 );
 
    sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
    kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
@@ -1374,23 +1312,20 @@ DbgLv(1) << "SL: aut min,inc" << smax << sinc << kmax << kinc;
 DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
  << "kmin,max,inc" << kmin << kmax << kinc;
 
-   // ct_plxmin->setValue( smin );
-   // ct_plxmax->setValue( smax );
-   // ct_plymin->setValue( kmin );
-   // ct_plymax->setValue( kmax );
-
-   plxmin      = smin;
-   plxmax      = smax;
-   plymin      = kmin;
-   plymax      = kmax;
+   plxmin = smin;
+   plxmax = smax;
+   plymin = kmin;
+   plymax = kmax;
+   le_plxmin->setText( QString::number( plxmin ) );
+   le_plxmax->setText( QString::number( plxmax ) );
+   le_plymin->setText( QString::number( plymin ) );
+   le_plymax->setText( QString::number( plymax ) );
 
    // Set bucket width,height values
-   //wxbuck       = ( plxmax - plxmin ) / 20.0;
-   //hybuck       = ( plymax - plymin ) / 20.0;
-   wxbuck       = ( plxmax - plxmin ) * 0.1;
-   hybuck       = ( plymax - plymin ) * 0.2;
-   ct_wxbuck->disconnect( );
-   ct_hybuck->disconnect( );
+   //double wxbuck       = ( plxmax - plxmin ) / 20.0;
+   //double hybuck       = ( plymax - plymin ) / 20.0;
+   double wxbuck       = ( plxmax - plxmin ) * 0.1;
+   double hybuck       = ( plymax - plymin ) * 0.2;
    int    spwr  = qRound( log10( wxbuck ) );
    int    kpwr  = qRound( log10( hybuck ) );
    smax         = pow( 10.0, spwr + 3 );
@@ -1405,10 +1340,6 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    ct_hybuck->setRange( 0.0, kmax );
    ct_hybuck->setSingleStep( kinc );
    ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
-   connect( ct_hybuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_hybuck );
 
    // Update help and status text
    QString hmsg = tr(
@@ -1442,7 +1373,7 @@ DbgLv(1) << "SL: autoassn xmin,xmax,ymin,ymax" << plxmin << plxmax
  << plymin << plymax;
    pb_autassb->setEnabled( !monte_carlo );
 
-   int kisols   = sdistro->size();
+   int kisols   = xy_distro.size();
    stnpline     = tr( "The number of distribution points is %1." )
                   .arg( kisols );
    te_status->setText( stcmline + "\n" + stdiline + "\n"
@@ -1558,12 +1489,18 @@ void US_GA_Initialize::highlight_solute( int sx )
 // mouse down:  save of first point
 void US_GA_Initialize::getMouseDown( const QPointF& p )
 {
+   if ( !pb_mandrsb->isChecked() ) {
+      return;
+   }
    p1     = p;              // save the first rubberband point
 }
 
 // mouse up:  draw bucket rectangle
 void US_GA_Initialize::getMouseUp( const QPointF& p )
 {
+   if ( !pb_mandrsb->isChecked() ) {
+      return;
+   }
    double        tx[2];
    double        ty[2];
    QwtPlotCurve* bc1;
@@ -1604,7 +1541,7 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
 
    if ( sx >= 0 )
    {  // for solute point nearest to rectangle midpoint
-      S_Solute sol  = sdistro->at( sx );
+      S_Solute sol  = xy_distro.at( sx );
       qreal bucc    = sol.c;  // get concentrate value
 
       // add the bucket entry and add a text box entry
@@ -1744,6 +1681,9 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
       pt0         = QPointF( ( ptl.x() + pbr.x() ) / 2.0, 
                              ( ptl.y() + pbr.y() ) / 2.0 );
    }
+
+   double wxbuck = ct_wxbuck->value();
+   double hybuck = ct_hybuck->value();
    sxset       = sx;
    qreal x1    = pt0.x() - wxbuck / 2.0;
    qreal y1    = pt0.y() + hybuck / 2.0;

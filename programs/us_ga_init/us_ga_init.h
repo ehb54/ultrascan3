@@ -115,21 +115,16 @@ class US_GA_Initialize : public US_Widgets
       QButtonGroup* bg_x_axis;
       QButtonGroup* bg_y_axis;
 
-      QCheckBox*    ck_autlim;
-      
       QPen*         pickpen;
       QPen          cbukpen;
       QPen          pbukpen;
 
       QList< S_Solute >  sk_distro;
       QList< S_Solute >  xy_distro;
-      QList< S_Solute >* sdistro;
 
       QPointF  p1;
       QPointF  p2;
 
-      double        wxbuck;
-      double        hybuck;
       double        resolu;
       double        plxmin;
       double        plxmax;
@@ -141,7 +136,6 @@ class US_GA_Initialize : public US_Widgets
       double        yreso;
       double        zfloor;
 
-      int           nisols;
       int           nibuks;
       int           mc_iters;
       int           patm_id;
@@ -188,9 +182,6 @@ class US_GA_Initialize : public US_Widgets
 
    private slots:
 
-      void update_nisols( double );
-      void update_wxbuck( double );
-      void update_hybuck( double );
       void update_resolu( double );
       void update_xreso(  double );
       void update_yreso(  double );
@@ -201,7 +192,6 @@ class US_GA_Initialize : public US_Widgets
       void update_plymax( void );
       void replot_data( void );
       void plot_3dim(   void );
-      void select_autolim( void );
       void check_draw_btn( void );
       void select_prefilt( void );
       void load_distro (   void );
