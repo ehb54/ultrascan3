@@ -19,6 +19,7 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
+#include <qchar.h>
 #include <qlineedit.h>
 
 //! \brief Less-than function for sorting S_Solute values
@@ -150,7 +151,6 @@ class US_GA_Initialize : public US_Widgets
 
       bool          minmax;
       bool          zoom;
-      bool          auto_lim;
       bool          monte_carlo;
       bool          runsel;
       bool          latest;
@@ -227,7 +227,7 @@ class US_GA_Initialize : public US_Widgets
       void select_y_axis   ( int );
       void build_xy_distro ( void );
       void load_bins       ( void );
-      void str2double      ( QLineEdit*, double& );
+      double str2double      ( const QString&, double );
       void update_plot_labels ( void );
       QString anno_title   ( int  );
       QString anno_label   ( int  );

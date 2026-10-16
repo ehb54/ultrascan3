@@ -133,13 +133,13 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmin     = us_lineedit();
    connect( le_plxmin, &QLineEdit::editingFinished,
-            this,        &US_GA_Initialize::update_plxmin );
+            this,      &US_GA_Initialize::update_plxmin );
 
    lb_plxmax     = us_label( tr( "Max. s [S]:" ) );
    lb_plxmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmax= us_lineedit();
    connect( le_plxmax, &QLineEdit::editingFinished,
-            this,        &US_GA_Initialize::update_plxmax );
+            this,      &US_GA_Initialize::update_plxmax );
 
    lb_plymin     = us_label( tr( "Min. f/f0:" ) );
    lb_plymin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -464,8 +464,6 @@ void US_GA_Initialize::reset( void )
    ct_zfloor->setSingleStep( 1.0 );
    ct_zfloor->setValue( (double)zfloor );
 
-   auto_lim   = true;
-
    attr_x = ATTR_S;
    plxmin = 1.0;
    plxmax = 10.0;
@@ -482,6 +480,9 @@ void US_GA_Initialize::reset( void )
    le_plymax->setText( QString::number( plymax ) );
 
    update_plot_labels();
+   data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
+   data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
+   data_plot->replot();
 
    // default to white-cyan-magenta-red-black color map
    colormap   = new QwtLinearColorMap( Qt::white, Qt::black );
@@ -840,22 +841,13 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
    data_plot->axisTitle( QwtPlot::yRight ).setFont(
-         data_plot->axisTitle( QwtPlot::yLeft ).font() );
+   data_plot->axisTitle( QwtPlot::yLeft ).font() );
    data_plot->setAxisScale( QwtPlot::yRight,
-      spec_dat->range().minValue(), spec_dat->range().maxValue() );
+   spec_dat->range().minValue(), spec_dat->range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
 
-   if ( auto_lim )
-   {   // auto limits
-      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
-      data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   }
-   else
-   {   // manual limits
-      data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
-      data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
-   }
-
+   data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
+   data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
    data_plot->replot();
 
    check_draw_btn();
@@ -885,71 +877,83 @@ void US_GA_Initialize::update_zfloor( double dval )
    zfloor = dval;
 }
 
-void US_GA_Initialize::str2double( QLineEdit* le, double& val )
+double US_GA_Initialize::str2double( const QString& str, double val )
 {
   bool ok;
-  double newval = le->text().toDouble( &ok );
+  double newval = str.toDouble( &ok );
   if (ok)
   {
-    val = newval;
+    return newval;
   } else {
     QMessageBox::warning(this, "Warning!", "Please enter a number!");
-    le->setText(QString::number(val));
+    return val;
   }
 }
 
 // update plot limit s min
-void US_GA_Initialize::update_plxmin( )
+void US_GA_Initialize::update_plxmin()
 {
-  str2double( le_plxmin, plxmin );
+  double val = str2double( le_plxmin->text(), plxmin );
+  if (val >= plxmax) {
+    QString msg = "Minimum of the x-axis must be less than the maximum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plxmin = val;
+  }
+  le_plxmin->setText( QString::number( plxmin ) );
+
+  data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
+  data_plot->replot();
 }
 
 // update plot limit s max
-void US_GA_Initialize::update_plxmax( )
+void US_GA_Initialize::update_plxmax()
 {
-  str2double( le_plxmax, plxmax );
+  double val = str2double( le_plxmax->text(), plxmax);
+  if (val <= plxmin) {
+    QString msg = "Maximum of the x-axis must be greater than the minimum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plxmax= val;
+  }
+  le_plxmax->setText( QString::number( plxmax ) );
+
+  data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
+  data_plot->replot();
 }
 
 // update plot limit f/f0 min
-void US_GA_Initialize::update_plymin( )
+void US_GA_Initialize::update_plymin()
 {
-  str2double( le_plymin, plymin );
+  double val = str2double( le_plymin->text(), plymin );
+  if (val >= plymax) {
+    QString msg = "Minimum of the y-axis must be less than the maximum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plymin = val;
+  }
+  le_plymin->setText( QString::number( plymin ) );
+
+  data_plot->setAxisScale( QwtPlot::yLeft, plymin, plymax );
+  data_plot->replot();
 }
+
 
 // update plot limit f/f0 max
-void US_GA_Initialize::update_plymax( )
+void US_GA_Initialize::update_plymax()
 {
-  str2double( le_plymax, plymax );
+  double val = str2double( le_plymax->text(), plymax);
+  if (val <= plymin) {
+    QString msg = "Maximum of the y-axis must be greater than the minimum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plymax= val;
+  }
+  le_plymax->setText( QString::number( plymax ) );
+
+  data_plot->setAxisScale( QwtPlot::yLeft, plymin, plymax );
+  data_plot->replot();
 }
-
-
-// select automatic plot limits
-// void US_GA_Initialize::select_autolim()
-// {
-//    auto_lim   = ck_autlim->isChecked();
-//    // ct_plymin->setEnabled( !auto_lim );
-//    // ct_plymax->setEnabled( !auto_lim );
-//    // ct_plxmin->setEnabled( !auto_lim );
-//    // ct_plxmax->setEnabled( !auto_lim );
-//    if ( auto_lim )
-//    {
-//       set_limits();
-//    }
-
-//    //wxbuck       = ( plxmax - plxmin ) / 20;
-//    //hybuck       = ( plymax - plymin ) / 20;
-//    wxbuck       = ( plxmax - plxmin ) * 0.08;
-//    hybuck       = ( plymax - plymin ) * 0.2;
-//    double rmax  = wxbuck * 10.0;
-//    double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
-//    ct_wxbuck->disconnect( );
-//    ct_wxbuck->setRange( 0.0, rmax );
-//    ct_wxbuck->setSingleStep( rinc );
-//    ct_wxbuck->setValue( wxbuck );
-//    ct_hybuck->setValue( hybuck );
-//    connect( ct_wxbuck, &QwtCounter::valueChanged,
-//             this,      &US_GA_Initialize::update_wxbuck );
-// }
 
 void US_GA_Initialize::check_draw_btn()
 {
@@ -1150,24 +1154,11 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    attrs << "s" << "f/f0" << "MW" << "vbar" << "D" << "f";
    QString s_attr = attrs[ attr_z ];
 
-   if ( auto_lim )
-   {
-      set_limits();
+   set_limits();
 
-      // ct_plymin->setEnabled( false );
-      // ct_plymax->setEnabled( false );
-      // ct_plxmin->setEnabled( false );
-      // ct_plxmax->setEnabled( false );
-   }
-   else
-   {
-      // plxmin    = ct_plxmin->value();
-      // plxmax    = ct_plxmax->value();
-      // plymin    = ct_plymin->value();
-      // plymax    = ct_plymax->value();
-   }
    data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
+   data_plot->replot();
 
    pb_resetsb->setEnabled( true );
 
