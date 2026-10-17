@@ -193,6 +193,7 @@ option(US3_NO_DB "Build without database support (for supercomputer backends)" O
 option(US3_BUILD_PROGRAMS "Build application programs" ON)
 option(USE_QT6 "Use Qt6 instead of Qt5" OFF)
 option(BUILD_DOCUMENTATION "Build Sphinx documentation" ON)
+option(US3_BUILD_SOMO "Build the SOMO/US-SOMO hydrodynamics suite (us_somo)" OFF)
 
 # High-level profile to make builds scriptable:
 #   APP  = desktop/user build (GUI + programs + DB)
@@ -1012,8 +1013,24 @@ endif()
 # =============================================================================
 # SoMo BUILD (CMake native)
 # =============================================================================
-# build has errors
-# add_subdirectory(us_somo)
+# Opt-in via -DUS3_BUILD_SOMO=ON. SOMO is a Qt-GUI suite (needs Qt + Multimedia +
+# Qwt), so it is incompatible with the headless HPC profile. It vendors its own
+# utils fork and is otherwise self-contained; the forwarder us_somo/CMakeLists.txt
+# delegates to us_somo/develop. Requires an APP feature that provides
+# qt5-multimedia/qtmultimedia + qwt (qt5-app / qt6-app).
+# SOMO has never been compiled with MSVC (on Windows it builds with MinGW, as
+# qmake builds it for the packages), so under MSVC it is skipped with a
+# warning rather than failing the UltraScan build, until
+# ehb54/ultrascan-tickets#1131 lands.
+if(US3_BUILD_SOMO AND NOT US3_PROFILE STREQUAL "HPC")
+    if(MSVC)
+        message(WARNING "SOMO does not build with MSVC yet (ehb54/ultrascan-tickets#1131), "
+                        "so it is skipped. Build it with MinGW (MSYS2), or configure "
+                        "without -DUS3_BUILD_SOMO=ON.")
+    else()
+        add_subdirectory(us_somo)
+    endif()
+endif()
 
 # =============================================================================
 # macOS DEPLOYMENT (folder-based layout)
