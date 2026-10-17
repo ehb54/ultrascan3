@@ -28,6 +28,7 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
    QVBoxLayout* info  = new QVBoxLayout();
    
    te_details = us_textedit();
+   te_details->setAccessibleName( tr( "Noise Fit Details" ) );
    us_setReadOnly( te_details, true );
    info->addWidget( te_details );
 
@@ -37,6 +38,7 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
    spin->addWidget( lb_spin );
 
    ct_order = us_counter( 1, 4.0, 9.0, (double)order );
+   ct_order->setAccessibleName( tr( "Fit Order" ) );
    ct_order->setSingleStep( 1.0 );
    connect( ct_order, &QwtCounter::valueChanged,
                       this, &US_RiNoise::draw_fit );

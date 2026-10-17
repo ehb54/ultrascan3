@@ -11,7 +11,14 @@
 #include <QtCore/QString>
 #include <cstdio>
 #include <mpi.h>
-#include <sys/user.h>
+#ifdef Q_OS_WIN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #define ELAPSED_SECS (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 
@@ -500,15 +507,7 @@ if (my_rank==0) {
    bottom_values.resize( bottom_points );
 
    // Use bottom from edited data if it is given
-   US_SolveSim::DataSet*  ds    = data_sets[ 0 ];
-   double bottom_ds    = ds->run_data.bottom;
-   if ( bottom_ds == 0.0 )
-   {
-      double rpm          = ds->run_data.scanData[ 0 ].rpm;
-      bottom_ds           = US_AstfemMath::calc_bottom( rpm,
-                                                        ds->centerpiece_bottom,
-                                                        ds->rotor_stretch );
-   }
+   double bottom_ds    = dataset_bottom( 0 );
    double bottom_start = bottom_ds - bottom_range / 2.0;
    
    double dbot         = fit_bott ?
@@ -1046,6 +1045,18 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
    {
       if ( count_datasets < 2  ||  mgroup_count > ( count_datasets + 2 ) )
          mgroup_count = 1;
+
+      // The supervisor starts every group on a dataset of its own, so use
+      //  no more groups than datasets, and groups of equal size
+      if ( mgroup_count > count_datasets )
+      {
+         mgroup_count = count_datasets;
+
+         while ( mgroup_count > 1 && ( proc_count % mgroup_count ) != 0 )
+         {
+            mgroup_count--;
+         }
+      }
    }
    else
    {
@@ -1056,6 +1067,9 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
 
+   // Collective over all ranks, so before any masters-group split
+   create_node_comm();
+
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
@@ -1064,6 +1078,34 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    else
       pmasters_start();         // Start parallel-masters job (mc_iters)
+}
+
+// Create the communicator of the ranks on this node, which can share
+//  memory (MPI_COMM_TYPE_SHARED).  Not used yet; a node-wide simulation
+//  cache will be built on it.
+void US_MPI_Analysis::create_node_comm( void )
+{
+   MPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, my_rank, MPI_INFO_NULL, &node_comm );
+   MPI_Comm_rank( node_comm, &node_rank );
+   MPI_Comm_size( node_comm, &node_size );
+
+   // Number of nodes: count the node leaders (node rank 0)
+   int leader     = ( node_rank == 0 ) ? 1 : 0;
+   int node_count = 0;
+   MPI_Allreduce( &leader, &node_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+
+   if ( my_rank == 0 )
+   {
+      DbgLv( 0 ) << "Node communicator: nodes" << node_count << "ranks on master node" << node_size;
+   }
+}
+
+void US_MPI_Analysis::free_node_comm( void )
+{
+   if ( node_comm != MPI_COMM_NULL )
+   {
+      MPI_Comm_free( &node_comm );
+   }
 }
 
 // Main function  (single master group)
@@ -1188,6 +1230,7 @@ void US_MPI_Analysis::start( void )
       }
    }
 
+   free_node_comm();
    MPI_Finalize();
    exit( exit_status );
 }
@@ -1234,6 +1277,27 @@ void US_MPI_Analysis::send_udp( const QString& message )
 long int US_MPI_Analysis::max_rss( void )
 {
    return (long int)US_Memory::rss_max( maxrss );
+}
+
+// Return the total and currently available physical memory in bytes.
+//  The available amount is 0 where the platform does not report it (macOS).
+void US_MPI_Analysis::phys_memory( qint64& total, qint64& avail )
+{
+#ifdef Q_OS_WIN
+   MEMORYSTATUSEX mstatx;
+   mstatx.dwLength = sizeof( mstatx );
+   GlobalMemoryStatusEx( &mstatx );
+   total = (qint64) mstatx.ullTotalPhys;
+   avail = (qint64) mstatx.ullAvailPhys;
+#else
+   qint64 pgsize = (qint64) sysconf( _SC_PAGE_SIZE );
+   total         = (qint64) sysconf( _SC_PHYS_PAGES ) * pgsize;
+#ifdef _SC_AVPHYS_PAGES
+   avail = (qint64) sysconf( _SC_AVPHYS_PAGES ) * pgsize;
+#else
+   avail = 0;
+#endif
+#endif
 }
 
 // Send an abort message and do orderly MPI abort
@@ -1442,41 +1506,53 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                                       SIMULATION& simu_values )
 {
    count_calc_residuals++;
-bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == (proc_count/2) ) );
-if ( do_dbg )
- DbgLv(1) << "w:" << my_rank << ": CALC_RES : count" << count_calc_residuals
-  << "offs dsknt" << offset << dataset_count;
+
+   // Solver diagnostics: the given level if above 1, otherwise level 1
+   // only on a few ranks when debugging is on
+   bool do_dbg           = ( dbg_level > 0 && ( group_rank < 2 || group_rank == ( proc_count / 2 ) ) );
+   int  dbglvsv          = simu_values.dbg_level;
+   simu_values.dbg_level = ( dbglvsv > 1 ) ? dbglvsv : ( do_dbg ? 1 : 0 );
+
+   QVector<US_Solute> isols;
+   if ( dbg_level > 0 )
+   {
+      isols = simu_values.solutes;
+      if ( do_dbg )
+      {
+         DbgLv( 1 ) << "w:" << my_rank << ": CALC_RES : count" << count_calc_residuals << "offs dsknt" << offset << dataset_count
+                    << "nsoli" << isols.size() << "nsolz" << simu_values.zsolutes.size();
+      }
+   }
 
    US_SolveSim solvesim( data_sets, my_rank, false );
-
-//*DEBUG*
-int dbglvsv=simu_values.dbg_level;
-simu_values.dbg_level=(dbglvsv>1||my_rank<0)?dbglvsv:0;
-//simu_values.dbg_level=(dbglvsv>0)?dbglvsv:0;
-int nsoli=simu_values.solutes.size();
-int nsolz=simu_values.zsolutes.size();
-if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
-QVector< US_Solute > isols;
-if (nsolz==0)
- { isols = simu_values.solutes; }
-else
- { nsoli=nsolz; }
-if ( do_dbg ) DbgLv(1) << "w:" << my_rank << ":nsoli" << nsoli << "nsolz" << nsolz;
-if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
-//*DEBUG*
-
    solvesim.calc_residuals( offset, dataset_count, simu_values );
 
-//*DEBUG*
-simu_values.dbg_level=dbglvsv;
-bool hicee = false;
-for (int jj=0;jj<simu_values.solutes.size();jj++ )
- if ( simu_values.solutes[jj].c > 1.0 ) hicee = true;
+   simu_values.dbg_level = dbglvsv;
 
-//if ( do_dbg )
-if ( do_dbg || hicee )
+   if ( dbg_level > 0 )
+   {
+      bool hicee = false;
+      for ( int jj = 0; jj < simu_values.solutes.size(); jj++ )
+      {
+         if ( simu_values.solutes[jj].c > 1.0 )
+         {
+            hicee = true;
+         }
+      }
+
+      if ( do_dbg || hicee )
+      {
+         debug_residuals( offset, dataset_count, simu_values, isols );
+      }
+   }
+}
+
+// Print data, simulation and dataset values after a residuals calculation
+void US_MPI_Analysis::debug_residuals( int offset, int dataset_count, SIMULATION& simu_values, QVector<US_Solute>& isols )
 {
  DbgLv(1) << "w:" << my_rank << ": ss.ca_re completed";
+ int nsolz                   = simu_values.zsolutes.size();
+ int nsoli                   = ( nsolz > 0 ) ? nsolz : isols.size();
  int nsolo=simu_values.solutes.size();
  nsolo = (nsolz>0) ? simu_values.zsolutes.size() : nsolo;
  US_DataIO::EditedData* edat = &data_sets[offset]->run_data;
@@ -1557,9 +1633,6 @@ if ( do_dbg || hicee )
   << isols[0].s << isols[0].k << isols[0].c
   << isols[mm].s << isols[mm].k << isols[mm].c
   << isols[nn].s << isols[nn].k << isols[nn].c;
-}
-//*DEBUG*
- 
 }
 
 // Write model (and maybe noise) output at the end of an iteration
@@ -2057,8 +2130,10 @@ DbgLv(1) << "wrMo: type" << type << "(DMGA=" << US_Model::DMGA << ") (PCSA="
 DbgLv(1) << "wrMo:  model comps" << model.components.size();
    }
 
-   int mc_iter       = ( mgroup_count < 2  ||  is_composite_job ) 
-                       ? ( mc_iteration + 1 ) : mc_iteration;
+   // 2DSA and single masters count Monte Carlo iterations from 0, the
+   //  parallel GA and DMGA group masters from 1
+   bool mc_from_0    = ( mgroup_count < 2 || is_composite_job || analysis_type.startsWith( "2DSA" ) );
+   int  mc_iter      = mc_from_0 ? ( mc_iteration + 1 ) : mc_iteration;
    model.monteCarlo  = mc_iterations > 1;
    model.wavelength  = edata->wavelength.toDouble();
    model.modelGUID   = ( ! model.monteCarlo  ||  mc_iter == 1 )
@@ -2624,8 +2699,10 @@ DbgLv(1) << "wrMo: type" << type << "(DMGA=" << US_Model::DMGA << ") (PCSA="
 DbgLv(1) << "wrMo:  model comps" << model.components.size();
    }
 
-   int mc_iter       = ( mgroup_count < 2  ||  is_composite_job ) 
-                       ? ( mc_iteration + 1 ) : mc_iteration;
+   // 2DSA and single masters count Monte Carlo iterations from 0, the
+   //  parallel GA and DMGA group masters from 1
+   bool mc_from_0    = ( mgroup_count < 2 || is_composite_job || analysis_type.startsWith( "2DSA" ) );
+   int  mc_iter      = mc_from_0 ? ( mc_iteration + 1 ) : mc_iteration;
    model.monteCarlo  = mc_iterations > 1;
    model.wavelength  = edata->wavelength.toDouble();
    model.modelGUID   = ( ! model.monteCarlo  ||  mc_iter == 1 )
