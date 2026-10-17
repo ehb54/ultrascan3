@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLineEdit  *le_cs_qend;
 
       QCheckBox  *cb_guinier_auto_fit;
+      QCheckBox  *cb_guinier_robust_search;
 
       QLabel     *lbl_pointsmin;
       QLineEdit  *le_pointsmin;
@@ -152,6 +153,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void update_Rt_qRtmax                     ( const QString & );
 
       void set_guinier_auto_fit                 ();
+      void set_guinier_robust_search            ();
       void update_pointsmin                     ( const QString & );
       void update_pointsmax                     ( const QString & );
       void update_guinier_csv_filename          ( const QString & );

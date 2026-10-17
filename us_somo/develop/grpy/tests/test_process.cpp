@@ -118,6 +118,34 @@ int main( int argc, char** argv ) {
       fails += chk( "a missing input file is reported", threw );
    }
 
+   // ---- a banner split across two reads ---------------------------------------
+   // Reads off a pipe break wherever the buffer happens to fill, not on record boundaries.
+   // Before consume_progress held the trailing partial record back, BOTH halves of a split
+   // banner were appended to the report -- so progress text reached the .grpy_res file and
+   // whatever parse_report() then made of it.
+   {
+      QString     carry;
+      int         pct = -1;
+      std::string stage;
+      ProgressFn  prog = [ &pct, &stage ]( int p, const char* st ) {
+         pct   = p;
+         stage = st ? st : "";
+      };
+
+      QString report;
+      report += consume_progress( QString( "  50% TASK: assembl" ), prog, carry );
+      fails += chk( "a half-arrived banner is held back, not reported",
+                    report.isEmpty() && pct == -1 );
+
+      report += consume_progress( QString( "ing\rreal report text" ), prog, carry, true );
+      fails += chk( "a banner split across reads is still recognised", pct == 50 );
+      fails += chk( "the split banner's stage is intact", stage == "assembling" );
+      fails += chk( "neither half of a split banner reaches the report",
+                    report.indexOf( "TASK:" ) < 0 && report.indexOf( "50%" ) < 0 );
+      fails += chk( "report text following it survives",
+                    report.indexOf( "real report text" ) >= 0 );
+   }
+
    // ---- a successful run ------------------------------------------------------
    {
       const QString fake = write_fake_grpy( tmp, golden, 0 );

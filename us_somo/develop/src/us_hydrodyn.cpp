@@ -4813,9 +4813,10 @@ void US_Hydrodyn::stop_calc()
       anaflex->terminate();
       QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
    }
-   // in-process GRPY (issue 972): no external process to terminate; stopFlag (set
-   // above) is honored by the Solver progress callback and grpy_finished(), which
-   // halts the model batch once the in-flight model returns.
+   // GRPY runs out of process again (issue 1012), but its child is owned by
+   // grpy::ProcessSolver, not by a QProcess member here, so there is nothing to terminate
+   // at this level. ProcessSolver polls stopFlag (set above) every 100 ms and kills the
+   // child; grpy_finished() then halts the model batch.
    pb_stop_calc->setEnabled(false);
 }
 

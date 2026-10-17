@@ -43,6 +43,7 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
+#include <cstdio>      // std::snprintf, used in annotation()
 #include <functional>
 #include <string>
 #include <vector>
@@ -124,10 +125,11 @@ struct ShellOptions {
    // where it stands: whatever has been computed keeps its error bar and is reported as
    // NOT converged, exactly like any other early stop.
    //
-   // Checked between rungs only -- a rung already running goes to completion, since the
-   // solve has no interior abort. That is also where stopping is worth anything: each rung
-   // costs roughly eight times the one before it, so cancelling before the next one begins
-   // saves almost everything that remained.
+   // Checked between rungs, which is where stopping is worth most: each rung costs roughly
+   // eight times the one before it, so cancelling before the next one begins saves almost
+   // everything that remained. A rung already running is not immune either -- the solve is
+   // a separate program and ProcessSolver kills it -- and run() treats a stop DURING a rung
+   // exactly like one between rungs (see the Stopped handler below).
    std::function<bool()> should_stop;
 };
 
@@ -570,10 +572,18 @@ private:
       s += "-------------------------------------------------------------------------------\n";
       s += " SHELL REDUCTION was applied to this calculation.\n";
       if ( rep.levels == 0 ) {
-         // No rung fit the memory budget, so there is no result to describe. The caller
-         // is responsible for refusing; say plainly why rather than print empty stats.
-         s += "   NO RESULT: even the smallest ladder rung exceeded the available\n";
-         s += "   memory, so no calculation was performed.\n";
+         // No rung completed, so there is no result to describe. The caller is responsible
+         // for refusing; say plainly WHICH reason applies rather than print empty stats.
+         // levels == 0 is reached two ways -- the memory cap rejected even the smallest
+         // rung, or should_stop fired before the first rung finished -- and reporting a
+         // user's own Stop as a machine limitation sends them looking for the wrong thing.
+         s += rep.stopped
+           ? "   NO RESULT: the calculation was stopped before the first ladder rung\n"
+             "   finished, so no result was produced.\n"
+           : rep.mem_capped
+           ? "   NO RESULT: even the smallest ladder rung exceeded the available\n"
+             "   memory, so no calculation was performed.\n"
+           : "   NO RESULT: no ladder rung completed, so no calculation was performed.\n";
          s += "-------------------------------------------------------------------------------\n";
          return s;
       }

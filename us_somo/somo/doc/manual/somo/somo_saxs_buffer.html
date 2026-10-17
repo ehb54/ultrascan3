@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO HPLC-SAXS Module</title>
+	<title>SOMO SAS Data Utility Module</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -21,10 +21,591 @@
 <hr>
 <center>
 <h2>
-SOMO HPLC-SAXS Module:</h2></center>
-<h3><center>Last updated: November 2013 </center></h3><p>
+SOMO - SAXS/SANS (SAS) Module: Data Utility (Buffer subtraction, joining and averaging)</h2>
+<p>
+<h3><center>Last updated: September 2026</center></h3><p>
+</center>
+
 <hr>
-<center><b>This is a work in progress and will eventually be updated.</b></center>
+
+<a name="Overview"></a>
+<h3>Overview</h3>
+
+The <b><i>Data Utility</i></b> module (window title <i>US-SOMO: SAXS: Data Utility</i>) is opened from the
+<b><i>Data</i></b> button in the <i>I(q)</i> panel of the
+<a href=somo_saxs.html><b><i>SAS</i></b></a> module. It is a general-purpose workbench for
+<i>I</i>(<i>q</i>) vs. <i>q</i> curves that are <i>not</i> part of a chromatography or kinetics run
+(for time-resolved data see the <a href=somo_saxs_hplc.html><b><i>HPLC/KIN</i></b></a> module instead). It provides:
+<p>
+<ul>
+<li><b>Buffer (and blank/capillary) subtraction</b>, with either a directly specified scaling factor or one
+computed from the solute partial specific volume and concentration, with full propagation of the standard deviations;<p>
+<li><b>Joining</b> of two curves measured over different <i>q</i> ranges (for example a
+<i>small-angle</i> and a <i>wide-angle</i> detector configuration, or two different sample-to-detector distances)
+into a single curve, with interactive scaling and an automatic scaling fit;<p>
+<li><b>Averaging</b>, <b>concentration-normalized averaging</b>, <b>concentration normalization</b> and
+<b>weighted summation</b> of sets of curves;<p>
+<li><b>Cropping and trimming</b> tools to bring curves onto a common <i>q</i> grid, remove
+unreliable low- or high-<i>q</i> points, or drop non-positive intensities;<p>
+<li><b>Bookkeeping</b> of concentrations, of the curves produced, and of what has and has not been written to disk.<p>
+</ul>
+
+Curves already plotted in the <b><i>SAS</i></b> module <i>I(q)</i> panel are handed over to the
+<b><i>Data Utility</i></b> automatically each time it is opened. They arrive in both the
+<b><i>Data files</i></b> and the <a href="#Produced"><b><i>Produced Data</i></b></a> lists, since they do not
+yet exist on disk as far as this module is concerned, and any character that is awkward in a file name
+(whitespace, quotes, slashes, periods) is replaced by an underscore. Conversely, any curve held in the
+<b><i>Data Utility</i></b> can be sent to the <i>I(q)</i> panel with the <b><i>S</i></b> button.
+<p>
+
+Opening the module brings up <i>two</i> windows: the main window described below, and a small
+companion window titled <i>US-SOMO: SAXS: Data Utility : Fitting</i> that holds the
+<a href="#Subtraction">buffer subtraction</a> controls. Closing the main window closes both.
+<p>
+
+<b>Contents</b>
+<ul>
+<li><a href="#Loading">Loading data</a>
+<li><a href="#Selecting">Selecting and displaying curves</a>
+<li><a href="#Arithmetic">Averaging, summing and normalizing</a>
+<li><a href="#Roles">Assigning the buffer, blank and solution</a>
+<li><a href="#Subtraction">Buffer subtraction</a>
+<li><a href="#Join">Joining two curves</a>
+<li><a href="#Cropping">Cropping and trimming</a>
+<li><a href="#Produced">Produced Data and saving</a>
+<li><a href="#Conc">Concentrations and the companion dialogs</a>
+<li><a href="#Names">Naming conventions of the produced curves</a>
+<li><a href="#Limitations">Notes and current limitations</a>
+</ul>
+
+<hr>
+
+<a name="Loading"></a>
+<h3>Loading data</h3>
+
+The upper left panel is labeled <b><i>Data files</i></b>. Above the list, the current working directory is
+shown; clicking on it opens a directory navigator. Checking the <b><i>Lock</i></b> checkbox next to it keeps
+that directory as the default instead of following whichever directory you last loaded from.
+<p>
+
+<ul>
+<li>
+<b><i>Add files</i></b> opens a file selector. Recognized extensions are <b>.dat</b>, <b>.int</b>,
+<b>.txt</b> and <b>.ssaxs</b>; any other extension is refused with a message.
+Files are read as whitespace-separated columns, with the first column <i>q</i>, the second
+<i>I</i>(<i>q</i>) and, if present, the third the standard deviation. Lines beginning with <tt>#</tt>
+and lines that are not purely numeric are skipped, so most headers are handled automatically.
+When several files are selected at once they are re-ordered by any trailing numeric fields in their names,
+so that <i>..._2</i> sorts before <i>..._10</i>.
+<p>
+Note the following behavior while reading:
+<ul>
+<li>reading of a file <i>stops</i> at the first point whose <i>q</i> is not larger than the previous one,
+which conveniently truncates files that contain several concatenated blocks;<p>
+<li>points with <i>I</i>(<i>q</i>) exactly zero are dropped;<p>
+<li>a standard deviation column is used only if <i>every</i> point has a positive standard deviation.
+If any value is zero or negative, <i>all</i> of the standard deviations are discarded and a notice is
+issued in the <b><i>Messages</i></b> area. This matters, because most of the operations below
+propagate errors only when errors are present on all the curves involved;<p>
+<li>a file whose name is already in the list is not loaded a second time. Curves are identified
+throughout the module by their base name, without directory or extension.<p>
+</ul>
+<li>
+For <b>.dat</b> files, the first line is additionally scanned for the keywords
+<b><i>Conc:</i></b>, <b><i>PSV:</i></b>, <b><i>I0se:</i></b> and <b><i>Units:</i></b>.
+The concentration (in mg/ml), partial specific volume and <i>I</i>(0) standard error found there are
+attached to the curve and are carried through the operations below; the concentration also
+pre-fills the <a href="#Conc"><b><i>Concentrations</i></b></a> table.
+<b><i>Units:</i></b> may be <i>1/A</i> (or <i>A^-1</i>) or <i>1/nm</i> (or <i>nm^-1</i>);
+<i>q</i> is converted to A<sup>-1</sup> accordingly. When no <b><i>Units:</i></b> keyword is present,
+the conversion is taken from the <i>q</i> scale set in the
+<a href=somo_saxs_options.html><b><i>SAS options</i></b></a>, and a reminder is printed
+whenever that default is 1/nm.
+<p>
+<li>
+<b><i>Similar</i></b>, active when exactly one curve is selected, looks at the disk file that curve came from,
+turns every run of two or more digits in its name into a wildcard, and loads every not-yet-loaded file in the
+same directory matching that pattern. This is the quickest way to pick up a whole series of exposures
+after having loaded one of them.<p>
+<li>
+The <b><i>RL</i></b> (regular expression load) button with its two adjacent fields loads by pattern.
+The first field holds one or more <i>printf</i>-style patterns containing <tt>%1</tt>, the second a list of
+values to substitute. Every combination is expanded into a regular expression, and all matching files in the
+current directory are loaded. For example a pattern of <tt>lysozyme_%1_.*\.dat</tt> with arguments
+<tt>001 002 003</tt> loads the three corresponding series.<p>
+<li>
+<b><i>Concentrations</i></b> opens the <a href="#Conc"><b><i>Solution Concentrations</i></b></a> window.<p>
+<li>
+<b><i>Remove files</i></b> removes the selected curves from the module. If any of them were produced here
+and not yet written to disk, you are offered the chance to save them first.<p>
+</ul>
+
+<hr>
+
+<a name="Selecting"></a>
+<h3>Selecting and displaying curves</h3>
+
+Curves are selected in the <b><i>Data files</i></b> list with the usual click, shift-click and
+control-click; the line below the list reports how many of how many are selected. Every selected curve is
+plotted in the graph on the right. The buttons immediately below the list are:
+<p>
+<ul>
+<li><b><i>Select all</i></b> and <b><i>Invert</i></b> act on the whole list.<p>
+<li><b><i>Select</i></b> opens the <a href=saxs_buffer_nth.html><b><i>Select curves</i></b></a> dialog
+(active when more than two curves are loaded), which can select every <i>N</i>th curve within a range of list
+positions, select by a substring of the name, or select by total integrated intensity above or below a
+threshold, with a preview plot to help place that threshold. It is described
+<a href=saxs_buffer_nth.html>here</a>.<p>
+<li><b><i>C</i></b> rotates the plot colors, which is useful when many curves are displayed and two
+adjacent ones happen to receive similar colors.<p>
+<li><b><i>S</i></b> copies the selected curves into the <b><i>SAS</i></b> module <i>I(q)</i> panel,
+together with their concentrations, for Guinier analysis, <i>P</i>(<i>r</i>) computation, fitting and so on.<p>
+<li><b><i>View</i></b>, active for up to ten selected curves, opens each of them in a text window
+showing the same columns that would be written to disk.<p>
+<li><b><i>X</i></b> and <b><i>Y</i></b> toggle the corresponding plot axis between linear and
+logarithmic scaling.<p>
+<li><b><i>Rescale</i></b> resets the plot limits to the extent of the selected curves and clears any zoom.<p>
+<li><b><i>Legend</i></b>, below the plot, toggles the curve legend; it is disabled when more than
+twenty curves are selected, where a legend would be unreadable.<p>
+</ul>
+
+The plot supports rubber-band zooming with the left mouse button, and the resulting zoom rectangle is
+what several of the <a href="#Cropping">cropping</a> tools act upon.
+<p>
+
+<hr>
+
+<a name="Arithmetic"></a>
+<h3>Averaging, summing and normalizing</h3>
+
+The next row of buttons combines the selected curves. All of them require the curves to be on the same
+<i>q</i> grid: the number of points must match after the automatic cropping described below, and
+corresponding <i>q</i> values must agree to within 5&times;10<sup>-6</sup> A<sup>-1</sup>.
+If the selected curves have differing numbers of points they are first truncated to the shortest one, with a
+notice in the <b><i>Messages</i></b> area; if the <i>q</i> values themselves disagree, the operation is
+refused and you should use <a href="#Cropping"><b><i>Crop Common</i></b></a> first.
+<p>
+<ul>
+<li>
+<b><i>Average</i></b> (active with two or more curves selected) forms the mean of the selected curves.
+If <i>every</i> selected curve carries non-zero standard deviations throughout, the mean is weighted by
+1/&sigma;<sup>2</sup> and the standard deviation of the mean is computed accordingly; otherwise a plain
+unweighted mean is used. Which of the two was applied is always stated in the
+<b><i>Messages</i></b> area. The concentration, PSV and <i>I</i>(0) standard error of the result are the
+averages of those of the contributing curves.<p>
+<li>
+<b><i>Concentration normalized average</i></b> divides each curve by its own concentration before
+averaging, and then re-multiplies the result by the mean concentration. This is the correct way to average
+exposures of the <i>same</i> sample taken at slightly different concentrations, and it becomes active only
+when every selected curve has a non-zero concentration.<p>
+<li>
+<b><i>N</i></b> (normalize) produces, for each selected curve, a copy divided by its own concentration; the
+standard deviations are divided by the same factor and the concentration of the result is set to 1.
+Like the previous button, it requires all the selected curves to have a non-zero concentration.<p>
+<li>
+<b><i>WS</i></b> (weighted sum) prompts for a multiplier for each selected curve in turn and forms the
+weighted sum. This button is only shown when the
+<a href=somo_advanced_config.html>advanced configuration</a> <b><i>expert mode</i></b> is enabled.<p>
+</ul>
+
+The buffer and the blank, if assigned, are excluded from
+<b><i>Concentration normalized average</i></b> and <b><i>N</i></b>.
+<p>
+
+<hr>
+
+<a name="Roles"></a>
+<h3>Assigning the buffer, blank and solution</h3>
+
+Three buttons assign roles to a single selected curve; the assigned name is shown to the right of each button:
+<p>
+<ul>
+<li><b><i>Set buffer</i></b> &mdash; the matching buffer or solvent scattering.<p>
+<li><b><i>Set blank</i></b> &mdash; the empty cell, capillary or blank measurement. This one is optional;
+leave it unset for the usual two-curve subtraction.<p>
+<li><b><i>Set solution</i></b> &mdash; the sample from which the buffer is to be subtracted.<p>
+</ul>
+
+A curve already holding one of the three roles cannot be assigned another, so the three buttons grey out
+when a curve that already has a role is selected. Curves assigned as buffer or blank are excluded from the
+concentration table and from the normalization operations above.
+<p>
+
+<hr>
+
+<a name="Subtraction"></a>
+<h3>Buffer subtraction</h3>
+
+The subtraction itself is driven from the companion <i>: Fitting</i> window. Its table holds three
+parameters and the radio buttons and checkboxes below it control what happens to the result.
+<p>
+
+<h4>The subtraction model</h4>
+
+The quantity computed is
+<p>
+<center>
+<i>I</i>(<i>q</i>) = <i>I</i><sub>solution</sub>(<i>q</i>) &minus;
+&alpha;&nbsp;<i>I</i><sub>buffer</sub>(<i>q</i>) &minus;
+(1 &minus; &alpha;)&nbsp;<i>I</i><sub>blank</sub>(<i>q</i>)
+</center>
+<p>
+where the last term is present only if a blank has been assigned. The factor &alpha; accounts for the
+volume of buffer displaced by the solute: in a solution of concentration <i>c</i>, the buffer occupies
+slightly less than the full illuminated volume, so subtracting the full buffer signal over-subtracts.
+&alpha; can be supplied in either of two ways, and the table enforces that exactly one of them is active
+&mdash; checking <b><i>PSV</i></b> or <b><i>Gamma</i></b> automatically unchecks <b><i>Alpha</i></b>, and
+vice versa:
+<p>
+<ul>
+<li>
+<b><i>Alpha</i></b> &mdash; &alpha; is used directly as given. The default range is 0.95 to 1.
+&alpha; = 1 is the plain, unscaled subtraction.<p>
+<li>
+<b><i>PSV</i></b> together with <b><i>Gamma</i></b> &mdash; &alpha; is computed from the solute partial
+specific volume as
+<p>
+<center>
+&alpha; = 1 &minus; &gamma;&nbsp;<i>c</i>&nbsp;<i>&psi;</i> / 1000
+</center>
+<p>
+with <i>c</i> the concentration of the solution curve in mg/ml (taken from the
+<a href="#Conc"><b><i>Solution Concentrations</i></b></a> window) and <i>&psi;</i> the partial specific
+volume in ml/g, default range 0.5 to 0.8. <b><i>Gamma</i></b> is an additional empirical scaling on that
+correction, default 1 and defaults ranging over 0.95 to 1.05; it lets you explore how sensitive the result
+is to the assumed volume displacement. A warning is issued if the solution has no concentration set,
+in which case &alpha; degenerates to 1.<p>
+</ul>
+
+<h4>The parameter table</h4>
+
+Each row of the table has the columns <b><i>Parameter</i></b>, <b><i>Active</i></b>,
+<b><i>Low value</i></b>, <b><i>High value</i></b>, <b><i>Points</i></b>, <b><i>Interval</i></b>,
+<b><i>Current value</i></b> and <b><i>Best value</i></b>.
+<b><i>Points</i></b> and <b><i>Interval</i></b> are kept consistent with each other and with the
+low/high limits: editing either one recomputes the other. <b><i>Current value</i></b> is the value used by
+the single-shot buttons and is filled automatically while a range is being scanned.
+<p>
+
+<h4>Handling of non-positive results</h4>
+
+Buffer subtraction is a difference of two nearly equal positive quantities, so at high <i>q</i> the result
+frequently goes to zero or below. The radio buttons labeled
+<b><i>Buffer subtraction non-positive:</i></b> decide what to do:
+<p>
+<ul>
+<li><b><i>Crop</i></b> (the default) truncates the curve at the first non-positive point. If that occurs
+within the first two points, nothing is produced and a notice is issued.<p>
+<li><b><i>Set to minimum</i></b> replaces every non-positive value with the minimum value found in the curve.<p>
+<li><b><i>Ignore</i></b> leaves the values as they are. Note that such a curve cannot be displayed on a
+logarithmic intensity axis.<p>
+<li><b><i>Ask</i></b> raises a dialog offering the same three choices for each subtraction; it therefore
+blocks unattended mass processing.<p>
+</ul>
+In every case the number of affected points and the <i>q</i> value at which the problem starts are
+reported in the <b><i>Messages</i></b> area.
+<p>
+
+<h4>Propagation of the standard deviations</h4>
+
+Assuming zero covariance between the measurements, the standard deviations are combined as
+<p>
+<center>
+&sigma;<sup>2</sup> = &sigma;<sup>2</sup><sub>solution</sub> +
+&alpha;<sup>2</sup> &sigma;<sup>2</sup><sub>buffer</sub> +
+(1 &minus; &alpha;)<sup>2</sup> &sigma;<sup>2</sup><sub>blank</sub>
+</center>
+<p>
+where each term is included only if that curve actually carries standard deviations. If the buffer or the
+blank has them but the solution does not, a warning is issued and the available ones are propagated alone.
+<p>
+
+<h4>Running the subtraction</h4>
+
+<ul>
+<li>
+<b><i>Current value buffer subtraction</i></b> performs a single subtraction with the values currently in the
+<b><i>Current value</i></b> column.<p>
+<li>
+<b><i>Buffer subtraction over range</i></b> scans every active parameter from its
+<b><i>Low value</i></b> to its <b><i>High value</i></b> in <b><i>Points</i></b> steps, performing one
+subtraction at each combination and producing one output curve per combination. The total number of
+combinations is the product over the active rows, and is reported before the run starts. It can be
+interrupted with <b><i>Stop</i></b>.<p>
+<li>
+<b><i>Current value buffer divide</i></b> forms the <i>ratio</i>
+<i>I</i><sub>solution</sub>(<i>q</i>) / [&alpha; <i>I</i><sub>buffer</sub>(<i>q</i>)] instead of the
+difference. This is a diagnostic: a well-matched buffer gives a ratio that is flat and close to one over the
+region where the solute does not scatter. If a blank has been assigned, its
+(1 &minus; &alpha;) term is subtracted from the ratio.<p>
+</ul>
+
+<h4>Processing many samples at once</h4>
+
+Checking <b><i>Subtract buffer from every selected file</i></b> (excepting those assigned as buffer and blank) makes all
+of the above act on every selected curve in turn rather than only on the one assigned with
+<b><i>Set solution</i></b>, using each curve's own concentration where the PSV method is active. This is the
+normal way to reduce a whole set of exposures in one step. Two further checkboxes then become available:
+<b><i>Average</i></b> and <b><i>Concentration normalized average</i></b>, which automatically apply the
+corresponding operation to the set of curves just produced.
+<p>
+
+<hr>
+
+<a name="Join"></a>
+<h3>Joining two curves</h3>
+
+Joining merges two curves covering different, partly overlapping <i>q</i> ranges &mdash; typically a
+small-angle and a wide-angle configuration of the same sample &mdash; into a single curve. Because the two
+measurements are generally on different arbitrary scales, one of them has to be brought onto the scale of the
+other before they are spliced together.
+<p>
+
+Select <i>exactly two</i> curves and press <b><i>Join</i></b>, below the plot. You are asked which of the
+two is the <i>low-q</i> curve. The two curves are then re-drawn in cyan (low-<i>q</i>) and yellow
+(high-<i>q</i>), the overlapping <i>q</i> interval is determined, and three vertical markers appear on the
+plot: <b><i>Start</i></b> and <b><i>End</i></b> in red, delimiting the overlap region, and
+<b><i>Join point</i></b> in magenta. The rest of the interface is disabled until the join is completed or
+abandoned. If the two curves do not overlap at all, the join is refused.
+<p>
+
+The row of fields below the plot then controls the join:
+<p>
+<ul>
+<li>
+<b><i>Linear offset</i></b> and <b><i>Multiplier</i></b> are the constant <i>b</i> and the factor <i>a</i>
+applied to the curve being adjusted, as <i>a</i>&nbsp;<i>I</i>(<i>q</i>) + <i>b</i>. Standard deviations are
+scaled by <i>a</i> as well.<p>
+<li>
+<b><i>Start</i></b> and <b><i>End</i></b> delimit the window, within the overlap, over which the two curves
+are compared &mdash; both by the automatic <b><i>Fit</i></b> and by the RMSD readout. Narrow it to exclude a
+part of the overlap you do not trust, such as the last few noisy points of the low-<i>q</i> curve.<p>
+<li>
+<b><i>Cut</i></b> is the <i>q</i> value at which the two curves are spliced: the output takes the low-<i>q</i>
+curve up to and including this <i>q</i>, and the high-<i>q</i> curve beyond it. It need not coincide with a
+data point of either curve.<p>
+<li>
+<b><i>Scale low-q</i></b> / <b><i>Scale high-q</i></b> swaps which of the two curves the offset and the
+multiplier are applied to; the button label always states what pressing it will do next. Swapping also
+inverts the current values (the offset changes sign and the multiplier is replaced by its reciprocal), so the
+relative adjustment is preserved.<p>
+<li>
+The number at the right end of the row is the RMSD between the two curves over the
+<b><i>Start</i></b> to <b><i>End</i></b> window, and it updates whenever a parameter changes. It is the
+quantity to minimize.<p>
+</ul>
+
+Any of the five numeric fields can be adjusted with the <b>wheel</b> above them: click into a field to give
+it the focus and the wheel is bound to it, with a range appropriate to that quantity (the observed intensity
+range for the offset, 0.1 to 10 for the multiplier, the overlap interval for the three <i>q</i> values). The
+current wheel value is displayed to its left. The plot updates live, so you can bring the two curves onto
+each other by eye and watch the RMSD as you go.
+<p>
+
+<b><i>Fit</i></b> determines the multiplier automatically by a least-squares scaling fit of one curve onto the
+other over the <b><i>Start</i></b> to <b><i>End</i></b> window, weighted by the standard deviations when both
+curves have them, and sets the offset to zero. <b><i>Linear</i></b> would instead fit both a slope and an intercept
+(see <a href="#Limitations">Notes and current limitations</a>).
+<p>
+
+<b><i>Keep</i></b> commits the join: a new curve is created, made of the low-<i>q</i> curve up to
+<b><i>Cut</i></b> followed by the high-<i>q</i> curve beyond it, with the offset and multiplier applied to
+whichever of the two is being scaled, and with standard deviations carried over when both curves have them.
+The two source curves are deselected and the new one selected. <b><i>Cancel</i></b> abandons the join and
+restores the original display.
+<p>
+
+If a non-zero <b><i>Linear offset</i></b> is in effect when <b><i>Keep</i></b> is pressed, a reminder is
+displayed, quoting P. Vachette: <i>this additional constant is to be avoided and if introduced, requires
+great care because it can hide an experimental problem which is thus swept under the carpet but could lead to
+erroneous interpretation.</i> The offset is nevertheless applied if you proceed &mdash; the message is
+advice, not a refusal.
+<p>
+
+<hr>
+
+<a name="Cropping"></a>
+<h3>Cropping and trimming</h3>
+
+The buttons in the row below the plot operate on the selected curves. The ones that depend on the visible
+region require the plot to be zoomed in; they are inactive at full zoom-out.
+<p>
+<ul>
+<li>
+<b><i>Select Visible</i></b> reduces the selection to those curves that have at least one point inside the
+current zoom rectangle. With many curves loaded, zooming onto an outlier and pressing this button is the
+fastest way to identify it.<p>
+<li>
+<b><i>Remove Visible</i></b> removes those curves from the module altogether (offering to save any unsaved
+produced curves among them first), and then zooms back out one step.<p>
+<li>
+<b><i>Crop Common</i></b> reduces every selected curve to the <i>q</i> values common to all of them, which is
+the prerequisite for averaging and for buffer subtraction across data from different sources.
+<i>q</i> values that differ only in the last digits are treated as the same grid point &mdash; they are
+matched with a relative tolerance of 10<sup>-4</sup>, while the retained points keep their original
+<i>q</i>, <i>I</i>(<i>q</i>) and standard deviation. Without this, curves written with six significant
+figures can produce spurious holes in the common grid. The maximal and the common <i>q</i> ranges and their
+point counts are reported before anything is changed, and if the grids are already identical nothing is done.<p>
+<li>
+<b><i>Crop Visible</i></b> reduces the selected curves to the <i>q</i> range currently visible. It refuses to
+cut the middle out of a curve, and it refuses a selection in which some curves would be cropped on the left
+and others on the right.<p>
+<li>
+<b><i>Crop Zeros</i></b> removes every point whose intensity is not positive. A confirmation dialog first
+points out that noisy data with occasional negative values are physically meaningful, being the difference
+between two positive and very close intensities &mdash; removing such points biases the remainder upwards.
+Use it only where a logarithmic display or an external program leaves no alternative.<p>
+<li>
+<b><i>Crop Left</i></b> and <b><i>Crop Right</i></b> remove points one at a time from the respective end of
+each selected curve. They work in two stages: if the end point in question is not visible in the current
+zoom, the first press pans and resizes the zoom rectangle so that the outermost few points are shown, and
+prints <i>press again to crop one point</i>; each subsequent press removes one point. This lets you watch
+exactly what you are discarding at the beam stop or in the noise at high <i>q</i>.<p>
+<li>
+<b><i>Undo</i></b> reverses the cropping operations one at a time, in reverse order. The undo history covers
+<b><i>Crop Common</i></b>, <b><i>Crop Visible</i></b>, <b><i>Crop Left</i></b> and
+<b><i>Crop Right</i></b>.<p>
+</ul>
+
+Any loaded curve that is modified by one of the cropping tools is added to the
+<b><i>Produced Data</i></b> list, so that the modified version can be saved without overwriting your
+original data unintentionally.
+<p>
+
+<hr>
+
+<a name="Produced"></a>
+<h3>Produced Data and saving</h3>
+
+Every curve created by the module &mdash; subtractions, divisions, joins, averages, normalizations and cropped
+copies &mdash; is added both to the <b><i>Data files</i></b> list, so it can be used as input to further
+operations, and to the <b><i>Produced Data</i></b> list below it. The directory to which produced curves will
+be written is shown above that list. It starts at the <b><i>SOMO</i></b> <i>saxs</i> directory and is then set
+to a subdirectory named <i>produced</i> under the directory you last loaded from, unless <b><i>Lock</i></b>
+is checked. Clicking on it opens a directory navigator, and the directory is created on the first save if it
+does not exist.
+<p>
+<ul>
+<li><b><i>Select all</i></b> selects the whole produced list.<p>
+<li><b><i>Similar</i></b> extends the selection to the curves whose names follow the same pattern as the
+first selected one &mdash; the whole family of subtractions from one parameter scan, for instance.<p>
+<li><b><i>Save</i></b> writes the selected produced curves as individual files, and is active only while
+some of them are still unsaved. Each is written with the name of the file it originated from, or the curve
+name with a <i>.dat</i> extension; existing files raise an overwrite prompt with an
+<i>overwrite all</i> option.<p>
+<li><b><i>Save CSV</i></b> writes all the selected produced curves into a single comma-separated file, whose
+name is derived from the common part of their names. If their <i>q</i> grids are not identical, versions
+cropped to the common grid are included in the output for compatibility, and a notice is issued.<p>
+<li><b><i>Show</i></b> adds the selected produced curves to the plot, and <b><i>Show only</i></b>
+displays them and nothing else.<p>
+<li>Right-clicking an entry in the <b><i>Produced Data</i></b> list allows it to be renamed.<p>
+</ul>
+
+Individual files are written with a one-line header of the form
+<p>
+<tt>US-SOMO: SAXS: Data Utility output: <i>name</i> PSV:<i>value</i> I0se:<i>value</i> Conc:<i>value</i> Units:1/a</tt>
+<p>
+followed by a column-heading line and the data as <i>q</i>, <i>I</i>(<i>q</i>) and, when available, the
+standard deviation. The <i>PSV</i>, <i>I0se</i> and <i>Conc</i> fields appear only when those quantities are
+known, and are read back when the file is loaded again, here or elsewhere in <b><i>US-SOMO</i></b>.
+<p>
+
+Closing the window while produced curves remain unsaved raises a dialog listing them (up to fifteen by name)
+and offering to save them, to close anyway, or to cancel the close.
+<p>
+
+<hr>
+
+<a name="Conc"></a>
+<h3>Concentrations and the companion dialogs</h3>
+
+The <b><i>Concentrations</i></b> button opens the
+<a href=somo_saxs_buffer_conc.html><b><i>Solution Concentrations</i></b></a> window, a table of every loaded
+curve and its concentration in mg/ml. The buffer and the blank are excluded, and the table is kept in step
+with the file list as curves are added, removed and created. Concentrations found in <b><i>.dat</i></b> file
+headers appear there automatically, and curves produced by the module inherit an appropriate value &mdash;
+the concentration of the solution for a subtraction, the mean for an average, 1 for a normalized curve.
+Concentrations are needed for the <b><i>PSV</i></b> route to &alpha;, for <b><i>N</i></b> and for
+<b><i>Concentration normalized average</i></b>, and are written into the header of each saved curve.
+<p>
+
+<span style="color:#CC0000">Values typed into that window take effect only once its
+<b><i>Save values</i></b> button has been pressed</span>; a warning is issued if a calculation is started
+while edits are still pending. The window can be left open alongside this one.
+<p>
+
+The <b><i>Data Utility</i></b> has three companion dialogs, each with its own page in this manual:
+<p>
+<ul>
+<li>
+<a href=somo_saxs_buffer_conc.html><b><i>Solution Concentrations</i></b></a> &mdash; the concentration table
+itself, its copy and paste operations, and the loading and saving of <b>.sbc</b> concentration files.<p>
+<li>
+<a href=somo_saxs_buffer_conc_load.html><b><i>File Concentration Loader</i></b></a> &mdash; reached from
+<b><i>Load</i></b> in the above when the chosen file is not a <b>.sbc</b> file. It maps the columns of an
+arbitrary tabular file onto curve identifiers and concentrations, with a timecode adjustment and a trial
+match.<p>
+<li>
+<a href=saxs_buffer_nth.html><b><i>Select curves</i></b></a> &mdash; reached from <b><i>Select</i></b>, for
+picking a subset out of a long list of curves by position, by name or by integrated intensity.<p>
+</ul>
+
+<hr>
+
+<a name="Names"></a>
+<h3>Naming conventions of the produced curves</h3>
+
+The name of a produced curve records how it was made, so that a directory of results remains
+self-documenting. Decimal points are replaced by underscores, and a numeric suffix is appended if the name
+would otherwise collide with an existing one.
+<p>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td><b>Operation</b></td><td><b>Name of the result</b></td></tr>
+<tr><td>Buffer subtraction</td><td><i>solution</i><tt>_bsub_a</tt><i>alpha</i></td></tr>
+<tr><td>Buffer divide</td><td><i>solution</i><tt>_bdiv_a</tt><i>alpha</i></td></tr>
+<tr><td>Join</td><td><i>high-q</i><tt>-</tt><i>low-q</i><tt>_j</tt><i>offset</i><tt>-</tt><i>multiplier</i><tt>-</tt><i>cut</i></td></tr>
+<tr><td>Average</td><td>common prefix + <tt>avg</tt> + common suffix</td></tr>
+<tr><td>Concentration normalized average</td><td>common prefix + <tt>cnavg</tt> + common suffix</td></tr>
+<tr><td>Weighted sum</td><td>common prefix + <tt>wsum</tt> + common suffix</td></tr>
+<tr><td>Normalize</td><td><i>name</i><tt>_n</tt></td></tr>
+</table>
+</center>
+<p>
+
+<hr>
+
+<a name="Limitations"></a>
+<h3>Notes and current limitations</h3>
+
+<ul>
+<li>
+<span style="color:#CC0000">The <b><i>Best buffer subtraction</i></b> button in the
+<i>: Fitting</i> window is not yet implemented and performs no action.</span> Use
+<b><i>Buffer subtraction over range</i></b> and choose among the resulting curves.<p>
+<li>
+<span style="color:#CC0000">The <b><i>Guinier</i></b> checkbox below the plot is not yet
+implemented.</span> Guinier analysis is available in the <b><i>SAS</i></b> module <i>I(q)</i> panel;
+send the curves there with the <b><i>S</i></b> button.<p>
+<li>
+<span style="color:#CC0000">The <b><i>Linear</i></b> button in the join, which would fit an offset in
+addition to a multiplier, is currently disabled</span>, in keeping with the caution against introducing a
+constant offset noted <a href="#Join">above</a>.<p>
+<li>
+The automatic <b><i>Fit</i></b> and the join itself require the two curves to share a common
+<i>q</i> grid over the fitted region; there is no interpolation. Where the two configurations were
+sampled differently, run <b><i>Crop Common</i></b> first.<p>
+<li>
+Buffer subtraction, averaging and the related operations all require identical <i>q</i> grids, matched to
+within 5&times;10<sup>-6</sup> A<sup>-1</sup>. The error message <i>incompatible grids</i> means either
+that the point counts differ or that the <i>q</i> values do; <b><i>Crop Common</i></b> resolves both.<p>
+<li>
+Standard deviations are propagated only where all of the participating curves carry them. Since a single
+non-positive standard deviation causes the whole error column of a file to be discarded on loading,
+an unexpected <i>NOT using standard deviation</i> notice is usually traced back to that.<p>
+</ul>
+
+<br>
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
@@ -40,7 +621,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 12, 2013.
+Last modified on September 8, 2026
 </font>
 </body>
 </html>

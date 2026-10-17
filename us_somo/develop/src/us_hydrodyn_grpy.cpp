@@ -104,9 +104,18 @@ void US_Hydrodyn::grpy_write_shell_model( const vector < int > & idx,
       return;
    }
 
+   // The model being solved, NOT `bead_model`. `bead_model` is left holding whichever model
+   // the setup loop in calc_grpy_hydro() assigned last, so with several models selected every
+   // one but the last would have its shells rebuilt from the wrong structure -- and the
+   // index-bounds check below only catches that when the bead COUNTS happen to differ.
+   // grpy_process_next() sets grpy_last_model_number per model, so it names the current one.
+   if ( grpy_last_model_number < 0 ||
+        grpy_last_model_number >= (int) bead_models.size() ) {
+      return;
+   }
    // Rebuild the .grpy bead order/filter exactly.
    vector < PDB_atom * > use_model;
-   bead_model_output_order( & bead_model, use_model );
+   bead_model_output_order( & bead_models[ grpy_last_model_number ], use_model );
    vector < PDB_atom * > used;
    used.reserve( use_model.size() );
    for ( unsigned int i = 0; i < use_model.size(); i++ ) {
@@ -547,30 +556,6 @@ bool US_Hydrodyn::calc_grpy_hydro() {
                               & bead_model,
                               US_HYDRODYN_OUTPUT_GRPY );
 
-            #define GRPY_MAX_FILENAME_LENGTH 70
-            #define GRPY_MAX_FILENAME_LENGTH_PAD 10
-            if ( last_bead_model.length() > GRPY_MAX_FILENAME_LENGTH ) {
-               QString msg =
-                  QString( us_tr( "Resulting file name length is %1 characters too long for GRPY calculations\n" ) )
-                  .arg( last_bead_model.length() + GRPY_MAX_FILENAME_LENGTH_PAD - GRPY_MAX_FILENAME_LENGTH )
-                  ;
-               editor_msg( "red", msg );
-               if ( batch_active() ) {
-                  batch_window->editor_msg( "red", msg );
-               }
-               set_enabled();
-               pb_calc_hydro->setEnabled(grpy_was_hydro_enabled);
-               pb_calc_zeno->setEnabled(true);
-               pb_bead_saxs->setEnabled(true);
-               pb_calc_grpy->setEnabled( true );
-               pb_calc_hullrad->setEnabled( true );
-               pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
-               pb_show_hydro_results->setEnabled(false);
-               progress->reset();
-               grpy_success = false;
-               return false;
-            }               
-
             write_bead_model( QFileInfo( fname ).fileName() + "-grpy", 
                               & bead_model );
 
@@ -949,10 +934,11 @@ void US_Hydrodyn::grpy_process_next() {
       // completion with a frozen-looking interface.
       //
       // With a ladder this ends it between rungs: each rung costs roughly eight times the
-      // one before, so stopping before the next begins saves nearly all that remained. A
-      // solve already running still finishes -- the factor has no interior abort -- so on a
-      // single large model Stop takes effect at the end of that model rather than
-      // instantly. That is a real limit, not a fix; it is called out in the manual.
+      // one before, so stopping before the next begins saves nearly all that remained. And
+      // since the solver became a separate program (issue 1012), a rung already running is
+      // interrupted too -- ProcessSolver polls this flag every 100 ms and kills the child --
+      // so Stop takes effect promptly rather than at the end of the model. The rungs already
+      // finished keep their error bars and the result is reported as not converged.
       sopt.should_stop = [ this ]() { return stopFlag; };
 
       // How one bead list gets solved: by running the GRPY program on it. The shell

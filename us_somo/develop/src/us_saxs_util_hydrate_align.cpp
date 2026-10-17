@@ -162,7 +162,8 @@ bool US_Saxs_Util::atom_align( vector < point > transform_from,
          S[ 1 ][ 2 ] = 
          S[ 2 ][ 0 ] = 
          S[ 2 ][ 1 ] = 0.0;
-      rot = matmult( matmult( U, S ), VT );
+      // corrected rotation is R = V S U^T
+      rot = matmult( matmult( V, S ), UT );
    }
 
 #if defined( DEBUG_ALIGN )
