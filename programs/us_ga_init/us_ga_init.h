@@ -89,10 +89,8 @@ class US_GA_Initialize : public US_Widgets
       QPushButton*  pb_prefilt;
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
-      QPushButton*  pb_refresh;
       QPushButton*  pb_mandrsb;
       QPushButton*  pb_shrnksb;
-      QPushButton*  pb_ckovrlp;
       QPushButton*  pb_autassb;
       QPushButton*  pb_resetsb;
       QPushButton*  pb_loadsb;
@@ -199,7 +197,6 @@ class US_GA_Initialize : public US_Widgets
       void update_plymax( void );
       void replot_data( void );
       void plot_3dim(   void );
-      void check_draw_btn( void );
       void select_prefilt( void );
       void load_distro (   void );
       void load_color(     void );

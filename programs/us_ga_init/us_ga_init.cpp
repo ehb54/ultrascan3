@@ -24,6 +24,7 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "qwt_picker_machine.h"
+#include "us_solutedata.h"
 #define canvasBackground() canvasBackground().color();
 
 // main program
@@ -238,44 +239,33 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_ldcolor, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::load_color );
 
-   pb_refresh    = us_pushbutton( tr( "Refresh Plot" ), false );
-   connect( pb_refresh, &QAbstractButton::clicked,
-            this,       &US_GA_Initialize::replot_data );
-
-   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ),
-                                  false );
+   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ) );
    pb_mandrsb->setCheckable( true );
    
    connect( pb_mandrsb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::manDrawSb );
 
-   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps / Sort" ),
-                                  false );
-   connect( pb_ckovrlp, &QAbstractButton::clicked,
-            this,       &US_GA_Initialize::checkOverlaps );
-
-   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ),
-                                  false );
+   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
    connect( pb_autassb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::autoAssignSb );
 
-   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ), false );
+   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ) );
    connect( pb_resetsb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::resetSb );
 
-   pb_reset      = us_pushbutton( tr( "Reset" ), false );
+   pb_reset      = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset,   &QAbstractButton::clicked,
             this,       &US_GA_Initialize::reset );
 
-   pb_view       = us_pushbutton( tr( "View Statistics" ), false );
+   pb_view       = us_pushbutton( tr( "View Statistics" ) );
    connect( pb_view,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::view );
 
-   pb_save       = us_pushbutton( tr( "Save" ), false );
+   pb_save       = us_pushbutton( tr( "Save" ) );
    connect( pb_save,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::save );
 
-   pb_loadsb     = us_pushbutton( tr( "Load Solute Bins" ), false );
+   pb_loadsb     = us_pushbutton( tr( "Load Solute Bins" ) );
    connect( pb_loadsb,  &QAbstractButton::clicked,
             this,       &US_GA_Initialize::load_bins );
 
@@ -350,8 +340,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( pb_autassb,   s_row++, 4, 1, 4 );
    spec->addWidget( pb_resetsb,   s_row,   0, 1, 4 );
    spec->addWidget( pb_loadsb,    s_row++, 4, 1, 4 );
-   spec->addWidget( pb_refresh,   s_row,   0, 1, 4 );
-   spec->addWidget( pb_ckovrlp,   s_row++, 4, 1, 4 );
    spec->addWidget( pb_ldcolor,   s_row,   0, 1, 4 );
    spec->addWidget( pb_view,      s_row++, 4, 1, 4 );
    spec->addWidget( pb_reset,     s_row,   0, 1, 4 );
@@ -434,10 +422,13 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 // reset the GUI
 void US_GA_Initialize::reset( void )
 {
+   sk_distro.clear();
+   xy_distro.clear();
+   pfilts.clear();
+   le_prefilt->clear();
+   
    dataPlotClear( data_plot );
-   data_plot->replot();
-   if ( pick != NULL )  delete pick;
-   pick       = new US_PlotPicker( data_plot );
+   pick->setEnabled( false );
  
    lw_sbin_data->clear();
    soludata->clearBuckets();
@@ -481,18 +472,18 @@ void US_GA_Initialize::reset( void )
    plymax = 4.0;
    rb_y_ff0->setChecked( true );
    
-   le_plxmin->setText( QString::number( plxmin ) );
-   le_plxmax->setText( QString::number( plxmax ) );
-   le_plymin->setText( QString::number( plymin ) );
-   le_plymax->setText( QString::number( plymax ) );
-
-   limit_key.clear();
-   manual_limits.clear();
-   ck_manlim->setChecked( false );
+   le_plxmin->clear();
+   le_plxmax->clear();
+   le_plymin->clear();
+   le_plymax->clear();
    le_plxmin->setReadOnly( true );
    le_plxmax->setReadOnly( true );
    le_plymin->setReadOnly( true );
    le_plymax->setReadOnly( true );
+
+   limit_key.clear();
+   manual_limits.clear();
+   ck_manlim->setChecked( false );
 
    update_plot_labels();
    data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
@@ -510,7 +501,9 @@ void US_GA_Initialize::reset( void )
 
    monte_carlo = false;
    is_saved   = false;
-   pb_reset  ->setEnabled( false );
+   ct_wxbuck->setEnabled( true );
+   ct_hybuck->setEnabled( true );
+   pb_autassb->setEnabled( true );
 }
 
 // save the GA data
@@ -597,7 +590,7 @@ DbgLv(1) << "SAVE call reportMC";
       // Copy the statistics file to the report directory
       QFile( fnam2 ).remove();
       QFile( fname ).copy( fnam2 );
-      pb_view   ->setEnabled( true );
+      // pb_view   ->setEnabled( true );
 
       msg     += "    " + fnsta + "\n";
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
@@ -640,60 +633,25 @@ DbgLv(1) << "SAVE fnst2" << fnst2;
 // Manually draw solute bins
 void US_GA_Initialize::manDrawSb( void )
 {
+   if ( !pb_mandrsb->isChecked() )
+   {
+      pick->setEnabled( false );
+      return;
+   }
+   pick->setEnabled( true );
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
-   qDebug() << "MANDRAW";
-
    // make sure rubber band and tracker show up against background
-   QColor bg  = data_plot->canvasBackground();
-   int csum   = bg.red() + bg.green() + bg.blue();
-   pickpen->setColor(( csum > 600 ) ? cblack : cwhite );
+   QColor bg    = data_plot->canvasBackground();
+   int csum     = bg.red() + bg.green() + bg.blue();
+   pickpen->setColor( ( csum > 600 ) ? cblack : cwhite );
+   pick->setRubberBandPen( *pickpen );
+   pick->setTrackerPen(    *pickpen );
 DbgLv(1) << "manDr: bg" << bg << "csum" << csum;
 DbgLv(1) << "manDr:   pickpen" << pickpen->brush().color();
 DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
 
-
-   // // set up to capture position and dimensions of solute bin
-
-   // pb_ckovrlp->setEnabled( false );
-
-   // double xrange = qAbs( plxmax - plxmin );
-   // double yrange = qAbs( plymax - plymin );
-   
-   // if ( xrange == 0.0 )
-   // {
-   //    xrange = 1.0e-1;
-   // }
-   
-   // if ( yrange <= 0.0 )
-   // {
-   //    yrange = 1.0e-1;
-   // }
-   
-   // //wxbuck       = ( plxmax - plxmin ) / 10.0;
-   // //hybuck       = ( plymax - plymin ) / 10.0;
-   // wxbuck       = xrange * 0.08;
-   // hybuck       = yrange * 0.2;
-   // ct_wxbuck->disconnect( );
-   // ct_hybuck->disconnect( );
-   // int    rpwr  = qRound( log10( wxbuck ) );
-   // double rmax  = pow( 10.0, rpwr + 3 );
-   // double rinc  = pow( 10.0, rpwr - 3 );
-   // wxbuck       = qRound( wxbuck / rinc ) * rinc;
-   // ct_wxbuck->setRange( 0.0, rmax );
-   // ct_wxbuck->setSingleStep( rinc );
-   // ct_wxbuck->setValue( wxbuck );
-   //        rpwr  = qRound( log10( hybuck ) );
-   //        rmax  = pow( 10.0, rpwr + 3 );
-   //        rinc  = pow( 10.0, rpwr - 3 );
-   // hybuck       = qRound( hybuck / rinc ) * rinc;
-   // ct_hybuck->setValue( hybuck );
-   // connect( ct_wxbuck, &QwtCounter::valueChanged,
-   //          this,      &US_GA_Initialize::update_wxbuck );
-   // connect( ct_hybuck, &QwtCounter::valueChanged,
-   //          this,      &US_GA_Initialize::update_hybuck );
-
-   // manbuks      = true;
+   manbuks      = true;
 }
 
 // Check for bin overlaps
@@ -737,6 +695,10 @@ void US_GA_Initialize::checkOverlaps( void )
 // Auto assign solute bins
 void US_GA_Initialize::autoAssignSb( void )
 {
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+
    if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
    {
       QMessageBox::information( this, "Information", "Autoassign is disabled when Rh is selected.");
@@ -761,14 +723,6 @@ void US_GA_Initialize::autoAssignSb( void )
    }
 
    data_plot->replot();
-   pb_resetsb->setEnabled( true );
-   // X,Y or fixed must be vbar for Save to be allowed
-   pb_save   ->setEnabled( ( attr_x == ATTR_V )  ||
-                           ( attr_y == ATTR_V )  ||
-                           ( attr_z == ATTR_V ) );
-   pb_ckovrlp->setEnabled( true );
-   pb_view   ->setEnabled( false );
-
    manbuks      = false;
 }
 
@@ -782,10 +736,6 @@ void US_GA_Initialize::resetSb( void )
    is_saved = false;
 
    erase_buckets( true );     // erase bucket rectangles from plot and delete
-
-   pb_save   ->setEnabled( false );
-   pb_view   ->setEnabled( false );
-   pb_ckovrlp->setEnabled( false );
 
    data_plot->replot();
 }
@@ -810,8 +760,8 @@ void US_GA_Initialize::plot_3dim( void )
    QColor cwhite( Qt::white );
    dataPlotClear( data_plot );
    data_plot->replot();
-   if ( pick != NULL )  delete pick;
-   pick          = new US_PlotPicker( data_plot );
+   // if ( pick != NULL )  delete pick;
+   // pick          = new US_PlotPicker( data_plot );
    QColor bg     = colormap->color1();
 
    data_plot->setCanvasBackground( bg );
@@ -867,7 +817,6 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
    data_plot->replot();
 
-   check_draw_btn();
 }
 
 // update pseudo-3d resolution factor
@@ -987,20 +936,6 @@ void US_GA_Initialize::update_plymax()
   }
 
   replot_data();
-}
-
-void US_GA_Initialize::check_draw_btn()
-{
-   pb_reset  ->setEnabled( true );
-   if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
-   {
-      pb_mandrsb->setEnabled( false );
-      pb_autassb->setEnabled( false );
-      return;
-   }
-
-  pb_mandrsb->setEnabled( true );
-  pb_autassb->setEnabled( !monte_carlo );
 }
 
 // load the solute distribution from a file or from DB
@@ -1194,8 +1129,6 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
    data_plot->replot();
 
-   pb_resetsb->setEnabled( true );
-
    // nisols       = sdistro->size();
    s_attr       = "\"" + s_attr + "\".";
    dfilname     = "(" + mfnam + ") " + mdesc;
@@ -1213,16 +1146,9 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
 
    soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
 
-   ct_wxbuck->setEnabled( !monte_carlo );
-   ct_hybuck->setEnabled( !monte_carlo );
-   pb_refresh->setEnabled( true );
-   pb_mandrsb->setEnabled( true );
-   pb_loadsb ->setEnabled( true );
-
-   // if ( monte_carlo )
-   // {
-   //    manDrawSb( );
-   // }
+   ct_wxbuck->setDisabled( monte_carlo );
+   ct_hybuck->setDisabled( monte_carlo );
+   pb_autassb->setDisabled( monte_carlo );
 }
 
 // load the color map from a file
@@ -1412,7 +1338,6 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
 
 DbgLv(1) << "SL: autoassn xmin,xmax,ymin,ymax" << plxmin << plxmax
  << plymin << plymax;
-   pb_autassb->setEnabled( !monte_carlo );
 
    int kisols   = xy_distro.size();
    stnpline     = tr( "The number of distribution points is %1." )
@@ -1534,6 +1459,10 @@ void US_GA_Initialize::getMouseDown( const QPointF& p )
    if ( !pb_mandrsb->isChecked() ) {
       return;
    }
+
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
    p1     = p;              // save the first rubberband point
 }
 
@@ -1543,20 +1472,16 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
    if ( !pb_mandrsb->isChecked() ) {
       return;
    }
+
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+   
    double        tx[2];
    double        ty[2];
    QwtPlotCurve* bc1;
 
    p2     = p;              // save the second rubberband point
-
-   // draw the bucket rectangle
-   int nibuks = soludata->bucketsCount();
-   bc1    = drawBucketRect( nibuks, p1, p2 );
-
-   // highlight it (and turn off highlight for previous)
-   highlight_solute( bc1 );
-
-   data_plot->replot();
 
    // construct and save a bucket entry
    tx[0]  = p1.x();         // upper,left and lower,right points
@@ -1576,8 +1501,19 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
       ty[1]  = p1.y();
    }
 
+   int nibuks = soludata->bucketsCount();
    // create bucket rectangle, solute point, and concentration value
    QRectF bucr( QPointF( tx[0], ty[1] ), QPointF( tx[1], ty[0] ) );
+   for ( int ii = 0; ii < nibuks; ii++ )
+   {
+      QRectF bucket = soludata->bucketRect( ii );
+      if (bucket.intersects(bucr))
+      {
+         QMessageBox::warning( this, "Warning!", "There's an overlap with the current bucket list" );
+         return;
+      }
+   }
+   
    QPointF tpt( ( tx[0] + tx[1] ) / 2.0, ( ty[0] + ty[1] ) / 2.0 );
    QPointF& bucp = tpt;
    int sx        = soludata->findNearestPoint( bucp );
@@ -1594,15 +1530,18 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
       lw_sbin_data->addItem( txt );
    }
 
+   // draw the bucket rectangle
+   bc1    = drawBucketRect( nibuks, p1, p2 );
+
+   // highlight it (and turn off highlight for previous)
+   highlight_solute( bc1 );
+
+   data_plot->replot();
+
    // bump solute bins count
    nibuks++;
    ct_nisols->setValue( (double)nibuks );
 
-   pb_save   ->setEnabled( attr_x == ATTR_V  ||
-                           attr_y == ATTR_V  ||
-                           attr_z == ATTR_V );
-   pb_view   ->setEnabled( true );
-   pb_ckovrlp->setEnabled( nibuks > 1 );
    is_saved = false;
 }
 
@@ -2163,12 +2102,6 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
    resetPlotAndList( hlx );
 
    is_saved       = false;
-   int nibuks         = soludata->bucketsCount();
-   pb_save   ->setEnabled( attr_x == ATTR_V  ||
-                           attr_y == ATTR_V  ||
-                           attr_z == ATTR_V );
-   pb_view   ->setEnabled( true );
-   pb_ckovrlp->setEnabled( nibuks > 1 );
 }
 
 // Make a ColorMap copy and return a pointer to the new ColorMap
