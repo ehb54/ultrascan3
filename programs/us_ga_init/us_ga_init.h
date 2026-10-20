@@ -21,6 +21,8 @@
 #include "qwt_color_map.h"
 #include <qchar.h>
 #include <qlineedit.h>
+#include <qmap.h>
+#include <qvector.h>
 
 //! \brief Less-than function for sorting S_Solute values
 bool distro_lessthan( const S_Solute&, const S_Solute& );
@@ -116,6 +118,8 @@ class US_GA_Initialize : public US_Widgets
       QButtonGroup* bg_x_axis;
       QButtonGroup* bg_y_axis;
 
+      QCheckBox*    ck_manlim;
+
       QPen*         pickpen;
       QPen          cbukpen;
       QPen          pbukpen;
@@ -125,6 +129,8 @@ class US_GA_Initialize : public US_Widgets
 
       QPointF  p1;
       QPointF  p2;
+
+      QMap< QString, QVector< double > > manual_limits;
 
       double        resolu;
       double        plxmin;
@@ -176,11 +182,13 @@ class US_GA_Initialize : public US_Widgets
       QString       mfilter;
       QString       editGUID;
       QString       binfpath;
+      QString       limit_key;
 
       QStringList   pfilts;
 
    private slots:
 
+      void select_manlim( void   );
       void update_resolu( double );
       void update_xreso(  double );
       void update_yreso(  double );

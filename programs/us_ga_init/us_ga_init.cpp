@@ -8,6 +8,7 @@
 #include <qmessagebox.h>
 #include <qnamespace.h>
 #include <qpen.h>
+#include <qvector.h>
 
 #include "us_ga_init.h"
 #include "us_select_runs.h"
@@ -129,28 +130,33 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( ct_zfloor, &QwtCounter::valueChanged,
             this,      &US_GA_Initialize::update_zfloor );
 
+   us_checkbox( tr( "Manually Set the X and Y Limits" ), ck_manlim, true );
+   ck_manlim->setStyleSheet( "QCheckBox {background-color: white;}" );
+   connect( ck_manlim, &QAbstractButton::clicked,
+            this,      &US_GA_Initialize::select_manlim );
+
    lb_plxmin     = us_label( tr( "Min. s [S]:" ) );
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmin     = us_lineedit();
-   connect( le_plxmin, &QLineEdit::editingFinished,
+   connect( le_plxmin, &QLineEdit::returnPressed,
             this,      &US_GA_Initialize::update_plxmin );
 
    lb_plxmax     = us_label( tr( "Max. s [S]:" ) );
    lb_plxmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plxmax= us_lineedit();
-   connect( le_plxmax, &QLineEdit::editingFinished,
+   connect( le_plxmax, &QLineEdit::returnPressed,
             this,      &US_GA_Initialize::update_plxmax );
 
    lb_plymin     = us_label( tr( "Min. f/f0:" ) );
    lb_plymin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plymin     = us_lineedit();
-   connect( le_plymin, &QLineEdit::editingFinished,
+   connect( le_plymin, &QLineEdit::returnPressed,
             this,      &US_GA_Initialize::update_plymin );
    
    lb_plymax     = us_label( tr( "Max. f/f0:" ) );
    lb_plymax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    le_plymax     = us_lineedit();
-   connect( le_plymax, &QLineEdit::editingFinished,
+   connect( le_plymax, &QLineEdit::returnPressed,
             this,      &US_GA_Initialize::update_plymax );
 
            attr_x      = 0;
@@ -324,6 +330,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addLayout( gl_y_vbar,    s_row,   5, 1, 1 );
    spec->addLayout( gl_y_D,       s_row,   6, 1, 1 );
    spec->addLayout( gl_y_rh,      s_row++, 7, 1, 1 );
+   spec->addWidget( ck_manlim,    s_row++, 0, 1, 8, Qt::AlignCenter );
    spec->addWidget( lb_plxmin,    s_row,   0, 1, 2 );
    spec->addWidget( le_plxmin,    s_row,   2, 1, 2 );
    spec->addWidget( lb_plxmax,    s_row,   4, 1, 2 );
@@ -479,10 +486,20 @@ void US_GA_Initialize::reset( void )
    le_plymin->setText( QString::number( plymin ) );
    le_plymax->setText( QString::number( plymax ) );
 
+   limit_key.clear();
+   manual_limits.clear();
+   ck_manlim->setChecked( false );
+   le_plxmin->setReadOnly( true );
+   le_plxmax->setReadOnly( true );
+   le_plymin->setReadOnly( true );
+   le_plymax->setReadOnly( true );
+
    update_plot_labels();
    data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
    data_plot->replot();
+
+   manual_limits.clear();
 
    // default to white-cyan-magenta-red-black color map
    colormap   = new QwtLinearColorMap( Qt::white, Qt::black );
@@ -857,24 +874,28 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
 void US_GA_Initialize::update_resolu( double dval )
 {
    resolu = dval;
+   replot_data();
 }
 
 // update raster x resolution
 void US_GA_Initialize::update_xreso( double dval )
 {
    xreso  = dval;
+   replot_data();
 }
 
 // update raster y resolution
 void US_GA_Initialize::update_yreso( double dval )
 {
    yreso  = dval;
+   replot_data();
 }
 
 // update Z (frequency) floor percent
 void US_GA_Initialize::update_zfloor( double dval )
 {
    zfloor = dval;
+   replot_data();
 }
 
 double US_GA_Initialize::str2double( const QString& str, double val )
@@ -900,10 +921,12 @@ void US_GA_Initialize::update_plxmin()
   } else {
     plxmin = val;
   }
-  le_plxmin->setText( QString::number( plxmin ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][0] = plxmin;
+  }
 
-  data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
-  data_plot->replot();
+  replot_data();
 }
 
 // update plot limit s max
@@ -917,9 +940,12 @@ void US_GA_Initialize::update_plxmax()
     plxmax= val;
   }
   le_plxmax->setText( QString::number( plxmax ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][1] = plxmax;
+  }
 
-  data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
-  data_plot->replot();
+  replot_data();
 }
 
 // update plot limit f/f0 min
@@ -933,9 +959,13 @@ void US_GA_Initialize::update_plymin()
     plymin = val;
   }
   le_plymin->setText( QString::number( plymin ) );
+  le_plxmax->setText( QString::number( plxmax ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][2] = plymin;
+  }
 
-  data_plot->setAxisScale( QwtPlot::yLeft, plymin, plymax );
-  data_plot->replot();
+  replot_data();
 }
 
 
@@ -950,9 +980,13 @@ void US_GA_Initialize::update_plymax()
     plymax= val;
   }
   le_plymax->setText( QString::number( plymax ) );
+  le_plxmax->setText( QString::number( plxmax ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][3] = plymax;
+  }
 
-  data_plot->setAxisScale( QwtPlot::yLeft, plymin, plymax );
-  data_plot->replot();
+  replot_data();
 }
 
 void US_GA_Initialize::check_draw_btn()
@@ -1297,6 +1331,34 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    plxmax = smax;
    plymin = kmin;
    plymax = kmax;
+   if ( ck_manlim->isChecked() )
+   {
+      if ( manual_limits.contains( limit_key) )
+      {
+         auto vec = manual_limits.value( limit_key );
+         plxmin = vec.at( 0 );
+         plxmax = vec.at( 1 );
+         plymin = vec.at( 2 );
+         plymax = vec.at( 3 );
+      } else
+      {
+         QVector< double > vec;
+         vec << plxmin << plxmax << plymin << plymax;
+         manual_limits.insert( limit_key, vec );
+      }
+      le_plxmin->setReadOnly( false );
+      le_plxmax->setReadOnly( false );
+      le_plymin->setReadOnly( false );
+      le_plymax->setReadOnly( false );
+   }
+   else
+   {
+      le_plxmin->setReadOnly( true );
+      le_plxmax->setReadOnly( true );
+      le_plymin->setReadOnly( true );
+      le_plymax->setReadOnly( true );
+   }
+
    le_plxmin->setText( QString::number( plxmin ) );
    le_plxmax->setText( QString::number( plxmax ) );
    le_plymin->setText( QString::number( plymin ) );
@@ -1896,6 +1958,18 @@ DbgLv(1) << "VIEW OPEN ERROR" << fname;
    }
 }
 
+void US_GA_Initialize::select_manlim()
+{
+   if ( sk_distro.empty() )
+   {
+      return;
+   }
+
+   build_xy_distro();
+   set_limits();
+   replot_data();
+}
+
 // Select the coordinate for the horizontal axis
 void US_GA_Initialize::select_x_axis( int ival )
 {
@@ -1907,6 +1981,9 @@ void US_GA_Initialize::select_x_axis( int ival )
    rb_y_D   ->setEnabled( attr_x != ATTR_D );
    rb_y_rh  ->setEnabled( attr_x != ATTR_R );
    update_plot_labels();
+   QString label_x = anno_label( attr_x );
+   QString label_y = anno_label( attr_y );
+   limit_key = QString( "%1-%2" ).arg( label_x ).arg( label_y );
 
    if ( sk_distro.empty() )
    {
@@ -1929,6 +2006,9 @@ void US_GA_Initialize::select_y_axis( int ival )
    rb_x_D   ->setEnabled( attr_y != ATTR_D );
    rb_x_rh  ->setEnabled( attr_y != ATTR_R );
    update_plot_labels();
+   QString label_x = anno_label( attr_x );
+   QString label_y = anno_label( attr_y );
+   limit_key = QString( "%1-%2" ).arg( label_x ).arg( label_y );
 
    if ( sk_distro.empty() )
    {
