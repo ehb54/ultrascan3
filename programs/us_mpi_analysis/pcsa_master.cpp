@@ -1,10 +1,11 @@
-#include "us_mpi_analysis.h"
-#include "us_math2.h"
-#include "us_util.h"
-#include "us_tar.h"
 #include "us_astfem_rsa.h"
-#include "us_simparms.h"
 #include "us_constants.h"
+#include "us_math2.h"
+#include "us_mpi_analysis.h"
+#include "us_simparms.h"
+#include "us_sleep.h"
+#include "us_tar.h"
+#include "us_util.h"
 
 #define DbgTime() qDebug() << "TM:" << (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 void US_MPI_Analysis::pcsa_master( void )
@@ -769,7 +770,10 @@ DbgLv(1) << "tikr: tikreg" << tikreg << "mrecs size" << mrecs.count();
    wksim_vals.ti_noise.clear();
 DbgLv(1) << "tikr: alpha" << alpha << "   mrecs size" << mrecs.size();;
 DbgLv(1) << "tikr:  currds" << current_dataset << "ds_to_p" << datasets_to_process;
-if(dbg_level>0) sleep(10);
+if ( dbg_level > 0 )
+{
+   US_Sleep::sleep( 10 );
+}
 
    calc_residuals( current_dataset, datasets_to_process, wksim_vals );
 
