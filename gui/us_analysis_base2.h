@@ -3,6 +3,7 @@
 #define US_ANALYSIS_BASE_H
 
 #include "us_extern.h"
+#include "us_settings.h"
 #include "us_widgets.h"
 #include "us_dataIO.h"
 #include "us_plot.h"
@@ -133,6 +134,10 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       virtual void update   ( int );    //!< Update screen for a new dataset
+
+      //! Investigator ID for DB queries; derived classes (e.g. GMP auto mode)
+      //! may override to supply an ID other than the logged-in user's.
+      virtual int  inv_ID   ( void ) const { return US_Settings::us_inv_ID(); }
       virtual void data_plot( void );   //!< Update the data plot
 
       //! A utility to create a directory

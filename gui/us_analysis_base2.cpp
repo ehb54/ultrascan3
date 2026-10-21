@@ -341,6 +341,10 @@ void US_AnalysisBase2::update( int selection )
    bool    bufin  = US_SolutionVals::values( dbP, d, solID, svbar, bdens,
                                              bvisc, bcomp, bmanu, errmsg );
 
+   qDebug() << "[US_AnalysisBase2][DBG] update: selection" << selection << "runID" << runID << "SolVals ok" << bufin
+            << "db" << ( dbP != nullptr ) << "invID" << inv_ID() << "solID" << solID << "dataGUID" << d->dataGUID
+            << "dens" << bdens << "visc" << bvisc << "cvbar20" << svbar << "manual" << bmanu << "\n" << errmsg;
+
    if ( bufin )
    {
       buffLoaded  = false;
@@ -392,7 +396,7 @@ void US_AnalysisBase2::update( int selection )
      int         idExp  = 0;
      query << "get_experiment_info_by_runID"
            << runID
-           << QString::number( US_Settings::us_inv_ID() );
+           << QString::number( inv_ID() );
      dbP->query( query );
 
      if ( dbP->lastErrno() == US_DB2::OK )
@@ -1501,7 +1505,7 @@ void US_AnalysisBase2::get_solution()
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       QStringList query( "get_experiment_info_by_runID" );
-      query << l_runID << QString::number( US_Settings::us_inv_ID() );
+      query << l_runID << QString::number( inv_ID() );
       db.query( query );
       if ( db.lastErrno() != US_DB2::NOROWS )
       {
@@ -1681,7 +1685,7 @@ bool US_AnalysisBase2::has_intensity_profile( const QString& run_id,
       US_DB2 db( pw.getPasswd() );
       QStringList query;
       query << "get_experiment_info_by_runID" << run_id
-            << QString::number( US_Settings::us_inv_ID() );
+            << QString::number( inv_ID() );
       db.query( query );
       if ( db.lastErrno() == US_DB2::NOROWS )
          return false;                      // No DB records means no profile

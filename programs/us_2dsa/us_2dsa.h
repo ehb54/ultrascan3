@@ -302,6 +302,17 @@ class US_2dsa : public US_AnalysisBase2
         //! logic here.
         void                           update( int selection ) override;
 
+        //! \brief Investigator ID used for DB queries by this class and by
+        //! US_AnalysisBase2 (e.g. get_experiment_info_by_runID). In GMP auto
+        //! mode the logged-in user need not own the run, so the ID passed in
+        //! protocol_details["invID_passed"] is used instead of US_Settings.
+        int                            inv_ID( void ) const override
+        {
+           return ( us_gmp_auto_mode && protocol_details.contains( "invID_passed" ) )
+                  ? protocol_details[ "invID_passed" ].toInt()
+                  : US_Settings::us_inv_ID();
+        }
+
      private slots:
         //! \brief Slot to open the residual plot.
         void open_resplot(void);

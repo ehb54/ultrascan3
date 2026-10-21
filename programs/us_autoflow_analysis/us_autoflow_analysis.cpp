@@ -2488,7 +2488,9 @@ void US_Analysis_auto::start_next_2dsa_channel( void )
 
       // All Approved channels are fitted: species selection for the Report,
       // run-wide claim, DB records, and the switch to the REPORT stage.
-      finalize_velmwl_species_selection();
+
+      //TEMPORTARY!!!
+      //finalize_velmwl_species_selection();
 
       return;
    }

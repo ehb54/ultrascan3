@@ -382,10 +382,16 @@ void US_2dsa::load( void )
       triples.clear();
       savedValues.clear();
 
-      lw_triples->disconnect();
+      // Block (do NOT disconnect) the list/counter signals while loading, exactly
+      // as US_AnalysisBase2::load() does. disconnect() would permanently drop the
+      // base-class lw_triples -> new_triple() connection, so new_triple()/update()
+      // would never run and runID, density, viscosity, vbar, solution_rec, noise
+      // and scan exclusions would stay at their reset_data() defaults.
+      QSignalBlocker b_lw_triples( lw_triples );
       lw_triples->clear();
-      ct_from->disconnect();
+      QSignalBlocker b_ct_from( ct_from );
       ct_from->setValue( 0 );
+      b_ct_from.unblock();
 
       const bool     edlast = true;
       const int      dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB : US_Disk_DB_Controls::Disk;
@@ -433,7 +439,13 @@ void US_2dsa::load( void )
       allExcls.fill( excludedScans, dataList.size() );
       rinoises.fill( US_Noise(), dataList.size() );
       tinoises.fill( US_Noise(), dataList.size() );
-      lw_triples->setCurrentRow( 0 );
+      b_lw_triples.unblock();
+      lw_triples->setCurrentRow( 0 );   // fires new_triple( 0 ) -> update( 0 )
+
+      qDebug() << "[US_2dsa] load(): auto -- runID" << runID << "edata runID" << dataList[0].runID
+               << "editID" << dataList[0].editID << "buffLoaded" << buffLoaded << "density" << density
+               << "viscosity" << viscosity << "vbar" << vbar << "manual" << manual
+               << "solution" << solution_rec.solutionDesc << "invID" << inv_ID();
 
       dataLoaded = true;
       emit dataAreLoaded();
@@ -467,7 +479,8 @@ void US_2dsa::load( void )
       QStringList query;
       QString     expID;
       int         idExp = 0;
-      query << "get_experiment_info_by_runID" << runID << QString::number( US_Settings::us_inv_ID() );
+      query << "get_experiment_info_by_runID" << runID << QString::number( inv_ID() );
+      qDebug() << "[US_2dsa] load(): speed-step query runID" << runID << "invID" << inv_ID();
       dbP->query( query );
 
       if ( dbP->lastErrno() == IUS_DB2::OK )
@@ -552,6 +565,10 @@ DbgLv(1) << "2dsa: Data is beyond range" << "limits from speed_profs " << stm1 <
    exp_steps     = ( nssp > 0 );      // Flag use of experiment speed steps
    edata         = &dataList[ 0 ];    // Point to first loaded data
 DbgLv(1) << " 2dsa: exp_steps" << exp_steps << "nssp" << nssp ;
+qDebug() << "[US_2dsa][DBG] load: loadDB" << loadDB << "runID" << runID << "exp_steps" << exp_steps << "nssp" << nssp
+         << "nscans" << edata->scanCount() << "r_first" << ( edata->xvalues.isEmpty() ? 0.0 : edata->xvalues.first() )
+         << "r_last" << ( edata->xvalues.isEmpty() ? 0.0 : edata->xvalues.last() ) << "meniscus" << edata->meniscus
+         << "bottom" << edata->bottom << "editID" << edata->editID << "dataGUID" << edata->dataGUID;
 //*DEBUG*
 for ( int js=0; js<edata->scanCount(); js++ )
 {
@@ -1355,6 +1372,16 @@ bool US_2dsa::prep_fit_dataset( int drow )
    dset.s20w_correction = sd.s20w_correction;
    dset.D20w_correction = sd.D20w_correction;
    dset.manual          = manual;
+   qDebug() << "[US_2dsa][DBG] prep_fit_dataset: drow" << drow << "triple" << edata->cell << edata->channel << edata->wavelength
+            << "runID" << runID << "edata runID" << edata->runID << "editID" << edata->editID << "invID" << inv_ID()
+            << "loadDB" << loadDB << "buffLoaded" << buffLoaded << "solution" << solution_rec.solutionDesc;
+   qDebug() << "[US_2dsa][DBG]   density" << density << "viscosity" << viscosity << "manual" << manual << "temp" << avTemp
+            << "vbar20" << vbar20 << "vbartb" << vbartb << "s20w_corr" << sd.s20w_correction << "D20w_corr" << sd.D20w_correction;
+   qDebug() << "[US_2dsa][DBG]   tmst_fpath" << tmst_fpath << "exists" << QFileInfo( tmst_fpath ).exists() << "need_tsfile(synthetic)"
+            << need_tsfile << "exp_steps" << exp_steps << "nsteps" << dset.simparams.speed_step.size()
+            << "sim_speed_prof" << dset.simparams.sim_speed_prof.count();
+   qDebug() << "[US_2dsa][DBG]   bottom" << dset.simparams.bottom << "meniscus" << dset.simparams.meniscus << "rotorcoeffs"
+            << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1] << "scans" << dset.run_data.scanCount();
    DbgLv( 1 ) << "Bottom" << dset.simparams.bottom << "rotorcoeffs" << dset.simparams.rotorcoeffs[0]
               << dset.simparams.rotorcoeffs[1];
    DbgLv( 1 ) << "SimulationParameter --";
@@ -1447,6 +1474,9 @@ void US_2dsa::run_2dsa_auto( void )
    // 0) even though prep_fit_dataset() below points edata/dset at the
    // right species at this instant.
    lw_triples->setCurrentRow( auto_triple_idx );
+   qDebug() << "[US_2dsa][DBG] run_2dsa_auto: auto_triple_idx" << auto_triple_idx << "lw_triples row" << lw_triples->currentRow()
+            << "triple" << ( auto_triple_idx >= 0 && auto_triple_idx < triples.size() ? triples.at( auto_triple_idx ) : QString( "?" ) )
+            << "runID" << runID << "buffLoaded" << buffLoaded << "density" << density << "viscosity" << viscosity << "vbar" << vbar;
 
    if ( !prep_fit_dataset( auto_triple_idx ) )
    {
