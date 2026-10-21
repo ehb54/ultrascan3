@@ -14,6 +14,7 @@
 US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Widgets()
 {
   abde_mode = false;
+  velmwl_mode                = false;
   this->report_map           = report_map; 
 
   QList < QString > report_map_keys = report_map.keys();
@@ -276,6 +277,13 @@ void US_ReportGui::abde_mode_passed( void )
   build_report_layout();
 }
 
+// VELOCITY-MWL
+void US_ReportGui::velmwl_mode_passed( void )
+{
+   velmwl_mode = true;
+   build_report_layout();
+}
+
 //Exp. Durat. counters
 void US_ReportGui::ssChgDuratTime_dd( int val )
 {
@@ -511,27 +519,26 @@ void US_ReportGui::build_report_layout( void )
   ***/
 
   //For param layout
-  if ( abde_mode )
-    {
-      lb_tot_conc   -> setVisible( false );
-      le_tot_conc   -> setVisible( false );
-      lb_tot_conc_tol -> setVisible( false );
-      le_tot_conc_tol -> setVisible( false );
-      lb_rmsd_limit -> setVisible( false );
-      le_rmsd_limit -> setVisible( false );
-      lb_wvl        -> setVisible( false );  
-      cb_wvl        -> setVisible( false );
-      lb_av_intensity -> setVisible( false );
-      le_av_intensity -> setVisible( false );
-      pb_prev_wvl  -> setVisible( false );
-      pb_next_wvl  -> setVisible( false );
-      pb_apply_all -> setVisible( false );
+  if ( abde_mode || velmwl_mode )
+  {
+     lb_tot_conc->setVisible( false );
+     le_tot_conc->setVisible( false );
+     lb_tot_conc_tol->setVisible( false );
+     le_tot_conc_tol->setVisible( false );
+     lb_rmsd_limit->setVisible( false );
+     le_rmsd_limit->setVisible( false );
+     lb_wvl->setVisible( false );
+     cb_wvl->setVisible( false );
+     lb_av_intensity->setVisible( false );
+     le_av_intensity->setVisible( false );
+     pb_prev_wvl->setVisible( false );
+     pb_next_wvl->setVisible( false );
+     pb_apply_all->setVisible( false );
 
-      pb_upload_files->setVisible( false );
-      le_ufiles      ->setVisible( false );
-    }
-  
-  
+     pb_upload_files->setVisible( false );
+     le_ufiles->setVisible( false );
+  }
+
   //Clean genL layout first:
   if ( genL != NULL && genL->layout() != NULL )
     {
@@ -568,47 +575,65 @@ void US_ReportGui::build_report_layout( void )
   row = 0;
   //genL->addWidget( bn_report_t, row++,  0, 1,-1 );
   genL->addWidget( lb_type,     row,    0, 1, 2 );
-  if (!abde_mode )
-    {
-      genL->addWidget( lb_method,   row,    3, 1, 2 );
-      genL->addWidget( lb_low,      row,    5, 1, 2 );
-      genL->addWidget( lb_high,     row,    7, 1, 2 );
-      genL->addWidget( lb_intval,   row,    9, 1, 2 );
-      genL->addWidget( lb_total,    row,    11, 1, 2 );
-      genL->addWidget( lb_tol,      row,    13, 1, 2 );
-      genL->addWidget( lb_combined, row,    15, 1, 2 );
-      genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
-    }
+  if ( !abde_mode && !velmwl_mode )
+  {
+     genL->addWidget( lb_method, row, 3, 1, 2 );
+     genL->addWidget( lb_low, row, 5, 1, 2 );
+     genL->addWidget( lb_high, row, 7, 1, 2 );
+     genL->addWidget( lb_intval, row, 9, 1, 2 );
+     genL->addWidget( lb_total, row, 11, 1, 2 );
+     genL->addWidget( lb_tol, row, 13, 1, 2 );
+     genL->addWidget( lb_combined, row, 15, 1, 2 );
+     genL->addWidget( lb_ind_plot, row++, 17, 1, 2 );
+  }
+  else if ( velmwl_mode )
+  {
+     // Like ABDE, but with the Method column kept
+     genL->addWidget( lb_method, row, 3, 1, 2 );
+     genL->addWidget( lb_low, row, 5, 1, 2 );
+     genL->addWidget( lb_high, row, 7, 1, 2 );
+     genL->addWidget( lb_total, row, 9, 1, 2 );
+     genL->addWidget( lb_tol, row, 11, 1, 2 );
+     genL->addWidget( lb_combined, row, 13, 1, 2 );
+     genL->addWidget( lb_ind_plot, row++, 15, 1, 2 );
+
+     lb_intval->setVisible( false );
+  }
   else
-    {                  
-      genL->addWidget( lb_low,      row,    3, 1, 2 );
-      genL->addWidget( lb_high,     row,    5, 1, 2 );
-      genL->addWidget( lb_total,    row,    7, 1, 2 );
-      genL->addWidget( lb_tol,      row,    9, 1, 2 );
-      genL->addWidget( lb_combined, row,    11, 1, 2 );
-      genL->addWidget( lb_ind_plot, row++,  13, 1, 2 );
-      
-      lb_method  ->setVisible( false );
-      lb_intval  ->setVisible( false );    
-    }
-  
+  {
+     genL->addWidget( lb_low, row, 3, 1, 2 );
+     genL->addWidget( lb_high, row, 5, 1, 2 );
+     genL->addWidget( lb_total, row, 7, 1, 2 );
+     genL->addWidget( lb_tol, row, 9, 1, 2 );
+     genL->addWidget( lb_combined, row, 11, 1, 2 );
+     genL->addWidget( lb_ind_plot, row++, 13, 1, 2 );
+
+     lb_method->setVisible( false );
+     lb_intval->setVisible( false );
+  }
+
   //End of table header
   
   QComboBox* cb_type;  
   QComboBox* cb_method;
   QStringList sl_types;
   QStringList sl_methods;
-  if ( !abde_mode )
-    {
-      sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW");
-      sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC");
-    }
+  if ( velmwl_mode )
+  {
+     sl_types << QString( "s" );
+     sl_methods << QString( "2DSA-IT" );
+  }
+  else if ( !abde_mode )
+  {
+     sl_types << QString( "s" ) << QString( "D" ) << QString( "f/f0" ) << QString( "MW" );
+     sl_methods << QString( "2DSA-IT" ) << QString( "PCSA-SL/DS/IS" ) << QString( "2DSA-MC" );
+  }
   else
-    {
-      sl_types     << QString("Radius") << QString("vbar") << QString("Density");
-      sl_methods   << QString("raw");
-    }
-  
+  {
+     sl_types << QString( "Radius" ) << QString( "vbar" ) << QString( "Density" );
+     sl_methods << QString( "raw" );
+  }
+
   qDebug() << "Begin ReportItems iteration -- ";
    
   QLineEdit* le_low;    
@@ -719,31 +744,44 @@ void US_ReportGui::build_report_layout( void )
 	       this,   &US_ReportGui::verify_text );
       
       genL->addWidget( cb_type,           row,    0, 1, 2 );
-      if ( !abde_mode )
-	{
-	  genL->addWidget( cb_method,         row,    3, 1, 2 );
-	  genL->addWidget( le_low,            row,    5, 1, 2 );
-	  genL->addWidget( le_high,           row,    7, 1, 2 );
-	  genL->addWidget( le_intval,         row,    9, 1, 2 );
-	  genL->addWidget( le_total,          row,    11, 1, 2 );
-	  genL->addWidget( le_tol,            row,    13, 1, 2 );
-	  genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
-	  genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
-	}
+      if ( !abde_mode && !velmwl_mode )
+      {
+         genL->addWidget( cb_method, row, 3, 1, 2 );
+         genL->addWidget( le_low, row, 5, 1, 2 );
+         genL->addWidget( le_high, row, 7, 1, 2 );
+         genL->addWidget( le_intval, row, 9, 1, 2 );
+         genL->addWidget( le_total, row, 11, 1, 2 );
+         genL->addWidget( le_tol, row, 13, 1, 2 );
+         genL->addWidget( ck_combined_plot, row, 15, 1, 2, Qt::AlignHCenter );
+         genL->addWidget( ck_ind_plot, row++, 17, 1, 2, Qt::AlignHCenter );
+      }
+      else if ( velmwl_mode )
+      {
+         genL->addWidget( cb_method, row, 3, 1, 2 );
+         genL->addWidget( le_low, row, 5, 1, 2 );
+         genL->addWidget( le_high, row, 7, 1, 2 );
+         genL->addWidget( le_total, row, 9, 1, 2 );
+         genL->addWidget( le_tol, row, 11, 1, 2 );
+         genL->addWidget( ck_combined_plot, row, 13, 1, 2, Qt::AlignHCenter );
+         genL->addWidget( ck_ind_plot, row++, 15, 1, 2, Qt::AlignHCenter );
+
+         le_intval->setVisible( false );
+         us_setReadOnly( le_total, false ); // editable, as in ABDE
+      }
       else
-	{
-	  genL->addWidget( le_low,            row,    3, 1, 2 );
-	  genL->addWidget( le_high,           row,    5, 1, 2 );
-	  genL->addWidget( le_total,          row,    7, 1, 2 );
-	  genL->addWidget( le_tol,            row,    9, 1, 2 );
-	  genL->addWidget( ck_combined_plot,  row,    11, 1, 2, Qt::AlignHCenter );
-	  genL->addWidget( ck_ind_plot,       row++,  13, 1, 2, Qt::AlignHCenter );
-	  
-	  cb_method  ->setVisible( false );
-	  le_intval  ->setVisible( false );
-	  us_setReadOnly ( le_total, false );
-	}
-      
+      {
+         genL->addWidget( le_low, row, 3, 1, 2 );
+         genL->addWidget( le_high, row, 5, 1, 2 );
+         genL->addWidget( le_total, row, 7, 1, 2 );
+         genL->addWidget( le_tol, row, 9, 1, 2 );
+         genL->addWidget( ck_combined_plot, row, 11, 1, 2, Qt::AlignHCenter );
+         genL->addWidget( ck_ind_plot, row++, 13, 1, 2, Qt::AlignHCenter );
+
+         cb_method->setVisible( false );
+         le_intval->setVisible( false );
+         us_setReadOnly( le_total, false );
+      }
+
       //Slots for cb_type | cb_method
       connect( cb_type,    qOverload< int >( &QComboBox::activated ),
                this,       &US_ReportGui::type_changed );
@@ -1009,29 +1047,29 @@ void US_ReportGui::build_report_layout( void )
     
   row = 0;
   reportmask->addWidget( bn_repmask_t,     row++,  0, 1, 6 );
-  if( !abde_mode )
-    {
-      reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
-      reportmask->addWidget( ck_min_intensity, row,    2, 1, 2 );
-      reportmask->addWidget( pseudo3d_box,     row++,  4, 4, 2 );
-      
-      reportmask->addWidget( ck_rmsd,          row,    0, 1, 2 );
-      reportmask->addWidget( ck_integration,   row++,  2, 1, 2 );
-      
-      reportmask->addWidget( ck_exp_duration,  row,    0, 1, 2 );
-      reportmask->addWidget( ck_plots,         row++,  2, 1, 2 );
-    }
-  else
-    {
-      reportmask->addWidget( ck_exp_duration,  row++,  0, 1, 2 );
-      reportmask->addWidget( ck_integration,   row++,  0, 1, 2 );
-      reportmask->addWidget( ck_plots,         row++,  0, 1, 2 );
+  if ( !abde_mode && !velmwl_mode )
+  {
+     reportmask->addWidget( ck_tot_conc, row, 0, 1, 2 );
+     reportmask->addWidget( ck_min_intensity, row, 2, 1, 2 );
+     reportmask->addWidget( pseudo3d_box, row++, 4, 4, 2 );
 
-      ck_tot_conc      -> setVisible( false );
-      ck_min_intensity -> setVisible( false );
-      ck_rmsd          -> setVisible( false );
-      pseudo3d_box     -> setVisible( false );
-    }
+     reportmask->addWidget( ck_rmsd, row, 0, 1, 2 );
+     reportmask->addWidget( ck_integration, row++, 2, 1, 2 );
+
+     reportmask->addWidget( ck_exp_duration, row, 0, 1, 2 );
+     reportmask->addWidget( ck_plots, row++, 2, 1, 2 );
+  }
+  else // ABDE and VELOCITY-MWL: Duration | Integration | Plots only
+  {
+     reportmask->addWidget( ck_exp_duration, row++, 0, 1, 2 );
+     reportmask->addWidget( ck_integration, row++, 0, 1, 2 );
+     reportmask->addWidget( ck_plots, row++, 0, 1, 2 );
+
+     ck_tot_conc->setVisible( false );
+     ck_min_intensity->setVisible( false );
+     ck_rmsd->setVisible( false );
+     pseudo3d_box->setVisible( false );
+  }
   main->addLayout( reportmask );
   
   //Build | Re-build Lower buttons layout
@@ -1369,42 +1407,44 @@ void US_ReportGui::verify_text( const QString& text )
 	  isErrorField[ oname ] = false;
 
 	  //ALEXEY: for a given row, compute 'Fraction of Total' (read-only) as '(Int_Val / Total Conc.) * 100%'
-	  if ( oname.contains(": intval") && !abde_mode )
-	    {
-	      double tot_conc_val = le_tot_conc ->text().toDouble();
-	      if ( text.toDouble() > tot_conc_val ) 
-		curr_widget -> setText( QString::number( tot_conc_val ) );
-			      
-	      QString item_row = oname.split(":")[0] + QString(": ");
-	      QString objName_fraction_of_total  = item_row + "total";
-	      QLineEdit * fraction_of_total_widget = containerWidget->findChild<QLineEdit *>( objName_fraction_of_total );
+     if ( oname.contains( ": intval" ) && !abde_mode && !velmwl_mode )
+     {
+        double tot_conc_val = le_tot_conc->text().toDouble();
+        if ( text.toDouble() > tot_conc_val )
+        {
+           curr_widget->setText( QString::number( tot_conc_val ) );
+        }
 
-	      double fraction = ( curr_widget ->text().toDouble() / tot_conc_val ) * 100.0;
-	      fraction_of_total_widget -> setText( QString::number( fraction ) );
-	      palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-	      fraction_of_total_widget -> setPalette( *palette );
-	    }
-	  //ALEXEY: check the same for tot_conc: apply to all ReportItems' 'Fraction of Total'
-	  if ( oname.contains("tot_conc") && !abde_mode )
-	    {
-	      int r_item_num = report->reportItems.size();
+        QString    item_row                  = oname.split( ":" )[0] + QString( ": " );
+        QString    objName_fraction_of_total = item_row + "total";
+        QLineEdit* fraction_of_total_widget  = containerWidget->findChild<QLineEdit*>( objName_fraction_of_total );
 
-	      qDebug() <<  "In Verify_text: report->reportItems.size() -- " << r_item_num;
+        double     fraction = ( curr_widget->text().toDouble() / tot_conc_val ) * 100.0;
+        fraction_of_total_widget->setText( QString::number( fraction ) );
+        palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+        fraction_of_total_widget->setPalette( *palette );
+     }
+     //ALEXEY: check the same for tot_conc: apply to all ReportItems' 'Fraction of Total'
+     if ( oname.contains( "tot_conc" ) && !abde_mode && !velmwl_mode )
+     {
+        int r_item_num = report->reportItems.size();
 
-	      for ( int ii = 0; ii < r_item_num; ii++ )
-		{
-		  QString objName_integration_val      = QString::number( ii ) + QString(": intval");
-		  QString objName_fraction_of_total    = QString::number( ii ) + QString(": total");
-		  QLineEdit * integration_val_widget   = containerWidget->findChild<QLineEdit *>( objName_integration_val );
-		  QLineEdit * fraction_of_total_widget = containerWidget->findChild<QLineEdit *>( objName_fraction_of_total );
-		  
-		  double fraction = ( integration_val_widget ->text().toDouble() / text.toDouble() ) * 100.0;
-		  fraction_of_total_widget -> setText( QString::number( fraction ) );
-		  palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-		  fraction_of_total_widget -> setPalette( *palette );
-		}
-	    }
-	}
+        qDebug() << "In Verify_text: report->reportItems.size() -- " << r_item_num;
+
+        for ( int ii = 0; ii < r_item_num; ii++ )
+        {
+           QString    objName_integration_val   = QString::number( ii ) + QString( ": intval" );
+           QString    objName_fraction_of_total = QString::number( ii ) + QString( ": total" );
+           QLineEdit* integration_val_widget    = containerWidget->findChild<QLineEdit*>( objName_integration_val );
+           QLineEdit* fraction_of_total_widget  = containerWidget->findChild<QLineEdit*>( objName_fraction_of_total );
+
+           double     fraction = ( integration_val_widget->text().toDouble() / text.toDouble() ) * 100.0;
+           fraction_of_total_widget->setText( QString::number( fraction ) );
+           palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+           fraction_of_total_widget->setPalette( *palette );
+        }
+     }
+   }
     }
 }
 
@@ -1447,15 +1487,21 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].type = cb_type->currentText();
       
       //method
-      if ( !abde_mode )
-	{
-	  QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
-	  qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
-	  report->reportItems[ ii ].method = cb_method->currentText();
-	}
+      if ( velmwl_mode )
+      {
+         report->reportItems[ii].method = "2DSA-IT";
+      }
+      else if ( !abde_mode )
+      {
+         QComboBox* cb_method = containerWidget->findChild<QComboBox*>( stchan + "method" );
+         qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
+         report->reportItems[ii].method = cb_method->currentText();
+      }
       else
-	report->reportItems[ ii ].method = "raw";
-	
+      {
+         report->reportItems[ii].method = "raw";
+      }
+
       //range_low
       QLineEdit * le_low    = containerWidget->findChild<QLineEdit *>( stchan + "low" );
       qDebug() << "ii, le_low->text()" << ii << le_low->text();
@@ -1467,14 +1513,13 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].range_high = le_high->text().toDouble();
 
       //integration value
-      if ( !abde_mode )
-	{
-	  QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
-	  qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
-	  report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
-	}
-           
-      
+      if ( !abde_mode && !velmwl_mode )
+      {
+         QLineEdit* le_intval = containerWidget->findChild<QLineEdit*>( stchan + "intval" );
+         qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
+         report->reportItems[ii].integration_val = le_intval->text().toDouble();
+      }
+
       //tolerance
       QLineEdit * le_tol  = containerWidget->findChild<QLineEdit *>( stchan + "tol" );
       qDebug() << "ii, le_tol->text()" << ii << le_tol->text();
@@ -1680,33 +1725,33 @@ void US_ReportGui::add_row( void )
 
   if ( report-> channel_name . contains("Interf.") )
     {
-      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
-      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
-      initItem.range_low        = 0;
-      initItem.range_high       = 0;
-      initItem.integration_val  = 0;
-      initItem.tolerance        = 0;
-      initItem.combined_plot    = 1;
-      initItem.ind_combined_plot  = 1;
-      
-      report->interf_report_changed = true;
+       initItem.type              = ( abde_mode ) ? QString( "Radius" ) : QString( "s" ); // velmwl: "s"
+       initItem.method            = ( abde_mode ) ? QString( "raw" ) : QString( "2DSA-IT" );
+       initItem.range_low         = 0;
+       initItem.range_high        = 0;
+       initItem.integration_val   = 0;
+       initItem.tolerance         = 0;
+       initItem.combined_plot     = 1;
+       initItem.ind_combined_plot = 1;
+
+       report->interf_report_changed = true;
     }
   else
     {
-      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
-      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
-      initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
-      initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
-      initItem.integration_val  = 0.57;
-      initItem.tolerance        = 10;
-      initItem.combined_plot    = 1;
-      initItem.ind_combined_plot  = 1;
+       initItem.type              = ( abde_mode ) ? QString( "Radius" ) : QString( "s" ); // velmwl: "s"
+       initItem.method            = ( abde_mode ) ? QString( "raw" ) : QString( "2DSA-IT" );
+       initItem.range_low         = ( abde_mode ) ? 5.8 : 3.2;
+       initItem.range_high        = ( abde_mode ) ? 7.0 : 3.7;
+       initItem.integration_val   = 0.57;
+       initItem.tolerance         = 10;
+       initItem.combined_plot     = 1;
+       initItem.ind_combined_plot = 1;
     }
 
   //Compute 'Fraction of Total' based on tot_conc:
   double tot_conc_val = le_tot_conc -> text().toDouble();
-  initItem.total_percent    = ( abde_mode ) ? 95 : ( initItem.integration_val / tot_conc_val) * 100.0;
-  
+  initItem.total_percent = ( abde_mode || velmwl_mode ) ? 95 : ( initItem.integration_val / tot_conc_val ) * 100.0;
+
   report->reportItems.push_back( initItem );
 
   //re-build genL layout

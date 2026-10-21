@@ -44,28 +44,45 @@ class US_Edit : public US_Widgets
          bool us_edit_auto_mode_manual_bll;
 	 bool all_loaded;
 	 bool is_spike_auto;
-	  
+    void      load_auto_velmwl( QMap<QString, QString>& );
+    //! true only if the last load_auto_velmwl() saved the edit profile
+    //! (XML + DB record) for every triple without error
+    bool      velmwl_edit_succeeded( void ) const
+    {
+       return velmwl_edit_ok;
+    }
+    bool velmwl_edit_ok    = false;
+    bool mwl_auto_write_ok = false;
 
-      private:
-	 US_Edit*       sdiag;
-         US_Edit*       sdiag_bll;
-         QWidget* upperWidget;
-         QWidget* leftWidget;
-         QWidget* rightWidget;	 
-         QVBoxLayout* top;  // this widget's own top-level layout; sdiag/sdiag_bll
-                             // are added into it so Qt keeps them auto-sized to
-                             // fill this widget (see manual_edit_auto()).
+ private:
+    US_Edit*     sdiag;
+    US_Edit*     sdiag_bll;
+    QWidget*     upperWidget;
+    QWidget*     leftWidget;
+    QWidget*     rightWidget;
+    QVBoxLayout* top; // this widget's own top-level layout; sdiag/sdiag_bll
+                      // are added into it so Qt keeps them auto-sized to
+                      // fill this widget (see manual_edit_auto()).
 
-         QPointF fixedPoint;
-         
-      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, BASELINE_LINEAR_CORR, FINISHED } step;
+    QPointF      fixedPoint;
 
-      class Edits
-      {
-         public:
-            int scan;
-            QList< QPointF > changes;
-      };
+    enum
+    {
+       MENISCUS,
+       AIRGAP,
+       RANGE,
+       PLATEAU,
+       BASELINE,
+       BASELINE_LINEAR_CORR,
+       FINISHED
+    } step;
+
+    class Edits
+    {
+       public:
+          int            scan;
+          QList<QPointF> changes;
+    };
 
       QList< Edits >                    changed_points;
       US_DataIO::RawData                data;
@@ -365,6 +382,7 @@ class US_Edit : public US_Widgets
       QString expType_manual;
       QString dataSource;
       bool    simulated_data;
+      QString                                     auto_flag_;
 
       class DataDesc_auto   // Description of each data set in the list presented
       {
