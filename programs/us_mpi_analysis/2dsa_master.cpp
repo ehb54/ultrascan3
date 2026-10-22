@@ -79,9 +79,12 @@ void US_MPI_Analysis::_2dsa_master( void )
       pm_iter = pm_next_unit( super ); // First MC iteration
 
       if ( pm_iter < 0 )
-      { // More groups than Monte Carlo iterations:  nothing to do
+      { // More groups than Monte Carlo iterations:  nothing to do but
+         //  report the group's memory use
          worker_status.fill( INIT, gcores_count );
          wait_workers_ready();
+         int rss = pm_group_rss();
+         MPI_Send( &rss, 1, MPI_INT, super, DONELAST, MPI_COMM_WORLD );
          shutdown_all();
          return;
       }
@@ -197,7 +200,11 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( mc_iteration < mc_iterations )
          {
             time_mc_iterations();
+         }
 
+         // Check again: a reduction for time may have ended the iterations
+         if ( mc_iteration < mc_iterations )
+         {
             set_monteCarlo();
          }
       }
@@ -382,16 +389,10 @@ bool US_MPI_Analysis::pm_iteration_done( int super, int& pm_iter )
    //  answers an iteration-done message with the next iteration
    time_mc_iterations();
 
-   if ( mc_iteration >= mc_iterations )
-   {
-      for ( int jj = 1; jj <= my_workers; jj++ )
-      {
-         maxrss += work_rss[jj];
-      }
-   }
-
-   // Tell the supervisor that an iteration is done
-   int iter = (int) maxrss;
+   // Tell the supervisor that an iteration is done.  The supervisor keeps
+   //  the group's memory use from the message that ends the group, which
+   //  may also be a DONEITER answered with STOPITER.
+   int iter = pm_group_rss();
    int tag  = ( mc_iteration < mc_iterations ) ? DONEITER : DONELAST;
 
    MPI_Send( &iter, 1, MPI_INT, super, tag, MPI_COMM_WORLD );
@@ -436,6 +437,20 @@ void US_MPI_Analysis::pm_recv_mc_base( void )
    mc_base_data = base.mid( count / 2 );
 }
 
+// Parallel masters: memory use of this group, the master's and its
+//  workers' maximum RSS
+int US_MPI_Analysis::pm_group_rss( void )
+{
+   long rss = max_rss();
+
+   for ( int jj = 1; jj <= my_workers; jj++ )
+   {
+      rss += work_rss[jj];
+   }
+
+   return (int) rss;
+}
+
 // Parallel composite: report the finished dataset to the supervisor and
 //  get the next one.  Returns count_datasets if the group is done.
 int US_MPI_Analysis::pm_dataset_done( int super )
@@ -446,16 +461,8 @@ int US_MPI_Analysis::pm_dataset_done( int super )
 
    int ittest = current_dataset + mgroup_count;
 
-   if ( ittest >= count_datasets )
-   {
-      for ( int jj = 1; jj <= my_workers; jj++ )
-      {
-         maxrss += work_rss[jj];
-      }
-   }
-
    // Tell the supervisor that a dataset is done
-   int iter = (int) maxrss;
+   int iter = pm_group_rss();
    int tag  = ( ittest < count_datasets ) ? DONEITER : DONELAST;
 
    MPI_Send( &iter, 1, MPI_INT, super, tag, MPI_COMM_WORLD );
@@ -521,6 +528,7 @@ void US_MPI_Analysis::run_2dsa_jobs( void )
       {
          case MPI_Job::READY:   // Ready for work
             worker_status[ worker ] = READY;
+            work_rss[worker]        = sizes[3];
             break;
 
          case MPI_Job::RESULTS: // Return solute data
@@ -554,6 +562,7 @@ void US_MPI_Analysis::wait_workers_ready( void )
          MPI_Recv( sizes, 4, MPI_INT, ii, MPI_Job::READY, my_communicator, &status );
 
          worker_status[ii] = READY;
+         work_rss[ii]      = sizes[3];
       }
    }
 }
@@ -970,25 +979,25 @@ void US_MPI_Analysis::set_monteCarlo( void )
       ds_end            = ds_start + datasets_to_process;
    }
    mc_data.resize( ds_points );
-DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
-DbgLv( 1 ) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count() << "base-size" << mc_base_data.count();
-int sigsiz=sigmas.count();
-int mcdsiz=mc_data.count();
-int    index   = 0;
-double varrmsd = 0.0;
-double varisum = 0.0;
-double varimin = 1.0;
-double varimax = -1.0;
-double datasum = 0.0;
+   DbgLv( 1 ) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
+   DbgLv( 1 ) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count() << "base-size" << mc_base_data.count();
+   int    sigsiz  = sigmas.count();
+   int    mcdsiz  = mc_data.count();
+   int    index   = 0;
+   double varrmsd = 0.0;
+   double varisum = 0.0;
+   double varimin = 1.0;
+   double varimax = -1.0;
+   double datasum = 0.0;
 
-// With a fixed seed, seed each iteration from the seed, dataset and
-//  iteration index, so its data do not depend on which master group
-//  computes it, and differ between datasets and nearby seeds
-uint   seed = parameters["seed"].toUInt();
-if ( seed != 0 )
-{
-   US_Math2::randomize( mc_seed( seed, current_dataset, mc_iteration ) );
-}
+   // With a fixed seed, seed each iteration from the seed, dataset and
+   //  iteration index, so its data do not depend on which master group
+   //  computes it, and differ between datasets and nearby seeds
+   uint   seed = parameters["seed"].toUInt();
+   if ( seed != 0 )
+   {
+      US_Math2::randomize( mc_seed( seed, current_dataset, mc_iteration ) );
+   }
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
@@ -997,37 +1006,37 @@ if ( seed != 0 )
       edata             = &data_sets[ ee ]->run_data;
       int scan_count    = edata->scanCount();
       int radius_points = edata->pointCount();
-int indxh=((scan_count/2)*radius_points)+(radius_points/2);
+      int indxh         = ( ( scan_count / 2 ) * radius_points ) + ( radius_points / 2 );
 
-for ( int ss = 0; ss < scan_count; ss++ )
-{
-   for ( int rr = 0; rr < radius_points; rr++ )
-   {
-      if ( index >= sigsiz )
+      for ( int ss = 0; ss < scan_count; ss++ )
       {
-         DbgLv( 1 ) << "sMC:  *ERR* index" << index << "sigsiz" << sigsiz << "ee,ss,rr" << ee << ss << rr;
-      }
-      if ( index >= mcdsiz )
-      {
-         DbgLv( 1 ) << "sMC:  *ERR* index" << index << "mcdsiz" << mcdsiz << "ee,ss,rr" << ee << ss << rr;
-      }
-      double variation = US_Math2::box_muller( 0.0, sigmas[index] );
-      double mcdata    = mc_base_data[index] + variation;
-      varrmsd += sq( variation );
-      varisum += variation;
-      varimin = qMin( varimin, variation );
-      varimax = qMax( varimax, variation );
-      datasum += mcdata;
+         for ( int rr = 0; rr < radius_points; rr++ )
+         {
+            if ( index >= sigsiz )
+            {
+               DbgLv( 1 ) << "sMC:  *ERR* index" << index << "sigsiz" << sigsiz << "ee,ss,rr" << ee << ss << rr;
+            }
+            if ( index >= mcdsiz )
+            {
+               DbgLv( 1 ) << "sMC:  *ERR* index" << index << "mcdsiz" << mcdsiz << "ee,ss,rr" << ee << ss << rr;
+            }
+            double variation = US_Math2::box_muller( 0.0, sigmas[index] );
+            double mcdata    = mc_base_data[index] + variation;
+            varrmsd += sq( variation );
+            varisum += variation;
+            varimin = qMin( varimin, variation );
+            varimax = qMax( varimax, variation );
+            datasum += mcdata;
 
-      if ( index < 5 || index > ( total_points - 6 ) || ( index > ( indxh - 4 ) && index < ( indxh + 3 ) ) )
-      {
-         DbgLv( 1 ) << "sMC:  index" << index << "sdat" << mc_base_data[index] << "sigma" << sigmas[index] << "vari" << variation
-                    << "mdat" << mcdata;
-      }
+            if ( index < 5 || index > ( total_points - 6 ) || ( index > ( indxh - 4 ) && index < ( indxh + 3 ) ) )
+            {
+               DbgLv( 1 ) << "sMC:  index" << index << "sdat" << mc_base_data[index] << "sigma" << sigmas[index] << "vari"
+                          << variation << "mdat" << mcdata;
+            }
 
-      mc_data[index++] = mcdata;
-   }
-}
+            mc_data[index++] = mcdata;
+         }
+      }
    }
 DbgLv(1) << "sMC:   mcdata sum" << datasum;
 
@@ -1123,18 +1132,18 @@ DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->po
       edata             = &data_sets[ ee ]->run_data;
       int scan_count    = edata->scanCount();
       int radius_points = edata->pointCount();
-DbgLv(1) << "sGA:   ee" << ee << "scans points" << scan_count << radius_points;
+      DbgLv( 1 ) << "sGA:   ee" << ee << "scans points" << scan_count << radius_points;
 
-// Place the residuals magnitudes and the simulation into single
-//  vectors, indexed like the Monte Carlo data
-for ( int ss = 0; ss < scan_count; ss++, scnx++ )
-{
-   for ( int rr = 0; rr < radius_points; rr++ )
-   {
-      sigmas << qAbs( res_data->value( scnx, rr ) );
-      mc_base_data << sim_data->value( scnx, rr );
-   }
-}
+      // Place the residuals magnitudes and the simulation into single
+      //  vectors, indexed like the Monte Carlo data
+      for ( int ss = 0; ss < scan_count; ss++, scnx++ )
+      {
+         for ( int rr = 0; rr < radius_points; rr++ )
+         {
+            sigmas << qAbs( res_data->value( scnx, rr ) );
+            mc_base_data << sim_data->value( scnx, rr );
+         }
+      }
    }
 int ssz=sigmas.size();
 DbgLv(1) << "sGA:   sigmas size" << ssz << "sigmas[mm]" << sigmas[ssz/2];
@@ -1610,8 +1619,8 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
       }
       else
       { // Shouldn't happen, but put job in queue if no worker is yet ready
-DbgLv(1) << "Mast:   WARNING: LAST depth and no worker ready!";
-add_to_queue( job );
+         DbgLv( 1 ) << "Mast:   WARNING: LAST depth and no worker ready!";
+         add_to_queue( job );
       }
    }
 

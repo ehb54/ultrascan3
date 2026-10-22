@@ -12,6 +12,10 @@ Commands:
   update <case>...   run cases and (re)write the baselines
   list               print the case names
 
+A case with a "baseline" entry has no baseline of its own:  it must give
+the result of the named case (the same fit with another layout or input),
+and "update" checks it instead of writing a file.
+
 Use "all" as the case name to select every case.
 """
 
@@ -30,10 +34,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 BASELINE_DIR = HERE / "baseline"
 
-# Dataset descriptors: (runID, cell, noise seed, concentration scale).
-# The experiment constants live in us_mpi_testdata.cpp.
+# Dataset descriptors: (runID, cell, noise seed, concentration scale) and
+# optionally a dict of us_mpi_testdata options ("scans": scan count,
+# "nobottom": edit without <bottom>).  The experiment constants live in
+# us_mpi_testdata.cpp.
 DS_A = ("regA", 1, 11, 1.0)
 DS_B = ("regA", 2, 23, 0.6)
+# 31 x 185 points:  an odd number of Monte Carlo deviates per iteration
+DS_ODD = ("regA", 1, 11, 1.0, {"scans": 31})
+DS_NOBOTTOM = ("regA", 1, 11, 1.0, {"nobottom": True})
 
 GRID_2DSA = {
     "s_min": "1.0", "s_max": "10.0",
@@ -76,6 +85,22 @@ CASES = {
         "method": "2DSA", "datasets": [DS_A], "np": 9, "mgroupcount": 3,
         "params": dict(GRID_2DSA, mc_iterations="2"),
     },
+    "2dsa_mc_pmasters_uneven": {
+        # 10 ranks do not split into 3 groups:  runs as 2 groups of 5
+        "method": "2DSA", "datasets": [DS_A], "np": 10, "mgroupcount": 3,
+        "params": dict(GRID_2DSA, mc_iterations="3"), "baseline": "2dsa_mc",
+    },
+    "2dsa_mc_odd": {
+        "method": "2DSA", "datasets": [DS_ODD], "np": 2,
+        "params": dict(GRID_2DSA, mc_iterations="3"),
+    },
+    "2dsa_mc_odd_pmasters": {
+        # Each iteration's data must not depend on the deviates the group
+        #  master drew before
+        "method": "2DSA", "datasets": [DS_ODD], "np": 6, "mgroupcount": 2,
+        "params": dict(GRID_2DSA, mc_iterations="3"),
+        "baseline": "2dsa_mc_odd",
+    },
     "2dsa_meniscus": {
         "method": "2DSA", "datasets": [DS_A], "np": 2,
         "params": dict(GRID_2DSA, meniscus_points="3", meniscus_range="0.04",
@@ -85,6 +110,13 @@ CASES = {
         "method": "2DSA", "datasets": [DS_A], "np": 2,
         "params": dict(GRID_2DSA, meniscus_points="3", meniscus_range="0.04",
                        fit_mb_select="2"),
+    },
+    "2dsa_meniscus_nobottom": {
+        # Edit without <bottom>:  the stretched centerpiece bottom is used
+        "method": "2DSA", "datasets": [DS_NOBOTTOM], "np": 2,
+        "params": dict(GRID_2DSA, meniscus_points="3", meniscus_range="0.04",
+                       fit_mb_select="1"),
+        "baseline": "2dsa_meniscus",
     },
     "2dsa_menbot": {
         "method": "2DSA", "datasets": [DS_A], "np": 2,
@@ -126,6 +158,20 @@ CASES = {
     "2dsa_composite_pmasters": {
         "method": "2DSA", "datasets": [DS_A, DS_B], "np": 6, "mgroupcount": 2,
         "params": dict(GRID_2DSA),
+    },
+    "2dsa_composite_pmasters_np4": {
+        # 4 ranks leave no worker for group 0 with 2 groups:  one master
+        "method": "2DSA", "datasets": [DS_A, DS_B], "np": 4, "mgroupcount": 3,
+        "params": dict(GRID_2DSA), "baseline": "2dsa_composite",
+    },
+    "2dsa_composite_mc": {
+        "method": "2DSA", "datasets": [DS_A, DS_B], "np": 2,
+        "params": dict(GRID_2DSA, mc_iterations="3"),
+    },
+    "2dsa_composite_mc_pmasters": {
+        "method": "2DSA", "datasets": [DS_A, DS_B], "np": 6, "mgroupcount": 2,
+        "params": dict(GRID_2DSA, mc_iterations="3"),
+        "baseline": "2dsa_composite_mc",
     },
     "2dsa_composite_meniscus": {
         "method": "2DSA", "datasets": [DS_A, DS_B], "np": 2,
@@ -211,7 +257,7 @@ def job_xml(name, case):
     for (xmin, xmax, ymin, ymax) in case.get("buckets", []):
         sub(params, "bucket", s_min=xmin, s_max=xmax, ff0_min=ymin, ff0_max=ymax)
 
-    for (run_id, cell, _seed, scale) in case["datasets"]:
+    for (run_id, cell, _seed, scale, *_opts) in case["datasets"]:
         triple = "RI.%d.A.260" % cell
         dset = sub(root, "dataset")
         files = sub(dset, "files")
@@ -232,16 +278,20 @@ def job_xml(name, case):
         sub(dset, "centerpiece_width", value="0")
         sub(dset, "total_concentration", value="%.4f" % (0.95 * scale))
 
-    ET.indent(root)
+    if hasattr(ET, "indent"):  # Python 3.9+
+        ET.indent(root)
     return ET.tostring(root, encoding="unicode")
 
 
 def build_archive(name, case, testdata, casedir):
     inputs = casedir / "inputs"
     inputs.mkdir(parents=True)
-    for (run_id, cell, seed, scale) in case["datasets"]:
+    for (run_id, cell, seed, scale, *opts) in case["datasets"]:
+        opts = opts[0] if opts else {}
+        extra = ["scans=%d" % opts["scans"]] if "scans" in opts else []
+        extra += ["nobottom"] if opts.get("nobottom") else []
         subprocess.run([testdata, "data", str(inputs), run_id, str(cell),
-                        str(seed), str(scale)], check=True,
+                        str(seed), str(scale)] + extra, check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if "cgrid" in case:
         subprocess.run([testdata, "cgrid", str(inputs), case["cgrid"]],
@@ -459,8 +509,10 @@ def main():
     failed = 0
     for name in names:
         summary = run_case(name, CASES[name], args)
-        path = BASELINE_DIR / ("%s.json" % name)
-        if args.command == "update":
+        # A case with "baseline" must equal that case's result
+        shared = CASES[name].get("baseline")
+        path = BASELINE_DIR / ("%s.json" % (shared or name))
+        if args.command == "update" and not shared:
             BASELINE_DIR.mkdir(exist_ok=True)
             path.write_text(json.dumps(summary, indent=1, sort_keys=True) + "\n")
             print("%s: baseline written (%d model files)"

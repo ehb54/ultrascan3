@@ -768,12 +768,13 @@ DbgLv(1) << "tikr: tikreg" << tikreg << "mrecs size" << mrecs.count();
    wksim_vals.solutes .clear();
    wksim_vals.ri_noise.clear();
    wksim_vals.ti_noise.clear();
-DbgLv(1) << "tikr: alpha" << alpha << "   mrecs size" << mrecs.size();;
-DbgLv(1) << "tikr:  currds" << current_dataset << "ds_to_p" << datasets_to_process;
-if ( dbg_level > 0 )
-{
-   US_Sleep::sleep( 10 );
-}
+   DbgLv( 1 ) << "tikr: alpha" << alpha << "   mrecs size" << mrecs.size();
+   ;
+   DbgLv( 1 ) << "tikr:  currds" << current_dataset << "ds_to_p" << datasets_to_process;
+   if ( dbg_level > 0 )
+   {
+      US_Sleep::sleep( 10 );
+   }
 
    calc_residuals( current_dataset, datasets_to_process, wksim_vals );
 

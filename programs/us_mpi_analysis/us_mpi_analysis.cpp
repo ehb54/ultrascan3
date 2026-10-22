@@ -1047,16 +1047,8 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
          mgroup_count = 1;
 
       // The supervisor starts every group on a dataset of its own, so use
-      //  no more groups than datasets, and groups of equal size
-      if ( mgroup_count > count_datasets )
-      {
-         mgroup_count = count_datasets;
-
-         while ( mgroup_count > 1 && ( proc_count % mgroup_count ) != 0 )
-         {
-            mgroup_count--;
-         }
-      }
+      //  no more groups than datasets
+      mgroup_count = qMin( mgroup_count, count_datasets );
    }
    else
    {
@@ -1064,7 +1056,22 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
          mgroup_count = 1;
    }
 
-   mgroup_count = qMax( 1, mgroup_count );
+   // Groups of equal size, so that every rank is in a group the supervisor
+   //  drives, and with a worker for every group master:  group 0 also holds
+   //  the supervisor (rank 0), so groups need at least 3 ranks
+   int mgroup_asked = mgroup_count;
+   mgroup_count     = qMax( 1, mgroup_count );
+
+   while ( mgroup_count > 1 && ( ( proc_count % mgroup_count ) != 0 || ( proc_count / mgroup_count ) < 3 ) )
+   {
+      mgroup_count--;
+   }
+
+   if ( mgroup_count != mgroup_asked && mgroup_asked > 1 && my_rank == 0 )
+   {
+      DbgLv( 0 ) << "Masters groups reduced from" << mgroup_asked << "to" << mgroup_count << "for" << proc_count << "processes";
+   }
+
    gcores_count = proc_count / mgroup_count;
 
    // Collective over all ranks, so before any masters-group split
