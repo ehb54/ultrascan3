@@ -264,7 +264,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_reset,   &QAbstractButton::clicked,
             this,       &US_GA_Initialize::reset );
 
-   pb_view       = us_pushbutton( tr( "View Statistics" ) );
+   pb_view       = us_pushbutton( tr( "View Statistics" ), false );
    connect( pb_view,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::view );
 
@@ -411,7 +411,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    mfilter    = "";         // default model list filter
    runsel     = true;       // default prefilter type
    latest     = true;       // default edit prefilter type
-   is_saved   = false;      // files have been saved
+   pb_view->setEnabled( false );
    pfilts.clear();          // default prefilter edits list
    binfpath   = US_Settings::resultDir();
    pick       = new US_PlotPicker( data_plot );
@@ -524,7 +524,7 @@ void US_GA_Initialize::reset( void )
    cmapname   = tr( "Default Color Map: w-cyan-magenta-red-black" );
 
    monte_carlo = false;
-   is_saved   = false;
+   pb_view->setEnabled( false );
    ct_wxbuck->setEnabled( true );
    ct_hybuck->setEnabled( true );
    pb_autassb->setEnabled( true );
@@ -537,18 +537,14 @@ void US_GA_Initialize::save( void )
       return;
    }
 
-   if ( attr_x == ATTR_R || attr_y == ATTR_R || attr_z == ATTR_R )
-   {
-      QMessageBox::warning( this, "Unsupported GA attribute",
-         "Hydrodynamic radius is not supported by the GA boundary file format." );
-      return;
-   }
+   const bool saveDistro = attr_x != ATTR_R && attr_y != ATTR_R && attr_z != ATTR_R
+      && ( attr_x == ATTR_V || attr_y == ATTR_V || attr_z == ATTR_V );
 
    // Sort the buckets in increasing-s order
    soludata->sortBuckets();
    fill_lw_bins();
    plot_buckets();
-   is_saved = false;
+   pb_view->setEnabled( false );
 
    // Test for overlaps
    int novlps = soludata->countOverlaps();
@@ -563,17 +559,6 @@ DbgLv(1) << "SAVE novlps" << novlps;
          tr( "Bin Overlaps" ),
          msg + tr( "You must correct this condition so that\n"
                    "no bins overlap, before you can save GA data." ) );
-      return;
-   }
-
-   if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
-   {  // None of X,Y,fixed is vbar:  there can be no output file
-      QMessageBox::information( this,
-         tr( "No Files Output" ),
-         tr( "No files will be saved, since neither X,Y nor fixed attribute"
-             " is vbar.\n\n"
-             "To output a gadistro file, insure that one of X,Y,fixed"
-             " is vbar." ) );
       return;
    }
 
@@ -604,13 +589,19 @@ DbgLv(1) << "SAVE ax,y,z" << attr_x << attr_y << attr_z;
    fixval        = ( attr_z == ATTR_W ) ? sk_distro[ 0 ].w : fixval;
    fixval        = ( attr_z == ATTR_D ) ? sk_distro[ 0 ].d : fixval;
 
-   soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval );
+   QString msg = tr( "Saved:\n" );
+   if ( saveDistro )
+   {
+      if ( soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval ) != 0 )
+      {
+         QMessageBox::warning( this, tr( "Save Error" ),
+            tr( "Unable to write %1" ).arg( fname ) );
+         return;
+      }
+      msg += "    " + fndat + "\n";
+   }
 
-   // Report on files saved
-   QString msg = tr( "Saved:\n    " ) + fndat + "\n";
-
-   if ( manbuks )
-   {  // if manual buckets, build up and analyze data, then report
+   {  // Statistics are available for every axis combination and bin mode.
 
 DbgLv(1) << "SAVE call buildMC";
       soludata->buildDataMC();                     // build it
@@ -618,13 +609,22 @@ DbgLv(1) << "SAVE call buildMC";
       fname         = fdir + "/" + fnsta;
 
 DbgLv(1) << "SAVE call reportMC";
-      soludata->reportDataMC( fname, mc_iters );   // report it
-      is_saved      = true;
+      if ( soludata->reportDataMC( fname, mc_iters ) != 0 )
+      {
+         QMessageBox::warning( this, tr( "Save Error" ),
+            tr( "Unable to write %1" ).arg( fname ) );
+         return;
+      }
 
       // Copy the statistics file to the report directory
       QFile( fnam2 ).remove();
-      QFile( fname ).copy( fnam2 );
-      // pb_view   ->setEnabled( true );
+      if ( !QFile( fname ).copy( fnam2 ) )
+      {
+         QMessageBox::warning( this, tr( "Save Error" ),
+            tr( "Unable to copy statistics to %1" ).arg( fnam2 ) );
+         return;
+      }
+      pb_view->setEnabled( true );
 
       msg     += "    " + fnsta + "\n";
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
@@ -655,11 +655,8 @@ DbgLv(1) << "SAVE call reportMC";
       }
    }
 
-   else
-   {
-DbgLv(1) << "SAVE fnst2" << fnst2;
-      msg     += tr( "in directory:\n    " ) + fdir;
-   }
+   if ( !saveDistro )
+      msg += tr( "\n\nGA boundary file omitted: it requires vbar and does not support Rh." );
 
    QMessageBox::information( this, tr( "Distro/Stats File Save" ), msg );
 }
@@ -705,7 +702,7 @@ void US_GA_Initialize::autoAssignSb( void )
    double hybuck = ct_hybuck->value();
    soludata->autoCalcBins( nisols, wxbuck, hybuck );
    manbuks      = false;
-   is_saved     = false;
+   pb_view->setEnabled( false );
    fill_lw_bins();
    plot_buckets();
    if ( lw_buckets->count() > 0 )
@@ -735,7 +732,7 @@ void US_GA_Initialize::resetSb( void )
 {
    le_nbuks->clear();
    soludata->clearBuckets();
-   is_saved = false;
+   pb_view->setEnabled( false );
    fill_lw_bins();
    plot_buckets();
 }
@@ -1361,8 +1358,8 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
 
    if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
    {
-      hmsg         = hmsg + tr( "\n\nNO SAVE ENABLED:  None of X "
-                                "or Y or the fixed-attribute is VBAR." );
+      hmsg         = hmsg + tr( "\n\nOnly statistics will be saved: none of X, Y, "
+                                "or the fixed attribute is VBAR." );
    }
 
    if ( monte_carlo )
@@ -1551,7 +1548,7 @@ void US_GA_Initialize::addSelectedBin( const QRectF& selection )
       lw_buckets->setCurrentRow(lw_buckets->count() - 1);
    }
    manbuks  = true;
-   is_saved = false;
+   pb_view->setEnabled( false );
 }
 
 // Delete the current bin when Delete is pressed in the bucket list.
@@ -1562,11 +1559,14 @@ void US_GA_Initialize::deleteSelectedBin()
       return;
 
    const QString msg = tr( "Are you sure you want to delete solute bin %1 ?" ).arg( row + 1 );
-   if ( QMessageBox::question( this, tr( "GA_Init Solute Bin Delete" ), msg ) != QMessageBox::Yes )
+   int ret = QMessageBox::question( this, tr( "GA_Init Solute Bin Delete" ), msg,
+                                    QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes );
+   
+   if ( ret != QMessageBox::Yes )
       return;
 
    soludata->removeBucketAt( row );
-   is_saved = false;
+   pb_view->setEnabled( false );
    fill_lw_bins();
    plot_buckets();
    lw_buckets->setCurrentRow( qMin( row, lw_buckets->count() - 1 ) );
@@ -1594,7 +1594,7 @@ void US_GA_Initialize::changeBucketRect( int sx, QRectF& rect )
       }
    }
    soludata->setBucket( sx, rect, bpnt, bconc, bstat );
-   is_saved = false;
+   pb_view->setEnabled( false );
 
    QString line  = soludata->bucketLine( sx );
    lw_buckets->item( sx )->setText( line );
@@ -1647,7 +1647,7 @@ DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
 // View the statistics file produced in a file editor
 void US_GA_Initialize::view( )
 {
-   if ( sk_distro.isEmpty() ) {
+   if ( sk_distro.isEmpty() || !pb_view->isEnabled() ) {
       return;
    }
 
@@ -1660,13 +1660,6 @@ DbgLv(1) << "VIEW";
    QString fnsta = "gainit." + trpid + ".sol_integ.stats";
    QString fname = fdir + "/" + fnsta;
 DbgLv(1) << "VIEW fname" << fname;
-
-   if ( ! is_saved )
-   {  // No save was done, so generate report file
-      soludata->buildDataMC();                     // build it
-      soludata->reportDataMC( fname, mc_iters );   // report it
-      is_saved      = true;
-   }
 
    QFile filei( fname );
    if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -1689,6 +1682,7 @@ DbgLv(1) << "VIEW eddiag SHOW";
    else
    {
 DbgLv(1) << "VIEW OPEN ERROR" << fname;
+      pb_view->setEnabled( false );
       QMessageBox::critical( this, tr( "File Read Error" ),
          tr( "Unable to open file\n\"%1\"\nfor read" ).arg( fname ) );
    }
@@ -1709,6 +1703,7 @@ void US_GA_Initialize::select_manlim()
 // Select the coordinate for the horizontal axis
 void US_GA_Initialize::select_x_axis( int ival )
 {
+   pb_view->setEnabled( false );
    attr_x = ival;
    rb_y_s   ->setEnabled( attr_x != ATTR_S );
    rb_y_ff0 ->setEnabled( attr_x != ATTR_K );
@@ -1735,6 +1730,7 @@ void US_GA_Initialize::select_x_axis( int ival )
 // Select the coordinate for the vertical axis
 void US_GA_Initialize::select_y_axis( int ival )
 {
+   pb_view->setEnabled( false );
    attr_y = ival;
    rb_x_s   ->setEnabled( attr_y != ATTR_S );
    rb_x_ff0 ->setEnabled( attr_y != ATTR_K );
@@ -1906,7 +1902,7 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
 
    resetSb();
    manbuks  = true;
-   is_saved = false;
+   pb_view->setEnabled( false );
    soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
    soludata->sortBuckets();
    fill_lw_bins();
