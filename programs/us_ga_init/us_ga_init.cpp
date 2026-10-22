@@ -705,16 +705,6 @@ void US_GA_Initialize::autoAssignSb( void )
       return;
    }
 
-   if ( soludata->bucketsCount() > 0 )
-   {
-      QString msg = "The solute bins list is not empty. " 
-                    "Rebuilding the bins will delete all existing ones.\n"
-                    "Do you want to continue?";
-      int res = QMessageBox::question( this, "Auto Find Solute Bins", msg );
-      if ( res != QMessageBox::Yes ) {
-         return;
-      }
-   }
    resetSb();
    int nisols    = xy_distro.size();
    double wxbuck = ct_wxbuck->value();
@@ -1494,12 +1484,12 @@ void US_GA_Initialize::highlight_bucket( int sx )
          bucket_curves[ ii ]->setPen( pbukpen );
       }
    }
-   if ( sx >= 0 && sx < soludata->bucketsCount() && ( monte_carlo || manbuks ) )
-   {
-      const QRectF rect = soludata->bucketRect( sx );
-      ct_wxbuck->setValue( rect.width() );
-      ct_hybuck->setValue( rect.height() );
-   }
+   // if ( sx >= 0 && sx < soludata->bucketsCount() && ( monte_carlo || manbuks ) )
+   // {
+   //    const QRectF rect = soludata->bucketRect( sx );
+   //    ct_wxbuck->setValue( rect.width() );
+   //    ct_hybuck->setValue( rect.height() );
+   // }
    data_plot->replot();
 }
 
