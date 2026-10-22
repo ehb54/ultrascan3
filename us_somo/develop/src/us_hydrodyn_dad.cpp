@@ -2398,6 +2398,18 @@ bool US_Hydrodyn_Dad::load_file( QString filename, bool load_conc )
       use_units = 1.0;
    }
 
+   // UV-Vis A(lambda) curves carry wavelength in nm on the abscissa, not q,
+   // so the 1/nm to 1/Angstrom q conversion must never be applied to them.
+   // the header test covers files written by this version, the name test
+   // covers UV-Vis files saved before the units were reported correctly
+
+   if ( ( ext == "dat" || ext == "txt" ) &&
+        ( qv[ 0 ].contains( " lambda units:nm" ) ||
+          QFileInfo( filename ).completeBaseName().contains( "_UV-Vis_" ) ) )
+   {
+      use_units = 1.0;
+   }
+
    if ( ext == "dat" && qv[ 0 ].contains( " UV-Vis parameter file" ) )
    {
       QRegularExpression rx_dad_param_desc              ( "^# __uv_vis_param_desc: (.*)\\s*$" );
@@ -4067,6 +4079,91 @@ bool US_Hydrodyn_Dad::save_files( QStringList files )
    return !errors;
 }
 
+// UV-Vis curves are A(t) at a fixed wavelength or A(lambda) at a fixed time,
+// their abscissa is never q, so report time or wavelength units for them
+
+QString US_Hydrodyn_Dad::header_units( const QString & file )
+{
+   if ( conc_files.count( file ) ) {
+      return "";
+   }
+
+   bool is_time = f_is_time.count( file ) && f_is_time[ file ];
+
+   if ( file.contains( "_UV-Vis_" ) ) {
+      return
+         is_time
+         ? QString( " t units:s A(t) units:a.u." )
+         : QString( " lambda units:nm A(lambda) units:a.u." )
+         ;
+   }
+
+   QString units = " q units:1/A";
+   if ( file.contains( "_Rt_q" ) ) {
+      units += " R(t) units:1/cm";
+   }
+   if ( file.contains( "_Ihasht_q" ) ) {
+      units += " I#(t) units:g^2/(cm^3*mol)";
+   }
+   if ( file.contains( "_Ihashq_" ) ) {
+      units += " I#(q) units:g^2/(cm^3*mol)";
+   }
+   if ( file.contains( "_Istarq_" ) ) {
+      units += " I*(q) units:g/mol";
+   }
+   if ( file.contains( "_Istart_" ) ) {
+      units += " I*(t) units:g/mol";
+   }
+   return units;
+}
+
+// PSV, I0se and I0st are set unconditionally when UV-Vis A(lambda) curves are
+// made, so they show up as a meaningless "0" on absorbance data, omit those
+
+QString US_Hydrodyn_Dad::header_field( const QString &           file,
+                                       map < QString, double > & values,
+                                       const QString &           format )
+{
+   if ( !values.count( file ) ) {
+      return "";
+   }
+   if ( !values[ file ] && file.contains( "_UV-Vis_" ) ) {
+      return "";
+   }
+   return QString( format ).arg( values[ file ] );
+}
+
+QString US_Hydrodyn_Dad::header_column_names( const QString & file, bool use_errors )
+{
+   bool is_time = f_is_time.count( file ) && f_is_time[ file ];
+
+   QString x;
+   QString y;
+
+   if ( is_time ) {
+      x = "t                 ";
+      y =
+         ( conc_files.count( file ) || file.contains( "_UV-Vis_" ) )
+         ? "A(t)         "
+         : "I(t)         "
+         ;
+   } else {
+      if ( file.contains( "_UV-Vis_" ) ) {
+         x = "lambda            ";
+         y = "A(lambda)    ";
+      } else {
+         x = "q                 ";
+         y = "I(q)         ";
+      }
+   }
+
+   if ( use_errors ) {
+      return x + "\t" + y + "\tsd\n";
+   }
+
+   return x + "\t" + y.trimmed() + "\n";
+}
+
 bool US_Hydrodyn_Dad::save_file( QString file, bool &cancel, bool &overwrite_all )
 {
    if ( !f_qs.count( file ) )
@@ -4144,27 +4241,9 @@ bool US_Hydrodyn_Dad::save_file( QString file, bool &cancel, bool &overwrite_all
    }
 
    {
-      
-      QString units = " q units:1/A";
-      if ( file.contains( "_Rt_q" ) ) {
-         units += " R(t) units:1/cm";
-      }
-      if ( file.contains( "_Ihasht_q" ) ) {
-         units += " I#(t) units:g^2/(cm^3*mol)";
-      }
-      if ( file.contains( "_Ihashq_" ) ) {
-         units += " I#(q) units:g^2/(cm^3*mol)";
-      }
-      if ( file.contains( "_Istarq_" ) ) {
-         units += " I*(q) units:g/mol";
-      }
-      if ( file.contains( "_Istart_" ) ) {
-         units += " I*(t) units:g/mol";
-      }
-      if ( conc_files.count( file ) ) {
-         units = "";
-      }
-      
+
+      QString units = header_units( file );
+
       // ts << QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
       //    .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       //    .arg( file )
@@ -4187,9 +4266,9 @@ bool US_Hydrodyn_Dad::save_file( QString file, bool &cancel, bool &overwrite_all
          .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
          .arg( file )
          .arg( units )
-         .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
-         .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
-         .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+         .arg( header_field( file, f_psv , " PSV:%1 [mL/g]"  ) )
+         .arg( header_field( file, f_I0se, " I0se:%1 [a.u.]" ) )
+         .arg( header_field( file, f_I0st, " I0st:%1 [a.u.]" ) )
          .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
          .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
          .arg( !file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
@@ -4218,31 +4297,7 @@ bool US_Hydrodyn_Dad::save_file( QString file, bool &cancel, bool &overwrite_all
                        f_errors[ file ].size() > 0 );
                        // is_nonzero_vector( f_errors[ file ] ) );
 
-   if ( f_is_time.count( file ) && f_is_time[ file ] )
-   {
-      if ( conc_files.count( file ) ) {
-         if ( use_errors )
-         {
-            ts << "t                 \tA(t)         \tsd\n";
-         } else {
-            ts << "t                 \tA(t)\n";
-         }
-      } else {
-         if ( use_errors )
-         {
-            ts << "t                 \tI(t)         \tsd\n";
-         } else {
-            ts << "t                 \tI(t)\n";
-         }
-      }
-   } else {
-      if ( use_errors )
-      {
-         ts << "q                 \tI(q)         \tsd\n";
-      } else {
-         ts << "q                 \tI(q)\n";
-      }
-   }
+   ts << header_column_names( file, use_errors );
 
    for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
    {
@@ -6286,25 +6341,7 @@ void US_Hydrodyn_Dad::view()
             }
 
             {
-               QString units = " q units:1/A";
-               if ( file.contains( "_Rt_q" ) ) {
-                  units += " R(t) units:1/cm";
-               }
-               if ( file.contains( "_Ihasht_q" ) ) {
-                  units += " I#(t) units:g^2/(cm^3*mol)";
-               }
-               if ( file.contains( "_Ihashq_" ) ) {
-                  units += " I#(q) units:g^2/(cm^3*mol)";
-               }
-               if ( file.contains( "_Istarq_" ) ) {
-                  units += " I*(q) units:g/mol";
-               }
-               if ( file.contains( "_Istart_" ) ) {
-                  units += " I*(t) units:g/mol";
-               }
-               if ( conc_files.count( file ) ) {
-                  units = "";
-               }
+               QString units = header_units( file );
 
                // text += QString( windowTitle() + us_tr( " %1data: %2%3%4%5%6%7%8%9%10%11%12%13%14\n" ) )
                //    .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
@@ -6328,9 +6365,9 @@ void US_Hydrodyn_Dad::view()
                   .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
                   .arg( file )
                   .arg( units )
-                  .arg( f_psv .count( file ) ? QString( " PSV:%1 [mL/g]"  ).arg( f_psv [ file ] ) : QString( "" ) )
-                  .arg( f_I0se.count( file ) ? QString( " I0se:%1 [a.u.]" ).arg( f_I0se[ file ] ) : QString( "" ) )
-                  .arg( f_I0st.count( file ) ? QString( " I0st:%1 [a.u.]" ).arg( f_I0st[ file ] ) : QString( "" ) )
+                  .arg( header_field( file, f_psv , " PSV:%1 [mL/g]"  ) )
+                  .arg( header_field( file, f_I0se, " I0se:%1 [a.u.]" ) )
+                  .arg( header_field( file, f_I0st, " I0st:%1 [a.u.]" ) )
                   .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
                   .arg( file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC:%1 [mL/(mg*cm)]" ).arg( f_extc[ file ] ) : QString( "" ) )
                   .arg( !file.contains( "_Istarq_" ) && f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
@@ -6360,31 +6397,7 @@ void US_Hydrodyn_Dad::view()
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
          
-         if ( f_is_time.count( file ) && f_is_time[ file ] )
-         {
-            if ( conc_files.count( file ) ) {
-               if ( use_errors )
-               {
-                  text += "t                 \tA(t)         \tsd\n";
-               } else {
-                  text += "t                 \tA(t)\n";
-               }
-            } else {
-               if ( use_errors )
-               {
-                  text += "t                 \tI(t)         \tsd\n";
-               } else {
-                  text += "t                 \tI(t)\n";
-               }
-            }
-         } else {
-            if ( use_errors )
-            {
-               text += "q                 \tI(q)         \tsd\n";
-            } else {
-               text += "q                 \tI(q)\n";
-            }
-         }
+         text += header_column_names( file, use_errors );
 
          for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
          {
