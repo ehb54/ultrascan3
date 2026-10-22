@@ -126,8 +126,6 @@ class US_GA_Initialize : public US_Widgets
       QList< S_Solute >  xy_distro;
       QList< QwtPlotCurve* > bucket_curves;
 
-      QPointF  p1;
-      QPointF  p2;
 
       QMap< QString, QVector< double > > manual_limits;
 
@@ -212,8 +210,7 @@ class US_GA_Initialize : public US_Widgets
       void sort_distro( QList< S_Solute >&, bool );
       void setBucketPens(  void );
       void highlight_bucket( int );
-      void getMouseDown(     const QPointF& );
-      void getMouseUp(       const QPointF& );
+      void addSelectedBin( const QRectF& );
       void sclick_sbdata(    const QModelIndex& );
       void dclick_sbdata(    const QModelIndex& );
       void changeBucketRect( int, QRectF& );

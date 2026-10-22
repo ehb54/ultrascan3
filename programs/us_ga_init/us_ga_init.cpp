@@ -417,10 +417,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pick->setTrackerPen(    *pickpen );
    pick->setRubberBand(    QwtPicker::RectRubberBand );
    connect( pick, qOverload<const QRectF&>( &QwtPlotPicker::selected ),
-            this, [this]( const QRectF& region ) {
-      getMouseDown( region.topLeft() );
-      getMouseUp( region.bottomRight() );
-   } );
+            this, &US_GA_Initialize::addSelectedBin );
    
    reset();
 }
@@ -428,6 +425,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 // reset the GUI
 void US_GA_Initialize::reset( void )
 {
+   data_plot->setTitle( QString() );
    pb_mandrsb->setChecked( false );
    manbuks = false;
    sk_distro.clear();
@@ -1483,60 +1481,20 @@ void US_GA_Initialize::highlight_bucket( int sx )
    data_plot->replot();
 }
 
-// mouse down:  save of first point
-void US_GA_Initialize::getMouseDown( const QPointF& p )
+// Store a completed rectangle selection as a solute bin.
+void US_GA_Initialize::addSelectedBin( const QRectF& selection )
 {
-   if ( !pb_mandrsb->isChecked() ) {
-      return;
-   }
-
-   if ( sk_distro.isEmpty() ) {
-      return;
-   }
-   p1     = p;              // save the first rubberband point
-}
-
-// mouse up:  draw bucket rectangle
-void US_GA_Initialize::getMouseUp( const QPointF& p )
-{
-   if ( !pb_mandrsb->isChecked() ) {
-      return;
-   }
-
-   if ( sk_distro.isEmpty() ) {
-      return;
-   }
-   
-   double        tx[2];
-   double        ty[2];
-
-   p2     = p;              // save the second rubberband point
-
-   // construct and save a bucket entry
-   tx[0]  = p1.x();         // upper,left and lower,right points
-   ty[0]  = p1.y();
-   tx[1]  = p2.x();
-   ty[1]  = p2.y();
-
-   if ( tx[0] > tx[1] )     // insure properly ordered
-   {
-      tx[0]  = p2.x();
-      tx[1]  = p1.x();
-   }
-
-   if ( ty[0] > ty[1] )
-   {
-      ty[0]  = p2.y();
-      ty[1]  = p1.y();
-   }
-
-   // create bucket rectangle, solute point, and concentration value
-   QRectF bucr( QPointF( tx[0], ty[1] ), QPointF( tx[1], ty[0] ) );
-   if ( tx[0] == tx[1] || ty[0] == ty[1] )
+   if ( !pb_mandrsb->isChecked() || sk_distro.isEmpty() )
       return;
 
-   QPointF tpt( ( tx[0] + tx[1] ) / 2.0, ( ty[0] + ty[1] ) / 2.0 );
-   QPointF& bucp = tpt;
+   const QRectF selected = selection.normalized();
+   if ( selected.width() <= 0.0 || selected.height() <= 0.0 )
+      return;
+
+   // Bucket storage expects the numerically larger Y coordinate first.
+   const QRectF bucr( QPointF( selected.left(), selected.bottom() ),
+                      QPointF( selected.right(), selected.top() ) );
+   QPointF bucp = selected.center();
    int sx        = soludata->findNearestPoint( bucp );
 
    if ( sx >= 0 )
