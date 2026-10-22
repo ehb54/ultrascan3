@@ -73,7 +73,11 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
       us_checkbox( tr( "Show Residuals Bitmap" ),             ck_shorbm );
 
    le_vari   = us_lineedit( "0.0", -1, true );
+   le_vari->setAccessibleName( tr( "Variance" ) );
+   lb_vari->setBuddy( le_vari );
    le_rmsd   = us_lineedit( "0.0", -1, true );
+   le_rmsd->setAccessibleName( tr( "RMSD" ) );
+   lb_rmsd->setBuddy( le_rmsd );
 
    datctrlsLayout->addWidget( lb_datctrls, 0, 0, 1, 8 );
    datctrlsLayout->addLayout( lo_plteda,   1, 0, 1, 8 );
@@ -108,7 +112,9 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent, const QString auto_mode )
          tr( "OD Difference" ) );
 
    data_plot1->setMinimumSize( p1size );
+   data_plot1->setAccessibleName( tr( "Experimental Data Plot" ) );
    data_plot2->setMinimumSize( p2size );
+   data_plot2->setAccessibleName( tr( "Residuals Plot" ) );
 
    // if ( a_mode )
    //   {

@@ -1,39 +1,49 @@
 # =============================================================================
 # us_somo / US-SOMO  —  CMake build
 # =============================================================================
-# Builds the SOMO hydrodynamics / SAXS suite. Two classes of application:
-#   GUI apps — a single main.cpp that LINKS libus_somo (+ qwt):
+# Builds the SOMO hydrodynamics / SAXS suite. Two classes of program:
+#   GUI programs — a single main.cpp that LINKS libus_somo (+ qwt):
 #     libus_somo          shared library (SONAME .10) — the bulk of the code
-#     us3_somo            main GUI application     (us3_hydrodyn/main.cpp)
-#     us_admin            admin GUI                (us_admin/)
+#     us3_somo            main GUI program         (us3_hydrodyn/main.cpp)
 #     us3_config          config GUI               (us3_config/)
-#   Standalone tools — compile a curated ../src subset directly, NO lib, NO qwt:
-#     us_saxs_cmds_t      SAXS command-line tool   (us_saxs_cmds_t/)
+#   Command-line tool — compiles a curated ../src subset directly, NO lib, NO qwt:
+#     us_saxs_cmds_t      SAXS command-line tool   (us_saxs_cmds_t/). Unix only,
+#                         as under qmake: cmdline.pri stops with an error on
+#                         Windows, and the code is POSIX.
 #   (us_cluster_server_t dropped: needs Qt3Support / q3socket.h, gone since Qt5)
+#   (us_admin not built: UltraScan II's administrator-password program, which
+#    nothing uses; its removal from SOMO is ehb54/ultrascan-tickets#1138)
+#   The MPI and CUDA tools (us_saxs_cmds_mpi, us_saxs_cmds_mpi_cuda) are not
+#   in the CMake build yet: neither has been built or tested with it. qmake
+#   still builds them.
 # Optional (default OFF):
-#     us_saxs_cmds_mpi        MPI SAXS tool            SOMO_ENABLE_MPI
-#     us_saxs_cmds_mpi_cuda   MPI+CUDA SAXS tool       SOMO_ENABLE_MPI + SOMO_ENABLE_CUDA
-#     CUDA code paths in the lib                       SOMO_ENABLE_CUDA
 #     ADOLC autodiff                                   SOMO_ENABLE_ADOLC
+#
+# MSVC: SOMO has never been compiled with MSVC (on Windows qmake builds it
+# with MinGW, and the packages ship that build). Until it is
+# (ehb54/ultrascan-tickets#1131), the root build skips SOMO under MSVC with a
+# warning, and a SOMO-only configure stops.
 #
 # KEY FACT (verified): SOMO is SELF-CONTAINED. It VENDORS its own fork of the
 # us_utils sources (src/us_math.cpp, us_matrix.cpp, us_saxs_util*.cpp, ...) and
 # does NOT link UltraScan3::Utils. Its only couplings are third-party: Qt5/Qt6,
-# Qwt, OpenGL, zlib, OpenSSL. Runtime ldd of the deployed us3_somo confirms:
+# Qwt, OpenGL, zlib. Runtime ldd of the deployed us3_somo confirms:
 # libus_somo.so.10 + qwt + Qt + system libs, no libus_utils.so.
 #
-# DUAL-MODE: this file configures standalone
-#     cmake -S us_somo/develop -B build --toolchain <vcpkg>/scripts/buildsystems/vcpkg.cmake
-# OR when pulled in from the root UltraScan3 build via add_subdirectory(us_somo).
-#
-# In standalone mode the third-party deps come from this directory's own
-# vcpkg.json (+ vcpkg-configuration.json), a minimal manifest that reuses the
-# repo-root overlay-ports (qwt / qt5-multimedia) and the same
-# builtin-baseline as the root. It has qt5 (default) and qt6 features — select
-# Qt6 with: --x-feature=qt6 (or -DVCPKG_MANIFEST_FEATURES=qt6 -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON).
-# When built from the root instead, the root vcpkg.json (qt5-app / qt6-app
-# features) already provides every dep SOMO needs, and this manifest is simply
-# ignored (vcpkg reads the manifest at the top-level source).
+# Three ways to configure it (CMakePresets.json has presets for the first two):
+#   - SOMO only, against an existing Qt and a qmake-built Qwt, as the qmake
+#     build uses them (macOS and MSYS2 packaging included). It neither builds
+#     nor needs any other part of UltraScan, and works on somo-dev too:
+#         cmake --preset qt5          (qt5-msys2 in the MSYS2 MINGW64 shell)
+#     or  cmake -S us_somo/develop -B build -DCMAKE_PREFIX_PATH=$QTDIR
+#     with Qwt from $QWTDIR (or -DQWTDIR=...), as qt5env sets it;
+#   - SOMO only, with vcpkg: cmake --preset vcpkg-qt5 | vcpkg-qt6 (and -debug).
+#     These use the root's vcpkg setup, so they install the same packages as
+#     a root build and share its binary cache: the root manifest with its
+#     qt5-app / qt6-app feature, and admin/cmake's toolchain wrapper and
+#     overlay triplets. Only SOMO is built;
+#   - from the root UltraScan3 build via add_subdirectory(us_somo), with
+#     -DUS3_BUILD_SOMO=ON.
 #
 # SOURCE LISTS come from the qmake files at configure time (libus_somo.pro and
 # each app's .pro, via cmake/SomoQmakeSources.cmake), so qmake and CMake build
@@ -43,12 +53,44 @@
 # --- standalone bootstrap (skipped when included via add_subdirectory) --------
 if(NOT DEFINED PROJECT_NAME)
     cmake_minimum_required(VERSION 3.21)
+    # CMake 4 no longer picks a macOS SDK, so the compiler takes the system
+    # default one, which need not match the selected Xcode (an older Xcode's
+    # clang cannot parse a newer SDK's libc++ headers). Use the selected
+    # Xcode's SDK, as qmake does (xcrun --sdk macosx --show-sdk-path).
+    if(CMAKE_HOST_APPLE AND NOT CMAKE_OSX_SYSROOT AND NOT DEFINED ENV{SDKROOT})
+        set(CMAKE_OSX_SYSROOT macosx CACHE STRING "macOS SDK, by name or path")
+    endif()
+    # Lowest macOS to run on: as the macOS packaging builds (and qmake's
+    # defaults), 11.0 on Apple silicon and 10.13 on Intel.
+    if(CMAKE_HOST_APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET
+       AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+        execute_process(COMMAND uname -m OUTPUT_VARIABLE _somo_arch
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(_somo_arch STREQUAL "arm64")
+            set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Lowest macOS version to run on")
+        else()
+            set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "Lowest macOS version to run on")
+        endif()
+    endif()
     project(us_somo VERSION 10.0.0 LANGUAGES CXX C)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
     set(SOMO_STANDALONE ON)
 else()
-    set(SOMO_STANDALONE OFF)   # inherit output dirs from root
+    # In the root build, SOMO gets a us_somo/ subtree of the build directory,
+    # laid out so its programs run from there (see "a build tree the programs
+    # run from" below). UltraScan's own bin/, lib/ and etc/ stay as they are.
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/us_somo/bin)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/us_somo/lib)
+    set(SOMO_STANDALONE OFF)
+endif()
+
+# MSVC has never compiled SOMO. The root build skips SOMO under MSVC (see the
+# root CMakeLists.txt), so this stops only a SOMO-only configure, which has
+# nothing else to build.
+if(MSVC)
+    message(FATAL_ERROR "SOMO does not build with MSVC yet (ehb54/ultrascan-tickets#1131). "
+                        "On Windows, build it with MinGW (MSYS2), as the qmake build and the packages do.")
 endif()
 
 # SOMO requires C++17 in BOTH modes. The root build sets a lower global standard
@@ -74,6 +116,22 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-fvisibility=default)
 endif()
 
+# Warnings as qmake builds show them: its default warn_on (-Wall -Wextra), plus
+# -Wno-non-virtual-dtor on Linux (libus_somo.pro) and, on macOS, the
+# -Wno-deprecated* -Wno-unused-result that the macOS packaging's local.pri
+# adds (SOMO still uses many Qt APIs deprecated in Qt 5).
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(APPLE)
+        # ahead of -Wall -Wextra, where qmake's command lines have them, so
+        # -Wextra turns back on what it groups (e.g. -Wdeprecated-copy)
+        add_compile_options(-Wno-deprecated -Wno-deprecated-declarations -Wno-unused-result)
+    endif()
+    add_compile_options(-Wall -Wextra)
+    if(UNIX AND NOT APPLE)
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-non-virtual-dtor>)
+    endif()
+endif()
+
 # The root switches off the Qt APIs deprecated up to 6.9
 # (add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060900)). SOMO still
 # uses some of them (Qt::ALT + Qt::Key_X, older QMessageBox overloads, ...; 89
@@ -84,6 +142,21 @@ get_directory_property(_somo_defs COMPILE_DEFINITIONS)
 list(FILTER _somo_defs EXCLUDE REGEX "^QT_DISABLE_DEPRECATED_UP_TO(=|$)")
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "${_somo_defs}")
 
+# CMake's Release-type configurations add -DNDEBUG, which compiles out
+# assert(); qmake's release builds never define it. SOMO has live asserts
+# (ZENO in us_zeno_cxx*, us_eigen.cpp, the global fits), so keep them, as
+# qmake does, by dropping NDEBUG for this subtree: from the per-configuration
+# flags, and from the compile options the root adds for Release.
+foreach(_lang C CXX)
+    foreach(_cfg RELEASE RELWITHDEBINFO MINSIZEREL)
+        string(REGEX REPLACE "(^| )[-/]DNDEBUG( |$)" " "
+            CMAKE_${_lang}_FLAGS_${_cfg} "${CMAKE_${_lang}_FLAGS_${_cfg}}")
+    endforeach()
+endforeach()
+get_directory_property(_somo_opts COMPILE_OPTIONS)
+list(FILTER _somo_opts EXCLUDE REGEX "^[-/]DNDEBUG$")
+set_directory_properties(PROPERTIES COMPILE_OPTIONS "${_somo_opts}")
+
 # Qt codegen — scoped to this subtree only (root already sets these globally,
 # but standalone mode needs them too).
 set(CMAKE_AUTOMOC ON)
@@ -91,29 +164,58 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 # --- options -----------------------------------------------------------------
-option(SOMO_ENABLE_MPI   "Build the SOMO MPI SAXS tool (us_saxs_cmds_mpi)" OFF)
-option(SOMO_ENABLE_CUDA  "Build SOMO CUDA SAXS kernels"                    OFF)
-option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation"     OFF)
+option(SOMO_ENABLE_ADOLC "Build with ADOLC automatic differentiation" OFF)
+
+# The MPI and CUDA tools are not in the CMake build yet (see the top of this
+# file); say so rather than ignore the options silently.
+foreach(_somo_opt SOMO_ENABLE_MPI SOMO_ENABLE_CUDA)
+    if(${_somo_opt})
+        message(WARNING "SOMO: ${_somo_opt} is not supported by the CMake build yet; "
+                        "the MPI and CUDA tools still build with qmake.")
+    endif()
+endforeach()
 
 set(SOMO_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-# us_register.cpp derives PLATFORM/TITLE from an arch macro (its own #if chain
-# sets the strings right before use). Define INTEL on Linux so that #if block
-# fires. This is needed in BOTH standalone and root builds: the string-valued
-# -DPLATFORM="intel"/-DTITLE="Intel" that add_compile_definitions() emits does
-# NOT survive CMake's quote-escaping into a usable macro (this bites the root's
-# own line 209 definition too — it just never mattered because only
-# us_register.cpp uses PLATFORM as a bare macro). The bareword INTEL is immune,
-# and since the parent's PLATFORM/TITLE don't actually take effect there is no
-# redefinition clash. APPLE is covered by MAC, Windows by WIN32.
-if(UNIX AND NOT APPLE)
-    add_compile_definitions(INTEL)
+# macOS: qmake's builds also search @executable_path/../Frameworks, which is
+# where a packaged app finds Qt and libus_somo (the macOS packaging links each
+# bundle's Contents/Frameworks to the package's Frameworks), so a CMake build
+# can be packaged the same way. Builds still run from the build tree too.
+if(APPLE)
+    list(APPEND CMAKE_BUILD_RPATH "@executable_path/../Frameworks")
 endif()
+
+# Platform macros, as qmake defines them (uname.pri, local.pri, libus_somo.pro),
+# so each platform compiles the same #ifdef branches as its qmake build. They
+# apply to every SOMO target: the library, the GUI apps and the tools.
+#   macOS:   UNIX MACX OSX MAC (the qmake build also adds OPTERON on Intel
+#            Macs, which only feeds the PLATFORM strings that MAC overrides)
+#   Windows: WIN32 MINGW __WIN64__
+#   Linux:   UNIX LINUX BIN64, and INTEL for us_register.cpp, which derives
+#            PLATFORM/TITLE from an arch macro (its own #if chain sets the
+#            strings right before use). INTEL is needed in BOTH standalone and
+#            root builds: the string-valued -DPLATFORM="intel"/-DTITLE="Intel"
+#            that add_compile_definitions() emits does NOT survive CMake's
+#            quote-escaping into a usable macro (this bites the root's own
+#            definition too — it just never mattered because only
+#            us_register.cpp uses PLATFORM as a bare macro). The bareword INTEL
+#            is immune, and since the parent's PLATFORM/TITLE don't actually
+#            take effect there is no redefinition clash. On macOS MAC sets the
+#            strings, on Windows WIN32.
+if(WIN32)
+    set(SOMO_PLATFORM_DEFINES WIN32 MINGW __WIN64__)
+elseif(APPLE)
+    set(SOMO_PLATFORM_DEFINES UNIX MACX OSX MAC)
+else()
+    set(SOMO_PLATFORM_DEFINES UNIX LINUX BIN64 INTEL)
+endif()
+add_compile_definitions(${SOMO_PLATFORM_DEFINES})
 
 # --- dependencies (all third-party) ------------------------------------------
 # Qt5 AND Qt6: PR #335 made the SOMO code compatible with both; CI/CodeQL test
-# both, and the qmake build is Qt5 today with a planned move to Qt6. Link
-# Qt${QT_VERSION_MAJOR}::... throughout, with the major version chosen as:
+# both, and the qmake build is Qt5 today with a planned move to Qt6. SOMO links
+# Qt's versionless targets (Qt::Core, ...), as the root does, from the Qt
+# whose major version is chosen as:
 #   - root build: the root's choice (it sets QT_VERSION_MAJOR from USE_QT6).
 #     Re-detecting here could pick the other Qt when both are installed, and
 #     SOMO would then build against a different Qt than the rest of UltraScan.
@@ -121,11 +223,10 @@ endif()
 #   - standalone otherwise: Qt6 if it has every component SOMO needs, else Qt5.
 #     (A bare Qt6 qtbase is not enough: vcpkg's Qt5 builds install one as the
 #     host tool that builds qwt.)
-# NOTE: Multimedia is required (sounds/). The root manifest's qt5-app/qt6-app
-# features include qt5-multimedia / qtmultimedia, and the standalone vcpkg.json
-# provides both via its qt5 / qt6 features.
-# TODO(Qt6): QtOpenGL split in Qt6 — if the code uses QOpenGLWidget, add the
-# OpenGLWidgets component for QT_VERSION_MAJOR==6.
+# NOTE: Multimedia is required (sounds/). The root manifest's qt5-app / qt6-app
+# features, which the vcpkg presets use too, include qt5-multimedia /
+# qtmultimedia. Qt 6 needs no OpenGLWidgets: SOMO uses no QOpenGLWidget or
+# QGLWidget.
 set(SOMO_QT_COMPONENTS Core Gui Widgets Network Xml Svg PrintSupport OpenGL Concurrent Multimedia)
 if(NOT SOMO_STANDALONE AND DEFINED QT_VERSION_MAJOR)
     # root build: keep the root's QT_VERSION_MAJOR
@@ -145,27 +246,59 @@ else()
 endif()
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${SOMO_QT_COMPONENTS})
 message(STATUS "SOMO: building against Qt${QT_VERSION_MAJOR} (${Qt${QT_VERSION_MAJOR}_VERSION})")
-find_package(OpenGL REQUIRED)
+# Qt::Core Qt::Gui ... (Qt's versionless targets, from Qt 5.15 on)
+list(TRANSFORM SOMO_QT_COMPONENTS PREPEND "Qt::" OUTPUT_VARIABLE SOMO_QT_LIBS)
+# OpenGL and zlib from the system (or the toolchain or vcpkg), as qmake links
+# them (-lGL, -lz). By default CMake also searches the lib/ next to every
+# directory on PATH, ahead of the system directories, so a program on PATH
+# that bundles its own libz (a PyMOL install, say) wins, and its other bundled
+# libraries then shadow the system's at link and run time (seen as undefined
+# uuid_generate@UUID_1.0 in libSM). Qt is still found through PATH, as a
+# configure without CMAKE_PREFIX_PATH relies on $QTDIR/bin being there.
+# Windows keeps the default, which its MinGW builds are tested with.
+if(NOT WIN32)
+    set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH OFF)
+endif()
+find_package(OpenGL  REQUIRED)
 find_package(ZLIB    REQUIRED)
-find_package(OpenSSL REQUIRED)
+unset(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH)
+find_package(Threads REQUIRED)   # us_zeno_cxx.cpp uses std::thread
 
-# Qwt — reuse root's resolver/alias if we were add_subdirectory'd; otherwise
-# resolve here (vcpkg 'unofficial-qwt', or system via admin/cmake/FindQwt.cmake).
+# Qwt, from the first of:
+#   1. the root build's Qwt::Qwt (when add_subdirectory'd),
+#   2. vcpkg's unofficial-qwt,
+#   3. a Qwt built by qmake in QWTDIR (as the qmake build and the macOS and
+#      MSYS2 packaging use it): library in lib/ (qwt.framework on macOS),
+#      headers in src/. QWTDIR defaults to $QWTDIR, which qt5env sets.
+set(QWTDIR "$ENV{QWTDIR}" CACHE PATH "Qwt built by qmake: library in lib/, headers in src/ (default: $QWTDIR)")
 if(NOT TARGET Qwt::Qwt)
     find_package(unofficial-qwt CONFIG QUIET)
     if(unofficial-qwt_FOUND AND NOT TARGET Qwt::Qwt)
         add_library(Qwt::Qwt ALIAS unofficial::qwt::qwt)
     endif()
 endif()
+if(NOT TARGET Qwt::Qwt AND QWTDIR)
+    find_library(SOMO_QWT_LIBRARY NAMES qwt HINTS ${QWTDIR}/lib NO_DEFAULT_PATH)
+    if(SOMO_QWT_LIBRARY)
+        add_library(Qwt::Qwt INTERFACE IMPORTED)
+        set_target_properties(Qwt::Qwt PROPERTIES INTERFACE_LINK_LIBRARIES "${SOMO_QWT_LIBRARY}")
+        message(STATUS "SOMO: qwt library ${SOMO_QWT_LIBRARY}")
+    endif()
+endif()
 if(NOT TARGET Qwt::Qwt)
-    message(FATAL_ERROR "SOMO: Qwt not found (need a Qwt::Qwt target)")
+    message(FATAL_ERROR "SOMO: Qwt not found. Set QWTDIR (qt5env does) or pass -DQWTDIR=<qwt build dir>, or configure with vcpkg.")
 endif()
 
-# SOMO does `#include <qwt_counter.h>` (flat, like the qmake QWTPATH/include
+# SOMO does `#include <qwt_counter.h>` (flat, like the qmake QWTPATH/src
 # layout), but vcpkg nests the headers under include/qwt/. The Qwt::Qwt target's
 # interface include (the vcpkg include root) is therefore not enough — add the
 # directory that actually contains the qwt headers.
-find_path(SOMO_QWT_INCLUDE_DIR NAMES qwt_counter.h PATH_SUFFIXES qwt qwt6 qt5/qwt)
+set(_somo_qwt_hints "")
+if(QWTDIR)
+    set(_somo_qwt_hints ${QWTDIR}/src ${QWTDIR}/include ${QWTDIR}/lib/qwt.framework/Headers)
+endif()
+find_path(SOMO_QWT_INCLUDE_DIR NAMES qwt_counter.h HINTS ${_somo_qwt_hints}
+    PATH_SUFFIXES qwt qwt6 qt5/qwt)
 if(NOT SOMO_QWT_INCLUDE_DIR)
     message(FATAL_ERROR "SOMO: qwt headers (qwt_counter.h) not found on the include path")
 endif()
@@ -176,22 +309,19 @@ message(STATUS "SOMO: qwt headers at ${SOMO_QWT_INCLUDE_DIR}")
 # nor the root's qwtplot3d::qwtplot3d is linked (nor was it under qmake).
 
 # --- generated version headers -----------------------------------------------
-# SOMO generates two headers via shell scripts (as in the qmake build):
-#   version.sh  -> include/us_version.h   (needs $us3      = repo root; reads utils/us_defines.h)
-#   revision.sh -> include/us_revision.h  (needs $ULTRASCAN = repo root; git log)
-# us_config.cpp includes us_version.h, and many src/ files include us_revision.h,
-# so both must exist before compilation. Both need git, and both rewrite their
-# header only when its contents change.
-# On main both scripts are tracked and the headers are untracked build output.
-# somo-dev instead commits both headers (and has dropped revision.sh). A build
-# must not rewrite a tracked file, so a committed header is used as is, and a
-# script runs only for a header git does not track.
-# TODO: these write into the SOURCE tree and shell out to git — prefer a
-# CMake-native generator writing into ${CMAKE_CURRENT_BINARY_DIR} (see
-# admin/cmake/GenerateVersion.cmake).
+# us_config.cpp includes include/us_version.h and many src/ files include
+# include/us_revision.h, so both must exist before compilation. The qmake build
+# has version.sh and revision.sh write them; here cmake/SomoGenHeaders.cmake
+# writes the same headers with only CMake and git (no sh, so it also works
+# where there is no POSIX shell), in the same place, and only when their
+# contents change.
+# On main both headers are untracked build output. somo-dev instead commits
+# both (and has dropped revision.sh). A build must not rewrite a tracked file,
+# so a committed header is used as is, and only a header git does not track
+# is generated.
 get_filename_component(SOMO_REPO_ROOT "${SOMO_ROOT}/../.." ABSOLUTE)
 find_package(Git QUIET)
-set(SOMO_GENHEADER_COMMANDS "")
+set(_somo_gen_args "")
 set(SOMO_GENHEADER_BYPRODUCTS "")
 foreach(kind version revision)
     set(_hdr include/us_${kind}.h)
@@ -203,20 +333,17 @@ foreach(kind version revision)
     endif()
     if(_rc EQUAL 0)
         message(STATUS "SOMO: using the committed ${_hdr}")
-    elseif(EXISTS ${SOMO_ROOT}/${kind}.sh)
-        list(APPEND SOMO_GENHEADER_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E env "us3=${SOMO_REPO_ROOT}" "ULTRASCAN=${SOMO_REPO_ROOT}" sh ${kind}.sh)
-        list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/${_hdr})
-    elseif(EXISTS ${SOMO_ROOT}/${_hdr})
-        message(STATUS "SOMO: no ${kind}.sh; using the existing ${_hdr}")
     else()
-        message(FATAL_ERROR "SOMO: neither ${kind}.sh nor ${_hdr} exists")
+        string(TOUPPER ${kind} _kind)
+        list(APPEND _somo_gen_args -DSOMO_GEN_${_kind}=ON)
+        list(APPEND SOMO_GENHEADER_BYPRODUCTS ${SOMO_ROOT}/${_hdr})
     endif()
 endforeach()
-if(SOMO_GENHEADER_COMMANDS)
+if(_somo_gen_args)
     add_custom_target(us_somo_genheaders ALL
-        ${SOMO_GENHEADER_COMMANDS}
-        WORKING_DIRECTORY ${SOMO_ROOT}
+        COMMAND ${CMAKE_COMMAND} "-DSOMO_ROOT=${SOMO_ROOT}" "-DREPO_ROOT=${SOMO_REPO_ROOT}"
+                "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}" ${_somo_gen_args}
+                -P ${SOMO_ROOT}/cmake/SomoGenHeaders.cmake
         BYPRODUCTS ${SOMO_GENHEADER_BYPRODUCTS}
         COMMENT "Generating SOMO version headers")
 else()
@@ -239,24 +366,31 @@ message(STATUS "SOMO: libus_somo.pro lists ${_n_src} sources, ${_n_hdr} headers"
 add_library(us_somo SHARED ${SOMO_LIB_SOURCES} ${SOMO_LIB_HEADERS})
 add_dependencies(us_somo us_somo_genheaders)
 set_target_properties(us_somo PROPERTIES VERSION 10.0.0 SOVERSION 10)  # libus_somo.so.10
+if(WIN32)
+    # us_somo10.dll, as qmake names it, with MinGW's import library libus_somo10.a
+    set_target_properties(us_somo PROPERTIES OUTPUT_NAME us_somo10 PREFIX "")
+    if(MINGW)
+        set_target_properties(us_somo PROPERTIES IMPORT_SUFFIX .a)
+    endif()
+endif()
 
 # grpy/ is the header-only GRPY driver module (libus_somo.pro: INCLUDEPATH += $$PWD/grpy)
 target_include_directories(us_somo PUBLIC
     ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/grpy ${SOMO_QWT_INCLUDE_DIR})
 
 target_compile_definitions(us_somo PUBLIC NO_DB THREAD NO_EDITOR_PRINT)
-if(UNIX AND NOT APPLE)
-    target_compile_definitions(us_somo PUBLIC UNIX LINUX BIN64)
-elseif(APPLE)
-    target_compile_definitions(us_somo PUBLIC OSX MAC)
-elseif(WIN32)
-    target_compile_definitions(us_somo PUBLIC MINGW WIN32)
+if(WIN32)
+    # include/us_extern.h & co. export with these only while building the DLL
+    # (libus_somo.pro's win32 block); the apps import without them.
+    target_compile_definitions(us_somo PRIVATE US_MAKE_DLL US_MAKE_GUI_DLL)
 endif()
 
 target_link_libraries(us_somo PUBLIC
-    Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
-    Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
-    Qwt::Qwt OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
+    ${SOMO_QT_LIBS}
+    Qwt::Qwt
+    OpenGL::GL
+    ZLIB::ZLIB
+    Threads::Threads)
 if(UNIX AND NOT APPLE)
     target_link_libraries(us_somo PUBLIC GLU)   # TODO: find_library(GLU) for robustness
 endif()
@@ -270,39 +404,75 @@ if(SOMO_ENABLE_ADOLC)
     target_link_libraries(us_somo PUBLIC ${ADOLC_LIB})
 endif()
 
-# --- optional: CUDA ----------------------------------------------------------
-if(SOMO_ENABLE_CUDA)
-    enable_language(CUDA)
-    target_compile_definitions(us_somo PUBLIC CUDA)
-    # us_saxs_util_cuda.cpp is already a lib member (it's in libus_somo.pro's
-    # SOURCES); this option only turns on the CUDA code paths inside it.
-    # TODO: wire the actual .cu kernels + CUDA::cudart.
-endif()
-
 # =============================================================================
-# APPLICATIONS — two distinct classes (verified against the .pro files + ldd):
+# PROGRAMS — two distinct classes (verified against the .pro files + ldd):
 #
-#   1) GUI apps  (include generic.pri): a single main.cpp that LINKS libus_somo
-#      (which pulls qwt transitively).  -> us3_somo, us_admin, us3_config
+#   1) GUI programs (include generic.pri): a single main.cpp that LINKS
+#      libus_somo (which pulls qwt transitively).  -> us3_somo, us3_config
 #
-#   2) Standalone command-line / MPI tools (include cmdline.pri): main.cpp plus
-#      a CURATED subset of ../src/*.cpp compiled DIRECTLY into the executable.
-#      They do NOT link libus_somo and do NOT link qwt (confirmed by ldd of the
-#      deployed us_saxs_cmds_t).
+#   2) Command-line tools (include cmdline.pri): main.cpp plus a CURATED subset
+#      of ../src/*.cpp compiled DIRECTLY into the executable. They do NOT link
+#      libus_somo and do NOT link qwt (confirmed by ldd of the deployed
+#      us_saxs_cmds_t). Of these, the CMake build has us_saxs_cmds_t only.
 # Each app's sources are read from its own .pro (which pulls main.cpp in from
 # generic.pri / cmdline.pri), the same way as the library's.
 # =============================================================================
 
 # GUI app: main.cpp + link libus_somo (generic.pri: SOURCES=main.cpp, -lus_somo -lqwt)
+# macOS: an .app bundle, as qmake builds every program there, with the keys of
+# the Info.plist qmake writes and the icon the .pro names (macx:ICON). SOMO
+# relies on the bundles: it starts us3_config as
+# <system dir>/bin/us3_config.app, and finds its install directory from the
+# .app/Contents in its own path.
+function(somo_mac_bundle tgt pro)
+    if(NOT APPLE)
+        return()
+    endif()
+    # the program's file name (OUTPUT_NAME, when it differs from the target's)
+    get_target_property(_exe ${tgt} OUTPUT_NAME)
+    if(NOT _exe)
+        set(_exe ${tgt})
+    endif()
+    set(SOMO_BUNDLE_EXECUTABLE ${_exe})
+    string(REPLACE "_" "-" _id ${_exe})
+    set(SOMO_BUNDLE_IDENTIFIER "com.yourcompany.${_id}")
+    set(SOMO_BUNDLE_ICON "")
+    file(STRINGS ${pro} _icon REGEX "^[ \t]*macx[ \t]*:[ \t]*ICON[ \t]*=")
+    if(_icon)
+        list(GET _icon 0 _icon)
+        string(REGEX REPLACE "^[^=]*=[ \t]*([^ \t#]+).*$" "\\1" _icon "${_icon}")
+        get_filename_component(_pro_dir ${pro} DIRECTORY)
+        get_filename_component(_icon ${_icon} ABSOLUTE BASE_DIR ${_pro_dir})
+        # the icons are in us_somo/etc, outside us_somo/develop, which also
+        # builds on its own: without them the bundle gets the default icon
+        if(EXISTS ${_icon})
+            get_filename_component(SOMO_BUNDLE_ICON ${_icon} NAME)
+            target_sources(${tgt} PRIVATE ${_icon})
+            set_source_files_properties(${_icon} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        else()
+            message(STATUS "SOMO: ${_icon} not found; ${_exe}.app gets the default icon")
+        endif()
+    endif()
+    configure_file(${SOMO_ROOT}/cmake/Info.plist.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/${tgt}.Info.plist @ONLY)
+    set_target_properties(${tgt} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/${tgt}.Info.plist)
+endfunction()
+
 function(somo_add_gui_app tgt pro)
     somo_qmake_sources(${SOMO_ROOT}/${pro} _srcs _hdrs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
+    # On Windows a windowed program with Qt's WinMain, as qmake builds it, so
+    # no console window opens with it (ignored on other platforms).
+    set_target_properties(${tgt} PROPERTIES WIN32_EXECUTABLE TRUE)
+    somo_mac_bundle(${tgt} ${SOMO_ROOT}/${pro})
     target_link_libraries(${tgt} PRIVATE us_somo)
     target_include_directories(${tgt} PRIVATE ${SOMO_ROOT}/include ${SOMO_ROOT}/src)
     add_dependencies(${tgt} us_somo_genheaders)
 endfunction()
 
-# Standalone tool: its .pro's ../src subset, no libus_somo, no qwt (cmdline.pri).
+# Command-line tool: its .pro's ../src subset, no libus_somo, no qwt (cmdline.pri).
 function(somo_add_tool tgt)
     somo_qmake_sources(${SOMO_ROOT}/${tgt}/${tgt}.pro _srcs _hdrs)
     add_executable(${tgt} ${_srcs} ${_hdrs})
@@ -313,54 +483,97 @@ function(somo_add_tool tgt)
         ${SOMO_ROOT}/include ${SOMO_ROOT}/src ${SOMO_ROOT}/${tgt}
         ${SOMO_QWT_INCLUDE_DIR})
     target_compile_definitions(${tgt} PRIVATE CMDLINE NO_DB NO_EDITOR_PRINT)
+    # All of SOMO's Qt modules, as qmake links them: the SOMO headers the tool
+    # compiles include headers from each (us_hydrodyn.h includes <qprinter.h>,
+    # ...), so it does not compile without them. Of their code it uses only
+    # Core, Network and Widgets (its QApplication, and QProgressBar in the SOMO
+    # code it shares with the GUI), as a link with --as-needed shows.
     target_link_libraries(${tgt} PRIVATE
-        Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Xml Qt${QT_VERSION_MAJOR}::Svg
-        Qt${QT_VERSION_MAJOR}::PrintSupport Qt${QT_VERSION_MAJOR}::OpenGL Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Multimedia
-        OpenGL::GL ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto)
+        ${SOMO_QT_LIBS}
+        OpenGL::GL
+        ZLIB::ZLIB
+        Threads::Threads)
     if(UNIX AND NOT APPLE)
-        target_compile_definitions(${tgt} PRIVATE UNIX LINUX BIN64)
         target_link_libraries(${tgt} PRIVATE GLU)
     endif()
     add_dependencies(${tgt} us_somo_genheaders)
+    somo_mac_bundle(${tgt} ${SOMO_ROOT}/${tgt}/${tgt}.pro)
 endfunction()
 
-# --- GUI applications --------------------------------------------------------
+# --- GUI programs ------------------------------------------------------------
 somo_add_gui_app(us3_somo   us3_hydrodyn/us3_hydrodyn.pro)   # main GUI -> us3_somo binary
-somo_add_gui_app(us_admin   us_admin/us_admin.pro)
+# us_admin (us_admin/) is not built: UltraScan II's administrator-password
+# program. No SOMO menu starts it, nothing reads the password it sets, and it
+# stops without an UltraScan II license file. Removing it from SOMO is
+# ehb54/ultrascan-tickets#1138.
 somo_add_gui_app(us3_config us3_config/us3_config.pro)
 
-# --- standalone tools --------------------------------------------------------
-somo_add_tool(us_saxs_cmds_t)                 # non-MPI SAXS command-line tool
+set(SOMO_INSTALL_TARGETS
+    us_somo us3_somo us3_config)
+
+# --- command-line tool -------------------------------------------------------
+# Unix only, as under qmake (us_somo.pro builds it in a unix: scope, and
+# cmdline.pri stops with an error on win32).
+if(NOT WIN32)
+    somo_add_tool(us_saxs_cmds_t)
+    list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_t)
+endif()
 # us_cluster_server_t (2011) dropped: its us_cluster_server_global.h includes
 # <q3socket.h> (Qt3Support), removed since Qt5 — it cannot build on Qt5/Qt6.
 
-set(SOMO_INSTALL_TARGETS
-    us_somo us3_somo us_admin us3_config us_saxs_cmds_t)
-
-# --- optional MPI tools ------------------------------------------------------
-if(SOMO_ENABLE_MPI)
-    find_package(MPI REQUIRED CXX)
-
-    # USE_MPI is the code's MPI guard (DEFINES += USE_MPI in both MPI .pro files)
-    somo_add_tool(us_saxs_cmds_mpi)
-    target_link_libraries(us_saxs_cmds_mpi PRIVATE MPI::MPI_CXX)
-    target_compile_definitions(us_saxs_cmds_mpi PRIVATE USE_MPI OMPI_SKIP_MPICXX)
-    target_include_directories(us_saxs_cmds_mpi PRIVATE ${MPI_CXX_INCLUDE_DIRS})
-    list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_mpi)
-
-    if(SOMO_ENABLE_CUDA)
-        somo_add_tool(us_saxs_cmds_mpi_cuda)
-        target_link_libraries(us_saxs_cmds_mpi_cuda PRIVATE MPI::MPI_CXX)
-        target_compile_definitions(us_saxs_cmds_mpi_cuda PRIVATE USE_MPI OMPI_SKIP_MPICXX CUDA)
-        target_include_directories(us_saxs_cmds_mpi_cuda PRIVATE ${MPI_CXX_INCLUDE_DIRS})
-        list(APPEND SOMO_INSTALL_TARGETS us_saxs_cmds_mpi_cuda)
+# --- a build tree the programs run from -------------------------------------
+# SOMO takes the directory above its program's bin/ as its system directory:
+# always on Linux and Windows (US_Config::read()), and on macOS when ULTRASCAN
+# is not set. It expects somo/ there (somo/doc), and etc/ (the reference
+# tables it installs into the user's data directory), with helper programs
+# such as GRPY in bin/ (bin64/ on Linux). qmake builds into us_somo/bin
+# (bin64/ on Linux), inside that layout. Give the build tree the same layout,
+# so the programs run from it: link somo/ and etc/ to us_somo's (or copy them,
+# where links cannot be made, as on Windows without the privilege), and copy
+# this platform's helpers next to the programs, as makesomo.sh does. A
+# SOMO-only build does this in its build directory. The root build does it in
+# its us_somo/ subtree, because the root's own etc/ is UltraScan's (a link to
+# the repository's etc/).
+get_filename_component(_somo_out "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/.." ABSOLUTE)
+get_filename_component(_somo_top "${SOMO_ROOT}/.." ABSOLUTE)   # us_somo
+foreach(_d somo etc)
+    set(_dst "${_somo_out}/${_d}")
+    if(EXISTS "${_somo_top}/${_d}" AND NOT EXISTS "${_dst}" AND NOT IS_SYMLINK "${_dst}")
+        file(MAKE_DIRECTORY "${_somo_out}")
+        file(CREATE_LINK "${_somo_top}/${_d}" "${_dst}" SYMBOLIC RESULT _rc)
+        if(NOT _rc EQUAL 0)
+            file(COPY "${_somo_top}/${_d}" DESTINATION "${_somo_out}")
+        endif()
     endif()
+endforeach()
+if(WIN32)
+    set(_somo_helpers_glob "*_win64.exe")
+elseif(APPLE)
+    set(_somo_helpers_glob "*_osx*")
+else()
+    set(_somo_helpers_glob "*_linux64")
+endif()
+file(GLOB _somo_helpers "${_somo_top}/add_to_bin/${_somo_helpers_glob}")
+if(_somo_helpers)
+    file(COPY ${_somo_helpers} DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
+# On Linux SOMO is built with BIN64 (as qmake does) and looks for the
+# helpers in bin64/, which makesomo.sh links to bin/ in an installation.
+if(UNIX AND NOT APPLE AND NOT EXISTS "${_somo_out}/bin64"
+   AND NOT IS_SYMLINK "${_somo_out}/bin64")
+    file(CREATE_LINK bin "${_somo_out}/bin64" SYMBOLIC)
 endif()
 
 # --- install -----------------------------------------------------------------
 install(TARGETS ${SOMO_INSTALL_TARGETS}
         RUNTIME DESTINATION bin
+        BUNDLE  DESTINATION bin
         LIBRARY DESTINATION lib)
 
-message(STATUS "SOMO: standalone=${SOMO_STANDALONE} "
-               "MPI=${SOMO_ENABLE_MPI} CUDA=${SOMO_ENABLE_CUDA} ADOLC=${SOMO_ENABLE_ADOLC}")
+if(SOMO_STANDALONE)
+    set(_somo_how "SOMO only")
+else()
+    set(_somo_how "as part of the UltraScan build")
+endif()
+message(STATUS "SOMO: configured ${_somo_how}; ADOLC=${SOMO_ENABLE_ADOLC}")
+message(STATUS "SOMO: programs in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
