@@ -1,6 +1,6 @@
 //! \file us_plot_control_2d.h
-#ifndef US_PLOT_CONTROL_H
-#define US_PLOT_CONTROL_H
+#ifndef US_PLOT_CONTROL_2D_H
+#define US_PLOT_CONTROL_2D_H
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
