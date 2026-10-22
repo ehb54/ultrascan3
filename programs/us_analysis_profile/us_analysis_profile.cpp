@@ -27,9 +27,10 @@ US_AnalysisProfileGui::US_AnalysisProfileGui() : US_Widgets()
    QGridLayout* statL     = new QGridLayout();
    QHBoxLayout* buttL     = new QHBoxLayout();
 
-   connection_status   = false;
-   automode            = false;
-   abde_mode_aprofile  = false;
+   connection_status    = false;
+   automode             = false;
+   abde_mode_aprofile   = false;
+   velmwl_mode_aprofile = false;
 
    // Create tab and panel widgets
    tabWidget           = us_tabwidget();
@@ -731,69 +732,133 @@ DbgLv(1) << "APG: ipro:  ap_xml length" << ap_xml.length();
 	     //Also, clean  currProf->ch_reports first  (since it will be re-created form DB here )
 	     currProf.ch_reports.clear();  // <-- Will this cause crash - as this omits "B:Interf." cannels ??
 
-	     // iterate over QMap ch_report_ids[ chdesc_alt ]
-	     QMap<QString, QList <int >>::iterator ri;
-	     for ( ri = currProf.ch_report_ids.begin(); ri != currProf.ch_report_ids.end(); ++ri )
-	       {
-		 QString channel_alt_desc = ri.key();
-		 //int     reportID         = ri.value();
+        // Progress bookkeeping: each report counts as 100 units, split
+        // across its items
+        int rep_total = 0, rep_done = 0;
+        for ( auto it = currProf.ch_report_ids.constBegin(); it != currProf.ch_report_ids.constEnd(); ++it )
+        {
+           rep_total += it.value().size();
+        }
+        const int RUNITS = 100;
 
-		 QList< int > reportIDs  = ri.value();
-		 
-		 //ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of reportIDs for a given channel
-		 //next will be cycle over this QList... 
+        // ONE DB connection for all reports (was: a new connection per
+        // report)
+        US_Passwd rpw;
+        US_DB2    rdb( rpw.getPasswd() );
+        bool      db_ok = true;
+        if ( rdb.lastErrno() != US_DB2::OK )
+        {
+           QMessageBox::warning(
+              this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + rdb.lastError() );
+           db_ok = false;
+        }
 
-		 QString wvl_read_abde;
-		 for (int rid = 0; rid < reportIDs.size(); ++rid )
-		   {
-		     int reportID = reportIDs[ rid ];
-		     qDebug() << "Reading reportItems form DB: channel_alt_desc, reportID  -- " << channel_alt_desc << ", " << reportID;
-		 
-		     //retrieve report from DB
-		     US_ReportGMP * reportFromDB = new US_ReportGMP();
-		     get_report_by_ID( reportFromDB, reportID );
-		     
-		     
-		     //ALEXEY_NEW_REPORT: here the QMap< QString, QMap < QString(wvl), US_ReportGMP > > currProf.ch_reports will be filled
-		     //Something like currProf.ch_reports[ channel_alt_desc ][ wvl ] -- where wvl == *reportFromDB->wavelength;
-		     // OR  wvl is returned from get_report_by_ID( reportFromDB, reportID );
+        if ( progress_cb && rep_total > 0 && db_ok )
+        {
+           progress_cb( 0, rep_total * RUNITS, tr( "Reading reports from DB..." ) );
+        }
 
-		     QString wvl_read = QString::number( reportFromDB->wavelength );
+        // iterate over QMap ch_report_ids[ chdesc_alt ]
+        QMap<QString, QList<int>>::iterator ri;
+        for ( ri = currProf.ch_report_ids.begin(); db_ok && ri != currProf.ch_report_ids.end(); ++ri )
+        {
+           QString    channel_alt_desc = ri.key();
+           // int     reportID         = ri.value();
 
-		     if ( reportIDs.size() == 1 )
-		       wvl_read_abde = wvl_read;
-		     
-		     //assign retieved report to currProf.ch_reports[ channel_alt_desc ];
-		     currProf.ch_reports[ channel_alt_desc ][ wvl_read ] = *reportFromDB;
+           QList<int> reportIDs = ri.value();
 
-		     qDebug() << "Filling currProf.ch_reports from DB: channel_alt_desc, wvl_read -- " << channel_alt_desc << ", " << wvl_read;
-		   }
+           // ALEXEY_NEW_REPORT: here ri.value() will be QList/QVector of
+           // reportIDs for a given channel next will be cycle over this
+           // QList...
 
-		 //In case of ABDE: the above loop would contain only 1 report (in DB: 1 report per channel [1st wvl])
-		 //For internal consistency, we need to populate (COPY) reports for the rest of wvls in the channel (will not be used)
-		 QList< double > ch_wavelengths = currProf.ch_wvls[ channel_alt_desc ];
-		 if ( abde_mode_aprofile
-		      && reportIDs.size() == 1
-		      && ch_wavelengths.size() > 1
-		      && !wvl_read_abde.isEmpty() )
-		   {
-		     qDebug() << "AProfile[ABDE]: reading from DB: replicating reports for MWL based on the 1st channel's wvl -- ";
-		     for ( int i=0; i<ch_wavelengths.size(); ++i )
-		       {
-			 QString c_wvl = QString::number ( ch_wavelengths[ i ] );
-			 if ( c_wvl == wvl_read_abde )
-			   {
-			     qDebug() << "Skipping 1st wvl: wvl = " << wvl_read_abde;
-			     continue;
-			   }
-			 
-			 qDebug() << "Filling wvl = " << c_wvl << ", with ref_wvl = " << wvl_read_abde;
-			 currProf.ch_reports[ channel_alt_desc ][ c_wvl ] = currProf.ch_reports[ channel_alt_desc ][ wvl_read_abde ];
-		       }
-		   }
-		 //END of replicating ch_reports for ABDE
-	       }
-	   }
+           QString    wvl_read_abde;
+           for ( int rid = 0; rid < reportIDs.size(); ++rid )
+           {
+              int reportID = reportIDs[rid];
+              qDebug() << "Reading reportItems form DB: channel_alt_desc, "
+                          "reportID  -- "
+                       << channel_alt_desc << ", " << reportID;
+
+              // retrieve report from DB
+              QString rep_detail =
+                 tr( "Reading report %1 of %2 (%3)..." ).arg( rep_done + 1 ).arg( rep_total ).arg( channel_alt_desc );
+              if ( progress_cb )
+              {
+                 progress_cb( rep_done * RUNITS, rep_total * RUNITS, rep_detail );
+              }
+
+              std::function<void( int, int )> item_cb;
+              if ( progress_cb )
+              {
+                 item_cb = [&]( int idone, int itotal )
+                 {
+                    if ( itotal <= 0 )
+                    {
+                       return;
+                    }
+                    progress_cb( rep_done * RUNITS + ( RUNITS * idone ) / itotal,
+                                 rep_total * RUNITS,
+                                 tr( "%1 item %2 of %3" ).arg( rep_detail ).arg( idone ).arg( itotal ) );
+                 };
+              }
+
+              US_ReportGMP* reportFromDB = new US_ReportGMP();
+              get_report_by_ID( reportFromDB, reportID, &rdb, item_cb );
+
+              // ALEXEY_NEW_REPORT: here the QMap< QString, QMap <
+              // QString(wvl), US_ReportGMP > > currProf.ch_reports will be
+              // filled Something like currProf.ch_reports[ channel_alt_desc
+              // ][ wvl ] -- where wvl == *reportFromDB->wavelength;
+              //  OR  wvl is returned from get_report_by_ID( reportFromDB,
+              //  reportID );
+
+              QString wvl_read = QString::number( reportFromDB->wavelength );
+
+              if ( reportIDs.size() == 1 )
+              {
+                 wvl_read_abde = wvl_read;
+              }
+
+              // assign retieved report to currProf.ch_reports[
+              // channel_alt_desc ];
+              currProf.ch_reports[channel_alt_desc][wvl_read] = *reportFromDB;
+              delete reportFromDB; // was leaked
+              ++rep_done;
+
+              qDebug() << "Filling currProf.ch_reports from DB: "
+                          "channel_alt_desc, wvl_read -- "
+                       << channel_alt_desc << ", " << wvl_read;
+           }
+
+           // In case of ABDE: the above loop would contain only 1 report
+           // (in DB: 1 report per channel [1st wvl]) For internal
+           // consistency, we need to populate (COPY) reports for the rest
+           // of wvls in the channel (will not be used)
+           QList<double> ch_wavelengths = currProf.ch_wvls[channel_alt_desc];
+           if ( abde_mode_aprofile && reportIDs.size() == 1 && ch_wavelengths.size() > 1 && !wvl_read_abde.isEmpty() )
+           {
+              qDebug() << "AProfile[ABDE]: reading from DB: replicating reports "
+                          "for MWL based on the 1st channel's wvl -- ";
+              for ( int i = 0; i < ch_wavelengths.size(); ++i )
+              {
+                 QString c_wvl = QString::number( ch_wavelengths[i] );
+                 if ( c_wvl == wvl_read_abde )
+                 {
+                    qDebug() << "Skipping 1st wvl: wvl = " << wvl_read_abde;
+                    continue;
+                 }
+
+                 qDebug() << "Filling wvl = " << c_wvl << ", with ref_wvl = " << wvl_read_abde;
+                 currProf.ch_reports[channel_alt_desc][c_wvl] = currProf.ch_reports[channel_alt_desc][wvl_read_abde];
+              }
+           }
+           // END of replicating ch_reports for ABDE
+        }
+        if ( progress_cb && rep_total > 0 )
+        {
+           progress_cb( rep_total * RUNITS, rep_total * RUNITS, QString() );
+        }
+      }
       }
    }
 
@@ -923,28 +988,38 @@ DbgLv(1) << "APG: ipro: nchn" << nchn << "call pGen iP";
 }
 
 //retrieve Report by ID from DB into ReportGMP structure
-void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int reportID )
+void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP*                          reportFromDB,
+                                              int                                    reportID,
+                                              US_DB2*                                db_in,
+                                              const std::function<void( int, int )>& item_cb )
 {
-  US_DB2* db  = NULL;
-  US_Passwd pw;
-  db            = new US_DB2( pw.getPasswd() );
-  if ( db->lastErrno() != US_DB2::OK )
-    {
-      QMessageBox::warning( this, tr( "Connection Problem" ),
-			    tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
-      return;
-    }
+   // Use caller's open connection if given; else connect here (and clean up on
+   // exit)
+   QScopedPointer<US_DB2> db_own;
+   US_DB2*                db = db_in;
+   if ( !db )
+   {
+      US_Passwd pw;
+      db_own.reset( new US_DB2( pw.getPasswd() ) );
+      db = db_own.data();
+      if ( db->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning(
+            this, tr( "Connection Problem" ), tr( "Reading Report: Could not connect to database: \n" ) + db->lastError() );
+         return;
+      }
+   }
 
-  //Read parent Report
-  QStringList qry;
-  qry << "get_report_info_by_id" << QString::number( reportID );
-  qDebug() << "In get_report_by_ID(): query -- " << qry;
-  db->query( qry );
+   //Read parent Report
+   QStringList qry;
+   qry << "get_report_info_by_id" << QString::number( reportID );
+   qDebug() << "In get_report_by_ID(): query -- " << qry;
+   db->query( qry );
 
-  QString reportMaskJson;
-  
-  if ( db->lastErrno() == US_DB2::OK )      
-    {
+   QString reportMaskJson;
+
+   if ( db->lastErrno() == US_DB2::OK )
+   {
       while ( db->next() )
 	{
 	  reportFromDB->channel_name            = db->value( 0 ).toString();  
@@ -1031,7 +1106,7 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
       
       //was read from DB
       reportFromDB->DBread = true;
-    }
+   }
 
   //Read children: reportItems-by-reportID && insert them to parent report
   reportFromDB->reportItems.clear();
@@ -1054,33 +1129,42 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	}
       
       // reportItem information
-      foreach ( int ID, reportItemsIDs )
-	{
-	  qry.clear();
-	  qry  << QString( "get_report_item_info_by_id" )
-	       << QString::number( ID );
-	  db->query( qry );
-	  db->next();
+   const int n_items = reportItemsIDs.size();
+   int       i_item  = 0;
+   if ( item_cb )
+   {
+      item_cb( 0, n_items );
+   }
+   foreach ( int ID, reportItemsIDs )
+   {
+      qry.clear();
+      qry << QString( "get_report_item_info_by_id" ) << QString::number( ID );
+      db->query( qry );
+      db->next();
 
-	  US_ReportGMP::ReportItem reportItem_read;
-	  
-	  reportItem_read.type              =   db->value( 0 ).toString();
-	  reportItem_read.method            =   db->value( 1 ).toString();
-	  reportItem_read.range_low         =   db->value( 2 ).toString().toDouble();	   
-	  reportItem_read.range_high        =   db->value( 3 ).toString().toDouble();
-	  reportItem_read.integration_val   =   db->value( 4 ).toString().toDouble();	   
-	  reportItem_read.tolerance         =   db->value( 5 ).toString().toDouble();
-	  reportItem_read.total_percent     =   db->value( 6 ).toString().toDouble();
-	  reportItem_read.combined_plot     =   db->value( 7 ).toString().toInt();
-	  reportItem_read.ind_combined_plot =   db->value( 8 ).toString().toInt();
+      US_ReportGMP::ReportItem reportItem_read;
 
-	  reportItem_read.integration_val_sim   = -1;
-	  reportItem_read.total_percent_sim     = -1;
-	  reportItem_read.passed                = QString("N/A");
-  
-	  reportFromDB->reportItems.push_back( reportItem_read );
-	}
-      
+      reportItem_read.type              = db->value( 0 ).toString();
+      reportItem_read.method            = db->value( 1 ).toString();
+      reportItem_read.range_low         = db->value( 2 ).toString().toDouble();
+      reportItem_read.range_high        = db->value( 3 ).toString().toDouble();
+      reportItem_read.integration_val   = db->value( 4 ).toString().toDouble();
+      reportItem_read.tolerance         = db->value( 5 ).toString().toDouble();
+      reportItem_read.total_percent     = db->value( 6 ).toString().toDouble();
+      reportItem_read.combined_plot     = db->value( 7 ).toString().toInt();
+      reportItem_read.ind_combined_plot = db->value( 8 ).toString().toInt();
+
+      reportItem_read.integration_val_sim = -1;
+      reportItem_read.total_percent_sim   = -1;
+      reportItem_read.passed              = QString( "N/A" );
+
+      reportFromDB->reportItems.push_back( reportItem_read );
+
+      if ( item_cb )
+      {
+         item_cb( ++i_item, n_items );
+      }
+   }
     }
   else //No reportItem(s) for report in the DB: push default rpeortItem structure??
     {
@@ -1125,7 +1209,6 @@ void US_AnalysisProfileGui::get_report_by_ID( US_ReportGMP* reportFromDB, int re
 	reportFromDB->reportItems.push_back( initItem );
     }
 }
-
 
 // Reset parameters to their defaults
 void US_AnalysisProfileGui::close_program( void )
@@ -2578,7 +2661,12 @@ void US_AnaprofPanGen::setReport( void )
    //abde
    if ( mainw->abde_mode_aprofile )
      reportGui->abde_mode_passed();
-   
+   // VELOCITY-MWL
+   else if ( mainw->velmwl_mode_aprofile )
+   {
+      reportGui->velmwl_mode_passed();
+   }
+
    reportGui->show();
 
 }

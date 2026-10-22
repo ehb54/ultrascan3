@@ -20,10 +20,28 @@ HEADERS       = us_fematch.h          \
                 ../us_ddist_combine/us_select_rundd.h  \
                 ../us_pseudo3d_combine/us_pseudo3d_combine.h \
                 ../us_pseudo3d_combine/us_remove_distros.h \
-                 ../us_mwl_species_fit/us_mwl_species_fit.h \
+                ../us_mwl_species_fit/us_mwl_species_fit.h \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.h \
                 ../us_mwl_species_fit/us_load_run_noise.h \
-                ../us_abde/us_norm_profile.h
+                ../us_abde/us_norm_profile.h \
+                ../us_mwl_species_sim/us_mwl_species_sim.h \
+                ../us_edit/us_edit.h \
+                ../us_edit/us_ri_noise.h \
+                ../us_edit/us_get_edit.h \
+                ../us_edit/us_select_lambdas.h \
+                ../us_edit/us_exclude_profile.h \
+                ../us_edit/us_edit_scan.h \
+                ../us_2dsa/us_2dsa.h \
+                ../us_2dsa/us_worker_calcnorm.h \
+                ../us_2dsa/us_worker_2d.h \
+                ../us_2dsa/us_show_norm.h \
+                ../us_2dsa/us_resplot_2d.h \
+                ../us_2dsa/us_plot_control_2d.h \
+                ../us_2dsa/us_adv_analysis_2d.h \
+                ../us_2dsa/us_2dsa_process.h \
+                ../us_2dsa/us_analysis_control_2d.h \
+                ../us_integral/us_integral.h \
+                ../us_integral/us_delete_models.h
                 
        
 SOURCES       = us_fematch_main.cpp     \
@@ -46,7 +64,25 @@ SOURCES       = us_fematch_main.cpp     \
                 ../us_mwl_species_fit/us_mwl_species_fit.cpp \
                 ../us_mwl_species_fit/us_mwl_sf_plot3d.cpp \
                 ../us_mwl_species_fit/us_load_run_noise.cpp \
-                ../us_abde/us_norm_profile.cpp
+                ../us_abde/us_norm_profile.cpp \
+                ../us_mwl_species_sim/us_mwl_species_sim.cpp \
+                ../us_edit/us_edit.cpp  \
+                ../us_edit/us_ri_noise.cpp \
+                ../us_edit/us_get_edit.cpp \
+                ../us_edit/us_select_lambdas.cpp \
+                ../us_edit/us_exclude_profile.cpp \
+                ../us_edit/us_edit_scan.cpp \
+                ../us_2dsa/us_2dsa.cpp \
+                ../us_2dsa/us_worker_calcnorm.cpp \
+                ../us_2dsa/us_worker_2d.cpp \
+                ../us_2dsa/us_show_norm.cpp \
+                ../us_2dsa/us_resplot_2d.cpp \
+                ../us_2dsa/us_plot_control_2d.cpp \
+                ../us_2dsa/us_adv_analysis_2d.cpp \
+                ../us_2dsa/us_2dsa_process.cpp \
+                ../us_2dsa/us_analysis_control_2d.cpp \
+                ../us_integral/us_integral.cpp \
+                ../us_integral/us_delete_models.cpp
                 
                 
                 
