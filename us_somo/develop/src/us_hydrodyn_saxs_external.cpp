@@ -33,6 +33,14 @@ void US_Hydrodyn_Saxs::editor_msg( QColor color, QColor bgcolor, QString msg )
 
 void US_Hydrodyn_Saxs::editor_msg( QColor color, QString msg )
 {
+   // in a headless gui_script run the editor pane is never seen; echo to stdout so scripted
+   // runs (e.g. saxs_extrap_c0) still surface their diagnostics for logging / validation.
+   if ( us_hydrodyn && ((US_Hydrodyn *) us_hydrodyn)->gui_script )
+   {
+      QString plain = msg;
+      plain.replace( QRegularExpression( QStringLiteral( "\n*$" ) ), "" );
+      QTextStream( stdout ) << plain << "\n";
+   }
    QColor save_color = editor->textColor();
    editor->setTextColor(color);
    editor->append(msg);
