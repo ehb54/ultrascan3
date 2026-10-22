@@ -251,7 +251,7 @@ QSizeF US_SoluteData::bucketSize(  int ix )
 
 QString US_SoluteData::bucketLine( int ix )
 {
-   const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f" };
+   const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f", "Rh" };
 
    bucket  buk = bucketAt( ix );
    int     kx  = ( ix < 0 ) ? bucketsCount() : ( ix + 1 );

@@ -699,12 +699,6 @@ void US_GA_Initialize::autoAssignSb( void )
       return;
    }
 
-   if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
-   {
-      QMessageBox::information( this, "Information", "Autoassign is disabled if Rh selected.");
-      return;
-   }
-
    resetSb();
    int nisols    = xy_distro.size();
    double wxbuck = ct_wxbuck->value();
