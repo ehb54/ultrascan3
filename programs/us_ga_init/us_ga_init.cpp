@@ -1505,6 +1505,7 @@ void US_GA_Initialize::selectBinAtPoint( const QPointF& point )
       {
          lw_buckets->setCurrentRow( row );
          lw_buckets->scrollToItem( lw_buckets->item( row ) );
+         lw_buckets->setFocus( Qt::OtherFocusReason );
          return;
       }
    }
