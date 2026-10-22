@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+        <title>SOMO Perceive Non-Coded Residues</title>
+        <link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - Perceive Non-Coded Residues:</h2>
+<p>
+<h3><center>Last updated: August 2026 </center></h3><p>
+</center>
+<p>
+A residue that is not defined in the <a href="somo_residue.html"><i>somo.residue</i></a> table
+is handed to the <b>Automatic Bead Builder</b>, which represents it by a single bead carrying
+<i>averaged</i>, generic properties. For a ligand, a cofactor or a modified residue that can be
+a poor description.
+<p>
+This module derives a tentative <i>somo.residue</i> entry for such a residue from its
+<b>coordinates alone</b>, and presents it for review. Nothing is computed from the residue's
+name: bonds are perceived from interatomic distances, rings and aromaticity from the resulting
+graph, and each atom's hybridization &mdash; and hence its mass, van der Waals radius and
+electron count &mdash; follows from that. The partial specific volume, the anhydrous volume and
+the hydration are then computed from the perceived chemistry.
+<p>
+It is reached from <b><i>Lookup Tables &rarr; Perceive Non-Coded Residues...</i></b> after a
+structure has been loaded.
+<p>
+<center>
+<img SRC="somo-perceive.png" ALT="SOMO Screen">
+<p>
+<font face="helvetica" size="-1">
+The citrate of 2CMD, reviewed. Three of its thirteen atoms are flagged: the carboxyl and the two
+symmetric carboxylate oxygens, where the protonation convention and the <i>pH</i> 7 hydration
+rule are assumptions rather than perceptions.
+</font>
+</center>
+
+<p>
+<b>Using the module:</b>
+<p>
+<ol>
+<li> <b>Load a PDB</b> containing a residue <i>somo.residue</i> does not code.
+<li> If <b><i>US-SOMO</i></b> raises its own dialog about the unrecognized residue, choose the
+     option that <b>stops processing</b>. Perceive first, build second: letting the bead builder
+     run first leaves the Automatic Bead Builder's <i>_NC</i> placeholder residues in the model.
+<li> Open <b><i>Lookup Tables &rarr; Perceive Non-Coded Residues...</i></b>
+<li> Review each proposed entry and <b>Accept</b> or <b>Skip this residue</b>.
+<li> Build the bead model as usual (<i>SoMo</i>, <i>SoMo</i> overlap, <i>vdW</i> or <i>AtoB</i>).
+</ol>
+<p>
+One dialog is shown per non-coded residue <i>type</i>. Everything the module does &mdash; and
+every reason it declines to do something &mdash; is echoed to the text window.
+
+<p>
+<b>The review dialog:</b>
+<p>
+<ul>
+<li> <b>View residue in RasMol</b> shows the residue spacefilled inside the rest of the
+     structure, which is drawn as a thin grey wireframe. Solvent and hydrogens are removed and
+     the view is centred on the residue, so a buried ligand stays visible rather than being lost
+     in the surrounding model.
+<li> The <b>atom table</b> lists each atom's perceived name, hybridization, mass and radius.
+     These are <i>read-only</i>: they follow from the geometry, and editing them would
+     desynchronise the entry from the structure it was derived from. The <b>hydration</b> column
+     is editable.
+<li> An <b>ionizable</b> atom carries three further columns on the same row: the
+     <b>Ionized</b> hybridization it takes when deprotonated, its <b>Ionized hydration</b>, and
+     the <b>pKa</b>. These are how the coded ionizable residues are already stored &mdash; Asp's
+     OD2, for instance, is written as <i>O2H1</i> with no waters in the protonated state and
+     <i>O1H0-</i> with five in the deprotonated one &mdash; and an entry with them is written the
+     same way, so <b><i>US-SOMO</i></b> can select the state by pH exactly as it does for a coded
+     residue. The ionized hydration and the pKa are editable; the ionized type follows from the
+     chemistry. Each ionizable group carries <b>its own pKa</b>, so the two groups of an entry can
+     be given different values.
+     <p>
+     The proposed pKa is a <b>convention value</b> borrowed from whichever coded residue shares
+     the group (a carboxyl takes Asp's 3.67 or Glu's 4.25 according to chain length), <i>not</i> a
+     prediction for your molecule. Citrate is the cautionary case: all three of its carboxyls are
+     proposed at 3.67, where the real values are roughly 3.13, 4.76 and 6.40. Check it.
+<li> A residue file entry can hold <b>at most two</b> ionizable groups. A molecule with more &mdash;
+     citrate has three carboxyls, phosphate three oxygens &mdash; follows the convention already
+     used for phosphate in the coded table: the <b>lowest-pKa</b> groups are taken as
+     <b>permanently deprotonated</b> and the two highest keep the real, pH-switchable slots. A
+     fixed group shows its deprotonated type and waters in the ordinary columns, with its ionized
+     columns greyed out, because there is no second state for it to switch to. Lowest-first is the
+     safe choice: the lowest pKa is the first to deprotonate, so it is already fully ionized over
+     the pH range where the entry is used. For citrate this keeps the 2&minus;/3&minus; transition
+     live; only the 3.13 carboxyl is frozen.
+<li> <b>Anhydrous volume</b> and <b>psv</b> are editable.
+<li> <b>Bead count</b> is fixed at one for now; the <b>bead position</b> is the centre of
+     gravity of all atoms; the <b>bead colour</b> defaults to <i>light green</i>, the colour the
+     Automatic Bead Builder uses for non-coded residues. Colours that would exclude a bead from
+     the hydrodynamic computation are never offered.
+<li> The <b>Flagged for review</b> box lists everything the perceiver was not confident about. These are
+     the entries worth your attention; they are not noise. Its heading gives the number of items,
+     and the list scrolls &mdash; the count tells you whether there is more below the fold. Each
+     atom appears once, with all of its notes on that line.
+<li> <b>Reset this residue</b> discards your edits and returns the entry to what the perceiver
+     originally proposed. Accepted residues can also be <b>revisited</b>: reopening the module
+     shows the values you accepted, under the original review notes, so an entry can be adjusted
+     later without being rebuilt from scratch.
+<li> <b>Skip all remaining</b> abandons the review and leaves every remaining residue to the
+     Automatic Bead Builder. A neutron structure with explicit deuteriums can make a great many
+     residues look non-coded; this is the way out.
+</ul>
+
+<p>
+<b>How long does an accepted entry last?</b>
+<p>
+<table BORDER=1 CELLPADDING=5>
+<tr><th>Action</th><th>Where the entry goes</th><th>How long it lasts</th></tr>
+<tr><td><b>Accept</b>, checkbox unticked</td>
+    <td><i>somo.residue.perceived</i>, which becomes the active lookup table</td>
+    <td><b>this session only</b></td></tr>
+<tr><td><b>Accept</b> + <i>Also append this entry to somo.residue</i></td>
+    <td>also appended to your <i>somo.residue</i></td>
+    <td>permanent</td></tr>
+</table>
+<p>
+On <b>Accept</b> the entry takes effect at once: the structure is re-read against the updated
+table and the residue stops being non-coded, so a bead model can be built straight away. The
+label beside <b>Select Lookup Table</b> changes to <i>somo.residue.perceived</i>, so the active
+table is always visible.
+<p>
+<b>Accepted entries are not remembered across restarts.</b> <b><i>US-SOMO</i></b> resets the
+active table to <i>somo.residue</i> every time it starts. The <i>somo.residue.perceived</i> file
+remains on disk but is not loaded, and the <i>next</i> session's first <b>Accept</b> rebuilds
+that file from <i>somo.residue</i> &mdash; overwriting what an earlier session accepted. To keep
+an entry, either tick <b>Also append this entry to somo.residue</b>, or press <b>Select Lookup Table</b> and choose
+<i>somo.residue.perceived</i> by hand <i>before</i> accepting anything new.
+<p>
+Accepting several residues within one session accumulates them all into the one file.
+
+<p>
+<b>What the computed numbers are worth:</b>
+<p>
+<ul>
+<li> <b>psv</b> is computed from the Durchschlag &amp; Zipper atomic volume increments. Typical
+     accuracy is &plusmn;2-3% for ordinary neutral organic chemistry, and poorer for charged
+     groups, lipids and ionic detergents. It is not applicable to metal or Fe-S clusters.
+<li> <b>Anhydrous volume</b> is a solvent-excluded volume computed on a grid at a 1.4 &Aring;
+     probe, scaled onto the convention the coded residues use.
+<li> <b>Hydration</b> is the weakest of the three. It is proposed from <i>pH</i> 7 chemistry
+     rules, falling back to an average over the coded residues for groups the rules do not
+     recognise. The residue <i>total</i> is the quantity with literature backing (Kuntz); the
+     per-atom split is convention. <b>vdW models rely on atomic hydration</b>, so that is where
+     a weak proposal shows up as a real modelling problem rather than as a number in a table.
+<li> <b>ASA</b> is a placeholder, not a measurement. Nothing computes with a residue's tabulated
+     ASA, but it may not be zero or the entry will not load at all.
+</ul>
+
+<p>
+<b>How accurate is it?</b>
+<p>
+A free ligand has nothing to check against, so the accuracy above is measured by <i>renaming</i>
+a residue the table already codes. The atoms are untouched, only the name in the PDB changes, so
+the coded entry for what the residue really is becomes the answer key. <i>8RATNC.pdb</i>,
+distributed with <b><i>US-SOMO</i></b>, is this trick done by hand: 8RAT with <b>LYS 31</b>
+renamed <b>LYD</b>.
+<p>
+Perceived from the structure, against the coded values:
+<p>
+<table BORDER=1 CELLPADDING=5>
+<tr><th>really</th><th>psv perceived</th><th>psv coded</th><th>difference</th>
+    <th>volume perceived</th><th>volume coded</th><th>difference</th><th>hydration</th></tr>
+<tr><td><b>SER</b></td><td>0.632</td><td>0.628</td><td>+0.6%</td>
+    <td>97.95</td><td>95.40</td><td>+2.7%</td><td>2.0 / 2.0</td></tr>
+<tr><td><b>LEU</b></td><td>0.892</td><td>0.898</td><td>&minus;0.7%</td>
+    <td>158.61</td><td>164.00</td><td>&minus;3.3%</td><td>1.0 / 1.0</td></tr>
+<tr><td><b>LYS</b></td><td>0.871</td><td>0.818</td><td><b>+6.5%</b></td>
+    <td>172.85</td><td>167.30</td><td>+3.3%</td><td>4.0 / 4.0</td></tr>
+<tr><td><b>ARG</b></td><td>0.809</td><td>0.698</td><td><b>+15.9%</b></td>
+    <td>196.19</td><td>194.00</td><td>+1.1%</td><td>3.0 / 3.0</td></tr>
+</table>
+<p>
+<ul>
+<li> <b>Hydration was exact</b> on all four &mdash; the proposed number of waters matched the
+     coded one every time. This is the quantity with the least theoretical backing, so it is
+     also the one most worth spot-checking on a residue whose chemistry you know.
+<li> <b>Anhydrous volume</b> agreed to within &plusmn;3.3%.
+<li> <b>psv depends on charge.</b> The neutral side chains are excellent (&plusmn;0.7%); the
+     charged ones read high. The arginine figure of +15.9% is reproduced independently by the
+     isolated-residue validation, and is consistent with the tabulated arginine psv having been
+     measured on the <i>unprotonated</i> residue while the Durchschlag &amp; Zipper increments
+     assume it protonated. Treat a perceived psv for a charged group as provisional.
+</ul>
+<p>
+Being embedded in a chain caused no difficulty: a single non-coded residue, three in a row, and
+three alternating with coded ones all gave the same values and built cleanly. The residuals track
+<i>charge</i>, not chain context.
+
+<p>
+<b>Current limitations:</b>
+<p>
+<ul>
+<li> A perceived residue is a <b>single bead</b> with all atoms assigned to it. Multi-bead
+     residues are not proposed.
+<li> Protonation and tautomer states that heavy-atom geometry cannot resolve (histidine, the
+     guanine lactam tautomer) follow a fixed convention rather than being perceived.
+<li> An atom whose name is absent from the <a href="somo_addatom.html"><i>somo.atom</i></a>
+     table is resolved from its hybridization, or failing that its element, rather than being
+     dropped from the surface area and excluded volume. The text window records each such
+     substitution.
+</ul>
+
+<p>
+<hr>
+<p>
+<font face="helvetica" size="-1">
+The
+</font>
+<font face="helvetica" size="-1">
+latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on August 9, 2026.
+</font>
+
+</body>
+</html>
