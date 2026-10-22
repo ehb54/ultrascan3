@@ -80,13 +80,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    // series of rows: most of them label on left, counter/box on right
    lb_info1      = us_banner( tr( "Genetic Algorithm Controls" ) );
 
-   lb_nisols     = us_label( tr( "Number of Initial Solutes:" ) );
-   lb_nisols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_nisols     = us_counter( 3, 1.0, 1000.0, 1.0 );
-   ct_nisols->setSingleStep( 1 );
-   ct_nisols->setEnabled( true );
-
    lb_wxbuck     = us_label( tr( "Width of s Bucket:" ) );
    lb_wxbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
@@ -211,7 +204,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( bg_y_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_y_axis );
 
    lb_info3      = us_banner( tr( "Bucket List" ) );
-   lw_sbin_data = us_listwidget( );
+   lw_sbin_data  = us_listwidget( );
    connect( lw_sbin_data, &QAbstractItemView::pressed,
             this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
    // connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
@@ -219,6 +212,14 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( lw_sbin_data, &QListWidget::currentRowChanged,
             this,         &US_GA_Initialize::highlight_bucket );
 
+   QLabel* lb_nsols = us_label( tr( "Number Solutes:" ) );
+   lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+
+   QLabel* lb_nbuks = us_label( tr( "Number Buckets:" ) );
+   lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+
+   le_nsols = us_lineedit( "", -1, true );
+   le_nbuks = us_lineedit( "", -1, true );
 
    lb_info4      = us_banner( tr( "Data Controls" ) );
 
@@ -244,7 +245,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ) );
    pb_mandrsb->setCheckable( true );
    
-   connect( pb_mandrsb, &QAbstractButton::clicked,
+   connect( pb_mandrsb, &QAbstractButton::toggled,
             this,       &US_GA_Initialize::manDrawSb );
 
    pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
@@ -293,8 +294,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    int s_row = 0;
    spec->addWidget( lb_info1,     s_row++, 0, 1, 8 );
-   spec->addWidget( lb_nisols,    s_row,   0, 1, 4 );
-   spec->addWidget( ct_nisols,    s_row++, 4, 1, 4 );
    spec->addWidget( lb_wxbuck,    s_row,   0, 1, 4 );
    spec->addWidget( ct_wxbuck,    s_row++, 4, 1, 4 );
    spec->addWidget( lb_hybuck,    s_row,   0, 1, 4 );
@@ -333,6 +332,10 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( le_plymax,    s_row++, 6, 1, 2 );
    spec->addWidget( lb_info3,     s_row++, 0, 1, 8 );
    spec->addWidget( lw_sbin_data, s_row++, 0, 1, 8 );
+   spec->addWidget( lb_nsols,     s_row,   0, 1, 2 );
+   spec->addWidget( le_nsols,     s_row,   2, 1, 2 );
+   spec->addWidget( lb_nbuks,     s_row,   4, 1, 2 );
+   spec->addWidget( le_nbuks,     s_row++, 6, 1, 2 );
    spec->addWidget( lb_info4,     s_row++, 0, 1, 8 );
    spec->addLayout( dkdb_cntrls,  s_row++, 0, 1, 8 );
    spec->addWidget( le_prefilt,   s_row++, 0, 1, 8 );
@@ -413,10 +416,11 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pick->setRubberBandPen( *pickpen );
    pick->setTrackerPen(    *pickpen );
    pick->setRubberBand(    QwtPicker::RectRubberBand );
-   connect( pick, &US_PlotPicker::mouseDown,
-            this, &US_GA_Initialize::getMouseDown );
-   connect( pick, &US_PlotPicker::mouseUp,
-            this, &US_GA_Initialize::getMouseUp );
+   connect( pick, qOverload<const QRectF&>( &QwtPlotPicker::selected ),
+            this, [this]( const QRectF& region ) {
+      getMouseDown( region.topLeft() );
+      getMouseUp( region.bottomRight() );
+   } );
    
    reset();
 }
@@ -424,6 +428,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 // reset the GUI
 void US_GA_Initialize::reset( void )
 {
+   pb_mandrsb->setChecked( false );
+   manbuks = false;
    sk_distro.clear();
    xy_distro.clear();
    pfilts.clear();
@@ -469,6 +475,9 @@ void US_GA_Initialize::reset( void )
    plymin = 1.0;
    plymax = 4.0;
    rb_y_ff0->setChecked( true );
+   select_x_axis( ATTR_S );
+   select_y_axis( ATTR_K );
+   attr_z = ATTR_V;
    
    le_plxmin->clear();
    le_plxmax->clear();
@@ -489,6 +498,9 @@ void US_GA_Initialize::reset( void )
    data_plot->replot();
 
    manual_limits.clear();
+
+   le_nsols->clear();
+   le_nbuks->clear();
 
    // default to white-cyan-magenta-red-black color map
    colormap   = new QwtLinearColorMap( Qt::white, Qt::black );
@@ -511,12 +523,18 @@ void US_GA_Initialize::save( void )
       return;
    }
 
-   // Sort the buckets in increasing-s order
-   // int hlx  = lw_sbin_data->currentRow();
-   soludata->sortBuckets();
+   if ( attr_x == ATTR_R || attr_y == ATTR_R || attr_z == ATTR_R )
+   {
+      QMessageBox::warning( this, "Unsupported GA attribute",
+         "Hydrodynamic radius is not supported by the GA boundary file format." );
+      return;
+   }
 
-   // Reset the buckets plot and list
-   // resetPlotAndList( hlx );
+   // Sort the buckets in increasing-s order
+   soludata->sortBuckets();
+   fill_lw_bins();
+   plot_buckets();
+   is_saved = false;
 
    // Test for overlaps
    int novlps = soludata->countOverlaps();
@@ -636,6 +654,8 @@ DbgLv(1) << "SAVE fnst2" << fnst2;
 void US_GA_Initialize::manDrawSb( void )
 {
    if ( sk_distro.isEmpty() ) {
+      pick->setEnabled( false );
+      pb_mandrsb->setChecked( false );
       return;
    }
 
@@ -665,11 +685,11 @@ void US_GA_Initialize::autoAssignSb( void )
       return;
    }
 
-   // if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
-   // {
-   //    QMessageBox::information( this, "Information", "Autoassign is disabled when Rh is selected.");
-   //    return;
-   // }
+   if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
+   {
+      QMessageBox::information( this, "Information", "Autoassign is disabled if Rh selected.");
+      return;
+   }
 
    if ( soludata->bucketsCount() > 0 )
    {
@@ -682,7 +702,7 @@ void US_GA_Initialize::autoAssignSb( void )
       }
    }
    resetSb();
-   int nisols    = ct_nisols->value();
+   int nisols    = xy_distro.size();
    double wxbuck = ct_wxbuck->value();
    double hybuck = ct_hybuck->value();
    soludata->autoCalcBins( nisols, wxbuck, hybuck );
@@ -700,15 +720,22 @@ void US_GA_Initialize::fill_lw_bins()
 {
    const QSignalBlocker blocker( lw_sbin_data );
    lw_sbin_data->clear();
-   for ( int ii = 0; ii < soludata->bucketsCount(); ii++ )
+   int nbuks = soludata->bucketsCount();
+   for ( int ii = 0; ii < nbuks; ii++ )
    {
       lw_sbin_data->addItem( soludata->bucketLine( ii ) );
+   }
+   le_nbuks->clear();
+   if ( nbuks > 0 )
+   {
+      le_nbuks->setText( QString::number( nbuks ) );
    }
 }
 
 // Reset solute bins
 void US_GA_Initialize::resetSb( void )
 {
+   le_nbuks->clear();
    soludata->clearBuckets();
    is_saved = false;
    fill_lw_bins();
@@ -721,8 +748,8 @@ void US_GA_Initialize::replot_data()
    if ( xy_distro.isEmpty() )
       return;
 
-   setBucketPens();
    plot_3dim();
+   setBucketPens();
    plot_buckets();
 }
 
@@ -765,7 +792,7 @@ void US_GA_Initialize::plot_buckets()
       curve->attach( data_plot );
       bucket_curves << curve;
    }
-   data_plot->replot();
+   highlight_bucket( lw_sbin_data->currentRow() );
 }
 
 // plot data 3-D
@@ -1135,6 +1162,7 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    attrs << "s" << "f/f0" << "MW" << "vbar" << "D" << "f";
    QString s_attr = attrs[ attr_z ];
 
+   le_nsols->setText( QString::number( sk_distro.size() ) );
    set_limits();
 
    data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
@@ -1445,11 +1473,11 @@ void US_GA_Initialize::highlight_bucket( int sx )
    {
       if ( ii == sx )
       {
-         bucket_curves[ ii ]->setPen( pbukpen );
+         bucket_curves[ ii ]->setPen( cbukpen );
       }
       else
       {
-         bucket_curves[ ii ]->setPen( cbukpen );
+         bucket_curves[ ii ]->setPen( pbukpen );
       }
    }
    data_plot->replot();
@@ -1502,19 +1530,11 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
       ty[1]  = p1.y();
    }
 
-   int nibuks = soludata->bucketsCount();
    // create bucket rectangle, solute point, and concentration value
    QRectF bucr( QPointF( tx[0], ty[1] ), QPointF( tx[1], ty[0] ) );
-   for ( int ii = 0; ii < nibuks; ii++ )
-   {
-      QRectF bucket = soludata->bucketRect( ii );
-      if (bucket.intersects(bucr))
-      {
-         QMessageBox::warning( this, "Warning!", "There's an overlap with the current bucket list" );
-         return;
-      }
-   }
-   
+   if ( tx[0] == tx[1] || ty[0] == ty[1] )
+      return;
+
    QPointF tpt( ( tx[0] + tx[1] ) / 2.0, ( ty[0] + ty[1] ) / 2.0 );
    QPointF& bucp = tpt;
    int sx        = soludata->findNearestPoint( bucp );
@@ -1525,9 +1545,23 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
       qreal bucc    = sol.c;  // get concentrate value
 
       // add the bucket entry and add a text box entry
-      soludata->appendBucket( bucr, bucp, bucc, 2 );
+      bucket candidate = soludata->createBucket( bucr, bucp, bucc, 2 );
+      const QRectF region( QPointF( candidate.x_min, candidate.y_min ),
+                           QPointF( candidate.x_max, candidate.y_max ) );
+      for ( int ii = 0; ii < soludata->bucketsCount(); ++ii )
+      {
+         if ( soludata->bucketRect( ii ).normalized().intersects( region.normalized() ) )
+         {
+            QMessageBox::warning( this, "Warning!", "The selected bin overlaps an existing bin." );
+            return;
+         }
+      }
+      soludata->appendBucket( candidate );
    }
 
+   if ( sx < 0 )
+      return;
+   manbuks = true;
    fill_lw_bins();
    plot_buckets();
    if (lw_sbin_data->count() > 0)
@@ -1542,6 +1576,8 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
 void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
    int  sx     = mx.row();
+   if ( sx < 0 || sx >= soludata->bucketsCount() )
+      return;
    bool global = monte_carlo || manbuks;
    bool rtbtn  = ( QApplication::mouseButtons() == Qt::RightButton );
 DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
@@ -1561,11 +1597,13 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
          const QSignalBlocker blocker( lw_sbin_data );
          delete lw_sbin_data->takeItem( sx );
          soludata->removeBucketAt( sx );
+         is_saved = false;
          bucket_curves[ sx ]->detach();
          delete bucket_curves[ sx ];
          bucket_curves.removeAt( sx );
       }
 
+      data_plot->replot();
       int nibuks = soludata->bucketsCount();
       int rx      = qMin( sx, ( nibuks - 1 ) );
       if ( rx >= 0 )
@@ -1588,6 +1626,8 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
 void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
+   if ( sx < 0 || sx >= soludata->bucketsCount() )
+      return;
    bool global = monte_carlo || manbuks;
    QPointF pt0;
 
@@ -1614,6 +1654,9 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
    QPointF pt2( x2, y2 );
    QRectF  brect( pt1, pt2 );
 
+   if ( wxbuck <= 0.0 || hybuck <= 0.0 )
+      return;
+
    changeBucketRect( sx, brect );  // change bucket rectangle
    plot_buckets();
    highlight_bucket( sx );
@@ -1624,13 +1667,26 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 // change the rectangle (vertices) for a bucket
 void US_GA_Initialize::changeBucketRect( int sx, QRectF& rect )
 {
-   bucket abuck  = soludata->bucketAt( sx );
+   if ( sx < 0 || sx >= soludata->bucketsCount() )
+      return;
 
    QPointF bpnt  = soludata->bucketPoint( sx, true );
    qreal bconc   = soludata->bucketAt( sx ).conc;
    int bstat     = 0;
 
+   bucket candidate = soludata->createBucket( rect, bpnt, bconc, bstat );
+   const QRectF region( QPointF( candidate.x_min, candidate.y_min ),
+                        QPointF( candidate.x_max, candidate.y_max ) );
+   for ( int ii = 0; ii < soludata->bucketsCount(); ++ii )
+   {
+      if ( ii != sx && soludata->bucketRect( ii ).normalized().intersects( region.normalized() ) )
+      {
+         QMessageBox::warning( this, "Warning!", "The resized bin overlaps an existing bin." );
+         return;
+      }
+   }
    soludata->setBucket( sx, rect, bpnt, bconc, bstat );
+   is_saved = false;
 
    QString line  = soludata->bucketLine( sx );
    lw_sbin_data->item( sx )->setText( line );
@@ -1942,6 +1998,7 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
    }
 
    resetSb();
+   manbuks = true;
    soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
    soludata->sortBuckets();
    fill_lw_bins();

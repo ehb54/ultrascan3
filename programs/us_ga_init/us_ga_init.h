@@ -45,7 +45,6 @@ class US_GA_Initialize : public US_Widgets
    private:
 
       QLabel*       lb_info1;
-      QLabel*       lb_nisols;
       QLabel*       lb_wxbuck;
       QLabel*       lb_hybuck;
       QLabel*       lb_info2;
@@ -64,14 +63,15 @@ class US_GA_Initialize : public US_Widgets
       QTextEdit*    te_pctl_help;
       QTextEdit*    te_status;
       QLineEdit*    le_prefilt;
-      QLineEdit*    le_plxmin;     
-      QLineEdit*    le_plxmax;     
-      QLineEdit*    le_plymin;     
-      QLineEdit*    le_plymax;     
+      QLineEdit*    le_plxmin;
+      QLineEdit*    le_plxmax;
+      QLineEdit*    le_plymin;
+      QLineEdit*    le_plymax;
+      QLineEdit*    le_nsols;
+      QLineEdit*    le_nbuks;
 
       US_Help       showHelp;
  
-      QwtCounter*   ct_nisols;
       QwtCounter*   ct_wxbuck;
       QwtCounter*   ct_hybuck;
       QwtCounter*   ct_resolu;
