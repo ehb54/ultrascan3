@@ -211,7 +211,7 @@ class US_GA_Initialize : public US_Widgets
       void setBucketPens(  void );
       void highlight_bucket( int );
       void addSelectedBin( const QRectF& );
-      void sclick_sbdata(    const QModelIndex& );
+      void deleteSelectedBin();
       void changeBucketRect( int, QRectF& );
       void erase_curves    ( bool );
       bool equivalent      ( double, double, double );

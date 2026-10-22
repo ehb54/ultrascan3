@@ -1,6 +1,7 @@
 //! \file us_ga_init.cpp
 
 #include <QApplication>
+#include <QAction>
 #include <qchar.h>
 #include <qglobal.h>
 #include <qlabel.h>
@@ -205,10 +206,15 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    lb_info3       = us_banner( tr( "Solute Bins List" ) );
    lw_buckets     = us_listwidget( );
-   connect( lw_buckets, &QAbstractItemView::pressed,
-            this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
    connect( lw_buckets, &QListWidget::currentRowChanged,
-            this,         &US_GA_Initialize::highlight_bucket );
+            this,       &US_GA_Initialize::highlight_bucket );
+   QAction* deleteBin = new QAction( tr( "Delete selected bin" ), lw_buckets );
+   deleteBin->setShortcut( QKeySequence( Qt::Key_Delete ) );
+   deleteBin->setShortcutContext( Qt::WidgetShortcut );
+   deleteBin->setAutoRepeat( false );
+   lw_buckets->addAction( deleteBin );
+   connect( deleteBin, &QAction::triggered,
+            this, &US_GA_Initialize::deleteSelectedBin );
 
    QLabel* lb_nsols = us_label( tr( "Number Solutes:" ) );
    lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -1354,8 +1360,8 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
       " You can select each solute bin from the listbox on the left and"
       " modify its size by first changing the bucket dimensions with the"
       " respective counters, then double-click on the listbox item."
-      " You may remove a bin by right-mouse-button clicking on the listbox"
-      " item and responding/defaulting Yes in the resulting dialog." );
+      " You may remove a bin by selecting it in the listbox, pressing Delete,"
+      " and confirming Yes in the resulting dialog." );
 
    if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
    {
@@ -1476,6 +1482,12 @@ void US_GA_Initialize::highlight_bucket( int sx )
          bucket_curves[ ii ]->setPen( pbukpen );
       }
    }
+   if ( sx >= 0 && sx < soludata->bucketsCount() && ( monte_carlo || manbuks ) )
+   {
+      const QRectF rect = soludata->bucketRect( sx );
+      ct_wxbuck->setValue( rect.width() );
+      ct_hybuck->setValue( rect.height() );
+   }
    data_plot->replot();
 }
 
@@ -1528,54 +1540,22 @@ void US_GA_Initialize::addSelectedBin( const QRectF& selection )
    is_saved = false;
 }
 
-// solute bin list row clicked: highlight bucket
-void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
+// Delete the current bin when Delete is pressed in the bucket list.
+void US_GA_Initialize::deleteSelectedBin()
 {
-   int  sx     = mx.row();
-   if ( sx < 0 || sx >= soludata->bucketsCount() )
+   const int row = lw_buckets->currentRow();
+   if ( row < 0 || row >= soludata->bucketsCount() )
       return;
-   bool global = monte_carlo || manbuks;
-   bool rtbtn  = ( QApplication::mouseButtons() == Qt::RightButton );
-DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
 
-   highlight_bucket( sx );
+   const QString msg = tr( "Are you sure you want to delete solute bin %1 ?" ).arg( row + 1 );
+   if ( QMessageBox::question( this, tr( "GA_Init Solute Bin Delete" ), msg ) != QMessageBox::Yes )
+      return;
 
-   if ( rtbtn )
-   {  // Handle right-mouse-button click:  delete bin
-      QString msg = tr( "Are you sure you want to delete solute bin %1 ?" ).arg( sx + 1 );
-      int ret = QMessageBox::question( this,"GA_Init Solute Bin Delete", msg );
-      if ( ret == QMessageBox::No)
-      {
-         return;
-      }
-      else
-      {
-         const QSignalBlocker blocker( lw_buckets );
-         delete lw_buckets->takeItem( sx );
-         soludata->removeBucketAt( sx );
-         is_saved = false;
-         bucket_curves[ sx ]->detach();
-         delete bucket_curves[ sx ];
-         bucket_curves.removeAt( sx );
-      }
-
-      data_plot->replot();
-      int nibuks = soludata->bucketsCount();
-      int rx      = qMin( sx, ( nibuks - 1 ) );
-      if ( rx >= 0 )
-      {
-         lw_buckets->setCurrentRow( rx );
-         highlight_bucket( rx );
-         data_plot->replot();
-      }
-   }
-
-   else if ( global )
-   {
-      QRectF rect = soludata->bucketRect( sx );
-      ct_wxbuck->setValue( rect.width() );
-      ct_hybuck->setValue( rect.height() );
-   }
+   soludata->removeBucketAt( row );
+   is_saved = false;
+   fill_lw_bins();
+   plot_buckets();
+   lw_buckets->setCurrentRow( qMin( row, lw_buckets->count() - 1 ) );
 }
 
 // change the rectangle (vertices) for a bucket
