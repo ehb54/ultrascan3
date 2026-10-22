@@ -334,24 +334,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                return;
             }
 
-            QString use_res_name  = this_atom.name != "OXT" ? this_atom.p_residue->name : "OXT";
-            QString use_atom_name = this_atom.p_residue->name == "N1" ? "N1" : this_atom.name;
-
-            if ( !k &&
-                 this_atom.name == "N" ) {
-               if ( use_res_name == "PRO" ) {
-                  use_res_name = "N1-";
-               } else {
-                  use_res_name = "N1";
-               }
-               use_atom_name = use_res_name;
-            }
-              
-            QString res_idx =
-               QString("%1|%2")
-               .arg( use_res_name )
-               .arg( use_atom_name )
-               ;
+            QString res_idx = vdwf_key( this_atom, !k );
 
             if ( vdwf.count( res_idx ) ) {
                // QTextStream( stdout ) << "found ionized_mw_delta " << vdwf[ res_idx ].ionized_mw_delta << endl;
@@ -921,24 +904,7 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
 
                if ( this_atom->asa >= sas_asa_threshold ) {
                   {
-                     QString use_res_name  = this_atom->name != "OXT" ? this_atom->p_residue->name : "OXT";
-                     QString use_atom_name = this_atom->p_residue->name == "N1" ? "N1" : this_atom->name;
-
-                     if ( !k &&
-                          this_atom->name == "N" ) {
-                        if ( use_res_name == "PRO" ) {
-                           use_res_name = "N1-";
-                        } else {
-                           use_res_name = "N1";
-                        }
-                        use_atom_name = use_res_name;
-                     }
-              
-                     QString res_idx =
-                        QString("%1|%2")
-                        .arg( use_res_name )
-                        .arg( use_atom_name )
-                        ;
+                     QString res_idx = vdwf_key( *this_atom, !k );
 
                      double saxs_excl_vol;
                      {

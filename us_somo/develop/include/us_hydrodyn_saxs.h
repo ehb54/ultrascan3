@@ -34,6 +34,7 @@
 
 
 #include "us_util.h"
+#include "us_saxs_util_guinier_search.h"
 #include "us_hydrodyn_pdbdefs.h"
 // #ifndef WIN32
 #include "us_hydrodyn_saxs_iqq_residuals.h"
@@ -339,6 +340,26 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void           resid_resized();
 
    public:
+      // --- gui_script entry points (see the "sas" command in us_hydrodyn_script.cpp) ---
+
+      // what check_pr_error() should do about points with no usable error value when it
+      // cannot ask, i.e. under gui_script or batch. Default PR_ERRORS_REMOVE keeps the
+      // long standing behaviour for scripts written before the repair existed.
+      enum pr_errors_policy {
+         PR_ERRORS_REMOVE = 0,
+         PR_ERRORS_MINIMUM,
+         PR_ERRORS_VALUE
+      };
+
+      pr_errors_policy script_pr_errors_mode;
+      double           script_pr_errors_value;
+
+      bool script_set_pr_errors( const QString & arg,      QString & errormsg );
+      bool script_load_pr      ( const QString & filename, QString & errormsg );
+      bool script_load_iq      ( const QString & filename, QString & errormsg );
+      bool script_guinier_search       ( const map < QString, QString > & kv, const QString & csvfile, QString & errormsg );
+      map < QString, US_Guinier_Search_Result > guinier_search_results;   // last "sas guinier_search" results by curve name
+
       ScrollZoomer  *plot_resid_zoomer;
 
       QwtPlotGrid  *grid_pr;
@@ -861,6 +882,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void check_pr_grid( vector < double > &r, vector < double > &pr );
       void check_pr_grid( vector < double > &r, vector < double > &pr, vector < double > &pr_error );
+      // validate the error column of a loaded P(r): report the points lacking a usable
+      // error value and, when interactive, offer to repair or drop them
+      void check_pr_error( const QString    & filename,
+                           vector < double > & r,
+                           vector < double > & pr_error,
+                           vector < bool >   & pr_error_present );
       vector < double > range_crop( vector < double > &q, vector < double > &I );
 
       bool started_in_expert_mode;

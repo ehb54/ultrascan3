@@ -377,6 +377,92 @@ void US_Hydrodyn::gui_script_run() {
             saxs_plot_window->saxs_extrap_c0_script( opt1 );
          }
          qApp->processEvents();
+      } else if ( cmd == "sas" ) {
+         if ( ls.isEmpty() ) {
+            gui_script_error( i, cmd, "missing argument" );
+         }
+         QString opt1 = ls.front(); ls.pop_front();
+         gui_script_msg( i, cmd, opt1 );
+
+         if ( opt1 == "open" ) {
+            if ( !saxs_plot_widget ) {
+               pdb_saxs( false, false );
+            }
+            if ( !saxs_plot_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "could not open the SAS window" );
+            }
+         } else {
+            if ( !saxs_plot_widget ) {
+               gui_script_error( i, cmd + " " + opt1, "SAS window not open, use \"sas open\" first" );
+            }
+
+            QString errormsg;
+
+            if ( opt1 == "pr_errors" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs remove, minimum or a positive value" );
+               }
+               QString opt2 = ls.front(); ls.pop_front();
+               if ( !saxs_plot_window->script_set_pr_errors( opt2, errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1 + " " + opt2, errormsg );
+               }
+            } else if ( opt1 == "load_pr" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               while ( !ls.isEmpty() ) {
+                  if ( !saxs_plot_window->script_load_pr( ls.front(), errormsg ) ) {
+                     gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+                  }
+                  ls.pop_front();
+               }
+            } else if ( opt1 == "load_iq" ) {
+               if ( ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "missing file name" );
+               }
+               while ( !ls.isEmpty() ) {
+                  if ( !saxs_plot_window->script_load_iq( ls.front(), errormsg ) ) {
+                     gui_script_error( i, cmd + " " + opt1 + " " + ls.front(), errormsg );
+                  }
+                  ls.pop_front();
+               }
+            } else if ( opt1 == "guinier" ) {
+               // sas guinier [rg|cs|tv] : the SAS window's Process Guinier buttons, honouring the Guinier options
+               QString which = ls.isEmpty() ? QString( "rg" ) : ls.front().toLower();
+               if ( !ls.isEmpty() ) {
+                  ls.pop_front();
+               }
+               const char * method =
+                  which == "rg" ? "run_guinier_analysis" :
+                  which == "cs" ? "run_guinier_cs" :
+                  which == "tv" ? "run_guinier_Rt" : 0;
+               if ( !method ) {
+                  gui_script_error( i, cmd + " " + opt1, "needs rg, cs or tv" );
+               }
+               QMetaObject::invokeMethod( saxs_plot_window, method, Qt::DirectConnection );
+            } else if ( opt1 == "guinier_search" ) {
+               // sas guinier_search [csv <file>] [key value ...]
+               map < QString, QString > kv;
+               QString csvfile;
+               while ( ls.size() >= 2 ) {
+                  QString key = ls.front(); ls.pop_front();
+                  QString val = ls.front(); ls.pop_front();
+                  if ( key.toLower() == "csv" ) {
+                     csvfile = val;
+                  } else {
+                     kv[ key.toLower() ] = val;
+                  }
+               }
+               if ( !ls.isEmpty() ) {
+                  gui_script_error( i, cmd + " " + opt1, "parameters must be key value pairs, odd one: " + ls.front() );
+               }
+               if ( !saxs_plot_window->script_guinier_search( kv, csvfile, errormsg ) ) {
+                  gui_script_error( i, cmd + " " + opt1, errormsg );
+               }
+            } else {
+               gui_script_error( i, cmd, opt1 + ": unrecognized" );
+            }
+         }
       } else if ( cmd == "dad" ) {
          if ( ls.isEmpty() ) {
             gui_script_error( i, cmd, "missing argument" );

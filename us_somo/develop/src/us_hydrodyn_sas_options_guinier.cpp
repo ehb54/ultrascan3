@@ -175,6 +175,16 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( cb_guinier_auto_fit );
    connect(cb_guinier_auto_fit, SIGNAL(clicked()), this, SLOT(set_guinier_auto_fit()));
 
+   cb_guinier_robust_search = new QCheckBox( this );
+   cb_guinier_robust_search->setText( us_tr( " Robust automatic Guinier range search " ) );
+   cb_guinier_robust_search->setEnabled( true );
+   cb_guinier_robust_search->setChecked( ( ( US_Hydrodyn * )us_hydrodyn )->gparams.count( "guinier_robust_search" ) &&
+                                         ( ( US_Hydrodyn * )us_hydrodyn )->gparams[ "guinier_robust_search" ] == "1" );
+   cb_guinier_robust_search->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_guinier_robust_search->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_guinier_robust_search );
+   connect( cb_guinier_robust_search, SIGNAL( clicked() ), this, SLOT( set_guinier_robust_search() ) );
+
    lbl_pointsmin = new QLabel(us_tr(" Minimum number of points : "), this);
    lbl_pointsmin->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pointsmin->setPalette( PALET_LABEL );
@@ -573,6 +583,8 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
       leftside->addWidget( cb_guinier_auto_fit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
       j++;
+      leftside->addWidget( cb_guinier_robust_search, j, 0, 1, 2 );
+      j++;
       leftside->addWidget(lbl_pointsmin, j, 0);
       leftside->addWidget(le_pointsmin, j, 1);
       j++;
@@ -816,6 +828,12 @@ void US_Hydrodyn_SasOptionsGuinier::set_guinier_use_qRlimit()
       cb_guinier_auto_fit->setChecked( false );
       set_guinier_auto_fit();
    }
+   if ( cb_guinier_use_qRlimit->isChecked() &&
+        cb_guinier_robust_search->isChecked() )
+   {
+      cb_guinier_robust_search->setChecked( false );
+      set_guinier_robust_search();
+   }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -845,6 +863,12 @@ void US_Hydrodyn_SasOptionsGuinier::set_guinier_outlier_reject()
    {
       cb_guinier_auto_fit->setChecked( false );
       set_guinier_auto_fit();
+   }
+   if ( cb_guinier_outlier_reject->isChecked() &&
+        cb_guinier_robust_search->isChecked() )
+   {
+      cb_guinier_robust_search->setChecked( false );
+      set_guinier_robust_search();
    }
       
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
@@ -1010,6 +1034,11 @@ void US_Hydrodyn_SasOptionsGuinier::set_guinier_auto_fit()
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_auto_fit" ] = cb_guinier_auto_fit->isChecked() ? "1" : "0";
    if ( cb_guinier_auto_fit->isChecked() )
    {
+      if ( cb_guinier_robust_search->isChecked() )
+      {
+         cb_guinier_robust_search->setChecked( false );
+         set_guinier_robust_search();
+      }
       if ( cb_guinier_outlier_reject->isChecked() )
       {
          cb_guinier_outlier_reject->setChecked( false );
@@ -1022,6 +1051,30 @@ void US_Hydrodyn_SasOptionsGuinier::set_guinier_auto_fit()
       }
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_robust_search()
+{
+   // the robust search ( see us_saxs_util_guinier_search.cpp ) replaces the other range modes
+   ( ( US_Hydrodyn * )us_hydrodyn )->gparams[ "guinier_robust_search" ] = cb_guinier_robust_search->isChecked() ? "1" : "0";
+   if ( cb_guinier_robust_search->isChecked() )
+   {
+      if ( cb_guinier_auto_fit->isChecked() )
+      {
+         cb_guinier_auto_fit->setChecked( false );
+         set_guinier_auto_fit();
+      }
+      if ( cb_guinier_outlier_reject->isChecked() )
+      {
+         cb_guinier_outlier_reject->setChecked( false );
+         set_guinier_outlier_reject();
+      }
+      if ( cb_guinier_use_qRlimit->isChecked() )
+      {
+         cb_guinier_use_qRlimit->setChecked( false );
+         set_guinier_use_qRlimit();
+      }
+   }
 }
 
 void US_Hydrodyn_SasOptionsGuinier::set_guinier_csv_save_data()

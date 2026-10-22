@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO PDB Editor Module</title>
+	<title>SOMO PDB Editor Module: Cut/Splice</title>
 	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -23,173 +23,571 @@
 <h2>
 SOMO - PDB Editor Module: Cut/Splice</h2>
 <p>
-<img SRC="somo_pdb_editor_cut_splice.png" ALT="SOMO PDB Editor Cut/Splice">
+<h3><center>Last updated: September 2026</center></h3><p>
 </center>
+
+<hr>
+
+<a name="Overview"></a>
+<h3>Overview</h3>
+
+The <b><i>Cut/Splice</i></b> tool (window title <i>US-SOMO: PDB Editor Cut/Splice Control</i>) builds a
+composite structure by grafting residues taken from one structure onto another. The two structures must share
+a short stretch of residues, with the same chain identifier and the same residue numbering. The tool
+superimposes the donor on the recipient over that shared stretch, using the C&alpha; atoms, and carries the
+grafted residues along with the same rotation and translation, so that they arrive in the frame of the
+recipient, attached to it.
+<p>
+Typical uses are:
+<ul>
+<li>completing a structure that lacks terminal residues with those of another model of the same protein,
+for example an NMR structure, a homology or AlphaFold model, or a separately built model of the missing
+segment;<p>
+<li>joining two structures of overlapping fragments of the same protein;<p>
+<li>replacing a poorly defined terminal segment with the corresponding segment of another model;<p>
+<li>grafting the same segment onto every model of an NMR or simulation ensemble, optionally setting aside
+the models in which it collides with the rest of the structure;<p>
+<li>bringing along whole additional chains, for example the other subunits of a complex, placed by the
+superposition of a chain the two structures have in common.<p>
+</ul>
+
+The tool is opened with the <b><i>Cut/Splice</i></b> button in the left-hand column of the
+<a href=somo_pdb_editor.html><b><i>PDB Editor</i></b></a>, which is itself opened with the
+<b><i>PDB Editor</i></b> button of the main SOMO window. Three files are involved:
+<ul>
+<li><b><i>Chains From</i></b>: the <i>donor</i> structure, from which residues are taken. It is shown in the
+center panel of the PDB Editor.<p>
+<li><b><i>Chains To</i></b>: the <i>recipient</i> structure, to which residues are added. It is shown in the
+right panel of the PDB Editor.<p>
+<li><b><i>Target</i></b>: the file to which <b><i>Start</i></b> writes the result.<p>
+</ul>
+The Cut/Splice window works directly on the two PDB Editor panels, so what is done in one window affects the
+other; see <a href="#Editor">Working with the PDB Editor</a>.
 <p>
 
-In this module, functional, but with additional development planned,
-provides the ability to cut and splice on individual chains of two PDB
-files.  No fitting on differently labeled chains is currently
-possible, although planned.  This program is tied to the PDB Editor's
-main window, with <i>From</i> associated with the center editor panel and
-the <i>To</i> associated with the right editor panel.  This can be
-very useful, but can be a source of trouble if you are not aware
-of the connection.  The PDB Editor is useful for selecting ranges
-for the merging, fitting and cut-back regions.  Trial results can 
-also be saved and visualized in the PDB Editor.  But if you load
-or clear in the PDB Editor, it will clear the associated information
-from the PDB Cut/Splice tool.
+<b>Contents</b>
+<ul>
+<li><a href="#Concepts">How a splice is described</a>
+<li><a href="#Example">A first splice, step by step</a>
+<li><a href="#Guess">Compute Guess</a>
+<li><a href="#Table">Editing the table</a>
+<li><a href="#Replace">Replacing residues: the Cut range</a>
+<li><a href="#Validate">Validate</a>
+<li><a href="#Run">Trial, Start and the output file</a>
+<li><a href="#Chains">Adding whole chains</a>
+<li><a href="#Ensembles">Ensembles and the steric clash filter</a>
+<li><a href="#BothEnds">Adding residues at both ends of a chain</a>
+<li><a href="#Files">Saving and loading the table</a>
+<li><a href="#Editor">Working with the PDB Editor</a>
+<li><a href="#Controls">Summary of the controls</a>
+<li><a href="#Prepare">Preparing the structures</a>
+<li><a href="#Limitations">Notes and current limitations</a>
+</ul>
 
+<hr>
+
+<a name="Concepts"></a>
+<h3>How a splice is described</h3>
+
+A splice is described in the table at the top of the window, one row per chain, with three residue ranges:
+<ul>
+<li><b><i>Merge start</i></b> - <b><i>Merge end</i></b>: the residues of the <b><i>Chains From</i></b> chain
+to be added to the <b><i>Chains To</i></b> chain.<p>
+<li><b><i>Fit start</i></b> - <b><i>Fit end</i></b>: residues present in <i>both</i> structures, used to
+superimpose the donor on the recipient. Only the C&alpha; atoms (atom name <tt>CA</tt>) of these residues
+take part in the fit.<p>
+<li><b><i>Cut start</i></b> - <b><i>Cut end</i></b>: residues of the <b><i>Chains To</i></b> chain to be
+removed before the merged residues are added. A cut is needed only when residues of the donor are to
+<i>replace</i> residues the recipient already has.<p>
+</ul>
+Ranges are residue numbers, inclusive. An empty cell, or zero, means that the range is not set.
 <p>
-<b> Prerequesites </b> The residue numbers and chains must match.  Of
-course, some can be missing, but the idea is that this program finds an
-overlapping sequence of residue numbers in matching chains. There can
-be multiple chains, but the fitting is done for each chain
-independently.  From the user defined sequential range of the
-overlapping sequence, of at least 3 residues, a fit is performed, and 
-the <i>merge</i> sequence is transformed by the fit and added to the 
-target structure. 
-<p>
-Only one end of an individual chain can be handled at a time.
-i.e. if you want to add from a file to both the beginning and end of
-a chain, you will have to run Cut/Splice two times.
-
-<p>
-<b> First </b> You must load a file using <i>Chains from</i>.  This is
-the file from which you will be taking a sequence of residues to
-merge.  Note: this PDB will automatically be loaded in the center panel
-of the main PDB Editor window.
-
-
-<p>
-<b> Second </b> You must load a file using <i>Chains to</i>.  This is
-the file to which you will be adding a sequence of residues. Note:
-this PDB will automatically be loaded in the right panel of the main
-PDB Editor window.
-
-<p>
-<b> Third </b> You must <i>Compute guess</i>.  If your PDBs are
-compatible, the identified chains and ranges will be added to the top
-area.  If not, recheck the <b> prerequisites</b>.
-
-<p>
-If all is well, at this point you should see one line for each chain
-where the there are overlaps and values set for <i>Merge start</i> and
-<i>Merge end</i>, <i>Fit start</i> and <i>Fit end</i>.  They may or
-not be the values you want.  They may not even be valid values.  If
-the chains nicely overlap, say <i>Chains from</i> has residues 1-52
-and <i>Chains to</i> has residues 49-100 (notice the required minimal
-overlap), then the program should figure this out and be all setup to
-merge.
-
-<p> In the image below, we have made separate PDBs out of
- residues 1-51 and 49-100 of an existing PDB.  Then followed
-the procedures above to produce: 
+For the <a href="#Example">first example</a> below, where residues 1-48 of ribonuclease A are added to a
+structure containing residues 49-124, the ranges are:
 <p>
 <center>
-<img SRC="somo_pdb_editor_cut_splice_2.png" ALT="SOMO PDB Editor Cut/Splice">
+<table BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td></td><td align=center><b>Residues 1-48</b></td><td align=center><b>Residues 49-55</b></td><td align=center><b>Residues 56-124</b></td></tr>
+<tr><td><b><i>Chains From</i></b> (<tt>rnase_1-55.pdb</tt>)</td><td align=center>present</td><td align=center>present</td><td align=center>-</td></tr>
+<tr><td><b><i>Chains To</i></b> (<tt>rnase_49-124.pdb</tt>)</td><td align=center>-</td><td align=center>present</td><td align=center>present</td></tr>
+<tr><td>Table entry</td><td align=center><b><i>Merge</i></b> 1-48</td><td align=center><b><i>Fit</i></b> 49-55</td><td align=center></td></tr>
+<tr><td>In the result, taken from</td><td align=center><b><i>Chains From</i></b>, moved onto the recipient</td><td align=center colspan=2><b><i>Chains To</i></b>, unchanged</td></tr>
+</table>
 </center>
+<p>
+The recipient is never moved: only the merged residues, and any <a href="#Chains">added chains</a>, are
+transformed, and the fit residues of the result are those of the recipient. The merged residues keep their
+residue names, residue numbers and atom names. Each chain can be extended at one end per run; to extend both
+ends, see <a href="#BothEnds">Adding residues at both ends of a chain</a>.
+<p>
 
 <hr>
-<p>
-<b><i>Chain</i></b>: 
-This identifies a chain where a merge is possible.
 
-<p>
-<b><i>Merge start</i>, <i>Merge end</i> </b>: 
-This is the sequence of residues from the <i>Chains from</i> PDB's
-identified <i>chain</i> that will be merged into the <i>Chains to</i>
-PDB's matching <i>chain</i>.
+<a name="Example"></a>
+<h3>A first splice, step by step</h3>
 
+The example joins two overlapping pieces of bovine pancreatic ribonuclease A: <tt>rnase_1-55.pdb</tt>
+(residues 1-55) and <tt>rnase_49-124.pdb</tt> (residues 49-124). Both can be cut from the demonstration
+structure <tt>8RAT.pdb</tt> in the <tt>somo/demo</tt> directory of the SOMO distribution with the PDB Editor
+itself: <b><i>Load</i></b> it into the center panel, select the residues in its tree and <b><i>Copy</i></b>
+them, then <b><i>Paste as new</i></b> in the right panel and <b><i>Save</i></b> from there. Since both pieces
+come from the same structure, the result can be compared with the original, which it reproduces to within a
+few thousandths of an &Aring;ngstr&ouml;m.
 <p>
-<b><i>Fit start</i>, <i>Fit end</i> </b>:
-This is the sequence of residues from the <i>Chains from</i> PDB's
-identified <i>chain</i> and the  <i>Chains to</i> PDB's matching <i>chain</i>
-that will be used for coordinate transformations.  The program will compute
-the transformation based on a best fit over this range.  Currently only
-"CA" atoms are used in the transformation.
+<ol>
+<li>In the PDB Editor, press <b><i>Cut/Splice</i></b>. As in the other SOMO windows, the buttons with black
+labels are active and those with red labels become active once their prerequisites are met.<p>
+<li>Press <b><i>Chains From</i></b> and choose <tt>rnase_1-55.pdb</tt>. The structure is loaded into the
+center panel of the PDB Editor and its file name appears next to the button. Only the first model of a
+multi-model file is loaded.<p>
+<li>Press <b><i>Chains To</i></b> and choose <tt>rnase_49-124.pdb</tt>. It is loaded into the right panel of
+the PDB Editor.<p>
+<li>Press <b><i>Compute Guess</i></b>. A row appears for chain A, proposing <b><i>Merge</i></b> 1-48, the
+residues the recipient lacks, and <b><i>Fit</i></b> 49-51, the first three residues the two structures
+share.<p>
+<li>Widen the fit range: double-click the <b><i>Fit end</i></b> cell, type 55 and press Return, so that all
+seven shared residues are used. Three residues are the minimum; a superposition on more residues is less
+sensitive to local differences between the two structures.<p>
+<li>Press <b><i>Validate</i></b>. The message area should report <i>Validation OK</i>; otherwise it lists what
+is wrong (see <a href="#Validate">Validate</a>).<p>
+<li>Press <b><i>Trial</i></b>. The spliced structure is added to the right panel of the PDB Editor as a new
+entry, named <i>merged</i> followed by the name of the <b><i>Chains To</i></b> file; the wheel at the right
+edge of the panel switches between it and the original. Use the right panel's <b><i>Visualize</i></b> to
+inspect the result in RasMol, and its <b><i>Save</i></b> to write it to a file.<p>
+<li>To write the result directly, press <b><i>Target</i></b> and give a file name (<tt>.pdb</tt> is appended
+if missing), then press <b><i>Start</i></b>. The message area reports <i>File written:</i> followed by the
+file name.<p>
+</ol>
 
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td><center><img SRC="somo_pdb_editor_cut_splice.png" ALT="SOMO PDB Editor Cut/Splice window after Compute Guess, with the fit widened and validated"></center></td></tr>
+<tr><td><center>The Cut/Splice window after <b><i>Compute Guess</i></b>, with the fit range widened to 49-55,
+a <b><i>Target</i></b> chosen and <b><i>Validate</i></b> pressed.</center></td></tr>
+</table>
 <p>
-<b><i>Cut start</i>, <i>Cut end</i> </b>:
-This is the sequence of residues from the <i>Chains to</i> PDB's
-identified <i>chain</i> that will be cut off before any fitting
-and merging.  This can be useful if there is more than the minimal
-overlap available. 
+<table BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td><center><img SRC="somo_pdb_editor_cut_splice_2.png" ALT="SOMO PDB Editor after a Cut/Splice Trial" width="1000"></center></td></tr>
+<tr><td><center>The PDB Editor after <b><i>Trial</i></b>: the donor in the center panel and the spliced
+structure, residues 1-124, as entry 2 of 2 in the right panel.</center></td></tr>
+</table>
+</center>
+<p>
+
 <hr>
 
-<p> 
+<a name="Guess"></a>
+<h3>Compute Guess</h3>
 
-<b> Validate </b>: If you have followed the steps above, then you are
-ready to <b>Validate</b>.  This will recheck any adjustments you have
-made to the values <i>Merge start</i>, <i>Merge end</i>,
-<i>Fit start</i>, <i>Fit end</i>, <i>Cut start</i> and <i>Cut end</i>.
-If everything is ok, the text area will show "Validation OK".  If not,
-there is some issue with the settings, and you will receive messages
-briefly describing the issue.
-
+<b><i>Compute Guess</i></b>, active once both <b><i>Chains From</i></b> and <b><i>Chains To</i></b> are loaded,
+clears the table and proposes one row for every chain identifier present in both structures. It looks only at
+the range of residue numbers each structure has for that chain:
+<ul>
+<li>if the donor chain starts before the recipient chain and also has the recipient's first three residue
+numbers, an <i>N-terminal addition</i> is proposed: <b><i>Merge</i></b> from the first residue of the donor to
+the residue before the first residue of the recipient, and <b><i>Fit</i></b> on the first three residues of
+the recipient;<p>
+<li>if the donor chain ends after the recipient chain and also has the recipient's last three residue numbers,
+a <i>C-terminal addition</i> is proposed: <b><i>Merge</i></b> from the residue after the last residue of the
+recipient to the last residue of the donor, and <b><i>Fit</i></b> on the last three residues of the
+recipient;<p>
+<li>if both are possible, the C-terminal addition is proposed;<p>
+<li>if residues are missing within the proposed fit range, the range is extended to include at least three
+residues present in both structures, or left empty if that is not possible;<p>
+<li>a chain for which neither addition is possible gets no row. Chains present only in
+<b><i>Chains To</i></b> are left as they are.<p>
+</ul>
+Chains present only in <b><i>Chains From</i></b> are noted as <i>extra chains</i>; they activate the
+<a href="#Chains"><b><i>Extra Chains</i></b> and <b><i>Only Closest Chains</i></b></a> buttons.
 <p>
-<b> Trial </b>: This will run the fitting procedure and produce the
-output in the main PDB Editor window's right panel.  If you have a
-multiple model NMR style <i>Chains to</i> PDB file, all models will be
-processed.
-
+Since only residue numbers are compared, both structures must number their residues the same way (see
+<a href="#Prepare">Preparing the structures</a>). The proposal is a starting point: review it, and widen the
+fit range before going further.
 <p>
-<b> Start </b>: This will only be enabled if a <b>Target</b> has
-been entered and the ranges are ready of <b>Trial</b>.  
-If so, the <b>Target</b> file will be created. If you have a multiple
-model NMR style <i>Chains to</i> PDB file, all models will be
-processed.
-
-<p>
-<b> Stop </b>: For long running fitting procedures, you can
-terminate by pressing this button.  This may be useful when
-processing to a large multiple model PDB file. 
 
 <hr>
-<p>
-<b> Clear </b>: This will clear the table.  
 
-<p>
-<b> Load </b>: This will load the table from a file.
+<a name="Table"></a>
+<h3>Editing the table</h3>
 
+A cell is edited by double-clicking it (or selecting it and typing), entering a residue number and pressing
+Return. The <b><i>Chain</i></b> column identifies the row and should not be changed. After each change the
+other cells of the row are adjusted to keep the row consistent:
+<ul>
+<li>a <b><i>Merge</i></b> range is kept within the residues of the donor chain. If it is extended over
+residues the recipient already has, the <b><i>Cut</i></b> range is set to remove them from the recipient,
+and the <b><i>Fit</i></b> range is moved clear of the cut (see <a href="#Replace">Replacing residues</a>);<p>
+<li>a <b><i>Fit</i></b> range is kept within the residues present in both structures and must contain at
+least three of them. A range that is too short is extended where possible; otherwise it is cleared, with the
+message <i>Error: could not find 3 residues to fit in this chain</i>. The <b><i>Merge</i></b> and
+<b><i>Cut</i></b> ranges are then moved or trimmed so that they do not overlap the fit;<p>
+<li>a <b><i>Cut</i></b> range always includes the first residue of the recipient chain (for an N-terminal
+addition) or its last residue (for a C-terminal one), so only its other end can be chosen, and at least three
+residues of the recipient must remain. Clearing either cut cell, or entering zero, clears both;<p>
+<li>when a start is entered beyond the corresponding end, or an end before the start, the other value
+follows.<p>
+</ul>
+The adjustments cannot resolve every combination; for example, a fit range cannot be moved out of a cut
+if the donor does not extend beyond it. Always read the row back after editing, and press
+<a href="#Validate"><b><i>Validate</i></b></a>.
 <p>
-<b> Save </b>: This save the table values to a file.
-
+Ranges can also be copied from a selection in the PDB Editor. Select residues, or whole chains, in the tree
+of the relevant panel, then press:
+<ul>
+<li><b><i>From -&gt; Merge</i></b> or <b><i>From -&gt; Fit</i></b>, active when anything is selected in the
+center (<b><i>Chains From</i></b>) panel, to set the <b><i>Merge</i></b> or the <b><i>Fit</i></b> range;<p>
+<li><b><i>To -&gt; Fit</i></b> or <b><i>To -&gt; Cut</i></b>, active when anything is selected in the right
+(<b><i>Chains To</i></b>) panel, to set the <b><i>Fit</i></b> or the <b><i>Cut</i></b> range.<p>
+</ul>
+For each chain with a selection, the lowest and the highest selected residue numbers are copied into that
+chain's row, which is created if the chain has none, and the same adjustments as for typed values are then
+applied.
 <p>
-<b> Cut back </b>: This button will be enabled after <b>Validate</b> if it is determined that a cut back is possible.
-Pressing the button will automatically compute the <i>Cut start</i> and <i>Cut end</i> values.  For example, suppose
-you had an overlap of more than three residues on a chain.  Then you could adjust the <i>Merge end</i> value.
-Then <b>Validate</b>, and the <b>Cut back</b> to automatically set the values.
+<b><i>Delete Rows</i></b> removes the rows selected in the table (click the row numbers at the left; several
+rows can be selected). <b><i>Clear</i></b> removes all the rows.
+<p>
 
 <hr>
-These are useful tools for interacting with the main PDB Editor window.  
-The <b>From</b> is associated with the center panel, and the <b>To</b> is associated with the right panel.  Be careful,
-changes made in the PDB editor effect the PDB cut/splice tool, so if you see something strange going on, it is likely
-that you have done something in the PDB editor.
-<p>
-<b> From->Merge </b>: 
-When you select a range of residues in the PDB Editor window's center
-panel, this button is enabled to copy over the range values to the
-<i>Merge</i> values.
 
-<p>
-<b> From->Fit </b>: 
-When you select a range of residues in the PDB Editor window's center
-panel, this button is enabled to copy over the range values to the
-<i>Fit</i> values.
+<a name="Replace"></a>
+<h3>Replacing residues: the Cut range</h3>
 
+When the recipient already has some of the residues, but those of the donor should be used instead (for
+example because the recipient's terminal residues are poorly defined), extend the <b><i>Merge</i></b> range
+over them rather than setting the <b><i>Cut</i></b> range directly: the cut then follows automatically.
 <p>
-<b> To->Fit </b>: 
-When you select a range of residues in the PDB Editor window's right
-panel, this button is enabled to copy over the range values to the
-<i>Fit</i> values.
-
+For example, when adding the C-terminal residues of <tt>rnase_60-124.pdb</tt> to <tt>rnase_1-70.pdb</tt>,
+<b><i>Compute Guess</i></b> proposes <b><i>Merge</i></b> 71-124 and <b><i>Fit</i></b> 68-70. Typing 66 as
+<b><i>Merge start</i></b> sets <b><i>Cut</i></b> 66-70, so that residues 66-70 of the recipient are removed
+and replaced by those of the donor, and moves the fit to 63-65, just before the cut. Widening the fit to 60-65
+(the donor starts at residue 60) completes the row.
 <p>
-<b> To->Cut </b>: 
-When you select a range of residues in the PDB Editor window's right
-panel, this button is enabled to copy over the range values to the
-<i>Cut</i> values.
+If you set the <b><i>Cut</i></b> range yourself, make sure that the <b><i>Merge</i></b> range covers it
+(<b><i>Merge start</i></b> equal to <b><i>Cut start</i></b> for a C-terminal addition, <b><i>Merge end</i></b>
+equal to <b><i>Cut end</i></b> for an N-terminal one). Residues that are cut but not merged are simply
+removed, leaving a gap in the chain, and <b><i>Validate</i></b> does not report it.
+<p>
 
+<hr>
+
+<a name="Validate"></a>
+<h3>Validate</h3>
+
+<b><i>Validate</i></b> reloads the first model of the <b><i>Chains To</i></b> file into the right panel of the
+PDB Editor and checks every row. It reports <i>Validation OK</i>, or one message per problem followed by
+<i>Validation errors</i>. The same checks are made at the beginning of <b><i>Trial</i></b> and
+<b><i>Start</i></b>. In the messages, <i>X</i> is the chain of the row.
+<p>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td><b>Message</b></td><td><b>Meaning</b></td></tr>
+<tr><td><i>Chain X missing in "Chains From" PDB</i>, <i>... in "Chains To" PDB</i></td>
+<td>The chain of the row, or the base chain of a <a href="#Chains">+ row</a>, is not in that structure.</td></tr>
+<tr><td><i>Chain X merge must have both merge range values set or none of them (zero is not a set value)</i>, and
+the similar messages for the fit and cut ranges</td>
+<td>Only one end of the range is set.</td></tr>
+<tr><td><i>Chain X merge range must be ascending</i>, and similarly for the fit and cut ranges</td>
+<td>The start is larger than the end.</td></tr>
+<tr><td><i>Chain X "Chains From" does not have residues in entire merge range</i>, <i>... in entire fit range</i></td>
+<td>The range extends beyond the first or the last residue of the donor chain.</td></tr>
+<tr><td><i>Chain X "Chains To" does not have residues in entire fit range</i>, <i>... do not have residues in entire cut range</i></td>
+<td>The range extends beyond the first or the last residue of the recipient chain; for the fit range, of
+what remains of the chain after the cut.</td></tr>
+<tr><td><i>Chain X "Chains To" cut start or cut end must equal one end of the chain</i></td>
+<td>The cut must include the first or the last residue of the recipient chain.</td></tr>
+<tr><td><i>Chain X "Chains To" can not cut entire chain</i></td>
+<td>The cut covers the whole recipient chain.</td></tr>
+<tr><td><i>Chain X "Chains To" has values in merge range and therefore needs to be cut</i></td>
+<td>The recipient already has some of the residues to be merged: remove them with a cut (see
+<a href="#Replace">Replacing residues</a>) or shorten the merge range.</td></tr>
+<tr><td><i>Extra chain E has repeated usage</i></td>
+<td>Chain <i>E</i> appears in more than one + row; delete all but one of them.</td></tr>
+</table>
+</center>
+<p>
+Ranges are compared only with the first and the last residue numbers of each chain. Residues missing inside a
+range are not detected here but when the fit is computed, see below.
+<p>
+
+<hr>
+
+<a name="Run"></a>
+<h3>Trial, Start and the output file</h3>
+
+<b><i>Trial</i></b> and <b><i>Start</i></b> reload the <b><i>Chains To</i></b> file, validate the table, and
+then, for every regular row:
+<ol>
+<li>collect the C&alpha; atoms of the fit residues in the donor chain and in the recipient chain. There must be
+as many in one as in the other: a fit residue missing from one of the two structures, or having
+alternate-location C&alpha; atoms in only one of them, stops the run with <i>Error: Fit point mismatch for
+X</i> followed by the two counts;<p>
+<li>compute the rotation and translation that superimpose, in the least-squares sense, the C&alpha; atoms of
+the donor on those of the recipient;<p>
+<li>remove the <b><i>Cut</i></b> residues from the recipient chain;<p>
+<li>apply the rotation and translation to every atom of the donor chain whose residue number lies in the
+<b><i>Merge</i></b> range, and insert these atoms before the first atom of the recipient chain (N-terminal
+addition) or after its last atom (C-terminal addition). All records with that chain identifier and residue
+number are included, HETATM records too, such as waters labeled with the chain identifier.<p>
+</ol>
+The <a href="#Chains">+ rows</a> are then processed, and finally the atoms are renumbered from 1 within each
+chain.
+<p>
+<b><i>Trial</i></b>:
+<ul>
+<li>processes only the first model of the <b><i>Chains To</i></b> file;<p>
+<li>adds the result to the right panel of the PDB Editor as a new entry, <i>merged</i> followed by the name of
+the <b><i>Chains To</i></b> file. Nothing is written to disk; save the entry from the right panel if it is
+to be kept;<p>
+<li>does not apply the <a href="#Ensembles">steric clash filter</a>.<p>
+</ul>
+Each <b><i>Trial</i></b>, <b><i>Validate</i></b> or <b><i>Start</i></b> first clears the right panel and
+reloads the <b><i>Chains To</i></b> file, so a previous trial result is lost unless it was saved.
+<p>
+<b><i>Start</i></b>, active once a <b><i>Target</i></b> is chosen:
+<ul>
+<li>processes every model of the <b><i>Chains To</i></b> file in turn, each with its own superposition. The
+donor is the same for all: the first model of the <b><i>Chains From</i></b> file;<p>
+<li>writes all the results to the <b><i>Target</i></b> file. If that file already exists, you can overwrite
+it, have the next free sequential number appended to its name (for example <tt>result-1.pdb</tt>), or type
+another name;<p>
+<li>reports each model in the message area as it is processed, while the progress bar shows the fraction of
+models done. <b><i>Stop</i></b> interrupts the run; the <b><i>Target</i></b> then holds the models already
+processed, without the final END record;<p>
+<li>leaves the right panel of the PDB Editor with the last model processed and its result.<p>
+</ul>
+The <b><i>Target</i></b> file:
+<ul>
+<li>starts with the record <tt>HEADER    Processed by US-SOMO Cut/Splice</tt>, followed by the HEADER,
+TITLE, COMPND, SOURCE, KEYWDS, AUTHOR, REVDAT, JRNL, REMARK, SEQRES, SHEET, HELIX, SSBOND, DBREF, ORIGX and
+SCALE records of the <b><i>Chains To</i></b> file. These are copied unchanged, so for example SEQRES, HELIX
+and SHEET records still describe the recipient only;<p>
+<li>encloses each result in MODEL and ENDMDL records carrying the original model number when the
+<b><i>Chains To</i></b> file has MODEL records, and has none otherwise;<p>
+<li>lists all atoms as ATOM records, chain by chain, with any added chains last. Atom serial numbers restart
+at 1 in each chain. Alternate-location indicators, insertion codes and charges are not written, and there are
+no TER, CONECT or CRYST1 records;<p>
+<li>ends with an END record.<p>
+</ul>
+A result saved from the right panel of the PDB Editor after <b><i>Trial</i></b> has the same atom records,
+enclosed in MODEL 1 and ENDMDL, and only the HEADER and TITLE records of the recipient.
+<p>
+
+<hr>
+
+<a name="Chains"></a>
+<h3>Adding whole chains</h3>
+
+Chains of the donor that the recipient lacks can be brought along, placed by the superposition of a chain the
+two structures share. Such a placement is described by a row whose <b><i>Chain</i></b> reads
+<i>base</i>+<i>extra</i>, for example <b>A+B</b>: chain B of the donor, in full, is moved with the
+superposition computed on the row's <b><i>Fit</i></b> range, which refers to residues of chain A, and added
+after the other chains. Only the <b><i>Fit</i></b> columns are used in a + row; typing in its other cells clears
+them. Each extra chain may appear in one + row only.
+<p>
+Two buttons create + rows. Both are active after <b><i>Compute Guess</i></b> when the donor has extra chains,
+and both become inactive once either has been used, until the next <b><i>Compute Guess</i></b>:
+<ul>
+<li><b><i>Extra Chains</i></b> adds, for every regular row and every extra chain, a + row with the fit range
+of that regular row, as it stands when the button is pressed. With several regular rows this gives several
+rows per extra chain, and all but one must be deleted with <b><i>Delete Rows</i></b>.<p>
+<li><b><i>Only Closest Chains</i></b> adds a single + row per extra chain. Among the chains of the regular
+rows, it picks the one with the atom closest to the extra chain in the donor, and proposes a fit on three
+residues centered on the closest residue. Each extra chain is thus placed by the part of the structure it
+actually touches, which matters when the two structures differ in conformation. The message area reports each
+closest pair of atoms and their distance. All atom pairs are compared, which takes a few seconds for chains
+of a few thousand atoms and longer for larger ones; <b><i>Stop</i></b> interrupts the search. As for any
+fit, widening the proposed three residues, for example to six residues on either side of the proposed
+center, makes the placement less sensitive to local differences between the two structures.<p>
+</ul>
+If the fit range of a + row lies in the part of the base chain that is being added, and therefore is not in
+the recipient, the fit range of the base chain's own row is used instead, with the message <i>Notice: setting
+fitting for extra chain E to fit region for chain X</i>.
+<p>
+In the example below the donor is the complete dogfish lactate dehydrogenase tetramer (chains A-D, from the
+demonstration structure <tt>6LDH1.pdb</tt>) and the recipient is chain A alone, residues 20-329.
+<b><i>Compute Guess</i></b> proposes the N-terminal residues 1-19 of chain A, with a fit widened here to
+20-30. <b><i>Only Closest Chains</i></b> then adds rows A+B, A+C and A+D, with fits proposed around residues
+188, 156 and 64 of chain A and widened here to 182-194, 150-162 and 58-70. The result is the complete
+tetramer, in the frame of the recipient.
+<p>
+<center>
+<table BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr><td><center><img SRC="somo_pdb_editor_cut_splice_3.png" ALT="SOMO PDB Editor Cut/Splice window with extra-chain rows"></center></td></tr>
+<tr><td><center>Adding chains B, C and D of the donor, placed by fits on chain A, after
+<b><i>Only Closest Chains</i></b> and widening of the proposed fit ranges.</center></td></tr>
+</table>
+</center>
+<p>
+
+<hr>
+
+<a name="Ensembles"></a>
+<h3>Ensembles and the steric clash filter</h3>
+
+Since <b><i>Start</i></b> processes every model of a multi-model <b><i>Chains To</i></b> file, the same
+segment can be grafted onto every conformer of an NMR or simulation ensemble in one run, each conformer
+receiving it according to the conformation of its own fit residues. For example, residues 1-19 of the
+crystal structure of ribonuclease A (<tt>8RAT.pdb</tt>) can be grafted onto each model of its solution
+structure (<tt>2AAS.pdb</tt>, trimmed to residues 20-124).
+<p>
+With <b><i>Filter out steric clashes from results</i></b> checked, each result is examined before it is
+written. An atom added by the splice (in the merged residues or in an added chain) and an atom of the
+recipient are considered to clash when their distance is not larger than the sum of their van der Waals
+radii; pairs in which either atom belongs to a residue of a fit range are ignored. The radii are taken, by the
+element symbol of the atom records (columns 77-78), from the file <tt>etc/vdw.json</tt> of the SOMO
+installation: C 1.61, N 1.55, O 1.42, S 1.77, P 1.80 and H 1.20 &Aring;, and 1.6 &Aring; for other elements.
+At the first clash found, the message area reports it (<i>first steric clash between ...</i>, followed by
+<i>Model n filtered due to steric clashes</i>), and the model is written to a second file, named after the
+<b><i>Target</i></b> with <tt>_filtered</tt> added before <tt>.pdb</tt>, instead of to the
+<b><i>Target</i></b>. Its first record reads <i>Processed by US-SOMO Cut/Splice and *filtered* due to steric
+clashes</i>. This second file is overwritten without asking.
+<p>
+<span style="color:#CC0000">No tolerance is applied, so ordinary hydrogen bonds and close packing between
+the added atoms and the rest of the structure also count as clashes.</span> In a test in which a protein was
+reassembled exactly from two of its own fragments, the correct, native result was filtered. The filter is
+therefore meaningful only when the added part is not expected to be in close contact with the rest of the
+structure, and a model written to the <tt>_filtered</tt> file is not necessarily unphysical. The filter
+applies to <b><i>Start</i></b> only.
+<p>
+
+<hr>
+
+<a name="BothEnds"></a>
+<h3>Adding residues at both ends of a chain</h3>
+
+Only one end of each chain can be extended per run, so a chain missing residues at both ends is completed in
+two runs, the second using the result of the first as its recipient. For example, with the complete
+ribonuclease A (residues 1-124) as <b><i>Chains From</i></b> and a structure of residues 40-90 as
+<b><i>Chains To</i></b>:
+<ol>
+<li><b><i>Compute Guess</i></b> proposes the C-terminal addition, <b><i>Merge</i></b> 91-124 and
+<b><i>Fit</i></b> 88-90. Widen the fit, for example to 84-90, choose a <b><i>Target</i></b> and press
+<b><i>Start</i></b>.<p>
+<li>Press <b><i>Chains To</i></b> and choose the file just written. <b><i>Compute Guess</i></b> now proposes
+the N-terminal addition, <b><i>Merge</i></b> 1-39 and <b><i>Fit</i></b> 40-42. Widen the fit, for example
+to 40-46, choose a new <b><i>Target</i></b> and press <b><i>Start</i></b>.<p>
+</ol>
+
+<hr>
+
+<a name="Files"></a>
+<h3>Saving and loading the table</h3>
+
+<b><i>Save</i></b> writes the table to a <tt>.csc</tt> file, by default in the SOMO directory. It is a plain
+comma-separated text file: the first line holds the column titles, and each following line one row, in the
+column order of the table, with unset values left empty:
+<pre>
+"Chain","Merge start","Merge end","Fit start","Fit end","Cut start","Cut end"
+A,1,48,49,55,,
+</pre>
+<b><i>Load</i></b> reads such a file back, ignoring its first line. The file does not record the structures,
+so load <b><i>Chains From</i></b> and <b><i>Chains To</i></b> first, and do not press
+<b><i>Compute Guess</i></b> afterwards, since it clears the table. The automatic adjustments described in
+<a href="#Table">Editing the table</a> depend on <b><i>Compute Guess</i></b> and are not applied to loaded rows:
+editing one reports <i>Internal error: chain start map entry missing</i> and leaves the other cells as they
+are, so check any such edit with <b><i>Validate</i></b>.
+<p>
+
+<hr>
+
+<a name="Editor"></a>
+<h3>Working with the PDB Editor</h3>
+
+<ul>
+<li><b><i>Chains From</i></b> and <b><i>Chains To</i></b> load their files into the center and the right
+panels of the PDB Editor (first model only). The fields next to them only record the file names: every
+operation uses what the panels hold. The donor can therefore be edited in the center panel before splicing,
+for example to delete residues, waters or chains, but loading another file into the center panel silently
+changes the donor.<p>
+<li><b><i>Validate</i></b>, <b><i>Trial</i></b> and <b><i>Start</i></b> clear the right panel, including any
+earlier trial results and any edits, and reload the <b><i>Chains To</i></b> file. Changes to the recipient
+must therefore be saved to a file, which is then loaded with <b><i>Chains To</i></b>.<p>
+<li><b><i>Compute Guess</i></b> and the <b><i>From -&gt;</i></b> and <b><i>To -&gt;</i></b> buttons use
+the entry currently shown in each panel. After a <b><i>Trial</i></b> the right panel shows the result,
+so press <b><i>Validate</i></b>, or turn the wheel back to the first entry, before using them again.<p>
+<li><b><i>PDB Editor</i></b> brings the PDB Editor window to the front. Closing the PDB Editor also closes the
+Cut/Splice window.<p>
+</ul>
+
+<hr>
+
+<a name="Controls"></a>
+<h3>Summary of the controls</h3>
+
+<ul>
+<li><b>The table</b> (top): one row per chain, see <a href="#Concepts">How a splice is described</a> and
+<a href="#Table">Editing the table</a>.<p>
+<li><b><i>Compute Guess</i></b> proposes the rows (<a href="#Guess">details</a>). Active when both
+structures are loaded.<p>
+<li><b><i>From -&gt; Merge</i></b>, <b><i>From -&gt; Fit</i></b>, <b><i>To -&gt; Fit</i></b> and
+<b><i>To -&gt; Cut</i></b> copy ranges from a selection in the PDB Editor
+(<a href="#Table">details</a>). Active when something is selected in the corresponding panel.<p>
+<li><b><i>Extra Chains</i></b> and <b><i>Only Closest Chains</i></b> create + rows for the chains of the
+donor that the recipient lacks (<a href="#Chains">details</a>).<p>
+<li><b><i>Delete Rows</i></b> removes the selected rows; <b><i>Clear</i></b> removes all of them.<p>
+<li><b><i>Load</i></b> and <b><i>Save</i></b> read and write the table as a <tt>.csc</tt> file
+(<a href="#Files">details</a>).<p>
+<li><b><i>Validate</i></b> checks the table (<a href="#Validate">details</a>). Active when both structures
+are loaded and the table is not empty.<p>
+<li><b>The message area</b> reports progress and errors. Its <b><i>File</i></b> menu offers
+<b><i>Font</i></b>, <b><i>Save</i></b> (the messages, as text) and <b><i>Clear Display</i></b>.<p>
+<li><b><i>Chains From</i></b>, <b><i>Chains To</i></b> and <b><i>Target</i></b> choose the three files.<p>
+<li><b><i>Filter out steric clashes from results</i></b>, see <a href="#Ensembles">Ensembles and the steric
+clash filter</a>.<p>
+<li><b>The progress bar</b> follows <b><i>Start</i></b> and <b><i>Only Closest Chains</i></b>.<p>
+<li><b><i>Start</i></b> writes the result for every model to the <b><i>Target</i></b>; <b><i>Trial</i></b>
+places the result for the first model in the PDB Editor (<a href="#Run">details</a>). Both are active when
+<b><i>Validate</i></b> is, <b><i>Start</i></b> once a <b><i>Target</i></b> is chosen too.
+<b><i>Stop</i></b> interrupts <b><i>Start</i></b> or <b><i>Only Closest Chains</i></b>.<p>
+<li><b><i>Help</i></b> shows this page, <b><i>PDB Editor</i></b> brings the PDB Editor to the front, and
+<b><i>Close</i></b> closes the window.<p>
+</ul>
+
+<hr>
+
+<a name="Prepare"></a>
+<h3>Preparing the structures</h3>
+
+<ul>
+<li>Corresponding chains must have the same chain identifier in both structures, and every chain should have
+one.<p>
+<li>Residues are matched by number only, so both structures must be numbered the same way. Renumber one of
+them first if needed.<p>
+<li>Insertion codes are ignored: residues 52 and 52A are both treated as residue 52, and the code is not
+written to the output. Renumber such structures first.<p>
+<li>Keep a single alternate location per atom. A duplicated C&alpha; atom in a fit residue can stop the run
+with a fit point mismatch, and all alternates of the merged residues are carried over, appearing in the output
+as duplicate atoms since alternate-location indicators are not written.<p>
+<li>HETATM records with the chain identifier of a row and a residue number in its merge range are merged
+too, and an added chain is taken with all its records. Remove unwanted waters and ligands from the donor
+first.<p>
+<li>Hydrogen atoms play no part in the fit and are carried over with the merged residues, so both structures
+should have hydrogens, or neither.<p>
+<li>For <b><i>Start</i></b> with a multi-model <b><i>Chains To</i></b> file, give every model a different
+model number. Models sharing a number are written as <tt>1</tt>, <tt>1-1</tt>, <tt>1-2</tt> and so on,
+which strict PDB readers may not accept.<p>
+</ul>
+
+<hr>
+
+<a name="Limitations"></a>
+<h3>Notes and current limitations</h3>
+
+<ul>
+<li>
+<span style="color:#CC0000">The steric clash filter applies no tolerance</span>, so ordinary hydrogen bonds
+and close packing count as clashes; see <a href="#Ensembles">Ensembles and the steric clash filter</a>.<p>
+<li>
+Rows read from a <tt>.csc</tt> file do not get the automatic adjustments of the table; see
+<a href="#Files">Saving and loading the table</a>.<p>
+<li>
+The SEQRES, HELIX and SHEET records copied to the <b><i>Target</i></b> describe the recipient only; see
+<a href="#Run">Trial, Start and the output file</a>.<p>
+<li>
+The message area opens with the notice <i>THIS WINDOW IS UNDER DEVELOPMENT</i>.<p>
+</ul>
+
+<br>
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
@@ -205,7 +603,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on 8 May, 2012
+Last modified on September 30, 2026
 </font>
 </body>
 </html>

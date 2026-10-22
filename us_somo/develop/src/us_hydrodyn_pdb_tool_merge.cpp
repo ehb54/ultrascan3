@@ -672,7 +672,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                unsigned int mext = 1;
                QString use_model_name;
                do {
-                  use_model_name = model_name + QString("-%1").arg( mext );
+                  use_model_name = model_name + QString( "-%1" ).arg( mext++ );
                } while ( model_names.count( use_model_name ) );
                model_name = use_model_name;
                if ( !dup_model_name_msg_done )
@@ -779,6 +779,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
          }
 
          QString qs = ts.readLine();
+         // a final line that is neither MODEL nor END still belongs to the current model
+         if ( ts.atEnd() && in_model && !qs.contains( rx_model ) && !qs.contains( rx_end ) )
+         {
+            model_lines << qs;
+         }
          if ( qs.contains( rx_model ) || qs.contains( rx_end ) || ts.atEnd() )
          {
             if ( model_lines.size() )
@@ -802,7 +807,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                }
                
                if ( filtered ) {
-                  editor_msg( "darkred", QString( "Model %1 filtered due to steric clashes\n" ).arg( model_name_vector[ pos ] ) );
+                  editor_msg( "darkred",
+                              QString( "Model %1 filtered due to steric clashes\n" )
+                              .arg( no_model ? QString( "1" ) : model_name_vector[ pos ] ) );
                   if ( cb_filter->isChecked() ) {
                      if ( !no_model )
                      {
@@ -1640,6 +1647,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
 {
    QString filename = QFileDialog::getSaveFileName( this , "Choose a name to save the result" , "" , "PDB (*.pdb *.PDB)" );
 
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
 
    if ( !filename.contains( QRegularExpression( ".pdb$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
@@ -1647,11 +1658,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
    }
 
    le_target->setText( filename );
-
-   if ( filename.isEmpty() )
-   {
-      return;
-   }
    update_enables();
 }
 
@@ -2017,12 +2023,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_from_to_merge()
    sel_to_range( lv_csv_from, ranges );
    update_t_csv_range( ranges, 1, 2 );
    update_cache_range();
+   // the row of a chain in the table, which is not its position in the Chains To structure
+   make_csv_chain_map();
    for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
-      if ( cache_to_range_pos.count( chain ) )
+      if ( cache_to_range_pos.count( chain ) && csv_chain_map.count( chain ) )
       {
-         recalc_from_merge( cache_to_range_pos[ chain ], 1 );
+         recalc_from_merge( csv_chain_map[ chain ], 1 );
       }
    }
    update_enables();
@@ -2034,12 +2042,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_from_to_fit()
    sel_to_range( lv_csv_from, ranges );
    update_t_csv_range( ranges, 3, 4 );
    update_cache_range();
+   // the row of a chain in the table, which is not its position in the Chains To structure
+   make_csv_chain_map();
    for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
-      if ( cache_to_range_pos.count( chain ) )
+      if ( cache_to_range_pos.count( chain ) && csv_chain_map.count( chain ) )
       {
-         recalc_from_fit( cache_to_range_pos[ chain ], 3 );
+         recalc_from_fit( csv_chain_map[ chain ], 3 );
       }
    }
    update_enables();
@@ -2051,12 +2061,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_fit()
    sel_to_range( lv_csv_to, ranges );
    update_t_csv_range( ranges, 3, 4 );
    update_cache_range();
+   // the row of a chain in the table, which is not its position in the Chains To structure
+   make_csv_chain_map();
    for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
-      if ( cache_to_range_pos.count( chain ) )
+      if ( cache_to_range_pos.count( chain ) && csv_chain_map.count( chain ) )
       {
-         recalc_from_fit( cache_to_range_pos[ chain ], 3 );
+         recalc_from_fit( csv_chain_map[ chain ], 3 );
       }
    }
    update_enables();
@@ -2068,12 +2080,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_cut()
    sel_to_range( lv_csv_to, ranges );
    update_t_csv_range( ranges, 5, 6 );
    update_cache_range();
+   // the row of a chain in the table, which is not its position in the Chains To structure
+   make_csv_chain_map();
    for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
-      if ( cache_to_range_pos.count( chain ) )
+      if ( cache_to_range_pos.count( chain ) && csv_chain_map.count( chain ) )
       {
-         recalc_from_cut( cache_to_range_pos[ chain ], 5 );
+         recalc_from_cut( csv_chain_map[ chain ], 5 );
       }
    }
    update_enables();
@@ -2443,6 +2457,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::load()
 
    f.close();
 
+   if ( qsl.isEmpty() )
+   {
+      editor_msg( "red", QString( us_tr( "Error: file %1 is empty" ) ).arg( filename ) );
+      return;
+   }
+
    csv new_csv = csv_commands;
 
    new_csv.data.clear( );
@@ -2466,13 +2486,19 @@ void US_Hydrodyn_Pdb_Tool_Merge::load()
             {
                data.push_back(*it2);
             }
+            // a trailing empty value is not returned by csv_parse_line(), so pad every row to the full width
+            data.resize( new_csv.header.size() );
             new_csv.data.push_back( data );
          }
       }
    }
 
    csv_commands = new_csv;
+   // filling the table must not run the per-cell adjustments, which would blank the chain of extra chain rows
+   disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
    update_t_csv_data();
+   connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
+   fill_csv_empty_items();
    update_enables();
 }
 
@@ -3544,9 +3570,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::extra_chains()
             {
                unsigned int pos = ( unsigned int ) t_csv->rowCount();
                t_csv->setRowCount( pos + 1 );
+               // table_value() would blank the chain cell of an extra chain row
+               disconnect( t_csv, SIGNAL( cellChanged( int, int ) ), 0, 0 );
                t_csv->setItem( pos, 0, new QTableWidgetItem( cross_chain ) );
                t_csv->setItem( pos, 3, new QTableWidgetItem( t_csv->item( it->second, 3 )->text() ) );
                t_csv->setItem( pos, 4, new QTableWidgetItem( t_csv->item( it->second, 4 )->text() ) );
+               connect( t_csv, SIGNAL( cellChanged( int, int ) ), SLOT( table_value( int, int ) ) );
                fill_csv_empty_items();
             }
          }

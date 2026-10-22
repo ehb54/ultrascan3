@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO SAS Data Utility: File Concentration Loader</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - SAS Data Utility: File Concentration Loader</h2>
+<p>
+<h3><center>Last updated: September 2026</center></h3><p>
+</center>
+
+<hr>
+
+The <b><i>File Concentration Loader</i></b> (window title <i>US-SOMO: SAXS Buffer: File Concentration
+Loader</i>) is reached from the <b><i>Load</i></b> button of the
+<a href=somo_saxs_buffer_conc.html><b><i>Solution Concentrations</i></b></a> window, whenever the file
+chosen there is <i>not</i> a <b>.sbc</b> file written by <b><i>US-SOMO</i></b> itself.
+<p>
+
+Its purpose is to take an arbitrary tabular file &mdash; a concentration log from a chromatography system, a
+spreadsheet export, a table typed up by hand &mdash; and work out which of its columns identifies the
+measurement and which holds the concentration, so that the values can be matched onto the curves currently
+loaded in the <a href=somo_saxs_buffer.html><b><i>Data Utility</i></b></a>.
+<p>
+
+<h3>How the file is read</h3>
+
+The file is split into fields on commas and/or whitespace. Only rows in which <i>every</i> field is numeric
+are retained; all others &mdash; titles, column headings, units, comments, trailing notes &mdash; are
+discarded automatically, so most instrument logs can be used without editing. If nothing numeric is found at
+all, the loader does not open and the <b><i>Solution Concentrations</i></b> window reports that the file does
+not appear to contain data the program understands.
+<p>
+
+What survives is displayed as a table, which is what you then work on.
+<p>
+
+<h3>Preparing the table</h3>
+
+<ul>
+<li>
+Clicking a column heading selects that whole column; clicking <b><i>Delete Rows</i></b> removes the rows
+currently selected. Use this to drop calibration lines, blanks, or a trailing block belonging to a different
+run. The window resizes itself to the remaining table.<p>
+<li>
+<b><i>Set column for frame timecode</i></b> designates the selected column as the one that identifies each
+measurement &mdash; a frame number, a timecode, or any other integer that also appears in the names of your
+curves. The chosen column number is shown beside the button.<p>
+<li>
+<b><i>Set column for concentration</i></b> designates the selected column as the one holding the
+concentration in mg/ml, again reporting the chosen column number beside the button.<p>
+<li>
+<b><i>Adjust frame timecode</i></b> asks for an integer correction between &minus;1000 and +1000 and adds it
+to every timecode. This is for the common case where the concentration log and the scattering frames are
+numbered from different origins, or are offset by a fixed number of frames.<p>
+</ul>
+
+<h3>Matching and applying</h3>
+
+<b><i>Trial set</i></b> performs the match without committing it. Each curve name in the
+<b><i>Data Utility</i></b> is broken into its runs of digits, and those numbers are compared &mdash;
+<i>last one first</i> &mdash; against the timecode column of the table. The first number that matches
+supplies the concentration for that curve. Working from the end of the name is deliberate: it picks up the
+frame index in names such as <i>lysozyme_2024_0137</i> in preference to the year.
+<p>
+
+The result is reported beside the button as <i>Match ok</i> or <i>No matches found</i>, together with the
+count of curves matched and not matched. <span style="color:#CC0000">Always run <b><i>Trial set</i></b> and
+check those counts before saving</span> &mdash; a wrong column designation or a missing timecode offset shows
+up immediately as a low match count, whereas once the values are applied it can be hard to notice that a
+subset of the curves kept their old concentrations.
+<p>
+
+<b><i>Save values</i></b> applies the trial match to the <b><i>Solution Concentrations</i></b> table and
+closes the loader. Curves that were not matched keep whatever concentration they already had.
+<b><i>Cancel</i></b> closes the loader without changing anything.
+<p>
+
+Remember that the concentrations then still have to be committed from the
+<a href=somo_saxs_buffer_conc.html><b><i>Solution Concentrations</i></b></a> window with <i>its</i>
+<b><i>Save values</i></b> button before any calculation will use them.
+<p>
+
+<h3>Saving the result for re-use</h3>
+
+Once a set of concentrations has been matched successfully, use <b><i>Save to file</i></b> in the
+<b><i>Solution Concentrations</i></b> window to write it as a <b>.sbc</b> file. That file is keyed on the
+curve names rather than on timecodes and is applied directly on loading, so the column mapping and the
+timecode adjustment only ever have to be done once per data set.
+<p>
+
+<br>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre.brookes@umt.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.aucsolutions.com">http://somo.aucsolutions.com</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on September 8, 2026
+</font>
+</body>
+</html>

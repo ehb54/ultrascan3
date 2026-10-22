@@ -25,6 +25,16 @@ revision.commands    = sh revision.sh
 revision.depends     = FORCE
 QMAKE_EXTRA_TARGETS += revision
 
+# The git branch and commit this tree is built from (include/us_somo_gitinfo.h, generated and
+# gitignored). Written here at qmake time so the header exists when qmake scans dependencies, and
+# again at make time by the FORCE target, so make on the library picks up a checkout or pull even
+# without re-running qmake. gitinfo.sh rewrites the header only when its content changes.
+system( cd $$PWD && sh gitinfo.sh )
+gitinfo.target       = include/us_somo_gitinfo.h
+gitinfo.commands     = sh gitinfo.sh
+gitinfo.depends      = FORCE
+QMAKE_EXTRA_TARGETS += gitinfo
+
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {
    QT += network
@@ -394,6 +404,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_conc.cpp \
         src/us_hydrodyn_saxs_cormap.cpp \
         src/us_hydrodyn_saxs_external.cpp \
+        src/us_hydrodyn_saxs_guinier_search.cpp \
         src/us_hydrodyn_saxs_guinier.cpp \
         src/us_hydrodyn_saxs_fits.cpp \
         src/us_hydrodyn_saxs_ift.cpp \
@@ -525,6 +536,7 @@ SOURCES *= \
         src/us_saxs_util_dammin.cpp \
         src/us_saxs_util_dmd.cpp \
         src/us_saxs_util_extern.cpp \
+        src/us_saxs_util_guinier_search.cpp \
         src/us_saxs_util_guinier.cpp \
         src/us_saxs_util_gui_only.cpp \
         src/us_saxs_util_hydrate.cpp \
@@ -929,6 +941,7 @@ HEADERS *= \
 #  us_sassoc.h \
         include/us_saxs_gp.h \
         include/us_saxs_util.h \
+        include/us_saxs_util_guinier_search.h \
         include/us_saxs_util_nsa.h \
 #  us_select_channel.h \
 #  us_selectmodel.h \
