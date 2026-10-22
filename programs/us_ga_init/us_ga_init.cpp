@@ -203,21 +203,21 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_x_axis );
    connect( bg_y_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_y_axis );
 
-   lb_info3      = us_banner( tr( "Bucket List" ) );
-   lw_sbin_data  = us_listwidget( );
-   connect( lw_sbin_data, &QAbstractItemView::pressed,
+   lb_info3       = us_banner( tr( "Solute Bins List" ) );
+   lw_buckets     = us_listwidget( );
+   connect( lw_buckets, &QAbstractItemView::pressed,
             this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-   connect( lw_sbin_data, &QListWidget::currentRowChanged,
+   connect( lw_buckets, &QListWidget::currentRowChanged,
             this,         &US_GA_Initialize::highlight_bucket );
 
    QLabel* lb_nsols = us_label( tr( "Number Solutes:" ) );
    lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   QLabel* lb_nbuks = us_label( tr( "Number Buckets:" ) );
+   QLabel* lb_nbuks = us_label( tr( "Number Bins:" ) );
    lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   le_nsols = us_lineedit( "", -1, true );
-   le_nbuks = us_lineedit( "", -1, true );
+   le_nsols      = us_lineedit( "", -1, true );
+   le_nbuks      = us_lineedit( "", -1, true );
 
    lb_info4      = us_banner( tr( "Data Controls" ) );
 
@@ -329,7 +329,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( lb_plymax,    s_row,   4, 1, 2 );
    spec->addWidget( le_plymax,    s_row++, 6, 1, 2 );
    spec->addWidget( lb_info3,     s_row++, 0, 1, 8 );
-   spec->addWidget( lw_sbin_data, s_row++, 0, 1, 8 );
+   spec->addWidget( lw_buckets,   s_row++, 0, 1, 8 );
    spec->addWidget( lb_nsols,     s_row,   0, 1, 2 );
    spec->addWidget( le_nsols,     s_row,   2, 1, 2 );
    spec->addWidget( lb_nbuks,     s_row,   4, 1, 2 );
@@ -706,20 +706,20 @@ void US_GA_Initialize::autoAssignSb( void )
    is_saved     = false;
    fill_lw_bins();
    plot_buckets();
-   if ( lw_sbin_data->count() > 0 )
+   if ( lw_buckets->count() > 0 )
    {
-      lw_sbin_data->setCurrentRow(0);
+      lw_buckets->setCurrentRow(0);
    }
 }
 
 void US_GA_Initialize::fill_lw_bins()
 {
-   const QSignalBlocker blocker( lw_sbin_data );
-   lw_sbin_data->clear();
+   const QSignalBlocker blocker( lw_buckets );
+   lw_buckets->clear();
    int nbuks = soludata->bucketsCount();
    for ( int ii = 0; ii < nbuks; ii++ )
    {
-      lw_sbin_data->addItem( soludata->bucketLine( ii ) );
+      lw_buckets->addItem( soludata->bucketLine( ii ) );
    }
    le_nbuks->clear();
    if ( nbuks > 0 )
@@ -788,7 +788,7 @@ void US_GA_Initialize::plot_buckets()
       curve->attach( data_plot );
       bucket_curves << curve;
    }
-   highlight_bucket( lw_sbin_data->currentRow() );
+   highlight_bucket( lw_buckets->currentRow() );
 }
 
 // plot data 3-D
@@ -1520,9 +1520,9 @@ void US_GA_Initialize::addSelectedBin( const QRectF& selection )
    manbuks = true;
    fill_lw_bins();
    plot_buckets();
-   if (lw_sbin_data->count() > 0)
+   if (lw_buckets->count() > 0)
    {
-      lw_sbin_data->setCurrentRow(lw_sbin_data->count() - 1);
+      lw_buckets->setCurrentRow(lw_buckets->count() - 1);
    }
    manbuks  = true;
    is_saved = false;
@@ -1550,8 +1550,8 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
       }
       else
       {
-         const QSignalBlocker blocker( lw_sbin_data );
-         delete lw_sbin_data->takeItem( sx );
+         const QSignalBlocker blocker( lw_buckets );
+         delete lw_buckets->takeItem( sx );
          soludata->removeBucketAt( sx );
          is_saved = false;
          bucket_curves[ sx ]->detach();
@@ -1564,7 +1564,7 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
       int rx      = qMin( sx, ( nibuks - 1 ) );
       if ( rx >= 0 )
       {
-         lw_sbin_data->setCurrentRow( rx );
+         lw_buckets->setCurrentRow( rx );
          highlight_bucket( rx );
          data_plot->replot();
       }
@@ -1603,7 +1603,7 @@ void US_GA_Initialize::changeBucketRect( int sx, QRectF& rect )
    is_saved = false;
 
    QString line  = soludata->bucketLine( sx );
-   lw_sbin_data->item( sx )->setText( line );
+   lw_buckets->item( sx )->setText( line );
 
    return;
 }

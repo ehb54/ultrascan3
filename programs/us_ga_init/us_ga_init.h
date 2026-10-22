@@ -59,7 +59,7 @@ class US_GA_Initialize : public US_Widgets
       QLabel*       lb_plymin;
       QLabel*       lb_plymax;
 
-      QListWidget*  lw_sbin_data;
+      QListWidget*  lw_buckets;
       QTextEdit*    te_pctl_help;
       QTextEdit*    te_status;
       QLineEdit*    le_prefilt;
