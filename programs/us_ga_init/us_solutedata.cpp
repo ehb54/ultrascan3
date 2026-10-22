@@ -19,7 +19,12 @@ US_SoluteData::US_SoluteData( void ) : QObject()
 {
    bndx      = -1;
    dbg_level = US_Settings::us_debug();
-
+   valid_attrs << US_GA_Initialize::ATTR_S
+               << US_GA_Initialize::ATTR_K
+               << US_GA_Initialize::ATTR_W
+               << US_GA_Initialize::ATTR_V
+               << US_GA_Initialize::ATTR_D
+               << US_GA_Initialize::ATTR_F;
    allbucks.clear();
 }
 
@@ -657,6 +662,12 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
       int ztype, double fixval )
 {
+   if ( !valid_attrs.contains( xtype ) ||
+        !valid_attrs.contains( ytype ) ||
+        !valid_attrs.contains( ztype ) )
+   {
+      return 1;
+   }
    int     rc   = 0;
    int     nbuk = allbucks.size();
    QString line;
@@ -700,55 +711,93 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
 }
 
 // Read bucket information from file for use by GA
-int US_SoluteData::loadGAdata( QString& fname, int* xtype, int* ytype,
-      int* ztype, double* fixval )
+bool US_SoluteData::loadGAdata( QString& fname, int* xtype, int* ytype,
+                                    int* ztype, double* fixval )
 {
-   int rc       = 0;
-   int nbuk     = allbucks.size();
-   int xt, yt, zt;
-   double fxv   = 0.0;
-   QString line;
-   bucket  buk;
-
-   QFile filei( fname );
-
-   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   QFile file( fname );
+   if ( !file.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
-      QTextStream ts( &filei );
+      return false;
+   }
+   QTextStream ts( &file );
+   const QStringList header = ts.readLine().section( '#', 0, 0 ).simplified().split( ' ' );
+   if ( header.size() != 5 )
+   {
+      return false;
+   }
 
-      // Read the header line and get extents
-      line          = ts.readLine();
-      nbuk          = line.section( " ", 0, 0 ).toInt();
-      xt            = line.section( " ", 1, 1 ).toInt();
-      yt            = line.section( " ", 2, 2 ).toInt();
-      zt            = line.section( " ", 3, 3 ).toInt();
-      fxv           = line.section( " ", 4, 4 ).toDouble();
-      int kbuk      = 0;
-      allbucks.clear();
+   bool ok = false;
+   const int count = header[0].toInt( &ok );
+   if ( !ok || count < 0 )
+   {
+      return false;
+   }
 
-      // Loop to read and save each bucket line
-      while ( ! ( line = ts.readLine() ).isEmpty() )
+   int attrs[3];
+   for ( int i = 0; i < 3; ++i )
+   {
+      attrs[i] = header[i + 1].toInt( &ok );
+      if ( !ok || !valid_attrs.contains( attrs[i] ) )
       {
-         buk.x_min     = line.section( ",", 0, 0 ).simplified().toDouble();
-         buk.x_max     = line.section( ",", 1, 1 ).simplified().toDouble();
-         buk.y_min     = line.section( ",", 2, 2 ).simplified().toDouble();
-         buk.y_max     = line.section( ",", 3, 3 ).simplified().toDouble();
+         return false;
+      }
+   }
 
-         allbucks << buk;
-         kbuk++;
+   const double fixed = header[4].toDouble( &ok );
+   if ( !ok || !qIsFinite( fixed ) )
+   {
+      return false;
+   }
+
+   QList<bucket> loaded;
+   while ( !ts.atEnd() )
+   {
+      const QString line = ts.readLine().trimmed();
+      if ( line.isEmpty() )
+      {
+         continue;
       }
 
-      if ( xtype  != NULL )   *xtype  = xt;
-      if ( ytype  != NULL )   *ytype  = yt;
-      if ( ztype  != NULL )   *ztype  = zt;
-      if ( fixval != NULL )   *fixval = fxv;
+      const QStringList fields = line.split( ',' );
+      if ( fields.size() != 4 )
+      {
+         return false;
+      }
 
-      filei.close();
+      double bounds[4];
+      for ( int i = 0; i < 4; ++i )
+      {
+         bounds[i] = fields[i].trimmed().toDouble( &ok );
+         if ( !ok || !qIsFinite( bounds[i] ) )
+         {
+            return false;
+         }
+      }
+
+      if ( bounds[0] >= bounds[1] || bounds[2] >= bounds[3] )
+      {
+         return false;
+      }
+
+      bucket buk;
+      buk.x_min = bounds[0]; buk.x_max = bounds[1];
+      buk.y_min = bounds[2]; buk.y_max = bounds[3];
+      buk.x = ( bounds[0] + bounds[1] ) / 2.0;
+      buk.y = ( bounds[2] + bounds[3] ) / 2.0;
+      loaded.append( buk );
    }
-   else
-      rc    = 1;
 
-   return rc;
+   if ( loaded.size() != count )
+   {
+      return false;
+   }
+   allbucks = loaded;
+   bndx = -1;
+   if ( xtype ) *xtype = attrs[0];
+   if ( ytype ) *ytype = attrs[1];
+   if ( ztype ) *ztype = attrs[2];
+   if ( fixval ) *fixval = fixed;
+   return true;
 }
 
 // build the data lists for Monte Carlo analysis

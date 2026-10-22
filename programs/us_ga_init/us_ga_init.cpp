@@ -1974,8 +1974,7 @@ DbgLv(1) << "gain: load_bins()";
    binfpath       = QString( fname ).section( "/", 0, -2 );
    int xparam, yparam, zparam;
    US_SoluteData sdata;
-   int ret = sdata.loadGAdata( fname, &xparam, &yparam, &zparam );
-   if ( ret != 0 )
+   if ( !sdata.loadGAdata( fname, &xparam, &yparam, &zparam ) )
    {
       QMessageBox::warning( this, "Warning!", "Wrong file format!" );
       return;
@@ -1998,12 +1997,12 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
    }
 
    resetSb();
-   manbuks = true;
+   manbuks  = true;
+   is_saved = false;
    soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
    soludata->sortBuckets();
    fill_lw_bins();
    plot_buckets();
-   is_saved       = false;
 }
 
 // Make a ColorMap copy and return a pointer to the new ColorMap
