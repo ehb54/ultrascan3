@@ -227,11 +227,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
 {
    return 
       QString(
-#if QT_VERSION < 0x040000
-              "%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1\n"
-#else
               "%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n"
-#endif
 
               )
       .arg(ce.name)
@@ -1431,41 +1427,6 @@ void US_Hydrodyn_Comparative::setupGUI()
    // editor->setMinimumWidth(300);
    // editor->setMinimumHeight(minHeight1 * 7);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
@@ -1492,7 +1453,6 @@ void US_Hydrodyn_Comparative::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -1682,7 +1642,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);

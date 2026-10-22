@@ -23,9 +23,6 @@
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-     #pragma warning ( disable: 4251 )
-# endif
 #endif      
 
 class US_EXTERN US_Hydrodyn_Saxs_Hplc_Simulate : public QFrame
@@ -108,9 +105,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Simulate : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

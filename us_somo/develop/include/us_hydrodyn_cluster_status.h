@@ -24,9 +24,6 @@
 #include <QNetworkReply> 
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 //standard C and C++ defs:
@@ -179,9 +176,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif
