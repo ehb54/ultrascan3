@@ -24,9 +24,6 @@
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QCloseEvent>
-#if QT_VERSION < 0x040000
-# include "../3dplot/mesh2mainwindow.h"
-#endif
 
 #include "qwt_plot_marker.h"
 #include "qwt_symbol.h"
@@ -175,9 +172,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                              );
 
    private:
-#if QT_VERSION < 0x040000
-      Mesh2MainWindow *plot3d_window;
-#endif
       bool             plot3d_flag;
 
       void * saxs_hplc_options_widget;

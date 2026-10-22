@@ -1668,15 +1668,11 @@ int US_Hydrodyn::run_browflex()
 #endif
    browflex = new QProcess( this );
    browflex->setWorkingDirectory( dir );
-#if QT_VERSION < 0x04000
-   browflex->addArgument( prog );
-#else
    QStringList args;
    args
       << "<"
       << browfile
       ;
-#endif
    
    connect( browflex, SIGNAL(readyReadStandardOutput()), this, SLOT(browflex_readFromStdout()) );
    connect( browflex, SIGNAL(readyReadStandardError()), this, SLOT(browflex_readFromStderr()) );
@@ -1684,37 +1680,19 @@ int US_Hydrodyn::run_browflex()
    connect( browflex, SIGNAL(started()), this, SLOT(browflex_started()) );
 
    editor->append("\n\nStarting Browflex\n");
-#if QT_VERSION < 0x040000
-   browflex->launch( browfile );
-#else
    browflex->start( prog, args, QIODevice::ReadOnly );
-#endif
    return 0;
 }
 
 void US_Hydrodyn::browflex_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( browflex->canReadLineStdout() )
-   {
-      editor_msg("brown", browflex->readLineStdout() + "\n");
-   }
-#else
    editor_msg( "brown", QString( browflex->readAllStandardOutput() ) );
-#endif   
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn::browflex_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( browflex->canReadLineStderr() )
-   {
-      editor_msg("red", browflex->readLineStderr() + "\n");
-   }
-#else
    editor_msg( "red", QString( browflex->readAllStandardError() ) );
-#endif   
    //  qApp->processEvents();
 }
    
