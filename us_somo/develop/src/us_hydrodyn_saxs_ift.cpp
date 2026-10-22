@@ -77,10 +77,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_label_0->setPalette( PALET_FRAME );
    lbl_label_0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_label_0 );
    
-#endif
 
    col = 1 + 1;
    background->addWidget( lbl_label_0 , row , 0 , 1 + ( row ) - ( row ) , 1 + ( col++  ) - ( 0 ) );
@@ -99,10 +97,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_qmin->setPalette( PALET_LABEL );
    lbl_qmin->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_qmin );
    lbl_qmin->setToolTip( us_tr( "Optionally enter q min in inverse Angstroms." ) );
-#endif
 
    background->addWidget( lbl_qmin, row, col++ );
 
@@ -117,9 +113,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_qmin->setPalette( PALET_NORMAL );
    connect( le_qmin, SIGNAL( textChanged( const QString & ) ), SLOT( update_qmin( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_qmin->setToolTip( us_tr( "Optionally enter q min in inverse Angstroms." ) );
-#endif
 
    background->addWidget( le_qmin, row, col++ );
 
@@ -138,10 +132,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_qmax->setPalette( PALET_LABEL );
    lbl_qmax->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_qmax );
    lbl_qmax->setToolTip( us_tr( "Qptionally Enter q max in inverse Angstroms." ) );
-#endif
 
    background->addWidget( lbl_qmax, row, col++ );
 
@@ -156,9 +148,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_qmax->setPalette( PALET_NORMAL );
    connect( le_qmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_qmax( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_qmax->setToolTip( us_tr( "Qptionally Enter q max in inverse Angstroms." ) );
-#endif
 
    background->addWidget( le_qmax, row, col++ );
 
@@ -178,10 +168,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    cb_fitbackground->setEnabled( true );
    cb_fitbackground->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_fitbackground->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_fitbackground );
    cb_fitbackground->setToolTip( us_tr( "A constant (flat) background is fitted to the data." ) );
-#endif
 
    connect( cb_fitbackground, SIGNAL( clicked() ), SLOT( set_fitbackground() ) );
 
@@ -207,10 +195,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_dmax->setPalette( PALET_LABEL );
    lbl_dmax->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_dmax );
    lbl_dmax->setToolTip( us_tr( "Optionally enter starting value for the maximum diameter of the scatterer in Angstroms." ) );
-#endif
 
    background->addWidget( lbl_dmax, row, col++ );
 
@@ -225,9 +211,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_dmax->setPalette( PALET_NORMAL );
    connect( le_dmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_dmax( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_dmax->setToolTip( us_tr( "Optionally enter starting value for the maximum diameter of the scatterer in Angstroms." ) );
-#endif
 
    background->addWidget( le_dmax, row, col++ );
 
@@ -247,10 +231,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    cb_dmaxfixed->setEnabled( true );
    cb_dmaxfixed->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_dmaxfixed->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_dmaxfixed );
    cb_dmaxfixed->setToolTip( us_tr( "Fix the defined maximum diameter" ) );
-#endif
 
    connect( cb_dmaxfixed, SIGNAL( clicked() ), SLOT( set_dmaxfixed() ) );
 
@@ -276,10 +258,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_alpha->setPalette( PALET_LABEL );
    lbl_alpha->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_alpha );
    lbl_alpha->setToolTip( us_tr( "<p>Optionally enter the starting value for the logarithm of the Lagrange multiplier (usually between -10 and 20).</p><p>Larger values will give smoother distributions or - for the MaxEnt constraint:</p><p>an estimate which is closer to the prior ellipsoid of revolution.</p>" ) );
-#endif
 
    background->addWidget( lbl_alpha, row, col++ );
 
@@ -294,9 +274,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_alpha->setPalette( PALET_NORMAL );
    connect( le_alpha, SIGNAL( textChanged( const QString & ) ), SLOT( update_alpha( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_alpha->setToolTip( us_tr( "<p>Optionally enter the starting value for the logarithm of the Lagrange multiplier (usually between -10 and 20).</p><p>Larger values will give smoother distributions or - for the MaxEnt constraint:</p><p>an estimate which is closer to the prior ellipsoid of revolution.</p>" ) );
-#endif
 
    background->addWidget( le_alpha, row, col++ );
 
@@ -316,10 +294,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    cb_alphafixed->setEnabled( true );
    cb_alphafixed->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_alphafixed->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_alphafixed );
    cb_alphafixed->setToolTip( us_tr( "Fix the Lagrange multiplier" ) );
-#endif
 
    connect( cb_alphafixed, SIGNAL( clicked() ), SLOT( set_alphafixed() ) );
 
@@ -345,10 +321,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_smearing->setPalette( PALET_LABEL );
    lbl_smearing->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_smearing );
    lbl_smearing->setToolTip( us_tr( "<p>Optionally enter a correction for slit smearing. Default is no smearing.</p><p>Enter value for constant c as given by the expression</p><p>I_smear(q) = integrate P(t)*I(sqrt(q**2 + t**2)) dt with the</p><p>primary beam length profile: P(t) = c/sqrt(pi) * exp(-c**2*t**2).</p><p>The fit and the deconvolution are both given in the ouput file fit.d</p>" ) );
-#endif
 
    background->addWidget( lbl_smearing, row, col++ );
 
@@ -363,9 +337,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_smearing->setPalette( PALET_NORMAL );
    connect( le_smearing, SIGNAL( textChanged( const QString & ) ), SLOT( update_smearing( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_smearing->setToolTip( us_tr( "<p>Optionally enter a correction for slit smearing. Default is no smearing.</p><p>Enter value for constant c as given by the expression</p><p>I_smear(q) = integrate P(t)*I(sqrt(q**2 + t**2)) dt with the</p><p>primary beam length profile: P(t) = c/sqrt(pi) * exp(-c**2*t**2).</p><p>The fit and the deconvolution are both given in the ouput file fit.d</p>" ) );
-#endif
 
    background->addWidget( le_smearing, row, col++ );
 
@@ -384,10 +356,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_prpoints->setPalette( PALET_LABEL );
    lbl_prpoints->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_prpoints );
    lbl_prpoints->setToolTip( us_tr( "<p>Optionally enter the number of points in the estimated function p(r): more points increase the cpu-time.</p><p>Default: 50, Maximum 500</p>" ) );
-#endif
 
    background->addWidget( lbl_prpoints, row, col++ );
 
@@ -401,9 +371,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_prpoints->setPalette( PALET_NORMAL );
    connect( le_prpoints, SIGNAL( textChanged( const QString & ) ), SLOT( update_prpoints( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_prpoints->setToolTip( us_tr( "<p>Optionally enter the number of points in the estimated function p(r): more points increase the cpu-time.</p><p>Default: 50, Maximum 500</p>" ) );
-#endif
 
    background->addWidget( le_prpoints, row, col++ );
 
@@ -422,10 +390,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_noextracalc->setPalette( PALET_LABEL );
    lbl_noextracalc->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_noextracalc );
    lbl_noextracalc->setToolTip( us_tr( "<p>Optionally Input number of extra error calculations (max 1000).</p><p>Entering a large number will improve the error estimate,</p><p>but require more cpu time.</p><p>In some cases it may be a little tricky to obtain a decent</p><p>error estimate. Try testing a couple of values to see the effect. </p>" ) );
-#endif
 
    background->addWidget( lbl_noextracalc, row, col++ );
 
@@ -439,9 +405,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_noextracalc->setPalette( PALET_NORMAL );
    connect( le_noextracalc, SIGNAL( textChanged( const QString & ) ), SLOT( update_noextracalc( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_noextracalc->setToolTip( us_tr( "<p>Optionally Input number of extra error calculations (max 1000).</p><p>Entering a large number will improve the error estimate,</p><p>but require more cpu time.</p><p>In some cases it may be a little tricky to obtain a decent</p><p>error estimate. Try testing a couple of values to see the effect. </p>" ) );
-#endif
 
    background->addWidget( le_noextracalc, row, col++ );
 
@@ -460,10 +424,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_transform->setPalette( PALET_LABEL );
    lbl_transform->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_transform );
    lbl_transform->setToolTip( us_tr( "<p>[D]ebye (default -> returning p(r) with positivity constraint)                                        sin(q*r)/(q*r) * dr</p><p>[N]egative (Debye transformation -> returning p(r) without positivity constraint)       sin(q*r)/(q*r) * dr</p><p>[M]axEnt using an ellipsoid of revolution as prior ( -> p(r) -positivity constraint)       sin(q*r)/(q*r) * dr</p><p>     The axial ratio for the ellipsoid is optimized using the posterior probability.</p><p>     The axial ratio may be initialized or fixed using the box <i>Estimate axial ratio</i></p><p>     (leave the box <i>Fit axial ratio</i> empty).</p><p>[B]essel (for cylindrical scatterers -> cross section distribution)        J_0(q*r)/q * dr</p><p>[C]osine (lamellae -> thickness distribution)                                    cos(q*r)/q**2 * dr</p><p>[S]ize (using spheres only -> size distribution)        (3*sin(q*r)-q*r*cos(q*r))/(q*r)**3)**2 * dr </p>" ) );
-#endif
    
    background->addWidget( lbl_transform, row, col++ );
 
@@ -471,9 +433,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lb_transform->setEnabled( true );
    lb_transform->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    lb_transform->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    lb_transform->setToolTip( us_tr( "<p>[D]ebye (default -> returning p(r) with positivity constraint)                                        sin(q*r)/(q*r) * dr</p><p>[N]egative (Debye transformation -> returning p(r) without positivity constraint)       sin(q*r)/(q*r) * dr</p><p>[M]axEnt using an ellipsoid of revolution as prior ( -> p(r) -positivity constraint)       sin(q*r)/(q*r) * dr</p><p>     The axial ratio for the ellipsoid is optimized using the posterior probability.</p><p>     The axial ratio may be initialized or fixed using the box <i>Estimate axial ratio</i></p><p>     (leave the box <i>Fit axial ratio</i> empty).</p><p>[B]essel (for cylindrical scatterers -> cross section distribution)        J_0(q*r)/q * dr</p><p>[C]osine (lamellae -> thickness distribution)                                    cos(q*r)/q**2 * dr</p><p>[S]ize (using spheres only -> size distribution)        (3*sin(q*r)-q*r*cos(q*r))/(q*r)**3)**2 * dr </p>" ) );
-#endif
 
    connect( lb_transform, SIGNAL( itemSelectionChanged() ), SLOT( set_transform() ) );
 
@@ -507,10 +467,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    cb_nondilute->setEnabled( true );
    cb_nondilute->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_nondilute->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_nondilute );
    cb_nondilute->setToolTip( us_tr( "Check for non-dilute solutions" ) );
-#endif
 
    connect( cb_nondilute, SIGNAL( clicked() ), SLOT( set_nondilute() ) );
 
@@ -536,10 +494,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_eta->setPalette( PALET_LABEL );
    lbl_eta->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_eta );
    lbl_eta->setToolTip( us_tr( "<p>The exact value entered here may influence the result when the information content of the data is low.</p><p>Start with a small number e.g. 0.01 to avoid numerical instabilities and long cpu times.</p>" ) );
-#endif
 
    background->addWidget( lbl_eta, row, col++ );
 
@@ -554,9 +510,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_eta->setPalette( PALET_NORMAL );
    connect( le_eta, SIGNAL( textChanged( const QString & ) ), SLOT( update_eta( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_eta->setToolTip( us_tr( "<p>The exact value entered here may influence the result when the information content of the data is low.</p><p>Start with a small number e.g. 0.01 to avoid numerical instabilities and long cpu times.</p>" ) );
-#endif
 
    background->addWidget( le_eta, row, col++ );
 
@@ -575,10 +529,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_fitratio->setPalette( PALET_LABEL );
    lbl_fitratio->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_fitratio );
    lbl_fitratio->setToolTip( us_tr( "Optionally enter the method" ) );
-#endif
    
    background->addWidget( lbl_fitratio, row, col++ );
 
@@ -586,9 +538,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lb_fitratio->setEnabled( true );
    lb_fitratio->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    lb_fitratio->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    lb_fitratio->setToolTip( us_tr( "Optionally enter the method" ) );
-#endif
 
    connect( lb_fitratio, SIGNAL( itemSelectionChanged() ), SLOT( set_fitratio() ) );
 
@@ -621,10 +571,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    lbl_estimateratio->setPalette( PALET_LABEL );
    lbl_estimateratio->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-#if QT_VERSION > 0x040000
    AUTFBACK( lbl_estimateratio );
    lbl_estimateratio->setToolTip( us_tr( "Optionally enter an estimate of the axial ratio" ) );
-#endif
 
    background->addWidget( lbl_estimateratio, row, col++ );
 
@@ -639,9 +587,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    le_estimateratio->setPalette( PALET_NORMAL );
    connect( le_estimateratio, SIGNAL( textChanged( const QString & ) ), SLOT( update_estimateratio( const QString & )));
 
-#if QT_VERSION > 0x040000
    le_estimateratio->setToolTip( us_tr( "Optionally enter an estimate of the axial ratio" ) );
-#endif
 
    background->addWidget( le_estimateratio, row, col++ );
 
@@ -661,10 +607,8 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    cb_estimateratiofixed->setEnabled( true );
    cb_estimateratiofixed->setFont( QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_estimateratiofixed->setPalette( PALET_NORMAL );
-#if QT_VERSION > 0x040000
    AUTFBACK( cb_estimateratiofixed );
    cb_estimateratiofixed->setToolTip( us_tr( "Fix the estimated axial ratio" ) );
-#endif
 
    connect( cb_estimateratiofixed, SIGNAL( clicked() ), SLOT( set_estimateratiofixed() ) );
 
@@ -690,9 +634,7 @@ void US_Hydrodyn_Saxs_Ift::setupGUI()
    pb_go->setPalette( PALET_PUSHB );
    connect( pb_go, SIGNAL( clicked() ), SLOT( go() ) );
 
-#if QT_VERSION > 0x040000
    pb_go->setToolTip( us_tr( "Process the IFT on all curves" ) );
-#endif
 
    if ( 0 == 10 ) {
        if ( col == 0 ) {
@@ -799,14 +741,9 @@ void US_Hydrodyn_Saxs_Ift::update_noextracalc( const QString & str )
 void US_Hydrodyn_Saxs_Ift::set_transform()
 {
    (*parameters)[ "transform" ] =
-#if QT_VERSION < 0x040000
-                  value_map_transform.count( lb_transform->currentItem()->text() ) ?
-                  value_map_transform[ lb_transform->currentItem()->text() ] :
-#else
                  !lb_transform->selectedItems().isEmpty() &&
                   value_map_transform.count( lb_transform->selectedItems().first()->text() ) ?
                   value_map_transform[  lb_transform->selectedItems().first()->text() ] :
-#endif
                   ""
                   ;
 }
@@ -825,14 +762,9 @@ void US_Hydrodyn_Saxs_Ift::update_eta( const QString & str )
 void US_Hydrodyn_Saxs_Ift::set_fitratio()
 {
    (*parameters)[ "fitratio" ] =
-#if QT_VERSION < 0x040000
-                  value_map_fitratio.count( lb_fitratio->currentItem()->text() ) ?
-                  value_map_fitratio[ lb_fitratio->currentItem()->text() ] :
-#else
                  !lb_fitratio->selectedItems().isEmpty() &&
                   value_map_fitratio.count( lb_fitratio->selectedItems().first()->text() ) ?
                   value_map_fitratio[  lb_fitratio->selectedItems().first()->text() ] :
-#endif
                   ""
                   ;
 }

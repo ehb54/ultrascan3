@@ -90,17 +90,6 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::setupGUI()
    ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
    ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   plot->enableOutline(true);
-   plot->setOutlinePen(Qt::white);
-   plot->setOutlineStyle(Qwt::VLine);
-   plot->enableGridXMin();
-   plot->enableGridYMin();
-   plot->setPalette( PALET_NORMAL );
-   AUTFBACK( plot );
-   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -109,22 +98,11 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::setupGUI()
    grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
-#endif
    plot->setAxisTitle(QwtPlot::xBottom, parameters[ "xbottom" ] );
    plot->setAxisTitle(QwtPlot::yLeft  , parameters[ "yleft"   ] );
 
-#if QT_VERSION < 0x040000
-   plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-   plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle( parameters[ "title" ] );
@@ -203,18 +181,11 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::update_plot()
       QString this_name = QString( "slope of fits" );
 
       QPen use_pen = QPen( Qt::cyan, use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( this_name );
       curve->setStyle ( QwtPlotCurve::NoCurve );
       curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
       curve->setSamples  ( & (slopes_x[ 0 ]), &(slopes[ 0 ]), slopes_x.size() );
       curve->attach   ( plot );
-#else
-      long curve = plot->insertCurve( this_name );
-      plot->setCurveStyle ( curve, QwtCurve::NoCurve );
-      plot->setCurveSymbol( curve, sym );
-      plot->setCurveData  ( curve, & (slopes_x[ 0 ]), &(slopes[ 0 ]), slopes_x.size() );
-#endif
    }
 
    us_qdebug( "scale1" ); 
@@ -237,18 +208,11 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::update_plot()
       }
 
       QPen use_pen = QPen( Qt::darkRed, use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_errorbar" );
       curve->setStyle ( QwtPlotCurve::Lines );
       curve->setPen   ( use_pen );
       curve->setSamples  ( x, y, 2 );
       curve->attach   ( plot );
-#else
-      long curve = plot->insertCurve( this_name + "_errorbar" );
-      plot->setCurveStyle ( curve, QwtCurve::Lines );
-      plot->setCurvePen   ( curve, use_pen  );
-      plot->setCurveData  ( curve, x, y, 2 );
-#endif
    }
    us_qdebug( "scale2" ); 
 
@@ -264,35 +228,23 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::update_plot()
       y[ 1 ] = fit_a + fit_b * x[ 1 ];
 
       QPen use_pen = QPen( Qt::green, use_line_width, Qt::SolidLine );
-#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_fitline" );
       curve->setStyle ( QwtPlotCurve::Lines );
       curve->setPen   ( use_pen );
       curve->setSamples  ( x, y, 2 );
       curve->attach   ( plot );
-#else
-      long curve = plot->insertCurve( this_name + "_errorbar" );
-      plot->setCurveStyle ( curve, QwtCurve::Lines );
-      plot->setCurvePen   ( curve, use_pen  );
-      plot->setCurveData  ( curve, x, y, 2 );
-#endif
    }
 
    us_qdebug( "scale3" ); 
    {
       QPen use_pen = QPen( Qt::red, use_line_width, Qt::DashDotLine );
       QFont use_font = QFont("Helvetica", 11, QFont::Bold );
-#if QT_VERSION >= 0x040000
       Qt::Alignment align;
-#else
-      int align;
-#endif
 
       if ( use_qmin ) {
          align = Qt::AlignRight | Qt::AlignTop;
          double pos = qmin;
          QString text = "Start";
-#if QT_VERSION >= 0x040000
          QwtPlotMarker * marker = new QwtPlotMarker;
          marker->setLineStyle       ( QwtPlotMarker::VLine );
          marker->setLinePen         ( use_pen );
@@ -305,21 +257,11 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::update_plot()
             marker->setLabel           ( qwtt );
          }
          marker->attach             ( plot );
-#else
-         long marker = plot->insertMarker();
-         plot->setMarkerLineStyle ( marker, QwtMarker::VLine );
-         plot->setMarkerPos       ( marker, pos, 0e0 );
-         plot->setMarkerLabelAlign( marker, align );
-         plot->setMarkerPen       ( marker, use_pen );
-         plot->setMarkerFont      ( marker, use_font );
-         plot->setMarkerLabelText ( marker, text );
-#endif
       }
       if ( use_qmax ) {
          align = Qt::AlignLeft | Qt::AlignTop;
          double pos = qmax;
          QString text = "End";
-#if QT_VERSION >= 0x040000
          QwtPlotMarker * marker = new QwtPlotMarker;
          marker->setLineStyle       ( QwtPlotMarker::VLine );
          marker->setLinePen         ( use_pen );
@@ -332,15 +274,6 @@ void US_Hydrodyn_Mals_Saxs_Scale_Trend::update_plot()
             marker->setLabel           ( qwtt );
          }
          marker->attach             ( plot );
-#else
-         long marker = plot->insertMarker();
-         plot->setMarkerLineStyle ( marker, QwtMarker::VLine );
-         plot->setMarkerPos       ( marker, pos, 0e0 );
-         plot->setMarkerLabelAlign( marker, align );
-         plot->setMarkerPen       ( marker, use_pen );
-         plot->setMarkerFont      ( marker, use_font );
-         plot->setMarkerLabelText ( marker, text );
-#endif
       }
    }      
 

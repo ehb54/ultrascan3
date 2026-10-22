@@ -146,7 +146,7 @@ US_Hydrodyn_Cluster_Dmd::~US_Hydrodyn_Cluster_Dmd()
 void US_Hydrodyn_Cluster_Dmd::setupGUI()
 {
    int minHeight1 = 30;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -170,11 +170,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
 
    reload_csv();
 
-#if QT_VERSION < 0x040000      
- //   Q3ValueList < unsigned int > column_widths;
-#else
    QList < unsigned int > column_widths;
-#endif
 
    column_widths 
       << 120
@@ -274,34 +270,6 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -332,7 +300,6 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -383,7 +350,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_load_save->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );

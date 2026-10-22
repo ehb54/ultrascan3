@@ -242,17 +242,11 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lb_created_files->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
    connect( lb_created_files, SIGNAL( itemSelectionChanged() ), SLOT( update_created_files() ) );
-#if QT_VERSION < 0x040000
-   connect( lb_created_files, 
-            SIGNAL( rightButtonClicked( QListWidgetItem *, const QPoint & ) ),
-            SLOT  ( rename_created    ( QListWidgetItem *, const QPoint & ) ) );
-#else
    connect( lb_created_files, 
             SIGNAL( customContextMenuRequested( const QPoint & ) ),
             SLOT  ( rename_from_context ( const QPoint & ) )
             );
    lb_created_files->setContextMenuPolicy( Qt::CustomContextMenu );
-#endif
 
    lbl_selected_created = new QLabel("0 files selected", this );
    lbl_selected_created->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -343,35 +337,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -403,7 +368,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
@@ -416,62 +380,27 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    ((QWidget *)plot_dist->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
    connect( (QWidget *)plot_dist->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
    ((QWidget *)plot_dist->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
-#if QT_VERSION < 0x040000
-   // plot_dist->enableOutline(true);
-   // plot_dist->setOutlinePen(Qt::white);
-   // plot_dist->setOutlineStyle(Qwt::VLine);
-   plot_dist->enableGridXMin();
-   plot_dist->enableGridYMin();
-#else
    grid_saxs = new QwtPlotGrid;
    grid_saxs->enableXMin( true );
    grid_saxs->enableYMin( true );
-#endif
    plot_dist->setPalette( PALET_NORMAL );
    AUTFBACK( plot_dist );
-#if QT_VERSION < 0x040000
-   plot_dist->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
-   plot_dist->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-#else
    grid_saxs->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid_saxs->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_dist );
-#endif
    plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom)"));
    plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
-#if QT_VERSION < 0x040000
-   plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-   plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_dist->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#if QT_VERSION < 0x040000
-   plot_dist->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-#endif
    plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //    plot_dist->setMargin(USglobal->config_list.margin);
    plot_dist->setTitle("");
-#if QT_VERSION < 0x040000
-   plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
-#else
    plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
-#endif
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
 
-#if QT_VERSION < 0x040000
-   plot_dist->setAutoLegend( false );
-   plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
-#else
    QwtLegend* legend_pd = new QwtLegend;
    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
    plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
-#endif
-#if QT_VERSION < 0x040000
-   connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse( const QMouseEvent & ) ) );
-#endif
 
    t_csv = new QTableWidget(csv1.data.size(), csv1.header.size(), fit_frame );
    t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -535,10 +464,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-#if QT_VERSION >= 0x050000
    connect( qwtw_wheel, SIGNAL( wheelPressed() ), SLOT( wheel_pressed() ) );
    connect( qwtw_wheel, SIGNAL( wheelReleased() ), SLOT( wheel_released() ) );
-#endif
 
    pb_wheel_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_wheel_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -782,14 +709,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    rb_np_ask->setPalette( PALET_NORMAL );
    AUTFBACK( rb_np_ask );
 
-#if QT_VERSION < 0x040000
-   bg_np = new QGroupBox(1, Qt::Horizontal, 0);
-   bg_np->setRadioButtonExclusive(true);
-   bg_np->insert(rb_np_crop);
-   bg_np->insert(rb_np_min);
-   bg_np->insert(rb_np_ignore);
-   bg_np->insert(rb_np_ask);
-#else
    bg_np = new QGroupBox( fit_frame );
    bg_np->setFlat( true );
 
@@ -801,7 +720,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
       bl->addWidget( rb_np_ask );
       bg_np->setLayout( bl );
    }
-#endif
    rb_np_crop->setChecked( true );
 
    cb_multi_sub = new QCheckBox( fit_frame );
@@ -891,7 +809,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_created_2->addWidget ( pb_show_only_created );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget (frame);
 #endif
    vbl_editor_group->addWidget (editor);
