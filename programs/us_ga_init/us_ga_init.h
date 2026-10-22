@@ -21,8 +21,11 @@
 #include "qwt_color_map.h"
 #include <qchar.h>
 #include <qlineedit.h>
+#include <qlist.h>
 #include <qmap.h>
 #include <qvector.h>
+#include <qwt_plot_curve.h>
+#include <qwt_plot_item.h>
 
 //! \brief Less-than function for sorting S_Solute values
 bool distro_lessthan( const S_Solute&, const S_Solute& );
@@ -77,9 +80,6 @@ class US_GA_Initialize : public US_Widgets
       QwtCounter*   ct_zfloor;
 
       QwtPlot*             data_plot;
-      QwtPlotSpectrogram*  d_spectrogram;
-      US_SpectrogramData*  spec_dat;
-      QwtPlotCurve*        pc1;
       QwtLinearColorMap*   colormap;
       US_PlotPicker*       pick;
       US_Disk_DB_Controls* dkdb_cntrls;
@@ -124,6 +124,7 @@ class US_GA_Initialize : public US_Widgets
 
       QList< S_Solute >  sk_distro;
       QList< S_Solute >  xy_distro;
+      QList< QwtPlotCurve* > bucket_curves;
 
       QPointF  p1;
       QPointF  p2;
@@ -145,7 +146,6 @@ class US_GA_Initialize : public US_Widgets
       int           patm_id;
       int           patm_dlay;
       int           distro_type;
-      int           sxset;
       int           psdsiz;
       int           dbg_level;
       int           plot_xy;
@@ -197,35 +197,27 @@ class US_GA_Initialize : public US_Widgets
       void update_plymax( void );
       void replot_data( void );
       void plot_3dim(   void );
+      void plot_buckets(   void );
       void select_prefilt( void );
       void load_distro (   void );
       void load_color(     void );
       void manDrawSb(      void );
-      void checkOverlaps(  void );
       void autoAssignSb(   void );
       void resetSb(        void );
+      void fill_lw_bins(   void );
       void save(           void );
       void reset(          void );
       void view(           void );
       void set_limits(     void );
       void sort_distro( QList< S_Solute >&, bool );
       void setBucketPens(  void );
-      void highlight_solute( QwtPlotCurve* );
-      void highlight_solute( int );
+      void highlight_bucket( int );
       void getMouseDown(     const QPointF& );
       void getMouseUp(       const QPointF& );
       void sclick_sbdata(    const QModelIndex& );
-      void sclick_sbdata(    const int          );
       void dclick_sbdata(    const QModelIndex& );
-      void newrow_sbdata(    int );
       void changeBucketRect( int, QRectF& );
-      QwtPlotCurve* drawBucketRect( int, QRectF );
-      QwtPlotCurve* drawBucketRect( int, QPointF, QPointF );
-      QwtPlotCurve* bucketCurveAt(  int );
-      void erase_buckets   ( bool );
-      void erase_buckets   ( void );
-      void removeSoluteBin ( int );
-      void resetPlotAndList( int );
+      void erase_curves    ( bool );
       bool equivalent      ( double, double, double );
       void update_disk_db  ( bool );
       void select_x_axis   ( int );

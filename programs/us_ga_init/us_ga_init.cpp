@@ -9,6 +9,8 @@
 #include <qnamespace.h>
 #include <qpen.h>
 #include <qvector.h>
+#include <QSignalBlocker>
+#include <qwt_plot_spectrogram.h>
 
 #include "us_ga_init.h"
 #include "us_select_runs.h"
@@ -212,10 +214,10 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lw_sbin_data = us_listwidget( );
    connect( lw_sbin_data, &QAbstractItemView::pressed,
             this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-   connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
-            this,         &US_GA_Initialize::dclick_sbdata );
+   // connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
+   //          this,         &US_GA_Initialize::dclick_sbdata );
    connect( lw_sbin_data, &QListWidget::currentRowChanged,
-            this,         &US_GA_Initialize::newrow_sbdata );
+            this,         &US_GA_Initialize::highlight_bucket );
 
 
    lb_info4      = us_banner( tr( "Data Controls" ) );
@@ -426,14 +428,10 @@ void US_GA_Initialize::reset( void )
    xy_distro.clear();
    pfilts.clear();
    le_prefilt->clear();
-   
-   dataPlotClear( data_plot );
+   erase_curves( false );
+   resetSb();
    pick->setEnabled( false );
  
-   lw_sbin_data->clear();
-   soludata->clearBuckets();
-   sxset      = 0;
-
    minmax     = false;
    zoom       = false;
    ct_wxbuck->setRange( 0, 200 );
@@ -509,12 +507,16 @@ void US_GA_Initialize::reset( void )
 // save the GA data
 void US_GA_Initialize::save( void )
 {
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+
    // Sort the buckets in increasing-s order
-   int hlx  = lw_sbin_data->currentRow();
+   // int hlx  = lw_sbin_data->currentRow();
    soludata->sortBuckets();
 
    // Reset the buckets plot and list
-   resetPlotAndList( hlx );
+   // resetPlotAndList( hlx );
 
    // Test for overlaps
    int novlps = soludata->countOverlaps();
@@ -633,6 +635,10 @@ DbgLv(1) << "SAVE fnst2" << fnst2;
 // Manually draw solute bins
 void US_GA_Initialize::manDrawSb( void )
 {
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+
    if ( !pb_mandrsb->isChecked() )
    {
       pick->setEnabled( false );
@@ -650,46 +656,6 @@ void US_GA_Initialize::manDrawSb( void )
 DbgLv(1) << "manDr: bg" << bg << "csum" << csum;
 DbgLv(1) << "manDr:   pickpen" << pickpen->brush().color();
 DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
-
-   manbuks      = true;
-}
-
-// Check for bin overlaps
-void US_GA_Initialize::checkOverlaps( void )
-{
-   int novlps = soludata->countOverlaps();
-
-   if ( novlps == 0 )
-   {
-      QMessageBox::information( this,
-         tr( "No Bins Overlap" ),
-         tr( "No bin overlaps were found, so you"
-             " may proceed to saving this GA data"
-             " or viewing statistics."
-             "\n\n*NOTE*: Bins will now be re-sorted." ) );
-      pb_save->setEnabled( attr_x == ATTR_V  ||
-                           attr_y == ATTR_V  ||
-                           attr_z == ATTR_V );
-      pb_view->setEnabled( true );
-   }
-
-   else
-   {
-      QString msg = ( novlps == 1 ) ?
-         tr( "There is one case of overlap between bins.\n" ) :
-         tr( "%1 pairs of bins overlap one another.\n" ).arg( novlps );
-      QMessageBox::warning( this,
-         tr( "Bin Overlaps" ),
-         msg + tr( "You must correct this condition so that no\n"
-                   "bins overlap, before you can save GA data." ) );
-      pb_save->setEnabled( false );
-      pb_view->setEnabled( false );
-   }
-
-   // Sort buckets, then reset the buckets plot and list
-   soludata->sortBuckets();
-   int hlx  = lw_sbin_data->currentRow();
-   resetPlotAndList( hlx );
 }
 
 // Auto assign solute bins
@@ -699,45 +665,54 @@ void US_GA_Initialize::autoAssignSb( void )
       return;
    }
 
-   if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
+   // if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
+   // {
+   //    QMessageBox::information( this, "Information", "Autoassign is disabled when Rh is selected.");
+   //    return;
+   // }
+
+   if ( soludata->bucketsCount() > 0 )
    {
-      QMessageBox::information( this, "Information", "Autoassign is disabled when Rh is selected.");
-      return;
+      QString msg = "The solute bins list is not empty. " 
+                    "Rebuilding the bins will delete all existing ones.\n"
+                    "Do you want to continue?";
+      int res = QMessageBox::question( this, "Auto Find Solute Bins", msg );
+      if ( res != QMessageBox::Yes ) {
+         return;
+      }
    }
+   resetSb();
    int nisols    = ct_nisols->value();
    double wxbuck = ct_wxbuck->value();
    double hybuck = ct_hybuck->value();
-   pc1         = NULL;
-   lw_sbin_data->clear();
-   soludata->clearBuckets();
-   erase_buckets( true );
-
-   int nibuks      = soludata->autoCalcBins( nisols, wxbuck, hybuck );
-
-   for ( int jj = 0; jj < nibuks; jj++ )
-   {  // draw the auto-assigned buckets and add lines to list widget
-      QRectF rect = soludata->bucketRect( jj );
-      pc1         = drawBucketRect( jj, rect );
-
-      lw_sbin_data->addItem( soludata->bucketLine( jj ) );
-   }
-
-   data_plot->replot();
+   soludata->autoCalcBins( nisols, wxbuck, hybuck );
    manbuks      = false;
+   is_saved     = false;
+   fill_lw_bins();
+   plot_buckets();
+   if ( lw_sbin_data->count() > 0 )
+   {
+      lw_sbin_data->setCurrentRow(0);
+   }
+}
+
+void US_GA_Initialize::fill_lw_bins()
+{
+   const QSignalBlocker blocker( lw_sbin_data );
+   lw_sbin_data->clear();
+   for ( int ii = 0; ii < soludata->bucketsCount(); ii++ )
+   {
+      lw_sbin_data->addItem( soludata->bucketLine( ii ) );
+   }
 }
 
 // Reset solute bins
 void US_GA_Initialize::resetSb( void )
 {
-   ct_nisols->setValue( 0.0 );
-   lw_sbin_data->clear();     // clear solute bucket data
    soludata->clearBuckets();
-   sxset    = 0;
    is_saved = false;
-
-   erase_buckets( true );     // erase bucket rectangles from plot and delete
-
-   data_plot->replot();
+   fill_lw_bins();
+   plot_buckets();
 }
 
 // (re)plot data
@@ -746,22 +721,59 @@ void US_GA_Initialize::replot_data()
    if ( xy_distro.isEmpty() )
       return;
 
-   resetSb();
-
-   plot_3dim();
-
    setBucketPens();
+   plot_3dim();
+   plot_buckets();
+}
+
+void US_GA_Initialize::erase_curves( bool buckets_only )
+{
+   if ( buckets_only )
+   {
+      for ( int ii = 0; ii < bucket_curves.size(); ii++ )
+      {
+         bucket_curves[ ii ]->detach();
+         delete bucket_curves[ ii ];
+       }
+   }
+   else
+   {
+      dataPlotClear( data_plot );
+   }
+   bucket_curves.clear();
+   data_plot->replot();
+}
+
+void US_GA_Initialize::plot_buckets()
+{
+   erase_curves( true );
+
+   for ( int ii = 0; ii < soludata->bucketsCount(); ii++ )
+   {
+      QRectF r = soludata->bucketRect( ii );
+      const double x[] = {
+        r.left(), r.right(), r.right(), r.left(), r.left()
+      };
+      const double y[] = {
+        r.top(), r.top(), r.bottom(), r.bottom(), r.top()
+      };
+
+      auto curve = us_curve( data_plot, QString( "bucket border %1" ).arg( ii ) );
+      curve->setPen( pbukpen );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setSamples( x, y, 5 );
+      curve->attach( data_plot );
+      bucket_curves << curve;
+   }
+   data_plot->replot();
 }
 
 // plot data 3-D
 void US_GA_Initialize::plot_3dim( void )
 {
+   erase_curves( false );
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
-   dataPlotClear( data_plot );
-   data_plot->replot();
-   // if ( pick != NULL )  delete pick;
-   // pick          = new US_PlotPicker( data_plot );
    QColor bg     = colormap->color1();
 
    data_plot->setCanvasBackground( bg );
@@ -776,8 +788,8 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    data_plot->setTitle( tstr );
 
    // set up spectrogram data
-   d_spectrogram = new QwtPlotSpectrogram();
-   spec_dat      = new US_SpectrogramData();
+   QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
+   US_SpectrogramData* spec_dat      = new US_SpectrogramData();
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    d_spectrogram->setData    ( spec_dat );
    d_spectrogram->attach( data_plot );
@@ -1190,7 +1202,6 @@ void US_GA_Initialize::load_color()
 // set plot x,y limits
 void US_GA_Initialize::set_limits()
 {
-   resetSb();
    soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
    
    // find min,max for S distributions
@@ -1427,30 +1438,21 @@ void US_GA_Initialize::setBucketPens()
    return;
 }
 
-// highlight solute bin rectangle in red; previous in yellow or blue
-void US_GA_Initialize::highlight_solute( QwtPlotCurve* bc1 )
-{
-   if ( bc1 == NULL )
-      return;
-
-   int nibuks = soludata->bucketsCount();
-   if ( nibuks > 0  &&  pc1 != NULL )
-   {  // re-color previous bucket yellow or blue
-      pc1->setPen( pbukpen );
-   }
-
-   // current bucket borders drawn in red
-   bc1->setPen( cbukpen );
-
-   pc1       = bc1;         // save previous bucket curve
-   return;
-}
-
 // find bucket curve by solute index, then highlight
-void US_GA_Initialize::highlight_solute( int sx )
+void US_GA_Initialize::highlight_bucket( int sx )
 {
-   highlight_solute( bucketCurveAt( sx ) );
-   return;
+   for ( int ii = 0; ii < bucket_curves.size(); ii++ )
+   {
+      if ( ii == sx )
+      {
+         bucket_curves[ ii ]->setPen( pbukpen );
+      }
+      else
+      {
+         bucket_curves[ ii ]->setPen( cbukpen );
+      }
+   }
+   data_plot->replot();
 }
 
 // mouse down:  save of first point
@@ -1479,7 +1481,6 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
    
    double        tx[2];
    double        ty[2];
-   QwtPlotCurve* bc1;
 
    p2     = p;              // save the second rubberband point
 
@@ -1525,123 +1526,62 @@ void US_GA_Initialize::getMouseUp( const QPointF& p )
 
       // add the bucket entry and add a text box entry
       soludata->appendBucket( bucr, bucp, bucc, 2 );
-
-      QString txt = soludata->bucketLine( -3 );
-      lw_sbin_data->addItem( txt );
    }
 
-   // draw the bucket rectangle
-   bc1    = drawBucketRect( nibuks, p1, p2 );
-
-   // highlight it (and turn off highlight for previous)
-   highlight_solute( bc1 );
-
-   data_plot->replot();
-
-   // bump solute bins count
-   nibuks++;
-   ct_nisols->setValue( (double)nibuks );
-
+   fill_lw_bins();
+   plot_buckets();
+   if (lw_sbin_data->count() > 0)
+   {
+      lw_sbin_data->setCurrentRow(lw_sbin_data->count() - 1);
+   }
+   manbuks  = true;
    is_saved = false;
-}
-
-// draw a bucket rectangle by index and top-left,bottom-right points
-QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx,
-      QPointF pt1, QPointF pt2 )
-{
-   double        tx[5];
-   double        ty[5];
-   QwtPlotCurve* bc1;
-
-   tx[0]  = pt1.x();        // set 5 points needed to draw rectangle
-   ty[0]  = pt1.y();
-   tx[1]  = pt2.x();
-   ty[1]  = pt1.y();
-   tx[2]  = pt2.x();
-   ty[2]  = pt2.y();
-   tx[3]  = pt1.x();
-   ty[3]  = pt2.y();
-   tx[4]  = pt1.x();
-   ty[4]  = pt1.y();
-
-   // create the bucket rectangle curve
-   bc1    = us_curve( data_plot, QString( "bucket border %1" ).arg( sx ) );
-   bc1->setPen(   pbukpen );
-   bc1->setStyle( QwtPlotCurve::Lines );
-   bc1->setSamples(  tx, ty, 5 );
-
-   return bc1;
-}
-
-// draw a bucket rectangle by index and rectangle
-QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx, QRectF rect )
-{
-   return drawBucketRect( sx, rect.topLeft(), rect.bottomRight() );
-}
-
-// solute bin list row selected by arrow key
-void US_GA_Initialize::newrow_sbdata( int /*row*/ )
-{
-   sclick_sbdata( lw_sbin_data->currentIndex() );
 }
 
 // solute bin list row clicked: highlight bucket
 void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
-   sclick_sbdata( mx.row() );
-}
-
-// solute bin list row clicked: highlight bucket
-void US_GA_Initialize::sclick_sbdata( const int mrow )
-{
-   int sx      = mrow;
+   int  sx     = mx.row();
    bool global = monte_carlo || manbuks;
    bool rtbtn  = ( QApplication::mouseButtons() == Qt::RightButton );
 DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
 
-   highlight_solute( sx );
-   data_plot->replot();
+   highlight_bucket( sx );
 
    if ( rtbtn )
    {  // Handle right-mouse-button click:  delete bin
-      lw_sbin_data->disconnect();
-      int binx    = sx + 1;
-      QMessageBox msgBox;
-      QString msg = tr( "Are you sure you want to delete solute bin %1 ?" )
-         .arg( binx );
-      msgBox.setWindowTitle( tr( "GA_Init Solute Bin Delete" ) );
-      msgBox.setText( msg );
-      msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
-      msgBox.setDefaultButton( QMessageBox::Yes );
-      if ( msgBox.exec() == QMessageBox::Yes )
+      QString msg = tr( "Are you sure you want to delete solute bin %1 ?" ).arg( sx + 1 );
+      int ret = QMessageBox::question( this,"GA_Init Solute Bin Delete", msg );
+      if ( ret == QMessageBox::No)
       {
-         removeSoluteBin( sx );
+         return;
       }
-      connect( lw_sbin_data, &QAbstractItemView::pressed,
-               this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-      connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
-               this,         &US_GA_Initialize::dclick_sbdata );
-      connect( lw_sbin_data, &QListWidget::currentRowChanged,
-               this,         &US_GA_Initialize::newrow_sbdata );
+      else
+      {
+         const QSignalBlocker blocker( lw_sbin_data );
+         delete lw_sbin_data->takeItem( sx );
+         soludata->removeBucketAt( sx );
+         bucket_curves[ sx ]->detach();
+         delete bucket_curves[ sx ];
+         bucket_curves.removeAt( sx );
+      }
 
       int nibuks = soludata->bucketsCount();
       int rx      = qMin( sx, ( nibuks - 1 ) );
       if ( rx >= 0 )
       {
          lw_sbin_data->setCurrentRow( rx );
-         highlight_solute( rx );
+         highlight_bucket( rx );
          data_plot->replot();
-         sx          = rx;
       }
    }
 
-   else if ( global  &&  sx != sxset )
+   else if ( global )
    {
       QRectF rect = soludata->bucketRect( sx );
       ct_wxbuck->setValue( rect.width() );
       ct_hybuck->setValue( rect.height() );
    }
-   sxset       = sx;
 }
 
 // solute bin list row double-clicked:  change bucket values
@@ -1649,7 +1589,6 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
    bool global = monte_carlo || manbuks;
-   QwtPlotCurve* bc1;
    QPointF pt0;
 
    if ( !global )
@@ -1667,7 +1606,6 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 
    double wxbuck = ct_wxbuck->value();
    double hybuck = ct_hybuck->value();
-   sxset       = sx;
    qreal x1    = pt0.x() - wxbuck / 2.0;
    qreal y1    = pt0.y() + hybuck / 2.0;
    qreal x2    = pt0.x() + wxbuck / 2.0;
@@ -1676,15 +1614,9 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
    QPointF pt2( x2, y2 );
    QRectF  brect( pt1, pt2 );
 
-   pc1->detach();                  // erase old rectangle for this bucket
-
    changeBucketRect( sx, brect );  // change bucket rectangle
-
-   bc1         = drawBucketRect( sx, pt1, pt2 );  // draw a new rectangle
-
-   pc1         = bc1;              // save previous bucket curve
-
-   data_plot->replot();
+   plot_buckets();
+   highlight_bucket( sx );
 
    return;
 }
@@ -1702,109 +1634,6 @@ void US_GA_Initialize::changeBucketRect( int sx, QRectF& rect )
 
    QString line  = soludata->bucketLine( sx );
    lw_sbin_data->item( sx )->setText( line );
-
-   return;
-}
-
-// find the plot curve in the list of curves
-QwtPlotCurve* US_GA_Initialize::bucketCurveAt( int sx )
-{
-   // get title of desired bucket curve and list of all items
-   QString ctext         = QString( "bucket border %1" ).arg( sx );
-   QwtPlotItemList ilist = data_plot->itemList();
-
-   for ( int jj = 0; jj < ilist.size(); jj++ )
-   {  // test each item for Curve type and matching title
-      QwtPlotCurve* bc1 = (QwtPlotCurve*)ilist.at( jj );
-
-      if ( bc1->rtti() == QwtPlotItem::Rtti_PlotCurve )
-      {  // right type,  so check title
-         QString itext = bc1->title().text();
-
-         if ( itext.compare( ctext ) == 0 )
-         {  // this is the one we want, return a pointer to the curve
-            return bc1;
-         }
-      }
-   }
-
-   return (QwtPlotCurve*)NULL;
-}
-
-// erase all bucket curves (option to completely delete )
-void US_GA_Initialize::erase_buckets( bool delflag )
-{
-
-   int nibuks = soludata->bucketsCount();
-   for ( int jj = 0; jj < nibuks; jj++ )
-   {
-      QwtPlotCurve* bc1 = bucketCurveAt( jj );
-      if ( bc1 != NULL )
-      {
-         bc1->detach();
-
-         if ( delflag )
-            delete bc1;
-      }
-   }
-
-   data_plot->replot();
-
-   return;
-}
-// erase all bucket curves (from plot only)
-void US_GA_Initialize::erase_buckets( )
-{
-   erase_buckets( false );
-   return;
-}
-
-// Remove a solute bin from data, plot, and list
-void US_GA_Initialize::removeSoluteBin( int sx )
-{
-   // Remove the solute bin
-   // int bsize = soludata->bucketsCount();
-   soludata->removeBucketAt( sx );
-   // nibuks    = bsize - 1;
-
-   // Reset the buckets plot and list
-   resetPlotAndList( sx );
-}
-
-// Reset the buckets plot and list after bucket remove or sort
-void US_GA_Initialize::resetPlotAndList( int hlx )
-{
-   // Replace the List Widget contents and redraw bin rectangles
-   int nibuks = soludata->bucketsCount();
-   lw_sbin_data->clear();
-   erase_buckets( );
-DbgLv(1) << "rPAL: nibuks" <<  nibuks;
-   ct_nisols->setValue( (double)nibuks );
-
-   for ( int jj = 0; jj < nibuks; jj++ )
-   {  // Draw the auto-assigned buckets and add lines to list widget
-      QRectF        rect = soludata->bucketRect( jj );
-      QwtPlotCurve* bc1  = drawBucketRect( jj, rect );
-      bc1->attach( data_plot );
-
-      lw_sbin_data->addItem( soludata->bucketLine( jj ) );
-DbgLv(1) << "rPAL:  " << soludata->bucketLine(jj);
-   }
-
-   // Highlight a specified next bucket
-   hlx       = ( hlx >= 0  &&  hlx < nibuks ) ? hlx : ( nibuks - 1 );
-DbgLv(1) << "rPAL: hlx" << hlx;
-   if ( hlx >= 0 )
-   {
-DbgLv(1) << "rPAL:  set-row" << hlx << nibuks << lw_sbin_data->count();
-      lw_sbin_data->setCurrentRow( hlx );
-DbgLv(1) << "rPAL:  highlight sol";
-      highlight_solute( hlx );
-   }
-
-DbgLv(1) << "rPAL:  replot sol";
-   data_plot->replot();
-   qApp->processEvents();
 
    return;
 }
@@ -1854,6 +1683,10 @@ DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
 // View the statistics file produced in a file editor
 void US_GA_Initialize::view( )
 {
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+
 DbgLv(1) << "VIEW";
    QString runid = run_name.section( ".",  0, -2 );
    if ( runid.startsWith( "Global-" ) )
@@ -1930,6 +1763,7 @@ void US_GA_Initialize::select_x_axis( int ival )
    }
 
    build_xy_distro();
+   resetSb();
    set_limits();
    replot_data();
 }
@@ -1955,6 +1789,7 @@ void US_GA_Initialize::select_y_axis( int ival )
    }
 
    build_xy_distro();
+   resetSb();
    set_limits();
    replot_data();
 }
@@ -2062,8 +1897,10 @@ QString US_GA_Initialize::anno_label( int id )
 // Load bins from a saved gadistro file
 void US_GA_Initialize::load_bins( void )
 {
-   int hlx        = 0;
-   pc1            = NULL;
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+
 DbgLv(1) << "gain: load_bins()";
 
    // Get a distro file
@@ -2080,7 +1917,13 @@ DbgLv(1) << "gain: load_bins()";
    // Load the solute bins and plot them
    binfpath       = QString( fname ).section( "/", 0, -2 );
    int xparam, yparam, zparam;
-   soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
+   US_SoluteData sdata;
+   int ret = sdata.loadGAdata( fname, &xparam, &yparam, &zparam );
+   if ( ret != 0 )
+   {
+      QMessageBox::warning( this, "Warning!", "Wrong file format!" );
+      return;
+   }
 DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
  << fname << attr_x << attr_y << attr_z;
    if ( xparam == attr_x && yparam == attr_y )
@@ -2098,9 +1941,11 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
       return;
    }
 
+   resetSb();
+   soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
    soludata->sortBuckets();
-   resetPlotAndList( hlx );
-
+   fill_lw_bins();
+   plot_buckets();
    is_saved       = false;
 }
 
