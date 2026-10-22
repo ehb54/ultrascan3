@@ -1013,16 +1013,18 @@ endif()
 # =============================================================================
 # SoMo BUILD (CMake native)
 # =============================================================================
-# Opt-in via -DUS3_BUILD_SOMO=ON. SOMO is a Qt-GUI suite (needs Qt + Multimedia +
-# Qwt), so it is incompatible with the headless HPC profile. It vendors its own
-# utils fork and is otherwise self-contained; the forwarder us_somo/CMakeLists.txt
-# delegates to us_somo/develop. Requires an APP feature that provides
+# Opt-in via -DUS3_BUILD_SOMO=ON, with the APP profile or none (the root presets
+# set none). SOMO is a Qt-GUI suite (needs Qt + Multimedia + Qwt), so it is
+# incompatible with the headless HPC profile, and the TEST profile, which builds
+# UltraScan's tests, has no use for it. It vendors its own utils fork and is
+# otherwise self-contained; the forwarder us_somo/CMakeLists.txt delegates to
+# us_somo/develop. Requires an APP feature that provides
 # qt5-multimedia/qtmultimedia + qwt (qt5-app / qt6-app).
 # SOMO has never been compiled with MSVC (on Windows it builds with MinGW, as
 # qmake builds it for the packages), so under MSVC it is skipped with a
 # warning rather than failing the UltraScan build, until
 # ehb54/ultrascan-tickets#1131 lands.
-if(US3_BUILD_SOMO AND NOT US3_PROFILE STREQUAL "HPC")
+if(US3_BUILD_SOMO AND (US3_PROFILE STREQUAL "APP" OR US3_PROFILE STREQUAL ""))
     if(MSVC)
         message(WARNING "SOMO does not build with MSVC yet (ehb54/ultrascan-tickets#1131), "
                         "so it is skipped. Build it with MinGW (MSYS2), or configure "
@@ -1030,6 +1032,8 @@ if(US3_BUILD_SOMO AND NOT US3_PROFILE STREQUAL "HPC")
     else()
         add_subdirectory(us_somo)
     endif()
+elseif(US3_BUILD_SOMO)
+    message(STATUS "SOMO: not built with the ${US3_PROFILE} profile, only with APP or none")
 endif()
 
 # =============================================================================

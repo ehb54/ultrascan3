@@ -113,6 +113,8 @@ These need the whole repository, as on main: they use the root's vcpkg setup
   `$VCPKG_ROOT`, or `~/vcpkg`.
 - From the repository root: the root presets with `-DUS3_BUILD_SOMO=ON`
   build SOMO along with the rest of UltraScan (not under MSVC, see above).
+  That needs the APP profile or none, as the root presets have; the TEST and
+  HPC profiles leave SOMO out.
   SOMO's programs and library land in `build/<preset>/us_somo/bin` and
   `lib`, laid out as above so the programs run from there. The root's own
   `etc/` is UltraScan's, so SOMO's cannot share it.
