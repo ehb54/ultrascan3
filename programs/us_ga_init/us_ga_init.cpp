@@ -207,8 +207,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lw_sbin_data  = us_listwidget( );
    connect( lw_sbin_data, &QAbstractItemView::pressed,
             this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-   // connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
-   //          this,         &US_GA_Initialize::dclick_sbdata );
    connect( lw_sbin_data, &QListWidget::currentRowChanged,
             this,         &US_GA_Initialize::highlight_bucket );
 
@@ -1578,48 +1576,6 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
       ct_wxbuck->setValue( rect.width() );
       ct_hybuck->setValue( rect.height() );
    }
-}
-
-// solute bin list row double-clicked:  change bucket values
-void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
-{
-   int sx      = mx.row();
-   if ( sx < 0 || sx >= soludata->bucketsCount() )
-      return;
-   bool global = monte_carlo || manbuks;
-   QPointF pt0;
-
-   if ( !global )
-   {
-      pt0         = soludata->bucketPoint( sx, false );
-   }
-   else
-   {
-      QRectF rect = soludata->bucketRect( sx );
-      QPointF ptl = rect.topLeft();
-      QPointF pbr = rect.bottomRight();
-      pt0         = QPointF( ( ptl.x() + pbr.x() ) / 2.0, 
-                             ( ptl.y() + pbr.y() ) / 2.0 );
-   }
-
-   double wxbuck = ct_wxbuck->value();
-   double hybuck = ct_hybuck->value();
-   qreal x1    = pt0.x() - wxbuck / 2.0;
-   qreal y1    = pt0.y() + hybuck / 2.0;
-   qreal x2    = pt0.x() + wxbuck / 2.0;
-   qreal y2    = pt0.y() - hybuck / 2.0;
-   QPointF pt1( x1, y1 );
-   QPointF pt2( x2, y2 );
-   QRectF  brect( pt1, pt2 );
-
-   if ( wxbuck <= 0.0 || hybuck <= 0.0 )
-      return;
-
-   changeBucketRect( sx, brect );  // change bucket rectangle
-   plot_buckets();
-   highlight_bucket( sx );
-
-   return;
 }
 
 // change the rectangle (vertices) for a bucket
