@@ -422,6 +422,18 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pick->setRubberBand(    QwtPicker::RectRubberBand );
    connect( pick, qOverload<const QRectF&>( &QwtPlotPicker::selected ),
             this, &US_GA_Initialize::addSelectedBin );
+
+   auto* binPicker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
+                                      data_plot->canvas() );
+   binPicker->setStateMachine( new QwtPickerClickPointMachine() );
+   binPicker->setRubberBand( QwtPicker::NoRubberBand );
+   binPicker->setTrackerMode( QwtPicker::AlwaysOff );
+   connect( binPicker, qOverload<const QPointF&>( &QwtPlotPicker::selected ),
+            this, &US_GA_Initialize::selectBinAtPoint );
+   connect( pb_mandrsb, &QAbstractButton::toggled,
+            binPicker, [binPicker]( bool drawing ) {
+      binPicker->setEnabled( !drawing );
+   } );
    
    reset();
 }
@@ -1489,6 +1501,23 @@ void US_GA_Initialize::highlight_bucket( int sx )
       ct_hybuck->setValue( rect.height() );
    }
    data_plot->replot();
+}
+
+// Select the first bin containing the clicked plot coordinates.
+void US_GA_Initialize::selectBinAtPoint( const QPointF& point )
+{
+   if ( pb_mandrsb->isChecked() )
+      return;
+
+   for ( int row = 0; row < soludata->bucketsCount(); ++row )
+   {
+      if ( soludata->bucketRect( row ).normalized().contains( point ) )
+      {
+         lw_buckets->setCurrentRow( row );
+         lw_buckets->scrollToItem( lw_buckets->item( row ) );
+         return;
+      }
+   }
 }
 
 // Store a completed rectangle selection as a solute bin.

@@ -210,6 +210,7 @@ class US_GA_Initialize : public US_Widgets
       void sort_distro( QList< S_Solute >&, bool );
       void setBucketPens(  void );
       void highlight_bucket( int );
+      void selectBinAtPoint( const QPointF& );
       void addSelectedBin( const QRectF& );
       void deleteSelectedBin();
       void changeBucketRect( int, QRectF& );
