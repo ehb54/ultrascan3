@@ -88,8 +88,6 @@ void US_MPI_Analysis::dmga_worker( void )
                            wmodel.coSedSolute < 0  &&
                            data_sets[ 0 ]->compress == 0.0 );
    DbgLv( 1 ) << my_rank << "dmga_worker: nfloatc nfvari do_astfem" << nfloatc << nfvari << do_astfem;
-   //DbgLv(1) << my_rank << "dmga_worker: wmodel DUMP";
-   //wmodel.debug();
 
    while ( ! finished )
    {
@@ -544,7 +542,6 @@ void US_MPI_Analysis::mutate_dgene( DGene& dgene )
    // Bump the count of hits for each unique smask (floats combination)
    lfvari[ smask - 1 ]++;
    DbgLv( 1 ) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
-   //if(my_rank==11) DbgLv(0) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
 
    // Loop thru float attributes, varying the selected ones
    for ( int ii = 0; ii < nfloatc; ii++ )
@@ -585,7 +582,6 @@ void US_MPI_Analysis::mutate_dgene( DGene& dgene )
       // Update the mutated value
       store_attr_value( vv, dgene, atype, mcompx );
    }
-   //DbgLv(1) << "dg:mutgene dgene comps" << dgene.components.size();
 }
 
 // Cross-mutate a pair of discrete GA Genes
@@ -1103,8 +1099,6 @@ double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
    double fitness  = sim.variance;         // Get the computed fitness
    fitness_map.insert( fkey, fitness );    // Add it the fitness map
 
-   //DbgLv(1) << "dg:get_fit fitness" << fitness << "count hits"
-   // << fitness_count << fitness_hits;
    return fitness;
 }
 
@@ -1182,15 +1176,12 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
       if ( do_astfem )
       {  // Calculate simulation for FEM (ideal) case
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
-         astfem_rsa.set_debug_flag( my_rank < 2 ? dbg_level : (-1) );
-         //*DEBUG
+         astfem_rsa.set_debug_flag( my_rank < 2 ? dbg_level : ( -1 ) );
          if ( group_rank < 1 )
          {
             int dbg_flg = in_gsm ? ( -1 ) : dbg_level;
-            //DbgLv(0) << my_rank << "CR: call ASTFEM CALC";
             astfem_rsa.set_debug_flag( dbg_flg );
          }
-         //*DEBUG
 
          astfem_rsa.calculate( simdat );
       }

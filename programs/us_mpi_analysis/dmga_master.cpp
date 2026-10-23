@@ -57,20 +57,16 @@ void US_MPI_Analysis::dmga_master( void )
       int compno  = mcompx + 1;
       int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
-      DbgLv(0) << "  Component" << compno << ":";
-      //DbgLv(0) << "mcompx ncompc c0atype" << mcompx << ncompc << cnsv[0].atype
-      // << "_FF0" << US_dmGA_Constraints::ATYPE_FF0;
+      DbgLv( 0 ) << "  Component" << compno << ":";
 
       for ( int cx = 0; cx < ncompc; cx++ )
       {
-         atype       = cnsv[ cx ].atype;
-         //DbgLv(0) << " cx" << cx << "atype" << atype;
+         atype         = cnsv[cx].atype;
          bool floats = cnsv[ cx ].floats;
          bool logscl = cnsv[ cx ].logscl;
          double vmin = cnsv[ cx ].low;
          double vmax = cnsv[ cx ].high;
-         attrtype    = tr( "UNKNOWN" );
-         //DbgLv(0) << "  cx" << cx << "fl ls mn mx" << floats << logscl << vmin << vmax;
+         attrtype      = tr( "UNKNOWN" );
 
          if      ( atype == US_dmGA_Constraints::ATYPE_S    )
             attrtype = tr( "Segmentation Coefficient" );
@@ -89,26 +85,21 @@ void US_MPI_Analysis::dmga_master( void )
          else if ( atype == US_dmGA_Constraints::ATYPE_EXT  )
             attrtype = tr( "Extinction" );
 
-         //DbgLv(0) << "  cx" << cx << "attrtype" << attrtype;
          if ( floats )
          {
-            //DbgLv(0) << "      FLOATS";
             if ( logscl )
             {
-               //DbgLv(0) << "       LOGSCL";
                DbgLv(0) << "    " << attrtype << "floats from "
                         << vmin << "to" << vmax << "(log scale)";
             }
             else
             {
-               //DbgLv(0) << "       !LOGSCL";
                DbgLv(0) << "    " << attrtype << "floats from "
                         << vmin << "to" << vmax;
             }
          }
          else
          {
-            //DbgLv(0) << "      !FLOATS";
             DbgLv(0) << "    " << attrtype << "is fixed at "
                      << vmin;
          }
@@ -191,8 +182,6 @@ void US_MPI_Analysis::dmga_master( void )
                   wmodel.coSedSolute < 0  &&
                   data_sets[ 0 ]->compress == 0.0 );
    lfvari.fill( 0, nfvari );
-   //DbgLv(0) << " wmodel DUMP";
-   //wmodel.debug();
 
    // Initialize arrays
    for ( int ii = 0; ii < gcores_count; ii++ )
@@ -312,8 +301,7 @@ void US_MPI_Analysis::dmga_master( void )
 
    // Report on the attribute values in the final model
 
-   US_Model* fmodel = &data_sets[ 0 ]->model;
-   //*DEBUG
+   US_Model* fmodel = &data_sets[0]->model;
    double    vsum   = 0.0;
    for ( int ii = 0; ii < simulation_values.sim_data.scanCount(); ii++ )
    {
@@ -353,7 +341,6 @@ void US_MPI_Analysis::dmga_master( void )
    DbgLv( 0 ) << "STEP0 durmin dlymin w2tf w2tl timf timl" << spstep->duration_minutes << spstep->delay_minutes << spstep->w2t_first
               << spstep->w2t_last << spstep->time_first << spstep->time_last;
    DbgLv( 0 ) << "STEP0 speed accel accelf" << spstep->rotorspeed << spstep->acceleration << spstep->acceleration_flag;
-   //*DEBUG
    DbgLv(0) << fmodel->description;
    DbgLv(0) << " Final Model Attribute Values --";
 
@@ -362,9 +349,7 @@ void US_MPI_Analysis::dmga_master( void )
       int compno  = mcompx + 1;
       int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
-      DbgLv(0) << "  Component" << compno << ":";
-      //DbgLv(0) << "   mcompx" << mcompx << "ncompc" << ncompc;
-      //DbgLv(0) << "   at[n-2] at[n-1]" << cnsv[ncompc-2].atype << cnsv[ncompc-1].atype;
+      DbgLv( 0 ) << "  Component" << compno << ":";
 
       for ( int cx = 0; cx < ncompc; cx++ )
       {
@@ -609,11 +594,7 @@ void US_MPI_Analysis::dmga_master_loop( void )
                      << "deme results - Early Termination.";
                   early_termination = true;
                }
-
             }
-            //DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
-            // << "fitness_same_count" << fitness_same_count
-            // << " early_term?" << early_termination;
             if ( ( worker % 10 ) == 1 )
             {
                DbgLv( 1 ) << worker << ": best_overall_fitness" << best_overall_fitness << "fitness_same_count"
@@ -660,11 +641,6 @@ void US_MPI_Analysis::dmga_master_loop( void )
             marker_to_dgenes( emmigrants, emigres, emgx, gene_count );
             DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: emigres size" << emigres.size();
 
-            //*DEBUG*
-            //if(emigres[0][0].s<0.0)
-            // DbgLv(0) << "MAST: **GENE s" << emigres[0][0].s << " Emigrant";
-            //*DEBUG*
-
             max_rss();
 
             // Don't send any back if the pool is too small
@@ -701,10 +677,6 @@ void US_MPI_Analysis::dmga_master_loop( void )
                       IMMIGRATE,
                       my_communicator );
             DbgLv( 1 ) << "dgmast:   Send#5 IMMIG: complete";
-            //*DEBUG*
-            //if(immigrants[0].s<0.0)
-            // DbgLv(0) << "MAST: **GENE s" << immigrants[0].s << " Immigrant-to-send";
-            //*DEBUG*
             break;
          }
       }
@@ -1068,8 +1040,7 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
 {
    model        = dgene;           // Initialize the model
 
-   model.update_coefficients();    // Compute missing coefficients
-   //*DEBUG*
+   model.update_coefficients(); // Compute missing coefficients
    if ( group_rank < 1 )
    {
       DbgLv( 2 ) << my_rank << "MFG:g-comp1 s,k,w,d,f" << dgene.components[0].s << dgene.components[0].f_f0
@@ -1077,7 +1048,6 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
       DbgLv( 2 ) << my_rank << "MFG:m-comp1 s,k,w,d,f" << model.components[0].s << model.components[0].f_f0
                  << model.components[0].mw << model.components[0].D << model.components[0].f;
    }
-   //*DEBUG*
 
    for ( int ii = 0; ii < model.associations.size(); ii++ )
    {  // Modify some coefficients based on associations

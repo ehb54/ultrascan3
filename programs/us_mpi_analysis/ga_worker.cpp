@@ -400,15 +400,7 @@ void US_MPI_Analysis::align_gene( Gene& gene )
       }
 
       gene[ i ].s = s;
-      gene[ i ].k = k;
-      //*DEBUG*
-      //if(gene[i].s<0.0) {
-      //int grp_nbr  = ( my_rank / gcores_count );
-      //int deme_nbr = my_rank - grp_nbr * gcores_count;
-      //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[i].s << "ALIGN"
-      // << "ds s_min gridpt" << ds << s_min << qRound( ds / buckets[i].ds );
-      //}
-      //*DEBUG*
+      gene[i].k   = k;
    }
 }
 
@@ -482,7 +474,6 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    fitness *= ( 1.0 + sq( regularization * solute_count ) );
    fitness_map.insert( key, fitness );
    DbgLv( 2 ) << "get_fitness:  out fitness" << fitness;
-   //*DEBUG*
    if ( dbg_level > 0 && fitness_map.size() == 20 )
    {
       int n = nosols - 1;
@@ -490,16 +481,12 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
                  << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v << "sn s,k,v" << sim.solutes[n].s
                  << sim.solutes[n].k << sim.solutes[n].v;
    }
-   //*DEBUG*
 
-   //*DEBUG*
-   //if(datasets_to_process>1 && generation<11 )
    if ( dbg_level > 1 && datasets_to_process > 1 && generation < 11 )
    {
       DbgLv( 0 ) << "rank generation" << my_rank << generation << "fitness" << fitness << "vari0 vari1" << sim.variances[0]
                  << sim.variances[1];
    }
-   //*DEBUG*
    return fitness;
 }
 
@@ -517,17 +504,14 @@ double US_MPI_Analysis::get_fitness_v( const US_Vector& vv )
       gene[ ii ].k = vv[ index++ ];
    }
 
-   //*DEBUG*
    if ( gene[0].s < 0.0 )
    {
       int grp_nbr  = ( my_rank / gcores_count );
       int deme_nbr = my_rank - grp_nbr * gcores_count;
       DbgLv( DL ) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "FIT_V";
    }
-   //*DEBUG*
    //   return get_fitness( gene );
-   int dbgsv = dbg_level;
-   //   dbg_level = 2;
+   int    dbgsv = dbg_level;
    double fitn = get_fitness( gene );
    dbg_level = dbgsv;
    return fitn;
@@ -576,13 +560,6 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
       mutate_s( gene[ solute ], solute );
       mutate_k( gene[ solute ], solute );
    }
-   //*DEBUG*
-   //if(gene[0].s<0.0) {
-   //int grp_nbr  = ( my_rank / gcores_count );
-   //int deme_nbr = my_rank - grp_nbr * gcores_count;
-   //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "MUTATE";
-   //}
-   //*DEBUG*
 }
 
 void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
@@ -591,20 +568,11 @@ void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
    double sigma = ( s_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
    double x     = US_Math2::box_muller( 0.0, sigma );
    double delta = qRound( x );
-   //DbgLv(1) << "    MUTATE_S x" << x << "sg sigma delta"
-   //   << s_grid << sigma << delta;
 
    // Ensure new value is at a grid point and within bucket
    solute.s += delta * buckets[ b ].ds;
    solute.s  = qMax( solute.s, buckets[ b ].x_min );
-   solute.s  = qMin( solute.s, buckets[ b ].x_max );
-   //*DEBUG*
-   //if(solute.s<0.0) {
-   //int grp_nbr  = ( my_rank / gcores_count );
-   //int deme_nbr = my_rank - grp_nbr * gcores_count;
-   //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "  solute.s" << solute.s << "MUTATE_S";
-   //}
-   //*DEBUG*
+   solute.s  = qMin( solute.s, buckets[b].x_max );
 }
 
 void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
@@ -614,8 +582,6 @@ void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
    double sigma   = ( k_grid - 1 ) / ( 6.0 * ( log2( generation + 2 ) ) );
    double x       = US_Math2::box_muller( 0.0, sigma );
    double delta   = qRound( x );
-   //DbgLv(1) << "     MUTATE_K x" << x << "kg sigma delta"
-   //   << k_grid << sigma << delta;
 
    // Ensure new value is at a grid point and within bucket
    solute.k += delta * buckets[ b ].dk;
@@ -646,13 +612,6 @@ void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
    {
       gene[ i ] = cross_from[ i ];
    }
-   //*DEBUG*
-   //if(gene[0].s<0.0) {
-   //int grp_nbr  = ( my_rank / gcores_count );
-   //int deme_nbr = my_rank - grp_nbr * gcores_count;
-   //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "CROSS";
-   //}
-   //*DEBUG*
 }
 
 int US_MPI_Analysis::migrate_genes( void )
@@ -669,13 +628,6 @@ int US_MPI_Analysis::migrate_genes( void )
       int  gene_index = e_random();
       emmigres += genes[ fitness[ gene_index ].index ];
    }
-   //*DEBUG*
-   //if(emmigres[0].s<0.0) {
-   //int grp_nbr  = ( my_rank / gcores_count );
-   //int deme_nbr = my_rank - grp_nbr * gcores_count;
-   //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << emmigres[0].s << "EMMIGRES";
-   //}
-   //*DEBUG*
 
    // MPI send msg type
    MPI_GA_MSG msg;
@@ -727,13 +679,6 @@ int US_MPI_Analysis::migrate_genes( void )
          Gene gene = immigres.mid( static_cast<qsizetype>( i ) * bucket_sols, bucket_sols );
          genes[ elitism_count + i ] = gene;
       }
-      //*DEBUG*
-      //if(genes[elitism_count][0].s<0.0) {
-      //int grp_nbr  = ( my_rank / gcores_count );
-      //int deme_nbr = my_rank - grp_nbr * gcores_count;
-      //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << genes[elitism_count][0].s << "IMMIGRANT";
-      //}
-      //*DEBUG*
    }
 
    return mgenes_count;
@@ -755,13 +700,6 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 
       gene << solute;
    }
-   //*DEBUG*
-   //if(gene[0].s<0.0) {
-   //int grp_nbr  = ( my_rank / gcores_count );
-   //int deme_nbr = my_rank - grp_nbr * gcores_count;
-   //DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "NEW";
-   //}
-   //*DEBUG*
 
    return gene;
 }
@@ -1238,8 +1176,7 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    int    nsols   = vsize / 2;
    int    navals  = nsols * ntotal;
    double                   fixval  = job_config.params.ga.bucket_fixed;
-   fixval         = ( attr_z == ATTR_V ) ? dset->vbar20 : fixval;
-   //qDebug() << "UF: vsize nsols ntotal navals" << vsize << nsols << ntotal << navals;
+   fixval                           = ( attr_z == ATTR_V ) ? dset->vbar20 : fixval;
 
    US_Math2::SolutionData sd;
    sd.density     = dset->density;
@@ -1258,7 +1195,6 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    zcomponent.f      = 0.0;
 
    set_comp_attrib( zcomponent, fixval, attr_z );
-   //DbgLv(1) << "UF: xyz" << attr_x << attr_y << attr_z << "fixval" << fixval;
 
    if ( index < 0 )
    {  // Do the initial population of A and B matrices
@@ -1309,9 +1245,6 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       build_component( model.components[ 0 ], sd, v[ vv ], v[ vv + 1 ] );
 
-      //qDebug() << "UF: index vv" << index << vv << "s,D"
-      // << model.components[0].s << model.components[0].D;
-
       US_AstfemMath::initSimData( simdat, *edata, 0.0 );
       US_Astfem_RSA astfem_rsa( model, dset->simparams );
       astfem_rsa.set_debug_flag( dbg_level );
@@ -1328,7 +1261,6 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
             nnls_a[ kk++ ] = simdat.value( ss, rr );
          }
       }
-      //qDebug() << "UF:  kk jj" << kk << jj;
 
       // Put A and B in work vectors since NNLS corrupts them
       w_nnls_a = nnls_a;
@@ -1381,11 +1313,7 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
          for ( int rr = 0; rr < npoints; rr++ )
          {
             double resid = edata->value( ss, rr ) - simdat.value( ss, rr );
-            fitness     += sq( resid );
-            //int ms=nscans/2;int mr=npoints/2;
-            //if((ss>ms-3)&&(ss<ms+3)&&(rr>mr-3)&&(rr<mr+3))
-            // qDebug() << "UF: index" << index << "ss rr edat sdat resd"
-            //  << ss << rr << edata->value(ss,rr) << simdat.value(ss,rr) << resid;
+            fitness += sq( resid );
          }
       }
 

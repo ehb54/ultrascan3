@@ -26,7 +26,6 @@ void US_MPI_Analysis::pcsa_worker( void )
                 my_communicator ); // let master know we are ready
 
       // Blocking -- Wait for instructions
-      //if(my_rank==1)
       DbgLv( 1 ) << "w:" << my_rank << ":PM:Recv: 1:job" << sizeof( job );
       MPI_Recv( &job, // get masters' response
                 sizeof( job ),
@@ -34,8 +33,7 @@ void US_MPI_Analysis::pcsa_worker( void )
                 MPI_Job::MASTER,
                 MPI_Job::TAG0,
                 my_communicator,
-                &status );        // status not used
-      //if(my_rank==1)
+                &status ); // status not used
       DbgLv( 1 ) << "w:" << my_rank << ": job_recvd  length" << job.length << "command" << job.command;
 
       int offset         = job.dataset_offset;
@@ -59,10 +57,8 @@ void US_MPI_Analysis::pcsa_worker( void )
                US_SolveSim::Simulation simulation_values;
                simulation_values.noisflag =
                   ( job_config.params.tinoise_option > 0 ? 1 : 0 ) + ( job_config.params.rinoise_option > 0 ? 2 : 0 );
-               //               simulation_values.dbg_level   = dbg_level;
                simulation_values.dbg_timing  = dbg_timing;
 
-               //if(my_rank==1)
                DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.zsolutes.resize( job.length );
 
@@ -76,9 +72,6 @@ void US_MPI_Analysis::pcsa_worker( void )
                          &status );
 
                max_rss();
-               //*DEBUG*
-               //if(dbg_level>0 && my_rank==1)
-               //if(my_rank==1)
                {
                   int nn = simulation_values.zsolutes.size() - 1;
                   int mm = nn / 2;
@@ -90,12 +83,9 @@ void US_MPI_Analysis::pcsa_worker( void )
                              << simulation_values.zsolutes[mm].y << simulation_values.zsolutes[nn].x
                              << simulation_values.zsolutes[nn].y;
                }
-               //*DEBUG*
 
                calc_residuals( offset, dataset_count, simulation_values );
 
-               //*DEBUG*
-               //if(my_rank==1)
                {
                   int nn = simulation_values.zsolutes.size() - 1;
                   int mm = nn / 2;
@@ -104,7 +94,6 @@ void US_MPI_Analysis::pcsa_worker( void )
                              << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
                              << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
                }
-               //*DEBUG*
                // Tell master we are sending back results
                int sizes[ 4 ] = { (int)simulation_values.zsolutes.size(),
                                   (int)simulation_values.ti_noise.size(),
@@ -113,13 +102,11 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << sizes[0] << "max_rss" << sizes[3] << "sizes12" << sizes[1]
                           << sizes[2];
-               //*DEBUG*
                if ( dbg_level == 0 && my_rank == 1 )
                {
                   DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << sizes[0] << "nsscan"
                              << simulation_values.sim_data.scanCount();
                }
-               //*DEBUG*
                MPI_Send( sizes,
                          4,
                          MPI_INT,
@@ -172,10 +159,8 @@ void US_MPI_Analysis::pcsa_worker( void )
                           << job_length;
                double varrmsd   = 0.0;
                simulation_values.noisflag    = 0;
-               //               simulation_values.dbg_level   = dbg_level;
                simulation_values.dbg_timing  = dbg_timing;
 
-               //if(my_rank==1)
                DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.zsolutes.resize( job.length );
 
@@ -246,9 +231,6 @@ void US_MPI_Analysis::pcsa_worker( void )
                         << "  for MC_Iteration" << mc_iter;
 
                max_rss();
-               //*DEBUG*
-               //if(dbg_level>0 && my_rank==1)
-               //if(my_rank==1)
                {
                   int nn = simulation_values.zsolutes.size() - 1;
                   int mm = nn / 2;
@@ -260,15 +242,12 @@ void US_MPI_Analysis::pcsa_worker( void )
                              << simulation_values.zsolutes[mm].y << simulation_values.zsolutes[nn].x
                              << simulation_values.zsolutes[nn].y;
                }
-               //*DEBUG*
 
                calc_residuals( offset, dataset_count, simulation_values );
 
                qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
                         << "  for MC_Iteration" << mc_iter;
 
-               //*DEBUG*
-               //if(my_rank==1)
                {
                   int nn = simulation_values.zsolutes.size() - 1;
                   int mm = nn / 2;
@@ -277,7 +256,6 @@ void US_MPI_Analysis::pcsa_worker( void )
                              << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
                              << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
                }
-               //*DEBUG*
                // Tell master we are sending back results
                int sizes[ 4 ] = { (int)simulation_values.zsolutes.size(),
                                   mc_iter,
@@ -285,13 +263,11 @@ void US_MPI_Analysis::pcsa_worker( void )
                                   (int)max_rss() };
 
                DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << sizes[0] << "max_rss" << sizes[3];
-               //*DEBUG*
                if ( dbg_level == 0 && my_rank == 1 )
                {
                   DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << sizes[0] << "nsscan"
                              << simulation_values.sim_data.scanCount();
                }
-               //*DEBUG*
                DbgLv( 1 ) << "w:" << my_rank << ":Send:RESULTS_MC  sizes" << sizes[0] << sizes[1] << sizes[2] << sizes[3];
                MPI_Send( sizes,
                          4,
@@ -326,7 +302,6 @@ void US_MPI_Analysis::pcsa_worker( void )
 
          case MPI_Job::NEWDATA:  // Reset data for Monte Carlo or global fit
          {
-            //if(my_rank==1)
             DbgLv( 1 ) << "w:" << my_rank << ":Recv:NEWDATA  joblen" << job_length;
             if ( is_global_fit && mc_iter < 3 && my_rank < 3 )
             { // For global fits, check the memory requirements

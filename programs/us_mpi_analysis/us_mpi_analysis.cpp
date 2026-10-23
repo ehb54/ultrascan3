@@ -67,7 +67,6 @@ int main( int argc, char* argv[] )
 // Constructor
 US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 {
-   //printf( "QT_LOGGING_RULES=\"%s\"\n", (char*)getenv("QT_LOGGING_RULES") );
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
 
@@ -860,11 +859,9 @@ void US_MPI_Analysis::prepare_timestates( int ntmsf_ne, int ntmsf_ex, int ntmsf_
       redo_tstate             = true;  // Then need to re-do
 
    // Sync up after all processes have evaluated timestates
-   //DbgLv(0) << "rank" << my_rank << ": pre-barrier2 :TM:" << ELAPSED_SECS;
    MPI_Barrier( MPI_COMM_WORLD );
    DbgLv( 0 ) << "rank" << my_rank << ": redo_tstate" << redo_tstate << "ntmsf_ne ntmsf_ex ntmsf_1s" << ntmsf_ne << ntmsf_ex
               << ntmsf_1s;
-   //DbgLv(0) << "rank" << my_rank << ": barrier2 :TM:" << ELAPSED_SECS;
 
    if ( redo_tstate )
    {  // We need to re-do the timestate files
@@ -980,7 +977,6 @@ void US_MPI_Analysis::prepare_timestates( int ntmsf_ne, int ntmsf_ex, int ntmsf_
             ds->simparams.simSpeedsFromTimeState( tmst_fpath );
          }
       }
-      //DbgLv(0) << "rank" << my_rank << ": pre-barrier3 :TM:" << ELAPSED_SECS;
 
       //      // Get all processes synched up, then fix non-master processes
       // Get all processes synched up, then build timestate objects
@@ -1009,7 +1005,6 @@ void US_MPI_Analysis::prepare_timestates( int ntmsf_ne, int ntmsf_ex, int ntmsf_
             data_sets[ee]->tmst_file = names[ee];
          }
       }
-      //DbgLv(0) << "rank" << my_rank << ": barrier3 :TM:" << ELAPSED_SECS;
    }  // END:  Re-do timestate files
 
    // Load dataset timestate(s)  [ and maybe adjust bottom ]
@@ -1243,9 +1238,6 @@ void US_MPI_Analysis::check_grid_size( void )
       }
       abort_all( "Implied Grid Size is Too Large!" );
    }
-   //else
-   // qDebug() << "check_grid_size FALSE  x_max" << x_max
-   //    << "rpm" << data_sets[0]->simparams.speed_step[0].rotorspeed;
 }
 
 // Determine the masters-group count and related controls
@@ -1456,10 +1448,7 @@ void US_MPI_Analysis::send_udp( const QString& message )
    QByteArray msg;
 
    if ( my_rank == 0 )
-   {  // Send UDP message from supervisor (or single-group master)
-      ///////////////////////////////*DEBUG*
-      //if(mgroup_count>1) return;   //*DEBUG*
-      ///////////////////////////////*DEBUG*
+   { // Send UDP message from supervisor (or single-group master)
       QString jobid = db_name + "-" + requestID + ": ";
       msg           = QString( jobid + message ).toLatin1();
       socket->writeDatagram( msg.data(), msg.size(), server, port );
@@ -1940,7 +1929,6 @@ void US_MPI_Analysis::write_output( void )
    {  // PCSA: Order model records and pick best model
       max_depth    = 0;
       std::sort( mrecs.begin(), mrecs.end() );
-      //*DEBUG*
       DbgLv( 1 ) << "MAST: wrout: mdl_type PCSA  mrecs size" << mrecs.size();
       if ( dbg_level > 0 )
       {
@@ -1951,7 +1939,6 @@ void US_MPI_Analysis::write_output( void )
                        << mrecs[jj].str_y << mrecs[jj].end_y << "p1 p2" << mrecs[jj].par1 << mrecs[jj].par2;
          }
       }
-      //*DEBUG*
       sim.zsolutes = mrecs[ 0 ].csolutes;
       mxdssz       = sim.zsolutes.size();
       sim.ti_noise = mrecs[ 0 ].ti_noise;

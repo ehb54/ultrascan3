@@ -373,10 +373,6 @@ void US_MPI_Analysis::ga_master_loop( void )
 
                emigres << gene;
             }
-            //*DEBUG*
-            //if(emigres[0][0].s<0.0)
-            // DbgLv(0) << "MAST: **GENE s" << emigres[0][0].s << " Emigrant";
-            //*DEBUG*
 
             max_rss();
 
@@ -393,16 +389,12 @@ void US_MPI_Analysis::ga_master_loop( void )
                   immigrants += emigres.takeAt( u_random( emigres.size() ) );
             }
 
-            MPI_Send( immigrants.data(),   // MPI #5
+            MPI_Send( immigrants.data(), // MPI #5
                       doubles_count,
                       MPI_DOUBLE,
                       worker,
                       IMMIGRATE,
                       my_communicator );
-            //*DEBUG*
-            //if(immigrants[0].s<0.0)
-            // DbgLv(0) << "MAST: **GENE s" << immigrants[0].s << " Immigrant-to-send";
-            //*DEBUG*
             break;
          }
       }

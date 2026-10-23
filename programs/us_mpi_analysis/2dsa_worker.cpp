@@ -20,7 +20,6 @@ void US_MPI_Analysis::_2dsa_worker( void )
 
       MPI_Send( x, 4, MPI_INT, MPI_Job::MASTER, MPI_Job::READY,
                 my_communicator ); // let master know we are ready
-      //if(my_rank==1)
       DbgLv( 1 ) << "w:" << my_rank << ": ready sent";
 
       // Blocking -- Wait for instructions
@@ -30,8 +29,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_Job::MASTER,
                 MPI_Job::TAG0,
                 my_communicator,
-                &status );        // status not used
-      //if(my_rank==1)
+                &status ); // status not used
       DbgLv( 1 ) << "w:" << my_rank << ": job_recvd  length" << job.length << "command" << job.command;
 
       meniscus_value     = job.meniscus_value;
@@ -54,8 +52,6 @@ void US_MPI_Analysis::_2dsa_worker( void )
                simulation_values.dbg_level   = dbg_level;
                simulation_values.dbg_timing  = dbg_timing;
 
-               //DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
-               //if(my_rank==1)
                DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.solutes.resize( job.length );
 
@@ -68,9 +64,6 @@ void US_MPI_Analysis::_2dsa_worker( void )
                          &status );
 
                max_rss();
-               //*DEBUG*
-               //if(dbg_level>0 && my_rank==1)
-               //if(my_rank==1)
                {
                   int nn = simulation_values.solutes.size() - 1;
                   int mm = nn / 2;
@@ -81,7 +74,6 @@ void US_MPI_Analysis::_2dsa_worker( void )
                              << simulation_values.solutes[0].k << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
                              << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
                }
-               //*DEBUG*
 
                calc_residuals( offset, dataset_count, simulation_values );
 
@@ -92,13 +84,11 @@ void US_MPI_Analysis::_2dsa_worker( void )
                                  (int)max_rss() };
 
                DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "max_rss" << size[3];
-               //*DEBUG*
                if ( dbg_level == 0 && my_rank == 1 )
                {
                   DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << size[0] << "nsscan"
                              << simulation_values.sim_data.scanCount();
                }
-               //*DEBUG*
                MPI_Send( size,
                          4,
                          MPI_INT,

@@ -534,9 +534,7 @@ void US_MPI_Analysis::time_mc_iterations()
          DbgLv( 0 ) << "TMI: show_mcit TRUE";
       }
    }
-   //*DEBUG*
    show_mcit = true;
-   //*DEBUG*
    DbgLv( 0 ) << "TMI: show_mcit" << show_mcit;
 
    // Do preliminary iteration time tests
@@ -611,7 +609,6 @@ void US_MPI_Analysis::pm_ga_master( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
-   //DbgLv(1) << "master start GA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;
@@ -801,7 +798,6 @@ void US_MPI_Analysis::pm_dmga_master( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
-   //DbgLv(1) << "master start DMGA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;

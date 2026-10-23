@@ -428,7 +428,6 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
-   //DbgLv(1) << "master start GA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;
@@ -624,7 +623,6 @@ void US_MPI_Analysis::pm_dmga_cjmast( void )
    datasets_to_process = data_sets.size();
    max_depth           = 0;
    calculated_solutes.clear();
-   //DbgLv(1) << "master start DMGA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;
@@ -844,10 +842,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
    while ( true )
    {
       int worker;
-      meniscus_value   = data_sets[ current_dataset ]->run_data.meniscus;
-      //if ( max_depth > 1 )
-      // DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
-      //    << "  areWorking?" << worker_status.contains(WORKING);
+      meniscus_value = data_sets[current_dataset]->run_data.meniscus;
 
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
@@ -1046,7 +1041,6 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
 
       worker = status.MPI_SOURCE;
 
-      //if ( max_depth > 0 )
       DbgLv( 1 ) << my_rank << ": PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG << MPI_Job::READY << MPI_Job::RESULTS
                  << "  source" << status.MPI_SOURCE;
       switch( status.MPI_TAG )

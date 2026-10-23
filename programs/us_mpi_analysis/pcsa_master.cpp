@@ -34,10 +34,7 @@ void US_MPI_Analysis::pcsa_master( void )
       int kwsw = worker_status.count( WORKING );
       DbgLv( 1 ) << "pcsa_mast:MLOOP - TOP  jqsize" << job_queue.size() << "wstat-K:IniRdyWrk" << kwsi << kwsr << kwsw;
       int worker;
-      meniscus_value   = data_sets[ current_dataset ]->run_data.meniscus;
-      //if ( max_depth > 1 )
-      // DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
-      //    << "  areWorking?" << worker_status.contains(WORKING);
+      meniscus_value = data_sets[current_dataset]->run_data.meniscus;
 
       int jql = job_queue.size() - 1;
       // Give the jobs to the workers
@@ -83,10 +80,8 @@ void US_MPI_Analysis::pcsa_master( void )
          simulation_values.ri_noise    = mrecs[ 0 ].ri_noise;
          simulation_values.noisflag    = job_config.params.tinoise_option > 0 ? 1 : 0;
          simulation_values.noisflag += job_config.params.rinoise_option > 0 ? 2 : 0;
-         //         simulation_values.dbg_level   = dbg_level;
          simulation_values.dbg_timing  = dbg_timing;
          simulation_values.solutes.clear();
-         //*DEBUG*
          wksim_vals          = simulation_values;
          wksim_vals.zsolutes = mrecs[0].isolutes;
          DbgLv( 1 ) << "final-mr0: enter CALC_RES" << current_dataset << datasets_to_process;
@@ -107,7 +102,6 @@ void US_MPI_Analysis::pcsa_master( void )
             }
          }
          DbgLv( 1 ) << "final-mr0: ki kw kr" << ki << kw << kr << "km kg" << km << kg;
-         //*DEBUG*
 
          // Compose the progress message
          QString progress =
@@ -186,7 +180,6 @@ void US_MPI_Analysis::pcsa_master( void )
             simulation_values.zsolutes  = mrec.isolutes;
             simulation_values.alpha     = 0.0;
             simulation_values.noisflag  = 0;
-            //            simulation_values.dbg_level = dbg_level;
             simulation_values.solutes .clear();
             simulation_values.ti_noise.clear();
             simulation_values.ri_noise.clear();
@@ -293,7 +286,6 @@ void US_MPI_Analysis::init_pcsa_solutes( void )
    orig_zsolutes      .clear();
    simulation_values.noisflag = job_config.params.tinoise_option > 0 ? 1 : 0;
    simulation_values.noisflag += job_config.params.rinoise_option > 0 ? 2 : 0;
-   //   simulation_values.dbg_level   = dbg_level;
    simulation_values.dbg_timing  = dbg_timing;
    DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
@@ -762,8 +754,6 @@ void US_MPI_Analysis::tikreg_pcsa()
    wksim_vals.zsolutes = mrecs[ 0 ].isolutes;
    wksim_vals.alpha    = alpha;
    wksim_vals.noisflag = 0;
-   //   wksim_vals.dbg_level= dbg_level;
-   //wksim_vals.dbg_level= 2;
    wksim_vals.solutes .clear();
    wksim_vals.ri_noise.clear();
    wksim_vals.ti_noise.clear();
@@ -1326,8 +1316,7 @@ void US_MPI_Analysis::clean_mrecs( QVector< US_ModelRecord >& mrecs )
 void US_MPI_Analysis::pcsa_best_model()
 {
    US_Model mdummy;
-   mrec              = mrecs[ 0 ];
-   //   simulation_values.dbg_level = dbg_level;
+   mrec                        = mrecs[0];
    simulation_values.alpha     = 0.0;
    simulation_values.noisflag  = 0;
    simulation_values.zsolutes  = mrec.csolutes;
