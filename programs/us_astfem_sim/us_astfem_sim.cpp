@@ -366,6 +366,15 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
             QList<US_AbstractCenterpiece> cp_list;
             US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
             sim_centerpiece_id = cp_list[cp].serial_number;
+
+            // setHardware() moves only bottom_position. Rebuild the radial
+            // grid the loaded simparams laid out, as sim_parameters() does,
+            // so its readings and radii agree on the new bottom.
+            if ( flags.contains( "simparams" ) && loaded_simparams )
+            {
+               simparams.bottom = simparams.bottom_position;
+               set_parameters();
+            }
          }
       }
    }
@@ -1091,11 +1100,6 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
       simparams.meniscus  = meniscus_ar;
       simparams.bottom    = bottom_ar;
       int kscan           = sim_data_all.scanCount();
-      int kpoint          = sim_data_all.pointCount();
-
-      // Initialize reading values to zero for all scans (all speeds)
-      for ( int js = 0; js < kscan; js++ )
-         sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
 
       // Set the radius values in data sets
       int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
@@ -1103,6 +1107,16 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
       // int points          = qCeil( ( simparams.bottom - simparams.meniscus ) /
       //                              simparams.radial_resolution ) + 1;
       sim_data_all.xvalues.resize( points );
+
+      // Initialize reading values to zero for all scans (all speeds), sized
+      //  to this grid: a headless --centerpiece moves the bottom after
+      //  set_parameters() laid out sim_data_all, and calculate() reads one
+      //  radius per reading
+      for ( int js = 0; js < kscan; js++ )
+      {
+         sim_data_all.scanData[js].rvalues.fill( 0.0, points );
+         sim_data_all.scanData[js].interpolated.fill( 0, ( points + 7 ) / 8 );
+      }
 
       for ( int jd = 0; jd < nstep; jd++ )
       {  // Set radius values for current speed's dataset
