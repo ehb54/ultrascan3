@@ -613,11 +613,16 @@ void US_MPI_Analysis::init_solutes( void )
    {  // If a model file was given, use it to set the initial solutes
       US_Model model;
       QString fn = "../" + model_filename;
-      model.load( fn );
+      int      loadst   = model.load( fn );
       int    nsubgrid = model.subGrids;
       int    ncomps   = model.components.size();
       DbgLv( 0 ) << "InSol: fn" << fn;
       DbgLv( 0 ) << "InSol:  nsubgrid ncomps" << nsubgrid << ncomps;
+
+      if ( loadst != IUS_DB2::OK || ncomps < 1 )
+      {
+         abort( "Custom grid model file " + model_filename + " cannot be read or has no solutes", -1 );
+      }
 
       if ( nsubgrid < 1 )
          abort( "Custom grid model file has no subgrids", -1 );
