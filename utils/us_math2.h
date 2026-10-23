@@ -202,8 +202,9 @@ class US_UTIL_EXTERN US_Math2
       //! \return The seed used to set the system time
       static uint randomize( void );
 
-      //! \brief Set the sysem random sequence.
-      //! \param seed A predetermined seed 
+      //! \brief Set the sysem random sequence.  Both overloads discard the
+      //!        deviate box_muller() keeps from its last pair.
+      //! \param seed A predetermined seed
       //! \return The seed used to set the system time
       static uint randomize( uint );
 
