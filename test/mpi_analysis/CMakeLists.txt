@@ -15,6 +15,30 @@ endif()
 add_executable(us_mpi_testdata us_mpi_testdata.cpp)
 target_link_libraries(us_mpi_testdata PRIVATE ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml)
 
+# Unit tests of the job XML reader (no MPI)
+set(US_MPI_SRC_DIR ${CMAKE_SOURCE_DIR}/programs/us_mpi_analysis)
+add_executable(test_us_mpi_jobconfig
+    test_us_mpi_jobconfig.cpp
+    ${US_MPI_SRC_DIR}/us_mpi_jobconfig.cpp)
+target_include_directories(test_us_mpi_jobconfig PRIVATE ${US_MPI_SRC_DIR})
+target_compile_definitions(test_us_mpi_jobconfig PRIVATE
+    US_MPI_TEST_JOBS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/jobs")
+target_link_libraries(test_us_mpi_jobconfig PRIVATE
+    ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml gtest gtest_main)
+
+# Checks job files without MPI: us_mpi_jobcheck [-q] <hpcrequest.xml>...
+add_executable(us_mpi_jobcheck
+    us_mpi_jobcheck.cpp
+    ${US_MPI_SRC_DIR}/us_mpi_jobconfig.cpp)
+target_include_directories(us_mpi_jobcheck PRIVATE ${US_MPI_SRC_DIR})
+target_link_libraries(us_mpi_jobcheck PRIVATE ${US_MPI_TEST_UTILS} Qt::Core Qt::Xml)
+
+include(GoogleTest)
+gtest_discover_tests(test_us_mpi_jobconfig
+    PROPERTIES
+    LABELS gtest-unit-mpi_analysis
+    TIMEOUT 60)
+
 if(NOT Python3_Interpreter_FOUND)
     message(STATUS "test/mpi_analysis: Python3 not found, regression tests skipped")
     return()
