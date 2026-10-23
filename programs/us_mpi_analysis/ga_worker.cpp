@@ -175,12 +175,6 @@ void US_MPI_Analysis::ga_worker_loop( void )
       fitness << empty_fitness;
    }
 
-   const int generations = job_config.params.ga.generations;
-   const int crossover   = job_config.params.ga.crossover;
-   const int mutation    = job_config.params.ga.mutation;
-   const int plague      = job_config.params.ga.plague;
-   const int elitism     = job_config.params.ga.elitism;
-
    const int p_mutate    = mutation;
    const int p_crossover = p_mutate + crossover;
    const int p_plague    = p_crossover + plague;
@@ -435,7 +429,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    calc_residuals( current_dataset, datasets_to_process, sim );
    //DbTimMsg("  ++  return calc_residuals");
 
-   double fitness      = sim.variance;
+   double    sfitness     = sim.variance;
    int    solute_count = 0;
    const int nosols       = sim.solutes.size();
 
@@ -451,14 +445,14 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    else
    {  // For multiple datasets, use a weighted average fitness
       double concen    = 0.0;
-      fitness          = 0.0;
+      sfitness         = 0.0;
 
       for ( int ee = 0; ee < datasets_to_process; ee++ )
       {
-         fitness         += ( sim.variances[ ee ] / maxods[ ee ] );
+         sfitness += ( sim.variances[ee] / maxods[ee] );
       }
 
-      fitness         /= (double)datasets_to_process;
+      sfitness /= (double) datasets_to_process;
 
       for ( int cc = 0; cc < nosols; cc++ )
          concen          += sim.solutes[ cc ].c;
@@ -471,23 +465,23 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
       }
    }
 
-   fitness *= ( 1.0 + sq( regularization * solute_count ) );
-   fitness_map.insert( key, fitness );
-   DbgLv( 2 ) << "get_fitness:  out fitness" << fitness;
+   sfitness *= ( 1.0 + sq( regularization * solute_count ) );
+   fitness_map.insert( key, sfitness );
+   DbgLv( 2 ) << "get_fitness:  out fitness" << sfitness;
    if ( dbg_level > 0 && fitness_map.size() == 20 )
    {
       const int n = nosols - 1;
-      DbgLv( 1 ) << "w:" << my_rank << generation << ": fmapsize fitness nsols" << fitness_map.size() << fitness << nisols << nosols
-                 << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v << "sn s,k,v" << sim.solutes[n].s
-                 << sim.solutes[n].k << sim.solutes[n].v;
+      DbgLv( 1 ) << "w:" << my_rank << generation << ": fmapsize fitness nsols" << fitness_map.size() << sfitness << nisols
+                 << nosols << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v << "sn s,k,v"
+                 << sim.solutes[n].s << sim.solutes[n].k << sim.solutes[n].v;
    }
 
    if ( dbg_level > 1 && datasets_to_process > 1 && generation < 11 )
    {
-      DbgLv( 0 ) << "rank generation" << my_rank << generation << "fitness" << fitness << "vari0 vari1" << sim.variances[0]
+      DbgLv( 0 ) << "rank generation" << my_rank << generation << "fitness" << sfitness << "vari0 vari1" << sim.variances[0]
                  << sim.variances[1];
    }
-   return fitness;
+   return sfitness;
 }
 
 // Compute the fitness of a gene represented as a vector of doubles
@@ -541,18 +535,20 @@ int US_MPI_Analysis::e_random( void )
 
 void US_MPI_Analysis::mutate_gene( Gene& gene )
 {
-   static const int p_mutate_s  = job_config.params.ga.p_mutate_s;
-   static const int p_mutate_k  = job_config.params.ga.p_mutate_k;
-   static const int p_mutate_sk = job_config.params.ga.p_mutate_sk;
+   static const int pmut_s  = job_config.params.ga.p_mutate_s;
+   static const int pmut_k  = job_config.params.ga.p_mutate_k;
+   static const int pmut_sk = job_config.params.ga.p_mutate_sk;
 
-   static const int p_k         = p_mutate_s + p_mutate_k;   // e.g., 40
-   static const int p_total     = p_k + p_mutate_sk;         // e.g., 60
+   static const int p_k     = pmut_s + pmut_k; // e.g., 40
+   static const int p_total = p_k + pmut_sk;   // e.g., 60
 
    const int        solute = u_random( gene.size() );
    const int        rand   = u_random( p_total );
 
-   if      ( rand < p_mutate_s )
-      mutate_s( gene[ solute ], solute );
+   if ( rand < pmut_s )
+   {
+      mutate_s( gene[solute], solute );
+   }
    else if ( rand < p_k )      
       mutate_k( gene[ solute ], solute );
    else
@@ -620,10 +616,10 @@ int US_MPI_Analysis::migrate_genes( void )
    static const int     elitism_count = job_config.params.ga.elitism;
 
    QVector< US_Solute > emmigres;
-   const int            migrate_count = ( migrate_pcent * population + 50 ) / 100;
+   const int            n_migrate = ( migrate_pcent * population + 50 ) / 100;
 
    // Send genes to master
-   for ( int i = 0; i < migrate_count; i++ )
+   for ( int i = 0; i < n_migrate; i++ )
    {
       const int gene_index = e_random();
       emmigres += genes[ fitness[ gene_index ].index ];
@@ -631,9 +627,9 @@ int US_MPI_Analysis::migrate_genes( void )
 
    // MPI send msg type
    MPI_GA_MSG msg;
-   msg.size = migrate_count;
+   msg.size               = n_migrate;
    const int bucket_sols  = buckets.size();
-   const int migrate_sols = migrate_count * bucket_sols;
+   const int migrate_sols = n_migrate * bucket_sols;
 
    MPI_Send( &msg,               // to MPI #1
              sizeof( msg ),
@@ -705,8 +701,8 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 }
 
 // Find the minimum fitness value close to a gene using
-// inverse hessian minimization 
-double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
+// inverse hessian minimization
+double US_MPI_Analysis::minimize( Gene& gene, double gfitness )
 {
 #if 0
 #define TIMING_MZ
@@ -740,7 +736,7 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
    const int     grp_nbr  = ( my_rank / gcores_count );
    const int     deme_nbr = my_rank - grp_nbr * gcores_count;
    const QString Phd      = "MIN:" + QString::asprintf( "%d:%d", grp_nbr, deme_nbr ) + ":";
-   DbgLv( DL ) << Phd << "vsize" << vsize << "fitness" << fitness << "gene0.s" << gene[0].s;
+   DbgLv( DL ) << Phd << "vsize" << vsize << "fitness" << gfitness << "gene0.s" << gene[0].s;
    int index = 0;
 
    // Convert gene to array of doubles
@@ -759,23 +755,26 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
 #endif
 
    static const double epsilon_f      = 1.0e-7;
-   static const int    max_iterations = 20;
+   static const int    max_gsm_iters  = 20;
    int                 iteration      = 0;
-   const double        epsilon        = epsilon_f * fitness * 4.0;
+   const double        epsilon        = epsilon_f * gfitness * 4.0;
    DbgLv( DL ) << Phd << "epsilon" << epsilon << "uL2norm" << uu.L2norm();
    const bool neg_cnstr = ( vv[0] < 0.1 ); // Negative constraint?
 
-   while ( uu.L2norm() >= epsilon_f  && iteration < max_iterations )
+   while ( uu.L2norm() >= epsilon_f && iteration < max_gsm_iters )
    {
 #ifdef TIMING_MZ
       clcSt1 = QDateTime::currentDateTime();
 #endif
       iteration++;
-      DbgLv( DL ) << Phd << " iter" << iteration << "fitness" << fitness;
-      if ( fitness == 0.0 ) break;
+      DbgLv( DL ) << Phd << " iter" << iteration << "fitness" << gfitness;
+      if ( gfitness == 0.0 )
+      {
+         break;
+      }
 
       US_Vector v_s1 = vv;
-      double g_s1    = fitness;
+      double    g_s1    = gfitness;
       double s1      = 0.0;
       double s2      = 0.5;
       double s3      = 1.0;
@@ -879,7 +878,7 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
             DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
             DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6" << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
 #endif
-            return fitness;
+            return gfitness;
          }
 
          double xx        = -bb / ( 2.0 * aa );
@@ -1012,19 +1011,19 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
       if ( g_s2 < g_s3  &&  g_s2 < g_s1 )
       {
          v_p     = v_s2;
-         fitness = g_s2;
+         gfitness = g_s2;
       }
       else if ( g_s1 < g_s3 )
       {
          v_p     = v_s1;
-         fitness = g_s1;
+         gfitness = g_s1;
       }
       else
       {
          v_p     = v_s3;
-         fitness = g_s3;
+         gfitness = g_s3;
       }
-      DbgLv( DL ) << Phd << "   g_s? fitness" << fitness;
+      DbgLv( DL ) << Phd << "   g_s? fitness" << gfitness;
 
 #ifdef TIMING_MZ
       QDateTime clcSt4 = QDateTime::currentDateTime();
@@ -1119,7 +1118,7 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
       gene[ ii ].s = vv[ index++ ];
       gene[ ii ].k = vv[ index++ ];
    }
-   DbgLv( DL ) << Phd << "OUT:fitness" << fitness << "gene0.s" << gene[0].s;
+   DbgLv( DL ) << Phd << "OUT:fitness" << gfitness << "gene0.s" << gene[0].s;
 
 #ifdef TIMING_MZ
    insms = (long) clcSt0.msecsTo( QDateTime::currentDateTime() );
@@ -1128,12 +1127,11 @@ double  US_MPI_Analysis::minimize( Gene& gene, double fitness )
    DRTiming << "MINIMIZE: msecs" << insms << "totmsecs calls" << totms << ncalls;
    DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6" << totT1 << totT2 << totT3 << totT4 << totT5 << totT6;
 #endif
-   return fitness;
+   return gfitness;
 }
 
 // Set vector values to the scaled sums of two vectors
-void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc,
-      US_Vector& aa, double sa, US_Vector& bb, double sb )
+void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc, const US_Vector& aa, double sa, const US_Vector& bb, double sb )
 {
    const int sizec = qMin( cc.size(), qMin( aa.size(), bb.size() ) );
 
@@ -1153,7 +1151,7 @@ void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc,
 // and recalculates the x vector, with fitness update.
 double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 {
-   double fitness = 0.0;
+   double                   ufitness = 0.0;
    static QVector< double > nnls_a;
    static QVector< double > nnls_b;
           QVector< double > nnls_x;
@@ -1283,9 +1281,9 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
          if ( soluval > 0.0 )
          {
             model.components << zcomponent;
-            const int vv = cc * 2;
+            const int vx = cc * 2;
 
-            build_component( model.components[ kk ], sd, v[ vv ], v[ vv + 1 ] );
+            build_component( model.components[kk], sd, v[vx], v[vx + 1] );
 
             model.components[ kk++ ].signal_concentration = soluval;
 
@@ -1300,22 +1298,22 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       astfem_rsa2.calculate( simdat );
 
       // Calculate the fitness (variance) == average of residuals-squared
-      fitness   = 0.0;
+      ufitness = 0.0;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
          for ( int rr = 0; rr < npoints; rr++ )
          {
             const double resid = edata->value( ss, rr ) - simdat.value( ss, rr );
-            fitness += sq( resid );
+            ufitness += sq( resid );
          }
       }
 
-      fitness  /= (double)( ntotal );
-      fitness  *= ( 1.0 + sq( regularization * ksol ) );
+      ufitness /= (double) ( ntotal );
+      ufitness *= ( 1.0 + sq( regularization * ksol ) );
    }
 
-   return fitness;
+   return ufitness;
 }
 
 void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
@@ -1424,15 +1422,15 @@ void US_MPI_Analysis::dump_genes( int gene )
    }
 }
 
-void US_MPI_Analysis::dump_fitness( const QList<Fitness>& fitness ) const
+void US_MPI_Analysis::dump_fitness( const QList<Fitness>& fits ) const
 {
    if ( my_rank != 1 ) return;
    
    QString s = "Fitness:\n";
 
-   for ( int f = 0; f < fitness.size(); f++ )
+   for ( int f = 0; f < fits.size(); f++ )
    {
-      s += QString::asprintf( "i, index, fitness: %3i, %3i, %.6e\n", f, fitness[f].index, fitness[f].fitness );
+      s += QString::asprintf( "i, index, fitness: %3i, %3i, %.6e\n", f, fits[f].index, fits[f].fitness );
    }
 
    DbgLv(1) << s;

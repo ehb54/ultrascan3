@@ -54,12 +54,12 @@ void US_MPI_Analysis::dmga_master( void )
 
    for ( int mcompx = 0; mcompx < wmodel.components.size(); mcompx++ )
    {
-      const int compno = mcompx + 1;
-      const int ncompc = constraints.comp_constraints( mcompx, &cnsv, NULL );
+      const int compno    = mcompx + 1;
+      const int ncomp_cns = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
       DbgLv( 0 ) << "  Component" << compno << ":";
 
-      for ( int cx = 0; cx < ncompc; cx++ )
+      for ( int cx = 0; cx < ncomp_cns; cx++ )
       {
          atype               = cnsv[cx].atype;
          const bool   floats = cnsv[cx].floats;
@@ -213,25 +213,24 @@ void US_MPI_Analysis::dmga_master( void )
       {  // If gradient search method for all terminations, minimize now
          double aval;
          in_gsm         = true;
-         const double fitness = bfit->fitness;
+         const double bfitness = bfit->fitness;
          dgene          = best_dgenes[ bfit->index ];
          int nlim       = 0;
 
-         bfit->fitness  = minimize_dmga( dgene, fitness );
+         bfit->fitness = minimize_dmga( dgene, bfitness );
 
          for ( int ii = 0; ii < nfloatc; ii++ )
          {  // Insure all the new gene attribute values are inside range
-            US_dmGA_Constraints::AttribType
-                 atype    = cns_flt[ ii ].atype;
-            int  mcompx   = cns_flt[ ii ].mcompx;
-            const double vmin     = cns_flt[ii].low;
-            const double vmax     = cns_flt[ii].high;
-            fetch_attr_value( aval, dgene, atype, mcompx );
+            const US_dmGA_Constraints::AttribType fatype = cns_flt[ii].atype;
+            const int                             mcompx = cns_flt[ii].mcompx;
+            const double                          vmin   = cns_flt[ii].low;
+            const double                          vmax   = cns_flt[ii].high;
+            fetch_attr_value( aval, dgene, fatype, mcompx );
 
             if ( aval < vmin  ||  aval > vmax )
             {
                aval          = qMax( vmin, qMin( vmax, aval ) );
-               store_attr_value( aval, dgene, atype, mcompx );
+               store_attr_value( aval, dgene, fatype, mcompx );
                nlim++;
             }
          }
@@ -346,12 +345,12 @@ void US_MPI_Analysis::dmga_master( void )
 
    for ( int mcompx = 0; mcompx < fmodel->components.size(); mcompx++ )
    {
-      const int compno = mcompx + 1;
-      const int ncompc = constraints.comp_constraints( mcompx, &cnsv, NULL );
+      const int compno    = mcompx + 1;
+      const int ncomp_cns = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
       DbgLv( 0 ) << "  Component" << compno << ":";
 
-      for ( int cx = 0; cx < ncompc; cx++ )
+      for ( int cx = 0; cx < ncomp_cns; cx++ )
       {
          atype       = cnsv[ cx ].atype;
 
@@ -709,20 +708,20 @@ void US_MPI_Analysis::dmga_global_fit( void )
    const int              radius_points = data->pointCount();
    int index         = 0;
 
-   QVector< double > scaled_data( static_cast<qsizetype>( scan_count ) * radius_points );
+   QVector<double>        ds_scaled( static_cast<qsizetype>( scan_count ) * radius_points );
 
    // Scale the data
    for ( int s = 0; s < scan_count; s++ )
    {
       for ( int r = 0; r < radius_points; r++ )
       {
-         scaled_data[ index++ ] = data->value( s, r ) / concentration;
+         ds_scaled[index++] = data->value( s, r ) / concentration;
       }
    }
 
    // Send the scaled data to the workers
    MPI_Job job;
-   job.length         = scaled_data.size();
+   job.length         = ds_scaled.size();
    job.dataset_offset = current_dataset;
    job.dataset_count  = 1;
 
@@ -742,10 +741,10 @@ void US_MPI_Analysis::dmga_global_fit( void )
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),      // MPI #8
-              scaled_data.size(), 
-              MPI_DOUBLE, 
-              MPI_Job::MASTER, 
+   MPI_Bcast( ds_scaled.data(), // MPI #8
+              ds_scaled.size(),
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
               my_communicator );
 
    // Go to the next dataset
@@ -874,8 +873,7 @@ void US_MPI_Analysis::dgene_from_marker( QVector< double >& dgm, DGene& dg )
 }
 
 // Get a marker vector of doubles from multiple dmga genes (models)
-void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
-      QList< DGene >& dgenes, const int stgx, const int ngenes )
+void US_MPI_Analysis::dgenes_to_marker( QVector<double>& dgm, QList<DGene>& dglist, const int stgx, const int ngenes )
 {
    int mx       = 0;            // Initial marker index
    int gx       = stgx;         // Initial genes index
@@ -883,7 +881,7 @@ void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
 
    for ( int kg = 0; kg < ngenes; kg++ )
    {  // Fetch each gene and store its float attribute values
-      wkgene        = dgenes[ gx++ ];
+      wkgene = dglist[gx++];
 
       for ( int ii = 0; ii < nfloatc; ii++ )
       {  // Fetch each gene float attribute value into the marker vector
@@ -894,12 +892,11 @@ void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
 }
 
 // Get multiple dmga genes (models) from a marker vector of doubles
-void US_MPI_Analysis::marker_to_dgenes( QVector< double >& dgm,
-      QList< DGene >& dgenes, const int stgx, const int ngenes )
+void US_MPI_Analysis::marker_to_dgenes( QVector<double>& dgm, QList<DGene>& dglist, const int stgx, const int ngenes )
 {
    int mx       = 0;               // Initial marker index
    int gx       = stgx;            // Initial genes index
-   int igsize   = dgenes.size();   // Initial genes list size
+   int   igsize   = dglist.size();   // Initial genes list size
    DGene wkgene = wmodel;          // Base gene
 
    for ( int kg = 0; kg < ngenes; kg++ )
@@ -913,17 +910,19 @@ void US_MPI_Analysis::marker_to_dgenes( QVector< double >& dgm,
 
       if ( gx >= igsize )
       {
-         dgenes << wkgene;         // Append the constructed gene
+         dglist << wkgene; // Append the constructed gene
          igsize++;
       }
       else
-         dgenes[ gx ] = wkgene;    // Store the constructed gene
+         dglist[gx] = wkgene; // Store the constructed gene
    }
 }
 
 // Store a component/association attribute value
-bool US_MPI_Analysis::store_attr_value( double& aval, US_Model& model,
-      US_dmGA_Constraints::AttribType& atype, int& mcompx )
+bool US_MPI_Analysis::store_attr_value( const double&                          aval,
+                                        US_Model&                              model,
+                                        const US_dmGA_Constraints::AttribType& atype,
+                                        const int&                             mcompx )
 {
    bool is_ok  = true;
    US_Model::SimulationComponent* sc = NULL;
@@ -979,8 +978,10 @@ bool US_MPI_Analysis::store_attr_value( double& aval, US_Model& model,
 }
 
 // Fetch a component/association attribute value
-bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
-      US_dmGA_Constraints::AttribType& atype, int& mcompx )
+bool US_MPI_Analysis::fetch_attr_value( double&                                aval,
+                                        US_Model&                              model,
+                                        const US_dmGA_Constraints::AttribType& atype,
+                                        const int&                             mcompx )
 {
    bool is_ok  = true;
    US_Model::SimulationComponent* sc = NULL;
@@ -1032,15 +1033,15 @@ bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
 }
 
 // Get an apply-ready model from a dmga gene
-void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene ) const
+void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dg ) const
 {
-   model        = dgene;           // Initialize the model
+   model = dg; // Initialize the model
 
    model.update_coefficients(); // Compute missing coefficients
    if ( group_rank < 1 )
    {
-      DbgLv( 2 ) << my_rank << "MFG:g-comp1 s,k,w,d,f" << dgene.components[0].s << dgene.components[0].f_f0
-                 << dgene.components[0].mw << dgene.components[0].D << dgene.components[0].f;
+      DbgLv( 2 ) << my_rank << "MFG:g-comp1 s,k,w,d,f" << dg.components[0].s << dg.components[0].f_f0 << dg.components[0].mw
+                 << dg.components[0].D << dg.components[0].f;
       DbgLv( 2 ) << my_rank << "MFG:m-comp1 s,k,w,d,f" << model.components[0].s << model.components[0].f_f0
                  << model.components[0].mw << model.components[0].D << model.components[0].f;
    }
@@ -1058,7 +1059,7 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene ) const
       const int              st2  = qAbs( as->stoichs[1] );
       const int              stp  = qAbs( as->stoichs[rpx] );
       const double           ff0p = qMax( 1.0, model.components[rcp].f_f0 );
-      model.components[ rcp ] = dgene.components[ rcp ]; // Raw product comp
+      model.components[rcp]       = dg.components[rcp]; // Raw product comp
       if ( group_rank < 2 )
       {
          DbgLv( 1 ) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp" << nrco << rc1 << rc2 << rcp << "st1,st2,stp" << st1 << st2

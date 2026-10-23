@@ -729,7 +729,7 @@ void US_MPI_Analysis::global_fit( void )
    const int kp            = radius_points;
    DbgLv( 1 ) << ":gf:  ee" << current_dataset << "BB-dset(m)" << edata->value( ks / 2, kp / 2 );
    int index         = 0;
-   QVector< double > scaled_data( scan_count * radius_points  + 1 );
+   QVector<double>   ds_scaled( scan_count * radius_points + 1 );
    double            isum = 0.0;
    double            dsum = 0.0;
 
@@ -741,19 +741,19 @@ void US_MPI_Analysis::global_fit( void )
          const double ival = edata->value( ss, rr );
          isum += ival;
          const double scaled_value = edata->value( ss, rr ) / concentration;
-         scaled_data[ index++ ] = scaled_value;
+         ds_scaled[index++]        = scaled_value;
          edata->setValue( ss, rr, scaled_value );
          dsum += scaled_value;
       }
    }
 
-   scaled_data[ index ] = edata->ODlimit;
+   ds_scaled[index] = edata->ODlimit;
    DbgLv( 0 ) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
    // Send the scaled version of current data to the workers
    MPI_Job job;
    job.command         = MPI_Job::NEWDATA;
-   job.length          = scaled_data.size();
+   job.length          = ds_scaled.size();
    job.solution        = 1;
    job.meniscus_value  = data_sets[ current_dataset ]->run_data.meniscus;
    job.dataset_offset  = current_dataset;
@@ -776,11 +776,7 @@ void US_MPI_Analysis::global_fit( void )
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),
-              scaled_data.size(),
-              MPI_DOUBLE,
-              MPI_Job::MASTER,
-              my_communicator );
+   MPI_Bcast( ds_scaled.data(), ds_scaled.size(), MPI_DOUBLE, MPI_Job::MASTER, my_communicator );
 
    // Go to the next dataset
    job_queue.clear();
@@ -948,17 +944,17 @@ void US_MPI_Analysis::set_monteCarlo( void )
    }
 
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   int ds_points     = total_points;
+   int                    mc_points     = total_points;
    int ds_start      = 0;
    int ds_end        = count_datasets;
 
    if ( is_composite_job )
    {
-      ds_points         = edata->scanCount() * edata->pointCount();
+      mc_points         = edata->scanCount() * edata->pointCount();
       ds_start          = current_dataset;
       ds_end            = ds_start + datasets_to_process;
    }
-   mc_data.resize( ds_points );
+   mc_data.resize( mc_points );
    DbgLv( 1 ) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
    DbgLv( 1 ) << "sMC:  sig-size" << sigmas.count() << "mcd-size" << mc_data.count() << "base-size" << mc_base_data.count();
    const int  sigsiz  = sigmas.count();
@@ -1020,7 +1016,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
    }
    DbgLv( 1 ) << "sMC:   mcdata sum" << datasum;
 
-   varrmsd          = sqrt( varrmsd / (double)( ds_points ) );
+   varrmsd = sqrt( varrmsd / (double) ( mc_points ) );
    qDebug() << "  Box_Muller Variation RMSD"
             << QString::number( varrmsd, 'f', 7 )
             << "  for MC_Iteration" << mc_iteration + 1;
@@ -1030,7 +1026,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
-   newdata.length         = ds_points;
+   newdata.length         = mc_points;
    newdata.solution       = mc_iteration + 1;
    newdata.meniscus_value = data_sets[ 0 ]->run_data.meniscus;
    newdata.dataset_offset = ds_start;
@@ -1054,11 +1050,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
    MPI_Barrier( my_communicator );
 
    DbgLv( 1 ) << "sMC: MPI Bcast";
-   MPI_Bcast( mc_data.data(),
-              ds_points,
-              MPI_DOUBLE,
-              MPI_Job::MASTER,
-              my_communicator );
+   MPI_Bcast( mc_data.data(), mc_points, MPI_DOUBLE, MPI_Job::MASTER, my_communicator );
 
    fill_queue();
 
@@ -1102,7 +1094,7 @@ void US_MPI_Analysis::set_gaussians( void )
    sigmas.clear();
    mc_base_data.clear();
    res_data          = &simulation_values.residuals;
-   US_DataIO::RawData* sim_data      = &simulation_values.sim_data;
+   US_DataIO::RawData* msim_data     = &simulation_values.sim_data;
    int scnx          = 0;
    DbgLv( 1 ) << "sGA:  resids scans points" << res_data->scanCount() << res_data->pointCount();
 
@@ -1120,7 +1112,7 @@ void US_MPI_Analysis::set_gaussians( void )
          for ( int rr = 0; rr < radius_points; rr++ )
          {
             sigmas << qAbs( res_data->value( scnx, rr ) );
-            mc_base_data << sim_data->value( scnx, rr );
+            mc_base_data << msim_data->value( scnx, rr );
          }
       }
    }

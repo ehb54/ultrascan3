@@ -430,11 +430,11 @@ void US_MPI_Analysis::ga_global_fit( void )
 
    concentrations[ current_dataset ] = concentration;
    edata->ODlimit   /= concentration;
-   const int         scan_count    = edata->scanCount();
-   const int         radius_points = edata->pointCount();
+   const int       scan_count    = edata->scanCount();
+   const int       radius_points = edata->pointCount();
    int index         = 0;
 
-   QVector< double > scaled_data( scan_count * radius_points + 1 );
+   QVector<double> ds_scaled( scan_count * radius_points + 1 );
 
    // Scale the data
    for ( int ss = 0; ss < scan_count; ss++ )
@@ -442,15 +442,15 @@ void US_MPI_Analysis::ga_global_fit( void )
       for ( int rr = 0; rr < radius_points; rr++ )
       {
          const double scaled_value = edata->value( ss, rr ) / concentration;
-         scaled_data[ index++ ] = scaled_value;
+         ds_scaled[index++]        = scaled_value;
          edata->setValue( ss, rr, scaled_value );
       }
    }
 
-   scaled_data[ index ] = edata->ODlimit;
+   ds_scaled[index] = edata->ODlimit;
    // Send the scaled data to the workers
    MPI_Job job;
-   job.length         = scaled_data.size();
+   job.length         = ds_scaled.size();
    job.dataset_offset = current_dataset;
    job.dataset_count  = 1;
 
@@ -470,10 +470,10 @@ void US_MPI_Analysis::ga_global_fit( void )
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),      // MPI #8
-              scaled_data.size(), 
-              MPI_DOUBLE, 
-              MPI_Job::MASTER, 
+   MPI_Bcast( ds_scaled.data(), // MPI #8
+              ds_scaled.size(),
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
               my_communicator );
 
    // Go to the next dataset

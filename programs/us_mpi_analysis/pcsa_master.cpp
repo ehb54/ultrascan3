@@ -492,7 +492,7 @@ void US_MPI_Analysis::process_pcsa_results( const int worker, const int* sizes )
 }
  
 // Process the calculated solute vector from a job result
-void US_MPI_Analysis::process_pcsa_solutes( Result& result )
+void US_MPI_Analysis::process_pcsa_solutes( const Result& result )
 {
    int jcurve     = result.depth;
    jcurve         = qMax( 0, qMin( ( mrecs.size() - 1 ), jcurve ) );
@@ -1094,48 +1094,18 @@ void US_MPI_Analysis::montecarlo_pcsa()
                mxsiz         = qMax( mxsiz, datasets_to_process );
                dwork.resize( mxsiz );
                double* wbuf  = dwork.data();
-               MPI_Status status;
+               MPI_Status rstatus;
 
                DbgLv( 1 ) << "PM:Recv: 11:wbuf" << sizes[0] * zsolut_doubles << mxsiz;
-               MPI_Recv( wbuf,
-                         sizes[ 0 ] * zsolut_doubles,
-                         MPI_DOUBLE,
-                         worker,
-                         MPI_Job::TAG0,
-                         my_communicator,
-                         &status );
+               MPI_Recv( wbuf, sizes[0] * zsolut_doubles, MPI_DOUBLE, worker, MPI_Job::TAG0, my_communicator, &rstatus );
                DbgLv( 1 ) << "PM:Recv: 12:wbuf" << 1;
-               MPI_Recv( wbuf,
-                         1,
-                         MPI_DOUBLE,
-                         worker,
-                         MPI_Job::TAG0,
-                         my_communicator,
-                         &status );
+               MPI_Recv( wbuf, 1, MPI_DOUBLE, worker, MPI_Job::TAG0, my_communicator, &rstatus );
                DbgLv( 1 ) << "PM:Recv: 13:wbuf" << datasets_to_process;
-               MPI_Recv( wbuf,
-                         datasets_to_process,
-                         MPI_DOUBLE,
-                         worker,
-                         MPI_Job::TAG0,
-                         my_communicator,
-                         &status );
+               MPI_Recv( wbuf, datasets_to_process, MPI_DOUBLE, worker, MPI_Job::TAG0, my_communicator, &rstatus );
                DbgLv( 1 ) << "PM:Recv: 14:wbuf" << sizes[1];
-               MPI_Recv( wbuf,
-                         sizes[ 1 ],
-                         MPI_DOUBLE,
-                         worker,
-                         MPI_Job::TAG0,
-                         my_communicator,
-                         &status );
+               MPI_Recv( wbuf, sizes[1], MPI_DOUBLE, worker, MPI_Job::TAG0, my_communicator, &rstatus );
                DbgLv( 1 ) << "PM:Recv: 15:wbuf" << sizes[2];
-               MPI_Recv( wbuf,
-                         sizes[ 2 ],
-                         MPI_DOUBLE,
-                         worker,
-                         MPI_Job::TAG0,
-                         my_communicator,
-                         &status );
+               MPI_Recv( wbuf, sizes[2], MPI_DOUBLE, worker, MPI_Job::TAG0, my_communicator, &rstatus );
             }
             break;
 
@@ -1225,16 +1195,16 @@ void US_MPI_Analysis::filter_mrecs( const int ctype,
 }
 
 // Clean up model records to handle records with empty calculated solutes
-void US_MPI_Analysis::clean_mrecs( QVector<US_ModelRecord>& mrecs ) const
+void US_MPI_Analysis::clean_mrecs( QVector<US_ModelRecord>& recs ) const
 {
    // First get index to last good
-   const int nmrec         = mrecs.size();
+   const int nmrec         = recs.size();
    const int lmrec         = nmrec - 1;
    int goodx         = 0;
 
    for ( int ii = lmrec; ii > 1; ii-- )
    {
-      if ( mrecs[ ii ].csolutes.size() != 0 )
+      if ( recs[ii].csolutes.size() != 0 )
       {
          goodx             = ii;
          break;
@@ -1246,12 +1216,12 @@ void US_MPI_Analysis::clean_mrecs( QVector<US_ModelRecord>& mrecs ) const
       return;
 
    DbgLv( 1 ) << " master:clean_mrecs: goodx lmrec" << goodx << lmrec;
-   if ( mrecs[ 0 ].v_ctype != CTYPE_ALL )
+   if ( recs[0].v_ctype != CTYPE_ALL )
    {  // If records of one type, just duplicate solutes from last good
       for ( int ii = goodx + 1; ii < nmrec; ii++ )
       {
-         mrecs[ ii ].csolutes = mrecs[ goodx ].csolutes;
-         mrecs[ ii ].rmsd     = mrecs[ goodx ].rmsd;
+         recs[ii].csolutes = recs[goodx].csolutes;
+         recs[ii].rmsd     = recs[goodx].rmsd;
       }
    }
 
@@ -1265,19 +1235,19 @@ void US_MPI_Analysis::clean_mrecs( QVector<US_ModelRecord>& mrecs ) const
       // Get indexes of last-good for each type
       for ( int ii = goodx; ii > 1; ii-- )
       {
-         if ( mrecs[ ii ].ctype == CTYPE_SL )
+         if ( recs[ii].ctype == CTYPE_SL )
          {
             if ( gx_sl > 0 )   continue;
             gx_sl             = ii;
             ktype++;
          }
-         else if ( mrecs[ ii ].ctype == CTYPE_IS )
+         else if ( recs[ii].ctype == CTYPE_IS )
          {
             if ( gx_is > 0 )   continue;
             gx_is             = ii;
             ktype++;
          }
-         else if ( mrecs[ ii ].ctype == CTYPE_DS )
+         else if ( recs[ii].ctype == CTYPE_DS )
          {
             if ( gx_ds > 0 )   continue;
             gx_ds             = ii;
@@ -1290,20 +1260,20 @@ void US_MPI_Analysis::clean_mrecs( QVector<US_ModelRecord>& mrecs ) const
       // Then replace each type with last good of that type
       for ( int ii = goodx + 1; ii < nmrec; ii++ )
       {
-         if ( mrecs[ ii ].ctype == CTYPE_SL )
+         if ( recs[ii].ctype == CTYPE_SL )
          {
-            mrecs[ ii ].csolutes = mrecs[ gx_sl ].csolutes;
-            mrecs[ ii ].rmsd     = mrecs[ gx_sl ].rmsd;
+            recs[ii].csolutes = recs[gx_sl].csolutes;
+            recs[ii].rmsd     = recs[gx_sl].rmsd;
          }
-         else if ( mrecs[ ii ].ctype == CTYPE_IS )
+         else if ( recs[ii].ctype == CTYPE_IS )
          {
-            mrecs[ ii ].csolutes = mrecs[ gx_is ].csolutes;
-            mrecs[ ii ].rmsd     = mrecs[ gx_is ].rmsd;
+            recs[ii].csolutes = recs[gx_is].csolutes;
+            recs[ii].rmsd     = recs[gx_is].rmsd;
          }
-         else if ( mrecs[ ii ].ctype == CTYPE_DS )
+         else if ( recs[ii].ctype == CTYPE_DS )
          {
-            mrecs[ ii ].csolutes = mrecs[ gx_ds ].csolutes;
-            mrecs[ ii ].rmsd     = mrecs[ gx_ds ].rmsd;
+            recs[ii].csolutes = recs[gx_ds].csolutes;
+            recs[ii].rmsd     = recs[gx_ds].rmsd;
          }
       }
    }
@@ -1695,7 +1665,7 @@ double US_MPI_Analysis::alpha_scan()
    return calpha;
 }
 
-void US_MPI_Analysis::apply_alpha( const double     alpha,
+void US_MPI_Analysis::apply_alpha( const double     alpha_val,
                                    QVector<double>* psv_nnls_a,
                                    QVector<double>* psv_nnls_b,
                                    const int        nscans,
@@ -1722,7 +1692,7 @@ void US_MPI_Analysis::apply_alpha( const double     alpha,
 
    for ( int cc = 0; cc < nisols; cc++ )
    {
-      nnls_a[ dx ] = alpha;
+      nnls_a[dx] = alpha_val;
       dx          += dinc;
    }
 

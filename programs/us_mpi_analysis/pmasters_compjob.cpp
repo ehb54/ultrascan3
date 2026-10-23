@@ -133,26 +133,20 @@ void US_MPI_Analysis::pm_cjobs_supervisor()
       int  ittest = current_dataset + mgroup_count;
       master      = status.MPI_SOURCE;
       tag         = status.MPI_TAG;
-      QByteArray msg;
+      QByteArray rmsg;
       DbgLv( 1 ) << "SUPER:   wait recv'd iwork" << iwork << "master tag" << master << tag;
 
       switch( tag )
       {
          case UDPSIZE:  // UDP message size: get the following UDP message string
             isize = iwork;
-            msg.resize( isize );
+            rmsg.resize( isize );
 
             DbgLv( 1 ) << "SUPER: wait on UDPmsg - master" << master;
-            MPI_Recv( msg.data(),
-                      isize,
-                      MPI_BYTE,
-                      master,
-                      UDPMSG,
-                      MPI_COMM_WORLD,
-                      &status );
+            MPI_Recv( rmsg.data(), isize, MPI_BYTE, master, UDPMSG, MPI_COMM_WORLD, &status );
 
-            DbgLv( 1 ) << "SUPER:     UDPmsg:" << QString( msg );
-            send_udp( QString( msg ) );       // Send forwarded UDP message
+            DbgLv( 1 ) << "SUPER:     UDPmsg:" << QString( rmsg );
+            send_udp( QString( rmsg ) ); // Send forwarded UDP message
 
             udpmsg   = true;
             break;
@@ -961,21 +955,18 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
                         << " : Intermediate archive was created.";
             }
 
-            US_DataIO::EditedData* edata
-                             = &data_sets[ current_dataset ]->run_data;
-            const QString tripleID = edata->cell + edata->channel + edata->wavelength;
+            US_DataIO::EditedData* ds_edata  = &data_sets[current_dataset]->run_data;
+            const QString          ds_triple = ds_edata->cell + ds_edata->channel + ds_edata->wavelength;
 
             if ( simulation_values.noisflag == 0 )
             {
-               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
-                        << "(" << tripleID << ")"
-                        << " : model was output.";
+               DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << ds_triple << ")"
+                          << " : model was output.";
             }
             else
             {
-               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
-                        << "(" << tripleID << ")"
-                        << " : model/noise(s) were output.";
+               DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << ds_triple << ")"
+                          << " : model/noise(s) were output.";
             }
 
             time_datasets_left();

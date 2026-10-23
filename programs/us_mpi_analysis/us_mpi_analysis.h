@@ -505,8 +505,7 @@ class US_MPI_Analysis : public QObject
         void   lamm_gsm_df   ( const US_Vector&, US_Vector& );
         void   align_gene    ( Gene& );
 
-        void   vector_scaled_sum   ( US_Vector&, US_Vector&, double,
-                                     US_Vector&, double = 1.0 );
+        void                   vector_scaled_sum( US_Vector&, const US_Vector&, double, const US_Vector&, double = 1.0 );
         void   solutes_from_gene   ( Gene&, int );
         void   set_comp_attrib     ( US_Model::SimulationComponent&,
                                      double, int );
@@ -525,11 +524,9 @@ class US_MPI_Analysis : public QObject
                                      const int, const int );
         void    marker_to_dgenes   ( QVector< double >&, QList< DGene >&,
                                      const int, const int );
-        bool    store_attr_value   ( double&, US_Model&,
-                                     US_dmGA_Constraints::AttribType&, int& );
-        bool    fetch_attr_value   ( double&, US_Model&,
-                                     US_dmGA_Constraints::AttribType&, int& );
-        void                   model_from_dgene( US_Model&, DGene& dgene ) const;
+        bool                   store_attr_value( const double&, US_Model&, const US_dmGA_Constraints::AttribType&, const int& );
+        bool                   fetch_attr_value( double&, US_Model&, const US_dmGA_Constraints::AttribType&, const int& );
+        void                   model_from_dgene( US_Model&, DGene& ) const;
 
         // DMGA Worker
         void    dmga_worker        ( void );
@@ -539,8 +536,8 @@ class US_MPI_Analysis : public QObject
         void    cross_dgene        ( DGene&, QList< DGene > );
         int     migrate_dgenes     ( void );
         double  get_fitness_dmga   ( DGene& );
-        double  get_fitness_v_dmga ( US_Vector&, US_Vector& );
-        void    lamm_gsm_df_dmga   ( US_Vector&, US_Vector&, US_Vector& );
+        double                 get_fitness_v_dmga( const US_Vector&, const US_Vector& );
+        void                   lamm_gsm_df_dmga( const US_Vector&, US_Vector&, const US_Vector& );
         double  minimize_dmga      ( DGene&, double );
         QString dgene_key          ( DGene& );
         void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
@@ -550,7 +547,7 @@ class US_MPI_Analysis : public QObject
         void    init_pcsa_solutes   ( void );
         void    fill_pcsa_queue     ( void );
         void    process_pcsa_results( const int, const int* );
-        void    process_pcsa_solutes( Result& );
+        void                   process_pcsa_solutes( const Result& );
         void    write_mrecs         ( void );
         void    iterate_pcsa        ( void );
         void    tikreg_pcsa         ( void );

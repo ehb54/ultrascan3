@@ -265,26 +265,20 @@ void US_MPI_Analysis::pmasters_supervisor()
       int  isize  = 0;
       master      = status.MPI_SOURCE;
       tag         = status.MPI_TAG;
-      QByteArray msg;
+      QByteArray rmsg;
       DbgLv( 1 ) << "SUPER:   wait recv'd iwork" << iwork << "master tag" << master << tag;
 
       switch( tag )
       {
          case UDPSIZE:  // UDP message size: get the following UDP message string
             isize = iwork;
-            msg.resize( isize );
+            rmsg.resize( isize );
 
             DbgLv( 1 ) << "SUPER: wait on UDPmsg - master" << master;
-            MPI_Recv( msg.data(),
-                      isize,
-                      MPI_BYTE,
-                      master,
-                      UDPMSG,
-                      MPI_COMM_WORLD,
-                      &status );
+            MPI_Recv( rmsg.data(), isize, MPI_BYTE, master, UDPMSG, MPI_COMM_WORLD, &status );
 
-            DbgLv( 1 ) << "SUPER:     UDPmsg:" << QString( msg );
-            send_udp( QString( msg ) );       // Send forwarded UDP message
+            DbgLv( 1 ) << "SUPER:     UDPmsg:" << QString( rmsg );
+            send_udp( QString( rmsg ) ); // Send forwarded UDP message
 
             udpmsg   = true;
             break;

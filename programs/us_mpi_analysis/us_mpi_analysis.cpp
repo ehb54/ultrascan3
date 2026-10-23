@@ -1581,8 +1581,12 @@ void US_MPI_Analysis::archive_outputs( void )
 }
 
 // Create output statistics file
-void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
-      QDateTime submitTime, QDateTime startTime, QDateTime endTime )
+void US_MPI_Analysis::stats_output( int       walltime,
+                                    int       cputime,
+                                    int       maxrssmb,
+                                    QDateTime submit_time,
+                                    QDateTime start_time,
+                                    QDateTime endTime )
 {
    const QString fname = "job_statistics.xml";
    QFile   file( fname );
@@ -1593,8 +1597,8 @@ void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
       return;
    }
 
-   const QString    sSubmitTime = submitTime.toString( Qt::ISODate ).replace( "T", " " );
-   const QString    sStartTime  = startTime.toString( Qt::ISODate ).replace( "T", " " );
+   const QString    sSubmitTime = submit_time.toString( Qt::ISODate ).replace( "T", " " );
+   const QString    sStartTime  = start_time.toString( Qt::ISODate ).replace( "T", " " );
    const QString    sEndTime    = endTime.toString( Qt::ISODate ).replace( "T", " " );
 
    QXmlStreamWriter xml( &file );
@@ -2301,14 +2305,14 @@ void US_MPI_Analysis::write_global( void )
          DbgLv( 1 ) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
 
          dset_matrices( ee, &nsolutes, nnls_a, nnls_b, c_used );
-         double dsum_b = 0.0;
+         double ds_sum_b = 0.0;
          for ( int ii = 0; ii < narows; ii++ )
          {
-            dsum_b += nnls_b[ii];
+            ds_sum_b += nnls_b[ii];
          }
-         DbgLv( 1 ) << "WrGlob:      ee" << ee << "dsum_b" << dsum_b << "stx pts" << ds_startx[ee] << ds_points[ee] << narows
+         DbgLv( 1 ) << "WrGlob:      ee" << ee << "dsum_b" << ds_sum_b << "stx pts" << ds_startx[ee] << ds_points[ee] << narows
                     << "conc" << concentrations[ee];
-         dsum_b_all += dsum_b;
+         dsum_b_all += ds_sum_b;
 
          DbgLv( 1 ) << "WrGlob:    mats built; calling NNLS";
          US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
@@ -2778,9 +2782,9 @@ void US_MPI_Analysis::update_outputs( bool is_final )
          // Build a list of model files relating to this triple
          const QString mftrip   = mtrips[ii];
          const QString tripleID = QString( mftrip ).section( ".", -1, -1 );
-         QStringList mfilt;
-         mfilt << mftrip + ".mc0*";
-         QStringList mtfiles = odir.entryList( mfilt, QDir::Files );
+         QStringList   mtfilt;
+         mtfilt << mftrip + ".mc0*";
+         QStringList mtfiles = odir.entryList( mtfilt, QDir::Files );
          DbgLv( 0 ) << my_rank << ": MC : ii" << ii << "mftrip" << mftrip << "mtf count" << mtfiles.count();
 
          // Skip composite build if not yet enough triple mc iteration models

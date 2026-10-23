@@ -217,12 +217,6 @@ void US_MPI_Analysis::dmga_worker_loop( void )
       fitness << empty_fitness;
    }
 
-   const int generations = job_config.params.ga.generations;
-   const int crossover   = job_config.params.ga.crossover;
-   const int mutation    = job_config.params.ga.mutation;
-   const int plague      = job_config.params.ga.plague;
-   const int elitism     = job_config.params.ga.elitism;
-
    int p_mutate    = mutation;
    const int p_crossover = p_mutate + crossover;
    const int p_plague    = p_crossover + plague;
@@ -354,9 +348,8 @@ void US_MPI_Analysis::dmga_worker_loop( void )
             {
                double val0;
                double val1;
-               US_dmGA_Constraints::AttribType
-                     atype  = cns_flt[ ii ].atype;
-               int   mcompx = cns_flt[ ii ].mcompx;
+               const US_dmGA_Constraints::AttribType atype  = cns_flt[ii].atype;
+               const int                             mcompx = cns_flt[ii].mcompx;
 
                fetch_attr_value( val0, gene0, atype, mcompx );
                fetch_attr_value( val1, gene1, atype, mcompx );
@@ -406,11 +399,10 @@ void US_MPI_Analysis::dmga_worker_loop( void )
 
          for ( int ii = 0; ii < nfloatc; ii++ )
          {  // Insure all the new gene attribute values are inside range
-            US_dmGA_Constraints::AttribType
-                 atype    = cns_flt[ ii ].atype;
-            int  mcompx   = cns_flt[ ii ].mcompx;
-            const double vmin     = cns_flt[ii].low;
-            const double vmax     = cns_flt[ii].high;
+            const US_dmGA_Constraints::AttribType atype  = cns_flt[ii].atype;
+            const int                             mcompx = cns_flt[ii].mcompx;
+            const double                          vmin   = cns_flt[ii].low;
+            const double                          vmax   = cns_flt[ii].high;
             fetch_attr_value( aval, dgene, atype, mcompx );
 
             if ( aval < vmin  ||  aval > vmax )
@@ -500,10 +492,9 @@ DGene US_MPI_Analysis::new_dmga_gene( void )
    for ( int ii = 0; ii < nfloatc; ii++ )
    {
       // Get the current attribute characteristics
-      US_dmGA_Constraints::AttribType
-           atype    = cns_flt[ ii ].atype;
-      int  mcompx   = cns_flt[ ii ].mcompx;
-      const bool logscl   = cns_flt[ii].logscl;
+      const US_dmGA_Constraints::AttribType atype  = cns_flt[ii].atype;
+      const int                             mcompx = cns_flt[ii].mcompx;
+      const bool                            logscl = cns_flt[ii].logscl;
       double vmin   = cns_flt[ ii ].low;
       double vmax   = cns_flt[ ii ].high;
       DbgLv( 1 ) << my_rank << "dg:newg:  ii" << ii << "vmin vmax" << vmin << vmax;
@@ -530,7 +521,7 @@ DGene US_MPI_Analysis::new_dmga_gene( void )
 }
 
 // Mutate a discrete GA Gene
-void US_MPI_Analysis::mutate_dgene( DGene& dgene )
+void US_MPI_Analysis::mutate_dgene( DGene& dg )
 {
    const double extn_p   = (double)( p_grid - 1 );
    const double sigfact  = pow( 10.0, ( mutate_sigma * 0.1 ) );
@@ -552,11 +543,10 @@ void US_MPI_Analysis::mutate_dgene( DGene& dgene )
 
       // Get the current value of the attribute
       double vv;
-      US_dmGA_Constraints::AttribType
-           atype    = cns_flt[ ii ].atype;
-      int  mcompx   = cns_flt[ ii ].mcompx;
-      const bool logscl   = cns_flt[ii].logscl;
-      fetch_attr_value( vv, dgene, atype, mcompx );
+      const US_dmGA_Constraints::AttribType atype  = cns_flt[ii].atype;
+      const int                             mcompx = cns_flt[ii].mcompx;
+      const bool                            logscl = cns_flt[ii].logscl;
+      fetch_attr_value( vv, dg, atype, mcompx );
 
       // Get float range and, if need be, convert to log scale
       double vl     = cns_flt[ ii ].low;
@@ -580,16 +570,16 @@ void US_MPI_Analysis::mutate_dgene( DGene& dgene )
       DbgLv( 1 ) << my_rank << "dg:mutg:  ii" << ii << "  xx" << xx << "delta" << delta << "vv" << vv;
 
       // Update the mutated value
-      store_attr_value( vv, dgene, atype, mcompx );
+      store_attr_value( vv, dg, atype, mcompx );
    }
 }
 
 // Cross-mutate a pair of discrete GA Genes
-void US_MPI_Analysis::cross_dgene( DGene& dgene, QList< DGene > dgenes )
+void US_MPI_Analysis::cross_dgene( DGene& dg, QList<DGene> dglist )
 {
    // Get the crossing gene according to an exponential distribution
-   const int gndx    = e_random();
-   DGene dgene2  = dgenes[ fitness[ gndx ].index ];
+   const int gndx   = e_random();
+   DGene     dgene2 = dglist[fitness[gndx].index];
 
    // Get a random mask that selects float attributes from the second gene
    const int smask = u_random( nfvari ) + 1;
@@ -603,13 +593,12 @@ void US_MPI_Analysis::cross_dgene( DGene& dgene, QList< DGene > dgenes )
 
       // Get the current value of the attribute from the second gene
       double vv;
-      US_dmGA_Constraints::AttribType
-          atype     = cns_flt[ ii ].atype;
-      int mcompx    = cns_flt[ ii ].mcompx;
+      const US_dmGA_Constraints::AttribType atype  = cns_flt[ii].atype;
+      const int                             mcompx = cns_flt[ii].mcompx;
       fetch_attr_value( vv, dgene2, atype, mcompx );
 
       // Store this value in the first gene
-      store_attr_value( vv, dgene,  atype, mcompx );
+      store_attr_value( vv, dg, atype, mcompx );
    }
 }
 
@@ -620,26 +609,26 @@ int US_MPI_Analysis::migrate_dgenes( void )
    static const int  elitism_count = job_config.params.ga.elitism;
 
    QList < DGene >   emmigres;
-   const int         migrate_count = ( migrate_pcent * population + 50 ) / 100;
-   const int         doubles_count = migrate_count * nfloatc;
+   const int         n_migrate     = ( migrate_pcent * population + 50 ) / 100;
+   const int         doubles_count = n_migrate * nfloatc;
    QVector< double > emmigrants( doubles_count );
-   DbgLv( 1 ) << my_rank << "dg:migrdg: migrate_count doubles_count" << migrate_count << doubles_count;
+   DbgLv( 1 ) << my_rank << "dg:migrdg: migrate_count doubles_count" << n_migrate << doubles_count;
 
    // Send genes to master
 
-   for ( int ii = 0; ii < migrate_count; ii++ )
+   for ( int ii = 0; ii < n_migrate; ii++ )
    {  // Build the current list of emmigrating genes
       const int gene_index = e_random();
       emmigres << dgenes[ fitness[ gene_index ].index ];
    }
 
    // Represent migrating genes as marker vector
-   dgenes_to_marker( emmigrants, emmigres, 0, migrate_count );
+   dgenes_to_marker( emmigrants, emmigres, 0, n_migrate );
    DbgLv( 1 ) << my_rank << "dg:migrdg: emmigres size" << emmigres.size() << "emmigrants size" << emmigrants.size();
 
    // MPI send msg type
    MPI_GA_MSG msg;
-   msg.size            = migrate_count;
+   msg.size = n_migrate;
 
    MPI_Send( &msg,                 // to MPI #1
              sizeof( msg ),
@@ -683,7 +672,7 @@ int US_MPI_Analysis::migrate_dgenes( void )
 }
 
 // Get fitness from a vector  (used in inverse hessian)
-double US_MPI_Analysis::get_fitness_v_dmga( US_Vector& vv, US_Vector& zz )
+double US_MPI_Analysis::get_fitness_v_dmga( const US_Vector& vv, const US_Vector& zz )
 {
    const int vsize = vv.size();
    dgmarker.resize( vsize );
@@ -703,8 +692,7 @@ double US_MPI_Analysis::get_fitness_v_dmga( US_Vector& vv, US_Vector& zz )
 }
 
 // Compute a derivatives vector  (an inverse hessian minimization step)
-void US_MPI_Analysis::lamm_gsm_df_dmga( US_Vector& vv, US_Vector& vd,
-                                        US_Vector& zz )
+void US_MPI_Analysis::lamm_gsm_df_dmga( const US_Vector& vv, US_Vector& vd, const US_Vector& zz )
 {
    static const double hh       = 0.01;
    static const double h2_recip = 0.5 / hh;
@@ -729,9 +717,9 @@ void US_MPI_Analysis::lamm_gsm_df_dmga( US_Vector& vv, US_Vector& vd,
 
 // Find the minimum fitness value close to a discrete GA gene using
 //  inverse hessian minimization
-double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
+double US_MPI_Analysis::minimize_dmga( DGene& dg, double gfitness )
 {
-   DbgLv( 1 ) << my_rank << "dg:IHM:minimize dgene comps" << dgene.components.size() << fitness;
+   DbgLv( 1 ) << my_rank << "dg:IHM:minimize dgene comps" << dg.components.size() << gfitness;
    const int                    vsize = nfloatc;
    US_Vector vv( vsize );  // Input values
    US_Vector uu( vsize );  // Vector of derivatives
@@ -747,7 +735,7 @@ double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
    }
 
    dgmarker.resize( vsize );
-   marker_from_dgene( dgmarker, dgene );
+   marker_from_dgene( dgmarker, dg );
 
    // Convert gene to array of normalized doubles and save normalizing factors
    for ( int ii = 0; ii < vsize; ii++ )
@@ -763,22 +751,25 @@ double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
    lamm_gsm_df_dmga( vv, uu, zz );   // uu is vector of derivatives
 
    static const double epsilon_f      = 1.0e-7;
-   static const int    max_iterations = 20;
+   static const int    max_gsm_iters  = 20;
    int    iteration      = 0;
-   const double        epsilon        = epsilon_f * fitness * 4.0;
+   const double        epsilon        = epsilon_f * gfitness * 4.0;
    const bool          neg_cnstr      = ( vv[0] < 0.1 ); // Negative constraint?
 
-   while ( uu.L2norm() >= epsilon_f  && iteration < max_iterations )
+   while ( uu.L2norm() >= epsilon_f && iteration < max_gsm_iters )
    {
       iteration++;
-      if ( fitness == 0.0 ) break;
+      if ( gfitness == 0.0 )
+      {
+         break;
+      }
 
       US_Vector v_s1 = vv;
-      double g_s1    = fitness;
+      double    g_s1    = gfitness;
       double s1      = 0.0;
       double s2      = 0.5;
       double s3      = 1.0;
-      DbgLv( 1 ) << my_rank << "dg:IHM:   iteration" << iteration << "fitness" << fitness;
+      DbgLv( 1 ) << my_rank << "dg:IHM:   iteration" << iteration << "fitness" << gfitness;
 
       // v_s2 = vv - uu * s2
       US_Vector v_s2( vsize );
@@ -853,9 +844,9 @@ double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
                dgmarker[ ii ] = vv[ ii ] / zz[ ii ];
             }
 
-            dgene_from_marker( dgmarker, dgene );
+            dgene_from_marker( dgmarker, dg );
 
-            return fitness;
+            return gfitness;
          }
 
          double xx        = -bb / ( 2.0 * aa );
@@ -977,17 +968,17 @@ double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
       if ( g_s2 < g_s3  &&  g_s2 < g_s1 )
       {
          v_p     = v_s2;
-         fitness = g_s2;
+         gfitness = g_s2;
       }
       else if ( g_s1 < g_s3 )
       {
          v_p     = v_s1;
-         fitness = g_s1;
+         gfitness = g_s1;
       }
       else
       {
          v_p     = v_s3;
-         fitness = g_s3;
+         gfitness = g_s3;
       }
       
       US_Vector v_g( vsize );            // Vector of derivatives
@@ -1067,16 +1058,16 @@ double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
       DbgLv( 1 ) << my_rank << "dg:IHM: ii" << ii << "vvi zzi dgmi" << vv[ii] << zz[ii] << dgmarker[ii];
    }
 
-   dgene_from_marker( dgmarker, dgene );
-   DbgLv( 1 ) << my_rank << "dg:IHM: FITNESS" << fitness;
+   dgene_from_marker( dgmarker, dg );
+   DbgLv( 1 ) << my_rank << "dg:IHM: FITNESS" << gfitness;
 
-   return fitness;
+   return gfitness;
 }
 
 // Get the fitness value for a discrete GA Gene
-double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
+double US_MPI_Analysis::get_fitness_dmga( DGene& dg )
 {
-   const QString fkey = dgene_key( dgene ); // Get an identifying key string
+   const QString fkey = dgene_key( dg ); // Get an identifying key string
    fitness_count++;
 
    if ( fitness_map.contains( fkey ) )
@@ -1088,19 +1079,19 @@ double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
    US_SolveSim::Simulation sim = simulation_values;
 
    // Compute the simulation and residuals for this model
-   calc_residuals_dmga( current_dataset, datasets_to_process, sim, dgene );
+   calc_residuals_dmga( current_dataset, datasets_to_process, sim, dg );
 
-   const double fitness = sim.variance;    // Get the computed fitness
-   fitness_map.insert( fkey, fitness );    // Add it the fitness map
+   const double sfitness = sim.variance; // Get the computed fitness
+   fitness_map.insert( fkey, sfitness ); // Add it the fitness map
 
-   return fitness;
+   return sfitness;
 }
 
 // Compose an identifying key string for a discrete GA Gene
-QString US_MPI_Analysis::dgene_key( DGene& dgene )
+QString US_MPI_Analysis::dgene_key( DGene& dg )
 {
    // Get the marker for this gene
-   marker_from_dgene( dgmarker, dgene );
+   marker_from_dgene( dgmarker, dg );
 
    // Compose a key string that is a concatenation of marker value strings
    QString fkey = QString::asprintf( "%.5e", dgmarker[ 0 ] );
@@ -1113,8 +1104,7 @@ QString US_MPI_Analysis::dgene_key( DGene& dgene )
 }
 
 // Calculate residuals for a given discrete GA gene
-void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
-                                           SIMULATION& sim_vals, DGene& dgene )
+void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count, SIMULATION& sim_vals, DGene& dg )
 {
    const int           lim_offs = offset + dset_count;
 
@@ -1141,7 +1131,7 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
       sd.density      = dset->density;
       sd.manual       = dset->manual;
 
-      model_from_dgene( model, dgene );     // Compute apply model from base
+      model_from_dgene( model, dg ); // Compute apply model from base
 
       if ( ee == offset )
          data_sets[ 0 ]->model = model;     // Save the s20w model

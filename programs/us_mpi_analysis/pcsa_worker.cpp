@@ -43,9 +43,9 @@ void US_MPI_Analysis::pcsa_worker( void )
       US_DataIO::EditedData* edata = &data_sets[ offset ]->run_data;
       meniscus_value     = edata->meniscus;
       DbgLv( 1 ) << "w:" << my_rank << ": offs cnt" << offset << dataset_count << "menisc" << meniscus_value;
-      const int scan_count     = edata->scanCount();
-      const int radius_points  = edata->pointCount();
-      int ds_points      = scan_count * radius_points;
+      const int scan_count    = edata->scanCount();
+      const int radius_points = edata->pointCount();
+      int       job_points    = scan_count * radius_points;
 
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
 
@@ -54,16 +54,16 @@ void US_MPI_Analysis::pcsa_worker( void )
          case MPI_Job::PROCESS:  // Process solutes
             {
                DbgLv( 1 ) << "w:" << my_rank << ":Recv:PROCESS";
-               US_SolveSim::Simulation simulation_values;
-               simulation_values.noisflag =
+               US_SolveSim::Simulation wsim_values;
+               wsim_values.noisflag =
                   ( job_config.params.tinoise_option > 0 ? 1 : 0 ) + ( job_config.params.rinoise_option > 0 ? 2 : 0 );
-               simulation_values.dbg_timing  = dbg_timing;
+               wsim_values.dbg_timing = dbg_timing;
 
                DbgLv( 1 ) << "w:" << my_rank << ": sols size" << job.length;
-               simulation_values.zsolutes.resize( job.length );
+               wsim_values.zsolutes.resize( job.length );
 
                DbgLv( 1 ) << "w:" << my_rank << ":PM:Recv: 2:zsol" << job_length * zsolut_doubles;
-               MPI_Recv( simulation_values.zsolutes.data(), // Get solutes
+               MPI_Recv( wsim_values.zsolutes.data(), // Get solutes
                          job_length * zsolut_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
@@ -73,39 +73,37 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                max_rss();
                {
-                  const int nn = simulation_values.zsolutes.size() - 1;
+                  const int nn = wsim_values.zsolutes.size() - 1;
                   const int mm = nn / 2;
                   DbgLv( 1 ) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count << "vbar s20wc bott"
                              << data_sets[offset]->vbar20 << data_sets[offset]->s20w_correction
                              << data_sets[offset]->centerpiece_bottom;
-                  DbgLv( 1 ) << "w:" << my_rank << ": sol0 solm soln" << simulation_values.zsolutes[0].x
-                             << simulation_values.zsolutes[0].y << simulation_values.zsolutes[mm].x
-                             << simulation_values.zsolutes[mm].y << simulation_values.zsolutes[nn].x
-                             << simulation_values.zsolutes[nn].y;
+                  DbgLv( 1 ) << "w:" << my_rank << ": sol0 solm soln" << wsim_values.zsolutes[0].x << wsim_values.zsolutes[0].y
+                             << wsim_values.zsolutes[mm].x << wsim_values.zsolutes[mm].y << wsim_values.zsolutes[nn].x
+                             << wsim_values.zsolutes[nn].y;
                }
 
-               calc_residuals( offset, dataset_count, simulation_values );
+               calc_residuals( offset, dataset_count, wsim_values );
 
                {
-                  const int nn = simulation_values.zsolutes.size() - 1;
+                  const int nn = wsim_values.zsolutes.size() - 1;
                   const int mm = nn / 2;
-                  DbgLv( 1 ) << "w:" << my_rank << ": nso" << simulation_values.zsolutes.size() << "c:sol0 solm soln"
-                             << simulation_values.zsolutes[0].x << simulation_values.zsolutes[0].y
-                             << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
-                             << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
+                  DbgLv( 1 ) << "w:" << my_rank << ": nso" << wsim_values.zsolutes.size() << "c:sol0 solm soln"
+                             << wsim_values.zsolutes[0].x << wsim_values.zsolutes[0].y << wsim_values.zsolutes[mm].x
+                             << wsim_values.zsolutes[mm].y << wsim_values.zsolutes[nn].x << wsim_values.zsolutes[nn].y;
                }
                // Tell master we are sending back results
-               int sizes[ 4 ] = { (int)simulation_values.zsolutes.size(),
-                                  (int)simulation_values.ti_noise.size(),
-                                  (int)simulation_values.ri_noise.size(),
-                                  (int)max_rss() };
+               int sizes[4] = { (int) wsim_values.zsolutes.size(),
+                                (int) wsim_values.ti_noise.size(),
+                                (int) wsim_values.ri_noise.size(),
+                                (int) max_rss() };
 
                DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << sizes[0] << "max_rss" << sizes[3] << "sizes12" << sizes[1]
                           << sizes[2];
                if ( dbg_level == 0 && my_rank == 1 )
                {
                   DbgLv( 1 ) << "w:" << my_rank << ":   result sols size" << sizes[0] << "nsscan"
-                             << simulation_values.sim_data.scanCount();
+                             << wsim_values.sim_data.scanCount();
                }
                MPI_Send( sizes,
                          4,
@@ -115,40 +113,20 @@ void US_MPI_Analysis::pcsa_worker( void )
                          my_communicator );
 
                // Send back to master all of simulation_values
-               MPI_Send( simulation_values.zsolutes.data(),
-                         sizes[ 0 ] * zsolut_doubles,
+               MPI_Send( wsim_values.zsolutes.data(),
+                         sizes[0] * zsolut_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
                          my_communicator );
 
-               MPI_Send( &simulation_values.variance,
-                         1,
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
+               MPI_Send( &wsim_values.variance, 1, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
 
-               MPI_Send( simulation_values.variances.data(),
-                         dataset_count,
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
+               MPI_Send( wsim_values.variances.data(), dataset_count, MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
 
-               MPI_Send( simulation_values.ti_noise.data(),
-                         sizes[ 1 ],
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
+               MPI_Send( wsim_values.ti_noise.data(), sizes[1], MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
 
-               MPI_Send( simulation_values.ri_noise.data(),
-                         sizes[ 2 ],
-                         MPI_DOUBLE,
-                         MPI_Job::MASTER,
-                         MPI_Job::TAG0,
-                         my_communicator );
+               MPI_Send( wsim_values.ri_noise.data(), sizes[2], MPI_DOUBLE, MPI_Job::MASTER, MPI_Job::TAG0, my_communicator );
             }
 
             break;
@@ -180,17 +158,17 @@ void US_MPI_Analysis::pcsa_worker( void )
                {  // Global-fit new variation of base+noise
                   DbgLv( 1 ) << "w:" << my_rank << ": MC : global_fit";
                   int jsc           = 0;
-                  ds_points         = 0;
-           
+                  job_points        = 0;
+
                   for ( int ee = 0; ee < dataset_count; ee++ )
                   {
                      edata             = &data_sets[ ee ]->run_data;
-                     const int scan_count    = edata->scanCount();
-                     const int radius_points = edata->pointCount();
+                     const int ds_scans   = edata->scanCount();
+                     const int ds_rpoints = edata->pointCount();
 
-                     for ( int ss = 0; ss < scan_count; ss++, jsc++ )
+                     for ( int ss = 0; ss < ds_scans; ss++, jsc++ )
                      {
-                        for ( int rr = 0; rr < radius_points; rr++, index++ )
+                        for ( int rr = 0; rr < ds_rpoints; rr++, index++ )
                         {
                            const double vari   = US_Math2::box_muller( 0.0, sigmas[index] );
                            const double datout = sim_data->value( jsc, rr ) + vari;
@@ -203,7 +181,7 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                            edata->setValue( ss, rr, datout );
                         }
-                        ds_points        += radius_points;
+                        job_points += ds_rpoints;
                      }
                   }
                }
@@ -225,7 +203,7 @@ void US_MPI_Analysis::pcsa_worker( void )
                   }
                }
 
-               varrmsd       = sqrt( varrmsd / (double)ds_points );
+               varrmsd = sqrt( varrmsd / (double) job_points );
                qDebug() << "  Box_Muller Variation RMSD"
                         << QString::number( varrmsd, 'f', 7 )
                         << "  for MC_Iteration" << mc_iter;
@@ -392,12 +370,12 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                   for ( int ee = 0; ee < dataset_count; ee++ )
                   {
-                     const int scan_count    = data_sets[ee]->run_data.scanCount();
-                     const int radius_points = data_sets[ee]->run_data.pointCount();
+                     const int ds_scans   = data_sets[ee]->run_data.scanCount();
+                     const int ds_rpoints = data_sets[ee]->run_data.pointCount();
 
-                     for ( int ss = 0; ss < scan_count; ss++, ksc++ )
+                     for ( int ss = 0; ss < ds_scans; ss++, ksc++ )
                      {
-                        for ( int rr = 0; rr < radius_points; rr++ )
+                        for ( int rr = 0; rr < ds_rpoints; rr++ )
                         {
                            sim_data->setValue( ksc, rr, mc_data[jda++] );
                            sigmas << qAbs( mc_data[jre++] );
@@ -411,23 +389,23 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                else
                { // Non-global (single-dataset) simdata,sigmas
-                  US_DataIO::EditedData* edata = &data_sets[offset]->run_data;
-                  US_AstfemMath::initSimData( sim_data1, *edata, 0.0 );
-                  const int scan_count    = edata->scanCount();
-                  const int radius_points = edata->pointCount();
+                  US_DataIO::EditedData* ds_edata = &data_sets[offset]->run_data;
+                  US_AstfemMath::initSimData( sim_data1, *ds_edata, 0.0 );
+                  const int ds_scans   = ds_edata->scanCount();
+                  const int ds_rpoints = ds_edata->pointCount();
                   sigmas.clear();
 
-                  for ( int ss = 0; ss < scan_count; ss++ ) // Save sim_data
+                  for ( int ss = 0; ss < ds_scans; ss++ ) // Save sim_data
                   {
-                     for ( int rr = 0; rr < radius_points; rr++ )
+                     for ( int rr = 0; rr < ds_rpoints; rr++ )
                      {
                         sim_data->setValue( ss, rr, mc_data[index++] );
                      }
                   }
 
-                  for ( int ss = 0; ss < scan_count; ss++ ) // Get sigmas
+                  for ( int ss = 0; ss < ds_scans; ss++ ) // Get sigmas
                   {
-                     for ( int rr = 0; rr < radius_points; rr++ )
+                     for ( int rr = 0; rr < ds_rpoints; rr++ )
                      {
                         sigmas << qAbs( mc_data[index++] );
                      }
@@ -443,22 +421,23 @@ void US_MPI_Analysis::pcsa_worker( void )
             { // Straight replacement of experiment data
                for ( int ee = offset; ee < offset + dataset_count; ee++ )
                {
-                  US_DataIO::EditedData* edata = &data_sets[ee]->run_data;
+                  US_DataIO::EditedData* ds_edata = &data_sets[ee]->run_data;
 
-                  const int              scan_count    = edata->scanCount();
-                  const int              radius_points = edata->pointCount();
+                  const int              ds_scans   = ds_edata->scanCount();
+                  const int              ds_rpoints = ds_edata->pointCount();
 
-                  const int              indxh = ( ( scan_count / 2 ) * radius_points ) + ( radius_points / 2 );
-                  for ( int ss = 0; ss < scan_count; ss++ )
+                  const int              indxh = ( ( ds_scans / 2 ) * ds_rpoints ) + ( ds_rpoints / 2 );
+                  for ( int ss = 0; ss < ds_scans; ss++ )
                   {
-                     for ( int rr = 0; rr < radius_points; rr++, index++ )
+                     for ( int rr = 0; rr < ds_rpoints; rr++, index++ )
                      {
-                        edata->setValue( ss, rr, mc_data[index] );
-                        dsum += edata->value( ss, rr );
+                        ds_edata->setValue( ss, rr, mc_data[index] );
+                        dsum += ds_edata->value( ss, rr );
                         if ( ( my_rank == 1 || my_rank == 11 ) &&
                              ( index < 5 || index > ( job_length - 6 ) || ( index > ( indxh - 4 ) && index < ( indxh + 3 ) ) ) )
                         {
-                           DbgLv( 1 ) << "newD:" << my_rank << ":index" << index << "edat" << edata->value( ss, rr ) << "ee" << ee;
+                           DbgLv( 1 ) << "newD:" << my_rank << ":index" << index << "edat" << ds_edata->value( ss, rr ) << "ee"
+                                      << ee;
                         }
                      }
                   }
