@@ -807,8 +807,20 @@ void US_MwlSpeciesSim::save_sims_auto( void )
 // Save simulations to an imports directory, along with time state
 void US_MwlSpeciesSim::save_sims( void )
 {
-DbgLv(1) << "SLOT: save_sims";
-save_sims_to( US_Settings::importDir() + "/" + orunid );
+   DbgLv( 1 ) << "SLOT: save_sims";
+   QString savedir = US_Settings::importDir() + "/" + orunid;
+
+   // Autoflow continues only on pass_ssf_dir, so report a failed save
+   //  rather than leaving it waiting
+   if ( !save_sims_to( savedir ) )
+   {
+      QMessageBox::warning( this, tr( "Save Simulations" ), tr( "The simulations could not be saved to\n%1" ).arg( savedir ) );
+      return;
+   }
+
+   // The receiver takes the run name from the last path section before "/"
+   QString impdir = savedir + "/";
+   emit    pass_ssf_dir( impdir );
 }
 
 int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
@@ -1181,8 +1193,6 @@ if ( writeTimeState( tfpath, simparams, synData[0] ) == 0 )
    {
       return false;
    }
-
-   emit pass_ssf_dir( impdir );
 
    return true;
 }
