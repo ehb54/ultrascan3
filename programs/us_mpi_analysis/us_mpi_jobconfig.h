@@ -247,7 +247,7 @@ class US_MPI_JobConfig
       QString                      cluster;       //!< Cluster short name
       QString                      db_name;       //!< Database name
       QString                      udp_server;    //!< UDP status server address
-      quint16                      udp_port = 0;  //!< UDP status server port
+      quint16                      udp_port = 0;  //!< UDP status server port (0 if not given or invalid)
       QString                      request_id;    //!< Request ID, six digits
       QString                      request_guid;  //!< Request GUID
       Optional<int>                dataset_count; //!< datasetCount, if given

@@ -204,8 +204,22 @@ void US_MPI_JobConfig::read_job( QXmlStreamReader& xml )
 
       else if ( xname == "udp" )
       {
-         udp_server = attr.value( "server" ).toString();
-         udp_port   = (quint16) attr.value( "port" ).toString().toInt();
+         udp_server    = attr.value( "server" ).toString();
+         QString sport = attr.value( "port" ).toString();
+         bool    ok    = false;
+         int     port  = sport.toInt( &ok );
+         if ( ok && port > 0 && port <= 65535 )
+         {
+            udp_port = (quint16) port;
+         }
+         else
+         { // Only the status messages need the port:  run without them
+            udp_port = 0;
+            if ( !sport.isEmpty() )
+            {
+               warnings << "Invalid udp port \"" + sport + "\": no status messages are sent";
+            }
+         }
       }
 
       else if ( xname == "global_fit" )
