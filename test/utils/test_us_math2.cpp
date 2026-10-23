@@ -98,6 +98,34 @@ double result = US_Math2::box_muller(mean, 0.0);
 EXPECT_DOUBLE_EQ(result, mean) << "Box-Muller with std=0 should return mean";
 }
 
+TEST_F( TestUSMath2Unit, BoxMullerReseedDiscardsCachedDeviate )
+{
+   // After reseeding, the sequence must not depend on how many deviates
+   //  were drawn before (an odd count leaves the second deviate of a pair)
+   US_Math2::randomize( 4711u );
+   QVector<double> fresh;
+   for ( int i = 0; i < 4; i++ )
+   {
+      fresh << US_Math2::box_muller( 0.0, 1.0 );
+   }
+
+   for ( int drawn = 1; drawn <= 3; drawn++ )
+   {
+      US_Math2::randomize( 1234u );
+      for ( int i = 0; i < drawn; i++ )
+      {
+         US_Math2::box_muller( 0.0, 1.0 );
+      }
+
+      US_Math2::randomize( 4711u );
+      for ( int i = 0; i < 4; i++ )
+      {
+         EXPECT_DOUBLE_EQ( US_Math2::box_muller( 0.0, 1.0 ), fresh[i] )
+            << "deviate " << i << " after " << drawn << " earlier draws";
+      }
+   }
+}
+
 // ============================================================================
 // LINE FITTING TESTS
 // ============================================================================

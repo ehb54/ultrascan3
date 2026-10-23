@@ -7,7 +7,7 @@ and compare the fitted models with stored baselines.
 
 | File | Purpose |
 |---|---|
-| `us_mpi_testdata.cpp` | Writes a simulated velocity dataset and a custom-grid model with the UltraScan writers (`US_DataIO::writeRawData`, `US_DataIO::writeEdits`, `US_Model::write`). Three species, 30 scans, 60 krpm, edited bottom at the stretched centerpiece bottom as `us_edit` writes it, noise σ = 0.004 from the seeded `US_Math2` generator. |
+| `us_mpi_testdata.cpp` | Writes a simulated velocity dataset and a custom-grid model with the UltraScan writers (`US_DataIO::writeRawData`, `US_DataIO::writeEdits`, `US_Model::write`). Three species, 30 scans, 60 krpm, edited bottom at the stretched centerpiece bottom as `us_edit` writes it, noise σ = 0.004 from the seeded `US_Math2` generator. Options: `scans=<n>` and `nobottom` (edit without `<bottom>`). |
 | `us_mpi_regression.py` | Builds the job archive (hpcrequest XML in the LIMS format), runs the case, reduces `analysis-results.tar` to a JSON summary and compares it with `baseline/<case>.json`. |
 | `baseline/*.json` | Reference summaries: per model the RMSD, the signal-weighted moments of s, f/f0 and vbar, the solute list, and any TI/RI noise vectors. |
 
@@ -19,6 +19,7 @@ and compare the fitted models with stored baselines.
 | `2dsa_refine` | iterative refinement (3) | 2 | exact |
 | `2dsa_mc` | Monte Carlo (3) | 2 | exact |
 | `2dsa_meniscus` | meniscus fit (3 points) | 2 | exact |
+| `2dsa_meniscus_nobottom` | the same with an edit without `<bottom>` (stretched centerpiece bottom) | 2 | = `2dsa_meniscus` |
 | `2dsa_bottom` | bottom fit (3 points) | 2 | exact |
 | `2dsa_menbot` | meniscus and bottom fit (3 × 3) | 2 | exact |
 | `2dsa_composite_menbot` | composite job, meniscus and bottom fit (2 × 2) | 2 | exact |
@@ -26,13 +27,20 @@ and compare the fitted models with stored baselines.
 | `2dsa_noise` | TI + RI noise | 2 | exact |
 | `2dsa_customgrid` | custom grid (s × vbar) | 2 | exact |
 | `2dsa_global` | global fit, 2 datasets | 2 | exact |
+| `2dsa_global_mc` | global fit with Monte Carlo (3) | 2 | exact |
 | `2dsa_composite` | composite job, 2 datasets | 2 | exact |
+| `2dsa_composite_mc` | composite job with Monte Carlo (3) | 2 | exact |
 | `2dsa_composite_meniscus` | composite job with meniscus fit | 2 | exact |
 | `2dsa_refine_np4`, `2dsa_mc_np4` | several workers | 4 | exact |
 | `2dsa_mc_pmasters` | parallel masters, MC (2 groups) | 6 | exact |
 | `2dsa_mc_pmasters3` | parallel MC, 3 groups, 4 iterations | 9 | exact |
 | `2dsa_mc_pmasters_idle` | parallel MC, 3 groups, 2 iterations | 9 | exact |
+| `2dsa_mc_pmasters_uneven` | 3 groups asked for 10 ranks: runs as 2 groups | 10 | = `2dsa_mc` |
+| `2dsa_mc_odd` | Monte Carlo (3) on 31 × 185 points (odd count of deviates) | 2 | exact |
+| `2dsa_mc_odd_pmasters` | the same with parallel masters (2 groups) | 6 | = `2dsa_mc_odd` |
 | `2dsa_composite_pmasters` | parallel masters, composite (2 groups) | 6 | exact |
+| `2dsa_composite_pmasters_np4` | 3 groups asked for 4 ranks: runs with one master | 4 | = `2dsa_composite` |
+| `2dsa_composite_mc_pmasters` | parallel composite with Monte Carlo | 6 | = `2dsa_composite_mc` |
 | `2dsa_composite_meniscus_pmasters` | parallel composite with meniscus fit | 6 | exact |
 | `pcsa_sl` | PCSA straight lines | 2 | exact |
 | `ga_basic` | GA, 3 buckets | 4 | loose |
@@ -44,11 +52,16 @@ and the iteration, so a fit gives the same result for any number of workers
 or master groups; the `*_np4` and `*_pmasters` cases equal the single-worker
 results.  GA migrates genes asynchronously, so its result depends on message
 timing; "loose" only requires the same output files and an RMSD not more
-than 15 % above the baseline.
+than 15 % above the baseline.  "= case" compares with that case's baseline:
+the case has none of its own, and must give the same result.
 
 ## Running
 
-The tests need a build with MPI, programs and tests, without the database:
+The tests need a build with MPI, programs and tests, without the database.
+Prerequisites besides the usual build dependencies: an MPI implementation
+(Open MPI or MPICH, with `mpirun`), Python 3, GoogleTest (`BUILD_TESTING`
+requires it) and Qwt (required by every profile except HPC, which turns
+`BUILD_TESTING` off).  With vcpkg, enable the `mpi` feature.
 
 ```bash
 cmake -S . -B build -G Ninja -DUS3_NO_DB=ON -DUS3_BUILD_PROGRAMS=ON \

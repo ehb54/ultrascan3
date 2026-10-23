@@ -27,7 +27,11 @@ set(US_MPI_CASES
     2dsa_mc_pmasters
     2dsa_mc_pmasters3
     2dsa_mc_pmasters_idle
+    2dsa_mc_pmasters_uneven
+    2dsa_mc_odd
+    2dsa_mc_odd_pmasters
     2dsa_meniscus
+    2dsa_meniscus_nobottom
     2dsa_bottom
     2dsa_menbot
     2dsa_composite_menbot
@@ -35,8 +39,12 @@ set(US_MPI_CASES
     2dsa_noise
     2dsa_customgrid
     2dsa_global
+    2dsa_global_mc
     2dsa_composite
     2dsa_composite_pmasters
+    2dsa_composite_pmasters_np4
+    2dsa_composite_mc
+    2dsa_composite_mc_pmasters
     2dsa_composite_meniscus
     2dsa_composite_meniscus_pmasters
     2dsa_refine_np4
