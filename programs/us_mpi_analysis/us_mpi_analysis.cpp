@@ -576,13 +576,12 @@ if ( my_rank == 0 )
       int nssp            = ds->simparams.speed_step.count();
       bool incl_speed     = ( nssp < 1 );
       ds->simparams.initFromData( NULL, *edata, incl_speed );
-      // Use bottom from edited data if it is given
-      double bottom_ds    = ( edata->bottom > 0.0 ) ? edata->bottom
-                            : ds->centerpiece_bottom;
-if ( my_rank == 0 )
- DbgLv(0) << "incl_speed" << incl_speed << "nssp" << nssp
-  << "bottom_ds bottom_cp" << bottom_ds << ds->centerpiece_bottom;
- 
+      if ( my_rank == 0 )
+      {
+         DbgLv( 0 ) << "incl_speed" << incl_speed << "nssp" << nssp << "bottom_ds bottom_cp" << dataset_bottom( ee )
+                    << ds->centerpiece_bottom;
+      }
+
       if ( ! incl_speed &&  ! redo_ss )
       {  // If experiment speed step used, test against data set times
          int stm1            = ds->simparams.speed_step[        0 ].time_first;
@@ -602,7 +601,8 @@ if ( my_rank == 0 )
       ds->simparams.rotorcoeffs[ 0 ]  = ds->rotor_stretch[ 0 ];
       ds->simparams.rotorcoeffs[ 1 ]  = ds->rotor_stretch[ 1 ];
       ds->simparams.bottom_position   = ds->centerpiece_bottom;
-      ds->simparams.bottom            = bottom_ds;
+      // Same bottom as the workers:  edited, else stretched centerpiece
+      ds->simparams.bottom            = dataset_bottom( ee );
       ds->simparams.band_forming      = ds->simparams.band_volume != 0.0;
       US_SolveSim::DataSet*  ds0      = data_sets[ 0 ];
 
@@ -1043,20 +1043,14 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
 
    if ( is_composite_job )
    {
-      if ( count_datasets < 2  ||  mgroup_count > ( count_datasets + 2 ) )
+      if ( count_datasets < 2 )
+      {
          mgroup_count = 1;
+      }
 
       // The supervisor starts every group on a dataset of its own, so use
-      //  no more groups than datasets, and groups of equal size
-      if ( mgroup_count > count_datasets )
-      {
-         mgroup_count = count_datasets;
-
-         while ( mgroup_count > 1 && ( proc_count % mgroup_count ) != 0 )
-         {
-            mgroup_count--;
-         }
-      }
+      //  no more groups than datasets
+      mgroup_count = qMin( mgroup_count, count_datasets );
    }
    else
    {
@@ -1064,7 +1058,24 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
          mgroup_count = 1;
    }
 
-   mgroup_count = qMax( 1, mgroup_count );
+   // Groups of equal size, so that every rank is in a group the supervisor
+   //  drives, and with a worker for every group master:  group 0 also holds
+   //  the supervisor (rank 0), so groups need at least 3 ranks
+   int mgroup_asked = task_params["mgroupcount"].toInt();
+   mgroup_count     = qMax( 1, mgroup_count );
+
+   while ( mgroup_count > 1 && ( ( proc_count % mgroup_count ) != 0 || ( proc_count / mgroup_count ) < 3 ) )
+   {
+      mgroup_count--;
+   }
+
+   if ( mgroup_count != mgroup_asked && mgroup_asked > 1 && my_rank == 0 )
+   {
+      DbgLv( 0 ) << "Masters groups reduced from" << mgroup_asked << "to" << mgroup_count << "for" << proc_count << "processes";
+      send_udp( "Masters groups reduced from " + QString::number( mgroup_asked ) + " to " + QString::number( mgroup_count ) +
+                " for " + QString::number( proc_count ) + " processes" );
+   }
+
    gcores_count = proc_count / mgroup_count;
 
    // Collective over all ranks, so before any masters-group split

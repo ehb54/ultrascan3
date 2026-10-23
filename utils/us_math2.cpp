@@ -62,15 +62,21 @@ static libnnls libnnls0;
 
 */
 
+// The second deviate of each Box-Muller pair, kept for the next call.
+//  randomize() discards it, so a reseeded sequence does not depend on
+//  how many deviates were drawn before.
+static bool   box_muller_use_last = false;
+static double box_muller_y2       = 0.0;
+
 double US_Math2::box_muller( double m, double s )   
 {
-   static bool  use_last = false;
+   bool&         use_last = box_muller_use_last;
+   double&       y2       = box_muller_y2;
 
    double        x1;
    double        x2;
    double        w;
    double        y1;
-   static double y2;
 
    if ( use_last )  // Use value from previous call 
    {
@@ -818,6 +824,7 @@ uint US_Math2::randomize( void )
 #endif
 
    get_random_generator().seed( seed );
+   box_muller_use_last = false;
    return seed;
 }
 
@@ -830,6 +837,7 @@ uint US_Math2::randomize( uint seed )
    else
    {
       get_random_generator().seed( seed );
+      box_muller_use_last = false;
    }
 
    return seed;
