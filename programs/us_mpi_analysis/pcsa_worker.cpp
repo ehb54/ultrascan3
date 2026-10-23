@@ -36,15 +36,15 @@ void US_MPI_Analysis::pcsa_worker( void )
                 &status ); // status not used
       DbgLv( 1 ) << "w:" << my_rank << ": job_recvd  length" << job.length << "command" << job.command;
 
-      int offset         = job.dataset_offset;
-      int dataset_count  = job.dataset_count;
+      const int              offset         = job.dataset_offset;
+      const int              dataset_count  = job.dataset_count;
       int job_length     = job.length;
-      int mc_iter        = job.solution;
+      const int              mc_iter        = job.solution;
       US_DataIO::EditedData* edata = &data_sets[ offset ]->run_data;
       meniscus_value     = edata->meniscus;
       DbgLv( 1 ) << "w:" << my_rank << ": offs cnt" << offset << dataset_count << "menisc" << meniscus_value;
-      int scan_count     = edata->scanCount();
-      int radius_points  = edata->pointCount();
+      const int scan_count     = edata->scanCount();
+      const int radius_points  = edata->pointCount();
       int ds_points      = scan_count * radius_points;
 
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
@@ -73,8 +73,8 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                max_rss();
                {
-                  int nn = simulation_values.zsolutes.size() - 1;
-                  int mm = nn / 2;
+                  const int nn = simulation_values.zsolutes.size() - 1;
+                  const int mm = nn / 2;
                   DbgLv( 1 ) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count << "vbar s20wc bott"
                              << data_sets[offset]->vbar20 << data_sets[offset]->s20w_correction
                              << data_sets[offset]->centerpiece_bottom;
@@ -87,8 +87,8 @@ void US_MPI_Analysis::pcsa_worker( void )
                calc_residuals( offset, dataset_count, simulation_values );
 
                {
-                  int nn = simulation_values.zsolutes.size() - 1;
-                  int mm = nn / 2;
+                  const int nn = simulation_values.zsolutes.size() - 1;
+                  const int mm = nn / 2;
                   DbgLv( 1 ) << "w:" << my_rank << ": nso" << simulation_values.zsolutes.size() << "c:sol0 solm soln"
                              << simulation_values.zsolutes[0].x << simulation_values.zsolutes[0].y
                              << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
@@ -185,16 +185,16 @@ void US_MPI_Analysis::pcsa_worker( void )
                   for ( int ee = 0; ee < dataset_count; ee++ )
                   {
                      edata             = &data_sets[ ee ]->run_data;
-                     int scan_count    = edata->scanCount();
-                     int radius_points = edata->pointCount();
+                     const int scan_count    = edata->scanCount();
+                     const int radius_points = edata->pointCount();
 
                      for ( int ss = 0; ss < scan_count; ss++, jsc++ )
                      {
                         for ( int rr = 0; rr < radius_points; rr++, index++ )
                         {
-                           double vari   = US_Math2::box_muller( 0.0, sigmas[ index ] );
-                           double datout = sim_data->value( jsc, rr ) + vari;
-                           varrmsd      += sq( vari );
+                           const double vari   = US_Math2::box_muller( 0.0, sigmas[index] );
+                           const double datout = sim_data->value( jsc, rr ) + vari;
+                           varrmsd += sq( vari );
                            if ( ss < 4 && rr < 4 )
                            {
                               DbgLv( 1 ) << "w:" << my_rank << ": ee ss rr" << ee << ss << rr << "index vari" << index << vari
@@ -216,9 +216,9 @@ void US_MPI_Analysis::pcsa_worker( void )
                   {
                      for ( int rr = 0; rr < radius_points; rr++, index++ )
                      {
-                        double vari   = US_Math2::box_muller( 0.0, sigmas[ index ] );
-                        double datout = sim_data->value( ss, rr ) + vari;
-                        varrmsd      += sq( vari );
+                        const double vari   = US_Math2::box_muller( 0.0, sigmas[index] );
+                        const double datout = sim_data->value( ss, rr ) + vari;
+                        varrmsd += sq( vari );
 
                         edata->setValue( ss, rr, datout );
                      }
@@ -232,8 +232,8 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                max_rss();
                {
-                  int nn = simulation_values.zsolutes.size() - 1;
-                  int mm = nn / 2;
+                  const int nn = simulation_values.zsolutes.size() - 1;
+                  const int mm = nn / 2;
                   DbgLv( 1 ) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count << "vbar s20wc bott"
                              << data_sets[offset]->vbar20 << data_sets[offset]->s20w_correction
                              << data_sets[offset]->centerpiece_bottom;
@@ -249,8 +249,8 @@ void US_MPI_Analysis::pcsa_worker( void )
                         << "  for MC_Iteration" << mc_iter;
 
                {
-                  int nn = simulation_values.zsolutes.size() - 1;
-                  int mm = nn / 2;
+                  const int nn = simulation_values.zsolutes.size() - 1;
+                  const int mm = nn / 2;
                   DbgLv( 1 ) << "w:" << my_rank << ": nso" << simulation_values.zsolutes.size() << "c:sol0 solm soln"
                              << simulation_values.zsolutes[0].x << simulation_values.zsolutes[0].y
                              << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
@@ -305,16 +305,16 @@ void US_MPI_Analysis::pcsa_worker( void )
             DbgLv( 1 ) << "w:" << my_rank << ":Recv:NEWDATA  joblen" << job_length;
             if ( is_global_fit && mc_iter < 3 && my_rank < 3 )
             { // For global fits, check the memory requirements
-               long         memused  = max_rss();
-               long         memdata  = job_length * sizeof( double );
-               double       s_pts    = job_config.params.grid.s_points();
-               double       ff0_pts  = job_config.params.grid.ff0_points();
-               int          nsstep   = (int) ( s_pts );
-               int          nkstep   = (int) ( ff0_pts );
-               int          maxsols  = nsstep * nkstep;
-               long         memamatr = memdata * maxsols;
-               long         membmatr = memdata;
-               long         memneed  = memdata + memamatr + membmatr;
+               const long   memused  = max_rss();
+               const long   memdata  = job_length * sizeof( double );
+               const double s_pts    = job_config.params.grid.s_points();
+               const double ff0_pts  = job_config.params.grid.ff0_points();
+               const int    nsstep   = (int) ( s_pts );
+               const int    nkstep   = (int) ( ff0_pts );
+               const int    maxsols  = nsstep * nkstep;
+               const long   memamatr = memdata * maxsols;
+               const long   membmatr = memdata;
+               const long   memneed  = memdata + memamatr + membmatr;
                const double mb_bytes = ( 1024. * 1024. );
                const double gb_bytes = ( mb_bytes * 1024. );
                double       gb_need  = (double) memneed / gb_bytes;
@@ -367,8 +367,8 @@ void US_MPI_Analysis::pcsa_worker( void )
                }
             }
 
-            bool is_simdat = ( mc_iter >= 10000 );
-            int  index     = 0;
+            const bool is_simdat = ( mc_iter >= 10000 );
+            int        index     = 0;
             DbgLv( 1 ) << "newD:" << my_rank << ": is_simdat" << is_simdat;
 
             if ( is_simdat )
@@ -392,8 +392,8 @@ void US_MPI_Analysis::pcsa_worker( void )
 
                   for ( int ee = 0; ee < dataset_count; ee++ )
                   {
-                     int scan_count    = data_sets[ee]->run_data.scanCount();
-                     int radius_points = data_sets[ee]->run_data.pointCount();
+                     const int scan_count    = data_sets[ee]->run_data.scanCount();
+                     const int radius_points = data_sets[ee]->run_data.pointCount();
 
                      for ( int ss = 0; ss < scan_count; ss++, ksc++ )
                      {
@@ -413,8 +413,8 @@ void US_MPI_Analysis::pcsa_worker( void )
                { // Non-global (single-dataset) simdata,sigmas
                   US_DataIO::EditedData* edata = &data_sets[offset]->run_data;
                   US_AstfemMath::initSimData( sim_data1, *edata, 0.0 );
-                  int scan_count    = edata->scanCount();
-                  int radius_points = edata->pointCount();
+                  const int scan_count    = edata->scanCount();
+                  const int radius_points = edata->pointCount();
                   sigmas.clear();
 
                   for ( int ss = 0; ss < scan_count; ss++ ) // Save sim_data
@@ -445,10 +445,10 @@ void US_MPI_Analysis::pcsa_worker( void )
                {
                   US_DataIO::EditedData* edata = &data_sets[ee]->run_data;
 
-                  int                    scan_count    = edata->scanCount();
-                  int                    radius_points = edata->pointCount();
+                  const int              scan_count    = edata->scanCount();
+                  const int              radius_points = edata->pointCount();
 
-                  int                    indxh = ( ( scan_count / 2 ) * radius_points ) + ( radius_points / 2 );
+                  const int              indxh = ( ( scan_count / 2 ) * radius_points ) + ( radius_points / 2 );
                   for ( int ss = 0; ss < scan_count; ss++ )
                   {
                      for ( int rr = 0; rr < radius_points; rr++, index++ )

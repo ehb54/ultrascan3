@@ -6,7 +6,7 @@
 //  file system is read once and all ranks get the same text.  Returns
 //  false on all ranks if rank 0 cannot read it.  Collective over
 //  MPI_COMM_WORLD.
-bool US_MPI_Analysis::read_shared_file( const QString& path, QByteArray& data )
+bool US_MPI_Analysis::read_shared_file( const QString& path, QByteArray& data ) const
 {
    int readable = 1;
    data.clear();

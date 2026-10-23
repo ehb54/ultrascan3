@@ -30,8 +30,7 @@ void US_MPI_Analysis::pm_cjobs_start()
    DbgLv( 1 ) << "MPI_Barrier" << my_rank;
    // Synch up everyone then split into communicator groups
    MPI_Barrier( MPI_COMM_WORLD );
-   int sstat = MPI_Comm_split( MPI_COMM_WORLD, my_group, group_rank,
-                               &my_communicator );
+   const int sstat = MPI_Comm_split( MPI_COMM_WORLD, my_group, group_rank, &my_communicator );
    DbgLv( 1 ) << "COMM_SPLIT (g r m)" << my_group << group_rank << my_rank << "stat" << sstat;
 
    if ( my_rank == 0 )
@@ -187,15 +186,15 @@ void US_MPI_Analysis::pm_cjobs_supervisor()
       //   used in the master group.
 
       master      = status.MPI_SOURCE;         // Master that has completed
-      int kgroup  = master / gcores_count;     // Group to which master belongs
-      int mgroup  = mstates.indexOf( READY );  // Find next ready master
+      const int kgroup = master / gcores_count;     // Group to which master belongs
+      const int mgroup = mstates.indexOf( READY );  // Find next ready master
 
-      int jgroup  = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
+      const int jgroup  = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
       mstates[ kgroup ] = READY;                      // Mark current as ready
-      int nileft  = mstates.count( WORKING );         // Masters left working
+      const int nileft  = mstates.count( WORKING );   // Masters left working
       DbgLv( 1 ) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup << "left dsets dset" << nileft << count_datasets
                  << current_dataset;
-      int kdset   = ( current_dataset / mgroup_count ) * mgroup_count;
+      const int kdset = ( current_dataset / mgroup_count ) * mgroup_count;
 
       if ( islast )    
       {  // Just finished was last dataset for that group
@@ -241,19 +240,17 @@ void US_MPI_Analysis::pm_cjobs_supervisor()
 
    // Get job end time (after waiting, so it has the greatest time stamp)
    US_Sleep::msleep( 900 );
-   QDateTime endTime = QDateTime::currentDateTime();
+   const QDateTime endTime = QDateTime::currentDateTime();
 
    // Send message and build file with run-time statistics
    max_rss();                              // Max memory for supervisor
    DbgLv( 1 ) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    maxrss       += maxrssma;               // Sum in master groups' use
 
-   int walltime  = qRound(
-      submitTime.msecsTo( endTime ) / 1000.0 );
-   int cputime   = qRound(
-      startTime .msecsTo( endTime ) / 1000.0 );
-   int maxrssmb  = qRound( (double)maxrss / 1024.0 );
-   int kc_iters  = data_sets.size();
+   const int walltime = qRound( submitTime.msecsTo( endTime ) / 1000.0 );
+   const int cputime  = qRound( startTime.msecsTo( endTime ) / 1000.0 );
+   const int maxrssmb = qRound( (double) maxrss / 1024.0 );
+   const int kc_iters = data_sets.size();
 
    stats_output( walltime, cputime, maxrssmb,
          submitTime, startTime, endTime );
@@ -262,12 +259,12 @@ void US_MPI_Analysis::pm_cjobs_supervisor()
    update_outputs( true );
 
    // Send 'Finished' message.
-   int wt_hr      = walltime / 3600;
-   int wt_min     = ( walltime - wt_hr * 3600 ) / 60;
-   int wt_sec     = walltime - wt_hr * 3600 - wt_min * 60;
-   int ct_hr      = cputime / 3600;
-   int ct_min     = ( cputime - ct_hr * 3600 ) / 60;
-   int ct_sec     = cputime - ct_hr * 3600 - ct_min * 60;
+   const int wt_hr  = walltime / 3600;
+   const int wt_min = ( walltime - wt_hr * 3600 ) / 60;
+   const int wt_sec = walltime - wt_hr * 3600 - wt_min * 60;
+   const int ct_hr  = cputime / 3600;
+   const int ct_min = ( cputime - ct_hr * 3600 ) / 60;
+   const int ct_sec = cputime - ct_hr * 3600 - ct_min * 60;
    printf( "Us_Mpi_Analysis has finished successfully"
            " (Wall=%d:%02d:%02d Cpu=%d:%02d:%02d).\n"
            , wt_hr, wt_min, wt_sec, ct_hr, ct_min, ct_sec );
@@ -300,7 +297,7 @@ void US_MPI_Analysis::pm_cjobs_master()
 
    // Get analysis date for model descriptions from supervisor
    DbgLv( 1 ) << "  MASTER   Recv from super. my_rank" << my_rank << "group" << my_group;
-   int super  = 0;
+   const int super  = 0;
    int isize  = 0;
 
    MPI_Recv( &isize,
@@ -383,25 +380,26 @@ void US_MPI_Analysis::time_datasets_left()
    if ( current_dataset < 4 )
       return;                      // Don't bother until current_dataset 4
 
-   QDateTime currTime  = QDateTime::currentDateTime();
-   int curr_iter       = current_dataset + 1;
-   int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
-   int mins_left_allow = max_walltime - mins_so_far;
+   const QDateTime currTime        = QDateTime::currentDateTime();
+   const int       curr_iter       = current_dataset + 1;
+   const int       mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
+   const int       mins_left_allow = max_walltime - mins_so_far;
    int ds_iters_left   = ( mins_left_allow * curr_iter ) / mins_so_far;
    ds_iters_left       = ( ds_iters_left / mgroup_count ) * mgroup_count;
-   int ds_iters_estim  = curr_iter + ds_iters_left;
+   const int ds_iters_estim        = curr_iter + ds_iters_left;
 
    if ( ds_iters_estim < count_datasets  &&  ds_iters_left < 4 )
    {  // In danger of exceeding allowed time:   reduce count of datasets
-      int old_dsiters     = count_datasets;
+      const int old_dsiters = count_datasets;
       count_datasets      = qMax( curr_iter, ds_iters_estim - 2 );
       int ac_iters_left   = count_datasets - curr_iter;
       ac_iters_left       = ( ac_iters_left / mgroup_count ) * mgroup_count;
       count_datasets      = curr_iter + ac_iters_left;
 
-      QString msg = tr( "Dataset count reduced from %1 to %2, "
-                        "due to max. time restrictions." )
-                    .arg( old_dsiters ).arg( count_datasets );
+      const QString msg = tr( "Dataset count reduced from %1 to %2, "
+                              "due to max. time restrictions." )
+                             .arg( old_dsiters )
+                             .arg( count_datasets );
       send_udp( msg );
 
       DbgLv(0) << "  Specified Maximum Wall-time minutes:" << max_walltime;
@@ -442,7 +440,7 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
 
-   Gene working_gene( buckets.count(), US_Solute() );
+   const Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
    for ( int i = 0; i < gcores_count; i++ )
@@ -453,14 +451,14 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
    {
       // Get MC iteration index from supervisor
       int iter       = 1;
-      int super      = 0;
+      const int  super      = 0;
       MPI_Status status;
 
       MPI_Recv( &iter,
@@ -492,7 +490,7 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
       std::sort( best_fitness.begin(), best_fitness.end() );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
 
-      int nisols      = simulation_values.solutes.size();
+      const int nisols = simulation_values.solutes.size();
 
       solutes_from_gene( simulation_values.solutes, nisols );
 
@@ -504,23 +502,22 @@ void US_MPI_Analysis::pm_ga_cjmast( void )
       DbgLv( 1 ) << "GaMast:    calc_resids return";
 
       // Write out the model, but skip if not 1st of iteration 1
-      bool do_write = ( mc_iteration > 1 ) ||
-                      ( mc_iteration == 1  &&  my_group == 0 );
+      const bool do_write = ( mc_iteration > 1 ) || ( mc_iteration == 1 && my_group == 0 );
       DbgLv( 1 ) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration << "variance" << simulation_values.variance
                  << "my_group" << my_group;
 
       std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
 
       // Convert given solute points to s,k for model output
-      double vbar20  = data_sets[ 0 ]->vbar20;
+      const double vbar20 = data_sets[0]->vbar20;
       QList< int > attrxs;
       attrxs << attr_x << attr_y << attr_z;
-      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
-      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
-      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
-      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
-      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
-      bool   vary_v  = ( attr_z != ATTR_V );
+      const bool have_s = ( attrxs.indexOf( ATTR_S ) >= 0 );
+      const bool have_k = ( attrxs.indexOf( ATTR_K ) >= 0 );
+      const bool have_w = ( attrxs.indexOf( ATTR_W ) >= 0 );
+      const bool have_d = ( attrxs.indexOf( ATTR_D ) >= 0 );
+      const bool have_f = ( attrxs.indexOf( ATTR_F ) >= 0 );
+      const bool vary_v = ( attr_z != ATTR_V );
 
       for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
       {
@@ -653,7 +650,7 @@ void US_MPI_Analysis::pm_dmga_cjmast( void )
    best_fitness.reserve( gcores_count );
 
    // Read in the constraints model and build constraints
-   QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
+   const QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
    wmodel.load( cmfname );                   // Load the constraints model
    constraints.load_constraints( &wmodel );  // Build the constraints object
    constraints.get_work_model  ( &wmodel );  // Get the base work model
@@ -678,14 +675,14 @@ void US_MPI_Analysis::pm_dmga_cjmast( void )
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
    {
       // Get MC iteration index from supervisor
       int iter       = 1;
-      int super      = 0;
+      const int  super      = 0;
       MPI_Status status;
 
       MPI_Recv( &iter,
@@ -728,8 +725,7 @@ void US_MPI_Analysis::pm_dmga_cjmast( void )
       // Output the model
 
       // Write out the model, but skip if not 1st of iteration 1
-      bool do_write = ( mc_iteration > 1 ) ||
-                      ( mc_iteration == 1  &&  my_group == 0 );
+      const bool do_write = ( mc_iteration > 1 ) || ( mc_iteration == 1 && my_group == 0 );
 
       if ( do_write )
       {
@@ -812,7 +808,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
 
    work_rss.resize( gcores_count );
 
-   int super           = 0;
+   const int super           = 0;
    int kcurve          = 0;
    int iter            = current_dataset;
    alpha               = 0.0;
@@ -862,7 +858,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
          kcurve           = 0;
          std::sort( mrecs.begin(), mrecs.end() );
          US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-         QString tripleID = edata->cell + edata->channel + edata->wavelength;
+         const QString          tripleID = edata->cell + edata->channel + edata->wavelength;
 
          simulation_values.variance   = mrecs[ 0 ].variance;
          simulation_values.zsolutes   = mrecs[ 0 ].csolutes;
@@ -967,7 +963,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
 
             US_DataIO::EditedData* edata
                              = &data_sets[ current_dataset ]->run_data;
-            QString tripleID = edata->cell + edata->channel + edata->wavelength;
+            const QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
             if ( simulation_values.noisflag == 0 )
             {
@@ -1055,8 +1051,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
             break;
 
          default:  // Should never happen
-            QString msg =  "Master 2DSA:  Received invalid status " +
-                           QString::number( status.MPI_TAG );
+            const QString msg = "Master 2DSA:  Received invalid status " + QString::number( status.MPI_TAG );
             abort( msg );
             break;
       }

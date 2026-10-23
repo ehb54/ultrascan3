@@ -29,9 +29,9 @@ void US_MPI_Analysis::pcsa_master( void )
 
    while ( true )
    {
-      int kwsi = worker_status.count( INIT );
-      int kwsr = worker_status.count( READY );
-      int kwsw = worker_status.count( WORKING );
+      const int kwsi = worker_status.count( INIT );
+      const int kwsr = worker_status.count( READY );
+      const int kwsw = worker_status.count( WORKING );
       DbgLv( 1 ) << "pcsa_mast:MLOOP - TOP  jqsize" << job_queue.size() << "wstat-K:IniRdyWrk" << kwsi << kwsr << kwsw;
       int worker;
       meniscus_value = data_sets[current_dataset]->run_data.meniscus;
@@ -72,7 +72,7 @@ void US_MPI_Analysis::pcsa_master( void )
          kcurve           = 0;
          std::sort( mrecs.begin(), mrecs.end() );                      // Sort curve model records
          edata            = &data_sets[ current_dataset ]->run_data;
-         QString tripleID = edata->cell + edata->channel + edata->wavelength;
+         const QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
          simulation_values.variance    = mrecs[ 0 ].variance;
          simulation_values.zsolutes    = mrecs[ 0 ].csolutes;
@@ -89,10 +89,10 @@ void US_MPI_Analysis::pcsa_master( void )
          DbgLv( 1 ) << "final-mr0: variance1 variance2" << simulation_values.variance << wksim_vals.variance;
          DbgLv( 1 ) << "final-mr0: csolsize1 csolsize2" << simulation_values.zsolutes.size() << wksim_vals.zsolutes.size();
          DbgLv( 1 ) << "final-mr0: worker_status" << worker_status;
-         int ki = worker_status.count( INIT );
-         int kw = worker_status.count( WORKING );
-         int kr = worker_status.count( READY );
-         int km = mrecs.size();
+         const int ki = worker_status.count( INIT );
+         const int kw = worker_status.count( WORKING );
+         const int kr = worker_status.count( READY );
+         const int km = mrecs.size();
          int kg = 0;
          for ( int jm = 0; jm < km; jm++ )
          {
@@ -163,10 +163,10 @@ void US_MPI_Analysis::pcsa_master( void )
          DbgLv( 1 ) << "pcsa_mast: loop-BOT: dssize" << data_sets.size() << "ds_to_p" << datasets_to_process << "curr_ds"
                     << current_dataset;
          US_DataIO::EditedData* edat = &data_sets[current_dataset]->run_data;
-         int                    ks   = edat->scanCount() - 10;
-         int                    kp   = edat->pointCount() - 10;
-         int                    ss   = ks / 2;
-         int                    rr   = kp / 2;
+         const int              ks   = edat->scanCount() - 10;
+         const int              kp   = edat->pointCount() - 10;
+         const int              ss   = ks / 2;
+         const int              rr   = kp / 2;
          DbgLv( 1 ) << "pcsa_mast: loop-BOT: ds" << current_dataset + 1 << "data l m h" << edat->value( 10, 10 )
                     << edat->value( ss, rr ) << edat->value( ks, kp );
 
@@ -261,8 +261,7 @@ void US_MPI_Analysis::pcsa_master( void )
 
          default:  // Should never happen
             DbgLv( 1 ) << "pcsa_mast: loop-BOTTOM:   NOT READY/RESULTS TAG=" << status.MPI_TAG;
-            QString msg =  "Master PCSA:  Received invalid status " +
-                           QString::number( status.MPI_TAG );
+            const QString msg = "Master PCSA:  Received invalid status " + QString::number( status.MPI_TAG );
             abort( msg );
             break;
       }
@@ -294,15 +293,15 @@ void US_MPI_Analysis::init_pcsa_solutes( void )
    double  y_min      = job_config.params.grid.y_min;
    double  y_max      = job_config.params.grid.y_max;
    double  zval       = job_config.params.z_value;
-   QString s_ctyp     = job_config.params.pcsa.curve_type;
+   const QString s_ctyp     = job_config.params.pcsa.curve_type;
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
-   QString s_styp     = job_config.params.solute_type;
-   int    stype      = US_ModelRecord::stype_flag( s_styp );
+   const QString s_styp     = job_config.params.solute_type;
+   const int     stype      = US_ModelRecord::stype_flag( s_styp );
    int     nkpts      = job_config.params.pcsa.vars_count;
    int    nkpto      = sq( nkpts );
    int     nlpts      = job_config.params.pcsa.curves_points;
    DbgLv( 1 ) << "  init_pcsa_sols: nkpts" << nkpts << "nkpto" << nkpto;
-   double vbar20     = data_sets[ current_dataset ]->vbar20;
+   const double vbar20 = data_sets[current_dataset]->vbar20;
    zval              = ( zval == 0.0 ) ? vbar20 : zval;
    DbgLv( 1 ) << "  init_pcsa_sols: currds" << current_dataset << "vbar" << vbar20;
    double *parlims   = (double*)pararry;
@@ -385,7 +384,7 @@ void US_MPI_Analysis::submit_pcsa( Sa_Job& job, int worker )
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
-   int dd                     = job.mpi_job.depth;
+   const int dd               = job.mpi_job.depth;
    if ( dd == 0 )
    {
       DbgLv( 1 ) << " submit_pcsa: worker" << worker << "  sols" << job.mpi_job.length << "mciter cds" << mc_iteration
@@ -506,7 +505,7 @@ void US_MPI_Analysis::process_pcsa_solutes( Result& result )
    cMr->csolutes  = result.zsolutes;
    cMr->variance  = simulation_values.variance;
    cMr->rmsd      = cMr->variance > 0.0 ? sqrt( cMr->variance ) : 0.0;
-   int noiflg     = simulation_values.noisflag;
+   const int noiflg = simulation_values.noisflag;
    DbgLv( 1 ) << "pcsa_mast: PPSol -   (03)JQue size" << job_queue.size();
 
    // Add in any noises
@@ -534,9 +533,9 @@ void US_MPI_Analysis::write_mrecs()
    DbgLv( 1 ) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID << "modelGUID=" << mrecs[0].modelGUID;
    QString s_desc        = QString( modelP->description )
                            .replace( ".model", ".mrecs" );
-   QString s_ctyp         = job_config.params.pcsa.curve_type;
+   const QString s_ctyp         = job_config.params.pcsa.curve_type;
    int    ctype          = US_ModelRecord::ctype_flag( s_ctyp );
-   QString s_styp         = job_config.params.solute_type;
+   const QString s_styp         = job_config.params.solute_type;
    int    stype          = US_ModelRecord::stype_flag( s_styp );
    double  x_min          = job_config.params.grid.x_min;
    double  x_max          = job_config.params.grid.x_max;
@@ -548,7 +547,7 @@ void US_MPI_Analysis::write_mrecs()
    mrecs[ 0 ].xmax       = x_max;
    mrecs[ 0 ].ymin       = y_min;
    mrecs[ 0 ].ymax       = y_max;
-   QString fnameo        = shorter_filename( s_desc + ".xml" );
+   const QString fnameo  = shorter_filename( s_desc + ".xml" );
    DbgLv( 0 ) << "pcsa:wrmr:  fnameo=" << fnameo << "  fn length" << fnameo.size();
    QFile fileo( fnameo );
 
@@ -575,14 +574,14 @@ void US_MPI_Analysis::write_mrecs()
    }
 
    QTextStream tsout( &filea );
-   QString tripleID = edata->cell + edata->channel + edata->wavelength;
-   int mc_iter = mc_iterations;
+   const QString tripleID = edata->cell + edata->channel + edata->wavelength;
+   const int     mc_iter  = mc_iterations;
    int run     = ( mc_iter > 1 ) ? mc_iter : 1;
 
    if ( mc_iterations > 0 )
       run        = mc_iter;
 
-   QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
+   const QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
 
    tsout << fnameo
          << ";meniscus_value=" << meniscus_value
@@ -598,8 +597,8 @@ void US_MPI_Analysis::write_mrecs()
 void US_MPI_Analysis::iterate_pcsa()
 {
    static double rmsd_last = 0.0;
-   double rmsd_curr  = mrecs[ 0 ].rmsd;
-   double        thr_dr_rat = job_config.params.pcsa.thr_deltr_ratio;
+   const double  rmsd_curr  = mrecs[0].rmsd;
+   const double  thr_dr_rat = job_config.params.pcsa.thr_deltr_ratio;
 
    DbgLv( 1 ) << "iter_p: iter" << iterations << "of" << max_iterations;
    // If we have reached the maximum iterations, we are done
@@ -607,7 +606,7 @@ void US_MPI_Analysis::iterate_pcsa()
 
    if ( iterations > 1 )
    {  // If after first iteration, check RMSD difference
-      double dr_rat     = ( rmsd_last - rmsd_curr ) / rmsd_last;
+      const double dr_rat = ( rmsd_last - rmsd_curr ) / rmsd_last;
       DbgLv( 1 ) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last << "dr_rat thr_dr_rat" << dr_rat << thr_dr_rat;
 
       // If difference in iteration RMSD less than threshold, we are done
@@ -636,13 +635,13 @@ void US_MPI_Analysis::iterate_pcsa()
    double  y_min      = job_config.params.grid.y_min;
    double  y_max      = job_config.params.grid.y_max;
    double  zval       = job_config.params.z_value;
-   QString s_ctyp     = job_config.params.pcsa.curve_type;
+   const QString s_ctyp     = job_config.params.pcsa.curve_type;
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
-   QString s_styp     = job_config.params.solute_type;
-   int    stype      = US_ModelRecord::stype_flag( s_styp );
+   const QString s_styp     = job_config.params.solute_type;
+   const int     stype      = US_ModelRecord::stype_flag( s_styp );
    int     nkpts      = job_config.params.pcsa.vars_count;
    int     nlpts      = job_config.params.pcsa.curves_points;
-   double vbar20     = data_sets[ current_dataset ]->vbar20;
+   const double  vbar20     = data_sets[current_dataset]->vbar20;
    zval              = ( zval == 0.0 ) ? vbar20 : zval;
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
@@ -690,7 +689,7 @@ void US_MPI_Analysis::iterate_pcsa()
 
       // Re-combine into a single vector
       int kk            = 0;
-      int ncurve        = sq( nkpts );
+      const int ncurve        = sq( nkpts );
       DbgLv( 1 ) << "iter_p: ncurve" << ncurve;
 
       for ( int ii = 0; ii < ncurve; ii++, kk++ )
@@ -741,7 +740,7 @@ void US_MPI_Analysis::iterate_pcsa()
 // Engineer Tikhonov Regularization for PCSA
 void US_MPI_Analysis::tikreg_pcsa()
 {
-   int tikreg = job_config.params.pcsa.tikreg_option;
+   const int tikreg = job_config.params.pcsa.tikreg_option;
    DbgLv( 1 ) << "tikr: tikreg" << tikreg << "mrecs size" << mrecs.count();
 
    if ( tikreg == 0 )
@@ -782,7 +781,7 @@ void US_MPI_Analysis::tikreg_pcsa()
    DbgLv( 1 ) << "tikr: RMSD" << mrec.rmsd << "csol size" << mrec.csolutes.size();
 
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   QString tripleID  = edata->cell + edata->channel + edata->wavelength;
+   const QString          tripleID  = edata->cell + edata->channel + edata->wavelength;
    QString progress  = "Regularization: "
                        + QString::number( wksim_vals.alpha );
 
@@ -810,9 +809,9 @@ void US_MPI_Analysis::montecarlo_pcsa()
    mc_iterations                       = job_config.params.mc_iterations;
    mc_iteration     = 1;
    mrec             = mrecs[ 0 ];
-   int stype        = mrec.stype;
+   const int              stype        = mrec.stype;
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   QString tripleID = edata->cell + edata->channel + edata->wavelength;
+   const QString          tripleID     = edata->cell + edata->channel + edata->wavelength;
    job_queue.clear();
 
    // Build composite simulation,residuals data array
@@ -822,11 +821,11 @@ void US_MPI_Analysis::montecarlo_pcsa()
    US_DataIO::Scan*    rscan;
    sdata         = &mrec.sim_data;
    rdata         = &mrec.residuals;
-   int nscan     = sdata->scanCount();
+   const int nscan     = sdata->scanCount();
    int npoint    = sdata->pointCount();
    int mcd_incr  = nscan * npoint;
    mcd_incr      = ( is_global_fit ) ? total_points : mcd_incr;
-   int mcd_size  = mcd_incr * 2;
+   const int mcd_size  = mcd_incr * 2;
    int kci_send  = 0;
    int kci_recv  = 0;
    int ks        = 0;
@@ -929,9 +928,9 @@ void US_MPI_Analysis::montecarlo_pcsa()
 
    while ( true )
    {
-      int kwsi = worker_status.count( INIT );
-      int kwsr = worker_status.count( READY );
-      int kwsw = worker_status.count( WORKING );
+      const int kwsi = worker_status.count( INIT );
+      const int kwsr = worker_status.count( READY );
+      const int kwsw = worker_status.count( WORKING );
       DbgLv( 1 ) << " masterMC loop-TOP  jqsize" << job_queue.size() << "wstat-K:IniRdyWrk" << kwsi << kwsr << kwsw;
       int        mc_iter;
       int        mc_iters;
@@ -987,9 +986,8 @@ void US_MPI_Analysis::montecarlo_pcsa()
       if ( worker < 1  ||  worker > my_workers )
       {
          qDebug() << "*ERROR* MPI_Recv w/ source" << worker << ", beyond limit 1 to" << my_workers;
-         QString msg =  "Master PCSA:  Received invalid source (worker): " +
-                        QString::number( worker ) + ", beyond limit 1 to " +
-                        QString::number( my_workers );
+         const QString msg = "Master PCSA:  Received invalid source (worker): " + QString::number( worker ) +
+                             ", beyond limit 1 to " + QString::number( my_workers );
          abort( msg );
       }
       DbgLv( 1 ) << " masterMC loop-BOTTOM:   status TAG" << status.MPI_TAG << "  source" << status.MPI_SOURCE << "sizes"
@@ -1163,13 +1161,13 @@ void US_MPI_Analysis::montecarlo_pcsa()
    update_outputs();
 
    // Update the MC entry of the mrecs vector
-   int mrx           = ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ) ? 2 : 1;
+   const int mrx           = ( mrecs[2].taskx == mrecs[0].taskx ) ? 2 : 1;
    mrec              = mrecs[ mrx ];
-   QString     mfilt = "*" + tripleID + "*.mcN*model.xml";
-   QStringList mfltl( mfilt );
+   const QString     mfilt = "*" + tripleID + "*.mcN*model.xml";
+   const QStringList mfltl( mfilt );
    QStringList mlist = QDir( "." ).entryList( mfltl, QDir::Files );
    QString mfile;
-   int nmfile        = mlist.size();
+   const int         nmfile = mlist.size();
 
    if ( nmfile == 1 )
    {
@@ -1183,7 +1181,7 @@ void US_MPI_Analysis::montecarlo_pcsa()
 
       for ( int jj = 1; jj < mlist.size(); jj++ )
       {  // Find the last of multiple files created
-         QDateTime ftime   = QFileInfo( mlist[ 0 ] ).lastModified();
+         const QDateTime ftime = QFileInfo( mlist[0] ).lastModified();
          if ( ftime > mtime )
          {
             mtime          = ftime;
@@ -1216,8 +1214,8 @@ void US_MPI_Analysis::montecarlo_pcsa()
 void US_MPI_Analysis::filter_mrecs( const int ctype,
       QVector< US_ModelRecord >& mrecs_a, QVector< US_ModelRecord >& mrecs_t )
 {
-   int namrec        = mrecs_a.size();
-   int ntmrec        = namrec / 3;
+   const int namrec = mrecs_a.size();
+   const int ntmrec = namrec / 3;
    mrecs_t.clear();
    mrecs_t.reserve( ntmrec );
 
@@ -1227,11 +1225,11 @@ void US_MPI_Analysis::filter_mrecs( const int ctype,
 }
 
 // Clean up model records to handle records with empty calculated solutes
-void US_MPI_Analysis::clean_mrecs( QVector< US_ModelRecord >& mrecs )
+void US_MPI_Analysis::clean_mrecs( QVector<US_ModelRecord>& mrecs ) const
 {
    // First get index to last good
-   int nmrec         = mrecs.size();
-   int lmrec         = nmrec - 1;
+   const int nmrec         = mrecs.size();
+   const int lmrec         = nmrec - 1;
    int goodx         = 0;
 
    for ( int ii = lmrec; ii > 1; ii-- )
@@ -1315,7 +1313,7 @@ void US_MPI_Analysis::clean_mrecs( QVector< US_ModelRecord >& mrecs )
 //  and insert place-holders for any regularization and/or montecarlo
 void US_MPI_Analysis::pcsa_best_model()
 {
-   US_Model mdummy;
+   const US_Model mdummy;
    mrec                        = mrecs[0];
    simulation_values.alpha     = 0.0;
    simulation_values.noisflag  = 0;
@@ -1342,14 +1340,14 @@ void US_MPI_Analysis::pcsa_best_model()
 
    mrecs[ 0 ]        = mrec;
 
-   int tikreg        = job_config.params.pcsa.tikreg_option;
+   const int tikreg  = job_config.params.pcsa.tikreg_option;
    mc_iterations     = job_config.params.mc_iterations;
-   int noiflg        = simulation_values.noisflag;
+   const int noiflg  = simulation_values.noisflag;
    DbgLv( 1 ) << "bestm: tikreg mciters" << tikreg << mc_iterations;
 
    if ( tikreg != 0 )
    {
-      int nadd          = ( mc_iterations > 1 ) ? 2 : 1;
+      const int nadd = ( mc_iterations > 1 ) ? 2 : 1;
       mrecs.insert( 1, nadd, mrec );
 
       mrecs[ 1 ].model    = mdummy;
@@ -1391,8 +1389,8 @@ void US_MPI_Analysis::pcsa_best_model()
       double vnoise     = 0.0;
       int nscan         = edata->scanCount();
       int npoint        = edata->pointCount();
-      int rcount        = mrec.ti_noise.size();
-      int scount        = mrec.ri_noise.size();
+      const int              rcount        = mrec.ti_noise.size();
+      const int              scount        = mrec.ri_noise.size();
       DbgLv( 1 ) << "bestm: noise apply ns np sc rc" << nscan << npoint << scount << rcount;
       npoint            = ( noiflg & 1 ) > 0 ? npoint : rcount;
       nscan             = ( noiflg & 2 ) > 0 ? nscan  : scount;
@@ -1438,13 +1436,13 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    wmodel.modelGUID    = US_Util::new_guid();
    wmodel.variance     = wksim_vals.variance;
    QString mdesc       = wmodel.description;
-   QString runID       = QString( mdesc ).section( ".",  0, -4 );
-   QString tripID      = QString( mdesc ).section( ".", -3, -3 );
+   const QString runID       = QString( mdesc ).section( ".", 0, -4 );
+   const QString tripID      = QString( mdesc ).section( ".", -3, -3 );
    QString asysID      = QString( mdesc ).section( ".", -2, -2 );
-   QString typeExt     = QString( ".model" );
-   QString dates       = QString( asysID ).section( "_", 0, 1 );
+   const QString typeExt     = QString( ".model" );
+   const QString dates       = QString( asysID ).section( "_", 0, 1 );
    QString atype       = QString( asysID ).section( "_", 2, 2 );
-   QString reqID       = QString( asysID ).section( "_", 3, 3 );
+   const QString reqID       = QString( asysID ).section( "_", 3, 3 );
    QString iterID      = "i01" ;
    DbgLv( 1 ) << "wraux: mdesc" << mdesc;
 
@@ -1480,7 +1478,7 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
       wmodel.monteCarlo   = true;
       DbgLv( 1 ) << "wraux:      MC: mrecs size" << mrecs.size();
       iterID              = QString::asprintf( "mc%04d", iter );
-      int jj              = ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ) ? 2 : 1;
+      const int jj          = ( mrecs[2].taskx == mrecs[0].taskx ) ? 2 : 1;
       mrecs[ jj ].modelGUID = wmodel.modelGUID;
    }
    asysID              = dates + "_" + atype + "_" + reqID + "_" + iterID;
@@ -1488,8 +1486,8 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    wmodel.description  = mdesc;
    wmodel.components.clear();
    DbgLv( 1 ) << "wraux: mdesc" << mdesc;
-   QString s_styp       = job_config.params.solute_type;
-   int    stype        = US_ModelRecord::stype_flag( s_styp );
+   const QString s_styp = job_config.params.solute_type;
+   const int     stype  = US_ModelRecord::stype_flag( s_styp );
 
    for ( int ii = 0; ii < wksim_vals.zsolutes.size(); ii++ )
    {
@@ -1504,14 +1502,14 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    }
 
    mrec.model          = wmodel;
-   QString fext        = ( iter == 0 ) ? ".model.xml" : ".mdl.tmp";
-   QString fileid      = "." + atype + "." + tripID + "." + iterID + fext;
+   const QString fext        = ( iter == 0 ) ? ".model.xml" : ".mdl.tmp";
+   const QString fileid      = "." + atype + "." + tripID + "." + iterID + fext;
    QString fn          = runID + fileid;
-   int lenfn           = fn.length();
+   const int     lenfn       = fn.length();
 
    if ( lenfn > 96 )
    {
-      int lenri           = runID.length() + 96 - lenfn;
+      const int lenri     = runID.length() + 96 - lenfn;
       fn                  = QString( runID ).left( lenri ) + fileid;
    }
 
@@ -1555,8 +1553,8 @@ double US_MPI_Analysis::alpha_scan()
    const double ealpha   = 0.90;
    const double dalpha   = 0.01;
    const double roundv   = dalpha * 0.05;
-   const double alphadef = salpha + ( ealpha - salpha ) * 0.25; 
-   int nalpha    = qRound( ( ealpha - salpha ) / dalpha ) + 1;
+   const double       alphadef = salpha + ( ealpha - salpha ) * 0.25;
+   const int          nalpha   = qRound( ( ealpha - salpha ) / dalpha ) + 1;
    QVector< double >  alphas;
    QVector< double >  varias;
    QVector< double >  xnorms;
@@ -1584,13 +1582,12 @@ double US_MPI_Analysis::alpha_scan()
    }
 
    // Do alpha scan
-   QVector< double > csolutes;
    sv_nnls_a.clear();
    sv_nnls_b.clear();
    mrec          = mrecs[ 0 ];
-   int nscans    = data_sets[ current_dataset ]->run_data.scanCount();
-   int npoints   = data_sets[ current_dataset ]->run_data.pointCount();
-   int nisols    = mrec.isolutes.size();
+   const int nscans  = data_sets[current_dataset]->run_data.scanCount();
+   const int npoints = data_sets[current_dataset]->run_data.pointCount();
+   const int nisols  = mrec.isolutes.size();
 
    for ( int ja = 0; ja < nalpha; ja++ )
    {  // Loop to evaluate each alpha in the specified range
@@ -1627,10 +1624,10 @@ double US_MPI_Analysis::alpha_scan()
    sv_nnls_a.clear();
    sv_nnls_b.clear();
 
-   int lgv        = 0  - (int)qFloor( log10( varmx ) );
-   int lgx        = -1 - (int)qFloor( log10( xnomx ) );
-   double vscl    = qPow( 10.0, lgv );
-   double xscl    = qPow( 10.0, lgx );
+   const int    lgv  = 0 - (int) qFloor( log10( varmx ) );
+   const int    lgx  = -1 - (int) qFloor( log10( xnomx ) );
+   const double vscl = qPow( 10.0, lgv );
+   const double xscl = qPow( 10.0, lgx );
    DbgLv( 1 ) << "Log-varia Log-xnorm" << lgv << lgx << "vscl xscl" << vscl << xscl;
 
    for ( int ja = 0; ja < nalpha; ja++ )
@@ -1655,8 +1652,7 @@ double US_MPI_Analysis::alpha_scan()
    // Compute a line fitted to the first few main curve points
    while ( nlp < nalpha )
    {
-      double avg  = US_Math2::linefit( &xx, &yy, &slope, &intcp,
-                                       &sigma, &corre, nlp );
+      const double avg = US_Math2::linefit( &xx, &yy, &slope, &intcp, &sigma, &corre, nlp );
       DbgLv( 1 ) << "ASCN:H1:  avg" << avg << "nlp" << nlp;
       DbgLv( 1 ) << "ASCN:H1:   sl" << slope << "in" << intcp << "sg" << sigma << "co" << corre;
       if ( slope < 1e99  &&  slope > (-1e99) )
@@ -1686,12 +1682,11 @@ double US_MPI_Analysis::alpha_scan()
    // Do a sanity check. If the intersection point is outside the
    // rectangle that encloses the curve, we likely have an aberrant curve.
    // So, forget elbow fit and default alpha.
-   double xcvp1  = xx[ 0 ];
-   double ycvp1  = yy[ 0 ];
-   double xcvp2  = xx[ je ];
-   double ycvp2  = yy[ je ];
-   bool good_fit = ( xlipt >= xcvp1  &&  ylipt <= ycvp1  &&
-                     xlipt <= xcvp2  &&  ylipt >= ycvp2 );
+   const double xcvp1    = xx[0];
+   const double ycvp1    = yy[0];
+   const double xcvp2    = xx[je];
+   const double ycvp2    = yy[je];
+   const bool   good_fit = ( xlipt >= xcvp1 && ylipt <= ycvp1 && xlipt <= xcvp2 && ylipt >= ycvp2 );
    DbgLv( 1 ) << "ASCN:T4:   cv: x1,y1" << xcvp1 << ycvp1 << "x2,y2" << xcvp2 << ycvp2 << " good_fit" << good_fit;
 
    calpha        = (double)qRound( calpha / roundv ) * roundv;
@@ -1700,12 +1695,17 @@ double US_MPI_Analysis::alpha_scan()
    return calpha;
 }
 
-void US_MPI_Analysis::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,
-      QVector< double >* psv_nnls_b, const int nscans, const int npoints,
-      const int nisols, double& variance, double& xnormsq )
+void US_MPI_Analysis::apply_alpha( const double     alpha,
+                                   QVector<double>* psv_nnls_a,
+                                   QVector<double>* psv_nnls_b,
+                                   const int        nscans,
+                                   const int        npoints,
+                                   const int        nisols,
+                                   double&          variance,
+                                   double&          xnormsq ) const
 {
-   int ntotal   = is_global_fit ? total_points : ( nscans * npoints );
-   int narows   = ntotal + nisols;
+   const int ntotal         = is_global_fit ? total_points : ( nscans * npoints );
+   const int narows         = ntotal + nisols;
    int ncsols   = 0;
        variance = 0.0;
        xnormsq  = 0.0;
@@ -1718,7 +1718,7 @@ void US_MPI_Analysis::apply_alpha( const double alpha, QVector< double >* psv_nn
 
    // Replace alpha in the diagonal of the lower square of A
    int dx       = ntotal;
-   int dinc     = ntotal + nisols + 1;
+   const int dinc     = ntotal + nisols + 1;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {
@@ -1733,7 +1733,7 @@ void US_MPI_Analysis::apply_alpha( const double alpha, QVector< double >* psv_nn
    // Construct the output solutes and the implied simulation and xnorm-sq
    for ( int cc = 0; cc < nisols; cc++ )
    {
-      double soluval  = nnls_x[ cc ];   // Computed concentration, this solute
+      const double soluval = nnls_x[cc]; // Computed concentration, this solute
 
       if ( soluval > 0.0 )
       {
@@ -1788,25 +1788,25 @@ void US_MPI_Analysis::fill_pcsa_queue( void )
 QString US_MPI_Analysis::shorter_filename( const QString fnamei )
 {
    QString fnameo     = fnamei;
-   int fnlen          = fnameo.size();
+   const int fnlen      = fnameo.size();
 
    if ( fnlen > 99 )
    {  // Name too long:  break it down and shorten parts where possible
       QStringList parts  = fnamei.split( "." );
-      int nparts         = parts.count();
-      int nchrmv         = fnlen - 99;
-      int lnpm1          = parts[ nparts - 1 ].length();
-      int lnpm2          = parts[ nparts - 2 ].length();
+      const int   nparts = parts.count();
+      const int   nchrmv = fnlen - 99;
+      const int   lnpm1  = parts[nparts - 1].length();
+      const int   lnpm2  = parts[nparts - 2].length();
 
       if ( parts[ nparts - 2 ] == "mrecs"  &&  nchrmv < 11 )
       {  // If mrecs name, try to shorten analysis description part
          QString anapart    = parts[ nparts - 3 ];
-         QString anap0      = anapart.section( "_", 0, 0 );
-         QString anap1      = anapart.section( "_", 1, 1 );
-         QString anap2      = anapart.section( "_", 2, 2 );
-         QString anap3      = anapart.section( "_", 3, 3 );
-         QString anap4      = anapart.section( "_", 4, 4 );
-         
+         const QString anap0      = anapart.section( "_", 0, 0 );
+         const QString anap1      = anapart.section( "_", 1, 1 );
+         const QString anap2      = anapart.section( "_", 2, 2 );
+         const QString anap3      = anapart.section( "_", 3, 3 );
+         const QString anap4      = anapart.section( "_", 4, 4 );
+
          if ( nchrmv < 9 )
          {  // Remove hhmm part of edit and analysis parts (- 8 chars.)
             anapart            = anap0.left( 7 ) + "_"

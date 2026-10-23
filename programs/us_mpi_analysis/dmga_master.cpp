@@ -37,7 +37,7 @@ void US_MPI_Analysis::dmga_master( void )
    best_fitness.reserve( gcores_count );
 
    // Read in the constraints model and build constraints
-   QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
+   const QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
    wmodel.load( cmfname );                  // Load the constraints model
    constraints.load_constraints( &wmodel ); // Build the constraints object
    constraints.get_work_model  ( &wmodel ); // Get the base work model
@@ -54,19 +54,19 @@ void US_MPI_Analysis::dmga_master( void )
 
    for ( int mcompx = 0; mcompx < wmodel.components.size(); mcompx++ )
    {
-      int compno  = mcompx + 1;
-      int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
+      const int compno = mcompx + 1;
+      const int ncompc = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
       DbgLv( 0 ) << "  Component" << compno << ":";
 
       for ( int cx = 0; cx < ncompc; cx++ )
       {
-         atype         = cnsv[cx].atype;
-         bool floats = cnsv[ cx ].floats;
-         bool logscl = cnsv[ cx ].logscl;
-         double vmin = cnsv[ cx ].low;
-         double vmax = cnsv[ cx ].high;
-         attrtype      = tr( "UNKNOWN" );
+         atype               = cnsv[cx].atype;
+         const bool   floats = cnsv[cx].floats;
+         const bool   logscl = cnsv[cx].logscl;
+         const double vmin   = cnsv[cx].low;
+         const double vmax   = cnsv[cx].high;
+         attrtype            = tr( "UNKNOWN" );
 
          if      ( atype == US_dmGA_Constraints::ATYPE_S    )
             attrtype = tr( "Segmentation Coefficient" );
@@ -108,9 +108,9 @@ void US_MPI_Analysis::dmga_master( void )
 
    for ( int assocx = 0; assocx < wmodel.associations.size(); assocx++ )
    {
-      int compno  = assocx + 1;
-      int nassoc  = constraints.assoc_constraints( assocx, &cnsv, NULL );
-      int ncomp   = wmodel.associations[ assocx ].rcomps.size();
+      const int compno = assocx + 1;
+      const int nassoc = constraints.assoc_constraints( assocx, &cnsv, NULL );
+      const int ncomp  = wmodel.associations[assocx].rcomps.size();
 
       DbgLv(0) << "  Reaction" << compno << ":";
 
@@ -134,10 +134,10 @@ void US_MPI_Analysis::dmga_master( void )
       for ( int rx = 0; rx < nassoc; rx++ )
       {
          atype       = cnsv[ rx ].atype;
-         bool floats = cnsv[ rx ].floats;
-         bool logscl = cnsv[ rx ].logscl;
-         double vmin = cnsv[ rx ].low;
-         double vmax = cnsv[ rx ].high;
+         const bool   floats = cnsv[rx].floats;
+         const bool   logscl = cnsv[rx].logscl;
+         const double vmin   = cnsv[rx].low;
+         const double vmax   = cnsv[rx].high;
          attrtype    = tr( "UNKNOWN" );
 
          if      ( atype == US_dmGA_Constraints::ATYPE_KD   )
@@ -192,7 +192,7 @@ void US_MPI_Analysis::dmga_master( void )
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
@@ -213,7 +213,7 @@ void US_MPI_Analysis::dmga_master( void )
       {  // If gradient search method for all terminations, minimize now
          double aval;
          in_gsm         = true;
-         double fitness = bfit->fitness;
+         const double fitness = bfit->fitness;
          dgene          = best_dgenes[ bfit->index ];
          int nlim       = 0;
 
@@ -224,8 +224,8 @@ void US_MPI_Analysis::dmga_master( void )
             US_dmGA_Constraints::AttribType
                  atype    = cns_flt[ ii ].atype;
             int  mcompx   = cns_flt[ ii ].mcompx;
-            double vmin   = cns_flt[ ii ].low;
-            double vmax   = cns_flt[ ii ].high;
+            const double vmin     = cns_flt[ii].low;
+            const double vmax     = cns_flt[ii].high;
             fetch_attr_value( aval, dgene, atype, mcompx );
 
             if ( aval < vmin  ||  aval > vmax )
@@ -311,8 +311,8 @@ void US_MPI_Analysis::dmga_master( void )
       }
    }
    DbgLv( 0 ) << "VSUM=" << vsum;
-   int hh = simulation_values.sim_data.pointCount() / 2;
-   int ss = simulation_values.sim_data.scanCount();
+   const int hh = simulation_values.sim_data.pointCount() / 2;
+   const int ss = simulation_values.sim_data.scanCount();
    DbgLv( 0 ) << "SDAT 0-3" << simulation_values.sim_data.value( 0, hh ) << simulation_values.sim_data.value( 1, hh )
               << simulation_values.sim_data.value( 2, hh ) << simulation_values.sim_data.value( 3, hh );
    DbgLv( 0 ) << "SDAT *-n" << simulation_values.sim_data.value( ss - 4, hh ) << simulation_values.sim_data.value( ss - 3, hh )
@@ -346,8 +346,8 @@ void US_MPI_Analysis::dmga_master( void )
 
    for ( int mcompx = 0; mcompx < fmodel->components.size(); mcompx++ )
    {
-      int compno  = mcompx + 1;
-      int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
+      const int compno = mcompx + 1;
+      const int ncompc = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
       DbgLv( 0 ) << "  Component" << compno << ":";
 
@@ -374,8 +374,7 @@ void US_MPI_Analysis::dmga_master( void )
          else
             attrtype    = tr( "Unknown" );
 
-         double aval = constraints.fetch_attrib( fmodel->components[ mcompx ],
-                                                 atype );
+         const double aval = constraints.fetch_attrib( fmodel->components[mcompx], atype );
          DbgLv(0) << "    " << attrtype << "has a value of"
                   << aval;
       }
@@ -383,9 +382,9 @@ void US_MPI_Analysis::dmga_master( void )
 
    for ( int assocx = 0; assocx < fmodel->associations.size(); assocx++ )
    {
-      int compno  = assocx + 1;
-      int nassoc  = constraints.assoc_constraints( assocx, &cnsv, NULL );
-      int ncomp   = fmodel->associations[ assocx ].rcomps.size();
+      const int compno = assocx + 1;
+      const int nassoc = constraints.assoc_constraints( assocx, &cnsv, NULL );
+      const int ncomp  = fmodel->associations[assocx].rcomps.size();
 
       DbgLv(0) << "  Reaction" << compno << ":";
 
@@ -415,8 +414,7 @@ void US_MPI_Analysis::dmga_master( void )
          else if ( atype == US_dmGA_Constraints::ATYPE_KOFF )
             attrtype = tr( "k_Off Rate" );
 
-         double aval = constraints.fetch_attrib( fmodel->associations[ assocx ],
-                                                 atype );
+         const double aval = constraints.fetch_attrib( fmodel->associations[assocx], atype );
          DbgLv(0) << "    " << attrtype << "has a value of"
                   << aval;
       }
@@ -442,15 +440,14 @@ void US_MPI_Analysis::dmga_master_loop( void )
    static const int    min_generation = 10;
    static const int    _KS_BASE_      = 6;
    static const int    _KS_STEP_      = 3;
-   QString             s_ksbase       = job_config.debug_value( "ksame_base" );
-   QString             s_ksstep       = job_config.debug_value( "ksame_step" );
+   const QString       s_ksbase       = job_config.debug_value( "ksame_base" );
+   const QString       s_ksstep       = job_config.debug_value( "ksame_step" );
    int ks_base       = s_ksbase.isEmpty() ? _KS_BASE_ : s_ksbase.toInt();
    int ks_step       = s_ksstep.isEmpty() ? _KS_STEP_ : s_ksstep.toInt();
    ks_base           = qMax( 2, ks_base );
    ks_step           = qMax( 1, ks_step );
    //   static const int    max_same_count = my_workers * 5;
-   int    max_same_count       = ( ks_base + ( nfloatc / ks_step ) * ks_step )
-                                 * my_workers;
+   const int max_same_count           = ( ks_base + ( nfloatc / ks_step ) * ks_step ) * my_workers;
    int    avg_generation       = 0;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
@@ -511,8 +508,7 @@ void US_MPI_Analysis::dmga_master_loop( void )
             if ( avg > avg_generation )
             {
                avg_generation = avg;
-               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 )
-                                                 : mc_iteration;
+               const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
                QString progress =
                   "Avg. Generation: "  + QString::number( avg_generation );
@@ -622,7 +618,7 @@ void US_MPI_Analysis::dmga_master_loop( void )
          case EMMIGRATE:
          {
             // First get a set of genes as a concatenated marker vector.
-            int gene_count    = msg.size;
+            const int         gene_count    = msg.size;
             int doubles_count = gene_count * nfloatc;
             QVector< double > emmigrants( doubles_count ) ;
             DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: gene_count doubles_count" << gene_count << doubles_count;
@@ -636,7 +632,7 @@ void US_MPI_Analysis::dmga_master_loop( void )
                       MPI_STATUS_IGNORE );
 
             // Add the genes to the emmigres list
-            int emgx          = emigres.size();
+            const int emgx = emigres.size();
             DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: emgx" << emgx;
             marker_to_dgenes( emmigrants, emigres, emgx, gene_count );
             DbgLv( 1 ) << "dgmast: Recv#4 EMMIG: emigres size" << emigres.size();
@@ -689,7 +685,7 @@ void US_MPI_Analysis::dmga_master_loop( void )
 
    if ( early_termination )
    {  // Report when we have reached early termination of generations
-      int mc_iter  = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+      const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
       DbgLv(0) << "Early termination at average generation" << avg
          << ", MC" << mc_iter;
    }
@@ -709,8 +705,8 @@ void US_MPI_Analysis::dmga_global_fit( void )
    // Point to current dataset
    US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
-   int scan_count    = data->scanCount();
-   int radius_points = data->pointCount();
+   const int              scan_count    = data->scanCount();
+   const int              radius_points = data->pointCount();
    int index         = 0;
 
    QVector< double > scaled_data( static_cast<qsizetype>( scan_count ) * radius_points );
@@ -772,8 +768,8 @@ void US_MPI_Analysis::set_dmga_gaussians( void )
 
    for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
-      int nscan   = data_sets[ ee ]->run_data.scanCount();
-      int npoint  = data_sets[ ee ]->run_data.pointCount();
+      const int nscan  = data_sets[ee]->run_data.scanCount();
+      const int npoint = data_sets[ee]->run_data.pointCount();
 
       // Place the residuals magnitudes into a single vector for convenience
       for ( int ss = 0; ss < nscan; ss++, ks++ )
@@ -808,14 +804,14 @@ void US_MPI_Analysis::set_dmga_MonteCarlo( void )
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-      int scan_count    = edata->scanCount();
-      int radius_points = edata->pointCount();
+      const int              scan_count    = edata->scanCount();
+      const int              radius_points = edata->pointCount();
 
       for ( int ss = 0; ss < scan_count; ss++ )
       {
          for ( int rr = 0; rr < radius_points; rr++ )
          {
-            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
+            const double variation = US_Math2::box_muller( 0.0, sigmas[index] );
             mc_data[ index ] = scaled_data.value( ss, rr ) + variation;
             index++;
          }
@@ -1036,7 +1032,7 @@ bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
 }
 
 // Get an apply-ready model from a dmga gene
-void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
+void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene ) const
 {
    model        = dgene;           // Initialize the model
 
@@ -1053,15 +1049,15 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
    {  // Modify some coefficients based on associations
       US_Model::Association* as  = &model.associations[ ii ];
 
-      int nrco      = as->rcomps.size();                 // Components involved
-      int rpx       = nrco - 1;                          // Last comp index
-      int rc1       = as->rcomps[ 0 ];                   // Comp indexes
-      int rc2       = nrco == 2 ? rc1 : as->rcomps[ 1 ];
-      int rcp       = as->rcomps[ rpx ];
-      int st1       = as->stoichs[ 0 ];                  // Stoichiometries
-      int st2       = qAbs( as->stoichs[ 1 ] );
-      int stp       = qAbs( as->stoichs[ rpx ] );
-      double ff0p   = qMax( 1.0, model.components[ rcp ].f_f0 );
+      const int              nrco = as->rcomps.size(); // Components involved
+      const int              rpx  = nrco - 1;          // Last comp index
+      const int              rc1  = as->rcomps[0];     // Comp indexes
+      const int              rc2  = nrco == 2 ? rc1 : as->rcomps[1];
+      const int              rcp  = as->rcomps[rpx];
+      const int              st1  = as->stoichs[0]; // Stoichiometries
+      const int              st2  = qAbs( as->stoichs[1] );
+      const int              stp  = qAbs( as->stoichs[rpx] );
+      const double           ff0p = qMax( 1.0, model.components[rcp].f_f0 );
       model.components[ rcp ] = dgene.components[ rcp ]; // Raw product comp
       if ( group_rank < 2 )
       {
@@ -1070,7 +1066,7 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
       }
 
       // Reset concentration for reactant(s) and product
-      double cval   = model.components[ rc1 ].signal_concentration;
+      const double cval                             = model.components[rc1].signal_concentration;
       model.components[ rc2 ].signal_concentration  = cval;
       //model.components[ rcp ].signal_concentration  = cval;
       model.components[ rcp ].signal_concentration  = 0.0;

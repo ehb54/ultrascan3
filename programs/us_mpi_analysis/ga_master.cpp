@@ -24,7 +24,7 @@ void US_MPI_Analysis::ga_master( void )
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
 
-   Gene working_gene( buckets.count(), US_Solute() );
+   const Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
    for ( int i = 0; i < gcores_count; i++ )
@@ -35,7 +35,7 @@ void US_MPI_Analysis::ga_master( void )
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
@@ -44,7 +44,7 @@ void US_MPI_Analysis::ga_master( void )
 
       std::sort( best_fitness.begin(), best_fitness.end() );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-      int nisols      = simulation_values.solutes.size();
+      const int nisols          = simulation_values.solutes.size();
       DbgLv( 1 ) << "GaMast: sols size" << nisols << "buck size" << buckets.size() << "dset size" << data_sets.size();
       DbgLv( 1 ) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
                  << simulation_values.solutes[0].v << simulation_values.solutes[0].d;
@@ -63,15 +63,15 @@ void US_MPI_Analysis::ga_master( void )
       std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
 
       // Convert given solute points to s,k for model output
-      double vbar20  = data_sets[ current_dataset ]->vbar20;
+      const double vbar20 = data_sets[current_dataset]->vbar20;
       QList< int > attrxs;
       attrxs << attr_x << attr_y << attr_z;
-      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
-      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
-      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
-      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
-      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
-      bool   vary_v  = ( attr_z != ATTR_V );
+      const bool have_s = ( attrxs.indexOf( ATTR_S ) >= 0 );
+      const bool have_k = ( attrxs.indexOf( ATTR_K ) >= 0 );
+      const bool have_w = ( attrxs.indexOf( ATTR_W ) >= 0 );
+      const bool have_d = ( attrxs.indexOf( ATTR_D ) >= 0 );
+      const bool have_f = ( attrxs.indexOf( ATTR_F ) >= 0 );
+      const bool vary_v = ( attr_z != ATTR_V );
 
       for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
       {
@@ -219,7 +219,6 @@ void US_MPI_Analysis::ga_master_loop( void )
       worker = status.MPI_SOURCE;
 
       QString g;
-      QString s;
 
       max_rss();
 
@@ -237,8 +236,7 @@ void US_MPI_Analysis::ga_master_loop( void )
             if ( avg > avg_generation )
             {
                avg_generation = avg;
-               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 )
-                                                 : mc_iteration;
+               const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
                QString progress =
                   "Avg. Generation: "  + QString::number( avg_generation );
@@ -341,8 +339,8 @@ void US_MPI_Analysis::ga_master_loop( void )
 
          case EMMIGRATE:
          {
-            // First get a set of genes as a concatenated vector.  
-            int               gene_count    = msg.size;
+            // First get a set of genes as a concatenated vector.
+            const int         gene_count    = msg.size;
             int               doubles_count = gene_count * buckets.size() * 
                                               solute_doubles;
             QVector< double > emmigrants( doubles_count ) ;
@@ -357,7 +355,7 @@ void US_MPI_Analysis::ga_master_loop( void )
 
             // Add the genes to the emmigres list
             int solute = 0;
-            int solinc = solute_doubles - 2;
+            const int solinc = solute_doubles - 2;
 
             for ( int i = 0; i < gene_count; i++ )
             {
@@ -365,8 +363,8 @@ void US_MPI_Analysis::ga_master_loop( void )
 
                for ( int b = 0; b < buckets.size(); b++ )
                {
-                  double s = emmigrants[ solute++ ];
-                  double k = emmigrants[ solute++ ];
+                  const double s = emmigrants[solute++];
+                  const double k = emmigrants[solute++];
                   gene << US_Solute( s, k );
                   solute  += solinc; // Concentration, Vbar, DiffCoeff
                }
@@ -407,7 +405,7 @@ void US_MPI_Analysis::ga_master_loop( void )
 
    if ( early_termination )
    {  // Report when we have reached early termination of generations
-      int mc_iter  = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+      const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
       DbgLv(0) << "Early termination at average generation" << avg
          << ", MC" << mc_iter;
    }
@@ -432,8 +430,8 @@ void US_MPI_Analysis::ga_global_fit( void )
 
    concentrations[ current_dataset ] = concentration;
    edata->ODlimit   /= concentration;
-   int scan_count    = edata->scanCount();
-   int radius_points = edata->pointCount();
+   const int         scan_count    = edata->scanCount();
+   const int         radius_points = edata->pointCount();
    int index         = 0;
 
    QVector< double > scaled_data( scan_count * radius_points + 1 );
@@ -443,7 +441,7 @@ void US_MPI_Analysis::ga_global_fit( void )
    {
       for ( int rr = 0; rr < radius_points; rr++ )
       {
-         double scaled_value    = edata->value( ss, rr ) / concentration;
+         const double scaled_value = edata->value( ss, rr ) / concentration;
          scaled_data[ index++ ] = scaled_value;
          edata->setValue( ss, rr, scaled_value );
       }
@@ -499,7 +497,7 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
       max_depth   = 0;  // Make the datasets compatible
       calculated_solutes.clear();
       calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
-      int ncsols  = calculated_solutes[ 0 ].size();
+      const int ncsols = calculated_solutes[0].size();
       DbgLv( 1 ) << "sgMC: bfgenes stored" << ncsols;
 
       solutes_from_gene( calculated_solutes[ 0 ], ncsols );
@@ -521,14 +519,14 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-      int scan_count    = edata->scanCount();
-      int radius_points = edata->pointCount();
+      const int              scan_count    = edata->scanCount();
+      const int              radius_points = edata->pointCount();
 
       for ( int ss = 0; ss < scan_count; ss++, ks++ )
       {
          for ( int rr = 0; rr < radius_points; rr++ )
          {
-            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
+            const double variation = US_Math2::box_muller( 0.0, sigmas[index] );
             mc_data[ index ] = scaled_data.value( ks, rr ) + variation;
             index++;
          }

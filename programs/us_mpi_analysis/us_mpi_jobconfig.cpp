@@ -16,8 +16,8 @@ double value_attr( const QXmlStreamAttributes& attr, const char* name )
 //  problems.  Limits may be zero or negative (flotation s).
 double rounded( double value, double vmin, double vmax )
 {
-   double vmag = qMax( qAbs( vmin ), qAbs( vmax ) );
-   double vinc = ( vmag > 0.0 ) ? pow( 10.0, qFloor( log10( vmag ) ) - 6 ) : 1.0;
+   const double vmag = qMax( qAbs( vmin ), qAbs( vmax ) );
+   const double vinc = ( vmag > 0.0 ) ? pow( 10.0, qFloor( log10( vmag ) ) - 6 ) : 1.0;
    return qRound64( value / vinc ) * vinc;
 }
 } // namespace
@@ -189,8 +189,8 @@ void US_MPI_JobConfig::read_job( QXmlStreamReader& xml )
          continue;
       }
 
-      QXmlStreamAttributes attr  = xml.attributes();
-      QString              xname = xml.name().toString();
+      const QXmlStreamAttributes attr  = xml.attributes();
+      const QString              xname = xml.name().toString();
 
       if ( xname == "cluster" )
       {
@@ -205,9 +205,9 @@ void US_MPI_JobConfig::read_job( QXmlStreamReader& xml )
       else if ( xname == "udp" )
       {
          udp_server    = attr.value( "server" ).toString();
-         QString sport = attr.value( "port" ).toString();
+         const QString sport = attr.value( "port" ).toString();
          bool    ok    = false;
-         int     port  = sport.toInt( &ok );
+         const int     port  = sport.toInt( &ok );
          if ( ok && port > 0 && port <= 65535 )
          {
             udp_port = (quint16) port;
@@ -230,7 +230,7 @@ void US_MPI_JobConfig::read_job( QXmlStreamReader& xml )
       else if ( xname == "datasetCount" )
       {
          bool ok;
-         int  count = attr.value( "value" ).toString().toInt( &ok );
+         const int count = attr.value( "value" ).toString().toInt( &ok );
          if ( ok )
          {
             dataset_count = count;
@@ -279,7 +279,7 @@ void US_MPI_JobConfig::read_job_parameters( QXmlStreamReader& xml )
          continue;
       }
 
-      QXmlStreamAttributes attr = xml.attributes();
+      const QXmlStreamAttributes attr = xml.attributes();
 
       if ( name == "bucket" )
       {
@@ -302,7 +302,7 @@ void US_MPI_JobConfig::read_job_parameters( QXmlStreamReader& xml )
 
       else if ( name.startsWith( "s_m" ) || name.startsWith( "ff0_m" ) )
       { // Also stored as the generic x/y limit
-         QString svalu    = attr.value( "value" ).toString();
+         const QString svalu = attr.value( "value" ).toString();
          parameters[name] = svalu;
          name.replace( "s_m", "x_m" );
          name.replace( "ff0_m", "y_m" );
@@ -347,17 +347,17 @@ void US_MPI_JobConfig::read_bucket( const QXmlStreamAttributes& attr, QString& y
    Bucket bucket;
    auto   limit = [&attr, &bucket]( const QString& name ) { // A missing or invalid limit reads as 0, as before, and is recorded
       bool   ok;
-      double value = attr.value( name ).toString().toDouble( &ok );
+      const double value = attr.value( name ).toString().toDouble( &ok );
       if ( !ok )
       {
          bucket.unreadable << ( name.startsWith( "s_" ) ? name + " (no x_max)" : name );
       }
       return value;
    };
-   double xmin = limit( xmin_name );
-   double xmax = limit( xmax_name );
-   double ymin = limit( ymin_name );
-   double ymax = limit( ymax_name );
+   const double xmin = limit( xmin_name );
+   const double xmax = limit( xmax_name );
+   const double ymin = limit( ymin_name );
+   const double ymax = limit( ymax_name );
 
    if ( ytype.isEmpty() )
    {
@@ -390,9 +390,9 @@ void US_MPI_JobConfig::read_dataset( QXmlStreamReader& xml, DatasetSpec& spec )
          continue;
       }
 
-      QString              name = xml.name().toString();
-      QXmlStreamAttributes attr = xml.attributes();
-      QString              sval = attr.value( "value" ).toString();
+      const QString              name = xml.name().toString();
+      const QXmlStreamAttributes attr = xml.attributes();
+      const QString              sval = attr.value( "value" ).toString();
 
       if ( name == "files" )
       {
@@ -493,8 +493,8 @@ void US_MPI_JobConfig::read_files( QXmlStreamReader& xml, DatasetSpec& spec )
          continue;
       }
 
-      QString type     = xml.name().toString();
-      QString filename = xml.attributes().value( "filename" ).toString();
+      const QString type     = xml.name().toString();
+      const QString filename = xml.attributes().value( "filename" ).toString();
 
       if ( type == "auc" )
       {
@@ -533,7 +533,7 @@ void US_MPI_JobConfig::read_solution( QXmlStreamReader& xml, DatasetSpec& spec )
          continue;
       }
 
-      QXmlStreamAttributes attr = xml.attributes();
+      const QXmlStreamAttributes attr = xml.attributes();
 
       if ( xml.name() == QLatin1String( "buffer" ) )
       {
@@ -549,7 +549,7 @@ void US_MPI_JobConfig::read_solution( QXmlStreamReader& xml, DatasetSpec& spec )
          aninfo.analyte.mw     = value_attr( attr, "mw" );
          aninfo.analyte.vbar20 = value_attr( attr, "vbar20" );
          aninfo.amount         = value_attr( attr, "amount" );
-         QString atype         = attr.value( "type" ).toString();
+         const QString atype   = attr.value( "type" ).toString();
          aninfo.analyte.type   = US_Analyte::PROTEIN;
 
          if ( atype == "DNA" )
@@ -582,8 +582,8 @@ QString US_MPI_JobConfig::DatasetSpec::edit_file_name() const
    // MWL: "<run>.<edit>.<triple>.<lambda1-lambda2>.xml" becomes
    //  "<run>.<edit>.<triple>.<lambda1-lambda2>@<lambda>.xml"
    clambda        = clambda + "@" + auc_file.section( ".", -2, -2 );
-   QString fpart1 = edit_file.section( ".", 0, -3 );
-   QString fpart2 = edit_file.section( ".", -1, -1 );
+   const QString fpart1 = edit_file.section( ".", 0, -3 );
+   const QString fpart2 = edit_file.section( ".", -1, -1 );
    return fpart1 + "." + clambda + "." + fpart2;
 }
 
@@ -798,7 +798,7 @@ int method_bit( const QString& method )
 // Check one value against its spec; returns an error text or empty
 QString check_value( const ParamSpec& spec, const QString& value )
 {
-   QString name = QString( spec.key ) + " \"" + value + "\"";
+   const QString name = QString( spec.key ) + " \"" + value + "\"";
    bool    ok   = true;
    double  dval = 0.0;
 
@@ -837,7 +837,7 @@ QString check_value( const ParamSpec& spec, const QString& value )
 
    if ( dval < spec.lo || dval > spec.hi )
    {
-      QString range =
+      const QString range =
          std::isinf( spec.hi ) ? QString( "at least %1" ).arg( spec.lo ) : QString( "from %1 to %2" ).arg( spec.lo ).arg( spec.hi );
       return name + ": must be " + range;
    }
@@ -854,15 +854,15 @@ QStringList US_MPI_JobConfig::method_families()
 
 void US_MPI_JobConfig::validate()
 {
-   int  mbit = method_bit( method );
+   const int mbit = method_bit( method );
 
    // s_m* and ff0_m* parameters are also stored as x_m* and y_m*: report
    //  a problem only under the name given in the file
-   auto mirrored = [this]( const QString& key )
+   auto      mirrored = [this]( const QString& key )
    {
-      QString source = key.startsWith( "x_m" )   ? "s_m" + key.mid( 3 )
-                       : key.startsWith( "y_m" ) ? "ff0_m" + key.mid( 3 )
-                                                 : QString();
+      const QString source = key.startsWith( "x_m" )   ? "s_m" + key.mid( 3 )
+                             : key.startsWith( "y_m" ) ? "ff0_m" + key.mid( 3 )
+                                                       : QString();
       return !source.isEmpty() && parameters.contains( source ) && parameters.value( source ) == parameters.value( key );
    };
 
@@ -876,7 +876,7 @@ void US_MPI_JobConfig::validate()
    for ( const ParamSpec& spec : PARAMS )
    {
       known << spec.key;
-      QString value = parameters.value( spec.key ).trimmed();
+      const QString value = parameters.value( spec.key ).trimmed();
 
       if ( value.isEmpty() )
       {
@@ -887,7 +887,7 @@ void US_MPI_JobConfig::validate()
          continue;
       }
 
-      QString error = check_value( spec, value );
+      const QString error = check_value( spec, value );
       if ( !error.isEmpty() && ( spec.methods & mbit ) != 0 && !mirrored( spec.key ) )
       {
          errors << error;
@@ -906,8 +906,8 @@ void US_MPI_JobConfig::validate()
    auto check_range = [this]( const char* kmin, const char* kmax )
    {
       bool   okn, okx;
-      double vmin = parameters.value( kmin ).toDouble( &okn );
-      double vmax = parameters.value( kmax ).toDouble( &okx );
+      const double vmin = parameters.value( kmin ).toDouble( &okn );
+      const double vmax = parameters.value( kmax ).toDouble( &okx );
       if ( okn && okx && vmin >= vmax )
       {
          errors << QString( "%1 (%2) must be less than %3 (%4)" ).arg( kmin ).arg( vmin ).arg( kmax ).arg( vmax );
@@ -967,7 +967,7 @@ void US_MPI_JobConfig::validate()
    for ( int ii = 0; ii < datasets.size(); ii++ )
    {
       const DatasetSpec& ds = datasets[ii];
-      QString            dx = QString( "Dataset %1: " ).arg( ii + 1 );
+      const QString      dx = QString( "Dataset %1: " ).arg( ii + 1 );
 
       if ( ds.auc_file.isEmpty() )
       {
@@ -1004,8 +1004,8 @@ QString US_MPI_JobConfig::debug_value( const QString& key, bool* found ) const
 {
    for ( const QString& entry : debug_text() )
    { // "key=value", "key value" or "key"
-      int     sep   = entry.indexOf( QRegularExpression( "[= ]" ) );
-      QString ekey  = ( sep < 0 ) ? entry : entry.left( sep );
+      const int     sep   = entry.indexOf( QRegularExpression( "[= ]" ) );
+      const QString ekey  = ( sep < 0 ) ? entry : entry.left( sep );
       QString value = ( sep < 0 ) ? QString() : entry.mid( sep + 1 ).trimmed();
 
       if ( ekey == key )

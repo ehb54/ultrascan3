@@ -394,7 +394,7 @@ class US_MPI_Analysis : public QObject
 
         // Methods
         void                   set_solute_types( void );
-        void                   parse_command_line( int, QStringList&, QString&, QString&, QString&, QMap<QString, QString>& );
+        void                   parse_command_line( int, QStringList&, QString&, QString&, QString&, QMap<QString, QString>& ) const;
         void                   unpack_inputs( const QString& );
         QString                find_job_file( const QString& );
         void                   read_task_parameters( const QString&, const QMap<QString, QString>& );
@@ -413,7 +413,7 @@ class US_MPI_Analysis : public QObject
         void     abort         ( const QString&, int=-1 );
         void                   abort_all( const QString&, int = -1 );
         void                   abort_if_any( const QString& );
-        bool                   read_shared_file( const QString&, QByteArray& );
+        bool                   read_shared_file( const QString&, QByteArray& ) const;
         void                   archive_outputs( void );
         long int max_rss       ( void );
         static void            phys_memory( qint64&, qint64& );
@@ -422,11 +422,11 @@ class US_MPI_Analysis : public QObject
                                  double, double, double );
         void     init_solutes  ( void );
         void     fill_queue    ( void );
-        void     limitBucket   ( Bucket& );
+        void                   limitBucket( Bucket& ) const;
 
         // Master
         void     _2dsa_master      ( void );
-        void     submit            ( Sa_Job&, int );
+        void                   submit( Sa_Job&, int ) const;
         void                   run_2dsa_jobs( void );
         void                   start_2dsa_dataset( int, bool );
         QString                progress_2dsa( void );
@@ -529,7 +529,7 @@ class US_MPI_Analysis : public QObject
                                      US_dmGA_Constraints::AttribType&, int& );
         bool    fetch_attr_value   ( double&, US_Model&,
                                      US_dmGA_Constraints::AttribType&, int& );
-        void    model_from_dgene   ( US_Model&, DGene& dgene );
+        void                   model_from_dgene( US_Model&, DGene& dgene ) const;
 
         // DMGA Worker
         void    dmga_worker        ( void );
@@ -559,10 +559,10 @@ class US_MPI_Analysis : public QObject
         void    write_pcsa_aux_model( const int );
         void    filter_mrecs        ( const int, QVector< US_ModelRecord >&,
                                                  QVector< US_ModelRecord >& );
-        void    clean_mrecs         ( QVector< US_ModelRecord >& );
+        void                   clean_mrecs( QVector<US_ModelRecord>& ) const;
         double  alpha_scan          ( void );
-        void    apply_alpha( const double, QVector< double >*, QVector< double >*,
-                             const int, const int, const int, double&, double& );
+        void apply_alpha( const double, QVector<double>*, QVector<double>*, const int, const int, const int, double&, double& )
+           const;
         QString shorter_filename    ( const QString );
 
 
@@ -588,7 +588,7 @@ class US_MPI_Analysis : public QObject
         // Debug
         void    dump_buckets( void );
         void    dump_genes  ( int );
-        void    dump_fitness( const QList< Fitness >& );
+        void                   dump_fitness( const QList<Fitness>& ) const;
 };
 
 #endif
