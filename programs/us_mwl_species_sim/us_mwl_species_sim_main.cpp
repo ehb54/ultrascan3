@@ -61,12 +61,6 @@ int main( int argc, char* argv[] )
    parser.addOption( start_option );
    auto save_option = QCommandLineOption( "save", "Save simulation data to a directory", "save" );
    parser.addOption( save_option );
-   auto overwrite_option = QCommandLineOption( "overwrite",
-                                               "Allow --save into a directory that already has files in it; without "
-                                               "it, a non-empty save directory is an error, since a previous run's "
-                                               "files (for example, edit XMLs with a stale timestamp) would otherwise "
-                                               "be left alongside the new ones" );
-   parser.addOption( overwrite_option );
    auto guid_seed_option = QCommandLineOption( "guid-seed",
                                                "Derive this run's experiment, raw and edit GUIDs from this text "
                                                "instead of minting random ones, so simulating the same inputs twice "
@@ -161,10 +155,6 @@ int main( int argc, char* argv[] )
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
    {
       args["save"] = parser.value( save_option ).replace( "\\", "/" );
-   }
-   if ( parser.isSet( overwrite_option ) )
-   {
-      args["overwrite"] = "true";
    }
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
    {

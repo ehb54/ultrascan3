@@ -992,14 +992,14 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       {
          reportHeadlessLoadFailure( "save directory (could not create)", save_path, errors_to_cl, gui_needed, error_occured );
       }
-      else if ( dir.exists() && !dir.isEmpty() && !flags.contains( "overwrite" ) )
+      else if ( dir.exists() && !dir.isEmpty() )
       {
          // A stale file from a previous run into the same directory (an
          // edit XML with a different timestamp, a noise CSV from a run
          // that had noise, ...) would otherwise sit alongside the new
          // output and confuse a later loadData().
          reportHeadlessLoadFailure(
-            "save directory (not empty; pass --overwrite to reuse it)", save_path, errors_to_cl, gui_needed, error_occured );
+            "save directory (not empty; choose an empty or new directory)", save_path, errors_to_cl, gui_needed, error_occured );
       }
       else
       {

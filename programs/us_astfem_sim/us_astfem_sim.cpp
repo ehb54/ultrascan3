@@ -481,12 +481,14 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
             }
          }
 
-         if ( !nonempty_dirs.isEmpty() && !flags.contains( "overwrite" ) )
+         // Refuse a non-empty directory rather than clear it: the path comes
+         // straight from the command line, so a typo must never delete files.
+         if ( !nonempty_dirs.isEmpty() )
          {
             if ( errors_to_cl )
             {
-               qDebug() << "Error: save directory is not empty; pass "
-                           "--overwrite to reuse it:"
+               qDebug() << "Error: save directory is not empty; choose an empty "
+                           "or new directory:"
                         << nonempty_dirs;
                exit( 2 );
             }
@@ -495,27 +497,6 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
          }
          else
          {
-            // --overwrite: clear stale content from a previous run instead
-            // of leaving it to mix with the new output.
-            for ( const QString& candidate : nonempty_dirs )
-            {
-               QDir               cdir( candidate );
-               const QStringList& entries = cdir.entryList( QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot );
-
-               for ( const QString& entry : entries )
-               {
-                  QFileInfo info( cdir.filePath( entry ) );
-                  if ( info.isDir() )
-                  {
-                     QDir( info.filePath() ).removeRecursively();
-                  }
-                  else
-                  {
-                     QFile::remove( info.filePath() );
-                  }
-               }
-            }
-
             // Check whether a file can be created in the directory, without
             // risking a collision with a same-named file the user already has.
             QTemporaryFile probe( dir.filePath( "us_astfem_sim_writable_XXXXXX" ) );
