@@ -1459,6 +1459,7 @@ DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
    int    ktotal     = 0;
    int    scnx       = 0;
    int    kdsx       = 0;
+   int                     kmsk       = 0; // Data row index into odmask
    US_DataIO::RawData*     sdata = &sim_vals.sim_data;
    US_DataIO::RawData*     resid = &sim_vals.residuals;
    sim_vals.residuals            =  sim_vals.sim_data;
@@ -1486,6 +1487,11 @@ DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
                           - rinvec[ ss + rinoffs ];
             resid->setValue( scnx, rr, resval );
 
+            if ( odmask[kmsk++] )
+            { // ODlimit exceeded:  not fitted, so not in the variance
+               continue;
+            }
+
             double r2    = sq( resval );
             variance    += r2;
             varidset    += r2;
@@ -1502,14 +1508,14 @@ DbgLv(1) << "CR: kdsx variance" << kdsx << varidset << variance;
    }
 
    sim_vals.variances.resize( dataset_count );
-   variance         /= (double)ktotal;    // Total sets variance
+   variance /= (double) qMax( ktotal, 1 ); // Total sets variance
    sim_vals.variance = variance;
    int kk    = 0;
 
    for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Scale variances for each data set
-      sim_vals.variances[ kk ] = rmsds[ kk ] / (double)( kntva[ kk ] );
-DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
+      sim_vals.variances[kk] = rmsds[kk] / (double) qMax( kntva[kk], 1 );
+      DbgLv( 1 ) << "CR:     kk variance" << sim_vals.variances[kk];
       kk++;
    }
 
