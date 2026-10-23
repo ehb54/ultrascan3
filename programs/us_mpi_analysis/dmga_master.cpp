@@ -174,7 +174,10 @@ void US_MPI_Analysis::dmga_master( void )
          }
       }
    }
-   DbgLv( 0 ) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d << wmodel.associations[0].k_off;
+   if ( !wmodel.associations.isEmpty() )
+   {
+      DbgLv( 0 ) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d << wmodel.associations[0].k_off;
+   }
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
@@ -328,9 +331,15 @@ void US_MPI_Analysis::dmga_master( void )
               << simulation_values.sim_data.value( ss - 2, hh ) << simulation_values.sim_data.value( ss - 1, hh );
    DbgLv( 0 ) << "MDL comp1 s,k,w,D,f" << fmodel->components[0].s / data_sets[0]->s20w_correction << fmodel->components[0].f_f0
               << fmodel->components[0].mw << fmodel->components[0].D / data_sets[0]->D20w_correction << fmodel->components[0].f;
-   DbgLv( 0 ) << "MDL comp2 s,k,w,D,f" << fmodel->components[1].s / data_sets[0]->s20w_correction << fmodel->components[1].f_f0
-              << fmodel->components[1].mw << fmodel->components[1].D / data_sets[0]->D20w_correction << fmodel->components[1].f;
-   DbgLv( 0 ) << "MDL asoc1 Kd,koff" << fmodel->associations[0].k_d << fmodel->associations[0].k_off;
+   if ( fmodel->components.size() > 1 )
+   {
+      DbgLv( 0 ) << "MDL comp2 s,k,w,D,f" << fmodel->components[1].s / data_sets[0]->s20w_correction << fmodel->components[1].f_f0
+                 << fmodel->components[1].mw << fmodel->components[1].D / data_sets[0]->D20w_correction << fmodel->components[1].f;
+   }
+   if ( !fmodel->associations.isEmpty() )
+   {
+      DbgLv( 0 ) << "MDL asoc1 Kd,koff" << fmodel->associations[0].k_d << fmodel->associations[0].k_off;
+   }
    DbgLv( 0 ) << "DS dens visc manual temp" << data_sets[0]->density << data_sets[0]->viscosity << data_sets[0]->manual
               << data_sets[0]->temperature;
    US_SimulationParameters* simpar = &data_sets[0]->simparams;
