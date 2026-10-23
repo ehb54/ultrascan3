@@ -701,7 +701,7 @@ TEST_F( TestUSDataIOEdits, EquilibriumSpeedStepsSurviveARoundTrip )
    EXPECT_DOUBLE_EQ( in.rangeRight, out.speedData.last().dataRight );
 }
 
-TEST_F( TestUSDataIOEdits, LambdasAreNeverWritten )
+TEST_F( TestUSDataIOEdits, LambdasRoundTripForWavelengthRange )
 {
    US_DataIO::EditValues out;
    out.expType    = "Velocity";
@@ -715,14 +715,12 @@ TEST_F( TestUSDataIOEdits, LambdasAreNeverWritten )
    ASSERT_EQ( US_DataIO::writeEdits( file, out ), US_DataIO::OK );
 
    QString text = slurp( file );
-   EXPECT_FALSE( text.contains( "<lambdas>" ) );
-   EXPECT_FALSE( text.contains( "<lambda " ) );
+   EXPECT_TRUE( text.contains( "<lambdas>" ) );
 
-   // A wavelength range must still parse when <lambdas> is absent.
    US_DataIO::EditValues in;
    ASSERT_EQ( US_DataIO::readEdits( file, in ), US_DataIO::OK );
 
-   EXPECT_TRUE( in.lambdas.isEmpty() );
+   EXPECT_EQ( in.lambdas, out.lambdas );
    EXPECT_DOUBLE_EQ( in.meniscus, out.meniscus );
    EXPECT_DOUBLE_EQ( in.bottom, out.bottom );
 }
