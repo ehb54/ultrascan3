@@ -12,8 +12,10 @@ us3_add_gui_test(test_us_astfem_clipdata_gui
             programs;simulation
         )
 
-# Persistence tests require the simulator and input-generator executables.
-if(TARGET us_astfem_sim AND TARGET us_sim_inputs_gen)
+# Persistence tests require the simulator and input-generator executables,
+# and the local-only dev license header, which is not in the repository.
+if(TARGET us_astfem_sim AND TARGET us_sim_inputs_gen
+        AND EXISTS "${CMAKE_SOURCE_DIR}/test/common/us3_dev_license.h")
     us3_add_gui_test(test_us_astfem_persist_gui
             SOURCES
                 test_us_astfem_persist_gui.cpp
@@ -52,5 +54,6 @@ if(TARGET us_astfem_sim AND TARGET us_sim_inputs_gen)
 else()
     message(STATUS
         "test: skipping test_us_astfem_persist_gui and "
-        "test_us_astfem_reproducibility_gui (simulator programs are not built)")
+        "test_us_astfem_reproducibility_gui (simulator programs are not built, or "
+        "test/common/us3_dev_license.h is not present)")
 endif()
