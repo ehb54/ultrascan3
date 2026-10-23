@@ -624,16 +624,10 @@ TEST_F( TestUSSolveSimNnlsNoise, MaskedRowsAreLeftOutOfTheNoiseFit )
                                              &masked ),
                     0 );
 
-         // Masked rows of the projected A stay zero
-         double amask = 0.0;
-         for ( int kk = 0; kk < nt; kk++ )
-         {
-            for ( int cc = 0; cc < nsolutes && masked[kk]; cc++ )
-            {
-               amask = qMax( amask, fabs( awork[cc * narows + kk] ) );
-            }
-         }
-         EXPECT_EQ( amask, 0.0 );
+         // awork is not checked here:  the NNLS solve overwrites it, and its
+         // Householder steps fill a masked row once it becomes a pivot row.
+         // Masked rows left non-zero by the projection would change the
+         // problem solved, which the residual and Kuhn-Tucker checks catch.
 
          // At the unmasked rows, b - A x - noise = P (b - A x)
          QVector<double> resid = data;
