@@ -15,7 +15,8 @@
 //! "data" writes <runID>.RI.<cell>.A.260.auc and the edit file
 //! <runID>.e1.RI.<cell>.A.260.xml.  "cgrid" writes a custom-grid model file.
 //! Options of "data":  scans=<n> (default 30) and nobottom (an edit file
-//! without <bottom>, as us_edit writes when it has none).
+//! without <bottom>, as older edit files lack the element; us_edit always
+//! writes it, with radius 0 when it has none).
 
 #include <QtCore>
 #include <cmath>
@@ -201,8 +202,8 @@ int write_data( const QString& outdir, const QString& runID, int cell, uint64_t 
    simparams.rotorcoeffs[0]  = stretch[0];
    simparams.rotorcoeffs[1]  = stretch[1];
    simparams.bottom_position = kCpBottom;
-   // As us_mpi_analysis:  the edited bottom, else the stretched centerpiece
-   //  bottom
+   // As us_mpi_analysis dataset_bottom():  the edited bottom, else the
+   //  stretched centerpiece bottom
    simparams.bottom          = ( edata.bottom > 0.0 ) ? edata.bottom : stretched_bottom();
    simparams.band_forming    = false;
 

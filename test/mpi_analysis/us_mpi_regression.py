@@ -313,8 +313,9 @@ def build_archive(name, case, testdata, casedir):
 
 def mpirun_command(mpirun, nprocs):
     cmd = [mpirun]
-    version = subprocess.run([mpirun, "--version"], capture_output=True,
-                             text=True).stdout
+    version = subprocess.run([mpirun, "--version"], stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             universal_newlines=True).stdout
     if "Open MPI" in version or "OpenRTE" in version:
         cmd += ["--oversubscribe"]
     return cmd + ["-np", str(nprocs)]
