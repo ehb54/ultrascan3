@@ -6,15 +6,16 @@
 #include <QtNetwork>
 #include <mpi.h>
 
-#include "us_model.h"
-#include "us_dmga_constr.h"
-#include "us_pcsa_modelrec.h"
 #include "us_dataIO.h"
+#include "us_dmga_constr.h"
+#include "us_math2.h"
+#include "us_model.h"
+#include "us_mpi_jobconfig.h"
 #include "us_noise.h"
+#include "us_pcsa_modelrec.h"
 #include "us_simparms.h"
 #include "us_solve_sim.h"
 #include "us_vector.h"
-#include "us_math2.h"
 
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
@@ -175,6 +176,7 @@ class US_MPI_Analysis : public QObject
 
         QString requestID;                  //!< Request ID
         QString directory;                  //!< Directory path
+        QString                   output_dir;                 //!< Output directory (absolute)
         QString analysis_type;              //!< Analysis type
         QString cluster;                    //!< Cluster name
         QString db_name;                    //!< Database name
@@ -182,7 +184,7 @@ class US_MPI_Analysis : public QObject
         QString requestGUID;                //!< Request GUID
         QString analysisDate;               //!< Analysis date
 
-        QMap< QString, QString > parameters; //!< Parameters map
+        US_MPI_JobConfig          job_config;  //!< The job description (hpcrequest XML)
         QMap< QString, QString > task_params; //!< Task parameters map
 
         QDateTime submitTime;               //!< Submission time
@@ -391,16 +393,30 @@ class US_MPI_Analysis : public QObject
         enum { GENERATION, GENE, IMMIGRATE, EMMIGRATE, UPDATE, FINISHED };
 
         // Methods
-        void     parse         ( const QString& );
-        void     parse_job     ( QXmlStreamReader& );
-        void     parse_dataset ( QXmlStreamReader&, DATASET* );
-        void     parse_files   ( QXmlStreamReader&, DATASET* );
-        void     parse_solution( QXmlStreamReader&, DATASET* );
+        void                   set_solute_types( void );
+        void                   parse_command_line( int, QStringList&, QString&, QString&, QString&, QMap<QString, QString>& );
+        void                   unpack_inputs( const QString& );
+        QString                find_job_file( const QString& );
+        void                   read_task_parameters( const QString&, const QMap<QString, QString>& );
+        void                   announce_start( const QString& );
+        void                   load_data( void );
+        void                   set_fit_controls( void );
+        void                   set_ga_controls( void );
+        void                   prepare_datasets( bool&, int&, int&, int& );
+        void                   prepare_timestates( int, int, int );
+        static QString         timestate_path( const QString&, const QString& );
+        void                   prepare_speed_steps( bool );
+        void                   check_grid_size( void );
+        void                   choose_groups( void );
+        void                   read_job_config( const QString& );
         void     send_udp      ( const QString& );
         void     abort         ( const QString&, int=-1 );
+        void                   abort_all( const QString&, int = -1 );
+        void                   abort_if_any( const QString& );
+        bool                   read_shared_file( const QString&, QByteArray& );
+        void                   archive_outputs( void );
         long int max_rss       ( void );
         static void            phys_memory( qint64&, qint64& );
-        QString  par_key_value ( const QString, const QString );
 
         Gene     create_solutes( double, double, double,
                                  double, double, double );

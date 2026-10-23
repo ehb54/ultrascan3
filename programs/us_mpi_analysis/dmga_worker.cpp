@@ -22,17 +22,15 @@ void US_MPI_Analysis::dmga_worker( void )
    static const int    GR_INCR  = 10;
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
-   QStringList keys    = parameters.keys();
-   p_grid              = ( keys.contains( "p_grid" ) )
-                         ? parameters[ "p_grid" ].toInt() : 100;
-   QString dbgtext     = parameters[ "debug_text" ];
-   QString s_bsig      = par_key_value( dbgtext, "base_sig" );
-   QString s_grinc     = par_key_value( dbgtext, "g_redo_inc" );
+   p_grid                       = job_config.params.ga.p_grid;
+   QString s_bsig               = job_config.debug_value( "base_sig" );
+   QString s_grinc              = job_config.debug_value( "g_redo_inc" );
    base_sig            = s_bsig .isEmpty() ? BASE_SIG : s_bsig .toDouble();
    g_redo_inc          = s_grinc.isEmpty() ? GR_INCR  : s_grinc.toInt();
-if(group_rank==1)
-DbgLv(0) << my_rank << "dmga_worker: base_sig" << base_sig
- << "g_redo_inc" << g_redo_inc;
+   if ( group_rank == 1 )
+   {
+      DbgLv( 0 ) << my_rank << "dmga_worker: base_sig" << base_sig << "g_redo_inc" << g_redo_inc;
+   }
 
    buckets.clear();
 
@@ -55,16 +53,16 @@ DbgLv(0) << my_rank << "dmga_worker: base_sig" << base_sig
       simulation_values.sim_data .scanData.resize( ntscan );
       simulation_values.residuals.scanData.resize( ntscan );
    }
-//if(group_rank>=0)
-//abort( "DMGA_WORKER not yet implemented" );
+   //if(group_rank>=0)
+   //abort( "DMGA_WORKER not yet implemented" );
 
    // Read in the constraints model and build constraints
-   QString cmfname  = "../" + parameters[ "DC_model" ];
+   QString cmfname = "../" + job_config.params.dc_model.value_or( "" );
    wmodel.load( cmfname );                  // Load the constraints model
    constraints.load_constraints( &wmodel ); // Build the constraints object
    constraints.get_work_model  ( &wmodel ); // Get the base work model
-DbgLv(1) << my_rank << "dmga_worker: cmfname" << cmfname;
-DbgLv(1) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
+   DbgLv( 1 ) << my_rank << "dmga_worker: cmfname" << cmfname;
+   DbgLv( 1 ) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
 
    MPI_GA_MSG msg;
    MPI_Status status;
@@ -89,10 +87,9 @@ DbgLv(1) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
                            wmodel.components[ 0 ].delta == 0.0  &&
                            wmodel.coSedSolute < 0  &&
                            data_sets[ 0 ]->compress == 0.0 );
-DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
- << nfloatc << nfvari << do_astfem;
-//DbgLv(1) << my_rank << "dmga_worker: wmodel DUMP";
-//wmodel.debug();
+   DbgLv( 1 ) << my_rank << "dmga_worker: nfloatc nfvari do_astfem" << nfloatc << nfvari << do_astfem;
+   //DbgLv(1) << my_rank << "dmga_worker: wmodel DUMP";
+   //wmodel.debug();
 
    while ( ! finished )
    {
@@ -108,11 +105,15 @@ DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
                 MPI_Job::MASTER,
                 FINISHED,
                 my_communicator );
-DbgLv(1) << my_rank << "dmgw: FIN sent";
-if(group_rank<2) {
-DbgLv(1) << my_rank << "lfvari  n" << nfvari << lfvari.size();
-for (int ii=0; ii<nfvari; ii++ )
- DbgLv(1) << my_rank << "  smask" << ii + 1 << "count" << lfvari[ii]; }
+      DbgLv( 1 ) << my_rank << "dmgw: FIN sent";
+      if ( group_rank < 2 )
+      {
+         DbgLv( 1 ) << my_rank << "lfvari  n" << nfvari << lfvari.size();
+         for ( int ii = 0; ii < nfvari; ii++ )
+         {
+            DbgLv( 1 ) << my_rank << "  smask" << ii + 1 << "count" << lfvari[ii];
+         }
+      }
 
       MPI_Recv( &job,          // Find out what to do next
                 sizeof( job ), // from MPI #0, MPI #7, MPI #9
@@ -125,8 +126,7 @@ for (int ii=0; ii<nfvari; ii++ )
       int dataset = job.dataset_offset;
       int count   = job.dataset_count;
       int length  = job.length;
-DbgLv(1) << my_rank << "dmgw: job offs count len" << dataset << count << length
-         << "tag" << status.MPI_TAG;
+      DbgLv( 1 ) << my_rank << "dmgw: job offs count len" << dataset << count << length << "tag" << status.MPI_TAG;
       int index   = 0;
 
       switch ( status.MPI_TAG )
@@ -200,7 +200,7 @@ void US_MPI_Analysis::dmga_worker_loop( void )
 {
    // Initialize genes
    dgenes.clear();
-   population = parameters[ "population" ].toInt();
+   population = job_config.params.ga.population;
 
    // Build the first generation of genes
    for ( int ii = 0; ii < population; ii++ )
@@ -219,11 +219,11 @@ void US_MPI_Analysis::dmga_worker_loop( void )
       fitness << empty_fitness;
    }
 
-   int generations = parameters[ "generations" ].toInt();
-   int crossover   = parameters[ "crossover"   ].toInt();
-   int mutation    = parameters[ "mutation"    ].toInt();
-   int plague      = parameters[ "plague"      ].toInt();
-   int elitism     = parameters[ "elitism"     ].toInt();
+   int generations = job_config.params.ga.generations;
+   int crossover   = job_config.params.ga.crossover;
+   int mutation    = job_config.params.ga.mutation;
+   int plague      = job_config.params.ga.plague;
+   int elitism     = job_config.params.ga.elitism;
 
    int p_mutate    = mutation;
    int p_crossover = p_mutate + crossover;
@@ -244,43 +244,41 @@ void US_MPI_Analysis::dmga_worker_loop( void )
    {
       max_rss();
 
-DbTimMsg("Worker start rank/generation/elapsed-secs");
+      DbTimMsg( "Worker start rank/generation/elapsed-secs" );
       // Calculate fitness
       for ( int ii = 0; ii < population; ii++ )
       {
          fitness[ ii ].index   = ii;
          fitness[ ii ].fitness = get_fitness_dmga( dgenes[ ii ] );
-DbgLv(1) << my_rank << "dg:getf:  ii" << ii << "  fitness"
- << fitness[ii].fitness;
+         DbgLv( 1 ) << my_rank << "dg:getf:  ii" << ii << "  fitness" << fitness[ii].fitness;
       }
 
       // Sort fitness
       std::sort( fitness.begin(), fitness.end() );
-DbTimMsg("Worker after get_fitness loop + sort");
+      DbTimMsg( "Worker after get_fitness loop + sort" );
 
       // Refine with gradient search method (gsm) on last generation
       if ( generation == generations - 1 )
       {
-DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
-         << ": At last generation minimize.";
-DbTimMsg("Worker before gsm rank/generation/elapsed");
+         DbgLv( DL ) << "Deme" << grp_nbr << deme_nbr << ": At last generation minimize.";
+         DbTimMsg( "Worker before gsm rank/generation/elapsed" );
          in_gsm        = true;
 
          fitness[ 0 ].fitness = minimize_dmga( dgenes[ fitness[ 0 ].index ], 
                                                fitness[ 0 ].fitness );
-DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
-         << ":   last generation minimize fitness=" << fitness[0].fitness;
-DbTimMsg("Worker after gsm rank/generation/elapsed");
+         DbgLv( DL ) << "Deme" << grp_nbr << deme_nbr << ":   last generation minimize fitness=" << fitness[0].fitness;
+         DbTimMsg( "Worker after gsm rank/generation/elapsed" );
          in_gsm        = false;
       }
 
       max_rss();
 
       // Send best gene to master
-if((deme_nbr%10)==1) {
- DbgLv(1) << "Best gene to master: gen" << generation << "worker" << deme_nbr
-  << "fitness" << fitness[0].fitness;
-dump_fitness( fitness ); }
+      if ( ( deme_nbr % 10 ) == 1 )
+      {
+         DbgLv( 1 ) << "Best gene to master: gen" << generation << "worker" << deme_nbr << "fitness" << fitness[0].fitness;
+         dump_fitness( fitness );
+      }
       msg.generation = generation;
       dgene          = dgenes[ fitness[ 0 ].index ];
       marker_from_dgene( dgmarker, dgene );
@@ -301,7 +299,7 @@ dump_fitness( fitness ); }
                 GENE,
                 my_communicator );
 
-DbTimMsg("Worker after send fitness,genes");
+      DbTimMsg( "Worker after send fitness,genes" );
       // Receive instructions from master (continue or finish)
       MPI_Status status;
 
@@ -312,7 +310,7 @@ DbTimMsg("Worker after send fitness,genes");
                 MPI_ANY_TAG,
                 my_communicator,
                 &status );
-DbTimMsg("Worker after receive instructions");
+      DbTimMsg( "Worker after receive instructions" );
 
       max_rss();
 
@@ -339,8 +337,8 @@ DbTimMsg("Worker after receive instructions");
       const double EPSF_SCALE = 1.0e-3;
       double fitpwr      = (double)qRound( log10( fitness[ 0 ].fitness ) );
       double epsilon_f   = pow( 10.0, fitpwr ) * EPSF_SCALE;
-DbgLv(1) << "gw:" << my_rank << ": Dup best-gene clean: fitness0 fitpwr epsilon_f"
- << fitness[0].fitness << fitpwr << epsilon_f;
+      DbgLv( 1 ) << "gw:" << my_rank << ": Dup best-gene clean: fitness0 fitpwr epsilon_f" << fitness[0].fitness << fitpwr
+                 << epsilon_f;
 
       while ( f1 < population )
       {
@@ -369,9 +367,8 @@ DbgLv(1) << "gw:" << my_rank << ": Dup best-gene clean: fitness0 fitpwr epsilon_
 
                if ( difv > NEAR_MATCH )
                {
-DbgLv(1) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1"
- << f0 << f1 << fitness[f0].fitness << fitness[f1].fitness << "ii g0 g1 g0v g1v"
- << ii << g0 << g1 << val0 << val1;
+                  DbgLv( 1 ) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1" << f0 << f1 << fitness[f0].fitness
+                             << fitness[f1].fitness << "ii g0 g1 g0v g1v" << ii << g0 << g1 << val0 << val1;
                   match        = false;
                   f0           = f1;
                   break;
@@ -380,8 +377,8 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1"
 
             if ( match )
             {
-DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
- << f0 << f1 << fitness[f0].fitness << fitness[f1].fitness;
+               DbgLv( 1 ) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1" << f0 << f1 << fitness[f0].fitness
+                          << fitness[f1].fitness;
                fitness[ f1 ].fitness = LARGE;  // Invalidate gene/sim_values 
             }
          }
@@ -393,7 +390,7 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
 
       // Re-sort
       std::sort( fitness.begin(), fitness.end() );
-DbgLv(1) << "gw:" << my_rank << ": fitness sorted";
+      DbgLv( 1 ) << "gw:" << my_rank << ": fitness sorted";
 
       QList< DGene > old_genes = dgenes;
       int gener_save  = generation;
@@ -420,9 +417,10 @@ DbgLv(1) << "gw:" << my_rank << ": fitness sorted";
 
             if ( aval < vmin  ||  aval > vmax )
             {
-if((group_rank%10)==1)
-DbgLv(0) << "gw:" << my_rank << ": re-do : ii" << ii
- << "aval vmin vmax" << aval << vmin << vmax;
+               if ( ( group_rank % 10 ) == 1 )
+               {
+                  DbgLv( 0 ) << "gw:" << my_rank << ": re-do : ii" << ii << "aval vmin vmax" << aval << vmin << vmax;
+               }
                aval          = qMax( vmin, qMin( vmax, aval ) );
                store_attr_value( aval, dgene, atype, mcompx );
                nlim++;
@@ -432,9 +430,10 @@ DbgLv(0) << "gw:" << my_rank << ": re-do : ii" << ii
          if ( nlim > 0 )
          {  // If adjustments due to limits, recompute fitness
             fit1         = get_fitness_dmga( dgene );
-if((group_rank%10)==1)
-DbgLv(0) << "gw:" << my_rank << ": re-do :     fit1a fit1b"
- << fitness[ 0 ].fitness  << fit1;
+            if ( ( group_rank % 10 ) == 1 )
+            {
+               DbgLv( 0 ) << "gw:" << my_rank << ": re-do :     fit1a fit1b" << fitness[0].fitness << fit1;
+            }
             fitness[ 0 ].fitness = fit1;
          }
 
@@ -442,9 +441,11 @@ DbgLv(0) << "gw:" << my_rank << ": re-do :     fit1a fit1b"
 
          for ( int gg = 0; gg < population; gg++ )
             old_genes[ gg ] = dgene;
-if((group_rank%10)==1)
-DbgLv(0) << "gw:" << my_rank << ": re-do genes at gen" << generation
- << "gen fitness" << fit0 << "post-min fitness" << fit1;
+         if ( ( group_rank % 10 ) == 1 )
+         {
+            DbgLv( 0 ) << "gw:" << my_rank << ": re-do genes at gen" << generation << "gen fitness" << fit0 << "post-min fitness"
+                       << fit1;
+         }
 
          generation   = 0;
       }
@@ -453,13 +454,13 @@ DbgLv(0) << "gw:" << my_rank << ": re-do genes at gen" << generation
       // First copy elite genes
       for ( int gg = 0; gg < elitism; gg++ )
          dgenes[ gg ] = old_genes[ fitness[ gg ].index ];
-DbgLv(1) << "gw:" << my_rank << ": elites copied";
+      DbgLv( 1 ) << "gw:" << my_rank << ": elites copied";
 
       int immigr_count = migrate_dgenes();
-DbgLv(1) << "gw:" << my_rank << ": immigr_count" << immigr_count
-         << "dgenes,old sizes" << dgenes.size() << old_genes.size() << population;
+      DbgLv( 1 ) << "gw:" << my_rank << ": immigr_count" << immigr_count << "dgenes,old sizes" << dgenes.size() << old_genes.size()
+                 << population;
 
-DbTimMsg("Worker before elitism loop");
+      DbTimMsg( "Worker before elitism loop" );
 
       for ( int gg = elitism + immigr_count; gg < population; gg++ )
       {
@@ -467,8 +468,7 @@ DbTimMsg("Worker before elitism loop");
          //  distribution
          int  gene_index  = e_random();
          int  probability = u_random( p_plague );
-DbgLv(1) << "gw:" << my_rank << ":  gg" << gg << "gene_index" << gene_index
-         << "probability" << probability;
+         DbgLv( 1 ) << "gw:" << my_rank << ":  gg" << gg << "gene_index" << gene_index << "probability" << probability;
          dgene            = old_genes[ gene_index ];
 
          // Do a self-mutate on some genes
@@ -482,14 +482,14 @@ DbgLv(1) << "gw:" << my_rank << ":  gg" << gg << "gene_index" << gene_index
 
          dgenes[ gg ] = dgene;
       }
-DbTimMsg("Worker after elitism loop");
+      DbTimMsg( "Worker after elitism loop" );
 
       generation   = gener_save;
       p_mutate     = mutation;
       max_rss();
 
    }  // End of generation loop
-DbTimMsg("  +++Worker after generation loop");
+   DbTimMsg( "  +++Worker after generation loop" );
 }
 
 // Create a new discrete GA Gene
@@ -508,8 +508,7 @@ DGene US_MPI_Analysis::new_dmga_gene( void )
       bool logscl   = cns_flt[ ii ].logscl;
       double vmin   = cns_flt[ ii ].low;
       double vmax   = cns_flt[ ii ].high;
-DbgLv(1) << my_rank << "dg:newg:  ii" << ii
-         << "vmin vmax" << vmin << vmax;
+      DbgLv( 1 ) << my_rank << "dg:newg:  ii" << ii << "vmin vmax" << vmin << vmax;
 
       if ( logscl )
       {  // Convert low,high to log scale
@@ -523,8 +522,7 @@ DbgLv(1) << my_rank << "dg:newg:  ii" << ii
       aval          = qMax( vmin, qMin( vmax, aval ) );
       // If need be, convert value back from log
       aval          = logscl ? exp( aval ) : aval;
-DbgLv(1) << my_rank << "dg:newg:   ii" << ii << "p_grid" << p_grid
-         << "delta" << delta << "aval" << aval;
+      DbgLv( 1 ) << my_rank << "dg:newg:   ii" << ii << "p_grid" << p_grid << "delta" << delta << "aval" << aval;
 
       // Update the new attribute value
       store_attr_value( aval, gene_new, atype, mcompx );
@@ -545,8 +543,8 @@ void US_MPI_Analysis::mutate_dgene( DGene& dgene )
    double sigma    = base_sig * extn_p / genterm;
    // Bump the count of hits for each unique smask (floats combination)
    lfvari[ smask - 1 ]++;
-DbgLv(1) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
-//if(my_rank==11) DbgLv(0) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
+   DbgLv( 1 ) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
+   //if(my_rank==11) DbgLv(0) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
 
    // Loop thru float attributes, varying the selected ones
    for ( int ii = 0; ii < nfloatc; ii++ )
@@ -566,8 +564,7 @@ DbgLv(1) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma
       // Get float range and, if need be, convert to log scale
       double vl     = cns_flt[ ii ].low;
       double vh     = cns_flt[ ii ].high;
-DbgLv(1) << my_rank << "dg:mutg:  ii" << ii
-         << "vl vh" << vl << vh << "vv" << vv;
+      DbgLv( 1 ) << my_rank << "dg:mutg:  ii" << ii << "vl vh" << vl << vh << "vv" << vv;
 
       if ( logscl )
       {
@@ -583,13 +580,12 @@ DbgLv(1) << my_rank << "dg:mutg:  ii" << ii
       vv            = qMax( vv, vl );
       vv            = qMin( vv, vh );
       vv            = logscl ? exp( vv ) : vv;
-DbgLv(1) << my_rank << "dg:mutg:  ii" << ii << "  xx" << xx
-         << "delta" << delta << "vv" << vv;
+      DbgLv( 1 ) << my_rank << "dg:mutg:  ii" << ii << "  xx" << xx << "delta" << delta << "vv" << vv;
 
       // Update the mutated value
       store_attr_value( vv, dgene, atype, mcompx );
    }
-//DbgLv(1) << "dg:mutgene dgene comps" << dgene.components.size();
+   //DbgLv(1) << "dg:mutgene dgene comps" << dgene.components.size();
 }
 
 // Cross-mutate a pair of discrete GA Genes
@@ -601,7 +597,7 @@ void US_MPI_Analysis::cross_dgene( DGene& dgene, QList< DGene > dgenes )
 
    // Get a random mask that selects float attributes from the second gene
    int smask     = u_random( nfvari ) + 1;
-DbgLv(1) << "dg:crsg: gndx" << gndx << "smask" << smask;
+   DbgLv( 1 ) << "dg:crsg: gndx" << gndx << "smask" << smask;
 
    for ( int ii = 0; ii < nfloatc; ii++ )
    {
@@ -624,14 +620,14 @@ DbgLv(1) << "dg:crsg: gndx" << gndx << "smask" << smask;
 // Migrate a list of discrete GA Genes
 int US_MPI_Analysis::migrate_dgenes( void )
 {
-   static const int migrate_pcent = parameters[ "migration" ].toInt();
-   static const int elitism_count = parameters[ "elitism"   ].toInt();
+   static const int  migrate_pcent = job_config.params.ga.migration;
+   static const int  elitism_count = job_config.params.ga.elitism;
 
    QList < DGene >   emmigres;
    int migrate_count   = ( migrate_pcent * population + 50 ) / 100;
    int doubles_count   = migrate_count * nfloatc;
    QVector< double > emmigrants( doubles_count );
-DbgLv(1) << my_rank << "dg:migrdg: migrate_count doubles_count" << migrate_count << doubles_count;
+   DbgLv( 1 ) << my_rank << "dg:migrdg: migrate_count doubles_count" << migrate_count << doubles_count;
 
    // Send genes to master
 
@@ -643,7 +639,7 @@ DbgLv(1) << my_rank << "dg:migrdg: migrate_count doubles_count" << migrate_count
 
    // Represent migrating genes as marker vector
    dgenes_to_marker( emmigrants, emmigres, 0, migrate_count );
-DbgLv(1) << my_rank << "dg:migrdg: emmigres size" << emmigres.size() << "emmigrants size" << emmigrants.size();
+   DbgLv( 1 ) << my_rank << "dg:migrdg: emmigres size" << emmigres.size() << "emmigrants size" << emmigrants.size();
 
    // MPI send msg type
    MPI_GA_MSG msg;
@@ -679,7 +675,7 @@ DbgLv(1) << my_rank << "dg:migrdg: emmigres size" << emmigres.size() << "emmigra
    int doubles_sent;
    MPI_Get_count( &status, MPI_DOUBLE, &doubles_sent );
    int mgenes_count    = doubles_sent / nfloatc;
-DbgLv(1) << my_rank << "dg:migrdg: immigres size" << immigres.size() << "doubles_sent" << doubles_sent;
+   DbgLv( 1 ) << my_rank << "dg:migrdg: immigres size" << immigres.size() << "doubles_sent" << doubles_sent;
 
    // The number returned equals the number sent or zero
    if ( mgenes_count > 0 )
@@ -739,7 +735,7 @@ void US_MPI_Analysis::lamm_gsm_df_dmga( US_Vector& vv, US_Vector& vd,
 //  inverse hessian minimization
 double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
 {
-DbgLv(1) << my_rank << "dg:IHM:minimize dgene comps" << dgene.components.size() << fitness;
+   DbgLv( 1 ) << my_rank << "dg:IHM:minimize dgene comps" << dgene.components.size() << fitness;
    int vsize     = nfloatc;
    US_Vector vv( vsize );  // Input values
    US_Vector uu( vsize );  // Vector of derivatives
@@ -765,8 +761,7 @@ DbgLv(1) << my_rank << "dg:IHM:minimize dgene comps" << dgene.components.size() 
       double vnorm  = pow( 10.0, -vpwr );
       vv.assign( ii, vval * vnorm );
       zz.assign( ii, vnorm );
-DbgLv(1) << my_rank << "dg:IHM:  ii" << ii << "vval vnorm" << vval << vnorm
-         << "vpwr" << vpwr << "vvi" << vv[ii];
+      DbgLv( 1 ) << my_rank << "dg:IHM:  ii" << ii << "vval vnorm" << vval << vnorm << "vpwr" << vpwr << "vvi" << vv[ii];
    }
 
    lamm_gsm_df_dmga( vv, uu, zz );   // uu is vector of derivatives
@@ -787,7 +782,7 @@ DbgLv(1) << my_rank << "dg:IHM:  ii" << ii << "vval vnorm" << vval << vnorm
       double s1      = 0.0;
       double s2      = 0.5;
       double s3      = 1.0;
-DbgLv(1) << my_rank << "dg:IHM:   iteration" << iteration << "fitness" << fitness;
+      DbgLv( 1 ) << my_rank << "dg:IHM:   iteration" << iteration << "fitness" << fitness;
 
       // v_s2 = vv - uu * s2
       US_Vector v_s2( vsize );
@@ -799,7 +794,7 @@ DbgLv(1) << my_rank << "dg:IHM:   iteration" << iteration << "fitness" << fitnes
       }
 
       double g_s2 = get_fitness_v_dmga( v_s2, zz );
-DbgLv(1) << my_rank << "dg:IHM: g_s2" << g_s2 << "s2" << s2 << "epsilon" << epsilon;
+      DbgLv( 1 ) << my_rank << "dg:IHM: g_s2" << g_s2 << "s2" << s2 << "epsilon" << epsilon;
 
       // Cut down until we have a decrease
       while ( s2 > epsilon  &&  g_s2 > g_s1 )
@@ -816,7 +811,7 @@ DbgLv(1) << my_rank << "dg:IHM: g_s2" << g_s2 << "s2" << s2 << "epsilon" << epsi
 
          g_s2 = get_fitness_v_dmga( v_s2, zz );
       }
-DbgLv(1) << my_rank << "dg:IHM:  g_s2" << g_s2;
+      DbgLv( 1 ) << my_rank << "dg:IHM:  g_s2" << g_s2;
 
       // Test for initial decrease
       if ( s2 <= epsilon  ||  ( s3 - s2 ) < epsilon ) break;
@@ -1079,12 +1074,11 @@ DbgLv(1) << my_rank << "dg:IHM:  g_s2" << g_s2;
    for ( int ii = 0; ii < vsize; ii++ )
    {
       dgmarker[ ii ] = vv[ ii ] / zz[ ii ];
-DbgLv(1) << my_rank << "dg:IHM: ii" << ii << "vvi zzi dgmi"
-         << vv[ii] << zz[ii] << dgmarker[ii];
+      DbgLv( 1 ) << my_rank << "dg:IHM: ii" << ii << "vvi zzi dgmi" << vv[ii] << zz[ii] << dgmarker[ii];
    }
 
    dgene_from_marker( dgmarker, dgene );
-DbgLv(1) << my_rank << "dg:IHM: FITNESS" << fitness;
+   DbgLv( 1 ) << my_rank << "dg:IHM: FITNESS" << fitness;
 
    return fitness;
 }
@@ -1109,8 +1103,8 @@ double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
    double fitness  = sim.variance;         // Get the computed fitness
    fitness_map.insert( fkey, fitness );    // Add it the fitness map
 
-//DbgLv(1) << "dg:get_fit fitness" << fitness << "count hits"
-// << fitness_count << fitness_hits;
+   //DbgLv(1) << "dg:get_fit fitness" << fitness << "count hits"
+   // << fitness_count << fitness_hits;
    return fitness;
 }
 
@@ -1126,7 +1120,7 @@ QString US_MPI_Analysis::dgene_key( DGene& dgene )
    for ( int ii = 1; ii < nfloatc; ii++ )
       fkey += QString::asprintf( " %.5e", dgmarker[ ii ] );
 
-DbgLv(1) << my_rank << "dg:dgkey" << fkey << "mv0 mvn" << dgmarker[0] << dgmarker[nfloatc-1];
+   DbgLv( 1 ) << my_rank << "dg:dgkey" << fkey << "mv0 mvn" << dgmarker[0] << dgmarker[nfloatc - 1];
    return fkey;
 }
 
@@ -1173,13 +1167,15 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
          model.components[ cc ].s  /= sd.s20w_correction;
          model.components[ cc ].D  /= sd.D20w_correction;
       }
-if(group_rank<2 && dbg_level>0) {
-DbgLv(1) << my_rank << "CR: SIMPARAMS DUMP";
-dset->simparams.debug();
-DbgLv(1) << my_rank << "CR: dens visc scorr dcorr"
- << sd.density << sd.viscosity << sd.s20w_correction << sd.D20w_correction;
-DbgLv(1) << my_rank << "CR: MODEL DUMP";
-model.debug(); }
+      if ( group_rank < 2 && dbg_level > 0 )
+      {
+         DbgLv( 1 ) << my_rank << "CR: SIMPARAMS DUMP";
+         dset->simparams.debug();
+         DbgLv( 1 ) << my_rank << "CR: dens visc scorr dcorr" << sd.density << sd.viscosity << sd.s20w_correction
+                    << sd.D20w_correction;
+         DbgLv( 1 ) << my_rank << "CR: MODEL DUMP";
+         model.debug();
+      }
 
       // Compute the simulation
 
@@ -1187,13 +1183,14 @@ model.debug(); }
       {  // Calculate simulation for FEM (ideal) case
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
          astfem_rsa.set_debug_flag( my_rank < 2 ? dbg_level : (-1) );
-//*DEBUG
-if(group_rank<1) {
-int dbg_flg=in_gsm?(-1):dbg_level;
-//DbgLv(0) << my_rank << "CR: call ASTFEM CALC";
-astfem_rsa.set_debug_flag(dbg_flg);
-}
-//*DEBUG
+         //*DEBUG
+         if ( group_rank < 1 )
+         {
+            int dbg_flg = in_gsm ? ( -1 ) : dbg_level;
+            //DbgLv(0) << my_rank << "CR: call ASTFEM CALC";
+            astfem_rsa.set_debug_flag( dbg_flg );
+         }
+         //*DEBUG
 
          astfem_rsa.calculate( simdat );
       }
@@ -1253,20 +1250,8 @@ astfem_rsa.set_debug_flag(dbg_flg);
    }
 
    sim_vals.variance = variance / (double)total_points;
-if(group_rank==0)
-DbgLv(1) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
+   if ( group_rank == 0 )
+   {
+      DbgLv( 1 ) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
+   }
 }
-
-// Get the value part of a "key value " substring
-QString US_MPI_Analysis::par_key_value( const QString kvtext, const QString key )
-{
-   QString value( "" );
-   int keyx   = kvtext.indexOf( key );
-   value      = ( keyx < 0 ) ? value
-                : QString( kvtext ).mid( keyx ).section( " ", 1, 1 );
-if(group_rank<2)
-DbgLv(0) << my_rank << ": p_k_v  key" << key << "value" << value << "kvtext" << kvtext;
-
-   return value;
-}
-

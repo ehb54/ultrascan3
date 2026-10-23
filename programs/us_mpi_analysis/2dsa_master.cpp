@@ -572,13 +572,10 @@ void US_MPI_Analysis::init_solutes( void )
 {
    calculated_solutes.clear();
    orig_solutes.clear();
-   simulation_values.noisflag    = ( parameters[ "tinoise_option" ].toInt() > 0 ?
-                                     1 : 0 )
-                                 + ( parameters[ "rinoise_option" ].toInt() > 0 ?
-                                     2 : 0 );
+   simulation_values.noisflag = ( job_config.params.tinoise_option > 0 ? 1 : 0 ) + ( job_config.params.rinoise_option > 0 ? 2 : 0 );
    simulation_values.dbg_level   = dbg_level;
    simulation_values.dbg_timing  = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Test to see if there is a custom grid model
    QString model_filename = data_sets[ 0 ]->model_file;
@@ -587,44 +584,29 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    if ( model_filename.isEmpty() )
    {  // If no model file given, calculate initial solutes in a fixed grid
 
-      double s_min   = parameters[ "s_min"           ].toDouble() * 1.0e-13;
-      double s_max   = parameters[ "s_max"           ].toDouble() * 1.0e-13;
-      double ff0_min = parameters[ "ff0_min"         ].toDouble();
-      double ff0_max = parameters[ "ff0_max"         ].toDouble();
+      double s_min   = job_config.params.grid.s_min * 1.0e-13;
+      double s_max   = job_config.params.grid.s_max * 1.0e-13;
+      double ff0_min = job_config.params.grid.ff0_min;
+      double ff0_max = job_config.params.grid.ff0_max;
 
-      int grid_reps  = qMax( parameters[ "uniform_grid" ].toInt(), 1 );
-      double s_pts   = 60.0;
-      double ff0_pts = 60.0;
-
-      if ( parameters.contains( "s_grid_points"   ) )
-         s_pts   = parameters[ "s_grid_points"   ].toDouble();
-
-      else if ( parameters.contains( "s_resolution"    ) )
-         s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_reps;
-
-      if ( parameters.contains( "ff0_grid_points" ) )
-         ff0_pts = parameters[ "ff0_grid_points" ].toDouble();
-
-      else if ( parameters.contains( "ff0_resolution"  ) )
-         ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_reps;
+      int    grid_reps = job_config.params.grid.repetitions();
+      double s_pts     = job_config.params.grid.s_points();
+      double ff0_pts   = job_config.params.grid.ff0_points();
 
       int    nsstep   = (int)( s_pts );
       int    nkstep   = (int)( ff0_pts );
 
-DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
+      DbgLv( 0 ) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
                                grid_reps, cnstff0, orig_solutes );
-DbgLv(0) << "InSol:  s range" << s_min*1.e+13 << s_max*1.e+13 << "k range"
- << ff0_min << ff0_max;
-int j0=orig_solutes.count()-1;
-int j1=orig_solutes[0].count()-1;
-int j2=orig_solutes[j0].count()-1;
-DbgLv(0) << "orig_solutes:"
- << orig_solutes[ 0][ 0].s*1.e+13 << orig_solutes[ 0][ 0].k << "  "
- << orig_solutes[ 0][j1].s*1.e+13 << orig_solutes[ 0][j1].k << "  "
- << orig_solutes[j0][ 0].s*1.e+13 << orig_solutes[j0][ 0].k << "  "
- << orig_solutes[j0][j2].s*1.e+13 << orig_solutes[j0][j2].k;
+      DbgLv( 0 ) << "InSol:  s range" << s_min * 1.e+13 << s_max * 1.e+13 << "k range" << ff0_min << ff0_max;
+      int j0 = orig_solutes.count() - 1;
+      int j1 = orig_solutes[0].count() - 1;
+      int j2 = orig_solutes[j0].count() - 1;
+      DbgLv( 0 ) << "orig_solutes:" << orig_solutes[0][0].s * 1.e+13 << orig_solutes[0][0].k << "  "
+                 << orig_solutes[0][j1].s * 1.e+13 << orig_solutes[0][j1].k << "  " << orig_solutes[j0][0].s * 1.e+13
+                 << orig_solutes[j0][0].k << "  " << orig_solutes[j0][j2].s * 1.e+13 << orig_solutes[j0][j2].k;
    }
 
    else
@@ -634,8 +616,8 @@ DbgLv(0) << "orig_solutes:"
       model.load( fn );
       int    nsubgrid = model.subGrids;
       int    ncomps   = model.components.size();
-DbgLv(0) << "InSol: fn" << fn;
-DbgLv(0) << "InSol:  nsubgrid ncomps" << nsubgrid << ncomps;
+      DbgLv( 0 ) << "InSol: fn" << fn;
+      DbgLv( 0 ) << "InSol:  nsubgrid ncomps" << nsubgrid << ncomps;
 
       if ( nsubgrid < 1 )
          abort( "Custom grid model file has no subgrids", -1 );
@@ -644,7 +626,7 @@ DbgLv(0) << "InSol:  nsubgrid ncomps" << nsubgrid << ncomps;
       {  // Subgrids too large:  adjust subgrid count and size
          nsubgrid       = ( ncomps / 100 + 1 ) | 1;
          model.subGrids = nsubgrid;
-DbgLv(0) << "InSol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
+         DbgLv( 0 ) << "InSol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
       }
 
       QVector< US_Solute > solvec;
@@ -722,7 +704,7 @@ void US_MPI_Analysis::global_fit( void )
       {
          concentration += simulation_values.solutes[ solute ].c;
       }
-DbgLv(1) << ":gf: 2DSA: nsols" << simulation_values.solutes.size() << "concen" << concentration;
+      DbgLv( 1 ) << ":gf: 2DSA: nsols" << simulation_values.solutes.size() << "concen" << concentration;
    }
    else
    {
@@ -730,7 +712,7 @@ DbgLv(1) << ":gf: 2DSA: nsols" << simulation_values.solutes.size() << "concen" <
       {
          concentration += simulation_values.zsolutes[ solute ].c;
       }
-DbgLv(1) << ":gf: PCSA: nzsols" << simulation_values.zsolutes.size() << "concen" << concentration;
+      DbgLv( 1 ) << ":gf: PCSA: nzsols" << simulation_values.zsolutes.size() << "concen" << concentration;
    }
 
    qDebug() << "   == Dataset" << current_dataset + 1
@@ -743,30 +725,30 @@ DbgLv(1) << ":gf: PCSA: nzsols" << simulation_values.zsolutes.size() << "concen"
    edata->ODlimit   /= concentration;
    int scan_count    = edata->scanCount();
    int radius_points = edata->pointCount();
-int ks=scan_count;
-int kp=radius_points;
-DbgLv(1) << ":gf:  ee" << current_dataset << "BB-dset(m)" << edata->value(ks/2,kp/2);
+   int ks            = scan_count;
+   int kp            = radius_points;
+   DbgLv( 1 ) << ":gf:  ee" << current_dataset << "BB-dset(m)" << edata->value( ks / 2, kp / 2 );
    int index         = 0;
    QVector< double > scaled_data( scan_count * radius_points  + 1 );
-double isum=0.0;
-double dsum=0.0;
+   double            isum = 0.0;
+   double            dsum = 0.0;
 
    // Scale the data
    for ( int ss = 0; ss < scan_count; ss++ )
    {
       for ( int rr = 0; rr < radius_points; rr++ )
       {
-double ival=edata->value(ss,rr);
-isum+=ival;
+         double ival = edata->value( ss, rr );
+         isum += ival;
          double scaled_value    = edata->value( ss, rr ) / concentration;
          scaled_data[ index++ ] = scaled_value;
          edata->setValue( ss, rr, scaled_value );
-dsum+=scaled_value;
+         dsum += scaled_value;
       }
    }
 
    scaled_data[ index ] = edata->ODlimit;
-DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
+   DbgLv( 0 ) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
    // Send the scaled version of current data to the workers
    MPI_Job job;
@@ -832,10 +814,10 @@ DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentrat
 
       for ( int ii = 0; ii < calculated_zsolutes.size(); ii++ )
          calculated_zsolutes[ ii ].clear();
-DbgLv(1) << "ScaledData fill/solclear complete";
+      DbgLv( 1 ) << "ScaledData fill/solclear complete";
 
       iterations      = 1;
-      max_iterations  = parameters[ "gfit_iterations" ].toInt();
+      max_iterations  = job_config.params.gfit_iterations;
    }
 }
 
@@ -924,12 +906,10 @@ void US_MPI_Analysis::set_meniscus( void )
    }
    else
    {
-DbgLv(0) << "FMB:set_meniscus: HUH????: mb m b:"
- << fit_menbot << fit_meni << fit_bott;
+      DbgLv( 0 ) << "FMB:set_meniscus: HUH????: mb m b:" << fit_menbot << fit_meni << fit_bott;
    }
-DbgLv(0) << "FMB:set_meniscus:  mb_ndx men_run bot_run"
- << menibott_ndx << meniscus_run << bottom_run << "mb m b mbc"
- << fit_menbot << fit_meni << fit_bott << menibott_count;
+   DbgLv( 0 ) << "FMB:set_meniscus:  mb_ndx men_run bot_run" << menibott_ndx << meniscus_run << bottom_run << "mb m b mbc"
+              << fit_menbot << fit_meni << fit_bott << menibott_count;
 
    // We incremented meniscus_run above.  Just rerun from the beginning.
    for ( int i = 0; i < orig_solutes.size(); i++ )
@@ -993,7 +973,7 @@ void US_MPI_Analysis::set_monteCarlo( void )
    // With a fixed seed, seed each iteration from the seed, dataset and
    //  iteration index, so its data do not depend on which master group
    //  computes it, and differ between datasets and nearby seeds
-   uint   seed = parameters["seed"].toUInt();
+   uint   seed = job_config.params.seed;
    if ( seed != 0 )
    {
       US_Math2::randomize( mc_seed( seed, current_dataset, mc_iteration ) );
@@ -1038,15 +1018,14 @@ void US_MPI_Analysis::set_monteCarlo( void )
          }
       }
    }
-DbgLv(1) << "sMC:   mcdata sum" << datasum;
+   DbgLv( 1 ) << "sMC:   mcdata sum" << datasum;
 
    varrmsd          = sqrt( varrmsd / (double)( ds_points ) );
    qDebug() << "  Box_Muller Variation RMSD"
             << QString::number( varrmsd, 'f', 7 )
             << "  for MC_Iteration" << mc_iteration + 1;
 
-DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
- << "mcdata sum" << datasum;
+   DbgLv( 1 ) << "sMC:   variation  sum min max" << varisum << varimin << varimax << "mcdata sum" << datasum;
 
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
@@ -1059,7 +1038,7 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
-DbgLv(1) << "sMC: MPI send   my_workers" << my_workers;
+   DbgLv( 1 ) << "sMC: MPI send   my_workers" << my_workers;
    for ( int worker = 1; worker <= my_workers; worker++ )
    {
       MPI_Send( &newdata,
@@ -1071,10 +1050,10 @@ DbgLv(1) << "sMC: MPI send   my_workers" << my_workers;
    }
 
    // Get everybody synced up
-DbgLv(1) << "sMC: MPI Barrier";
+   DbgLv( 1 ) << "sMC: MPI Barrier";
    MPI_Barrier( my_communicator );
 
-DbgLv(1) << "sMC: MPI Bcast";
+   DbgLv( 1 ) << "sMC: MPI Bcast";
    MPI_Bcast( mc_data.data(),
               ds_points,
               MPI_DOUBLE,
@@ -1106,17 +1085,17 @@ void US_MPI_Analysis::set_gaussians( void )
       ds_end            = ds_start + datasets_to_process;
       ds_count          = datasets_to_process;
    }
-DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
+   DbgLv( 1 ) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
 
    simulation_values.solutes = calculated_solutes[ max_depth ];
 
-int mm=simulation_values.solutes.size()-1;
-DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
- << simulation_values.solutes[mm].s << "  M=" << mm;;
-DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
-DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
-edata = &data_sets[ds_start]->run_data;
-DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCount();
+   int mm = simulation_values.solutes.size() - 1;
+   DbgLv( 1 ) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s << simulation_values.solutes[mm].s << "  M=" << mm;
+   ;
+   DbgLv( 1 ) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
+   DbgLv( 1 ) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
+   edata = &data_sets[ds_start]->run_data;
+   DbgLv( 1 ) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCount();
 
    calc_residuals( ds_start, ds_count, simulation_values );
 
@@ -1125,7 +1104,7 @@ DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCo
    res_data          = &simulation_values.residuals;
    US_DataIO::RawData* sim_data      = &simulation_values.sim_data;
    int scnx          = 0;
-DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->pointCount();
+   DbgLv( 1 ) << "sGA:  resids scans points" << res_data->scanCount() << res_data->pointCount();
 
    for ( int ee = ds_start; ee < ds_end; ee++ )
    {
@@ -1145,10 +1124,10 @@ DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->po
          }
       }
    }
-int ssz=sigmas.size();
-DbgLv(1) << "sGA:   sigmas size" << ssz << "sigmas[mm]" << sigmas[ssz/2];
+   int ssz = sigmas.size();
+   DbgLv( 1 ) << "sGA:   sigmas size" << ssz << "sigmas[mm]" << sigmas[ssz / 2];
 
-qDebug() << "  MC_Iteration 1 Simulation RMSD" << QString::number( sqrt( simulation_values.variance ), 'f', 7 );
+   qDebug() << "  MC_Iteration 1 Simulation RMSD" << QString::number( sqrt( simulation_values.variance ), 'f', 7 );
 }
 
 // Reset for a refinement iteration
@@ -1283,16 +1262,19 @@ void US_MPI_Analysis::submit( Sa_Job& job, int worker )
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
-int dd=job.mpi_job.depth;
-if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
- << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
-else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
- << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
-DbgLv(1) << "Mast: submit: len sol offs cnt"
- << job.mpi_job.length
- << job.mpi_job.solution
- << job.mpi_job.dataset_offset
- << job.mpi_job.dataset_count;
+   int dd                     = job.mpi_job.depth;
+   if ( dd == 0 )
+   {
+      DbgLv( 1 ) << "Mast: submit: worker" << worker << "  sols" << job.mpi_job.length << "mciter cds" << mc_iteration
+                 << current_dataset << " depth" << dd;
+   }
+   else
+   {
+      DbgLv( 1 ) << "Mast: submit:     worker" << worker << "  sols" << job.mpi_job.length << "mciter cds" << mc_iteration
+                 << current_dataset << " depth" << dd;
+   }
+   DbgLv( 1 ) << "Mast: submit: len sol offs cnt" << job.mpi_job.length << job.mpi_job.solution << job.mpi_job.dataset_offset
+              << job.mpi_job.dataset_count;
 
    // Tell worker that solutes are coming
    MPI_Send( &job.mpi_job,
@@ -1301,7 +1283,7 @@ DbgLv(1) << "Mast: submit: len sol offs cnt"
        worker,      // Send to system that needs work
        MPI_Job::MASTER,
        my_communicator );
-DbgLv(1) << "Mast: submit: send #1";
+   DbgLv( 1 ) << "Mast: submit: send #1";
 
    // Send solutes
    MPI_Send( job.solutes.data(),
@@ -1310,7 +1292,7 @@ DbgLv(1) << "Mast: submit: send #1";
        worker,       // to worker
        MPI_Job::MASTER,
        my_communicator );
-DbgLv(1) << "Mast: submit: send #2";
+   DbgLv( 1 ) << "Mast: submit: send #2";
 }
 
 // Add a job to the queue, maintaining depth order
@@ -1508,8 +1490,7 @@ bool US_MPI_Analysis::job_pending_at( int depth )
 void US_MPI_Analysis::process_solutes( int& depth, int& worker,
                                        QVector< US_Solute >& result_solutes )
 {
-DbgLv(1) << "Mast:    process_solutes:      worker" << worker
- << " solsize" << result_solutes.size() << "depth" << depth;
+   DbgLv( 1 ) << "Mast:    process_solutes:      worker" << worker << " solsize" << result_solutes.size() << "depth" << depth;
    int next_depth  = depth + 1;
    // This loop should only execute, at most, once per result.
    while ( calculated_solutes.size() < next_depth )
@@ -1533,8 +1514,8 @@ DbgLv(1) << "Mast:    process_solutes:      worker" << worker
       unique_solutes( job.solutes );
       add_to_queue( job );
 
-DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
- << job.mpi_job.depth << " newsz mxesz" << new_size << max_experiment_size;
+      DbgLv( 1 ) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d=" << job.mpi_job.depth << " newsz mxesz" << new_size
+                 << max_experiment_size;
       max_depth           = qMax( next_depth, max_depth );
       calculated_solutes[ depth ].clear();
    }
@@ -1544,8 +1525,7 @@ DbgLv(1) << "Mast:   queue NEW DEPTH sols" << job.solutes.size() << " d="
    if ( next_depth > 1  &&  new_size > max_experiment_size )
    { // Adjust max_experiment_size if it is only large enough for one output
       max_experiment_size = ( new_size * 11 + 9 ) / 10;  // 10% above
-DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
- << "from new_size rsol_size" << new_size << rsol_size;
+      DbgLv( 1 ) << "Mast:    NEW max_exp_size" << max_experiment_size << "from new_size rsol_size" << new_size << rsol_size;
    }
 
    // Add in the current results
@@ -1576,7 +1556,7 @@ DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
          std::sort( job.solutes.begin(), job.solutes.end() );
          unique_solutes( job.solutes );
          add_to_queue( job );
-DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
+         DbgLv( 1 ) << "Mast:   queue REMAINDER" << remainder << " d=" << d + 1;
 
          calculated_solutes[ d ].clear();
       }
