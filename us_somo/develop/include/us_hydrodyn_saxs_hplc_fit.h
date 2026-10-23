@@ -34,9 +34,6 @@
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 
@@ -265,9 +262,6 @@ namespace HFIT
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

@@ -38,6 +38,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    bn_select->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
    lw_solutions = us_listwidget();
+   lw_solutions->setAccessibleName( tr( "Solutions" ) );
    lw_solutions-> setSortingEnabled( true );
 
 
@@ -48,6 +49,8 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
 
    QLabel* lb_search     = us_label( tr( "Search:" ) );
    le_search             = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
 
    //QLabel* lb_solutionDesc = us_label( tr( "Solution Name:" ) );
    //le_solutionDesc = us_lineedit( "", 1 );
@@ -61,18 +64,31 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
 
 
    le_amount = us_lineedit();
+   le_amount->setAccessibleName( tr( "Analyte Molar Ratio" ) );
+   lb_amount->setBuddy( le_amount );
    us_setReadOnly( le_amount,   true );
    le_bufferInfo = us_lineedit();
+   le_bufferInfo->setAccessibleName( tr( "Buffer Name" ) );
+   lb_bufferInfo->setBuddy( le_bufferInfo );
    us_setReadOnly( le_bufferInfo,   true );
    le_commonVbar20 = us_lineedit();
+   le_commonVbar20->setAccessibleName( tr( "Common VBar (20C)" ) );
+   lb_commonVbar20->setBuddy( le_commonVbar20 );
    us_setReadOnly( le_commonVbar20,   true );
    le_density = us_lineedit();
+   le_density->setAccessibleName( tr( "Buffer Density" ) );
+   lb_density->setBuddy( le_density );
    us_setReadOnly( le_density,     true );
    le_viscosity = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Buffer Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
+   le_storageTemp->setAccessibleName( tr( "Storage Temperature" ) );
+   lb_storageTemp->setBuddy( le_storageTemp );
    us_setReadOnly( le_storageTemp,     true );
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Solution Notes" ) );
    te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( true );
 
@@ -83,6 +99,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    lb_banner4->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
    lw_analytes = us_listwidget();
+   lw_analytes->setAccessibleName( tr( "Analytes" ) );
    lw_analytes-> setSortingEnabled( true );
    connect( lw_analytes, &QListWidget::itemClicked,                                             
                          this, &US_SolutionMgrSelect::selectAnalyte );
@@ -975,9 +992,12 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
 
    lb_descrip   = us_label( tr( "Solution Name:" ) );
    le_descrip   = us_lineedit( "New Solution", 0, false );
+   le_descrip->setAccessibleName( tr( "Description" ) );
 
    lb_bufferInfo   = us_label( tr( "Buffer Name:" ) );
    le_bufferInfo = us_lineedit();
+   le_bufferInfo->setAccessibleName( tr( "Buffer Name" ) );
+   lb_bufferInfo->setBuddy( le_bufferInfo );
    us_setReadOnly( le_bufferInfo,   true );
 
    pb_analyte = us_pushbutton( tr( "Add Analyte" ) );
@@ -1002,6 +1022,7 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    lo_amount->addWidget( lb_amount );
 
    ct_amount = us_counter ( 2, 0, 100, 1 ); // #buttons, low, high, start_value
+   ct_amount->setAccessibleName( tr( "Analyte Molar Ratio" ) );
    ct_amount->setSingleStep( 1 );
    ct_amount->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
@@ -1011,6 +1032,7 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    QLabel* lb_banner3 = us_banner( tr( "Current solution contents" )  );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_analytes = us_listwidget();
+   lw_analytes->setAccessibleName( tr( "Analytes" ) );
    lw_analytes-> setSortingEnabled( true );
 
 
@@ -1021,14 +1043,23 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
 
 
    le_commonVbar20 = us_lineedit();
+   le_commonVbar20->setAccessibleName( tr( "Common VBar (20C)" ) );
+   lb_commonVbar20->setBuddy( le_commonVbar20 );
    us_setReadOnly( le_commonVbar20,   true );
    le_density = us_lineedit();
+   le_density->setAccessibleName( tr( "Buffer Density" ) );
+   lb_density->setBuddy( le_density );
    us_setReadOnly( le_density,     true );
    le_viscosity = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Buffer Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
+   le_storageTemp->setAccessibleName( tr( "Storage Temperature" ) );
+   lb_storageTemp->setBuddy( le_storageTemp );
 
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Solution Notes" ) );
    //te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( false );
 
@@ -1511,13 +1542,18 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
    le_descrip    = us_lineedit( solution-> solutionDesc );
+   le_descrip->setAccessibleName( tr( "Description" ) );
+   lb_descrip->setBuddy( le_descrip );
    //us_setReadOnly( le_descrip, false );
    us_setReadOnly( le_descrip, true );
 
    QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
    le_storageTemp = us_lineedit();
+   le_storageTemp->setAccessibleName( tr( "Storage Temperature" ) );
+   lb_storageTemp->setBuddy( le_storageTemp );
 
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Analyte Notes" ) );
    //te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( false );
    //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
@@ -1722,6 +1758,7 @@ US_SolutionMgrSettings::US_SolutionMgrSettings( int *invID, int *select_db_disk 
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );

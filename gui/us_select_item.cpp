@@ -180,6 +180,8 @@ void US_SelectItem::build_layout( const QString titl )
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
    le_dfilter          = us_lineedit();
+   le_dfilter->setAccessibleName( tr( "Search" ) );
+   lb_filtdata->setBuddy( le_dfilter );
    dsearch             = QString( "" );
 
    int row             = 0;
@@ -207,6 +209,7 @@ void US_SelectItem::build_layout( const QString titl )
    // Construct the table widget 
 
    tw_data = new QTableWidget( 20, ncols, this );
+   tw_data->setAccessibleName( tr( "Selection List" ) );
    tw_data->setFrameStyle ( QFrame::NoFrame );
    tw_data->setPalette    ( US_GuiSettings::editColor() );
    tw_data->setFont       ( tw_font );
