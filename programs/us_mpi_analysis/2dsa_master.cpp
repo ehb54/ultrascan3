@@ -1012,7 +1012,7 @@ for ( int ss = 0; ss < scan_count; ss++ )
          DbgLv( 1 ) << "sMC:  *ERR* index" << index << "mcdsiz" << mcdsiz << "ee,ss,rr" << ee << ss << rr;
       }
       double variation = US_Math2::box_muller( 0.0, sigmas[index] );
-      double mcdata    = mc_base_data[index] + variation;
+      double mcdata    = US_SolveSim::mc_data_value( mc_base_data[index], variation, edata->value( ss, rr ), edata->ODlimit );
       varrmsd += sq( variation );
       varisum += variation;
       varimin = qMin( varimin, variation );

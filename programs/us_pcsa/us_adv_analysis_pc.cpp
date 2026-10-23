@@ -1195,14 +1195,18 @@ DbgLv(1) << "AA: set_gaus: gausmoo" << gausmoo;
    US_DataIO::RawData*   rdata = &sim_vals.residuals;
 
    sigmas.clear();
+   mc_odata.clear();
 
    for ( int ss = 0; ss < nscans; ss++ )
    {  // Loop to accumulate the residuals from iteration 1
       QVector< double > vv( npoints );
 
       for ( int rr = 0; rr < npoints; rr++ )
-      {  // Get all residuals points from a scan
-         vv[ rr ]   = qAbs( rdata->value( ss, rr ) );
+      { // Get all residuals points from a scan; save unmodified data
+         //  (ODlimit points were not fitted:  no sigma to smooth in)
+         bool odmask = ( edata->value( ss, rr ) >= edata->ODlimit );
+         vv[rr]      = odmask ? 0.0 : qAbs( rdata->value( ss, rr ) );
+         mc_odata << edata->value( ss, rr );
       }
 
       if ( gausmoo )
@@ -1216,14 +1220,22 @@ DbgLv(1) << "AA: set_gaus: gausmoo" << gausmoo;
 
    if ( gausmoo )
    {  // Scale the sigmas so they are at the same level as original residuals
+      //  (whose RMSD leaves out the ODlimit points)
       double rmsdi    = mrecs_mc[ 0 ].rmsd;
       double rmsds    = 0.0;
       int    ntpoints = nscans * npoints;
+      int    nfitted  = 0;
 
       for ( int rr = 0; rr < ntpoints; rr++ )
-         rmsds          += sq( sigmas[ rr ] );            // Sum of squares
+      {
+         if ( mc_odata[rr] < edata->ODlimit )
+         {
+            rmsds += sq( sigmas[rr] ); // Sum of squares
+            nfitted++;
+         }
+      }
 
-      rmsds           = sqrt( rmsds / (double)ntpoints ); // Sigmas RMSD
+      rmsds           = sqrt( rmsds / (double) qMax( nfitted, 1 ) ); // Sigmas RMSD
       double sigscl   = rmsdi / rmsds;                    // Sigma scale factor
 
       for ( int rr = 0; rr < ntpoints; rr++ )
@@ -1247,8 +1259,9 @@ void US_AdvAnalysisPc::apply_gaussians()
    {
       for ( int rr = 0; rr < npoints; rr++ )
       {
+         double odata  = mc_odata[kk];
          double svari  = US_Math2::box_muller( 0.0, sigmas[ kk++ ] );
-         wdata.setValue( ss, rr, ( sdata1.value( ss, rr ) + svari ) );
+         wdata.setValue( ss, rr, US_SolveSim::mc_data_value( sdata1.value( ss, rr ), svari, odata, wdata.ODlimit ) );
       }
    }
 }

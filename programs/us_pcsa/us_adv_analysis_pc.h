@@ -48,6 +48,7 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
       US_DataIO::RawData       sdata1;
 
       QVector< double >        sigmas;
+      QVector<double>                  mc_odata; // unmodified data for MC
 
       US_Model                 model;
 

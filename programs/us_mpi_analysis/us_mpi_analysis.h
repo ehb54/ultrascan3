@@ -116,6 +116,7 @@ class US_MPI_Analysis : public QObject
         QVector< double > mc_data;         //!< Monte Carlo data
         QVector< double > sigmas;          //!< Sigma values
         QVector<double>   mc_base_data;    //!< 2DSA simulation of the unmodified data, indexed like sigmas
+        QVector<double>   mc_odata;        //!< PCSA worker: unmodified data, indexed like sigmas (keeps ODlimit points masked)
         QVector< long > work_rss;          //!< Work RSS
 
         double meniscus_range;   //!< Meniscus range (Master only)

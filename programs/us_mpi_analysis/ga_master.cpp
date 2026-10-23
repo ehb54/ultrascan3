@@ -545,7 +545,8 @@ DbgLv(1) << "sgMC: totpts" << total_points << "sizes mc_data,sigmas"
          for ( int rr = 0; rr < radius_points; rr++ )
          {
             double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-            mc_data[ index ] = scaled_data.value( ks, rr ) + variation;
+            mc_data[index] =
+               US_SolveSim::mc_data_value( scaled_data.value( ks, rr ), variation, edata->value( ss, rr ), edata->ODlimit );
             index++;
          }
       }
