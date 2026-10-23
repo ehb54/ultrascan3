@@ -9,11 +9,14 @@
 //! US_Math2 generator that us_mpi_analysis uses for Monte Carlo data.
 //!
 //! Usage:
-//!   us_mpi_testdata data   <outdir> <runID> <cell> <seed> <scale>
+//!   us_mpi_testdata data   <outdir> <runID> <cell> <seed> <scale> [options]
 //!   us_mpi_testdata cgrid  <outdir> <filename>
 //!
 //! "data" writes <runID>.RI.<cell>.A.260.auc and the edit file
 //! <runID>.e1.RI.<cell>.A.260.xml.  "cgrid" writes a custom-grid model file.
+//! Options of "data":  scans=<n> (default 30) and nobottom (an edit file
+//! without <bottom>, as older edit files lack the element; us_edit always
+//! writes it, with radius 0 when it has none).
 
 #include <QtCore>
 #include <cmath>
@@ -42,7 +45,7 @@ const double kDensity    = 0.998234;
 const double kViscosity  = 1.001940;
 const double kVbar20     = 0.72;
 const double kNoiseSigma = 0.004;
-const int    kScans      = 30;
+const int    kScans      = 30; // Default scan count
 const double kRadiusLo   = 5.95;
 const double kRadiusHi   = 7.15;
 const double kRadiusStep = 0.006;
@@ -52,7 +55,7 @@ QString      raw_guid( int cell, uint64_t seed )
    return QString( "00000000-0000-4000-8000-%1" ).arg( seed * 100 + cell, 12, 10, QChar( '0' ) );
 }
 
-US_DataIO::RawData skeleton( const QString& runID, int cell, uint64_t seed )
+US_DataIO::RawData skeleton( const QString& runID, int cell, uint64_t seed, int scans )
 {
    US_DataIO::RawData raw;
    memcpy( raw.type, "RI", 2 );
@@ -72,7 +75,7 @@ US_DataIO::RawData skeleton( const QString& runID, int cell, uint64_t seed )
    // Linear acceleration to kRpm: omega^2 t integrates to w^2 (t - 2/3 t_acc)
    double omega = kRpm * M_PI / 30.0;
    double t_acc = kRpm / kAccelRate;
-   for ( int ss = 0; ss < kScans; ss++ )
+   for ( int ss = 0; ss < scans; ss++ )
    {
       US_DataIO::Scan scan;
       scan.temperature = 20.0;
@@ -99,9 +102,9 @@ double stretched_bottom( void )
    return US_AstfemMath::calc_bottom( kRpm, kCpBottom, stretch );
 }
 
-// Velocity edit: meniscus, stretched bottom, data range 6.0-7.1 cm, plateau
-//  and baseline
-bool write_edit( const QString& path, const QString& runID, const US_DataIO::RawData& raw, int cell )
+// Velocity edit: meniscus, stretched bottom (0: no <bottom>), data
+//  range 6.0-7.1 cm, plateau and baseline
+bool write_edit( const QString& path, const QString& runID, const US_DataIO::RawData& raw, int cell, double bottom )
 {
    US_DataIO::EditValues ev;
    ev.expType    = "Velocity";
@@ -112,14 +115,42 @@ bool write_edit( const QString& path, const QString& runID, const US_DataIO::Raw
    ev.editGUID   = QString( "00000000-0000-4000-8000-0000000000%1" ).arg( 10 + cell );
    ev.dataGUID   = US_Util::uuid_unparse( (uchar*) raw.rawGUID );
    ev.meniscus   = kMeniscus;
-   ev.bottom     = stretched_bottom();
+   ev.bottom     = bottom;
    ev.rangeLeft  = 6.0;
    ev.rangeRight = 7.1;
    ev.plateau    = 7.0;
    ev.baseline   = 7.12;
    ev.ODlimit    = 1.5;
 
-   return US_DataIO::writeEdits( path, ev ) == US_DataIO::OK;
+   if ( US_DataIO::writeEdits( path, ev ) != US_DataIO::OK )
+   {
+      return false;
+   }
+
+   if ( bottom > 0.0 )
+   {
+      return true;
+   }
+
+   // writeEdits always writes <bottom>; drop it
+   QFile ff( path );
+   if ( !ff.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      return false;
+   }
+   QString xml = QString::fromUtf8( ff.readAll() );
+   ff.close();
+
+   int nbot = xml.count( "<bottom " );
+   xml.remove( QRegularExpression( "\\s*<bottom [^>]*/>" ) );
+
+   if ( nbot != 1 || !ff.open( QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text ) )
+   {
+      return false;
+   }
+   ff.write( xml.toUtf8() );
+   ff.close();
+   return ff.error() == QFileDevice::NoError;
 }
 
 US_Model sample_model( double scale )
@@ -143,15 +174,15 @@ US_Model sample_model( double scale )
    return model;
 }
 
-int write_data( const QString& outdir, const QString& runID, int cell, uint64_t seed, double scale )
+int write_data( const QString& outdir, const QString& runID, int cell, uint64_t seed, double scale, int scans, bool nobottom )
 {
    QString            triple   = QString( "RI.%1.A.260" ).arg( cell );
    QString            aucname  = runID + "." + triple + ".auc";
    QString            editname = runID + ".e1." + triple + ".xml";
 
-   US_DataIO::RawData raw = skeleton( runID, cell, seed );
+   US_DataIO::RawData raw = skeleton( runID, cell, seed, scans );
    if ( US_DataIO::writeRawData( outdir + "/" + aucname, raw ) != US_DataIO::OK ||
-        !write_edit( outdir + "/" + editname, runID, raw, cell ) )
+        !write_edit( outdir + "/" + editname, runID, raw, cell, nobottom ? 0.0 : stretched_bottom() ) )
    {
       fprintf( stderr, "cannot write %s\n", qPrintable( aucname ) );
       return 1;
@@ -171,7 +202,9 @@ int write_data( const QString& outdir, const QString& runID, int cell, uint64_t 
    simparams.rotorcoeffs[0]  = stretch[0];
    simparams.rotorcoeffs[1]  = stretch[1];
    simparams.bottom_position = kCpBottom;
-   simparams.bottom          = edata.bottom; // As us_mpi_analysis
+   // As us_mpi_analysis dataset_bottom():  the edited bottom, else the
+   //  stretched centerpiece bottom
+   simparams.bottom          = ( edata.bottom > 0.0 ) ? edata.bottom : stretched_bottom();
    simparams.band_forming    = false;
 
    QTemporaryDir      tmpdir;
@@ -272,9 +305,36 @@ int main( int argc, char* argv[] )
    QCoreApplication app( argc, argv );
    QStringList      args = app.arguments();
 
-   if ( args.size() == 7 && args[1] == "data" )
+   if ( args.size() >= 7 && args[1] == "data" )
    {
-      return write_data( args[2], args[3], args[4].toInt(), args[5].toULongLong(), args[6].toDouble() );
+      int  scans    = kScans;
+      bool nobottom = false;
+      bool argsok   = true;
+
+      for ( int ii = 7; ii < args.size(); ii++ )
+      {
+         if ( args[ii].startsWith( "scans=" ) )
+         {
+            scans  = args[ii].mid( 6 ).toInt( &argsok );
+            argsok = argsok && scans > 0;
+         }
+         else if ( args[ii] == "nobottom" )
+         {
+            nobottom = true;
+         }
+         else
+         {
+            argsok = false;
+         }
+
+         if ( !argsok )
+         {
+            fprintf( stderr, "invalid option %s\n", qPrintable( args[ii] ) );
+            return 2;
+         }
+      }
+
+      return write_data( args[2], args[3], args[4].toInt(), args[5].toULongLong(), args[6].toDouble(), scans, nobottom );
    }
 
    if ( args.size() == 4 && args[1] == "cgrid" )
@@ -283,7 +343,7 @@ int main( int argc, char* argv[] )
    }
 
    fprintf( stderr,
-            "usage: %s data <outdir> <runID> <cell> <seed> <scale>\n"
+            "usage: %s data <outdir> <runID> <cell> <seed> <scale> [scans=<n>] [nobottom]\n"
             "       %s cgrid <outdir> <filename>\n",
             argv[0],
             argv[0] );
