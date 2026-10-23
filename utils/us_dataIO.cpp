@@ -1288,7 +1288,7 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, EditValues& parameters )
    }
 }
 
-int US_DataIO::loadData( const QString&         directory,
+int US_DataIO::loadData( const QString&         directory, 
                          const QString&         editFilename,
                          QVector< EditedData >& data )
 {
