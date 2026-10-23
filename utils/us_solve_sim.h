@@ -119,7 +119,11 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param abort_flag Optional pointer to a flag that stops the NNLS
     //!                  solve (return code 3) when it becomes true
     //! \param masked    Optional flags for the data rows (all data sets in
-    //!                  turn) that are left out of the fit (not used yet)
+    //!                  turn) that are left out of the fit, e.g. for
+    //!                  exceeding the OD limit.  Their A and B rows must be
+    //!                  zero.  For a data set with masked rows the noise is
+    //!                  the least-squares fit over its unmasked rows only,
+    //!                  and the masked rows stay zero
     //! \returns         Return code of US_Math2::nnls
     static int    nnls_noise( int                      noisflag,
                               const QVector<int>&      nscans,
