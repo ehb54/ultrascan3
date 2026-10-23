@@ -4,6 +4,7 @@
 #include "us_astfem_math.h"
 #include "us_constants.h"
 #include "us_math2.h"
+#include "us_sim_cache.h"
 #include "us_solve_sim.h"
 #include <QTemporaryDir>
 #include <QVector>
@@ -11,6 +12,7 @@
 #include <cmath>
 #include <cstring>
 #include <random>
+#include <thread>
 
 namespace
 {
@@ -1005,4 +1007,334 @@ TEST_F( TestUSSolveSimCalcResiduals, TikhonovAfterNormCutKeepsColumnsAligned )
       EXPECT_LT( sim.variance, 1e-12 );
       EXPECT_LT( maxDiff( fittedConc( input.zsolutes, sim.zsolutes ), cgrid ), 1e-4 );
    }
+}
+
+// ============================================================================
+// Simulation cache:  a fit gives the same result with and without a cache
+// ============================================================================
+
+namespace
+{
+// All outputs of a calc_residuals, appended to a vector of values
+void appendResult( QVector<double>& out, const US_SolveSim::Simulation& sim )
+{
+   out << sim.variance << sim.xnormsq << (double) sim.solutes.size() << (double) sim.zsolutes.size();
+   for ( const US_Solute& sol : sim.solutes )
+   {
+      out << sol.s << sol.k << sol.c << sol.v << sol.d;
+   }
+   for ( const US_ZSolute& zsol : sim.zsolutes )
+   {
+      out << zsol.x << zsol.y << zsol.z << zsol.c;
+   }
+   out << (double) sim.ti_noise.size() << sim.ti_noise << (double) sim.ri_noise.size() << sim.ri_noise;
+   for ( const US_DataIO::Scan& scan : sim.sim_data.scanData )
+   {
+      out << scan.rvalues;
+   }
+   for ( const US_DataIO::Scan& scan : sim.residuals.scanData )
+   {
+      out << scan.rvalues;
+   }
+}
+
+// Index of the first value that differs bitwise (-1 if none)
+int firstDifference( const QVector<double>& aval, const QVector<double>& bval )
+{
+   const int nvals = qMin( aval.size(), bval.size() );
+   for ( int ii = 0; ii < nvals; ii++ )
+   {
+      if ( memcmp( &aval[ii], &bval[ii], sizeof( double ) ) != 0 )
+      {
+         return ii;
+      }
+   }
+   return ( aval.size() == bval.size() ) ? -1 : nvals;
+}
+
+// Solutes with positive concentration
+QVector<US_Solute> survivors( const QVector<US_Solute>& solutes )
+{
+   QVector<US_Solute> sols;
+   for ( const US_Solute& sol : solutes )
+   {
+      if ( sol.c > 0.0 )
+      {
+         sols << sol;
+      }
+   }
+   return sols;
+}
+} // namespace
+
+class TestUSSolveSimCache : public TestUSSolveSimCalcResiduals
+{
+   protected:
+      enum
+      {
+         NSUBGRIDS = 4
+      };
+
+      // Data of three species with TI and RI noise and random noise;  a grid
+      //  of 8 s by 5 f/f0 values in interleaved subgrids, as us_2dsa makes
+      void SetUp() override
+      {
+         TestUSSolveSimCalcResiduals::SetUp();
+
+         US_SolveSim::Simulation truth;
+         truth.solutes << US_Solute( 2.5e-13, 1.25 ) << US_Solute( 4.5e-13, 1.6 ) << US_Solute( 6.5e-13, 2.1 );
+         QVector<double> amatrix = basis( truth );
+         ASSERT_EQ( amatrix.size(), 3 * NTOTAL );
+
+         QVector<double> tinoi, rinoi;
+         makeNoise( tinoi, rinoi );
+         setData( amatrix, QVector<double>{ 0.3, 0.5, 0.2 }, tinoi, rinoi );
+         addNoise( 23, 0.002 );
+         base = dset.run_data;
+
+         subgrids.resize( NSUBGRIDS );
+         for ( int ss = 0; ss < 8; ss++ )
+         {
+            for ( int kk = 0; kk < 5; kk++ )
+            {
+               subgrids[( ss % 2 ) * 2 + ( kk % 2 )] << US_Solute( ( 1.0 + 0.9 * ss ) * 1.0e-13, 1.0 + 0.3 * kk );
+            }
+         }
+      }
+
+      // Add gaussian noise to the data
+      void addNoise( unsigned seed, double sigma )
+      {
+         std::mt19937                     gen( seed );
+         std::normal_distribution<double> gauss( 0.0, sigma );
+         for ( int ss = 0; ss < NSCANS; ss++ )
+         {
+            for ( int rr = 0; rr < NPOINTS; rr++ )
+            {
+               dset.run_data.scanData[ss].rvalues[rr] += gauss( gen );
+            }
+         }
+      }
+
+      // One task, as a us_2dsa worker does it:  on its own copy of the data
+      //  set, with its own US_SolveSim
+      US_SolveSim::Simulation task( const QVector<US_Solute>& solutes, US_SimCache* cache )
+      {
+         US_SolveSim::DataSet         wkdset = dset;
+         QList<US_SolveSim::DataSet*> wkdsets;
+         wkdsets << &wkdset;
+         US_SolveSim::Simulation sim;
+         sim.solutes  = solutes;
+         sim.noisflag = noisflag;
+         sim.alpha    = alpha;
+         US_SolveSim solvesim( wkdsets, 1, false );
+         solvesim.set_sim_cache( cache );
+         solvesim.calc_residuals( 0, 1, sim );
+         return sim;
+      }
+
+      // A 2DSA-like fit:  the subgrids (in threads, if asked), a merge of
+      //  their survivors, a refinement iteration with the merged survivors
+      //  added to each subgrid and a merge, then a Monte Carlo iteration on
+      //  perturbed data.  Returns all outputs of all tasks.
+      QVector<double> fit2dsa( US_SimCache* cache, bool threads )
+      {
+         QVector<double>    out;
+         QVector<US_Solute> added;
+         dset.run_data = base;
+
+         for ( int pass = 0; pass < 3; pass++ )
+         {
+            if ( pass == 2 )
+            { // Monte Carlo iteration:  new data, the same grid
+               addNoise( 7, 0.003 );
+               added.clear();
+            }
+
+            // Each worker copies the shared data set in its own thread (as
+            //  us_2dsa workers do);  the copies are implicitly shared
+            std::vector<US_SolveSim::Simulation> results( NSUBGRIDS );
+            std::vector<std::thread>             workers;
+            for ( int tt = 0; tt < NSUBGRIDS; tt++ )
+            {
+               QVector<US_Solute> solutes = subgrids[tt] + added;
+               if ( threads )
+               {
+                  workers.emplace_back( [this, tt, solutes, cache, &results]() { results[tt] = task( solutes, cache ); } );
+               }
+               else
+               {
+                  results[tt] = task( solutes, cache );
+               }
+            }
+            for ( std::thread& worker : workers )
+            {
+               worker.join();
+            }
+
+            QVector<US_Solute> merged;
+            for ( const US_SolveSim::Simulation& sim : results )
+            {
+               appendResult( out, sim );
+               merged << survivors( sim.solutes );
+            }
+            std::sort( merged.begin(), merged.end() );
+            merged.erase( std::unique( merged.begin(), merged.end() ), merged.end() );
+
+            US_SolveSim::Simulation msim = task( merged, cache );
+            appendResult( out, msim );
+            added = survivors( msim.solutes );
+         }
+
+         dset.run_data = base;
+         return out;
+      }
+
+      // Expect the outputs with a cache to equal those without, bitwise
+      void expectSameFit( qint64 max_bytes, bool threads )
+      {
+         const QVector<double> expected = fit2dsa( nullptr, false );
+         ASSERT_GT( expected.size(), 0 );
+
+         US_SimCache           cache( max_bytes );
+         const QVector<double> cached = fit2dsa( &cache, threads );
+         const int             diffx  = firstDifference( cached, expected );
+         EXPECT_EQ( diffx, -1 ) << "sizes " << cached.size() << " " << expected.size() << ";  " << cache.stats_text().toStdString();
+
+         lastStats = cache.stats();
+         EXPECT_GT( lastStats.hits, 0 );
+         EXPECT_GT( lastStats.survivors, 0 );
+         EXPECT_LE( lastStats.bytes, lastStats.max_bytes );
+      }
+
+      // Approximate cache bytes of one simulation of the data set
+      qint64 simBytes()
+      {
+         US_DataIO::RawData simdat;
+         US_AstfemMath::initSimData( simdat, dset.run_data, 0.0 );
+         return US_SimCache::sim_bytes( simdat );
+      }
+
+      US_DataIO::EditedData       base;
+      QVector<QVector<US_Solute>> subgrids;
+      int                         noisflag = 0;
+      double                      alpha    = 0.0;
+      US_SimCache::Stats          lastStats{};
+};
+
+TEST_F( TestUSSolveSimCache, FitIsUnchangedByCache )
+{
+   for ( int nflag : { 0, 3 } )
+   {
+      for ( double alf : { 0.0, 0.5 } )
+      {
+         SCOPED_TRACE( QString( "noisflag %1 alpha %2" ).arg( nflag ).arg( alf ).toStdString() );
+         noisflag = nflag;
+         alpha    = alf;
+         expectSameFit( 1024LL * 1024 * 1024, false );
+         EXPECT_EQ( lastStats.evicted, 0 );
+         EXPECT_EQ( lastStats.rejected, 0 );
+      }
+   }
+}
+
+TEST_F( TestUSSolveSimCache, FitIsUnchangedByCacheInThreads )
+{
+   noisflag = 3;
+   expectSameFit( 1024LL * 1024 * 1024, true );
+}
+
+TEST_F( TestUSSolveSimCache, FitIsUnchangedBySmallCache )
+{
+   // Room for 12 of the 40 grid simulations:  non-survivors are refused or
+   // evicted, survivors are kept
+   noisflag = 3;
+   expectSameFit( 12 * simBytes(), false );
+   EXPECT_GT( lastStats.rejected + lastStats.evicted, 0 );
+}
+
+TEST_F( TestUSSolveSimCache, MeniscusChangeIsNotReused )
+{
+   // Simulations of another meniscus are not taken from the cache
+   US_SimCache              cache( 1024LL * 1024 * 1024 );
+   const QVector<US_Solute> solutes = subgrids[0];
+
+   QVector<double>          first;
+   appendResult( first, task( solutes, &cache ) );
+   const qint64 hits       = cache.stats().hits;
+   dset.simparams.meniscus = 5.85;
+   dset.run_data.meniscus  = 5.85;
+   QVector<double> cached;
+   appendResult( cached, task( solutes, &cache ) );
+   EXPECT_EQ( cache.stats().hits, hits );
+
+   QVector<double> expected;
+   appendResult( expected, task( solutes, nullptr ) );
+   EXPECT_EQ( firstDifference( cached, expected ), -1 );
+   EXPECT_NE( firstDifference( first, expected ), -1 );
+}
+
+TEST_F( TestUSSolveSimCache, GlobalFitIsUnchanged )
+{
+   // A global fit of two data sets of different meniscus:  each solute has a
+   // simulation for each data set
+   US_SolveSim::DataSet dset2 = dset;
+   dset2.simparams.meniscus   = 5.95;
+   dset2.run_data.meniscus    = 5.95;
+   dsets << &dset2;
+
+   US_SolveSim::Simulation input;
+   input.solutes = subgrids[0] + subgrids[3];
+
+   auto fitGlobal = [this, &input]( US_SimCache* cache )
+   {
+      US_SolveSim::Simulation sim = input;
+      sim.noisflag                = 3;
+      US_SolveSim solvesim( dsets, 1, false );
+      solvesim.set_sim_cache( cache );
+      solvesim.calc_residuals( 0, 2, sim );
+      QVector<double> out;
+      appendResult( out, sim );
+      return out;
+   };
+
+   const QVector<double> expected = fitGlobal( nullptr );
+   US_SimCache           cache( 1024LL * 1024 * 1024 );
+   EXPECT_EQ( firstDifference( fitGlobal( &cache ), expected ), -1 );
+   EXPECT_EQ( cache.stats().hits, 0 );
+   EXPECT_EQ( cache.stats().entries, 2 * input.solutes.size() );
+   EXPECT_EQ( firstDifference( fitGlobal( &cache ), expected ), -1 );
+   EXPECT_EQ( cache.stats().hits, 2 * input.solutes.size() );
+}
+
+TEST_F( TestUSSolveSimCache, CustomGridFitIsUnchanged )
+{
+   // Z-solutes of a custom grid:  x = s, y = vbar, fixed z = f/f0
+   dset.solute_type = ( 0 << 6 ) | ( 3 << 3 ) | 1;
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double vbar : { 0.70, 0.74 } )
+      {
+         input.zsolutes << US_ZSolute( sval * 1.0e-13, vbar, 1.5, 0.0 );
+      }
+   }
+
+   auto fitCustom = [this, &input]( US_SimCache* cache )
+   {
+      US_SolveSim::Simulation sim = input;
+      sim.noisflag                = 3;
+      US_SolveSim solvesim( dsets, 1, false );
+      solvesim.set_sim_cache( cache );
+      solvesim.calc_residuals( 0, 1, sim );
+      QVector<double> out;
+      appendResult( out, sim );
+      return out;
+   };
+
+   const QVector<double> expected = fitCustom( nullptr );
+   US_SimCache           cache( 1024LL * 1024 * 1024 );
+   EXPECT_EQ( firstDifference( fitCustom( &cache ), expected ), -1 );
+   EXPECT_EQ( firstDifference( fitCustom( &cache ), expected ), -1 );
+   EXPECT_EQ( cache.stats().hits, input.zsolutes.size() );
 }
