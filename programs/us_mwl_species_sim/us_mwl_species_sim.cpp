@@ -869,6 +869,12 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       {
          reportHeadlessLoadFailure( "models", paths.join( "," ), errors_to_cl, gui_needed, error_occured );
       }
+      else
+      {
+         // The GUI and autoflow write the "S" simulation channel; command-line
+         //  output keeps the channel the models were fitted to
+         sim_channel = model_channel( models[0].description );
+      }
    }
 
    if ( flags.contains( "buffer" ) && flags["buffer"].length() > 0 )
@@ -1129,9 +1135,9 @@ bool US_MwlSpeciesSim::load_models_from_paths( const QStringList& paths )
 bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
 {
    QString impdir  = save_dir + "/";
-   // The generated model description owns the dataset triple.
+   // The cell comes from the model description; see sim_channel for the channel.
    QString cell    = model_cell( models[0].description );
-   QString channel = model_channel( models[0].description );
+   QString channel = sim_channel;
    QString basefn  = orunid + "." + run_type + "." + cell + "." + channel + ".xxx.auc";
 
    if ( !QDir().mkpath( impdir ) )
@@ -1713,7 +1719,7 @@ DbgLv(1) << "rdata:  dltr sc1" << rdata.scanData[1].delta_r;
    QString waveln     = QString( triple ).mid( 2, 3 );
    double mwavelen    = waveln.toDouble();
    rdata.cell         = triple.left( 1 ).toInt();
-   rdata.channel       = triple.mid( 1, 1 ).at( 0 ).toLatin1();
+   rdata.channel       = sim_channel.at( 0 ).toLatin1();
    for ( int js = 0; js < nscan; js++ )
       rdata.scanData[ js ].wavelength = mwavelen;
 

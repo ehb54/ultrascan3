@@ -115,6 +115,8 @@ class US_MwlSpeciesSim : public US_Widgets
         QString orunid;        //!< Original run ID
         QString         run_type;      //!< Two-character optical data type tag, "RA" unless overridden by --runtype
         QString         sim_description    = "Simulation"; //!< Output data description, from --description
+        //! Output channel: "S" (simulation), or the models' channel on the command line
+        QString         sim_channel        = "S";
         int             sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
         uint            noise_seed         = 0; //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
         QString         guid_seed;              //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
