@@ -289,7 +289,11 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
                              + ( ii == data.xvalues.size() - 1 ? spacing * 0.5 : 0.0 );
       if ( ! ( data.xvalues[ ii ] > data.xvalues[ ii - 1 ] ) ||
            ! ( qAbs( data.xvalues[ ii ] - rebuilt ) <= tolerance ) )
+      {
+         qDebug() << "US_DataIO::writeRawData: invalid radius at point" << ii << "of" << data.xvalues.size() << ":"
+                  << data.xvalues[ii] << "expected" << rebuilt << "tolerance" << tolerance;
          return NOT_USDATA;
+      }
    }
 
    // A present interpolation bitmap must cover every reading.
@@ -299,7 +303,12 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
       if ( sc.interpolated.isEmpty() ) continue;
 
       if ( sc.interpolated.size() < ( sc.rvalues.size() + 7 ) / 8 )
+      {
+         qDebug() << "US_DataIO::writeRawData: scan" << ii << "has an" << "interpolation bitmap of" << sc.interpolated.size()
+                  << "bytes for" << sc.rvalues.size() << "readings, which" << "needs" << ( sc.rvalues.size() + 7 ) / 8
+                  << "-- the bitmap was not resized with the readings";
          return NOT_USDATA;
+      }
    }
 
    QSaveFile ff( file );
@@ -860,7 +869,8 @@ int US_DataIO::readEdits( const QString& filename, EditValues& parameters )
 
 int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters )
 {
-   QFile ff( filename );
+   // Written to a temporary file that only replaces filename once complete
+   QSaveFile ff( filename );
    if ( !ff.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
       return CANTOPEN;
@@ -1036,10 +1046,13 @@ int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters
    xml.writeEndElement(); // experiment
    xml.writeEndDocument();
 
-   // A buffered write error only shows up when the file is flushed
-   ff.close();
+   // A buffered write error only shows up when the file is committed
+   if ( xml.hasError() || !ff.commit() )
+   {
+      return CANTWRITE;
+   }
 
-   return ( !xml.hasError() && ff.error() == QFile::NoError ) ? OK : CANTWRITE;
+   return OK;
 }
 
 void US_DataIO::ident( QXmlStreamReader& xml, EditValues& parameters )

@@ -1,0 +1,44 @@
+# us_sim_inputs_gen is a headless command-line tool: no GUI libraries.
+include( ../../local.pri )
+
+TEMPLATE     = app
+TARGET       = us_sim_inputs_gen
+DESTDIR      = ../../bin
+MOC_DIR      = ./moc
+OBJECTS_DIR  = ./obj
+VER          = 10
+
+QT          -= gui
+QT          += xml
+CONFIG      += $$DEBUGORRELEASE qt thread warn console
+CONFIG      -= app_bundle
+
+DEPENDPATH  += ../../utils ..
+INCLUDEPATH += ../../utils ..
+
+# libus_utils does not carry its MySQL dependency on every platform, so each
+# program linking it must link the client library too.
+
+unix:!macx {
+  LIBS      += -L../../lib -lus_utils
+  LIBS      += -lcrypto
+  LIBS      += -L$$MYSQLDIR -lmysqlclient
+  INCLUDEPATH += $$MYSQLPATH
+  DEFINES   += INTEL LINUX
+}
+
+win32 {
+  LIBS      += -L../../lib -lus_utils$${VER}
+  LIBS      += $$MYSQLLIB
+  LIBS      += -L$$OPENSSL/lib -lssl -lcrypto
+  INCLUDEPATH += $$MYSQLPATH/include $$OPENSSL/include $$QTPATH/include
+  DEFINES   += INTEL
+}
+
+macx {
+  LIBS      += -L../../lib -lus_utils -lmysqlclient
+  INCLUDEPATH += $$MYSQLPATH/include
+  DEFINES   += MAC OSX
+}
+
+SOURCES      = us_sim_inputs_gen.cpp

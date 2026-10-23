@@ -165,8 +165,16 @@ class US_UTIL_EXTERN US_DataIO
             ODlimit      = 1.5;
             bottom       = 0.0;
 
-	    bl_corr_slope = 0.0;
-	    bl_corr_yintercept = 0.0; 
+            //! Defaults for optional XML elements.
+            meniscus     = 0.0;
+            gapTolerance = 0.0;
+            rangeLeft    = 0.0;
+            rangeRight   = 0.0;
+            plateau      = 0.0;
+            baseline     = 0.0;
+
+            bl_corr_slope      = 0.0;
+            bl_corr_yintercept = 0.0;
 
             //! Air Gap is only for interference data
             airGapLeft   = 0.0;
