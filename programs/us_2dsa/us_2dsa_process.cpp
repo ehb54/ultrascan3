@@ -1632,6 +1632,15 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
       set_gaussians();              // calculate sigmas at 1st mc iteration
 
       sdata1 = sdata;               // save mc iteration 1 simulation
+
+      mc_odata.clear(); // save unmodified data (ODlimit points)
+      for ( int ss = 0; ss < nscans; ss++ )
+      {
+         for ( int rr = 0; rr < npoints; rr++ )
+         {
+            mc_odata << bdata->value( ss, rr );
+         }
+      }
    }
 
    // Get a randomized variation of the concentrations
@@ -1642,8 +1651,9 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
    {
       for ( int rr = 0; rr < npoints; rr++ )
       {
+         double odata     = mc_odata[kk];
          double variation = US_Math2::box_muller( 0.0, sigmas[ kk++ ] );
-         wdata.setValue( ss, rr, ( sdata1.value( ss, rr ) + variation ) );
+         wdata.setValue( ss, rr, US_SolveSim::mc_data_value( sdata1.value( ss, rr ), variation, odata, wdata.ODlimit ) );
       }
    }
 
@@ -1715,9 +1725,12 @@ DbgLv(1) << "MCARLO:setgau ns np" << nscans << npoints << "gausmoo" << gausmoo;
 
    else
    {  // Construct sigmas from residuals smoothed for each scan
+      //  (ODlimit points were not fitted:  no sigma, not in the RMSDs)
       int    ntpoints = nscans * npoints;
+      int           nfitted  = 0;
       double rmsdr    = 0.0;
       double rmsds    = 0.0;
+      QVector<bool> odmask;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
@@ -1726,8 +1739,11 @@ DbgLv(1) << "MCARLO:setgau ns np" << nscans << npoints << "gausmoo" << gausmoo;
          for ( int rr = 0; rr < npoints; rr++ )
          {
             double rval     = rdata.value( ss, rr );
-            rmsdr          += sq( rval );
-            vv[ rr ]        = qAbs( rval );
+            bool   omask    = ( bdata->value( ss, rr ) >= bdata->ODlimit );
+            odmask << omask;
+            rmsdr += omask ? 0.0 : sq( rval );
+            nfitted += omask ? 0 : 1;
+            vv[rr] = omask ? 0.0 : qAbs( rval );
          }
 
 if ( ss < 2 )
@@ -1742,10 +1758,11 @@ if ( ss < 2 )
 
       // Determine sigmas rmsd, then scale to match residuals rmsd
       for ( int rr = 0; rr < ntpoints; rr++ )
-         rmsds          += sq( sigmas[ rr ] );
+         rmsds += odmask[rr] ? 0.0 : sq( sigmas[rr] );
 
-      rmsdr           = sqrt( rmsdr / (double)ntpoints );  // Residuals RMSD
-      rmsds           = sqrt( rmsds / (double)ntpoints );  // Sigmas RMSD
+      nfitted         = qMax( nfitted, 1 );
+      rmsdr           = sqrt( rmsdr / (double) nfitted );  // Residuals RMSD
+      rmsds           = sqrt( rmsds / (double) nfitted );  // Sigmas RMSD
       double sigscl   = rmsdr / rmsds;                     // Sigma scale factor
 
       for ( int rr = 0; rr < ntpoints; rr++ )
