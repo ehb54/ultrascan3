@@ -720,10 +720,18 @@ void US_GA_Initialize::fill_lw_bins()
    {
       lw_buckets->addItem( soludata->bucketLine( ii ) );
    }
+
+   int max_buks = 50;
    le_nbuks->clear();
+   le_nbuks->setStyleSheet( nbuks > max_buks ? "QLineEdit { color: red; }" : "" );
    if ( nbuks > 0 )
    {
       le_nbuks->setText( QString::number( nbuks ) );
+   }
+   if ( nbuks > max_buks )
+   {
+      QMessageBox::warning( this, tr( "Bin Count Warning" ),
+         tr( "There are %1 bins, exceeding the limit of %2." ).arg( nbuks ).arg( max_buks ) );
    }
 }
 
