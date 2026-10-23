@@ -3,7 +3,7 @@
 set(src_dir ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(us_mwl_species_sim
-    ${src_dir}/main.cpp
+    ${src_dir}/us_mwl_species_sim_main.cpp
     ${src_dir}/us_mwl_species_sim.cpp
     ${src_dir}/us_mwl_species_sim.h
 )
