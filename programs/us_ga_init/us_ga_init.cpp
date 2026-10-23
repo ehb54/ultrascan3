@@ -1650,6 +1650,8 @@ void US_GA_Initialize::select_prefilt( void )
 
 DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilt->setText( pfmsg );
+
+   load_distro();
 }
 
 // View the statistics file produced in a file editor
