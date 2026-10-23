@@ -19,6 +19,13 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
+#include <qchar.h>
+#include <qlineedit.h>
+#include <qlist.h>
+#include <qmap.h>
+#include <qvector.h>
+#include <qwt_plot_curve.h>
+#include <qwt_plot_item.h>
 
 //! \brief Less-than function for sorting S_Solute values
 bool distro_lessthan( const S_Solute&, const S_Solute& );
@@ -38,43 +45,41 @@ class US_GA_Initialize : public US_Widgets
    private:
 
       QLabel*       lb_info1;
-      QLabel*       lb_nisols;
       QLabel*       lb_wxbuck;
       QLabel*       lb_hybuck;
       QLabel*       lb_info2;
+      QLabel*       lb_info3;
+      QLabel*       lb_info4;
       QLabel*       lb_resolu;
       QLabel*       lb_xreso;
       QLabel*       lb_yreso;
       QLabel*       lb_zfloor;
-      QLabel*       lb_autlim;
       QLabel*       lb_plxmin;
       QLabel*       lb_plxmax;
       QLabel*       lb_plymin;
       QLabel*       lb_plymax;
 
-      QListWidget*  lw_sbin_data;
+      QListWidget*  lw_buckets;
       QTextEdit*    te_pctl_help;
       QTextEdit*    te_status;
       QLineEdit*    le_prefilt;
+      QLineEdit*    le_plxmin;
+      QLineEdit*    le_plxmax;
+      QLineEdit*    le_plymin;
+      QLineEdit*    le_plymax;
+      QLineEdit*    le_nsols;
+      QLineEdit*    le_nbuks;
 
       US_Help       showHelp;
  
-      QwtCounter*   ct_nisols;
       QwtCounter*   ct_wxbuck;
       QwtCounter*   ct_hybuck;
       QwtCounter*   ct_resolu;
       QwtCounter*   ct_xreso;
       QwtCounter*   ct_yreso;
       QwtCounter*   ct_zfloor;
-      QwtCounter*   ct_plxmin;     
-      QwtCounter*   ct_plxmax;     
-      QwtCounter*   ct_plymin;     
-      QwtCounter*   ct_plymax;     
 
       QwtPlot*             data_plot;
-      QwtPlotSpectrogram*  d_spectrogram;
-      US_SpectrogramData*  spec_dat;
-      QwtPlotCurve*        pc1;
       QwtLinearColorMap*   colormap;
       US_PlotPicker*       pick;
       US_Disk_DB_Controls* dkdb_cntrls;
@@ -84,10 +89,8 @@ class US_GA_Initialize : public US_Widgets
       QPushButton*  pb_prefilt;
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
-      QPushButton*  pb_refresh;
       QPushButton*  pb_mandrsb;
       QPushButton*  pb_shrnksb;
-      QPushButton*  pb_ckovrlp;
       QPushButton*  pb_autassb;
       QPushButton*  pb_resetsb;
       QPushButton*  pb_loadsb;
@@ -102,38 +105,30 @@ class US_GA_Initialize : public US_Widgets
       QRadioButton* rb_x_mw;
       QRadioButton* rb_x_vbar;
       QRadioButton* rb_x_D;
-      QRadioButton* rb_x_f;
       QRadioButton* rb_x_rh;
       QRadioButton* rb_y_s;
       QRadioButton* rb_y_ff0;
       QRadioButton* rb_y_mw;
       QRadioButton* rb_y_vbar;
       QRadioButton* rb_y_D;
-      QRadioButton* rb_y_f;
       QRadioButton* rb_y_rh;
-      QRadioButton* rb_1dplot;
-      QRadioButton* rb_2dplot;
-      QRadioButton* rb_3dplot;
       
       QButtonGroup* bg_x_axis;
       QButtonGroup* bg_y_axis;
-      QButtonGroup* bg_plot;
 
-      QCheckBox*    ck_autlim;
-      
+      QCheckBox*    ck_manlim;
+
       QPen*         pickpen;
       QPen          cbukpen;
       QPen          pbukpen;
 
       QList< S_Solute >  sk_distro;
       QList< S_Solute >  xy_distro;
-      QList< S_Solute >* sdistro;
+      QList< QwtPlotCurve* > bucket_curves;
 
-      QPointF  p1;
-      QPointF  p2;
 
-      double        wxbuck;
-      double        hybuck;
+      QMap< QString, QVector< double > > manual_limits;
+
       double        resolu;
       double        plxmin;
       double        plxmax;
@@ -145,14 +140,10 @@ class US_GA_Initialize : public US_Widgets
       double        yreso;
       double        zfloor;
 
-      int           nisols;
-      int           nibuks;
       int           mc_iters;
       int           patm_id;
       int           patm_dlay;
-      int           plot_dim;
       int           distro_type;
-      int           sxset;
       int           psdsiz;
       int           dbg_level;
       int           plot_xy;
@@ -162,12 +153,10 @@ class US_GA_Initialize : public US_Widgets
 
       bool          minmax;
       bool          zoom;
-      bool          auto_lim;
       bool          monte_carlo;
       bool          runsel;
       bool          latest;
       bool          manbuks;
-      bool          is_saved;
 
       QString       run_name;
       QString       analys_name;
@@ -188,64 +177,51 @@ class US_GA_Initialize : public US_Widgets
       QString       mfilter;
       QString       editGUID;
       QString       binfpath;
+      QString       limit_key;
 
       QStringList   pfilts;
 
    private slots:
 
-      void update_nisols( double );
-      void update_wxbuck( double );
-      void update_hybuck( double );
+      void select_manlim( void   );
       void update_resolu( double );
       void update_xreso(  double );
       void update_yreso(  double );
       void update_zfloor( double );
-      void update_plxmin( double );
-      void update_plxmax( double );
-      void update_plymin( double );
-      void update_plymax( double );
+      void update_plxmin( void );
+      void update_plxmax( void );
+      void update_plymin( void );
+      void update_plymax( void );
       void replot_data( void );
-      void plot_1dim(   void );
-      void plot_2dim(   void );
       void plot_3dim(   void );
-      void select_autolim( void );
-      void select_plot_dim( int );
-      void check_draw_btn( void );
+      void plot_buckets(   void );
       void select_prefilt( void );
       void load_distro (   void );
       void load_color(     void );
       void manDrawSb(      void );
-      void checkOverlaps(  void );
       void autoAssignSb(   void );
       void resetSb(        void );
+      void fill_lw_bins(   void );
       void save(           void );
       void reset(          void );
       void view(           void );
       void set_limits(     void );
       void sort_distro( QList< S_Solute >&, bool );
       void setBucketPens(  void );
-      void highlight_solute( QwtPlotCurve* );
-      void highlight_solute( int );
-      void getMouseDown(     const QPointF& );
-      void getMouseUp(       const QPointF& );
-      void sclick_sbdata(    const QModelIndex& );
-      void sclick_sbdata(    const int          );
-      void dclick_sbdata(    const QModelIndex& );
-      void newrow_sbdata(    int );
+      void highlight_bucket( int );
+      void selectBinAtPoint( const QPointF& );
+      void addSelectedBin( const QRectF& );
+      void deleteSelectedBin();
       void changeBucketRect( int, QRectF& );
-      QwtPlotCurve* drawBucketRect( int, QRectF );
-      QwtPlotCurve* drawBucketRect( int, QPointF, QPointF );
-      QwtPlotCurve* bucketCurveAt(  int );
-      void erase_buckets   ( bool );
-      void erase_buckets   ( void );
-      void removeSoluteBin ( int );
-      void resetPlotAndList( int );
+      void erase_curves    ( bool );
       bool equivalent      ( double, double, double );
       void update_disk_db  ( bool );
       void select_x_axis   ( int );
       void select_y_axis   ( int );
       void build_xy_distro ( void );
       void load_bins       ( void );
+      double str2double      ( const QString&, double );
+      void update_plot_labels ( void );
       QString anno_title   ( int  );
       QString anno_label   ( int  );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
