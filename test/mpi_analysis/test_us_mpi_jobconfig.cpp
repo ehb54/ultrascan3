@@ -178,6 +178,30 @@ TEST( US_MPI_JobConfig, ZValueDefaultOnlyWithJobElement )
    EXPECT_FALSE( empty.parameters.contains( "z_value" ) );
 }
 
+TEST( US_MPI_JobConfig, UdpPort )
+{
+   auto udp = []( const QString& port )
+   { return parse( "<US_JobSubmit method=\"2DSA\"><job><udp server=\"127.0.0.1\" " + port + "/></job></US_JobSubmit>" ); };
+
+   Config valid = udp( "port=\"12233\"" );
+   EXPECT_EQ( valid.udp_port, 12233 );
+   EXPECT_TRUE( valid.warnings.isEmpty() );
+
+   Config none = udp( "" );
+   EXPECT_EQ( none.udp_port, 0 );
+   EXPECT_TRUE( none.warnings.isEmpty() );
+
+   // Out of range or not a number:  no status messages, but the job runs
+   for ( const char* bad : { "port=\"70000\"", "port=\"-1\"", "port=\"abc\"" } )
+   {
+      Config config = udp( bad );
+      EXPECT_TRUE( config.ok() ) << bad;
+      EXPECT_EQ( config.udp_port, 0 ) << bad;
+      ASSERT_EQ( config.warnings.size(), 1 ) << bad;
+      EXPECT_TRUE( config.warnings[0].contains( "udp port" ) ) << bad;
+   }
+}
+
 TEST( US_MPI_JobConfig, ModelFileParameters )
 {
    Config config = parse( job( "<DC_model id=\"7\" filename=\"c.model.xml\"/>" ) );
