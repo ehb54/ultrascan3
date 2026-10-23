@@ -558,6 +558,19 @@ def mpirun_command(mpirun, nprocs):
     return cmd + ["-np", str(nprocs)]
 
 
+def kill_process_tree(proc):
+    """Stop mpirun and every process it started (the ranks, and on Windows
+    the smpd of MS-MPI), so that no rank keeps running or holds the
+    program file open."""
+    if sys.platform == "win32":
+        # No process groups to signal:  taskkill /T follows the parent ids
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        os.killpg(proc.pid, signal.SIGKILL)
+    proc.wait()
+
+
 def run_job(name, case, args):
     """Build the archive and run us_mpi_analysis.
 
@@ -585,14 +598,16 @@ def run_job(name, case, args):
     log = casedir.parent / ("%s.log" % name)
     with open(log, "w") as out:
         # Own process group, so that a hanging run is stopped completely
+        if sys.platform == "win32":
+            group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        else:
+            group = {"start_new_session": True}
         proc = subprocess.Popen(cmd, cwd=casedir, env=env, stdout=out,
-                                stderr=subprocess.STDOUT,
-                                start_new_session=True)
+                                stderr=subprocess.STDOUT, **group)
         try:
             status = proc.wait(timeout=case.get("timeout", args.timeout))
         except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
-            proc.wait()
+            kill_process_tree(proc)
             status = "timeout"
     results = casedir / "output" / "analysis-results.tar"
     return status, log.read_text(errors="replace"), results
