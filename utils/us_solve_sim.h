@@ -5,15 +5,16 @@
 #include <QtCore>
 #include <algorithm>
 
-#include "us_model.h"
-#include "us_dataIO.h"
-#include "us_noise.h"
-#include "us_simparms.h"
-#include "us_solution.h"
-#include "us_solute.h"
-#include "us_zsolute.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
+#include "us_dataIO.h"
+#include "us_model.h"
+#include "us_noise.h"
+#include "us_sim_cache.h"
+#include "us_simparms.h"
+#include "us_solute.h"
+#include "us_solution.h"
+#include "us_zsolute.h"
 
 #define SIMPARAMS US_SimulationParameters
 
@@ -162,6 +163,14 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
 
+    //! \brief Reuse simulations from a cache, and store new ones in it
+    //! \param cache  Cache shared with other threads (or 0, the default,
+    //!               for none); it must outlive the calc_residuals calls
+    void        set_sim_cache( US_SimCache* cache )
+    {
+       simcache = cache;
+    }
+
   signals:
     //! \brief emit a signal that includes a progress step count
     void work_progress ( int );
@@ -184,6 +193,27 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     bool               calc_ri;       // Calculate-RI-noise flag
     bool               banddthr;      // Band-forming data threshold peak enhance
     QDateTime          startCalc;     // Start calc time for elapsed time prints
+
+    US_SimCache*       simcache; // Simulation cache (or 0)
+
+    // Data set key of the simulation cache, kept with the parameter values
+    // that the simulator may change (so the key is renewed when they do)
+    class DsetKey
+    {
+       public:
+          const DataSet*               dset;
+          const US_DataIO::EditedData* edata;
+          const void*                  tsobj;
+          int                          nspeeds;
+          int                          nsimprofs;
+          bool                         sim;
+          QByteArray                   key;
+    };
+    QList<DsetKey> dskeys; // Data set keys of a calc_residuals
+
+    // Simulate a single-component model for a data set, or get the
+    //  simulation from the cache; returns the cache key (if any)
+    QByteArray     simulate( US_Model&, DataSet*, US_DataIO::EditedData*, US_DataIO::RawData& );
 
  private slots:
     // Limit data to thresholds
