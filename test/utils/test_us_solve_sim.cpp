@@ -54,6 +54,73 @@ void project( int noisflag, int nscans, int npoints, double* vals )
       }
    }
 }
+
+// Remove the per-scan (RI) or per-radius (TI) means of the unmasked values;
+//  return the largest mean removed
+double removeMaskedMeans( bool per_scan, int nscans, int npoints, const QVector<bool>& masked, double* vals )
+{
+   int    ngroups = per_scan ? nscans : npoints;
+   int    nmember = per_scan ? npoints : nscans;
+   double maxmean = 0.0;
+
+   for ( int gg = 0; gg < ngroups; gg++ )
+   {
+      double sum = 0.0;
+      int    cnt = 0;
+      for ( int mm = 0; mm < nmember; mm++ )
+      {
+         int kk = per_scan ? ( gg * npoints + mm ) : ( mm * npoints + gg );
+         if ( !masked[kk] )
+         {
+            sum += vals[kk];
+            cnt++;
+         }
+      }
+      double mean = ( cnt > 0 ) ? sum / cnt : 0.0;
+      for ( int mm = 0; mm < nmember; mm++ )
+      {
+         int kk = per_scan ? ( gg * npoints + mm ) : ( mm * npoints + gg );
+         if ( !masked[kk] )
+         {
+            vals[kk] -= mean;
+         }
+      }
+      maxmean = qMax( maxmean, fabs( mean ) );
+   }
+
+   return maxmean;
+}
+
+// Reference projection with masked values left out (and set to zero):
+//  for TI and RI noise, alternately remove the per-scan and per-radius
+//  means of the unmasked values until converged (alternating projections)
+void projectMasked( int noisflag, int nscans, int npoints, const QVector<bool>& masked, double* vals )
+{
+   bool fit_ti = ( noisflag & 1 ) != 0;
+   bool fit_ri = ( noisflag & 2 ) != 0;
+
+   for ( int kk = 0; kk < nscans * npoints; kk++ )
+   {
+      vals[kk] = masked[kk] ? 0.0 : vals[kk];
+   }
+
+   for ( int iter = 0; iter < 1000000; iter++ )
+   {
+      double change = 0.0;
+      if ( fit_ri )
+      {
+         change = qMax( change, removeMaskedMeans( true, nscans, npoints, masked, vals ) );
+      }
+      if ( fit_ti )
+      {
+         change = qMax( change, removeMaskedMeans( false, nscans, npoints, masked, vals ) );
+      }
+      if ( !( fit_ti && fit_ri ) || change < 1e-17 )
+      {
+         break;
+      }
+   }
+}
 }
 
 // ============================================================================
@@ -447,6 +514,209 @@ TEST_F( TestUSSolveSimNnlsNoise, EachDataSetHasItsOwnNoise )
          ndiff       = qMax( ndiff, fabs( fit - tru ) );
       }
       EXPECT_LT( ndiff, 1e-9 );
+   }
+}
+
+TEST_F( TestUSSolveSimNnlsNoise, MaskedRowsAreLeftOutOfTheNoiseFit )
+{
+   // Masked rows (zero in A and b) are not data:  the noise is the
+   // least-squares fit over the unmasked rows, x minimizes the projected
+   // residual there, and the masked rows stay zero.  Shapes with fewer and
+   // with more scans than points, a fully masked scan and radius, and
+   // Tikhonov rows below the data rows
+   struct Shape
+   {
+         int    nscans;
+         int    npoints;
+         double alpha;
+   };
+
+   for ( const Shape& shape : { Shape{ 12, 40, 0.0 }, Shape{ 30, 8, 0.0 }, Shape{ 12, 40, 0.5 } } )
+   {
+      const int ns     = shape.nscans;
+      const int np     = shape.npoints;
+      const int nt     = ns * np;
+      const int narows = ( shape.alpha != 0.0 ) ? ( nt + nsolutes ) : nt;
+      SCOPED_TRACE( QString( "%1x%2 alpha %3" ).arg( ns ).arg( np ).arg( shape.alpha ).toStdString() );
+
+      QVector<double> acols; // Column-major, nt rows
+      for ( int is = 0; is < 6; is++ )
+      {
+         for ( int id = 0; id < 3; id++ )
+         {
+            for ( int ss = 0; ss < ns; ss++ )
+            {
+               for ( int rr = 0; rr < np; rr++ )
+               {
+                  acols << boundary( ( 2.0 + 1.5 * is ) * 1.0e-13,
+                                     ( 3.0 + 2.0 * id ) * 1.0e-7,
+                                     6.0 + rr * ( 1.0 / np ),
+                                     1200.0 + ss * ( 6000.0 / ns ) );
+               }
+            }
+         }
+      }
+
+      // Masked:  a growing band at the bottom of later scans, the last
+      // radius, the second scan and one isolated point
+      QVector<bool> masked( nt, false );
+      for ( int ss = 0; ss < ns; ss++ )
+      {
+         for ( int rr = 0; rr < np; rr++ )
+         {
+            bool band            = ( ss >= ns / 3 ) && ( rr >= np - 1 - ( ss - ns / 3 ) * np / ( 2 * ns ) );
+            masked[ss * np + rr] = band || rr == np - 1 || ss == 1;
+         }
+      }
+      masked[( ns / 2 ) * np + np / 2] = true;
+
+      std::mt19937                     gen( 23 );
+      std::normal_distribution<double> gauss( 0.0, 1.0 );
+      QVector<double>                  tinoi( np ), rinoi( ns );
+      for ( double& val : tinoi )
+      {
+         val = 0.05 * gauss( gen );
+      }
+      for ( double& val : rinoi )
+      {
+         val = 0.20 * gauss( gen );
+      }
+      QVector<double> data( nt, 0.0 );
+      for ( int kk = 0; kk < nt; kk++ )
+      {
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            data[kk] += ctrue[cc] * acols[cc * nt + kk];
+         }
+         data[kk] += tinoi[kk % np] + rinoi[kk / np] + 0.003 * gauss( gen );
+      }
+
+      for ( int noisflag = 1; noisflag <= 3; noisflag++ )
+      {
+         SCOPED_TRACE( noisflag );
+         QVector<double> awork( narows * nsolutes, 0.0 );
+         QVector<double> bwork( narows, 0.0 );
+         for ( int kk = 0; kk < nt; kk++ )
+         {
+            bwork[kk] = masked[kk] ? 0.0 : data[kk];
+            for ( int cc = 0; cc < nsolutes; cc++ )
+            {
+               awork[cc * narows + kk] = masked[kk] ? 0.0 : acols[cc * nt + kk];
+            }
+         }
+         for ( int cc = 0; cc < nsolutes && shape.alpha != 0.0; cc++ )
+         {
+            awork[cc * narows + nt + cc] = shape.alpha;
+         }
+
+         QVector<double> xvec( nsolutes, 0.0 ), tivec( np, 0.0 ), rivec( ns, 0.0 );
+         ASSERT_EQ( US_SolveSim::nnls_noise( noisflag,
+                                             QVector<int>( 1, ns ),
+                                             QVector<int>( 1, np ),
+                                             nsolutes,
+                                             narows,
+                                             awork,
+                                             bwork,
+                                             xvec,
+                                             tivec,
+                                             rivec,
+                                             nullptr,
+                                             &masked ),
+                    0 );
+
+         // Masked rows of the projected A stay zero
+         double amask = 0.0;
+         for ( int kk = 0; kk < nt; kk++ )
+         {
+            for ( int cc = 0; cc < nsolutes && masked[kk]; cc++ )
+            {
+               amask = qMax( amask, fabs( awork[cc * narows + kk] ) );
+            }
+         }
+         EXPECT_EQ( amask, 0.0 );
+
+         // At the unmasked rows, b - A x - noise = P (b - A x)
+         QVector<double> resid = data;
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            for ( int kk = 0; kk < nt; kk++ )
+            {
+               resid[kk] -= xvec[cc] * acols[cc * nt + kk];
+            }
+         }
+         QVector<double> presid = resid;
+         projectMasked( noisflag, ns, np, masked, presid.data() );
+
+         double rdiff = 0.0;
+         for ( int kk = 0; kk < nt; kk++ )
+         {
+            if ( !masked[kk] )
+            {
+               double nfit = ( ( noisflag & 1 ) ? tivec[kk % np] : 0.0 ) + ( ( noisflag & 2 ) ? rivec[kk / np] : 0.0 );
+               rdiff       = qMax( rdiff, fabs( resid[kk] - nfit - presid[kk] ) );
+            }
+         }
+         EXPECT_LT( rdiff, 1e-10 );
+
+         // Kuhn-Tucker conditions of min ||P (b - A x)||^2 + alpha^2 ||x||^2
+         double dual_pos  = 0.0;
+         double dual_zero = -1.0;
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            QVector<double> pcol( acols.mid( cc * nt, nt ) );
+            projectMasked( noisflag, ns, np, masked, pcol.data() );
+            double dual = -shape.alpha * shape.alpha * xvec[cc];
+            for ( int kk = 0; kk < nt; kk++ )
+            {
+               dual += pcol[kk] * presid[kk];
+            }
+
+            EXPECT_GE( xvec[cc], 0.0 );
+            if ( xvec[cc] > 0.0 )
+            {
+               dual_pos = qMax( dual_pos, fabs( dual ) );
+            }
+            else
+            {
+               dual_zero = qMax( dual_zero, dual );
+            }
+         }
+         EXPECT_LT( dual_pos, 1e-9 );
+         EXPECT_LT( dual_zero, 1e-9 );
+      }
+   }
+}
+
+TEST_F( TestUSSolveSimNnlsNoise, AllFalseMaskGivesUnmaskedResult )
+{
+   QVector<double> data = makeData( 0.05, 0.20, 0.003, 5 );
+   QVector<bool>   masked( NTOTAL, false );
+
+   for ( int noisflag = 1; noisflag <= 3; noisflag++ )
+   {
+      SCOPED_TRACE( noisflag );
+      QVector<double> x0, t0, r0;
+      solve( noisflag, data, x0, t0, r0 );
+
+      QVector<double> awork = amat;
+      QVector<double> bwork = data;
+      QVector<double> xvec( nsolutes, 0.0 ), tivec( NPOINTS, 0.0 ), rivec( NSCANS, 0.0 );
+      ASSERT_EQ( US_SolveSim::nnls_noise( noisflag,
+                                          QVector<int>( 1, NSCANS ),
+                                          QVector<int>( 1, NPOINTS ),
+                                          nsolutes,
+                                          NTOTAL,
+                                          awork,
+                                          bwork,
+                                          xvec,
+                                          tivec,
+                                          rivec,
+                                          nullptr,
+                                          &masked ),
+                 0 );
+      EXPECT_EQ( xvec, x0 );
+      EXPECT_EQ( tivec, t0 );
+      EXPECT_EQ( rivec, r0 );
    }
 }
 
@@ -1005,4 +1275,300 @@ TEST_F( TestUSSolveSimCalcResiduals, TikhonovAfterNormCutKeepsColumnsAligned )
       EXPECT_LT( sim.variance, 1e-12 );
       EXPECT_LT( maxDiff( fittedConc( input.zsolutes, sim.zsolutes ), cgrid ), 1e-4 );
    }
+}
+
+TEST_F( TestUSSolveSimCalcResiduals, OdLimitMaskedPointsDoNotBiasNoise )
+{
+   // Points at or above the OD limit are left out of the fit.  The data at
+   // all other points are exact sums of the solute simulations plus TI
+   // and/or RI noise, so the concentrations and the noise at the fitted
+   // points must still be recovered exactly
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double kval : { 1.2, 2.0 } )
+      {
+         input.solutes << US_Solute( sval * 1.0e-13, kval );
+      }
+   }
+   std::sort( input.solutes.begin(), input.solutes.end() );
+
+   QVector<double> amatrix = basis( input );
+   ASSERT_EQ( amatrix.size(), input.solutes.size() * NTOTAL );
+
+   QVector<double> conc = { 0.3, 0.0, 0.5, 0.0, 0.0, 0.2 };
+   QVector<double> tinoi, rinoi;
+   makeNoise( tinoi, rinoi );
+
+   // Masked:  a growing band at the bottom of later scans, the last radius
+   // of every scan and one isolated point
+   QVector<bool> masked( NTOTAL, false );
+   for ( int ss = 0; ss < NSCANS; ss++ )
+   {
+      for ( int rr = 0; rr < NPOINTS; rr++ )
+      {
+         masked[ss * NPOINTS + rr] = ( ss >= 4 && rr >= NPOINTS - 2 * ( ss - 3 ) ) || rr == NPOINTS - 1;
+      }
+   }
+   masked[2 * NPOINTS + 20] = true;
+
+   for ( int noisflag = 1; noisflag <= 3; noisflag++ )
+   {
+      SCOPED_TRACE( noisflag );
+      const bool      fit_ti = ( noisflag & 1 ) != 0;
+      const bool      fit_ri = ( noisflag & 2 ) != 0;
+      QVector<double> tfit   = tinoi;
+      QVector<double> rfit   = rinoi;
+      if ( !fit_ti )
+      {
+         tfit.fill( 0.0 );
+      }
+      if ( !fit_ri )
+      {
+         rfit.fill( 0.0 );
+      }
+      setData( amatrix, conc, tfit, rfit );
+      dset.run_data.ODlimit = 1.5;
+      for ( int kk = 0; kk < NTOTAL; kk++ )
+      {
+         if ( masked[kk] )
+         {
+            dset.run_data.scanData[kk / NPOINTS].rvalues[kk % NPOINTS] = 2.0;
+         }
+      }
+
+      US_SolveSim::Simulation sim = fit( input, noisflag, 0.0 );
+
+      EXPECT_LT( maxDiff( fittedConc( input.solutes, sim.solutes ), conc ), 1e-8 );
+
+      // Fitted noise and residuals at the unmasked points
+      double ndiff = 0.0;
+      double rmax  = 0.0;
+      for ( int ss = 0; ss < NSCANS; ss++ )
+      {
+         for ( int rr = 0; rr < NPOINTS; rr++ )
+         {
+            if ( masked[ss * NPOINTS + rr] )
+            {
+               continue;
+            }
+            double nfit = ( fit_ti ? sim.ti_noise[rr] : 0.0 ) + ( fit_ri ? sim.ri_noise[ss] : 0.0 );
+            ndiff       = qMax( ndiff, fabs( nfit - tfit[rr] - rfit[ss] ) );
+            rmax        = qMax( rmax, fabs( sim.residuals.value( ss, rr ) ) );
+         }
+      }
+      EXPECT_LT( ndiff, 1e-9 );
+      EXPECT_LT( rmax, 1e-9 );
+   }
+}
+
+TEST_F( TestUSSolveSimCalcResiduals, OdLimitMaskedPointsAreLeftOutOfVariance )
+{
+   // Points at or above the OD limit were not fitted:  the variances are
+   // the mean squared residual of the other points only.  The residuals of
+   // the masked points are still data - fit (Monte Carlo sigmas use them)
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double kval : { 1.2, 2.0 } )
+      {
+         input.solutes << US_Solute( sval * 1.0e-13, kval );
+      }
+   }
+   std::sort( input.solutes.begin(), input.solutes.end() );
+
+   QVector<double> amatrix = basis( input );
+   ASSERT_EQ( amatrix.size(), input.solutes.size() * NTOTAL );
+
+   QVector<double> conc = { 0.3, 0.0, 0.5, 0.0, 0.0, 0.2 };
+   QVector<double> tinoi, rinoi;
+   makeNoise( tinoi, rinoi );
+
+   QVector<bool> masked( NTOTAL, false );
+   int           nunmask = 0;
+   for ( int kk = 0; kk < NTOTAL; kk++ )
+   {
+      int ss     = kk / NPOINTS;
+      int rr     = kk % NPOINTS;
+      masked[kk] = ( ss >= 6 && rr >= NPOINTS - ( ss - 4 ) ) || kk == 3 * NPOINTS + 10;
+      nunmask += masked[kk] ? 0 : 1;
+   }
+
+   for ( int noisflag : { 0, 3 } )
+   {
+      for ( double rndamp : { 0.0, 0.004 } )
+      {
+         SCOPED_TRACE( QString( "noisflag %1 random %2" ).arg( noisflag ).arg( rndamp ).toStdString() );
+         QVector<double> tfit = tinoi;
+         QVector<double> rfit = rinoi;
+         if ( noisflag == 0 )
+         {
+            tfit.fill( 0.0 );
+            rfit.fill( 0.0 );
+         }
+         setData( amatrix, conc, tfit, rfit );
+         std::mt19937                     gen( 31 );
+         std::normal_distribution<double> gauss( 0.0, 1.0 );
+         dset.run_data.ODlimit = 1.5;
+         for ( int kk = 0; kk < NTOTAL; kk++ )
+         {
+            double& val = dset.run_data.scanData[kk / NPOINTS].rvalues[kk % NPOINTS];
+            val         = masked[kk] ? 2.5 : ( val + rndamp * gauss( gen ) );
+         }
+
+         US_SolveSim::Simulation sim = fit( input, noisflag, 0.0 );
+
+         double                  rsum  = 0.0;
+         double                  rmask = 0.0;
+         for ( int kk = 0; kk < NTOTAL; kk++ )
+         {
+            double rval = sim.residuals.value( kk / NPOINTS, kk % NPOINTS );
+            rsum += masked[kk] ? 0.0 : rval * rval;
+            rmask = masked[kk] ? qMax( rmask, fabs( rval ) ) : rmask;
+         }
+         EXPECT_GT( rmask, 1.0 ); // Masked data 2.5, fit at most about 1.1
+         ASSERT_EQ( sim.variances.size(), 1 );
+         EXPECT_NEAR( sim.variance, rsum / nunmask, 1e-12 * rsum / nunmask + 1e-30 );
+         EXPECT_NEAR( sim.variances[0], rsum / nunmask, 1e-12 * rsum / nunmask + 1e-30 );
+         if ( rndamp == 0.0 )
+         {
+            EXPECT_LT( sim.variance, 1e-20 );
+         }
+      }
+   }
+}
+
+TEST_F( TestUSSolveSimCalcResiduals, MonteCarloDataKeepsOdLimitMask )
+{
+   // Monte Carlo data are the fit plus a gaussian variation with the
+   // residual magnitude as sigma.  At points above the OD limit, the
+   // residual is the large unfitted data - fit:  with only base +
+   // variation, many of them fall below the limit and enter the Monte
+   // Carlo fits.  mc_data_value keeps them at their original value, so
+   // each Monte Carlo fit leaves out exactly the points the base fit did
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double kval : { 1.2, 2.0 } )
+      {
+         input.solutes << US_Solute( sval * 1.0e-13, kval );
+      }
+   }
+   std::sort( input.solutes.begin(), input.solutes.end() );
+
+   QVector<double> amatrix = basis( input );
+   ASSERT_EQ( amatrix.size(), input.solutes.size() * NTOTAL );
+
+   QVector<double> conc = { 0.3, 0.0, 0.5, 0.0, 0.0, 0.2 };
+   QVector<double> zero( qMax( (int) NPOINTS, (int) NSCANS ), 0.0 );
+   setData( amatrix, conc, zero, zero );
+   std::mt19937                     gen( 41 );
+   std::normal_distribution<double> gauss( 0.0, 1.0 );
+   const double                     odlim = 1.5;
+   dset.run_data.ODlimit                  = odlim;
+   QVector<bool> masked( NTOTAL, false );
+   for ( int kk = 0; kk < NTOTAL; kk++ )
+   {
+      int     ss  = kk / NPOINTS;
+      int     rr  = kk % NPOINTS;
+      double& val = dset.run_data.scanData[ss].rvalues[rr];
+      masked[kk]  = ( ss >= 5 && rr >= NPOINTS - ( ss - 3 ) );
+      val         = masked[kk] ? 1.6 + 0.4 * ( rr % 3 ) : val + 0.004 * gauss( gen );
+   }
+   US_DataIO::EditedData   odata = dset.run_data;
+
+   US_SolveSim::Simulation sim = fit( input, 0, 0.0 );
+
+   int                     nunmask = 0; // Masked points that base + variation would unmask
+   for ( int iter = 0; iter < 5; iter++ )
+   {
+      SCOPED_TRACE( iter );
+      for ( int kk = 0; kk < NTOTAL; kk++ )
+      {
+         int    ss    = kk / NPOINTS;
+         int    rr    = kk % NPOINTS;
+         double base  = sim.sim_data.value( ss, rr );
+         double sigma = qAbs( sim.residuals.value( ss, rr ) );
+         double vari  = sigma * gauss( gen );
+         nunmask += ( masked[kk] && base + vari < odlim ) ? 1 : 0;
+         dset.run_data.scanData[ss].rvalues[rr] = US_SolveSim::mc_data_value( base, vari, odata.value( ss, rr ), odata.ODlimit );
+      }
+
+      // Exactly the originally masked points are at or above the limit
+      int nwrong = 0;
+      for ( int kk = 0; kk < NTOTAL; kk++ )
+      {
+         nwrong += ( ( dset.run_data.value( kk / NPOINTS, kk % NPOINTS ) >= odlim ) != masked[kk] ) ? 1 : 0;
+      }
+      EXPECT_EQ( nwrong, 0 );
+
+      // The Monte Carlo fit stays close to the base fit
+      US_SolveSim::Simulation simmc = fit( input, 0, 0.0 );
+      EXPECT_LT( maxDiff( fittedConc( input.solutes, simmc.solutes ), conc ), 0.05 );
+      EXPECT_LT( sqrt( simmc.variance ), 0.02 );
+   }
+   EXPECT_GT( nunmask, 0 ); // The scenario does exercise the mask
+   dset.run_data = odata;
+}
+
+TEST_F( TestUSSolveSimCalcResiduals, ZeroDataValueIsNotMaskedByOdLimit )
+{
+   // With points above the OD limit present, a data value of exactly 0.0
+   // below the limit is still a data point:  the result must equal the
+   // NNLS solution with only the OD-limit rows removed
+   US_SolveSim::Simulation input;
+   for ( double sval : { 2.0, 4.0, 6.0 } )
+   {
+      for ( double kval : { 1.2, 2.0 } )
+      {
+         input.solutes << US_Solute( sval * 1.0e-13, kval );
+      }
+   }
+   std::sort( input.solutes.begin(), input.solutes.end() );
+
+   QVector<double> amatrix = basis( input );
+   const int       nsols   = input.solutes.size();
+   ASSERT_EQ( amatrix.size(), nsols * NTOTAL );
+
+   QVector<double> conc = { 0.3, 0.0, 0.5, 0.0, 0.0, 0.2 };
+   QVector<double> zero( qMax( (int) NPOINTS, (int) NSCANS ), 0.0 );
+   setData( amatrix, conc, zero, zero );
+
+   // Zero values on the plateau of two scans; OD limit exceeded at the
+   // bottom of the last scans
+   const int kzero1                                                   = 5 * NPOINTS + 40;
+   const int kzero2                                                   = 9 * NPOINTS + 45;
+   dset.run_data.scanData[kzero1 / NPOINTS].rvalues[kzero1 % NPOINTS] = 0.0;
+   dset.run_data.scanData[kzero2 / NPOINTS].rvalues[kzero2 % NPOINTS] = 0.0;
+   dset.run_data.ODlimit                                              = 1.5;
+   QVector<bool> masked( NTOTAL, false );
+   for ( int ss = 8; ss < NSCANS; ss++ )
+   {
+      for ( int rr = NPOINTS - 4; rr < NPOINTS; rr++ )
+      {
+         masked[ss * NPOINTS + rr]              = true;
+         dset.run_data.scanData[ss].rvalues[rr] = 3.0;
+      }
+   }
+
+   // Reference:  NNLS with the OD-limit rows of A and b set to zero
+   QVector<double> aref = amatrix;
+   QVector<double> bref( NTOTAL, 0.0 );
+   QVector<double> xref( nsols, 0.0 );
+   for ( int kk = 0; kk < NTOTAL; kk++ )
+   {
+      bref[kk] = masked[kk] ? 0.0 : dset.run_data.scanData[kk / NPOINTS].rvalues[kk % NPOINTS];
+      for ( int cc = 0; cc < nsols; cc++ )
+      {
+         if ( masked[kk] )
+         {
+            aref[cc * NTOTAL + kk] = 0.0;
+         }
+      }
+   }
+   ASSERT_EQ( US_Math2::nnls( aref.data(), NTOTAL, NTOTAL, nsols, bref.data(), xref.data() ), 0 );
+
+   US_SolveSim::Simulation sim = fit( input, 0, 0.0 );
+
+   EXPECT_LT( maxDiff( fittedConc( input.solutes, sim.solutes ), xref ), 1e-10 );
 }

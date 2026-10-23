@@ -1778,7 +1778,8 @@ int US_SolveSim::nnls_noise( const int                noisflag,
                              QVector<double>&         nnls_x,
                              QVector<double>&         tinvec,
                              QVector<double>&         rinvec,
-                             const std::atomic<bool>* abort_flag )
+                             const std::atomic<bool>* abort_flag,
+                             const QVector<bool>* /*masked*/ )
 {
    const bool calc_ti = ( ( noisflag & 1 ) != 0 );
    const bool calc_ri = ( ( noisflag & 2 ) != 0 );

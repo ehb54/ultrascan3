@@ -118,18 +118,33 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //!                  turn), if noisflag has 2
     //! \param abort_flag Optional pointer to a flag that stops the NNLS
     //!                  solve (return code 3) when it becomes true
+    //! \param masked    Optional flags for the data rows (all data sets in
+    //!                  turn) that are left out of the fit (not used yet)
     //! \returns         Return code of US_Math2::nnls
-    static int nnls_noise( int                      noisflag,
-                           const QVector<int>&      nscans,
-                           const QVector<int>&      npoints,
-                           int                      nsolutes,
-                           int                      narows,
-                           QVector<double>&         nnls_a,
-                           QVector<double>&         nnls_b,
-                           QVector<double>&         nnls_x,
-                           QVector<double>&         tinvec,
-                           QVector<double>&         rinvec,
-                           const std::atomic<bool>* abort_flag = nullptr );
+    static int    nnls_noise( int                      noisflag,
+                              const QVector<int>&      nscans,
+                              const QVector<int>&      npoints,
+                              int                      nsolutes,
+                              int                      narows,
+                              QVector<double>&         nnls_a,
+                              QVector<double>&         nnls_b,
+                              QVector<double>&         nnls_x,
+                              QVector<double>&         tinvec,
+                              QVector<double>&         rinvec,
+                              const std::atomic<bool>* abort_flag = nullptr,
+                              const QVector<bool>*     masked     = nullptr );
+
+    //! \brief Monte Carlo data value of one point
+    //!
+    //! \param base      Base value:  the fit to the original data
+    //! \param variation Random variation of the point
+    //! \param odata     Original data value of the point
+    //! \param odlimit   OD limit of the data set
+    //! \returns         Monte Carlo data value
+    static double mc_data_value( double base, double variation, double /*odata*/, double /*odlimit*/ )
+    {
+       return base + variation;
+    }
 
  public slots:
 
