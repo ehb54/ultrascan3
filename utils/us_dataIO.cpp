@@ -869,7 +869,8 @@ int US_DataIO::readEdits( const QString& filename, EditValues& parameters )
 
 int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters )
 {
-   QFile ff( filename );
+   // Written to a temporary file that only replaces filename once complete
+   QSaveFile ff( filename );
    if ( !ff.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
       return CANTOPEN;
@@ -1045,10 +1046,13 @@ int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters
    xml.writeEndElement(); // experiment
    xml.writeEndDocument();
 
-   // A buffered write error only shows up when the file is flushed
-   ff.close();
+   // A buffered write error only shows up when the file is committed
+   if ( xml.hasError() || !ff.commit() )
+   {
+      return CANTWRITE;
+   }
 
-   return ( !xml.hasError() && ff.error() == QFile::NoError ) ? OK : CANTWRITE;
+   return OK;
 }
 
 void US_DataIO::ident( QXmlStreamReader& xml, EditValues& parameters )
