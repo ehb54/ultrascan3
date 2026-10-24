@@ -1,497 +1,175 @@
 #include "us_mpi_analysis.h"
-#include "us_math2.h"
+#include "us_mpi_jobconfig.h"
 #include "us_settings.h"
-#include "mpi.h"
 
-//  Parse XML routines
-void US_MPI_Analysis::parse( const QString& xmlfile )
+// Read a file on rank 0 and send its content to all ranks, so that the
+//  file system is read once and all ranks get the same text.  Returns
+//  false on all ranks if rank 0 cannot read it.  Collective over
+//  MPI_COMM_WORLD.
+bool US_MPI_Analysis::read_shared_file( const QString& path, QByteArray& data ) const
 {
-   QFile file ( xmlfile );
+   int readable = 1;
+   data.clear();
 
-   if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
+   if ( my_rank == 0 )
    {
-      // Fail quietly - can't use udp yet
-      if ( my_rank == 0 ) DbgLv(0) << "Cannot open file " << xmlfile;
-      printf( "Cannot open file %s\n", xmlfile.toLatin1().data() );
-      printf( "Aborted" );
-      MPI_Finalize();
-      qApp->exit();
-   }
-
-   QString tmst_fn;
-   QXmlStreamReader xml( &file );
-
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isStartElement() )
+      QFile file( path );
+      readable = file.open( QIODevice::ReadOnly ) ? 1 : 0;
+      if ( readable )
       {
-         if ( xml.name() == "US_JobSubmit" )
-         {
-            QXmlStreamAttributes a = xml.attributes();
-            analysis_type = a.value( "method" ).toString();
-         }
-
-         if ( xml.name() == "job" )
-            parse_job( xml );
-
-         if ( xml.name() == "dataset" )
-         {
-            US_SolveSim::DataSet* d = new US_SolveSim::DataSet;
-            d->tmst_file   = tmst_fn;       // Initialize to blank or previous
-            parse_dataset( xml, d );
-            tmst_fn        = d->tmst_file;  // Init for subsequent dataset
-
-            if ( parameters.contains( "CG_model" ) )
-            {  // Flag Custom Grid model input
-               d->model_file  = parameters[ "CG_model" ];
-               d->solute_type = 2;
-               attr_x         = ATTR_S;
-               attr_y         = ATTR_V;
-               attr_z         = ATTR_K;
-            }
-
-            else if ( parameters.contains( "DC_model" ) )
-            {  // Flag DMGA_Constraints model input
-               d->model_file  = parameters[ "DC_model" ];
-            }
-
-            else if ( ! parameters[ "ztype" ].isEmpty() )
-            {  // Flag generic x,y model with fixed "z"
-               QStringList s_attrs;
-               s_attrs << "s" << "ff0" << "MW" << "vbar" << "D" << "f";
-               attr_x         = s_attrs.indexOf( parameters[ "xtype" ] );
-               attr_y         = s_attrs.indexOf( parameters[ "ytype" ] );
-               attr_z         = s_attrs.indexOf( parameters[ "ztype" ] );
-               attr_x         = ( attr_x < 0 ) ? ATTR_S : attr_x;
-               attr_y         = ( attr_y < 0 ) ? ATTR_K : attr_y;
-               attr_z         = ( attr_z < 0 ) ? ATTR_V : attr_z;
-               // The solute type flag is a number which when viewed as
-               //  octal is in the form "01xyz".
-               d->solute_type = ( attr_x << 6 ) + ( attr_y << 3 ) + attr_z;
-            }
-
-            else if ( parameters[ "ytype" ] == "vbar" )
-            {  // Flag s,vbar model with fixed f_f0
-               d->solute_type = 1;
-               attr_x         = ATTR_S;
-               attr_y         = ATTR_V;
-               attr_z         = ATTR_K;
-            }
-
-            else if ( ! parameters[ "solute_type" ].isEmpty() )
-            {  // Flag explicit solute type
-               QString s_styp = parameters[ "solute_type" ];
-               d->solute_type = US_ModelRecord::stype_flag( s_styp );
-               attr_x         = ( d->solute_type >> 6 ) & 7;
-               attr_y         = ( d->solute_type >> 3 ) & 7;
-               attr_z         =   d->solute_type        & 7;
-            }
-
-            else
-            {  // Flag standard s,k model with fixed vbar
-               d->solute_type = 0;
-               attr_x         = ATTR_S;
-               attr_y         = ATTR_K;
-               attr_z         = ATTR_V;
-//d->solute_type = (0 << 6) + (1 << 3) + 3;
-            }
-
-if (my_rank==0) DbgLv(0) << "PF: solute_type" << d->solute_type
- << "attr_x _y _z" << attr_x << attr_y << attr_z;
-            data_sets << d;
-         }
+         data = file.readAll();
       }
    }
 
-   file.close();
-
-   if ( parameters.contains( "debug_text" ) )
+   MPI_Bcast( &readable, 1, MPI_INT, 0, MPI_COMM_WORLD );
+   if ( !readable )
    {
-      QString dbgtxt_str     = parameters[ "debug_text" ];
-      QStringList dbgtxt_sls = dbgtxt_str.split( ',' );
-      int ndtln              = dbgtxt_sls.count();
+      return false;
+   }
 
-      for ( int ii = 0; ii < ndtln; ii++ )
-      {
-         dbgtxt_sls[ ii ] = dbgtxt_sls[ ii ].simplified();
-      }
-
-      US_Settings::set_debug_text( dbgtxt_sls );
-//*DEBUG*
-if (my_rank==0) {
-DbgLv(0) << "DBGTXT: dt string: " << dbgtxt_str;
-DbgLv(0) << "DBGTXT: dt sl_count" << ndtln;
-DbgLv(0) << "DBGTXT: dt strlst: " << dbgtxt_sls;
-dbgtxt_sls = US_Settings::debug_text();
-ndtln = dbgtxt_sls.count();
-DbgLv(0) << "DBGTXT: dt sl_count(2)" << ndtln;
-DbgLv(0) << "DBGTXT: dt strlst(2): " << dbgtxt_sls;
+   int nsize = data.size();
+   MPI_Bcast( &nsize, 1, MPI_INT, 0, MPI_COMM_WORLD );
+   data.resize( nsize );
+   MPI_Bcast( data.data(), nsize, MPI_BYTE, 0, MPI_COMM_WORLD );
+   return true;
 }
-//*DEBUG*
+
+// Read the job description (hpcrequest XML) into job_config, set up the
+//  job data, datasets and debug settings from it, and validate it: errors
+//  abort, warnings are printed.
+void US_MPI_Analysis::read_job_config( const QString& xmlfile )
+{
+   QByteArray text; // Read by rank 0, sent to all ranks
+   if ( !read_shared_file( xmlfile, text ) )
+   {
+      abort_all( "Cannot open file " + xmlfile );
+   }
+
+   QBuffer buffer( &text );
+   buffer.open( QIODevice::ReadOnly | QIODevice::Text );
+   job_config = US_MPI_JobConfig::fromXml( buffer, xmlfile );
+
+   if ( !job_config.errors.isEmpty() )
+   { // Cannot open, malformed XML, invalid values
+      abort_all( job_config.errors.join( "; " ) );
+   }
+
+   analysis_type = job_config.method;
+   cluster       = job_config.cluster;
+   db_name       = job_config.db_name;
+   server        = QHostAddress( job_config.udp_server );
+   port          = job_config.udp_port;
+   requestID     = job_config.request_id;
+   requestGUID   = job_config.request_guid;
+
+   // Debug level for the first ranks only (and rank 15)
+   dbg_level = job_config.debug_level();
+   US_Settings::set_us_debug( ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0 );
+   dbg_timing = job_config.debug_timings();
+
+   if ( job_config.parameters.contains( "debug_text" ) )
+   {
+      US_Settings::set_debug_text( job_config.debug_text() );
+   }
+
+   for ( const US_MPI_JobConfig::Bucket& jb : job_config.buckets )
+   {
+      Bucket bucket;
+      bucket.x_min = jb.x_min;
+      bucket.x_max = jb.x_max;
+      bucket.y_min = jb.y_min;
+      bucket.y_max = jb.y_max;
+      bucket.ds    = 0.0;
+      bucket.dk    = 0.0;
+      buckets << bucket;
+   }
+
+   data_sets = job_config.make_datasets();
+   for ( const US_MPI_JobConfig::DatasetSpec& spec : job_config.datasets )
+   {
+      concentrations += spec.total_concentrations;
+   }
+   set_solute_types();
+
+   job_config.validate();
+
+   if ( my_rank == 0 )
+   {
+      for ( const QString& warning : job_config.warnings )
+      {
+         printf( "  Warning: %s\n", qPrintable( warning ) );
+      }
+   }
+
+   if ( !job_config.errors.isEmpty() )
+   {
+      abort_all( "Invalid job " + xmlfile + ": " + job_config.errors.join( "; " ) );
    }
 }
 
-void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
+// Set the model file and solute type of each dataset and the solute
+//  attributes (attr_x, attr_y, attr_z) from the job parameters
+void US_MPI_Analysis::set_solute_types( void )
 {
-   QXmlStreamAttributes attr;
-   QString xname;
-   QString ytype;
+   const US_MPI_JobConfig::Parameters& params = job_config.params;
 
-   while ( ! xml.atEnd() )
+   for ( US_SolveSim::DataSet* d : data_sets )
    {
-      xml.readNext();
-      xname       = xml.name().toString();
-
-      if ( xml.isEndElement()  &&  xname == "job" ) break;
-
-      if ( xml.isStartElement() )
-      {
-         attr        = xml.attributes();
-
-         if ( xname == "cluster" )
-         {
-            cluster     = attr.value( "shortname" ).toString();
-         }
-
-         else if ( xname == "name" )
-         {
-            db_name     = attr.value( "value" ).toString();
-         }
-
-         else if ( xname == "udp" )
-         {
-            server     = QHostAddress( attr.value( "server" ).toString() );
-            port       = (quint16)attr.value( "port" ).toString().toInt();
-         }
-
-         else if ( xname == "global_fit" )
-         {
-            parameters[ xname ] = attr.value( "value" ).toString();
-         }
-
-         else if ( xname == "request" )
-         {
-            requestID   = QString::asprintf( "%06d",
-                                             attr.value( "id" ).toString().toInt() );
-            requestGUID = attr.value( "guid" ).toString();
-         }
-
-         else if ( xname == "jobParameters" )
-         {
-            while ( ! xml.atEnd() )
-            {
-               xml.readNext();
-               QString name = xml.name().toString();
-
-               if ( xml.isEndElement()  &&  name == "jobParameters" ) break;
-
-               if ( xml.isStartElement() )
-               {
-                  attr    = xml.attributes();
-
-                  if ( name == "bucket" )
-                  { // Get bucket coords; try to forestall round-off problems
-                     QString ytyp0 = QString( "ff0" );
-                     Bucket b;
-                     QString stxmn = attr.value( "x_min"    ).toString();
-                     QString stxmx = attr.value( "x_max"    ).toString();
-                     QString stymn = attr.value( "y_min"    ).toString();
-                     QString stymx = attr.value( "y_max"    ).toString();
-                     QString stfmn = attr.value( "ff0_min"  ).toString();
-                     QString stfmx = attr.value( "ff0_max"  ).toString();
-                     QString stvmn = attr.value( "vbar_min" ).toString();
-                     QString stvmx = attr.value( "vbar_max" ).toString();
-                     double xmin   = stxmn.toDouble();
-                     double xmax   = stxmx.toDouble();
-                     double ymin   = stymn.toDouble();
-                     double ymax   = stymx.toDouble();
-
-                     if ( stxmx.isEmpty() )
-                     {
-                        xmin       = attr.value( "s_min").toString().toDouble();
-                        xmax       = attr.value( "s_max").toString().toDouble();
-                        if ( !stfmx.isEmpty() )
-                        {
-                           ymin    = stfmn.toDouble();
-                           ymax    = stfmx.toDouble();
-                           ytyp0   = QString( "ff0" );
-                        }
-                        else if ( !stvmx.isEmpty() )
-                        {
-                           ymin    = stvmn.toDouble();
-                           ymax    = stvmx.toDouble();
-                           ytyp0   = QString( "vbar" );
-                        }
-                     }
-
-                     if ( ytype.isEmpty() )
-                     {
-                        ytype      = ytyp0;
-                        parameters[ "ytype" ]     = ytype;
-                     }
-
-                     // Try to forestall round-off problems
-if (my_rank==0) DbgLv(0) << "PF: xymnmx" << xmin << xmax << ymin << ymax;
-                     int xpwr      = (int)qFloor( log10( xmax ) ) - 6;
-                     int ypwr      = (int)qFloor( log10( ymax ) ) - 6;
-                     double xinc   = pow( 10.0, xpwr );
-                     double yinc   = pow( 10.0, ypwr );
-if (my_rank==0) DbgLv(0) << "PF:  xp yp xi yi" << xpwr << ypwr << xinc << yinc;
-                     b.x_min       = qRound64( xmin / xinc ) * xinc;
-                     b.x_max       = qRound64( xmax / xinc ) * xinc;
-                     b.y_min       = qRound64( ymin / yinc ) * yinc;
-                     b.y_max       = qRound64( ymax / yinc ) * yinc;
-if (my_rank==0) DbgLv(0) << "PF:   rnd xymnmx" << b.x_min << b.x_max << b.y_min << b.y_max;
-
-                     buckets << b;
-                  }
-                  else if ( name == "CG_model"  ||  name == "DC_model" )
-                  {
-                     parameters[ name ]    = attr.value( "filename").toString();
-if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
-                  }
-                  else if ( name == "bucket_fixed" )
-                  {
-                     parameters[ name ]    = attr.value( "value" ).toString();
-                     parameters[ "xtype" ] = attr.value( "xtype" ).toString();
-                     parameters[ "ytype" ] = attr.value( "ytype" ).toString();
-                     parameters[ "ztype" ] = attr.value("fixedtype").toString();
-                     ytype                 = parameters[ "ytype" ];
-                  }
-
-                  else if ( name.startsWith( "s_m" )  ||
-                            name.startsWith( "ff0_m" ) )
-                  {
-                     QString svalu = attr.value( "value" ).toString();
-                     parameters[ name ]    = svalu;
-                     name          = name.replace( "s_m",   "x_m" );
-                     name          = name.replace( "ff0_m", "y_m" );
-                     parameters[ name ]    = svalu;
-                  }
-
-                  else
-                  {
-                     parameters[ name ]    = attr.value( "value" ).toString();
-                  }
-               }
-            }
-         }
+      if ( params.cg_model )
+      { // Custom Grid model input
+         d->model_file  = *params.cg_model;
+         d->solute_type = 2;
+         attr_x         = ATTR_S;
+         attr_y         = ATTR_V;
+         attr_z         = ATTR_K;
       }
 
-      if ( ! parameters.contains( "z_value" ) )
-         parameters[ "z_value" ]     = "0.0";
+      else if ( params.dc_model )
+      { // DMGA_Constraints model input
+         d->model_file = *params.dc_model;
+      }
 
-      if ( parameters.contains( "debug_level" ) )
-         dbg_level  = parameters[ "debug_level" ].toInt();
+      else if ( !params.ga.ztype.isEmpty() )
+      { // Generic x,y model with fixed "z"
+         const QStringList s_attrs = { "s", "ff0", "MW", "vbar", "D", "f" };
+         attr_x                    = s_attrs.indexOf( params.ga.xtype );
+         attr_y                    = s_attrs.indexOf( params.ga.ytype );
+         attr_z                    = s_attrs.indexOf( params.ga.ztype );
+         attr_x                    = ( attr_x < 0 ) ? ATTR_S : attr_x;
+         attr_y                    = ( attr_y < 0 ) ? ATTR_K : attr_y;
+         attr_z                    = ( attr_z < 0 ) ? ATTR_V : attr_z;
+         // The solute type flag is a number which when viewed as
+         //  octal is in the form "01xyz".
+         d->solute_type            = ( attr_x << 6 ) + ( attr_y << 3 ) + attr_z;
+      }
+
+      else if ( params.ga.ytype == "vbar" )
+      { // s,vbar model with fixed f_f0
+         d->solute_type = 1;
+         attr_x         = ATTR_S;
+         attr_y         = ATTR_V;
+         attr_z         = ATTR_K;
+      }
+
+      else if ( !params.solute_type.isEmpty() )
+      { // Explicit solute type
+         d->solute_type = US_ModelRecord::stype_flag( params.solute_type );
+         attr_x         = ( d->solute_type >> 6 ) & 7;
+         attr_y         = ( d->solute_type >> 3 ) & 7;
+         attr_z         = d->solute_type & 7;
+      }
 
       else
-         dbg_level  = 0;
-
-//      US_Settings::set_us_debug( dbg_level );
-      int dbglv = ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0;
-      US_Settings::set_us_debug( dbglv );
-      dbg_timing = ( parameters.contains( "debug_timings" )
-                 &&  parameters[ "debug_timings" ].toInt() != 0 );
-   }
-}
-
-void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
-{
-   dataset->simparams.speed_step.clear();
-
-   QXmlStreamAttributes a;
-
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-      QString              name = xml.name().toString();
-
-      if ( xml.isEndElement()  &&  xml.name() == "dataset" ) return;
-
-      if ( ! xml.isStartElement() )  continue;
-
-      if ( xml.name() == "files" )
-         parse_files( xml, dataset ); 
-
-      if ( xml.name() == "solution" )
-         parse_solution( xml, dataset ); 
-
-      a                  = xml.attributes();
-      if ( xml.name() == "simpoints" )
-      {
-         dataset->simparams.simpoints
-                            = a.value( "value" ).toString().toInt();
+      { // Standard s,k model with fixed vbar
+         d->solute_type = 0;
+         attr_x         = ATTR_S;
+         attr_y         = ATTR_K;
+         attr_z         = ATTR_V;
       }
 
-      if ( xml.name() == "band_volume" )
+      if ( my_rank == 0 )
       {
-         dataset->simparams.band_volume
-                            = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "radial_grid" )
-      {
-         dataset->simparams.meshType = (US_SimulationParameters::MeshType)
-                              a.value( "value" ).toString().toInt();
-      }
-
-      if ( xml.name() == "time_grid" )
-      {
-         dataset->simparams.gridType = (US_SimulationParameters::GridType)
-                              a.value( "value" ).toString().toInt();
-      }
-
-      if ( xml.name() == "density" )
-      {
-         dataset->density     = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "viscosity" )
-      {
-         dataset->viscosity   = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "compress" )
-      {
-         dataset->compress    = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "rotor_stretch" )
-      {
-         QStringList stretch  = 
-            a.value( "value" ).toString().split( " ", Qt::SkipEmptyParts );
-
-         dataset->rotor_stretch[ 0 ] = stretch[ 0 ].toDouble();
-         dataset->rotor_stretch[ 1 ] = stretch[ 1 ].toDouble();
-      }
-
-      if ( xml.name() == "centerpiece_bottom" )
-      {
-         dataset->centerpiece_bottom
-                                = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "centerpiece_shape" )
-      {
-         QString shape          = a.value( "value" ).toString();
-         QStringList shapes;
-         shapes << "sector"
-                << "standard"
-                << "rectangular"
-                << "band-forming"
-                << "meniscus-matching"
-                << "circular"
-                << "synthetic";
-         dataset->simparams.cp_sector
-                                = qMax( 0, shapes.indexOf( shape ) );
-      }
-
-      if ( xml.name() == "centerpiece_angle" )
-      {
-         dataset->simparams.cp_angle
-                                = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "centerpiece_pathlength" )
-      {
-         dataset->simparams.cp_pathlen
-                                = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "centerpiece_width" )
-      {
-         dataset->simparams.cp_width
-                                = a.value( "value" ).toString().toDouble();
-      }
-
-      if ( xml.name() == "speedstep" )
-      {
-         US_SimulationParameters::SpeedProfile sp;
-
-         US_SimulationParameters::speedstepFromXml( xml, sp );
-
-         dataset->simparams.speed_step << sp;
-      }
-
-      if ( xml.name() == "total_concentration" )
-      {
-         concentrations << a.value( "value" ).toString().toDouble();
+         DbgLv( 0 ) << "PF: solute_type" << d->solute_type << "attr_x _y _z" << attr_x << attr_y << attr_z;
       }
    }
 }
-
-void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DATASET* dataset )
-{
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isEndElement()  &&  xml.name() == "files" )  break;
-
-      if ( xml.isStartElement() )
-      {
-         QXmlStreamAttributes a        = xml.attributes();
-         QString              type     = xml.name().toString();
-         QString              filename = a.value( "filename" ).toString();
-
-         if ( type == "auc"   )      dataset->auc_file   = filename;
-         if ( type == "edit"  )      dataset->edit_file  = filename;
-         if ( type == "noise" )      dataset->noise_files << filename;
-         if ( type == "timestate" )  dataset->tmst_file  = filename;
-      }
-   }
-
-   QString clambda = dataset->edit_file.section( ".", -2, -2 );
-   if ( clambda.contains( "-" ) )
-   {  // Modify edit file name for MWL case
-      clambda         = clambda + "@" + dataset->auc_file.section( ".", -2, -2 );
-      QString fpart1  = dataset->edit_file.section( ".",  0, -3 );
-      QString fpart2  = dataset->edit_file.section( ".", -1, -1 );
-      dataset->edit_file = fpart1 + "." + clambda + "." + fpart2;
-if (my_rank==0) DbgLv(0) << "PF: MWL edit_file" << dataset->edit_file;
-   }
-}
-
-void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
-{
-   while ( ! xml.atEnd() )
-   {
-      xml.readNext();
-
-      if ( xml.isEndElement()  &&  xml.name() == "solution" ) break;
-
-      if ( xml.isStartElement() && xml.name() == "buffer" )
-      {
-         QXmlStreamAttributes a        = xml.attributes();
-         dataset->density   = a.value( "density"   ).toString().toDouble();
-         dataset->viscosity = a.value( "viscosity" ).toString().toDouble();
-         dataset->compress  = a.value( "compress"  ).toString().toDouble();
-         dataset->manual    = a.value( "manual"    ).toString().toInt();
-      }
-
-      if ( xml.isStartElement() && xml.name() == "analyte" )
-      {
-         US_Solution::AnalyteInfo aninfo;
-         QXmlStreamAttributes a        = xml.attributes();
-
-         aninfo.analyte.mw     = a.value( "mw"     ).toString().toDouble();
-         aninfo.analyte.vbar20 = a.value( "vbar20" ).toString().toDouble();
-         aninfo.amount         = a.value( "amount" ).toString().toDouble();
-         QString atype         = a.value( "type"   ).toString();
-         aninfo.analyte.type   = US_Analyte::PROTEIN;
-         if ( atype == "DNA" )
-            aninfo.analyte.type   = US_Analyte::DNA;
-         if ( atype == "RNA" )
-            aninfo.analyte.type   = US_Analyte::RNA;
-         if ( atype == "Other" )
-            aninfo.analyte.type   = US_Analyte::CARBOHYDRATE;
-
-         dataset->solution_rec.analyteInfo << aninfo;
-      }
-   }
-
-   dataset->vbar20  = US_Math2::calcCommonVbar( dataset->solution_rec, 20.0 );
-}
-

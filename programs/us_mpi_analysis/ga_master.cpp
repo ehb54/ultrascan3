@@ -11,13 +11,11 @@ void US_MPI_Analysis::ga_master( void )
    calculated_solutes.clear();
 
    // Set noise and debug flags
-   simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
-                                  1 : 0;
-   simulation_values.noisflag  += parameters[ "rinoise_option" ].toInt() > 0 ?
-                                  2 : 0;
+   simulation_values.noisflag = job_config.params.tinoise_option > 0 ? 1 : 0;
+   simulation_values.noisflag += job_config.params.rinoise_option > 0 ? 2 : 0;
    simulation_values.dbg_level  = dbg_level;
    simulation_values.dbg_timing = dbg_timing;
-DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+   DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    // Initialize best fitness
    best_genes  .reserve( gcores_count );
@@ -26,7 +24,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
 
-   Gene working_gene( buckets.count(), US_Solute() );
+   const Gene working_gene( buckets.count(), US_Solute() );
 
    // Initialize arrays
    for ( int i = 0; i < gcores_count; i++ )
@@ -37,7 +35,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       best_fitness << empty_fitness;
    }
 
-   QDateTime time = QDateTime::currentDateTime();
+   const QDateTime time = QDateTime::currentDateTime();
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
@@ -46,38 +44,34 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       std::sort( best_fitness.begin(), best_fitness.end() );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-      int nisols      = simulation_values.solutes.size();
-DbgLv(1) << "GaMast: sols size" << nisols << "buck size" << buckets.size()
- << "dset size" << data_sets.size();
-DbgLv(1) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s
- << simulation_values.solutes[0].k << simulation_values.solutes[0].v
- << simulation_values.solutes[0].d;
+      const int nisols          = simulation_values.solutes.size();
+      DbgLv( 1 ) << "GaMast: sols size" << nisols << "buck size" << buckets.size() << "dset size" << data_sets.size();
+      DbgLv( 1 ) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
+                 << simulation_values.solutes[0].v << simulation_values.solutes[0].d;
 
       solutes_from_gene( simulation_values.solutes, nisols );
-DbgLv(1) << "GaMast:   osol0.s .k .v .d" << simulation_values.solutes[0].s
- << simulation_values.solutes[0].k << simulation_values.solutes[0].v
- << simulation_values.solutes[0].d;
+      DbgLv( 1 ) << "GaMast:   osol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
+                 << simulation_values.solutes[0].v << simulation_values.solutes[0].d;
 
-//      calc_residuals( 0, data_sets.size(), simulation_values );
+      //      calc_residuals( 0, data_sets.size(), simulation_values );
       calc_residuals( current_dataset, datasets_to_process, simulation_values );
-DbgLv(1) << "GaMast:    calc_resids return - calcsize vari"
- << simulation_values.solutes.size() << simulation_values.variance;
-DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
- << simulation_values.solutes[0].k << simulation_values.solutes[0].v
- << simulation_values.solutes[0].d;
+      DbgLv( 1 ) << "GaMast:    calc_resids return - calcsize vari" << simulation_values.solutes.size()
+                 << simulation_values.variance;
+      DbgLv( 1 ) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s << simulation_values.solutes[0].k
+                 << simulation_values.solutes[0].v << simulation_values.solutes[0].d;
 
       std::sort( simulation_values.solutes.begin(), simulation_values.solutes.end() );
 
       // Convert given solute points to s,k for model output
-      double vbar20  = data_sets[ current_dataset ]->vbar20;
+      const double vbar20 = data_sets[current_dataset]->vbar20;
       QList< int > attrxs;
       attrxs << attr_x << attr_y << attr_z;
-      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
-      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
-      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
-      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
-      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
-      bool   vary_v  = ( attr_z != ATTR_V );
+      const bool have_s = ( attrxs.indexOf( ATTR_S ) >= 0 );
+      const bool have_k = ( attrxs.indexOf( ATTR_K ) >= 0 );
+      const bool have_w = ( attrxs.indexOf( ATTR_W ) >= 0 );
+      const bool have_d = ( attrxs.indexOf( ATTR_D ) >= 0 );
+      const bool have_f = ( attrxs.indexOf( ATTR_F ) >= 0 );
+      const bool vary_v = ( attr_z != ATTR_V );
 
       for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
       {
@@ -110,7 +104,7 @@ DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
          write_output();
       }
 
-DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
+      DbgLv( 1 ) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       mc_iteration++;
       if ( mc_iterations > 1 )
       {
@@ -126,9 +120,9 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
 
             time_mc_iterations();
 
-DbgLv(1) << "GaMast:    set_gaMC call";
+            DbgLv( 1 ) << "GaMast:    set_gaMC call";
             set_gaMonteCarlo();
-DbgLv(1) << "GaMast:    set_gaMC  return";
+            DbgLv( 1 ) << "GaMast:    set_gaMC  return";
          }
          else
             break;
@@ -177,8 +171,8 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
 
 void US_MPI_Analysis::ga_master_loop( void )
 {
-//   static const double fit_div        = 1.0e-9;
-//   static const double fit_mul        = 1.0e+9;
+   //   static const double fit_div        = 1.0e-9;
+   //   static const double fit_mul        = 1.0e+9;
    static const double DIGIT_FIT      = 1.0e+4;
    static const int    max_same_count = my_workers * 5;
    static const int    min_generation = 10;
@@ -188,8 +182,8 @@ void US_MPI_Analysis::ga_master_loop( void )
    double best_overall_fitness = LARGE;
    int    tag;
    int    workers              = my_workers;
-DbgLv(1) << "ga_master start loop:  gcores_count fitsize" << gcores_count
-   << best_fitness.size() << "best_overall" << best_overall_fitness;
+   DbgLv( 1 ) << "ga_master start loop:  gcores_count fitsize" << gcores_count << best_fitness.size() << "best_overall"
+              << best_overall_fitness;
 
    // Reset best fitness for each worker
    for ( int i = 0; i < gcores_count; i++ )
@@ -224,8 +218,7 @@ DbgLv(1) << "ga_master start loop:  gcores_count fitsize" << gcores_count
 
       worker = status.MPI_SOURCE;
 
-QString g;
-QString s;
+      QString g;
 
       max_rss();
 
@@ -243,8 +236,7 @@ QString s;
             if ( avg > avg_generation )
             {
                avg_generation = avg;
-               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 )
-                                                 : mc_iteration;
+               const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
                QString progress =
                   "Avg. Generation: "  + QString::number( avg_generation );
@@ -283,16 +275,17 @@ QString s;
             fitness_round  = (double)qRound64( msg.fitness * fit_digit )
                              / fit_digit;
 
-DbgLv(1) << "  MAST: work" << worker << "fit msg,round,bestw,besto"
- << msg.fitness << fitness_round << best_fitness[worker].fitness
- << best_overall_fitness;
+            DbgLv( 1 ) << "  MAST: work" << worker << "fit msg,round,bestw,besto" << msg.fitness << fitness_round
+                       << best_fitness[worker].fitness << best_overall_fitness;
             // Set deme's best fitness
             if ( fitness_round < best_fitness[ worker ].fitness )
                best_fitness[ worker ].fitness = fitness_round;
-g = "";
-for ( int i = 0; i < buckets.size(); i++ )
-   g += QString::asprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
-DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
+            g = "";
+            for ( int i = 0; i < buckets.size(); i++ )
+            {
+               g += QString::asprintf( "(%.3f,%.3f)", best_genes[worker][i].s, best_genes[worker][i].k );
+            }
+            DbgLv( 1 ) << "master: worker/fitness/best gene" << worker << msg.fitness << g;
 
             if ( ! early_termination )
             {  // Handle normal pre-early-termination updates
@@ -301,8 +294,8 @@ DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
                {  // Report first best-fit RMSD
                   DbgLv(0) << "First Best Fit RMSD" << sqrt( fitness_round );
                }
-DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round
- << "fit_power fit_digit msgfit" << fit_power << fit_digit << msg.fitness;
+               DbgLv( 1 ) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round
+                          << "fit_power fit_digit msgfit" << fit_power << fit_digit << msg.fitness;
 
                if ( fitness_round < best_overall_fitness )
                {  // Update over-all best fitness value (rounded)
@@ -325,9 +318,8 @@ DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitnes
                }
 
             }
-DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
- << "fitness_same_count" << fitness_same_count
- << " early_term?" << early_termination;
+            DbgLv( 1 ) << "  best_overall_fitness" << best_overall_fitness << "fitness_same_count" << fitness_same_count
+                       << " early_term?" << early_termination;
 
             // Tell the worker to either stop or continue
             tag = early_termination ? FINISHED : GENERATION; 
@@ -347,8 +339,8 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
 
          case EMMIGRATE:
          {
-            // First get a set of genes as a concatenated vector.  
-            int               gene_count    = msg.size;
+            // First get a set of genes as a concatenated vector.
+            const int         gene_count    = msg.size;
             int               doubles_count = gene_count * buckets.size() * 
                                               solute_doubles;
             QVector< double > emmigrants( doubles_count ) ;
@@ -363,7 +355,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
 
             // Add the genes to the emmigres list
             int solute = 0;
-            int solinc = solute_doubles - 2;
+            const int solinc = solute_doubles - 2;
 
             for ( int i = 0; i < gene_count; i++ )
             {
@@ -371,18 +363,14 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
 
                for ( int b = 0; b < buckets.size(); b++ )
                {
-                  double s = emmigrants[ solute++ ];
-                  double k = emmigrants[ solute++ ];
+                  const double s = emmigrants[solute++];
+                  const double k = emmigrants[solute++];
                   gene << US_Solute( s, k );
                   solute  += solinc; // Concentration, Vbar, DiffCoeff
                }
 
                emigres << gene;
             }
-//*DEBUG*
-//if(emigres[0][0].s<0.0)
-// DbgLv(0) << "MAST: **GENE s" << emigres[0][0].s << " Emigrant";
-//*DEBUG*
 
             max_rss();
 
@@ -399,16 +387,12 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
                   immigrants += emigres.takeAt( u_random( emigres.size() ) );
             }
 
-            MPI_Send( immigrants.data(),   // MPI #5
+            MPI_Send( immigrants.data(), // MPI #5
                       doubles_count,
                       MPI_DOUBLE,
                       worker,
                       IMMIGRATE,
                       my_communicator );
-//*DEBUG*
-//if(immigrants[0].s<0.0)
-// DbgLv(0) << "MAST: **GENE s" << immigrants[0].s << " Immigrant-to-send";
-//*DEBUG*
             break;
          }
       }
@@ -416,13 +400,12 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
       max_rss();
    }
 
-DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal
- << "rank" << my_rank;
+   DbgLv( 1 ) << "Master maxrss" << maxrss << " worker total rss" << rsstotal << "rank" << my_rank;
    maxrss += rsstotal;
 
    if ( early_termination )
    {  // Report when we have reached early termination of generations
-      int mc_iter  = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+      const int mc_iter = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
       DbgLv(0) << "Early termination at average generation" << avg
          << ", MC" << mc_iter;
    }
@@ -447,27 +430,27 @@ void US_MPI_Analysis::ga_global_fit( void )
 
    concentrations[ current_dataset ] = concentration;
    edata->ODlimit   /= concentration;
-   int scan_count    = edata->scanCount();
-   int radius_points = edata->pointCount();
+   const int       scan_count    = edata->scanCount();
+   const int       radius_points = edata->pointCount();
    int index         = 0;
 
-   QVector< double > scaled_data( scan_count * radius_points + 1 );
+   QVector<double> ds_scaled( scan_count * radius_points + 1 );
 
    // Scale the data
    for ( int ss = 0; ss < scan_count; ss++ )
    {
       for ( int rr = 0; rr < radius_points; rr++ )
       {
-         double scaled_value    = edata->value( ss, rr ) / concentration;
-         scaled_data[ index++ ] = scaled_value;
+         const double scaled_value = edata->value( ss, rr ) / concentration;
+         ds_scaled[index++]        = scaled_value;
          edata->setValue( ss, rr, scaled_value );
       }
    }
 
-   scaled_data[ index ] = edata->ODlimit;
+   ds_scaled[index] = edata->ODlimit;
    // Send the scaled data to the workers
    MPI_Job job;
-   job.length         = scaled_data.size();
+   job.length         = ds_scaled.size();
    job.dataset_offset = current_dataset;
    job.dataset_count  = 1;
 
@@ -487,10 +470,10 @@ void US_MPI_Analysis::ga_global_fit( void )
    // Get everybody synced up
    MPI_Barrier( my_communicator );
 
-   MPI_Bcast( scaled_data.data(),      // MPI #8
-              scaled_data.size(), 
-              MPI_DOUBLE, 
-              MPI_Job::MASTER, 
+   MPI_Bcast( ds_scaled.data(), // MPI #8
+              ds_scaled.size(),
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
               my_communicator );
 
    // Go to the next dataset
@@ -506,7 +489,7 @@ void US_MPI_Analysis::ga_global_fit( void )
 
 void US_MPI_Analysis::set_gaMonteCarlo( void ) 
 {
-DbgLv(1) << "sgMC: mciter" << mc_iteration;
+   DbgLv( 1 ) << "sgMC: mciter" << mc_iteration;
    // This is almost the same as 2dsa set_monteCarlo
    if ( mc_iteration <= mgroup_count )
    {
@@ -514,22 +497,21 @@ DbgLv(1) << "sgMC: mciter" << mc_iteration;
       max_depth   = 0;  // Make the datasets compatible
       calculated_solutes.clear();
       calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
-      int ncsols  = calculated_solutes[ 0 ].size();
-DbgLv(1) << "sgMC: bfgenes stored" << ncsols;
+      const int ncsols = calculated_solutes[0].size();
+      DbgLv( 1 ) << "sgMC: bfgenes stored" << ncsols;
 
       solutes_from_gene( calculated_solutes[ 0 ], ncsols );
 
-DbgLv(1) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
+      DbgLv( 1 ) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
       set_gaussians();
-DbgLv(1) << "sgMC: gaussians set";
+      DbgLv( 1 ) << "sgMC: gaussians set";
    }
 
    mc_data.resize( total_points );
    int index = 0;
    int ks    = 0;
-DbgLv(1) << "sgMC: totpts" << total_points << "sizes mc_data,sigmas"
- << mc_data.count() << sigmas.count() << "scaled_data ns,nr"
- << scaled_data.scanCount() << scaled_data.pointCount();
+   DbgLv( 1 ) << "sgMC: totpts" << total_points << "sizes mc_data,sigmas" << mc_data.count() << sigmas.count()
+              << "scaled_data ns,nr" << scaled_data.scanCount() << scaled_data.pointCount();
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
@@ -537,20 +519,20 @@ DbgLv(1) << "sgMC: totpts" << total_points << "sizes mc_data,sigmas"
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-      int scan_count    = edata->scanCount();
-      int radius_points = edata->pointCount();
+      const int              scan_count    = edata->scanCount();
+      const int              radius_points = edata->pointCount();
 
       for ( int ss = 0; ss < scan_count; ss++, ks++ )
       {
          for ( int rr = 0; rr < radius_points; rr++ )
          {
-            double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
+            const double variation = US_Math2::box_muller( 0.0, sigmas[index] );
             mc_data[ index ] = scaled_data.value( ks, rr ) + variation;
             index++;
          }
       }
    }
-DbgLv(1) << "sgMC: mc_data set index" << index << "ks" << ks;
+   DbgLv( 1 ) << "sgMC: mc_data set index" << index << "ks" << ks;
 
    // Broadcast Monte Carlo data to all workers
    MPI_Job job;
@@ -558,7 +540,7 @@ DbgLv(1) << "sgMC: mc_data set index" << index << "ks" << ks;
    job.length         = total_points;
    job.dataset_offset = 0;
    job.dataset_count  = count_datasets;
-DbgLv(1) << "sgMC: MPI send my_workers" << my_workers;
+   DbgLv( 1 ) << "sgMC: MPI send my_workers" << my_workers;
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
@@ -573,10 +555,10 @@ DbgLv(1) << "sgMC: MPI send my_workers" << my_workers;
    }
 
    // Get everybody synced up
-DbgLv(1) << "sgMC: MPI Barrier";
+   DbgLv( 1 ) << "sgMC: MPI Barrier";
    MPI_Barrier( my_communicator );
 
-DbgLv(1) << "sgMC: MPI Bcast";
+   DbgLv( 1 ) << "sgMC: MPI Bcast";
    MPI_Bcast( mc_data.data(),   // MPI #10
               total_points, 
               MPI_DOUBLE, 
