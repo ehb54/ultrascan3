@@ -18,7 +18,7 @@ DEMOS = data/1HEL.pdb data/6LYZ.pdb data/2AAS_mod1.pdb data/8RAT.pdb \
 # model change could break builder and sit on a pushed branch for days without anything going red
 # (hydration totals, 2026-08-12 -- found 2026-08-17). coverage/sssrreal stay out: they report
 # rather than assert, and sssrreal needs the demo structures.
-all: unit regress psv hydration gridvol sssr builder
+all: unit regress psv hydration gridvol sssr builder nucleotide
 
 bin/emit_residue: tests/emit_residue.cpp $(BUILDER_SRC) $(HDR)
 	@mkdir -p bin
@@ -113,6 +113,13 @@ bin/builder: tests/builder.cpp $(BUILDER_SRC) $(HDR)
 
 builder: bin/builder
 	./bin/builder
+
+bin/nucleotide: tests/nucleotide_hydration.cpp $(SRC) ../src/us_hydrodyn_hydration.cpp $(HDR) ../include/us_hydrodyn_hydration.h
+	@mkdir -p bin
+	$(CXX) $(CXXFLAGS) $(INC) tests/nucleotide_hydration.cpp $(SRC) ../src/us_hydrodyn_hydration.cpp -o bin/nucleotide
+
+nucleotide: bin/nucleotide
+	./bin/nucleotide
 
 bin/residue_variants: tests/residue_variants.cpp $(SRC) ../src/us_hydrodyn_psv.cpp $(HDR) ../include/us_hydrodyn_psv.h
 	@mkdir -p bin

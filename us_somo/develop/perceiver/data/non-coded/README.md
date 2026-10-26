@@ -60,6 +60,19 @@ Note that the perceiver itself handles deuterated structures fine — it exclude
 design. What fails here is SOMO's residue *matching*, on atom count. Making that H-agnostic would
 remove this failure mode, and is a separate change.
 
+## `ccd/` — cofactors from the CCD
+
+`AMP ADP ATP NAD FAD GLC`, each the model coordinates of its wwPDB Chemical Component Dictionary
+entry (`https://files.rcsb.org/ligands/view/<ID>.cif`, the `model_Cartn_*` columns, which the CCD
+takes from a deposition named in each file's REMARK), heavy atoms only, written as a
+single-residue HETATM file. They give `make nucleotide` one clean copy of each cofactor, under
+the CCD's own atom names, to check the nucleotide hydration rules against. Of the six, only FAD
+is non-coded.
+
+Not the CCD's *ideal* coordinates: those close the P-O-P angle until P...P is 2.585 A, inside
+the perceiver's 2.59 A P-P bond cutoff, so every pyrophosphate comes out with a P-P bond. In
+depositions P...P is 2.8-2.9 A.
+
 ## Running the scan headlessly
 
 ```

@@ -1,0 +1,27 @@
+REMARK   1 AMP: model coordinates from the wwPDB Chemical Component Dictionary
+REMARK   1 (https://files.rcsb.org/ligands/view/AMP.cif),
+REMARK   1 heavy atoms only.
+HETATM    1  P   AMP A   1       8.043  39.686  18.813  1.00  0.00           P
+HETATM    2  O1P AMP A   1       7.774  40.637  19.995  1.00  0.00           O
+HETATM    3  O2P AMP A   1       6.883  38.784  18.643  1.00  0.00           O
+HETATM    4  O3P AMP A   1       9.316  38.856  19.092  1.00  0.00           O
+HETATM    5  O5' AMP A   1       8.290  40.534  17.463  1.00  0.00           O
+HETATM    6  C5' AMP A   1       9.275  41.545  17.412  1.00  0.00           C
+HETATM    7  C4' AMP A   1       9.922  41.617  16.032  1.00  0.00           C
+HETATM    8  O4' AMP A   1      10.626  40.417  15.752  1.00  0.00           O
+HETATM    9  C3' AMP A   1       8.899  41.815  14.923  1.00  0.00           C
+HETATM   10  O3' AMP A   1       9.238  42.933  14.133  1.00  0.00           O
+HETATM   11  C2' AMP A   1       8.933  40.529  14.114  1.00  0.00           C
+HETATM   12  O2' AMP A   1       8.932  40.781  12.726  1.00  0.00           O
+HETATM   13  C1' AMP A   1      10.220  39.828  14.530  1.00  0.00           C
+HETATM   14  N9  AMP A   1      10.093  38.369  14.756  1.00  0.00           N
+HETATM   15  C8  AMP A   1       9.377  37.767  15.753  1.00  0.00           C
+HETATM   16  N7  AMP A   1       9.495  36.418  15.645  1.00  0.00           N
+HETATM   17  C5  AMP A   1      10.287  36.160  14.586  1.00  0.00           C
+HETATM   18  C6  AMP A   1      10.707  34.951  14.063  1.00  0.00           C
+HETATM   19  N6  AMP A   1      10.337  33.806  14.627  1.00  0.00           N
+HETATM   20  N1  AMP A   1      11.551  34.995  12.959  1.00  0.00           N
+HETATM   21  C2  AMP A   1      11.915  36.195  12.375  1.00  0.00           C
+HETATM   22  N3  AMP A   1      11.488  37.403  12.902  1.00  0.00           N
+HETATM   23  C4  AMP A   1      10.672  37.369  14.001  1.00  0.00           C
+END

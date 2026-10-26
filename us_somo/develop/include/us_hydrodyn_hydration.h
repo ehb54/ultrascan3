@@ -10,7 +10,7 @@
 // exactly the residues SOMO stores PROTONATED and which therefore carry no charged-carboxylate
 // water. So the per-atom values are a hand distribution of a per-residue total, not an
 // independently derived per-atom rule, and the same chemical group is sometimes hydrated in one
-// entry and not in another (ADP.O2' = 1 but A.O2' = 0; MET.SD = 1 but CYS.SG = 0).
+// entry and not in another (GLC.O3 = 1 but GLC.O4 = 0; MET.SD = 1 but CYS.SG = 0).
 //
 // Consequently this is a STARTING POINT FOR INTERACTIVE EDITING, exactly as specified, and must
 // never be presented to the user as a physical prediction. Two numbers are worth showing: the
@@ -96,8 +96,25 @@ struct Proposal {
 //   aliphatic hydroxyl     (O2H1)                1
 //   phenolic hydroxyl      (O2H1 on aromatic C)  0
 //   amide -NH- and -NH2    (N3H1 / N3H2)         1
-//   aromatic ring NH                             1, and 2 when protonated
+//   aromatic ring N                              1, and 2 when protonated -- but 0 when it
+//                                                carries an sp3 substituent (glycosidic N9/N1,
+//                                                flavin N10), sits beside a ring carbonyl
+//                                                (pyrimidine N3, guanine N1, flavin N1/N3), or
+//                                                is a purine N1
 //   thioether S                                  1, thiol S 0
+//
+// and, from somo.residue's nucleotide entries (2026-10), with flavin by analogy (Mattia,
+// 2026-10-26):
+//
+//   ring carbonyl O of a six-ring holding an N   1 (base O2/O4/O6, flavin O2/O4)
+//   five-membered ring ether O                   1 (furanose O4'); any other ether or
+//                                                carbonyl O stays 0, as the pyranose O5 is stored
+//   phosphate oxygens, by the phosphate's topology, the first free O by name taken as the P=O:
+//     phosphodiester (nucleic-acid backbone)     free 1, 4; esters 1
+//     pyrophosphate half (ADP alpha, NAD)        free 1, 5; ester 0; P-O-P bridge 2
+//     middle of a triphosphate (ATP beta)        free 1, 4; bridges 2
+//     terminal monoester (AMP)                   free 1, 5, 5; ester 0
+//     terminal phosphate of an anhydride         free 1, 4, 5 (ADP beta); bridge 2
 //
 // Anything the rules do not recognise falls back to the observed-majority Table and is flagged,
 // so a novel group is never given a confident-looking number by accident.

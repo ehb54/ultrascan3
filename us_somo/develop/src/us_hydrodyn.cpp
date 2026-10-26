@@ -2213,6 +2213,23 @@ static QString perceived_table_record( const QString & block ) {
    return out.join( "\n" ) + "\n";
 }
 
+// Copy a residue table aside before the perceiver appends to it, named the way SOMO names the
+// tables it backs up when it installs new ones -- somo.residue becomes somo-prev-N.residue, the
+// first N not already taken -- so an unwanted entry is undone by restoring the copy. Returns the
+// copy's path, or an empty string if no copy could be made.
+static QString backup_residue_table( const QString & filename ) {
+   const QFileInfo fi( filename );
+   const QString suffix = fi.suffix().isEmpty() ? QString() : "." + fi.suffix();
+   for ( int n = 1; n < 10000; ++n ) {
+      const QString copy =
+         fi.absolutePath() + "/" + fi.completeBaseName() + QString( "-prev-%1" ).arg( n ) + suffix;
+      if ( !QFile::exists( copy ) ) {
+         return QFile::copy( filename, copy ) ? copy : QString();
+      }
+   }
+   return QString();
+}
+
 // Write <contents of `active`> + `extra` to `overlay`. Lets perceived entries be added to a
 // working copy of a SOMO lookup table without touching the file the user curates. `active` and
 // `overlay` may be the same path (a second perceive accumulating into an existing overlay), so
@@ -2399,6 +2416,7 @@ void US_Hydrodyn::perceive_non_coded() {
 
    int accepted = 0;
    int saved    = 0;
+   static std::set< QString > backed_up;              // tables copied aside this session
    QStringList accepted_blocks;
    QStringList accepted_hybrids;
    for ( int t = 0; t < tents.size(); ++t ) {
@@ -2434,7 +2452,23 @@ void US_Hydrodyn::perceive_non_coded() {
          editor_msg( "blue", QString( us_tr( "Perceive: accepted entry for %1\n" ) )
                      .arg( tents[ t ].resName ) );
          editor_msg( "black", block );
-         if ( dlg->save_requested() ) {
+         // Each table is copied aside before its first append in a session, and an entry that
+         // cannot be backed up is not appended -- it is still used for this session.
+         if ( dlg->save_requested() && !backed_up.count( permanent_residue_filename ) ) {
+            const QString copy = backup_residue_table( permanent_residue_filename );
+            if ( copy.isEmpty() ) {
+               editor_msg( "red", QString( us_tr( "Perceive: could NOT back up %1, so %2 was not "
+                                                  "appended to it\n" ) )
+                           .arg( permanent_residue_filename )
+                           .arg( tents[ t ].resName ) );
+            } else {
+               backed_up.insert( permanent_residue_filename );
+               editor_msg( "dark blue", QString( us_tr( "Perceive: backed up %1 as %2\n" ) )
+                           .arg( permanent_residue_filename )
+                           .arg( copy ) );
+            }
+         }
+         if ( dlg->save_requested() && backed_up.count( permanent_residue_filename ) ) {
             // the user's own table, never the session overlay -- and as a valid record, not the
             // annotated block, which would leave their table unreadable from that point on
             QFile f( permanent_residue_filename );
