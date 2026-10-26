@@ -24,6 +24,7 @@ using namespace somo_hydration;
 struct Parsed {
     std::vector<std::pair<std::string, double>> obs;
     std::map<std::string, double> residue_total;
+    std::map<std::string, double> residue_beads;       // the same entry's bead hydration, summed
     std::map<std::string, int> residue_atoms;
 };
 
@@ -59,7 +60,18 @@ static Parsed parse(const std::string& path) {
             if (first) p.obs.push_back({f2[1], w});
             tot += w;
         }
-        if (first) { p.residue_total[name] = tot; p.residue_atoms[name] = natoms; }
+        double beads = 0;
+        for (int b = 0; b < nbeads && i + natoms + b < L.size(); ++b) {
+            // whitespace-separated: hydration, colour, placing, chain, volume
+            std::istringstream bs(L[i + natoms + b]);
+            double h = 0;
+            if (bs >> h) beads += h;
+        }
+        if (first) {
+            p.residue_total[name] = tot;
+            p.residue_beads[name] = beads;
+            p.residue_atoms[name] = natoms;
+        }
         i += natoms + (nbeads > 0 ? nbeads : 0);
     }
     return p;
@@ -98,7 +110,7 @@ TEST("every carbon type is unanimously anhydrous") {
 // the caller flags them rather than defaulting silently.
 TEST("ambiguous types are marked not-confident") {
     if (!g_ok) return;
-    const char* weak[] = {"O2H1", "O2H0", "N3H2", "N3H0"};
+    const char* weak[] = {"O2H1", "O2H0", "N3H0"};
     for (const char* h : weak) {
         const Entry* e = g_t.find(h);
         if (!e) { std::printf("  (%s absent)\n", h); continue; }
@@ -106,12 +118,22 @@ TEST("ambiguous types are marked not-confident") {
                     h, e->waters, 100 * e->agreement, e->n_obs);
         CHECK(!e->confident);
     }
+    // N3H2 -- amide and amino -NH2 -- left the list when the nucleotide entries were filled in
+    // (2026-10): the bases' amino groups took it past the confidence line, at one water.
+    const Entry* nh2 = g_t.find("N3H2");
+    if (nh2) {
+        std::printf("  N3H2   proposed %.0f, agreement %.0f%% of %d (now pinned down)\n",
+                    nh2->waters, 100 * nh2->agreement, nh2->n_obs);
+        CHECK(nh2->confident && nh2->waters == 1.0);
+    }
 }
 
 TEST("metal ions keep their distinctive hydration") {
     if (!g_ok) return;
     struct M { const char* h; double w; };
-    const M m[] = {{"MG+2", 6}, {"CU+2", 6}, {"CL-1", 6}, {"MN+2", 4}, {"ZN+2", 2}, {"NA+1", 1}};
+    // Na+ carries 4 since 2026-10 (from 1). So does the K+ ion (from 0), but K+1 is not listed:
+    // the potassium inside MEN's cluster is stored dry, which makes the type a tie.
+    const M m[] = {{"MG+2", 6}, {"CU+2", 6}, {"CL-1", 6}, {"MN+2", 4}, {"ZN+2", 2}, {"NA+1", 4}};
     for (const M& x : m) {
         const Entry* e = g_t.find(x.h);
         if (!e) { std::printf("  (%s absent)\n", x.h); continue; }
@@ -148,21 +170,24 @@ TEST("somo.residue totals reproduce the Kuntz per-residue numbers") {
 }
 
 // Mattia, 2026-08-08: "we could then have atomic hydration at neutral pH for all the other
-// entries in somo.residue... I mean, nucleotides". This records the gap he suspected.
-TEST("GAP: every nucleotide entry carries zero hydration") {
+// entries in somo.residue... I mean, nucleotides". Until 2026-10 every nucleotide entry carried
+// zero, and this test asserted that gap so that it would turn red the day they were filled in.
+// They have been (the phosphate oxygens from MD), so it now checks the filled-in entries hold
+// together: hydrated at the atom level, with the atoms summing to the beads.
+TEST("nucleotide entries are hydrated at the atom level, atoms summing to beads") {
     if (!g_ok) return;
     const char* nuc[] = {"A", "C", "G", "U", "DA", "DC", "DG", "DT"};
-    int zero = 0, found = 0;
+    int found = 0;
     for (const char* r : nuc) {
         auto it = g_p.residue_total.find(r);
         if (it == g_p.residue_total.end()) continue;
         ++found;
-        if (it->second == 0.0) ++zero;
+        const double beads = g_p.residue_beads[r];
+        std::printf("  %-2s atoms %.0f, beads %.0f\n", r, it->second, beads);
+        CHECK(it->second > 0);
+        CHECK(std::fabs(it->second - beads) < 1e-9);
     }
-    std::printf("  %d of %d nucleotide entries have total hydration 0\n", zero, found);
-    // Asserted as the CURRENT state so this test turns red the day someone fills them in,
-    // which is the moment to revisit any model built on the old values.
-    CHECK(found > 0 && zero == found);
+    CHECK(found > 0);
 }
 
 TEST("proposal flags unknown types instead of inventing a number") {
