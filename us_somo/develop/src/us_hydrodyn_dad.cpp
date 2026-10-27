@@ -743,6 +743,8 @@ US_Hydrodyn_Dad::US_Hydrodyn_Dad(
    unified_ggaussian_ok = false;
    wheel_errors_ok      = false;
 
+   gauss_rescale_never_ask = false;
+
    detector_uv   = false;
    detector_uv_conv = 0e0;
 
@@ -7534,7 +7536,7 @@ void US_Hydrodyn_Dad::update_gauss_pos()
    }
 }
 
-void US_Hydrodyn_Dad::gauss_start()
+void US_Hydrodyn_Dad::gauss_start( bool ask_rescale )
 {
    plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    // if ( plot_errors_zoomer )
@@ -7612,7 +7614,11 @@ void US_Hydrodyn_Dad::gauss_start()
       gaussians = f_gaussians[ wheel_file ];
    }
 
-   opt_repeak_gaussians( wheel_file );
+   // the movie shows the Gaussians as they are, so it never asks to rescale them
+   if ( ask_rescale )
+   {
+      opt_repeak_gaussians( wheel_file );
+   }
 
    // gaussian_mode = true;
    mode_select( MODE_GAUSSIAN );
