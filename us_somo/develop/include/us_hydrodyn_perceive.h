@@ -78,6 +78,18 @@ void find_sssr(Bonds& b, int max_ring = 12);
 static constexpr int DEFAULT_BEAD_COLOR = 10;
 static constexpr int MAX_BEAD_COLOR     = 15;
 
+// ---- Residue type for machine-generated entries ----------------------------------------------
+// SINGLE POINT OF DEFINITION, like the colour above. 9 = "Other" in the Residue Definition
+// Module's list (0 amino acid, 1 sugar, 2 nucleotide, 3 heme, 4 phosphate, 5 co-factor, 6 ion,
+// 7 detergent, 8 lipid, 9 other).
+//
+// The model builder only ever asks whether the type is 0, but that question decides a lot: type 0
+// switches on the amino-acid peptide-bond rules, which treat the residue's bead as a backbone bead
+// and rewrite its mass and volume (1MBO's perceived sulfate came out as "SO4.PB" at 41.03 Da, an
+// amino-acid backbone's CA+C+O, instead of 96.07), and it also skips the regrouping of atoms by
+// bead that SOMO applies to every other type when it loads the table. Never emit 0.
+static constexpr int DEFAULT_RESIDUE_TYPE = 9;
+
 // ---- ASA policy for machine-generated entries -----------------------------------------------
 // An entry's ASA column MUST be > 0. All three of SOMO's residue loaders --
 // US_Hydrodyn::read_residue_file (us_hydrodyn_load.cpp:534), US_AddResidue

@@ -600,7 +600,7 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     for (size_t k=0;k<atoms.size();++k) {
         const OutAtom& o=perceived[k];
         total_mw += fixed_deprot[k] ? pr.alternate[k].mw : o.mw;
-        // atom line: name hybrid mw radius bead 0 index hydration
+        // atom line: name hybrid mw radius bead positioner index hydration
         const bool has_alt = k < pr.alternate.size() && !pr.alternate[k].hybrid.empty();
         const Properties::Alt* a = has_alt ? &pr.alternate[k] : nullptr;
         double hyd = k < pr.hydration.size() ? pr.hydration[k] : 0.0;
@@ -616,15 +616,23 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
         // read 1 water against the 16 the review dialog computed for the same entry (Mattia,
         // 2026-08-10) -- the headless and GUI paths disagreed on the same residue.
         bead_hydration += a ? a->waters : hyd;
+        // Bead 0, positioner 1. The bead is placed at the centre of gravity of its POSITIONER
+        // atoms only (US_Hydrodyn::compute_asa sums the flagged ones), so every atom is flagged:
+        // the bead belongs at the centre of mass of the whole residue. With none flagged, the sum
+        // is empty and SOMO puts the bead at the coordinate origin -- which is what this wrote
+        // until 2026-10, placing every perceived residue at (0,0,0) in SOMO and SoMo-overlap
+        // models while vdW models, which use the atoms themselves, looked right.
         body << atoms[k].name << '\t' << pr_hyb << '\t' << pr_mw << '\t' << pr_rad
-             << "\t0\t0\t" << k << '\t' << hyd;
+             << "\t0\t1\t" << k << '\t' << hyd;
         // 16-field form for a switchable atom: the protonated species above, the deprotonated one
         // here, exactly as somo.residue writes ASP's OD2 / LYS's NZ / ARG's NH2. The loader accepts
         // 8 or 16 fields and nothing between, so this is all or nothing. The ionization index must
-        // be unique within the residue and match a declared pKa, so it counts up from 1.
+        // be unique within the residue and match a declared pKa, so it counts up from 1. Bead,
+        // positioner and index must repeat the primary's: on a mismatch the loader stops reading
+        // the residue file altogether.
         if (switchable(k)) {
             body << '\t' << ++ion_index << '\t' << a->hybrid << '\t' << a->mw << '\t' << a->radius
-                 << "\t0\t0\t" << k << '\t' << a->waters;
+                 << "\t0\t1\t" << k << '\t' << a->waters;
         }
         body << '\n';
         if (!o.in_table && !seen_new.count(o.hybrid)) {
@@ -719,10 +727,12 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     // (us_hydrodyn_load.cpp:151): name, type, molvol, ASA, natoms, nbeads, vbar.
     // ASA must be > 0 or every loader drops the record without a word -- see the policy note at
     // DEFAULT_ASA_PER_ATOM. It is a placeholder, so it is called one in the REVIEW block.
+    // The type is never 0 (amino acid): see DEFAULT_RESIDUE_TYPE for what 0 would switch on.
     {
         std::ostringstream h;
         h.setf(std::ios::fixed);
-        h << resname << "\t0\t" << std::setprecision(2) << (pr.have_molvol ? pr.molvol : 0.0)
+        h << resname << '\t' << DEFAULT_RESIDUE_TYPE << '\t'
+          << std::setprecision(2) << (pr.have_molvol ? pr.molvol : 0.0)
           << '\t' << std::setprecision(2) << asa_out
           << '\t' << atoms.size() << "\t1\t"
           << std::setprecision(3) << (pr.have_vbar ? pr.vbar : 0.0);
@@ -751,7 +761,8 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
     bead.setf(std::ios::fixed);
     bead << std::setprecision(2) << bead_hydration << '\t'  // bead hydration = sum over its atoms
          << pr.bead_color << '\t'       // colour: default is DEFAULT_BEAD_COLOR in the header
-         << "0\t"                       // placing_method 0 = centre of gravity (the only one used)
+         << "0\t"                       // placing_method 0 = centre of gravity of the positioner
+                                        // atoms, which is every atom (see the atom lines)
          << "0\t"                       // chain 0 = main chain
          << (pr.have_molvol ? pr.molvol : 0.0) << '\n';   // single bead: volume == molvol
     em.residue_block = hdr.str() + body.str() + bead.str();

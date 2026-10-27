@@ -585,8 +585,11 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
                                       .arg( rows_[ r ].ion_pKa, 0, 'f', 2 );
     s += "\n";
     int ion_index = 0;    // unique per residue, and must match a declared header pKa
+    // Every atom is in bead 0 and every atom is a positioner, alternate fields included: the bead
+    // sits at the centre of gravity of its positioner atoms, and with none flagged SOMO puts it at
+    // the coordinate origin. The emitter writes the same; see the atom lines in emit_residue.
     for ( int r = 0; r < rows_.size(); ++r ) {
-        s += QString( "%1\t%2\t%3\t%4\t0\t0\t%5\t%6" )
+        s += QString( "%1\t%2\t%3\t%4\t0\t1\t%5\t%6" )
                  .arg( rows_[ r ].name )
                  .arg( rows_[ r ].hybrid )
                  .arg( rows_[ r ].mw )
@@ -594,7 +597,7 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
                  .arg( r )
                  .arg( rows_[ r ].hydration );
         if ( !rows_[ r ].ion_hybrid.isEmpty() && !rows_[ r ].ion_display_only )
-            s += QString( "\t%1\t%2\t%3\t%4\t0\t0\t%5\t%6" )
+            s += QString( "\t%1\t%2\t%3\t%4\t0\t1\t%5\t%6" )
                      .arg( ++ion_index )
                      .arg( rows_[ r ].ion_hybrid )
                      .arg( rows_[ r ].ion_mw )

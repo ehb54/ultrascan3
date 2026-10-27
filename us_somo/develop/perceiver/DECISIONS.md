@@ -1154,3 +1154,47 @@ tool. The caller honours it and reports how many residues went unreviewed.
   The perceiver itself is H-agnostic by design (hydrogens are excluded from bond perception), so
   it perceives these correctly -- it is SOMO's residue MATCHING that fails, because the atom count
   differs. Making the match H-agnostic too would be the real fix and is out of scope here.
+
+## Perceived residues built at the origin, as amino acids — 2026-10-26
+
+Found while scoping multi-bead entries (Mattia, 2026-10-26: one bead per group of atoms, placed
+at "the center of mass among the selected atoms"). Every entry the perceiver emitted, headless or
+through the review dialog, had two wrong fields, and neither showed until a bead model was built
+and its coordinates read.
+
+- **Every atom had positioner 0.** A centre-of-gravity bead is placed at the centre of gravity of
+  its POSITIONER atoms only (`compute_asa`, pass 2 sums the flagged ones), and pass 3 zeroes a bead
+  whose sum is empty. So the bead went to (0,0,0). Every bead in `somo.residue.new` that has atoms
+  flags at least one of them, and SOMO's own Automatic Bead Builder flags all of them.
+- **The residue type was 0, amino acid.** The model builder only ever asks whether the type is 0,
+  and 0 switches on the peptide-bond rules: the bead is treated as a backbone bead and its mass
+  and volume are rewritten. Type 0 also skips the regrouping of atoms by bead that SOMO applies to
+  every other type when it loads the table.
+
+1MBO's sulfate, built with `perceive build` (offscreen, on Linux) and read back from the bead
+model; the sulfate's centre of mass is 32.80, 29.75, 4.35 and its mass 96.07 Da:
+
+| entry | SOMO bead | mass |
+|---|---|---|
+| as emitted: type 0, positioners 0 | `SO4.PB` at 0, 0, 0 | 41.03 (an amino-acid backbone's CA+C+O) |
+| type 0, positioners 1 | `SO4.PB` at 32.80, 29.76, 4.35 | 41.03 |
+| type 9, positioners 1, chain 0 | `SO4.MC` at 32.80, 29.76, 4.35 | 96.07 |
+| type 9, positioners 1, chain 1 | `SO4.SC` at 33.29, 29.98, 4.26 | 96.07 |
+
+SoMo-overlap models were wrong the same way; vdW models, built from the atoms themselves, were
+not. AtoB models were not checked.
+
+**Fix.** Positioner 1 on every atom line, the ionized alternate's included (the loader stops
+reading the residue file if the alternate's bead, positioner or index differ from the primary's),
+in both `emit_residue` and the dialog's `refresh_entry`. Residue type `DEFAULT_RESIDUE_TYPE` = 9,
+"Other", a single point of definition in `us_hydrodyn_perceive.h`, carried through the dialog
+verbatim like the other header fields it does not edit. `make builder` checks both fields on an
+aspartate, whose carboxylate covers the 16-field lines; `run_dialog_test.sh` checks the dialog
+writes them.
+
+### FINDINGS worth eb's attention
+- **The chain flag (0 main chain, 1 side chain) was never decided.** The perceiver writes 0;
+  SOMO's own Automatic Bead Builder writes 1, as do most coded ligands (sugars, ions, NAD), while
+  HEM is 0. It changes the model: overlap removal moved the sulfate bead 0.5 A outward as a side
+  chain bead, and left it at radius 1.91 A against 1.35 A as a main chain one. Left at 0 for now,
+  as a question for Mattia.

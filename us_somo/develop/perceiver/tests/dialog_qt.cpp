@@ -27,10 +27,10 @@ int main( int argc, char ** argv ) {
         "# test ligand [TST]  (generated on-the-fly by perceiver)\n"
         "# REVIEW - check these before accepting the entry:\n"
         "#   O1 (O2H1): proposed 0 but the coded residues agree only 49% of 115 -- please check\n"
-        "TST\t0\t123.45\t54.00\t3\t1\t0.712\n"
-        "N\tN3H1\t15.02\t1.64\t0\t0\t0\t1\n"
-        "CA\tC4H1\t13.02\t1.88\t0\t0\t1\t0\n"
-        "O1\tO2H1\t17.01\t1.46\t0\t0\t2\t0\n"
+        "TST\t9\t123.45\t54.00\t3\t1\t0.712\n"
+        "N\tN3H1\t15.02\t1.64\t0\t1\t0\t1\n"
+        "CA\tC4H1\t13.02\t1.88\t0\t1\t1\t0\n"
+        "O1\tO2H1\t17.01\t1.46\t0\t1\t2\t0\n"
         "1\t10\t0\t0\t123.45\n";
 
     US_Hydrodyn_Perceive_Dialog dlg( t, QString(), 0 );
@@ -38,7 +38,22 @@ int main( int argc, char ** argv ) {
     // the block round-trips: same atoms, same computed values
     const QString e = dlg.entry();
     std::printf("--- rebuilt entry ---\n%s---\n", e.toLatin1().constData());
-    CK( e.contains( "TST\t0\t123.45" ) );
+    CK( e.contains( "TST\t9\t123.45" ) );          // the type is carried, never re-invented
+    // Every rebuilt atom is a positioner of bead 0. The dialog writes these two fields itself
+    // rather than carrying them, and with no positioner SOMO places the bead at the origin.
+    {
+        int atom_lines = 0;
+        bool past_header = false;
+        foreach ( const QString & ln, e.split( "\n" ) ) {
+            if ( ln.startsWith( "#" ) || ln.trimmed().isEmpty() ) continue;
+            if ( !past_header ) { past_header = true; continue; }
+            const QStringList af = ln.split( "\t" );
+            if ( af.size() < 8 ) continue;              // the bead line
+            ++atom_lines;
+            CK( af[ 4 ] == "0" && af[ 5 ] == "1" );
+        }
+        CK( atom_lines == 3 );
+    }
     CK( e.contains( "0.712" ) );
     // The dialog rebuilds the whole entry from its widgets, so every header field it does not
     // edit must survive the round trip. It used to hardcode the ASA slot to 0, which quietly
@@ -93,7 +108,7 @@ int main( int argc, char ** argv ) {
         const QString after = dlg.entry();
         std::printf("--- after editing O1 hydration to 3.5 ---\n%s---\n",
                     after.toLatin1().constData());
-        CK( after.contains( "O1\tO2H1\t17.01\t1.46\t0\t0\t2\t3.5" ) );
+        CK( after.contains( "O1\tO2H1\t17.01\t1.46\t0\t1\t2\t3.5" ) );
         CK( after.contains( "4.50\t10\t0\t0\t123.45" ) );           // bead total 1 + 0 + 3.5
         // a nonsense edit is rejected and the old value restored
         tbl->item( 2, 4 )->setText( "not a number" );

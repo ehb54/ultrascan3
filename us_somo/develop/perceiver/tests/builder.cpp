@@ -174,6 +174,53 @@ TEST("the single bead carries the molvol, a selectable colour, and the summed hy
     CHECK(std::fabs(hydr - b.hydration.total) < 0.01);
 }
 
+// The bead is placed at the centre of gravity of its POSITIONER atoms, and the residue type decides
+// whether SOMO applies its amino-acid peptide-bond rules. Both were wrong until 2026-10 and neither
+// shows unless checked for: with no atom flagged as a positioner SOMO puts the bead at the
+// coordinate origin, and type 0 (amino acid) turned 1MBO's perceived sulfate into an amino-acid
+// backbone bead of 41.03 Da. Only the SOMO and SoMo-overlap models were wrong; vdW models, built
+// from the atoms themselves, looked fine.
+TEST("every atom positions the bead, and the entry is not an amino acid") {
+    if (!load()) return;
+    std::vector<int> idx = pick("ASP", 8);        // a carboxylate, so 16-field lines are covered
+    if (idx.empty()) { std::printf("  (no complete ASP -- skipped)\n"); return; }
+    Built b = build("ASP", g.in, g.perc, g.bonds, idx, Perceiver(g.tbl), &g.hyd);
+
+    std::vector<std::vector<std::string>> rec;   // header, atom lines, bead line
+    std::istringstream ls(b.residue_block);
+    std::string ln;
+    while (std::getline(ls, ln)) {
+        if (ln.empty() || ln[0] == '#') continue;
+        std::vector<std::string> f;
+        std::string cur;
+        std::istringstream fs(ln);
+        while (std::getline(fs, cur, '\t')) f.push_back(cur);
+        rec.push_back(f);
+    }
+    REQUIRE(rec.size() == 1 + 8 + 1);
+    const int type = std::stoi(rec[0][1]);
+    std::printf("  residue type %d\n", type);
+    CHECK(type == DEFAULT_RESIDUE_TYPE);
+    CHECK(type != 0);
+    int n16 = 0;
+    for (size_t r = 1; r <= 8; ++r) {
+        const std::vector<std::string>& f = rec[r];
+        CHECK(f.size() == 8 || f.size() == 16);
+        if (f.size() < 8) continue;
+        CHECK(f[4] == "0");                       // bead 0
+        CHECK(f[5] == "1");                       // positioner
+        if (f.size() == 16) {
+            ++n16;
+            // the ionized alternate must repeat bead, positioner and index exactly, or the loader
+            // stops reading the residue file
+            CHECK(f[12] == f[4] && f[13] == f[5] && f[14] == f[6]);
+        }
+    }
+    std::printf("  %d of 8 atom lines carry an ionized alternate\n", n16);
+    CHECK(n16 > 0);
+    CHECK(rec[9].size() == 5 && rec[9][2] == "0");   // placing method: centre of gravity
+}
+
 TEST("with the stages disabled, unset fields are visibly unset") {
     if (!load()) return;
     std::vector<int> idx = pick("ALA", 5);
