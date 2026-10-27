@@ -823,36 +823,36 @@ void US_MwlSpeciesSim::save_sims( void )
    emit    pass_ssf_dir( impdir );
 }
 
-int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
+int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
 {
-   bool gui_needed    = !flags.contains( "close" );
+   bool gui_needed    = !args.close;
    bool error_occured = false;
-   bool errors_to_cl  = flags.contains( "errors-cl" );
+   bool errors_to_cl  = args.errors_cl;
 
    // CLI overrides for output type and reproducible identifiers.
-   if ( flags.contains( "guid-seed" ) )
+   if ( !args.guid_seed.isEmpty() )
    {
-      guid_seed = flags["guid-seed"];
+      guid_seed = args.guid_seed;
    }
 
-   if ( flags.contains( "edit-timestamp" ) )
+   if ( !args.edit_stamp.isEmpty() )
    {
-      edit_stamp = flags["edit-timestamp"];
+      edit_stamp = args.edit_stamp;
    }
 
-   if ( flags.contains( "runtype" ) && flags["runtype"].length() == 2 )
+   if ( !args.run_type.isEmpty() )
    {
-      run_type = flags["runtype"];
+      run_type = args.run_type;
    }
 
-   if ( flags.contains( "description" ) )
+   if ( !args.description.isEmpty() )
    {
-      sim_description = flags["description"];
+      sim_description = args.description;
    }
 
-   if ( flags.contains( "noise-seed" ) )
+   if ( args.noise_seed != 0 )
    {
-      noise_seed = flags["noise-seed"].toUInt();
+      noise_seed = args.noise_seed;
    }
 
    // Abort only when an explicitly requested input fails to load.
@@ -861,9 +861,9 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
    bool loaded_simparams = true;
    bool loaded_rotor     = true;
 
-   if ( flags.contains( "models" ) && flags["models"].length() > 0 )
+   if ( !args.models.isEmpty() )
    {
-      QStringList paths = flags["models"].split( ",", Qt::SkipEmptyParts );
+      const QStringList& paths = args.models;
       loaded_models     = load_models_from_paths( paths );
       if ( !loaded_models )
       {
@@ -877,9 +877,9 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       }
    }
 
-   if ( flags.contains( "buffer" ) && flags["buffer"].length() > 0 )
+   if ( !args.buffer.isEmpty() )
    {
-      QString       load_id = flags["buffer"];
+      QString       load_id = args.buffer;
       US_BufferGui* dialog  = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
       bool          success = dialog->load_buffer( load_id, buffer );
       dialog->close();
@@ -895,9 +895,9 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       delete dialog;
    }
 
-   if ( flags.contains( "simparams" ) && flags["simparams"].length() > 0 )
+   if ( !args.simparams.isEmpty() )
    {
-      QString          load_id = flags["simparams"];
+      QString          load_id = args.simparams;
       US_SimParamsGui* dialog  = new US_SimParamsGui( simparams );
       bool             success = dialog->load_params( load_id, simparams );
       dialog->close();
@@ -908,8 +908,8 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       }
       else if ( simparams.speed_step.size() != 1 )
       { // set_parameters() and the simulation use only the first speed step.
-         QTextStream( stderr ) << "Error: " << load_id << " has " << simparams.speed_step.size()
-                               << " speed steps; us_mwl_species_sim simulates exactly one" << Qt::endl;
+         QTextStream( stderr ) << "Error: " << QString( US_SimCli::speedStepCountMessage ).arg( load_id ).arg( simparams.speed_step.size() )
+                               << Qt::endl;
          reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl, gui_needed, error_occured );
          loaded_simparams = false;
       }
@@ -923,11 +923,11 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
       delete dialog;
    }
 
-   if ( flags.contains( "rotor" ) && flags["rotor"].length() > 0 )
+   if ( !args.rotor.isEmpty() )
    {
       US_Rotor::Rotor            rotorval;
       US_Rotor::RotorCalibration calibration;
-      QString                    rotor_id      = flags["rotor"];
+      QString                    rotor_id      = args.rotor;
       US_Disk_DB_Controls*       disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
       int                        dbdisk        = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB : US_Disk_DB_Controls::Disk;
       US_RotorGui*               rotorInfo     = new US_RotorGui( true, dbdisk, rotorval, calibration );
@@ -956,42 +956,34 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
 
    // A centerpiece selects the row geometry and overrides the loaded bottom.
    // Preserve rotorCalID so its calibration remains in effect.
-   if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
+   if ( args.centerpiece >= 0 || args.centerpiece_row >= 0 )
    {
-      int     cp = 0;
-      int     ch = 0;
-      QString parse_error;
+      // US_SimCli has validated both values.
+      int cp = qMax( 0, args.centerpiece );
+      int ch = qMax( 0, args.centerpiece_row );
 
-      if ( !US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error ) ||
-           !US_AbstractCenterpiece::parse_channel( flags.value( "centerpiece-channel", "0" ), ch, parse_error ) )
+      QString range_error = US_AbstractCenterpiece::validate( cp, ch );
+      if ( !range_error.isEmpty() )
       {
-         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl, gui_needed, error_occured );
+         reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl, gui_needed, error_occured );
+      }
+      else if ( !simparams.setHardware( NULL, simparams.rotorCalID, cp, ch ) )
+      { // Reject invalid geometry instead of using the default bottom.
+         reportHeadlessLoadFailure(
+            "centerpiece", "hardware definitions could not be applied", errors_to_cl, gui_needed, error_occured );
       }
       else
-      {
-         QString range_error = US_AbstractCenterpiece::validate( cp, ch );
-         if ( !range_error.isEmpty() )
-         {
-            reportHeadlessLoadFailure( "centerpiece", range_error, errors_to_cl, gui_needed, error_occured );
-         }
-         else if ( !simparams.setHardware( NULL, simparams.rotorCalID, cp, ch ) )
-         { // Reject invalid geometry instead of using the default bottom.
-            reportHeadlessLoadFailure(
-               "centerpiece", "hardware definitions could not be applied", errors_to_cl, gui_needed, error_occured );
-         }
-         else
-         { // Record the selected centerpiece in the experiment record.
-            QList<US_AbstractCenterpiece> cp_list;
-            US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
-            sim_centerpiece_id = cp_list[cp].serial_number;
-         }
+      { // Record the selected centerpiece in the experiment record.
+         QList<US_AbstractCenterpiece> cp_list;
+         US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
+         sim_centerpiece_id = cp_list[cp].serial_number;
       }
    }
 
    QString save_path;
-   if ( flags.contains( "save" ) && flags["save"].length() > 0 )
+   if ( !args.save.isEmpty() )
    {
-      save_path = flags["save"];
+      save_path = args.save;
       QDir dir( save_path );
 
       // Accept a new output directory as well as an existing one.
@@ -1022,7 +1014,7 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
 
    if ( !error_occured && loaded_models && loaded_buffer && loaded_simparams && loaded_rotor )
    {
-      if ( flags.contains( "start" ) )
+      if ( args.start )
       {
          start_sims();
          if ( !save_path.isEmpty() && !save_sims_to( save_path ) )

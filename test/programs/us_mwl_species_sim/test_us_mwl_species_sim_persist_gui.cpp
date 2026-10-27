@@ -9,6 +9,7 @@
 
 #include "us3_dev_license.h"
 #include "us_dataIO.h"
+#include "us_sim_cli.h"
 #include "us_util.h"
 
 namespace
@@ -242,7 +243,7 @@ class US_MwlSpeciesSimPersistTest : public QObject
          sim.start( US_MWL_SPECIES_SIM_EXE, { "--no-db", "--errors-cl", "--close", "--noise-seed", "0" } );
          QVERIFY( sim.waitForFinished( 60000 ) );
          QCOMPARE( sim.exitCode(), 1 );
-         QVERIFY( QString::fromUtf8( sim.readAllStandardError() ).contains( "--noise-seed" ) );
+         QVERIFY( QString::fromUtf8( sim.readAllStandardError() ).contains( US_SimCli::invalidValueMessage( "noise-seed", "0" ) ) );
       }
 
       void multiSpeedSimparamsAreRejected()
@@ -276,7 +277,8 @@ class US_MwlSpeciesSimPersistTest : public QObject
                                               multiOut } );
          QVERIFY( sim.waitForFinished( 60000 ) );
          QCOMPARE( sim.exitCode(), 2 );
-         QVERIFY( QString::fromUtf8( sim.readAllStandardError() ).contains( "2 speed steps" ) );
+         QVERIFY( QString::fromUtf8( sim.readAllStandardError() )
+                     .contains( QString( US_SimCli::speedStepCountMessage ).arg( inputs + "/simparams_two_steps.xml" ).arg( 2 ) ) );
          QVERIFY( QDir( multiOut ).isEmpty() );
       }
 

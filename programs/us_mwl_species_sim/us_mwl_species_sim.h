@@ -9,6 +9,7 @@
 #include "us_model_loader.h"
 #include "us_plot.h"
 #include "us_rotor.h"
+#include "us_sim_cli.h"
 #include "us_simparms.h"
 #include "us_widgets.h"
 
@@ -33,9 +34,9 @@ class US_MwlSpeciesSim : public US_Widgets
         void save_sims_auto( void );
 
         //! \brief Run the simulation headlessly using command-line options.
-        //! \param flags Parsed input, output, and execution options.
+        //! \param args Parsed input, output, and execution options.
         //! \return 0 on success, 1 if the GUI is required, or 2 on error.
-        int            init_from_args( const QMap<QString, QString>& flags );
+        int            init_from_args( const US_SimCliArgs& args );
 
         //! \brief Extract a wavelength from a model description.
         //! \param description Third-from-last dot-separated field contains the wavelength.

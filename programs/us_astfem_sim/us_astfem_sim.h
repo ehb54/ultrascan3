@@ -14,6 +14,7 @@
 #include "us_dataIO.h"
 #include "us_astfem_math.h"
 #include "us_csv_data.h"
+#include "us_sim_cli.h"
 #include <qwt_plot.h>
 #include <qwt_counter.h>
 
@@ -34,9 +35,9 @@ class US_Astfem_Sim : public US_Widgets
       US_Astfem_Sim( QWidget* p = nullptr, Qt::WindowFlags f = Qt::WindowFlags() );
 
       //! Initialize the us_astfem_sim with command line arguments
-      //! \param flags Command line arguments
-      //! \returns int: 0 on success no gui needed, 1 on success but gui needed, -1 on error
-      int init_from_args( const QMap<QString, QString>& flags );
+      //! \param args Parsed command-line options
+      //! \returns int: 0 on success no gui needed, 1 on success but gui needed, 2 on error
+      int init_from_args( const US_SimCliArgs& args );
 
     signals:
        void new_time         ( double );

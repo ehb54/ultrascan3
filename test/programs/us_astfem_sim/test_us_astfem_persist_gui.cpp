@@ -9,6 +9,8 @@
 
 #include "us3_dev_license.h"
 #include "us_dataIO.h"
+#include "us_hardware.h"
+#include "us_sim_cli.h"
 #include "us_util.h"
 
 namespace
@@ -322,19 +324,20 @@ class US_AstfemSimPersistTest : public QObject
       void cellBeyondTheRotorHoleCountIsRejected()
       {
          // Rotor 2 is an AN60, which has 4 holes.
-         QVERIFY( rejectedRun( { "--rotor", "2", "--cell", "5" } ).contains( "has only 4 holes" ) );
+         QVERIFY( rejectedRun( { "--rotor", "2", "--cell", "5" } ).contains( QString( US_SimCli::cellBeyondRotorMessage ).arg( 5 ).arg( 4 ) ) );
       }
 
       void channelMissingFromTheCenterpieceIsRejected()
       {
          // Centerpiece 1 is a 2-channel centerpiece: only row 0 (A/B) exists.
-         QVERIFY( rejectedRun( { "--rotor", "1", "--centerpiece", "1", "--channel", "C" } ).contains( "out of range" ) );
+         QVERIFY( rejectedRun( { "--rotor", "1", "--centerpiece", "1", "--channel", "C" } )
+                     .contains( US_AbstractCenterpiece::validate( 1, 1 ) ) );
       }
 
       void channelAndCenterpieceChannelMustAgree()
       {
          QVERIFY( rejectedRun( { "--rotor", "1", "--centerpiece", "3", "--channel", "C", "--centerpiece-channel", "A" } )
-                     .contains( "--channel C is centerpiece row 1" ) );
+                     .contains( QString( US_SimCli::channelRowMismatchMessage ).arg( 'C' ).arg( 1 ).arg( 0 ) ) );
       }
 
       void experimentRecordNamesTheSelectedCenterpiece()
@@ -352,7 +355,8 @@ class US_AstfemSimPersistTest : public QObject
          // Not ten digits, and ten digits that are not a real date.
          for ( const QString& stamp : { QString( "abc" ), QString( "2413320000" ) } )
          {
-            QVERIFY2( rejectedRun( { "--edit-timestamp", stamp }, 1 ).contains( "Invalid --edit-timestamp" ), qPrintable( stamp ) );
+            QVERIFY2( rejectedRun( { "--edit-timestamp", stamp }, 1 ).contains( US_SimCli::invalidValueMessage( "edit-timestamp", stamp ) ),
+                      qPrintable( stamp ) );
          }
       }
 
@@ -361,13 +365,16 @@ class US_AstfemSimPersistTest : public QObject
          // Simulated concentration cannot be tagged as intensity data.
          for ( const QString& type : { QString( "RI" ), QString( "WI" ) } )
          {
-            QVERIFY2( rejectedRun( { "--runtype", type }, 1 ).contains( "Invalid --runtype" ), qPrintable( type ) );
+            QVERIFY2( rejectedRun( { "--runtype", type }, 1 ).contains( US_SimCli::invalidValueMessage( "runtype", type ) ),
+                      qPrintable( type ) );
          }
       }
 
       void descriptionTooLongForTheAucFormatIsRejected()
       {
-         QVERIFY( rejectedRun( { "--description", QString( 240, 'x' ) }, 1 ).contains( "Invalid --description" ) );
+         const QString description( 240, 'x' );
+         QVERIFY( rejectedRun( { "--description", description }, 1 )
+                     .contains( US_SimCli::invalidValueMessage( "description", description ) ) );
       }
 
       void speedRunsShareAProjectButNotARawIdentity()

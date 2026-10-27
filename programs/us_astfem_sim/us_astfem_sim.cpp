@@ -212,9 +212,9 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 }
 
 // Initialize the simulation from command-line arguments.
-int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
+int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
    // check if model is to be loaded
-   bool gui_needed = !flags.contains("close");
+   bool gui_needed = !args.close;
    bool error_occured = false;
    // Abort only when an explicitly requested input fails to load.
    bool loaded_model     = true;
@@ -222,11 +222,11 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    bool loaded_simparams = true;
    bool loaded_rotor     = true;
    int  rotor_holes      = -1;
-   bool errors_to_cl = flags.contains("errors-cl");
+   bool errors_to_cl = args.errors_cl;
    // load model
-   if ( flags.contains("model") && flags["model"].length() > 0 ) {
+   if ( !args.model.isEmpty() ) {
       US_Model temp_model = US_Model();
-      QString model_id = flags["model"];
+      QString model_id = args.model;
       US_ModelGui* dialog = new US_ModelGui( system  );
       bool success = dialog->load_model( model_id, temp_model );
       dialog->close();
@@ -240,8 +240,8 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       delete dialog;
    }
    // load buffer
-   if ( flags.contains("buffer") && flags["buffer"].length() > 0 ) {
-      QString load_id = flags["buffer"];
+   if ( !args.buffer.isEmpty() ) {
+      QString load_id = args.buffer;
       US_BufferGui* dialog = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
       bool success = dialog->load_buffer( load_id, buffer );
       dialog->close();
@@ -255,8 +255,8 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       delete dialog;
    }
    // load simulation parameters if needed
-   if ( flags.contains("simparams") && flags["simparams"].length() > 0 ) {
-      QString load_id = flags["simparams"];
+   if ( !args.simparams.isEmpty() ) {
+      QString load_id = args.simparams;
       US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
       bool success = dialog->load_params( load_id, simparams );
       dialog->close();
@@ -273,12 +273,12 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
       delete dialog;
    }
    // load rotor if needed
-   if ( flags.contains("rotor") && flags["rotor"].length() > 0 )
+   if ( !args.rotor.isEmpty() )
    {
       US_Rotor::Rotor rotor;
       US_Rotor::RotorCalibration calibration;
       US_Disk_DB_Controls*    disk_controls;
-      QString rotor_id = flags["rotor"];
+      QString rotor_id = args.rotor;
       disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
       int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                             : US_Disk_DB_Controls::Disk;
@@ -319,32 +319,22 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    // Preserve rotorCalID so its calibration remains in effect.
    // A channel letter implies its centerpiece row (S, A and B are row 0).
    int channel_row = -1;
-   if ( flags.contains( "channel" ) )
+   if ( args.channel != 0 )
    {
       QString unused;
-      US_AbstractCenterpiece::parse_channel( flags["channel"], channel_row, unused );
+      US_AbstractCenterpiece::parse_channel( QString( args.channel ), channel_row, unused );
    }
 
-   if ( flags.contains( "centerpiece" ) || flags.contains( "centerpiece-channel" ) )
+   if ( args.centerpiece >= 0 || args.centerpiece_row >= 0 )
    {
-      int     cp = 0;
-      int     ch = qMax( 0, channel_row );
-      QString parse_error;
+      // US_SimCli has validated both values.
+      int cp = qMax( 0, args.centerpiece );
+      int ch = args.centerpiece_row >= 0 ? args.centerpiece_row : qMax( 0, channel_row );
 
-      if ( !US_AbstractCenterpiece::parse_index( flags.value( "centerpiece", "0" ), cp, parse_error ) ||
-           ( flags.contains( "centerpiece-channel" ) &&
-             !US_AbstractCenterpiece::parse_channel( flags["centerpiece-channel"], ch, parse_error ) ) )
-      {
-         reportHeadlessLoadFailure( "centerpiece", parse_error, errors_to_cl, gui_needed, error_occured );
-      }
-      else if ( channel_row >= 0 && ch != channel_row )
+      if ( channel_row >= 0 && ch != channel_row )
       {
          reportHeadlessLoadFailure( "centerpiece",
-                                    QString( "--channel %1 is centerpiece row %2, but "
-                                             "--centerpiece-channel selects row %3" )
-                                       .arg( flags["channel"] )
-                                       .arg( channel_row )
-                                       .arg( ch ),
+                                    QString( US_SimCli::channelRowMismatchMessage ).arg( QChar( args.channel ) ).arg( channel_row ).arg( ch ),
                                     errors_to_cl,
                                     gui_needed,
                                     error_occured );
@@ -370,7 +360,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
             // setHardware() moves only bottom_position. Rebuild the radial
             // grid the loaded simparams laid out, as sim_parameters() does,
             // so its readings and radii agree on the new bottom.
-            if ( flags.contains( "simparams" ) && loaded_simparams )
+            if ( !args.simparams.isEmpty() && loaded_simparams )
             {
                simparams.bottom = simparams.bottom_position;
                set_parameters();
@@ -380,69 +370,68 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    }
 
    // CLI overrides for output type and reproducible identifiers.
-   if ( flags.contains( "guid-seed" ) )
+   if ( !args.guid_seed.isEmpty() )
    {
-      guid_seed = flags["guid-seed"];
+      guid_seed = args.guid_seed;
    }
 
-   if ( flags.contains( "edit-timestamp" ) )
+   if ( !args.edit_stamp.isEmpty() )
    {
-      edit_stamp = flags["edit-timestamp"];
+      edit_stamp = args.edit_stamp;
    }
 
-   if ( flags.contains( "runtype" ) && flags["runtype"].length() == 2 )
+   if ( !args.run_type.isEmpty() )
    {
-      run_type = flags["runtype"];
+      run_type = args.run_type;
    }
 
-   if ( flags.contains( "description" ) )
+   if ( !args.description.isEmpty() )
    {
-      sim_description = flags["description"];
+      sim_description = args.description;
    }
 
    // Default output triple: cell 1, channel S.
-   if ( flags.contains( "cell" ) )
+   if ( args.cell != 0 )
    {
-      sim_cell = flags["cell"].toInt();
+      sim_cell = args.cell;
 
       // The CLI allows 1 to 8; a loaded rotor may have fewer holes.
       if ( rotor_holes > 0 && sim_cell > rotor_holes )
       {
-         reportHeadlessLoadFailure(
-            "cell",
-            QString( "%1: rotor %2 has only %3 holes" ).arg( sim_cell ).arg( rotor.name ).arg( rotor_holes ),
-            errors_to_cl,
-            gui_needed,
-            error_occured );
+         reportHeadlessLoadFailure( "cell",
+                                    QString( US_SimCli::cellBeyondRotorMessage ).arg( sim_cell ).arg( rotor_holes ),
+                                    errors_to_cl,
+                                    gui_needed,
+                                    error_occured );
       }
    }
 
-   if ( flags.contains( "channel" ) )
+   if ( args.channel != 0 )
    {
-      sim_channel = flags["channel"].at( 0 ).toLatin1();
+      sim_channel = args.channel;
    }
 
-   if ( flags.contains( "noise-seed" ) )
+   if ( args.noise_seed != 0 )
    {
-      noise_seed = flags["noise-seed"].toUInt();
+      noise_seed = args.noise_seed;
    }
    // set movie flag if needed
-   if ( flags.contains("movie") )
+   if ( args.movie )
    {
       ck_movie->setChecked( true );
       movieFlag = true;
    }
    // set timecorr flag if needed
-   if ( flags.contains("timecorr") )
+   if ( args.timecorr )
    {
       ck_timeCorr->setChecked( true );
       time_correctionFlag = true;
    }
    // check save directory
-   if ( flags.contains("save") && flags["save"].length() > 0 )
+   if ( !args.save.isEmpty() )
    {
       // Check whether the path exists and is writable.
-      QString save_path = flags["save"];
+      QString save_path = args.save;
       QDir dir( save_path );
       if ( !dir.exists() )
       {
@@ -518,7 +507,7 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
    if ( !error_occured && loaded_model && loaded_buffer && loaded_simparams && loaded_rotor  )
    {
       // no error yet
-      if ( flags.contains("start") ) {
+      if ( args.start ) {
          // start simulation
          start_simulation();
 
@@ -527,10 +516,10 @@ int US_Astfem_Sim::init_from_args( const QMap<QString, QString>& flags ) {
             DbgLv( 0 ) << "US_Astfem_Sim: simulation failed; nothing was saved";
             error_occured = true;
          }
-         else if ( flags.contains( "save" ) && flags["save"].length() > 0 )
+         else if ( !args.save.isEmpty() )
          {
             // check if path is accessible and writable
-            QString save_path = flags["save"];
+            QString save_path = args.save;
             if ( !save_simulation( save_path, true, true ) )
             {
                DbgLv( 0 ) << "US_Astfem_Sim: save_simulation failed for" << save_path;
