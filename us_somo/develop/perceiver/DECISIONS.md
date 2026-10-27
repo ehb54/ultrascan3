@@ -1230,7 +1230,8 @@ somo.residue.new add up (SUL, a succinimidyl linker, has 137.63 in its beads aga
 so the beads add up to molvol. Neither option offered to him: the nearest-atom voxel partition
 needs no rescaling, and the atomic-volume share does not use the parts' own surfaces.
 His reply says the sum should match the *hydrated* volume, which the Help and the table both
-contradict; the anhydrous molvol stands unless he says otherwise.
+contradict; the anhydrous molvol stands unless he says otherwise. (He meant anhydrous, and SUL is
+rescaled; see the last section.)
 
 ### RasMol
 Opaque beads over the residue's atoms are enough to begin with. A translucent rendering, possibly
@@ -1240,7 +1241,7 @@ added to RasMol for the perceiver only, is for later.
 - AMP, ADP, ATP, NAD, NDP and LNC take the nucleic-acid values on their bases and sugars: purine
   N3 and N7 1, N6 1 (NAD, NDP and LNC had 2 on N6A), the furanose ring oxygens 1, and NAD's and
   LNC's O3B 1. The phosphate esters (O5', O5B, O5D, NDP's O2B) keep the MD scheme's 0. ATF, an ATP
-  analogue outside the list, still has the old values.
+  analogue outside the list, still has the old values. (It follows; see the last section.)
 - NDP: nicotinamide bead 2 -> 1, its atoms' sum, as NAD. The 2'-phosphate takes AMP's monoester
   1/5/5; CCD NDP has P2B=O1X, so O1X is the P=O and the charge moves to O2X (O1X O1H0, O2X O1H0-).
   O2B, the ester, is O2H0; its mass and radius already were.
@@ -1250,3 +1251,12 @@ added to RasMol for the perceiver only, is for later.
 - ATP's phosphates stay as they are, from the MD, and the perceiver keeps ADP's values.
 - ACE is type 9, "Other".
 Every bead now equals its atoms' sum, the ionized states counted for the pyrophosphates (14).
+
+### ATF and SUL (his second reply, 2026-10-27)
+- ATF, the ATP analogue, takes ATP's base and sugar: O4', N3 and N7 1, so the sugar and base beads
+  are 3 and 3. Its adenine C2 was C3H0, the only adenine entry without the ring H; it is now C3H1
+  (13.02, 1.76), as in ATP, a pair somo.atom.new already has. The phosphates are unchanged.
+- Bead volumes: anhydrous, as the Help says. SUL's two beads, 68.75 and 68.88, are rescaled
+  proportionally to its molvol, to 76.05 and 76.19 (152.24). All 86 multi-bead entries now add up;
+  AMP, ATF, ATP, B12, BF4 and MEN miss molvol by 0.01-0.03 A^3, from rounding, which the Residue
+  Definition Module's two-decimal comparison would still flag.
