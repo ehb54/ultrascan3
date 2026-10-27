@@ -170,6 +170,8 @@ TEST("the single bead carries the molvol, a selectable colour, and the summed hy
                 hydr, colour, placing, chain, vol);
     CHECK(colour == DEFAULT_BEAD_COLOR);
     CHECK(bead_color_is_selectable(colour));      // never a reserved colour
+    CHECK(chain == DEFAULT_BEAD_CHAIN);           // side chain, as the Automatic Bead Builder
+    CHECK(chain == 1);
     CHECK(std::fabs(vol - b.molvol) < 0.5);
     CHECK(std::fabs(hydr - b.hydration.total) < 0.01);
 }

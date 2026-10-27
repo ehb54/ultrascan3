@@ -1197,4 +1197,56 @@ writes them.
   SOMO's own Automatic Bead Builder writes 1, as do most coded ligands (sugars, ions, NAD), while
   HEM is 0. It changes the model: overlap removal moved the sulfate bead 0.5 A outward as a side
   chain bead, and left it at radius 1.91 A against 1.35 A as a main chain one. Left at 0 for now,
-  as a question for Mattia.
+  as a question for Mattia. (Decided 2026-10-27: side chain; see the next section.)
+
+## Mattia's answers: multi-bead entries and the nucleotide table — 2026-10-27
+
+### Chain flag: side chain by default, editable
+Mattia: propose side chain, editable bead by bead. `DEFAULT_BEAD_CHAIN` = 1 in
+`us_hydrodyn_perceive.h`, emitted through `Properties::bead_chain` like the colour, and a "Bead
+chain" combo in the review dialog (one bead today, so one combo; the multi-bead table will carry
+it per bead). The dialog used to write chain 0 whatever the block said; it now reads the block's
+value, so a residue accepted as main chain reopens as main chain, and Reset returns to the
+proposal. `make builder` and `run_dialog_test.sh` check both directions.
+
+His reply also says outward translation happens only in vdW models, and that a single bead's
+change of radius comes from hydration. The code says otherwise for SOMO models:
+- `compute_asa` removes overlaps in three stages, the first for exposed side-chain beads, and adds
+  `OUTWARD_TRANSLATION` to it when `sidechain_overlap.translate_out` is set
+  (us_hydrodyn_core.cpp:6059), which is the default (us_hydrodyn_settings.cpp:2824). A pair with a
+  chain-1 bead takes the translation branch in the later stages too (us_hydrodyn_core.cpp:6549).
+- vdW models have an outward translation of their own (`vdw_ot_mult`, `vdw_ot_dpct`,
+  us_hydrodyn.cpp:5244), a different setting.
+- The two 1MBO models in the table above differ only in the chain field and carry the same
+  hydration, so the 1.91 against 1.35 A comes from the overlap removal.
+
+### Bead volumes: the Help's rule
+Mattia points to the Help. somo_residue.html, Panel 3: each part's volume comes from a contact
+volume calculation (3V), and since the parts do not add up to the whole they are rescaled
+proportionally to the residue's anhydrous molecular volume; the Residue Definition Module will not
+save an entry whose bead volumes miss it, and 85 of the 86 multi-bead entries in
+somo.residue.new add up (SUL, a succinimidyl linker, has 137.63 in its beads against a molvol of
+152.24). For the perceiver that means the grid volume of each bead's atoms on their own, rescaled
+so the beads add up to molvol. Neither option offered to him: the nearest-atom voxel partition
+needs no rescaling, and the atomic-volume share does not use the parts' own surfaces.
+His reply says the sum should match the *hydrated* volume, which the Help and the table both
+contradict; the anhydrous molvol stands unless he says otherwise.
+
+### RasMol
+Opaque beads over the residue's atoms are enough to begin with. A translucent rendering, possibly
+added to RasMol for the perceiver only, is for later.
+
+### The nucleotide table (somo.residue.new)
+- AMP, ADP, ATP, NAD, NDP and LNC take the nucleic-acid values on their bases and sugars: purine
+  N3 and N7 1, N6 1 (NAD, NDP and LNC had 2 on N6A), the furanose ring oxygens 1, and NAD's and
+  LNC's O3B 1. The phosphate esters (O5', O5B, O5D, NDP's O2B) keep the MD scheme's 0. ATF, an ATP
+  analogue outside the list, still has the old values.
+- NDP: nicotinamide bead 2 -> 1, its atoms' sum, as NAD. The 2'-phosphate takes AMP's monoester
+  1/5/5; CCD NDP has P2B=O1X, so O1X is the P=O and the charge moves to O2X (O1X O1H0, O2X O1H0-).
+  O2B, the ester, is O2H0; its mass and radius already were.
+- NAD O2A: 1 protonated, as NAD O2N and the NDP and LNC O2A (ionized still 5).
+- ADP: O3A, the bridge, O2H0; O3B, a free oxygen, O1H0. Their waters (2 and 5) were already right.
+  somo.atom.new gains the (O3B, O1H0) pair.
+- ATP's phosphates stay as they are, from the MD, and the perceiver keeps ADP's values.
+- ACE is type 9, "Other".
+Every bead now equals its atoms' sum, the ionized states counted for the pyrophosphates (14).

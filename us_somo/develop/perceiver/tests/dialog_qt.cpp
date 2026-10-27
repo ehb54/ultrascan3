@@ -31,7 +31,7 @@ int main( int argc, char ** argv ) {
         "N\tN3H1\t15.02\t1.64\t0\t1\t0\t1\n"
         "CA\tC4H1\t13.02\t1.88\t0\t1\t1\t0\n"
         "O1\tO2H1\t17.01\t1.46\t0\t1\t2\t0\n"
-        "1\t10\t0\t0\t123.45\n";
+        "1\t10\t0\t1\t123.45\n";
 
     US_Hydrodyn_Perceive_Dialog dlg( t, QString(), 0 );
 
@@ -81,7 +81,7 @@ int main( int argc, char ** argv ) {
     CK( te != 0 );
 
     // colour combo: only selectable colours, defaulting to the configured one
-    QComboBox * cmb = dlg.findChild<QComboBox *>();
+    QComboBox * cmb = dlg.findChild<QComboBox *>( "cmb_color" );
     CK( cmb != 0 );
     if ( cmb ) {
         bool reserved_offered = false;
@@ -94,6 +94,39 @@ int main( int argc, char ** argv ) {
         CK( !reserved_offered );                                   // 0/6/7/8 never offered
         CK( cmb->count() == 12 );                                  // 16 colours minus 4 reserved
         CK( cmb->currentData().toInt() == somo_perceive::DEFAULT_BEAD_COLOR );
+    }
+
+    // Chain combo: opens on the block's side chain, and the bead line follows it both ways. The
+    // dialog used to write chain 0 whatever the block said.
+    QComboBox * chain = dlg.findChild<QComboBox *>( "cmb_chain" );
+    CK( chain != 0 );
+    if ( chain ) {
+        CK( chain->count() == 2 );
+        CK( chain->currentData().toInt() == 1 );
+        CK( somo_perceive::DEFAULT_BEAD_CHAIN == 1 );
+        CK( dlg.entry().contains( "1.00\t10\t0\t1\t123.45" ) );
+        chain->setCurrentIndex( chain->findData( 0 ) );
+        CK( dlg.entry().contains( "1.00\t10\t0\t0\t123.45" ) );
+        chain->setCurrentIndex( chain->findData( 1 ) );
+        CK( dlg.entry().contains( "1.00\t10\t0\t1\t123.45" ) );
+    }
+    // An entry accepted as main chain reopens as main chain, and Reset returns to the proposal.
+    {
+        QString main_block = t.block;
+        main_block.replace( "1\t10\t0\t1\t123.45", "1\t10\t0\t0\t123.45" );
+        US_Hydrodyn_Perceive_Dialog again( t, QString(), 0, 0, 0, main_block );
+        QComboBox * c2 = again.findChild<QComboBox *>( "cmb_chain" );
+        CK( c2 != 0 && c2->currentData().toInt() == 0 );
+        CK( again.entry().contains( "1.00\t10\t0\t0\t123.45" ) );
+        QPushButton * reset = 0;
+        foreach ( QPushButton * b, again.findChildren<QPushButton *>() )
+            if ( b->text() == "Reset this residue" ) reset = b;
+        CK( reset != 0 );
+        if ( reset ) {
+            reset->click();
+            CK( c2 != 0 && c2->currentData().toInt() == 1 );
+            CK( again.entry().contains( "1.00\t10\t0\t1\t123.45" ) );
+        }
     }
 
     // editing a hydration cell must change the rebuilt entry and the bead total
@@ -109,7 +142,7 @@ int main( int argc, char ** argv ) {
         std::printf("--- after editing O1 hydration to 3.5 ---\n%s---\n",
                     after.toLatin1().constData());
         CK( after.contains( "O1\tO2H1\t17.01\t1.46\t0\t1\t2\t3.5" ) );
-        CK( after.contains( "4.50\t10\t0\t0\t123.45" ) );           // bead total 1 + 0 + 3.5
+        CK( after.contains( "4.50\t10\t0\t1\t123.45" ) );           // bead total 1 + 0 + 3.5
         // a nonsense edit is rejected and the old value restored
         tbl->item( 2, 4 )->setText( "not a number" );
         CK( dlg.entry().contains( "2\t3.5" ) );

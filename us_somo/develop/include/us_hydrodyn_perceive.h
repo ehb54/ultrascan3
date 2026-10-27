@@ -90,6 +90,17 @@ static constexpr int MAX_BEAD_COLOR     = 15;
 // bead that SOMO applies to every other type when it loads the table. Never emit 0.
 static constexpr int DEFAULT_RESIDUE_TYPE = 9;
 
+// ---- Main or side chain for machine-generated beads -----------------------------------------
+// SINGLE POINT OF DEFINITION. Every bead line carries this flag: 0 = main chain, 1 = side chain.
+// 1 is what SOMO's Automatic Bead Builder writes and what most coded ligands carry (sugars, ions,
+// NAD; HEM is main chain), and it is Mattia's choice (2026-10-27), editable bead by bead in the
+// review dialog. It is not a label. SOMO's overlap removal treats exposed side-chain beads in a
+// stage of their own, and with that stage's Outward Translation on (the default,
+// sidechain_overlap.translate_out) it moves them outward as it shrinks them; a main-chain bead is
+// only shrunk. In a SOMO model of 1MBO the perceived sulfate bead moved 0.5 A outward and ended
+// at a radius of 1.91 A as side chain, against 1.35 A in place as main chain.
+static constexpr int DEFAULT_BEAD_CHAIN = 1;
+
 // ---- ASA policy for machine-generated entries -----------------------------------------------
 // An entry's ASA column MUST be > 0. All three of SOMO's residue loaders --
 // US_Hydrodyn::read_residue_file (us_hydrodyn_load.cpp:534), US_AddResidue
@@ -167,6 +178,7 @@ public:
         std::vector<Alt> alternate;
         std::vector<std::string> review;                   // extra lines for the REVIEW block
         int    bead_color = DEFAULT_BEAD_COLOR;
+        int    bead_chain = DEFAULT_BEAD_CHAIN;
     };
 
     Emitted emit_residue(const std::string& resname,

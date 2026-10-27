@@ -145,6 +145,7 @@ void US_Hydrodyn_Perceive_Dialog::parse_block( const QString & data_source ) {
         }
         if ( f.size() == 5 ) {
             init_color_ = f[ 1 ].toInt();   // bead line: hydration, colour, placing, chain, volume
+            init_chain_ = f[ 3 ].toInt();
             continue;
         }
         if ( f.size() >= 8 ) {
@@ -197,6 +198,16 @@ void US_Hydrodyn_Perceive_Dialog::populate_colors() {
         }
     }
     cmb_color->setCurrentIndex( select_at );
+}
+
+// Side chain first, as the default. A value other than 0 or 1 in the block cannot be shown, so it
+// opens as the default rather than as whichever item happens to be first.
+void US_Hydrodyn_Perceive_Dialog::populate_chain() {
+    cmb_chain->clear();
+    cmb_chain->addItem( us_tr( "Side chain" ), 1 );
+    cmb_chain->addItem( us_tr( "Main chain" ), 0 );
+    const int at = cmb_chain->findData( init_chain_ );
+    cmb_chain->setCurrentIndex( at >= 0 ? at : cmb_chain->findData( somo_perceive::DEFAULT_BEAD_CHAIN ) );
 }
 
 // Fill the atom table from rows_. Separate from setupGUI so "Reset this residue" can refill it
@@ -386,6 +397,7 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     AUTFBACK( lbl_color );
     lbl_color->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
     cmb_color = new QComboBox( this );
+    cmb_color->setObjectName( "cmb_color" );
     cmb_color->setMinimumHeight( minHeight1 );
     cmb_color->setToolTip( us_tr( "Colour categorises the bead. Black and orange/brown mark a "
                                   "bead for exclusion from the hydrodynamic computation, and "
@@ -393,6 +405,21 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
                                   "are offered here." ) );
     populate_colors();
     connect( cmb_color, SIGNAL( currentIndexChanged( int ) ), SLOT( value_changed() ) );
+
+    lbl_chain = new QLabel( us_tr( " Bead chain: " ), this );
+    lbl_chain->setPalette( perceive_palette() );
+    AUTFBACK( lbl_chain );
+    lbl_chain->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+    cmb_chain = new QComboBox( this );
+    cmb_chain->setObjectName( "cmb_chain" );
+    cmb_chain->setMinimumHeight( minHeight1 );
+    cmb_chain->setToolTip( us_tr( "Side chain is what the Automatic Bead Builder uses for "
+                                  "non-coded residues. It changes SOMO models: with Outward "
+                                  "Translation on, as it is by default, overlap removal moves "
+                                  "an exposed side-chain bead outward as it shrinks it, and "
+                                  "only shrinks a main-chain bead." ) );
+    populate_chain();
+    connect( cmb_chain, SIGNAL( currentIndexChanged( int ) ), SLOT( value_changed() ) );
 
     lbl_position = new QLabel( us_tr( " Bead position: centre of gravity of all atoms " ), this );
     lbl_position->setPalette( perceive_palette() );
@@ -508,7 +535,9 @@ void US_Hydrodyn_Perceive_Dialog::setupGUI() {
     props->addWidget( sb_beads,   2, 1 );
     props->addWidget( lbl_color,  2, 2 );
     props->addWidget( cmb_color,  2, 3 );
-    props->addWidget( lbl_position, 3, 0, 1, 4 );
+    props->addWidget( lbl_chain,  3, 0 );
+    props->addWidget( cmb_chain,  3, 1 );
+    props->addWidget( lbl_position, 4, 0, 1, 4 );
     top->addLayout( props );
 
     top->addWidget( lbl_review );
@@ -606,9 +635,10 @@ void US_Hydrodyn_Perceive_Dialog::refresh_entry() {
                      .arg( rows_[ r ].ion_hydration );
         s += "\n";
     }
-    s += QString( "%1\t%2\t0\t0\t%3\n" )
+    s += QString( "%1\t%2\t0\t%3\t%4\n" )
              .arg( hyd_total, 0, 'f', 2 )
              .arg( cmb_color->currentData().toInt() )
+             .arg( cmb_chain->currentData().toInt() )
              .arg( sb_molvol->value(), 0, 'f', 2 );
     entry_ = s;
     te_entry->setText( s );
@@ -746,6 +776,7 @@ void US_Hydrodyn_Perceive_Dialog::reset_entry() {
     sb_vbar->setValue( init_vbar_ );
     sb_molvol->setValue( init_molvol_ );
     populate_colors();
+    populate_chain();
     refresh_entry();
 }
 

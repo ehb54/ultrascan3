@@ -106,7 +106,11 @@ every reason it declines to do something &mdash; is echoed to the text window.
 <li> <b>Bead count</b> is fixed at one for now; the <b>bead position</b> is the centre of
      gravity of all atoms; the <b>bead colour</b> defaults to <i>light green</i>, the colour the
      Automatic Bead Builder uses for non-coded residues. Colours that would exclude a bead from
-     the hydrodynamic computation are never offered.
+     the hydrodynamic computation are never offered. The bead is a <b>side chain</b> bead by
+     default, as the Automatic Bead Builder makes it, and can be set to <b>main chain</b>. The
+     choice changes SOMO models: with <i>Outward Translation</i> on, as it is by default, overlap
+     removal moves an exposed side-chain bead outward as it shrinks it, and only shrinks a
+     main-chain bead.
 <li> The <b>Flagged for review</b> box lists everything the perceiver was not confident about. These are
      the entries worth your attention; they are not noise. Its heading gives the number of items,
      and the list scrolls &mdash; the count tells you whether there is more below the fold. Each

@@ -763,7 +763,7 @@ Perceiver::Emitted Perceiver::emit_residue(const std::string& resname,
          << pr.bead_color << '\t'       // colour: default is DEFAULT_BEAD_COLOR in the header
          << "0\t"                       // placing_method 0 = centre of gravity of the positioner
                                         // atoms, which is every atom (see the atom lines)
-         << "0\t"                       // chain 0 = main chain
+         << pr.bead_chain << '\t'       // chain: default is DEFAULT_BEAD_CHAIN, side chain
          << (pr.have_molvol ? pr.molvol : 0.0) << '\n';   // single bead: volume == molvol
     em.residue_block = hdr.str() + body.str() + bead.str();
     return em;

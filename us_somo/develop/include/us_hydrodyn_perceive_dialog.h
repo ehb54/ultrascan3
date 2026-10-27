@@ -15,7 +15,8 @@
 //   4  anhydrous volume from the grid calculation, editable
 //   5  bead count -- single bead for now, so the control is present but fixed
 //   6  bead position -- centre of gravity of all atoms, the only method in use
-//   7  bead colour, chosen from the selectable colours only (reserved ones are never offered)
+//   7  bead colour, chosen from the selectable colours only (reserved ones are never offered),
+//      and main or side chain, side by default
 //   8  psv, editable, with the running entry shown for final validation
 
 #include <QCheckBox>
@@ -105,6 +106,7 @@ private:
     double init_vbar_   = 0;
     double init_molvol_ = 0;
     int    init_color_  = somo_perceive::DEFAULT_BEAD_COLOR;
+    int    init_chain_  = somo_perceive::DEFAULT_BEAD_CHAIN;
     bool   revisiting_  = false;
 
     QLabel      * lbl_info;
@@ -123,6 +125,8 @@ private:
     QSpinBox  * sb_beads;
     QLabel    * lbl_color;
     QComboBox * cmb_color;
+    QLabel    * lbl_chain;
+    QComboBox * cmb_chain;
     QLabel    * lbl_position;
 
     QLabel    * lbl_review;
@@ -141,6 +145,7 @@ private:
     void populate_table();
     void refresh_entry();
     void populate_colors();
+    void populate_chain();
 
 private slots:
     void view_rasmol();
