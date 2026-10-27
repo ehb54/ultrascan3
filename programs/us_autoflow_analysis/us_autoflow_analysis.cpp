@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QScrollArea>
+#include <QSet>
 #include <QTimer>
 #include <QXmlStreamReader>
 #include <QtNumeric>
@@ -174,6 +175,53 @@ US_Analysis_auto::US_Analysis_auto() : US_Widgets()
 
   // -----------------
 
+}
+
+// Collect the exact stage names present in an autoflowAnalysis status_json:
+//   { "to_process":["2DSA_IT",..], "processed":[{"2DSA":{..}},..], "submitted":"2DSA_FM" }
+// Stage names are compared as whole strings, so e.g. "2DSA" does not match "2DSA_FM" or "2DSA_IT".
+static QSet<QString> us_statusJsonStages( const QString& status_json )
+{
+   QSet<QString>   stages;
+   QJsonDocument   jdoc = QJsonDocument::fromJson( status_json.toUtf8() );
+
+   if ( !jdoc.isObject() )
+   {
+      qDebug() << "us_statusJsonStages: NOT a JSON object: " << status_json;
+      return stages;
+   }
+
+   QJsonObject jobj = jdoc.object();
+
+   // "to_process": array of stage-name strings
+   const QJsonArray to_process = jobj.value( "to_process" ).toArray();
+   for ( const QJsonValue& v : to_process )
+   {
+      if ( v.isString() )
+      {
+         stages.insert( v.toString() );
+      }
+   }
+
+   // "processed": array of single-key objects, the key being the stage name
+   const QJsonArray processed = jobj.value( "processed" ).toArray();
+   for ( const QJsonValue& v : processed )
+   {
+      const QJsonObject o = v.toObject();
+      for ( const QString& key : o.keys() )
+      {
+         stages.insert( key );
+      }
+   }
+
+   // "submitted": stage-name string
+   const QJsonValue submitted = jobj.value( "submitted" );
+   if ( submitted.isString() && !submitted.toString().isEmpty() )
+   {
+      stages.insert( submitted.toString() );
+   }
+
+   return stages;
 }
 
 //init correct # of us_labels rows based on passed # stages from AProfile
@@ -388,10 +436,7 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       Canceled_triples[ triple_name ]  = false;
       History_read[ triple_name ]      = false;
 
-      if ( status_json.contains("2DSA_FM") ) 
-	Process_2dsafm[ triple_name ] = true;
-      else
-	Process_2dsafm[ triple_name ] = false;
+      Process_2dsafm[ triple_name ] = us_statusJsonStages( status_json ).contains( "2DSA_FM" );
 	
       //Define triple's channels
       QStringList triple_name_parts = triple_name.split(".");
@@ -463,20 +508,16 @@ void US_Analysis_auto::initPanel( QMap < QString, QString > & protocol_details )
       //TEST
       //json = "{\"to_process\":[\"FITMEN\",\"2DSA_IT\",\"2DSA_MC\"],\"processed\":[\"2DSA\"],\"submitted\":\"2DSA_FM\"}" ;
 
-      if ( json.contains("2DSA") )    //ALEXEY: maybe more strict condition here? (as 2DSA is in other stages...)
-	job1run = true;
-      if ( json.contains("2DSA_FM") )
-	job2run = true;
-      if ( json.contains("FITMEN") )
-	job3run = true;
-      if ( json.contains("FITMEN_AUTO") )
-	job3run = false;
-      if ( json.contains("2DSA_IT") )
-	job4run = true;	  
-      if ( json.contains("2DSA_MC") )
-	job5run = true;
-      if ( json.contains("PCSA") )
-	job6run_pcsa = true;
+      // Exact stage-name matching on the parsed JSON ("to_process", "processed", "submitted"),
+      // NOT substring search: "2DSA" must not match "2DSA_FM", "2DSA_IT", "2DSA_MC"
+      const QSet<QString> json_stages = us_statusJsonStages( json );
+
+      job1run      = json_stages.contains( "2DSA" );
+      job2run      = json_stages.contains( "2DSA_FM" );
+      job3run      = json_stages.contains( "FITMEN" ) && !json_stages.contains( "FITMEN_AUTO" );
+      job4run      = json_stages.contains( "2DSA_IT" );
+      job5run      = json_stages.contains( "2DSA_MC" );
+      job6run_pcsa = json_stages.contains( "PCSA" );
           
       triple_name_width = fmet.horizontalAdvance( triple_curr );
       
