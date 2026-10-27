@@ -474,6 +474,12 @@ void US_Hydrodyn_Mals_Movie::update_plot()
       last_show_gauss = cb_show_gauss->isChecked();
       last_show_ref   = cb_show_ref  ->isChecked();
 
+      // leave Gaussian mode first: the selection change replots, which deletes the Gaussian curves wheel_cancel() would detach
+      if ( mals_win->current_mode == mals_win->MODE_GAUSSIAN )
+      {
+         mals_win->wheel_cancel();
+      }
+
       mals_win->lb_files->clearSelection();
       if ( cb_show_ref->isChecked() )
       {
@@ -483,10 +489,6 @@ void US_Hydrodyn_Mals_Movie::update_plot()
       } 
       mals_win->lb_files->item( mals_selected_files[ pos ])->setSelected( true );
 
-      if ( mals_win->current_mode == mals_win->MODE_GAUSSIAN )
-      {
-         mals_win->wheel_cancel();
-      }
       if ( cb_show_gauss->isChecked() &&
            mals_win->f_is_time.count( mals_win->lb_files->item( mals_selected_files[ pos ] )->text() ) &&
            mals_win->f_is_time[ mals_win->lb_files->item( mals_selected_files[ pos ] )->text() ] )
