@@ -44,8 +44,9 @@ double US_DataIO::RawData::scWavelength( int wavx )
    return xvalues[ wavx ];
 }
 
-// Get the readings value at given scan,radius indecies
-double US_DataIO::RawData::value( int scnx, int radx )
+// Get the readings value at given scan,radius indecies (const, so reading
+//  an implicitly shared copy does not detach it)
+double US_DataIO::RawData::value( int scnx, int radx ) const
 {
    return scanData[ scnx ].rvalues[ radx ];
 }

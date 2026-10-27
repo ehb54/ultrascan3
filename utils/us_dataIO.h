@@ -113,7 +113,7 @@ class US_UTIL_EXTERN US_DataIO
          int    xindex      ( double );      //!< Get index of X (radius) value
          double radius      ( int );         //!< Get radius value at index
          double scWavelength( int );         //!< Get wavelength value at index
-         double value       ( int, int );    //!< Get reading for scan,radius
+         double            value( int, int ) const;     //!< Get reading for scan,radius
          double reading     ( int, int );    //!< Get reading for scan,radius
          bool   setValue    ( int, int, double ); //!< Set reading value
          double std_dev     ( int, int );    //!< Get std.dev. for scan,radius

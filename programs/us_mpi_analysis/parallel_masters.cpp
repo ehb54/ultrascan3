@@ -171,6 +171,8 @@ void US_MPI_Analysis::pmasters_supervisor()
    // A 2DSA group master waits for a reply to every iteration-done message;
    //  when no iterations are left it gets STOPITER
    bool stop_groups = analysis_type.startsWith( "2DSA" );
+   QVector<bool> idle( mgroup_count, false ); // Stopped at the start,
+                                              //  memory not yet reported
 
    for ( int ii = 0; ii < mgroup_count; ii++ )
    {
@@ -198,6 +200,7 @@ DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
          MPI_Send( &mc_iteration, 1, MPI_INT, master, STOPITER, MPI_COMM_WORLD );
 
          mstates[ii] = INIT;
+         idle[ii]    = true;
          continue;
       }
 
@@ -277,6 +280,13 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
 
       if ( udpmsg )  continue;                // Loop for next master message
 
+      if ( idle[status.MPI_SOURCE / gcores_count] )
+      { // Memory use of a group stopped at the start
+         idle[status.MPI_SOURCE / gcores_count] = false;
+         maxrssma += (long) ( iwork );
+         continue;
+      }
+
       // If here, the message was a signal that an MC iteration is complete.
       // Most commonly, the group master that just completed an iteration
       //   is sent the next iteration to begin.
@@ -340,6 +350,17 @@ DbgLv(1) << "SUPER:  Send next iter" << iter_wk << "gr ma tg" << jgroup << maste
 
       mstates[ jgroup ] = WORKING;         // Mark group as busy
       max_rss();                           // Memory use of supervisor
+   }
+
+   // Memory use of the groups stopped at the start, if not yet received
+   for ( int ii = 0; ii < mgroup_count; ii++ )
+   {
+      if ( idle[ii] )
+      {
+         master = ( ii == 0 ) ? 1 : ( ii * gcores_count );
+         MPI_Recv( &iwork, 1, MPI_INT, master, DONELAST, MPI_COMM_WORLD, &status );
+         maxrssma += (long) ( iwork );
+      }
    }
 
    // In the parallel-masters case, the supervisor handles end-of-job
