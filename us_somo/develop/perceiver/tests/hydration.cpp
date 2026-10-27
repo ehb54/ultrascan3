@@ -110,7 +110,7 @@ TEST("every carbon type is unanimously anhydrous") {
 // the caller flags them rather than defaulting silently.
 TEST("ambiguous types are marked not-confident") {
     if (!g_ok) return;
-    const char* weak[] = {"O2H1", "O2H0", "N3H0"};
+    const char* weak[] = {"O2H0", "N3H0"};
     for (const char* h : weak) {
         const Entry* e = g_t.find(h);
         if (!e) { std::printf("  (%s absent)\n", h); continue; }
@@ -118,13 +118,18 @@ TEST("ambiguous types are marked not-confident") {
                     h, e->waters, 100 * e->agreement, e->n_obs);
         CHECK(!e->confident);
     }
-    // N3H2 -- amide and amino -NH2 -- left the list when the nucleotide entries were filled in
-    // (2026-10): the bases' amino groups took it past the confidence line, at one water.
-    const Entry* nh2 = g_t.find("N3H2");
-    if (nh2) {
-        std::printf("  N3H2   proposed %.0f, agreement %.0f%% of %d (now pinned down)\n",
-                    nh2->waters, 100 * nh2->agreement, nh2->n_obs);
-        CHECK(nh2->confident && nh2->waters == 1.0);
+    // Two types left the list as the nucleotide entries were filled in (2026-10), both settling
+    // at one water. N3H2, amide and amino -NH2: the bases' amino groups took it past the
+    // confidence line. O2H1, hydroxyl: the cofactors took the nucleic-acid values -- NAD's and
+    // LNC's O3B and NAD's O2A went to one water, NDP's O2B became O2H0 -- and the type went
+    // from 74% of 121 to 77% of 120.
+    const char* settled[] = {"N3H2", "O2H1"};
+    for (const char* h : settled) {
+        const Entry* e = g_t.find(h);
+        if (!e) { std::printf("  (%s absent)\n", h); continue; }
+        std::printf("  %-6s proposed %.0f, agreement %.0f%% of %d (now pinned down)\n",
+                    h, e->waters, 100 * e->agreement, e->n_obs);
+        CHECK(e->confident && e->waters == 1.0);
     }
 }
 
