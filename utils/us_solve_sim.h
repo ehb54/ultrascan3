@@ -123,21 +123,40 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //!                  turn) that are left out of the fit, e.g. for
     //!                  exceeding the OD limit.  Their A and B rows must be
     //!                  zero.  For a data set with masked rows the noise is
-    //!                  the least-squares fit over its unmasked rows only,
-    //!                  and the masked rows stay zero
+    //!                  the least-squares fit over its unmasked rows; with
+    //!                  TI and RI noise, each masked row also counts as an
+    //!                  observation of zero noise of weight masked_weight
+    //! \param masked_weight Weight of a masked row in a TI and RI noise fit:
+    //!                  0 fits the unmasked rows only, 1 gives the plain
+    //!                  means over all rows (as if the masked rows were data
+    //!                  of zero)
     //! \returns         Return code of US_Math2::nnls
-    static int    nnls_noise( int                      noisflag,
-                              const QVector<int>&      nscans,
-                              const QVector<int>&      npoints,
-                              int                      nsolutes,
-                              int                      narows,
-                              QVector<double>&         nnls_a,
-                              QVector<double>&         nnls_b,
-                              QVector<double>&         nnls_x,
-                              QVector<double>&         tinvec,
-                              QVector<double>&         rinvec,
-                              const std::atomic<bool>* abort_flag = nullptr,
-                              const QVector<bool>*     masked     = nullptr );
+    static int              nnls_noise( int                      noisflag,
+                                        const QVector<int>&      nscans,
+                                        const QVector<int>&      npoints,
+                                        int                      nsolutes,
+                                        int                      narows,
+                                        QVector<double>&         nnls_a,
+                                        QVector<double>&         nnls_b,
+                                        QVector<double>&         nnls_x,
+                                        QVector<double>&         tinvec,
+                                        QVector<double>&         rinvec,
+                                        const std::atomic<bool>* abort_flag    = nullptr,
+                                        const QVector<bool>*     masked        = nullptr,
+                                        double                   masked_weight = masked_noise_weight );
+
+    //! \brief Weight of a point above the OD limit in a TI and RI noise fit
+    //!
+    //! The noise of a point that is left out of the fit is not seen in the
+    //! data.  With TI and RI noise both fitted, a fit over the remaining
+    //! points only is poorly determined once large parts of scans are
+    //! masked:  RI noise trades against slow, diffuse solutes, and the
+    //! solution drifts (the total concentration grows).  A small weight of
+    //! the masked points as observations of zero noise keeps the fit
+    //! determined, while unlike weight 1 (the means over all points) it
+    //! lets the visible points set the noise.  A TI or RI noise fit alone
+    //! is well determined and does not use it
+    static constexpr double masked_noise_weight = 0.03;
 
     //! \brief Monte Carlo data value of one point
     //!

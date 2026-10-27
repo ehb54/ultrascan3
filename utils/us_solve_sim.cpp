@@ -8,6 +8,7 @@
 //#include "us_gui_settings.h"
 
 #include <algorithm>
+#include <cmath>
 
 // Define level-conditioned debug print that includes thread/processor
 #ifdef DbgLv
@@ -1831,24 +1832,36 @@ static void remove_noise_means( double*    vals,
 //  masked (left out) rows.  The means of remove_noise_means only fit the
 //  noise where no row is masked:  with missing rows TI and RI noise are
 //  coupled, so for both the RI (or TI, whichever is shorter) values solve
-//  the reduced normal equations M w = rhs.  M is a graph Laplacian that
-//  depends only on the mask; it is factored (LDL^T) once and reused for B
-//  and each A column.  Its null space (a constant shared by TI and RI
+//  the reduced normal equations M w = rhs.  M is a weighted graph Laplacian
+//  that depends only on the mask; it is factored (LDL^T) once and reused
+//  for B and each A column.  Its null space (a constant shared by TI and RI
 //  noise) is pinned by skipping zero pivots, then shifted so that the TI
-//  noise has zero mean, as with remove_noise_means
+//  noise has zero mean, as with remove_noise_means.
+//  A masked row may keep a weight mwt as an observation of zero noise
+//  (its A and B rows are zero):  mwt 0 is the fit over the unmasked rows
+//  only, mwt 1 the plain means over all rows
 namespace
 {
 class MaskedNoiseFit
 {
    public:
-      MaskedNoiseFit( const bool* masked, const int nscans, const int npoints, const bool calc_ti, const bool calc_ri ) :
+      MaskedNoiseFit( const bool*  masked,
+                      const int    nscans,
+                      const int    npoints,
+                      const bool   calc_ti,
+                      const bool   calc_ri,
+                      const double mwt ) :
           masked( masked ),
           nscans( nscans ),
           npoints( npoints ),
           calc_ti( calc_ti ),
           calc_ri( calc_ri ),
-          cnt_s( nscans, 0 ),
-          cnt_r( npoints, 0 ),
+          mwt( mwt ),
+          rwt( std::sqrt( mwt ) ),
+          wsum_s( nscans, 0.0 ),
+          wsum_r( npoints, 0.0 ),
+          nmsk_s( nscans, 0 ),
+          nmsk_r( npoints, 0 ),
           sum_s( nscans, 0.0 ),
           sum_r( npoints, 0.0 )
       {
@@ -1856,10 +1869,14 @@ class MaskedNoiseFit
          {
             for ( int rr = 0; rr < npoints; rr++ )
             {
-               if ( !masked[static_cast<size_t>( ss ) * npoints + rr] )
+               const double ww = weight( ss, rr );
+               wsum_s[ss] += ww;
+               wsum_r[rr] += ww;
+
+               if ( masked[static_cast<size_t>( ss ) * npoints + rr] )
                {
-                  cnt_s[ss]++;
-                  cnt_r[rr]++;
+                  nmsk_s[ss]++;
+                  nmsk_r[rr]++;
                }
             }
          }
@@ -1871,8 +1888,9 @@ class MaskedNoiseFit
          }
       }
 
-      // Subtract the fitted noise from the unmasked rows, zero the masked
-      //  rows, and return the RI (v_tilde) and TI (v_bar) noise
+      // Subtract the fitted noise from the unmasked rows, set the masked
+      //  rows to their weighted residual, and return the RI (v_tilde) and
+      //  TI (v_bar) noise
       void remove( double* vals, double* v_tilde, double* v_bar )
       {
          sum_s.fill( 0.0 );
@@ -1897,13 +1915,13 @@ class MaskedNoiseFit
 
          if ( calc_ti && calc_ri )
          {
-            QVector<double>&       w_a   = solve_s ? u_s : t_r;
-            QVector<double>&       w_b   = solve_s ? t_r : u_s;
-            const QVector<double>& sum_a = solve_s ? sum_s : sum_r;
-            const QVector<double>& sum_b = solve_s ? sum_r : sum_s;
-            const QVector<int>&    cnt_b = solve_s ? cnt_r : cnt_s;
-            const int              na    = w_a.size();
-            const int              nb    = w_b.size();
+            QVector<double>&       w_a    = solve_s ? u_s : t_r;
+            QVector<double>&       w_b    = solve_s ? t_r : u_s;
+            const QVector<double>& sum_a  = solve_s ? sum_s : sum_r;
+            const QVector<double>& sum_b  = solve_s ? sum_r : sum_s;
+            const QVector<double>& wsum_b = solve_s ? wsum_r : wsum_s;
+            const int              na     = w_a.size();
+            const int              nb     = w_b.size();
 
             for ( int aa = 0; aa < na; aa++ )
             {
@@ -1911,9 +1929,9 @@ class MaskedNoiseFit
 
                for ( int bb = 0; bb < nb; bb++ )
                {
-                  if ( cnt_b[bb] > 0 && !is_masked( aa, bb ) )
+                  if ( wsum_b[bb] > 0.0 )
                   {
-                     rhs -= sum_b[bb] / cnt_b[bb];
+                     rhs -= weight_ab( aa, bb ) * sum_b[bb] / wsum_b[bb];
                   }
                }
 
@@ -1924,7 +1942,7 @@ class MaskedNoiseFit
 
             for ( int bb = 0; bb < nb; bb++ )
             {
-               if ( cnt_b[bb] == 0 )
+               if ( wsum_b[bb] == 0.0 )
                {
                   continue;
                }
@@ -1933,13 +1951,10 @@ class MaskedNoiseFit
 
                for ( int aa = 0; aa < na; aa++ )
                {
-                  if ( !is_masked( aa, bb ) )
-                  {
-                     val -= w_a[aa];
-                  }
+                  val -= weight_ab( aa, bb ) * w_a[aa];
                }
 
-               w_b[bb] = val / cnt_b[bb];
+               w_b[bb] = val / wsum_b[bb];
             }
 
             // Shift the shared constant from TI to RI noise
@@ -1948,7 +1963,7 @@ class MaskedNoiseFit
 
             for ( int rr = 0; rr < npoints; rr++ )
             {
-               if ( cnt_r[rr] > 0 )
+               if ( wsum_r[rr] > 0.0 )
                {
                   tmean += t_r[rr];
                   ktr++;
@@ -1959,7 +1974,7 @@ class MaskedNoiseFit
 
             for ( int rr = 0; rr < npoints; rr++ )
             {
-               if ( cnt_r[rr] > 0 )
+               if ( wsum_r[rr] > 0.0 )
                {
                   t_r[rr] -= tmean;
                }
@@ -1967,7 +1982,7 @@ class MaskedNoiseFit
 
             for ( int ss = 0; ss < nscans; ss++ )
             {
-               if ( cnt_s[ss] > 0 )
+               if ( wsum_s[ss] > 0.0 )
                {
                   u_s[ss] += tmean;
                }
@@ -1975,18 +1990,18 @@ class MaskedNoiseFit
          }
 
          else if ( calc_ri )
-         { // Per-scan means of the unmasked rows
+         { // Per-scan weighted means
             for ( int ss = 0; ss < nscans; ss++ )
             {
-               u_s[ss] = ( cnt_s[ss] > 0 ) ? ( sum_s[ss] / cnt_s[ss] ) : 0.0;
+               u_s[ss] = ( wsum_s[ss] > 0.0 ) ? ( sum_s[ss] / wsum_s[ss] ) : 0.0;
             }
          }
 
          else if ( calc_ti )
-         { // Per-radius means of the unmasked rows
+         { // Per-radius weighted means
             for ( int rr = 0; rr < npoints; rr++ )
             {
-               t_r[rr] = ( cnt_r[rr] > 0 ) ? ( sum_r[rr] / cnt_r[rr] ) : 0.0;
+               t_r[rr] = ( wsum_r[rr] > 0.0 ) ? ( sum_r[rr] / wsum_r[rr] ) : 0.0;
             }
          }
 
@@ -1995,7 +2010,7 @@ class MaskedNoiseFit
             for ( int rr = 0; rr < npoints; rr++ )
             {
                size_t kk = static_cast<size_t>( ss ) * npoints + rr;
-               vals[kk]  = masked[kk] ? 0.0 : ( vals[kk] - t_r[rr] - u_s[ss] );
+               vals[kk]  = masked[kk] ? ( -rwt * ( t_r[rr] + u_s[ss] ) ) : ( vals[kk] - t_r[rr] - u_s[ss] );
             }
          }
 
@@ -2018,28 +2033,39 @@ class MaskedNoiseFit
          return masked[static_cast<size_t>( ss ) * npoints + rr];
       }
 
-      // Build and factor M = diag(cnt_a) - sum over b of
-      //  (1/cnt_b) o_b o_b^T, o_b flagging the unmasked a of b
+      double weight( const int ss, const int rr ) const
+      {
+         return masked[static_cast<size_t>( ss ) * npoints + rr] ? mwt : 1.0;
+      }
+
+      double weight_ab( const int aa, const int bb ) const
+      {
+         return is_masked( aa, bb ) ? mwt : 1.0;
+      }
+
+      // Build and factor M = diag(wsum_a) - sum over b of
+      //  (1/wsum_b) o_b o_b^T, o_b holding the weights of the a of b
       void factor()
       {
-         const QVector<int>& cnt_a   = solve_s ? cnt_s : cnt_r;
-         const QVector<int>& cnt_b   = solve_s ? cnt_r : cnt_s;
-         const int           na      = cnt_a.size();
-         const int           nb      = cnt_b.size();
-         double              fullsum = 0.0; // Sum over the unmasked b without gaps
-         QVector<int>        aobs;
+         const QVector<double>& wsum_a  = solve_s ? wsum_s : wsum_r;
+         const QVector<double>& wsum_b  = solve_s ? wsum_r : wsum_s;
+         const QVector<int>&    nmsk_b  = solve_s ? nmsk_r : nmsk_s;
+         const int              na      = wsum_a.size();
+         const int              nb      = wsum_b.size();
+         double                 fullsum = 0.0; // Sum over the b without masked a
+         QVector<int>           aobs;
 
          mfac.fill( 0.0, static_cast<qsizetype>( na ) * na );
          zpiv.fill( false, na );
 
          for ( int bb = 0; bb < nb; bb++ )
          {
-            if ( cnt_b[bb] == 0 )
+            if ( wsum_b[bb] == 0.0 )
             {
                continue;
             }
 
-            if ( cnt_b[bb] == na )
+            if ( nmsk_b[bb] == 0 )
             {
                fullsum += 1.0 / na;
                continue;
@@ -2049,19 +2075,21 @@ class MaskedNoiseFit
 
             for ( int aa = 0; aa < na; aa++ )
             {
-               if ( !is_masked( aa, bb ) )
+               if ( weight_ab( aa, bb ) > 0.0 )
                {
                   aobs << aa;
                }
             }
 
-            const double wb = 1.0 / cnt_b[bb];
+            const double wb = 1.0 / wsum_b[bb];
 
             for ( int ja : aobs )
             {
+               const double wj = weight_ab( ja, bb ) * wb;
+
                for ( int ka : aobs )
                {
-                  mfac[static_cast<size_t>( ja ) * na + ka] -= wb;
+                  mfac[static_cast<size_t>( ja ) * na + ka] -= wj * weight_ab( ka, bb );
                }
             }
          }
@@ -2072,10 +2100,10 @@ class MaskedNoiseFit
 
             for ( int ka = 0; ka < na; ka++ )
             {
-               mrow[ka] -= ( cnt_a[ka] > 0 && cnt_a[ja] > 0 ) ? fullsum : 0.0;
+               mrow[ka] -= ( wsum_a[ka] > 0.0 && wsum_a[ja] > 0.0 ) ? fullsum : 0.0;
             }
 
-            mrow[ja] += cnt_a[ja];
+            mrow[ja] += wsum_a[ja];
          }
 
          // In-place LDL^T (lower triangle:  L below, D on the diagonal)
@@ -2089,7 +2117,7 @@ class MaskedNoiseFit
                dk -= krow[jj] * krow[jj] * mfac[static_cast<size_t>( jj ) * na + jj];
             }
 
-            if ( dk <= 1.0e-10 * qMax( cnt_a[kk], 1 ) )
+            if ( dk <= 1.0e-10 * qMax( wsum_a[kk], 1.0 ) )
             { // Zero pivot:  the row of the reduced matrix is zero
                zpiv[kk] = true;
                krow[kk] = 0.0;
@@ -2153,9 +2181,13 @@ class MaskedNoiseFit
       const int       npoints;
       const bool      calc_ti;
       const bool      calc_ri;
+      const double    mwt;            // Weight of a masked row
+      const double    rwt;            // Its square root
       bool            solve_s = true; // Solve for RI (else TI) noise
-      QVector<int>    cnt_s;          // Unmasked rows of each scan
-      QVector<int>    cnt_r;          // Unmasked rows of each radius
+      QVector<double> wsum_s;         // Row weights of each scan
+      QVector<double> wsum_r;         // Row weights of each radius
+      QVector<int>    nmsk_s;         // Masked rows of each scan
+      QVector<int>    nmsk_r;         // Masked rows of each radius
       QVector<double> sum_s;
       QVector<double> sum_r;
       QVector<double> mfac; // Factored M, row-major
@@ -2175,7 +2207,8 @@ int US_SolveSim::nnls_noise( const int                noisflag,
                              QVector<double>&         tinvec,
                              QVector<double>&         rinvec,
                              const std::atomic<bool>* abort_flag,
-                             const QVector<bool>*     masked )
+                             const QVector<bool>*     masked,
+                             const double             masked_weight )
 {
    const bool calc_ti = ( ( noisflag & 1 ) != 0 );
    const bool calc_ri = ( ( noisflag & 2 ) != 0 );
@@ -2228,8 +2261,9 @@ int US_SolveSim::nnls_noise( const int                noisflag,
       }
 
       if ( dmasked != nullptr )
-      { // Least-squares noise of the unmasked rows
-         MaskedNoiseFit nfit( dmasked, nscans[ee], npoints[ee], calc_ti, calc_ri );
+      { // Weighted least-squares noise
+         // Only the coupled TI and RI fit needs the masked rows' weight
+         MaskedNoiseFit nfit( dmasked, nscans[ee], npoints[ee], calc_ti, calc_ri, ( calc_ti && calc_ri ) ? masked_weight : 0.0 );
 
          nfit.remove( nnls_b.data() + krow, a_tilde.data() + kri, a_bar.data() + kti );
 

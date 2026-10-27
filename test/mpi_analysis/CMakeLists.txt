@@ -37,6 +37,7 @@ set(US_MPI_CASES
     2dsa_composite_menbot
     2dsa_composite_menbot_pmasters
     2dsa_noise
+    2dsa_noise_odlimit
     2dsa_customgrid
     2dsa_global
     2dsa_global_mc

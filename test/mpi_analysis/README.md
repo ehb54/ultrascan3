@@ -7,7 +7,7 @@ and compare the fitted models with stored baselines.
 
 | File | Purpose |
 |---|---|
-| `us_mpi_testdata.cpp` | Writes a simulated velocity dataset and a custom-grid model with the UltraScan writers (`US_DataIO::writeRawData`, `US_DataIO::writeEdits`, `US_Model::write`). Three species, 30 scans, 60 krpm, edited bottom at the stretched centerpiece bottom as `us_edit` writes it, noise σ = 0.004 from the seeded `US_Math2` generator. Options: `scans=<n>` and `nobottom` (edit without `<bottom>`). |
+| `us_mpi_testdata.cpp` | Writes a simulated velocity dataset and a custom-grid model with the UltraScan writers (`US_DataIO::writeRawData`, `US_DataIO::writeEdits`, `US_Model::write`). Three species, 30 scans, 60 krpm, edited bottom at the stretched centerpiece bottom as `us_edit` writes it, noise σ = 0.004 from the seeded `US_Math2` generator. Options: `scans=<n>`, `nobottom` (edit without `<bottom>`), `odlimit=<OD>` (OD limit of the edit, default 1.5), `tinoise=<sd>` and `rinoise=<sd>` (added TI and RI noise). |
 | `us_mpi_regression.py` | Builds the job archive (hpcrequest XML in the LIMS format), runs the case, reduces `analysis-results.tar` to a JSON summary and compares it with `baseline/<case>.json`. |
 | `baseline/*.json` | Reference summaries: per model the RMSD, the signal-weighted moments of s, f/f0 and vbar, the solute list, and any TI/RI noise vectors. |
 
@@ -25,6 +25,7 @@ and compare the fitted models with stored baselines.
 | `2dsa_composite_menbot` | composite job, meniscus and bottom fit (2 × 2) | 2 | exact |
 | `2dsa_composite_menbot_pmasters` | the same with parallel masters | 6 | exact |
 | `2dsa_noise` | TI + RI noise | 2 | exact |
+| `2dsa_noise_odlimit` | TI + RI noise, OD limit 0.8 (39 % of the points left out), TI and RI noise added | 2 | exact |
 | `2dsa_customgrid` | custom grid (s × vbar) | 2 | exact |
 | `2dsa_global` | global fit, 2 datasets | 2 | exact |
 | `2dsa_global_mc` | global fit with Monte Carlo (3) | 2 | exact |

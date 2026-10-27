@@ -466,6 +466,49 @@ DbgLv(0) << "FMB: meni range points" << meniscus_range << meniscus_points
       abort( "Global fit is not compatible with noise computation" );
    }
 
+   if ( my_rank == 0 )
+   { // Report the points that the OD limit leaves out of the fit
+      bool ti_ri = parameters["tinoise_option"].toInt() > 0 && parameters["rinoise_option"].toInt() > 0;
+
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {
+         US_DataIO::EditedData& edata  = data_sets[ee]->run_data;
+         int                    ktotal = edata.scanCount() * edata.pointCount();
+         int                    kodl   = 0;
+
+         for ( int ss = 0; ss < edata.scanCount(); ss++ )
+         {
+            for ( int rr = 0; rr < edata.pointCount(); rr++ )
+            {
+               kodl += ( edata.value( ss, rr ) >= edata.ODlimit ) ? 1 : 0;
+            }
+         }
+
+         if ( kodl == 0 )
+         {
+            continue;
+         }
+
+         qDebug().noquote() << QString::asprintf( "  Dataset %d: %d of %d points"
+                                                  " (%.1f %%) at or above the OD limit %g are left out of the fit",
+                                                  ee + 1,
+                                                  kodl,
+                                                  ktotal,
+                                                  100.0 * kodl / ktotal,
+                                                  edata.ODlimit );
+
+         if ( ti_ri )
+         {
+            qDebug().noquote() << QString::asprintf( "  Dataset %d: TI and RI"
+                                                     " noise are not seen there; the fit takes them as zero with"
+                                                     " weight %g (large masked areas leave the noise poorly"
+                                                     " determined)",
+                                                     ee + 1,
+                                                     US_SolveSim::masked_noise_weight );
+         }
+      }
+   }
+
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
 
