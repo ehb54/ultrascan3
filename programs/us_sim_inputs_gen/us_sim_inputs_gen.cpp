@@ -12,6 +12,7 @@
 #include "us_defines.h"
 #include "us_hardware.h"
 #include "us_sim_inputs.h"
+#include "us_sim_inputs_gen_cli.h"
 #include "us_sim_record.h"
 #include "us_util.h"
 
@@ -67,22 +68,6 @@ static bool parse_svedberg( const QString& text, double& value, QString& error )
    }
 
    return true;
-}
-
-// Keys accepted in a --component value.
-static const QStringList& component_keys()
-{
-   static const QStringList keys = []
-   {
-      QStringList names;
-      for ( const US_SimSpecies::Coefficient& coeff : US_SimSpecies::coefficients() )
-      {
-         names << coeff.name;
-      }
-      names << "vbar20" << "conc" << "extinction" << "type" << "guid" << "name";
-      return names;
-   }();
-   return keys;
 }
 
 // Accept an analyte type name or US_Analyte::analyte_t value.
@@ -418,7 +403,7 @@ static bool parse_component_spec( const QString& spec, US_SimSpecies::Component&
 
       if ( !is_coefficient && key != "vbar20" && key != "conc" && key != "extinction" )
       {
-         error = QString( "--component key \"%1\" is not one of %2" ).arg( key, component_keys().join( ", " ) );
+         error = QString( US_SimInputsGenMessages::unknownComponentKey ).arg( key, component_keys().join( ", " ) );
          return false;
       }
 
@@ -907,9 +892,7 @@ int main( int argc, char* argv[] )
       if ( ( parser.isSet( delay_hrs_option ) && sp_params.delay_hours < 0 ) ||
            ( parser.isSet( delay_mins_option ) && sp_params.delay_minutes < 0.0 ) )
       {
-         QTextStream( stderr ) << "Error: --delay-hrs and --delay-mins must be "
-                                  "zero or greater; omit both to use the acceleration time"
-                               << Qt::endl;
+         QTextStream( stderr ) << "Error: " << US_SimInputsGenMessages::negativeDelay << Qt::endl;
          return 1;
       }
 
@@ -1048,12 +1031,13 @@ int main( int argc, char* argv[] )
       const int cell_nbr = cell.toInt( &cell_ok );
       if ( !cell_ok || cell_nbr < 1 || cell_nbr > 8 )
       {
-         QTextStream( stderr ) << "Error: --cell must be 1 to 8" << Qt::endl;
+         QTextStream( stderr ) << "Error: " << US_SimInputsGenMessages::badCell << Qt::endl;
          return 1;
       }
       if ( letter.length() != 1 || !US_Util::channel_letters().contains( letter ) )
       {
-         QTextStream( stderr ) << "Error: --channel must be one of " << US_Util::channel_letters() << Qt::endl;
+         QTextStream( stderr ) << "Error: " << QString( US_SimInputsGenMessages::badChannel ).arg( US_Util::channel_letters() )
+                               << Qt::endl;
          return 1;
       }
       const QString                   channel = QString::number( cell_nbr ) + letter;
@@ -1061,9 +1045,7 @@ int main( int argc, char* argv[] )
       static const QRegularExpression wavelength_rx( "^[1-9][0-9]{2}$" );
       if ( !wavelength_rx.match( wavelength ).hasMatch() )
       {
-         QTextStream( stderr ) << "Error: --wavelength must be a 3-digit "
-                                  "number"
-                               << Qt::endl;
+         QTextStream( stderr ) << "Error: " << US_SimInputsGenMessages::badWavelength << Qt::endl;
          return 1;
       }
 

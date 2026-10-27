@@ -62,16 +62,13 @@ QString US_SimInputs::validateParams( const Params& p )
    {
       if ( !qIsFinite( check.value ) || ( check.allow_zero ? check.value < 0.0 : check.value <= 0.0 ) )
       {
-         return QString( "%1 must be finite and %2 (got %3)" )
-            .arg( check.name )
-            .arg( check.allow_zero ? "zero or greater" : "greater than zero" )
-            .arg( check.value );
+         return QString( check.allow_zero ? negativeMessage : notPositiveMessage ).arg( check.name ).arg( check.value );
       }
    }
 
    if ( p.scans < 1 )
    {
-      return QString( "scans must be at least 1 (got %1)" ).arg( p.scans );
+      return QString( tooFewScansMessage ).arg( p.scans );
    }
 
    // No ultracentrifuge rotor runs this fast; catch an order-of-magnitude typo
@@ -191,9 +188,7 @@ bool US_SimInputs::simParams( const Params& p, US_SimulationParameters& params_o
    // Analysis ignores the band volume unless the centerpiece forms a band.
    if ( p.band_forming && !sp_out.band_forming )
    {
-      error = QString( "band forming requires a band-forming centerpiece "
-                       "(centerpiece %1 is not band-forming)" )
-                 .arg( p.centerpiece );
+      error = QString( notBandFormingMessage ).arg( p.centerpiece );
       return false;
    }
 

@@ -5,6 +5,11 @@
 
 #include <QProcess>
 
+#include "us_hardware.h"
+#include "us_sim_inputs.h"
+#include "us_sim_inputs_gen_cli.h"
+#include "us_util.h"
+
 class US_SimInputsGenCliTest : public QObject
 {
       Q_OBJECT
@@ -46,22 +51,27 @@ class US_SimInputsGenCliTest : public QObject
          QTest::addColumn<QStringList>( "args" );
          QTest::addColumn<QString>( "message" );
 
-         QTest::newRow( "negative speed" ) << simparams( { "--speed", "-1" } ) << "speed must be";
-         QTest::newRow( "zero scans" ) << simparams( { "--scans", "0" } ) << "scans must be";
-         QTest::newRow( "negative delay" ) << simparams( { "--delay-mins", "-5" } ) << "--delay-hrs and --delay-mins";
+         QTest::newRow( "negative speed" ) << simparams( { "--speed", "-1" } )
+                                           << QString( US_SimInputs::notPositiveMessage ).arg( "speed" ).arg( -1.0 );
+         QTest::newRow( "zero scans" ) << simparams( { "--scans", "0" } ) << QString( US_SimInputs::tooFewScansMessage ).arg( 0 );
+         QTest::newRow( "negative delay" ) << simparams( { "--delay-mins", "-5" } )
+                                           << QString( US_SimInputsGenMessages::negativeDelay );
          QTest::newRow( "band forming, standard centerpiece" )
-            << simparams( { "--band-forming", "--centerpiece", "1" } ) << "band-forming centerpiece";
+            << simparams( { "--band-forming", "--centerpiece", "1" } ) << QString( US_SimInputs::notBandFormingMessage ).arg( 1 );
          QTest::newRow( "centerpiece row out of range" )
-            << simparams( { "--centerpiece", "1", "--centerpiece-channel", "C" } ) << "out of range";
-         QTest::newRow( "signed wavelength" ) << mwlModel( { "--channel", "A", "--wavelength", "-20" } ) << "--wavelength must be";
+            << simparams( { "--centerpiece", "1", "--centerpiece-channel", "C" } ) << US_AbstractCenterpiece::validate( 1, 1 );
+         QTest::newRow( "signed wavelength" )
+            << mwlModel( { "--channel", "A", "--wavelength", "-20" } ) << QString( US_SimInputsGenMessages::badWavelength );
          QTest::newRow( "plus-signed wavelength" )
-            << mwlModel( { "--channel", "A", "--wavelength", "+99" } ) << "--wavelength must be";
+            << mwlModel( { "--channel", "A", "--wavelength", "+99" } ) << QString( US_SimInputsGenMessages::badWavelength );
          QTest::newRow( "cell and channel in --channel" )
-            << mwlModel( { "--channel", "1A", "--wavelength", "280" } ) << "--channel must be one of";
-         QTest::newRow( "cell out of range" )
-            << mwlModel( { "--cell", "9", "--channel", "A", "--wavelength", "280" } ) << "--cell must be";
+            << mwlModel( { "--channel", "1A", "--wavelength", "280" } )
+            << QString( US_SimInputsGenMessages::badChannel ).arg( US_Util::channel_letters() );
+         QTest::newRow( "cell out of range" ) << mwlModel( { "--cell", "9", "--channel", "A", "--wavelength", "280" } )
+                                              << QString( US_SimInputsGenMessages::badCell );
          QTest::newRow( "unknown component key" )
-            << QStringList{ "--emit-model", "--out", scratch.filePath( "m.xml" ), "--component", "bogus=1" } << "is not one of";
+            << QStringList{ "--emit-model", "--out", scratch.filePath( "m.xml" ), "--component", "bogus=1" }
+            << QString( US_SimInputsGenMessages::unknownComponentKey ).arg( "bogus", component_keys().join( ", " ) );
       }
 
       void invalidOptionsAreRejected()
@@ -105,7 +115,7 @@ class US_SimInputsGenCliTest : public QObject
       void defaultModeHonoursGuidSeed()
       {
          // Generate the default inputs into the named directory with the given seed.
-         auto generate = [ this ]( const QString& name, const QString& seed ) -> QString
+         auto generate = [this]( const QString& name, const QString& seed ) -> QString
          {
             const QString dir = scratch.filePath( name );
             QString       err;

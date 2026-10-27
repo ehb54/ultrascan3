@@ -55,8 +55,8 @@ Apply centerpieceValue( int US_SimCliArgs::*field, bool row )
    {
       int        parsed = -1;
       QString    unused;
-      const bool ok     = row ? US_AbstractCenterpiece::parse_channel( value, parsed, unused )
-                              : US_AbstractCenterpiece::parse_index( value, parsed, unused );
+      const bool ok = row ? US_AbstractCenterpiece::parse_channel( value, parsed, unused )
+                          : US_AbstractCenterpiece::parse_index( value, parsed, unused );
       if ( !ok || parsed < 0 )
       {
          return false;
@@ -66,15 +66,15 @@ Apply centerpieceValue( int US_SimCliArgs::*field, bool row )
    };
 }
 
-const QString centerpieceHelp = "Centerpiece-list index used for channel geometry (default: 0). "
-                                "Overrides the bottom position recovered from --simparams, which is the "
-                                "only way to select a row of a multi-row centerpiece. Indexes the local "
-                                "etc/abstractCenterpieces.xml, never the database, so that a given index "
-                                "means the same thing on every machine";
+const QString          centerpieceHelp = "Centerpiece-list index used for channel geometry (default: 0). "
+                                         "Overrides the bottom position recovered from --simparams, which is the "
+                                         "only way to select a row of a multi-row centerpiece. Indexes the local "
+                                         "etc/abstractCenterpieces.xml, never the database, so that a given index "
+                                         "means the same thing on every machine";
 
-const QString loadHelp               = "Load a %1 from a file path, GUID, or database ID";
+const QString          loadHelp = "Load a %1 from a file path, GUID, or database ID";
 
-const QString centerpieceRowExpected = "a channel letter (S or A-H) or a row index of 0 or more";
+const QString          centerpieceRowExpected = "a channel letter (S or A-H) or a row index of 0 or more";
 
 // The options, in --help order. Flags and paths have no expected text: any
 // value is valid.
@@ -168,12 +168,7 @@ const QVector<Option>& options()
         "",
         "",
         flag( &US_SimCliArgs::no_db ) },
-      { Both,
-        { "errors-cl" },
-        "Write errors to the console without opening the GUI",
-        "",
-        "",
-        flag( &US_SimCliArgs::errors_cl ) },
+      { Both, { "errors-cl" }, "Write errors to the console without opening the GUI", "", "", flag( &US_SimCliArgs::errors_cl ) },
       { Both,
         { "runtype" },
         "Two-character optical data type to tag the output with (" + US_SimCli::runTypes().join( ", " ) +
@@ -314,13 +309,14 @@ int US_SimCli::parse( Tool tool, const QStringList& arguments, US_SimCliArgs& ar
    if ( parser.isSet( version_option ) )
    {
       // QGuiApplication's display name, if the program set one.
-      QString name = QCoreApplication::instance() ? QCoreApplication::instance()->property( "applicationDisplayName" ).toString()
-                                                  : QString();
+      QString name =
+         QCoreApplication::instance() ? QCoreApplication::instance()->property( "applicationDisplayName" ).toString() : QString();
       if ( name.isEmpty() )
       {
          name = QCoreApplication::applicationName();
       }
-      output = QString( "%1 (%2)\nVersion %3\n" ).arg( name, QCoreApplication::applicationName(), QCoreApplication::applicationVersion() );
+      output = QString( "%1 (%2)\nVersion %3\n" )
+                  .arg( name, QCoreApplication::applicationName(), QCoreApplication::applicationVersion() );
       return 0;
    }
    if ( parser.isSet( help_option ) )

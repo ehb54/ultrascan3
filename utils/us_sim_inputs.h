@@ -57,7 +57,19 @@ class US_UTIL_EXTERN US_SimInputs
 
       //! \brief Validate run conditions before constructing parameters.
       //! \return An empty string if valid; otherwise, an error message.
-      static QString   validateParams( const Params& p );
+      static QString               validateParams( const Params& p );
+
+      //! \brief Error formats validateParams() and simParams() return, shared
+      //!        with the tests; fill them with QString::arg().
+      //! A value that must be positive: %1 its name, %2 the value.
+      static constexpr const char* notPositiveMessage    = "%1 must be finite and greater than zero (got %2)";
+      //! A value that must not be negative: %1 its name, %2 the value.
+      static constexpr const char* negativeMessage       = "%1 must be finite and zero or greater (got %2)";
+      //! Fewer than one scan: %1 the scan count.
+      static constexpr const char* tooFewScansMessage    = "scans must be at least 1 (got %1)";
+      //! Band forming without a band-forming centerpiece: %1 the centerpiece.
+      static constexpr const char* notBandFormingMessage = "band forming requires a band-forming centerpiece "
+                                                           "(centerpiece %1 is not band-forming)";
 
       //! \brief Create parameters for a single-speed simulation.
       //! Geometry is stored at rest; simulation consumers apply rotor stretch.
@@ -65,17 +77,17 @@ class US_UTIL_EXTERN US_SimInputs
       //! \param p      Run conditions.
       //! \param params Parameters populated only on success.
       //! \param error  Error message on failure; empty on success.
-      static bool      simParams( const Params& p, US_SimulationParameters& params, QString& error );
+      static bool                  simParams( const Params& p, US_SimulationParameters& params, QString& error );
 
       //! \brief Create default single-speed simulation parameters.
       //! Construction reads hardware definitions from disk, so it can fail.
       //! \param params Parameters populated only on success.
       //! \param error  Error message on failure; empty on success.
-      static bool      simParams( US_SimulationParameters& params, QString& error );
+      static bool                  simParams( US_SimulationParameters& params, QString& error );
 
       //! \brief Create a default buffer using water properties at 20 C.
       //! \param guidSeed Reproducible GUID seed; empty generates a random GUID.
-      static US_Buffer buffer( const QString& guidSeed = QString() );
+      static US_Buffer             buffer( const QString& guidSeed = QString() );
 
       //! \brief Write the default simulation parameters, model, and buffer.
       //! Creates sp_default.xml, model_default.xml, and buffer_default.xml
@@ -85,7 +97,7 @@ class US_UTIL_EXTERN US_SimInputs
       //! \param guidSeed Reproducible GUID seed for the model and buffer;
       //!                 empty generates random GUIDs.
       //! \return true on success; otherwise, false.
-      static bool      writeAll( const QString& dir, QString& error, const QString& guidSeed = QString() );
+      static bool                  writeAll( const QString& dir, QString& error, const QString& guidSeed = QString() );
 };
 
 #endif // US_SIM_INPUTS_H

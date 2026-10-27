@@ -13,7 +13,7 @@
 //! \brief Load translators and start US_MwlSpeciesSim.
 int main( int argc, char* argv[] )
 {
-   QApplication       application( argc, argv );
+   QApplication  application( argc, argv );
 
    // --help, --version and invalid options should work without a license,
    // so the command line is parsed and checked before main1.inc's license

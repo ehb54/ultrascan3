@@ -864,7 +864,7 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
    if ( !args.models.isEmpty() )
    {
       const QStringList& paths = args.models;
-      loaded_models     = load_models_from_paths( paths );
+      loaded_models            = load_models_from_paths( paths );
       if ( !loaded_models )
       {
          reportHeadlessLoadFailure( "models", paths.join( "," ), errors_to_cl, gui_needed, error_occured );
@@ -908,7 +908,8 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
       }
       else if ( simparams.speed_step.size() != 1 )
       { // set_parameters() and the simulation use only the first speed step.
-         QTextStream( stderr ) << "Error: " << QString( US_SimCli::speedStepCountMessage ).arg( load_id ).arg( simparams.speed_step.size() )
+         QTextStream( stderr ) << "Error: "
+                               << QString( US_SimCli::speedStepCountMessage ).arg( load_id ).arg( simparams.speed_step.size() )
                                << Qt::endl;
          reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl, gui_needed, error_occured );
          loaded_simparams = false;
@@ -959,8 +960,8 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
    if ( args.centerpiece >= 0 || args.centerpiece_row >= 0 )
    {
       // US_SimCli has validated both values.
-      int cp = qMax( 0, args.centerpiece );
-      int ch = qMax( 0, args.centerpiece_row );
+      int     cp = qMax( 0, args.centerpiece );
+      int     ch = qMax( 0, args.centerpiece_row );
 
       QString range_error = US_AbstractCenterpiece::validate( cp, ch );
       if ( !range_error.isEmpty() )

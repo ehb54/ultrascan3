@@ -88,8 +88,11 @@ class US_AstfemSimReproducibilityTest : public QObject
       QProcessEnvironment env;
 
       // The generated files compared between the two runs.
-      const QStringList   generatedFiles{ "model.xml", "buffer.xml", "default/model_default.xml",
-                                          "default/buffer_default.xml", "default/sp_default.xml" };
+      const QStringList   generatedFiles{ "model.xml",
+                                        "buffer.xml",
+                                        "default/model_default.xml",
+                                        "default/buffer_default.xml",
+                                        "default/sp_default.xml" };
 
       // Generate one run's inputs, each mode with the same --guid-seed.
       void                generate( const QString& inputsDir )
@@ -97,12 +100,27 @@ class US_AstfemSimReproducibilityTest : public QObject
          QVERIFY( QDir().mkpath( inputsDir + "/default" ) );
          QVERIFY( writeText( inputsDir + "/simparams.xml", kSimParams ) );
 
-         const QList<QStringList> invocations{
-            { "--emit-model", "--out", inputsDir + "/model.xml", "-s", "4.58S", "--mw", "66430", "--vbar20", "0.733",
-              "--name", "BSA" },
-            { "--emit-buffer", "--out", inputsDir + "/buffer.xml", "--density", "0.998234", "--viscosity", "1.001940",
-              "--ph", "7.0" },
-            { "--out", inputsDir + "/default" } };
+         const QList<QStringList> invocations{ { "--emit-model",
+                                                 "--out",
+                                                 inputsDir + "/model.xml",
+                                                 "-s",
+                                                 "4.58S",
+                                                 "--mw",
+                                                 "66430",
+                                                 "--vbar20",
+                                                 "0.733",
+                                                 "--name",
+                                                 "BSA" },
+                                               { "--emit-buffer",
+                                                 "--out",
+                                                 inputsDir + "/buffer.xml",
+                                                 "--density",
+                                                 "0.998234",
+                                                 "--viscosity",
+                                                 "1.001940",
+                                                 "--ph",
+                                                 "7.0" },
+                                               { "--out", inputsDir + "/default" } };
 
          for ( const QStringList& args : invocations )
          {
@@ -115,7 +133,7 @@ class US_AstfemSimReproducibilityTest : public QObject
       }
 
       // Simulate from the given inputs into outDir; return the program's stdout.
-      QString             simulate( const QString& inputsDir, const QString& outDir, const QStringList& extra )
+      QString simulate( const QString& inputsDir, const QString& outDir, const QStringList& extra )
       {
          if ( !QDir().mkpath( outDir ) )
          {
@@ -125,32 +143,42 @@ class US_AstfemSimReproducibilityTest : public QObject
 
          QProcess sim;
          sim.setProcessEnvironment( env );
-         sim.start( US_ASTFEM_SIM_EXE, QStringList{ "--no-db",          "--errors-cl",
-                                                    "--close",          "--model",
-                                                    inputsDir + "/model.xml",
-                                                    "--buffer",         inputsDir + "/buffer.xml",
-                                                    "--simparams",      inputsDir + "/simparams.xml",
-                                                    "--rotor",          "1",
-                                                    "--save",           outDir,
-                                                    "--guid-seed",      kGuidSeed,
-                                                    "--edit-timestamp", kEditStamp,
-                                                    "--description",    kDescription,
-                                                    "--centerpiece",    "3" } +
-                                           extra );
+         sim.start( US_ASTFEM_SIM_EXE,
+                    QStringList{ "--no-db",
+                                 "--errors-cl",
+                                 "--close",
+                                 "--model",
+                                 inputsDir + "/model.xml",
+                                 "--buffer",
+                                 inputsDir + "/buffer.xml",
+                                 "--simparams",
+                                 inputsDir + "/simparams.xml",
+                                 "--rotor",
+                                 "1",
+                                 "--save",
+                                 outDir,
+                                 "--guid-seed",
+                                 kGuidSeed,
+                                 "--edit-timestamp",
+                                 kEditStamp,
+                                 "--description",
+                                 kDescription,
+                                 "--centerpiece",
+                                 "3" } +
+                       extra );
          if ( !sim.waitForFinished( 300000 ) )
          {
             sim.kill();
             sim.waitForFinished( 5000 );
-            QTest::qFail( "us_astfem_sim did not finish; check that UltraScan is registered for this user", __FILE__,
-                          __LINE__ );
+            QTest::qFail( "us_astfem_sim did not finish; check that UltraScan is registered for this user", __FILE__, __LINE__ );
             return QString();
          }
 
          const QString err = QString::fromUtf8( sim.readAllStandardError() );
          if ( sim.exitStatus() != QProcess::NormalExit || sim.exitCode() != 0 )
          {
-            QTest::qFail( qPrintable( QString( "us_astfem_sim exited %1: %2" ).arg( sim.exitCode() ).arg( err ) ),
-                          __FILE__, __LINE__ );
+            QTest::qFail(
+               qPrintable( QString( "us_astfem_sim exited %1: %2" ).arg( sim.exitCode() ).arg( err ) ), __FILE__, __LINE__ );
             return QString();
          }
 
@@ -158,14 +186,14 @@ class US_AstfemSimReproducibilityTest : public QObject
       }
 
       // The run's dataset, or an empty array if it was not written.
-      static QByteArray   aucOf( const QString& outDir )
+      static QByteArray aucOf( const QString& outDir )
       {
          QFile file( outDir + "/" + QString( kRunID ) + ".RA.1.S.123.auc" );
          return file.open( QIODevice::ReadOnly ) ? file.readAll() : QByteArray();
       }
 
       // The seed a run reports choosing, or 0 if it reported none.
-      static uint         reportedSeed( const QString& out )
+      static uint reportedSeed( const QString& out )
       {
          const QRegularExpressionMatch match = QRegularExpression( "Noise seed: (\\d+)" ).match( out );
          return match.hasMatch() ? match.captured( 1 ).toUInt() : 0;
@@ -243,7 +271,7 @@ class US_AstfemSimReproducibilityTest : public QObject
          const QString outD = scratch.path() + "/out_d/" + kRunID;
          const QString outE = scratch.path() + "/out_e/" + kRunID;
 
-         const uint seedC = reportedSeed( simulate( inputsA, outC, {} ) );
+         const uint    seedC = reportedSeed( simulate( inputsA, outC, {} ) );
          QVERIFY( !QTest::currentTestFailed() );
          const uint seedD = reportedSeed( simulate( inputsA, outD, {} ) );
          QVERIFY( !QTest::currentTestFailed() );

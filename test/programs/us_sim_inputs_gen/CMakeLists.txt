@@ -11,6 +11,10 @@ if(TARGET us_sim_inputs_gen)
 
     add_dependencies(test_us_sim_inputs_gen_cli us_sim_inputs_gen)
 
+    # us_sim_inputs_gen_cli.h holds the error formats the generator prints.
+    target_include_directories(test_us_sim_inputs_gen_cli PRIVATE
+            ${CMAKE_SOURCE_DIR}/programs/us_sim_inputs_gen)
+
     target_compile_definitions(test_us_sim_inputs_gen_cli PRIVATE
             US_SIM_INPUTS_GEN_EXE="$<TARGET_FILE:us_sim_inputs_gen>")
 else()

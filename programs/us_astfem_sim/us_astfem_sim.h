@@ -2,21 +2,21 @@
 #ifndef US_ASTFEM_SIM_H
 #define US_ASTFEM_SIM_H
 
-#include "us_widgets.h"
-#include "us_plot.h"
-#include "us_model.h"
-#include "us_simparms.h"
-#include "us_help.h"
-#include "us_rotor_gui.h"
-#include "us_astfem_rsa.h"
-#include "us_lamm_astfvm.h"
-#include "us_buffer.h"
-#include "us_dataIO.h"
 #include "us_astfem_math.h"
+#include "us_astfem_rsa.h"
+#include "us_buffer.h"
 #include "us_csv_data.h"
+#include "us_dataIO.h"
+#include "us_help.h"
+#include "us_lamm_astfvm.h"
+#include "us_model.h"
+#include "us_plot.h"
+#include "us_rotor_gui.h"
 #include "us_sim_cli.h"
-#include <qwt_plot.h>
+#include "us_simparms.h"
+#include "us_widgets.h"
 #include <qwt_counter.h>
+#include <qwt_plot.h>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -39,12 +39,12 @@ class US_Astfem_Sim : public US_Widgets
       //! \returns int: 0 on success no gui needed, 1 on success but gui needed, 2 on error
       int init_from_args( const US_SimCliArgs& args );
 
-    signals:
-       void new_time         ( double );
+   signals:
+      void new_time( double );
 
    private:
       bool           stopFlag;            //!< Flag to stop the simulation
-      bool                    sim_failed;          //!< Set when start_simulation() could not produce data
+      bool           sim_failed;          //!< Set when start_simulation() could not produce data
       bool           movieFlag;           //!< Flag to show a movie during simulation
       bool           save_movie;          //!< Flag to save the generated frames
       bool           time_correctionFlag; //!< Flag to apply time correction - Currently not implemented/connected
@@ -59,14 +59,14 @@ class US_Astfem_Sim : public US_Widgets
       QString        imagedir;            //!< Path to the image dir
       QString        imageName;           //!< Full path template for movie frames ({imagedir}/frame{image_count}.png)
       QString        tmst_tfpath;         //!< Path to the timestate of the simulation in a temporary location
-      QString                 run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
-      int                     sim_cell           = 1;            //!< Output cell
-      QString                 sim_description    = "Simulation"; //!< Output data description, from --description
-      int                     sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
-      char                    sim_channel        = 'S'; //!< Output channel
-      uint                    noise_seed         = 0;   //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
-      bool                    noise_to_composite = true; //!< Apply ASTFEM noise to the composite before splitting by speed
-      QString                 guid_seed;                 //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
+      QString        run_type;            //!< Two-character optical data type tag, "RA" unless overridden by --runtype
+      int            sim_cell           = 1;            //!< Output cell
+      QString        sim_description    = "Simulation"; //!< Output data description, from --description
+      int            sim_centerpiece_id = 1;   //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
+      char           sim_channel        = 'S'; //!< Output channel
+      uint noise_seed = 0; //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
+      bool noise_to_composite = true;     //!< Apply ASTFEM noise to the composite before splitting by speed
+      QString                 guid_seed;  //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
       QString                 edit_stamp; //!< Fixed yyMMddhhmm for the edit filename, from --edit-timestamp; empty uses the clock
 
       QCheckBox*     ck_movie;            //!< Pointer to QCheckbox for movie display

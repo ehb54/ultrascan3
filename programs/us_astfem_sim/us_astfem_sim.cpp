@@ -212,9 +212,10 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 }
 
 // Initialize the simulation from command-line arguments.
-int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
+int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args )
+{
    // check if model is to be loaded
-   bool gui_needed = !args.close;
+   bool gui_needed       = !args.close;
    bool error_occured = false;
    // Abort only when an explicitly requested input fails to load.
    bool loaded_model     = true;
@@ -222,11 +223,12 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
    bool loaded_simparams = true;
    bool loaded_rotor     = true;
    int  rotor_holes      = -1;
-   bool errors_to_cl = args.errors_cl;
+   bool errors_to_cl     = args.errors_cl;
    // load model
-   if ( !args.model.isEmpty() ) {
+   if ( !args.model.isEmpty() )
+   {
       US_Model temp_model = US_Model();
-      QString model_id = args.model;
+      QString      model_id   = args.model;
       US_ModelGui* dialog = new US_ModelGui( system  );
       bool success = dialog->load_model( model_id, temp_model );
       dialog->close();
@@ -240,8 +242,9 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
       delete dialog;
    }
    // load buffer
-   if ( !args.buffer.isEmpty() ) {
-      QString load_id = args.buffer;
+   if ( !args.buffer.isEmpty() )
+   {
+      QString       load_id = args.buffer;
       US_BufferGui* dialog = new US_BufferGui( true, buffer, US_Disk_DB_Controls::Default );
       bool success = dialog->load_buffer( load_id, buffer );
       dialog->close();
@@ -255,8 +258,9 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
       delete dialog;
    }
    // load simulation parameters if needed
-   if ( !args.simparams.isEmpty() ) {
-      QString load_id = args.simparams;
+   if ( !args.simparams.isEmpty() )
+   {
+      QString          load_id = args.simparams;
       US_SimParamsGui* dialog = new US_SimParamsGui( simparams );
       bool success = dialog->load_params( load_id, simparams );
       dialog->close();
@@ -278,7 +282,7 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
       US_Rotor::Rotor rotor;
       US_Rotor::RotorCalibration calibration;
       US_Disk_DB_Controls*    disk_controls;
-      QString rotor_id = args.rotor;
+      QString                    rotor_id = args.rotor;
       disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
       int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                             : US_Disk_DB_Controls::Disk;
@@ -333,11 +337,12 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
 
       if ( channel_row >= 0 && ch != channel_row )
       {
-         reportHeadlessLoadFailure( "centerpiece",
-                                    QString( US_SimCli::channelRowMismatchMessage ).arg( QChar( args.channel ) ).arg( channel_row ).arg( ch ),
-                                    errors_to_cl,
-                                    gui_needed,
-                                    error_occured );
+         reportHeadlessLoadFailure(
+            "centerpiece",
+            QString( US_SimCli::channelRowMismatchMessage ).arg( QChar( args.channel ) ).arg( channel_row ).arg( ch ),
+            errors_to_cl,
+            gui_needed,
+            error_occured );
       }
       else
       {
@@ -507,7 +512,8 @@ int US_Astfem_Sim::init_from_args( const US_SimCliArgs& args ) {
    if ( !error_occured && loaded_model && loaded_buffer && loaded_simparams && loaded_rotor  )
    {
       // no error yet
-      if ( args.start ) {
+      if ( args.start )
+      {
          // start simulation
          start_simulation();
 
@@ -895,29 +901,29 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 void US_Astfem_Sim::start_simulation( void )
 {
 //DbgLv(1) << "start_simulation is called";
-   sim_failed = false;
+sim_failed = false;
 
-   int size_cv    = system.components.size();// Number of components in the system
-   QVector< bool >  reactVec( size_cv );     // Boolean array showing reaction case between system
+int           size_cv = system.components.size(); // Number of components in the system
+QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
 
-   //moviePlot->autoRefresh();
+//moviePlot->autoRefresh();
 
-   moviePlot->replot();
-   curve_count    = 0;
-   image_count    = 0;
-   int nstep      = simparams.speed_step.size();
-   dataPlotClear( scanPlot );
-   scanPlot ->setAxisAutoScale( QwtPlot::xBottom );
-   scanPlot ->replot();
+moviePlot->replot();
+curve_count = 0;
+image_count = 0;
+int nstep   = simparams.speed_step.size();
+dataPlotClear( scanPlot );
+scanPlot->setAxisAutoScale( QwtPlot::xBottom );
+scanPlot->replot();
 
-   pb_stop   ->setEnabled( true  );
-   pb_start  ->setEnabled( false );
-   pb_saveSim->setEnabled( false );
+pb_stop->setEnabled( true );
+pb_start->setEnabled( false );
+pb_saveSim->setEnabled( false );
 
-   // The astfem/astfvm simulation routines expects a dataset structure that
-   // is initialized with a time and radius grid, and all concentration points
-   // need to be set to zero. Each speed is a separate mfem_data set.
-   sim_datas.resize( nstep );
+// The astfem/astfvm simulation routines expects a dataset structure that
+// is initialized with a time and radius grid, and all concentration points
+// need to be set to zero. Each speed is a separate mfem_data set.
+sim_datas.resize( nstep );
 DbgLv(1) << "start_simulation is called, steps:" << nstep;
    // Experimental grid setting starts from here
    for ( int jd = 0; jd < nstep; jd++ )
@@ -1123,7 +1129,7 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
       connect( astfvm, &US_LammAstfvm::calc_progress, this, &US_Astfem_Sim::show_progress );
       connect( astfvm, &US_LammAstfvm::calc_done, this, &US_Astfem_Sim::calc_over );
       astfvm->set_buffer( buffer );
-      if ( astfvm->calculate( sim_datas[ 0 ] ) != 0 )
+      if ( astfvm->calculate( sim_datas[0] ) != 0 )
       { // Stop before saving if the solver fails, as for ASTFEM above.
          DbgLv( 0 ) << "US_Astfem_Sim: simulation failed";
          sim_failed = true;

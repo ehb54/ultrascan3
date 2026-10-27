@@ -324,7 +324,8 @@ class US_AstfemSimPersistTest : public QObject
       void cellBeyondTheRotorHoleCountIsRejected()
       {
          // Rotor 2 is an AN60, which has 4 holes.
-         QVERIFY( rejectedRun( { "--rotor", "2", "--cell", "5" } ).contains( QString( US_SimCli::cellBeyondRotorMessage ).arg( 5 ).arg( 4 ) ) );
+         QVERIFY( rejectedRun( { "--rotor", "2", "--cell", "5" } )
+                     .contains( QString( US_SimCli::cellBeyondRotorMessage ).arg( 5 ).arg( 4 ) ) );
       }
 
       void channelMissingFromTheCenterpieceIsRejected()
@@ -355,7 +356,8 @@ class US_AstfemSimPersistTest : public QObject
          // Not ten digits, and ten digits that are not a real date.
          for ( const QString& stamp : { QString( "abc" ), QString( "2413320000" ) } )
          {
-            QVERIFY2( rejectedRun( { "--edit-timestamp", stamp }, 1 ).contains( US_SimCli::invalidValueMessage( "edit-timestamp", stamp ) ),
+            QVERIFY2( rejectedRun( { "--edit-timestamp", stamp }, 1 )
+                         .contains( US_SimCli::invalidValueMessage( "edit-timestamp", stamp ) ),
                       qPrintable( stamp ) );
          }
       }

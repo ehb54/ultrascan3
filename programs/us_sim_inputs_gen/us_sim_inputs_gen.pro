@@ -52,4 +52,5 @@ macx {
   }
 }
 
+HEADERS      = us_sim_inputs_gen_cli.h
 SOURCES      = us_sim_inputs_gen.cpp

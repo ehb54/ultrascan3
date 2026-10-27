@@ -60,33 +60,33 @@ class US_MwlSpeciesSim : public US_Widgets
 
      private:
         //! \brief Load and aggregate models without displaying a selection dialog.
-        bool            load_models_from_paths( const QStringList& paths );
+        bool    load_models_from_paths( const QStringList& paths );
 
         //! \brief Save simulations to save_dir instead of US_Settings::importDir().
-        bool            save_sims_to( const QString& save_dir );
-        bool            write_edit_files( const QString& impdir, const QString& cell, const QString& channel );
+        bool    save_sims_to( const QString& save_dir );
+        bool    write_edit_files( const QString& impdir, const QString& cell, const QString& channel );
 
         //! \brief Write the experiment and solution records a database load
         //! needs, through the same utils writers us_astfem_sim uses.
         //! \param impdir The import directory the run was saved into.
         //! \param cell   The cell the run's datasets belong to.
         //! \return true if both documents were written.
-        bool            write_experiment_record( const QString& impdir, const QString& cell, const QString& channel );
+        bool    write_experiment_record( const QString& impdir, const QString& cell, const QString& channel );
 
         //! \brief Apply systematic and random noise to one wavelength.
         //! \param rdata Padded, clipped data.
         //! \param total_conc Total signal concentration, used to scale noise.
-        void            apply_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void    apply_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
 
         //! \brief Scale concentrations by extinction relative to the set maximum.
         //! Call before summing concentrations. All-zero extinction leaves the set unchanged.
-        void            apply_extinction_scaling( void );
+        void    apply_extinction_scaling( void );
 
-        void            add_ri_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
-        void            add_baseline( US_DataIO::RawData& rdata );
-        void            add_random_noise( US_DataIO::RawData& rdata, double total_conc );
-        void            add_ti_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
-        void            save_csv_noise( US_CSV_Data& csv );
+        void    add_ri_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void    add_baseline( US_DataIO::RawData& rdata );
+        void    add_random_noise( US_DataIO::RawData& rdata, double total_conc );
+        void    add_ti_noise( US_DataIO::RawData& rdata, double total_conc, int model_index );
+        void    save_csv_noise( US_CSV_Data& csv );
 
         int dbg_level;         //!< Debug level
         int nmodels;           //!< Number of models
@@ -99,19 +99,20 @@ class US_MwlSpeciesSim : public US_Widgets
 
         //! Stretched cell geometry, set by init_rawdata() and reused by every
         //! consumer so the data grid and the edit files cannot disagree.
-        double          curr_meniscus = 0.0; //!< Current meniscus
-        double          curr_bottom   = 0.0; //!< Current bottom
+        double  curr_meniscus = 0.0; //!< Current meniscus
+        double  curr_bottom   = 0.0; //!< Current bottom
 
         QString mfilt;         //!< Model filter
         QString mrunid;        //!< Model run ID
         QString orunid;        //!< Original run ID
-        QString         run_type;      //!< Two-character optical data type tag, "RA" unless overridden by --runtype
-        QString         sim_description    = "Simulation"; //!< Output data description, from --description
+        QString run_type;      //!< Two-character optical data type tag, "RA" unless overridden by --runtype
+        QString sim_description    = "Simulation"; //!< Output data description, from --description
         //! Output channel: "S" (simulation), or the models' channel on the command line
-        QString         sim_channel        = "S";
-        int             sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
-        uint            noise_seed         = 0; //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
-        QString         guid_seed;              //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
+        QString sim_channel        = "S";
+        int     sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
+        uint    noise_seed =
+           0; //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
+        QString         guid_seed;  //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
         QString         edit_stamp; //!< Fixed yyMMddhhmm for the edit filenames, from --edit-timestamp; empty uses the clock
 
         QVector<double> mtconcs; //!< Model concentrations

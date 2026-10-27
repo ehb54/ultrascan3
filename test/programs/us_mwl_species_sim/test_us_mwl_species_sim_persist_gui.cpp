@@ -250,9 +250,9 @@ class US_MwlSpeciesSimPersistTest : public QObject
       {
          // Only the first speed step is simulated, so a second one would be
          // recorded without any data behind it.
-         QString twoSteps = QString( kSimParams );
-         const int stepAt = twoSteps.indexOf( "        <speedstep" );
-         const int stepTo = twoSteps.indexOf( "\n", stepAt ) + 1;
+         QString   twoSteps = QString( kSimParams );
+         const int stepAt   = twoSteps.indexOf( "        <speedstep" );
+         const int stepTo   = twoSteps.indexOf( "\n", stepAt ) + 1;
          twoSteps.insert( stepTo, twoSteps.mid( stepAt, stepTo - stepAt ).replace( "40000", "20000" ) );
          QVERIFY( writeText( inputs + "/simparams_two_steps.xml", twoSteps ) );
 
@@ -261,20 +261,21 @@ class US_MwlSpeciesSimPersistTest : public QObject
 
          QProcess sim;
          sim.setProcessEnvironment( env );
-         sim.start( US_MWL_SPECIES_SIM_EXE, { "--no-db",
-                                              "--errors-cl",
-                                              "--start",
-                                              "--close",
-                                              "--models",
-                                              models.join( "," ),
-                                              "--buffer",
-                                              inputs + "/buffer.xml",
-                                              "--simparams",
-                                              inputs + "/simparams_two_steps.xml",
-                                              "--rotor",
-                                              "1",
-                                              "--save",
-                                              multiOut } );
+         sim.start( US_MWL_SPECIES_SIM_EXE,
+                    { "--no-db",
+                      "--errors-cl",
+                      "--start",
+                      "--close",
+                      "--models",
+                      models.join( "," ),
+                      "--buffer",
+                      inputs + "/buffer.xml",
+                      "--simparams",
+                      inputs + "/simparams_two_steps.xml",
+                      "--rotor",
+                      "1",
+                      "--save",
+                      multiOut } );
          QVERIFY( sim.waitForFinished( 60000 ) );
          QCOMPARE( sim.exitCode(), 2 );
          QVERIFY( QString::fromUtf8( sim.readAllStandardError() )
