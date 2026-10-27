@@ -24,7 +24,7 @@
 SOMO - SAXS/SANS (SAS) Module: MALS</h2>
 <p>
 <p>
-<h3><center>Last updated: February 2026 </center></h3><p>
+<h3><center>Last updated: October 2026 </center></h3><p>
 </center>
 <span style="color:#CC0000">The <b>Help</b> for the <b><i>MALS</b></i> module, available from the <b>July 2024</b> intermediate <b><i>US-SOMO</i></b> release, is currently still under construction. We apologize for any inconvenience this might cause.</span>
 <p>
@@ -1440,7 +1440,7 @@ For a description of the <b><i>Make results curves</i></b> and <b><i>To produced
 
 A re-peaked (and if necessary time-shifted) concentration chromatogram can be now fitted with Gaussians, using for initialization the set derived from the <i>I#(t)</i> vs. <i>t</i> chromatograms (note: it is mandatory that the same number of Gaussians be used for both the concentration and <i>I#(t)</i> vs. <i>t</i> chromatograms).<p>
 
-This is done by first selecting only the concentration chromatogram and then pressing <b><i>Gaussian</i></b> (<b><i>EMG+GMG</i></b> in this example), which will bring up the current Gaussian parameters automatically rescaled to the highest intensity in the concentration chromatogram:<p> 
+This is done by first selecting only the concentration chromatogram and then pressing <b><i>Gaussian</i></b> (<b><i>EMG+GMG</i></b> in this example), which will bring up the current Gaussian parameters. If their heights differ from those of the concentration chromatogram by more than 50%, as is usually the case, a pop-up asks whether to rescale them: answer <i>Rescale the Gaussian amplitudes</i> to rescale them to the highest intensity in the concentration chromatogram (<i>Do not rescale</i>, the default, leaves them unchanged, while <i>Do not rescale, don't ask again</i> also stops the question until the <b><i>MALS</i></b> module window is closed):<p> 
 <p>
 <center>
 <table id="somomainwindow" BORDER CELLSPACING=2 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -1510,7 +1510,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on February 13, 2026
+Last modified on October 27, 2026
 </font>
 </body>
 </html>

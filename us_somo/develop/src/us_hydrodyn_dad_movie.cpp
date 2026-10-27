@@ -474,6 +474,12 @@ void US_Hydrodyn_Dad_Movie::update_plot()
       last_show_gauss = cb_show_gauss->isChecked();
       last_show_ref   = cb_show_ref  ->isChecked();
 
+      // leave Gaussian mode first: the selection change replots, which deletes the Gaussian curves wheel_cancel() would detach
+      if ( dad_win->current_mode == dad_win->MODE_GAUSSIAN )
+      {
+         dad_win->wheel_cancel();
+      }
+
       dad_win->lb_files->clearSelection();
       if ( cb_show_ref->isChecked() )
       {
@@ -483,15 +489,11 @@ void US_Hydrodyn_Dad_Movie::update_plot()
       } 
       dad_win->lb_files->item( dad_selected_files[ pos ])->setSelected( true );
 
-      if ( dad_win->current_mode == dad_win->MODE_GAUSSIAN )
-      {
-         dad_win->wheel_cancel();
-      }
       if ( cb_show_gauss->isChecked() &&
            dad_win->f_is_time.count( dad_win->lb_files->item( dad_selected_files[ pos ] )->text() ) &&
            dad_win->f_is_time[ dad_win->lb_files->item( dad_selected_files[ pos ] )->text() ] )
       {
-         dad_win->gauss_start();
+         dad_win->gauss_start( false );
       }
       // else {
       // dad_win->plot_files();

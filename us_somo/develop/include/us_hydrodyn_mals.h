@@ -1340,6 +1340,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       bool                                wheel_errors_ok;
 
       bool                                opt_repeak_gaussians( QString file );
+      bool                                gauss_rescale_never_ask;
 
       QStringList                         all_selected_files();
       set < QString >                     all_selected_files_set();
@@ -1857,7 +1858,7 @@ class US_EXTERN US_Hydrodyn_Mals : public QFrame
       void adjust_wheel ( double );
 
       void gauss_mode();
-      void gauss_start();
+      void gauss_start( bool ask_rescale = true );
       void gauss_clear( );
       void gauss_new();
       void gauss_delete();
