@@ -2,15 +2,6 @@
 #ifndef US_MWL_SPECIES_SIM_H
 #define US_MWL_SPECIES_SIM_H
 
-// A caller may have already included us_license.h, whose unguarded
-// "spacing" macro collides with the spacing() methods some Qwt headers
-// declare (us_widgets.h pulls in qwt_plot.h, which needs its own axis
-// scale draws). Kept as a defense-in-depth guard even after trimming this
-// header's own, actually-unused Qwt includes below.
-#ifdef spacing
-#undef spacing
-#endif
-
 #include "us_buffer.h"
 #include "us_csv_data.h"
 #include "us_extern.h"
