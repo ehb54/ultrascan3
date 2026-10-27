@@ -1,6 +1,7 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "mock_us_db2.h"
+#include "qt_test_base.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <memory>
 
 using namespace testing;

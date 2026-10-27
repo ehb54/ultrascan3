@@ -136,14 +136,14 @@ class US_SimInputsGenCliTest : public QObject
          const QString other  = generate( "default_3", "s2" );
          QVERIFY( !first.isEmpty() && !second.isEmpty() && !other.isEmpty() );
 
-         for ( const QString& name : { "model_default.xml", "buffer_default.xml", "sp_default.xml" } )
+         for ( const QString& name : QStringList{ "model_default.xml", "buffer_default.xml", "sp_default.xml" } )
          {
             const QByteArray bytes = contents( first + "/" + name );
             QVERIFY2( !bytes.isEmpty(), qPrintable( name ) );
             QVERIFY2( bytes == contents( second + "/" + name ), qPrintable( name + " differs for the same seed" ) );
          }
 
-         for ( const QString& name : { "model_default.xml", "buffer_default.xml" } )
+         for ( const QString& name : QStringList{ "model_default.xml", "buffer_default.xml" } )
          {
             QVERIFY2( contents( first + "/" + name ) != contents( other + "/" + name ),
                       qPrintable( name + " is the same for different seeds" ) );
