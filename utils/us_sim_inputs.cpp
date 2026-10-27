@@ -2,6 +2,7 @@
 #include "us_sim_inputs.h"
 #include "us_constants.h"
 #include "us_hardware.h"
+#include "us_sim_record.h"
 #include "us_util.h"
 #include <QDir>
 #include <QStringList>
@@ -264,16 +265,16 @@ bool US_SimInputs::simParams( US_SimulationParameters& params_out, QString& erro
    return simParams( Params(), params_out, error );
 }
 
-US_Buffer US_SimInputs::buffer()
+US_Buffer US_SimInputs::buffer( const QString& guidSeed )
 {
    US_Buffer buffer_out;
    buffer_out.description = "us3-sim-inputs generated water buffer v1";
-   buffer_out.GUID        = US_Util::new_guid();
+   buffer_out.GUID        = US_SimRecord::guid( guidSeed, "buffer.default" );
 
    return buffer_out;
 }
 
-bool US_SimInputs::writeAll( const QString& dir, QString& error )
+bool US_SimInputs::writeAll( const QString& dir, QString& error, const QString& guidSeed )
 {
    QDir outdir( dir );
    if ( !outdir.exists() )
@@ -294,6 +295,9 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
    {
       return false;
    }
+   // Keyed apart from --emit-model's "model", so one seed never gives the
+   // default model and a custom model the same identity.
+   model.modelGUID = US_SimRecord::guid( guidSeed, "model.default" );
 
    if ( params.save_simparms( outdir.filePath( "sp_default.xml" ) ) != 0 )
    {
@@ -307,7 +311,7 @@ bool US_SimInputs::writeAll( const QString& dir, QString& error )
       return false;
    }
 
-   if ( !buffer().writeToDisk( outdir.filePath( "buffer_default.xml" ) ) )
+   if ( !buffer( guidSeed ).writeToDisk( outdir.filePath( "buffer_default.xml" ) ) )
    {
       error = "could not write buffer_default.xml";
       return false;

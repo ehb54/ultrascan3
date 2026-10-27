@@ -74,15 +74,18 @@ class US_UTIL_EXTERN US_SimInputs
       static bool      simParams( US_SimulationParameters& params, QString& error );
 
       //! \brief Create a default buffer using water properties at 20 C.
-      static US_Buffer buffer();
+      //! \param guidSeed Reproducible GUID seed; empty generates a random GUID.
+      static US_Buffer buffer( const QString& guidSeed = QString() );
 
       //! \brief Write the default simulation parameters, model, and buffer.
       //! Creates sp_default.xml, model_default.xml, and buffer_default.xml
       //! using each class's serializer.
-      //! \param dir   Existing output directory.
-      //! \param error Error message on failure; empty on success.
+      //! \param dir      Existing output directory.
+      //! \param error    Error message on failure; empty on success.
+      //! \param guidSeed Reproducible GUID seed for the model and buffer;
+      //!                 empty generates random GUIDs.
       //! \return true on success; otherwise, false.
-      static bool      writeAll( const QString& dir, QString& error );
+      static bool      writeAll( const QString& dir, QString& error, const QString& guidSeed = QString() );
 };
 
 #endif // US_SIM_INPUTS_H

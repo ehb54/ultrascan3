@@ -56,6 +56,12 @@ class US_UTIL_EXTERN US_SimRecord
 
       /*! \brief The largest value in a dataset, the OD ceiling an edit file
                  records and RMSD calculations read.
+
+          Taken from the data, the limit never excludes a point, so it
+          deliberately disables OD filtering of simulated data. It is also far
+          above any plateau: MWL's meniscus spike puts it at 1.5 times the total
+          concentration or more, and ASTFEM's bottom pile-up can reach about
+          33 OD for the default model.
           \param data The dataset to scan.
           \returns    The maximum, or zero for an empty dataset.
       */

@@ -906,6 +906,13 @@ int US_MwlSpeciesSim::init_from_args( const QMap<QString, QString>& flags )
          reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl, gui_needed, error_occured );
          loaded_simparams = false;
       }
+      else if ( simparams.speed_step.size() != 1 )
+      { // set_parameters() and the simulation use only the first speed step.
+         QTextStream( stderr ) << "Error: " << load_id << " has " << simparams.speed_step.size()
+                               << " speed steps; us_mwl_species_sim simulates exactly one" << Qt::endl;
+         reportHeadlessLoadFailure( "simparams", load_id, errors_to_cl, gui_needed, error_occured );
+         loaded_simparams = false;
+      }
       else
       {
          // The file omits bottom_position; mirror the loaded at-rest bottom.
@@ -1665,7 +1672,7 @@ void US_MwlSpeciesSim::save_csv_noise( US_CSV_Data& csv )
    csv.writeFile( "," );
 }
 
-// Apply noise after clipping and padding.
+// Apply noise after clipping and before padding.
 // Each wavelength gets its own TI, RI, and random noise.
 // Noise scales with concentration, an approximation of instrument noise.
 void US_MwlSpeciesSim::apply_noise( US_DataIO::RawData& rdata, double total_conc, int model_index )

@@ -118,7 +118,7 @@ class US_MwlSpeciesSim : public US_Widgets
         //! Output channel: "S" (simulation), or the models' channel on the command line
         QString         sim_channel        = "S";
         int             sim_centerpiece_id = 1; //!< Centerpiece ID for the experiment record; 1 is the simulation centerpiece
-        uint            noise_seed         = 0; //!< Noise generator seed from --noise-seed; 0 leaves the generator as it is
+        uint            noise_seed         = 0; //!< Noise generator seed from --noise-seed or chosen for a started run; 0 leaves the generator as it is
         QString         guid_seed;              //!< Seed for reproducible GUIDs, from --guid-seed; empty mints random ones
         QString         edit_stamp; //!< Fixed yyMMddhhmm for the edit filenames, from --edit-timestamp; empty uses the clock
 

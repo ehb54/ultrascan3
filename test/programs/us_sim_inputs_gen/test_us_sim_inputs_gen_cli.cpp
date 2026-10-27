@@ -101,6 +101,44 @@ class US_SimInputsGenCliTest : public QObject
          QCOMPARE( run( mwlModel( { "--cell", "2", "--channel", "b", "--wavelength", "280" } ), err ), 0 );
          QVERIFY( QFile::exists( scratch.filePath( "model_2B_280.xml" ) ) );
       }
+
+      void defaultModeHonoursGuidSeed()
+      {
+         // Generate the default inputs into the named directory with the given seed.
+         auto generate = [ this ]( const QString& name, const QString& seed ) -> QString
+         {
+            const QString dir = scratch.filePath( name );
+            QString       err;
+            if ( !QDir().mkpath( dir ) || run( { "--out", dir, "--guid-seed", seed }, err ) != 0 )
+            {
+               return QString();
+            }
+            return dir;
+         };
+         auto contents = []( const QString& path ) -> QByteArray
+         {
+            QFile file( path );
+            return file.open( QIODevice::ReadOnly ) ? file.readAll() : QByteArray();
+         };
+
+         const QString first  = generate( "default_1", "s1" );
+         const QString second = generate( "default_2", "s1" );
+         const QString other  = generate( "default_3", "s2" );
+         QVERIFY( !first.isEmpty() && !second.isEmpty() && !other.isEmpty() );
+
+         for ( const QString& name : { "model_default.xml", "buffer_default.xml", "sp_default.xml" } )
+         {
+            const QByteArray bytes = contents( first + "/" + name );
+            QVERIFY2( !bytes.isEmpty(), qPrintable( name ) );
+            QVERIFY2( bytes == contents( second + "/" + name ), qPrintable( name + " differs for the same seed" ) );
+         }
+
+         for ( const QString& name : { "model_default.xml", "buffer_default.xml" } )
+         {
+            QVERIFY2( contents( first + "/" + name ) != contents( other + "/" + name ),
+                      qPrintable( name + " is the same for different seeds" ) );
+         }
+      }
 };
 
 US3_GUI_TEST_MAIN( US_SimInputsGenCliTest )

@@ -1,13 +1,15 @@
 //! \file test_us_astfem_reproducibility_gui.cpp
 // Verify that two headless runs with identical --guid-seed, --noise-seed,
 // and --edit-timestamp produce byte-identical .auc data and matching
-// identities in the edit XML. This is the headline feature of the
-// deterministic simulator CLI.
+// identities in the edit XML, that generating inputs twice with one
+// --guid-seed produces identical files, and that runs without --noise-seed
+// get fresh, reported, reproducible seeds.
 
 #include "us3_gui_test_main.h"
 
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QRegularExpression>
 #include <QXmlStreamReader>
 
 #include "us3_dev_license.h"
@@ -79,74 +81,94 @@ class US_AstfemSimReproducibilityTest : public QObject
       Q_OBJECT
 
       QTemporaryDir       scratch;
-      QString             inputs;
+      QString             inputsA;
+      QString             inputsB;
       QString             outA;
       QString             outB;
       QProcessEnvironment env;
 
-      // Run the full generate-and-simulate sequence into the given output dir.
-      void                runOnce( const QString& outDir )
+      // The generated files compared between the two runs.
+      const QStringList   generatedFiles{ "model.xml", "buffer.xml", "default/model_default.xml",
+                                          "default/buffer_default.xml", "default/sp_default.xml" };
+
+      // Generate one run's inputs, each mode with the same --guid-seed.
+      void                generate( const QString& inputsDir )
       {
-         QProcess gen;
-         gen.setProcessEnvironment( env );
-         gen.start( US_SIM_INPUTS_GEN_EXE,
-                    { "--emit-model",
-                      "--out",
-                      inputs + "/model.xml",
-                      "-s",
-                      "4.58S",
-                      "--mw",
-                      "66430",
-                      "--vbar20",
-                      "0.733",
-                      "--name",
-                      "BSA",
-                      "--guid-seed",
-                      kGuidSeed } );
-         QVERIFY( gen.waitForFinished( 60000 ) );
-         QCOMPARE( gen.exitCode(), 0 );
+         QVERIFY( QDir().mkpath( inputsDir + "/default" ) );
+         QVERIFY( writeText( inputsDir + "/simparams.xml", kSimParams ) );
 
-         gen.start( US_SIM_INPUTS_GEN_EXE,
-                    { "--emit-buffer",
-                      "--out",
-                      inputs + "/buffer.xml",
-                      "--density",
-                      "0.998234",
-                      "--viscosity",
-                      "1.001940",
-                      "--ph",
-                      "7.0",
-                      "--guid-seed",
-                      kGuidSeed } );
-         QVERIFY( gen.waitForFinished( 60000 ) );
-         QCOMPARE( gen.exitCode(), 0 );
+         const QList<QStringList> invocations{
+            { "--emit-model", "--out", inputsDir + "/model.xml", "-s", "4.58S", "--mw", "66430", "--vbar20", "0.733",
+              "--name", "BSA" },
+            { "--emit-buffer", "--out", inputsDir + "/buffer.xml", "--density", "0.998234", "--viscosity", "1.001940",
+              "--ph", "7.0" },
+            { "--out", inputsDir + "/default" } };
 
-         QVERIFY( QDir().mkpath( outDir ) );
+         for ( const QStringList& args : invocations )
+         {
+            QProcess gen;
+            gen.setProcessEnvironment( env );
+            gen.start( US_SIM_INPUTS_GEN_EXE, args + QStringList{ "--guid-seed", kGuidSeed } );
+            QVERIFY( gen.waitForFinished( 60000 ) );
+            QCOMPARE( gen.exitCode(), 0 );
+         }
+      }
+
+      // Simulate from the given inputs into outDir; return the program's stdout.
+      QString             simulate( const QString& inputsDir, const QString& outDir, const QStringList& extra )
+      {
+         if ( !QDir().mkpath( outDir ) )
+         {
+            QTest::qFail( qPrintable( "could not create " + outDir ), __FILE__, __LINE__ );
+            return QString();
+         }
 
          QProcess sim;
          sim.setProcessEnvironment( env );
-         sim.start( US_ASTFEM_SIM_EXE, { "--no-db",          "--errors-cl",
-                                         "--start",          "--close",
-                                         "--model",          inputs + "/model.xml",
-                                         "--buffer",         inputs + "/buffer.xml",
-                                         "--simparams",      inputs + "/simparams.xml",
-                                         "--rotor",          "1",
-                                         "--save",           outDir,
-                                         "--guid-seed",      kGuidSeed,
-                                         "--edit-timestamp", kEditStamp,
-                                         "--noise-seed",     "4242",
-                                         "--description",    kDescription,
-                                         "--centerpiece",    "3" } );
+         sim.start( US_ASTFEM_SIM_EXE, QStringList{ "--no-db",          "--errors-cl",
+                                                    "--close",          "--model",
+                                                    inputsDir + "/model.xml",
+                                                    "--buffer",         inputsDir + "/buffer.xml",
+                                                    "--simparams",      inputsDir + "/simparams.xml",
+                                                    "--rotor",          "1",
+                                                    "--save",           outDir,
+                                                    "--guid-seed",      kGuidSeed,
+                                                    "--edit-timestamp", kEditStamp,
+                                                    "--description",    kDescription,
+                                                    "--centerpiece",    "3" } +
+                                           extra );
          if ( !sim.waitForFinished( 300000 ) )
          {
             sim.kill();
             sim.waitForFinished( 5000 );
-            QFAIL( "us_astfem_sim did not finish; check that UltraScan is "
-                   "registered for this user" );
+            QTest::qFail( "us_astfem_sim did not finish; check that UltraScan is registered for this user", __FILE__,
+                          __LINE__ );
+            return QString();
          }
 
-         QCOMPARE( sim.exitStatus(), QProcess::NormalExit );
-         QCOMPARE( sim.exitCode(), 0 );
+         const QString err = QString::fromUtf8( sim.readAllStandardError() );
+         if ( sim.exitStatus() != QProcess::NormalExit || sim.exitCode() != 0 )
+         {
+            QTest::qFail( qPrintable( QString( "us_astfem_sim exited %1: %2" ).arg( sim.exitCode() ).arg( err ) ),
+                          __FILE__, __LINE__ );
+            return QString();
+         }
+
+         return QString::fromUtf8( sim.readAllStandardOutput() );
+      }
+
+      // The run's dataset, or an empty array if it was not written.
+      static QByteArray   aucOf( const QString& outDir )
+      {
+         QFile file( outDir + "/" + QString( kRunID ) + ".RA.1.S.123.auc" );
+         return file.open( QIODevice::ReadOnly ) ? file.readAll() : QByteArray();
+      }
+
+      // The seed a run reports choosing, or 0 if it reported none.
+      static uint         reportedSeed( const QString& out )
+      {
+         const QRegularExpressionMatch match = QRegularExpression( "Noise seed: (\\d+)" ).match( out );
+         return match.hasMatch() ? match.captured( 1 ).toUInt() : 0;
       }
 
    private slots:
@@ -154,18 +176,16 @@ class US_AstfemSimReproducibilityTest : public QObject
       {
          QVERIFY( scratch.isValid() );
 
-         inputs = scratch.path() + "/inputs";
-         outA   = scratch.path() + "/out_a/" + kRunID;
-         outB   = scratch.path() + "/out_b/" + kRunID;
+         inputsA = scratch.path() + "/inputs_a";
+         inputsB = scratch.path() + "/inputs_b";
+         outA    = scratch.path() + "/out_a/" + kRunID;
+         outB    = scratch.path() + "/out_b/" + kRunID;
 
          const QString home = scratch.path() + "/home";
-         QVERIFY( QDir().mkpath( inputs ) );
          QVERIFY( QDir().mkpath( home + "/ultrascan/tmp" ) );
          QVERIFY( QDir().mkpath( home + "/ultrascan/imports" ) );
          QVERIFY( QDir().mkpath( home + "/ultrascan/results" ) );
          registerDevLicenseFor( home );
-
-         QVERIFY( writeText( inputs + "/simparams.xml", kSimParams ) );
 
          env = QProcessEnvironment::systemEnvironment();
          env.insert( "HOME", home );
@@ -178,25 +198,69 @@ class US_AstfemSimReproducibilityTest : public QObject
             env.remove( name );
          }
 
-         runOnce( outA );
-         // A QFAIL inside runOnce() only unwinds that call, not initTestCase();
-         // without this check, a stuck/missing registration doubles the wait
+         // A QFAIL inside a helper only unwinds that call, not initTestCase();
+         // without these checks, a stuck/missing registration doubles the wait
          // (two sequential 300s kills) and trips CTest's 600s hard timeout
          // instead of failing cleanly.
+         generate( inputsA );
          if ( QTest::currentTestFailed() )
          {
             return;
          }
-         runOnce( outB );
+         generate( inputsB );
+         if ( QTest::currentTestFailed() )
+         {
+            return;
+         }
+         simulate( inputsA, outA, { "--start", "--noise-seed", "4242" } );
+         if ( QTest::currentTestFailed() )
+         {
+            return;
+         }
+         simulate( inputsB, outB, { "--start", "--noise-seed", "4242" } );
       }
 
       void generatedInputsAreReproducible()
       {
-         // us_sim_inputs_gen was invoked twice with the same --guid-seed to
-         // build the shared model.xml/buffer.xml; both runs share one copy, so
-         // reproducibility of the generator itself is covered by the XML GUIDs
-         // both simulator runs below ended up referencing.
-         QVERIFY2( !attributeOf( inputs + "/model.xml", "model", "modelGUID" ).isEmpty(), "generated model carries no modelGUID" );
+         // Each run generated its own inputs, so equal files mean every
+         // generator mode honours --guid-seed.
+         for ( const QString& name : generatedFiles )
+         {
+            QFile fileA( inputsA + "/" + name );
+            QFile fileB( inputsB + "/" + name );
+            QVERIFY2( fileA.open( QIODevice::ReadOnly ), qPrintable( fileA.fileName() ) );
+            QVERIFY2( fileB.open( QIODevice::ReadOnly ), qPrintable( fileB.fileName() ) );
+            QVERIFY2( fileA.readAll() == fileB.readAll(), qPrintable( name + " differs between the two generator runs" ) );
+         }
+
+         QVERIFY2( !attributeOf( inputsA + "/model.xml", "model", "modelGUID" ).isEmpty(), "generated model carries no modelGUID" );
+      }
+
+      void unseededRunsGetFreshNoiseAndReportTheirSeed()
+      {
+         // These runs omit --start: --save implies it.
+         const QString outC = scratch.path() + "/out_c/" + kRunID;
+         const QString outD = scratch.path() + "/out_d/" + kRunID;
+         const QString outE = scratch.path() + "/out_e/" + kRunID;
+
+         const uint seedC = reportedSeed( simulate( inputsA, outC, {} ) );
+         QVERIFY( !QTest::currentTestFailed() );
+         const uint seedD = reportedSeed( simulate( inputsA, outD, {} ) );
+         QVERIFY( !QTest::currentTestFailed() );
+
+         QVERIFY2( seedC != 0, "an unseeded run did not report its noise seed" );
+         QVERIFY2( seedD != 0, "an unseeded run did not report its noise seed" );
+         QVERIFY( seedC != seedD );
+
+         const QByteArray aucC = aucOf( outC );
+         QVERIFY2( !aucC.isEmpty(), "--save without --start wrote no data" );
+         QVERIFY2( aucC != aucOf( outD ), "two unseeded runs produced the same noise" );
+
+         // The reported seed reproduces the run.
+         const QString outE_stdout = simulate( inputsA, outE, { "--noise-seed", QString::number( seedC ) } );
+         QVERIFY( !QTest::currentTestFailed() );
+         QCOMPARE( reportedSeed( outE_stdout ), 0u );
+         QVERIFY2( aucOf( outE ) == aucC, "rerunning with the reported seed did not reproduce the run" );
       }
 
       void sameSeedsProduceByteIdenticalAucData()

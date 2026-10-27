@@ -61,7 +61,7 @@ int main( int argc, char* argv[] )
                                           "Directory to write the run into; its last path component becomes the "
                                           "run ID. Writes several files, not one: the .auc data, the time-state "
                                           "pair, the edit file, and any noise CSVs. A multi-speed run instead "
-                                          "writes one sibling directory per speed, suffixed with -<rpm>",
+                                          "writes one sibling directory per speed, suffixed with -<rpm>. Implies --start",
                                           "dir" );
    parser.addOption( save_option );
    auto guid_seed_option = QCommandLineOption( "guid-seed",
@@ -182,10 +182,11 @@ int main( int argc, char* argv[] )
    {
       return cli_exit_code;
    }
-   // parse save
+   // parse save; saving needs a simulation, so --save implies --start
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
    {
-      args["save"] = parser.value( save_option ).replace( "\\", "/" );
+      args["save"]  = parser.value( save_option ).replace( "\\", "/" );
+      args["start"] = "true";
    }
    // parse guid-seed
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
@@ -202,6 +203,7 @@ int main( int argc, char* argv[] )
    {
       args["close"] = "true";
    }
+   chooseNoiseSeedIfUnset( args );
    int init_status = w.init_from_args( args );
    // Show the GUI only if needed.
    return showGuiIfNeeded( w, init_status, args );

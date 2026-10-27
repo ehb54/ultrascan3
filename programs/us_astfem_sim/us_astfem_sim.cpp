@@ -906,34 +906,29 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 void US_Astfem_Sim::start_simulation( void )
 {
 //DbgLv(1) << "start_simulation is called";
-sim_failed = false;
-double        current_time; // Used for current time
-double        delay;        // Acceleration time of the rotor from one speed to other
-double        increment;    // Used to update omega_2_t in experimental grid
-double        duration;     // Used for time left after acceleration zone
+   sim_failed = false;
 
-int           size_cv = system.components.size(); // Number of components in the system
-QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
+   int size_cv    = system.components.size();// Number of components in the system
+   QVector< bool >  reactVec( size_cv );     // Boolean array showing reaction case between system
 
-//moviePlot->autoRefresh();
+   //moviePlot->autoRefresh();
 
-moviePlot->replot();
-curve_count  = 0;
-image_count  = 0;
-int    nstep = simparams.speed_step.size();
-double rpm   = simparams.speed_step[0].rotorspeed; // Rotor speed for first speed step
-dataPlotClear( scanPlot );
-scanPlot->setAxisAutoScale( QwtPlot::xBottom );
-scanPlot->replot();
+   moviePlot->replot();
+   curve_count    = 0;
+   image_count    = 0;
+   int nstep      = simparams.speed_step.size();
+   dataPlotClear( scanPlot );
+   scanPlot ->setAxisAutoScale( QwtPlot::xBottom );
+   scanPlot ->replot();
 
-pb_stop->setEnabled( true );
-pb_start->setEnabled( false );
-pb_saveSim->setEnabled( false );
+   pb_stop   ->setEnabled( true  );
+   pb_start  ->setEnabled( false );
+   pb_saveSim->setEnabled( false );
 
-// The astfem/astfvm simulation routines expects a dataset structure that
-// is initialized with a time and radius grid, and all concentration points
-// need to be set to zero. Each speed is a separate mfem_data set.
-sim_datas.resize( nstep );
+   // The astfem/astfvm simulation routines expects a dataset structure that
+   // is initialized with a time and radius grid, and all concentration points
+   // need to be set to zero. Each speed is a separate mfem_data set.
+   sim_datas.resize( nstep );
 DbgLv(1) << "start_simulation is called, steps:" << nstep;
    // Experimental grid setting starts from here
    for ( int jd = 0; jd < nstep; jd++ )
@@ -997,15 +992,6 @@ DbgLv(1) << "astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].
       }
    }
 
-   // Initialize delay
-   delay        = simparams.speed_step[ 0 ].delay_hours * 3600.0
-                + simparams.speed_step[ 0 ].delay_minutes * 60.0;
-
-   current_time        = 0.0;   // Initial time
-   duration            = 0.0;   // Initialize total duration
-   increment           = 0.0;   // Initial increment in time
-//   int    scan_number  = 0;   // Counter for each scan and initialized to zero
-   double acc_time;
 //for ( int i =0; i< sim_datas.scanData.size();i++ )
 // DbgLv(1)<<"time="<<sim_datas.scanData[i].seconds<<"omega2t="<< sim_datas.scanData[i].omega2t;
 
@@ -1148,7 +1134,16 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
       connect( astfvm, &US_LammAstfvm::calc_progress, this, &US_Astfem_Sim::show_progress );
       connect( astfvm, &US_LammAstfvm::calc_done, this, &US_Astfem_Sim::calc_over );
       astfvm->set_buffer( buffer );
-      astfvm->calculate( sim_datas[ 0 ] );
+      if ( astfvm->calculate( sim_datas[ 0 ] ) != 0 )
+      { // Stop before saving if the solver fails, as for ASTFEM above.
+         DbgLv( 0 ) << "US_Astfem_Sim: simulation failed";
+         sim_failed = true;
+         pb_stop->setEnabled( false );
+         pb_start->setEnabled( true );
+         delete astfvm;
+         astfvm = NULL;
+         return;
+      }
    }
 
    finish();
@@ -1386,8 +1381,8 @@ void US_Astfem_Sim::derive_speed_data( void )
    {
       if ( scan_offset + sim_datas[jd].scanData.size() > sim_data_all.scanData.size() )
       {
-         DbgErr( 1 ) << "ASIM:derive_speed_data: per-speed scan count exceeds "
-                        "the composite's scan count; sim_failed set";
+         DbgLv( 0 ) << "ASIM:derive_speed_data: per-speed scan count exceeds "
+                       "the composite's scan count; sim_failed set";
          sim_failed = true;
          return;
       }
@@ -1402,8 +1397,8 @@ void US_Astfem_Sim::derive_speed_data( void )
 
    if ( scan_offset != sim_data_all.scanData.size() )
    {
-      DbgErr( 1 ) << "ASIM:derive_speed_data: per-speed scan counts do not sum "
-                     "to the composite's scan count; sim_failed set";
+      DbgLv( 0 ) << "ASIM:derive_speed_data: per-speed scan counts do not sum "
+                    "to the composite's scan count; sim_failed set";
       sim_failed = true;
    }
 }

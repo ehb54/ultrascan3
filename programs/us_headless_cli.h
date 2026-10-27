@@ -10,6 +10,7 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QMap>
+#include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QString>
 #include <QStringList>
@@ -245,8 +246,30 @@ inline QString noiseSeedOptionHelp()
 {
    return QString( "Seed for the noise generator (1 to %1). Given the same "
                    "seed and the same inputs, a run's noise is reproducible; "
-                   "omitted, the generator is left as it is" )
+                   "omitted, a started run picks a fresh seed and prints it" )
       .arg( UINT_MAX );
+}
+
+//! \brief Give a started run without --noise-seed a fresh seed, and print it.
+//! Unseeded, the generator starts from the same fixed state in every process,
+//! so replicate runs would all get the same noise.
+inline void chooseNoiseSeedIfUnset( QMap<QString, QString>& args )
+{
+   if ( !args.contains( "start" ) || args.contains( "noise-seed" ) )
+   {
+      return;
+   }
+
+   // Zero is reserved: US_Math2::randomize() reads it as "use the clock".
+   quint32 seed = 0;
+   while ( seed == 0 )
+   {
+      seed = QRandomGenerator::system()->generate();
+   }
+
+   args["noise-seed"] = QString::number( seed );
+   QTextStream( stdout ) << "Noise seed: " << seed << " (pass --noise-seed " << seed << " to reproduce this run's noise)"
+                         << Qt::endl;
 }
 
 //! \brief Help text for the --channel option, shared by the simulators.

@@ -81,15 +81,17 @@ class US_MwlSpeciesSimPersistTest : public QObject
       QString             outDir;
       QProcessEnvironment env;
       QString             savedRunID; // the program derives it from the models
+      QString             inputs;
+      QStringList         models;
 
    private slots:
       void initTestCase()
       {
          QVERIFY( scratch.isValid() );
 
-         const QString inputs = scratch.path() + "/inputs";
-         const QString home   = scratch.path() + "/home";
-         outDir               = scratch.path() + "/out/" + kRunID;
+         const QString home = scratch.path() + "/home";
+         inputs             = scratch.path() + "/inputs";
+         outDir             = scratch.path() + "/out/" + kRunID;
 
          QVERIFY( QDir().mkpath( inputs ) );
          QVERIFY( QDir().mkpath( outDir ) );
@@ -112,8 +114,7 @@ class US_MwlSpeciesSimPersistTest : public QObject
             env.remove( name );
          }
 
-         QStringList models;
-         QProcess    gen;
+         QProcess gen;
          gen.setProcessEnvironment( env );
 
          for ( const QString& wavelength : kWavelengths )
@@ -242,6 +243,41 @@ class US_MwlSpeciesSimPersistTest : public QObject
          QVERIFY( sim.waitForFinished( 60000 ) );
          QCOMPARE( sim.exitCode(), 1 );
          QVERIFY( QString::fromUtf8( sim.readAllStandardError() ).contains( "--noise-seed" ) );
+      }
+
+      void multiSpeedSimparamsAreRejected()
+      {
+         // Only the first speed step is simulated, so a second one would be
+         // recorded without any data behind it.
+         QString twoSteps = QString( kSimParams );
+         const int stepAt = twoSteps.indexOf( "        <speedstep" );
+         const int stepTo = twoSteps.indexOf( "\n", stepAt ) + 1;
+         twoSteps.insert( stepTo, twoSteps.mid( stepAt, stepTo - stepAt ).replace( "40000", "20000" ) );
+         QVERIFY( writeText( inputs + "/simparams_two_steps.xml", twoSteps ) );
+
+         const QString multiOut = scratch.path() + "/out_multi/" + kRunID;
+         QVERIFY( QDir().mkpath( multiOut ) );
+
+         QProcess sim;
+         sim.setProcessEnvironment( env );
+         sim.start( US_MWL_SPECIES_SIM_EXE, { "--no-db",
+                                              "--errors-cl",
+                                              "--start",
+                                              "--close",
+                                              "--models",
+                                              models.join( "," ),
+                                              "--buffer",
+                                              inputs + "/buffer.xml",
+                                              "--simparams",
+                                              inputs + "/simparams_two_steps.xml",
+                                              "--rotor",
+                                              "1",
+                                              "--save",
+                                              multiOut } );
+         QVERIFY( sim.waitForFinished( 60000 ) );
+         QCOMPARE( sim.exitCode(), 2 );
+         QVERIFY( QString::fromUtf8( sim.readAllStandardError() ).contains( "2 speed steps" ) );
+         QVERIFY( QDir( multiOut ).isEmpty() );
       }
 
       void theRunHasOneExperimentRecordNamingAProject()

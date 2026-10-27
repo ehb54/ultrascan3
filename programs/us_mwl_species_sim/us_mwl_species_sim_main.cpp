@@ -3,25 +3,12 @@
 
 #include <QApplication>
 
-#include "us_astfem_math.h"
-#include "us_astfem_rsa.h"
-#include "us_data_loader.h"
 #include "us_gui_settings.h"
-#include "us_hardware.h"
 #include "us_headless_cli.h"
-#include "us_images.h"
 #include "us_license.h"
 #include "us_license_t.h"
-#include "us_math2.h"
 #include "us_mwl_species_sim.h"
-#include "us_passwd.h"
-#include "us_select_runs.h"
 #include "us_settings.h"
-#include "us_sim_inputs.h"
-#include "us_util.h"
-
-#include "qwt_picker_machine.h"
-#define dPlotClearAll( a ) a->detachItems( QwtPlotItem::Rtti_PlotItem, true )
 
 //! \brief Load translators and start US_MwlSpeciesSim.
 int main( int argc, char* argv[] )
@@ -59,7 +46,7 @@ int main( int argc, char* argv[] )
    parser.addOption( centerpiece_channel_option );
    auto start_option = QCommandLineOption( "start", "Start simulations automatically" );
    parser.addOption( start_option );
-   auto save_option = QCommandLineOption( "save", "Save simulation data to a directory", "save" );
+   auto save_option = QCommandLineOption( "save", "Save simulation data to a directory. Implies --start", "save" );
    parser.addOption( save_option );
    auto guid_seed_option = QCommandLineOption( "guid-seed",
                                                "Derive this run's experiment, raw and edit GUIDs from this text "
@@ -152,9 +139,11 @@ int main( int argc, char* argv[] )
    {
       return cli_exit_code;
    }
+   // Saving needs a simulation, so --save implies --start.
    if ( parser.isSet( save_option ) && !parser.value( save_option ).isEmpty() )
    {
-      args["save"] = parser.value( save_option ).replace( "\\", "/" );
+      args["save"]  = parser.value( save_option ).replace( "\\", "/" );
+      args["start"] = "true";
    }
    if ( parser.isSet( guid_seed_option ) && !parser.value( guid_seed_option ).isEmpty() )
    {
@@ -169,6 +158,7 @@ int main( int argc, char* argv[] )
       args["close"] = "true";
    }
 
+   chooseNoiseSeedIfUnset( args );
    int init_status = args.isEmpty() ? 1 : w.init_from_args( args );
 
    if ( init_status == 1 && args.contains( "errors-cl" ) )
