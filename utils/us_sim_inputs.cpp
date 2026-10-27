@@ -93,7 +93,7 @@ QString US_SimInputs::validateParams( const Params& p )
    // rounded value of zero makes the acceleration ramp infinitely long.
    if ( qRound( p.acceleration ) < 1 )
    {
-      return QString( "acceleration must be at least 1 rpm/s (got %1)" ).arg( p.acceleration );
+      return QString( lowAccelerationMessage ).arg( p.acceleration );
    }
 
    const double finite_values[] = { p.delay_minutes, p.rnoise, p.lrnoise, p.tinoise, p.rinoise, p.baseline };
@@ -113,10 +113,7 @@ QString US_SimInputs::validateParams( const Params& p )
 
    if ( delay_min >= duration_min )
    {
-      return QString( "delay (%1 min) must be shorter than the run duration"
-                      " (%2 min)" )
-         .arg( delay_min )
-         .arg( duration_min );
+      return QString( delayTooLongMessage ).arg( delay_min ).arg( duration_min );
    }
 
    if ( p.meshType < US_SimulationParameters::ASTFEM || p.meshType > US_SimulationParameters::ASTFVM )

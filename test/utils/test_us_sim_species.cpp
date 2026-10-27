@@ -106,8 +106,10 @@ TEST_F( US_SimSpeciesTest, ZeroIsASuppliedCoefficientRatherThanAMarker )
    EXPECT_TRUE( c.s.supplied );
    EXPECT_DOUBLE_EQ( c.s.value, 0.0 );
 
-   // Validation may reject the pair, but not its coefficient count.
-   EXPECT_FALSE( US_SimSpecies::validateComponent( c ).contains( "exactly two" ) );
+   // Validation may reject the pair, but not its coefficient count: the
+   // error must not start with the count message's fixed text.
+   const QString count_prefix = QString( US_SimSpecies::coefficientCountMessage ).section( "%1", 0, 0 );
+   EXPECT_FALSE( US_SimSpecies::validateComponent( c ).startsWith( count_prefix ) );
 }
 
 TEST_F( US_SimSpeciesTest, ComponentAcceptsEverySolvablePair )
@@ -534,8 +536,7 @@ TEST_F( US_SimSpeciesTest, MixtureValidationIdentifiesTheFailingComponent )
    mixture << good << bad;
 
    QString error = US_SimSpecies::validateComponents( mixture );
-   EXPECT_FALSE( error.isEmpty() );
-   EXPECT_TRUE( error.contains( "component 2" ) ) << error.toStdString();
+   EXPECT_EQ( error, QString( US_SimSpecies::componentErrorMessage ).arg( 2 ).arg( US_SimSpecies::validateComponent( bad ) ) );
 
    EXPECT_FALSE( US_SimSpecies::validateComponents( QVector<US_SimSpecies::Component>() ).isEmpty() );
 }

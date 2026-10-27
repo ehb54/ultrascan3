@@ -62,14 +62,18 @@ class US_UTIL_EXTERN US_SimInputs
       //! \brief Error formats validateParams() and simParams() return, shared
       //!        with the tests; fill them with QString::arg().
       //! A value that must be positive: %1 its name, %2 the value.
-      static constexpr const char* notPositiveMessage    = "%1 must be finite and greater than zero (got %2)";
+      static constexpr const char* notPositiveMessage     = "%1 must be finite and greater than zero (got %2)";
       //! A value that must not be negative: %1 its name, %2 the value.
-      static constexpr const char* negativeMessage       = "%1 must be finite and zero or greater (got %2)";
+      static constexpr const char* negativeMessage        = "%1 must be finite and zero or greater (got %2)";
       //! Fewer than one scan: %1 the scan count.
-      static constexpr const char* tooFewScansMessage    = "scans must be at least 1 (got %1)";
+      static constexpr const char* tooFewScansMessage     = "scans must be at least 1 (got %1)";
+      //! Acceleration that rounds below 1 rpm/s: %1 the acceleration.
+      static constexpr const char* lowAccelerationMessage = "acceleration must be at least 1 rpm/s (got %1)";
+      //! A scan delay that leaves no time to scan: %1 the delay, %2 the run duration, in minutes.
+      static constexpr const char* delayTooLongMessage    = "delay (%1 min) must be shorter than the run duration (%2 min)";
       //! Band forming without a band-forming centerpiece: %1 the centerpiece.
-      static constexpr const char* notBandFormingMessage = "band forming requires a band-forming centerpiece "
-                                                           "(centerpiece %1 is not band-forming)";
+      static constexpr const char* notBandFormingMessage  = "band forming requires a band-forming centerpiece "
+                                                            "(centerpiece %1 is not band-forming)";
 
       //! \brief Create parameters for a single-speed simulation.
       //! Geometry is stored at rest; simulation consumers apply rotor stretch.

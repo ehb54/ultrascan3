@@ -130,7 +130,7 @@ QString US_SimSpecies::validateComponent( const Component& c )
 
    if ( supplied.size() != 2 )
    {
-      return QString( "exactly two of %1 must be given (got %2: %3)" )
+      return QString( coefficientCountMessage )
          .arg( names.join( ", " ) )
          .arg( supplied.size() )
          .arg( supplied.isEmpty() ? QString( "none" ) : supplied.join( ", " ) );
@@ -187,7 +187,7 @@ QString US_SimSpecies::validateComponents( const QVector<Component>& components 
 
       if ( !error.isEmpty() )
       {
-         return QString( "component %1: %2" ).arg( ii + 1 ).arg( error );
+         return QString( componentErrorMessage ).arg( ii + 1 ).arg( error );
       }
    }
 

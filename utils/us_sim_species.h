@@ -85,6 +85,15 @@ class US_UTIL_EXTERN US_SimSpecies
       //! \return An empty string if valid; otherwise, an error message.
       static QString                     validateComponent( const Component& c );
 
+      //! \brief validateComponent()'s error for other than two coefficients,
+      //!        shared with the tests: %1 the coefficient names, %2 the count
+      //!        given, %3 the names given.
+      static constexpr const char*       coefficientCountMessage = "exactly two of %1 must be given (got %2: %3)";
+
+      //! \brief validateComponents()'s error for a failing component, shared
+      //!        with the tests: %1 its 1-based position, %2 its own error.
+      static constexpr const char*       componentErrorMessage = "component %1: %2";
+
       //! \brief Validate every species of a mixture.
       //! Each must satisfy validateComponent(); the list must not be empty.
       //! \return An empty string if valid; otherwise, an error message

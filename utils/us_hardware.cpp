@@ -388,7 +388,7 @@ QString US_AbstractCenterpiece::validate( int centerpiece, int channel )
    QList<US_AbstractCenterpiece> cp_list;
    if ( !US_AbstractCenterpiece::read_centerpieces( NULL, cp_list ) || cp_list.isEmpty() )
    {
-      return "no centerpiece definitions could be loaded";
+      return noCenterpiecesMessage;
    }
 
    if ( centerpiece < 0 || centerpiece >= cp_list.size() )

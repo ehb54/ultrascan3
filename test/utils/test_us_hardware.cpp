@@ -82,7 +82,7 @@ TEST_F( US_AbstractCenterpieceTest, ValidateRejectsOutOfRangeIndices )
 {
    // Skip if the centerpiece table is not reachable in this environment;
    // validate() reports that case with its own message.
-   if ( US_AbstractCenterpiece::validate( 0, 0 ).contains( "no centerpiece" ) )
+   if ( US_AbstractCenterpiece::validate( 0, 0 ) == US_AbstractCenterpiece::noCenterpiecesMessage )
    {
       GTEST_SKIP() << "centerpiece definitions unavailable";
    }

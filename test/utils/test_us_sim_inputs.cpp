@@ -115,7 +115,7 @@ TEST_F( US_SimInputsTest, ZeroAccelerationIsRejectedAtTheBuilderBoundary )
    QString                 error;
 
    EXPECT_FALSE( US_SimInputs::simParams( p, sp, error ) );
-   EXPECT_TRUE( error.contains( "acceleration" ) );
+   EXPECT_EQ( error, QString( US_SimInputs::notPositiveMessage ).arg( "acceleration" ).arg( p.acceleration ) );
 }
 
 TEST_F( US_SimInputsTest, BandFormingRequiresABandFormingCenterpiece )
@@ -127,7 +127,7 @@ TEST_F( US_SimInputsTest, BandFormingRequiresABandFormingCenterpiece )
    QString                 error;
 
    EXPECT_FALSE( US_SimInputs::simParams( p, sp, error ) );
-   EXPECT_TRUE( error.contains( "band-forming centerpiece" ) );
+   EXPECT_EQ( error, QString( US_SimInputs::notBandFormingMessage ).arg( p.centerpiece ) );
 
    p.centerpiece = 6; // Epon 2-channel band forming
    EXPECT_TRUE( US_SimInputs::simParams( p, sp, error ) ) << error.toStdString();
@@ -142,7 +142,7 @@ TEST_F( US_SimInputsTest, AccelerationRoundingToZeroIsRejected )
    QString                 error;
 
    EXPECT_FALSE( US_SimInputs::simParams( p, sp, error ) );
-   EXPECT_TRUE( error.contains( "acceleration" ) );
+   EXPECT_EQ( error, QString( US_SimInputs::lowAccelerationMessage ).arg( p.acceleration ) );
 }
 
 TEST_F( US_SimInputsTest, ExplicitDelayReachingTheEndOfTheRunIsRejected )
@@ -155,7 +155,8 @@ TEST_F( US_SimInputsTest, ExplicitDelayReachingTheEndOfTheRunIsRejected )
    QString                 error;
 
    EXPECT_FALSE( US_SimInputs::simParams( p, sp, error ) );
-   EXPECT_TRUE( error.contains( "delay" ) );
+   EXPECT_EQ( error,
+              QString( US_SimInputs::delayTooLongMessage ).arg( 180.0 ).arg( p.duration_hours * 60.0 + p.duration_minutes ) );
 }
 
 TEST_F( US_SimInputsTest, DerivedDelayReachingTheEndOfTheRunIsRejected )
@@ -168,7 +169,8 @@ TEST_F( US_SimInputsTest, DerivedDelayReachingTheEndOfTheRunIsRejected )
    QString                 error;
 
    EXPECT_FALSE( US_SimInputs::simParams( p, sp, error ) );
-   EXPECT_TRUE( error.contains( "delay" ) );
+   EXPECT_EQ( error,
+              QString( US_SimInputs::delayTooLongMessage ).arg( 200.0 ).arg( p.duration_hours * 60.0 + p.duration_minutes ) );
 }
 
 TEST_F( US_SimInputsTest, WriteAllProducesReadableTriple )
@@ -222,7 +224,7 @@ TEST_F( US_SimInputsTest, BuilderRejectsInvalidParamsWithoutPartialOutput )
    invalid       = US_SimInputs::Params();
    invalid.scans = 0;
    EXPECT_FALSE( US_SimInputs::simParams( invalid, output, error ) );
-   EXPECT_TRUE( error.contains( "at least 1" ) );
+   EXPECT_EQ( error, QString( US_SimInputs::tooFewScansMessage ).arg( invalid.scans ) );
 }
 
 TEST_F( US_SimInputsTest, BuilderAcceptsAOneScanRun )
