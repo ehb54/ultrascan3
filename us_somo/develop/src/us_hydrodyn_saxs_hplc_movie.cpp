@@ -537,7 +537,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       if ( cb_show_gauss->isChecked() &&
            hplc_win->f_is_time.count( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ) &&
            hplc_win->f_is_time[ hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ] ) {
-         hplc_win->gauss_start();
+         hplc_win->gauss_start( false );
       }
 
       // else {

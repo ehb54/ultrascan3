@@ -6920,7 +6920,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
                          ggaussian_last_I[ ggauss_scroll_set [ pos ] ],
                          ggaussian_last_gg[ ggauss_scroll_set [ pos ] ],
                          use_errors ? ggaussian_last_e[ ggauss_scroll_set [ pos ] ] : errors,
-                         plot_colors[ ggaussian_selected_file_index[ ggauss_scroll_set [ pos ] ] % plot_colors.size() ]
+                         plot_colors[ f_pos[ unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] ] % plot_colors.size() ]
                          );
       // redo_plot_errors();
    }
