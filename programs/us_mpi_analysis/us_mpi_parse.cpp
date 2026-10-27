@@ -34,6 +34,19 @@ bool US_MPI_Analysis::read_shared_file( const QString& path, QByteArray& data ) 
    return true;
 }
 
+// Rank 0's text, on all ranks: for decisions that must be the same on
+//  all ranks, such as a file found by listing a directory.  Collective
+//  over MPI_COMM_WORLD.
+QString US_MPI_Analysis::shared_text( const QString& text ) const
+{
+   QByteArray data  = ( my_rank == 0 ) ? text.toUtf8() : QByteArray();
+   int        nsize = data.size();
+   MPI_Bcast( &nsize, 1, MPI_INT, 0, MPI_COMM_WORLD );
+   data.resize( nsize );
+   MPI_Bcast( data.data(), nsize, MPI_BYTE, 0, MPI_COMM_WORLD );
+   return QString::fromUtf8( data );
+}
+
 // Read the job description (hpcrequest XML) into job_config, set up the
 //  job data, datasets and debug settings from it, and validate it: errors
 //  abort, warnings are printed.

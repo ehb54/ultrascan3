@@ -49,7 +49,7 @@ and compare the fitted models with stored baselines.
 | `pcsa_sl` | PCSA straight lines | 2 | exact |
 | `ga_basic` | GA, 3 buckets | 4 | loose |
 | `ga_np2` | GA, 3 buckets, one worker | 2 | exact |
-| `dmga_basic` | DMGA, 3 components, s, f/f0 and concentration float | 2 | exact |
+| `dmga_basic` | DMGA, 3 components, s, f/f0 and concentration float | 2 | loose |
 
 "Exact" means RMSD within 1e-6 relative, moments within 1e-4 relative and
 noise within 1e-6 absolute.  The 2DSA master merges subgrid results in job
@@ -60,7 +60,10 @@ results.  GA migrates genes asynchronously, so its result depends on message
 timing; "loose" only requires the same output files and an RMSD not more
 than 15 % above the baseline.  "= case" compares with that case's baseline:
 the case has none of its own, and must give the same result.  With a single worker (`ga_np2`,
-`dmga_basic`) there is no migration and the result is reproducible.
+`dmga_basic`) there is no migration and the result is reproducible on one
+platform.  DMGA's mutations go through `log` and `sqrt`, though, and a
+last-bit difference in the math library sends its search down another path,
+so `dmga_basic` is compared loosely.
 
 ## Input cases
 
@@ -87,7 +90,6 @@ leave the job's input files in the work directory.
 | `input_single_rank` | run with one process | abort (was: hang) |
 | `input_load_fails_on_worker` | data read fails on rank 1 only (`debug_text` `fail_load_rank=1`) | abort naming the data file and rank |
 | `input_timestate_missing` | timestate file listed, not in the archive | result as `2dsa_timestate`, timestate created |
-
 | `input_invalid_number` | 2DSA `s_max="ten"` | abort naming `s_max` (was: segfault) |
 | `input_missing_required` | 2DSA without `s_max` | abort naming `s_max` (was: segfault) |
 | `input_unknown_method` | method `2DXA` | abort naming the method (was: exit 0, no output) |

@@ -453,8 +453,12 @@ DEFAULT_TOL = {"rmsd_rel": 1e-6, "moment_rel": 1e-4, "noise_abs": 1e-6}
 # GA migrates genes asynchronously, so its result depends on message timing.
 # Only require a fit that is not markedly worse.
 LOOSE = {"rmsd_rel": 0.15, "moment_rel": 0.0, "noise_abs": 0.0, "loose": True}
+# DMGA with one worker is reproducible on one platform, but its mutations
+# go through log and sqrt: a last-bit libm difference sends the search down
+# another path (Linux and Windows differ by 2.4 % in RMSD).
 CASE_TOL = {
     "ga_basic": LOOSE,
+    "dmga_basic": LOOSE,
 }
 
 INPUT_TIMEOUT = 180   # A broken input must not run for long

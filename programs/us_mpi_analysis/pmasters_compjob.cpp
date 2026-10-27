@@ -807,7 +807,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
    int iter            = current_dataset;
    alpha               = 0.0;
    mc_iterations       = 0;
-   max_iterations      = job_config.params.gfit_iterations;
+   max_iterations            = job_config.params.gfit_iterations;
    MPI_Status status;
 
    // Get 1st dataset from supervisor

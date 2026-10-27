@@ -488,6 +488,31 @@ TEST( US_MPI_JobConfig, RangesAndChoices )
               "s_min (10) must be less than s_max (1)" );
 }
 
+TEST( US_MPI_JobConfig, LimsFormValuesAccepted )
+{
+   // The LIMS DMGA mutate_sigma slider runs from -10 to 10
+   Config dmga = validated( "<population value=\"30\"/><generations value=\"15\"/><DC_model filename=\"c.model.xml\"/>"
+                            "<mutate_sigma value=\"-5\"/>",
+                            "DMGA" );
+   EXPECT_TRUE( dmga.errors.isEmpty() ) << all_of( dmga );
+
+   // PCSA with a fixed f/f0; inverted limits are still rejected
+   const QString pcsa  = "<curve_type value=\"SL\"/><x_min value=\"1\"/><x_max value=\"10\"/>"
+                         "<vars_count value=\"10\"/><curves_points value=\"200\"/>";
+   Config        fixed = validated( pcsa + "<y_min value=\"2\"/><y_max value=\"2\"/>", "PCSA" );
+   EXPECT_TRUE( fixed.errors.isEmpty() ) << all_of( fixed );
+   EXPECT_EQ( validated( pcsa + "<y_min value=\"3\"/><y_max value=\"2\"/>", "PCSA" ).errors,
+              QStringList( "y_min (3) must be at most y_max (2)" ) );
+
+   // Equal 2DSA limits are still rejected
+   EXPECT_EQ( validated( "<s_min value=\"1\"/><s_max value=\"1\"/><ff0_min value=\"1\"/><ff0_max value=\"4\"/>" ).errors,
+              QStringList( "s_min (1) must be less than s_max (1)" ) );
+
+   // Grid points are read as numbers
+   Config points = validated( GRID_2DSA + "<s_grid_points value=\"200.0\"/>" );
+   EXPECT_TRUE( points.errors.isEmpty() ) << all_of( points );
+}
+
 TEST( US_MPI_JobConfig, EmptyValueCountsAsNotGiven )
 {
    // As in LIMS GA jobs: bucket_fixed with empty value and types

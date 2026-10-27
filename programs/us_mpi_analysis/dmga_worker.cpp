@@ -26,7 +26,11 @@ void US_MPI_Analysis::dmga_worker( void )
    const QString s_bsig         = job_config.debug_value( "base_sig" );
    const QString s_grinc        = job_config.debug_value( "g_redo_inc" );
    base_sig            = s_bsig .isEmpty() ? BASE_SIG : s_bsig .toDouble();
-   g_redo_inc          = s_grinc.isEmpty() ? GR_INCR  : s_grinc.toInt();
+   g_redo_inc                   = s_grinc.toInt();
+   if ( g_redo_inc < 1 )
+   { // Not given, not an integer or not positive: it is a divisor
+      g_redo_inc = GR_INCR;
+   }
    if ( group_rank == 1 )
    {
       DbgLv( 0 ) << my_rank << "dmga_worker: base_sig" << base_sig << "g_redo_inc" << g_redo_inc;

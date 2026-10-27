@@ -93,7 +93,7 @@ void US_MPI_Analysis::pcsa_master( void )
          const int kw = worker_status.count( WORKING );
          const int kr = worker_status.count( READY );
          const int km = mrecs.size();
-         int kg = 0;
+         int       kg = 0;
          for ( int jm = 0; jm < km; jm++ )
          {
             if ( mrecs[jm].rmsd < 1.0 )
@@ -288,18 +288,18 @@ void US_MPI_Analysis::init_pcsa_solutes( void )
    simulation_values.dbg_timing  = dbg_timing;
    DbgLv( 0 ) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
-   double  x_min      = job_config.params.grid.x_min;
-   double  x_max      = job_config.params.grid.x_max;
-   double  y_min      = job_config.params.grid.y_min;
-   double  y_max      = job_config.params.grid.y_max;
-   double  zval       = job_config.params.z_value;
+   double        x_min      = job_config.params.grid.x_min;
+   double        x_max      = job_config.params.grid.x_max;
+   double        y_min      = job_config.params.grid.y_min;
+   double        y_max      = job_config.params.grid.y_max;
+   double        zval       = job_config.params.z_value;
    const QString s_ctyp     = job_config.params.pcsa.curve_type;
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
    const QString s_styp     = job_config.params.solute_type;
    const int     stype      = US_ModelRecord::stype_flag( s_styp );
-   int     nkpts      = job_config.params.pcsa.vars_count;
+   int           nkpts      = job_config.params.pcsa.vars_count;
    int    nkpto      = sq( nkpts );
-   int     nlpts      = job_config.params.pcsa.curves_points;
+   int           nlpts      = job_config.params.pcsa.curves_points;
    DbgLv( 1 ) << "  init_pcsa_sols: nkpts" << nkpts << "nkpto" << nkpto;
    const double vbar20 = data_sets[current_dataset]->vbar20;
    zval              = ( zval == 0.0 ) ? vbar20 : zval;
@@ -537,10 +537,10 @@ void US_MPI_Analysis::write_mrecs()
    int    ctype          = US_ModelRecord::ctype_flag( s_ctyp );
    const QString s_styp         = job_config.params.solute_type;
    int    stype          = US_ModelRecord::stype_flag( s_styp );
-   double  x_min          = job_config.params.grid.x_min;
-   double  x_max          = job_config.params.grid.x_max;
-   double  y_min          = job_config.params.grid.y_min;
-   double  y_max          = job_config.params.grid.y_max;
+   double        x_min          = job_config.params.grid.x_min;
+   double        x_max          = job_config.params.grid.x_max;
+   double        y_min          = job_config.params.grid.y_min;
+   double        y_max          = job_config.params.grid.y_max;
    if ( ctype != CTYPE_ALL )
       mrecs[ 0 ].ctype      = ctype;
    mrecs[ 0 ].xmin       = x_min;
@@ -630,17 +630,17 @@ void US_MPI_Analysis::iterate_pcsa()
    }
 
    // Set up to create a narrower set of model record curves
-   double  x_min      = job_config.params.grid.x_min;
-   double  x_max      = job_config.params.grid.x_max;
-   double  y_min      = job_config.params.grid.y_min;
-   double  y_max      = job_config.params.grid.y_max;
-   double  zval       = job_config.params.z_value;
+   double        x_min      = job_config.params.grid.x_min;
+   double        x_max      = job_config.params.grid.x_max;
+   double        y_min      = job_config.params.grid.y_min;
+   double        y_max      = job_config.params.grid.y_max;
+   double        zval       = job_config.params.z_value;
    const QString s_ctyp     = job_config.params.pcsa.curve_type;
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
    const QString s_styp     = job_config.params.solute_type;
    const int     stype      = US_ModelRecord::stype_flag( s_styp );
-   int     nkpts      = job_config.params.pcsa.vars_count;
-   int     nlpts      = job_config.params.pcsa.curves_points;
+   int           nkpts      = job_config.params.pcsa.vars_count;
+   int           nlpts      = job_config.params.pcsa.curves_points;
    const double  vbar20     = data_sets[current_dataset]->vbar20;
    zval              = ( zval == 0.0 ) ? vbar20 : zval;
    double *parlims   = (double*)pararry;
@@ -806,12 +806,12 @@ void US_MPI_Analysis::montecarlo_pcsa()
 
    int worker;
    meniscus_value   = data_sets[ current_dataset ]->run_data.meniscus;
-   mc_iterations                       = job_config.params.mc_iterations;
+   mc_iterations                   = job_config.params.mc_iterations;
    mc_iteration     = 1;
    mrec             = mrecs[ 0 ];
-   const int              stype        = mrec.stype;
+   const int              stype    = mrec.stype;
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   const QString          tripleID     = edata->cell + edata->channel + edata->wavelength;
+   const QString          tripleID = edata->cell + edata->channel + edata->wavelength;
    job_queue.clear();
 
    // Build composite simulation,residuals data array
@@ -1310,9 +1310,9 @@ void US_MPI_Analysis::pcsa_best_model()
 
    mrecs[ 0 ]        = mrec;
 
-   const int tikreg  = job_config.params.pcsa.tikreg_option;
-   mc_iterations     = job_config.params.mc_iterations;
-   const int noiflg  = simulation_values.noisflag;
+   const int tikreg = job_config.params.pcsa.tikreg_option;
+   mc_iterations    = job_config.params.mc_iterations;
+   const int noiflg = simulation_values.noisflag;
    DbgLv( 1 ) << "bestm: tikreg mciters" << tikreg << mc_iterations;
 
    if ( tikreg != 0 )

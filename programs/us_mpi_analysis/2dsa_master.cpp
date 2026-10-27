@@ -729,9 +729,9 @@ void US_MPI_Analysis::global_fit( void )
    const int kp            = radius_points;
    DbgLv( 1 ) << ":gf:  ee" << current_dataset << "BB-dset(m)" << edata->value( ks / 2, kp / 2 );
    int index         = 0;
-   QVector<double>   ds_scaled( scan_count * radius_points + 1 );
-   double            isum = 0.0;
-   double            dsum = 0.0;
+   QVector<double> ds_scaled( scan_count * radius_points + 1 );
+   double          isum = 0.0;
+   double          dsum = 0.0;
 
    // Scale the data
    for ( int ss = 0; ss < scan_count; ss++ )

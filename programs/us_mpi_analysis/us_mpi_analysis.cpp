@@ -315,7 +315,9 @@ void US_MPI_Analysis::unpack_inputs( const QString& tarfile )
 }
 
 // The hpcrequest file: the one given on the command line, else the one
-//  hpc*.xml in the work or input directory
+//  hpc*.xml in the work or input directory.  Rank 0 looks for it, so all
+//  ranks use (or abort without) the same file.  Collective over
+//  MPI_COMM_WORLD.
 QString US_MPI_Analysis::find_job_file( const QString& hpcfile )
 {
    if ( !hpcfile.isEmpty() )
@@ -323,24 +325,31 @@ QString US_MPI_Analysis::find_job_file( const QString& hpcfile )
       return hpcfile;
    }
 
-   const QDir    wkdir     = QDir::current();
-   const QString input_dir = QDir::currentPath() + "/input";
-   QStringList ffilt;
-
    QString xmlfile;
-   ffilt.clear();
-   ffilt << "hpc*.xml";
-   QStringList files = wkdir.entryList( ffilt );
-   if ( files.size() == 0 )
+   if ( my_rank == 0 )
    {
-      files = QDir( input_dir ).entryList( ffilt );
-      if ( files.size() == 1 )
-         xmlfile = input_dir + "/" + files[ 0 ];
-   }
-   else
-      xmlfile = files[ 0 ];
+      const QDir    wkdir     = QDir::current();
+      const QString input_dir = QDir::currentPath() + "/input";
+      QStringList   ffilt;
 
-   if ( files.size() != 1 )
+      ffilt << "hpc*.xml";
+      QStringList files = wkdir.entryList( ffilt );
+      if ( files.size() == 0 )
+      {
+         files = QDir( input_dir ).entryList( ffilt );
+         if ( files.size() == 1 )
+         {
+            xmlfile = input_dir + "/" + files[0];
+         }
+      }
+      else if ( files.size() == 1 )
+      {
+         xmlfile = files[0];
+      }
+   }
+
+   xmlfile = shared_text( xmlfile );
+   if ( xmlfile.isEmpty() )
    {
       abort_all( "Could not find unique hpc input file." );
    }
@@ -354,13 +363,13 @@ void US_MPI_Analysis::read_task_parameters( const QString& jxmlfili, const QMap<
 {
    const QDir    wkdir     = QDir::current();
    const QString input_dir = QDir::currentPath() + "/input";
-   QStringList ffilt;
+   QStringList   ffilt;
 
    QString jxmlfile  = jxmlfili;
 
    // Parse task xml file if present or needed (input argument or detected file)
-   if ( jxmlfile.isEmpty() )
-   {  // Not on command line: just look for its presence in the work directory
+   if ( jxmlfile.isEmpty() && my_rank == 0 )
+   { // Not on command line: rank 0 looks for its presence in the work directory
       ffilt.clear();
       ffilt << "*jobxmlfile.xml";
       ffilt << "jobxmlfile.xml";
@@ -387,7 +396,8 @@ void US_MPI_Analysis::read_task_parameters( const QString& jxmlfili, const QMap<
       }
    }
 
-   task_parse( jxmlfile );
+   // All ranks parse the file rank 0 found (task_parse is collective)
+   task_parse( jxmlfili.isEmpty() ? shared_text( jxmlfile ) : jxmlfile );
 
    // Task parameters given on the command line take precedence over
    //  those of the job xml file
@@ -853,8 +863,11 @@ void US_MPI_Analysis::prepare_timestates( int ntmsf_ne, int ntmsf_ex, int ntmsf_
         ( ntmsf_1s < ntmsf_ex ) )      //  or not all at 1-second,
       redo_tstate             = true;  // Then need to re-do
 
-   // Sync up after all processes have evaluated timestates
-   MPI_Barrier( MPI_COMM_WORLD );
+   // Rank 0 decides, since it writes the files: the counts come from each
+   //  rank's view of the file system
+   int redo = redo_tstate ? 1 : 0;
+   MPI_Bcast( &redo, 1, MPI_INT, 0, MPI_COMM_WORLD );
+   redo_tstate = ( redo != 0 );
    DbgLv( 0 ) << "rank" << my_rank << ": redo_tstate" << redo_tstate << "ntmsf_ne ntmsf_ex ntmsf_1s" << ntmsf_ne << ntmsf_ex
               << ntmsf_1s;
 
@@ -908,7 +921,7 @@ void US_MPI_Analysis::prepare_timestates( int ntmsf_ne, int ntmsf_ex, int ntmsf_
                tmst_fdsav         = tmst_fdefs + "-orig";
                const QString tmst_fpold = tmst_fpath;
                const QString tmst_fdold = tmst_fdefs;
-               tmst_fpath         = timestate_path( QString(), ds->run_data.runID );
+               tmst_fpath               = timestate_path( QString(), ds->run_data.runID );
                tmst_fdefs         = QString( tmst_fpath ).replace( ".tmst", ".xml" );
 
                if ( ee == 0 )
@@ -933,7 +946,7 @@ void US_MPI_Analysis::prepare_timestates( int ntmsf_ne, int ntmsf_ex, int ntmsf_
                tmst_fdsav         = tmst_fdefs + "-orig";
                const QString tmst_fpold = tmst_fpath;
                const QString tmst_fdold = tmst_fdefs;
-               tmst_fpath         = timestate_path( QString(), ds->run_data.runID );
+               tmst_fpath               = timestate_path( QString(), ds->run_data.runID );
                tmst_fdefs         = QString( tmst_fpath ).replace( ".tmst", ".xml" );
 
                if ( ! tmsf_fs.contains( tmst_fpath )  &&
@@ -1224,15 +1237,14 @@ void US_MPI_Analysis::check_grid_size( void )
    {
       DbgLv( 0 ) << "ckGrSz: ssp count" << data_sets[0]->simparams.sim_speed_prof.count() << "g_too_big" << g_too_big;
    }
-   if ( g_too_big )
+   if ( g_too_big && my_rank == 0 )
    {
-      if ( my_rank == 0 )
-      {
-         qDebug() << smsg;
-         printf( "%s", smsg.toLatin1().data() );
-      }
-      abort_all( "Implied Grid Size is Too Large!" );
+      qDebug() << smsg;
+      printf( "%s", smsg.toLatin1().data() );
    }
+   // The speed profile comes from each rank's timestate file: abort on all
+   //  ranks if any found the grid too large
+   abort_if_any( g_too_big ? "Implied Grid Size is Too Large!" : QString() );
 }
 
 // Determine the masters-group count and related controls
@@ -1497,9 +1509,10 @@ void US_MPI_Analysis::phys_memory( qint64& total, qint64& avail )
 #endif
 }
 
-// Abort the job from this rank alone: report the message (rank 0 also to
-//  the udp server, and archive the outputs), then MPI_Abort.  The other
-//  ranks need not take part, so any rank may call it at any time.
+// Abort the job from this rank alone: report the message, also to the udp
+//  server, then MPI_Abort.  Rank 0 also archives the outputs; from another
+//  rank nothing is archived.  The other ranks need not take part, so any
+//  rank may call it at any time.
 void US_MPI_Analysis::abort( const QString& message, int error )
 {
    const QString text = ( my_rank == 0 ) ? message : QString( "%1 (rank %2)" ).arg( message ).arg( my_rank );
@@ -1510,6 +1523,13 @@ void US_MPI_Analysis::abort( const QString& message, int error )
    {
       send_udp( "Abort.  " + message );
       archive_outputs();
+   }
+
+   else
+   { // send_udp() would need rank 0: send from this rank
+      QUdpSocket       rank_socket;
+      const QByteArray msg = QString( db_name + "-" + requestID + ": Abort.  " + text ).toLatin1();
+      rank_socket.writeDatagram( msg, server, port );
    }
 
    DbgLv( 0 ) << my_rank << ": " << message;
@@ -2126,12 +2146,12 @@ void US_MPI_Analysis::write_global( void )
                   for ( int jb = 0; jb < narows; jb++ )
                   {
                      const double aval = nnls_a[ja++];
-                     avlo        = qMin( avlo, aval );
-                     avhi        = qMax( avhi, aval );
+                     avlo              = qMin( avlo, aval );
+                     avhi              = qMax( avhi, aval );
                      avav += aval;
                      const double bval = nnls_b[jb];
-                     bvlo        = qMin( bvlo, bval );
-                     bvhi        = qMax( bvhi, bval );
+                     bvlo              = qMin( bvlo, bval );
+                     bvhi              = qMax( bvhi, bval );
                      bvav += bval;
                   }
                   DbgLv( 0 ) << "WrGlob:      A lo,hi,av" << avlo << avhi << avav << "B lo,hi,av" << bvlo << bvhi << bvav;

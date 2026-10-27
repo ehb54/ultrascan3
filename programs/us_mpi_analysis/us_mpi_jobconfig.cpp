@@ -204,9 +204,9 @@ void US_MPI_JobConfig::read_job( QXmlStreamReader& xml )
 
       else if ( xname == "udp" )
       {
-         udp_server    = attr.value( "server" ).toString();
+         udp_server          = attr.value( "server" ).toString();
          const QString sport = attr.value( "port" ).toString();
-         bool    ok    = false;
+         bool          ok    = false;
          const int     port  = sport.toInt( &ok );
          if ( ok && port > 0 && port <= 65535 )
          {
@@ -229,7 +229,7 @@ void US_MPI_JobConfig::read_job( QXmlStreamReader& xml )
 
       else if ( xname == "datasetCount" )
       {
-         bool ok;
+         bool      ok;
          const int count = attr.value( "value" ).toString().toInt( &ok );
          if ( ok )
          {
@@ -303,7 +303,7 @@ void US_MPI_JobConfig::read_job_parameters( QXmlStreamReader& xml )
       else if ( name.startsWith( "s_m" ) || name.startsWith( "ff0_m" ) )
       { // Also stored as the generic x/y limit
          const QString svalu = attr.value( "value" ).toString();
-         parameters[name] = svalu;
+         parameters[name]    = svalu;
          name.replace( "s_m", "x_m" );
          name.replace( "ff0_m", "y_m" );
          parameters[name] = svalu;
@@ -346,7 +346,7 @@ void US_MPI_JobConfig::read_bucket( const QXmlStreamAttributes& attr, QString& y
 
    Bucket bucket;
    auto   limit = [&attr, &bucket]( const QString& name ) { // A missing or invalid limit reads as 0, as before, and is recorded
-      bool   ok;
+      bool         ok;
       const double value = attr.value( name ).toString().toDouble( &ok );
       if ( !ok )
       {
@@ -581,7 +581,7 @@ QString US_MPI_JobConfig::DatasetSpec::edit_file_name() const
 
    // MWL: "<run>.<edit>.<triple>.<lambda1-lambda2>.xml" becomes
    //  "<run>.<edit>.<triple>.<lambda1-lambda2>@<lambda>.xml"
-   clambda        = clambda + "@" + auc_file.section( ".", -2, -2 );
+   clambda              = clambda + "@" + auc_file.section( ".", -2, -2 );
    const QString fpart1 = edit_file.section( ".", 0, -3 );
    const QString fpart2 = edit_file.section( ".", -1, -1 );
    return fpart1 + "." + clambda + "." + fpart2;
@@ -745,8 +745,9 @@ const ParamSpec PARAMS[] = {
    // 2DSA
    { "s_resolution", Kind::Double, M_2DSA | M_PCSA, 0, 0, NOLIM, nullptr },
    { "ff0_resolution", Kind::Double, M_2DSA | M_PCSA, 0, 0, NOLIM, nullptr },
-   { "s_grid_points", Kind::Int, M_2DSA | M_PCSA, 0, 1, NOLIM, nullptr },
-   { "ff0_grid_points", Kind::Int, M_2DSA | M_PCSA, 0, 1, NOLIM, nullptr },
+   // Grid points: read as numbers, so "200.0" is valid
+   { "s_grid_points", Kind::Double, M_2DSA | M_PCSA, 0, 1, NOLIM, nullptr },
+   { "ff0_grid_points", Kind::Double, M_2DSA | M_PCSA, 0, 1, NOLIM, nullptr },
    { "uniform_grid", Kind::Int, M_2DSA | M_PCSA, 0, 0, NOLIM, nullptr },
    { "montecarlo_value", Kind::Int, M_2DSA, 0, 0, NOLIM, nullptr },
    { "gfit_iterations", Kind::Int, M_2DSA | M_PCSA, 0, 0, NOLIM, nullptr },
@@ -759,7 +760,7 @@ const ParamSpec PARAMS[] = {
    { "plague", Kind::Int, M_GA | M_DMGA, 0, 0, 100, nullptr },
    { "migration", Kind::Int, M_GA | M_DMGA, 0, 0, 100, nullptr },
    { "elitism", Kind::Int, M_GA | M_DMGA, 0, 0, NOLIM, nullptr },
-   { "mutate_sigma", Kind::Double, M_GA | M_DMGA, 0, 0, NOLIM, nullptr },
+   { "mutate_sigma", Kind::Double, M_GA | M_DMGA, 0, -NOLIM, NOLIM, nullptr }, // DMGA: 10^(sigma/10)
    { "p_mutate_s", Kind::Int, M_GA | M_DMGA, 0, 0, 100, nullptr },
    { "p_mutate_k", Kind::Int, M_GA | M_DMGA, 0, 0, 100, nullptr },
    { "p_mutate_sk", Kind::Int, M_GA | M_DMGA, 0, 0, 100, nullptr },
@@ -799,8 +800,8 @@ int method_bit( const QString& method )
 QString check_value( const ParamSpec& spec, const QString& value )
 {
    const QString name = QString( spec.key ) + " \"" + value + "\"";
-   bool    ok   = true;
-   double  dval = 0.0;
+   bool          ok   = true;
+   double        dval = 0.0;
 
    switch ( spec.kind )
    {
@@ -902,15 +903,21 @@ void US_MPI_JobConfig::validate()
       }
    }
 
-   // Ranges given by a pair of parameters
-   auto check_range = [this]( const char* kmin, const char* kmax )
+   // Ranges given by a pair of parameters; allow_equal admits a range of
+   //  one value (e.g. a fixed f/f0)
+   auto check_range = [this]( const char* kmin, const char* kmax, const bool allow_equal )
    {
-      bool   okn, okx;
+      bool         okn, okx;
       const double vmin = parameters.value( kmin ).toDouble( &okn );
       const double vmax = parameters.value( kmax ).toDouble( &okx );
-      if ( okn && okx && vmin >= vmax )
+      if ( okn && okx && ( allow_equal ? vmin > vmax : vmin >= vmax ) )
       {
-         errors << QString( "%1 (%2) must be less than %3 (%4)" ).arg( kmin ).arg( vmin ).arg( kmax ).arg( vmax );
+         errors << QString( "%1 (%2) must be %3 %4 (%5)" )
+                      .arg( kmin )
+                      .arg( vmin )
+                      .arg( allow_equal ? "at most" : "less than" )
+                      .arg( kmax )
+                      .arg( vmax );
       }
    };
 
@@ -923,14 +930,15 @@ void US_MPI_JobConfig::validate()
             errors << QString( "%1: required for %2" ).arg( key, method );
          }
       }
-      check_range( "s_min", "s_max" );
-      check_range( "ff0_min", "ff0_max" );
+      // Equal limits: main never finishes such a grid
+      check_range( "s_min", "s_max", false );
+      check_range( "ff0_min", "ff0_max", false );
    }
 
    if ( mbit == M_PCSA )
-   {
-      check_range( "x_min", "x_max" );
-      check_range( "y_min", "y_max" );
+   { // Equal limits (e.g. a fixed f/f0) are valid; the LIMS form allows them
+      check_range( "x_min", "x_max", true );
+      check_range( "y_min", "y_max", true );
    }
 
    // GA buckets
@@ -1006,7 +1014,7 @@ QString US_MPI_JobConfig::debug_value( const QString& key, bool* found ) const
    { // "key=value", "key value" or "key"
       const int     sep   = entry.indexOf( QRegularExpression( "[= ]" ) );
       const QString ekey  = ( sep < 0 ) ? entry : entry.left( sep );
-      QString value = ( sep < 0 ) ? QString() : entry.mid( sep + 1 ).trimmed();
+      QString       value = ( sep < 0 ) ? QString() : entry.mid( sep + 1 ).trimmed();
 
       if ( ekey == key )
       {
