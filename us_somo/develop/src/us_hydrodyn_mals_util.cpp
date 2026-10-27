@@ -582,6 +582,12 @@ bool US_Hydrodyn_Mals::opt_repeak_gaussians( QString file )
 
    if ( scale < .5 || scale > 1.5 )
    {
+      if ( gauss_rescale_never_ask )
+      {
+         editor_msg( "dark red", QString( us_tr( "Gaussians not rescaled for %1 (suggested scale %2): the rescale question is off until this window is closed\n" ) ).arg( file ).arg( scale ) );
+         return false;
+      }
+
       switch ( QMessageBox::warning(this, 
                                     windowTitle(),
                                     QString( us_tr( "Please note:\n\n"
@@ -589,9 +595,9 @@ bool US_Hydrodyn_Mals::opt_repeak_gaussians( QString file )
                                                  "What would you like to do?\n" ) ).arg( scale ),
                                     us_tr( "&Rescale the Gaussian amplitudes" ), 
                                     us_tr( "&Do not rescale" ),
-                                    QString(),
-                                    0, // Stop == button 0
-                                    0 // Escape == button 0
+                                    us_tr( "Do not rescale, do&n't ask again" ),
+                                    1, // Default == button 1
+                                    1 // Escape == button 1
                                     ) )
       {
       case 0 : // rescale the Gaussians
@@ -602,6 +608,10 @@ bool US_Hydrodyn_Mals::opt_repeak_gaussians( QString file )
          return true;
          break;
       case 1 : // just ignore them
+         return false;
+         break;
+      case 2 : // ignore them and stop asking until this window is closed
+         gauss_rescale_never_ask = true;
          return false;
          break;
       }

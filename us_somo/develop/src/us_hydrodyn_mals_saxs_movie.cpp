@@ -491,7 +491,7 @@ void US_Hydrodyn_Mals_Saxs_Movie::update_plot()
            mals_saxs_win->f_is_time.count( mals_saxs_win->lb_files->item( mals_saxs_selected_files[ pos ] )->text() ) &&
            mals_saxs_win->f_is_time[ mals_saxs_win->lb_files->item( mals_saxs_selected_files[ pos ] )->text() ] )
       {
-         mals_saxs_win->gauss_start();
+         mals_saxs_win->gauss_start( false );
       }
       // else {
       // mals_saxs_win->plot_files();

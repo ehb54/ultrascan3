@@ -491,7 +491,7 @@ void US_Hydrodyn_Dad_Movie::update_plot()
            dad_win->f_is_time.count( dad_win->lb_files->item( dad_selected_files[ pos ] )->text() ) &&
            dad_win->f_is_time[ dad_win->lb_files->item( dad_selected_files[ pos ] )->text() ] )
       {
-         dad_win->gauss_start();
+         dad_win->gauss_start( false );
       }
       // else {
       // dad_win->plot_files();
