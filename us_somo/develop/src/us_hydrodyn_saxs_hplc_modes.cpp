@@ -4,6 +4,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_scale_trend.h"
 #include "../include/us_pm.h"
 #include "../include/us_saxs_util.h"
+#include "../include/us_plot_zoom.h"
 //Added by qt3to4:
 #include <QPixmap>
 #include <algorithm>
@@ -5298,6 +5299,21 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    }
 }
 
+// show or hide a curve in the main plot together with its SD bars (with Err on, each bar is its own curve)
+void US_Hydrodyn_Saxs_Hplc::set_curve_visible( const QString & file, bool visible )
+{
+   QString eb_title = UPU_EB_PREFIX + file;
+   const QwtPlotItemList items = plot_dist->itemList( QwtPlotItem::Rtti_PlotCurve );
+   for ( QwtPlotItemIterator it = items.begin(); it != items.end(); ++it )
+   {
+      QString title = ( *it )->title().text();
+      if ( title == file || title == eb_title )
+      {
+         ( *it )->setVisible( visible );
+      }
+   }
+}
+
 void US_Hydrodyn_Saxs_Hplc::scale_scroll_highlight( int pos )
 {
    // if ( pos >= (int) scale_scroll_selected.size() )
@@ -5320,8 +5336,8 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll_highlight( int pos )
       plot_errors->setCurveStyle( scale_plotted_errors[ scale_scroll_selected[ pos ] ], QwtCurve::Lines );
    }
 #else
-   plotted_curves[ scale_scroll_selected[ scale_scroll_pos ] ]->setStyle( QwtPlotCurve::NoCurve );
-   plotted_curves[ scale_scroll_selected[ pos ] ]->setStyle( QwtPlotCurve::Lines );
+   set_curve_visible( scale_scroll_selected[ scale_scroll_pos ], false );
+   set_curve_visible( scale_scroll_selected[ pos ], true );
    if ( scale_plotted_errors.count( scale_scroll_selected[ scale_scroll_pos ] ) )
    {
       scale_plotted_errors[ scale_scroll_selected[ scale_scroll_pos ] ]->setStyle( QwtPlotCurve::NoCurve );
@@ -5361,7 +5377,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
             plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::NoCurve );
          }
 #else
-         plotted_curves[ *it ]->setStyle( QwtPlotCurve::NoCurve );
+         set_curve_visible( *it, false );
          if ( scale_plotted_errors.count( *it ) ) {
             scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::NoCurve );
          }
@@ -5397,7 +5413,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
             plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::Lines );
          }
 #else
-         plotted_curves[ *it ]->setStyle( QwtPlotCurve::Lines );
+         set_curve_visible( *it, true );
          if ( scale_plotted_errors.count( *it ) )
          {
              scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::Lines );
@@ -6029,6 +6045,29 @@ void US_Hydrodyn_Saxs_Hplc::scale_reset()
 
 void US_Hydrodyn_Saxs_Hplc::scale_replot()
 {
+   if ( cb_eb->isChecked() )
+   {
+      // the SD bars are separate curves: redraw everything from the current values (plot_file uses scale_*)
+      US_Plot_Zoom upz ( plot_dist, plot_dist_zoomer );
+      plot_files();
+      gauss_delete_markers();
+      gauss_add_marker( le_scale_q_start  ->text().toDouble(), Qt::red, us_tr( "Start") );
+      gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, us_tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
+      if ( cb_scale_scroll->isChecked() &&
+           scale_scroll_pos >= 0 &&
+           scale_scroll_pos < (int) scale_scroll_selected.size() )
+      {
+         for ( set < QString >::iterator it = scale_selected.begin();
+               it != scale_selected.end();
+               ++it )
+         {
+            set_curve_visible( *it, *it == scale_scroll_selected[ scale_scroll_pos ] );
+         }
+      }
+      upz.restore( !suppress_replot );
+      return;
+   }
+
    for ( set < QString >::iterator it = scale_selected.begin();
          it != scale_selected.end();
          ++it )
