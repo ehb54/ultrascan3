@@ -21,6 +21,7 @@
 //Added by qt3to4:
 #include <QMouseEvent>
 #include <QCloseEvent>
+#include <QShowEvent>
 
 #if QT_VERSION >= 0x040000
 #include "qwt_plot_marker.h"
@@ -485,6 +486,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
    protected slots:
 
       void closeEvent(QCloseEvent *);
+      void showEvent(QShowEvent *);
    
 };
 #ifdef WIN32

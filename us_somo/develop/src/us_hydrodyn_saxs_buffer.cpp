@@ -18,6 +18,7 @@
 #include <QGridLayout>
 #endif
 #include <QRegularExpression>
+#include <QTimer>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -410,6 +411,18 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
+}
+
+void US_Hydrodyn_Saxs_Buffer::showEvent( QShowEvent *e )
+{
+   QFrame::showEvent( e );
+
+   // show the subtraction window once this one is on screen, so it opens in front
+   if ( !e->spontaneous() )
+   {
+      QTimer::singleShot( 0, fit_widget, SLOT( show() ) );
+      QTimer::singleShot( 0, fit_widget, SLOT( raise() ) );
+   }
 }
 
 void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
