@@ -319,6 +319,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         zoom_info();
       void                         clear_files( QStringList files );
       void                         to_created( QString file );
+      void                         created_show_saved( const QString & file, const QString & saved_as );
       void                         add_files( QStringList files );
       bool                         axis_x_log;
       bool                         axis_y_log;

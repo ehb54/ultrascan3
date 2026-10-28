@@ -3192,6 +3192,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
                .arg( file )
                .arg( use_filename ) );
    created_files_not_saved.erase( file );
+   created_show_saved( file, QFileInfo( use_filename ).absoluteFilePath() );
    return true;
 }
 
@@ -5076,7 +5077,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       {
          f_errors[ it->first ] = new_e;
       }
-      to_created( it->first );
+      // a file already on the common grid is unchanged, so it keeps its saved state and is not added to the produced files
+      if ( new_q.size() != cud.f_qs[ it->first ].size() )
+      {
+         to_created( it->first );
+      }
    }
    crop_undos.push_back( cud );
    editor_msg( "blue", us_tr( "Crop common: done" ) );
@@ -5188,6 +5193,32 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
       lb_created_files->addItem( file );
       lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
       created_files_not_saved[ file ] = true;
+   }
+   created_show_saved( file, "" );
+}
+
+// show a produced file as saved (grey italics, with where it was saved as its tooltip), or as not saved when saved_as is empty
+void US_Hydrodyn_Saxs_Buffer::created_show_saved( const QString & file, const QString & saved_as )
+{
+   for ( int i = 0; i < (int)lb_created_files->count(); i++ )
+   {
+      QListWidgetItem * item = lb_created_files->item( i );
+      if ( item->text() != file )
+      {
+         continue;
+      }
+      if ( saved_as.isEmpty() )
+      {
+         item->setData( Qt::FontRole, QVariant() );
+         item->setData( Qt::ForegroundRole, QVariant() );
+         item->setToolTip( "" );
+      } else {
+         QFont font = lb_created_files->font();
+         font.setItalic( true );
+         item->setFont( font );
+         item->setForeground( QBrush( Qt::darkGray ) );
+         item->setToolTip( QString( us_tr( "Saved as %1" ) ).arg( saved_as ) );
+      }
    }
 }
 
@@ -6086,6 +6117,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
       {
          QString this_file = lb_files->item( i )->text();
 
+         vector < QString > new_q_string;
          vector < double > new_q;
          vector < double > new_I;
          vector < double > new_errors;
@@ -6099,6 +6131,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
             {
                if ( f_Is[ this_file ][ i ] > 0e0 )
                {
+                  // the q strings are what save_file() writes, so they must lose the same points
+                  if ( i < f_qs_string[ this_file ].size() )
+                  {
+                     new_q_string.push_back( f_qs_string[ this_file ][ i ] );
+                  }
                   new_q.push_back( f_qs[ this_file ][ i ] );
                   new_I.push_back( f_Is[ this_file ][ i ] );
                   if ( has_errors )
@@ -6107,6 +6144,12 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
                   }
                }
             }
+            // a changed file is not saved any more
+            if ( new_q.size() != f_qs[ this_file ].size() )
+            {
+               to_created( this_file );
+            }
+            f_qs_string[ this_file ] = new_q_string;
             f_qs    [ this_file ] = new_q;
             f_Is    [ this_file ] = new_I;
             f_errors[ this_file ] = new_errors;
