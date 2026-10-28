@@ -726,13 +726,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_legend->setPalette( PALET_PUSHB );
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
-   pb_axis_x = new QPushButton(us_tr("X"), this);
+   pb_axis_x = new QPushButton(us_tr("Log X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
    pb_axis_x->setPalette( PALET_PUSHB );
    connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
 
-   pb_axis_y = new QPushButton(us_tr("Y"), this);
+   pb_axis_y = new QPushButton(us_tr("Log Y"), this);
    pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_y->setMinimumHeight(minHeight1);
    pb_axis_y->setPalette( PALET_PUSHB );

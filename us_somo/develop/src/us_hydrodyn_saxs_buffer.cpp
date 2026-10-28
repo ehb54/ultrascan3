@@ -60,6 +60,8 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    running = false;
    axis_y_log = true;
    axis_x_log = false;
+   pb_axis_y->setText( axis_y_log ? us_tr( "Lin Y" ) : us_tr( "Log Y" ) );
+   pb_axis_x->setText( axis_x_log ? us_tr( "Lin X" ) : us_tr( "Log X" ) );
    join_adjust_lowq = true;
 
    update_enables();
@@ -5365,6 +5367,8 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
 {
    axis_y_log = !axis_y_log;
 
+   pb_axis_y->setText( axis_y_log ? us_tr( "Lin Y" ) : us_tr( "Log Y" ) );
+
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)") );
@@ -5395,6 +5399,9 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
 void US_Hydrodyn_Saxs_Buffer::axis_x()
 {
    axis_x_log = !axis_x_log;
+
+   pb_axis_x->setText( axis_x_log ? us_tr( "Lin X" ) : us_tr( "Log X" ) );
+
    if ( axis_x_log )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom) (log scale)") );
