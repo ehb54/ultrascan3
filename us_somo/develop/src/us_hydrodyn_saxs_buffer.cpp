@@ -896,6 +896,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
    unsigned int negative_pos   = 0;
    unsigned int negative_count = 0;
    double       minimum_positive = bsub_I[ 0 ];
+   QString      np_note;
 
    for ( unsigned int i = 0; i < bsub_I.size(); i++ )
    {
@@ -967,6 +968,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
                return;
             }
                
+            np_note = QString( ", %1 non-positive points, cropped from q %2" ).arg( negative_count ).arg( bsub_q[ negative_pos ] );
             bsub_q_string.resize( negative_pos );
             bsub_q       .resize( negative_pos );
             bsub_I       .resize( negative_pos );
@@ -977,6 +979,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
          }
          break;
       case 1 : // use absolute value
+         np_note = QString( ", %1 non-positive points set to %2" ).arg( negative_count ).arg( minimum_positive );
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {
             if ( bsub_I[ i ] <= 0e0 )
@@ -986,6 +989,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
          }
          break;
       case 2 : // ignore
+         np_note = QString( ", %1 non-positive points left as they are" ).arg( negative_count );
          break;
       }
    }
@@ -1012,6 +1016,13 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
    f_qs        [ bsub_name ] = bsub_q;
    f_Is        [ bsub_name ] = bsub_I;
    f_errors    [ bsub_name ] = bsub_error;
+   f_header    [ bsub_name ] = QString( " Buffer subtracted: %1 - %2 * %3%4%5%6" )
+      .arg( solution )
+      .arg( alpha )
+      .arg( buffer )
+      .arg( empty.isEmpty() ? QString( "" ) : QString( " - %1 * %2" ).arg( 1e0 - alpha ).arg( empty ) )
+      .arg( use_psv ? QString( ", alpha from gamma %1, conc %2, psv %3" ).arg( gamma ).arg( this_conc ).arg( psv ) : QString( "" ) )
+      .arg( np_note );
    
    // we could check if it has changed and then delete
    if ( do_plot )
@@ -1520,6 +1531,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          f_I0se     .erase( lb_files->item( i )->text() );
          f_conc     .erase( lb_files->item( i )->text() );
          f_extc     .erase( lb_files->item( i )->text() );
+         f_header   .erase( lb_files->item( i )->text() );
          delete lb_files->takeItem( i );
       }
    }
@@ -2360,6 +2372,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    // cout << QString( "opened %1\n" ).arg( filename ) << flush;
    QString basename = QFileInfo( filename ).completeBaseName();
+   f_header    .erase( basename );
    f_name      [ basename ] = filename;
    f_pos       [ basename ] = f_qs.size();
    f_qs_string [ basename ] = q_string;
@@ -2705,6 +2718,12 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       tail = "_" + tail;
    }
 
+   QString range = frame_range( selected_files );
+   if ( !range.isEmpty() )
+   {
+      tail = "_" + range + tail;
+   }
+
    QString avg_name = head + "avg" + tail;
 
    map < QString, bool > current_files;
@@ -2729,6 +2748,11 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    f_qs        [ avg_name ] = avg_qs;
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
+   f_header    [ avg_name ] = QString( " Average of %1 files%2%3: %4" )
+      .arg( selected_files.size() )
+      .arg( all_nonzero_errors ? QString( ", weighted by 1/sd^2" ) : QString( "" ) )
+      .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
+      .arg( selected_files.join( "," ) );
    
    if ( avg_psv )
    {
@@ -2806,6 +2830,45 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_tail( QStringList qsl, bool stri
       s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
+}
+
+// when the names differ only by a number (e.g. frames lyz_00010 ... lyz_00050), its range ("00010-00050"), else empty
+QString US_Hydrodyn_Saxs_Buffer::frame_range( QStringList qsl )
+{
+   if ( qsl.size() < 2 )
+   {
+      return "";
+   }
+
+   int head_len = (int) qstring_common_head( qsl, true ).length();
+   int tail_len = (int) qstring_common_tail( qsl, true ).length();
+
+   QRegularExpression rx_number( QStringLiteral( "^\\d+$" ) );
+
+   QString first;
+   QString last;
+
+   for ( int i = 0; i < (int) qsl.size(); i++ )
+   {
+      if ( head_len + tail_len >= (int) qsl[ i ].length() )
+      {
+         return "";
+      }
+      QString number = qsl[ i ].mid( head_len, qsl[ i ].length() - head_len - tail_len );
+      if ( !rx_number.match( number ).hasMatch() )
+      {
+         return "";
+      }
+      if ( first.isEmpty() || number.toULongLong() < first.toULongLong() )
+      {
+         first = number;
+      }
+      if ( last.isEmpty() || number.toULongLong() > last.toULongLong() )
+      {
+         last = number;
+      }
+   }
+   return first + "-" + last;
 }
       
 QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QString s1, 
@@ -3169,11 +3232,12 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
       }
    }
 
-   ts << QString( title + us_tr( " output: %1%2%3%4 Units:1/a\n" ) )
+   ts << QString( title + us_tr( " output: %1%2%3%4 Units:1/a%5\n" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
       .arg( use_conc )
+      .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
       ;
 
    bool use_errors = ( f_errors.count( file ) && 
@@ -3647,6 +3711,12 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       tail = "_" + tail;
    }
 
+   QString range = frame_range( selected_files );
+   if ( !range.isEmpty() )
+   {
+      tail = "_" + range + tail;
+   }
+
    QString avg_name = head + "cnavg" + tail;
 
    map < QString, bool > current_files;
@@ -3671,6 +3741,21 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    f_qs        [ avg_name ] = avg_qs;
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
+   {
+      QStringList used_concs;
+      for ( int i = 0; i < (int) selected_files.size(); i++ )
+      {
+         used_concs << QString( "%1" ).arg( concs.count( selected_files[ i ] ) ? concs[ selected_files[ i ] ] : 0e0 );
+      }
+      f_header [ avg_name ] = QString( " Concentration normalized average of %1 files%2%3: %4,"
+                                       " each divided by its concentration (%5 mg/ml), then multiplied by their mean %6 mg/ml" )
+         .arg( selected_files.size() )
+         .arg( all_nonzero_errors ? QString( ", weighted by 1/sd^2" ) : QString( "" ) )
+         .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
+         .arg( selected_files.join( "," ) )
+         .arg( used_concs.join( "," ) )
+         .arg( avg_conc );
+   }
    
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
@@ -4193,6 +4278,10 @@ void US_Hydrodyn_Saxs_Buffer::join()
    {
       f_errors    [ use_basename ] = e;
    }
+   f_header    [ use_basename ] = QString( " Joined: %1 up to q %2, %3 above" )
+      .arg( selected[ 0 ] )
+      .arg( q_join )
+      .arg( selected[ 1 ] );
    if ( avg_conc )
    {
       f_conc      [ use_basename ] = avg_conc;
@@ -5608,6 +5697,10 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint
    {
       f_errors   [ text ] = f_errors   [ lbi->text() ];
    }
+   if ( f_header.count( lbi->text() ))
+   {
+      f_header   [ text ] = f_header   [ lbi->text() ];
+   }
 
    update_csv_conc();
    map < QString, double > concs = current_concs();
@@ -5698,6 +5791,9 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
             f_errors[ norm_name ][ j ] *= inv_concs[ files[ i ] ];
          }
       }
+      f_header   [ norm_name ] = QString( " Concentration normalized: %1 / %2 mg/ml" )
+         .arg( files[ i ] )
+         .arg( concs.count( files[ i ] ) ? concs[ files[ i ] ] : 0e0 );
 
       update_csv_conc();
 
@@ -5934,6 +6030,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
    unsigned int negative_pos   = 0;
    unsigned int negative_count = 0;
    double       minimum_positive = bsub_I[ 0 ];
+   QString      np_note;
 
    for ( unsigned int i = 0; i < bsub_I.size(); i++ )
    {
@@ -6005,6 +6102,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
                return;
             }
                
+            np_note = QString( ", %1 non-positive points, cropped from q %2" ).arg( negative_count ).arg( bsub_q[ negative_pos ] );
             bsub_q_string.resize( negative_pos );
             bsub_q       .resize( negative_pos );
             bsub_I       .resize( negative_pos );
@@ -6015,6 +6113,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
          }
          break;
       case 1 : // use absolute value
+         np_note = QString( ", %1 non-positive points set to %2" ).arg( negative_count ).arg( minimum_positive );
          for ( unsigned int i = 0; i < bsub_I.size(); i++ )
          {
             if ( bsub_I[ i ] <= 0e0 )
@@ -6024,6 +6123,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
          }
          break;
       case 2 : // ignore
+         np_note = QString( ", %1 non-positive points left as they are" ).arg( negative_count );
          break;
       }
    }
@@ -6050,6 +6150,13 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
    f_qs        [ bsub_name ] = bsub_q;
    f_Is        [ bsub_name ] = bsub_I;
    f_errors    [ bsub_name ] = bsub_error;
+   f_header    [ bsub_name ] = QString( " Buffer divided: %1 / ( %2 * %3 )%4%5%6" )
+      .arg( solution )
+      .arg( alpha )
+      .arg( buffer )
+      .arg( empty.isEmpty() ? QString( "" ) : QString( " - %1 * %2" ).arg( 1e0 - alpha ).arg( empty ) )
+      .arg( use_psv ? QString( ", alpha from gamma %1, conc %2, psv %3" ).arg( gamma ).arg( this_conc ).arg( psv ) : QString( "" ) )
+      .arg( np_note );
    
    // we could check if it has changed and then delete
    if ( plot_dist_zoomer )
@@ -7247,6 +7354,13 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
    f_qs_string [ save_name ] = q_string;
    f_Is        [ save_name ] = I;
    f_errors    [ save_name ] = errors;
+   {
+      QString scaled = QString( "%1 * %2 + %3" ).arg( mult ).arg( join_adjust_lowq ? wheel_file : join_file ).arg( offset );
+      f_header    [ save_name ] = QString( " Joined: %1 up to q %2, %3 above" )
+         .arg( join_adjust_lowq ? scaled : wheel_file )
+         .arg( point )
+         .arg( join_adjust_lowq ? join_file : scaled );
+   }
 
    lb_files->item( f_pos[ save_name ])->setSelected( true );
 
@@ -7618,6 +7732,17 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    f_qs        [ wsum_name ] = avg_qs;
    f_Is        [ wsum_name ] = avg_Is;
    f_errors    [ wsum_name ] = avg_sd;
+   {
+      QStringList terms;
+      for ( int i = 0; i < (int) files.size() && i < (int) mults.size(); i++ )
+      {
+         terms << QString( "%1 * %2" ).arg( mults[ i ] ).arg( files[ i ] );
+      }
+      f_header [ wsum_name ] = QString( " Weighted sum of %1 files%2: %3" )
+         .arg( files.size() )
+         .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
+         .arg( terms.join( " + " ) );
+   }
    
    if ( avg_psv )
    {

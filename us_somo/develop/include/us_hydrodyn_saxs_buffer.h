@@ -254,6 +254,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, double >             f_I0se;
       map < QString, double >             f_conc;
       map < QString, double >             f_extc;
+      // how a created file was made, written into its saved header line
+      map < QString, QString >            f_header;
 
       map < QString, bool >               created_files_not_saved;
 
@@ -296,6 +298,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QString qstring_common_head( QStringList qsl, bool strip_digits = false );
       QString qstring_common_tail( QStringList qsl, bool strip_digits = false );
+      QString frame_range        ( QStringList qsl );
 
       QString last_load_dir;
       bool    save_files( QStringList files );
