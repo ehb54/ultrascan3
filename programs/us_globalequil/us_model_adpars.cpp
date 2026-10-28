@@ -108,15 +108,15 @@ US_ModelAdPars::US_ModelAdPars(
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_ModelAdPars::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_ModelAdPars::cancelled );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "OK" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( selected() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_ModelAdPars::selected );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons,    row++, 0, 1, 6 );

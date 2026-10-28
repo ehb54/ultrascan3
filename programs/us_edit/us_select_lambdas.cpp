@@ -27,8 +27,10 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    // Read-only lambda list count text
    le_original   = us_lineedit( tr( "%1 original lambdas" )
                       .arg( nbr_orig ),   -1, true );
+   le_original->setAccessibleName( tr( "Original Lambda Count" ) );
    le_selected   = us_lineedit( tr( "%1 selected lambdas" )
                       .arg( nbr_select ), -1, true );
+   le_selected->setAccessibleName( tr( "Selected Lambda Count" ) );
 
    // Lambda list labels
    QLabel* lb_original = us_label( tr( "Original Lambdas" ) );
@@ -36,7 +38,11 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
 
    // Lambda list widgets
    lw_original   = us_listwidget();
+   lw_original->setAccessibleName( tr( "Original Lambdas" ) );
+   lb_original->setBuddy( lw_original );
    lw_selected   = us_listwidget();
+   lw_selected->setAccessibleName( tr( "Selected Lambdas" ) );
+   lb_selected->setBuddy( lw_selected );
    lw_original->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lw_selected->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
@@ -49,8 +55,8 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    pb_add        = us_pushbutton( tr( "Add  ===>" ) );
    pb_remove     = us_pushbutton( tr( "<===  Remove" ) );
 
-   connect( pb_add,    SIGNAL( clicked() ), SLOT( add_selections() ) );
-   connect( pb_remove, SIGNAL( clicked() ), SLOT( rmv_selections() ) );
+   connect( pb_add,    &QAbstractButton::clicked, this, &US_SelectLambdas::add_selections );
+   connect( pb_remove, &QAbstractButton::clicked, this, &US_SelectLambdas::rmv_selections );
 
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -60,10 +66,10 @@ US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
                 pb_accept = us_pushbutton( tr( "Accept" ) );
 
-   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset()  ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()   ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( done()   ) );
+   connect( pb_reset,  &QAbstractButton::clicked, this, &US_SelectLambdas::reset );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_SelectLambdas::help );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectLambdas::cancel );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectLambdas::done );
 
    pb_accept->setEnabled( false );
    buttons->addWidget( pb_reset  );

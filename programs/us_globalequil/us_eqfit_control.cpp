@@ -125,24 +125,24 @@ qDebug() << "EFC: IN";
    eqfitLayout->addWidget( le_nbrdpts,  row,   2, 1, 2 );
    eqfitLayout->addWidget( pb_close,    row++, 4, 1, 2 );
 
-   connect( pb_strtfit, SIGNAL( clicked()    ),
-            this,       SLOT(   start_fit()  ) );
-   connect( pb_pause,   SIGNAL( clicked()    ),
-            this,       SLOT(   pause_fit()  ) );
-   connect( pb_resume,  SIGNAL( clicked()    ),
-            this,       SLOT(   resume_fit() ) );
-   connect( pb_savefit, SIGNAL( clicked()    ),
-            this,       SLOT(   save_fit()   ) );
-   connect( pb_viewrep, SIGNAL( clicked()        ),
-            this,       SLOT(   view_report()    ) );
-   connect( pb_resids,  SIGNAL( clicked()        ),
-            this,       SLOT(   plot_residuals() ) );
-   connect( pb_ovrlays, SIGNAL( clicked()        ),
-            this,       SLOT(   plot_overlays()  ) );
-   connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT(   closed()  ) );
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT(   help()    ) );
+   connect( pb_strtfit, &QAbstractButton::clicked,
+            this,       &US_EqFitControl::start_fit );
+   connect( pb_pause,   &QAbstractButton::clicked,
+            this,       &US_EqFitControl::pause_fit );
+   connect( pb_resume,  &QAbstractButton::clicked,
+            this,       &US_EqFitControl::resume_fit );
+   connect( pb_savefit, &QAbstractButton::clicked,
+            this,       &US_EqFitControl::save_fit );
+   connect( pb_viewrep, &QAbstractButton::clicked,
+            this,       &US_EqFitControl::view_report );
+   connect( pb_resids,  &QAbstractButton::clicked,
+            this,       &US_EqFitControl::plot_residuals );
+   connect( pb_ovrlays, &QAbstractButton::clicked,
+            this,       &US_EqFitControl::plot_overlays );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &US_EqFitControl::closed );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_EqFitControl::help );
    pb_pause  ->setEnabled( false );
    pb_resume ->setEnabled( false );
    pb_savefit->setEnabled( false );
@@ -177,9 +177,9 @@ qDebug() << "EFC: IN";
    gplotLayout->addWidget( ct_plotscn,  row++, 3, 1, 3 );
    gplotLayout->addLayout( lo_monfitg,  row++, 2, 1, 4 );
 
-   connect( ct_plotscn, SIGNAL( valueChanged(double) ), SLOT( new_pscan() ) );
-   connect( rb_pltalld, SIGNAL( toggled( bool ) ),      SLOT( new_pscan() ) );
-   connect( rb_pltsscn, SIGNAL( toggled( bool ) ),      SLOT( new_pscan() ) );
+   connect( ct_plotscn, &QwtCounter::valueChanged, this, &US_EqFitControl::new_pscan );
+   connect( rb_pltalld, &QAbstractButton::toggled,      this, &US_EqFitControl::new_pscan );
+   connect( rb_pltsscn, &QAbstractButton::toggled,      this, &US_EqFitControl::new_pscan );
    plottype = -1;
 
    // NLSQ Fit Tuning controls
@@ -255,12 +255,12 @@ qDebug() << "EFC: IN";
    cb_nlsalgo->addItem( tr( "Quasi-Newton Method" ) );
    cb_nlsalgo->addItem( tr( "Generalized Linear LS" ) );
    cb_nlsalgo->addItem( tr( "NonNegative constrained LS" ) );
-   connect( pb_lnvsr2,  SIGNAL( clicked()    ),
-            this,       SLOT(   plot_two()   ) );
-   connect( pb_mwvsr2,  SIGNAL( clicked()    ),
-            this,       SLOT(   plot_three() ) );
-   connect( pb_mwvscv,  SIGNAL( clicked()    ),
-            this,       SLOT(   plot_four()  ) );
+   connect( pb_lnvsr2,  &QAbstractButton::clicked,
+            this,       &US_EqFitControl::plot_two );
+   connect( pb_mwvsr2,  &QAbstractButton::clicked,
+            this,       &US_EqFitControl::plot_three );
+   connect( pb_mwvscv,  &QAbstractButton::clicked,
+            this,       &US_EqFitControl::plot_four );
 
    // Status layout
    QLabel*  lb_status   = us_label( tr( "Status:" ) );
@@ -374,10 +374,10 @@ qDebug() << "START_FIT";
    pb_savefit->setEnabled( false );
    pb_close  ->setEnabled( false );
 
-   connect( fitwork, SIGNAL( work_progress( int ) ),
-            this,    SLOT(   new_progress ( int ) ) );
-   connect( fitwork, SIGNAL( work_complete()      ),
-            this,    SLOT(   fit_completed()      ) );
+   connect( fitwork, &US_FitWorker::work_progress,
+            this,    &US_EqFitControl::new_progress );
+   connect( fitwork, &US_FitWorker::work_complete,
+            this,    &US_EqFitControl::fit_completed );
    progress->setRange( 1, mxiters );
    progress->reset();
 
@@ -826,7 +826,7 @@ void US_EqFitControl::prepare_data()
    ct_plotscn->setSingleStep(  jpscnn );
    ct_plotscn->disconnect();
    ct_plotscn->setValue( ipscnn );
-   connect( ct_plotscn, SIGNAL( valueChanged( double ) ), SLOT( new_pscan() ) );
+   connect( ct_plotscn, &QwtCounter::valueChanged, this, &US_EqFitControl::new_pscan );
 //qDebug() << "PREP_DATA ipscnn lpscnn liscnn jpscnn" << ipscnn << lpscnn
 //   << liscnn << jpscnn;
 }

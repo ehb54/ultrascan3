@@ -26,14 +26,14 @@ US_Table::US_Table( QMap< double, double >& map,
    edits->addWidget( lb_wl );
 
    le_wl = us_lineedit();
-   connect( le_wl, SIGNAL( editingFinished() ), SLOT( edited() ) ); 
+   connect( le_wl, &QLineEdit::editingFinished, this, &US_Table::edited );
    edits->addWidget( le_wl );
 
    QLabel* lb_value = us_label( type );
    edits->addWidget( lb_value );
 
    le_value = us_lineedit();
-   connect( le_value, SIGNAL( editingFinished() ), SLOT( edited() ) ); 
+   connect( le_value, &QLineEdit::editingFinished, this, &US_Table::edited );
    edits->addWidget( le_value );
 
    main->addLayout( edits );
@@ -42,20 +42,18 @@ US_Table::US_Table( QMap< double, double >& map,
    lw_table = us_listwidget();
 
    main->addWidget( lw_table );
-   connect( lw_table, SIGNAL( itemSelectionChanged( void ) ), 
-                      SLOT  ( new_row             ( void ) ) );
+   connect( lw_table, &QListWidget::itemSelectionChanged, this, &US_Table::new_row );
 
-   connect( lw_table, SIGNAL( itemDoubleClicked   ( QListWidgetItem* ) ), 
-                      SLOT  ( delete_row          ( QListWidgetItem* ) ) );
+   connect( lw_table, &QListWidget::itemDoubleClicked, this, &US_Table::delete_row );
 
    QBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QPushButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( done() ) );
+   connect( pb_accept, &QPushButton::clicked, this, &US_Table::done );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );

@@ -34,9 +34,6 @@
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 
@@ -199,6 +196,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Fit : public QDialog
       bool          max_free_peak_delta( vector < double > & par );
 
       double        mals_saxs_ampl_width_min;
+      double        mals_saxs_ampl_min;
       bool          mals_saxs_lock_min_retry;
       double        mals_saxs_lock_min_retry_mult;
       bool          mals_saxs_maxfpk_restart;
@@ -257,9 +255,6 @@ namespace MSFIT
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

@@ -5,9 +5,14 @@
 #include "us_matrix.h"
 #include "us_util.h"
 #include "us_settings.h"
+#include <QSaveFile>
+#include <limits>
 
 // Static member definition
 const uint US_DataIO::format_version;
+
+// Versions 4 and 5 share the supported header layout.
+static const quint32 oldest_version = 4;
 
 // Return the count of readings points
 int US_DataIO::RawData::pointCount( )
@@ -39,8 +44,9 @@ double US_DataIO::RawData::scWavelength( int wavx )
    return xvalues[ wavx ];
 }
 
-// Get the readings value at given scan,radius indecies
-double US_DataIO::RawData::value( int scnx, int radx )
+// Get the readings value at given scan,radius indecies (const, so reading
+//  an implicitly shared copy does not detach it)
+double US_DataIO::RawData::value( int scnx, int radx ) const
 {
    return scanData[ scnx ].rvalues[ radx ];
 }
@@ -199,16 +205,8 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    QFile ff( file );
    if ( ! ff.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
    QTextStream ts( &ff );
-#if 1
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
-#endif
+
+   double ss_reso      = US_Settings::speedResolution();
 
    // Read the description
    data.description = ts.readLine();
@@ -274,8 +272,38 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
 int US_DataIO::writeRawData( const QString& file, RawData& data )
 {
-   // Open the file for writing
-   QFile ff( file );
+   // The stored axis requires an origin and a positive spacing.
+   if ( data.xvalues.size() < 2 ) return NODATA;
+
+   const double origin  = data.xvalues[ 0 ];
+   const double spacing = data.xvalues[ 1 ] - origin;
+   if ( ! qIsFinite( origin ) || ! qIsFinite( spacing ) || spacing <= 0.0 )
+      return NOT_USDATA;
+
+   for ( int ii = 2; ii < data.xvalues.size(); ii++ )
+   {
+      const double rebuilt = origin + spacing * ii;
+      // Allow accumulated rounding error and a half-step cell-bottom endpoint.
+      const double rounding = 8.0 * std::numeric_limits<double>::epsilon()
+                            * qMax( qAbs( origin ), qAbs( rebuilt ) ) * ( ii + 1 );
+      const double tolerance = rounding
+                             + ( ii == data.xvalues.size() - 1 ? spacing * 0.5 : 0.0 );
+      if ( ! ( data.xvalues[ ii ] > data.xvalues[ ii - 1 ] ) ||
+           ! ( qAbs( data.xvalues[ ii ] - rebuilt ) <= tolerance ) )
+         return NOT_USDATA;
+   }
+
+   // A present interpolation bitmap must cover every reading.
+   for ( int ii = 0; ii < data.scanData.size(); ii++ )
+   {
+      const Scan& sc = data.scanData[ ii ];
+      if ( sc.interpolated.isEmpty() ) continue;
+
+      if ( sc.interpolated.size() < ( sc.rvalues.size() + 7 ) / 8 )
+         return NOT_USDATA;
+   }
+
+   QSaveFile ff( file );
    if ( ! ff.open( QIODevice::WriteOnly ) ) return CANTOPEN;
    QDataStream ds( &ff );
 
@@ -308,7 +336,8 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    memset( desc, '\0', sizeof desc );  // bzero is not defined in WIN32
 
    QByteArray dd = data.description.toLatin1();
-   strncpy( desc, dd.data(), sizeof desc );
+   // Reserve one byte for the null terminator.
+   strncpy( desc, dd.constData(), sizeof desc - 1 );
    write( ds, desc, sizeof desc, crc );
 
    // Find min and max radius, data, and std deviation
@@ -421,9 +450,8 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    qToLittleEndian( crc, ui.u ); // crc
    ds.writeRawData( ui.c, 4 );
 
-   ff.close();
-
-   return OK;
+   if ( ds.status() != QDataStream::Ok || ! ff.flush() ) return CANTWRITE;
+   return ff.commit() ? OK : CANTWRITE;
 }
 
 void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data, 
@@ -476,7 +504,8 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    qToLittleEndian( valueCount, ui.u );
    write( ds, ui.c, 4, crc );
 
-   // Write readings
+   // Write readings.  A zero range (constant values) has a zero step and
+   // stores every value as 0, the minimum, rather than rounding 0/0 = NaN.
    double  delta  = ( pp.max_data1 - pp.min_data1 ) / 65535;
    double  delta2 = ( pp.max_data2 - pp.min_data2 ) / 65535;
 
@@ -487,7 +516,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    {
       double rval = data.rvalues[ ii ];
       // reading
-      si = (quint16) qRound( ( rval - pp.min_data1 ) / delta );
+      si          = ( delta > 0.0 ) ? (quint16) qRound( ( rval - pp.min_data1 ) / delta ) : 0;
       qToLittleEndian( si, ui.u );
       write( ds, ui.c, 2, crc );
 
@@ -495,15 +524,18 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
       if ( stdDev )
       {
          double sval = data.stddevs[ ii ];
-         si = (quint16) qRound( ( sval - pp.min_data2 ) / delta2 );
+         si          = ( delta2 > 0.0 ) ? (quint16) qRound( ( sval - pp.min_data2 ) / delta2 ) : 0;
          qToLittleEndian( si, ui.u );
          write( ds, ui.c, 2, crc );
       }
    }
 
-   // Write interpolated flags
+   // An empty interpolation bitmap is written as zeroes.
    int flagSize = ( valueCount + 7 ) / 8;
-   write( ds, data.interpolated.data(), flagSize, crc );
+   QByteArray flags = data.interpolated;
+   if ( flags.size() < flagSize ) flags = QByteArray( flagSize, '\0' );
+
+   write( ds, flags.data(), flagSize, crc );
 }
 
 void US_DataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
@@ -511,6 +543,10 @@ void US_DataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
    ds.writeRawData( c, len );
    crc = US_Crc::crc32( crc, (unsigned char*) c, len );
 }
+
+// Bytes writeScan() always emits before the readings:  the "DATA" marker plus
+// temperature, rpm, seconds, omega2t, wavelength, delta_r and the reading count.
+static const qint64 scan_header_size = 30;
 
 int US_DataIO::readRawData( const QString& file, RawData& data )
 {
@@ -520,16 +556,15 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
    int      err = OK;
    quint32  crc = 0xffffffffUL;
-#if 1
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
-#endif
+
+   // Leave the destination unchanged if parsing fails.
+   RawData  rd;
+   rd.cell    = 0;
+   rd.channel = ' ';
+   memset( rd.type,    0, sizeof rd.type    );
+   memset( rd.rawGUID, 0, sizeof rd.rawGUID );
+
+   double ss_reso      = US_Settings::speedResolution();
 
    try
    {
@@ -542,8 +577,10 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
-      if ( version > format_version ) throw BAD_VERSION;
+      if ( version > format_version  ||  version < oldest_version )
+         throw BAD_VERSION;
 
+      // Version 4 wrote the wavelength on a different scale than version 5.
       bool wvlf_new  = ( version > (quint32)4 );
 
       // Read and get the file type
@@ -555,7 +592,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
                                         << "WA" << "WI";
     
       if ( ! types.contains( QString( type ) ) ) throw BADTYPE;
-      strncpy( data.type, type, 2 );
+      strncpy( rd.type, type, 2 );
 
       // Get the cell
       union 
@@ -566,18 +603,19 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       cell.i = 0;
 
       read( ds, cell.c, 1, crc );
-      data.cell = qFromLittleEndian( cell.i );
+      rd.cell = qFromLittleEndian( cell.i );
 
       // Get the channel
-      read( ds, &data.channel, 1, crc );
+      read( ds, &rd.channel, 1, crc );
 
       // Get the guid
-      read( ds, data.rawGUID, 16, crc );
-    
-      // Get the description
-      char desc[ 240 ];
+      read( ds, rd.rawGUID, 16, crc );
+
+      // Terminate descriptions that fill all 240 stored bytes.
+      char desc[ 241 ];
       read( ds, desc, 240, crc );
-      data.description = QString( desc );
+      desc[ 240 ] = '\0';
+      rd.description = QString( desc );
 
       // Get the parameters to expand the values
       union
@@ -631,8 +669,19 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       u2.I = qFromLittleEndian( u1.I );
       double max_data2 = u2.f;
 
+      // Require finite coordinates and an ascending radius axis.
+      if ( qIsNaN( min_radius )  ||  qIsInf( min_radius ) ) throw NOT_USDATA;
+      if ( qIsNaN( delta_radius ) || qIsInf( delta_radius ) ) throw NOT_USDATA;
+      if ( delta_radius <= 0.0 ) throw NOT_USDATA;
+
       read( ds, si.c, 2, crc );
       qint16 scan_count = qFromLittleEndian( si.I );
+
+      if ( scan_count <= 0 ) throw NODATA;
+
+      // Reject scan counts that exceed the available headers.
+      const qint64 remaining = ff.size() - ff.pos();
+      if ( (qint64)scan_count * scan_header_size > remaining ) throw NOT_USDATA;
 
       // Read each scan
       int valueCount = 0;
@@ -681,12 +730,23 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
          // Reading count
          read( ds, u1.c, 4, crc );
-         valueCount = qFromLittleEndian( u1.I );
+         qint32 this_count = qFromLittleEndian( u1.I );
+
+         if ( this_count <= 0 ) throw NODATA;
+
+         // All scans share one radius axis.
+         if ( ii == 0 ) valueCount = this_count;
+         else if ( this_count != valueCount ) throw NOT_USDATA;
 
          // Get the readings
          double  factor1 = ( max_data1 - min_data1 ) / 65535.0;
          double  factor2 = ( max_data2 - min_data2 ) / 65535.0;
          bool    stdDev  = ( min_data2 != 0.0 || max_data2 != 0.0 );
+
+         // Check payload size in 64 bits to avoid count overflow.
+         const qint64 need = (qint64)valueCount * ( stdDev ? 4 : 2 )
+                           + ( (qint64)valueCount + 7 ) / 8;
+         if ( need > ff.size() - ff.pos() ) throw NOT_USDATA;
 
          for ( int jj = 0; jj < valueCount; jj++ )
          {
@@ -728,23 +788,25 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          delete [] interpolated;
 
          // Add the scan to the data
-         data.scanData <<  sc;
+         rd.scanData <<  sc;
       }
 
       // Calculate the radius vector
-      data.xvalues.clear();
+      rd.xvalues.clear();
       double  radius  = min_radius;
-      
+
       for ( int jj = 0; jj < valueCount; jj++ )
       {
-         data.xvalues << radius;
+         rd.xvalues << radius;
          radius += delta_radius;
       }
 
       // Read the crc
       quint32 read_crc;
-      ds.readRawData( (char*) &read_crc , 4 );
+      if ( ds.readRawData( (char*) &read_crc, 4 ) != 4 ) throw NOT_USDATA;
       if ( crc != qFromLittleEndian( read_crc ) ) throw BADCRC;
+
+      data = rd;
 
    } catch( ioError error )
    {
@@ -757,7 +819,8 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
 void US_DataIO::read( QDataStream& ds, char* cc, int len, quint32& crc )
 {
-   ds.readRawData( cc, len );
+   // Reject short reads before using the buffer.
+   if ( ds.readRawData( cc, len ) != len ) throw NOT_USDATA;
    crc = US_Crc::crc32( crc, (uchar*) cc, len );
 }
 
@@ -794,6 +857,190 @@ int US_DataIO::readEdits( const QString& filename, EditValues& parameters )
    if ( error ) return BADXML;
 
    return OK;
+}
+
+int US_DataIO::writeEdits( const QString& filename, const EditValues& parameters )
+{
+   QFile ff( filename );
+   if ( !ff.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return CANTOPEN;
+   }
+
+   const EditValues& ev      = parameters;
+   QString           expType = ev.expType.isEmpty() ? QString( "Velocity" ) : ev.expType;
+   bool              isEquil = ( expType == "Equilibrium" );
+
+   QXmlStreamWriter  xml( &ff );
+   xml.setAutoFormatting( true );
+   xml.writeStartDocument();
+   xml.writeDTD( "<!DOCTYPE UltraScanEdits>" );
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute( "type", expType );
+
+   xml.writeStartElement( "identification" );
+   xml.writeStartElement( "runid" );
+   xml.writeAttribute( "value", ev.runID );
+   xml.writeEndElement();
+   xml.writeStartElement( "editGUID" );
+   xml.writeAttribute( "value", ev.editGUID );
+   xml.writeEndElement();
+   xml.writeStartElement( "rawDataGUID" );
+   xml.writeAttribute( "value", ev.dataGUID );
+   xml.writeEndElement();
+   xml.writeEndElement(); // identification
+
+   xml.writeStartElement( "run" );
+   xml.writeAttribute( "cell", ev.cell );
+   xml.writeAttribute( "channel", ev.channel );
+   xml.writeAttribute( "wavelength", ev.wavelength );
+
+   // readEdits reads up to </lambdas> for a wavelength range, so always
+   //  write the element for one
+   if ( !ev.lambdas.isEmpty() || ev.wavelength.contains( "-" ) )
+   {
+      xml.writeStartElement( "lambdas" );
+      for ( int ii = 0; ii < ev.lambdas.size(); ii++ )
+      {
+         xml.writeStartElement( "lambda" );
+         xml.writeAttribute( "value", QString::number( ev.lambdas[ii] ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement(); // lambdas
+   }
+
+   if ( !ev.excludes.isEmpty() )
+   {
+      xml.writeStartElement( "excludes" );
+      for ( int ii = 0; ii < ev.excludes.size(); ii++ )
+      {
+         xml.writeStartElement( "exclude" );
+         xml.writeAttribute( "scan", QString::number( ev.excludes[ii] ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement(); // excludes
+   }
+
+   if ( !ev.editedPoints.isEmpty() )
+   {
+      xml.writeStartElement( "edited" );
+      for ( int ii = 0; ii < ev.editedPoints.size(); ii++ )
+      {
+         const EditedPoint& ep = ev.editedPoints[ii];
+         xml.writeStartElement( "edit" );
+         xml.writeAttribute( "scan", QString::number( ep.scan ) );
+         xml.writeAttribute( "radius", QString::number( ep.radius ) );
+         xml.writeAttribute( "value", QString::number( ep.value, 'f', 8 ) );
+         xml.writeEndElement();
+      }
+      xml.writeEndElement(); // edited
+   }
+
+   xml.writeStartElement( "parameters" );
+
+   // Air gap only applies to interference data and differs from the default
+   if ( ev.airGapLeft != 0.0 || ev.airGapRight != 9.0 )
+   {
+      xml.writeStartElement( "air_gap" );
+      xml.writeAttribute( "left", QString::number( ev.airGapLeft, 'f', 8 ) );
+      xml.writeAttribute( "right", QString::number( ev.airGapRight, 'f', 8 ) );
+      xml.writeAttribute( "tolerance", QString::number( ev.gapTolerance, 'f', 8 ) );
+      xml.writeEndElement();
+   }
+
+   if ( !isEquil )
+   {
+      xml.writeStartElement( "meniscus" );
+      xml.writeAttribute( "radius", QString::number( ev.meniscus, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "bottom" );
+      xml.writeAttribute( "radius", QString::number( ev.bottom, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "data_range" );
+      xml.writeAttribute( "left", QString::number( ev.rangeLeft, 'f', 8 ) );
+      xml.writeAttribute( "right", QString::number( ev.rangeRight, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "plateau" );
+      xml.writeAttribute( "radius", QString::number( ev.plateau, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "baseline" );
+      xml.writeAttribute( "radius", QString::number( ev.baseline, 'f', 8 ) );
+      xml.writeEndElement();
+      xml.writeStartElement( "od_limit" );
+      xml.writeAttribute( "value", QString::number( ev.ODlimit, 'f', 8 ) );
+      xml.writeEndElement();
+
+      if ( ev.bl_corr_slope != 0.0 || ev.bl_corr_yintercept != 0.0 )
+      {
+         xml.writeStartElement( "linear_baseline_correction" );
+         xml.writeAttribute( "slope", QString::number( ev.bl_corr_slope, 'f', 8 ) );
+         xml.writeAttribute( "y_intercept", QString::number( ev.bl_corr_yintercept, 'f', 8 ) );
+         xml.writeEndElement();
+      }
+   }
+
+   else
+   {
+      for ( int ii = 0; ii < ev.speedData.size(); ii++ )
+      {
+         const SpeedData& sd = ev.speedData[ii];
+         xml.writeStartElement( "speed" );
+         xml.writeAttribute( "value", QString::number( sd.speed ) );
+         xml.writeAttribute( "scanStart", QString::number( sd.first_scan ) );
+         xml.writeAttribute( "scanCount", QString::number( sd.scan_count ) );
+         xml.writeStartElement( "meniscus" );
+         xml.writeAttribute( "radius", QString::number( sd.meniscus, 'f', 8 ) );
+         xml.writeEndElement();
+         xml.writeStartElement( "data_range" );
+         xml.writeAttribute( "left", QString::number( sd.dataLeft, 'f', 8 ) );
+         xml.writeAttribute( "right", QString::number( sd.dataRight, 'f', 8 ) );
+         xml.writeEndElement();
+         xml.writeEndElement(); // speed
+      }
+   }
+
+   xml.writeEndElement(); // parameters
+
+   if ( ev.noiseOrder > 0 || ev.removeSpikes || ev.invert == -1.0 || ev.floatingData )
+   {
+      xml.writeStartElement( "operations" );
+
+      if ( ev.noiseOrder > 0 )
+      {
+         xml.writeStartElement( "subtract_ri_noise" );
+         xml.writeAttribute( "order", QString::number( ev.noiseOrder ) );
+         xml.writeEndElement();
+      }
+
+      if ( ev.removeSpikes )
+      {
+         xml.writeStartElement( "remove_spikes" );
+         xml.writeEndElement();
+      }
+
+      if ( ev.invert == -1.0 )
+      {
+         xml.writeStartElement( "invert" );
+         xml.writeEndElement();
+      }
+
+      if ( ev.floatingData )
+      {
+         xml.writeStartElement( "floating_data" );
+         xml.writeEndElement();
+      }
+
+      xml.writeEndElement(); // operations
+   }
+
+   xml.writeEndElement(); // run
+   xml.writeEndElement(); // experiment
+   xml.writeEndDocument();
+
+   // A buffered write error only shows up when the file is flushed
+   ff.close();
+
+   return ( !xml.hasError() && ff.error() == QFile::NoError ) ? OK : CANTWRITE;
 }
 
 void US_DataIO::ident( QXmlStreamReader& xml, EditValues& parameters )
@@ -1701,6 +1948,7 @@ QString US_DataIO::errorString( int code )
       case OK        
          : return QObject::tr( "The operation completed successully" );
       case CANTOPEN  : return QObject::tr( "The file cannot be opened" );
+      case CANTWRITE : return QObject::tr( "The file could not be saved" );
       case BADCRC    : return QObject::tr( "The file was corrupted" );
       case NOT_USDATA: return QObject::tr( "The file was not valid scan data" );
       case BADTYPE   : return QObject::tr( "The filetype was not recognized" );

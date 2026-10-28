@@ -85,7 +85,8 @@ US_SelectItem::US_SelectItem( QList< QStringList >& items,
 	 }
        if( add_label == "AUTOFLOW_GMP_REPORT")
 	 {
-	   autoflow_gmp_report = true;	   
+	   autoflow_gmp_report = true;
+	   refresh_state_autoflow = true;   // reuse the existing "refresh" button/signal plumbing
 	 }
      }
    
@@ -161,11 +162,12 @@ void US_SelectItem::build_layout( const QString titl )
 	 }
        else
 	 {
-	   le_info->setText(tr( "Information on one or more experimental methods submitted to Beckman Optima AUC Instruments is available."
-				"<ul><li>You can reattach to a specific job by selecting it from the list below and clicking \"Select Optima Run to Follow\"</ul></li>"
-				"<ul><li>Alternatively, you can click \"Define Another Experiment\" to design and/or submit a new experimental method to the availabale Optima instrument(s)</ul></li>"
-				"<ul><li>Records can be removed form the list (\"Remove from the List\"). NOTE that such runs cannot be monitored with this program</ul></li>"
-				"<ul><li>Finally, selected record can be marked as \"Failed\". The program will re-initialize the run from the 3. IMPORT stage</ul></li>"));
+	   le_info->setText(tr( "One or more experimental methods have already been submitted to the Beckman Optima AUC instrument(s)."
+				"<ul><li>To continue monitoring an existing run, select it from the list below and click \"Select Optima Run to Follow.\"</ul></li>"
+				"<ul><li>To create or submit a new method, click \"Define Another Experiment.\"</ul></li>"
+				"<ul><li>To hide a record from this list, select it and click \"Remove from the List.\" Removed runs can no longer be monitored from this program.</ul></li>"
+				"<ul><li>To mark a selected record as failed, click \"Mark/Unmark Run as Failed.\" The program will reset the workflow to stage 3, \"LIMS Import,\" so the run can be reinitialized.</ul></li>"));
+	   
 	 }
        
        le_info->setFont(le_info_font);
@@ -178,14 +180,16 @@ void US_SelectItem::build_layout( const QString titl )
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
    le_dfilter          = us_lineedit();
+   le_dfilter->setAccessibleName( tr( "Search" ) );
+   lb_filtdata->setBuddy( le_dfilter );
    dsearch             = QString( "" );
 
    int row             = 0;
    top->addWidget( lb_filtdata, row,   0, 1, 1 );
    top->addWidget( le_dfilter,  row++, 1, 1, 3 );
 
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_SelectItem::search );
 
    main->addLayout( top );
 
@@ -205,6 +209,7 @@ void US_SelectItem::build_layout( const QString titl )
    // Construct the table widget 
 
    tw_data = new QTableWidget( 20, ncols, this );
+   tw_data->setAccessibleName( tr( "Selection List" ) );
    tw_data->setFrameStyle ( QFrame::NoFrame );
    tw_data->setPalette    ( US_GuiSettings::editColor() );
    tw_data->setFont       ( tw_font );
@@ -250,7 +255,9 @@ void US_SelectItem::build_layout( const QString titl )
 
    QPushButton* pb_mark_unmark_failed_autoflow = us_pushbutton( tr( "Mark/Unmark Run as Failed" ) );
 
-   QPushButton* pb_refresh_state_autoflow      = us_pushbutton( tr( "Refresh Optima Run States" ) );
+   QPushButton* pb_refresh_state_autoflow      = us_pushbutton( autoflow_gmp_report ?
+                                                                 tr( "Refresh List" ) :
+                                                                 tr( "Refresh Optima Run States" ) );
    
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_delete );
@@ -259,12 +266,12 @@ void US_SelectItem::build_layout( const QString titl )
    buttons->addWidget( pb_mark_unmark_failed_autoflow );
    buttons->addWidget( pb_refresh_state_autoflow );
 
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( deleted() ) );
-   connect( pb_delete_autoflow, SIGNAL( clicked() ), SLOT( deleted_autoflow() ) );
-   connect( pb_mark_unmark_failed_autoflow, SIGNAL( clicked() ), SLOT( set_unset_failed_autoflow() ) );
-   connect( pb_refresh_state_autoflow, SIGNAL( clicked() ), SLOT( do_refresh_state_autoflow() ) );
+   connect( pb_cancel, &QPushButton::clicked, this, &US_SelectItem::cancelled );
+   connect( pb_accept, &QPushButton::clicked, this, &US_SelectItem::accepted );
+   connect( pb_delete, &QPushButton::clicked, this, &US_SelectItem::deleted );
+   connect( pb_delete_autoflow, &QPushButton::clicked, this, &US_SelectItem::deleted_autoflow );
+   connect( pb_mark_unmark_failed_autoflow, &QPushButton::clicked, this, &US_SelectItem::set_unset_failed_autoflow );
+   connect( pb_refresh_state_autoflow, &QPushButton::clicked, this, &US_SelectItem::do_refresh_state_autoflow );
 
    if ( !deleted_button )
      pb_delete->hide();
@@ -842,7 +849,7 @@ void US_SelectItem::set_unset_failed_autoflow()
    
    QString current_mark = "<font color='green'><b>NOT FAILED</b></font>";
    QString new_mark     = "<font color='red'><b>FAILED</b></font>";
-   QString add_msg      = "This implies the run will be re-started from stage <b>3. IMPORT</b> upon next re-attachment.";
+   QString add_msg      = "<br>If you later select this run again, UltraScan will restart processing from Stage <b>3: LIMS Import</b>.";
    bool isFailed = false;
    if ( failedID. toInt() != 0 )
      {
@@ -854,13 +861,13 @@ void US_SelectItem::set_unset_failed_autoflow()
      }
 
    QMessageBox msgBox;
-   msgBox.setText(tr( "You have selected to change the status for the following run:<br><br>" )
+   msgBox.setText(tr( "You are about to update the status of the following run:<br><br>" )
 		  + tr("<b>ID:&emsp;</b>") + items[ AutoflowRow ][ 0 ]
 		  + tr("<br>")
 		  + tr("<b>Name:&emsp;</b>") + items[ AutoflowRow ][ 1 ]
 		  + tr("<br>")
 		  + tr("<b>Current Status:&emsp;</b> ") + current_mark
-		  + tr("<br><br> If proceeded, it will be marked as %1. %2").arg( new_mark ).arg( add_msg )
+		  + tr("<br><br> It will be marked as %1. %2").arg( new_mark ).arg( add_msg )
 		  + tr( "<br><br>Proceed?" ));
    //msgBox.setInformativeText("<font color='red'><b>NOTE:</b> if deleted, this run cannot be monitored with this program anymore!</font>");
    msgBox.setWindowTitle(tr("Mark/UnMark Autoflow Record as FAILED"));
@@ -881,7 +888,7 @@ void US_SelectItem::set_unset_failed_autoflow()
 	   if (  protocol_details[ "gmpRun" ] == "YES " )
 	     {
 	       US_FailedRunGui * fdiag = new US_FailedRunGui( protocol_details );
-	       connect( fdiag, SIGNAL( failed_status_set() ), this, SLOT( show_autoflow_run_as_failed() ));
+	       connect( fdiag, &US_FailedRunGui::failed_status_set, this, &US_SelectItem::show_autoflow_run_as_failed );
 	       fdiag -> show();
 	     }
 	   else // For non-GMP: just repeat as for GMP, but create "empty" autoflowFailed record & attach to the autoflow 

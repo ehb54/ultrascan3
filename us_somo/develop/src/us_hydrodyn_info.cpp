@@ -1,4 +1,5 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -1140,7 +1141,7 @@ QString US_Hydrodyn::info_cite( const QString & package ) {
 
 QString US_Hydrodyn::split_and_prepend( const QString & qs, const QString & prepend ) {
    QStringList qsl = qs.split( "\n" );
-   qsl.replaceInStrings( QRegExp( "^" ), prepend );
+   qsl.replaceInStrings( QRegularExpression( QStringLiteral( "^" ) ), prepend );
    return qsl.join( "\n" ) + "\n";
 }
 
@@ -1149,7 +1150,7 @@ QString US_Hydrodyn::citation_cleanup( const QString & qs ) {
    set < QString > used;
    QStringList qslout;
    for ( int i = 0; i < (int) qsl.size(); ++i ) {
-      if ( !qsl[ i ].contains( QRegExp( "^\\s*$" ) ) && !used.count( qsl[ i ] ) ) {
+      if ( !qsl[ i ].contains( QRegularExpression( QStringLiteral( "^\\s*$" ) ) ) && !used.count( qsl[ i ] ) ) {
          used.insert( qsl[ i ] );
          qslout << qsl[ i ];
       }

@@ -59,21 +59,19 @@ protected:
 
     // Helper to create XML content for testing
     QString createTestModelXml() {
-        return QString(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                "<!DOCTYPE US_Model>\n"
-                "<ModelData version=\"1.0\">\n"
-                "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
-                "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
-                "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
-                "coSedSolute=\"-1\" subGrids=\"0\">\n"
-                "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
-                "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
-                "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
-                "oligomer=\"1\" shape=\"0\" type=\"0\" molar=\"0\" signal=\"1\" />\n"
-                "</model>\n"
-                "</ModelData>\n"
-        );
+       return QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                       "<!DOCTYPE US_Model>\n"
+                       "<ModelData version=\"1.0\">\n"
+                       "<model description=\"Test Model\" modelGUID=\"test-guid-123\" "
+                       "editGUID=\"edit-guid-456\" wavelength=\"280.0\" "
+                       "opticsType=\"0\" analysisType=\"1\" globalType=\"0\" "
+                       "coSedSolute=\"-1\">\n"
+                       "<analyte name=\"Component1\" mw=\"50000\" s=\"2.5e-13\" "
+                       "D=\"1e-11\" f=\"1\" f_f0=\"1.25\" vbar20=\"0.73\" "
+                       "extinction=\"0\" axial=\"10\" sigma=\"0\" delta=\"0\" "
+                       "oligomer=\"1\" shape=\"0\" type=\"0\" molar=\"0\" signal=\"1\" />\n"
+                       "</model>\n"
+                       "</ModelData>\n" );
     }
 };
 
@@ -85,7 +83,7 @@ EXPECT_EQ(model->variance, 0.0);
 EXPECT_EQ(model->meniscus, 0.0);
 EXPECT_EQ(model->bottom, 0.0);
 EXPECT_EQ(model->alphaRP, 0.0);
-EXPECT_EQ(model->subGrids, 0);
+EXPECT_EQ( model->subGrids, 1 );
 EXPECT_THAT(model->description, QStringEq("New Model"));
 EXPECT_EQ(model->optics, US_Model::ABSORBANCE);
 EXPECT_EQ(model->analysis, US_Model::MANUAL);
@@ -285,41 +283,6 @@ EXPECT_TRUE(model->components.isEmpty());
 EXPECT_TRUE(model->associations.isEmpty());
 }
 
-// Component Search Tests
-TEST_F(US_ModelTest, FindComponentByName_ExistingComponent_ReturnsCorrectIndex) {
-model->components << createValidComponent();
-model->components << createValidComponent();
-model->components[1].name = "Unique Component";
-
-// Find component by name (assuming there's a method for this)
-bool found = false;
-int index = -1;
-for (int i = 0; i < model->components.size(); ++i) {
-if (model->components[i].name == "Unique Component") {
-found = true;
-index = i;
-break;
-}
-}
-
-EXPECT_TRUE(found);
-EXPECT_EQ(index, 1);
-}
-
-TEST_F(US_ModelTest, FindComponentByName_NonExistentComponent_ReturnsNotFound) {
-model->components << createValidComponent();
-
-bool found = false;
-for (int i = 0; i < model->components.size(); ++i) {
-if (model->components[i].name == "Non-existent Component") {
-found = true;
-break;
-}
-}
-
-EXPECT_FALSE(found);
-}
-
 // Validation Tests
 TEST_F(US_ModelTest, IsValid_ValidModel_ReturnsTrue) {
 model->description = "Valid Model";
@@ -427,48 +390,42 @@ EXPECT_EQ(assoc.rcomps[2], 2);
 EXPECT_EQ(assoc.stoichs[2], -1);
 }
 
-// Edge Cases
-TEST_F(US_ModelTest, ComponentWithZeroMW_HandlesCorrectly) {
+// Coefficient calculation edge cases
+
+TEST_F(US_ModelTest, CalcCoefficients_ZeroMolecularWeight_ReportsFailure) {
 US_Model::SimulationComponent sc = createValidComponent();
 sc.mw = 0.0;
+sc.s  = 0.0;
+sc.D  = 0.0;
+sc.f  = 0.0;
 
-model->components << sc;
-
-EXPECT_EQ(model->components[0].mw, 0.0);
-// Model should handle zero MW gracefully
+// A component with no mass has no derivable hydrodynamic coefficients.
+EXPECT_FALSE(US_Model::calc_coefficients(sc));
 }
 
-TEST_F(US_ModelTest, ComponentWithNegativeConcentration_HandlesCorrectly) {
+TEST_F(US_ModelTest, CalcCoefficients_ValidComponent_DerivesPositiveCoefficients) {
 US_Model::SimulationComponent sc = createValidComponent();
-sc.signal_concentration = -1.0;
+sc.s = 0.0;
+sc.D = 0.0;
+sc.f = 0.0;
 
-model->components << sc;
+ASSERT_TRUE(US_Model::calc_coefficients(sc));
 
-EXPECT_EQ(model->components[0].signal_concentration, -1.0);
-// Model should handle negative concentration (though it might be invalid)
+// Derived coefficients must be positive.
+EXPECT_GT(sc.D, 0.0);
+EXPECT_GT(sc.f, 0.0);
+EXPECT_GT(sc.f_f0, 0.0);
 }
 
-// Boundary Value Tests
-TEST_F(US_ModelTest, ExtremeWavelengthValues_HandlesCorrectly) {
-model->wavelength = 1000.0; // Very high
-EXPECT_EQ(model->wavelength, 1000.0);
-
-model->wavelength = 0.1; // Very low
-EXPECT_EQ(model->wavelength, 0.1);
-
-model->wavelength = -1.0; // Negative
-EXPECT_EQ(model->wavelength, -1.0);
-}
-
-TEST_F(US_ModelTest, LargeNumberOfComponents_HandlesCorrectly) {
-// Add many components
-for (int i = 0; i < 100; ++i) {
+TEST_F(US_ModelTest, CalcCoefficients_NonPositiveVbarFallsBackToTheTypicalValue) {
 US_Model::SimulationComponent sc = createValidComponent();
-sc.name = QString("Component %1").arg(i);
-model->components << sc;
-}
+sc.vbar20 = 0.0;
+sc.s = 0.0;
+sc.D = 0.0;
+sc.f = 0.0;
 
-EXPECT_EQ(model->components.size(), 100);
-EXPECT_EQ(model->components[50].name, "Component 50");
-EXPECT_EQ(model->components[99].name, "Component 99");
+ASSERT_TRUE(US_Model::calc_coefficients(sc));
+
+// Nonpositive vbar20 falls back to TYPICAL_VBAR.
+EXPECT_GT(sc.D, 0.0);
 }

@@ -15,8 +15,8 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
    us_auto_mode = false;
      
    projectName = temp_projectName;
-	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
-   connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
+	connect(pb_overlays, &QAbstractButton::clicked, this, &US_ExtinctFitter::plot_overlays);
+   connect(pb_residuals, &QAbstractButton::clicked, this, &US_ExtinctFitter::plot_residuals);
 }
 
 US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName,  bool *temp_fitting_widget, bool auto_mode ) : US_Minimize(temp_fitting_widget, true)
@@ -32,8 +32,8 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
 
      
    projectName = temp_projectName;
-	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
-   connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
+	connect(pb_overlays, &QAbstractButton::clicked, this, &US_ExtinctFitter::plot_overlays);
+   connect(pb_residuals, &QAbstractButton::clicked, this, &US_ExtinctFitter::plot_residuals);
 }
 
 void US_ExtinctFitter::saveFit()

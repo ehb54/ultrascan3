@@ -4,7 +4,6 @@
 #include <QGridLayout>
 #include <QFrame>
 #include <QLabel>
-#include <QtCore/QLocale>
 
 US_Dirhist::US_Dirhist(
                        QStringList                 & history,
@@ -78,7 +77,7 @@ void US_Dirhist::setupGUI()
          {
             QString toset =
                last_access->count( (*history)[ i ] )
-               ? QLocale().toString((*last_access)[ (*history)[ i ] ], QLocale::ShortFormat )
+               ? QLocale::system().toString((*last_access)[(*history)[i]], QLocale::ShortFormat)
                : "";
             t_hist->setItem( i, 1, new QTableWidgetItem( toset ) );
          }
@@ -94,7 +93,8 @@ void US_Dirhist::setupGUI()
             QString qs = 
                QString( "%1" )
                .arg( last_access->count( (*history)[ i ] ) ?
-                     (unsigned int)(*last_access)[ (*history)[ i ] ].toTime_t() :
+                     // (unsigned int)(*last_access)[ (*history)[ i ] ].toTime_t() :
+                     (unsigned int)(*last_access)[ (*history)[ i ] ].toSecsSinceEpoch() :
                      unknowns++ );
             while ( qs.length() < 20 )
             {
@@ -148,13 +148,8 @@ void US_Dirhist::setupGUI()
 
   { for ( int i = 0; i < t_hist->rowCount(); ++i ) { for ( int j = 0; j < t_hist->columnCount(); ++j ) { t_hist->item( i, j )->setFlags( t_hist->item( i, j )->flags() ^ Qt::ItemIsEditable ); } } };
 
-#if QT_VERSION < 0x040000   
-   connect( t_hist->horizontalHeader(), SIGNAL( clicked(int) ), SLOT( t_sort_column(int) ) );
-   connect( t_hist, SIGNAL( doubleClicked( int, int, int, const QPoint & ) ), SLOT( t_doubleClicked( int, int, int, const QPoint & ) ) );
-#else
    connect( t_hist->horizontalHeader(), SIGNAL( sectionClicked(int) ), SLOT( t_sort_column(int) ) );
    connect( t_hist, SIGNAL( cellDoubleClicked( int, int) ), SLOT( t_doubleClicked( int, int ) ) );
-#endif
    connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
    pb_del = new QPushButton(us_tr("Delete directory from history"), this);
@@ -312,10 +307,8 @@ void US_Dirhist::del()
    update_enables();
 }
 
-#if QT_VERSION >= 0x040000   
 # include <QList>
 # include <QTableWidgetSelectionRange>
-#endif
 
 void US_Dirhist::update_enables()
 {

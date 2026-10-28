@@ -7,8 +7,6 @@
 #include <time.h>
 #include <qstringlist.h>
 #include <qinputdialog.h>
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QGridLayout>
 #include <QLabel>
 #include <QFrame>
@@ -46,11 +44,7 @@ US_Hydrodyn_BD::US_Hydrodyn_BD(
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
-#if QT_VERSION >= 0x040000
    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint );
-#else
-   setWFlags(getWFlags() | Qt::WStyle_StaysOnTop);
-#endif
    stopFlag = false;
    //   pb_stop->setEnabled(false);
 }
@@ -401,7 +395,7 @@ void US_Hydrodyn_BD::closeEvent(QCloseEvent *e)
 // void US_Hydrodyn_BD::print()
 // {
 //    const int MARGIN = 10;
-//    printer.setPageSize( QPageSize( QPageSize::Letter ) );
+//    printer.setPageSize(QPrinter::Letter);
 // 
 //    if ( printer.setup(this) ) {      // opens printer dialog
 //       QPainter p;

@@ -212,12 +212,12 @@ void US_ScanExclGui::build_layout ( void )
       genL->addWidget( le_remaining_scans,   row,    9, 1, 2 );
       // }
 
-      connect( sb_begin,   SIGNAL( valueChanged ( int ) ),
-	       this,       SLOT  ( scan_excl_changed ( int ) ) );
-      connect( sb_end,     SIGNAL( valueChanged ( int ) ),
-	       this,       SLOT  ( scan_excl_changed ( int ) ) );
-      connect( sb_nth,     SIGNAL( valueChanged ( int ) ),
-	       this,       SLOT  ( scan_excl_changed ( int ) ) );
+      connect( sb_begin,   qOverload< int >( &QSpinBox::valueChanged ),
+	       this,       &US_ScanExclGui::scan_excl_changed );
+      connect( sb_end,     qOverload< int >( &QSpinBox::valueChanged ),
+	       this,       &US_ScanExclGui::scan_excl_changed );
+      connect( sb_nth,     qOverload< int >( &QSpinBox::valueChanged ),
+	       this,       &US_ScanExclGui::scan_excl_changed );
       
       QFont font   = le_chan_desc->property("font").value<QFont>();
       QFontMetrics fm(font);
@@ -228,8 +228,8 @@ void US_ScanExclGui::build_layout ( void )
       if ( ii == 0 )
 	{
 	  genL->addWidget( pb_applyall, row++, 11, 1, 2 );
-	  connect( pb_applyall, SIGNAL( clicked       ( ) ),
-		   this,        SLOT(   applied_to_all( ) ) );
+	  connect( pb_applyall, &QAbstractButton::clicked,
+		   this,        &US_ScanExclGui::applied_to_all );
 	}
       else
 	row++;
@@ -277,8 +277,8 @@ void US_ScanExclGui::build_layout ( void )
   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
   pb_accept   = us_pushbutton( tr( "Accept" ) );
   
-  connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancel_update() ) );
-  connect( pb_accept, SIGNAL( clicked() ), SLOT( update_scans_excl() ) );
+  connect( pb_cancel, &QAbstractButton::clicked, this, &US_ScanExclGui::cancel_update );
+  connect( pb_accept, &QAbstractButton::clicked, this, &US_ScanExclGui::update_scans_excl );
 
   lower_buttons->addWidget( pb_cancel );
   lower_buttons->addWidget( pb_accept );

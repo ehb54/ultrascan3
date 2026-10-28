@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_dmd.h"
 #include "../include/us_hydrodyn.h"
@@ -145,7 +146,7 @@ US_Hydrodyn_Cluster_Dmd::~US_Hydrodyn_Cluster_Dmd()
 void US_Hydrodyn_Cluster_Dmd::setupGUI()
 {
    int minHeight1 = 30;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -169,11 +170,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
 
    reload_csv();
 
-#if QT_VERSION < 0x040000      
- //   Q3ValueList < unsigned int > column_widths;
-#else
    QList < unsigned int > column_widths;
-#endif
 
    column_widths 
       << 120
@@ -273,34 +270,6 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -331,7 +300,6 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -382,7 +350,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_load_save->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
@@ -914,7 +882,7 @@ void US_Hydrodyn_Cluster_Dmd::save_csv()
       return;
    }
 
-   if ( !fname.contains( QRegExp("\\.dmd$", Qt::CaseInsensitive ) ) )
+   if ( !fname.contains( QRegularExpression("\\.dmd$", QRegularExpression::CaseInsensitiveOption ) ) )
    {
       fname += ".dmd";
    }
@@ -1277,9 +1245,9 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
    QTextStream ts( &f );
 
-   QRegExp rx_end ("^END");
-   QRegExp rx_atom("^(ATOM|HETATM)");
-   QRegExp rx_hetatm("^HETATM");
+   QRegularExpression rx_end ("^END");
+   QRegularExpression rx_atom("^(ATOM|HETATM)");
+   QRegularExpression rx_hetatm("^HETATM");
 
    map < QString, bool > dup_chain;
 
@@ -1295,7 +1263,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          it != residues_range_start.end();
          it++ )
    {
-      if ( it->first.contains( QRegExp( QString( "^%1:" ).arg( filename ) ) ) )
+      if ( it->first.contains( QRegularExpression( QString( "^%1:" ).arg( filename ) ) ) )
       {
          it->second.clear( );
       }
@@ -1305,11 +1273,13 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    {
       QString line = ts.readLine();
 
-      if ( rx_end.indexIn( line ) != -1 )
+      QRegularExpressionMatch rx_end_m = rx_end.match( line );
+      if ( rx_end_m.hasMatch() )
       {
          break;
       }
-      if ( rx_atom.indexIn( line ) != -1 )
+      QRegularExpressionMatch rx_atom_m = rx_atom.match( line );
+      if ( rx_atom_m.hasMatch() )
       {
          QString      chain_id   = line.mid( 21, 1 );
          unsigned int residue_no = line.mid( 22, 4 ).trimmed().toUInt();
@@ -1509,13 +1479,13 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
 
    QStringList qsl;
    {
-      QRegExp rx = QRegExp( "\\s*(\\s|,|;)+\\s*" );
+      QRegularExpression rx = QRegularExpression( QStringLiteral( "\\s*(\\s|,|;)+\\s*" ) );
       qsl = (static_range ).split( rx , Qt::SkipEmptyParts );
    }
 
    TSO << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );
 
-   QRegExp rx ( "^(|.):(\\d+)(-(\\d+)|)$" );
+   QRegularExpression rx ( "^(|.):(\\d+)(-(\\d+)|)$" );
 
    QString native_range = "";
 
@@ -1527,7 +1497,8 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
       {
          continue;
       }
-      if ( rx.indexIn( qsl[ i ] ) == -1 )
+      QRegularExpressionMatch rx_m = rx.match( qsl[ i ] );
+      if ( !rx_m.hasMatch() )
       {
          editor_msg( "red",
                      QString( us_tr( "Error: Static range \"%1\" has an invalid format.\n"
@@ -1537,10 +1508,10 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
          has_errors = true;
          continue;
       }
-      QString      chain_id      = rx.cap( 1 );
-      unsigned int start_residue = rx.cap( 2 ).toUInt();
-      unsigned int end_residue   = rx.cap( 4 ).toUInt();
-      if ( rx.cap( 4 ).isEmpty() )
+      QString      chain_id      = rx_m.captured( 1 );
+      unsigned int start_residue = rx_m.captured( 2 ).toUInt();
+      unsigned int end_residue   = rx_m.captured( 4 ).toUInt();
+      if ( rx_m.captured( 4 ).isEmpty() )
       {
          end_residue = start_residue;
       }

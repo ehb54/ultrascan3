@@ -731,7 +731,7 @@ DbgLv(1) << "MG:Deme" << deme_nbr << ": solsent mg_count" << solutes_sent
    << mgenes_count << " elit" << elitism_count << "sol_dbls" << solute_doubles;
       for ( int i = 0; i < mgenes_count; i++ )
       {
-         Gene gene = immigres.mid( i * bucket_sols, bucket_sols );
+         Gene gene = immigres.mid( static_cast<qsizetype>( i ) * bucket_sols, bucket_sols );
          genes[ elitism_count + i ] = gene;
       }
 //*DEBUG*

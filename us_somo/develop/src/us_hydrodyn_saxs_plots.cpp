@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_lm.h"
 //Added by qt3to4:
@@ -344,7 +345,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                          text, 
                                          &ok, 
                                          this );
-            text.replace( QRegExp( "\\s" ), "_" );
+            text.replace( QRegularExpression( QStringLiteral( "\\s" ) ), "_" );
             text = text.toUpper();
             if ( ok && !text.isEmpty() )
             {

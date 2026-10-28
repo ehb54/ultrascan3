@@ -172,6 +172,12 @@ zmin=0.0;
       }
 
       xrng    = xmax - xmin;          // initial ranges and pixel/data ratios
+      if ( xrng == 0.0 )
+      {
+         xrng = 0.02;
+         xmin = (double)( qFloor( xmin * 100.0 ) ) * 0.01;
+         xmax = xmin + xrng;
+      }
       xinc    = ( xreso - 1.0 ) / xrng;
       yrng    = ymax - ymin;
       if ( yrng == 0.0 )

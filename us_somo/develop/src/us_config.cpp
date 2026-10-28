@@ -1,11 +1,7 @@
 #include "../include/us_util.h"
+#include <QRegularExpression>
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
-#if QT_VERSION >= 0x040000
-#include <QtCore>
-#endif
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -17,9 +13,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Config::US_Config( QObject* parent )
    : QObject ( parent )
 {
-#if QT_VERSION >= 0x040000
    const QString RevSvn( SOMO_Revision );
-#endif
    US_Version = US_Version_string; // Defined in us_util.h
    
    if ( ! read() )
@@ -463,23 +457,19 @@ void US_Config::setDefault()
 
 #ifdef MAC
    config_list.browser = "/Applications/Safari.app";
-#if QT_VERSION < 0x040000
-   config_list.system_dir = "/Applications/UltraScanII";
-#else
    QString ultrascan = getenv( "ULTRASCAN" );
    if ( ultrascan != "" )
       config_list.system_dir = QDir::toNativeSeparators( ultrascan );
    else
    {
-      QString base = qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) );
+      QString base = qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin(|64)$" ) ) );
       if ( base.contains( ".app/Contents" ) )
       {
          int jj = base.lastIndexOf( "/bin/" );
          base   = ( jj > 0 ) ? base.left( jj ) : base;
       }
-      config_list.system_dir = base.remove( QRegExp( "/somo$" ) );
+      config_list.system_dir = base.remove( QRegularExpression( QStringLiteral( "/somo$" ) ) );
    }
-#endif
 #else
 
    QString ultrascan = getenv( "ULTRASCAN" );
@@ -487,7 +477,7 @@ void US_Config::setDefault()
    // Set system directory
    if ( ultrascan == "" )
    {
-      ultrascan = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+      ultrascan = qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin$" ) ) );
       // QString warning = us_tr( "Error:" ), message;
       // message = us_tr( "The required environment variable ULTRASCAN is not set.\n"
       //               "Please add it and restart the program.  Exiting." );
@@ -501,13 +491,8 @@ void US_Config::setDefault()
 #endif
 
    // Doc Directory
-#if QT_VERSION < 0x040000
-   config_list.help_dir =
-      QDir::toNativeSeparators( config_list.system_dir + "/doc" );
-#else
    config_list.help_dir =
       QDir::toNativeSeparators( config_list.system_dir + "/somo/doc" );
-#endif
 
    // Set the per user directory and subdirectories
    config_list.root_dir = get_home_dir();
@@ -531,9 +516,7 @@ void US_Config::setDefault()
    config_list.fontSize        = 10;
    config_list.margin          = 10;
    config_list.numThreads      = 1;   // Default: 1 thread
-#if QT_VERSION >= 0x050000
    config_list.numThreads      = QThread::idealThreadCount();
-#endif
    if ( config_list.numThreads > 16 ) {
       config_list.numThreads = 16;
    }
@@ -551,14 +534,6 @@ bool US_Config::read()
       QTextStream ts( &f );
       config_list.version = ts.readLine();
 
-#if QT_VERSION <= 0x050000
-      if ( config_list.version.toFloat() < 6.0 )
-      {
-         f.close();
-         f.remove();
-         return ( false );
-      }
-#endif
       
       QString dummy;
       config_list.browser     = ts.readLine();
@@ -651,11 +626,9 @@ bool US_Config::read()
          if ( ! str.isNull() && ! str.isEmpty() )
          {
             config_list.numThreads = str.toUInt();
-#if QT_VERSION >= 0x050000
             if ( config_list.numThreads <= 1 ) {
                config_list.numThreads = QThread::idealThreadCount();
             }
-#endif
          }
          else
          {
@@ -690,7 +663,7 @@ bool US_Config::read()
 
    // compare config_list.system_dir with applicationdirpath()
 #ifndef MAC
-   QString real_ultrascan = QDir::toNativeSeparators( qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) ) );
+   QString real_ultrascan = QDir::toNativeSeparators( qApp->applicationDirPath().remove( QRegularExpression( QStringLiteral( "/bin(|64)$" ) ) ) );
    QString match = config_list.system_dir != real_ultrascan ? "different" : "the same";
    
    // QMessageBox::information( 0
@@ -702,13 +675,8 @@ bool US_Config::read()
 
    if ( config_list.system_dir != real_ultrascan ) {
       config_list.system_dir = real_ultrascan;
-#if QT_VERSION < 0x040000
-      config_list.help_dir =
-         QDir::toNativeSeparators( config_list.system_dir + "/doc" );
-#else
       config_list.help_dir =
          QDir::toNativeSeparators( config_list.system_dir + "/somo/doc" );
-#endif
       US_Write_Config *w_config;
       w_config = new US_Write_Config(this);
       if ( ! w_config->write_config( config_list ) )

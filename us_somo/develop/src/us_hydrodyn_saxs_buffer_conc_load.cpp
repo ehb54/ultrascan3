@@ -30,12 +30,12 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
    // try to break text up
 
    vector < QStringList > lines;
-   QRegExp rx_split( "(,|)\\s+" );
+   QRegularExpression rx_split( "(,|)\\s+" );
 
    disp_csv.name = this->csv1->name;
 
    // remove rows that are not all numeric
-   QRegExp rx_numeric( "^(-|\\+|)(\\d*(|\\.)(\\d+))(|(e|E)(-|\\+|)\\d+)$" );
+   QRegularExpression rx_numeric( "^(-|\\+|)(\\d*(|\\.)(\\d+))(|(e|E)(-|\\+|)\\d+)$" );
 
    for ( unsigned int i = 0; i < (unsigned int) qsl_text.size(); i++ )
    {
@@ -48,7 +48,8 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
          bool all_numeric = true;
          for ( unsigned int j = 0; j < (unsigned int) line.size(); j++ )
          {
-            if ( rx_numeric.indexIn( line[ j ].trimmed() ) != -1 )
+            QRegularExpressionMatch rx_numeric_m = rx_numeric.match( line[ j ].trimmed() );
+            if ( rx_numeric_m.hasMatch() )
             {
                tmp_data.push_back( line[ j ].trimmed() );
             } else {
@@ -136,7 +137,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    
    t_csv->adjustSize();
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
-   connect( t_csv->horizontalHeader(), SIGNAL( released( int ) ), SLOT( col_header_released( int ) ) );
+   connect( t_csv->horizontalHeader(), SIGNAL( sectionClicked( int ) ), SLOT( col_header_released( int ) ) );
    
    pb_del_row = new QPushButton(us_tr("Delete Rows"), this);
    pb_del_row->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -477,7 +478,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
    // now, see if we can figure out the time sequence codes
    // how many numeric fields are present and collect them all up
 
-   QRegExp rx_nondigit( "\\D+" );
+   QRegularExpression rx_nondigit( "\\D+" );
 
    map < QString, QString > new_concs;
 

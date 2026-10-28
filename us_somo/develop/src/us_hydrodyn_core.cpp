@@ -14,9 +14,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_vvv.h"
-#include <qregexp.h>
 #include <qfont.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -2099,6 +2097,24 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          }
       }
    }
+
+   // Point at the perceiver. Without this the module is only discoverable by knowing it is there:
+   // the load reports non-coded residues, the bead builder then represents each by one crude bead,
+   // and nothing says a better entry can be derived from the coordinates first (Mattia,
+   // 2026-08-10: "the warning in the progress window alerting to go to the perceiver is no longer
+   // present"). Named residues are listed so it is obvious which ones are meant.
+   if ( !unknown_residues.empty() ) {
+      QStringList nc;
+      for ( map < QString, bool >::iterator it = unknown_residues.begin();
+            it != unknown_residues.end(); ++it )
+         nc << it->first;
+      editor_msg( "dark red",
+                  QString( us_tr( "Non-coded residue(s) found: %1\n"
+                                  "Lookup Tables -> Perceive Non-Coded Residues... can derive a "
+                                  "somo.residue entry for these from the coordinates. Without it "
+                                  "the Automatic Bead Builder represents each by a single bead.\n" ) )
+                  .arg( nc.join( ", " ) ) );
+   }
 #if defined(AUTO_BB_DEBUG) || 1
    QString str1;
    QFile f(somo_tmp_dir + SLASH + "tmp.somo.residue");
@@ -2381,7 +2397,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
 #endif
    get_atom_map(&model_vector[current_model]);
 
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    map < QString, QString > hybrid_name_to_N = { { "N3H0", "N1-" },
                                                  { "N3H1", "N1" } };
@@ -2680,6 +2696,17 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                                           );
                            editor->setTextColor(save_color);
                         } else {
+                           // An atom name the table has never seen is derived from its hybrid or
+                           // element rather than dropped -- see US_Hydrodyn::ensure_atom_entry.
+                           {
+                              QString how;
+                              if ( ensure_atom_entry( saxs_util->atom_map, this_atom->name,
+                                                      hybrid_name, &how )
+                                   && !how.isEmpty() )
+                              {
+                                 editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+                              }
+                           }
                            if ( !saxs_util->atom_map.count(this_atom->name + "~" + hybrid_name) )
                            {
                               cout << "error: atom_map missing for hybrid_name "
@@ -2702,9 +2729,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                               this_atom->saxs_name = saxs_util->hybrid_map[hybrid_name].saxs_name; 
                               this_atom->hybrid_name = hybrid_name;
                               this_atom->hydrogens = 0;
-                              if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+                              QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+                              if ( count_hydrogens_m.hasMatch() )
                               {
-                                 this_atom->hydrogens = count_hydrogens.cap(1).toInt();
+                                 this_atom->hydrogens = count_hydrogens_m.captured(1).toInt();
                               }
                               this_atom->saxs_excl_vol = saxs_util->atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
                               if ( !saxs_util->saxs_map.count(saxs_util->hybrid_map[hybrid_name].saxs_name) )

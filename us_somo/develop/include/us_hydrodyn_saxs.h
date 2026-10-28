@@ -17,7 +17,6 @@
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <qregexp.h>
 #include <qwt_wheel.h>
 #include <qtimer.h>
 #include <qmutex.h>
@@ -27,7 +26,6 @@
 
 #include <qwt_plot.h>
 #include "us3i_plot.h"
-//Added by qt3to4:
 #include <QCloseEvent>
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
@@ -787,6 +785,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       bool everything_plotted_has_same_grid_as_set();
 
       void load_iqq_csv( QString filename, bool just_plotted_curves = false );
+
+      void do_extrap_c0( QStringList qsl_sel_names,
+                          QStringList qsl_data,
+                          map < QString, QString > name_to_errors_map,
+                          vector < double > q,
+                          QString filename );
 
       bool iq_plot_experimental_and_calculated_present();
       bool iq_plot_only_experimental_present();

@@ -1,0 +1,51 @@
+{
+  "$comment": [
+    "Pinned dependency artifacts shared by upstream and forks.",
+    "Archive targets specify repository, release_tag, asset, and sha256.",
+    "Container targets specify a full registry image path and digest.",
+    "release_tag at the top level selects the release for newly published archives.",
+    "Manual toolchain builds update only the targets they publish.",
+    "inputs_digest records each published target's build inputs; missing values require a rebuild.",
+    "Keep published artifacts available for older revisions and forks.",
+    "The vcpkg baseline remains in vcpkg.json."
+  ],
+  "release_tag": "toolchain",
+  "targets": {
+    "macos-arm64": {
+      "kind": "archive",
+      "asset": "us3-toolchain-macos-arm64-qt6-38681512299.1.tar.zst",
+      "sha256": "01da7c65b2d3548c6621aea50a5caa4d4d81a37775db3dffd60dd550c8c9fb94",
+      "repository": "ehb54/ultrascan3",
+      "release_tag": "toolchain",
+      "inputs_digest": "9edd7eb1de5abbebaeb3cc1151bdb85b327aa32847a5136aa499f4b72bc55e02"
+    },
+    "macos-x64": {
+      "kind": "archive",
+      "asset": "us3-toolchain-macos-x64-qt6-38681512299.1.tar.zst",
+      "sha256": "4a4db2f77e473867872435ca2862e5eba5684c2a596461411f176f51a94b46b1",
+      "repository": "ehb54/ultrascan3",
+      "release_tag": "toolchain",
+      "inputs_digest": "ec9843bc844bb12e107a66a84fbfd2823720f10fb7345fa68bcd78a8526f0f8c"
+    },
+    "windows-x64": {
+      "kind": "archive",
+      "asset": "us3-toolchain-windows-x64-qt6-38681512299.1.tar.zst",
+      "sha256": "d01e01920b7c44eed9b4851b50a9e060b73f842a093969d3406922207158293c",
+      "repository": "ehb54/ultrascan3",
+      "release_tag": "toolchain",
+      "inputs_digest": "6cf144bab9888c9fba0ece070230189cfa5613c212f57297ca876b00159ef396"
+    },
+    "ubuntu2404-x64": {
+      "kind": "container",
+      "image": "ghcr.io/ehb54/us3-toolchain-ubuntu2404",
+      "digest": "sha256:e0f657dba9231441b6949f69e70d5187df3260cb0ae09172fd88808a8788f0c2",
+      "inputs_digest": "e3867dc41e9d1f29ce0ed58ea9d6e112cfc1a28e5eaa5a92e3b89ca81839e1b9"
+    },
+    "oraclelinux8-x64": {
+      "kind": "container",
+      "image": "ghcr.io/ehb54/us3-toolchain-oraclelinux8",
+      "digest": "sha256:53073b60b5d9aca51d0dd7e3f4f6ad7e71dffa86c4cb6028c9b80ff31b447b2d",
+      "inputs_digest": "c353405f0fb33a162ddf22e54ffb2fee266d9cc2a210aae3d411365800a8668f"
+    }
+  }
+}

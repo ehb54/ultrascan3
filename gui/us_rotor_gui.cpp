@@ -239,8 +239,7 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->setContentsMargins ( 2, 2, 2, 2 );
 
    // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
 
    int row = 0;
    QStringList DB = US_Settings::defaultDB();
@@ -251,16 +250,17 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_bannerDB, row++, 0, 1, 4 );
 
    disk_controls = new US_Disk_DB_Controls( select_db_disk );
-   connect( disk_controls, SIGNAL( changed       ( bool ) ),
-                           SLOT  ( source_changed( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed,
+                           this, &US_RotorGui::source_changed );
    top->addLayout( disk_controls, row++, 0, 1, 4 );
 
    // labID
    QLabel* lbl_lab = us_label( tr( " Please select a Laboratory:" ) );
    top->addWidget( lbl_lab, row, 0, 1, 2 );
    cb_lab = new QComboBox( this );
-   connect( cb_lab, SIGNAL( activated( int ) ),      // Only if the user has changed it
-                    SLOT  ( changeLab( int ) ) );
+   cb_lab->setAccessibleName( tr( "Laboratory" ) );
+   connect( cb_lab, qOverload< int >( &QComboBox::activated ),                                         
+                    this, &US_RotorGui::changeLab );
    top->addWidget( cb_lab, row++, 2, 1, 2 );
 
    QLabel* lbl_bannerRotor = us_banner( tr( "Click to select a Rotor: " ), -1 );
@@ -268,40 +268,45 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_bannerRotor, row, 0, 1, 2 );
 
    pb_addRotor = us_pushbutton( tr( "Add new Rotor" ) );
-   connect( pb_addRotor, SIGNAL( clicked() ), this, SLOT( addRotor() ) );
+   connect( pb_addRotor, &QAbstractButton::clicked, this, &US_RotorGui::addRotor );
    top->addWidget( pb_addRotor, row++, 2, 1, 2);
 
    // List the rotors for selection
    lw_rotors = us_listwidget();
+   lw_rotors->setAccessibleName( tr( "Rotors" ) );
    lw_rotors-> setSortingEnabled( false );
-   connect( lw_rotors, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
-                       SLOT  ( selectRotor  ( QListWidgetItem* ) ) );
+   connect( lw_rotors, &QListWidget::itemClicked,
+                       this, &US_RotorGui::selectRotor );
    top->addWidget( lw_rotors, row, 0, 3, 2);
 
    pb_deleteRotor = us_pushbutton( tr( "Delete Rotor" ) );
-   connect( pb_deleteRotor, SIGNAL( clicked() ), this, SLOT( deleteRotor() ) );
+   connect( pb_deleteRotor, &QAbstractButton::clicked, this, &US_RotorGui::deleteRotor );
    top->addWidget( pb_deleteRotor, row++, 2, 1, 2);
 
    QLabel *lbl_name = us_label( tr(" Name of Rotor:"), -1 );
    top->addWidget( lbl_name, row, 2 );
 
    le_name = us_lineedit( "", -1 );
+   le_name->setAccessibleName( tr( "Rotor Name" ) );
+   lbl_name->setBuddy( le_name );
    le_name->setText( tr("< not selected >"));
    le_name->setPalette ( gray );
    le_name->setReadOnly( true );
-   connect( le_name, SIGNAL( textEdited  ( const QString & ) ),
-                     SLOT  ( updateName  ( const QString & ) ) );
+   connect( le_name, &QLineEdit::textEdited,
+                     this, &US_RotorGui::updateName );
    top->addWidget( le_name, row++, 3);
 
    QLabel *lbl_serialNumber = us_label( tr(" Rotor Serial Number:"), -1 );
    top->addWidget( lbl_serialNumber, row, 2 );
 
    le_serialNumber = us_lineedit( "", -1 );
+   le_serialNumber->setAccessibleName( tr( "Rotor Serial Number" ) );
+   lbl_serialNumber->setBuddy( le_serialNumber );
    le_serialNumber->setText( tr("< not selected >"));
    le_serialNumber->setPalette ( gray );
    le_serialNumber->setReadOnly( true );
-   connect( le_serialNumber, SIGNAL( textEdited         ( const QString & ) ),
-                             SLOT  ( updateSerialNumber ( const QString & ) ) );
+   connect( le_serialNumber, &QLineEdit::textEdited,
+                             this, &US_RotorGui::updateSerialNumber );
    top->addWidget( le_serialNumber, row++, 3);
 
    QLabel* lbl_bannerCalibration = us_banner( tr( "Click to select a Rotor Calibration: " ), -1 );
@@ -309,38 +314,43 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_bannerCalibration, row, 0, 1, 2);
 
    pb_saveCalibration = us_pushbutton( tr( "Save Calibration Data" ) );
-   connect( pb_saveCalibration, SIGNAL( clicked() ), this, SLOT( saveCalibration() ) );
+   connect( pb_saveCalibration, &QAbstractButton::clicked, this, &US_RotorGui::saveCalibration );
    top->addWidget( pb_saveCalibration, row++, 2, 1, 2);
 
    lw_calibrations = us_listwidget();
+   lw_calibrations->setAccessibleName( tr( "Calibrations" ) );
    lw_calibrations-> setSortingEnabled( false ); // comes out of mysql sorted
-   connect( lw_calibrations, SIGNAL( itemClicked      ( QListWidgetItem* ) ),
-                             SLOT  ( selectCalibration( QListWidgetItem* ) ) );
+   connect( lw_calibrations, &QListWidget::itemClicked,
+                             this, &US_RotorGui::selectCalibration );
    top->addWidget( lw_calibrations, row, 0, 6, 2);
 
    pb_deleteCalibration = us_pushbutton( tr( "Delete Selected Calibration" ) );
-   connect( pb_deleteCalibration, SIGNAL( clicked() ), this, SLOT( deleteCalibration() ) );
+   connect( pb_deleteCalibration, &QAbstractButton::clicked, this, &US_RotorGui::deleteCalibration );
    top->addWidget( pb_deleteCalibration, row++, 2, 1, 2);
 
    pb_viewReport = us_pushbutton( tr( "View Calibration Report" ) );
-   connect( pb_viewReport, SIGNAL( clicked() ), this, SLOT( viewReport() ) );
+   connect( pb_viewReport, &QAbstractButton::clicked, this, &US_RotorGui::viewReport );
    top->addWidget( pb_viewReport, row++, 2, 1, 2);
 
    QLabel* lbl_calibName = us_label( tr( " Calibration Name:"), -1 );
    top->addWidget( lbl_calibName, row, 2 );
 
    le_calibrationLabel = us_lineedit( "", -1 );
+   le_calibrationLabel->setAccessibleName( tr( "Calibration Name" ) );
+   lbl_calibName->setBuddy( le_calibrationLabel );
    le_calibrationLabel->setText( tr("< not available >"));
    le_calibrationLabel->setPalette ( gray );
    le_calibrationLabel->setReadOnly( true );
-   connect( le_calibrationLabel, SIGNAL( textEdited  ( const QString&   ) ),
-                                 SLOT  ( updateLabel ( const QString&   ) ) );
+   connect( le_calibrationLabel, &QLineEdit::textEdited,
+                                 this, &US_RotorGui::updateLabel );
    top->addWidget( le_calibrationLabel, row++, 3);
 
    QLabel *lbl_coefficients = us_label( tr(" Rotor Stretch Coefficient 1:"), -1 );
    top->addWidget( lbl_coefficients, row, 2 );
 
    le_coefficient1 = us_lineedit( "", -1 );
+   le_coefficient1->setAccessibleName( tr( "Rotor Stretch Coefficient 1" ) );
+   lbl_coefficients->setBuddy( le_coefficient1 );
    le_coefficient1->setText( tr("< not available >"));
    le_coefficient1->setPalette ( gray );
    le_coefficient1->setReadOnly( true );
@@ -350,6 +360,8 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_date, row, 2 );
 
    le_coefficient2 = us_lineedit( "", -1 );
+   le_coefficient2->setAccessibleName( tr( "Rotor Stretch Coefficient 2" ) );
+   lbl_date->setBuddy( le_coefficient2 );
    le_coefficient2->setText( tr("< not available >"));
    le_coefficient2->setPalette ( gray );
    le_coefficient2->setReadOnly( true );
@@ -359,22 +371,24 @@ void US_RotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_force, row, 2 );
 
    le_omega2t = us_lineedit( "", -1 );
+   le_omega2t->setAccessibleName( tr( "Rotor omega2t" ) );
+   lbl_force->setBuddy( le_omega2t );
    le_omega2t->setText( tr("< not available >"));
    le_omega2t->setPalette ( gray );
    le_omega2t->setReadOnly( true );
-   connect( le_omega2t, SIGNAL( textEdited    ( const QString&   ) ),
-                        SLOT  ( updateOmega2t ( const QString&   ) ) );
+   connect( le_omega2t, &QLineEdit::textEdited,
+                        this, &US_RotorGui::updateOmega2t );
    top->addWidget( le_omega2t, row++, 3);
 
    // some pushbuttons
    QHBoxLayout* buttons = new QHBoxLayout;
 
    pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), this, SLOT( load() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_RotorGui::load );
    buttons->addWidget( pb_reset );
 
    pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_RotorGui::help );
    buttons->addWidget( pb_help );
 
    pb_accept = us_pushbutton( tr( "Close" ) );
@@ -382,13 +396,13 @@ void US_RotorGui::setupGui( int select_db_disk )
    if ( signal )
    {
       QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-      connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+      connect( pb_cancel, &QAbstractButton::clicked, this, &US_RotorGui::cancel );
       buttons->addWidget( pb_cancel );
 
       pb_accept -> setText( tr( "Accept" ) );
    }
 
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_RotorGui::accept );
    buttons->addWidget( pb_accept );
 
    top->addLayout( buttons, row, 0, 1, 4 );
@@ -464,9 +478,9 @@ void US_RotorGui::addRotor( void )
 
    currentRotor.reset();
    US_AbstractRotorGui *arDialog = new US_AbstractRotorGui( true, dbdisk, &currentRotor );
-   connect( arDialog, SIGNAL ( accepted() ), this, SLOT ( newRotor() ) ); 
-   connect( arDialog, SIGNAL ( use_db        ( bool ) ),
-                      SLOT   ( update_disk_db( bool ) ) );
+   connect( arDialog, &QDialog::accepted, this, &US_RotorGui::newRotor ); 
+   connect( arDialog, &US_AbstractRotorGui::use_db,
+                      this, &US_RotorGui::update_disk_db );
    arDialog->show();
 }
 
@@ -910,8 +924,7 @@ void US_RotorGui::saveCalibration()
    savingCalibration = false;
 
    // Disable calibration input fields
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray = US_GuiSettings::readonlyColor();
    le_calibrationLabel->setPalette ( gray );
    le_calibrationLabel->setReadOnly( true );
    le_omega2t->setPalette ( gray );
@@ -1172,3 +1185,26 @@ void US_RotorGui::connect_error( const QString& error )
          tr( "Could not connect to database \n" ) + error );
 }
 
+// For VEL-MWL: GMP
+void US_RotorGui::selectSimRotor( QStringList rotor_defs )
+{
+   for ( int i = 0; i < lw_rotors->count(); ++i )
+   {
+      QListWidgetItem* item = lw_rotors->item( i );
+      QString          text = item->text();
+
+      bool             containsAll = std::all_of(
+         rotor_defs.begin(), rotor_defs.end(), [&text]( const QString& s ) { return text.contains( s, Qt::CaseInsensitive ); } );
+      if ( containsAll )
+      {
+         selectRotor( item );
+         break;
+      }
+   }
+
+   qDebug() << "[in US_RotorGui::selectSimRotor()], rotorname " << currentRotor.name << currentRotor.ID << ", "
+            << currentCalibration.rotorID;
+
+   emit RotorCalibrationSelected( currentRotor, currentCalibration );
+   // close();
+}

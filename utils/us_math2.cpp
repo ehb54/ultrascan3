@@ -62,15 +62,21 @@ static libnnls libnnls0;
 
 */
 
+// The second deviate of each Box-Muller pair, kept for the next call.
+//  randomize() discards it, so a reseeded sequence does not depend on
+//  how many deviates were drawn before.
+static bool   box_muller_use_last = false;
+static double box_muller_y2       = 0.0;
+
 double US_Math2::box_muller( double m, double s )   
 {
-   static bool  use_last = false;
+   bool&         use_last = box_muller_use_last;
+   double&       y2       = box_muller_y2;
 
    double        x1;
    double        x2;
    double        w;
    double        y1;
-   static double y2;
 
    if ( use_last )  // Use value from previous call 
    {
@@ -818,6 +824,7 @@ uint US_Math2::randomize( void )
 #endif
 
    get_random_generator().seed( seed );
+   box_muller_use_last = false;
    return seed;
 }
 
@@ -830,6 +837,7 @@ uint US_Math2::randomize( uint seed )
    else
    {
       get_random_generator().seed( seed );
+      box_muller_use_last = false;
    }
 
    return seed;
@@ -869,19 +877,26 @@ double US_Math2::erfc( double x )
 #endif
 
 // Non-negative least-squares matrix solution
-int US_Math2::nnls( double* a, int a_dim1, int m, int n,
-                    double* b,
-                    double* x,
-                    double* rnorm,
-                    double* wp,  
-                    double* zzp,
-                    int*    indexp 
-                  ) 
+int US_Math2::nnls( double*                  a,
+                    int                      a_dim1,
+                    int                      m,
+                    int                      n,
+                    double*                  b,
+                    double*                  x,
+                    double*                  rnorm,
+                    double*                  wp,
+                    double*                  zzp,
+                    int*                     indexp,
+                    int                      itmax,
+                    const std::atomic<bool>* abort_flag )
 {
 #ifdef _BF_NNLS_
    /* If there is an external NNLS algorithm implementation, execute it */
+   /* (it has no iteration limit or abort hook:  use the internal solver */
+   /*  when either is requested) */
    qDebug() << "BF-NNLS: NNLS size (m, n) = (" << m << ", " << n << ")";
-   if ( libnnls0.nnls != NULL ) {
+   if ( libnnls0.nnls != NULL && itmax <= 0 && abort_flag == NULL )
+   {
       qDebug() << "BF-NNLS: Using libnnls";
       return libnnls0.nnls( a, a_dim1, m, n, b, x, rnorm, wp, zzp, indexp );
    }
@@ -945,13 +960,24 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
 
    /* Main loop; quit if all coeffs are already in the solution or */
    /* if M cols of A have been triangularized */
-   
-   int iter  = 0; 
-   int itmax = n * 3;
+
+   int iter = 0;
    int ja_dim1;
 
-   while ( iz1 <= iz2 && nsetp < m ) 
+   if ( itmax <= 0 )
    {
+      itmax = n * 3;
+   }
+
+   while ( iz1 <= iz2 && nsetp < m )
+   {
+      /* Quit with the current (feasible) X if an abort was requested */
+      if ( abort_flag && abort_flag->load( std::memory_order_relaxed ) )
+      {
+         ret = 3;
+         break;
+      }
+
       /* Compute components of the dual (negative gradient) vector W[] */
       for ( iz = iz1; iz <= iz2; iz++ ) 
       {
@@ -1072,7 +1098,8 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
       }
 
       /* Secondary loop begins here */
-      while ( ++iter < itmax ) 
+      /* (at most itmax iterations, as in Lawson & Hanson) */
+      while ( ++iter <= itmax )
       {
          /* See if all new constrained coeffs are feasible; 
             if not, compute alpha */
@@ -1152,12 +1179,13 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
             /* be because of the way alpha was determined. If any are */
             /* infeasible it is due to round-off error. Any that are */
             /* nonpositive will be set to zero and moved from set P to set Z */
-            for( jj = 0; jj < nsetp; jj++ ) 
+            for ( jj = 0, pfeas = 1; jj < nsetp; jj++ )
             {
-               k = index[ jj ]; 
-               if ( x[ k ] <= 0.0 ) 
-               {
-                  pfeas = 0; 
+               k = index[jj];
+               if ( x[k] <= 0.0 )
+               { /* Leave jj one below the position of k, as set above */
+                  pfeas = 0;
+                  jj--;
                   break;
                }
             }
@@ -1179,8 +1207,8 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
          }
       } /* end of secondary loop */
 
-      if ( iter > itmax ) 
-      {
+      if ( iter > itmax )
+      { /* Iteration limit:  quit with the last feasible X */
          ret = 1; 
          break;
       }
@@ -1202,6 +1230,22 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
    else 
       for( j = 0; j < n; j++ ) 
          w[ j ] = 0.0;
+
+   if ( ret == 1 )
+   { /* At the iteration limit X does not solve the triangular system */
+      /* of set P:  add its residual in the first nsetp rows */
+      for ( ii = 0; ii < nsetp; ii++ )
+      {
+         d1 = b[ii];
+
+         for ( l = ii; l < nsetp; l++ )
+         {
+            d1 -= a[ii + index[l] * a_dim1] * x[index[l]];
+         }
+
+         sm += d1 * d1;
+      }
+   }
 
    if ( rnorm != NULL ) *rnorm = sqrt( sm );
 

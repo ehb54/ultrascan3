@@ -43,14 +43,14 @@ US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const
    main->addWidget( pb_uploadDisk,   row,   4, 1, 2 );
    main->addWidget( pb_uploadFit,    row,   6, 1, 2 );
 
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-            this,           SLOT  ( cancel() ) ); 
-   connect( pb_manual,      SIGNAL( clicked()  ),
-            this,           SLOT  ( entermanually() ) );     
-   connect( pb_uploadDisk,  SIGNAL( clicked()  ),
-            this,           SLOT  ( uploadDisk() ) );
-   connect( pb_uploadFit,   SIGNAL( clicked()  ),
-	    this,           SLOT  ( uploadFit() ) );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::cancel );
+   connect( pb_manual,      &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::entermanually );
+   connect( pb_uploadDisk,  &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::uploadDisk );
+   connect( pb_uploadFit,   &QAbstractButton::clicked,
+	    this,           &US_NewSpectrum::uploadFit );
 
 }
 
@@ -84,14 +84,14 @@ US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const
    main->addWidget( pb_uploadDisk,   row,   4, 1, 2 );
    main->addWidget( pb_uploadFit,    row,   6, 1, 2 );
 
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-            this,           SLOT  ( cancel() ) ); 
-   connect( pb_manual,      SIGNAL( clicked()  ),
-            this,           SLOT  ( entermanually() ) );     
-   connect( pb_uploadDisk,  SIGNAL( clicked()  ),
-            this,           SLOT  ( uploadDisk() ) );
-   connect( pb_uploadFit,   SIGNAL( clicked()  ),
-	    this,           SLOT  ( uploadFit() ) );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::cancel );
+   connect( pb_manual,      &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::entermanually );
+   connect( pb_uploadDisk,  &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::uploadDisk );
+   connect( pb_uploadFit,   &QAbstractButton::clicked,
+	    this,           &US_NewSpectrum::uploadFit );
 }
 
 
@@ -125,14 +125,14 @@ US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const
    main->addWidget( pb_uploadDisk,   row,   4, 1, 2 );
    main->addWidget( pb_uploadFit,    row,   6, 1, 2 );
 
-   connect( pb_cancel,      SIGNAL( clicked()  ),
-            this,           SLOT  ( cancel() ) ); 
-   connect( pb_manual,      SIGNAL( clicked()  ),
-            this,           SLOT  ( entermanually() ) );     
-   connect( pb_uploadDisk,  SIGNAL( clicked()  ),
-            this,           SLOT  ( uploadDisk() ) );
-   connect( pb_uploadFit,   SIGNAL( clicked()  ),
-	    this,           SLOT  ( uploadFit() ) );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::cancel );
+   connect( pb_manual,      &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::entermanually );
+   connect( pb_uploadDisk,  &QAbstractButton::clicked,
+            this,           &US_NewSpectrum::uploadDisk );
+   connect( pb_uploadFit,   &QAbstractButton::clicked,
+	    this,           &US_NewSpectrum::uploadFit );
 }
 
 void US_NewSpectrum::uploadDisk(void)
@@ -144,7 +144,7 @@ void US_NewSpectrum::uploadFit(void)
 {    
     w_spec = new US_Extinction(type, text, text_e280, (QWidget*)this); 
     
-    connect( w_spec, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+    connect( w_spec, &US_Extinction::get_results, this, &US_NewSpectrum::process_results );
     
     w_spec->setParent(this, Qt::Window);
     w_spec->setAttribute(Qt::WA_DeleteOnClose);
@@ -332,6 +332,7 @@ US_ViewSpectrum::US_ViewSpectrum(QMap<double,double>& tmp_extinction) : US_Widge
   extinction = tmp_extinction;
   
   data_plot = new QwtPlot();
+  US_Widgets::us_style_plot( data_plot );
   //changedCurve = NULL;
   plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
   data_plot->setCanvasBackground(Qt::black);
@@ -343,7 +344,7 @@ US_ViewSpectrum::US_ViewSpectrum(QMap<double,double>& tmp_extinction) : US_Widge
   us_grid(data_plot);
 
   QPushButton *pb_save = us_pushbutton(tr("Save to CSV"));
-  connect(pb_save, SIGNAL(clicked()), this, SLOT(save_csv()));
+  connect(pb_save, &QAbstractButton::clicked, this, &US_ViewSpectrum::save_csv);
    
   QGridLayout* main;
   main = new QGridLayout(this);

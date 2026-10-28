@@ -131,12 +131,12 @@ US_QueryRmsd::US_QueryRmsd() : US_Widgets()
 
    fematch = new US_FeMatch();
 
-   connect(pb_load_runid, SIGNAL(clicked()), this, SLOT(load_runid()));
-   connect(pb_save, SIGNAL(clicked()), this, SLOT(save_data()));
-   connect(pb_help, SIGNAL(clicked()), this, SLOT(help()));
-   connect(pb_simulate, SIGNAL(clicked()), this, SLOT(simulate()));
-   connect(le_threshold, SIGNAL(editingFinished()), this, SLOT(new_threshold()));
-   connect(fematch, SIGNAL(astfem_cmp(int)), SLOT(update_progress(int)));
+   connect(pb_load_runid, &QAbstractButton::clicked, this, &US_QueryRmsd::load_runid);
+   connect(pb_save, &QAbstractButton::clicked, this, &US_QueryRmsd::save_data);
+   connect(pb_help, &QAbstractButton::clicked, this, &US_QueryRmsd::help);
+   connect(pb_simulate, &QAbstractButton::clicked, this, &US_QueryRmsd::simulate);
+   connect(le_threshold, &QLineEdit::editingFinished, this, &US_QueryRmsd::new_threshold);
+   connect(fematch, &US_FeMatch::astfem_cmp, this, &US_QueryRmsd::update_progress);
 }
 
 void US_QueryRmsd::help() {
@@ -250,7 +250,7 @@ void US_QueryRmsd::load_runid(){
    foreach (QString item, editList)
       cb_edit->addItem(item);
    cb_edit->setCurrentIndex(0);
-   connect(cb_edit,     SIGNAL(currentIndexChanged(int)), this, SLOT(set_analysis(int)));
+   connect(cb_edit,     qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::set_analysis);
    set_analysis(cb_edit->count() - 1);
 }
 
@@ -380,7 +380,7 @@ void US_QueryRmsd::set_analysis(int){
    foreach (QString item, analysisList)
       cb_analysis->addItem(item);
    cb_analysis->setCurrentIndex(0);
-   connect(cb_analysis, SIGNAL(currentIndexChanged(int)), this, SLOT(set_method(int)));
+   connect(cb_analysis, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::set_method);
    set_method(0);
 }
 
@@ -406,7 +406,7 @@ void US_QueryRmsd:: set_method(int){
    foreach (QString item, methodList)
       cb_method->addItem(item);
    cb_method->setCurrentIndex(0);
-   connect(cb_method, SIGNAL(currentIndexChanged(int)), this, SLOT(set_triple(int)));
+   connect(cb_method, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::set_triple);
    set_triple(0);
 }
 
@@ -463,9 +463,9 @@ void US_QueryRmsd::set_triple(int){
       cb_lambda->addItem(item);
    cb_lambda->setCurrentIndex(0);
 
-   connect(cb_cell,     SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-   connect(cb_channel,  SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
-   connect(cb_lambda,   SIGNAL(currentIndexChanged(int)), this, SLOT(fill_table(int)));
+   connect(cb_cell,     qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::fill_table);
+   connect(cb_channel,  qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::fill_table);
+   connect(cb_lambda,   qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_QueryRmsd::fill_table);
    fill_table(0);
 
 }

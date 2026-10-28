@@ -1,4 +1,6 @@
 // us_hydrodyn.cpp contains class creation & gui connected functions
+#include <QRegularExpression>
+static const QRegularExpression rx_txt_ext( QStringLiteral( "(txt|TXT)$" ) );
 // us_hydrodyn_core.cpp contains the main computational routines
 // us_hydrodyn_bd_core.cpp contains the main computational routines for brownian dynamic browflex computations
 // (this) us_hydrodyn_anaflex_core.cpp contains the main computational routines for brownian dynamic (anaflex) computations
@@ -8,7 +10,6 @@
 // includes and defines need cleanup
 
 #include "../include/us_hydrodyn.h"
-#include <qregexp.h>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -562,52 +563,30 @@ int US_Hydrodyn::run_anaflex( int /* use_mode */, int /* sub_mode */ )
    anaflex = new QProcess( this );
    anaflex->setWorkingDirectory( dir );
 
-#if QT_VERSION < 0x040000
-   anaflex->addArgument( prog );
-#else
    QStringList args;
    args
       << "<"
       << anafile
       ;
-#endif
 
    connect( anaflex, SIGNAL(readyReadStandardOutput()), this, SLOT(anaflex_readFromStdout()) );
    connect( anaflex, SIGNAL(readyReadStandardError()), this, SLOT(anaflex_readFromStderr()) );
    connect( anaflex, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(anaflex_finished( int, QProcess::ExitStatus )) );
    connect( anaflex, SIGNAL(started()), this, SLOT(anaflex_started()) );
 
-#if QT_VERSION < 0x040000
-   anaflex->launch( anafile );
-#else
    anaflex->start( prog, args, QIODevice::ReadOnly );
-#endif
 
    return 0;
 }
 
 void US_Hydrodyn::anaflex_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( anaflex->canReadLineStdout() )
-   {
-      editor_msg("brown", anaflex->readLineStdout() + "\n");
-   }
-#else
    editor_msg( "brown", QString( anaflex->readAllStandardOutput() ) );
-#endif   
 }
    
 void US_Hydrodyn::anaflex_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( anaflex->canReadLineStderr() )
-   {
-      editor_msg("red", anaflex->readLineStderr() + "\n");
-   }
-#else
    editor_msg( "red", QString( anaflex->readAllStandardError() ) );
-#endif   
 }
    
 void US_Hydrodyn::anaflex_finished( int, QProcess::ExitStatus )
@@ -745,7 +724,7 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return false;
@@ -759,7 +738,7 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return false;
@@ -773,7 +752,7 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return false;
@@ -916,7 +895,7 @@ void US_Hydrodyn::anaflex_load_results()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return;
@@ -931,7 +910,7 @@ void US_Hydrodyn::anaflex_load_results()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return;
@@ -946,7 +925,7 @@ void US_Hydrodyn::anaflex_load_results()
       {
          ts >> tmp_filename;
          ts.readLine();
-         if ( !tmp_filename.contains(QRegExp("(txt|TXT)$")) )
+         if ( !tmp_filename.contains( rx_txt_ext ) )
          {
             f.close();
             return;

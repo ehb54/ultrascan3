@@ -67,15 +67,15 @@ US_ModelSelect::US_ModelSelect(
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_ModelSelect::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_ModelSelect::cancelled );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_select = us_pushbutton( tr( "Select Model" ) );
-   connect( pb_select, SIGNAL( clicked() ), SLOT( selected() ) );
+   connect( pb_select, &QAbstractButton::clicked, this, &US_ModelSelect::selected );
    buttons->addWidget( pb_select );
 
    main->addLayout( buttons );

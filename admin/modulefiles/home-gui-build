@@ -21,18 +21,18 @@ conflict ultrascan
 
 setenv        US_GUI        $::env(HOME)/ultrascan3
 setenv        ULTRASCAN     $::env(HOME)/ultrascan3
-setenv        QTDIR         /opt/qt-5.15.13
-setenv        QWTDIR        /opt/qt-5.15.13-qwt-6.1.6
+setenv        QTDIR         /opt/qt-5.15.19
+setenv        QWTDIR        /opt/qt-5.15.19-qwt-6.3.0
 setenv        US3DIR	    $::env(HOME)/ultrascan3
-setenv        QTBIN	    /opt/qt-5.15.13/bin
-setenv        QTLIB	    /opt/qt-5.15.13/lib
-setenv        QTINC	    /opt/qt-5.15.13/include
+setenv        QTBIN	    /opt/qt-5.15.19/bin
+setenv        QTLIB	    /opt/qt-5.15.19/lib
+setenv        QTINC	    /opt/qt-5.15.19/include
 setenv        US3BIN	    $::env(HOME)/ultrascan3/bin
 setenv        US3LIB	    $::env(HOME)/ultrascan3/lib
 setenv        us3	    $::env(HOME)/ultrascan3
 
-prepend-path  PATH          $::env(HOME)/ultrascan3/bin:/opt/qt-5.15.13/bin
-prepend-path  LD_LIBRARY_PATH $::env(HOME)/ultrascan3/lib:/opt/qt-5.15.13/lib:/opt/qt-5.15.13-qwt-6.1.6/lib
+prepend-path  PATH          $::env(HOME)/ultrascan3/bin:/opt/qt-5.15.19/bin
+prepend-path  LD_LIBRARY_PATH $::env(HOME)/ultrascan3/lib:/opt/qt-5.15.19/lib:/opt/qt-5.15.19-qwt-6.3.0/lib
 
 # gcc-toolset-9 addendum
 prepend-path    INFOPATH        /opt/rh/gcc-toolset-9/root/usr/share/info

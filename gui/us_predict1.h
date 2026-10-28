@@ -94,7 +94,7 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
 
       US_Plot*       plotLayout;
       QwtPlot*       plot;
-      QwtPlotPicker* pick;
+      US_PlotPicker* pick;
 
       QwtPlotCurve*  prolate_curve;
       QwtPlotCurve*  oblate_curve;

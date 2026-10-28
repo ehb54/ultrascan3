@@ -38,6 +38,7 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
 {
    parentw        = p;
    processor      = 0;
+   auto_mode      = false;
    dbg_level      = US_Settings::us_debug();
    grtype         = US_2dsaProcess::UGRID;
    baserss        = 0;
@@ -259,54 +260,54 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    optimize_options();
 
-   connect( ck_unifgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkUniGrid(  bool ) ) );
-   connect( ck_custgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkCusGrid(  bool ) ) );
-   connect( ck_menisc, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_bottom, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMeniscus( bool ) ) );
-   connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMonteCar( bool ) ) );
-   connect( ck_iters,  SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkIterate(  bool ) ) );
-   connect( ck_varvbar, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkVaryVbar( bool ) ) );
+   connect( ck_unifgr, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkUniGrid );
+   connect( ck_custgr, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkCusGrid );
+   connect( ck_menisc, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkMeniscus );
+   connect( ck_bottom, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkMeniscus );
+   connect( ck_mcarlo, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkMonteCar );
+   connect( ck_iters,  &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkIterate );
+   connect( ck_varvbar, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkVaryVbar );
 
-   connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_thrdcnt,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   slim_change()          ) );
-   connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   slim_change()          ) );
-   connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   klim_change()          ) );
-   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   kstep_change()         ) );
+   connect( ct_nstepss,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
+   connect( ct_nstepsk,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
+   connect( ct_thrdcnt,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
+   connect( ct_lolimits, &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::slim_change );
+   connect( ct_uplimits, &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::slim_change );
+   connect( ct_lolimitk, &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::klim_change );
+   connect( ct_nstepsk,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::kstep_change );
 
-   connect( pb_strtfit, SIGNAL( clicked()   ),
-            this,       SLOT(   start()     ) );
-   connect( pb_stopfit, SIGNAL( clicked()   ),
-            this,       SLOT(   stop_fit()  ) );
-   connect( pb_ldmodel, SIGNAL( clicked()   ),
-            this,       SLOT(  load_model() ) );
-   connect( pb_plot,    SIGNAL( clicked()   ),
-            this,       SLOT(   plot()      ) );
-   connect( pb_save,    SIGNAL( clicked()   ),
-            this,       SLOT(   save()      ) );
-   connect( pb_help,    SIGNAL( clicked()   ),
-            this,       SLOT(   help()      ) );
-   connect( pb_close,   SIGNAL( clicked()   ),
-            this,       SLOT(   close_all() ) );
-   connect( pb_advance, SIGNAL( clicked()   ),
-            this,       SLOT(   advanced()  ) );
-   connect( pb_anorm,   SIGNAL( clicked()          ),
-            this,       SLOT(   calculate_norms( ) ) );
+   connect( pb_strtfit, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::start );
+   connect( pb_stopfit, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::stop_fit );
+   connect( pb_ldmodel, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::load_model );
+   connect( pb_plot,    &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::plot );
+   connect( pb_save,    &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::save );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::help );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::close_all );
+   connect( pb_advance, &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::advanced );
+   connect( pb_anorm,   &QAbstractButton::clicked,
+            this,       &US_AnalysisControl2D::calculate_norms );
 
    edata          = &dsets[ 0 ]->run_data;
 
@@ -376,8 +377,8 @@ void US_AnalysisControl2D::checkUniGrid(  bool checked )
    ck_custgr ->disconnect();
    ck_custgr ->setChecked( ! checked );
    pb_ldmodel->setEnabled( ! checked );
-   connect( ck_custgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkCusGrid(  bool ) ) );
+   connect( ck_custgr, &QAbstractButton::toggled,
+            this,  &US_AnalysisControl2D::checkCusGrid );
 }
 
 // Handle custom grid checked
@@ -641,14 +642,14 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    ti_noise->count = 0;
    ri_noise->count = 0;
 
-   connect( processor, SIGNAL( progress_update(   int ) ),
-            this,      SLOT(   update_progress(   int ) ) );
-   connect( processor, SIGNAL( message_update(    QString, bool ) ),
-            this,      SLOT(   progress_message(  QString, bool ) ) );
-   connect( processor, SIGNAL( stage_complete(    int, int )  ),
-            this,      SLOT(   reset_steps(       int, int )  ) );
-   connect( processor, SIGNAL( process_complete(  int  ) ),
-            this,      SLOT(   completed_process( int  ) ) );
+   connect( processor, &US_2dsaProcess::progress_update,
+            this,      &US_AnalysisControl2D::update_progress );
+   connect( processor, &US_2dsaProcess::message_update,
+            this,      &US_AnalysisControl2D::progress_message );
+   connect( processor, &US_2dsaProcess::stage_complete,
+            this,      &US_AnalysisControl2D::reset_steps );
+   connect( processor, &US_2dsaProcess::process_complete,
+            this,      &US_AnalysisControl2D::completed_process );
 
    int mxiter    = (int)ct_iters->value();
    int mniter    = ( ck_menisc->isChecked() ||
@@ -679,6 +680,77 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    pb_stopfit->setEnabled( true  );
    pb_plot   ->setEnabled( false );
    pb_save   ->setEnabled( false );
+}
+
+// ALEXEY: Headless equivalent of a "Start Fit" click -- see header doc.
+// start() itself needs no changes: it already just reads current widget
+// values (ct_lolimits, ct_uplimits, ct_nstepss, ct_lolimitk, ct_uplimitk,
+// ct_nstepsk, ct_thrdcnt, and the ck_* checkboxes), which are left at
+// their constructor defaults here -- s x1e-13 in [1,10] over 64 grid
+// points, f/f0 in [1,4] over 64 grid points, thread count = ideal thread
+// count, no TI/RI noise fitting, no meniscus/bottom fit, no Monte Carlo.
+// Setting auto_mode here is what makes completed_process() call save()
+// itself once the fit finishes (see its alldone branch) and makes
+// memory_check() log instead of popping a blocking confirmation dialog.
+void US_AnalysisControl2D::fit_auto( void )
+{
+   auto_mode = true;
+   start();
+}
+
+// ALEXEY: Apply Analysis-Profile-sourced grid-fit parameters ahead of a
+// headless fit_auto() run (see this method's header comment). Called
+// from US_2dsa::run_2dsa_auto() right after this dialog is constructed,
+// before fit_auto() itself -- so the counters/checkbox below are set,
+// and their normal valueChanged/toggled-connected slots (grid_change(),
+// slim_change(), klim_change(), kstep_change(), checkIterate()) fire
+// exactly as they would from a user's own interaction, keeping the
+// displayed grid-repetition/estimated-memory summaries consistent.
+void US_AnalysisControl2D::apply_auto_fit_params( const QMap<QString, QString>& params )
+{
+   if ( params.contains( "s_min" ) )
+   {
+      ct_lolimits->setValue( params.value( "s_min" ).toDouble() );
+   }
+
+   if ( params.contains( "s_max" ) )
+   {
+      ct_uplimits->setValue( params.value( "s_max" ).toDouble() );
+   }
+
+   if ( params.contains( "s_grpts" ) )
+   {
+      ct_nstepss->setValue( params.value( "s_grpts" ).toDouble() );
+   }
+
+   if ( params.contains( "k_min" ) )
+   {
+      ct_lolimitk->setValue( params.value( "k_min" ).toDouble() );
+   }
+
+   if ( params.contains( "k_max" ) )
+   {
+      ct_uplimitk->setValue( params.value( "k_max" ).toDouble() );
+   }
+
+   if ( params.contains( "k_grpts" ) )
+   {
+      ct_nstepsk->setValue( params.value( "k_grpts" ).toDouble() );
+   }
+
+   // Per requirement: always run the iterative-refinement method with a
+   // fixed 10 iterations, regardless of what the Analysis Profile (or
+   // this dialog's own default) specifies for either. checkIterate(true)
+   // (fired by setChecked(), via the ck_iters->toggled connection) sets
+   // ct_iters to its own default of 3 -- explicitly override that with
+   // 2 afterward.
+   ck_iters->setChecked( true );
+   ct_iters->setValue( 2 );
+   ct_thrdcnt->setValue( 8 );
+
+   DbgLv( 1 ) << "AC:apply_auto_fit_params: s" << ct_lolimits->value() << ct_uplimits->value() << ct_nstepss->value() << "k"
+              << ct_lolimitk->value() << ct_uplimitk->value() << ct_nstepsk->value() << "iters" << ct_iters->value() << "threads"
+              << ct_thrdcnt->value();
 }
 
 // stop fit button clicked
@@ -832,13 +904,13 @@ DbgLv(1) << "GC: 5)ngrrep" << ngrrep << "nss nks" << nsteps << nstepk;
 
    ct_nstepss->disconnect();
    ct_nstepss->setValue( nsteps );
-   connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
+   connect( ct_nstepss,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
 
    ct_nstepsk->disconnect();
    ct_nstepsk->setValue( nstepk );
-   connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
+   connect( ct_nstepsk,  &QwtCounter::valueChanged,
+            this,        &US_AnalysisControl2D::grid_change );
 
    if ( parentw )
    {  // Get the starting base rss memory of this dataset and parameters
@@ -974,7 +1046,8 @@ void US_AnalysisControl2D::update_progress( int ksteps )
    }
 
    b_progress->setValue( ncsteps );
-DbgLv(2) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
+   emit fit_progress_s( ncsteps, nctotal );
+   DbgLv( 2 ) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
 }
 
 // slot to handle updated progress message
@@ -1009,8 +1082,9 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 DbgLv(1) << "AC:cs: BB";
    b_progress->setValue(   ncsteps );
 DbgLv(1) << "AC:cs: CC";
+emit fit_progress_s( ncsteps, nctotal );
 
-   qApp->processEvents();
+qApp->processEvents();
 }
 
 // slot to handle completed processing
@@ -1020,6 +1094,7 @@ void US_AnalysisControl2D::completed_process( int stage )
 DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
+   emit fit_progress_s( nctotal, nctotal );
    qApp->processEvents();
 
    if ( stage == 6 )
@@ -1131,12 +1206,33 @@ DbgLv(1) << "AC:cp inum mmit vari meni bott"
    {
       mainw->analysis_done( -2 );
 
-      mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
+      // ALEXEY: Skip this branch entirely in headless auto mode --
+      // analysis_done(1) opens US_2dsa's 2-D Spectrum Analysis Data/
+      // Residuals Viewer (open_3dplot()/open_resplot()), which has no
+      // business appearing on an unattended pipeline; analysis_done(0)
+      // is a no-op (neither plotdata nor savedata) either way. save()
+      // below -- not this call -- is what actually persists this
+      // species' results in auto mode.
+      if ( !auto_mode )
+      {
+         mainw->analysis_done( ck_autoplt->isChecked() ? 1 : 0 );
+      }
 
       pb_strtfit->setEnabled( true  );
       pb_stopfit->setEnabled( false );
       pb_plot   ->setEnabled( true  );
       pb_save   ->setEnabled( true  );
+
+      if ( auto_mode )
+      {
+         // ALEXEY: No user is present to click "Save Results" in the
+         // headless (VEL-MWL post-processing) path -- do exactly what
+         // that click would do. save() itself calls
+         // mainw->analysis_done( 2 ), which is what actually persists
+         // the fit results and (in US_2dsa's auto mode) reports
+         // completion back to US_Analysis_auto via twodsa_complete_s().
+         save();
+      }
    }
 
    else if ( mmitnum > 0  &&  stage > 0 )
@@ -1237,11 +1333,11 @@ DbgLv(1) << "aac2:define_work" << workin.thrn << workin.nthrd;
       
       wthr->define_work( workin );
 
-      connect( wthr, SIGNAL( work_progress( int ) ),
-               this, SLOT  ( norm_progress( int ) ) );
+      connect( wthr, &WorkerThreadCalcNorm::work_progress,
+               this, &US_AnalysisControl2D::norm_progress );
 
-      connect( wthr, SIGNAL( work_complete( WorkerThreadCalcNorm* ) ),
-               this, SLOT  ( norm_complete( WorkerThreadCalcNorm* ) ) );
+      connect( wthr, &WorkerThreadCalcNorm::work_complete,
+               this, &US_AnalysisControl2D::norm_complete );
 
       wthr->start();
    }
@@ -1349,12 +1445,40 @@ int US_AnalysisControl2D::memory_check( )
 
       if ( memneed > memtot )
       {
-         QMessageBox::critical( this, title,
-             tr( "Memory needed for this fit exceeds total available." )
-             + memp + tr( "This fit will not proceed.\n"
-                          "Re-parameterize the fit with adjusted\n"
-                          "Grid Refinements and/or Thread Count." ) );
-         status          = 1;
+         // ALEXEY: Genuinely can't proceed either way (not enough memory
+         // to exist, not a judgment call) -- log instead of a blocking
+         // dialog in auto_mode, but the abort (status = 1) stands either
+         // way. See fit_auto()'s header comment: this is the one
+         // parameter-driven (not data-driven) early-return start() can
+         // hit, and the default grid (64x64, ideal thread count) is
+         // sized to make it unlikely in practice.
+         if ( auto_mode )
+         {
+            qDebug() << "[US_AnalysisControl2D] memory_check(): needed" << memneed << "MB exceeds total" << memtot
+                     << "MB -- aborting fit (auto mode).";
+         }
+         else
+         {
+            QMessageBox::critical( this,
+                                   title,
+                                   tr( "Memory needed for this fit exceeds total available." ) + memp +
+                                      tr( "This fit will not proceed.\n"
+                                          "Re-parameterize the fit with adjusted\n"
+                                          "Grid Refinements and/or Thread Count." ) );
+         }
+         status = 1;
+      }
+
+      else if ( auto_mode )
+      {
+         // ALEXEY: High-but-survivable memory use is exactly the kind of
+         // judgment call an operator would normally make ("Yes" to
+         // proceed) -- no one is present to answer a modal dialog here,
+         // and blocking on msgBox.exec() with nobody to click it would
+         // hang the whole VEL-MWL post-processing pipeline. Log and
+         // proceed, same as an operator clicking "Yes".
+         qDebug() << "[US_AnalysisControl2D] memory_check(): needed" << memneed << "MB is a high percentage of available" << memava
+                  << "MB -- proceeding anyway (auto mode).";
       }
 
       else
@@ -1362,8 +1486,8 @@ int US_AnalysisControl2D::memory_check( )
          QMessageBox msgBox( this );
          msgBox.setWindowTitle( title );
          msgBox.setText( tr( "Memory needed for this fit is a\n"
-                             "high percentage of the available memory." )
-                        + memp +
+                             "high percentage of the available memory." ) +
+                         memp +
                          tr( "You may proceed if you wish (\"Yes\")\n"
                              "Or you may stop this fit (\"No\")\n"
                              "then re-parameterize the fit with adjusted\n"
@@ -1373,7 +1497,9 @@ int US_AnalysisControl2D::memory_check( )
          msgBox.setDefaultButton( QMessageBox::No );
 
          if ( msgBox.exec() == QMessageBox::No )
-            status          = 2;
+         {
+            status = 2;
+         }
       }
    }
 

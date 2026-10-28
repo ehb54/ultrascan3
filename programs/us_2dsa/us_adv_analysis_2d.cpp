@@ -186,37 +186,36 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
 
    optimize_options();
 
-   connect( rb_bandcp, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkBandForm( bool ) ) );
-   connect( ck_unifgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkUniGrid(  bool ) ) );
-   connect( ck_locugr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkLocalUni( bool ) ) );
-   connect( ck_ranlgr, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkRandLoc(  bool ) ) );
-   connect( ck_soluco, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkSoluCoal( bool ) ) );
-   connect( ck_clipcs, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkClipLow(  bool ) ) );
+   connect( rb_bandcp, &QRadioButton::toggled,
+            this,  &US_AdvAnalysis2D::checkBandForm );
+   connect( ck_unifgr, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkUniGrid );
+   connect( ck_locugr, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkLocalUni );
+   connect( ck_ranlgr, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkRandLoc );
+   connect( ck_soluco, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkSoluCoal );
+   connect( ck_clipcs, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkClipLow );
    //connect( ck_menisc, SIGNAL( toggled( bool ) ),
    //         this,  SLOT( checkMeniscus( bool ) ) );
    //connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
    //         this,  SLOT( checkMonteCar( bool ) ) );
-   connect( ck_mdgrid, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMdGrid  ( bool ) ) );
-   connect( ck_mdrati, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkMdRatios( bool ) ) );
-   connect( ck_regulz, SIGNAL( toggled( bool ) ),
-            this,  SLOT( checkRegular(  bool ) ) );
-   connect( pb_ldmodel, SIGNAL( clicked()    ),
-            this,       SLOT(   load_model() ) );
+   connect( ck_mdgrid, &QCheckBox::toggled, this, &US_AdvAnalysis2D::checkMdGrid );
+   connect( ck_mdrati, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkMdRatios );
+   connect( ck_regulz, &QCheckBox::toggled,
+            this,  &US_AdvAnalysis2D::checkRegular );
+   connect( pb_ldmodel, &QPushButton::clicked,
+            this,       &US_AdvAnalysis2D::load_model );
 
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT(   help()    ) );
-   connect( pb_cancel,  SIGNAL( clicked() ),
-            this,       SLOT(   reject()  ) );
-   connect( pb_accept,  SIGNAL( clicked() ),
-            this,       SLOT(   select()  ) );
+   connect( pb_help,    &QPushButton::clicked,
+            this,       &US_AdvAnalysis2D::help );
+   connect( pb_cancel,  &QPushButton::clicked,
+            this,       &QDialog::reject );
+   connect( pb_accept,  &QPushButton::clicked,
+            this,       &US_AdvAnalysis2D::select );
 
    //ck_menisc->setChecked( false );
    //ck_mcarlo->setChecked( false );

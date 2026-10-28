@@ -99,6 +99,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    }
 
    le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
 
    // Radio buttons
    disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
@@ -107,6 +108,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Display status
    QLabel* lb_status = us_label(      tr( "Status:" ) );
    le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
@@ -144,6 +147,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
+   ct_tolerance->setAccessibleName( tr( "Separation Tolerance" ) );
    ct_tolerance->setSingleStep( 1 );
 
    // Set up MWL controls
@@ -157,8 +161,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
    cb_lambstrt  = us_comboBox();
+   cb_lambstrt->setAccessibleName( tr( "Wavelength Start" ) );
    cb_lambstop  = us_comboBox();
+   cb_lambstop->setAccessibleName( tr( "Wavelength End" ) );
    cb_lambplot  = us_comboBox();
+   cb_lambplot->setAccessibleName( tr( "Plot Wavelength" ) );
    pb_lambprev  = us_pushbutton( "previous", true, -2 );
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
@@ -173,17 +180,23 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
 
    le_runID2           = new US_LineEdit_RE( "", 1, true );
+   le_runID2->setAccessibleName( tr( "Run ID" ) );
+   lb_runID2->setBuddy( le_runID2 );
    le_runID2  ->setMaxChars(250);
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
    QLabel* lb_dir      = us_label(    tr( "Directory:" ) );
    le_dir              = us_lineedit( "", 1, true );
+   le_dir->setAccessibleName( tr( "Directory" ) );
+   lb_dir->setBuddy( le_dir );
 
    // Description
    lb_description      = us_label(    tr( "Description:" ), 0 );
    //lb_description ->setMaximumWidth( 175 );
    le_description      = us_lineedit( "", 1, true );
+   le_description->setAccessibleName( tr( "Description" ) );
+   lb_description->setBuddy( le_description );
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
@@ -192,6 +205,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             tr( "Cell / Channel / Wavelength" ) );
    lb_triple->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_triple           = us_listwidget();
+   lw_triple->setAccessibleName( tr( "Cell, Channel, and Wavelength" ) );
    // QLabel* lb_ccwinfo  = us_label(
    //                          tr( "Enter Associated Triple (c/c/w) Info:" ) );
    QLabel* lb_ccwinfo  = us_label(
@@ -201,6 +215,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Set up centerpiece drop-down
    cb_centerpiece      = new US_SelectBox( this );
+   cb_centerpiece->setAccessibleName( tr( "Centerpiece" ) );
    centerpieceInfo();
    cb_centerpiece -> load();
 
@@ -230,17 +245,21 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
+   le_solutionDesc->setAccessibleName( tr( "Solution" ) );
+   lb_solution->setBuddy( le_solutionDesc );
    // Scan Controls
    lb_scan             = us_banner(     tr( "Scan Controls" ) );
    // Scan focus from
    lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setAccessibleName( tr( "Scan Focus From" ) );
    ct_from->setSingleStep( 1 );
    // Scan focus to
    lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setAccessibleName( tr( "Scan Focus To" ) );
    ct_to->setSingleStep( 1 );
 
    // Exclude and Include pushbuttons
@@ -364,6 +383,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                                    true, "Raw", "rainbow" );
 
    data_plot->setMinimumSize( 400, 300 );
+   data_plot->setAccessibleName( tr( "Absorbance Data Plot" ) );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -380,62 +400,62 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Connect signals and slots
    if ( isadmin )
-      connect( pb_investigator, SIGNAL( clicked()          ),
-                                SLOT(   sel_investigator() ) );
-   connect( disk_controls,  SIGNAL( changed       ( bool ) ),
-                            SLOT  ( source_changed( bool ) ) );
-   connect( pb_import,      SIGNAL( clicked()       ),
-                            SLOT(   import()        ) );
-   connect( pb_editRuninfo, SIGNAL( clicked()       ),
-                            SLOT(   editRuninfo()   ) );
-   connect( pb_loadUS3,     SIGNAL( clicked()       ),
-                            SLOT(   loadUS3()       ) );
-   connect( pb_showTmst,    SIGNAL( clicked()       ),
-                            SLOT(   showTimeState() ) );
-   connect( pb_details,     SIGNAL( clicked()       ),
-                            SLOT(   runDetails()    ) );
-   connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
-                            SLOT  ( toleranceValueChanged( double ) ) );
-   connect( le_description, SIGNAL( textEdited( QString )      ),
-                            SLOT  ( changeDescription()        ) );
-   connect( lw_triple,      SIGNAL( itemSelectionChanged()     ),
-                            SLOT  ( changeTriple()             ) );
-   connect( cb_centerpiece, SIGNAL( activated          ( int ) ),
-                            SLOT  ( getCenterpieceIndex( int ) ) );
-   connect( pb_solution,    SIGNAL( clicked()          ),
-                            SLOT(   getSolutionInfo()  ) );
-   connect( pb_applyAll,    SIGNAL( clicked()          ),
-                            SLOT(   tripleApplyAll()   ) );
-   connect( pb_define,      SIGNAL( clicked()          ),
-                            SLOT(   define_subsets()   ) );
-   connect( pb_process,     SIGNAL( clicked()          ),
-                            SLOT(   process_subsets()  ) );
-   connect( pb_reference,   SIGNAL( clicked()          ),
-                            SLOT(   define_reference() ) );
-   connect( pb_cancelref,   SIGNAL( clicked()          ),
-                            SLOT(   cancel_reference() ) );
-   connect( pb_intensity,   SIGNAL( clicked()          ),
-                            SLOT(   show_intensity()   ) );
-   connect( pb_dropTrips,   SIGNAL( clicked()          ),
-                            SLOT(   drop_reference()   ) );
-   connect( pb_dropCelch,   SIGNAL( clicked()          ),
-                            SLOT(   drop_cellchan()    ) );
-   connect( pb_dropChan,    SIGNAL( clicked()          ),
-                            SLOT(   drop_channel()     ) );
-   connect( pb_exclude,     SIGNAL( clicked()          ),
-                            SLOT(   exclude_scans()    ) );
-   connect( pb_include,     SIGNAL( clicked()  ),
-                            SLOT(   include()  ) );
-   connect( pb_reset,       SIGNAL( clicked()  ),
-                            SLOT(   resetAll() ) );
-   connect( pb_help,        SIGNAL( clicked()  ),
-                            SLOT(   help()     ) );
-   connect( pb_saveUS3,     SIGNAL( clicked()  ),
-                            SLOT(   saveUS3()  ) );
-   connect( pb_close,       SIGNAL( clicked()  ),
-                            SLOT(   close() )  );
+      connect( pb_investigator, &QAbstractButton::clicked,
+                                this, &US_ConvertGui::sel_investigator );
+   connect( disk_controls,  &US_Disk_DB_Controls::changed,
+                            this, &US_ConvertGui::source_changed );
+   connect( pb_import,      &QAbstractButton::clicked,
+                            this, &US_ConvertGui::import );
+   connect( pb_editRuninfo, &QAbstractButton::clicked,
+                            this, &US_ConvertGui::editRuninfo );
+   connect( pb_loadUS3,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::loadUS3 );
+   connect( pb_showTmst,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::showTimeState );
+   connect( pb_details,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::runDetails );
+   connect( ct_tolerance,   &QwtCounter::valueChanged,
+                            this, &US_ConvertGui::toleranceValueChanged );
+   connect( le_description, &QLineEdit::textEdited,
+                            this, &US_ConvertGui::changeDescription );
+   connect( lw_triple,      &QListWidget::itemSelectionChanged,
+                            this, &US_ConvertGui::changeTriple );
+   connect( cb_centerpiece, qOverload< int >( &QComboBox::activated ),
+                            this, &US_ConvertGui::getCenterpieceIndex );
+   connect( pb_solution,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::getSolutionInfo );
+   connect( pb_applyAll,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::tripleApplyAll );
+   connect( pb_define,      &QAbstractButton::clicked,
+                            this, &US_ConvertGui::define_subsets );
+   connect( pb_process,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::process_subsets );
+   connect( pb_reference,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::define_reference );
+   connect( pb_cancelref,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::cancel_reference );
+   connect( pb_intensity,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::show_intensity );
+   connect( pb_dropTrips,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::drop_reference );
+   connect( pb_dropCelch,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::drop_cellchan );
+   connect( pb_dropChan,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::drop_channel );
+   connect( pb_exclude,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::exclude_scans );
+   connect( pb_include,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::include );
+   connect( pb_reset,       &QAbstractButton::clicked,
+                            this, &US_ConvertGui::resetAll );
+   connect( pb_help,        &QAbstractButton::clicked,
+                            this, &US_ConvertGui::help );
+   connect( pb_saveUS3,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::saveUS3 );
+   connect( pb_close,       &QAbstractButton::clicked,
+                            this, &QWidget::close  );
 
-   connect ( this, SIGNAL( process_next_optics () ), SLOT ( process_optics () )  );
+   connect ( this, &US_ConvertGui::process_next_optics, this, &US_ConvertGui::process_optics  );
 
 
    // Hide scan Control
@@ -708,6 +728,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    }
 
    le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
 
    // Radio buttons
    disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
@@ -716,6 +737,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Display status
    QLabel* lb_status = us_label(      tr( "Status:" ) );
    le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
@@ -753,6 +776,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
+   ct_tolerance->setAccessibleName( tr( "Separation Tolerance" ) );
    ct_tolerance->setSingleStep( 1 );
 
    // Set up MWL controls
@@ -765,8 +789,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
    cb_lambstrt  = us_comboBox();
+   cb_lambstrt->setAccessibleName( tr( "Wavelength Start" ) );
    cb_lambstop  = us_comboBox();
+   cb_lambstop->setAccessibleName( tr( "Wavelength End" ) );
    cb_lambplot  = us_comboBox();
+   cb_lambplot->setAccessibleName( tr( "Plot Wavelength" ) );
    pb_lambprev  = us_pushbutton( "previous", true, -2 );
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
@@ -779,16 +806,22 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Change Run ID
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
    le_runID2           = new US_LineEdit_RE( "", 1 );
+   le_runID2->setAccessibleName( tr( "Run ID" ) );
+   lb_runID2->setBuddy( le_runID2 );
    //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
    QLabel* lb_dir      = us_label(    tr( "Directory:" ) );
    le_dir              = us_lineedit( "", 1, true );
+   le_dir->setAccessibleName( tr( "Directory" ) );
+   lb_dir->setBuddy( le_dir );
 
    // Description
    lb_description      = us_label(    tr( "Description:" ), 0 );
    //lb_description ->setMaximumWidth( 175 );
    le_description      = us_lineedit( "", 1 );
+   le_description->setAccessibleName( tr( "Description" ) );
+   lb_description->setBuddy( le_description );
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
@@ -796,6 +829,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_triple           = us_banner(
                             tr( "Cell / Channel / Wavelength" ), -1 );
    lw_triple           = us_listwidget();
+   lw_triple->setAccessibleName( tr( "Cell, Channel, and Wavelength" ) );
    QLabel* lb_ccwinfo  = us_label(
                             tr( "Enter Associated Triple (c/c/w) Info:" ) );
 
@@ -805,6 +839,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Set up centerpiece drop-down
    cb_centerpiece      = new US_SelectBox( this );
+   cb_centerpiece->setAccessibleName( tr( "Centerpiece" ) );
    centerpieceInfo();
    cb_centerpiece -> load();
 
@@ -826,17 +861,21 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
+   le_solutionDesc->setAccessibleName( tr( "Solution" ) );
+   lb_solution->setBuddy( le_solutionDesc );
    // Scan Controls
    lb_scan             = us_banner(     tr( "Scan Controls" ) );
    // Scan focus from
    lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from->setAccessibleName( tr( "Scan Focus From" ) );
    ct_from->setSingleStep( 1 );
    // Scan focus to
    lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to->setAccessibleName( tr( "Scan Focus To" ) );
    ct_to->setSingleStep( 1 );
 
    // Exclude and Include pushbuttons
@@ -913,6 +952,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                                    true, "", "rainbow" );
 
    data_plot->setMinimumSize( 500, 300 );
+   data_plot->setAccessibleName( tr( "Absorbance Data Plot" ) );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -947,60 +987,60 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    // Connect signals and slots
    if ( isadmin )
-      connect( pb_investigator, SIGNAL( clicked()          ),
-                                SLOT(   sel_investigator() ) );
-   connect( disk_controls,  SIGNAL( changed       ( bool ) ),
-                            SLOT  ( source_changed( bool ) ) );
-   connect( pb_import,      SIGNAL( clicked()       ),
-                            SLOT(   import()        ) );
-   connect( pb_editRuninfo, SIGNAL( clicked()       ),
-                            SLOT(   editRuninfo()   ) );
-   connect( pb_loadUS3,     SIGNAL( clicked()       ),
-                            SLOT(   loadUS3()       ) );
-   connect( pb_showTmst,    SIGNAL( clicked()       ),
-                            SLOT(   showTimeState() ) );
-   connect( pb_details,     SIGNAL( clicked()       ),
-                            SLOT(   runDetails()    ) );
-   connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
-                            SLOT  ( toleranceValueChanged( double ) ) );
-   connect( le_description, SIGNAL( textEdited( QString )      ),
-                            SLOT  ( changeDescription()        ) );
-   connect( lw_triple,      SIGNAL( itemSelectionChanged()     ),
-                            SLOT  ( changeTriple()             ) );
-   connect( cb_centerpiece, SIGNAL( activated          ( int ) ),
-                            SLOT  ( getCenterpieceIndex( int ) ) );
-   connect( pb_solution,    SIGNAL( clicked()          ),
-                            SLOT(   getSolutionInfo()  ) );
-   connect( pb_applyAll,    SIGNAL( clicked()          ),
-                            SLOT(   tripleApplyAll()   ) );
-   connect( pb_define,      SIGNAL( clicked()          ),
-                            SLOT(   define_subsets()   ) );
-   connect( pb_process,     SIGNAL( clicked()          ),
-                            SLOT(   process_subsets()  ) );
-   connect( pb_reference,   SIGNAL( clicked()          ),
-                            SLOT(   define_reference() ) );
-   connect( pb_cancelref,   SIGNAL( clicked()          ),
-                            SLOT(   cancel_reference() ) );
-   connect( pb_intensity,   SIGNAL( clicked()          ),
-                            SLOT(   show_intensity()   ) );
-   connect( pb_dropTrips,   SIGNAL( clicked()          ),
-                            SLOT(   drop_reference()   ) );
-   connect( pb_dropCelch,   SIGNAL( clicked()          ),
-                            SLOT(   drop_cellchan()    ) );
-   connect( pb_dropChan,    SIGNAL( clicked()          ),
-                            SLOT(   drop_channel()     ) );
-   connect( pb_exclude,     SIGNAL( clicked()          ),
-                            SLOT(   exclude_scans()    ) );
-   connect( pb_include,     SIGNAL( clicked()  ),
-                            SLOT(   include()  ) );
-   connect( pb_reset,       SIGNAL( clicked()  ),
-                            SLOT(   resetAll() ) );
-   connect( pb_help,        SIGNAL( clicked()  ),
-                            SLOT(   help()     ) );
-   connect( pb_saveUS3,     SIGNAL( clicked()  ),
-                            SLOT(   saveUS3()  ) );
-   connect( pb_close,       SIGNAL( clicked()  ),
-                            SLOT(   close() )  );
+      connect( pb_investigator, &QAbstractButton::clicked,
+                                this, &US_ConvertGui::sel_investigator );
+   connect( disk_controls,  &US_Disk_DB_Controls::changed,
+                            this, &US_ConvertGui::source_changed );
+   connect( pb_import,      &QAbstractButton::clicked,
+                            this, &US_ConvertGui::import );
+   connect( pb_editRuninfo, &QAbstractButton::clicked,
+                            this, &US_ConvertGui::editRuninfo );
+   connect( pb_loadUS3,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::loadUS3 );
+   connect( pb_showTmst,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::showTimeState );
+   connect( pb_details,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::runDetails );
+   connect( ct_tolerance,   &QwtCounter::valueChanged,
+                            this, &US_ConvertGui::toleranceValueChanged );
+   connect( le_description, &QLineEdit::textEdited,
+                            this, &US_ConvertGui::changeDescription );
+   connect( lw_triple,      &QListWidget::itemSelectionChanged,
+                            this, &US_ConvertGui::changeTriple );
+   connect( cb_centerpiece, qOverload< int >( &QComboBox::activated ),
+                            this, &US_ConvertGui::getCenterpieceIndex );
+   connect( pb_solution,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::getSolutionInfo );
+   connect( pb_applyAll,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::tripleApplyAll );
+   connect( pb_define,      &QAbstractButton::clicked,
+                            this, &US_ConvertGui::define_subsets );
+   connect( pb_process,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::process_subsets );
+   connect( pb_reference,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::define_reference );
+   connect( pb_cancelref,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::cancel_reference );
+   connect( pb_intensity,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::show_intensity );
+   connect( pb_dropTrips,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::drop_reference );
+   connect( pb_dropCelch,   &QAbstractButton::clicked,
+                            this, &US_ConvertGui::drop_cellchan );
+   connect( pb_dropChan,    &QAbstractButton::clicked,
+                            this, &US_ConvertGui::drop_channel );
+   connect( pb_exclude,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::exclude_scans );
+   connect( pb_include,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::include );
+   connect( pb_reset,       &QAbstractButton::clicked,
+                            this, &US_ConvertGui::resetAll );
+   connect( pb_help,        &QAbstractButton::clicked,
+                            this, &US_ConvertGui::help );
+   connect( pb_saveUS3,     &QAbstractButton::clicked,
+                            this, &US_ConvertGui::saveUS3 );
+   connect( pb_close,       &QAbstractButton::clicked,
+                            this, &QWidget::close  );
 
    // Now let's assemble the page
 
@@ -1182,6 +1222,9 @@ void US_ConvertGui::reset_auto( void )
    ExpData     .clear();
 
    drop_operations. clear();
+   drop_items.clear();
+   scan_difference_map. clear();
+   
    if ( isMwl )
       mwl_data.clear();
    show_plot_progress = true;
@@ -1317,8 +1360,8 @@ void US_ConvertGui::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, ExpData.invID );
 
    connect( inv_dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT  ( assign_investigator  ( int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_ConvertGui::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -1490,38 +1533,44 @@ bool US_ConvertGui::copyDirectory(const QString &sourcePath, const QString &dest
 //alt. import_auto_ssf (for [ABDE-MWL])
 void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at_live_update )
 {
-  us_import_ssf_abde     = true;
-  dataSavedOtherwise     = false;
-  runType_combined_IP_RI = false;
-  
-  autoflowID_passed = details_at_live_update[ "autoflowID" ].toInt();
+   import_ssf_ok          = false; // set true below only on confirmed success
+   us_import_ssf_abde     = true;
+   dataSavedOtherwise     = false;
+   runType_combined_IP_RI = false;
 
-  qDebug() << "autoflowID: " << autoflowID_passed;
+   autoflowID_passed = details_at_live_update["autoflowID"].toInt();
 
-  details_at_editing = details_at_live_update;
+   qDebug() << "autoflowID: " << autoflowID_passed;
 
-  ExpData.invID     = details_at_live_update[ "invID_passed" ].toInt();
-  ProtocolName_auto = details_at_live_update[ "protocolName" ];
-  OptimaName        = details_at_live_update[ "OptimaName" ];
-  runID_numeric     = details_at_live_update[ "runID" ];
+   details_at_editing = details_at_live_update;
 
-  Exp_label         = details_at_live_update[ "label" ];
+   ExpData.invID     = details_at_live_update["invID_passed"].toInt();
+   ProtocolName_auto = details_at_live_update["protocolName"];
+   OptimaName        = details_at_live_update["OptimaName"];
+   runID_numeric     = details_at_live_update["runID"];
 
-  AProfileGUID      = details_at_live_update[ "aprofileguid" ];
-  expType           = details_at_live_update[ "expType" ];
-  dataSource        = details_at_live_update[ "dataSource" ];
-  opticsFailedType  = details_at_live_update[ "opticsFailedType" ];
+   Exp_label = details_at_live_update["label"];
 
-  //debug
-  qDebug() << "ssf_dir_name" << details_at_live_update["ssf_dir_name"];
-  qDebug() << "Exp_label: " << Exp_label;
-  qDebug() << "ExpType: "   << expType;
-  qDebug() << "dataSource: " << dataSource;
+   AProfileGUID     = details_at_live_update["aprofileguid"];
+   expType          = details_at_live_update["expType"];
+   dataSource       = details_at_live_update["dataSource"];
+   opticsFailedType = details_at_live_update["opticsFailedType"];
 
-  impType     = getImports_auto( details_at_live_update["ssf_dir_name"] );
-  qDebug() << "impType, IMPORT AUC auto..." << impType;
-  importAUC();
-  
+   //debug
+   qDebug() << "ssf_dir_name" << details_at_live_update["ssf_dir_name"];
+   qDebug() << "Exp_label: " << Exp_label;
+   qDebug() << "ExpType: " << expType;
+   qDebug() << "dataSource: " << dataSource;
+
+   impType = getImports_auto( details_at_live_update["ssf_dir_name"] );
+   qDebug() << "impType, IMPORT AUC auto..." << impType;
+   importAUC();
+   if ( allData.isEmpty() )
+   {
+      qDebug() << "[import_ssf_data_auto] FAILED: importAUC() produced no data";
+      return;
+   }
+
   //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
   if ( us_convert_auto_mode ) 
     {
@@ -1534,10 +1583,16 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   //emit data_loaded();
   
   editRuninfo_auto();
-  
-  if( dataSavedOtherwise )
-    return;
-  
+
+  if ( dataSavedOtherwise )
+  {
+     // Run was already in the DB (saveUS3DB-type path elsewhere) -- success iff
+     // it is there
+     import_ssf_ok = runInDB_auto();
+     qDebug() << "[import_ssf_data_auto] dataSavedOtherwise; run in DB:" << import_ssf_ok;
+     return;
+  }
+
   //debug
   qDebug() << "Before reading protocol: out_triples, out_channles -- "
 	   << out_triples << ", \n "
@@ -1573,16 +1628,35 @@ void US_ConvertGui::import_ssf_data_auto( QMap < QString, QString > & details_at
   //And save to DB -- Will probably be a separate funciton with:
   // (1) check for if saved already?
   // (2) switch to Reporting stage
-  
-  if( isSaved_auto() )
-    {
-      qDebug() << "SSF Already saved!";
-      return;
-    }
-    
+
+  bool already_saved_dbg = isSaved_auto();
+  qDebug() << "[import_ssf_data_auto] runID:" << ExpData.runID << "invID:" << ExpData.invID << "DB mode:" << disk_controls->db()
+           << "saveStatus:" << (int) saveStatus << "already saved:" << already_saved_dbg;
+
+  if ( already_saved_dbg )
+  {
+     qDebug() << "SSF Already saved!";
+     import_ssf_ok = true; // already in the DB: nothing more to do
+     return;
+  }
+
   saveUS3DB();          
   writeTimeStateDisk(); // do we need timestate?
   writeTimeStateDB();   // do we need timestate?
+
+  // saveUS3DB() reports failures only via message boxes and early returns,
+  // so confirm the outcome by asking the DB whether the run is there now.
+  // NB: do NOT use isSaved_auto() here: a successful saveUS3DB() sets
+  // saveStatus = BOTH, which makes isSaved_auto() return false.
+  import_ssf_ok = runInDB_auto();
+  qDebug() << "[import_ssf_data_auto] after save; run in DB:" << import_ssf_ok;
+
+  // capture a new "filemane" for VEL-MWL:
+  QString auto_flag_ = details_at_live_update["auto_flag_import"];
+  if ( !auto_flag_.isEmpty() && auto_flag_ == "VELMWL_IMPORT_SIM_ANALYSIS" )
+  {
+     qDebug() << "Saved filename -- " << details_at_live_update["filename"];
+  }
 
   //message? (will likely be shown in the parent AUTO-analysis widget)
   // QMessageBox::information( this,
@@ -1817,7 +1891,11 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
    {
      qDebug() << "IMPORT AUC auto...";
      importAUC();
-     
+     if ( allData.isEmpty() )
+     {
+        return;
+     }
+
      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
      if ( us_convert_auto_mode ) 
        {
@@ -1848,52 +1926,77 @@ void US_ConvertGui::import_data_auto( QMap < QString, QString > & details_at_liv
        auto_ref_scan = false;
 
      //TEMPORARY !!!!
-     if ( dataType == "RI" && expType != "ABDE" &&
-	  dataSource != "dataDiskAUC:Absorbance" &&
-	  dataSource != "dataDiskAUC:PseudoAbsorbance"  )
-       {
-     	 // double low_ref  = 5.87 - 0.005;
-     	 // double high_ref = 5.87 + 0.005;
-	 
-	 centerpoint_ref_def = 5.87;
-	 plot_last_scans( centerpoint_ref_def );
-	 //process_reference_auto( centerpoint_ref_def );
-	 
-	 auto_ref_scan = true;
-	 
-	 QMessageBox msgBox;
-     	 msgBox.setText(QString( tr("ATTENTION: Reference scans will be defined automatically "
-				    "based on the guess value of %1cm for the air absorbance region above the meniscus.") ).
-			arg( centerpoint_ref_def ) );
-	 msgBox.setInformativeText( tr( "You may review and proceed with saving the data, "
-					"or choose to reset reference scans definitions by clicking 'Undo Reference Scans' "
-					"and subsequently defining them manually by clicking 'Define Reference Scans' button."));
-				    
-     	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-     	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
-     	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
-      	 
-     	 msgBox.setIcon(QMessageBox::Question);
-     	 msgBox.exec();
-      
-     	 if (msgBox.clickedButton() == Automatic)
-	   {
-	     process_reference_auto( centerpoint_ref_def );
-	     first_time_plot_auto = false;
-	     return;
-	   }
-	 // else if (msgBox.clickedButton() == Manual) {
-     	 //   cancel_reference();
-     	 // }
-       }
+     if ( dataType == "RI" && expType != "ABDE" && dataSource != "dataDiskAUC:Absorbance" &&
+          dataSource != "dataDiskAUC:PseudoAbsorbance" )
+     {
+        if ( protDev_bool && dataSource.contains( "dataDiskAUC" ) )
+        {
+           pb_reference->setEnabled( false );
+           referenceDefined = true;
+           lw_todoinfo->clear();
+           pb_saveUS3->setEnabled( true );
+           enableRunIDControl( false );
+           return;
+        }
+
+        // double low_ref  = 5.87 - 0.005;
+        // double high_ref = 5.87 + 0.005;
+
+        centerpoint_ref_def = 5.87;
+        plot_last_scans( centerpoint_ref_def );
+        // process_reference_auto( centerpoint_ref_def );
+
+        auto_ref_scan = true;
+
+        QMessageBox msgBox;
+        msgBox.setText( QString( tr( "ATTENTION: Reference scans will be defined automatically "
+                                     "based on the guess value of %1cm for the air absorbance "
+                                     "region above the meniscus." ) )
+                           .arg( centerpoint_ref_def ) );
+        msgBox.setInformativeText( tr( "You may review and proceed with saving the data, "
+                                       "or choose to reset reference scans definitions by clicking "
+                                       "'Undo Reference Scans' "
+                                       "and subsequently defining them manually by clicking 'Define "
+                                       "Reference Scans' button." ) );
+
+        msgBox.setWindowTitle( tr( "Reference Scans: Automated Processing" ) );
+        QPushButton* Automatic = msgBox.addButton( tr( "OK " ), QMessageBox::YesRole );
+        // QPushButton *Manual     = msgBox.addButton(tr("Define Manually"),
+        // QMessageBox::YesRole);
+
+        msgBox.setIcon( QMessageBox::Question );
+        msgBox.exec();
+
+        if ( msgBox.clickedButton() == Automatic )
+        {
+           process_reference_auto( centerpoint_ref_def );
+           first_time_plot_auto = false;
+           return;
+        }
+        // else if (msgBox.clickedButton() == Manual) {
+        //   cancel_reference();
+        // }
+     }
      //end of auto-processing reference range
 
      //ABDE case
-     if ( expType == "ABDE")
-       {
-	 absorbance_conversion_abde();
-	 return;
-       }
+     if ( expType == "ABDE" )
+     {
+        if ( !protDev_bool )
+        {
+           absorbance_conversion_abde();
+           return;
+        }
+        else
+        {
+           pb_reference->setEnabled( false );
+           referenceDefined = true;
+           lw_todoinfo->clear();
+           pb_saveUS3->setEnabled( true );
+           enableRunIDControl( false );
+           return;
+        }
+     }
 
      return;
    }
@@ -1936,11 +2039,11 @@ DbgLv(1) << "CGui:IMP: init_excludes CALL";
 
    QApplication::restoreOverrideCursor();
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_from );
 
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to  , &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_to );
 
    saveStatus = NOT_SAVED;
 
@@ -1969,7 +2072,11 @@ void US_ConvertGui::process_optics()
    {
      qDebug() << "IMPORT AUC auto...";
      importAUC();
-     
+     if ( allData.isEmpty() )
+     {
+        return;
+     }
+
      //ALEXEY: For autoflow: Reset to-do list && maybe solutions, triple desc.
      if ( us_convert_auto_mode ) 
        {
@@ -2003,43 +2110,67 @@ void US_ConvertGui::process_optics()
 	  dataSource != "dataDiskAUC:Absorbance" &&
 	  dataSource != "dataDiskAUC:PseudoAbsorbance" )
        {
-	 // double low_ref  = 5.87 - 0.005;
-	 // double high_ref = 5.87 + 0.005;
+          if ( protDev_bool && dataSource.contains( "dataDiskAUC" ) )
+          {
+             pb_reference->setEnabled( false );
+             referenceDefined = true;
+             lw_todoinfo->clear();
+             pb_saveUS3->setEnabled( true );
+             enableRunIDControl( false );
+             return;
+          }
 
-	 centerpoint_ref_def = 5.87;
-	 plot_last_scans( centerpoint_ref_def );
-	 //process_reference_auto( centerpoint_ref_def );
-     	 
-	 auto_ref_scan = true;
+          // double low_ref  = 5.87 - 0.005;
+          // double high_ref = 5.87 + 0.005;
 
-	 QMessageBox msgBox;
-	 msgBox.setText(tr("Attention: Reference scans have been defined automatically."));
-	 msgBox.setInformativeText("You may review and proceed with saving the data, or choose to reset reference scans definitions by clicking 'Undo Reference Scans':");
-	 msgBox.setWindowTitle(tr("Reference Scans: Automated Processing"));
-	 QPushButton *Automatic  = msgBox.addButton(tr("OK "),   QMessageBox::YesRole);
-	 //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
-	 	 
-	 msgBox.setIcon(QMessageBox::Question);
-	 msgBox.exec();
-	 
-	 if (msgBox.clickedButton() == Automatic)
-	   {
-	     process_reference_auto( centerpoint_ref_def );
-	     first_time_plot_auto = false;
-	     return;
-	   }
-	 // else if (msgBox.clickedButton() == Manual) {
-	 //   cancel_reference();
-	 // }
+          centerpoint_ref_def = 5.87;
+          plot_last_scans( centerpoint_ref_def );
+          //process_reference_auto( centerpoint_ref_def );
+
+          auto_ref_scan = true;
+
+          QMessageBox msgBox;
+          msgBox.setText( tr( "Attention: Reference scans have been defined automatically." ) );
+          msgBox.setInformativeText( "You may review and proceed with saving the data, or choose to reset reference scans "
+                                     "definitions by clicking 'Undo Reference Scans':" );
+          msgBox.setWindowTitle( tr( "Reference Scans: Automated Processing" ) );
+          QPushButton* Automatic = msgBox.addButton( tr( "OK " ), QMessageBox::YesRole );
+          //QPushButton *Manual     = msgBox.addButton(tr("Define Manually"), QMessageBox::YesRole);
+
+          msgBox.setIcon( QMessageBox::Question );
+          msgBox.exec();
+
+          if ( msgBox.clickedButton() == Automatic )
+          {
+             process_reference_auto( centerpoint_ref_def );
+             first_time_plot_auto = false;
+             return;
+          }
+          // else if (msgBox.clickedButton() == Manual) {
+          //   cancel_reference();
+          // }
        } 
      //end of auto-processing reference range
 
-     if ( expType == "ABDE" )
+       // ABDE case
+       if ( expType == "ABDE" )
        {
-	 absorbance_conversion_abde();
-	 return;
+          if ( !protDev_bool )
+          {
+             absorbance_conversion_abde();
+             return;
+          }
+          else
+          {
+             pb_reference->setEnabled( false );
+             referenceDefined = true;
+             lw_todoinfo->clear();
+             pb_saveUS3->setEnabled( true );
+             enableRunIDControl( false );
+             return;
+          }
        }
-     
+
      return;
    }
 }
@@ -2111,11 +2242,11 @@ DbgLv(1) << "CGui:IMP: init_excludes CALL";
 
    QApplication::restoreOverrideCursor();
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_from );
 
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to  , &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_to );
 
    saveStatus = NOT_SAVED;
 
@@ -2174,11 +2305,11 @@ void US_ConvertGui::reimport( void )
    plot_current();
    QApplication::restoreOverrideCursor();
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_from );
 
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to  , &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_to );
 
    // Ok to enable some buttons now
    enableControls();
@@ -2333,6 +2464,18 @@ DbgLv(1) << "CGui:iA: CURRENT DIR_1: " << importDir;
          QDir::Files | QDir::Readable, QDir::Name );
    allData     .clear();
    all_tripinfo.clear();
+
+   if ( files.isEmpty() )
+   {  // Nothing to import (e.g. the simulation output was not written)
+      QApplication::restoreOverrideCursor();
+      qDebug() << "importAUC: no .auc files found in" << importDir;
+      le_status->setText( tr( "No AUC data found to import." ) );
+      QMessageBox::warning( this, tr( "Import AUC Data" ),
+         tr( "No .auc files were found in\n%1\n\n"
+             "The data may not have been written, so nothing can be imported." )
+         .arg( importDir ) );
+      return;
+   }
 
    // *** Determine 1st runType to process *************//
    if ( runType_combined_IP_RI )
@@ -2583,12 +2726,19 @@ QString US_ConvertGui::correct_description( QString & description, QString cell,
 void US_ConvertGui::check_scans()
 {
    int nsmin = 99999;
+   int nsmax = -99999;
    for (int ii = 0; ii < allData.size(); ii++ ) {
       nsmin = qMin(allData[ii].scanCount(), nsmin);
+      nsmax = qMax(allData[ii].scanCount(), nsmax);
    }
-
+   
    QStringList ccws_list;
    bool same = true;
+
+   // Reset any previously recorded scan-count differences for this runType,
+   // so record_import_status() only sees the current check_scans() results.
+   scan_difference_map[ runType ].clear();
+
    for (int ii = 0; ii < allData.size(); ii++ ) {
       int ns = allData[ii].scanCount();
       // In most cases, df is zero. However, occasionally it becomes 1,
@@ -2598,10 +2748,27 @@ void US_ConvertGui::check_scans()
       char channel = allData[ii].channel;
       double lambda = allData[ii].scanData.first().wavelength;
       ccws_list << tr("%1 / %2 / %3 : number of scans = %4").arg(cell).arg(channel).arg(lambda).arg(ns);
-      if ( df > 0 ) {
-         same = false;
-         allData[ii].scanData.remove( ns - df, df );
-      }
+      if ( df > 0 )
+	{
+	  same = false;
+	  allData[ii].scanData.remove( ns - df, df );
+	}
+      else
+	{
+	  //for GMP report
+	  qDebug() << "triple: " << cell << "/" << channel << "/" << lambda << ": ns (collected) " << ns
+		   << "; nsmax (expected) " << nsmax;
+
+	  // Only triples whose collected scan count differs from the
+	  // expected (max) count are recorded for the import status report.
+	  if ( us_convert_auto_mode && ns != nsmax )
+	    scan_difference_map[ runType ] << tr("%1 / %2 / %3 : expected %4; collected %5")
+	      .arg(cell)
+	      .arg(channel)
+	      .arg(lambda)
+	      .arg(nsmax)
+	      .arg(ns);
+	} 
    }
    if ( ! same ) {
       US_WidgetsDialog *error_wgt = new US_WidgetsDialog(this);
@@ -2725,8 +2892,8 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
      if ( !us_convert_auto_mode ) //ALEXEY: do not enable edit runID && attach to slot 
        {
 	 us_setReadOnly( le_runID2, false );
-     connect( le_runID2, SIGNAL( textUpdated( ) ),
-		  SLOT  ( runIDChanged(  )      ) );
+     connect( le_runID2, &US_LineEdit_RE::textUpdated,
+		  this, &US_ConvertGui::runIDChanged );
        }
      else
        {
@@ -2763,11 +2930,11 @@ DbgLv(1) << "CGui:enabScContr: trx dax" << tripListx << tripDatax;
                         - allExcludes[ tripDatax ].size() );
    ct_to  ->setValue   ( 0 );
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_from );
 
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to  , &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_to );
 
 }
 
@@ -3497,6 +3664,22 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
    ///////////////////////////////////////////////////////////////////////
 
    int num_cent_holes = int(ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size());
+
+   //Fix for GMP:dataDisk
+   /***
+       When mixed RI+IP data, it's possible that #total_chsols (channels) is less than 2*#cells_used
+       E.g., 1/A,1/B,2/A,2/B,5/A,5/B = RI (6 channels) + only 6/A IP (1 IP channel)
+       So, #total_chsols = 6+1 = 7, while #cells_used = 4 (1,2,5,6)
+       So, num_cent_holes = 7 / 4 = 1 (should be 2 !)
+       Possible fix: if #total_chsols > #cells_used: just make num_cent_holes = 2! 
+    ***/
+   if ( dataSource.contains("Disk") && us_convert_auto_mode && !us_import_ssf_abde )
+     {
+       if ( ProtInfo.ProtSolutions.chsols.size() > ProtInfo.ProtCells.cells_used.size() )
+	 num_cent_holes = 2;
+     }
+   
+   
    qDebug() << " num_cent_holes:: ProtInfo.ProtSolutions.chsols.size()/ProtInfo.ProtCells.cells_used.size() -- " << num_cent_holes << ProtInfo.ProtSolutions.chsols.size() << "/" << ProtInfo.ProtCells.cells_used.size();
    
    int cellnumber;
@@ -3705,7 +3888,9 @@ void US_ConvertGui::getLabInstrumentOperatorInfo_auto( void )
 	       qDebug() << " Test HEXAL 1" ;
 	       
 	       cellnumber = i / num_cent_holes;
-
+	       qDebug() << "cellnumber, i, num_cent_holes, ProtInfo.ProtCells.cells_used.keys(), cent_options.keys()  -- "
+			<< cellnumber <<  i <<  num_cent_holes << ProtInfo.ProtCells.cells_used.size() << cent_options.size();
+	       
 	       qDebug() << " Test HEXAL 2" ;
 	       for ( int aa = 0; aa < cent_options.size(); ++aa )
 		 {
@@ -3832,7 +4017,8 @@ int US_ConvertGui::getProtSolIndex( QString channel_name, QString dtype )
   QStringList channelList = channel_name.split("/");
   QString channel_name_mod = channelList[0] + " / " + channelList[1];
   
-  qDebug() << "In getProtSolIndex():  channel_name_mod -- " <<  channel_name_mod; 
+  qDebug() << "In getProtSolIndex():  ProtInfo.ProtSolutions.chsols.size(), channel_name_mod -- "
+	   <<  ProtInfo.ProtSolutions.chsols.size() << ", " << channel_name_mod; 
   
   for ( int i=0; i < ProtInfo.ProtSolutions.chsols.size(); ++i ) 
     {
@@ -3907,8 +4093,8 @@ void US_ConvertGui::loadUS3( )
    // Open a dialog to get the RunID from DB or Disk
    US_GetRun dialog( runID, disk_controls->db() );
 
-   connect( &dialog, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT  ( update_disk_db( bool ) ) );
+   connect( &dialog, &US_GetRun::dkdb_changed,
+            this,    &US_ConvertGui::update_disk_db );
 
    if ( dialog.exec() == QDialog::Rejected )
       return;
@@ -4254,11 +4440,11 @@ DbgLv(1) << "CGui: call plot_current";
    plot_current();
    QApplication::restoreOverrideCursor();
 
-   connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_from, &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_from );
 
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
-                     SLOT  ( focus_to     ( double ) ) );
+   connect( ct_to  , &QwtCounter::valueChanged,
+                     this, &US_ConvertGui::focus_to );
 
    // Ok to enable some buttons now
    enableControls();
@@ -4470,14 +4656,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
    strncpy( optSysPtr, allData[ 0 ].type, 2 );
    optSysPtr[ 2 ] = '\0';
 
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
+   double ss_reso      = US_Settings::speedResolution();
 
    // A list of unique rpms
    ExpData.rpms.clear();
@@ -4592,14 +4771,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
    strncpy( optSysPtr, allData[ 0 ].type, 2 );
    optSysPtr[ 2 ] = '\0';
 
-   double ss_reso      = 100.0;
-   // If debug_text so directs, change set_speed_resolution
-   QStringList dbgtxt = US_Settings::debug_text();
-   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
-   {  // If debug text modifies ss_reso, apply it
-      if ( dbgtxt[ ii ].startsWith( "SetSpeedReso" ) )
-         ss_reso       = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
-   }
+   double ss_reso      = US_Settings::speedResolution();
 
    // A list of unique rpms
    ExpData.rpms.clear();
@@ -4638,14 +4810,14 @@ DbgLv(1) << "CGui: gExpInf: IN";
                                                      ExpData,
                                                      dbdisk );
 
-   connect( expInfo, SIGNAL( updateExpInfoSelection( US_Experiment& ) ),
-            this   , SLOT  ( updateExpInfo         ( US_Experiment& ) ) );
+   connect( expInfo, &US_ExperimentGui::updateExpInfoSelection,
+            this   , &US_ConvertGui::updateExpInfo );
 
-   connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
-            this   , SLOT  ( cancelExpInfo         () ) );
+   connect( expInfo, &US_ExperimentGui::cancelExpInfoSelection,
+            this   , &US_ConvertGui::cancelExpInfo );
 
-   connect( expInfo, SIGNAL( use_db        ( bool ) ),
-                     SLOT  ( update_disk_db( bool ) ) );
+   connect( expInfo, &US_ExperimentGui::use_db,
+                     this, &US_ConvertGui::update_disk_db );
 
    expInfo->exec();
 DbgLv(1) << "CGui: gExpInf: RTN";
@@ -4689,14 +4861,14 @@ void US_ConvertGui::getSolutionInfo( void )
                                      dbdisk, // data source
                                      solution );
 
-   connect( solutionInfo, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
-            this,         SLOT  ( updateSolutionInfo        ( US_Solution ) ) );
+   connect( solutionInfo, &US_SolutionGui::updateSolutionGuiSelection,
+            this,         &US_ConvertGui::updateSolutionInfo );
 
-   connect( solutionInfo, SIGNAL( cancelSolutionGuiSelection() ),
-            this,         SLOT  ( cancelSolutionInfo        () ) );
+   connect( solutionInfo, &US_SolutionGui::cancelSolutionGuiSelection,
+            this,         &US_ConvertGui::cancelSolutionInfo );
 
-   connect( solutionInfo, SIGNAL( use_db        ( bool ) ),
-                          SLOT  ( update_disk_db( bool ) ) );
+   connect( solutionInfo, &US_SolutionGui::use_db,
+                          this, &US_ConvertGui::update_disk_db );
 
    solutionInfo->exec();
 }
@@ -5060,8 +5232,8 @@ DbgLv(1) << " sTi: elams_ch:" << elambdas_per_channel;
    }
 
    lw_triple->setCurrentRow( tripListx );
-   connect( lw_triple, SIGNAL( itemSelectionChanged() ),
-                       SLOT  ( changeTriple        () ) );
+   connect( lw_triple, &QListWidget::itemSelectionChanged,
+                       this, &US_ConvertGui::changeTriple );
 
    if ( ntrips > 0 )
    {
@@ -5132,8 +5304,8 @@ void US_ConvertGui::focus_from( double scan )
       ct_to->setValue( scan );
       to = from;
 
-      connect( ct_to, SIGNAL( valueChanged ( double ) ),
-                      SLOT  ( focus_to     ( double ) ) );
+      connect( ct_to, &QwtCounter::valueChanged,
+                      this, &US_ConvertGui::focus_to );
    }
 
    focus( from, to );
@@ -5150,8 +5322,8 @@ void US_ConvertGui::focus_to( double scan )
       ct_from->setValue( scan );
       from = to;
 
-      connect( ct_from, SIGNAL( valueChanged ( double ) ),
-                        SLOT  ( focus_from   ( double ) ) );
+      connect( ct_from, &QwtCounter::valueChanged,
+                        this, &US_ConvertGui::focus_from );
    }
 
    focus( from, to );
@@ -5247,8 +5419,8 @@ void US_ConvertGui::define_subsets( void )
    pb_define  ->setEnabled( false );
    pb_process ->setEnabled( true );
 
-   connect( picker, SIGNAL( cMouseUp( const QPointF& ) ),
-                    SLOT  ( cClick  ( const QPointF& ) ) );
+   connect( picker, &US_PlotPicker::cMouseUp,
+                    this, &US_ConvertGui::cClick );
 
    step = SPLIT;
 }
@@ -5351,8 +5523,8 @@ DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
 */
    plot_last_scans( centerpoint_ref_def );
 
-   connect( picker, SIGNAL( cMouseUp( const QPointF& ) ),
-                    SLOT  ( cClick  ( const QPointF& ) ) );
+   connect( picker, &US_PlotPicker::cMouseUp,
+                    this, &US_ConvertGui::cClick );
 
    reference_start = 0.0;
    reference_end   = 0.0;
@@ -6468,6 +6640,33 @@ void US_ConvertGui::cancel_reference( void )
 }
 
 // Drop selected triples
+// Record the name of a dropped triple / channel (reported at 3. IMPORT in
+// Reporter & Audit Trail)
+void US_ConvertGui::add_drop_item( const QString& dropType, const QString& item )
+{
+   if ( !drop_items[runType][dropType].contains( item ) )
+   {
+      drop_items[runType][dropType] << item;
+   }
+}
+
+//"2 / A / 280" -> "2A.280"
+QString US_ConvertGui::drop_triple_name( QString triple )
+{
+   QStringList parts = triple.split( "/" );
+   for ( int ii = 0; ii < parts.size(); ii++ )
+   {
+      parts[ii] = parts[ii].simplified();
+   }
+
+   if ( parts.size() >= 3 )
+   {
+      return parts[0] + parts[1] + "." + parts[2];
+   }
+
+   return triple.simplified();
+}
+
 void US_ConvertGui::drop_reference( void )
 {
   qDebug() << "runType -- " << runType;
@@ -6525,6 +6724,9 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 	    DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel tripleDesc" << ss << trx << selected[ss] <<  all_tripinfo[ trx ].tripleDesc;
          }
       }
+
+      QStringList chans_auto_dropped; // channels dropped because their
+                                      // representative triple was dropped
 
       //ALEXEY: If autoflow: - check if Mwl; if yes, check for all selected triples if it's a reference wvl for EDIT & 2DSA_FM & FITMEN...
       //        if yes, inform user that all channel will be selected for drop-out, confirm... 
@@ -6592,21 +6794,26 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 
 		  //Mark channel to be dropped - for exclusion of the report
 		  channels_to_drop[ QString( celchn ).replace(" / ","") ] = true;
-		  qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
-		  
-		  for ( int trx = 0; trx < all_triples.size(); trx++ )
-		    {  // Mark matching triples as excluded
-		      QString tcelchn = QString( all_triples[ trx ] )       // "2 / B"
-			.section( "/", 0, 1 ).simplified();
-		      
-		      if ( tcelchn == celchn )
-			{
-			  all_tripinfo[ trx ].excluded = true;
-			  DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
-			}
-		    }
-		}
-	    }
+        if ( !chans_auto_dropped.contains( celchn ) )
+        {
+           chans_auto_dropped << celchn;
+        }
+        qDebug() << "DROP Reference Wwl: Channel_cell for EXCLUSION -- " << celchn;
+
+        for ( int trx = 0; trx < all_triples.size(); trx++ )
+        {                                                // Mark matching triples as excluded
+           QString tcelchn = QString( all_triples[trx] ) // "2 / B"
+                                .section( "/", 0, 1 )
+                                .simplified();
+
+           if ( tcelchn == celchn )
+           {
+              all_tripinfo[trx].excluded = true;
+              DbgLv( 1 ) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
+           }
+        }
+      }
+       }
 	}
       //END of adiitional drop-out
 
@@ -6625,10 +6832,21 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
 		  drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	      **/
 	      drop_operations[ runType ][ "Triples" ] = t_comment;
-	    }
-	}
-          
-      
+
+         // names of dropped triples (and channels dropped along with their
+         // representative triple):
+         for ( int ss = 0; ss < selsiz; ss++ )
+         {
+            add_drop_item( "Triples", drop_triple_name( selected[ss] ) );
+         }
+         for ( int cc = 0; cc < chans_auto_dropped.size(); cc++ )
+         {
+            add_drop_item( "Channels", chans_auto_dropped[cc] );
+         }
+       }
+   }
+
+
       // Rebuild the output data controls
 DbgLv(1) << "DelTrip: bldout call";
       build_output_data();
@@ -6930,16 +7148,21 @@ void US_ConvertGui::drop_channel()
   if ( status != QMessageBox::Ok ) return;
 
    //identify all dropped channels
-   for (int ii = 0; ii < lw_triple->count(); ii++)
+  QStringList chans_dropped_now;
+  for ( int ii = 0; ii < lw_triple->count(); ii++ )
+  {
+     QString channel_cell = lw_triple->item( ii )->text().section( "/", 0, 1 ).simplified();
+     if ( channel_cell.contains( chann ) )
      {
-       QString channel_cell = lw_triple->item( ii )->text().section( "/", 0, 1 ).simplified();
-       if ( channel_cell.contains( chann ) )
-	 {
-	   channels_to_drop[ QString( channel_cell ).replace(" / ","") ] = true;
-	   qDebug() << "DROP All A's/B's: Channel_cell for EXCLUSION -- " << channel_cell;
-	 }
+        channels_to_drop[QString( channel_cell ).replace( " / ", "" )] = true;
+        if ( !chans_dropped_now.contains( channel_cell ) )
+        {
+           chans_dropped_now << channel_cell;
+        }
+        qDebug() << "DROP All A's/B's: Channel_cell for EXCLUSION -- " << channel_cell;
      }
-       
+  }
+
    for ( int trx = 0; trx < all_triples.size(); trx++ )
    {  // Mark matching triples as excluded
       QString tchan = QString( all_triples[ trx ] )
@@ -6966,7 +7189,12 @@ DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
 	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	   **/
 	   drop_operations[ runType ][ "Channels" ] = t_comment;
-	 }
+
+      for ( int cc = 0; cc < chans_dropped_now.size(); cc++ )
+      {
+         add_drop_item( "Channels", chans_dropped_now[cc] );
+      }
+    }
      }
    
      
@@ -7082,7 +7310,8 @@ DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
 	       drop_operations[run_type: RI|IP] [drop_type: triple(s) | channel(s) | selected_cahnnel ] = t_comment;
 	   **/
 	   drop_operations[ runType ][ "Selected Channel" ] = t_comment;
-	 }
+      add_drop_item( "Selected Channel", celchn );
+    }
      }
    
    
@@ -7218,6 +7447,21 @@ QMap< QString, QString> US_ConvertGui::read_autoflow_record( int autoflowID  )
 
 
 //Check if runID already saved into DB
+bool US_ConvertGui::runInDB_auto( void )
+{
+   ExpData.runID = le_runID->text();
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      return false;
+   }
+
+   return ( ExpData.checkRunID_auto( ExpData.invID, &db ) == US_DB2::OK );
+}
+
 bool US_ConvertGui::isSaved_auto( void )
 {
    bool isDataSaved = false;
@@ -8016,6 +8260,35 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importRI_Json.chop(1);
 	  importRI_Json += "}]";
 	}
+
+   // Names of the actually dropped triples / channels (recorded in
+   // drop_items):
+   if ( !drop_items[runType].isEmpty() )
+   {
+      importRI_Json += ", \"DroppedItems\": ";
+      importRI_Json += "[{";
+      QMap<QString, QStringList>::iterator di;
+      for ( di = drop_items[runType].begin(); di != drop_items[runType].end(); ++di )
+      {
+         importRI_Json += "\"" + di.key() + "\": \"" + di.value().join( ", " ) + "\",";
+      }
+      importRI_Json.chop( 1 );
+      importRI_Json += "}]";
+   }
+
+      //Now check if check_scans() found a mismatch between expected and
+      //collected scan counts for any triple in this run:
+      if ( !scan_difference_map[ runType ].isEmpty() )
+	{
+	  importRI_Json += ", \"ScanDifference\": ";
+	  importRI_Json += "[";
+	  foreach ( QString sd_line, scan_difference_map[ runType ] )
+	    {
+	      importRI_Json += "\"" + sd_line + "\",";
+	    }
+	  importRI_Json.chop(1);
+	  importRI_Json += "]";
+	}
       //////////////////////////////////////////////////////////////////////////////////
       
       importRI_Json += "}";
@@ -8077,6 +8350,35 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
 	  importIP_Json.chop(1);
 	  importIP_Json += "}]";
 	}
+
+   // Names of the actually dropped triples / channels (recorded in
+   // drop_items):
+   if ( !drop_items[runType].isEmpty() )
+   {
+      importIP_Json += ", \"DroppedItems\": ";
+      importIP_Json += "[{";
+      QMap<QString, QStringList>::iterator di;
+      for ( di = drop_items[runType].begin(); di != drop_items[runType].end(); ++di )
+      {
+         importIP_Json += "\"" + di.key() + "\": \"" + di.value().join( ", " ) + "\",";
+      }
+      importIP_Json.chop( 1 );
+      importIP_Json += "}]";
+   }
+
+      //Now check if check_scans() found a mismatch between expected and
+      //collected scan counts for any triple in this run:
+      if ( !scan_difference_map[ runType ].isEmpty() )
+	{
+	  importIP_Json += ", \"ScanDifference\": ";
+	  importIP_Json += "[";
+	  foreach ( QString sd_line, scan_difference_map[ runType ] )
+	    {
+	      importIP_Json += "\"" + sd_line + "\",";
+	    }
+	  importIP_Json.chop(1);
+	  importIP_Json += "]";
+	}
       //////////////////////////////////////////////////////////////////////////////////
 
       importIP_Json += "}";
@@ -8111,6 +8413,7 @@ void US_ConvertGui::record_import_status( bool auto_ref, QString runtype )
     }
 
   qDebug() << "in record_import_status: importRI_Json,importIP_Json -- " << importRI_Json << "\n" << importIP_Json;
+  
 } 
 
 
@@ -9150,6 +9453,12 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
 	QMap<QString, QString> leg_types = US_Convert::exploreLegacyData( currentDir );
 	if ( leg_types.isEmpty() )
 	{
+		QApplication::restoreOverrideCursor();
+		le_status->setText( tr( "No importable data found." ) );
+		QMessageBox::warning( this, tr( "Import Experimental Data" ),
+			tr( "No importable data files were found in\n%1\n\n"
+			    "Expected Beckman raw files (e.g. 000001.RA1), MWL data, "
+			    "or .auc files." ).arg( currentDir ) );
 		return false;
 	}
 	if ( leg_types.size() == 1 )
@@ -9185,7 +9494,14 @@ DbgLv(1) << "CGui:RD:  rdLegDat CALL";
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:RD:   rdLegDat RTN  lDsz" << legacyData.size();
 
-   if ( legacyData.size() == 0 ) return( false );
+   if ( legacyData.size() == 0 )
+   {
+      le_status->setText( tr( "No data could be read." ) );
+      QMessageBox::warning( this, tr( "Import Experimental Data" ),
+         tr( "Files were found, but no %1 data could be read from\n%2" )
+         .arg( runType ).arg( currentDir ) );
+      return( false );
+   }
 
    // if runType has changed, let's clear out xml data too
    if ( oldRunType != runType ) ExpData.clear();
@@ -9208,7 +9524,14 @@ DbgLv(1) << "CGui:CV: IN";
 DbgLv(1) << "CGui:CV: kadata katrip runType" << kadata << katrip << runType;
    QApplication::restoreOverrideCursor();
 
-   if ( kadata == 0 ) return( false );
+   if ( kadata == 0 )
+   {
+      le_status->setText( tr( "No data could be converted." ) );
+      QMessageBox::warning( this, tr( "Import Experimental Data" ),
+         tr( "The data read from\n%1\ncould not be converted." )
+         .arg( currentDir ) );
+      return( false );
+   }
 
    le_description->setText( allData[ 0 ].description );
    saveDescription = QString( allData[ 0 ].description );
@@ -9594,8 +9917,8 @@ DbgLv(1) << "lStChg: LAMBDA_STR_CHANGE: index_lambstrt " << index_lambstrt;
 
        cb_lambstrt->disconnect();
        cb_lambstrt->setCurrentIndex( index_lambstrt );
-       connect( cb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
-       		this,         SLOT  ( lambdaStartChanged ( int    ) ) );
+       connect( cb_lambstrt,  qOverload< int >( &QComboBox::currentIndexChanged ),
+       		this,         &US_ConvertGui::lambdaStartChanged );
     
    }
    
@@ -9648,8 +9971,8 @@ DbgLv(1) << "lEnChg: LAMBDA_STOP_CHANGE:  index_lambstop " << index_lambstop;
 
        cb_lambstop->disconnect();
        cb_lambstop->setCurrentIndex( index_lambstop );
-       connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
-       		this,         SLOT  ( lambdaEndChanged ( int    ) ) );
+       connect( cb_lambstop,  qOverload< int >( &QComboBox::currentIndexChanged ),
+       		this,         &US_ConvertGui::lambdaEndChanged );
    }
 
    int currChan  = out_chaninfo[ tripListx ].channelID;
@@ -9783,16 +10106,16 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 {
    if ( connect_on )
    {
-      connect( cb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
-               this,         SLOT  ( lambdaStartChanged ( int    ) ) );
-      connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
-               this,         SLOT  ( lambdaEndChanged   ( int    ) ) );
-      connect( cb_lambplot,  SIGNAL( currentIndexChanged( int    ) ),
-               this,         SLOT  ( lambdaPlotChanged  ( int    ) ) );
-      connect( pb_lambprev,  SIGNAL( clicked            (        ) ),
-               this,         SLOT  ( lambdaPrevClicked  (        ) ) );
-      connect( pb_lambnext,  SIGNAL( clicked            (        ) ),
-               this,         SLOT  ( lambdaNextClicked  (        ) ) );
+      connect( cb_lambstrt,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_ConvertGui::lambdaStartChanged );
+      connect( cb_lambstop,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_ConvertGui::lambdaEndChanged );
+      connect( cb_lambplot,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_ConvertGui::lambdaPlotChanged );
+      connect( pb_lambprev,  &QAbstractButton::clicked,
+               this,         &US_ConvertGui::lambdaPrevClicked );
+      connect( pb_lambnext,  &QAbstractButton::clicked,
+               this,         &US_ConvertGui::lambdaNextClicked );
    }
 
    else
@@ -10353,8 +10676,8 @@ void US_ConvertGui::connectTolerance( bool setConnect )
 {
    if ( setConnect )
    {
-      connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
-                               SLOT  ( toleranceValueChanged( double ) ) );
+      connect( ct_tolerance,   &QwtCounter::valueChanged,
+                               this, &US_ConvertGui::toleranceValueChanged );
    }
    else
    {

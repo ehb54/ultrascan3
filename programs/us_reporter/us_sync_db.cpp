@@ -35,7 +35,7 @@ US_SyncWithDB::US_SyncWithDB() : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
 
    int invlev = US_Settings::us_inv_level();
    pb_invest->setEnabled( invlev > 0 );
-   connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
+   connect( pb_invest, &QAbstractButton::clicked, this, &US_SyncWithDB::get_person );
    top->addWidget( pb_invest, row, 0 );
 
    QString name = ( invlev > 0 )
@@ -66,9 +66,9 @@ US_SyncWithDB::US_SyncWithDB() : US_WidgetsDialog( nullptr, Qt::WindowFlags() )
    QPushButton* pb_accept  = us_pushbutton( tr( "Download" ) );
    QPushButton* pb_newonly = us_pushbutton( tr( "New Only" ) );
 
-   connect( pb_cancel,  SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_accept,  SIGNAL( clicked() ), SLOT( accepted()  ) );
-   connect( pb_newonly, SIGNAL( clicked() ), SLOT( downnew()   ) );
+   connect( pb_cancel,  &QAbstractButton::clicked, this, &US_SyncWithDB::cancelled );
+   connect( pb_accept,  &QAbstractButton::clicked, this, &US_SyncWithDB::accepted );
+   connect( pb_newonly, &QAbstractButton::clicked, this, &US_SyncWithDB::downnew );
 
    buttons->addWidget( pb_cancel  );
    buttons->addWidget( pb_accept  );

@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
@@ -148,35 +149,6 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight1);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
@@ -201,7 +173,6 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -239,7 +210,7 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -359,46 +330,6 @@ void US_Hydrodyn_Cluster_Results::purge()
 
       lv_files->setEnabled( false );
 
-#if QT_VERSION < 0x040000
-      QTreeWidgetItem *lvi = lv_files->firstChild();
-      if ( lvi )
-      {
-         do {
-            // purge
-            if ( lvi->isSelected() )
-            {
-               if ( !QFile::remove( lvi->text( 0 ) ) )
-               {
-                  editor_msg( "red", QString( us_tr( "Error: can not remove %1" ) ).arg( lvi->text( 0 ) ) );
-               } else {
-                  editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
-               }
-               QString qs = lvi->text( 0 );
-               qs.replace( QRegExp( "_out.t..$" ), "" );
-               QStringList qscheck;
-               qscheck 
-                  <<  qs + ".tar"
-                  <<  qs + ".tgz"
-                  <<  qs + ".TAR"
-                  <<  qs + ".TGZ"
-                  ;
-                  
-               for ( int i = 0; i < (int) qscheck.size(); ++i )
-               {
-                  if ( QFile::exists( qscheck[ i ] ) )
-                  {
-                     if ( !QFile::remove( qscheck[ i ] ) )
-                     {
-                        editor_msg( "red", QString( us_tr( "Error: can not remove %1" ) ).arg( qscheck[ i ] ) );
-                     } else {
-                        editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( qscheck[ i ] ) );
-                     }
-                  }
-               }
-            }
-         } while ( ( lvi = lvi->nextSibling() ) );
-      }
-#else
       QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
       QTreeWidgetItem *lvi;
       while ( *it ) {
@@ -411,7 +342,7 @@ void US_Hydrodyn_Cluster_Results::purge()
             editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
          }
          QString qs = lvi->text( 0 );
-         qs.replace( QRegExp( "_out.t..$" ), "" );
+         qs.replace( QRegularExpression( QStringLiteral( "_out.t..$" ) ), "" );
          QStringList qscheck;
          qscheck 
             <<  qs + ".tar"
@@ -434,7 +365,6 @@ void US_Hydrodyn_Cluster_Results::purge()
          }
          ++it;
       }
-#endif      
 
       editor_msg( "black", us_tr( "purge complete" ) );
       if ( !update_files() )
@@ -520,23 +450,6 @@ void US_Hydrodyn_Cluster_Results::load_results()
    }
 
    lv_files->setEnabled( false );
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            if ( !load_one_result( lvi->text( 0 ) ) )
-            {
-               editor_msg( "red", errormsg );
-               lv_files->setEnabled( true );
-               return;
-            }
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-#else
    QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
    while ( *it ) {
       if ( !load_one_result( (*it)->text( 0 ) ) )
@@ -547,7 +460,6 @@ void US_Hydrodyn_Cluster_Results::load_results()
       }
       ++it;
    }
-#endif
    
    purge();
 
@@ -592,10 +504,10 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    }
 
    // ungzip if needed
-   if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+   if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
    {
       QString dest = file;
-      dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+      dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
       QDir qd;
       qd.remove( dest );
       if ( !qd.rename( file, dest ) )
@@ -615,11 +527,11 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
       }
       file = usg.last_written_name;
 
-      if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+      if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
       {
          // rename it to .tar (?) probably some error in us_gzip internal name storage
          dest = file;
-         dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar" );
+         dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar" );
          if ( !qd.rename( file, dest ) )
          {
             errormsg = QString( us_tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
@@ -631,7 +543,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    // file should be .tar now
 
-   if ( !file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+   if ( !file.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
    {
       errormsg = QString( us_tr( "Error: file %1 is not .tar" ) ).arg( file );
       return false;
@@ -692,7 +604,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
    {
-      if ( tar_list[ i ].contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
+      if ( tar_list[ i ].contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ|tar|TAR)$" ) ) ) )
       {
          // further extraction needed
          further_extraction << tar_list[ i ];
@@ -715,10 +627,10 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          }
 
          // ungzip if needed
-         if ( file.contains( QRegExp( "\\.(tgz|TGZ)$" ) ) )
+         if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ) ) )
          {
             QString dest = file;
-            dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar.gz" );
+            dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar.gz" );
             QDir qd;
             qd.remove( dest );
             if ( !qd.rename( file, dest ) )
@@ -739,10 +651,10 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
             file = usg.last_written_name;
             // this is a problem with gunzip, as far as I can tell
             // it is giving the file a wrong name
-            if ( file.contains( QRegExp( "\\.(tgz|TGZ)" ) ) )
+            if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)" ) ) ) )
             {
                QString dest = file;
-               dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar" );
+               dest.replace( QRegularExpression( QStringLiteral( "\\.(tgz|TGZ)$" ) ), ".tar" );
                QDir qd;
                qd.remove( dest );
                if ( !qd.rename( file, dest ) )
@@ -757,7 +669,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
          // file should be .tar now
          
-         if ( !file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+         if ( !file.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
          {
             errormsg = QString( us_tr( "Error: file %1 is not .tar" ) ).arg( file );
             return false;
@@ -830,7 +742,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
 bool US_Hydrodyn_Cluster_Results::merge_csvs( QStringList &final_results )
 {
-   QStringList csvs = final_results.filter( QRegExp( "\\.(csv|CSV)$" ) );
+   QStringList csvs = final_results.filter( QRegularExpression( QStringLiteral( "\\.(csv|CSV)$" ) ) );
    if ( !csvs.size() )
    {
       // no csvs
@@ -942,7 +854,7 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
 bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList final_results )
 {
    QString output_dir = results_dir + SLASH + QString( "%1" )
-      .arg( jobname ).replace( QRegExp( "_(out|OUT).*$" ), "" );
+      .arg( jobname ).replace( QRegularExpression( QStringLiteral( "_(out|OUT).*$" ) ), "" );
    QDir qd( output_dir );
    bool overwrite = false;
    if ( qd.exists() )
@@ -1070,20 +982,12 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
       lv_files->clear( );
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
-#if QT_VERSION < 0x040000
-         new QTreeWidgetItem( lv_files, 
-                            files[ i ], 
-                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() ),
-                            QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
-                            );
-#else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
                                                         << QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() )
                                                         << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                                                         ) );
-#endif
       }
    }
 

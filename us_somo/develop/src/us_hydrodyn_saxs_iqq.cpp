@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_saxs_util.h"
@@ -130,7 +131,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -188,6 +189,14 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 1) atom_map missing for hybrid_name "
@@ -291,7 +300,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( !compute_scale_excl_vol() )
    {
@@ -341,7 +350,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -401,6 +410,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 2) atom_map missing for hybrid_name "
@@ -433,9 +450,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+            if ( count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
             
@@ -761,7 +779,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          pb_pr_contrib->setEnabled(false);
          if ( cb_pr_contrib->isChecked() &&
               !source &&
-              contrib_file.contains(QRegExp("(PDB|pdb)$")) )
+              contrib_file.contains(QRegularExpression( QStringLiteral( "(PDB|pdb)$" ) )) )
          {
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < as1; i++ )
@@ -1242,21 +1260,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#if QT_VERSION < 0x040000
-      long Iq = plot_saxs->insertCurve( plot_name );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-#endif
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#if QT_VERSION < 0x040000
-      plotted_Iq.push_back(Iq);
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
       plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
       plotted_q.push_back(q);
       {
          vector < double > q2(q.size());
@@ -1291,15 +1300,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
       }
 
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
-                              q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
       curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -1309,7 +1309,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
       //      for ( unsigned int i = 0; i < q.size(); i++ )
       //      {
       //         cout << QString("plotted_q[%1][%2] = %3  plotted_I[%4]I[%5] = %6\n")
@@ -1469,7 +1468,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options->iqq_use_atomic_ff )
    {
@@ -1527,7 +1526,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -1587,6 +1586,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 3) atom_map missing for hybrid_name "
@@ -1685,10 +1692,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
 
@@ -2320,21 +2328,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#if QT_VERSION < 0x040000
-      long Iq = plot_saxs->insertCurve( plot_name );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-#endif
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#if QT_VERSION < 0x040000
-      plotted_Iq.push_back(Iq);
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
       plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
       plotted_q.push_back(q);
       {
          vector < double > q2(q.size());
@@ -2364,15 +2363,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          }
       }
 
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
-                              q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
       curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -2382,7 +2372,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
       cb_user_range->setChecked(false);
       cb_guinier->setChecked(true);
       rescale_plot();
@@ -2526,7 +2515,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
    pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( !compute_scale_excl_vol() )
    {
@@ -2575,7 +2564,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -2635,6 +2624,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
 
             QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+            // derive an entry for an unseen atom name rather than dropping the atom
+            {
+               QString how;
+               if ( US_Hydrodyn::ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                    && !how.isEmpty() ) {
+                  editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+               }
+            }
             if ( !atom_map.count(this_atom_name + "~" + hybrid_name) )
             {
                cout << "error: (saxs_iqq 4) atom_map missing for hybrid_name "
@@ -2702,9 +2699,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
+            if ( count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
             // cout << QString("in %1 hydrogens %2\n").arg( hybrid_name ).arg( new_atom.hydrogens );
 
@@ -3344,21 +3342,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#if QT_VERSION < 0x040000
-      long Iq = plot_saxs->insertCurve( plot_name );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
-#endif
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#if QT_VERSION < 0x040000
-      plotted_Iq.push_back(Iq);
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-#else
       plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
       plotted_q.push_back(q);
       {
          vector < double > q2(q.size());
@@ -3388,15 +3377,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          }
       }
 
-#if QT_VERSION < 0x040000
-      plot_saxs->setCurveData(Iq, 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : (double *)&(plotted_I[p][0]),
-                              q_points );
-      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
       curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -3406,7 +3386,6 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                      );
       curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
       curve->attach( plot_saxs );
-#endif
       cb_user_range->setChecked(false);
       cb_guinier->setChecked(true);
       rescale_plot();
@@ -3535,7 +3514,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 void US_Hydrodyn_Saxs::set_scaling_target( QString &scaling_target )
 {
    if ( !our_saxs_options->iqq_default_scaling_target.isEmpty() &&
-        qsl_plotted_iq_names.filter(QRegExp(QString("^%1$").arg(our_saxs_options->iqq_default_scaling_target))).size() )
+        qsl_plotted_iq_names.filter(QRegularExpression(QString("^%1$").arg(our_saxs_options->iqq_default_scaling_target))).size() )
    {
       scaling_target = our_saxs_options->iqq_default_scaling_target;
    } else {
@@ -3784,8 +3763,8 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
    
    unsigned int line = 0;
 
-   QRegExp rx_blank  ( "^\\s*$" );
-   QRegExp rx_comment( "#.*$" );
+   QRegularExpression rx_blank  ( "^\\s*$" );
+   QRegularExpression rx_comment( "#.*$" );
 
    while ( !ts.atEnd() )
    {
@@ -3798,7 +3777,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -3874,7 +3853,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {

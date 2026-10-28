@@ -41,7 +41,7 @@ US_Intensity::US_Intensity(
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    pb_close->setFixedWidth( 100 );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    buttons->insertStretch( 0, 10 );
 	QLabel* lbl_average = us_label( tr( "Average Intensity (counts):" ), -1 );
 	buttons->addWidget( lbl_average );

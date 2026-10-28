@@ -45,16 +45,14 @@ void US_AbstractRotorGui::setupGui( int select_db_disk )
    top->addWidget( lbl_bannerDB, row++, 0, 1, 2 );
 
    disk_controls = new US_Disk_DB_Controls( select_db_disk );
-   connect( disk_controls, SIGNAL( changed       ( bool ) ),
-                           SLOT  ( source_changed( bool ) ) );
+   connect( disk_controls, &US_Disk_DB_Controls::changed, this, &US_AbstractRotorGui::source_changed );
    top->addLayout( disk_controls, row++, 0, 1, 2 );
 
 
    QLabel* lbl_lab = us_label( tr( " Please select a Rotor Type: " ) );
    top->addWidget( lbl_lab, row, 0, 1, 1 );
    cb_rotors = us_comboBox();
-   connect( cb_rotors, SIGNAL( activated ( int ) ),      // Only if the user has changed it
-                       SLOT  ( showDetails( int ) ) );
+   connect( cb_rotors, qOverload<int>(&QComboBox::activated), this, &US_AbstractRotorGui::showDetails); // Only if the user has changed it
    top->addWidget( cb_rotors, row++, 1, 1, 1 );
 
    if(!loadAbstractRotors())
@@ -86,19 +84,19 @@ void US_AbstractRotorGui::setupGui( int select_db_disk )
    top->addWidget( le_serialNumber, row++, 1);
 
    pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked, this, &US_AbstractRotorGui::help );
    top->addWidget( pb_help, row, 0 );
 
    pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked, this, &US_AbstractRotorGui::reset );
    top->addWidget( pb_reset, row++, 1 );
 
    pb_close = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_close, SIGNAL( clicked() ), this, SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    top->addWidget( pb_close, row, 0 );
 
    pb_accept = us_pushbutton( tr( "Add Rotor" ) );
-   connect( pb_accept, SIGNAL( clicked() ), this, SLOT( select() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_AbstractRotorGui::select );
    top->addWidget( pb_accept, row, 1 );
 }
 

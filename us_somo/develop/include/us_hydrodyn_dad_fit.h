@@ -34,9 +34,6 @@
 using namespace std;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 
@@ -199,6 +196,7 @@ class US_EXTERN US_Hydrodyn_Dad_Fit : public QDialog
       bool          max_free_peak_delta( vector < double > & par );
 
       double        dad_ampl_width_min;
+      double        dad_ampl_min;
       bool          dad_lock_min_retry;
       double        dad_lock_min_retry_mult;
       bool          dad_maxfpk_restart;
@@ -257,9 +255,6 @@ namespace DFIT
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

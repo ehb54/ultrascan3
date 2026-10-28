@@ -43,8 +43,8 @@ DbgLv(1) << " THRWRK:" << thrn << "model-0 s k" << model.components[0].s*1.e13
    {
       US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
    
-      connect( astfem_rsa, SIGNAL( current_component( int ) ),
-               this,       SLOT(   forward_progress ( int ) ) );
+      connect( astfem_rsa, &US_Astfem_RSA::current_component,
+               this,       &ThreadWorker::forward_progress );
 
 qint64 stim=QDateTime::currentDateTime().toMSecsSinceEpoch();
 DbgLv(1) << " THRWRK:" << thrn << "calc START" << stim;
@@ -57,8 +57,8 @@ DbgLv(1) << " THRWRK:" << thrn << "calc    END" << etim;
    {
       US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
 
-      connect( astfvm,     SIGNAL( comp_progress   ( int ) ),
-               this,       SLOT  ( forward_progress( int ) ) );
+      connect( astfvm,     &US_LammAstfvm::comp_progress,
+               this,       &ThreadWorker::forward_progress );
 
       astfvm->set_buffer( buffer );
       astfvm->calculate( simdat );

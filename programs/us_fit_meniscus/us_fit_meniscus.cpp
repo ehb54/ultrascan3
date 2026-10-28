@@ -56,8 +56,8 @@ DbgLv(1) << "Main: AA";
  
    te_data = new US_Editor( US_Editor::LOAD, false,
          "results/*.dat;;*.fitmen.dat;;*.fitbot.dat;;*.*" );
-   connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
-                     SLOT  ( file_loaded(           QString ) ) );
+   connect( te_data, &US_Editor::US_EditorLoadComplete, 
+                     this, &US_FitMeniscus::file_loaded );
 
    te_data->edMenuBar->hide();
    
@@ -79,7 +79,7 @@ DbgLv(1) << "Main: AA";
          tr( "2DSA Meniscus,Bottom RMSD" ) );
    
 DbgLv(1) << "Main: BB";
-   QwtPlotPicker* pick = new US_PlotPicker( meniscus_plot );
+   US_PlotPicker* pick = new US_PlotPicker( meniscus_plot );
    QwtPlotGrid*   grid = us_grid( meniscus_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
    //connect( pick, SIGNAL( moved    ( const QPointF& ) ),
@@ -88,14 +88,15 @@ DbgLv(1) << "Main: BB";
    //Mouse controls
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
                           Qt::LeftButton, Qt::ControlModifier );
-   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                  SLOT  ( mouse   ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseUp,
+                  this, &US_FitMeniscus::mouse );
    
    grid->attach( meniscus_plot );
    
    meniscus_plot->setMinimumSize( 400, 400 );
    meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
    meniscus_plot->setToolTip( tr( "Fitted meniscus,rmsd plot" ) );
+   meniscus_plot->setAccessibleName( tr( "Meniscus RMSD Plot" ) );
 
    rightLayout->addLayout( plot, 0, 1, 20, 1 );
 
@@ -103,15 +104,18 @@ DbgLv(1) << "Main: BB";
    QLabel* lb_status    = us_label( tr( "Status:"    ) );
    
    le_status    = us_lineedit( tr( "No data loaded" ), -1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    le_status->setToolTip(
          tr( "Results of the last action performed" ) );
 
    lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    ct_zfloor     = us_counter( 1, 50.0, 150.0, 1.0 );
+   ct_zfloor->setAccessibleName( tr( "Z Visibility Percent" ) );
    ct_zfloor->setSingleStep( 1 );
    ct_zfloor->setValue( 100.0 );
-   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
-            this,      SLOT  ( plot_data()            ) );
+   connect( ct_zfloor, &QwtCounter::valueChanged,
+            this,      qOverload<>( &US_FitMeniscus::plot_data ) );
 
 
    lb_order     = us_label( tr( "Fit Order:" ) );
@@ -128,20 +132,26 @@ DbgLv(1) << "Main: BB";
    sb_order->setValue( 2 );
    sb_order->setPalette( US_GuiSettings::editColor() );
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
+   sb_order->setAccessibleName( tr( "Fit Order" ) );
 
    le_men_lor   = us_lineedit( "", -1, true );
+   le_men_lor->setAccessibleName( tr( "Low-RMSD Meniscus" ) );
    le_men_lor->setToolTip(
          tr( "Selected-minimum meniscus radius value" ) );
    le_bot_lor   = us_lineedit( "", -1, true );
+   le_bot_lor->setAccessibleName( tr( "Low-RMSD Bottom" ) );
    le_bot_lor->setToolTip(
          tr( "Selected-minimum bottom radius value" ) );
    le_men_fit   = us_lineedit( "", -1, false );
+   le_men_fit->setAccessibleName( tr( "Fit Meniscus" ) );
    le_men_fit->setToolTip(
          tr( "Fit/Editable meniscus radius value" ) );
    le_bot_fit   = us_lineedit( "", -1, false );
+   le_bot_fit->setAccessibleName( tr( "Fit Bottom" ) );
    le_bot_fit->setToolTip(
          tr( "Fit/Editable bottom radius value" ) );
    le_mprads    = us_lineedit( "", -1, false );
+   le_mprads->setAccessibleName( tr( "Mid-Point Radii" ) );
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
@@ -149,50 +159,54 @@ DbgLv(1) << "Main: BB";
    if ( auto_mode )
    {
       le_men_sel   = us_lineedit( "", -1, true );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected meniscus radius value" ) );
    }
    else
    {
       le_men_sel   = us_lineedit( "", -1, false );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected/Editable meniscus radius value" ) );
    }
    
    le_rms_error = us_lineedit( "", -1, true );
+   le_rms_error->setAccessibleName( tr( "RMS Error" ) );
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 
-   connect( sb_order, SIGNAL( valueChanged( int ) ),
-            this,     SLOT( plot_data( int ) ) );
+   connect( sb_order, qOverload< int >( &QSpinBox::valueChanged ),
+            this,     qOverload< int >( &US_FitMeniscus::plot_data ) );
 
    dkdb_cntrls            = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   connect( dkdb_cntrls, SIGNAL( changed( bool )        ),
-            this,        SLOT(   update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_FitMeniscus::update_disk_db );
 
    pb_update = us_pushbutton( tr( "Update Edit" ) );
-   connect( pb_update, SIGNAL( clicked() ),
-            this,      SLOT( edit_update() ) );
+   connect( pb_update, &QAbstractButton::clicked,
+            this,      &US_FitMeniscus::edit_update );
    pb_update->setEnabled( false );
    pb_update->setToolTip(
          tr( "Update edit record with meniscus; remove non-chosen models" ) );
 
    pb_scandb = us_pushbutton( tr( "Scan Database" ) );
-   connect( pb_scandb, SIGNAL( clicked() ),
-            this,      SLOT( scan_dbase() ) );
+   connect( pb_scandb, &QAbstractButton::clicked,
+            this,      &US_FitMeniscus::scan_dbase );
    pb_scandb->setEnabled( dkdb_cntrls->db() );
    pb_scandb->setToolTip(
          tr( "Scan fit-meniscus models in DB; create local table files" ) );
 
    QPushButton*
    pb_invest    = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_invest, SIGNAL( clicked() ),
-            this,      SLOT(   sel_investigator() ) );
+   connect( pb_invest, &QAbstractButton::clicked,
+            this,      &US_FitMeniscus::sel_investigator );
    QString
       inv_name  = QString::number( US_Settings::us_inv_ID() )
                   + ": " + US_Settings::us_inv_name();
    le_invest    = us_lineedit( inv_name, -1, true );
+   le_invest->setAccessibleName( tr( "Investigator" ) );
 
    //us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
    us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  false );
@@ -206,26 +220,26 @@ DbgLv(1) << "Main: BB";
              " the current cell/channel" ) );
 
    pb_plot   = us_pushbutton( tr( "Plot" ) );
-   connect( pb_plot, SIGNAL( clicked() ),
-            this,    SLOT( plot_data() ) );
+   connect( pb_plot, &QAbstractButton::clicked,
+            this,    qOverload<>( &US_FitMeniscus::plot_data ) );
    pb_plot->setToolTip(
          tr( "Plot,analyze meniscus,rmsd from current text" ) );
 
    pb_reset  = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ),
-            this,     SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked,
+            this,     &US_FitMeniscus::reset );
    pb_reset->setToolTip(
          tr( "Clear text,plot and various other controls" ) );
 
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ),
-            this,    SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked,
+            this,    &US_FitMeniscus::help );
    pb_help->setToolTip(
          tr( "Open a dialog with detailed documentation" ) );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ),
-            this,      SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked,
+            this,      &QWidget::close );
    pb_accept->setToolTip(
          tr( "Close this dialog and exit the program" ) );
 
@@ -353,8 +367,8 @@ DbgLv(1) << "Main: AA";
 //         "results/*-fm*.fit*dat;;*.dat;;*.*" );
    te_data = new US_Editor( US_Editor::LOAD, false,
          "results/*.dat;;*.fitmen.dat;;*.fitbot.dat;;*.*" );
-   connect( te_data, SIGNAL( US_EditorLoadComplete( QString ) ), 
-                     SLOT  ( file_loaded(           QString ) ) );
+   connect( te_data, &US_Editor::US_EditorLoadComplete, 
+                     this, &US_FitMeniscus::file_loaded );
    
    QFontMetrics fm( te_data->e->font() ); 
 
@@ -374,7 +388,7 @@ DbgLv(1) << "Main: AA";
          tr( "2DSA Meniscus,Bottom RMSD" ) );
    
 DbgLv(1) << "Main: BB";
-   QwtPlotPicker* pick = new US_PlotPicker( meniscus_plot );
+   US_PlotPicker* pick = new US_PlotPicker( meniscus_plot );
    QwtPlotGrid*   grid = us_grid( meniscus_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
    //connect( pick, SIGNAL( moved    ( const QPointF& ) ),
@@ -383,8 +397,8 @@ DbgLv(1) << "Main: BB";
    //Mouse controls
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
                           Qt::LeftButton, Qt::ControlModifier );
-   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-                  SLOT  ( mouse   ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseUp,
+                  this, &US_FitMeniscus::mouse );
    
    
    grid->attach( meniscus_plot );
@@ -392,6 +406,7 @@ DbgLv(1) << "Main: BB";
    meniscus_plot->setMinimumSize( 400, 400 );
    meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
    meniscus_plot->setToolTip( tr( "Fitted meniscus,rmsd plot" ) );
+   meniscus_plot->setAccessibleName( tr( "Meniscus RMSD Plot" ) );
 
    rightLayout->addLayout( plot, 0, 1, 20, 1 );
 
@@ -399,15 +414,18 @@ DbgLv(1) << "Main: BB";
    QLabel* lb_status    = us_label( tr( "Status:"    ) );
    
    le_status    = us_lineedit( tr( "No data loaded" ), -1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    le_status->setToolTip(
          tr( "Results of the last action performed" ) );
 
    lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    ct_zfloor     = us_counter( 1, 50.0, 150.0, 1.0 );
+   ct_zfloor->setAccessibleName( tr( "Z Visibility Percent" ) );
    ct_zfloor->setSingleStep( 1 );
    ct_zfloor->setValue( 100.0 );
-   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
-            this,      SLOT  ( plot_data()            ) );
+   connect( ct_zfloor, &QwtCounter::valueChanged,
+            this,      qOverload<>( &US_FitMeniscus::plot_data ) );
 
 
    lb_order     = us_label( tr( "Fit Order:" ) );
@@ -424,70 +442,80 @@ DbgLv(1) << "Main: BB";
    sb_order->setValue( 2 );
    sb_order->setPalette( US_GuiSettings::editColor() );
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
+   sb_order->setAccessibleName( tr( "Fit Order" ) );
 
    le_men_lor   = us_lineedit( "", -1, false );
+   le_men_lor->setAccessibleName( tr( "Low-RMSD Meniscus" ) );
    le_men_lor->setToolTip(
          tr( "Selected-minimum meniscus radius value" ) );
    le_bot_lor   = us_lineedit( "", -1, false );
+   le_bot_lor->setAccessibleName( tr( "Low-RMSD Bottom" ) );
    le_bot_lor->setToolTip(
          tr( "Selected-minimum bottom radius value" ) );
    le_men_fit   = us_lineedit( "", -1, false );
+   le_men_fit->setAccessibleName( tr( "Fit Meniscus" ) );
    le_men_fit->setToolTip(
          tr( "Fit/Editable meniscus radius value" ) );
    le_bot_fit   = us_lineedit( "", -1, false );
+   le_bot_fit->setAccessibleName( tr( "Fit Bottom" ) );
    le_bot_fit->setToolTip(
          tr( "Fit/Editable bottom radius value" ) );
    le_mprads    = us_lineedit( "", -1, false );
+   le_mprads->setAccessibleName( tr( "Mid-Point Radii" ) );
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
    if ( auto_mode )
    {
       le_men_sel   = us_lineedit( "", -1, true );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected meniscus radius value" ) );
    }
    else
    {
       le_men_sel   = us_lineedit( "", -1, false );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected/Editable meniscus radius value" ) );
    }
    
    le_rms_error = us_lineedit( "", -1, true );
+   le_rms_error->setAccessibleName( tr( "RMS Error" ) );
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 
-   connect( sb_order, SIGNAL( valueChanged( int ) ),
-            this,     SLOT( plot_data( int ) ) );
+   connect( sb_order, qOverload< int >( &QSpinBox::valueChanged ),
+            this,     qOverload< int >( &US_FitMeniscus::plot_data ) );
 
    dkdb_cntrls            = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
-   connect( dkdb_cntrls, SIGNAL( changed( bool )        ),
-            this,        SLOT(   update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_FitMeniscus::update_disk_db );
 
    pb_update = us_pushbutton( tr( "Update Edit" ) );
-   connect( pb_update, SIGNAL( clicked() ),
-            this,      SLOT( edit_update() ) );
+   connect( pb_update, &QAbstractButton::clicked,
+            this,      &US_FitMeniscus::edit_update );
    pb_update->setEnabled( false );
    pb_update->setToolTip(
          tr( "Update edit record with meniscus; remove non-chosen models" ) );
 
    pb_scandb = us_pushbutton( tr( "Scan Database" ) );
-   connect( pb_scandb, SIGNAL( clicked() ),
-            this,      SLOT( scan_dbase() ) );
+   connect( pb_scandb, &QAbstractButton::clicked,
+            this,      &US_FitMeniscus::scan_dbase );
    pb_scandb->setEnabled( dkdb_cntrls->db() );
    pb_scandb->setToolTip(
          tr( "Scan fit-meniscus models in DB; create local table files" ) );
 
    QPushButton*
    pb_invest    = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_invest, SIGNAL( clicked() ),
-            this,      SLOT(   sel_investigator() ) );
+   connect( pb_invest, &QAbstractButton::clicked,
+            this,      &US_FitMeniscus::sel_investigator );
    QString
       inv_name  = QString::number( US_Settings::us_inv_ID() )
                   + ": " + US_Settings::us_inv_name();
    le_invest    = us_lineedit( inv_name, -1, true );
+   le_invest->setAccessibleName( tr( "Investigator" ) );
 
    us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
    us_checkbox( tr( "Apply to All Wavelengths" ), ck_applymwl, true );
@@ -499,26 +527,26 @@ DbgLv(1) << "Main: BB";
              " the current cell/channel" ) );
 
    pb_plot   = us_pushbutton( tr( "Plot" ) );
-   connect( pb_plot, SIGNAL( clicked() ),
-            this,    SLOT( plot_data() ) );
+   connect( pb_plot, &QAbstractButton::clicked,
+            this,    qOverload<>( &US_FitMeniscus::plot_data ) );
    pb_plot->setToolTip(
          tr( "Plot,analyze meniscus,rmsd from current text" ) );
 
    pb_reset  = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ),
-            this,     SLOT( reset() ) );
+   connect( pb_reset, &QAbstractButton::clicked,
+            this,     &US_FitMeniscus::reset );
    pb_reset->setToolTip(
          tr( "Clear text,plot and various other controls" ) );
 
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ),
-            this,    SLOT( help() ) );
+   connect( pb_help, &QAbstractButton::clicked,
+            this,    &US_FitMeniscus::help );
    pb_help->setToolTip(
          tr( "Open a dialog with detailed documentation" ) );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ),
-            this,      SLOT( close() ) );
+   connect( pb_accept, &QAbstractButton::clicked,
+            this,      &QWidget::close );
    pb_accept->setToolTip(
          tr( "Close this dialog and exit the program" ) );
 
@@ -4133,8 +4161,8 @@ void US_FitMeniscus::sel_investigator( void )
    int personID  = US_Settings::us_inv_ID();
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
-   connect( inv_dialog, SIGNAL( investigator_accepted( int ) ),
-            this,       SLOT  ( assign_investigator  ( int ) ) );
+   connect( inv_dialog, &US_Investigator::investigator_accepted,
+            this,       &US_FitMeniscus::assign_investigator );
 
    inv_dialog->exec();
 }

@@ -50,6 +50,15 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       bool usmode;
       bool us_import_ssf_abde;
       void import_ssf_data_auto  ( QMap < QString, QString > & ) ;
+      //! true only if the last import_ssf_data_auto() call ended with the run's
+      //! data confirmed present in the DB (already saved, or saved just now)
+      bool                    import_ssf_succeeded( void ) const
+      {
+         return import_ssf_ok;
+      }
+      bool import_ssf_ok = false;
+      //! true if this run's ID exists in the DB (does NOT depend on saveStatus)
+      bool runInDB_auto( void );
       void download_data_auto ( QMap < QString, QString > & ) ;
       bool copyDirectory(const QString &, const QString &);
 
@@ -372,10 +381,21 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       QMap < QString, QString > channels_report;
       QMap < QString, QStringList >    triples_dropped_from_channel;
   QMap < QString, QMap <QString, QString> > drop_operations;
+  // Names of actually dropped items: drop_items[ runType ][ "Triples" |
+  // "Channels" | "Selected Channel" ] = list
+  QMap<QString, QMap<QString, QStringList>> drop_items;
+  void                                      add_drop_item( const QString&, const QString& );
+  QString                                   drop_triple_name( QString );
+  QMap<QString, QStringList> scan_difference_map;
   //ABDE
   QMap < QString, int >  channels_abde_refs;
   QMap < QString, int >  channels_abde_use_refs;					   
 							   
+
+  public slots:
+      //void import_data_auto  (QString &, QString &, QString &, QString &);
+      void import_data_auto  ( QMap < QString, QString > & ) ;
+      void reset_limsimport_panel( void );
 
   private slots:
       //! \brief Select the current investigator
@@ -386,8 +406,6 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      //void import_data_auto  (QString &, QString &, QString &, QString &);
-      void import_data_auto  ( QMap < QString, QString > & ) ;
       
       QMap < QString, QString > read_autoflow_record( int );
       int  read_autoflow_stages_record( int );
@@ -460,7 +478,6 @@ class US_GUI_EXTERN US_ConvertGui : public US_Widgets
       
       void resetAll          ( void );
       void resetAll_auto     ( void );
-      void reset_limsimport_panel( void );
       
       void source_changed    ( bool );
       void update_disk_db    ( bool );

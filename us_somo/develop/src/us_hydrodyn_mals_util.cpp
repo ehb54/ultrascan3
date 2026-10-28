@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_mals.h"
@@ -15,9 +16,7 @@
 #include "../include/us_hydrodyn_mals_simulate.h"
 #include "../include/us_lm.h"
 #include "../include/us_svd.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
-#endif
 #include "../include/us_plot_zoom.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -141,295 +140,6 @@ bool US_Hydrodyn_Mals::all_have_f_gaussians( QStringList & files )
 
 void US_Hydrodyn_Mals::p3d()
 {
-#if QT_VERSION < 0x040000
-   disable_all();
-   // this is for global gaussians for now
-
-   QStringList files = all_selected_files();
-
-   if ( !all_have_f_gaussians( files ) )
-   {
-      editor_msg( "red", us_tr( "Error: Not all files have Gaussians defined" ) );
-      update_enables();
-      return;
-   }
-   if ( !ggaussian_compatible( files, false ) )
-   {
-      editor_msg( "dark red", 
-                  cb_fix_width->isChecked() ?
-                  us_tr( "NOTICE: Some files selected have Gaussians with varying centers or widths or a different number of Gaussians or centers or widths that do not match the last Gaussians" )
-                  :
-                  us_tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers that do not match the last Gaussians." ) 
-                  );
-      update_enables();
-      return;
-   }
-
-   for ( unsigned int i = 1; i < ( unsigned int ) files.size(); i++ )
-   {
-      if ( f_qs[ files[ 0 ] ] != f_qs[ files[ i ] ] )
-      {
-         editor_msg( "red", QString( us_tr( "Error: Incompatible grids (comparing %1 and %2). Suggest: Crop Common" ) ).arg( files[ 0 ] ).arg( files[ i ] ) );
-         update_enables();
-         return;
-      }
-   }
-
-   // get q range
-   vector < double  > q;
-   {
-      list < double >      ql;
-      map < double, bool > used_q;
-      QRegExp rx_q( "_q(\\d+_\\d+)" );
-      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-      {
-         if ( rx_q.indexIn( files[ i ] ) == -1 )
-         {
-            editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
-            update_enables();
-            return;
-         }
-         ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
-
-         if ( used_q.count( ql.back() ) )
-         {
-            editor_msg( "red", QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
-            update_enables();
-            return;
-         }
-         used_q[ ql.back() ] = true;
-      }         
-      ql.sort();
-
-      for ( list < double >::iterator it = ql.begin();
-            it != ql.end();
-            it++ )
-      {
-         q.push_back( *it );
-      }
-   }
-
-   map < unsigned int, bool > g_to_plot;
-
-   QString title = windowTitle() + ": Gaussians :";
-
-   {
-      map < QString, QString > parameters;
-      parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / gaussian_type_size );
-
-      US_Hydrodyn_Mals_P3d *mals_p3d = 
-         new US_Hydrodyn_Mals_P3d(
-                                       this,
-                                       & parameters,
-                                       this );
-      US_Hydrodyn::fixWinButtons( mals_p3d );
-      mals_p3d->exec();
-      delete mals_p3d;
-
-      if ( !parameters.count( "plot" ) )
-      {
-         update_enables();
-         return;
-      }
-
-      for ( unsigned int i = 0; i < parameters[ "gaussians" ].toUInt(); i++ )
-      {
-         if ( parameters.count( QString( "%1" ).arg( i ) ) )
-         {
-            g_to_plot[ i ] = true;
-            title += QString( " %1" ).arg( i + 1 );
-         }
-      }
-   }
-
-   if ( !g_to_plot.size() )
-   {
-      editor_msg( "dark red", us_tr( "Plot 3D: no Gaussians selected to plot" ) );
-      update_enables();
-      return;
-   }
-
-   // compute partial (selected) gaussians sums:
-
-   // compute all gaussians over q range
-
-   // vector < vector < vector < double > > > fg; // a vector of the individual gaussians
-   vector < vector < double > >            fs; // a vector of the gaussian sums
-   vector < vector < double > >            g_area;      // a vector of the gaussian area
-   vector < double >                       g_area_sum; // a vector of the gaussian area
-
-   for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
-   {
-      vector < vector < double > > tmp_v;
-      vector < double >            tmp_sum;
-      vector < double >            tmp_area;
-      double                       tmp_area_sum = 0e0;
-
-      bool any_accumulated        = false;
-
-      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
-      {
-         if ( g_to_plot.count( j / gaussian_type_size ) )
-         {
-            vector < double > tmp_g( gaussian_type_size );
-            tmp_g[ 0 ] = f_gaussians[ files[ i ] ][ 0 + j ];
-            tmp_g[ 1 ] = f_gaussians[ files[ i ] ][ 1 + j ];
-            tmp_g[ 2 ] = f_gaussians[ files[ i ] ][ 2 + j ];
-            if ( dist1_active )
-            {
-               tmp_g[ 3 ] = f_gaussians[ files[ i ] ][ 3 + j ];
-               if ( dist2_active )
-               {
-                  tmp_g[ 4 ] = f_gaussians[ files[ i ] ][ 4 + j ];
-               }
-            }
-
-            vector < double > tmp = compute_gaussian( f_qs[ files[ i ] ], tmp_g );
-            tmp_v.push_back( tmp );
-            if ( any_accumulated )
-            {
-               for ( unsigned int k = 0; k < tmp.size(); k++ )
-               {
-                  tmp_sum[ k ] += tmp[ k ];
-               }
-            } else {
-               any_accumulated = true;
-               tmp_sum = tmp;
-            }
-
-            tmp_area.push_back( tmp_g[ 0 ] * tmp_g[ 2 ] * M_SQRT2PI );
-            tmp_area_sum += tmp_area.back();
-         }
-      }
-      // fg.push_back( tmp_v );
-      fs.push_back( tmp_sum );
-
-      for ( unsigned int j = 0; j < ( unsigned int ) tmp_area.size(); j++ )
-      {
-         tmp_area[ j ] /= tmp_area_sum;
-      }
-         
-      g_area    .push_back( tmp_area );
-      g_area_sum.push_back( tmp_area_sum );
-   }
-
-   // plot 3d
-   {
-      QString xtitle;
-      QString ytitle;
-      QString ztitle;
-
-      if ( !QGLFormat::hasOpenGL() )
-      {
-         editor_msg( "red", us_tr( "This system has no OpenGL support." ) );
-         update_enables();
-         return;
-      }
-
-      double **data3d;
-
-      unsigned int rows    = ( unsigned int ) fs.size();
-      unsigned int columns = ( unsigned int ) fs[ 0 ].size();
-
-      data3d = new double * [rows];
-
-      for ( unsigned int i = 0; i < rows; i++ )
-      {
-         data3d[ i ] = new double [ columns ];
-      }
-
-      double maxI = 0e0;
-      for ( unsigned int i = 0; i < rows; i++ )
-      {
-         // cout << QString( "row %1:" ).arg( i );
-         for ( unsigned int j = 0; j < columns; j++ )
-         {
-            // cout << QString( "%1 " ).arg( data3d[ i ][ j ] );
-            if ( maxI < fs[ i ][ j ] )
-            {
-               maxI = fs[ i ][ j ];
-            }
-         }
-         // cout << endl;
-      }
-
-      for ( unsigned int i = 0; i < rows; i++ )
-      {
-         // cout << QString( "row %1:" ).arg( i );
-         for ( unsigned int j = 0; j < columns; j++ )
-         {
-            data3d[ i ][ j ] = fs[ i ][ j ] / maxI;
-            // cout << QString( "%1 " ).arg( data3d[ i ][ j ] );
-            if ( maxI < fs[ i ][ j ] )
-            {
-               maxI = fs[ i ][ j ];
-            }
-         }
-         // cout << endl;
-      }
-
-      SA2d_control_variables controlvar_3d;
-
-      controlvar_3d.minx = q[ 0 ];
-      controlvar_3d.maxx = q.back();
-
-      controlvar_3d.miny = f_qs[ files[ 0 ] ][ 0 ];
-      controlvar_3d.maxy = f_qs[ files[ 0 ] ].back();
-
-      controlvar_3d.xscaling = 1e0 / ( q.back() - q[ 0 ] );
-      controlvar_3d.yscaling = 10e0 / ( f_qs[ files[ 0 ] ].back() - f_qs[ files[ 0 ] ][ 0 ] );
-      controlvar_3d.zscaling = 1000e0 / maxI;
-
-      controlvar_3d.minx = 0e0;  // f_qs[ files[ 0 ] ][ 0 ];
-      controlvar_3d.maxx = 10e0; // f_qs[ files[ 0 ] ].back();
-      controlvar_3d.miny = 0;
-      controlvar_3d.maxy = 10e0;
-      controlvar_3d.xscaling = 1e0;
-      controlvar_3d.yscaling = 1e0;
-      controlvar_3d.zscaling = 10e0; // 10e0 / maxI > 1e0 ? 10e0 / maxI : 1e0;
-
-      cout << QString( "3d params t %1,%2 scaling %3\n"
-                       "          q %4,%5 scaling %6\n"
-                       "       maxI %7    scaling %8\n" )
-         .arg( controlvar_3d.minx ).arg( controlvar_3d.maxx ).arg( controlvar_3d.xscaling )
-         .arg( controlvar_3d.miny ).arg( controlvar_3d.maxy ).arg( controlvar_3d.yscaling )
-         .arg( maxI ).arg( controlvar_3d.zscaling );
-
-      controlvar_3d.meshx = rows;
-      controlvar_3d.meshy = columns;
-
-      xtitle = "q (relative)";
-      ytitle = "Frame (relative)";
-      ztitle = "I(q)";
-
-      bool raise = plot3d_flag;
-      if ( plot3d_flag )
-      {
-         plot3d_window->setParameters( title, xtitle, ytitle, ztitle, data3d, &controlvar_3d );
-      }
-      else
-      {
-         plot3d_window = new Mesh2MainWindow( &plot3d_flag, title, xtitle, ytitle, ztitle, data3d, &controlvar_3d );
-      }
-
-      plot3d_window->dataWidget->coordinates()->setStandardScale();
-      plot3d_window->dataWidget->updateGL();
-
-      if ( raise )
-      {
-         plot3d_window->raise();
-      } else {
-         plot3d_window->show();
-      }
-
-      for ( unsigned int i = 0; i < rows; i++ )
-      {
-         delete [] data3d[i];
-      }
-      delete [] data3d;
-   }
-   update_enables();
-#endif
 }
 
 void US_Hydrodyn_Mals::set_detector()
@@ -680,7 +390,7 @@ vector < double > US_Hydrodyn_Mals::conc_curve( vector < double > &t,
 bool US_Hydrodyn_Mals::adjacent_ok( QString name )
 {
    if ( name.contains( "_bsub_a" ) ||
-        name.contains( QRegExp( "\\d+$" ) ) )
+        name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
 
       return true;
@@ -707,7 +417,7 @@ void US_Hydrodyn_Mals::adjacent()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -717,32 +427,32 @@ void US_Hydrodyn_Mals::adjacent()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -811,7 +521,7 @@ void US_Hydrodyn_Mals::adjacent_created()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -821,32 +531,32 @@ void US_Hydrodyn_Mals::adjacent_created()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -946,7 +656,7 @@ bool US_Hydrodyn_Mals::adjacent_select( QListWidget *lb, QString match )
       
    last_match = match;
 
-   QRegExp rx( match );
+   QRegularExpression rx( match );
    bool any_set = false;
 
    for ( int i = 0; i < lb->count(); i++ ) {
@@ -1303,10 +1013,23 @@ void US_Hydrodyn_Mals::crop_common()
       }
    }
 
+   // Merge q values that differ only by last-digit rounding (e.g. 0.00547318 vs
+   // 0.00547317) so they match as one grid point; retained points keep their
+   // original q/I/sd (see ehb54/ultrascan-tickets#962).
+   const double crop_common_reltol = 1e-4;
+   map < double, double > q_canonical = US_Vector::canonical_map( grids, crop_common_reltol );
+   for ( unsigned int g = 0; g < ( unsigned int ) grids.size(); g++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) grids[ g ].size(); i++ )
+      {
+         grids[ g ][ i ] = q_canonical[ grids[ g ][ i ] ];
+      }
+   }
+
    vector < double > v_union = US_Vector::vunion( grids );
    vector < double > v_int   = US_Vector::intersection( grids );
 
-   editor_msg( "black", 
+   editor_msg( "black",
                QString( us_tr( "Crop common:\n"
                             "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
                             "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
@@ -1364,7 +1087,7 @@ void US_Hydrodyn_Mals::crop_common()
 
       for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
       {
-         if ( map_int.count( f_qs[ it->first ][ i ] ) )
+         if ( map_int.count( q_canonical[ f_qs[ it->first ][ i ] ] ) )
          {
             new_q_string.push_back( f_qs_string[ it->first ][ i ] );
             new_q       .push_back( f_qs       [ it->first ][ i ] );
@@ -1467,7 +1190,7 @@ QStringList US_Hydrodyn_Mals::get_frames( QStringList files, QString head, QStri
       .arg( tail )
       ;
 #endif
-   result = files.replaceInStrings( QRegExp( "^" + QRegExp::escape( head ) ), "" ).replaceInStrings( QRegExp( QRegExp::escape( tail ) + "$" ), "" );
+   result = files.replaceInStrings( QRegularExpression( "^" + QRegularExpression::escape( head ) ), "" ).replaceInStrings( QRegularExpression( QRegularExpression::escape( tail ) + "$" ), "" );
    // us_qdebug( QString( "get frames head %1 tail %2 result %3\n" )
    //         .arg( head )
    //         .arg( tail )
@@ -1768,12 +1491,12 @@ void US_Hydrodyn_Mals::avg( QStringList files, QString suffix )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -2109,12 +1832,12 @@ void US_Hydrodyn_Mals::conc_avg( QStringList files )
    unsigned int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -2367,7 +2090,8 @@ void US_Hydrodyn_Mals::options()
    parameters[ "mals_csv_transposed"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_csv_transposed" ];
 
    parameters[ "mals_ampl_width_min"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_width_min"           ];
-   parameters[ "mals_lock_min_retry"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"           ];
+   parameters[ "mals_ampl_min"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_min"                 ];
+   parameters[ "mals_lock_min_retry"        ] =( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"           ];
    parameters[ "mals_lock_min_retry_mult"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry_mult"      ];
    parameters[ "mals_maxfpk_restart"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart"           ];
    parameters[ "mals_maxfpk_restart_tries"  ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart_tries"     ];
@@ -2431,7 +2155,8 @@ void US_Hydrodyn_Mals::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_csv_transposed"        ] = parameters[ "mals_csv_transposed"           ];
 
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_width_min"        ] = parameters[ "mals_ampl_width_min"           ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"        ] = parameters[ "mals_lock_min_retry"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_ampl_min"              ] = parameters[ "mals_ampl_min"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry"        ] =parameters[ "mals_lock_min_retry"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_lock_min_retry_mult"   ] = parameters[ "mals_lock_min_retry_mult"      ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart"        ] = parameters[ "mals_maxfpk_restart"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "mals_maxfpk_restart_tries"  ] = parameters[ "mals_maxfpk_restart_tries"     ];
@@ -2686,23 +2411,10 @@ void US_Hydrodyn_Mals::update_ref()
       return;
    }
 
-#if QT_VERSION < 0x040000
-   plot_ref->removeMarkers();
-#else
    plot_ref->detachItems( QwtPlotItem::Rtti_PlotMarker );
-#endif
    
    QColor color( "red" );
 
-#if QT_VERSION < 0x040000
-   ref_marker = plot_ref->insertMarker();
-   plot_ref->setMarkerLineStyle ( ref_marker, QwtMarker::VLine );
-   plot_ref->setMarkerPos       ( ref_marker, f_time[ last_selected_file ], 0e0 );
-   plot_ref->setMarkerLabelAlign( ref_marker, Qt::AlignLeft | Qt::AlignTop );
-   plot_ref->setMarkerPen       ( ref_marker, QPen( color, 2, DashDotDotLine));
-   plot_ref->setMarkerFont      ( ref_marker, QFont("Helvetica", 11, QFont::Bold));
-   plot_ref->setMarkerLabelText ( ref_marker, QString( "%1" ).arg( f_time[ last_selected_file ] ) );
-#else
    QwtPlotMarker * ref_marker = new QwtPlotMarker;
    ref_marker->setLineStyle       ( QwtPlotMarker::VLine );
    ref_marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
@@ -2715,7 +2427,6 @@ void US_Hydrodyn_Mals::update_ref()
       ref_marker->setLabel           ( qwtt );
    }
    ref_marker->attach             ( plot_ref );
-#endif
    if ( !suppress_replot )
    {
       plot_ref->replot();
@@ -3404,9 +3115,10 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
          vector < QString > use_scale_selected_names;
 
          if ( files_are_time ) {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_scale_selected_names.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_scale_selected_names[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_scale_selected_names[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -3420,7 +3132,7 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
                   scale_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_scale_selected_names[ i ] ) );
                if ( qv <= cormap_maxq && qv >= cormap_minq ) {
                   use_scale_selected_names.push_back( use_preq_scale_selected_names[ i ] );
@@ -3945,7 +3657,6 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
          QStringList use_blanks_created;
          // US_Vector::printvector( "blanks_created_q", blanks_created_q );
          {
-            // QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
             int use_decimate = parameters.count( "decimate" ) ? parameters[ "decimate" ].toInt() : 1;
             for ( int i = 0; i < (int) use_preq_blanks_created.size(); ++i ) {
                // if ( rx_cap.indexIn( use_preq_blanks_created[ i ] ) == -1 ) {
@@ -3955,7 +3666,7 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
                //    baseline_enables();
                //    return;
                // }                  
-               // double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "qv %1 blanks_created_q[ i ] %2" ).arg( qv ).arg( blanks_created_q[ i * use_decimate ] ) );
                
                // if ( qv <= cormap_maxq ) {
@@ -4289,9 +4000,10 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
 
          QStringList use_baseline_selected;
          {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_baseline_selected.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_baseline_selected[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_baseline_selected[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : Baseline PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -4305,7 +4017,7 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
                   baseline_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_baseline_selected[ i ] ) );
                if ( qv <= cormap_maxq &&
                     qv >= cormap_minq ) {
@@ -4743,9 +4455,10 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
          vector < QString > use_selected_files;
 
          if ( files_are_time ) {
-            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            QRegularExpression rx_cap( "_It_q(\\d+_\\d+)" );
             for ( int i = 0; i < (int) use_preq_selected_files.size(); ++i ) {
-               if ( rx_cap.indexIn( use_preq_selected_files[ i ] ) == -1 ) {
+               QRegularExpressionMatch rx_cap_m = rx_cap.match( use_preq_selected_files[ i ] );
+               if ( !rx_cap_m.hasMatch() ) {
                   // QMessageBox::warning( this
                   //                       , windowTitle() + us_tr( " : PVP Analysis" )
                   //                       , QString( us_tr( "Could not extract q value from file name %1" ) )
@@ -4759,7 +4472,7 @@ void US_Hydrodyn_Mals::cormap( map < QString, QString > & parameters )
                   update_enables();
                   return;
                }                  
-               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               double qv = rx_cap_m.captured( 1 ).replace( "_", "." ).toDouble();
                // us_qdebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_selected_files[ i ] ) );
                if ( qv <= cormap_maxq && qv >= cormap_minq ) {
                   use_selected_files.push_back( use_preq_selected_files[ i ] );
@@ -5116,7 +4829,7 @@ void US_Hydrodyn_Mals::bb_cm_inc()
    QString fn = QFileDialog::getSaveFileName( this , us_tr( "Choose a file name for the images" ) , QString() , "png (*.png *.PNG)" );
 
    if ( !fn.isEmpty() ) {
-      fn = fn.replace( QRegExp( ".png$", Qt::CaseInsensitive ), "" );
+      fn = fn.replace( QRegularExpression( ".png$", QRegularExpression::CaseInsensitiveOption ), "" );
    }
    
    save_parameters[ "decimate" ] = "0";

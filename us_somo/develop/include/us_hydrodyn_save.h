@@ -36,9 +36,6 @@
 #include "../include/us_hydrodyn_pdbdefs.h"
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 using namespace std;
@@ -89,6 +86,12 @@ struct save_data
    double        cor_int_visc;      // "Corrected intrinsic viscosity [cm^3/g]"
    double        cor_einst_rad;     // "Corrected Einstein's radius [nm]"
    double        grpy_einst_rad;    // "GRPY Einstein's radius[nm]"
+   // GRPY shell reduction outcome. The settings that produced it are already carried by
+   // the embedded hydro struct; these two are results, and the error bar in particular is
+   // the point of the option -- without it the CSV records numbers with no uncertainty.
+   double        grpy_shell_tol_pct;  // hydro.grpy_shell_tol as a percentage, as entered
+   double        grpy_shell_err;      // "GRPY shell reduction estimated error [%]"
+   QString       grpy_shell_worst;    // "GRPY shell reduction worst quantity"
    double        rel_times_tau_1;   // "Relaxation times, tau(1) [ns]"
    double        rel_times_tau_2;   // "Relaxation times, tau(2) [ns]"
    double        rel_times_tau_3;   // "Relaxation times, tau(3) [ns]"
@@ -248,9 +251,6 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
 #endif

@@ -5,6 +5,7 @@
 #define US_ESIGNER_GMP_H
 
 #include <QPrinter>
+#include <QProgressDialog>
 
 #include "us_widgets.h"
 #include "us_db2.h"
@@ -42,6 +43,11 @@ class US_eSignaturesGMP : public US_Widgets
         bool auto_separate_status; //!< Flag for automatic separate status.
         bool assign_revs_sep; //!< Flag for assigning reviewers separately.
         bool reassign_revs_sep; //!< Flag for reassigning reviewers separately.
+
+    protected:
+        //! \brief Blocks the modal "please wait" progress dialog from being
+        //!        dismissed by the user (Escape key).
+        bool eventFilter(QObject* obj, QEvent* event) override;
 
         //! \class US_InvestigatorData
         //! \brief A class to hold investigator data.
@@ -168,10 +174,14 @@ class US_eSignaturesGMP : public US_Widgets
 
     public slots:
 
-    private slots:
+    public slots:
         //! \brief Initialize the auto panel.
         //! \param details The details map for initialization.
         void initPanel_auto(QMap<QString, QString>& details);
+        //! \brief Reset the eSign panel.
+        void reset_esign_panel(void);
+
+    private slots:
 
         //! \brief Display reviewers for auto mode.
         //! \param index The index of the reviewer.
@@ -248,8 +258,12 @@ class US_eSignaturesGMP : public US_Widgets
         //! \brief List all autoflow records.
         //! \param records The list of autoflow records.
         //! \param query The query string.
+        //! \param progress Optional progress dialog to update while the (potentially long) query runs.
         //! \return The number of records found.
-        int list_all_autoflow_records(QList<QStringList>& records, QString query);
+        int list_all_autoflow_records(QList<QStringList>& records, QString query, QProgressDialog* progress = NULL);
+
+        //! \brief Re-fetch the autoflow records list and redraw it in the still-open selection dialog.
+        void refreshAutoflowRecordsList(void);
 
         //! \brief Read an autoflow record.
         //! \param index The index of the record.
@@ -368,8 +382,12 @@ class US_eSignaturesGMP : public US_Widgets
         //! \brief List all GMP reports from the database.
         //! \param reports The list of reports.
         //! \param db The database connection.
+        //! \param progress Optional progress dialog to update while the (potentially long) query runs.
         //! \return The number of reports found.
-        int list_all_gmp_reports_db(QList<QStringList>& reports, US_DB2* db);
+        int list_all_gmp_reports_db(QList<QStringList>& reports, US_DB2* db, QProgressDialog* progress = NULL);
+
+        //! \brief Re-fetch the GMP report list and redraw it in the still-open selection dialog.
+        void refreshGMPReportsList(void);
 
         //! \brief Remove files by mask.
         //! \param dir The directory.
@@ -442,8 +460,6 @@ class US_eSignaturesGMP : public US_Widgets
         //! \param eSignID The eSign ID.
         void write_download_eSignatures_DB(QString runID, QString eSignID);
 
-        //! \brief Reset the eSign panel.
-        void reset_esign_panel(void);
 
         //! \brief Paint a page with the given parameters.
         //! \param printer The printer object.

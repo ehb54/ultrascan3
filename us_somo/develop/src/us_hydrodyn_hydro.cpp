@@ -18,7 +18,11 @@ US_Hydrodyn_Hydro::US_Hydrodyn_Hydro(struct hydro_options *hydro,
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("SOMO Hydrodynamic Calculation Options"));
-   this->setMinimumWidth(680);
+   // Headroom for the longer group-box titles and control rows this window has accumulated;
+   // it is a minimum, so the window still grows to whatever its contents need. The GRPY
+   // shell-reduction box, which prompted this, is fixed by being laid out in two rows rather
+   // than by width alone -- see setupGUI() -- since a width threshold only moves with font.
+   this->setMinimumWidth(740);
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -465,7 +469,138 @@ void US_Hydrodyn_Hydro::setupGUI()
    } else {
       rb_grpy_inclusion->setChecked(true);
    }
-   
+
+   bg_grpy_precision = new QGroupBox( us_tr( "GRPY Numerical Precision:" ) );
+
+   rb_grpy_double = new QRadioButton();
+   rb_grpy_double->setText(us_tr(" Double (default) "));
+   rb_grpy_double->setEnabled(true);
+   rb_grpy_double->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_double->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_double );
+   connect(rb_grpy_double, SIGNAL(clicked()), this, SLOT(select_grpy_precision()));
+
+   rb_grpy_float = new QRadioButton();
+   rb_grpy_float->setText(us_tr(" Float (for large systems) "));
+   rb_grpy_float->setEnabled(true);
+   rb_grpy_float->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_float->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_float );
+   connect(rb_grpy_float, SIGNAL(clicked()), this, SLOT(select_grpy_precision()));
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_grpy_double );
+      bl->addWidget( rb_grpy_float );
+      bg_grpy_precision->setLayout( bl );
+   }
+
+   if ( !(*hydro).grpy_single ) {
+      rb_grpy_double->setChecked(true);
+   } else {
+      rb_grpy_float->setChecked(true);
+   }
+
+   // Shell reduction (issue 984). Generalizes the buried-bead exclusion above from a
+   // binary include/exclude into a convergence test that reports the error it introduced.
+   // Off by default: enabling it moves results slightly, so it must be a deliberate act.
+   bg_grpy_shell = new QGroupBox( us_tr( "GRPY Shell Reduction (reduced beads, with error estimate):" ) );
+
+   rb_grpy_shell_off = new QRadioButton();
+   rb_grpy_shell_off->setText(us_tr(" Off (default) "));
+   rb_grpy_shell_off->setEnabled(true);
+   rb_grpy_shell_off->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_shell_off->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_shell_off );
+   connect(rb_grpy_shell_off, SIGNAL(clicked()), this, SLOT(select_grpy_shell()));
+
+   rb_grpy_shell_on = new QRadioButton();
+   rb_grpy_shell_on->setText(us_tr(" On "));
+   rb_grpy_shell_on->setEnabled(true);
+   rb_grpy_shell_on->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_grpy_shell_on->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_grpy_shell_on );
+   connect(rb_grpy_shell_on, SIGNAL(clicked()), this, SLOT(select_grpy_shell()));
+
+   lbl_grpy_shell_tol = new QLabel(us_tr(" Target accuracy [%]: "), bg_grpy_shell );
+   lbl_grpy_shell_tol->setAlignment(Qt::AlignVCenter);
+   lbl_grpy_shell_tol->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_grpy_shell_tol );
+   lbl_grpy_shell_tol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   le_grpy_shell_tol = new QLineEdit( bg_grpy_shell );  le_grpy_shell_tol->setObjectName( "GRPY Shell Tolerance Line Edit" );
+   le_grpy_shell_tol->setText( QString::asprintf( "%.3g", 100.0 * (*hydro).grpy_shell_tol ) );
+   le_grpy_shell_tol->setAlignment(Qt::AlignVCenter);
+   le_grpy_shell_tol->setPalette( PALET_NORMAL );
+   AUTFBACK( le_grpy_shell_tol );
+   le_grpy_shell_tol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_grpy_shell_tol->setEnabled((*hydro).grpy_shell);
+   connect(le_grpy_shell_tol, SIGNAL(textChanged(const QString &)), SLOT(update_grpy_shell_tol(const QString &)));
+
+   // Intrinsic viscosity needs roughly 3.3x the accuracy budget of the diffusion
+   // coefficients at equal reduction, so requiring it costs a large part of the speedup.
+   // When it is not required it is WITHHELD from the reported results rather than
+   // reported with a caveat -- see grpy_finished().
+   // Named for what it does -- gate the ladder's stopping decision -- because " Require
+   // intrinsic viscosity " was read as an on/off switch for the quantity itself, and the
+   // box keeping its state while greyed out then looked as though it had turned viscosity
+   // off for ordinary GRPY runs too. It never does: with shell reduction off nothing is
+   // withheld regardless of this setting.
+   cb_grpy_shell_eta = new QCheckBox();
+   cb_grpy_shell_eta->setText(us_tr(" Require intrinsic viscosity to converge "));
+   // Broken with <br> rather than left to wrap: the tags make Qt treat the tip as rich
+   // text, so the lines fall where the sense does instead of at whatever width the tip
+   // happens to take.
+   cb_grpy_shell_eta->setToolTip(us_tr("Shell reduction only: sets when the series of calculations may stop.<br>"
+                                       "Checked: it may not stop until intrinsic viscosity also reaches the target accuracy.<br>"
+                                       "Unchecked: a reduced result withholds intrinsic viscosity as unconverged.<br>"
+                                       "Intrinsic viscosity is always computed, and is always reported with shell reduction off."));
+   cb_grpy_shell_eta->setChecked((*hydro).grpy_shell_require_eta);
+   cb_grpy_shell_eta->setEnabled((*hydro).grpy_shell);
+   cb_grpy_shell_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy_shell_eta->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_grpy_shell_eta );
+   connect(cb_grpy_shell_eta, SIGNAL(clicked()), this, SLOT(set_grpy_shell_eta()));
+
+   cb_grpy_shell_models = new QCheckBox();
+   cb_grpy_shell_models->setText(us_tr(" Save shell bead models "));
+   cb_grpy_shell_models->setChecked((*hydro).grpy_shell_save_models);
+   cb_grpy_shell_models->setEnabled((*hydro).grpy_shell);
+   cb_grpy_shell_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy_shell_models->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_grpy_shell_models );
+   connect(cb_grpy_shell_models, SIGNAL(clicked()), this, SLOT(set_grpy_shell_models()));
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_grpy_shell_off );
+      bl->addWidget( rb_grpy_shell_on );
+      bl->addWidget( lbl_grpy_shell_tol );
+      bl->addWidget( le_grpy_shell_tol );
+      bl->addStretch( 1 );
+
+      // Two rows rather than one. This box carries six controls -- about a hundred
+      // characters of label text -- which is half again the widest of the other boxes and
+      // was clipped on the right at the window's minimum width. Splitting it drops the
+      // width this box demands to roughly that of a single row, so it survives larger
+      // fonts and interface scalings rather than merely clearing today's threshold.
+      QHBoxLayout * bl2 = new QHBoxLayout; bl2->setContentsMargins( 0, 0, 0, 0 ); bl2->setSpacing( 0 );
+      bl2->addWidget( cb_grpy_shell_eta );
+      bl2->addWidget( cb_grpy_shell_models );
+      bl2->addStretch( 1 );
+
+      QVBoxLayout * bv = new QVBoxLayout; bv->setContentsMargins( 0, 0, 0, 0 ); bv->setSpacing( 0 );
+      bv->addLayout( bl );
+      bv->addLayout( bl2 );
+      bg_grpy_shell->setLayout( bv );
+   }
+
+   if ( !(*hydro).grpy_shell ) {
+      rb_grpy_shell_off->setChecked(true);
+   } else {
+      rb_grpy_shell_on->setChecked(true);
+   }
+
 
    bg_buried = new QGroupBox( "Include Buried Beads in Volume Correction for Calculation of (for SMI):" );
 
@@ -592,6 +727,10 @@ void US_Hydrodyn_Hydro::setupGUI()
    background->addWidget( bg_bead_inclusion , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
    background->addWidget( bg_grpy_bead_inclusion , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j+=3;
+   background->addWidget( bg_grpy_precision , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   j+=3;
+   background->addWidget( bg_grpy_shell , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
    background->addWidget( bg_buried , j , 0 , 1 + ( j+2 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=3;
@@ -747,6 +886,61 @@ void US_Hydrodyn_Hydro::select_grpy_bead_inclusion() {
 void US_Hydrodyn_Hydro::select_grpy_bead_inclusion(int val)
 {
    (*hydro).grpy_bead_inclusion = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::select_grpy_precision() {
+   if ( rb_grpy_double->isChecked() ) {
+      return select_grpy_precision( 0 );
+   }
+   if ( rb_grpy_float->isChecked() ) {
+      return select_grpy_precision( 1 );
+   }
+}
+
+void US_Hydrodyn_Hydro::select_grpy_precision(int val)
+{
+   (*hydro).grpy_single = val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::select_grpy_shell() {
+   if ( rb_grpy_shell_off->isChecked() ) {
+      return select_grpy_shell( 0 );
+   }
+   if ( rb_grpy_shell_on->isChecked() ) {
+      return select_grpy_shell( 1 );
+   }
+}
+
+void US_Hydrodyn_Hydro::select_grpy_shell(int val)
+{
+   (*hydro).grpy_shell = val;
+   le_grpy_shell_tol->setEnabled( val );
+   cb_grpy_shell_eta->setEnabled( val );
+   cb_grpy_shell_models->setEnabled( val );
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::update_grpy_shell_tol(const QString &str)
+{
+   // entered as a percentage, stored as a relative tolerance
+   double pct = str.toDouble();
+   if ( pct > 0 ) {
+      (*hydro).grpy_shell_tol = pct * 0.01;
+      ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   }
+}
+
+void US_Hydrodyn_Hydro::set_grpy_shell_models()
+{
+   (*hydro).grpy_shell_save_models = cb_grpy_shell_models->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::set_grpy_shell_eta()
+{
+   (*hydro).grpy_shell_require_eta = cb_grpy_shell_eta->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

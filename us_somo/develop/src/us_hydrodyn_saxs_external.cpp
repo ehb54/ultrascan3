@@ -1,9 +1,8 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_cmdline_app.h"
 #include "../include/us_hydrodyn_saxs_ift.h"
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -16,20 +15,12 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 void US_Hydrodyn_Saxs::editor_msg( QColor color, QColor bgcolor, QString msg )
 {
-   msg.replace( QRegExp( "\n*$" ), "" );
+   msg.replace( QRegularExpression( QStringLiteral( "\n*$" ) ), "" );
    msg += "\n";
    // QColor save_color_bg = editor->paragraphBackgroundColor( editor->paragraphs() - 1 );
-#if QT_VERSION < 0x040000
-   editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  bgcolor );
-#else
    editor->setTextBackgroundColor( bgcolor );
-#endif
    editor_msg( color, msg );
-#if QT_VERSION < 0x040000
-   editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  "white" );
-#else
    editor->setTextBackgroundColor( QColor( "white" ) );
-#endif
 }
 
 void US_Hydrodyn_Saxs::editor_msg( QColor color, QString msg )
@@ -419,18 +410,6 @@ void US_Hydrodyn_Saxs::ift_process_next() {
    ift = new QProcess( this );
    //   ift->setWorkingDirectory( dir );
    us_qdebug( "prog is " + ift_prog );
-#if QT_VERSION < 0x040000
-   ift->addArgument( ift_prog );
-
-   connect( ift, SIGNAL(readyReadStandardOutput()), this, SLOT(ift_readFromStdout()) );
-   connect( ift, SIGNAL(readyReadStandardError()), this, SLOT(ift_readFromStderr()) );
-   connect( ift, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(ift_finished( int, QProcess::ExitStatus )) );
-   connect( ift, SIGNAL(started()), this, SLOT(ift_started()) );
-
-   editor_msg( "black", "\nStarting IFT\n");
-   ift->start();
-   external_running = true;
-#else
    {
       QStringList args;
 
@@ -443,38 +422,21 @@ void US_Hydrodyn_Saxs::ift_process_next() {
       ift->start( ift_prog, args, QIODevice::ReadOnly );
       external_running = true;
    }
-#endif
    
    return;
 }
 
 void US_Hydrodyn_Saxs::ift_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( ift->canReadLineStdout() )
-   {
-      QString qs = ift->readLineStdout() + "\n";
-      ift_stdout += qs;
-      editor_msg("brown", qs );
-   }
-#else
    QString qs = QString( ift->readAllStandardOutput() );
    ift_stdout += qs;
    editor_msg( "brown", qs );
-#endif   
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn_Saxs::ift_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( ift->canReadLineStderr() )
-   {
-      editor_msg("red", ift->readLineStderr() + "\n");
-   }
-#else
    editor_msg( "red", QString( ift->readAllStandardError() ) );
-#endif   
    //  qApp->processEvents();
 }
    
@@ -500,7 +462,7 @@ bool US_Hydrodyn_Saxs::last_pr_rebin_save(
       USglobal->config_list.root_dir
       + "/somo/saxs/"
       + QString( "%1" )
-      .arg( ift_last_processed ).replace( QRegExp( rxstr )
+      .arg( ift_last_processed ).replace( QRegularExpression( rxstr )
                                           , QString("_bin%1_%2ift.dat" )
                                           .arg( our_saxs_options->bin_size )
                                           .arg( cb_normalize->isChecked() ? "normed_" : "" )
@@ -563,12 +525,13 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    map < QString, QString > files;
 
    for ( int i = 0; i < (int) caps.size(); ++i ) {
-      QRegExp rx( caps[ i ] + " in\\s+:\\s*(\\S+)" );
+      QRegularExpression rx( caps[ i ] + " in\\s+:\\s*(\\S+)" );
 
-      if ( rx.indexIn( ift_stdout ) == -1 ) {
+      QRegularExpressionMatch rx_m = rx.match( ift_stdout );
+      if ( !rx_m.hasMatch() ) {
          editor_msg( "red", QString( us_tr( "Could not find %1 file in IFT output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
       } else {
-         files[ caps[ i ] ] = rx.cap( 1 );
+         files[ caps[ i ] ] = rx_m.captured( 1 );
          us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i ] ).arg( files[ caps[ i ] ] ) );
       }
    }
@@ -581,17 +544,13 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          editor_msg( "red", QString( "Error: Could not open file %1 for reading." ).arg( files[ caps[ 1 ] ] ) );
       } else {
          QTextStream ts( &f );
-#if QT_VERSION < 0x040000
-         editor_msg( "black", ts.read() );
-#else
          editor_msg( "black", ts.readAll() );
-#endif
       }
    }
 
    QStringList created_files;
    QString rxstr = "\\..*$";
-   if ( !ift_last_processed.contains( QRegExp( rxstr ) ) ) {
+   if ( !ift_last_processed.contains( QRegularExpression( rxstr ) ) ) {
       rxstr = "$";
    }
 
@@ -601,7 +560,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    if ( files.count( caps[ 2 ] ) ) {
       // copy this to our created files
 
-      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegularExpression( QStringLiteral( "\\..*$" ) ), "_ift P(r)" ), false, true );
       cb_normalize->setChecked( mw != -1 );
 
       vector < double > r;
@@ -616,13 +575,13 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
       if ( !US_File_Util::getcontents( files[ caps[ 2 ] ], prcontents, error ) ) {
          editor_msg( "red", error );
       } else {
-         QStringList qsl = prcontents.split( "\n" ).replaceInStrings( QRegExp( "^\\s*" ), "" );
+         QStringList qsl = prcontents.split( "\n" ).replaceInStrings( QRegularExpression( QStringLiteral( "^\\s*" ) ), "" );
             
          // QTextStream( stdout ) << "--- pr contents ---\n";
          double min_sd = 1e99;
          double min_pr = 1e99;
          for ( int i = 0; i < qsl.size(); ++i ) {
-            QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+            QStringList line = qsl[i].split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
             // QTextStream( stdout ) << line.join( " " ) << Qt::endl;
             if ( line.size() < 3 ) {
                continue;
@@ -658,7 +617,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
             QStringList newcontents;
             QStringList newcontents_normed;
             for ( int i = 0; i < qsl.size(); ++i ) {
-               QStringList line = qsl[i].split( QRegExp( "\\s+" ) );
+               QStringList line = qsl[i].split( QRegularExpression( QStringLiteral( "\\s+" ) ) );
                if ( line.size() < 3 ) {
                   continue;
                } else {
@@ -686,7 +645,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          }
       }
          
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.sprr" );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegularExpression( rxstr ), "_ift.sprr" );
       if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
          dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       }
@@ -715,7 +674,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
          }            
          if ( !prcontents_normed.isEmpty() ) {
             prcontents_normed = header + prcontents_normed;
-            QString dest_normed = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift.dat" );
+            QString dest_normed = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegularExpression( rxstr ), "_ift.dat" );
             if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
                dest_normed = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest_normed, 0, this );
             }
@@ -746,7 +705,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    // "out" file
    if ( files.count( caps[ 0 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_ift_summary.txt" );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegularExpression( rxstr ), "_ift_summary.txt" );
       if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
          dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       }
@@ -761,7 +720,7 @@ void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
    // fit file
    if ( files.count( caps[ 4 ] ) ) {
       // copy this to our created files
-      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( rxstr ), "_fit.ssaxs" );
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegularExpression( rxstr ), "_fit.ssaxs" );
       if ( !((US_Hydrodyn *) us_hydrodyn )->overwrite ) {
          dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
       }
@@ -834,32 +793,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
 
    foxs = new QProcess( this );
    //   foxs->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-   foxs->addArgument( prog );
-
-   foxs->addArgument( "-q" );
-   foxs->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
-
-   foxs->addArgument( "-s" );
-   foxs->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-
-   foxs->addArgument( pdb );
-
-   cout << 
-      QString("foxs -q %1 -s %2 %3\n")
-      .arg( our_saxs_options->end_q )
-      .arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q) )
-      .arg( pdb );
-
-   connect( foxs, SIGNAL(readyReadStandardOutput()), this, SLOT(foxs_readFromStdout()) );
-   connect( foxs, SIGNAL(readyReadStandardError()), this, SLOT(foxs_readFromStderr()) );
-   connect( foxs, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(foxs_finished( int, QProcess::ExitStatus )) );
-   connect( foxs, SIGNAL(started()), this, SLOT(foxs_started()) );
-
-   editor_msg( "black", "\nStarting FoXS\n");
-   foxs->start();
-   external_running = true;
-#else
    {
       QStringList args;
 
@@ -886,34 +819,19 @@ int US_Hydrodyn_Saxs::run_saxs_iq_foxs( QString pdb )
       foxs->start( prog, args, QIODevice::ReadOnly );
       external_running = true;
    }
-#endif
    
    return 0;
 }
 
 void US_Hydrodyn_Saxs::foxs_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( foxs->canReadLineStdout() )
-   {
-      editor_msg("brown", foxs->readLineStdout() + "\n");
-   }
-#else
    editor_msg( "brown", QString( foxs->readAllStandardOutput() ) );
-#endif   
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn_Saxs::foxs_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( foxs->canReadLineStderr() )
-   {
-      editor_msg("red", foxs->readLineStderr() + "\n");
-   }
-#else
    editor_msg( "red", QString( foxs->readAllStandardError() ) );
-#endif   
    //  qApp->processEvents();
 }
    
@@ -935,7 +853,7 @@ void US_Hydrodyn_Saxs::foxs_finished( int, QProcess::ExitStatus )
 
    QString created_dat = foxs_last_pdb + ".dat";
    QString created_plt = foxs_last_pdb;
-   created_plt.replace(QRegExp("\\.(pdb|PDB)$"),".plt");
+   created_plt.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),".plt");
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -997,6 +915,8 @@ void US_Hydrodyn_Saxs::foxs_started()
 
 int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 {
+   editor_msg( "darkblue", QString( "crysol pdb is %1\n" ).arg( pdb ) );
+
    QString prog = 
       USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
@@ -1083,9 +1003,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol_last_pdb = pdb;
    if ( our_saxs_options->crysol_version_26 )
    {
-      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"").left(6) + ".pdb";
    } else {
-      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ".pdb";
+      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + ".pdb";
    }
       
    QString use_pdb = pdb;
@@ -1114,15 +1034,16 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
       if ( selected_models[ 0 ] != 0 )
       {
-         QRegExp rx_model( "^MODEL\\s+(\\S+)(\\s+|$)" );
+         QRegularExpression rx_model( "^MODEL\\s+(\\S+)(\\s+|$)" );
          
          bool found_model = false;
          while ( !ts.atEnd() )
          {
             qs = ts.readLine();
-            if ( rx_model.indexIn( qs ) != -1 )
+            QRegularExpressionMatch rx_model_m = rx_model.match( qs );
+            if ( rx_model_m.hasMatch() )
             {
-               if ( rx_model.cap( 1 ).toUInt() == selected_models[ 0 ] + 1 )
+               if ( rx_model_m.captured(1).toUInt() == selected_models[ 0 ] + 1 )
                {
                   found_model = true;
                }
@@ -1165,7 +1086,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    // clean up so we have new files
 
    {
-      QString base = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
+      QString base = crysol_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"");
       cout << "base: <" << base << ">\n";
 
       QString to_remove = base + "00.alm";
@@ -1184,9 +1105,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
    pb_plot_saxs_sans->setEnabled(false);
 
-#if QT_VERSION >= 0x040000
    QStringList args;
-#endif
    
    crysol_manual_mode = false;
    crysol_manual_input.clear( );
@@ -1341,11 +1260,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
             crysol = new QProcess( this );
             crysol->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-            crysol->addArgument( f.fileName() );
-#else
             prog = f.fileName();
-#endif
          }
 
 // attempt to create job with no "cmd" box
@@ -1470,7 +1385,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             if ( !ufu.copy( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ], dir ) )
             {
                editor_msg( "red", ufu.errormsg );
-               if ( ufu.errormsg.contains( QRegExp( "exists$" ) ) )
+               if ( ufu.errormsg.contains( QRegularExpression( QStringLiteral( "exists$" ) ) ) )
                {
                   args 
                      << QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName()
@@ -1500,13 +1415,8 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    
    editor->append("\n\nStarting Crysol\n");
    
-#if QT_VERSION < 0x040000
-   editor_msg( "dark blue", crysol->arguments().join( " " ) );
-   crysol->start();
-#else
    editor_msg( "dark blue", args.join( " " ) );
    crysol->start( prog, args, QIODevice::ReadOnly );
-#endif
    external_running = true;
    return 0;
 }
@@ -1520,18 +1430,9 @@ void US_Hydrodyn_Saxs::crysol_timeout()
 
 void US_Hydrodyn_Saxs::crysol_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( crysol->canReadLineStdout() )
-   {
-      QString qs = crysol->readLineStdout();
-      crysol_stdout << qs;
-      editor_msg("brown", qs );
-   }
-#else
    QString qs( crysol->readAllStandardOutput() );
    crysol_stdout << qs;
    editor_msg("brown", qs );
-#endif
 
 #if defined( UHSE_APP_RESPONSE_WAY )
    if ( !crysol_manual_mode )
@@ -1624,18 +1525,9 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
    
 void US_Hydrodyn_Saxs::crysol_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( crysol->canReadLineStderr() )
-   {
-      QString qs = crysol->readLineStderr();
-      crysol_stderr << qs;
-      editor_msg("red", qs + "\n");
-   }
-#else
    QString qs( crysol->readAllStandardError() );
    crysol_stderr << qs;
    editor_msg("red", qs );
-#endif
    //  qApp->processEvents();
 }
    
@@ -1653,11 +1545,7 @@ void US_Hydrodyn_Saxs::crysol_finished( int, QProcess::ExitStatus )
 
    if ( crysol_manual_mode )
    {
-#if QT_VERSION < 0x040000
-      QFile f( crysol->workingDirectory().dirName() + QDir::separator() + "output" );
-#else
       QFile f( crysol->workingDirectory() + QDir::separator() + "output" );
-#endif
       if ( !f.open( QIODevice::ReadOnly ) )
       {
          editor_msg( "red", QString( us_tr( "Error: trying to read output file %1" ) ).arg( f.fileName() ) );
@@ -1691,26 +1579,28 @@ void US_Hydrodyn_Saxs::crysol_finished( int, QProcess::ExitStatus )
 
 void US_Hydrodyn_Saxs::crysol_finishup()
 {
-   QStringList intensity_lines = crysol_stdout.filter( QRegExp( "Intensities\\s+saved to file" ) );
-   QStringList fit_lines       = crysol_stdout.filter( QRegExp( "Data fit\\s+saved to file" ) );
+   QStringList intensity_lines = crysol_stdout.filter( QRegularExpression( QStringLiteral( "Intensities\\s+saved to file" ) ) );
+   QStringList fit_lines       = crysol_stdout.filter( QRegularExpression( QStringLiteral( "Data fit\\s+saved to file" ) ) );
 
    QString new_intensity_file;
    QString new_fit_file;
 
    if ( intensity_lines.size() == 1 )
    {
-      QRegExp rx( "Intensities\\s+saved to file (\\S+)" );
-      if ( rx.indexIn( intensity_lines[ 0 ] ) != -1 )
+      QRegularExpression rx( "Intensities\\s+saved to file (\\S+)" );
+      QRegularExpressionMatch rx_m = rx.match( intensity_lines[ 0 ] );
+      if ( rx_m.hasMatch() )
       {
-         new_intensity_file = rx.cap( 1 );
+         new_intensity_file = rx_m.captured(1);
       }
    }
    if ( fit_lines.size() == 1 )
    {
-      QRegExp rx( "Data fit\\s+saved to file (\\S+)" );
-      if ( rx.indexIn( fit_lines[ 0 ] ) != -1 )
+      QRegularExpression rx( "Data fit\\s+saved to file (\\S+)" );
+      QRegularExpressionMatch rx_m = rx.match( fit_lines[ 0 ] );
+      if ( rx_m.hasMatch() )
       {
-         new_fit_file = rx.cap( 1 );
+         new_fit_file = rx_m.captured(1);
       }
    }
 
@@ -1727,9 +1617,9 @@ void US_Hydrodyn_Saxs::crysol_finishup()
 
    QString created_dat;
    if ( our_saxs_options->crysol_version_3 ) {
-      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + type;
+      created_dat = crysol_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + type;
    } else {
-      created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") + "00" + type;
+      created_dat = crysol_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") + "00" + type;
    }
 
    // us_qdebug( "created_dat: " + created_dat );
@@ -1756,7 +1646,7 @@ void US_Hydrodyn_Saxs::crysol_finishup()
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + 
+      QFileInfo( crysol_last_pdb.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") ).fileName() + 
       ( selected_models[ 0 ] == 0 ? QString( "" ) : QString( "_m%1" ).arg( selected_models[ 0 ] + 1 ) )
       + iqq_suffix() + type;
 
@@ -1859,7 +1749,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    }
 
    cryson_last_pdb = pdb;
-   cryson_last_pdb_base = dir + SLASH + QFileInfo(cryson_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+   cryson_last_pdb_base = dir + SLASH + QFileInfo(cryson_last_pdb).fileName().replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"").left(6) + ".pdb";
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
@@ -1902,7 +1792,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    // clean up so we have new files
 
    // {
-   //    QString base = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
+   //    QString base = cryson_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"");
    //    cout << "base: <" << base << ">\n";
 
    //    QString to_remove = base + "00.alm";
@@ -1920,37 +1810,6 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
 
    cryson = new QProcess( this );
    cryson->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-   cryson->addArgument( prog );
-   cryson->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
-
-   cryson->addArgument( "/sm" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
-
-   cryson->addArgument( "/ns" );
-   cryson->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-
-   cryson->addArgument( "/D2O" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->d2o_conc ) );
-
-   if ( our_saxs_options->cryson_manual_hs )
-   {
-      cryson->addArgument( "/dro" );
-      cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_hydration_shell_contrast ) );
-   }
-
-   if ( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "perdeuteration" ) )
-   {
-      cryson->addArgument( "/per" );
-      cryson->addArgument( ((US_Hydrodyn *)us_hydrodyn)->gparams[ "perdeuteration" ] );
-   }
-
-   cryson->addArgument( "/lm" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_sh_max_harmonics ) );
-
-   cryson->addArgument( "/fb" );
-   cryson->addArgument( QString("%1").arg( our_saxs_options->cryson_sh_fibonacci_grid_order ) );
-#else
    QStringList args;
    
    args
@@ -1988,7 +1847,6 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
       << "/fb"
       << QString("%1").arg( our_saxs_options->cryson_sh_fibonacci_grid_order )
       ;
-#endif
    
    //    if ( our_saxs_options->cryson_explicit_hydrogens )
    //    {
@@ -2001,11 +1859,7 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
    connect( cryson, SIGNAL(started()), this, SLOT(cryson_started()) );
 
    editor->append("\n\nStarting Cryson\n");
-#if QT_VERSION < 0x040000
-   cryson->start();
-#else
    cryson->start( prog, args, QIODevice::ReadOnly );
-#endif
    external_running = true;
 
    return 0;
@@ -2013,28 +1867,14 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
 
 void US_Hydrodyn_Saxs::cryson_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( cryson->canReadLineStdout() )
-   {
-      editor_msg("brown", cryson->readLineStdout() + "\n");
-   }
-#else
    editor_msg("brown", QString( cryson->readAllStandardOutput() ) );
-#endif
    
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn_Saxs::cryson_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( cryson->canReadLineStderr() )
-   {
-      editor_msg("red", cryson->readLineStderr() + "\n");
-   }
-#else
    editor_msg("red", QString( cryson->readAllStandardError() ) );
-#endif
    //  qApp->processEvents();
 }
    
@@ -2057,7 +1897,7 @@ void US_Hydrodyn_Saxs::cryson_finished( int, QProcess::ExitStatus )
 
    // we just want the .int, the rest will be removed if needed
 
-   QString created_dat = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00.int";
+   QString created_dat = cryson_last_pdb_base.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") +  "00.int";
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -2070,7 +1910,7 @@ void US_Hydrodyn_Saxs::cryson_finished( int, QProcess::ExitStatus )
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( cryson_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + ".int";
+      QFileInfo( cryson_last_pdb.replace(QRegularExpression( QStringLiteral( "\\.(pdb|PDB)$" ) ),"") ).fileName() + iqq_suffix() + ".int";
 
    if ( QFile::exists(new_created_dat) )
    {
@@ -2154,16 +1994,10 @@ int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
 
    sastbx = new QProcess( this );
    //   sastbx->setWorkingDirectory( dir );
-#if QT_VERSION < 0x040000
-   sastbx->addArgument( prog );
-
-   sastbx->addArgument( QString( "structure=%1" ).arg( pdb ) );
-#else
    QStringList args;
    args
       << QString( "structure=%1" ).arg( pdb )
       ;
-#endif
    
    QString method;
    switch ( our_saxs_options->sastbx_method )
@@ -2180,17 +2014,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
       break;
    }
 
-#if QT_VERSION < 0x040000
-   sastbx->addArgument( QString( "method=%1"    ).arg( method ) );
-   sastbx->addArgument( QString( "q_start=%1"   ).arg( our_saxs_options->start_q ) );
-   sastbx->addArgument( QString( "q_stop=%1"    ).arg( our_saxs_options->end_q ) );
-   sastbx->addArgument( QString( "n_step=%1"    ).arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-   sastbx->addArgument( QString( "rho=%1"       ).arg( our_saxs_options->water_e_density ) );
-   sastbx->addArgument( QString( "drho=%1"      ).arg( our_saxs_options->crysol_hydration_shell_contrast ) );
-   sastbx->addArgument( QString( "max_i =%1"    ).arg( our_saxs_options->sh_fibonacci_grid_order ) );
-   sastbx->addArgument( QString( "max_L =%1"    ).arg( our_saxs_options->sh_max_harmonics ) );
-   sastbx->addArgument( QString( "output=%1"    ).arg( sastbx_last_pdb + ".int" ) );
-#else
    args
       << QString( "method=%1"    ).arg( method )
       << QString( "q_start=%1"   ).arg( our_saxs_options->start_q )
@@ -2202,7 +2025,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
       << QString( "max_L =%1"    ).arg( our_saxs_options->sh_max_harmonics )
       << QString( "output=%1"    ).arg( sastbx_last_pdb + ".int" )
       ;
-#endif
    connect( sastbx, SIGNAL(readyReadStandardOutput()), this, SLOT(sastbx_readFromStdout()) );
    connect( sastbx, SIGNAL(readyReadStandardError()), this, SLOT(sastbx_readFromStderr()) );
    connect( sastbx, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(sastbx_finished( int, QProcess::ExitStatus )) );
@@ -2211,11 +2033,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
    editor->append("\n\nStarting Sastbx\n");
    
 
-#if QT_VERSION < 0x040000
-   sastbx->start();
-#else
    sastbx->start( prog, args, QIODevice::ReadOnly );
-#endif
    external_running = true;
 
    return 0;
@@ -2223,27 +2041,13 @@ int US_Hydrodyn_Saxs::run_saxs_iq_sastbx( QString pdb )
 
 void US_Hydrodyn_Saxs::sastbx_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( sastbx->canReadLineStdout() )
-   {
-      editor_msg("brown", sastbx->readLineStdout() + "\n");
-   }
-#else
    editor_msg("brown", QString( sastbx->readAllStandardOutput() ) );
-#endif
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn_Saxs::sastbx_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( sastbx->canReadLineStderr() )
-   {
-      editor_msg("red", sastbx->readLineStderr() + "\n");
-   }
-#else
    editor_msg("red", QString( sastbx->readAllStandardError() ) );
-#endif
    //  qApp->processEvents();
 }
    

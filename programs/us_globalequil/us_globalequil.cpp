@@ -80,24 +80,24 @@ US_GlobalEquil::US_GlobalEquil() : US_Widgets( true )
    pb_resetsl ->setEnabled( false );
    le_prjname ->setText( tr( "SampleFit" ) );
 
-   connect( pb_loadExp,  SIGNAL( clicked()       ),
-                         SLOT(   load()          ) );
-   connect( pb_details,  SIGNAL( clicked()       ),
-                         SLOT(   details()       ) );
-   connect( pb_view,     SIGNAL( clicked()       ),
-                         SLOT(   view_report()   ) );
-   connect( pb_unload,   SIGNAL( clicked()       ),
-                         SLOT(   unload()        ) );
-   connect( pb_scdiags,  SIGNAL( clicked()       ),
-                         SLOT(   scan_diags()    ) );
-   connect( pb_ckscfit,  SIGNAL( clicked()       ),
-                         SLOT(  check_scan_fit() ) );
-   connect( pb_conchist, SIGNAL( clicked()       ),
-                         SLOT(  conc_histogram() ) );
-   connect( pb_resetsl,  SIGNAL( clicked()       ),
-                         SLOT(   reset_scan_lims() ) );
-   connect( le_prjname,  SIGNAL( textChanged(    const QString& ) ),
-                         SLOT( new_project_name( const QString& ) ) );
+   connect( pb_loadExp,  &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::load );
+   connect( pb_details,  &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::details );
+   connect( pb_view,     &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::view_report );
+   connect( pb_unload,   &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::unload );
+   connect( pb_scdiags,  &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::scan_diags );
+   connect( pb_ckscfit,  &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::check_scan_fit );
+   connect( pb_conchist, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::conc_histogram );
+   connect( pb_resetsl,  &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::reset_scan_lims );
+   connect( le_prjname,  &QLineEdit::textChanged,
+                         this, &US_GlobalEquil::new_project_name );
 
    int row = 0;
    dataSelLayout->addWidget( lb_datasel,  row++, 0, 1, 2 );
@@ -156,16 +156,16 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    pb_fitcntrl->setEnabled( false );
    pb_monCarlo->setEnabled( false );
 
-   connect( pb_selModel, SIGNAL( clicked()       ),
-                         SLOT(   select_model()    ) );
-   connect( pb_modlCtrl, SIGNAL( clicked()       ),
-                         SLOT(   model_control()   ) );
-   connect( pb_fitcntrl, SIGNAL( clicked()       ),
-                         SLOT(   fitting_control() ) );
-   connect( pb_loadFit,  SIGNAL( clicked()       ),
-                         SLOT(   load_fit()        ) );
-   connect( pb_monCarlo, SIGNAL( clicked()       ),
-                         SLOT(   monte_carlo()     ) );
+   connect( pb_selModel, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::select_model );
+   connect( pb_modlCtrl, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::model_control );
+   connect( pb_fitcntrl, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::fitting_control );
+   connect( pb_loadFit,  &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::load_fit );
+   connect( pb_monCarlo, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::monte_carlo );
 
    row     = 0;
    modlFitLayout->addWidget( lb_mfitinfo, row++, 0, 1, 2 );
@@ -190,16 +190,16 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    ct_scselect->setSingleStep(  1.0 );
    ct_scselect->setValue     ( 0.0 );
 
-   connect( pb_floatPar, SIGNAL( clicked()              ),
-                         SLOT(   float_params()         ) );
-   connect( pb_initPars, SIGNAL( clicked()              ),
-                         SLOT(   init_params()          ) );
-   connect( pb_help,     SIGNAL( clicked()              ),
-                         SLOT(   help()                 ) );
-   connect( pb_close,    SIGNAL( clicked()              ),
-                         SLOT(   close_all()            ) );
-   connect( ct_scselect, SIGNAL( valueChanged( double ) ),
-                         SLOT(   scan_select(  double ) ) );
+   connect( pb_floatPar, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::float_params );
+   connect( pb_initPars, &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::init_params );
+   connect( pb_help,     &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::help );
+   connect( pb_close,    &QAbstractButton::clicked,
+                         this, &US_GlobalEquil::close_all );
+   connect( ct_scselect, &QwtCounter::valueChanged,
+                         this, &US_GlobalEquil::scan_select );
 
    row     = 0;
    paramLayout  ->addWidget( lb_parminfo, row++, 0, 1, 4 );
@@ -256,8 +256,8 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    statusLayout ->addWidget( le_mxfringe, row,   2, 1, 1 );
    statusLayout ->addWidget( lb_mxfnotes, row++, 3, 1, 3 );
 
-   connect( le_mxfringe, SIGNAL( textChanged(    const QString& ) ),
-                         SLOT( od_limit_changed( const QString& ) ) );
+   connect( le_mxfringe, &QLineEdit::textChanged,
+                         this, &US_GlobalEquil::od_limit_changed );
 
    rightLayout->addLayout( eplot );
    rightLayout->addLayout( statusLayout );
@@ -316,8 +316,8 @@ void US_GlobalEquil::load( void )
    US_DataLoader* dialog = new US_DataLoader( dataLatest, dbdisk, rawList,
          dataList, triples, workingDir, QString( "equilibrium" ) );
 
-   connect( dialog, SIGNAL( changed(      bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
+   connect( dialog, &US_DataLoader::changed,
+            this,   &US_GlobalEquil::update_disk_db );
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
@@ -492,10 +492,10 @@ DbgLv(1) << " LD: update_limit";
    ct_scselect->setRange( 1.0, (double)jsscn );
    ct_scselect->setSingleStep( 1.0 );
 
-   connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
-            this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
-   connect( tw_equiscns, SIGNAL( itemSelectionChanged( ) ),
-            this,        SLOT(   itemRowChanged( )       ) );
+   connect( tw_equiscns, &QTableWidget::itemDoubleClicked,
+            this,        &US_GlobalEquil::doubleClickedItem );
+   connect( tw_equiscns, &QTableWidget::itemSelectionChanged,
+            this,        &US_GlobalEquil::itemRowChanged );
 
    te_status->setText( tr( "To edit (exclude points):  Ctrl-click-hold,"
                            " move, and release mouse button in the plot area;"
@@ -546,10 +546,10 @@ void US_GlobalEquil::unload( void )
    pb_selModel->setEnabled( false );
    pb_scdiags ->setEnabled( false );
 
-   connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
-            this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
-   connect( tw_equiscns, SIGNAL( itemSelectionChanged( ) ),
-            this,        SLOT(   itemRowChanged( )       ) );
+   connect( tw_equiscns, &QTableWidget::itemDoubleClicked,
+            this,        &US_GlobalEquil::doubleClickedItem );
+   connect( tw_equiscns, &QTableWidget::itemSelectionChanged,
+            this,        &US_GlobalEquil::itemRowChanged );
 }
 
 // Generate and display scan diagnostics
@@ -682,8 +682,8 @@ DbgLv(1) << "MODEL_CONTROL()";
       emodctrl = new US_EqModelControl(
             scanfits, runfit, edata, modelx, models, model_widget, sscann );
 
-      connect( emodctrl, SIGNAL( update_scan( int ) ),
-               this,     SLOT(   new_scan(    int ) ) );
+      connect( emodctrl, &US_EqModelControl::update_scan,
+               this,     &US_GlobalEquil::new_scan );
 
       emodctrl->show();
    }
@@ -839,8 +839,8 @@ DbgLv(1) << "SCAN_SELECT()" << sscann << sscanx;
 
    ct_scselect->disconnect();
    ct_scselect->setValue( newscan );              // Set the scan nbr counter
-   connect( ct_scselect, SIGNAL( valueChanged( double ) ),
-                         SLOT(   scan_select(  double ) ) );
+   connect( ct_scselect, &QwtCounter::valueChanged,
+                         this, &US_GlobalEquil::scan_select );
 
 DbgLv(1) << " GE:ClItem: signal_mc model_widget" << signal_mc << model_widget;
    if ( signal_mc )
@@ -1008,14 +1008,14 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
    // Set up the picker for mouse down, moves and up
-   QwtPlotPicker* pick = new US_PlotPicker( equil_plot );
+   US_PlotPicker* pick = new US_PlotPicker( equil_plot );
    pick->setRubberBand( QwtPicker::CrossRubberBand );
-   connect( pick, SIGNAL( cMouseDown(   const QPointF& ) ),
-                  SLOT(   pMouseDown(  const QPointF& ) ) );
-   connect( pick, SIGNAL( cMouseUp(     const QPointF& ) ),
-                  SLOT(   pMouseUp(    const QPointF& ) ) );
-   connect( pick, SIGNAL( cMouseDrag(   const QPointF& ) ),
-                  SLOT(   pMouseMoved( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseDown,
+                  this, &US_GlobalEquil::pMouseDown );
+   connect( pick, &US_PlotPicker::cMouseUp,
+                  this, &US_GlobalEquil::pMouseUp );
+   connect( pick, &US_PlotPicker::cMouseDrag,
+                  this, &US_GlobalEquil::pMouseMoved );
 
    if ( scedits[ sscanx ].edited )
    {

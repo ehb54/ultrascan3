@@ -36,8 +36,8 @@ US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US
    main->setContentsMargins( 2, 2, 2, 2 );
 
    dkdb_cntrls   = new US_Disk_DB_Controls( ddstate );
-   connect( dkdb_cntrls, SIGNAL( changed     ( bool ) ),
-            this,        SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_LoadAUC::update_disk_db );
 
    // Investigator selection
    //personID = US_Settings::us_inv_ID();
@@ -45,7 +45,7 @@ US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US
    QHBoxLayout* investigator = new QHBoxLayout;
 
    pb_invest = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_invest, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_invest, &QAbstractButton::clicked, this, &US_LoadAUC::sel_investigator );
    investigator->addWidget( pb_invest );
    if ( US_Settings::us_inv_level() < 3 )
       pb_invest->setEnabled( false );
@@ -64,8 +64,8 @@ US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US
    search->addWidget( lb_search );
  
    le_search = us_lineedit( "" );
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-                       SLOT  ( limit_data ( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged,
+                       this, &US_LoadAUC::limit_data );
    search->addWidget( le_search );
 
    // Tree
@@ -119,12 +119,12 @@ US_LoadAUC::US_LoadAUC( bool local, QMap<QString,QString>& prot_det, QVector< US
    buttons->addWidget( pb_shedits );
    buttons->addWidget( pb_accept );
 
-   connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand()   ) );
-   connect( pb_collapse, SIGNAL( clicked() ), SLOT( collapse() ) );
-   connect( pb_help,     SIGNAL( clicked() ), SLOT( help()     ) );
-   connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject()   ) );
-   connect( pb_shedits,  SIGNAL( clicked() ), SLOT( fill_in()  ) );
-   connect( pb_accept,   SIGNAL( clicked() ), SLOT( load()     ) );
+   connect( pb_expand,   &QAbstractButton::clicked, this, &US_LoadAUC::expand );
+   connect( pb_collapse, &QAbstractButton::clicked, this, &US_LoadAUC::collapse );
+   connect( pb_help,     &QAbstractButton::clicked, this, &US_LoadAUC::help );
+   connect( pb_cancel,   &QAbstractButton::clicked, this, &QDialog::reject );
+   connect( pb_shedits,  &QAbstractButton::clicked, this, &US_LoadAUC::fill_in );
+   connect( pb_accept,   &QAbstractButton::clicked, this, &US_LoadAUC::load );
 
    main->addLayout( dkdb_cntrls );
    main->addLayout( investigator );
@@ -167,15 +167,15 @@ US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawDa
    main->setContentsMargins( 2, 2, 2, 2 );
 
    dkdb_cntrls   = new US_Disk_DB_Controls( ddstate );
-   connect( dkdb_cntrls, SIGNAL( changed     ( bool ) ),
-            this,        SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_LoadAUC::update_disk_db );
 
    // Investigator selection
    personID = US_Settings::us_inv_ID();
    QHBoxLayout* investigator = new QHBoxLayout;
 
    pb_invest = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_invest, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_invest, &QAbstractButton::clicked, this, &US_LoadAUC::sel_investigator );
    investigator->addWidget( pb_invest );
    if ( US_Settings::us_inv_level() < 3 )
       pb_invest->setEnabled( false );
@@ -194,8 +194,8 @@ US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawDa
    search->addWidget( lb_search );
  
    le_search = us_lineedit( "" );
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-                       SLOT  ( limit_data ( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged,
+                       this, &US_LoadAUC::limit_data );
    search->addWidget( le_search );
 
    // Tree
@@ -249,12 +249,12 @@ US_LoadAUC::US_LoadAUC( bool local, QString auto_mode, QVector< US_DataIO::RawDa
    buttons->addWidget( pb_shedits );
    buttons->addWidget( pb_accept );
 
-   connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand()   ) );
-   connect( pb_collapse, SIGNAL( clicked() ), SLOT( collapse() ) );
-   connect( pb_help,     SIGNAL( clicked() ), SLOT( help()     ) );
-   connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject()   ) );
-   connect( pb_shedits,  SIGNAL( clicked() ), SLOT( fill_in()  ) );
-   connect( pb_accept,   SIGNAL( clicked() ), SLOT( load()     ) );
+   connect( pb_expand,   &QAbstractButton::clicked, this, &US_LoadAUC::expand );
+   connect( pb_collapse, &QAbstractButton::clicked, this, &US_LoadAUC::collapse );
+   connect( pb_help,     &QAbstractButton::clicked, this, &US_LoadAUC::help );
+   connect( pb_cancel,   &QAbstractButton::clicked, this, &QDialog::reject );
+   connect( pb_shedits,  &QAbstractButton::clicked, this, &US_LoadAUC::fill_in );
+   connect( pb_accept,   &QAbstractButton::clicked, this, &US_LoadAUC::load );
 
    main->addLayout( dkdb_cntrls );
    main->addLayout( investigator );
@@ -295,15 +295,15 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    main->setContentsMargins( 2, 2, 2, 2 );
 
    dkdb_cntrls   = new US_Disk_DB_Controls( ddstate );
-   connect( dkdb_cntrls, SIGNAL( changed     ( bool ) ),
-            this,        SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_LoadAUC::update_disk_db );
 
    // Investigator selection
    personID = US_Settings::us_inv_ID();
    QHBoxLayout* investigator = new QHBoxLayout;
 
    pb_invest = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_invest, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_invest, &QAbstractButton::clicked, this, &US_LoadAUC::sel_investigator );
    investigator->addWidget( pb_invest );
    if ( US_Settings::us_inv_level() < 3 )
       pb_invest->setEnabled( false );
@@ -322,8 +322,8 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    search->addWidget( lb_search );
  
    le_search = us_lineedit( "" );
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-                       SLOT  ( limit_data ( const QString& ) ) );
+   connect( le_search, &QLineEdit::textChanged,
+                       this, &US_LoadAUC::limit_data );
    search->addWidget( le_search );
 
    // Tree
@@ -377,12 +377,12 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    buttons->addWidget( pb_shedits );
    buttons->addWidget( pb_accept );
 
-   connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand()   ) );
-   connect( pb_collapse, SIGNAL( clicked() ), SLOT( collapse() ) );
-   connect( pb_help,     SIGNAL( clicked() ), SLOT( help()     ) );
-   connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject()   ) );
-   connect( pb_shedits,  SIGNAL( clicked() ), SLOT( fill_in()  ) );
-   connect( pb_accept,   SIGNAL( clicked() ), SLOT( load()     ) );
+   connect( pb_expand,   &QAbstractButton::clicked, this, &US_LoadAUC::expand );
+   connect( pb_collapse, &QAbstractButton::clicked, this, &US_LoadAUC::collapse );
+   connect( pb_help,     &QAbstractButton::clicked, this, &US_LoadAUC::help );
+   connect( pb_cancel,   &QAbstractButton::clicked, this, &QDialog::reject );
+   connect( pb_shedits,  &QAbstractButton::clicked, this, &US_LoadAUC::fill_in );
+   connect( pb_accept,   &QAbstractButton::clicked, this, &US_LoadAUC::load );
 
    main->addLayout( dkdb_cntrls );
    main->addLayout( investigator );
@@ -625,8 +625,8 @@ void US_LoadAUC::sel_investigator( void )
 
    US_Investigator* inv_dialog = new US_Investigator( true, personID );
 
-   connect( inv_dialog, SIGNAL( investigator_accepted( int ) ),
-            this,       SLOT  ( assign_investigator  ( int ) ) );
+   connect( inv_dialog, &US_Investigator::investigator_accepted,
+            this,       &US_LoadAUC::assign_investigator );
 
    inv_dialog->exec();
 }

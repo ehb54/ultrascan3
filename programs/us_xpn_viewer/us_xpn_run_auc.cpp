@@ -22,36 +22,38 @@ US_XpnRunAuc::US_XpnRunAuc( QString& runID )
    QHBoxLayout* search       = new QHBoxLayout;
    QLabel*      lb_search    = us_label( tr( "Search" ) );
                 le_search    = us_lineedit( "" );
-   search      ->addWidget( lb_search );
-   search      ->addWidget( le_search );
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-            this,      SLOT  ( limit_data ( const QString& ) ) );
+                le_search->setAccessibleName( tr( "Search" ) );
+                lb_search->setBuddy( le_search );
+                search->addWidget( lb_search );
+                search->addWidget( le_search );
+                connect( le_search, &QLineEdit::textChanged, this, &US_XpnRunAuc::limit_data );
 
-   // Load the runInfo structure with current data
-   load_runs();
+                // Load the runInfo structure with current data
+                load_runs();
 
-   // Tree
-   tw                     = new QTableWidget( runInfo.size(), 3, this );
-   populate_list();
+                // Tree
+                tw = new QTableWidget( runInfo.size(), 3, this );
+                tw->setAccessibleName( tr( "AUC Runs" ) );
+                populate_list();
 
-   // Button Row
-   QHBoxLayout* buttons   = new QHBoxLayout;
+                // Button Row
+                QHBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
-   buttons->addWidget( pb_cancel );
+                QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+                connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
+                buttons->addWidget( pb_cancel );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
-   buttons->addWidget( pb_accept );
+                QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
+                connect( pb_accept, &QAbstractButton::clicked, this, &US_XpnRunAuc::select );
+                buttons->addWidget( pb_accept );
 
-   main->addLayout( search );
-   main->addWidget( tw );
-   main->addLayout( buttons );
-qDebug() << "gDBr: size" << size();
+                main->addLayout( search );
+                main->addWidget( tw );
+                main->addLayout( buttons );
+                qDebug() << "gDBr: size" << size();
 
-   resize( 600, 300 );
-qDebug() << "gDBr: size" << size();
+                resize( 600, 300 );
+                qDebug() << "gDBr: size" << size();
 }
 
 // Function to load the runInfo structure with all runID's on local disk

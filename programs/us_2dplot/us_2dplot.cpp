@@ -58,7 +58,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_par1->setSingleStep( 0.01 );
    ct_par1->setValue( par1 );
    ct_par1->setNumButtons( 3 );
-   connect (ct_par1, SIGNAL(valueChanged (double)), this, SLOT(update_par1(double)));
+   connect (ct_par1, &QwtCounter::valueChanged, this, &US_2dPlot::update_par1);
    top->addWidget( ct_par1, row++, 0 );
    
    QLabel* lbl_par2 = us_label( tr("Parameter 2:"), -1 );
@@ -69,7 +69,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_par2->setSingleStep( 0.01 );
    ct_par2->setValue( par2 );
    ct_par2->setNumButtons( 3 );
-   connect (ct_par2, SIGNAL(valueChanged (double)), this, SLOT(update_par2(double)));
+   connect (ct_par2, &QwtCounter::valueChanged, this, &US_2dPlot::update_par2);
    top->addWidget( ct_par2, row++, 0 );
    
    QLabel* lbl_par3 = us_label( tr("Parameter 3:"), -1 );
@@ -80,7 +80,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_par3->setSingleStep( 0.01 );
    ct_par3->setValue( par3 );
    ct_par3->setNumButtons( 3 );
-   connect (ct_par3, SIGNAL(valueChanged (double)), this, SLOT(update_par3(double)));
+   connect (ct_par3, &QwtCounter::valueChanged, this, &US_2dPlot::update_par3);
    top->addWidget( ct_par3, row++, 0 );
    
    QLabel* lbl_par4 = us_label( tr("Parameter 4:"), -1 );
@@ -91,7 +91,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_par4->setSingleStep( 0.01 );
    ct_par4->setValue( par4 );
    ct_par4->setNumButtons( 3 );
-   connect (ct_par4, SIGNAL(valueChanged (double)), this, SLOT(update_par4(double)));
+   connect (ct_par4, &QwtCounter::valueChanged, this, &US_2dPlot::update_par4);
    top->addWidget( ct_par4, row++, 0 );
    
    QLabel* lbl_resolution = us_label( tr("S-value Resolution:"), -1 );
@@ -102,7 +102,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_resolution->setSingleStep( 0.1 );
    ct_resolution->setValue( resolution );
    ct_resolution->setNumButtons( 3 );
-   connect (ct_resolution, SIGNAL(valueChanged (double)), this, SLOT(update_resolution(double)));
+   connect (ct_resolution, &QwtCounter::valueChanged, this, &US_2dPlot::update_resolution);
    top->addWidget( ct_resolution, row++, 0 );
    
    QLabel* lbl_model = us_label( tr("Model #:"), -1 );
@@ -113,7 +113,7 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    ct_model->setSingleStep( 1 );
    ct_model->setValue( model );
    ct_model->setNumButtons( 1 );
-   connect (ct_model, SIGNAL(valueChanged (double)), this, SLOT(update_model(double)));
+   connect (ct_model, &QwtCounter::valueChanged, this, &US_2dPlot::update_model);
    top->addWidget( ct_model, row++, 0 );
    
    
@@ -132,11 +132,11 @@ US_2dPlot::US_2dPlot() : US_Widgets()
 
    pb_calculate = us_pushbutton( tr( "Calculate" ) );
    pb_calculate->setEnabled( true );
-   connect( pb_calculate, SIGNAL( clicked() ), SLOT( calculate() ) );
+   connect( pb_calculate, &QAbstractButton::clicked, this, &US_2dPlot::calculate );
    top->addWidget( pb_calculate, row++, 0 );
 
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_close, &QAbstractButton::clicked, this, &QWidget::close );
    top->addWidget( pb_close, row++, 0 );
 
    top->setColumnStretch( 0, 0 );

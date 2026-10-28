@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
@@ -51,8 +52,8 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    manage_url_host = manage_url;
    manage_url_port = manage_url;
 
-   manage_url_host.replace( QRegExp( ":.*$" ), "" );
-   manage_url_port.replace( QRegExp( "^.*:" ), "" );
+   manage_url_host.replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+   manage_url_port.replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
    cout << manage_url_host << endl;
    cout << manage_url_port << endl;
 
@@ -60,8 +61,8 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    // stage_path      = stage_url;
    // stage_url_path  = stage_url;
 
-   // stage_url     .replace( QRegExp( ":.*$" ), "" );
-   // stage_path    .replace( QRegExp( "^.*:" ), "" );
+   // stage_url     .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+   // stage_path    .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
    // stage_url_path += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
 
    if ( cluster_id.isEmpty() ||
@@ -156,20 +157,12 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
          // qt3 QFileInfo::size() is incorrect uint is too small
          // so use fstat()
 
-#if QT_VERSION < 0x040000
-         new QTreeWidgetItem( lv_files, 
-                            files[ i ], 
-                            QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() ),
-                            QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
-                            );
-#else
          lv_files->addTopLevelItem( new QTreeWidgetItem(
                                                         QStringList()
                                                         << files[ i ]
                                                         << QString( " %1 " ).arg( QFileInfo( files[ i ] ).lastModified().toString() )
                                                         << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                                                         ) );
-#endif
       }
    }
 
@@ -283,35 +276,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight1);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
@@ -336,7 +300,6 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(100);
@@ -382,7 +345,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -431,8 +394,8 @@ void US_Hydrodyn_Cluster_Submit::systems()
                stage_url       = selected_system[ "stage" ];
                // stage_path      = stage_url;
                // stage_url_path  = stage_url;
-               stage_url       .replace( QRegExp( ":.*$" ), "" );
-               // stage_path      .replace( QRegExp( "^.*:" ), "" );
+               stage_url       .replace( QRegularExpression( QStringLiteral( ":.*$" ) ), "" );
+               // stage_path      .replace( QRegularExpression( QStringLiteral( "^.*:" ) ), "" );
                // stage_url_path  += QString( "%1%2%3" ).arg( QDir::separator() ).arg( cluster_id ).arg( QDir::separator() );
             } else {
                QMessageBox::warning( this, 
@@ -578,7 +541,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
 
    // get a count of the files in a tar file
    QStringList tar_list;
-   if ( file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
+   if ( file.contains( QRegularExpression( QStringLiteral( "\\.(tar|TAR)$" ) ) ) )
    {
       US_Tar ust;
       int result = ust.list( file, tar_list, true );
@@ -612,16 +575,17 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
       return false;
    }
 
-   unsigned int common_count = ( unsigned int ) tar_list.filter( QRegExp( "^common_" ) ).size();
+   unsigned int common_count = ( unsigned int ) tar_list.filter( QRegularExpression( QStringLiteral( "^common_" ) ) ).size();
 
 
    unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
    
    {
-      QRegExp rx( "^(bfnb|bfnbpm|oned|best)_p(\\d+)_" );
-      if ( rx.indexIn( file ) != -1 )
+      QRegularExpression rx( "^(bfnb|bfnbpm|oned|best)_p(\\d+)_" );
+      QRegularExpressionMatch rx_m = rx.match( file );
+      if ( rx_m.hasMatch() )
       {
-         job_count = rx.cap( 2 ).toUInt();
+         job_count = rx_m.captured(2).toUInt();
          cout << QString( "host count, %1\n" ).arg( job_count );
          if ( job_count < 2 )
          {
@@ -644,7 +608,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
       processor_count = 1;
    }
 
-   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+   QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegularExpression( QStringLiteral( "\\.(tar|tgz)$" ) ), "" );
 
    // url = QString( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
    //                "<Message>"
@@ -653,15 +617,15 @@ bool US_Hydrodyn_Cluster_Submit::submit_url_body( QString file, QString &url, QS
 
 
    QString job_type = "iq";
-   if ( file.contains( QRegExp( "^bfnb_" ) ) )
+   if ( file.contains( QRegularExpression( QStringLiteral( "^bfnb_" ) ) ) )
    {
       job_type = "nsa";
    }
-   if ( file.contains( QRegExp( "^bfnbpm_" ) ) )
+   if ( file.contains( QRegularExpression( QStringLiteral( "^bfnbpm_" ) ) ) )
    {
       job_type = "pm";
    }
-   if ( file.contains( QRegExp( "^oned_" ) ) )
+   if ( file.contains( QRegularExpression( QStringLiteral( "^oned_" ) ) ) )
    {
       job_type = "1d";
    }
@@ -983,13 +947,9 @@ bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
 
    system_proc = new QProcess( this );
 
-#if QT_VERSION < 0x040000
-   system_proc->setArguments( cmd );
-#else
    QString prog = cmd.front();
    cmd.pop_front();
    QStringList args = cmd;
-#endif
 
    system_proc_active = true;
 
@@ -999,36 +959,18 @@ bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
    connect( system_proc, SIGNAL(started()),  this, SLOT(system_proc_started()) );
 
 
-#if QT_VERSION < 0x040000
-   return system_proc->start();
-#else
    system_proc->start( prog, args );
    return system_proc->waitForStarted();
-#endif
 }
 
 void US_Hydrodyn_Cluster_Submit::system_proc_readFromStdout()
 {
-#if QT_VERSION < 0x040000
-   while ( system_proc->canReadLineStdout() )
-   {
-      editor_msg("brown", system_proc->readLineStdout());
-   }
-#else
    editor_msg( "brown", QString( system_proc->readAllStandardOutput() ) );
-#endif   
 }
    
 void US_Hydrodyn_Cluster_Submit::system_proc_readFromStderr()
 {
-#if QT_VERSION < 0x040000
-   while ( system_proc->canReadLineStderr() )
-   {
-      editor_msg("red", system_proc->readLineStderr());
-   }
-#else
    editor_msg( "red", QString( system_proc->readAllStandardError() ) );
-#endif   
 }
    
 void US_Hydrodyn_Cluster_Submit::system_proc_finished( int, QProcess::ExitStatus )
@@ -1076,7 +1018,7 @@ bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
 //    // followed by ftp.rmdir();
 //    comm_active = true;
 
-//    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+//    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegularExpression( QStringLiteral( "\\.(tar|tgz)$" ) ), "" );
 
 //    cout 
 //       << QString( "ftp host   : %1\n"
@@ -1132,7 +1074,7 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
 //    // setup stuff for ftp
 //    comm_active = true;
 
-//    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegExp( "\\.(tar|tgz)$" ), "" );
+//    QString target_dir = QString( "%1" ).arg( next_to_process->text( 0 ) ).replace( QRegularExpression( QStringLiteral( "\\.(tar|tgz)$" ) ), "" );
 
 //    cout 
 //       << QString( "ftp host   : %1\n"
@@ -1170,7 +1112,7 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
 
    //   cmd << QString( "%1%2/" )
    //      .arg( stage_url_path )
-   //      .arg( QString("%1").arg( file ).replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) );
+   //      .arg( QString("%1").arg( file ).replace( QRegularExpression( QStringLiteral( "\\.(tgz|tar|TGZ|TAR)$" ) ), "" ) );
 
    //   return( system_cmd( cmd ) );
    //}
@@ -1203,24 +1145,6 @@ void US_Hydrodyn_Cluster_Submit::remove()
       return;
    }
 
-#if QT_VERSION < 0x040000
-   QTreeWidgetItem *lvi = lv_files->firstChild();
-
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            if ( !QFile::remove( lvi->text( 0 ) ) )
-            {
-               editor_msg( "red" , QString( us_tr( "can not remove file %1" ) ).arg( lvi->text( 0 ) ) );
-            } else {
-               editor_msg( "black" , QString( us_tr( "Removed file: %1" ) ).arg( lvi->text( 0 ) ) );
-            }
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-#else
    QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
    QTreeWidgetItem *lvi;
    while ( *it ) {
@@ -1233,7 +1157,6 @@ void US_Hydrodyn_Cluster_Submit::remove()
       }
       ++it;
    }
-#endif
    if ( !update_files() )
    {
       QMessageBox::information( this, 
@@ -1353,14 +1276,14 @@ void US_Hydrodyn_Cluster_Submit::http_finished() {
    /*   if ( comm_mode == "status" )
    {
       QString status = current_http_response;
-      status.replace( QRegExp( "^.*<status>" ), "" );
-      status.replace( QRegExp( "</status>.*$" ), "" );
+      status.replace( QRegularExpression( QStringLiteral( "^.*<status>" ) ), "" );
+      status.replace( QRegularExpression( QStringLiteral( "</status>.*$" ) ), "" );
       next_to_process->setText( 1, status );
       QString message = current_http_response;
       if ( message.contains( "<message>" ) )
       {
-         message.replace( QRegExp( "^.*<message>" ), "" );
-         message.replace( QRegExp( "</message>.*$" ), "" );
+         message.replace( QRegularExpression( QStringLiteral( "^.*<message>" ) ), "" );
+         message.replace( QRegularExpression( QStringLiteral( "</message>.*$" ) ), "" );
       } else {
          message = "";
       }

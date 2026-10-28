@@ -202,8 +202,9 @@ class US_UTIL_EXTERN US_Math2
       //! \return The seed used to set the system time
       static uint randomize( void );
 
-      //! \brief Set the sysem random sequence.
-      //! \param seed A predetermined seed 
+      //! \brief Set the sysem random sequence.  Both overloads discard the
+      //!        deviate box_muller() keeps from its last pair.
+      //! \param seed A predetermined seed
       //! \return The seed used to set the system time
       static uint randomize( uint );
 
@@ -215,8 +216,10 @@ class US_UTIL_EXTERN US_Math2
       vector end-to-end, and the parameter a_dim1 contains the length of
       each column
 
-      Function returns 0 if succesful, 1, if iteration count exceeded 3*N,
-      or 2 in case of invalid problem dimensions or memory allocation error.
+      Function returns 0 if succesful, 1, if iteration count exceeded the
+      limit (3*N by default), or 2 in case of invalid problem dimensions or
+      memory allocation error.  At the iteration limit, x[] holds the last
+      feasible (not optimal) solution and rnorm its residual norm.
 
       Instead of pointers for working space, NULL can be given to let this
       function to allocate and free the required memory.
@@ -248,17 +251,29 @@ class US_UTIL_EXTERN US_Math2
       
       \param zzp    An m-array of working space, zz[].
       \param indexp An n-array of working space, index[].
+      \param itmax  Iteration limit (least-squares solves); 0 or less
+                    selects 3*n, as in Lawson & Hanson.
+      \param abort_flag  Optional pointer to a flag checked once per outer
+                    iteration; if it becomes true, the function returns 3
+                    with the last feasible x (and its rnorm).
+
+      \returns     0 = solution found, 1 = iteration limit reached (x is the
+                    last feasible solution), 2 = invalid parameters,
+                    3 = aborted through abort_flag
       */
 
-      static int nnls(
-         double* a, int a_dim1, int m, int n,
-         double* b,
-         double* x,
-         double* rnorm  = NULL,
-         double* wp     = NULL,  
-         double* zzp    = NULL, 
-         int*    indexp = NULL
-         );
+      static int    nnls( double*                  a,
+                          int                      a_dim1,
+                          int                      m,
+                          int                      n,
+                          double*                  b,
+                          double*                  x,
+                          double*                  rnorm      = nullptr,
+                          double*                  wp         = nullptr,
+                          double*                  zzp        = nullptr,
+                          int*                     indexp     = nullptr,
+                          int                      itmax      = 0,
+                          const std::atomic<bool>* abort_flag = nullptr );
 
       /*! \brief Remove high frequency noise from a signal
           \param array   Data to be smoothed.  This array will be modified.

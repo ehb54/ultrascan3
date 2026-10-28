@@ -6,6 +6,10 @@ add_executable(us_analyte
     ${src_dir}/us_analyte_main.cpp
 )
 
+set_target_properties(us_analyte PROPERTIES
+    OUTPUT_NAME us_analyte_gui
+)
+
 target_link_libraries(us_analyte
     PRIVATE
         us_program_common

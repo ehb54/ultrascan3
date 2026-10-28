@@ -123,4 +123,22 @@
   #define US_GUI_EXTERN US_EXPORT
 #endif
 
+/**
+ * @def US_CB_STATE_CHANGED
+ * @brief Portable signal pointer for "a QCheckBox check state changed".
+ *
+ * Qt 6.7 introduced QCheckBox::checkStateChanged(Qt::CheckState) and deprecated
+ * QCheckBox::stateChanged(int) in 6.9, so builds with
+ * QT_DISABLE_DEPRECATED_UP_TO >= 0x060900 no longer see stateChanged. Qt 5 only
+ * ever had stateChanged. Both carry the same values, and Qt::CheckState
+ * converts implicitly to int, so a slot taking int works with either.
+ *
+ * Usage: connect( ck_box, US_CB_STATE_CHANGED, this, &US_Foo::bar );
+ */
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+  #define US_CB_STATE_CHANGED (&QCheckBox::checkStateChanged)
+#else
+  #define US_CB_STATE_CHANGED (&QCheckBox::stateChanged)
+#endif
+
 #endif // US_EXTERN_H

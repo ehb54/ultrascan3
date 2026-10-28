@@ -72,24 +72,12 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    AUTFBACK( rb_integral );
    connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-#if 1 // QT_VERSION < 0x040000
    bg_bl_type = new QButtonGroup( this );
    int bg_pos = 0;
    bg_bl_type->setExclusive(true);
    bg_bl_type->addButton( rb_linear, bg_pos++ );
    bg_bl_type->addButton( rb_integral, bg_pos++ );
    // connect( bg_bl_type, SIGNAL( buttonClicked( int id ) ), SLOT( update_enables() ) );
-#else
-   bg_bl_type = new QGroupBox();
-   bg_bl_type->setFlat( true );
-
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_linear );
-      bl->addWidget( rb_integral );
-      bg_bl_type->setLayout( bl );
-   }
-#endif
    
    cb_save_bl = new QCheckBox(this);
    // cb_save_bl->setText( us_tr( "Produce separate baseline curves " ) );
@@ -100,7 +88,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    cb_save_bl->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_bl );
 
-   lbl_smooth =  new QLabel      ( us_tr( "Smoothing:" ), this );
+   lbl_smooth =  new QLabel      ( us_tr( "Smoothing radius:" ), this );
    lbl_smooth -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_smooth -> setPalette      ( PALET_LABEL );
    AUTFBACK( lbl_smooth );
@@ -264,7 +252,6 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    rb_emggmg->setPalette( PALET_NORMAL );
    AUTFBACK( rb_emggmg );
 
-#if 1 // QT_VERSION < 0x040000
    bg_gaussian_type = new QButtonGroup( this );
    bg_pos = 0;
    bg_gaussian_type->setExclusive(true);
@@ -272,19 +259,6 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    bg_gaussian_type->addButton( rb_gmg, bg_pos++ );
    bg_gaussian_type->addButton( rb_emg, bg_pos++ );
    bg_gaussian_type->addButton( rb_emggmg, bg_pos++ );
-#else
-   bg_gaussian_type = new QGroupBox();
-   bg_gaussian_type->setFlat( true );
-   
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_gauss );
-      bl->addWidget( rb_gmg );
-      bl->addWidget( rb_emg );
-      bl->addWidget( rb_emggmg );
-      bg_gaussian_type->setLayout( bl );
-   }
-#endif
 
    pb_clear_gauss =  new QPushButton ( us_tr( "Clear cached Gaussian values" ), this );
    pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1) );
@@ -419,7 +393,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
    cb_gg_smooth = new QCheckBox(this);
-   cb_gg_smooth->setText(us_tr( "Experimental: Global Gaussian initialization smoothing. Maximum smoothing points: "));
+   cb_gg_smooth->setText(us_tr( "Global Gaussians - initialization smoothing. Maximum smoothing radius: "));
    cb_gg_smooth->setEnabled( true );
    cb_gg_smooth->setChecked( (*parameters)[ "dad_cb_gg_smooth" ] == "true" );
    cb_gg_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -441,7 +415,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    le_gg_smooth->setMinimumWidth( 60 );
 
    cb_gg_cyclic = new QCheckBox(this);
-   cb_gg_cyclic->setText(us_tr( "Experimental: Global Gaussian Gaussian cyclic fit"));
+   cb_gg_cyclic->setText(us_tr( "Global Gaussians - cyclic fit"));
    cb_gg_cyclic->setEnabled( true );
    cb_gg_cyclic->setChecked( (*parameters)[ "dad_cb_gg_cyclic" ] == "true" );
    cb_gg_cyclic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -450,7 +424,7 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    connect( cb_gg_cyclic, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_gg_oldstyle = new QCheckBox(this);
-   cb_gg_oldstyle->setText(us_tr( "Experimental: Global Gaussian - Enable old style Gaussian fit display"));
+   cb_gg_oldstyle->setText(us_tr( "Global Gaussians - Enable legacy Gaussian fit display"));
    cb_gg_oldstyle->setEnabled( true );
    cb_gg_oldstyle->setChecked( (*parameters)[ "dad_cb_gg_oldstyle" ] == "true" );
    cb_gg_oldstyle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -553,6 +527,25 @@ void US_Hydrodyn_Dad_Options::setupGUI()
    }
    connect( le_ampl_width_min, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_ampl_width_min->setMinimumWidth( 60 );
+
+   lbl_ampl_min =  new QLabel      ( us_tr( "Global minimum value for Gaussian amplitude:" ), this );
+   lbl_ampl_min -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_ampl_min -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_ampl_min );
+   lbl_ampl_min -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_ampl_min = new QLineEdit( this );    le_ampl_min->setObjectName( "le_ampl_min Line Edit" );
+   le_ampl_min->setText( (*parameters)[ "dad_ampl_min" ] );
+   le_ampl_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_ampl_min->setPalette( PALET_NORMAL );
+   AUTFBACK( le_ampl_min );
+   le_ampl_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1e-50, 1e-3, 1, le_ampl_min );
+      le_ampl_min->setValidator( qdv );
+   }
+   connect( le_ampl_min, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_ampl_min->setMinimumWidth( 60 );
 
    cb_lock_min_retry = new QCheckBox(this);
    cb_lock_min_retry->setText( us_tr( "Lock curves and retry when minimum amplitude or width is pegged\nby the global minimum times this value:" ) );
@@ -723,15 +716,18 @@ void US_Hydrodyn_Dad_Options::setupGUI()
       gl_other->addWidget         ( lbl_ampl_width_min , 1, 0 );
       gl_other->addWidget         ( le_ampl_width_min  , 1, 1 );
 
-      gl_other->addWidget         ( cb_lock_min_retry       , 2, 0 );
-      gl_other->addWidget         ( le_lock_min_retry_mult  , 2, 1 );
+      gl_other->addWidget         ( lbl_ampl_min , 2, 0 );
+      gl_other->addWidget         ( le_ampl_min  , 2, 1 );
 
-      gl_other->addWidget         ( cb_maxfpk_restart       , 3, 0 );
+      gl_other->addWidget         ( cb_lock_min_retry       , 3, 0 );
+      gl_other->addWidget         ( le_lock_min_retry_mult  , 3, 1 );
+
+      gl_other->addWidget         ( cb_maxfpk_restart       , 4, 0 );
       {
          QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          // hbl->addWidget     ( le_maxfpk_restart_tries );
          hbl->addWidget     ( le_maxfpk_restart_pct );
-         gl_other->addLayout( hbl , 3, 1 );
+         gl_other->addLayout( hbl , 4, 1 );
       }
       background->addLayout( gl_other );
    }
@@ -969,6 +965,7 @@ bool US_Hydrodyn_Dad_Options::any_changes()
       || (*parameters)[ "dad_makeiq_avg_peaks"        ] != ( le_makeiq_avg_peaks    ->text() )
       || (*parameters)[ "dad_csv_transposed"          ] != ( cb_csv_transposed->isChecked() ? "true" : "false" )
       || (*parameters)[ "dad_ampl_width_min"          ] != ( le_ampl_width_min      ->text() )
+      || (*parameters)[ "dad_ampl_min"                ] != ( le_ampl_min            ->text() )
       || (*parameters)[ "dad_lock_min_retry"          ] != ( cb_lock_min_retry->isChecked() ? "true" : "false" )
       || (*parameters)[ "dad_lock_min_retry_mult"     ] != ( le_lock_min_retry_mult ->text() )
       || (*parameters)[ "dad_maxfpk_restart"          ] != ( cb_maxfpk_restart->isChecked() ? "true" : "false" )
@@ -1029,6 +1026,7 @@ void US_Hydrodyn_Dad_Options::ok()
    (*parameters)[ "dad_csv_transposed" ] = cb_csv_transposed->isChecked() ? "true" : "false";
    
    (*parameters)[ "dad_ampl_width_min"       ] = le_ampl_width_min      ->text();
+   (*parameters)[ "dad_ampl_min"             ] = le_ampl_min            ->text();
 
    (*parameters)[ "dad_lock_min_retry"       ] = cb_lock_min_retry->isChecked() ? "true" : "false";
    (*parameters)[ "dad_lock_min_retry_mult"  ] = le_lock_min_retry_mult ->text();
@@ -1236,8 +1234,8 @@ void US_Hydrodyn_Dad_Options::fasta_file() {
    QStringList qsl;
 
    QTextStream ts( &f );
-   QRegExp rx_empty( "^\\s*$" );
-   QRegExp rx_newseq( "^\\s*>" );
+   QRegularExpression rx_empty( "^\\s*$" );
+   QRegularExpression rx_newseq( "^\\s*>" );
 
    QString seq;
    int chains = 0;
@@ -1249,11 +1247,12 @@ void US_Hydrodyn_Dad_Options::fasta_file() {
    while ( !ts.atEnd() ) {
       QString qs = ts.readLine().trimmed();
       
-      if ( rx_empty.exactMatch( qs ) ) {
+      if ( rx_empty.match( qs ).hasMatch() ) {
          continue;
       }
 
-      if ( rx_newseq.indexIn( qs ) > -1 ) {
+      QRegularExpressionMatch rx_newseq_m = rx_newseq.match( qs );
+      if ( rx_newseq_m.hasMatch() ) {
          seq_names += qs.replace( rx_newseq, "" ) + "\n";
          chains++;
          continue;

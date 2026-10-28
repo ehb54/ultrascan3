@@ -116,34 +116,34 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    main->addWidget( pb_delete,       row++, 2, 1, 2 );
    main->addLayout( buttonbox,       row++, 0, 1, 4 );
 
-   connect( pb_investigator, SIGNAL( clicked()           ),
-                             SLOT(   get_person()        ) );
-   connect( dkdb_cntrls,     SIGNAL( changed    ( bool ) ),
-                             SLOT(   upd_disk_db( bool ) ) );
-   connect( le_mlfilt,       SIGNAL( editingFinished()   ),
-                             SLOT(   filter_changed()    ) );
-   connect( pb_models,       SIGNAL( clicked()           ),
-                             SLOT(   list_models()       ) );
-   connect( pb_new,          SIGNAL( clicked()           ),
-                             SLOT(   new_model()         ) );
-   connect( le_description,  SIGNAL( editingFinished ()  ),
-                             SLOT  ( edit_description()  ) );
-   connect( pb_components,   SIGNAL( clicked()           ),
-                             SLOT(   manage_components() ) );
-   connect( pb_associations, SIGNAL( clicked()           ),
-                             SLOT(   associations()      ) );
-   connect( pb_save,         SIGNAL( clicked()           ),
-                             SLOT(   save_model()        ) );
-   connect( pb_delete,       SIGNAL( clicked()           ),
-                             SLOT(   delete_model()      ) );
-   connect( pb_help,         SIGNAL( clicked()           ),
-                             SLOT(   help()              ) );
-   connect( pb_close,        SIGNAL( clicked()           ),
-                             SLOT(   close()             ) );
-   connect( pb_accept,       SIGNAL( clicked()           ),
-                             SLOT(   accept_model()      ) );
-   connect( lw_models, SIGNAL( itemClicked ( QListWidgetItem* ) ),
-                       SLOT  ( select_model( QListWidgetItem* ) ) );
+   connect( pb_investigator, &QAbstractButton::clicked,
+                             this, &US_ModelGui::get_person );
+   connect( dkdb_cntrls,     &US_Disk_DB_Controls::changed,
+                             this, &US_ModelGui::upd_disk_db );
+   connect( le_mlfilt,       &QLineEdit::editingFinished,
+                             this, &US_ModelGui::filter_changed );
+   connect( pb_models,       &QAbstractButton::clicked,
+                             this, &US_ModelGui::list_models );
+   connect( pb_new,          &QAbstractButton::clicked,
+                             this, &US_ModelGui::new_model );
+   connect( le_description,  &QLineEdit::editingFinished,
+                             this, &US_ModelGui::edit_description );
+   connect( pb_components,   &QAbstractButton::clicked,
+                             this, &US_ModelGui::manage_components );
+   connect( pb_associations, &QAbstractButton::clicked,
+                             this, &US_ModelGui::associations );
+   connect( pb_save,         &QAbstractButton::clicked,
+                             this, &US_ModelGui::save_model );
+   connect( pb_delete,       &QAbstractButton::clicked,
+                             this, &US_ModelGui::delete_model );
+   connect( pb_help,         &QAbstractButton::clicked,
+                             this, &US_ModelGui::help );
+   connect( pb_close,        &QAbstractButton::clicked,
+                             this, &QWidget::close );
+   connect( pb_accept,       &QAbstractButton::clicked,
+                             this, &US_ModelGui::accept_model );
+   connect( lw_models, &QListWidget::itemClicked,
+                       this, &US_ModelGui::select_model );
 
    if ( !model.description.isEmpty()  &&  model.description != "New Model" )
    {  // if re-loading a previous model, list that model
@@ -771,10 +771,10 @@ qDebug() << "MngCmp: index" << index;
 
    US_Properties* dialog = new US_Properties( working_model, dbdisk );
    
-   connect( dialog, SIGNAL( done  ( void ) ), SLOT( update_sim    ( void ) ) );
-   connect( dialog, SIGNAL( use_db( bool ) ), SLOT( source_changed( bool ) ) );
+   connect( dialog, &US_Properties::done, this, &US_ModelGui::update_sim );
+   connect( dialog, &US_Properties::use_db, this, &US_ModelGui::source_changed );
 
-   connect( this, SIGNAL( disable_components_gui( ) ), dialog, SLOT( disable_gui( ) ) );
+   connect( this, &US_ModelGui::disable_components_gui, dialog, &US_Properties::disable_gui );
    
    //Check if the model was generated via autoflow framework
    
@@ -818,10 +818,10 @@ void US_ModelGui::associations( void )
    working_model = model;
 
    US_AssociationsGui* dialog = new US_AssociationsGui( working_model );
-   connect( dialog, SIGNAL( done() ), SLOT( update_assoc() ) );
+   connect( dialog, &US_AssociationsGui::done, this, &US_ModelGui::update_assoc );
    
    //Check if the model was generated via autoflow framework
-   connect( this, SIGNAL( disable_components_gui( ) ), dialog, SLOT( disable_gui( ) ) );
+   connect( this, &US_ModelGui::disable_components_gui, dialog, &US_AssociationsGui::disable_gui );
    if ( is_modelIDs_from_autoflow( modelID_global ) )
      {
        qDebug() << "Manage Associationss: GMP model!";

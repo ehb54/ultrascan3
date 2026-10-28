@@ -41,8 +41,8 @@ US_SequenceEditor::US_SequenceEditor( const QString& sequence )
    main->addWidget( pb_cancel, 5, 0 );
    main->addWidget( pb_accept, 5, 1 );
 
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QWidget::close );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SequenceEditor::accept );
 
    QFontMetrics fm( font );
    resize( fm.horizontalAdvance( 'W' ) * 80, fm.height() * 20 );
@@ -115,22 +115,50 @@ US_AnalyteMgrSelect::US_AnalyteMgrSelect( int *invID, int *select_db_disk,
    QGridLayout* gfbox   = us_checkbox( tr( "Gradient-Forming" ), ck_gradform );
 
    le_search            = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
    le_molecwt           = us_lineedit( "", -1, true );
+   le_molecwt->setAccessibleName( tr( "Molecular Weight" ) );
+   lb_molecwt->setBuddy( le_molecwt );
    le_vbar20            = us_lineedit( "", -1, true );
+   le_vbar20->setAccessibleName( tr( "VBar" ) );
+   lb_vbar20->setBuddy( le_vbar20 );
    le_residue           = us_lineedit( "", -1, true );
+   le_residue->setAccessibleName( tr( "Residue Count" ) );
+   lb_residue->setBuddy( le_residue );
    le_e280              = us_lineedit( "", -1, true );
+   le_e280->setAccessibleName( tr( "E280" ) );
+   lb_e280->setBuddy( le_e280 );
    le_strand            = us_lineedit( tr( "Double Stranded" ), -1, true );
+   le_strand->setAccessibleName( tr( "Strand" ) );
+   lb_strand->setBuddy( le_strand );
    le_3prime            = us_lineedit( tr( "Hydroxyl" ),        -1, true );
+   le_3prime->setAccessibleName( tr( "Three Prime" ) );
+   lb_3prime->setBuddy( le_3prime );
    le_5prime            = us_lineedit( tr( "Phospate" ),        -1, true );
+   le_5prime->setAccessibleName( tr( "Five Prime" ) );
+   lb_5prime->setBuddy( le_5prime );
    le_sodium            = us_lineedit( "1.00", -1, true );
+   le_sodium->setAccessibleName( tr( "Sodium, Na+" ) );
+   lb_sodium->setBuddy( le_sodium );
    le_potassium         = us_lineedit( "0.00", -1, true );
+   le_potassium->setAccessibleName( tr( "Potassium, K+" ) );
+   lb_potassium->setBuddy( le_potassium );
    le_lithium           = us_lineedit( "0.34", -1, true );
+   le_lithium->setAccessibleName( tr( "Lithium, Li+" ) );
+   lb_lithium->setBuddy( le_lithium );
    le_magnesium         = us_lineedit( "0.00", -1, true );
+   le_magnesium->setAccessibleName( tr( "Magnesium, Mg+" ) );
+   lb_magnesium->setBuddy( le_magnesium );
    le_calcium           = us_lineedit( "0.00", -1, true );
+   le_calcium->setAccessibleName( tr( "Calcium, Ca+" ) );
+   lb_calcium->setBuddy( le_calcium );
 
    lw_analyte_list      = us_listwidget();
+   lw_analyte_list->setAccessibleName( tr( "Analytes" ) );
    lw_analyte_list->setSelectionMode( QAbstractItemView::ExtendedSelection );
    te_analyte_smry      = us_textedit();
+   te_analyte_smry->setAccessibleName( tr( "Analyte Summary" ) );
    te_analyte_smry->setTextColor( Qt::blue );
    te_analyte_smry->setFont( QFont( US_Widgets::fixedFont().family(),
                                     US_GuiSettings::fontSize() ) );
@@ -190,27 +218,23 @@ US_AnalyteMgrSelect::US_AnalyteMgrSelect( int *invID, int *select_db_disk,
    
    for ( int ii = 0; ii < 12; ii++ )  main->setColumnStretch( ii, 99 );
    for ( int ii = 0; ii < 12; ii++ )  main->setRowStretch( ii, 99 );
-
-   connect( typeButtons,     SIGNAL( buttonClicked   ( int )       ),
-            this,            SLOT  ( set_analyte_type( int )       ) );
-   connect( le_search,       SIGNAL( textChanged( const QString& ) ),
-            this,            SLOT  ( search     ( const QString& ) ) );
-   connect( pb_cancel,       SIGNAL( clicked() ),
-            this,            SLOT  ( reject()  ) );
-   connect( pb_accept,       SIGNAL( clicked()        ),
-            this,            SLOT  ( accept_analyte() ) );
-   connect( pb_info,         SIGNAL( clicked()        ),
-            this,            SLOT  ( info_analyte()   ) );
-   connect( pb_help,         SIGNAL( clicked() ),
-            this,            SLOT  ( help()    ) );
-   connect( lw_analyte_list, SIGNAL( itemSelectionChanged() ),
-            this,            SLOT  ( select_analyte()        ) );
-   connect( pb_spectrum,     SIGNAL( clicked()  ),
-            this,            SLOT  ( spectrum() ) );
-   connect( pb_sequence,     SIGNAL( clicked()  ),
-            this,            SLOT  ( sequence() ) );
-   connect( pb_delete,       SIGNAL( clicked()        ),
-            this,            SLOT  ( delete_analyte() ) );
+   connect( typeButtons, &QButtonGroup::idClicked, this, &US_AnalyteMgrSelect::set_analyte_type);
+   connect( le_search, &QLineEdit::textChanged, this, &US_AnalyteMgrSelect::search );
+   connect( pb_cancel,       &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::reject );
+   connect( pb_accept,       &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::accept_analyte );
+   connect( pb_info,         &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::info_analyte );
+   connect( pb_help,         &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::help );
+   connect( lw_analyte_list, &QListWidget::itemSelectionChanged, this, qOverload<>(&US_AnalyteMgrSelect::select_analyte) );
+   connect( pb_spectrum,     &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::spectrum );
+   connect( pb_sequence,     &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::sequence );
+   connect( pb_delete,       &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSelect::delete_analyte );
 
    init_analyte();
    set_analyte_type( 0 );
@@ -1397,24 +1421,25 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
 
    pb_cancel   = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newCanceled() ) );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrNew::newCanceled );
 
    pb_reset   = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset,   SIGNAL( clicked()     ),
-            this,        SLOT  ( reset() ) );
+   connect( pb_reset,   &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrNew::reset );
    
    //pb_save     = us_pushbutton( tr( "Accept" ), false);
    //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
    
    pb_accept     = us_pushbutton( tr( "Accept" ), false);
-   connect( pb_accept,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newAccepted() ) );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrNew::newAccepted );
    
    lb_descrip   = us_label( tr( "Analyte Name:" ) );
    le_descrip   = us_lineedit( "New Analyte", 0, false );
-   connect( le_descrip, SIGNAL( editingFinished   () ), 
-                            SLOT  ( new_description() ) );
+   le_descrip->setAccessibleName( tr( "Analyte Name" ) );
+   lb_descrip->setBuddy( le_descrip );
+   connect( le_descrip, &QLineEdit::editingFinished, this, &US_AnalyteMgrNew::new_description );
 
    // Start Protein widget /////////////////////////////////////////////////
 
@@ -1429,6 +1454,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     protein_info->addWidget( lb_protein_mw, prow, 0 );
 
     le_protein_mw = us_lineedit( "0", 0, false );
+    le_protein_mw->setAccessibleName( tr( "Molecular Weight" ) );
+    lb_protein_mw->setBuddy( le_protein_mw );
     protein_info->addWidget( le_protein_mw, prow, 1 );
 
     QLabel* lb_protein_vbar20 = us_label( 
@@ -1436,8 +1463,9 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     protein_info->addWidget( lb_protein_vbar20, prow, 2 );
 
     le_protein_vbar20 = us_lineedit(  "0.0000", 0, false );
-    connect( le_protein_vbar20, SIGNAL( textChanged  ( const QString& ) ),
-                                 SLOT  ( value_changed( const QString& ) ) );
+    le_protein_vbar20->setAccessibleName( tr( "VBar at 20C" ) );
+    lb_protein_vbar20->setBuddy( le_protein_vbar20 );
+    connect( le_protein_vbar20, &QLineEdit::textChanged, this, &US_AnalyteMgrNew::value_changed );
     protein_info->addWidget( le_protein_vbar20, prow++, 3 );
 
     signal_tmp = signal;
@@ -1449,15 +1477,16 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     protein_info->addWidget( lb_protein_temp, prow, 0 );
 
     le_protein_temp = us_lineedit( QString::number( temperature, 'f', 1 ) );
-  
+    le_protein_temp->setAccessibleName( tr( "Temperature" ) );
+    lb_protein_temp->setBuddy( le_protein_temp );
+
     if ( signal_tmp )
     {
        us_setReadOnly( le_protein_temp, true );
     }
     else
     {
-       connect( le_protein_temp, SIGNAL( textChanged ( const QString& ) ), 
-                                 SLOT  ( temp_changed( const QString& ) ) );
+       connect( le_protein_temp, &QLineEdit::textChanged, this, &US_AnalyteMgrNew::temp_changed );
     }
 
     protein_info->addWidget( le_protein_temp, prow, 1 );
@@ -1468,12 +1497,16 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
     le_protein_vbar = us_lineedit( "0.0000", 0, true );
+    le_protein_vbar->setAccessibleName( tr( "VBar at T" ) );
+    lb_protein_vbar->setBuddy( le_protein_vbar );
     protein_info->addWidget( le_protein_vbar, prow++, 3 );
     
     QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
     protein_info->addWidget( lb_protein_residues, prow, 0 );
 
     le_protein_residues = us_lineedit( "0", 0, true );
+    le_protein_residues->setAccessibleName( tr( "Residue Count" ) );
+    lb_protein_residues->setBuddy( le_protein_residues );
     protein_info->addWidget( le_protein_residues, prow, 1 );
       
     QLabel* lb_protein_e280     = us_label(
@@ -1482,8 +1515,10 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
     
     //le_protein_e280 = us_lineedit( "0", 0, true );
     le_protein_e280 = us_lineedit( "0", 0, false );
-    connect( le_protein_e280, SIGNAL( textChanged  ( const QString& ) ),
-	                      SLOT  ( value_changed_e280( const QString& ) ) );
+    le_protein_e280->setAccessibleName( tr( "E280" ) );
+    lb_protein_e280->setBuddy( le_protein_e280 );
+    connect( le_protein_e280, &QLineEdit::textChanged,
+	                      this, &US_AnalyteMgrNew::value_changed_e280 );
 
     protein_info->addWidget( le_protein_e280, prow++, 3 );
     QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
@@ -1514,10 +1549,10 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    QGridLayout* box2 = us_checkbox( tr( "Complement Only" ), ck_mw_only );
    grid1->addLayout( box1, 0, 0 );
    grid1->addLayout( box2, 1, 0 );
-   connect( ck_stranded, SIGNAL( toggled        ( bool ) ), 
-	    SLOT  ( update_stranded( bool ) ) );
-   connect( ck_mw_only , SIGNAL( toggled        ( bool ) ), 
-	    SLOT  ( update_mw_only ( bool ) ) );
+   connect( ck_stranded, &QAbstractButton::toggled, 
+	    this, &US_AnalyteMgrNew::update_stranded );
+   connect( ck_mw_only , &QAbstractButton::toggled, 
+	    this, &US_AnalyteMgrNew::update_mw_only );
  
    QVBoxLayout* stretch1 = new QVBoxLayout;
    stretch1->addStretch();
@@ -1539,8 +1574,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    grid2->addLayout( box3, 0, 0 );
    grid2->addLayout( box4, 0, 1 );
    gb_three_prime->setLayout( grid2 ); 
-   connect( rb_3_hydroxyl, SIGNAL( toggled          ( bool ) ), 
-	    SLOT  ( update_nucleotide( bool ) ) );
+   connect( rb_3_hydroxyl, &QAbstractButton::toggled, 
+	    this, qOverload< bool >( &US_AnalyteMgrNew::update_nucleotide ) );
 
    dna_layout->addWidget( gb_three_prime, 1, 0 );
 
@@ -1558,8 +1593,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    grid3->addLayout( box6, 0, 1 );
   
    gb_five_prime->setLayout( grid3 ); 
-   connect( rb_5_hydroxyl, SIGNAL( toggled          ( bool ) ), 
-	    SLOT  ( update_nucleotide( bool ) ) );
+   connect( rb_5_hydroxyl, &QAbstractButton::toggled, 
+	    this, qOverload< bool >( &US_AnalyteMgrNew::update_nucleotide ) );
 
    dna_layout->addWidget( gb_five_prime, 2, 0 );
 
@@ -1572,45 +1607,50 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    ratios->addWidget( lb_sodium, 1, 0 );
 
    ct_sodium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_sodium->setAccessibleName( tr( "Sodium, Na+" ) );
    ct_sodium->setSingleStep( 0.01 );
-   connect( ct_sodium, SIGNAL( valueChanged     ( double ) ),
-                        SLOT  ( update_nucleotide( double ) ) );
+   connect( ct_sodium, &QwtCounter::valueChanged,
+                        this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
    ratios->addWidget( ct_sodium, 1, 1, 1, 2 );
 
    QLabel* lb_potassium = us_label( tr( "Potassium, K+" ) );
    ratios->addWidget( lb_potassium, 2, 0 );
 
    ct_potassium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_potassium->setAccessibleName( tr( "Potassium, K+" ) );
    ct_potassium->setSingleStep( 0.01 );
-   connect( ct_potassium, SIGNAL( valueChanged     ( double ) ),
-	                 SLOT  ( update_nucleotide( double ) ) );
+   connect( ct_potassium, &QwtCounter::valueChanged,
+	                 this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
    ratios->addWidget( ct_potassium, 2, 1, 1, 2 );
 
    QLabel* lb_lithium = us_label( tr( "Lithium, Li+" ) );
    ratios->addWidget( lb_lithium, 3, 0 );
 
    ct_lithium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_lithium->setAccessibleName( tr( "Lithium, Li+" ) );
    ct_lithium->setSingleStep( 0.01 );
-   connect( ct_lithium, SIGNAL( valueChanged     ( double ) ),
-                         SLOT  ( update_nucleotide( double ) ) );
+   connect( ct_lithium, &QwtCounter::valueChanged,
+                         this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
    ratios->addWidget( ct_lithium, 3, 1, 1, 2 );
 
    QLabel* lb_magnesium = us_label( tr( "Magnesium, Mg+" ) );
    ratios->addWidget( lb_magnesium, 4, 0 );
 
    ct_magnesium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_magnesium->setAccessibleName( tr( "Magnesium, Mg+" ) );
    ct_magnesium->setSingleStep( 0.01 );
-   connect( ct_magnesium, SIGNAL( valueChanged     ( double ) ),
-                           SLOT  ( update_nucleotide( double ) ) );
+   connect( ct_magnesium, &QwtCounter::valueChanged,
+                           this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
    ratios->addWidget( ct_magnesium, 4, 1, 1, 2 );
 
    QLabel* lb_calcium = us_label( tr( "Calcium, Ca+" ) );
    ratios->addWidget( lb_calcium, 5, 0 );
 
    ct_calcium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_calcium->setAccessibleName( tr( "Calcium, Ca+" ) );
    ct_calcium->setSingleStep( 0.01 );
-   connect( ct_calcium, SIGNAL( valueChanged     ( double ) ),
-                         SLOT  ( update_nucleotide( double ) ) );
+   connect( ct_calcium, &QwtCounter::valueChanged,
+                         this, qOverload< double >( &US_AnalyteMgrNew::update_nucleotide ) );
    ratios->addWidget( ct_calcium, 5, 1 );
 
    dna_layout->addLayout( ratios, 0, 1, 4, 2 );
@@ -1620,6 +1660,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    nucle_data->addWidget( lb_nucle_mw, 0, 0 );
 
    le_nucle_mw = us_lineedit( "", -2, true );
+   le_nucle_mw->setAccessibleName( tr( "Molecular Weight" ) );
+   lb_nucle_mw->setBuddy( le_nucle_mw );
    nucle_data->addWidget( le_nucle_mw, 0, 1, 1, 3 );
 
    QLabel* lb_nucle_vbar = us_label( 
@@ -1627,8 +1669,10 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    nucle_data->addWidget( lb_nucle_vbar, 1, 0 );
 
    le_nucle_vbar = us_lineedit( "0.5500" );
-   connect( le_nucle_vbar, SIGNAL( textChanged  ( const QString& ) ),
-                            SLOT  ( value_changed( const QString& ) ) );
+   le_nucle_vbar->setAccessibleName( tr( "VBar" ) );
+   lb_nucle_vbar->setBuddy( le_nucle_vbar );
+   connect( le_nucle_vbar, &QLineEdit::textChanged,
+                            this, &US_AnalyteMgrNew::value_changed );
    nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
 
    dna_layout->addLayout( nucle_data, 4, 0, 2, 3 );
@@ -1651,6 +1695,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    carbs_info->addWidget( lb_carbs_mw,   1, 0 );
 
    le_carbs_mw = us_lineedit( "" );
+   le_carbs_mw->setAccessibleName( tr( "Molecular Weight" ) );
+   lb_carbs_mw->setBuddy( le_carbs_mw );
    carbs_info->addWidget( le_carbs_mw,   1, 1 );
 
    QLabel* lb_carbs_vbar = us_label( 
@@ -1658,6 +1704,8 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    carbs_info->addWidget( lb_carbs_vbar, 1, 2 );
 
    le_carbs_vbar = us_lineedit( "" );
+   le_carbs_vbar->setAccessibleName( tr( "VBar" ) );
+   lb_carbs_vbar->setBuddy( le_carbs_vbar );
    carbs_info->addWidget( le_carbs_vbar, 1, 3 );
 
    // End Carbohydrates widget //////////////////////////////////////////
@@ -1683,14 +1731,14 @@ DbgLv(1) << "Signal in New: " << signal_tmp;
    //for ( int ii = 0; ii < 12; ii++ )  main->setRowStretch( ii, 99 );
    main->setRowStretch( 5, 5 );
 
-   connect( typeButtons,     SIGNAL( buttonClicked   ( int )       ),
-            this,            SLOT  ( set_analyte_type( int )       ) );
-   connect( pb_sequence,     SIGNAL( clicked() ),
-	    this,            SLOT  ( manage_sequence()    ) );
+   connect( typeButtons,     &QButtonGroup::idClicked,
+            this,            &US_AnalyteMgrNew::set_analyte_type );
+   connect( pb_sequence,     &QAbstractButton::clicked,
+	    this,            &US_AnalyteMgrNew::manage_sequence );
    //connect( pb_spectrum,     SIGNAL( clicked() ),
    // 	    this,            SLOT  ( manage_spectrum()    ) );
-   connect( pb_spectrum,     SIGNAL( clicked() ),
-    	    this,            SLOT  ( spectrum_class()    ) );
+   connect( pb_spectrum,     &QAbstractButton::clicked,
+    	    this,            &US_AnalyteMgrNew::spectrum_class );
 
    init_analyte();
    set_analyte_type( 0 );
@@ -1703,8 +1751,8 @@ void US_AnalyteMgrNew::spectrum_class( void )
 {
   US_NewSpectrum *w = new US_NewSpectrum("ANALYTE", le_descrip->text(), le_protein_e280->text(), analyte);
 
-  connect( w,     SIGNAL( change_prot_e280( void ) ),
-           this,  SLOT ( change_prot_e280( void ) ) );
+  connect( w,     &US_NewSpectrum::change_prot_e280,
+           this,  &US_AnalyteMgrNew::change_prot_e280 );
 
   w->setParent(this, Qt::Window);
   w->setWindowModality(Qt::WindowModal);
@@ -1722,8 +1770,8 @@ void US_AnalyteMgrNew::change_prot_e280( void )
 void US_AnalyteMgrNew::manage_sequence( void )
 {
    US_SequenceEditor* edit = new US_SequenceEditor( analyte->sequence );
-   connect( edit, SIGNAL( sequenceChanged( QString ) ), 
-                  SLOT  ( update_sequence( QString ) ) );
+   connect( edit, &US_SequenceEditor::sequenceChanged,
+                  this, &US_AnalyteMgrNew::update_sequence );
    edit->exec();
 
 }
@@ -2772,6 +2820,7 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
    QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
    le_descrip    = us_lineedit( analyte->description );
+   le_descrip->setAccessibleName( tr( "Description" ) );
 
    bn_modana->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -2791,18 +2840,18 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
    QLabel *empty = us_banner ("");
    main->addWidget( empty,           row,   0, 6, 8 );
 
-   connect( pb_help,     SIGNAL( clicked()  ),
-            this,        SLOT  ( help()     ) );
-   connect( pb_cancel,   SIGNAL( clicked()      ),
-            this,        SLOT  ( editCanceled() ) );
-   connect( pb_accept,   SIGNAL( clicked()      ),
-            this,        SLOT  ( editAccepted() ) );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrEdit::help );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrEdit::editCanceled );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrEdit::editAccepted );
    // connect( pb_spectrum, SIGNAL( clicked()  ),
    //          this,        SLOT  ( spectrum() ) );
-   connect( pb_spectrum, SIGNAL( clicked()  ),
-            this,        SLOT  ( spectrum_class() ) );
-   connect( le_descrip, SIGNAL( editingFinished   () ), 
-	                SLOT  ( description() ) );
+   connect( pb_spectrum, &QAbstractButton::clicked,
+            this,        &US_AnalyteMgrEdit::spectrum_class );
+   connect( le_descrip, &QLineEdit::editingFinished, 
+	                this, &US_AnalyteMgrEdit::description );
 }
 
 // Slot for manually changed description
@@ -2826,10 +2875,10 @@ void US_AnalyteMgrEdit::spectrum_class( void )
   
   US_EditSpectrum *w = new US_EditSpectrum("ANALYTE", ifexists, le_descrip->text(), "1.000", analyte);
   
-  connect( w,     SIGNAL( change_spectrum( void ) ),
-	   this,  SLOT ( change_spectrum( void ) ) );
-  connect( w,     SIGNAL( accept_enable( void ) ),
-	   this,  SLOT ( accept_enable( void ) ) );
+  connect( w,     &US_EditSpectrum::change_spectrum,
+	   this,  &US_AnalyteMgrEdit::change_spectrum );
+  connect( w,     &US_EditSpectrum::accept_enable,
+	   this,  &US_AnalyteMgrEdit::accept_enable );
   
   w->setParent(this, Qt::Window);
   w->setWindowModality(Qt::WindowModal);
@@ -2949,6 +2998,7 @@ US_AnalyteMgrSettings::US_AnalyteMgrSettings( int *invID, int *select_db_disk )
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );
@@ -2966,12 +3016,12 @@ US_AnalyteMgrSettings::US_AnalyteMgrSettings( int *invID, int *select_db_disk )
    main->addWidget( pb_help,         row++, 3, 1, 1 );
    main->addWidget( empty,           row,   0, 6, 4 );
 
-   connect( disk_controls,   SIGNAL( changed   ( bool ) ),
-            this,            SLOT  ( db_changed( bool ) ) );
-   connect( pb_investigator, SIGNAL( clicked()          ),
-            this,            SLOT(   sel_investigator() ) );
-   connect( pb_help,         SIGNAL( clicked() ),
-            this,            SLOT  ( help()    ) );
+   connect( disk_controls,   &US_Disk_DB_Controls::changed,
+            this,            &US_AnalyteMgrSettings::db_changed );
+   connect( pb_investigator, &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSettings::sel_investigator );
+   connect( pb_help,         &QAbstractButton::clicked,
+            this,            &US_AnalyteMgrSettings::help );
 }
 
 // Select a new investigator
@@ -2980,8 +3030,8 @@ void US_AnalyteMgrSettings::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, (*personID) );
 
    connect( inv_dialog,
-            SIGNAL( investigator_accepted( int ) ),
-            SLOT  ( assign_investigator  ( int ) ) );
+            &US_Investigator::investigator_accepted,
+            this, &US_AnalyteMgrSettings::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -3064,26 +3114,26 @@ DbgLv(1) << "Signal: " << signal;
 
    main->addWidget( tabWidget );
 
-   connect( tabWidget,   SIGNAL( currentChanged(       int  ) ),
-            this,        SLOT (  checkTab(             int  ) ) );
-   connect( selectTab,   SIGNAL( analyteAccepted(      void ) ),
-            this,        SLOT (  analyteAccepted(      void ) ) );
-   connect( selectTab,   SIGNAL( selectionCanceled(    void ) ),
-            this,        SLOT (  analyteRejected(      void ) ) );
-   connect( selectTab,   SIGNAL( analytesAccepted( QList< US_Analyte >& ) ),
-            this,        SLOT (  analytesAccepted( QList< US_Analyte >& ) ) );
-   connect( newTab,      SIGNAL( newAnaAccepted(       void ) ),
-            this,        SLOT (  newAnaAccepted(       void ) ) );
-   connect( newTab,      SIGNAL( newAnaCanceled(       void ) ),
-            this,        SLOT (  newAnaCanceled(       void ) ) );
-   connect( editTab,     SIGNAL( editAnaAccepted(      void ) ),
-            this,        SLOT (  editAnaAccepted(      void ) ) );
-   connect( editTab,     SIGNAL( editAnaCanceled(      void ) ),
-            this,        SLOT (  editAnaCanceled(      void ) ) );
-   connect( settingsTab, SIGNAL( use_db(               bool ) ),
-            this,        SLOT (  update_disk_or_db(    bool ) ) );
-   connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
-            this,        SLOT (  update_personID(      int  ) ) );
+   connect( tabWidget,   &QTabWidget::currentChanged,
+            this,        &US_AnalyteGui::checkTab );
+   connect( selectTab,   &US_AnalyteMgrSelect::analyteAccepted,
+            this,        &US_AnalyteGui::analyteAccepted );
+   connect( selectTab,   &US_AnalyteMgrSelect::selectionCanceled,
+            this,        &US_AnalyteGui::analyteRejected );
+   connect( selectTab,   &US_AnalyteMgrSelect::analytesAccepted,
+            this,        &US_AnalyteGui::analytesAccepted );
+   connect( newTab,      &US_AnalyteMgrNew::newAnaAccepted,
+            this,        &US_AnalyteGui::newAnaAccepted );
+   connect( newTab,      &US_AnalyteMgrNew::newAnaCanceled,
+            this,        &US_AnalyteGui::newAnaCanceled );
+   connect( editTab,     &US_AnalyteMgrEdit::editAnaAccepted,
+            this,        &US_AnalyteGui::editAnaAccepted );
+   connect( editTab,     &US_AnalyteMgrEdit::editAnaCanceled,
+            this,        &US_AnalyteGui::editAnaCanceled );
+   connect( settingsTab, &US_AnalyteMgrSettings::use_db,
+            this,        &US_AnalyteGui::update_disk_or_db );
+   connect( settingsTab, &US_AnalyteMgrSettings::investigator_changed,
+            this,        &US_AnalyteGui::update_personID );
 }
 
 void US_AnalyteGui::value_changed( const QString& )

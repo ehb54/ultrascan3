@@ -5,6 +5,7 @@
 
 #include <QApplication>
 #include <QtSql>
+#include <functional>
 
 #include "us_ana_profile.h"
 #include "us_run_protocol.h"
@@ -98,7 +99,8 @@ class US_AnaprofPanGen : public US_WidgetsDialog
       QScrollArea* scrollArea;
       QWidget*     containerWidget;
       
-      QGridLayout* middle_h;
+     QGridLayout* middle_h;
+  //QHBoxLayout* middle_h;
       QVBoxLayout* left;
       QVBoxLayout* right;
       QScrollArea* scrollArea_r;
@@ -455,55 +457,61 @@ class US_AnalysisProfileGui : public US_Widgets
       
       bool    automode;
   bool abde_mode_aprofile;
-  
-      void    auto_mode_passed( void ); 
-      void    auto_name_passed( QString&, QString& ); 
-      void    inherit_protocol( US_RunProtocol* );
-      void    get_report_by_ID( US_ReportGMP*, int );
+  bool                                            velmwl_mode_aprofile;
 
-      int     scanCount;
-      int     scanCount_int;
-      
-   private:
+  void                                            auto_mode_passed( void );
+  void                                            auto_name_passed( QString&, QString& );
+  void                                            inherit_protocol( US_RunProtocol* );
+  //! \brief Read one report (and its reportItems) from the DB.
+  //! \param db       Open DB connector to reuse (NULL: connect here)
+  //! \param item_cb  Optional ( items_done, items_total ) progress hook
+  void                                            get_report_by_ID( US_ReportGMP*,
+                                                                    int,
+                                                                    US_DB2*                                db = NULL,
+                                                                    const std::function<void( int, int )>& item_cb = std::function<void( int, int )>() );
 
-      QTabWidget*           tabWidget;      // Tab Widget holding the panels
+  //! Optional progress hook for inherit_protocol(): ( done, total, detail ).
+  //! Empty by default, so other users of this class are unaffected.
+  std::function<void( int, int, const QString& )> progress_cb;
 
-      US_AnaprofPanGen*     apanGeneral;    // General panel
-      US_AnaprofPan2DSA*    apan2DSA;       // 2DSA panel
-      US_AnaprofPanPCSA*    apanPCSA;       // PCSA panel
+  int                                             scanCount;
+  int                                             scanCount_int;
 
-      int         statflag;        // Composite panels status flag
-      int         dbg_level;       // Debug print flag
-      int         curr_panx;       // Current panel index (0-7)
+  private:
+  QTabWidget*        tabWidget; // Tab Widget holding the panels
 
-      
+  US_AnaprofPanGen*  apanGeneral; // General panel
+  US_AnaprofPan2DSA* apan2DSA;    // 2DSA panel
+  US_AnaprofPanPCSA* apanPCSA;    // PCSA panel
 
-   private slots:
+  int                statflag;  // Composite panels status flag
+  int                dbg_level; // Debug print flag
+  int                curr_panx; // Current panel index (0-7)
 
-     //void reset     ( void );
-      void newPanel  ( int  );     // Move to a new panel
-      void statUpdate( void );     // Get a status flag update
-      void panelUp   ( void );     // Move to next panel
-      void panelDown ( void );     // Move to previous panel
-      void help      ( void );     // Show documentation window
+  private slots:
 
-      void disable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
-      void enable_tabs_buttons_readonly( void);  // Slot to enable Tabs and Buttons after profile is loaded
-      void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after run_name is entered
+  // void reset     ( void );
+  void newPanel( int );    // Move to a new panel
+  void statUpdate( void ); // Get a status flag update
+  void panelUp( void );    // Move to next panel
+  void panelDown( void );  // Move to previous panel
+  void help( void );       // Show documentation window
 
-      void back_to_pcsa( void );
-      
-    public slots:
-      void reset     ( void );
-      void close_program( void );
-      void apply_profile( void );
-      //void auto_mode_passed( void ); 
+  void disable_tabs_buttons( void );         // Slot to unable Tabs and Buttons when user level is low
+  void enable_tabs_buttons_readonly( void ); // Slot to enable Tabs and Buttons after profile is loaded
+  void enable_tabs_buttons( void );          // Slot to enable Tabs and Buttons after run_name is entered
 
-    signals:
-      void us_exp_is_closed( void );
-      void back_to_pcsa_signal( void );
-      
-      
+  void back_to_pcsa( void );
+
+  public slots:
+  void reset( void );
+  void close_program( void );
+  void apply_profile( void );
+  // void auto_mode_passed( void );
+
+  signals:
+  void us_exp_is_closed( void );
+  void back_to_pcsa_signal( void );
 };
 #endif
 

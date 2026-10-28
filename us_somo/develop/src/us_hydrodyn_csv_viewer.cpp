@@ -1,4 +1,5 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_csv_viewer.h"
@@ -95,11 +96,7 @@ void US_Hydrodyn_Csv_Viewer::setupGUI()
 
    
     t_csv->horizontalHeader()->setSectionsClickable( true );
-#if QT_VERSION < 0x040000   
-   connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
-#else
    connect(t_csv->horizontalHeader(), SIGNAL(sectionClicked(int)), SLOT(sort_column(int)));
-#endif
    // probably I'm not understanding something, but these next two lines don't seem to do anything
    // t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
@@ -187,7 +184,7 @@ void US_Hydrodyn_Csv_Viewer::numeric_sort( int section )
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
-      if ( csv1.data[ i ][ 0 ].contains( QRegExp( "^(Average|Standard deviation): " ) ) )
+      if ( csv1.data[ i ][ 0 ].contains( QRegularExpression( QStringLiteral( "^(Average|Standard deviation): " ) ) ) )
       {
          avgstdrows.push_back( i );
       } else {

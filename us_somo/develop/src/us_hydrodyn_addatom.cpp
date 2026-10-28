@@ -1,8 +1,7 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn_addatom.h"
 #include <list>
-#include <qregexp.h>
-//Added by qt3to4:
 #include <QTextStream>
 #include <QCloseEvent>
 #include <QGridLayout>
@@ -532,12 +531,12 @@ void US_AddAtom::select_saxs_file()
 
             QString    qs  = ts.readLine();
             line++;
-            if ( qs.contains( QRegExp( "^\\s+#" ) ) )
+            if ( qs.contains( QRegularExpression( QStringLiteral( "^\\s+#" ) ) ) )
             {
                continue;
             }
             qs = qs.trimmed();
-            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+            QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
             {

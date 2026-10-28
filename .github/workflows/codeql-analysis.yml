@@ -112,7 +112,7 @@ jobs:
       matrix:
         language: [ cpp ]
         container:
-          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
           - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
           - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
@@ -131,6 +131,19 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          # These jobs perform a manual build (not autobuild); declaring this
+          # explicitly stops CodeQL from attempting an overlay-base database
+          # (which requires build-mode: none) and then falling back, e.g.:
+          # "Cannot build an overlay database because build-mode is set to
+          # 'undefined' instead of 'none'. Falling back to creating a normal
+          # full database instead."
+          build-mode: manual
+          # Disable TRAP caching: multiple matrix legs build the same language
+          # concurrently with different toolchains/containers, and they were
+          # racing for the same cache key, e.g.:
+          # "Failed to save: Unable to reserve cache with key codeql-trap-...,
+          # another job may be creating this cache."
+          trap-caching: false
       - name: Build
         if: ${{ needs.changed-files.outputs.mpi == 'true' || github.event_name == 'schedule' || github.event.act == 'true' }}
         run: |
@@ -160,7 +173,6 @@ jobs:
       matrix:
         language: [ cpp ]
         container:
-          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
           - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
           - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
           - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
@@ -180,6 +192,19 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          # These jobs perform a manual build (not autobuild); declaring this
+          # explicitly stops CodeQL from attempting an overlay-base database
+          # (which requires build-mode: none) and then falling back, e.g.:
+          # "Cannot build an overlay database because build-mode is set to
+          # 'undefined' instead of 'none'. Falling back to creating a normal
+          # full database instead."
+          build-mode: manual
+          # Disable TRAP caching: multiple matrix legs build the same language
+          # concurrently with different toolchains/containers, and they were
+          # racing for the same cache key, e.g.:
+          # "Failed to save: Unable to reserve cache with key codeql-trap-...,
+          # another job may be creating this cache."
+          trap-caching: false
       - name: Prepare build
         run: |
           cp admin/codeql/docker/local.pri.gui local.pri
@@ -194,7 +219,7 @@ jobs:
         run: |
           touch build_targets.txt
           # if libs or common changed or it is a push to main/scheduled event, force all programs
-          if [ "$FORCE_ALL" == "true" ] || [ "$COMMON_CHANGED" == "true" ] || [ "$LIBS_CHANGED" == "true" ]; then
+          if [ "$FORCE_ALL" = "true" ] || [ "$COMMON_CHANGED" = "true" ] || [ "$LIBS_CHANGED" = "true" ]; then
             echo "Global rebuild with all programs"
             echo "." >> build_targets.txt
           else
@@ -271,12 +296,9 @@ jobs:
       matrix:
         language: [ cpp ]
         container:
-          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.1.6"
-          # somo main not ready for qwt6.3.0
-          # - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
-          # somo main not ready for qt6
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
-          # - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu22.04-qt5.15.10-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.8.3-qwt6.3.0"
+          - "ehb1/usbuildtest:ubuntu24.04-qt6.10.0-qwt6.3.0"
 
     # Specify the container in which actions will run
     container:
@@ -293,24 +315,39 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          # These jobs perform a manual build (not autobuild); declaring this
+          # explicitly stops CodeQL from attempting an overlay-base database
+          # (which requires build-mode: none) and then falling back, e.g.:
+          # "Cannot build an overlay database because build-mode is set to
+          # 'undefined' instead of 'none'. Falling back to creating a normal
+          # full database instead."
+          build-mode: manual
+          # Disable TRAP caching: multiple matrix legs build the same language
+          # concurrently with different toolchains/containers, and they were
+          # racing for the same cache key, e.g.:
+          # "Failed to save: Unable to reserve cache with key codeql-trap-...,
+          # another job may be creating this cache."
+          trap-caching: false
       - name: Prepare build
         run: |
-          bdir=`pwd`
-          echo $bdir
-          pwd
-          export ULTRASCAN=$bdir
-          export us3=$bdir
+          export ULTRASCAN=`pwd`
+          export us3=`pwd`
+          echo ULTRASCAN=$ULTRASCAN
           cd us_somo/develop
           ./revision.sh
           ./version.sh
-          cp $bdir/admin/codeql/docker/local.pri.somo local.pri
+          cp $ULTRASCAN/admin/codeql/docker/local.pri.somo local.pri
       - name: Build libus_somo
         run: |
+          export ULTRASCAN=`pwd`
+          export us3=`pwd`
           cd us_somo/develop
           qmake libus_somo.pro
           make -j$(( $(nproc) + 1 ))
       - name: Build us_somo
         run: |
+          export ULTRASCAN=`pwd`
+          export us3=`pwd`
           cd us_somo/develop
           qmake us_somo.pro
           make -j$(( $(nproc) + 1 ))

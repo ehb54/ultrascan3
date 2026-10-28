@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include <QRegularExpression>
 //Added by qt3to4:
 #include <QTextStream>
 
@@ -66,7 +67,7 @@ bool US_Saxs_Util::compute_1d()
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
       qs = qs.trimmed();
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = qsl[ i ].toUInt();
@@ -143,7 +144,7 @@ bool US_Saxs_Util::compute_1d()
    }
 
    // setup atoms
-   QRegExp count_hydrogens("H(\\d)");
+   QRegularExpression count_hydrogens("H(\\d)");
 
    if ( our_saxs_options.iqq_use_atomic_ff )
    {
@@ -197,7 +198,7 @@ bool US_Saxs_Util::compute_1d()
             }
 
             QString use_resname = this_atom->resName;
-            use_resname.replace( QRegExp( "_.*$" ), "" );
+            use_resname.replace( QRegularExpression( QStringLiteral( "_.*$" ) ), "" );
 
             QString mapkey = QString("%1|%2")
                .arg( use_resname )
@@ -297,10 +298,11 @@ bool US_Saxs_Util::compute_1d()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
+            QRegularExpressionMatch count_hydrogens_m = count_hydrogens.match(hybrid_name);
             if ( !our_saxs_options.iqq_use_atomic_ff &&
-                 count_hydrogens.indexIn(hybrid_name) != -1 )
+                 count_hydrogens_m.hasMatch() )
             {
-               new_atom.hydrogens = count_hydrogens.cap(1).toInt();
+               new_atom.hydrogens = count_hydrogens_m.captured(1).toInt();
             }
 
             if ( !saxs_map.count(hybrid_map[hybrid_name].saxs_name) )
@@ -707,7 +709,7 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      QStringList qsl = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {

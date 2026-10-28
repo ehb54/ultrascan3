@@ -149,9 +149,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    chkb_log = new QCheckBox();
    lyt_log = us_checkbox( "X-Axis Logarithmic", chkb_log );
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-   connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+   connect( chkb_log, US_CB_STATE_CHANGED, this, &US_Grid_Editor::refill_grid_points );
 #else
-   connect( chkb_log, &QCheckBox::checkStateChanged, this, &US_Grid_Editor::refill_grid_points );
+   connect( chkb_log, US_CB_STATE_CHANGED, this, &US_Grid_Editor::refill_grid_points );
 #endif
 
 
@@ -2181,9 +2181,9 @@ void US_Grid_Editor::load()
       bool isMid = model.customGridData.midpointBins;
       bg_point_type->button( MIDPOINTS )->setChecked( isMid );
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-      connect( chkb_log, &QCheckBox::stateChanged, this, &US_Grid_Editor::refill_grid_points );
+      connect( chkb_log, US_CB_STATE_CHANGED, this, &US_Grid_Editor::refill_grid_points );
 #else
-      connect( chkb_log, &QCheckBox::checkStateChanged, this, &US_Grid_Editor::refill_grid_points );
+      connect( chkb_log, US_CB_STATE_CHANGED, this, &US_Grid_Editor::refill_grid_points );
 #endif
       connect( bg_point_type, &QButtonGroup::idClicked, this, &US_Grid_Editor::set_mid_exct_points );
 
@@ -2650,7 +2650,7 @@ void US_Grid_Preset::set_z_axis()
       z_axis->setCurrentIndex( index );
    }
 
-   connect( z_axis, QOverload<int>::of( &QComboBox::currentIndexChanged ),
+   connect( z_axis, qOverload< int >( &QComboBox::currentIndexChanged ),
            this,   &US_Grid_Preset::select_z_axis );
 }
 
@@ -3234,6 +3234,7 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    QPushButton *pb_apply  = us_pushbutton( "Apply" );
 
    plot = new QwtPlot();
+   US_Widgets::us_style_plot( plot );
    QBoxLayout* usplot = new US_Plot( plot, "Grid Layout", "", "" );
    plot->setCanvasBackground( QBrush( QColor( 32, 32, 32 ) ) );
 
@@ -3363,9 +3364,9 @@ void US_Grid_ZFunction::set_gui( const QMap< QString, QString>& settings )
    parse_params( settings.value( "parameters" ) );
    set_dependent( cb_dependent->currentIndex() );
 
-   connect( cb_function,  QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_function  );
-   connect( cb_dependent, QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_dependent );
-   connect( cb_order    , QOverload<int>::of( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_order );
+   connect( cb_function,  qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_function  );
+   connect( cb_dependent, qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_dependent );
+   connect( cb_order    , qOverload< int >( &QComboBox::currentIndexChanged ), this, &US_Grid_ZFunction::set_order );
    connect( pb_fit      , &QPushButton::clicked, this, &US_Grid_ZFunction::fit );
    connect( pb_apply    , &QPushButton::clicked, this, &US_Grid_ZFunction::apply );
    connect( pb_cancel   , &QPushButton::clicked, this, &US_Grid_ZFunction::reject );

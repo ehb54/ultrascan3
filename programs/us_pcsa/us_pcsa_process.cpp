@@ -80,6 +80,10 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
    fi_itermax  = gfits;
    rd_thresh   = gfthr;
    lmmxcall    = lmmxc;
+
+   // Cache of solute simulations, shared by the grid fit tasks
+   //  (debug text "SimCache=off" disables it, "SimCacheMB=N" sets its cap)
+   simcache.reset( US_SimCache::create_default() );
    st_mask          = dsets[ 0 ]->solute_type;
    attr_x           = ( st_mask >> 6 ) & 7;
    attr_y           = ( st_mask >> 3 ) & 7;
@@ -287,6 +291,7 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
    }
 
    job_queue.clear();
+   simcache.reset();
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
@@ -488,6 +493,12 @@ DbgLv(1) << "FIN_FIN:    rd_frac rd_thresh" << rd_frac << rd_thresh;
       return;
    }
 
+   if ( simcache )
+   { // Grid fits are done:  free the simulation cache
+      DbgLv( 1 ) << "FIN_FIN:" << simcache->stats_text();
+      simcache.reset();
+   }
+
    emit process_complete( 8 );     // signal that L-M is starting
 
    // Compute a best model using Levenberg-Marquardt
@@ -636,6 +647,7 @@ DbgLv(1) << "PC:putMRs:  curvtype" << curvtype << "nypts" << nypts;
 void US_pcsaProcess::submit_job( WorkPacketPc& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
+   wtask.simcache     = simcache;
 
    WorkerThreadPc* wthr = new WorkerThreadPc( this );
    wthreads[ thrx ]   = wthr;
@@ -644,8 +656,8 @@ void US_pcsaProcess::submit_job( WorkPacketPc& wtask, int thrx )
 
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
-            this, SLOT(   process_job(   WorkerThreadPc* ) ) );
+   connect( wthr, &WorkerThreadPc::work_complete,
+            this, &US_pcsaProcess::process_job );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
  << "sk ek" << wtask.str_y << wtask.end_y << "maxrss" << maxrss;
 
@@ -1105,7 +1117,7 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
    modstats << tr( "Index of best model:" )
             << QString::asprintf( "%5d", mrecs[ 0 ].taskx );
    modstats << tr( "Best curve calculated solutes:" )
-            << QString::asprintf( "%5d", mrecs[ 0 ].csolutes.size() );
+            << QString::asprintf( "%5d", static_cast<int>( mrecs[ 0 ].csolutes.size() ) );
    modstats << tr( "Minimum, Maximum calculated solutes:" )
             << QString::asprintf( "%5d  %5d", nsolmin, nsolmax );
    modstats << tr( "Average calculated solutes:" )

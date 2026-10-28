@@ -69,18 +69,18 @@ US_CombineModels::US_CombineModels() : US_Widgets()
    mainLayout->addWidget( pb_help,     row,   2, 1, 1 );
    mainLayout->addWidget( pb_close,    row++, 3, 1, 1 );
 
-   connect( pb_prefilt, SIGNAL( clicked()      ),
-            this,       SLOT(   select_filt()  ) );
-   connect( pb_add,     SIGNAL( clicked()      ),
-            this,       SLOT(   add_models()   ) );
-   connect( pb_reset,   SIGNAL( clicked()      ),
-            this,       SLOT(   reset()        ) );
-   connect( pb_close,   SIGNAL( clicked()      ),
-            this,       SLOT(   close()        ) );
-   connect( pb_help,    SIGNAL( clicked()      ),
-            this,       SLOT(   help()         ) );
-   connect( pb_save,    SIGNAL( clicked()      ),
-            this,       SLOT(   save()         ) );
+   connect( pb_prefilt, &QAbstractButton::clicked,
+            this,       &US_CombineModels::select_filt );
+   connect( pb_add,     &QAbstractButton::clicked,
+            this,       &US_CombineModels::add_models );
+   connect( pb_reset,   &QAbstractButton::clicked,
+            this,       &US_CombineModels::reset );
+   connect( pb_close,   &QAbstractButton::clicked,
+            this,       &QWidget::close );
+   connect( pb_help,    &QAbstractButton::clicked,
+            this,       &US_CombineModels::help );
+   connect( pb_save,    &QAbstractButton::clicked,
+            this,       &US_CombineModels::save );
 
    lw_models ->setToolTip(
       tr( "List of models to combine for a global model" ) );
@@ -119,8 +119,8 @@ void US_CombineModels::add_models()
    US_ModelLoader dialog( loadDB, mfilter, tmodels, tmdescs, pfilts );
    dialog.move( this->pos() + QPoint( 200, 200 ) );
 
-   connect( &dialog, SIGNAL(   changed( bool ) ),
-            this, SLOT( update_disk_db( bool ) ) );
+   connect( &dialog, &US_ModelLoader::changed,
+            this, &US_CombineModels::update_disk_db );
    QApplication::restoreOverrideCursor();
 
    if ( dialog.exec() != QDialog::Accepted )
@@ -384,8 +384,8 @@ void US_CombineModels::select_filt( void )
 
    US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
    srdiag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT  ( update_disk_db( bool ) ) );
+   connect( &srdiag, &US_SelectRuns::dkdb_changed,
+            this,    &US_CombineModels::update_disk_db );
 
    if ( srdiag.exec() == QDialog::Accepted )
       nruns         = pfilts.size();

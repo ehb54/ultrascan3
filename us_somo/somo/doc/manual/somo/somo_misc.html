@@ -23,7 +23,7 @@
 <h2>
 SOMO - Miscellaneous Options Module:</h2>
 <p>
-<h3><center>Last updated: June 2024 </center></h3><p>
+<h3><center>Last updated: August 2026 </center></h3><p>
 <p>
 <img SRC="somo-misc1New.png" ALT="SOMO Miscellaneous Options Screen">
 </center>
@@ -96,7 +96,7 @@ When set, all beads will be forced to have the same radius value.
 In May 2014 we added a new method for the computation of the hydrodynamic parameters starting from an atomic-level structure, the boundary elements approach <b><i>BEST</i></b> [S.R. Aragon, A precise boundary element method for macromolecular transport properties. J. Comp.Chem., 25, 1191-1205 (2004); S.R. Aragon and D.K. Hahn, Precise boundary element computation of proteins transport properties: Diffusion tensors, specific volume and hydration, Biophysical Journal, 91:1591-1603 (2006)]. This method necessitates a properly formatted atomic radii and names file for its ancillary program <b><i>MSROLL</i></b>, and the one provided with the original <b><i>BEST</i></b> program is directly made available within the <b>US-SOMO</b> implementation ("<i>best.radii</i>"). Users wishing to utilize instead the atomic radii and names as listed in the <b><i>US-SOMO</i></b> <i>somo.residue</i> file can generate a properly formatted file compatible with <b><i>BEST</i></b> by selecting the <i><b>Create MSROLL atomic radii and names file on load residue file</i></b> checkbox here, and re-launch <b><i>US-SOMO</i></b>.<p>
 
 <li>
-In 2018, we added the <b><i>GRPY</b></i> very accurate but computationally-intensive method for calculating the hydrodynamic properties of models with overlapping beads of different size (see <i>History</i> in the <a href=somo.html><b><i>Main US-SOMO Help</i></b></a>). A non-parallel <b><i>GRPY</i></b> code was made available at that time, severely limiting speed and size of the models that could be processed. A full implementation allowing multi-core parallel processing is now available for all operating systems from the <span style="color:#CC0000">July 2024</span> release. Select the <i><b>Enable Parallel GRPY</i></b> checkbox to use this option (<b>default: not selected</b>).<p>
+In 2018, we added the <b><i>GRPY</b></i> very accurate but computationally-intensive method for calculating the hydrodynamic properties of models with overlapping beads of different size (see <i>History</i> in the <a href=somo.html><b><i>Main US-SOMO Help</i></b></a>). <b><i>GRPY</i></b> was initially provided as a non-parallel external program, severely limiting the speed and size of the models that could be processed, and a Docker-based parallel version was later added. From the <span style="color:#CC0000">August 2026</span> release, that program is replaced by a new, <b>multi-core</b> implementation which <b><i>US-SOMO</i></b> installs and runs for you: no separate installation, no Docker image, and no checkbox selection are required. A memory-lean solver (storing only the tiled upper triangle of the mobility matrix, with an optional single-precision mode) extends the accessible size range. Because the calculation is nonetheless dense, its memory requirement grows as the square of the number of used beads; before starting, <b><i>US-SOMO</i></b> now estimates this requirement and, if it would exceed the available RAM, warns and lets you choose single precision, a smaller model, or the size-independent <b><i>ZENO</i></b> method (which, however, does not compute <i>rotational diffusion</i>) rather than risk exhausting memory.<p>
 
 <li>
 <b><i>Method used when automatically calculate hydrodynamics is checked</i></b> in the <b><i>Hydrodynamic Calculations</i></b> section of the <b><i>US-SOMO</i></b> main section. A pull down menu will let you choose between three options:
@@ -114,7 +114,7 @@ In 2018, we added the <b><i>GRPY</b></i> very accurate but computationally-inten
     &emsp;<i>SMI or ZENO if overlaps present (legacy)</i><br>
     &emsp;<i>ZENO</i><br>
     &emsp;<i>GRPY</i><p>
-<b><i>ZENO</i></b> is the <b>Default option</b> because it allows computing the hydrodynamic parameters of bead models irrespective of their size and of the presence/absence of overlaps. The use of <b><i>SMI</i></b> is discouraged, and <b><i>GRPY</i></b> can be unable to run (crash) depending on the user's computer characteristics and size (number of used beads) of the model.<p>
+<b><i>ZENO</i></b> is the <b>Default option</b> because it allows computing the hydrodynamic parameters of bead models irrespective of their size and of the presence/absence of overlaps. The use of <b><i>SMI</i></b> is discouraged, and <b><i>GRPY</i></b> may be impractical for very large models on machines with limited RAM, in which case <b><i>US-SOMO</i></b> will estimate the memory requirement and warn before starting the run.<p>
 </ul>
 
 
@@ -133,7 +133,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on June 13, 2024.
+Last modified on August 6, 2026.
 </font>
 </body>
 </html>

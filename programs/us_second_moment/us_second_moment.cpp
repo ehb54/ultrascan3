@@ -32,9 +32,9 @@ US_SecondMoment::US_SecondMoment() : US_AnalysisBase2()
    smSeconds  = NULL;
    te_results = NULL;
 
-   connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
-   connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+   connect( pb_help,  &QAbstractButton::clicked, this, &US_SecondMoment::help );
+   connect( pb_view,  &QAbstractButton::clicked, this, &US_SecondMoment::view );
+   connect( pb_save,  &QAbstractButton::clicked, this, &US_SecondMoment::save );
 }
 
 void US_SecondMoment::data_plot( void )

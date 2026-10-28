@@ -23,11 +23,11 @@ US_GetEdit::US_GetEdit( int& i, QStringList& filenames )
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &QDialog::reject );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Select" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( select() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_GetEdit::select );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );

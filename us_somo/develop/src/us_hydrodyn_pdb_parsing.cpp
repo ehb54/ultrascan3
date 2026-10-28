@@ -53,8 +53,18 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    AUTFBACK( cb_skip_hydrogen );
    connect(cb_skip_hydrogen, SIGNAL(clicked()), this, SLOT(skip_hydrogen()));
 
+   cb_skip_deuterium = new QCheckBox();
+   cb_skip_deuterium->setText(us_tr(" Skip deuterium atoms"));
+   cb_skip_deuterium->setEnabled(true);
+   cb_skip_deuterium->setChecked((*pdb).skip_deuterium);
+   cb_skip_deuterium->setMinimumHeight(minHeight1);
+   cb_skip_deuterium->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_skip_deuterium->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_skip_deuterium );
+   connect(cb_skip_deuterium, SIGNAL(clicked()), this, SLOT(skip_deuterium()));
+
    cb_skip_water = new QCheckBox();
-   cb_skip_water->setText(us_tr(" Skip solvent water molecules"));
+   cb_skip_water->setText(us_tr(" Skip solvent water molecules (light and heavy)"));
    cb_skip_water->setEnabled(false);
    cb_skip_water->setChecked((*pdb).skip_water);
    cb_skip_water->setMinimumHeight(minHeight1);
@@ -126,6 +136,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    {
       QVBoxLayout * vbox = new QVBoxLayout; vbox->setContentsMargins( 0, 0, 0, 0 ); vbox->setSpacing( 0 );
       vbox->addWidget( cb_skip_hydrogen );
+      vbox->addWidget( cb_skip_deuterium );
       vbox->addWidget( cb_skip_water );
       vbox->addWidget( cb_alternate );
       vbox->addWidget( cb_find_sh );
@@ -273,6 +284,12 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
 void US_Hydrodyn_PDB_Parsing::skip_hydrogen()
 {
    (*pdb).skip_hydrogen = cb_skip_hydrogen->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_PDB_Parsing::skip_deuterium()
+{
+   (*pdb).skip_deuterium = cb_skip_deuterium->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

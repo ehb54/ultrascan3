@@ -153,60 +153,60 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
    // Signals and Slots
-   connect( pb_prefilt,   SIGNAL( clicked()        ),
-            this,         SLOT  ( select_prefilt() ) );
-   connect( pb_loaddis,   SIGNAL( clicked()        ),
-            this,         SLOT  ( load_distro()    ) );
-   connect( pb_reset,     SIGNAL( clicked()  ),
-            this,         SLOT  ( resetAll() ) );
-   connect( pb_details,   SIGNAL( clicked()    ),
-            this,         SLOT  ( runDetails() ) );
-   connect( cb_sstart,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeSedcoeff( )            ) );
-   connect( cb_send,      SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeSedcoeff( )            ) );
-   connect( cb_lstart,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeLambda( )            ) );
-   connect( cb_lend,      SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeLambda( )            ) );
-   connect( ct_smooth,    SIGNAL( valueChanged( double     ) ),
-            this,         SLOT  ( changeSmooth()             ) );
-   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeRecord( )            ) );
-   connect( pb_prev,      SIGNAL( clicked()  ),
-            this,         SLOT  ( prevPlot() ) );
-   connect( pb_next,      SIGNAL( clicked()  ),
-            this,         SLOT  ( nextPlot() ) );
-   connect( ck_srngsum,   SIGNAL( clicked()       ),
-            this,         SLOT  ( sum_check()     ) );
-   connect( pb_svdata,    SIGNAL( clicked()       ),
-            this,         SLOT  ( save_data()     ) );
-   connect( pb_plot2d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( changeRecord()  ) );
-   connect( pb_movie2d,   SIGNAL( clicked()       ),
-            this,         SLOT  ( show_2d_movie() ) );
-   connect( pb_plot3d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( plot_3d()       ) );
-   connect( pb_svplot,    SIGNAL( clicked()       ),
-            this,         SLOT  ( save_plot()     ) );
-   connect( pb_svmovie,   SIGNAL( clicked()       ),
-            this,         SLOT  ( save_movie()    ) );
-   connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT  ( help()     ) );
-   connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT  ( close()    ) );
-    connect( rb_pltsw,    SIGNAL( toggled     ( bool ) ),
-             this,        SLOT(   changedPlotX( bool ) ) );
-    connect( rb_pltMW,    SIGNAL( toggled     ( bool ) ),
-             this,        SLOT(   changedPlotX( bool ) ) );
-    connect( rb_pltDw,    SIGNAL( toggled     ( bool ) ),
-             this,        SLOT(   changedPlotX( bool ) ) );
-    connect( rb_pltff0,   SIGNAL( toggled     ( bool ) ),
-             this,        SLOT(   changedPlotX( bool ) ) );
-    connect( rb_pltvb,    SIGNAL( toggled     ( bool ) ),
-             this,        SLOT(   changedPlotX( bool ) ) );
-    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
-             this,        SLOT(   changedPlotX( bool ) ) );
+   connect( pb_prefilt,   &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::select_prefilt );
+   connect( pb_loaddis,   &QAbstractButton::clicked,
+            this,         qOverload<>( &US_MwlSpectra::load_distro ) );
+   connect( pb_reset,     &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::resetAll );
+   connect( pb_details,   &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::runDetails );
+   connect( cb_sstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlSpectra::changeSedcoeff );
+   connect( cb_send,      qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlSpectra::changeSedcoeff );
+   connect( cb_lstart,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlSpectra::changeLambda );
+   connect( cb_lend,      qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlSpectra::changeLambda );
+   connect( ct_smooth,    &QwtCounter::valueChanged,
+            this,         &US_MwlSpectra::changeSmooth );
+   connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,         &US_MwlSpectra::changeRecord );
+   connect( pb_prev,      &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::prevPlot );
+   connect( pb_next,      &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::nextPlot );
+   connect( ck_srngsum,   &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::sum_check );
+   connect( pb_svdata,    &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::save_data );
+   connect( pb_plot2d,    &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::changeRecord );
+   connect( pb_movie2d,   &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::show_2d_movie );
+   connect( pb_plot3d,    &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::plot_3d );
+   connect( pb_svplot,    &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::save_plot );
+   connect( pb_svmovie,   &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::save_movie );
+   connect( pb_help,      &QAbstractButton::clicked,
+            this,         &US_MwlSpectra::help );
+   connect( pb_close,     &QAbstractButton::clicked,
+            this,         &QWidget::close );
+    connect( rb_pltsw,    &QAbstractButton::toggled,
+             this,        &US_MwlSpectra::changedPlotX );
+    connect( rb_pltMW,    &QAbstractButton::toggled,
+             this,        &US_MwlSpectra::changedPlotX );
+    connect( rb_pltDw,    &QAbstractButton::toggled,
+             this,        &US_MwlSpectra::changedPlotX );
+    connect( rb_pltff0,   &QAbstractButton::toggled,
+             this,        &US_MwlSpectra::changedPlotX );
+    connect( rb_pltvb,    &QAbstractButton::toggled,
+             this,        &US_MwlSpectra::changedPlotX );
+    connect( rb_pltMWl,   &QAbstractButton::toggled,
+             this,        &US_MwlSpectra::changedPlotX );
 
    // Do the left-side layout
    int row = 0;
@@ -446,8 +446,8 @@ void US_MwlSpectra::select_prefilt( )
 
    US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
    srdiag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
-            this,    SLOT  ( update_disk_db( bool ) ) );
+   connect( &srdiag, &US_SelectRuns::dkdb_changed,
+            this,    &US_MwlSpectra::update_disk_db );
 
    if ( srdiag.exec() != QDialog::Accepted )
       pfilts.clear();
@@ -464,8 +464,8 @@ void US_MwlSpectra::load_distro( )
    US_ModelLoader lddiag( loadDB, mfilter, models, mdescs, pfilts );
    lddiag.move( this->pos() + QPoint( 200, 200 ) );
 
-   connect( &lddiag, SIGNAL( changed       ( bool ) ),
-            this,    SLOT  ( update_disk_db( bool ) ) );
+   connect( &lddiag, &US_ModelLoader::changed,
+            this,    &US_MwlSpectra::update_disk_db );
    QApplication::restoreOverrideCursor();
 
    if ( lddiag.exec() != QDialog::Accepted )
@@ -1264,16 +1264,16 @@ void US_MwlSpectra::connect_ranges( bool conn )
 {
    if ( conn )
    {  // Connect the range-related controls
-      connect( cb_sstart,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeSedcoeff(          ) ) );
-      connect( cb_send,    SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeSedcoeff(          ) ) );
-      connect( cb_lstart,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeLambda(            ) ) );
-      connect( cb_lend,    SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeLambda(            ) ) );
-      connect( cb_pltrec,  SIGNAL( currentIndexChanged( int ) ),
-               this,       SLOT  ( changeRecord(            ) ) );
+      connect( cb_sstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlSpectra::changeSedcoeff );
+      connect( cb_send,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlSpectra::changeSedcoeff );
+      connect( cb_lstart,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlSpectra::changeLambda );
+      connect( cb_lend,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlSpectra::changeLambda );
+      connect( cb_pltrec,  qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,       &US_MwlSpectra::changeRecord );
    }
 
    else
@@ -1350,8 +1350,8 @@ DbgLv(1) << "Plt3D";
       p3d_ctld->show();
       // Position inside the main window relative to its upper left
       p3d_ctld->move( x() + 500, y() + 100 );
-      connect( p3d_ctld, SIGNAL( has_closed()     ),
-               this,     SLOT  ( p3dctrl_closed() ) );
+      connect( p3d_ctld, &US_MwlSPlotControl::has_closed,
+               this,     &US_MwlSpectra::p3dctrl_closed );
    }
 
    else
@@ -1597,8 +1597,8 @@ void US_MwlSpectra::sum_check()
       sedxp      = ( sedxp < 0 ) ? ( ( sedxs + sedxe ) / 2 ) : sedxp;
       cb_pltrec->disconnect();
       cb_pltrec->setCurrentIndex( sedxp );
-      connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
-               this,         SLOT  ( changeRecord( )            ) );
+      connect( cb_pltrec,    qOverload< int >( &QComboBox::currentIndexChanged ),
+               this,         &US_MwlSpectra::changeRecord );
       le_status->setText( lb_pltrec->text() + "  "
             + tr( "sum for S from %1 to %2" )
             .arg( sed_start ).arg( sed_end ) );

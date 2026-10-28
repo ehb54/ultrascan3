@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_dad.h"
 #include "../include/us_hydrodyn_dad_ciq.h"
@@ -8,11 +9,9 @@
 #include "../include/us_hydrodyn_dad_fit.h"
 #include "../include/us_hydrodyn_dad_fit_global.h"
 #include "../include/us_lm.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QTextStream>
-#endif
 
 #define TSO QTextStream(stdout)
 
@@ -53,15 +52,15 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
    }
 
    QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
    head = head.replace( QRegularExpression( "At_L" ), "AL_t" );
 
-   QRegExp rx_q     ( "At_L(\\d+(:?|_\\d+))" );
-   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-   QRegExp rx_blc   ( "_blc(.\\d*(:?|_\\d+))" );
+   QRegularExpression rx_q     ( "At_L(\\d+(?:_\\d+)?)" );
+   QRegularExpression rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_blc   ( "_blc(.\\d*(?:_\\d+)?)" );
 
    vector < QString > q_string;
    vector < double  > q;
@@ -99,14 +98,15 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
          qApp->processEvents();
       }
 
-      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+      if ( !rx_q_m.hasMatch() )
       {
          editor_msg( "red", QString( us_tr( "Error: Can not find " + UNICODE_LAMBDA_QS + " value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
          return false;
       }
-      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      ql.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
       {
          editor_msg( "red", QString( us_tr( "Error: Duplicate " + UNICODE_LAMBDA_QS + " value in file name for %1" ) ).arg( files[ i ] ) );
@@ -116,15 +116,18 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
       }
       used_q[ ql.back() ] = true;
          
-      if ( rx_bl.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_bl_m = rx_bl.match( files[ i ] );
+      if ( rx_bl_m.hasMatch() )
       {
          any_bl = true;
       }
-      if ( rx_bi.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_bi_m = rx_bi.match( files[ i ] );
+      if ( rx_bi_m.hasMatch() )
       {
          any_bi = true;
       }
-      if ( rx_blc.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_blc_m = rx_blc.match( files[ i ] );
+      if ( rx_blc_m.hasMatch() )
       {
          any_blc = true;
       }
@@ -334,10 +337,11 @@ bool US_Hydrodyn_Dad::create_i_of_q_ng( QStringList files, double t_min, double 
          }
          
          {
-            QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
-            if ( rx_repeak.indexIn( lbl_conc_file->text() ) != -1 )
+            QRegularExpression rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+            QRegularExpressionMatch rx_repeak_m = rx_repeak.match( lbl_conc_file->text() );
+            if ( rx_repeak_m.hasMatch() )
             {
-               conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
+               conc_repeak = rx_repeak_m.captured(1).replace( "_", "." ).toDouble();
                if ( conc_repeak == 0e0 )
                {
                   conc_repeak = 1e0;
@@ -553,8 +557,8 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
    }
 
    QString head = qstring_common_head( files, true );
-   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
-   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "__It_q\\d*_$" ) ), "" );
+   head = head.replace( QRegularExpression( QStringLiteral( "_q\\d*_$" ) ), "" );
    head = head.replace( QRegularExpression( "[\\[\\]{}]" ), "" );
 
    if ( !ggaussian_compatible( false ) )
@@ -563,9 +567,9 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
       return false;
    }
 
-   QRegExp rx_q     ( "At_L(\\d+_\\d+)" );
-   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_q     ( "At_L(\\d+_\\d+)" );
+   QRegularExpression rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
    vector < QString > q_string;
    vector < double  > q;
@@ -608,14 +612,15 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
    {
       progress->setValue( i ); progress->setMaximum( files.size() * 2 );
       qApp->processEvents();
-      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+      if ( !rx_q_m.hasMatch() )
       {
          editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
          return false;
       }
-      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      ql.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
       {
          editor_msg( "red", QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
@@ -625,32 +630,34 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
       }
       used_q[ ql.back() ] = true;
          
-      if ( rx_bl.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_bl_m = rx_bl.match( files[ i ] );
+      if ( !rx_bl_m.hasMatch() )
       {
          bl_slope    .push_back( 0e0 );
          bl_intercept.push_back( 0e0 );
       } else {
-         // TSO << QString( "bl_cap 1 <%1>\n" ).arg( rx_bl.cap( 1 ) );
-         // TSO << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl.cap( 3 ) );
-         bl_slope    .push_back( rx_bl.cap( 1 ).replace( "_", "." ).toDouble() );
-         bl_intercept.push_back( rx_bl.cap( 3 ).replace( "_", "." ).toDouble() );
+         // TSO << QString( "bl_cap 1 <%1>\n" ).arg( rx_bl_m.captured( 1 ) );
+         // TSO << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl_m.captured( 3 ) );
+         bl_slope    .push_back( rx_bl_m.captured( 1 ).replace( "_", "." ).toDouble() );
+         bl_intercept.push_back( rx_bl_m.captured( 3 ).replace( "_", "." ).toDouble() );
          // TSO << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).toLatin1().data();
          bl_count++;
          any_bl = true;
       }
 
-      if ( rx_bi.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_bi_m = rx_bi.match( files[ i ] );
+      if ( !rx_bi_m.hasMatch() )
       {
          // bi_delta    .push_back( 0e0 );
          // bi_alpha.push_back( 0e0 );
       } else {
-         // TSO << QString( "bi_cap 1 <%1>\n" ).arg( rx_bi.cap( 1 ) );
-         // TSO << QString( "bi_cap 2 <%1>\n" ).arg( rx_bi.cap( 3 ) );
-         // bi_delta .push_back( rx_bi.cap( 1 ).replace( "_", "." ).toDouble() );
-         // bi_alpha .push_back( rx_bi.cap( 3 ).replace( "_", "." ).toDouble() );
+         // TSO << QString( "bi_cap 1 <%1>\n" ).arg( rx_bi_m.captured( 1 ) );
+         // TSO << QString( "bi_cap 2 <%1>\n" ).arg( rx_bi_m.captured( 3 ) );
+         // bi_delta .push_back( rx_bi_m.captured( 1 ).replace( "_", "." ).toDouble() );
+         // bi_alpha .push_back( rx_bi_m.captured( 3 ).replace( "_", "." ).toDouble() );
          // TSO << QString( "bi for file %1 delta  %2 alpha %3\n" ).arg( i ).arg( bi_delta.back(), 0, 'g', 8 ).arg( bi_alpha.back(), 0, 'g', 8 ).toLatin1().data();
-         bi_delta[ ql.back() ] = rx_bi.cap( 1 ).replace( "_", "." ).toDouble();
-         bi_alpha[ ql.back() ] = rx_bi.cap( 3 ).replace( "_", "." ).toDouble();
+         bi_delta[ ql.back() ] = rx_bi_m.captured( 1 ).replace( "_", "." ).toDouble();
+         bi_alpha[ ql.back() ] = rx_bi_m.captured( 3 ).replace( "_", "." ).toDouble();
          bi_count++;
          any_bi = true;
       }
@@ -853,10 +860,11 @@ bool US_Hydrodyn_Dad::create_i_of_q( QStringList files, double t_min, double t_m
 
       if ( !no_conc )
       {
-         QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
-         if ( rx_repeak.indexIn( lbl_conc_file->text() ) != -1 )
+         QRegularExpression rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+         QRegularExpressionMatch rx_repeak_m = rx_repeak.match( lbl_conc_file->text() );
+         if ( rx_repeak_m.hasMatch() )
          {
-            conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
+            conc_repeak = rx_repeak_m.captured(1).replace( "_", "." ).toDouble();
             if ( conc_repeak == 0e0 )
             {
                conc_repeak = 1e0;
@@ -2120,7 +2128,7 @@ bool US_Hydrodyn_Dad::create_unified_ggaussian_target( QStringList & files, bool
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_cb_gg_smooth" ] == "true"
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "dad_gg_smooth" )
            && ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_gg_smooth" ].toInt() > 0 ) {
-         editor_msg( "darkred", QString( "Experimental smoothing points %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "dad_gg_smooth" ].toInt() ) );
+         editor_msg( "darkred", QString( "Smoothing radius %1 will be applied\n" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gg_smooth" ].toInt() ) );
       }
 
       if ( !initial_ggaussian_fit( files, only_init_unset ) )
@@ -2130,7 +2138,7 @@ bool US_Hydrodyn_Dad::create_unified_ggaussian_target( QStringList & files, bool
       }
    }
 
-   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegularExpression rx_q     ( "_q(\\d+_\\d+)" );
 
    common_size   = 0;
    per_file_size = 0;
@@ -2227,13 +2235,14 @@ bool US_Hydrodyn_Dad::create_unified_ggaussian_target( QStringList & files, bool
          return false;
       }
       
-      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+      if ( !rx_q_m.hasMatch() )
       {
          editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
          return false;
       }
 
-      unified_ggaussian_qvals.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      unified_ggaussian_qvals.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
       
 
       for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
@@ -3249,9 +3258,9 @@ bool US_Hydrodyn_Dad::create_istar_q_ng( QStringList files, double t_min, double
    
    // TSO << "create_istar_q_ng()  head: " << head << "\n";
 
-   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
-   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
-   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_q     ( "_q(\\d+_\\d+)" );
+   QRegularExpression rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegularExpression rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
    vector < QString > q_string;
    vector < double  > q;
@@ -3284,14 +3293,15 @@ bool US_Hydrodyn_Dad::create_istar_q_ng( QStringList files, double t_min, double
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ ) {
       progress->setValue( i ); progress->setMaximum( files.size() * 2 );
       qApp->processEvents();
-      if ( rx_q.indexIn( files[ i ] ) == -1 )
+      QRegularExpressionMatch rx_q_m = rx_q.match( files[ i ] );
+      if ( !rx_q_m.hasMatch() )
       {
          editor_msg( "red", QString( us_tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
          return false;
       }
-      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      ql.push_back( rx_q_m.captured( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
       {
          editor_msg( "red", QString( us_tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
@@ -3302,11 +3312,13 @@ bool US_Hydrodyn_Dad::create_istar_q_ng( QStringList files, double t_min, double
       }
       used_q[ ql.back() ] = true;
          
-      if ( rx_bl.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_bl_m = rx_bl.match( files[ i ] );
+      if ( rx_bl_m.hasMatch() )
       {
          any_bl = true;
       }
-      if ( rx_bi.indexIn( files[ i ] ) != -1 )
+      QRegularExpressionMatch rx_bi_m = rx_bi.match( files[ i ] );
+      if ( rx_bi_m.hasMatch() )
       {
          any_bi = true;
       }
@@ -3516,10 +3528,11 @@ bool US_Hydrodyn_Dad::create_istar_q_ng( QStringList files, double t_min, double
          }
          
          {
-            QRegExp rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
-            if ( rx_repeak.indexIn( lbl_conc_file->text() ) != -1 )
+            QRegularExpression rx_repeak( "-rp(.\\d*(_|\\.)\\d+(|e.\\d+))" );
+            QRegularExpressionMatch rx_repeak_m = rx_repeak.match( lbl_conc_file->text() );
+            if ( rx_repeak_m.hasMatch() )
             {
-               conc_repeak = rx_repeak.cap( 1 ).replace( "_", "." ).toDouble();
+               conc_repeak = rx_repeak_m.captured(1).replace( "_", "." ).toDouble();
                if ( conc_repeak == 0e0 )
                {
                   conc_repeak = 1e0;

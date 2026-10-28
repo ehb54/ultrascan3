@@ -160,14 +160,14 @@ DbgLv(1) << "TRP:  csizw cminw" << csizw << cminw;
    mainLayout->setStretchFactor( leftLayout,  3 );
    mainLayout->setStretchFactor( rightLayout, 5 );
 
-   connect( pb_scan,   SIGNAL( clicked()        ),
-            this,      SLOT  ( scan()           ) );
-   connect( pb_help,   SIGNAL( clicked()        ),
-            this,      SLOT  ( help()           ) );
-   connect( pb_cancel, SIGNAL( clicked()        ),
-            this,      SLOT  ( reject_it()      ) );
-   connect( pb_accept, SIGNAL( clicked()        ),
-            this,      SLOT  ( accept_it()      ) );
+   connect( pb_scan,   &QAbstractButton::clicked,
+            this,      &US_RpScan::scan );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_RpScan::help );
+   connect( pb_cancel, &QAbstractButton::clicked,
+            this,      &US_RpScan::reject_it );
+   connect( pb_accept, &QAbstractButton::clicked,
+            this,      &US_RpScan::accept_it );
 
 DbgLv(1) << "TRP:  p1size" << p1size;
    data_plot1 ->resize( p1size );
@@ -360,8 +360,8 @@ DbgLv(1) << "ASC:   jt" << jt << "alpha" << calpha;
 
          wthr->define_work( wtask );
          wthreads << wthr;
-         connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
-                  this, SLOT(   process_job(   WorkerThreadPc* ) ) );
+         connect( wthr, &WorkerThreadPc::work_complete,
+                  this, &US_RpScan::process_job );
          wthr->start();
          nasubm++;
 DbgLv(1) << "ASC:      defined: nasubm" << nasubm;
@@ -596,8 +596,8 @@ DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
       le_selalpha->setText( QString::asprintf( "%.3f", alpha ) );
    }
 
-   connect( pick, SIGNAL( cMouseUp( const QPointF& ) ),
-            this, SLOT  ( mouse   ( const QPointF& ) ) );
+   connect( pick, &US_PlotPicker::cMouseUp,
+            this, &US_RpScan::mouse );
 
    data_plot1->replot();
 }
@@ -694,8 +694,8 @@ DbgLv(1) << "SCPJ:     new subm taskx alpha" << nasubm << wtask.sim_vals.alpha;
       wthr->define_work( wtask );
 DbgLv(1) << "SCPJ:     new subm   work defined  sv_nnls_a" << wtask.psv_nnls_b;
 //      wthr->disconnect();
-      connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
-               this, SLOT(   process_job(   WorkerThreadPc* ) ) );
+      connect( wthr, &WorkerThreadPc::work_complete,
+               this, &US_RpScan::process_job );
       wthr->start();
       nasubm++;
 DbgLv(1) << "SCPJ:     new subm   tsk started" << nasubm;

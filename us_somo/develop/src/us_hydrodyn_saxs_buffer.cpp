@@ -3,7 +3,6 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
-#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -16,7 +15,7 @@
 #include <QMouseEvent>
 #include <QCloseEvent>
 #include <QGridLayout>
-#endif
+#include <QRegularExpression>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -42,9 +41,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    setWindowTitle( title );
    order_ascending = false;
    conc_widget     = false;
-#if QT_VERSION >= 0x040000
    legend_vis      = false;
-#endif
 
    QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" );
 
@@ -1613,15 +1610,15 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    {
       bool reorder = true;
 
-      QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      rx_cap.setMinimal( true );
+      QRegularExpression rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
+      rx_cap.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
 
       list < hplc_sortable_qstring > svals;
 
       QString head = qstring_common_head( filenames, true );
       QString tail = qstring_common_tail( filenames, true );
 
-      bool add_dp = head.contains( QRegExp( "\\d_$" ) );
+      bool add_dp = head.contains( QRegularExpression( QStringLiteral( "\\d_$" ) ) );
 
 #ifdef DEBUG_LOAD_REORDER
       us_qdebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
@@ -1633,12 +1630,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       {
          QString tmp = filenames[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
-         if ( rx_cap.indexIn( tmp ) != -1 )
+         QRegularExpressionMatch rx_cap_m = rx_cap.match( tmp );
+         if ( rx_cap_m.hasMatch() )
          {
 #ifdef DEBUG_LOAD_REORDER
             us_qdebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
 #endif
-            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            tmp = rx_cap_m.captured(1) + "." + rx_cap_m.captured( 2 );
 #ifdef DEBUG_LOAD_REORDER
          } else {
             us_qdebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
@@ -1845,11 +1843,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
    plotted_curves.clear( );
 
    if ( all_selected_files().size() > 20 &&
-#if QT_VERSION < 0x040000
-        plot_dist->autoLegend() 
-#else
         legend_vis
-#endif
         )
    {
       legend();
@@ -1930,9 +1924,6 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-      plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
       connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
    
@@ -1957,29 +1948,14 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
    get_min_max( file, minx, maxx, miny, maxy );
 
-#if QT_VERSION < 0x040000
-   long Iq = plot_dist->insertCurve( file );
-   plotted_curves[ file ] = Iq;
-   plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
-#else
    QwtPlotCurve *curve = new QwtPlotCurve( file );
    plotted_curves[ file ] = curve;
    curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
    unsigned int q_points = f_qs[ file ].size();
 
    if ( !axis_y_log )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->setCurveData( Iq, 
-                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                               (double *)&( f_qs[ file ][ 0 ] ),
-                               (double *)&( f_Is[ file ][ 0 ] ),
-                               q_points
-                               );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
-#else
       curve->setSamples(
                      /* cb_guinier->isChecked() ?
                         (double *)&(plotted_q2[p][0]) : */
@@ -1990,7 +1966,6 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
       curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
       curve->attach( plot_dist );
-#endif
    } else {
       vector < double > q;
       vector < double > I;
@@ -2003,15 +1978,6 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
          }
       }
       q_points = ( unsigned int )q.size();
-#if QT_VERSION < 0x040000
-      plot_dist->setCurveData( Iq, 
-                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                               (double *)&( q[ 0 ] ),
-                               (double *)&( I[ 0 ] ),
-                               q_points
-                               );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
-#else
       curve->setSamples(
                      /* cb_guinier->isChecked() ?
                         (double *)&(plotted_q2[p][0]) : */
@@ -2022,7 +1988,6 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
       curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
       curve->attach( plot_dist );
-#endif
    }
    return true;
 }
@@ -2176,7 +2141,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    
    QString ext = QFileInfo( filename ).suffix().toLower();
 
-   QRegExp rx_valid_ext (
+   QRegularExpression rx_valid_ext (
                          "^("
                          "dat|"
                          "int|"
@@ -2184,7 +2149,8 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.indexIn( ext ) == -1 )
+   QRegularExpressionMatch rx_valid_ext_m = rx_valid_ext.match( ext );
+   if ( !rx_valid_ext_m.hasMatch() )
    {
       errormsg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -2222,38 +2188,42 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    if ( ext == "dat" )
    {
-      QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
-      QRegExp rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
-      if ( rx_unit.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpression rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
+      QRegularExpression rx_unit      ( "Units:\\s*(\\S+)(\\s|$)" );
+      QRegularExpressionMatch rx_unit_m = rx_unit.match( qv[ 0 ] );
+      if ( rx_unit_m.hasMatch() )
       {
-         QString unitstr = rx_unit.cap( 1 ).toLower();
+         QString unitstr = rx_unit_m.captured(1).toLower();
          bool ok = false;
-         if ( !ok && unitstr.contains( QRegExp( "^(1/nm|nm^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/nm|nm^-1)$" ) ) ) ) {
             use_units = 0.1;
             ok = true;
          }
-         if ( !ok && unitstr.contains( QRegExp( "^(1/a|a^-1)$" ) ) ) {
+         if ( !ok && unitstr.contains( QRegularExpression( QStringLiteral( "^(1/a|a^-1)$" ) ) ) ) {
             use_units = 1.0;
             ok = true;
          }
          if ( !ok ) {
-            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit.cap( 1 ) ).arg( use_units ) );
+            editor_msg( "black", QString( us_tr( "%1 - unknown Units: %2 specified, must be 1/A or 1/NM, using specified default conversion of %3") ).arg( filename ).arg( rx_unit_m.captured( 1 ) ).arg( use_units ) );
          }
       }
-      if ( rx_conc.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpressionMatch rx_conc_m = rx_conc.match( qv[ 0 ] );
+      if ( rx_conc_m.hasMatch() )
       {
-         this_conc = rx_conc.cap( 1 ).toDouble();
+         this_conc = rx_conc_m.captured(1).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpressionMatch rx_psv_m = rx_psv.match( qv[ 0 ] );
+      if ( rx_psv_m.hasMatch() )
       {
-         this_psv = rx_psv.cap( 1 ).toDouble();
+         this_psv = rx_psv_m.captured(1).toDouble();
       }
-      if ( rx_I0se.indexIn( qv[ 0 ] ) != -1 )
+      QRegularExpressionMatch rx_I0se_m = rx_I0se.match( qv[ 0 ] );
+      if ( rx_I0se_m.hasMatch() )
       {
-         this_I0se = rx_I0se.cap( 1 ).toDouble();
+         this_I0se = rx_I0se_m.captured(1).toDouble();
       }
    }
 
@@ -2270,21 +2240,22 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    vector < double >  I;
    vector < double >  e;
 
-   QRegExp rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
-   rx_ok_line.setMinimal( true );
+   QRegularExpression rx_ok_line("^(\\s+(-|)|\\d+|\\.|\\d(E|e)(\\+|-|\\d))+$");
+   rx_ok_line.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
-      if ( qv[i].contains(QRegExp("^#")) ||
-           rx_ok_line.indexIn( qv[i] ) == -1 )
+      QRegularExpressionMatch rx_ok_line_m = rx_ok_line.match( qv[i] );
+      if ( qv[i].contains(QRegularExpression( QStringLiteral( "^#" ) )) ||
+           !rx_ok_line_m.hasMatch() )
       {
          continue;
       }
       
-      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , Qt::SkipEmptyParts ),""));
+      // QStringList tokens = (qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ),""));
       QStringList tokens;
       {
-         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
-         tokens = (qs ).split( QRegExp("\\s+") , Qt::SkipEmptyParts );
+         QString qs = qv[i].replace(QRegularExpression( QStringLiteral( "^\\s+" ) ),"");
+         tokens = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       }
 
       if ( (int)tokens.size() > 1 + offset )
@@ -2672,12 +2643,12 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -2758,7 +2729,7 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_head( QStringList qsl, bool stri
 
    if ( strip_digits )
    {
-      s.replace( QRegExp( "\\d+$" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" );
    }
    return s;
 }
@@ -2780,7 +2751,7 @@ QString US_Hydrodyn_Saxs_Buffer::qstring_common_tail( QStringList qsl, bool stri
    }
    if ( strip_digits )
    {
-      s.replace( QRegExp( "^\\d+" ), "" );
+      s.replace( QRegularExpression( QStringLiteral( "^\\d+" ) ), "" );
    }
    return s;
 }
@@ -3614,12 +3585,12 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    unsigned int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }
@@ -3816,9 +3787,6 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#if QT_VERSION < 0x040000
-   plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    
    legend_set();
@@ -3829,123 +3797,13 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
 bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 {
    if ( name.contains( "_bsub_a" ) ||
-        name.contains( QRegExp( "\\d+$" ) ) )
+        name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
 
       return true;
    }
    return false;
 }
-
-// void US_Hydrodyn_Saxs_Buffer::adjacent()
-// {
-//    us_qdebug( "adjacent" );
-//    QString match_name;
-//    int     match_pos = 0;
-//    QStringList turn_on;
-
-//    disable_all();
-
-//    us_qdebug( "adjacent 0" );
-//    for ( int i = 0; i < lb_files->count(); i++ )
-//    {
-//       if ( lb_files->item( i )->isSelected() )
-//       {
-//          match_name = lb_files->item( i )->text();
-//          turn_on << match_name;
-//          match_pos = i;
-//          break;
-//       }
-//    }
-//    us_qdebug( "adjacent 1" );
-
-//    QRegExp rx;
-
-//    bool found = false;
-//    // if we have bsub
-//    if ( match_name.contains( "_bsub_a" ) )
-//    {
-//       found = true;
-//       rx.setPattern(
-//                     QString( "^%1" )
-//                     .arg( match_name )
-//                     .replace( QRegExp( "_bsub_a.*$" ), "" )
-//                     .replace( QRegExp( "\\d+$" ), "\\d+" )
-//                     + 
-//                     QString( "%1$" )
-//                     .arg( match_name )
-//                     .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
-//                     );
-//    }
-
-//    us_qdebug( "adjacent 2" );
-//    if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
-//    {
-//       found = true;
-//       rx.setPattern(
-//                     QString( "^%1" )
-//                     .arg( match_name )
-//                     .replace( QRegExp( "_cn\\d+.*$" ), "" )
-//                     );
-//    }
-
-//    us_qdebug( "adjacent 3" );
-//    if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
-//    {
-//       found = true;
-//       rx.setPattern(
-//                     QString( "^%1" )
-//                     .arg( match_name )
-//                     .replace( QRegExp( "\\d+$" ), "" ) 
-//                     );
-//    }
-
-//    // cout << "rx: " << rx.pattern() << endl;
-
-//    unsigned int newly_set = 0;
-//    us_qdebug( "adjacent 4" );
-
-//    if ( found )
-//    {
-//       disable_updates = true;
-      
-//       for ( int i = match_pos - 1; i >= 0; i-- )
-//       {
-//          if ( lb_files->item( i )->text().contains( rx ) )
-//          {
-//             if ( !lb_files->item( i )->isSelected() )
-//             {
-//                lb_files->item( i)->setSelected( true );
-//                newly_set++;
-//             }
-//          }
-//       }
-      
-//       for ( int i = match_pos + 1; i < lb_files->count(); i++ )
-//       {
-//          if ( lb_files->item( i )->text().contains( rx ) )
-//          {
-//             if ( !lb_files->item( i )->isSelected() )
-//             {
-//                lb_files->item( i)->setSelected( true );
-//                newly_set++;
-//             }
-//          }
-//       }
-      
-//       if ( !newly_set )
-//       {
-//          adjacent_select( lb_files, match_name );
-//          return;
-//       }
-//       disable_updates = false;
-//       update_files();
-//    } else {
-//       adjacent_select( lb_files, match_name );
-//       return;
-//    }      
-//    update_enables();
-// }
 
 void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 {
@@ -3966,7 +3824,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       }
    }
 
-   QRegExp rx;
+   QRegularExpression rx;
 
    bool found = false;
    // if we have bsub
@@ -3976,32 +3834,32 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
+                    .replace( QRegularExpression( QStringLiteral( "_bsub_a.*$" ) ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "\\d+" )
                     + 
                     QString( "%1$" )
                     .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+                    .replace( QRegularExpression( QStringLiteral( "^.*_bsub" ) ), "_bsub" ) 
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
+                    .replace( QRegularExpression( QStringLiteral( "_cn\\d+.*$" ) ), "" )
                     );
    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+   if ( !found && match_name.contains( QRegularExpression( QStringLiteral( "\\d+$" ) ) ) )
    {
       found = true;
       rx.setPattern(
                     QString( "^%1" )
                     .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
+                    .replace( QRegularExpression( QStringLiteral( "\\d+$" ) ), "" ) 
                     );
    }
 
@@ -4099,7 +3957,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_select( QListWidget *lb, QString match )
 
    last_match = match;
       
-   QRegExp rx( match );
+   QRegularExpression rx( match );
    bool any_set = false;
 
    for ( int i = 0; i < lb->count(); i++ )
@@ -4366,18 +4224,6 @@ void US_Hydrodyn_Saxs_Buffer::zoom_info()
 {
    if ( plot_dist_zoomer )
    {
-#if QT_VERSION < 0x040000
-      cout << QString( "zoomrect: %1 %2 %3 %4\n" )
-         .arg( plot_dist_zoomer->zoomRect().x1() )
-         .arg( plot_dist_zoomer->zoomRect().x2() )
-         .arg( plot_dist_zoomer->zoomRect().y1() )
-         .arg( plot_dist_zoomer->zoomRect().y2() );
-      cout << QString( "zoombase: %1 %2 %3 %4\n" )
-         .arg( plot_dist_zoomer->zoomBase().x1() )
-         .arg( plot_dist_zoomer->zoomBase().x2() )
-         .arg( plot_dist_zoomer->zoomBase().y1() )
-         .arg( plot_dist_zoomer->zoomBase().y2() );
-#else
       cout << QString( "zoomrect: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomRect().left() )
          .arg( plot_dist_zoomer->zoomRect().right() )
@@ -4388,7 +4234,6 @@ void US_Hydrodyn_Saxs_Buffer::zoom_info()
          .arg( plot_dist_zoomer->zoomBase().right() )
          .arg( plot_dist_zoomer->zoomBase().top() )
          .arg( plot_dist_zoomer->zoomBase().bottom() );
-#endif
    } else {
       cout << "no current zoomer\n";
    }
@@ -4408,17 +4253,10 @@ void US_Hydrodyn_Saxs_Buffer::plot_mouse( const QMouseEvent & /* me */ )
 
 void US_Hydrodyn_Saxs_Buffer::select_vis()
 {
-#if QT_VERSION < 0x040000
-   double zrx1  = plot_dist_zoomer->zoomRect().x1();
-   double zrx2  = plot_dist_zoomer->zoomRect().x2();
-   double zry1  = plot_dist_zoomer->zoomRect().y1();
-   double zry2  = plot_dist_zoomer->zoomRect().y2();
-#else
    double zrx1  = plot_dist_zoomer->zoomRect().left();
    double zrx2  = plot_dist_zoomer->zoomRect().right();
    double zry1  = plot_dist_zoomer->zoomRect().top();
    double zry2  = plot_dist_zoomer->zoomRect().bottom();
-#endif
    // find curves within zoomRect & select only them
    map < QString, bool > selected_files;
    for ( int i = 0; i < lb_files->count(); i++ )
@@ -4459,17 +4297,10 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
 
 void US_Hydrodyn_Saxs_Buffer::remove_vis()
 {
-#if QT_VERSION < 0x040000
-   double zrx1  = plot_dist_zoomer->zoomRect().x1();
-   double zrx2  = plot_dist_zoomer->zoomRect().x2();
-   double zry1  = plot_dist_zoomer->zoomRect().y1();
-   double zry2  = plot_dist_zoomer->zoomRect().y2();
-#else
    double zrx1  = plot_dist_zoomer->zoomRect().left();
    double zrx2  = plot_dist_zoomer->zoomRect().right();
    double zry1  = plot_dist_zoomer->zoomRect().top();
    double zry2  = plot_dist_zoomer->zoomRect().bottom();
-#endif
    // find curves within zoomRect & select only them
    cout << "select visible\n";
    QStringList selected_files;
@@ -4586,17 +4417,10 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
 
    // is the rectangle contained?
    if ( 
-#if QT_VERSION < 0x040000
-       minx < plot_dist_zoomer->zoomRect().x1() ||
-       maxx > plot_dist_zoomer->zoomRect().x2() ||
-       miny < plot_dist_zoomer->zoomRect().y1() ||
-       maxy > plot_dist_zoomer->zoomRect().y2()
-#else
        minx < plot_dist_zoomer->zoomRect().left()  ||
        maxx > plot_dist_zoomer->zoomRect().right() ||
        miny < plot_dist_zoomer->zoomRect().top()   ||
        maxy > plot_dist_zoomer->zoomRect().bottom()
-#endif
        )
    {
       all_lefts_visible = false;
@@ -4610,13 +4434,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
-#if QT_VERSION < 0x040000
-      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
-      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
-#else
       double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
       double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
-#endif
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4648,23 +4467,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       {
          newminy = 0e0;
       }
-#if QT_VERSION < 0x040000
-      dr.setX1( newminx );
-      dr.setY1( newminy );
-
-      if ( zdx > dx * 1.1 )
-      {
-         dr.setX2( newminx + zdx );
-      } else {         
-         dr.setX2( newminx + dx * 1.1 );
-      }
-      if ( zdy > dy * 1.1 )
-      {
-         dr.setY2( newminy + zdy );
-      } else {         
-         dr.setY2( newminy + dy * 1.1 );
-      }
-#else
       dr.setLeft( newminx );
       dr.setTop ( newminy );
 
@@ -4680,7 +4482,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       } else {         
          dr.setBottom( newminy + dy * 1.1 );
       }
-#endif
 
       plot_dist_zoomer->zoom( dr );
       return;
@@ -4818,17 +4619,10 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
 
    // is the rectangle contained?
    if ( 
-#if QT_VERSION < 0x040000
-       minx < plot_dist_zoomer->zoomRect().x1() ||
-       maxx > plot_dist_zoomer->zoomRect().x2() ||
-       miny < plot_dist_zoomer->zoomRect().y1() ||
-       maxy > plot_dist_zoomer->zoomRect().y2() )
-#else
        minx < plot_dist_zoomer->zoomRect().left()  ||
        maxx > plot_dist_zoomer->zoomRect().right() ||
        miny < plot_dist_zoomer->zoomRect().top()   ||
        maxy > plot_dist_zoomer->zoomRect().bottom() )
-#endif
    {
       all_rights_visible = false;
    }
@@ -4841,13 +4635,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
-#if QT_VERSION < 0x040000
-      double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
-      double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
-#else
       double zdx = plot_dist_zoomer->zoomRect().right()  - plot_dist_zoomer->zoomRect().left();
       double zdy = plot_dist_zoomer->zoomRect().bottom() - plot_dist_zoomer->zoomRect().top();
-#endif
       if ( zdx > dx * 1.1 && zdy > dy * 1.1 )
       {
          // we can fit
@@ -4879,23 +4668,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       {
          newminy = 0e0;
       }
-#if QT_VERSION < 0x040000
-      dr.setX1( newminx );
-      dr.setY1( newminy );
-
-      if ( zdx > dx * 1.1 )
-      {
-         dr.setX2( newminx + zdx );
-      } else {         
-         dr.setX2( newminx + dx * 1.1 );
-      }
-      if ( zdy > dy * 1.1 )
-      {
-         dr.setY2( newminy + zdy );
-      } else {         
-         dr.setY2( newminy + dy * 1.1 );
-      }
-#else
       dr.setLeft( newminx );
       dr.setTop ( newminy );
 
@@ -4911,7 +4683,6 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       } else {         
          dr.setBottom( newminy + dy * 1.1 );
       }
-#endif
 
       plot_dist_zoomer->zoom( dr );
       return;
@@ -5082,10 +4853,23 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       }
    }
 
+   // Merge q values that differ only by last-digit rounding (e.g. 0.00547318 vs
+   // 0.00547317) so they match as one grid point; retained points keep their
+   // original q/I/sd (see ehb54/ultrascan-tickets#962).
+   const double crop_common_reltol = 1e-4;
+   map < double, double > q_canonical = US_Vector::canonical_map( grids, crop_common_reltol );
+   for ( unsigned int g = 0; g < ( unsigned int ) grids.size(); g++ )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) grids[ g ].size(); i++ )
+      {
+         grids[ g ][ i ] = q_canonical[ grids[ g ][ i ] ];
+      }
+   }
+
    vector < double > v_union = US_Vector::vunion( grids );
    vector < double > v_int   = US_Vector::intersection( grids );
 
-   editor_msg( "black", 
+   editor_msg( "black",
                QString( us_tr( "Crop common:\n"
                             "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
                             "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
@@ -5143,7 +4927,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
 
       for ( unsigned int i = 0; i < f_qs[ it->first ].size(); i++ )
       {
-         if ( map_int.count( f_qs[ it->first ][ i ] ) )
+         if ( map_int.count( q_canonical[ f_qs[ it->first ][ i ] ] ) )
          {
             new_q_string.push_back( f_qs_string[ it->first ][ i ] );
             new_q       .push_back( f_qs       [ it->first ][ i ] );
@@ -5213,23 +4997,6 @@ void US_Hydrodyn_Saxs_Buffer::view()
             }
          }
 
-#if QT_VERSION < 0x040000
-         TextEdit *edit;
-         edit = new TextEdit( this, qPrintable( file ) );
-         edit->setFont    ( QFont( "Courier" ) );
-         edit->setPalette ( PALET_NORMAL );
-         AUTFBACK( edit );
-         edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
-         // edit->setTitle( file );
-         if ( QFile::exists( file + ".dat" ) )
-         {
-            edit->load( file + ".dat", file );
-         } else {
-            edit->load_text( text );
-         }
-         //   edit->setTextFormat( PlainText );
-         edit->show();
-#else
          US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), 0 );
          edit->setWindowTitle( file );
          edit->resize( 685, 700 );
@@ -5241,7 +5008,6 @@ void US_Hydrodyn_Saxs_Buffer::view()
                                   US3i_GuiSettings::fontSize() ) );
          edit->e->setText( text );
          edit->show();
-#endif
       }
    }
 }
@@ -5283,17 +5049,10 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
 void US_Hydrodyn_Saxs_Buffer::crop_vis()
 {
    // find curves within zoomRect & select only them
-#if QT_VERSION < 0x040000
-   double minx = plot_dist_zoomer->zoomRect().x1();
-   double maxx = plot_dist_zoomer->zoomRect().x2();
-   double miny = plot_dist_zoomer->zoomRect().y1();
-   double maxy = plot_dist_zoomer->zoomRect().y2();
-#else
    double minx = plot_dist_zoomer->zoomRect().left();
    double maxx = plot_dist_zoomer->zoomRect().right();
    double miny = plot_dist_zoomer->zoomRect().top();
    double maxy = plot_dist_zoomer->zoomRect().bottom();
-#endif
 
    map < QString, bool > selected_files;
 
@@ -5435,19 +5194,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
 
 void US_Hydrodyn_Saxs_Buffer::legend()
 {
-#if QT_VERSION < 0x040000
-   if ( plot_dist->autoLegend() )
-   {
-      plot_dist->setAutoLegend( false );
-      plot_dist->enableLegend ( false, -1 );
-   } else {
-      plot_dist->setAutoLegend( true );
-      plot_dist->enableLegend ( true, -1 );
-   }
-#else
    legend_vis = !legend_vis;
    legend_set();
-#endif
 }
 
 void US_Hydrodyn_Saxs_Buffer::axis_y()
@@ -5457,19 +5205,11 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
-#else
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
-#endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q)") );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
-#else
       // actually need to test this, not sure what the correct version is
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
-#endif
    }
    if ( plot_dist_zoomer )
    {
@@ -5487,27 +5227,17 @@ void US_Hydrodyn_Saxs_Buffer::axis_x()
    if ( axis_x_log )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom) (log scale)") );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
-#else
       plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
-#endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom)") );
-#if QT_VERSION < 0x040000
-      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
-#else
       // actually need to test this, not sure what the correct version is
       plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
-#endif
    }
    plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Buffer::legend_set()
 {
-#if QT_VERSION >= 0x040000
-# if QT_VERSION >= 0x050000
    if ( legend_vis ) {
       QwtLegend* legend_saxs = new QwtLegend;
       // legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -5515,18 +5245,6 @@ void US_Hydrodyn_Saxs_Buffer::legend_set()
    } else {      
       plot_dist->insertLegend( NULL );
    }
-# else
-   QwtPlotItemList ilist = plot_dist->itemList();
-   for ( int ii = 0; ii < ilist.size(); ii++ )
-   {
-      QwtPlotItem* plitem = ilist[ ii ];
-      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
-         continue;
-      plitem->setItemAttribute( QwtPlotItem::Legend, legend_vis );
-   }
-   plot_dist->legend()->setVisible( legend_vis );
-# endif
-#endif
 }
 
 void US_Hydrodyn_Saxs_Buffer::similar_files()
@@ -5557,7 +5275,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    QString similar = QFileInfo( f_name[ selected[ 0 ] ] ).fileName();
    QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).path();
    QString match   = similar;
-   match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
+   match.replace( QRegularExpression( QStringLiteral( "\\d{2,}" ) ), "\\d+" );
 
    cout << QString( "select to match <%1> in directory <%2> using regexp <%3>\n" )
       .arg( similar )
@@ -5573,7 +5291,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
       lbl_dir->setText( QDir::currentPath() );
    }
    QDir qd;
-   add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
+   add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
 }
 
 void US_Hydrodyn_Saxs_Buffer::regex_load()
@@ -5587,16 +5305,16 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    QDir qd;
 
 
-   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts )      );
-   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts ) );
+   // QStringList regexs = (le_regex->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts ) );
    QStringList regexs;
    QStringList args;
 
    {
       QString qs = le_regex->text();
-      regexs = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      regexs = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
       qs = le_regex_args->text();
-      args   = (qs ).split( QRegExp( "\\s+" ) , Qt::SkipEmptyParts );
+      args   = (qs ).split( QRegularExpression( QStringLiteral( "\\s+" ) ) , Qt::SkipEmptyParts );
    }
 
    for ( int i = 0; i < (int)args.size(); i++ )
@@ -5606,18 +5324,16 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
          QString match   = QString( regexs[ j ] ).arg( args[ i ] );
          editor_msg( "dark blue", 
                      QString( us_tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
-         add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
+         add_files( qd.entryList( QStringList() << "*" ).filter( QRegularExpression( match ) ) );
       }
    }
 }
 
 void US_Hydrodyn_Saxs_Buffer::rename_from_context( const QPoint & pos ) {
-#if QT_VERSION >= 0x040000
    QListWidgetItem * lwi = lb_created_files->itemAt( pos );
    if ( lwi ) {
       return rename_created( lwi, pos );
    }
-#endif
 }
 
 void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint & )
@@ -5639,7 +5355,7 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint
                                    text, 
                                    &ok, 
                                    this );
-      text.replace( QRegExp( "\\s" ), "_" );
+      text.replace( QRegularExpression( QStringLiteral( "\\s" ) ), "_" );
       if ( ok && !text.isEmpty() )
       {
          // user entered something and pressed OK
@@ -5805,7 +5521,7 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
                                         vector < double > I,
                                         vector < double > errors )
 {
-   name.replace( QRegExp( "(\\s+|\"|'|\\/|\\.)" ), "_" );
+   name.replace( QRegularExpression( "(\\s+|\"|'|\\/|\\.)" ), "_" );
    
    QString bsub_name = name;
    unsigned int ext = 0;
@@ -6327,20 +6043,6 @@ void US_Hydrodyn_Saxs_Buffer::join_end_focus( bool hasFocus )
 void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
 {
    lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( wheel_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                            (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                            f_qs[ wheel_file ].size()
-                            );
-   plot_dist->setCurveData( join_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ join_file ][ 0 ] ),
-                            (double *)&( f_Is[ join_file ][ 0 ] ),
-                            f_qs[ join_file ].size()
-                            );
-#else
    wheel_curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
@@ -6355,28 +6057,19 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
                        (double *)&( f_Is[ join_file ][ 0 ] ),
                        f_qs[ join_file ].size()
                         );
-#endif
 
    join_delete_markers();
 
    if ( plotted_curves.count( wheel_file ) &&
         f_pos.count( wheel_file ) )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
-#else
       plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
-#endif
    }
 
    if ( plotted_curves.count( join_file ) &&
         f_pos.count( join_file ) )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( plotted_curves[ join_file ], QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size()], 1, SolidLine));
-#else
       plotted_curves[ join_file ]->setPen( QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
-#endif
    }
 
    plot_dist->replot();
@@ -6415,14 +6108,6 @@ void US_Hydrodyn_Saxs_Buffer::join_do_replot()
    {
       offset_I[ i ] = mult * offset_I[ i ] + pos;
    }
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( join_adjust_lowq ? wheel_curve : join_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                            (double *)&( offset_I[ 0 ] ),
-                            offset_I.size()
-                            );
-#else
    ( join_adjust_lowq ? wheel_curve : join_curve )->setSamples(
                                                             /* cb_guinier->isChecked() ?
                                                                (double *)&(plotted_q2[p][0]) : */
@@ -6430,7 +6115,6 @@ void US_Hydrodyn_Saxs_Buffer::join_do_replot()
                                                             (double *)&( offset_I[ 0 ] ),
                                                             offset_I.size()
                                                             );
-#endif
    plot_dist->replot();
 }
 
@@ -6446,11 +6130,7 @@ void US_Hydrodyn_Saxs_Buffer::join_mult_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -6461,11 +6141,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -6476,11 +6152,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Buffer::join_end_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 2 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -6744,20 +6416,6 @@ void US_Hydrodyn_Saxs_Buffer::join_fit_scaling()
 void US_Hydrodyn_Saxs_Buffer::join_swap()
 {
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveData( wheel_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                            (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                            f_qs[ wheel_file ].size()
-                            );
-   plot_dist->setCurveData( join_curve, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ join_file ][ 0 ] ),
-                            (double *)&( f_Is[ join_file ][ 0 ] ),
-                            f_qs[ join_file ].size()
-                            );
-#else
    wheel_curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
@@ -6772,7 +6430,6 @@ void US_Hydrodyn_Saxs_Buffer::join_swap()
                        (double *)&( f_Is[ join_file ][ 0 ] ),
                        f_qs[ join_file ].size()
                         );
-#endif
 
    join_adjust_lowq = !join_adjust_lowq;
    pb_join_swap->setText( join_adjust_lowq ? us_tr("Scale high-q") : us_tr("Scale low-q") );
@@ -6979,13 +6636,8 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
    wheel_curve           = plotted_curves[ wheel_file ];
    join_curve            = plotted_curves[ join_file ];
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan  , 1, SolidLine));
-   plot_dist->setCurvePen( plotted_curves[ join_file  ], QPen( Qt::yellow, 1, SolidLine));
-#else
    plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan  , 1, Qt::SolidLine ) );
    plotted_curves[ join_file  ]->setPen( QPen( Qt::yellow, 1, Qt::SolidLine ) );
-#endif
 
    join_low_q = 
       f_qs[ wheel_file ][ 0 ] > f_qs[ join_file ][ 0 ] ?
@@ -7014,11 +6666,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
 
 void US_Hydrodyn_Saxs_Buffer::join_delete_markers()
 {
-#if QT_VERSION < 0x040000
-   plot_dist->removeMarkers();
-#else
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
-#endif
 }
 
 void US_Hydrodyn_Saxs_Buffer::join_init_markers()
@@ -7037,22 +6685,9 @@ void US_Hydrodyn_Saxs_Buffer::join_init_markers()
 void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, 
                                                QColor color, 
                                                QString text, 
-#if QT_VERSION < 0x040000
-                                               int 
-#else
                                                Qt::Alignment
-#endif
                                                align )
 {
-#if QT_VERSION < 0x040000
-   long marker = plot_dist->insertMarker();
-   plot_dist->setMarkerLineStyle ( marker, QwtMarker::VLine );
-   plot_dist->setMarkerPos       ( marker, pos, 0e0 );
-   plot_dist->setMarkerLabelAlign( marker, align );
-   plot_dist->setMarkerPen       ( marker, QPen( color, 2, DashDotDotLine));
-   plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
-   plot_dist->setMarkerLabelText ( marker, text );
-#else
    QwtPlotMarker * marker = new QwtPlotMarker;
    marker->setLineStyle       ( QwtPlotMarker::VLine );
    marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
@@ -7065,7 +6700,6 @@ void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos,
       marker->setLabel           ( qwtt );
    }
    marker->attach             ( plot_dist );
-#endif
    plotted_markers.push_back( marker );
 }   
 
@@ -7653,12 +7287,12 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    int ext = 0;
 
    if ( !head.isEmpty() &&
-        !head.contains( QRegExp( "_$" ) ) )
+        !head.contains( QRegularExpression( QStringLiteral( "_$" ) ) ) )
    {
       head += "_";
    }
    if ( !tail.isEmpty() &&
-        !tail.contains( QRegExp( "^_" ) ) )
+        !tail.contains( QRegularExpression( QStringLiteral( "^_" ) ) ) )
    {
       tail = "_" + tail;
    }

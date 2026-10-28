@@ -1,6 +1,11 @@
-#include <QPrinter>
-#include <QPdfWriter>
+#include <QApplication>
+#include <QCollator>
+#include <QKeyEvent>
 #include <QPainter>
+#include <QPdfWriter>
+#include <QPrinter>
+#include <QProgressDialog>
+#include <algorithm>
 //#include <QThread>    
 
 
@@ -16,6 +21,40 @@
 #include "us_tar.h"
 
 #define MIN_NTC 25
+
+// QTreeWidget::setItemWidget() content is invisible to AT-SPI; this reads the already-displayed text as a stand-in.
+static QString us_accessibleSummary( QWidget* panel )
+{
+   QStringList           parts;
+   const QList<QWidget*> kids = panel->findChildren<QWidget*>();
+
+   for ( QWidget* kid : kids )
+   {
+      if ( QLabel* lb = qobject_cast<QLabel*>( kid ) )
+      {
+         if ( !lb->text().isEmpty() )
+         {
+            parts << lb->text();
+         }
+      }
+      else if ( QLineEdit* le = qobject_cast<QLineEdit*>( kid ) )
+      {
+         if ( !le->text().isEmpty() )
+         {
+            parts << le->text();
+         }
+      }
+      else if ( QTextEdit* te = qobject_cast<QTextEdit*>( kid ) )
+      {
+         if ( !te->toPlainText().isEmpty() )
+         {
+            parts << te->toPlainText();
+         }
+      }
+   }
+
+   return parts.join( "; " );
+}
 
 // Constructor
 US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
@@ -52,10 +91,90 @@ US_auditTrailGMP::US_auditTrailGMP() : US_Widgets()
   // QSpacerItem* spacer2 = new QSpacerItem( 20, 1*ihgt, QSizePolicy::Expanding);
   // topLayout_auto->addItem( spacer2 );
   
-  connect( pb_loadreport_db,  SIGNAL( clicked() ), SLOT ( loadGMPReport() ) );
+  connect( pb_loadreport_db,  &QAbstractButton::clicked, this, &US_auditTrailGMP::loadGMPReport );
     
   //resize( 1200, 300 );
   resize( 600, 500 );
+}
+
+// Blocks the modal "please wait" progress dialog (shown in loadGMPReport())
+// from being dismissed by the user via the Escape key -- it has no
+// title-bar buttons since it is frameless, so that's the only way left in.
+bool US_auditTrailGMP::eventFilter( QObject* obj, QEvent* event )
+{
+  if ( qobject_cast< QProgressDialog* >( obj ) )
+    {
+      if ( event->type() == QEvent::KeyPress )
+	{
+	  QKeyEvent* keyEvent = static_cast< QKeyEvent* >( event );
+	  if ( keyEvent->key() == Qt::Key_Escape )
+	    return true;
+	}
+    }
+
+  return US_Widgets::eventFilter( obj, event );
+}
+
+// Re-fetches the GMP report list from the database while the "Select GMP
+// Report for Audit Trail" dialog is still open (triggered by its own
+// "Refresh List" button, see loadGMPReport()), then redraws that dialog's
+// table in place with the refreshed data. Unlike the very first scan, this
+// one can be cancelled -- if the user does, the previously loaded list is
+// left untouched.
+void US_auditTrailGMP::refreshGMPReportsList( void )
+{
+  US_Passwd pw( this );
+  US_DB2 db( pw.getPasswd() );
+
+  if ( db.lastErrno() != US_DB2::OK )
+    {
+      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+			    tr( "Could not connect to database \n" ) + db.lastError() );
+      return;
+    }
+
+  QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+			     tr( "Cancel" ), 0, 0, pdiag_autoflow_db );
+  progress.setWindowModality( Qt::ApplicationModal );
+  progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+  progress.setMinimumDuration( 0 );
+  progress.setAutoClose( false );
+  progress.setAutoReset( false );
+  progress.installEventFilter( this );   // swallow Escape (Cancel button click still works normally)
+  progress.setValue( 0 );
+  progress.show();
+  progress.move( pdiag_autoflow_db->frameGeometry().center() - progress.rect().center() );
+  qApp->processEvents();
+
+  // Scan into a temporary list rather than gmpReportsDBdata directly, so
+  // that cancelling mid-scan can't leave the already-open dialog's data
+  // (and the cached list) in a truncated, half-refreshed state.
+  QList< QStringList > freshReportsData;
+  list_all_gmp_reports_db( freshReportsData, &db, &progress );
+
+  bool cancelled = progress.wasCanceled();
+
+  if ( !cancelled )
+    {
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+    }
+
+  progress.close();
+
+  if ( cancelled )
+    {
+      QMessageBox::information( pdiag_autoflow_db, tr( "Refresh Cancelled" ),
+				tr( "The refresh was cancelled. The previously loaded list is unchanged." ) );
+      return;
+    }
+
+  gmpReportsDBdata = freshReportsData;
+
+  // gmpReportsDBdata is held by reference inside pdiag_autoflow_db, so it
+  // already sees the refreshed contents -- just ask it to redraw the table.
+  QMetaObject::invokeMethod( pdiag_autoflow_db, "list_data" );
 }
 
 void US_auditTrailGMP::printAPDF( void )
@@ -105,17 +224,45 @@ void US_auditTrailGMP::viewAPDF ( void )
 //Load GMP Run
 void US_auditTrailGMP::loadGMPReport( void )
 {
-  US_Passwd pw;
-  US_DB2 db( pw.getPasswd() );
-  
-  if ( db.lastErrno() != US_DB2::OK )
+  // If the report list was already fetched earlier in this session, reuse
+  // it instead of hitting the database and re-running the full scan again.
+  if ( gmpReportsDBdata.isEmpty() )
     {
-      QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
-			    tr( "Could not connect to database \n" ) + db.lastError() );
-      return;
-    }
+      US_Passwd pw( this );
+      US_DB2 db( pw.getPasswd() );
   
-  list_all_gmp_reports_db( gmpReportsDBdata, &db );
+      if ( db.lastErrno() != US_DB2::OK )
+	{
+	  QMessageBox::warning( this, tr( "LIMS DB Connection Problem" ),
+				tr( "Could not connect to database \n" ) + db.lastError() );
+	  return;
+	}
+  
+      // Show a busy progress dialog while the (potentially long) DB query runs.
+      // Frameless + CustomizeWindowHint removes the title bar entirely, so there
+      // are no close/minimize/maximize buttons and nothing for the user to grab
+      // and drag -- the dialog stays put, centered over this window.
+      QProgressDialog progress( tr( "<b>Please Wait</b><br>Loading GMP runs from database..." ),
+				 QString(), 0, 0, this );
+      progress.setWindowModality( Qt::ApplicationModal );
+      progress.setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint );
+      progress.setMinimumDuration( 0 );
+      progress.setAutoClose( false );
+      progress.setAutoReset( false );
+      progress.installEventFilter( this );   // swallow Escape / close attempts, see eventFilter()
+      progress.setValue( 0 );
+      progress.show();
+      progress.move( this->frameGeometry().center() - progress.rect().center() );
+      qApp->processEvents();
+
+      list_all_gmp_reports_db( gmpReportsDBdata, &db, &progress );
+
+      // Make sure the bar visibly reaches 100% before it disappears
+      progress.setValue( progress.maximum() );
+      qApp->processEvents();
+
+      progress.close();
+    }
 
   QString pdtitle( tr( "Select GMP Report for Audit Trail" ) );
   QStringList hdrs;
@@ -131,6 +278,8 @@ void US_auditTrailGMP::loadGMPReport( void )
   QString autoflow_btn = "AUTOFLOW_GMP_REPORT";
 
   pdiag_autoflow_db = new US_SelectItem( gmpReportsDBdata, hdrs, pdtitle, &prx, autoflow_btn, -3 );
+
+  connect( pdiag_autoflow_db, &US_SelectItem::accept_refresh_states, this, &US_auditTrailGMP::refreshGMPReportsList );
 
   QString gmpReport_id_selected("");
   QString gmpReport_runname_selected("");
@@ -181,7 +330,8 @@ void US_auditTrailGMP::loadGMPReport( void )
 }
 
 // Get .pdf GMP reports with assigned reviewers:
-int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db)
+int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsDBdata, US_DB2* db,
+						QProgressDialog* progress )
 {
   int nrecs        = 0;   
   gmpReportsDBdata.clear();
@@ -201,23 +351,62 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
   qry << "get_autoflowGMPReport_desc";
   db->query( qry );
 
+  // First pass: buffer the base rows so the *total* record count is known
+  // up front. This is what lets the progress dialog show real, proportional
+  // ("N of M") progress below, instead of just sitting at an indeterminate
+  // busy state that never visibly moves.
+  struct GmpBaseRow
+  {
+    QString id;
+    QString autoflowHistoryID;
+    QString autoflowHistoryName;
+    QString ptime_created;
+    QString filenamePdf;
+  };
+
+  QList< GmpBaseRow > baseRows;
+
   while ( db->next() )
     {
-      QStringList gmpreportentry;
-      QString id                     = db->value( 0 ).toString();
-      QString autoflowHistoryID      = db->value( 1 ).toString();
-      QString autoflowHistoryName    = db->value( 2 ).toString();
-      QString protocolName           = db->value( 3 ).toString();
+      GmpBaseRow row;
+      row.id                  = db->value( 0 ).toString();
+      row.autoflowHistoryID   = db->value( 1 ).toString();
+      row.autoflowHistoryName = db->value( 2 ).toString();
+      // db->value( 3 )  -- protocolName, currently unused
 
-      QDateTime time_created         = db->value( 4 ).toDateTime().toUTC();
-      QString ptime_created          = US_Util::toUTCDatetimeText( time_created
+      QDateTime time_created  = db->value( 4 ).toDateTime().toUTC();
+      row.ptime_created        = US_Util::toUTCDatetimeText( time_created
 								   .toString( Qt::ISODate ), true )
 	                                                           .section( ":", 0, 1 ) + " UTC";
-      
-      QString filenamePdf            = db->value( 5 ).toString();
+
+      row.filenamePdf          = db->value( 5 ).toString();
+
+      baseRows << row;
+    }
+
+  if ( progress )
+    {
+      progress->setRange( 0, baseRows.size() );
+      progress->setValue( 0 );
+    }
+
+  // Second pass: for each candidate report, look up its eSign details --
+  // this is the part that does an extra DB round-trip per record and is
+  // where most of the time is spent -- and update the progress dialog with
+  // real, proportional progress as each one completes.
+  for ( int irow = 0; irow < baseRows.size(); irow++ )
+    {
+      // Only has any effect for a progress dialog that was given a real
+      // Cancel button (see refreshGMPReportsList()) -- the very first scan's
+      // dialog has no Cancel button, so wasCanceled() can never be true there.
+      if ( progress && progress->wasCanceled() )
+	break;
+
+      const GmpBaseRow& row = baseRows.at( irow );
+      QStringList gmpreportentry;
 
       //check if report has assigned operator(s) & reviewer(s)
-      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( autoflowHistoryID );
+      QMap< QString, QString > eSign = read_autoflowGMPReportEsign_record( row.autoflowHistoryID );
       QString operatorListJson  = eSign[ "operatorListJson" ];
       QString reviewersListJson = eSign[ "reviewersListJson" ];
       QString approversListJson = eSign[ "approversListJson" ];
@@ -237,10 +426,10 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
       if ( jsonDocRevList. isArray() && jsonDocOperList. isArray()
       	   && !operatorListJson.isEmpty() && !reviewersListJson.isEmpty() )
       	{
-	  gmpreportentry << id << autoflowHistoryName // << protocolName
-			 << ptime_created //<< time_created.toString()
-			 << filenamePdf
-			 << autoflowHistoryID;
+	  gmpreportentry << row.id << row.autoflowHistoryName
+			 << row.ptime_created
+			 << row.filenamePdf
+			 << row.autoflowHistoryID;
 
 	  // //additionally filter by userID for {operator, reviewer, appr.} in case of SEPARATE const.
 	  // if ( operatorListJson.contains( logged_user ) ||
@@ -255,6 +444,16 @@ int US_auditTrailGMP::list_all_gmp_reports_db( QList< QStringList >& gmpReportsD
 	  gmpReportsDBdata << gmpreportentry;
 	  nrecs++;
 	}
+
+      if ( progress )
+	{
+	  progress->setValue( irow + 1 );
+	  progress->setLabelText( tr( "<b>Please Wait</b><br>"
+				       "Loading GMP runs from database...<br>"
+				       "%1 of %2 checked, %3 record(s) found" )
+				     .arg( irow + 1 ).arg( baseRows.size() ).arg( nrecs ) );
+	  qApp->processEvents();
+	}
     }
 
   return nrecs;
@@ -266,7 +465,7 @@ QMap< QString, QString> US_auditTrailGMP::read_autoflowGMPReportEsign_record( QS
 {
   QMap< QString, QString> eSign_record;
   
-  US_Passwd pw;
+  US_Passwd pw( this );
   US_DB2* db = new US_DB2( pw.getPasswd() );
   
   if ( db->lastErrno() != US_DB2::OK )
@@ -379,6 +578,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   QLabel*      lb_runloaded  = us_banner( tr( "Loaded GMP Run:" ), 1 );
   QLabel*      lb_runName    = us_label(  tr( "GMP Run Name:" ), 1  );
   QLineEdit*   le_runName    = us_lineedit( gmpRunName_passed, 0, true );
+  le_runName->setAccessibleName( tr( "Loaded GMP Run Name" ) );
+  lb_runName->setBuddy( le_runName );
 
   //QLabel* bn_viewAPDF = us_banner( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ), 1 );
   pb_viewAPDF  =  us_pushbutton( tr( "View .PDF of the Audit Trail for the Currenlty Loaded GMP Run:" ) );
@@ -388,7 +589,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   loadedRunGrid  -> addWidget( le_runName,      row++,   3,  1,  7  );
   loadedRunGrid  -> addWidget( pb_viewAPDF,     row++,   0,  1,  10  );
 
-  connect( pb_viewAPDF,  SIGNAL( clicked() ), SLOT ( viewAPDF() ) );
+  connect( pb_viewAPDF,  &QAbstractButton::clicked, this, &US_auditTrailGMP::viewAPDF );
 
   //1. e_signers layout
   eSignersGrid     = new QGridLayout();
@@ -398,6 +599,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //eSigners Info Tree
   QLabel*      lb_esigners  = us_banner(      tr( "e-Signers Information:" ), 1 );
   eSignTree = new QTreeWidget();
+  eSignTree->setAccessibleName( tr( "Audit Signatures" ) );
   QStringList esigns_theads;
   esigns_theads << "Selected" << "Details";
   eSignTree->setHeaderLabels( esigns_theads );
@@ -423,6 +625,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   QTreeWidgetItem* eSignItem_childItem = new QTreeWidgetItem();
   esigntItem -> addChild( eSignItem_childItem );
   eSignTree  -> setItemWidget( eSignItem_childItem, 1, groupBox_esign );
+  eSignItem_childItem->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupBox_esign ) );
 
   int max_width = fmet.horizontalAdvance( esignItemName );
   max_width *= 2;
@@ -436,6 +639,7 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
   //user Intaracitons Info Tree
   QLabel*      lb_uints  = us_banner(      tr( "User INPUTS:" ), 1 );
   uInteractionsTree = new QTreeWidget();
+  uInteractionsTree->setAccessibleName( tr( "Audit Run Events" ) );
   QStringList uints_theads;
   uints_theads << "Selected" << "Details";
   uInteractionsTree->setHeaderLabels( uints_theads );
@@ -471,7 +675,8 @@ void US_auditTrailGMP::initPanel_auto( QMap < QString, QString > & protocol_deta
 	  QTreeWidgetItem* Item_childItem = new QTreeWidgetItem();
 	  uintsItem -> addChild( Item_childItem );
 	  uInteractionsTree  -> setItemWidget( Item_childItem, 1, groupBox_stages[j] );
-	}
+     Item_childItem->setData( 1, Qt::AccessibleTextRole, us_accessibleSummary( groupBox_stages[j] ) );
+   }
     }
   uInteractionsTree->header()->resizeSection(0, max_width );
   
@@ -578,12 +783,28 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
   QMap < QString, QString > data_types_edit_ts;
   QString editRIJson, editIPJson, editRIts, editIPts, analysisJson, analysisCancelJson;
   QString analysisABDEJson, analysisABDEts;
+  QString                   analysisVelMwlJson, analysisVelMwlts;
 
-  read_autoflowStatus_record( importRIJson, importRIts, importIPJson, importIPts,
-			      editRIJson, editRIts, editIPJson, editIPts, analysisJson,
-			      stopOptimaJson, stopOptimats, skipOptimaJson, skipOptimats,
-			      analysisCancelJson, createdGMPrunJson, createdGMPrunts,
-			      analysisABDEJson, analysisABDEts); 
+  read_autoflowStatus_record( importRIJson,
+                              importRIts,
+                              importIPJson,
+                              importIPts,
+                              editRIJson,
+                              editRIts,
+                              editIPJson,
+                              editIPts,
+                              analysisJson,
+                              stopOptimaJson,
+                              stopOptimats,
+                              skipOptimaJson,
+                              skipOptimats,
+                              analysisCancelJson,
+                              createdGMPrunJson,
+                              createdGMPrunts,
+                              analysisABDEJson,
+                              analysisABDEts,
+                              analysisVelMwlJson,
+                              analysisVelMwlts );
 
   QMap< QString, QMap < QString, QString > > status_map;
   QMap < QString, QString >::iterator im;
@@ -916,12 +1137,69 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 
 	  status_map = parse_autoflowStatus_json( json_str, im.key() );
 
-	  //GUI
-	  QHBoxLayout* genL   = new QHBoxLayout();
-	  genL->setSpacing        ( 2 );
-	  genL->setContentsMargins( 20, 10, 20, 15 );
-	  
-	  QHBoxLayout* genL_sec_row = new QHBoxLayout();
+     // VELOCITY-MWL & ABDE: if an entire channel was dropped, do not list
+     // that channel's triples separately
+     if ( ( expType == "VELOCITY-MWL" || expType == "ABDE" ) && status_map.contains( "DroppedItems" ) )
+     {
+        QStringList dropped_chans;
+        QStringList chan_keys;
+        chan_keys << "Channels" << "Selected Channel";
+        for ( int kk = 0; kk < chan_keys.size(); kk++ )
+        {
+           if ( status_map["DroppedItems"].contains( chan_keys[kk] ) )
+           {
+              QStringList cl = status_map["DroppedItems"][chan_keys[kk]].split( ",", Qt::SkipEmptyParts );
+              for ( int cc = 0; cc < cl.size(); cc++ )
+              {
+                 dropped_chans << cl[cc].simplified().remove( " / " ).remove( " " ); // "3 / B" -> "3B"
+              }
+           }
+        }
+
+        if ( !dropped_chans.isEmpty() )
+        {
+           // profile-based list ("3B.230"):
+           QStringList tr_kept;
+           for ( int tt = 0; tt < dtype_opt_dropped_triples.size(); tt++ )
+           {
+              if ( !dropped_chans.contains( dtype_opt_dropped_triples[tt].section( ".", 0, 0 ).simplified() ) )
+              {
+                 tr_kept << dtype_opt_dropped_triples[tt];
+              }
+           }
+           dtype_opt_dropped_triples = tr_kept;
+
+           // recorded list:
+           if ( status_map["DroppedItems"].contains( "Triples" ) )
+           {
+              QStringList rec = status_map["DroppedItems"]["Triples"].split( ",", Qt::SkipEmptyParts );
+              QStringList rec_kept;
+              for ( int rr = 0; rr < rec.size(); rr++ )
+              {
+                 if ( !dropped_chans.contains( rec[rr].section( ".", 0, 0 ).simplified() ) )
+                 {
+                    rec_kept << rec[rr].trimmed();
+                 }
+              }
+
+              if ( rec_kept.isEmpty() )
+              {
+                 status_map["DroppedItems"].remove( "Triples" );
+              }
+              else
+              {
+                 status_map["DroppedItems"]["Triples"] = rec_kept.join( ", " );
+              }
+           }
+        }
+     }
+
+     //GUI
+     QHBoxLayout* genL = new QHBoxLayout();
+     genL->setSpacing( 2 );
+     genL->setContentsMargins( 20, 10, 20, 15 );
+
+     QHBoxLayout* genL_sec_row = new QHBoxLayout();
 	  genL_sec_row->setSpacing        ( 2 );
 	  genL_sec_row->setContentsMargins( 20, 10, 20, 15 );
 	  
@@ -1108,17 +1386,108 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 		}
 	      html_assembled += tr( "</table>" );
 
-	      QTextEdit* te_drop_c1    = us_textedit();
-	      te_drop_c1    -> setFixedHeight  ( RowHeight * 2 );
-	      te_drop_c1    ->setFont( QFont( US_Widgets::fixedFont().family(),
-						 US_GuiSettings::fontSize() - 1) );
-	      us_setReadOnly( te_drop_c1, true );
-	      
-	      te_drop_c1 -> setText( comm_list.join(",\n") );
+         // Names of the actually dropped triples / channels (recorded
+         // at 3. IMPORT; the only source for VEL-MWL):
+         if ( status_map.contains( "DroppedItems" ) )
+         {
+            QString                          items_html;
+            QMap<QString, QString>::iterator di;
+            for ( di = status_map["DroppedItems"].begin(); di != status_map["DroppedItems"].end(); ++di )
+            {
+               if ( di.key() == "Triples" )
+               {
+                  // skip only if the profile-based list above already
+                  // contains every recorded triple
+                  QStringList rec        = di.value().split( ",", Qt::SkipEmptyParts );
+                  bool        all_listed = !rec.isEmpty();
+                  for ( int rr = 0; rr < rec.size(); rr++ )
+                  {
+                     if ( !dtype_opt_dropped_triples.contains( rec[rr].trimmed() ) )
+                     {
+                        all_listed = false;
+                     }
+                  }
+                  if ( all_listed )
+                  {
+                     continue;
+                  }
+               }
+
+               comm_list << di.key() + " dropped:\n" + di.value();
+               items_html += "<tr><td> " + di.key().toHtmlEscaped() +
+                             " dropped: </td>"
+                             "<td style=\"color:red;\"> " +
+                             di.value().toHtmlEscaped() + " </td></tr>";
+            }
+            if ( !items_html.isEmpty() )
+            {
+               html_assembled += "<table style=\"margin-left:25px\">" + items_html + "</table>";
+            }
+         }
+
+         QTextEdit* te_drop_c1 = us_textedit();
+         te_drop_c1->setFixedHeight( RowHeight * 2 );
+         te_drop_c1->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+         us_setReadOnly( te_drop_c1, true );
+
+         te_drop_c1 -> setText( comm_list.join(",\n") );
 	      genL5 -> addWidget( te_drop_c1,     row++,   3,  1,  3  );
 	 		  
 	      genL51 -> addLayout( genL5);
 	      genL51 -> addStretch();
+	    }
+
+	  //Scan Count Mismatch (ScanDifference) [if any]
+	  QGridLayout* genL6  = NULL;
+	  QVBoxLayout* genL61 = NULL;
+	  if ( status_map. contains("ScanDifference") )
+	    {
+	      html_assembled += tr(
+				   "<table style=\"margin-left:10px\">"
+				   "<caption style=\"color:red;\" align=left> <b><i>Scan Count Mismatch (Expected vs. Collected): </i></b> </caption>"
+				   "</table>"
+
+				   "<table style=\"margin-left:25px\">"
+				   );
+
+	      genL6  = new QGridLayout();
+	      genL61 = new QVBoxLayout();
+
+	      QLabel* lb_scandiff         = us_label( tr("Scan Count Mismatch:") );
+	      lb_scandiff->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	      row=0;
+	      genL6 -> addWidget( lb_scandiff,      row++,   0,  1,  6  );
+
+	      QLabel* lb_scandiff1        = us_label( tr("Expected vs. Collected:") );
+	      genL6 -> addWidget( lb_scandiff1,     row,     1,  1,  2  );
+
+	      QStringList scandiff_list;
+	      QMap < QString, QString >::iterator sd;
+	      for ( sd = status_map[ "ScanDifference" ].begin(); sd != status_map[ "ScanDifference" ].end(); ++sd )
+		{
+		  scandiff_list << sd.value();
+
+		  html_assembled += tr(
+				       "<tr>"
+				       "<td style=\"color:red;\"> %1 </td> "
+				       "</tr>"
+				       )
+		    .arg( sd.value() )
+		    ;
+		}
+	      html_assembled += tr( "</table>" );
+
+	      QTextEdit* te_scandiff1    = us_textedit();
+	      te_scandiff1    -> setFixedHeight  ( RowHeight * 2 );
+	      te_scandiff1    ->setFont( QFont( US_Widgets::fixedFont().family(),
+						US_GuiSettings::fontSize() - 1) );
+	      us_setReadOnly( te_scandiff1, true );
+
+	      te_scandiff1 -> setText( scandiff_list.join(",\n") );
+	      genL6 -> addWidget( te_scandiff1,     row++,   3,  1,  3  );
+
+	      genL61 -> addLayout( genL6);
+	      genL61 -> addStretch();
 	    }
 	  
 	  //assemble
@@ -1130,6 +1499,8 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
 	    genL_sec_row->addLayout( genL41);
 	  if ( genL51 != NULL )
 	    genL_sec_row->addLayout( genL51);
+	  if ( genL61 != NULL )
+	    genL_sec_row->addLayout( genL61);
 
 	  genL_v_rows->addLayout( genL);
 	  genL_v_rows->addLayout( genL_sec_row);
@@ -1328,6 +1699,10 @@ QVector< QGroupBox *> US_auditTrailGMP::createGroup_stages( QString name, QStrin
       	user_interactions_analysis( name, analysisJson, analysisCancelJson, groupBoxes );
       else if ( expType == "ABDE" )
       	user_interactions_analysis_abde( name, analysisABDEJson, analysisABDEts, groupBoxes );
+      else if ( expType == "VELOCITY-MWL" )
+      {
+         user_interactions_analysis_velmwl( name, analysisVelMwlJson, analysisVelMwlts, groupBoxes );
+      }
     }
  
   else if ( s_name == "E-SIGNATURES" )
@@ -1677,6 +2052,276 @@ void US_auditTrailGMP::user_interactions_analysis_abde( QString name, QString an
   
 }
 
+// do user-interactions-analysis separately:VELOCITY-MWL
+void US_auditTrailGMP::user_interactions_analysis_velmwl( QString              name,
+                                                          QString              analysisVelMwlJson,
+                                                          QString              analysisVelMwlts,
+                                                          QVector<QGroupBox*>& groupBoxes )
+{
+   html_assembled += tr( "<h3 align=left>VELOCITY-MWL Analysis: Species "
+                         "Selection for Report (5. ANALYSIS)</h3>" );
+   QMap<QString, QMap<QString, QString>> status_map = parse_autoflowStatus_json( analysisVelMwlJson, "" );
+
+   // GUI
+   QHBoxLayout*                          genL = new QHBoxLayout();
+   genL->setSpacing( 2 );
+   genL->setContentsMargins( 20, 10, 20, 15 );
+
+   // Person
+   QLabel*      lb_init  = us_label( tr( "Performed by:" ) );
+   QLabel*      lb_ID    = us_label( tr( "User ID:" ) );
+   QLabel*      lb_name  = us_label( tr( "Name:" ) );
+   QLabel*      lb_email = us_label( tr( "E-mail:" ) );
+   QLabel*      lb_level = us_label( tr( "Level:" ) );
+   QLineEdit*   le_ID    = us_lineedit( status_map["Person"]["ID"], 0, true );
+   QLineEdit*   le_name  = us_lineedit( status_map["Person"]["lname"] + "," + status_map["Person"]["fname"], 0, true );
+   QLineEdit*   le_email = us_lineedit( status_map["Person"]["email"], 0, true );
+   QLineEdit*   le_level = us_lineedit( status_map["Person"]["level"], 0, true );
+
+   QGridLayout* genL1  = new QGridLayout();
+   QVBoxLayout* genL11 = new QVBoxLayout();
+
+   int          row = 0;
+   genL1->addWidget( lb_init, row++, 0, 1, 6 );
+   genL1->addWidget( lb_ID, row, 1, 1, 2 );
+   genL1->addWidget( le_ID, row++, 3, 1, 3 );
+   genL1->addWidget( lb_name, row, 1, 1, 2 );
+   genL1->addWidget( le_name, row++, 3, 1, 3 );
+   genL1->addWidget( lb_email, row, 1, 1, 2 );
+   genL1->addWidget( le_email, row++, 3, 1, 3 );
+   genL1->addWidget( lb_level, row, 1, 1, 2 );
+   genL1->addWidget( le_level, row++, 3, 1, 3 );
+
+   genL11->addLayout( genL1 );
+   genL11->addStretch();
+
+   // TimeStamp
+   QGridLayout* genL2  = new QGridLayout();
+   QVBoxLayout* genL21 = new QVBoxLayout();
+
+   QLabel*      lb_time = us_label( tr( "Time of VELOCITY-MWL analysis completion:" ) );
+   lb_time->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   QLabel*    lb_time1 = us_label( tr( "Completed at:" ) );
+   QLineEdit* le_time1 = us_lineedit( analysisVelMwlts + " (UTC)", 0, true );
+
+   row = 0;
+   genL2->addWidget( lb_time, row++, 0, 1, 6 );
+   genL2->addWidget( lb_time1, row, 1, 1, 2 );
+   genL2->addWidget( le_time1, row++, 3, 1, 3 );
+
+   genL21->addLayout( genL2 );
+   genL21->addStretch();
+
+   // int ihgt        = lb_time1->height();
+   // QSpacerItem* spacer2 = new QSpacerItem( 20, 3*ihgt,
+   // QSizePolicy::Expanding); genL2->setRowStretch( 1, 1 ); genL2->addItem(
+   // spacer2,  row++,  0, 1, 6 );
+
+   // Comment
+   QGridLayout* genL3  = new QGridLayout();
+   QVBoxLayout* genL31 = new QVBoxLayout();
+
+   QLabel*      lb_comm = us_label( tr( "Comment at the Time of VELOCITY-MWL Analysis Completion:" ) );
+   lb_comm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   QLabel*    lb_comm1 = us_label( tr( "Comment:" ) );
+
+   QTextEdit* te_comm1 = us_textedit();
+   te_comm1->setFixedHeight( RowHeight * 2 );
+   te_comm1->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+   us_setReadOnly( te_comm1, true );
+   te_comm1->setText( status_map["Comment"]["comment"] );
+
+   row = 0;
+   genL3->addWidget( lb_comm, row++, 0, 1, 6 );
+   genL3->addWidget( lb_comm1, row, 1, 1, 2 );
+   genL3->addWidget( te_comm1, row++, 3, 1, 3 );
+
+   genL31->addLayout( genL3 );
+   genL31->addStretch();
+
+   // Channels' decisions (Approved/Rejected) and species selected for the
+   // Report's Integration Results (autoflowAnalysisVelMwl: column 0 - channels'
+   //decisions, column 2 - speciesSelections)
+   QString species_txt, species_html, species_html_gui;
+   {
+      US_Passwd pw_sp( this );
+      US_DB2    db_sp( pw_sp.getPasswd() );
+
+      if ( db_sp.lastErrno() == US_DB2::OK )
+      {
+         QStringList qry_sp;
+         qry_sp << "read_autoflowAnalysisVelMwl_record" << autoflowID_passed;
+         db_sp.query( qry_sp );
+
+         if ( db_sp.lastErrno() == US_DB2::OK && db_sp.next() )
+         {
+            QJsonObject dec = QJsonDocument::fromJson( db_sp.value( 0 ).toString().toUtf8() ).object(); // channels' decisions
+            QJsonObject sel = QJsonDocument::fromJson( db_sp.value( 2 ).toString().toUtf8() ).object(); // species selections
+
+            // All channels, whether decided (Approved/Rejected) or having a species
+            // selection
+            QStringList chan_keys = dec.keys();
+            for ( const QString& k : sel.keys() )
+            {
+               if ( !chan_keys.contains( k ) )
+               {
+                  chan_keys << k;
+               }
+            }
+            QCollator collator;
+            collator.setNumericMode( true );
+            std::sort( chan_keys.begin(),
+                       chan_keys.end(),
+                       [&collator]( const QString& x, const QString& y ) { return collator.compare( x, y ) < 0; } );
+
+            for ( const QString& key : chan_keys )
+            {
+               QString decision = dec.value( key ).toObject().value( "decision" ).toString();
+               bool    rejected = ( decision == "Rejected" );
+               QString dec_lbl =
+                  ( decision == "Accepted" ) ? tr( "Approved" ) : ( rejected ? tr( "Rejected" ) : tr( "Not decided" ) );
+
+               QString line = key + ": " + dec_lbl;
+               if ( sel.contains( key ) )
+               {
+                  QJsonObject co = sel.value( key ).toObject();
+                  QStringList s_sel, s_all;
+                  QJsonArray  a1 = co.value( "selected" ).toArray();
+                  QJsonArray  a2 = co.value( "available" ).toArray();
+                  for ( int i = 0; i < a1.size(); ++i )
+                  {
+                     s_sel << a1[i].toString();
+                  }
+                  for ( int i = 0; i < a2.size(); ++i )
+                  {
+                     s_all << a2[i].toString();
+                  }
+                  line += " -- " + s_sel.join( ", " ) + "  (of " + s_all.join( ", " ) + ")";
+               }
+
+               QString cell = line.toHtmlEscaped();
+               if ( rejected )
+               {
+                  cell = "<font color=\"red\">" + cell + "</font>";
+               }
+
+               species_txt += line + "\n";
+               species_html += "<tr><td>" + cell + "</td></tr>";
+               species_html_gui += cell + "<br>";
+            }
+         }
+      }
+   }
+
+   if ( species_txt.isEmpty() )
+   {
+      species_txt      = tr( "No species selection recorded (all species shown in the Report)." );
+      species_html     = "<tr><td>" + species_txt.toHtmlEscaped() + "</td></tr>";
+      species_html_gui = species_txt.toHtmlEscaped();
+   }
+
+   QGridLayout* genL4  = new QGridLayout();
+   QVBoxLayout* genL41 = new QVBoxLayout();
+
+   QLabel*      lb_spec = us_label( tr( "Channels' Decisions and Species Selected for "
+                                        "Report (Integration Results):" ) );
+   lb_spec->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   QTextEdit* te_spec = us_textedit();
+   te_spec->setFixedHeight( RowHeight * 3 );
+   te_spec->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+   us_setReadOnly( te_spec, true );
+   te_spec->setHtml( species_html_gui );
+
+   row = 0;
+   genL4->addWidget( lb_spec, row++, 0, 1, 6 );
+   genL4->addWidget( te_spec, row++, 1, 1, 5 );
+
+   genL41->addLayout( genL4 );
+   genL41->addStretch();
+
+   // assemble
+   genL->addLayout( genL11 );
+   genL->addLayout( genL21 );
+   genL->addLayout( genL31 );
+   genL->addLayout( genL41 );
+
+   // Set GroupBox
+   QGroupBox* groupBox = new QGroupBox( name );
+   QPalette   p        = groupBox->palette();
+   p.setColor( QPalette::Dark, Qt::white );
+   groupBox->setPalette( p );
+
+   groupBox->setStyleSheet( "QGroupBox { font: bold;  background-color: qlineargradient(x1: 0, y1: "
+                            "0, x2: 0, y2: 1, stop: 0 #E0E0E0, stop: 1 #FFFFFF); border: 2px solid "
+                            "gray; border-radius: 10px; margin-top: 20px; margin-bottom: 10px; "
+                            "padding-top: 5px; } QGroupBox::title { subcontrol-origin: margin; "
+                            "subcontrol-position: top left; left: 10px; margin: 0 5px; "
+                            "background-color: black; color: white; padding: 0 3px;}  "
+                            "QGroupBox::indicator { width: 13px; height: 13px; border: 1px solid "
+                            "grey; background-color: rgba(204, 204, 204, 255);} "
+                            "QGroupBox::indicator:hover {background-color: rgba(235, 235, 235, "
+                            "255);} QLabel {background-color: rgb(105,105,105);}" );
+
+   groupBox->setFlat( true );
+
+   groupBox->setLayout( genL );
+   groupBoxes.push_back( groupBox );
+
+   // html_assembled += tr("<br>");
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Performed by: </i></b> </caption>"
+                         "</table>"
+
+                         "<table style=\"margin-left:25px\">"
+                         "<tr><td>User ID: </td> <td>%1</td></tr>"
+                         "<tr><td>Name: </td><td> %2, %3 </td></tr>"
+                         "<tr><td>E-mail: </td><td> %4 </td> </tr>"
+                         "<tr><td>Level: </td><td> %5 </td></tr>"
+                         "</table>" )
+                        .arg( status_map["Person"]["ID"] )    // 1
+                        .arg( status_map["Person"]["lname"] ) // 2
+                        .arg( status_map["Person"]["fname"] ) // 3
+                        .arg( status_map["Person"]["email"] ) // 4
+                        .arg( status_map["Person"]["level"] ) // 5
+      ;
+
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Time of VELOCITY-MWL "
+                         "analysis completion: </i></b> </caption>"
+                         "</table>"
+
+                         "<table style=\"margin-left:25px\">"
+                         "<tr>"
+                         "<td> Completed at:     %1 (UTC) </td>"
+                         "</tr>"
+                         "</table>" )
+                        .arg( analysisVelMwlts ) // 1
+      ;
+
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Comment at the Time of "
+                         "VELOCITY-MWL Analysis Completion: </i></b> </caption>"
+                         "</table>"
+
+                         "<table style=\"margin-left:25px\">"
+                         "<tr>"
+                         "<td> Comment:  %1 </td> "
+                         "</tr>"
+                         "</table>" )
+                        .arg( status_map["Comment"]["comment"] ) // 1
+      ;
+   html_assembled += tr( "<table style=\"margin-left:10px\">"
+                         "<caption align=left> <b><i>Channels' Decisions and Species Selected "
+                         "for Report (Integration Results): </i></b> </caption>"
+                         "</table>"
+                         "<table style=\"margin-left:25px\">"
+                         "%1"
+                         "</table>" )
+                        .arg( species_html ) // 1
+      ;
+   html_assembled += tr( "<hr>" );
+}
+
 //do user-interactions-analysis separately:
 void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysisJson,
 						   QString analysisCancelJson, QVector< QGroupBox * >& groupBoxes )
@@ -1852,7 +2497,7 @@ void US_auditTrailGMP::user_interactions_analysis( QString name, QString analysi
 QMap< QString, QString>  US_auditTrailGMP::read_autoflow_record( int autoflowID  )
 {
    // Check DB connection
-   US_Passwd pw;
+   US_Passwd pw( this );
    QString masterpw = pw.getPasswd();
    US_DB2* db = new US_DB2( masterpw );
 
@@ -1924,7 +2569,7 @@ void US_auditTrailGMP::read_reportLists_from_aprofile( QStringList & dropped_tri
   QString aprofile_xml;
   
   // Check DB connection
-  US_Passwd pw;
+  US_Passwd pw( this );
   QString masterPW = pw.getPasswd();
   US_DB2 db( masterPW );
   
@@ -2085,42 +2730,57 @@ bool US_auditTrailGMP::read_2dsa_settings( QXmlStreamReader& xmli )
 }
 
 //read autoflowStatus, populate internals
-void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QString& importRIts, QString& importIPJson, QString& importIPts,
-						   QString& editRIJson, QString& editRIts, QString& editIPJson, QString& editIPts,
-						   QString& analysisJson,
-						   QString& stopOptimaJson, QString& stopOptimats, QString& skipOptimaJson,
-						   QString& skipOptimats,
-						   QString& analysisCancelJson, QString& createdGMPrunJson, QString& createdGMPrunts,
-						   QString& analysisABDEJson, QString& analysisABDEts )
+void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson,
+                                                   QString& importRIts,
+                                                   QString& importIPJson,
+                                                   QString& importIPts,
+                                                   QString& editRIJson,
+                                                   QString& editRIts,
+                                                   QString& editIPJson,
+                                                   QString& editIPts,
+                                                   QString& analysisJson,
+                                                   QString& stopOptimaJson,
+                                                   QString& stopOptimats,
+                                                   QString& skipOptimaJson,
+                                                   QString& skipOptimats,
+                                                   QString& analysisCancelJson,
+                                                   QString& createdGMPrunJson,
+                                                   QString& createdGMPrunts,
+                                                   QString& analysisABDEJson,
+                                                   QString& analysisABDEts,
+                                                   QString& analysisVelMwlJson,
+                                                   QString& analysisVelMwlts )
 {
-  importRIJson.clear();
-  importRIts  .clear();
-  importIPJson.clear();
-  importIPts  .clear();
-  editRIJson  .clear();
-  editRIts    .clear();
-  editIPJson  .clear();
-  editIPts    .clear();
-  analysisJson.clear();
-  stopOptimaJson. clear();
-  stopOptimats  . clear();
-  skipOptimaJson. clear();
-  skipOptimats  . clear();
-  analysisCancelJson. clear();
-  createdGMPrunJson .clear();
-  createdGMPrunts   .clear();
-  analysisABDEJson  .clear();
-  analysisABDEts    .clear();
+   importRIJson.clear();
+   importRIts.clear();
+   importIPJson.clear();
+   importIPts.clear();
+   editRIJson.clear();
+   editRIts.clear();
+   editIPJson.clear();
+   editIPts.clear();
+   analysisJson.clear();
+   stopOptimaJson.clear();
+   stopOptimats.clear();
+   skipOptimaJson.clear();
+   skipOptimats.clear();
+   analysisCancelJson.clear();
+   createdGMPrunJson.clear();
+   createdGMPrunts.clear();
+   analysisABDEJson.clear();
+   analysisABDEts.clear();
+   analysisVelMwlJson.clear();
+   analysisVelMwlts.clear();
 
-  US_Passwd pw;
-  US_DB2    db( pw.getPasswd() );
+   US_Passwd pw( this );
+   US_DB2    db( pw.getPasswd() );
 
-  if ( db.lastErrno() != US_DB2::OK )
-    {
+   if ( db.lastErrno() != US_DB2::OK )
+   {
       QMessageBox::warning( this, tr( "Connection Problem: Read autoflowStatus" ),
 			    tr( "Could not connect to database \n" ) +  db.lastError() );
       return;
-    }
+   }
 
   QStringList qry;
   qry.clear();
@@ -2158,14 +2818,16 @@ void US_auditTrailGMP::read_autoflowStatus_record( QString& importRIJson, QStrin
 
 	  analysisABDEJson = db.value( 16 ).toString();
 	  analysisABDEts   = db.value( 17 ).toString();
-	}
+
+     analysisVelMwlJson = db.value( 18 ).toString();
+     analysisVelMwlts   = db.value( 19 ).toString();
+   }
     }
 
   qDebug() << "Read_autoflow_status: stopOptimaJson, skipOptimaJson -- "
 	   << stopOptimaJson
 	   << skipOptimaJson;
 }
-
 
 //Parse autoflowStatus RI/IP Json
 QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatus_json( QString statusJson, QString dtype )
@@ -2230,7 +2892,39 @@ QMap< QString, QMap < QString, QString > > US_auditTrailGMP::parse_autoflowStatu
 
 	  status_map[ key ] = dropped_map;
 	}
-      
+
+   if ( key == "DroppedItems" ) // import: names of actually dropped triples
+                                // / channels
+   {
+      QJsonArray             json_array = value.toArray();
+      QMap<QString, QString> dropped_items_map;
+
+      for ( int i = 0; i < json_array.size(); ++i )
+      {
+         foreach ( const QString& array_key, json_array[i].toObject().keys() )
+         {
+            dropped_items_map[array_key] = json_array[i].toObject().value( array_key ).toString();
+         }
+      }
+
+      status_map[key] = dropped_items_map;
+   }
+
+      if ( key == "ScanDifference" )   // import: scan-count mismatches (expected vs. collected) per triple
+	{
+	  QJsonArray json_array = value.toArray();
+	  QMap< QString, QString > scandiff_map;
+
+	  for (int i=0; i < json_array.size(); ++i )
+	    {
+	      scandiff_map[ QString::number( i ) ] = json_array[i].toString();
+	      qDebug() << "ScanDifference Map: -- index, value: "
+		       << i
+		       << json_array[i].toString();
+	    }
+
+	  status_map[ key ] = scandiff_map;
+	}
 
       if ( key == "Meniscus" )   //edit  
 	{	  
@@ -2362,68 +3056,71 @@ void US_auditTrailGMP::display_reviewers_auto( int& row, QMap< QString, QString>
 	    u_role = "Reviewer";
 	  else if ( JsonListName. contains("approver") )
 	    u_role = "Approver";
-	      
-	  QLineEdit* le_role = us_lineedit( u_role, 0, true );
+     QString signer = u_role + ": " + current_reviewer;
+     le_name->setAccessibleName( tr( "Signer Name (%1)" ).arg( signer ) );
 
-	  //TimeDate && Comment
-	  QString e_date, e_decision, e_comment;
-	  for (int i=0; i < esigned_array.size(); ++i )
-	    {
-	      foreach(const QString& key, esigned_array[i].toObject().keys())
-		{
-		  if ( key == current_reviewer )
-		    {
-		      QJsonObject newObj = esigned_array[i].toObject().value(key).toObject();
-		      
-		      e_comment  = newObj["Comment"]   .toString();
-		      e_decision = newObj["Decision"]  .toString();
-		      e_date     = newObj["timeDate"]  .toString();
-		     		      
-		      qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- "
-			       << newObj["Comment"]   .toString()
-			       << newObj["Decision"]  .toString()
-			       << newObj["timeDate"]  .toString();
-		      
-		      break;
-		    }
-		}
-	    }
-	  QLineEdit* le_date    = us_lineedit( e_date, 0, true );
-	  
-	  //QLineEdit* le_comment = us_lineedit( e_comment, 0, true );
-	  QTextEdit* te_comment    = us_textedit();
-	  te_comment    -> setFixedHeight  ( RowHeight * 2 );
-	  te_comment    ->setFont( QFont( US_Widgets::fixedFont().family(),
-					  US_GuiSettings::fontSize() - 1) );
-	  us_setReadOnly( te_comment, true );
-	  te_comment -> setText( e_comment );
-	  
-	  
-	  QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d ); 
-	  le_stat -> setObjectName( "status: " + current_reviewer );
+     QLineEdit* le_role = us_lineedit( u_role, 0, true );
+     le_role->setAccessibleName( tr( "Signer Role (%1)" ).arg( signer ) );
 
-	  qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
+     //TimeDate && Comment
+     QString e_date, e_decision, e_comment;
+     for ( int i = 0; i < esigned_array.size(); ++i )
+     {
+        foreach ( const QString& key, esigned_array[i].toObject().keys() )
+        {
+           if ( key == current_reviewer )
+           {
+              QJsonObject newObj = esigned_array[i].toObject().value( key ).toObject();
 
-	  if( le_stat->text(). contains("NOT") )
-	    {
-	      le_date    -> setText( "N/A" );
-	      te_comment -> setText( "N/A" );
-	    }
-	  
-	  genL -> addWidget( le_name,      row,      0,  1,  3 );
-	  genL -> addWidget( le_role,      row,      3,  1,  2 );
-	  genL -> addWidget( le_date,      row,      5,  1,  2 );
-	  genL -> addWidget( te_comment,   row,      7,  1,  3 );
-	  genL -> addWidget( le_stat,      row++,    10, 1,  2 );
+              e_comment  = newObj["Comment"].toString();
+              e_decision = newObj["Decision"].toString();
+              e_date     = newObj["timeDate"].toString();
 
-	  //assemble eSigs html
-	  esigs_html[ "Name" ] = le_name->text();
-	  esigs_html[ "Role" ] = le_role->text();
-	  esigs_html[ "Date" ] = le_date->text();
-	  esigs_html[ "Comment" ] = te_comment->toPlainText();
-	  esigs_html[ "Status" ] = le_stat->text();
-	  assemble_esigs( esigs_html ); 
-	}
+              qDebug() << "E-Signed - " << key << ": Comment, Decision, timeDate -- " << newObj["Comment"].toString()
+                       << newObj["Decision"].toString() << newObj["timeDate"].toString();
+
+              break;
+           }
+        }
+     }
+     QLineEdit* le_date = us_lineedit( e_date, 0, true );
+     le_date->setAccessibleName( tr( "Signing Date" ) );
+
+     //QLineEdit* le_comment = us_lineedit( e_comment, 0, true );
+     QTextEdit* te_comment = us_textedit();
+     te_comment->setAccessibleName( tr( "Signing Comment" ) );
+     te_comment->setFixedHeight( RowHeight * 2 );
+     te_comment->setFont( QFont( US_Widgets::fixedFont().family(), US_GuiSettings::fontSize() - 1 ) );
+     us_setReadOnly( te_comment, true );
+     te_comment->setText( e_comment );
+
+
+     QLineEdit* le_stat = check_eSign_status_for_gmpReport_auto( current_reviewer, eSign_d );
+     le_stat->setObjectName( "status: " + current_reviewer );
+     le_stat->setAccessibleName( tr( "Signing Status" ) );
+
+     qDebug() << "Object Name of le_stat -- " << le_stat->objectName();
+
+     if ( le_stat->text().contains( "NOT" ) )
+     {
+        le_date->setText( "N/A" );
+        te_comment->setText( "N/A" );
+     }
+
+     genL->addWidget( le_name, row, 0, 1, 3 );
+     genL->addWidget( le_role, row, 3, 1, 2 );
+     genL->addWidget( le_date, row, 5, 1, 2 );
+     genL->addWidget( te_comment, row, 7, 1, 3 );
+     genL->addWidget( le_stat, row++, 10, 1, 2 );
+
+     //assemble eSigs html
+     esigs_html["Name"]    = le_name->text();
+     esigs_html["Role"]    = le_role->text();
+     esigs_html["Date"]    = le_date->text();
+     esigs_html["Comment"] = te_comment->toPlainText();
+     esigs_html["Status"]  = le_stat->text();
+     assemble_esigs( esigs_html );
+   }
     }
 }
 

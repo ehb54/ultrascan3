@@ -7,6 +7,11 @@
 #include "us_extern.h"
 
 //! \brief Fetch and set Gui values via QSettings.  All functions are static.
+/*!  The defaults returned here are derived from the US_Theme token table and
+     therefore follow the active (light or dark) color scheme.  Values the
+     user has redefined in the color configuration panel are stored in
+     QSettings and win over the defaults.
+*/
 class US_GUI_EXTERN US_GuiSettings
         {
                 public:
@@ -22,6 +27,9 @@ class US_GUI_EXTERN US_GuiSettings
                 static QString  fontFamily      ( void );
                 //! \brief Set font family setting
                 static void set_fontFamily  ( const QString& );
+
+                //! \retval The user interface font family of the desktop
+                static QString  defaultFontFamily( void );
 
                 //! \brief Get font size setting
                 static int fontSize        ( void );
@@ -45,10 +53,18 @@ class US_GUI_EXTERN US_GuiSettings
                 //! \brief Set current edit palette
                 static void set_editColor   ( const QPalette& );
 
+                //! \brief Get the edit palette variant used for read-only fields
+                static QPalette readonlyColor   ( void );
+
                 //! \brief Get current frame palette
                 static QPalette frameColor      ( void );
                 //! \brief Set current frame palette
                 static void set_frameColor  ( const QPalette& );
+
+                //! \brief Get current banner palette
+                static QPalette bannerColor     ( void );
+                //! \brief Set current banner palette
+                static void set_bannerColor ( const QPalette& );
 
                 //! \brief Get current pushbutton palette
                 static QPalette pushbColor      ( void );
@@ -112,6 +128,9 @@ class US_GUI_EXTERN US_GuiSettings
                 //! \retval UltraScan default frame color palette
                 static QPalette frameColorDefault ( void );
 
+                //! \retval UltraScan default banner color palette
+                static QPalette bannerColorDefault( void );
+
                 //! \retval UltraScan default pushbutton color palette
                 static QPalette pushbColorDefault ( void );
 
@@ -123,6 +142,21 @@ class US_GUI_EXTERN US_GuiSettings
 
                 //! \retval UltraScan default plot color palette
                 static QPalette plotColorDefault  ( void );
+
+                //! \retval UltraScan default plot curve color
+                static QColor   plotCurveDefault     ( void );
+
+                //! \retval UltraScan default plot canvas background color
+                static QColor   plotCanvasBGDefault  ( void );
+
+                //! \retval UltraScan default major gridline color
+                static QColor   plotMajGridDefault   ( void );
+
+                //! \retval UltraScan default minor gridline color
+                static QColor   plotMinGridDefault   ( void );
+
+                //! \retval UltraScan default plot picker/crosshairs color
+                static QColor   plotPickerDefault    ( void );
         };
 
 #endif

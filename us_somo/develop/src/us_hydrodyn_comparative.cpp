@@ -1,8 +1,7 @@
 #include "../include/us3_defines.h"
+#include <QRegularExpression>
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
-#include "qregexp.h"
-//Added by qt3to4:
 #include <QBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>
@@ -228,11 +227,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
 {
    return 
       QString(
-#if QT_VERSION < 0x040000
-              "%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1\n"
-#else
               "%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n"
-#endif
 
               )
       .arg(ce.name)
@@ -1432,41 +1427,6 @@ void US_Hydrodyn_Comparative::setupGUI()
    // editor->setMinimumWidth(300);
    // editor->setMinimumHeight(minHeight1 * 7);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
@@ -1493,7 +1453,6 @@ void US_Hydrodyn_Comparative::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
 
    editor->setWordWrapMode (QTextOption::WordWrap);
@@ -1683,7 +1642,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -2686,7 +2645,7 @@ void US_Hydrodyn_Comparative::save_param()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".smp$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".smp$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".smp";
    }
@@ -3176,8 +3135,8 @@ void US_Hydrodyn_Comparative::process_csv()
       return;
    }
 
-   csv_processed.name.replace(QRegExp("^selected_rows_from_"),"");
-   csv_processed.name.replace(QRegExp("^Processed_"),"");
+   csv_processed.name.replace(QRegularExpression( QStringLiteral( "^selected_rows_from_" ) ),"");
+   csv_processed.name.replace(QRegularExpression( QStringLiteral( "^Processed_" ) ),"");
    csv_processed.name = "Processed_" + csv_processed.name;
    if ( !csv_process(csv_processed) )
    {
@@ -3270,7 +3229,7 @@ void US_Hydrodyn_Comparative::save_csv()
    }
 
    QString use_name = sel_name.isEmpty() ? "*.csv" : sel_name;
-   if ( !use_name.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !use_name.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       use_name += ".csv";
    }
@@ -3288,7 +3247,7 @@ void US_Hydrodyn_Comparative::save_csv()
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".csv$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".csv";
    }
@@ -3322,7 +3281,7 @@ void US_Hydrodyn_Comparative::print()
 {
 #ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
-   printer.setPageSize( QPageSize( QPageSize::Letter ) );
+   printer.setPageSize(QPrinter::Letter);
 
    if ( printer.setup(this) ) {      // opens printer dialog
       QPainter p;
@@ -4045,7 +4004,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    // csv csv_merged;
 
    csv *ref_csv = &csvs[ csv_used_vector[0] ];
-   csv_merged.name.replace(QRegExp("^selected_rows_from_"),"");
+   csv_merged.name.replace(QRegularExpression( QStringLiteral( "^selected_rows_from_" ) ),"");
    csv_merged.name = "selected_rows_from_" + QFileInfo(ref_csv->name).completeBaseName();
    csv_merged.header_map = ref_csv->header_map;
    csv_merged.header = ref_csv->header;

@@ -1,0 +1,171 @@
+name: UltraScan3 Release
+
+# Builds and publishes the versioned release for a v* tag.
+
+run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  actions: write
+  packages: read
+
+jobs:
+
+  validate-version:
+    name: "Validate release tag and VERSION"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+
+      - name: Require tag to match VERSION
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(tr -d '\r\n' < VERSION)
+          expected_tag="v${version}"
+
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "::error::Release tag '$GITHUB_REF_NAME' does not match VERSION '$version' (expected '$expected_tag')."
+            exit 1
+          fi
+
+          echo "Validated release $GITHUB_REF_NAME against VERSION $version."
+
+  # PLATFORM BUILDS
+  # Build all targets against buildsys/toolchain.lock.json.
+
+  build:
+    name: "${{ matrix.label }}"
+    needs: validate-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: ubuntu2404-x64,   profile: APP, label: "Ubuntu 24.04 APP",   platform: Ubuntu-24.04-x86_64 }
+          - { target: ubuntu2404-x64,   profile: HPC, label: "Ubuntu 24.04 HPC",   platform: HPC-Ubuntu-24.04-x86_64 }
+          - { target: oraclelinux8-x64, profile: APP, label: "Oracle Linux 8 APP", platform: RHEL-8-x86_64 }
+          - { target: oraclelinux8-x64, profile: HPC, label: "Oracle Linux 8 HPC", platform: HPC-RHEL-8-x86_64 }
+          - { target: macos-arm64,      profile: APP, label: "macOS arm64 APP",    platform: macOS-arm64 }
+          - { target: macos-x64,        profile: APP, label: "macOS x86_64 APP",   platform: macOS-x86_64 }
+          - { target: windows-x64,      profile: APP, label: "Windows x86_64 APP", platform: Windows-x86_64 }
+    uses: ./.github/workflows/app-build.yml
+    with:
+      target:                  ${{ matrix.target }}
+      profile:                 ${{ matrix.profile }}
+      qt_variant:              qt6
+      ref:                     ${{ github.ref }}
+      clean_tier:              incremental
+      artifact_name:           ${{ format('release-{0}-{1}', github.ref_name, matrix.platform) }}
+      artifact_retention_days: 7
+    secrets: inherit
+
+  # --------------------------------------------------------------------------
+  # PUBLISH RELEASE
+  # Runs only when all platform builds succeeded.
+  # Downloads all artifacts produced by this run, renames to stable filenames,
+  # then creates a permanent versioned GitHub Release.
+  # --------------------------------------------------------------------------
+  publish-release:
+    name: "Publish release ${{ github.ref_name }}"
+    needs: [validate-version, build]
+    if: success()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 1
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-${{ github.ref_name }}-*
+          path: artifacts
+          run-id: ${{ github.run_id }}
+
+      - name: Stage assets with stable filenames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+
+          # Extract version from tag (strip leading 'v')
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+
+          cp_first_find() {
+            local dest="$1"
+            shift
+            local src
+            src=$("$@" | head -1)
+            [ -n "$src" ] || { echo "ERROR: no file found for $dest"; exit 1; }
+            cp "$src" "release-assets/$dest"
+            echo "  $dest ← $src"
+          }
+
+          find artifacts -maxdepth 4 -print | sort
+          echo "Staging release assets..."
+
+          cp_first_find "UltraScan3-macos-installer-arm64-${VERSION}.pkg" \
+            find artifacts -type f -path '*release-*-macOS-arm64/*' -name '*.pkg'
+
+          cp_first_find "UltraScan3-macos-installer-x86_64-${VERSION}.pkg" \
+            find artifacts -type f -path '*release-*-macOS-x86_64/*' -name '*.pkg'
+
+          cp_first_find "us3-Windows-x86_64-${VERSION}-setup.exe" \
+            find artifacts -type f -path '*release-*-Windows-x86_64/*' -name '*.exe'
+
+          cp_first_find "us3-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-Ubuntu-24.04-x86_64/*' ! -path '*HPC*' -name '*.tar.xz'
+
+          cp_first_find "us3-HPC-ubuntu-24.04-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-HPC-Ubuntu-24.04-x86_64/*' -name '*.tar.xz'
+
+          cp_first_find "us3-redhat-8.10-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-RHEL-8-x86_64/*' ! -path '*HPC*' -name '*.tar.xz'
+
+          cp_first_find "us3-HPC-redhat-8.10-x86_64-${VERSION}.tar.xz" \
+            find artifacts -type f -path '*release-*-HPC-RHEL-8-x86_64/*' -name '*.tar.xz'
+
+          echo "Assets ready:"
+          ls -lh release-assets/
+
+      - name: Publish versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          COMMIT=$(git rev-parse HEAD)
+          DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+
+          NOTES="## UltraScan3 $TAG
+
+          **Released:** $DATE
+          **Commit:** $COMMIT
+
+          | Asset | Platform | Profile |
+          |-------|----------|---------|
+          | \`UltraScan3-macos-installer-arm64-${VERSION}.pkg\`    | macOS ARM (Apple Silicon) | Desktop |
+          | \`UltraScan3-macos-installer-x86_64-${VERSION}.pkg\`   | macOS Intel (x86_64)      | Desktop |
+          | \`us3-Windows-x86_64-${VERSION}-setup.exe\`             | Windows x86_64            | Desktop |
+          | \`us3-ubuntu-24.04-x86_64-${VERSION}.tar.xz\`          | Ubuntu 24.04 x86_64       | Desktop |
+          | \`us3-HPC-ubuntu-24.04-x86_64-${VERSION}.tar.xz\`      | Ubuntu 24.04 x86_64       | HPC/MPI |
+          | \`us3-redhat-8.10-x86_64-${VERSION}.tar.xz\`           | Oracle Linux 8 / RHEL 8   | Desktop |
+          | \`us3-HPC-redhat-8.10-x86_64-${VERSION}.tar.xz\`       | Oracle Linux 8 / RHEL 8   | HPC/MPI |"
+
+          gh release create "$TAG" release-assets/* \
+            --title "UltraScan3 $TAG" \
+            --notes "$NOTES" \
+            --target main

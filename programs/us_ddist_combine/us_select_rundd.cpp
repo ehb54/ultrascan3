@@ -51,12 +51,12 @@ DbgLv(1) << "SE:sel_db" << sel_db;
 
    le_dfilter      = us_lineedit();
 
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,   SLOT( update_disk_db( bool ) ) );
-   connect( pb_invest,   SIGNAL( clicked()    ),
-                         SLOT  ( get_person() ) );
-   connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
-                         SLOT  ( search     ( const QString& ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,   &US_SelectRunDD::update_disk_db );
+   connect( pb_invest,   &QAbstractButton::clicked,
+                         this, &US_SelectRunDD::get_person );
+   connect( le_dfilter,  &QLineEdit::textChanged,
+                         this, &US_SelectRunDD::search );
 
    int row           = 0;
    top->addLayout( dkdb_cntrls, row++, 0, 1, 3 );
@@ -75,8 +75,8 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    lw_data->setPalette      ( US_GuiSettings::editColor() );
    lw_data->setFont         ( font );
    lw_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
-   connect( lw_data,  SIGNAL( itemSelectionChanged() ),
-            this,     SLOT  ( selectionChanged()     ) );
+   connect( lw_data,  &QListWidget::itemSelectionChanged,
+            this,     &US_SelectRunDD::selectionChanged );
 
    main->addWidget( lw_data );
 
@@ -86,8 +86,8 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
 
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_SelectRunDD::cancelled );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_SelectRunDD::accepted );
 
    buttons->addWidget( pb_cancel );
    buttons->addWidget( pb_accept );
@@ -455,8 +455,8 @@ void US_SelectRunDD::get_person()
    int invID     = US_Settings::us_inv_ID();
    US_Investigator* dialog = new US_Investigator( true, invID );
 
-   connect( dialog, SIGNAL( investigator_accepted( int ) ),
-                    SLOT(   update_person(         int ) ) );
+   connect( dialog, &US_Investigator::investigator_accepted,
+                    this, &US_SelectRunDD::update_person );
 
    dialog->exec();
 }
@@ -511,8 +511,8 @@ DbgLv(1) << "sChg: count_list" << count_list << "kseld" << kseld;
       kseld        = selitems.size();
       if ( kseld > 0 )
          lw_data->setCurrentItem( selitems[ 0 ] );
-      connect( lw_data,  SIGNAL( itemSelectionChanged() ),
-               this,     SLOT  ( selectionChanged()     ) );
+      connect( lw_data,  &QListWidget::itemSelectionChanged,
+               this,     &US_SelectRunDD::selectionChanged );
    }
 
    count_seld   = kseld;

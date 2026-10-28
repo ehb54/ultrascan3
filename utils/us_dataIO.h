@@ -113,7 +113,7 @@ class US_UTIL_EXTERN US_DataIO
          int    xindex      ( double );      //!< Get index of X (radius) value
          double radius      ( int );         //!< Get radius value at index
          double scWavelength( int );         //!< Get wavelength value at index
-         double value       ( int, int );    //!< Get reading for scan,radius
+         double            value( int, int ) const;     //!< Get reading for scan,radius
          double reading     ( int, int );    //!< Get reading for scan,radius
          bool   setValue    ( int, int, double ); //!< Set reading value
          double std_dev     ( int, int );    //!< Get std.dev. for scan,radius
@@ -268,7 +268,7 @@ class US_UTIL_EXTERN US_DataIO
 
       //! Values that are returned for various errors when managing scan data
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
-                     NODATA, NO_GUID_MATCH, BAD_VERSION };
+                     NODATA, NO_GUID_MATCH, BAD_VERSION, CANTWRITE };
 
       /*! Read a set of legacy data in raw teckman data set format
           \param file  The filename to be read
@@ -294,6 +294,12 @@ class US_UTIL_EXTERN US_DataIO
           \param parameters A reference to the data structure for the read data
       */
       static int     readEdits   ( const QString&, EditValues& );
+
+      /*! Write a set of edit parameters in xml format, as read by readEdits
+          \param filename   The filename to be written
+          \param parameters The edit parameters to write
+      */
+      static int     writeEdits( const QString&, const EditValues& );
 
       /*! A string describing the last read or write error
           \param code  The error code to be described

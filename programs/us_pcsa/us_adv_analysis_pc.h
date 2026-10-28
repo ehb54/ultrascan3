@@ -43,6 +43,8 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
 
       US_SolveSim::DataSet*    dset0;
 
+      std::shared_ptr<US_SimCache>     mccache; // Monte Carlo simulation cache
+
       US_DataIO::EditedData*   edata;
       US_DataIO::EditedData    wdata;
       US_DataIO::RawData       sdata1;
@@ -130,7 +132,7 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
       void kupperChanged   ( double );
       void pointsChanged   ( double );
 #endif
-      void mciterChanged   ( double );
+      void mciterChanged   ( int );
       void load_mrecs      ( void );
       void store_mrecs     ( void );
       void load_bfm        ( void );

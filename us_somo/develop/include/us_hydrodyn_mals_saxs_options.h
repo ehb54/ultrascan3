@@ -42,11 +42,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Options : public QDialog
 
       QLabel *                                lbl_baseline;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *                          bg_bl_type;
-#else
       QButtonGroup *                         bg_bl_type;
-#endif
 
       QRadioButton *                          rb_linear;
       QRadioButton *                          rb_integral;
@@ -76,11 +72,7 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Options : public QDialog
 
       QLabel *                                lbl_gaussian_type;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *                          bg_gaussian_type;
-#else
       QButtonGroup *                          bg_gaussian_type;
-#endif
       QRadioButton *                          rb_gauss;
       QRadioButton *                          rb_gmg;
       QRadioButton *                          rb_emg;
@@ -91,6 +83,9 @@ class US_EXTERN US_Hydrodyn_Mals_Saxs_Options : public QDialog
 
       QLabel *                                lbl_ampl_width_min;
       QLineEdit *                             le_ampl_width_min;
+
+      QLabel *                                lbl_ampl_min;
+      QLineEdit *                             le_ampl_min;
 
       QCheckBox *                             cb_lock_min_retry;
       QLineEdit *                             le_lock_min_retry_mult;

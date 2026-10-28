@@ -255,14 +255,6 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    AUTFBACK( rb_save_bmp );
    rb_save_bmp->setToolTip( us_tr( "Save as BMP files" ) );
 
-#if QT_VERSION < 0x040000
-   bg_save = new QGroupBox( this );
-   int bg_pos = 0;
-   bg_save->setExclusive(true);
-   bg_save->addButton( rb_save_png, bg_pos++ );
-   bg_save->addButton( rb_save_jpeg, bg_pos++ );
-   bg_save->addButton( rb_save_bmp, bg_pos++ );
-#else
    bg_save = new QGroupBox();
    bg_save->setFlat( true );
 
@@ -273,7 +265,6 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
       bl->addWidget( rb_save_bmp );
       bg_save->setLayout( bl );
    }
-#endif
 
    cb_save_overwrite = new QCheckBox(this);
    cb_save_overwrite->setText(us_tr("Overwrite"));
@@ -649,9 +640,10 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QPixmap & qPix, QString tag, int my
    QString curvefname = hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text();
    QString qvaluetag  = "";
 
-   static QRegExp rx_q     ( "It_q(\\d+_\\d+)" );
-   if ( rx_q.indexIn( curvefname ) != -1 ) {
-      qvaluetag = QString( "q: %1 " ).arg( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+   static QRegularExpression rx_q     ( "It_q(\\d+_\\d+)" );
+   QRegularExpressionMatch rx_q_m = rx_q.match( curvefname );
+   if ( rx_q_m.hasMatch() ) {
+      qvaluetag = QString( "q: %1 " ).arg( rx_q_m.captured(1).replace( "_", "." ).toDouble() );
    }
 
    paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, QString( "%1%2" ).arg( qvaluetag ).arg( curvefname ));

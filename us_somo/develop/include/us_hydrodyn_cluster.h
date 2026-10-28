@@ -33,9 +33,6 @@
 //standard C and C++ defs:
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
 
 using namespace std;
@@ -146,7 +143,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, bool >                       cluster_additional_methods_no_tgz_output;
       map < QString, bool >                       cluster_additional_methods_must_run_alone;
       map < QString, QString >                    cluster_additional_methods_prepend;
-      map < QString, QString >                    cluster_additional_methods_add_selected_files;
+      map < QString, bool >                       cluster_additional_methods_add_selected_files;
       map < QString, unsigned int >               cluster_additional_methods_job_multiplier;
       map < QString, map < QString, bool > >      cluster_additional_methods_modes;
 
@@ -232,8 +229,5 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 };
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 #endif

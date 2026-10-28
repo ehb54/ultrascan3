@@ -55,7 +55,7 @@ void US_Minimize::setup_GUI()
 	le_iteration = us_lineedit("0", 1, false);
 	gl1->addWidget(le_iteration, 0, 1);
 	pb_fit = us_pushbutton(tr("Fit"));
-	connect(pb_fit, SIGNAL(clicked()), SLOT(Fit()));
+	connect(pb_fit, &QPushButton::clicked, this, &US_Minimize::Fit);
 	gl1->addWidget(pb_fit, 0, 2);
 	lbl_variance = us_label(tr("Variance"));
 	gl1->addWidget(lbl_variance, 1, 0);
@@ -74,7 +74,7 @@ void US_Minimize::setup_GUI()
    le_improvement = us_lineedit("0", 1, false);
 	gl1->addWidget(le_improvement, 3, 1);
 	pb_saveFit = us_pushbutton(tr("Save Fit"),false);
-	connect(pb_saveFit, SIGNAL(clicked()), SLOT(save_Fit()));
+	connect(pb_saveFit, &QPushButton::clicked, this, &US_Minimize::save_Fit);
 	gl1->addWidget(pb_saveFit, 3, 2);
    lbl_evaluations = us_label(tr("Function Evaluations"));
    gl1->addWidget(lbl_evaluations, 4, 0);
@@ -111,10 +111,11 @@ void US_Minimize::setup_GUI()
    le_points = us_lineedit("0", 1, false);
 	gl1->addWidget(le_points, 9, 1);
 	pb_close = us_pushbutton("Close");
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
+	connect(pb_close, &QPushButton::clicked, this, &US_Minimize::close);
 	gl1->addWidget(pb_close, 9, 2);
 
 	data_plot = new QwtPlot();
+	US_Widgets::us_style_plot( data_plot );
 	plotLayout = new US_Plot(data_plot, tr(""), tr(""), tr(""));
 	data_plot->setCanvasBackground(Qt::black);	
 	data_plot->setMinimumSize(560, 240);
@@ -176,7 +177,7 @@ void US_Minimize::setup_GUI()
 	lbl_lambdaStart = us_label(tr("Lambda Start:"));
 	gl3->addWidget(lbl_lambdaStart, 3, 0);
    le_lambdaStart = us_lineedit("20.0", 1, false);
-   connect(le_lambdaStart, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStart(const QString &)));
+   connect(le_lambdaStart, &QLineEdit::textChanged, this, &US_Minimize::update_lambdaStart);
 	gl3->addWidget(le_lambdaStart, 3, 1);
 	pb_plottwo = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plottwo, 3, 2);	
@@ -184,21 +185,21 @@ void US_Minimize::setup_GUI()
 	gl3->addWidget(lbl_lambdaStep, 4, 0);
 	//le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
 	le_lambdaStep = us_lineedit("1.050", 1, false);
-   connect(le_lambdaStep, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStep(const QString &)));
+   connect(le_lambdaStep, &QLineEdit::textChanged, this, &US_Minimize::update_lambdaStep);
 	gl3->addWidget(le_lambdaStep, 4, 1);
 	pb_plotthree = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotthree, 4, 2);
 	lbl_maxIterations = us_label(tr("Maximum Iterations:"));
 	gl3->addWidget(lbl_maxIterations, 5, 0);
    le_maxIterations = us_lineedit("50000", 1, false);
-	connect(le_maxIterations, SIGNAL(textChanged(const QString&)), SLOT(update_maxIterations(const QString &)));
+	connect(le_maxIterations, &QLineEdit::textChanged, this, &US_Minimize::update_maxIterations);
 	gl3->addWidget(le_maxIterations, 5, 1);
 	pb_plotfour = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotfour, 5, 2);
 	lbl_tolerance = us_label(tr("Fit Tolerance:"));
 	gl3->addWidget(lbl_tolerance, 6, 0);
    le_tolerance = us_lineedit("1.000e-12", 1, false);
-	connect(le_tolerance, SIGNAL(textChanged(const QString&)), SLOT(update_tolerance(const QString &)));
+	connect(le_tolerance, &QLineEdit::textChanged, this, &US_Minimize::update_tolerance);
 	gl3->addWidget(le_tolerance, 6, 1);
 	pb_plotfive = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotfive, 6, 2);

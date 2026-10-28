@@ -3,6 +3,7 @@
 #include "us_solution_gui.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_theme.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_investigator.h"
@@ -37,6 +38,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    bn_select->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
    lw_solutions = us_listwidget();
+   lw_solutions->setAccessibleName( tr( "Solutions" ) );
    lw_solutions-> setSortingEnabled( true );
 
 
@@ -47,6 +49,8 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
 
    QLabel* lb_search     = us_label( tr( "Search:" ) );
    le_search             = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
 
    //QLabel* lb_solutionDesc = us_label( tr( "Solution Name:" ) );
    //le_solutionDesc = us_lineedit( "", 1 );
@@ -60,32 +64,61 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
 
 
    le_amount = us_lineedit();
+   le_amount->setAccessibleName( tr( "Analyte Molar Ratio" ) );
+   lb_amount->setBuddy( le_amount );
    us_setReadOnly( le_amount,   true );
    le_bufferInfo = us_lineedit();
+   le_bufferInfo->setAccessibleName( tr( "Buffer Name" ) );
+   lb_bufferInfo->setBuddy( le_bufferInfo );
    us_setReadOnly( le_bufferInfo,   true );
    le_commonVbar20 = us_lineedit();
+   le_commonVbar20->setAccessibleName( tr( "Common VBar (20C)" ) );
+   lb_commonVbar20->setBuddy( le_commonVbar20 );
    us_setReadOnly( le_commonVbar20,   true );
    le_density = us_lineedit();
+   le_density->setAccessibleName( tr( "Buffer Density" ) );
+   lb_density->setBuddy( le_density );
    us_setReadOnly( le_density,     true );
    le_viscosity = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Buffer Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
+   le_storageTemp->setAccessibleName( tr( "Storage Temperature" ) );
+   lb_storageTemp->setBuddy( le_storageTemp );
    us_setReadOnly( le_storageTemp,     true );
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Solution Notes" ) );
    te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( true );
 
-   QLabel* lb_banner3 = us_banner( tr( "Current solution contents" )  );
+   QLabel* lb_banner3 = us_banner( tr( "Current Solution Contents" )  );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
-   QLabel* lb_banner4 = us_banner( tr( "Solution notes" )  );
+   QLabel* lb_banner4 = us_banner( tr( "Solution Notes" )  );
    lb_banner4->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
    lw_analytes = us_listwidget();
+   lw_analytes->setAccessibleName( tr( "Analytes" ) );
    lw_analytes-> setSortingEnabled( true );
-   connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),   // To see Molar ratio for each analyte...
-                         SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
+   connect( lw_analytes, &QListWidget::itemClicked,                                             
+                         this, &US_SolutionMgrSelect::selectAnalyte );
    //lw_analytes->setSelectionMode( QAbstractItemView::NoSelection );
+
+   buffer_state_style = tr( "color: %1; background-color: white;" ) +
+   tr( "font-family: '%1';" ).arg( US_GuiSettings::fontFamily() ) +
+   tr( "font-size: %1pt; font-weight: bold;" ).arg( US_GuiSettings::fontSize() );
+
+   QLabel* lb_banner5 = us_banner( tr( "Buffer Notes" )  );
+   lb_banner5->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   lb_buffer_state  = new QLabel( this );
+   lb_buffer_state->setText("");
+   lb_buffer_state->setFixedHeight( 30 );
+   lb_buffer_state->setStyleSheet( buffer_state_style.arg( "green" ) );
+   lb_buffer_state->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+   lb_buffer_state->setAlignment ( Qt::AlignCenter );
+   lb_buffer_state->setAutoFillBackground( true );
 
    int row = 0;
    main->addWidget( bn_select,       row++,  0,  1, 12 );
@@ -94,7 +127,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    main->addWidget( pb_help,         row,    6,  1,  2 );
    main->addWidget( pb_cancel,       row,    8,  1,  2 );
    main->addWidget( pb_accept,       row++, 10,  1,  2 );
-   main->addWidget( lw_solutions,    row,    0, 10,  6 );
+   main->addWidget( lw_solutions,    row,    0, 12,  6 );
    main->addWidget( pb_spectrum,     row,    6,  1,  3 );
    main->addWidget( pb_delete,       row++,  9,  1,  3 );
    main->addWidget( pb_upload,       row++,  6,  1,  6 );
@@ -103,8 +136,10 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    main->addWidget( te_notes,        row++,  6,  1,  6 );
    main->addWidget( lb_banner3,      row++,  6,  1,  6 );
    main->addWidget( lw_analytes,     row++,  6,  4,  6 );
+   row += 4;
 
-   row += 5;
+   main->addWidget( lb_banner5,      row++,  6,  1,  6 );
+   main->addWidget( lb_buffer_state, row++,  6,  1,  6 );
 
    main->addWidget( lb_amount,       row,    0, 1,  2 );
    main->addWidget( le_amount,       row,    2, 1,  4 );
@@ -124,22 +159,22 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    //connect( lw_analytes, SIGNAL( itemDoubleClicked  ( QListWidgetItem* ) ),
    //                      SLOT  ( changeAnalyte      ( QListWidgetItem* ) ) );
 
-   connect( le_search,      SIGNAL( textChanged( const QString& ) ),
-            this,           SLOT  ( search     ( const QString& ) ) );
-   connect( lw_solutions, SIGNAL  ( itemClicked    ( QListWidgetItem* ) ),
-            this,           SLOT  ( selectSolution ( QListWidgetItem* ) ) );
-   connect( pb_help,        SIGNAL( clicked() ),
-            this,           SLOT  ( help()    ) );
-   connect( pb_cancel,      SIGNAL( clicked() ),
-            this,           SLOT  ( reject()  ) );
-   connect( pb_accept,      SIGNAL( clicked()       ),
-            this,           SLOT  ( accept_solution() ) );
-   connect( pb_delete,      SIGNAL( clicked() ),
-            this,           SLOT  ( delete_solution() ) );
-   connect( pb_spectrum,    SIGNAL( clicked()  ),
-            this,           SLOT  ( spectrum() ) );
-   connect( pb_upload,      SIGNAL( clicked()       ),
-            this,           SLOT  ( upload_solution() ) );
+   connect( le_search,      &QLineEdit::textChanged,
+            this,           &US_SolutionMgrSelect::search );
+   connect( lw_solutions, &QListWidget::itemClicked,
+            this,           &US_SolutionMgrSelect::selectSolution );
+   connect( pb_help,        &QAbstractButton::clicked,
+            this,           &US_SolutionMgrSelect::help );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+            this,           &US_SolutionMgrSelect::reject );
+   connect( pb_accept,      &QAbstractButton::clicked,
+            this,           &US_SolutionMgrSelect::accept_solution );
+   connect( pb_delete,      &QAbstractButton::clicked,
+            this,           &US_SolutionMgrSelect::delete_solution );
+   connect( pb_spectrum,    &QAbstractButton::clicked,
+            this,           &US_SolutionMgrSelect::spectrum );
+   connect( pb_upload,      &QAbstractButton::clicked,
+            this,           &US_SolutionMgrSelect::upload_solution );
 
    if ( US_Settings::us_inv_level() < 4 )
       pb_upload->setVisible( false );
@@ -892,6 +927,17 @@ DbgLv(1) << "We are at RESET_2:  aInf count" << solution->analyteInfo.count() <<
    else
       pb_accept->setEnabled( false );
 
+   lb_buffer_state->clear();
+   if ( solution->buffer.manual )
+   {
+      lb_buffer_state->setText( "Manual Buffer" );
+      lb_buffer_state->setStyleSheet( buffer_state_style.arg( "red" ) );
+   } else
+   {
+      lb_buffer_state->setText( "Automatic Temperature Correction" );
+      lb_buffer_state->setStyleSheet( buffer_state_style.arg( "green" ) );
+   }
+
    // // Display investigator
    // investigatorID = US_Settings::us_inv_ID();
 
@@ -946,9 +992,12 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
 
    lb_descrip   = us_label( tr( "Solution Name:" ) );
    le_descrip   = us_lineedit( "New Solution", 0, false );
+   le_descrip->setAccessibleName( tr( "Description" ) );
 
    lb_bufferInfo   = us_label( tr( "Buffer Name:" ) );
    le_bufferInfo = us_lineedit();
+   le_bufferInfo->setAccessibleName( tr( "Buffer Name" ) );
+   lb_bufferInfo->setBuddy( le_bufferInfo );
    us_setReadOnly( le_bufferInfo,   true );
 
    pb_analyte = us_pushbutton( tr( "Add Analyte" ) );
@@ -973,6 +1022,7 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    lo_amount->addWidget( lb_amount );
 
    ct_amount = us_counter ( 2, 0, 100, 1 ); // #buttons, low, high, start_value
+   ct_amount->setAccessibleName( tr( "Analyte Molar Ratio" ) );
    ct_amount->setSingleStep( 1 );
    ct_amount->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
@@ -982,6 +1032,7 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    QLabel* lb_banner3 = us_banner( tr( "Current solution contents" )  );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_analytes = us_listwidget();
+   lw_analytes->setAccessibleName( tr( "Analytes" ) );
    lw_analytes-> setSortingEnabled( true );
 
 
@@ -992,14 +1043,23 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
 
 
    le_commonVbar20 = us_lineedit();
+   le_commonVbar20->setAccessibleName( tr( "Common VBar (20C)" ) );
+   lb_commonVbar20->setBuddy( le_commonVbar20 );
    us_setReadOnly( le_commonVbar20,   true );
    le_density = us_lineedit();
+   le_density->setAccessibleName( tr( "Buffer Density" ) );
+   lb_density->setBuddy( le_density );
    us_setReadOnly( le_density,     true );
    le_viscosity = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Buffer Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
+   le_storageTemp->setAccessibleName( tr( "Storage Temperature" ) );
+   lb_storageTemp->setBuddy( le_storageTemp );
 
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Solution Notes" ) );
    //te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( false );
 
@@ -1216,10 +1276,8 @@ void US_SolutionMgrNew::reset( void )
 
       lw_analytes->addItem( item );
    }
-   // Turn the red label back
-   QPalette p = lb_amount->palette();
-   p.setColor( QPalette::WindowText, Qt::white );
-   lb_amount->setPalette( p );
+   // Turn the red label back to the ordinary label color
+   US_Theme::tag( lb_amount, US_Theme::Label );
    const bool is_ok = can_accept();
 }
 
@@ -1484,13 +1542,18 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
    le_descrip    = us_lineedit( solution-> solutionDesc );
+   le_descrip->setAccessibleName( tr( "Description" ) );
+   lb_descrip->setBuddy( le_descrip );
    //us_setReadOnly( le_descrip, false );
    us_setReadOnly( le_descrip, true );
 
    QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
    le_storageTemp = us_lineedit();
+   le_storageTemp->setAccessibleName( tr( "Storage Temperature" ) );
+   lb_storageTemp->setBuddy( le_storageTemp );
 
    te_notes = us_textedit();
+   te_notes->setAccessibleName( tr( "Analyte Notes" ) );
    //te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( false );
    //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
@@ -1519,21 +1582,21 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    QLabel *empty = us_banner ("");
    main->addWidget( empty,           row,   0, 9, 12);
 
-   connect( pb_spectrum, SIGNAL( clicked()  ),
-            this,        SLOT  ( spectrum_class() ) );
-   connect( pb_accept,   SIGNAL( clicked()  ),
-            this,        SLOT  ( editAccepted() ) );
-   connect( pb_cancel,   SIGNAL( clicked()  ),
-            this,        SLOT  ( editCanceled() ) );
-   connect( pb_help,     SIGNAL( clicked() ),
-            this,        SLOT  ( help()    ) );
-   connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
-                            SLOT  ( saveTemperature ( const QString&   ) ) );
+   connect( pb_spectrum, &QAbstractButton::clicked,
+            this,        &US_SolutionMgrEdit::spectrum_class );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_SolutionMgrEdit::editAccepted );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_SolutionMgrEdit::editCanceled );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_SolutionMgrEdit::help );
+   connect( le_storageTemp, &QLineEdit::textEdited,
+                            this, &US_SolutionMgrEdit::saveTemperature );
 
-   connect( te_notes,    SIGNAL( textChanged( void ) ),
-            this,        SLOT  ( saveNotes  ( void ) ) );
-   connect( le_descrip,  SIGNAL( editingFinished   () ),
-            this,        SLOT  ( description() ) );
+   connect( te_notes,    &QTextEdit::textChanged,
+            this,        &US_SolutionMgrEdit::saveNotes );
+   connect( le_descrip,  &QLineEdit::editingFinished,
+            this,        &US_SolutionMgrEdit::description );
 }
 
 // Slot for manually changed description
@@ -1571,10 +1634,10 @@ void US_SolutionMgrEdit::spectrum_class( void )
 
   US_EditSpectrum *w = new US_EditSpectrum("SOLUTION", ifexists, le_descrip->text(), "1.000", solution);
 
-  connect( w,     SIGNAL( change_spectrum( void ) ),
-           this,  SLOT ( change_spectrum( void ) ) );
-  connect( w,     SIGNAL( accept_enable( void ) ),
-           this,  SLOT ( accept_enable( void ) ) );
+  connect( w,     &US_EditSpectrum::change_spectrum,
+           this,  &US_SolutionMgrEdit::change_spectrum );
+  connect( w,     &US_EditSpectrum::accept_enable,
+           this,  &US_SolutionMgrEdit::accept_enable );
 
   w->setParent(this, Qt::Window);
   w->setWindowModality(Qt::WindowModal);
@@ -1695,6 +1758,7 @@ US_SolutionMgrSettings::US_SolutionMgrSettings( int *invID, int *select_db_disk 
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );
@@ -1712,12 +1776,12 @@ US_SolutionMgrSettings::US_SolutionMgrSettings( int *invID, int *select_db_disk 
    main->addWidget( pb_help,         row++, 3, 1, 1 );
    main->addWidget( empty,           row,   0, 6, 4 );
 
-   connect( disk_controls,   SIGNAL( changed   ( bool ) ),
-            this,            SLOT  ( db_changed( bool ) ) );
-   connect( pb_investigator, SIGNAL( clicked()          ),
-            this,            SLOT(   sel_investigator() ) );
-   connect( pb_help,         SIGNAL( clicked() ),
-            this,            SLOT  ( help()    ) );
+   connect( disk_controls,   &US_Disk_DB_Controls::changed,
+            this,            &US_SolutionMgrSettings::db_changed );
+   connect( pb_investigator, &QAbstractButton::clicked,
+            this,            &US_SolutionMgrSettings::sel_investigator );
+   connect( pb_help,         &QAbstractButton::clicked,
+            this,            &US_SolutionMgrSettings::help );
 
 }
 // Select a new investigator
@@ -1726,8 +1790,8 @@ void US_SolutionMgrSettings::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, (*personID) );
 
    connect( inv_dialog,
-            SIGNAL( investigator_accepted( int ) ),
-            SLOT  ( assign_investigator  ( int ) ) );
+            &US_Investigator::investigator_accepted,
+            this, &US_SolutionMgrSettings::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -1797,24 +1861,24 @@ US_SolutionGui::US_SolutionGui(
 
    main->addWidget( tabWidget );
 
-   connect( tabWidget,   SIGNAL( currentChanged(       int  ) ),
-            this,        SLOT (  checkTab(             int  ) ) );
-   connect( selectTab,   SIGNAL( solutionAccepted(      void ) ),
-            this,        SLOT (  solutionAccepted(      void ) ) );
-   connect( selectTab,   SIGNAL( selectionCanceled(    void ) ),
-            this,        SLOT (  solutionRejected(      void ) ) );
-   connect( newTab,      SIGNAL( newSolAccepted(       void ) ),
-            this,        SLOT (  newSolAccepted(       void ) ) );
-   connect( newTab,      SIGNAL( newSolCanceled(       void ) ),
-            this,        SLOT (  newSolCanceled(       void ) ) );
-   connect( editTab,     SIGNAL( editSolAccepted(      void ) ),
-            this,        SLOT (  editSolAccepted(      void ) ) );
-   connect( editTab,     SIGNAL( editSolCanceled(      void ) ),
-            this,        SLOT (  editSolCanceled(      void ) ) );
-   connect( settingsTab, SIGNAL( use_db(               bool ) ),
-            this,        SLOT (  update_disk_or_db(    bool ) ) );
-   connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
-            this,        SLOT (  update_personID(      int  ) ) );
+   connect( tabWidget,   &QTabWidget::currentChanged,
+            this,        &US_SolutionGui::checkTab );
+   connect( selectTab,   &US_SolutionMgrSelect::solutionAccepted,
+            this,        &US_SolutionGui::solutionAccepted );
+   connect( selectTab,   &US_SolutionMgrSelect::selectionCanceled,
+            this,        &US_SolutionGui::solutionRejected );
+   connect( newTab,      &US_SolutionMgrNew::newSolAccepted,
+            this,        &US_SolutionGui::newSolAccepted );
+   connect( newTab,      &US_SolutionMgrNew::newSolCanceled,
+            this,        &US_SolutionGui::newSolCanceled );
+   connect( editTab,     &US_SolutionMgrEdit::editSolAccepted,
+            this,        &US_SolutionGui::editSolAccepted );
+   connect( editTab,     &US_SolutionMgrEdit::editSolCanceled,
+            this,        &US_SolutionGui::editSolCanceled );
+   connect( settingsTab, &US_SolutionMgrSettings::use_db,
+            this,        &US_SolutionGui::update_disk_or_db );
+   connect( settingsTab, &US_SolutionMgrSettings::investigator_changed,
+            this,        &US_SolutionGui::update_personID );
 }
 
 void US_SolutionGui::value_changed( const QString& )

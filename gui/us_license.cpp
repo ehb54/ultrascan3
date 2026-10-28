@@ -41,8 +41,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   le_firstname = us_lineedit( "" );
   le_firstname->setGeometry( xpos, ypos, half_buttonw, rowHeight );
 
-  connect( le_firstname, SIGNAL( textChanged     ( const QString& ) ), 
-                         SLOT  ( update_firstname( const QString& ) ) );
+  connect( le_firstname, &QLineEdit::textChanged, this, &US_License::update_firstname );
 
   xpos += half_buttonw + spacing;
 
@@ -54,8 +53,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   le_lastname = us_lineedit( "" );
   le_lastname->setGeometry( xpos, ypos, half_buttonw, rowHeight );
   
-  connect( le_lastname, SIGNAL( textChanged    ( const QString& ) ), 
-                        SLOT  ( update_lastname( const QString& ) ) );
+  connect( le_lastname, &QLineEdit::textChanged, this, &US_License::update_lastname );
 
   // Row 2 - Email
   xpos  = spacing;
@@ -68,8 +66,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   le_email = us_lineedit( "" );
   le_email->setGeometry( xpos, ypos, full_buttonw, rowHeight );
-  connect( le_email, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_email( const QString& ) ) );
+  connect( le_email, &QLineEdit::textChanged, this, &US_License::update_email );
 
   // Row 3 - Institution
   xpos = spacing;
@@ -82,8 +79,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   le_institution = us_lineedit( "" );
   le_institution->setGeometry( xpos, ypos, full_buttonw, rowHeight );
-  connect( le_institution, SIGNAL( textChanged       ( const QString& ) ), 
-                           SLOT  ( update_institution( const QString& ) ) );
+  connect( le_institution, &QLineEdit::textChanged, this, &US_License::update_institution );
 
   // Row 5 - City/State/Zip
   xpos = spacing;
@@ -96,8 +92,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   le_city = us_lineedit( "" );
   le_city->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( le_city, SIGNAL( textChanged( const QString& ) ), 
-                    SLOT  ( update_city( const QString& ) ) );
+  connect( le_city, &QLineEdit::textChanged, this, &US_License::update_city );
 
   xpos += buttonw + spacing;
 
@@ -120,8 +115,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   state = "NON-US"; // Initialize
   cbb_state->setGeometry( xpos, ypos, mediumColumn, rowHeight );
-  connect( cbb_state, SIGNAL( currentIndexChanged( const QString& ) ), 
-                      SLOT  ( update_state       ( const QString& ) ) );
+  connect( cbb_state, &QComboBox::currentTextChanged, this, &US_License::update_state );
 
   xpos += mediumColumn + spacing + 10; // Adjust
 
@@ -143,8 +137,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   licensetype = "academic";  // Initialize
   cbb_licensetype->setGeometry( xpos, ypos, mediumColumn, rowHeight );
   
-  connect( cbb_licensetype, SIGNAL( currentIndexChanged( const QString& ) ), 
-                            SLOT  ( update_licensetype ( const QString& ) ) );
+  connect( cbb_licensetype, &QComboBox::currentTextChanged, this, &US_License::update_licensetype );
   
   xpos  = spacing;
   ypos += rowHeight + spacing;
@@ -154,8 +147,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
 
   // Very light gray, for read-only line edits
-  QPalette gray = US_GuiSettings::editColor();
-  gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+  QPalette gray = US_GuiSettings::readonlyColor();
 
   // Row 7 - Platform
   xpos  = spacing;
@@ -205,7 +197,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   
   pb_update = us_pushbutton( tr( "Register" ) );
   pb_update->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
+  connect( pb_update, &QPushButton::clicked, this, &US_License::update );
 
   QString error;
   QString validMsg;
@@ -226,13 +218,13 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   pb_help = us_pushbutton( tr( "Help" ) );
   pb_help->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+  connect( pb_help, &QPushButton::clicked, this, &US_License::help );
 
   xpos += pushbutton + spacing;
 
   pb_cancel = us_pushbutton( tr( "Close" ) );
   pb_cancel->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
+  connect( pb_cancel, &QPushButton::clicked, this, &QWidget::close );
 
   // Finish up
   ypos += 30;    
@@ -455,8 +447,7 @@ void US_License::update( void )
   // Send request
   QString url     = "https://ultrascan.aucsolutions.com/update-license-new.php";
   US_HttpPost* transmit = new US_HttpPost( url, req );
-  connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
-           this,     SLOT  ( update_response      ( const QString& ) ) );
+  connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::update_response );
 }
 
 // Process response
@@ -523,8 +514,7 @@ void US_License::request( void )
   //qDebug() << "sending: " << request;
   QString      url      = "https://ultrascan.aucsolutions.com/request-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, request );
-  connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
-           this,     SLOT  ( request_response     ( const QString& ) ) );
+  connect( transmit, &US_HttpPost::US_Http_post_response, this, &US_License::request_response );
 }
 
 void US_License::request_response( const QString& response )

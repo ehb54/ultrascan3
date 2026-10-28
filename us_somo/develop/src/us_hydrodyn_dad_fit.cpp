@@ -45,6 +45,7 @@ US_Hydrodyn_Dad_Fit::US_Hydrodyn_Dad_Fit(
    gaussian_type_size = dad_win->gaussian_type_size;
 
    dad_ampl_width_min       = ( ( US_Hydrodyn * ) ( dad_win->us_hydrodyn ) )->gparams[ "dad_ampl_width_min"        ].toDouble();
+   dad_ampl_min             = ( ( US_Hydrodyn * ) ( dad_win->us_hydrodyn ) )->gparams[ "dad_ampl_min"              ].toDouble();
    dad_lock_min_retry       = ( ( US_Hydrodyn * ) ( dad_win->us_hydrodyn ) )->gparams[ "dad_lock_min_retry"        ] == "true" ? true : false;
    dad_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( dad_win->us_hydrodyn ) )->gparams[ "dad_lock_min_retry_mult"   ].toDouble();
    dad_maxfpk_restart       = ( ( US_Hydrodyn * ) ( dad_win->us_hydrodyn ) )->gparams[ "dad_maxfpk_restart"        ] == "true" ? true : false;
@@ -417,22 +418,6 @@ void US_Hydrodyn_Dad_Fit::setupGUI()
    lbl_fix_curves->setPalette( PALET_LABEL );
    AUTFBACK( lbl_fix_curves );
    lbl_fix_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   /* old way
-   QString qs_rx = QString( "^(|(\\d+)|(\\d+(,\\d+){0,%1}))$" ).arg( dad_win->gaussians.size() / 3 - 1 );
-   cout << "qs_rx:" << qs_rx << endl;
-   QRegExp rx_fix_curves( qs_rx );
-   QRegExpValidator *rx_val_fix_curves = new QRegExpValidator( rx_fix_curves, this );
-   le_fix_curves = new mQLineEdit( this );    le_fix_curves->setObjectName( "le_fix_curves Line Edit" );
-   le_fix_curves->setText( "" );
-   le_fix_curves->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_fix_curves->setPalette( PALET_NORMAL );
-   AUTFBACK( le_fix_curves );
-   le_fix_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
-   le_fix_curves->setEnabled( false );
-   le_fix_curves->setValidator( rx_val_fix_curves );
-   connect( le_fix_curves, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
-   */
 
    for ( unsigned int i = 0; i < ( unsigned int ) dad_win->gaussians.size() / gaussian_type_size; i++ )
    {
@@ -1530,7 +1515,7 @@ bool US_Hydrodyn_Dad_Fit::setup_run()
          DFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = dad_ampl_width_min;
+         double min = dad_ampl_min;
          double max = dad_win->gauss_max_height;
          // qDebug() << "dad_fit:: gauss_max_height " << max;
          if ( cb_pct_amplitude->isChecked() )
@@ -1539,9 +1524,9 @@ bool US_Hydrodyn_Dad_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < dad_ampl_width_min )
+         if ( min < dad_ampl_min )
          {
-            min = dad_ampl_width_min;
+            min = dad_ampl_min;
          }
          if ( max > dad_win->gauss_max_height )
          {
@@ -1864,7 +1849,7 @@ bool US_Hydrodyn_Dad_Fit::lock_zeros( vector < double > & par )
       if ( !cb_fix_curves[ pos ]->isChecked() ) {
 
          if ( !cb_fix_amplitude->isChecked() ) {
-            if ( tmp_gaussians[ 0 + i ] <= dad_ampl_width_min * dad_lock_min_retry_mult ) {
+            if ( tmp_gaussians[ 0 + i ] <= dad_ampl_min * dad_lock_min_retry_mult ) {
                to_lock.insert( pos + 1 );
                continue;
             }

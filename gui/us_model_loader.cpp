@@ -105,15 +105,14 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
                               : US_Disk_DB_Controls::Disk;
    dkdb_cntrls       = new US_Disk_DB_Controls( iload );
 
-   connect( dkdb_cntrls, SIGNAL( changed(     bool ) ),
-            this,        SLOT(   select_diskdb()     ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,        &US_ModelLoader::select_diskdb );
 
-   QPalette gray   = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray   = US_GuiSettings::readonlyColor();
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked()       ),
-            this,            SLOT(   get_person()    ) );
+   connect( pb_investigator, &QAbstractButton::clicked,
+            this,            &US_ModelLoader::get_person );
 
    if ( US_Settings::us_inv_level() < 3 )
       pb_investigator->setEnabled( false );
@@ -123,8 +122,8 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
          0, true );
 
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
-   connect( pb_filtmodels, SIGNAL( clicked() ),
-            this,          SLOT( list_models() ) );
+   connect( pb_filtmodels, &QAbstractButton::clicked,
+            this,          &US_ModelLoader::list_models );
 
    QString edGUID  = editGUID;
    do_single       = false;
@@ -157,10 +156,10 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
  << " edit" << do_edit << " unasgn" << do_unasgn << " dsearch" << dsearch;
 
    le_mfilter      = us_lineedit( dsearch, -1, false );
-   connect( le_mfilter,    SIGNAL( returnPressed() ),
-            this,          SLOT(   list_models()   ) );
-   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
-            this,          SLOT(   msearch(     const QString& ) ) );
+   connect( le_mfilter,    &QLineEdit::returnPressed,
+            this,          &US_ModelLoader::list_models );
+   connect( le_mfilter,    &QLineEdit::textChanged,
+            this,          &US_ModelLoader::msearch );
 
    int row          = 0;
    top->addLayout( dkdb_cntrls,     row++, 0, 1, 2 );
@@ -202,14 +201,14 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
    advtypes->addLayout( lo_unasgn,  arow,   2, 1, 1 );
    advtypes->addLayout( lo_edlast,  arow++, 3, 1, 1 );
 
-   connect( ck_single, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_single( bool ) ) );
-   connect( ck_edit,   SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_edit  ( bool ) ) );
-   connect( ck_unasgn, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_unasgn( bool ) ) );
-   connect( ck_edlast, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_edlast( bool ) ) );
+   connect( ck_single, &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_single );
+   connect( ck_edit,   &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_edit );
+   connect( ck_unasgn, &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_unasgn );
+   connect( ck_edlast, &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_edlast );
 
    main->addLayout( advtypes );
 
@@ -217,15 +216,15 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,   SIGNAL( clicked() ), this, SLOT( help() ) );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_ModelLoader::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancelled() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_ModelLoader::cancelled );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), this, SLOT( accepted() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_ModelLoader::accepted );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );
@@ -269,8 +268,7 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
    // connect( dkdb_cntrls, SIGNAL( changed(     bool ) ),
    //          this,        SLOT(   select_diskdb()     ) );
 
-   QPalette gray   = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QPalette gray   = US_GuiSettings::readonlyColor();
 
    pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    // connect( pb_investigator, SIGNAL( clicked()       ),
@@ -284,8 +282,8 @@ qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
          0, true );
 
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
-   connect( pb_filtmodels, SIGNAL( clicked() ),
-            this,          SLOT( list_models() ) );
+   connect( pb_filtmodels, &QAbstractButton::clicked,
+            this,          &US_ModelLoader::list_models );
 
    QString edGUID  = editGUID;
    do_single       = false;
@@ -318,10 +316,10 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
  << " edit" << do_edit << " unasgn" << do_unasgn << " dsearch" << dsearch;
 
    le_mfilter      = us_lineedit( dsearch, -1, false );
-   connect( le_mfilter,    SIGNAL( returnPressed() ),
-            this,          SLOT(   list_models()   ) );
-   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
-            this,          SLOT(   msearch(     const QString& ) ) );
+   connect( le_mfilter,    &QLineEdit::returnPressed,
+            this,          &US_ModelLoader::list_models );
+   connect( le_mfilter,    &QLineEdit::textChanged,
+            this,          &US_ModelLoader::msearch );
 
    int row          = 0;
    top->addLayout( dkdb_cntrls,     row++, 0, 1, 2 );
@@ -363,14 +361,14 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
    advtypes->addLayout( lo_unasgn,  arow,   2, 1, 1 );
    advtypes->addLayout( lo_edlast,  arow++, 3, 1, 1 );
 
-   connect( ck_single, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_single( bool ) ) );
-   connect( ck_edit,   SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_edit  ( bool ) ) );
-   connect( ck_unasgn, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_unasgn( bool ) ) );
-   connect( ck_edlast, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_edlast( bool ) ) );
+   connect( ck_single, &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_single );
+   connect( ck_edit,   &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_edit );
+   connect( ck_unasgn, &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_unasgn );
+   connect( ck_edlast, &QAbstractButton::toggled,
+                       this, &US_ModelLoader::change_edlast );
 
    main->addLayout( advtypes );
 
@@ -378,15 +376,15 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
    QHBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   connect( pb_help,   SIGNAL( clicked() ), this, SLOT( help() ) );
+   connect( pb_help,   &QAbstractButton::clicked, this, &US_ModelLoader::help );
    buttons->addWidget( pb_help );
 
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( cancelled() ) );
+   connect( pb_cancel, &QAbstractButton::clicked, this, &US_ModelLoader::cancelled );
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), this, SLOT( accepted() ) );
+   connect( pb_accept, &QAbstractButton::clicked, this, &US_ModelLoader::accepted );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );
@@ -451,14 +449,11 @@ qDebug() << "LdM:    description" << model_descriptions[index].description;
       QString sdescr     = model_descriptions[ index ].description;
       QStringList xmls;
       int nxmls          = model2.mc_iter_xmls( xmls );
-
+      const QString descMatch = "description=\"" + sdescr + "\"";
       for ( int jj = 0; jj < nxmls; jj++ )
       {  // Loop through iteration contents looking for match
-         QString mcont      = xmls[ jj ];
-         int kk             = mcont.indexOf( "description=" );
-         QString mdescr     = QString( mcont ).mid( kk, 100 )
-                              .section( '"', 1, 1 );
-         if ( mdescr == sdescr )
+         const QString& mcont = xmls[ jj ];
+         if ( mcont.contains( descMatch ) )
          {  // Found a matching description:  load the single and break
             model.load_string( mcont );
 qDebug() << "LdM:     match at jj" << jj << "ncomp" << model.components.size();
@@ -514,8 +509,8 @@ void US_ModelLoader::get_person()
    US_Investigator* dialog = new US_Investigator( true, invID );
 
    connect( dialog,
-      SIGNAL( investigator_accepted( int ) ),
-      SLOT(   update_person(         int ) ) );
+      &US_Investigator::investigator_accepted,
+      this, &US_ModelLoader::update_person );
 
    dialog->exec();
 }
@@ -540,7 +535,7 @@ QDateTime time2=QDateTime::currentDateTime();
    QString mdesc;
    QString lmdesc;
    QString mfilt = le_mfilter->text();
-   le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
+   QObject::disconnect( le_mfilter, &QLineEdit::textChanged, nullptr, nullptr );
    bool listdesc = !mfilt.isEmpty();         // description filtered?
    bool listedit = do_edit || do_run;        // edit filtered?
    bool listsing = do_single;                // show singles of MC groups?
@@ -970,7 +965,7 @@ qDebug() << " (4)m_d size" << model_descriptions.size();
       select_edlast();
    }
 
-   lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   QObject::disconnect( lw_models, &QListWidget::currentRowChanged, nullptr, nullptr );
    lw_models->clear();
    int maxlch   = 0;
    QString strmx;
@@ -1032,8 +1027,8 @@ qDebug() << "LM:  sized:" << size();
    //adjustSize();
 #endif
 
-   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
-            this,          SLOT(   msearch(     const QString& ) ) );
+   connect( le_mfilter,    &QLineEdit::textChanged,
+            this,          &US_ModelLoader::msearch );
 }
 
 
@@ -1048,7 +1043,7 @@ QDateTime time2=QDateTime::currentDateTime();
    QString mdesc;
    QString lmdesc;
    QString mfilt = le_mfilter->text();
-   le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
+   QObject::disconnect( le_mfilter, &QLineEdit::textChanged, nullptr, nullptr );
    bool listdesc = !mfilt.isEmpty();         // description filtered?
    bool listedit = do_edit || do_run;        // edit filtered?
    bool listsing = do_single;                // show singles of MC groups?
@@ -1327,7 +1322,7 @@ qDebug() << " (4)m_d size" << model_descriptions.size();
       select_edlast();
    }
 
-   lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   QObject::disconnect( lw_models, &QListWidget::currentRowChanged, nullptr, nullptr );
    lw_models->clear();
    int maxlch   = 0;
    QString strmx;
@@ -1362,8 +1357,8 @@ qDebug() << "Timing: Time6" << time0.msecsTo(time6) << time2.msecsTo(time6);
    singprev   = listsing;    // save list-singles flag
 
 
-   connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
-            this,          SLOT(   msearch(     const QString& ) ) );
+   connect( le_mfilter,    &QLineEdit::textChanged,
+            this,          &US_ModelLoader::msearch );
 }
 
 
@@ -1563,6 +1558,126 @@ qDebug() << "Timing: accept-load: mcount" << modelsCount
    dsearch    = dsearch.simplified();
 
    accept();        // signal that selection was accepted
+   close();
+}
+
+// Accept button:  set up to return model information: mod. copy for GMP:VEl-MWL
+void US_ModelLoader::accepted_multiple_auto( QStringList m_t_r_id )
+{
+   QList<ModelDesc>        allmods = model_descriptions;
+   // QList< QListWidgetItem* > selmods = lw_models->selectedItems();
+   QList<QListWidgetItem*> selmods;
+
+   QString                 model_passed   = m_t_r_id[0];
+   QString                 triple_passed  = m_t_r_id[1];
+   QString                 runid_passed   = m_t_r_id[2];
+   QString                 modelid_passed = m_t_r_id[3];
+
+   triple_passed.remove( "." );
+
+   qDebug() << "In accepted_auto() 1: passed vals -- " << model_passed << triple_passed << runid_passed << modelid_passed;
+
+   // check for precise name overlapp: must contain model, tripe, run:
+   for ( int i = 0; i < lw_models->count(); ++i )
+   {
+      QListWidgetItem* item       = lw_models->item( i );
+      QString          model_text = item->text();
+
+      QString          triple_from_mtext = item->text().split( "." )[1];
+
+      // get original description of the model
+      QString          mdesc   = alt_description( model_text, false );
+      int              mdx     = modelIndex( mdesc, allmods );
+      QString          modelID = allmods.at( mdx ).DB_id;
+
+      qDebug() << "mdesc, mdx, modelID, triple_from_mtext -- " << mdesc << mdx << modelID << triple_from_mtext;
+
+      if ( model_text.contains( model_passed ) && triple_from_mtext.contains( triple_passed ) &&
+           model_text.contains( runid_passed ) )
+      {
+         selmods << item;
+         qDebug() << "In accepted_auto(): model_passed, triple_passed, "
+                     "runid_passed, model_text, modelID -- "
+                  << model_passed << triple_passed << runid_passed << model_text << modelID;
+      }
+   }
+
+   modelsCount = selmods.size();
+
+   if ( modelsCount > 0 )
+   { // loop through selections
+      model_descriptions.clear();
+
+      for ( int ii = 0; ii < modelsCount; ii++ )
+      { // get row of selection then index in original descriptions
+         // list
+         QString lmdesc = selmods[ii]->text();
+         QString mdesc  = alt_description( lmdesc, false );
+         int     mdx    = modelIndex( mdesc, allmods );
+
+         // repopulate descriptions with only selected row(s)
+         model_descriptions.append( allmods.at( mdx ) );
+      }
+   }
+
+   else
+   {
+      QMessageBox::information( this, tr( "No Model Selected" ), tr( "You have not selected a model.\nSelect+Accept or Cancel" ) );
+      return;
+   }
+
+   qDebug() << "ACC: multi" << multi;
+   if ( !multi )
+   { // in single-select mode, load the model and set the description
+      qDebug() << "ACC: load... (single)";
+      load_model( omodel, 0 );
+      qDebug() << "ACC: ...loaded (single)";
+      odescr = description( 0 );
+      qDebug() << "ACC: odescr" << odescr;
+   }
+
+   else
+   { // in multiple-select mode, load all models and descriptions
+      omodels.clear();
+      odescrs.clear();
+
+      QDateTime time1 = QDateTime::currentDateTime();
+      qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
+      for ( int ii = 0; ii < modelsCount; ii++ )
+      {
+         load_model( model, ii );
+
+         omodels << model;
+         odescrs << description( ii );
+      }
+      qDebug() << "ACC: ...loaded (multi)";
+      QDateTime time2 = QDateTime::currentDateTime();
+      qDebug() << "Timing: accept-load: mcount" << modelsCount << "time(ms)" << time1.msecsTo( time2 );
+   }
+
+   // Return search string that reflects current state
+   dsearch = le_mfilter->text();
+
+   if ( do_edit )
+   {
+      dsearch = "=e " + dsearch;
+   }
+   if ( do_single )
+   {
+      dsearch = "=s " + dsearch;
+   }
+   if ( do_unasgn )
+   {
+      dsearch = "=u " + dsearch;
+   }
+   if ( do_manual )
+   {
+      dsearch = "=m " + dsearch;
+   }
+
+   dsearch = dsearch.simplified();
+
+   accept(); // signal that selection was accepted
    close();
 }
 

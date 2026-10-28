@@ -952,6 +952,14 @@ void US_Hydrodyn::fractal_dimension( bool from_parameters, save_info * fd_save_i
                         }
                         QString hybrid_name = residue_atom_hybrid_map[mapkey];
                         QString this_atom_name = hybrid_name == "ABB" ? "ABB" : this_atom->name;
+                        // derive an entry for an unseen atom name rather than dropping the atom
+                        {
+                           QString how;
+                           if ( ensure_atom_entry( atom_map, this_atom_name, hybrid_name, &how )
+                                && !how.isEmpty() ) {
+                              editor_msg( "dark blue", QString( us_tr( "Note: %1\n" ) ).arg( how ) );
+                           }
+                        }
                         if ( !atom_map.count( this_atom_name + "~" + hybrid_name ) ) {
                            editor_msg( "red", QString( us_tr( "Error: Missing hybrid name for key %1" ) ).arg( mapkey ) );
                            return;

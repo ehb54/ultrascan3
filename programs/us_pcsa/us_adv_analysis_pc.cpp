@@ -231,8 +231,8 @@ DbgLv(1) << "AA: nmrecs" << nmrecs << "ncsols" << ncsols;
 
    // Define connections
 DbgLv(1) << "AA: connect buttons";
-   connect( cb_curvtype, SIGNAL( currentIndexChanged( int ) ),
-            this,        SLOT(   curvtypeChanged    ( int ) ) );
+   connect( cb_curvtype, qOverload< int >( &QComboBox::currentIndexChanged ),
+            this,        &US_AdvAnalysisPc::curvtypeChanged );
 
 #if 0
    connect( le_x_lower,  SIGNAL( textChanged( const QString& ) ),
@@ -250,32 +250,32 @@ DbgLv(1) << "AA: connect buttons";
    connect( le_crpoints, SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   pointsChanged( double ) ) );
 #endif
-   connect( le_mciters,  SIGNAL( textChanged( const QString& ) ),
-            this,        SLOT(   mciterChanged( double ) ) );
+   connect( le_mciters, &QLineEdit::textChanged,
+         this, [this]( const QString& s ) { mciterChanged( s.toInt() ); } );
 
-   connect( pb_loadmrs,  SIGNAL( clicked()          ),
-            this,        SLOT(   load_mrecs()       ) );
-   connect( pb_storemrs, SIGNAL( clicked()          ),
-            this,        SLOT(   store_mrecs()      ) );
-   connect( pb_loadbfm,  SIGNAL( clicked()          ),
-            this,        SLOT(   load_bfm()         ) );
-   connect( pb_storebfm, SIGNAL( clicked()          ),
-            this,        SLOT(   store_bfm()        ) );
-   connect( pb_resetbfm, SIGNAL( clicked()          ),
-            this,        SLOT(   reset_bfm()        ) );
-   connect( pb_resetmrs, SIGNAL( clicked()          ),
-            this,        SLOT(   reset_mrecs()      ) );
-   connect( pb_buildbfm, SIGNAL( clicked()          ),
-            this,        SLOT(   build_bfm()        ) );
-   connect( pb_mciters,  SIGNAL( clicked()          ),
-            this,        SLOT(   start_montecarlo() ) );
+   connect( pb_loadmrs,  &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::load_mrecs );
+   connect( pb_storemrs, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::store_mrecs );
+   connect( pb_loadbfm,  &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::load_bfm );
+   connect( pb_storebfm, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::store_bfm );
+   connect( pb_resetbfm, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::reset_bfm );
+   connect( pb_resetmrs, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::reset_mrecs );
+   connect( pb_buildbfm, &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::build_bfm );
+   connect( pb_mciters,  &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::start_montecarlo );
 
-   connect( pb_help,     SIGNAL( clicked() ),
-            this,        SLOT(   help()    ) );
-   connect( pb_cancel,   SIGNAL( clicked() ),
-            this,        SLOT(   cancel()  ) );
-   connect( pb_accept,   SIGNAL( clicked() ),
-            this,        SLOT(   select()  ) );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::help );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::cancel );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_AdvAnalysisPc::select );
 
    curvtypeChanged( 1 );
    resize( 780, 400 );
@@ -411,7 +411,7 @@ DbgLv(1) << "pointsChanged" << value;
 #endif
 
 // Slot to handle a change in monte carlo iterations
-void US_AdvAnalysisPc::mciterChanged( double value )
+void US_AdvAnalysisPc::mciterChanged( int value )
 {
 DbgLv(1) << "mciterChanged" << value;
    mciters           = (int)value;
@@ -1048,6 +1048,9 @@ DbgLv(1) << " MC reset curves:   dyl dyh sdyl sdyh"
    b_progress->reset();
    b_progress->setMaximum( mciters );
 
+   // Every iteration simulates the same solutes:  cache the simulations
+   mccache.reset( US_SimCache::create_default() );
+
    if ( nthr == 1 )
    {  // Monte Carlo with single thread
       for ( int iter = 0; iter < mciters; iter++ )
@@ -1058,6 +1061,7 @@ DbgLv(1) << " MC reset curves:   dyl dyh sdyl sdyh"
          dsets[ 0 ]->run_data      = wdata;
 
          US_SolveSim* solvesim     = new US_SolveSim( dsets, 0, false );
+         solvesim->set_sim_cache( mccache.get() );
 
          solvesim->calc_residuals( 0, 1, sim_vals );
 
@@ -1113,6 +1117,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       ksiters++;
 
       US_SolveSim* solvesim     = new US_SolveSim( dsets, 0, false );
+      solvesim->set_sim_cache( mccache.get() );
 
       solvesim->calc_residuals( 0, 1, sim_vals );
 
@@ -1142,6 +1147,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       wtbase.noisf     = 0;
       wtbase.dsets     = dsets;
       wtbase.depth     = 0;
+      wtbase.simcache              = mccache;
       US_SolveSim::DataSet wkdset  = *(dsets[ 0 ]);
       wkdsets.clear();
 
@@ -1169,8 +1175,8 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
          wtask.dsets[ 0 ]->run_data = wdata;
 
          WorkerThreadPc* wthrd  = new WorkerThreadPc( this );
-         connect( wthrd, SIGNAL( work_complete( WorkerThreadPc* ) ),
-                  this,  SLOT  ( process_job  ( WorkerThreadPc* ) ) );
+         connect( wthrd, &WorkerThreadPc::work_complete,
+                  this,  &US_AdvAnalysisPc::process_job );
 
          wthrd->define_work( wtask );
 
@@ -1303,8 +1309,8 @@ DbgLv(1) << "    ksiters" << ksiters << "     wt tskx,thrn"
       delete wthr;
 
       WorkerThreadPc* wthrd  = new WorkerThreadPc( this );
-      connect( wthrd, SIGNAL( work_complete( WorkerThreadPc* ) ),
-               this,  SLOT  ( process_job  ( WorkerThreadPc* ) ) );
+      connect( wthrd, &WorkerThreadPc::work_complete,
+               this,  &US_AdvAnalysisPc::process_job );
 
       wthrd->define_work( wtask );
       wthrd->start();
@@ -1316,6 +1322,12 @@ DbgLv(1) << "    ksiters" << ksiters << "      dsets[0]" << wtask.dsets[0];
 void US_AdvAnalysisPc::montecarlo_done( void )
 {
 DbgLv(1) << "==montecarlo_done()==";
+if ( mccache )
+{ // Free the simulation cache
+   DbgLv( 1 ) << "MC:" << mccache->stats_text();
+   mccache.reset();
+}
+
    stat_bfm( tr( "Building MC models and final composite..." ), true );
 #if 0
    int     nccsol   = 0;

@@ -285,120 +285,120 @@ US_DDistr_Combine::US_DDistr_Combine( const QString auto_mode ) : US_Widgets()
    lfullLayout->addWidget( spl1       );
    lfullLayout->addWidget( te_status  );
 
-   connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
-            this,    SLOT( update_disk_db( bool ) ) );
+   connect( dkdb_cntrls, &US_Disk_DB_Controls::changed,
+            this,    &US_DDistr_Combine::update_disk_db );
 
-   connect( pb_loadda, SIGNAL( clicked()    ),
-            this,      SLOT(   load()       ) );
-   connect( pb_saveda, SIGNAL( clicked()    ),
-            this,      SLOT(   save()       ) );
-   connect( pb_resetd, SIGNAL( clicked()    ),
-            this,      SLOT(   reset_data() ) );
-   connect( pb_resetp, SIGNAL( clicked()    ),
-            this,      SLOT(   reset_plot() ) );
-   connect( pb_help,   SIGNAL( clicked()    ),
-            this,      SLOT(   help()       ) );
-   connect( pb_close,  SIGNAL( clicked()    ),
-            this,      SLOT(   close()      ) );
+   connect( pb_loadda, &QAbstractButton::clicked,
+            this,      &US_DDistr_Combine::load );
+   connect( pb_saveda, &QAbstractButton::clicked,
+            this,      &US_DDistr_Combine::save );
+   connect( pb_resetd, &QAbstractButton::clicked,
+            this,      &US_DDistr_Combine::reset_data );
+   connect( pb_resetp, &QAbstractButton::clicked,
+            this,      &US_DDistr_Combine::reset_plot );
+   connect( pb_help,   &QAbstractButton::clicked,
+            this,      &US_DDistr_Combine::help );
+   connect( pb_close,  &QAbstractButton::clicked,
+            this,      &QWidget::close );
 
-   connect( ck_2dsa,     SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsait,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsamc,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsamw,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsamcmw, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsagl,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsaglmc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsacg,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsacgit, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsacgfm, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsacgmc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_2dsafm,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_ga,       SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_gamc,     SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_gamw,     SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_gamcmw,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_gagl,     SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_gaglmc,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsais,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsasl,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsads,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsahl,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsaismc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsaslmc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsadsmc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsahlmc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsaistr, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsasltr, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsadstr, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsahltr, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsa2o,   SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsa2omc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsa2otr, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_dtall,    SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   allMethodChanged( int ) ) );
+   connect( ck_2dsa,     US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsait,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsamc,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsamw,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsamcmw, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsagl,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsaglmc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsacg,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsacgit, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsacgfm, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsacgmc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_2dsafm,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_ga,       US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_gamc,     US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_gamw,     US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_gamcmw,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_gagl,     US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_gaglmc,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsais,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsasl,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsads,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsahl,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsaismc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsaslmc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsadsmc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsahlmc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsaistr, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsasltr, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsadstr, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsahltr, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsa2o,   US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsa2omc, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_pcsa2otr, US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::methodChanged );
+   connect( ck_dtall,    US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::allMethodChanged );
 
-   connect( rb_pltsw,    SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
-   connect( rb_pltMW,    SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
-   connect( rb_pltDw,    SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
-   connect( rb_pltff0,   SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
-   connect( rb_pltvb,    SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
-   connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
-   connect( rb_pltRh,    SIGNAL( toggled     ( bool ) ),
-            this,        SLOT(   changedPlotX( bool ) ) );
+   connect( rb_pltsw,    &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
+   connect( rb_pltMW,    &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
+   connect( rb_pltDw,    &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
+   connect( rb_pltff0,   &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
+   connect( rb_pltvb,    &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
+   connect( rb_pltMWl,   &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
+   connect( rb_pltRh,    &QAbstractButton::toggled,
+            this,        &US_DDistr_Combine::changedPlotX );
 
-   connect( ct_sigma,    SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   envvalChange(        ) ) );
-   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-            this,        SLOT(   envvalChange(    ) ) );
-   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-            this,        SLOT(   envvalChange(    ) ) );
+   connect( ct_sigma,    &QwtCounter::valueChanged,
+            this,        &US_DDistr_Combine::envvalChange );
+   connect( le_plxmin,   &QLineEdit::editingFinished,
+            this,        &US_DDistr_Combine::envvalChange );
+   connect( le_plxmax,   &QLineEdit::editingFinished,
+            this,        &US_DDistr_Combine::envvalChange );
 
-   connect( ck_mdltype,  SIGNAL( stateChanged( int  ) ),
-            this,        SLOT(   ltypeChanged(      )  ) );
+   connect( ck_mdltype,  US_CB_STATE_CHANGED,
+            this,        &US_DDistr_Combine::ltypeChanged );
 
-   connect( lw_runids,   SIGNAL( currentRowChanged( int ) ),
-            this,        SLOT(   runid_select(      int ) ) );
-   connect( lw_models,   SIGNAL( currentRowChanged( int ) ),
-            this,        SLOT(   model_select(      int ) ) );
+   connect( lw_runids,   &QListWidget::currentRowChanged,
+            this,        &US_DDistr_Combine::runid_select );
+   connect( lw_models,   &QListWidget::currentRowChanged,
+            this,        &US_DDistr_Combine::model_select );
 
    QBoxLayout* plot = new US_Plot( data_plot1,
          tr( "Discrete s20,W Distributions" ),
@@ -586,8 +586,8 @@ void US_DDistr_Combine::load( void )
 
    // Open a dialog and get the runID(s)
    US_SelectRunDD srdiag( dkdb_cntrls->db(), runids, aDescrs );
-   connect( &srdiag,      SIGNAL( changed( bool ) ),
-            this,    SLOT( update_disk_db( bool ) ) );
+   connect( &srdiag,      &US_SelectRunDD::changed,
+            this,    &US_DDistr_Combine::update_disk_db );
    srdiag.exec();
 
 
@@ -944,10 +944,10 @@ void US_DDistr_Combine::reset_plot( void )
    QString smax = "0";
    le_plxmin->setText( smin );
    le_plxmax->setText( smax );
-   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-      this, SLOT( envvalChange() ) );
-   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-      this, SLOT( envvalChange() ) );
+   connect( le_plxmin,   &QLineEdit::editingFinished,
+      this, &US_DDistr_Combine::envvalChange );
+   connect( le_plxmax,   &QLineEdit::editingFinished,
+      this, &US_DDistr_Combine::envvalChange );
 
 }
 
@@ -1112,10 +1112,10 @@ DbgLv(1) << "pDa:  titleX" << titleX;
    le_plxmax->disconnect();
    le_plxmin->setText( QString::number( plxmin ) );
    le_plxmax->setText( QString::number( plxmax ) );
-   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-      this, SLOT(envvalChange( ) ) );
-   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-      this, SLOT(envvalChange( ) ) );
+   connect( le_plxmin,   &QLineEdit::editingFinished,
+      this, &US_DDistr_Combine::envvalChange );
+   connect( le_plxmax,   &QLineEdit::editingFinished,
+      this, &US_DDistr_Combine::envvalChange );
 }
 
 // Add a single distribution to the plot
@@ -1177,10 +1177,10 @@ void US_DDistr_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    le_plxmax->disconnect();
    le_plxmin->setText(str.setNum(minx));
    le_plxmax->setText(str.setNum(maxx));
-   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-      this, SLOT(envvalChange() ) );
-   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-      this, SLOT(envvalChange() ) );
+   connect( le_plxmin,   &QLineEdit::editingFinished,
+      this, &US_DDistr_Combine::envvalChange );
+   connect( le_plxmax,   &QLineEdit::editingFinished,
+      this, &US_DDistr_Combine::envvalChange );
    data_plot1->setAxisScale( QwtPlot::xBottom, minx, maxx );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
@@ -2640,10 +2640,10 @@ DbgLv(1) << "  PX=Rh";
       le_plxmax->disconnect();
       le_plxmin->setText( "0" );
       le_plxmax->setText( "0" );
-      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-               this,        SLOT(   envvalChange(    ) ) );
-      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-               this,        SLOT(   envvalChange(    ) ) );
+      connect( le_plxmin,   &QLineEdit::editingFinished,
+               this,        &US_DDistr_Combine::envvalChange );
+      connect( le_plxmax,   &QLineEdit::editingFinished,
+               this,        &US_DDistr_Combine::envvalChange );
 
       plot_data();
    }
@@ -2696,10 +2696,10 @@ QMap< QStringList, QList< QColor> > US_DDistr_Combine::changedPlotX_auto( int ty
       le_plxmax->disconnect();
       le_plxmin->setText( "0" );
       le_plxmax->setText( "0" );
-      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-               this,        SLOT(   envvalChange(    ) ) );
-      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-               this,        SLOT(   envvalChange(    ) ) );
+      connect( le_plxmin,   &QLineEdit::editingFinished,
+               this,        &US_DDistr_Combine::envvalChange );
+      connect( le_plxmax,   &QLineEdit::editingFinished,
+               this,        &US_DDistr_Combine::envvalChange );
 
       plot_data_auto( c_parms );
    }
@@ -2971,9 +2971,9 @@ void US_DDistr_Combine::envvalChange( )
    le_plxmax->disconnect();
    le_plxmin->setText( pmintxt );
    le_plxmax->setText( pmaxtxt );
-   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-            this,        SLOT(   envvalChange(    ) ) );
-   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-            this,        SLOT(   envvalChange(    ) ) );
+   connect( le_plxmin,   &QLineEdit::editingFinished,
+            this,        &US_DDistr_Combine::envvalChange );
+   connect( le_plxmax,   &QLineEdit::editingFinished,
+            this,        &US_DDistr_Combine::envvalChange );
 }
 

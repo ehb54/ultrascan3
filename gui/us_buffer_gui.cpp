@@ -34,6 +34,18 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    pb_info     = us_pushbutton( tr( "Buffer Details" ) );
    pb_help     = us_pushbutton( tr( "Help" ) );
 
+   buffer_state_style = tr( "color: %1; background-color: white;" ) +
+                        tr( "font-family: '%1';" ).arg( US_GuiSettings::fontFamily() ) +
+                        tr( "font-size: %1pt; font-weight: bold;" ).arg( US_GuiSettings::fontSize() );
+
+   lb_buffer_state  = new QLabel( this );
+   lb_buffer_state->setText("");
+   lb_buffer_state->setFixedHeight( 30 );
+   lb_buffer_state->setStyleSheet( buffer_state_style.arg( "green" ) );
+   lb_buffer_state->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+   lb_buffer_state->setAlignment ( Qt::AlignCenter );
+   lb_buffer_state->setAutoFillBackground( true );
+
    QLabel* bn_select     = us_banner( tr( "Select a buffer to use" ) );
    QLabel* lb_search     = us_label( tr( "Search:" ) );
    lb_density            = us_label( tr( "Density (20" ) + DEGC
@@ -44,13 +56,25 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    QLabel* lb_compressib = us_label( tr( "Compressibility:" ) );
 
    le_search             = us_lineedit();
+   le_search->setAccessibleName( tr( "Search" ) );
+   lb_search->setBuddy( le_search );
    le_density            = us_lineedit();
+   le_density->setAccessibleName( tr( "Density" ) );
+   lb_density->setBuddy( le_density );
    le_ph                 = us_lineedit( "7.0000" );
+   le_ph->setAccessibleName( tr( "pH" ) );
+   lb_ph->setBuddy( le_ph );
    le_viscosity          = us_lineedit();
+   le_viscosity->setAccessibleName( tr( "Viscosity" ) );
+   lb_viscosity->setBuddy( le_viscosity );
    le_compressib         = us_lineedit();
+   le_compressib->setAccessibleName( tr( "Compressibility" ) );
+   lb_compressib->setBuddy( le_compressib );
 
    lw_buffer_list        = us_listwidget();
+   lw_buffer_list->setAccessibleName( tr( "Buffers" ) );
    lw_buffer_comps       = us_listwidget();
+   lw_buffer_comps->setAccessibleName( tr( "Buffer Components" ) );
 
    QLabel* lb_temperature = us_label( tr( "Temperature:" ) );
    lb_temperature->setAlignment(Qt::AlignLeft);
@@ -75,18 +99,18 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    us_setReadOnly( le_compressib,  true );
    lw_buffer_comps->setSelectionMode( QAbstractItemView::NoSelection );
 
-
    int row = 0;
    main->addWidget( bn_select,       row++, 0, 1, 5 );
    main->addWidget( lb_search,       row,   0, 1, 1 );
    main->addWidget( le_search,       row,   1, 1, 2 );
    main->addWidget( pb_cancel,       row,   3, 1, 1 );
    main->addWidget( pb_accept,       row++, 4, 1, 1 );
-   main->addWidget( lw_buffer_list,  row,   0, 6, 3 );
+   main->addWidget( lw_buffer_list,  row,   0, 7, 3 );
    main->addWidget( pb_spectrum,     row,   3, 1, 1 );
    main->addWidget( pb_delete,       row++, 4, 1, 1 );
    main->addWidget( pb_info,         row,   3, 1, 1 );
    main->addWidget( pb_help,         row++, 4, 1, 1 );
+   main->addWidget( lb_buffer_state, row++, 3, 1, 2 );
    main->addWidget( lw_buffer_comps, row,   3, 4, 2 );
    row += 5;
    main->addLayout( lo_temp,         row++, 0, 1, 5 );
@@ -99,26 +123,26 @@ US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
    main->addWidget( lb_compressib,   row,   3, 1, 1);
    main->addWidget( le_compressib,   row,   4, 1, 1);
 
-   connect( le_search,      SIGNAL( textChanged( const QString& ) ),
-            this,           SLOT  ( search     ( const QString& ) ) );
-   connect( pb_cancel,      SIGNAL( clicked() ),
-            this,           SLOT  ( reject()  ) );
-   connect( pb_accept,      SIGNAL( clicked()       ),
-            this,           SLOT  ( accept_buffer() ) );
-   connect( pb_info,        SIGNAL( clicked()       ),
-            this,           SLOT  ( info_buffer()   ) );
-   connect( pb_help,        SIGNAL( clicked() ),
-            this,           SLOT  ( help()    ) );
-   connect( lw_buffer_list, SIGNAL( itemSelectionChanged() ),
-            this,           SLOT  ( select_buffer()        ) );
-   connect( pb_spectrum,    SIGNAL( clicked()  ),
-            this,           SLOT  ( spectrum() ) );
-   connect( pb_delete,      SIGNAL( clicked()       ),
-            this,           SLOT  ( delete_buffer() ) );
-   connect( pb_temp20C,     SIGNAL( clicked() ),
-            this,           SLOT( set_temp20() ) );
-   connect( sl_temp,        SIGNAL( valueChanged( int ) ),
-            this,           SLOT( calc_visc_dent_temp() ) );
+   connect( le_search,      &QLineEdit::textChanged,
+            this,           &US_BufferGuiSelect::search );
+   connect( pb_cancel,      &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::reject );
+   connect( pb_accept,      &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::accept_buffer );
+   connect( pb_info,        &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::info_buffer );
+   connect( pb_help,        &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::help );
+   connect( lw_buffer_list, &QListWidget::itemSelectionChanged,
+            this,           qOverload<>( &US_BufferGuiSelect::select_buffer ) );
+   connect( pb_spectrum,    &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::spectrum );
+   connect( pb_delete,      &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::delete_buffer );
+   connect( pb_temp20C,     &QAbstractButton::clicked,
+            this,           &US_BufferGuiSelect::set_temp20 );
+   connect( sl_temp,        &QAbstractSlider::valueChanged,
+            this,           &US_BufferGuiSelect::calc_visc_dent_temp );
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -188,6 +212,16 @@ DbgLv(1) << "BufS:  selbuf: ROW" << lw_buffer_list->currentRow();
    le_viscosity ->setText( QString::number( buffer->viscosity,  'f', 5 ) );
    le_ph        ->setText( QString::number( buffer->pH,         'f', 4 ) );
    le_compressib->setText( QString::number( buffer->compressibility, 'e', 4 ) );
+
+   if ( buffer->manual )
+   {
+      lb_buffer_state->setText( "Manual Buffer" );
+      lb_buffer_state->setStyleSheet( buffer_state_style.arg( "red" ) );
+   } else
+   {
+      lb_buffer_state->setText( "Automatic Temperature Correction" );
+      lb_buffer_state->setStyleSheet( buffer_state_style.arg( "green" ) );
+   }
 
    lw_buffer_comps->clear();
 
@@ -869,6 +903,7 @@ void US_BufferGuiSelect::reset()
 {
    lw_buffer_comps->clear();
    lw_buffer_list ->setCurrentRow( -1 );
+   lb_buffer_state      ->clear();
    le_density     ->setText( "" );
    le_viscosity   ->setText( "" );
    le_ph          ->setText( "" );
@@ -888,11 +923,9 @@ void US_BufferGuiSelect::calc_visc_dent_temp()
    qApp->processEvents();
    if (le_density->text().isEmpty()) return;
    if (le_viscosity->text().isEmpty()) return;
-   double density_tb, viscosity_tb;
-   if (temp == 20) {
-      density_tb = buffer->density;
-      viscosity_tb = buffer->viscosity;
-   } else {
+   double density_tb = buffer->density;
+   double viscosity_tb = buffer->viscosity;
+   if (temp != 20 && !buffer->manual) {
       US_Math2::SolutionData sol;
       sol.manual = false;
       sol.viscosity = buffer->viscosity;
@@ -965,14 +998,27 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    lo_temp->addWidget(pb_temp20C);
 
    le_descrip          = us_lineedit( "" );
+   le_descrip->setAccessibleName( tr( "Description" ) );
+   lb_descrip->setBuddy( le_descrip );
    le_concen           = us_lineedit( "" );
+   le_concen->setAccessibleName( tr( "Component Concentration" ) );
    le_density          = us_lineedit( "" );
+   le_density->setAccessibleName( tr( "Density" ) );
+   lb_density->setBuddy( le_density );
    le_viscos           = us_lineedit( "" );
+   le_viscos->setAccessibleName( tr( "Viscosity" ) );
+   lb_viscos->setBuddy( le_viscos );
    le_ph               = us_lineedit( "7.0000" );
+   le_ph->setAccessibleName( tr( "pH" ) );
+   lb_ph->setBuddy( le_ph );
    le_compress         = us_lineedit( "0.0000e+0" );
+   le_compress->setAccessibleName( tr( "Compressibility" ) );
+   lb_compress->setBuddy( le_compress );
 
    lw_allcomps         = us_listwidget();
+   lw_allcomps->setAccessibleName( tr( "Available Components" ) );
    lw_bufcomps         = us_listwidget();
+   lw_bufcomps->setAccessibleName( tr( "Buffer Components" ) );
 
 
    QPalette upal       = lb_bselect->palette();
@@ -1007,7 +1053,7 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    if ( false && US_Settings::us_inv_level()>1){ // "create new" disabled - see issue #275
          main->addWidget(bn_allcomps, row, 0, 1, 3);
          main->addWidget(pb_new_bcomp,row, 3,1,1);
-         connect(pb_new_bcomp, SIGNAL(clicked()), this, SLOT(create_new_buffer_component()));
+         connect(pb_new_bcomp, &QAbstractButton::clicked, this, &US_BufferGuiNew::create_new_buffer_component);
    }
    else{
          main->addWidget(bn_allcomps, row, 0, 1, 4);
@@ -1032,42 +1078,42 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
    std::sort( keys.begin(), keys.end() );
 
 
-   connect( le_descrip,  SIGNAL( editingFinished() ),
-            this,        SLOT  ( new_description() ) );
-   connect( le_concen,   SIGNAL( editingFinished() ),
-            this,        SLOT  ( add_component()   ) );
-   connect( lw_allcomps, SIGNAL( itemSelectionChanged() ),
-            this,        SLOT  ( select_bcomp()         ) );
-   connect( lw_allcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-           this,        SLOT  ( select_water( QListWidgetItem* ) ) );
-   connect( lw_bufcomps, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-            this,        SLOT  ( remove_bcomp(      QListWidgetItem* ) ) );
-   connect( le_density,  SIGNAL( editingFinished()   ), 
-            this,        SLOT  ( density()           ) );
-   connect( le_viscos,   SIGNAL( editingFinished()   ), 
-            this,        SLOT  ( viscosity()         ) );
-   connect( le_ph,       SIGNAL( editingFinished()   ), 
-            this,        SLOT  ( ph()                ) );
-   connect( le_compress, SIGNAL( editingFinished()   ), 
-            this,        SLOT  ( compressibility()   ) );
-   connect( ck_manual,   SIGNAL( toggled    ( bool ) ),
-            this,        SLOT  ( manual_flag( bool ) ) );
+   connect( le_descrip,  &QLineEdit::editingFinished,
+            this,        &US_BufferGuiNew::new_description );
+   connect( le_concen,   &QLineEdit::editingFinished,
+            this,        &US_BufferGuiNew::add_component );
+   connect( lw_allcomps, &QListWidget::itemSelectionChanged,
+            this,        &US_BufferGuiNew::select_bcomp );
+   connect( lw_allcomps, &QListWidget::itemDoubleClicked,
+           this,        &US_BufferGuiNew::select_water );
+   connect( lw_bufcomps, &QListWidget::itemDoubleClicked,
+            this,        &US_BufferGuiNew::remove_bcomp );
+   connect( le_density,  &QLineEdit::editingFinished, 
+            this,        &US_BufferGuiNew::density );
+   connect( le_viscos,   &QLineEdit::editingFinished, 
+            this,        &US_BufferGuiNew::viscosity );
+   connect( le_ph,       &QLineEdit::editingFinished, 
+            this,        &US_BufferGuiNew::ph );
+   connect( le_compress, &QLineEdit::editingFinished, 
+            this,        &US_BufferGuiNew::compressibility );
+   connect( ck_manual,   &QAbstractButton::toggled,
+            this,        &US_BufferGuiNew::manual_flag );
    //connect( pb_spectrum, SIGNAL( clicked()   ),
    //         this,        SLOT  ( spectrum()  ) );
 
-   connect( pb_spectrum, SIGNAL( clicked()   ),
-            this,        SLOT  ( spectrum_class()  ) );
+   connect( pb_spectrum, &QAbstractButton::clicked,
+            this,        &US_BufferGuiNew::spectrum_class );
 
-   connect( pb_help,     SIGNAL( clicked()   ),
-            this,        SLOT  ( help()      ) );
-   connect( pb_cancel,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newCanceled() ) );
-   connect( pb_accept,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newAccepted() ) );
-   connect( this,        SIGNAL( use_db( bool )),
-           this,        SLOT  ( update_db_disk ( bool ) ) );
-   connect( sl_temp, SIGNAL( valueChanged( int ) ), this, SLOT( calc_visc_dent_temp() ) );
-   connect( pb_temp20C, SIGNAL( clicked() ), this, SLOT( set_temp20() ) );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_BufferGuiNew::help );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_BufferGuiNew::newCanceled );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_BufferGuiNew::newAccepted );
+   connect( this,        &US_BufferGuiNew::use_db,
+           this,        &US_BufferGuiNew::update_db_disk );
+   connect( sl_temp, &QAbstractSlider::valueChanged, this, &US_BufferGuiNew::calc_visc_dent_temp );
+   connect( pb_temp20C, &QAbstractButton::clicked, this, &US_BufferGuiNew::set_temp20 );
 }
 
 // Slot when the DB-local state is changed from US_BufferGuiSetting
@@ -1747,7 +1793,9 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    QLabel* lb_ph            = us_label( tr( "pH:" ) );
    //QLabel* bn_spacer        = us_banner( "" );
    le_descrip    = us_lineedit( buffer->description );
+   le_descrip->setAccessibleName( tr( "Description" ) );
    le_ph         = us_lineedit( QString::number( buffer->pH, 'f', 4 ) );
+   le_ph->setAccessibleName( tr( "pH" ) );
 
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
@@ -1770,20 +1818,20 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    main->addWidget( empty,           row,   0, 6, 8 );
 
    
-   connect( le_descrip,   SIGNAL( editingFinished() ), 
-	     this,        SLOT  ( description    () ) );
-   connect( le_ph,       SIGNAL( editingFinished() ), 
-            this,        SLOT  ( ph             () ) );
+   connect( le_descrip,   &QLineEdit::editingFinished, 
+	     this,        &US_BufferGuiEdit::description );
+   connect( le_ph,       &QLineEdit::editingFinished, 
+            this,        &US_BufferGuiEdit::ph );
    // connect( pb_spectrum, SIGNAL( clicked()  ),
    //          this,        SLOT  ( spectrum() ) );
-   connect( pb_spectrum, SIGNAL( clicked()  ),
-            this,        SLOT  ( spectrum_class() ) );
-   connect( pb_help,     SIGNAL( clicked()  ),
-            this,        SLOT  ( help()     ) );
-   connect( pb_cancel,   SIGNAL( clicked()      ),
-            this,        SLOT  ( editCanceled() ) );
-   connect( pb_accept,   SIGNAL( clicked()      ),
-            this,        SLOT  ( editAccepted() ) );
+   connect( pb_spectrum, &QAbstractButton::clicked,
+            this,        &US_BufferGuiEdit::spectrum_class );
+   connect( pb_help,     &QAbstractButton::clicked,
+            this,        &US_BufferGuiEdit::help );
+   connect( pb_cancel,   &QAbstractButton::clicked,
+            this,        &US_BufferGuiEdit::editCanceled );
+   connect( pb_accept,   &QAbstractButton::clicked,
+            this,        &US_BufferGuiEdit::editAccepted );
 }
 
 // Initialize buffer settings, possibly after re-entry to Edit panel
@@ -1833,10 +1881,10 @@ void US_BufferGuiEdit::spectrum_class( void )
   
   US_EditSpectrum *w = new US_EditSpectrum("BUFFER", ifexists, le_descrip->text(), "1.000", buffer);
   
-  connect( w,     SIGNAL( change_spectrum( void ) ),
-	   this,  SLOT ( change_spectrum( void ) ) );
-  connect( w,     SIGNAL( accept_enable( void ) ),
-	   this,  SLOT ( accept_enable( void ) ) );
+  connect( w,     &US_EditSpectrum::change_spectrum,
+	   this,  &US_BufferGuiEdit::change_spectrum );
+  connect( w,     &US_EditSpectrum::accept_enable,
+	   this,  &US_BufferGuiEdit::accept_enable );
   
   w->setParent(this, Qt::Window);
   w->setWindowModality(Qt::WindowModal);
@@ -1946,7 +1994,9 @@ US_BufferGuiSettings::US_BufferGuiSettings( int *invID, int *select_db_disk )
       : "";
 
    le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   le_investigator->setAccessibleName( tr( "Investigator" ) );
    le_syncstat     = us_lineedit();
+   le_syncstat->setAccessibleName( tr( "Synchronization Status" ) );
    int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
                              : US_Disk_DB_Controls::Disk;
    disk_controls   = new US_Disk_DB_Controls( idb_or_disk );
@@ -1970,14 +2020,14 @@ US_BufferGuiSettings::US_BufferGuiSettings( int *invID, int *select_db_disk )
    main->addWidget( le_syncstat,     row++, 2, 1, 2 );
    main->addWidget( empty,           row,   0, 6, 4 );
 
-   connect( disk_controls,   SIGNAL( changed       ( bool ) ),
-            this,            SLOT  ( source_changed( bool ) ) );
-   connect( pb_investigator, SIGNAL( clicked() ),
-            this,            SLOT(   sel_investigator() ) );
-   connect( pb_synchdb,      SIGNAL( clicked() ),
-            this,            SLOT(   synch_components() ) );
-   connect( pb_help,         SIGNAL( clicked() ),
-            this,            SLOT  ( help()    ) );
+   connect( disk_controls,   &US_Disk_DB_Controls::changed,
+            this,            &US_BufferGuiSettings::source_changed );
+   connect( pb_investigator, &QAbstractButton::clicked,
+            this,            &US_BufferGuiSettings::sel_investigator );
+   connect( pb_synchdb,      &QAbstractButton::clicked,
+            this,            &US_BufferGuiSettings::synch_components );
+   connect( pb_help,         &QAbstractButton::clicked,
+            this,            &US_BufferGuiSettings::help );
 }
 
 // Select a new investigator
@@ -1986,8 +2036,8 @@ void US_BufferGuiSettings::sel_investigator( void )
    US_Investigator* inv_dialog = new US_Investigator( true, (*personID) );
 
    connect( inv_dialog,
-            SIGNAL( investigator_accepted( int ) ),
-            SLOT  ( assign_investigator  ( int ) ) );
+            &US_Investigator::investigator_accepted,
+            this, &US_BufferGuiSettings::assign_investigator );
 
    inv_dialog->exec();
 }
@@ -2065,24 +2115,24 @@ US_BufferGui::US_BufferGui( bool signal_wanted, const US_Buffer& buf,
 
    main->addWidget( tabWidget );
 
-   connect( tabWidget,   SIGNAL( currentChanged(       int  ) ),
-            this,        SLOT (  checkTab(             int  ) ) );
-   connect( selectTab,   SIGNAL( bufferAccepted(       void ) ),
-            this,        SLOT (  bufferAccepted(       void ) ) );
-   connect( selectTab,   SIGNAL( selectionCanceled(    void ) ),
-            this,        SLOT (  bufferRejected(       void ) ) );
-   connect( newTab,      SIGNAL( newBufAccepted(       void ) ),
-            this,        SLOT (  newBufAccepted(       void ) ) );
-   connect( newTab,      SIGNAL( newBufCanceled(       void ) ),
-            this,        SLOT (  newBufCanceled(       void ) ) );
-   connect( editTab,     SIGNAL( editBufAccepted(      void ) ),
-            this,        SLOT (  editBufAccepted(      void ) ) );
-   connect( editTab,     SIGNAL( editBufCanceled(      void ) ),
-            this,        SLOT (  editBufCanceled(      void ) ) );
-   connect( settingsTab, SIGNAL( use_db(               bool ) ),
-            this,        SLOT (  update_disk_or_db(    bool ) ) );
-   connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
-            this,        SLOT (  update_personID(      int  ) ) );
+   connect( tabWidget,   &QTabWidget::currentChanged,
+            this,        &US_BufferGui::checkTab );
+   connect( selectTab,   &US_BufferGuiSelect::bufferAccepted,
+            this,        &US_BufferGui::bufferAccepted );
+   connect( selectTab,   &US_BufferGuiSelect::selectionCanceled,
+            this,        &US_BufferGui::bufferRejected );
+   connect( newTab,      &US_BufferGuiNew::newBufAccepted,
+            this,        &US_BufferGui::newBufAccepted );
+   connect( newTab,      &US_BufferGuiNew::newBufCanceled,
+            this,        &US_BufferGui::newBufCanceled );
+   connect( editTab,     &US_BufferGuiEdit::editBufAccepted,
+            this,        &US_BufferGui::editBufAccepted );
+   connect( editTab,     &US_BufferGuiEdit::editBufCanceled,
+            this,        &US_BufferGui::editBufCanceled );
+   connect( settingsTab, &US_BufferGuiSettings::use_db,
+            this,        &US_BufferGui::update_disk_or_db );
+   connect( settingsTab, &US_BufferGuiSettings::investigator_changed,
+            this,        &US_BufferGui::update_personID );
    
 }
 
@@ -2211,21 +2261,37 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    lb_visc = us_banner("Viscosity Coefficients");
    lb_dens = us_banner("Density Coefficients");
    le_name = us_lineedit("");
+   le_name->setAccessibleName( tr( "Component Name" ) );
    le_lrange = us_lineedit("");
+   le_lrange->setAccessibleName( tr( "Range Low" ) );
    le_urange = us_lineedit("");
+   le_urange->setAccessibleName( tr( "Range High" ) );
    le_unit = us_lineedit("");
+   le_unit->setAccessibleName( tr( "Unit" ) );
    le_density0 = us_lineedit("");
+   le_density0->setAccessibleName( tr( "Density Coefficient Independent of c" ) );
    le_density1 = us_lineedit("");
+   le_density1->setAccessibleName( tr( "Density Coefficient for sqrt(c) x1E3" ) );
    le_density2 = us_lineedit("");
+   le_density2->setAccessibleName( tr( "Density Coefficient for c x1E2" ) );
    le_density3 = us_lineedit("");
+   le_density3->setAccessibleName( tr( "Density Coefficient for c^2 x1E3" ) );
    le_density4 = us_lineedit("");
+   le_density4->setAccessibleName( tr( "Density Coefficient for c^3 x1E4" ) );
    le_density5 = us_lineedit("");
+   le_density5->setAccessibleName( tr( "Density Coefficient for c^4 x1E6" ) );
    le_viscosity0 = us_lineedit("");
+   le_viscosity0->setAccessibleName( tr( "Viscosity Coefficient Independent of c" ) );
    le_viscosity1 = us_lineedit("");
+   le_viscosity1->setAccessibleName( tr( "Viscosity Coefficient for sqrt(c) x1E3" ) );
    le_viscosity2 = us_lineedit("");
+   le_viscosity2->setAccessibleName( tr( "Viscosity Coefficient for c x1E2" ) );
    le_viscosity3 = us_lineedit("");
+   le_viscosity3->setAccessibleName( tr( "Viscosity Coefficient for c^2 x1E3" ) );
    le_viscosity4 = us_lineedit("");
+   le_viscosity4->setAccessibleName( tr( "Viscosity Coefficient for c^3 x1E4" ) );
    le_viscosity5 = us_lineedit("");
+   le_viscosity5->setAccessibleName( tr( "Viscosity Coefficient for c^4 x1E6" ) );
    QLabel* lb_range3 = us_label(tr("in M"));
    lb_density0 = us_label(tr("Density coefficient independent of c"));
    lb_density1 = us_label(tr("Density coefficient for sqrt(c) *1E3"));
@@ -2239,6 +2305,8 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    lb_viscosity3 = us_label(tr("Viscosity coefficient for c<sup>2</sup> *1E3"));
    lb_viscosity4 = us_label(tr("Viscosity coefficient for c<sup>3</sup> *1E4"));
    lb_viscosity5 = us_label(tr("Viscosity coefficient for c<sup>4</sup> *1E6"));
+   lb_name->setBuddy( le_name );
+   lb_unit->setBuddy( le_unit );
    QGridLayout* gfbox   = us_checkbox( tr( "Gradient-Forming" ), ck_gf );
    int row = 0;
    main->addWidget(lb_description, row++, 0, 1, 7);
@@ -2287,25 +2355,25 @@ US_BufferComponentRequerster::US_BufferComponentRequerster(
    main->addWidget(pb_cancel, row, 0, 1, 2);
    main->addWidget(pb_accept, row, 2, 1, 2);
    pb_accept->setEnabled(false);
-   connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancelled()));
-   connect(pb_accept, SIGNAL(clicked()), this, SLOT(accept()));
-   connect(le_name, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_lrange, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_urange, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_unit, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(ck_gf, SIGNAL(toggled(bool)), this, SLOT  (gf_ck(bool)));
-   connect(le_density0, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_density1, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_density2, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_density3, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_density4, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_density5, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_viscosity0, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_viscosity1, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_viscosity2, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_viscosity3, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_viscosity4, SIGNAL(editingFinished()), this, SLOT(edit()));
-   connect(le_viscosity5, SIGNAL(editingFinished()), this, SLOT(edit()));
+   connect(pb_cancel, &QAbstractButton::clicked, this, &US_BufferComponentRequerster::cancelled);
+   connect(pb_accept, &QAbstractButton::clicked, this, &US_BufferComponentRequerster::accept);
+   connect(le_name, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_lrange, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_urange, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_unit, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(ck_gf, &QAbstractButton::toggled, this, &US_BufferComponentRequerster::gf_ck);
+   connect(le_density0, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_density1, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_density2, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_density3, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_density4, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_density5, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_viscosity0, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_viscosity1, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_viscosity2, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_viscosity3, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_viscosity4, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
+   connect(le_viscosity5, &QLineEdit::editingFinished, this, &US_BufferComponentRequerster::edit);
 }
 
 void US_BufferComponentRequerster::cancelled(void) {

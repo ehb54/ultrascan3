@@ -1,4 +1,5 @@
 /*       PROGRAM SUPC VERSION 4.0 (Updated 31 Jan 2001)       */
+#include <QRegularExpression>
 /*                            4.1 (Updated  3 Jun 2004)       */
 /*               4.2 (Updated 14 Jun 2007) introduced overlap choice in over.c */
 /*                                    introduced version # in supc.c */
@@ -11,7 +12,6 @@
 // #define DEBUG_FILES
 // #define DEBUG_EV
 #include "../include/us_math.h"
-#include <qregexp.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -870,7 +870,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     
    smi_mm      = models_to_proc > 1;
    smi_mm_name = filename;
-   smi_mm_name = smi_mm_name.replace( QRegExp( ".beams$" ), "" ).replace( "_%1", "" );
+   smi_mm_name = smi_mm_name.replace( QRegularExpression( QStringLiteral( ".beams$" ) ), "" ).replace( "_%1", "" );
    if ( smi_mm ) {
       smi_progress = us_hydrodyn->mprogress;
       smi_progress->setValue( 0 );
@@ -887,8 +887,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    supc_results->pH                = us_hydrodyn->hydro.pH;
     
    supc_results->name = use_filename;
-   supc_results->name.replace(QRegExp("\\.beams$"),"");
-   supc_results->name.replace(QRegExp("_%1"),"");
+   supc_results->name.replace(QRegularExpression( QStringLiteral( "\\.beams$" ) ),"");
+   supc_results->name.replace(QRegularExpression( QStringLiteral( "_%1" ) ),"");
    if ( lb_model->count() > 1 && model_idx.size() ) 
    {
       supc_results->name += 

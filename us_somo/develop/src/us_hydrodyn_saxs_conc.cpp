@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include <QRegularExpression>
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_conc.h"
@@ -161,21 +162,13 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    t_csv->setColumnWidth(3, 170);
    
     t_csv->horizontalHeader()->setSectionsClickable( true );
-#if QT_VERSION < 0x040000   
-   connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
-#else
    connect(t_csv->horizontalHeader(), SIGNAL(sectionClicked(int)), SLOT(sort_column(int)));
-#endif
    
    // probably I'm not understanding something, but these next two lines don't seem to do anything
    // t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
-#if QT_VERSION < 0x040000   
-   connect( t_csv->verticalHeader(), SIGNAL( released( int ) ), SLOT( row_header_released( int ) ) );
-#else
    connect( t_csv->verticalHeader(), SIGNAL( sectionClicked( int ) ), SLOT( row_header_released( int ) ) );
-#endif
    
    pb_load = new QPushButton(us_tr("Load"), this);
    pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -515,7 +508,7 @@ void US_Hydrodyn_Saxs_Conc::load()
    }
    f.close();
       
-   if ( QFileInfo( fname ).suffix().contains( QRegExp( "^(sxc|SXC)$" ) ) )
+   if ( QFileInfo( fname ).suffix().contains( QRegularExpression( QStringLiteral( "^(sxc|SXC)$" ) ) ) )
    {
       for ( unsigned int i = 0; i < (unsigned int) qsl_lines.size(); i++ ) 
       {
@@ -551,7 +544,7 @@ void US_Hydrodyn_Saxs_Conc::save()
       return;
    }
 
-   if ( !fname.contains(QRegExp(".sxc$", Qt::CaseInsensitive )) )
+   if ( !fname.contains(QRegularExpression(".sxc$", QRegularExpression::CaseInsensitiveOption )) )
    {
       fname += ".sxc";
    }

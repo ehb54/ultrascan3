@@ -62,8 +62,6 @@ struct misc_options
    bool   export_msroll;
    bool   export_ssbond;
 
-   bool   parallel_grpy;
-
    enum   CALC_HYDRO_METHOD auto_calc_hydro_method;
 };
 
@@ -140,7 +138,6 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QLabel    *lbl_other;
       QCheckBox *cb_export_msroll;
       QCheckBox *cb_export_ssbond;
-      QCheckBox *cb_parallel_grpy;
       QLabel    *lbl_vdw_ot_mult;
       QLineEdit *le_vdw_ot_mult;
       QLabel    *lbl_vdw_ot_dpct;
@@ -194,7 +191,6 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       void set_export_msroll();
       void set_export_ssbond();
-      void set_parallel_grpy();
 
       void cancel();
       void help();
