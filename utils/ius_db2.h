@@ -87,6 +87,20 @@ public:
     virtual QVariant value(unsigned index) = 0;
     virtual bool isConnected() = 0;
 
+    // Guard a possibly-null connection pointer, reporting a formatted error.
+    // Static, so it is safe to call before db is known to be non-null, and
+    // callable with any IUS_DB2* without duplicating the check per file.
+    static bool      requireConnected( IUS_DB2* db, const QString& what, QString& error )
+    {
+       if ( db != nullptr && db->isConnected() )
+       {
+          return true;
+       }
+
+       error = QString( "%1: no database connection" ).arg( what );
+       return false;
+    }
+
     // Error methods (used in tests and error handling)
     virtual QString lastError() = 0;
     virtual int lastErrno() = 0;

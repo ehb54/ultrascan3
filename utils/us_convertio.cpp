@@ -29,26 +29,9 @@ US_ConvertIO::US_ConvertIO( void )
 // told, and not where a transaction begins or ends.
 // ----------------------------------------------------------------------------
 
-namespace
-{
-// Guard shared by every operation below.  A null connection is the caller's
-// mistake, and reporting it as NOT_CONNECTED keeps it inside the status space
-// the callers already handle.
-bool haveConnection( IUS_DB2* db, const QString& what, QString& error )
-{
-   if ( db != nullptr )
-   {
-      return true;
-   }
-
-   error = QString( "%1: no database connection" ).arg( what );
-   return false;
-}
-}
-
 int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error )
 {
-   if ( !haveConnection( db, "raw data lookup", error ) )
+   if ( !IUS_DB2::requireConnected( db, "raw data lookup", error ) )
    {
       return IUS_DB2::NOT_CONNECTED;
    }
@@ -77,14 +60,23 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDa
       return IUS_DB2::NO_RAWDATA;
    }
 
-   rawDataID = db->value( 0 ).toInt();
+   const QVariant id     = db->value( 0 );
+   bool           ok     = false;
+   const int      parsed = id.toInt( &ok );
 
+   if ( !ok )
+   {
+      error = QString( "Raw data record for GUID %1 has a non-numeric id (\"%2\")" ).arg( rawGUID, id.toString() );
+      return IUS_DB2::DBERROR;
+   }
+
+   rawDataID = parsed;
    return IUS_DB2::OK;
 }
 
 int US_ConvertIO::createEditedData( IUS_DB2* db, const EditedDataRecord& record, int& editedDataID, QString& error )
 {
-   if ( !haveConnection( db, "edited data creation", error ) )
+   if ( !IUS_DB2::requireConnected( db, "edited data creation", error ) )
    {
       return IUS_DB2::NOT_CONNECTED;
    }
@@ -112,7 +104,7 @@ int US_ConvertIO::createEditedData( IUS_DB2* db, const EditedDataRecord& record,
 
 int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID, const EditedDataRecord& record, QString& error )
 {
-   if ( !haveConnection( db, "edited data update", error ) )
+   if ( !IUS_DB2::requireConnected( db, "edited data update", error ) )
    {
       return IUS_DB2::NOT_CONNECTED;
    }
@@ -139,7 +131,7 @@ int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID, const EditedD
 
 int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID, const QString& filename, QString& error )
 {
-   if ( !haveConnection( db, "edited data upload", error ) )
+   if ( !IUS_DB2::requireConnected( db, "edited data upload", error ) )
    {
       return IUS_DB2::NOT_CONNECTED;
    }
@@ -880,23 +872,18 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
 
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) triples[ i ].tripleGUID );
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      int status = db->lastErrno();
-qDebug() << "iSv: trip" << i << "tGUID" << uuidc
- << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
+      int     rawDataID = 0;
+      QString error;
+      int     status = findRawDataId( db, uuidc, rawDataID, error );
+      qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
       if ( status == US_DB2::OK )
       {
          // Save updated triple ID
-         if ( db->next() )
-            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-qDebug() << "iSv:    tID" << triples[i].tripleID;
+         triples[i].tripleID = rawDataID;
+         qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS )
+      else if ( status == US_DB2::NOROWS || status == US_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -905,8 +892,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 
       else     // more unlikely errors
       {
-         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
-         qDebug() << "triple GUID = " << uuidc;
+         qDebug() << error;
          return status;
       }
 
@@ -1053,23 +1039,18 @@ int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
 
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) triples[ i ].tripleGUID );
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      int status = db->lastErrno();
-qDebug() << "iSv: trip" << i << "tGUID" << uuidc
- << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
+      int     rawDataID = 0;
+      QString error;
+      int     status = findRawDataId( db, uuidc, rawDataID, error );
+      qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
       if ( status == US_DB2::OK )
       {
          // Save updated triple ID
-         if ( db->next() )
-            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-qDebug() << "iSv:    tID" << triples[i].tripleID;
+         triples[i].tripleID = rawDataID;
+         qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS )
+      else if ( status == US_DB2::NOROWS || status == US_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -1078,8 +1059,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 
       else     // more unlikely errors
       {
-         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
-         qDebug() << "triple GUID = " << uuidc;
+         qDebug() << error;
          return status;
       }
 

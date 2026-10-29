@@ -49,7 +49,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db        An opened db connection
           \param rawGUID   The raw dataset's GUID, as the AUC header carries it
           \param rawDataID Set to the row id on success, left alone otherwise
-          \param error     Appended with context on failure
+          \param error     Set to context on failure
 
           \returns IUS_DB2::OK, or the underlying status.  A query that
                    succeeds but names no row is IUS_DB2::NO_RAWDATA: whether
@@ -62,7 +62,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db           An opened db connection
           \param record       The values to write
           \param editedDataID Set to the new row id on success
-          \param error        Appended with context on failure
+          \param error        Set to context on failure
 
           \returns IUS_DB2::OK, or the underlying status
       */
@@ -73,7 +73,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db           An opened db connection
           \param editedDataID The row to update
           \param record       The values to write
-          \param error        Appended with context on failure
+          \param error        Set to context on failure
 
           \returns IUS_DB2::OK, or the underlying status
       */
@@ -84,7 +84,7 @@ class US_UTIL_EXTERN US_ConvertIO
           \param db           An opened db connection
           \param editedDataID The row to attach to
           \param filename     Full path of the edit XML to upload
-          \param error        Appended with context on failure
+          \param error        Set to context on failure
 
           \returns IUS_DB2::OK, or the underlying status
       */

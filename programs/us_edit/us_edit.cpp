@@ -12304,13 +12304,10 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
          return;
       }
 
-      QStringList q( "get_rawDataID_from_GUID" );
+      int     rawDataIDnum = -1;
+      QString opError;
 
-      q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-      dbP->query( q );
-
-      // Error check
-      if ( dbP->lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::findRawDataId( dbP, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) != US_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -12319,10 +12316,8 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
          return;
       }
 
-      dbP->next();
-      QString rawDataID = dbP->value( 0 ).toString();
-
-      q.clear();
+      QString     rawDataID = QString::number( rawDataIDnum );
+      QStringList q;
       q << "get_editedDataIDs" << rawDataID;
 
       dbP->query( q );
@@ -12517,14 +12512,10 @@ void US_Edit::prior_equil( void )
          return;
       }
 
-      QStringList q( "get_rawDataID_from_GUID" );
+      int     rawDataIDnum = -1;
+      QString opError;
 
-      q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-
-      db.query( q );
-
-      // Error check
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) != US_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -12533,10 +12524,8 @@ void US_Edit::prior_equil( void )
          return;
       }
 
-      db.next();
-      QString rawDataID = db.value( 0 ).toString();
-
-      q.clear();
+      QString     rawDataID = QString::number( rawDataIDnum );
+      QStringList q;
       q << "get_editedDataIDs" << rawDataID;
 
       db.query( q );
@@ -12580,12 +12569,14 @@ void US_Edit::prior_equil( void )
       for ( int ii = 1; ii < outData.size(); ii++ )
       {
          data    = *outData[ ii ];
-         q.clear();
-         q << "get_rawDataID_from_GUID"
-           << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-         db.query( q );
-         db.next();
-         rawDataID = db.value( 0 ).toString();
+
+         if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+              US_DB2::OK )
+         { // Without its raw record, this triple has no matching edit
+            cefnames << "";
+            continue;
+         }
+         rawDataID = QString::number( rawDataIDnum );
 
          q.clear();
          q << "get_editedDataIDs" << rawDataID;
@@ -14457,9 +14448,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
    {
       if ( US_ConvertIO::createEditedData( dbP, record, idEdit, error ) != US_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not insert metadata into the database\n" ) +
-                dbP->lastError() );
+         QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not insert metadata into the database\n" ) + error );
 
          return 3;
       }
@@ -14475,9 +14464,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
 
       if ( US_ConvertIO::updateEditedData( dbP, idEdit, record, error ) != US_DB2::OK )
       {
-         QMessageBox::warning( this, tr( "Database Problem" ),
-            tr( "Could not update metadata in the database \n" ) +
-            dbP->lastError() );
+         QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not update metadata in the database \n" ) + error );
 
          return 4;
       }
@@ -14485,9 +14472,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
 
    if ( US_ConvertIO::uploadEditedDataBlob( dbP, idEdit, workingDir + fname, error ) != US_DB2::OK )
    {
-      QMessageBox::warning( this, tr( "Database Problem" ),
-         tr( "Could not insert edit xml data into database \n" ) +
-         dbP->lastError() );
+      QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not insert edit xml data into database \n" ) + error );
       return 5;
    }
 

@@ -3233,9 +3233,9 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
 
    if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != US_DB2::OK )
    {
-      qDebug() << tr( "*ERROR* update_db_edit: " ) << db.lastError();
+      qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
       msg += tr( "*ERROR* update_db_edit: " );
-      msg += db.lastError();
+      msg += upload_error;
       return;
    }
 

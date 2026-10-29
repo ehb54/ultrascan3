@@ -49,6 +49,7 @@ class EditedDataOpsTest : public ::testing::Test
          // Nothing failed unless a test says so.
          ON_CALL( *db, lastErrno() ).WillByDefault( Return( IUS_DB2::OK ) );
          ON_CALL( *db, lastError() ).WillByDefault( Return( QString() ) );
+         ON_CALL( *db, isConnected() ).WillByDefault( Return( true ) );
       }
 
       std::unique_ptr<NiceMock<US_DB2_Mock>> db;
@@ -210,6 +211,30 @@ TEST_F( EditedDataOpsTest, ReportsTheBlobStatusItWasGiven )
 }
 
 // ---------------------------------------------------------- null connection
+
+TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
+{
+   // toInt() would otherwise turn it into row 0 without a word.
+   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL( *db, next() ).WillOnce( Return( true ) );
+   EXPECT_CALL( *db, value( 0 ) ).WillOnce( Return( QVariant( "abc" ) ) );
+
+   int rawDataID = -1;
+   EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::DBERROR );
+
+   EXPECT_EQ( rawDataID, -1 );
+   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "abc" ) );
+}
+
+TEST_F( EditedDataOpsTest, RefusesADisconnectedConnection )
+{
+   ON_CALL( *db, isConnected() ).WillByDefault( Return( false ) );
+   EXPECT_CALL( *db, query( An<const QStringList&>() ) ).Times( 0 );
+
+   int rawDataID = -1;
+   EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NOT_CONNECTED );
+   EXPECT_FALSE( error.isEmpty() );
+}
 
 TEST_F( EditedDataOpsTest, EveryOperationRefusesANullConnection )
 {
