@@ -2748,8 +2748,9 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    f_qs        [ avg_name ] = avg_qs;
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
-   f_header    [ avg_name ] = QString( " Average of %1 files%2%3: %4" )
+   f_header    [ avg_name ] = QString( " Average of %1 files%2%3%4: %5" )
       .arg( selected_files.size() )
+      .arg( range.isEmpty() ? QString( "" ) : QString( " (frames %1)" ).arg( range ) )
       .arg( all_nonzero_errors ? QString( ", weighted by 1/sd^2" ) : QString( "" ) )
       .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
       .arg( selected_files.join( "," ) );
@@ -3245,9 +3246,9 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
 
    if ( use_errors )
    {
-      ts << "q                 \tI(q)         \tsd\n";
+      ts << "q (1/Angstrom)    \tI(q)         \tsd\n";
    } else {
-      ts << "q                 \tI(q)\n";
+      ts << "q (1/Angstrom)    \tI(q)\n";
    }
 
    for ( int i = 0; i < (int)f_qs[ file ].size(); i++ )
@@ -3748,9 +3749,10 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       {
          used_concs << QString( "%1" ).arg( concs.count( selected_files[ i ] ) ? concs[ selected_files[ i ] ] : 0e0 );
       }
-      f_header [ avg_name ] = QString( " Concentration normalized average of %1 files%2%3: %4,"
-                                       " each divided by its concentration (%5 mg/ml), then multiplied by their mean %6 mg/ml" )
+      f_header [ avg_name ] = QString( " Concentration normalized average of %1 files%2%3%4: %5,"
+                                       " each divided by its concentration (%6 mg/ml), then multiplied by their mean %7 mg/ml" )
          .arg( selected_files.size() )
+         .arg( range.isEmpty() ? QString( "" ) : QString( " (frames %1)" ).arg( range ) )
          .arg( all_nonzero_errors ? QString( ", weighted by 1/sd^2" ) : QString( "" ) )
          .arg( crop ? QString( ", cropped to %1 points" ).arg( min_q_len ) : QString( "" ) )
          .arg( selected_files.join( "," ) )
