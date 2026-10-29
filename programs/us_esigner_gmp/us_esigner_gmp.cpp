@@ -203,6 +203,46 @@ namespace
     return r;
   }
 
+  //names out of the text of an "Assigned ..." box: "12. Name(SIGNED: APPROVE)\n13. Name(NOT SIGNED)" -> 12. Name, 13. Name
+  QStringList namesFromAssignedText( const QString& text )
+  {
+    QStringList names;
+    for ( const QString& line : text.split( "\n" ) )
+      names << line.split( "(" )[0];
+    return cleanNames( names );
+  }
+
+  //same parties, regardless of the order?
+  bool sameParties( const QStringList& a, const QStringList& b )
+  {
+    if ( a.size() != b.size() )
+      return false;
+    for ( const QString& n : a )
+      if ( !b.contains( n ) )
+	return false;
+    return true;
+  }
+
+  //rich text describing what changes in one role: who is removed, who is added, who stays.
+  //Empty string if the role does not change.
+  QString describeRoleChange( const QString& title, const QStringList& old_names, const QStringList& new_names )
+  {
+    if ( sameParties( old_names, new_names ) )
+      return QString();
+
+    QString html = "<b>" + title.toHtmlEscaped() + ":</b><br>";
+    for ( const QString& n : old_names )
+      if ( !new_names.contains( n ) )
+	html += "&nbsp;&nbsp;<font color='red'>Removed:</font> " + n.toHtmlEscaped() + "<br>";
+    for ( const QString& n : new_names )
+      if ( !old_names.contains( n ) )
+	html += "&nbsp;&nbsp;<font color='darkgreen'>Added:</font> <b>" + n.toHtmlEscaped() + "</b><br>";
+    for ( const QString& n : new_names )
+      if ( old_names.contains( n ) )
+	html += "&nbsp;&nbsp;<font color='gray'>Kept: " + n.toHtmlEscaped() + "</font><br>";
+    return html + "<br>";
+  }
+
   //person id: "12. Savelyev, Alexey" -> "12"   (a person is identified by the ID, not by the spelling)
   QString personId( const QString& name )
   {
@@ -3268,8 +3308,22 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   qDebug() << "Old Approvers -- " << old_apprs;
   qDebug() << "New Approvers -- " << new_apprs;
 
-  //check if at least one of tehe operator OR reviewer lists has been changed 
-  if ( old_opers == new_opers && old_revs  == new_revs && old_apprs == new_apprs )
+  //which roles really change? (as sets of parties: the order does not matter)
+  QStringList old_oper_names = namesFromAssignedText( exsisting_oper_list );
+  QStringList old_rev_names  = namesFromAssignedText( exsisting_rev_list );
+  QStringList old_appr_names = namesFromAssignedText( exsisting_appr_list );
+
+  bool oper_changed = !sameParties( old_oper_names, opers.names );
+  bool rev_changed  = !sameParties( old_rev_names,  revs.names );
+  bool appr_changed = !sameParties( old_appr_names, apprs.names );
+
+  //unchanged role: new == old (so that it is logged as "NONE")
+  if ( !oper_changed ) new_opers = old_opers;
+  if ( !rev_changed  ) new_revs  = old_revs;
+  if ( !appr_changed ) new_apprs = old_apprs;
+
+  //check if at least one of the operator OR reviewer OR approver lists has been changed 
+  if ( !oper_changed && !rev_changed && !appr_changed )
     {
       qDebug() << "Operators and Reviewers and Approvers are the same...";
       QMessageBox::information( this, tr( "NO CHANGES!" ),
@@ -3285,21 +3339,23 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
 
   QMessageBox msg_rev;
   msg_rev.setWindowTitle(tr("Operator(s), Reviewer(s), Approver(s) Change"));
-  msg_rev.setText( tr( "<font color='red'><b>ATTENTION:</b> </font><br>"
-		       "You are about to change assigned operator(s) and/or reviewer(s) and/or approver(s): <br><br>"
-		       "Old Operators: <font ><b>%1</b><br>"
-		       "New Operators: <font ><b>%2</b><br><br>"
-		       "Old Reviewers: <font ><b>%3</b><br>"
-		       "New Reviewers: <font ><b>%4</b><br><br>"
-		       "Old Approvers: <font ><b>%5</b><br>"
-		       "New Approvers: <font ><b>%6</b><br><br>" )
-		   .arg( old_opers )
-		   .arg( new_opers )
-		   .arg( old_revs )
-		   .arg( new_revs )
-		   .arg( old_apprs )
-		   .arg( new_apprs )
-		   );
+  //show only the role(s) that change: who is removed / added / kept
+  QString changes_html =
+    describeRoleChange( tr( "Operators" ), old_oper_names, opers.names ) +
+    describeRoleChange( tr( "Reviewers" ), old_rev_names,  revs.names )  +
+    describeRoleChange( tr( "Approvers" ), old_appr_names, apprs.names );
+
+  QStringList unchanged_roles;
+  if ( !oper_changed ) unchanged_roles << tr( "Operators" );
+  if ( !rev_changed  ) unchanged_roles << tr( "Reviewers" );
+  if ( !appr_changed ) unchanged_roles << tr( "Approvers" );
+
+  QString msg_text = tr( "<font color='red'><b>ATTENTION:</b> </font><br>"
+			 "You are about to change the following assignment(s): <br><br>" ) + changes_html;
+  if ( !unchanged_roles.isEmpty() )
+    msg_text += tr( "<font color='gray'>Not changed: %1</font><br><br>" ).arg( unchanged_roles.join( ", " ) );
+
+  msg_rev.setText( msg_text );
   
   msg_rev.setInformativeText( QString( tr( "Do you want to Proceed?" )));
   
