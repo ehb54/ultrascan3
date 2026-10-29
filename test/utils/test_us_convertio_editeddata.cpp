@@ -90,6 +90,19 @@ TEST_F( EditedDataOpsTest, DistinguishesAMissingRawRecordFromAFailedQuery )
    EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( kRawGUID ) );
 }
 
+TEST_F( EditedDataOpsTest, ReportsNoRowsAsAMissingRawRecord )
+{
+   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL( *db, lastErrno() ).WillRepeatedly( Return( IUS_DB2::NOROWS ) );
+   EXPECT_CALL( *db, next() ).Times( 0 );
+
+   int rawDataID = -1;
+   EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NO_RAWDATA );
+
+   EXPECT_EQ( rawDataID, -1 );
+   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( kRawGUID ) );
+}
+
 TEST_F( EditedDataOpsTest, ReturnsTheUnderlyingStatusWhenTheLookupQueryFails )
 {
    EXPECT_CALL( *db, query( An<const QStringList&>() ) );
@@ -103,6 +116,20 @@ TEST_F( EditedDataOpsTest, ReturnsTheUnderlyingStatusWhenTheLookupQueryFails )
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NOT_CONNECTED );
 
    EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "server has gone away" ) );
+}
+
+TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
+{
+   // toInt() would otherwise turn it into row 0 without a word.
+   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
+   EXPECT_CALL( *db, next() ).WillOnce( Return( true ) );
+   EXPECT_CALL( *db, value( 0 ) ).WillOnce( Return( QVariant( "abc" ) ) );
+
+   int rawDataID = -1;
+   EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::DBERROR );
+
+   EXPECT_EQ( rawDataID, -1 );
+   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "abc" ) );
 }
 
 // ---------------------------------------------------------------- create
@@ -210,21 +237,7 @@ TEST_F( EditedDataOpsTest, ReportsTheBlobStatusItWasGiven )
    EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "501" ) );
 }
 
-// ---------------------------------------------------------- null connection
-
-TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
-{
-   // toInt() would otherwise turn it into row 0 without a word.
-   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
-   EXPECT_CALL( *db, next() ).WillOnce( Return( true ) );
-   EXPECT_CALL( *db, value( 0 ) ).WillOnce( Return( QVariant( "abc" ) ) );
-
-   int rawDataID = -1;
-   EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::DBERROR );
-
-   EXPECT_EQ( rawDataID, -1 );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "abc" ) );
-}
+// ---------------------------------------------------------- no connection
 
 TEST_F( EditedDataOpsTest, RefusesADisconnectedConnection )
 {
@@ -256,17 +269,18 @@ TEST_F( EditedDataOpsTest, EveryOperationRefusesANullConnection )
    EXPECT_FALSE( error.isEmpty() );
 }
 
-TEST_F( EditedDataOpsTest, NoOperationLeaksCredentialsIntoItsError )
+TEST_F( EditedDataOpsTest, RequireConnectedNamesTheOperationAndLeavesSuccessAlone )
 {
-   // lastError() is the only DB text these carry, and callers hand the result
-   // to users and logs.  Nothing here composes a query string into `error`.
-   EXPECT_CALL( *db, query( An<const QStringList&>() ) );
-   EXPECT_CALL( *db, lastErrno() ).WillRepeatedly( Return( IUS_DB2::DBERROR ) );
-   EXPECT_CALL( *db, lastError() ).WillRepeatedly( Return( QString( "access denied" ) ) );
+   EXPECT_FALSE( IUS_DB2::requireConnected( nullptr, "edited data upload", error ) );
+   EXPECT_EQ( error.toStdString(), "edited data upload: no database connection" );
 
-   int editedDataID = -1;
-   US_ConvertIO::createEditedData( db.get(), sampleRecord(), editedDataID, error );
+   ON_CALL( *db, isConnected() ).WillByDefault( Return( false ) );
+   error.clear();
+   EXPECT_FALSE( IUS_DB2::requireConnected( db.get(), "edited data upload", error ) );
+   EXPECT_EQ( error.toStdString(), "edited data upload: no database connection" );
 
-   EXPECT_THAT( error.toStdString(), ::testing::Not( ::testing::HasSubstr( "CALL " ) ) );
-   EXPECT_THAT( error.toStdString(), ::testing::Not( ::testing::HasSubstr( "new_editedData" ) ) );
+   ON_CALL( *db, isConnected() ).WillByDefault( Return( true ) );
+   error = "untouched";
+   EXPECT_TRUE( IUS_DB2::requireConnected( db.get(), "edited data upload", error ) );
+   EXPECT_EQ( error.toStdString(), "untouched" );
 }

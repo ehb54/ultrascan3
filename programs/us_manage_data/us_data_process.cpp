@@ -79,9 +79,8 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
    else if ( cdesc.recType == 2 )
    {  // upload an EditedData record
-      QString runID    = filename.section( ".",  0,  0 );
-      QString label    = runID;
-      QString comment  = filename.section( ".",  0,  2 );
+      QString runID    = filename.section( ".", 0, 0 );
+      QString comment  = filename.section( ".", 0, 2 );
       QString editGUID = cdesc.dataGUID;
       QString rawGUID  = cdesc.parentGUID;
       QString editID   = QString::number( idData );
@@ -92,10 +91,9 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       int     rawDataID = -1;
       QString opError;
 
-      if ( ( stat = US_ConvertIO::findRawDataId( db, rawGUID, rawDataID, opError ) ) != US_DB2::OK )
+      if ( ( stat = US_ConvertIO::findRawDataId( db, rawGUID, rawDataID, opError ) ) != IUS_DB2::OK )
       {
-         errMsg = tr( "Raw DB record for Edit could not be accessed: %1" )
-                  .arg( stat );
+         errMsg = tr( "Raw DB record for Edit could not be accessed: %1" ).arg( opError );
          stat   = 3052;
       }
 
@@ -113,7 +111,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
          if ( idData < 0 )
          {
-            if ( US_ConvertIO::createEditedData( db, record, idData, opError ) != US_DB2::OK )
+            if ( US_ConvertIO::createEditedData( db, record, idData, opError ) != IUS_DB2::OK )
             {
                errMsg = tr( "Could not create the editedData record: %1" ).arg( opError );
                stat   = 3053;
@@ -127,23 +125,18 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
          if ( stat == US_DB2::OK )
          {
-            // The update always follows, including right after a create: it
-            // is what puts the label on the row, since the create procedure
-            // takes the run ID in that position instead.
-            record.label = label;
-
-            if ( US_ConvertIO::updateEditedData( db, editID.toInt(), record, opError ) != US_DB2::OK )
+            if ( US_ConvertIO::updateEditedData( db, editID.toInt(), record, opError ) != IUS_DB2::OK )
             {
                errMsg = tr( "Could not update the editedData record: %1" ).arg( opError );
                stat   = 3054;
             }
-            DbgLv( 1 ) << "editUpld: label" << label;
+            DbgLv( 1 ) << "editUpld: label" << runID;
          }
 
          if ( stat == US_DB2::OK )
          {
             stat           = US_ConvertIO::uploadEditedDataBlob( db, idData, filepath, opError );
-            errMsg         = tr( "writeBlob Edited stat %1, idData %2" ).arg( stat ).arg( idData );
+            errMsg         = ( stat == 0 ) ? tr( "writeBlob Edited stat %1, idData %2" ).arg( stat ).arg( idData ) : opError;
             stat           = ( stat == 0 ) ? 0 : 3042;
             cdesc.recordID = idData;
          }
@@ -337,13 +330,7 @@ int US_DataProcess::record_remove_db( int row )
    QString dataID   = QString::number( irecID );
 
    if      ( cdesc.recType == 1 )
-   {  // remove a Raw record
-      {
-         int     dbgRawDataID = -1;
-         QString dbgOpError;
-         US_ConvertIO::findRawDataId( db, cdesc.dataGUID, dbgRawDataID, dbgOpError );
-         DbgLv( 1 ) << "REC_RMV: rawGUID rawID" << cdesc.dataGUID << dbgRawDataID;
-      }
+   { // remove a Raw record
       query.clear();
       query << "delete_rawData" << QString::number( cdesc.parentID );
 DbgLv(1) << "REC_RMV: exp ID" << cdesc.parentID;

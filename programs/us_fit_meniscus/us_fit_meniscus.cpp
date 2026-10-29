@@ -3231,7 +3231,7 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
    // How the existing edit is found is unchanged; only the upload is shared.
    QString upload_error;
 
-   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != US_DB2::OK )
+   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != IUS_DB2::OK )
    {
       qDebug() << tr( "*ERROR* update_db_edit: " ) << upload_error;
       msg += tr( "*ERROR* update_db_edit: " );

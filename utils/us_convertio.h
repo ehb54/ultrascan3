@@ -51,9 +51,10 @@ class US_UTIL_EXTERN US_ConvertIO
           \param rawDataID Set to the row id on success, left alone otherwise
           \param error     Set to context on failure
 
-          \returns IUS_DB2::OK, or the underlying status.  A query that
-                   succeeds but names no row is IUS_DB2::NO_RAWDATA: whether
-                   that is fatal is the caller's decision.
+          \returns IUS_DB2::OK, or the underlying status.  No matching row,
+                   whether the server reports NOROWS or the query succeeds
+                   without one, is IUS_DB2::NO_RAWDATA: whether that is fatal
+                   is the caller's decision.
       */
       static int     findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error );
 

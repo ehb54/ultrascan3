@@ -14,20 +14,9 @@ US_ConvertIO::US_ConvertIO( void )
 {
 }
 
-// ----------------------------------------------------------------------------
-// Edited-data database mechanics.
-//
-// Three programs used to carry their own copy of this: us_edit, us_manage_data
-// and the corpus loader.  They agreed on the stored procedures and disagreed on
-// everything else -- one raised dialogs, one wrote status codes into a table
-// model, one returned a message -- so the mechanics could not be shared without
-// dragging one program's policy into the others.
-//
-// These take an IUS_DB2*, return the underlying database status, and put
-// context into `error`.  They decide nothing: not whether a record is created
-// or updated, not whether a missing raw record is fatal, not what the user is
-// told, and not where a transaction begins or ends.
-// ----------------------------------------------------------------------------
+// Edited-data database mechanics shared by us_edit, us_manage_data,
+// us_fit_meniscus and us_autoflow_analysis.  These return the database status
+// and set `error`; what to do about a failure is left to the caller.
 
 int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error )
 {
@@ -42,6 +31,14 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDa
 
    const int status = db->lastErrno();
 
+   // NOROWS and a successful query without a row both mean the raw data was
+   // never uploaded, so both are reported as NO_RAWDATA.
+   if ( status == IUS_DB2::NOROWS )
+   {
+      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      return IUS_DB2::NO_RAWDATA;
+   }
+
    if ( status != IUS_DB2::OK )
    {
       error = QString( "Could not look up the raw data record for GUID %1: "
@@ -51,9 +48,6 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDa
       return status;
    }
 
-   // A successful query that names no row.  Reported separately from a query
-   // failure because the two mean different things to a caller: one is a
-   // broken connection, the other is data that was never uploaded.
    if ( !db->next() )
    {
       error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
@@ -876,14 +870,14 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
       QString error;
       int     status = findRawDataId( db, uuidc, rawDataID, error );
       qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
-      if ( status == US_DB2::OK )
+      if ( status == IUS_DB2::OK )
       {
          // Save updated triple ID
          triples[i].tripleID = rawDataID;
          qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS || status == US_DB2::NO_RAWDATA )
+      else if ( status == IUS_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -1043,14 +1037,14 @@ int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
       QString error;
       int     status = findRawDataId( db, uuidc, rawDataID, error );
       qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
-      if ( status == US_DB2::OK )
+      if ( status == IUS_DB2::OK )
       {
          // Save updated triple ID
          triples[i].tripleID = rawDataID;
          qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS || status == US_DB2::NO_RAWDATA )
+      else if ( status == IUS_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );

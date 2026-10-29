@@ -12307,7 +12307,8 @@ DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
       int     rawDataIDnum = -1;
       QString opError;
 
-      if ( US_ConvertIO::findRawDataId( dbP, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) != US_DB2::OK )
+      if ( US_ConvertIO::findRawDataId( dbP, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+           IUS_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -12515,7 +12516,8 @@ void US_Edit::prior_equil( void )
       int     rawDataIDnum = -1;
       QString opError;
 
-      if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) != US_DB2::OK )
+      if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
+           IUS_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -12571,7 +12573,7 @@ void US_Edit::prior_equil( void )
          data    = *outData[ ii ];
 
          if ( US_ConvertIO::findRawDataId( &db, US_Util::uuid_unparse( (uchar*) data.rawGUID ), rawDataIDnum, opError ) !=
-              US_DB2::OK )
+              IUS_DB2::OK )
          { // Without its raw record, this triple has no matching edit
             cefnames << "";
             continue;
@@ -14429,7 +14431,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       return 1;
    }
 
-   if ( US_ConvertIO::findRawDataId( dbP, rawGUID, rawDataID, error ) != US_DB2::OK )
+   if ( US_ConvertIO::findRawDataId( dbP, rawGUID, rawDataID, error ) != IUS_DB2::OK )
    {
       QMessageBox::warning( this,
          tr( "AUC Data is not in DB" ),
@@ -14446,7 +14448,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
 
    if ( editID.isEmpty() )
    {
-      if ( US_ConvertIO::createEditedData( dbP, record, idEdit, error ) != US_DB2::OK )
+      if ( US_ConvertIO::createEditedData( dbP, record, idEdit, error ) != IUS_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not insert metadata into the database\n" ) + error );
 
@@ -14462,7 +14464,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
    {
       idEdit = editID.toInt();
 
-      if ( US_ConvertIO::updateEditedData( dbP, idEdit, record, error ) != US_DB2::OK )
+      if ( US_ConvertIO::updateEditedData( dbP, idEdit, record, error ) != IUS_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not update metadata in the database \n" ) + error );
 
@@ -14470,7 +14472,7 @@ int US_Edit::write_edit_db( IUS_DB2* dbP, QString& fname, QString& editGUID,
       }
    }
 
-   if ( US_ConvertIO::uploadEditedDataBlob( dbP, idEdit, workingDir + fname, error ) != US_DB2::OK )
+   if ( US_ConvertIO::uploadEditedDataBlob( dbP, idEdit, workingDir + fname, error ) != IUS_DB2::OK )
    {
       QMessageBox::warning( this, tr( "Database Problem" ), tr( "Could not insert edit xml data into database \n" ) + error );
       return 5;
