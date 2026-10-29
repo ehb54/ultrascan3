@@ -202,6 +202,71 @@ namespace
 
     return r;
   }
+
+  //person id: "12. Savelyev, Alexey" -> "12"   (a person is identified by the ID, not by the spelling)
+  QString personId( const QString& name )
+  {
+    return name.section( ".", 0, 0 ).trimmed();
+  }
+
+  //names from a stored JSON array text, e.g. ["12. Savelyev, Alexey","101. Brookes, Emre"]
+  QStringList namesFromJsonList( const QString& jsonArrayText )
+  {
+    QStringList out;
+    for ( const QJsonValue& v : QJsonDocument::fromJson( jsonArrayText.toUtf8() ).array() )
+      out << v.toString();
+    return cleanNames( out );
+  }
+
+  //A person can hold only ONE role (operator | reviewer | approver).
+  //Returns those who appear in more than one of the given role lists.
+  QStringList duplicatePersons( const QList< QStringList >& roles )
+  {
+    QStringList dups, seen;
+    for ( const QStringList& role : roles )
+      {
+	QStringList in_role;                         //count a person once per role
+	for ( const QString& n : role )
+	  if ( !in_role.contains( personId( n ) ) )
+	    in_role << personId( n );
+
+	for ( int i = 0; i < in_role.size(); ++i )
+	  {
+	    if ( seen.contains( in_role[i] ) )
+	      {
+		for ( const QString& n : role )
+		  if ( personId( n ) == in_role[i] && !dups.contains( n ) )
+		    dups << n;
+	      }
+	    else
+	      seen << in_role[i];
+	  }
+      }
+    return dups;
+  }
+
+  //Is "person" (about to be added to role thisRole: 0=operator, 1=reviewer, 2=approver) already
+  //holding another role? Returns that role's name, or an empty string.
+  //  ex : text of the three "Assigned ..." boxes;  to : text of the three "... to Assign" boxes.
+  //  sa : stand-alone reassign: a role's final members are the parties who already signed plus
+  //       either the new ones (if any were specified) or the unsigned ones as they are;
+  //       otherwise a role's members are just what is in its "to Assign" box.
+  QString roleHeldElsewhere( const QString& person, int thisRole, bool sa,
+			     const QStringList& ex, const QStringList& to )
+  {
+    static const char* roleName[3] = { "operator", "reviewer", "approver" };
+    for ( int r = 0; r < 3; ++r )
+      {
+	if ( r == thisRole )
+	  continue;
+
+	QStringList members = sa ? mergeRole( ex[r], to[r] ).names : namesFromLines( to[r] );
+	for ( const QString& m : members )
+	  if ( personId( m ) == personId( person ) )
+	    return QString( roleName[r] );
+      }
+    return QString();
+  }
 }
 
 // Constructor
@@ -1996,6 +2061,17 @@ void US_eSignaturesGMP::selectGMPRun( void )
 //for stand-alone reassign program
 void US_eSignaturesGMP::selectGMPRun_sa( void )
 {
+  //Only users with User Level 3 and above may reassign operators/reviewers/approvers
+  if ( US_Settings::us_inv_level() < 3 )
+    {
+      QMessageBox::warning( this, tr( "Insufficient User Level" ),
+			    tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
+				"User Level 3 or higher.<br><br>"
+				"Your current User Level is <b>%1</b>." )
+			    .arg( US_Settings::us_inv_level() ) );
+      return;
+    }
+
   /* Here, we need to list all completed GMP runs (i.e. from autoflowHistory) */
   /* For HISTORY, check if GMP reports for these runs are NOT completely eSigned */
 
@@ -2164,6 +2240,24 @@ void US_eSignaturesGMP::set_revOper_panel_gui_sa( void )
 
   //Read autoflowGMPReportEsign record by autoflowID:
   eSign_details = read_autoflowGMPReportEsign_record( gmp_run_details[ "autoflowID" ] );
+
+  //records created before "one person - one role" was enforced may violate it:
+  //e-signatures are stored by person, so such a record cannot be reassigned correctly here
+  QStringList multi_role_rec =
+    duplicatePersons( QList< QStringList >() << namesFromJsonList( eSign_details[ "operatorListJson" ] )
+					     << namesFromJsonList( eSign_details[ "reviewersListJson" ] )
+					     << namesFromJsonList( eSign_details[ "approversListJson" ] ) );
+  if ( !multi_role_rec.isEmpty() )
+    {
+      QMessageBox::warning( this, tr( "Inconsistent e-Sign Record" ),
+			    tr( "<font color='red'><b>ATTENTION:</b> </font> In this GMP run the following person(s) "
+				"are assigned to more than one role (operator, reviewer, approver):<br><br>"
+				"<b>%1</b><br><br>"
+				"A person can hold only ONE role, and an e-signature is recorded per person, "
+				"so the status shown for such a person is not reliable and this record cannot be "
+				"changed here until it is corrected in the database." )
+			    .arg( multi_role_rec.join( "<br>" ) ) );
+    }
 
   operators_info. clear();
   reviewers_info. clear();
@@ -2475,6 +2569,11 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	  autoflowentry << status << row.gmpRun;
 
 	  //Check user level && GUID; if <3, check if the user is operator || investigator
+	  //
+	  //Stand-alone reassign program: NO per-run filtering -- any run can be reassigned by any user
+	  //whose User Level is 3 or above (the level itself is checked in selectGMPRun_sa()).
+	  //For all other callers the original rule stays: level <3 sees only own runs.
+	  /* ORIGINAL (kept for reference):
 	  if ( US_Settings::us_inv_level() < 3 )
 	    {
 	      if ( user_id && user_id == row.invID.toInt() )
@@ -2484,6 +2583,16 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 		}
 	    }
 	  else
+	    {
+	      autoflowdata  << autoflowentry;
+	      nrecs++;
+	    }
+	  */
+	  bool include_run = reassign_revs_sep                                      //stand-alone reassign: all runs
+	    || US_Settings::us_inv_level() >= 3                                      //level >=3: all runs
+	    || ( user_id && user_id == row.invID.toInt() );                          //level <3: own runs only
+
+	  if ( include_run )
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
@@ -2834,6 +2943,27 @@ void US_eSignaturesGMP::addOpertoList( void )
       return;
     }
 
+  //a person can hold only ONE role (operator | reviewer | approver)
+  {
+    QString other_role =
+      roleHeldElsewhere( c_oper, 0, reassign_revs_sep,
+			 QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText()
+				       << te_appr_names->toPlainText(),
+			 QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
+				       << te_apprs_to_assign->toPlainText() );
+    if ( !other_role.isEmpty() )
+      {
+	QMessageBox::information( this, tr( "Cannot add Operator" ),
+				  tr( "<font color='red'><b>ATTENTION:</b> </font> Selected operator: <br><br>"
+				      "<font ><b>%1</b><br><br>"
+				      "already holds the role of <b>%2</b>.<br>"
+				      "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
+				      "Please choose other operator." )
+				  .arg( c_oper ).arg( other_role ) );
+	return;
+      }
+  }
+
   te_opers_to_assign->append( c_oper );
   setUnsetPb_operRev();
 }
@@ -2882,6 +3012,27 @@ void US_eSignaturesGMP::addRevtoList( void )
 				.arg( c_rev ) );
       return;
     }
+
+  //a person can hold only ONE role (operator | reviewer | approver)
+  {
+    QString other_role =
+      roleHeldElsewhere( c_rev, 1, reassign_revs_sep,
+			 QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText()
+				       << te_appr_names->toPlainText(),
+			 QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
+				       << te_apprs_to_assign->toPlainText() );
+    if ( !other_role.isEmpty() )
+      {
+	QMessageBox::information( this, tr( "Cannot add Reviewer" ),
+				  tr( "<font color='red'><b>ATTENTION:</b> </font> Selected reviewer: <br><br>"
+				      "<font ><b>%1</b><br><br>"
+				      "already holds the role of <b>%2</b>.<br>"
+				      "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
+				      "Please choose other reviewer." )
+				  .arg( c_rev ).arg( other_role ) );
+	return;
+      }
+  }
 
   te_revs_to_assign->append( c_rev );
 
@@ -2935,6 +3086,27 @@ void US_eSignaturesGMP::addApprtoList( void )
       return;
     }
 
+  //a person can hold only ONE role (operator | reviewer | approver)
+  {
+    QString other_role =
+      roleHeldElsewhere( c_appr, 2, reassign_revs_sep,
+			 QStringList() << te_operator_names->toPlainText() << te_reviewer_names->toPlainText()
+				       << te_appr_names->toPlainText(),
+			 QStringList() << te_opers_to_assign->toPlainText() << te_revs_to_assign->toPlainText()
+				       << te_apprs_to_assign->toPlainText() );
+    if ( !other_role.isEmpty() )
+      {
+	QMessageBox::information( this, tr( "Cannot add Approver" ),
+				  tr( "<font color='red'><b>ATTENTION:</b> </font> Selected approver: <br><br>"
+				      "<font ><b>%1</b><br><br>"
+				      "already holds the role of <b>%2</b>.<br>"
+				      "A person can hold only ONE role: operator, OR reviewer, OR approver.<br>"
+				      "Please choose other approver." )
+				  .arg( c_appr ).arg( other_role ) );
+	return;
+      }
+  }
+
   te_apprs_to_assign->append( c_appr );
 
   setUnsetPb_operRev();
@@ -2961,6 +3133,15 @@ void US_eSignaturesGMP::removeApprfromList( void )
 //Assign operators & reviewers for the current GMP run: for SA
 void US_eSignaturesGMP::assignOperRevs_sa( void )
 {
+  //Only users with User Level 3 and above may reassign operators/reviewers/approvers
+  if ( US_Settings::us_inv_level() < 3 )
+    {
+      QMessageBox::warning( this, tr( "Insufficient User Level" ),
+			    tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
+				"User Level 3 or higher." ) );
+      return;
+    }
+
   //save existign operators && reviewers:
   QString exsisting_oper_list = te_operator_names->toPlainText();
   QString exsisting_rev_list  = te_reviewer_names->toPlainText();
@@ -2987,6 +3168,19 @@ void US_eSignaturesGMP::assignOperRevs_sa( void )
   RoleMerge opers = mergeRole( exsisting_oper_list, oper_list );
   RoleMerge revs  = mergeRole( exsisting_rev_list,  rev_list );
   RoleMerge apprs = mergeRole( exsisting_appr_list, appr_list );
+
+  //a person can hold only ONE role: refuse to save otherwise
+  QStringList multi_role = duplicatePersons( QList< QStringList >() << opers.names << revs.names << apprs.names );
+  if ( !multi_role.isEmpty() )
+    {
+      QMessageBox::warning( this, tr( "One Person - One Role" ),
+			    tr( "<font color='red'><b>ATTENTION:</b> </font> The following person(s) would hold "
+				"more than one role (operator, reviewer, approver):<br><br>"
+				"<b>%1</b><br><br>"
+				"A person can hold only ONE role. Nothing has been changed." )
+			    .arg( multi_role.join( "<br>" ) ) );
+      return;
+    }
 
   QString opers_updated = opers.html;
   QString revs_updated  = revs.html;
@@ -3241,6 +3435,19 @@ void US_eSignaturesGMP::assignOperRevs( void )
   QStringList oper_listList = namesFromLines( oper_list );
   QStringList rev_listList  = namesFromLines( rev_list );
   QStringList appr_listList = namesFromLines( appr_list );
+
+  //a person can hold only ONE role: refuse to save otherwise
+  QStringList multi_role = duplicatePersons( QList< QStringList >() << oper_listList << rev_listList << appr_listList );
+  if ( !multi_role.isEmpty() )
+    {
+      QMessageBox::warning( this, tr( "One Person - One Role" ),
+			    tr( "<font color='red'><b>ATTENTION:</b> </font> The following person(s) would hold "
+				"more than one role (operator, reviewer, approver):<br><br>"
+				"<b>%1</b><br><br>"
+				"A person can hold only ONE role. Nothing has been changed." )
+			    .arg( multi_role.join( "<br>" ) ) );
+      return;
+    }
 
   QString operListJsonArray = jsonToString( namesToJsonArray( oper_listList ) );
   QString revListJsonArray  = jsonToString( namesToJsonArray( rev_listList ) );
