@@ -970,6 +970,9 @@ endif()
 # HPC: only us_mpi_analysis (NO_DB, no GUI)
 if(US3_BUILD_PROGRAMS)
     add_subdirectory(programs)
+elseif(BUILD_TESTING AND NOT US3_NO_DB)
+    # TEST: us_sim_inputs_gen needs only Utils, so build it for its CLI test.
+    add_subdirectory(programs/us_sim_inputs_gen)
 endif()
 
 if(BUILD_TESTING)
