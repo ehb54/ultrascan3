@@ -1298,12 +1298,13 @@ DbgLv(1) << "SP: ssFts: ispeed" << sim_speed_prof[0].rotorspeed
 }
 
 // Set the edit radii implied by a simulated cell geometry.
-// Simulated data has no optical artifacts, so the fit range spans the column.
-void US_SimulationParameters::editRadiiFromCell( US_DataIO::EditValues& edits, double meniscus, double bottom )
+// The only optical artifact in simulated data is the spike the simulators put
+// at the meniscus, so the fit range spans the rest of the column.
+void US_SimulationParameters::editRadiiFromCell( US_DataIO::EditValues& edits, double meniscus, double bottom, double resolution )
 {
-   // Starts the range past the meniscus reading, which us_mwl_species_sim
-   // sets to a spike; half the default 0.001 cm radial resolution.
-   const double past_meniscus   = 0.0005;
+   // Start one grid step past the spike: a point between two readings would
+   // leave US_DataIO::index() to break the tie, and it picks the spike.
+   const double past_meniscus   = resolution;
    const double baseline_offset = 0.0055; // cm past the meniscus
    const double plateau_inset   = 0.3;    // cm before the bottom
    const double standard_column = 1.4;    // cm; shorter columns scale the inset

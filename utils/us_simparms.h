@@ -136,11 +136,13 @@ class US_UTIL_EXTERN US_SimulationParameters
    static int ssProfFromTimeState( US_TimeState*, QVector< SimSpeedProf >& );
 
    //! \brief Set edit radii from simulated cell geometry.
-   //! The data range spans the column from just past the meniscus to the bottom.
-   //! \param edits    Reference to the edit values to fill in
-   //! \param meniscus Meniscus radius of the simulated cell
-   //! \param bottom   Bottom radius of the simulated cell
-   static void             editRadiiFromCell( US_DataIO::EditValues& edits, double meniscus, double bottom );
+   //! The data range spans the column from the first reading past the
+   //! meniscus spike to the bottom.
+   //! \param edits      Reference to the edit values to fill in
+   //! \param meniscus   Meniscus radius of the simulated cell
+   //! \param bottom     Bottom radius of the simulated cell
+   //! \param resolution Radial grid spacing of the simulated data
+   static void             editRadiiFromCell( US_DataIO::EditValues& edits, double meniscus, double bottom, double resolution );
 
    //! \brief Function to build an internal simulation speed step profile
    //!        vector from an internal TimeState object.

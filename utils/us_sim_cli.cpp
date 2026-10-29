@@ -26,7 +26,8 @@ struct Option
       Apply       apply;
 };
 
-const int Both = US_SimCli::Astfem | US_SimCli::MwlSpecies;
+// Accepted by every simulator.
+const int All = US_SimCli::Astfem | US_SimCli::MwlSpecies;
 
 // A flag sets one field.
 Apply     flag( bool US_SimCliArgs::*field )
@@ -92,10 +93,10 @@ const QVector<Option>& options()
            args.models = value.split( ",", Qt::SkipEmptyParts );
            return true;
         } },
-      { Both, { "buffer" }, loadHelp.arg( "buffer" ), "buffer", "", text( &US_SimCliArgs::buffer ) },
-      { Both, { "simparams" }, "Load simulation parameters from a file path", "simparams", "", text( &US_SimCliArgs::simparams ) },
-      { Both, { "rotor" }, loadHelp.arg( "rotor" ), "rotor", "", text( &US_SimCliArgs::rotor ) },
-      { Both,
+      { All, { "buffer" }, loadHelp.arg( "buffer" ), "buffer", "", text( &US_SimCliArgs::buffer ) },
+      { All, { "simparams" }, "Load simulation parameters from a file path", "simparams", "", text( &US_SimCliArgs::simparams ) },
+      { All, { "rotor" }, loadHelp.arg( "rotor" ), "rotor", "", text( &US_SimCliArgs::rotor ) },
+      { All,
         { "centerpiece" },
         centerpieceHelp,
         "index",
@@ -120,7 +121,7 @@ const QVector<Option>& options()
         centerpieceValue( &US_SimCliArgs::centerpiece_row, true ) },
       { US_SimCli::Astfem, { "movie" }, "Show the simulation as a movie", "", "", flag( &US_SimCliArgs::movie ) },
       { US_SimCli::Astfem, { "timecorr" }, "Use time correction", "", "", flag( &US_SimCliArgs::timecorr ) },
-      { Both, { "start" }, "Start the simulation automatically", "", "", flag( &US_SimCliArgs::start ) },
+      { All, { "start" }, "Start the simulation automatically", "", "", flag( &US_SimCliArgs::start ) },
       { US_SimCli::Astfem,
         { "save" },
         "Directory to write the run into; its last path component becomes the "
@@ -136,7 +137,7 @@ const QVector<Option>& options()
         "save",
         "",
         text( &US_SimCliArgs::save ) },
-      { Both,
+      { All,
         { "guid-seed" },
         "Derive this run's experiment, raw and edit GUIDs from this text "
         "instead of minting random ones, so simulating the same inputs twice "
@@ -144,7 +145,7 @@ const QVector<Option>& options()
         "text",
         "",
         text( &US_SimCliArgs::guid_seed ) },
-      { Both,
+      { All,
         { "edit-timestamp" },
         "Stamp the edit filenames with this yyMMddhhmm instead of the current "
         "clock, so the run's filenames are reproducible too",
@@ -161,15 +162,15 @@ const QVector<Option>& options()
            args.edit_stamp = value;
            return true;
         } },
-      { Both, { "close" }, "Close application if no errors occurred", "", "", flag( &US_SimCliArgs::close ) },
-      { Both,
+      { All, { "close" }, "Close application if no errors occurred", "", "", flag( &US_SimCliArgs::close ) },
+      { All,
         { "no-db" },
         "Ignore database preferences and use only locally available data",
         "",
         "",
         flag( &US_SimCliArgs::no_db ) },
-      { Both, { "errors-cl" }, "Write errors to the console without opening the GUI", "", "", flag( &US_SimCliArgs::errors_cl ) },
-      { Both,
+      { All, { "errors-cl" }, "Write errors to the console without opening the GUI", "", "", flag( &US_SimCliArgs::errors_cl ) },
+      { All,
         { "runtype" },
         "Two-character optical data type to tag the output with (" + US_SimCli::runTypes().join( ", " ) +
            "; default RA). Affects the type tag and the derived file names only -- "
@@ -186,7 +187,7 @@ const QVector<Option>& options()
            args.run_type = run_type;
            return true;
         } },
-      { Both,
+      { All,
         { "description" },
         "Description stored with the simulated data (default "
         "\"Simulation\"; up to 239 Latin-1 characters)",
@@ -239,7 +240,7 @@ const QVector<Option>& options()
            args.channel = channel.at( 0 ).toLatin1();
            return true;
         } },
-      { Both,
+      { All,
         { "noise-seed" },
         QString( "Seed for the noise generator (1 to %1). Given the same "
                  "seed and the same inputs, a run's noise is reproducible; "

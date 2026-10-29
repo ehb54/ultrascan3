@@ -5,7 +5,7 @@ QT+=xml
 HEADERS       = us_astfem_sim.h             \
                 us_clipdata.h
 
-SOURCES       = main.cpp                    \
+SOURCES       = us_astfem_sim_main.cpp      \
                 us_astfem_sim.cpp           \
                 us_clipdata.cpp
 

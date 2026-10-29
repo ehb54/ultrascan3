@@ -773,68 +773,68 @@ DbgLv(1) << "==SimPar:MAIN:SetP";
       sim_data_all.xvalues[ jp ] = simparams.meniscus
                                    + jp * simparams.radial_resolution;
    }
-DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
- << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
+   DbgLv( 1 ) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn" << sim_data_all.xvalues[0]
+              << sim_data_all.xvalues[points - 1];
 
-//   sim_data_all.xvalues[ points - 1 ] = simparams.bottom;
-//DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
-// << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
+   //   sim_data_all.xvalues[ points - 1 ] = simparams.bottom;
+   //DbgLv(1) << "SimPar:MAIN:SetP:  points" << points << "rad0 radn"
+   // << sim_data_all.xvalues[0] << sim_data_all.xvalues[points-1];
 
-// Fill in speed steps with scan times and omega^2t; build raw data
-double s_speed = 0.0;
-int    nstep   = simparams.speed_step.count();
+   // Fill in speed steps with scan times and omega^2t; build raw data
+   double s_speed = 0.0;
+   int    nstep   = simparams.speed_step.count();
 
-double previous_speed = 0.0;
-double previous_time  = 0.0;
-double previous_w2t   = 0.0;
-for ( int jj = 0; jj < nstep; jj++ )
-{
-   US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[jj];
-   if ( nstep > 0 && sp->set_speed < 1.0 )
-   { // For multi-speed, insure values for set and average speeds
-      s_speed       = qRound( sp->rotorspeed * 0.01 ) * 100.0;
-      sp->set_speed = s_speed;
-      sp->avg_speed = sp->rotorspeed;
-   }
-   const double    target_speed       = ( sp->set_speed == 0.0 ) ? sp->rotorspeed : sp->set_speed;
-   const double    delay              = qRound( sp->delay_hours * 3600.0 + sp->delay_minutes * 60.0 );
-   const double    duration           = qRound( sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0 );
-   const double    scanning_time      = duration - delay;
-   const double    time_between_scans = ( sp->scans > 1 ) ? scanning_time / static_cast<double>( sp->scans - 1 ) : 0.0;
-   US_DataIO::Scan scandata;
-   scandata.temperature = simparams.temperature;
-   scandata.rpm         = target_speed;
-   scandata.wavelength  = system.wavelength;
-   scandata.plateau     = 0.0;
-   scandata.delta_r     = simparams.radial_resolution;
-   scandata.rvalues.fill( 0.0, points );
-   for ( int s = 0; s < sp->scans; s++ )
+   double previous_speed = 0.0;
+   double previous_time  = 0.0;
+   double previous_w2t   = 0.0;
+   for ( int jj = 0; jj < nstep; jj++ )
    {
-      scandata.seconds = static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
-      scandata.omega2t = US_AstfemMath::calc_omega2t(
-         previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, scandata.seconds );
-      if ( s == 0 )
+      US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[jj];
+      if ( nstep > 0 && sp->set_speed < 1.0 )
+      { // For multi-speed, insure values for set and average speeds
+         s_speed       = qRound( sp->rotorspeed * 0.01 ) * 100.0;
+         sp->set_speed = s_speed;
+         sp->avg_speed = sp->rotorspeed;
+      }
+      const double    target_speed       = ( sp->set_speed == 0.0 ) ? sp->rotorspeed : sp->set_speed;
+      const double    delay              = qRound( sp->delay_hours * 3600.0 + sp->delay_minutes * 60.0 );
+      const double    duration           = qRound( sp->duration_hours * 3600.0 + sp->duration_minutes * 60.0 );
+      const double    scanning_time      = duration - delay;
+      const double    time_between_scans = ( sp->scans > 1 ) ? scanning_time / static_cast<double>( sp->scans - 1 ) : 0.0;
+      US_DataIO::Scan scandata;
+      scandata.temperature = simparams.temperature;
+      scandata.rpm         = target_speed;
+      scandata.wavelength  = system.wavelength;
+      scandata.plateau     = 0.0;
+      scandata.delta_r     = simparams.radial_resolution;
+      scandata.rvalues.fill( 0.0, points );
+      for ( int s = 0; s < sp->scans; s++ )
       {
-         sp->time_first = scandata.seconds;
-         sp->w2t_first  = scandata.omega2t;
-         if ( sp->scans == 1 )
+         scandata.seconds = static_cast<double>( qRound( previous_time + delay + time_between_scans * s ) );
+         scandata.omega2t = US_AstfemMath::calc_omega2t(
+            previous_w2t, previous_speed, previous_time, target_speed, sp->acceleration, scandata.seconds );
+         if ( s == 0 )
          {
-            sp->time_last = sp->time_first;
-            sp->w2t_last  = sp->w2t_first;
+            sp->time_first = scandata.seconds;
+            sp->w2t_first  = scandata.omega2t;
+            if ( sp->scans == 1 )
+            {
+               sp->time_last = sp->time_first;
+               sp->w2t_last  = sp->w2t_first;
+            }
          }
+         else if ( s == sp->scans - 1 )
+         {
+            sp->time_last = scandata.seconds;
+            sp->w2t_last  = scandata.omega2t;
+         }
+         DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
+         sim_data_all.scanData << scandata;
       }
-      else if ( s == sp->scans - 1 )
-      {
-         sp->time_last = scandata.seconds;
-         sp->w2t_last  = scandata.omega2t;
-      }
-      DbgLv( 1 ) << "SimPar:MAIN:SetP: js time omega2t " << s << scandata.seconds << scandata.omega2t;
-      sim_data_all.scanData << scandata;
+      previous_speed = target_speed;
+      previous_time  = sp->time_last;
+      previous_w2t   = sp->w2t_last;
    }
-   previous_speed = target_speed;
-   previous_time  = sp->time_last;
-   previous_w2t   = sp->w2t_last;
-}
 
    // Create a timestate for this speed profile set
    if ( !tmst_tfpath.isEmpty()  ||
@@ -900,31 +900,31 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 // Start simulation
 void US_Astfem_Sim::start_simulation( void )
 {
-//DbgLv(1) << "start_simulation is called";
-sim_failed = false;
+   //DbgLv(1) << "start_simulation is called";
+   sim_failed = false;
 
-int           size_cv = system.components.size(); // Number of components in the system
-QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
+   int           size_cv = system.components.size(); // Number of components in the system
+   QVector<bool> reactVec( size_cv );                // Boolean array showing reaction case between system
 
-//moviePlot->autoRefresh();
+   //moviePlot->autoRefresh();
 
-moviePlot->replot();
-curve_count = 0;
-image_count = 0;
-int nstep   = simparams.speed_step.size();
-dataPlotClear( scanPlot );
-scanPlot->setAxisAutoScale( QwtPlot::xBottom );
-scanPlot->replot();
+   moviePlot->replot();
+   curve_count = 0;
+   image_count = 0;
+   int nstep   = simparams.speed_step.size();
+   dataPlotClear( scanPlot );
+   scanPlot->setAxisAutoScale( QwtPlot::xBottom );
+   scanPlot->replot();
 
-pb_stop->setEnabled( true );
-pb_start->setEnabled( false );
-pb_saveSim->setEnabled( false );
+   pb_stop->setEnabled( true );
+   pb_start->setEnabled( false );
+   pb_saveSim->setEnabled( false );
 
-// The astfem/astfvm simulation routines expects a dataset structure that
-// is initialized with a time and radius grid, and all concentration points
-// need to be set to zero. Each speed is a separate mfem_data set.
-sim_datas.resize( nstep );
-DbgLv(1) << "start_simulation is called, steps:" << nstep;
+   // The astfem/astfvm simulation routines expects a dataset structure that
+   // is initialized with a time and radius grid, and all concentration points
+   // need to be set to zero. Each speed is a separate mfem_data set.
+   sim_datas.resize( nstep );
+   DbgLv( 1 ) << "start_simulation is called, steps:" << nstep;
    // Experimental grid setting starts from here
    for ( int jd = 0; jd < nstep; jd++ )
    {
@@ -1586,8 +1586,9 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
          }
       } // End:  multi-speed case
    }  // End:  output directory specified
+   // Only a headless --save writes the experiment, solution and edit records.
    if ( !write_records )
-   { // Write experiment, solution, and edit records when requested.
+   {
       return true;
    }
 
@@ -1686,7 +1687,8 @@ DbgLv(1) << "ASIM:svscn: 1-speed file paths"  << odir << tmst_fpath;
       ev.editGUID   = US_SimRecord::guid( guid_seed, "edit." + edit_runid );
       ev.dataGUID   = US_Util::uuid_unparse( reinterpret_cast<uchar*>( sim_data.rawGUID ) );
 
-      US_SimulationParameters::editRadiiFromCell( ev, af_params.current_meniscus, af_params.current_bottom );
+      US_SimulationParameters::editRadiiFromCell(
+         ev, af_params.current_meniscus, af_params.current_bottom, simparams.radial_resolution );
       ev.ODlimit = US_SimRecord::maxOD( sim_data );
 
       if ( US_DataIO::writeEdits( edir + fname, ev ) != US_DataIO::OK )
@@ -1850,21 +1852,20 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          if ( kchange > 0 )
             nmodscn++;
       }
-DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
- << "maxc dthresh" << maxc << dthresh;
+      DbgLv( 1 ) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn << "maxc dthresh" << maxc << dthresh;
 
       // Report that some readings were threshold-limited
-if ( !supress_dialog )
-{
-   QMessageBox::information( this,
-                             tr( "OD Values Limited to Threshold" ),
-                             tr( "%1 readings in %2 scans were reset to the threshold "
-                                 "value of %3.\nThe maximum OD before thresholding was %4." )
-                                .arg( nchange )
-                                .arg( nmodscn )
-                                .arg( dthresh )
-                                .arg( maxc ) );
-}
+      if ( !supress_dialog )
+      {
+         QMessageBox::information( this,
+                                   tr( "OD Values Limited to Threshold" ),
+                                   tr( "%1 readings in %2 scans were reset to the threshold "
+                                       "value of %3.\nThe maximum OD before thresholding was %4." )
+                                      .arg( nchange )
+                                      .arg( nmodscn )
+                                      .arg( dthresh )
+                                      .arg( maxc ) );
+      }
    }
 
 

@@ -283,6 +283,62 @@ class US_MwlSpeciesSimPersistTest : public QObject
          QVERIFY( QDir( multiOut ).isEmpty() );
       }
 
+      void centerpieceBottomReachesTheSolver()
+      {
+         // Centerpiece index 2 is a standard sector with a 7.15 cm bottom. A
+         // run selecting it must match one whose parameters already have that
+         // geometry; a solver left at the parameters' 7.2 cm bottom would not.
+         QString cpGeometry = QString( kSimParams ).replace( "bottom=\"7.2\"", "bottom=\"7.15\"" );
+         cpGeometry.replace( "sector=\"0\"", "sector=\"1\"" );
+         QVERIFY( writeText( inputs + "/simparams_cp_geometry.xml", cpGeometry ) );
+
+         QList<US_DataIO::RawData> runs;
+         for ( const QStringList& extra : { QStringList{ "--simparams", inputs + "/simparams.xml", "--centerpiece", "2" },
+                                            QStringList{ "--simparams", inputs + "/simparams_cp_geometry.xml" } } )
+         {
+            const QString dir = scratch.path() + "/out_cp" + QString::number( runs.size() ) + "/" + kRunID;
+            QVERIFY( QDir().mkpath( dir ) );
+
+            QProcess sim;
+            sim.setProcessEnvironment( env );
+            sim.start( US_MWL_SPECIES_SIM_EXE,
+                       QStringList{ "--no-db",
+                                    "--errors-cl",
+                                    "--start",
+                                    "--close",
+                                    "--models",
+                                    models.join( "," ),
+                                    "--buffer",
+                                    inputs + "/buffer.xml",
+                                    "--rotor",
+                                    "1",
+                                    "--save",
+                                    dir,
+                                    "--guid-seed",
+                                    kGuidSeed,
+                                    "--noise-seed",
+                                    "4242",
+                                    "--edit-timestamp",
+                                    kEditStamp } +
+                          extra );
+            QVERIFY( sim.waitForFinished( 300000 ) );
+            QCOMPARE( sim.exitCode(), 0 );
+
+            const QStringList aucs = QDir( dir ).entryList( { "*.auc" }, QDir::Files );
+            QVERIFY( !aucs.isEmpty() );
+            US_DataIO::RawData data;
+            QCOMPARE( US_DataIO::readRawData( dir + "/" + aucs.first(), data ), int( US_DataIO::OK ) );
+            runs << data;
+         }
+
+         QCOMPARE( runs[0].xvalues, runs[1].xvalues );
+         QCOMPARE( runs[0].scanData.size(), runs[1].scanData.size() );
+         for ( int js = 0; js < runs[0].scanData.size(); js++ )
+         {
+            QCOMPARE( runs[0].scanData[js].rvalues, runs[1].scanData[js].rvalues );
+         }
+      }
+
       void theRunHasOneExperimentRecordNamingAProject()
       {
          const QString expPath = outDir + "/" + savedRunID + ".RA.xml";

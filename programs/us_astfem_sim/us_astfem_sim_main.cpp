@@ -1,4 +1,4 @@
-//! \file main.cpp
+//! \file us_astfem_sim_main.cpp
 //! \brief Entry point for us_astfem_sim.
 
 #include <QApplication>
@@ -15,11 +15,12 @@
 //! the class US_Astfem_Sim.
 int main( int argc, char* argv[] )
 {
+   useOffscreenPlatformIfHeadless( argc, argv );
    QApplication application( argc, argv );
    QApplication::setApplicationName( "us_astfem_sim" );
    QApplication::setApplicationDisplayName( "US Astfem Simulation Module" );
    QApplication::setApplicationVersion( US_Version );
-   QApplication::setOrganizationDomain( "https://ultrascan.aucsoltions.com" );
+   QApplication::setOrganizationDomain( "ultrascan.aucsolutions.com" );
    QApplication::setOrganizationName( "AUC Solutions, LLC" );
    // --help, --version and invalid options should work without a license,
    // so the command line is parsed and checked before main1.inc's license

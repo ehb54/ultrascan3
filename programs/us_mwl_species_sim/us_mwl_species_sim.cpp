@@ -978,6 +978,10 @@ int US_MwlSpeciesSim::init_from_args( const US_SimCliArgs& args )
          QList<US_AbstractCenterpiece> cp_list;
          US_AbstractCenterpiece::read_centerpieces( NULL, cp_list );
          sim_centerpiece_id = cp_list[cp].serial_number;
+
+         // setHardware() moves only bottom_position; set_parameters() copies
+         // it to the bottom the solver uses, as us_astfem_sim does.
+         set_parameters();
       }
    }
 
@@ -1152,18 +1156,18 @@ bool US_MwlSpeciesSim::save_sims_to( const QString& save_dir )
       QString swavl      = mdesc.section( ".", -3, -3 ).mid( 2, 3 ) + ".auc";
       QString fname      = QString( basefn ).replace( "xxx.auc", swavl );
       QString fpath      = impdir + fname;
-DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
+      DbgLv( 1 ) << " svsim: jm" << jm << "fname" << fname;
 
-te_status->setText( tr( "Saving data: %1" ).arg( swavl ) );
-qApp->processEvents();
+      te_status->setText( tr( "Saving data: %1" ).arg( swavl ) );
+      qApp->processEvents();
 
-int stat = US_DataIO::writeRawData( fpath, synData[jm] );
-if ( stat != US_DataIO::OK )
-{
-   qDebug() << "Error: could not write" << fpath << "status" << stat;
-   te_status->setText( tr( "Error writing %1" ).arg( fname ) );
-   return false;
-}
+      int stat = US_DataIO::writeRawData( fpath, synData[jm] );
+      if ( stat != US_DataIO::OK )
+      {
+         qDebug() << "Error: could not write" << fpath << "status" << stat;
+         te_status->setText( tr( "Error writing %1" ).arg( fname ) );
+         return false;
+      }
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
@@ -1173,14 +1177,14 @@ if ( stat != US_DataIO::OK )
 
    QString tfname     = orunid + ".time_state.tmst";
    QString tfpath     = impdir + tfname;
-DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
+   DbgLv( 1 ) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
-// Zero indicates a time-state write failure.
-if ( writeTimeState( tfpath, simparams, synData[0] ) == 0 )
-{
-   qDebug() << "Error: could not write time state" << tfpath;
-   return false;
-}
+   // Zero indicates a time-state write failure.
+   if ( writeTimeState( tfpath, simparams, synData[0] ) == 0 )
+   {
+      qDebug() << "Error: could not write time state" << tfpath;
+      return false;
+   }
 
    smsga             += tr( "\n\nTime State file\n%1\nhas been written" )
                         .arg( tfname );
@@ -1330,7 +1334,7 @@ bool US_MwlSpeciesSim::write_edit_files( const QString& impdir, const QString& c
       ev.editGUID   = US_SimRecord::guid( guid_seed, "edit." + orunid + "." + QString::number( jm ) );
       ev.dataGUID   = US_Util::uuid_unparse( reinterpret_cast<uchar*>( synData[jm].rawGUID ) );
 
-      US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom );
+      US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom, simparams.radial_resolution );
       ev.ODlimit = US_SimRecord::maxOD( synData[jm] );
 
       if ( US_DataIO::writeEdits( impdir + fname, ev ) != US_DataIO::OK )

@@ -3,6 +3,7 @@
 
 #include <QApplication>
 
+#include "us_defines.h"
 #include "us_gui_settings.h"
 #include "us_headless_cli.h"
 #include "us_license.h"
@@ -13,7 +14,13 @@
 //! \brief Load translators and start US_MwlSpeciesSim.
 int main( int argc, char* argv[] )
 {
-   QApplication  application( argc, argv );
+   useOffscreenPlatformIfHeadless( argc, argv );
+   QApplication application( argc, argv );
+   QApplication::setApplicationName( "us_mwl_species_sim" );
+   QApplication::setApplicationDisplayName( "US MWL Species Simulation Module" );
+   QApplication::setApplicationVersion( US_Version );
+   QApplication::setOrganizationDomain( "ultrascan.aucsolutions.com" );
+   QApplication::setOrganizationName( "AUC Solutions, LLC" );
 
    // --help, --version and invalid options should work without a license,
    // so the command line is parsed and checked before main1.inc's license

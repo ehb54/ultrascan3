@@ -12,6 +12,38 @@
 
 #include "us_sim_cli.h"
 
+//! \brief Use Qt's offscreen platform when no window will be shown, so
+//! headless runs need no display.
+//! --help and --version only print, and --errors-cl never shows the GUI.
+//! Call before constructing QApplication. A QT_QPA_PLATFORM the user set is
+//! kept, and the native platform is the fallback for a package that ships
+//! without the offscreen plugin.
+inline void useOffscreenPlatformIfHeadless( int argc, char* argv[] )
+{
+   if ( qEnvironmentVariableIsSet( "QT_QPA_PLATFORM" ) )
+   {
+      return;
+   }
+
+#if defined( Q_OS_MACOS )
+   const char* native = "cocoa";
+#elif defined( Q_OS_WIN )
+   const char* native = "windows";
+#else
+   const char* native = "xcb;wayland";
+#endif
+
+   const QStringList headless = { "--errors-cl", "--help", "-h", "-?", "--version", "-v" };
+   for ( int ii = 1; ii < argc; ii++ )
+   {
+      if ( headless.contains( QString::fromLocal8Bit( argv[ii] ) ) )
+      {
+         qputenv( "QT_QPA_PLATFORM", QByteArray( "offscreen;" ) + native );
+         return;
+      }
+   }
+}
+
 //! \brief Parse the simulator's command line, printing help, version or errors.
 //! \return true if the caller should return immediately using exit_code;
 //! false if it should continue with args.
