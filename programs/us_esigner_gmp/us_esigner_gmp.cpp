@@ -2562,6 +2562,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 
       AutoflowBaseRow row = baseRows.at( irow );
       bool skip = ( row.devRecord == "Processed" );
+      QString skip_reason = skip ? "devRecord is Processed (protocol development record)" : "";
 
       /* Check for HISTORY -- if autoflowGMPReportEsign where ID=devRecord EXISTS!!! */
       /* If not - GMP report completely eSigned, so do not include in the list (cont.) */
@@ -2570,7 +2571,10 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	  QMap<QString,QString> eSign_rec = read_autoflowGMPReportEsign_record( row.id );
 
 	  if ( eSign_rec.isEmpty() )
-	    skip = true;
+	    {
+	      skip = true;
+	      skip_reason = "no open autoflowGMPReportEsign record (report fully eSigned, or none created)";
+	    }
 	}
 
       if ( !skip )
@@ -2636,14 +2640,23 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	    {
 	      autoflowdata  << autoflowentry;
 	      nrecs++;
+	      qDebug() << "list_all_autoflow_records(" << type << "): INCLUDED autoflowID" << row.id << runname;
 	    }
+	  else
+	    qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << runname
+		     << ": run belongs to another investigator and user level is < 3";
 	}
+      else
+	qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << row.runname
+		 << ":" << skip_reason;
 
       if ( progress )
 	{
 	  progress->setValue( irow + 1 );
 	  QString scanText = ( type == "HISTORY" ) ?
-	    tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) :
+	    ( reassign_revs_sep ?
+	      tr( "Looking for completed GMP runs with an open e-Signature record (all users)..." ) :
+	      tr( "Scanning completed GMP runs for outstanding e-Signatures..." ) ) :
 	    tr( "Scanning current GMP runs..." );
 	  progress->setLabelText( tr( "<b>Please Wait</b><br>%1<br>"
 				       "%2 of %3 checked, %4 record(s) found" )
