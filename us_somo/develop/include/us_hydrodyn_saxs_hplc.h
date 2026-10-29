@@ -1656,6 +1656,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < double >            scale_spline_y2;
 
       void                         scale_replot();
+      void                         set_curve_visible( const QString & file, bool visible );
 
       map < QString, QwtPlotCurve * >     scale_plotted_errors;
 

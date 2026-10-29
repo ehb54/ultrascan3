@@ -1156,13 +1156,23 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
 
    get_min_max( file, minx, maxx, miny, maxy );
 
+   // in scale analysis, the curves being scaled are drawn as currently scaled, SD bars included
+   bool use_scale =
+      current_mode == MODE_SCALE &&
+      scale_q.count( file ) &&
+      scale_I.count( file ) &&
+      scale_e.count( file );
+   vector < double > & use_qs     = use_scale ? scale_q[ file ] : f_qs    [ file ];
+   vector < double > & use_Is     = use_scale ? scale_I[ file ] : f_Is    [ file ];
+   vector < double > & use_errors = use_scale ? scale_e[ file ] : f_errors[ file ];
+
    QwtPlotCurve *curve = new QwtPlotCurve( file );
    plotted_curves[ file ] = curve;
    curve->setStyle( cb_dots->isChecked() ? QwtPlotCurve::Dots : QwtPlotCurve::Lines );
 
-   unsigned int q_points = f_qs[ file ].size();
+   unsigned int q_points = use_qs.size();
 
-   bool use_error = cb_eb->isChecked() && ( f_errors[ file ].size() == q_points );
+   bool use_error = cb_eb->isChecked() && ( use_errors.size() == q_points );
    double x[ 2 ];
    double y[ 2 ];
 
@@ -1178,8 +1188,8 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
          curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
-                        (double *)&( f_qs[ file ][ 0 ] ),
-                        (double *)&( f_Is[ file ][ 0 ] ),
+                        (double *)&( use_qs[ 0 ] ),
+                        (double *)&( use_Is[ 0 ] ),
                         q_points
                         );
 
@@ -1193,10 +1203,10 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
          {
             QwtPlotCurve *curveeb = new QwtPlotCurve( UPU_EB_PREFIX + file );
             curveeb->setStyle( QwtPlotCurve::Lines );
-            x[ 0 ] = f_qs[ file ][ i ];
+            x[ 0 ] = use_qs[ i ];
             x[ 1 ] = x[ 0 ];
-            y[ 0 ] = f_Is[ file ][ i ] - f_errors[ file ][ i ];
-            y[ 1 ] = f_Is[ file ][ i ] + f_errors[ file ][ i ];
+            y[ 0 ] = use_Is[ i ] - use_errors[ i ];
+            y[ 1 ] = use_Is[ i ] + use_errors[ i ];
 
             curveeb->setSamples(
                              (double *)&( x[ 0 ] ),
@@ -1214,11 +1224,11 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
          vector < double > e;
          for ( unsigned int i = 0; i < q_points; i++ )
          {
-            if ( f_Is[ file ][ i ] - f_errors[ file ][ i ] > 0e0 )
+            if ( use_Is[ i ] - use_errors[ i ] > 0e0 )
             {
-               q.push_back( f_qs[ file ][ i ] );
-               I.push_back( f_Is[ file ][ i ] );
-               e.push_back( f_errors[ file ][ i ] );
+               q.push_back( use_qs[ i ] );
+               I.push_back( use_Is[ i ] );
+               e.push_back( use_errors[ i ] );
             }
          }
          q_points = ( unsigned int )q.size();
@@ -1263,8 +1273,8 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
          curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
-                        (double *)&( f_qs[ file ][ 0 ] ),
-                        (double *)&( f_Is[ file ][ 0 ] ),
+                        (double *)&( use_qs[ 0 ] ),
+                        (double *)&( use_Is[ 0 ] ),
                         q_points
                         );
 
@@ -1275,10 +1285,10 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
          vector < double > I;
          for ( unsigned int i = 0; i < q_points; i++ )
          {
-            if ( f_Is[ file ][ i ] > 0e0 )
+            if ( use_Is[ i ] > 0e0 )
             {
-               q.push_back( f_qs[ file ][ i ] );
-               I.push_back( f_Is[ file ][ i ] );
+               q.push_back( use_qs[ i ] );
+               I.push_back( use_Is[ i ] );
             }
          }
          q_points = ( unsigned int )q.size();
