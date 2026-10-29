@@ -288,6 +288,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_PROTOCOL, tr( "&Protocol Development" ),     gmp );
   addMenu(  P_GMPRPT,   tr( "&GMP Report Generator and Viewer"  ), gmp );
   addMenu(  P_ESIGN,    tr( "&e-Signature Assignment" ),   gmp );
+  addMenu(  P_REASSIGN, tr( "&Reassign Operators, Reviewers, Approvers" ), gmp );
   addMenu(  P_AUDIT,    tr( "&Audit Trail" ),              gmp );
 
   QMenu* database    = new QMenu( tr( "&Database" ),    this );
