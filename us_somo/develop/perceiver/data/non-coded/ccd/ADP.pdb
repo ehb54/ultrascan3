@@ -1,0 +1,31 @@
+REMARK   1 ADP: model coordinates from the wwPDB Chemical Component Dictionary
+REMARK   1 (https://files.rcsb.org/ligands/view/ADP.cif), taken from PDB entry 1PHP,
+REMARK   1 heavy atoms only.
+HETATM    1  PB  ADP A   1      44.669   2.928  38.556  1.00  0.00           P
+HETATM    2  O1B ADP A   1      46.021   3.508  38.317  1.00  0.00           O
+HETATM    3  O2B ADP A   1      43.709   3.812  37.905  1.00  0.00           O
+HETATM    4  O3B ADP A   1      44.459   1.449  38.382  1.00  0.00           O
+HETATM    5  PA  ADP A   1      43.230   2.955  41.110  1.00  0.00           P
+HETATM    6  O1A ADP A   1      41.975   3.497  40.573  1.00  0.00           O
+HETATM    7  O2A ADP A   1      42.962   1.501  41.401  1.00  0.00           O
+HETATM    8  O3A ADP A   1      44.522   3.210  40.212  1.00  0.00           O
+HETATM    9  O5' ADP A   1      43.462   3.832  42.407  1.00  0.00           O
+HETATM   10  C5' ADP A   1      43.735   5.246  42.335  1.00  0.00           C
+HETATM   11  C4' ADP A   1      43.095   5.810  43.626  1.00  0.00           C
+HETATM   12  O4' ADP A   1      43.764   5.261  44.779  1.00  0.00           O
+HETATM   13  C3' ADP A   1      43.337   7.325  43.617  1.00  0.00           C
+HETATM   14  O3' ADP A   1      42.056   7.988  43.560  1.00  0.00           O
+HETATM   15  C2' ADP A   1      43.946   7.593  45.083  1.00  0.00           C
+HETATM   16  O2' ADP A   1      43.554   8.726  45.877  1.00  0.00           O
+HETATM   17  C1' ADP A   1      43.613   6.275  45.813  1.00  0.00           C
+HETATM   18  N9  ADP A   1      44.375   5.781  46.991  1.00  0.00           N
+HETATM   19  C8  ADP A   1      45.711   5.486  47.062  1.00  0.00           C
+HETATM   20  N7  ADP A   1      46.202   5.379  48.282  1.00  0.00           N
+HETATM   21  C5  ADP A   1      45.067   5.597  49.064  1.00  0.00           C
+HETATM   22  C6  ADP A   1      44.883   5.623  50.499  1.00  0.00           C
+HETATM   23  N6  ADP A   1      45.912   5.433  51.325  1.00  0.00           N
+HETATM   24  N1  ADP A   1      43.626   5.852  50.896  1.00  0.00           N
+HETATM   25  C2  ADP A   1      42.590   6.076  50.067  1.00  0.00           C
+HETATM   26  N3  ADP A   1      42.675   6.067  48.735  1.00  0.00           N
+HETATM   27  C4  ADP A   1      43.951   5.821  48.304  1.00  0.00           C
+END
