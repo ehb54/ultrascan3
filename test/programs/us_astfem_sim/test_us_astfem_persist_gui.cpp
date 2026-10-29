@@ -20,6 +20,7 @@ namespace
 const char* const kRunID        = "persist-run";
 const char* const kGuidSeed     = "us3-persist-regression";
 const char* const kEditStamp    = "2401010000";
+const char* const kTriple       = "RA.1.S.123"; // runType.cell.channel.wavelength
 const int         kScansPerStep = 3;
 const char* const kDescription  = "ASTFEM persist test";
 
@@ -117,15 +118,43 @@ class US_AstfemSimPersistTest : public QObject
       QString             inputs;
       QProcessEnvironment env;
 
-      // Path of the sibling run directory a speed step is saved into.
-      QString             speedDir( int rpm ) const
-      {
-         return outRoot + "/" + QString( kRunID ) + QString::asprintf( "-%06d", rpm );
-      }
+      // The simulator saves each speed step as its own run.  With --save
+      // <outRoot>/persist-run and a step at 40000 rpm the layout is
+      //
+      //   <outRoot>/persist-run-040000/                    run directory
+      //      persist-run-040000.RA.xml                     experiment record
+      //      persist-run-040000.RA.1.S.123.auc             raw data
+      //      persist-run-040000.2401010000.RA.1.S.123.xml  edit record
+      //
+      // The run ID is the --save basename plus the step's rpm as "-%06d".
+      // The rest is the usual US3 naming: <runID>.<runType>.xml,
+      // <runID>.<runType>.<cell>.<channel>.<wavelength>.auc, and the edit
+      // inserts its --edit-timestamp after the run ID.  This test simulates
+      // one RA triple, cell 1, channel S, 123 nm.
 
       QString speedRunID( int rpm ) const
       {
          return QString( kRunID ) + QString::asprintf( "-%06d", rpm );
+      }
+
+      QString speedDir( int rpm ) const
+      {
+         return outRoot + "/" + speedRunID( rpm );
+      }
+
+      QString experimentName( int rpm ) const
+      {
+         return speedRunID( rpm ) + ".RA.xml";
+      }
+
+      QString aucName( int rpm ) const
+      {
+         return speedRunID( rpm ) + "." + kTriple + ".auc";
+      }
+
+      QString editName( int rpm ) const
+      {
+         return speedRunID( rpm ) + "." + kEditStamp + "." + kTriple + ".xml";
       }
 
       // Run the simulator with invalid options; return its stderr, or an empty
@@ -251,11 +280,9 @@ class US_AstfemSimPersistTest : public QObject
             const QDir dir( speedDir( rpm ) );
             QVERIFY2( dir.exists(), qPrintable( dir.path() ) );
 
-            const QString runID = speedRunID( rpm );
-            QCOMPARE( dir.entryList( { "*.auc" }, QDir::Files ), QStringList{ runID + ".RA.1.S.123.auc" } );
-            QCOMPARE( dir.entryList( { runID + ".RA.xml" }, QDir::Files ).size(), 1 );
-            QCOMPARE( dir.entryList( { "*." + QString( kEditStamp ) + ".*.xml" }, QDir::Files ),
-                      QStringList{ runID + "." + kEditStamp + ".RA.1.S.123.xml" } );
+            QCOMPARE( dir.entryList( { "*.auc" }, QDir::Files ), QStringList{ aucName( rpm ) } );
+            QCOMPARE( dir.entryList( { experimentName( rpm ) }, QDir::Files ).size(), 1 );
+            QCOMPARE( dir.entryList( { "*." + QString( kEditStamp ) + ".*.xml" }, QDir::Files ), QStringList{ editName( rpm ) } );
 
             // Each step's noise record sits beside the data it describes.
             QVERIFY( QFile::exists( dir.filePath( "ASTFEM_RI_NOISE.csv" ) ) );
@@ -266,8 +293,7 @@ class US_AstfemSimPersistTest : public QObject
       {
          for ( int rpm : { 40000, 50000 } )
          {
-            const QString      runID  = speedRunID( rpm );
-            const QVector<int> speeds = speedStepsOf( speedDir( rpm ) + "/" + runID + ".RA.xml" );
+            const QVector<int> speeds = speedStepsOf( speedDir( rpm ) + "/" + experimentName( rpm ) );
 
             QCOMPARE( speeds, QVector<int>{ rpm } );
          }
@@ -279,9 +305,8 @@ class US_AstfemSimPersistTest : public QObject
 
          for ( int rpm : { 40000, 50000 } )
          {
-            const QString      runID = speedRunID( rpm );
             US_DataIO::RawData data;
-            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + runID + ".RA.1.S.123.auc", data ), (int) US_DataIO::OK );
+            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + aucName( rpm ), data ), (int) US_DataIO::OK );
 
             QCOMPARE( data.scanCount(), kScansPerStep );
             QCOMPARE( (int) data.cell, 1 );
@@ -304,9 +329,8 @@ class US_AstfemSimPersistTest : public QObject
       {
          for ( int rpm : { 40000, 50000 } )
          {
-            const QString      runID = speedRunID( rpm );
             US_DataIO::RawData data;
-            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + runID + ".RA.1.S.123.auc", data ), (int) US_DataIO::OK );
+            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + aucName( rpm ), data ), (int) US_DataIO::OK );
 
             QFile csv( speedDir( rpm ) + "/ASTFEM_RI_NOISE.csv" );
             QVERIFY( csv.open( QIODevice::ReadOnly | QIODevice::Text ) );
@@ -348,7 +372,7 @@ class US_AstfemSimPersistTest : public QObject
          // Centerpiece index 3 is the Epon 6-channel rectangular, ID 4.
          for ( int rpm : { 40000, 50000 } )
          {
-            const QString expPath = speedDir( rpm ) + "/" + speedRunID( rpm ) + ".RA.xml";
+            const QString expPath = speedDir( rpm ) + "/" + experimentName( rpm );
             QCOMPARE( attributeOf( expPath, "centerpiece", "id" ), QString( "4" ) );
          }
       }
@@ -388,12 +412,11 @@ class US_AstfemSimPersistTest : public QObject
 
          for ( int rpm : { 40000, 50000 } )
          {
-            const QString      runID    = speedRunID( rpm );
-            const QString      expPath  = speedDir( rpm ) + "/" + runID + ".RA.xml";
-            const QString      editPath = speedDir( rpm ) + "/" + runID + "." + kEditStamp + ".RA.1.S.123.xml";
+            const QString      expPath  = speedDir( rpm ) + "/" + experimentName( rpm );
+            const QString      editPath = speedDir( rpm ) + "/" + editName( rpm );
 
             US_DataIO::RawData data;
-            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + runID + ".RA.1.S.123.auc", data ), (int) US_DataIO::OK );
+            QCOMPARE( US_DataIO::readRawData( speedDir( rpm ) + "/" + aucName( rpm ), data ), (int) US_DataIO::OK );
 
             const QString rawGUID = US_Util::uuid_unparse( (unsigned char*) data.rawGUID );
 
@@ -443,7 +466,7 @@ class US_AstfemSimPersistTest : public QObject
             QCOMPARE( experiment.runID, runID );
 
             // The experiment filled in what the filename scan left empty.
-            QCOMPARE( triples[0].tripleFilename, runID + ".RA.1.S.123.auc" );
+            QCOMPARE( triples[0].tripleFilename, aucName( rpm ) );
             QCOMPARE( US_Util::uuid_unparse( (unsigned char*) triples[0].tripleGUID ),
                       US_Util::uuid_unparse( (unsigned char*) allData[0].rawGUID ) );
 

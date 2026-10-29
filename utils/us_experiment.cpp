@@ -75,8 +75,8 @@ qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   // composeQuery owns SQL escaping.
-   RIxmlEscaped = RIxml;
+   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -200,8 +200,8 @@ qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    QByteArray RIxml;
    QByteArray RIxmlEscaped;
    createRIXml( RIxml );
-   // composeQuery owns SQL escaping.
-   RIxmlEscaped = RIxml;
+   //unsigned long length = db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
+   db->mysqlEscapeString( RIxmlEscaped, RIxml, RIxml.size() );
 
    // Check for experiment runID in database
    int saveStatus = 0;
@@ -667,7 +667,7 @@ int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
    // cases because it is the one that would silently overwrite.
    if ( !state.duplicated.isEmpty() )
    {
-      detail = QString( "The experiment record describes %1 more than once" ).arg( state.duplicated.join( ", " ) );
+      detail = QObject::tr( "The experiment record describes %1 more than once" ).arg( state.duplicated.join( ", " ) );
       return US_Convert::BADGUID;
    }
 
@@ -687,15 +687,15 @@ int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
 
       if ( !state.unmatched.isEmpty() )
       {
-         parts << QString( "the experiment record describes %1, which has no "
-                           "data file" )
+         parts << QObject::tr( "the experiment record describes %1, which has no "
+                               "data file" )
                      .arg( state.unmatched.join( ", " ) );
       }
 
       if ( !unfilled.isEmpty() )
       {
-         parts << QString( "the data files include %1, which the experiment "
-                           "record does not describe" )
+         parts << QObject::tr( "the data files include %1, which the experiment "
+                               "record does not describe" )
                      .arg( unfilled.join( ", " ) );
       }
 

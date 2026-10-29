@@ -58,6 +58,8 @@ add_executable(test_us_utils
         ${AUTO_TEST_HEADERS}
         ../../utils/ius_db2.h
         ../common/qt_test_base.cpp
+        support/disk_run_fixture.cpp
+        support/disk_run_fixture.h
         test_us_vector.cpp
         test_us_timer.cpp
         )

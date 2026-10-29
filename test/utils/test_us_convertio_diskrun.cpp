@@ -329,7 +329,7 @@ TEST_F( ReadDiskRunTest, ReportsADatasetIdentityThatDisagreesWithItsDataFile )
 TEST_F( ReadDiskRunTest, DoesNotRequireEditsOrChemistryRecords )
 {
    // A run with no edit XML and no solution on disk still reads.  Requiring
-   // either is corpus policy and lives in the corpus caller.
+   // either is the caller's policy, not the reader's.
    const DiskRun fixture = us3test::writeDiskRun( parentDir(), "bare-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
    ASSERT_FALSE( fixture.dir.isEmpty() );
 

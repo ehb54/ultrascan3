@@ -28,7 +28,7 @@ class US_UTIL_EXTERN US_ConvertIO
       /*! \brief One run as it exists on disk, loaded but not interpreted.
 
           The value owns loaded domain data and nothing else: no widgets, no
-          database connection, no edit files, no corpus rules, no settings, no
+          database connection, no edit files, no load policy, no settings, no
           temporary-directory lifecycle.
       */
       struct US_UTIL_EXTERN DiskRun

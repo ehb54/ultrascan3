@@ -4138,8 +4138,8 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    le_status->setText( tr( "Loading data from local disk ..." ) );
    qApp->processEvents();
 
-   // Read the run through the operation the corpus loader also uses.  It
-   // reports; this decides.  Everything the GUI recovered from before, it
+   // Read the run through US_ConvertIO::readDiskRun().  It reports; this
+   // decides.  Everything the GUI recovered from before, it
    // still recovers from -- the added detail only says more in the same
    // messages, and no archive that loaded before stops loading here.
    le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
