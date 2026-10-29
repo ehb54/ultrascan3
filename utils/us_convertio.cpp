@@ -233,22 +233,19 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDa
    // never uploaded, so both are reported as NO_RAWDATA.
    if ( status == IUS_DB2::NOROWS )
    {
-      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      error = QObject::tr( noRawDataRecordMessage ).arg( rawGUID );
       return IUS_DB2::NO_RAWDATA;
    }
 
    if ( status != IUS_DB2::OK )
    {
-      error = QString( "Could not look up the raw data record for GUID %1: "
-                       "%2 (status %3)" )
-                 .arg( rawGUID, db->lastError() )
-                 .arg( status );
+      error = QObject::tr( rawDataLookupFailedMessage ).arg( rawGUID, db->lastError() ).arg( status );
       return status;
    }
 
    if ( !db->next() )
    {
-      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      error = QObject::tr( noRawDataRecordMessage ).arg( rawGUID );
       return IUS_DB2::NO_RAWDATA;
    }
 
@@ -258,7 +255,7 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDa
 
    if ( !ok )
    {
-      error = QString( "Raw data record for GUID %1 has a non-numeric id (\"%2\")" ).arg( rawGUID, id.toString() );
+      error = QObject::tr( nonNumericRawDataIdMessage ).arg( rawGUID, id.toString() );
       return IUS_DB2::DBERROR;
    }
 
@@ -282,10 +279,7 @@ int US_ConvertIO::createEditedData( IUS_DB2* db, const EditedDataRecord& record,
 
    if ( status != IUS_DB2::OK )
    {
-      error = QString( "Could not create the editedData record for %1: "
-                       "%2 (status %3)" )
-                 .arg( record.filename, db->lastError() )
-                 .arg( status );
+      error = QObject::tr( createEditedDataFailedMessage ).arg( record.filename, db->lastError() ).arg( status );
       return status;
    }
 
@@ -310,11 +304,8 @@ int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID, const EditedD
 
    if ( status != IUS_DB2::OK )
    {
-      error = QString( "Could not update editedData record %1 for %2: "
-                       "%3 (status %4)" )
-                 .arg( editedDataID )
-                 .arg( record.filename, db->lastError() )
-                 .arg( status );
+      error =
+         QObject::tr( updateEditedDataFailedMessage ).arg( editedDataID ).arg( record.filename, db->lastError() ).arg( status );
       return status;
    }
 
@@ -332,12 +323,7 @@ int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID, const QSt
 
    if ( status != IUS_DB2::OK )
    {
-      error = QString( "Could not attach %1 to editedData record %2: "
-                       "%3 (status %4)" )
-                 .arg( filename )
-                 .arg( editedDataID )
-                 .arg( db->lastError() )
-                 .arg( status );
+      error = QObject::tr( uploadEditedDataFailedMessage ).arg( filename ).arg( editedDataID ).arg( db->lastError() ).arg( status );
       return status;
    }
 

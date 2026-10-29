@@ -87,7 +87,7 @@ TEST_F( EditedDataOpsTest, DistinguishesAMissingRawRecordFromAFailedQuery )
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NO_RAWDATA );
 
    EXPECT_EQ( rawDataID, -1 );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( kRawGUID ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::noRawDataRecordMessage ).arg( kRawGUID ) );
 }
 
 TEST_F( EditedDataOpsTest, ReportsNoRowsAsAMissingRawRecord )
@@ -100,7 +100,7 @@ TEST_F( EditedDataOpsTest, ReportsNoRowsAsAMissingRawRecord )
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NO_RAWDATA );
 
    EXPECT_EQ( rawDataID, -1 );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( kRawGUID ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::noRawDataRecordMessage ).arg( kRawGUID ) );
 }
 
 TEST_F( EditedDataOpsTest, ReturnsTheUnderlyingStatusWhenTheLookupQueryFails )
@@ -115,7 +115,9 @@ TEST_F( EditedDataOpsTest, ReturnsTheUnderlyingStatusWhenTheLookupQueryFails )
    int rawDataID = -1;
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NOT_CONNECTED );
 
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "server has gone away" ) );
+   EXPECT_EQ(
+      error,
+      QString( US_ConvertIO::rawDataLookupFailedMessage ).arg( kRawGUID, "server has gone away" ).arg( IUS_DB2::NOT_CONNECTED ) );
 }
 
 TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
@@ -129,7 +131,7 @@ TEST_F( EditedDataOpsTest, RejectsANonNumericRawDataId )
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::DBERROR );
 
    EXPECT_EQ( rawDataID, -1 );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "abc" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::nonNumericRawDataIdMessage ).arg( kRawGUID, "abc" ) );
 }
 
 // ---------------------------------------------------------------- create
@@ -168,8 +170,10 @@ TEST_F( EditedDataOpsTest, LeavesTheIdAloneWhenCreationFails )
    EXPECT_EQ( US_ConvertIO::createEditedData( db.get(), sampleRecord(), editedDataID, error ), (int) IUS_DB2::DBERROR );
 
    EXPECT_EQ( editedDataID, -1 );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "duplicate key" ) );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "demo-run.2401010000.RA.1.A.280.xml" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::createEditedDataFailedMessage )
+                 .arg( sampleRecord().filename, "duplicate key" )
+                 .arg( IUS_DB2::DBERROR ) );
 }
 
 // ---------------------------------------------------------------- update
@@ -201,8 +205,11 @@ TEST_F( EditedDataOpsTest, ReportsTheRowAndTheFileWhenAnUpdateFails )
 
    EXPECT_EQ( US_ConvertIO::updateEditedData( db.get(), 501, sampleRecord(), error ), (int) IUS_DB2::DBERROR );
 
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "501" ) );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "demo-run.2401010000.RA.1.A.280.xml" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::updateEditedDataFailedMessage )
+                 .arg( 501 )
+                 .arg( sampleRecord().filename, QString() )
+                 .arg( IUS_DB2::DBERROR ) );
 }
 
 // ------------------------------------------------------------------- blob
@@ -233,8 +240,12 @@ TEST_F( EditedDataOpsTest, ReportsTheBlobStatusItWasGiven )
 
    EXPECT_EQ( US_ConvertIO::uploadEditedDataBlob( db.get(), 501, "/runs/demo/demo-run.xml", error ), (int) IUS_DB2::DBERROR );
 
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "/runs/demo/demo-run.xml" ) );
-   EXPECT_THAT( error.toStdString(), ::testing::HasSubstr( "501" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::uploadEditedDataFailedMessage )
+                 .arg( "/runs/demo/demo-run.xml" )
+                 .arg( 501 )
+                 .arg( QString() )
+                 .arg( IUS_DB2::DBERROR ) );
 }
 
 // ---------------------------------------------------------- no connection
@@ -246,7 +257,7 @@ TEST_F( EditedDataOpsTest, RefusesADisconnectedConnection )
 
    int rawDataID = -1;
    EXPECT_EQ( US_ConvertIO::findRawDataId( db.get(), kRawGUID, rawDataID, error ), (int) IUS_DB2::NOT_CONNECTED );
-   EXPECT_FALSE( error.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "raw data lookup" ) );
 }
 
 TEST_F( EditedDataOpsTest, EveryOperationRefusesANullConnection )
@@ -254,30 +265,30 @@ TEST_F( EditedDataOpsTest, EveryOperationRefusesANullConnection )
    int value = -1;
 
    EXPECT_EQ( US_ConvertIO::findRawDataId( nullptr, kRawGUID, value, error ), (int) IUS_DB2::NOT_CONNECTED );
-   EXPECT_FALSE( error.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "raw data lookup" ) );
 
    error.clear();
    EXPECT_EQ( US_ConvertIO::createEditedData( nullptr, sampleRecord(), value, error ), (int) IUS_DB2::NOT_CONNECTED );
-   EXPECT_FALSE( error.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data creation" ) );
 
    error.clear();
    EXPECT_EQ( US_ConvertIO::updateEditedData( nullptr, 501, sampleRecord(), error ), (int) IUS_DB2::NOT_CONNECTED );
-   EXPECT_FALSE( error.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data update" ) );
 
    error.clear();
    EXPECT_EQ( US_ConvertIO::uploadEditedDataBlob( nullptr, 501, "x.xml", error ), (int) IUS_DB2::NOT_CONNECTED );
-   EXPECT_FALSE( error.isEmpty() );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data upload" ) );
 }
 
 TEST_F( EditedDataOpsTest, RequireConnectedNamesTheOperationAndLeavesSuccessAlone )
 {
    EXPECT_FALSE( IUS_DB2::requireConnected( nullptr, "edited data upload", error ) );
-   EXPECT_EQ( error.toStdString(), "edited data upload: no database connection" );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data upload" ) );
 
    ON_CALL( *db, isConnected() ).WillByDefault( Return( false ) );
    error.clear();
    EXPECT_FALSE( IUS_DB2::requireConnected( db.get(), "edited data upload", error ) );
-   EXPECT_EQ( error.toStdString(), "edited data upload: no database connection" );
+   EXPECT_EQ( error, QString( IUS_DB2::notConnectedMessage ).arg( "edited data upload" ) );
 
    ON_CALL( *db, isConnected() ).WillByDefault( Return( true ) );
    error = "untouched";

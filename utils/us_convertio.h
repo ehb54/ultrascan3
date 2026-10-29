@@ -143,6 +143,24 @@ class US_UTIL_EXTERN US_ConvertIO
       */
       static int     findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error );
 
+      //! \brief Edited-data error formats, shared with the tests; fill them
+      //! with QString::arg().
+      //! No raw data row for a GUID: %1 the GUID.
+      static constexpr const char* noRawDataRecordMessage     = "No raw data record exists for GUID %1";
+      //! The raw data lookup failed: %1 the GUID, %2 the database error, %3 the status.
+      static constexpr const char* rawDataLookupFailedMessage = "Could not look up the raw data record for GUID %1: %2 (status %3)";
+      //! A raw data id that is not a number: %1 the GUID, %2 the id as stored.
+      static constexpr const char* nonNumericRawDataIdMessage = "Raw data record for GUID %1 has a non-numeric id (\"%2\")";
+      //! Creating an editedData row failed: %1 the edit file, %2 the database
+      //! error, %3 the status.
+      static constexpr const char* createEditedDataFailedMessage = "Could not create the editedData record for %1: %2 (status %3)";
+      //! Updating an editedData row failed: %1 the row, %2 the edit file, %3
+      //! the database error, %4 the status.
+      static constexpr const char* updateEditedDataFailedMessage = "Could not update editedData record %1 for %2: %3 (status %4)";
+      //! Uploading the edit XML failed: %1 the file, %2 the row, %3 the
+      //! database error, %4 the status.
+      static constexpr const char* uploadEditedDataFailedMessage = "Could not attach %1 to editedData record %2: %3 (status %4)";
+
       /*! \brief Create an editedData row.
 
           \param db           An opened db connection
