@@ -1,12 +1,12 @@
 //! \file us_data_process.cpp
 
 #include "us_data_process.h"
+#include "us_convertio.h"
 #include "us_data_model.h"
+#include "us_datafiles.h"
+#include "us_settings.h"
 #include "us_sync_exper.h"
 #include "us_util.h"
-#include "us_settings.h"
-#include "us_datafiles.h"
-#include "us_convertio.h"
 
 // class to process operatations on data:  upload/download/remove
 US_DataProcess::US_DataProcess( US_DataModel* dmodel, QWidget* parent /*=0*/ )
@@ -92,8 +92,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
       int     rawDataID = -1;
       QString opError;
 
-      if ( ( stat = US_ConvertIO::findRawDataId( db, rawGUID, rawDataID,
-                                                 opError ) ) != US_DB2::OK )
+      if ( ( stat = US_ConvertIO::findRawDataId( db, rawGUID, rawDataID, opError ) ) != US_DB2::OK )
       {
          errMsg = tr( "Raw DB record for Edit could not be accessed: %1" )
                   .arg( stat );
@@ -102,7 +101,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
       else
       {
-         DbgLv(1) << "editUpld: rawGUID" << rawGUID;
+         DbgLv( 1 ) << "editUpld: rawGUID" << rawGUID;
          DbgLv(1) << "editUpld: rawDataID" << rawDataID;
 
          US_ConvertIO::EditedDataRecord record;
@@ -122,13 +121,11 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
          // The update always follows, including right after a create: it is
          // what puts the label on the row, since the create procedure takes
          // the run ID in that position instead.
-         record.label     = label;
-         US_ConvertIO::updateEditedData( db, editID.toInt(), record,
-                                         opError );
+         record.label = label;
+         US_ConvertIO::updateEditedData( db, editID.toInt(), record, opError );
          DbgLv(1) << "editUpld: label" << label;
 
-         stat = US_ConvertIO::uploadEditedDataBlob( db, idData, filepath,
-                                                    opError );
+         stat   = US_ConvertIO::uploadEditedDataBlob( db, idData, filepath, opError );
          errMsg = tr( "writeBlob Edited stat %1, idData %2" )
             .arg( stat ).arg( idData );
          stat = ( stat == 0 ) ? 0 : 3042;

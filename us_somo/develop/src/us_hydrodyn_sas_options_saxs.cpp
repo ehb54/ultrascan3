@@ -464,16 +464,6 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       rb_sastbx_method_zernike->setPalette( PALET_NORMAL );
       AUTFBACK( rb_sastbx_method_zernike );
 
-#if QT_VERSION < 0x040000
-      bg_sastbx_method = new QGroupBox( this );
-      int bg_pos = 0;
-      bg_sastbx_method->setExclusive(true);
-      bg_sastbx_method->addButton( rb_sastbx_method_she, bg_pos++ );
-      bg_sastbx_method->addButton( rb_sastbx_method_debye, bg_pos++ );
-      bg_sastbx_method->addButton( rb_sastbx_method_zernike, bg_pos++ );
-
-      connect(bg_sastbx_method, SIGNAL(buttonClicked(int)), SLOT(set_sastbx_method(int)));
-#else
       bg_sastbx_method = new QGroupBox();
       connect(rb_sastbx_method_she, SIGNAL(clicked()), SLOT(set_sastbx_method()));
       connect(rb_sastbx_method_debye, SIGNAL(clicked()), SLOT(set_sastbx_method()));
@@ -486,7 +476,6 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
          bl->addWidget( rb_sastbx_method_zernike );
          bg_sastbx_method->setLayout( bl );
       }
-#endif
    }
 
    pb_cancel = new QPushButton(us_tr("Close"), this);

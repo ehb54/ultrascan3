@@ -56,6 +56,12 @@ file(WRITE "${_DEST}/Contents/Resources/qt.conf"
 "[Paths]\nPlugins = ${QT6_PLUGINS_DIR}\nLibraries = ${QT6_LIB_DIR}\n")
 
 # install_name_tool invalidates the ARM64 signature of the copied executable.
+# Nested code must be signed before the bundle; x86_64 dylibs arrive unsigned.
+file(GLOB_RECURSE _nested_dylibs "${_DEST}/Contents/PlugIns/*.dylib")
+foreach(_dylib IN LISTS _nested_dylibs)
+    execute_process(COMMAND "${US3_CODESIGN_EXECUTABLE}" --force --sign - "${_dylib}"
+        COMMAND_ERROR_IS_FATAL ANY)
+endforeach()
 execute_process(COMMAND "${US3_CODESIGN_EXECUTABLE}" --force --sign - "${_DEST}"
     COMMAND_ERROR_IS_FATAL ANY)
 

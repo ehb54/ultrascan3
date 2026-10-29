@@ -242,7 +242,7 @@ US_Hydrodyn_Saxs_2d::~US_Hydrodyn_Saxs_2d()
 void US_Hydrodyn_Saxs_2d::setupGUI()
 {
    int minHeight1 = 30;
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -446,34 +446,6 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar *menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight3);
-   m = new QMenuBar( frame );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined(Q_OS_MAC)
    m = new QMenuBar( this );
    m->setObjectName( "menu" );
@@ -504,7 +476,6 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (QTextOption::WordWrap);
    // editor->setMinimumHeight(300);
@@ -562,7 +533,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout( 0 ); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addLayout( gl_options );
-#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
+#if !defined(Q_OS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
@@ -781,19 +752,6 @@ bool US_Hydrodyn_Saxs_2d::update_image()
    }
       
    QPixmap pm;
-#if QT_VERSION < 0x040000
-   pm.convertFromImage( i_2d.smoothScale( 
-                                          i_2d.width() > US_SAXS_2D_PIXMAX ?
-                                          US_SAXS_2D_PIXMAX : 
-                                          ( i_2d.width() < US_SAXS_2D_PIXMIN ?
-                                            US_SAXS_2D_PIXMIN : i_2d.width() ) ,
-                                          i_2d.height() > US_SAXS_2D_PIXMAX ?
-                                          US_SAXS_2D_PIXMAX : 
-                                          ( i_2d.height() < US_SAXS_2D_PIXMIN ?
-                                            US_SAXS_2D_PIXMIN : i_2d.height() ) ,
-                                          Qt::KeepAspectRatio 
-                                          ) );
-#else
    pm.convertFromImage( i_2d.scaled( 
                                     i_2d.width() > US_SAXS_2D_PIXMAX ?
                                     US_SAXS_2D_PIXMAX : 
@@ -806,7 +764,6 @@ bool US_Hydrodyn_Saxs_2d::update_image()
                                     Qt::KeepAspectRatio,
                                     Qt::SmoothTransformation
                                      ) );
-#endif
    lbl_2d->setPixmap( pm );
    return true;
 }
@@ -1630,32 +1587,13 @@ void US_Hydrodyn_Saxs_2d::reset_2d()
         detector_pixels_height != i_2d.height() ||
         detector_pixels_width  != i_2d.width() ) )
    {
-#if QT_VERSION < 0x040000
-      i_2d.reset();
-      
-      i_2d.create(
-                   detector_pixels_width,
-                   detector_pixels_height,
-                   32
-                   );
-#else
       i_2d = QImage(
                     detector_pixels_width,
                     detector_pixels_height,
                     QImage::Format_RGB32
                     );
-#endif
       i_2d.fill( qRgb( 0, 0, 0 ) );
       QPixmap pm;
-#if QT_VERSION < 0x040000
-      pm.convertFromImage( i_2d.smoothScale( 
-                                             i_2d.width() > US_SAXS_2D_PIXMAX ?
-                                             US_SAXS_2D_PIXMAX : i_2d.width(),
-                                             i_2d.height() > US_SAXS_2D_PIXMAX ?
-                                             US_SAXS_2D_PIXMAX : i_2d.height(),
-                                             Qt::KeepAspectRatio 
-                                             ) );
-#else
       pm.convertFromImage( i_2d.scaled( 
                                        i_2d.width() > US_SAXS_2D_PIXMAX ?
                                        US_SAXS_2D_PIXMAX : i_2d.width(),
@@ -1664,7 +1602,6 @@ void US_Hydrodyn_Saxs_2d::reset_2d()
                                        Qt::KeepAspectRatio,
                                        Qt::SmoothTransformation
                                              ) );
-#endif
       lbl_2d->setPixmap( pm );
    }
 }

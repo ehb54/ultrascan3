@@ -57,24 +57,12 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
    rb_integral->setPalette( PALET_NORMAL );
    connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-#if 1 // QT_VERSION < 0x040000
    bg_bl_type = new QGroupBox( this );
    int bg_pos = 0;
    bg_bl_type->setExclusive(true);
    bg_bl_type->addButton( rb_linear, bg_pos++ );
    bg_bl_type->addButton( rb_integral, bg_pos++ );
    // connect( bg_bl_type, SIGNAL( buttonClicked( int id ) ), SLOT( update_enables() ) );
-#else
-   bg_bl_type = new QGroupBox();
-   bg_bl_type->setFlat( true );
-
-   {
-      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
-      bl->addWidget( rb_linear );
-      bl->addWidget( rb_integral );
-      bg_bl_type->setLayout( bl );
-   }
-#endif
 
    cb_save_bl = new QCheckBox(this);
    cb_save_bl->setText( us_tr( "Produce separate baseline curves " ) );

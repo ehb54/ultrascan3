@@ -394,7 +394,9 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          ARCHIVES=(incoming/toolchain-*/*.tar.zst)
+          # A single matching artifact is extracted straight into incoming/,
+          # several into incoming/<artifact>/, so accept both layouts.
+          ARCHIVES=(incoming/*.tar.zst incoming/toolchain-*/*.tar.zst)
           if [ ${#ARCHIVES[@]} -eq 0 ]; then
             echo "No archives to publish (Linux-only run)."
             exit 0
@@ -427,7 +429,8 @@ jobs:
           changed = []
 
           # Archive targets: read the checksum recorded beside each archive.
-          for sums in glob.glob("incoming/toolchain-*/*.sha256"):
+          # One artifact lands in incoming/, several in incoming/<artifact>/.
+          for sums in glob.glob("incoming/*.sha256") + glob.glob("incoming/toolchain-*/*.sha256"):
               digest, asset = pathlib.Path(sums).read_text().split()
               target = pathlib.Path(sums).stem
               entry = lock["targets"].get(target)
@@ -442,7 +445,7 @@ jobs:
                   changed.append(target)
 
           # Container targets: read the pushed manifest digest.
-          for dpath in glob.glob("incoming/digest-*/*.json"):
+          for dpath in glob.glob("incoming/*.json") + glob.glob("incoming/digest-*/*.json"):
               target = pathlib.Path(dpath).stem
               published = json.loads(pathlib.Path(dpath).read_text())
               entry = lock["targets"].get(target)

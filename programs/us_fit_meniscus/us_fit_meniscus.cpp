@@ -6,21 +6,21 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include "us_convertio.h"
+#include "us_db2.h"
 #include "us_fit_meniscus.h"
-#include "us_license_t.h"
-#include "us_license.h"
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
-#include "us_settings.h"
-#include "us_db2.h"
-#include "us_passwd.h"
-#include "us_convertio.h"
-#include "us_report.h"
 #include "us_investigator.h"
+#include "us_license.h"
+#include "us_license_t.h"
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_model.h"
 #include "us_noise.h"
+#include "us_passwd.h"
+#include "us_report.h"
+#include "us_settings.h"
 
 //US_FitMeniscus::US_FitMeniscus( QString auto_mode ) : US_Widgets()
 US_FitMeniscus::US_FitMeniscus( QMap<QString, QString> triple_info_map ) : US_Widgets()
@@ -97,6 +97,7 @@ DbgLv(1) << "Main: BB";
    meniscus_plot->setMinimumSize( 400, 400 );
    meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
    meniscus_plot->setToolTip( tr( "Fitted meniscus,rmsd plot" ) );
+   meniscus_plot->setAccessibleName( tr( "Meniscus RMSD Plot" ) );
 
    rightLayout->addLayout( plot, 0, 1, 20, 1 );
 
@@ -104,11 +105,14 @@ DbgLv(1) << "Main: BB";
    QLabel* lb_status    = us_label( tr( "Status:"    ) );
    
    le_status    = us_lineedit( tr( "No data loaded" ), -1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    le_status->setToolTip(
          tr( "Results of the last action performed" ) );
 
    lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    ct_zfloor     = us_counter( 1, 50.0, 150.0, 1.0 );
+   ct_zfloor->setAccessibleName( tr( "Z Visibility Percent" ) );
    ct_zfloor->setSingleStep( 1 );
    ct_zfloor->setValue( 100.0 );
    connect( ct_zfloor, &QwtCounter::valueChanged,
@@ -129,20 +133,26 @@ DbgLv(1) << "Main: BB";
    sb_order->setValue( 2 );
    sb_order->setPalette( US_GuiSettings::editColor() );
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
+   sb_order->setAccessibleName( tr( "Fit Order" ) );
 
    le_men_lor   = us_lineedit( "", -1, true );
+   le_men_lor->setAccessibleName( tr( "Low-RMSD Meniscus" ) );
    le_men_lor->setToolTip(
          tr( "Selected-minimum meniscus radius value" ) );
    le_bot_lor   = us_lineedit( "", -1, true );
+   le_bot_lor->setAccessibleName( tr( "Low-RMSD Bottom" ) );
    le_bot_lor->setToolTip(
          tr( "Selected-minimum bottom radius value" ) );
    le_men_fit   = us_lineedit( "", -1, false );
+   le_men_fit->setAccessibleName( tr( "Fit Meniscus" ) );
    le_men_fit->setToolTip(
          tr( "Fit/Editable meniscus radius value" ) );
    le_bot_fit   = us_lineedit( "", -1, false );
+   le_bot_fit->setAccessibleName( tr( "Fit Bottom" ) );
    le_bot_fit->setToolTip(
          tr( "Fit/Editable bottom radius value" ) );
    le_mprads    = us_lineedit( "", -1, false );
+   le_mprads->setAccessibleName( tr( "Mid-Point Radii" ) );
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
@@ -150,17 +160,20 @@ DbgLv(1) << "Main: BB";
    if ( auto_mode )
    {
       le_men_sel   = us_lineedit( "", -1, true );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected meniscus radius value" ) );
    }
    else
    {
       le_men_sel   = us_lineedit( "", -1, false );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected/Editable meniscus radius value" ) );
    }
    
    le_rms_error = us_lineedit( "", -1, true );
+   le_rms_error->setAccessibleName( tr( "RMS Error" ) );
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 
@@ -194,6 +207,7 @@ DbgLv(1) << "Main: BB";
       inv_name  = QString::number( US_Settings::us_inv_ID() )
                   + ": " + US_Settings::us_inv_name();
    le_invest    = us_lineedit( inv_name, -1, true );
+   le_invest->setAccessibleName( tr( "Investigator" ) );
 
    //us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
    us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  false );
@@ -393,6 +407,7 @@ DbgLv(1) << "Main: BB";
    meniscus_plot->setMinimumSize( 400, 400 );
    meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
    meniscus_plot->setToolTip( tr( "Fitted meniscus,rmsd plot" ) );
+   meniscus_plot->setAccessibleName( tr( "Meniscus RMSD Plot" ) );
 
    rightLayout->addLayout( plot, 0, 1, 20, 1 );
 
@@ -400,11 +415,14 @@ DbgLv(1) << "Main: BB";
    QLabel* lb_status    = us_label( tr( "Status:"    ) );
    
    le_status    = us_lineedit( tr( "No data loaded" ), -1, true );
+   le_status->setAccessibleName( tr( "Status" ) );
+   lb_status->setBuddy( le_status );
    le_status->setToolTip(
          tr( "Results of the last action performed" ) );
 
    lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    ct_zfloor     = us_counter( 1, 50.0, 150.0, 1.0 );
+   ct_zfloor->setAccessibleName( tr( "Z Visibility Percent" ) );
    ct_zfloor->setSingleStep( 1 );
    ct_zfloor->setValue( 100.0 );
    connect( ct_zfloor, &QwtCounter::valueChanged,
@@ -425,37 +443,46 @@ DbgLv(1) << "Main: BB";
    sb_order->setValue( 2 );
    sb_order->setPalette( US_GuiSettings::editColor() );
    sb_order->setToolTip( tr( "Order of fitting curve" ) );
+   sb_order->setAccessibleName( tr( "Fit Order" ) );
 
    le_men_lor   = us_lineedit( "", -1, false );
+   le_men_lor->setAccessibleName( tr( "Low-RMSD Meniscus" ) );
    le_men_lor->setToolTip(
          tr( "Selected-minimum meniscus radius value" ) );
    le_bot_lor   = us_lineedit( "", -1, false );
+   le_bot_lor->setAccessibleName( tr( "Low-RMSD Bottom" ) );
    le_bot_lor->setToolTip(
          tr( "Selected-minimum bottom radius value" ) );
    le_men_fit   = us_lineedit( "", -1, false );
+   le_men_fit->setAccessibleName( tr( "Fit Meniscus" ) );
    le_men_fit->setToolTip(
          tr( "Fit/Editable meniscus radius value" ) );
    le_bot_fit   = us_lineedit( "", -1, false );
+   le_bot_fit->setAccessibleName( tr( "Fit Bottom" ) );
    le_bot_fit->setToolTip(
          tr( "Fit/Editable bottom radius value" ) );
    le_mprads    = us_lineedit( "", -1, false );
+   le_mprads->setAccessibleName( tr( "Mid-Point Radii" ) );
    le_mprads ->setToolTip(
          tr( "Meniscus,Bottom current radii (midpoint of ranges)" ) );
 
    if ( auto_mode )
    {
       le_men_sel   = us_lineedit( "", -1, true );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected meniscus radius value" ) );
    }
    else
    {
       le_men_sel   = us_lineedit( "", -1, false );
+      le_men_sel->setAccessibleName( tr( "Meniscus Selected" ) );
       le_men_sel->setToolTip(
             tr( "Selected/Editable meniscus radius value" ) );
    }
    
    le_rms_error = us_lineedit( "", -1, true );
+   le_rms_error->setAccessibleName( tr( "RMS Error" ) );
    le_rms_error->setToolTip(
          tr( "RMS error of curve to meniscus,rmsd points" ) );
 
@@ -489,6 +516,7 @@ DbgLv(1) << "Main: BB";
       inv_name  = QString::number( US_Settings::us_inv_ID() )
                   + ": " + US_Settings::us_inv_name();
    le_invest    = us_lineedit( inv_name, -1, true );
+   le_invest->setAccessibleName( tr( "Investigator" ) );
 
    us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
    us_checkbox( tr( "Apply to All Wavelengths" ), ck_applymwl, true );
@@ -3199,12 +3227,11 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
    db.query( query );
    db.next();
    idEdit           = db.value( 0 ).toString().toInt();
-DbgLv(1) << "updDbEd: idEdit" << idEdit;
+   DbgLv( 1 ) << "updDbEd: idEdit" << idEdit;
    // How the existing edit is found is unchanged; only the upload is shared.
    QString upload_error;
 
-   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath,
-                                            upload_error ) != US_DB2::OK )
+   if ( US_ConvertIO::uploadEditedDataBlob( &db, idEdit, efilepath, upload_error ) != US_DB2::OK )
    {
       qDebug() << tr( "*ERROR* update_db_edit: " ) << db.lastError();
       msg += tr( "*ERROR* update_db_edit: " );

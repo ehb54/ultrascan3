@@ -20,9 +20,12 @@
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
 
-//! \brief Less-than function for sorting distributions
-bool distro_lessthan( const S_Solute&, const S_Solute& );
-   
+// ALEXEY: distro_lessthan() moved to static (internal) linkage in
+// us_show_norm.cpp -- see that file for why -- and dropped from here:
+// it's only ever used within us_show_norm.cpp itself (nothing outside
+// this file includes this header for that declaration), so no
+// declaration is needed here.
+
 //! \brief A class to provide a window with 2DSA analysis controls
 class US_show_norm : public US_WidgetsDialog
 {

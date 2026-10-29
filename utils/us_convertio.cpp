@@ -37,18 +37,21 @@ namespace
 bool haveConnection( IUS_DB2* db, const QString& what, QString& error )
 {
    if ( db != nullptr )
+   {
       return true;
+   }
 
    error = QString( "%1: no database connection" ).arg( what );
    return false;
 }
 }
 
-int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID,
-                                 int& rawDataID, QString& error )
+int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error )
 {
-   if ( ! haveConnection( db, "raw data lookup", error ) )
+   if ( !haveConnection( db, "raw data lookup", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
    QStringList query;
    query << "get_rawDataID_from_GUID" << rawGUID;
@@ -60,14 +63,15 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID,
    {
       error = QString( "Could not look up the raw data record for GUID %1: "
                        "%2 (status %3)" )
-              .arg( rawGUID, db->lastError() ).arg( status );
+                 .arg( rawGUID, db->lastError() )
+                 .arg( status );
       return status;
    }
 
    // A successful query that names no row.  Reported separately from a query
    // failure because the two mean different things to a caller: one is a
    // broken connection, the other is data that was never uploaded.
-   if ( ! db->next() )
+   if ( !db->next() )
    {
       error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
       return IUS_DB2::NO_RAWDATA;
@@ -78,19 +82,15 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID,
    return IUS_DB2::OK;
 }
 
-int US_ConvertIO::createEditedData( IUS_DB2* db,
-                                    const EditedDataRecord& record,
-                                    int& editedDataID, QString& error )
+int US_ConvertIO::createEditedData( IUS_DB2* db, const EditedDataRecord& record, int& editedDataID, QString& error )
 {
-   if ( ! haveConnection( db, "edited data creation", error ) )
+   if ( !haveConnection( db, "edited data creation", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
    QStringList query;
-   query << "new_editedData"
-         << QString::number( record.rawDataID )
-         << record.editGUID
-         << record.label
-         << record.filename
+   query << "new_editedData" << QString::number( record.rawDataID ) << record.editGUID << record.label << record.filename
          << record.comment;
    db->query( query );
 
@@ -100,7 +100,8 @@ int US_ConvertIO::createEditedData( IUS_DB2* db,
    {
       error = QString( "Could not create the editedData record for %1: "
                        "%2 (status %3)" )
-              .arg( record.filename, db->lastError() ).arg( status );
+                 .arg( record.filename, db->lastError() )
+                 .arg( status );
       return status;
    }
 
@@ -109,21 +110,16 @@ int US_ConvertIO::createEditedData( IUS_DB2* db,
    return IUS_DB2::OK;
 }
 
-int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID,
-                                    const EditedDataRecord& record,
-                                    QString& error )
+int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID, const EditedDataRecord& record, QString& error )
 {
-   if ( ! haveConnection( db, "edited data update", error ) )
+   if ( !haveConnection( db, "edited data update", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
    QStringList query;
-   query << "update_editedData"
-         << QString::number( editedDataID )
-         << QString::number( record.rawDataID )
-         << record.editGUID
-         << record.label
-         << record.filename
-         << record.comment;
+   query << "update_editedData" << QString::number( editedDataID ) << QString::number( record.rawDataID ) << record.editGUID
+         << record.label << record.filename << record.comment;
    db->query( query );
 
    const int status = db->lastErrno();
@@ -132,30 +128,32 @@ int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID,
    {
       error = QString( "Could not update editedData record %1 for %2: "
                        "%3 (status %4)" )
-              .arg( editedDataID ).arg( record.filename, db->lastError() )
-              .arg( status );
+                 .arg( editedDataID )
+                 .arg( record.filename, db->lastError() )
+                 .arg( status );
       return status;
    }
 
    return IUS_DB2::OK;
 }
 
-int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID,
-                                        const QString& filename,
-                                        QString& error )
+int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID, const QString& filename, QString& error )
 {
-   if ( ! haveConnection( db, "edited data upload", error ) )
+   if ( !haveConnection( db, "edited data upload", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
-   const int status = db->writeBlobToDB( filename, "upload_editData",
-                                         editedDataID );
+   const int status = db->writeBlobToDB( filename, "upload_editData", editedDataID );
 
    if ( status != IUS_DB2::OK )
    {
       error = QString( "Could not attach %1 to editedData record %2: "
                        "%3 (status %4)" )
-              .arg( filename ).arg( editedDataID ).arg( db->lastError() )
-              .arg( status );
+                 .arg( filename )
+                 .arg( editedDataID )
+                 .arg( db->lastError() )
+                 .arg( status );
       return status;
    }
 
@@ -368,7 +366,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       // Write cell table record
       QStringList parts    = triple->tripleDesc.split(" / ");
       const QString& cell         = parts[ 0 ];
-      QString letters("SABCDEFGH");
+      QString        letters      = US_Util::channel_letters();
       const QString& channel      = parts[ 1 ];
       int     channelNum   = letters.indexOf( channel );
       QString eccc         = cell + ":" + QString::number( channelNum )
@@ -645,7 +643,7 @@ qDebug() << " rRDD: read BlobFromDB (loop)";
    while ( db->next() )
    {
       struct cellInfo cell;
-      QString letters("SABCDEFGH");
+      QString         letters = US_Util::channel_letters();
       cell.cellName      = db->value( 2 ).toString();
       cell.channelName   = QString( letters[ qMax( 0, db->value( 3 ).toInt() ) ] );
       cell.centerpieceID = db->value( 4 ).toInt();
