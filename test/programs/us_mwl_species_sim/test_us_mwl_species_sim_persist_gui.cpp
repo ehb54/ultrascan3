@@ -1,0 +1,353 @@
+//! \file test_us_mwl_species_sim_persist_gui.cpp
+// Verify one saved dataset and matching wavelength edit file per wavelength.
+
+#include "us3_gui_test_main.h"
+
+#include <QProcess>
+#include <QProcessEnvironment>
+#include <QXmlStreamReader>
+
+#include "us3_dev_license.h"
+#include "us_dataIO.h"
+#include "us_sim_cli.h"
+#include "us_util.h"
+
+namespace
+{
+const char* const kRunID       = "mwl-run";
+const char* const kChannel     = "1A";
+const char* const kGuidSeed    = "us3-mwl-persist-regression";
+const char* const kEditStamp   = "2401010000";
+const char* const kDescription = "MWL persist test";
+const QStringList kWavelengths{ "280", "410" };
+
+const char* const kSimParams = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                               "<!DOCTYPE US_SimParams>\n"
+                               "<SimParams version=\"1.0\">\n"
+                               "    <params meshType=\"ASTFEM\" gridType=\"Moving\" simpoints=\"100\""
+                               " radialres=\"0.01\" meniscus=\"5.8\" bottom=\"7.2\" rnoise=\"0\""
+                               " lrnoise=\"0\" tinoise=\"0\" rinoise=\"0\" baseline=\"0\""
+                               " temperature=\"20\" rotorCalID=\"0\" bandform=\"0\" sector=\"0\""
+                               " pathlength=\"1.2\" angle=\"2.5\" width=\"0\">\n"
+                               "        <speedstep rotorspeed=\"40000\" scans=\"3\" timefirst=\"0\""
+                               " timelast=\"0\" w2tfirst=\"0\" w2tlast=\"0\" duration_hrs=\"1\""
+                               " duration_mins=\"15\" delay_hrs=\"0\" delay_mins=\"1.875\""
+                               " acceleration=\"400\" accelerflag=\"1\" set_speed=\"40000\""
+                               " avg_speed=\"40000\" speed_stddev=\"0\"/>\n"
+                               "    </params>\n"
+                               "</SimParams>\n";
+
+bool              writeText( const QString& path, const QString& text )
+{
+   QFile file( path );
+
+   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return false;
+   }
+
+   return file.write( text.toUtf8() ) == text.toUtf8().size();
+}
+
+QString attributeOf( const QString& path, const QString& element, const QString& attribute )
+{
+   QFile file( path );
+
+   if ( !file.open( QIODevice::ReadOnly ) )
+   {
+      return QString();
+   }
+
+   QXmlStreamReader xml( &file );
+
+   while ( !xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() && xml.name().toString() == element )
+      {
+         return xml.attributes().value( attribute ).toString();
+      }
+   }
+
+   return QString();
+}
+}
+
+class US_MwlSpeciesSimPersistTest : public QObject
+{
+      Q_OBJECT
+
+      QTemporaryDir       scratch;
+      QString             outDir;
+      QProcessEnvironment env;
+      QString             savedRunID; // the program derives it from the models
+      QString             inputs;
+      QStringList         models;
+
+   private slots:
+      void initTestCase()
+      {
+         QVERIFY( scratch.isValid() );
+
+         const QString home = scratch.path() + "/home";
+         inputs             = scratch.path() + "/inputs";
+         outDir             = scratch.path() + "/out/" + kRunID;
+
+         QVERIFY( QDir().mkpath( inputs ) );
+         QVERIFY( QDir().mkpath( outDir ) );
+         QVERIFY( QDir().mkpath( home + "/ultrascan/tmp" ) );
+         QVERIFY( QDir().mkpath( home + "/ultrascan/imports" ) );
+         QVERIFY( QDir().mkpath( home + "/ultrascan/results" ) );
+         registerDevLicenseFor( home );
+
+         QVERIFY( writeText( inputs + "/simparams.xml", kSimParams ) );
+
+         env = QProcessEnvironment::systemEnvironment();
+         env.insert( "HOME", home );
+
+         // Use registered application settings to avoid a modal registration dialog.
+         for ( const QString& name : { QStringLiteral( "US3_SETTINGS_ROOT" ),
+                                       QStringLiteral( "US3_TEST_SANDBOX" ),
+                                       QStringLiteral( "US3_TEST_SETTINGS_ROOT" ),
+                                       QStringLiteral( "US3_TEST_WORK_ROOT" ) } )
+         {
+            env.remove( name );
+         }
+
+         QProcess gen;
+         gen.setProcessEnvironment( env );
+
+         for ( const QString& wavelength : kWavelengths )
+         {
+            gen.start( US_SIM_INPUTS_GEN_EXE,
+                       { "--out", inputs, "--run-id", kRunID, "--cell", "1", "--channel", "A", "--wavelength", wavelength } );
+            QVERIFY( gen.waitForFinished( 60000 ) );
+            QCOMPARE( gen.exitCode(), 0 );
+
+            models << inputs + "/model_" + kChannel + "_" + wavelength + ".xml";
+            QVERIFY2( QFile::exists( models.last() ), qPrintable( models.last() ) );
+         }
+
+         gen.start( US_SIM_INPUTS_GEN_EXE,
+                    { "--emit-buffer",
+                      "--out",
+                      inputs + "/buffer.xml",
+                      "--density",
+                      "0.998234",
+                      "--viscosity",
+                      "1.001940",
+                      "--ph",
+                      "7.0" } );
+         QVERIFY( gen.waitForFinished( 60000 ) );
+         QCOMPARE( gen.exitCode(), 0 );
+
+         QProcess sim;
+         sim.setProcessEnvironment( env );
+         sim.start( US_MWL_SPECIES_SIM_EXE, { "--no-db",          "--errors-cl",
+                                              "--start",          "--close",
+                                              "--models",         models.join( "," ),
+                                              "--buffer",         inputs + "/buffer.xml",
+                                              "--simparams",      inputs + "/simparams.xml",
+                                              "--rotor",          "1",
+                                              "--runtype",        "RA",
+                                              "--save",           outDir,
+                                              "--guid-seed",      kGuidSeed,
+                                              "--edit-timestamp", kEditStamp,
+                                              "--description",    kDescription } );
+
+         if ( !sim.waitForFinished( 300000 ) )
+         {
+            sim.kill();
+            sim.waitForFinished( 5000 );
+            QFAIL( "us_mwl_species_sim did not finish; check that UltraScan is "
+                   "registered for this user" );
+         }
+
+         QCOMPARE( sim.exitStatus(), QProcess::NormalExit );
+         QCOMPARE( sim.exitCode(), 0 );
+
+         // The saved run ID comes from the models, not from the directory name.
+         const QStringList aucs = QDir( outDir ).entryList( { "*.auc" }, QDir::Files );
+         QCOMPARE( aucs.size(), kWavelengths.size() );
+         savedRunID = aucs.first().section( ".", 0, 0 );
+         QVERIFY( !savedRunID.isEmpty() );
+      }
+
+      void oneEditAccompaniesEachWavelengthsData()
+      {
+         const QDir        dir( outDir );
+         const QStringList edits = dir.entryList( { "*." + QString( kEditStamp ) + ".*.xml" }, QDir::Files );
+
+         QCOMPARE( edits.size(), kWavelengths.size() );
+
+         for ( const QString& wavelength : kWavelengths )
+         {
+            const QString triple = "RA.1.A." + wavelength;
+
+            QVERIFY2( edits.contains( savedRunID + "." + kEditStamp + "." + triple + ".xml" ), qPrintable( edits.join( ", " ) ) );
+            QVERIFY( QFile::exists( dir.filePath( savedRunID + "." + triple + ".auc" ) ) );
+         }
+      }
+
+      void theWavelengthFieldIsOnePlainWavelength()
+      {
+         // A hyphen or an "@" in this field is a band lookup key.  Those are
+         // in-memory forms; neither belongs in a filename.
+         for ( const QString& name : QDir( outDir ).entryList( { "*." + QString( kEditStamp ) + ".*.xml" }, QDir::Files ) )
+         {
+            const QString field = name.section( ".", -2, -2 );
+
+            QVERIFY2( !field.contains( '-' ), qPrintable( name ) );
+            QVERIFY2( !field.contains( '@' ), qPrintable( name ) );
+            QVERIFY2( kWavelengths.contains( field ), qPrintable( name ) );
+         }
+      }
+
+      void eachEditNamesTheDataBesideIt()
+      {
+         QStringList rawGUIDs;
+
+         for ( const QString& wavelength : kWavelengths )
+         {
+            const QString      triple   = "RA.1.A." + wavelength;
+            const QString      aucPath  = outDir + "/" + savedRunID + "." + triple + ".auc";
+            const QString      editPath = outDir + "/" + savedRunID + "." + kEditStamp + "." + triple + ".xml";
+
+            US_DataIO::RawData data;
+            QCOMPARE( US_DataIO::readRawData( aucPath, data ), (int) US_DataIO::OK );
+
+            // Cell and channel come from the model description.
+            QCOMPARE( (int) data.cell, 1 );
+            QCOMPARE( data.description, QString( kDescription ) );
+            QCOMPARE( (char) data.channel, 'A' );
+
+            const QString rawGUID = US_Util::uuid_unparse( (unsigned char*) data.rawGUID );
+
+            QCOMPARE( attributeOf( editPath, "rawDataGUID", "value" ), rawGUID );
+            QCOMPARE( attributeOf( editPath, "runid", "value" ), savedRunID );
+
+            rawGUIDs << rawGUID;
+         }
+
+         // Separate datasets of one run, so separate raw identities.
+         QCOMPARE( rawGUIDs.size(), kWavelengths.size() );
+         QVERIFY( rawGUIDs[0] != rawGUIDs[1] );
+      }
+
+      void noiseSeedIsValidated()
+      {
+         // Zero would select a clock-based seed, so it is rejected.
+         QProcess sim;
+         sim.setProcessEnvironment( env );
+         sim.start( US_MWL_SPECIES_SIM_EXE, { "--no-db", "--errors-cl", "--close", "--noise-seed", "0" } );
+         QVERIFY( sim.waitForFinished( 60000 ) );
+         QCOMPARE( sim.exitCode(), 1 );
+         QVERIFY( QString::fromUtf8( sim.readAllStandardError() ).contains( US_SimCli::invalidValueMessage( "noise-seed", "0" ) ) );
+      }
+
+      void multiSpeedSimparamsAreRejected()
+      {
+         // Only the first speed step is simulated, so a second one would be
+         // recorded without any data behind it.
+         QString   twoSteps = QString( kSimParams );
+         const int stepAt   = twoSteps.indexOf( "        <speedstep" );
+         const int stepTo   = twoSteps.indexOf( "\n", stepAt ) + 1;
+         twoSteps.insert( stepTo, twoSteps.mid( stepAt, stepTo - stepAt ).replace( "40000", "20000" ) );
+         QVERIFY( writeText( inputs + "/simparams_two_steps.xml", twoSteps ) );
+
+         const QString multiOut = scratch.path() + "/out_multi/" + kRunID;
+         QVERIFY( QDir().mkpath( multiOut ) );
+
+         QProcess sim;
+         sim.setProcessEnvironment( env );
+         sim.start( US_MWL_SPECIES_SIM_EXE,
+                    { "--no-db",
+                      "--errors-cl",
+                      "--start",
+                      "--close",
+                      "--models",
+                      models.join( "," ),
+                      "--buffer",
+                      inputs + "/buffer.xml",
+                      "--simparams",
+                      inputs + "/simparams_two_steps.xml",
+                      "--rotor",
+                      "1",
+                      "--save",
+                      multiOut } );
+         QVERIFY( sim.waitForFinished( 60000 ) );
+         QCOMPARE( sim.exitCode(), 2 );
+         QVERIFY( QString::fromUtf8( sim.readAllStandardError() )
+                     .contains( QString( US_SimCli::speedStepCountMessage ).arg( inputs + "/simparams_two_steps.xml" ).arg( 2 ) ) );
+         QVERIFY( QDir( multiOut ).isEmpty() );
+      }
+
+      void centerpieceBottomReachesTheSolver()
+      {
+         // Centerpiece index 2 is a standard sector with a 7.15 cm bottom. A
+         // run selecting it must match one whose parameters already have that
+         // geometry; a solver left at the parameters' 7.2 cm bottom would not.
+         QString cpGeometry = QString( kSimParams ).replace( "bottom=\"7.2\"", "bottom=\"7.15\"" );
+         cpGeometry.replace( "sector=\"0\"", "sector=\"1\"" );
+         QVERIFY( writeText( inputs + "/simparams_cp_geometry.xml", cpGeometry ) );
+
+         QList<US_DataIO::RawData> runs;
+         for ( const QStringList& extra : { QStringList{ "--simparams", inputs + "/simparams.xml", "--centerpiece", "2" },
+                                            QStringList{ "--simparams", inputs + "/simparams_cp_geometry.xml" } } )
+         {
+            const QString dir = scratch.path() + "/out_cp" + QString::number( runs.size() ) + "/" + kRunID;
+            QVERIFY( QDir().mkpath( dir ) );
+
+            QProcess sim;
+            sim.setProcessEnvironment( env );
+            sim.start( US_MWL_SPECIES_SIM_EXE,
+                       QStringList{ "--no-db",
+                                    "--errors-cl",
+                                    "--start",
+                                    "--close",
+                                    "--models",
+                                    models.join( "," ),
+                                    "--buffer",
+                                    inputs + "/buffer.xml",
+                                    "--rotor",
+                                    "1",
+                                    "--save",
+                                    dir,
+                                    "--guid-seed",
+                                    kGuidSeed,
+                                    "--noise-seed",
+                                    "4242",
+                                    "--edit-timestamp",
+                                    kEditStamp } +
+                          extra );
+            QVERIFY( sim.waitForFinished( 300000 ) );
+            QCOMPARE( sim.exitCode(), 0 );
+
+            const QStringList aucs = QDir( dir ).entryList( { "*.auc" }, QDir::Files );
+            QVERIFY( !aucs.isEmpty() );
+            US_DataIO::RawData data;
+            QCOMPARE( US_DataIO::readRawData( dir + "/" + aucs.first(), data ), int( US_DataIO::OK ) );
+            runs << data;
+         }
+
+         QCOMPARE( runs[0].xvalues, runs[1].xvalues );
+         QCOMPARE( runs[0].scanData.size(), runs[1].scanData.size() );
+         for ( int js = 0; js < runs[0].scanData.size(); js++ )
+         {
+            QCOMPARE( runs[0].scanData[js].rvalues, runs[1].scanData[js].rvalues );
+         }
+      }
+
+      void theRunHasOneExperimentRecordNamingAProject()
+      {
+         const QString expPath = outDir + "/" + savedRunID + ".RA.xml";
+
+         QCOMPARE( QDir( outDir ).entryList( { "*.RA.xml" }, QDir::Files ), QStringList{ savedRunID + ".RA.xml" } );
+         QVERIFY2( !attributeOf( expPath, "project", "guid" ).isEmpty(), "experiment XML names no project" );
+      }
+};
+
+US3_GUI_TEST_MAIN( US_MwlSpeciesSimPersistTest )
+
+#include "test_us_mwl_species_sim_persist_gui.moc"

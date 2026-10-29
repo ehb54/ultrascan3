@@ -14,6 +14,138 @@ US_ConvertIO::US_ConvertIO( void )
 {
 }
 
+// Edited-data database mechanics shared by us_edit, us_manage_data,
+// us_fit_meniscus and us_autoflow_analysis.  These return the database status
+// and set `error`; what to do about a failure is left to the caller.
+
+int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error )
+{
+   if ( !IUS_DB2::requireConnected( db, "raw data lookup", error ) )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
+   QStringList query;
+   query << "get_rawDataID_from_GUID" << rawGUID;
+   db->query( query );
+
+   const int status = db->lastErrno();
+
+   // NOROWS and a successful query without a row both mean the raw data was
+   // never uploaded, so both are reported as NO_RAWDATA.
+   if ( status == IUS_DB2::NOROWS )
+   {
+      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      return IUS_DB2::NO_RAWDATA;
+   }
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not look up the raw data record for GUID %1: "
+                       "%2 (status %3)" )
+                 .arg( rawGUID, db->lastError() )
+                 .arg( status );
+      return status;
+   }
+
+   if ( !db->next() )
+   {
+      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      return IUS_DB2::NO_RAWDATA;
+   }
+
+   const QVariant id     = db->value( 0 );
+   bool           ok     = false;
+   const int      parsed = id.toInt( &ok );
+
+   if ( !ok )
+   {
+      error = QString( "Raw data record for GUID %1 has a non-numeric id (\"%2\")" ).arg( rawGUID, id.toString() );
+      return IUS_DB2::DBERROR;
+   }
+
+   rawDataID = parsed;
+   return IUS_DB2::OK;
+}
+
+int US_ConvertIO::createEditedData( IUS_DB2* db, const EditedDataRecord& record, int& editedDataID, QString& error )
+{
+   if ( !IUS_DB2::requireConnected( db, "edited data creation", error ) )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
+   QStringList query;
+   query << "new_editedData" << QString::number( record.rawDataID ) << record.editGUID << record.label << record.filename
+         << record.comment;
+   db->query( query );
+
+   const int status = db->lastErrno();
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not create the editedData record for %1: "
+                       "%2 (status %3)" )
+                 .arg( record.filename, db->lastError() )
+                 .arg( status );
+      return status;
+   }
+
+   editedDataID = db->lastInsertID();
+
+   return IUS_DB2::OK;
+}
+
+int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID, const EditedDataRecord& record, QString& error )
+{
+   if ( !IUS_DB2::requireConnected( db, "edited data update", error ) )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
+   QStringList query;
+   query << "update_editedData" << QString::number( editedDataID ) << QString::number( record.rawDataID ) << record.editGUID
+         << record.label << record.filename << record.comment;
+   db->query( query );
+
+   const int status = db->lastErrno();
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not update editedData record %1 for %2: "
+                       "%3 (status %4)" )
+                 .arg( editedDataID )
+                 .arg( record.filename, db->lastError() )
+                 .arg( status );
+      return status;
+   }
+
+   return IUS_DB2::OK;
+}
+
+int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID, const QString& filename, QString& error )
+{
+   if ( !IUS_DB2::requireConnected( db, "edited data upload", error ) )
+   {
+      return IUS_DB2::NOT_CONNECTED;
+   }
+
+   const int status = db->writeBlobToDB( filename, "upload_editData", editedDataID );
+
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not attach %1 to editedData record %2: "
+                       "%3 (status %4)" )
+                 .arg( filename )
+                 .arg( editedDataID )
+                 .arg( db->lastError() )
+                 .arg( status );
+      return status;
+   }
+
+   return IUS_DB2::OK;
+}
+
 QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData, 
                                        QList< US_Convert::TripleInfo >& triples,
                                        const QString& dir,
@@ -220,7 +352,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       // Write cell table record
       QStringList parts    = triple->tripleDesc.split(" / ");
       const QString& cell         = parts[ 0 ];
-      QString letters("SABCDEFGH");
+      QString        letters      = US_Util::channel_letters();
       const QString& channel      = parts[ 1 ];
       int     channelNum   = letters.indexOf( channel );
       QString eccc         = cell + ":" + QString::number( channelNum )
@@ -497,7 +629,7 @@ qDebug() << " rRDD: read BlobFromDB (loop)";
    while ( db->next() )
    {
       struct cellInfo cell;
-      QString letters("SABCDEFGH");
+      QString         letters = US_Util::channel_letters();
       cell.cellName      = db->value( 2 ).toString();
       cell.channelName   = QString( letters[ qMax( 0, db->value( 3 ).toInt() ) ] );
       cell.centerpieceID = db->value( 4 ).toInt();
@@ -734,23 +866,18 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
 
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) triples[ i ].tripleGUID );
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      int status = db->lastErrno();
-qDebug() << "iSv: trip" << i << "tGUID" << uuidc
- << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
-      if ( status == US_DB2::OK )
+      int     rawDataID = 0;
+      QString error;
+      int     status = findRawDataId( db, uuidc, rawDataID, error );
+      qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
+      if ( status == IUS_DB2::OK )
       {
          // Save updated triple ID
-         if ( db->next() )
-            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-qDebug() << "iSv:    tID" << triples[i].tripleID;
+         triples[i].tripleID = rawDataID;
+         qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS )
+      else if ( status == IUS_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -759,8 +886,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 
       else     // more unlikely errors
       {
-         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
-         qDebug() << "triple GUID = " << uuidc;
+         qDebug() << error;
          return status;
       }
 
@@ -907,23 +1033,18 @@ int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
 
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) triples[ i ].tripleGUID );
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      int status = db->lastErrno();
-qDebug() << "iSv: trip" << i << "tGUID" << uuidc
- << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
-      if ( status == US_DB2::OK )
+      int     rawDataID = 0;
+      QString error;
+      int     status = findRawDataId( db, uuidc, rawDataID, error );
+      qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
+      if ( status == IUS_DB2::OK )
       {
          // Save updated triple ID
-         if ( db->next() )
-            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-qDebug() << "iSv:    tID" << triples[i].tripleID;
+         triples[i].tripleID = rawDataID;
+         qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS )
+      else if ( status == IUS_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -932,8 +1053,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 
       else     // more unlikely errors
       {
-         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
-         qDebug() << "triple GUID = " << uuidc;
+         qDebug() << error;
          return status;
       }
 

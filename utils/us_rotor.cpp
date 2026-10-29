@@ -305,6 +305,37 @@ US_Rotor::Status US_Rotor::readAbstractRotorsDisk( QVector< US_Rotor::AbstractRo
    return US_Rotor::ROTOR_OK;
 }
 
+int US_Rotor::holeCount( const US_Rotor::Rotor& rotor, IUS_DB2* db )
+{
+   if ( rotor.abstractRotorID < 1 )
+   {
+      return -1;
+   }
+
+   if ( db != nullptr && db->lastErrno() == IUS_DB2::OK )
+   {
+      US_Rotor::AbstractRotor arotor;
+
+      if ( arotor.readDB( rotor.abstractRotorID, db ) != US_Rotor::ROTOR_OK )
+      {
+         return -1;
+      }
+      return arotor.numHoles;
+   }
+
+   QVector<US_Rotor::AbstractRotor> arotors;
+   US_Rotor::readAbstractRotorsDisk( arotors );
+
+   for ( const US_Rotor::AbstractRotor& arotor : arotors )
+   {
+      if ( arotor.ID == rotor.abstractRotorID )
+      {
+         return arotor.numHoles;
+      }
+   }
+   return -1;
+}
+
 // Function to read all the abstract rotor info from disk
 US_Rotor::Status US_Rotor::readRotorsFromDB( QVector< US_Rotor::Rotor >& rotors,
                                              int labID, IUS_DB2* db )
