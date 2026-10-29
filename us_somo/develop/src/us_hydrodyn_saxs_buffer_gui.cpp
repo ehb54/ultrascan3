@@ -303,7 +303,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    progress->reset();
 
-   QFrame * fit_frame = new QFrame();
+   // a separate window owned by this one, so the window manager keeps it above the data utility
+   QFrame * fit_frame = new QFrame( this, Qt::Window );
    fit_frame->setPalette( PALET_FRAME );
    fit_frame->setWindowTitle( windowTitle() + us_tr( " : Fitting" ) );
    
@@ -726,13 +727,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_legend->setPalette( PALET_PUSHB );
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
-   pb_axis_x = new QPushButton(us_tr("X"), this);
+   pb_axis_x = new QPushButton(us_tr("Log X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
    pb_axis_x->setPalette( PALET_PUSHB );
    connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
 
-   pb_axis_y = new QPushButton(us_tr("Y"), this);
+   pb_axis_y = new QPushButton(us_tr("Log Y"), this);
    pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_y->setMinimumHeight(minHeight1);
    pb_axis_y->setPalette( PALET_PUSHB );
@@ -1083,8 +1084,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    fit_background->addLayout ( hbl_controls );
 
    fit_frame->adjustSize();
-   fit_frame->show();
-   fit_frame->raise();
+
+   // shown by showEvent(), once this window is shown
 
    fit_widget = (QWidget *) fit_frame;
 
