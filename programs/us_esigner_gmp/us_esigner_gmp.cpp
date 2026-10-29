@@ -1663,7 +1663,8 @@ void US_eSignaturesGMP::init_grevs( void )
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
             
-      if ( lev < 3  &&  inv != data.invID )
+      //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
+      if ( !reassign_revs_sep  &&  lev < 3  &&  inv != data.invID )
 	continue;
 
       g_reviewers << data;
@@ -1729,7 +1730,8 @@ void US_eSignaturesGMP::init_gapprs( void )
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
             
-      if ( lev < 3  &&  inv != data.invID )
+      //reassign program: level 2 must be able to choose any reviewer/approver for their own runs
+      if ( !reassign_revs_sep  &&  lev < 3  &&  inv != data.invID )
 	continue;
 
       g_apprs << data;
@@ -2101,12 +2103,13 @@ void US_eSignaturesGMP::selectGMPRun( void )
 //for stand-alone reassign program
 void US_eSignaturesGMP::selectGMPRun_sa( void )
 {
-  //Only users with User Level 3 and above may reassign operators/reviewers/approvers
-  if ( US_Settings::us_inv_level() < 3 )
+  //User Level 3 and above: any run;  User Level 2: own runs only;  User Level 1 and below: not allowed
+  if ( US_Settings::us_inv_level() < 2 )
     {
       QMessageBox::warning( this, tr( "Insufficient User Level" ),
 			    tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
-				"User Level 3 or higher.<br><br>"
+				"User Level 2 or higher "
+				"(Level 2: your own runs only; Level 3 and above: any run).<br><br>"
 				"Your current User Level is <b>%1</b>." )
 			    .arg( US_Settings::us_inv_level() ) );
       return;
@@ -2614,8 +2617,8 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 
 	  //Check user level && GUID; if <3, check if the user is operator || investigator
 	  //
-	  //Stand-alone reassign program: NO per-run filtering -- any run can be reassigned by any user
-	  //whose User Level is 3 or above (the level itself is checked in selectGMPRun_sa()).
+	  //Stand-alone reassign program: level >= 3 -- any run; level 2 -- own runs only; level <= 1 -- none
+	  //(the level is also checked in selectGMPRun_sa() and assignOperRevs_sa()).
 	  //For all other callers the original rule stays: level <3 sees only own runs.
 	  /* ORIGINAL (kept for reference):
 	  if ( US_Settings::us_inv_level() < 3 )
@@ -2632,9 +2635,12 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	      nrecs++;
 	    }
 	  */
-	  bool include_run = reassign_revs_sep                                      //stand-alone reassign: all runs
-	    || US_Settings::us_inv_level() >= 3                                      //level >=3: all runs
-	    || ( user_id && user_id == row.invID.toInt() );                          //level <3: own runs only
+	  //Stand-alone reassign:  level >= 3 : any run;  level 2 : own runs only;  level <= 1 : none.
+	  //All other callers:      level >= 3 : any run;  level < 3 : own runs only.
+	  int  ulev    = US_Settings::us_inv_level();
+	  bool own_run = ( user_id && user_id == row.invID.toInt() );
+	  bool include_run = reassign_revs_sep ? ( ulev >= 3 || ( ulev == 2 && own_run ) )
+	                                       : ( ulev >= 3 || own_run );
 
 	  if ( include_run )
 	    {
@@ -2644,7 +2650,7 @@ int US_eSignaturesGMP::list_all_autoflow_records( QList< QStringList >& autoflow
 	    }
 	  else
 	    qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << runname
-		     << ": run belongs to another investigator and user level is < 3";
+		     << ": not allowed for this user (own runs only below level 3; none below level 2 when reassigning)";
 	}
       else
 	qDebug() << "list_all_autoflow_records(" << type << "): SKIPPED autoflowID" << row.id << row.runname
@@ -3186,12 +3192,22 @@ void US_eSignaturesGMP::removeApprfromList( void )
 //Assign operators & reviewers for the current GMP run: for SA
 void US_eSignaturesGMP::assignOperRevs_sa( void )
 {
-  //Only users with User Level 3 and above may reassign operators/reviewers/approvers
-  if ( US_Settings::us_inv_level() < 3 )
+  //User Level 3 and above: any run;  User Level 2: own runs only;  User Level 1 and below: not allowed
+  if ( US_Settings::us_inv_level() < 2 )
     {
       QMessageBox::warning( this, tr( "Insufficient User Level" ),
 			    tr( "Reassigning Operator(s), Reviewer(s) and Approver(s) requires "
-				"User Level 3 or higher." ) );
+				"User Level 2 or higher "
+				"(Level 2: your own runs only; Level 3 and above: any run)." ) );
+      return;
+    }
+
+  if ( US_Settings::us_inv_level() < 3 &&
+       gmp_run_details[ "invID_passed" ].toInt() != US_Settings::us_inv_ID() )
+    {
+      QMessageBox::warning( this, tr( "Not Your Run" ),
+			    tr( "With User Level 2 you can reassign Operator(s), Reviewer(s) and Approver(s) "
+				"only for your own GMP runs." ) );
       return;
     }
 
