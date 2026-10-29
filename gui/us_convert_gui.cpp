@@ -4138,10 +4138,9 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    le_status->setText( tr( "Loading data from local disk ..." ) );
    qApp->processEvents();
 
-   // Read the run through US_ConvertIO::readDiskRun().  It reports; this
-   // decides.  Everything the GUI recovered from before, it
-   // still recovers from -- the added detail only says more in the same
-   // messages, and no archive that loaded before stops loading here.
+   // readDiskRun() reads the run directory and describes any problems it
+   // finds; whether a problem stops the load is decided below.  A run that
+   // loaded before still loads, and readError adds detail to the messages.
    le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
    qApp->processEvents();
    DbgLv( 1 ) << "CGui: ldUS3Dk: call read";
