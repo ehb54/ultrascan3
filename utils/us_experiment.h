@@ -165,7 +165,17 @@ class US_UTIL_EXTERN US_Experiment
                    datasets claimed the same triple, otherwise the same status
                    the four-argument overload would return
       */
-      int         readFromDisk( QList<US_Convert::TripleInfo>&, QString, QString, QString, QVector<SP_SPEEDPROFILE>&, QString& );
+      int readFromDisk( QList<US_Convert::TripleInfo>&, QString, QString, QString, QVector<SP_SPEEDPROFILE>&, QString& );
+
+      //! \brief Detail formats of the diagnostic readFromDisk(), shared with
+      //! the tests; fill them with QString::arg().
+      //! Datasets claiming one triple: %1 the triple descriptions.
+      static constexpr const char* duplicatedDatasetMessage  = "The experiment record describes %1 more than once";
+      //! Datasets matching no data file: %1 the triple descriptions.
+      static constexpr const char* datasetWithoutDataMessage = "the experiment record describes %1, which has no data file";
+      //! Data files the XML does not describe: %1 the triple descriptions.
+      static constexpr const char* dataWithoutDatasetMessage =
+         "the data files include %1, which the experiment record does not describe";
 
       /*! \brief    Writes the radial intensity profile data to the HD
 

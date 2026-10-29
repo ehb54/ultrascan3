@@ -667,7 +667,7 @@ int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
    // cases because it is the one that would silently overwrite.
    if ( !state.duplicated.isEmpty() )
    {
-      detail = QObject::tr( "The experiment record describes %1 more than once" ).arg( state.duplicated.join( ", " ) );
+      detail = QObject::tr( duplicatedDatasetMessage ).arg( state.duplicated.join( ", " ) );
       return US_Convert::BADGUID;
    }
 
@@ -687,16 +687,12 @@ int US_Experiment::readFromDisk( QList<US_Convert::TripleInfo>& triples,
 
       if ( !state.unmatched.isEmpty() )
       {
-         parts << QObject::tr( "the experiment record describes %1, which has no "
-                               "data file" )
-                     .arg( state.unmatched.join( ", " ) );
+         parts << QObject::tr( datasetWithoutDataMessage ).arg( state.unmatched.join( ", " ) );
       }
 
       if ( !unfilled.isEmpty() )
       {
-         parts << QObject::tr( "the data files include %1, which the experiment "
-                               "record does not describe" )
-                     .arg( unfilled.join( ", " ) );
+         parts << QObject::tr( dataWithoutDatasetMessage ).arg( unfilled.join( ", " ) );
       }
 
       detail = parts.join( "; " );

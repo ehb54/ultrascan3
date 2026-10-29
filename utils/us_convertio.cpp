@@ -64,10 +64,7 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
    if ( !runIdIsUsable( run.runID ) )
    {
-      error = QObject::tr( "\"%1\" cannot be a run ID: a run directory name may "
-                           "hold only letters, digits, the underscore and the "
-                           "hyphen, and at most 80 of them" )
-                 .arg( run.runID );
+      error = QObject::tr( invalidRunIdMessage ).arg( run.runID );
       return US_Convert::INVALID_RUN;
    }
 
@@ -75,8 +72,8 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
    if ( rawStatus != US_Convert::OK )
    {
-      error = ( rawStatus == US_Convert::NODATA ) ? QObject::tr( "No .auc files were found in %1" ).arg( run.directory )
-                                                  : QObject::tr( "A data file in %1 could not be read" ).arg( run.directory );
+      error = ( rawStatus == US_Convert::NODATA ) ? QObject::tr( noAucFilesMessage ).arg( run.directory )
+                                                  : QObject::tr( unreadableAucMessage ).arg( run.directory );
       return rawStatus;
    }
 
@@ -86,7 +83,7 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
    // consumer of this run reaches it.
    if ( run.rawData.isEmpty() )
    {
-      error = QObject::tr( "%1 holds no raw data" ).arg( run.directory );
+      error = QObject::tr( noRawDataMessage ).arg( run.directory );
       return US_Convert::INVALID_RUN;
    }
 
@@ -94,7 +91,7 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
    {
       if ( run.rawData[ii].scanData.isEmpty() )
       {
-         error = QObject::tr( "The data file for %1 has no scans" ).arg( run.triples[ii].tripleDesc );
+         error = QObject::tr( noScansMessage ).arg( run.triples[ii].tripleDesc );
          return US_Convert::INVALID_RUN;
       }
    }
@@ -135,14 +132,12 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
    if ( runTypes.size() > 1 )
    {
-      mixedDetail = QObject::tr( "the data files name more than one run type "
-                                 "(%1); only %2 was read" )
-                       .arg( runTypes.join( ", " ), run.runType );
+      mixedDetail = QObject::tr( mixedRunTypesMessage ).arg( runTypes.join( ", " ), run.runType );
    }
 
    else if ( runIDs.size() > 1 )
    {
-      mixedDetail = QObject::tr( "the data files name more than one run (%1)" ).arg( runIDs.join( ", " ) );
+      mixedDetail = QObject::tr( mixedRunIdsMessage ).arg( runIDs.join( ", " ) );
    }
 
    QString   detail;
@@ -154,17 +149,17 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
       if ( expStatus == US_Convert::CANTOPEN )
       {
-         error = QObject::tr( "The experiment record %1 could not be opened" ).arg( run.directory + file );
+         error = QObject::tr( experimentUnopenableMessage ).arg( run.directory + file );
       }
 
       else if ( expStatus == US_Convert::BADXML )
       {
-         error = QObject::tr( "The experiment record %1 is not well-formed XML" ).arg( run.directory + file );
+         error = QObject::tr( experimentMalformedMessage ).arg( run.directory + file );
       }
 
       else
       {
-         error = QObject::tr( "%1 and the data files in %2 disagree: %3" ).arg( file, run.directory, detail );
+         error = QObject::tr( experimentDisagreesMessage ).arg( file, run.directory, detail );
       }
 
       // A directory holding two runs explains a dataset mismatch, so it is
@@ -174,11 +169,11 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
          if ( expStatus == US_Convert::CANTOPEN || expStatus == US_Convert::BADXML )
          { // The record itself is unreadable, which no amount of run mixing
             // explains away.  Report that, and the mixing alongside it.
-            error += QObject::tr( ". Also, %1" ).arg( mixedDetail );
+            error += QObject::tr( alsoMixedRunMessage ).arg( mixedDetail );
             return expStatus;
          }
 
-         error = QObject::tr( "The run in %1 is not one run: %2. As a result, %3" ).arg( run.directory, mixedDetail, detail );
+         error = QObject::tr( notOneRunCausedMessage ).arg( run.directory, mixedDetail, detail );
          return US_Convert::INVALID_RUN;
       }
 
@@ -187,7 +182,7 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
    if ( !mixedDetail.isEmpty() )
    {
-      error = QObject::tr( "The run in %1 is not one run: %2" ).arg( run.directory, mixedDetail );
+      error = QObject::tr( notOneRunMessage ).arg( run.directory, mixedDetail );
       return US_Convert::INVALID_RUN;
    }
 
@@ -200,7 +195,7 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
       if ( triple.tripleFilename.isEmpty() )
       {
-         error = QObject::tr( "The experiment record names no data file for %1" ).arg( triple.tripleDesc );
+         error = QObject::tr( noDataFileForTripleMessage ).arg( triple.tripleDesc );
          return US_Convert::PARTIAL_XML;
       }
 
@@ -209,9 +204,7 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
 
       if ( tripleGUID != rawGUID )
       {
-         error = QObject::tr( "The experiment record gives %1 the identity %2, "
-                              "but its data file carries %3" )
-                    .arg( triple.tripleDesc, tripleGUID, rawGUID );
+         error = QObject::tr( identityMismatchMessage ).arg( triple.tripleDesc, tripleGUID, rawGUID );
          return US_Convert::BADGUID;
       }
    }

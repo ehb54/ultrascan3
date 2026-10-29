@@ -159,7 +159,7 @@ TEST_F( ReadDiskRunTest, RefusesADirectoryNameThatCannotBeARunId )
    ASSERT_TRUE( QDir().mkpath( bad ) );
 
    EXPECT_EQ( US_ConvertIO::readDiskRun( bad, run, error ), US_Convert::INVALID_RUN );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "not a run id" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::invalidRunIdMessage ).arg( "not a run id" ) );
 }
 
 TEST_F( ReadDiskRunTest, ReportsADirectoryWithNoData )
@@ -168,7 +168,8 @@ TEST_F( ReadDiskRunTest, ReportsADirectoryWithNoData )
    ASSERT_TRUE( QDir().mkpath( empty ) );
 
    EXPECT_EQ( US_ConvertIO::readDiskRun( empty, run, error ), US_Convert::NODATA );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "empty-run" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::noAucFilesMessage ).arg( run.directory ) );
+   EXPECT_THAT( run.directory.toStdString(), HasSubstr( "/empty-run/" ) );
 }
 
 TEST_F( ReadDiskRunTest, AScanlessDataFileIsStoppedByTheAucReaderFirst )
@@ -186,7 +187,7 @@ TEST_F( ReadDiskRunTest, AScanlessDataFileIsStoppedByTheAucReaderFirst )
    ASSERT_FALSE( fixture.dir.isEmpty() );
 
    EXPECT_EQ( read( fixture ), US_Convert::NOAUC );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "could not be read" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::unreadableAucMessage ).arg( fixture.dir ) );
    EXPECT_TRUE( run.speedSteps.isEmpty() );
 }
 
@@ -205,9 +206,10 @@ TEST_F( ReadDiskRunTest, ReportsMixedRunTypesInOneDirectory )
    // fundamental fact and is what comes back; the mixing is named alongside it
    // because it is why the wrong file was looked for.
    EXPECT_EQ( read( fixture ), US_Convert::CANTOPEN );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "more than one run type" ) );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "RA" ) );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "IP" ) );
+   const QString mixed = QString( US_ConvertIO::mixedRunTypesMessage ).arg( "IP, RA", "IP" );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::experimentUnopenableMessage ).arg( fixture.dir + "mixed-type-run.IP.xml" ) +
+                 QString( US_ConvertIO::alsoMixedRunMessage ).arg( mixed ) );
 
    // Reported, not rejected: the caller still gets what was read.
    EXPECT_EQ( run.rawData.size(), 2 );
@@ -228,6 +230,11 @@ TEST_F( ReadDiskRunTest, StillReadsTheExperimentWhenADirectoryHoldsTwoRuns )
    ASSERT_TRUE( QFile::copy( guest.dir + guest.aucFiles[0], fixture.dir + guest.aucFiles[0] ) );
 
    EXPECT_EQ( read( fixture ), US_Convert::INVALID_RUN );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::notOneRunCausedMessage )
+                 .arg( fixture.dir,
+                       QString( US_ConvertIO::mixedRunIdsMessage ).arg( "two-runs-guest, two-runs" ),
+                       QString( US_Experiment::dataWithoutDatasetMessage ).arg( "3 / A / 280" ) ) );
 
    // Everything the experiment record had is still there.
    EXPECT_EQ( run.experiment.runID.toStdString(), "two-runs" );
@@ -245,7 +252,11 @@ TEST_F( ReadDiskRunTest, ReportsMixedRunIdsInOneDirectory )
    ASSERT_TRUE( QFile::copy( guest.dir + guest.aucFiles[0], fixture.dir + guest.aucFiles[0] ) );
 
    EXPECT_EQ( read( fixture ), US_Convert::INVALID_RUN );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "more than one run" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::notOneRunCausedMessage )
+                 .arg( fixture.dir,
+                       QString( US_ConvertIO::mixedRunIdsMessage ).arg( "guest-run, host-run" ),
+                       QString( US_Experiment::dataWithoutDatasetMessage ).arg( "3 / A / 280" ) ) );
    EXPECT_EQ( run.rawData.size(), 2 );
 }
 
@@ -258,7 +269,7 @@ TEST_F( ReadDiskRunTest, ReportsAMissingExperimentRecordWithItsPath )
    ASSERT_TRUE( QFile::remove( fixture.dir + "no-xml-run.RA.xml" ) );
 
    EXPECT_EQ( read( fixture ), US_Convert::CANTOPEN );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "no-xml-run.RA.xml" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::experimentUnopenableMessage ).arg( fixture.dir + "no-xml-run.RA.xml" ) );
 
    // The raw data was already read and is still there for the caller.
    EXPECT_EQ( run.rawData.size(), 1 );
@@ -275,7 +286,7 @@ TEST_F( ReadDiskRunTest, ReportsAMalformedExperimentRecord )
    xml.close();
 
    EXPECT_EQ( read( fixture ), US_Convert::BADXML );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "well-formed" ) );
+   EXPECT_EQ( error, QString( US_ConvertIO::experimentMalformedMessage ).arg( fixture.dir + "bad-xml-run.RA.xml" ) );
 }
 
 TEST_F( ReadDiskRunTest, NamesTheDatasetTheExperimentRecordDoesNotDescribe )
@@ -290,8 +301,10 @@ TEST_F( ReadDiskRunTest, NamesTheDatasetTheExperimentRecordDoesNotDescribe )
    ASSERT_TRUE( QFile::copy( donor.dir + donor.aucFiles[0], fixture.dir + "extra-auc-run.RA.2.B.280.auc" ) );
 
    EXPECT_EQ( read( fixture ), US_Convert::PARTIAL_XML );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "2 / B / 280" ) );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "does not describe" ) );
+   EXPECT_EQ(
+      error,
+      QString( US_ConvertIO::experimentDisagreesMessage )
+         .arg( "extra-auc-run.RA.xml", fixture.dir, QString( US_Experiment::dataWithoutDatasetMessage ).arg( "2 / B / 280" ) ) );
 }
 
 TEST_F( ReadDiskRunTest, NamesTheDatasetWithNoDataFile )
@@ -303,8 +316,11 @@ TEST_F( ReadDiskRunTest, NamesTheDatasetWithNoDataFile )
    ASSERT_TRUE( QFile::remove( fixture.dir + fixture.aucFiles[1] ) );
 
    EXPECT_EQ( read( fixture ), US_Convert::PARTIAL_XML );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "1 / A / 410" ) );
-   EXPECT_THAT( error.toStdString(), HasSubstr( "no data file" ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::experimentDisagreesMessage )
+                 .arg( "extra-dataset-run.RA.xml",
+                       fixture.dir,
+                       QString( US_Experiment::datasetWithoutDataMessage ).arg( "1 / A / 410" ) ) );
 }
 
 TEST_F( ReadDiskRunTest, ReportsADatasetIdentityThatDisagreesWithItsDataFile )
@@ -320,8 +336,8 @@ TEST_F( ReadDiskRunTest, ReportsADatasetIdentityThatDisagreesWithItsDataFile )
    ASSERT_TRUE( QFile::copy( donor.dir + donor.aucFiles[0], target ) );
 
    EXPECT_EQ( read( fixture ), US_Convert::BADGUID );
-   EXPECT_THAT( error.toStdString(), HasSubstr( fixture.rawGUIDs[0].toStdString() ) );
-   EXPECT_THAT( error.toStdString(), HasSubstr( donor.rawGUIDs[0].toStdString() ) );
+   EXPECT_EQ( error,
+              QString( US_ConvertIO::identityMismatchMessage ).arg( "1 / A / 280", fixture.rawGUIDs[0], donor.rawGUIDs[0] ) );
 }
 
 // ----------------------------------------------------------- what it will not do

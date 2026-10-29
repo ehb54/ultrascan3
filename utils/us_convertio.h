@@ -48,7 +48,7 @@ class US_UTIL_EXTERN US_ConvertIO
           problems and does not reject them: it returns the most specific
           status it can, fills `error` with the detail, and populates `run` as
           far as the read got.  Whether a non-OK status ends the load is the
-          caller's decision -- `us_import_run` treats every one as fatal, while
+          caller's decision -- an importer may treat every one as fatal, while
           US_ConvertGui recovers from exactly what it recovered from before and
           uses the detail only to say more in its existing messages.
 
@@ -70,7 +70,45 @@ class US_UTIL_EXTERN US_ConvertIO
                    an unusable run ID, no raw data, a raw dataset with no
                    scans, or filenames carrying mixed run IDs or run types.
       */
-      static int readDiskRun( const QString& directory, DiskRun& run, QString& error );
+      static int                   readDiskRun( const QString& directory, DiskRun& run, QString& error );
+
+      //! \brief readDiskRun() error formats, shared with the tests; fill them
+      //! with QString::arg().
+      //! A directory name that cannot be a run ID: %1 the name.
+      static constexpr const char* invalidRunIdMessage  = "\"%1\" cannot be a run ID: a run directory name may hold only letters, "
+                                                          "digits, the underscore and the hyphen, and at most 80 of them";
+      //! No .auc files: %1 the directory.
+      static constexpr const char* noAucFilesMessage    = "No .auc files were found in %1";
+      //! An .auc file that could not be read: %1 the directory.
+      static constexpr const char* unreadableAucMessage = "A data file in %1 could not be read";
+      //! The read produced no raw data: %1 the directory.
+      static constexpr const char* noRawDataMessage     = "%1 holds no raw data";
+      //! A dataset without scans: %1 the triple description.
+      static constexpr const char* noScansMessage       = "The data file for %1 has no scans";
+      //! Mixed run types: %1 the types found, %2 the one read.
+      static constexpr const char* mixedRunTypesMessage = "the data files name more than one run type (%1); only %2 was read";
+      //! Mixed run IDs: %1 the run IDs found.
+      static constexpr const char* mixedRunIdsMessage   = "the data files name more than one run (%1)";
+      //! The experiment XML could not be opened: %1 its path.
+      static constexpr const char* experimentUnopenableMessage = "The experiment record %1 could not be opened";
+      //! The experiment XML is malformed: %1 its path.
+      static constexpr const char* experimentMalformedMessage  = "The experiment record %1 is not well-formed XML";
+      //! The experiment XML and the .auc files disagree: %1 the XML file name,
+      //! %2 the directory, %3 US_Experiment's detail.
+      static constexpr const char* experimentDisagreesMessage  = "%1 and the data files in %2 disagree: %3";
+      //! Appended to an unreadable-experiment error: %1 the mixed-run detail.
+      static constexpr const char* alsoMixedRunMessage         = ". Also, %1";
+      //! A mixed run: %1 the directory, %2 the mixed-run detail.
+      static constexpr const char* notOneRunMessage            = "The run in %1 is not one run: %2";
+      //! A mixed run that caused a disagreement: %1 the directory, %2 the
+      //! mixed-run detail, %3 US_Experiment's detail.
+      static constexpr const char* notOneRunCausedMessage      = "The run in %1 is not one run: %2. As a result, %3";
+      //! A triple the experiment XML names no file for: %1 the triple description.
+      static constexpr const char* noDataFileForTripleMessage  = "The experiment record names no data file for %1";
+      //! A triple whose GUID differs from its .auc's: %1 the triple
+      //! description, %2 the experiment's GUID, %3 the data file's GUID.
+      static constexpr const char* identityMismatchMessage     = "The experiment record gives %1 the identity %2, "
+                                                                 "but its data file carries %3";
 
       /*! \brief The values an editedData row is created or updated with.
 
