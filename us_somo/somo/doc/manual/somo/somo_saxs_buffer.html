@@ -23,7 +23,7 @@
 <h2>
 SOMO - SAXS/SANS (SAS) Module: Data Utility (Buffer subtraction, joining and averaging)</h2>
 <p>
-<h3><center>Last updated: September 2026</center></h3><p>
+<h3><center>Last updated: October 2026</center></h3><p>
 </center>
 
 <hr>
@@ -60,7 +60,8 @@ yet exist on disk as far as this module is concerned, and any character that is 
 
 Opening the module brings up <i>two</i> windows: the main window described below, and a small
 companion window titled <i>US-SOMO: SAXS: Data Utility : Fitting</i> that holds the
-<a href="#Subtraction">buffer subtraction</a> controls. Closing the main window closes both.
+<a href="#Subtraction">buffer subtraction</a> controls. The companion window opens in front of the main window
+and stays above it. Closing the main window closes both.
 <p>
 
 <b>Contents</b>
@@ -162,8 +163,10 @@ adjacent ones happen to receive similar colors.<p>
 together with their concentrations, for Guinier analysis, <i>P</i>(<i>r</i>) computation, fitting and so on.<p>
 <li><b><i>View</i></b>, active for up to ten selected curves, opens each of them in a text window
 showing the same columns that would be written to disk.<p>
-<li><b><i>X</i></b> and <b><i>Y</i></b> toggle the corresponding plot axis between linear and
-logarithmic scaling.<p>
+<li><b><i>Log X</i></b> / <b><i>Lin X</i></b> and <b><i>Log Y</i></b> / <b><i>Lin Y</i></b> switch the
+corresponding plot axis between linear and logarithmic scaling. Each button names the scale a click switches
+to; the plot starts with a linear <i>q</i> axis and a logarithmic intensity axis, so the buttons first read
+<b><i>Log X</i></b> and <b><i>Lin Y</i></b>.<p>
 <li><b><i>Rescale</i></b> resets the plot limits to the extent of the selected curves and clears any zoom.<p>
 <li><b><i>Legend</i></b>, below the plot, toggles the curve legend; it is disabled when more than
 twenty curves are selected, where a legend would be unreadable.<p>
@@ -469,7 +472,9 @@ exactly what you are discarding at the beam stop or in the noise at high <i>q</i
 
 Any loaded curve that is modified by one of the cropping tools is added to the
 <b><i>Produced Data</i></b> list, so that the modified version can be saved without overwriting your
-original data unintentionally.
+original data unintentionally, and a produced curve that a crop modifies is marked as not saved again.
+A curve that a crop leaves unchanged &mdash; one already on the common grid in <b><i>Crop Common</i></b>, for
+instance &mdash; keeps its state.
 <p>
 
 <hr>
@@ -489,25 +494,49 @@ does not exist.
 <li><b><i>Select all</i></b> selects the whole produced list.<p>
 <li><b><i>Similar</i></b> extends the selection to the curves whose names follow the same pattern as the
 first selected one &mdash; the whole family of subtractions from one parameter scan, for instance.<p>
-<li><b><i>Save</i></b> writes the selected produced curves as individual files, and is active only while
-some of them are still unsaved. Each is written with the name of the file it originated from, or the curve
-name with a <i>.dat</i> extension; existing files raise an overwrite prompt with an
-<i>overwrite all</i> option.<p>
+<li><b><i>Save</i></b> writes the selected produced curves that are not saved yet as individual files, and is
+active only while some of the selected ones are still unsaved. Each is written with the name of the file it
+originated from, or the curve name with a <i>.dat</i> extension; existing files raise an overwrite prompt
+with an <i>overwrite all</i> option. A saved curve is shown in grey italics in the
+<b><i>Produced Data</i></b> list, and its tooltip gives the file it was saved as; it is not saved again
+unless it changes.<p>
 <li><b><i>Save CSV</i></b> writes all the selected produced curves into a single comma-separated file, whose
 name is derived from the common part of their names. If their <i>q</i> grids are not identical, versions
 cropped to the common grid are included in the output for compatibility, and a notice is issued.<p>
 <li><b><i>Show</i></b> adds the selected produced curves to the plot, and <b><i>Show only</i></b>
 displays them and nothing else.<p>
-<li>Right-clicking an entry in the <b><i>Produced Data</i></b> list allows it to be renamed.<p>
+<li>Right-clicking an entry in the <b><i>Produced Data</i></b> list makes a copy of it under a new name;
+the original stays. The copy keeps the description of how the curve was made (see below).<p>
 </ul>
 
 Individual files are written with a one-line header of the form
 <p>
-<tt>US-SOMO: SAXS: Data Utility output: <i>name</i> PSV:<i>value</i> I0se:<i>value</i> Conc:<i>value</i> Units:1/a</tt>
+<tt>US-SOMO: SAXS: Data Utility output: <i>name</i> PSV:<i>value</i> I0se:<i>value</i> Conc:<i>value</i> Units:1/a <i>description</i></tt>
 <p>
-followed by a column-heading line and the data as <i>q</i>, <i>I</i>(<i>q</i>) and, when available, the
-standard deviation. The <i>PSV</i>, <i>I0se</i> and <i>Conc</i> fields appear only when those quantities are
-known, and are read back when the file is loaded again, here or elsewhere in <b><i>US-SOMO</i></b>.
+followed by a column-heading line, <tt>q (1/Angstrom)&nbsp; I(q)&nbsp; sd</tt>, and the data as <i>q</i>,
+<i>I</i>(<i>q</i>) and, when available, the standard deviation. The <i>PSV</i>, <i>I0se</i> and
+<i>Conc</i> fields appear only when those quantities are known, and are read back when the file is loaded
+again, here or elsewhere in <b><i>US-SOMO</i></b>. <tt>Units:1/a</tt> states that <i>q</i> is in
+&Aring;<sup>-1</sup>, whatever the units of the data it came from; it is read back too, so it keeps this exact form.
+<p>
+The <i>description</i> at the end of the header records how a produced curve was made:
+<ul>
+<li>buffer subtraction and buffer divide: the formula with the solution, buffer and blank and &alpha;;
+&gamma;, the concentration and the <i>psv</i> when &alpha; is computed from them; and how non-positive points
+were handled, if there were any;
+<li>average and concentration normalized average: the number of files, their frame range when their names
+differ only by a frame number, the weighting, any cropping, and the files themselves (for the concentration
+normalized average, also their concentrations);
+<li>weighted sum: the files and their weights;
+<li><b><i>N</i></b> normalization: the source curve and its concentration;
+<li>join and the interactive join: the two curves, the join point and, for the interactive join, the scaling
+and the offset.
+</ul>
+For example:
+<p>
+<tt>US-SOMO: SAXS: Data Utility output: lyz_avg_00010-00050 Conc:4.8 Units:1/a Average of 41 files (frames 00010-00050), weighted by 1/sd^2: lyz_00010,lyz_00011,...</tt>
+<p>
+Curves loaded from files have no description, and keep none when they are cropped and saved.
 <p>
 
 Closing the window while produced curves remain unsaved raises a dialog listing them (up to fifteen by name)
@@ -565,8 +594,10 @@ would otherwise collide with an existing one.
 <tr><td>Buffer subtraction</td><td><i>solution</i><tt>_bsub_a</tt><i>alpha</i></td></tr>
 <tr><td>Buffer divide</td><td><i>solution</i><tt>_bdiv_a</tt><i>alpha</i></td></tr>
 <tr><td>Join</td><td><i>high-q</i><tt>-</tt><i>low-q</i><tt>_j</tt><i>offset</i><tt>-</tt><i>multiplier</i><tt>-</tt><i>cut</i></td></tr>
-<tr><td>Average</td><td>common prefix + <tt>avg</tt> + common suffix</td></tr>
-<tr><td>Concentration normalized average</td><td>common prefix + <tt>cnavg</tt> + common suffix</td></tr>
+<tr><td>Average</td><td>common prefix + <tt>avg</tt> + common suffix; when the names differ only by a
+frame number, <tt>_</tt><i>first</i><tt>-</tt><i>last</i> follows <tt>avg</tt> (<i>e.g.</i> <tt>lyz_avg_00010-00050</tt>)</td></tr>
+<tr><td>Concentration normalized average</td><td>common prefix + <tt>cnavg</tt> + common suffix, with the
+frame range as for the average</td></tr>
 <tr><td>Weighted sum</td><td>common prefix + <tt>wsum</tt> + common suffix</td></tr>
 <tr><td>Normalize</td><td><i>name</i><tt>_n</tt></td></tr>
 </table>
@@ -621,7 +652,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 8, 2026
+Last modified on October 29, 2026
 </font>
 </body>
 </html>
