@@ -222,6 +222,12 @@ TEST_F(US_SimulationParametersTest, SetHardware_NegativeCp_HandlesSerialNumber) 
     EXPECT_NO_THROW(simparms->setHardware(testCalID, testSerialNumber, testCh));
 }
 
+TEST_F( US_SimulationParametersTest, SetHardware_RejectsOutOfRangeIndexes )
+{
+   EXPECT_FALSE( simparms->setHardware( "0", 9999, 0 ) );
+   EXPECT_FALSE( simparms->setHardware( "0", 0, 9999 ) );
+}
+
 // Load SimParms Tests
 TEST_F(US_SimulationParametersTest, LoadSimparms_ValidFile_LoadsCorrectly) {
     QString xmlContent = createTestSimParmsXml();
@@ -321,4 +327,60 @@ TEST_F(US_SimulationParametersTest, InitFromData_EditedData_SetsBasicParameters)
 
     EXPECT_EQ(simparms->meniscus, 5.8);
     EXPECT_EQ(simparms->bottom_position, 7.2);
+}
+TEST_F( US_SimulationParametersTest, EditRadiiSpanTheWholeColumn )
+{
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, 5.8, 7.2, 0.001 );
+
+   EXPECT_DOUBLE_EQ( ev.meniscus, 5.8 );
+   EXPECT_DOUBLE_EQ( ev.bottom, 7.2 );
+   EXPECT_DOUBLE_EQ( ev.rangeLeft, 5.8 + 0.001 );
+   EXPECT_DOUBLE_EQ( ev.baseline, 5.8 + 0.0055 );
+   EXPECT_DOUBLE_EQ( ev.rangeRight, 7.2 );
+   EXPECT_DOUBLE_EQ( ev.plateau, 7.2 - 0.3 );
+}
+
+TEST_F( US_SimulationParametersTest, EditRangeExcludesTheMeniscusSpike )
+{
+   // The simulators put a spike at the meniscus reading of their grid.
+   const double    meniscus   = 5.8;
+   const double    resolution = 0.001;
+   QVector<double> xvalues;
+   for ( int jj = 0; jj < 100; jj++ )
+   {
+      xvalues << meniscus + jj * resolution;
+   }
+
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, meniscus, 5.9, resolution );
+
+   EXPECT_EQ( US_DataIO::index( xvalues, ev.rangeLeft ), 1 );
+}
+
+TEST_F( US_SimulationParametersTest, EditRadiiHoldMeniscusInsetsFixedOnAShortColumn )
+{
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, 5.8, 6.111, 0.001 );
+
+   EXPECT_DOUBLE_EQ( ev.rangeLeft, 5.8 + 0.001 );
+   EXPECT_DOUBLE_EQ( ev.baseline, 5.8 + 0.0055 );
+}
+
+TEST_F( US_SimulationParametersTest, EditRadiiScaleThePlateauInsetOnAShortColumn )
+{
+   // A 0.311 cm column cannot use the standard 0.3 cm plateau inset.
+   const double          meniscus = 5.8;
+   const double          bottom   = 6.111;
+
+   US_DataIO::EditValues ev;
+   US_SimulationParameters::editRadiiFromCell( ev, meniscus, bottom, 0.001 );
+
+   EXPECT_GT( ev.plateau, ev.baseline );
+   EXPECT_LT( ev.plateau, ev.rangeRight );
+   EXPECT_DOUBLE_EQ( ev.rangeRight, bottom );
+
+   double frac = ( ev.plateau - meniscus ) / ( bottom - meniscus );
+   EXPECT_GT( frac, 0.5 );
+   EXPECT_LT( frac, 1.0 );
 }
