@@ -35,19 +35,20 @@ bool runIdIsUsable( const QString& runID )
 }
 
 //! "runID.runType." prefix fields of an AUC basename, or empty if malformed.
-QPair< QString, QString > runFieldsOf( const QString& filename )
+QPair<QString, QString> runFieldsOf( const QString& filename )
 {
    const QStringList parts = filename.split( "." );
 
    if ( parts.size() < 5 )
-      return QPair< QString, QString >();
+   {
+      return QPair<QString, QString>();
+   }
 
-   return QPair< QString, QString >( parts[ 0 ], parts[ 1 ] );
+   return QPair<QString, QString>( parts[0], parts[1] );
 }
 }
 
-int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
-                               QString& error )
+int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& error )
 {
    run = DiskRun();
    error.clear();
@@ -59,28 +60,28 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
    QString dir = QString( directory ).replace( "\\", "/" );
 
    while ( dir.endsWith( "/" ) )
+   {
       dir.chop( 1 );
+   }
 
    run.runID     = dir.section( "/", -1, -1 );
    run.directory = dir + "/";
 
-   if ( ! runIdIsUsable( run.runID ) )
+   if ( !runIdIsUsable( run.runID ) )
    {
       error = QString( "\"%1\" cannot be a run ID: a run directory name may "
                        "hold only letters, digits, the underscore and the "
-                       "hyphen, and at most 80 of them" ).arg( run.runID );
+                       "hyphen, and at most 80 of them" )
+                 .arg( run.runID );
       return US_Convert::INVALID_RUN;
    }
 
-   const int rawStatus = US_Convert::readUS3Disk( run.directory, run.rawData,
-                                                  run.triples, run.runType );
+   const int rawStatus = US_Convert::readUS3Disk( run.directory, run.rawData, run.triples, run.runType );
 
    if ( rawStatus != US_Convert::OK )
    {
-      error = ( rawStatus == US_Convert::NODATA )
-              ? QString( "No .auc files were found in %1" ).arg( run.directory )
-              : QString( "A data file in %1 could not be read" )
-                .arg( run.directory );
+      error = ( rawStatus == US_Convert::NODATA ) ? QString( "No .auc files were found in %1" ).arg( run.directory )
+                                                  : QString( "A data file in %1 could not be read" ).arg( run.directory );
       return rawStatus;
    }
 
@@ -96,10 +97,9 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
 
    for ( int ii = 0; ii < run.rawData.size(); ii++ )
    {
-      if ( run.rawData[ ii ].scanData.isEmpty() )
+      if ( run.rawData[ii].scanData.isEmpty() )
       {
-         error = QString( "The data file for %1 has no scans" )
-                 .arg( run.triples[ ii ].tripleDesc );
+         error = QString( "The data file for %1 has no scans" ).arg( run.triples[ii].tripleDesc );
          return US_Convert::INVALID_RUN;
       }
    }
@@ -112,20 +112,24 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
    QStringList runTypes;
    QDir        listing( run.directory );
 
-   for ( const QString& name : listing.entryList( QStringList( "*.auc" ),
-                                                  QDir::Files | QDir::Readable,
-                                                  QDir::Name ) )
+   for ( const QString& name : listing.entryList( QStringList( "*.auc" ), QDir::Files | QDir::Readable, QDir::Name ) )
    {
-      const QPair< QString, QString > fields = runFieldsOf( name );
+      const QPair<QString, QString> fields = runFieldsOf( name );
 
       if ( fields.first.isEmpty() )
+      {
          continue;
+      }
 
-      if ( ! runIDs.contains( fields.first ) )
+      if ( !runIDs.contains( fields.first ) )
+      {
          runIDs << fields.first;
+      }
 
-      if ( ! runTypes.contains( fields.second ) )
+      if ( !runTypes.contains( fields.second ) )
+      {
          runTypes << fields.second;
+      }
    }
 
    // Held rather than returned.  Reading stops here only for things that make
@@ -135,59 +139,60 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
    QString mixedDetail;
 
    if ( runTypes.size() > 1 )
+   {
       mixedDetail = QString( "the data files name more than one run type "
                              "(%1); only %2 was read" )
-                    .arg( runTypes.join( ", " ), run.runType );
+                       .arg( runTypes.join( ", " ), run.runType );
+   }
 
    else if ( runIDs.size() > 1 )
-      mixedDetail = QString( "the data files name more than one run (%1)" )
-                    .arg( runIDs.join( ", " ) );
+   {
+      mixedDetail = QString( "the data files name more than one run (%1)" ).arg( runIDs.join( ", " ) );
+   }
 
-   QString detail;
-   const int expStatus = run.experiment.readFromDisk(
-      run.triples, run.runType, run.runID, run.directory,
-      run.speedSteps, detail );
+   QString   detail;
+   const int expStatus = run.experiment.readFromDisk( run.triples, run.runType, run.runID, run.directory, run.speedSteps, detail );
 
    if ( expStatus != US_Convert::OK )
    {
       const QString file = run.runID + "." + run.runType + ".xml";
 
       if ( expStatus == US_Convert::CANTOPEN )
-         error = QString( "The experiment record %1 could not be opened" )
-                 .arg( run.directory + file );
+      {
+         error = QString( "The experiment record %1 could not be opened" ).arg( run.directory + file );
+      }
 
       else if ( expStatus == US_Convert::BADXML )
-         error = QString( "The experiment record %1 is not well-formed XML" )
-                 .arg( run.directory + file );
+      {
+         error = QString( "The experiment record %1 is not well-formed XML" ).arg( run.directory + file );
+      }
 
       else
-         error = QString( "%1 and the data files in %2 disagree: %3" )
-                 .arg( file, run.directory, detail );
+      {
+         error = QString( "%1 and the data files in %2 disagree: %3" ).arg( file, run.directory, detail );
+      }
 
       // A directory holding two runs explains a dataset mismatch, so it is
       // named ahead of the mismatch it caused.
-      if ( ! mixedDetail.isEmpty() )
+      if ( !mixedDetail.isEmpty() )
       {
-         if ( expStatus == US_Convert::CANTOPEN
-              ||  expStatus == US_Convert::BADXML )
-         {  // The record itself is unreadable, which no amount of run mixing
+         if ( expStatus == US_Convert::CANTOPEN || expStatus == US_Convert::BADXML )
+         { // The record itself is unreadable, which no amount of run mixing
             // explains away.  Report that, and the mixing alongside it.
             error += QString( ". Also, %1" ).arg( mixedDetail );
             return expStatus;
          }
 
-         error = QString( "The run in %1 is not one run: %2. As a result, %3" )
-                 .arg( run.directory, mixedDetail, detail );
+         error = QString( "The run in %1 is not one run: %2. As a result, %3" ).arg( run.directory, mixedDetail, detail );
          return US_Convert::INVALID_RUN;
       }
 
       return expStatus;
    }
 
-   if ( ! mixedDetail.isEmpty() )
+   if ( !mixedDetail.isEmpty() )
    {
-      error = QString( "The run in %1 is not one run: %2" )
-              .arg( run.directory, mixedDetail );
+      error = QString( "The run in %1 is not one run: %2" ).arg( run.directory, mixedDetail );
       return US_Convert::INVALID_RUN;
    }
 
@@ -196,25 +201,22 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
    // downstream checks it, and writeRawDataToDB() would unparse and store it.
    for ( int ii = 0; ii < run.triples.size(); ii++ )
    {
-      const US_Convert::TripleInfo& triple = run.triples[ ii ];
+      const US_Convert::TripleInfo& triple = run.triples[ii];
 
       if ( triple.tripleFilename.isEmpty() )
       {
-         error = QString( "The experiment record names no data file for %1" )
-                 .arg( triple.tripleDesc );
+         error = QString( "The experiment record names no data file for %1" ).arg( triple.tripleDesc );
          return US_Convert::PARTIAL_XML;
       }
 
-      const QString tripleGUID = US_Util::uuid_unparse(
-         (unsigned char*)const_cast< char* >( triple.tripleGUID ) );
-      const QString rawGUID = US_Util::uuid_unparse(
-         (unsigned char*)run.rawData[ ii ].rawGUID );
+      const QString tripleGUID = US_Util::uuid_unparse( (unsigned char*) const_cast<char*>( triple.tripleGUID ) );
+      const QString rawGUID    = US_Util::uuid_unparse( (unsigned char*) run.rawData[ii].rawGUID );
 
       if ( tripleGUID != rawGUID )
       {
          error = QString( "The experiment record gives %1 the identity %2, "
                           "but its data file carries %3" )
-                 .arg( triple.tripleDesc, tripleGUID, rawGUID );
+                    .arg( triple.tripleDesc, tripleGUID, rawGUID );
          return US_Convert::BADGUID;
       }
    }
@@ -222,41 +224,16 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run,
    return US_Convert::OK;
 }
 
-// ----------------------------------------------------------------------------
-// Edited-data database mechanics.
-//
-// Three programs used to carry their own copy of this: us_edit, us_manage_data
-// and the corpus loader.  They agreed on the stored procedures and disagreed on
-// everything else -- one raised dialogs, one wrote status codes into a table
-// model, one returned a message -- so the mechanics could not be shared without
-// dragging one program's policy into the others.
-//
-// These take an IUS_DB2*, return the underlying database status, and put
-// context into `error`.  They decide nothing: not whether a record is created
-// or updated, not whether a missing raw record is fatal, not what the user is
-// told, and not where a transaction begins or ends.
-// ----------------------------------------------------------------------------
+// Edited-data database mechanics shared by us_edit, us_manage_data,
+// us_fit_meniscus and us_autoflow_analysis.  These return the database status
+// and set `error`; what to do about a failure is left to the caller.
 
-namespace
+int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID, int& rawDataID, QString& error )
 {
-// Guard shared by every operation below.  A null connection is the caller's
-// mistake, and reporting it as NOT_CONNECTED keeps it inside the status space
-// the callers already handle.
-bool haveConnection( IUS_DB2* db, const QString& what, QString& error )
-{
-   if ( db != nullptr )
-      return true;
-
-   error = QString( "%1: no database connection" ).arg( what );
-   return false;
-}
-}
-
-int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID,
-                                 int& rawDataID, QString& error )
-{
-   if ( ! haveConnection( db, "raw data lookup", error ) )
+   if ( !IUS_DB2::requireConnected( db, "raw data lookup", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
    QStringList query;
    query << "get_rawDataID_from_GUID" << rawGUID;
@@ -264,41 +241,52 @@ int US_ConvertIO::findRawDataId( IUS_DB2* db, const QString& rawGUID,
 
    const int status = db->lastErrno();
 
-   if ( status != IUS_DB2::OK )
-   {
-      error = QString( "Could not look up the raw data record for GUID %1: "
-                       "%2 (status %3)" )
-              .arg( rawGUID, db->lastError() ).arg( status );
-      return status;
-   }
-
-   // A successful query that names no row.  Reported separately from a query
-   // failure because the two mean different things to a caller: one is a
-   // broken connection, the other is data that was never uploaded.
-   if ( ! db->next() )
+   // NOROWS and a successful query without a row both mean the raw data was
+   // never uploaded, so both are reported as NO_RAWDATA.
+   if ( status == IUS_DB2::NOROWS )
    {
       error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
       return IUS_DB2::NO_RAWDATA;
    }
 
-   rawDataID = db->value( 0 ).toInt();
+   if ( status != IUS_DB2::OK )
+   {
+      error = QString( "Could not look up the raw data record for GUID %1: "
+                       "%2 (status %3)" )
+                 .arg( rawGUID, db->lastError() )
+                 .arg( status );
+      return status;
+   }
 
+   if ( !db->next() )
+   {
+      error = QString( "No raw data record exists for GUID %1" ).arg( rawGUID );
+      return IUS_DB2::NO_RAWDATA;
+   }
+
+   const QVariant id     = db->value( 0 );
+   bool           ok     = false;
+   const int      parsed = id.toInt( &ok );
+
+   if ( !ok )
+   {
+      error = QString( "Raw data record for GUID %1 has a non-numeric id (\"%2\")" ).arg( rawGUID, id.toString() );
+      return IUS_DB2::DBERROR;
+   }
+
+   rawDataID = parsed;
    return IUS_DB2::OK;
 }
 
-int US_ConvertIO::createEditedData( IUS_DB2* db,
-                                    const EditedDataRecord& record,
-                                    int& editedDataID, QString& error )
+int US_ConvertIO::createEditedData( IUS_DB2* db, const EditedDataRecord& record, int& editedDataID, QString& error )
 {
-   if ( ! haveConnection( db, "edited data creation", error ) )
+   if ( !IUS_DB2::requireConnected( db, "edited data creation", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
    QStringList query;
-   query << "new_editedData"
-         << QString::number( record.rawDataID )
-         << record.editGUID
-         << record.label
-         << record.filename
+   query << "new_editedData" << QString::number( record.rawDataID ) << record.editGUID << record.label << record.filename
          << record.comment;
    db->query( query );
 
@@ -308,7 +296,8 @@ int US_ConvertIO::createEditedData( IUS_DB2* db,
    {
       error = QString( "Could not create the editedData record for %1: "
                        "%2 (status %3)" )
-              .arg( record.filename, db->lastError() ).arg( status );
+                 .arg( record.filename, db->lastError() )
+                 .arg( status );
       return status;
    }
 
@@ -317,21 +306,16 @@ int US_ConvertIO::createEditedData( IUS_DB2* db,
    return IUS_DB2::OK;
 }
 
-int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID,
-                                    const EditedDataRecord& record,
-                                    QString& error )
+int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID, const EditedDataRecord& record, QString& error )
 {
-   if ( ! haveConnection( db, "edited data update", error ) )
+   if ( !IUS_DB2::requireConnected( db, "edited data update", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
    QStringList query;
-   query << "update_editedData"
-         << QString::number( editedDataID )
-         << QString::number( record.rawDataID )
-         << record.editGUID
-         << record.label
-         << record.filename
-         << record.comment;
+   query << "update_editedData" << QString::number( editedDataID ) << QString::number( record.rawDataID ) << record.editGUID
+         << record.label << record.filename << record.comment;
    db->query( query );
 
    const int status = db->lastErrno();
@@ -340,30 +324,32 @@ int US_ConvertIO::updateEditedData( IUS_DB2* db, int editedDataID,
    {
       error = QString( "Could not update editedData record %1 for %2: "
                        "%3 (status %4)" )
-              .arg( editedDataID ).arg( record.filename, db->lastError() )
-              .arg( status );
+                 .arg( editedDataID )
+                 .arg( record.filename, db->lastError() )
+                 .arg( status );
       return status;
    }
 
    return IUS_DB2::OK;
 }
 
-int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID,
-                                        const QString& filename,
-                                        QString& error )
+int US_ConvertIO::uploadEditedDataBlob( IUS_DB2* db, int editedDataID, const QString& filename, QString& error )
 {
-   if ( ! haveConnection( db, "edited data upload", error ) )
+   if ( !IUS_DB2::requireConnected( db, "edited data upload", error ) )
+   {
       return IUS_DB2::NOT_CONNECTED;
+   }
 
-   const int status = db->writeBlobToDB( filename, "upload_editData",
-                                         editedDataID );
+   const int status = db->writeBlobToDB( filename, "upload_editData", editedDataID );
 
    if ( status != IUS_DB2::OK )
    {
       error = QString( "Could not attach %1 to editedData record %2: "
                        "%3 (status %4)" )
-              .arg( filename ).arg( editedDataID ).arg( db->lastError() )
-              .arg( status );
+                 .arg( filename )
+                 .arg( editedDataID )
+                 .arg( db->lastError() )
+                 .arg( status );
       return status;
    }
 
@@ -576,7 +562,7 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
       // Write cell table record
       QStringList parts    = triple->tripleDesc.split(" / ");
       const QString& cell         = parts[ 0 ];
-      QString letters("SABCDEFGH");
+      QString        letters      = US_Util::channel_letters();
       const QString& channel      = parts[ 1 ];
       int     channelNum   = letters.indexOf( channel );
       QString eccc         = cell + ":" + QString::number( channelNum )
@@ -853,7 +839,7 @@ qDebug() << " rRDD: read BlobFromDB (loop)";
    while ( db->next() )
    {
       struct cellInfo cell;
-      QString letters("SABCDEFGH");
+      QString         letters = US_Util::channel_letters();
       cell.cellName      = db->value( 2 ).toString();
       cell.channelName   = QString( letters[ qMax( 0, db->value( 3 ).toInt() ) ] );
       cell.centerpieceID = db->value( 4 ).toInt();
@@ -1090,23 +1076,18 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
 
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) triples[ i ].tripleGUID );
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      int status = db->lastErrno();
-qDebug() << "iSv: trip" << i << "tGUID" << uuidc
- << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
-      if ( status == US_DB2::OK )
+      int     rawDataID = 0;
+      QString error;
+      int     status = findRawDataId( db, uuidc, rawDataID, error );
+      qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
+      if ( status == IUS_DB2::OK )
       {
          // Save updated triple ID
-         if ( db->next() )
-            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-qDebug() << "iSv:    tID" << triples[i].tripleID;
+         triples[i].tripleID = rawDataID;
+         qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS )
+      else if ( status == IUS_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -1115,8 +1096,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 
       else     // more unlikely errors
       {
-         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
-         qDebug() << "triple GUID = " << uuidc;
+         qDebug() << error;
          return status;
       }
 
@@ -1263,23 +1243,18 @@ int US_ConvertIO::checkDiskData_auto( US_Experiment& ExpData,
 
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) triples[ i ].tripleGUID );
-      q.clear();
-      q << QString( "get_rawDataID_from_GUID" )
-        << uuidc;
-      db->query( q );
-
-      int status = db->lastErrno();
-qDebug() << "iSv: trip" << i << "tGUID" << uuidc
- << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
-      if ( status == US_DB2::OK )
+      int     rawDataID = 0;
+      QString error;
+      int     status = findRawDataId( db, uuidc, rawDataID, error );
+      qDebug() << "iSv: trip" << i << "tGUID" << uuidc << "stat" << status;
+      if ( status == IUS_DB2::OK )
       {
          // Save updated triple ID
-         if ( db->next() )
-            triples[ i ].tripleID = db->value( 0 ).toString().toInt();
-qDebug() << "iSv:    tID" << triples[i].tripleID;
+         triples[i].tripleID = rawDataID;
+         qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
-      else if ( status == US_DB2::NOROWS )
+      else if ( status == IUS_DB2::NO_RAWDATA )
       {
          triples[ i ].tripleID = 0;
          memset( triples[ i ].tripleGUID, 0, 16 );
@@ -1288,8 +1263,7 @@ qDebug() << "iSv:    tID" << triples[i].tripleID;
 
       else     // more unlikely errors
       {
-         qDebug() << "get_rawDataID_from_GUID error: " << db->lastErrno();
-         qDebug() << "triple GUID = " << uuidc;
+         qDebug() << error;
          return status;
       }
 

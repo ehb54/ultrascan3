@@ -165,10 +165,7 @@ class US_UTIL_EXTERN US_Experiment
                    datasets claimed the same triple, otherwise the same status
                    the four-argument overload would return
       */
-      int readFromDisk( QList< US_Convert::TripleInfo >&,
-                        QString, QString, QString,
-                        QVector< SP_SPEEDPROFILE >&,
-                        QString& );
+      int         readFromDisk( QList<US_Convert::TripleInfo>&, QString, QString, QString, QVector<SP_SPEEDPROFILE>&, QString& );
 
       /*! \brief    Writes the radial intensity profile data to the HD
 
@@ -204,25 +201,22 @@ class US_UTIL_EXTERN US_Experiment
       //!        ignores it, which is how its behavior stays unchanged.
       struct DiskReadState
       {
-         //! Serialized speed steps, in file order, when wanted.
-         QVector< SP_SPEEDPROFILE >* speedsteps = nullptr;
+            //! Serialized speed steps, in file order, when wanted.
+            QVector<SP_SPEEDPROFILE>* speedsteps = nullptr;
 
-         //! Triple descriptions of datasets that matched no triple.
-         QStringList unmatched;
+            //! Triple descriptions of datasets that matched no triple.
+            QStringList               unmatched;
 
-         //! Triple descriptions claimed by more than one dataset.
-         QStringList duplicated;
+            //! Triple descriptions claimed by more than one dataset.
+            QStringList               duplicated;
 
-         //! Indexes of the triples a dataset filled in.
-         QSet< int > filled;
+            //! Indexes of the triples a dataset filled in.
+            QSet<int>                 filled;
       };
 
-      int  readFromDisk( QList< US_Convert::TripleInfo >&,
-                         QString, QString, QString, DiskReadState& );
+      int  readFromDisk( QList<US_Convert::TripleInfo>&, QString, QString, QString, DiskReadState& );
 
-      void readExperiment( QXmlStreamReader&, 
-                 QList< US_Convert::TripleInfo >&, QString , QString,
-                 DiskReadState& );
+      void readExperiment( QXmlStreamReader&, QList<US_Convert::TripleInfo>&, QString, QString, DiskReadState& );
 
       void readDataset( QXmlStreamReader&, US_Convert::TripleInfo& );
 

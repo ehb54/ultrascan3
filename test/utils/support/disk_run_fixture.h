@@ -1,3 +1,4 @@
+//! \file disk_run_fixture.h
 // A US3 run archive on disk, written through the production serializers.
 //
 // Phase 1 characterizes the disk-reading prefix of US_ConvertGui::loadUS3Disk()
@@ -10,7 +11,8 @@
 // A negative test may copy a run this produced and corrupt it explicitly in its
 // own temporary directory.  That is the only sanctioned mutation.
 
-#pragma once
+#ifndef DISK_RUN_FIXTURE_H
+#define DISK_RUN_FIXTURE_H
 
 #include "us_convert.h"
 #include "us_dataIO.h"
@@ -31,24 +33,24 @@ namespace us3test
 //! One cell/channel/wavelength dataset of a run.
 struct DatasetSpec
 {
-   int     cell       = 1;
-   char    channel    = 'A';
-   QString wavelength = "280";   //!< the filename field, verbatim
-   int     scans      = 3;
-   int     points     = 8;
+      int     cell       = 1;
+      char    channel    = 'A';
+      QString wavelength = "280"; //!< the filename field, verbatim
+      int     scans      = 3;
+      int     points     = 8;
 };
 
 //! What writeDiskRun() put on disk, for a test to assert against.
 struct DiskRun
 {
-   QString     runID;
-   QString     runType;
-   QString     dir;          //!< absolute, with a trailing separator
-   QStringList aucFiles;     //!< basenames, in the order they were written
-   QStringList tripleDescs;  //!< "cell / channel / wavelength", same order
-   QStringList rawGUIDs;     //!< same order; also each dataset's triple GUID
-   QString     solutionGUID;
-   QString     projectGUID;
+      QString     runID;
+      QString     runType;
+      QString     dir;         //!< absolute, with a trailing separator
+      QStringList aucFiles;    //!< basenames, in the order they were written
+      QStringList tripleDescs; //!< "cell / channel / wavelength", same order
+      QStringList rawGUIDs;    //!< same order; also each dataset's triple GUID
+      QString     solutionGUID;
+      QString     projectGUID;
 };
 
 namespace detail
@@ -57,8 +59,7 @@ namespace detail
 //! A stable GUID for a fixture, so a failure names the same identity twice.
 inline QString fixtureGuid( const QString& key )
 {
-   static const QUuid ns( QStringLiteral(
-                             "{6f3f9a02-2c0e-4a5b-9a2a-6f0d1c5b7e41}" ) );
+   static const QUuid ns( QStringLiteral( "{6f3f9a02-2c0e-4a5b-9a2a-6f0d1c5b7e41}" ) );
 
    return QUuid::createUuidV5( ns, key.toUtf8() ).toString().mid( 1, 36 );
 }
@@ -87,24 +88,25 @@ inline US_DataIO::Scan buildScan( int points, double base, double seconds )
    return scan;
 }
 
-inline US_DataIO::RawData buildRawData( const QString& runType,
-                                        const DatasetSpec& spec,
-                                        const QString& guid )
+inline US_DataIO::RawData buildRawData( const QString& runType, const DatasetSpec& spec, const QString& guid )
 {
    US_DataIO::RawData data;
    memcpy( data.type, runType.toLatin1().constData(), 2 );
-   US_Util::uuid_parse( guid, (unsigned char*)data.rawGUID );
+   US_Util::uuid_parse( guid, (unsigned char*) data.rawGUID );
 
    data.cell        = spec.cell;
    data.channel     = spec.channel;
    data.description = "disk-run fixture";
 
    for ( int point = 0; point < spec.points; point++ )
+   {
       data.xvalues << 5.8 + 0.01 * point;
+   }
 
    for ( int scan = 0; scan < spec.scans; scan++ )
-      data.scanData << buildScan( spec.points, 0.2 + scan,
-                                  300.0 * ( scan + 1 ) );
+   {
+      data.scanData << buildScan( spec.points, 0.2 + scan, 300.0 * ( scan + 1 ) );
+   }
 
    return data;
 }
@@ -113,24 +115,20 @@ inline US_DataIO::RawData buildRawData( const QString& runType,
 //! The triple description US_Convert::readUS3Disk() derives from a filename.
 inline QString tripleDescFor( const QString& runType, const DatasetSpec& spec )
 {
-   const QString wavelength = ( runType == "WA" )
-      ? QString::number( spec.wavelength.toDouble() / 1000.0 )
-      : spec.wavelength;
+   const QString wavelength = ( runType == "WA" ) ? QString::number( spec.wavelength.toDouble() / 1000.0 ) : spec.wavelength;
 
-   return QString::number( spec.cell ) + " / " + QString( spec.channel )
-        + " / " + wavelength;
+   return QString::number( spec.cell ) + " / " + QString( spec.channel ) + " / " + wavelength;
 }
 
 //! Write one run archive under parentDir and describe what landed there.
 //!
 //! The directory is named for the run, which is what the reader requires: it
 //! takes the run ID from the last path component.
-inline DiskRun writeDiskRun( const QString& parentDir,
-                             const QString& runID,
-                             const QString& runType,
-                             const QVector< DatasetSpec >& datasets,
-                             const QVector< SP_SPEEDPROFILE >& speedSteps
-                                = QVector< SP_SPEEDPROFILE >() )
+inline DiskRun writeDiskRun( const QString&                  parentDir,
+                             const QString&                  runID,
+                             const QString&                  runType,
+                             const QVector<DatasetSpec>&     datasets,
+                             const QVector<SP_SPEEDPROFILE>& speedSteps = QVector<SP_SPEEDPROFILE>() )
 {
    DiskRun run;
    run.runID        = runID;
@@ -141,23 +139,22 @@ inline DiskRun writeDiskRun( const QString& parentDir,
 
    QDir().mkpath( run.dir );
 
-   QList< US_Convert::TripleInfo > triples;
+   QList<US_Convert::TripleInfo> triples;
 
    for ( int ii = 0; ii < datasets.size(); ii++ )
    {
-      const DatasetSpec& spec = datasets[ ii ];
-      const QString guid = detail::fixtureGuid(
-         runID + "/raw/" + QString::number( ii ) );
+      const DatasetSpec& spec = datasets[ii];
+      const QString      guid = detail::fixtureGuid( runID + "/raw/" + QString::number( ii ) );
 
-      const QString name = runID + "." + runType + "."
-                         + QString::number( spec.cell ) + "."
-                         + QString( spec.channel ) + "."
-                         + spec.wavelength + ".auc";
+      const QString      name = runID + "." + runType + "." + QString::number( spec.cell ) + "." + QString( spec.channel ) + "." +
+                           spec.wavelength + ".auc";
 
       US_DataIO::RawData data = detail::buildRawData( runType, spec, guid );
 
       if ( US_DataIO::writeRawData( run.dir + name, data ) != US_DataIO::OK )
+      {
          return DiskRun();
+      }
 
       US_Convert::TripleInfo triple;
       triple.clear();
@@ -173,13 +170,13 @@ inline DiskRun writeDiskRun( const QString& parentDir,
       triple.solution.solutionID   = 1;
       triple.solution.solutionGUID = run.solutionGUID;
       triple.solution.solutionDesc = "disk-run fixture solution";
-      US_Util::uuid_parse( guid, (unsigned char*)triple.tripleGUID );
+      US_Util::uuid_parse( guid, (unsigned char*) triple.tripleGUID );
 
       triples << triple;
 
-      run.aucFiles    << name;
+      run.aucFiles << name;
       run.tripleDescs << triple.tripleDesc;
-      run.rawGUIDs    << guid;
+      run.rawGUIDs << guid;
    }
 
    US_Experiment experiment;
@@ -196,12 +193,15 @@ inline DiskRun writeDiskRun( const QString& parentDir,
    experiment.project.projectGUID = run.projectGUID;
    experiment.project.projectDesc = "disk-run fixture project";
 
-   QVector< SP_SPEEDPROFILE > steps = speedSteps;
+   QVector<SP_SPEEDPROFILE> steps = speedSteps;
 
-   if ( experiment.saveToDisk( triples, runType, runID, run.dir, steps )
-        != US_Convert::OK )
+   if ( experiment.saveToDisk( triples, runType, runID, run.dir, steps ) != US_Convert::OK )
+   {
       return DiskRun();
+   }
 
    return run;
 }
 }
+
+#endif // DISK_RUN_FIXTURE_H

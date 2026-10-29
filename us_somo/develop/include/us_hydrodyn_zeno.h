@@ -18,7 +18,7 @@ zeno_main(
 int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, US_Udp_Msg * zeno_us_udp_msg );
 #endif
 
-#if !defined(USE_OLD_ZENO) && QT_VERSION >= 0x040000 && __cplusplus < 201103L
+#if !defined(USE_OLD_ZENO) && __cplusplus < 201103L
 # error C++11 or greater is required
 #endif
 

@@ -2,9 +2,9 @@
 #ifndef US_SIM_SPECIES_H
 #define US_SIM_SPECIES_H
 
+#include "us_analyte.h"
 #include "us_extern.h"
 #include "us_model.h"
-#include "us_analyte.h"
 
 //! \brief Describe one or more solute species and turn them into a model.
 //! Accepts any coefficient pair US_Model::calc_coefficients() can solve.
@@ -22,8 +22,8 @@ class US_UTIL_EXTERN US_SimSpecies
             //! Construct a supplied coefficient; implicit for direct assignment.
             Coeff( double value );
 
-            double value;     //!< The coefficient, or zero when not supplied
-            bool   supplied;  //!< Whether a caller stated this coefficient
+            double value;    //!< The coefficient, or zero when not supplied
+            bool   supplied; //!< Whether a caller stated this coefficient
       };
 
       //! \brief The hydrodynamic description of one solute species.
@@ -35,13 +35,13 @@ class US_UTIL_EXTERN US_SimSpecies
             Component();
 
             //! Partial specific volume at 20 C, defaulting to a typical protein.
-            double vbar20;
+            double  vbar20;
 
-            Coeff s;       //!< Sedimentation coefficient (seconds)
-            Coeff D;       //!< Diffusion coefficient (cm^2/s)
-            Coeff mw;      //!< Molecular weight (Daltons)
-            Coeff f;       //!< Frictional coefficient (g/s)
-            Coeff f_f0;    //!< Frictional ratio (1.0 = perfect sphere)
+            Coeff   s;    //!< Sedimentation coefficient (seconds)
+            Coeff   D;    //!< Diffusion coefficient (cm^2/s)
+            Coeff   mw;   //!< Molecular weight (Daltons)
+            Coeff   f;    //!< Frictional coefficient (g/s)
+            Coeff   f_f0; //!< Frictional ratio (1.0 = perfect sphere)
 
             //! Descriptive name. Empty keeps the US_Model default.
             QString name;
@@ -49,15 +49,15 @@ class US_UTIL_EXTERN US_SimSpecies
             //! Absolute loading signal concentration for this species.
             //! A model's total loading concentration is the sum across all
             //! components; values are not normalized as fractions.
-            double signal_concentration;
+            double  signal_concentration;
 
             //! Molar extinction at the model wavelength; defaults to zero.
             //! All-zero extinction leaves model-set concentrations unchanged.
-            double extinction;
+            double  extinction;
 
             //! Analyte type for solution records; defaults to PROTEIN.
             //! Does not affect hydrodynamic calculations.
-            int analyte_type;
+            int     analyte_type;
 
             //! Persistent analyte UUID (36 characters); empty is omitted from model XML.
             //! Reuse the UUID across runs to match the same database analyte.
@@ -67,36 +67,45 @@ class US_UTIL_EXTERN US_SimSpecies
       //! \brief One coefficient a caller may supply on a Component.
       struct US_UTIL_EXTERN Coefficient
       {
-         const char* name;           //!< "s", "D", "mw", "f", or "f-f0"
-         const char* description;    //!< What the value means, and its units
-         Coeff Component::* field;   //!< The field the value is read into
+            const char* name;        //!< "s", "D", "mw", "f", or "f-f0"
+            const char* description; //!< What the value means, and its units
+            Coeff Component::*field; //!< The field the value is read into
       };
 
       //! \brief The coefficients validateComponent() accepts.
       //! Shared by validation and command-line option generation.
-      static const QVector< Coefficient >& coefficients();
+      static const QVector<Coefficient>& coefficients();
 
       //! \brief The species used when the caller specifies none.
       //! Uses the US_Model::SimulationComponent defaults.
-      static Component defaultComponent();
+      static Component                   defaultComponent();
 
       //! \brief Validate a species before US_Model solves for its coefficients.
       //! Checks the pair, value ranges, and sedimentation/buoyancy signs.
       //! \return An empty string if valid; otherwise, an error message.
-      static QString validateComponent( const Component& c );
+      static QString                     validateComponent( const Component& c );
+
+      //! \brief validateComponent()'s error for other than two coefficients,
+      //!        shared with the tests: %1 the coefficient names, %2 the count
+      //!        given, %3 the names given.
+      static constexpr const char*       coefficientCountMessage = "exactly two of %1 must be given (got %2: %3)";
+
+      //! \brief validateComponents()'s error for a failing component, shared
+      //!        with the tests: %1 its 1-based position, %2 its own error.
+      static constexpr const char*       componentErrorMessage = "component %1: %2";
 
       //! \brief Validate every species of a mixture.
       //! Each must satisfy validateComponent(); the list must not be empty.
       //! \return An empty string if valid; otherwise, an error message
       //!         identifying which component failed.
-      static QString validateComponents( const QVector< Component >& components );
+      static QString                     validateComponents( const QVector<Component>& components );
 
       //! \brief Create a single-component absorbance model from a species.
       //! Validates input first; returns false on failure.
       //! \param c     Species to build.
       //! \param model Model populated only on success.
       //! \param error Error message on failure; empty on success.
-      static bool model( const Component& c, US_Model& model, QString& error );
+      static bool                        model( const Component& c, US_Model& model, QString& error );
 
       //! \brief Create a multi-component absorbance model from a mixture.
       //! Builds one model containing all components, in the given order.
@@ -104,14 +113,13 @@ class US_UTIL_EXTERN US_SimSpecies
       //! \param components Species to build.
       //! \param model      Model populated only on success.
       //! \param error      Error message on failure; empty on success.
-      static bool model( const QVector< Component >& components,
-                         US_Model& model, QString& error );
+      static bool                        model( const QVector<Component>& components, US_Model& model, QString& error );
 
       //! \brief Create a default single-component absorbance model.
       //! Built through the same checked path as defaultComponent().
       //! \param model Model populated only on success.
       //! \param error Error message on failure; empty on success.
-      static bool model( US_Model& model, QString& error );
+      static bool                        model( US_Model& model, QString& error );
 };
 
 #endif // US_SIM_SPECIES_H

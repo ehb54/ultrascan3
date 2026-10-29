@@ -147,9 +147,7 @@ void US_Hydrodyn_Batch::setupGUI()
    // qcg_cb_disabled.setColor( QPalette::ButtonText, Qt::magenta );
 
    QPalette qp_cb = USglobal->global_colors.cg_normal;
-#if QT_VERSION >= 0x050000   
    qp_cb.setColor( QPalette::Disabled, QPalette::WindowText, Qt::darkRed );
-#endif
 
    lbl_selection = new QLabel(us_tr("Select files:"), this);
    Q_CHECK_PTR(lbl_selection);
@@ -281,40 +279,6 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( lbl_screen );
    lbl_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-#if QT_VERSION < 0x040000   
-   bg_residues = new QGroupBox(3, Qt::Vertical, "If non-coded residues are found:", this);
-   QFont qf = bg_residues->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_residues->setFont(qf);
-   bg_residues->setExclusive(true);
-   bg_residues->setAlignment(Qt::AlignHCenter);
-   bg_residues->setInsideMargin(3);
-   bg_residues->setInsideSpacing(0);
-   connect(bg_residues, SIGNAL(clicked(int)), this, SLOT(residue(int)));
-
-   cb_residue_stop = new QCheckBox(bg_residues);
-   cb_residue_stop->setText(us_tr(" List them and stop operation"));
-   cb_residue_stop->setEnabled(true);
-   //   cb_residue_stop->setMinimumHeight(minHeight1);
-   cb_residue_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_residue_stop->setPalette( qp_cb ); AUTFBACK( cb_residue_stop );
-
-   cb_residue_skip = new QCheckBox(bg_residues);
-   cb_residue_skip->setText(us_tr(" List them, skip residue and proceed"));
-   cb_residue_skip->setEnabled(true);
-   //   cb_residue_skip->setMinimumHeight(minHeight1);
-   cb_residue_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_residue_skip->setPalette( qp_cb ); AUTFBACK( cb_residue_skip );
-
-   cb_residue_auto = new QCheckBox(bg_residues);
-   cb_residue_auto->setText(us_tr(" Use automatic bead builder (approximate method)"));
-   cb_residue_auto->setEnabled(true);
-   //   cb_residue_auto->setMinimumHeight(minHeight1);
-   cb_residue_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_residue_auto->setPalette( qp_cb ); AUTFBACK( cb_residue_auto );
-
-   bg_residues->setButton(batch->missing_residues);
-#else
    bg_residues = new QGroupBox("If non-coded residues are found:", this);
    QFont qf = bg_residues->font();
    qf.setPointSize(qf.pointSize() - 1);
@@ -368,42 +332,7 @@ void US_Hydrodyn_Batch::setupGUI()
    default : qDebug() << "batch missing residues selection error"; break;
    }
 
-#endif
 
-#if QT_VERSION < 0x040000   
-   bg_atoms = new QGroupBox(3, Qt::Vertical, "If missing atoms within a residue are found:", this);
-   qf = bg_atoms->font();
-   qf.setPointSize(qf.pointSize() - 1);
-   bg_atoms->setFont(qf);
-   bg_atoms->setAlignment(Qt::AlignHCenter);
-   bg_atoms->setInsideMargin(3);
-   bg_atoms->setInsideSpacing(0);
-   bg_atoms->setExclusive(true);
-   connect(bg_atoms, SIGNAL(clicked(int)), this, SLOT(atom(int)));
-
-   cb_atom_stop = new QCheckBox(bg_atoms);
-   cb_atom_stop->setText(us_tr(" List them and stop operation"));
-   cb_atom_stop->setEnabled(true);
-   //   cb_atom_stop->setMinimumHeight(minHeight1);
-   cb_atom_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_atom_stop->setPalette( qp_cb ); AUTFBACK( cb_atom_stop );
-
-   cb_atom_skip = new QCheckBox(bg_atoms);
-   cb_atom_skip->setText(us_tr(" List them, skip entire residue and proceed"));
-   cb_atom_skip->setEnabled(true);
-   //   cb_atom_skip->setMinimumHeight(minHeight1);
-   cb_atom_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_atom_skip->setPalette( qp_cb ); AUTFBACK( cb_atom_skip );
-
-   cb_atom_auto = new QCheckBox(bg_atoms);
-   cb_atom_auto->setText(us_tr(" Use approximate method to generate bead"));
-   cb_atom_auto->setEnabled(true);
-   //   cb_atom_auto->setMinimumHeight(minHeight1);
-   cb_atom_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_atom_auto->setPalette( qp_cb ); AUTFBACK( cb_atom_auto );
-
-   bg_atoms->setButton(batch->missing_atoms);
-#else
    bg_atoms = new QGroupBox( "If missing atoms within a residue are found:" );
    qf = bg_atoms->font();
    qf.setPointSize(qf.pointSize() - 1);
@@ -456,7 +385,6 @@ void US_Hydrodyn_Batch::setupGUI()
       bl->addWidget( rb_atom_auto );
       bg_atoms->setLayout( bl );
    }
-#endif
 
    pb_screen = new QPushButton(us_tr("Screen Selected"), this);
    Q_CHECK_PTR(pb_screen);
@@ -766,37 +694,6 @@ void US_Hydrodyn_Batch::setupGUI()
    editor->setReadOnly(true);
    editor->setMinimumWidth(350);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-
-      QMenuBar * menu = new QMenuBar( this );
-      AUTFBACK( menu );
-
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# else
-   m = new QMenuBar(  editor );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if defined( Q_OS_MAC )
    m = new QMenuBar(  this );    m->setObjectName( "menu" );
 # else
@@ -821,7 +718,6 @@ void US_Hydrodyn_Batch::setupGUI()
       qa3->setShortcut( Qt::ALT+Qt::Key_X );
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
-#endif
 
    editor->setWordWrapMode (((US_Hydrodyn *)us_hydrodyn)->advanced_config.scroll_editor ? QTextOption::NoWrap : QTextOption::WordWrap);
 //    editor->setMargin(5);
@@ -3476,13 +3372,9 @@ void US_Hydrodyn_Batch::clear_display()
 
 void US_Hydrodyn_Batch::dragEnterEvent(QDragEnterEvent *event)
 {
-#if QT_VERSION < 0x040000
-   event->accept(QNotUsed::canDecode(event));
-#else
    if ( event->mimeData()->hasText() ) {
       event->acceptProposedAction();
    }
-#endif
 }
 
 void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
@@ -3490,14 +3382,10 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
    disable_updates = true;
    QStringList fileNames;
    editor->append("\n");
-#if QT_VERSION < 0x040000
-   if ( QNotUsed::decodeLocalFiles(event, fileNames) ) {
-#else
    if ( event->mimeData()->hasUrls() ) {
       for ( int i = 0; i < event->mimeData()->urls().size(); ++i ) {
          fileNames << event->mimeData()->urls().at(i).toLocalFile();
       }
-#endif
       map < QString, bool > current_files;
       for ( int i = 0; i < lb_files->count(); i++ )
       {

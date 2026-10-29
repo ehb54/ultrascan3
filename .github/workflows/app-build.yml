@@ -134,7 +134,7 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.needs_container == 'true'
     runs-on: ${{ needs.resolve.outputs.runner }}
-    timeout-minutes: 90
+    timeout-minutes: 360
     container:
       image: ${{ needs.resolve.outputs.container }}
       credentials:
@@ -169,7 +169,7 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.needs_container == 'false'
     runs-on: ${{ needs.resolve.outputs.runner }}
-    timeout-minutes: 90
+    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v5

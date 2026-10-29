@@ -225,11 +225,7 @@ bool US_Saxs_Util::guinier_fit(
                              sigb,
                              chi2 );
    log += QString(
-#if QT_VERSION < 0x040000
-                  "pnggnuplot.pl -p 1.5 -g -l points -c %1 %1 -m %1 %1 %1 %1 %1g%1_%1.png %1g.dat\n"
-#else
                   "pnggnuplot.pl -p 1.5 -g -l points -c %1 %2 -m %3 %4 %5 %6 %7g%8_%9.png %10g.dat\n"
-#endif
                   )
       .arg(wave[tag].q[startpos]* .2 )
       .arg(wave[tag].q[endpos]* 1.2 )

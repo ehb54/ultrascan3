@@ -41,6 +41,10 @@ PROFILE="TEST"
 # Keep DB and NO_DB builds separate to avoid mixing incompatible objects.
 NO_DB_VARIANT=false
 COVERAGE=false
+# Opt-in: the TEST profile forces US3_BUILD_PROGRAMS off, so GUI-dependent
+# tests under test/programs/ (for example, the simulator CLI GUI tests)
+# can't build or run by default. This builds the full programs suite too.
+BUILD_PROGRAMS_VARIANT=false
 
 
 show_help() {
@@ -78,6 +82,10 @@ Usage: ./test-docker.sh [options]
                           (default is the DB-enabled TEST profile in build-docker)
   --coverage              Measure line and branch coverage of utils/ in
                           build-docker-coverage and write reports there
+  --build-programs        Also build programs/ (us_astfem_sim, etc.) in
+                          build-docker-programs, for GUI-dependent tests
+                          under test/programs/ that the default TEST
+                          profile skips because it builds no programs
 
 
 === EXAMPLES FOR DEBUGGING WORKFLOW ===
@@ -178,6 +186,7 @@ while [[ $# -gt 0 ]]; do
         --profile) PROFILE="$2"; shift 2 ;;
         --no-db) NO_DB_VARIANT=true; shift ;;
         --coverage) COVERAGE=true; shift ;;
+        --build-programs) BUILD_PROGRAMS_VARIANT=true; shift ;;
         --rebuild) REBUILD=true; shift ;;
         --stats) SHOW_STATS=true; shift ;;
         -q|--quick) QUICK_MODE=true; shift ;;
@@ -242,12 +251,19 @@ if [ "$COVERAGE" = true ]; then
     BUILD_SUBDIR="build-docker-coverage"
 elif [ "$NO_DB_VARIANT" = true ]; then
     BUILD_SUBDIR="build-docker-nodb"
+elif [ "$BUILD_PROGRAMS_VARIANT" = true ]; then
+    BUILD_SUBDIR="build-docker-programs"
 else
     BUILD_SUBDIR="build-docker"
 fi
 
 if [ "$COVERAGE" = true ] && [ "$NO_DB_VARIANT" = true ]; then
     print_error "--coverage and --no-db cannot be combined; the coverage baseline is measured on the DB-enabled variant"
+    exit 1
+fi
+
+if [ "$BUILD_PROGRAMS_VARIANT" = true ] && [ "$NO_DB_VARIANT" = true ]; then
+    print_error "--build-programs and --no-db cannot be combined; the GUI-dependent tests it exists for need the DB-enabled variant"
     exit 1
 fi
 BUILD_DIR="${ROOT_DIR}/${BUILD_SUBDIR}"
@@ -490,8 +506,16 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
 
 #    Enable testing to build static library
     # Set options explicitly: the TEST profile forces US3_NO_DB=OFF.
+    BUILD_PROGRAMS_FLAG="OFF"
     if [ "$NO_DB_VARIANT" = "true" ]; then
         VARIANT_ARGS=(-DUS3_NO_DB=ON -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
+    elif [ "$BUILD_PROGRAMS_VARIANT" = "true" ]; then
+        # Match the TEST profile's other settings, but leave US3_PROFILE
+        # unset: that profile forces US3_BUILD_PROGRAMS off (via CACHE
+        # FORCE), which would silently override -DUS3_BUILD_PROGRAMS=ON
+        # below regardless of argument order.
+        VARIANT_ARGS=(-DUS3_NO_DB=OFF -DUS3_PREFER_STATIC=ON -DBUILD_DOCUMENTATION=OFF)
+        BUILD_PROGRAMS_FLAG="ON"
     else
         VARIANT_ARGS=(-DUS3_PROFILE=TEST)
     fi
@@ -501,7 +525,7 @@ if [ ! -f CMakeCache.txt ] || [ "$REBUILD" = "true" ]; then
         -DCMAKE_BUILD_TYPE=Debug \
         "${VARIANT_ARGS[@]}" \
         -DBUILD_TESTING=ON \
-        -DUS3_BUILD_PROGRAMS=OFF \
+        -DUS3_BUILD_PROGRAMS="$BUILD_PROGRAMS_FLAG" \
         -DCMAKE_MODULE_PATH=/ultrascan3/admin/cmake \
         | tee configure.log
 
@@ -699,6 +723,7 @@ if [ "$SAVE_LOGS" = true ]; then
         -w /ultrascan3 \
         -e BUILD_SUBDIR="$BUILD_SUBDIR" \
         -e NO_DB_VARIANT="$NO_DB_VARIANT" \
+        -e BUILD_PROGRAMS_VARIANT="$BUILD_PROGRAMS_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \
@@ -727,6 +752,7 @@ else
         -w /ultrascan3 \
         -e BUILD_SUBDIR="$BUILD_SUBDIR" \
         -e NO_DB_VARIANT="$NO_DB_VARIANT" \
+        -e BUILD_PROGRAMS_VARIANT="$BUILD_PROGRAMS_VARIANT" \
         -e DEBUG_MODE="$DEBUG_MODE" \
         -e QUICK_MODE="$QUICK_MODE" \
         -e REBUILD="$REBUILD" \

@@ -646,9 +646,7 @@ void US_AddResidue::setupGUI()
    rb_backbone->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_backbone->setPalette( PALET_NORMAL );
    AUTFBACK( rb_backbone );
-#if QT_VERSION >= 0x040000
    connect( rb_backbone, SIGNAL( clicked() ), this, SLOT( set_chain() ) );
-#endif
 
    rb_sidechain = new QRadioButton(us_tr("Sidechain"), this);
    rb_sidechain->setEnabled(false);
@@ -657,18 +655,8 @@ void US_AddResidue::setupGUI()
    rb_sidechain->setMinimumHeight(minHeight1);
    rb_sidechain->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sidechain );
-#if QT_VERSION >= 0x040000
    connect( rb_sidechain, SIGNAL( clicked() ), this, SLOT( set_chain() ) );
-#endif
 
-#if QT_VERSION < 0x040000
-   bg_chain = new QGroupBox(1, Qt::Horizontal, 0);
-   bg_chain->setRadioButtonExclusive(true);
-   bg_chain->insert(rb_backbone);
-   bg_chain->insert(rb_sidechain);
-   bg_chain->setMinimumHeight(minHeight1);
-   connect(bg_chain, SIGNAL(clicked(int)), SLOT(set_chain(int)));
-#else
    bg_chain = new QGroupBox();
    bg_chain->setFlat( true );
    {
@@ -677,7 +665,6 @@ void US_AddResidue::setupGUI()
       bl->addWidget( rb_sidechain );
       bg_chain->setLayout( bl );
    }
-#endif
    
    lbl_bead_volume = new QLabel(us_tr(" Anhydrous Bead Volume: "), this);
    Q_CHECK_PTR(lbl_bead_volume);
@@ -1758,19 +1745,11 @@ void US_AddResidue::select_r_bead(int val)
 
       if (new_residue.r_bead[current_bead].chain)
       {
-#if QT_VERSION < 0x040000
-         bg_chain->setButton(1);
-#else
          rb_sidechain->setChecked( true );
-#endif
       }
       else
       {
-#if QT_VERSION < 0x040000
-         bg_chain->setButton(0);
-#else
          rb_backbone->setChecked( true );
-#endif
       }
    } else {
       // TSO << "select_r_bead(" << val << ") NOT existing residue\n";
@@ -2026,11 +2005,7 @@ void US_AddResidue::reset( bool /* reselect */ )
      rb_sidechain->setChecked(false);
    */
    bg_chain->setEnabled(false);
-#if QT_VERSION < 0x040000
-   bg_chain->setButton(0);
-#else
    rb_backbone->setChecked( true );
-#endif
    lb_select_beadatom->setEnabled(false);
    lb_select_beadatom->clear( );
    lb_list_beadatom->setEnabled(false);
@@ -2197,11 +2172,7 @@ void US_AddResidue::atom_continue()
    rb_sidechain->setEnabled(true);
    rb_sidechain->setChecked(false);
    bg_chain->setEnabled(true);
-#if QT_VERSION < 0x040000
-   bg_chain->setButton(0);
-#else
    rb_backbone->setChecked( true );
-#endif
    lb_list_beadatom->setEnabled(true);
    lb_list_beadatom->clear( );
    lb_select_beadatom->setEnabled(true);
