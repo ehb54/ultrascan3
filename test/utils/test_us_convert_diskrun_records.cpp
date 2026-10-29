@@ -1,10 +1,7 @@
 //! \file test_us_convert_diskrun_records.cpp
-// Characterization of the record-reading steps of the disk prefix inside
-// US_ConvertGui::loadUS3Disk(): the experiment XML, the project it names, the
-// per-triple solutions, and an RI run's intensity profile.
-//
-// As with the raw-data step, these describe today's behavior -- permissive
-// parts included -- so the Phase 3 extraction can be checked against it.
+// The record-reading steps of a disk run: the experiment XML, the project it
+// names, the per-triple solutions, and an RI run's intensity profile,
+// including where they are permissive.
 
 #include <gtest/gtest.h>
 
@@ -137,8 +134,8 @@ TEST_F( DiskRunRecordsTest, ReportsBadXmlForAMalformedExperiment )
 TEST_F( DiskRunRecordsTest, IgnoresAnExperimentDatasetWithNoMatchingTriple )
 {
    // The experiment describes two datasets but only one .auc is present.  The
-   // reader reports OK and leaves the unmatched dataset out.  Phase 3 reports
-   // this at the coordinator boundary; it must not start failing here.
+   // reader reports OK and leaves the unmatched dataset out; readDiskRun() is
+   // where this is reported.
    const DiskRun run = us3test::writeDiskRun(
       parentDir(), "extra-dataset-run", "RA", { DatasetSpec{ 1, 'A', "280" }, DatasetSpec{ 1, 'A', "410" } } );
    ASSERT_FALSE( run.dir.isEmpty() );
@@ -225,9 +222,8 @@ TEST_F( DiskRunRecordsTest, ReportsNoProjectForAGuidWithNoRecord )
 
 TEST_F( DiskRunRecordsTest, ReportsNoProjectForAnEmptyGuid )
 {
-   // What an experiment written before the simulator set a project GUID gives
-   // the caller.  The GUI reports it and clears the project rather than
-   // refusing the run.
+   // An experiment with no project GUID.  The GUI reports it and clears the
+   // project rather than refusing the run.
    US_Project project;
    QString    empty;
 
@@ -250,7 +246,7 @@ TEST_F( DiskRunRecordsTest, TheGuiCarriesThePrecedingSolutionForwardOverAGap )
    // whose solution GUID is empty, substitutes the previous triple's -- but
    // only when there is a previous one, so an empty GUID on the first triple
    // stays empty.  The rule is reproduced here because it lives in the GUI
-   // loop rather than in a reader; the extraction has to preserve it.
+   // loop rather than in a reader.
    const DiskRun run =
       us3test::writeDiskRun( parentDir(),
                              "solution-gap-run",

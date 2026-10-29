@@ -21,7 +21,7 @@ US_ConvertIO::US_ConvertIO( void )
 
 namespace
 {
-//! The run ID rule US_ConvertGui has always applied to a directory basename.
+//! A usable run ID: letters, digits, '_' and '-', at most 80 characters.
 bool runIdIsUsable( const QString& runID )
 {
    static const QRegularExpression rx( "^[A-Za-z0-9_-]{1,80}$" );
@@ -124,10 +124,9 @@ int US_ConvertIO::readDiskRun( const QString& directory, DiskRun& run, QString& 
       }
    }
 
-   // Held rather than returned.  Reading stops here only for things that make
-   // the rest of the read impossible or unsafe; a directory holding two runs
-   // is neither, and US_ConvertGui loads such an archive today with its
-   // experiment metadata intact.  Returning now would take that away.
+   // Held rather than returned.  Reading stops only for things that make the
+   // rest of the read impossible or unsafe; a directory holding two runs is
+   // neither, and the caller still gets its experiment metadata.
    QString mixedDetail;
 
    if ( runTypes.size() > 1 )

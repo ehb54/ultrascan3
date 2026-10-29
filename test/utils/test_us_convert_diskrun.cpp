@@ -1,11 +1,6 @@
 //! \file test_us_convert_diskrun.cpp
-// Characterization of US_Convert::readUS3Disk(), the first step of the disk
-// prefix inside US_ConvertGui::loadUS3Disk().
-//
-// These tests describe what the shipping reader does today, including where it
-// is permissive.  Phase 3 moves this code behind a shared operation; the
-// contract is that every archive that loads now still loads afterwards, so
-// these must keep passing unchanged against US_ConvertGui after the migration.
+// US_Convert::readUS3Disk(), the raw-data step of US_ConvertIO::readDiskRun(),
+// including where it is permissive.
 
 #include <gtest/gtest.h>
 
@@ -190,8 +185,8 @@ TEST_F( ReadUS3DiskTest, ReportsNoAucWhenADataFileCannotBeRead )
    EXPECT_EQ( read( run ), US_Convert::NOAUC );
 }
 
-// --------------------------------------------------- permissive, and staying
-// so: Phase 3 reports at the coordinator boundary instead of rejecting here.
+// ---------------------------------------------------------------- permissive
+// readUS3Disk() accepts these; readDiskRun() is where they are reported.
 
 TEST_F( ReadUS3DiskTest, AcceptsMixedRunTypesAndNamesTheRunAfterTheFirst )
 {

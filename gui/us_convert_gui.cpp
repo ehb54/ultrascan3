@@ -4139,8 +4139,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // readDiskRun() reads the run directory and describes any problems it
-   // finds; whether a problem stops the load is decided below.  A run that
-   // loaded before still loads, and readError adds detail to the messages.
+   // finds in readError; whether a problem stops the load is decided below.
    le_status->setText( tr( "Loading data from Disk (raw data) ..." ) );
    qApp->processEvents();
    DbgLv( 1 ) << "CGui: ldUS3Dk: call read";
@@ -4152,8 +4151,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    QApplication::restoreOverrideCursor();
 
    if ( status == US_Convert::INVALID_RUN && diskRun.rawData.isEmpty() )
-   { // An unusable directory name; the old code checked this itself and
-      // showed exactly this warning before reading anything.
+   { // The directory name cannot be a run ID, so nothing was read.
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
             tr( "The runID name may consist only of alphanumeric\n"
@@ -4214,8 +4212,8 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
    }
 
    else if ( status != US_Convert::OK )
-   { // PARTIAL_XML, BADGUID and INVALID_RUN all land here.  The archive used
-      // to load with nothing said; it still loads, and now says what is wrong.
+   { // PARTIAL_XML, BADGUID and INVALID_RUN: the run loads, and the user is
+      // told what is inconsistent about it.
       QMessageBox::information( this, tr( "Error" ), tr( "US3 run data ok, but the run is not self-consistent:\n" ) + readError );
    }
 

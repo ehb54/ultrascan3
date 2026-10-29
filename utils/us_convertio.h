@@ -48,9 +48,8 @@ class US_UTIL_EXTERN US_ConvertIO
           problems and does not reject them: it returns the most specific
           status it can, fills `error` with the detail, and populates `run` as
           far as the read got.  Whether a non-OK status ends the load is the
-          caller's decision -- an importer may treat every one as fatal, while
-          US_ConvertGui recovers from exactly what it recovered from before and
-          uses the detail only to say more in its existing messages.
+          caller's decision; US_ConvertGui, for example, loads most of them
+          and shows the detail.
 
           It does not split archives, require edits, connect to a database,
           start a transaction, write records, stage files, change settings,

@@ -218,10 +218,8 @@ TEST_F( ReadDiskRunTest, ReportsMixedRunTypesInOneDirectory )
 
 TEST_F( ReadDiskRunTest, StillReadsTheExperimentWhenADirectoryHoldsTwoRuns )
 {
-   // The reason the mixed-run report is held back rather than returned at the
-   // point it is found.  US_ConvertGui loads such an archive today with its
-   // experiment metadata intact, and stopping the read early would take that
-   // away -- which the extraction is not allowed to do.
+   // The mixed-run report is held back rather than returned where it is
+   // found, so US_ConvertGui still gets the experiment metadata of such a run.
    const DiskRun fixture = us3test::writeDiskRun( parentDir(), "two-runs", "RA", { DatasetSpec{ 1, 'A', "280" } } );
    const DiskRun guest   = us3test::writeDiskRun( parentDir(), "two-runs-guest", "RA", { DatasetSpec{ 3, 'A', "280" } } );
    ASSERT_FALSE( fixture.dir.isEmpty() );
@@ -291,8 +289,8 @@ TEST_F( ReadDiskRunTest, ReportsAMalformedExperimentRecord )
 
 TEST_F( ReadDiskRunTest, NamesTheDatasetTheExperimentRecordDoesNotDescribe )
 {
-   // The silent case Phase 1 pinned: an .auc with no <dataset> used to read as
-   // OK and keep a zero triple GUID that a later database write would store.
+   // An .auc with no <dataset> would otherwise keep a zero triple GUID that a
+   // later database write would store.
    const DiskRun fixture = us3test::writeDiskRun( parentDir(), "extra-auc-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
    const DiskRun donor   = us3test::writeDiskRun( parentDir(), "extra-auc-donor", "RA", { DatasetSpec{ 2, 'B', "280" } } );
    ASSERT_FALSE( fixture.dir.isEmpty() );
@@ -309,7 +307,7 @@ TEST_F( ReadDiskRunTest, NamesTheDatasetTheExperimentRecordDoesNotDescribe )
 
 TEST_F( ReadDiskRunTest, NamesTheDatasetWithNoDataFile )
 {
-   // The mirror case, also previously silent.
+   // The mirror case: a <dataset> with no .auc.
    const DiskRun fixture = us3test::writeDiskRun(
       parentDir(), "extra-dataset-run", "RA", { DatasetSpec{ 1, 'A', "280" }, DatasetSpec{ 1, 'A', "410" } } );
    ASSERT_FALSE( fixture.dir.isEmpty() );

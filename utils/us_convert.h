@@ -29,8 +29,7 @@ class US_UTIL_EXTERN US_Convert
          PARTIAL_XML, //!< XML data has not been entered for all c/c/w combos
          NOT_WRITTEN, //!< Data was not written
          INVALID_RUN  //!< The run is structurally contradictory; see the
-                      //!< accompanying detail string.  Appended at the end so
-                      //!< no existing value is renumbered
+                      //!< accompanying detail string
       };
 
       //! \brief Class to contain a list of scans to exclude from a data set

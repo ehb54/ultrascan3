@@ -1,10 +1,9 @@
 //! \file disk_run_fixture.h
 // A US3 run archive on disk, written through the production serializers.
 //
-// Phase 1 characterizes the disk-reading prefix of US_ConvertGui::loadUS3Disk()
-// before that code moves.  Those tests have to start from archives the shipping
-// writers produced, not from hand-rolled XML, or they would pin the fixture's
-// idea of the format rather than UltraScan's.  So this helper only calls
+// The disk-run tests start from archives UltraScan's own writers produce, not
+// from hand-rolled XML, so they test UltraScan's format rather than the
+// fixture's idea of it.  This helper only calls
 // US_DataIO::writeRawData(), US_Experiment::saveToDisk() and
 // US_DataIO::writeEdits(), and it never patches what they wrote.
 //

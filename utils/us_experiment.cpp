@@ -635,8 +635,7 @@ int US_Experiment::readFromDisk(
     QString runID,
     QString dirname )
 {
-   // No diagnostics wanted: the state goes nowhere and nothing is reported
-   // from it, so this stays exactly the read it has always been.
+   // No diagnostics wanted, so the collected state is discarded.
    DiskReadState state;
 
    return readFromDisk( triples, runType, runID, dirname, state );
@@ -851,15 +850,13 @@ void US_Experiment::readExperiment( QXmlStreamReader&              xml,
 
             if ( !found )
             { // No triple carries this description, so no data file does
-               // either.  The read continues -- callers that do not ask for
-               // diagnostics see exactly what they always saw.
+               // either.  Recorded, and the read continues.
                state.unmatched << triple;
             }
 
             else if ( state.filled.contains( ndx ) )
-            { // A previous dataset already claimed this triple.  Recorded
-               // before the fields are overwritten, which is what used to
-               // happen with nothing said.
+            { // A previous dataset already claimed this triple; its fields
+               // are overwritten below, so record that first.
                state.duplicated << triple;
             }
 
