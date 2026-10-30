@@ -15,19 +15,22 @@ class US_UTIL_EXTERN US_Convert
    public:
       //! \brief   Some status codes returned by the us_convert program
       enum ioError
-      { 
-         OK,           //!< Ok, no error
-         CANTOPEN,     //!< The file cannot be opened
-         DUP_RUNID,    //!< The given run ID already exists
-         NOPERSON,     //!< The person specified doesn't exist
-         NODATA,       //!< There is no data to read or write
-         NODB,         //!< Connection to database cannot be made
-         NOAUC,        //!< AUC File cannot be opened
-         NOXML,        //!< XML data has not been entered
-         BADXML,       //!< XML not formed correctly
-         BADGUID,      //!< GUID read in the XML was not found in the database
-         PARTIAL_XML,  //!< XML data has not been entered for all c/c/w combos
-         NOT_WRITTEN   //!< Data was not written
+      {
+         OK,          //!< Ok, no error
+         CANTOPEN,    //!< The file cannot be opened
+         DUP_RUNID,   //!< The given run ID already exists
+         NOPERSON,    //!< The person specified doesn't exist
+         NODATA,      //!< There is no data to read or write
+         NODB,        //!< Connection to database cannot be made
+         NOAUC,       //!< AUC File cannot be opened
+         NOXML,       //!< XML data has not been entered
+         BADXML,      //!< XML not formed correctly
+         BADGUID,     //!< GUID read in the XML was not found in the database
+         PARTIAL_XML, //!< XML data has not been entered for all c/c/w combos
+         NOT_WRITTEN, //!< Data was not written
+         INVALID_RUN, //!< The run is structurally contradictory; see the
+                      //!< accompanying detail string
+         BAD_RUNID    //!< The directory name cannot be a run ID
       };
 
       //! \brief Class to contain a list of scans to exclude from a data set

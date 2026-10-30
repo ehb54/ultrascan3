@@ -188,6 +188,12 @@ QString US_Util::expanded_triple( const QString& ccw, bool spaces )
    return ( cell + sep + chan + sep + wvln );
 }
 
+// Channel letters in database channel-number order
+QString US_Util::channel_letters( void )
+{
+   return "SABCDEFGH";
+}
+
 bool US_Util::is_valid_uuid(const QString& uuid)
 {
    return UUID_REGEX.match(uuid).hasMatch();
@@ -387,4 +393,5 @@ int US_Util::listlistParse( QList< QStringList >& lsl, QString& llstring )
 }
 
 //! \brief Regex expression for UUID for use
-QRegularExpression US_Util::UUID_REGEX = QRegularExpression( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", QRegularExpression::CaseInsensitiveOption );
+QRegularExpression US_Util::UUID_REGEX = QRegularExpression( "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                                                             QRegularExpression::CaseInsensitiveOption );
