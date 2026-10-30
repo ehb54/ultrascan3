@@ -3277,41 +3277,41 @@ QString  US_Analysis_auto::aa_tripleInfo()  { return tripleInfo;    }
 //Load rawData/editedData
 bool US_Analysis_auto::loadData( QMap < QString, QString > & triple_information )
 {
-  rawData.clear();
-  editedData.clear();
+   rawData.clear();
+   editedData.clear();
 
-  const auto fail = [ this ]( const QString& detail )
-  {
-    QApplication::restoreOverrideCursor();
-    QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
-    return false;
-  };
+   const auto fail = [this]( const QString& detail )
+   {
+      QApplication::restoreOverrideCursor();
+      QMessageBox::warning( this, tr( "Data Load Problem" ), detail );
+      return false;
+   };
 
-  US_Passwd   pw;
-  US_DB2 db( pw.getPasswd() );
-    
-  if ( db.lastErrno() != US_DB2::OK )
-    {
-      return fail( tr( "There was an error connecting to the database:\n" )
-                   + db.lastError() );
-    }
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
 
-  const QString tripleName = triple_information[ "triple_name" ];
-  const QString runID      = triple_information[ "filename" ];
-  int editedDataID = -1;
-  QString error;
-  const int status = US_EditedDataLoaders::loadAutoflow(
-     &db, tripleName, runID, US_Settings::resultDir() + "/" + runID,
-     editedData, rawData, editedDataID, error );
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      return fail( tr( "There was an error connecting to the database:\n" ) + db.lastError() );
+   }
 
-  if ( status != IUS_DB2::OK )
-    return fail( error );
+   const QString tripleName   = triple_information["triple_name"];
+   const QString runID        = triple_information["filename"];
+   int           editedDataID = -1;
+   QString       error;
+   const int     status = US_EditedDataLoaders::loadAutoflow(
+      &db, tripleName, runID, US_Settings::resultDir() + "/" + runID, editedData, rawData, editedDataID, error );
 
-  eID_global = editedDataID;
+   if ( status != IUS_DB2::OK )
+   {
+      return fail( error );
+   }
 
-  qDebug() << "END of loadData(), eID_global: " << eID_global;
+   eID_global = editedDataID;
 
-  return true;
+   qDebug() << "END of loadData(), eID_global: " << eID_global;
+
+   return true;
 }
 
 //Load rawData/editedData
@@ -4699,8 +4699,8 @@ void US_Analysis_auto::show_overlay( const QString& triple_stage )
 
     if ( !loadData( triple_info_map ) )
     {
-        progress_msg->close();
-        return;
+       progress_msg->close();
+       return;
     }
     progress_msg->setValue( 1 );
     qApp->processEvents();
