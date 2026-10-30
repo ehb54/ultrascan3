@@ -1,6 +1,17 @@
 //! \file us_ga_init.cpp
 
 #include <QApplication>
+#include <QAction>
+#include <qchar.h>
+#include <qglobal.h>
+#include <qlabel.h>
+#include <qlineedit.h>
+#include <qmessagebox.h>
+#include <qnamespace.h>
+#include <qpen.h>
+#include <qvector.h>
+#include <QSignalBlocker>
+#include <qwt_plot_spectrogram.h>
 
 #include "us_ga_init.h"
 #include "us_select_runs.h"
@@ -16,6 +27,7 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "qwt_picker_machine.h"
+#include "us_solutedata.h"
 #define canvasBackground() canvasBackground().color();
 
 // main program
@@ -38,8 +50,6 @@ bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
    return ( solu1.s < solu2.s ) ||
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
 }
-
-const double epsilon = 0.0005;   // equivalence magnitude ratio radius
 
 // US_GA_Initialize class constructor
 US_GA_Initialize::US_GA_Initialize() : US_Widgets()
@@ -71,30 +81,17 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    // series of rows: most of them label on left, counter/box on right
    lb_info1      = us_banner( tr( "Genetic Algorithm Controls" ) );
 
-   lb_nisols     = us_label( tr( "Number of Initial Solutes:" ) );
-   lb_nisols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_nisols     = us_counter( 3, 0.0, 1000.0, 0.0 );
-   ct_nisols->setSingleStep( 1 );
-   ct_nisols->setEnabled( true );
-   connect( ct_nisols, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_nisols );
-
    lb_wxbuck     = us_label( tr( "Width of s Bucket:" ) );
    lb_wxbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_wxbuck     = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_wxbuck->setSingleStep( 1 );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
 
    lb_hybuck     = us_label( tr( "Height of f/f0 Bucket:" ) );
    lb_hybuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_hybuck     = us_counter( 3, 0.0, 1.0, 0.0 );
    ct_hybuck->setSingleStep( 1 );
-   connect( ct_hybuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_hybuck );
 
    lb_info2      = us_banner( tr( "Pseudo-3D Controls" ) );
 
@@ -130,57 +127,40 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( ct_zfloor, &QwtCounter::valueChanged,
             this,      &US_GA_Initialize::update_zfloor );
 
-   lb_autlim     = us_label( tr( "Automatic Plot Limits" ) );
-   lb_autlim->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   us_checkbox( tr( "Manually Set the X and Y Limits" ), ck_manlim, true );
+   ck_manlim->setStyleSheet( "QCheckBox {background-color: white;}" );
+   connect( ck_manlim, &QAbstractButton::clicked,
+            this,      &US_GA_Initialize::select_manlim );
 
-   us_checkbox( tr( "(unselect to override)             " ), ck_autlim, true );
-   connect( ck_autlim, &QAbstractButton::clicked,
-            this,       &US_GA_Initialize::select_autolim );
-
-   lb_plxmin     = us_label( tr( "Plot Limit s Min:" ) );
+   lb_plxmin     = us_label( tr( "Min. s [S]:" ) );
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   le_plxmin     = us_lineedit();
+   connect( le_plxmin, &QLineEdit::returnPressed,
+            this,      &US_GA_Initialize::update_plxmin );
 
-   ct_plxmin     = us_counter( 3, -10000.0, 10000.0, 0.0 );
-   ct_plxmin->setSingleStep( 1 );
-   connect( ct_plxmin, &QwtCounter::valueChanged,
-            this,        &US_GA_Initialize::update_plxmin );
+   lb_plxmax     = us_label( tr( "Max. s [S]:" ) );
+   lb_plxmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   le_plxmax= us_lineedit();
+   connect( le_plxmax, &QLineEdit::returnPressed,
+            this,      &US_GA_Initialize::update_plxmax );
 
-   lb_plxmax     = us_label( tr( "Plot Limit s Max:" ) );
-   ct_plxmax     = us_counter( 3, -100.0, 10000.0, 0.0 );
-   ct_plxmax->setSingleStep( 1 );
-   connect( ct_plxmax, &QwtCounter::valueChanged,
-            this,        &US_GA_Initialize::update_plxmax );
-
-   lb_plymin     = us_label( tr( "Plot Limit f/f0 Min:" ) );
+   lb_plymin     = us_label( tr( "Min. f/f0:" ) );
    lb_plymin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-
-   ct_plymin     = us_counter( 3, 0.5, 50.0, 0.0 );
-   ct_plymin->setSingleStep( 1 );
-   connect( ct_plymin, &QwtCounter::valueChanged,
+   le_plymin     = us_lineedit();
+   connect( le_plymin, &QLineEdit::returnPressed,
             this,      &US_GA_Initialize::update_plymin );
    
-   lb_plymax     = us_label( tr( "Plot Limit f/f0 Max:" ) );
+   lb_plymax     = us_label( tr( "Max. f/f0:" ) );
    lb_plymax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   
-   ct_plymax     = us_counter( 3, 1.0, 50.0, 1.0 );
-   ct_plymax->setSingleStep( 1 );
-   ct_plymax->setValue( 1.34567e+01 );
-   connect( ct_plymax, &QwtCounter::valueChanged,
+   le_plymax     = us_lineedit();
+   connect( le_plymax, &QLineEdit::returnPressed,
             this,      &US_GA_Initialize::update_plymax );
-
-   lw_sbin_data = us_listwidget( );
-   connect( lw_sbin_data, &QAbstractItemView::pressed,
-            this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-   connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
-            this,         &US_GA_Initialize::dclick_sbdata );
-   connect( lw_sbin_data, &QListWidget::currentRowChanged,
-            this,         &US_GA_Initialize::newrow_sbdata );
 
            attr_x      = 0;
            attr_y      = 1;
            attr_z      = 3;
-   QLabel* lb_x_axis   = us_label( tr( "Plot X:" ) );
-   QLabel* lb_y_axis   = us_label( tr( "Plot Y:" ) );
+   QLabel* lb_x_axis   = us_label( tr( "X Axis:" ) );
+   QLabel* lb_y_axis   = us_label( tr( "Y Axis:" ) );
            bg_x_axis   = new QButtonGroup( this );
            bg_y_axis   = new QButtonGroup( this );
    QGridLayout* gl_x_s    = us_radiobutton( tr( "s"    ), rb_x_s,    true  );
@@ -188,28 +168,24 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    QGridLayout* gl_x_mw   = us_radiobutton( tr( "mw"   ), rb_x_mw,   false );
    QGridLayout* gl_x_vbar = us_radiobutton( tr( "vbar" ), rb_x_vbar, false );
    QGridLayout* gl_x_D    = us_radiobutton( tr( "D"    ), rb_x_D,    false );
-   QGridLayout* gl_x_f    = us_radiobutton( tr( "f"    ), rb_x_f,    false );
    QGridLayout* gl_x_rh   = us_radiobutton( tr( "Rh"   ), rb_x_rh,   false );
    QGridLayout* gl_y_s    = us_radiobutton( tr( "s"    ), rb_y_s,    false );
    QGridLayout* gl_y_ff0  = us_radiobutton( tr( "ff0"  ), rb_y_ff0,  true  );
    QGridLayout* gl_y_mw   = us_radiobutton( tr( "mw"   ), rb_y_mw,   false );
    QGridLayout* gl_y_vbar = us_radiobutton( tr( "vbar" ), rb_y_vbar, false );
    QGridLayout* gl_y_D    = us_radiobutton( tr( "D"    ), rb_y_D,    false );
-   QGridLayout* gl_y_f    = us_radiobutton( tr( "f"    ), rb_y_f,    false );
    QGridLayout* gl_y_rh   = us_radiobutton( tr( "Rh"   ), rb_y_rh,   false );
    bg_x_axis->addButton( rb_x_s,    ATTR_S );
    bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
    bg_x_axis->addButton( rb_x_mw,   ATTR_W );
    bg_x_axis->addButton( rb_x_vbar, ATTR_V );
    bg_x_axis->addButton( rb_x_D,    ATTR_D );
-   bg_x_axis->addButton( rb_x_f,    ATTR_F );
    bg_x_axis->addButton( rb_x_rh,   ATTR_R );
    bg_y_axis->addButton( rb_y_s,    ATTR_S );
    bg_y_axis->addButton( rb_y_ff0,  ATTR_K );
    bg_y_axis->addButton( rb_y_mw,   ATTR_W );
    bg_y_axis->addButton( rb_y_vbar, ATTR_V );
    bg_y_axis->addButton( rb_y_D,    ATTR_D );
-   bg_y_axis->addButton( rb_y_f,    ATTR_F );
    bg_y_axis->addButton( rb_y_rh,   ATTR_R );
    rb_x_s   ->setChecked( true  );
    rb_y_s   ->setEnabled( false );
@@ -220,15 +196,36 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    rb_x_mw  ->setToolTip( tr( "Set X axis to Molecular Weight"          ) );
    rb_x_vbar->setToolTip( tr( "Set X axis to Partial Specific Volume"   ) );
    rb_x_D   ->setToolTip( tr( "Set X axis to Diffusion Coefficient"     ) );
-   rb_x_f   ->setToolTip( tr( "Set X axis to Frictional Coefficient"    ) );
    rb_y_s   ->setToolTip( tr( "Set Y axis to Sedimentation Coefficient" ) );
    rb_y_ff0 ->setToolTip( tr( "Set Y axis to Frictional Ratio"          ) );
    rb_y_mw  ->setToolTip( tr( "Set Y axis to Molecular Weight"          ) );
    rb_y_vbar->setToolTip( tr( "Set Y axis to Partial Specific Volume"   ) );
    rb_y_D   ->setToolTip( tr( "Set Y axis to Diffusion Coefficient"     ) );
-   rb_y_f   ->setToolTip( tr( "Set Y axis to Frictional Coefficient"    ) );
    connect( bg_x_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_x_axis );
    connect( bg_y_axis, &QButtonGroup::idReleased, this, &US_GA_Initialize::select_y_axis );
+
+   lb_info3       = us_banner( tr( "Solute Bins List" ) );
+   lw_buckets     = us_listwidget( );
+   connect( lw_buckets, &QListWidget::currentRowChanged,
+            this,       &US_GA_Initialize::highlight_bucket );
+   QAction* deleteBin = new QAction( tr( "Delete selected bin" ), lw_buckets );
+   deleteBin->setShortcut( QKeySequence( Qt::Key_Delete ) );
+   deleteBin->setShortcutContext( Qt::WidgetShortcut );
+   deleteBin->setAutoRepeat( false );
+   lw_buckets->addAction( deleteBin );
+   connect( deleteBin, &QAction::triggered,
+            this, &US_GA_Initialize::deleteSelectedBin );
+
+   QLabel* lb_nsols = us_label( tr( "Number Solutes:" ) );
+   lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+
+   QLabel* lb_nbuks = us_label( tr( "Number Bins:" ) );
+   lb_nsols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+
+   le_nsols      = us_lineedit( "", -1, true );
+   le_nbuks      = us_lineedit( "", -1, true );
+
+   lb_info4      = us_banner( tr( "Data Controls" ) );
 
    dkdb_cntrls   = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
@@ -249,41 +246,21 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_ldcolor, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::load_color );
 
-   pb_refresh    = us_pushbutton( tr( "Refresh Plot" ), false );
-   connect( pb_refresh, &QAbstractButton::clicked,
-            this,       &US_GA_Initialize::replot_data );
-
-   plot_dim   = 3;          // default plot dimension
-   us_radiobutton( tr( "1-Dimensional Plot" ), rb_1dplot, false );
-   us_radiobutton( tr( "2-Dimensional Plot" ), rb_2dplot, false );
-   us_radiobutton( tr( "Pseudo 3-D Plot" ),    rb_3dplot, true  );
-
-   bg_plot = new QButtonGroup( this );
-   bg_plot->addButton( rb_1dplot, 1 );
-   bg_plot->addButton( rb_2dplot, 2 );
-   bg_plot->addButton( rb_3dplot, 3 );
-   connect( bg_plot, &QButtonGroup::idClicked, this, &US_GA_Initialize::select_plot_dim );
+   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ) );
+   pb_mandrsb->setCheckable( true );
    
-   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ),
-                                  false );
-   connect( pb_mandrsb, &QAbstractButton::clicked,
+   connect( pb_mandrsb, &QAbstractButton::toggled,
             this,       &US_GA_Initialize::manDrawSb );
 
-   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps / Sort" ),
-                                  false );
-   connect( pb_ckovrlp, &QAbstractButton::clicked,
-            this,       &US_GA_Initialize::checkOverlaps );
-
-   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ),
-                                  false );
+   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
    connect( pb_autassb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::autoAssignSb );
 
-   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ), false );
+   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ) );
    connect( pb_resetsb, &QAbstractButton::clicked,
             this,       &US_GA_Initialize::resetSb );
 
-   pb_reset      = us_pushbutton( tr( "Reset" ), false );
+   pb_reset      = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset,   &QAbstractButton::clicked,
             this,       &US_GA_Initialize::reset );
 
@@ -291,11 +268,11 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_view,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::view );
 
-   pb_save       = us_pushbutton( tr( "Save" ), false );
+   pb_save       = us_pushbutton( tr( "Save" ) );
    connect( pb_save,    &QAbstractButton::clicked,
             this,       &US_GA_Initialize::save );
 
-   pb_loadsb     = us_pushbutton( tr( "Load Solute Bins" ), false );
+   pb_loadsb     = us_pushbutton( tr( "Load Solute Bins" ) );
    connect( pb_loadsb,  &QAbstractButton::clicked,
             this,       &US_GA_Initialize::load_bins );
 
@@ -321,8 +298,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    int s_row = 0;
    spec->addWidget( lb_info1,     s_row++, 0, 1, 8 );
-   spec->addWidget( lb_nisols,    s_row,   0, 1, 4 );
-   spec->addWidget( ct_nisols,    s_row++, 4, 1, 4 );
    spec->addWidget( lb_wxbuck,    s_row,   0, 1, 4 );
    spec->addWidget( ct_wxbuck,    s_row++, 4, 1, 4 );
    spec->addWidget( lb_hybuck,    s_row,   0, 1, 4 );
@@ -336,53 +311,51 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( ct_yreso,     s_row++, 4, 1, 4 );
    spec->addWidget( lb_zfloor,    s_row,   0, 1, 4 );
    spec->addWidget( ct_zfloor,    s_row++, 4, 1, 4 );
-   spec->addWidget( lb_autlim,    s_row,   0, 1, 4 );
-   spec->addWidget( ck_autlim,    s_row++, 4, 1, 4 );
-   spec->addWidget( lb_plxmin,    s_row,   0, 1, 4 );
-   spec->addWidget( ct_plxmin,    s_row++, 4, 1, 4 );
-   spec->addWidget( lb_plxmax,    s_row,   0, 1, 4 );
-   spec->addWidget( ct_plxmax,    s_row++, 4, 1, 4 );
-   spec->addWidget( lb_plymin,    s_row,   0, 1, 4 );
-   spec->addWidget( ct_plymin,    s_row++, 4, 1, 4 );
-   spec->addWidget( lb_plymax,    s_row,   0, 1, 4 );
-   spec->addWidget( ct_plymax,    s_row++, 4, 1, 4 );
-   spec->addWidget( lw_sbin_data, s_row++, 0, 1, 8 );
-   spec->addWidget( lb_x_axis,    s_row,   0, 1, 1 );
-   spec->addLayout( gl_x_s,       s_row,   1, 1, 1 );
-   spec->addLayout( gl_x_ff0,     s_row,   2, 1, 1 );
-   spec->addLayout( gl_x_mw,      s_row,   3, 1, 1 );
-   spec->addLayout( gl_x_vbar,    s_row,   4, 1, 1 );
-   spec->addLayout( gl_x_D,       s_row,   5, 1, 1 );
-   spec->addLayout( gl_x_f,       s_row,   6, 1, 1 );
+   spec->addWidget( lb_x_axis,    s_row,   0, 1, 2 );
+   spec->addLayout( gl_x_s,       s_row,   2, 1, 1 );
+   spec->addLayout( gl_x_ff0,     s_row,   3, 1, 1 );
+   spec->addLayout( gl_x_mw,      s_row,   4, 1, 1 );
+   spec->addLayout( gl_x_vbar,    s_row,   5, 1, 1 );
+   spec->addLayout( gl_x_D,       s_row,   6, 1, 1 );
    spec->addLayout( gl_x_rh,      s_row++, 7, 1, 1 );
-   spec->addWidget( lb_y_axis,    s_row,   0, 1, 1 );
-   spec->addLayout( gl_y_s,       s_row,   1, 1, 1 );
-   spec->addLayout( gl_y_ff0,     s_row,   2, 1, 1 );
-   spec->addLayout( gl_y_mw,      s_row,   3, 1, 1 );
-   spec->addLayout( gl_y_vbar,    s_row,   4, 1, 1 );
-   spec->addLayout( gl_y_D,       s_row,   5, 1, 1 );
-   spec->addLayout( gl_y_f,       s_row,   6, 1, 1 );
+   spec->addWidget( lb_y_axis,    s_row,   0, 1, 2 );
+   spec->addLayout( gl_y_s,       s_row,   2, 1, 1 );
+   spec->addLayout( gl_y_ff0,     s_row,   3, 1, 1 );
+   spec->addLayout( gl_y_mw,      s_row,   4, 1, 1 );
+   spec->addLayout( gl_y_vbar,    s_row,   5, 1, 1 );
+   spec->addLayout( gl_y_D,       s_row,   6, 1, 1 );
    spec->addLayout( gl_y_rh,      s_row++, 7, 1, 1 );
+   spec->addWidget( ck_manlim,    s_row++, 0, 1, 8, Qt::AlignCenter );
+   spec->addWidget( lb_plxmin,    s_row,   0, 1, 2 );
+   spec->addWidget( le_plxmin,    s_row,   2, 1, 2 );
+   spec->addWidget( lb_plxmax,    s_row,   4, 1, 2 );
+   spec->addWidget( le_plxmax,    s_row++, 6, 1, 2 );
+   spec->addWidget( lb_plymin,    s_row,   0, 1, 2 );
+   spec->addWidget( le_plymin,    s_row,   2, 1, 2 );
+   spec->addWidget( lb_plymax,    s_row,   4, 1, 2 );
+   spec->addWidget( le_plymax,    s_row++, 6, 1, 2 );
+   spec->addWidget( lb_info3,     s_row++, 0, 1, 8 );
+   spec->addWidget( lw_buckets,   s_row++, 0, 1, 8 );
+   spec->addWidget( lb_nsols,     s_row,   0, 1, 2 );
+   spec->addWidget( le_nsols,     s_row,   2, 1, 2 );
+   spec->addWidget( lb_nbuks,     s_row,   4, 1, 2 );
+   spec->addWidget( le_nbuks,     s_row++, 6, 1, 2 );
+   spec->addWidget( lb_info4,     s_row++, 0, 1, 8 );
    spec->addLayout( dkdb_cntrls,  s_row++, 0, 1, 8 );
+   spec->addWidget( le_prefilt,   s_row++, 0, 1, 8 );
    spec->addWidget( pb_prefilt,   s_row,   0, 1, 4 );
-   spec->addWidget( le_prefilt,   s_row++, 4, 1, 4 );
-   spec->addWidget( pb_lddistr,   s_row,   0, 1, 4 );
-   spec->addWidget( rb_1dplot,    s_row++, 4, 1, 4 );
-   spec->addWidget( pb_ldcolor,   s_row,   0, 1, 4 );
-   spec->addWidget( rb_2dplot,    s_row++, 4, 1, 4 );
-   spec->addWidget( pb_refresh,   s_row,   0, 1, 4 );
-   spec->addWidget( rb_3dplot,    s_row++, 4, 1, 4 );
+   spec->addWidget( pb_lddistr,   s_row++, 4, 1, 4 );
    spec->addWidget( pb_mandrsb,   s_row,   0, 1, 4 );
-   spec->addWidget( pb_ckovrlp,   s_row++, 4, 1, 4 );
-   spec->addWidget( pb_autassb,   s_row,   0, 1, 4 );
-   spec->addWidget( pb_resetsb,   s_row++, 4, 1, 4 );
-   spec->addWidget( pb_loadsb,    s_row,   0, 1, 4 );
-   spec->addWidget( pb_reset,     s_row,   4, 1, 2 );
-   spec->addWidget( pb_save,      s_row++, 6, 1, 2 );
-   spec->addWidget( pb_view,      s_row,   0, 1, 4 );
-   spec->addWidget( pb_help,      s_row,   4, 1, 2 );
-   spec->addWidget( pb_close,     s_row++, 6, 1, 2 );
-   spec->addWidget( te_status,    s_row++, 0, 6, 8 );
+   spec->addWidget( pb_autassb,   s_row++, 4, 1, 4 );
+   spec->addWidget( pb_resetsb,   s_row,   0, 1, 4 );
+   spec->addWidget( pb_loadsb,    s_row++, 4, 1, 4 );
+   spec->addWidget( pb_ldcolor,   s_row,   0, 1, 4 );
+   spec->addWidget( pb_view,      s_row++, 4, 1, 4 );
+   spec->addWidget( pb_reset,     s_row,   0, 1, 4 );
+   spec->addWidget( pb_save,      s_row++, 4, 1, 4 );
+   spec->addWidget( pb_help,      s_row,   0, 1, 4 );
+   spec->addWidget( pb_close,     s_row++, 4, 1, 4 );
+   spec->addWidget( te_status,    s_row++, 0, 1, 8 );
 
    // set up plot component window on right side
    xa_title    = tr( "Sedimentation Coefficient corrected for water at 20" )
@@ -432,18 +405,35 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    // set up variables and initial state of GUI
    soludata   = new US_SoluteData();
-   sdistro    = &xy_distro;
    attr_x     = 0;          // default X type: s
    attr_y     = 1;          // default Y type: f/f0
    attr_z     = 3;          // default Z (fixed) type:  vbar
    mfilter    = "";         // default model list filter
    runsel     = true;       // default prefilter type
    latest     = true;       // default edit prefilter type
-   is_saved   = false;      // files have been saved
+   pb_view->setEnabled( false );
    pfilts.clear();          // default prefilter edits list
    binfpath   = US_Settings::resultDir();
-   pick       = NULL;
-   pickpen    = NULL;
+   pick       = new US_PlotPicker( data_plot );
+   pickpen    = new QPen();
+   pick->setStateMachine(  new QwtPickerDragRectMachine() );
+   pick->setRubberBandPen( *pickpen );
+   pick->setTrackerPen(    *pickpen );
+   pick->setRubberBand(    QwtPicker::RectRubberBand );
+   connect( pick, qOverload<const QRectF&>( &QwtPlotPicker::selected ),
+            this, &US_GA_Initialize::addSelectedBin );
+
+   auto* binPicker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
+                                      data_plot->canvas() );
+   binPicker->setStateMachine( new QwtPickerClickPointMachine() );
+   binPicker->setRubberBand( QwtPicker::NoRubberBand );
+   binPicker->setTrackerMode( QwtPicker::AlwaysOff );
+   connect( binPicker, qOverload<const QPointF&>( &QwtPlotPicker::selected ),
+            this, &US_GA_Initialize::selectBinAtPoint );
+   connect( pb_mandrsb, &QAbstractButton::toggled,
+            binPicker, [binPicker]( bool drawing ) {
+      binPicker->setEnabled( !drawing );
+   } );
    
    reset();
 }
@@ -451,29 +441,25 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 // reset the GUI
 void US_GA_Initialize::reset( void )
 {
-   dataPlotClear( data_plot );
-   data_plot->replot();
-   if ( pick != NULL )  delete pick;
-   pick       = new US_PlotPicker( data_plot );
+   data_plot->setTitle( QString() );
+   pb_mandrsb->setChecked( false );
+   manbuks = false;
+   sk_distro.clear();
+   xy_distro.clear();
+   pfilts.clear();
+   le_prefilt->clear();
+   erase_curves( false );
+   resetSb();
+   pick->setEnabled( false );
  
-   lw_sbin_data->clear();
-   soludata->clearBuckets();
-   sxset      = 0;
-
    minmax     = false;
    zoom       = false;
-   select_plot_dim( plot_dim );
-   nisols     = 0;
-   nibuks     = 0;
-   wxbuck     = 0.0;
-   hybuck     = 0.0;
-   ct_nisols->setValue( (double)nisols );
    ct_wxbuck->setRange( 0, 200 );
    ct_hybuck->setRange( 0,  50 );
    ct_wxbuck->setSingleStep( 0.1 );
    ct_hybuck->setSingleStep( 0.01 );
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
+   ct_wxbuck->setValue( 0.0 );
+   ct_hybuck->setValue( 0.0 );
 
    resolu     = 90.0;
    ct_resolu->setRange( 1, 100 );
@@ -494,30 +480,41 @@ void US_GA_Initialize::reset( void )
    ct_zfloor->setSingleStep( 1.0 );
    ct_zfloor->setValue( (double)zfloor );
 
-   auto_lim   = true;
-   ck_autlim->setChecked( auto_lim );
+   attr_x = ATTR_S;
+   plxmin = 1.0;
+   plxmax = 10.0;
+   rb_x_s->setChecked( true );
 
-   plymin     = 1.0;
-   plymax     = 4.0;
-   ct_plymin->setRange( 0.5, 50 );
-   ct_plymin->setSingleStep( 0.01 );
-   ct_plymin->setValue( plymin );
-   ct_plymin->setEnabled( false );
-   ct_plymax->setRange( 1.0, 50 );
-   ct_plymax->setSingleStep( 0.01 );
-   ct_plymax->setValue( plymax );
-   ct_plymax->setEnabled( false );
+   attr_y = ATTR_K;
+   plymin = 1.0;
+   plymax = 4.0;
+   rb_y_ff0->setChecked( true );
+   select_x_axis( ATTR_S );
+   select_y_axis( ATTR_K );
+   attr_z = ATTR_V;
+   
+   le_plxmin->clear();
+   le_plxmax->clear();
+   le_plymin->clear();
+   le_plymax->clear();
+   le_plxmin->setReadOnly( true );
+   le_plxmax->setReadOnly( true );
+   le_plymin->setReadOnly( true );
+   le_plymax->setReadOnly( true );
 
-   plxmin     = 1.0;
-   plxmax     = 10.0;
-   ct_plxmin->setRange( -10000.0, 10000.0 );
-   ct_plxmin->setSingleStep( 0.01 );
-   ct_plxmin->setValue( plxmin );
-   ct_plxmin->setEnabled( false );
-   ct_plxmax->setRange( 0.0, 10000.0 );
-   ct_plxmax->setSingleStep( 0.01 );
-   ct_plxmax->setValue( plxmax );
-   ct_plxmax->setEnabled( false );
+   limit_key.clear();
+   manual_limits.clear();
+   ck_manlim->setChecked( false );
+
+   update_plot_labels();
+   data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
+   data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
+   data_plot->replot();
+
+   manual_limits.clear();
+
+   le_nsols->clear();
+   le_nbuks->clear();
 
    // default to white-cyan-magenta-red-black color map
    colormap   = new QwtLinearColorMap( Qt::white, Qt::black );
@@ -527,19 +524,27 @@ void US_GA_Initialize::reset( void )
    cmapname   = tr( "Default Color Map: w-cyan-magenta-red-black" );
 
    monte_carlo = false;
-   is_saved   = false;
-   pb_reset  ->setEnabled( false );
+   pb_view->setEnabled( false );
+   ct_wxbuck->setEnabled( true );
+   ct_hybuck->setEnabled( true );
+   pb_autassb->setEnabled( true );
 }
 
 // save the GA data
 void US_GA_Initialize::save( void )
 {
-   // Sort the buckets in increasing-s order
-   int hlx  = lw_sbin_data->currentRow();
-   soludata->sortBuckets();
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
 
-   // Reset the buckets plot and list
-   resetPlotAndList( hlx );
+   const bool saveDistro = attr_x != ATTR_R && attr_y != ATTR_R && attr_z != ATTR_R
+      && ( attr_x == ATTR_V || attr_y == ATTR_V || attr_z == ATTR_V );
+
+   // Sort the buckets in increasing-s order
+   soludata->sortBuckets();
+   fill_lw_bins();
+   plot_buckets();
+   pb_view->setEnabled( false );
 
    // Test for overlaps
    int novlps = soludata->countOverlaps();
@@ -554,17 +559,6 @@ DbgLv(1) << "SAVE novlps" << novlps;
          tr( "Bin Overlaps" ),
          msg + tr( "You must correct this condition so that\n"
                    "no bins overlap, before you can save GA data." ) );
-      return;
-   }
-
-   if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
-   {  // None of X,Y,fixed is vbar:  there can be no output file
-      QMessageBox::information( this,
-         tr( "No Files Output" ),
-         tr( "No files will be saved, since neither X,Y nor fixed attribute"
-             " is vbar.\n\n"
-             "To output a gadistro file, insure that one of X,Y,fixed"
-             " is vbar." ) );
       return;
    }
 
@@ -594,15 +588,20 @@ DbgLv(1) << "SAVE ax,y,z" << attr_x << attr_y << attr_z;
    fixval        = ( attr_z == ATTR_K ) ? sk_distro[ 0 ].k : fixval;
    fixval        = ( attr_z == ATTR_W ) ? sk_distro[ 0 ].w : fixval;
    fixval        = ( attr_z == ATTR_D ) ? sk_distro[ 0 ].d : fixval;
-   fixval        = ( attr_z == ATTR_F ) ? sk_distro[ 0 ].f : fixval;
 
-   soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval );
+   QString msg = tr( "Saved:\n" );
+   if ( saveDistro )
+   {
+      if ( soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval ) != 0 )
+      {
+         QMessageBox::warning( this, tr( "Save Error" ),
+            tr( "Unable to write %1" ).arg( fname ) );
+         return;
+      }
+      msg += "    " + fndat + "\n";
+   }
 
-   // Report on files saved
-   QString msg = tr( "Saved:\n    " ) + fndat + "\n";
-
-   if ( manbuks )
-   {  // if manual buckets, build up and analyze data, then report
+   {  // Statistics are available for every axis combination and bin mode.
 
 DbgLv(1) << "SAVE call buildMC";
       soludata->buildDataMC();                     // build it
@@ -610,13 +609,22 @@ DbgLv(1) << "SAVE call buildMC";
       fname         = fdir + "/" + fnsta;
 
 DbgLv(1) << "SAVE call reportMC";
-      soludata->reportDataMC( fname, mc_iters );   // report it
-      is_saved      = true;
+      if ( soludata->reportDataMC( fname, mc_iters ) != 0 )
+      {
+         QMessageBox::warning( this, tr( "Save Error" ),
+            tr( "Unable to write %1" ).arg( fname ) );
+         return;
+      }
 
       // Copy the statistics file to the report directory
       QFile( fnam2 ).remove();
-      QFile( fname ).copy( fnam2 );
-      pb_view   ->setEnabled( true );
+      if ( !QFile( fname ).copy( fnam2 ) )
+      {
+         QMessageBox::warning( this, tr( "Save Error" ),
+            tr( "Unable to copy statistics to %1" ).arg( fnam2 ) );
+         return;
+      }
+      pb_view->setEnabled( true );
 
       msg     += "    " + fnsta + "\n";
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
@@ -647,11 +655,8 @@ DbgLv(1) << "SAVE call reportMC";
       }
    }
 
-   else
-   {
-DbgLv(1) << "SAVE fnst2" << fnst2;
-      msg     += tr( "in directory:\n    " ) + fdir;
-   }
+   if ( !saveDistro )
+      msg += tr( "\n\nGA boundary file omitted: it requires vbar and does not support Rh." );
 
    QMessageBox::information( this, tr( "Distro/Stats File Save" ), msg );
 }
@@ -659,386 +664,146 @@ DbgLv(1) << "SAVE fnst2" << fnst2;
 // Manually draw solute bins
 void US_GA_Initialize::manDrawSb( void )
 {
+   if ( sk_distro.isEmpty() ) {
+      pick->setEnabled( false );
+      pb_mandrsb->setChecked( false );
+      return;
+   }
+
+   if ( !pb_mandrsb->isChecked() )
+   {
+      pick->setEnabled( false );
+      return;
+   }
+   pick->setEnabled( true );
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
-
-   // create a new plot picker to draw rectangles around solute points
-   if ( pick    != NULL )  delete pick;
-   if ( pickpen != NULL )  delete pickpen;
-   pick         = new US_PlotPicker( data_plot );
-
    // make sure rubber band and tracker show up against background
    QColor bg    = data_plot->canvasBackground();
    int csum     = bg.red() + bg.green() + bg.blue();
-   pickpen      = new QPen( ( csum > 600 ) ? cblack : cwhite );
+   pickpen->setColor( ( csum > 600 ) ? cblack : cwhite );
+   pick->setRubberBandPen( *pickpen );
+   pick->setTrackerPen(    *pickpen );
 DbgLv(1) << "manDr: bg" << bg << "csum" << csum;
 DbgLv(1) << "manDr:   pickpen" << pickpen->brush().color();
 DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
-
-   pick->setStateMachine(  new QwtPickerDragRectMachine() );
-   pick->setRubberBandPen( *pickpen );
-   pick->setTrackerPen(    *pickpen );
-   pick->setRubberBand(    QwtPicker::RectRubberBand );
-
-   // set up to capture position and dimensions of solute bin
-   connect( pick, &US_PlotPicker::mouseDown,
-            this, &US_GA_Initialize::getMouseDown );
-   connect( pick, &US_PlotPicker::mouseUp,
-            this, &US_GA_Initialize::getMouseUp );
-
-   pb_ckovrlp->setEnabled( false );
-
-   double xrange = qAbs( plxmax - plxmin );
-   double yrange = qAbs( plymax - plymin );
-   
-   if ( xrange == 0.0 )
-   {
-      xrange = 1.0e-1;
-   }
-   
-   if ( yrange <= 0.0 )
-   {
-      yrange = 1.0e-1;
-   }
-   
-   //wxbuck       = ( plxmax - plxmin ) / 10.0;
-   //hybuck       = ( plymax - plymin ) / 10.0;
-   wxbuck       = xrange * 0.08;
-   hybuck       = yrange * 0.2;
-   ct_wxbuck->disconnect( );
-   ct_hybuck->disconnect( );
-   int    rpwr  = qRound( log10( wxbuck ) );
-   double rmax  = pow( 10.0, rpwr + 3 );
-   double rinc  = pow( 10.0, rpwr - 3 );
-   wxbuck       = qRound( wxbuck / rinc ) * rinc;
-   ct_wxbuck->setRange( 0.0, rmax );
-   ct_wxbuck->setSingleStep( rinc );
-   ct_wxbuck->setValue( wxbuck );
-          rpwr  = qRound( log10( hybuck ) );
-          rmax  = pow( 10.0, rpwr + 3 );
-          rinc  = pow( 10.0, rpwr - 3 );
-   hybuck       = qRound( hybuck / rinc ) * rinc;
-   ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
-   connect( ct_hybuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_hybuck );
-
-   manbuks      = true;
-}
-
-// Check for bin overlaps
-void US_GA_Initialize::checkOverlaps( void )
-{
-   int novlps = soludata->countOverlaps();
-
-   if ( novlps == 0 )
-   {
-      QMessageBox::information( this,
-         tr( "No Bins Overlap" ),
-         tr( "No bin overlaps were found, so you"
-             " may proceed to saving this GA data"
-             " or viewing statistics."
-             "\n\n*NOTE*: Bins will now be re-sorted." ) );
-      pb_save->setEnabled( attr_x == ATTR_V  ||
-                           attr_y == ATTR_V  ||
-                           attr_z == ATTR_V );
-      pb_view->setEnabled( true );
-   }
-
-   else
-   {
-      QString msg = ( novlps == 1 ) ?
-         tr( "There is one case of overlap between bins.\n" ) :
-         tr( "%1 pairs of bins overlap one another.\n" ).arg( novlps );
-      QMessageBox::warning( this,
-         tr( "Bin Overlaps" ),
-         msg + tr( "You must correct this condition so that no\n"
-                   "bins overlap, before you can save GA data." ) );
-      pb_save->setEnabled( false );
-      pb_view->setEnabled( false );
-   }
-
-   // Sort buckets, then reset the buckets plot and list
-   soludata->sortBuckets();
-   int hlx  = lw_sbin_data->currentRow();
-   resetPlotAndList( hlx );
 }
 
 // Auto assign solute bins
 void US_GA_Initialize::autoAssignSb( void )
 {
-   if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
-   {
-      QMessageBox::information( this, "Information", "Autoassign is disabled when Rh is selected.");
+   if ( sk_distro.isEmpty() ) {
       return;
    }
-   nisols      = ( nisols == 0 ) ? sdistro->size() : nisols;
-   pc1         = NULL;
-   lw_sbin_data->clear();
-   soludata->clearBuckets();
-   erase_buckets( true );
 
-   nibuks      = soludata->autoCalcBins( nisols, wxbuck, hybuck );
+   resetSb();
+   int nisols    = xy_distro.size();
+   double wxbuck = ct_wxbuck->value();
+   double hybuck = ct_hybuck->value();
+   soludata->autoCalcBins( nisols, wxbuck, hybuck );
+   manbuks      = false;
+   pb_view->setEnabled( false );
+   fill_lw_bins();
+   plot_buckets();
+   if ( lw_buckets->count() > 0 )
+   {
+      lw_buckets->setCurrentRow(0);
+   }
+}
 
-   for ( int jj = 0; jj < nibuks; jj++ )
-   {  // draw the auto-assigned buckets and add lines to list widget
-      QRectF rect = soludata->bucketRect( jj );
-      pc1         = drawBucketRect( jj, rect );
-
-      lw_sbin_data->addItem( soludata->bucketLine( jj ) );
+void US_GA_Initialize::fill_lw_bins()
+{
+   const QSignalBlocker blocker( lw_buckets );
+   lw_buckets->clear();
+   int nbuks = soludata->bucketsCount();
+   for ( int ii = 0; ii < nbuks; ii++ )
+   {
+      lw_buckets->addItem( soludata->bucketLine( ii ) );
    }
 
-   data_plot->replot();
-   pb_resetsb->setEnabled( true );
-   // X,Y or fixed must be vbar for Save to be allowed
-   pb_save   ->setEnabled( ( attr_x == ATTR_V )  ||
-                           ( attr_y == ATTR_V )  ||
-                           ( attr_z == ATTR_V ) );
-   pb_ckovrlp->setEnabled( true );
-   pb_view   ->setEnabled( false );
-
-   manbuks      = false;
+   int max_buks = 50;
+   le_nbuks->clear();
+   le_nbuks->setStyleSheet( nbuks > max_buks ? "QLineEdit { color: red; }" : "" );
+   if ( nbuks > 0 )
+   {
+      le_nbuks->setText( QString::number( nbuks ) );
+   }
+   if ( nbuks > max_buks )
+   {
+      QMessageBox::warning( this, tr( "Bin Count Warning" ),
+         tr( "There are %1 bins, exceeding the limit of %2." ).arg( nbuks ).arg( max_buks ) );
+   }
 }
 
 // Reset solute bins
 void US_GA_Initialize::resetSb( void )
 {
-   ct_nisols->setValue( 0.0 );
-   lw_sbin_data->clear();     // clear solute bucket data
+   le_nbuks->clear();
    soludata->clearBuckets();
-   sxset    = 0;
-   is_saved = false;
-
-   erase_buckets( true );     // erase bucket rectangles from plot and delete
-
-   nibuks   = 0;
-   pb_save   ->setEnabled( false );
-   pb_view   ->setEnabled( false );
-   pb_ckovrlp->setEnabled( false );
-
-   data_plot->replot();
+   pb_view->setEnabled( false );
+   fill_lw_bins();
+   plot_buckets();
 }
 
 // (re)plot data
 void US_GA_Initialize::replot_data()
 {
-   if ( sdistro->isEmpty()  ||  sdistro->size() == 0 )
+   if ( xy_distro.isEmpty() )
       return;
 
-   resetSb();
+   plot_3dim();
+   setBucketPens();
+   plot_buckets();
+}
 
-   sdistro   = &xy_distro;
-
-   if ( plot_dim == 1 )
+void US_GA_Initialize::erase_curves( bool buckets_only )
+{
+   if ( buckets_only )
    {
-      plot_1dim();
-   }
-   else if ( plot_dim == 2 )
-   {
-      plot_2dim();
+      for ( int ii = 0; ii < bucket_curves.size(); ii++ )
+      {
+         bucket_curves[ ii ]->detach();
+         delete bucket_curves[ ii ];
+       }
    }
    else
    {
-      plot_3dim();
+      dataPlotClear( data_plot );
    }
-
-   setBucketPens();
+   bucket_curves.clear();
+   data_plot->replot();
 }
 
-// plot data 1-D
-void US_GA_Initialize::plot_1dim( void )
+void US_GA_Initialize::plot_buckets()
 {
-   dataPlotClear( data_plot );
-   data_plot->replot();
-   if ( pick != NULL )  delete pick;
-   pick          = new US_PlotPicker( data_plot );
+   erase_curves( true );
 
-   data_plot->setCanvasBackground( Qt::black );
-   pick->setTrackerPen( QColor( Qt::white ) );
-
-   int     dsize = sdistro->size();
-   QVector< double > xvec( dsize );
-   QVector< double > yvec( dsize );
-   double* x     = xvec.data();
-   double* y     = yvec.data();
-   double  sval  = sdistro->at( 0 ).s;
-   double  smin  = sval;
-   double  smax  = sval;
-   double  cval  = sdistro->at( 0 ).c;
-   double  cmin  = cval;
-   double  cmax  = cval;
-   int     nn    = 1;
-   x[ 0 ]        = sval;
-   y[ 0 ]        = cval;
-
-   for ( int jj = 1; jj < dsize; jj++ )
+   for ( int ii = 0; ii < soludata->bucketsCount(); ii++ )
    {
-      double svpr = sval;
-      double cvpr = cval;
-      sval        = sdistro->at( jj ).s;
-      cval        = sdistro->at( jj ).c;
+      QRectF r = soludata->bucketRect( ii );
+      const double x[] = {
+        r.left(), r.right(), r.right(), r.left(), r.left()
+      };
+      const double y[] = {
+        r.top(), r.top(), r.bottom(), r.bottom(), r.top()
+      };
 
-      if ( equivalent( sval, svpr, epsilon ) )
-      {  // effectively equal s values: sum c values
-         cval       += cvpr;
-         x[ nn - 1 ] = ( svpr + sval ) * 0.5;
-         y[ nn - 1 ] = cval;
-      }
-
-      else
-      {  // new s value:  save c value and bump count
-         x[ nn   ]   = sval;
-         y[ nn++ ]   = cval;
-      }
-
-      smin        = ( smin < sval ) ? smin : sval;
-      smax        = ( smax > sval ) ? smax : sval;
-      cmin        = ( cmin < cval ) ? cmin : cval;
-      cmax        = ( cmax > cval ) ? cmax : cval;
+      auto curve = us_curve( data_plot, QString( "bucket border %1" ).arg( ii ) );
+      curve->setPen( pbukpen );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setSamples( x, y, 5 );
+      curve->attach( data_plot );
+      bucket_curves << curve;
    }
-
-   if ( dsize == 1 )
-   {
-      smin       *= ( ( smin < 0 ) ? 1.05 : 0.95 );
-      smax       *= ( ( smin < 0 ) ? 0.95 : 1.05 );
-      cmin       *= 0.95;
-      cmax       *= 1.05;
-   }
-
-   double rdif = ( smax - smin ) / 20.0;
-   smin       -= rdif;
-   smax       += rdif;
-   rdif        = ( cmax - cmin ) / 20.0;
-   cmin       -= rdif;
-   cmax       += rdif;
-   cmin        = ( cmin > 0.0 ) ? cmin : 0.0;
-
-   QwtPlotGrid* data_grid = us_grid( data_plot );
-   data_grid->enableYMin( true );
-   data_grid->enableY( true );
-   data_grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(),
-      0, Qt::DashLine ) );
-   data_grid->attach( data_plot );
-
-   QwtPlotCurve *data_curv = us_curve( data_plot, "distro" );
-   data_curv->setSamples( x, y, nn );
-   data_curv->setPen( QPen( Qt::yellow, 3, Qt::SolidLine ) );
-   data_curv->setStyle( QwtPlotCurve::Sticks );
-
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->enableAxis( QwtPlot::yRight, false );
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   tr( "Partial Concentration" ) );
-   data_plot->setAxisScale( QwtPlot::xBottom, smin, smax );
-   data_plot->setAxisScale( QwtPlot::yLeft,   cmin, cmax );
-
-   data_plot->replot();
-
-   check_draw_btn();
-}
-
-// plot data 2-D
-void US_GA_Initialize::plot_2dim( void )
-{
-   dataPlotClear( data_plot );
-   data_plot->replot();
-   if ( pick != NULL )  delete pick;
-   pick          = new US_PlotPicker( data_plot );
-
-   data_plot->setCanvasBackground( Qt::black );
-   pick->setTrackerPen( QColor( Qt::white ) );
-
-   int     dsize = sdistro->size();
-   double* x     = new double[ dsize ];
-   double* y     = new double[ dsize ];
-   double  smin  = 1.0e30;
-   double  smax  = -1.0e30;
-   double  kmin  = 1.0e30;
-   double  kmax  = -1.0e30;
-
-   for ( int jj = 0; jj < dsize; jj++ )
-   {
-      double sval = sdistro->at( jj ).s;
-      double kval = sdistro->at( jj ).k;
-      x[ jj ]     = sval;
-      y[ jj ]     = kval;
-      smin        = qMin( smin, sval );
-      smax        = qMax( smax, sval );
-      kmin        = qMin( kmin, kval );
-      kmax        = qMax( kmax, kval );
-   }
-
-   if ( dsize == 1 )
-   {
-      smin       *= 0.95;
-      smax       *= 1.05;
-      kmin       *= 0.95;
-      kmax       *= 1.05;
-   }
-
-   double rdif = ( smax - smin ) / 20.0;
-   smin       -= rdif;
-   smax       += rdif;
-   rdif        = ( kmax - kmin ) / 20.0;
-   kmin       -= rdif;
-   kmax       += rdif;
-   kmin        = ( kmin > 0.0 ) ? kmin : 0.0;
-
-   QwtPlotGrid* data_grid = us_grid( data_plot );
-   data_grid->enableYMin( true );
-   data_grid->enableY( true );
-   data_grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(),
-      0, Qt::DashLine ) );
-   data_grid->attach( data_plot );
-
-   QwtPlotCurve *data_curv = us_curve( data_plot, "distro" );
-   QwtSymbol* symbol       = new QwtSymbol;
-
-   symbol->setStyle( QwtSymbol::Ellipse );
-   symbol->setPen( QPen( Qt::red ) );
-   symbol->setBrush( QBrush( Qt::yellow ) );
-   if ( dsize < 100  &&  dsize > 50 )
-      symbol->setSize( 8 );
-   else if ( dsize < 50  &&  dsize > 20 )
-      symbol->setSize( 10 );
-   else if ( dsize < 21 )
-      symbol->setSize( 12 );
-   else if ( dsize > 100 )
-      symbol->setSize( 6 );
-
-   data_curv->setStyle( QwtPlotCurve::NoCurve );
-   data_curv->setSymbol( symbol );
-   data_curv->setSamples( x, y, dsize );
-
-   delete [] x;
-   delete [] y;
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->enableAxis( QwtPlot::yRight, false );
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
-   data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
-   data_plot->axisTitle( QwtPlot::yRight ).setFont(
-         data_plot->axisTitle( QwtPlot::yLeft ).font() );
-   data_plot->setAxisScale( QwtPlot::xBottom, smin, smax );
-   data_plot->setAxisScale( QwtPlot::yLeft,   kmin, kmax );
-
-   data_plot->replot();
-
-   check_draw_btn();
+   highlight_bucket( lw_buckets->currentRow() );
 }
 
 // plot data 3-D
 void US_GA_Initialize::plot_3dim( void )
 {
+   erase_curves( false );
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
-   dataPlotClear( data_plot );
-   data_plot->replot();
-   if ( pick != NULL )  delete pick;
-   pick          = new US_PlotPicker( data_plot );
    QColor bg     = colormap->color1();
 
    data_plot->setCanvasBackground( bg );
@@ -1053,37 +818,27 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    data_plot->setTitle( tstr );
 
    // set up spectrogram data
-   d_spectrogram = new QwtPlotSpectrogram();
-   spec_dat      = new US_SpectrogramData();
+   QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
+   US_SpectrogramData* spec_dat      = new US_SpectrogramData();
    d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    d_spectrogram->setData    ( spec_dat );
    d_spectrogram->attach( data_plot );
 
-   QRectF drect;
+   QRectF drect = QRectF( plxmin, plymin,
+                        ( plxmax - plxmin ), ( plymax - plymin ) );
 
-   if ( auto_lim )
-   {
-      drect = QRectF( 0.0, 0.0, 0.0, 0.0 );
-   }
-
-   else
-   {
-      drect = QRectF( plxmin, plymin,
-            ( plxmax - plxmin ), ( plymax - plymin ) );
-   }
-
-   double zmax = sdistro->at( 0 ).c;
+   double zmax = xy_distro.at( 0 ).c;
    double zmin = 0.0;
 
-   for ( int jj = 0; jj < sdistro->size(); jj++ )
+   for ( int jj = 0; jj < xy_distro.size(); jj++ )
    {
-      zmin  = qMin( zmin, sdistro->at( jj ).c );
-      zmax  = qMax( zmax, sdistro->at( jj ).c );
+      zmin  = qMin( zmin, xy_distro.at( jj ).c );
+      zmax  = qMax( zmax, xy_distro.at( jj ).c );
    }
 
    spec_dat->setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat->setZRange( zmin, zmax );
-   spec_dat->setRaster( sdistro );
+   spec_dat->setRaster( &xy_distro );
 
    // Set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
@@ -1095,161 +850,134 @@ DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
    data_plot->axisTitle( QwtPlot::yRight ).setFont(
-         data_plot->axisTitle( QwtPlot::yLeft ).font() );
+   data_plot->axisTitle( QwtPlot::yLeft ).font() );
    data_plot->setAxisScale( QwtPlot::yRight,
-      spec_dat->range().minValue(), spec_dat->range().maxValue() );
+   spec_dat->range().minValue(), spec_dat->range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
 
-   if ( auto_lim )
-   {   // auto limits
-      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
-      data_plot->setAxisAutoScale( QwtPlot::xBottom );
-   }
-   else
-   {   // manual limits
-      data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
-      data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
-   }
-
+   data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
+   data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
    data_plot->replot();
 
-   check_draw_btn();
 }
 
 // update pseudo-3d resolution factor
 void US_GA_Initialize::update_resolu( double dval )
 {
    resolu = dval;
+   replot_data();
 }
 
 // update raster x resolution
 void US_GA_Initialize::update_xreso( double dval )
 {
    xreso  = dval;
+   replot_data();
 }
 
 // update raster y resolution
 void US_GA_Initialize::update_yreso( double dval )
 {
    yreso  = dval;
+   replot_data();
 }
 
 // update Z (frequency) floor percent
 void US_GA_Initialize::update_zfloor( double dval )
 {
    zfloor = dval;
-}
-
-// update number of initial solutes
-void US_GA_Initialize::update_nisols( double dval )
-{
-   nisols    = qRound( dval );
-}
-
-// update width in s of buckets
-void US_GA_Initialize::update_wxbuck( double dval )
-{
-   wxbuck    = dval;
-}
-
-// update height in f/f0 of buckets
-void US_GA_Initialize::update_hybuck( double dval )
-{
-   hybuck    = dval;
-}
-
-// update plot limit s min
-void US_GA_Initialize::update_plxmin( double dval )
-{
-   plxmin    = dval;
-}
-
-// update plot limit s max
-void US_GA_Initialize::update_plxmax( double dval )
-{
-   plxmax    = dval;
-
-   if ( attr_x == ATTR_W )
-   {  // For MW, use logarithmic steps
-      double rinc = pow( 10.0, qRound( log10( dval ) ) - 2.0 );
-      ct_plxmin->setSingleStep( rinc );
-      ct_plxmax->setSingleStep( rinc );
-   }
-}
-
-// update plot limit f/f0 min
-void US_GA_Initialize::update_plymin( double dval )
-{
-   plymin    = dval;
-}
-
-// update plot limit f/f0 max
-void US_GA_Initialize::update_plymax( double dval )
-{
-   plymax    = dval;
-
-   if ( attr_y == ATTR_W )
-   {  // For MW, use logarithmic steps
-      double rinc = pow( 10.0, qRound( log10( dval ) ) - 2.0 );
-      ct_plymin->setSingleStep( rinc );
-      ct_plymax->setSingleStep( rinc );
-   }
-}
-
-// select automatic plot limits
-void US_GA_Initialize::select_autolim()
-{
-   auto_lim   = ck_autlim->isChecked();
-   ct_plymin->setEnabled( !auto_lim );
-   ct_plymax->setEnabled( !auto_lim );
-   ct_plxmin->setEnabled( !auto_lim );
-   ct_plxmax->setEnabled( !auto_lim );
-   if ( auto_lim )
-   {
-      set_limits();
-   }
-
-   //wxbuck       = ( plxmax - plxmin ) / 20;
-   //hybuck       = ( plymax - plymin ) / 20;
-   wxbuck       = ( plxmax - plxmin ) * 0.08;
-   hybuck       = ( plymax - plymin ) * 0.2;
-   double rmax  = wxbuck * 10.0;
-   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
-   ct_wxbuck->disconnect( );
-   ct_wxbuck->setRange( 0.0, rmax );
-   ct_wxbuck->setSingleStep( rinc );
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
-}
-
-void US_GA_Initialize::select_plot_dim( int id )
-{
-   plot_dim = id;
    replot_data();
 }
 
-void US_GA_Initialize::check_draw_btn()
+double US_GA_Initialize::str2double( const QString& str, double val )
 {
-   pb_reset  ->setEnabled( true );
-   if ( rb_x_rh->isChecked() || rb_y_rh->isChecked() )
-   {
-      pb_mandrsb->setEnabled( false );
-      pb_autassb->setEnabled( false );
-      return;
-   }
+  bool ok;
+  double newval = str.toDouble( &ok );
+  if (ok)
+  {
+    return newval;
+  } else {
+    QMessageBox::warning(this, "Warning!", "Please enter a number!");
+    return val;
+  }
+}
 
-   if ( plot_dim == 1 )
-   {
-      pb_mandrsb->setEnabled( false );
-      pb_autassb->setEnabled( false );
-      manbuks      = true;
-   } else 
-   {
-      pb_mandrsb->setEnabled( true );
-      pb_autassb->setEnabled( !monte_carlo );
-   }
+// update plot limit s min
+void US_GA_Initialize::update_plxmin()
+{
+  double val = str2double( le_plxmin->text(), plxmin );
+  if (val >= plxmax) {
+    QString msg = "Minimum of the x-axis must be less than the maximum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plxmin = val;
+  }
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][0] = plxmin;
+  }
+
+  replot_data();
+}
+
+// update plot limit s max
+void US_GA_Initialize::update_plxmax()
+{
+  double val = str2double( le_plxmax->text(), plxmax);
+  if (val <= plxmin) {
+    QString msg = "Maximum of the x-axis must be greater than the minimum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plxmax= val;
+  }
+  le_plxmax->setText( QString::number( plxmax ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][1] = plxmax;
+  }
+
+  replot_data();
+}
+
+// update plot limit f/f0 min
+void US_GA_Initialize::update_plymin()
+{
+  double val = str2double( le_plymin->text(), plymin );
+  if (val >= plymax) {
+    QString msg = "Minimum of the y-axis must be less than the maximum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plymin = val;
+  }
+  le_plymin->setText( QString::number( plymin ) );
+  le_plxmax->setText( QString::number( plxmax ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][2] = plymin;
+  }
+
+  replot_data();
+}
+
+
+// update plot limit f/f0 max
+void US_GA_Initialize::update_plymax()
+{
+  double val = str2double( le_plymax->text(), plymax);
+  if (val <= plymin) {
+    QString msg = "Maximum of the y-axis must be greater than the minimum of it!";
+    QMessageBox::warning(this, "Error!", msg);
+  } else {
+    plymax= val;
+  }
+  le_plymax->setText( QString::number( plymax ) );
+  le_plxmax->setText( QString::number( plxmax ) );
+  if ( manual_limits.contains( limit_key ) )
+  {
+    manual_limits[ limit_key ][3] = plymax;
+  }
+
+  replot_data();
 }
 
 // load the solute distribution from a file or from DB
@@ -1270,8 +998,6 @@ void US_GA_Initialize::load_distro()
    double          vmax   = 1e-39;
    double          dmin   = 1e+39;
    double          dmax   = 1e-39;
-   double          fmin   = 1e+39;
-   double          fmax   = 1e-39;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
@@ -1369,14 +1095,12 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
          sol_xy.s  = ( attr_x == ATTR_W ) ? sol_sk.w : sol_xy.s;
          sol_xy.s  = ( attr_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
          sol_xy.s  = ( attr_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
-         sol_xy.s  = ( attr_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
          sol_xy.s  = ( attr_x == ATTR_R ) ? sol_sk.r : sol_xy.s;
          sol_xy.k  = ( attr_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
          sol_xy.k  = ( attr_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
          sol_xy.k  = ( attr_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
          sol_xy.k  = ( attr_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
          sol_xy.k  = ( attr_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
-         sol_xy.k  = ( attr_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
          sol_xy.k  = ( attr_y == ATTR_R ) ? sol_sk.r : sol_xy.k;
          sol_xy.si = sol_sk.s;
          sol_xy.ki = sol_sk.k;
@@ -1391,8 +1115,6 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
          vmax      = qMax( vmax, sol_sk.v );
          dmin      = qMin( dmin, sol_sk.d );
          dmax      = qMax( dmax, sol_sk.d );
-         fmin      = qMin( fmin, sol_sk.f );
-         fmax      = qMax( fmax, sol_sk.f );
 //DbgLv(2) << "Solute jj s w k c d" << jj << sol_s.s << sol_w.s << sol_s.k
 //   << sol_s.c << sol_s.d << " vb" << model.components[jj].vbar20;
 
@@ -1401,8 +1123,7 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
       }
 
       // sort and reduce distributions
-      sdistro   = &xy_distro;
-      psdsiz    = sdistro->size();
+      psdsiz    = xy_distro.size();
       sort_distro( sk_distro, false );
       sort_distro( xy_distro, true  );
 DbgLv(1) << "Solute psdsiz sdsiz xdsiz" << psdsiz << sk_distro.size()
@@ -1423,8 +1144,6 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
       attr_z    = ATTR_W;
    else if ( equivalent( dmin, dmax, 0.001 ) )
       attr_z    = ATTR_D;
-   else if ( equivalent( fmin, fmax, 0.001 ) )
-      attr_z    = ATTR_F;
 
    if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
    {  // No attribute is vbar, so use vbar as the default X or Y
@@ -1446,62 +1165,33 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    attrs << "s" << "f/f0" << "MW" << "vbar" << "D" << "f";
    QString s_attr = attrs[ attr_z ];
 
-   if ( auto_lim )
-   {
-      set_limits();
+   le_nsols->setText( QString::number( sk_distro.size() ) );
+   set_limits();
 
-      ct_plymin->setEnabled( false );
-      ct_plymax->setEnabled( false );
-      ct_plxmin->setEnabled( false );
-      ct_plxmax->setEnabled( false );
-   }
-   else
-   {
-      plxmin    = ct_plxmin->value();
-      plxmax    = ct_plxmax->value();
-      plymin    = ct_plymin->value();
-      plymax    = ct_plymax->value();
-   }
    data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
+   data_plot->replot();
 
-   pb_resetsb->setEnabled( true );
-
-   nisols       = sdistro->size();
+   // nisols       = sdistro->size();
    s_attr       = "\"" + s_attr + "\".";
    dfilname     = "(" + mfnam + ") " + mdesc;
    stdfline     = "  " + dfilname;
    stfxline     = tr( "The components fixed attribute is " ) + s_attr;
-   stnpline     = tr( "The number of distribution points is %1" )
-                  .arg( nisols );
-   if ( nisols != psdsiz )
-      stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
+   // stnpline     = tr( "The number of distribution points is %1" )
+   //                .arg( nisols );
+   // if ( nisols != psdsiz )
+   //    stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
 
    te_status->setText( stcmline + "\n" + stdiline + "\n"
          + stdfline + "\n" + stfxline + "\n" + stnpline + "." );
 
    replot_data();
 
-   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
+   soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
 
-   nibuks       = 0;
-   //wxbuck       = ( plxmax - plxmin ) / 20.0;
-   //hybuck       = ( plymax - plymin ) / 20.0;
-   wxbuck       = ( plxmax - plxmin ) * 0.08;
-   hybuck       = ( plymax - plymin ) * 0.2;
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
-   ct_nisols->setValue( double( nisols ) );
-   ct_wxbuck->setEnabled(  true );
-   ct_hybuck->setEnabled(  true );
-   pb_refresh->setEnabled( true );
-   pb_mandrsb->setEnabled( plot_dim != 1 );
-   pb_loadsb ->setEnabled( true );
-
-   if ( monte_carlo )
-   {
-      manDrawSb( );
-   }
+   ct_wxbuck->setDisabled( monte_carlo );
+   ct_hybuck->setDisabled( monte_carlo );
+   pb_autassb->setDisabled( monte_carlo );
 }
 
 // load the color map from a file
@@ -1543,25 +1233,7 @@ void US_GA_Initialize::load_color()
 // set plot x,y limits
 void US_GA_Initialize::set_limits()
 {
-   
-   const QStringList labels = {"s", "f/f0", "MW", "vbar", "D", "f", "Rh" };
-   xa_title = anno_title( attr_x );
-   ya_title = anno_title( attr_y );
-   QString xlabel = labels.at( attr_x );
-   QString ylabel = labels.at( attr_y );
-   lb_plxmin->setText( tr( "Plot Limit " ) + xlabel + tr( " Minimum:" ) );
-   lb_plxmax->setText( tr( "Plot Limit " ) + xlabel + tr( " Maximum:" ) );
-   lb_wxbuck->setText( tr( "Width of "   ) + xlabel + tr( " Bucket:"  ) );
-   lb_plymin->setText( tr( "Plot Limit " ) + ylabel + tr( " Minimum:" ) );
-   lb_plymax->setText( tr( "Plot Limit " ) + ylabel + tr( " Maximum:" ) );
-   lb_hybuck->setText( tr( "Height of "  ) + ylabel + tr( " Bucket:"  ) );
-   
-   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
-   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
-
-   resetSb();
-   sdistro     = &xy_distro;
-   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
+   soludata->setDistro( &xy_distro, attr_x, attr_y, attr_z );
    
    // find min,max for S distributions
    double smin = +1.0e99;
@@ -1570,10 +1242,10 @@ void US_GA_Initialize::set_limits()
    double kmax = -1.0e99;
    double sinc;
    double kinc;
-   for ( int jj = 0; jj < sdistro->size(); jj++ )
+   for ( int jj = 0; jj < xy_distro.size(); jj++ )
    {
-      double sval = sdistro->at( jj ).s;
-      double kval = sdistro->at( jj ).k;
+      double sval = xy_distro.at( jj ).s;
+      double kval = xy_distro.at( jj ).k;
       smin        = qMin( smin, sval );
       smax        = qMax( smax, sval );
       kmin        = qMin( kmin, kval );
@@ -1585,8 +1257,8 @@ DbgLv(1) << "SL: distr skmin,max" << smin << smax << kmin << kmax;
    sinc      = ( smax - smin ) / 10.0;
    kinc      = ( kmax - kmin ) / 10.0;
 DbgLv(1) << "SL: adj sinc kinc" << sinc << kinc;
-   sinc      = ( sinc == 0.0 || sdistro->size() == 1 ) ? ( smin * 0.05 ) : sinc;
-   kinc      = ( kinc == 0.0 || sdistro->size() == 1 ) ? ( kmin * 0.05 ) : kinc;
+   sinc      = ( sinc == 0.0 || xy_distro.size() == 1 ) ? ( smin * 0.05 ) : sinc;
+   kinc      = ( kinc == 0.0 || xy_distro.size() == 1 ) ? ( kmin * 0.05 ) : kinc;
 DbgLv(1) << "SL:  adj sinc kinc" << sinc << kinc;
 
    smin     -= sinc;
@@ -1595,16 +1267,6 @@ DbgLv(1) << "SL:  adj sinc kinc" << sinc << kinc;
    kmax     += kinc;
 DbgLv(1) << "SL: adj smin,max" << smin << smax
  << "kmin,max" << kmin << kmax;
-
-   ct_plxmin->setRange( smin, smax );
-   ct_plxmax->setRange( smin, smax );
-   ct_plxmin->setSingleStep( sinc / 10.0 );
-   ct_plxmax->setSingleStep( sinc / 10.0 );
-
-   ct_plymin->setRange( kmin, kmax );
-   ct_plymax->setRange( kmin, kmax );
-   ct_plymin->setSingleStep( kinc / 10.0 );
-   ct_plymax->setSingleStep( kinc / 10.0 );
 
    sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
    kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
@@ -1633,23 +1295,46 @@ DbgLv(1) << "SL: aut min,inc" << smax << sinc << kmax << kinc;
 DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
  << "kmin,max,inc" << kmin << kmax << kinc;
 
-   ct_plxmin->setValue( smin );
-   ct_plxmax->setValue( smax );
-   ct_plymin->setValue( kmin );
-   ct_plymax->setValue( kmax );
+   plxmin = smin;
+   plxmax = smax;
+   plymin = kmin;
+   plymax = kmax;
+   if ( ck_manlim->isChecked() )
+   {
+      if ( manual_limits.contains( limit_key) )
+      {
+         auto vec = manual_limits.value( limit_key );
+         plxmin = vec.at( 0 );
+         plxmax = vec.at( 1 );
+         plymin = vec.at( 2 );
+         plymax = vec.at( 3 );
+      } else
+      {
+         QVector< double > vec;
+         vec << plxmin << plxmax << plymin << plymax;
+         manual_limits.insert( limit_key, vec );
+      }
+      le_plxmin->setReadOnly( false );
+      le_plxmax->setReadOnly( false );
+      le_plymin->setReadOnly( false );
+      le_plymax->setReadOnly( false );
+   }
+   else
+   {
+      le_plxmin->setReadOnly( true );
+      le_plxmax->setReadOnly( true );
+      le_plymin->setReadOnly( true );
+      le_plymax->setReadOnly( true );
+   }
 
-   plxmin      = smin;
-   plxmax      = smax;
-   plymin      = kmin;
-   plymax      = kmax;
+   le_plxmin->setText( QString::number( plxmin ) );
+   le_plxmax->setText( QString::number( plxmax ) );
+   le_plymin->setText( QString::number( plymin ) );
+   le_plymax->setText( QString::number( plymax ) );
 
    // Set bucket width,height values
-   //wxbuck       = ( plxmax - plxmin ) / 20.0;
-   //hybuck       = ( plymax - plymin ) / 20.0;
-   wxbuck       = ( plxmax - plxmin ) * 0.1;
-   hybuck       = ( plymax - plymin ) * 0.2;
-   ct_wxbuck->disconnect( );
-   ct_hybuck->disconnect( );
+   double wxbuck       = ( smax - smin ) * 0.1;
+   double hybuck       = ( kmax - kmin ) * 0.2;
    int    spwr  = qRound( log10( wxbuck ) );
    int    kpwr  = qRound( log10( hybuck ) );
    smax         = pow( 10.0, spwr + 3 );
@@ -1664,10 +1349,6 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    ct_hybuck->setRange( 0.0, kmax );
    ct_hybuck->setSingleStep( kinc );
    ct_hybuck->setValue( hybuck );
-   connect( ct_wxbuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_wxbuck );
-   connect( ct_hybuck, &QwtCounter::valueChanged,
-            this,      &US_GA_Initialize::update_hybuck );
 
    // Update help and status text
    QString hmsg = tr(
@@ -1680,13 +1361,13 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
       " You can select each solute bin from the listbox on the left and"
       " modify its size by first changing the bucket dimensions with the"
       " respective counters, then double-click on the listbox item."
-      " You may remove a bin by right-mouse-button clicking on the listbox"
-      " item and responding/defaulting Yes in the resulting dialog." );
+      " You may remove a bin by selecting it in the listbox, pressing Delete,"
+      " and confirming Yes in the resulting dialog." );
 
    if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
    {
-      hmsg         = hmsg + tr( "\n\nNO SAVE ENABLED:  None of X "
-                                "or Y or the fixed-attribute is VBAR." );
+      hmsg         = hmsg + tr( "\n\nOnly statistics will be saved: none of X, Y, "
+                                "or the fixed attribute is VBAR." );
    }
 
    if ( monte_carlo )
@@ -1699,9 +1380,8 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
 
 DbgLv(1) << "SL: autoassn xmin,xmax,ymin,ymax" << plxmin << plxmax
  << plymin << plymax;
-   pb_autassb->setEnabled( !monte_carlo );
 
-   int kisols   = sdistro->size();
+   int kisols   = xy_distro.size();
    stnpline     = tr( "The number of distribution points is %1." )
                   .arg( kisols );
    te_status->setText( stcmline + "\n" + stdiline + "\n"
@@ -1789,359 +1469,143 @@ void US_GA_Initialize::setBucketPens()
    return;
 }
 
-// highlight solute bin rectangle in red; previous in yellow or blue
-void US_GA_Initialize::highlight_solute( QwtPlotCurve* bc1 )
+// find bucket curve by solute index, then highlight
+void US_GA_Initialize::highlight_bucket( int sx )
 {
-   if ( bc1 == NULL )
+   for ( int ii = 0; ii < bucket_curves.size(); ii++ )
+   {
+      if ( ii == sx )
+      {
+         bucket_curves[ ii ]->setPen( cbukpen );
+      }
+      else
+      {
+         bucket_curves[ ii ]->setPen( pbukpen );
+      }
+   }
+   // if ( sx >= 0 && sx < soludata->bucketsCount() && ( monte_carlo || manbuks ) )
+   // {
+   //    const QRectF rect = soludata->bucketRect( sx );
+   //    ct_wxbuck->setValue( rect.width() );
+   //    ct_hybuck->setValue( rect.height() );
+   // }
+   data_plot->replot();
+}
+
+// Select the first bin containing the clicked plot coordinates.
+void US_GA_Initialize::selectBinAtPoint( const QPointF& point )
+{
+   if ( pb_mandrsb->isChecked() )
       return;
 
-   if ( nibuks > 0  &&  pc1 != NULL )
-   {  // re-color previous bucket yellow or blue
-      pc1->setPen( pbukpen );
-   }
-
-   // current bucket borders drawn in red
-   bc1->setPen( cbukpen );
-
-   pc1       = bc1;         // save previous bucket curve
-   return;
-}
-
-// find bucket curve by solute index, then highlight
-void US_GA_Initialize::highlight_solute( int sx )
-{
-   highlight_solute( bucketCurveAt( sx ) );
-   return;
-}
-
-// mouse down:  save of first point
-void US_GA_Initialize::getMouseDown( const QPointF& p )
-{
-   p1     = p;              // save the first rubberband point
-}
-
-// mouse up:  draw bucket rectangle
-void US_GA_Initialize::getMouseUp( const QPointF& p )
-{
-   double        tx[2];
-   double        ty[2];
-   QwtPlotCurve* bc1;
-
-   p2     = p;              // save the second rubberband point
-
-   // draw the bucket rectangle
-   bc1    = drawBucketRect( nibuks, p1, p2 );
-
-   // highlight it (and turn off highlight for previous)
-   highlight_solute( bc1 );
-
-   data_plot->replot();
-
-   // construct and save a bucket entry
-   tx[0]  = p1.x();         // upper,left and lower,right points
-   ty[0]  = p1.y();
-   tx[1]  = p2.x();
-   ty[1]  = p2.y();
-
-   if ( tx[0] > tx[1] )     // insure properly ordered
+   for ( int row = 0; row < soludata->bucketsCount(); ++row )
    {
-      tx[0]  = p2.x();
-      tx[1]  = p1.x();
+      if ( soludata->bucketRect( row ).normalized().contains( point ) )
+      {
+         lw_buckets->setCurrentRow( row );
+         lw_buckets->scrollToItem( lw_buckets->item( row ) );
+         lw_buckets->setFocus( Qt::OtherFocusReason );
+         return;
+      }
    }
+}
 
-   if ( ty[0] > ty[1] )
-   {
-      ty[0]  = p2.y();
-      ty[1]  = p1.y();
-   }
+// Store a completed rectangle selection as a solute bin.
+void US_GA_Initialize::addSelectedBin( const QRectF& selection )
+{
+   if ( !pb_mandrsb->isChecked() || sk_distro.isEmpty() )
+      return;
 
-   // create bucket rectangle, solute point, and concentration value
-   QRectF bucr( QPointF( tx[0], ty[1] ), QPointF( tx[1], ty[0] ) );
-   QPointF tpt( ( tx[0] + tx[1] ) / 2.0, ( ty[0] + ty[1] ) / 2.0 );
-   QPointF& bucp = tpt;
+   const QRectF selected = selection.normalized();
+   if ( selected.width() <= 0.0 || selected.height() <= 0.0 )
+      return;
+
+   // Bucket storage expects the numerically larger Y coordinate first.
+   const QRectF bucr( QPointF( selected.left(), selected.bottom() ),
+                      QPointF( selected.right(), selected.top() ) );
+   QPointF bucp = selected.center();
    int sx        = soludata->findNearestPoint( bucp );
 
    if ( sx >= 0 )
    {  // for solute point nearest to rectangle midpoint
-      S_Solute sol  = sdistro->at( sx );
+      S_Solute sol  = xy_distro.at( sx );
       qreal bucc    = sol.c;  // get concentrate value
 
       // add the bucket entry and add a text box entry
-      soludata->appendBucket( bucr, bucp, bucc, 2 );
-
-      QString txt = soludata->bucketLine( -3 );
-      lw_sbin_data->addItem( txt );
-   }
-
-   // bump solute bins count
-   nibuks++;
-   ct_nisols->setValue( (double)nibuks );
-
-   pb_save   ->setEnabled( attr_x == ATTR_V  ||
-                           attr_y == ATTR_V  ||
-                           attr_z == ATTR_V );
-   pb_view   ->setEnabled( true );
-   pb_ckovrlp->setEnabled( nibuks > 1 );
-   is_saved = false;
-}
-
-// draw a bucket rectangle by index and top-left,bottom-right points
-QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx,
-      QPointF pt1, QPointF pt2 )
-{
-   double        tx[5];
-   double        ty[5];
-   QwtPlotCurve* bc1;
-
-   tx[0]  = pt1.x();        // set 5 points needed to draw rectangle
-   ty[0]  = pt1.y();
-   tx[1]  = pt2.x();
-   ty[1]  = pt1.y();
-   tx[2]  = pt2.x();
-   ty[2]  = pt2.y();
-   tx[3]  = pt1.x();
-   ty[3]  = pt2.y();
-   tx[4]  = pt1.x();
-   ty[4]  = pt1.y();
-
-   // create the bucket rectangle curve
-   bc1    = us_curve( data_plot, QString( "bucket border %1" ).arg( sx ) );
-   bc1->setPen(   pbukpen );
-   bc1->setStyle( QwtPlotCurve::Lines );
-   bc1->setSamples(  tx, ty, 5 );
-
-   return bc1;
-}
-
-// draw a bucket rectangle by index and rectangle
-QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx, QRectF rect )
-{
-   return drawBucketRect( sx, rect.topLeft(), rect.bottomRight() );
-}
-
-// solute bin list row selected by arrow key
-void US_GA_Initialize::newrow_sbdata( int /*row*/ )
-{
-   sclick_sbdata( lw_sbin_data->currentIndex() );
-}
-
-// solute bin list row clicked: highlight bucket
-void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
-{
-   sclick_sbdata( mx.row() );
-}
-
-// solute bin list row clicked: highlight bucket
-void US_GA_Initialize::sclick_sbdata( const int mrow )
-{
-   int sx      = mrow;
-   bool global = monte_carlo || manbuks;
-   bool rtbtn  = ( QApplication::mouseButtons() == Qt::RightButton );
-DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
-
-   highlight_solute( sx );
-   data_plot->replot();
-
-   if ( rtbtn )
-   {  // Handle right-mouse-button click:  delete bin
-      lw_sbin_data->disconnect();
-      int binx    = sx + 1;
-      QMessageBox msgBox;
-      QString msg = tr( "Are you sure you want to delete solute bin %1 ?" )
-         .arg( binx );
-      msgBox.setWindowTitle( tr( "GA_Init Solute Bin Delete" ) );
-      msgBox.setText( msg );
-      msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
-      msgBox.setDefaultButton( QMessageBox::Yes );
-      if ( msgBox.exec() == QMessageBox::Yes )
+      bucket candidate = soludata->createBucket( bucr, bucp, bucc, 2 );
+      const QRectF region( QPointF( candidate.x_min, candidate.y_min ),
+                           QPointF( candidate.x_max, candidate.y_max ) );
+      for ( int ii = 0; ii < soludata->bucketsCount(); ++ii )
       {
-         removeSoluteBin( sx );
+         if ( soludata->bucketRect( ii ).normalized().intersects( region.normalized() ) )
+         {
+            QMessageBox::warning( this, "Warning!", "The selected bin overlaps an existing bin." );
+            return;
+         }
       }
-      connect( lw_sbin_data, &QAbstractItemView::pressed,
-               this,         qOverload< const QModelIndex& >( &US_GA_Initialize::sclick_sbdata ) );
-      connect( lw_sbin_data, &QAbstractItemView::doubleClicked,
-               this,         &US_GA_Initialize::dclick_sbdata );
-      connect( lw_sbin_data, &QListWidget::currentRowChanged,
-               this,         &US_GA_Initialize::newrow_sbdata );
-
-      int rx      = qMin( sx, ( nibuks - 1 ) );
-      if ( rx >= 0 )
-      {
-         lw_sbin_data->setCurrentRow( rx );
-         highlight_solute( rx );
-         data_plot->replot();
-         sx          = rx;
-      }
+      soludata->appendBucket( candidate );
    }
 
-   else if ( global  &&  sx != sxset )
+   if ( sx < 0 )
+      return;
+   manbuks = true;
+   fill_lw_bins();
+   plot_buckets();
+   if (lw_buckets->count() > 0)
    {
-      QRectF rect = soludata->bucketRect( sx );
-      ct_wxbuck->setValue( rect.width() );
-      ct_hybuck->setValue( rect.height() );
+      lw_buckets->setCurrentRow(lw_buckets->count() - 1);
    }
-   sxset       = sx;
+   manbuks  = true;
+   pb_view->setEnabled( false );
 }
 
-// solute bin list row double-clicked:  change bucket values
-void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
+// Delete the current bin when Delete is pressed in the bucket list.
+void US_GA_Initialize::deleteSelectedBin()
 {
-   int sx      = mx.row();
-   bool global = monte_carlo || manbuks;
-   QwtPlotCurve* bc1;
-   QPointF pt0;
+   const int row = lw_buckets->currentRow();
+   if ( row < 0 || row >= soludata->bucketsCount() )
+      return;
 
-   if ( !global )
-   {
-      pt0         = soludata->bucketPoint( sx, false );
-   }
-   else
-   {
-      QRectF rect = soludata->bucketRect( sx );
-      QPointF ptl = rect.topLeft();
-      QPointF pbr = rect.bottomRight();
-      pt0         = QPointF( ( ptl.x() + pbr.x() ) / 2.0, 
-                             ( ptl.y() + pbr.y() ) / 2.0 );
-   }
-   sxset       = sx;
-   qreal x1    = pt0.x() - wxbuck / 2.0;
-   qreal y1    = pt0.y() + hybuck / 2.0;
-   qreal x2    = pt0.x() + wxbuck / 2.0;
-   qreal y2    = pt0.y() - hybuck / 2.0;
-   QPointF pt1( x1, y1 );
-   QPointF pt2( x2, y2 );
-   QRectF  brect( pt1, pt2 );
+   const QString msg = tr( "Are you sure you want to delete solute bin %1 ?" ).arg( row + 1 );
+   int ret = QMessageBox::question( this, tr( "GA_Init Solute Bin Delete" ), msg,
+                                    QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes );
+   
+   if ( ret != QMessageBox::Yes )
+      return;
 
-   pc1->detach();                  // erase old rectangle for this bucket
-
-   changeBucketRect( sx, brect );  // change bucket rectangle
-
-   bc1         = drawBucketRect( sx, pt1, pt2 );  // draw a new rectangle
-
-   pc1         = bc1;              // save previous bucket curve
-
-   data_plot->replot();
-
-   return;
+   soludata->removeBucketAt( row );
+   pb_view->setEnabled( false );
+   fill_lw_bins();
+   plot_buckets();
+   lw_buckets->setCurrentRow( qMin( row, lw_buckets->count() - 1 ) );
 }
 
 // change the rectangle (vertices) for a bucket
 void US_GA_Initialize::changeBucketRect( int sx, QRectF& rect )
 {
-   bucket abuck  = soludata->bucketAt( sx );
+   if ( sx < 0 || sx >= soludata->bucketsCount() )
+      return;
 
    QPointF bpnt  = soludata->bucketPoint( sx, true );
    qreal bconc   = soludata->bucketAt( sx ).conc;
    int bstat     = 0;
 
+   bucket candidate = soludata->createBucket( rect, bpnt, bconc, bstat );
+   const QRectF region( QPointF( candidate.x_min, candidate.y_min ),
+                        QPointF( candidate.x_max, candidate.y_max ) );
+   for ( int ii = 0; ii < soludata->bucketsCount(); ++ii )
+   {
+      if ( ii != sx && soludata->bucketRect( ii ).normalized().intersects( region.normalized() ) )
+      {
+         QMessageBox::warning( this, "Warning!", "The resized bin overlaps an existing bin." );
+         return;
+      }
+   }
    soludata->setBucket( sx, rect, bpnt, bconc, bstat );
+   pb_view->setEnabled( false );
 
    QString line  = soludata->bucketLine( sx );
-   lw_sbin_data->item( sx )->setText( line );
-
-   return;
-}
-
-// find the plot curve in the list of curves
-QwtPlotCurve* US_GA_Initialize::bucketCurveAt( int sx )
-{
-   // get title of desired bucket curve and list of all items
-   QString ctext         = QString( "bucket border %1" ).arg( sx );
-   QwtPlotItemList ilist = data_plot->itemList();
-
-   for ( int jj = 0; jj < ilist.size(); jj++ )
-   {  // test each item for Curve type and matching title
-      QwtPlotCurve* bc1 = (QwtPlotCurve*)ilist.at( jj );
-
-      if ( bc1->rtti() == QwtPlotItem::Rtti_PlotCurve )
-      {  // right type,  so check title
-         QString itext = bc1->title().text();
-
-         if ( itext.compare( ctext ) == 0 )
-         {  // this is the one we want, return a pointer to the curve
-            return bc1;
-         }
-      }
-   }
-
-   return (QwtPlotCurve*)NULL;
-}
-
-// erase all bucket curves (option to completely delete )
-void US_GA_Initialize::erase_buckets( bool delflag )
-{
-
-   for ( int jj = 0; jj < nibuks; jj++ )
-   {
-      QwtPlotCurve* bc1 = bucketCurveAt( jj );
-      if ( bc1 != NULL )
-      {
-         bc1->detach();
-
-         if ( delflag )
-            delete bc1;
-      }
-   }
-   nibuks   = 0;
-
-   data_plot->replot();
-
-   return;
-}
-// erase all bucket curves (from plot only)
-void US_GA_Initialize::erase_buckets( )
-{
-   erase_buckets( false );
-   return;
-}
-
-// Remove a solute bin from data, plot, and list
-void US_GA_Initialize::removeSoluteBin( int sx )
-{
-   // Remove the solute bin
-   int bsize = soludata->bucketsCount();
-   soludata->removeBucketAt( sx );
-   nibuks    = bsize - 1;
-
-   // Reset the buckets plot and list
-   resetPlotAndList( sx );
-}
-
-// Reset the buckets plot and list after bucket remove or sort
-void US_GA_Initialize::resetPlotAndList( int hlx )
-{
-   // Replace the List Widget contents and redraw bin rectangles
-   int kibuks  = soludata->bucketsCount();
-   lw_sbin_data->clear();
-   erase_buckets( );
-DbgLv(1) << "rPAL:kibuks nibuks" << kibuks << nibuks;
-   nibuks      = kibuks;
-   ct_nisols->setValue( (double)nibuks );
-
-   for ( int jj = 0; jj < nibuks; jj++ )
-   {  // Draw the auto-assigned buckets and add lines to list widget
-      QRectF        rect = soludata->bucketRect( jj );
-      QwtPlotCurve* bc1  = drawBucketRect( jj, rect );
-      bc1->attach( data_plot );
-
-      lw_sbin_data->addItem( soludata->bucketLine( jj ) );
-DbgLv(1) << "rPAL:  " << soludata->bucketLine(jj);
-   }
-
-   // Highlight a specified next bucket
-   hlx       = ( hlx >= 0  &&  hlx < nibuks ) ? hlx : ( nibuks - 1 );
-DbgLv(1) << "rPAL: hlx" << hlx;
-   if ( hlx >= 0 )
-   {
-DbgLv(1) << "rPAL:  set-row" << hlx << nibuks << lw_sbin_data->count();
-      lw_sbin_data->setCurrentRow( hlx );
-DbgLv(1) << "rPAL:  highlight sol";
-      highlight_solute( hlx );
-   }
-
-DbgLv(1) << "rPAL:  replot sol";
-   data_plot->replot();
-   qApp->processEvents();
+   lw_buckets->item( sx )->setText( line );
 
    return;
 }
@@ -2186,11 +1650,17 @@ void US_GA_Initialize::select_prefilt( void )
 
 DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilt->setText( pfmsg );
+
+   load_distro();
 }
 
 // View the statistics file produced in a file editor
 void US_GA_Initialize::view( )
 {
+   if ( sk_distro.isEmpty() || !pb_view->isEnabled() ) {
+      return;
+   }
+
 DbgLv(1) << "VIEW";
    QString runid = run_name.section( ".",  0, -2 );
    if ( runid.startsWith( "Global-" ) )
@@ -2200,13 +1670,6 @@ DbgLv(1) << "VIEW";
    QString fnsta = "gainit." + trpid + ".sol_integ.stats";
    QString fname = fdir + "/" + fnsta;
 DbgLv(1) << "VIEW fname" << fname;
-
-   if ( ! is_saved )
-   {  // No save was done, so generate report file
-      soludata->buildDataMC();                     // build it
-      soludata->reportDataMC( fname, mc_iters );   // report it
-      is_saved      = true;
-   }
 
    QFile filei( fname );
    if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -2229,23 +1692,14 @@ DbgLv(1) << "VIEW eddiag SHOW";
    else
    {
 DbgLv(1) << "VIEW OPEN ERROR" << fname;
+      pb_view->setEnabled( false );
       QMessageBox::critical( this, tr( "File Read Error" ),
          tr( "Unable to open file\n\"%1\"\nfor read" ).arg( fname ) );
    }
 }
 
-// Select the coordinate for the horizontal axis
-void US_GA_Initialize::select_x_axis( int ival )
+void US_GA_Initialize::select_manlim()
 {
-   attr_x = ival;
-   rb_y_s   ->setEnabled( attr_x != ATTR_S );
-   rb_y_ff0 ->setEnabled( attr_x != ATTR_K );
-   rb_y_mw  ->setEnabled( attr_x != ATTR_W );
-   rb_y_vbar->setEnabled( attr_x != ATTR_V );
-   rb_y_D   ->setEnabled( attr_x != ATTR_D );
-   rb_y_f   ->setEnabled( attr_x != ATTR_F );
-   rb_y_rh  ->setEnabled( attr_x != ATTR_R );
-
    if ( sk_distro.empty() )
    {
       return;
@@ -2256,17 +1710,21 @@ void US_GA_Initialize::select_x_axis( int ival )
    replot_data();
 }
 
-// Select the coordinate for the vertical axis
-void US_GA_Initialize::select_y_axis( int ival )
+// Select the coordinate for the horizontal axis
+void US_GA_Initialize::select_x_axis( int ival )
 {
-   attr_y = ival;
-   rb_x_s   ->setEnabled( attr_y != ATTR_S );
-   rb_x_ff0 ->setEnabled( attr_y != ATTR_K );
-   rb_x_mw  ->setEnabled( attr_y != ATTR_W );
-   rb_x_vbar->setEnabled( attr_y != ATTR_V );
-   rb_x_D   ->setEnabled( attr_y != ATTR_D );
-   rb_x_f   ->setEnabled( attr_y != ATTR_F );
-   rb_x_rh  ->setEnabled( attr_y != ATTR_R );
+   pb_view->setEnabled( false );
+   attr_x = ival;
+   rb_y_s   ->setEnabled( attr_x != ATTR_S );
+   rb_y_ff0 ->setEnabled( attr_x != ATTR_K );
+   rb_y_mw  ->setEnabled( attr_x != ATTR_W );
+   rb_y_vbar->setEnabled( attr_x != ATTR_V );
+   rb_y_D   ->setEnabled( attr_x != ATTR_D );
+   rb_y_rh  ->setEnabled( attr_x != ATTR_R );
+   update_plot_labels();
+   QString label_x = anno_label( attr_x );
+   QString label_y = anno_label( attr_y );
+   limit_key = QString( "%1-%2" ).arg( label_x ).arg( label_y );
 
    if ( sk_distro.empty() )
    {
@@ -2274,6 +1732,34 @@ void US_GA_Initialize::select_y_axis( int ival )
    }
 
    build_xy_distro();
+   resetSb();
+   set_limits();
+   replot_data();
+}
+
+// Select the coordinate for the vertical axis
+void US_GA_Initialize::select_y_axis( int ival )
+{
+   pb_view->setEnabled( false );
+   attr_y = ival;
+   rb_x_s   ->setEnabled( attr_y != ATTR_S );
+   rb_x_ff0 ->setEnabled( attr_y != ATTR_K );
+   rb_x_mw  ->setEnabled( attr_y != ATTR_W );
+   rb_x_vbar->setEnabled( attr_y != ATTR_V );
+   rb_x_D   ->setEnabled( attr_y != ATTR_D );
+   rb_x_rh  ->setEnabled( attr_y != ATTR_R );
+   update_plot_labels();
+   QString label_x = anno_label( attr_x );
+   QString label_y = anno_label( attr_y );
+   limit_key = QString( "%1-%2" ).arg( label_x ).arg( label_y );
+
+   if ( sk_distro.empty() )
+   {
+      return;
+   }
+
+   build_xy_distro();
+   resetSb();
    set_limits();
    replot_data();
 }
@@ -2297,14 +1783,12 @@ void US_GA_Initialize::build_xy_distro()
       sol_xy.s  = ( attr_x == ATTR_W ) ? sol_sk.w : sol_xy.s;
       sol_xy.s  = ( attr_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
       sol_xy.s  = ( attr_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
-      sol_xy.s  = ( attr_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
       sol_xy.s  = ( attr_x == ATTR_R ) ? sol_sk.r : sol_xy.s;
       sol_xy.k  = ( attr_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
       sol_xy.k  = ( attr_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
       sol_xy.k  = ( attr_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
       sol_xy.k  = ( attr_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
       sol_xy.k  = ( attr_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
-      sol_xy.k  = ( attr_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
       sol_xy.k  = ( attr_y == ATTR_R ) ? sol_sk.r : sol_xy.k;
 
       xy_distro << sol_xy;
@@ -2313,24 +1797,38 @@ void US_GA_Initialize::build_xy_distro()
    sort_distro( xy_distro, true );
 }
 
+void US_GA_Initialize::update_plot_labels()
+{
+   const QStringList labels = {"s", "f/f0", "MW", "Vbar", "D", "f", "Rh" };
+   QString xlabel = labels.at( attr_x );
+   QString ylabel = labels.at( attr_y );
+   lb_plxmin->setText( tr( "Min. %1: " ).arg( xlabel ) );
+   lb_plxmax->setText( tr( "Max. %1: " ).arg( xlabel ) );
+   lb_plymin->setText( tr( "Min. %1: " ).arg( ylabel ) );
+   lb_plymax->setText( tr( "Max. %1: " ).arg( ylabel ) );
+   lb_wxbuck->setText( tr( "Width of "   ) + xlabel + tr( " Bucket:"  ) );
+   lb_hybuck->setText( tr( "Height of "  ) + ylabel + tr( " Bucket:"  ) );
+   xa_title = anno_title( attr_x );
+   ya_title = anno_title( attr_y );
+   data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
+   data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+}
+
 // Set annotation title for a plot index
 QString US_GA_Initialize::anno_title( int pltndx )
 {
    QString a_title;
 
    if      ( pltndx == ATTR_S )
-      a_title  = tr( "Sedimentation Coefficient (1e-13)"
-                     " for water at 20" ) + DEGC;
+      a_title  = tr( "Sedimentation Coefficient (Sv)" );
    else if ( pltndx == ATTR_K )
       a_title  = tr( "Frictional Ratio f/f0" );
    else if ( pltndx == ATTR_W )
-      a_title  = tr( "Molecular Weight (Dalton)" );
+      a_title  = tr( "Molecular Weight (Da)" );
    else if ( pltndx == ATTR_V )
-      a_title  = tr( "Vbar at 20" ) + DEGC;
+      a_title  = tr( "Vbar (ml / g)" );
    else if ( pltndx == ATTR_D )
-      a_title  = tr( "Diffusion Coefficient" );
-   else if ( pltndx == ATTR_F )
-      a_title  = tr( "Frictional Coefficient" );
+      a_title  = tr( "Diffusion Coefficient (cm^2 / s)" );
    else if ( pltndx == ATTR_R )
       a_title  = tr( "Hydrodynamic Radius (nm)" );
 
@@ -2359,9 +1857,6 @@ QString US_GA_Initialize::anno_label( int id )
    case ATTR_D:
       title = "D";
       break;
-   case ATTR_F:
-      title = "f";
-      break;
    case ATTR_R:
       title = "Rh";
       break;
@@ -2372,8 +1867,10 @@ QString US_GA_Initialize::anno_label( int id )
 // Load bins from a saved gadistro file
 void US_GA_Initialize::load_bins( void )
 {
-   int hlx        = 0;
-   pc1            = NULL;
+   if ( sk_distro.isEmpty() ) {
+      return;
+   }
+
 DbgLv(1) << "gain: load_bins()";
 
    // Get a distro file
@@ -2390,7 +1887,12 @@ DbgLv(1) << "gain: load_bins()";
    // Load the solute bins and plot them
    binfpath       = QString( fname ).section( "/", 0, -2 );
    int xparam, yparam, zparam;
-   soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
+   US_SoluteData sdata;
+   if ( !sdata.loadGAdata( fname, &xparam, &yparam, &zparam ) )
+   {
+      QMessageBox::warning( this, "Warning!", "Wrong file format!" );
+      return;
+   }
 DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
  << fname << attr_x << attr_y << attr_z;
    if ( xparam == attr_x && yparam == attr_y )
@@ -2408,16 +1910,13 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
       return;
    }
 
+   resetSb();
+   manbuks  = true;
+   pb_view->setEnabled( false );
+   soludata->loadGAdata( fname, &xparam, &yparam, &zparam );
    soludata->sortBuckets();
-   resetPlotAndList( hlx );
-
-   is_saved       = false;
-   nibuks         = soludata->bucketsCount();
-   pb_save   ->setEnabled( attr_x == ATTR_V  ||
-                           attr_y == ATTR_V  ||
-                           attr_z == ATTR_V );
-   pb_view   ->setEnabled( true );
-   pb_ckovrlp->setEnabled( nibuks > 1 );
+   fill_lw_bins();
+   plot_buckets();
 }
 
 // Make a ColorMap copy and return a pointer to the new ColorMap
