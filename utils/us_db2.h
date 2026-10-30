@@ -324,9 +324,10 @@ public:
 
     /*! \brief Composes a stored-procedure invocation from its arguments
 
-        The credentials are always passed as the first two procedure arguments.
-        Single quotes in any argument are escaped.  This is pure text assembly
-        with no connection involved, which is why it is testable on its own.
+        The guid and password are passed as the first two procedure
+        arguments.  Every argument, the credentials included, has its
+        backslashes and single quotes escaped, so callers pass values raw.
+        No connection is involved.
 
         \param keyword    The leading SQL keyword, "CALL" or "SELECT"
 
@@ -337,13 +338,14 @@ public:
         \param password   The user password, passed as the second argument
 
         \return The composed query, or an empty string if arguments is empty
+                or the procedure name is not a plain identifier
     */
-    static QString composeQuery( const QString&     keyword,
-                                 const QStringList& arguments,
-                                 const QString&     guid,
-                                 const QString&     password );
+    static QString               composeQuery( const QString&     keyword,
+                                               const QStringList& arguments,
+                                               const QString&     guid,
+                                               const QString&     password );
 
-private:
+ private:
     bool       connected;
     bool       inTransaction        = false;
     //! A deadlock in the open transaction, after which the server rolled it back.
