@@ -9,8 +9,8 @@
 
 #include "us3_dev_license.h"
 #include "us_convert.h"
+#include "us_convertio.h"
 #include "us_dataIO.h"
-#include "us_experiment.h"
 #include "us_hardware.h"
 #include "us_sim_cli.h"
 #include "us_util.h"
@@ -438,41 +438,34 @@ class US_AstfemSimPersistTest : public QObject
          QCOMPARE( projectGUIDs[0], projectGUIDs[1] );
       }
 
-      void aSavedSpeedRunLoadsThroughTheDiskReaderChain()
+      void aSavedSpeedRunLoadsThroughTheDiskReader()
       {
-         // The one archive-shape integration case: a real simulator run driven
-         // through the same reader sequence US_ConvertGui::loadUS3Disk() uses, so
-         // the unit characterizations elsewhere are anchored to output the
-         // production writers actually produce.
+         // The one archive-shape integration case: a real simulator run read
+         // by US_ConvertIO::readDiskRun(), the reader US_ConvertGui::
+         // loadUS3Disk() uses, so the unit characterizations elsewhere are
+         // anchored to output the production writers actually produce.
          for ( int rpm : { 40000, 50000 } )
          {
-            const QString                 runID = speedRunID( rpm );
-            const QString                 dir   = speedDir( rpm ) + "/";
+            const QString         runID = speedRunID( rpm );
+            US_ConvertIO::DiskRun run;
+            QString               error;
 
-            QVector<US_DataIO::RawData>   allData;
-            QList<US_Convert::TripleInfo> triples;
-            QString                       runType;
+            QCOMPARE( US_ConvertIO::readDiskRun( speedDir( rpm ), run, error ), (int) US_Convert::OK );
+            QVERIFY2( error.isEmpty(), qPrintable( error ) );
 
-            QCOMPARE( US_Convert::readUS3Disk( dir, allData, triples, runType ), (int) US_Convert::OK );
-            QCOMPARE( runType, QString( "RA" ) );
-            QCOMPARE( allData.size(), 1 );
-            QCOMPARE( triples.size(), 1 );
-            QCOMPARE( triples[0].tripleDesc, QString( "1 / S / 123" ) );
-
-            US_Experiment experiment;
-            experiment.clear();
-            QCOMPARE( experiment.readFromDisk( triples, runType, runID, dir ), (int) US_Convert::OK );
-
-            QCOMPARE( experiment.runID, runID );
+            QCOMPARE( run.runID, runID );
+            QCOMPARE( run.runType, QString( "RA" ) );
+            QCOMPARE( run.rawData.size(), 1 );
+            QCOMPARE( run.triples.size(), 1 );
+            QCOMPARE( run.triples[0].tripleDesc, QString( "1 / S / 123" ) );
+            QCOMPARE( run.experiment.runID, runID );
 
             // The experiment filled in what the filename scan left empty.
-            QCOMPARE( triples[0].tripleFilename, aucName( rpm ) );
-            QCOMPARE( US_Util::uuid_unparse( (unsigned char*) triples[0].tripleGUID ),
-                      US_Util::uuid_unparse( (unsigned char*) allData[0].rawGUID ) );
+            QCOMPARE( run.triples[0].tripleFilename, aucName( rpm ) );
 
             // A generated run names both records it depends on.
-            QVERIFY( !experiment.project.projectGUID.isEmpty() );
-            QVERIFY( !triples[0].solution.solutionGUID.isEmpty() );
+            QVERIFY( !run.experiment.project.projectGUID.isEmpty() );
+            QVERIFY( !run.triples[0].solution.solutionGUID.isEmpty() );
          }
       }
 };

@@ -154,7 +154,7 @@ TEST_F( ReadDiskRunTest, RefusesADirectoryNameThatCannotBeARunId )
    const QString bad = parentDir() + "/not a run id/";
    ASSERT_TRUE( QDir().mkpath( bad ) );
 
-   EXPECT_EQ( US_ConvertIO::readDiskRun( bad, run, error ), US_Convert::INVALID_RUN );
+   EXPECT_EQ( US_ConvertIO::readDiskRun( bad, run, error ), US_Convert::BAD_RUNID );
    EXPECT_EQ( error, QString( US_ConvertIO::invalidRunIdMessage ).arg( "not a run id" ) );
 }
 
@@ -339,8 +339,13 @@ TEST_F( ReadDiskRunTest, DoesNotRequireEditsOrChemistryRecords )
    const DiskRun fixture = us3test::writeDiskRun( parentDir(), "bare-run", "RA", { DatasetSpec{ 1, 'A', "280" } } );
    ASSERT_FALSE( fixture.dir.isEmpty() );
 
-   EXPECT_TRUE(
-      QDir( fixture.dir ).entryList( { "*.xml" }, QDir::Files ).filter( QRegularExpression( "\\\\.\\\\d{10}\\\\." ) ).isEmpty() );
+   // Edit XML is named runID.editLabel.runType.cell.channel.wavelength.xml,
+   // and an edit label starts with a ten-digit yyMMddhhmm timestamp.
+   const QRegularExpression editFile( R"(\.\d{10}[^.]*\.)" );
+   ASSERT_TRUE( editFile.match( "bare-run.25103012340.RA.1.A.280.xml" ).hasMatch() );
+   ASSERT_FALSE( editFile.match( "bare-run.RA.xml" ).hasMatch() );
+
+   EXPECT_TRUE( QDir( fixture.dir ).entryList( { "*.xml" }, QDir::Files ).filter( editFile ).isEmpty() );
 
    EXPECT_EQ( read( fixture ), US_Convert::OK );
 }

@@ -10,6 +10,7 @@
 
 #include "ius_db2.h"
 #include "us_convert.h"
+#include "us_convertio.h"
 #include "us_experiment.h"
 #include "us_project.h"
 #include "us_simparms.h"
@@ -234,13 +235,8 @@ TEST_F( DiskRunRecordsTest, ReportsNoSolutionForAGuidWithNoRecord )
    EXPECT_EQ( solution.readFromDisk( absent ), (int) IUS_DB2::NO_SOLUTION );
 }
 
-TEST_F( DiskRunRecordsTest, TheGuiCarriesThePrecedingSolutionForwardOverAGap )
+TEST_F( DiskRunRecordsTest, FillsASolutionGapFromThePrecedingTriple )
 {
-   // US_ConvertGui::loadUS3Disk() walks the triples in order and, for a triple
-   // whose solution GUID is empty, substitutes the previous triple's -- but
-   // only when there is a previous one, so an empty GUID on the first triple
-   // stays empty.  The rule is reproduced here because it lives in the GUI
-   // loop rather than in a reader.
    const DiskRun run =
       us3test::writeDiskRun( parentDir(),
                              "solution-gap-run",
@@ -251,35 +247,36 @@ TEST_F( DiskRunRecordsTest, TheGuiCarriesThePrecedingSolutionForwardOverAGap )
    ASSERT_EQ( experiment.readFromDisk( triples, runType, run.runID, run.dir ), US_Convert::OK );
    ASSERT_EQ( triples.size(), 3 );
 
+   triples[1].solution.solutionGUID.clear();
+   triples[2].solution.solutionGUID.clear();
+
+   US_ConvertIO::fillSolutionGaps( triples );
+
+   EXPECT_EQ( triples[1].solution.solutionGUID.toStdString(), run.solutionGUID.toStdString() );
+   EXPECT_EQ( triples[2].solution.solutionGUID.toStdString(), run.solutionGUID.toStdString() );
+}
+
+TEST_F( DiskRunRecordsTest, LeavesLeadingSolutionGapsEmpty )
+{
+   // The case that crashed US_ConvertGui::loadUS3Disk(): the first triple has
+   // no solution GUID, so there is nothing to take one from.
+   const DiskRun run =
+      us3test::writeDiskRun( parentDir(),
+                             "leading-gap-run",
+                             "RA",
+                             { DatasetSpec{ 1, 'A', "280" }, DatasetSpec{ 1, 'A', "410" }, DatasetSpec{ 2, 'B', "280" } } );
+   ASSERT_FALSE( run.dir.isEmpty() );
+   ASSERT_EQ( readRaw( run ), US_Convert::OK );
+   ASSERT_EQ( experiment.readFromDisk( triples, runType, run.runID, run.dir ), US_Convert::OK );
+   ASSERT_EQ( triples.size(), 3 );
+
    triples[0].solution.solutionGUID.clear();
    triples[1].solution.solutionGUID.clear();
 
-   QString previous;
-
-   for ( int ii = 0; ii < triples.size(); ii++ )
-   {
-      QString current = triples[ii].solution.solutionGUID;
-
-      if ( current == previous )
-      {
-         continue;
-      }
-
-      if ( current.isEmpty() && ii > 0 )
-      {
-         current                           = previous;
-         triples[ii].solution.solutionGUID = current;
-      }
-
-      previous = current;
-   }
+   US_ConvertIO::fillSolutionGaps( triples );
 
    EXPECT_TRUE( triples[0].solution.solutionGUID.isEmpty() );
-
-   // Second triple: empty, and the first is empty too, so it stays empty.
    EXPECT_TRUE( triples[1].solution.solutionGUID.isEmpty() );
-
-   // Third triple names its own solution and is left alone.
    EXPECT_EQ( triples[2].solution.solutionGUID.toStdString(), run.solutionGUID.toStdString() );
 }
 

@@ -4150,12 +4150,9 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    int status = US_ConvertIO::readDiskRun( dir, diskRun, readError );
    QApplication::restoreOverrideCursor();
 
-   if ( status == US_Convert::INVALID_RUN && diskRun.rawData.isEmpty() )
-   { // The directory name cannot be a run ID, so nothing was read.
-      QMessageBox::warning( this,
-            tr( "Bad runID Name" ),
-            tr( "The runID name may consist only of alphanumeric\n"
-                "characters, the underscore, and the hyphen." ) );
+   if ( status == US_Convert::BAD_RUNID )
+   {
+      QMessageBox::warning( this, tr( "Bad runID Name" ), readError );
       return;
    }
 
@@ -4171,18 +4168,13 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 
    if ( status == US_Convert::NODATA )
    {
-      QMessageBox::warning( this,
-            tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"
-                "found in the specified directory." ) );
+      QMessageBox::warning( this, tr( "No Files Found" ), readError );
       return;
    }
 
    if ( status == US_Convert::NOAUC )
    {
-      QMessageBox::warning( this,
-         tr( "UltraScan Error" ),
-         tr( "Could not read data file.\n" ) );
+      QMessageBox::warning( this, tr( "UltraScan Error" ), readError );
       return;
    }
 
@@ -4191,24 +4183,9 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
    qApp->processEvents();
    ExpData = diskRun.experiment;
 
-   if ( status == US_Convert::CANTOPEN )
+   if ( status == US_Convert::CANTOPEN || status == US_Convert::BADXML )
    {
-      QString readFile = runID      + "."
-                       + runType    + ".xml";
-      QMessageBox::information( this,
-         tr( "Error" ),
-         tr( "US3 run data ok, but unable to assocate run with DB.\n " ) +
-         tr( "Cannot open read file: " ) + dir + readFile );
-   }
-
-   else if ( status == US_Convert::BADXML )
-   {
-      QString readFile = runID      + "."
-                       + runType    + ".xml";
-      QMessageBox::information( this,
-         tr( "Error" ),
-         tr( "US3 run data ok, but there is an error in association with DB.\n"
-             "Improper XML in read file: " ) + dir + readFile );
+      QMessageBox::information( this, tr( "Error" ), tr( "US3 run data ok, but unable to associate run with DB:\n" ) + readError );
    }
 
    else if ( status != US_Convert::OK )
@@ -4248,74 +4225,69 @@ DbgLv(1) << "CGui: ldUS3Dk: call prj-rDk";
    le_status->setText( tr( "Project and experiment are loaded." ) );
    qApp->processEvents();
    QString psolGUID = "";
-DbgLv(1) << "CGui: SOLCHK:loop";
+   DbgLv( 1 ) << "CGui: SOLCHK:loop";
 
-   // Now the solutions
+   // Now the solutions.  A triple sharing the previous triple's solution
+   // copies it instead of reading it again.
+   US_ConvertIO::fillSolutionGaps( all_tripinfo );
+
    for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
    {
-      QString csolGUID = all_tripinfo[ ii ].solution.solutionGUID;
+      QString csolGUID = all_tripinfo[ii].solution.solutionGUID;
 
-      if ( csolGUID == psolGUID )
+      if ( ii > 0 && csolGUID == psolGUID )
       {
-         all_tripinfo[ ii ].solution = all_tripinfo[ ii - 1 ].solution;
-         status   = US_DB2::OK;
+         all_tripinfo[ii].solution = all_tripinfo[ii - 1].solution;
+         status                    = US_DB2::OK;
          continue;
       }
-      else
-      {
-         if ( csolGUID.isEmpty() )
-         {
-DbgLv(1) << "SOLCHK:  ii csolGUID EMPTY" << ii << csolGUID;
-            if ( ii > 0 )
-            {
-               csolGUID = psolGUID;
-               all_tripinfo[ ii ].solution.solutionGUID = csolGUID;
-            }
-         }
-         status   = all_tripinfo[ ii ].solution.readFromDisk( csolGUID );
-         psolGUID = csolGUID;
-      }
+
+      status   = all_tripinfo[ii].solution.readFromDisk( csolGUID );
+      psolGUID = csolGUID;
 
       // Error reporting
       if ( status == US_DB2::NO_SOLUTION )
       {
          QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "A solution this run refers to was not found,"
-                " or could not be read.\n"
-                "Please select an existing solution and try again.\n" ) );
-DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
+                                   tr( "Attention" ),
+                                   tr( "A solution this run refers to was not found,"
+                                       " or could not be read.\n"
+                                       "Please select an existing solution and try again.\n" ) );
+         DbgLv( 1 ) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
       }
 
       else if ( status == US_DB2::NO_BUFFER )
       {
          QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "The buffer this solution refers to was not found.\n"
-                "Please restore and try again.\n" ) );
+                                   tr( "Attention" ),
+                                   tr( "The buffer this solution refers to was not found.\n"
+                                       "Please restore and try again.\n" ) );
       }
 
       else if ( status == US_DB2::NO_ANALYTE )
       {
          QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "One of the analytes this solution refers to was not found.\n"
-                "Please restore and try again.\n" ) );
+                                   tr( "Attention" ),
+                                   tr( "One of the analytes this solution refers to was not found.\n"
+                                       "Please restore and try again.\n" ) );
       }
 
       else if ( status != US_DB2::OK )
       {
          QMessageBox::information( this,
-            tr( "Disk Read Problem" ),
-            tr( "Could not read data from the disk.\n"
-                "Disk status: " ) + QString::number( status ) );
+                                   tr( "Disk Read Problem" ),
+                                   tr( "Could not read data from the disk.\n"
+                                       "Disk status: " ) +
+                                      QString::number( status ) );
       }
 
       // Just clear it out
       if ( status != US_DB2::OK )
-         all_tripinfo[ ii ].solution.clear();
+      {
+         all_tripinfo[ii].solution.clear();
+      }
    }
-DbgLv(1) << "CGui: SOLCHK:loop-END";
+   DbgLv( 1 ) << "CGui: SOLCHK:loop-END";
 
    le_status->setText( tr( "Solutions are now loaded." ) );
    qApp->processEvents();
