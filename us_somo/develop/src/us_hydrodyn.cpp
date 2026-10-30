@@ -671,9 +671,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_filename                     = US_Config::get_home_dir() + "etc/somo.residue";
    editor                               = (mQTextEdit *)0;
 
-#if QT_VERSION >= 0x040000
    gparams[ "zeno_cxx" ]                = "true";
-#endif
 
    last_saxs_search_csv.name            = "__empty__";
    last_saxs_screen_csv.name            = "__empty__";
@@ -781,9 +779,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
-#if QT_VERSION < 0x040000
-                               QDir(
-#endif
                                     USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
                                      "bin64"
@@ -791,9 +786,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                                     "/bin/"
 #endif
 				    + SLASH
-#if QT_VERSION < 0x040000
-                                    )
-#endif
                                );
 
    bead_model_from_file = false;
@@ -1023,84 +1015,13 @@ void US_Hydrodyn::setupGUI()
    int minHeight1 = 24;
    bead_model_file = "";
 
-#if QT_VERSION < 0x040000
- //   lookup_tables = new Q3PopupMenu;
-   lookup_tables->insertItem(us_tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
-   lookup_tables->insertItem(us_tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
-   lookup_tables->insertItem(us_tr("Add/Edit &Residue"), this, SLOT(residue()));
-   lookup_tables->insertItem(us_tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs()));
-
- //   somo_options = new Q3PopupMenu;
-   somo_options->insertItem(us_tr("&ASA Calculation"), this, SLOT(show_asa()));
-   somo_options->insertItem(us_tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
-   somo_options->insertItem(us_tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
-   somo_options->insertItem(us_tr("&vdW Overlap Parameters"), this, SLOT(show_vdw_overlap()));
-   somo_options->insertItem(us_tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
-   somo_options->insertItem(us_tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options()));
-   somo_options->insertItem(us_tr("&Miscellaneous Options"), this, SLOT(show_misc()));
-   somo_options->insertItem(us_tr("&Bead Model Output"), this, SLOT(show_bead_output()));
-   somo_options->insertItem(us_tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
-   somo_options->insertItem(us_tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
-   somo_options->insertItem(us_tr("&Fractal Dimension Options"), this, SLOT(show_fractal_dimension_options()));
-
- //   md_options = new Q3PopupMenu;
-   // md_options->insertItem(us_tr("&DMD Options"), this, SLOT(show_dmd_options()));
-   md_options->insertItem(us_tr("&Browflex Options"), this, SLOT(show_bd_options()));
-   md_options->insertItem(us_tr("&Anaflex Options"), this, SLOT(show_anaflex_options()));
-
- //   pdb_options = new Q3PopupMenu;
-   pdb_options->insertItem(us_tr("&Parsing"), this, SLOT(pdb_parsing()));
-   pdb_options->insertItem(us_tr("&Visualization"), this, SLOT(pdb_visualization()));
-
- //   configuration = new Q3PopupMenu;
-   configuration->insertItem(us_tr("&Load Configuration"), this, SLOT(load_config()));
-   configuration->insertItem(us_tr("&Save Current Configuration"), this, SLOT(write_config()));
-   configuration->insertItem(us_tr("&Reset to Default Configuration"), this, SLOT(reset()));
-   configuration->insertItem(us_tr("&Advanced Configuration"), this, SLOT(show_advanced_config()));
-   configuration->insertItem(us_tr("S&ystem Configuration"), this, SLOT(run_us_config()));
-   // configuration->insertItem(us_tr("A&dministrator"), this, SLOT(run_us_admin()));
-
-   QFrame *frame;
-   frame = new QFrame(this);
-   frame->setMinimumHeight(minHeight1);
-
-# if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
-   menu = new QMenuBar(frame);
-# else
-   menu = new QMenuBar( this );
-# endif
-   menu->setPalette( PALET_NORMAL );
-   AUTFBACK( menu );
-   menu->insertItem(us_tr("&Lookup Tables"), lookup_tables);
-   menu->insertItem(us_tr("&SOMO"), somo_options);
-   menu->insertItem(us_tr("&MD"), md_options);
-   menu->insertItem(us_tr("&PDB"), pdb_options);
-   menu->insertItem(us_tr("&Configuration"), configuration);
-
-# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
-   {
- //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-      menu->insertItem(us_tr("&Messages"), file );
-   }
-# endif
-#else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
    frame->setPalette( PALET_NORMAL );
    AUTFBACK( frame );
 
-# if !defined(Q_OS_MAC) || QT_VERSION > 0x050000
    menu = new QMenuBar(frame);
-# else
-   menu = new QMenuBar( this );
-# endif
    {
       QMenu *submenu = new QMenu( us_tr("&Lookup Tables") );
       {
@@ -1240,11 +1161,7 @@ void US_Hydrodyn::setupGUI()
    }
 # if defined(Q_OS_MAC)
    {
-#  if QT_VERSION >= 0x050000
       QMenu * submenu = new QMenu( us_tr( "&File" ) );
-#  else
-      QMenu * submenu = m->addMenu( us_tr( "&File" ) );
-#  endif
 
       QAction *qa1 = submenu->addAction( us_tr( "Font" ) );
       qa1->setShortcut( Qt::ALT+Qt::Key_F );
@@ -1261,7 +1178,6 @@ void US_Hydrodyn::setupGUI()
       menu->addMenu( submenu );
    }
 # endif
-#endif
 
    lbl_info1 = new QLabel(us_tr("PDB Functions:"), this);
    Q_CHECK_PTR(lbl_info1);
@@ -1377,9 +1293,6 @@ void US_Hydrodyn::setupGUI()
 
    le_pdb_file = new mQLineEdit( this );
    le_pdb_file->setText( us_tr( "not selected" ) );
-#if QT_VERSION < 0x040000
-   le_pdb_file->setFrameStyle(QFrame::WinPanel|Sunken);
-#endif
    le_pdb_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pdb_file->setMinimumHeight(minHeight1);
    le_pdb_file->setPalette( PALET_EDIT );
@@ -1831,23 +1744,6 @@ void US_Hydrodyn::setupGUI()
    editor->setReadOnly(true);
    editor->setMinimumWidth(600);
 
-#if QT_VERSION < 0x040000
-# if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
-   m = new QMenuBar( editor );    m->setObjectName( "menu" );
-   m->setMinimumHeight(minHeight1);
-   m->setPalette( PALET_NORMAL );
-   AUTFBACK( m );
- //   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-
-#  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-# endif
-#else
 # if !defined(Q_OS_MAC)
    m = new QMenuBar( editor );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1);
@@ -1867,7 +1763,6 @@ void US_Hydrodyn::setupGUI()
       connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
    }
 # endif
-#endif
    
    editor->setWordWrapMode (advanced_config.scroll_editor ? QTextOption::NoWrap : QTextOption::WordWrap);
 
@@ -2055,9 +1950,6 @@ void US_Hydrodyn::set_expert( bool expert )
    if ( expert )
    {
       // pb_best->show();
-#if QT_VERSION < 0x040000
-      lookup_tables->insertItem(us_tr("Make test set"), this, SLOT( make_test_set() ) );
-#endif
    }
    expert ? pb_equi_grid_bead_model->show() : pb_equi_grid_bead_model->hide();
    expert ? pb_rescale_bead_model->show() : pb_rescale_bead_model->hide();
@@ -5676,32 +5568,6 @@ void US_Hydrodyn::dmd_run()
 void US_Hydrodyn::run_us_config()
 {
    QProcess* process = new QProcess( this );
-#if QT_VERSION < 0x040000
-   QString config_prog = "us_config";
-   
-   process->setCommunication( 0 );
-# ifndef Q_OS_MAC
-   process->addArgument( config_prog );
-# else
-   QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
-   QString procapp = procbin + ".app";
-
-   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
-      procapp         = procbin;
-
-   process->addArgument( "open" );
-   process->addArgument( "-a" );
-   process->addArgument( procapp );
-# endif
-
-   if ( ! process->start() )
-   {
-      QMessageBox::information( this,
-                                us_tr( "Error" ),
-                                us_tr( "There was a problem creating a subprocess\n"
-                                    "for " ) + QString("us_config").toUpper() );
-   }
-#else
    QString prog = "us3_config";
    QStringList args;
 # if defined( Q_OS_MAC )
@@ -5726,37 +5592,12 @@ void US_Hydrodyn::run_us_config()
                                 us_tr( "There was a problem creating a subprocess\n"
                                     "for " ) + QString("us_config").toUpper() );
    }
-#endif
 
 }
 
 void US_Hydrodyn::run_us_admin()
 {
    QProcess* process = new QProcess( this );
-#if QT_VERSION < 0x040000
-   process->setCommunication( 0 );
-# ifndef Q_OS_MAC
-   process->addArgument( "us_admin" );
-# else
-   QString procbin = USglobal->config_list.system_dir + "/bin/" + "us_admin";
-   QString procapp = procbin + ".app";
-
-   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
-      procapp         = procbin;
-
-   process->addArgument( "open" );
-   process->addArgument( "-a" );
-   process->addArgument( procapp );
-# endif
-
-   if ( ! process->start() )
-   {
-      QMessageBox::information( this,
-                                us_tr( "Error" ),
-                                us_tr( "There was a problem creating a subprocess\n"
-                                    "for " ) + QString("us_admin").toUpper() );
-   }
-#else
    QString prog = "us_admin";
    QStringList args;
 # if defined( Q_OS_MAC )
@@ -5781,7 +5622,6 @@ void US_Hydrodyn::run_us_admin()
                                 us_tr( "There was a problem creating a subprocess\n"
                                     "for " ) + QString("us_admin").toUpper() );
    }
-#endif
 }
 
 
@@ -5790,12 +5630,12 @@ void US_Hydrodyn::update_enables()
 }
 
 void US_Hydrodyn::sizeArrows( QwtCounter* 
-#if QT_VERSION >= 0x040000 && ( defined(Q_OS_MAC) || defined(Q_OS_WIN) )
+#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
                               counter 
 #endif
 )
 {
-#if QT_VERSION >= 0x040000 && ( defined(Q_OS_MAC) || defined(Q_OS_WIN) )
+#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
    QList< QObject* > children = counter->children();
    QStyle* btnstyle = QStyleFactory::create("fusion");
    for ( int jj = 0; jj < children.size(); jj++ )
@@ -5809,12 +5649,9 @@ void US_Hydrodyn::sizeArrows( QwtCounter*
 }
 
 void US_Hydrodyn::fixWinButtons( QWidget* 
-#if QT_VERSION >= 0x040000
                                  widg 
-#endif
                                  )
 {
-#if QT_VERSION >= 0x040000
    QList< QObject* > children = widg->children();
    QStyle* btnstyle = QStyleFactory::create("fusion");
    for ( int jj = 0; jj < children.size(); jj++ )
@@ -5826,7 +5663,6 @@ void US_Hydrodyn::fixWinButtons( QWidget*
       if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
          cwidg->setStyle( btnstyle );
    }
-#endif
 }
 
 bool US_Hydrodyn::equi_grid_bead_model( double dR )

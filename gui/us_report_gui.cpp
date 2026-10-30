@@ -14,6 +14,7 @@
 US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Widgets()
 {
   abde_mode = false;
+  velmwl_mode                = false;
   this->report_map           = report_map; 
 
   QList < QString > report_map_keys = report_map.keys();
@@ -78,11 +79,21 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
     le_av_intensity->setEnabled( false );
 
   le_tot_conc      -> setObjectName( "tot_conc" );
+  le_tot_conc->setAccessibleName( tr( "Total Concentration" ) );
+  lb_tot_conc->setBuddy( le_tot_conc );
   le_rmsd_limit    -> setObjectName( "rmsd" );
+  le_rmsd_limit->setAccessibleName( tr( "RMSD Upper Limit" ) );
+  lb_rmsd_limit->setBuddy( le_rmsd_limit );
   le_av_intensity  -> setObjectName( "av_intensity" );
-  
+  le_av_intensity->setAccessibleName( tr( "Minimum Intensity" ) );
+  lb_av_intensity->setBuddy( le_av_intensity );
+
   le_tot_conc_tol  -> setObjectName( "tot_conc_tol" );
+  le_tot_conc_tol->setAccessibleName( tr( "Total Concentration Tolerance" ) );
+  lb_tot_conc_tol->setBuddy( le_tot_conc_tol );
   le_duration_tol  -> setObjectName( "duration_tol" );
+  le_duration_tol->setAccessibleName( tr( "Experiment Duration Tolerance" ) );
+  lb_duration_tol->setBuddy( le_duration_tol );
 
   //set connecitons btw textChanged() and slot
   connect( le_tot_conc,   &QLineEdit::textChanged,
@@ -130,6 +141,8 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
+  cb_wvl->setAccessibleName( tr( "Wavelength" ) );
+  lb_wvl->setBuddy( cb_wvl );
   connect( cb_wvl,  qOverload< int >( &QComboBox::currentIndexChanged ),
             this,   &US_ReportGui::changeWvl );
   /////////////////////////////////////////////////////////////////////////////
@@ -215,6 +228,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
 	   this,         &US_ReportGui::upload_files );
 
   le_ufiles      = us_lineedit( "",  0, true  );
+  le_ufiles->setAccessibleName( tr( "Uploaded Files" ) );
   row = 0;
   ufiles->addWidget( pb_upload_files,  row,    0, 1, 2 );
   ufiles->addWidget( le_ufiles,        row,    2, 1, 4 );
@@ -225,6 +239,7 @@ US_ReportGui::US_ReportGui( QMap < QString, US_ReportGMP* > report_map ) : US_Wi
   QFont le_info_font( US_Widgets::fixedFont().family(),
 		      US_GuiSettings::fontSize() );
   le_info = us_textedit();
+  le_info->setAccessibleName( tr( "Report Parameter Units and File Information" ) );
   QFontMetrics m (le_info -> font()) ;
   int RowHeight = m.lineSpacing() ;
   le_info -> setFixedHeight  (2 * RowHeight) ;
@@ -260,6 +275,13 @@ void US_ReportGui::abde_mode_passed( void )
 {
   abde_mode = true;
   build_report_layout();
+}
+
+// VELOCITY-MWL
+void US_ReportGui::velmwl_mode_passed( void )
+{
+   velmwl_mode = true;
+   build_report_layout();
 }
 
 //Exp. Durat. counters
@@ -325,11 +347,21 @@ void US_ReportGui::build_report_layout( void )
     le_av_intensity->setEnabled( false );
 
   le_tot_conc      -> setObjectName( "tot_conc" );
+  le_tot_conc      -> setAccessibleName( tr( "Total Concentration" ) );
+  lb_tot_conc      -> setBuddy( le_tot_conc );
   le_rmsd_limit    -> setObjectName( "rmsd" );
+  le_rmsd_limit    -> setAccessibleName( tr( "RMSD Upper Limit" ) );
+  lb_rmsd_limit    -> setBuddy( le_rmsd_limit );
   le_av_intensity  -> setObjectName( "av_intensity" );
-  
+  le_av_intensity  -> setAccessibleName( tr( "Minimum Intensity" ) );
+  lb_av_intensity  -> setBuddy( le_av_intensity );
+
   le_tot_conc_tol  -> setObjectName( "tot_conc_tol" );
+  le_tot_conc_tol  -> setAccessibleName( tr( "Total Concentration Tolerance" ) );
+  lb_tot_conc_tol  -> setBuddy( le_tot_conc_tol );
   le_duration_tol  -> setObjectName( "duration_tol" );
+  le_duration_tol  -> setAccessibleName( tr( "Experiment Duration Tolerance" ) );
+  lb_duration_tol  -> setBuddy( le_duration_tol );
 
   //set connecitons btw textChanged() and slot
   connect( le_tot_conc,   SIGNAL( textChanged ( const QString& ) ),
@@ -371,6 +403,8 @@ void US_ReportGui::build_report_layout( void )
   cb_wvl =  us_comboBox();
   cb_wvl -> addItems( wvl_passed );
   cb_wvl -> setCurrentIndex( init_index );
+  cb_wvl -> setAccessibleName( tr( "Wavelength" ) );
+  lb_wvl -> setBuddy( cb_wvl );
   connect( cb_wvl,  SIGNAL( currentIndexChanged( int ) ),
             this,   SLOT  ( changeWvl          ( int ) ) );
   /////////////////////////////////////////////////////////////////////////////
@@ -485,27 +519,26 @@ void US_ReportGui::build_report_layout( void )
   ***/
 
   //For param layout
-  if ( abde_mode )
-    {
-      lb_tot_conc   -> setVisible( false );
-      le_tot_conc   -> setVisible( false );
-      lb_tot_conc_tol -> setVisible( false );
-      le_tot_conc_tol -> setVisible( false );
-      lb_rmsd_limit -> setVisible( false );
-      le_rmsd_limit -> setVisible( false );
-      lb_wvl        -> setVisible( false );  
-      cb_wvl        -> setVisible( false );
-      lb_av_intensity -> setVisible( false );
-      le_av_intensity -> setVisible( false );
-      pb_prev_wvl  -> setVisible( false );
-      pb_next_wvl  -> setVisible( false );
-      pb_apply_all -> setVisible( false );
+  if ( abde_mode || velmwl_mode )
+  {
+     lb_tot_conc->setVisible( false );
+     le_tot_conc->setVisible( false );
+     lb_tot_conc_tol->setVisible( false );
+     le_tot_conc_tol->setVisible( false );
+     lb_rmsd_limit->setVisible( false );
+     le_rmsd_limit->setVisible( false );
+     lb_wvl->setVisible( false );
+     cb_wvl->setVisible( false );
+     lb_av_intensity->setVisible( false );
+     le_av_intensity->setVisible( false );
+     pb_prev_wvl->setVisible( false );
+     pb_next_wvl->setVisible( false );
+     pb_apply_all->setVisible( false );
 
-      pb_upload_files->setVisible( false );
-      le_ufiles      ->setVisible( false );
-    }
-  
-  
+     pb_upload_files->setVisible( false );
+     le_ufiles->setVisible( false );
+  }
+
   //Clean genL layout first:
   if ( genL != NULL && genL->layout() != NULL )
     {
@@ -542,47 +575,65 @@ void US_ReportGui::build_report_layout( void )
   row = 0;
   //genL->addWidget( bn_report_t, row++,  0, 1,-1 );
   genL->addWidget( lb_type,     row,    0, 1, 2 );
-  if (!abde_mode )
-    {
-      genL->addWidget( lb_method,   row,    3, 1, 2 );
-      genL->addWidget( lb_low,      row,    5, 1, 2 );
-      genL->addWidget( lb_high,     row,    7, 1, 2 );
-      genL->addWidget( lb_intval,   row,    9, 1, 2 );
-      genL->addWidget( lb_total,    row,    11, 1, 2 );
-      genL->addWidget( lb_tol,      row,    13, 1, 2 );
-      genL->addWidget( lb_combined, row,    15, 1, 2 );
-      genL->addWidget( lb_ind_plot, row++,  17, 1, 2 );
-    }
+  if ( !abde_mode && !velmwl_mode )
+  {
+     genL->addWidget( lb_method, row, 3, 1, 2 );
+     genL->addWidget( lb_low, row, 5, 1, 2 );
+     genL->addWidget( lb_high, row, 7, 1, 2 );
+     genL->addWidget( lb_intval, row, 9, 1, 2 );
+     genL->addWidget( lb_total, row, 11, 1, 2 );
+     genL->addWidget( lb_tol, row, 13, 1, 2 );
+     genL->addWidget( lb_combined, row, 15, 1, 2 );
+     genL->addWidget( lb_ind_plot, row++, 17, 1, 2 );
+  }
+  else if ( velmwl_mode )
+  {
+     // Like ABDE, but with the Method column kept
+     genL->addWidget( lb_method, row, 3, 1, 2 );
+     genL->addWidget( lb_low, row, 5, 1, 2 );
+     genL->addWidget( lb_high, row, 7, 1, 2 );
+     genL->addWidget( lb_total, row, 9, 1, 2 );
+     genL->addWidget( lb_tol, row, 11, 1, 2 );
+     genL->addWidget( lb_combined, row, 13, 1, 2 );
+     genL->addWidget( lb_ind_plot, row++, 15, 1, 2 );
+
+     lb_intval->setVisible( false );
+  }
   else
-    {                  
-      genL->addWidget( lb_low,      row,    3, 1, 2 );
-      genL->addWidget( lb_high,     row,    5, 1, 2 );
-      genL->addWidget( lb_total,    row,    7, 1, 2 );
-      genL->addWidget( lb_tol,      row,    9, 1, 2 );
-      genL->addWidget( lb_combined, row,    11, 1, 2 );
-      genL->addWidget( lb_ind_plot, row++,  13, 1, 2 );
-      
-      lb_method  ->setVisible( false );
-      lb_intval  ->setVisible( false );    
-    }
-  
+  {
+     genL->addWidget( lb_low, row, 3, 1, 2 );
+     genL->addWidget( lb_high, row, 5, 1, 2 );
+     genL->addWidget( lb_total, row, 7, 1, 2 );
+     genL->addWidget( lb_tol, row, 9, 1, 2 );
+     genL->addWidget( lb_combined, row, 11, 1, 2 );
+     genL->addWidget( lb_ind_plot, row++, 13, 1, 2 );
+
+     lb_method->setVisible( false );
+     lb_intval->setVisible( false );
+  }
+
   //End of table header
   
   QComboBox* cb_type;  
   QComboBox* cb_method;
   QStringList sl_types;
   QStringList sl_methods;
-  if ( !abde_mode )
-    {
-      sl_types     << QString("s") << QString("D") << QString("f/f0") << QString("MW");
-      sl_methods   << QString("2DSA-IT") << QString("PCSA-SL/DS/IS") << QString("2DSA-MC");
-    }
+  if ( velmwl_mode )
+  {
+     sl_types << QString( "s" );
+     sl_methods << QString( "2DSA-IT" );
+  }
+  else if ( !abde_mode )
+  {
+     sl_types << QString( "s" ) << QString( "D" ) << QString( "f/f0" ) << QString( "MW" );
+     sl_methods << QString( "2DSA-IT" ) << QString( "PCSA-SL/DS/IS" ) << QString( "2DSA-MC" );
+  }
   else
-    {
-      sl_types     << QString("Radius") << QString("vbar") << QString("Density");
-      sl_methods   << QString("raw");
-    }
-  
+  {
+     sl_types << QString( "Radius" ) << QString( "vbar" ) << QString( "Density" );
+     sl_methods << QString( "raw" );
+  }
+
   qDebug() << "Begin ReportItems iteration -- ";
    
   QLineEdit* le_low;    
@@ -592,7 +643,9 @@ void US_ReportGui::build_report_layout( void )
   QLineEdit* le_total;
   QCheckBox* ck_combined_plot;
   QCheckBox* ck_ind_plot;
-    
+
+  containerWidget = new QWidget;
+
   for ( int ii = 0; ii < r_item_num; ii++ )
     {
       US_ReportGMP::ReportItem curr_item = report->reportItems[ ii ];
@@ -649,15 +702,35 @@ void US_ReportGui::build_report_layout( void )
       //set Object Name based on row number
       QString stchan      =  QString::number( ii ) + ": ";
       cb_type      -> setObjectName( stchan + "type" );
+      cb_type->setAccessibleName( tr( "Analysis Type" ) );
       cb_method    -> setObjectName( stchan + "method" );
+      cb_method->setAccessibleName( tr( "Method" ) );
+      // Combo Name is always the selected value on Linux; a per-row buddy relation carries purpose.
+      // Zero size keeps these out of view without hide(), which would also hide them from AT-SPI.
+      QLabel* lb_type_a11y   = us_label( tr( "Type" ) );
+      QLabel* lb_method_a11y = us_label( tr( "Method" ) );
+      // Qt resolves buddy relations among siblings; the row layout reparents the combos here.
+      lb_type_a11y->setParent( containerWidget );
+      lb_method_a11y->setParent( containerWidget );
+      lb_type_a11y->setFixedSize( 0, 0 );
+      lb_method_a11y->setFixedSize( 0, 0 );
+      lb_type_a11y->setBuddy( cb_type );
+      lb_method_a11y->setBuddy( cb_method );
       le_low       -> setObjectName( stchan + "low" );
+      le_low->setAccessibleName( tr( "Low Value" ) );
       le_high      -> setObjectName( stchan + "high" );
+      le_high->setAccessibleName( tr( "High Value" ) );
       le_intval    -> setObjectName( stchan + "intval" );
+      le_intval->setAccessibleName( tr( "Integration Value" ) );
       le_total     -> setObjectName( stchan + "total" );
+      le_total->setAccessibleName( tr( "Total" ) );
       le_tol       -> setObjectName( stchan + "tol" );
+      le_tol->setAccessibleName( tr( "Tolerance" ) );
       ck_combined_plot -> setObjectName( stchan + "combined_plot" );
+      ck_combined_plot->setAccessibleName( tr( "Combined Plot" ) );
       ck_ind_plot -> setObjectName( stchan + "ind_combined_plot" );
-            
+      ck_ind_plot->setAccessibleName( tr( "Individual Combined Plot" ) );
+
       //set connecitons btw textChanged() and slot
       connect( le_low, &QLineEdit::textChanged,
 	       this,   &US_ReportGui::verify_text );
@@ -671,31 +744,44 @@ void US_ReportGui::build_report_layout( void )
 	       this,   &US_ReportGui::verify_text );
       
       genL->addWidget( cb_type,           row,    0, 1, 2 );
-      if ( !abde_mode )
-	{
-	  genL->addWidget( cb_method,         row,    3, 1, 2 );
-	  genL->addWidget( le_low,            row,    5, 1, 2 );
-	  genL->addWidget( le_high,           row,    7, 1, 2 );
-	  genL->addWidget( le_intval,         row,    9, 1, 2 );
-	  genL->addWidget( le_total,          row,    11, 1, 2 );
-	  genL->addWidget( le_tol,            row,    13, 1, 2 );
-	  genL->addWidget( ck_combined_plot,  row,    15, 1, 2, Qt::AlignHCenter );
-	  genL->addWidget( ck_ind_plot,       row++,  17, 1, 2, Qt::AlignHCenter );
-	}
+      if ( !abde_mode && !velmwl_mode )
+      {
+         genL->addWidget( cb_method, row, 3, 1, 2 );
+         genL->addWidget( le_low, row, 5, 1, 2 );
+         genL->addWidget( le_high, row, 7, 1, 2 );
+         genL->addWidget( le_intval, row, 9, 1, 2 );
+         genL->addWidget( le_total, row, 11, 1, 2 );
+         genL->addWidget( le_tol, row, 13, 1, 2 );
+         genL->addWidget( ck_combined_plot, row, 15, 1, 2, Qt::AlignHCenter );
+         genL->addWidget( ck_ind_plot, row++, 17, 1, 2, Qt::AlignHCenter );
+      }
+      else if ( velmwl_mode )
+      {
+         genL->addWidget( cb_method, row, 3, 1, 2 );
+         genL->addWidget( le_low, row, 5, 1, 2 );
+         genL->addWidget( le_high, row, 7, 1, 2 );
+         genL->addWidget( le_total, row, 9, 1, 2 );
+         genL->addWidget( le_tol, row, 11, 1, 2 );
+         genL->addWidget( ck_combined_plot, row, 13, 1, 2, Qt::AlignHCenter );
+         genL->addWidget( ck_ind_plot, row++, 15, 1, 2, Qt::AlignHCenter );
+
+         le_intval->setVisible( false );
+         us_setReadOnly( le_total, false ); // editable, as in ABDE
+      }
       else
-	{
-	  genL->addWidget( le_low,            row,    3, 1, 2 );
-	  genL->addWidget( le_high,           row,    5, 1, 2 );
-	  genL->addWidget( le_total,          row,    7, 1, 2 );
-	  genL->addWidget( le_tol,            row,    9, 1, 2 );
-	  genL->addWidget( ck_combined_plot,  row,    11, 1, 2, Qt::AlignHCenter );
-	  genL->addWidget( ck_ind_plot,       row++,  13, 1, 2, Qt::AlignHCenter );
-	  
-	  cb_method  ->setVisible( false );
-	  le_intval  ->setVisible( false );
-	  us_setReadOnly ( le_total, false );
-	}
-      
+      {
+         genL->addWidget( le_low, row, 3, 1, 2 );
+         genL->addWidget( le_high, row, 5, 1, 2 );
+         genL->addWidget( le_total, row, 7, 1, 2 );
+         genL->addWidget( le_tol, row, 9, 1, 2 );
+         genL->addWidget( ck_combined_plot, row, 11, 1, 2, Qt::AlignHCenter );
+         genL->addWidget( ck_ind_plot, row++, 13, 1, 2, Qt::AlignHCenter );
+
+         cb_method->setVisible( false );
+         le_intval->setVisible( false );
+         us_setReadOnly( le_total, false );
+      }
+
       //Slots for cb_type | cb_method
       connect( cb_type,    qOverload< int >( &QComboBox::activated ),
                this,       &US_ReportGui::type_changed );
@@ -709,8 +795,7 @@ void US_ReportGui::build_report_layout( void )
   genL->addItem( spacer2,  row++,  0, 1, 1 );
 
   //add Scroll Area to genL
-  scrollArea      = new QScrollArea;
-  containerWidget = new QWidget;
+  scrollArea = new QScrollArea;
   containerWidget->setLayout( genL );
   scrollArea     ->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
   scrollArea     ->setWidgetResizable( true );
@@ -860,64 +945,76 @@ void US_ReportGui::build_report_layout( void )
   ck_2dsait_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_s_ff0 ->setChecked( report -> pseudo3d_2dsait_s_ff0 );
   ck_2dsait_s_ff0 ->setAutoFillBackground( true  );
+  ck_2dsait_s_ff0->setAccessibleName( tr( "2DSA-IT Pseudo3D s versus f/f0" ) );
 
   ck_2dsait_s_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_s_d ->setChecked( report -> pseudo3d_2dsait_s_d );
   ck_2dsait_s_d ->setAutoFillBackground( true  );
+  ck_2dsait_s_d->setAccessibleName( tr( "2DSA-IT Pseudo3D s versus D" ) );
 
   ck_2dsait_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_mw_ff0 ->setChecked( report -> pseudo3d_2dsait_mw_ff0 );
   ck_2dsait_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_2dsait_mw_ff0->setAccessibleName( tr( "2DSA-IT Pseudo3D MW versus f/f0" ) );
+
   ck_2dsait_mw_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsait_mw_d ->setChecked( report -> pseudo3d_2dsait_mw_d );
   ck_2dsait_mw_d ->setAutoFillBackground( true  );
+  ck_2dsait_mw_d->setAccessibleName( tr( "2DSA-IT Pseudo3D MW versus D" ) );
 
   //2DSA-MC checkboxes
   ck_2dsamc_s_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_s_ff0 ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
   ck_2dsamc_s_ff0 ->setAutoFillBackground( true  );
+  ck_2dsamc_s_ff0->setAccessibleName( tr( "2DSA-MC Pseudo3D s versus f/f0" ) );
 
   ck_2dsamc_s_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_s_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
   ck_2dsamc_s_d ->setAutoFillBackground( true  );
+  ck_2dsamc_s_d->setAccessibleName( tr( "2DSA-MC Pseudo3D s versus D" ) );
 
   ck_2dsamc_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_mw_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
   ck_2dsamc_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_2dsamc_mw_ff0->setAccessibleName( tr( "2DSA-MC Pseudo3D MW versus f/f0" ) );
+
   ck_2dsamc_mw_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_2dsamc_mw_d ->setChecked( report -> pseudo3d_2dsamc_mw_d );
   ck_2dsamc_mw_d ->setAutoFillBackground( true  );
+  ck_2dsamc_mw_d->setAccessibleName( tr( "2DSA-MC Pseudo3D MW versus D" ) );
 
   //PCSA checkboxes
   ck_pcsa_s_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_s_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_s_ff0 ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
   ck_pcsa_s_ff0 ->setAutoFillBackground( true  );
+  ck_pcsa_s_ff0->setAccessibleName( tr( "PCSA Pseudo3D s versus f/f0" ) );
 
   ck_pcsa_s_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_s_d ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_s_d ->setChecked( report -> pseudo3d_pcsa_s_d );
   ck_pcsa_s_d ->setAutoFillBackground( true  );
+  ck_pcsa_s_d->setAccessibleName( tr( "PCSA Pseudo3D s versus D" ) );
 
   ck_pcsa_mw_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw_ff0 ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_mw_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
   ck_pcsa_mw_ff0 ->setAutoFillBackground( true  );
-  
+  ck_pcsa_mw_ff0->setAccessibleName( tr( "PCSA Pseudo3D MW versus f/f0" ) );
+
   ck_pcsa_mw_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw_d ->setPalette( US_GuiSettings::normalColor() );
   ck_pcsa_mw_d ->setChecked( report -> pseudo3d_pcsa_mw_d );
-  ck_pcsa_mw_d ->setAutoFillBackground( true  );  
-  
+  ck_pcsa_mw_d->setAutoFillBackground( true );
+  ck_pcsa_mw_d->setAccessibleName( tr( "PCSA Pseudo3D MW versus D" ) );
+
   QGridLayout *gbox = new QGridLayout;
   gbox              ->setSpacing         ( 1 );
   gbox              ->setContentsMargins ( 0, 0, 0, 0 );
@@ -950,29 +1047,29 @@ void US_ReportGui::build_report_layout( void )
     
   row = 0;
   reportmask->addWidget( bn_repmask_t,     row++,  0, 1, 6 );
-  if( !abde_mode )
-    {
-      reportmask->addWidget( ck_tot_conc,      row,    0, 1, 2 );
-      reportmask->addWidget( ck_min_intensity, row,    2, 1, 2 );
-      reportmask->addWidget( pseudo3d_box,     row++,  4, 4, 2 );
-      
-      reportmask->addWidget( ck_rmsd,          row,    0, 1, 2 );
-      reportmask->addWidget( ck_integration,   row++,  2, 1, 2 );
-      
-      reportmask->addWidget( ck_exp_duration,  row,    0, 1, 2 );
-      reportmask->addWidget( ck_plots,         row++,  2, 1, 2 );
-    }
-  else
-    {
-      reportmask->addWidget( ck_exp_duration,  row++,  0, 1, 2 );
-      reportmask->addWidget( ck_integration,   row++,  0, 1, 2 );
-      reportmask->addWidget( ck_plots,         row++,  0, 1, 2 );
+  if ( !abde_mode && !velmwl_mode )
+  {
+     reportmask->addWidget( ck_tot_conc, row, 0, 1, 2 );
+     reportmask->addWidget( ck_min_intensity, row, 2, 1, 2 );
+     reportmask->addWidget( pseudo3d_box, row++, 4, 4, 2 );
 
-      ck_tot_conc      -> setVisible( false );
-      ck_min_intensity -> setVisible( false );
-      ck_rmsd          -> setVisible( false );
-      pseudo3d_box     -> setVisible( false );
-    }
+     reportmask->addWidget( ck_rmsd, row, 0, 1, 2 );
+     reportmask->addWidget( ck_integration, row++, 2, 1, 2 );
+
+     reportmask->addWidget( ck_exp_duration, row, 0, 1, 2 );
+     reportmask->addWidget( ck_plots, row++, 2, 1, 2 );
+  }
+  else // ABDE and VELOCITY-MWL: Duration | Integration | Plots only
+  {
+     reportmask->addWidget( ck_exp_duration, row++, 0, 1, 2 );
+     reportmask->addWidget( ck_integration, row++, 0, 1, 2 );
+     reportmask->addWidget( ck_plots, row++, 0, 1, 2 );
+
+     ck_tot_conc->setVisible( false );
+     ck_min_intensity->setVisible( false );
+     ck_rmsd->setVisible( false );
+     pseudo3d_box->setVisible( false );
+  }
   main->addLayout( reportmask );
   
   //Build | Re-build Lower buttons layout
@@ -1310,42 +1407,44 @@ void US_ReportGui::verify_text( const QString& text )
 	  isErrorField[ oname ] = false;
 
 	  //ALEXEY: for a given row, compute 'Fraction of Total' (read-only) as '(Int_Val / Total Conc.) * 100%'
-	  if ( oname.contains(": intval") && !abde_mode )
-	    {
-	      double tot_conc_val = le_tot_conc ->text().toDouble();
-	      if ( text.toDouble() > tot_conc_val ) 
-		curr_widget -> setText( QString::number( tot_conc_val ) );
-			      
-	      QString item_row = oname.split(":")[0] + QString(": ");
-	      QString objName_fraction_of_total  = item_row + "total";
-	      QLineEdit * fraction_of_total_widget = containerWidget->findChild<QLineEdit *>( objName_fraction_of_total );
+     if ( oname.contains( ": intval" ) && !abde_mode && !velmwl_mode )
+     {
+        double tot_conc_val = le_tot_conc->text().toDouble();
+        if ( text.toDouble() > tot_conc_val )
+        {
+           curr_widget->setText( QString::number( tot_conc_val ) );
+        }
 
-	      double fraction = ( curr_widget ->text().toDouble() / tot_conc_val ) * 100.0;
-	      fraction_of_total_widget -> setText( QString::number( fraction ) );
-	      palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-	      fraction_of_total_widget -> setPalette( *palette );
-	    }
-	  //ALEXEY: check the same for tot_conc: apply to all ReportItems' 'Fraction of Total'
-	  if ( oname.contains("tot_conc") && !abde_mode )
-	    {
-	      int r_item_num = report->reportItems.size();
+        QString    item_row                  = oname.split( ":" )[0] + QString( ": " );
+        QString    objName_fraction_of_total = item_row + "total";
+        QLineEdit* fraction_of_total_widget  = containerWidget->findChild<QLineEdit*>( objName_fraction_of_total );
 
-	      qDebug() <<  "In Verify_text: report->reportItems.size() -- " << r_item_num;
+        double     fraction = ( curr_widget->text().toDouble() / tot_conc_val ) * 100.0;
+        fraction_of_total_widget->setText( QString::number( fraction ) );
+        palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+        fraction_of_total_widget->setPalette( *palette );
+     }
+     //ALEXEY: check the same for tot_conc: apply to all ReportItems' 'Fraction of Total'
+     if ( oname.contains( "tot_conc" ) && !abde_mode && !velmwl_mode )
+     {
+        int r_item_num = report->reportItems.size();
 
-	      for ( int ii = 0; ii < r_item_num; ii++ )
-		{
-		  QString objName_integration_val      = QString::number( ii ) + QString(": intval");
-		  QString objName_fraction_of_total    = QString::number( ii ) + QString(": total");
-		  QLineEdit * integration_val_widget   = containerWidget->findChild<QLineEdit *>( objName_integration_val );
-		  QLineEdit * fraction_of_total_widget = containerWidget->findChild<QLineEdit *>( objName_fraction_of_total );
-		  
-		  double fraction = ( integration_val_widget ->text().toDouble() / text.toDouble() ) * 100.0;
-		  fraction_of_total_widget -> setText( QString::number( fraction ) );
-		  palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-		  fraction_of_total_widget -> setPalette( *palette );
-		}
-	    }
-	}
+        qDebug() << "In Verify_text: report->reportItems.size() -- " << r_item_num;
+
+        for ( int ii = 0; ii < r_item_num; ii++ )
+        {
+           QString    objName_integration_val   = QString::number( ii ) + QString( ": intval" );
+           QString    objName_fraction_of_total = QString::number( ii ) + QString( ": total" );
+           QLineEdit* integration_val_widget    = containerWidget->findChild<QLineEdit*>( objName_integration_val );
+           QLineEdit* fraction_of_total_widget  = containerWidget->findChild<QLineEdit*>( objName_fraction_of_total );
+
+           double     fraction = ( integration_val_widget->text().toDouble() / text.toDouble() ) * 100.0;
+           fraction_of_total_widget->setText( QString::number( fraction ) );
+           palette->setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+           fraction_of_total_widget->setPalette( *palette );
+        }
+     }
+   }
     }
 }
 
@@ -1388,15 +1487,21 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].type = cb_type->currentText();
       
       //method
-      if ( !abde_mode )
-	{
-	  QComboBox * cb_method    = containerWidget->findChild<QComboBox *>( stchan + "method" );
-	  qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
-	  report->reportItems[ ii ].method = cb_method->currentText();
-	}
+      if ( velmwl_mode )
+      {
+         report->reportItems[ii].method = "2DSA-IT";
+      }
+      else if ( !abde_mode )
+      {
+         QComboBox* cb_method = containerWidget->findChild<QComboBox*>( stchan + "method" );
+         qDebug() << "ii, cb_method->currentText()" << ii << cb_method->currentText();
+         report->reportItems[ii].method = cb_method->currentText();
+      }
       else
-	report->reportItems[ ii ].method = "raw";
-	
+      {
+         report->reportItems[ii].method = "raw";
+      }
+
       //range_low
       QLineEdit * le_low    = containerWidget->findChild<QLineEdit *>( stchan + "low" );
       qDebug() << "ii, le_low->text()" << ii << le_low->text();
@@ -1408,14 +1513,13 @@ void US_ReportGui::gui_to_report( void )
       report->reportItems[ ii ].range_high = le_high->text().toDouble();
 
       //integration value
-      if ( !abde_mode )
-	{
-	  QLineEdit * le_intval  = containerWidget->findChild<QLineEdit *>( stchan + "intval" );
-	  qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
-	  report->reportItems[ ii ].integration_val = le_intval->text().toDouble();
-	}
-           
-      
+      if ( !abde_mode && !velmwl_mode )
+      {
+         QLineEdit* le_intval = containerWidget->findChild<QLineEdit*>( stchan + "intval" );
+         qDebug() << "ii, le_intval->text()" << ii << le_intval->text();
+         report->reportItems[ii].integration_val = le_intval->text().toDouble();
+      }
+
       //tolerance
       QLineEdit * le_tol  = containerWidget->findChild<QLineEdit *>( stchan + "tol" );
       qDebug() << "ii, le_tol->text()" << ii << le_tol->text();
@@ -1621,33 +1725,33 @@ void US_ReportGui::add_row( void )
 
   if ( report-> channel_name . contains("Interf.") )
     {
-      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
-      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
-      initItem.range_low        = 0;
-      initItem.range_high       = 0;
-      initItem.integration_val  = 0;
-      initItem.tolerance        = 0;
-      initItem.combined_plot    = 1;
-      initItem.ind_combined_plot  = 1;
-      
-      report->interf_report_changed = true;
+       initItem.type              = ( abde_mode ) ? QString( "Radius" ) : QString( "s" ); // velmwl: "s"
+       initItem.method            = ( abde_mode ) ? QString( "raw" ) : QString( "2DSA-IT" );
+       initItem.range_low         = 0;
+       initItem.range_high        = 0;
+       initItem.integration_val   = 0;
+       initItem.tolerance         = 0;
+       initItem.combined_plot     = 1;
+       initItem.ind_combined_plot = 1;
+
+       report->interf_report_changed = true;
     }
   else
     {
-      initItem.type             = ( abde_mode ) ? QString("Radius") : QString("s");
-      initItem.method           = ( abde_mode ) ? QString("raw") : QString("2DSA-IT");
-      initItem.range_low        = ( abde_mode ) ? 5.8 : 3.2;
-      initItem.range_high       = ( abde_mode ) ? 7.0 : 3.7;
-      initItem.integration_val  = 0.57;
-      initItem.tolerance        = 10;
-      initItem.combined_plot    = 1;
-      initItem.ind_combined_plot  = 1;
+       initItem.type              = ( abde_mode ) ? QString( "Radius" ) : QString( "s" ); // velmwl: "s"
+       initItem.method            = ( abde_mode ) ? QString( "raw" ) : QString( "2DSA-IT" );
+       initItem.range_low         = ( abde_mode ) ? 5.8 : 3.2;
+       initItem.range_high        = ( abde_mode ) ? 7.0 : 3.7;
+       initItem.integration_val   = 0.57;
+       initItem.tolerance         = 10;
+       initItem.combined_plot     = 1;
+       initItem.ind_combined_plot = 1;
     }
 
   //Compute 'Fraction of Total' based on tot_conc:
   double tot_conc_val = le_tot_conc -> text().toDouble();
-  initItem.total_percent    = ( abde_mode ) ? 95 : ( initItem.integration_val / tot_conc_val) * 100.0;
-  
+  initItem.total_percent = ( abde_mode || velmwl_mode ) ? 95 : ( initItem.integration_val / tot_conc_val ) * 100.0;
+
   report->reportItems.push_back( initItem );
 
   //re-build genL layout
@@ -2067,24 +2171,28 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
   ck_2dsait_s ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_s ->setChecked(  );
   ck_2dsait_s ->setObjectName("s_it");
+  ck_2dsait_s->setAccessibleName( tr( "2DSA-IT Sedimentation Coefficient" ) );
   ck_2dsait_s ->setAutoFillBackground( true  );
 
   ck_2dsait_d       = new QCheckBox( tr( "" ), this );
   ck_2dsait_d ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_d ->setChecked(  );
   ck_2dsait_d ->setObjectName("d_it");
+  ck_2dsait_d->setAccessibleName( tr( "2DSA-IT Diffusion Coefficient" ) );
   ck_2dsait_d ->setAutoFillBackground( true  );
 
   ck_2dsait_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsait_ff0 ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_ff0 ->setChecked(  );
   ck_2dsait_ff0 ->setObjectName("ff0_it");
+  ck_2dsait_ff0->setAccessibleName( tr( "2DSA-IT Frictional Ratio" ) );
   ck_2dsait_ff0 ->setAutoFillBackground( true  );
   
   ck_2dsait_mw       = new QCheckBox( tr( "" ), this );
   ck_2dsait_mw ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsait_mw ->setChecked( report -> pseudo3d_2dsait_mw_d );
   ck_2dsait_mw ->setObjectName("mw_it");
+  ck_2dsait_mw->setAccessibleName( tr( "2DSA-IT Molecular Weight" ) );
   ck_2dsait_mw ->setAutoFillBackground( true  );
 
   //2DSA-MC checkboxes
@@ -2092,24 +2200,28 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
   ck_2dsamc_s ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_s ->setChecked( report -> pseudo3d_2dsamc_s_ff0 );
   ck_2dsamc_s ->setObjectName("s_mc");
+  ck_2dsamc_s->setAccessibleName( tr( "2DSA-MC Sedimentation Coefficient" ) );
   ck_2dsamc_s ->setAutoFillBackground( true  );
 
   ck_2dsamc_d       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_d ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_d ->setChecked( report -> pseudo3d_2dsamc_s_d );
   ck_2dsamc_d ->setObjectName("d_mc");
+  ck_2dsamc_d->setAccessibleName( tr( "2DSA-MC Diffusion Coefficient" ) );
   ck_2dsamc_d ->setAutoFillBackground( true  );
 
   ck_2dsamc_ff0       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_ff0 ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_ff0 ->setChecked( report -> pseudo3d_2dsamc_mw_ff0 );
   ck_2dsamc_ff0 ->setObjectName("ff0_mc");
+  ck_2dsamc_ff0->setAccessibleName( tr( "2DSA-MC Frictional Ratio" ) );
   ck_2dsamc_ff0 ->setAutoFillBackground( true  );
   
   ck_2dsamc_mw       = new QCheckBox( tr( "" ), this );
   ck_2dsamc_mw ->setPalette( US_GuiSettings::normalColor() );
   //ck_2dsamc_mw ->setChecked( report -> pseudo3d_2dsamc_mw_d );
   ck_2dsamc_mw ->setObjectName("mw_mc");
+  ck_2dsamc_mw->setAccessibleName( tr( "2DSA-MC Molecular Weight" ) );
   ck_2dsamc_mw ->setAutoFillBackground( true  );
 
   //PCSA checkboxes
@@ -2117,24 +2229,28 @@ US_ConfirmUpload::US_ConfirmUpload(QStringList variables, QWidget *parent) : US_
   ck_pcsa_s ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_s ->setChecked( report -> pseudo3d_pcsa_s_ff0 );
   ck_pcsa_s -> setObjectName("s_pcsa");
+  ck_pcsa_s->setAccessibleName( tr( "PCSA Sedimentation Coefficient" ) );
   ck_pcsa_s ->setAutoFillBackground( true  );
 
   ck_pcsa_d       = new QCheckBox( tr( "" ), this );
   ck_pcsa_d ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_d ->setChecked( report -> pseudo3d_pcsa_s_d );
   ck_pcsa_d -> setObjectName("d_pcsa");
+  ck_pcsa_d->setAccessibleName( tr( "PCSA Diffusion Coefficient" ) );
   ck_pcsa_d ->setAutoFillBackground( true  );
 
   ck_pcsa_ff0       = new QCheckBox( tr( "" ), this );
   ck_pcsa_ff0 ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_ff0 ->setChecked( report -> pseudo3d_pcsa_mw_ff0 );
   ck_pcsa_ff0 -> setObjectName("ff0_pcsa");
+  ck_pcsa_ff0->setAccessibleName( tr( "PCSA Frictional Ratio" ) );
   ck_pcsa_ff0 ->setAutoFillBackground( true  );
   
   ck_pcsa_mw       = new QCheckBox( tr( "" ), this );
   ck_pcsa_mw ->setPalette( US_GuiSettings::normalColor() );
   //ck_pcsa_mw ->setChecked( report -> pseudo3d_pcsa_mw_d );
   ck_pcsa_mw -> setObjectName("mw_pcsa");
+  ck_pcsa_mw->setAccessibleName( tr( "PCSA Molecular Weight" ) );
   ck_pcsa_mw ->setAutoFillBackground( true  );  
   
   QGridLayout *gbox = new QGridLayout();

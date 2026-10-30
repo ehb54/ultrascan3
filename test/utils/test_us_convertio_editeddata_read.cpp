@@ -87,6 +87,7 @@ protected:
                                         sampleEditValues( raw ) ),
                  (int)US_DataIO::OK );
 
+      ON_CALL( db, isConnected() ).WillByDefault( Return( true ) );
       ON_CALL( db, lastError() ).WillByDefault( Return( QString() ) );
    }
 

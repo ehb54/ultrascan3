@@ -27,15 +27,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       void         * hplc_win;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
       map < QString, QString > *              parameters;
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
       US_Hydrodyn *                           us_hydrodyn;
@@ -46,11 +40,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 
       QLabel *                                lbl_baseline;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *                          bg_bl_type;
-#else
       QButtonGroup *                         bg_bl_type;
-#endif
 
       QRadioButton *                          rb_linear;
       QRadioButton *                          rb_integral;
@@ -80,11 +70,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 
       QLabel *                                lbl_gaussian_type;
 
-#if QT_VERSION < 0x040000
-      QGroupBox *                          bg_gaussian_type;
-#else
       QButtonGroup *                          bg_gaussian_type;
-#endif
       QRadioButton *                          rb_gauss;
       QRadioButton *                          rb_gmg;
       QRadioButton *                          rb_emg;

@@ -105,7 +105,6 @@ void US_Hydrodyn_Mals_Saxs::pm()
 void US_Hydrodyn_Mals_Saxs::pm_enables()
 {
    bool shapes_selected = false;
-#if QT_VERSION >= 0x040000
    for ( QList < QAbstractButton* >::iterator it = bg_pm_shape->buttons().begin();
          it != bg_pm_shape->buttons().end();
          ++it ) {
@@ -113,15 +112,6 @@ void US_Hydrodyn_Mals_Saxs::pm_enables()
          shapes_selected = true;
       }
    }
-#else
-   for ( int i = 0; i < (int) bg_pm_shape->count(); ++i )
-   {
-      if ( ((QRadioButton *)bg_pm_shape->find( i ))->isChecked() )
-      {
-         shapes_selected = true;
-      }
-   }
-#endif
    pb_timeshift          ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( true );
    le_pm_q_start         ->setEnabled( true );
@@ -294,11 +284,7 @@ void US_Hydrodyn_Mals_Saxs::pm_q_pts_text( const QString & )
 
 void US_Hydrodyn_Mals_Saxs::pm_q_start_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -309,11 +295,7 @@ void US_Hydrodyn_Mals_Saxs::pm_q_start_text( const QString & text )
 
 void US_Hydrodyn_Mals_Saxs::pm_q_end_text( const QString & text )
 {
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -748,11 +730,7 @@ void US_Hydrodyn_Mals_Saxs::testiq()
             rb->show();
             rb_testiq_gaussians .push_back( rb );
             hbl_testiq_gaussians->addWidget( rb );
-#if QT_VERSION < 0x040000
-            bg_testiq_gaussians ->insert( rb );
-#else
             bg_testiq_gaussians ->addButton( rb );
-#endif
             connect( rb, SIGNAL( clicked() ), SLOT( testiq_gauss_line() ) );
          }
          rb_testiq_from_i_t->setChecked( true );
@@ -788,11 +766,7 @@ void US_Hydrodyn_Mals_Saxs::testiq_gauss_line()
    {
       QPen use_pen = QPen( rb_testiq_gaussians[ i ]->isChecked() ? Qt::magenta : Qt::blue, line_width, Qt::DashDotDotLine );
          
-#if QT_VERSION >= 0x040000
       plotted_markers[ 2 + i ]->setLinePen( use_pen );
-#else
-      plot_dist->setMarkerPen( plotted_markers[ 2 + i ], use_pen );
-#endif
    }
    plot_dist->replot();
    testiq_enables();
@@ -845,26 +819,16 @@ void US_Hydrodyn_Mals_Saxs::testiq_visrange()
    disconnect( le_testiq_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    if ( plot_dist_zoomer )
    {
-#if QT_VERSION >= 0x040000
       le_testiq_q_start->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().left() ) );
       le_testiq_q_end  ->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().right() ) );
-#else
-      le_testiq_q_start->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().x1() ) );
-      le_testiq_q_end  ->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().x2() ) );
-#endif
    } else {
       le_testiq_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
       le_testiq_q_end  ->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
    }      
    connect( le_testiq_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( testiq_q_start_text( const QString & ) ) );
    connect( le_testiq_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( testiq_q_end_text( const QString & ) ) );
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], le_testiq_q_start->text().toDouble(), 0e0 );
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], le_testiq_q_end  ->text().toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( le_testiq_q_start->text().toDouble() );
    plotted_markers[ 1 ]->setXValue( le_testiq_q_end  ->text().toDouble() );
-#endif
    if ( le_testiq_q_start->hasFocus() &&
         qwtw_wheel->value() != le_testiq_q_start->text().toDouble() )
    {
@@ -905,11 +869,7 @@ void US_Hydrodyn_Mals_Saxs::testiq_q_start_text( const QString & text )
    {
       return;
    }
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -924,11 +884,7 @@ void US_Hydrodyn_Mals_Saxs::testiq_q_end_text( const QString & text )
    {
       return;
    }
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1018,11 +974,7 @@ void US_Hydrodyn_Mals_Saxs::wyatt_start()
       return;
    }
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
-#else
    plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
-#endif
 
    {
       QwtSymbol symbol;
@@ -1031,17 +983,8 @@ void US_Hydrodyn_Mals_Saxs::wyatt_start()
       symbol.setPen  ( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
       symbol.setBrush( Qt::cyan );
 
-#if QT_VERSION < 0x040000
-      plot_dist->setCurveStyle ( plotted_curves[ wheel_file ], QwtCurve::NoCurve );
-      plot_dist->setCurveSymbol( plotted_curves[ wheel_file ], symbol );
-#else
       plotted_curves[ wheel_file ]->setStyle( QwtPlotCurve::NoCurve );
-# if QT_VERSION < 0x050000
       plotted_curves[ wheel_file ]->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
-# else
-      plotted_curves[ wheel_file ]->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
-# endif
-#endif
    }
 
    mode_select( MODE_WYATT );
@@ -1118,17 +1061,10 @@ void US_Hydrodyn_Mals_Saxs::wyatt_enables()
    le_wyatt_start2        ->setEnabled( cb_wyatt_2->isChecked() );
    le_wyatt_end2          ->setEnabled( cb_wyatt_2->isChecked() );
    wheel_enables          (
-#if QT_VERSION > 0x050000
                            le_last_focus == le_wyatt_start   || 
                            le_last_focus == le_wyatt_end     ||
                            le_last_focus == le_wyatt_start2  || 
                            le_last_focus == le_wyatt_end2   
-#else
-                           le_wyatt_start  ->hasFocus() || 
-                           le_wyatt_end    ->hasFocus() ||
-                           le_wyatt_start2 ->hasFocus() || 
-                           le_wyatt_end2   ->hasFocus()
-#endif
                            );
    pb_rescale             ->setEnabled( true );
    pb_rescale_y           ->setEnabled( true );
@@ -1240,11 +1176,7 @@ void US_Hydrodyn_Mals_Saxs::wyatt_apply( const QStringList & files )
 void US_Hydrodyn_Mals_Saxs::wyatt_start_text( const QString & text )
 {
    int pos = 0;
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1260,11 +1192,7 @@ void US_Hydrodyn_Mals_Saxs::wyatt_start_text( const QString & text )
 void US_Hydrodyn_Mals_Saxs::wyatt_end_text( const QString & text )
 {
    int pos = 1;
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1308,11 +1236,7 @@ void US_Hydrodyn_Mals_Saxs::wyatt_end_focus( bool hasFocus )
 void US_Hydrodyn_Mals_Saxs::wyatt_start2_text( const QString & text )
 {
    int pos = 2;
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1328,11 +1252,7 @@ void US_Hydrodyn_Mals_Saxs::wyatt_start2_text( const QString & text )
 void US_Hydrodyn_Mals_Saxs::wyatt_end2_text( const QString & text )
 {
    int pos = 3;
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1381,11 +1301,7 @@ void US_Hydrodyn_Mals_Saxs::replot_wyatt()
 
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_wyatt.size(); i++ )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->removeCurve( plotted_wyatt[ i ] );
-#else
       plotted_wyatt[ i ]->detach();
-#endif
    }
 
    vector < double > wyatt_q;
@@ -1404,25 +1320,11 @@ void US_Hydrodyn_Mals_Saxs::replot_wyatt()
 
    if ( wyatt_error >= 0e0 ) 
    {
-#if QT_VERSION < 0x040000
-      long curve;
-      curve = plot_dist->insertCurve( "wyatt" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
       QwtPlotCurve *curve = new QwtPlotCurve( "wyatt" );
       curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
       plotted_wyatt.push_back( curve );
 
-#if QT_VERSION < 0x040000
-      plot_dist->setCurvePen( curve, QPen( Qt::green , use_line_width, Qt::SolidLine ) );
-      plot_dist->setCurveData( curve,
-                               (double *)&wyatt_q[ 0 ],
-                               (double *)&wyatt_y[ 0 ],
-                               wyatt_q.size()
-                               );
-#else
       curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
       curve->setSamples(
                      (double *)&wyatt_q[ 0 ],
@@ -1430,7 +1332,6 @@ void US_Hydrodyn_Mals_Saxs::replot_wyatt()
                      wyatt_q.size()
                      );
       curve->attach( plot_dist );
-#endif
    }
 
    QString msg = 
@@ -1458,25 +1359,11 @@ void US_Hydrodyn_Mals_Saxs::replot_wyatt()
 
       if ( wyatt_error2 >= 0e0 ) 
       {
-#if QT_VERSION < 0x040000
-         long curve;
-         curve = plot_dist->insertCurve( "wyatt2" );
-         plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
          QwtPlotCurve *curve = new QwtPlotCurve( "wyatt2" );
          curve->setStyle( QwtPlotCurve::Lines );
-#endif
 
          plotted_wyatt.push_back( curve );
 
-#if QT_VERSION < 0x040000
-         plot_dist->setCurvePen( curve, QPen( Qt::yellow , use_line_width, Qt::SolidLine ) );
-         plot_dist->setCurveData( curve,
-                                  (double *)&wyatt_q2[ 0 ],
-                                  (double *)&wyatt_y2[ 0 ],
-                                  wyatt_q2.size()
-                                  );
-#else
          curve->setPen( QPen( Qt::yellow, use_line_width, Qt::SolidLine ) );
          curve->setSamples(
                         (double *)&wyatt_q2[ 0 ],
@@ -1484,7 +1371,6 @@ void US_Hydrodyn_Mals_Saxs::replot_wyatt()
                         wyatt_q2.size()
                         );
          curve->attach( plot_dist );
-#endif
       }
       double use_e;
 
@@ -1699,18 +1585,6 @@ void US_Hydrodyn_Mals_Saxs::scale_scroll_highlight( int pos )
    lbl_wheel_pos->setText( "" );
    lbl_wheel_pos_below->setText( scale_scroll_selected[ pos ] );
 
-#if QT_VERSION < 0x040000
-   plot_dist->setCurveStyle( plotted_curves[ scale_scroll_selected[ scale_scroll_pos ] ], QwtCurve::NoCurve );
-   plot_dist->setCurveStyle( plotted_curves[ scale_scroll_selected[ pos ] ], QwtCurve::Lines );
-   if ( scale_plotted_errors.count( scale_scroll_selected[ scale_scroll_pos ] ) )
-   {
-      plot_errors->setCurveStyle( scale_plotted_errors[ scale_scroll_selected[ scale_scroll_pos ] ], QwtCurve::NoCurve );
-   }
-   if ( scale_plotted_errors.count( scale_scroll_selected[ pos ] ) )
-   {
-      plot_errors->setCurveStyle( scale_plotted_errors[ scale_scroll_selected[ pos ] ], QwtCurve::Lines );
-   }
-#else
    plotted_curves[ scale_scroll_selected[ scale_scroll_pos ] ]->setStyle( QwtPlotCurve::NoCurve );
    plotted_curves[ scale_scroll_selected[ pos ] ]->setStyle( QwtPlotCurve::Lines );
    if ( scale_plotted_errors.count( scale_scroll_selected[ scale_scroll_pos ] ) )
@@ -1721,7 +1595,6 @@ void US_Hydrodyn_Mals_Saxs::scale_scroll_highlight( int pos )
    {
       scale_plotted_errors[ scale_scroll_selected[ pos ] ]->setStyle( QwtPlotCurve::Lines );
    }
-#endif
    plot_dist->replot();
    scale_scroll_pos = pos;
    plot_errors->replot();
@@ -1746,17 +1619,10 @@ void US_Hydrodyn_Mals_Saxs::scale_scroll()
             ++it )
       {
          scale_scroll_selected.push_back( *it );
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveStyle( plotted_curves[ *it ], QwtCurve::NoCurve );
-         if ( scale_plotted_errors.count( *it ) ) {
-            plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::NoCurve );
-         }
-#else
          plotted_curves[ *it ]->setStyle( QwtPlotCurve::NoCurve );
          if ( scale_plotted_errors.count( *it ) ) {
             scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::NoCurve );
          }
-#endif
       }
       if ( scale_scroll_pos < 0 )
       {
@@ -1781,19 +1647,11 @@ void US_Hydrodyn_Mals_Saxs::scale_scroll()
             it != scale_selected.end();
             ++it )
       {
-#if QT_VERSION < 0x040000
-         plot_dist->setCurveStyle( plotted_curves[ *it ], QwtCurve::Lines );
-         if ( scale_plotted_errors.count( *it ) )
-         {
-            plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::Lines );
-         }
-#else
          plotted_curves[ *it ]->setStyle( QwtPlotCurve::Lines );
          if ( scale_plotted_errors.count( *it ) )
          {
              scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::Lines );
          }
-#endif
       }
       lbl_wheel_pos->setText( "" );
       le_last_focus = ( mQLineEdit * )0;
@@ -1870,7 +1728,6 @@ void US_Hydrodyn_Mals_Saxs::scale_update_plot_errors()
          }
       }
 
-#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( *it );
       curve->setStyle( hide ? QwtPlotCurve::NoCurve : QwtPlotCurve::Lines );
       curve->setPen( QPen( plot_colors[ f_pos[ *it ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
@@ -1880,17 +1737,6 @@ void US_Hydrodyn_Mals_Saxs::scale_update_plot_errors()
                      this_q.size()
                      );
       curve->attach( plot_errors );
-#else
-      long curve;
-      curve = plot_errors->insertCurve( *it );
-      plot_errors->setCurveStyle( curve, hide ? QwtPlotCurve::NoCurve : QwtPlotCurve::Lines );
-      plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ *it ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&this_q   [ 0 ],
-                                 (double *)&this_diff[ 0 ],
-                                 this_q.size()
-                                 );
-#endif
       scale_plotted_errors[ *it ] = curve;
       // us_qdebug( US_Vector::qs_vector2( QString( "diff plot %1" ).arg( *it ), this_q, this_diff ) );
    }
@@ -1899,13 +1745,8 @@ void US_Hydrodyn_Mals_Saxs::scale_update_plot_errors()
 
    if ( plot_dist_zoomer )
    {
-#if QT_VERSION < 0x040000
-      double minx = plot_dist_zoomer->zoomRect().x1();
-      double maxx = plot_dist_zoomer->zoomRect().x2();
-#else
       double minx = plot_dist_zoomer->zoomRect().left();
       double maxx = plot_dist_zoomer->zoomRect().right();
-#endif
       plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
    } else {
       plot_errors->setAxisScale( QwtPlot::xBottom, q_min, q_max );
@@ -2424,19 +2265,11 @@ void US_Hydrodyn_Mals_Saxs::scale_replot()
          it != scale_selected.end();
          ++it )
    {
-#if QT_VERSION < 0x040000
-      plot_dist->setCurveData( plotted_curves[ *it ], 
-                               (double *)&( scale_q[ *it ][ 0 ] ),
-                               (double *)&( scale_I[ *it ][ 0 ] ),
-                               scale_q[ *it ].size()
-                               );
-#else
       plotted_curves[ *it ]->setSamples(
                            (double *)&( scale_q[ *it ][ 0 ] ),
                            (double *)&( scale_I[ *it ][ 0 ] ),
                            scale_q[ *it ].size()
                            );
-#endif
    }
    plot_dist->replot();
 }
@@ -2538,11 +2371,7 @@ void US_Hydrodyn_Mals_Saxs::scale_q_start_text( const QString & text )
    {
       return;
    }
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -2557,11 +2386,7 @@ void US_Hydrodyn_Mals_Saxs::scale_q_end_text( const QString & text )
    {
       return;
    }
-#if QT_VERSION < 0x040000
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
    if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -3026,29 +2851,8 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_set_selected()
 
       // clear highlighted ggqfit_plot for chi2 and pfit
       {
-#if QT_VERSION < 0x050000
-         QwtSymbol sym;
-#else
          const QwtSymbol * sym;
-#endif
          // clear any highlighted symbols
-#if QT_VERSION >= 0x040000
-# if QT_VERSION < 0x050000
-         for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_chi2_marked.begin();
-               it != ggaussian_pts_chi2_marked.end();
-               it++ ) {
-            sym = (*it)->symbol();
-            sym.setSize( use_line_width * 3 + 1 );
-            (*it)->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-         }
-         for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_pfit_marked.begin();
-               it != ggaussian_pts_pfit_marked.end();
-               it++ ) {
-            sym = (*it)->symbol();
-            sym.setSize( use_line_width * 2 + 1 );
-            (*it)->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-         }
-# else
          for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_chi2_marked.begin();
                it != ggaussian_pts_chi2_marked.end();
                it++ ) {
@@ -3061,23 +2865,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_set_selected()
             sym = (*it)->symbol();
             (*it)->setSymbol( new QwtSymbol( sym->style(), sym->brush(), sym->pen(), QSize( use_line_width * 2 + 1, use_line_width * 2 + 1 ) ) );
          }
-# endif
-#else
-         for ( set < long >::iterator it = ggaussian_pts_chi2_marked.begin();
-               it != ggaussian_pts_chi2_marked.end();
-               it++ ) {
-            sym = ggqfit_plot->markerSymbol( *it );
-            sym.setSize( use_line_width * 3 + 1 );
-            ggqfit_plot->setMarkerSymbol( *it, sym );
-         }
-         for ( set < long >::iterator it = ggaussian_pts_pfit_marked.begin();
-               it != ggaussian_pts_pfit_marked.end();
-               it++ ) {
-            sym = ggqfit_plot->markerSymbol( *it );
-            sym.setSize( use_line_width * 2 + 1 );
-            ggqfit_plot->setMarkerSymbol( *it, sym );
-         }
-#endif
          ggaussian_pts_chi2_marked.clear( );
          ggaussian_pts_pfit_marked.clear( );
       }
@@ -3112,32 +2899,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
       
    QPixmap pm;
 
-#if QT_VERSION < 0x040000
-   if ( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ] >= 0.05 ) {
-      pm.convertFromImage( 
-                          qi_green->smoothScale( 
-                                                lbl_wheel_Pcolor->width() / 2
-                                                ,lbl_wheel_Pcolor->height() / 2
-                                                ,Qt::KeepAspectRatio 
-                                                 ) );
-   } else {
-      if ( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ] >= 0.01 ) {
-         pm.convertFromImage( 
-                             qi_yellow->smoothScale( 
-                                                    lbl_wheel_Pcolor->width() / 2
-                                                    ,lbl_wheel_Pcolor->height() / 2
-                                                    ,Qt::KeepAspectRatio 
-                                                     ) );
-      } else {
-         pm.convertFromImage( 
-                             qi_red->smoothScale( 
-                                                 lbl_wheel_Pcolor->width() / 2
-                                                 ,lbl_wheel_Pcolor->height() / 2
-                                                 ,Qt::KeepAspectRatio 
-                                                  ) );
-      }
-   }
-#else
    if ( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ] >= 0.05 ) {
       pm.convertFromImage( 
                           qi_green->scaled( 
@@ -3166,7 +2927,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
                                              ) );
       }
    }
-#endif
    lbl_wheel_Pcolor->setPixmap( pm );
 
    lbl_wheel_pos_below->setText( 
@@ -3231,7 +2991,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
    {
       QPen use_pen = QPen( Qt::yellow, use_line_width, Qt::DashDotLine );
 
-#if QT_VERSION >= 0x040000
       QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian" );
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSamples(
@@ -3240,15 +2999,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
                      ggaussian_last_gg[ ggauss_scroll_set [ pos ] ].size() );
       curve->setPen( use_pen );
       curve->attach( plot_dist );
-#else
-      long curve = plot_dist->insertCurve( "gg_scroll_gaussian" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-      plot_dist->setCurveData( curve,
-                               (double *)&(ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ][ 0 ]),
-                               (double *)&(ggaussian_last_gg[ ggauss_scroll_set [ pos ] ][ 0 ]),
-                               ggaussian_last_gg[ ggauss_scroll_set [ pos ] ].size() );
-      plot_dist->setCurvePen( curve, use_pen );
-#endif
    }
    
    // and individual gaussians
@@ -3257,7 +3007,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
       QPen use_pen = QPen( Qt::green, use_line_width, Qt::DashDotLine );
       for ( int i = 0; i < (int) ggaussian_last_ggig[ ggauss_scroll_set [ pos ] ].size(); ++i ) {
          
-#if QT_VERSION >= 0x040000
          QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian_individual" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setSamples(
@@ -3266,15 +3015,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
                         ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ].size() );
          curve->setPen( use_pen );
          curve->attach( plot_dist );
-#else
-         long curve = plot_dist->insertCurve( "gg_scroll_gaussian_individual" );
-         plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-         plot_dist->setCurveData( curve,
-                                  (double *)&(ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ][ 0 ]),
-                                  (double *)&(ggaussian_last_ggig[ ggauss_scroll_set [ pos ] ][ i ][ 0 ]),
-                                  ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ].size() );
-         plot_dist->setCurvePen( curve, use_pen );
-#endif
       }
    }         
 
@@ -3318,29 +3058,8 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
 
    // clear highlighted ggqfit_plot for chi2 and pfit
    {
-#if QT_VERSION < 0x050000
-         QwtSymbol sym;
-#else
          const QwtSymbol * sym;
-#endif
       // clear any highlighted symbols
-#if QT_VERSION >= 0x040000
-# if QT_VERSION < 0x050000
-      for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_chi2_marked.begin();
-            it != ggaussian_pts_chi2_marked.end();
-            it++ ) {
-         sym = (*it)->symbol();
-         sym.setSize( use_line_width * 3 + 1 );
-         (*it)->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-      }
-      for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_pfit_marked.begin();
-            it != ggaussian_pts_pfit_marked.end();
-            it++ ) {
-         sym = (*it)->symbol();
-         sym.setSize( use_line_width * 2 + 1 );
-         (*it)->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-      }
-# else
       for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_chi2_marked.begin();
             it != ggaussian_pts_chi2_marked.end();
             it++ ) {
@@ -3353,23 +3072,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
          sym = (*it)->symbol();
          (*it)->setSymbol( new QwtSymbol( sym->style(), sym->brush(), sym->pen(), QSize( use_line_width * 2 + 1, use_line_width * 2 + 1 ) ) );
       }
-# endif
-#else
-      for ( set < long >::iterator it = ggaussian_pts_chi2_marked.begin();
-            it != ggaussian_pts_chi2_marked.end();
-            it++ ) {
-         sym = ggqfit_plot->markerSymbol( *it );
-         sym.setSize( use_line_width * 3 + 1 );
-         ggqfit_plot->setMarkerSymbol( *it, sym );
-      }
-      for ( set < long >::iterator it = ggaussian_pts_pfit_marked.begin();
-            it != ggaussian_pts_pfit_marked.end();
-            it++ ) {
-         sym = ggqfit_plot->markerSymbol( *it );
-         sym.setSize( use_line_width * 2 + 1 );
-         ggqfit_plot->setMarkerSymbol( *it, sym );
-      }
-#endif
       ggaussian_pts_chi2_marked.clear( );
       ggaussian_pts_pfit_marked.clear( );
    }
@@ -3378,29 +3080,7 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
    {
       // highlight selected
 
-#if QT_VERSION < 0x050000
-      QwtSymbol sym;
-#else
       const QwtSymbol * sym;
-#endif
-#if QT_VERSION >= 0x040000
-# if QT_VERSION < 0x050000
-      if ( ggaussian_pts_chi2.size() ) {
-         QwtPlotMarker * marker = ggaussian_pts_chi2[ ggauss_scroll_set [ pos ] ];
-         sym = marker->symbol();
-         sym.setSize( use_line_width * 7 + 1 );
-         marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-         ggaussian_pts_chi2_marked.insert( marker );
-      }
-
-      if ( ggaussian_pts_pfit.size() ) {
-         QwtPlotMarker * marker = ggaussian_pts_pfit[ ggauss_scroll_set [ pos ] ];
-         sym = marker->symbol();
-         sym.setSize( use_line_width * 6 + 1 );
-         marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
-         ggaussian_pts_pfit_marked.insert( marker );
-      }
-# else
       if ( ggaussian_pts_chi2.size() ) {
          QwtPlotMarker * marker = ggaussian_pts_chi2[ ggauss_scroll_set [ pos ] ];
          sym = marker->symbol();
@@ -3414,24 +3094,6 @@ void US_Hydrodyn_Mals_Saxs::ggauss_scroll_highlight( int pos )
          marker->setSymbol( new QwtSymbol( sym->style(), sym->brush(), sym->pen(), QSize( use_line_width * 6 + 1, use_line_width * 6 + 1 ) ) );
          ggaussian_pts_pfit_marked.insert( marker );
       }
-# endif
-#else
-      if ( ggaussian_pts_chi2.size() ) {
-         long marker = ggaussian_pts_chi2[ ggauss_scroll_set [ pos ] ];
-         sym = ggqfit_plot->markerSymbol( marker );
-         sym.setSize( use_line_width * 7 + 1 );
-         ggqfit_plot->setMarkerSymbol( marker, sym );
-         ggaussian_pts_chi2_marked.insert( marker );
-      }
-
-      if ( ggaussian_pts_pfit.size() ) {
-         long marker = ggaussian_pts_pfit[ ggauss_scroll_set [ pos ] ];
-         sym = ggqfit_plot->markerSymbol( marker );
-         sym.setSize( use_line_width * 6 + 1 );
-         ggqfit_plot->setMarkerSymbol( marker, sym );
-         ggaussian_pts_pfit_marked.insert( marker );
-      }
-#endif
       ggqfit_plot->replot();
    }               
 }

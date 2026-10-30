@@ -12,18 +12,16 @@ void US_MPI_Analysis::_2dsa_worker( void )
 
    // Use 4 here because the master will be reading 4 with the
    // same instruction when reading ::READY or ::RESULTS.
-   int x[ 4 ];
+   int         x[4] = { 0, 0, 0, 0 };
 
    while ( repeat_loop )
    {
-      MPI_Send( x, // Basically don't care
-                4,
-                MPI_INT,
-                MPI_Job::MASTER,
-                MPI_Job::READY,
+      x[3] = static_cast<int>( max_rss() ); // Memory use, as with ::RESULTS
+
+      MPI_Send( x, 4, MPI_INT, MPI_Job::MASTER, MPI_Job::READY,
                 my_communicator ); // let master know we are ready
-//if(my_rank==1)
-DbgLv(1) << "w:" << my_rank << ": ready sent";
+      //if(my_rank==1)
+      DbgLv( 1 ) << "w:" << my_rank << ": ready sent";
 
       // Blocking -- Wait for instructions
       MPI_Recv( &job, // get masters' response
@@ -46,16 +44,13 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
                          + ( parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0 );
 DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
-      data_sets[ offset ]->run_data.meniscus  = meniscus_value;
-      data_sets[ offset ]->run_data.bottom    = bottom_value;
-      data_sets[ offset ]->simparams.meniscus = meniscus_value;
-      data_sets[ offset ]->simparams.bottom   = bottom_value;
-
       switch( job.command )
       {
 
          case MPI_Job::PROCESS:  // Process solutes
             {
+               worker_fit_context( offset, meniscus_value, bottom_value );
+
                US_SolveSim::Simulation simulation_values;
                simulation_values.noisflag    = noisflag;
                simulation_values.dbg_level   = dbg_level;
@@ -189,18 +184,11 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
                   gb_need         = qRound( gb_need * 1000.0 ) * 0.001;
                   double gb_used  = (double)memused / mb_bytes;
                   gb_used         = qRound( gb_used * 1000.0 ) * 0.001;
-                  long pgavail    = sysconf( _SC_PHYS_PAGES );
-                  long pgsize     = sysconf( _SC_PAGE_SIZE );
-                  long memavail   = pgavail * pgsize;
+                  qint64 memavail         = 0;
+                  qint64 memcurav         = 0; // Stays 0 where not reported (macOS)
+                  phys_memory( memavail, memcurav );
                   double gb_avail = (double)memavail / gb_bytes;
                   gb_avail        = qRound( gb_avail * 1000.0 ) * 0.001;
-#ifdef _SC_AVPHYS_PAGES
-                  long pgcurav    = sysconf( _SC_AVPHYS_PAGES );
-                  long memcurav   = pgcurav * pgsize;
-#else
-                  // _SC_AVPHYS_PAGES is Linux-only; on macOS report 0
-                  long memcurav   = 0L;
-#endif
                   double gb_curav = (double)memcurav / gb_bytes;
                   gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
 
@@ -285,3 +273,21 @@ DbgLv(1) << "newD:" << my_rank << "  length index" << job_length << index
    }  // repeat_loop
 }
 
+// Apply a job's meniscus and bottom to its dataset.  This is the workers'
+//  fit-context entry point; returns true if the simulation parameters
+//  differ from those of the previous job.
+bool US_MPI_Analysis::worker_fit_context( int offset, double meniscus, double bottom )
+{
+   data_sets[offset]->run_data.meniscus  = meniscus;
+   data_sets[offset]->run_data.bottom    = bottom;
+   data_sets[offset]->simparams.meniscus = meniscus;
+   data_sets[offset]->simparams.bottom   = bottom;
+
+   bool sim_changed = ( fit_context.dataset != offset || fit_context.meniscus != meniscus || fit_context.bottom != bottom );
+
+   fit_context.dataset  = offset;
+   fit_context.meniscus = meniscus;
+   fit_context.bottom   = bottom;
+
+   return sim_changed;
+}

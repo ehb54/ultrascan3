@@ -35,6 +35,7 @@ public:
 
     /*! \brief Generic destructor for the US_DB2 class. Database connection
         is terminated and any resources in use are closed and deleted.
+        A transaction still open is rolled back first.
     */
     ~US_DB2() override;
 
@@ -118,20 +119,34 @@ public:
         \param personPassword That investigator's US3 password
         \param err            Set to the reason on failure
     */
-    bool connectAuthenticated( const QString& host, const QString& dbname,
-                               const QString& user, const QString& password,
-                               const QString& personGUID,
-                               const QString& personPassword,
-                               QString& err );
+    bool                         connectAuthenticated( const QString& host,
+                                                       const QString& dbname,
+                                                       const QString& user,
+                                                       const QString& password,
+                                                       const QString& personGUID,
+                                                       const QString& personPassword,
+                                                       QString&       err );
 
-    /*! \brief Begin a transaction on the active connection. */
-    bool beginTransaction( QString& error ) override;
+    //! Transaction error formats; %1 is the refused operation or the server's error text.
+    static constexpr const char* transactionOpenMessage = "%1: a transaction is already open";
+    static constexpr const char* noTransactionMessage   = "%1: no transaction is open";
+    static constexpr const char* commitUnknownMessage =
+       "the connection was lost during the commit, so whether it took effect is unknown: %1";
+    static constexpr const char* serverRollbackMessage =
+       "the server had already rolled the transaction back after %1, so nothing written in it was kept "
+       "and anything run after that ran outside the transaction";
+    static constexpr const char* transactionEndedMessage =
+       "the transaction had already ended, by an implicit commit or a rollback by the server, "
+       "so some rows written in it may have been kept";
 
-    /*! \brief Commit the active transaction and restore autocommit. */
-    bool commitTransaction( QString& error ) override;
+    /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
+    bool           beginTransaction( QString& error ) final;
 
-    /*! \brief Roll back the active transaction and restore autocommit. */
-    bool rollbackTransaction( QString& error ) override;
+    /*! \brief Commit the open transaction. See IUS_DB2. */
+    bool           commitTransaction( QString& error ) final;
+
+    /*! \brief Roll back the open transaction. See IUS_DB2. */
+    bool           rollbackTransaction( QString& error ) final;
 
     /*! \brief Implements a simple query on the active database
         connection, cleaning up any unused results from a previous query.
@@ -342,9 +357,10 @@ public:
 
     /*! \brief Composes a stored-procedure invocation from its arguments
 
-        The credentials are always passed as the first two procedure arguments.
-        Single quotes in any argument are escaped.  This is pure text assembly
-        with no connection involved, which is why it is testable on its own.
+        The guid and password are passed as the first two procedure
+        arguments.  Every argument, the credentials included, has its
+        backslashes and single quotes escaped, so callers pass values raw.
+        No connection is involved.
 
         \param keyword    The leading SQL keyword, "CALL" or "SELECT"
 
@@ -355,14 +371,19 @@ public:
         \param password   The user password, passed as the second argument
 
         \return The composed query, or an empty string if arguments is empty
+                or the procedure name is not a plain identifier
     */
     static QString composeQuery( const QString&     keyword,
                                  const QStringList& arguments,
                                  const QString&     guid,
                                  const QString&     password );
 
-private:
+ private:
     bool       connected;
+    bool         inTransaction       = false;
+    //! The error after which the server rolled the open transaction back
+    //! (ER_LOCK_DEADLOCK or ER_LOCK_WAIT_TIMEOUT), or 0.
+    unsigned int serverRollbackError = 0;
 #ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
@@ -387,7 +408,17 @@ private:
     //! but anything that talks to the connection without going through a
     //! query, transaction control included, has to clear it first or the
     //! server answers "Commands out of sync".
-    void       drainResults   ();
+    void       drainResults();
+
+    //! \brief True if the server no longer has a transaction open.
+    bool       transactionEndedEarly();
+
+    //! \brief Records a failed statement's error if it rolled the open
+    //!        transaction back.  Call while the error is still current.
+    void       noteStatementError();
+
+    //! \brief serverRollbackMessage filled in for serverRollbackError.
+    QString    serverRollbackText() const;
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );

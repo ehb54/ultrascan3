@@ -34,11 +34,9 @@
 
 #include <qwt_plot.h>
 #include "us3i_plot.h"
-#if QT_VERSION >= 0x040000
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
-#endif
 
 using namespace std;
 
@@ -129,10 +127,8 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
    private:
       ScrollZoomer  *plot_saxs_zoomer;
-#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_pr;
       QwtPlotGrid   *grid_saxs;
-#endif
       QPushButton   *pb_save_data;
       QPushButton   *pb_to_somo;
 
@@ -158,9 +154,6 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       int           unit;
 
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( disable: 4251 )
-# endif
 #endif
       vector < complex < double > >                   data;
 
@@ -186,9 +179,6 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       bool                                            load_rotations( int number, 
                                                                       vector < vector < double > > &rotations );
 #ifdef WIN32
-# if QT_VERSION < 0x040000
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
       void                                            compute_variables();

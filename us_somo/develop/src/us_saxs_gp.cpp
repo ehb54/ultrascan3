@@ -53,11 +53,7 @@ QString sgp_node::default_params()
 {
    QStringList           params;
 
-#if QT_VERSION < 0x040000      
- //   Q3ValueList < double > values;
-#else
    QList < double > values;
-#endif
 
    params << "distancequantum";
    values << 2.5;
