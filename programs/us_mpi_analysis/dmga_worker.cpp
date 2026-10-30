@@ -25,8 +25,13 @@ void US_MPI_Analysis::dmga_worker( void )
    p_grid                       = job_config.params.ga.p_grid;
    const QString s_bsig         = job_config.debug_value( "base_sig" );
    const QString s_grinc        = job_config.debug_value( "g_redo_inc" );
-   base_sig            = s_bsig .isEmpty() ? BASE_SIG : s_bsig .toDouble();
-   g_redo_inc                   = s_grinc.toInt();
+   bool          bsig_ok        = false;
+   base_sig                     = s_bsig.toDouble( &bsig_ok );
+   if ( !bsig_ok )
+   { // Not given or not a number (reported by the job validation)
+      base_sig = BASE_SIG;
+   }
+   g_redo_inc = s_grinc.toInt();
    if ( g_redo_inc < 1 )
    { // Not given, not an integer or not positive: it is a divisor
       g_redo_inc = GR_INCR;

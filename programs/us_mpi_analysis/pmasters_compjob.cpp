@@ -960,8 +960,7 @@ void US_MPI_Analysis::pm_pcsa_cjmast( void )
 
             if ( simulation_values.noisflag == 0 )
             {
-               DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << ds_triple << ")"
-                          << " : model was output.";
+               DbgLv( 0 ) << my_rank << ": Dataset" << current_dataset + 1 << "(" << ds_triple << ")" << " : model was output.";
             }
             else
             {

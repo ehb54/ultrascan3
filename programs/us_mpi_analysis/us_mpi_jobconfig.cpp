@@ -903,6 +903,47 @@ void US_MPI_JobConfig::validate()
       }
    }
 
+   // debug_text entries this program reads with a value: one that does not
+   //  parse falls back to the default, so report it.  Entries are separated
+   //  by commas; the former form "g_redo_inc 5 base_sig 0.3" is one entry.
+   struct DebugKnob
+   {
+         const char* key;
+         bool        integer;
+         bool        positive;
+   };
+   static const DebugKnob DEBUG_KNOBS[] = { { "g_redo_inc", true, true },
+                                            { "base_sig", false, false },
+                                            { "fail_load_rank", true, false } };
+
+   for ( const DebugKnob& knob : DEBUG_KNOBS )
+   {
+      bool          found = false;
+      const QString value = debug_value( knob.key, &found );
+      if ( !found )
+      {
+         continue;
+      }
+
+      bool ok = false;
+      if ( knob.integer )
+      {
+         const int number = value.toInt( &ok );
+         ok               = ok && ( !knob.positive || number > 0 );
+      }
+      else
+      {
+         value.toDouble( &ok );
+      }
+
+      if ( !ok )
+      {
+         warnings << QString( "debug_text %1 \"%2\" is not a valid %3%4 value: the default is used (separate "
+                              "debug_text entries by commas, e.g. g_redo_inc=5,base_sig=0.3)" )
+                        .arg( knob.key, value, knob.positive ? "positive " : "", knob.integer ? "integer" : "number" );
+      }
+   }
+
    // Ranges given by a pair of parameters; allow_equal admits a range of
    //  one value (e.g. a fixed f/f0)
    auto check_range = [this]( const char* kmin, const char* kmax, const bool allow_equal )

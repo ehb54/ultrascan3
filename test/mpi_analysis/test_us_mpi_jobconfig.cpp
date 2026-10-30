@@ -435,6 +435,22 @@ TEST( US_MPI_JobConfig, ValidMinimalJobs )
                    .errors.isEmpty() );
 }
 
+TEST( US_MPI_JobConfig, DebugTextKnobsAreChecked )
+{
+   Config ok = validated( GRID_2DSA + "<debug_text value=\"g_redo_inc=5, base_sig 0.3\"/>" );
+   EXPECT_TRUE( ok.warnings.isEmpty() ) << all_of( ok );
+
+   // The comma-less form is one entry whose value does not parse: it must be reported
+   Config legacy = validated( GRID_2DSA + "<debug_text value=\"g_redo_inc 5 base_sig 0.3\"/>" );
+   ASSERT_EQ( legacy.warnings.size(), 1 ) << all_of( legacy );
+   EXPECT_TRUE( legacy.warnings[0].contains( "g_redo_inc" ) );
+   EXPECT_TRUE( legacy.warnings[0].contains( "commas" ) );
+
+   Config bad = validated( GRID_2DSA + "<debug_text value=\"base_sig=abc,g_redo_inc=0\"/>" );
+   EXPECT_EQ( bad.warnings.size(), 2 ) << all_of( bad );
+   EXPECT_TRUE( bad.errors.isEmpty() );
+}
+
 TEST( US_MPI_JobConfig, UnknownMethod )
 {
    Config config = validated( GRID_2DSA, "2DXA" );

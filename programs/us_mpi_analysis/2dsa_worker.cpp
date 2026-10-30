@@ -157,12 +157,12 @@ void US_MPI_Analysis::_2dsa_worker( void )
                double gb_curav = (double) memcurav / gb_bytes;
                gb_curav        = qRound( gb_curav * 1000.0 ) * 0.001;
 
-               qDebug() << "++ Worker" << my_rank << ": MC iteration" << mc_iter << ": Memory Profile :"
-                        << "\n    Maximum memory used to this point" << memused << "\n    Composite data memory needed" << memdata
-                        << "\n    Maximum subgrid solute count" << maxsols << "\n    NNLS A matrix memory needed" << memamatr
-                        << "\n    NNLS B matrix memory needed" << membmatr << "\n    Total memory (GB) used" << gb_used
-                        << "\n    Total memory (GB) needed" << gb_need << "\n    Total memory (GB) available" << gb_avail
-                        << "\n    Memory (GB) currently available" << gb_curav;
+               qDebug() << "++ Worker" << my_rank << ": MC iteration" << mc_iter
+                        << ": Memory Profile :" << "\n    Maximum memory used to this point" << memused
+                        << "\n    Composite data memory needed" << memdata << "\n    Maximum subgrid solute count" << maxsols
+                        << "\n    NNLS A matrix memory needed" << memamatr << "\n    NNLS B matrix memory needed" << membmatr
+                        << "\n    Total memory (GB) used" << gb_used << "\n    Total memory (GB) needed" << gb_need
+                        << "\n    Total memory (GB) available" << gb_avail << "\n    Memory (GB) currently available" << gb_curav;
             }
 
             mc_data.resize( job_length );
