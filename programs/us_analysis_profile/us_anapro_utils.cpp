@@ -1514,11 +1514,14 @@ DbgLv(1) << "AP2d:inP:  parms_to_gui complete";
    bool was_changed     = changed;       // Save changed state
    changed              = was_changed;   // Restore changed state
 
-   // for VELOCITY-MWL
-   bool vel_mwl_mode_2dsa = ( mainw->velmwl_mode_aprofile ) ? false : true;
-   ck_j5run->setChecked( vel_mwl_mode_2dsa );
-   ck_j5run->setEnabled( vel_mwl_mode_2dsa );
-   le_j5iter->setEnabled( vel_mwl_mode_2dsa );
+   // for VELOCITY-MWL: 2DSA-MC is not run and cannot be selected.
+   // Otherwise leave the checkbox as restored from the profile above
+   // (do NOT force it back to checked), and just make sure it is editable.
+   bool vel_mwl_mode = mainw->velmwl_mode_aprofile;
+   if ( vel_mwl_mode )
+      ck_j5run->setChecked( false );
+   ck_j5run->setEnabled( !vel_mwl_mode );
+   le_j5iter->setEnabled( !vel_mwl_mode );
 }
 
 // Save panel controls when about to leave the panel
@@ -1827,10 +1830,13 @@ DbgLv(1) << "APpc:inP:     set-parm ii" << ii << "channel" << parm1.channel;
    parms_to_gui( first_avail );   
 DbgLv(1) << "APpc:inP:   parms_to_gui complete";
 
-// for VELOCITY-MWL
-bool vel_mwl_mode_2dsa = ( mainw->velmwl_mode_aprofile ) ? true : false;
-ck_nopcsa->setChecked( vel_mwl_mode_2dsa );
-ck_nopcsa->setEnabled( !vel_mwl_mode_2dsa );
+// for VELOCITY-MWL: PCSA is not included and cannot be selected.
+// Otherwise leave the checkbox as restored from the profile above
+// (do NOT force it back to unchecked), and just make sure it is editable.
+bool vel_mwl_mode = mainw->velmwl_mode_aprofile;
+if ( vel_mwl_mode )
+   ck_nopcsa->setChecked( true );
+ck_nopcsa->setEnabled( !vel_mwl_mode );
 }
 
 // Save PCSA panel controls when about to leave the panel
