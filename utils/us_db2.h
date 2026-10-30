@@ -99,8 +99,12 @@ public:
     static constexpr const char* noTransactionMessage   = "%1: no transaction is open";
     static constexpr const char* commitUnknownMessage =
        "the connection was lost during the commit, so whether it took effect is unknown: %1";
-    static constexpr const char* implicitCommitMessage =
-       "the transaction was already ended by an implicit commit, so the rows written before it were kept";
+    static constexpr const char* serverRollbackMessage =
+       "the server had already rolled the transaction back after %1, so nothing written in it was kept "
+       "and anything run after that ran outside the transaction";
+    static constexpr const char* transactionEndedMessage =
+       "the transaction had already ended, by an implicit commit or a rollback by the server, "
+       "so some rows written in it may have been kept";
 
     /*! \brief Begin a transaction with START TRANSACTION. See IUS_DB2. */
     bool          beginTransaction( QString& error ) final;
@@ -320,7 +324,10 @@ public:
 
 private:
     bool       connected;
-    bool       inTransaction = false;
+    bool         inTransaction       = false;
+    //! The error after which the server rolled the open transaction back
+    //! (ER_LOCK_DEADLOCK or ER_LOCK_WAIT_TIMEOUT), or 0.
+    unsigned int serverRollbackError = 0;
 #ifndef NO_DB
     MYSQL*     db;
     MYSQL_RES* result;
@@ -346,6 +353,16 @@ private:
     //! query, transaction control included, has to clear it first or the
     //! server answers "Commands out of sync".
     void       drainResults();
+
+    //! \brief True if the server no longer has a transaction open.
+    bool       transactionEndedEarly();
+
+    //! \brief Records a failed statement's error if it rolled the open
+    //!        transaction back.  Call while the error is still current.
+    void       noteStatementError();
+
+    //! \brief serverRollbackMessage filled in for serverRollbackError.
+    QString    serverRollbackText() const;
 
     QString    buildQuery      ( const QStringList& );
     QString    buildQuerySelect( const QStringList& );
